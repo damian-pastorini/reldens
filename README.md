@@ -31,8 +31,12 @@ $ npm install
 ```
 
 References:
-*[https://nodejs.org/en/download/package-manager/]
-*[https://docs.mongodb.com/manual/tutorial/install-mongodb-on-ubuntu/]
+
+..* [https://nodejs.org/en/download/package-manager/]
+
+..* [https://docs.mongodb.com/manual/tutorial/install-mongodb-on-ubuntu/]
 
 Run the server with:
+```bash
 $ nodejs app.js
+```
