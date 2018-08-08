@@ -1,0 +1,18 @@
+{
+  "name": "questworld",
+  "version": "1.0.0",
+  "description": "Epic adventure - MMORPG",
+  "main": "app.js",
+  "dependencies": {
+    "express": "^4.13.4",
+    "mongodb": "^3.1.1",
+    "mongojs": "^2.6.0",
+    "socket.io": "^1.7.4"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "BSD-2-Clause"
+}
