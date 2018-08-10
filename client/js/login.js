@@ -1,9 +1,12 @@
 /**
  * Initialize!
  */
-$( document ).ready(function() {
+$(document).ready(function() {
     console.log('ready!');
-    $('login-form').on('submit', function() {
-        console.log('Logging...');
-    });
+    if($('#login-form').length) {
+        $('#login-form').on('submit', function(e){
+            console.log('Logging...');
+            e.preventDefault();
+        });
+    }
 });
