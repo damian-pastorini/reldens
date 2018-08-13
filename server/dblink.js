@@ -39,7 +39,7 @@ exports.link = {
             if(err){
                 throw err;
             }
-            callback(result, originalParams);
+            callback(err, result, originalParams);
         });
     }
 };

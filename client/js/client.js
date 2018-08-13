@@ -33,7 +33,11 @@ $(document).ready(function(){
     if($login.length){
         $login.on('submit', function(e){
             e.preventDefault();
-            socket.emit('login', $('#login-form').serializeArray());
+            var params = {
+                username: $('#username').val(),
+                password: $('#password').val(),
+            };
+            socket.emit('login', params);
         });
     }
 
@@ -42,6 +46,7 @@ $(document).ready(function(){
             $('.forms-container').hide();
             $('.login-form .response-error').hide();
             $('.game-container').show();
+            $('.player-username').html(data.username);
         } else {
             $('.login-form .response-error').html('Invalid data, please try again.');
         }

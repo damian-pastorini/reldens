@@ -46,11 +46,11 @@ io.sockets.on('connection', function(socket){
     // login:
     socket.on('login', function(data){
 		var result = false;
-        if(player.login(data)){
-            socket.player = player;
-            result = true;
-        }
-        socket.emit('loginResponse', {success: result});
+        var self = this;
+        data.player = player;
+        data.socket = self;
+        data.db = db;
+        player.login(data);
     });
 
     // register:

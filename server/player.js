@@ -15,12 +15,27 @@ exports.player = {
             params.socket.emit('registerResponse', {success: false});
         }
     },
-    saveResult: function(result, params){
+    saveResult: function(err, result, params){
         params.socket.emit('registerResponse', {success: result});
     },
     exists: function(params){
         this.db.select('SELECT * FROM users WHERE email = "'+params.email+'" OR username = "'+params.username+'"', params.player.save, params);
     },
-    login: function(){
+    login: function(params){
+        this.db.select('SELECT * FROM users WHERE username = "'+params.username+'" AND password = "'+params.password+'"', params.player.loginResponse, params);
     },
+    loginResponse: function(err, result, params){
+        if(result.length){
+            Object.keys(result).forEach(function(key) {
+                var row = result[key];
+                params.player.id = row.id;
+                params.player.username = row.username;
+                params.socket.player = params.player;
+                params.socket.emit('loginResponse', {success: true, username: params.player.username});
+                return params.socket;
+            });
+        } else {
+            params.socket.emit('loginResponse', {success: false});
+        }
+    }
 };
