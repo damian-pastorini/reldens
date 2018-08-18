@@ -1,2 +1,4 @@
-.idea
-node_modules
+/.idea
+/node_modules
+/colyseus-examples
+/ts-node*
