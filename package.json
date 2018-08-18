@@ -1,0 +1,31 @@
+{
+  "name": "quest-world",
+  "version": "1.0.1",
+  "description": "Epic adventure - MMORPG",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon --watch '**/*.ts' --exec ts-node index.ts",
+    "bundle-colyseus-client": "browserify ./node_modules/colyseus.js/lib/index.js -s Colyseus -o static/colyseus.js",
+    "build": "npm run bundle-colyseus-client",
+    "heroku-postbuild": "npm run build"
+  },
+  "engines": {
+    "node": "8.9.1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@colyseus/monitor": "^0.1.7",
+    "colyseus": "^0.9.11",
+    "colyseus.js": "^0.9.6",
+    "express": "^4.14.0",
+    "nodemon": "^1.11.0",
+    "serve-index": "^1.8.0",
+    "superagent": "^3.8.1"
+  },
+  "devDependencies": {
+    "browserify": "^14.4.0",
+    "ts-node": "^5.0.1",
+    "typescript": "^2.7.2"
+  }
+}
