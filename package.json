@@ -21,7 +21,8 @@
     "express": "^4.14.0",
     "nodemon": "^1.11.0",
     "serve-index": "^1.8.0",
-    "superagent": "^3.8.1"
+    "superagent": "^3.8.1",
+    "mysql": "^2.16.0"
   },
   "devDependencies": {
     "browserify": "^14.4.0",
