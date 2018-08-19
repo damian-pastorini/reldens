@@ -14,14 +14,17 @@
             <h1 class="title">Quest World</h1>
         </div>
         <div class="content">
-            <div class="user-interface">
-                <strong>commands</strong><br>
-                <button onclick="up()">up</button>
-                <button onclick="down()">down</button>
-                <br/>
-                <button onclick="left()">left</button>
-                <button onclick="right()">right</button>
-            </div>
+            <!-- login form -->
+            <form name="login-form" id="login-form" class="login-form">
+                <h3 class="form-title">Login</h3>
+                <label for="username">Username</label>
+                <input type="text" name="username" id="username"/>
+                <label for="password">Password</label>
+                <input type="password" name="password" id="password"/>
+                <input type="submit" value="Submit"/>
+            </form>
+            <!-- game container -->
+            <div class="game-container" style="display:none;"></div>
         </div>
         <div class="footer">
             <div class="copyright">Copyright 2018</div>
