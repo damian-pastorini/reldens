@@ -13,7 +13,7 @@ gameServer.register('game_room', require('./server/rooms/game-room').gameroom);
 const path = require('path');
 const monitor = require('@colyseus/monitor');
 
-app.use('/', express.static(path.join(__dirname, "frontend")));
+app.use('/', express.static(path.join(__dirname, 'frontend')));
 
 // (optional) attach web monitoring panel
 app.use('/colyseus', monitor.monitor(gameServer));
@@ -23,4 +23,4 @@ gameServer.onShutdown(function(){
 });
 
 gameServer.listen(port);
-console.log(`Listening on http://localhost:${ port }`);
+console.log('Listening on http://localhost:'+port);
