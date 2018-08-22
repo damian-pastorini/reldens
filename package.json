@@ -4,13 +4,13 @@
   "description": "Epic adventure - MMORPG",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon ./server/app.js",
-    "start-production": "node ./server/app.js"
+    "start": "nodemon ./server.js",
+    "start-production": "node ./server.js"
   },
   "engines": {
     "node": "8.9.1"
   },
-  "author": "",
+  "author": "Damian A. Pastorini",
   "license": "ISC",
   "dependencies": {
     "@colyseus/monitor": "^0.1.7",
@@ -21,6 +21,7 @@
     "serve-index": "^1.8.0",
     "superagent": "^3.8.1",
     "mysql": "^2.16.0",
+    "promise-mysql": "^3.3.1",
     "phaser": "^3.11.0"
   },
   "devDependencies": {
