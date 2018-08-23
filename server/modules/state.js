@@ -1,4 +1,4 @@
-var Player = require('../modules/player').player;
+var Player = require('./player').player;
 
 class State
 {
@@ -11,7 +11,8 @@ class State
     createPlayer(id)
     {
         var playerModel = new Player();
-        playerModel.id = id;
+        playerModel.newId = id;
+        playerModel.register();
         this.players[id] = playerModel;
     }
 
