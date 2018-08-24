@@ -2,3 +2,4 @@
 node_modules
 colyseus-examples
 ts-node*
+npm-debug*
