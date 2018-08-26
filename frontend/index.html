@@ -14,17 +14,52 @@
             <h1 class="title">Quest World</h1>
         </div>
         <div class="content">
-            <!-- login form -->
-            <form name="login-form" id="login-form" class="login-form">
-                <h3 class="form-title">Login</h3>
-                <label for="username">Username</label>
-                <input type="text" name="username" id="username"/>
-                <label for="password">Password</label>
-                <input type="password" name="password" id="password"/>
-                <input type="submit" value="Submit"/>
-            </form>
-            <!-- game container -->
-            <div class="game-container" style="display:none;"></div>
+            <div class="forms-container">
+                <div class="col-2">
+                    <!-- login form -->
+                    <form name="login-form" id="login-form" class="login-form" action="/game-room.html" method="post">
+                        <h3 class="form-title">Login</h3>
+                        <div class="input-box">
+                            <label for="username">Username</label>
+                            <input type="text" name="username" id="username"/>
+                        </div>
+                        <div class="input-box">
+                            <label for="password">Password</label>
+                            <input type="password" name="password" id="password"/>
+                        </div>
+                        <div class="input-box">
+                            <input type="submit" value="Submit"/>
+                        </div>
+                        <div class="response-error"></div>
+                    </form>
+                </div>
+                <div class="col-2">
+                    <!-- register form -->
+                    <form name="register-form" id="register-form" class="register-form" action="/game-room.html" method="post">
+                        <h3 class="form-title">Create Account</h3>
+                        <div class="input-box">
+                            <label for="reg-email">Email</label>
+                            <input type="text" name="reg-email" id="reg-email"/>
+                        </div>
+                        <div class="input-box">
+                            <label for="reg-username">Username</label>
+                            <input type="text" name="reg-username" id="reg-username"/>
+                        </div>
+                        <div class="input-box">
+                            <label for="reg-password">Password</label>
+                            <input type="password" name="reg-password" id="reg-password"/>
+                        </div>
+                        <div class="input-box">
+                            <label for="reg-re-password">Re-type your password</label>
+                            <input type="password" name="reg-re-password" id="reg-re-password"/>
+                        </div>
+                        <div class="input-box">
+                            <input type="submit" value="Register"/>
+                        </div>
+                        <div class="response-error"></div>
+                    </form>
+                </div>
+            </div>
         </div>
         <div class="footer">
             <div class="copyright">Copyright 2018</div>
