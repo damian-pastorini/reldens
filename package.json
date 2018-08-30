@@ -1,6 +1,6 @@
 {
   "name": "quest-world",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Epic adventure - MMORPG",
   "main": "index.js",
   "scripts": {
@@ -14,15 +14,16 @@
   "license": "ISC",
   "dependencies": {
     "@colyseus/monitor": "^0.1.7",
+    "body-parser": "^1.18.3",
     "colyseus": "^0.9.11",
     "colyseus.js": "^0.9.6",
     "express": "^4.14.0",
-    "nodemon": "^1.11.0",
-    "serve-index": "^1.8.0",
-    "superagent": "^3.8.1",
     "mysql": "^2.16.0",
+    "nodemon": "^1.11.0",
+    "phaser": "^3.11.0",
     "promise-mysql": "^3.3.1",
-    "phaser": "^3.11.0"
+    "serve-index": "^1.8.0",
+    "superagent": "^3.8.1"
   },
   "devDependencies": {
     "browserify": "^14.4.0",

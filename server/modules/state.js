@@ -8,12 +8,11 @@ class State
         this.players = {};
     }
 
-    createPlayer(id)
+    createPlayer(sessionId, playerData)
     {
-        var playerModel = new Player();
-        playerModel.newId = id;
-        playerModel.register();
-        this.players[id] = playerModel;
+        var newPlayer = new Player(playerData);
+        newPlayer.sessionId = sessionId;
+        this.players[sessionId] = newPlayer;
     }
 
     removePlayer(id)
@@ -23,7 +22,7 @@ class State
 
     movePlayer(id, movement)
     {
-        if (movement.x) {
+        if(movement.x){
             this.players[id].x += movement.x * 10;
         } else if (movement.y) {
             this.players[id].y += movement.y * 10;

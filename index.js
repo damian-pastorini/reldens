@@ -7,7 +7,6 @@ const port = Number(process.env.PORT || 8080);
 
 const server = http.createServer(app);
 const gameServer = new colyseus.Server({server: server});
-
 gameServer.register('game_room', require('./server/rooms/game-room').gameroom);
 
 const path = require('path');
