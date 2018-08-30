@@ -15,3 +15,6 @@ body { font-family:Verdana, Geneva, sans-serif; }
 .game-container { min-height:200px; }
 .response-error { color:#ff0000; }
 .player { width:100px; height:100px; position:absolute; padding-top:24px; box-sizing:border-box; left:0; top:0; }
+.ux-box { z-index:1001; display:block; margin:0px; padding:0px; }
+.ux-box-left { position:absolute; top:0px; left:0px; }
+.ux-box-right { position:absolute; top:0px; right:0px; }

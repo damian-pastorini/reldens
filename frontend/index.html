@@ -3,9 +3,14 @@
 <head>
     <title>Quest World - Epic adventure</title>
     <meta name="viewport" content="width=device-width"/>
+    <!-- colyseus -->
     <script type="text/javascript" src="/js/colyseus.js"></script>
+    <!-- jquery and validator -->
     <script src="/js/jquery-3.3.1.min.js"></script>
-    <script type="text/javascript" src="/js/scripts.js"></script>
+    <script src="/js/jquery.validate.min.js"></script>
+    <!-- custom client scripts -->
+    <script type="text/javascript" src="/js/client.js"></script>
+    <!-- styles -->
     <link rel="stylesheet" type="text/css" href="/css/styles.css"/>
 </head>
 <body>
@@ -17,47 +22,58 @@
             <div class="forms-container">
                 <div class="col-2">
                     <!-- login form -->
-                    <form name="login-form" id="login-form" class="login-form" action="/game-room.html" method="post">
+                    <form name="login_form" id="login_form" class="login_form" action="/game-room.html" method="post">
                         <h3 class="form-title">Login</h3>
                         <div class="input-box">
                             <label for="username">Username</label>
-                            <input type="text" name="username" id="username"/>
+                            <input type="text" name="username" id="username" class="required"/>
                         </div>
                         <div class="input-box">
                             <label for="password">Password</label>
-                            <input type="password" name="password" id="password"/>
+                            <input type="password" name="password" id="password" class="required"/>
                         </div>
                         <div class="input-box">
                             <input type="submit" value="Submit"/>
                         </div>
-                        <div class="response-error"></div>
+                        <div class="response-error" style="display:none;"></div>
                     </form>
                 </div>
                 <div class="col-2">
                     <!-- register form -->
-                    <form name="register-form" id="register-form" class="register-form" action="/game-room.html" method="post">
+                    <form name="register_form" id="register_form" class="register_form" action="/game-room.html" method="post">
                         <h3 class="form-title">Create Account</h3>
                         <div class="input-box">
-                            <label for="reg-email">Email</label>
-                            <input type="text" name="reg_email" id="reg-email"/>
+                            <label for="reg_email">Email</label>
+                            <input type="text" name="reg_email" id="reg_email" class="required email"/>
                         </div>
                         <div class="input-box">
-                            <label for="reg-username">Username</label>
-                            <input type="text" name="reg_username" id="reg-username"/>
+                            <label for="reg_username">Username</label>
+                            <input type="text" name="reg_username" id="reg_username" class="required"/>
                         </div>
                         <div class="input-box">
-                            <label for="reg-password">Password</label>
-                            <input type="password" name="reg_password" id="reg-password"/>
+                            <label for="reg_password">Password</label>
+                            <input type="password" name="reg_password" id="reg_password" class="required"/>
                         </div>
                         <div class="input-box">
-                            <label for="reg-re-password">Re-type your password</label>
-                            <input type="password" name="reg_re_password" id="reg-re-password"/>
+                            <label for="reg_re_password">Re-type your password</label>
+                            <input type="password" name="reg_re_password" id="reg_re_password" class="required"/>
                         </div>
                         <div class="input-box">
                             <input type="submit" value="Register"/>
                         </div>
                         <div class="response-error"></div>
                     </form>
+                </div>
+            </div>
+            <div class="game-container" style="display:none;">
+                <div class="ux-box ux-box-left">
+                    <button type="button" id="up">Up</button>
+                    <button type="button" id="down">Down</button>
+                    <button type="button" id="left">Left</button>
+                    <button type="button" id="right">Right</button>
+                </div>
+                <div class="ux-box ux-box-right">
+                    <button type="button" id="logout">Logout</button>
                 </div>
             </div>
         </div>
