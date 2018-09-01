@@ -5,6 +5,29 @@ Colyseus + MySQL + Phaser Implementation
 
 ## Database
 
+Server configuration samples:
+
+/server/config/database.json
+```
+{
+  "host": "localhost",
+  "user": "root",
+  "password": "root",
+  "database": "database_name"
+}
+```
+
+/server/config/database_pool.json
+```
+{
+  "host": "localhost",
+  "user": "root",
+  "password": "root",
+  "database": "database_name",
+  "connectionLimit": 10
+}
+```
+
 ### Users Entity
 
 ```mysql
