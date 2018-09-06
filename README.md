@@ -19,6 +19,7 @@
 ```
 $ git clone git@bitbucket.org:dwdeveloper/questworld.git
 $ cd questworld
+$ mkdir dist
 $ npm install
 $ npm start
 ```
