@@ -1,10 +1,12 @@
-import Phaser, { Game } from '../../node_modules/phaser';
-import Main from './scenes/Main';
+const Phaser = require('phaser');
+const Game = Phaser.Game;
+
+const Main = require('./scenes/Main');
 
 const config = {
     type: Phaser.AUTO,
-    width: 200,
-    height: 200,
+    width: 350,
+    height: 350,
     physics: {
         default: 'arcade',
         arcade: {
