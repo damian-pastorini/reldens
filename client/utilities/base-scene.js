@@ -1,5 +1,5 @@
 import { Scene } from 'phaser';
-import Player from '../../objects/player';
+import Player from '../objects/player';
 const FADE_DURATION = 1000;
 const STOP = 'stop';
 import TilesetAnimation from './tileset-animation';
