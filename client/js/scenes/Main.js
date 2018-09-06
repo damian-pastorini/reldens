@@ -1,14 +1,14 @@
-import { Scene } from '../node_modules/phaser';
+const Scene = require('phaser').Scene;
 
 const UP = 'up';
 const LEFT = 'left';
 const DOWN = 'down';
 const RIGHT = 'right';
 const INIT = 'Init';
-const MAP_TOWN = 'map-main';
+const MAP_MAIN = 'map-main';
 const IMAGE_TOWN = 'main';
 const IMAGE_PLAYER = 'player';
-
+const MAIN = 'Main';
 
 class Main extends Scene
 {
@@ -23,7 +23,7 @@ class Main extends Scene
 
     preload()
     {
-        this.load.tilemapTiledJSON(MAP_TOWN, 'assets/maps/main.json');
+        this.load.tilemapTiledJSON(MAP_MAIN, 'assets/maps/main.json');
         this.load.spritesheet(IMAGE_TOWN, 'assets/maps/main.png', { frameWidth: 32, frameHeight: 32 });
         this.load.spritesheet(IMAGE_PLAYER, 'assets/sprites/player.png', { frameWidth: 32, frameHeight: 32 });
         this.load.on('progress', this.onLoadProgress, this);
@@ -71,7 +71,7 @@ class Main extends Scene
 
     onLoadComplete(loader)
     {
-        this.scene.start(TOWN);
+        this.scene.start(MAIN);
         this.scene.shutdown();
     }
 
@@ -89,4 +89,4 @@ class Main extends Scene
 
 }
 
-export default Main;
+module.export = Main;

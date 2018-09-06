@@ -1,4 +1,14 @@
-jQuery(document).ready(function($){
+const WEBGL_RENDERER = true;
+const CANVAS_RENDERER = true;
+const Phaser = require('phaser');
+const Game = Phaser.Game;
+const Main = require('./scenes/Main');
+
+window.$ = require('jquery');
+window.Colyseus = require('colyseus.js');
+window.validate = require('jquery-validation');
+
+$(document).ready(function($){
 
     var room = '';
     var $register = $('#register_form');
@@ -42,6 +52,22 @@ jQuery(document).ready(function($){
         room.onJoin.add(function(){
             $('.forms-container').detach();
             $('.game-container').show();
+            const config = {
+                type: Phaser.AUTO,
+                parent: 'questworld-epic-adventure',
+                width: 350,
+                height: 350,
+                physics: {
+                    default: 'arcade',
+                    arcade: {
+                        gravity: { y: 0 },
+                        debug: true,
+                    },
+                },
+                scene: [Main],
+            };
+
+            const game = new Game(config);
         });
         if(room){
             function up(){
