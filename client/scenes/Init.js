@@ -1,16 +1,19 @@
-const Scene = require('phaser').Scene;
-
+const Phaser = require('phaser');
+const Scene = Phaser.Scene;
 const UP = 'up';
 const LEFT = 'left';
 const DOWN = 'down';
 const RIGHT = 'right';
 const INIT = 'Init';
-const MAP_MAIN = 'map-main';
-const IMAGE_TOWN = 'main';
+const TOWN = 'Town';
 const IMAGE_PLAYER = 'player';
-const MAIN = 'Main';
+const IMAGE_TOWN = 'town';
+const IMAGE_HOUSE = 'house';
+const MAP_TOWN = 'map-town';
+const MAP_HOUSE_1 = 'map-house-1';
+const MAP_HOUSE_2 = 'map-house-2';
 
-class Main extends Scene
+class Init extends Scene
 {
 
     constructor()
@@ -23,9 +26,12 @@ class Main extends Scene
 
     preload()
     {
-        this.load.tilemapTiledJSON(MAP_MAIN, 'assets/maps/main.json');
-        this.load.spritesheet(IMAGE_TOWN, 'assets/maps/main.png', { frameWidth: 32, frameHeight: 32 });
+        this.load.tilemapTiledJSON(MAP_TOWN, 'assets/maps/town.json');
+        this.load.tilemapTiledJSON(MAP_HOUSE_1, 'assets/maps/house-1.json');
+        this.load.tilemapTiledJSON(MAP_HOUSE_2, 'assets/maps/house-2.json');
         this.load.spritesheet(IMAGE_PLAYER, 'assets/sprites/player.png', { frameWidth: 32, frameHeight: 32 });
+        this.load.spritesheet(IMAGE_TOWN, 'assets/maps/town.png', { frameWidth: 32, frameHeight: 32 });
+        this.load.spritesheet(IMAGE_HOUSE, 'assets/maps/house.png', { frameWidth: 32, frameHeight: 32 });
         this.load.on('progress', this.onLoadProgress, this);
         this.load.on('complete', this.onLoadComplete, this);
         this.createProgressBar();
@@ -69,9 +75,9 @@ class Main extends Scene
         this.progressBar = this.add.graphics();
     }
 
-    onLoadComplete(loader)
+    onLoadComplete(loader) 
     {
-        this.scene.start(MAIN);
+        this.scene.start(TOWN);
         this.scene.shutdown();
     }
 
@@ -89,4 +95,4 @@ class Main extends Scene
 
 }
 
-module.export = Main;
+module.exports = Init;

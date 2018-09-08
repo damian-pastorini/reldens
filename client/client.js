@@ -2,7 +2,10 @@ const WEBGL_RENDERER = true;
 const CANVAS_RENDERER = true;
 const Phaser = require('phaser');
 const Game = Phaser.Game;
-const Main = require('./scenes/Main');
+const Init = require('./scenes/Init');
+const Town = require('./scenes/Town');
+const House1 = require('./scenes/House-1');
+const House2 = require('./scenes/House-2');
 
 window.$ = require('jquery');
 window.Colyseus = require('colyseus.js');
@@ -10,6 +13,7 @@ window.validate = require('jquery-validation');
 
 $(document).ready(function($){
 
+    var phaserGame = '';
     var room = '';
     var $register = $('#register_form');
     var $login = $('#login_form');
@@ -52,11 +56,11 @@ $(document).ready(function($){
         room.onJoin.add(function(){
             $('.forms-container').detach();
             $('.game-container').show();
-            const config = {
+            var config = {
                 type: Phaser.AUTO,
                 parent: 'questworld-epic-adventure',
-                width: 350,
-                height: 350,
+                width: 500,
+                height: 500,
                 physics: {
                     default: 'arcade',
                     arcade: {
@@ -64,10 +68,12 @@ $(document).ready(function($){
                         debug: true,
                     },
                 },
-                scene: [Main],
+                scene: [Init, Town, House1, House2],
             };
-
-            const game = new Game(config);
+            window.ColyseusRoom = room;
+            phaserGame = new Game(config);
+            window.phaserGame = phaserGame;
+            window.phaserConfig = config;
         });
         if(room){
             function up(){
@@ -85,6 +91,7 @@ $(document).ready(function($){
             // listen to patches coming from the server
             room.listen('players/:id', function(change){
                 if (change.operation === 'add'){
+                    /*
                     var dom = document.createElement('div');
                     dom.className = 'player';
                     dom.style.left = change.value.x + 'px';
@@ -93,27 +100,21 @@ $(document).ready(function($){
                     dom.innerHTML = 'Player '+change.path.id;
                     players[change.path.id] = dom;
                     document.body.appendChild(dom);
+                    */
                 } else if (change.operation === 'remove'){
+                    /*
                     document.body.removeChild(players[change.path.id]);
                     delete players[change.path.id];
+                    */
                 }
             });
             room.listen('players/:id/:axis', function(change){
-                var dom = players[change.path.id];
+                /*var dom = players[change.path.id];
                 var styleAttribute = (change.path.axis === 'x') ? 'left' : 'top';
                 dom.style[styleAttribute] = change.value+'px';
+                */
             });
-            window.addEventListener('keydown', function(e){
-                if (e.which === 38) {
-                    up();
-                } else if (e.which === 39) {
-                    right();
-                } else if (e.which === 40) {
-                    down();
-                } else if (e.which === 37) {
-                    left();
-                }
-            });
+            /*
             $('#up').on('click', function(){
                 up();
             });
@@ -126,6 +127,7 @@ $(document).ready(function($){
             $('#left').on('click', function(){
                 left();
             });
+            */
         }
     }
 

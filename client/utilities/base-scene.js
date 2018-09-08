@@ -1,8 +1,8 @@
-import { Scene } from 'phaser';
-import Player from '../objects/player';
+const Phaser = require('phaser');
+const Scene = Phaser.Scene;
+const Player = require('../objects/player');
 const FADE_DURATION = 1000;
-const STOP = 'stop';
-import TilesetAnimation from './tileset-animation';
+const TilesetAnimation = require('./tileset-animation');
 
 class BaseScene extends Scene
 {
@@ -24,42 +24,37 @@ class BaseScene extends Scene
         this.input.keyboard.removeAllListeners();
     }
 
-    create(tilemap, tileset, withTSAnimation) {
+    create(tilemap, tileset, withTSAnimation)
+    {
         this.keyLeft = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.LEFT);
         this.keyRight = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.RIGHT);
         this.keyUp = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP);
         this.keyDown = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.DOWN);
-
         this.withTSAnimation = withTSAnimation;
         this.map = this.add.tilemap(tilemap);
         this.tileset = this.map.addTilesetImage(tileset);
-
         for (let i = 0; i < this.map.layers.length; i++) {
             if (withTSAnimation)
                 this.layers[i] = this.map.createDynamicLayer(this.map.layers[i].name, this.tileset, 0, 0);
             else
                 this.layers[i] = this.map.createStaticLayer(this.map.layers[i].name, this.tileset, 0, 0);
         }
-
         this.player.create();
-
         this.cameras.main.on('camerafadeincomplete', () => {
             this.transition = false;
-
             this.input.keyboard.on('keyup', (event) => {
                 if (event.keyCode >= 37 && event.keyCode <= 40) {
                     this.player.stop();
                 }
             });
-            
             this.registerCollision();
             this.registerController();
         });
-
         this.cameras.main.on('camerafadeoutcomplete', this.changeScene.bind(this));
     }
 
-    update() {
+    update()
+    {
         if (this.transition === false) {
             if (this.keyLeft.isDown) {
                 this.player.left();
@@ -73,38 +68,44 @@ class BaseScene extends Scene
         }
     }
 
-    onChangeScene() {
+    onChangeScene()
+    {
         this.transition = true;
         this.player.stop();
         this.cameras.main.fade(FADE_DURATION);
     }
 
-    changeScene() {
-        if (this.withTSAnimation)
+    changeScene()
+    {
+        if (this.withTSAnimation) {
             this.tilesetAnimation.destroy();
-
+        }
         this.player.socket.disconnect();
         this.scene.start(this.nextSceneKey, this.prevSceneKey);
     }
 
-    registerCollision() {
+    registerCollision()
+    {
         throw new Error('registerCollision() not implemented');
     }
 
-    registerTilesetAnimation(layer) {
+    registerTilesetAnimation(layer)
+    {
         this.tilesetAnimation = new TilesetAnimation();
         this.tilesetAnimation.register(layer, this.tileset.tileData);
         this.tilesetAnimation.start();
     }
 
-    registerController() {
+    registerController()
+    {
         this.hold(document.getElementById('up'), this.player.up.bind(this.player));
         this.hold(document.getElementById('down'), this.player.down.bind(this.player));
         this.hold(document.getElementById('left'), this.player.left.bind(this.player));
         this.hold(document.getElementById('right'), this.player.right.bind(this.player));
     }
 
-    hold(btn, action) {
+    hold(btn, action)
+    {
         let t;
         let repeat = () => { action(); t = setTimeout(repeat, this.timeout); }
         btn.onmousedown = (e) => { e.preventDefault(); if (this.transition === false) repeat(); }
@@ -112,6 +113,7 @@ class BaseScene extends Scene
         btn.ontouchstart = (e) => { e.preventDefault(); if (this.transition === false) repeat(); }
         btn.ontouchend = (e) => { e.preventDefault(); clearTimeout(t); if (this.transition === false) this.player.stop(); }
     }
+
 }
 
-export default BaseScene;
+module.exports = BaseScene;

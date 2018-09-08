@@ -134,11 +134,11 @@
         {
          "columns":20,
          "firstgid":1,
-         "image":"main.png",
+         "image":"town.png",
          "imageheight":3136,
          "imagewidth":640,
          "margin":0,
-         "name":"main",
+         "name":"town",
          "properties":
             {
 
