@@ -26,7 +26,7 @@ class Town extends BaseScene
 
     registerCollision()
     {
-        /*
+
         // river:
         this.layers[6].setCollisionBetween(0, 1021);
         // house 1:
@@ -50,8 +50,7 @@ class Town extends BaseScene
         this.layers[9].setCollisionBetween(213, 215);
         this.layers[9].setCollisionBetween(233, 256);
         this.layers[9].setCollisionBetween(273, 296);
-        let player = this.player.players[this.player.socket.id];
-        console.log(this.player.socket.id);
+        let player = this.player.players[this.player.playerId];
         this.physics.add.collider(player, this.layers[6]);
         this.physics.add.collider(player, this.layers[8]);
         this.physics.add.collider(player, this.layers[9]);
@@ -64,7 +63,6 @@ class Town extends BaseScene
                 this.onChangeScene();
             }
         });
-        */
     }
 
     getPosition(data)

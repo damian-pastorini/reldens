@@ -1,5 +1,3 @@
-const WEBGL_RENDERER = true;
-const CANVAS_RENDERER = true;
 const Phaser = require('phaser');
 const Game = Phaser.Game;
 const Init = require('./scenes/Init');
@@ -19,8 +17,6 @@ $(document).ready(function($){
     var $login = $('#login_form');
     var host = window.document.location.host.replace(/:.*/, '');
     var client = new Colyseus.Client(location.protocol.replace('http', 'ws')+host+(location.port ? ':'+location.port : ''));
-    var players = {};
-    var colors = ['red', 'green', 'yellow', 'blue', 'cyan', 'magenta'];
     var userData = '';
 
     function joinRoom(submitedForm, isNewUser=false){

@@ -34,10 +34,11 @@ class BaseScene extends Scene
         this.map = this.add.tilemap(tilemap);
         this.tileset = this.map.addTilesetImage(tileset);
         for (let i = 0; i < this.map.layers.length; i++) {
-            if (withTSAnimation)
+            if (withTSAnimation) {
                 this.layers[i] = this.map.createDynamicLayer(this.map.layers[i].name, this.tileset, 0, 0);
-            else
+            } else {
                 this.layers[i] = this.map.createStaticLayer(this.map.layers[i].name, this.tileset, 0, 0);
+            }
         }
         this.player.create();
         this.cameras.main.on('camerafadeincomplete', () => {
@@ -80,7 +81,7 @@ class BaseScene extends Scene
         if (this.withTSAnimation) {
             this.tilesetAnimation.destroy();
         }
-        this.player.socket.disconnect();
+        // this.player.socket.disconnect(); // TODO: change room
         this.scene.start(this.nextSceneKey, this.prevSceneKey);
     }
 
