@@ -1,5 +1,6 @@
 const Phaser = require('phaser');
 const Game = Phaser.Game;
+var PhaserPlayer = require('./objects/player');
 const Init = require('./scenes/Init');
 const Town = require('./scenes/Town');
 const House1 = require('./scenes/House-1');
@@ -8,11 +9,12 @@ const House2 = require('./scenes/House-2');
 window.$ = require('jquery');
 window.Colyseus = require('colyseus.js');
 window.validate = require('jquery-validation');
+var phaserGame = '';
 
 $(document).ready(function($){
 
-    var phaserGame = '';
     var room = '';
+    var players = {};
     var $register = $('#register_form');
     var $login = $('#login_form');
     var host = window.document.location.host.replace(/:.*/, '');
@@ -52,80 +54,85 @@ $(document).ready(function($){
         room.onJoin.add(function(){
             $('.forms-container').detach();
             $('.game-container').show();
-            var config = {
-                type: Phaser.AUTO,
-                parent: 'questworld-epic-adventure',
-                width: 500,
-                height: 500,
-                physics: {
-                    default: 'arcade',
-                    arcade: {
-                        gravity: { y: 0 },
-                        debug: true,
-                    },
-                },
-                scene: [Init, Town, House1, House2],
-            };
             window.ColyseusRoom = room;
-            phaserGame = new Game(config);
-            window.phaserGame = phaserGame;
-            window.phaserConfig = config;
-        });
-        if(room){
-            function up(){
-                room.send({y: -1});
-            }
-            function right(){
-                room.send({x: 1});
-            }
-            function down(){
-                room.send({y: 1});
-            }
-            function left(){
-                room.send({x: -1});
-            }
+            phaserGame.scene.start('Town');
             // listen to patches coming from the server
             room.listen('players/:id', function(change){
+                console.log('room listen:', change.operation, change);
                 if (change.operation === 'add'){
-                    /*
-                    var dom = document.createElement('div');
-                    dom.className = 'player';
-                    dom.style.left = change.value.x + 'px';
-                    dom.style.top = change.value.y + 'px';
-                    dom.style.background = colors[Math.floor(Math.random() * colors.length)];
-                    dom.innerHTML = 'Player '+change.path.id;
-                    players[change.path.id] = dom;
-                    document.body.appendChild(dom);
-                    */
+                    var currentScene = phaserGame.scene.getScene('Town'); // temporal hardcoded scene - each room will be an scene.
+                    // console.log('Town > players :)', currentScene.player.players);
+                    let newPhaserPlayer = new PhaserPlayer(currentScene, 'Town', { x: 225, y: 280, direction: 'down' });
+                    currentScene.player = newPhaserPlayer;
+                    newPhaserPlayer.socket = room;
+                    newPhaserPlayer.playerId = change.path.id;
+                    newPhaserPlayer.create();
+                    // currentScene.player.players[change.path.id] = newPhaserPlayer;
+                    // currentScene.player.addPlayer(change.path.id, change.path.x, change.path.y, change.path.direction);
+                    // players[change.path.id] = change.path.id;
                 } else if (change.operation === 'remove'){
-                    /*
-                    document.body.removeChild(players[change.path.id]);
-                    delete players[change.path.id];
-                    */
+                    // document.body.removeChild(players[change.path.id]);
+                    // delete players[change.path.id];
                 }
             });
             room.listen('players/:id/:axis', function(change){
-                /*var dom = players[change.path.id];
-                var styleAttribute = (change.path.axis === 'x') ? 'left' : 'top';
-                dom.style[styleAttribute] = change.value+'px';
+                var currentScene = phaserGame.scene.getScene('Town'); // temporal hardcoded scene - each room will be an scene.
+                console.log('Town > players :)', currentScene.player.players);
+                console.log('player axis:', change);
+                let direction = '';
+                console.log('currentScene.player.players[change.path.id].x:', currentScene.player.players[change.path.id].x);
+                console.log('currentScene.player.players[change.path.id].y:', currentScene.player.players[change.path.id].y);
+                console.log('dir:', change.path.axis, ' > val:', change.value);
+                /*
+                if(change.path.axis == 'x') {
+                    if(currentScene.player.players[change.path.id].x > change.value) {
+                        direction = 'left';
+                        currentScene.player.left();
+                    } else {
+                        direction = 'right';
+                        currentScene.player.right();
+                    }
+                    // currentScene.player.players[change.path.id].x = change.value;
+                }
+                if(change.path.axis == 'y') {
+                    if(currentScene.player.players[change.path.id].y > change.value) {
+                        direction = 'up';
+                        currentScene.player.up();
+                    } else {
+                        direction = 'down';
+                        currentScene.player.down();
+                    }
+                    // currentScene.player.players[change.path.id].y = change.value;
+                }
                 */
+                // currentScene.player.players[change.path.id].anims.play(direction, true);
+                // this.players[data.id].anims.stop();
+                // var dom = players[change.path.id];
+                // var styleAttribute = (change.path.axis === 'x') ? 'left' : 'top';
+                // dom.style[styleAttribute] = change.value+'px';
             });
-            /*
-            $('#up').on('click', function(){
-                up();
-            });
-            $('#right').on('click', function(){
-                right();
-            });
-            $('#down').on('click', function(){
-                down();
-            });
-            $('#left').on('click', function(){
-                left();
-            });
-            */
-        }
+        });
     }
+
+    // on room join init phaser client:
+    var config = {
+        type: Phaser.AUTO,
+        parent: 'questworld-epic-adventure',
+        width: 500,
+        height: 500,
+        physics: {
+            default: 'arcade',
+            arcade: {
+                gravity: { y: 0 },
+                debug: true,
+            },
+        },
+        scene: [Init, Town, House1, House2],
+    };
+
+    phaserGame = new Game(config);
+    window.phaserGame = phaserGame;
+    window.phaserConfig = config;
 
     if($register.length){
         $register.on('submit', function(e){

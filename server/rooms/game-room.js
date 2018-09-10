@@ -7,7 +7,7 @@ class GameRoom extends Room
 
     onInit(options)
     {
-        // console.log('GameRoom created!', options);
+        console.log('GameRoom created!', options);
         this.setState(new State());
     }
 
@@ -52,20 +52,20 @@ class GameRoom extends Room
     onJoin(client, options, auth)
     {
         // console.log(this.hasReachedMaxClients());
-        // console.log('session / options / auth: ', client.sessionId, options, auth);
+        console.log('session / options / auth: ', client.sessionId, options, auth);
         this.state.createPlayer(client.sessionId, auth);
     }
 
     onLeave(client)
     {
-        // console.log('Leave session: '+client.sessionId);
+        console.log('Leave session: '+client.sessionId);
         this.state.removePlayer(client.sessionId);
     }
 
     onMessage(client, data)
     {
+        console.log('Message:', client.sessionId, ':', data);
         this.state.movePlayer(client.sessionId, data);
-        // console.log('Message:', client.sessionId, ':', data);
     }
 
     onDispose()

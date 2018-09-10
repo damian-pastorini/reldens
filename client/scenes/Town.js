@@ -26,7 +26,6 @@ class Town extends BaseScene
 
     registerCollision()
     {
-
         // river:
         this.layers[6].setCollisionBetween(0, 1021);
         // house 1:

@@ -1,5 +1,5 @@
 const Phaser = require('phaser');
-const Scene = Phaser.Scene;
+var Scene = Phaser.Scene;
 const UP = 'up';
 const LEFT = 'left';
 const DOWN = 'down';
@@ -42,25 +42,25 @@ class Init extends Scene
         this.anims.create({
             key: LEFT,
             frames: this.anims.generateFrameNumbers(IMAGE_PLAYER, { start: 3, end: 5 }),
-            frameRate: 13,
+            frameRate: 16,
             repeat: -1
         });
         this.anims.create({
             key: RIGHT,
             frames: this.anims.generateFrameNumbers(IMAGE_PLAYER, { start: 6, end: 8 }),
-            frameRate: 13,
+            frameRate: 16,
             repeat: -1
         });
         this.anims.create({
             key: UP,
             frames: this.anims.generateFrameNumbers(IMAGE_PLAYER, { start: 9, end: 11 }),
-            frameRate: 13,
+            frameRate: 16,
             repeat: -1
         });
         this.anims.create({
             key: DOWN,
             frames: this.anims.generateFrameNumbers(IMAGE_PLAYER, { start: 0, end: 2 }),
-            frameRate: 13,
+            frameRate: 16,
             repeat: -1
         });
     }
@@ -77,7 +77,7 @@ class Init extends Scene
 
     onLoadComplete(loader) 
     {
-        this.scene.start(TOWN);
+        // this.scene.start(TOWN);
         this.scene.shutdown();
     }
 

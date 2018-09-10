@@ -9,8 +9,10 @@ class Player
         this.role_id = data.role_id;
         this.status = data.status;
         this.state = data.state;
-        this.x = Math.floor(Math.random() * 400);
-        this.y = Math.floor(Math.random() * 400);
+        // initial position:
+        this.x = 225;
+        this.y = 280;
+        this.direction = '';
     }
 
 }

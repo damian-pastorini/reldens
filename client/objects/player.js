@@ -19,11 +19,12 @@ class Player
 
     constructor(scene, room, position)
     {
+        console.log('scene, room, position', scene, room, position);
         this.scene = scene;
         this.room = room;
         this.position = position;
-        this.socket = window.ColyseusRoom;
-        this.playerId = window.ColyseusRoom.sessionId;
+        this.socket = {};
+        this.playerId = '';
         this.players = {};
     }
 
@@ -31,10 +32,11 @@ class Player
     {
         // this.socket.emit(NEW_PLAYER, this.room, this.position);
         // this.socket.on(NEW_PLAYER, (data) => {
-        this.addPlayer(this.playerId, 225, 280, 'down');
+        console.log('THIS.POSITION:', this.position);
+        this.addPlayer(this.playerId, this.position.x, this.position.y, this.position.direction);
         this.scene.cameras.main.fadeFrom(FADE_DURATION);
         this.scene.scene.setVisible(true, this.room);
-        /*for (let i = 0; i < this.players.length; i++) {
+        /* for (let i = 0; i < this.players.length; i++) {
             this.addPlayer(this.players[i].id, this.players[i].x, this.players[i].y, this.players[i].direction);
         }*/
         this.scene.physics.world.setBounds(0, 0, this.scene.map.widthInPixels, this.scene.map.heightInPixels);
@@ -81,28 +83,28 @@ class Player
     {
         this.players[this.playerId].body.velocity.x = -SPEED;
         this.players[this.playerId].anims.play(LEFT, true);
-        this.socket.send(KEY_PRESS, LEFT, { x: this.players[this.playerId].x, y: this.players[this.playerId].y });
+        this.socket.send({act: KEY_PRESS, dir: LEFT, x: this.players[this.playerId].x, y: this.players[this.playerId].y });
     }
 
     right()
     {
         this.players[this.playerId].body.velocity.x = SPEED;
         this.players[this.playerId].anims.play(RIGHT, true);
-        this.socket.send(KEY_PRESS, RIGHT, { x: this.players[this.playerId].x, y: this.players[this.playerId].y });
+        this.socket.send({act: KEY_PRESS, dir: RIGHT, x: this.players[this.playerId].x, y: this.players[this.playerId].y });
     }
 
     up()
     {
         this.players[this.playerId].body.velocity.y = -SPEED;
         this.players[this.playerId].anims.play(UP, true);
-        this.socket.send(KEY_PRESS, UP, { x: this.players[this.playerId].x, y: this.players[this.playerId].y });
+        this.socket.send({act: KEY_PRESS, dir: UP, x: this.players[this.playerId].x, y: this.players[this.playerId].y });
     }
 
     down()
     {
         this.players[this.playerId].body.velocity.y = SPEED;
         this.players[this.playerId].anims.play(DOWN, true);
-        this.socket.send(KEY_PRESS, DOWN, { x: this.players[this.playerId].x, y: this.players[this.playerId].y });
+        this.socket.send({act: KEY_PRESS, dir: DOWN, x: this.players[this.playerId].x, y: this.players[this.playerId].y });
     }
 
     stop()
@@ -110,7 +112,7 @@ class Player
         this.players[this.playerId].body.velocity.x = 0;
         this.players[this.playerId].body.velocity.y = 0;
         this.players[this.playerId].anims.stop();
-        this.socket.send(STOP, { x: this.players[this.playerId].x, y: this.players[this.playerId].y });
+        this.socket.send({act: STOP, x: this.players[this.playerId].x, y: this.players[this.playerId].y });
     }
 
     registerChat()
