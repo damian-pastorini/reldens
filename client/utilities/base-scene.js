@@ -1,8 +1,9 @@
 const Phaser = require('phaser');
 const Scene = Phaser.Scene;
-const Player = require('../objects/player');
-const FADE_DURATION = 1000;
 const TilesetAnimation = require('./tileset-animation');
+// const Player = require('../objects/player');
+
+var share = require('../../shared/constants');
 
 class BaseScene extends Scene
 {
@@ -15,10 +16,10 @@ class BaseScene extends Scene
 
     init(position)
     {
-        console.log('position:', position);
+        // console.log('position:', position);
         this.scene.setVisible(false, this.key);
         // this.player = new Player(this, this.key, position);
-        console.log('this.player:', this.player);
+        // console.log('this.player:', this.player);
         this.layers = {};
         this.prevSceneKey = this.key;
         this.nextSceneKey = null;
@@ -75,7 +76,7 @@ class BaseScene extends Scene
     {
         this.transition = true;
         this.player.stop();
-        this.cameras.main.fade(FADE_DURATION);
+        this.cameras.main.fade(share.FADE_DURATION);
     }
 
     changeScene()
@@ -101,10 +102,10 @@ class BaseScene extends Scene
 
     registerController()
     {
-        this.hold(document.getElementById('up'), this.player.up.bind(this.player));
-        this.hold(document.getElementById('down'), this.player.down.bind(this.player));
-        this.hold(document.getElementById('left'), this.player.left.bind(this.player));
-        this.hold(document.getElementById('right'), this.player.right.bind(this.player));
+        this.hold(document.getElementById(share.UP), this.player.up.bind(this.player));
+        this.hold(document.getElementById(share.DOWN), this.player.down.bind(this.player));
+        this.hold(document.getElementById(share.LEFT), this.player.left.bind(this.player));
+        this.hold(document.getElementById(share.RIGHT), this.player.right.bind(this.player));
     }
 
     hold(btn, action)

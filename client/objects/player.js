@@ -79,40 +79,61 @@ class Player
         this.players[id].anims.stop();
     }
 
-    left()
+    left(send = true)
     {
         this.players[this.playerId].body.velocity.x = -SPEED;
         this.players[this.playerId].anims.play(LEFT, true);
-        this.socket.send({act: KEY_PRESS, dir: LEFT, x: this.players[this.playerId].x, y: this.players[this.playerId].y });
+        console.log({act: KEY_PRESS, dir: LEFT, x: this.players[this.playerId].x, y: this.players[this.playerId].y});
+        if(send) {
+            console.log('left sent.');
+            this.socket.send({act: KEY_PRESS, dir: LEFT, x: this.players[this.playerId].x, y: this.players[this.playerId].y});
+        }
+
     }
 
-    right()
+    right(send = true)
     {
         this.players[this.playerId].body.velocity.x = SPEED;
         this.players[this.playerId].anims.play(RIGHT, true);
-        this.socket.send({act: KEY_PRESS, dir: RIGHT, x: this.players[this.playerId].x, y: this.players[this.playerId].y });
+        console.log({act: KEY_PRESS, dir: RIGHT, x: this.players[this.playerId].x, y: this.players[this.playerId].y});
+        if(send) {
+            console.log('right sent.');
+            this.socket.send({act: KEY_PRESS, dir: RIGHT, x: this.players[this.playerId].x, y: this.players[this.playerId].y});
+        }
     }
 
-    up()
+    up(send = true)
     {
         this.players[this.playerId].body.velocity.y = -SPEED;
         this.players[this.playerId].anims.play(UP, true);
-        this.socket.send({act: KEY_PRESS, dir: UP, x: this.players[this.playerId].x, y: this.players[this.playerId].y });
+        console.log({act: KEY_PRESS, dir: UP, x: this.players[this.playerId].x, y: this.players[this.playerId].y});
+        if(send) {
+            console.log('up sent.');
+            this.socket.send({act: KEY_PRESS, dir: UP, x: this.players[this.playerId].x, y: this.players[this.playerId].y});
+        }
     }
 
-    down()
+    down(send = true)
     {
         this.players[this.playerId].body.velocity.y = SPEED;
         this.players[this.playerId].anims.play(DOWN, true);
-        this.socket.send({act: KEY_PRESS, dir: DOWN, x: this.players[this.playerId].x, y: this.players[this.playerId].y });
+        console.log({act: KEY_PRESS, dir: DOWN, x: this.players[this.playerId].x, y: this.players[this.playerId].y});
+        if(send) {
+            console.log('down sent.');
+            this.socket.send({act: KEY_PRESS, dir: DOWN, x: this.players[this.playerId].x, y: this.players[this.playerId].y});
+        }
     }
 
-    stop()
+    stop(send = true)
     {
         this.players[this.playerId].body.velocity.x = 0;
         this.players[this.playerId].body.velocity.y = 0;
         this.players[this.playerId].anims.stop();
-        this.socket.send({act: STOP, x: this.players[this.playerId].x, y: this.players[this.playerId].y });
+        console.log({act: STOP, x: this.players[this.playerId].x, y: this.players[this.playerId].y });
+        if(send) {
+            console.log('stop sent.');
+            this.socket.send({act: STOP, x: this.players[this.playerId].x, y: this.players[this.playerId].y });
+        }
     }
 
     registerChat()
@@ -122,8 +143,7 @@ class Player
         chat.onsubmit = (e) => {
             e.preventDefault();
             let message = document.getElementById('message');
-
-            this.socket.send(CHAT, message.value);
+            // this.socket.send(CHAT, message.value);
             message.value = '';
         };
         /*this.socket.on(CHAT, (name, message) => {

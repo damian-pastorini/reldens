@@ -58,13 +58,13 @@ class GameRoom extends Room
 
     onLeave(client)
     {
-        console.log('Leave session: '+client.sessionId);
+        // console.log('Leave session: '+client.sessionId);
         this.state.removePlayer(client.sessionId);
     }
 
     onMessage(client, data)
     {
-        console.log('Message:', client.sessionId, ':', data);
+        // console.log('onMessage:', client.sessionId, ':', data);
         this.state.movePlayer(client.sessionId, data);
     }
 

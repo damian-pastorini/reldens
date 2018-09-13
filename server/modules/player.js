@@ -1,3 +1,5 @@
+var share = require('../../shared/constants');
+
 class Player
 {
 
@@ -10,9 +12,10 @@ class Player
         this.status = data.status;
         this.state = data.state;
         // initial position:
-        this.x = 225;
-        this.y = 280;
-        this.direction = '';
+        this.x = 225; // Math.floor(Math.random() * 400);
+        this.y = 280; // Math.floor(Math.random() * 400);
+        this.dir = share.DOWN;
+        this.mov = false;
     }
 
 }

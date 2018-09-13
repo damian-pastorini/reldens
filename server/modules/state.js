@@ -25,12 +25,26 @@ class State
     movePlayer(id, movement)
     {
         console.log('move player:', id, ' > ', movement);
-        if(movement.x){
-            this.players[id].x = movement.x;
-            // this.players[id].x += movement.x * 10;
-        } else if (movement.y) {
-            this.players[id].y = movement.y;
-            // this.players[id].y += movement.y * 10;
+        // console.log('player.x: ',this.players[id].x, 'player.y: ', this.players[id].y);
+        if(movement.x != this.players[id].x){
+            console.log('move x');
+            // this.players[id].x = movement.x;
+            this.players[id].x = movement.x;// += movement.x * 10;
+            this.players[id].mov = true;
+        }
+        if(movement.y != this.players[id].y){
+            // this.players[id].y = movement.y;
+            console.log('move y');
+            this.players[id].y = movement.y; // += movement.y * 10;
+            this.players[id].mov = true;
+        }
+        if(movement.act = 'stop') {
+            console.log('STOP!');
+            this.players[id].mov = false;
+        }
+        if(movement.dir != this.players[id].dir) {
+            console.log('direction?');
+            this.players[id].dir = movement.dir;
         }
     }
 
