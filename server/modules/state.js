@@ -39,7 +39,7 @@ class State
             this.players[id].mov = true;
         }
         if(movement.act = 'stop') {
-            console.log('STOP!');
+            console.log('STOP!', this.players[id].mov, '>', false);
             this.players[id].mov = false;
         }
         if(movement.dir != this.players[id].dir) {
