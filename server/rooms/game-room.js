@@ -52,7 +52,7 @@ class GameRoom extends Room
     onJoin(client, options, auth)
     {
         // console.log(this.hasReachedMaxClients());
-        console.log('session / options / auth: ', client.sessionId, options, auth);
+        // console.log('session / options / auth: ', client.sessionId, options, auth);
         this.state.createPlayer(client.sessionId, auth);
     }
 

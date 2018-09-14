@@ -14,8 +14,6 @@ var phaserGame = '';
 $(document).ready(function($){
 
     var room = '';
-    // var players = {};
-    // var colors = ['red', 'green', 'yellow', 'blue', 'cyan', 'magenta'];
     var $register = $('#register_form');
     var $login = $('#login_form');
     var host = window.document.location.host.replace(/:.*/, '');
@@ -63,9 +61,11 @@ $(document).ready(function($){
             currentPlayer.playerId = room.sessionId;
             currentPlayer.create();
             currentScene.player = currentPlayer;
-            // players[room.sessionId] = currentPlayer;
+            room.onError.add(function(data){
+                alert('Connection error!');
+                window.location.reload();
+            });
         });
-
         if(room){
             function up(){
                 room.send({y: -1});
@@ -81,59 +81,48 @@ $(document).ready(function($){
             }
             // listen to patches coming from the server
             room.listen('players/:id', function(change){
+                let currentScene = phaserGame.scene.getScene('Town');
                 if (change.operation === 'add'){
-                    console.log('PLAYER CREATED!', change.path.id);
-                    // let dom = document.createElement('div');
-                    // dom.className = 'player';
-                    // dom.style.left = change.value.x + 'px';
-                    // dom.style.top = change.value.y + 'px';
-                    // dom.style.background = colors[Math.floor(Math.random() * colors.length)];
-                    // dom.id = change.path.id;
-                    // dom.innerHTML = 'Player '+change.path.id;
-                    // document.body.appendChild(dom);
                     if(change.path.id != room.sessionId) {
-                        console.log(change.path.id, '!=', room.sessionId);
-                        let currentScene = phaserGame.scene.getScene('Town');
+                        // console.log('PLAYER CREATED!', change.path.id, '!=', room.sessionId);
                         currentScene.player.addPlayer(change.path.id, 225, 280, 'down');
-                        // players[change.path.id] = currentScene.player.players[change.path.id];
                     }
                 }
                 if (change.operation === 'remove'){
-                    let currentScene = phaserGame.scene.getScene('Town');
-                    currentScene.player.players[change.path.id].destroy();
-                    // document.body.removeChild(change.path.id);
-                    // delete players[change.path.id];
+                    if(change.path.id == room.sessionId) {
+                        alert('Your session expired! Please login again');
+                        window.location.reload();
+                    } else {
+                        currentScene.player.players[change.path.id].destroy();
+                        delete currentScene.player.players[change.path.id];
+                    }
                     console.log('PLAYER REMOVED!', change.path.id);
                 }
                 console.log('OTHER OPERATION?', change);
             });
             room.listen('players/:id/:axis', function(change){
-                console.log('AXIS: ', change);
-                // var dom = $('#'+change.path.id);
-                // var styleAttribute = (change.path.axis === 'x') ? 'left' : 'top';
-                // dom.css(styleAttribute, change.value+'px');
+                // console.log('AXIS: ', change);
                 if(change.path.id != room.sessionId){
-                    console.log(change.path.id, '!=', room.sessionId);
                     var currentScene = phaserGame.scene.getScene('Town'); // temporal hardcoded scene - each room will be an scene.
                     var playerToMove = currentScene.player.players[change.path.id];
                     if(change.path.axis == 'x') {
                         if(change.value < playerToMove.x){
-                            console.log('go right: ', change.path.id);
+                            // console.log('go right (direction left): ', change.path.id);
                             playerToMove.anims.play('left', true);
                             playerToMove.x = change.value;
                         } else {
-                            console.log('go left: ', change.path.id);
+                            // console.log('go left (direction right): ', change.path.id);
                             playerToMove.anims.play('right', true);
                             playerToMove.x = change.value;
                         }
                     }
                     if(change.path.axis == 'y') {
                         if(change.value < playerToMove.y){
-                            console.log('go up: ', change.path.id);
+                            // console.log('go up: ', change.path.id);
                             playerToMove.anims.play('up', true);
                             playerToMove.y = change.value;
                         } else {
-                            console.log('go down: ', change.path.id);
+                            // console.log('go down: ', change.path.id);
                             playerToMove.anims.play('down', true);
                             playerToMove.y = change.value;
                         }
