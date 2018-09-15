@@ -1,15 +1,10 @@
-const NEW_PLAYER = 'newPlayer';
-const ALL_PLAYERS = 'allPlayers';
 const CHAT = 'chat';
 const KEY_PRESS = 'keyPress';
-const MOVE = 'move';
 const STOP = 'stop';
-const REMOVE = 'remove';
 const UP = 'up';
 const LEFT = 'left';
 const DOWN = 'down';
 const RIGHT = 'right';
-
 const IMAGE_PLAYER = 'player';
 const SPEED = 200;
 const FADE_DURATION = 1000;
