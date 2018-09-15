@@ -53,7 +53,6 @@ $(document).ready(function($){
         room.onJoin.add(function(){
             $('.forms-container').detach();
             $('.game-container').show();
-            window.ColyseusRoom = room;
             phaserGame.scene.start('Town');
             let currentScene = phaserGame.scene.getScene('Town');
             let currentPlayer = new PhaserPlayer(currentScene, 'Town', { x: 225, y: 280, direction: 'down' });
