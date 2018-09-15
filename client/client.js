@@ -67,18 +67,6 @@ $(document).ready(function($){
             });
         });
         if(room){
-            function up(){
-                room.send({y: -1});
-            }
-            function right(){
-                room.send({x: 1});
-            }
-            function down(){
-                room.send({y: 1});
-            }
-            function left(){
-                room.send({x: -1});
-            }
             // listen to patches coming from the server
             room.listen('players/:id', function(change){
                 let currentScene = phaserGame.scene.getScene('Town');
@@ -86,6 +74,7 @@ $(document).ready(function($){
                     if(change.path.id != room.sessionId) {
                         // console.log('PLAYER CREATED!', change.path.id, '!=', room.sessionId);
                         currentScene.player.addPlayer(change.path.id, 225, 280, 'down');
+                        currentScene.player.players[change.path.id].anims.stop();
                     }
                 }
                 if (change.operation === 'remove'){
@@ -96,16 +85,15 @@ $(document).ready(function($){
                         currentScene.player.players[change.path.id].destroy();
                         delete currentScene.player.players[change.path.id];
                     }
-                    console.log('PLAYER REMOVED!', change.path.id);
+                    // console.log('PLAYER REMOVED!', change.path.id);
                 }
-                console.log('OTHER OPERATION?', change);
             });
             room.listen('players/:id/:axis', function(change){
                 // console.log('AXIS: ', change);
                 if(change.path.id != room.sessionId){
-                    var currentScene = phaserGame.scene.getScene('Town'); // temporal hardcoded scene - each room will be an scene.
-                    var playerToMove = currentScene.player.players[change.path.id];
-                    if(change.path.axis == 'x') {
+                    let currentScene = phaserGame.scene.getScene('Town'); // temporal hardcoded scene - each room will be an scene.
+                    let playerToMove = currentScene.player.players[change.path.id];
+                    if(change.path.axis == 'x'){
                         if(change.value < playerToMove.x){
                             // console.log('go right (direction left): ', change.path.id);
                             playerToMove.anims.play('left', true);
@@ -116,7 +104,7 @@ $(document).ready(function($){
                             playerToMove.x = change.value;
                         }
                     }
-                    if(change.path.axis == 'y') {
+                    if(change.path.axis == 'y'){
                         if(change.value < playerToMove.y){
                             // console.log('go up: ', change.path.id);
                             playerToMove.anims.play('up', true);
@@ -129,17 +117,11 @@ $(document).ready(function($){
                     }
                 }
             });
-            $('#up').on('click', function(){
-                up();
-            });
-            $('#right').on('click', function(){
-                right();
-            });
-            $('#down').on('click', function(){
-                down();
-            });
-            $('#left').on('click', function(){
-                left();
+            room.listen('players/:id/:attribute', function(change){
+                if(change.path.id != room.sessionId && change.operation == 'replace' && change.path.attribute == 'mov'){
+                    let currentScene = phaserGame.scene.getScene('Town');
+                    currentScene.player.players[change.path.id].anims.stop();
+                }
             });
         }
     }

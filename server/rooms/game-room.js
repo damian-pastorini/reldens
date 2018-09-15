@@ -65,7 +65,11 @@ class GameRoom extends Room
     onMessage(client, data)
     {
         // console.log('onMessage:', client.sessionId, ':', data);
-        this.state.movePlayer(client.sessionId, data);
+        if(data.act == 'stop'){
+            this.state.stopPlayer(client.sessionId, data);
+        } else {
+            this.state.movePlayer(client.sessionId, data);
+        }
     }
 
     onDispose()

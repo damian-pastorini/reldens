@@ -27,7 +27,7 @@ class State
         // console.log('move player:', id, ' > ', movement);
         // console.log('player.x: ',this.players[id].x, 'player.y: ', this.players[id].y);
         if(movement.x != this.players[id].x){
-            console.log('move x');
+            // console.log('move x');
             // this.players[id].x = movement.x;
             this.players[id].x = movement.x;// += movement.x * 10;
             this.players[id].mov = true;
@@ -39,13 +39,22 @@ class State
             this.players[id].mov = true;
         }
         if(movement.act = 'stop') {
-            console.log('STOP!', this.players[id].mov, '>', false);
+            // console.log('STOP!', this.players[id].mov, '>', false);
             this.players[id].mov = false;
         }
         if(movement.dir != this.players[id].dir) {
-            console.log('direction?');
+            // console.log('direction?');
             this.players[id].dir = movement.dir;
         }
+    }
+
+    stopPlayer(id, data)
+    {
+        let movement = true;
+        if(this.players[id].mov){
+            movement = false;
+        }
+        this.players[id].mov = movement;
     }
 
 }
