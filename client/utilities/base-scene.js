@@ -1,8 +1,7 @@
 const Phaser = require('phaser');
 const Scene = Phaser.Scene;
 const TilesetAnimation = require('./tileset-animation');
-// const Player = require('../objects/player');
-
+const Player = require('../objects/player');
 var share = require('../../shared/constants');
 
 class BaseScene extends Scene
@@ -10,16 +9,19 @@ class BaseScene extends Scene
 
     constructor(key)
     {
-        super({ key });
+        super({key});
         this.key = key;
     }
 
     init(position)
     {
-        // console.log('position:', position);
         this.scene.setVisible(false, this.key);
-        // this.player = new Player(this, this.key, position);
-        // console.log('this.player:', this.player);
+        if(!this.player && this.game.colyseusRoom){
+            let currentPlayer = new Player(this, this.key, position);
+            currentPlayer.socket = this.game.colyseusRoom;
+            currentPlayer.playerId = this.game.colyseusRoom.sessionId;
+            this.player = currentPlayer;
+        }
         this.layers = {};
         this.prevSceneKey = this.key;
         this.nextSceneKey = null;
@@ -36,19 +38,21 @@ class BaseScene extends Scene
         this.withTSAnimation = withTSAnimation;
         this.map = this.add.tilemap(tilemap);
         this.tileset = this.map.addTilesetImage(tileset);
-        for (let i = 0; i < this.map.layers.length; i++) {
-            if (withTSAnimation) {
+        for(let i=0; i<this.map.layers.length; i++){
+            if(withTSAnimation){
                 this.layers[i] = this.map.createDynamicLayer(this.map.layers[i].name, this.tileset, 0, 0);
             } else {
                 this.layers[i] = this.map.createStaticLayer(this.map.layers[i].name, this.tileset, 0, 0);
             }
         }
-        // this.player.create();
+        if(this.game.colyseusRoom){
+            this.player.create();
+        }
         this.cameras.main.on('camerafadeincomplete', () => {
             this.transition = false;
             this.input.keyboard.on('keyup', (event) => {
                 if (event.keyCode >= 37 && event.keyCode <= 40) {
-                    this.player.stop();
+                    this.player.stop(true);
                 }
             });
             this.registerCollision();
@@ -59,15 +63,15 @@ class BaseScene extends Scene
 
     update()
     {
-        if (this.transition === false) {
-            if (this.keyLeft.isDown) {
-                this.player.left();
-            } else if (this.keyRight.isDown) {
-                this.player.right();
-            } else if (this.keyUp.isDown) {
-                this.player.up();
-            } else if (this.keyDown.isDown) {
-                this.player.down();
+        if(this.transition === false){
+            if(this.keyLeft.isDown){
+                this.player.left(true);
+            } else if(this.keyRight.isDown){
+                this.player.right(true);
+            } else if(this.keyUp.isDown){
+                this.player.up(true);
+            } else if(this.keyDown.isDown){
+                this.player.down(true);
             }
         }
     }
@@ -75,17 +79,18 @@ class BaseScene extends Scene
     onChangeScene()
     {
         this.transition = true;
-        this.player.stop();
+        this.player.stop(true);
         this.cameras.main.fade(share.FADE_DURATION);
     }
 
     changeScene()
     {
-        if (this.withTSAnimation) {
+        if(this.withTSAnimation){
             this.tilesetAnimation.destroy();
         }
-        // this.player.socket.disconnect(); // TODO: change room
         this.scene.start(this.nextSceneKey, this.prevSceneKey);
+        // @TODO: change client to listen to player.scene change.
+        this.player.socket.send({act: 'scene', next: this.nextSceneKey, prev: this.prevSceneKey});
     }
 
     registerCollision()

@@ -7,13 +7,11 @@ class GameRoom extends Room
 
     onInit(options)
     {
-        console.log('GameRoom created!', options);
         this.setState(new State());
     }
 
     onAuth(options)
     {
-        // console.log('onAuth: ', options);
         if(options.isNewUser){
             // registration (default role_id = 1, status = 1, state = 1):
             var queryString = 'INSERT INTO users VALUES(NULL, "'+options.email+'", "'+options.username+'", "'+options.password+'", 1, 1, 1);';
@@ -21,7 +19,6 @@ class GameRoom extends Room
             // login:
             var queryString = 'SELECT * FROM users WHERE username="'+options.username+'" AND password="'+options.password+'";';
         }
-        // console.log(queryString);
         return new Promise((resolve, reject) => {
             DbLink.connection.query(queryString, options, (err, rows) => {
                 if(err){
@@ -37,11 +34,10 @@ class GameRoom extends Room
                     } else {
                         // temporal fix to get row data values as object:
                         var currentPlayer = '';
-                        for(var i=0; i<rows.length; i++){
+                        for(let i=0; i<rows.length; i++){
                             currentPlayer = rows[i];
                             break;
                         }
-                        // console.log(currentPlayer);
                         resolve(currentPlayer);
                     }
                 }
@@ -58,18 +54,44 @@ class GameRoom extends Room
 
     onLeave(client)
     {
-        // console.log('Leave session: '+client.sessionId);
         this.state.removePlayer(client.sessionId);
     }
 
     onMessage(client, data)
     {
         // console.log('onMessage:', client.sessionId, ':', data);
-        if(data.act == 'stop'){
-            this.state.stopPlayer(client.sessionId, data);
-        } else {
+        if(data.act == 'keyPress'){
             this.state.movePlayer(client.sessionId, data);
         }
+        if(data.act == 'stop') {
+            this.state.stopPlayer(client.sessionId, data);
+        }
+        /* @TODO: fix scene change sync.
+        if(data.act == 'scene'){
+            console.log('change scene', data);
+            // broadcast the current player scene change to be removed or added from other players:
+            this.broadcast({act: 'change-scene', id: client.sessionId, scene: data.next});
+            // console.log({act: 'remove', id: client.sessionId, prev: data.prev});
+            // this.broadcast({act: 'remove', id: client.sessionId, prev: data.prev});
+            // this.broadcast({act: 'addthis', id: client.sessionId, scene: data.next});
+        }
+        if(data.act == 'get-players') {
+            this.state.players[client.sessionId].scene = data.next;
+            let playersInScene = [];
+            for(let i in this.state.players){
+                let ps = this.state.players[i];
+                if(client.sessionId != ps.sessionId && ps.scene == data.next){
+                    playersInScene.push({id: ps.sessionId, x: ps.x, y: ps.y, dir: ps.dir});
+                }
+            }
+            console.log('playersInScene: ', playersInScene);
+            if(playersInScene.length){
+                // players in current scene just sent to the current client:
+                console.log({act: 'add-from-scene', scene: data.next, p: playersInScene});
+                this.send(client, {act: 'add-from-scene', scene: data.next, p: playersInScene});
+            }
+        }
+        */
     }
 
     onDispose()

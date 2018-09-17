@@ -14,7 +14,6 @@ class Player
 
     constructor(scene, room, position)
     {
-        // console.log('scene, room, position', scene, room, position);
         this.scene = scene;
         this.room = room;
         this.position = position;
@@ -25,7 +24,7 @@ class Player
 
     create()
     {
-        // console.log('THIS.POSITION:', this.position);
+        // console.log('player creation: ', this.playerId);
         this.addPlayer(this.playerId, this.position.x, this.position.y, this.position.direction);
         this.scene.cameras.main.fadeFrom(FADE_DURATION);
         this.scene.scene.setVisible(true, this.room);
@@ -47,9 +46,7 @@ class Player
     {
         this.players[this.playerId].body.velocity.x = -SPEED;
         this.players[this.playerId].anims.play(LEFT, true);
-        // console.log({act: KEY_PRESS, dir: LEFT, x: this.players[this.playerId].x, y: this.players[this.playerId].y});
         if(send) {
-            // console.log('left sent.');
             this.socket.send({act: KEY_PRESS, dir: LEFT, x: this.players[this.playerId].x, y: this.players[this.playerId].y});
         }
 
@@ -59,9 +56,7 @@ class Player
     {
         this.players[this.playerId].body.velocity.x = SPEED;
         this.players[this.playerId].anims.play(RIGHT, true);
-        // console.log({act: KEY_PRESS, dir: RIGHT, x: this.players[this.playerId].x, y: this.players[this.playerId].y});
         if(send) {
-            // console.log('right sent.');
             this.socket.send({act: KEY_PRESS, dir: RIGHT, x: this.players[this.playerId].x, y: this.players[this.playerId].y});
         }
     }
@@ -70,9 +65,7 @@ class Player
     {
         this.players[this.playerId].body.velocity.y = -SPEED;
         this.players[this.playerId].anims.play(UP, true);
-        // console.log({act: KEY_PRESS, dir: UP, x: this.players[this.playerId].x, y: this.players[this.playerId].y});
         if(send) {
-            // console.log('up sent.');
             this.socket.send({act: KEY_PRESS, dir: UP, x: this.players[this.playerId].x, y: this.players[this.playerId].y});
         }
     }
@@ -81,9 +74,7 @@ class Player
     {
         this.players[this.playerId].body.velocity.y = SPEED;
         this.players[this.playerId].anims.play(DOWN, true);
-        // console.log({act: KEY_PRESS, dir: DOWN, x: this.players[this.playerId].x, y: this.players[this.playerId].y});
         if(send) {
-            // console.log('down sent.');
             this.socket.send({act: KEY_PRESS, dir: DOWN, x: this.players[this.playerId].x, y: this.players[this.playerId].y});
         }
     }
@@ -93,9 +84,7 @@ class Player
         this.players[this.playerId].body.velocity.x = 0;
         this.players[this.playerId].body.velocity.y = 0;
         this.players[this.playerId].anims.stop();
-        // console.log({act: STOP, x: this.players[this.playerId].x, y: this.players[this.playerId].y });
         if(send) {
-            // console.log('stop sent.');
             this.socket.send({act: STOP, x: this.players[this.playerId].x, y: this.players[this.playerId].y });
         }
     }

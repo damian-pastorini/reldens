@@ -54,8 +54,9 @@ $(document).ready(function($){
             $('.forms-container').detach();
             $('.game-container').show();
             phaserGame.scene.start('Town');
+            phaserGame.colyseusRoom = room;
             let currentScene = phaserGame.scene.getScene('Town');
-            let currentPlayer = new PhaserPlayer(currentScene, 'Town', { x: 225, y: 280, direction: 'down' });
+            let currentPlayer = new PhaserPlayer(currentScene, 'Town', {x: 225, y: 280, direction: 'down'});
             currentPlayer.socket = room;
             currentPlayer.playerId = room.sessionId;
             currentPlayer.create();
@@ -68,59 +69,139 @@ $(document).ready(function($){
         if(room){
             // listen to patches coming from the server
             room.listen('players/:id', function(change){
-                let currentScene = phaserGame.scene.getScene('Town');
+                // player creation after login:
                 if (change.operation === 'add'){
-                    if(change.path.id != room.sessionId) {
-                        // console.log('PLAYER CREATED!', change.path.id, '!=', room.sessionId);
+                    if(change.path.id != room.sessionId){
+                        // @TODO: fix hardocoded 'Town' scene.
+                        let currentScene = phaserGame.scene.getScene('Town');
                         currentScene.player.addPlayer(change.path.id, 225, 280, 'down');
-                        currentScene.player.players[change.path.id].anims.stop();
                     }
                 }
+                // remove player on disconnect or logout:
                 if (change.operation === 'remove'){
-                    if(change.path.id == room.sessionId) {
+                    if(change.path.id == room.sessionId){
                         alert('Your session expired! Please login again');
                         window.location.reload();
                     } else {
+                        // @TODO: fix hardocoded 'Town' scene.
+                        let currentScene = phaserGame.scene.getScene('Town');
                         currentScene.player.players[change.path.id].destroy();
                         delete currentScene.player.players[change.path.id];
                     }
-                    // console.log('PLAYER REMOVED!', change.path.id);
                 }
             });
             room.listen('players/:id/:axis', function(change){
-                // console.log('AXIS: ', change);
                 if(change.path.id != room.sessionId){
-                    let currentScene = phaserGame.scene.getScene('Town'); // temporal hardcoded scene - each room will be an scene.
-                    let playerToMove = currentScene.player.players[change.path.id];
-                    if(change.path.axis == 'x'){
-                        if(change.value < playerToMove.x){
-                            // console.log('go right (direction left): ', change.path.id);
-                            playerToMove.anims.play('left', true);
-                            playerToMove.x = change.value;
-                        } else {
-                            // console.log('go left (direction right): ', change.path.id);
-                            playerToMove.anims.play('right', true);
-                            playerToMove.x = change.value;
+                    // @TODO: fix hardocoded 'Town' scene.
+                    let currentScene = phaserGame.scene.getScene('Town');
+                    if(currentScene.player.players.hasOwnProperty(change.path.id)){
+                        let playerToMove = currentScene.player.players[change.path.id];
+                        if(change.path.axis == 'x'){
+                            if(change.value < playerToMove.x){
+                                // console.log('go right (direction left): ', change.path.id);
+                                playerToMove.anims.play('left', true);
+                                playerToMove.x = change.value;
+                            } else {
+                                // console.log('go left (direction right): ', change.path.id);
+                                playerToMove.anims.play('right', true);
+                                playerToMove.x = change.value;
+                            }
                         }
-                    }
-                    if(change.path.axis == 'y'){
-                        if(change.value < playerToMove.y){
-                            // console.log('go up: ', change.path.id);
-                            playerToMove.anims.play('up', true);
-                            playerToMove.y = change.value;
-                        } else {
-                            // console.log('go down: ', change.path.id);
-                            playerToMove.anims.play('down', true);
-                            playerToMove.y = change.value;
+                        if(change.path.axis == 'y'){
+                            if(change.value < playerToMove.y){
+                                // console.log('go up: ', change.path.id);
+                                playerToMove.anims.play('up', true);
+                                playerToMove.y = change.value;
+                            } else {
+                                // console.log('go down: ', change.path.id);
+                                playerToMove.anims.play('down', true);
+                                playerToMove.y = change.value;
+                            }
                         }
                     }
                 }
             });
             room.listen('players/:id/:attribute', function(change){
+                // player stop action:
                 if(change.path.id != room.sessionId && change.operation == 'replace' && change.path.attribute == 'mov'){
+                    // @TODO: fix hardocoded 'Town' scene.
                     let currentScene = phaserGame.scene.getScene('Town');
-                    currentScene.player.players[change.path.id].anims.stop();
+                    if(currentScene.player.players.hasOwnProperty(change.path.id)){
+                        currentScene.player.players[change.path.id].anims.stop();
+                    }
                 }
+                // player change direction action:
+                if(change.path.id != room.sessionId && change.path.attribute == 'dir'){
+                    // @TODO: fix hardocoded 'Town' scene.
+                    let currentScene = phaserGame.scene.getScene('Town');
+                    if(currentScene.player.players.hasOwnProperty(change.path.id)){
+                        currentScene.player.players[change.path.id].anims.stop();
+                    }
+                }
+            });
+            room.onMessage.add(function(message){
+                // console.log('server message: ', message);
+                // @TODO: fix scene change sync.
+                /*
+                if(message.act == 'change-scene'){
+                    // @TODO: fix hardocoded 'Town' scene.
+                    let currentScene = phaserGame.scene.getScene('Town');
+                    if(message.scene != 'Town' && currentScene.player.players.hasOwnProperty(message.id) && currentScene.player.playerId != message.id){
+                        console.log('player removed: ', message.id);
+                        currentScene.player.players[message.id].destroy();
+                        delete currentScene.player.players[message.id];
+                    }
+                    if(message.scene == 'Town' && currentScene.player.playerId != message.id){
+                        console.log('player entered in scene', message.id);
+                        currentScene.player.addPlayer(message.id, 225, 280, 'down');
+                    }
+                    if(currentScene.player.playerId == message.id){
+                        // @TODO: fix hardocoded 'Town' scene.
+                        room.send({act: 'get-players', next: 'Town'});
+                    }
+                }
+                if(message.act == 'add-from-scene'){
+                    let currentScene = phaserGame.scene.getScene(message.scene);
+                    for(let i in message.p){
+                        console.log('i: ', i, ' > currentScene.player.playerId: ', currentScene.player.playerId);
+                        let toAdd = message.p[i];
+                        if(toAdd.id != currentScene.player.playerId){
+                            console.log('toadd: ', toAdd);
+                            currentScene.player.addPlayer(toAdd.id, toAdd.x, toAdd.y, toAdd.dir);
+                        }
+                    }
+                }
+                */
+                /*
+                if(message.act == 'add'){
+                    let currentScene = phaserGame.scene.getScene(message.scene);
+                    for(let i in message.p){
+                        console.log('i: ', i, ' > currentScene.player.playerId: ', currentScene.player.playerId);
+                        if(i != currentScene.player.playerId){
+                            let toAdd = message.p[i];
+                            console.log('toadd: ', toAdd);
+                            console.log(toAdd.id, toAdd.x, toAdd.y, toAdd.dir);
+                            currentScene.player.addPlayer(toAdd.id, toAdd.x, toAdd.y, toAdd.dir);
+                        }
+                    }
+                }
+                if(message.act == 'addthis'){
+                    // @TODO: fix hardocoded 'Town' scene.
+                    let currentScene = phaserGame.scene.getScene('Town');
+                    if(message.scene == 'Town' && currentScene.player.playerId != message.id){
+                        currentScene.player.addPlayer(message.id, 225, 280, 'down');
+                    }
+                }
+                if(message.act == 'remove'){
+                    console.log('remove > ', message);
+                    // @TODO: fix hardocoded 'Town' scene.
+                    let currentScene = phaserGame.scene.getScene('Town');
+                    if(message.prev == 'Town' && currentScene.player.players.hasOwnProperty(message.id)){
+                        currentScene.player.players[message.id].destroy();
+                        delete currentScene.player.players[message.id];
+                    }
+                }
+                */
             });
         }
     }

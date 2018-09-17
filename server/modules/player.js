@@ -16,6 +16,8 @@ class Player
         this.y = 280;
         this.dir = share.DOWN;
         this.mov = false;
+        this.scene = 'Town'; // initial scene
+        this.players = [];
     }
 
 }
