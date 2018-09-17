@@ -66,9 +66,9 @@ class Town extends BaseScene
 
     getPosition(data)
     {
-        if (data === HOUSE_1 || Object.getOwnPropertyNames(data).length === 0) {
+        if (data === HOUSE_1 || Object.getOwnPropertyNames(data).length === 0){
             return { x: 225, y: 280, direction: DOWN };
-        } else if (data === HOUSE_2) {
+        } else if(data === HOUSE_2){
             return { x: 655, y: 470, direction: DOWN };
         }
     }
