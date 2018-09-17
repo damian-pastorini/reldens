@@ -6,3 +6,4 @@ ts-node*
 npm-debug*
 /server/config/*
 /dist
+/v8-compile-cache*
