@@ -55,6 +55,8 @@ $(document).ready(function($){
             $('.game-container').show();
             phaserGame.scene.start('Town');
             phaserGame.colyseusRoom = room;
+            // @NOTE: 'Town' is hardcoded below since it's the initial scene for every player.
+            // @RFA: if we save the user state in the DB then we can replace Town by the last user scene.
             let currentScene = phaserGame.scene.getScene('Town');
             let currentPlayer = new PhaserPlayer(currentScene, 'Town', {x: 225, y: 280, direction: 'down'});
             currentPlayer.socket = room;
@@ -72,8 +74,8 @@ $(document).ready(function($){
                 // player creation after login:
                 if (change.operation === 'add'){
                     if(change.path.id != room.sessionId){
-                        // @TODO: fix hardocoded 'Town' scene.
-                        let currentScene = phaserGame.scene.getScene('Town');
+                        let currentScene = getActiveScene();
+                        // let currentScene = phaserGame.scene.getScene('Town');
                         currentScene.player.addPlayer(change.path.id, 225, 280, 'down');
                     }
                 }
@@ -84,7 +86,8 @@ $(document).ready(function($){
                         window.location.reload();
                     } else {
                         // @TODO: fix hardocoded 'Town' scene.
-                        let currentScene = phaserGame.scene.getScene('Town');
+                        // let currentScene = phaserGame.scene.getScene('Town');
+                        let currentScene = getActiveScene();
                         currentScene.player.players[change.path.id].destroy();
                         delete currentScene.player.players[change.path.id];
                     }
@@ -93,7 +96,8 @@ $(document).ready(function($){
             room.listen('players/:id/:axis', function(change){
                 if(change.path.id != room.sessionId){
                     // @TODO: fix hardocoded 'Town' scene.
-                    let currentScene = phaserGame.scene.getScene('Town');
+                    // let currentScene = phaserGame.scene.getScene('Town');
+                    let currentScene = getActiveScene();
                     if(currentScene.player.players.hasOwnProperty(change.path.id)){
                         let playerToMove = currentScene.player.players[change.path.id];
                         if(change.path.axis == 'x'){
@@ -125,7 +129,8 @@ $(document).ready(function($){
                 // player stop action:
                 if(change.path.id != room.sessionId && change.operation == 'replace' && change.path.attribute == 'mov'){
                     // @TODO: fix hardocoded 'Town' scene.
-                    let currentScene = phaserGame.scene.getScene('Town');
+                    // let currentScene = phaserGame.scene.getScene('Town');
+                    let currentScene = getActiveScene();
                     if(currentScene.player.players.hasOwnProperty(change.path.id)){
                         currentScene.player.players[change.path.id].anims.stop();
                     }
@@ -133,7 +138,8 @@ $(document).ready(function($){
                 // player change direction action:
                 if(change.path.id != room.sessionId && change.path.attribute == 'dir'){
                     // @TODO: fix hardocoded 'Town' scene.
-                    let currentScene = phaserGame.scene.getScene('Town');
+                    // let currentScene = phaserGame.scene.getScene('Town');
+                    let currentScene = getActiveScene();
                     if(currentScene.player.players.hasOwnProperty(change.path.id)){
                         currentScene.player.players[change.path.id].anims.stop();
                     }
@@ -144,7 +150,8 @@ $(document).ready(function($){
                 // @TODO: fix scene change sync.
                 if(message.act == 'change-scene'){
                     // @TODO: fix hardocoded 'Town' scene.
-                    let currentScene = phaserGame.scene.getScene('Town');
+                    // let currentScene = phaserGame.scene.getScene('Town');
+                    let currentScene = getActiveScene();
                     if(message.scene != 'Town' && currentScene.player.players.hasOwnProperty(message.id) && currentScene.player.playerId != message.id){
                         console.log('player removed: ', message.id);
                         currentScene.player.players[message.id].destroy();
@@ -193,6 +200,19 @@ $(document).ready(function($){
 
     phaserGame = new Game(config);
     window.phaserGame = phaserGame;
+
+    function getActiveScene()
+    {
+        var result = false;
+        for(let i in phaserGame.scene.keys){
+            scene = phaserGame.scene.keys[i];
+            if(scene.key && phaserGame.scene.isActive(scene.key)){
+                // console.log('scene: '+scene.key+' is active: '+phaserGame.scene.isActive(scene.key));
+                result = scene;
+            }
+        }
+        return result;
+    }
 
     if($register.length){
         $register.on('submit', function(e){
