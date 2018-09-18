@@ -72,9 +72,6 @@ class GameRoom extends Room
             console.log('change scene', data);
             // broadcast the current player scene change to be removed or added from other players:
             this.broadcast({act: 'change-scene', id: client.sessionId, scene: data.next});
-            // console.log({act: 'remove', id: client.sessionId, prev: data.prev});
-            // this.broadcast({act: 'remove', id: client.sessionId, prev: data.prev});
-            // this.broadcast({act: 'addthis', id: client.sessionId, scene: data.next});
         }
         if(data.act == 'get-players') {
             // console.log(this.state.players);
