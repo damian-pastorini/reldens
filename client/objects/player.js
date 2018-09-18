@@ -32,6 +32,8 @@ class Player
         this.scene.cameras.main.setBounds(0, 0, this.scene.map.widthInPixels, this.scene.map.heightInPixels);
         this.scene.cameras.main.startFollow(this.players[this.playerId], true);
         this.players[this.playerId].setCollideWorldBounds(true);
+        // this.room.send({act: 'get-players', next: this.scene.key});
+        console.log({act: 'get-players', next: this.scene.key});
         // this.registerChat();
     }
 

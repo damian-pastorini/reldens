@@ -142,7 +142,6 @@ $(document).ready(function($){
             room.onMessage.add(function(message){
                 // console.log('server message: ', message);
                 // @TODO: fix scene change sync.
-                /*
                 if(message.act == 'change-scene'){
                     // @TODO: fix hardocoded 'Town' scene.
                     let currentScene = phaserGame.scene.getScene('Town');
@@ -157,13 +156,14 @@ $(document).ready(function($){
                     }
                     if(currentScene.player.playerId == message.id){
                         // @TODO: fix hardocoded 'Town' scene.
-                        room.send({act: 'get-players', next: 'Town'});
+                        room.send({act: 'get-players', next: message.scene});
                     }
                 }
                 if(message.act == 'add-from-scene'){
+                    console.log(message);
                     let currentScene = phaserGame.scene.getScene(message.scene);
                     for(let i in message.p){
-                        console.log('i: ', i, ' > currentScene.player.playerId: ', currentScene.player.playerId);
+                        // console.log('i: ', i, ' > currentScene.player.playerId: ', currentScene.player.playerId);
                         let toAdd = message.p[i];
                         if(toAdd.id != currentScene.player.playerId){
                             console.log('toadd: ', toAdd);
@@ -171,37 +171,6 @@ $(document).ready(function($){
                         }
                     }
                 }
-                */
-                /*
-                if(message.act == 'add'){
-                    let currentScene = phaserGame.scene.getScene(message.scene);
-                    for(let i in message.p){
-                        console.log('i: ', i, ' > currentScene.player.playerId: ', currentScene.player.playerId);
-                        if(i != currentScene.player.playerId){
-                            let toAdd = message.p[i];
-                            console.log('toadd: ', toAdd);
-                            console.log(toAdd.id, toAdd.x, toAdd.y, toAdd.dir);
-                            currentScene.player.addPlayer(toAdd.id, toAdd.x, toAdd.y, toAdd.dir);
-                        }
-                    }
-                }
-                if(message.act == 'addthis'){
-                    // @TODO: fix hardocoded 'Town' scene.
-                    let currentScene = phaserGame.scene.getScene('Town');
-                    if(message.scene == 'Town' && currentScene.player.playerId != message.id){
-                        currentScene.player.addPlayer(message.id, 225, 280, 'down');
-                    }
-                }
-                if(message.act == 'remove'){
-                    console.log('remove > ', message);
-                    // @TODO: fix hardocoded 'Town' scene.
-                    let currentScene = phaserGame.scene.getScene('Town');
-                    if(message.prev == 'Town' && currentScene.player.players.hasOwnProperty(message.id)){
-                        currentScene.player.players[message.id].destroy();
-                        delete currentScene.player.players[message.id];
-                    }
-                }
-                */
             });
         }
     }

@@ -66,8 +66,9 @@ class GameRoom extends Room
         if(data.act == 'stop') {
             this.state.stopPlayer(client.sessionId, data);
         }
-        /* @TODO: fix scene change sync.
+        // @TODO: fix scene change sync.
         if(data.act == 'scene'){
+            this.state.players[client.sessionId].scene = data.next;
             console.log('change scene', data);
             // broadcast the current player scene change to be removed or added from other players:
             this.broadcast({act: 'change-scene', id: client.sessionId, scene: data.next});
@@ -76,10 +77,11 @@ class GameRoom extends Room
             // this.broadcast({act: 'addthis', id: client.sessionId, scene: data.next});
         }
         if(data.act == 'get-players') {
-            this.state.players[client.sessionId].scene = data.next;
+            // console.log(this.state.players);
             let playersInScene = [];
             for(let i in this.state.players){
                 let ps = this.state.players[i];
+                console.log(ps, (client.sessionId != ps.sessionId), (ps.scene == data.next));
                 if(client.sessionId != ps.sessionId && ps.scene == data.next){
                     playersInScene.push({id: ps.sessionId, x: ps.x, y: ps.y, dir: ps.dir});
                 }
@@ -91,7 +93,6 @@ class GameRoom extends Room
                 this.send(client, {act: 'add-from-scene', scene: data.next, p: playersInScene});
             }
         }
-        */
     }
 
     onDispose()
