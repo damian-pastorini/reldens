@@ -10,14 +10,14 @@ class Player
         this.sessionId = '';
         this.role_id = data.role_id;
         this.status = data.status;
+        // @TODO: state will be used to save player state at logout.
         this.state = data.state;
-        // initial position:
+        // initial scene and position:
+        this.scene = 'Town';
         this.x = 225;
         this.y = 280;
         this.dir = share.DOWN;
         this.mov = false;
-        this.scene = 'Town'; // initial scene
-        this.players = [];
     }
 
 }

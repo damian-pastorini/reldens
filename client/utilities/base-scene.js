@@ -17,10 +17,12 @@ class BaseScene extends Scene
     {
         this.scene.setVisible(false, this.key);
         if(!this.player && this.game.colyseusRoom){
-            let currentPlayer = new Player(this, this.key, position);
-            currentPlayer.socket = this.game.colyseusRoom;
-            currentPlayer.playerId = this.game.colyseusRoom.sessionId;
-            this.player = currentPlayer;
+            this.player = new Player(this, this.key, position);
+            this.player.socket = this.game.colyseusRoom;
+            this.player.playerId = this.game.colyseusRoom.sessionId;
+        }
+        if(this.player){
+            this.player.position = position;
         }
         this.layers = {};
         this.prevSceneKey = this.key;
@@ -59,6 +61,12 @@ class BaseScene extends Scene
             this.registerController();
         });
         this.cameras.main.on('camerafadeoutcomplete', this.changeScene.bind(this));
+        // save active key into the game object to get it in other events.
+        this.game.currentScene = this.key;
+        if(this.player){
+            // if player is set it means it's changing scene:
+            this.player.socket.send({act: 'change-scene', next: this.key});
+        }
     }
 
     update()
@@ -89,8 +97,6 @@ class BaseScene extends Scene
             this.tilesetAnimation.destroy();
         }
         this.scene.start(this.nextSceneKey, this.prevSceneKey);
-        // @TODO: change client to listen to player.scene change.
-        this.player.socket.send({act: 'scene', next: this.nextSceneKey, prev: this.prevSceneKey});
     }
 
     registerCollision()

@@ -12,6 +12,7 @@ class GameRoom extends Room
 
     onAuth(options)
     {
+        // @TODO: check if user is already logged and disconnect from the previous client.
         if(options.isNewUser){
             // registration (default role_id = 1, status = 1, state = 1):
             var queryString = 'INSERT INTO users VALUES(NULL, "'+options.email+'", "'+options.username+'", "'+options.password+'", 1, 1, 1);';
@@ -32,7 +33,7 @@ class GameRoom extends Room
                         options.state = 1;
                         resolve(options);
                     } else {
-                        // temporal fix to get row data values as object:
+                        // @TODO: refactor to get row data values as object.
                         var currentPlayer = '';
                         for(let i=0; i<rows.length; i++){
                             currentPlayer = rows[i];
@@ -47,46 +48,46 @@ class GameRoom extends Room
 
     onJoin(client, options, auth)
     {
-        // console.log(this.hasReachedMaxClients());
-        // console.log('session / options / auth: ', client.sessionId, options, auth);
+        // player creation:
         this.state.createPlayer(client.sessionId, auth);
     }
 
     onLeave(client)
     {
+        // remove player on logout:
         this.state.removePlayer(client.sessionId);
     }
 
     onMessage(client, data)
     {
-        // console.log('onMessage:', client.sessionId, ':', data);
+        // player movement:
         if(data.act == 'keyPress'){
             this.state.movePlayer(client.sessionId, data);
         }
+        // player stop:
         if(data.act == 'stop') {
             this.state.stopPlayer(client.sessionId, data);
         }
-        // @TODO: fix scene change sync.
-        if(data.act == 'scene'){
+        // player change scene:
+        if(data.act == 'change-scene'){
+            let previousScene = this.state.players[client.sessionId].scene;
             this.state.players[client.sessionId].scene = data.next;
-            console.log('change scene', data);
-            // broadcast the current player scene change to be removed or added from other players:
-            this.broadcast({act: 'change-scene', id: client.sessionId, scene: data.next});
+            // broadcast the current player scene change to be removed or added in other players:
+            // @TODO: instead of broadcast the scene change we need to listen the player.scene attribute change.
+            this.broadcast({act: 'change-scene', id: client.sessionId, scene: data.next, prev: previousScene});
         }
-        if(data.act == 'get-players') {
-            // console.log(this.state.players);
+        // players in the same scene:
+        if(data.act == 'get-players'){
+            // @TODO: this will be this.state.players when we use different server rooms to match client scenes.
             let playersInScene = [];
             for(let i in this.state.players){
                 let ps = this.state.players[i];
-                console.log(ps, (client.sessionId != ps.sessionId), (ps.scene == data.next));
                 if(client.sessionId != ps.sessionId && ps.scene == data.next){
                     playersInScene.push({id: ps.sessionId, x: ps.x, y: ps.y, dir: ps.dir});
                 }
             }
-            console.log('playersInScene: ', playersInScene);
             if(playersInScene.length){
-                // players in current scene just sent to the current client:
-                console.log({act: 'add-from-scene', scene: data.next, p: playersInScene});
+                // players in current scene sent only to the current client:
                 this.send(client, {act: 'add-from-scene', scene: data.next, p: playersInScene});
             }
         }

@@ -24,7 +24,6 @@ class Player
 
     create()
     {
-        // console.log('player creation: ', this.playerId);
         this.addPlayer(this.playerId, this.position.x, this.position.y, this.position.direction);
         this.scene.cameras.main.fadeFrom(FADE_DURATION);
         this.scene.scene.setVisible(true, this.room);
@@ -32,9 +31,6 @@ class Player
         this.scene.cameras.main.setBounds(0, 0, this.scene.map.widthInPixels, this.scene.map.heightInPixels);
         this.scene.cameras.main.startFollow(this.players[this.playerId], true);
         this.players[this.playerId].setCollideWorldBounds(true);
-        // this.room.send({act: 'get-players', next: this.scene.key});
-        console.log({act: 'get-players', next: this.scene.key});
-        // this.registerChat();
     }
 
     addPlayer(id, x, y, direction)
@@ -93,6 +89,7 @@ class Player
 
     registerChat()
     {
+        // @TODO: create the chat feature.
         let chat = document.getElementById(CHAT);
         let messages = document.getElementById('messages');
         chat.onsubmit = (e) => {
