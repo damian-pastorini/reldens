@@ -186,7 +186,7 @@ $(document).ready(function($){
     // on room join init phaser client:
     var config = {
         type: Phaser.AUTO,
-        parent: 'questworld-epic-adventure',
+        parent: 'dwd-game',
         width: 500,
         height: 500,
         physics: {
