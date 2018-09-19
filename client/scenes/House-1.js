@@ -15,7 +15,7 @@ class House_1 extends BaseScene
 
     init()
     {
-        super.init({ x: 240, y: 365, direction: UP });
+        super.init({x: 240, y: 365, direction: UP});
     }
 
     create()
