@@ -1,5 +1,4 @@
-# Quest World - Epic Adventure
-#### MMORPG
+# DwD - Game - MMORPG
 
 ## Built with
 + Node.js (Express.js)
@@ -9,7 +8,7 @@
 + Phaser 3
 
 ## Installation
-- Change the configuration file as you need: ./server/config:
+- Change the port configuration file as you need: ./server/config:
 ```json
 {
     "port": "8080"
@@ -17,8 +16,8 @@
 ```
 - Then run the following commands:
 ```
-$ git clone git@bitbucket.org:dwdeveloper/questworld.git
-$ cd questworld
+$ git clone git@github.com:damian-pastorini/dwdgame.git
+$ cd dwdgame
 $ mkdir dist
 $ npm install
 $ npm start
