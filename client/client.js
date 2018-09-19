@@ -1,6 +1,7 @@
 const Phaser = require('phaser');
 const Game = Phaser.Game;
 var PhaserPlayer = require('./objects/player');
+var phaserGame = '';
 const Init = require('./scenes/Init');
 const Town = require('./scenes/Town');
 const House1 = require('./scenes/House-1');
@@ -9,7 +10,6 @@ const House2 = require('./scenes/House-2');
 window.$ = require('jquery');
 window.Colyseus = require('colyseus.js');
 window.validate = require('jquery-validation');
-var phaserGame = '';
 
 $(document).ready(function($){
 

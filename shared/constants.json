@@ -3,8 +3,6 @@
     "LEFT": "left",
     "DOWN": "down",
     "RIGHT" : "right",
-    "NEW_PLAYER": "newPlayer",
-    "ALL_PLAYERS": "allPlayers",
     "CHAT": "chat",
     "KEY_PRESS": "keyPress",
     "MOVE": "move",

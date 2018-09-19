@@ -1,7 +1,7 @@
 {
-    "name": "quest-world",
-    "version": "1.1.0",
-    "description": "Epic adventure - MMORPG",
+    "name": "dwdgame",
+    "version": "1.2.0",
+    "description": "DwD - Game - MMORPG",
     "main": "index.js",
     "scripts": {
         "start": "rm -R dist && mkdir dist && cp -r client/assets dist/assets/ && node ."

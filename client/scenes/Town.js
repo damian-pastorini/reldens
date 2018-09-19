@@ -1,4 +1,5 @@
 const BaseScene = require('../utilities/base-scene');
+// @TODO: move into the shared file.
 const DOWN = 'down';
 const TOWN = 'Town';
 const HOUSE_1 = 'House_1';

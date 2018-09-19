@@ -1,3 +1,4 @@
+// @TODO: move into the shared file.
 const CHAT = 'chat';
 const KEY_PRESS = 'keyPress';
 const STOP = 'stop';

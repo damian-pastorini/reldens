@@ -1,6 +1,6 @@
 const config = require('./config/server.json');
 const Parcel = require('parcel-bundler');
-const colyseus = require('colyseus');
+const Colyseus = require('colyseus');
 const http = require('http');
 const path = require('path');
 const gameroom = require('./rooms/game-room').gameroom;
@@ -10,7 +10,7 @@ const app = express();
 const port = Number(process.env.PORT || config.port);
 
 const server = http.createServer(app);
-const gameServer = new colyseus.Server({server: server});
+const gameServer = new Colyseus.Server({server: server});
 gameServer.register('game_room', gameroom);
 
 const monitor = require('@colyseus/monitor');

@@ -1,9 +1,8 @@
 .cache
 .idea
 node_modules
-colyseus-examples
-ts-node*
 npm-debug*
+ts-node*
 /server/config/*
 /dist
 /v8-compile-cache*

@@ -2,7 +2,7 @@ const Phaser = require('phaser');
 const Scene = Phaser.Scene;
 const TilesetAnimation = require('./tileset-animation');
 const Player = require('../objects/player');
-// @TODO: create a single js file for constants and require it from the index.
+// @TODO: create a single js file for constants and include it as global in the index.
 var share = require('../../shared/constants');
 
 class BaseScene extends Scene

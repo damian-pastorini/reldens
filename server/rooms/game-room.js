@@ -12,11 +12,11 @@ class GameRoom extends Room
 
     onAuth(options)
     {
-        // @TODO: check if user is already logged and disconnect from the previous client.
         if(options.isNewUser){
-            // registration (default role_id = 1, status = 1, state = 1):
+            // the last 3 values are for the default role_id = 1, status = 1 and state = 1:
             var queryString = 'INSERT INTO users VALUES(NULL, "'+options.email+'", "'+options.username+'", "'+options.password+'", 1, 1, 1);';
         } else {
+            // @TODO: check if user is already logged and disconnect from the previous client.
             // login:
             var queryString = 'SELECT * FROM users WHERE username="'+options.username+'" AND password="'+options.password+'";';
         }

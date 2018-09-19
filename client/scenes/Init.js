@@ -1,11 +1,11 @@
 const Phaser = require('phaser');
+// @TODO: move into the shared file.
 var Scene = Phaser.Scene;
 const UP = 'up';
 const LEFT = 'left';
 const DOWN = 'down';
 const RIGHT = 'right';
 const INIT = 'Init';
-const TOWN = 'Town';
 const IMAGE_PLAYER = 'player';
 const IMAGE_TOWN = 'town';
 const IMAGE_HOUSE = 'house';
@@ -77,7 +77,6 @@ class Init extends Scene
 
     onLoadComplete(loader) 
     {
-        // this.scene.start(TOWN);
         this.scene.shutdown();
     }
 

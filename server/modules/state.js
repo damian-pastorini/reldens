@@ -17,7 +17,7 @@ class State
 
     movePlayer(id, data)
     {
-        // @TODO: move movement logic to the server side.
+        // @TODO: the values and logic should be on the server side to re-validate the client actions.
         if(data.x != this.players[id].x){
             this.players[id].x = data.x;
             this.players[id].mov = true;
@@ -32,6 +32,7 @@ class State
 
     stopPlayer(id, data)
     {
+        // @TODO: the values and logic should be on the server side to re-validate the client actions.
         let result = true;
         if(this.players[id].mov){
             result = false;

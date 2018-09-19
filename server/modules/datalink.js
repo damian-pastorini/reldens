@@ -1,4 +1,13 @@
 const mysql = require('mysql');
+// config example:
+/*
+{
+  "host": "localhost",
+  "user": "root",
+  "password": "root",
+  "database": "db_name"
+}
+*/
 var config = require('../config/database.json');
 
 class DataLink
