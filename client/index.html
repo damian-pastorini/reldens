@@ -2,16 +2,12 @@
 <html>
 <head>
     <title>Quest World - Epic adventure</title>
-    <meta name="viewport" content="width=device-width"/>
-    <!-- colyseus -->
-    <script type="text/javascript" src="/js/colyseus.js"></script>
-    <!-- jquery and validator -->
-    <script src="/js/jquery-3.3.1.min.js"></script>
-    <script src="/js/jquery.validate.min.js"></script>
-    <!-- custom client scripts -->
-    <script type="text/javascript" src="/js/client.js"></script>
+    <link rel="icon" href="favicon.ico" type="image/x-icon"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"/>
+    <!-- client -->
+    <script type="text/javascript" src="./client.js"></script>
     <!-- styles -->
-    <link rel="stylesheet" type="text/css" href="/css/styles.css"/>
+    <link rel="stylesheet" type="text/css" href="./css/styles.css"/>
 </head>
 <body>
     <div class="wrapper">
@@ -22,7 +18,7 @@
             <div class="forms-container">
                 <div class="col-2">
                     <!-- login form -->
-                    <form name="login_form" id="login_form" class="login_form" action="/game-room.html" method="post">
+                    <form name="login_form" id="login_form" class="login_form" action="#" method="post">
                         <h3 class="form-title">Login</h3>
                         <div class="input-box">
                             <label for="username">Username</label>
@@ -40,7 +36,7 @@
                 </div>
                 <div class="col-2">
                     <!-- register form -->
-                    <form name="register_form" id="register_form" class="register_form" action="/game-room.html" method="post">
+                    <form name="register_form" id="register_form" class="register_form" action="#" method="post">
                         <h3 class="form-title">Create Account</h3>
                         <div class="input-box">
                             <label for="reg_email">Email</label>
@@ -75,6 +71,11 @@
                 <div class="ux-box ux-box-right">
                     <button type="button" id="logout">Logout</button>
                 </div>
+                <div id="questworld-epic-adventure"></div>
+                <form id="chat" autocomplete="off" action="#">
+                    <div id="messages"></div>
+                    <input id="message" type="text" placeholder="Enter message"/>
+                </form>
             </div>
         </div>
         <div class="footer">

@@ -1,16 +1,23 @@
+var share = require('../../shared/constants');
+
 class Player
 {
 
     constructor(data)
     {
-        // console.log('data: ', data);
+        // player data:
         this.id = data.id;
         this.sessionId = '';
         this.role_id = data.role_id;
         this.status = data.status;
+        // @TODO: state will be used to save player state at logout.
         this.state = data.state;
-        this.x = Math.floor(Math.random() * 400);
-        this.y = Math.floor(Math.random() * 400);
+        // initial scene and position:
+        this.scene = 'Town';
+        this.x = 225;
+        this.y = 280;
+        this.dir = share.DOWN;
+        this.mov = false;
     }
 
 }

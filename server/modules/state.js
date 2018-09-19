@@ -15,18 +15,33 @@ class State
         this.players[sessionId] = newPlayer;
     }
 
+    movePlayer(id, data)
+    {
+        // @TODO: move movement logic to the server side.
+        if(data.x != this.players[id].x){
+            this.players[id].x = data.x;
+            this.players[id].mov = true;
+            this.players[id].dir = data.dir;
+        }
+        if(data.y != this.players[id].y){
+            this.players[id].y = data.y;
+            this.players[id].mov = true;
+            this.players[id].dir = data.dir;
+        }
+    }
+
+    stopPlayer(id, data)
+    {
+        let result = true;
+        if(this.players[id].mov){
+            result = false;
+        }
+        this.players[id].mov = result;
+    }
+
     removePlayer(id)
     {
         delete this.players[id];
-    }
-
-    movePlayer(id, movement)
-    {
-        if(movement.x){
-            this.players[id].x += movement.x * 10;
-        } else if (movement.y) {
-            this.players[id].y += movement.y * 10;
-        }
     }
 
 }
