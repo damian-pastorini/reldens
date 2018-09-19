@@ -2,12 +2,19 @@
 
 ## About this project
 This is a really simple base MMORPG game created based on the Colyseus samples:
+
 https://github.com/gamestdio/colyseus-examples
+
 And on the Phaser 3 implementation from Jacky Rusly:
+
 https://github.com/jackyrusly/jrgame
+
 As you will see I've considerable modified how the jrgame interact with Socket.io in order to make it work as how the Colyseus example was created.
+
 The game basics are login through DB, loader, scene change, players sync, nothing like chat, items, or attacks was implemented here.
+
 Please feel free to create any tickets or pull requests for questions, fixes or improvements.
+
 Consider this is my first implementation ever, I never used neither Node.js, much less Parcel, Colyseus or Phaser (I'm coming from PHP and Magento to give you an idea). 
 
 ## Built with
