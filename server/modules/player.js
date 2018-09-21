@@ -1,4 +1,4 @@
-// @TODO: create a single js file for constants and require it.
+// shared file:
 var share = require('../../shared/constants');
 
 class Player

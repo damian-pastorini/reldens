@@ -1,6 +1,6 @@
 const BaseScene = require ('../utilities/base-scene');
-// @TODO: move into the shared file.
-const UP = 'up';
+var share = require('../../shared/constants');
+// @TODO: this will be from the DB.
 const TOWN = 'Town';
 const HOUSE_2 = 'House_2';
 const IMAGE_HOUSE = 'house';
@@ -16,7 +16,7 @@ class House_2 extends BaseScene
 
     init()
     {
-        super.init({x: 240, y: 397, direction: UP});
+        super.init({x: 240, y: 397, direction: share.UP});
     }
 
     create()

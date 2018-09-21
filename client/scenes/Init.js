@@ -1,11 +1,6 @@
 const Phaser = require('phaser');
-// @TODO: move into the shared file.
-var Scene = Phaser.Scene;
-const UP = 'up';
-const LEFT = 'left';
-const DOWN = 'down';
-const RIGHT = 'right';
-const INIT = 'Init';
+var share = require('../../shared/constants');
+// @TODO: this will be from the DB.
 const IMAGE_PLAYER = 'player';
 const IMAGE_TOWN = 'town';
 const IMAGE_HOUSE = 'house';
@@ -13,12 +8,12 @@ const MAP_TOWN = 'map-town';
 const MAP_HOUSE_1 = 'map-house-1';
 const MAP_HOUSE_2 = 'map-house-2';
 
-class Init extends Scene
+class Init extends Phaser.Scene
 {
 
     constructor()
     {
-        super({ key: INIT });
+        super({ key: share.INIT });
         this.progressBar = null;
         this.progressCompleteRect = null;
         this.progressRect = null;
@@ -40,25 +35,25 @@ class Init extends Scene
     create()
     {
         this.anims.create({
-            key: LEFT,
+            key: share.LEFT,
             frames: this.anims.generateFrameNumbers(IMAGE_PLAYER, { start: 3, end: 5 }),
             frameRate: 16,
             repeat: -1
         });
         this.anims.create({
-            key: RIGHT,
+            key: share.RIGHT,
             frames: this.anims.generateFrameNumbers(IMAGE_PLAYER, { start: 6, end: 8 }),
             frameRate: 16,
             repeat: -1
         });
         this.anims.create({
-            key: UP,
+            key: share.UP,
             frames: this.anims.generateFrameNumbers(IMAGE_PLAYER, { start: 9, end: 11 }),
             frameRate: 16,
             repeat: -1
         });
         this.anims.create({
-            key: DOWN,
+            key: share.DOWN,
             frames: this.anims.generateFrameNumbers(IMAGE_PLAYER, { start: 0, end: 2 }),
             frameRate: 16,
             repeat: -1

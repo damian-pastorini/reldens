@@ -1,14 +1,6 @@
-// @TODO: move into the shared file.
-const CHAT = 'chat';
-const KEY_PRESS = 'keyPress';
-const STOP = 'stop';
-const UP = 'up';
-const LEFT = 'left';
-const DOWN = 'down';
-const RIGHT = 'right';
+var share = require('../../shared/constants');
+// @TODO: this will be from the DB.
 const IMAGE_PLAYER = 'player';
-const SPEED = 200;
-const FADE_DURATION = 1000;
 
 class Player
 {
@@ -26,7 +18,7 @@ class Player
     create()
     {
         this.addPlayer(this.playerId, this.position.x, this.position.y, this.position.direction);
-        this.scene.cameras.main.fadeFrom(FADE_DURATION);
+        this.scene.cameras.main.fadeFrom(share.FADE_DURATION);
         this.scene.scene.setVisible(true, this.room);
         this.scene.physics.world.setBounds(0, 0, this.scene.map.widthInPixels, this.scene.map.heightInPixels);
         this.scene.cameras.main.setBounds(0, 0, this.scene.map.widthInPixels, this.scene.map.heightInPixels);
@@ -43,38 +35,38 @@ class Player
 
     left(send = true)
     {
-        this.players[this.playerId].body.velocity.x = -SPEED;
-        this.players[this.playerId].anims.play(LEFT, true);
+        this.players[this.playerId].body.velocity.x = -share.SPEED;
+        this.players[this.playerId].anims.play(share.LEFT, true);
         if(send) {
-            this.socket.send({act: KEY_PRESS, dir: LEFT, x: this.players[this.playerId].x, y: this.players[this.playerId].y});
+            this.socket.send({act: share.KEY_PRESS, dir: share.LEFT, x: this.players[this.playerId].x, y: this.players[this.playerId].y});
         }
 
     }
 
     right(send = true)
     {
-        this.players[this.playerId].body.velocity.x = SPEED;
-        this.players[this.playerId].anims.play(RIGHT, true);
+        this.players[this.playerId].body.velocity.x = share.SPEED;
+        this.players[this.playerId].anims.play(share.RIGHT, true);
         if(send) {
-            this.socket.send({act: KEY_PRESS, dir: RIGHT, x: this.players[this.playerId].x, y: this.players[this.playerId].y});
+            this.socket.send({act: share.KEY_PRESS, dir: share.RIGHT, x: this.players[this.playerId].x, y: this.players[this.playerId].y});
         }
     }
 
     up(send = true)
     {
-        this.players[this.playerId].body.velocity.y = -SPEED;
-        this.players[this.playerId].anims.play(UP, true);
+        this.players[this.playerId].body.velocity.y = -share.SPEED;
+        this.players[this.playerId].anims.play(share.UP, true);
         if(send) {
-            this.socket.send({act: KEY_PRESS, dir: UP, x: this.players[this.playerId].x, y: this.players[this.playerId].y});
+            this.socket.send({act: share.KEY_PRESS, dir: share.UP, x: this.players[this.playerId].x, y: this.players[this.playerId].y});
         }
     }
 
     down(send = true)
     {
-        this.players[this.playerId].body.velocity.y = SPEED;
-        this.players[this.playerId].anims.play(DOWN, true);
+        this.players[this.playerId].body.velocity.y = share.SPEED;
+        this.players[this.playerId].anims.play(share.DOWN, true);
         if(send) {
-            this.socket.send({act: KEY_PRESS, dir: DOWN, x: this.players[this.playerId].x, y: this.players[this.playerId].y});
+            this.socket.send({act: share.KEY_PRESS, dir: share.DOWN, x: this.players[this.playerId].x, y: this.players[this.playerId].y});
         }
     }
 
@@ -84,14 +76,14 @@ class Player
         this.players[this.playerId].body.velocity.y = 0;
         this.players[this.playerId].anims.stop();
         if(send) {
-            this.socket.send({act: STOP, x: this.players[this.playerId].x, y: this.players[this.playerId].y });
+            this.socket.send({act: share.STOP, x: this.players[this.playerId].x, y: this.players[this.playerId].y });
         }
     }
 
     registerChat()
     {
         // @TODO: create the chat feature.
-        let chat = document.getElementById(CHAT);
+        let chat = document.getElementById(share.CHAT);
         let messages = document.getElementById('messages');
         chat.onsubmit = (e) => {
             e.preventDefault();

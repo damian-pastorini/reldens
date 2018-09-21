@@ -1,11 +1,12 @@
+// game-client:
 const Phaser = require('phaser');
-const Game = Phaser.Game;
-var PhaserPlayer = require('./objects/player');
-var phaserGame = '';
+const PhaserPlayer = require('./objects/player');
 const Init = require('./scenes/Init');
 const Town = require('./scenes/Town');
 const House1 = require('./scenes/House-1');
 const House2 = require('./scenes/House-2');
+var share = require('../shared/constants');
+var phaserGame = '';
 
 window.$ = require('jquery');
 window.Colyseus = require('colyseus.js');
@@ -81,7 +82,7 @@ $(document).ready(function($){
                     // @TODO: change position based on the current scene.
                     // let currentScene = phaserGame.scene.getScene('Town');
                     let currentScene = getActiveScene();
-                    currentScene.player.addPlayer(change.path.id, 225, 280, 'down');
+                    currentScene.player.addPlayer(change.path.id, 225, 280, share.DOWN);
                 }
             }
             // remove player on disconnect or logout:
@@ -106,19 +107,19 @@ $(document).ready(function($){
                     let playerToMove = currentScene.player.players[change.path.id];
                     if(change.path.axis == 'x'){
                         if(change.value < playerToMove.x){
-                            playerToMove.anims.play('left', true);
+                            playerToMove.anims.play(share.LEFT, true);
                             playerToMove.x = change.value;
                         } else {
-                            playerToMove.anims.play('right', true);
+                            playerToMove.anims.play(share.RIGHT, true);
                             playerToMove.x = change.value;
                         }
                     }
                     if(change.path.axis == 'y'){
                         if(change.value < playerToMove.y){
-                            playerToMove.anims.play('up', true);
+                            playerToMove.anims.play(share.UP, true);
                             playerToMove.y = change.value;
                         } else {
-                            playerToMove.anims.play('down', true);
+                            playerToMove.anims.play(share.DOWN, true);
                             playerToMove.y = change.value;
                         }
                     }
@@ -143,7 +144,7 @@ $(document).ready(function($){
             }
         });
         room.onMessage.add(function(message){
-            if(message.act == 'change-scene'){
+            if(message.act == share.CHANGE_SCENE){
                 let currentScene = getActiveScene();
                 // if other users move to a different scene from the current one we need to remove them:
                 if(message.scene != currentScene.key && currentScene.player.players.hasOwnProperty(message.id) && currentScene.player.playerId != message.id){
@@ -158,20 +159,20 @@ $(document).ready(function($){
                         pos = currentScene.getPosition(message.prev);
                     }
                     if(currentScene.key == 'House_1'){
-                        pos = {x: 240, y: 365, direction: 'up'};
+                        pos = {x: 240, y: 365, direction: share.UP};
                     }
                     if(currentScene.key == 'House_2'){
-                        pos = {x: 240, y: 397, direction: 'up'};
+                        pos = {x: 240, y: 397, direction: share.UP};
                     }
                     currentScene.player.addPlayer(message.id, pos.x, pos.y, pos.direction);
                 }
                 // if current user change scene we need to get the other users from that scene:
                 if(currentScene.player.playerId == message.id){
-                    room.send({act: 'get-players', next: message.scene});
+                    room.send({act: share.GET_PLAYERS, next: message.scene});
                 }
             }
             // the get-players will send the request to the server to get the other players in the current scene:
-            if(message.act == 'add-from-scene'){
+            if(message.act == share.ADD_FROM_SCENE){
                 let currentScene = phaserGame.scene.getScene(message.scene);
                 for(let i in message.p){
                     let toAdd = message.p[i];
@@ -200,7 +201,7 @@ $(document).ready(function($){
     };
 
     // initialize game:
-    phaserGame = new Game(config);
+    phaserGame = new Phaser.Game(config);
     window.phaserGame = phaserGame;
 
     function getActiveScene()

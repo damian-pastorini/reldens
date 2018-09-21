@@ -1,11 +1,9 @@
 const Phaser = require('phaser');
-const Scene = Phaser.Scene;
 const TilesetAnimation = require('./tileset-animation');
 const Player = require('../objects/player');
-// @TODO: create a single js file for constants and include it as global in the index.
 var share = require('../../shared/constants');
 
-class BaseScene extends Scene
+class BaseScene extends Phaser.Scene
 {
 
     constructor(key)
@@ -66,7 +64,7 @@ class BaseScene extends Scene
         this.game.currentScene = this.key;
         if(this.player){
             // if player is set it means it's changing scene:
-            this.player.socket.send({act: 'change-scene', next: this.key});
+            this.player.socket.send({act: share.CHANGE_SCENE, next: this.key});
         }
     }
 

@@ -1,6 +1,6 @@
 const BaseScene = require('../utilities/base-scene');
-// @TODO: move into the shared file.
-const DOWN = 'down';
+var share = require('../../shared/constants');
+// @TODO: this will be from the DB.
 const TOWN = 'Town';
 const HOUSE_1 = 'House_1';
 const HOUSE_2 = 'House_2';
@@ -68,9 +68,9 @@ class Town extends BaseScene
     getPosition(data)
     {
         if (data === HOUSE_1 || Object.getOwnPropertyNames(data).length === 0){
-            return { x: 225, y: 280, direction: DOWN };
+            return { x: 225, y: 280, direction: share.DOWN };
         } else if(data === HOUSE_2){
-            return { x: 655, y: 470, direction: DOWN };
+            return { x: 655, y: 470, direction: share.DOWN };
         }
     }
 

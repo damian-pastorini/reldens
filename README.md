@@ -28,7 +28,8 @@ Consider this is my first implementation ever, I never used neither Node.js, muc
 - Change the port configuration file as you need: ./server/config:
 ```json
 {
-    "port": "8080"
+    "port": "8080",
+    "colyseus_monitor": true
 }
 ```
 - Then run the following commands:

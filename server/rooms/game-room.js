@@ -1,6 +1,7 @@
 var Room = require('colyseus').Room;
 var State = require('../modules/state').state;
-var DbLink = require('../modules/datalink');
+var DataLink = require('../modules/datalink');
+var share = require('../../shared/constants');
 
 class GameRoom extends Room
 {
@@ -21,7 +22,7 @@ class GameRoom extends Room
             var queryString = 'SELECT * FROM users WHERE username="'+options.username+'" AND password="'+options.password+'";';
         }
         return new Promise((resolve, reject) => {
-            DbLink.connection.query(queryString, options, (err, rows) => {
+            DataLink.connection.query(queryString, options, (err, rows) => {
                 if(err){
                     return reject(options);
                 }
@@ -61,23 +62,23 @@ class GameRoom extends Room
     onMessage(client, data)
     {
         // player movement:
-        if(data.act == 'keyPress'){
+        if(data.act == share.KEY_PRESS){
             this.state.movePlayer(client.sessionId, data);
         }
         // player stop:
-        if(data.act == 'stop') {
+        if(data.act == share.STOP) {
             this.state.stopPlayer(client.sessionId, data);
         }
         // player change scene:
-        if(data.act == 'change-scene'){
+        if(data.act == share.CHANGE_SCENE){
             let previousScene = this.state.players[client.sessionId].scene;
             this.state.players[client.sessionId].scene = data.next;
             // broadcast the current player scene change to be removed or added in other players:
             // @TODO: instead of broadcast the scene change we need to listen the player.scene attribute change.
-            this.broadcast({act: 'change-scene', id: client.sessionId, scene: data.next, prev: previousScene});
+            this.broadcast({act: share.CHANGE_SCENE, id: client.sessionId, scene: data.next, prev: previousScene});
         }
         // players in the same scene:
-        if(data.act == 'get-players'){
+        if(data.act == share.GET_PLAYERS){
             // @TODO: this will be this.state.players when we use different server rooms to match client scenes.
             let playersInScene = [];
             for(let i in this.state.players){
@@ -88,7 +89,7 @@ class GameRoom extends Room
             }
             if(playersInScene.length){
                 // players in current scene sent only to the current client:
-                this.send(client, {act: 'add-from-scene', scene: data.next, p: playersInScene});
+                this.send(client, {act: share.ADD_FROM_SCENE, scene: data.next, p: playersInScene});
             }
         }
     }
