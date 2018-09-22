@@ -1,18 +1,12 @@
 const BaseScene = require('../utilities/base-scene');
 var share = require('../../shared/constants');
-// @TODO: this will be from the DB.
-const TOWN = 'Town';
-const HOUSE_1 = 'House_1';
-const HOUSE_2 = 'House_2';
-const MAP_TOWN = 'map-town';
-const IMAGE_TOWN = 'town';
 
 class Town extends BaseScene
 {
 
     constructor()
     {
-        super(TOWN);
+        super(share.TOWN);
     }
 
     init(data)
@@ -22,7 +16,7 @@ class Town extends BaseScene
 
     create()
     {
-        super.create(MAP_TOWN, IMAGE_TOWN, false);
+        super.create(share.MAP_TOWN, share.IMAGE_TOWN, false);
     }
 
     registerCollision()
@@ -56,10 +50,10 @@ class Town extends BaseScene
         this.physics.add.collider(player, this.layers[9]);
         this.physics.add.collider(player, this.layers[7], (sprite, tile) => {
             if (tile.index === 167) {
-                this.nextSceneKey = HOUSE_1;
+                this.nextSceneKey = share.HOUSE_1;
                 this.onChangeScene();
             } else if (tile.index === 1661 || tile.index === 1662) {
-                this.nextSceneKey = HOUSE_2;
+                this.nextSceneKey = share.HOUSE_2;
                 this.onChangeScene();
             }
         });
@@ -67,9 +61,9 @@ class Town extends BaseScene
 
     getPosition(data)
     {
-        if (data === HOUSE_1 || Object.getOwnPropertyNames(data).length === 0){
+        if (data === share.HOUSE_1 || Object.getOwnPropertyNames(data).length === 0){
             return { x: 225, y: 280, direction: share.DOWN };
-        } else if(data === HOUSE_2){
+        } else if(data === share.HOUSE_2){
             return { x: 655, y: 470, direction: share.DOWN };
         }
     }

@@ -1,17 +1,12 @@
 const BaseScene = require('../utilities/base-scene');
 var share = require('../../shared/constants');
-// @TODO: this will be from the DB.
-const TOWN = 'Town';
-const HOUSE_1 = 'House_1';
-const IMAGE_HOUSE = 'house';
-const MAP_HOUSE_1 = 'map-house-1';
 
 class House_1 extends BaseScene
 {
 
     constructor()
     {
-        super(HOUSE_1);
+        super(share.HOUSE_1);
     }
 
     init()
@@ -21,7 +16,7 @@ class House_1 extends BaseScene
 
     create()
     {
-        super.create(MAP_HOUSE_1, IMAGE_HOUSE, true);
+        super.create(share.MAP_HOUSE_1, share.IMAGE_HOUSE, true);
         this.registerTilesetAnimation(this.layers[2]);
     }
 
@@ -33,7 +28,7 @@ class House_1 extends BaseScene
         this.physics.add.collider(player, this.layers[2]);
         this.physics.add.collider(player, this.layers[1], (sprite, tile) => {
             if (tile.index === 20) {
-                this.nextSceneKey = TOWN;
+                this.nextSceneKey = share.TOWN;
                 this.onChangeScene();
             }
         });

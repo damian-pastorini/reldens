@@ -1,6 +1,4 @@
 var share = require('../../shared/constants');
-// @TODO: this will be from the DB.
-const IMAGE_PLAYER = 'player';
 
 class Player
 {
@@ -28,7 +26,7 @@ class Player
 
     addPlayer(id, x, y, direction)
     {
-        this.players[id] = this.scene.physics.add.sprite(x, y, IMAGE_PLAYER);
+        this.players[id] = this.scene.physics.add.sprite(x, y, share.IMAGE_PLAYER);
         this.players[id].anims.play(direction);
         this.players[id].anims.stop();
     }

@@ -59,7 +59,7 @@ $(document).ready(function($){
         room.onJoin.add(function(){
             $('.forms-container').detach();
             $('.game-container').show();
-            phaserGame.scene.start('Town');
+            phaserGame.scene.start(share.TOWN);
             phaserGame.colyseusRoom = room;
             // @NOTE: 'Town' is hardcoded below since it's the initial scene for every player.
             // @TODO: if we save the user state in the DB then we can replace Town by the last user scene.
@@ -155,13 +155,13 @@ $(document).ready(function($){
                 if(message.scene == currentScene.key && currentScene.player.playerId != message.id){
                     // @TODO: this will be coming from a single method in each scene.
                     let pos = {};
-                    if(currentScene.key == 'Town'){
+                    if(currentScene.key == share.TOWN){
                         pos = currentScene.getPosition(message.prev);
                     }
-                    if(currentScene.key == 'House_1'){
+                    if(currentScene.key == share.HOUSE_1){
                         pos = {x: 240, y: 365, direction: share.UP};
                     }
-                    if(currentScene.key == 'House_2'){
+                    if(currentScene.key == share.HOUSE_2){
                         pos = {x: 240, y: 397, direction: share.UP};
                     }
                     currentScene.player.addPlayer(message.id, pos.x, pos.y, pos.direction);
@@ -207,7 +207,7 @@ $(document).ready(function($){
     function getActiveScene()
     {
         // default scene:
-        let currentScene = 'Town';
+        let currentScene = share.TOWN;
         if(phaserGame.currentScene){
             currentScene = phaserGame.currentScene;
         }
