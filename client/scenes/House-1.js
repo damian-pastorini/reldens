@@ -1,4 +1,4 @@
-const BaseScene = require('../utilities/base-scene');
+const BaseScene = require('../objects/base-scene');
 var share = require('../../shared/constants');
 
 class House_1 extends BaseScene

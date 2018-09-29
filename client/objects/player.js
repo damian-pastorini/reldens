@@ -5,6 +5,7 @@ class Player
 
     constructor(scene, room, position)
     {
+        this.username = '';
         this.scene = scene;
         this.room = room;
         this.position = position;

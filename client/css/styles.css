@@ -21,3 +21,4 @@ body { font-family:Verdana, Geneva, sans-serif; }
 .ux-box { z-index:1001; display:block; margin:0px; padding:0px; }
 .ux-box-left { position:absolute; top:0px; left:0px; }
 .ux-box-right { position:absolute; top:0px; right:0px; }
+.player-name { margin:10px 0px; text-align:right; }

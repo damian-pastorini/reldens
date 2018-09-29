@@ -13,6 +13,13 @@ class State
         var newPlayer = new Player(playerData);
         newPlayer.sessionId = sessionId;
         this.players[sessionId] = newPlayer;
+        /* NOTE: in case we need to add the player as first attribute we can use the following example.
+        let tmpObj = {};
+        tmpObj[sessionId] = newPlayer;
+        let newPlayers = Object.assign(tmpObj, this.players);
+        // console.log(newPlayers);
+        this.players = newPlayers;
+        */
     }
 
     movePlayer(id, data)

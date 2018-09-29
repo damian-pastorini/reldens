@@ -55,20 +55,14 @@ $(document).ready(function($){
                 $errorBlock.show();
             });
         }
+        room.onError.add(function(data){
+            alert('There was a connection error.');
+            window.location.reload();
+        });
         // on join activate game:
         room.onJoin.add(function(){
             $('.forms-container').detach();
             $('.game-container').show();
-            phaserGame.scene.start(share.TOWN);
-            phaserGame.colyseusRoom = room;
-            // @NOTE: 'Town' is hardcoded below since it's the initial scene for every player.
-            // @TODO: if we save the user state in the DB then we can replace Town by the last user scene.
-            let currentScene = phaserGame.scene.getScene('Town');
-            let currentPlayer = new PhaserPlayer(currentScene, 'Town', {x: 225, y: 280, direction: 'down'});
-            currentPlayer.socket = room;
-            currentPlayer.playerId = room.sessionId;
-            currentPlayer.create();
-            currentScene.player = currentPlayer;
             room.onError.add(function(data){
                 alert('Connection error!');
                 window.location.reload();
@@ -76,19 +70,10 @@ $(document).ready(function($){
         });
         // listen to patches coming from the server
         room.listen('players/:id', function(change){
-            // player creation after login:
-            if (change.operation === 'add'){
-                if(change.path.id != room.sessionId){
-                    // @TODO: change position based on the current scene.
-                    // let currentScene = phaserGame.scene.getScene('Town');
-                    let currentScene = getActiveScene();
-                    currentScene.player.addPlayer(change.path.id, 225, 280, share.DOWN);
-                }
-            }
             // remove player on disconnect or logout:
             if (change.operation === 'remove'){
                 if(change.path.id == room.sessionId){
-                    alert('Your session expired! Please login again');
+                    alert('Your session ended, please login again.');
                     window.location.reload();
                 } else {
                     let currentScene = getActiveScene();
@@ -103,7 +88,7 @@ $(document).ready(function($){
         room.listen('players/:id/:axis', function(change){
             if(change.path.id != room.sessionId){
                 let currentScene = getActiveScene();
-                if(currentScene.player.players.hasOwnProperty(change.path.id)){
+                if(currentScene.player && currentScene.player.players.hasOwnProperty(change.path.id)){
                     let playerToMove = currentScene.player.players[change.path.id];
                     if(change.path.axis == 'x'){
                         if(change.value < playerToMove.x){
@@ -138,12 +123,37 @@ $(document).ready(function($){
             // player change direction action:
             if(change.path.id != room.sessionId && change.path.attribute == 'dir'){
                 let currentScene = getActiveScene();
-                if(currentScene.player.players.hasOwnProperty(change.path.id)){
+                if(currentScene.player && currentScene.player.players.hasOwnProperty(change.path.id)){
                     currentScene.player.players[change.path.id].anims.stop();
                 }
             }
         });
         room.onMessage.add(function(message){
+            if(message.act == share.CREATE_PLAYER && message.id == room.sessionId){
+                $('.player-name').html(message.player.username);
+                phaserGame.scene.start(message.player.scene);
+                phaserGame.colyseusRoom = room;
+                let currentScene = phaserGame.scene.getScene(message.player.scene);
+                let playerPos = {x: parseFloat(message.player.x), y: parseFloat(message.player.y), direction: message.player.dir};
+                let currentPlayer = new PhaserPlayer(currentScene, message.player.scene, playerPos);
+                currentPlayer.socket = room;
+                currentPlayer.playerId = room.sessionId;
+                currentPlayer.username = message.player.username;
+                currentPlayer.create();
+                currentScene.player = currentPlayer;
+                for(let p in message.players){
+                    let tmp = message.players[p];
+                    if(tmp.sessionId != room.sessionId){
+                        currentScene.player.addPlayer(tmp.sessionId, tmp.x, tmp.y, tmp.dir);
+                    }
+                }
+            }
+            if(message.act == share.ADD_PLAYER && message.id != room.sessionId){
+                let currentScene = getActiveScene();
+                if(currentScene.key == message.player.scene){
+                    currentScene.player.addPlayer(message.id, parseFloat(message.player.x), parseFloat(message.player.y), message.player.dir);
+                }
+            }
             if(message.act == share.CHANGE_SCENE){
                 let currentScene = getActiveScene();
                 // if other users move to a different scene from the current one we need to remove them:
@@ -156,7 +166,11 @@ $(document).ready(function($){
                     // @TODO: this will be coming from a single method in each scene.
                     let pos = {};
                     if(currentScene.key == share.TOWN){
-                        pos = currentScene.getPosition(message.prev);
+                        let previousScene = {};
+                        if(message.prev){
+                            previousScene = message.prev;
+                        }
+                        pos = currentScene.getPosition(previousScene);
                     }
                     if(currentScene.key == share.HOUSE_1){
                         pos = {x: 240, y: 365, direction: share.UP};
@@ -177,7 +191,7 @@ $(document).ready(function($){
                 for(let i in message.p){
                     let toAdd = message.p[i];
                     if(toAdd.id != currentScene.player.playerId){
-                        currentScene.player.addPlayer(toAdd.id, toAdd.x, toAdd.y, toAdd.dir);
+                        currentScene.player.addPlayer(toAdd.id, parseFloat(toAdd.x), parseFloat(toAdd.y), toAdd.dir);
                     }
                 }
             }
