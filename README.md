@@ -17,6 +17,9 @@ Please feel free to create any tickets or pull requests for questions, fixes or 
 
 Consider this is my first implementation ever, I never used neither Node.js, much less Parcel, Colyseus or Phaser (I'm coming from PHP and Magento to give you an idea). 
 
+## Contributions and donations
+If you like to contribute or donate to support the project please feel free to contact me at damian.pastorini@gmail.com.
+
 ## Built with
 + Node.js (Express.js)
 + Parcel
