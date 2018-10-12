@@ -1,12 +1,12 @@
-const BaseScene = require('./base-scene');
+const SceneBase = require('./scene-base');
 
-class DynamicScene extends BaseScene
+class SceneDynamic extends SceneBase
 {
 
     constructor(key, data)
     {
         super(key);
-        this.data = data;
+        this.params = data;
     }
 
     init(data)
@@ -16,13 +16,19 @@ class DynamicScene extends BaseScene
 
     create()
     {
-        super.create(this.data.map, this.data.image, false);
+        super.create(this.params.sceneMap, this.params.image, false);
+        if(this.params.layers.animation){
+            for(let a in this.params.layers.animation){
+                let layerIndex = this.params.layers.animation[a];
+                this.registerTilesetAnimation(this.layers[layerIndex]);
+            }
+        }
     }
 
     registerCollision()
     {
-        for(let i=0; i<this.data.collisions; i++){
-            let newC = this.data.collisions[i];
+        for(let c in this.params.collisions){
+            let newC = this.params.collisions[c];
             if(newC.C == 'btw'){
                 // example: {"L":7, "C":"btw", "A":105, "B":110}
                 this.layers[newC.L].setCollisionBetween(newC.A, newC.B);
@@ -33,14 +39,14 @@ class DynamicScene extends BaseScene
             }
         }
         let player = this.player.players[this.player.playerId];
-        for(let i=0; i<this.data.layers.collider; i++){
+        for(let lc in this.params.layers.collider){
             // example: "collider": [6,8,9]
-            let collider = this.data.layers.collider[i];
+            let collider = this.params.layers.collider[lc];
             this.physics.add.collider(player, this.layers[collider]);
         }
-        this.physics.add.collider(player, this.layers[this.data.layers.main], (sprite, tile) => {
-            for(let i=0; i<this.data.layers.change_points; i++){
-                let cPoint = this.data.layers.change_points[i];
+        this.physics.add.collider(player, this.layers[this.params.layers.main], (sprite, tile) => {
+            for(let cp in this.params.layers.change_points){
+                let cPoint = this.params.layers.change_points[cp];
                 // example: {"i":167, "n":"other_scene_key_1"}
                 if (tile.index === cPoint.i) {
                     this.nextSceneKey = cPoint.n;
@@ -52,12 +58,17 @@ class DynamicScene extends BaseScene
 
     getPosition(data)
     {
-        for(let i=0; i<this.data.return_positions; i++){
+        for(let i=0; i<this.params.returnPositions; i++){
             // examples:
             // {"P":"other_scene_key_1", "X":225, "Y":280, D:"down", "De":1},
             // {"P":"other_scene_key_2", "X":655, "Y":470, "D":"down"}
-            let rp = this.data.return_positions[i];
-            if (data === rp.P || (Object.getOwnPropertyNames(data).length === 0 && rp.De==1)){
+            let rp = this.params.returnPositions[i];
+            if(
+                // if previous scene is set and data match:
+                (data && rp.P && data === rp.P)
+                // or if data is null and position is default (De):
+                || (Object.getOwnPropertyNames(data).length === 0 && rp.De==1)
+            ){
                 return {x: rp.X, y: rp.Y, direction: rp.D};
             }
 
@@ -66,4 +77,4 @@ class DynamicScene extends BaseScene
 
 }
 
-module.exports = DynamicScene;
+module.exports = SceneDynamic;

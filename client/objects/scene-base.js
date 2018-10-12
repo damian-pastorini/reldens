@@ -1,9 +1,9 @@
 const Phaser = require('phaser');
 const TilesetAnimation = require('./tileset-animation');
 const Player = require('./player');
-var share = require('../../shared/constants');
+const share = require('../../shared/constants');
 
-class BaseScene extends Phaser.Scene
+class SceneBase extends Phaser.Scene
 {
 
     constructor(key)
@@ -46,7 +46,7 @@ class BaseScene extends Phaser.Scene
                 this.layers[i] = this.map.createStaticLayer(this.map.layers[i].name, this.tileset, 0, 0);
             }
         }
-        if(this.game.colyseusRoom){
+        if(this.game.colyseusRoom && !this.player){
             this.player.create();
         }
         this.cameras.main.on('camerafadeincomplete', () => {
@@ -62,9 +62,10 @@ class BaseScene extends Phaser.Scene
         this.cameras.main.on('camerafadeoutcomplete', this.changeScene.bind(this));
         // save active key into the game object to get it in other events.
         this.game.currentScene = this.key;
+        // @TODO: we need to replace this.player.playerId with the current colyseus room ID.
         if(this.player){
             // if player is set it means it's changing scene:
-            this.player.socket.send({act: share.CHANGE_SCENE, next: this.key});
+            // this.player.socket.send({act: share.CHANGED_SCENE, next: this.key});
         }
     }
 
@@ -95,6 +96,14 @@ class BaseScene extends Phaser.Scene
         if(this.withTSAnimation){
             this.tilesetAnimation.destroy();
         }
+        this.player.socket.send({act: share.CHANGED_SCENE, next: this.nextSceneKey, prev: this.prevSceneKey});
+        this.scene.start(this.nextSceneKey, this.prevSceneKey);
+    }
+
+    sceneChangedOnServer(prev, next)
+    {
+        this.nextSceneKey = next;
+        this.prevSceneKey = prev;
         this.scene.start(this.nextSceneKey, this.prevSceneKey);
     }
 
@@ -130,4 +139,4 @@ class BaseScene extends Phaser.Scene
 
 }
 
-module.exports = BaseScene;
+module.exports = SceneBase;

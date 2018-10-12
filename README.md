@@ -28,14 +28,19 @@ If you like to contribute or donate to support the project please feel free to c
 + Phaser 3
 
 ## Change Log
-### 1.2.0
-+ Base integration between Colyseus and Phaser 3.
-+ Users entity.
+### 1.2.2
++ Implemented multiple Colyseus rooms (one room for each Phaser scene).
++ Fixed database entity for scenes.
++ Fixed player save state, login, registration, and encrypted passwords.
 
 ### 1.2.1
 + Players state load / save feature.
 + Database entity for scenes.
 + Dynamic Phaser scenes and Colyseus rooms modules (to be implemented).
+
+### 1.2.0
++ Base integration between Colyseus and Phaser 3.
++ Users entity.
 
 ## Installation
 - Change the port configuration file as you need: ./server/config:
@@ -105,7 +110,7 @@ ENGINE=InnoDB;
 
 ### Scenes Entity
 
-This entity is related to scenes creation from the administration panel (future feature not fully implemented yet).
+This entity is related to scenes creation from the administration panel (future feature not implemented yet).
 
 ##### Table creation:
 
@@ -113,7 +118,7 @@ This entity is related to scenes creation from the administration panel (future 
 CREATE TABLE `scenes` (
 	`id` INT(11) NOT NULL AUTO_INCREMENT,
 	`name` VARCHAR(255) NOT NULL,
-	`map` VARCHAR(255) NOT NULL COMMENT 'The map JSON file name.',
+	`scene_map` VARCHAR(255) NOT NULL COMMENT 'The map JSON file name.',
 	`image` VARCHAR(255) NOT NULL,
 	`collisions` VARCHAR(255) NOT NULL COMMENT 'Collisions in JSON format.',
 	`layers` VARCHAR(255) NOT NULL COMMENT 'Layers data in JSON format.',
@@ -127,7 +132,7 @@ ENGINE=InnoDB
 
 ##### Fields description:
 
-The scenes entity map field will be the full json file for the exported map.
+In the scenes entity, the scene_map field will be the full json file for the exported map.
 
 Collisions JSON sample:
 
@@ -147,8 +152,16 @@ We will have:
 ]
 ```
 
-Layers collider and change points configuration.
+Layers collider, change points configuration and titleset animations:
 For example:
+```javascript
+    create()
+    {
+        super.create(share.MAP_HOUSE_1, share.IMAGE_HOUSE, true);
+        this.registerTilesetAnimation(this.layers[2]);
+    }
+```
+And then:
 ```javascript
         this.physics.add.collider(player, this.layers[6]);
         this.physics.add.collider(player, this.layers[8]);
@@ -167,9 +180,10 @@ For example:
 Will be:
 ```json
 {
-    "collider": [6,8,9],
-    "main": 7,
-    "change_points": 
+    "animation":[2],
+    "collider":[6,8,9],
+    "main":7,
+    "change_points":
     [
         {"i":167, "n":"other_scene_key_1"},
         {"i":1661, "n":"other_scene_key_2"},

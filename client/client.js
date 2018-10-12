@@ -1,24 +1,24 @@
 // game-client:
 const Phaser = require('phaser');
-const PhaserPlayer = require('./objects/player');
 const Init = require('./scenes/Init');
 const Town = require('./scenes/Town');
 const House1 = require('./scenes/House-1');
 const House2 = require('./scenes/House-2');
-var share = require('../shared/constants');
-var phaserGame = '';
+const RoomListener = require('./objects/room-events');
+const share = require('../shared/constants');
 
 window.$ = require('jquery');
-window.Colyseus = require('colyseus.js');
 window.validate = require('jquery-validation');
+window.Colyseus = require('colyseus.js');
+window.host = window.document.location.host.replace(/:.*/, '');
+window.gameClient = new Colyseus.Client(location.protocol.replace('http', 'ws')+host+(location.port ? ':'+location.port : ''));
 
 $(document).ready(function($){
 
-    var room = '';
+    var gameRoom = '';
+    var activeRoom = '';
     var $register = $('#register_form');
     var $login = $('#login_form');
-    var host = window.document.location.host.replace(/:.*/, '');
-    var client = new Colyseus.Client(location.protocol.replace('http', 'ws')+host+(location.port ? ':'+location.port : ''));
     var userData = '';
 
     function joinRoom(submitedForm, isNewUser=false){
@@ -37,169 +37,73 @@ $(document).ready(function($){
             userData.username = $('#username').val();
             userData.password = $('#password').val();
         }
+        // save username and password in client for later use:
+        gameClient.userData = userData;
+        gameClient.reconnectColyseus = function(message, previousRoom){
+            // console.log('reconnectColyseus', message, previousRoom);
+            var newRoom = new RoomListener(message.player.scene);
+            var newColyseusRoom = newRoom.join(gameClient);
+            newColyseusRoom.onJoin.add(function(){
+                // as soon we join the room we set it in the Phaser client:
+                // @TODO: see startPhaserScene in room-events.js line 165 in case of required refactor.
+                phaserGame.colyseusRoom = newRoom;
+                // joined new one:
+                newRoom.startListen(newColyseusRoom, message.prev);
+                // phaserGame.scene.start(newRoom.roomName);
+                // newRoom.startPhaserScene(message, newColyseusRoom);
+            });
+            // leave old room:
+            previousRoom.leave();
+        };
         // join room:
-        room = client.join('game_room', userData);
+        gameRoom = gameClient.join(share.ROOM_GAME, userData);
         var $errorBlock = $(submitedForm).find('.response-error');
         $(submitedForm).find('input').on('focus', function(){
             $errorBlock.hide();
         });
         // errors:
         if(isNewUser) {
-            room.onError.add(function(data){
+            gameRoom.onError.add(function(data){
                 $errorBlock.html('Registration error, please try again.');
                 $errorBlock.show();
             });
         } else {
-            room.onError.add(function(data){
-                $errorBlock.html('Login error please try again.');
-                $errorBlock.show();
-            });
+            if(userData){
+                gameRoom.onError.add(function(data){
+                    $errorBlock.html('Login error please try again.');
+                    $errorBlock.show();
+                });
+            } else {
+                gameRoom.onError.add(function(data){
+                    alert('There was a connection error.');
+                    window.location.reload();
+                });
+            }
         }
-        room.onError.add(function(data){
-            alert('There was a connection error.');
-            window.location.reload();
-        });
         // on join activate game:
-        room.onJoin.add(function(){
+        gameRoom.onJoin.add(function(){
             $('.forms-container').detach();
             $('.game-container').show();
-            room.onError.add(function(data){
+            gameRoom.onError.add(function(data){
                 alert('Connection error!');
                 window.location.reload();
             });
+            gameClient.userData.isNewUser = false;
         });
-        // listen to patches coming from the server
-        room.listen('players/:id', function(change){
-            // remove player on disconnect or logout:
-            if (change.operation === 'remove'){
-                if(change.path.id == room.sessionId){
-                    alert('Your session ended, please login again.');
-                    window.location.reload();
-                } else {
-                    let currentScene = getActiveScene();
-                    if(currentScene.player.players.hasOwnProperty(change.path.id)){
-                        currentScene.player.players[change.path.id].destroy();
-                        delete currentScene.player.players[change.path.id];
-                    }
-                }
-            }
-        });
-        // move other clients:
-        room.listen('players/:id/:axis', function(change){
-            if(change.path.id != room.sessionId){
-                let currentScene = getActiveScene();
-                if(currentScene.player && currentScene.player.players.hasOwnProperty(change.path.id)){
-                    let playerToMove = currentScene.player.players[change.path.id];
-                    if(change.path.axis == 'x'){
-                        if(change.value < playerToMove.x){
-                            playerToMove.anims.play(share.LEFT, true);
-                            playerToMove.x = change.value;
-                        } else {
-                            playerToMove.anims.play(share.RIGHT, true);
-                            playerToMove.x = change.value;
-                        }
-                    }
-                    if(change.path.axis == 'y'){
-                        if(change.value < playerToMove.y){
-                            playerToMove.anims.play(share.UP, true);
-                            playerToMove.y = change.value;
-                        } else {
-                            playerToMove.anims.play(share.DOWN, true);
-                            playerToMove.y = change.value;
-                        }
-                    }
-                }
-            }
-        });
-        // stop movement:
-        room.listen('players/:id/:attribute', function(change){
-            // player stop action:
-            if(change.path.id != room.sessionId && change.operation == 'replace' && change.path.attribute == 'mov'){
-                let currentScene = getActiveScene();
-                if(currentScene.player.players.hasOwnProperty(change.path.id)){
-                    currentScene.player.players[change.path.id].anims.stop();
-                }
-            }
-            // player change direction action:
-            if(change.path.id != room.sessionId && change.path.attribute == 'dir'){
-                let currentScene = getActiveScene();
-                if(currentScene.player && currentScene.player.players.hasOwnProperty(change.path.id)){
-                    currentScene.player.players[change.path.id].anims.stop();
-                }
-            }
-        });
-        room.onMessage.add(function(message){
-            if(message.act == share.CREATE_PLAYER && message.id == room.sessionId){
-                $('.player-name').html(message.player.username);
-                phaserGame.scene.start(message.player.scene);
-                phaserGame.colyseusRoom = room;
-                let currentScene = phaserGame.scene.getScene(message.player.scene);
-                let playerPos = {x: parseFloat(message.player.x), y: parseFloat(message.player.y), direction: message.player.dir};
-                let currentPlayer = new PhaserPlayer(currentScene, message.player.scene, playerPos);
-                currentPlayer.socket = room;
-                currentPlayer.playerId = room.sessionId;
-                currentPlayer.username = message.player.username;
-                currentPlayer.create();
-                currentScene.player = currentPlayer;
-                for(let p in message.players){
-                    let tmp = message.players[p];
-                    if(tmp.sessionId != room.sessionId){
-                        currentScene.player.addPlayer(tmp.sessionId, tmp.x, tmp.y, tmp.dir);
-                    }
-                }
-            }
-            if(message.act == share.ADD_PLAYER && message.id != room.sessionId){
-                let currentScene = getActiveScene();
-                if(currentScene.key == message.player.scene){
-                    currentScene.player.addPlayer(message.id, parseFloat(message.player.x), parseFloat(message.player.y), message.player.dir);
-                }
-            }
-            if(message.act == share.CHANGE_SCENE){
-                let currentScene = getActiveScene();
-                // if other users move to a different scene from the current one we need to remove them:
-                if(message.scene != currentScene.key && currentScene.player.players.hasOwnProperty(message.id) && currentScene.player.playerId != message.id){
-                    currentScene.player.players[message.id].destroy();
-                    delete currentScene.player.players[message.id];
-                }
-                // if other users enter in the current scene we need to add them:
-                if(message.scene == currentScene.key && currentScene.player.playerId != message.id){
-                    // @TODO: this will be coming from a single method in each scene.
-                    let pos = {};
-                    if(currentScene.key == share.TOWN){
-                        let previousScene = {};
-                        if(message.prev){
-                            previousScene = message.prev;
-                        }
-                        pos = currentScene.getPosition(previousScene);
-                    }
-                    if(currentScene.key == share.HOUSE_1){
-                        pos = {x: 240, y: 365, direction: share.UP};
-                    }
-                    if(currentScene.key == share.HOUSE_2){
-                        pos = {x: 240, y: 397, direction: share.UP};
-                    }
-                    currentScene.player.addPlayer(message.id, pos.x, pos.y, pos.direction);
-                }
-                // if current user change scene we need to get the other users from that scene:
-                if(currentScene.player.playerId == message.id){
-                    room.send({act: share.GET_PLAYERS, next: message.scene});
-                }
-            }
-            // the get-players will send the request to the server to get the other players in the current scene:
-            if(message.act == share.ADD_FROM_SCENE){
-                let currentScene = phaserGame.scene.getScene(message.scene);
-                for(let i in message.p){
-                    let toAdd = message.p[i];
-                    if(toAdd.id != currentScene.player.playerId){
-                        currentScene.player.addPlayer(toAdd.id, parseFloat(toAdd.x), parseFloat(toAdd.y), toAdd.dir);
-                    }
-                }
+        gameRoom.onMessage.add(function(message){
+            if(message.act == share.START_GAME && message.sessionId == gameRoom.sessionId){
+                gameRoom.leave();
+                activeRoom = new RoomListener(message.player.scene);
+                var colyseusRoom = activeRoom.join(gameClient);
+                colyseusRoom.onJoin.add(function(){
+                    activeRoom.startListen(colyseusRoom);
+                });
             }
         });
     }
 
-    // on room join init phaser client:
-    var config = {
+    // on game-room join init phaser client:
+    let config = {
         type: Phaser.AUTO,
         parent: 'dwd-game',
         width: 500,
@@ -211,22 +115,12 @@ $(document).ready(function($){
                 debug: true,
             },
         },
+        // @TODO: this will be loaded dynamically when the client connects to the room-game.
         scene: [Init, Town, House1, House2],
     };
 
     // initialize game:
-    phaserGame = new Phaser.Game(config);
-    window.phaserGame = phaserGame;
-
-    function getActiveScene()
-    {
-        // default scene:
-        let currentScene = share.TOWN;
-        if(phaserGame.currentScene){
-            currentScene = phaserGame.currentScene;
-        }
-        return phaserGame.scene.getScene(currentScene);
-    }
+    window.phaserGame = new Phaser.Game(config);
 
     if($register.length){
         $register.on('submit', function(e){
