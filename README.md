@@ -28,6 +28,10 @@ If you like to contribute or donate to support the project please feel free to c
 + Phaser 3
 
 ## Change Log
+### 1.2.3
++ Fixed issues with multiple Colyseus rooms and Phaser scenes change.
+
+## Change Log
 ### 1.2.2
 + Implemented multiple Colyseus rooms (one room for each Phaser scene).
 + Fixed database entity for scenes.
