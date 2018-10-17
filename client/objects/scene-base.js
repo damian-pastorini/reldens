@@ -1,6 +1,5 @@
 const Phaser = require('phaser');
 const TilesetAnimation = require('./tileset-animation');
-const Player = require('./player');
 const share = require('../../shared/constants');
 
 class SceneBase extends Phaser.Scene
@@ -12,17 +11,9 @@ class SceneBase extends Phaser.Scene
         this.key = key;
     }
 
-    init(position)
+    init()
     {
         this.scene.setVisible(false, this.key);
-        if(!this.player && this.game.colyseusRoom){
-            this.player = new Player(this, this.key, position);
-            this.player.socket = this.game.colyseusRoom;
-            this.player.playerId = this.game.colyseusRoom.sessionId;
-        }
-        if(this.player){
-            this.player.position = position;
-        }
         this.layers = {};
         this.prevSceneKey = this.key;
         this.nextSceneKey = null;
@@ -46,9 +37,6 @@ class SceneBase extends Phaser.Scene
                 this.layers[i] = this.map.createStaticLayer(this.map.layers[i].name, this.tileset, 0, 0);
             }
         }
-        if(this.game.colyseusRoom && !this.player){
-            this.player.create();
-        }
         this.cameras.main.on('camerafadeincomplete', () => {
             this.transition = false;
             this.input.keyboard.on('keyup', (event) => {
@@ -62,11 +50,6 @@ class SceneBase extends Phaser.Scene
         this.cameras.main.on('camerafadeoutcomplete', this.changeScene.bind(this));
         // save active key into the game object to get it in other events.
         this.game.currentScene = this.key;
-        // @TODO: we need to replace this.player.playerId with the current colyseus room ID.
-        if(this.player){
-            // if player is set it means it's changing scene:
-            // this.player.socket.send({act: share.CHANGED_SCENE, next: this.key});
-        }
     }
 
     update()
@@ -97,14 +80,6 @@ class SceneBase extends Phaser.Scene
             this.tilesetAnimation.destroy();
         }
         this.player.socket.send({act: share.CHANGED_SCENE, next: this.nextSceneKey, prev: this.prevSceneKey});
-        this.scene.start(this.nextSceneKey, this.prevSceneKey);
-    }
-
-    sceneChangedOnServer(prev, next)
-    {
-        this.nextSceneKey = next;
-        this.prevSceneKey = prev;
-        this.scene.start(this.nextSceneKey, this.prevSceneKey);
     }
 
     registerCollision()

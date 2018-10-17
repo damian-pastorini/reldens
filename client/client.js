@@ -40,20 +40,16 @@ $(document).ready(function($){
         // save username and password in client for later use:
         gameClient.userData = userData;
         gameClient.reconnectColyseus = function(message, previousRoom){
-            // console.log('reconnectColyseus', message, previousRoom);
             var newRoom = new RoomListener(message.player.scene);
             var newColyseusRoom = newRoom.join(gameClient);
+            // as soon we join the room we set it in the Phaser client:
+            phaserGame.colyseusRoom = newColyseusRoom;
             newColyseusRoom.onJoin.add(function(){
-                // as soon we join the room we set it in the Phaser client:
-                // @TODO: see startPhaserScene in room-events.js line 165 in case of required refactor.
-                phaserGame.colyseusRoom = newRoom;
-                // joined new one:
+                // leave old room:
+                previousRoom.leave();
+                // start listen to room events:
                 newRoom.startListen(newColyseusRoom, message.prev);
-                // phaserGame.scene.start(newRoom.roomName);
-                // newRoom.startPhaserScene(message, newColyseusRoom);
             });
-            // leave old room:
-            previousRoom.leave();
         };
         // join room:
         gameRoom = gameClient.join(share.ROOM_GAME, userData);

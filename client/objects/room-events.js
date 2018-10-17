@@ -1,5 +1,4 @@
 const PhaserPlayer = require('./player');
-// const SceneDynamic = require('./scene-dynamic');
 const share = require('../../shared/constants');
 
 class RoomEvents
@@ -18,7 +17,7 @@ class RoomEvents
 
     startListen(room, previousScene = false)
     {
-        var self = this;
+        const self = this;
         // listen to patches coming from the server
         room.listen('players/:id', function(change){
             // remove player on disconnect or logout:
@@ -29,12 +28,10 @@ class RoomEvents
                     window.location.reload();
                 }
                 */
-                if(change.path.id != room.sessionId){
-                    let currentScene = self.getActiveScene();
-                    if(currentScene.player.players.hasOwnProperty(change.path.id)){
-                        currentScene.player.players[change.path.id].destroy();
-                        delete currentScene.player.players[change.path.id];
-                    }
+                let currentScene = self.getActiveScene();
+                if(currentScene.player.players.hasOwnProperty(change.path.id)){
+                    currentScene.player.players[change.path.id].destroy();
+                    delete currentScene.player.players[change.path.id];
                 }
             }
         });
@@ -94,13 +91,15 @@ class RoomEvents
             if(message.act == share.ADD_PLAYER && message.id != room.sessionId){
                 let currentScene = self.getActiveScene();
                 if(currentScene.key == message.player.scene){
-                    currentScene.player.addPlayer(message.id, parseFloat(message.player.x), parseFloat(message.player.y), message.player.dir);
+                    if(currentScene.player && currentScene.player.players){
+                        currentScene.player.addPlayer(message.id, parseFloat(message.player.x), parseFloat(message.player.y), message.player.dir);
+                    }
                 }
             }
             if(message.act == share.CHANGED_SCENE){
                 let currentScene = self.getActiveScene();
                 // if other users enter in the current scene we need to add them:
-                if(message.scene == currentScene.key && currentScene.player.playerId != message.id){
+                if(message.scene == currentScene.key && currentScene.player && currentScene.player.playerId != message.id){
                     currentScene.player.addPlayer(message.id, message.x, message.y, message.dir);
                 }
             }
@@ -119,11 +118,16 @@ class RoomEvents
     {
         if(!phaserGame.colyseusRoom){
             phaserGame.scene.start(message.player.scene);
+        } else {
+            if(previousScene){
+                phaserGame.scene.stop(previousScene);
+                phaserGame.scene.start(message.player.scene);
+            }
         }
         phaserGame.colyseusRoom = room;
         var currentScene = phaserGame.scene.getScene(message.player.scene);
-        var playerPos = {x: parseFloat(message.player.x), y: parseFloat(message.player.y), direction: message.player.dir};
-        var currentPlayer = new PhaserPlayer(currentScene, message.player.scene, playerPos);
+        let playerPos = {x: parseFloat(message.player.x), y: parseFloat(message.player.y), direction: message.player.dir};
+        let currentPlayer = new PhaserPlayer(currentScene, message.player.scene, playerPos);
         currentPlayer.socket = room;
         currentPlayer.playerId = room.sessionId;
         currentPlayer.username = message.player.username;
@@ -139,12 +143,12 @@ class RoomEvents
 
     getActiveScene()
     {
-        // default scene:
-        let currentScene = share.TOWN;
+        // default scene is the current game room name:
+        let activeScene = this.roomName;
         if(phaserGame.currentScene){
-            currentScene = phaserGame.currentScene;
+            activeScene = phaserGame.currentScene;
         }
-        return phaserGame.scene.getScene(currentScene);
+        return phaserGame.scene.getScene(activeScene);
     }
 
 }
