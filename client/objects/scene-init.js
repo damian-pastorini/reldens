@@ -1,12 +1,12 @@
 const Phaser = require('phaser');
-var share = require('../../shared/constants');
+const share = require('../../shared/constants');
 
-class Init extends Phaser.Scene
+class SceneInit extends Phaser.Scene
 {
 
     constructor()
     {
-        super({ key: share.INIT });
+        super({ key: share.SCENE_INIT });
         this.progressBar = null;
         this.progressCompleteRect = null;
         this.progressRect = null;
@@ -14,6 +14,7 @@ class Init extends Phaser.Scene
 
     preload()
     {
+        // @TODO: this should be loaded dynamically from the game server or included in the scenes creation.
         this.load.tilemapTiledJSON(share.MAP_TOWN, 'assets/maps/town.json');
         this.load.tilemapTiledJSON(share.MAP_HOUSE_1, 'assets/maps/house-1.json');
         this.load.tilemapTiledJSON(share.MAP_HOUSE_2, 'assets/maps/house-2.json');
@@ -63,7 +64,7 @@ class Init extends Phaser.Scene
         this.progressBar = this.add.graphics();
     }
 
-    onLoadComplete(loader) 
+    onLoadComplete(loader)
     {
         this.scene.shutdown();
     }
@@ -82,4 +83,4 @@ class Init extends Phaser.Scene
 
 }
 
-module.exports = Init;
+module.exports = SceneInit;

@@ -1,4 +1,5 @@
 const PhaserPlayer = require('./player');
+const DynamicScene = require('./scene-dynamic');
 const share = require('../../shared/constants');
 
 class RoomEvents
@@ -81,9 +82,10 @@ class RoomEvents
         });
         room.onMessage.add(function(message){
             if(message.act == share.CREATE_PLAYER && message.id == room.sessionId){
-                // @TODO: this will be implemented after the change rooms in the server side works.
-                // var phaserDynamicScene = new DynamicScene(message.player.scene, message.sceneData);
-                // phaserGame.scene.add(message.player.scene, phaserDynamicScene, true);
+                if(!phaserGame.scene.getScene(message.player.scene)){
+                    let phaserDynamicScene = new DynamicScene(message.player.scene, message.sceneData);
+                    phaserGame.scene.add(message.player.scene, phaserDynamicScene, false);
+                }
                 $('.player-name').html(message.player.username);
                 self.startPhaserScene(message, room, previousScene);
             }
@@ -96,13 +98,12 @@ class RoomEvents
                     }
                 }
             }
-            if(message.act == share.CHANGED_SCENE){
+            if(message.act == share.CHANGED_SCENE && message.scene == room.roomName && room.sessionId != message.id){
                 let currentScene = self.getActiveScene();
                 // if other users enter in the current scene we need to add them:
-                if(message.scene == currentScene.key && currentScene.player && currentScene.player.playerId != message.id){
-                    currentScene.player.addPlayer(message.id, message.x, message.y, message.dir);
-                }
+                currentScene.player.addPlayer(message.id, message.x, message.y, message.dir);
             }
+            // NOTE: here we don't need to evaluate the id since the reconnect only is sent to the current client.
             if(message.act == share.RECONNET){
                 gameClient.reconnectColyseus(message, room);
             }

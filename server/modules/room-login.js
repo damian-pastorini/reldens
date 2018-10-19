@@ -14,6 +14,7 @@ class RoomLogin extends Room
         }
         var salt = bcrypt.genSaltSync(saltRounds);
         var hash = bcrypt.hashSync(options.password, salt);
+        // @TODO: this should be in the game configuration.
         var defaultState = '{"scene":"'+share.TOWN+'","x":"225","y":"280","dir":"'+share.DOWN+'"}';
         if(options.isNewUser){
             // the last 3 values are for the default role_id = 1, status = 1 and state = 1:

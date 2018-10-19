@@ -1,4 +1,4 @@
-var Player = require('./player').player;
+const Player = require('./player').player;
 
 class State
 {
@@ -10,7 +10,7 @@ class State
 
     createPlayer(sessionId, playerData)
     {
-        var newPlayer = new Player(playerData);
+        let newPlayer = new Player(playerData);
         newPlayer.sessionId = sessionId;
         this.players[sessionId] = newPlayer;
     }

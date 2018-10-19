@@ -1,9 +1,6 @@
 // game-client:
 const Phaser = require('phaser');
-const Init = require('./scenes/Init');
-const Town = require('./scenes/Town');
-const House1 = require('./scenes/House-1');
-const House2 = require('./scenes/House-2');
+const SceneInit = require('./objects/scene-init');
 const RoomListener = require('./objects/room-events');
 const share = require('../shared/constants');
 
@@ -58,7 +55,7 @@ $(document).ready(function($){
             $errorBlock.hide();
         });
         // errors:
-        if(isNewUser) {
+        if(isNewUser){
             gameRoom.onError.add(function(data){
                 $errorBlock.html('Registration error, please try again.');
                 $errorBlock.show();
@@ -111,8 +108,7 @@ $(document).ready(function($){
                 debug: true,
             },
         },
-        // @TODO: this will be loaded dynamically when the client connects to the room-game.
-        scene: [Init, Town, House1, House2],
+        scene: [SceneInit]
     };
 
     // initialize game:

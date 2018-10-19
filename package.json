@@ -1,6 +1,6 @@
 {
     "name": "dwdgame",
-    "version": "1.2.3",
+    "version": "1.2.4",
     "description": "DwD - Game - MMORPG",
     "main": "index.js",
     "scripts": {

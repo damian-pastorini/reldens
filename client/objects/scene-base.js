@@ -79,7 +79,7 @@ class SceneBase extends Phaser.Scene
         if(this.withTSAnimation){
             this.tilesetAnimation.destroy();
         }
-        this.player.socket.send({act: share.CHANGED_SCENE, next: this.nextSceneKey, prev: this.prevSceneKey});
+        this.player.socket.send({act: share.CLIENT_CHANGED_SCENE, next: this.nextSceneKey, prev: this.prevSceneKey});
     }
 
     registerCollision()

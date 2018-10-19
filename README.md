@@ -28,6 +28,9 @@ If you like to contribute or donate to support the project please feel free to c
 + Phaser 3
 
 ## Change Log
+### 1.2.4
++ Implemented DynamicScenes information from database.
+
 ### 1.2.3
 + Fixed issues with multiple Colyseus rooms and Phaser scenes change.
 
