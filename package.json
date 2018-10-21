@@ -1,8 +1,17 @@
 {
     "name": "dwdgame",
-    "version": "1.2.4",
+    "version": "1.2.5",
     "description": "DwD - Game - MMORPG",
     "main": "index.js",
+    "homepage": "https://github.com/damian-pastorini/dwdgame",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/damian-pastorini/dwdgame.git"
+    },
+    "keywords": ["game","mmorpg","dwd","colyseus","phaser","parcel","nodejs"],
+    "bugs": {
+        "url": "https://github.com/damian-pastorini/dwdgame/issues"
+    },
     "scripts": {
         "start": "rm -R dist && mkdir dist && cp -r client/assets dist/assets/ && node ."
     },

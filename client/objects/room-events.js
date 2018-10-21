@@ -8,6 +8,7 @@ class RoomEvents
     constructor(roomName)
     {
         this.roomName = roomName;
+        this.sceneData = false;
     }
 
     join(gameClient)
@@ -21,6 +22,11 @@ class RoomEvents
         const self = this;
         // listen to patches coming from the server
         room.listen('players/:id', function(change){
+            // Note: in case an state update comes before the player creation we create the scene based.
+            if(!self.sceneData){
+                self.sceneData = room.state.sceneData;
+            }
+            // console.log('change-A: ', change);
             // remove player on disconnect or logout:
             if (change.operation === 'remove'){
                 /* @TODO: since we are removing the player from the room we need to refactor this.
@@ -38,6 +44,11 @@ class RoomEvents
         });
         // move other clients:
         room.listen('players/:id/:axis', function(change){
+            // Note: in case an state update comes before the player creation we create the scene based.
+            if(!self.sceneData){
+                self.sceneData = room.state.sceneData;
+            }
+            // console.log('change-B: ', change);
             if(change.path.id != room.sessionId){
                 let currentScene = self.getActiveScene();
                 if(currentScene.player && currentScene.player.players.hasOwnProperty(change.path.id)){
@@ -65,6 +76,11 @@ class RoomEvents
         });
         // stop movement:
         room.listen('players/:id/:attribute', function(change){
+            // Note: in case an state update comes before the player creation we create the scene based.
+            if(!self.sceneData){
+                self.sceneData = room.state.sceneData;
+            }
+            // console.log('change-C: ', change);
             // player stop action:
             if(change.path.id != room.sessionId && change.operation == 'replace' && change.path.attribute == 'mov'){
                 let currentScene = self.getActiveScene();
@@ -82,10 +98,6 @@ class RoomEvents
         });
         room.onMessage.add(function(message){
             if(message.act == share.CREATE_PLAYER && message.id == room.sessionId){
-                if(!phaserGame.scene.getScene(message.player.scene)){
-                    let phaserDynamicScene = new DynamicScene(message.player.scene, message.sceneData);
-                    phaserGame.scene.add(message.player.scene, phaserDynamicScene, false);
-                }
                 $('.player-name').html(message.player.username);
                 self.startPhaserScene(message, room, previousScene);
             }
@@ -98,7 +110,7 @@ class RoomEvents
                     }
                 }
             }
-            if(message.act == share.CHANGED_SCENE && message.scene == room.roomName && room.sessionId != message.id){
+            if(message.act == share.CHANGED_SCENE && message.scene == room.name && room.sessionId != message.id){
                 let currentScene = self.getActiveScene();
                 // if other users enter in the current scene we need to add them:
                 currentScene.player.addPlayer(message.id, message.x, message.y, message.dir);
@@ -117,6 +129,10 @@ class RoomEvents
 
     startPhaserScene(message, room, previousScene = false)
     {
+        if(!phaserGame.scene.getScene(message.player.scene)){
+            let phaserDynamicScene = new DynamicScene(message.player.scene, room.state.sceneData);
+            phaserGame.scene.add(message.player.scene, phaserDynamicScene, false);
+        }
         if(!phaserGame.colyseusRoom){
             phaserGame.scene.start(message.player.scene);
         } else {
@@ -144,12 +160,13 @@ class RoomEvents
 
     getActiveScene()
     {
-        // default scene is the current game room name:
-        let activeScene = this.roomName;
-        if(phaserGame.currentScene){
-            activeScene = phaserGame.currentScene;
+        if(!phaserGame.scene.getScene(this.roomName)){
+            if(this.sceneData){
+                let phaserDynamicScene = new DynamicScene(this.roomName, this.sceneData);
+                phaserGame.scene.add(this.roomName, phaserDynamicScene, false);
+            }
         }
-        return phaserGame.scene.getScene(activeScene);
+        return phaserGame.scene.getScene(this.roomName);
     }
 
 }

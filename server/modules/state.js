@@ -3,8 +3,10 @@ const Player = require('./player').player;
 class State
 {
 
-    constructor()
+    constructor(sceneData)
     {
+        // @TODO: move scene data logic to the server side to validate the client actions.
+        this.sceneData = sceneData;
         this.players = {};
     }
 
@@ -17,7 +19,7 @@ class State
 
     movePlayer(id, data)
     {
-        // @TODO: the values and logic should be on the server side to re-validate the client actions.
+        // @TODO: move values and logic to the server side to validate the client actions.
         if(data.x != this.players[id].x){
             this.players[id].x = data.x;
             this.players[id].mov = true;
@@ -32,7 +34,7 @@ class State
 
     stopPlayer(id, data)
     {
-        // @TODO: the values and logic should be on the server side to re-validate the client actions.
+        // @TODO: move values and logic to the server side to validate the client actions.
         let result = true;
         if(this.players[id].mov){
             result = false;

@@ -28,6 +28,11 @@ If you like to contribute or donate to support the project please feel free to c
 + Phaser 3
 
 ## Change Log
+### 1.2.5
++ Moved scenes data into room state.
++ Fixed multi-player issue with undefined scenes.
++ Included repository data.
+
 ### 1.2.4
 + Implemented DynamicScenes information from database.
 

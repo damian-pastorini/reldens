@@ -8,10 +8,10 @@ class RoomScene extends RoomLogin
 
     onInit(options)
     {
-        this.setState(new State());
-        if(options.scene){
-            this.scene = options.scene;
-        }
+        // @TODO: move scene data logic on server side to validate the user actions.
+        // Note: in the future not all the scene information will be sent to the client.
+        // This is because we could have hidden information to be discovered.
+        this.setState(new State(options.scene));
     }
 
     onJoin(client, options, authResult)
@@ -33,7 +33,6 @@ class RoomScene extends RoomLogin
             act: share.CREATE_PLAYER,
             id: client.sessionId,
             player: this.state.players[client.sessionId],
-            sceneData: this.scene
         });
         this.broadcast({act: share.ADD_PLAYER, id: client.sessionId, player: this.state.players[client.sessionId]});
     }
