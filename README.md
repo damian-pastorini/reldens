@@ -28,6 +28,13 @@ If you like to contribute or donate to support the project please feel free to c
 + MySQL
 + Phaser 3
 
+## NEWS & Coming soon!
+I've been a bit short on time to continue with the project (considerign it's free), but for sure I'll continue with it over the next months, so keep in touch!
+
+#### For the next release (1.2.6):
++ P2world implementation on server side.
++ Client movement and impact calculations on server side as authority for client side correction to avoid possible hacks.
+
 ## Change Log
 ### 1.2.5
 + Moved scenes data into room state.
