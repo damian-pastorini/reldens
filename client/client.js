@@ -3,6 +3,7 @@ const Phaser = require('phaser');
 const SceneInit = require('./objects/scene-init');
 const RoomListener = require('./objects/room-events');
 const share = require('../shared/constants');
+const gameConfig = require('../shared/game-config');
 
 window.$ = require('jquery');
 window.validate = require('jquery-validation');
@@ -85,10 +86,10 @@ $(document).ready(function($){
         });
         gameRoom.onMessage.add(function(message){
             if(message.act == share.START_GAME && message.sessionId == gameRoom.sessionId){
-                gameRoom.leave();
                 activeRoom = new RoomListener(message.player.scene);
                 var colyseusRoom = activeRoom.join(gameClient);
                 colyseusRoom.onJoin.add(function(){
+                    gameRoom.leave();
                     activeRoom.startListen(colyseusRoom);
                 });
             }
@@ -96,20 +97,10 @@ $(document).ready(function($){
     }
 
     // on game-room join init phaser client:
-    let config = {
-        type: Phaser.AUTO,
-        parent: 'dwd-game',
-        width: 500,
-        height: 500,
-        physics: {
-            default: 'arcade',
-            arcade: {
-                gravity: { y: 0 },
-                debug: true,
-            },
-        },
-        scene: [SceneInit]
-    };
+    let config = gameConfig;
+    config.type = Phaser.AUTO;
+    config.parent = 'dwd-game';
+    config.scene = [SceneInit];
 
     // initialize game:
     window.phaserGame = new Phaser.Game(config);

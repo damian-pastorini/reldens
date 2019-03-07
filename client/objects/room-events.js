@@ -26,7 +26,6 @@ class RoomEvents
             if(!self.sceneData){
                 self.sceneData = room.state.sceneData;
             }
-            // console.log('change-A: ', change);
             // remove player on disconnect or logout:
             if (change.operation === 'remove'){
                 /* @TODO: since we are removing the player from the room we need to refactor this.
@@ -48,29 +47,36 @@ class RoomEvents
             if(!self.sceneData){
                 self.sceneData = room.state.sceneData;
             }
-            // console.log('change-B: ', change);
-            if(change.path.id != room.sessionId){
-                let currentScene = self.getActiveScene();
-                if(currentScene.player && currentScene.player.players.hasOwnProperty(change.path.id)){
-                    let playerToMove = currentScene.player.players[change.path.id];
-                    if(change.path.axis == 'x'){
+            let currentScene = self.getActiveScene();
+            if(currentScene.player && currentScene.player.players.hasOwnProperty(change.path.id)){
+                let playerToMove = currentScene.player.players[change.path.id];
+                if(change.path.axis == 'x'){
+                    if(change.path.id != room.sessionId){
                         if(change.value < playerToMove.x){
                             playerToMove.anims.play(share.LEFT, true);
-                            playerToMove.x = change.value;
+                            // Note: we commented the speed here since the body position is given by the body speed
+                            // in the server. This is a temporal implementation to prevent client hacks.
+                            // @TODO: improve the implementation, probably we could use client physics for prediction.
+                            // playerToMove.body.velocity.x = -share.SPEED;
                         } else {
                             playerToMove.anims.play(share.RIGHT, true);
-                            playerToMove.x = change.value;
+                            // playerToMove.body.velocity.x = share.SPEED;
                         }
                     }
-                    if(change.path.axis == 'y'){
+                    playerToMove.x = parseFloat(change.value);
+                }
+                if(change.path.axis == 'y'){
+                    // console.log(change.path.axis, change.value, playerToMove.y, playerToMove.body.y);
+                    if(change.path.id != room.sessionId){
                         if(change.value < playerToMove.y){
                             playerToMove.anims.play(share.UP, true);
-                            playerToMove.y = change.value;
+                            // playerToMove.body.velocity.y = -share.SPEED;
                         } else {
                             playerToMove.anims.play(share.DOWN, true);
-                            playerToMove.y = change.value;
+                            // playerToMove.body.velocity.y = share.SPEED;
                         }
                     }
+                    playerToMove.y = parseFloat(change.value);
                 }
             }
         });
@@ -80,16 +86,17 @@ class RoomEvents
             if(!self.sceneData){
                 self.sceneData = room.state.sceneData;
             }
-            // console.log('change-C: ', change);
             // player stop action:
-            if(change.path.id != room.sessionId && change.operation == 'replace' && change.path.attribute == 'mov'){
+            if(change.path.attribute == 'mov'){
                 let currentScene = self.getActiveScene();
-                if(currentScene.player.players.hasOwnProperty(change.path.id)){
+                if(currentScene.player && currentScene.player.players.hasOwnProperty(change.path.id)){
+                    currentScene.player.players[change.path.id].body.velocity.x = 0;
+                    currentScene.player.players[change.path.id].body.velocity.y = 0;
                     currentScene.player.players[change.path.id].anims.stop();
                 }
             }
             // player change direction action:
-            if(change.path.id != room.sessionId && change.path.attribute == 'dir'){
+            if(change.path.attribute == 'dir'){
                 let currentScene = self.getActiveScene();
                 if(currentScene.player && currentScene.player.players.hasOwnProperty(change.path.id)){
                     currentScene.player.players[change.path.id].anims.stop();

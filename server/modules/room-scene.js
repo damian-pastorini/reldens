@@ -2,21 +2,37 @@ const RoomLogin = require('./room-login').roomlogin;
 const State = require('./state').state;
 const DataLink = require('./datalink');
 const share = require('../../shared/constants');
+const P2 = require('p2');
+const P2world = require('./p2world').p2world;
 
 class RoomScene extends RoomLogin
 {
 
     onInit(options)
     {
-        // @TODO: move scene data logic on server side to validate the user actions.
         // Note: in the future not all the scene information will be sent to the client.
         // This is because we could have hidden information to be discovered.
         this.setState(new State(options.scene));
+        // create world:
+        let roomWorld = new P2world();
+        roomWorld.applyGravity = false;
+        // add collisions:
+        roomWorld.setMapCollisions(this.state.sceneData);
+        // assign world to room:
+        this.p2world = roomWorld;
+        // start world movement:
+        var self = this;
+        // @TODO: improve the timeStep to perfectly match client frames and movement.
+        this.timeStep = 0.0386; // 1/60; // 0.112;
+        this.worldTimer = this.clock.setInterval(function(){
+            self.p2world.step(self.timeStep);
+        }, 1000 * self.timeStep);
     }
 
     onJoin(client, options, authResult)
     {
-        // TODO: check client ID in room presence.
+        var fatherEvent = this;
+        // @TODO: check client ID in room presence.
         // check if user is already logged and disconnect from the previous client:
         for(let i in this.state.players){
             let p = this.state.players[i];
@@ -28,13 +44,50 @@ class RoomScene extends RoomLogin
         }
         // player creation:
         this.state.createPlayer(client.sessionId, authResult);
+        let currentPlayer = this.state.players[client.sessionId];
+        // server physics:
+        let boxShape = new P2.Box({ width: 32, height: 32});
+        boxShape.collisionGroup = share.COL_PLAYER;
+        boxShape.collisionMask = share.COL_ENEMY | share.COL_GROUND;
+        let boxBody = new P2.Body({
+            mass:1,
+            position:[currentPlayer.x, currentPlayer.y],
+            type: P2.Body.DYNAMIC
+        });
+        boxBody.addShape(boxShape);
+        boxBody.playerId = client.sessionId;
+        this.p2world.addBody(boxBody);
+        let bodyIndex = this.p2world.bodies.length -1;
+        currentPlayer.bodyIndex = bodyIndex;
+        // on impact:
+        this.p2world.on('impact', function(evt){
+            var bodyA = evt.bodyA,
+                bodyB = evt.bodyB;
+            if(bodyA.hasOwnProperty('playerId')){
+                var currentPlayer = fatherEvent.state.players[client.sessionId];
+                var cPlayerBody = bodyA;
+                bodyA.velocity = [0,0];
+            } else {
+                if(bodyB.hasOwnProperty('playerId')){
+                    var currentPlayer = fatherEvent.state.players[bodyA.playerId];
+                    var cPlayerBody = bodyB;
+                    bodyB.velocity = [0,0];
+                } else {
+                    // @TODO: refactor this with the NPC's implementation.
+                    // Note: in the current implementation we should never hit this since we do not have any other
+                    // moving bodies beside the players.
+                    console.log('Who is moving?', bodyA, bodyB);
+                }
+            }
+            fatherEvent.state.stopPlayer(cPlayerBody.playerId, {x: cPlayerBody.position[0], y: cPlayerBody.position[1]});
+        });
         // client creation:
         this.send(client, {
             act: share.CREATE_PLAYER,
             id: client.sessionId,
-            player: this.state.players[client.sessionId],
+            player: currentPlayer,
         });
-        this.broadcast({act: share.ADD_PLAYER, id: client.sessionId, player: this.state.players[client.sessionId]});
+        this.broadcast({act: share.ADD_PLAYER, id: client.sessionId, player: currentPlayer});
     }
 
     onLeave(client, consented)
@@ -47,11 +100,35 @@ class RoomScene extends RoomLogin
     onMessage(client, data)
     {
         // player movement:
-        if(data.act == share.KEY_PRESS){
+        if(data.hasOwnProperty('dir')){
+            var currentPlayer = this.state.players[client.sessionId];
+            var bodyToMoveIndex = currentPlayer.bodyIndex;
+            var bodyToMove = this.p2world.bodies[bodyToMoveIndex];
+            if(data.dir == share.RIGHT){
+                bodyToMove.velocity[0] = share.SPEED_SERVER;
+            }
+            if(data.dir == share.LEFT){
+                bodyToMove.velocity[0] = -share.SPEED_SERVER;
+            }
+            if(data.dir == share.UP){
+                bodyToMove.velocity[1] = -share.SPEED_SERVER;
+            }
+            if(data.dir == share.DOWN){
+                bodyToMove.velocity[1] = share.SPEED_SERVER;
+            }
+            data.x = bodyToMove.position[0];
+            data.y = bodyToMove.position[1];
             this.state.movePlayer(client.sessionId, data);
         }
         // player stop:
         if(data.act == share.STOP){
+            var currentPlayer = this.state.players[client.sessionId];
+            var bodyToMoveIndex = currentPlayer.bodyIndex;
+            var bodyToMove = this.p2world.bodies[bodyToMoveIndex];
+            bodyToMove.velocity[0] = 0;
+            bodyToMove.velocity[1] = 0;
+            data.x = bodyToMove.position[0];
+            data.y = bodyToMove.position[1];
             this.state.stopPlayer(client.sessionId, data);
         }
         // player change scene:

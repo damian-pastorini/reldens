@@ -1,6 +1,6 @@
 {
     "name": "dwdgame",
-    "version": "1.2.5",
+    "version": "1.2.6",
     "description": "DwD - Game - MMORPG",
     "main": "index.js",
     "homepage": "https://github.com/damian-pastorini/dwdgame",
@@ -16,22 +16,23 @@
         "start": "rm -R dist && mkdir dist && cp -r client/assets dist/assets/ && node ."
     },
     "engines": {
-        "node": "8.9.1"
+        "node": "10.15.1"
     },
     "author": "Damian A. Pastorini",
     "license": "MIT",
     "dependencies": {
-        "@colyseus/monitor": "^0.1.7",
-        "colyseus": "^0.9.11",
-        "colyseus.js": "^0.9.6",
-        "express": "^4.16.3",
-        "game": "^1.0.3",
-        "glslify": "^6.1.1",
+        "@colyseus/monitor": "^0.1.11",
+        "colyseus": "^0.9.32",
+        "colyseus.js": "^0.9.16",
+        "express": "^4.16.4",
+        "glslify": "^7.0.0",
         "jquery": "^3.3.1",
-        "jquery-validation": "^1.17.0",
+        "jquery-validation": "^1.19.0",
         "mysql": "^2.16.0",
-        "parcel-bundler": "^1.8.1",
-        "phaser": "^3.11.0",
-        "promise-mysql": "^3.3.1"
+        "parcel-bundler": "^1.11.0",
+        "phaser": "^3.16.2",
+        "promise-mysql": "^3.3.1",
+        "bcrypt": "^3.0.4",
+        "p2": "^0.7.1"
     }
 }

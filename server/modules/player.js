@@ -1,5 +1,4 @@
-// shared file:
-var share = require('../../shared/constants');
+const share = require('../../shared/constants');
 
 class Player
 {
@@ -26,13 +25,13 @@ class Player
                 this.dir = state.dir;
             }
         } else {
-            // initial position in town:
+            // initial position in initial scene (town):
             this.scene = share.TOWN;
             this.x = 225;
             this.y = 280;
             this.dir = share.DOWN;
-            this.mov = false;
         }
+        this.mov = false;
     }
 
 }
