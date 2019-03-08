@@ -37,7 +37,8 @@ Feb 13, 2019: I've been a bit short on time to continue with the project (consid
 
 #### For the next release (1.2.6):
 + P2world implementation on server side.
-+ Client movement and impact calculations on server side as authority for client side correction to avoid possible hacks.
++ Client movement and impact calculations on server side as authority to avoid possible hacks.
++ Scenes change validation on server side.
 
 ## Change Log
 ### 1.2.5
