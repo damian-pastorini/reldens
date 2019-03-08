@@ -29,6 +29,8 @@ If you like to contribute or donate to support the project please feel free to c
 + Phaser 3
 
 ## NEWS & Coming soon!
+March 8, 2019: Close to launch 1.2.6, you will find a new RC branch. Note the client prediction part will be a future feature and for now we will only have the server side movement to avoid hacks. The biggest pending modification that's keeping the branch to be merged is to make the scene chage happen on the server, and for last some minor modifications to fix the current test maps.
+
 Feb 19, 2019: Preparing a Vagrant VM ready to run the project (considering I've broke my environment after update the Node version, and also because there are a lot of updates on Phaser and Colyseus).
 
 Feb 13, 2019: I've been a bit short on time to continue with the project (considerign it's free), but for sure I'll continue with it over the next months, so keep in touch!
