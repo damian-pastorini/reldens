@@ -29,6 +29,9 @@ If you like to contribute or donate to support the project please feel free to c
 + Phaser 3
 
 ## NEWS & Coming soon!
+March 27, 2019: So far it's been hard to make the change rooms work properly now that we have the P2.World involved since for example I need to remove the players body when they leave the room, between other things. Also, I've had to update the maps JSON to properly work in the P2.World, and now I think I need to update some data in the sample DB dump (for example the scenes return points).
+I'm including all my updates in the v1.2.6rc branch, I'm looking to fix the change scene as soon as possible.
+
 March 8, 2019: Close to launch 1.2.6, you will find a new RC branch. Note the client prediction part will be a future feature and for now we will only have the server side movement to avoid hacks. The biggest pending modification that's keeping the branch to be merged is to make the scene chage happen on the server, and for last some minor modifications to fix the current test maps.
 
 Feb 19, 2019: Preparing a Vagrant VM ready to run the project (considering I've broke my environment after update the Node version, and also because there are a lot of updates on Phaser and Colyseus).
@@ -36,9 +39,9 @@ Feb 19, 2019: Preparing a Vagrant VM ready to run the project (considering I've 
 Feb 13, 2019: I've been a bit short on time to continue with the project (considerign it's free), but for sure I'll continue with it over the next months, so keep in touch!
 
 #### For the next release (1.2.6):
-+ P2world implementation on server side.
-+ Client movement and impact calculations on server side as authority to avoid possible hacks.
-+ Scenes change validation on server side.
++ P2world implementation on server side. [done]
++ Client movement and impact calculations on server side as authority to avoid possible hacks. [done]
++ Scenes change validation on server side. [work in progress]
 
 ## Change Log
 ### 1.2.5
