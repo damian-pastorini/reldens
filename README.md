@@ -22,13 +22,13 @@ If you like to contribute or donate to support the project please feel free to c
 + MySQL
 + Phaser 3
 
-## NEWS & Coming soon!
+## Last News
 #### March 31, 2019:
 After a considerable time I'm really happy to release v1.2.6!
 This release includes the game-world implementation on the server to avoid possible client-hacks, which is a huge deal on multiplayer games. So far the collisions implementation still needs some work to perfectly match the game graphics, but I'm hopping to make it better for the next release.
 From now on the plan is to get the new versions done faster than this one!
 
-[Please checkout the news and coming soon section for more information!](https://github.com/damian-pastorini/dwdgame/wiki/News-&-Coming-soon "News & Coming soon")
+## [Coming soon and news archive!](https://github.com/damian-pastorini/dwdgame/wiki/Coming-soon-&-News-archive "Coming soon & News archive")
 
 ## [Change Log](https://github.com/damian-pastorini/dwdgame/wiki/Change-Log "Change Log")
 
