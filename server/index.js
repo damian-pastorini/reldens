@@ -24,10 +24,10 @@ if(config.colyseus_monitor){
 }
 // server shutdown:
 gameServer.onShutdown(function(){
-    console.log('Game Server is going down.');
+    console.log('NOTIFICATION - Game Server is going down.');
 });
 var queryString = 'SELECT * FROM scenes';
-var prom = new Promise((resolve, reject) => {
+let prom = new Promise((resolve, reject) => {
     DataLink.connection.query(queryString, {}, (err, rows) => {
         if(err){
             return reject({});
@@ -47,7 +47,8 @@ prom.then(function(result){
                 image: scene.image,
                 collisions: JSON.parse(scene.collisions),
                 layers: JSON.parse(scene.layers),
-                returnPositions: JSON.parse(scene.return_positions)
+                returnPositions: JSON.parse(scene.return_positions),
+                sceneName: scene.name
             };
             console.log('Registered scene: '+scene.name);
             gameServer.register(scene.name, RoomScene, {scene: temp});
@@ -63,5 +64,5 @@ prom.then(function(result){
     app.use(bundler.middleware());
 }).catch(function(err){
     // @TODO: improve error handle.
-    console.log('Server catch error: ', err);
+    console.log('ERROR - Server catch error:', err);
 });

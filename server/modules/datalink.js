@@ -8,7 +8,7 @@ const mysql = require('mysql');
   "database": "db_name"
 }
 */
-var config = require('../config/database.json');
+const config = require('../config/database.json');
 
 class DataLink
 {

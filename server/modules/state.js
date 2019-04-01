@@ -15,6 +15,7 @@ class State
         let newPlayer = new Player(playerData);
         newPlayer.sessionId = sessionId;
         this.players[sessionId] = newPlayer;
+        return this.players[sessionId];
     }
 
     movePlayer(id, data)
@@ -32,13 +33,17 @@ class State
 
     stopPlayer(id, data)
     {
-        let result = true;
-        if(this.players[id].mov){
-            result = false;
+        if(!this.players[id]){
+            // @NOTE: since P2world could run the endContact several times.
+        } else {
+            let result = true;
+            if(this.players[id].mov){
+                result = false;
+            }
+            this.players[id].mov = result;
+            this.players[id].x = data.x;
+            this.players[id].y = data.y;
         }
-        this.players[id].mov = result;
-        this.players[id].x = data.x;
-        this.players[id].y = data.y;
     }
 
     removePlayer(id)

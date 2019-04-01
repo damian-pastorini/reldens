@@ -44,16 +44,6 @@ class SceneDynamic extends SceneBase
             let collider = this.params.layers.collider[lc];
             this.physics.add.collider(player, this.layers[collider]);
         }
-        this.physics.add.collider(player, this.layers[this.params.layers.main], (sprite, tile) => {
-            for(let cp in this.params.layers.change_points){
-                let cPoint = this.params.layers.change_points[cp];
-                // example: {"i":167, "n":"other_scene_key_1"}
-                if (tile.index === cPoint.i) {
-                    this.nextSceneKey = cPoint.n;
-                    this.onChangeScene();
-                }
-            }
-        });
     }
 
     getPosition(data)
@@ -71,7 +61,6 @@ class SceneDynamic extends SceneBase
             ){
                 return {x: rp.X, y: rp.Y, direction: rp.D};
             }
-
         }
     }
 

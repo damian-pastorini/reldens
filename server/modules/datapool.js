@@ -1,5 +1,5 @@
-var mysql = require('promise-mysql');
-var config = require('../config/database_pool.json');
+const mysql = require('promise-mysql');
+const config = require('../config/database_pool.json');
 
 // config example:
 /*

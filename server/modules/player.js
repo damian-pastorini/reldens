@@ -11,6 +11,7 @@ class Player
         this.role_id = data.role_id;
         this.status = data.status;
         this.username = data.username;
+        this.isBussy = false;
         // initial scene and position:
         if(data.state){
             // parse user state:

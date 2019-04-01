@@ -69,8 +69,9 @@ class Player
         if(send){
             this.socket.send({act: share.STOP});
         }
-        this.players[this.playerId].body.velocity.x = 0;
-        this.players[this.playerId].body.velocity.y = 0;
+        // @NOTE: we are not using Phaser velocity for now, position is coming from the server where the speed is controlled.
+        // this.players[this.playerId].body.velocity.x = 0;
+        // this.players[this.playerId].body.velocity.y = 0;
         this.players[this.playerId].anims.stop();
     }
 
