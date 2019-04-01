@@ -15,8 +15,6 @@ class SceneBase extends Phaser.Scene
     {
         this.scene.setVisible(false, this.key);
         this.layers = {};
-        this.prevSceneKey = this.key;
-        this.nextSceneKey = null;
         this.transition = true;
         this.input.keyboard.removeAllListeners();
     }
@@ -41,6 +39,7 @@ class SceneBase extends Phaser.Scene
             this.transition = false;
             this.input.keyboard.on('keyup', (event) => {
                 if (event.keyCode >= 37 && event.keyCode <= 40) {
+                    // @NOTE: all keyup events has to be sent.
                     this.player.stop(true);
                 }
             });
@@ -70,7 +69,6 @@ class SceneBase extends Phaser.Scene
     onChangeScene()
     {
         this.transition = true;
-        this.player.stop(true);
         this.cameras.main.fade(share.FADE_DURATION);
     }
 
@@ -79,7 +77,6 @@ class SceneBase extends Phaser.Scene
         if(this.withTSAnimation){
             this.tilesetAnimation.destroy();
         }
-        this.player.socket.send({act: share.CLIENT_CHANGED_SCENE, next: this.nextSceneKey, prev: this.prevSceneKey});
     }
 
     registerCollision()

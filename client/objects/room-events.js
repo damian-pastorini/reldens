@@ -22,11 +22,10 @@ class RoomEvents
         const self = this;
         // listen to patches coming from the server
         room.listen('players/:id', function(change){
-            // Note: in case an state update comes before the player creation we create the scene based.
+            // @NOTE: in case an state update comes before the player creation we create the scene based.
             if(!self.sceneData){
                 self.sceneData = room.state.sceneData;
             }
-            // console.log('change-A: ', change);
             // remove player on disconnect or logout:
             if (change.operation === 'remove'){
                 /* @TODO: since we are removing the player from the room we need to refactor this.
@@ -42,61 +41,71 @@ class RoomEvents
                 }
             }
         });
-        // move other clients:
+        // move clients:
         room.listen('players/:id/:axis', function(change){
-            // Note: in case an state update comes before the player creation we create the scene based.
+            // @NOTE: in case an state update comes before the player creation we create the scene based.
             if(!self.sceneData){
                 self.sceneData = room.state.sceneData;
             }
-            // console.log('change-B: ', change);
-            if(change.path.id != room.sessionId){
-                let currentScene = self.getActiveScene();
-                if(currentScene.player && currentScene.player.players.hasOwnProperty(change.path.id)){
-                    let playerToMove = currentScene.player.players[change.path.id];
-                    if(change.path.axis == 'x'){
+            let currentScene = self.getActiveScene();
+            if(currentScene.player && currentScene.player.players.hasOwnProperty(change.path.id)){
+                let playerToMove = currentScene.player.players[change.path.id];
+                if(change.path.axis == 'x'){
+                    if(change.path.id != room.sessionId && playerToMove.anims){
                         if(change.value < playerToMove.x){
                             playerToMove.anims.play(share.LEFT, true);
-                            playerToMove.x = change.value;
+                            // @NOTE: we commented the speed here since the body position is given by the body speed
+                            // in the server. This is a temporal implementation to prevent client hacks.
+                            // @TODO: improve the implementation, use client physics for prediction.
+                            // playerToMove.body.velocity.x = -share.SPEED;
                         } else {
                             playerToMove.anims.play(share.RIGHT, true);
-                            playerToMove.x = change.value;
+                            // playerToMove.body.velocity.x = share.SPEED;
                         }
                     }
-                    if(change.path.axis == 'y'){
+                    playerToMove.x = parseFloat(change.value);
+                }
+                if(change.path.axis == 'y'){
+                    if(change.path.id != room.sessionId && playerToMove.anims){
                         if(change.value < playerToMove.y){
                             playerToMove.anims.play(share.UP, true);
-                            playerToMove.y = change.value;
+                            // playerToMove.body.velocity.y = -share.SPEED;
                         } else {
                             playerToMove.anims.play(share.DOWN, true);
-                            playerToMove.y = change.value;
+                            // playerToMove.body.velocity.y = share.SPEED;
                         }
                     }
+                    playerToMove.y = parseFloat(change.value);
                 }
             }
         });
-        // stop movement:
+        // stop movement or change direction:
         room.listen('players/:id/:attribute', function(change){
-            // Note: in case an state update comes before the player creation we create the scene based.
+            // @NOTE: in case an state update comes before the player creation we create the scene based.
             if(!self.sceneData){
                 self.sceneData = room.state.sceneData;
             }
-            // console.log('change-C: ', change);
-            // player stop action:
-            if(change.path.id != room.sessionId && change.operation == 'replace' && change.path.attribute == 'mov'){
-                let currentScene = self.getActiveScene();
-                if(currentScene.player.players.hasOwnProperty(change.path.id)){
-                    currentScene.player.players[change.path.id].anims.stop();
-                }
-            }
-            // player change direction action:
-            if(change.path.id != room.sessionId && change.path.attribute == 'dir'){
-                let currentScene = self.getActiveScene();
-                if(currentScene.player && currentScene.player.players.hasOwnProperty(change.path.id)){
-                    currentScene.player.players[change.path.id].anims.stop();
+            // get scene:
+            let currentScene = self.getActiveScene();
+            if(currentScene && currentScene.hasOwnProperty('player')){
+                let playerToMove = currentScene.player.players[change.path.id];
+                if(playerToMove && playerToMove.anims){
+                    // player stop action:
+                    if(change.path.attribute == 'mov'){
+                        playerToMove.body.velocity.x = 0;
+                        playerToMove.body.velocity.y = 0;
+                        playerToMove.anims.stop();
+                    }
+                    // player change direction action:
+                    if(change.path.attribute == 'dir'){
+                        playerToMove.anims.stop();
+                    }
                 }
             }
         });
+        // create players or change scenes:
         room.onMessage.add(function(message){
+            // create player:
             if(message.act == share.CREATE_PLAYER && message.id == room.sessionId){
                 $('.player-name').html(message.player.username);
                 self.startPhaserScene(message, room, previousScene);
@@ -106,7 +115,9 @@ class RoomEvents
                 let currentScene = self.getActiveScene();
                 if(currentScene.key == message.player.scene){
                     if(currentScene.player && currentScene.player.players){
-                        currentScene.player.addPlayer(message.id, parseFloat(message.player.x), parseFloat(message.player.y), message.player.dir);
+                        let posX = parseFloat(message.player.x),
+                            posY = parseFloat(message.player.y);
+                        currentScene.player.addPlayer(message.id, posX, posY, message.player.dir);
                     }
                 }
             }
@@ -115,7 +126,7 @@ class RoomEvents
                 // if other users enter in the current scene we need to add them:
                 currentScene.player.addPlayer(message.id, message.x, message.y, message.dir);
             }
-            // NOTE: here we don't need to evaluate the id since the reconnect only is sent to the current client.
+            // @NOTE: here we don't need to evaluate the id since the reconnect only is sent to the current client.
             if(message.act == share.RECONNET){
                 gameClient.reconnectColyseus(message, room);
             }
@@ -142,7 +153,7 @@ class RoomEvents
             }
         }
         phaserGame.colyseusRoom = room;
-        var currentScene = phaserGame.scene.getScene(message.player.scene);
+        let currentScene = phaserGame.scene.getScene(message.player.scene);
         let playerPos = {x: parseFloat(message.player.x), y: parseFloat(message.player.y), direction: message.player.dir};
         let currentPlayer = new PhaserPlayer(currentScene, message.player.scene, playerPos);
         currentPlayer.socket = room;

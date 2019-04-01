@@ -1,11 +1,11 @@
 const Player = require('./player').player;
+const share = require('../../shared/constants');
 
 class State
 {
 
     constructor(sceneData)
     {
-        // @TODO: move scene data logic to the server side to validate the client actions.
         this.sceneData = sceneData;
         this.players = {};
     }
@@ -15,31 +15,35 @@ class State
         let newPlayer = new Player(playerData);
         newPlayer.sessionId = sessionId;
         this.players[sessionId] = newPlayer;
+        return this.players[sessionId];
     }
 
     movePlayer(id, data)
     {
-        // @TODO: move values and logic to the server side to validate the client actions.
-        if(data.x != this.players[id].x){
-            this.players[id].x = data.x;
-            this.players[id].mov = true;
+        if(data.hasOwnProperty('dir')){
             this.players[id].dir = data.dir;
-        }
-        if(data.y != this.players[id].y){
-            this.players[id].y = data.y;
-            this.players[id].mov = true;
-            this.players[id].dir = data.dir;
+            if(data.dir == share.RIGHT || data.dir == share.LEFT){
+                this.players[id].x = data.x;
+            }
+            if(data.dir == share.UP || data.dir == share.DOWN){
+                this.players[id].y = data.y;
+            }
         }
     }
 
     stopPlayer(id, data)
     {
-        // @TODO: move values and logic to the server side to validate the client actions.
-        let result = true;
-        if(this.players[id].mov){
-            result = false;
+        if(!this.players[id]){
+            // @NOTE: since P2world could run the endContact several times.
+        } else {
+            let result = true;
+            if(this.players[id].mov){
+                result = false;
+            }
+            this.players[id].mov = result;
+            this.players[id].x = data.x;
+            this.players[id].y = data.y;
         }
-        this.players[id].mov = result;
     }
 
     removePlayer(id)

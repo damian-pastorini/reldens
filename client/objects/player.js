@@ -34,49 +34,45 @@ class Player
 
     left(send = true)
     {
-        this.players[this.playerId].body.velocity.x = -share.SPEED;
-        this.players[this.playerId].anims.play(share.LEFT, true);
-        if(send) {
-            this.socket.send({act: share.KEY_PRESS, dir: share.LEFT, x: this.players[this.playerId].x, y: this.players[this.playerId].y});
+        if(send){
+            this.socket.send({dir: share.LEFT});
         }
-
+        this.players[this.playerId].anims.play(share.LEFT, true);
     }
 
     right(send = true)
     {
-        this.players[this.playerId].body.velocity.x = share.SPEED;
-        this.players[this.playerId].anims.play(share.RIGHT, true);
-        if(send) {
-            this.socket.send({act: share.KEY_PRESS, dir: share.RIGHT, x: this.players[this.playerId].x, y: this.players[this.playerId].y});
+        if(send){
+            this.socket.send({dir: share.RIGHT});
         }
+        this.players[this.playerId].anims.play(share.RIGHT, true);
     }
 
     up(send = true)
     {
-        this.players[this.playerId].body.velocity.y = -share.SPEED;
-        this.players[this.playerId].anims.play(share.UP, true);
-        if(send) {
-            this.socket.send({act: share.KEY_PRESS, dir: share.UP, x: this.players[this.playerId].x, y: this.players[this.playerId].y});
+        if(send){
+            this.socket.send({dir: share.UP});
         }
+        this.players[this.playerId].anims.play(share.UP, true);
     }
 
     down(send = true)
     {
-        this.players[this.playerId].body.velocity.y = share.SPEED;
-        this.players[this.playerId].anims.play(share.DOWN, true);
-        if(send) {
-            this.socket.send({act: share.KEY_PRESS, dir: share.DOWN, x: this.players[this.playerId].x, y: this.players[this.playerId].y});
+        if(send){
+            this.socket.send({dir: share.DOWN});
         }
+        this.players[this.playerId].anims.play(share.DOWN, true);
     }
 
     stop(send = true)
     {
-        this.players[this.playerId].body.velocity.x = 0;
-        this.players[this.playerId].body.velocity.y = 0;
-        this.players[this.playerId].anims.stop();
-        if(send) {
-            this.socket.send({act: share.STOP, x: this.players[this.playerId].x, y: this.players[this.playerId].y });
+        if(send){
+            this.socket.send({act: share.STOP});
         }
+        // @NOTE: we are not using Phaser velocity for now, position is coming from the server where the speed is controlled.
+        // this.players[this.playerId].body.velocity.x = 0;
+        // this.players[this.playerId].body.velocity.y = 0;
+        this.players[this.playerId].anims.stop();
     }
 
     registerChat()

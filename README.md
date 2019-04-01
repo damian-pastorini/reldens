@@ -163,7 +163,7 @@ ENGINE=InnoDB
 
 ##### Fields description:
 
-In the scenes entity, the scene_map field will be the full json file for the exported map.
+In the scenes entity, the scene_map field will be the json file for the exported tiled map.
 
 Collisions JSON sample:
 

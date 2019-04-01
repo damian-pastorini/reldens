@@ -24,10 +24,10 @@ if(config.colyseus_monitor){
 }
 // server shutdown:
 gameServer.onShutdown(function(){
-    console.log('Game Server is going down.');
+    console.log('NOTIFICATION - Game Server is going down.');
 });
 var queryString = 'SELECT * FROM scenes';
-var prom = new Promise((resolve, reject) => {
+let prom = new Promise((resolve, reject) => {
     DataLink.connection.query(queryString, {}, (err, rows) => {
         if(err){
             return reject({});
@@ -39,18 +39,21 @@ var prom = new Promise((resolve, reject) => {
 });
 prom.then(function(result){
     let counter = 0;
-    for(let s in result){
-        let scene = result[s];
-        let temp = {
-            sceneMap: scene.scene_map,
-            image: scene.image,
-            collisions: JSON.parse(scene.collisions),
-            layers: JSON.parse(scene.layers),
-            returnPositions: JSON.parse(scene.return_positions)
-        };
-        console.log('Registered scene: '+scene.name);
-        gameServer.register(scene.name, RoomScene, {scene: temp});
-        counter++;
+    if(result){
+        for(let s in result){
+            let scene = result[s];
+            let temp = {
+                sceneMap: scene.scene_map,
+                image: scene.image,
+                collisions: JSON.parse(scene.collisions),
+                layers: JSON.parse(scene.layers),
+                returnPositions: JSON.parse(scene.return_positions),
+                sceneName: scene.name
+            };
+            console.log('Registered scene: '+scene.name);
+            gameServer.register(scene.name, RoomScene, {scene: temp});
+            counter++;
+        }
     }
     console.log('Loaded '+counter+' scenes');
     // start:
@@ -60,5 +63,6 @@ prom.then(function(result){
     const bundler = new Parcel(path.resolve(__dirname, '../client/index.html'));
     app.use(bundler.middleware());
 }).catch(function(err){
-    console.log('Server catch error: ', err);
+    // @TODO: improve error handle.
+    console.log('ERROR - Server catch error:', err);
 });
