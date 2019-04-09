@@ -1,4 +1,4 @@
-# DwD - Game - MMORPG
+# Reldens - MMORPG
 
 ## About this project
 This is a really simple base MMORPG game created based on the [Colyseus samples](https://github.com/gamestdio/colyseus-examples "Colyseus Examples") and on the Phaser 3 implementation from [Jacky Rusly](https://github.com/jackyrusly/jrgame "Jacky Rusly").
@@ -34,3 +34,5 @@ From now on the plan is to get the new versions done faster than this one!
 ## [Change Log](https://github.com/damian-pastorini/dwdgame/wiki/Change-Log "Change Log")
 
 ## [Installation](https://github.com/damian-pastorini/dwdgame/wiki/Installation "Installation")
+
+### [By DwDeveloper](https://www.dwdeveloper.com/ "DwDeveloper")
