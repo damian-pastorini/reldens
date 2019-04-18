@@ -23,7 +23,7 @@ If you like to contribute or donate to support the project please feel free to c
 + MySQL
 + Phaser 3
 
-## [Coming soon and news!](https://github.com/damian-pastorini/dwdgame/wiki/Coming-soon-&-News-archive "Coming soon & News archive")
+## [Coming soon and news!](https://github.com/damian-pastorini/reldens/wiki/Coming-soon-&-News "Coming soon & News archive")
 
 ## [Change Log](https://github.com/damian-pastorini/dwdgame/wiki/Change-Log "Change Log")
 
