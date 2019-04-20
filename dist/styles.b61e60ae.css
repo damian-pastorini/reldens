@@ -1,0 +1,31 @@
+/**
+ * DwD - Game Interface - Styles
+ */
+body { font-family:Verdana, Geneva, sans-serif; }
+.wrapper,
+.header,
+.footer,
+.game-container
+{ float:left; position:relative; display:block; width:100%; margin:0px; padding:0px; }
+.header,
+.footer
+{ background-color:#222222; color:#ffffff; }
+.header h1 { float:left; position:relative; display:block; width:96%; margin:20px 2%; padding:0px; text-align:center; }
+.content {  position:relative; display:block; width:100%; max-width:1000px; min-height:400px; margin:0px auto; padding:0px; }
+.col-2 { float:left; display:block; position:relative; width:50%; margin:0px; padding:0px; }
+.footer-content { position:relative; display:block; width:100%; max-width:1000px; margin:20px auto 0px; padding:0px; }
+.copyright { position:relative; display:block; width:100%; margin:20px 0px; padding:0px; text-align:center; }
+.game-container { min-height:200px; }
+.response-error { color:#ff0000; }
+.player { width:100px; height:100px; position:absolute; padding-top:24px; box-sizing:border-box; left:0; top:0; }
+.ux-box { z-index:1001; display:block; margin:0px; padding:0px; }
+.ux-box-left { position:absolute; bottom:10px; left:0px; max-width:150px; }
+.ux-box-left button { float:left; }
+.ux-box-left .vertical-buttons { float:left; width:56px; text-align:center; top:-21px; position:relative; }
+.ux-box-left .vertical-buttons button { float:none; }
+.ux-box-left .vertical-buttons #down { margin-top:23px; }
+.ux-box-right { position:absolute; top:0px; right:0px; }
+.player-name { margin:10px 0px; text-align:right; }
+
+
+/*# sourceMappingURL=/styles.b61e60ae.css.map */

@@ -13,7 +13,8 @@
         "url": "https://github.com/damian-pastorini/reldens/issues"
     },
     "scripts": {
-        "start": "rm -R dist && mkdir dist && cp -r client/assets dist/assets/ && node ."
+        "start": "node .",
+        "dev-start": "rm -R dist && mkdir dist && cp -r client/assets dist/assets/ && node ."
     },
     "engines": {
         "node": "10.15.1"
