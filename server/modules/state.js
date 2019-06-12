@@ -22,10 +22,10 @@ class State
     {
         if(data.hasOwnProperty('dir')){
             this.players[id].dir = data.dir;
-            if(data.dir == share.RIGHT || data.dir == share.LEFT){
+            if(data.dir === share.RIGHT || data.dir === share.LEFT){
                 this.players[id].x = data.x;
             }
-            if(data.dir == share.UP || data.dir == share.DOWN){
+            if(data.dir === share.UP || data.dir === share.DOWN){
                 this.players[id].y = data.y;
             }
         }

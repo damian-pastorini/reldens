@@ -19,28 +19,26 @@ class RoomScene extends RoomLogin
 
     onJoin(client, options, authResult)
     {
-        var self = this;
         // @TODO: check client ID in room presence.
         // check if user is already logged and disconnect from the previous client:
-        for(let i in this.state.players){
-            let p = this.state.players[i];
-            if(p.username == options.username){
-                // @TODO: this should use a Promise.
-                this.saveStateAndRemovePlayer(p.sessionId);
-                break;
+        if(this.state.players.length > 0){
+            for(let player of this.state.players){
+                if(player.username === options.username){
+                    // @TODO: this should use a Promise.
+                    this.saveStateAndRemovePlayer(player.sessionId);
+                    break;
+                }
             }
         }
         // player creation:
         let currentPlayer = this.state.createPlayer(client.sessionId, authResult);
         // server physics:
-        let bodyIndex = this.createPlayerBody(currentPlayer, client.sessionId);
-        currentPlayer.bodyIndex = bodyIndex;
+        currentPlayer.bodyIndex = this.createPlayerBody(currentPlayer, client.sessionId);
         // client creation:
         this.send(client, {act: share.CREATE_PLAYER, id: client.sessionId, player: currentPlayer});
         this.broadcast({act: share.ADD_PLAYER, id: client.sessionId, player: currentPlayer});
         // assign actions on end contact:
-        this.p2world.on('endContact', function(evt){
-            // self.runWorldEndContactActions(evt);
+        this.p2world.on('endContact', (evt) => {
             let bodyA = evt.bodyA,
                 bodyB = evt.bodyB,
                 currentPlayerBody = false,
@@ -61,11 +59,12 @@ class RoomScene extends RoomLogin
                     console.log('WHO IS MOVING???', bodyA.velocity, bodyA.position, bodyB.velocity, bodyB.position);
                 }
             }
-            let contactPlayer = self.getPlayer(currentPlayerBody.playerId);
-            if(contactPlayer.isBussy || currentPlayerBody.isChangingScene) {
+            let contactPlayer = this.getPlayer(currentPlayerBody.playerId);
+            if(contactPlayer.isBussy || currentPlayerBody.isChangingScene){
                 // @NOTE: if the player is been saved or if is changing scene: do nothing.
             } else {
-                self.state.stopPlayer(currentPlayerBody.playerId, {x: currentPlayerBody.position[0], y: currentPlayerBody.position[1]});
+                let playerPosition = {x: currentPlayerBody.position[0], y: currentPlayerBody.position[1]};
+                this.state.stopPlayer(currentPlayerBody.playerId, playerPosition);
             }
             // check for scene change points:
             if(wallBody.changeScenePoint){
@@ -76,8 +75,8 @@ class RoomScene extends RoomLogin
                 // check if the player is not changing scenes already:
                 if(currentPlayerBody.isChangingScene === false){
                     currentPlayerBody.isChangingScene = true;
-                    let contactClient = self.getClientById(currentPlayerBody.playerId);
-                    self.nextSceneInitialPosition(contactClient, changeData);
+                    let contactClient = this.getClientById(currentPlayerBody.playerId);
+                    this.nextSceneInitialPosition(contactClient, changeData);
                     // @NOTE: we do not need to change back the isChangingScene property back to false since in the new
                     // scene a new body will be created with the value set to false by default.
                 }
@@ -103,17 +102,17 @@ class RoomScene extends RoomLogin
             let bodyToMove = this.p2world.bodies[bodyToMoveIndex];
             // if is player movement:
             if(data.hasOwnProperty('dir')){
-                if(bodyToMove) {
-                    if(data.dir == share.RIGHT){
+                if(bodyToMove){
+                    if(data.dir === share.RIGHT){
                         bodyToMove.velocity[0] = share.SPEED_SERVER;
                     }
-                    if(data.dir == share.LEFT){
+                    if(data.dir === share.LEFT){
                         bodyToMove.velocity[0] = -share.SPEED_SERVER;
                     }
-                    if(data.dir == share.UP){
+                    if(data.dir === share.UP){
                         bodyToMove.velocity[1] = -share.SPEED_SERVER;
                     }
-                    if(data.dir == share.DOWN){
+                    if(data.dir === share.DOWN){
                         bodyToMove.velocity[1] = share.SPEED_SERVER;
                     }
                     data.x = bodyToMove.position[0];
@@ -122,8 +121,8 @@ class RoomScene extends RoomLogin
                 }
             }
             // if is player stop:
-            if(data.act == share.STOP){
-                if(currentPlayer.isDoinIt) {
+            if(data.act === share.STOP){
+                if(currentPlayer.isDoinIt){
                     return false;
                 }
                 let bodyToMoveIndex = currentPlayer.bodyIndex;
@@ -155,12 +154,11 @@ class RoomScene extends RoomLogin
         // assign world to room:
         this.p2world = roomWorld;
         // start world movement:
-        var self = this;
         // @TODO: in the future we need to improve the timeStep to perfectly match client movement for predictions.
         this.timeStep = 0.04; // 1/60; // 0.0116 // 0.112;
-        this.worldTimer = this.clock.setInterval(function(){
-            self.p2world.step(self.timeStep);
-        }, 1000 * self.timeStep);
+        this.worldTimer = this.clock.setInterval(() => {
+            this.p2world.step(this.timeStep);
+        }, 1000 * this.timeStep);
     }
 
     createPlayerBody(currentPlayer, sessionId)
@@ -178,15 +176,14 @@ class RoomScene extends RoomLogin
         boxBody.playerId = sessionId;
         boxBody.isChangingScene = false;
         this.p2world.addBody(boxBody);
-        let bodyIndex = this.p2world.bodies.length -1;
-        return bodyIndex;
+        // return body index:
+        return (this.p2world.bodies.length -1);
     }
 
     nextSceneInitialPosition(client, data)
     {
-        var self = this;
         // prepare query:
-        let queryString = 'SELECT return_positions FROM scenes WHERE name="'+data.next+'";';
+        let queryString = `SELECT return_positions FROM scenes WHERE name="${data.next}";`;
         let prom = new Promise((resolve, reject) => {
             DataLink.connection.query(queryString, {}, (err, rows) => {
                 if(err){
@@ -194,30 +191,25 @@ class RoomScene extends RoomLogin
                     return reject(err);
                 }
                 if(rows){
-                    let positions = '';
                     // there should be only 1 row always:
-                    for(let i in rows) {
-                        positions = JSON.parse(rows[i].return_positions);
-                        break;
-                    }
+                    let positions = JSON.parse(rows[0].return_positions);
                     resolve({data: data, positions: positions});
                 }
             });
         });
-        prom.then(function(result){
-            let currentPlayer = self.state.players[client.sessionId];
-            for(let i in result.positions){
-                let newPosition = result.positions[i];
-                if(!newPosition.hasOwnProperty('P') || newPosition.P == result.data.prev){
+        prom.then((result) => {
+            let currentPlayer = this.state.players[client.sessionId];
+            for(let newPosition of result.positions){
+                if(!newPosition.hasOwnProperty('P') || newPosition.P === result.data.prev){
                     currentPlayer.scene = result.data.next;
                     currentPlayer.x = parseFloat(newPosition.X);
                     currentPlayer.y = parseFloat(newPosition.Y);
                     currentPlayer.dir = newPosition.D;
-                    let stateSaved = self.savePlayerState(client.sessionId);
+                    let stateSaved = this.savePlayerState(client.sessionId);
                     if(stateSaved !== false){
-                        stateSaved.then(function(stateResult) {
+                        stateSaved.then((stateResult) => {
                             // @NOTE: we need to broadcast the current player scene change to be removed or added in other players:
-                            self.broadcast({
+                            this.broadcast({
                                 act: share.CHANGED_SCENE,
                                 id: client.sessionId,
                                 scene: currentPlayer.scene,
@@ -227,36 +219,35 @@ class RoomScene extends RoomLogin
                                 dir: currentPlayer.dir,
                             });
                             // reconnect is to create the player in the new scene:
-                            self.send(client, {act: share.RECONNET, player: currentPlayer, prev: result.data.prev});
-                        }).catch(function(err){
+                            this.send(client, {act: share.RECONNET, player: currentPlayer, prev: result.data.prev});
+                        }).catch((err) => {
                             console.log('ERROR - Save state error:', client.sessionId, err);
                         });
                     }
                     break;
                 }
             }
-        }).catch(function(err){
+        }).catch((err) => {
             console.log('ERROR - Player scene change error:', err);
         });
     }
 
     saveStateAndRemovePlayer(sessionId)
     {
-        var self = this;
         // save the last state on the database:
         let prom = this.savePlayerState(sessionId);
-        prom.then(function(result){
+        prom.then((result) => {
             // first remove player body from current world:
-            let playerToRemove = self.getPlayer(sessionId);
+            let playerToRemove = this.getPlayer(sessionId);
             if(playerToRemove){
-                let bodyToRemove = self.p2world.bodies[playerToRemove.bodyIndex];
+                let bodyToRemove = this.p2world.bodies[playerToRemove.bodyIndex];
                 if(bodyToRemove){
-                    self.p2world.removeBody(bodyToRemove);
+                    this.p2world.removeBody(bodyToRemove);
                 }
                 // remove player:
-                self.state.removePlayer(sessionId);
+                this.state.removePlayer(sessionId);
             }
-        }).catch(function(err){
+        }).catch((err) => {
             console.log('ERROR - Player save error:', err);
         });
     }
@@ -265,7 +256,7 @@ class RoomScene extends RoomLogin
     {
         // when user disconnects save the last state on the database:
         let currentUser = this.getPlayer(sessionId);
-        if(currentUser.isBussy) {
+        if(currentUser.isBussy){
             return false;
         }
         currentUser.isBussy = true;
@@ -278,7 +269,7 @@ class RoomScene extends RoomLogin
             +'}';
         let args = {sessionId: sessionId};
         // prepare query:
-        let queryString = 'UPDATE users SET state=\''+currentStateJson+'\' WHERE username="'+currentUser.username+'";';
+        let queryString = `UPDATE users SET state='${currentStateJson}' WHERE username='${currentUser.username}';`;
         // run query:
         return new Promise((resolve, reject) => {
             DataLink.connection.query(queryString, args, (err, rows) => {
@@ -296,11 +287,10 @@ class RoomScene extends RoomLogin
 
     getClientById(clientId)
     {
-        let result = false;
+        let result;
         if(this.clients){
-            for (let i=0; i < this.clients.length; i++) {
-                let client = this.clients[i];
-                if (client.sessionId == clientId) {
+            for (let client of this.clients){
+                if (client.sessionId === clientId){
                     result = client;
                     break;
                 }
@@ -312,7 +302,7 @@ class RoomScene extends RoomLogin
     getPlayer(playerIndex)
     {
         let result = false;
-        if(this.state.players[playerIndex]) {
+        if(this.state.players[playerIndex]){
             result = this.state.players[playerIndex];
         }
         return result;
@@ -322,7 +312,7 @@ class RoomScene extends RoomLogin
     {
         let result = false;
         let player = this.getPlayer(playerIndex);
-        if(player) {
+        if(player){
             let bodyIndex = player.bodyIndex;
             if(this.p2world.bodies[bodyIndex]){
                 result = this.p2world.bodies[bodyIndex];

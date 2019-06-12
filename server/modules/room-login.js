@@ -12,43 +12,49 @@ class RoomLogin extends Room
         if(!options){
             return false;
         }
-        var salt = bcrypt.genSaltSync(saltRounds);
-        var hash = bcrypt.hashSync(options.password, salt);
-        // @TODO: move this to the DB as part of the game configuration.
-        var defaultState = '{"scene":"'+share.TOWN+'","x":"225","y":"280","dir":"'+share.DOWN+'"}';
-        if(options.isNewUser){
-            // the last 3 values are for the default role_id = 1, status = 1 and state = 1:
-            var queryString = 'INSERT INTO users VALUES(NULL, "'+options.email+'", "'+options.username+'", "'+hash+'", 1, 1, \''+defaultState+'\');';
-        } else {
-            // login:
-            var queryString = 'SELECT * FROM users WHERE username="'+options.username+'"';
-        }
+        // first find if the email was used already:
+        let queryString = `SELECT * FROM users WHERE username='${options.username}'`;
         return new Promise((resolve, reject) => {
             DataLink.connection.query(queryString, options, (err, rows) => {
                 if(err){
+                    // if there's any error then reject:
                     return reject(options);
                 }
-                if(rows){
+                // generate the password hash:
+                let salt = bcrypt.genSaltSync(saltRounds);
+                let hash = bcrypt.hashSync(options.password, salt);
+                // if the email exists:
+                if(rows.length > 0){
+                    let currentPlayer = rows[0];
+                    // check if player status is not active or if the password doesn't match then return an error:
+                    if(currentPlayer.status !== 1 || !bcrypt.compareSync(options.password, currentPlayer.password)){
+                        // if the password doesn't match return an error:
+                        return reject(false);
+                    } else {
+                        // if everything is good then just return the user:
+                        return resolve(currentPlayer);
+                    }
+                } else {
+                    // if the email doesn't exists in the database and it's a registration request:
                     if(options.isNewUser){
+                        // @TODO: move this to the DB as part of the game configuration.
+                        let defaultState = `{"scene":"${share.TOWN}","x":"225","y":"280","dir":"${share.DOWN}"}`;
+                        // the last 3 values are for the default role_id = 1, status = 1 and state = 1:
+                        queryString = `INSERT INTO users VALUES(NULL, '${options.email}', '${options.username}', '${hash}', 1, 1, '${defaultState}');`;
+                        // if is a new user status is always active by default:
                         options.isNewUser = false;
                         options.role_id = 1;
                         options.status = 1;
                         options.state = defaultState;
-                        // if is a new user status is always active by default:
-                        return resolve(options);
+                        return DataLink.connection.query(queryString, options, (err, rows) => {
+                            if(err){
+                                // if there's any error then reject:
+                                return reject(options);
+                            }
+                            return resolve(options);
+                        });
                     } else {
-                        // @TODO: refactor loop.
-                        let currentPlayer = '';
-                        for(let i=0; i<rows.length; i++){
-                            currentPlayer = rows[i];
-                            break;
-                        }
-                        // if player status is not active then return an error:
-                        if(currentPlayer.status !== 1 || !bcrypt.compareSync(options.password, currentPlayer.password)){
-                            return reject(false);
-                        } else {
-                            return resolve(currentPlayer);
-                        }
+                        return reject(false);
                     }
                 }
             });

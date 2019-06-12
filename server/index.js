@@ -26,7 +26,7 @@ if(config.app.colyseusMonitor){
 gameServer.onShutdown(function(){
     console.log('NOTIFICATION - Game Server is going down.');
 });
-var queryString = 'SELECT * FROM scenes';
+let queryString = 'SELECT * FROM scenes';
 let prom = new Promise((resolve, reject) => {
     DataLink.connection.query(queryString, {}, (err, rows) => {
         if(err){
@@ -40,8 +40,7 @@ let prom = new Promise((resolve, reject) => {
 prom.then(function(result){
     let counter = 0;
     if(result){
-        for(let s in result){
-            let scene = result[s];
+        for(let scene of result){
             let temp = {
                 sceneMap: scene.scene_map,
                 image: scene.image,
