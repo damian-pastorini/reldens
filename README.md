@@ -23,7 +23,7 @@ If you like to contribute or donate to support the project please feel free to c
 + MySQL
 + Phaser 3
 
-## [Coming soon and news!](https://github.com/damian-pastorini/reldens/wiki/Coming-soon-&-News "Coming soon & News archive") > Last update June 4, 2019.
+## [Coming soon and news!](https://github.com/damian-pastorini/reldens/wiki/Coming-soon-&-News "Coming soon & News archive") > Last update June 12, 2019.
 
 ## [Change Log](https://github.com/damian-pastorini/dwdgame/wiki/Change-Log "Change Log")
 
