@@ -67,23 +67,25 @@ class P2world extends P2.World
     createLimits()
     {
         // map data:
-        let mapW = this.mapJson.width;
-        let mapH = this.mapJson.height;
-        let halfBlock = 0.5;
+        let blockW = this.mapJson.tilewidth,
+            blockH = this.mapJson.tileheight,
+            mapW = this.mapJson.width * blockW,
+            mapH = this.mapJson.height * blockH,
+            worldLimit = 1;
         // create world boundary, up wall:
-        let upWall = this.createWall(mapW, 0.1, ((mapW/2)-halfBlock), halfBlock);
+        let upWall = this.createWall((mapW+blockW), worldLimit, (mapW/2), 1);
         upWall.isWorldWall = true;
         this.addBody(upWall);
         // create world boundary, down wall:
-        let downWall = this.createWall(mapW, 0.1, ((mapW/2)-halfBlock), -(mapH-halfBlock));
+        let downWall = this.createWall((mapW+blockW), worldLimit, (mapW/2), (mapH-worldLimit));
         downWall.isWorldWall = true;
         this.addBody(downWall);
         // create world boundary, left wall:
-        let leftWall = this.createWall(0.1, (mapH+1), -halfBlock, -(mapH/2));
+        let leftWall = this.createWall(worldLimit, (mapH+blockH), 1, (mapH/2));
         leftWall.isWorldWall = true;
         this.addBody(leftWall);
         // create world boundary, right wall:
-        let rightWall = this.createWall(0.1, (mapH+1), (mapW-halfBlock), -(mapH/2));
+        let rightWall = this.createWall(worldLimit, (mapH+blockH), (mapW-worldLimit), (mapH/2));
         rightWall.isWorldWall = true;
         this.addBody(rightWall);
     }
