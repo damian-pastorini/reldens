@@ -1,27 +1,26 @@
 # Reldens - MMORPG
 
-## About this project
-This is a really simple base MMORPG game created based on the [Colyseus samples](https://github.com/gamestdio/colyseus-examples "Colyseus Examples") and on the Phaser 3 implementation from [Jacky Rusly](https://github.com/jackyrusly/jrgame "Jacky Rusly").
+## About the project
+The project main goal is to create a good MMORPG base for anyone to use. A tool that will give to developers the possibility of create a multiplayer game without the need of deal with all the difficulties to make it work in a secure and efficient way over any network.
 
-As you will see I've considerable modified how the jrgame interact with Socket.io in order to make it work as how the Colyseus example was created.
-Another issue with that implementation is that all the game logic is on the client side which make the game really easy to hack.
-To avoid any possible client-hacks I've moved the logic to the server side using P2JS (part of Phaser 3 physics), you can see a the basic of it here: [P2JS - Tiled Map - Demo](https://github.com/damian-pastorini/p2js-tiledmap-demo "P2JS - Tiled Map - Demo").
+In a later phase the next step is to make it available for non-developers as well, so normal people could use an interface to create and run the game online.
 
-The game basics are login through DB, loader, scene change, players sync, other features like chat, items, or attacks were not implemented yet but they will be in future releases.
+## Why I've started this project?
+I've always loved the idea of create my own games and I've started to do it long time ago with the old fashion RPG Maker 2000 (yes, as you can tell, I LOVE RPG's and specially the 2D old ones), but in these days I find a much more rich experience in multiplayer games so I've decided to dig into.
 
-Please feel free to create any tickets or pull requests for questions, fixes or improvements.
+When I've started to see all the required stuff that I'd have to learn and all the challenges it has, like avoid been hacked or LAG (stuff you don't care on a single player offline game), I've decided to create a tool using stardard code lenguages that work cross-device to make the project developer-friendly, easy to upgrade, and that can grow along with the tecnology advances.
 
-Consider this is my first implementation ever, I never used neither Node.js, much less Parcel, Colyseus or Phaser (I'm coming from PHP and Magento to give you an idea). 
-
-## Contributions and donations
-If you like to contribute or donate to support the project please feel free to contact me at damian.pastorini@gmail.com.
+I know it is a huge project but I'll put all I have to make it work, so needless to say that any kind of support will be really appreciated.
 
 ## Built with
 + Node.js (Express.js)
++ MySQL
 + Parcel
 + Colyseus
-+ MySQL
 + Phaser 3
+
+## Contributions and donations
+If you like to contribute or donate to support the project please feel free to contact me at damian.pastorini@gmail.com.
 
 ## [Coming soon and news!](https://github.com/damian-pastorini/reldens/wiki/Coming-soon-&-News "Coming soon & News archive") > Last update June 13, 2019.
 
