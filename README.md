@@ -1,4 +1,4 @@
-# Reldens - MMORPG
+# Reldens - MMORPG Platform
 
 ## About the project
 The project main goal is to create a good MMORPG base for anyone to use. A tool that will give to developers the possibility of create a multiplayer game without the need of deal with all the difficulties to make it work in a secure and efficient way over any network.
@@ -22,7 +22,7 @@ I know it is a huge project but I'll put all I have to make it work, so needless
 ## Contributions and donations
 If you like to contribute or donate to support the project please feel free to contact me at damian.pastorini@gmail.com.
 
-## [Coming soon and news!](https://github.com/damian-pastorini/reldens/wiki/Coming-soon-&-News "Coming soon & News archive") > Last update June 13, 2019.
+## [Coming soon and news!](https://github.com/damian-pastorini/reldens/wiki/Coming-soon-&-News "Coming soon & News archive") > Last update June 14, 2019.
 
 ## [Change Log](https://github.com/damian-pastorini/dwdgame/wiki/Change-Log "Change Log")
 
