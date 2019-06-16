@@ -1,21 +1,14 @@
 const mysql = require('mysql');
-// config example:
-/*
-{
-  "host": "localhost",
-  "user": "root",
-  "password": "root",
-  "database": "db_name"
-}
-*/
-const config = require('../config/database.json');
+const config = require('../config/config');
+const {db: {engine, host, port, database, user, password}} = config;
+const connectionString = `${engine}://${user}:${password}@${host}:${port}/${database}`;
 
 class DataLink
 {
 
     constructor()
     {
-        this.connection = mysql.createConnection(config);
+        this.connection = mysql.createConnection(connectionString);
     }
 
     query(sql, args)

@@ -17,9 +17,7 @@ class P2world extends P2.World
 
     setMapCollisions(mapData)
     {
-        // @TODO:
-        // - Fix maps to create proper body blocks instead of use only boxes for each map block.
-        // - Refactor to use ray cast and avoid the amount the overload of bodies created.
+        // @TODO: fix maps to create proper body blocks instead of use only boxes for each map block.
         // get scene change points:
         let changePoints = this.getSceneChangePoints(mapData);
         // map data:
@@ -31,23 +29,22 @@ class P2world extends P2.World
         // @NOTE: for collisions in server side we need to include the defined main layer.
         let mainLayer = mapData.layers.main;
         mapData.layers.collider[mapData.layers.collider.length] = mainLayer;
-        for(let ci in mapData.layers.collider){
-            let colliderIndex = mapData.layers.collider[ci];
+        for(let colliderIndex of mapData.layers.collider){
             if(mapLayers[colliderIndex]){
                 let layerData = mapLayers[colliderIndex].data;
-                for (let c = 0; c < mapW; c++) {
-                    let posX = c * tileW;
-                    for (let r = 0; r < mapH; r++) {
+                for (let c = 0; c < mapW; c++){
+                    let posX = c * tileW + (tileW/2);
+                    for (let r = 0; r < mapH; r++){
                         // position in pixels
-                        let posY = r * tileH;
+                        let posY = r * tileH + (tileH/2);
                         let tileIndex = r * mapW + c;
                         let tile = layerData[tileIndex];
                         // occupy space or add the scene change points:
-                        if (tile !== 0) { // 0 => empty tiles without collision
+                        if (tile !== 0){ // 0 => empty tiles without collision
                             // if the tile is a change point has to be empty for every layer.
                             if(changePoints[tile]){
                                 // only create the change points once on the main layer:
-                                if(colliderIndex == mainLayer) {
+                                if(colliderIndex === mainLayer){
                                     // @NOTE: we make the change point smaller so the user needs to walk into to hit it.
                                     let bodyChangePoint = this.createWall((tileW/2), (tileH/2), posX, posY);
                                     bodyChangePoint.changeScenePoint = changePoints[tile];
@@ -70,22 +67,25 @@ class P2world extends P2.World
     createLimits()
     {
         // map data:
-        let mapW = this.mapJson.width;
-        let mapH = this.mapJson.height;
+        let blockW = this.mapJson.tilewidth,
+            blockH = this.mapJson.tileheight,
+            mapW = this.mapJson.width * blockW,
+            mapH = this.mapJson.height * blockH,
+            worldLimit = 1;
         // create world boundary, up wall:
-        let upWall = this.createWall(mapW, 0.1, ((mapW/2)-0.5), 0.5);
+        let upWall = this.createWall((mapW+blockW), worldLimit, (mapW/2), 1);
         upWall.isWorldWall = true;
         this.addBody(upWall);
         // create world boundary, down wall:
-        let downWall = this.createWall(mapW, 0.1, ((mapW/2)-0.5), -(mapH-0.5));
+        let downWall = this.createWall((mapW+blockW), worldLimit, (mapW/2), (mapH-worldLimit));
         downWall.isWorldWall = true;
         this.addBody(downWall);
         // create world boundary, left wall:
-        let leftWall = this.createWall(0.1, (mapH+1), -0.5, -(mapH/2));
+        let leftWall = this.createWall(worldLimit, (mapH+blockH), 1, (mapH/2));
         leftWall.isWorldWall = true;
         this.addBody(leftWall);
         // create world boundary, right wall:
-        let rightWall = this.createWall(0.1, (mapH+1), (mapW-0.5), -(mapH/2));
+        let rightWall = this.createWall(worldLimit, (mapH+blockH), (mapW-worldLimit), (mapH/2));
         rightWall.isWorldWall = true;
         this.addBody(rightWall);
     }

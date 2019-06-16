@@ -13,13 +13,14 @@ window.gameClient = new Colyseus.Client(location.protocol.replace('http', 'ws')+
 
 $(document).ready(function($){
 
-    var gameRoom = '';
-    var activeRoom = '';
-    var $register = $('#register_form');
-    var $login = $('#login_form');
-    var userData = '';
+    let gameRoom,
+        activeRoom = '',
+        $register = $('#register_form'),
+        $login = $('#login_form'),
+        $logout = $('#logout'),
+        userData;
 
-    function joinRoom(submitedForm, isNewUser=false){
+    function joinRoom(submitedForm, isNewUser = false){
         // validate form:
         if(!$(submitedForm).valid()){
             return false;
@@ -38,11 +39,11 @@ $(document).ready(function($){
         // save username and password in client for later use:
         gameClient.userData = userData;
         gameClient.reconnectColyseus = function(message, previousRoom){
-            var newRoom = new RoomListener(message.player.scene);
-            var newColyseusRoom = newRoom.join(gameClient);
+            let newRoom = new RoomListener(message.player.scene);
+            let newColyseusRoom = newRoom.join(gameClient);
             // as soon we join the room we set it in the Phaser client:
             phaserGame.colyseusRoom = newColyseusRoom;
-            newColyseusRoom.onJoin.add(function(){
+            newColyseusRoom.onJoin.add(() => {
                 // leave old room:
                 previousRoom.leave();
                 // start listen to room events:
@@ -52,40 +53,40 @@ $(document).ready(function($){
         // join room:
         gameRoom = gameClient.join(share.ROOM_GAME, userData);
         var $errorBlock = $(submitedForm).find('.response-error');
-        $(submitedForm).find('input').on('focus', function(){
+        $(submitedForm).find('input').on('focus', () => {
             $errorBlock.hide();
         });
         // errors:
         if(isNewUser){
-            gameRoom.onError.add(function(data){
+            gameRoom.onError.add((data) => {
                 $errorBlock.html('Registration error, please try again.');
                 $errorBlock.show();
             });
         } else {
             if(userData){
-                gameRoom.onError.add(function(data){
+                gameRoom.onError.add((data) => {
                     $errorBlock.html('Login error please try again.');
                     $errorBlock.show();
                 });
             } else {
-                gameRoom.onError.add(function(data){
+                gameRoom.onError.add((data) => {
                     alert('There was a connection error.');
                     window.location.reload();
                 });
             }
         }
         // on join activate game:
-        gameRoom.onJoin.add(function(){
+        gameRoom.onJoin.add(() => {
             $('.forms-container').detach();
             $('.game-container').show();
-            gameRoom.onError.add(function(data){
+            gameRoom.onError.add((data) => {
                 alert('Connection error!');
                 window.location.reload();
             });
             gameClient.userData.isNewUser = false;
         });
-        gameRoom.onMessage.add(function(message){
-            if(message.act == share.START_GAME && message.sessionId == gameRoom.sessionId){
+        gameRoom.onMessage.add((message) => {
+            if(message.act === share.START_GAME && message.sessionId === gameRoom.sessionId){
                 activeRoom = new RoomListener(message.player.scene);
                 var colyseusRoom = activeRoom.join(gameClient);
                 colyseusRoom.onJoin.add(function(){
@@ -106,9 +107,9 @@ $(document).ready(function($){
     window.phaserGame = new Phaser.Game(config);
 
     if($register.length){
-        $register.on('submit', function(e){
+        $register.on('submit', (e) => {
             e.preventDefault();
-            joinRoom(this, true);
+            joinRoom($register, true);
         });
         $register.validate({
             rules: {
@@ -120,15 +121,15 @@ $(document).ready(function($){
     }
 
     if($login.length){
-        $login.on('submit', function(e){
+        $login.on('submit', (e) => {
             e.preventDefault();
-            joinRoom(this);
+            joinRoom($login);
         });
         $login.validate();
     }
 
-    if($('#logout').length){
-        $('#logout').on('click', function(){
+    if($logout.length){
+        $logout.on('click', () => {
             window.location.reload(true);
         });
     }

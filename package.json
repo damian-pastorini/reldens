@@ -1,19 +1,20 @@
 {
-    "name": "dwdgame",
-    "version": "1.2.6",
-    "description": "DwD - Game - MMORPG",
+    "name": "reldens",
+    "version": "1.2.7",
+    "description": "Reldens - MMORPG Creator",
     "main": "index.js",
-    "homepage": "https://github.com/damian-pastorini/dwdgame",
+    "homepage": "https://github.com/damian-pastorini/reldens",
     "repository": {
         "type": "git",
-        "url": "https://github.com/damian-pastorini/dwdgame.git"
+        "url": "https://github.com/damian-pastorini/reldens.git"
     },
-    "keywords": ["game","mmorpg","dwd","colyseus","phaser","parcel","nodejs"],
+    "keywords": ["reldens","game","mmorpg","rpg","dwd","colyseus","phaser","parcel","nodejs"],
     "bugs": {
-        "url": "https://github.com/damian-pastorini/dwdgame/issues"
+        "url": "https://github.com/damian-pastorini/reldens/issues"
     },
     "scripts": {
-        "start": "rm -R dist && mkdir dist && cp -r client/assets dist/assets/ && node ."
+        "start": "node .",
+        "dev-start": "rm -R dist && mkdir dist && cp -r client/assets dist/assets/ && node ."
     },
     "engines": {
         "node": "10.15.1"

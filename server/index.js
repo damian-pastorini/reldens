@@ -1,4 +1,4 @@
-const config = require('./config/server.json');
+const config = require('./config/config');
 const http = require('http');
 const path = require('path');
 const express = require('express');
@@ -10,14 +10,14 @@ const RoomScene = require('./modules/room-scene').roomscene;
 const share = require('../shared/constants');
 // server:
 const app = express();
-const port = Number(process.env.PORT || config.port);
+const port = Number(config.app.port);
 const server = http.createServer(app);
 // game server:
 const gameServer = new Colyseus.Server({server: server});
 // main room:
 gameServer.register(share.ROOM_GAME, RoomGame);
 // game monitor:
-if(config.colyseus_monitor){
+if(config.app.colyseusMonitor){
     const monitor = require('@colyseus/monitor');
     // (optional) attach web monitoring panel
     app.use('/colyseus', monitor.monitor(gameServer));
@@ -26,7 +26,7 @@ if(config.colyseus_monitor){
 gameServer.onShutdown(function(){
     console.log('NOTIFICATION - Game Server is going down.');
 });
-var queryString = 'SELECT * FROM scenes';
+let queryString = 'SELECT * FROM scenes';
 let prom = new Promise((resolve, reject) => {
     DataLink.connection.query(queryString, {}, (err, rows) => {
         if(err){
@@ -40,8 +40,7 @@ let prom = new Promise((resolve, reject) => {
 prom.then(function(result){
     let counter = 0;
     if(result){
-        for(let s in result){
-            let scene = result[s];
+        for(let scene of result){
             let temp = {
                 sceneMap: scene.scene_map,
                 image: scene.image,
