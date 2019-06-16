@@ -36,7 +36,6 @@ class RoomEvents
             player.onChange = (changes) => {
                 changes.forEach(change => {
                     if(change.value != change.previousValue){
-                        console.log(change.field, ':', change.value, '!=', change.previousValue);
                         let currentScene = this.getActiveScene();
                         if(currentScene.player && currentScene.player.players.hasOwnProperty(key)){
                             let playerToMove = currentScene.player.players[key];
@@ -141,7 +140,7 @@ class RoomEvents
         room.onError.add((data) => {
             alert('There was a connection error.');
             // @TODO: check if is worth it to send the error data to log the error in the server.
-            console.log(data);
+            // console.log(data);
             window.location.reload();
         });
         this.room = room;
