@@ -12,9 +12,10 @@ class RoomScene extends RoomLogin
     {
         // @NOTE: in the future not all the scene information will be sent to the client. This is because we could have
         // hidden information to be discovered.
-        this.setState(new State(options.scene));
+        let roomState = new State(options.scene);
+        this.setState(roomState);
         // create world:
-        this.createWorld(this.state.sceneData);
+        this.createWorld(options.scene);
     }
 
     onJoin(client, options, authResult)
@@ -60,7 +61,7 @@ class RoomScene extends RoomLogin
                 }
             }
             let contactPlayer = this.getPlayer(currentPlayerBody.playerId);
-            if(contactPlayer.isBussy || currentPlayerBody.isChangingScene){
+            if(contactPlayer.isBusy || currentPlayerBody.isChangingScene){
                 // @NOTE: if the player is been saved or if is changing scene: do nothing.
             } else {
                 let playerPosition = {x: currentPlayerBody.position[0], y: currentPlayerBody.position[1]};
@@ -256,10 +257,10 @@ class RoomScene extends RoomLogin
     {
         // when user disconnects save the last state on the database:
         let currentUser = this.getPlayer(sessionId);
-        if(currentUser.isBussy){
+        if(currentUser.isBusy){
             return false;
         }
-        currentUser.isBussy = true;
+        currentUser.isBusy = true;
         // prepare json:
         let currentStateJson = '{'
             +'"scene":"'+currentUser.scene+'",'
@@ -279,7 +280,7 @@ class RoomScene extends RoomLogin
                 }
                 if(rows){
                     resolve(rows);
-                    currentUser.isBussy = false;
+                    currentUser.isBusy = false;
                 }
             });
         });

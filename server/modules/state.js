@@ -1,13 +1,19 @@
+const schema = require('@colyseus/schema');
+const Schema = schema.Schema;
+const type = schema.type;
 const Player = require('./player').player;
+const MapSchema = schema.MapSchema;
 const share = require('../../shared/constants');
 
-class State
+class State extends Schema
 {
 
     constructor(sceneData)
     {
-        this.sceneData = sceneData;
-        this.players = {};
+        super();
+        // @TODO: refactor to use an object for the scene data and avoid the JSON parsing.
+        this.sceneData = JSON.stringify(sceneData);
+        this.players = new MapSchema();
     }
 
     createPlayer(sessionId, playerData)
@@ -52,5 +58,8 @@ class State
     }
 
 }
+
+type({ map: Player })(State.prototype, 'players');
+type('string')(State.prototype, 'sceneData');
 
 exports.state = State;
