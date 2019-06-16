@@ -52,7 +52,7 @@ $(document).ready(function($){
         };
         // join room:
         gameRoom = gameClient.join(share.ROOM_GAME, userData);
-        var $errorBlock = $(submitedForm).find('.response-error');
+        let $errorBlock = $(submitedForm).find('.response-error');
         $(submitedForm).find('input').on('focus', () => {
             $errorBlock.hide();
         });
@@ -88,8 +88,8 @@ $(document).ready(function($){
         gameRoom.onMessage.add((message) => {
             if(message.act === share.START_GAME && message.sessionId === gameRoom.sessionId){
                 activeRoom = new RoomListener(message.player.scene);
-                var colyseusRoom = activeRoom.join(gameClient);
-                colyseusRoom.onJoin.add(function(){
+                let colyseusRoom = activeRoom.join(gameClient);
+                colyseusRoom.onJoin.add(() => {
                     gameRoom.leave();
                     activeRoom.startListen(colyseusRoom);
                 });

@@ -1,17 +1,21 @@
+const schema = require('@colyseus/schema');
+const Schema = schema.Schema;
+const type = schema.type;
 const share = require('../../shared/constants');
 
-class Player
+class Player extends Schema
 {
 
     constructor(data)
     {
+        super();
         // player data:
         this.id = data.id;
         this.sessionId = '';
         this.role_id = data.role_id;
         this.status = data.status;
         this.username = data.username;
-        this.isBussy = false;
+        this.isBusy = false;
         // initial scene and position:
         if(data.state){
             // parse user state:
@@ -36,5 +40,14 @@ class Player
     }
 
 }
+
+type('string')(Player.prototype, 'sessionId');
+type('number')(Player.prototype, 'status');
+type('number')(Player.prototype, 'x');
+type('number')(Player.prototype, 'y');
+type('string')(Player.prototype, 'scene');
+type('string')(Player.prototype, 'dir');
+type('boolean')(Player.prototype, 'mov');
+type('boolean')(Player.prototype, 'isBusy');
 
 exports.player = Player;
