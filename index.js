@@ -1,2 +1,2 @@
-// server index:
+// server app:
 module.exports = require('./server/index');
