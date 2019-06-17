@@ -22,7 +22,7 @@ I know it is a huge project but I'll put all I have to make it work, so needless
 ## Contributions and donations
 If you like to contribute or donate to support the project please feel free to contact me at damian.pastorini@gmail.com.
 
-## [Coming soon and news!](https://github.com/damian-pastorini/reldens/wiki/Coming-soon-&-News "Coming soon & News archive") > Last update June 16, 2019.
+## [Coming soon and news!](https://github.com/damian-pastorini/reldens/wiki/Coming-soon-&-News "Coming soon & News archive") > Last update June 17, 2019.
 
 ## [Change Log](https://github.com/damian-pastorini/dwdgame/wiki/Change-Log "Change Log")
 
