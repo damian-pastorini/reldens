@@ -20,7 +20,7 @@ I know it is a huge project but I'll put all I have to make it work, so needless
 + Phaser 3
 
 ## Demo
-Here you will find a small demo for the results with the last available version from master: [dev.reldens.com](dev.reldens.com)
+Here you will find a small demo for the results with the last available version from master: [https://reldens.herokuapp.com/](https://reldens.herokuapp.com/)
 
 ## Contributions and donations
 If you like to contribute or donate to support the project please feel free to contact me at damian.pastorini@gmail.com.
