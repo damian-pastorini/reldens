@@ -3,7 +3,6 @@ module.exports = {
     // Note: use shortcuts since these are used for all the communications between server and client.
     START_GAME: 'sg',
     KEY_PRESS: 'kp',
-    CREATE_PLAYER: 'cp',
     ADD_PLAYER: 'ap',
     CHANGED_SCENE: 'cs',
     CLIENT_CHANGED_SCENE: 'ccs',
