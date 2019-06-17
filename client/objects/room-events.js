@@ -35,7 +35,7 @@ class RoomEvents
             // TODO: refactor to use room.state.players.onChange = (player, key) => {};
             player.onChange = (changes) => {
                 changes.forEach(change => {
-                    if(change.value != change.previousValue){
+                    if(change.value !== change.previousValue){
                         let currentScene = this.getActiveScene();
                         if(currentScene.player && currentScene.player.players.hasOwnProperty(key)){
                             let playerToMove = currentScene.player.players[key];
@@ -111,18 +111,21 @@ class RoomEvents
             // console.log('room.onMessage.add((message):', message);
             this.getSceneData(room);
             // create player:
-            if(message.act === share.CREATE_PLAYER && message.id === room.sessionId){
-                $('.player-name').html(message.player.username);
-                this.startPhaserScene(message, room, previousScene);
-            }
-            // add other new players into the current scene:
-            if(message.act === share.ADD_PLAYER && message.id !== room.sessionId){
-                let currentScene = this.getActiveScene();
-                if(currentScene.key === message.player.scene){
-                    if(currentScene.player && currentScene.player.players){
-                        let posX = parseFloat(message.player.x),
-                            posY = parseFloat(message.player.y);
-                        currentScene.player.addPlayer(message.id, posX, posY, message.player.dir);
+            if(message.act === share.ADD_PLAYER){
+                // current player:
+                if(message.id === room.sessionId){
+                    $('.player-name').html(message.player.username);
+                    this.startPhaserScene(message, room, previousScene);
+                }
+                // add new players into the current player scene:
+                if(message.id !== room.sessionId){
+                    let currentScene = this.getActiveScene();
+                    if(currentScene.key === message.player.scene){
+                        if(currentScene.player && currentScene.player.players){
+                            let posX = parseFloat(message.player.x),
+                                posY = parseFloat(message.player.y);
+                            currentScene.player.addPlayer(message.id, posX, posY, message.player.dir);
+                        }
                     }
                 }
             }
@@ -173,8 +176,9 @@ class RoomEvents
         currentPlayer.username = message.player.username;
         currentScene.player = currentPlayer;
         currentScene.player.create();
-        if(room.state.players.length > 0){
-            for(let tmp of room.state.players){
+        if(room.state.players){
+            for(let idx in room.state.players){
+                let tmp = room.state.players[idx];
                 if(tmp.sessionId && tmp.sessionId !== room.sessionId){
                     currentScene.player.addPlayer(tmp.sessionId, tmp.x, tmp.y, tmp.dir);
                 }
