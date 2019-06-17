@@ -36,7 +36,6 @@ class RoomScene extends RoomLogin
         // server physics:
         currentPlayer.bodyIndex = this.createPlayerBody(currentPlayer, client.sessionId);
         // client creation:
-        this.send(client, {act: share.CREATE_PLAYER, id: client.sessionId, player: currentPlayer});
         this.broadcast({act: share.ADD_PLAYER, id: client.sessionId, player: currentPlayer});
         // assign actions on end contact:
         this.p2world.on('endContact', (evt) => {
