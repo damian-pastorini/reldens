@@ -25,7 +25,7 @@ Here you will find a small demo for the results with the last available version 
 ## Contributions and donations
 If you like to contribute or donate to support the project please feel free to contact me at damian.pastorini@gmail.com.
 
-## [Coming soon and news!](https://github.com/damian-pastorini/reldens/wiki/Coming-soon-&-News "Coming soon & News archive") > Last update June 17, 2019.
+## [Coming soon and news!](https://github.com/damian-pastorini/reldens/wiki/Coming-soon-&-News "Coming soon & News archive") > Last update June 18, 2019.
 
 ## [Change Log](https://github.com/damian-pastorini/dwdgame/wiki/Change-Log "Change Log")
 
