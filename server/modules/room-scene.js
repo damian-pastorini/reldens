@@ -10,6 +10,7 @@ class RoomScene extends RoomLogin
 
     onInit(options)
     {
+        console.log('NOTIFICATION - INIT ROOM:', this.roomName);
         // @NOTE: in the future not all the scene information will be sent to the client. This is because we could have
         // hidden information to be discovered.
         let roomState = new State(options.scene);
@@ -33,55 +34,10 @@ class RoomScene extends RoomLogin
         }
         // player creation:
         let currentPlayer = this.state.createPlayer(client.sessionId, authResult);
-        // server physics:
-        currentPlayer.bodyIndex = this.createPlayerBody(currentPlayer, client.sessionId);
+        // create body for server physics and assign the body to the player:
+        currentPlayer.p2body = this.createPlayerBody(currentPlayer, client.sessionId);
         // client creation:
         this.broadcast({act: share.ADD_PLAYER, id: client.sessionId, player: currentPlayer});
-        // assign actions on end contact:
-        this.p2world.on('endContact', (evt) => {
-            let bodyA = evt.bodyA,
-                bodyB = evt.bodyB,
-                currentPlayerBody = false,
-                wallBody = false;
-            if(bodyA.playerId){
-                currentPlayerBody = bodyA;
-                wallBody = bodyB;
-                bodyA.velocity = [0,0];
-            } else {
-                if(bodyB.playerId){
-                    currentPlayerBody = bodyB;
-                    wallBody = bodyA;
-                    bodyB.velocity = [0,0];
-                } else {
-                    // @TODO: refactor this with the NPC's implementation.
-                    // @NOTE: in the current implementation we should never hit this since we do not have any other
-                    // moving bodies beside the players.
-                    console.log('WHO IS MOVING???', bodyA.velocity, bodyA.position, bodyB.velocity, bodyB.position);
-                }
-            }
-            let contactPlayer = this.getPlayer(currentPlayerBody.playerId);
-            if(contactPlayer.isBusy || currentPlayerBody.isChangingScene){
-                // @NOTE: if the player is been saved or if is changing scene: do nothing.
-            } else {
-                let playerPosition = {x: currentPlayerBody.position[0], y: currentPlayerBody.position[1]};
-                this.state.stopPlayer(currentPlayerBody.playerId, playerPosition);
-            }
-            // check for scene change points:
-            if(wallBody.changeScenePoint){
-                // scene change data:
-                let changeScene = wallBody.changeScenePoint;
-                let previousScene = contactPlayer.scene;
-                let changeData = {prev: previousScene, next: changeScene};
-                // check if the player is not changing scenes already:
-                if(currentPlayerBody.isChangingScene === false){
-                    currentPlayerBody.isChangingScene = true;
-                    let contactClient = this.getClientById(currentPlayerBody.playerId);
-                    this.nextSceneInitialPosition(contactClient, changeData);
-                    // @NOTE: we do not need to change back the isChangingScene property back to false since in the new
-                    // scene a new body will be created with the value set to false by default.
-                }
-            }
-        });
     }
 
     onLeave(client, consented)
@@ -98,9 +54,8 @@ class RoomScene extends RoomLogin
         let currentPlayer = this.getPlayer(client.sessionId);
         if(currentPlayer){
             // get player body:
-            let bodyToMoveIndex = currentPlayer.bodyIndex;
-            let bodyToMove = this.p2world.bodies[bodyToMoveIndex];
-            // if is player movement:
+            let bodyToMove = currentPlayer.p2body;
+            // if player is moving:
             if(data.hasOwnProperty('dir')){
                 if(bodyToMove){
                     if(data.dir === share.RIGHT){
@@ -120,14 +75,15 @@ class RoomScene extends RoomLogin
                     this.state.movePlayer(client.sessionId, data);
                 }
             }
-            // if is player stop:
+            // if player stopped:
             if(data.act === share.STOP){
-                if(currentPlayer.isDoinIt){
+                if(currentPlayer.isBusy){
                     return false;
                 }
-                let bodyToMoveIndex = currentPlayer.bodyIndex;
-                let bodyToMove = this.p2world.bodies[bodyToMoveIndex];
+                // get player body:
+                let bodyToMove = currentPlayer.p2body;
                 if(bodyToMove){
+                    // stop by setting speed to zero:
                     bodyToMove.velocity[0] = 0;
                     bodyToMove.velocity[1] = 0;
                     data.x = bodyToMove.position[0];
@@ -153,12 +109,66 @@ class RoomScene extends RoomLogin
         roomWorld.setMapCollisions(sceneData);
         // assign world to room:
         this.p2world = roomWorld;
+        // activate world collisions:
+        this.assignCollisions();
         // start world movement:
         // @TODO: in the future we need to improve the timeStep to perfectly match client movement for predictions.
         this.timeStep = 0.04; // 1/60; // 0.0116 // 0.112;
         this.worldTimer = this.clock.setInterval(() => {
             this.p2world.step(this.timeStep);
         }, 1000 * this.timeStep);
+        console.log('NOTIFICATION - P2 WORLD CREATED IN ROOM:', this.roomName);
+    }
+
+    assignCollisions()
+    {
+        if(this.p2world){
+            // assign actions on end contact:
+            this.p2world.on('endContact', (evt) => {
+                let bodyA = evt.bodyA,
+                    bodyB = evt.bodyB,
+                    currentPlayerBody = false,
+                    wallBody = false;
+                if(bodyA.playerId){
+                    currentPlayerBody = bodyA;
+                    wallBody = bodyB;
+                    bodyA.velocity = [0,0];
+                } else {
+                    if(bodyB.playerId){
+                        currentPlayerBody = bodyB;
+                        wallBody = bodyA;
+                        bodyB.velocity = [0,0];
+                    } else {
+                        // @TODO: refactor this with the NPC's implementation.
+                        // @NOTE: in the current implementation we should never hit this since we do not have any other
+                        // moving bodies beside the players.
+                        console.log('WHO IS MOVING???', bodyA.velocity, bodyA.position, bodyB.velocity, bodyB.position);
+                    }
+                }
+                let contactPlayer = this.getPlayer(currentPlayerBody.playerId);
+                if(contactPlayer.isBusy || currentPlayerBody.isChangingScene){
+                    // @NOTE: if the player is been saved or if is changing scene: do nothing.
+                } else {
+                    let playerPosition = {x: currentPlayerBody.position[0], y: currentPlayerBody.position[1]};
+                    this.state.stopPlayer(currentPlayerBody.playerId, playerPosition);
+                }
+                // check for scene change points:
+                if(wallBody.changeScenePoint){
+                    // scene change data:
+                    let changeScene = wallBody.changeScenePoint;
+                    let previousScene = contactPlayer.scene;
+                    let changeData = {prev: previousScene, next: changeScene};
+                    // check if the player is not changing scenes already:
+                    if(currentPlayerBody.isChangingScene === false){
+                        currentPlayerBody.isChangingScene = true;
+                        let contactClient = this.getClientById(currentPlayerBody.playerId);
+                        this.nextSceneInitialPosition(contactClient, changeData);
+                        // @NOTE: we do not need to change back the isChangingScene property back to false since in the new
+                        // scene a new body will be created with the value set to false by default.
+                    }
+                }
+            });
+        }
     }
 
     createPlayerBody(currentPlayer, sessionId)
@@ -176,8 +186,8 @@ class RoomScene extends RoomLogin
         boxBody.playerId = sessionId;
         boxBody.isChangingScene = false;
         this.p2world.addBody(boxBody);
-        // return body index:
-        return (this.p2world.bodies.length -1);
+        // return body:
+        return boxBody;
     }
 
     nextSceneInitialPosition(client, data)
@@ -218,6 +228,9 @@ class RoomScene extends RoomLogin
                                 y: currentPlayer.y,
                                 dir: currentPlayer.dir,
                             });
+                            // remove body from server world:
+                            let bodyToRemove = currentPlayer.p2body;
+                            this.p2world.removeBody(bodyToRemove);
                             // reconnect is to create the player in the new scene:
                             this.send(client, {act: share.RECONNET, player: currentPlayer, prev: result.data.prev});
                         }).catch((err) => {
@@ -240,8 +253,10 @@ class RoomScene extends RoomLogin
             // first remove player body from current world:
             let playerToRemove = this.getPlayer(sessionId);
             if(playerToRemove){
-                let bodyToRemove = this.p2world.bodies[playerToRemove.bodyIndex];
+                // get body:
+                let bodyToRemove = playerToRemove.p2body;
                 if(bodyToRemove){
+                    // remove body:
                     this.p2world.removeBody(bodyToRemove);
                 }
                 // remove player:
@@ -308,14 +323,14 @@ class RoomScene extends RoomLogin
         return result;
     }
 
-    getBody(playerIndex)
+    getPlayerBody(playerId)
     {
         let result = false;
-        let player = this.getPlayer(playerIndex);
-        if(player){
-            let bodyIndex = player.bodyIndex;
-            if(this.p2world.bodies[bodyIndex]){
-                result = this.p2world.bodies[bodyIndex];
+        for(let body of this.p2world.bodies){
+            if(body.playerId === playerId){
+                // console.log('found body: ', body.playerId, playerId);
+                result = body;
+                break;
             }
         }
         return result;

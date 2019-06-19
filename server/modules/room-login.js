@@ -61,6 +61,11 @@ class RoomLogin extends Room
         });
     }
 
+    onDispose()
+    {
+        console.log('NOTIFICATION - ON-DISPOSE ROOM:', this.roomName);
+    }
+
 }
 
 exports.roomlogin = RoomLogin;
