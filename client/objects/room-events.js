@@ -33,33 +33,37 @@ class RoomEvents
             let currentScene = this.getActiveScene();
             if(currentScene.player && currentScene.player.players.hasOwnProperty(key)){
                 let playerToMove = currentScene.player.players[key];
-                if(playerToMove && key !== room.sessionId && playerToMove.anims){
+                if(playerToMove){
                     if(player.x !== playerToMove.x){
-                        if(player.x < playerToMove.x){
-                            playerToMove.anims.play(share.LEFT, true);
-                            // @NOTE: we commented the speed here since the body position is given by the body speed
-                            // in the server. This is a temporal implementation to prevent client hacks.
-                            // @TODO: improve the implementation, use client physics for prediction.
-                            // playerToMove.body.velocity.x = -share.SPEED;
-                        } else {
-                            playerToMove.anims.play(share.RIGHT, true);
-                            // playerToMove.body.velocity.x = share.SPEED;
+                        if(key !== room.sessionId && playerToMove.anims){
+                            if(player.x < playerToMove.x){
+                                playerToMove.anims.play(share.LEFT, true);
+                                // @NOTE: we commented the speed here since the body position is given by the body speed
+                                // in the server. This is a temporal implementation to prevent client hacks.
+                                // @TODO: improve the implementation, use client physics for prediction.
+                                // playerToMove.body.velocity.x = -share.SPEED;
+                            } else {
+                                playerToMove.anims.play(share.RIGHT, true);
+                                // playerToMove.body.velocity.x = share.SPEED;
+                            }
                         }
                         playerToMove.x = parseFloat(player.x);
                     }
                     if(player.y !== playerToMove.y){
-                        if(player.y < playerToMove.y){
-                            playerToMove.anims.play(share.UP, true);
-                            // playerToMove.body.velocity.y = -share.SPEED;
-                        } else {
-                            playerToMove.anims.play(share.DOWN, true);
-                            // playerToMove.body.velocity.y = share.SPEED;
+                        if(key !== room.sessionId && playerToMove.anims){
+                            if(player.y < playerToMove.y){
+                                playerToMove.anims.play(share.UP, true);
+                                // playerToMove.body.velocity.y = -share.SPEED;
+                            } else {
+                                playerToMove.anims.play(share.DOWN, true);
+                                // playerToMove.body.velocity.y = share.SPEED;
+                            }
                         }
                         playerToMove.y = parseFloat(player.y);
                     }
                     // @TODO: fix animation stop.
                     // player stop action:
-                    if(player.mov !== playerToMove.mov){
+                    if(key !== room.sessionId && player.mov !== playerToMove.mov && playerToMove.anims){
                         // playerToMove.body.velocity.x = 0;
                         // playerToMove.body.velocity.y = 0;
                         // playerToMove.anims.stop();
