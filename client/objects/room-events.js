@@ -28,71 +28,53 @@ class RoomEvents
     startListen(room, previousScene = false)
     {
         // listen to changes coming from the server:
-        room.state.players.onAdd = (player, key) => {
-            this.getSceneData(room);
-            // add your player entity to the game world!
-            // If you want to track changes on a child object inside a map, this is a common pattern:
-            // TODO: refactor to use room.state.players.onChange = (player, key) => {};
-            player.onChange = (changes) => {
-                changes.forEach(change => {
-                    if(change.value !== change.previousValue){
-                        let currentScene = this.getActiveScene();
-                        if(currentScene.player && currentScene.player.players.hasOwnProperty(key)){
-                            let playerToMove = currentScene.player.players[key];
-                            if(change.field === 'x'){
-                                if(key !== room.sessionId && playerToMove.anims){
-                                    if(change.value < playerToMove.x){
-                                        playerToMove.anims.play(share.LEFT, true);
-                                        // @NOTE: we commented the speed here since the body position is given by the body speed
-                                        // in the server. This is a temporal implementation to prevent client hacks.
-                                        // @TODO: improve the implementation, use client physics for prediction.
-                                        // playerToMove.body.velocity.x = -share.SPEED;
-                                    } else {
-                                        playerToMove.anims.play(share.RIGHT, true);
-                                        // playerToMove.body.velocity.x = share.SPEED;
-                                    }
-                                }
-                                playerToMove.x = parseFloat(change.value);
-                            }
-                            if(change.field === 'y'){
-                                if(key !== room.sessionId && playerToMove.anims){
-                                    if(change.value < playerToMove.y){
-                                        playerToMove.anims.play(share.UP, true);
-                                        // playerToMove.body.velocity.y = -share.SPEED;
-                                    } else {
-                                        playerToMove.anims.play(share.DOWN, true);
-                                        // playerToMove.body.velocity.y = share.SPEED;
-                                    }
-                                }
-                                playerToMove.y = parseFloat(change.value);
-                            }
-                            if(playerToMove && playerToMove.anims){
-                                // player stop action:
-                                if(change.field === 'mov'){
-                                    // playerToMove.body.velocity.x = 0;
-                                    // playerToMove.body.velocity.y = 0;
-                                    playerToMove.anims.stop();
-                                }
-                                // player change direction action:
-                                if(change.field === 'dir'){
-                                    // playerToMove.body.velocity.x = 0;
-                                    // playerToMove.body.velocity.y = 0;
-                                    playerToMove.anims.stop();
-                                }
-                            }
-                        }
-                    }
-                })
-            };
-            // force 'onChange' to be called immediately:
-            player.triggerAll();
-        };
-        /*
-        // @TODO: refactor to use this.
         room.state.players.onChange = (player, key) => {
-            console.log(player, "have changes at", key);
+            this.getSceneData(room);
+            let currentScene = this.getActiveScene();
+            if(currentScene.player && currentScene.player.players.hasOwnProperty(key)){
+                let playerToMove = currentScene.player.players[key];
+                if(playerToMove && key !== room.sessionId && playerToMove.anims){
+                    if(player.x !== playerToMove.x){
+                        if(player.x < playerToMove.x){
+                            playerToMove.anims.play(share.LEFT, true);
+                            // @NOTE: we commented the speed here since the body position is given by the body speed
+                            // in the server. This is a temporal implementation to prevent client hacks.
+                            // @TODO: improve the implementation, use client physics for prediction.
+                            // playerToMove.body.velocity.x = -share.SPEED;
+                        } else {
+                            playerToMove.anims.play(share.RIGHT, true);
+                            // playerToMove.body.velocity.x = share.SPEED;
+                        }
+                        playerToMove.x = parseFloat(player.x);
+                    }
+                    if(player.y !== playerToMove.y){
+                        if(player.y < playerToMove.y){
+                            playerToMove.anims.play(share.UP, true);
+                            // playerToMove.body.velocity.y = -share.SPEED;
+                        } else {
+                            playerToMove.anims.play(share.DOWN, true);
+                            // playerToMove.body.velocity.y = share.SPEED;
+                        }
+                        playerToMove.y = parseFloat(player.y);
+                    }
+                    // @TODO: fix animation stop.
+                    // player stop action:
+                    if(player.mov !== playerToMove.mov){
+                        // playerToMove.body.velocity.x = 0;
+                        // playerToMove.body.velocity.y = 0;
+                        // playerToMove.anims.stop();
+                        // console.log('player-stop', player.mov, playerToMove.mov);
+                    }
+                    // player change direction action:
+                    /*if(player.dir !== playerToMove.dir){
+                        // playerToMove.body.velocity.x = 0;
+                        // playerToMove.body.velocity.y = 0;
+                        playerToMove.anims.stop();
+                    }*/
+                }
+            }
+            // ---------------------------------------------
         };
-        */
         room.state.players.onRemove = (player, key) => {
             // @TODO: since we are removing the player from the room we need to refactor this.
             // if(key === room.sessionId){
@@ -108,12 +90,11 @@ class RoomEvents
         };
         // create players or change scenes:
         room.onMessage.add((message) => {
-            // console.log('room.onMessage.add((message):', message);
             this.getSceneData(room);
-            // create player:
             if(message.act === share.ADD_PLAYER){
-                // current player:
+                // create current player:
                 if(message.id === room.sessionId){
+                    // @TODO: remove jQuery reference, create a client object and require it to update the game view.
                     $('.player-name').html(message.player.username);
                     this.startPhaserScene(message, room, previousScene);
                 }

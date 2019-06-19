@@ -16,6 +16,7 @@ class Player extends Schema
         this.status = data.status;
         this.username = data.username;
         this.isBusy = false;
+        this.p2body = false;
         // initial scene and position:
         if(data.state){
             // parse user state:
@@ -42,6 +43,7 @@ class Player extends Schema
 }
 
 type('string')(Player.prototype, 'sessionId');
+type('string')(Player.prototype, 'username');
 type('number')(Player.prototype, 'status');
 type('number')(Player.prototype, 'x');
 type('number')(Player.prototype, 'y');

@@ -1,6 +1,6 @@
 {
     "name": "reldens",
-    "version": "2.0.4",
+    "version": "2.0.5",
     "description": "Reldens - MMORPG Creator",
     "main": "index.js",
     "homepage": "https://github.com/damian-pastorini/reldens",
