@@ -16,17 +16,18 @@ class State extends Schema
         this.players = new MapSchema();
     }
 
-    createPlayer(sessionId, playerData)
+    createPlayer(id, playerData)
     {
         let newPlayer = new Player(playerData);
-        newPlayer.sessionId = sessionId;
-        this.players[sessionId] = newPlayer;
-        return this.players[sessionId];
+        newPlayer.sessionId = id;
+        this.players[id] = newPlayer;
+        return this.players[id];
     }
 
     movePlayer(id, data)
     {
         if(data.hasOwnProperty('dir')){
+            this.players[id].mov = true;
             this.players[id].dir = data.dir;
             if(data.dir === share.RIGHT || data.dir === share.LEFT){
                 this.players[id].x = data.x;

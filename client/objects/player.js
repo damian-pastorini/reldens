@@ -9,6 +9,8 @@ class Player
         this.scene = scene;
         this.room = room;
         this.position = position;
+        this.dir = '';
+        this.mov = false;
         this.socket = {};
         this.playerId = '';
         this.players = {};

@@ -64,17 +64,21 @@ class RoomEvents
                     // @TODO: fix animation stop.
                     // player stop action:
                     if(key !== room.sessionId && player.mov !== playerToMove.mov && playerToMove.anims){
-                        // playerToMove.body.velocity.x = 0;
-                        // playerToMove.body.velocity.y = 0;
-                        // playerToMove.anims.stop();
-                        // console.log('player-stop', player.mov, playerToMove.mov);
+                        if(!player.mov){
+                            // playerToMove.body.velocity.x = 0;
+                            // playerToMove.body.velocity.y = 0;
+                            playerToMove.anims.stop();
+                        }
+                        playerToMove.mov = player.mov;
                     }
                     // player change direction action:
-                    /*if(player.dir !== playerToMove.dir){
+                    if(player.dir !== playerToMove.dir){
                         // playerToMove.body.velocity.x = 0;
                         // playerToMove.body.velocity.y = 0;
+                        playerToMove.dir = player.dir;
+                        playerToMove.anims.play(player.dir, true);
                         playerToMove.anims.stop();
-                    }*/
+                    }
                 }
             }
             // ---------------------------------------------
