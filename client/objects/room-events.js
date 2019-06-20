@@ -29,6 +29,10 @@ class RoomEvents
     {
         // listen to changes coming from the server:
         room.state.players.onChange = (player, key) => {
+            // do not move player if is changing scene:
+            if(player.scene !== this.roomName){
+                return;
+            }
             this.getSceneData(room);
             let currentScene = this.getActiveScene();
             if(currentScene.player && currentScene.player.players.hasOwnProperty(key)){
@@ -125,7 +129,7 @@ class RoomEvents
                 currentScene.player.addPlayer(id, x, y, dir);
             }
             // @NOTE: here we don't need to evaluate the id since the reconnect only is sent to the current client.
-            if(message.act === share.RECONNET){
+            if(message.act === share.RECONNECT){
                 gameClient.reconnectColyseus(message, room);
             }
         });

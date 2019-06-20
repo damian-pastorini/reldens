@@ -2,17 +2,11 @@
 module.exports = {
     // Note: use shortcuts since these are used for all the communications between server and client.
     START_GAME: 'sg',
-    KEY_PRESS: 'kp',
     ADD_PLAYER: 'ap',
     CHANGED_SCENE: 'cs',
-    CLIENT_CHANGED_SCENE: 'ccs',
-    RECONNET: 'r',
-    ADD_FROM_SCENE: 'afs',
-    REMOVE: 'r',
+    RECONNECT: 'r',
     ROOM_GAME: 'room_game',
     SCENE_INIT: 'SceneInit',
-    // Note: town is for the initial scene.
-    TOWN: 'Town',
     // player movement:
     UP: 'up',
     LEFT: 'left',
@@ -23,8 +17,11 @@ module.exports = {
     CHAT: 'chat',
     // @TODO: this should be part of the server configuration.
     FADE_DURATION: 1000,
-    // SPEED: 150,
     SPEED_SERVER: 180,
+    // @TODO: speed will be implemented with the client prediction in a future version.
+    // SPEED: 150,
+    // Note: town is for the initial scene.
+    TOWN: 'Town',
     // @TODO: this will be from the DB.
     IMAGE_PLAYER: 'player',
     IMAGE_HOUSE: 'house',

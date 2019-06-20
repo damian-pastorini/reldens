@@ -232,7 +232,7 @@ class RoomScene extends RoomLogin
                             let bodyToRemove = currentPlayer.p2body;
                             this.p2world.removeBody(bodyToRemove);
                             // reconnect is to create the player in the new scene:
-                            this.send(client, {act: share.RECONNET, player: currentPlayer, prev: result.data.prev});
+                            this.send(client, {act: share.RECONNECT, player: currentPlayer, prev: result.data.prev});
                         }).catch((err) => {
                             console.log('ERROR - Save state error:', client.sessionId, err);
                         });
@@ -319,19 +319,6 @@ class RoomScene extends RoomLogin
         let result = false;
         if(this.state.players[playerIndex]){
             result = this.state.players[playerIndex];
-        }
-        return result;
-    }
-
-    getPlayerBody(playerId)
-    {
-        let result = false;
-        for(let body of this.p2world.bodies){
-            if(body.playerId === playerId){
-                // console.log('found body: ', body.playerId, playerId);
-                result = body;
-                break;
-            }
         }
         return result;
     }
