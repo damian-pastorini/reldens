@@ -71,27 +71,7 @@ class Player
         if(send){
             this.socket.send({act: share.STOP});
         }
-        // @NOTE: we are not using Phaser velocity for now, position is coming from the server where the speed is controlled.
-        // this.players[this.playerId].body.velocity.x = 0;
-        // this.players[this.playerId].body.velocity.y = 0;
         this.players[this.playerId].anims.stop();
-    }
-
-    registerChat()
-    {
-        // @TODO: create the chat feature.
-        let chat = document.getElementById(share.CHAT);
-        let messages = document.getElementById('messages');
-        chat.onsubmit = (e) => {
-            e.preventDefault();
-            let message = document.getElementById('message');
-            // this.socket.send(CHAT, message.value);
-            message.value = '';
-        };
-        /*this.socket.on(CHAT, (name, message) => {
-            messages.innerHTML += `${name}: ${message}<br>`;
-            messages.scrollTo(0, messages.scrollHeight);
-        });*/
     }
 
 }

@@ -38,13 +38,13 @@ class RoomEvents
             if(currentScene.player && currentScene.player.players.hasOwnProperty(key)){
                 let playerToMove = currentScene.player.players[key];
                 if(playerToMove){
+                    // @TODO: improve the implementation using client physics for prediction.
+                    // @NOTE: we commented the speed since the body position is given by the body speed in
+                    // the server, this is to prevent client hacks.
                     if(player.x !== playerToMove.x){
                         if(key !== room.sessionId && playerToMove.anims){
                             if(player.x < playerToMove.x){
                                 playerToMove.anims.play(share.LEFT, true);
-                                // @NOTE: we commented the speed here since the body position is given by the body speed
-                                // in the server. This is a temporal implementation to prevent client hacks.
-                                // @TODO: improve the implementation, use client physics for prediction.
                                 // playerToMove.body.velocity.x = -share.SPEED;
                             } else {
                                 playerToMove.anims.play(share.RIGHT, true);
@@ -65,7 +65,6 @@ class RoomEvents
                         }
                         playerToMove.y = parseFloat(player.y);
                     }
-                    // @TODO: fix animation stop.
                     // player stop action:
                     if(key !== room.sessionId && player.mov !== playerToMove.mov && playerToMove.anims){
                         if(!player.mov){
@@ -88,17 +87,17 @@ class RoomEvents
             // ---------------------------------------------
         };
         room.state.players.onRemove = (player, key) => {
-            // @TODO: since we are removing the player from the room we need to refactor this.
-            // if(key === room.sessionId){
-            //     alert('Your session ended, please login again.');
-            //     window.location.reload();
-            // }
-            let currentScene = this.getActiveScene();
-            if(currentScene.player.players.hasOwnProperty(key)){
-                currentScene.player.players[key].destroy();
-                delete currentScene.player.players[key];
+            if(key === room.sessionId){
+                alert('Your session ended, please login again.');
+                window.location.reload();
+            } else {
+                let currentScene = this.getActiveScene();
+                if(currentScene.player.players.hasOwnProperty(key)){
+                    // remove your player entity from the game world:
+                    currentScene.player.players[key].destroy();
+                    delete currentScene.player.players[key];
+                }
             }
-            // remove your player entity from the game world!
         };
         // create players or change scenes:
         room.onMessage.add((message) => {
@@ -135,12 +134,32 @@ class RoomEvents
         });
         room.onError.add((data) => {
             alert('There was a connection error.');
-            // @TODO: check if is worth it to send the error data to log the error in the server.
-            // console.log(data);
+            console.log(data);
             window.location.reload();
         });
         this.room = room;
     }
+
+    /*
+    registerChat()
+    {
+        // @TODO: replace elements direct reference with a client object integration, see above for jQuery reference.
+        let chatForm = document.getElementById(share.CHAT);
+        let readPanel = document.getElementById('messages');
+        chatForm.onsubmit = (e) => {
+            e.preventDefault();
+            let message = document.getElementById('message');
+            this.room.send(share.CHAT, message.value);
+            message.value = '';
+        };
+        this.room.onMessage.add((message) => {
+            if(message.act === share.CHAT){
+                readPanel.innerHTML += `${message.fromUser}: ${message.text}<br>`;
+                readPanel.scrollTo(0, message.scrollHeight);
+            }
+        });
+    }
+    */
 
     startPhaserScene(message, room, previousScene = false)
     {

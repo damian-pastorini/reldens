@@ -14,10 +14,14 @@ module.exports = {
     RIGHT: 'right',
     STOP: 'stop',
     MOVE: 'move',
-    CHAT: 'chat',
     // @TODO: this should be part of the server configuration.
+    // collisions tests:
+    COL_PLAYER: Math.pow(2,0),
+    COL_ENEMY: Math.pow(2,1),
+    COL_GROUND: Math.pow(2,2),
     FADE_DURATION: 1000,
     SPEED_SERVER: 180,
+    CHAT: 'chat',
     // @TODO: speed will be implemented with the client prediction in a future version.
     // SPEED: 150,
     // Note: town is for the initial scene.
@@ -28,9 +32,5 @@ module.exports = {
     IMAGE_TOWN: 'town',
     MAP_HOUSE_1: 'house-1',
     MAP_HOUSE_2: 'house-2',
-    MAP_TOWN: 'town',
-    // collisions tests:
-    COL_PLAYER: Math.pow(2,0),
-    COL_ENEMY: Math.pow(2,1),
-    COL_GROUND: Math.pow(2,2)
+    MAP_TOWN: 'town'
 };

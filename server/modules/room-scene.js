@@ -21,17 +21,44 @@ class RoomScene extends RoomLogin
 
     onJoin(client, options, authResult)
     {
-        // @TODO: check client ID in room presence.
         // check if user is already logged and disconnect from the previous client:
-        if(this.state.players.length > 0){
-            for(let player of this.state.players){
+        let loggedUserFound = false;
+        if(this.state.players){
+            for(let playerIdx in this.state.players){
+                let player = this.state.players[playerIdx];
                 if(player.username === options.username){
-                    // @TODO: this should use a Promise.
-                    this.saveStateAndRemovePlayer(player.sessionId);
+                    loggedUserFound = true;
+                    let prom = this.savePlayerState(player.sessionId);
+                    prom.then((result) => {
+                        // first remove player body from current world:
+                        let playerToRemove = this.getPlayer(player.sessionId);
+                        if(playerToRemove){
+                            // get body:
+                            let bodyToRemove = playerToRemove.p2body;
+                            if(bodyToRemove){
+                                // remove body:
+                                this.p2world.removeBody(bodyToRemove);
+                            }
+                            // remove player:
+                            this.state.removePlayer(player.sessionId);
+                        }
+                        // old player session removed, create it again:
+                        this.createPlayer(client, authResult);
+                    }).catch((err) => {
+                        console.log('ERROR - Player save error:', err);
+                    });
                     break;
                 }
             }
         }
+        if(!loggedUserFound){
+            // player not logged, create it:
+            this.createPlayer(client, authResult);
+        }
+    }
+
+    createPlayer(client, authResult)
+    {
         // player creation:
         let currentPlayer = this.state.createPlayer(client.sessionId, authResult);
         // create body for server physics and assign the body to the player:
