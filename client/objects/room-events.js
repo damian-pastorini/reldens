@@ -140,7 +140,6 @@ class RoomEvents
         this.room = room;
     }
 
-    /*
     registerChat()
     {
         // @TODO: replace elements direct reference with a client object integration, see above for jQuery reference.
@@ -159,7 +158,6 @@ class RoomEvents
             }
         });
     }
-    */
 
     startPhaserScene(message, room, previousScene = false)
     {

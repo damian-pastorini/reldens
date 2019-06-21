@@ -13,7 +13,6 @@ module.exports = {
     DOWN: 'down',
     RIGHT: 'right',
     STOP: 'stop',
-    MOVE: 'move',
     // @TODO: this should be part of the server configuration.
     // collisions tests:
     COL_PLAYER: Math.pow(2,0),
