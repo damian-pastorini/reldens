@@ -100,8 +100,18 @@ $(document).ready(function($){
     // on game-room join init phaser client:
     let config = gameConfig;
     config.type = Phaser.AUTO;
-    config.parent = 'dwd-game';
     config.scene = [SceneInit];
+    config.scale = {
+        parent: 'reldens',
+        mode: Phaser.Scale.FIT,
+        width: 500,
+        height: 500,
+        min: {
+            width: 300,
+            height: 500
+        },
+        autoCenter: Phaser.Scale.CENTER_BOTH
+    };
 
     // initialize game:
     window.phaserGame = new Phaser.Game(config);

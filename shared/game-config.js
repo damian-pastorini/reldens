@@ -1,7 +1,9 @@
 // general gama environment configuration:
 module.exports = {
-    width: 500,
-    height: 500,
+    parent: 'reldens',
+    dom: {
+        createContainer: true
+    },
     physics: {
         default: 'arcade',
         arcade: {

@@ -28,6 +28,7 @@ class SceneInit extends Phaser.Scene
 
     create()
     {
+        // @TODO: create players animations in player object.
         this.anims.create({
             key: share.LEFT,
             frames: this.anims.generateFrameNumbers(share.IMAGE_PLAYER, { start: 3, end: 5 }),
