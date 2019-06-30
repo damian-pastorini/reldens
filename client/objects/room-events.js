@@ -5,16 +5,12 @@ const share = require('../../shared/constants');
 class RoomEvents
 {
 
-    constructor(roomName)
+    constructor(roomName, phaserGame, colyseusClient)
     {
+        this.colyseusClient = colyseusClient;
+        this.phaserGame = phaserGame;
         this.roomName = roomName;
         this.sceneData = false;
-    }
-
-    join(gameClient)
-    {
-        // return room:
-        return gameClient.join(this.roomName, gameClient.userData);
     }
 
     getSceneData(room)
@@ -39,6 +35,7 @@ class RoomEvents
                 let playerToMove = currentScene.player.players[key];
                 if(playerToMove){
                     // @TODO: improve the implementation using client physics for prediction.
+                    // See NEXT items in Road Map: https://github.com/damian-pastorini/reldens/wiki/Road-Map
                     // @NOTE: we commented the speed since the body position is given by the body speed in
                     // the server, this is to prevent client hacks.
                     if(player.x !== playerToMove.x){
@@ -84,7 +81,6 @@ class RoomEvents
                     }
                 }
             }
-            // ---------------------------------------------
         };
         room.state.players.onRemove = (player, key) => {
             if(key === room.sessionId){
@@ -105,8 +101,6 @@ class RoomEvents
             if(message.act === share.ADD_PLAYER){
                 // create current player:
                 if(message.id === room.sessionId){
-                    // @TODO: remove jQuery reference, create a client object and require it to update the game view.
-                    $('.player-name').html(message.player.username);
                     this.startPhaserScene(message, room, previousScene);
                 }
                 // add new players into the current player scene:
@@ -129,7 +123,7 @@ class RoomEvents
             }
             // @NOTE: here we don't need to evaluate the id since the reconnect only is sent to the current client.
             if(message.act === share.RECONNECT){
-                gameClient.reconnectColyseus(message, room);
+                this.colyseusClient.reconnectColyseus(message, room);
             }
         });
         room.onError.add((data) => {
@@ -161,20 +155,20 @@ class RoomEvents
 
     startPhaserScene(message, room, previousScene = false)
     {
-        if(!phaserGame.scene.getScene(message.player.scene)){
+        if(!this.phaserGame.scene.getScene(message.player.scene)){
             let phaserDynamicScene = new DynamicScene(message.player.scene, this.getSceneData(room));
-            phaserGame.scene.add(message.player.scene, phaserDynamicScene, false);
+            this.phaserGame.scene.add(message.player.scene, phaserDynamicScene, false);
         }
-        if(!phaserGame.colyseusRoom){
-            phaserGame.scene.start(message.player.scene);
+        if(!this.phaserGame.colyseusRoom){
+            this.phaserGame.scene.start(message.player.scene);
         } else {
             if(previousScene){
-                phaserGame.scene.stop(previousScene);
-                phaserGame.scene.start(message.player.scene);
+                this.phaserGame.scene.stop(previousScene);
+                this.phaserGame.scene.start(message.player.scene);
             }
         }
-        phaserGame.colyseusRoom = room;
-        let currentScene = phaserGame.scene.getScene(message.player.scene);
+        this.phaserGame.colyseusRoom = room;
+        let currentScene = this.phaserGame.scene.getScene(message.player.scene);
         let playerPos = {
             x: parseFloat(message.player.x),
             y: parseFloat(message.player.y),
@@ -198,13 +192,13 @@ class RoomEvents
 
     getActiveScene()
     {
-        if(!phaserGame.scene.getScene(this.roomName)){
+        if(!this.phaserGame.scene.getScene(this.roomName)){
             if(this.sceneData){
                 let phaserDynamicScene = new DynamicScene(this.roomName, this.sceneData);
-                phaserGame.scene.add(this.roomName, phaserDynamicScene, false);
+                this.phaserGame.scene.add(this.roomName, phaserDynamicScene, false);
             }
         }
-        return phaserGame.scene.getScene(this.roomName);
+        return this.phaserGame.scene.getScene(this.roomName);
     }
 
 }

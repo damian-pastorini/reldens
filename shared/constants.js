@@ -22,6 +22,7 @@ module.exports = {
     SPEED_SERVER: 180,
     CHAT: 'chat',
     // @TODO: speed will be implemented with the client prediction in a future version.
+    // See NEXT items in Road Map: https://github.com/damian-pastorini/reldens/wiki/Road-Map
     // SPEED: 150,
     // Note: town is for the initial scene.
     TOWN: 'Town',

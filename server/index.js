@@ -62,6 +62,5 @@ prom.then(function(result){
     const bundler = new Parcel(path.resolve(__dirname, '../client/index.html'));
     app.use(bundler.middleware());
 }).catch(function(err){
-    // @TODO: improve error handle.
     console.log('ERROR - Server catch error:', err);
 });
