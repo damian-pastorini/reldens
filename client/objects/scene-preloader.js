@@ -1,12 +1,14 @@
 const Phaser = require('phaser');
 const share = require('../../shared/constants');
 
-class SceneInit extends Phaser.Scene
+class ScenePreloader extends Phaser.Scene
 {
 
-    constructor()
+    constructor(preloaderName, preloadMapKey, preloadImageKey)
     {
-        super({ key: share.SCENE_INIT });
+        super({ key: preloaderName });
+        this.preloadMapKey = preloadMapKey;
+        this.preloadImageKey = preloadImageKey;
         this.progressBar = null;
         this.progressCompleteRect = null;
         this.progressRect = null;
@@ -14,13 +16,14 @@ class SceneInit extends Phaser.Scene
 
     preload()
     {
-        // @TODO: this should be loaded dynamically from the game server or included in the scenes creation.
-        this.load.tilemapTiledJSON(share.MAP_TOWN, 'assets/maps/town.json');
-        this.load.tilemapTiledJSON(share.MAP_HOUSE_1, 'assets/maps/house-1.json');
-        this.load.tilemapTiledJSON(share.MAP_HOUSE_2, 'assets/maps/house-2.json');
+        if(this.preloadMapKey){
+            this.load.tilemapTiledJSON(this.preloadMapKey, `assets/maps/${this.preloadMapKey}.json`);
+        }
+        if(this.preloadImageKey){
+            this.load.spritesheet(this.preloadImageKey, `assets/maps/${this.preloadImageKey}.png`, { frameWidth: 32, frameHeight: 32 });
+        }
+        // @TODO: player image will be part of the configuration in the database.
         this.load.spritesheet(share.IMAGE_PLAYER, 'assets/sprites/player.png', { frameWidth: 32, frameHeight: 32 });
-        this.load.spritesheet(share.IMAGE_TOWN, 'assets/maps/town.png', { frameWidth: 32, frameHeight: 32 });
-        this.load.spritesheet(share.IMAGE_HOUSE, 'assets/maps/house.png', { frameWidth: 32, frameHeight: 32 });
         this.load.on('progress', this.onLoadProgress, this);
         this.load.on('complete', this.onLoadComplete, this);
         this.createProgressBar();
@@ -28,7 +31,7 @@ class SceneInit extends Phaser.Scene
 
     create()
     {
-        // @TODO: create players animations in player object.
+        // @TODO: player animation will be part of the configuration in the database.
         this.anims.create({
             key: share.LEFT,
             frames: this.anims.generateFrameNumbers(share.IMAGE_PLAYER, { start: 3, end: 5 }),
@@ -65,8 +68,11 @@ class SceneInit extends Phaser.Scene
         this.progressBar = this.add.graphics();
     }
 
-    onLoadComplete(loader)
+    onLoadComplete()
     {
+        for(let child of this.children.list){
+            child.destroy();
+        }
         this.scene.shutdown();
     }
 
@@ -84,4 +90,4 @@ class SceneInit extends Phaser.Scene
 
 }
 
-module.exports = SceneInit;
+module.exports = ScenePreloader;

@@ -1,5 +1,6 @@
 const PhaserPlayer = require('./player');
 const DynamicScene = require('./scene-dynamic');
+const ScenePreloader = require('./scene-preloader');
 const share = require('../../shared/constants');
 
 class RoomEvents
@@ -155,8 +156,24 @@ class RoomEvents
 
     startPhaserScene(message, room, previousScene = false)
     {
+        let sceneData = this.getSceneData(room);
+        let preloaderName = share.SCENE_PRELOADER+sceneData.sceneName;
+        let scenePreloader = new ScenePreloader(preloaderName, sceneData.sceneMap, sceneData.sceneKey);
+        if(!this.phaserGame.scene.getScene(preloaderName)){
+            this.phaserGame.scene.add(preloaderName, scenePreloader, true);
+            let preloader = this.phaserGame.scene.getScene(preloaderName);
+            preloader.load.on('complete', () => {
+                this.createPhaserScene(message, room, previousScene, sceneData);
+            });
+        } else {
+            this.createPhaserScene(message, room, previousScene, sceneData);
+        }
+    }
+
+    createPhaserScene(message, room, previousScene, sceneData)
+    {
         if(!this.phaserGame.scene.getScene(message.player.scene)){
-            let phaserDynamicScene = new DynamicScene(message.player.scene, this.getSceneData(room));
+            let phaserDynamicScene = new DynamicScene(message.player.scene, sceneData);
             this.phaserGame.scene.add(message.player.scene, phaserDynamicScene, false);
         }
         if(!this.phaserGame.colyseusRoom){

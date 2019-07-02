@@ -43,12 +43,12 @@ prom.then(function(result){
     if(result){
         for(let scene of result){
             let temp = {
+                sceneName: scene.name,
                 sceneKey: scene.scene_key,
                 sceneMap: scene.scene_map,
                 collisions: JSON.parse(scene.collisions),
                 layers: JSON.parse(scene.layers),
-                returnPositions: JSON.parse(scene.return_positions),
-                sceneName: scene.name
+                returnPositions: JSON.parse(scene.return_positions)
             };
             console.log('Registered scene: '+scene.name);
             gameServer.register(scene.name, RoomScene, {scene: temp});

@@ -21,7 +21,7 @@ $(document).ready(function($){
 
     function startGame(formData)
     {
-        let gameRoom = gameClient.joinRoom(formData);
+        let gameRoom = gameClient.joinGameRoom(formData);
         gameRoom.onError.add((data) => {
             $('#'+formData.formId+' .response-error').show();
         });

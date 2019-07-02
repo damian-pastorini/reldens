@@ -1,19 +1,19 @@
 // constants:
 module.exports = {
     // Note: use shortcuts since these are used for all the communications between server and client.
-    START_GAME: 'sg',
-    ADD_PLAYER: 'ap',
-    CHANGED_SCENE: 'cs',
+    START_GAME: 's',
+    ADD_PLAYER: 'a',
+    CHANGED_SCENE: 'c',
     RECONNECT: 'r',
     ROOM_GAME: 'room_game',
-    SCENE_INIT: 'SceneInit',
+    SCENE_PRELOADER: 'ScenePreloader',
     // player movement:
     UP: 'up',
     LEFT: 'left',
     DOWN: 'down',
     RIGHT: 'right',
     STOP: 'stop',
-    // @TODO: this should be part of the server configuration.
+    // @TODO: this will be part of the configuration in the database.
     // collisions tests:
     COL_PLAYER: Math.pow(2,0),
     COL_ENEMY: Math.pow(2,1),
@@ -21,16 +21,10 @@ module.exports = {
     FADE_DURATION: 1000,
     SPEED_SERVER: 180,
     CHAT: 'chat',
+    IMAGE_PLAYER: 'player',
+    // Note: town is for the initial scene.
+    TOWN: 'Town'
     // @TODO: speed will be implemented with the client prediction in a future version.
     // See NEXT items in Road Map: https://github.com/damian-pastorini/reldens/wiki/Road-Map
     // SPEED: 150,
-    // Note: town is for the initial scene.
-    TOWN: 'Town',
-    // @TODO: this will be from the DB.
-    IMAGE_PLAYER: 'player',
-    IMAGE_HOUSE: 'house',
-    IMAGE_TOWN: 'town',
-    MAP_HOUSE_1: 'house-1',
-    MAP_HOUSE_2: 'house-2',
-    MAP_TOWN: 'town'
 };

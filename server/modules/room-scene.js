@@ -128,7 +128,7 @@ class RoomScene extends RoomLogin
             sceneName: this.roomName,
             sceneTiledMapFile: sceneData.sceneMap
         });
-        // @TODO: this should be part of the game configuration.
+        // @TODO: applyGravity should be part of the game configuration.
         roomWorld.applyGravity = false;
         // create world limits:
         roomWorld.createLimits();
