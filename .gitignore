@@ -5,3 +5,5 @@ npm-debug*
 ts-node*
 /demo
 /v8-compile-cache*
+database.json
+/migrations/test

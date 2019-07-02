@@ -19,8 +19,9 @@ gameServer.register(share.ROOM_GAME, RoomGame);
 // game monitor:
 if(config.app.colyseusMonitor){
     const monitor = require('@colyseus/monitor');
-    // (optional) attach web monitoring panel
+    // (optional) attach web monitoring panel:
     app.use('/colyseus', monitor.monitor(gameServer));
+    console.log('NOTIFICATION - Attached Colyseus Monitor.');
 }
 // server shutdown:
 gameServer.onShutdown(function(){
@@ -42,8 +43,8 @@ prom.then(function(result){
     if(result){
         for(let scene of result){
             let temp = {
+                sceneKey: scene.scene_key,
                 sceneMap: scene.scene_map,
-                image: scene.image,
                 collisions: JSON.parse(scene.collisions),
                 layers: JSON.parse(scene.layers),
                 returnPositions: JSON.parse(scene.return_positions),

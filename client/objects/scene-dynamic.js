@@ -16,7 +16,7 @@ class SceneDynamic extends SceneBase
 
     create()
     {
-        super.create(this.params.sceneMap, this.params.image, false);
+        super.create(this.params.sceneMap, this.params.sceneKey, false);
         if(this.params.layers.animation){
             for(let layerIndex of this.params.layers.animation){
                 this.registerTilesetAnimation(this.layers[layerIndex]);

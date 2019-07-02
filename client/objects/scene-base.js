@@ -51,7 +51,7 @@ class SceneBase extends Phaser.Scene
         this.game.currentScene = this.key;
     }
 
-    update()
+    update(time, delta)
     {
         if(this.transition === false){
             if(this.keyLeft.isDown){
@@ -64,12 +64,6 @@ class SceneBase extends Phaser.Scene
                 this.player.down(true);
             }
         }
-    }
-
-    onChangeScene()
-    {
-        this.transition = true;
-        this.cameras.main.fade(share.FADE_DURATION);
     }
 
     changeScene()
