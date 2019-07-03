@@ -27,6 +27,7 @@ if(config.app.colyseusMonitor){
 gameServer.onShutdown(function(){
     console.log('NOTIFICATION - Game Server is going down.');
 });
+// loading game data:
 let queryString = 'SELECT * FROM scenes';
 let prom = new Promise((resolve, reject) => {
     DataLink.connection.query(queryString, {}, (err, rows) => {
@@ -38,6 +39,7 @@ let prom = new Promise((resolve, reject) => {
         }
     });
 });
+// parsing data to register in the server:
 prom.then(function(result){
     let counter = 0;
     if(result){
@@ -56,10 +58,10 @@ prom.then(function(result){
         }
     }
     console.log('Loaded '+counter+' scenes');
-    // start:
+    // start game server:
     gameServer.listen(port);
     console.log('Listening on http://localhost:'+port);
-    // bundler:
+    // create bundle:
     const bundler = new Parcel(path.resolve(__dirname, '../client/index.html'));
     app.use(bundler.middleware());
 }).catch(function(err){

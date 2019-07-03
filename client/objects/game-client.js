@@ -34,7 +34,7 @@ class GameClient
         let config = gameConfig;
         // initialize game:
         this.phaserGame = new Phaser.Game(config);
-        window.gameClient = this;
+        this.phaserGame.uiScene = false;
     }
 
     joinGameRoom(formData, isNewUser = false)
