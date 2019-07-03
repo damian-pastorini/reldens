@@ -31,7 +31,7 @@ class Player extends Schema
                 this.dir = state.dir;
             }
         } else {
-            // @TODO: this will come from the server configuration in the DB.
+            // @TODO: initial position will be part of the configuration in the database.
             // initial position in initial scene (town):
             this.scene = share.TOWN;
             this.x = 225;

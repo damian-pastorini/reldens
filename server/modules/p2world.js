@@ -12,6 +12,7 @@ class P2world extends P2.World
         if(!this.sceneName || !this.sceneTiledMapFile){
             console.log('ERROR - World creation missing data in options:', options);
         }
+        // @TODO: as part of the future admin panel this will be an upload option.
         this.mapJson = require('../../client/assets/maps/'+this.sceneTiledMapFile);
     }
 
