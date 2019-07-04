@@ -6,7 +6,6 @@ $(document).ready(function($){
 
     // game-client:
     let gameClient = new GameClient();
-
     let $register = $('#register_form'),
         $login = $('#login_form'),
         $logout = $('#logout');
@@ -29,7 +28,6 @@ $(document).ready(function($){
         gameRoom.onJoin.add(() => {
             $('.forms-container').detach();
             $('.game-container').show();
-            $('.player-name').html(formData.username);
         });
     }
 

@@ -158,11 +158,23 @@ class RoomEvents
     {
         let sceneData = this.getSceneData(room);
         let preloaderName = share.SCENE_PRELOADER+sceneData.sceneName;
-        let scenePreloader = new ScenePreloader(preloaderName, sceneData.sceneMap, sceneData.sceneKey);
+        let uiScene = false;
+        if(!this.phaserGame.uiScene){
+            uiScene = true;
+        }
+        let scenePreloader = new ScenePreloader(preloaderName, sceneData.sceneMap, sceneData.sceneKey, uiScene);
         if(!this.phaserGame.scene.getScene(preloaderName)){
             this.phaserGame.scene.add(preloaderName, scenePreloader, true);
             let preloader = this.phaserGame.scene.getScene(preloaderName);
             preloader.load.on('complete', () => {
+                // set ui on first preloader scene:
+                if(!this.phaserGame.uiScene){
+                    this.phaserGame.uiScene = preloader;
+                    let element = preloader.uiBoxRight.getChildByProperty('className', 'player-name');
+                    if(element){
+                        element.innerHTML = message.player.username;
+                    }
+                }
                 this.createPhaserScene(message, room, previousScene, sceneData);
             });
         } else {
