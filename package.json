@@ -14,7 +14,8 @@
     },
     "scripts": {
         "start": "node .",
-        "dev-start": "rm -R dist && mkdir dist && cp -r client/assets dist/assets/ && node ."
+        "dev-start": "rm -R dist && mkdir dist && cp -r client/assets dist/assets/ && node .",
+        "install-db": "db-migrate up:prod"
     },
     "engines": {
         "node": "10.15.1"
