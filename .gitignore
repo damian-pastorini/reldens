@@ -7,4 +7,4 @@ ts-node*
 /v8-compile-cache*
 database.json
 /migrations/test
-/server/config.js
+/server/config/config.js

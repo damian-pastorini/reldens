@@ -26,13 +26,13 @@ body { font-family:Verdana, Geneva, sans-serif; margin:0; padding:0; }
 .response-error { color:#ff0000; }
 .player { width:100px; height:100px; position:absolute; padding-top:24px; box-sizing:border-box; left:0; top:0; }
 .ux-box { z-index:1001; display:block; margin:0; padding:0; }
-.ux-box-left { /* position:absolute; bottom:10px; left:0; max-width:150px; */ background-color: rgba(0, 0, 0, 0.5); }
+.ux-box-left { background-color: rgba(0, 0, 0, 0.5); }
 .ux-box-left button { float:left; }
 .ux-box-left .vertical-buttons { float:left; width:56px; text-align:center; top:0; position:relative; }
 .ux-box-left #left,.ux-box-left #right { position:relative; top:21px; }
 .ux-box-left .vertical-buttons button { float:none; }
 .ux-box-left .vertical-buttons #down { margin-top:23px; }
-.ux-box-right { /* position:absolute; top:0; right:0; */ background-color: rgba(0, 0, 0, 0.5); }
+.ux-box-right { background-color: rgba(0, 0, 0, 0.5); }
 .player-name { margin:10px 0; text-align:center; color:#ffffff; }
 
 
