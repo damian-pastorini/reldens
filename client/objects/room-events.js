@@ -126,7 +126,17 @@ class RoomEvents
             if(message.act === share.RECONNECT){
                 this.colyseusClient.reconnectColyseus(message, room);
             }
+            // chat events:
+            let uiScene = this.phaserGame.uiScene;
+            if(uiScene && message.act === share.CHAT_ACTION){
+                let readPanel = uiScene.uiChat.getChildByProperty('id', share.CHAT_MESSAGES);
+                if(readPanel){
+                    readPanel.innerHTML += `${message[share.CHAT_FROM]}: ${message[share.CHAT_MESSAGE]}<br/>`;
+                    readPanel.scrollTo(0, readPanel.scrollHeight);
+                }
+            }
         });
+        // room error:
         room.onError.add((data) => {
             alert('There was a connection error.');
             console.log(data);
@@ -137,21 +147,23 @@ class RoomEvents
 
     registerChat()
     {
-        // @TODO: replace elements direct reference with a client object integration, see above for jQuery reference.
-        let chatForm = document.getElementById(share.CHAT);
-        let readPanel = document.getElementById('messages');
-        chatForm.onsubmit = (e) => {
-            e.preventDefault();
-            let message = document.getElementById('message');
-            this.room.send(share.CHAT, message.value);
-            message.value = '';
-        };
-        this.room.onMessage.add((message) => {
-            if(message.act === share.CHAT){
-                readPanel.innerHTML += `${message.fromUser}: ${message.text}<br>`;
-                readPanel.scrollTo(0, message.scrollHeight);
-            }
-        });
+        let uiScene = this.phaserGame.uiScene;
+        let chatForm = uiScene.uiChat.getChildByProperty('id', share.CHAT_FORM);
+        if(chatForm){
+            chatForm.onsubmit = (e) => {
+                e.preventDefault();
+                let message = uiScene.uiChat.getChildByProperty('id', share.CHAT_INPUT);
+                this.room.send({act: share.CHAT_ACTION, m: message.value});
+                message.value = '';
+            };
+            let chatInput = uiScene.uiChat.getChildByProperty('id', share.CHAT_INPUT);
+            chatInput.addEventListener('keyup', (e) => {
+                if(e.keyCode === Phaser.Input.Keyboard.KeyCodes.ENTER) {
+                    e.preventDefault();
+                    chatForm.submit();
+                }
+            });
+        }
     }
 
     startPhaserScene(message, room, previousScene = false)
@@ -217,6 +229,7 @@ class RoomEvents
                 }
             }
         }
+        this.registerChat();
     }
 
     getActiveScene()

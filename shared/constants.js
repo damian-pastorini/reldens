@@ -3,7 +3,7 @@ module.exports = {
     // Note: use shortcuts since these are used for all the communications between server and client.
     START_GAME: 's',
     ADD_PLAYER: 'a',
-    CHANGED_SCENE: 'c',
+    CHANGED_SCENE: 'cs',
     RECONNECT: 'r',
     ROOM_GAME: 'room_game',
     SCENE_PRELOADER: 'ScenePreloader',
@@ -20,7 +20,12 @@ module.exports = {
     COL_GROUND: Math.pow(2,2),
     FADE_DURATION: 1000,
     SPEED_SERVER: 180,
-    CHAT: 'chat',
+    CHAT_ACTION: 'c',
+    CHAT_MESSAGE: 'm',
+    CHAT_FROM: 'f',
+    CHAT_FORM: 'chat-form',
+    CHAT_MESSAGES: 'chat-messages',
+    CHAT_INPUT: 'chat-input',
     IMAGE_PLAYER: 'player',
     // Note: town is for the initial scene.
     TOWN: 'Town'

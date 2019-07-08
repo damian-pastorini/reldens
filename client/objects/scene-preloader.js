@@ -21,6 +21,7 @@ class ScenePreloader extends Phaser.Scene
             // ui elements:
             this.load.html('uiBoxRight', 'assets/html/ui-box-right.html');
             this.load.html('uiBoxLeft', 'assets/html/ui-box-left.html');
+            this.load.html('uiChat', 'assets/html/ui-chat.html');
         }
         // maps:
         if(this.preloadMapKey){
@@ -42,8 +43,10 @@ class ScenePreloader extends Phaser.Scene
     {
         if(this.uiScene) {
             // create ui:
+            // @TODO: UI will be part of the configuration in the database.
             this.uiBoxRight = this.add.dom(450, 20).createFromCache('uiBoxRight');
-            this.uiBoxLeft = this.add.dom(80, 450).createFromCache('uiBoxLeft');
+            this.uiBoxLeft = this.add.dom(120, 420).createFromCache('uiBoxLeft');
+            this.uiChat = this.add.dom(360, 420).createFromCache('uiChat');
         }
         // player animations:
         // @TODO: player animation will be part of the configuration in the database.
