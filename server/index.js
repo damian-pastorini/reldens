@@ -5,8 +5,8 @@ const express = require('express');
 const DataLink = require('./modules/datalink');
 const Parcel = require('parcel-bundler');
 const Colyseus = require('colyseus');
-const RoomGame = require('./modules/room-game').roomgame;
-const RoomScene = require('./modules/room-scene').roomscene;
+const RoomGame = require('./modules/room-game');
+const RoomScene = require('./modules/room-scene');
 const share = require('../shared/constants');
 // server:
 const app = express();

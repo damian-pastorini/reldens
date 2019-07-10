@@ -1,7 +1,7 @@
 const schema = require('@colyseus/schema');
 const Schema = schema.Schema;
 const type = schema.type;
-const Player = require('./player').player;
+const Player = require('./player');
 const MapSchema = schema.MapSchema;
 const share = require('../../shared/constants');
 
@@ -63,4 +63,4 @@ class State extends Schema
 type({ map: Player })(State.prototype, 'players');
 type('string')(State.prototype, 'sceneData');
 
-exports.state = State;
+module.exports = State;

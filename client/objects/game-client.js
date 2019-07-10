@@ -30,10 +30,8 @@ class GameClient
         };
         this.gameRoom = false;
         this.activeRoom = false;
-        // on game-room join init Phaser client:
-        let config = gameConfig;
-        // initialize game:
-        this.phaserGame = new Phaser.Game(config);
+        // initialize game engine:
+        this.phaserGame = new Phaser.Game(gameConfig);
         this.phaserGame.uiScene = false;
     }
 

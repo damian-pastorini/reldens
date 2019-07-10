@@ -120,4 +120,4 @@ class P2world extends P2.World
 
 }
 
-exports.p2world = P2world;
+module.exports = P2world;

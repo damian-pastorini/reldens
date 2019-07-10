@@ -1,9 +1,9 @@
-const RoomLogin = require('./room-login').roomlogin;
-const State = require('./state').state;
+const RoomLogin = require('./room-login');
+const State = require('./state');
 const DataLink = require('./datalink');
 const share = require('../../shared/constants');
 const P2 = require('p2');
-const P2world = require('./p2world').p2world;
+const P2world = require('./p2world');
 
 class RoomScene extends RoomLogin
 {
@@ -360,4 +360,4 @@ class RoomScene extends RoomLogin
 
 }
 
-exports.roomscene = RoomScene;
+module.exports = RoomScene;

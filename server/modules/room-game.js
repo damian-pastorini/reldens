@@ -9,8 +9,8 @@
  *
  */
 
-const RoomLogin = require('./room-login').roomlogin;
-const Player = require('./player').player;
+const RoomLogin = require('./room-login');
+const Player = require('./player');
 const share = require('../../shared/constants');
 
 class RoomGame extends RoomLogin
@@ -27,4 +27,4 @@ class RoomGame extends RoomLogin
 
 }
 
-exports.roomgame = RoomGame;
+module.exports = RoomGame;

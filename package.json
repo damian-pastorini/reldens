@@ -24,7 +24,7 @@
     "license": "MIT",
     "dependencies": {
         "@colyseus/monitor": "^0.10.0",
-        "colyseus": "^0.10.7",
+        "colyseus": "^0.10.8",
         "colyseus.js": "^0.10.8",
         "express": "^4.17.1",
         "glslify": "^7.0.0",

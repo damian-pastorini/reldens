@@ -53,4 +53,4 @@ type('string')(Player.prototype, 'dir');
 type('boolean')(Player.prototype, 'mov');
 type('boolean')(Player.prototype, 'isBusy');
 
-exports.player = Player;
+module.exports = Player;

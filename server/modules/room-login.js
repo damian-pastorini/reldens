@@ -68,4 +68,4 @@ class RoomLogin extends Room
 
 }
 
-exports.roomlogin = RoomLogin;
+module.exports = RoomLogin;
