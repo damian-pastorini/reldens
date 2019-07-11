@@ -12,6 +12,22 @@ class RoomEvents
         this.phaserGame = phaserGame;
         this.roomName = roomName;
         this.sceneData = false;
+        this.colyseusClient.getAvailableRooms(share.CHAT_GLOBAL, () => {
+            this.globalChat = this.getGlobalChatRoom();
+        });
+    }
+
+    getGlobalChatRoom()
+    {
+        let globalChatRoom = false;
+        for (let idx in this.colyseusClient.rooms) {
+            let room = this.colyseusClient.rooms[idx];
+            if(room.name === share.CHAT_GLOBAL){
+                globalChatRoom = room;
+                break;
+            }
+        }
+        return globalChatRoom;
     }
 
     getSceneData(room)
@@ -139,7 +155,7 @@ class RoomEvents
         // room error:
         room.onError.add((data) => {
             alert('There was a connection error.');
-            console.log(data);
+            console.log('ERROR - ', data);
             window.location.reload();
         });
         this.room = room;
@@ -153,7 +169,29 @@ class RoomEvents
             chatForm.onsubmit = (e) => {
                 e.preventDefault();
                 let message = uiScene.uiChat.getChildByProperty('id', share.CHAT_INPUT);
-                this.room.send({act: share.CHAT_ACTION, m: message.value});
+                if((!message.value || message.value.length === 0)){
+                    return false;
+                }
+                // both global or private messages use the global chat room:
+                let isGlobal = (message.value.indexOf('#') === 0 || message.value.indexOf('@') === 0);
+                // check if is a global chat (must begin with #) and if the global chat room is ready:
+                let messageData = {act: share.CHAT_ACTION, m: message.value};
+                if(isGlobal && this.globalChat){
+                    if(message.value.indexOf('@') === 0){
+                        let username = message.value.substring(1, message.value.indexOf(' '));
+                        if(username !== '@'){
+                            messageData.t = username;
+                            this.globalChat.send(messageData);
+                        } else {
+                            // NOTE: this will be the user not found case but better not show any response here.
+                        }
+                    } else {
+                        this.globalChat.send(messageData);
+                    }
+
+                } else {
+                    this.room.send(messageData);
+                }
                 message.value = '';
             };
             let chatInput = uiScene.uiChat.getChildByProperty('id', share.CHAT_INPUT);

@@ -7,6 +7,7 @@ const Parcel = require('parcel-bundler');
 const Colyseus = require('colyseus');
 const RoomGame = require('./modules/room-game');
 const RoomScene = require('./modules/room-scene');
+const RoomChat = require('./modules/room-chat');
 const share = require('../shared/constants');
 // server:
 const app = express();
@@ -43,6 +44,7 @@ let prom = new Promise((resolve, reject) => {
 prom.then(function(result){
     let counter = 0;
     if(result){
+        // register room-scenes from database:
         for(let scene of result){
             let temp = {
                 sceneName: scene.name,
@@ -56,8 +58,10 @@ prom.then(function(result){
             gameServer.register(scene.name, RoomScene, {scene: temp});
             counter++;
         }
+        // register global chat room:
+        gameServer.register(share.CHAT_GLOBAL, RoomChat, {});
     }
-    console.log('Loaded '+counter+' scenes');
+    console.log(`Loaded ${counter} scenes`);
     // start game server:
     gameServer.listen(port);
     console.log('Listening on http://localhost:'+port);

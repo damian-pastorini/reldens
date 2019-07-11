@@ -23,9 +23,11 @@ module.exports = {
     CHAT_ACTION: 'c',
     CHAT_MESSAGE: 'm',
     CHAT_FROM: 'f',
+    CHAT_TO: 't',
     CHAT_FORM: 'chat-form',
     CHAT_MESSAGES: 'chat-messages',
     CHAT_INPUT: 'chat-input',
+    CHAT_GLOBAL: 'chat_global',
     IMAGE_PLAYER: 'player',
     // Note: town is for the initial scene.
     TOWN: 'Town'

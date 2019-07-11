@@ -6,6 +6,7 @@ $(document).ready(function($){
 
     // game-client:
     let gameClient = new GameClient();
+    window.gameClient = gameClient;
     let $register = $('#register_form'),
         $login = $('#login_form'),
         $logout = $('#logout');

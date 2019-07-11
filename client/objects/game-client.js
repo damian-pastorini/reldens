@@ -48,8 +48,11 @@ class GameClient
         this.gameRoom = this.colyseusClient.join(share.ROOM_GAME, this.colyseusClient.userData);
         // on join activate game:
         this.gameRoom.onJoin.add(() => {
+            // initiate global chat for current user:
+            this.startChatGlobal();
             this.gameRoom.onError.add((data) => {
                 alert('Connection error.');
+                console.log('ERROR - Connection error:', data);
                 window.location.reload();
             });
             this.colyseusClient.userData.isNewUser = false;
@@ -65,6 +68,24 @@ class GameClient
             }
         });
         return this.gameRoom;
+    }
+
+    startChatGlobal()
+    {
+        this.chatRoom = this.colyseusClient.join(share.CHAT_GLOBAL, this.colyseusClient.userData);
+        this.chatRoom.onJoin.add(() => {
+            this.chatRoom.onMessage.add((message) => {
+                // chat events:
+                let uiScene = this.phaserGame.uiScene;
+                if(uiScene && message.act === share.CHAT_ACTION){
+                    let readPanel = uiScene.uiChat.getChildByProperty('id', share.CHAT_MESSAGES);
+                    if(readPanel){
+                        readPanel.innerHTML += `${message[share.CHAT_FROM]}: ${message[share.CHAT_MESSAGE]}<br/>`;
+                        readPanel.scrollTo(0, readPanel.scrollHeight);
+                    }
+                }
+            });
+        });
     }
 
 }

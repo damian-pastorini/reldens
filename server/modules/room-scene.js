@@ -66,8 +66,8 @@ class RoomScene extends RoomLogin
         // client creation:
         this.broadcast({act: share.ADD_PLAYER, id: client.sessionId, player: currentPlayer});
         // @TODO: broadcast players entering in rooms will be part of the configuration in the database.
-        let text = `<span style="color:#0000ff;">${currentPlayer.username} has entered the room.</span>`;
-        this.broadcast({act: share.CHAT_ACTION, m: text, f: 'System'});
+        let message = `<span style="color:#0000ff;">${currentPlayer.username} has entered the ${this.roomName}.</span>`;
+        this.broadcast({act: share.CHAT_ACTION, m: message, f: 'System'});
     }
 
     onLeave(client, consented)
@@ -122,8 +122,8 @@ class RoomScene extends RoomLogin
                 }
             }
             if(data.act === share.CHAT_ACTION){
-                let text = data[share.CHAT_MESSAGE].toString();
-                this.broadcast({act: share.CHAT_ACTION, m: text, f: currentPlayer.username});
+                let message = data[share.CHAT_MESSAGE].toString();
+                this.broadcast({act: share.CHAT_ACTION, m: message, f: currentPlayer.username});
             }
         }
     }

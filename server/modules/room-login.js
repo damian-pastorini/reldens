@@ -32,6 +32,11 @@ class RoomLogin extends Room
                         return reject(false);
                     } else {
                         // if everything is good then just return the user:
+                        // @TODO: analyze if we need to check the user is joining a "valid" room.
+                        // A "valid" room means the user reached room using the previous room change point (if is not
+                        // the first room visited), and the position is the correct.
+                        // This is probably not needed since we are saving the user status and reloading it in the next
+                        // room.
                         return resolve(currentPlayer);
                     }
                 } else {
