@@ -43,7 +43,6 @@ class SceneBase extends Phaser.Scene
                     this.player.stop(true);
                 }
             });
-            this.registerCollision();
             this.registerController();
         });
         this.cameras.main.on('camerafadeoutcomplete', this.changeScene.bind(this));
@@ -71,11 +70,6 @@ class SceneBase extends Phaser.Scene
         if(this.withTSAnimation){
             this.tilesetAnimation.destroy();
         }
-    }
-
-    registerCollision()
-    {
-        throw new Error('registerCollision() not implemented');
     }
 
     registerTilesetAnimation(layer)
