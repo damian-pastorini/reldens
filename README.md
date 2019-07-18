@@ -27,6 +27,9 @@ If you like to contribute or donate to support the project please feel free to c
 
 ## [Coming soon and news!](https://github.com/damian-pastorini/reldens/wiki/Coming-soon-&-News "Coming soon & News archive") > Last update July 12, 2019.
 
+## Contact us
+Join our Discord channel: https://discord.gg/HuJMxUY
+
 ## [Change Log](https://github.com/damian-pastorini/dwdgame/wiki/Change-Log "Change Log")
 
 ## [Installation](https://github.com/damian-pastorini/dwdgame/wiki/Installation "Installation")
