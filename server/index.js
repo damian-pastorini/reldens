@@ -50,7 +50,6 @@ prom.then(function(result){
                 sceneName: scene.name,
                 sceneKey: scene.scene_key,
                 sceneMap: scene.scene_map,
-                collisions: JSON.parse(scene.collisions),
                 layers: JSON.parse(scene.layers),
                 returnPositions: JSON.parse(scene.return_positions)
             };

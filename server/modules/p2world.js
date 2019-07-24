@@ -28,9 +28,9 @@ class P2world extends P2.World
             tileW = this.mapJson.tilewidth,
             tileH = this.mapJson.tileheight;
         // @NOTE: main layer is where the change points are going to be included.
-        let mainLayer = mapData.layers.main;
         for(let layer of mapLayers){
-            if(layer.name.indexOf('collisions') !== -1){
+            // just consider collisions and change points layers:
+            if(layer.name.indexOf('collisions') !== -1 || layer.name.indexOf('change-points') !== -1){
                 let layerData = layer.data;
                 for (let c = 0; c < mapW; c++){
                     let posX = c * tileW + (tileW/2);
@@ -41,14 +41,13 @@ class P2world extends P2.World
                         let tile = layerData[tileIndex];
                         // occupy space or add the scene change points:
                         if (tile !== 0){ // 0 => empty tiles without collision
-                            // if the tile is a change point has to be empty for every layer.
-                            if(changePoints[tile]){
+                            // if the tile is a change point it has to be empty for every layer.
+                            if(changePoints[tileIndex]){
                                 // only create the change points once on the main layer:
-                                // @TODO: fix the change points to be in an specific layer.
-                                if(false === mainLayer){
+                                if(layer.name.indexOf('change-points') !== -1){
                                     // @NOTE: we make the change point smaller so the user needs to walk into to hit it.
                                     let bodyChangePoint = this.createWall((tileW/2), (tileH/2), posX, posY);
-                                    bodyChangePoint.changeScenePoint = changePoints[tile];
+                                    bodyChangePoint.changeScenePoint = changePoints[tileIndex];
                                     bodyChangePoint.isWall = true;
                                     this.addBody(bodyChangePoint);
                                 } // that's why we don't have an else for the main layer condition here.

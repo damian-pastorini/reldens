@@ -40,6 +40,10 @@ class SceneBase extends Phaser.Scene
                 // @TODO: layers depth will be part of the configuration in the database.
                 this.layers[i].setDepth(10);
             }
+            if(this.map.layers[i].name.indexOf('change-points') !== -1){
+                // @TODO: layers depth will be part of the configuration in the database.
+                this.layers[i].setDepth(1);
+            }
         }
         this.cameras.main.on('camerafadeincomplete', () => {
             this.transition = false;
