@@ -82,28 +82,28 @@ class RoomScene extends RoomLogin
     {
         // get player:
         let currentPlayer = this.getPlayer(client.sessionId);
-        if(currentPlayer){
+        if(currentPlayer && currentPlayer.hasOwnProperty('p2body')){
             // get player body:
             let bodyToMove = currentPlayer.p2body;
             // if player is moving:
-            if(data.hasOwnProperty('dir')){
-                if(bodyToMove){
-                    if(data.dir === share.RIGHT){
-                        bodyToMove.velocity[0] = share.SPEED_SERVER;
-                    }
-                    if(data.dir === share.LEFT){
-                        bodyToMove.velocity[0] = -share.SPEED_SERVER;
-                    }
-                    if(data.dir === share.UP){
-                        bodyToMove.velocity[1] = -share.SPEED_SERVER;
-                    }
-                    if(data.dir === share.DOWN){
-                        bodyToMove.velocity[1] = share.SPEED_SERVER;
-                    }
-                    data.x = bodyToMove.position[0];
-                    data.y = bodyToMove.position[1];
-                    this.state.movePlayer(client.sessionId, data);
+            if(data.hasOwnProperty('dir') && bodyToMove){
+                // @TODO: multiple keys press will be part of the configuration in the database.
+                // if body is moving then avoid multiple key press at the same time:
+                if(data.dir === share.RIGHT && bodyToMove.velocity[1] === 0){
+                    bodyToMove.velocity[0] = share.SPEED_SERVER;
                 }
+                if(data.dir === share.LEFT && bodyToMove.velocity[1] === 0){
+                    bodyToMove.velocity[0] = -share.SPEED_SERVER;
+                }
+                if(data.dir === share.UP && bodyToMove.velocity[0] === 0){
+                    bodyToMove.velocity[1] = -share.SPEED_SERVER;
+                }
+                if(data.dir === share.DOWN && bodyToMove.velocity[0] === 0){
+                    bodyToMove.velocity[1] = share.SPEED_SERVER;
+                }
+                data.x = bodyToMove.position[0];
+                data.y = bodyToMove.position[1];
+                this.state.movePlayer(client.sessionId, data);
             }
             // if player stopped:
             if(data.act === share.STOP){
@@ -167,12 +167,12 @@ class RoomScene extends RoomLogin
                 if(bodyA.playerId){
                     currentPlayerBody = bodyA;
                     wallBody = bodyB;
-                    bodyA.velocity = [0,0];
+                    bodyA.velocity = [0, 0];
                 } else {
                     if(bodyB.playerId){
                         currentPlayerBody = bodyB;
                         wallBody = bodyA;
-                        bodyB.velocity = [0,0];
+                        bodyB.velocity = [0, 0];
                     } else {
                         // @TODO: refactor this with the NPC's implementation.
                         // @NOTE: in the current implementation we should never hit this since we do not have any other
@@ -208,7 +208,9 @@ class RoomScene extends RoomLogin
 
     createPlayerBody(currentPlayer, sessionId)
     {
-        let boxShape = new P2.Box({ width: 32, height: 32});
+        // @TODO: player image will be part of the configuration in the database.
+        // @NOTE: check client/objects/scene-preloader.js to validate the same size.
+        let boxShape = new P2.Box({ width: 16, height: 16});
         boxShape.collisionGroup = share.COL_PLAYER;
         boxShape.collisionMask = share.COL_ENEMY | share.COL_GROUND;
         let boxBody = new P2.Body({

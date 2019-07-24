@@ -27,12 +27,11 @@ class P2world extends P2.World
             mapH = this.mapJson.height,
             tileW = this.mapJson.tilewidth,
             tileH = this.mapJson.tileheight;
-        // @NOTE: for collisions in server side we need to include the defined main layer.
+        // @NOTE: main layer is where the change points are going to be included.
         let mainLayer = mapData.layers.main;
-        mapData.layers.collider[mapData.layers.collider.length] = mainLayer;
-        for(let colliderIndex of mapData.layers.collider){
-            if(mapLayers[colliderIndex]){
-                let layerData = mapLayers[colliderIndex].data;
+        for(let layer of mapLayers){
+            if(layer.name.indexOf('collisions') !== -1){
+                let layerData = layer.data;
                 for (let c = 0; c < mapW; c++){
                     let posX = c * tileW + (tileW/2);
                     for (let r = 0; r < mapH; r++){
@@ -45,7 +44,8 @@ class P2world extends P2.World
                             // if the tile is a change point has to be empty for every layer.
                             if(changePoints[tile]){
                                 // only create the change points once on the main layer:
-                                if(colliderIndex === mainLayer){
+                                // @TODO: fix the change points to be in an specific layer.
+                                if(false === mainLayer){
                                     // @NOTE: we make the change point smaller so the user needs to walk into to hit it.
                                     let bodyChangePoint = this.createWall((tileW/2), (tileH/2), posX, posY);
                                     bodyChangePoint.changeScenePoint = changePoints[tile];

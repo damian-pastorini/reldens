@@ -18,6 +18,7 @@ class ScenePreloader extends Phaser.Scene
     preload()
     {
         if(this.uiScene){
+            // @TODO: ui elements visibility and availability will be part of the configuration in the database.
             // ui elements:
             this.load.html('uiBoxRight', 'assets/html/ui-box-right.html');
             this.load.html('uiBoxLeft', 'assets/html/ui-box-left.html');
@@ -27,15 +28,20 @@ class ScenePreloader extends Phaser.Scene
         if(this.preloadMapKey){
             this.load.tilemapTiledJSON(this.preloadMapKey, `assets/maps/${this.preloadMapKey}.json`);
         }
-        // @TODO: this will be modified to load multiple tiles images per map.
+        // @TODO: this will be modified to allow multiple tiles images per map.
         // map tiles images:
         if(this.preloadImageKey){
-            this.load.spritesheet(this.preloadImageKey, `assets/maps/${this.preloadImageKey}.png`, { frameWidth: 32, frameHeight: 32 });
+            // @TODO: frame width, height, margin and spacing will be part of the configuration in the database.
+            let tileData = {frameWidth:16, frameHeight:16, margin:1, spacing:2};
+            let filePath = `assets/maps/${this.preloadImageKey}.png`;
+            this.load.spritesheet(this.preloadImageKey, filePath, tileData);
         }
         // @TODO: player image will be part of the configuration in the database.
-        this.load.spritesheet(share.IMAGE_PLAYER, 'assets/sprites/player.png', { frameWidth: 32, frameHeight: 32 });
+        this.load.spritesheet(share.IMAGE_PLAYER, 'assets/sprites/player-s.png', {frameWidth:26, frameHeight:36});
         this.load.on('progress', this.onLoadProgress, this);
         this.load.on('complete', this.onLoadComplete, this);
+        // @TODO: the player frame rate will be part of the configuration in the database.
+        this.configuredFrameRate = 12; // 16;
         this.createProgressBar();
     }
 
@@ -52,26 +58,26 @@ class ScenePreloader extends Phaser.Scene
         // @TODO: player animation will be part of the configuration in the database.
         this.anims.create({
             key: share.LEFT,
-            frames: this.anims.generateFrameNumbers(share.IMAGE_PLAYER, { start: 3, end: 5 }),
-            frameRate: 16,
-            repeat: -1
+            frames: this.anims.generateFrameNumbers(share.IMAGE_PLAYER, {start:3, end:5}),
+            frameRate: this.configuredFrameRate,
+            repeat:-1
         });
         this.anims.create({
             key: share.RIGHT,
-            frames: this.anims.generateFrameNumbers(share.IMAGE_PLAYER, { start: 6, end: 8 }),
-            frameRate: 16,
+            frames: this.anims.generateFrameNumbers(share.IMAGE_PLAYER, {start:6, end:8}),
+            frameRate: this.configuredFrameRate,
             repeat: -1
         });
         this.anims.create({
             key: share.UP,
-            frames: this.anims.generateFrameNumbers(share.IMAGE_PLAYER, { start: 9, end: 11 }),
-            frameRate: 16,
+            frames: this.anims.generateFrameNumbers(share.IMAGE_PLAYER, {start:9, end:11}),
+            frameRate: this.configuredFrameRate,
             repeat: -1
         });
         this.anims.create({
             key: share.DOWN,
-            frames: this.anims.generateFrameNumbers(share.IMAGE_PLAYER, { start: 0, end: 2 }),
-            frameRate: 16,
+            frames: this.anims.generateFrameNumbers(share.IMAGE_PLAYER, {start:0, end:2}),
+            frameRate: this.configuredFrameRate,
             repeat: -1
         });
     }

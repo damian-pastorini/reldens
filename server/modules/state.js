@@ -3,7 +3,7 @@ const Schema = schema.Schema;
 const type = schema.type;
 const Player = require('./player');
 const MapSchema = schema.MapSchema;
-const share = require('../../shared/constants');
+// const share = require('../../shared/constants');
 
 class State extends Schema
 {
@@ -29,12 +29,13 @@ class State extends Schema
         if(data.hasOwnProperty('dir')){
             this.players[id].mov = true;
             this.players[id].dir = data.dir;
-            if(data.dir === share.RIGHT || data.dir === share.LEFT){
-                this.players[id].x = data.x;
-            }
-            if(data.dir === share.UP || data.dir === share.DOWN){
-                this.players[id].y = data.y;
-            }
+            // @TODO: validate body movement be optional and part of the configuration in the database.
+            // if(data.dir === share.RIGHT || data.dir === share.LEFT){
+            this.players[id].x = data.x;
+            // }
+            // if(data.dir === share.UP || data.dir === share.DOWN){
+            this.players[id].y = data.y;
+            // }
         }
     }
 

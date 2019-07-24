@@ -29,10 +29,16 @@ class SceneBase extends Phaser.Scene
         this.map = this.add.tilemap(tilemap);
         this.tileset = this.map.addTilesetImage(tileset);
         for(let i=0; i<this.map.layers.length; i++){
+            // @TODO: tilesets margin and spacing will be part of the configuration in the database.
             if(withTSAnimation){
-                this.layers[i] = this.map.createDynamicLayer(this.map.layers[i].name, this.tileset, 0, 0);
+                this.layers[i] = this.map.createDynamicLayer(this.map.layers[i].name, this.tileset, 1, 2);
             } else {
-                this.layers[i] = this.map.createStaticLayer(this.map.layers[i].name, this.tileset, 0, 0);
+                this.layers[i] = this.map.createStaticLayer(this.map.layers[i].name, this.tileset, 1, 2);
+            }
+            // layers over player:
+            if(this.map.layers[i].name.indexOf('over-player') !== -1){
+                // @TODO: layers depth will be part of the configuration in the database.
+                this.layers[i].setDepth(10);
             }
         }
         this.cameras.main.on('camerafadeincomplete', () => {
