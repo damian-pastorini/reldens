@@ -30,7 +30,7 @@ module.exports = {
     CHAT_GLOBAL: 'chat_global',
     IMAGE_PLAYER: 'player',
     // Note: town is for the initial scene.
-    TOWN: 'Town'
+    TOWN: 'ReldensTown'
     // @TODO: speed will be implemented with the client prediction in a future version.
     // See NEXT items in Road Map: https://github.com/damian-pastorini/reldens/wiki/Road-Map
     // SPEED: 150,

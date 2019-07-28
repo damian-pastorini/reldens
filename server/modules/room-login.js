@@ -68,7 +68,7 @@ class RoomLogin extends Room
 
     onDispose()
     {
-        console.log('NOTIFICATION - ON-DISPOSE ROOM:', this.roomName);
+        console.log('NOTIFICATION - ON-DISPOSE Room:', this.roomName);
     }
 
 }

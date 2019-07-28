@@ -37,11 +37,12 @@ class ScenePreloader extends Phaser.Scene
             this.load.spritesheet(this.preloadImageKey, filePath, tileData);
         }
         // @TODO: player image will be part of the configuration in the database.
-        this.load.spritesheet(share.IMAGE_PLAYER, 'assets/sprites/player-s.png', {frameWidth:26, frameHeight:36});
+        let playerSpriteSize = {frameWidth:52, frameHeight:71};
+        this.load.spritesheet(share.IMAGE_PLAYER, 'assets/sprites/player-1.png', playerSpriteSize);
         this.load.on('progress', this.onLoadProgress, this);
         this.load.on('complete', this.onLoadComplete, this);
         // @TODO: the player frame rate will be part of the configuration in the database.
-        this.configuredFrameRate = 12; // 16;
+        this.configuredFrameRate = 12;
         this.createProgressBar();
     }
 

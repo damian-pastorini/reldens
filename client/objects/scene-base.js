@@ -36,13 +36,17 @@ class SceneBase extends Phaser.Scene
                 this.layers[i] = this.map.createStaticLayer(this.map.layers[i].name, this.tileset, 1, 2);
             }
             // layers over player:
+            if(this.map.layers[i].name.indexOf('below-player') !== -1){
+                // @TODO: layers depth will be part of the configuration in the database.
+                this.layers[i].setDepth(0);
+            }
             if(this.map.layers[i].name.indexOf('over-player') !== -1){
                 // @TODO: layers depth will be part of the configuration in the database.
-                this.layers[i].setDepth(10);
+                this.layers[i].setDepth(i);
             }
             if(this.map.layers[i].name.indexOf('change-points') !== -1){
                 // @TODO: layers depth will be part of the configuration in the database.
-                this.layers[i].setDepth(1);
+                this.layers[i].setDepth(0);
             }
         }
         this.cameras.main.on('camerafadeincomplete', () => {

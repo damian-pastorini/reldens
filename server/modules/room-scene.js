@@ -152,7 +152,7 @@ class RoomScene extends RoomLogin
         this.worldTimer = this.clock.setInterval(() => {
             this.p2world.step(this.timeStep);
         }, 1000 * this.timeStep);
-        console.log('NOTIFICATION - P2 WORLD CREATED IN ROOM:', this.roomName);
+        console.log('NOTIFICATION - P2 World created in Room:', this.roomName);
     }
 
     assignCollisions()
@@ -210,7 +210,7 @@ class RoomScene extends RoomLogin
     {
         // @TODO: player image will be part of the configuration in the database.
         // @NOTE: check client/objects/scene-preloader.js to validate the same size.
-        let boxShape = new P2.Box({ width: 16, height: 16});
+        let boxShape = new P2.Box({width: 16, height: 16});
         boxShape.collisionGroup = share.COL_PLAYER;
         boxShape.collisionMask = share.COL_ENEMY | share.COL_GROUND;
         let boxBody = new P2.Body({
@@ -255,21 +255,23 @@ class RoomScene extends RoomLogin
                     let stateSaved = this.savePlayerState(client.sessionId);
                     if(stateSaved !== false){
                         stateSaved.then((stateResult) => {
-                            // @NOTE: we need to broadcast the current player scene change to be removed or added in other players:
-                            this.broadcast({
-                                act: share.CHANGED_SCENE,
-                                id: client.sessionId,
-                                scene: currentPlayer.scene,
-                                prev: result.data.prev,
-                                x: currentPlayer.x,
-                                y: currentPlayer.y,
-                                dir: currentPlayer.dir,
-                            });
-                            // remove body from server world:
-                            let bodyToRemove = currentPlayer.p2body;
-                            this.p2world.removeBody(bodyToRemove);
-                            // reconnect is to create the player in the new scene:
-                            this.send(client, {act: share.RECONNECT, player: currentPlayer, prev: result.data.prev});
+                            if(stateResult.changedRows){
+                                // @NOTE: we need to broadcast the current player scene change to be removed or added in other players:
+                                this.broadcast({
+                                    act: share.CHANGED_SCENE,
+                                    id: client.sessionId,
+                                    scene: currentPlayer.scene,
+                                    prev: result.data.prev,
+                                    x: currentPlayer.x,
+                                    y: currentPlayer.y,
+                                    dir: currentPlayer.dir,
+                                });
+                                // remove body from server world:
+                                let bodyToRemove = currentPlayer.p2body;
+                                this.p2world.removeBody(bodyToRemove);
+                                // reconnect is to create the player in the new scene:
+                                this.send(client, {act: share.RECONNECT, player: currentPlayer, prev: result.data.prev});
+                            }
                         }).catch((err) => {
                             console.log('ERROR - Save state error:', client.sessionId, err);
                         });

@@ -42,16 +42,19 @@ class P2world extends P2.World
                         // occupy space or add the scene change points:
                         if (tile !== 0){ // 0 => empty tiles without collision
                             // if the tile is a change point it has to be empty for every layer.
-                            if(changePoints[tileIndex]){
-                                // only create the change points once on the main layer:
-                                if(layer.name.indexOf('change-points') !== -1){
+                            if(layer.name.indexOf('change-points') !== -1){
+                                if(changePoints[tileIndex]){
+                                    console.log('NOTIFICATION - Created change point on tileIndex:', tileIndex);
                                     // @NOTE: we make the change point smaller so the user needs to walk into to hit it.
                                     let bodyChangePoint = this.createWall((tileW/2), (tileH/2), posX, posY);
                                     bodyChangePoint.changeScenePoint = changePoints[tileIndex];
                                     bodyChangePoint.isWall = true;
                                     this.addBody(bodyChangePoint);
-                                } // that's why we don't have an else for the main layer condition here.
-                            } else {
+                                } else {
+                                    console.log('ERROR - Change point not created:', tileIndex, changePoints[tileIndex]);
+                                }
+                            }
+                            if(layer.name.indexOf('collisions') !== -1){
                                 // create a box to fill the space:
                                 let bodyWall = this.createWall(tileW, tileH, posX, posY);
                                 bodyWall.isWall = true;
