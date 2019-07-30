@@ -42,7 +42,7 @@ class ScenePreloader extends Phaser.Scene
         this.load.on('progress', this.onLoadProgress, this);
         this.load.on('complete', this.onLoadComplete, this);
         // @TODO: the player frame rate will be part of the configuration in the database.
-        this.configuredFrameRate = 12;
+        this.configuredFrameRate = 10;
         this.createProgressBar();
     }
 

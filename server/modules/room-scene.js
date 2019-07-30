@@ -210,7 +210,7 @@ class RoomScene extends RoomLogin
     {
         // @TODO: player image will be part of the configuration in the database.
         // @NOTE: check client/objects/scene-preloader.js to validate the same size.
-        let boxShape = new P2.Box({width: 16, height: 16});
+        let boxShape = new P2.Box({width: 32, height: 32});
         boxShape.collisionGroup = share.COL_PLAYER;
         boxShape.collisionMask = share.COL_ENEMY | share.COL_GROUND;
         let boxBody = new P2.Body({
