@@ -34,8 +34,8 @@ class Player extends Schema
             // @TODO: initial position will be part of the configuration in the database.
             // initial position in initial scene (town):
             this.scene = share.TOWN;
-            this.x = 225;
-            this.y = 280;
+            this.x = 400;
+            this.y = 345;
             this.dir = share.DOWN;
         }
         this.mov = false;

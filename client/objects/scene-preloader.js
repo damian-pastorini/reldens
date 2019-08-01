@@ -4,11 +4,11 @@ const share = require('../../shared/constants');
 class ScenePreloader extends Phaser.Scene
 {
 
-    constructor(preloaderName, preloadMapKey, preloadImageKey, uiScene)
+    constructor(preloaderName, preloadMapKey, preloadImages, uiScene)
     {
         super({ key: preloaderName });
         this.preloadMapKey = preloadMapKey;
-        this.preloadImageKey = preloadImageKey;
+        this.preloadImages = preloadImages;
         this.uiScene = uiScene;
         this.progressBar = null;
         this.progressCompleteRect = null;
@@ -28,13 +28,17 @@ class ScenePreloader extends Phaser.Scene
         if(this.preloadMapKey){
             this.load.tilemapTiledJSON(this.preloadMapKey, `assets/maps/${this.preloadMapKey}.json`);
         }
-        // @TODO: this will be modified to allow multiple tiles images per map.
+        // @TODO: test a multiple tiles images case.
         // map tiles images:
-        if(this.preloadImageKey){
+        if(this.preloadImages){
             // @TODO: frame width, height, margin and spacing will be part of the configuration in the database.
+            // @NOTE: we need the preloadImages and tile data here because the JSON map file is not loaded yet.
             let tileData = {frameWidth:16, frameHeight:16, margin:1, spacing:2};
-            let filePath = `assets/maps/${this.preloadImageKey}.png`;
-            this.load.spritesheet(this.preloadImageKey, filePath, tileData);
+            let files = this.preloadImages.split(',');
+            for(let imageFile of files){
+                let filePath = `assets/maps/${imageFile}.png`;
+                this.load.spritesheet(imageFile, filePath, tileData);
+            }
         }
         // @TODO: player image will be part of the configuration in the database.
         let playerSpriteSize = {frameWidth:52, frameHeight:71};

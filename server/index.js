@@ -28,8 +28,35 @@ if(config.app.colyseusMonitor){
 gameServer.onShutdown(function(){
     console.log('NOTIFICATION - Game Server is going down.');
 });
-// loading game data:
-let queryString = 'SELECT * FROM scenes';
+// @TODO: optimize the query.
+// loading scenes data:
+let queryString = `SELECT 
+    s.*, 
+    CONCAT('[', 
+        GROUP_CONCAT(
+            DISTINCT 
+                '{"i":"', sc.tile_index, 
+                '", "n":', (SELECT CONCAT('"', name, '"') FROM scenes WHERE id = sc.next_scene_id),
+                 '}' 
+            SEPARATOR ','),
+    ']') as change_points,
+    CONCAT('[', 
+        GROUP_CONCAT(
+            DISTINCT 
+                '{"D":"', sr.direction, 
+                '", "X":', sr.x,
+                 ', "Y":', sr.y,
+                 (IF (sr.is_default IS NULL, '', (CONCAT(', "De":', sr.is_default)))),
+                 (IF(sr.to_scene_id IS NULL, '', (CONCAT(', "P":', (SELECT CONCAT('"', name, '"') FROM scenes WHERE id = sr.to_scene_id))))),
+                 '}' 
+            SEPARATOR ','),
+    ']') as return_positions
+FROM scenes AS s
+LEFT JOIN scenes_change_points AS sc
+ON s.id = sc.scene_id
+LEFT JOIN scenes_return_points AS sr
+ON s.id = sr.scene_id
+GROUP BY s.id`;
 let prom = new Promise((resolve, reject) => {
     DataLink.connection.query(queryString, {}, (err, rows) => {
         if(err){
@@ -48,9 +75,9 @@ prom.then(function(result){
         for(let scene of result){
             let temp = {
                 sceneName: scene.name,
-                sceneKey: scene.scene_key,
                 sceneMap: scene.scene_map,
-                layers: JSON.parse(scene.layers),
+                sceneImages: scene.scene_images,
+                changePoints: JSON.parse(scene.change_points),
                 returnPositions: JSON.parse(scene.return_positions)
             };
             console.log('Registered scene: '+scene.name);

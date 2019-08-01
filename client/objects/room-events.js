@@ -212,7 +212,7 @@ class RoomEvents
         if(!this.phaserGame.uiScene){
             uiScene = true;
         }
-        let scenePreloader = new ScenePreloader(preloaderName, sceneData.sceneMap, sceneData.sceneKey, uiScene);
+        let scenePreloader = new ScenePreloader(preloaderName, sceneData.sceneMap, sceneData.sceneImages, uiScene);
         if(!this.phaserGame.scene.getScene(preloaderName)){
             this.phaserGame.scene.add(preloaderName, scenePreloader, true);
             let preloader = this.phaserGame.scene.getScene(preloaderName);

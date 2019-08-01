@@ -27,7 +27,6 @@ class P2world extends P2.World
             mapH = this.mapJson.height,
             tileW = this.mapJson.tilewidth,
             tileH = this.mapJson.tileheight;
-        // @NOTE: main layer is where the change points are going to be included.
         for(let layer of mapLayers){
             // just consider collisions and change points layers:
             if(layer.name.indexOf('collisions') !== -1 || layer.name.indexOf('change-points') !== -1){
@@ -112,8 +111,8 @@ class P2world extends P2.World
     getSceneChangePoints(mapData)
     {
         let changePoints = {};
-        for(let cp in mapData.layers.change_points){
-            let cPoint = mapData.layers.change_points[cp];
+        for(let cp in mapData.changePoints){
+            let cPoint = mapData.changePoints[cp];
             // example: {"i":167, "n":"other_scene_key_1"}
             changePoints[cPoint.i] = cPoint.n;
         }
