@@ -230,7 +230,23 @@ class RoomScene extends RoomLogin
     nextSceneInitialPosition(client, data)
     {
         // prepare query:
-        let queryString = `SELECT return_positions FROM scenes WHERE name="${data.next}";`;
+        let queryString = `SELECT 
+            CONCAT('[', 
+                    GROUP_CONCAT(
+                        DISTINCT 
+                            '{"D":"', sr.direction, 
+                            '", "X":', sr.x,
+                             ', "Y":', sr.y,
+                             (IF (sr.is_default IS NULL, '', (CONCAT(', "De":', sr.is_default)))),
+                             (IF(sr.to_scene_id IS NULL, '', (CONCAT(', "P":', (SELECT CONCAT('"', name, '"') FROM scenes WHERE id = sr.to_scene_id))))),
+                             '}' 
+                        SEPARATOR ','),
+                ']') as return_positions
+            FROM scenes_return_points AS sr
+            LEFT JOIN scenes AS s
+            ON sr.scene_id = s.id
+            WHERE s.name="${data.next}"
+            GROUP BY sr.scene_id;`;
         let prom = new Promise((resolve, reject) => {
             DataLink.connection.query(queryString, {}, (err, rows) => {
                 if(err){
