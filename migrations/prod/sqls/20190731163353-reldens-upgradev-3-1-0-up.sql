@@ -67,3 +67,7 @@ INSERT INTO `scenes_return_points` (`id`, `scene_id`, `direction`, `x`, `y`, `is
 (2, 3, 'up', 190, 430, 1, NULL),
 (3, 4, 'down', 400, 345, 1, 2),
 (4, 4, 'down', 1274, 670, 0, 3);
+
+ALTER TABLE `users`
+    ADD COLUMN `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER `state`,
+    ADD COLUMN `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP AFTER `created_at`;
