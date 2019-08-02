@@ -209,8 +209,11 @@ class RoomScene extends RoomLogin
     createPlayerBody(currentPlayer, sessionId)
     {
         // @TODO: player image will be part of the configuration in the database.
-        // @NOTE: check client/objects/scene-preloader.js to validate the same size.
-        let boxShape = new P2.Box({width: 32, height: 32});
+        // @NOTES:
+        // - check client/objects/scene-preloader.js to validate the same size.
+        // - since the player size will be configurable for now we made the player body a bit smaller than
+        // the original tiles size to make the collisions work a bit smooth (remember this is far from finish).
+        let boxShape = new P2.Box({width: 25, height: 25});
         boxShape.collisionGroup = share.COL_PLAYER;
         boxShape.collisionMask = share.COL_ENEMY | share.COL_GROUND;
         let boxBody = new P2.Body({
