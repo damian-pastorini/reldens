@@ -71,6 +71,8 @@ let prom = new Promise((resolve, reject) => {
 prom.then(function(result){
     let counter = 0;
     if(result){
+        // @TODO: optimize and remove all the JSON.parse.
+        // @NOTE: we only need to send the basic data to the client and do all the associations on the client side.
         // register room-scenes from database:
         for(let scene of result){
             let temp = {
@@ -90,6 +92,15 @@ prom.then(function(result){
     console.log(`Loaded ${counter} scenes`);
     // start game server:
     gameServer.listen(port);
+    // @TODO:
+    // - modify this index file and move the scenes loading logic into a class.
+    // - check on the 4th callback argument on gameServer.listen to run the logic.
+    /* code example:
+    gameServer.listen(port, undefined, undefined, function() {
+        // server is now listening!
+        // do your stuff
+    })
+    */
     console.log('Listening on http://localhost:'+port);
     // create bundle:
     const bundler = new Parcel(path.resolve(__dirname, '../client/index.html'));
