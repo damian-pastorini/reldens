@@ -130,10 +130,10 @@ class SceneDynamic extends Phaser.Scene
     hold(btn, action)
     {
         let t;
-        let repeat = () => { action(); t = setTimeout(repeat, this.timeout); }
-        btn.onmousedown = (e) => { e.preventDefault(); if (this.transition === false) repeat(); }
-        btn.onmouseup = (e) => { e.preventDefault(); clearTimeout(t); if (this.transition === false) this.player.stop(); }
-        btn.ontouchstart = (e) => { e.preventDefault(); if (this.transition === false) repeat(); }
+        let repeat = () => { action(); t = setTimeout(repeat, this.timeout); };
+        btn.onmousedown = (e) => { e.preventDefault(); if (this.transition === false) repeat(); };
+        btn.onmouseup = (e) => { e.preventDefault(); clearTimeout(t); if (this.transition === false) this.player.stop(); };
+        btn.ontouchstart = (e) => { e.preventDefault(); if (this.transition === false) repeat(); };
         btn.ontouchend = (e) => { e.preventDefault(); clearTimeout(t); if (this.transition === false) this.player.stop(); }
     }
 
