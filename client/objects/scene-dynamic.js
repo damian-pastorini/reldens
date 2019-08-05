@@ -134,7 +134,7 @@ class SceneDynamic extends Phaser.Scene
         btn.onmousedown = (e) => { e.preventDefault(); if (this.transition === false) repeat(); };
         btn.onmouseup = (e) => { e.preventDefault(); clearTimeout(t); if (this.transition === false) this.player.stop(); };
         btn.ontouchstart = (e) => { e.preventDefault(); if (this.transition === false) repeat(); };
-        btn.ontouchend = (e) => { e.preventDefault(); clearTimeout(t); if (this.transition === false) this.player.stop(); }
+        btn.ontouchend = (e) => { e.preventDefault(); clearTimeout(t); if (this.transition === false) this.player.stop(); };
     }
 
 }
