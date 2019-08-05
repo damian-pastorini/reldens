@@ -76,6 +76,7 @@ prom.then(function(result){
         // register room-scenes from database:
         for(let scene of result){
             let temp = {
+                sceneId: scene.id,
                 sceneName: scene.name,
                 sceneMap: scene.scene_map,
                 sceneImages: scene.scene_images,

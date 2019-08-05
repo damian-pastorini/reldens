@@ -1,6 +1,7 @@
 const RoomLogin = require('./room-login');
 const State = require('./state');
 const DataLink = require('./datalink');
+const ChatHelper = require('./chat-helper');
 const share = require('../../shared/constants');
 const P2 = require('p2');
 const P2world = require('./p2world');
@@ -13,6 +14,8 @@ class RoomScene extends RoomLogin
         console.log('NOTIFICATION - INIT ROOM:', this.roomName);
         // @NOTE: in the future not all the scene information will be sent to the client. This is because we could have
         // hidden information to be discovered.
+        this.sceneId = options.scene.sceneId;
+        this.chatHelper = new ChatHelper;
         let roomState = new State(options.scene);
         this.setState(roomState);
         // create world:
@@ -66,8 +69,10 @@ class RoomScene extends RoomLogin
         // client creation:
         this.broadcast({act: share.ADD_PLAYER, id: client.sessionId, player: currentPlayer});
         // @TODO: broadcast players entering in rooms will be part of the configuration in the database.
-        let message = `<span style="color:#0000ff;">${currentPlayer.username} has entered the ${this.roomName}.</span>`;
+        let sentText = `${currentPlayer.username} has entered the ${this.roomName}.`;
+        let message = `<span style="color:#0000ff;">${sentText}.</span>`;
         this.broadcast({act: share.CHAT_ACTION, m: message, f: 'System'});
+        this.chatHelper.saveMessage(sentText, currentPlayer, this.sceneId, false, 's');
     }
 
     onLeave(client, consented)
@@ -122,8 +127,9 @@ class RoomScene extends RoomLogin
                 }
             }
             if(data.act === share.CHAT_ACTION){
-                let message = data[share.CHAT_MESSAGE].toString();
+                let message = data[share.CHAT_MESSAGE].toString().replace('\\', '');
                 this.broadcast({act: share.CHAT_ACTION, m: message, f: currentPlayer.username});
+                this.chatHelper.saveMessage(message, currentPlayer, this.sceneId, {}, false);
             }
         }
     }

@@ -30,15 +30,17 @@ class RoomGame extends RoomLogin
     updateLastLogin(userName)
     {
         let queryString = `UPDATE users SET updated_at = CURRENT_TIMESTAMP WHERE username='${userName}'`;
-        DataLink.connection.query(queryString, {}, (err, rows) => {
-            if(err){
-                console.log('ERROR - Query:', err, data);
-                return reject(err);
-            }
-            if(rows){
-                // for now we don't do nothing with this.
-                return true;
-            }
+        let prom = new Promise((resolve, reject) => {
+            DataLink.connection.query(queryString, {}, (err, rows) => {
+                if(err){
+                    console.log('ERROR - Query:', err, data);
+                    return reject(err);
+                }
+                if(rows){
+                    // for now we don't do nothing with this.
+                    return true;
+                }
+            });
         });
     }
 

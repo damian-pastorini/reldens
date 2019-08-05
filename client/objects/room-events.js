@@ -188,7 +188,6 @@ class RoomEvents
                     } else {
                         this.globalChat.send(messageData);
                     }
-
                 } else {
                     this.room.send(messageData);
                 }

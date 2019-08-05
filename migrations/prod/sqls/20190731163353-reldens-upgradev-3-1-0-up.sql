@@ -68,6 +68,25 @@ INSERT INTO `scenes_return_points` (`id`, `scene_id`, `direction`, `x`, `y`, `is
 (3, 4, 'down', 400, 345, 1, 2),
 (4, 4, 'down', 1274, 670, 0, 3);
 
+-- Modifying structure for table reldens.users
 ALTER TABLE `users`
     ADD COLUMN `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER `state`,
     ADD COLUMN `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP AFTER `created_at`;
+
+-- Dumping structure for table reldens.chat
+CREATE TABLE IF NOT EXISTS `chat` (
+    `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+    `user_id` INT(11) UNSIGNED NOT NULL,
+    `scene_id` INT(11) UNSIGNED NULL DEFAULT NULL,
+    `message` VARCHAR(50) NOT NULL COLLATE 'utf8_unicode_ci',
+    `private_user_id` INT(11) UNSIGNED NULL DEFAULT NULL,
+    `message_type` VARCHAR(10) NULL DEFAULT NULL COLLATE 'utf8_unicode_ci',
+    `message_time` TIMESTAMP NOT NULL,
+    PRIMARY KEY (`id`),
+    INDEX `user_id` (`user_id`),
+    INDEX `scene_id` (`scene_id`),
+    INDEX `private_user_id` (`private_user_id`),
+    CONSTRAINT `FK__scenes` FOREIGN KEY (`scene_id`) REFERENCES `scenes` (`id`) ON UPDATE CASCADE,
+    CONSTRAINT `FK__users` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON UPDATE CASCADE,
+    CONSTRAINT `FK__users_2` FOREIGN KEY (`private_user_id`) REFERENCES `users` (`id`) ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
