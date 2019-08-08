@@ -47,9 +47,11 @@ class SceneDynamic extends Phaser.Scene
         if(this.withTSAnimation){
             // @NOTE: replaced animations from database by layers with name convention.
             for(let layerIndex in this.layers){
-                let layer = this.layers[layerIndex];
-                if(layer.layer.name.indexOf('animations') !== -1){
-                    this.registerTilesetAnimation(layer);
+                if(this.layers.hasOwnProperty(layerIndex)){
+                    let layer = this.layers[layerIndex];
+                    if(layer.layer.name.indexOf('animations') !== -1){
+                        this.registerTilesetAnimation(layer);
+                    }
                 }
             }
         }
@@ -121,6 +123,7 @@ class SceneDynamic extends Phaser.Scene
 
     registerController()
     {
+        // @TODO: controllers will be part of the configuration in the database.
         this.hold(document.getElementById(share.UP), this.player.up.bind(this.player));
         this.hold(document.getElementById(share.DOWN), this.player.down.bind(this.player));
         this.hold(document.getElementById(share.LEFT), this.player.left.bind(this.player));
@@ -130,11 +133,36 @@ class SceneDynamic extends Phaser.Scene
     hold(btn, action)
     {
         let t;
-        let repeat = () => { action(); t = setTimeout(repeat, this.timeout); };
-        btn.onmousedown = (e) => { e.preventDefault(); if (this.transition === false) repeat(); };
-        btn.onmouseup = (e) => { e.preventDefault(); clearTimeout(t); if (this.transition === false) this.player.stop(); };
-        btn.ontouchstart = (e) => { e.preventDefault(); if (this.transition === false) repeat(); };
-        btn.ontouchend = (e) => { e.preventDefault(); clearTimeout(t); if (this.transition === false) this.player.stop(); };
+        let repeat = () => {
+            action();
+            t = setTimeout(repeat, this.timeout);
+        };
+        btn.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            if(this.transition === false){
+                repeat();
+            }
+        });
+        btn.addEventListener('mouseup', (e) => {
+            e.preventDefault();
+            clearTimeout(t);
+            if (this.transition === false) {
+                this.player.stop();
+            }
+        });
+        btn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (this.transition === false) {
+                repeat();
+            }
+        });
+        btn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            clearTimeout(t);
+            if (this.transition === false) {
+                this.player.stop();
+            }
+        });
     }
 
 }
