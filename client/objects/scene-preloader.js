@@ -58,6 +58,11 @@ class ScenePreloader extends Phaser.Scene
             this.uiBoxRight = this.add.dom(450, 20).createFromCache('uiBoxRight');
             this.uiBoxLeft = this.add.dom(120, 420).createFromCache('uiBoxLeft');
             this.uiChat = this.add.dom(360, 420).createFromCache('uiChat');
+            // logout:
+            let logoutButton = this.uiBoxRight.getChildByProperty('id', 'logout');
+            logoutButton.addEventListener('click', () => {
+                window.location.reload();
+            });
         }
         // player animations:
         // @TODO: player animation will be part of the configuration in the database.

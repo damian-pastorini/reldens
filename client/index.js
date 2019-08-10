@@ -8,8 +8,7 @@ $(document).ready(function($){
     let gameClient = new GameClient();
     window.gameClient = gameClient;
     let $register = $('#register_form'),
-        $login = $('#login_form'),
-        $logout = $('#logout');
+        $login = $('#login_form');
 
     function restartError(submittedForm)
     {
@@ -69,12 +68,6 @@ $(document).ready(function($){
             startGame(formData);
         });
         $login.validate();
-    }
-
-    if($logout.length){
-        $logout.on('click', () => {
-            window.location.reload();
-        });
     }
 
 });
