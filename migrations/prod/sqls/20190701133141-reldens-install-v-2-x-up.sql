@@ -30,9 +30,3 @@ CREATE TABLE IF NOT EXISTS `users` (
     UNIQUE KEY `email` (`email`),
     UNIQUE KEY `username` (`username`)
 ) ENGINE=InnoDB AUTO_INCREMENT=32 DEFAULT CHARSET=latin1;
-
--- Dumping data for table users: ~3 rows (approximately)
-INSERT INTO `users` (`id`, `email`, `username`, `password`, `role_id`, `status`, `state`) VALUES
-(29, 'dap@dap.com', 'dap', '$2b$10$PQIYGBFyA/69DaowJVTA5ufVWmIUeIOwIK4e6JCAP5Uen0sp0TAHu', 1, 1, '{"scene":"Town","x":"224.00","y":"280.00","dir":"down"}'),
-(30, 'dap2@dap.com', 'dap2', '$2b$10$Kvjh1XdsMai8Xt2wdivG2.prYvTiW6vJrdnrNPYZenf8qCRLhuZ/a', 1, 1, '{"scene":"Town","x":"525.79","y":"436.47","dir":"down"}'),
-(31, 'dap3@dap.com', 'dap3', '$2b$10$CmtWkhIexIVtcBjwsmEkeOlIhqizViykDFYAKtVrl4sF8KWLuBsxO', 1, 1, '{"scene":"Town","x":"224.00","y":"280.00","dir":"down"}');
