@@ -9,4 +9,4 @@ database.json
 /migrations/*
 !/migrations/prod
 /migrations/prod/config.json
-/server/config/config.js
+# /server/config/config.js
