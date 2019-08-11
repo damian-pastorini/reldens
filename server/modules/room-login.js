@@ -45,7 +45,16 @@ class RoomLogin extends Room
                         // @TODO: default state will be part of the configuration in the database.
                         let defaultState = `{"scene":"${share.TOWN}","x":"225","y":"280","dir":"${share.DOWN}"}`;
                         // the last 3 values are for the default role_id = 1, status = 1 and state = 1:
-                        queryString = `INSERT INTO users VALUES(NULL, '${options.email}', '${options.username}', '${hash}', 1, 1, '${defaultState}');`;
+                        queryString = `INSERT INTO users VALUES(
+                            NULL, 
+                            '${options.email}',
+                            '${options.username}',
+                            '${hash}',
+                            1,
+                            1,
+                            '${defaultState}',
+                            CURRENT_TIMESTAMP,
+                            CURRENT_TIMESTAMP);`;
                         // if is a new user status is always active by default:
                         options.isNewUser = false;
                         options.role_id = 1;

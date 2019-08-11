@@ -18,9 +18,9 @@ $(document).ready(function($){
         });
     }
 
-    function startGame(formData)
+    function startGame(formData, isNewUser)
     {
-        let gameRoom = gameClient.joinGameRoom(formData);
+        let gameRoom = gameClient.joinGameRoom(formData, isNewUser);
         gameRoom.onError.add((data) => {
             $('#'+formData.formId+' .response-error').show();
         });
@@ -41,10 +41,11 @@ $(document).ready(function($){
             }
             let formData = {
                 formId: $register.attr('id'),
-                username: $register.find('#username').val(),
-                password: $register.find('#password').val()
+                email: $register.find('#reg_email').val(),
+                username: $register.find('#reg_username').val(),
+                password: $register.find('#reg_password').val()
             };
-            startGame(formData);
+            startGame(formData, true);
         });
         $register.validate({
             rules: {
@@ -65,7 +66,7 @@ $(document).ready(function($){
                 username: $login.find('#username').val(),
                 password: $login.find('#password').val()
             };
-            startGame(formData);
+            startGame(formData, false);
         });
         $login.validate();
     }
