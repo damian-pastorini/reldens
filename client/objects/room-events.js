@@ -1,20 +1,33 @@
 const PhaserPlayer = require('./player');
 const DynamicScene = require('./scene-dynamic');
+const ScenePreloader = require('./scene-preloader');
 const share = require('../../shared/constants');
 
 class RoomEvents
 {
 
-    constructor(roomName)
+    constructor(roomName, phaserGame, colyseusClient)
     {
+        this.colyseusClient = colyseusClient;
+        this.phaserGame = phaserGame;
         this.roomName = roomName;
         this.sceneData = false;
+        this.colyseusClient.getAvailableRooms(share.CHAT_GLOBAL, () => {
+            this.globalChat = this.getGlobalChatRoom();
+        });
     }
 
-    join(gameClient)
+    getGlobalChatRoom()
     {
-        // return room:
-        return gameClient.join(this.roomName, gameClient.userData);
+        let globalChatRoom = false;
+        for (let idx in this.colyseusClient.rooms) {
+            let room = this.colyseusClient.rooms[idx];
+            if(room.name === share.CHAT_GLOBAL){
+                globalChatRoom = room;
+                break;
+            }
+        }
+        return globalChatRoom;
     }
 
     getSceneData(room)
@@ -29,18 +42,23 @@ class RoomEvents
     {
         // listen to changes coming from the server:
         room.state.players.onChange = (player, key) => {
+            // do not move player if is changing scene:
+            if(player.scene !== this.roomName){
+                return;
+            }
             this.getSceneData(room);
             let currentScene = this.getActiveScene();
             if(currentScene.player && currentScene.player.players.hasOwnProperty(key)){
                 let playerToMove = currentScene.player.players[key];
                 if(playerToMove){
+                    // @TODO: improve the implementation using client physics for prediction.
+                    // See NEXT items in Road Map: https://github.com/damian-pastorini/reldens/wiki/Road-Map
+                    // @NOTE: we commented the speed since the body position is given by the body speed in
+                    // the server, this is to prevent client hacks.
                     if(player.x !== playerToMove.x){
                         if(key !== room.sessionId && playerToMove.anims){
                             if(player.x < playerToMove.x){
                                 playerToMove.anims.play(share.LEFT, true);
-                                // @NOTE: we commented the speed here since the body position is given by the body speed
-                                // in the server. This is a temporal implementation to prevent client hacks.
-                                // @TODO: improve the implementation, use client physics for prediction.
                                 // playerToMove.body.velocity.x = -share.SPEED;
                             } else {
                                 playerToMove.anims.play(share.RIGHT, true);
@@ -61,36 +79,38 @@ class RoomEvents
                         }
                         playerToMove.y = parseFloat(player.y);
                     }
-                    // @TODO: fix animation stop.
                     // player stop action:
                     if(key !== room.sessionId && player.mov !== playerToMove.mov && playerToMove.anims){
-                        // playerToMove.body.velocity.x = 0;
-                        // playerToMove.body.velocity.y = 0;
-                        // playerToMove.anims.stop();
-                        // console.log('player-stop', player.mov, playerToMove.mov);
+                        if(!player.mov){
+                            // playerToMove.body.velocity.x = 0;
+                            // playerToMove.body.velocity.y = 0;
+                            playerToMove.anims.stop();
+                        }
+                        playerToMove.mov = player.mov;
                     }
                     // player change direction action:
-                    /*if(player.dir !== playerToMove.dir){
+                    if(player.dir !== playerToMove.dir){
                         // playerToMove.body.velocity.x = 0;
                         // playerToMove.body.velocity.y = 0;
+                        playerToMove.dir = player.dir;
+                        playerToMove.anims.play(player.dir, true);
                         playerToMove.anims.stop();
-                    }*/
+                    }
                 }
             }
-            // ---------------------------------------------
         };
         room.state.players.onRemove = (player, key) => {
-            // @TODO: since we are removing the player from the room we need to refactor this.
-            // if(key === room.sessionId){
-            //     alert('Your session ended, please login again.');
-            //     window.location.reload();
-            // }
-            let currentScene = this.getActiveScene();
-            if(currentScene.player.players.hasOwnProperty(key)){
-                currentScene.player.players[key].destroy();
-                delete currentScene.player.players[key];
+            if(key === room.sessionId){
+                alert('Your session ended, please login again.');
+                window.location.reload();
+            } else {
+                let currentScene = this.getActiveScene();
+                if(currentScene.player.players.hasOwnProperty(key)){
+                    // remove your player entity from the game world:
+                    currentScene.player.players[key].destroy();
+                    delete currentScene.player.players[key];
+                }
             }
-            // remove your player entity from the game world!
         };
         // create players or change scenes:
         room.onMessage.add((message) => {
@@ -98,8 +118,6 @@ class RoomEvents
             if(message.act === share.ADD_PLAYER){
                 // create current player:
                 if(message.id === room.sessionId){
-                    // @TODO: remove jQuery reference, create a client object and require it to update the game view.
-                    $('.player-name').html(message.player.username);
                     this.startPhaserScene(message, room, previousScene);
                 }
                 // add new players into the current player scene:
@@ -121,35 +139,114 @@ class RoomEvents
                 currentScene.player.addPlayer(id, x, y, dir);
             }
             // @NOTE: here we don't need to evaluate the id since the reconnect only is sent to the current client.
-            if(message.act === share.RECONNET){
-                gameClient.reconnectColyseus(message, room);
+            if(message.act === share.RECONNECT){
+                this.colyseusClient.reconnectColyseus(message, room);
+            }
+            // chat events:
+            let uiScene = this.phaserGame.uiScene;
+            if(uiScene && message.act === share.CHAT_ACTION){
+                let readPanel = uiScene.uiChat.getChildByProperty('id', share.CHAT_MESSAGES);
+                if(readPanel){
+                    readPanel.innerHTML += `${message[share.CHAT_FROM]}: ${message[share.CHAT_MESSAGE]}<br/>`;
+                    readPanel.scrollTo(0, readPanel.scrollHeight);
+                }
             }
         });
+        // room error:
         room.onError.add((data) => {
             alert('There was a connection error.');
-            // @TODO: check if is worth it to send the error data to log the error in the server.
-            // console.log(data);
+            console.log('ERROR - ', data);
             window.location.reload();
         });
         this.room = room;
     }
 
+    registerChat()
+    {
+        let uiScene = this.phaserGame.uiScene;
+        let chatForm = uiScene.uiChat.getChildByProperty('id', share.CHAT_FORM);
+        if(chatForm){
+            chatForm.onsubmit = (e) => {
+                e.preventDefault();
+                let message = uiScene.uiChat.getChildByProperty('id', share.CHAT_INPUT);
+                if((!message.value || message.value.length === 0)){
+                    return false;
+                }
+                // both global or private messages use the global chat room:
+                let isGlobal = (message.value.indexOf('#') === 0 || message.value.indexOf('@') === 0);
+                // check if is a global chat (must begin with #) and if the global chat room is ready:
+                let messageData = {act: share.CHAT_ACTION, m: message.value};
+                if(isGlobal && this.globalChat){
+                    if(message.value.indexOf('@') === 0){
+                        let username = message.value.substring(1, message.value.indexOf(' '));
+                        if(username !== '@'){
+                            messageData.t = username;
+                            this.globalChat.send(messageData);
+                        } else {
+                            // NOTE: this will be the user not found case but better not show any response here.
+                        }
+                    } else {
+                        this.globalChat.send(messageData);
+                    }
+                } else {
+                    this.room.send(messageData);
+                }
+                message.value = '';
+            };
+            let chatInput = uiScene.uiChat.getChildByProperty('id', share.CHAT_INPUT);
+            chatInput.addEventListener('keyup', (e) => {
+                if(e.keyCode === Phaser.Input.Keyboard.KeyCodes.ENTER) {
+                    e.preventDefault();
+                    chatForm.submit();
+                }
+            });
+        }
+    }
+
     startPhaserScene(message, room, previousScene = false)
     {
-        if(!phaserGame.scene.getScene(message.player.scene)){
-            let phaserDynamicScene = new DynamicScene(message.player.scene, this.getSceneData(room));
-            phaserGame.scene.add(message.player.scene, phaserDynamicScene, false);
+        let sceneData = this.getSceneData(room);
+        let preloaderName = share.SCENE_PRELOADER+sceneData.sceneName;
+        let uiScene = false;
+        if(!this.phaserGame.uiScene){
+            uiScene = true;
         }
-        if(!phaserGame.colyseusRoom){
-            phaserGame.scene.start(message.player.scene);
+        let scenePreloader = new ScenePreloader(preloaderName, sceneData.sceneMap, sceneData.sceneImages, uiScene);
+        if(!this.phaserGame.scene.getScene(preloaderName)){
+            this.phaserGame.scene.add(preloaderName, scenePreloader, true);
+            let preloader = this.phaserGame.scene.getScene(preloaderName);
+            preloader.load.on('complete', () => {
+                // set ui on first preloader scene:
+                if(!this.phaserGame.uiScene){
+                    this.phaserGame.uiScene = preloader;
+                    let element = preloader.uiBoxRight.getChildByProperty('className', 'player-name');
+                    if(element){
+                        element.innerHTML = message.player.username;
+                    }
+                }
+                this.createPhaserScene(message, room, previousScene, sceneData);
+            });
+        } else {
+            this.createPhaserScene(message, room, previousScene, sceneData);
+        }
+    }
+
+    createPhaserScene(message, room, previousScene, sceneData)
+    {
+        if(!this.phaserGame.scene.getScene(message.player.scene)){
+            let phaserDynamicScene = new DynamicScene(message.player.scene, sceneData);
+            this.phaserGame.scene.add(message.player.scene, phaserDynamicScene, false);
+        }
+        if(!this.phaserGame.colyseusRoom){
+            this.phaserGame.scene.start(message.player.scene);
         } else {
             if(previousScene){
-                phaserGame.scene.stop(previousScene);
-                phaserGame.scene.start(message.player.scene);
+                this.phaserGame.scene.stop(previousScene);
+                this.phaserGame.scene.start(message.player.scene);
             }
         }
-        phaserGame.colyseusRoom = room;
-        let currentScene = phaserGame.scene.getScene(message.player.scene);
+        this.phaserGame.colyseusRoom = room;
+        let currentScene = this.phaserGame.scene.getScene(message.player.scene);
         let playerPos = {
             x: parseFloat(message.player.x),
             y: parseFloat(message.player.y),
@@ -169,17 +266,18 @@ class RoomEvents
                 }
             }
         }
+        this.registerChat();
     }
 
     getActiveScene()
     {
-        if(!phaserGame.scene.getScene(this.roomName)){
+        if(!this.phaserGame.scene.getScene(this.roomName)){
             if(this.sceneData){
                 let phaserDynamicScene = new DynamicScene(this.roomName, this.sceneData);
-                phaserGame.scene.add(this.roomName, phaserDynamicScene, false);
+                this.phaserGame.scene.add(this.roomName, phaserDynamicScene, false);
             }
         }
-        return phaserGame.scene.getScene(this.roomName);
+        return this.phaserGame.scene.getScene(this.roomName);
     }
 
 }

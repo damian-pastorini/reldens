@@ -1,6 +1,7 @@
 const Room = require('colyseus').Room;
 const DataLink = require('./datalink');
 const share = require('../../shared/constants');
+const localConfig = require('../../server/config/config');
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
 
@@ -32,15 +33,33 @@ class RoomLogin extends Room
                         return reject(false);
                     } else {
                         // if everything is good then just return the user:
+                        // @TODO: analyze if we need to check the user is joining a "valid" room.
+                        // A "valid" room means the user reached room using the previous room change point (if is not
+                        // the first room visited), and the position is the correct.
+                        // This is probably not needed since we are saving the user status and reloading it in the next
+                        // room.
                         return resolve(currentPlayer);
                     }
                 } else {
                     // if the email doesn't exists in the database and it's a registration request:
                     if(options.isNewUser){
-                        // @TODO: move this to the DB as part of the game configuration.
+                        // @TODO: default state will be part of the configuration in the database.
                         let defaultState = `{"scene":"${share.TOWN}","x":"225","y":"280","dir":"${share.DOWN}"}`;
+                        if(localConfig.hasOwnProperty('initialScene') && localConfig.initialScene.hasOwnProperty('scene')){
+                            let initScene = localConfig.initialScene;
+                            defaultState = `{"scene":"${initScene.scene}","x":"${initScene.x}","y":"${initScene.y}","dir":"${initScene.dir}"}`;
+                        }
                         // the last 3 values are for the default role_id = 1, status = 1 and state = 1:
-                        queryString = `INSERT INTO users VALUES(NULL, '${options.email}', '${options.username}', '${hash}', 1, 1, '${defaultState}');`;
+                        queryString = `INSERT INTO users VALUES(
+                            NULL, 
+                            '${options.email}',
+                            '${options.username}',
+                            '${hash}',
+                            1,
+                            1,
+                            '${defaultState}',
+                            CURRENT_TIMESTAMP,
+                            CURRENT_TIMESTAMP);`;
                         // if is a new user status is always active by default:
                         options.isNewUser = false;
                         options.role_id = 1;
@@ -63,9 +82,9 @@ class RoomLogin extends Room
 
     onDispose()
     {
-        console.log('NOTIFICATION - ON-DISPOSE ROOM:', this.roomName);
+        console.log('NOTIFICATION - ON-DISPOSE Room:', this.roomName);
     }
 
 }
 
-exports.roomlogin = RoomLogin;
+module.exports = RoomLogin;

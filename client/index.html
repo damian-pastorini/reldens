@@ -6,14 +6,14 @@
     <link rel="shortcut icon" href="https://www.dwdeveloper.com/media/favicon/default/dwdeveloper-50x50-linkedin.png" type="image/x-icon"/>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"/>
     <!-- client -->
-    <script type="text/javascript" src="./client.js"></script>
+    <script type="text/javascript" src="./index.js"></script>
     <!-- styles -->
     <link rel="stylesheet" type="text/css" href="./css/styles.css"/>
 </head>
 <body>
     <div class="wrapper">
         <div class="header">
-            <h1 class="title">DwD - Reldens</h1>
+            <h1 class="title">- Reldens -</h1>
         </div>
         <div class="content">
             <div class="forms-container">
@@ -32,7 +32,7 @@
                         <div class="input-box">
                             <input type="submit" value="Submit"/>
                         </div>
-                        <div class="response-error" style="display:none;"></div>
+                        <div class="response-error" style="display:none;">Login error please try again.</div>
                     </form>
                 </div>
                 <div class="col-2">
@@ -58,32 +58,18 @@
                         <div class="input-box">
                             <input type="submit" value="Register"/>
                         </div>
-                        <div class="response-error"></div>
+                        <div class="response-error" style="display:none;">Registration error, please try again later.</div>
                     </form>
                 </div>
             </div>
             <div class="game-container" style="display:none;">
-                <div class="ux-box ux-box-left">
-                    <button type="button" id="left">Left</button>
-                    <div class="vertical-buttons">
-                        <button type="button" id="up">Up</button>
-                        <button type="button" id="down">Down</button>
-                    </div>
-                    <button type="button" id="right">Right</button>
-                </div>
-                <div class="ux-box ux-box-right">
-                    <div class="player-name"></div>
-                    <button type="button" id="logout">Logout</button>
-                </div>
-                <div id="dwd-game"></div>
-                <form id="chat" autocomplete="off" action="#">
-                    <div id="messages"></div>
-                    <input id="message" type="text" placeholder="Enter message"/>
-                </form>
+                <div id="reldens"></div>
             </div>
         </div>
         <div class="footer">
-            <div class="copyright">By DwD</div>
+            <div class="copyright">
+                <a href="https://www.dwdeveloper.com/">by DwD</a>
+            </div>
         </div>
     </div>
 </body>

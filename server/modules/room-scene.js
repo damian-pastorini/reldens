@@ -1,9 +1,10 @@
-const RoomLogin = require('./room-login').roomlogin;
-const State = require('./state').state;
+const RoomLogin = require('./room-login');
+const State = require('./state');
 const DataLink = require('./datalink');
+const ChatHelper = require('./chat-helper');
 const share = require('../../shared/constants');
 const P2 = require('p2');
-const P2world = require('./p2world').p2world;
+const P2world = require('./p2world');
 
 class RoomScene extends RoomLogin
 {
@@ -13,6 +14,8 @@ class RoomScene extends RoomLogin
         console.log('NOTIFICATION - INIT ROOM:', this.roomName);
         // @NOTE: in the future not all the scene information will be sent to the client. This is because we could have
         // hidden information to be discovered.
+        this.sceneId = options.scene.sceneId;
+        this.chatHelper = new ChatHelper;
         let roomState = new State(options.scene);
         this.setState(roomState);
         // create world:
@@ -21,23 +24,55 @@ class RoomScene extends RoomLogin
 
     onJoin(client, options, authResult)
     {
-        // @TODO: check client ID in room presence.
         // check if user is already logged and disconnect from the previous client:
-        if(this.state.players.length > 0){
-            for(let player of this.state.players){
+        let loggedUserFound = false;
+        if(this.state.players){
+            for(let playerIdx in this.state.players){
+                let player = this.state.players[playerIdx];
                 if(player.username === options.username){
-                    // @TODO: this should use a Promise.
-                    this.saveStateAndRemovePlayer(player.sessionId);
+                    loggedUserFound = true;
+                    let prom = this.savePlayerState(player.sessionId);
+                    prom.then((result) => {
+                        // first remove player body from current world:
+                        let playerToRemove = this.getPlayer(player.sessionId);
+                        if(playerToRemove){
+                            // get body:
+                            let bodyToRemove = playerToRemove.p2body;
+                            if(bodyToRemove){
+                                // remove body:
+                                this.p2world.removeBody(bodyToRemove);
+                            }
+                            // remove player:
+                            this.state.removePlayer(player.sessionId);
+                        }
+                        // old player session removed, create it again:
+                        this.createPlayer(client, authResult);
+                    }).catch((err) => {
+                        console.log('ERROR - Player save error:', err);
+                    });
                     break;
                 }
             }
         }
+        if(!loggedUserFound){
+            // player not logged, create it:
+            this.createPlayer(client, authResult);
+        }
+    }
+
+    createPlayer(client, authResult)
+    {
         // player creation:
         let currentPlayer = this.state.createPlayer(client.sessionId, authResult);
         // create body for server physics and assign the body to the player:
         currentPlayer.p2body = this.createPlayerBody(currentPlayer, client.sessionId);
         // client creation:
         this.broadcast({act: share.ADD_PLAYER, id: client.sessionId, player: currentPlayer});
+        // @TODO: broadcast players entering in rooms will be part of the configuration in the database.
+        let sentText = `${currentPlayer.username} has entered the ${this.roomName}.`;
+        let message = `<span style="color:#0000ff;">${sentText}.</span>`;
+        this.broadcast({act: share.CHAT_ACTION, m: message, f: 'System'});
+        this.chatHelper.saveMessage(sentText, currentPlayer, this.sceneId, false, 's');
     }
 
     onLeave(client, consented)
@@ -52,28 +87,28 @@ class RoomScene extends RoomLogin
     {
         // get player:
         let currentPlayer = this.getPlayer(client.sessionId);
-        if(currentPlayer){
+        if(currentPlayer && currentPlayer.hasOwnProperty('p2body')){
             // get player body:
             let bodyToMove = currentPlayer.p2body;
             // if player is moving:
-            if(data.hasOwnProperty('dir')){
-                if(bodyToMove){
-                    if(data.dir === share.RIGHT){
-                        bodyToMove.velocity[0] = share.SPEED_SERVER;
-                    }
-                    if(data.dir === share.LEFT){
-                        bodyToMove.velocity[0] = -share.SPEED_SERVER;
-                    }
-                    if(data.dir === share.UP){
-                        bodyToMove.velocity[1] = -share.SPEED_SERVER;
-                    }
-                    if(data.dir === share.DOWN){
-                        bodyToMove.velocity[1] = share.SPEED_SERVER;
-                    }
-                    data.x = bodyToMove.position[0];
-                    data.y = bodyToMove.position[1];
-                    this.state.movePlayer(client.sessionId, data);
+            if(data.hasOwnProperty('dir') && bodyToMove){
+                // @TODO: multiple keys press will be part of the configuration in the database.
+                // if body is moving then avoid multiple key press at the same time:
+                if(data.dir === share.RIGHT && bodyToMove.velocity[1] === 0){
+                    bodyToMove.velocity[0] = share.SPEED_SERVER;
                 }
+                if(data.dir === share.LEFT && bodyToMove.velocity[1] === 0){
+                    bodyToMove.velocity[0] = -share.SPEED_SERVER;
+                }
+                if(data.dir === share.UP && bodyToMove.velocity[0] === 0){
+                    bodyToMove.velocity[1] = -share.SPEED_SERVER;
+                }
+                if(data.dir === share.DOWN && bodyToMove.velocity[0] === 0){
+                    bodyToMove.velocity[1] = share.SPEED_SERVER;
+                }
+                data.x = bodyToMove.position[0];
+                data.y = bodyToMove.position[1];
+                this.state.movePlayer(client.sessionId, data);
             }
             // if player stopped:
             if(data.act === share.STOP){
@@ -91,6 +126,11 @@ class RoomScene extends RoomLogin
                     this.state.stopPlayer(client.sessionId, data);
                 }
             }
+            if(data.act === share.CHAT_ACTION){
+                let message = data[share.CHAT_MESSAGE].toString().replace('\\', '');
+                this.broadcast({act: share.CHAT_ACTION, m: message, f: currentPlayer.username});
+                this.chatHelper.saveMessage(message, currentPlayer, this.sceneId, {}, false);
+            }
         }
     }
 
@@ -101,7 +141,7 @@ class RoomScene extends RoomLogin
             sceneName: this.roomName,
             sceneTiledMapFile: sceneData.sceneMap
         });
-        // @TODO: this should be part of the game configuration.
+        // @TODO: applyGravity will be part of the configuration in the database.
         roomWorld.applyGravity = false;
         // create world limits:
         roomWorld.createLimits();
@@ -113,11 +153,12 @@ class RoomScene extends RoomLogin
         this.assignCollisions();
         // start world movement:
         // @TODO: in the future we need to improve the timeStep to perfectly match client movement for predictions.
+        // See NEXT items in Road Map: https://github.com/damian-pastorini/reldens/wiki/Road-Map
         this.timeStep = 0.04; // 1/60; // 0.0116 // 0.112;
         this.worldTimer = this.clock.setInterval(() => {
             this.p2world.step(this.timeStep);
         }, 1000 * this.timeStep);
-        console.log('NOTIFICATION - P2 WORLD CREATED IN ROOM:', this.roomName);
+        console.log('NOTIFICATION - P2 World created in Room:', this.roomName);
     }
 
     assignCollisions()
@@ -132,12 +173,12 @@ class RoomScene extends RoomLogin
                 if(bodyA.playerId){
                     currentPlayerBody = bodyA;
                     wallBody = bodyB;
-                    bodyA.velocity = [0,0];
+                    bodyA.velocity = [0, 0];
                 } else {
                     if(bodyB.playerId){
                         currentPlayerBody = bodyB;
                         wallBody = bodyA;
-                        bodyB.velocity = [0,0];
+                        bodyB.velocity = [0, 0];
                     } else {
                         // @TODO: refactor this with the NPC's implementation.
                         // @NOTE: in the current implementation we should never hit this since we do not have any other
@@ -173,7 +214,12 @@ class RoomScene extends RoomLogin
 
     createPlayerBody(currentPlayer, sessionId)
     {
-        let boxShape = new P2.Box({ width: 32, height: 32});
+        // @TODO: player image will be part of the configuration in the database.
+        // @NOTES:
+        // - check client/objects/scene-preloader.js to validate the same size.
+        // - since the player size will be configurable for now we made the player body a bit smaller than
+        // the original tiles size to make the collisions work a bit smooth (remember this is far from finish).
+        let boxShape = new P2.Box({width: 25, height: 25});
         boxShape.collisionGroup = share.COL_PLAYER;
         boxShape.collisionMask = share.COL_ENEMY | share.COL_GROUND;
         let boxBody = new P2.Body({
@@ -193,7 +239,23 @@ class RoomScene extends RoomLogin
     nextSceneInitialPosition(client, data)
     {
         // prepare query:
-        let queryString = `SELECT return_positions FROM scenes WHERE name="${data.next}";`;
+        let queryString = `SELECT 
+            CONCAT('[', 
+                    GROUP_CONCAT(
+                        DISTINCT 
+                            '{"D":"', sr.direction, 
+                            '", "X":', sr.x,
+                             ', "Y":', sr.y,
+                             (IF (sr.is_default IS NULL, '', (CONCAT(', "De":', sr.is_default)))),
+                             (IF(sr.to_scene_id IS NULL, '', (CONCAT(', "P":', (SELECT CONCAT('"', name, '"') FROM scenes WHERE id = sr.to_scene_id))))),
+                             '}' 
+                        SEPARATOR ','),
+                ']') as return_positions
+            FROM scenes_return_points AS sr
+            LEFT JOIN scenes AS s
+            ON sr.scene_id = s.id
+            WHERE s.name="${data.next}"
+            GROUP BY sr.scene_id;`;
         let prom = new Promise((resolve, reject) => {
             DataLink.connection.query(queryString, {}, (err, rows) => {
                 if(err){
@@ -218,21 +280,23 @@ class RoomScene extends RoomLogin
                     let stateSaved = this.savePlayerState(client.sessionId);
                     if(stateSaved !== false){
                         stateSaved.then((stateResult) => {
-                            // @NOTE: we need to broadcast the current player scene change to be removed or added in other players:
-                            this.broadcast({
-                                act: share.CHANGED_SCENE,
-                                id: client.sessionId,
-                                scene: currentPlayer.scene,
-                                prev: result.data.prev,
-                                x: currentPlayer.x,
-                                y: currentPlayer.y,
-                                dir: currentPlayer.dir,
-                            });
-                            // remove body from server world:
-                            let bodyToRemove = currentPlayer.p2body;
-                            this.p2world.removeBody(bodyToRemove);
-                            // reconnect is to create the player in the new scene:
-                            this.send(client, {act: share.RECONNET, player: currentPlayer, prev: result.data.prev});
+                            if(stateResult.changedRows){
+                                // @NOTE: we need to broadcast the current player scene change to be removed or added in other players:
+                                this.broadcast({
+                                    act: share.CHANGED_SCENE,
+                                    id: client.sessionId,
+                                    scene: currentPlayer.scene,
+                                    prev: result.data.prev,
+                                    x: currentPlayer.x,
+                                    y: currentPlayer.y,
+                                    dir: currentPlayer.dir,
+                                });
+                                // remove body from server world:
+                                let bodyToRemove = currentPlayer.p2body;
+                                this.p2world.removeBody(bodyToRemove);
+                                // reconnect is to create the player in the new scene:
+                                this.send(client, {act: share.RECONNECT, player: currentPlayer, prev: result.data.prev});
+                            }
                         }).catch((err) => {
                             console.log('ERROR - Save state error:', client.sessionId, err);
                         });
@@ -323,19 +387,6 @@ class RoomScene extends RoomLogin
         return result;
     }
 
-    getPlayerBody(playerId)
-    {
-        let result = false;
-        for(let body of this.p2world.bodies){
-            if(body.playerId === playerId){
-                // console.log('found body: ', body.playerId, playerId);
-                result = body;
-                break;
-            }
-        }
-        return result;
-    }
-
 }
 
-exports.roomscene = RoomScene;
+module.exports = RoomScene;

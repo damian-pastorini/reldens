@@ -1,63 +1,168 @@
-const SceneBase = require('./scene-base');
+const Phaser = require('phaser');
+const TilesetAnimation = require('./tileset-animation');
+const share = require('../../shared/constants');
 
-class SceneDynamic extends SceneBase
+class SceneDynamic extends Phaser.Scene
 {
 
     constructor(key, data)
     {
-        super(key);
+        super({key});
+        this.key = key;
         this.params = data;
+        this.layers = {};
+        this.transition = true;
+        this.withTSAnimation = false;
     }
 
-    init(data)
+    init()
     {
-        super.init(this.getPosition(data));
+        this.scene.setVisible(false, this.key);
+        this.input.keyboard.removeAllListeners();
     }
 
     create()
     {
-        super.create(this.params.sceneMap, this.params.image, false);
-        if(this.params.layers.animation){
-            for(let layerIndex of this.params.layers.animation){
-                this.registerTilesetAnimation(this.layers[layerIndex]);
+        this.keyLeft = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.LEFT);
+        this.keyRight = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.RIGHT);
+        this.keyUp = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP);
+        this.keyDown = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.DOWN);
+        this.map = this.add.tilemap(this.params.sceneMap);
+        this.withTSAnimation = this.hasTSAnimation();
+        this.tileset = this.map.addTilesetImage(this.params.sceneMap);
+        this.registerLayers();
+        this.cameras.main.on('camerafadeincomplete', () => {
+            this.transition = false;
+            this.input.keyboard.on('keyup', (event) => {
+                if (event.keyCode >= 37 && event.keyCode <= 40){
+                    // @NOTE: all keyup events has to be sent.
+                    this.player.stop(true);
+                }
+            });
+            this.registerController();
+        });
+        this.cameras.main.on('camerafadeoutcomplete', this.changeScene.bind(this));
+        // save active key into the game object to get it in other events.
+        this.game.currentScene = this.key;
+        if(this.withTSAnimation){
+            // @NOTE: replaced animations from database by layers with name convention.
+            for(let layerIndex in this.layers){
+                if(this.layers.hasOwnProperty(layerIndex)){
+                    let layer = this.layers[layerIndex];
+                    if(layer.layer.name.indexOf('animations') !== -1){
+                        this.registerTilesetAnimation(layer);
+                    }
+                }
             }
         }
     }
 
-    registerCollision()
+    update(time, delta)
     {
-        for(let newC of this.params.collisions){
-            if(newC.C === 'btw'){
-                // example: {"L":7, "C":"btw", "A":105, "B":110}
-                this.layers[newC.L].setCollisionBetween(newC.A, newC.B);
+        if(this.transition === false){
+            if(this.keyLeft.isDown){
+                this.player.left(true);
+            } else if(this.keyRight.isDown){
+                this.player.right(true);
+            } else if(this.keyUp.isDown){
+                this.player.up(true);
+            } else if(this.keyDown.isDown){
+                this.player.down(true);
             }
-            if(newC.C === 'exc'){
-                // example: {"L":2, "C":"exc", "A":[-1, 67, 68, 69]}
-                this.layers[newC.L].setCollisionByExclusion(newC.A);
-            }
-        }
-        let player = this.player.players[this.player.playerId];
-        for(let collider of this.params.layers.collider){
-            // example: "collider": [6,8,9]
-            this.physics.add.collider(player, this.layers[collider]);
         }
     }
 
-    getPosition(data)
+    changeScene()
     {
-        for(let rp of this.params.returnPositions){
-            // examples:
-            // {"P":"other_scene_key_1", "X":225, "Y":280, D:"down", "De":1},
-            // {"P":"other_scene_key_2", "X":655, "Y":470, "D":"down"}
-            if(
-                // if previous scene is set and data match:
-                (data && rp.P && data === rp.P)
-                // or if data is null and position is default (De):
-                || (Object.getOwnPropertyNames(data).length === 0 && rp.De === 1)
-            ){
-                return {x: rp.X, y: rp.Y, direction: rp.D};
+        if(this.withTSAnimation){
+            this.tilesetAnimation.destroy();
+        }
+    }
+
+    hasTSAnimation()
+    {
+        for(let i=0; i<this.map.layers.length; i++){
+            if(this.map.layers[i].name.indexOf('animations') !== -1){
+                this.withTSAnimation = true;
+                break;
             }
         }
+    }
+
+    registerLayers()
+    {
+        for(let i=0; i<this.map.layers.length; i++){
+            // @TODO: tilesets margin and spacing will be part of the configuration in the database.
+            if(this.withTSAnimation){
+                this.layers[i] = this.map.createDynamicLayer(this.map.layers[i].name, this.tileset, 1, 2);
+            } else {
+                this.layers[i] = this.map.createStaticLayer(this.map.layers[i].name, this.tileset, 1, 2);
+            }
+            // layers over player:
+            if(this.map.layers[i].name.indexOf('below-player') !== -1){
+                // @TODO: layers depth will be part of the configuration in the database.
+                this.layers[i].setDepth(0);
+            }
+            if(this.map.layers[i].name.indexOf('over-player') !== -1){
+                // @TODO: layers depth will be part of the configuration in the database.
+                this.layers[i].setDepth(i);
+            }
+            if(this.map.layers[i].name.indexOf('change-points') !== -1){
+                // @TODO: layers depth will be part of the configuration in the database.
+                this.layers[i].setDepth(0);
+            }
+        }
+    }
+
+    registerTilesetAnimation(layer)
+    {
+        this.tilesetAnimation = new TilesetAnimation();
+        this.tilesetAnimation.register(layer, this.tileset.tileData);
+        this.tilesetAnimation.start();
+    }
+
+    registerController()
+    {
+        // @TODO: controllers will be part of the configuration in the database.
+        this.hold(document.getElementById(share.UP), this.player.up.bind(this.player));
+        this.hold(document.getElementById(share.DOWN), this.player.down.bind(this.player));
+        this.hold(document.getElementById(share.LEFT), this.player.left.bind(this.player));
+        this.hold(document.getElementById(share.RIGHT), this.player.right.bind(this.player));
+    }
+
+    hold(btn, action)
+    {
+        let t;
+        let repeat = () => {
+            action();
+            t = setTimeout(repeat, this.timeout);
+        };
+        btn.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            if(this.transition === false){
+                repeat();
+            }
+        });
+        btn.addEventListener('mouseup', (e) => {
+            e.preventDefault();
+            clearTimeout(t);
+            if (this.transition === false) {
+                this.player.stop();
+            }
+        });
+        btn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (this.transition === false) {
+                repeat();
+            }
+        });
+        btn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            clearTimeout(t);
+            if (this.transition === false) {
+                this.player.stop();
+            }
+        });
     }
 
 }

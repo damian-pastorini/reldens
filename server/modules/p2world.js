@@ -12,6 +12,7 @@ class P2world extends P2.World
         if(!this.sceneName || !this.sceneTiledMapFile){
             console.log('ERROR - World creation missing data in options:', options);
         }
+        // @TODO: as part of the future admin panel this will be an upload option.
         this.mapJson = require('../../client/assets/maps/'+this.sceneTiledMapFile);
     }
 
@@ -26,12 +27,10 @@ class P2world extends P2.World
             mapH = this.mapJson.height,
             tileW = this.mapJson.tilewidth,
             tileH = this.mapJson.tileheight;
-        // @NOTE: for collisions in server side we need to include the defined main layer.
-        let mainLayer = mapData.layers.main;
-        mapData.layers.collider[mapData.layers.collider.length] = mainLayer;
-        for(let colliderIndex of mapData.layers.collider){
-            if(mapLayers[colliderIndex]){
-                let layerData = mapLayers[colliderIndex].data;
+        for(let layer of mapLayers){
+            // just consider collisions and change points layers:
+            if(layer.name.indexOf('collisions') !== -1 || layer.name.indexOf('change-points') !== -1){
+                let layerData = layer.data;
                 for (let c = 0; c < mapW; c++){
                     let posX = c * tileW + (tileW/2);
                     for (let r = 0; r < mapH; r++){
@@ -41,17 +40,20 @@ class P2world extends P2.World
                         let tile = layerData[tileIndex];
                         // occupy space or add the scene change points:
                         if (tile !== 0){ // 0 => empty tiles without collision
-                            // if the tile is a change point has to be empty for every layer.
-                            if(changePoints[tile]){
-                                // only create the change points once on the main layer:
-                                if(colliderIndex === mainLayer){
+                            // if the tile is a change point it has to be empty for every layer.
+                            if(layer.name.indexOf('change-points') !== -1){
+                                if(changePoints[tileIndex]){
+                                    console.log('NOTIFICATION - Created change point on tileIndex:', tileIndex);
                                     // @NOTE: we make the change point smaller so the user needs to walk into to hit it.
                                     let bodyChangePoint = this.createWall((tileW/2), (tileH/2), posX, posY);
-                                    bodyChangePoint.changeScenePoint = changePoints[tile];
+                                    bodyChangePoint.changeScenePoint = changePoints[tileIndex];
                                     bodyChangePoint.isWall = true;
                                     this.addBody(bodyChangePoint);
-                                } // that's why we don't have an else for the main layer condition here.
-                            } else {
+                                } else {
+                                    console.log('ERROR - Change point not created:', tileIndex, changePoints[tileIndex]);
+                                }
+                            }
+                            if(layer.name.indexOf('collisions') !== -1){
                                 // create a box to fill the space:
                                 let bodyWall = this.createWall(tileW, tileH, posX, posY);
                                 bodyWall.isWall = true;
@@ -109,8 +111,8 @@ class P2world extends P2.World
     getSceneChangePoints(mapData)
     {
         let changePoints = {};
-        for(let cp in mapData.layers.change_points){
-            let cPoint = mapData.layers.change_points[cp];
+        for(let cp in mapData.changePoints){
+            let cPoint = mapData.changePoints[cp];
             // example: {"i":167, "n":"other_scene_key_1"}
             changePoints[cPoint.i] = cPoint.n;
         }
@@ -119,4 +121,4 @@ class P2world extends P2.World
 
 }
 
-exports.p2world = P2world;
+module.exports = P2world;

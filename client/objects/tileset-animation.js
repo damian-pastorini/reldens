@@ -34,7 +34,10 @@ class TilesetAnimation
         }
         this.layer.replaceByIndex(prev, animation[index].tileid+1);
         let total = animation.length;
-        this.registered[id] = setTimeout(this.repeat.bind(this, id, animation, animation[index % total].tileid+1, (index+1) % total), animation[index].duration);
+        let duration = animation[index].duration;
+        let indexTotal = (index+1) % total;
+        let animationTile = animation[index % total].tileid+1;
+        this.registered[id] = setTimeout(this.repeat.bind(this, id, animation, animationTile, indexTotal), duration);
     }
 
     destroy()

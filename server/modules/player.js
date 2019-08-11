@@ -2,6 +2,7 @@ const schema = require('@colyseus/schema');
 const Schema = schema.Schema;
 const type = schema.type;
 const share = require('../../shared/constants');
+const localConfig = require('../../server/config/config');
 
 class Player extends Schema
 {
@@ -31,11 +32,20 @@ class Player extends Schema
                 this.dir = state.dir;
             }
         } else {
-            // initial position in initial scene (town):
-            this.scene = share.TOWN;
-            this.x = 225;
-            this.y = 280;
-            this.dir = share.DOWN;
+            // @TODO: initial position will be part of the configuration in the database.
+            if(localConfig.hasOwnProperty('initialScene') && localConfig.initialScene.hasOwnProperty('scene')){
+                // initial position in initial scene (town):
+                this.scene = localConfig.initialScene.scene;
+                this.x = localConfig.initialScene.x;
+                this.y = localConfig.initialScene.y;
+                this.dir = localConfig.initialScene.dir;
+            } else {
+                // initial position in initial scene (town):
+                this.scene = share.TOWN;
+                this.x = 400;
+                this.y = 345;
+                this.dir = share.DOWN;
+            }
         }
         this.mov = false;
     }
@@ -52,4 +62,4 @@ type('string')(Player.prototype, 'dir');
 type('boolean')(Player.prototype, 'mov');
 type('boolean')(Player.prototype, 'isBusy');
 
-exports.player = Player;
+module.exports = Player;

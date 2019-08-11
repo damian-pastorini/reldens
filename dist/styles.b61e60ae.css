@@ -1,31 +1,48 @@
 /**
- * DwD - Game Interface - Styles
+ * DwD - Reldens Interface - Styles
  */
-body { font-family:Verdana, Geneva, sans-serif; }
+body { font-family:Verdana, Geneva, sans-serif; margin:0; padding:0; }
 .wrapper,
 .header,
 .footer,
-.game-container
-{ float:left; position:relative; display:block; width:100%; margin:0px; padding:0px; }
+.content
+{ float:left; position:relative; display:block; width:100%; margin:0; padding:0; min-width:300px; }
+.wrapper, .game-container { height:100%; }
 .header,
 .footer
 { background-color:#222222; color:#ffffff; }
-.header h1 { float:left; position:relative; display:block; width:96%; margin:20px 2%; padding:0px; text-align:center; }
-.content {  position:relative; display:block; width:100%; max-width:1000px; min-height:400px; margin:0px auto; padding:0px; }
-.col-2 { float:left; display:block; position:relative; width:50%; margin:0px; padding:0px; }
-.footer-content { position:relative; display:block; width:100%; max-width:1000px; margin:20px auto 0px; padding:0px; }
-.copyright { position:relative; display:block; width:100%; margin:20px 0px; padding:0px; text-align:center; }
-.game-container { min-height:200px; }
+.header { height:10%; min-height:46px; }
+.footer { height:6%; min-height:20px; }
+.content { height:84%; }
+.game-container { background-color:#000; }
+.header h1 { float:left; position:relative; display:block; width:96%; margin:1% 2%; padding:0; text-align:center; }
+.col-2 { float:left; display:block; position:relative; width:50%; margin:0; padding:0; }
+.footer-content { position:relative; display:block; width:100%; max-width:1000px; margin:20px auto 0; padding:0; }
+.copyright { position:relative; display:block; width:100%; min-height:20px; margin:0; padding:0; text-align:center; }
+.copyright a, .copyright a:hover, .copyright a:visited { display:block; margin:1% 0 0; color:#fff; text-decoration:none; }
+#login_form,
+#register_form
+{ max-width:400px; display:block; margin:0 auto; }
 .response-error { color:#ff0000; }
+h3.form-title { text-align:center; background:#f2f2f2; padding:10px 0px; }
+#reldens div:first-child { z-index:200; }
+form .input-box { margin-bottom:10px; display:block; position:relative; width:100%; float:left; }
+form .input-box label { float:left; display:block; position:relative; font-size:12px; margin-top:8px; width:42%; text-align:right; }
+form .input-box input { float:right; display:block; position:relative; }
+form .input-box input[type="text"], form .input-box input[type="password"] { width:50%; }
 .player { width:100px; height:100px; position:absolute; padding-top:24px; box-sizing:border-box; left:0; top:0; }
-.ux-box { z-index:1001; display:block; margin:0px; padding:0px; }
-.ux-box-left { position:absolute; bottom:10px; left:0px; max-width:150px; }
-.ux-box-left button { float:left; }
-.ux-box-left .vertical-buttons { float:left; width:56px; text-align:center; top:-21px; position:relative; }
+.ux-box { z-index:1001; display:block; margin:0; padding:0; }
+.ux-box-left { background-color: rgba(0, 0, 0, 0.5); }
+.ux-box-left button { float:left; width:50px; border:1px solid; padding:2px; }
+.ux-box-left .vertical-buttons { float:left; width:56px; text-align:center; top:0; position:relative; }
+.ux-box-left #left,.ux-box-left #right { position:relative; top:21px; }
 .ux-box-left .vertical-buttons button { float:none; }
 .ux-box-left .vertical-buttons #down { margin-top:23px; }
-.ux-box-right { position:absolute; top:0px; right:0px; }
-.player-name { margin:10px 0px; text-align:right; }
+.ux-box-right { background-color: rgba(0, 0, 0, 0.5); }
+.player-name { padding:10px 0; text-align:center; color:#ffffff; }
+.chat-ui { display:block; float:left; min-width:100px; min-height:80px; background:#000000; opacity:0.6; color:#ffffff; }
+#chat-messages { width:242px; height:90px; word-wrap:break-word; overflow:auto; font-size:12px; }
+#chat-input { width:99%; }
 
 
 /*# sourceMappingURL=/styles.b61e60ae.css.map */

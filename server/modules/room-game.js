@@ -9,8 +9,9 @@
  *
  */
 
-const RoomLogin = require('./room-login').roomlogin;
-const Player = require('./player').player;
+const RoomLogin = require('./room-login');
+const Player = require('./player');
+const DataLink = require('./datalink');
 const share = require('../../shared/constants');
 
 class RoomGame extends RoomLogin
@@ -18,6 +19,7 @@ class RoomGame extends RoomLogin
 
     onJoin(client, options, authResult)
     {
+        this.updateLastLogin(authResult.username);
         // player object:
         let newPlayer = new Player(authResult);
         newPlayer.sessionId = client.sessionId;
@@ -25,6 +27,23 @@ class RoomGame extends RoomLogin
         this.send(client, {act: share.START_GAME, sessionId: client.sessionId, player: newPlayer});
     }
 
+    updateLastLogin(userName)
+    {
+        let queryString = `UPDATE users SET updated_at = CURRENT_TIMESTAMP WHERE username='${userName}'`;
+        let prom = new Promise((resolve, reject) => {
+            DataLink.connection.query(queryString, {}, (err, rows) => {
+                if(err){
+                    console.log('ERROR - Query:', err, data);
+                    return reject(err);
+                }
+                if(rows){
+                    // for now we don't do nothing with this.
+                    return true;
+                }
+            });
+        });
+    }
+
 }
 
-exports.roomgame = RoomGame;
+module.exports = RoomGame;
