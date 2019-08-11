@@ -25,13 +25,15 @@ Here you will find a small demo for the results with the last available version 
 ## Contributions and donations
 If you like to contribute or donate to support the project please feel free to contact me at damian.pastorini@gmail.com.
 
-## [Coming soon and news!](https://github.com/damian-pastorini/reldens/wiki/Coming-soon-&-News "Coming soon & News archive") > Last update August 1, 2019.
+## [Coming soon and news!](https://github.com/damian-pastorini/reldens/wiki/Coming-soon-&-News "Coming soon & News archive") > Last update August 11, 2019.
 
 ## Contact us
 Join our Discord channel: https://discord.gg/HuJMxUY
 
-## [Change Log](https://github.com/damian-pastorini/dwdgame/wiki/Change-Log "Change Log")
-
 ## [Installation](https://github.com/damian-pastorini/dwdgame/wiki/Installation "Installation")
+
+## [How To](https://github.com/damian-pastorini/reldens/wiki/How-To "How To")
+
+## [Change Log](https://github.com/damian-pastorini/dwdgame/wiki/Change-Log "Change Log")
 
 #### [By DwDeveloper](https://www.dwdeveloper.com/ "DwDeveloper")
