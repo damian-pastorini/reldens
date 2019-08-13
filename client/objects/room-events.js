@@ -166,6 +166,15 @@ class RoomEvents
         let uiScene = this.phaserGame.uiScene;
         let chatInput = uiScene.uiChat.getChildByProperty('id', share.CHAT_INPUT);
         if(chatInput){
+            document.addEventListener('keyup', (evt) => {
+                if(evt.keyCode === Phaser.Input.Keyboard.KeyCodes.ENTER){
+                    // check for focus:
+                    let isFocused = (document.activeElement === chatInput);
+                    if(!isFocused){
+                        chatInput.focus();
+                    }
+                }
+            });
             chatInput.addEventListener('keyup', (e) => {
                 if(e.keyCode === Phaser.Input.Keyboard.KeyCodes.ENTER){
                     e.preventDefault();
