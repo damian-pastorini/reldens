@@ -18,8 +18,10 @@ class RoomLogin extends Room
         return new Promise((resolve, reject) => {
             DataLink.connection.query(queryString, options, (err, rows) => {
                 if(err){
+                    // @TODO: is not possible tu customize error messages now.
+                    //  @NOTE: Colyseus 0.11 will include a fix for this.
                     // if there's any error then reject:
-                    return reject(options);
+                    return reject({msj: 'Connection error, please try again.'});
                 }
                 // generate the password hash:
                 let salt = bcrypt.genSaltSync(saltRounds);
@@ -30,7 +32,7 @@ class RoomLogin extends Room
                     // check if player status is not active or if the password doesn't match then return an error:
                     if(currentPlayer.status !== 1 || !bcrypt.compareSync(options.password, currentPlayer.password)){
                         // if the password doesn't match return an error:
-                        return reject(false);
+                        return reject({msj: 'User already exists.'});
                     } else {
                         // if everything is good then just return the user:
                         // @TODO: analyze if we need to check the user is joining a "valid" room.
@@ -68,12 +70,12 @@ class RoomLogin extends Room
                         return DataLink.connection.query(queryString, options, (err, rows) => {
                             if(err){
                                 // if there's any error then reject:
-                                return reject(options);
+                                return reject({msj: 'Unable to register the user.'});
                             }
                             return resolve(options);
                         });
                     } else {
-                        return reject(false);
+                        return reject({msj: 'Unable to authenticate the user.'});
                     }
                 }
             });
