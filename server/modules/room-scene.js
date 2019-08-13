@@ -69,10 +69,10 @@ class RoomScene extends RoomLogin
         // client creation:
         this.broadcast({act: share.ADD_PLAYER, id: client.sessionId, player: currentPlayer});
         // @TODO: broadcast players entering in rooms will be part of the configuration in the database.
-        let sentText = `${currentPlayer.username} has entered the ${this.roomName}.`;
+        let sentText = `${currentPlayer.username} has joined ${this.roomName}.`;
         let message = `<span style="color:#0fffaa;">${sentText}.</span>`;
         this.broadcast({act: share.CHAT_ACTION, m: message, f: 'System'});
-        this.chatHelper.saveMessage(sentText, currentPlayer, this.sceneId, false, 's');
+        this.chatHelper.saveMessage(this.roomName, currentPlayer, this.sceneId, false, share.CHAT_JOINED);
     }
 
     onLeave(client, consented)
