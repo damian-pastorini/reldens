@@ -32,7 +32,7 @@ class RoomScene extends RoomLogin
                 if(player.username === options.username){
                     loggedUserFound = true;
                     let prom = this.savePlayerState(player.sessionId);
-                    prom.then((result) => {
+                    prom.then(() => {
                         // first remove player body from current world:
                         let playerToRemove = this.getPlayer(player.sessionId);
                         if(playerToRemove){

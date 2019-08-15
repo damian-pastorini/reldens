@@ -34,12 +34,14 @@ class RoomLogin extends Room
                         // if the password doesn't match return an error:
                         return reject({msj: 'User already exists.'});
                     } else {
+                        // @TODO: valid rooms will be part of the configuration in the database.
+                        let currentState = JSON.parse(currentPlayer.state);
+                        let validRooms = ['room_game', 'chat_global'];
+                        if(validRooms.indexOf(this.roomName) === -1 && currentState.scene !== this.roomName){
+                            console.log('ERROR - Invalid player scene:', currentState.scene, this.roomName);
+                            return reject({msj: 'ERROR - Invalid player scene.'});
+                        }
                         // if everything is good then just return the user:
-                        // @TODO: analyze if we need to check the user is joining a "valid" room.
-                        // A "valid" room means the user reached room using the previous room change point (if is not
-                        // the first room visited), and the position is the correct.
-                        // This is probably not needed since we are saving the user status and reloading it in the next
-                        // room.
                         return resolve(currentPlayer);
                     }
                 } else {
@@ -70,6 +72,7 @@ class RoomLogin extends Room
                         return DataLink.connection.query(queryString, options, (err, rows) => {
                             if(err){
                                 // if there's any error then reject:
+                                // console.log('ERROR - Unable to register the user.', err);
                                 return reject({msj: 'Unable to register the user.'});
                             }
                             return resolve(options);
