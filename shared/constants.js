@@ -28,6 +28,7 @@ module.exports = {
     CHAT_MESSAGES: 'chat-messages',
     CHAT_INPUT: 'chat-input',
     CHAT_GLOBAL: 'chat_global',
+    CHAT_JOINED: 'j',
     IMAGE_PLAYER: 'player',
     // Note: town is for the initial scene.
     TOWN: 'ReldensTown'

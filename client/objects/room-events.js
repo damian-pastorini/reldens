@@ -164,40 +164,43 @@ class RoomEvents
     registerChat()
     {
         let uiScene = this.phaserGame.uiScene;
-        let chatForm = uiScene.uiChat.getChildByProperty('id', share.CHAT_FORM);
-        if(chatForm){
-            chatForm.onsubmit = (e) => {
-                e.preventDefault();
-                let message = uiScene.uiChat.getChildByProperty('id', share.CHAT_INPUT);
-                if((!message.value || message.value.length === 0)){
-                    return false;
+        let chatInput = uiScene.uiChat.getChildByProperty('id', share.CHAT_INPUT);
+        if(chatInput){
+            document.addEventListener('keyup', (evt) => {
+                if(evt.keyCode === Phaser.Input.Keyboard.KeyCodes.ENTER){
+                    // check for focus:
+                    let isFocused = (document.activeElement === chatInput);
+                    if(!isFocused){
+                        chatInput.focus();
+                    }
                 }
-                // both global or private messages use the global chat room:
-                let isGlobal = (message.value.indexOf('#') === 0 || message.value.indexOf('@') === 0);
-                // check if is a global chat (must begin with #) and if the global chat room is ready:
-                let messageData = {act: share.CHAT_ACTION, m: message.value};
-                if(isGlobal && this.globalChat){
-                    if(message.value.indexOf('@') === 0){
-                        let username = message.value.substring(1, message.value.indexOf(' '));
-                        if(username !== '@'){
-                            messageData.t = username;
-                            this.globalChat.send(messageData);
+            });
+            chatInput.addEventListener('keyup', (e) => {
+                if(e.keyCode === Phaser.Input.Keyboard.KeyCodes.ENTER){
+                    e.preventDefault();
+                    if((!chatInput.value || chatInput.value.length === 0)){
+                        return false;
+                    }
+                    // both global or private messages use the global chat room:
+                    let isGlobal = (chatInput.value.indexOf('#') === 0 || chatInput.value.indexOf('@') === 0);
+                    // check if is a global chat (must begin with #) and if the global chat room is ready:
+                    let messageData = {act: share.CHAT_ACTION, m: chatInput.value};
+                    if(isGlobal && this.globalChat){
+                        if(chatInput.value.indexOf('@') === 0){
+                            let username = chatInput.value.substring(1, chatInput.value.indexOf(' '));
+                            if(username !== '@'){
+                                messageData.t = username;
+                                this.globalChat.send(messageData);
+                            } else {
+                                // NOTE: this will be the user not found case but better not show any response here.
+                            }
                         } else {
-                            // NOTE: this will be the user not found case but better not show any response here.
+                            this.globalChat.send(messageData);
                         }
                     } else {
-                        this.globalChat.send(messageData);
+                        this.room.send(messageData);
                     }
-                } else {
-                    this.room.send(messageData);
-                }
-                message.value = '';
-            };
-            let chatInput = uiScene.uiChat.getChildByProperty('id', share.CHAT_INPUT);
-            chatInput.addEventListener('keyup', (e) => {
-                if(e.keyCode === Phaser.Input.Keyboard.KeyCodes.ENTER) {
-                    e.preventDefault();
-                    chatForm.submit();
+                    chatInput.value = '';
                 }
             });
         }
