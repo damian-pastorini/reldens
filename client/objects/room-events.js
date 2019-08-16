@@ -151,6 +151,13 @@ class RoomEvents
                     readPanel.scrollTo(0, readPanel.scrollHeight);
                 }
             }
+            if(message.act === share.PLAYER_STATS){
+                let currentScene = this.getActiveScene();
+                if(currentScene.player && currentScene.player.players.hasOwnProperty(room.sessionId)){
+                    let playerToMove = currentScene.player.players[room.sessionId];
+                    playerToMove.stats = message.stats;
+                }
+            }
         });
         // room error:
         room.onError.add((data) => {
@@ -269,6 +276,9 @@ class RoomEvents
                 }
             }
         }
+        // request player stats after the player was add to the scene:
+        room.send({act: share.PLAYER_STATS});
+        // for last register the chat:
         this.registerChat();
     }
 

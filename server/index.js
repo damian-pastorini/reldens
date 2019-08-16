@@ -68,7 +68,7 @@ let prom = new Promise((resolve, reject) => {
     });
 });
 // parsing data to register in the server:
-prom.then(function(result){
+prom.then((result) => {
     let counter = 0;
     if(result){
         // @TODO: optimize and remove all the JSON.parse.

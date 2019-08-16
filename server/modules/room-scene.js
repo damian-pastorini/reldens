@@ -5,6 +5,7 @@ const ChatHelper = require('./chat-helper');
 const share = require('../../shared/constants');
 const P2 = require('p2');
 const P2world = require('./p2world');
+const PlayerStats = require('./player-stats');
 
 class RoomScene extends RoomLogin
 {
@@ -130,6 +131,18 @@ class RoomScene extends RoomLogin
                 let message = data[share.CHAT_MESSAGE].toString().replace('\\', '');
                 this.broadcast({act: share.CHAT_ACTION, m: message, f: currentPlayer.username});
                 this.chatHelper.saveMessage(message, currentPlayer, this.sceneId, {}, false);
+            }
+            if(data.act === share.PLAYER_STATS){
+                // player stats:
+                currentPlayer.stats = new PlayerStats(currentPlayer.id);
+                currentPlayer.stats.loadSavedStats().then((statsRow) => {
+                    if(statsRow.length){
+                        currentPlayer.stats.setData(statsRow[0]);
+                        delete(statsRow[0].id)
+                        delete(statsRow[0].user_id);
+                        this.send(client, {act: share.PLAYER_STATS, stats: statsRow[0]});
+                    }
+                });
             }
         }
     }
