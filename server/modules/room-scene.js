@@ -129,7 +129,8 @@ class RoomScene extends RoomLogin
             }
             if(data.act === share.CHAT_ACTION){
                 let message = data[share.CHAT_MESSAGE].toString().replace('\\', '');
-                this.broadcast({act: share.CHAT_ACTION, m: message, f: currentPlayer.username});
+                let messageData = {act: share.CHAT_ACTION, m: message, f: currentPlayer.username};
+                this.broadcast(messageData);
                 this.chatHelper.saveMessage(message, currentPlayer, this.sceneId, {}, false);
             }
             if(data.act === share.PLAYER_STATS){
