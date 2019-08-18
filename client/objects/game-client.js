@@ -14,16 +14,29 @@ class GameClient
         let wsProtocol = location.protocol.replace('http', 'ws');
         // setup Colyseus:
         this.colyseusClient = new Colyseus.Client(wsProtocol+this.host+(location.port ? ':'+location.port : ''));
+        this.colyseusClient.onError.add((e) => {
+            alert('There was a connection error.');
+            console.log('ERROR - ', e);
+            window.location.reload();
+        });
+        this.colyseusClient.onClose.add(() => {
+            alert('The connections with the server was closed.');
+            window.location.reload();
+        });
         this.colyseusClient.userData = {};
         // reconnect custom method to change rooms and scenes:
         this.colyseusClient.reconnectColyseus = (message, previousRoom) => {
             let newRoom = new RoomEvents(message.player.scene, this.phaserGame, this.colyseusClient);
             let newColyseusRoom = this.colyseusClient.join(newRoom.roomName, this.colyseusClient.userData);
+            this.activeRoom = newRoom;
+            this.room = newColyseusRoom;
             // as soon we join the room we set it in the Phaser client:
             this.phaserGame.colyseusRoom = newColyseusRoom;
             newColyseusRoom.onJoin.add(() => {
                 // leave old room:
                 previousRoom.leave();
+                this.activeRoom = newRoom;
+                this.room = newColyseusRoom;
                 // start listen to room events:
                 newRoom.startListen(newColyseusRoom, message.prev);
             });
