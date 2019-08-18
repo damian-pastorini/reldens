@@ -27,6 +27,7 @@ module.exports = {
     CHAT_FORM: 'chat-form',
     CHAT_MESSAGES: 'chat-messages',
     CHAT_INPUT: 'chat-input',
+    CHAT_SEND_BUTTON: 'chat-send',
     CHAT_GLOBAL: 'chat_global',
     CHAT_JOINED: 'j',
     IMAGE_PLAYER: 'player',
