@@ -12,6 +12,7 @@ When I've started to see all the required stuff that I'd have to learn and all t
 
 I know it is a huge project but I'll put all I have to make it work, so needless to say that any kind of support will be really appreciated.
 
+
 ## Built with
 + Node.js (Express.js)
 + MySQL
@@ -19,21 +20,37 @@ I know it is a huge project but I'll put all I have to make it work, so needless
 + Colyseus
 + Phaser 3
 
-## Demo
-Here you will find a small demo for the results with the last available version from master: [https://reldens.herokuapp.com/](https://reldens.herokuapp.com/)
+
+## [Features List](https://github.com/damian-pastorini/reldens/wiki/Features)
+
+
+## [Demo](dev.reldens.com)
+
+Here you will find a small demo for the results with the last available version from master: 
+
+[dev.reldens.com](dev.reldens.com)
+
+[https://reldens.herokuapp.com/](https://reldens.herokuapp.com/)
+
 
 ## Contributions and donations
 If you like to contribute or donate to support the project please feel free to contact me at damian.pastorini@gmail.com.
 
+
 ## [Coming soon and news!](https://github.com/damian-pastorini/reldens/wiki/Coming-soon-&-News "Coming soon & News archive") > Last update August 18, 2019.
+
 
 ## Contact us
 Join our Discord channel: https://discord.gg/HuJMxUY
 
+
 ## [Installation](https://github.com/damian-pastorini/dwdgame/wiki/Installation "Installation")
+
 
 ## [How To](https://github.com/damian-pastorini/reldens/wiki/How-To "How To")
 
+
 ## [Change Log](https://github.com/damian-pastorini/dwdgame/wiki/Change-Log "Change Log")
+
 
 #### [By DwDeveloper](https://www.dwdeveloper.com/ "DwDeveloper")
