@@ -142,6 +142,19 @@ class RoomScene extends RoomLogin
                         delete(statsRow[0].id)
                         delete(statsRow[0].user_id);
                         this.send(client, {act: share.PLAYER_STATS, stats: statsRow[0]});
+                    } else {
+                        // if stats are not found it means it's a new user then we will save the initial data:
+                        // @TODO: the stats will be part of the configuration in the database.
+                        let statsQuery = `INSERT INTO users_stats VALUES(NULL, ?, 100, 100, 100, 100, 100, 100, 100)`;
+                        let statsProm = DataLink.query(statsQuery, currentPlayer.id);
+                        statsProm.then((err, statsRow) => {
+                            if(err){
+                                console.log('ERROR - Can not save stats for user ID '+currentPlayer.id);
+                            } else {
+                                let statsData = {hp:100, mp:100, stamina:100, atk:100, def:100, dodge:100, speed:100};
+                                this.send(client, {act: share.PLAYER_STATS, stats: statsData});
+                            }
+                        });
                     }
                 });
             }

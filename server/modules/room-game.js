@@ -30,6 +30,7 @@ class RoomGame extends RoomLogin
     updateLastLogin(userName)
     {
         let queryString = `UPDATE users SET updated_at = CURRENT_TIMESTAMP WHERE username='${userName}'`;
+        // @TODO: fix DataLink implementation.
         let prom = new Promise((resolve, reject) => {
             DataLink.connection.query(queryString, {}, (err, rows) => {
                 if(err){
