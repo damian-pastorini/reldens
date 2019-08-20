@@ -11,26 +11,35 @@ class PlayerStats
     loadSavedStats()
     {
         let queryString = `SELECT * FROM users_stats WHERE user_id = ${this.userId}`;
-        return new Promise((resolve, reject) => {
-            DataLink.connection.query(queryString, {}, (err, rows) => {
-                if(err){
-                    return reject(err);
-                }
-                resolve(rows);
-            });
-        });
+        return DataLink.query(queryString);
     }
 
-    setData(data)
+    saveStats(playerId, statsData = false)
+    {
+        let statsDataString = '100, 100, 100, 100, 100, 100, 100';
+        if(statsData) {
+            statsDataString = `${statsData.hp}, 
+            ${statsData.mp}, 
+            ${statsData.stamina}, 
+            ${statsData.atk}, 
+            ${statsData.def}, 
+            ${statsData.dodge}, 
+            ${statsData.speed}`;
+        }
+        let queryString = `INSERT INTO users_stats VALUES(NULL, ?, ${statsDataString})`;
+        return DataLink.query(queryString, playerId);
+    }
+
+    setData(statsData)
     {
         // @TODO: the stats will be part of the configuration in the database.
-        this.hp = data.hp;
-        this.mp = data.mp;
-        this.stamina = data.stamina;
-        this.atk = data.atk;
-        this.def = data.def;
-        this.dodge = data.dodge;
-        this.speed = data.speed;
+        this.hp = statsData.hp;
+        this.mp = statsData.mp;
+        this.stamina = statsData.stamina;
+        this.atk = statsData.atk;
+        this.def = statsData.def;
+        this.dodge = statsData.dodge;
+        this.speed = statsData.speed;
     }
 
 }

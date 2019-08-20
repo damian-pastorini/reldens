@@ -68,7 +68,7 @@ class RoomChat extends RoomLogin
         }
     }
 
-    onLeave (client, consented)
+    onLeave(client, consented)
     {
         let currentActivePlayer = this.activePlayers[client.sessionId];
         let message = `<span style="color:#ff0000;">${currentActivePlayer.username} has left.</span>`;
