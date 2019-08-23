@@ -57,39 +57,28 @@ ON s.id = sc.scene_id
 LEFT JOIN scenes_return_points AS sr
 ON s.id = sr.scene_id
 GROUP BY s.id`;
-let prom = new Promise((resolve, reject) => {
-    DataLink.connection.query(queryString, {}, (err, rows) => {
-        if(err){
-            return reject({});
-        }
-        if(rows){
-            resolve(rows);
-        }
-    });
-});
+let serverInitProm = DataLink.query(queryString);
 // parsing data to register in the server:
-prom.then(function(result){
+serverInitProm.then((rows) => {
     let counter = 0;
-    if(result){
-        // @TODO: optimize and remove all the JSON.parse.
-        // @NOTE: we only need to send the basic data to the client and do all the associations on the client side.
-        // register room-scenes from database:
-        for(let scene of result){
-            let temp = {
-                sceneId: scene.id,
-                sceneName: scene.name,
-                sceneMap: scene.scene_map,
-                sceneImages: scene.scene_images,
-                changePoints: JSON.parse(scene.change_points),
-                returnPositions: JSON.parse(scene.return_positions)
-            };
-            console.log('Registered scene: '+scene.name);
-            gameServer.register(scene.name, RoomScene, {scene: temp});
-            counter++;
-        }
-        // register global chat room:
-        gameServer.register(share.CHAT_GLOBAL, RoomChat, {});
+    // @TODO: optimize and remove all the JSON.parse.
+    // @NOTE: we only need to send the basic data to the client and do all the associations on the client side.
+    // register room-scenes from database:
+    for(let scene of rows){
+        let temp = {
+            sceneId: scene.id,
+            sceneName: scene.name,
+            sceneMap: scene.scene_map,
+            sceneImages: scene.scene_images,
+            changePoints: JSON.parse(scene.change_points),
+            returnPositions: JSON.parse(scene.return_positions)
+        };
+        console.log('Registered scene: '+scene.name);
+        gameServer.register(scene.name, RoomScene, {scene: temp});
+        counter++;
     }
+    // register global chat room:
+    gameServer.register(share.CHAT_GLOBAL, RoomChat, {});
     console.log(`Loaded ${counter} scenes`);
     // start game server:
     gameServer.listen(port);
@@ -106,6 +95,6 @@ prom.then(function(result){
     // create bundle:
     const bundler = new Parcel(path.resolve(__dirname, '../client/index.html'));
     app.use(bundler.middleware());
-}).catch(function(err){
+}).catch((err) => {
     console.log('ERROR - Server catch error:', err);
 });

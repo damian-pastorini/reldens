@@ -16,26 +16,20 @@ class RoomLogin extends Room
         // first find if the email was used already:
         let queryString = `SELECT * FROM users WHERE username='${options.username}'`;
         return new Promise((resolve, reject) => {
-            DataLink.connection.query(queryString, options, (err, rows) => {
-                if(err){
-                    // @TODO: is not possible tu customize error messages now.
-                    //  @NOTE: Colyseus 0.11 will include a fix for this.
-                    // if there's any error then reject:
-                    return reject({msj: 'Connection error, please try again.'});
-                }
+            DataLink.query(queryString).then((rows) => {
                 // generate the password hash:
                 let salt = bcrypt.genSaltSync(saltRounds);
                 let hash = bcrypt.hashSync(options.password, salt);
                 // if the email exists:
-                if(rows.length > 0){
+                if(rows){
                     let currentPlayer = rows[0];
                     // check if player status is not active or if the password doesn't match then return an error:
                     if(currentPlayer.status !== 1 || !bcrypt.compareSync(options.password, currentPlayer.password)){
                         // if the password doesn't match return an error:
                         return reject({msj: 'User already exists.'});
                     } else {
-                        // @TODO: valid rooms will be part of the configuration in the database.
                         let currentState = JSON.parse(currentPlayer.state);
+                        // @TODO: valid rooms will be part of the configuration in the database.
                         let validRooms = ['room_game', 'chat_global'];
                         if(validRooms.indexOf(this.roomName) === -1 && currentState.scene !== this.roomName){
                             console.log('ERROR - Invalid player scene:', currentState.scene, this.roomName);
@@ -69,13 +63,12 @@ class RoomLogin extends Room
                         options.role_id = 1;
                         options.status = 1;
                         options.state = defaultState;
-                        return DataLink.connection.query(queryString, options, (err, rows) => {
-                            if(err){
-                                // if there's any error then reject:
-                                // console.log('ERROR - Unable to register the user.', err);
-                                return reject({msj: 'Unable to register the user.'});
-                            }
+                        return DataLink.query(queryString).then((rows) => {
                             return resolve(options);
+                        }).catch((err) => {
+                            // if there's any error then reject:
+                            // console.log('ERROR - Unable to register the user.', err);
+                            return reject({msj: 'Unable to register the user.'});
                         });
                     } else {
                         return reject({msj: 'Unable to authenticate the user.'});

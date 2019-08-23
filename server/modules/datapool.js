@@ -4,7 +4,7 @@ const pool = mysql.createPool(config.db);
 
 function getSqlConnection()
 {
-    return pool.getConnection().disposer(function(connection){
+    return pool.getConnection().disposer((connection) => {
         pool.releaseConnection(connection);
     });
 }

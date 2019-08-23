@@ -21,6 +21,7 @@ class ScenePreloader extends Phaser.Scene
             // @TODO: ui elements visibility and availability will be part of the configuration in the database.
             // ui elements:
             this.load.html('uiBoxRight', 'assets/html/ui-box-right.html');
+            this.load.html('uiBoxPlayerStats', 'assets/html/ui-box-player-stats.html');
             this.load.html('uiBoxLeft', 'assets/html/ui-box-left.html');
             this.load.html('uiChat', 'assets/html/ui-chat.html');
         }
@@ -43,6 +44,8 @@ class ScenePreloader extends Phaser.Scene
         // @TODO: player image will be part of the configuration in the database.
         let playerSpriteSize = {frameWidth:52, frameHeight:71};
         this.load.spritesheet(share.IMAGE_PLAYER, 'assets/sprites/player-1.png', playerSpriteSize);
+        // interface assets:
+        this.load.image(share.ICON_STATS, 'assets/icons/book.png');
         this.load.on('progress', this.onLoadProgress, this);
         this.load.on('complete', this.onLoadComplete, this);
         // @TODO: the player frame rate will be part of the configuration in the database.
@@ -54,8 +57,9 @@ class ScenePreloader extends Phaser.Scene
     {
         if(this.uiScene) {
             // create ui:
-            // @TODO: UI will be part of the configuration in the database.
+            // @TODO: UI will be part of the configuration in the database (elements visibility and position).
             this.uiBoxRight = this.add.dom(450, 20).createFromCache('uiBoxRight');
+            this.uiBoxPlayerStats = this.add.dom(420, 70).createFromCache('uiBoxPlayerStats');
             this.uiBoxLeft = this.add.dom(120, 420).createFromCache('uiBoxLeft');
             this.uiChat = this.add.dom(360, 420).createFromCache('uiChat');
             // logout:

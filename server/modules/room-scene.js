@@ -5,6 +5,7 @@ const ChatHelper = require('./chat-helper');
 const share = require('../../shared/constants');
 const P2 = require('p2');
 const P2world = require('./p2world');
+const PlayerStats = require('./player-stats');
 
 class RoomScene extends RoomLogin
 {
@@ -31,25 +32,28 @@ class RoomScene extends RoomLogin
                 let player = this.state.players[playerIdx];
                 if(player.username === options.username){
                     loggedUserFound = true;
-                    let prom = this.savePlayerState(player.sessionId);
-                    prom.then(() => {
-                        // first remove player body from current world:
-                        let playerToRemove = this.getPlayer(player.sessionId);
-                        if(playerToRemove){
-                            // get body:
-                            let bodyToRemove = playerToRemove.p2body;
-                            if(bodyToRemove){
-                                // remove body:
-                                this.p2world.removeBody(bodyToRemove);
+                    let promSave = this.savePlayerState(player.sessionId);
+                    if(promSave !== false){
+                        promSave.then((err, rows) => {
+                            // first remove player body from current world:
+                            let playerToRemove = this.getPlayer(player.sessionId);
+                            playerToRemove.isBusy = false;
+                            if(playerToRemove){
+                                // get body:
+                                let bodyToRemove = playerToRemove.p2body;
+                                if(bodyToRemove){
+                                    // remove body:
+                                    this.p2world.removeBody(bodyToRemove);
+                                }
+                                // remove player:
+                                this.state.removePlayer(player.sessionId);
                             }
-                            // remove player:
-                            this.state.removePlayer(player.sessionId);
-                        }
-                        // old player session removed, create it again:
-                        this.createPlayer(client, authResult);
-                    }).catch((err) => {
-                        console.log('ERROR - Player save error:', err);
-                    });
+                            // old player session removed, create it again:
+                            this.createPlayer(client, authResult);
+                        }).catch((err) => {
+                            console.log('ERROR - Player save error:', err);
+                        });
+                    }
                     break;
                 }
             }
@@ -131,6 +135,31 @@ class RoomScene extends RoomLogin
                 let messageData = {act: share.CHAT_ACTION, m: message, f: currentPlayer.username};
                 this.broadcast(messageData);
                 this.chatHelper.saveMessage(message, currentPlayer, this.sceneId, {}, false);
+            }
+            if(data.act === share.PLAYER_STATS){
+                // player stats:
+                currentPlayer.stats = new PlayerStats(currentPlayer.id);
+                let loadStatsProm = currentPlayer.stats.loadSavedStats();
+                loadStatsProm.then((statsRow) => {
+                    if(statsRow.length){
+                        currentPlayer.stats.setData(statsRow[0]);
+                        delete(statsRow[0].id);
+                        delete(statsRow[0].user_id);
+                        this.send(client, {act: share.PLAYER_STATS, stats: statsRow[0]});
+                    } else {
+                        // if stats are not found it means it's a new user then we will save the initial data:
+                        // @TODO: the stats will be part of the configuration in the database.
+                        let statsSaveProm = currentPlayer.stats.saveStats(currentPlayer.id);
+                        statsSaveProm.then((result) => {
+                            let statsData = {hp:100, mp:100, stamina:100, atk:100, def:100, dodge:100, speed:100};
+                            this.send(client, {act: share.PLAYER_STATS, stats: statsData});
+                        }).catch((err) => {
+                            console.log('ERROR - Can not save stats for user ID '+currentPlayer.id, err);
+                        });
+                    }
+                }).catch((err) => {
+                    console.log('ERROR - Can not get stats for user ID '+currentPlayer.id, err);
+                });
             }
         }
     }
@@ -257,20 +286,14 @@ class RoomScene extends RoomLogin
             ON sr.scene_id = s.id
             WHERE s.name="${data.next}"
             GROUP BY sr.scene_id;`;
-        let prom = new Promise((resolve, reject) => {
-            DataLink.connection.query(queryString, {}, (err, rows) => {
-                if(err){
-                    console.log('ERROR - Query:', err, data);
-                    return reject(err);
-                }
-                if(rows){
-                    // there should be only 1 row always:
-                    let positions = JSON.parse(rows[0].return_positions);
-                    resolve({data: data, positions: positions});
-                }
-            });
-        });
-        prom.then((result) => {
+        let nextSceneProm = DataLink.query(queryString);
+        nextSceneProm.then((rows) => {
+            let result;
+            if(rows){
+                // there should be only 1 row always:
+                let positions = JSON.parse(rows[0].return_positions);
+                result = {data: data, positions: positions};
+            }
             let currentPlayer = this.state.players[client.sessionId];
             for(let newPosition of result.positions){
                 if(!newPosition.hasOwnProperty('P') || newPosition.P === result.data.prev){
@@ -313,28 +336,30 @@ class RoomScene extends RoomLogin
     saveStateAndRemovePlayer(sessionId)
     {
         // save the last state on the database:
-        let prom = this.savePlayerState(sessionId);
-        prom.then((result) => {
-            // first remove player body from current world:
-            let playerToRemove = this.getPlayer(sessionId);
-            if(playerToRemove){
-                // get body:
-                let bodyToRemove = playerToRemove.p2body;
-                if(bodyToRemove){
-                    // remove body:
-                    this.p2world.removeBody(bodyToRemove);
+        let savePlayerProm = this.savePlayerState(sessionId);
+        if(savePlayerProm) {
+            savePlayerProm.then((result) => {
+                // first remove player body from current world:
+                let playerToRemove = this.getPlayer(sessionId);
+                if(playerToRemove){
+                    // get body:
+                    let bodyToRemove = playerToRemove.p2body;
+                    if(bodyToRemove){
+                        // remove body:
+                        this.p2world.removeBody(bodyToRemove);
+                    }
+                    // remove player:
+                    this.state.removePlayer(sessionId);
                 }
-                // remove player:
-                this.state.removePlayer(sessionId);
-            }
-        }).catch((err) => {
-            console.log('ERROR - Player save error:', err);
-        });
+            }).catch((err) => {
+                console.log('ERROR - Player save error:', err);
+            });
+        }
     }
 
     savePlayerState(sessionId)
     {
-        // when user disconnects save the last state on the database:
+        // set player busy as long the state is been saved:
         let currentUser = this.getPlayer(sessionId);
         if(currentUser.isBusy){
             return false;
@@ -351,18 +376,7 @@ class RoomScene extends RoomLogin
         // prepare query:
         let queryString = `UPDATE users SET state='${currentStateJson}' WHERE username='${currentUser.username}';`;
         // run query:
-        return new Promise((resolve, reject) => {
-            DataLink.connection.query(queryString, args, (err, rows) => {
-                if(err){
-                    console.log('ERROR - Query error:', err, args);
-                    return reject(args);
-                }
-                if(rows){
-                    resolve(rows);
-                    currentUser.isBusy = false;
-                }
-            });
-        });
+        return DataLink.query(queryString, args);
     }
 
     getClientById(clientId)

@@ -16,18 +16,9 @@ class ChatHelper
             ${toClientId},
             '${messageTypeSave}',
             CURRENT_TIMESTAMP);`;
-        let prom = new Promise((resolve, reject) => {
-            DataLink.connection.query(queryString, [currentPlayer.id,
-                message], (err, rows) => {
-                if(err){
-                    console.log('ERROR - Query:', err, queryString);
-                    return reject(err);
-                }
-                if(rows){
-                    // for now we don't do nothing with this.
-                    return resolve(rows);
-                }
-            });
+        let chatProm = DataLink.query(queryString, [currentPlayer.id, message]);
+        chatProm.catch((err) => {
+            console.log('ERROR - Chat message error.', err, queryString);
         });
     }
 

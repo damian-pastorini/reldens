@@ -6,31 +6,18 @@ const connectionString = `${engine}://${user}:${password}@${host}:${port}/${data
 class DataLink
 {
 
-    constructor()
-    {
-        this.connection = mysql.createConnection(connectionString);
-    }
-
-    query(sql, args)
+    query(sql, args = {})
     {
         return new Promise((resolve, reject) => {
-            this.connection.query(sql, args, (err, rows) => {
+            let connection = mysql.createConnection(connectionString);
+            connection.query(sql, args, (err, rows) => {
+                // in any case first close the connection:
+                connection.end();
+                // then reject or resolve:
                 if(err){
                     return reject(err);
                 }
-                resolve(rows);
-            });
-        });
-    }
-
-    close()
-    {
-        return new Promise((resolve, reject) => {
-            this.connection.end(err => {
-                if(err){
-                    return reject(err);
-                }
-                resolve();
+                return resolve(rows);
             });
         });
     }

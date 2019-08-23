@@ -153,6 +153,36 @@ class RoomEvents
                     readPanel.scrollTo(0, readPanel.scrollHeight);
                 }
             }
+            if(message.act === share.PLAYER_STATS){
+                let currentScene = this.getActiveScene();
+                if(currentScene.player && currentScene.player.players.hasOwnProperty(room.sessionId)){
+                    let playerToMove = currentScene.player.players[room.sessionId];
+                    playerToMove.stats = message.stats;
+                }
+                if(uiScene){
+                    let statsBox = uiScene.uiBoxPlayerStats.getChildByProperty('id', 'box-player-stats');
+                    let statsButton = uiScene.uiBoxPlayerStats.getChildByProperty('id', 'player-stats-btn');
+                    let statsPanel = uiScene.uiBoxPlayerStats.getChildByProperty('id', 'player-stats-container');
+                    if(statsButton && statsPanel){
+                        // @TODO: stats labels will be part of the configuration in the database.
+                        statsPanel.innerHTML += `<span class="stat-label">hp:</span><span class="stat-value">${message.stats.hp}</span>
+                            <span class="stat-label">mp:</span><span class="stat-value">${message.stats.mp}</span>
+                            <span class="stat-label">atk:</span><span class="stat-value">${message.stats.atk}</span>
+                            <span class="stat-label">def:</span><span class="stat-value">${message.stats.def}</span>
+                            <span class="stat-label">dodge:</span><span class="stat-value">${message.stats.dodge}</span>
+                            <span class="stat-label">speed:</span><span class="stat-value">${message.stats.speed}</span>`;
+                        statsButton.addEventListener('click', () => {
+                            if(statsPanel.style.display === 'none'){
+                                statsPanel.style.display = 'block';
+                                statsBox.style.left = '-80px';
+                            } else {
+                                statsPanel.style.display = 'none';
+                                statsBox.style.left = '0px';
+                            }
+                        });
+                    }
+                }
+            }
         });
         // room error:
         this.room.onError.add((data) => {
@@ -164,7 +194,7 @@ class RoomEvents
 
     registerChat()
     {
-        // @TODO: temporal fix, analyze the issue.
+        // @TODO: temporal fix, analyze the issue, probably related to the first event attached to the input.
         if(gameClient.hasOwnProperty('room') && gameClient.room.id !== this.room.id){
             this.room = gameClient.room;
         }
@@ -288,6 +318,9 @@ class RoomEvents
                 }
             }
         }
+        // request player stats after the player was add to the scene:
+        room.send({act: share.PLAYER_STATS});
+        // for last register the chat:
         this.registerChat();
     }
 
