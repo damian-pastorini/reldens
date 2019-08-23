@@ -26,6 +26,7 @@ $(document).ready(function($){
         });
         // on join activate game:
         gameRoom.onJoin.add(() => {
+            $('.loading').hide();
             $('.forms-container').detach();
             $('.game-container').show();
         });
@@ -39,6 +40,7 @@ $(document).ready(function($){
             if(!$register.valid()){
                 return false;
             }
+            $register.find('.loading-container').show();
             let formData = {
                 formId: $register.attr('id'),
                 email: $register.find('#reg_email').val(),
@@ -60,6 +62,10 @@ $(document).ready(function($){
         restartError($login);
         $login.on('submit', (e) => {
             e.preventDefault();
+            if(!$login.valid()){
+                return false;
+            }
+            $login.find('.loading-container').show();
             let formData = {
                 formId: $login.attr('id'),
                 email: $login.find('#email').val(),

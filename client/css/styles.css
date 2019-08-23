@@ -51,3 +51,4 @@ form .input-box input[type="text"], form .input-box input[type="password"] { wid
 #player-stats-container { display:block; float:right; width:120px; margin-top:10px; color:#ffffff; }
 span.stat-label { float:left; width:48%; margin-right:2%; display:block; text-align:right; color:#00ffff; }
 span.stat-value { float:left; width:50%; display:block; text-align:left; }
+.loading-container { float:left; text-align:center; width:100%; }
