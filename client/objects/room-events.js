@@ -153,19 +153,20 @@ class RoomEvents
                     readPanel.scrollTo(0, readPanel.scrollHeight);
                 }
             }
-            if(message.act === share.PLAYER_STATS){
+            if(message.act === share.PLAYER_STATS && !this.phaserGame.statsDisplayed){
                 let currentScene = this.getActiveScene();
                 if(currentScene.player && currentScene.player.players.hasOwnProperty(room.sessionId)){
                     let playerToMove = currentScene.player.players[room.sessionId];
                     playerToMove.stats = message.stats;
                 }
-                if(uiScene){
+                if(uiScene && uiScene.hasOwnProperty('uiBoxPlayerStats')){
                     let statsBox = uiScene.uiBoxPlayerStats.getChildByProperty('id', 'box-player-stats');
                     let statsButton = uiScene.uiBoxPlayerStats.getChildByProperty('id', 'player-stats-btn');
                     let statsPanel = uiScene.uiBoxPlayerStats.getChildByProperty('id', 'player-stats-container');
                     if(statsButton && statsPanel){
                         // @TODO: stats labels will be part of the configuration in the database.
-                        statsPanel.innerHTML += `<span class="stat-label">hp:</span><span class="stat-value">${message.stats.hp}</span>
+                        // @TODO: move the HTML from here.
+                        statsPanel.innerHTML = `<span class="stat-label">hp:</span><span class="stat-value">${message.stats.hp}</span>
                             <span class="stat-label">mp:</span><span class="stat-value">${message.stats.mp}</span>
                             <span class="stat-label">atk:</span><span class="stat-value">${message.stats.atk}</span>
                             <span class="stat-label">def:</span><span class="stat-value">${message.stats.def}</span>
@@ -180,6 +181,7 @@ class RoomEvents
                                 statsBox.style.left = '0px';
                             }
                         });
+                        this.phaserGame.statsDisplayed = true;
                     }
                 }
             }
@@ -195,6 +197,9 @@ class RoomEvents
     registerChat()
     {
         // @TODO: temporal fix, analyze the issue, probably related to the first event attached to the input.
+        // @NOTE: the issue seems to be that the register chat like the player stats runs every time the scene is
+        // created, which runs multiple times and we only need to register the chat and the stats once and then when
+        // the scene changes we only need to update the events or the contents if required.
         if(gameClient.hasOwnProperty('room') && gameClient.room.id !== this.room.id){
             this.room = gameClient.room;
         }
