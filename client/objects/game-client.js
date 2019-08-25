@@ -45,7 +45,9 @@ class GameClient
         this.activeRoom = false;
         // initialize game engine:
         this.phaserGame = new Phaser.Game(gameConfig);
+        // @TODO: extend Phaser.Game in a custom object to add custom features.
         this.phaserGame.uiScene = false;
+        this.phaserGame.statsDisplayed = false;
     }
 
     joinGameRoom(formData, isNewUser = false)
