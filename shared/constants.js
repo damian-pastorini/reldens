@@ -33,6 +33,7 @@ module.exports = {
     IMAGE_PLAYER: 'player',
     PLAYER_STATS: 'ps',
     ICON_STATS: 'player-stats',
+    CLIENT_JOINED: 'cj',
     // Note: town is for the initial scene.
     TOWN: 'ReldensTown'
     // @TODO: speed will be implemented with the client prediction in a future version.

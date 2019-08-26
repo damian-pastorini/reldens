@@ -2,6 +2,7 @@ const config = require('./config/config');
 const http = require('http');
 const path = require('path');
 const express = require('express');
+const cors = require('cors');
 const DataLink = require('./modules/datalink');
 const Parcel = require('parcel-bundler');
 const Colyseus = require('colyseus');
@@ -11,12 +12,17 @@ const RoomChat = require('./modules/room-chat');
 const share = require('../shared/constants');
 // server:
 const app = express();
+app.use(cors());
+app.use(express.json());
 const port = Number(config.app.port);
 const server = http.createServer(app);
 // game server:
-const gameServer = new Colyseus.Server({server: server});
+const gameServer = new Colyseus.Server({
+    server: server,
+    express: app
+});
 // main room:
-gameServer.register(share.ROOM_GAME, RoomGame);
+gameServer.define(share.ROOM_GAME, RoomGame);
 // game monitor:
 if(config.app.colyseusMonitor){
     const monitor = require('@colyseus/monitor');
@@ -73,13 +79,15 @@ serverInitProm.then((rows) => {
             changePoints: JSON.parse(scene.change_points),
             returnPositions: JSON.parse(scene.return_positions)
         };
-        console.log('Registered scene: '+scene.name);
-        gameServer.register(scene.name, RoomScene, {scene: temp});
+        gameServer.define(scene.name, RoomScene, {scene: temp});
+        console.log('Defined scene: '+scene.name);
         counter++;
     }
-    // register global chat room:
-    gameServer.register(share.CHAT_GLOBAL, RoomChat, {});
+    // log definied rooms:
     console.log(`Loaded ${counter} scenes`);
+    // register global chat room:
+    gameServer.define(share.CHAT_GLOBAL, RoomChat, {});
+    console.log('Loaded chat room.');
     // start game server:
     gameServer.listen(port);
     // @TODO:

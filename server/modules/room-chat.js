@@ -13,7 +13,7 @@ const share = require('../../shared/constants');
 class RoomChat extends RoomLogin
 {
 
-    onInit(options)
+    onCreate(options)
     {
         this.activePlayers = {};
     }

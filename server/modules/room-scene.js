@@ -10,7 +10,7 @@ const PlayerStats = require('./player-stats');
 class RoomScene extends RoomLogin
 {
 
-    onInit(options)
+    onCreate(options)
     {
         console.log('NOTIFICATION - INIT ROOM:', this.roomName);
         // @NOTE: in the future not all the scene information will be sent to the client. This is because we could have
@@ -70,13 +70,6 @@ class RoomScene extends RoomLogin
         let currentPlayer = this.state.createPlayer(client.sessionId, authResult);
         // create body for server physics and assign the body to the player:
         currentPlayer.p2body = this.createPlayerBody(currentPlayer, client.sessionId);
-        // client creation:
-        this.broadcast({act: share.ADD_PLAYER, id: client.sessionId, player: currentPlayer});
-        // @TODO: broadcast players entering in rooms will be part of the configuration in the database.
-        let sentText = `${currentPlayer.username} has joined ${this.roomName}.`;
-        let message = `<span style="color:#0fffaa;">${sentText}.</span>`;
-        this.broadcast({act: share.CHAT_ACTION, m: message, f: 'System'});
-        this.chatHelper.saveMessage(this.roomName, currentPlayer, this.sceneId, false, share.CHAT_JOINED);
     }
 
     onLeave(client, consented)
@@ -135,6 +128,13 @@ class RoomScene extends RoomLogin
                 let messageData = {act: share.CHAT_ACTION, m: message, f: currentPlayer.username};
                 this.broadcast(messageData);
                 this.chatHelper.saveMessage(message, currentPlayer, this.sceneId, {}, false);
+            }
+            if(data.act === share.CLIENT_JOINED){
+                // @TODO: broadcast message of players joining rooms will be part of the configuration in the database.
+                let sentText = `${currentPlayer.username} has joined ${this.roomName}.`;
+                let message = `<span style="color:#0fffaa;">${sentText}.</span>`;
+                this.broadcast({act: share.CHAT_ACTION, m: message, f: 'System'});
+                this.chatHelper.saveMessage(this.roomName, currentPlayer, this.sceneId, false, share.CHAT_JOINED);
             }
             if(data.act === share.PLAYER_STATS){
                 // player stats:

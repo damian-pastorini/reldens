@@ -13,22 +13,7 @@ class RoomEvents
         this.room = false;
         this.roomName = roomName;
         this.sceneData = false;
-        this.colyseusClient.getAvailableRooms(share.CHAT_GLOBAL, () => {
-            this.globalChat = this.getGlobalChatRoom();
-        });
-    }
-
-    getGlobalChatRoom()
-    {
-        let globalChatRoom = false;
-        for (let idx in this.colyseusClient.rooms) {
-            let room = this.colyseusClient.rooms[idx];
-            if(room.name === share.CHAT_GLOBAL){
-                globalChatRoom = room;
-                break;
-            }
-        }
-        return globalChatRoom;
+        this.globalChat = colyseusClient.globalChat;
     }
 
     getSceneData(room)
@@ -114,8 +99,28 @@ class RoomEvents
                 }
             }
         };
+        this.room.state.players.onAdd = (player, key) => {
+            let message = {act: share.ADD_PLAYER, id: key, player: player};
+            this.getSceneData(this.room);
+            // create current player:
+            if(key === this.room.sessionId){
+                this.startPhaserScene(message, this.room, previousScene);
+            }
+            // add new players into the current player scene:
+            if(key !== this.room.sessionId){
+                let currentScene = this.getActiveScene();
+                if(currentScene.key === player.scene){
+                    if(currentScene.player && currentScene.player.players){
+                        let posX = parseFloat(player.x),
+                            posY = parseFloat(player.y);
+                        currentScene.player.addPlayer(key, posX, posY, player.dir);
+                    }
+                }
+            }
+            this.room.send({act: share.CLIENT_JOINED});
+        };
         // create players or change scenes:
-        this.room.onMessage.add((message) => {
+        this.room.onMessage((message) => {
             this.getSceneData(this.room);
             if(message.act === share.ADD_PLAYER){
                 // create current player:
@@ -185,12 +190,6 @@ class RoomEvents
                     }
                 }
             }
-        });
-        // room error:
-        this.room.onError.add((data) => {
-            alert('There was a room connection error.');
-            console.log('ERROR - ', data);
-            window.location.reload();
         });
     }
 

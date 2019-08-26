@@ -20,15 +20,16 @@ $(document).ready(function($){
 
     function startGame(formData, isNewUser)
     {
+        // display the game container on join:
         let gameRoom = gameClient.joinGameRoom(formData, isNewUser);
-        gameRoom.onError.add((data) => {
-            $('#'+formData.formId+' .response-error').show();
-        });
-        // on join activate game:
-        gameRoom.onJoin.add(() => {
+        gameRoom.then((room) => {
             $('.loading').hide();
             $('.forms-container').detach();
             $('.game-container').show();
+        });
+        gameRoom.catch((data) => {
+            console.log('ERROR - GameRoom error.', data);
+            $('#'+formData.formId+' .response-error').show();
         });
     }
 
