@@ -158,6 +158,8 @@ class RoomEvents
                     readPanel.scrollTo(0, readPanel.scrollHeight);
                 }
             }
+            // @TODO: remove statsDisplayed, check why stats are been created more than once.
+            // @NOTE: stats interface like the chat should be created once when the game is initialized.
             if(message.act === share.PLAYER_STATS && !this.phaserGame.statsDisplayed){
                 let currentScene = this.getActiveScene();
                 if(currentScene.player && currentScene.player.players.hasOwnProperty(room.sessionId)){
@@ -170,7 +172,7 @@ class RoomEvents
                     let statsPanel = uiScene.uiBoxPlayerStats.getChildByProperty('id', 'player-stats-container');
                     if(statsButton && statsPanel){
                         // @TODO: stats labels will be part of the configuration in the database.
-                        // @TODO: move the HTML from here.
+                        // @TODO: remove the HTML from here.
                         statsPanel.innerHTML = `<span class="stat-label">hp:</span><span class="stat-value">${message.stats.hp}</span>
                             <span class="stat-label">mp:</span><span class="stat-value">${message.stats.mp}</span>
                             <span class="stat-label">atk:</span><span class="stat-value">${message.stats.atk}</span>

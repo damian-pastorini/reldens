@@ -57,7 +57,7 @@ class ScenePreloader extends Phaser.Scene
     {
         if(this.uiScene) {
             // create ui:
-            // @TODO: UI will be part of the configuration in the database (elements visibility and position).
+            // @TODO: UI (elements visibility and position) will be part of the configuration in the database.
             this.uiBoxRight = this.add.dom(450, 20).createFromCache('uiBoxRight');
             this.uiBoxPlayerStats = this.add.dom(420, 70).createFromCache('uiBoxPlayerStats');
             this.uiBoxLeft = this.add.dom(120, 420).createFromCache('uiBoxLeft');
