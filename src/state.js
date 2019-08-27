@@ -1,7 +1,7 @@
 const schema = require('@colyseus/schema');
 const Schema = schema.Schema;
 const type = schema.type;
-const Player = require('./player');
+const Player = require('./client-player');
 const MapSchema = schema.MapSchema;
 // const share = require('../../shared/constants');
 

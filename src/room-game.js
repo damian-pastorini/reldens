@@ -10,7 +10,7 @@
  */
 
 const RoomLogin = require('./room-login');
-const Player = require('./player');
+const Player = require('./client-player');
 const DataLink = require('./datalink');
 const share = require('../../shared/constants');
 

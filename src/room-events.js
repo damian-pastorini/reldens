@@ -1,4 +1,4 @@
-const PhaserPlayer = require('./player');
+const PhaserPlayer = require('./client-player');
 const DynamicScene = require('./scene-dynamic');
 const ScenePreloader = require('./scene-preloader');
 const share = require('../../shared/constants');
