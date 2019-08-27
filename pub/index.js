@@ -1,6 +1,6 @@
 const $ = require('jquery');
 const validate = require('jquery-validation');
-const GameClient = require('./objects/game-client');
+const GameClient = require('../src/game/game-client');
 
 $(document).ready(function($){
 
