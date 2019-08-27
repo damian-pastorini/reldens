@@ -1,8 +1,8 @@
 const schema = require('@colyseus/schema');
 const Schema = schema.Schema;
 const type = schema.type;
-const share = require('../../shared/constants');
-const localConfig = require('../../server/config/config');
+const share = require('../utils/constants');
+const localConfig = require('../config/config');
 
 class Player extends Schema
 {

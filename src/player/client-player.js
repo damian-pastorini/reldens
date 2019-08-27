@@ -1,4 +1,4 @@
-const share = require('../../shared/constants');
+const share = require('../utils/constants');
 
 class Player
 {

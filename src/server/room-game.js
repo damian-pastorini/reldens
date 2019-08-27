@@ -10,9 +10,9 @@
  */
 
 const RoomLogin = require('./room-login');
-const Player = require('./client-player');
-const DataLink = require('./datalink');
-const share = require('../../shared/constants');
+const Player = require('../player/player');
+const DataLink = require('../driver/datalink');
+const share = require('../utils/constants');
 
 class RoomGame extends RoomLogin
 {

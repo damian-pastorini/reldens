@@ -1,5 +1,5 @@
 const P2 = require('p2');
-const share = require('../../shared/constants');
+const share = require('../utils/constants');
 
 class P2world extends P2.World
 {
@@ -13,7 +13,7 @@ class P2world extends P2.World
             console.log('ERROR - World creation missing data in options:', options);
         }
         // @TODO: as part of the future admin panel this will be an upload option.
-        this.mapJson = require('../../client/assets/maps/'+this.sceneTiledMapFile);
+        this.mapJson = require('../../pub/assets/maps/'+this.sceneTiledMapFile);
     }
 
     setMapCollisions(mapData)

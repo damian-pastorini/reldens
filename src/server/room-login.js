@@ -1,7 +1,7 @@
 const Room = require('colyseus').Room;
-const DataLink = require('./datalink');
-const share = require('../../shared/constants');
-const localConfig = require('../../server/config/config');
+const DataLink = require('../driver/datalink');
+const share = require('../utils/constants');
+const localConfig = require('../config/config');
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
 

@@ -1,8 +1,8 @@
 const Colyseus = require('colyseus.js');
 const Phaser = require('phaser');
 const RoomEvents = require('./room-events');
-const gameConfig = require('../../shared/game-config');
-const share = require('../../shared/constants');
+const gameConfig = require('../config/client');
+const share = require('../utils/constants');
 
 class GameClient
 {

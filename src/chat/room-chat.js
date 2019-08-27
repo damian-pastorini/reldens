@@ -6,9 +6,9 @@
  *
  */
 
-const RoomLogin = require('./room-login');
-const ChatHelper = require('./chat-helper');
-const share = require('../../shared/constants');
+const RoomLogin = require('../server/room-login');
+const ChatHelper = require('../chat/chat-helper');
+const share = require('../utils/constants');
 
 class RoomChat extends RoomLogin
 {

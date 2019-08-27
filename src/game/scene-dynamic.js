@@ -1,6 +1,6 @@
 const Phaser = require('phaser');
 const TilesetAnimation = require('./tileset-animation');
-const share = require('../../shared/constants');
+const share = require('../utils/constants');
 
 class SceneDynamic extends Phaser.Scene
 {

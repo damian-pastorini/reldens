@@ -1,15 +1,17 @@
-const config = require('./config/config');
+// 3rd party:
 const http = require('http');
 const path = require('path');
 const express = require('express');
 const cors = require('cors');
-const DataLink = require('./modules/datalink');
 const Parcel = require('parcel-bundler');
 const Colyseus = require('colyseus');
-const RoomGame = require('./modules/room-game');
-const RoomScene = require('./modules/room-scene');
-const RoomChat = require('./modules/room-chat');
-const share = require('../shared/constants');
+// reldens:
+const share = require('../utils/constants');
+const config = require('../config/config');
+const DataLink = require('../driver/datalink');
+const RoomGame = require('./room-game');
+const RoomScene = require('./room-scene');
+const RoomChat = require('../chat/room-chat');
 // server:
 const app = express();
 app.use(cors());
@@ -101,7 +103,7 @@ serverInitProm.then((rows) => {
     */
     console.log('Listening on http://localhost:'+port);
     // create bundle:
-    const bundler = new Parcel(path.resolve(__dirname, '../client/index.html'));
+    const bundler = new Parcel(path.resolve(__dirname, '../../pub/index.html'));
     app.use(bundler.middleware());
 }).catch((err) => {
     console.log('ERROR - Server catch error:', err);

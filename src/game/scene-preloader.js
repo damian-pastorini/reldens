@@ -1,5 +1,5 @@
 const Phaser = require('phaser');
-const share = require('../../shared/constants');
+const share = require('../utils/constants');
 
 class ScenePreloader extends Phaser.Scene
 {

@@ -1,11 +1,11 @@
 const RoomLogin = require('./room-login');
 const State = require('./state');
-const DataLink = require('./datalink');
-const ChatHelper = require('./chat-helper');
-const share = require('../../shared/constants');
+const DataLink = require('../driver/datalink');
+const ChatHelper = require('../chat/chat-helper');
+const share = require('../utils/constants');
 const P2 = require('p2');
-const P2world = require('./p2world');
-const PlayerStats = require('./player-stats');
+const P2world = require('../world/p2world');
+const PlayerStats = require('../player/player-stats');
 
 class RoomScene extends RoomLogin
 {
