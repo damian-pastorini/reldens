@@ -8,7 +8,7 @@ const saltRounds = 10;
 class RoomLogin extends Room
 {
 
-    onAuth(client, options)
+    onAuth(client, options, request)
     {
         if(!options){
             return false;

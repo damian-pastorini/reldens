@@ -17,7 +17,7 @@ body { font-family:Verdana, Geneva, sans-serif; margin:0; padding:0; }
 button, input[type="button"], input[type="submit"], #player-stats-btn { cursor:pointer; }
 .game-container { background-color:#000; }
 .header h1 { float:left; position:relative; display:block; width:96%; margin:1% 2%; padding:0; text-align:center; }
-.col-2 { float:left; display:block; position:relative; width:50%; margin:0; padding:0; }
+.col-2 { float:left; display:block; position:relative; width:46%; margin:0; padding:0 2%; }
 .footer-content { position:relative; display:block; width:100%; max-width:1000px; margin:20px auto 0; padding:0; }
 .copyright { position:relative; display:block; width:100%; min-height:20px; margin:0; padding:0; text-align:center; }
 .copyright a, .copyright a:hover, .copyright a:visited { display:block; margin:1% 0 0; color:#fff; text-decoration:none; }

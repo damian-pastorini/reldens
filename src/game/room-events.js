@@ -193,6 +193,15 @@ class RoomEvents
                 }
             }
         });
+        this.room.onLeave((code) => {
+            if (code > 1000) {
+                // server error, disconnection:
+                alert('There was a connection error.');
+                window.location.reload();
+            } else {
+                // the client has initiated the disconnection.
+            }
+        });
     }
 
     registerChat()
