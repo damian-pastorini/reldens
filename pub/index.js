@@ -1,12 +1,13 @@
 const $ = require('jquery');
 const validate = require('jquery-validation');
-const GameClient = require('../src/game/game-client');
+const Reldens = require('../src/game/reldens');
 
 $(document).ready(function($){
 
-    // game-client:
-    let gameClient = new GameClient();
-    window.gameClient = gameClient;
+    // reldens game:
+    let reldens = new Reldens();
+    window.reldens = reldens;
+
     let $register = $('#register_form'),
         $login = $('#login_form');
 
@@ -21,7 +22,7 @@ $(document).ready(function($){
     function startGame(formData, isNewUser)
     {
         // display the game container on join:
-        let gameRoom = gameClient.joinGameRoom(formData, isNewUser);
+        let gameRoom = reldens.joinGameRoom(formData, isNewUser);
         gameRoom.then((room) => {
             $('.loading').hide();
             $('.forms-container').detach();

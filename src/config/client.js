@@ -10,6 +10,8 @@
 const Phaser = require('phaser');
 
 const config = {
+    // @NOTE: the game server URL will be part of the configuration in the database.
+    // serverUrl: ''
     type: Phaser.AUTO,
     parent: 'reldens',
     dom: {
