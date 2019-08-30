@@ -9,6 +9,7 @@
 
 // constants:
 module.exports = {
+    FEATURES: 'gf',
     START_GAME: 's',
     ADD_PLAYER: 'a',
     CHANGED_SCENE: 'cs',

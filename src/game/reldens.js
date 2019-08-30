@@ -13,42 +13,33 @@ class Reldens
         this.gameClient = new GameClient(this.getServerUrl());
         // initialize game engine:
         this.gameEngine = new GameEngine(gameConfig);
-        // init properties:
+        // game room will be used for login:
         this.gameRoom = false;
+        // global room will be use for massive actions:
+        this.globlaRoom = false;
+        // active room will be where the user is currently:
         this.activeRoom = false;
-    }
-
-    getServerUrl()
-    {
-        if(!this.clientUrl){
-            if(gameConfig.hasOwnProperty('serverUrl')){
-                this.clientUrl = gameConfig.serverUrl;
-            } else {
-                let host = window.location.hostname;
-                let wsProtocol = 'ws://';
-                let wsPort = (window.location.port ? ':'+window.location.port : '');
-                this.clientUrl = wsProtocol+host+wsPort;
-            }
-        }
-        return this.clientUrl;
+        // features will be loaded in "featuresList" and initialized in "features" after the user logged in:
+        this.featuresList = [];
+        this.features = {};
     }
 
     joinGameRoom(formData, isNewUser = false)
     {
         // login or register:
         if(isNewUser){
-            this.colyseusClient.userData.isNewUser = true;
-            this.colyseusClient.userData.email = formData['email'];
+            this.gameClient.userData.isNewUser = true;
+            this.gameClient.userData.email = formData['email'];
         }
-        this.colyseusClient.userData.username = formData['username'];
-        this.colyseusClient.userData.password = formData['password'];
+        this.gameClient.userData.username = formData['username'];
+        this.gameClient.userData.password = formData['password'];
         // join room:
-        return this.colyseusClient.joinOrCreate(share.ROOM_GAME, this.colyseusClient.userData).then((gameRoom) => {
+        return this.gameClient.joinOrCreate(share.ROOM_GAME, this.gameClient.userData).then((gameRoom) => {
             this.gameRoom = gameRoom;
             gameRoom.onMessage((message) => {
                 if(message.act === share.START_GAME && message.sessionId === this.gameRoom.sessionId){
                     // initiate global chat for current user:
-                    let globalChatProm = this.colyseusClient.joinOrCreate(share.CHAT_GLOBAL, this.colyseusClient.userData);
+                    let globalChatProm = this.gameClient.joinOrCreate(share.CHAT_GLOBAL, this.gameClient.userData);
                     globalChatProm.then((globalChat) => {
                         globalChat.onMessage((message) => {
                             // chat events:
@@ -61,10 +52,10 @@ class Reldens
                                 }
                             }
                         });
-                        this.colyseusClient.globalChat = globalChat;
-                        this.colyseusClient.userData.isNewUser = false;
-                        this.activeRoom = new RoomEvents(message.player.scene, this.phaserGame, this.colyseusClient);
-                        this.colyseusClient.joinOrCreate(this.activeRoom.roomName, this.colyseusClient.userData).then((room) => {
+                        this.gameClient.globalChat = globalChat;
+                        this.gameClient.userData.isNewUser = false;
+                        this.activeRoom = new RoomEvents(message.player.scene, this.phaserGame, this.gameClient);
+                        this.gameClient.joinOrCreate(this.activeRoom.roomName, this.gameClient.userData).then((room) => {
                             this.gameRoom.leave();
                             this.activeRoom.startListen(room);
                         }).catch((data) => {
@@ -81,6 +72,26 @@ class Reldens
             console.log('ERROR - Connection error:', data);
             window.location.reload();
         });
+    }
+
+    initializeFeatures()
+    {
+
+    }
+
+    getServerUrl()
+    {
+        if(!this.clientUrl){
+            if(gameConfig.hasOwnProperty('serverUrl')){
+                this.clientUrl = gameConfig.serverUrl;
+            } else {
+                let host = window.location.hostname;
+                let wsProtocol = 'ws://';
+                let wsPort = (window.location.port ? ':'+window.location.port : '');
+                this.clientUrl = wsProtocol+host+wsPort;
+            }
+        }
+        return this.clientUrl;
     }
 
 }

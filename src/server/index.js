@@ -33,10 +33,9 @@ if(config.app.colyseusMonitor){
     console.log('NOTIFICATION - Attached Colyseus Monitor.');
 }
 // server shutdown:
-gameServer.onShutdown(function(){
+gameServer.onShutdown(() => {
     console.log('NOTIFICATION - Game Server is going down.');
 });
-// @TODO: optimize the query.
 // loading scenes data:
 let queryString = `SELECT 
     s.*, 
@@ -61,9 +60,9 @@ let queryString = `SELECT
     ']') as return_positions
 FROM scenes AS s
 LEFT JOIN scenes_change_points AS sc
-ON s.id = sc.scene_id
+    ON s.id = sc.scene_id
 LEFT JOIN scenes_return_points AS sr
-ON s.id = sr.scene_id
+    ON s.id = sr.scene_id
 GROUP BY s.id`;
 let serverInitProm = DataLink.query(queryString);
 // parsing data to register in the server:
