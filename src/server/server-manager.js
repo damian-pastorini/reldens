@@ -48,16 +48,11 @@ class ServerManager
             // prepare rooms:
             await this.roomsManager.defineRoomsInGameServe(this.gameServer, config);
             // after the rooms were loaded then finish the server process:
-            // let roomsProm = this.roomsManager.defineRoomsInGameServe(this.gameServer, config);
-            // roomsProm.then(() => {
             this.gameServer.listen(config.app.port);
             console.log('INFO - Listening on http://localhost:'+config.app.port);
             // create bundle:
             this.bundler = new Parcel(config.projectRoot+'/pub/index.html');
             this.app.use(this.bundler.middleware());
-            // }).catch((err) => {
-            // console.log('ERROR - Rooms loader error.', err);
-            // });
         } catch (err) {
             console.log('ERROR - Rooms loader error.', err);
         }
