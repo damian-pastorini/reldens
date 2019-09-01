@@ -1,4 +1,4 @@
-const DataLink = require('../driver/datalink');
+const DataLink = require('../storage/data-server');
 
 class PlayerStats
 {

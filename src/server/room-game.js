@@ -11,7 +11,6 @@
 
 const RoomLogin = require('./room-login');
 const Player = require('../player/player');
-const DataLink = require('../driver/datalink');
 const share = require('../utils/constants');
 
 class RoomGame extends RoomLogin

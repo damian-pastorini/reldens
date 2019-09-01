@@ -1,7 +1,7 @@
 const RoomLogin = require('./room-login');
 const State = require('./state');
-const DataLink = require('../driver/datalink');
-const ChatHelper = require('../chat/chat-helper');
+// @TODO: move chat to features.
+// const ChatHelper = require('../chat/chat-helper');
 const share = require('../utils/constants');
 const P2 = require('p2');
 const P2world = require('../world/p2world');
@@ -12,11 +12,14 @@ class RoomScene extends RoomLogin
 
     onCreate(options)
     {
-        console.log('NOTIFICATION - INIT ROOM:', this.roomName);
+        // data server:
+        this.dataServer = options.dataServer;
+        console.log('INFO - INIT ROOM:', this.roomName);
         // @NOTE: in the future not all the scene information will be sent to the client. This is because we could have
         // hidden information to be discovered.
         this.sceneId = options.scene.sceneId;
-        this.chatHelper = new ChatHelper;
+        // @TODO: move chat to features.
+        // this.chatHelper = new ChatHelper;
         let roomState = new State(options.scene);
         this.setState(roomState);
         // create world:
@@ -123,18 +126,23 @@ class RoomScene extends RoomLogin
                     this.state.stopPlayer(client.sessionId, data);
                 }
             }
+            // @TODO: move chat to features.
+            /*
             if(data.act === share.CHAT_ACTION){
                 let message = data[share.CHAT_MESSAGE].toString().replace('\\', '');
                 let messageData = {act: share.CHAT_ACTION, m: message, f: currentPlayer.username};
                 this.broadcast(messageData);
-                this.chatHelper.saveMessage(message, currentPlayer, this.sceneId, {}, false);
+                // @TODO: move chat to features.
+                // this.chatHelper.saveMessage(message, currentPlayer, this.sceneId, {}, false);
             }
+            */
             if(data.act === share.CLIENT_JOINED){
                 // @TODO: broadcast message of players joining rooms will be part of the configuration in the database.
                 let sentText = `${currentPlayer.username} has joined ${this.roomName}.`;
                 let message = `<span style="color:#0fffaa;">${sentText}.</span>`;
                 this.broadcast({act: share.CHAT_ACTION, m: message, f: 'System'});
-                this.chatHelper.saveMessage(this.roomName, currentPlayer, this.sceneId, false, share.CHAT_JOINED);
+                // @TODO: move chat to features.
+                // this.chatHelper.saveMessage(this.roomName, currentPlayer, this.sceneId, false, share.CHAT_JOINED);
             }
             if(data.act === share.PLAYER_STATS){
                 // player stats:
@@ -188,7 +196,7 @@ class RoomScene extends RoomLogin
         this.worldTimer = this.clock.setInterval(() => {
             this.p2world.step(this.timeStep);
         }, 1000 * this.timeStep);
-        console.log('NOTIFICATION - P2 World created in Room:', this.roomName);
+        console.log('INFO - P2 World created in Room:', this.roomName);
     }
 
     assignCollisions()
@@ -286,7 +294,7 @@ class RoomScene extends RoomLogin
             ON sr.scene_id = s.id
             WHERE s.name="${data.next}"
             GROUP BY sr.scene_id;`;
-        let nextSceneProm = DataLink.query(queryString);
+        let nextSceneProm = this.dataServer.query(queryString);
         nextSceneProm.then((rows) => {
             let result;
             if(rows){
@@ -376,7 +384,7 @@ class RoomScene extends RoomLogin
         // prepare query:
         let queryString = `UPDATE users SET state='${currentStateJson}' WHERE username='${currentUser.username}';`;
         // run query:
-        return DataLink.query(queryString, args);
+        return this.dataServer.query(queryString, args);
     }
 
     getClientById(clientId)

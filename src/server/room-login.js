@@ -1,12 +1,15 @@
 const Room = require('colyseus').Room;
-const DataLink = require('../driver/datalink');
-const share = require('../utils/constants');
-const localConfig = require('../config/config');
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
 
 class RoomLogin extends Room
 {
+
+    onCreate(options)
+    {
+        this.config = options.config;
+        this.dataServer = options.dataServer;
+    }
 
     onAuth(client, options, request)
     {
@@ -16,7 +19,7 @@ class RoomLogin extends Room
         // first find if the email was used already:
         let queryString = `SELECT * FROM users WHERE username='${options.username}'`;
         return new Promise((resolve, reject) => {
-            DataLink.query(queryString).then((rows) => {
+            this.dataServer.query(queryString).then((rows) => {
                 // generate the password hash:
                 let salt = bcrypt.genSaltSync(saltRounds);
                 let hash = bcrypt.hashSync(options.password, salt);
@@ -42,13 +45,11 @@ class RoomLogin extends Room
                     // if the email doesn't exists in the database and it's a registration request:
                     if(options.isNewUser){
                         // @TODO: default state will be part of the configuration in the database.
-                        let defaultState = `{"scene":"${share.TOWN}","x":"225","y":"280","dir":"${share.DOWN}"}`;
-                        if(localConfig.hasOwnProperty('initialScene') && localConfig.initialScene.hasOwnProperty('scene')){
-                            let initScene = localConfig.initialScene;
-                            defaultState = `{"scene":"${initScene.scene}","x":"${initScene.x}","y":"${initScene.y}","dir":"${initScene.dir}"}`;
-                        }
-                        // the last 3 values are for the default role_id = 1, status = 1 and state = 1:
-                        queryString = `INSERT INTO users VALUES(
+                        if(this.config.hasOwnProperty('initialScene') && this.config.initialScene.hasOwnProperty('scene')){
+                            let initScene = this.config.initialScene;
+                            let defaultState = `{"scene":"${initScene.scene}","x":"${initScene.x}","y":"${initScene.y}","dir":"${initScene.dir}"}`;
+                            // the last 3 values are for the default role_id = 1, status = 1 and state = 1:
+                            queryString = `INSERT INTO users VALUES(
                             NULL, 
                             '${options.email}',
                             '${options.username}',
@@ -58,18 +59,21 @@ class RoomLogin extends Room
                             '${defaultState}',
                             CURRENT_TIMESTAMP,
                             CURRENT_TIMESTAMP);`;
-                        // if is a new user status is always active by default:
-                        options.isNewUser = false;
-                        options.role_id = 1;
-                        options.status = 1;
-                        options.state = defaultState;
-                        return DataLink.query(queryString).then((rows) => {
-                            return resolve(options);
-                        }).catch((err) => {
-                            // if there's any error then reject:
-                            // console.log('ERROR - Unable to register the user.', err);
-                            return reject({msj: 'Unable to register the user.'});
-                        });
+                            // if is a new user status is always active by default:
+                            options.isNewUser = false;
+                            options.role_id = 1;
+                            options.status = 1;
+                            options.state = defaultState;
+                            return this.dataServer.query(queryString).then((rows) => {
+                                return resolve(options);
+                            }).catch((err) => {
+                                // if there's any error then reject:
+                                // console.log('ERROR - Unable to register the user.', err);
+                                return reject({msj: 'Unable to register the user.'});
+                            });
+                        } else {
+                            return reject({msj: 'ERROR - Missing initial scene configuration.'});
+                        }
                     } else {
                         return reject({msj: 'Unable to authenticate the user.'});
                     }
@@ -80,7 +84,7 @@ class RoomLogin extends Room
 
     onDispose()
     {
-        console.log('NOTIFICATION - ON-DISPOSE Room:', this.roomName);
+        console.log('INFO - ON-DISPOSE Room:', this.roomName);
     }
 
 }

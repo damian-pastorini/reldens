@@ -1,7 +1,6 @@
 const GameClient = require('./game-client');
 const GameEngine = require('./game-engine');
 const RoomEvents = require('./room-events');
-const gameConfig = require('../config/client');
 const share = require('../utils/constants');
 
 class Reldens
@@ -11,8 +10,8 @@ class Reldens
     {
         // setup game client, colyseus extended class:
         this.gameClient = new GameClient(this.getServerUrl());
-        // initialize game engine:
-        this.gameEngine = new GameEngine(gameConfig);
+        // the game engine will be initialized after the user joined the game:
+        this.gameEngine = false;
         // game room will be used for login:
         this.gameRoom = false;
         // global room will be use for massive actions:
@@ -35,6 +34,10 @@ class Reldens
         this.gameClient.userData.password = formData['password'];
         // join room:
         return this.gameClient.joinOrCreate(share.ROOM_GAME, this.gameClient.userData).then((gameRoom) => {
+            if(gameRoom.hasOwnProperty('gameConfig')){
+                // initialize game engine:
+                this.gameEngine = new GameEngine(gameRoom.gameConfig);
+            }
             this.gameRoom = gameRoom;
             gameRoom.onMessage((message) => {
                 if(message.act === share.START_GAME && message.sessionId === this.gameRoom.sessionId){

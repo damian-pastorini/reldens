@@ -43,7 +43,7 @@ class P2world extends P2.World
                             // if the tile is a change point it has to be empty for every layer.
                             if(layer.name.indexOf('change-points') !== -1){
                                 if(changePoints[tileIndex]){
-                                    console.log('NOTIFICATION - Created change point on tileIndex:', tileIndex);
+                                    console.log('INFO - Created change point on tileIndex:', tileIndex);
                                     // @NOTE: we make the change point smaller so the user needs to walk into to hit it.
                                     let bodyChangePoint = this.createWall((tileW/2), (tileH/2), posX, posY);
                                     bodyChangePoint.changeScenePoint = changePoints[tileIndex];

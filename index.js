@@ -2,13 +2,20 @@
  *
  * Reldens - index
  *
- * Server initialization file and environment variables loader.
+ * Server initialization and environment variables and configuration loader.
  *
  */
 
-// set environment variables:
+// setup environment variables:
 const dotenv = require('dotenv');
 dotenv.config();
-
-// server app:
-module.exports = require('./src/server/index');
+// load default configuration:
+const config = require('./config/config');
+// setup project root path:
+config.projectRoot = __dirname;
+// server class:
+const ServerManager = require('./src/server/server-manager');
+// create create instance:
+let server = new ServerManager();
+// start the server:
+server.start(config);

@@ -1,8 +1,7 @@
 const schema = require('@colyseus/schema');
 const Schema = schema.Schema;
 const type = schema.type;
-const share = require('../utils/constants');
-const localConfig = require('../config/config');
+const localConfig = require('../../config/config');
 
 class Player extends Schema
 {
@@ -40,11 +39,7 @@ class Player extends Schema
                 this.y = localConfig.initialScene.y;
                 this.dir = localConfig.initialScene.dir;
             } else {
-                // initial position in initial scene (town):
-                this.scene = share.TOWN;
-                this.x = 400;
-                this.y = 345;
-                this.dir = share.DOWN;
+                throw new Error('ERROR - Missing initial scene configuration.');
             }
         }
         this.mov = false;

@@ -43,7 +43,6 @@ module.exports = {
     // @TODO: the following constants additionally will be part of the configuration in the database.
     // default data:
     IMAGE_PLAYER: 'player',
-    TOWN: 'ReldensTown',
     FADE_DURATION: 1000,
     SPEED_SERVER: 180
     // @TODO: speed will be implemented with the client prediction in a future version.
