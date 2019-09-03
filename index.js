@@ -18,4 +18,8 @@ const ServerManager = require('./src/server/server-manager');
 // create create instance:
 let server = new ServerManager();
 // start the server:
-server.start(config);
+server.start(config).then(() => {
+    console.log('Server running...');
+}).catch((err) => {
+    console.log('ERROR - Server error:', err);
+});

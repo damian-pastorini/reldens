@@ -21,6 +21,7 @@ class ServerManager
 
     async start(config)
     {
+        console.log('Server Manager - Start!');
         if(!config){
             throw new Error('ERROR - Missing server configuration.');
         }
@@ -38,24 +39,30 @@ class ServerManager
             this.app.use('/monitor', this.gameServer.initMonitor());
             console.log('INFO - Attached monitor.');
         }
-        // rooms manager:
-        this.roomsManager = new RoomsManager({dataServer: this.dataServer});
+        // features manager will receive the dataServer and all the available features from the config file:
+        let featuresOptions = {
+            dataServer: this.dataServer,
+            availableFeatures: config.features
+        };
         // features manager:
-        this.featuresManager = new FeaturesManager();
-        try{
-            // prepare features:
-            await this.featuresManager.loadAndInitFeatures();
-            // prepare rooms:
-            await this.roomsManager.defineRoomsInGameServe(this.gameServer, config);
-            // after the rooms were loaded then finish the server process:
-            this.gameServer.listen(config.app.port);
-            console.log('INFO - Listening on http://localhost:'+config.app.port);
-            // create bundle:
-            this.bundler = new Parcel(config.projectRoot+'/pub/index.html');
-            this.app.use(this.bundler.middleware());
-        } catch (err) {
-            console.log('ERROR - Rooms loader error.', err);
-        }
+        this.featuresManager = new FeaturesManager(featuresOptions);
+        // prepare features:
+        await this.featuresManager.loadFeatures();
+        // the rooms manager will receive the dataServer and the features rooms to be defined:
+        let roomManagerOptions = {
+            dataServer: this.dataServer,
+            defineRooms: this.featuresManager.featuresWithRooms
+        };
+        // rooms manager:
+        this.roomsManager = new RoomsManager(roomManagerOptions);
+        // prepare rooms:
+        await this.roomsManager.defineRoomsInGameServe(this.gameServer, config);
+        // after the rooms were loaded then finish the server process:
+        this.gameServer.listen(config.app.port);
+        console.log('INFO - Listening on http://localhost:'+config.app.port);
+        // create bundle:
+        this.bundler = new Parcel(config.projectRoot+'/pub/index.html');
+        this.app.use(this.bundler.middleware());
     }
 
 }

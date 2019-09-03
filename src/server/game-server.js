@@ -3,6 +3,7 @@
  * Reldens - GameServer
  *
  * This class extends Colyseus server to include new features and implement all the custom behaviors.
+ * This will not override any of the code features.
  *
  */
 

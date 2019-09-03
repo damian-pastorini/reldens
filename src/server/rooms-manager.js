@@ -8,8 +8,6 @@
 
 const RoomGame = require('./room-game');
 const RoomScene = require('./room-scene');
-// @TODO: move chat to features.
-// const RoomChat = require('../chat/room-chat');
 const share = require('../utils/constants');
 
 class RoomsManager
@@ -17,26 +15,35 @@ class RoomsManager
 
     constructor(options = false)
     {
-        if(options && options.hasOwnProperty('dataServer')){
-            this.dataServer = options.dataServer;
-        } else {
+        if(!options || !options.hasOwnProperty('dataServer')){
             throw new Error('Missing dataServer.');
+        }
+        this.dataServer = options.dataServer;
+        if(options.hasOwnProperty('defineRooms')){
+            this.defineRooms = options.defineRooms;
+        } else {
+            console.log('INFO - None extra rooms to be defined.');
         }
     }
 
     async defineRoomsInGameServe(gameServer, config)
     {
+        // loaded rooms counter:
+        let counter = 0;
         // lobby room:
         gameServer.define(share.ROOM_GAME, RoomGame, {dataServer: this.dataServer, config: config});
         console.log('INFO - Loaded game room using configuration.', config);
-        // @TODO: move chat to features.
-        // register global chat room:
-        // gameServer.define(share.CHAT_GLOBAL, RoomChat, {dataServer: this.dataServer, config: config});
-        // console.log('INFO - Loaded chat room.');
+        // define features rooms (if any):
+        if(this.defineRooms){
+            for(let roomIdx in this.defineRooms){
+                let roomData = this.defineRooms[roomIdx];
+                gameServer.define(roomData.roomName, roomData.room, {dataServer: this.dataServer, config: config});
+                counter++;
+                console.log(`INFO - Loaded feature room: ${roomData.roomName}`);
+            }
+        }
         // load rooms data:
         let rooms = await this.loadRooms();
-        // register the rooms in the server:
-        let counter = 0;
         // @NOTE: we only need to send the basic data to the client and do all the associations on the client side.
         // register room-scenes from database:
         for(let room of rooms){
@@ -50,18 +57,18 @@ class RoomsManager
                 returnPoints: room.return_points
             };
             gameServer.define(room.name, RoomScene, {room: temp, dataServer: this.dataServer, config: config});
-            console.log('INFO - Loaded room: '+temp.roomName);
             counter++;
+            console.log(`INFO - Loaded room: ${temp.roomName}`);
         }
         // log defined rooms:
-        console.log(`INFO - Loaded ${counter} rooms`);
+        console.log(`INFO - Total rooms loaded: ${counter}`);
         return rooms;
     }
 
     async loadRooms()
     {
         // get rooms:
-        let roomsQuery = 'SELECT * FROM rooms';
+        let roomsQuery = 'SELECT * FROM rooms;';
         let rooms = await this.dataServer.query(roomsQuery);
         if(!rooms){
             throw new Error('ERROR - None rooms found in the database.');
@@ -73,7 +80,7 @@ class RoomsManager
                 ' FROM rooms_change_points AS cp'+
                 ' LEFT JOIN rooms AS s'+
                 ' ON s.id = cp.next_room_id'+
-                ' WHERE cp.room_id = ?';
+                ' WHERE cp.room_id = ?;';
             let changePoints = await this.dataServer.query(changePointsQuery, room.id);
             // assign to room:
             for (let changePoint of changePoints){
