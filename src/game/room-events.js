@@ -38,18 +38,13 @@ class RoomEvents
             if(currentScene.player && currentScene.player.players.hasOwnProperty(key)){
                 let playerToMove = currentScene.player.players[key];
                 if(playerToMove){
-                    // @TODO: improve the implementation using client physics for prediction.
-                    // See NEXT items in Road Map: https://github.com/damian-pastorini/reldens/wiki/Road-Map
-                    // @NOTE: we commented the speed since the body position is given by the body speed in
-                    // the server, this is to prevent client hacks.
+                    // @NOTE: player speed is defined by the server.
                     if(player.x !== playerToMove.x){
                         if(key !== this.room.sessionId && playerToMove.anims){
                             if(player.x < playerToMove.x){
                                 playerToMove.anims.play(share.LEFT, true);
-                                // playerToMove.body.velocity.x = -share.SPEED;
                             } else {
                                 playerToMove.anims.play(share.RIGHT, true);
-                                // playerToMove.body.velocity.x = share.SPEED;
                             }
                         }
                         playerToMove.x = parseFloat(player.x);
@@ -58,10 +53,8 @@ class RoomEvents
                         if(key !== this.room.sessionId && playerToMove.anims){
                             if(player.y < playerToMove.y){
                                 playerToMove.anims.play(share.UP, true);
-                                // playerToMove.body.velocity.y = -share.SPEED;
                             } else {
                                 playerToMove.anims.play(share.DOWN, true);
-                                // playerToMove.body.velocity.y = share.SPEED;
                             }
                         }
                         playerToMove.y = parseFloat(player.y);
@@ -69,16 +62,12 @@ class RoomEvents
                     // player stop action:
                     if(key !== this.room.sessionId && player.mov !== playerToMove.mov && playerToMove.anims){
                         if(!player.mov){
-                            // playerToMove.body.velocity.x = 0;
-                            // playerToMove.body.velocity.y = 0;
                             playerToMove.anims.stop();
                         }
                         playerToMove.mov = player.mov;
                     }
                     // player change direction action:
                     if(player.dir !== playerToMove.dir){
-                        // playerToMove.body.velocity.x = 0;
-                        // playerToMove.body.velocity.y = 0;
                         playerToMove.dir = player.dir;
                         playerToMove.anims.play(player.dir, true);
                         playerToMove.anims.stop();

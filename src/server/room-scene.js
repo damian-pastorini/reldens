@@ -189,10 +189,9 @@ class RoomScene extends RoomLogin
         this.p2world = roomWorld;
         // activate world collisions:
         this.assignCollisions();
+        // @TODO: timeStep will be part of the configuration in the database.
         // start world movement:
-        // @TODO: in the future we need to improve the timeStep to perfectly match client movement for predictions.
-        // See NEXT items in Road Map: https://github.com/damian-pastorini/reldens/wiki/Road-Map
-        this.timeStep = 0.04; // 1/60; // 0.0116 // 0.112;
+        this.timeStep = 0.04;
         this.worldTimer = this.clock.setInterval(() => {
             this.p2world.step(this.timeStep);
         }, 1000 * this.timeStep);
