@@ -1,17 +1,17 @@
 const schema = require('@colyseus/schema');
 const Schema = schema.Schema;
 const type = schema.type;
-const localConfig = require('../../config/config');
+const initialScene = require('../../config/initial-scene');
 
 class Player extends Schema
 {
 
-    constructor(data)
+    constructor(data, sessionId)
     {
         super();
         // player data:
         this.id = data.id;
-        this.sessionId = '';
+        this.sessionId = sessionId;
         this.role_id = data.role_id;
         this.status = data.status;
         this.username = data.username;
@@ -31,18 +31,22 @@ class Player extends Schema
                 this.dir = state.dir;
             }
         } else {
-            // @TODO: initial position will be part of the configuration in the database.
-            if(localConfig.hasOwnProperty('initialScene') && localConfig.initialScene.hasOwnProperty('scene')){
-                // initial position in initial scene (town):
-                this.scene = localConfig.initialScene.scene;
-                this.x = localConfig.initialScene.x;
-                this.y = localConfig.initialScene.y;
-                this.dir = localConfig.initialScene.dir;
-            } else {
-                throw new Error('ERROR - Missing initial scene configuration.');
-            }
+            // initial position in initial scene (town):
+            this.scene = initialScene.scene;
+            this.x = initialScene.x;
+            this.y = initialScene.y;
+            this.dir = initialScene.dir;
         }
         this.mov = false;
+    }
+
+    updateLastLogin()
+    {
+        let queryString = `UPDATE users SET updated_at = CURRENT_TIMESTAMP WHERE username='${this.username}'`;
+        let lastLoginProm = DataLink.query(queryString);
+        lastLoginProm.catch((err) => {
+            console.log('ERROR - Update last login query fail.', err, queryString);
+        });
     }
 
 }

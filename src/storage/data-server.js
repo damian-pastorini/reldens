@@ -2,11 +2,13 @@
  *
  * Reldens - DataServer
  *
- * This class will handle the database connection and queries.
+ * This module handle the database connection and queries.
  *
  */
 
-const mysql = require('mysql');
+const { Model } = require('objection');
+const Knex = require('knex');
+const configDb = require('../../config/db');
 
 class DataServer
 {
@@ -18,15 +20,21 @@ class DataServer
      */
     constructor(dbConfig = false)
     {
+        // database configuration can be manually created by passing the connection data or using the general config.
+        if(!dbConfig){
+            dbConfig = configDb;
+        }
         // if the database config is present:
         if(dbConfig && this.checkParameters(dbConfig)){
             this.config = dbConfig;
-            let {engine, host, port, database, user, password} = dbConfig;
-            this.connectionString = `${engine}://${user}${(password ? ':'+password : '')}@${host}:${port}/${database}`;
+            let {client, host, port, database, user, password} = dbConfig;
+            this.connectionString = `${client}://${user}${(password ? ':'+password : '')}@${host}:${port}/${database}`;
             console.log('INFO - Created DataServer:', this.connectionString);
         } else {
             throw new Error('Missing database full configuration.');
         }
+        this.prepareObjection();
+        console.log('INFO - Objection Model ready!');
     }
 
     /**
@@ -38,8 +46,8 @@ class DataServer
     checkParameters(dbConfig)
     {
         // check the parameters required for the connection:
-        if(!dbConfig.hasOwnProperty('engine')){
-            throw new Error('Missing database engine configuration.');
+        if(!dbConfig.hasOwnProperty('client')){
+            throw new Error('Missing database client configuration.');
         }
         if(!dbConfig.hasOwnProperty('host')){
             throw new Error('Missing database host configuration.');
@@ -59,20 +67,20 @@ class DataServer
         return true;
     }
 
-    query(sql, args = {})
+    prepareObjection()
     {
-        return new Promise((resolve, reject) => {
-            let connection = mysql.createConnection(this.connectionString);
-            connection.query(sql, args, (err, rows) => {
-                // in any case first close the connection:
-                connection.end();
-                // then reject or resolve:
-                if(err){
-                    return reject(err);
-                }
-                return resolve(rows);
-            });
+        // initialize knex, the query builder:
+        this.knex = Knex({
+            client: this.config.client,
+            connection: {
+                host : this.config.host,
+                user : this.config.user,
+                password : this.config.password,
+                database : this.config.database
+            }
         });
+        // give the knex instance to Objection.
+        this.model = Model.knex(this.knex);
     }
 
 }

@@ -1,5 +1,10 @@
-// chat package:
+/**
+ *
+ * Reldens - Chat Package.
+ *
+ */
+
 module.exports = {
-    helper: require('./chat-helper'),
-    room: require('./room-chat')
-}
+    helper: require('./helper'),
+    room: require('./room')
+};

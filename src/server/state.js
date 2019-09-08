@@ -1,3 +1,12 @@
+/**
+ *
+ * Reldens - State
+ *
+ * This class will handle the server - client communications.
+ *
+ */
+
+
 const schema = require('@colyseus/schema');
 const Schema = schema.Schema;
 const type = schema.type;
@@ -11,15 +20,14 @@ class State extends Schema
     constructor(sceneData)
     {
         super();
-        // @TODO: refactor to use an object for the scene data and avoid the JSON parsing.
+        // @NOTE: this JSON is to send the scene data to the client, here we could remove data we don't want to send.
         this.sceneData = JSON.stringify(sceneData);
         this.players = new MapSchema();
     }
 
     createPlayer(id, playerData)
     {
-        let newPlayer = new Player(playerData);
-        newPlayer.sessionId = id;
+        let newPlayer = new Player(playerData, id);
         this.players[id] = newPlayer;
         return this.players[id];
     }

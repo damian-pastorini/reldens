@@ -1,3 +1,11 @@
+/**
+ *
+ * Reldens - P2world
+ *
+ * This module handle the physics world on the server.
+ *
+ */
+
 const P2 = require('p2');
 const share = require('../utils/constants');
 
