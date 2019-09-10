@@ -21,7 +21,7 @@ class UsersModel extends Model
         // to avoid require loop:
         const PlayersModel = require('./players-model');
         return {
-            player: {
+            players: {
                 relation: Model.HasManyRelation,
                 modelClass: PlayersModel,
                 join: {

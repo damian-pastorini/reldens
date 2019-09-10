@@ -20,8 +20,8 @@ class PlayersModel extends Model
     {
         // to avoid require loop:
         const Users = require('./model');
-        const PlayerStats = require('./players-stats-model');
-        const PlayerState = require('./players-state-model');
+        const PlayersStats = require('./players-stats-model');
+        const PlayersState = require('./players-state-model');
         return {
             parent_user: {
                 relation: Model.BelongsToOneRelation,
@@ -33,18 +33,18 @@ class PlayersModel extends Model
             },
             stats: {
                 relation: Model.HasOneRelation,
-                modelClass: PlayerStats,
+                modelClass: PlayersStats,
                 join: {
                     from: 'players.id',
-                    to: 'player_stats.player_id'
+                    to: 'players_stats.player_id'
                 }
             },
             state: {
                 relation: Model.HasOneRelation,
-                modelClass: PlayerState,
+                modelClass: PlayersState,
                 join: {
                     from: 'players.id',
-                    to: 'player_stats.player_id'
+                    to: 'players_state.player_id'
                 }
             }
         }

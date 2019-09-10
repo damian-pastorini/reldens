@@ -29,7 +29,7 @@ class RoomLogin extends Room
             // login error.
             throw new Error(loginResult.error);
         }
-        if(!this.validateRoom(loginResult.user.player.state.scene)){
+        if(!this.validateRoom(loginResult.user.players[0].state.scene)){
             // invalid room.
             throw new Error('ERROR - Invalid room data.');
         }

@@ -24,13 +24,14 @@ $(document).ready(function($){
         // display the game container on join:
         let gameRoom = reldens.joinGameRoom(formData, isNewUser);
         gameRoom.then((room) => {
-            $('.loading').hide();
+            $('.loading-container').hide();
             $('.forms-container').detach();
             $('.game-container').show();
         });
         gameRoom.catch((data) => {
             // @NOTE: game room errors should be always because some wrong login or registration data. For these cases
             // we will check the isNewUser variable to know where display the error.
+            $('.loading-container').hide();
             $('#'+formData.formId+' .response-error').html(data).show();
         });
     }

@@ -32,18 +32,20 @@ class LoginManager
     async attemptLoginOrRegister(userData = false)
     {
         if(!userData || !userData.hasOwnProperty('username') || !userData.hasOwnProperty('password')){
-            return {error: 'Missing user data.'};
+            return {error: 'Missing user login data.'};
         }
         // first find if the email was used already:
-        let user = UsersModel.query().eager('player.[state, stats]').where('username', userData.username);
-        if(!user && !userData.isNewUser){
+        let userResult = await UsersModel.query().eager('players.[state, stats]').where('username', userData.username);
+        if(!userResult && !userData.isNewUser){
             return {error: 'Missing user data.'};
         }
+        let user = userResult[0];
         // generate the password hash:
         let salt = bcrypt.genSaltSync(this.saltRounds);
         let hash = bcrypt.hashSync(userData.password, salt);
         // if the email exists:
         if(user){
+            console.log('user', user);
             // check if player status is not active or if the password doesn't match then return an error:
             if(user.status !== 1 || !bcrypt.compareSync(userData.password, user.password)){
                 // if the password doesn't match return an error:
@@ -60,7 +62,7 @@ class LoginManager
                     let initStats = this.config.players.initialStats;
                     let initState = this.config.players.initialState;
                     // insert user, player, player state and player stats:
-                    user = await UsersModel.createUserWith({
+                    let newUser = await UsersModel.createUserWith({
                         data: userData,
                         state: initState,
                         stats: initStats,
@@ -104,7 +106,7 @@ class LoginManager
                     return {user: userData};
                 } catch (err) {
                     // if there's any error then reject:
-                    // console.log('ERROR - Unable to register the user.', err);
+                    console.log('ERROR - Unable to register the user.', err);
                     return {error: 'Unable to register the user.', catch: err};
                 }
             } else {

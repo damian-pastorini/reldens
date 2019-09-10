@@ -8,12 +8,12 @@
 
 const { Model } = require('objection');
 
-class PlayerStateModel extends Model
+class PlayersStateModel extends Model
 {
 
     static get tableName()
     {
-        return 'players_stats';
+        return 'players_state';
     }
 
     static get relationMappings()
@@ -25,7 +25,7 @@ class PlayerStateModel extends Model
                 relation: Model.BelongsToOneRelation,
                 modelClass: Players,
                 join: {
-                    from: 'player_state.player_id',
+                    from: 'players_state.player_id',
                     to: 'players.id'
                 }
             }
@@ -34,4 +34,4 @@ class PlayerStateModel extends Model
 
 }
 
-module.exports = PlayerStateModel;
+module.exports = PlayersStateModel;
