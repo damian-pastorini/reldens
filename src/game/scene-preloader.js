@@ -34,7 +34,7 @@ class ScenePreloader extends Phaser.Scene
         if(this.preloadImages){
             // @TODO: frame width, height, margin and spacing will be part of the configuration in the database.
             // @NOTE: we need the preloadImages and tile data here because the JSON map file is not loaded yet.
-            let tileData = {frameWidth:16, frameHeight:16, margin:1, spacing:2};
+            let tileData = {frameWidth: 16, frameHeight: 16, margin: 1, spacing: 2};
             let files = this.preloadImages.split(',');
             for(let imageFile of files){
                 let filePath = `assets/maps/${imageFile}.png`;
@@ -42,7 +42,7 @@ class ScenePreloader extends Phaser.Scene
             }
         }
         // @TODO: player image will be part of the configuration in the database.
-        let playerSpriteSize = {frameWidth:52, frameHeight:71};
+        let playerSpriteSize = {frameWidth: 52, frameHeight: 71};
         this.load.spritesheet(share.IMAGE_PLAYER, 'assets/sprites/player-1.png', playerSpriteSize);
         // interface assets:
         this.load.image(share.ICON_STATS, 'assets/icons/book.png');

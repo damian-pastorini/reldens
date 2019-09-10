@@ -11,9 +11,8 @@ const State = require('../server/state');
 // @TODO: move chat to features.
 // const ChatHelper = require('../chat/chat-helper');
 const share = require('../utils/constants');
-const P2 = require('p2');
 const P2world = require('../world/p2world');
-const PlayerStats = require('../player/player-stats');
+const PlayerStats = require('../users/player-stats');
 
 class RoomScene extends RoomLogin
 {
@@ -21,7 +20,7 @@ class RoomScene extends RoomLogin
     onCreate(options)
     {
         // data server:
-        this.dataServer = options.dataServer;
+        super.onCreate(options);
         console.log('INFO - INIT ROOM:', this.roomName);
         // @NOTE: in the future not all the scene information will be sent to the client. This is because we could have
         // hidden information to be discovered.
@@ -80,7 +79,13 @@ class RoomScene extends RoomLogin
         // player creation:
         let currentPlayer = this.state.createPlayer(client.sessionId, authResult);
         // create body for server physics and assign the body to the player:
-        currentPlayer.p2body = this.createPlayerBody(currentPlayer, client.sessionId);
+        currentPlayer.p2body = this.p2world.createPlayerBody({
+            id: client.sessionId,
+            width: this.config.players.size.width,
+            height: this.config.players.size.height,
+            x: currentPlayer.x,
+            y: currentPlayer.y,
+        });
     }
 
     onLeave(client, consented)
@@ -183,16 +188,11 @@ class RoomScene extends RoomLogin
     createWorld(sceneData)
     {
         let roomWorld = new P2world({
-            gravity:[0, 0],
             sceneName: this.roomName,
-            sceneTiledMapFile: sceneData.sceneMap
+            sceneData: sceneData,
+            gravity: [0, 0],
+            applyGravity: false
         });
-        // @TODO: applyGravity will be part of the configuration in the database.
-        roomWorld.applyGravity = false;
-        // create world limits:
-        roomWorld.createLimits();
-        // add collisions:
-        roomWorld.setMapCollisions(sceneData);
         // assign world to room:
         this.p2world = roomWorld;
         // activate world collisions:
@@ -255,30 +255,6 @@ class RoomScene extends RoomLogin
                 }
             });
         }
-    }
-
-    createPlayerBody(currentPlayer, sessionId)
-    {
-        // @TODO: player image will be part of the configuration in the database.
-        // @NOTES:
-        // - check client/objects/scene-preloader.js to validate the same size.
-        // - since the player size will be configurable for now we made the player body a bit smaller than
-        // the original tiles size to make the collisions work a bit smooth (remember this is far from finish).
-        let boxShape = new P2.Box({width: 25, height: 25});
-        boxShape.collisionGroup = share.COL_PLAYER;
-        boxShape.collisionMask = share.COL_ENEMY | share.COL_GROUND;
-        let boxBody = new P2.Body({
-            mass:1,
-            position:[currentPlayer.x, currentPlayer.y],
-            type: P2.Body.DYNAMIC,
-            fixedRotation: true
-        });
-        boxBody.addShape(boxShape);
-        boxBody.playerId = sessionId;
-        boxBody.isChangingScene = false;
-        this.p2world.addBody(boxBody);
-        // return body:
-        return boxBody;
     }
 
     nextSceneInitialPosition(client, data)

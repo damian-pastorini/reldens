@@ -10,7 +10,7 @@
 const dotenv = require('dotenv');
 dotenv.config();
 // server class:
-const ServerManager = require('./src/server/server-manager');
+const ServerManager = require('./src/server/manager');
 // create create instance:
 let server = new ServerManager();
 // start the server passing the app root data:

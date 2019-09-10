@@ -38,7 +38,7 @@ class RoomsReturnPointsModel extends Model
                 }
             }
         }
-    };
+    }
 
 }
 

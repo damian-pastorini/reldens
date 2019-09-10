@@ -2,6 +2,7 @@ const GameClient = require('./game-client');
 const GameEngine = require('./game-engine');
 const RoomEvents = require('./room-events');
 const share = require('../utils/constants');
+const gameConfig = require('../../config/server');
 
 class Reldens
 {
@@ -42,7 +43,12 @@ class Reldens
             gameRoom.onMessage((message) => {
                 if(message.act === share.START_GAME && message.sessionId === this.gameRoom.sessionId){
                     // initiate global chat for current user:
-                    let globalChatProm = this.gameClient.joinOrCreate(share.CHAT_GLOBAL, this.gameClient.userData);
+                    let globalChatProm = this.gameClient.joinOrCreate(share.CHAT_GLOBAL, this.gameClient.userData)
+                        .catch((errorMessage) => {
+                            // room error, the received "data" will be the actual onAuth error.
+                            alert(errorMessage);
+                            window.location.reload();
+                        });
                     globalChatProm.then((globalChat) => {
                         globalChat.onMessage((message) => {
                             // chat events:
@@ -61,18 +67,17 @@ class Reldens
                         this.gameClient.joinOrCreate(this.activeRoom.roomName, this.gameClient.userData).then((room) => {
                             this.gameRoom.leave();
                             this.activeRoom.startListen(room);
-                        }).catch((data) => {
-                            // room error:
-                            alert('There was a room connection error.');
-                            console.log('ERROR - ', data);
+                        }).catch((errorMessage) => {
+                            // room error, the received "data" will be the actual onAuth error.
+                            alert(errorMessage);
                             window.location.reload();
                         });
                     });
                 }
             });
-        }).catch((data) => {
-            alert('Connection error.');
-            console.log('ERROR - Connection error:', data);
+        }).catch((errorMessage) => {
+            // room error, the received "data" will be the actual onAuth error.
+            alert(errorMessage);
             window.location.reload();
         });
     }

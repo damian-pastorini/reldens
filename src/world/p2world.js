@@ -15,13 +15,18 @@ class P2world extends P2.World
     constructor(options)
     {
         super(options);
+        this.applyGravity = options.applyGravity;
         this.sceneName = options.sceneName || false;
-        this.sceneTiledMapFile = options.sceneTiledMapFile || false;
+        this.sceneTiledMapFile = options.sceneData.sceneMap || false;
         if(!this.sceneName || !this.sceneTiledMapFile){
             console.log('ERROR - World creation missing data in options:', options);
         }
         // @TODO: as part of the future admin panel this will be an upload option.
         this.mapJson = require('../../pub/assets/maps/'+this.sceneTiledMapFile);
+        // create world limits:
+        this.createLimits();
+        // add collisions:
+        this.setMapCollisions(options.sceneData);
     }
 
     setMapCollisions(mapData)
@@ -125,6 +130,25 @@ class P2world extends P2.World
             changePoints[cPoint.i] = cPoint.n;
         }
         return changePoints;
+    }
+
+    createPlayerBody(playerData)
+    {
+        let boxShape = new P2.Box({width: playerData.width, height: playerData.height});
+        boxShape.collisionGroup = share.COL_PLAYER;
+        boxShape.collisionMask = share.COL_ENEMY | share.COL_GROUND;
+        let boxBody = new P2.Body({
+            mass: 1,
+            position: [playerData.x, playerData.y],
+            type: P2.Body.DYNAMIC,
+            fixedRotation: true
+        });
+        boxBody.addShape(boxShape);
+        boxBody.playerId = playerData.id;
+        boxBody.isChangingScene = false;
+        this.addBody(boxBody);
+        // return body:
+        return boxBody;
     }
 
 }

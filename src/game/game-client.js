@@ -22,10 +22,9 @@ class GameClient extends ColyseusClient
             this.room = sceneRoom;
             // start listen to room events:
             newRoom.startListen(sceneRoom, message.prev);
-        }).catch((data) => {
-            // room error:
-            alert('There was a room error.');
-            console.log('ERROR - ', data);
+        }).catch((errorMessage) => {
+            // room error, the received "data" will be the actual onAuth error.
+            alert(errorMessage);
             window.location.reload();
         });
     };
