@@ -188,7 +188,7 @@ class RoomEvents
                 alert('There was a connection error.');
                 window.location.reload();
             } else {
-                // the client has initiated the disconnection.
+                // the client has initiated the disconnection (do nothing).
             }
         });
     }

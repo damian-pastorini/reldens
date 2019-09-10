@@ -29,8 +29,9 @@ $(document).ready(function($){
             $('.game-container').show();
         });
         gameRoom.catch((data) => {
-            console.log('ERROR - GameRoom error.', data);
-            $('#'+formData.formId+' .response-error').show();
+            // @NOTE: game room errors should be always because some wrong login or registration data. For these cases
+            // we will check the isNewUser variable to know where display the error.
+            $('#'+formData.formId+' .response-error').html(data).show();
         });
     }
 

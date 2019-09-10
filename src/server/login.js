@@ -35,7 +35,7 @@ class LoginManager
             return {error: 'Missing user data.'};
         }
         // first find if the email was used already:
-        let user = UsersModel.query().eager('[player.state, player.stats]').where('username', userData.username);
+        let user = UsersModel.query().eager('player.[state, stats]').where('username', userData.username);
         if(!user && !userData.isNewUser){
             return {error: 'Missing user data.'};
         }

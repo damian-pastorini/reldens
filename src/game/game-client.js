@@ -23,7 +23,8 @@ class GameClient extends ColyseusClient
             // start listen to room events:
             newRoom.startListen(sceneRoom, message.prev);
         }).catch((errorMessage) => {
-            // room error, the received "data" will be the actual onAuth error.
+            // @NOTE: the errors while trying to reconnect will always be originated in the server. For these errors we
+            // will alert the user and reload the window automatically.
             alert(errorMessage);
             window.location.reload();
         });

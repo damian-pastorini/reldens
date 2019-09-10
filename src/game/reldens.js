@@ -33,7 +33,7 @@ class Reldens
         }
         this.gameClient.userData.username = formData['username'];
         this.gameClient.userData.password = formData['password'];
-        // join room:
+        // join initial game room, since we return the promise we don't need to catch the error here:
         return this.gameClient.joinOrCreate(share.ROOM_GAME, this.gameClient.userData).then((gameRoom) => {
             if(gameRoom.hasOwnProperty('gameConfig')){
                 // initialize game engine:
@@ -42,9 +42,13 @@ class Reldens
             this.gameRoom = gameRoom;
             gameRoom.onMessage((message) => {
                 if(message.act === share.START_GAME && message.sessionId === this.gameRoom.sessionId){
+                    // @TODO: chat will be loaded as feature.
+                    /*
                     // initiate global chat for current user:
                     let globalChatProm = this.gameClient.joinOrCreate(share.CHAT_GLOBAL, this.gameClient.userData)
                         .catch((errorMessage) => {
+                            // @NOTE: global chat errors will always be originated in the server. For these errors we
+                            // will alert the user and reload the window automatically.
                             // room error, the received "data" will be the actual onAuth error.
                             alert(errorMessage);
                             window.location.reload();
@@ -62,23 +66,21 @@ class Reldens
                             }
                         });
                         this.gameClient.globalChat = globalChat;
+                        */
                         this.gameClient.userData.isNewUser = false;
                         this.activeRoom = new RoomEvents(message.player.scene, this.phaserGame, this.gameClient);
                         this.gameClient.joinOrCreate(this.activeRoom.roomName, this.gameClient.userData).then((room) => {
                             this.gameRoom.leave();
                             this.activeRoom.startListen(room);
                         }).catch((errorMessage) => {
-                            // room error, the received "data" will be the actual onAuth error.
+                            // @NOTE: the errors while trying to join a rooms/scene will always be originated in the
+                            // server. For these errors we will alert the user and reload the window automatically.
                             alert(errorMessage);
                             window.location.reload();
                         });
-                    });
+                    // });
                 }
             });
-        }).catch((errorMessage) => {
-            // room error, the received "data" will be the actual onAuth error.
-            alert(errorMessage);
-            window.location.reload();
         });
     }
 
