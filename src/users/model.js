@@ -34,14 +34,22 @@ class UsersModel extends Model
 
     $beforeInsert(queryContext)
     {
-        let currentDate = new Date().toISOString();
-        this.created_at = currentDate;
-        this.updated_at = currentDate;
+        let dateFormat = this.getCurrentDate();
+        this.created_at = dateFormat;
+        this.updated_at = dateFormat;
     }
 
     $beforeUpdate(modelOptions, queryContext)
     {
-        this.updated_at = new Date().toISOString();
+        this.updated_at = this.getCurrentDate();
+    }
+
+    getCurrentDate()
+    {
+        // get date:
+        let date = new Date();
+        // format:
+        return date.toISOString().slice(0, 19).replace('T', ' ');
     }
 
 }

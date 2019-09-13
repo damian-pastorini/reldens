@@ -38,7 +38,6 @@ class LoginManager
         }
         // search if the email was already used:
         let user = await this.usersManager.loadUserByUsername(userData.username);
-        console.log('user', user);
         if(!user && !userData.isNewUser){
             return {error: 'Missing user data.'};
         }
@@ -107,7 +106,11 @@ class LoginManager
         let currentPlayerRoom = await this.roomsManager.loadRoomById(currentPlayer.state.room_id);
         currentPlayer.scene = currentPlayerRoom.name;
         // update last login date:
-        this.usersManager.updateUserLastLogin(authResult.username);
+        let updated = await this.usersManager.updateUserLastLogin(authResult.username);
+        console.log('updated:', updated);
+        if(!updated){
+            throw new Error('ERROR - User update fail.');
+        }
         // client start:
         room.send(client, {act: share.START_GAME, sessionId: client.sessionId, player: currentPlayer});
     }

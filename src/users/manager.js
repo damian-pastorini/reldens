@@ -62,10 +62,14 @@ class UsersManager
         return createdUser;
     }
 
-    updateUserLastLogin(username)
+    async updateUserLastLogin(username)
     {
-        // @TODO: fix query update.
-        // return UsersModel.query().where('username', username).patch({updated_at: new Date().toISOString()});
+        // get date:
+        let date = new Date();
+        // format:
+        let dateFormat = date.toISOString().slice(0, 19).replace('T', ' ');
+        // save user:
+        return UsersModel.query().patch({updated_at: dateFormat}).where('username', username);
     }
 
 }

@@ -83,8 +83,8 @@ class RoomScene extends RoomLogin
         // create body for server physics and assign the body to the player:
         currentPlayer.p2body = this.p2world.createPlayerBody({
             id: client.sessionId,
-            width: this.config.players.size.width,
-            height: this.config.players.size.height,
+            width: this.config.server.players.size.width,
+            height: this.config.server.players.size.height,
             x: currentPlayer.x,
             y: currentPlayer.y,
         });
