@@ -58,16 +58,12 @@ class LoginManager
             // if the email doesn't exists in the database and it's a registration request:
             if(userData.isNewUser){
                 try {
-                    let hash = this.encryptPassword(userData.password);
-                    // default data:
-                    let initStats = this.config.players.initialStats;
-                    let initState = this.config.players.initialState;
                     // insert user, player, player state and player stats:
                     let newUser = await this.usersManager.createUserWith({
                         data: userData,
-                        state: initState,
-                        stats: initStats,
-                        hash: hash
+                        state: this.config.players.initialState,
+                        stats: this.config.players.initialStats,
+                        hash: this.encryptPassword(userData.password)
                     });
                     // if is a new user status is always active by default:
                     userData.isNewUser = false;
