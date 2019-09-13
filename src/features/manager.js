@@ -9,7 +9,7 @@
 const configuredFeatures = require('../../config/features');
 const FeaturesModel = require('./model');
 
-class FeatureManager
+class FeaturesManager
 {
 
     constructor()
@@ -50,4 +50,4 @@ class FeatureManager
 
 }
 
-module.exports = FeatureManager;
+module.exports = FeaturesManager;

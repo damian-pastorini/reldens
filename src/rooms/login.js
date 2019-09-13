@@ -8,7 +8,6 @@
  */
 
 const Room = require('colyseus').Room;
-const LoginManager = require('../server/login');
 
 class RoomLogin extends Room
 {
@@ -16,7 +15,7 @@ class RoomLogin extends Room
     onCreate(options)
     {
         this.config = options.config;
-        this.loginManager = new LoginManager(options.config);
+        this.loginManager = options.loginManager;
     }
 
     async onAuth(client, options, request)
@@ -29,7 +28,7 @@ class RoomLogin extends Room
             // login error.
             throw new Error(loginResult.error);
         }
-        if(!this.validateRoom(loginResult.user.players[0].state.scene)){
+        if(!this.validateRoom(loginResult.user.players[0].scene)){
             // invalid room.
             throw new Error('ERROR - Invalid room data.');
         }
@@ -39,8 +38,8 @@ class RoomLogin extends Room
     validateRoom(playerRoomName)
     {
         let result = true;
-        if(this.config.rooms.validation.enabled){
-            this.validRooms = this.config.rooms.validation.valid.split(',');
+        if(this.config.server.rooms.validation.enabled){
+            this.validRooms = this.config.server.rooms.validation.valid.split(',');
             if(this.validRooms.indexOf(this.roomName) === -1 && playerRoomName !== this.roomName){
                 console.log('ERROR - Invalid player room:', playerRoomName, this.roomName);
                 result = false;

@@ -26,6 +26,7 @@ class GameClient extends ColyseusClient
             // @NOTE: the errors while trying to reconnect will always be originated in the server. For these errors we
             // will alert the user and reload the window automatically.
             alert(errorMessage);
+            console.log('ERROR - reconnectColyseus:', errorMessage, 'message:', message, 'previousRoom:', previousRoom);
             window.location.reload();
         });
     };

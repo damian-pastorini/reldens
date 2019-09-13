@@ -44,63 +44,6 @@ class UsersModel extends Model
         this.updated_at = new Date().toISOString();
     }
 
-    async createUserWith(initialData)
-    {
-        let userData = initialData.data;
-        let initState = initialData.state;
-        let initStats = initialData.stats;
-        let createdUser = await this.$query()
-            .allowInsert('[player.stats, player.state]')
-            .insertGraph({
-                email: userData.email,
-                username: userData.username,
-                password: hash,
-                role_id: 1,
-                status: 1,
-                player: {
-                    name: userData.username,
-                    stats: {
-                        hp: initStats.hp,
-                        mp: initStats.mp,
-                        stamina: initStats.stamina,
-                        atk: initStats.atk,
-                        def: initStats.def,
-                        dodge: initStats.dodge,
-                        speed: initStats.speed
-                    },
-                    state: {
-                        scene: initState.scene,
-                        x: initState.x,
-                        y: initState.y,
-                        dir: initState.dir
-                    }
-                }
-            });
-        return createdUser;
-    }
-
-    /*
-    $afterInsert(queryContext)
-    {
-        const PlayersModel = require('./players-model');
-        PlayersModel.query()
-            .allowInsert('[player.stats, player.state]')
-            .insertGraph({
-                user_id: this.id,
-                stats: [{
-                    user_id: 'Sage',
-                    pets: [{
-                        name: 'Fluffy'
-                        species: 'dog'
-                    }, {
-                        name: 'Scrappy',
-                        species: 'dog'
-                    }]
-                }]
-            })
-    }
-    */
-
 }
 
 module.exports = UsersModel;

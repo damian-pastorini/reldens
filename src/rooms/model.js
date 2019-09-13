@@ -7,8 +7,6 @@
  */
 
 const { Model } = require('objection');
-const RoomsChangePoints = require('./change-points-model');
-const RoomsReturnPoints = require('./return-points-model');
 
 class RoomsModel extends Model
 {
@@ -20,6 +18,8 @@ class RoomsModel extends Model
 
     static get relationMappings()
     {
+        const RoomsChangePoints = require('./change-points-model');
+        const RoomsReturnPoints = require('./return-points-model');
         return {
             rooms_change_points: {
                 relation: Model.HasManyRelation,

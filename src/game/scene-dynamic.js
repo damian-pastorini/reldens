@@ -10,6 +10,7 @@ class SceneDynamic extends Phaser.Scene
         super({key});
         this.key = key;
         this.params = data;
+        console.log('scene dynamic data', data);
         this.layers = {};
         this.transition = true;
         this.withTSAnimation = false;
@@ -27,9 +28,9 @@ class SceneDynamic extends Phaser.Scene
         this.keyRight = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.RIGHT);
         this.keyUp = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP);
         this.keyDown = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.DOWN);
-        this.map = this.add.tilemap(this.params.sceneMap);
+        this.map = this.add.tilemap(this.params.roomMap);
         this.withTSAnimation = this.hasTSAnimation();
-        this.tileset = this.map.addTilesetImage(this.params.sceneMap);
+        this.tileset = this.map.addTilesetImage(this.params.roomMap);
         this.registerLayers();
         this.cameras.main.on('camerafadeincomplete', () => {
             this.transition = false;

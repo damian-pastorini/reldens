@@ -1,6 +1,6 @@
 /**
  *
- * Reldens - PlayerModel
+ * Reldens - PlayersModel
  *
  * Players storage model, this class will load, add, edit, delete the values in the storage.
  *

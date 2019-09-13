@@ -7,15 +7,17 @@
  */
 
 const bcrypt = require('bcrypt');
-const UsersModel = require('../users/model');
+const share = require('../utils/constants');
 
 class LoginManager
 {
 
-    constructor(storedConfig)
+    constructor(props)
     {
+        this.config = props.config;
+        this.usersManager = props.usersManager;
+        this.roomsManager = props.roomsManager;
         this.saltRounds = 10;
-        this.config = storedConfig;
         // if stored config doesn't have the initial scene specified then get the default values:
         if(
             !this.config.hasOwnProperty('players')
@@ -34,75 +36,45 @@ class LoginManager
         if(!userData || !userData.hasOwnProperty('username') || !userData.hasOwnProperty('password')){
             return {error: 'Missing user login data.'};
         }
-        // first find if the email was used already:
-        let userResult = await UsersModel.query().eager('players.[state, stats]').where('username', userData.username);
-        if(!userResult && !userData.isNewUser){
+        // search if the email was already used:
+        let user = await this.usersManager.loadUserByUsername(userData.username);
+        console.log('user', user);
+        if(!user && !userData.isNewUser){
             return {error: 'Missing user data.'};
         }
-        let user = userResult[0];
-        // generate the password hash:
-        let salt = bcrypt.genSaltSync(this.saltRounds);
-        let hash = bcrypt.hashSync(userData.password, salt);
         // if the email exists:
         if(user){
-            console.log('user', user);
             // check if player status is not active or if the password doesn't match then return an error:
-            if(user.status !== 1 || !bcrypt.compareSync(userData.password, user.password)){
+            if(user.status !== 1 || !this.validatePassword(userData.password, user.password)){
                 // if the password doesn't match return an error:
                 return {error: 'User already exists or invalid user data.'};
             } else {
                 // if everything is good then just return the user:
+                let currentPlayer = user.players[0];
+                let currentPlayerRoom = await this.roomsManager.loadRoomById(currentPlayer.state.room_id);
+                currentPlayer.scene = currentPlayerRoom.name;
                 return {user: user};
             }
         } else {
             // if the email doesn't exists in the database and it's a registration request:
             if(userData.isNewUser){
                 try {
+                    let hash = this.encryptPassword(userData.password);
                     // default data:
                     let initStats = this.config.players.initialStats;
                     let initState = this.config.players.initialState;
                     // insert user, player, player state and player stats:
-                    let newUser = await UsersModel.createUserWith({
+                    let newUser = await this.usersManager.createUserWith({
                         data: userData,
                         state: initState,
                         stats: initStats,
                         hash: hash
                     });
-                        /*
-                        .query()
-                        .allowInsert('[player.stats, player.state]')
-                        .insertGraph({
-                            email: userData.email,
-                            username: userData.username,
-                            password: hash,
-                            role_id: 1,
-                            status: 1,
-                            player: {
-                                name: userData.username,
-                                stats: {
-                                    hp: initStats.hp,
-                                    mp: initStats.mp,
-                                    stamina: initStats.stamina,
-                                    atk: initStats.atk,
-                                    def: initStats.def,
-                                    dodge: initStats.dodge,
-                                    speed: initStats.speed
-                                },
-                                state: {
-                                    scene: initState.scene,
-                                    x: initState.x,
-                                    y: initState.y,
-                                    dir: initState.dir
-                                }
-                            }
-                        });
-                        */
                     // if is a new user status is always active by default:
                     userData.isNewUser = false;
                     userData.role_id = 1;
                     userData.status = 1;
-                    let defaultState = `{"scene":"${initState.scene}","x":"${initState.x}","y":"${initState.y}","dir":"${initState.dir}"}`;
-                    userData.state = defaultState;
+                    userData.state = `{"scene":"${initState.room}","x":"${initState.x}","y":"${initState.y}","dir":"${initState.dir}"}`;
                     return {user: userData};
                 } catch (err) {
                     // if there's any error then reject:
@@ -113,6 +85,31 @@ class LoginManager
                 return {error: 'Unable to authenticate the user.'};
             }
         }
+    }
+
+    validatePassword(receivedPassword, storedPassword)
+    {
+        return bcrypt.compareSync(receivedPassword, storedPassword);
+    }
+
+    encryptPassword(receivedPassword)
+    {
+        // generate the password hash:
+        let salt = bcrypt.genSaltSync(this.saltRounds);
+        return bcrypt.hashSync(receivedPassword, salt);
+    }
+
+    async startGame(client, room, authResult)
+    {
+        let currentUser = await this.usersManager.loadUserByUsername(authResult.username);
+        // @TODO: for now we will only have 1 player per user, that's why we send players[0].
+        let currentPlayer = currentUser.players[0];
+        let currentPlayerRoom = await this.roomsManager.loadRoomById(currentPlayer.state.room_id);
+        currentPlayer.scene = currentPlayerRoom.name;
+        // update last login date:
+        this.usersManager.updateUserLastLogin(authResult.username);
+        // client start:
+        room.send(client, {act: share.START_GAME, sessionId: client.sessionId, player: currentPlayer});
     }
 
 }

@@ -263,11 +263,12 @@ class RoomEvents
     {
         let sceneData = this.getSceneData(room);
         let preloaderName = share.SCENE_PRELOADER+sceneData.sceneName;
+        console.log('sceneData', sceneData);
         let uiScene = false;
         if(!this.phaserGame.uiScene){
             uiScene = true;
         }
-        let scenePreloader = new ScenePreloader(preloaderName, sceneData.sceneMap, sceneData.sceneImages, uiScene);
+        let scenePreloader = new ScenePreloader(preloaderName, sceneData.roomMap, sceneData.sceneImages, uiScene);
         if(!this.phaserGame.scene.getScene(preloaderName)){
             this.phaserGame.scene.add(preloaderName, scenePreloader, true);
             let preloader = this.phaserGame.scene.getScene(preloaderName);

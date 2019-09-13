@@ -24,17 +24,17 @@ class RoomsManager
         }
     }
 
-    async defineRoomsInGameServer(gameServer, config = {})
+    async defineRoomsInGameServer(gameServer, props)
     {
         // loaded rooms counter:
         let counter = 0;
         // lobby room:
-        gameServer.define(share.ROOM_GAME, RoomGame, {config: config});
-        console.log('INFO - Loaded game room using stored configuration.', config);
-        // define features rooms (if any):
+        gameServer.define(share.ROOM_GAME, RoomGame, props);
+        console.log('INFO - Loaded game room using stored configuration.', props.config);
+        // define extra rooms (if any, for example features rooms):
         if(this.defineRooms){
             for(let roomData of this.defineRooms){
-                gameServer.define(roomData.roomName, roomData.room, {config: config});
+                gameServer.define(roomData.roomName, roomData.room, props);
                 counter++;
                 console.log(`INFO - Loaded feature room: ${roomData.roomName}`);
             }
@@ -43,7 +43,10 @@ class RoomsManager
         let rooms = await this.loadRooms();
         // register room-scenes from database:
         for(let room of rooms){
-            gameServer.define(room.roomName, RoomScene, {room: room, config: config});
+            // assign room to props:
+            props.room = room;
+            // define the room:
+            gameServer.define(room.roomName, RoomScene, props);
             counter++;
             console.log(`INFO - Loaded room: ${room.roomName}`);
         }
@@ -87,6 +90,11 @@ class RoomsManager
             rooms.push(temp);
         }
         return rooms;
+    }
+
+    loadRoomById(roomId)
+    {
+        return Rooms.query().findById(roomId);
     }
 
 }

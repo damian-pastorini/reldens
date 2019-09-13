@@ -21,16 +21,18 @@ class RoomScene extends RoomLogin
     {
         // data server:
         super.onCreate(options);
+        console.log('options', options);
         console.log('INFO - INIT ROOM:', this.roomName);
+        // @NOTE: sceneId seems to be used only for chat.
         // @NOTE: in the future not all the scene information will be sent to the client. This is because we could have
         // hidden information to be discovered.
-        this.sceneId = options.scene.sceneId;
+        // this.sceneId = options.scene.roomId;
         // @TODO: move chat to features.
         // this.chatHelper = new ChatHelper;
-        let roomState = new State(options.scene);
+        let roomState = new State(options.room);
         this.setState(roomState);
         // create world:
-        this.createWorld(options.scene);
+        this.createWorld(options.room);
     }
 
     onJoin(client, options, authResult)
