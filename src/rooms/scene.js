@@ -169,8 +169,8 @@ class RoomScene extends RoomLogin
                         delete(statsRow[0].user_id);
                         this.send(client, {act: share.PLAYER_STATS, stats: statsRow[0]});
                     } else {
+                        /*
                         // if stats are not found it means it's a new user then we will save the initial data:
-                        // @TODO: the stats will be part of the configuration in the database.
                         let statsSaveProm = currentPlayer.stats.saveStats(currentPlayer.id);
                         statsSaveProm.then((result) => {
                             let statsData = {hp:100, mp:100, stamina:100, atk:100, def:100, dodge:100, speed:100};
@@ -178,9 +178,13 @@ class RoomScene extends RoomLogin
                         }).catch((err) => {
                             console.log('ERROR - Can not save stats for user ID '+currentPlayer.id, err);
                         });
+                        */
+                        console.log('ERROR - Player stats not found for user ID '+currentPlayer.id);
+                        // @TODO: disconnect player.
                     }
                 }).catch((err) => {
                     console.log('ERROR - Can not get stats for user ID '+currentPlayer.id, err);
+                    // @TODO: disconnect player.
                 });
             }
         }

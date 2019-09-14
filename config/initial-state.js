@@ -1,6 +1,6 @@
 /**
  *
- * Reldens - config/initial-scene
+ * Reldens - config/initial-state
  *
  * Please do not to modify this file!
  * In order to override any of the default values please create an ".env" file in your project root to change the

@@ -72,7 +72,6 @@ class LoginManager
                         stats: this.config.players.initialStats,
                         hash: this.encryptPassword(userData.password)
                     });
-                    console.log('newUser:', newUser);
                     newUser.players[0].scene = initialState.scene;
                     return {user: newUser};
                 } catch (err) {
