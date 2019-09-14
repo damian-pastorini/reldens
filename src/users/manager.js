@@ -22,7 +22,7 @@ class UsersManager
             .eager('players.[state, stats]')
             .where('username', username)
             .first();
-        if(loadedUser.hasOwnProperty('username')){
+        if(loadedUser && loadedUser.hasOwnProperty('username')){
             result = loadedUser;
         }
         return result;
@@ -35,13 +35,13 @@ class UsersManager
         let initStats = initialData.stats;
         let createdUser = await UsersModel.query()
             .allowInsert('players.[stats, state]')
-            .insertGraph({
+            .insertWithRelatedAndFetch({
                 email: userData.email,
                 username: userData.username,
                 password: initialData.hash,
                 role_id: 1,
                 status: 1,
-                player: {
+                players: {
                     name: userData.username,
                     stats: {
                         hp: initStats.hp,
@@ -53,7 +53,7 @@ class UsersManager
                         speed: initStats.speed
                     },
                     state: {
-                        scene: initState.scene,
+                        room_id: initState.room_id,
                         x: initState.x,
                         y: initState.y,
                         dir: initState.dir

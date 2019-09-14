@@ -26,7 +26,7 @@ class LoginManager
         ){
             this.config.players = {
                 initialStats: require('../../config/initial-stats'),
-                initialState: require('../../config/initial-scene')
+                initialState: require('../../config/initial-state')
             };
         }
     }
@@ -48,29 +48,33 @@ class LoginManager
                 // if the password doesn't match return an error:
                 return {error: 'User already exists or invalid user data.'};
             } else {
-                // if everything is good then just return the user:
-                let currentPlayer = user.players[0];
-                let currentPlayerRoom = await this.roomsManager.loadRoomById(currentPlayer.state.room_id);
-                currentPlayer.scene = currentPlayerRoom.roomName;
-                return {user: user};
+                try {
+                    // if everything is good then just return the user:
+                    let player = user.players[0];
+                    let playerRoom = await this.roomsManager.loadRoomById(player.state.room_id);
+                    player.scene = playerRoom.roomName;
+                    return {user: user};
+                } catch (err) {
+                    return {error: err};
+                }
             }
         } else {
             // if the email doesn't exists in the database and it's a registration request:
             if(userData.isNewUser){
                 try {
                     // insert user, player, player state and player stats:
+                    let initialState = this.config.players.initialState;
+                    let initialRoom = await this.roomsManager.loadRoomByName(initialState.scene);
+                    initialState.room_id = initialRoom.roomId;
                     let newUser = await this.usersManager.createUserWith({
                         data: userData,
-                        state: this.config.players.initialState,
+                        state: initialState,
                         stats: this.config.players.initialStats,
                         hash: this.encryptPassword(userData.password)
                     });
-                    // if is a new user status is always active by default:
-                    userData.isNewUser = false;
-                    userData.role_id = 1;
-                    userData.status = 1;
-                    userData.state = `{"scene":"${initState.room}","x":"${initState.x}","y":"${initState.y}","dir":"${initState.dir}"}`;
-                    return {user: userData};
+                    console.log('newUser:', newUser);
+                    newUser.players[0].scene = initialState.scene;
+                    return {user: newUser};
                 } catch (err) {
                     // if there's any error then reject:
                     console.log('ERROR - Unable to register the user.', err);
@@ -96,11 +100,11 @@ class LoginManager
 
     async startGame(client, room, authResult)
     {
-        let currentUser = await this.usersManager.loadUserByUsername(authResult.username);
-        // @TODO: for now we will only have 1 player per user, that's why we send players[0].
-        let currentPlayer = currentUser.players[0];
-        let currentPlayerRoom = await this.roomsManager.loadRoomById(currentPlayer.state.room_id);
-        currentPlayer.scene = currentPlayerRoom.roomName;
+        let user = await this.usersManager.loadUserByUsername(authResult.username);
+        // @NOTE: for now we will only have 1 player per user, that's why we send players[0].
+        let player = user.players[0];
+        let playerRoom = await this.roomsManager.loadRoomById(player.state.room_id);
+        player.scene = playerRoom.roomName;
         // update last login date:
         let updated = await this.usersManager.updateUserLastLogin(authResult.username);
         if(!updated){
@@ -110,7 +114,7 @@ class LoginManager
         room.send(client, {
             act: share.START_GAME,
             sessionId: client.sessionId,
-            player: currentPlayer,
+            player: player,
             gameConfig: this.config.gameEngine
         });
     }

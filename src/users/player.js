@@ -1,7 +1,7 @@
 const schema = require('@colyseus/schema');
 const Schema = schema.Schema;
 const type = schema.type;
-const initialScene = require('../../config/initial-scene');
+const initialState = require('../../config/initial-state');
 
 class Player extends Schema
 {
@@ -32,10 +32,10 @@ class Player extends Schema
             }
         } else {
             // initial position in initial scene (town):
-            this.scene = initialScene.scene;
-            this.x = initialScene.x;
-            this.y = initialScene.y;
-            this.dir = initialScene.dir;
+            this.scene = initialState.scene;
+            this.x = initialState.x;
+            this.y = initialState.y;
+            this.dir = initialState.dir;
         }
         this.mov = false;
     }

@@ -8,7 +8,7 @@
 
 const ConfigModel = require('./model');
 const defaultConfigGameEngine = require('../../config/game-engine');
-const defaultConfigInitialScene = require('../../config/initial-scene');
+const defaultConfigInitialState = require('../../config/initial-state');
 const defaultConfigInitialStats = require('../../config/initial-stats');
 
 class ConfigManager
@@ -19,7 +19,7 @@ class ConfigManager
         // initialize config props with default data:
         this.configList = {
             gameEngine: defaultConfigGameEngine,
-            initialScene: defaultConfigInitialScene,
+            initialState: defaultConfigInitialState,
             initialStats: defaultConfigInitialStats,
         };
         this.configListRaw = {};
