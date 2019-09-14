@@ -21,7 +21,6 @@ class RoomScene extends RoomLogin
     {
         // data server:
         super.onCreate(options);
-        console.log('options', options);
         console.log('INFO - INIT ROOM:', this.roomName);
         // @NOTE: sceneId seems to be used only for chat.
         // @NOTE: in the future not all the scene information will be sent to the client. This is because we could have
@@ -261,6 +260,7 @@ class RoomScene extends RoomLogin
 
     nextSceneInitialPosition(client, data)
     {
+        /*
         // prepare query:
         let queryString = `SELECT 
             CONCAT('[', 
@@ -280,6 +280,8 @@ class RoomScene extends RoomLogin
             WHERE s.name="${data.next}"
             GROUP BY sr.scene_id;`;
         let nextSceneProm = this.dataServer.query(queryString);
+        */
+        let nextSceneProm = this.loginManager.roomsManager.loadRoomByName(data.next);
         nextSceneProm.then((rows) => {
             let result;
             if(rows){
@@ -358,6 +360,7 @@ class RoomScene extends RoomLogin
             return false;
         }
         currentUser.isBusy = true;
+        /*
         // prepare json:
         let currentStateJson = '{'
             +'"scene":"'+currentUser.scene+'",'
@@ -370,6 +373,13 @@ class RoomScene extends RoomLogin
         let queryString = `UPDATE users SET state='${currentStateJson}' WHERE username='${currentUser.username}';`;
         // run query:
         return this.dataServer.query(queryString, args);
+        */
+        this.loginManager.usersManager.updateUserStateByPlayerId(currentUser.players[0].id, {
+            room_id: currentUser.players[0].state.room_id,
+            x: currentUser.players[0].state.x,
+            y: currentUser.players[0].state.y,
+            dir: currentUser.players[0].state.dir,
+        });
     }
 
     getClientById(clientId)

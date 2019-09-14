@@ -34,14 +34,15 @@ class Reldens
         this.gameClient.userData.username = formData['username'];
         this.gameClient.userData.password = formData['password'];
         // join initial game room, since we return the promise we don't need to catch the error here:
-        return this.gameClient.joinOrCreate(share.ROOM_GAME, this.gameClient.userData).then((gameRoom) => {
+        let joinedRoom = this.gameClient.joinOrCreate(share.ROOM_GAME, this.gameClient.userData);
+        joinedRoom.then((gameRoom) => {
             if(gameRoom.hasOwnProperty('gameConfig')){
                 // initialize game engine:
                 this.gameEngine = new GameEngine(gameRoom.gameConfig);
             }
             this.gameRoom = gameRoom;
             gameRoom.onMessage((message) => {
-                if(message.act === share.START_GAME && message.sessionId === this.gameRoom.sessionId){
+                if(message.act === share.START_GAME){ //  && message.sessionId === this.gameRoom.sessionId
                     // @TODO: chat will be loaded as feature.
                     /*
                     // initiate global chat for current user:
@@ -67,22 +68,22 @@ class Reldens
                         });
                         this.gameClient.globalChat = globalChat;
                         */
-                        this.gameClient.userData.isNewUser = false;
-                        this.activeRoom = new RoomEvents(message.player.scene, this.gameEngine, this.gameClient);
-                        this.gameClient.joinOrCreate(this.activeRoom.roomName, this.gameClient.userData).then((room) => {
-                            this.gameRoom.leave();
-                            this.activeRoom.startListen(room);
-                        }).catch((errorMessage) => {
-                            // @NOTE: the errors while trying to join a rooms/scene will always be originated in the
-                            // server. For these errors we will alert the user and reload the window automatically.
-                            alert(errorMessage);
-                            console.log('ERROR - START_GAME:', errorMessage, 'message:', message);
-                            window.location.reload();
-                        });
+                    this.gameClient.userData.isNewUser = false;
+                    this.activeRoom = new RoomEvents(message.player.scene, this.gameEngine, this.gameClient);
+                    this.gameClient.joinOrCreate(this.activeRoom.roomName, this.gameClient.userData).then((room) => {
+                        this.gameRoom.leave();
+                        this.activeRoom.startListen(room);
+                    }).catch((errorMessage) => {
+                        // @NOTE: the errors while trying to join a rooms/scene will always be originated in the
+                        // server. For these errors we will alert the user and reload the window automatically.
+                        alert(errorMessage);
+                        window.location.reload();
+                    });
                     // });
                 }
             });
         });
+        return joinedRoom;
     }
 
     initializeFeatures()

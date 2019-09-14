@@ -2,19 +2,26 @@
  *
  * Reldens - ConfigManager
  *
- * This class will manage the configurations from the database.
+ * This class will manage the configurations from the database and also include the default values in the config files.
  *
  */
 
 const ConfigModel = require('./model');
+const defaultConfigGameEngine = require('../../config/game-engine');
+const defaultConfigInitialScene = require('../../config/initial-scene');
+const defaultConfigInitialStats = require('../../config/initial-stats');
 
 class ConfigManager
 {
 
     constructor()
     {
-        // initialize config props:
-        this.configList = {};
+        // initialize config props with default data:
+        this.configList = {
+            gameEngine: defaultConfigGameEngine,
+            initialScene: defaultConfigInitialScene,
+            initialStats: defaultConfigInitialStats,
+        };
         this.configListRaw = {};
     }
 
@@ -48,6 +55,15 @@ class ConfigManager
             this.configListRaw[configEntity.path] = configEntity;
         }
         return this.configList;
+    }
+
+    getConfigByPath(path)
+    {
+        let result = false;
+        if(this.configListRaw.hasOwnProperty(path)){
+            result = this.configListRaw[path];
+        }
+        return result;
     }
 
 }

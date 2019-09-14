@@ -51,7 +51,7 @@ class LoginManager
                 // if everything is good then just return the user:
                 let currentPlayer = user.players[0];
                 let currentPlayerRoom = await this.roomsManager.loadRoomById(currentPlayer.state.room_id);
-                currentPlayer.scene = currentPlayerRoom.name;
+                currentPlayer.scene = currentPlayerRoom.roomName;
                 return {user: user};
             }
         } else {
@@ -100,15 +100,19 @@ class LoginManager
         // @TODO: for now we will only have 1 player per user, that's why we send players[0].
         let currentPlayer = currentUser.players[0];
         let currentPlayerRoom = await this.roomsManager.loadRoomById(currentPlayer.state.room_id);
-        currentPlayer.scene = currentPlayerRoom.name;
+        currentPlayer.scene = currentPlayerRoom.roomName;
         // update last login date:
         let updated = await this.usersManager.updateUserLastLogin(authResult.username);
-        console.log('updated:', updated);
         if(!updated){
             throw new Error('ERROR - User update fail.');
         }
         // client start:
-        room.send(client, {act: share.START_GAME, sessionId: client.sessionId, player: currentPlayer});
+        room.send(client, {
+            act: share.START_GAME,
+            sessionId: client.sessionId,
+            player: currentPlayer,
+            gameConfig: this.config.gameEngine
+        });
     }
 
 }

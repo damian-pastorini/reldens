@@ -7,6 +7,7 @@
  */
 
 const UsersModel = require('./model');
+const PlayersStateModel = require('./players-state-model');
 
 class UsersManager
 {
@@ -62,7 +63,7 @@ class UsersManager
         return createdUser;
     }
 
-    async updateUserLastLogin(username)
+    updateUserLastLogin(username)
     {
         // get date:
         let date = new Date();
@@ -70,6 +71,11 @@ class UsersManager
         let dateFormat = date.toISOString().slice(0, 19).replace('T', ' ');
         // save user:
         return UsersModel.query().patch({updated_at: dateFormat}).where('username', username);
+    }
+
+    updateUserStateByPlayerId(playerId, newState)
+    {
+        return PlayersStateModel.query().patch(newState).where('player_id', playerId);
     }
 
 }

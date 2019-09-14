@@ -64,37 +64,55 @@ class RoomsManager
         }
         let rooms = [];
         for (let room of roomsModels){
-            let temp = {
-                roomId: room.id,
-                roomName: room.name,
-                roomTitle: room.title,
-                roomMap: room.map_filename,
-                roomImages: room.scene_images,
-                changePoints: [],
-                returnPoints: []
-            };
-            // assign to room:
-            for (let changePoint of room.rooms_change_points){
-                temp.changePoints.push({i: changePoint.tile_index, n: changePoint.next_room.name});
-            }
-            // assign to room:
-            for (let returnPosition of room.rooms_return_points){
-                // this array translates to D for direction, X and Y for positions, De for default and P for next room.
-                let toRoomName = returnPosition.to_room ? returnPosition.to_room.name : '';
-                let posTemp = {D: returnPosition.direction, X: returnPosition.x, Y: returnPosition.y, P: toRoomName};
-                if(returnPosition.hasOwnProperty('is_default') && returnPosition.is_default){
-                    posTemp.De = returnPosition.is_default;
-                }
-                temp.returnPoints.push(posTemp);
-            }
+            let temp = this.generateRoomModel(room);
             rooms.push(temp);
         }
         return rooms;
     }
 
-    loadRoomById(roomId)
+    async loadRoomById(roomId)
     {
-        return Rooms.query().findById(roomId);
+        let room = await Rooms.query()
+            .eager('[rooms_change_points.next_room, rooms_return_points.to_room]')
+            .findById(roomId);
+        return this.generateRoomModel(room);
+    }
+
+    async loadRoomByName(roomName)
+    {
+        let room = await Rooms.query()
+            .eager('[rooms_change_points.next_room, rooms_return_points.to_room]')
+            .where('name', roomName)
+            .first();
+        return this.generateRoomModel(room);
+    }
+
+    generateRoomModel(room)
+    {
+        let temp = {
+            roomId: room.id,
+            roomName: room.name,
+            roomTitle: room.title,
+            roomMap: room.map_filename,
+            roomImages: room.scene_images,
+            changePoints: [],
+            returnPoints: []
+        };
+        // assign to room:
+        for (let changePoint of room.rooms_change_points){
+            temp.changePoints.push({i: changePoint.tile_index, n: changePoint.next_room.name});
+        }
+        // assign to room:
+        for (let returnPosition of room.rooms_return_points){
+            // this array translates to D for direction, X and Y for positions, De for default and P for next room.
+            let toRoomName = returnPosition.to_room ? returnPosition.to_room.name : '';
+            let posTemp = {D: returnPosition.direction, X: returnPosition.x, Y: returnPosition.y, P: toRoomName};
+            if(returnPosition.hasOwnProperty('is_default') && returnPosition.is_default){
+                posTemp.De = returnPosition.is_default;
+            }
+            temp.returnPoints.push(posTemp);
+        }
+        return temp;
     }
 
 }

@@ -1,21 +1,28 @@
-const DataLink = require('../storage/data-server');
+// const DataLink = require('../storage/data-server');
+const PlayersStatsModel = require('./players-stats-model');
 
 class PlayerStats
 {
 
-    constructor(userId)
+    constructor(playerId)
     {
-        this.userId = userId;
+        this.playerId = playerId;
     }
 
     loadSavedStats()
     {
-        let queryString = `SELECT * FROM users_stats WHERE user_id = ${this.userId}`;
+        /*
+        let queryString = `SELECT * FROM users_stats WHERE user_id = ${this.playerId}`;
         return DataLink.query(queryString);
+        */
+        return PlayersStatsModel.query().where('player_id', this.playerId).first();
     }
 
     saveStats(playerId, statsData = false)
     {
+        // @TODO: save stats.
+        console.log('TODO - Save stats.');
+        /*
         let statsDataString = '100, 100, 100, 100, 100, 100, 100';
         if(statsData) {
             statsDataString = `${statsData.hp}, 
@@ -28,6 +35,7 @@ class PlayerStats
         }
         let queryString = `INSERT INTO users_stats VALUES(NULL, ?, ${statsDataString})`;
         return DataLink.query(queryString, playerId);
+        */
     }
 
     setData(statsData)

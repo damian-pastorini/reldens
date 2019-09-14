@@ -10,7 +10,6 @@ class SceneDynamic extends Phaser.Scene
         super({key});
         this.key = key;
         this.params = data;
-        console.log('scene dynamic data', data);
         this.layers = {};
         this.transition = true;
         this.withTSAnimation = false;

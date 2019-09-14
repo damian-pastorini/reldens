@@ -51,6 +51,7 @@ $(document).ready(function($){
                 username: $register.find('#reg_username').val(),
                 password: $register.find('#reg_password').val()
             };
+            console.log('formData', formData);
             startGame(formData, true);
         });
         $register.validate({

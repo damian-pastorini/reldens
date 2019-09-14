@@ -40,15 +40,6 @@ class Player extends Schema
         this.mov = false;
     }
 
-    updateLastLogin()
-    {
-        let queryString = `UPDATE users SET updated_at = CURRENT_TIMESTAMP WHERE username='${this.username}'`;
-        let lastLoginProm = DataLink.query(queryString);
-        lastLoginProm.catch((err) => {
-            console.log('ERROR - Update last login query fail.', err, queryString);
-        });
-    }
-
 }
 
 type('string')(Player.prototype, 'sessionId');
