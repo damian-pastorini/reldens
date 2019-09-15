@@ -1,3 +1,11 @@
+![Reldens - GitHub - Release](https://www.dwdeveloper.com/media/reldens/reldens-mmorpg.png)
+
+![Reldens - GitHub - Release](https://img.shields.io/github/v/release/damian-pastorini/reldens?style=for-the-badge)
+![Reldens - GitHub - Stars](https://img.shields.io/github/stars/damian-pastorini/reldens?color=green&style=for-the-badge)
+![Reldens - Discord](https://img.shields.io/discord/599108949312143370?style=for-the-badge)
+![Reldens - Licence - MIT](https://img.shields.io/github/license/damian-pastorini/reldens?color=blue&style=for-the-badge)
+
+
 # Reldens - MMORPG Platform
 
 ## About the project
