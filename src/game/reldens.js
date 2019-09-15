@@ -2,7 +2,7 @@ const GameClient = require('./game-client');
 const GameEngine = require('./game-engine');
 const RoomEvents = require('./room-events');
 const share = require('../utils/constants');
-const gameConfig = require('../../config/server');
+const gameSeverConfig = require('../../config/server');
 
 class Reldens
 {
@@ -10,7 +10,7 @@ class Reldens
     constructor()
     {
         // setup game client, colyseus extended class:
-        this.gameClient = new GameClient(this.getServerUrl());
+        this.gameClient = new GameClient(this);
         // the game engine will be initialized after the user joined the game:
         this.gameEngine = false;
         // game room will be used for login:
@@ -34,15 +34,16 @@ class Reldens
         this.gameClient.userData.username = formData['username'];
         this.gameClient.userData.password = formData['password'];
         // join initial game room, since we return the promise we don't need to catch the error here:
-        let joinedRoom = this.gameClient.joinOrCreate(share.ROOM_GAME, this.gameClient.userData);
-        joinedRoom.then((gameRoom) => {
-            if(gameRoom.hasOwnProperty('gameConfig')){
-                // initialize game engine:
-                this.gameEngine = new GameEngine(gameRoom.gameConfig);
-            }
+        let gameRoom = this.gameClient.joinOrCreate(share.ROOM_GAME, this.gameClient.userData);
+        gameRoom.then((gameRoom) => {
             this.gameRoom = gameRoom;
             gameRoom.onMessage((message) => {
-                if(message.act === share.START_GAME){ //  && message.sessionId === this.gameRoom.sessionId
+                // only the current client will get this message:
+                if(message.act === share.START_GAME){
+                    if(message.hasOwnProperty('gameConfig')){
+                        // initialize game engine:
+                        this.gameEngine = new GameEngine(message.gameConfig);
+                    }
                     // @TODO: chat will be loaded as feature.
                     /*
                     // initiate global chat for current user:
@@ -83,7 +84,7 @@ class Reldens
                 }
             });
         });
-        return joinedRoom;
+        return gameRoom;
     }
 
     initializeFeatures()
@@ -94,8 +95,8 @@ class Reldens
     getServerUrl()
     {
         if(!this.clientUrl){
-            if(gameConfig.hasOwnProperty('serverUrl')){
-                this.clientUrl = gameConfig.serverUrl;
+            if(gameSeverConfig.hasOwnProperty('serverUrl')){
+                this.clientUrl = gameSeverConfig.serverUrl;
             } else {
                 let host = window.location.hostname;
                 let wsProtocol = 'ws://';

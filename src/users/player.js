@@ -9,6 +9,7 @@ class Player extends Schema
     constructor(data, sessionId)
     {
         super();
+        this.stats = data.players[0].stats;
         // player data:
         this.id = data.id;
         this.sessionId = sessionId;
@@ -17,6 +18,7 @@ class Player extends Schema
         this.username = data.username;
         this.isBusy = false;
         this.p2body = false;
+        // @TODO: fix state.
         // initial scene and position:
         if(data.state){
             // parse user state:

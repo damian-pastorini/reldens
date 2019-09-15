@@ -12,7 +12,6 @@ const State = require('../server/state');
 // const ChatHelper = require('../chat/chat-helper');
 const share = require('../utils/constants');
 const P2world = require('../world/p2world');
-const PlayerStats = require('../users/player-stats');
 
 class RoomScene extends RoomLogin
 {
@@ -149,7 +148,6 @@ class RoomScene extends RoomLogin
                 // @TODO: move chat to features.
                 // this.chatHelper.saveMessage(message, currentPlayer, this.sceneId, {}, false);
             }
-            */
             if(data.act === share.CLIENT_JOINED){
                 // @TODO: broadcast message of players joining rooms will be part of the configuration in the database.
                 let sentText = `${currentPlayer.username} has joined ${this.roomName}.`;
@@ -158,34 +156,12 @@ class RoomScene extends RoomLogin
                 // @TODO: move chat to features.
                 // this.chatHelper.saveMessage(this.roomName, currentPlayer, this.sceneId, false, share.CHAT_JOINED);
             }
+            */
             if(data.act === share.PLAYER_STATS){
-                // player stats:
-                currentPlayer.stats = new PlayerStats(currentPlayer.id);
-                let loadStatsProm = currentPlayer.stats.loadSavedStats();
-                loadStatsProm.then((statsRow) => {
-                    if(statsRow.length){
-                        currentPlayer.stats.setData(statsRow[0]);
-                        delete(statsRow[0].id);
-                        delete(statsRow[0].user_id);
-                        this.send(client, {act: share.PLAYER_STATS, stats: statsRow[0]});
-                    } else {
-                        /*
-                        // if stats are not found it means it's a new user then we will save the initial data:
-                        let statsSaveProm = currentPlayer.stats.saveStats(currentPlayer.id);
-                        statsSaveProm.then((result) => {
-                            let statsData = {hp:100, mp:100, stamina:100, atk:100, def:100, dodge:100, speed:100};
-                            this.send(client, {act: share.PLAYER_STATS, stats: statsData});
-                        }).catch((err) => {
-                            console.log('ERROR - Can not save stats for user ID '+currentPlayer.id, err);
-                        });
-                        */
-                        console.log('ERROR - Player stats not found for user ID '+currentPlayer.id);
-                        // @TODO: disconnect player.
-                    }
-                }).catch((err) => {
-                    console.log('ERROR - Can not get stats for user ID '+currentPlayer.id, err);
-                    // @TODO: disconnect player.
-                });
+                // @TODO: unset not needed data from stats?
+                // delete(statsRow[0].id);
+                // delete(statsRow[0].user_id);
+                this.send(client, {act: share.PLAYER_STATS, stats: currentPlayer.stats});
             }
         }
     }
@@ -264,38 +240,18 @@ class RoomScene extends RoomLogin
 
     nextSceneInitialPosition(client, data)
     {
-        /*
-        // prepare query:
-        let queryString = `SELECT 
-            CONCAT('[', 
-                    GROUP_CONCAT(
-                        DISTINCT 
-                            '{"D":"', sr.direction, 
-                            '", "X":', sr.x,
-                             ', "Y":', sr.y,
-                             (IF (sr.is_default IS NULL, '', (CONCAT(', "De":', sr.is_default)))),
-                             (IF(sr.to_scene_id IS NULL, '', (CONCAT(', "P":', (SELECT CONCAT('"', name, '"') FROM scenes WHERE id = sr.to_scene_id))))),
-                             '}' 
-                        SEPARATOR ','),
-                ']') as return_positions
-            FROM scenes_return_points AS sr
-            LEFT JOIN scenes AS s
-            ON sr.scene_id = s.id
-            WHERE s.name="${data.next}"
-            GROUP BY sr.scene_id;`;
-        let nextSceneProm = this.dataServer.query(queryString);
-        */
         let nextSceneProm = this.loginManager.roomsManager.loadRoomByName(data.next);
-        nextSceneProm.then((rows) => {
-            let result;
-            if(rows){
-                // there should be only 1 row always:
-                let positions = JSON.parse(rows[0].return_positions);
-                result = {data: data, positions: positions};
+        nextSceneProm.then((nextRoom) => {
+            let result = {};
+            if(nextRoom){
+                result = {data: data, positions: nextRoom.returnPoints};
             }
             let currentPlayer = this.state.players[client.sessionId];
             for(let newPosition of result.positions){
-                if(!newPosition.hasOwnProperty('P') || newPosition.P === result.data.prev){
+                // @NOTE: P === false means there's only one room that would lead to this one. If there's more than one
+                // possible room then validate the previous one.
+                // validate if previous room:
+                if(!newPosition.P || newPosition.P === result.data.prev){
                     currentPlayer.scene = result.data.next;
                     currentPlayer.x = parseFloat(newPosition.X);
                     currentPlayer.y = parseFloat(newPosition.Y);
@@ -303,23 +259,22 @@ class RoomScene extends RoomLogin
                     let stateSaved = this.savePlayerState(client.sessionId);
                     if(stateSaved !== false){
                         stateSaved.then((stateResult) => {
-                            if(stateResult.changedRows){
-                                // @NOTE: we need to broadcast the current player scene change to be removed or added in other players:
-                                this.broadcast({
-                                    act: share.CHANGED_SCENE,
-                                    id: client.sessionId,
-                                    scene: currentPlayer.scene,
-                                    prev: result.data.prev,
-                                    x: currentPlayer.x,
-                                    y: currentPlayer.y,
-                                    dir: currentPlayer.dir,
-                                });
-                                // remove body from server world:
-                                let bodyToRemove = currentPlayer.p2body;
-                                this.p2world.removeBody(bodyToRemove);
-                                // reconnect is to create the player in the new scene:
-                                this.send(client, {act: share.RECONNECT, player: currentPlayer, prev: result.data.prev});
-                            }
+                            // @NOTE: we need to broadcast the current player scene change to be removed or added in
+                            // other players.
+                            this.broadcast({
+                                act: share.CHANGED_SCENE,
+                                id: client.sessionId,
+                                scene: currentPlayer.scene,
+                                prev: result.data.prev,
+                                x: currentPlayer.x,
+                                y: currentPlayer.y,
+                                dir: currentPlayer.dir,
+                            });
+                            // remove body from server world:
+                            let bodyToRemove = currentPlayer.p2body;
+                            this.p2world.removeBody(bodyToRemove);
+                            // reconnect is to create the player in the new scene:
+                            this.send(client, {act: share.RECONNECT, player: currentPlayer, prev: result.data.prev});
                         }).catch((err) => {
                             console.log('ERROR - Save state error:', client.sessionId, err);
                         });
@@ -356,34 +311,23 @@ class RoomScene extends RoomLogin
         }
     }
 
-    savePlayerState(sessionId)
+    async savePlayerState(sessionId)
     {
         // set player busy as long the state is been saved:
-        let currentUser = this.getPlayer(sessionId);
-        if(currentUser.isBusy){
+        let player = this.getPlayer(sessionId);
+        if(player.isBusy){
             return false;
         }
-        currentUser.isBusy = true;
-        /*
-        // prepare json:
-        let currentStateJson = '{'
-            +'"scene":"'+currentUser.scene+'",'
-            +'"x":"'+parseFloat(currentUser.x).toFixed(2)+'",'
-            +'"y":"'+parseFloat(currentUser.y).toFixed(2)+'",'
-            +'"dir":"'+currentUser.dir+'"'
-            +'}';
-        let args = {sessionId: sessionId};
-        // prepare query:
-        let queryString = `UPDATE users SET state='${currentStateJson}' WHERE username='${currentUser.username}';`;
-        // run query:
-        return this.dataServer.query(queryString, args);
-        */
-        this.loginManager.usersManager.updateUserStateByPlayerId(currentUser.players[0].id, {
-            room_id: currentUser.players[0].state.room_id,
-            x: currentUser.players[0].state.x,
-            y: currentUser.players[0].state.y,
-            dir: currentUser.players[0].state.dir,
-        });
+        player.isBusy = true;
+        let room = await this.loginManager.roomsManager.loadRoomByName(player.scene);
+        let newPlayerData = {
+            room_id: room.roomId,
+            x: player.x,
+            y: player.y,
+            dir: player.dir,
+        };
+        // @TODO: temporal getting player_id from stats here.
+        return this.loginManager.usersManager.updateUserStateByPlayerId(player.stats.player_id, newPlayerData);
     }
 
     getClientById(clientId)

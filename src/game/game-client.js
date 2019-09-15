@@ -4,20 +4,21 @@ const RoomEvents = require('./room-events');
 class GameClient extends ColyseusClient
 {
 
-    constructor(serverUrl)
+    constructor(reldens)
     {
-        super(serverUrl);
+        super(reldens.getServerUrl());
+        this.reldens = reldens;
         this.userData = {};
     }
 
     // reconnect custom method to change rooms and scenes:
-    reconnectColyseus(message, previousRoom)
+    reconnectGameClient(message, previousRoom)
     {
-        let newRoom = new RoomEvents(message.player.scene, this.phaserGame, this);
+        let newRoom = new RoomEvents(message.player.scene, this.reldens.gameEngine, this);
         this.joinOrCreate(newRoom.roomName, this.userData).then((sceneRoom) => {
             // leave old room:
             previousRoom.leave();
-            this.phaserGame.colyseusRoom = sceneRoom;
+            this.reldens.gameEngine.colyseusRoom = sceneRoom;
             this.activeRoom = newRoom;
             this.room = sceneRoom;
             // start listen to room events:
@@ -26,7 +27,7 @@ class GameClient extends ColyseusClient
             // @NOTE: the errors while trying to reconnect will always be originated in the server. For these errors we
             // will alert the user and reload the window automatically.
             alert(errorMessage);
-            console.log('ERROR - reconnectColyseus:', errorMessage, 'message:', message, 'previousRoom:', previousRoom);
+            console.log('ERROR - reconnectGameClient:', errorMessage, 'message:', message, 'previousRoom:', previousRoom);
             window.location.reload();
         });
     };

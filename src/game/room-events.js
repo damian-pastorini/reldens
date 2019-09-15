@@ -6,14 +6,14 @@ const share = require('../utils/constants');
 class RoomEvents
 {
 
-    constructor(roomName, phaserGame, colyseusClient)
+    constructor(roomName, gameEngine, gameClient)
     {
-        this.colyseusClient = colyseusClient;
-        this.phaserGame = phaserGame;
+        this.gameClient = gameClient;
+        this.gameEngine = gameEngine;
         this.room = false;
         this.roomName = roomName;
         this.sceneData = false;
-        this.globalChat = colyseusClient.globalChat;
+        this.globalChat = gameClient.globalChat;
     }
 
     getSceneData(room)
@@ -136,10 +136,10 @@ class RoomEvents
             }
             // @NOTE: here we don't need to evaluate the id since the reconnect only is sent to the current client.
             if(message.act === share.RECONNECT){
-                this.colyseusClient.reconnectColyseus(message, this.room);
+                this.gameClient.reconnectGameClient(message, this.room);
             }
             // chat events:
-            let uiScene = this.phaserGame.uiScene;
+            let uiScene = this.gameEngine.uiScene;
             if(uiScene && message.act === share.CHAT_ACTION){
                 let readPanel = uiScene.uiChat.getChildByProperty('id', share.CHAT_MESSAGES);
                 if(readPanel){
@@ -149,7 +149,7 @@ class RoomEvents
             }
             // @TODO: remove statsDisplayed, check why stats are been created more than once.
             // @NOTE: stats interface like the chat should be created once when the game is initialized.
-            if(message.act === share.PLAYER_STATS && !this.phaserGame.statsDisplayed){
+            if(message.act === share.PLAYER_STATS && !this.gameEngine.statsDisplayed){
                 let currentScene = this.getActiveScene();
                 if(currentScene.player && currentScene.player.players.hasOwnProperty(room.sessionId)){
                     let playerToMove = currentScene.player.players[room.sessionId];
@@ -177,7 +177,7 @@ class RoomEvents
                                 statsBox.style.left = '0px';
                             }
                         });
-                        this.phaserGame.statsDisplayed = true;
+                        this.gameEngine.statsDisplayed = true;
                     }
                 }
             }
@@ -193,16 +193,17 @@ class RoomEvents
         });
     }
 
+    /* @TODO: re-implement in features.
     registerChat()
     {
         // @TODO: temporal fix, analyze the issue, probably related to the first event attached to the input.
         // @NOTE: the issue seems to be that the register chat like the player stats runs every time the scene is
         // created, which runs multiple times and we only need to register the chat and the stats once and then when
         // the scene changes we only need to update the events or the contents if required.
-        if(gameClient.hasOwnProperty('room') && gameClient.room.id !== this.room.id){
-            this.room = gameClient.room;
+        if(this.gameClient.hasOwnProperty('room') && this.gameClient.room.id !== this.room.id){
+            this.room = this.gameClient.room;
         }
-        let uiScene = this.phaserGame.uiScene;
+        let uiScene = this.gameEngine.uiScene;
         let chatInput = uiScene.uiChat.getChildByProperty('id', share.CHAT_INPUT);
         let chatSendButton = uiScene.uiChat.getChildByProperty('id', share.CHAT_SEND_BUTTON);
         if(chatInput){
@@ -258,23 +259,24 @@ class RoomEvents
         }
         chatInput.value = '';
     }
+    */
 
     startPhaserScene(message, room, previousScene = false)
     {
         let sceneData = this.getSceneData(room);
-        let preloaderName = share.SCENE_PRELOADER+sceneData.sceneName;
+        let preloaderName = share.SCENE_PRELOADER+sceneData.roomName;
         let uiScene = false;
-        if(!this.phaserGame.uiScene){
+        if(!this.gameEngine.uiScene){
             uiScene = true;
         }
         let scenePreloader = new ScenePreloader(preloaderName, sceneData.roomMap, sceneData.sceneImages, uiScene);
-        if(!this.phaserGame.scene.getScene(preloaderName)){
-            this.phaserGame.scene.add(preloaderName, scenePreloader, true);
-            let preloader = this.phaserGame.scene.getScene(preloaderName);
+        if(!this.gameEngine.scene.getScene(preloaderName)){
+            this.gameEngine.scene.add(preloaderName, scenePreloader, true);
+            let preloader = this.gameEngine.scene.getScene(preloaderName);
             preloader.load.on('complete', () => {
                 // set ui on first preloader scene:
-                if(!this.phaserGame.uiScene){
-                    this.phaserGame.uiScene = preloader;
+                if(!this.gameEngine.uiScene){
+                    this.gameEngine.uiScene = preloader;
                     let element = preloader.uiBoxRight.getChildByProperty('className', 'player-name');
                     if(element){
                         element.innerHTML = message.player.username;
@@ -289,20 +291,20 @@ class RoomEvents
 
     createPhaserScene(message, room, previousScene, sceneData)
     {
-        if(!this.phaserGame.scene.getScene(message.player.scene)){
+        if(!this.gameEngine.scene.getScene(message.player.scene)){
             let phaserDynamicScene = new DynamicScene(message.player.scene, sceneData);
-            this.phaserGame.scene.add(message.player.scene, phaserDynamicScene, false);
+            this.gameEngine.scene.add(message.player.scene, phaserDynamicScene, false);
         }
-        if(!this.phaserGame.colyseusRoom){
-            this.phaserGame.scene.start(message.player.scene);
+        if(!this.gameEngine.colyseusRoom){
+            this.gameEngine.scene.start(message.player.scene);
         } else {
             if(previousScene){
-                this.phaserGame.scene.stop(previousScene);
-                this.phaserGame.scene.start(message.player.scene);
+                this.gameEngine.scene.stop(previousScene);
+                this.gameEngine.scene.start(message.player.scene);
             }
         }
-        this.phaserGame.colyseusRoom = room;
-        let currentScene = this.phaserGame.scene.getScene(message.player.scene);
+        this.gameEngine.colyseusRoom = room;
+        let currentScene = this.gameEngine.scene.getScene(message.player.scene);
         let playerPos = {
             x: parseFloat(message.player.x),
             y: parseFloat(message.player.y),
@@ -324,19 +326,21 @@ class RoomEvents
         }
         // request player stats after the player was add to the scene:
         room.send({act: share.PLAYER_STATS});
+        /* @TODO: re-implement in chat feture.
         // for last register the chat:
-        this.registerChat();
+        // this.registerChat();
+        */
     }
 
     getActiveScene()
     {
-        if(!this.phaserGame.scene.getScene(this.roomName)){
+        if(!this.gameEngine.scene.getScene(this.roomName)){
             if(this.sceneData){
                 let phaserDynamicScene = new DynamicScene(this.roomName, this.sceneData);
-                this.phaserGame.scene.add(this.roomName, phaserDynamicScene, false);
+                this.gameEngine.scene.add(this.roomName, phaserDynamicScene, false);
             }
         }
-        return this.phaserGame.scene.getScene(this.roomName);
+        return this.gameEngine.scene.getScene(this.roomName);
     }
 
 }

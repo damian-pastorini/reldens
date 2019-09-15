@@ -94,7 +94,7 @@ class RoomsManager
             roomName: room.name,
             roomTitle: room.title,
             roomMap: room.map_filename,
-            roomImages: room.scene_images,
+            sceneImages: room.scene_images,
             changePoints: [],
             returnPoints: []
         };
@@ -104,8 +104,8 @@ class RoomsManager
         }
         // assign to room:
         for (let returnPosition of room.rooms_return_points){
-            // this array translates to D for direction, X and Y for positions, De for default and P for next room.
-            let toRoomName = returnPosition.to_room ? returnPosition.to_room.name : '';
+            // this array translates to D for direction, X and Y for positions, De for default and P for previous room.
+            let toRoomName = returnPosition.to_room ? returnPosition.to_room.name : false;
             let posTemp = {D: returnPosition.direction, X: returnPosition.x, Y: returnPosition.y, P: toRoomName};
             if(returnPosition.hasOwnProperty('is_default') && returnPosition.is_default){
                 posTemp.De = returnPosition.is_default;
