@@ -70,7 +70,7 @@ class Reldens
                         this.gameClient.globalChat = globalChat;
                         */
                     this.gameClient.userData.isNewUser = false;
-                    this.activeRoom = new RoomEvents(message.player.scene, this.gameEngine, this.gameClient);
+                    this.activeRoom = new RoomEvents(message.player.state.scene, this.gameEngine, this.gameClient);
                     this.gameClient.joinOrCreate(this.activeRoom.roomName, this.gameClient.userData).then((room) => {
                         this.gameRoom.leave();
                         this.activeRoom.startListen(room);

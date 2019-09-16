@@ -1,15 +1,21 @@
 const share = require('../utils/constants');
 
-class Player
+class PlayerEngine
 {
 
-    constructor(scene, room, position)
+    constructor(scene, playerData)
     {
+        /*
+            x: parseFloat(playerData.state.x),
+            y: parseFloat(playerData.state.y),
+            dir: playerData.state.dir
+        */
         this.username = '';
         this.scene = scene;
-        this.room = room;
-        this.position = position;
-        this.dir = '';
+        this.room = playerData.state.scene;
+        this.state = playerData.state;
+        // this.position = position;
+        // this.dir = '';
         this.mov = false;
         this.socket = {};
         this.playerId = '';
@@ -18,7 +24,7 @@ class Player
 
     create()
     {
-        this.addPlayer(this.playerId, this.position.x, this.position.y, this.position.direction);
+        this.addPlayer(this.playerId, this.state);
         this.scene.cameras.main.fadeFrom(share.FADE_DURATION);
         this.scene.scene.setVisible(true, this.room);
         this.scene.physics.world.setBounds(0, 0, this.scene.map.widthInPixels, this.scene.map.heightInPixels);
@@ -27,11 +33,12 @@ class Player
         this.players[this.playerId].setCollideWorldBounds(true);
     }
 
-    addPlayer(id, x, y, direction)
+    addPlayer(id, state)
     {
-        this.players[id] = this.scene.physics.add.sprite(x, y, share.IMAGE_PLAYER);
-        this.players[id].anims.play(direction);
+        this.players[id] = this.scene.physics.add.sprite(state.x, state.y, share.IMAGE_PLAYER);
+        this.players[id].anims.play(state.dir);
         this.players[id].anims.stop();
+        return this.players[id];
     }
 
     left(send = true)
@@ -76,4 +83,4 @@ class Player
 
 }
 
-module.exports = Player;
+module.exports = PlayerEngine;

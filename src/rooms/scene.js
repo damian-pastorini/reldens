@@ -84,8 +84,8 @@ class RoomScene extends RoomLogin
             id: client.sessionId,
             width: this.config.server.players.size.width,
             height: this.config.server.players.size.height,
-            x: currentPlayer.x,
-            y: currentPlayer.y,
+            x: currentPlayer.state.x,
+            y: currentPlayer.state.y,
         });
     }
 
@@ -167,11 +167,11 @@ class RoomScene extends RoomLogin
         }
     }
 
-    createWorld(sceneData)
+    createWorld(roomData)
     {
         let roomWorld = new P2world({
             sceneName: this.roomName,
-            sceneData: sceneData,
+            roomData: roomData,
             gravity: [0, 0],
             applyGravity: false
         });
@@ -185,7 +185,7 @@ class RoomScene extends RoomLogin
         this.worldTimer = this.clock.setInterval(() => {
             this.p2world.step(this.timeStep);
         }, 1000 * this.timeStep);
-        console.log('INFO - P2 World created in Room:', this.roomName);
+        console.log('INFO - World created in Room:', this.roomName);
     }
 
     assignCollisions()
@@ -224,7 +224,7 @@ class RoomScene extends RoomLogin
                 if(wallBody.changeScenePoint){
                     // scene change data:
                     let changeScene = wallBody.changeScenePoint;
-                    let previousScene = contactPlayer.scene;
+                    let previousScene = contactPlayer.state.scene;
                     let changeData = {prev: previousScene, next: changeScene};
                     // check if the player is not changing scenes already:
                     if(currentPlayerBody.isChangingScene === false){
@@ -253,10 +253,10 @@ class RoomScene extends RoomLogin
                 // possible room then validate the previous one.
                 // validate if previous room:
                 if(!newPosition.P || newPosition.P === result.data.prev){
-                    currentPlayer.scene = result.data.next;
-                    currentPlayer.x = parseFloat(newPosition.X);
-                    currentPlayer.y = parseFloat(newPosition.Y);
-                    currentPlayer.dir = newPosition.D;
+                    currentPlayer.state.scene = result.data.next;
+                    currentPlayer.state.x = parseFloat(newPosition.X);
+                    currentPlayer.state.y = parseFloat(newPosition.Y);
+                    currentPlayer.state.dir = newPosition.D;
                     let stateSaved = this.savePlayerState(client.sessionId);
                     if(stateSaved !== false){
                         stateSaved.then((stateResult) => {
@@ -265,11 +265,11 @@ class RoomScene extends RoomLogin
                             this.broadcast({
                                 act: share.CHANGED_SCENE,
                                 id: client.sessionId,
-                                scene: currentPlayer.scene,
+                                scene: currentPlayer.state.scene,
                                 prev: result.data.prev,
-                                x: currentPlayer.x,
-                                y: currentPlayer.y,
-                                dir: currentPlayer.dir,
+                                x: currentPlayer.state.x,
+                                y: currentPlayer.state.y,
+                                dir: currentPlayer.state.dir,
                             });
                             // remove body from server world:
                             let bodyToRemove = currentPlayer.p2body;
@@ -320,12 +320,12 @@ class RoomScene extends RoomLogin
             return false;
         }
         player.isBusy = true;
-        let room = await this.loginManager.roomsManager.loadRoomByName(player.scene);
+        let room = await this.loginManager.roomsManager.loadRoomByName(player.state.scene);
         let newPlayerData = {
             room_id: room.roomId,
-            x: player.x,
-            y: player.y,
-            dir: player.dir,
+            x: player.state.x,
+            y: player.state.y,
+            dir: player.state.dir
         };
         // @TODO: temporal getting player_id from stats here.
         return this.loginManager.usersManager.updateUserStateByPlayerId(player.stats.player_id, newPlayerData);

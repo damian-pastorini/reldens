@@ -35,13 +35,13 @@ class State extends Schema
     {
         if(data.hasOwnProperty('dir')){
             this.players[id].mov = true;
-            this.players[id].dir = data.dir;
+            this.players[id].state.dir = data.dir;
             // @TODO: validate body movement be optional and part of the configuration in the database.
             // if(data.dir === share.RIGHT || data.dir === share.LEFT){
-            this.players[id].x = data.x;
+            this.players[id].state.x = data.x;
             // }
             // if(data.dir === share.UP || data.dir === share.DOWN){
-            this.players[id].y = data.y;
+            this.players[id].state.y = data.y;
             // }
         }
     }
@@ -56,8 +56,8 @@ class State extends Schema
                 result = false;
             }
             this.players[id].mov = result;
-            this.players[id].x = data.x;
-            this.players[id].y = data.y;
+            this.players[id].state.x = data.x;
+            this.players[id].state.y = data.y;
         }
     }
 

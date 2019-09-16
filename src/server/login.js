@@ -52,7 +52,7 @@ class LoginManager
                     // if everything is good then just return the user:
                     let player = user.players[0];
                     let playerRoom = await this.roomsManager.loadRoomById(player.state.room_id);
-                    player.scene = playerRoom.roomName;
+                    player.state.scene = playerRoom.roomName;
                     return {user: user};
                 } catch (err) {
                     return {error: err};
@@ -72,7 +72,7 @@ class LoginManager
                         stats: this.config.players.initialStats,
                         hash: this.encryptPassword(userData.password)
                     });
-                    newUser.players[0].scene = initialState.scene;
+                    newUser.players[0].state.scene = initialState.scene;
                     return {user: newUser};
                 } catch (err) {
                     // if there's any error then reject:
@@ -103,7 +103,7 @@ class LoginManager
         // @NOTE: for now we will only have 1 player per user, that's why we send players[0].
         let player = user.players[0];
         let playerRoom = await this.roomsManager.loadRoomById(player.state.room_id);
-        player.scene = playerRoom.roomName;
+        player.state.scene = playerRoom.roomName;
         // update last login date:
         let updated = await this.usersManager.updateUserLastLogin(authResult.username);
         if(!updated){

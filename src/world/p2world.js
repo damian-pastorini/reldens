@@ -17,7 +17,7 @@ class P2world extends P2.World
         super(options);
         this.applyGravity = options.applyGravity;
         this.sceneName = options.sceneName || false;
-        this.sceneTiledMapFile = options.sceneData.roomMap || false;
+        this.sceneTiledMapFile = options.roomData.roomMap || false;
         if(!this.sceneName || !this.sceneTiledMapFile){
             console.log('ERROR - World creation missing data in options:', options);
         }
@@ -26,7 +26,7 @@ class P2world extends P2.World
         // create world limits:
         this.createLimits();
         // add collisions:
-        this.setMapCollisions(options.sceneData);
+        this.setMapCollisions(options.roomData);
     }
 
     setMapCollisions(mapData)

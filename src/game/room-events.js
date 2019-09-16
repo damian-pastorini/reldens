@@ -1,4 +1,4 @@
-const PhaserPlayer = require('../users/client-player');
+const PlayerEngine = require('../users/player-engine');
 const DynamicScene = require('./scene-dynamic');
 const ScenePreloader = require('./scene-preloader');
 const share = require('../utils/constants');
@@ -13,7 +13,8 @@ class RoomEvents
         this.room = false;
         this.roomName = roomName;
         this.sceneData = false;
-        this.globalChat = gameClient.globalChat;
+        // @TODO: move to chat feature.
+        // this.globalChat = gameClient.globalChat;
     }
 
     getSceneData(room)
@@ -30,47 +31,47 @@ class RoomEvents
         // listen to changes coming from the server:
         this.room.state.players.onChange = (player, key) => {
             // do not move player if is changing scene:
-            if(player.scene !== this.roomName){
+            if(player.state.scene !== this.roomName){
                 return;
             }
             this.getSceneData(this.room);
             let currentScene = this.getActiveScene();
             if(currentScene.player && currentScene.player.players.hasOwnProperty(key)){
-                let playerToMove = currentScene.player.players[key];
-                if(playerToMove){
+                let playerSprite = currentScene.player.players[key];
+                if(playerSprite){
                     // @NOTE: player speed is defined by the server.
-                    if(player.x !== playerToMove.x){
-                        if(key !== this.room.sessionId && playerToMove.anims){
-                            if(player.x < playerToMove.x){
-                                playerToMove.anims.play(share.LEFT, true);
+                    if(player.state.x !== playerSprite.x){
+                        if(key !== this.room.sessionId && playerSprite.anims){
+                            if(player.state.x < playerSprite.x){
+                                playerSprite.anims.play(share.LEFT, true);
                             } else {
-                                playerToMove.anims.play(share.RIGHT, true);
+                                playerSprite.anims.play(share.RIGHT, true);
                             }
                         }
-                        playerToMove.x = parseFloat(player.x);
+                        playerSprite.x = parseFloat(player.state.x);
                     }
-                    if(player.y !== playerToMove.y){
-                        if(key !== this.room.sessionId && playerToMove.anims){
-                            if(player.y < playerToMove.y){
-                                playerToMove.anims.play(share.UP, true);
+                    if(player.state.y !== playerSprite.y){
+                        if(key !== this.room.sessionId && playerSprite.anims){
+                            if(player.state.y < playerSprite.y){
+                                playerSprite.anims.play(share.UP, true);
                             } else {
-                                playerToMove.anims.play(share.DOWN, true);
+                                playerSprite.anims.play(share.DOWN, true);
                             }
                         }
-                        playerToMove.y = parseFloat(player.y);
+                        playerSprite.y = parseFloat(player.state.y);
                     }
                     // player stop action:
-                    if(key !== this.room.sessionId && player.mov !== playerToMove.mov && playerToMove.anims){
+                    if(key !== this.room.sessionId && player.mov !== playerSprite.mov && playerSprite.anims){
                         if(!player.mov){
-                            playerToMove.anims.stop();
+                            playerSprite.anims.stop();
                         }
-                        playerToMove.mov = player.mov;
+                        playerSprite.mov = player.mov;
                     }
                     // player change direction action:
-                    if(player.dir !== playerToMove.dir){
-                        playerToMove.dir = player.dir;
-                        playerToMove.anims.play(player.dir, true);
-                        playerToMove.anims.stop();
+                    if(player.state.dir !== playerSprite.dir){
+                        playerSprite.dir = player.state.dir;
+                        playerSprite.anims.play(player.state.dir, true);
+                        playerSprite.anims.stop();
                     }
                 }
             }
@@ -93,16 +94,16 @@ class RoomEvents
             this.getSceneData(this.room);
             // create current player:
             if(key === this.room.sessionId){
-                this.startPhaserScene(message, this.room, previousScene);
+                this.startEngineScene(message, this.room, previousScene);
             }
             // add new players into the current player scene:
             if(key !== this.room.sessionId){
                 let currentScene = this.getActiveScene();
-                if(currentScene.key === player.scene){
+                if(currentScene.key === player.state.scene){
                     if(currentScene.player && currentScene.player.players){
-                        let posX = parseFloat(player.x),
-                            posY = parseFloat(player.y);
-                        currentScene.player.addPlayer(key, posX, posY, player.dir);
+                        let posX = parseFloat(player.state.x),
+                            posY = parseFloat(player.state.y);
+                        currentScene.player.addPlayer(key, {x: posX, y: posY, dir: player.dir});
                     }
                 }
             }
@@ -114,16 +115,16 @@ class RoomEvents
             if(message.act === share.ADD_PLAYER){
                 // create current player:
                 if(message.id === this.room.sessionId){
-                    this.startPhaserScene(message, this.room, previousScene);
+                    this.startEngineScene(message, this.room, previousScene);
                 }
                 // add new players into the current player scene:
                 if(message.id !== this.room.sessionId){
                     let currentScene = this.getActiveScene();
-                    if(currentScene.key === message.player.scene){
+                    if(currentScene.key === message.player.state.scene){
                         if(currentScene.player && currentScene.player.players){
-                            let posX = parseFloat(message.player.x),
-                                posY = parseFloat(message.player.y);
-                            currentScene.player.addPlayer(message.id, posX, posY, message.player.dir);
+                            let posX = parseFloat(message.player.state.x),
+                                posY = parseFloat(message.player.state.y);
+                            currentScene.player.addPlayer(message.id, {x: posX, y: posY, dir: message.player.state.dir});
                         }
                     }
                 }
@@ -132,7 +133,7 @@ class RoomEvents
                 let currentScene = this.getActiveScene();
                 // if other users enter in the current scene we need to add them:
                 let {id, x, y, dir} = message;
-                currentScene.player.addPlayer(id, x, y, dir);
+                currentScene.player.addPlayer(id, {x: x, y: y, dir: dir});
             }
             // @NOTE: here we don't need to evaluate the id since the reconnect only is sent to the current client.
             if(message.act === share.RECONNECT){
@@ -152,8 +153,8 @@ class RoomEvents
             if(message.act === share.PLAYER_STATS && !this.gameEngine.statsDisplayed){
                 let currentScene = this.getActiveScene();
                 if(currentScene.player && currentScene.player.players.hasOwnProperty(room.sessionId)){
-                    let playerToMove = currentScene.player.players[room.sessionId];
-                    playerToMove.stats = message.stats;
+                    let playerSprite = currentScene.player.players[room.sessionId];
+                    playerSprite.stats = message.stats;
                 }
                 if(uiScene && uiScene.hasOwnProperty('uiBoxPlayerStats')){
                     let statsBox = uiScene.uiBoxPlayerStats.getChildByProperty('id', 'box-player-stats');
@@ -261,7 +262,7 @@ class RoomEvents
     }
     */
 
-    startPhaserScene(message, room, previousScene = false)
+    startEngineScene(message, room, previousScene = false)
     {
         let sceneData = this.getSceneData(room);
         let preloaderName = share.SCENE_PRELOADER+sceneData.roomName;
@@ -282,35 +283,30 @@ class RoomEvents
                         element.innerHTML = message.player.username;
                     }
                 }
-                this.createPhaserScene(message, room, previousScene, sceneData);
+                this.createEngineScene(message, room, previousScene, sceneData);
             });
         } else {
-            this.createPhaserScene(message, room, previousScene, sceneData);
+            this.createEngineScene(message, room, previousScene, sceneData);
         }
     }
 
-    createPhaserScene(message, room, previousScene, sceneData)
+    createEngineScene(message, room, previousScene, sceneData)
     {
-        if(!this.gameEngine.scene.getScene(message.player.scene)){
-            let phaserDynamicScene = new DynamicScene(message.player.scene, sceneData);
-            this.gameEngine.scene.add(message.player.scene, phaserDynamicScene, false);
+        if(!this.gameEngine.scene.getScene(message.player.state.scene)){
+            let phaserDynamicScene = new DynamicScene(message.player.state.scene, sceneData);
+            this.gameEngine.scene.add(message.player.state.scene, phaserDynamicScene, false);
         }
         if(!this.gameEngine.clientRoom){
-            this.gameEngine.scene.start(message.player.scene);
+            this.gameEngine.scene.start(message.player.state.scene);
         } else {
             if(previousScene){
                 this.gameEngine.scene.stop(previousScene);
-                this.gameEngine.scene.start(message.player.scene);
+                this.gameEngine.scene.start(message.player.state.scene);
             }
         }
         this.gameEngine.clientRoom = room;
-        let currentScene = this.gameEngine.scene.getScene(message.player.scene);
-        let playerPos = {
-            x: parseFloat(message.player.x),
-            y: parseFloat(message.player.y),
-            direction: message.player.dir
-        };
-        let currentPlayer = new PhaserPlayer(currentScene, message.player.scene, playerPos);
+        let currentScene = this.gameEngine.scene.getScene(message.player.state.scene);
+        let currentPlayer = new PlayerEngine(currentScene, message.player);
         currentPlayer.socket = room;
         currentPlayer.playerId = room.sessionId;
         currentPlayer.username = message.player.username;
@@ -320,7 +316,7 @@ class RoomEvents
             for(let idx in room.state.players){
                 let tmp = room.state.players[idx];
                 if(tmp.sessionId && tmp.sessionId !== room.sessionId){
-                    currentScene.player.addPlayer(tmp.sessionId, tmp.x, tmp.y, tmp.dir);
+                    currentScene.player.addPlayer(tmp.sessionId, {x: tmp.x, y: tmp.y, dir: tmp.dir});
                 }
             }
         }

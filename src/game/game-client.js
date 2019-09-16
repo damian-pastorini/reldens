@@ -14,7 +14,7 @@ class GameClient extends ColyseusClient
     // reconnect custom method to change rooms and scenes:
     reconnectGameClient(message, previousRoom)
     {
-        let newRoom = new RoomEvents(message.player.scene, this.reldens.gameEngine, this);
+        let newRoom = new RoomEvents(message.player.state.scene, this.reldens.gameEngine, this);
         this.joinOrCreate(newRoom.roomName, this.userData).then((sceneRoom) => {
             // leave old room:
             previousRoom.leave();
