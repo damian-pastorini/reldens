@@ -15,7 +15,7 @@ class ChatHelper
     constructor(props)
     {
         if(!props.hasOwnProperty('dataServer')){
-            throw new Error('Missing dataServer.');
+            throw new Error('ERROR - Missing dataServer.');
         }
         this.dataServer = props.dataServer;
     }

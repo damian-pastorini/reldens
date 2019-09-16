@@ -18,7 +18,7 @@ class GameClient extends ColyseusClient
         this.joinOrCreate(newRoom.roomName, this.userData).then((sceneRoom) => {
             // leave old room:
             previousRoom.leave();
-            this.reldens.gameEngine.colyseusRoom = sceneRoom;
+            this.reldens.gameEngine.clientRoom = sceneRoom;
             this.activeRoom = newRoom;
             this.room = sceneRoom;
             // start listen to room events:

@@ -9,7 +9,7 @@ class Reldens
 
     constructor()
     {
-        // setup game client, colyseus extended class:
+        // setup game client:
         this.gameClient = new GameClient(this);
         // the game engine will be initialized after the user joined the game:
         this.gameEngine = false;

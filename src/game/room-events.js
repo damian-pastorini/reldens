@@ -295,7 +295,7 @@ class RoomEvents
             let phaserDynamicScene = new DynamicScene(message.player.scene, sceneData);
             this.gameEngine.scene.add(message.player.scene, phaserDynamicScene, false);
         }
-        if(!this.gameEngine.colyseusRoom){
+        if(!this.gameEngine.clientRoom){
             this.gameEngine.scene.start(message.player.scene);
         } else {
             if(previousScene){
@@ -303,7 +303,7 @@ class RoomEvents
                 this.gameEngine.scene.start(message.player.scene);
             }
         }
-        this.gameEngine.colyseusRoom = room;
+        this.gameEngine.clientRoom = room;
         let currentScene = this.gameEngine.scene.getScene(message.player.scene);
         let playerPos = {
             x: parseFloat(message.player.x),

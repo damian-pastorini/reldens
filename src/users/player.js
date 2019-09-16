@@ -1,7 +1,7 @@
 const schema = require('@colyseus/schema');
 const Schema = schema.Schema;
 const type = schema.type;
-const initialState = require('../../config/initial-state');
+// const PlayerState = require('./player-state');
 
 class Player extends Schema
 {
@@ -9,7 +9,8 @@ class Player extends Schema
     constructor(data, sessionId)
     {
         super();
-        this.stats = data.players[0].stats;
+        let player = data.players[0];
+        this.stats = player.stats;
         // player data:
         this.id = data.id;
         this.sessionId = sessionId;
@@ -18,26 +19,22 @@ class Player extends Schema
         this.username = data.username;
         this.isBusy = false;
         this.p2body = false;
-        // @TODO: fix state.
-        // initial scene and position:
-        if(data.state){
-            // parse user state:
-            let state = JSON.parse(data.state);
-            this.state = state;
+        // set scene and position:
+        if(player.state){
+            this.state = player.state;
             // use saved scene and position if available:
-            if(state.scene){
+            if(player.scene){
                 // use user scene:
-                this.scene = state.scene;
-                this.x = parseFloat(state.x);
-                this.y = parseFloat(state.y);
-                this.dir = state.dir;
+                this.scene = player.scene;
+                this.x = parseFloat(this.state.x);
+                this.y = parseFloat(this.state.y);
+                this.dir = this.state.dir;
+            } else {
+                throw new Error('ERROR - Missing user state scene data.');
             }
+            // this.state = new PlayerState(player.state);
         } else {
-            // initial position in initial scene (town):
-            this.scene = initialState.scene;
-            this.x = initialState.x;
-            this.y = initialState.y;
-            this.dir = initialState.dir;
+            throw new Error('ERROR - Missing user state data.');
         }
         this.mov = false;
     }
@@ -53,5 +50,6 @@ type('string')(Player.prototype, 'scene');
 type('string')(Player.prototype, 'dir');
 type('boolean')(Player.prototype, 'mov');
 type('boolean')(Player.prototype, 'isBusy');
+// schema.defineTypes(Player, { state: PlayerState });
 
 module.exports = Player;

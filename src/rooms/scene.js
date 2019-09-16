@@ -8,10 +8,10 @@
 
 const RoomLogin = require('./login');
 const State = require('../server/state');
-// @TODO: move chat to features.
-// const ChatHelper = require('../chat/chat-helper');
 const share = require('../utils/constants');
 const P2world = require('../world/p2world');
+// @TODO: move chat to features.
+// const ChatHelper = require('../chat/chat-helper');
 
 class RoomScene extends RoomLogin
 {
@@ -20,11 +20,12 @@ class RoomScene extends RoomLogin
     {
         // data server:
         super.onCreate(options);
+        // this.roomId = options.room.roomId;
         console.log('INFO - INIT ROOM:', this.roomName);
         // @NOTE: sceneId seems to be used only for chat.
+        // this.sceneId = options.scene.roomId;
         // @NOTE: in the future not all the scene information will be sent to the client. This is because we could have
         // hidden information to be discovered.
-        // this.sceneId = options.scene.roomId;
         // @TODO: move chat to features.
         // this.chatHelper = new ChatHelper;
         let roomState = new State(options.room);
@@ -44,9 +45,9 @@ class RoomScene extends RoomLogin
                     loggedUserFound = true;
                     let promSave = this.savePlayerState(player.sessionId);
                     if(promSave !== false){
-                        promSave.then((err, rows) => {
+                        promSave.then((rows) => {
                             // first remove player body from current world:
-                            let playerToRemove = this.getPlayer(player.sessionId);
+                            let playerToRemove = this.getPlayerFromState(player.sessionId);
                             playerToRemove.isBusy = false;
                             if(playerToRemove){
                                 // get body:
@@ -90,7 +91,7 @@ class RoomScene extends RoomLogin
 
     onLeave(client, consented)
     {
-        let currentPlayer = this.getPlayer(client.sessionId);
+        let currentPlayer = this.getPlayerFromState(client.sessionId);
         if(currentPlayer){
             this.saveStateAndRemovePlayer(client.sessionId);
         }
@@ -99,7 +100,7 @@ class RoomScene extends RoomLogin
     onMessage(client, data)
     {
         // get player:
-        let currentPlayer = this.getPlayer(client.sessionId);
+        let currentPlayer = this.getPlayerFromState(client.sessionId);
         if(currentPlayer && currentPlayer.hasOwnProperty('p2body')){
             // get player body:
             let bodyToMove = currentPlayer.p2body;
@@ -212,7 +213,7 @@ class RoomScene extends RoomLogin
                         console.log('WHO IS MOVING???', bodyA.velocity, bodyA.position, bodyB.velocity, bodyB.position);
                     }
                 }
-                let contactPlayer = this.getPlayer(currentPlayerBody.playerId);
+                let contactPlayer = this.getPlayerFromState(currentPlayerBody.playerId);
                 if(contactPlayer.isBusy || currentPlayerBody.isChangingScene){
                     // @NOTE: if the player is been saved or if is changing scene: do nothing.
                 } else {
@@ -294,7 +295,7 @@ class RoomScene extends RoomLogin
         if(savePlayerProm) {
             savePlayerProm.then((result) => {
                 // first remove player body from current world:
-                let playerToRemove = this.getPlayer(sessionId);
+                let playerToRemove = this.getPlayerFromState(sessionId);
                 if(playerToRemove){
                     // get body:
                     let bodyToRemove = playerToRemove.p2body;
@@ -314,7 +315,7 @@ class RoomScene extends RoomLogin
     async savePlayerState(sessionId)
     {
         // set player busy as long the state is been saved:
-        let player = this.getPlayer(sessionId);
+        let player = this.getPlayerFromState(sessionId);
         if(player.isBusy){
             return false;
         }
@@ -344,7 +345,7 @@ class RoomScene extends RoomLogin
         return result;
     }
 
-    getPlayer(playerIndex)
+    getPlayerFromState(playerIndex)
     {
         let result = false;
         if(this.state.players[playerIndex]){

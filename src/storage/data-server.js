@@ -31,7 +31,7 @@ class DataServer
             this.connectionString = `${client}://${user}${(password ? ':'+password : '')}@${host}:${port}/${database}`;
             console.log('INFO - Created DataServer:', this.connectionString);
         } else {
-            throw new Error('Missing database full configuration.');
+            throw new Error('ERROR - Missing database full configuration.');
         }
         this.prepareObjection();
         console.log('INFO - Objection Model ready!');
@@ -47,22 +47,22 @@ class DataServer
     {
         // check the parameters required for the connection:
         if(!dbConfig.hasOwnProperty('client')){
-            throw new Error('Missing database client configuration.');
+            throw new Error('ERROR - Missing database client configuration.');
         }
         if(!dbConfig.hasOwnProperty('host')){
-            throw new Error('Missing database host configuration.');
+            throw new Error('ERROR - Missing database host configuration.');
         }
         if(!dbConfig.hasOwnProperty('port')){
-            throw new Error('Missing database port configuration.');
+            throw new Error('ERROR - Missing database port configuration.');
         }
         if(!dbConfig.hasOwnProperty('host')){
-            throw new Error('Missing database host configuration.');
+            throw new Error('ERROR - Missing database host configuration.');
         }
         if(!dbConfig.hasOwnProperty('database')){
-            throw new Error('Missing database name configuration.');
+            throw new Error('ERROR - Missing database name configuration.');
         }
         if(!dbConfig.hasOwnProperty('user')){
-            throw new Error('Missing database user configuration.');
+            throw new Error('ERROR - Missing database user configuration.');
         }
         return true;
     }
