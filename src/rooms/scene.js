@@ -34,7 +34,7 @@ class RoomScene extends RoomLogin
         this.createWorld(options.roomData);
     }
 
-    onJoin(client, options, authResult)
+    async onJoin(client, options, authResult)
     {
         // check if user is already logged and disconnect from the previous client:
         let loggedUserFound = false;
@@ -43,27 +43,10 @@ class RoomScene extends RoomLogin
                 let player = this.state.players[playerIdx];
                 if(player.username === options.username){
                     loggedUserFound = true;
-                    let promSave = this.savePlayerState(player.sessionId);
-                    if(promSave !== false){
-                        promSave.then((rows) => {
-                            // first remove player body from current world:
-                            let playerToRemove = this.getPlayerFromState(player.sessionId);
-                            playerToRemove.isBusy = false;
-                            if(playerToRemove){
-                                // get body:
-                                let bodyToRemove = playerToRemove.p2body;
-                                if(bodyToRemove){
-                                    // remove body:
-                                    this.p2world.removeBody(bodyToRemove);
-                                }
-                                // remove player:
-                                this.state.removePlayer(player.sessionId);
-                            }
-                            // old player session removed, create it again:
-                            this.createPlayer(client, authResult);
-                        }).catch((err) => {
-                            console.log('ERROR - Player save error:', err);
-                        });
+                    let savedAndRemoved = await this.saveStateAndRemovePlayer(playerIdx);
+                    if(savedAndRemoved){
+                        // old player session removed, create it again:
+                        this.createPlayer(client, authResult);
                     }
                     break;
                 }
@@ -299,9 +282,8 @@ class RoomScene extends RoomLogin
             } else {
                 console.log('ERROR - Player not found:', sessionId);
             }
-        } else {
-            console.log('ERROR - Player save error:', sessionId);
         }
+        return savedPlayer;
     }
 
     async savePlayerState(sessionId)
