@@ -8,9 +8,14 @@ class User
         this.model = props.userModel;
         this.availablePlayers = {};
         this.player = {
-            schema: props.playerSchema,
-            body: props.body
+            isBusy: false
         }
+    }
+
+    setCurrentPlayer(props)
+    {
+        this.player.schema = props.playerSchema;
+        this.player.body = props.body;
     }
 
 }
