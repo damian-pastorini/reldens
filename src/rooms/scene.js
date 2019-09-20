@@ -28,10 +28,10 @@ class RoomScene extends RoomLogin
         // hidden information to be discovered.
         // @TODO: move chat to features.
         // this.chatHelper = new ChatHelper;
-        let roomState = new State(options.room);
+        let roomState = new State(options.roomData);
         this.setState(roomState);
         // create world:
-        this.createWorld(options.room);
+        this.createWorld(options.roomData);
     }
 
     onJoin(client, options, authResult)
@@ -190,125 +190,117 @@ class RoomScene extends RoomLogin
 
     assignCollisions()
     {
-        if(this.p2world){
-            // assign actions on end contact:
-            this.p2world.on('endContact', (evt) => {
-                let bodyA = evt.bodyA,
-                    bodyB = evt.bodyB,
-                    currentPlayerBody = false,
-                    wallBody = false;
-                if(bodyA.playerId){
-                    currentPlayerBody = bodyA;
-                    wallBody = bodyB;
-                    bodyA.velocity = [0, 0];
+        // assign actions on end contact:
+        this.p2world.on('endContact', (evt) => {
+            let bodyA = evt.bodyA,
+                bodyB = evt.bodyB,
+                currentPlayerBody = false,
+                wallBody = false;
+            if(bodyA.playerId){
+                currentPlayerBody = bodyA;
+                wallBody = bodyB;
+                bodyA.velocity = [0, 0];
+            } else {
+                if(bodyB.playerId){
+                    currentPlayerBody = bodyB;
+                    wallBody = bodyA;
+                    bodyB.velocity = [0, 0];
                 } else {
-                    if(bodyB.playerId){
-                        currentPlayerBody = bodyB;
-                        wallBody = bodyA;
-                        bodyB.velocity = [0, 0];
-                    } else {
-                        // @TODO: refactor this with the NPC's implementation.
-                        // @NOTE: in the current implementation we should never hit this since we do not have any other
-                        // moving bodies beside the players.
-                        console.log('WHO IS MOVING???', bodyA.velocity, bodyA.position, bodyB.velocity, bodyB.position);
-                    }
+                    // @TODO: refactor this with the NPC's implementation.
+                    // @NOTE: in the current implementation we should never hit this since we do not have any other
+                    // moving bodies beside the players.
+                    console.log('WHO IS MOVING???', bodyA.velocity, bodyA.position, bodyB.velocity, bodyB.position);
                 }
-                let contactPlayer = this.getPlayerFromState(currentPlayerBody.playerId);
-                if(contactPlayer.isBusy || currentPlayerBody.isChangingScene){
-                    // @NOTE: if the player is been saved or if is changing scene: do nothing.
-                } else {
-                    let playerPosition = {x: currentPlayerBody.position[0], y: currentPlayerBody.position[1]};
-                    this.state.stopPlayer(currentPlayerBody.playerId, playerPosition);
+            }
+            let contactPlayer = this.getPlayerFromState(currentPlayerBody.playerId);
+            if(contactPlayer.isBusy || currentPlayerBody.isChangingScene){
+                // @NOTE: if the player is been saved or if is changing scene: do nothing.
+            } else {
+                let playerPosition = {x: currentPlayerBody.position[0], y: currentPlayerBody.position[1]};
+                this.state.stopPlayer(currentPlayerBody.playerId, playerPosition);
+            }
+            // check for scene change points:
+            if(wallBody.changeScenePoint){
+                // scene change data:
+                let changeScene = wallBody.changeScenePoint;
+                let previousScene = contactPlayer.state.scene;
+                let changeData = {prev: previousScene, next: changeScene};
+                // check if the player is not changing scenes already:
+                if(currentPlayerBody.isChangingScene === false){
+                    currentPlayerBody.isChangingScene = true;
+                    let contactClient = this.getClientById(currentPlayerBody.playerId);
+                    this.nextSceneInitialPosition(contactClient, changeData);
+                    // @NOTE: we do not need to change back the isChangingScene property back to false since in the new
+                    // scene a new body will be created with the value set to false by default.
                 }
-                // check for scene change points:
-                if(wallBody.changeScenePoint){
-                    // scene change data:
-                    let changeScene = wallBody.changeScenePoint;
-                    let previousScene = contactPlayer.state.scene;
-                    let changeData = {prev: previousScene, next: changeScene};
-                    // check if the player is not changing scenes already:
-                    if(currentPlayerBody.isChangingScene === false){
-                        currentPlayerBody.isChangingScene = true;
-                        let contactClient = this.getClientById(currentPlayerBody.playerId);
-                        this.nextSceneInitialPosition(contactClient, changeData);
-                        // @NOTE: we do not need to change back the isChangingScene property back to false since in the new
-                        // scene a new body will be created with the value set to false by default.
-                    }
-                }
-            });
-        }
+            }
+        });
     }
 
-    nextSceneInitialPosition(client, data)
+    async nextSceneInitialPosition(client, data)
     {
-        let nextSceneProm = this.loginManager.roomsManager.loadRoomByName(data.next);
-        nextSceneProm.then((nextRoom) => {
-            let result = {};
-            if(nextRoom){
-                result = {data: data, positions: nextRoom.returnPoints};
-            }
+        let nextRoom = await this.loginManager.roomsManager.loadRoomByName(data.next);
+        if(nextRoom){
             let currentPlayer = this.state.players[client.sessionId];
-            for(let newPosition of result.positions){
+            for(let newPosition of nextRoom.returnPoints){
                 // @NOTE: P === false means there's only one room that would lead to this one. If there's more than one
-                // possible room then validate the previous one.
+                // possible return point then validate the previous room.
                 // validate if previous room:
-                if(!newPosition.P || newPosition.P === result.data.prev){
-                    currentPlayer.state.scene = result.data.next;
+                if(!newPosition.P || newPosition.P === data.prev){
+                    currentPlayer.state.scene = data.next;
                     currentPlayer.state.x = parseFloat(newPosition.X);
                     currentPlayer.state.y = parseFloat(newPosition.Y);
                     currentPlayer.state.dir = newPosition.D;
-                    let stateSaved = this.savePlayerState(client.sessionId);
-                    if(stateSaved !== false){
-                        stateSaved.then((stateResult) => {
-                            // @NOTE: we need to broadcast the current player scene change to be removed or added in
-                            // other players.
-                            this.broadcast({
-                                act: share.CHANGED_SCENE,
-                                id: client.sessionId,
-                                scene: currentPlayer.state.scene,
-                                prev: result.data.prev,
-                                x: currentPlayer.state.x,
-                                y: currentPlayer.state.y,
-                                dir: currentPlayer.state.dir,
-                            });
-                            // remove body from server world:
-                            let bodyToRemove = currentPlayer.p2body;
-                            this.p2world.removeBody(bodyToRemove);
-                            // reconnect is to create the player in the new scene:
-                            this.send(client, {act: share.RECONNECT, player: currentPlayer, prev: result.data.prev});
-                        }).catch((err) => {
-                            console.log('ERROR - Save state error:', client.sessionId, err);
+                    let stateSaved = await this.savePlayerState(client.sessionId);
+                    if(stateSaved){
+                        // @NOTE: we need to broadcast the current player scene change to be removed or added in
+                        // other players.
+                        this.broadcast({
+                            act: share.CHANGED_SCENE,
+                            id: client.sessionId,
+                            scene: currentPlayer.state.scene,
+                            prev: data.prev,
+                            x: currentPlayer.state.x,
+                            y: currentPlayer.state.y,
+                            dir: currentPlayer.state.dir,
                         });
+                        // remove body from server world:
+                        let bodyToRemove = currentPlayer.p2body;
+                        this.p2world.removeBody(bodyToRemove);
+                        // reconnect is to create the player in the new scene:
+                        this.send(client, {act: share.RECONNECT, player: currentPlayer, prev: data.prev});
+                    } else {
+                        console.log('ERROR - Save state error:', client.sessionId, err);
                     }
                     break;
                 }
             }
-        }).catch((err) => {
-            console.log('ERROR - Player scene change error:', err);
-        });
+        } else {
+            console.log('ERROR - Player room change error. Next room not found:', data.next);
+        }
     }
 
-    saveStateAndRemovePlayer(sessionId)
+    async saveStateAndRemovePlayer(sessionId)
     {
         // save the last state on the database:
-        let savePlayerProm = this.savePlayerState(sessionId);
-        if(savePlayerProm) {
-            savePlayerProm.then((result) => {
-                // first remove player body from current world:
-                let playerToRemove = this.getPlayerFromState(sessionId);
-                if(playerToRemove){
-                    // get body:
-                    let bodyToRemove = playerToRemove.p2body;
-                    if(bodyToRemove){
-                        // remove body:
-                        this.p2world.removeBody(bodyToRemove);
-                    }
-                    // remove player:
-                    this.state.removePlayer(sessionId);
+        let savedPlayer = await this.savePlayerState(sessionId);
+        if(savedPlayer) {
+            // first remove player body from current world:
+            let playerToRemove = this.getPlayerFromState(sessionId);
+            if(playerToRemove){
+                // get body:
+                let bodyToRemove = playerToRemove.p2body;
+                if(bodyToRemove){
+                    // remove body:
+                    this.p2world.removeBody(bodyToRemove);
                 }
-            }).catch((err) => {
-                console.log('ERROR - Player save error:', err);
-            });
+                // remove player:
+                this.state.removePlayer(sessionId);
+            } else {
+                console.log('ERROR - Player not found:', sessionId);
+            }
+        } else {
+            console.log('ERROR - Player save error:', sessionId);
         }
     }
 
@@ -335,7 +327,7 @@ class RoomScene extends RoomLogin
     {
         let result;
         if(this.clients){
-            for (let client of this.clients){
+            for(let client of this.clients){
                 if (client.sessionId === clientId){
                     result = client;
                     break;

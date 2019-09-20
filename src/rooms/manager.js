@@ -43,8 +43,8 @@ class RoomsManager
         let rooms = await this.loadRooms();
         // register room-scenes from database:
         for(let room of rooms){
-            // append room data to props:
-            let roomProps = Object.assign(props, {room: room});
+            // merge room data and props:
+            let roomProps = {roomData: room, loginManager: props.loginManager, config: props.config};
             // define the room including all the props:
             gameServer.define(room.roomName, RoomScene, roomProps);
             counter++;

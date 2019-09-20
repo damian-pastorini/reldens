@@ -24,8 +24,8 @@
     "license": "MIT",
     "dependencies": {
         "@colyseus/monitor": "^0.10.0",
-        "colyseus": "^0.11.11",
-        "colyseus.js": "^0.11.0",
+        "colyseus": "^0.11.13",
+        "colyseus.js": "^0.11.1",
         "express": "^4.17.1",
         "cors": "^2.8.5",
         "dotenv": "^8.1.0",

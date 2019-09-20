@@ -19,7 +19,7 @@ class RoomEvents
 
     getSceneData(room)
     {
-        if(!this.sceneData && room.state){
+        if(room.state && (!this.sceneData || room.state !== this.sceneData)){
             this.sceneData = JSON.parse(room.state.sceneData);
         }
         return this.sceneData;
