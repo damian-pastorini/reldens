@@ -146,6 +146,8 @@ class RoomScene extends RoomLogin
                 // this.chatHelper.saveMessage(this.roomName, playerSchema, this.sceneId, false, share.CHAT_JOINED);
             }
             */
+            // @NOTE: player states must be requested since are private user data that we can share with other players
+            // or broadcast to the rooms.
             if(data.act === share.PLAYER_STATS){
                 // @TODO: unset not needed data from stats?
                 // delete(statsRow[0].id);

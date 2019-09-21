@@ -5,17 +5,10 @@ class PlayerEngine
 
     constructor(scene, playerData)
     {
-        /*
-            x: parseFloat(playerData.state.x),
-            y: parseFloat(playerData.state.y),
-            dir: playerData.state.dir
-        */
         this.username = '';
         this.scene = scene;
         this.room = playerData.state.scene;
         this.state = playerData.state;
-        // this.position = position;
-        // this.dir = '';
         this.mov = false;
         this.socket = {};
         this.playerId = '';

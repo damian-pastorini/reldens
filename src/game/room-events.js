@@ -90,21 +90,19 @@ class RoomEvents
             }
         };
         this.room.state.players.onAdd = (player, key) => {
-            let message = {act: share.ADD_PLAYER, id: key, player: player};
+            // let message = {act: share.ADD_PLAYER, id: key, player: player};
             this.getSceneData(this.room);
             // create current player:
             if(key === this.room.sessionId){
-                this.startEngineScene(message, this.room, previousScene);
+                this.startEngineScene(player, this.room, previousScene);
             }
             // add new players into the current player scene:
             if(key !== this.room.sessionId){
                 let currentScene = this.getActiveScene();
-                if(currentScene.key === player.state.scene){
-                    if(currentScene.player && currentScene.player.players){
-                        let posX = parseFloat(player.state.x),
-                            posY = parseFloat(player.state.y);
-                        currentScene.player.addPlayer(key, {x: posX, y: posY, dir: player.dir});
-                    }
+                let posX = player.state.x,
+                    posY = player.state.y;
+                if(currentScene.key === player.state.scene && currentScene.player && currentScene.player.players){
+                    currentScene.player.addPlayer(key, {x: posX, y: posY, dir: player.state.dir});
                 }
             }
             this.room.send({act: share.CLIENT_JOINED});
@@ -112,23 +110,6 @@ class RoomEvents
         // create players or change scenes:
         this.room.onMessage((message) => {
             this.getSceneData(this.room);
-            if(message.act === share.ADD_PLAYER){
-                // create current player:
-                if(message.id === this.room.sessionId){
-                    this.startEngineScene(message, this.room, previousScene);
-                }
-                // add new players into the current player scene:
-                if(message.id !== this.room.sessionId){
-                    let currentScene = this.getActiveScene();
-                    if(currentScene.key === message.player.state.scene){
-                        if(currentScene.player && currentScene.player.players){
-                            let posX = parseFloat(message.player.state.x),
-                                posY = parseFloat(message.player.state.y);
-                            currentScene.player.addPlayer(message.id, {x: posX, y: posY, dir: message.player.state.dir});
-                        }
-                    }
-                }
-            }
             if(message.act === share.CHANGED_SCENE && message.scene === this.room.name && this.room.sessionId !== message.id){
                 let currentScene = this.getActiveScene();
                 // if other users enter in the current scene we need to add them:
@@ -262,7 +243,7 @@ class RoomEvents
     }
     */
 
-    startEngineScene(message, room, previousScene = false)
+    startEngineScene(player, room, previousScene = false)
     {
         let sceneData = this.getSceneData(room);
         let preloaderName = share.SCENE_PRELOADER+sceneData.roomName;
@@ -280,46 +261,48 @@ class RoomEvents
                     this.gameEngine.uiScene = preloader;
                     let element = preloader.uiBoxRight.getChildByProperty('className', 'player-name');
                     if(element){
-                        element.innerHTML = message.player.username;
+                        element.innerHTML = player.username;
                     }
                 }
-                this.createEngineScene(message, room, previousScene, sceneData);
+                this.createEngineScene(player, room, previousScene, sceneData);
             });
         } else {
-            this.createEngineScene(message, room, previousScene, sceneData);
+            this.createEngineScene(player, room, previousScene, sceneData);
         }
     }
 
-    createEngineScene(message, room, previousScene, sceneData)
+    createEngineScene(player, room, previousScene, sceneData)
     {
-        if(!this.gameEngine.scene.getScene(message.player.state.scene)){
-            let phaserDynamicScene = new DynamicScene(message.player.state.scene, sceneData);
-            this.gameEngine.scene.add(message.player.state.scene, phaserDynamicScene, false);
+        if(!this.gameEngine.scene.getScene(player.state.scene)){
+            let phaserDynamicScene = new DynamicScene(player.state.scene, sceneData);
+            this.gameEngine.scene.add(player.state.scene, phaserDynamicScene, false);
         }
         if(!this.gameEngine.clientRoom){
-            this.gameEngine.scene.start(message.player.state.scene);
+            this.gameEngine.scene.start(player.state.scene);
         } else {
             if(previousScene){
                 this.gameEngine.scene.stop(previousScene);
-                this.gameEngine.scene.start(message.player.state.scene);
+                this.gameEngine.scene.start(player.state.scene);
             }
         }
         this.gameEngine.clientRoom = room;
-        let currentScene = this.gameEngine.scene.getScene(message.player.state.scene);
-        let currentPlayer = new PlayerEngine(currentScene, message.player);
+        let currentScene = this.gameEngine.scene.getScene(player.state.scene);
+        let currentPlayer = new PlayerEngine(currentScene, player);
         currentPlayer.socket = room;
         currentPlayer.playerId = room.sessionId;
-        currentPlayer.username = message.player.username;
+        currentPlayer.username = player.username;
         currentScene.player = currentPlayer;
         currentScene.player.create();
         if(room.state.players){
             for(let idx in room.state.players){
                 let tmp = room.state.players[idx];
                 if(tmp.sessionId && tmp.sessionId !== room.sessionId){
-                    currentScene.player.addPlayer(tmp.sessionId, {x: tmp.x, y: tmp.y, dir: tmp.dir});
+                    currentScene.player.addPlayer(tmp.sessionId, {x: tmp.state.x, y: tmp.state.y, dir: tmp.state.dir});
                 }
             }
         }
+        // @NOTE: player states must be requested since are private user data that we can share with other players or
+        // broadcast to the rooms.
         // request player stats after the player was add to the scene:
         room.send({act: share.PLAYER_STATS});
         /* @TODO: re-implement in chat feture.
