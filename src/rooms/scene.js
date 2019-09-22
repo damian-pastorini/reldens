@@ -7,10 +7,10 @@
  */
 
 const RoomLogin = require('./login');
-const State = require('../server/state');
+const State = require('./state');
 const P2world = require('../world/p2world');
-const share = require('../utils/constants');
 const CollisionsManager = require('../world/collisions-manager');
+const share = require('../utils/constants');
 // @TODO: move chat to features.
 // const ChatHelper = require('../chat/chat-helper');
 

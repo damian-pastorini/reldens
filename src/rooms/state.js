@@ -16,11 +16,11 @@ const Player = require('../users/player');
 class State extends Schema
 {
 
-    constructor(sceneData)
+    constructor(roomData)
     {
         super();
         // @NOTE: this JSON is to send the scene data to the client, here we could remove data we don't want to send.
-        this.sceneData = JSON.stringify(sceneData);
+        this.sceneData = JSON.stringify(roomData);
         this.players = new MapSchema();
     }
 

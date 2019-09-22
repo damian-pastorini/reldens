@@ -3,7 +3,14 @@
 class CollisionsManager
 {
 
-    constructor(room)
+    constructor(room = false)
+    {
+        if(room){
+            this.activateCollisions(room);
+        }
+    }
+
+    activateCollisions(room)
     {
         this.room = room;
         if(!this.room.hasOwnProperty('roomWorld')){
