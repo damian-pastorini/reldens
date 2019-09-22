@@ -114,7 +114,9 @@ class RoomScene extends RoomLogin
             }
             // if player stopped:
             if(data.act === share.STOP){
+                // @TODO: remove isBusy.
                 if(playerSchema.isBusy){
+                    console.log('player is busy to stop?');
                     return false;
                 }
                 // get player body:
@@ -205,8 +207,8 @@ class RoomScene extends RoomLogin
                             dir: currentPlayer.state.dir,
                         });
                         // remove body from server world:
-                        // let bodyToRemove = currentPlayer.p2body;
-                        // this.roomWorld.removeBody(bodyToRemove);
+                        let bodyToRemove = currentPlayer.p2body;
+                        this.roomWorld.removeBody(bodyToRemove);
                         // reconnect is to create the player in the new scene:
                         this.send(client, {act: share.RECONNECT, player: currentPlayer, prev: data.prev});
                     } else {
@@ -224,21 +226,19 @@ class RoomScene extends RoomLogin
     {
         // save the last state on the database:
         let savedPlayer = await this.savePlayerState(sessionId);
-        if(savedPlayer) {
-            // first remove player body from current world:
-            let playerSchema = this.getPlayerFromState(sessionId);
-            if(playerSchema){
-                // get body:
-                let bodyToRemove = playerSchema.p2body;
-                if(bodyToRemove){
-                    // remove body:
-                    this.roomWorld.removeBody(bodyToRemove);
-                }
-                // remove player:
-                this.state.removePlayer(sessionId);
-            } else {
-                console.log('ERROR - Player not found:', sessionId);
+        // first remove player body from current world:
+        let playerSchema = this.getPlayerFromState(sessionId);
+        if(playerSchema){
+            // get body:
+            let bodyToRemove = playerSchema.p2body;
+            if(bodyToRemove){
+                // remove body:
+                this.roomWorld.removeBody(bodyToRemove);
             }
+            // remove player:
+            this.state.removePlayer(sessionId);
+        } else {
+            console.log('ERROR - Player not found:', sessionId);
         }
         return savedPlayer;
     }
@@ -247,10 +247,12 @@ class RoomScene extends RoomLogin
     {
         // set player busy as long the state is been saved:
         let playerSchema = this.getPlayerFromState(sessionId);
+        // @TODO: remove isBusy.
         if(playerSchema.isBusy){
+            console.log('player.isBusy to be saved?', playerSchema.isBusy);
             return false;
         }
-        playerSchema.isBusy = true;
+        playerSchema.isBusy = 'saving player';
         let newPlayerData = {
             room_id: playerSchema.state.room_id,
             x: playerSchema.state.x,
@@ -260,6 +262,7 @@ class RoomScene extends RoomLogin
         // @TODO: temporal getting player_id from stats here.
         let playerId = playerSchema.stats.player_id;
         let updateResult = await this.loginManager.usersManager.updateUserStateByPlayerId(playerId, newPlayerData);
+        playerSchema.isBusy = false;
         if(updateResult){
             return playerSchema;
         } else {

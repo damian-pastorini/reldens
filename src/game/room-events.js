@@ -15,6 +15,7 @@ class RoomEvents
         this.sceneData = false;
         // @TODO: move to chat feature.
         // this.globalChat = gameClient.globalChat;
+        this.playersQueue = {};
     }
 
     getSceneData(room)
@@ -90,19 +91,27 @@ class RoomEvents
             }
         };
         this.room.state.players.onAdd = (player, key) => {
-            // let message = {act: share.ADD_PLAYER, id: key, player: player};
             this.getSceneData(this.room);
             // create current player:
             if(key === this.room.sessionId){
+                this.engineStarted = true;
                 this.startEngineScene(player, this.room, previousScene);
-            }
-            // add new players into the current player scene:
-            if(key !== this.room.sessionId){
                 let currentScene = this.getActiveScene();
-                let posX = player.state.x,
-                    posY = player.state.y;
                 if(currentScene.key === player.state.scene && currentScene.player && currentScene.player.players){
-                    currentScene.player.addPlayer(key, {x: posX, y: posY, dir: player.state.dir});
+                    for(let idx in this.playersQueue){
+                        let tmp = this.playersQueue[idx];
+                        currentScene.player.addPlayer(idx, {x: tmp.x, y: tmp.y, dir: tmp.dir});
+                    }
+                }
+            } else {
+                // add new players into the current player scene:
+                if(key !== this.room.sessionId && this.engineStarted){
+                    let currentScene = this.getActiveScene();
+                    if(currentScene.key === player.state.scene && currentScene.player && currentScene.player.players){
+                        currentScene.player.addPlayer(key, {x: player.state.x, y: player.state.y, dir: player.state.dir});
+                    }
+                } else {
+                    this.playersQueue[key] = {x: player.state.x, y: player.state.y, dir: player.state.dir};
                 }
             }
             this.room.send({act: share.CLIENT_JOINED});
@@ -122,6 +131,7 @@ class RoomEvents
             }
             // chat events:
             let uiScene = this.gameEngine.uiScene;
+            /* @TODO: move CHAT.
             if(uiScene && message.act === share.CHAT_ACTION){
                 let readPanel = uiScene.uiChat.getChildByProperty('id', share.CHAT_MESSAGES);
                 if(readPanel){
@@ -129,6 +139,7 @@ class RoomEvents
                     readPanel.scrollTo(0, readPanel.scrollHeight);
                 }
             }
+            */
             // @TODO: remove statsDisplayed, check why stats are been created more than once.
             // @NOTE: stats interface like the chat should be created once when the game is initialized.
             if(message.act === share.PLAYER_STATS && !this.gameEngine.statsDisplayed){
@@ -170,7 +181,8 @@ class RoomEvents
                 alert('There was a connection error.');
                 window.location.reload();
             } else {
-                // the client has initiated the disconnection (do nothing).
+                // the client has initiated the disconnection, remove the scene:
+                // this.gameEngine.scene.remove(this.roomName);
             }
         });
     }
@@ -251,6 +263,8 @@ class RoomEvents
         if(!this.gameEngine.uiScene){
             uiScene = true;
         }
+        // @TODO: implement characters images.
+        // , player.username
         let scenePreloader = new ScenePreloader(preloaderName, sceneData.roomMap, sceneData.sceneImages, uiScene);
         if(!this.gameEngine.scene.getScene(preloaderName)){
             this.gameEngine.scene.add(preloaderName, scenePreloader, true);
@@ -305,7 +319,7 @@ class RoomEvents
         // broadcast to the rooms.
         // request player stats after the player was add to the scene:
         room.send({act: share.PLAYER_STATS});
-        /* @TODO: re-implement in chat feture.
+        /* @TODO: re-implement in chat feature.
         // for last register the chat:
         // this.registerChat();
         */

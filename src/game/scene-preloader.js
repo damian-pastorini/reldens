@@ -13,6 +13,9 @@ class ScenePreloader extends Phaser.Scene
         this.progressBar = null;
         this.progressCompleteRect = null;
         this.progressRect = null;
+        // @TODO: implement characters images.
+        // , username
+        // this.username = username;
     }
 
     preload()
@@ -43,6 +46,8 @@ class ScenePreloader extends Phaser.Scene
         }
         // @TODO: player image will be part of the configuration in the database.
         let playerSpriteSize = {frameWidth: 52, frameHeight: 71};
+        // @TODO: implement characters images.
+        // this.load.spritesheet(this.username, 'assets/sprites/'+this.username+'.png', playerSpriteSize);
         this.load.spritesheet(share.IMAGE_PLAYER, 'assets/sprites/player-1.png', playerSpriteSize);
         // interface assets:
         this.load.image(share.ICON_STATS, 'assets/icons/book.png');
