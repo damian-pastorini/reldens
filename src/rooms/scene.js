@@ -116,11 +116,6 @@ class RoomScene extends RoomLogin
             }
             // if player stopped:
             if(data.act === share.STOP){
-                // @TODO: remove isBusy.
-                if(playerSchema.isBusy){
-                    console.log('player is busy to stop?');
-                    return false;
-                }
                 // get player body:
                 let bodyToMove = playerSchema.p2body;
                 if(bodyToMove){
@@ -234,12 +229,6 @@ class RoomScene extends RoomLogin
     {
         // set player busy as long the state is been saved:
         let playerSchema = this.getPlayerFromState(sessionId);
-        // @TODO: remove isBusy.
-        if(playerSchema.isBusy){
-            console.log('player.isBusy to be saved?', playerSchema.isBusy);
-            return false;
-        }
-        playerSchema.isBusy = 'saving player';
         let newPlayerData = {
             room_id: playerSchema.state.room_id,
             x: playerSchema.state.x,
@@ -249,7 +238,6 @@ class RoomScene extends RoomLogin
         // @TODO: temporal getting player_id from stats here.
         let playerId = playerSchema.stats.player_id;
         let updateResult = await this.loginManager.usersManager.updateUserStateByPlayerId(playerId, newPlayerData);
-        playerSchema.isBusy = false;
         if(updateResult){
             return playerSchema;
         } else {

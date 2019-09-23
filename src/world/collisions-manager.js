@@ -67,10 +67,10 @@ class CollisionsManager
     playerHitChangePoint(player, changePoint)
     {
         let playerSchema = this.room.getPlayerFromState(player.playerId);
-        if(playerSchema.isBusy || player.isChangingScene){
-            // @TODO: remove isBusy and isChangingScene too?
-            console.log('player is busy for a change point', playerSchema.isBusy, playerSchema.isChangingScene);
-            // @NOTE: if the player is been saved or if is changing scene: do nothing.
+        if(player.hasOwnProperty('isChangingScene') && player.isChangingScene){
+            // @NOTE: if the player is already changing scene do nothing.
+            console.log('ERROR - Player is busy for a change point');
+            return false;
         } else {
             let playerPosition = {x: player.position[0], y: player.position[1]};
             this.room.state.stopPlayer(player.playerId, playerPosition);

@@ -7,9 +7,7 @@ class User
     {
         this.model = props.userModel;
         this.availablePlayers = {};
-        this.player = {
-            isBusy: false
-        }
+        this.player = {};
     }
 
     setCurrentPlayer(props)

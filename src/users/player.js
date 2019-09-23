@@ -20,7 +20,6 @@ class Player extends Schema
             this.role_id = data.role_id;
             this.status = data.status;
             this.username = data.username;
-            this.isBusy = false;
             this.p2body = false;
             this.mov = false;
             // set scene and position:
@@ -38,7 +37,6 @@ type('string')(Player.prototype, 'sessionId');
 type('string')(Player.prototype, 'username');
 type('number')(Player.prototype, 'status');
 type('boolean')(Player.prototype, 'mov');
-type('boolean')(Player.prototype, 'isBusy');
 schema.defineTypes(Player, {state: PlayerState});
 
 module.exports = Player;
