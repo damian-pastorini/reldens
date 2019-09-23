@@ -74,6 +74,7 @@ class DataServer
             client: this.config.client,
             connection: {
                 host : this.config.host,
+                port: this.config.port,
                 user : this.config.user,
                 password : this.config.password,
                 database : this.config.database

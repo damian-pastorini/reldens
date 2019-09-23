@@ -2,6 +2,7 @@ const GameClient = require('./game-client');
 const GameEngine = require('./game-engine');
 const RoomEvents = require('./room-events');
 const share = require('../utils/constants');
+const chatConst = require('../chat/constants');
 const gameSeverConfig = require('../../config/server');
 
 class Reldens
@@ -45,9 +46,9 @@ class Reldens
                         this.gameEngine = new GameEngine(message.gameConfig);
                     }
                     // @TODO: chat will be loaded as feature.
-                    /*
+
                     // initiate global chat for current user:
-                    let globalChatProm = this.gameClient.joinOrCreate(share.CHAT_GLOBAL, this.gameClient.userData)
+                    let globalChatProm = this.gameClient.joinOrCreate(chatConst.CHAT_GLOBAL, this.gameClient.userData)
                         .catch((errorMessage) => {
                             // @NOTE: global chat errors will always be originated in the server. For these errors we
                             // will alert the user and reload the window automatically.
@@ -59,28 +60,28 @@ class Reldens
                         globalChat.onMessage((message) => {
                             // chat events:
                             let uiScene = this.gameEngine.uiScene;
-                            if(uiScene && message.act === share.CHAT_ACTION){
-                                let readPanel = uiScene.uiChat.getChildByProperty('id', share.CHAT_MESSAGES);
+                            if(uiScene && message.act === chatConst.CHAT_ACTION){
+                                let readPanel = uiScene.uiChat.getChildByProperty('id', chatConst.CHAT_MESSAGES);
                                 if(readPanel){
-                                    readPanel.innerHTML += `${message[share.CHAT_FROM]}: ${message[share.CHAT_MESSAGE]}<br/>`;
+                                    readPanel.innerHTML += `${message[chatConst.CHAT_FROM]}: ${message[chatConst.CHAT_MESSAGE]}<br/>`;
                                     readPanel.scrollTo(0, readPanel.scrollHeight);
                                 }
                             }
                         });
                         this.gameClient.globalChat = globalChat;
-                        */
-                    this.gameClient.userData.isNewUser = false;
-                    this.activeRoom = new RoomEvents(message.player.state.scene, this.gameEngine, this.gameClient);
-                    this.gameClient.joinOrCreate(this.activeRoom.roomName, this.gameClient.userData).then((room) => {
-                        this.gameRoom.leave();
-                        this.activeRoom.startListen(room);
-                    }).catch((errorMessage) => {
-                        // @NOTE: the errors while trying to join a rooms/scene will always be originated in the
-                        // server. For these errors we will alert the user and reload the window automatically.
-                        alert(errorMessage);
-                        window.location.reload();
+
+                        this.gameClient.userData.isNewUser = false;
+                        this.activeRoom = new RoomEvents(message.player.state.scene, this.gameEngine, this.gameClient);
+                        this.gameClient.joinOrCreate(this.activeRoom.roomName, this.gameClient.userData).then((room) => {
+                            this.gameRoom.leave();
+                            this.activeRoom.startListen(room);
+                        }).catch((errorMessage) => {
+                            // @NOTE: the errors while trying to join a rooms/scene will always be originated in the
+                            // server. For these errors we will alert the user and reload the window automatically.
+                            alert(errorMessage);
+                            window.location.reload();
+                        });
                     });
-                    // });
                 }
             });
         });

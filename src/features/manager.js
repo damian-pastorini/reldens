@@ -21,6 +21,7 @@ class FeaturesManager
         this.featuresCodeList = [];
         this.featuresWithRooms = [];
         this.featuresWithRoomsCodeList = [];
+        this.appendOnMessage = {};
     }
 
     async loadFeatures()
@@ -36,13 +37,16 @@ class FeaturesManager
                 // add the feature to the codes list:
                 this.featuresCodeList.push(featureEntity.code);
                 // if the feature has a room include it the featuresWithRooms list:
-                if(
-                    this.availableFeatures.hasOwnProperty(featureEntity.code)
-                    && this.availableFeatures[featureEntity.code].hasOwnProperty('room')
-                ){
-                    featureRoom = this.availableFeatures[featureEntity.code].room;
-                    this.featuresWithRooms.push({roomName: featureEntity.code, room: featureRoom});
-                    this.featuresWithRoomsCodeList.push(featureEntity.code);
+                if(this.availableFeatures.hasOwnProperty(featureEntity.code)){
+                    let availableFeature = this.availableFeatures[featureEntity.code];
+                    if(availableFeature.hasOwnProperty('room')){
+                        featureRoom = availableFeature.room;
+                        this.featuresWithRooms.push({roomName: featureEntity.code, room: featureRoom});
+                        this.featuresWithRoomsCodeList.push(featureEntity.code);
+                    }
+                    if(availableFeature.hasOwnProperty('appendOnMessage')){
+                        this.appendOnMessage[featureEntity.code] = availableFeature.appendOnMessage;
+                    }
                 }
             }
         }

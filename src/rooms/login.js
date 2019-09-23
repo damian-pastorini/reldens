@@ -16,6 +16,7 @@ class RoomLogin extends Room
     {
         this.config = options.config;
         this.loginManager = options.loginManager;
+        this.validateRoomData = false;
     }
 
     async onAuth(client, options, request)
@@ -28,7 +29,8 @@ class RoomLogin extends Room
             // login error.
             throw new Error(loginResult.error);
         }
-        if(!this.validateRoom(loginResult.user.players[0].state.scene)){
+        // @TODO: for now we only have one player.
+        if(this.validateRoomData && !this.validateRoom(loginResult.user.players[0].state.scene)){
             // invalid room.
             throw new Error('ERROR - Invalid room data.');
         }

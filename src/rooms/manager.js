@@ -22,6 +22,12 @@ class RoomsManager
             this.defineRooms = false;
             console.log('INFO - None extra rooms to be defined.');
         }
+        if(options.hasOwnProperty('appendOnMessage')){
+            this.appendOnMessage = options.appendOnMessage;
+        } else {
+            this.appendOnMessage = false;
+            console.log('INFO - None additional message actions to be defined.');
+        }
     }
 
     async defineRoomsInGameServer(gameServer, props)
@@ -44,7 +50,12 @@ class RoomsManager
         // register room-scenes from database:
         for(let room of rooms){
             // merge room data and props:
-            let roomProps = {roomData: room, loginManager: props.loginManager, config: props.config};
+            let roomProps = {
+                roomData: room,
+                loginManager: props.loginManager,
+                config: props.config,
+                appendOnMessage: this.appendOnMessage
+            };
             // define the room including all the props:
             gameServer.define(room.roomName, RoomScene, roomProps);
             counter++;

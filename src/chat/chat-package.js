@@ -5,6 +5,6 @@
  */
 
 module.exports = {
-    helper: require('./helper'),
-    room: require('./room')
+    room: require('./room'),
+    appendOnMessage: require('./message-observer')
 };

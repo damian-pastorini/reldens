@@ -2,6 +2,7 @@ const PlayerEngine = require('../users/player-engine');
 const DynamicScene = require('./scene-dynamic');
 const ScenePreloader = require('./scene-preloader');
 const share = require('../utils/constants');
+const chatConst = require('../chat/constants');
 
 class RoomEvents
 {
@@ -14,7 +15,7 @@ class RoomEvents
         this.roomName = roomName;
         this.sceneData = false;
         // @TODO: move to chat feature.
-        // this.globalChat = gameClient.globalChat;
+        this.globalChat = gameClient.globalChat;
         this.playersQueue = {};
     }
 
@@ -105,7 +106,7 @@ class RoomEvents
                 }
             } else {
                 // add new players into the current player scene:
-                if(key !== this.room.sessionId && this.engineStarted){
+                if(this.engineStarted){
                     let currentScene = this.getActiveScene();
                     if(currentScene.key === player.state.scene && currentScene.player && currentScene.player.players){
                         currentScene.player.addPlayer(key, {x: player.state.x, y: player.state.y, dir: player.state.dir});
@@ -114,7 +115,6 @@ class RoomEvents
                     this.playersQueue[key] = {x: player.state.x, y: player.state.y, dir: player.state.dir};
                 }
             }
-            this.room.send({act: share.CLIENT_JOINED});
         };
         // create players or change scenes:
         this.room.onMessage((message) => {
@@ -131,15 +131,15 @@ class RoomEvents
             }
             // chat events:
             let uiScene = this.gameEngine.uiScene;
-            /* @TODO: move CHAT.
-            if(uiScene && message.act === share.CHAT_ACTION){
-                let readPanel = uiScene.uiChat.getChildByProperty('id', share.CHAT_MESSAGES);
+            // @TODO: move CHAT.
+            if(uiScene && message.act === chatConst.CHAT_ACTION){
+                let readPanel = uiScene.uiChat.getChildByProperty('id', chatConst.CHAT_MESSAGES);
                 if(readPanel){
-                    readPanel.innerHTML += `${message[share.CHAT_FROM]}: ${message[share.CHAT_MESSAGE]}<br/>`;
+                    readPanel.innerHTML += `${message[chatConst.CHAT_FROM]}: ${message[chatConst.CHAT_MESSAGE]}<br/>`;
                     readPanel.scrollTo(0, readPanel.scrollHeight);
                 }
             }
-            */
+
             // @TODO: remove statsDisplayed, check why stats are been created more than once.
             // @NOTE: stats interface like the chat should be created once when the game is initialized.
             if(message.act === share.PLAYER_STATS && !this.gameEngine.statsDisplayed){
@@ -187,7 +187,7 @@ class RoomEvents
         });
     }
 
-    /* @TODO: re-implement in features.
+    // @TODO: re-implement in features.
     registerChat()
     {
         // @TODO: temporal fix, analyze the issue, probably related to the first event attached to the input.
@@ -198,8 +198,8 @@ class RoomEvents
             this.room = this.gameClient.room;
         }
         let uiScene = this.gameEngine.uiScene;
-        let chatInput = uiScene.uiChat.getChildByProperty('id', share.CHAT_INPUT);
-        let chatSendButton = uiScene.uiChat.getChildByProperty('id', share.CHAT_SEND_BUTTON);
+        let chatInput = uiScene.uiChat.getChildByProperty('id', chatConst.CHAT_INPUT);
+        let chatSendButton = uiScene.uiChat.getChildByProperty('id', chatConst.CHAT_SEND_BUTTON);
         if(chatInput){
             uiScene.input.keyboard.on('keyup_ENTER', () => {
                 let isFocused = (document.activeElement === chatInput);
@@ -231,7 +231,7 @@ class RoomEvents
         // both global or private messages use the global chat room:
         let isGlobal = (chatInput.value.indexOf('#') === 0 || chatInput.value.indexOf('@') === 0);
         // check if is a global chat (must begin with #) and if the global chat room is ready:
-        let messageData = {act: share.CHAT_ACTION, m: chatInput.value};
+        let messageData = {act: chatConst.CHAT_ACTION, m: chatInput.value};
         if(isGlobal && this.globalChat){
             if(chatInput.value.indexOf('@') === 0){
                 let username = chatInput.value.substring(1, chatInput.value.indexOf(' '));
@@ -246,14 +246,14 @@ class RoomEvents
             }
         } else {
             // @TODO: temporal fix, analyze why this.room is different from client.room.
-            if(gameClient.hasOwnProperty('room') && this.room !== gameClient.room){
-                this.room = gameClient.room;
+            if(this.gameClient.hasOwnProperty('room') && this.room !== this.gameClient.room){
+                this.room = this.gameClient.room;
             }
             this.room.send(messageData);
         }
         chatInput.value = '';
     }
-    */
+
 
     startEngineScene(player, room, previousScene = false)
     {
@@ -319,10 +319,10 @@ class RoomEvents
         // broadcast to the rooms.
         // request player stats after the player was add to the scene:
         room.send({act: share.PLAYER_STATS});
-        /* @TODO: re-implement in chat feature.
+        // @TODO: re-implement in chat feature.
         // for last register the chat:
-        // this.registerChat();
-        */
+        this.registerChat();
+        this.room.send({act: share.CLIENT_JOINED});
     }
 
     getActiveScene()

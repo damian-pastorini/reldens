@@ -55,7 +55,10 @@ class ServerManager
         // users manager:
         this.usersManager = new UsersManager();
         // the rooms manager will receive the features rooms to be defined:
-        this.roomsManager = new RoomsManager({defineRooms: this.featuresManager.featuresWithRooms});
+        this.roomsManager = new RoomsManager({
+            defineRooms: this.featuresManager.featuresWithRooms,
+            appendOnMessage: this.featuresManager.appendOnMessage
+        });
         // login manager:
         this.loginManager = new LoginManager({
             config: storedConfig,

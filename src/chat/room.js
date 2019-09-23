@@ -7,14 +7,16 @@
  */
 
 const RoomLogin = require('../rooms/login');
-const ChatHelper = require('./helper');
-const share = require('../utils/constants');
+const ChatManager = require('./manager');
+const share = require('./constants');
 
 class RoomChat extends RoomLogin
 {
 
     onCreate(options)
     {
+        // parent config:
+        super.onCreate(options);
         this.activePlayers = {};
     }
 
@@ -25,9 +27,9 @@ class RoomChat extends RoomLogin
             id: authResult.id,
             sessionId: client.sessionId,
             username: authResult.username,
+            playerData: authResult.players[0],
             client: client
         };
-        this.chatHelper = new ChatHelper({dataServer: this.dataServer});
     }
 
     onMessage(client, data)
@@ -40,11 +42,13 @@ class RoomChat extends RoomLogin
                 let text = data[share.CHAT_MESSAGE].toString().replace('\\', '');
                 let messageObject = {act: share.CHAT_ACTION, f: currentActivePlayer.username};
                 let clientTo = false;
+                let clientToPlayerSchema = false;
                 let sentText = 'Message not allowed.';
                 let messageType = false;
                 if(text.indexOf('@') === 0){
                     let to = data[share.CHAT_TO];
                     clientTo = this.getActivePlayerByName(to);
+                    clientToPlayerSchema = clientTo.playerData;
                     sentText = text.substring(text.indexOf(' '));
                     messageObject.m = `<span style="color:#00f0f0;">${sentText}</span>`;
                     this.send(client, messageObject);
@@ -63,7 +67,9 @@ class RoomChat extends RoomLogin
                     this.send(client, messageObject);
                     messageType = 's';
                 }
-                this.chatHelper.saveMessage(sentText, currentActivePlayer, false, clientTo, messageType);
+                ChatManager.saveMessage(sentText, currentActivePlayer.playerData, false, clientToPlayerSchema, messageType).catch((err) => {
+                    console.log('ERROR - Global chat save error:', err);
+                });
             }
         }
     }

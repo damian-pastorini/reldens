@@ -11,31 +11,33 @@ const State = require('./state');
 const P2world = require('../world/p2world');
 const CollisionsManager = require('../world/collisions-manager');
 const share = require('../utils/constants');
-// @TODO: move chat to features.
-// const ChatHelper = require('../chat/chat-helper');
 
 class RoomScene extends RoomLogin
 {
 
     onCreate(options)
     {
-        // data server:
+        this.validateRoomData = true;
+        // parent config:
         super.onCreate(options);
-        // this.roomId = options.room.roomId;
         console.log('INFO - INIT ROOM:', this.roomName);
-        // @NOTE: sceneId seems to be used only for chat.
-        // this.sceneId = options.scene.roomId;
+        // this.roomId = options.room.roomId;
+        this.sceneId = this.roomId;
         // @NOTE: in the future not all the scene information will be sent to the client. This is because we could have
         // hidden information to be discovered.
-        // @TODO: move chat to features.
-        // this.chatHelper = new ChatHelper;
         let roomState = new State(options.roomData);
         this.setState(roomState);
         // create world:
         this.createWorld(options.roomData);
         // note the collisions manager has to be initialized after the world was created:
         this.collisionsManager = new CollisionsManager(this);
+        if(options.appendOnMessage){
+            this.appendOnMessage = options.appendOnMessage;
+        } else {
+            this.appendOnMessage = false;
+        }
     }
+
 
     async onJoin(client, options, authResult)
     {
@@ -130,30 +132,15 @@ class RoomScene extends RoomLogin
                     this.state.stopPlayer(client.sessionId, data);
                 }
             }
-            // @TODO: move chat to features.
-            /*
-            if(data.act === share.CHAT_ACTION){
-                let message = data[share.CHAT_MESSAGE].toString().replace('\\', '');
-                let messageData = {act: share.CHAT_ACTION, m: message, f: playerSchema.username};
-                this.broadcast(messageData);
-                // @TODO: move chat to features.
-                // this.chatHelper.saveMessage(message, playerSchema, this.sceneId, {}, false);
+            if(this.appendOnMessage){
+                for(let idx in this.appendOnMessage){
+                    this.messageObserver = new this.appendOnMessage[idx]();
+                    this.messageObserver.parseMessageAndRunActions(this, data, playerSchema);
+                }
             }
-            if(data.act === share.CLIENT_JOINED){
-                // @TODO: broadcast message of players joining rooms will be part of the configuration in the database.
-                let sentText = `${playerSchema.username} has joined ${this.roomName}.`;
-                let message = `<span style="color:#0fffaa;">${sentText}.</span>`;
-                this.broadcast({act: share.CHAT_ACTION, m: message, f: 'System'});
-                // @TODO: move chat to features.
-                // this.chatHelper.saveMessage(this.roomName, playerSchema, this.sceneId, false, share.CHAT_JOINED);
-            }
-            */
             // @NOTE: player states must be requested since are private user data that we can share with other players
             // or broadcast to the rooms.
             if(data.act === share.PLAYER_STATS){
-                // @TODO: unset not needed data from stats?
-                // delete(statsRow[0].id);
-                // delete(statsRow[0].user_id);
                 this.send(client, {act: share.PLAYER_STATS, stats: playerSchema.stats});
             }
         }
