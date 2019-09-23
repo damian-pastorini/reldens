@@ -15,7 +15,7 @@
     "scripts": {
         "start": "node .",
         "dev-start": "rm -R dist && mkdir dist && cp -r pub/assets dist/assets/ && node .",
-        "install-db": "db-migrate up:prod"
+        "install-db": "knex migrate:up --env production"
     },
     "engines": {
         "node": "10.15.1"

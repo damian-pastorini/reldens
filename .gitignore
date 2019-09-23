@@ -1,10 +1,9 @@
 /.cache
 /.env
 /.idea
-/database.json
+/knexfile.js
 /migrations/*
-!/migrations/prod
-/migrations/prod/config.json
+!/migrations/production
 /node_modules
 /npm-debug*
 /test
