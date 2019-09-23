@@ -17,9 +17,10 @@ class RoomScene extends RoomLogin
 
     onCreate(options)
     {
-        this.validateRoomData = true;
         // parent config:
         super.onCreate(options);
+        // override super prop:
+        this.validateRoomData = true;
         console.log('INFO - INIT ROOM:', this.roomName);
         // this.roomId = options.room.roomId;
         this.sceneId = this.roomId;
