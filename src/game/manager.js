@@ -1,12 +1,19 @@
+/**
+ *
+ * Reldens - GameManager
+ *
+ * Like the ServerManager class, this is the main one that will handle everything on the client side.
+ *
+ */
+
 const GameClient = require('./game-client');
 const GameEngine = require('./game-engine');
 const RoomEvents = require('./room-events');
 const FeaturesClient = require('../features/client');
 const share = require('../utils/constants');
-const chatConst = require('../chat/constants');
 const gameSeverConfig = require('../../config/server');
 
-class Reldens
+class GameManager
 {
 
     constructor()
@@ -28,7 +35,7 @@ class Reldens
         this.userData = {};
     }
 
-    joinGameRoom(formData, isNewUser = false)
+    async joinGameRoom(formData, isNewUser = false)
     {
         // login or register:
         if(isNewUser){
@@ -38,20 +45,18 @@ class Reldens
         this.userData.username = formData['username'];
         this.userData.password = formData['password'];
         // join initial game room, since we return the promise we don't need to catch the error here:
-        let gameRoom = this.gameClient.joinOrCreate(share.ROOM_GAME, this.userData);
-        gameRoom.then((gameRoom) => {
-            gameRoom.onMessage((message) => {
-                // only the current client will get this message:
-                if(message.act === share.START_GAME){
-                    // initialize the engine and start the game:
-                    this.initEngineAndStartGame(message).then((joinedFirstRoom) => {
-                        // @NOTE we leave the game room after the game initialized because at that point the user already
-                        // joined the scene room and is pointless to keep this room connected since it doesn't listen for
-                        // any package.
-                        gameRoom.leave();
-                    });
-                }
-            });
+        let gameRoom = await this.gameClient.joinOrCreate(share.ROOM_GAME, this.userData);
+        gameRoom.onMessage((message) => {
+            // only the current client will get this message:
+            if(message.act === share.START_GAME){
+                // initialize the engine and start the game:
+                this.initEngineAndStartGame(message).then((joinedFirstRoom) => {
+                    // @NOTE we leave the game room after the game initialized because at that point the user already
+                    // joined the scene room and is pointless to keep this room connected since it doesn't listen for
+                    // any package.
+                    gameRoom.leave();
+                });
+            }
         });
         // @NOTE: we return the gameRoom here to control the login result actions in the index script.
         return gameRoom;
@@ -160,4 +165,4 @@ class Reldens
 
 }
 
-module.exports = Reldens;
+module.exports = GameManager;

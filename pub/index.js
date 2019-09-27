@@ -1,11 +1,11 @@
 const $ = require('jquery');
 const validate = require('jquery-validation');
-const Reldens = require('../src/game/reldens');
+const GameManager = require('../src/game/manager');
 
 $(document).ready(function($){
 
     // reldens game:
-    let reldens = new Reldens();
+    let reldens = new GameManager();
     window.reldens = reldens;
 
     let $register = $('#register_form'),

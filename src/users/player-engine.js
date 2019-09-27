@@ -1,3 +1,11 @@
+/**
+ *
+ * Reldens - PlayerEngine
+ *
+ * PlayerEngine is the class that handle the player actions in the client side.
+ *
+ */
+
 const share = require('../utils/constants');
 
 class PlayerEngine

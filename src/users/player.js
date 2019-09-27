@@ -1,3 +1,11 @@
+/**
+ *
+ * Reldens - Player
+ *
+ * Player schema, this class get the player data and keep the state in sync.
+ *
+ */
+
 const schema = require('@colyseus/schema');
 const Schema = schema.Schema;
 const type = schema.type;

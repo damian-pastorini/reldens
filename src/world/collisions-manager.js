@@ -1,4 +1,10 @@
-
+/**
+ *
+ * Reldens - CollisionsManager
+ *
+ * This module handle the collisions and the related actions.
+ *
+ */
 
 class CollisionsManager
 {

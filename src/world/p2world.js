@@ -12,6 +12,9 @@ const share = require('../utils/constants');
 class P2world extends P2.World
 {
 
+    /**
+     * @param options
+     */
     constructor(options)
     {
         super(options);
@@ -29,6 +32,9 @@ class P2world extends P2.World
         this.setMapCollisions(options.roomData);
     }
 
+    /**
+     * @param mapData
+     */
     setMapCollisions(mapData)
     {
         // @TODO: fix maps to create proper body blocks instead of use only boxes for each map block.
