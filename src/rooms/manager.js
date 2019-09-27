@@ -22,10 +22,10 @@ class RoomsManager
             this.defineRooms = false;
             console.log('INFO - None extra rooms to be defined.');
         }
-        if(options.hasOwnProperty('appendOnMessage')){
-            this.appendOnMessage = options.appendOnMessage;
+        if(options.hasOwnProperty('messageActions')){
+            this.messageActions = options.messageActions;
         } else {
-            this.appendOnMessage = false;
+            this.messageActions = false;
             console.log('INFO - None additional message actions to be defined.');
         }
     }
@@ -42,7 +42,7 @@ class RoomsManager
             for(let roomData of this.defineRooms){
                 gameServer.define(roomData.roomName, roomData.room, props);
                 counter++;
-                console.log(`INFO - Loaded feature room: ${roomData.roomName}`);
+                console.log(`INFO - Loaded extra room: ${roomData.roomName}`);
             }
         }
         // load rooms data:
@@ -54,7 +54,7 @@ class RoomsManager
                 roomData: room,
                 loginManager: props.loginManager,
                 config: props.config,
-                appendOnMessage: this.appendOnMessage
+                messageActions: this.messageActions
             };
             // define the room including all the props:
             gameServer.define(room.roomName, RoomScene, roomProps);

@@ -32,10 +32,10 @@ class RoomScene extends RoomLogin
         this.createWorld(options.roomData);
         // note the collisions manager has to be initialized after the world was created:
         this.collisionsManager = new CollisionsManager(this);
-        if(options.appendOnMessage){
-            this.appendOnMessage = options.appendOnMessage;
+        if(options.messageActions){
+            this.messageActions = options.messageActions;
         } else {
-            this.appendOnMessage = false;
+            this.messageActions = false;
         }
     }
 
@@ -71,8 +71,8 @@ class RoomScene extends RoomLogin
         // create body for server physics and assign the body to the player:
         currentPlayer.p2body = this.roomWorld.createPlayerBody({
             id: client.sessionId,
-            width: this.config.server.players.size.width,
-            height: this.config.server.players.size.height,
+            width: parseFloat(this.config.server.players.size.width),
+            height: parseFloat(this.config.server.players.size.height),
             x: currentPlayer.state.x,
             y: currentPlayer.state.y,
         });
@@ -97,19 +97,35 @@ class RoomScene extends RoomLogin
             let bodyToMove = playerSchema.p2body;
             // if player is moving:
             if(data.hasOwnProperty('dir') && bodyToMove){
-                // @TODO: multiple keys press will be part of the configuration in the database.
-                // if body is moving then avoid multiple key press at the same time:
-                if(data.dir === share.RIGHT && bodyToMove.velocity[1] === 0){
-                    bodyToMove.velocity[0] = share.SPEED_SERVER;
-                }
-                if(data.dir === share.LEFT && bodyToMove.velocity[1] === 0){
-                    bodyToMove.velocity[0] = -share.SPEED_SERVER;
-                }
-                if(data.dir === share.UP && bodyToMove.velocity[0] === 0){
-                    bodyToMove.velocity[1] = -share.SPEED_SERVER;
-                }
-                if(data.dir === share.DOWN && bodyToMove.velocity[0] === 0){
-                    bodyToMove.velocity[1] = share.SPEED_SERVER;
+                if(this.config.server.general.controls.allow_simultaneous_keys === 1){
+                    /* @TODO: implement.
+                    if(data.dir === share.RIGHT){
+                        bodyToMove.velocity[0] = share.SPEED_SERVER;
+                    }
+                    if(data.dir === share.LEFT){
+                        bodyToMove.velocity[0] = -share.SPEED_SERVER;
+                    }
+                    if(data.dir === share.UP){
+                        bodyToMove.velocity[1] = -share.SPEED_SERVER;
+                    }
+                    if(data.dir === share.DOWN){
+                        bodyToMove.velocity[1] = share.SPEED_SERVER;
+                    }
+                    */
+                } else {
+                    // if body is moving then avoid multiple key press at the same time:
+                    if(data.dir === share.RIGHT && bodyToMove.velocity[1] === 0){
+                        bodyToMove.velocity[0] = share.SPEED_SERVER;
+                    }
+                    if(data.dir === share.LEFT && bodyToMove.velocity[1] === 0){
+                        bodyToMove.velocity[0] = -share.SPEED_SERVER;
+                    }
+                    if(data.dir === share.UP && bodyToMove.velocity[0] === 0){
+                        bodyToMove.velocity[1] = -share.SPEED_SERVER;
+                    }
+                    if(data.dir === share.DOWN && bodyToMove.velocity[0] === 0){
+                        bodyToMove.velocity[1] = share.SPEED_SERVER;
+                    }
                 }
                 data.x = bodyToMove.position[0];
                 data.y = bodyToMove.position[1];
@@ -128,9 +144,9 @@ class RoomScene extends RoomLogin
                     this.state.stopPlayer(client.sessionId, data);
                 }
             }
-            if(this.appendOnMessage){
-                for(let idx in this.appendOnMessage){
-                    this.messageObserver = new this.appendOnMessage[idx]();
+            if(this.messageActions){
+                for(let idx in this.messageActions){
+                    this.messageObserver = new this.messageActions[idx]();
                     this.messageObserver.parseMessageAndRunActions(this, data, playerSchema);
                 }
             }
@@ -152,9 +168,9 @@ class RoomScene extends RoomLogin
         });
         // assign world to room:
         this.roomWorld = roomWorld;
-        // @TODO: timeStep will be part of the configuration in the database.
-        // start world movement:
-        this.timeStep = 0.04;
+        // start world movement from the config or with the default value:
+        this.timeStep = (this.config.server.rooms.world.timestep !== undefined) ?
+            parseFloat(this.config.server.rooms.world.timestep) : 0.04;
         this.worldTimer = this.clock.setInterval(() => {
             this.roomWorld.step(this.timeStep);
         }, 1000 * this.timeStep);

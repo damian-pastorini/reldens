@@ -7,8 +7,9 @@ const chatConst = require('../chat/constants');
 class RoomEvents
 {
 
-    constructor(roomName, gameEngine, gameClient)
+    constructor(roomName, gameEngine, gameClient, reldens)
     {
+        this.reldens = reldens;
         this.gameClient = gameClient;
         this.gameEngine = gameEngine;
         this.room = false;
@@ -127,7 +128,7 @@ class RoomEvents
             }
             // @NOTE: here we don't need to evaluate the id since the reconnect only is sent to the current client.
             if(message.act === share.RECONNECT){
-                this.gameClient.reconnectGameClient(message, this.room);
+                this.reldens.reconnectGameClient(message, this.room);
             }
             // chat events:
             let uiScene = this.gameEngine.uiScene;

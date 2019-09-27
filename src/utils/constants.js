@@ -9,7 +9,6 @@
 
 // constants:
 module.exports = {
-    FEATURES: 'gf',
     START_GAME: 's',
     CHANGED_SCENE: 'cs',
     RECONNECT: 'r',
@@ -18,6 +17,7 @@ module.exports = {
     PLAYER_STATS: 'ps',
     ICON_STATS: 'player-stats',
     CLIENT_JOINED: 'cj',
+    FEATURES: 'gf',
     // movement:
     UP: 'up',
     LEFT: 'left',

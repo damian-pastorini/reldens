@@ -114,7 +114,8 @@ class LoginManager
             act: share.START_GAME,
             sessionId: client.sessionId,
             player: player,
-            gameConfig: this.config.gameEngine
+            gameConfig: this.config.gameEngine,
+            features: this.config.availableFeaturesList
         });
     }
 

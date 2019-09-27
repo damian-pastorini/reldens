@@ -50,14 +50,14 @@ class ServerManager
         let storedConfig = await this.configManager.loadConfigurations();
         // features manager:
         this.featuresManager = new FeaturesManager();
-        // prepare features:
-        await this.featuresManager.loadFeatures();
+        // load the available features list and append to the config, this way we will pass the list to the client:
+        storedConfig.availableFeaturesList = await this.featuresManager.loadFeatures();
         // users manager:
         this.usersManager = new UsersManager();
         // the rooms manager will receive the features rooms to be defined:
         this.roomsManager = new RoomsManager({
             defineRooms: this.featuresManager.featuresWithRooms,
-            appendOnMessage: this.featuresManager.appendOnMessage
+            messageActions: this.featuresManager.messageActions
         });
         // login manager:
         this.loginManager = new LoginManager({

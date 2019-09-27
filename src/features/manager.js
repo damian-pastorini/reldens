@@ -6,7 +6,7 @@
  *
  */
 
-const configuredFeatures = require('../../config/features');
+const configuredFeatures = require('../../config/features-server');
 const FeaturesModel = require('./model');
 
 class FeaturesManager
@@ -21,7 +21,7 @@ class FeaturesManager
         this.featuresCodeList = [];
         this.featuresWithRooms = [];
         this.featuresWithRoomsCodeList = [];
-        this.appendOnMessage = {};
+        this.messageActions = {};
     }
 
     async loadFeatures()
@@ -29,27 +29,33 @@ class FeaturesManager
         // get the features from the database:
         let featuresCollection = await FeaturesModel.query();
         for(let featureEntity of featuresCollection){
-            let featureRoom = false;
-            // only include enabled features:
-            if(featureEntity.hasOwnProperty('is_enabled') && featureEntity.is_enabled){
-                featureEntity.room = featureRoom;
-                this.featuresList[featureEntity.code] = featureEntity;
+            // only include available and enabled features:
+            if(
+                this.availableFeatures.hasOwnProperty(featureEntity.code)
+                && featureEntity.hasOwnProperty('is_enabled')
+                && featureEntity.is_enabled
+            ){
                 // add the feature to the codes list:
                 this.featuresCodeList.push(featureEntity.code);
-                // if the feature has a room include it the featuresWithRooms list:
-                if(this.availableFeatures.hasOwnProperty(featureEntity.code)){
-                    let availableFeature = this.availableFeatures[featureEntity.code];
-                    if(availableFeature.hasOwnProperty('room')){
-                        featureRoom = availableFeature.room;
-                        this.featuresWithRooms.push({roomName: featureEntity.code, room: featureRoom});
-                        this.featuresWithRoomsCodeList.push(featureEntity.code);
-                    }
-                    if(availableFeature.hasOwnProperty('appendOnMessage')){
-                        this.appendOnMessage[featureEntity.code] = availableFeature.appendOnMessage;
-                    }
+                // get feature package server for server side:
+                let featurePackage = this.availableFeatures[featureEntity.code];
+                // set package on entity:
+                featureEntity.package = featurePackage;
+                // if the feature package has a room then add the room to the list:
+                if(featurePackage.hasOwnProperty('room')){
+                    this.featuresWithRooms.push({roomName: featureEntity.code, room: featurePackage.room});
+                    this.featuresWithRoomsCodeList.push(featureEntity.code);
                 }
+                // if the feature package has an messageActions observer then add the observer to the list:
+                if(featurePackage.hasOwnProperty('messageActions')){
+                    this.messageActions[featureEntity.code] = featurePackage.messageActions;
+                }
+                // for last add the feature entity to the list:
+                this.featuresList[featureEntity.code] = featureEntity;
             }
         }
+        // return the features code list:
+        return this.featuresCodeList;
     }
 
 }

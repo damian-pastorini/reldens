@@ -48,13 +48,21 @@ class RoomChat extends RoomLogin
                 if(text.indexOf('@') === 0){
                     let to = data[share.CHAT_TO];
                     clientTo = this.getActivePlayerByName(to);
-                    clientToPlayerSchema = clientTo.playerData;
-                    sentText = text.substring(text.indexOf(' '));
-                    messageObject.m = `<span style="color:#00f0f0;">${sentText}</span>`;
-                    this.send(client, messageObject);
-                    // use a different color for send:
-                    messageObject.m = `<span style="color:#00ffff;">${sentText}</span>`;
-                    this.send(clientTo.client, messageObject);
+                    if(clientTo){
+                        clientToPlayerSchema = clientTo.playerData;
+                        sentText = text.substring(text.indexOf(' '));
+                        messageObject.m = `<span style="color:#00f0f0;">${sentText}</span>`;
+                        this.send(client, messageObject);
+                        // use a different color for send:
+                        messageObject.m = `<span style="color:#00ffff;">${sentText}</span>`;
+                        this.send(clientTo.client, messageObject);
+                    } else {
+                        sentText = 'Player not found: '+to;
+                        messageObject.m = `<span style="color:#ff0000;">${sentText}</span>`;
+                        messageObject.f = 'System';
+                        this.send(client, messageObject);
+                        messageType = 's';
+                    }
                 } else if(text.indexOf('#') === 0){
                     sentText = text.substring(1);
                     messageObject.m = `<span style="color:#ffff00;">${sentText}</span>`;
