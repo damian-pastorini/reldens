@@ -26,7 +26,7 @@ class GameManager
         // game configuration from the server when the game starts.
         this.gameEngine = false;
         // active room is the currently connected server room:
-        this.activeRoom = false;
+        this.activeRoomEvents = false;
         // joined rooms:
         this.joinedRooms = {};
         // features manager:
@@ -84,11 +84,16 @@ class GameManager
             window.location.reload();
         }
         // start listening the new room events:
-        this.activeRoom = new RoomEvents(initialGameData.player.state.scene, this.gameEngine, this.gameClient, this);
-        this.activeRoom.startListen(joinedFirstRoom);
+        this.activeRoomEvents = this.createRoomEventsInstance(initialGameData.player.state.scene);
+        this.activeRoomEvents.startListen(joinedFirstRoom);
         return joinedFirstRoom;
     }
 
+    /**
+     * Join features rooms dynamically and assign any events listeners if available.
+     *
+     * @returns {Promise<void>}
+     */
     async joinFeaturesRooms()
     {
         for(let idx in this.features.featuresList){
@@ -104,6 +109,7 @@ class GameManager
                         window.location.reload();
                     }
                     // after the room was joined added to the joinedRooms list:
+                    // @TODO: remove this global chat after refactor the room-events.
                     this.gameClient.globalChat = joinedRoom;
                     this.joinedRooms[joinRoomName] = joinedRoom;
                     // if the feature as additional message actions then we will observe the messages:
@@ -129,25 +135,39 @@ class GameManager
      */
     reconnectGameClient(message, previousRoom)
     {
-        let newRoomEvents = new RoomEvents(message.player.state.scene, this.gameEngine, this.gameClient, this);
+        let newRoomEvents = this.createRoomEventsInstance(message.player.state.scene);
         this.gameClient.joinOrCreate(newRoomEvents.roomName, this.userData).then((sceneRoom) => {
             // leave old room:
             previousRoom.leave();
-            this.gameEngine.clientRoom = sceneRoom;
-            this.activeRoom = newRoomEvents;
+            this.activeRoomEvents = newRoomEvents;
             this.room = sceneRoom;
             // start listen to room events:
             newRoomEvents.startListen(sceneRoom, message.prev);
-
-        }).catch((errorMessage) => {
+        }).catch((err) => {
             // @NOTE: the errors while trying to reconnect will always be originated in the server. For these errors we
             // will alert the user and reload the window automatically.
-            alert(errorMessage);
-            console.log('ERROR - reconnectGameClient:', errorMessage, 'message:', message, 'previousRoom:', previousRoom);
+            alert(err);
+            console.log('ERROR - reconnectGameClient:', err, 'message:', message, 'previousRoom:', previousRoom);
             window.location.reload();
         });
     };
 
+    /**
+     * Create RoomEvents instance.
+     *
+     * @param roomName
+     * @returns {RoomEvents}
+     */
+    createRoomEventsInstance(roomName)
+    {
+        return new RoomEvents(roomName, this);
+    }
+
+    /**
+     * Generate server URL from configuration or using the current url data.
+     *
+     * @returns {*}
+     */
     getServerUrl()
     {
         if(!this.clientUrl){

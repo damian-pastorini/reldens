@@ -1,3 +1,11 @@
+/**
+ *
+ * Reldens - FeaturesClient
+ * This class will handle the features activation on the client side depending on the configuration received from the
+ * server.
+ *
+ */
+
 const configuredFeatures = require('../../config/features-client');
 
 class FeaturesClient

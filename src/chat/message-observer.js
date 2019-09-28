@@ -1,3 +1,12 @@
+/**
+ *
+ * Reldens - ChatMessageObserver
+ *
+ * This class will listen the messages received by the room and run the related actions, for example show the received
+ * messages in the interface.
+ *
+ */
+
 const chatConst = require('./constants');
 
 class ChatMessageObserver

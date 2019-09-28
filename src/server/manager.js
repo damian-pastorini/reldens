@@ -46,12 +46,12 @@ class ServerManager
         this.dataServer = new DataServer();
         // configuration data from database:
         this.configManager = new ConfigManager();
-        // load configurations:
-        let storedConfig = await this.configManager.loadConfigurations();
+        // load configurations and get a config processor instance:
+        let configProcessor = await this.configManager.loadConfigurations();
         // features manager:
         this.featuresManager = new FeaturesManager();
         // load the available features list and append to the config, this way we will pass the list to the client:
-        storedConfig.availableFeaturesList = await this.featuresManager.loadFeatures();
+        configProcessor.availableFeaturesList = await this.featuresManager.loadFeatures();
         // users manager:
         this.usersManager = new UsersManager();
         // the rooms manager will receive the features rooms to be defined:
@@ -61,14 +61,14 @@ class ServerManager
         });
         // login manager:
         this.loginManager = new LoginManager({
-            config: storedConfig,
+            config: configProcessor,
             usersManager: this.usersManager,
             roomsManager: this.roomsManager
         });
         // prepare rooms:
         await this.roomsManager.defineRoomsInGameServer(this.gameServer, {
             loginManager: this.loginManager,
-            config: storedConfig
+            config: configProcessor
         });
         // after the rooms were loaded then finish the server process:
         this.gameServer.listen(configServer.port);

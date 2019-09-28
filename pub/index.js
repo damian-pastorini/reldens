@@ -1,3 +1,11 @@
+/**
+ *
+ * Reldens - Index
+ * Client main file, this file provide the basic first page with the login and registration forms, and start the
+ * GameManager if the request was successfully processed.
+ *
+ */
+
 const $ = require('jquery');
 const validate = require('jquery-validation');
 const GameManager = require('../src/game/manager');

@@ -1,3 +1,12 @@
+/**
+ *
+ * Reldens - RoomEvents
+ *
+ * This class will listen the scene-rooms and run the related actions, it will also register the other modules action
+ * into the room events.
+ *
+ */
+
 const PlayerEngine = require('../users/player-engine');
 const DynamicScene = require('./scene-dynamic');
 const ScenePreloader = require('./scene-preloader');
@@ -7,16 +16,16 @@ const chatConst = require('../chat/constants');
 class RoomEvents
 {
 
-    constructor(roomName, gameEngine, gameClient, gameManager)
+    constructor(roomName, gameManager)
     {
         this.gameManager = gameManager;
-        this.gameClient = gameClient;
-        this.gameEngine = gameEngine;
+        this.gameClient = gameManager.gameClient;
+        this.gameEngine = gameManager.gameEngine;
         this.room = false;
         this.roomName = roomName;
         this.sceneData = false;
         // @TODO: move to chat feature.
-        this.globalChat = gameClient.globalChat;
+        this.globalChat = gameManager.gameClient.globalChat;
         this.playersQueue = {};
     }
 
@@ -292,7 +301,7 @@ class RoomEvents
             let phaserDynamicScene = new DynamicScene(player.state.scene, sceneData);
             this.gameEngine.scene.add(player.state.scene, phaserDynamicScene, false);
         }
-        if(!this.gameEngine.clientRoom){
+        if(!this.gameManager.room){
             this.gameEngine.scene.start(player.state.scene);
         } else {
             if(previousScene){
@@ -300,7 +309,7 @@ class RoomEvents
                 this.gameEngine.scene.start(player.state.scene);
             }
         }
-        this.gameEngine.clientRoom = room;
+        this.gameManager.room = room;
         let currentScene = this.gameEngine.scene.getScene(player.state.scene);
         let currentPlayer = new PlayerEngine(currentScene, player);
         currentPlayer.socket = room;
