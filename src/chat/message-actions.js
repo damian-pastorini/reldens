@@ -16,18 +16,16 @@ class MessageActions
     {
         if(data.act === share.CHAT_ACTION){
             let message = data[share.CHAT_MESSAGE].toString().replace('\\', '');
-            let messageData = {act: share.CHAT_ACTION, m: message, f: playerSchema.username};
+            let messageData = {act: share.CHAT_ACTION, m: message, f: playerSchema.username, t: share.CHAT_TYPE_NORMAL};
             room.broadcast(messageData);
-            ChatManager.saveMessage(message, playerSchema, room.sceneId, {}, false).catch((err) => {
+            ChatManager.saveMessage(message, playerSchema, {}, false).catch((err) => {
                 console.log('ERROR - Chat save error:', err);
             });
         }
         if(data.act === utils.CLIENT_JOINED && room.config.get('feature/chat/messages/broadcast_join')){
-            // @TODO: remove HTML from here, we will send a message type to the client to modify the display.
             let sentText = `${playerSchema.username} has joined ${room.roomName}.`;
-            let message = `<span style="color:#0fffaa;">${sentText}</span>`;
-            room.broadcast({act: share.CHAT_ACTION, m: message, f: 'System'});
-            ChatManager.saveMessage(room.roomName, playerSchema, room.sceneId, false, share.CHAT_JOINED)
+            room.broadcast({act: share.CHAT_ACTION, m: sentText, f: 'System', t: share.CHAT_TYPE_SYSTEM});
+            ChatManager.saveMessage(room.roomName, playerSchema, false, share.CHAT_JOINED)
                 .catch((err) => {
                     console.log('ERROR - Joined room chat save error:', err);
                 });

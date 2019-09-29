@@ -68,6 +68,8 @@ class LoginManager
                     initialState.room_id = initialRoom.roomId;
                     let newUser = await this.usersManager.createUserWith({
                         data: userData,
+                        role_id: this.config.initialUser.role_id,
+                        status: this.config.initialUser.status,
                         state: initialState,
                         stats: this.config.players.initialStats,
                         hash: this.encryptPassword(userData.password)

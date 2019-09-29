@@ -18,5 +18,11 @@ module.exports = {
     CHAT_INPUT: 'chat-input',
     CHAT_SEND_BUTTON: 'chat-send',
     CHAT_GLOBAL: 'chat',
-    CHAT_JOINED: 'j'
+    CHAT_JOINED: 'j',
+    CHAT_TYPE_NORMAL: 'ctn',
+    CHAT_TYPE_PRIVATE_FROM: 'ctpf',
+    CHAT_TYPE_PRIVATE_TO: 'ctpt',
+    CHAT_TYPE_GLOBAL: 'ctg',
+    CHAT_TYPE_SYSTEM: 'cts',
+    CHAT_TYPE_SYSTEM_ERROR: 'ctse'
 };

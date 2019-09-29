@@ -11,6 +11,7 @@ const ConfigModel = require('./model');
 const defaultConfigGameEngine = require('../../config/game-engine');
 const defaultConfigInitialState = require('../../config/initial-state');
 const defaultConfigInitialStats = require('../../config/initial-stats');
+const defaultConfigInitialUser = require('../../config/initial-user');
 
 const CONFIG_TYPE_BOOLEAN = 'b';
 const CONFIG_TYPE_NUMBER = 'i';
@@ -28,6 +29,7 @@ class ConfigManager
             gameEngine: defaultConfigGameEngine,
             initialState: defaultConfigInitialState,
             initialStats: defaultConfigInitialStats,
+            initialUser: defaultConfigInitialUser
         };
     }
 

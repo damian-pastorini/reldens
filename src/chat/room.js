@@ -27,6 +27,7 @@ class RoomChat extends RoomLogin
             id: authResult.id,
             sessionId: client.sessionId,
             username: authResult.username,
+            role_id: authResult.role_id,
             playerData: authResult.players[0],
             client: client
         };
@@ -38,7 +39,6 @@ class RoomChat extends RoomLogin
         let currentActivePlayer = this.activePlayers[client.sessionId];
         if(currentActivePlayer){
             if(data.act === share.CHAT_ACTION){
-                // @TODO: validate if user is allowed to use global chat.
                 let text = data[share.CHAT_MESSAGE].toString().replace('\\', '');
                 let messageObject = {act: share.CHAT_ACTION, f: currentActivePlayer.username};
                 let clientTo = false;
@@ -50,46 +50,66 @@ class RoomChat extends RoomLogin
                     clientTo = this.getActivePlayerByName(to);
                     if(clientTo){
                         clientToPlayerSchema = clientTo.playerData;
-                        sentText = text.substring(text.indexOf(' '));
-                        messageObject.m = `<span style="color:#00f0f0;">${sentText}</span>`;
+                        messageObject.m = text.substring(text.indexOf(' '));
+                        messageObject.t = share.CHAT_TYPE_PRIVATE_FROM;
                         this.send(client, messageObject);
-                        // use a different color for send:
-                        messageObject.m = `<span style="color:#00ffff;">${sentText}</span>`;
+                        messageObject.t = share.CHAT_TYPE_PRIVATE_TO;
                         this.send(clientTo.client, messageObject);
                     } else {
-                        sentText = 'Player not found: '+to;
-                        messageObject.m = `<span style="color:#ff0000;">${sentText}</span>`;
+                        messageObject.m = 'Player not found: '+to;
                         messageObject.f = 'System';
+                        messageObject.t = share.CHAT_TYPE_SYSTEM_ERROR;
                         this.send(client, messageObject);
                         messageType = 's';
                     }
                 } else if(text.indexOf('#') === 0){
-                    sentText = text.substring(1);
-                    messageObject.m = `<span style="color:#ffff00;">${sentText}</span>`;
-                    this.broadcast(messageObject);
-                    messageType = 'g';
+                    let isGlobalEnabled = this.config.get('feature/chat/messages/global_enabled');
+                    let globalAllowedRoles = this.config.get('feature/chat/messages/global_allowed_roles')
+                        .split(',')
+                        .map(Number);
+                    if(isGlobalEnabled && globalAllowedRoles.indexOf(currentActivePlayer.role_id) !== -1){
+                        messageObject.m = text.substring(1);
+                        messageObject.t = share.CHAT_TYPE_GLOBAL;
+                        this.broadcast(messageObject);
+                        messageType = 'g';
+                    } else {
+                        messageObject.m = 'Global messages not allowed.';
+                        messageObject.f = 'System';
+                        messageObject.t = share.CHAT_TYPE_SYSTEM_ERROR;
+                        this.send(client, messageObject);
+                        messageType = 's';
+                    }
                 } else {
-                    sentText = sentText+' - '+text;
-                    messageObject.m = `<span style="color:#ff0000;">${sentText}</span>`;
+                    messageObject.m = sentText+' - '+text;
                     messageObject.f = 'System';
+                    messageObject.t = share.CHAT_TYPE_SYSTEM_ERROR;
                     this.send(client, messageObject);
                     messageType = 's';
                 }
-                ChatManager.saveMessage(sentText, currentActivePlayer.playerData, false, clientToPlayerSchema, messageType).catch((err) => {
-                    console.log('ERROR - Global chat save error:', err);
-                });
+                ChatManager.saveMessage(sentText, currentActivePlayer.playerData, clientToPlayerSchema, messageType)
+                    .catch((err) => {
+                        console.log('ERROR - Global chat save error:', err);
+                     });
             }
         }
     }
 
     onLeave(client, consented)
     {
-        let currentActivePlayer = this.activePlayers[client.sessionId];
-        let message = `<span style="color:#ff0000;">${currentActivePlayer.username} has left.</span>`;
-        this.broadcast({act: share.CHAT_ACTION, m: message, f: 'System'});
+        if(this.config.get('feature/chat/messages/broadcast_leave')){
+            let currentActivePlayer = this.activePlayers[client.sessionId];
+            let sentText = `${currentActivePlayer.username} has left.`;
+            this.broadcast({act: share.CHAT_ACTION, m: sentText, f: 'System', t: share.CHAT_TYPE_SYSTEM});
+        }
         delete this.activePlayers[client.sessionId];
     }
 
+    /**
+     * Active players are custom objects with only some properties.
+     *
+     * @param playerName
+     * @returns {boolean}
+     */
     getActivePlayerByName(playerName)
     {
         let clientTo = false;

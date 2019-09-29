@@ -14,11 +14,10 @@ class ChatManager
     /**
      * @param message
      * @param playerSchema
-     * @param playerSceneId
-     * @param clientTo
+     * @param clientToPlayerSchema
      * @param messageType
      */
-    async saveMessage(message, playerSchema, playerSceneId, clientToPlayerSchema, messageType)
+    async saveMessage(message, playerSchema, clientToPlayerSchema, messageType)
     {
         // @TODO: fix, playerSchema is actually the currentUser.
         // console.log('playerSchema:', playerSchema);

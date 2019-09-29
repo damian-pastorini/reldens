@@ -39,8 +39,8 @@ class UsersManager
                 email: userData.email,
                 username: userData.username,
                 password: initialData.hash,
-                role_id: 1,
-                status: 1,
+                role_id: initialData.role_id,
+                status: initialData.status,
                 players: {
                     name: userData.username,
                     stats: {
