@@ -20,7 +20,7 @@ class ChatMessageObserver
             let readPanel = uiScene.uiChat.getChildByProperty('id', chatConst.CHAT_MESSAGES);
             if(readPanel){
                 let messageTemplate = uiScene.cache.html.get('uiChatMessage');
-                let output = gameManager.gameEngine.Mustache.render(messageTemplate, {
+                let output = gameManager.gameEngine.TemplateEngine.render(messageTemplate, {
                     from: message[chatConst.CHAT_FROM],
                     color: chatConst.colors[message.t],
                     message: message[chatConst.CHAT_MESSAGE]
