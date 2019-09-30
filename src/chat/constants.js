@@ -24,5 +24,13 @@ module.exports = {
     CHAT_TYPE_PRIVATE_TO: 'ctpt',
     CHAT_TYPE_GLOBAL: 'ctg',
     CHAT_TYPE_SYSTEM: 'cts',
-    CHAT_TYPE_SYSTEM_ERROR: 'ctse'
+    CHAT_TYPE_SYSTEM_ERROR: 'ctse',
+    colors: {
+        ctn: '#ffffff',
+        ctpf: '#f39c12',
+        ctpt: '#00afff',
+        ctg: '#ffff00',
+        cts: '#2ecc71',
+        ctse: '#ff0000'
+    }
 };

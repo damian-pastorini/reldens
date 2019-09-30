@@ -7,6 +7,7 @@
  *
  */
 
+const Mustache = require('mustache');
 const chatConst = require('./constants');
 
 class ChatMessageObserver
@@ -19,7 +20,13 @@ class ChatMessageObserver
         if(uiScene && message.act === chatConst.CHAT_ACTION){
             let readPanel = uiScene.uiChat.getChildByProperty('id', chatConst.CHAT_MESSAGES);
             if(readPanel){
-                readPanel.innerHTML += `${message[chatConst.CHAT_FROM]}: ${message[chatConst.CHAT_MESSAGE]}<br/>`;
+                let messageTemplate = uiScene.cache.html.get('uiChatMessage');
+                let output = Mustache.render(messageTemplate, {
+                    from: message[chatConst.CHAT_FROM],
+                    color: chatConst.colors[message.t],
+                    message: message[chatConst.CHAT_MESSAGE]
+                });
+                readPanel.innerHTML += output;
                 readPanel.scrollTo(0, readPanel.scrollHeight);
             }
         }

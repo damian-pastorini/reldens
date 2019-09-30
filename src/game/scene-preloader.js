@@ -26,7 +26,9 @@ class ScenePreloader extends Phaser.Scene
             this.load.html('uiBoxRight', 'assets/html/ui-box-right.html');
             this.load.html('uiBoxPlayerStats', 'assets/html/ui-box-player-stats.html');
             this.load.html('uiBoxLeft', 'assets/html/ui-box-left.html');
-            this.load.html('uiChat', 'assets/html/ui-chat.html');
+            // @TODO: preload all features elements.
+            this.load.html('uiChat', 'assets/features/chat/templates/ui-chat.html');
+            this.load.html('uiChatMessage', 'assets/features/chat/templates/message.html');
         }
         // maps:
         if(this.preloadMapKey){
