@@ -7,7 +7,6 @@
  *
  */
 
-const Mustache = require('mustache');
 const PlayerEngine = require('../users/player-engine');
 const DynamicScene = require('./scene-dynamic');
 const ScenePreloader = require('./scene-preloader');
@@ -147,7 +146,7 @@ class RoomEvents
                 let readPanel = uiScene.uiChat.getChildByProperty('id', chatConst.CHAT_MESSAGES);
                 if(readPanel){
                     let messageTemplate = uiScene.cache.html.get('uiChatMessage');
-                    let output = Mustache.render(messageTemplate, {
+                    let output = this.gameEngine.Mustache.render(messageTemplate, {
                         from: message[chatConst.CHAT_FROM],
                         color: chatConst.colors[message.t],
                         message: message[chatConst.CHAT_MESSAGE]

@@ -79,25 +79,25 @@ class ScenePreloader extends Phaser.Scene
         // @TODO: player animation will be part of the configuration in the database.
         this.anims.create({
             key: share.LEFT,
-            frames: this.anims.generateFrameNumbers(share.IMAGE_PLAYER, {start:3, end:5}),
+            frames: this.anims.generateFrameNumbers(share.IMAGE_PLAYER, {start: 3, end: 5}),
             frameRate: this.configuredFrameRate,
             repeat:-1
         });
         this.anims.create({
             key: share.RIGHT,
-            frames: this.anims.generateFrameNumbers(share.IMAGE_PLAYER, {start:6, end:8}),
+            frames: this.anims.generateFrameNumbers(share.IMAGE_PLAYER, {start: 6, end: 8}),
             frameRate: this.configuredFrameRate,
             repeat: -1
         });
         this.anims.create({
             key: share.UP,
-            frames: this.anims.generateFrameNumbers(share.IMAGE_PLAYER, {start:9, end:11}),
+            frames: this.anims.generateFrameNumbers(share.IMAGE_PLAYER, {start: 9, end: 11}),
             frameRate: this.configuredFrameRate,
             repeat: -1
         });
         this.anims.create({
             key: share.DOWN,
-            frames: this.anims.generateFrameNumbers(share.IMAGE_PLAYER, {start:0, end:2}),
+            frames: this.anims.generateFrameNumbers(share.IMAGE_PLAYER, {start: 0, end: 2}),
             frameRate: this.configuredFrameRate,
             repeat: -1
         });

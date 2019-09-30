@@ -1,4 +1,5 @@
 const PhaserGame = require('phaser').Game;
+const Mustache = require('mustache');
 
 class GameEngine extends PhaserGame
 {
@@ -8,6 +9,7 @@ class GameEngine extends PhaserGame
         super(GameConfig);
         this.uiScene = false;
         this.statsDisplayed = false;
+        this.Mustache = Mustache;
     }
 
 }
