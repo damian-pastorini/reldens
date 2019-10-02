@@ -1,6 +1,6 @@
 /**
  *
- * Reldens - index
+ * Reldens - Index
  *
  * Server initialization and environment variables and configuration loader.
  *
