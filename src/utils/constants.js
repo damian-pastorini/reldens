@@ -19,6 +19,9 @@ module.exports = {
     CLIENT_JOINED: 'cj',
     FEATURES: 'gf',
     ROOM_EVENTS: 'roomEvents',
+    PRELOAD_HTML: 'html',
+    PRELOAD_IMAGE: 'image',
+    PRELOAD_SPRITESHEET: 'spritesheet',
     // movement:
     UP: 'up',
     LEFT: 'left',

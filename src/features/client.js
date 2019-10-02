@@ -52,6 +52,38 @@ class FeaturesClient
         }
     }
 
+    preloadAssets(preloadScene)
+    {
+        for(let idx in this.featuresList){
+            let feature = this.featuresList[idx];
+            if(feature.hasOwnProperty('preloadAssets')){
+                for(let asset of feature.preloadAssets){
+                    // @TODO: improve to load any type.
+                    if(asset.type === share.PRELOAD_HTML){
+                        preloadScene.load.html(asset.name, asset.path);
+                    }
+                    if(asset.type === share.PRELOAD_IMAGE){
+                        preloadScene.load.image(asset.name, asset.path);
+                    }
+                    if(asset.type === share.PRELOAD_SPRITESHEET){
+                        preloadScene.load.spritesheet(asset.name, asset.path, asset.data);
+                    }
+                }
+            }
+        }
+    }
+
+    createFeaturesUi(uiScene)
+    {
+        for(let idx in this.featuresList){
+            let feature = this.featuresList[idx];
+            if(feature.hasOwnProperty('uiCreate')){
+                uiScene[feature.name+'UiCreate'] = new feature.uiCreate(uiScene);
+                uiScene[feature.name+'UiCreate'].createUi();
+            }
+        }
+    }
+
 }
 
 module.exports = FeaturesClient;

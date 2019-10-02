@@ -26,14 +26,6 @@ class RoomEvents
         this.playersQueue = {};
     }
 
-    getSceneData(room)
-    {
-        if(room.state && (!this.sceneData || room.state !== this.sceneData)){
-            this.sceneData = JSON.parse(room.state.sceneData);
-        }
-        return this.sceneData;
-    }
-
     startListen(room, previousScene = false)
     {
         this.room = room;
@@ -168,7 +160,6 @@ class RoomEvents
                 }
             }
         });
-        this.gameManager.features.attachOnMessageObserversToRoom(this);
         this.room.onLeave((code) => {
             if (code > 1000) {
                 // server error, disconnection:
@@ -179,6 +170,9 @@ class RoomEvents
                 // this.gameEngine.scene.remove(this.roomName);
             }
         });
+        // @NOTE: here we attach features onMessage actions for the events on the scene-rooms, we may need to do this
+        // for every room state change, not only for onMessage but for room.state.onChange, onRemove, onAdd as well.
+        this.gameManager.features.attachOnMessageObserversToRoom(this);
     }
 
     startEngineScene(player, room, previousScene = false)
@@ -247,6 +241,14 @@ class RoomEvents
         this.room.send({act: share.PLAYER_STATS});
         // send notification about client joined:
         this.room.send({act: share.CLIENT_JOINED});
+    }
+
+    getSceneData(room)
+    {
+        if(room.state && (!this.sceneData || room.state !== this.sceneData)){
+            this.sceneData = JSON.parse(room.state.sceneData);
+        }
+        return this.sceneData;
     }
 
     getActiveScene()

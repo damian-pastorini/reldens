@@ -28,9 +28,8 @@ class ScenePreloader extends Phaser.Scene
             this.load.html('uiBoxPlayerStats', 'assets/html/ui-box-player-stats.html');
             this.load.html('uiBoxLeft', 'assets/html/ui-box-left.html');
             this.load.html('playerStats', 'assets/html/player-stats.html');
-            // @TODO: preload all features elements.
-            this.load.html('uiChat', 'assets/features/chat/templates/ui-chat.html');
-            this.load.html('uiChatMessage', 'assets/features/chat/templates/message.html');
+            // preload all features elements:
+            this.gameManager.features.preloadAssets(this);
         }
         // maps:
         if(this.preloadMapKey){
@@ -70,18 +69,13 @@ class ScenePreloader extends Phaser.Scene
             this.uiBoxRight = this.add.dom(450, 20).createFromCache('uiBoxRight');
             this.uiBoxPlayerStats = this.add.dom(420, 70).createFromCache('uiBoxPlayerStats');
             this.uiBoxLeft = this.add.dom(120, 420).createFromCache('uiBoxLeft');
-            this.uiChat = this.add.dom(360, 420).createFromCache('uiChat');
             // logout:
             let logoutButton = this.uiBoxRight.getChildByProperty('id', 'logout');
             logoutButton.addEventListener('click', () => {
                 window.location.reload();
             });
             // @NOTE: since this happens only once and just for the first preloader, here we register the features.
-            // this.gameManager.features.registerFeaturesUi(this);
-            // @TODO: re-implement chat as feature.
-            const ChatRegister = require('../chat/register');
-            this.chatRegister = new ChatRegister();
-            this.chatRegister.registerChat(this.gameManager.activeRoomEvents, this, this.gameManager);
+            this.gameManager.features.createFeaturesUi(this);
         }
         // player animations:
         // @TODO: player animation will be part of the configuration in the database.

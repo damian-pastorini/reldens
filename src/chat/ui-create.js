@@ -1,16 +1,28 @@
 
 const chatConst = require('./constants');
 
-class ChatRegister
+class ChatUiCreate
 {
 
-    registerChat(roomEvents, uiScene, gameManager)
+    constructor(uiScene = false)
     {
-        this.gameManager = gameManager;
-        let chatInput = uiScene.uiChat.getChildByProperty('id', chatConst.CHAT_INPUT);
-        let chatSendButton = uiScene.uiChat.getChildByProperty('id', chatConst.CHAT_SEND_BUTTON);
+        if(!uiScene){
+            console.log('ERROR - UiScene false.');
+        }
+        this.uiScene = uiScene;
+    }
+
+    createUi()
+    {
+        if(!this.uiScene){
+            console.log('ERROR - UiScene not defined.');
+        }
+        this.gameManager = this.uiScene.gameManager;
+        this.uiScene.uiChat = this.uiScene.add.dom(360, 420).createFromCache('uiChat');
+        let chatInput = this.uiScene.uiChat.getChildByProperty('id', chatConst.CHAT_INPUT);
+        let chatSendButton = this.uiScene.uiChat.getChildByProperty('id', chatConst.CHAT_SEND_BUTTON);
         if(chatInput){
-            uiScene.input.keyboard.on('keyup_ENTER', () => {
+            this.uiScene.input.keyboard.on('keyup_ENTER', () => {
                 let isFocused = (document.activeElement === chatInput);
                 if(!isFocused){
                     chatInput.focus();
@@ -19,14 +31,14 @@ class ChatRegister
             if(chatSendButton){
                 chatSendButton.addEventListener('click', (e) => {
                     e.preventDefault();
-                    this.sendChatMessage(chatInput, gameManager.activeRoomEvents);
+                    this.sendChatMessage(chatInput, this.gameManager.activeRoomEvents);
                     chatInput.focus();
                 });
             }
             chatInput.addEventListener('keyup', (e) => {
                 if(e.keyCode === Phaser.Input.Keyboard.KeyCodes.ENTER){
                     e.preventDefault();
-                    this.sendChatMessage(chatInput, gameManager.activeRoomEvents);
+                    this.sendChatMessage(chatInput, this.gameManager.activeRoomEvents);
                 }
             });
         }
@@ -70,4 +82,4 @@ class ChatRegister
 
 }
 
-module.exports = ChatRegister;
+module.exports = ChatUiCreate;
