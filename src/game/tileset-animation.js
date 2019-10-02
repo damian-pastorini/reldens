@@ -1,3 +1,11 @@
+/**
+ *
+ * Reldens - TilesetAnimation
+ *
+ * This class will generate and run the animations.
+ *
+ */
+
 class TilesetAnimation
 {
 

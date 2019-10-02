@@ -1,3 +1,11 @@
+/**
+ *
+ * Reldens - ScenePreloader
+ *
+ * This class extends Phaser.Scene to preload all the required assets, generate the UI and assign the actions.
+ *
+ */
+
 const Phaser = require('phaser');
 const share = require('../utils/constants');
 

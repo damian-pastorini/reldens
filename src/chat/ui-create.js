@@ -1,3 +1,10 @@
+/**
+ *
+ * Reldens - ChatUiCreate
+ *
+ * This class will handle the chat UI and assign all the related events and actions.
+ *
+ */
 
 const chatConst = require('./constants');
 

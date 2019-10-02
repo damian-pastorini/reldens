@@ -1,6 +1,6 @@
 /**
  *
- * RoomGame
+ * Reldens - RoomGame
  *
  * This room is the game lobby and for now it will just start the game using the loginManager.
  * The client will automatically disconnect from this room once it received the data.

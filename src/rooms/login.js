@@ -1,6 +1,6 @@
 /**
  *
- * RoomLogin
+ * Reldens - RoomLogin
  *
  * This room is the base to authenticate every single client join.
  * Since we are hitting the storage to validate the client we doing it on each join.
