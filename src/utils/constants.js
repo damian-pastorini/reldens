@@ -18,6 +18,7 @@ module.exports = {
     ICON_STATS: 'player-stats',
     CLIENT_JOINED: 'cj',
     FEATURES: 'gf',
+    ROOM_EVENTS: 'roomEvents',
     // movement:
     UP: 'up',
     LEFT: 'left',

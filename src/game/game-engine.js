@@ -1,3 +1,11 @@
+/**
+ *
+ * Reldens - GameEngine
+ *
+ * This class will extend Phaser to include any all the customizations.
+ *
+ */
+
 const PhaserGame = require('phaser').Game;
 const TemplateEngine = require('mustache');
 

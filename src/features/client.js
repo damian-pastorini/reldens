@@ -7,6 +7,7 @@
  */
 
 const configuredFeatures = require('../../config/features-client');
+const share = require('../utils/constants');
 
 class FeaturesClient
 {
@@ -27,6 +28,28 @@ class FeaturesClient
             }
         }
         return this.featuresList;
+    }
+
+    attachOnMessageObserversToRoom(roomEvents)
+    {
+        for(let idx in this.featuresList){
+            let feature = this.featuresList[idx];
+            if(feature.hasOwnProperty('joinedRoomsOnMessage')){
+                let attachIndex = false;
+                if(feature.joinedRoomsOnMessage.hasOwnProperty(roomEvents.roomName)){
+                    attachIndex = roomEvents.roomName;
+                }
+                if(feature.joinedRoomsOnMessage.hasOwnProperty(share.ROOM_EVENTS)){
+                    attachIndex = share.ROOM_EVENTS;
+                }
+                if(attachIndex){
+                    roomEvents.room.onMessage((message) => {
+                        feature.messageObserver = new feature.joinedRoomsOnMessage[attachIndex]();
+                        feature.messageObserver.observeMessage(message, roomEvents.gameManager);
+                    });
+                }
+            }
+        }
     }
 
 }

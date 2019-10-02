@@ -109,8 +109,6 @@ class GameManager
                         window.location.reload();
                     }
                     // after the room was joined added to the joinedRooms list:
-                    // @TODO: remove this global chat after refactor the room-events.
-                    this.gameClient.globalChat = joinedRoom;
                     this.joinedRooms[joinRoomName] = joinedRoom;
                     // if the feature as additional message actions then we will observe the messages:
                     if(
