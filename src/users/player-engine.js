@@ -11,7 +11,7 @@ const share = require('../utils/constants');
 class PlayerEngine
 {
 
-    constructor(scene, playerData)
+    constructor(scene, playerData, gameConfig)
     {
         this.username = '';
         this.scene = scene;
@@ -21,12 +21,14 @@ class PlayerEngine
         this.socket = {};
         this.playerId = '';
         this.players = {};
+        this.config = gameConfig;
     }
 
     create()
     {
         this.addPlayer(this.playerId, this.state);
-        this.scene.cameras.main.fadeFrom(share.FADE_DURATION);
+        let fadeDuration = this.config.get('client/players/animations/fadeDuration') || share.FADE_DURATION;
+        this.scene.cameras.main.fadeFrom(fadeDuration);
         this.scene.scene.setVisible(true, this.room);
         this.scene.physics.world.setBounds(0, 0, this.scene.map.widthInPixels, this.scene.map.heightInPixels);
         this.scene.cameras.main.setBounds(0, 0, this.scene.map.widthInPixels, this.scene.map.heightInPixels);
@@ -36,6 +38,7 @@ class PlayerEngine
 
     addPlayer(id, state)
     {
+        // @TODO: implement player custom avatar.
         this.players[id] = this.scene.physics.add.sprite(state.x, state.y, share.IMAGE_PLAYER);
         this.players[id].anims.play(state.dir);
         this.players[id].anims.stop();

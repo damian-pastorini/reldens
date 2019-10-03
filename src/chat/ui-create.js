@@ -54,7 +54,7 @@ class ChatUiCreate
     sendChatMessage(chatInput, roomEvents)
     {
         // validate if there's something to send:
-        if((!chatInput.value || chatInput.value.length === 0)){
+        if((!chatInput.value || chatInput.value.trim().length === 0)){
             return false;
         }
         // both global or private messages use the global chat room:

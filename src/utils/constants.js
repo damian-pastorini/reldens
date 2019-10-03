@@ -32,9 +32,9 @@ module.exports = {
     COL_PLAYER: Math.pow(2,0),
     COL_ENEMY: Math.pow(2,1),
     COL_GROUND: Math.pow(2,2),
-    // @TODO: the following constants additionally will be part of the configuration in the database.
     // default data:
-    IMAGE_PLAYER: 'player',
     FADE_DURATION: 1000,
-    SPEED_SERVER: 180
+    SPEED_SERVER: 180,
+    // @TODO: implement player custom avatar.
+    IMAGE_PLAYER: 'player'
 };

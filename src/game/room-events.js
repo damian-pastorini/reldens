@@ -128,36 +128,9 @@ class RoomEvents
             if(message.act === share.RECONNECT){
                 this.gameManager.reconnectGameClient(message, this.room);
             }
-            let uiScene = this.gameEngine.uiScene;
-            // @TODO: remove statsDisplayed, check why stats are been created more than once.
+            // @TODO: remove from here, send player data on game creation and create stats display only once.
             if(message.act === share.PLAYER_STATS && !this.gameEngine.statsDisplayed){
-                let currentScene = this.getActiveScene();
-                if(currentScene.player && currentScene.player.players.hasOwnProperty(room.sessionId)){
-                    let playerSprite = currentScene.player.players[room.sessionId];
-                    playerSprite.stats = message.stats;
-                }
-                if(uiScene && uiScene.hasOwnProperty('uiBoxPlayerStats')){
-                    let statsBox = uiScene.uiBoxPlayerStats.getChildByProperty('id', 'box-player-stats');
-                    let statsButton = uiScene.uiBoxPlayerStats.getChildByProperty('id', 'player-stats-btn');
-                    let statsPanel = uiScene.uiBoxPlayerStats.getChildByProperty('id', 'player-stats-container');
-                    if(statsButton && statsPanel){
-                        let messageTemplate = uiScene.cache.html.get('playerStats');
-                        // @TODO: stats will be part of the configuration in the database.
-                        statsPanel.innerHTML = this.gameManager.gameEngine.TemplateEngine.render(messageTemplate, {
-                            stats: message.stats
-                        });
-                        statsButton.addEventListener('click', () => {
-                            if(statsPanel.style.display === 'none'){
-                                statsPanel.style.display = 'block';
-                                statsBox.style.left = '-80px';
-                            } else {
-                                statsPanel.style.display = 'none';
-                                statsBox.style.left = '0px';
-                            }
-                        });
-                        this.gameEngine.statsDisplayed = true;
-                    }
-                }
+                this.activatePlayerStats(message)
             }
         });
         this.room.onLeave((code) => {
@@ -175,6 +148,39 @@ class RoomEvents
         this.gameManager.features.attachOnMessageObserversToRoom(this);
     }
 
+    activatePlayerStats(message)
+    {
+        let uiScene = this.gameEngine.uiScene;
+
+        let currentScene = this.getActiveScene();
+        if(currentScene.player && currentScene.player.players.hasOwnProperty(this.room.sessionId)){
+            let playerSprite = currentScene.player.players[this.room.sessionId];
+            playerSprite.stats = message.stats;
+        }
+        if(uiScene && uiScene.hasOwnProperty('uiBoxPlayerStats')){
+            let statsBox = uiScene.uiBoxPlayerStats.getChildByProperty('id', 'box-player-stats');
+            let statsButton = uiScene.uiBoxPlayerStats.getChildByProperty('id', 'player-stats-btn');
+            let statsPanel = uiScene.uiBoxPlayerStats.getChildByProperty('id', 'player-stats-container');
+            if(statsButton && statsPanel){
+                let messageTemplate = uiScene.cache.html.get('playerStats');
+                // @TODO: stats will be part of the configuration in the database.
+                statsPanel.innerHTML = this.gameManager.gameEngine.TemplateEngine.render(messageTemplate, {
+                    stats: message.stats
+                });
+                statsButton.addEventListener('click', () => {
+                    if(statsPanel.style.display === 'none'){
+                        statsPanel.style.display = 'block';
+                        statsBox.style.left = '-80px';
+                    } else {
+                        statsPanel.style.display = 'none';
+                        statsBox.style.left = '0px';
+                    }
+                });
+                this.gameEngine.statsDisplayed = true;
+            }
+        }
+    }
+
     startEngineScene(player, room, previousScene = false)
     {
         let sceneData = this.getSceneData(room);
@@ -183,7 +189,7 @@ class RoomEvents
         if(!this.gameEngine.uiScene){
             uiScene = true;
         }
-        // @TODO: implement characters images.
+        // @TODO: implement player custom avatar.
         // , player.username
         let scenePreloader = new ScenePreloader(preloaderName, sceneData.roomMap, sceneData.sceneImages, uiScene, this.gameManager);
         if(!this.gameEngine.scene.getScene(preloaderName)){
@@ -192,10 +198,14 @@ class RoomEvents
             preloader.load.on('complete', () => {
                 // set ui on first preloader scene:
                 if(!this.gameEngine.uiScene){
+                    // assign the preloader:
                     this.gameEngine.uiScene = preloader;
-                    let element = preloader.uiBoxRight.getChildByProperty('className', 'player-name');
-                    if(element){
-                        element.innerHTML = player.username;
+                    // if the box right is present then assign the actions:
+                    if(preloader.uiBoxRight){
+                        let element = preloader.uiBoxRight.getChildByProperty('className', 'player-name');
+                        if(element){
+                            element.innerHTML = player.username;
+                        }
                     }
                 }
                 this.createEngineScene(player, room, previousScene, sceneData);
@@ -208,7 +218,7 @@ class RoomEvents
     createEngineScene(player, room, previousScene, sceneData)
     {
         if(!this.gameEngine.scene.getScene(player.state.scene)){
-            let phaserDynamicScene = new DynamicScene(player.state.scene, sceneData);
+            let phaserDynamicScene = new DynamicScene(player.state.scene, sceneData, this.gameManager.config);
             this.gameEngine.scene.add(player.state.scene, phaserDynamicScene, false);
         }
         if(!this.gameManager.room){
@@ -221,7 +231,7 @@ class RoomEvents
         }
         this.gameManager.room = room;
         let currentScene = this.gameEngine.scene.getScene(player.state.scene);
-        let currentPlayer = new PlayerEngine(currentScene, player);
+        let currentPlayer = new PlayerEngine(currentScene, player, this.gameManager.config);
         currentPlayer.socket = room;
         currentPlayer.playerId = room.sessionId;
         currentPlayer.username = player.username;
@@ -255,7 +265,7 @@ class RoomEvents
     {
         if(!this.gameEngine.scene.getScene(this.roomName)){
             if(this.sceneData){
-                let phaserDynamicScene = new DynamicScene(this.roomName, this.sceneData);
+                let phaserDynamicScene = new DynamicScene(this.roomName, this.sceneData, this.gameManager.config);
                 this.gameEngine.scene.add(this.roomName, phaserDynamicScene, false);
             }
         }

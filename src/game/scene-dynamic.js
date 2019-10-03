@@ -5,7 +5,7 @@ const share = require('../utils/constants');
 class SceneDynamic extends Phaser.Scene
 {
 
-    constructor(key, data)
+    constructor(key, data, config)
     {
         super({key});
         this.key = key;
@@ -13,6 +13,7 @@ class SceneDynamic extends Phaser.Scene
         this.layers = {};
         this.transition = true;
         this.withTSAnimation = false;
+        this.configManager = config;
     }
 
     init()
@@ -91,25 +92,23 @@ class SceneDynamic extends Phaser.Scene
 
     registerLayers()
     {
-        for(let i=0; i<this.map.layers.length; i++){
-            // @TODO: tilesets margin and spacing will be part of the configuration in the database.
+        for(let i = 0; i < this.map.layers.length; i++){
+            let margin = this.configManager.get('client/general/tileData/margin');
+            let spacing = this.configManager.get('client/general/tileData/spacing');
             if(this.withTSAnimation){
-                this.layers[i] = this.map.createDynamicLayer(this.map.layers[i].name, this.tileset, 1, 2);
+                this.layers[i] = this.map.createDynamicLayer(this.map.layers[i].name, this.tileset, margin, spacing);
             } else {
-                this.layers[i] = this.map.createStaticLayer(this.map.layers[i].name, this.tileset, 1, 2);
+                this.layers[i] = this.map.createStaticLayer(this.map.layers[i].name, this.tileset, margin, spacing);
             }
             // layers over player:
             if(this.map.layers[i].name.indexOf('below-player') !== -1){
-                // @TODO: layers depth will be part of the configuration in the database.
-                this.layers[i].setDepth(0);
+                this.layers[i].setDepth(this.configManager.get('client/map/layersDepth/belowPlayer'));
             }
             if(this.map.layers[i].name.indexOf('over-player') !== -1){
-                // @TODO: layers depth will be part of the configuration in the database.
                 this.layers[i].setDepth(i);
             }
             if(this.map.layers[i].name.indexOf('change-points') !== -1){
-                // @TODO: layers depth will be part of the configuration in the database.
-                this.layers[i].setDepth(0);
+                this.layers[i].setDepth(this.configManager.get('client/map/layersDepth/changePoints'));
             }
         }
     }
@@ -124,10 +123,18 @@ class SceneDynamic extends Phaser.Scene
     registerController()
     {
         // @TODO: controllers will be part of the configuration in the database.
-        this.hold(document.getElementById(share.UP), this.player.up.bind(this.player));
-        this.hold(document.getElementById(share.DOWN), this.player.down.bind(this.player));
-        this.hold(document.getElementById(share.LEFT), this.player.left.bind(this.player));
-        this.hold(document.getElementById(share.RIGHT), this.player.right.bind(this.player));
+        if(document.getElementById(share.UP)){
+            this.hold(document.getElementById(share.UP), this.player.up.bind(this.player));
+        }
+        if(document.getElementById(share.DOWN)){
+            this.hold(document.getElementById(share.DOWN), this.player.down.bind(this.player));
+        }
+        if(document.getElementById(share.LEFT)){
+            this.hold(document.getElementById(share.LEFT), this.player.left.bind(this.player));
+        }
+        if(document.getElementById(share.RIGHT)){
+            this.hold(document.getElementById(share.RIGHT), this.player.right.bind(this.player));
+        }
     }
 
     hold(btn, action)

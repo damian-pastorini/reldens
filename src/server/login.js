@@ -111,12 +111,15 @@ class LoginManager
         if(!updated){
             throw new Error('ERROR - User update fail.');
         }
+        // we need to send the engine and all the general and client configurations from the storage:
+        let storedClientAndGeneral = {client: this.config.client, general: this.config.general};
+        let clientFullConfig = Object.assign({}, this.config.gameEngine, storedClientAndGeneral);
         // client start:
         room.send(client, {
             act: share.START_GAME,
             sessionId: client.sessionId,
             player: player,
-            gameConfig: this.config.gameEngine,
+            gameConfig: clientFullConfig,
             features: this.config.availableFeaturesList
         });
     }

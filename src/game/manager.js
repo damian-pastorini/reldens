@@ -10,6 +10,7 @@ const GameClient = require('./game-client');
 const GameEngine = require('./game-engine');
 const RoomEvents = require('./room-events');
 const FeaturesClient = require('../features/client');
+const ConfigProcessor = require('../config/processor');
 const share = require('../utils/constants');
 const gameSeverConfig = require('../../config/server');
 
@@ -33,6 +34,8 @@ class GameManager
         this.features = new FeaturesClient();
         // user data:
         this.userData = {};
+        // full game config:
+        this.config = ConfigProcessor;
     }
 
     async joinGameRoom(formData, isNewUser = false)
@@ -67,6 +70,8 @@ class GameManager
         if(!initialGameData.hasOwnProperty('gameConfig')){
             throw new Error('ERROR - Missing game configuration.');
         }
+        // apply the initial config to the processor:
+        Object.assign(this.config, initialGameData.gameConfig);
         // initialize game engine:
         this.gameEngine = new GameEngine(initialGameData.gameConfig);
         // features list:

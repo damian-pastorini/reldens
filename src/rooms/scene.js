@@ -71,8 +71,8 @@ class RoomScene extends RoomLogin
         // create body for server physics and assign the body to the player:
         currentPlayer.p2body = this.roomWorld.createPlayerBody({
             id: client.sessionId,
-            width: parseFloat(this.config.server.players.size.width),
-            height: parseFloat(this.config.server.players.size.height),
+            width: this.config.get('server/players/size/width'),
+            height: this.config.get('server/players/size/height'),
             x: currentPlayer.state.x,
             y: currentPlayer.state.y,
         });
@@ -97,7 +97,7 @@ class RoomScene extends RoomLogin
             let bodyToMove = playerSchema.p2body;
             // if player is moving:
             if(data.hasOwnProperty('dir') && bodyToMove){
-                if(this.config.server.general.controls.allow_simultaneous_keys === 1){
+                if(this.config.get('server/general/controls/allow_simultaneous_keys') === 1){
                     /* @TODO: implement.
                     if(data.dir === share.RIGHT){
                         bodyToMove.velocity[0] = share.SPEED_SERVER;
@@ -113,18 +113,19 @@ class RoomScene extends RoomLogin
                     }
                     */
                 } else {
+                    let serverSpeed = this.config.get('server/players/physicsBody/speed') || share.SPEED_SERVER;
                     // if body is moving then avoid multiple key press at the same time:
                     if(data.dir === share.RIGHT && bodyToMove.velocity[1] === 0){
-                        bodyToMove.velocity[0] = share.SPEED_SERVER;
+                        bodyToMove.velocity[0] = serverSpeed;
                     }
                     if(data.dir === share.LEFT && bodyToMove.velocity[1] === 0){
-                        bodyToMove.velocity[0] = -share.SPEED_SERVER;
+                        bodyToMove.velocity[0] = -serverSpeed;
                     }
                     if(data.dir === share.UP && bodyToMove.velocity[0] === 0){
-                        bodyToMove.velocity[1] = -share.SPEED_SERVER;
+                        bodyToMove.velocity[1] = -serverSpeed;
                     }
                     if(data.dir === share.DOWN && bodyToMove.velocity[0] === 0){
-                        bodyToMove.velocity[1] = share.SPEED_SERVER;
+                        bodyToMove.velocity[1] = serverSpeed;
                     }
                 }
                 data.x = bodyToMove.position[0];
@@ -160,7 +161,7 @@ class RoomScene extends RoomLogin
 
     createWorld(roomData)
     {
-        let roomWorld = new P2world({
+        let roomWorld = this.getWorldInstance({
             sceneName: this.roomName,
             roomData: roomData,
             gravity: [0, 0],
@@ -169,12 +170,16 @@ class RoomScene extends RoomLogin
         // assign world to room:
         this.roomWorld = roomWorld;
         // start world movement from the config or with the default value:
-        this.timeStep = (this.config.server.rooms.world.timestep !== undefined) ?
-            parseFloat(this.config.server.rooms.world.timestep) : 0.04;
+        this.timeStep = this.config.get('server/rooms/world/timestep') || 0.04;
         this.worldTimer = this.clock.setInterval(() => {
             this.roomWorld.step(this.timeStep);
         }, 1000 * this.timeStep);
         console.log('INFO - World created in Room:', this.roomName);
+    }
+
+    getWorldInstance(data)
+    {
+        return new P2world(data);
     }
 
     async nextSceneInitialPosition(client, data)

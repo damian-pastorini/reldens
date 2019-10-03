@@ -21,7 +21,7 @@ class ScenePreloader extends Phaser.Scene
         this.progressBar = null;
         this.progressCompleteRect = null;
         this.progressRect = null;
-        // @TODO: implement characters images.
+        // @TODO: implement player custom avatar.
         // , username
         // this.username = username;
         this.gameManager = gameManager;
@@ -30,13 +30,18 @@ class ScenePreloader extends Phaser.Scene
     preload()
     {
         if(this.uiScene){
-            // @TODO: ui elements visibility and availability will be part of the configuration in the database.
             // ui elements:
-            this.load.html('uiBoxRight', 'assets/html/ui-box-right.html');
-            this.load.html('uiBoxPlayerStats', 'assets/html/ui-box-player-stats.html');
-            this.load.html('uiBoxLeft', 'assets/html/ui-box-left.html');
-            this.load.html('playerStats', 'assets/html/player-stats.html');
-            // preload all features elements:
+            if(this.gameManager.config.get('client/general/uiVisibility/uiBoxRight')){
+                this.load.html('uiBoxRight', 'assets/html/ui-box-right.html');
+            }
+            if(this.gameManager.config.get('client/general/uiVisibility/uiBoxLeft')){
+                this.load.html('uiBoxLeft', 'assets/html/ui-box-left.html');
+            }
+            if(this.gameManager.config.get('client/general/uiVisibility/uiBoxPlayerStats')){
+                this.load.html('uiBoxPlayerStats', 'assets/html/ui-box-player-stats.html');
+                this.load.html('playerStats', 'assets/html/player-stats.html');
+            }
+            // preload features templates:
             this.gameManager.features.preloadAssets(this);
         }
         // maps:
@@ -46,26 +51,31 @@ class ScenePreloader extends Phaser.Scene
         // @TODO: test a multiple tiles images case.
         // map tiles images:
         if(this.preloadImages){
-            // @TODO: frame width, height, margin and spacing will be part of the configuration in the database.
             // @NOTE: we need the preloadImages and tile data here because the JSON map file is not loaded yet.
-            let tileData = {frameWidth: 16, frameHeight: 16, margin: 1, spacing: 2};
+            let tileData = {
+                frameWidth: this.gameManager.config.get('client/general/tileData/width') || 16,
+                frameHeight: this.gameManager.config.get('client/general/tileData/height') || 16,
+                margin: this.gameManager.config.get('client/general/tileData/margin') || 1,
+                spacing: this.gameManager.config.get('client/general/tileData/spacing') || 2
+            };
             let files = this.preloadImages.split(',');
             for(let imageFile of files){
                 let filePath = `assets/maps/${imageFile}.png`;
                 this.load.spritesheet(imageFile, filePath, tileData);
             }
         }
-        // @TODO: player image will be part of the configuration in the database.
-        let playerSpriteSize = {frameWidth: 52, frameHeight: 71};
-        // @TODO: implement characters images.
+        let playerSpriteSize = {
+            frameWidth: this.gameManager.config.get('client/players/size/width') || 52,
+            frameHeight: this.gameManager.config.get('client/players/size/height') || 71
+        };
+        // @TODO: implement player custom avatar.
         // this.load.spritesheet(this.username, 'assets/sprites/'+this.username+'.png', playerSpriteSize);
         this.load.spritesheet(share.IMAGE_PLAYER, 'assets/sprites/player-1.png', playerSpriteSize);
         // interface assets:
         this.load.image(share.ICON_STATS, 'assets/icons/book.png');
         this.load.on('progress', this.onLoadProgress, this);
         this.load.on('complete', this.onLoadComplete, this);
-        // @TODO: the player frame rate will be part of the configuration in the database.
-        this.configuredFrameRate = 10;
+        this.configuredFrameRate = this.gameManager.config.get('client/general/animations/frameRate') || 10;
         this.createProgressBar();
     }
 
@@ -73,20 +83,26 @@ class ScenePreloader extends Phaser.Scene
     {
         if(this.uiScene) {
             // create ui:
-            // @TODO: UI (elements visibility and position) will be part of the configuration in the database.
-            this.uiBoxRight = this.add.dom(450, 20).createFromCache('uiBoxRight');
-            this.uiBoxPlayerStats = this.add.dom(420, 70).createFromCache('uiBoxPlayerStats');
-            this.uiBoxLeft = this.add.dom(120, 420).createFromCache('uiBoxLeft');
-            // logout:
-            let logoutButton = this.uiBoxRight.getChildByProperty('id', 'logout');
-            logoutButton.addEventListener('click', () => {
-                window.location.reload();
-            });
+            if(this.gameManager.config.get('client/general/uiVisibility/uiBoxRight')){
+                this.uiBoxRight = this.add.dom(450, 20).createFromCache('uiBoxRight');
+                // logout:
+                let logoutButton = this.uiBoxRight.getChildByProperty('id', 'logout');
+                logoutButton.addEventListener('click', () => {
+                    window.location.reload();
+                });
+            }
+            if(this.gameManager.config.get('client/general/uiVisibility/uiBoxLeft')) {
+                this.uiBoxLeft = this.add.dom(120, 420).createFromCache('uiBoxLeft');
+            }
+            if(this.gameManager.config.get('client/general/uiVisibility/uiBoxPlayerStats')) {
+                this.uiBoxPlayerStats = this.add.dom(420, 70).createFromCache('uiBoxPlayerStats');
+            }
             // @NOTE: since this happens only once and just for the first preloader, here we register the features.
             this.gameManager.features.createFeaturesUi(this);
         }
         // player animations:
         // @TODO: player animation will be part of the configuration in the database.
+        // @TODO: implement player custom avatar.
         this.anims.create({
             key: share.LEFT,
             frames: this.anims.generateFrameNumbers(share.IMAGE_PLAYER, {start: 3, end: 5}),
