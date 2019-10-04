@@ -96,7 +96,6 @@ class SceneDynamic extends Phaser.Scene
             } else {
                 this.layers[i] = this.map.createStaticLayer(this.map.layers[i].name, this.tileset, margin, spacing);
             }
-            // layers over player:
             if(this.map.layers[i].name.indexOf('below-player') !== -1){
                 this.layers[i].setDepth(this.configManager.get('client/map/layersDepth/belowPlayer'));
             }
