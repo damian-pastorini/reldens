@@ -202,7 +202,7 @@ class RoomEvents
     createEngineScene(player, room, previousScene, sceneData)
     {
         if(!this.gameEngine.scene.getScene(player.state.scene)){
-            let phaserDynamicScene = new DynamicScene(player.state.scene, sceneData, this.gameManager.config);
+            let phaserDynamicScene = this.createSceneInstance(player.state.scene, sceneData, this.gameManager.config);
             this.gameEngine.scene.add(player.state.scene, phaserDynamicScene, false);
         }
         if(!this.gameManager.room){
@@ -258,11 +258,16 @@ class RoomEvents
     {
         if(!this.gameEngine.scene.getScene(this.roomName)){
             if(this.sceneData){
-                let phaserDynamicScene = new DynamicScene(this.roomName, this.sceneData, this.gameManager.config);
+                let phaserDynamicScene = this.createSceneInstance(this.roomName, this.sceneData, this.gameManager.config);
                 this.gameEngine.scene.add(this.roomName, phaserDynamicScene, false);
             }
         }
         return this.gameEngine.scene.getScene(this.roomName);
+    }
+
+    createSceneInstance(sceneName, sceneData, config)
+    {
+        return new DynamicScene(sceneName, sceneData, config);
     }
 
 }
