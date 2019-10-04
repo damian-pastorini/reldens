@@ -16,7 +16,6 @@ class GameEngine extends PhaserGame
     {
         super(GameConfig);
         this.uiScene = false;
-        this.statsDisplayed = false;
         this.TemplateEngine = TemplateEngine;
     }
 

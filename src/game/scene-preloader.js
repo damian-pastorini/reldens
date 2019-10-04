@@ -37,6 +37,9 @@ class ScenePreloader extends Phaser.Scene
             if(this.gameManager.config.get('client/general/uiVisibility/uiBoxLeft')){
                 this.load.html('uiBoxLeft', 'assets/html/ui-box-left.html');
             }
+            if(this.gameManager.config.get('client/general/uiVisibility/sceneLabel')){
+                this.load.html('uiSceneLabel', 'assets/html/ui-scene-label.html');
+            }
             if(this.gameManager.config.get('client/general/uiVisibility/uiBoxPlayerStats')){
                 this.load.html('uiBoxPlayerStats', 'assets/html/ui-box-player-stats.html');
                 this.load.html('playerStats', 'assets/html/player-stats.html');
@@ -94,10 +97,32 @@ class ScenePreloader extends Phaser.Scene
             if(this.gameManager.config.get('client/general/uiVisibility/uiBoxLeft')) {
                 this.uiBoxLeft = this.add.dom(120, 420).createFromCache('uiBoxLeft');
             }
+            if(this.gameManager.config.get('client/general/uiVisibility/sceneLabel')){
+                this.uiSceneLabel = this.add.dom(20, 20).createFromCache('uiSceneLabel');
+            }
             if(this.gameManager.config.get('client/general/uiVisibility/uiBoxPlayerStats')) {
                 this.uiBoxPlayerStats = this.add.dom(420, 70).createFromCache('uiBoxPlayerStats');
+                let statsBox = this.uiBoxPlayerStats.getChildByProperty('id', 'box-player-stats');
+                let statsButton = this.uiBoxPlayerStats.getChildByProperty('id', 'player-stats-btn');
+                let statsPanel = this.uiBoxPlayerStats.getChildByProperty('id', 'player-stats-container');
+                if(statsButton && statsPanel){
+                    let messageTemplate = this.cache.html.get('playerStats');
+                    // @TODO: stats types will be part of the configuration in the database.
+                    statsPanel.innerHTML = this.gameManager.gameEngine.TemplateEngine.render(messageTemplate, {
+                        stats: this.gameManager.playerData.stats
+                    });
+                    statsButton.addEventListener('click', () => {
+                        if(statsPanel.style.display === 'none'){
+                            statsPanel.style.display = 'block';
+                            statsBox.style.left = '-80px';
+                        } else {
+                            statsPanel.style.display = 'none';
+                            statsBox.style.left = '0px';
+                        }
+                    });
+                }
             }
-            // @NOTE: since this happens only once and just for the first preloader, here we register the features.
+            // @NOTE: since this happens only once and just for the first preloader, here we register the features UI.
             this.gameManager.features.createFeaturesUi(this);
         }
         // player animations:

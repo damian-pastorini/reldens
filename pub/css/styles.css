@@ -33,6 +33,8 @@ form .input-box input { float:right; display:block; position:relative; }
 form .input-box input[type="text"], form .input-box input[type="password"] { width:50%; }
 .player { width:100px; height:100px; position:absolute; padding-top:24px; box-sizing:border-box; left:0; top:0; }
 .ux-box { z-index:1001; display:block; margin:0; padding:0; }
+.ux-box-scene-data { background-color:rgba(0, 0, 0, 0.5); padding:10px; }
+.scene-label { color:#fff; }
 .ux-box-left { background-color: rgba(0, 0, 0, 0.5); }
 .ux-box-left button { float:left; width:50px; border:1px solid; padding:2px; }
 .ux-box-left .vertical-buttons { float:left; width:56px; text-align:center; top:0; position:relative; }

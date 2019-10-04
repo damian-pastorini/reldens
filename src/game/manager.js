@@ -26,16 +26,18 @@ class GameManager
         // @NOTE: the game engine will be initialized after the user logged in the game that way we will get the full
         // game configuration from the server when the game starts.
         this.gameEngine = false;
+        // full game config:
+        this.config = ConfigProcessor;
+        // features manager:
+        this.features = new FeaturesClient();
         // active room is the currently connected server room:
         this.activeRoomEvents = false;
         // joined rooms:
         this.joinedRooms = {};
-        // features manager:
-        this.features = new FeaturesClient();
         // user data:
         this.userData = {};
-        // full game config:
-        this.config = ConfigProcessor;
+        // player data:
+        this.playerData = false;
     }
 
     async joinGameRoom(formData, isNewUser = false)
@@ -70,6 +72,8 @@ class GameManager
         if(!initialGameData.hasOwnProperty('gameConfig')){
             throw new Error('ERROR - Missing game configuration.');
         }
+        // save original player data:
+        this.playerData = initialGameData.player;
         // apply the initial config to the processor:
         Object.assign(this.config, initialGameData.gameConfig);
         // initialize game engine:
@@ -90,7 +94,7 @@ class GameManager
         }
         // start listening the new room events:
         this.activeRoomEvents = this.createRoomEventsInstance(initialGameData.player.state.scene);
-        this.activeRoomEvents.startListen(joinedFirstRoom);
+        this.activeRoomEvents.activateRoom(joinedFirstRoom);
         return joinedFirstRoom;
     }
 
@@ -145,7 +149,7 @@ class GameManager
             this.activeRoomEvents = newRoomEvents;
             this.room = sceneRoom;
             // start listen to room events:
-            newRoomEvents.startListen(sceneRoom, message.prev);
+            newRoomEvents.activateRoom(sceneRoom, message.prev);
         }).catch((err) => {
             // @NOTE: the errors while trying to reconnect will always be originated in the server. For these errors we
             // will alert the user and reload the window automatically.

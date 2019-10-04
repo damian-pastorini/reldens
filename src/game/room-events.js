@@ -26,7 +26,7 @@ class RoomEvents
         this.playersQueue = {};
     }
 
-    startListen(room, previousScene = false)
+    activateRoom(room, previousScene = false)
     {
         this.room = room;
         // listen to changes coming from the server:
@@ -128,9 +128,10 @@ class RoomEvents
             if(message.act === share.RECONNECT){
                 this.gameManager.reconnectGameClient(message, this.room);
             }
-            // @TODO: remove from here, send player data on game creation and create stats display only once.
-            if(message.act === share.PLAYER_STATS && !this.gameEngine.statsDisplayed){
-                this.activatePlayerStats(message)
+            // @NOTE: now this method will update the stats every time the stats action is received but the UI will be
+            // created only once in the preloader.
+            if(message.act === share.PLAYER_STATS){
+                this.activatePlayerStats(message);
             }
         });
         this.room.onLeave((code) => {
@@ -151,32 +152,19 @@ class RoomEvents
     activatePlayerStats(message)
     {
         let uiScene = this.gameEngine.uiScene;
-
         let currentScene = this.getActiveScene();
         if(currentScene.player && currentScene.player.players.hasOwnProperty(this.room.sessionId)){
             let playerSprite = currentScene.player.players[this.room.sessionId];
             playerSprite.stats = message.stats;
         }
         if(uiScene && uiScene.hasOwnProperty('uiBoxPlayerStats')){
-            let statsBox = uiScene.uiBoxPlayerStats.getChildByProperty('id', 'box-player-stats');
-            let statsButton = uiScene.uiBoxPlayerStats.getChildByProperty('id', 'player-stats-btn');
             let statsPanel = uiScene.uiBoxPlayerStats.getChildByProperty('id', 'player-stats-container');
-            if(statsButton && statsPanel){
+            if(statsPanel){
                 let messageTemplate = uiScene.cache.html.get('playerStats');
-                // @TODO: stats will be part of the configuration in the database.
+                // @TODO: stats types will be part of the configuration in the database.
                 statsPanel.innerHTML = this.gameManager.gameEngine.TemplateEngine.render(messageTemplate, {
                     stats: message.stats
                 });
-                statsButton.addEventListener('click', () => {
-                    if(statsPanel.style.display === 'none'){
-                        statsPanel.style.display = 'block';
-                        statsBox.style.left = '-80px';
-                    } else {
-                        statsPanel.style.display = 'none';
-                        statsBox.style.left = '0px';
-                    }
-                });
-                this.gameEngine.statsDisplayed = true;
             }
         }
     }
@@ -243,6 +231,15 @@ class RoomEvents
                 if(tmp.sessionId && tmp.sessionId !== room.sessionId){
                     currentScene.player.addPlayer(tmp.sessionId, {x: tmp.state.x, y: tmp.state.y, dir: tmp.state.dir});
                 }
+            }
+        }
+        // update any ui if needed, this event happens once for every scene:
+        let uiScene = this.gameEngine.uiScene;
+        // if scene label is visible assign the data to the box:
+        if(uiScene.hasOwnProperty('uiSceneLabel')){
+            let element = uiScene.uiSceneLabel.getChildByProperty('className', 'scene-label');
+            if(element){
+                element.innerHTML = this.getSceneData(room).roomTitle;
             }
         }
         // @NOTE: player states must be requested since are private user data that we can share with other players or
