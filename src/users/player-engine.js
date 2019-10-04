@@ -45,44 +45,29 @@ class PlayerEngine
         return this.players[id];
     }
 
-    left(send = true)
+    left()
     {
-        if(send){
-            this.socket.send({dir: share.LEFT});
-        }
-        this.players[this.playerId].anims.play(share.LEFT, true);
+        this.socket.send({dir: share.LEFT});
     }
 
-    right(send = true)
+    right()
     {
-        if(send){
-            this.socket.send({dir: share.RIGHT});
-        }
-        this.players[this.playerId].anims.play(share.RIGHT, true);
+        this.socket.send({dir: share.RIGHT});
     }
 
-    up(send = true)
+    up()
     {
-        if(send){
-            this.socket.send({dir: share.UP});
-        }
-        this.players[this.playerId].anims.play(share.UP, true);
+        this.socket.send({dir: share.UP});
     }
 
-    down(send = true)
+    down()
     {
-        if(send){
-            this.socket.send({dir: share.DOWN});
-        }
-        this.players[this.playerId].anims.play(share.DOWN, true);
+        this.socket.send({dir: share.DOWN});
     }
 
-    stop(send = true)
+    stop()
     {
-        if(send){
-            this.socket.send({act: share.STOP});
-        }
-        this.players[this.playerId].anims.stop();
+        this.socket.send({act: share.STOP});
     }
 
 }

@@ -41,28 +41,24 @@ class RoomEvents
                 let playerSprite = currentScene.player.players[key];
                 if(playerSprite){
                     // @NOTE: player speed is defined by the server.
-                    if(player.state.x !== playerSprite.x){
-                        if(key !== this.room.sessionId && playerSprite.anims){
-                            if(player.state.x < playerSprite.x){
-                                playerSprite.anims.play(share.LEFT, true);
-                            } else {
-                                playerSprite.anims.play(share.RIGHT, true);
-                            }
+                    if(player.state.x !== playerSprite.x && playerSprite.anims){
+                        if(player.state.x < playerSprite.x){
+                            playerSprite.anims.play(share.LEFT, true);
+                        } else {
+                            playerSprite.anims.play(share.RIGHT, true);
                         }
                         playerSprite.x = parseFloat(player.state.x);
                     }
-                    if(player.state.y !== playerSprite.y){
-                        if(key !== this.room.sessionId && playerSprite.anims){
-                            if(player.state.y < playerSprite.y){
-                                playerSprite.anims.play(share.UP, true);
-                            } else {
-                                playerSprite.anims.play(share.DOWN, true);
-                            }
+                    if(player.state.y !== playerSprite.y && playerSprite.anims){
+                        if(player.state.y < playerSprite.y){
+                            playerSprite.anims.play(share.UP, true);
+                        } else {
+                            playerSprite.anims.play(share.DOWN, true);
                         }
                         playerSprite.y = parseFloat(player.state.y);
                     }
                     // player stop action:
-                    if(key !== this.room.sessionId && player.mov !== playerSprite.mov && playerSprite.anims){
+                    if(player.mov !== playerSprite.mov && playerSprite.anims){
                         if(!player.mov){
                             playerSprite.anims.stop();
                         }

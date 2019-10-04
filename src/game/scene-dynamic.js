@@ -37,7 +37,7 @@ class SceneDynamic extends Phaser.Scene
             this.input.keyboard.on('keyup', (event) => {
                 if (event.keyCode >= 37 && event.keyCode <= 40){
                     // @NOTE: all keyup events has to be sent.
-                    this.player.stop(true);
+                    this.player.stop();
                 }
             });
             this.registerController();
@@ -62,13 +62,13 @@ class SceneDynamic extends Phaser.Scene
     {
         if(this.transition === false){
             if(this.keyLeft.isDown){
-                this.player.left(true);
+                this.player.left();
             } else if(this.keyRight.isDown){
-                this.player.right(true);
+                this.player.right();
             } else if(this.keyUp.isDown){
-                this.player.up(true);
+                this.player.up();
             } else if(this.keyDown.isDown){
-                this.player.down(true);
+                this.player.down();
             }
         }
     }
