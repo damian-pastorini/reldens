@@ -1,6 +1,5 @@
 const Phaser = require('phaser');
 const TilesetAnimation = require('./tileset-animation');
-const share = require('../utils/constants');
 
 class SceneDynamic extends Phaser.Scene
 {
@@ -40,11 +39,8 @@ class SceneDynamic extends Phaser.Scene
                     this.player.stop();
                 }
             });
-            this.registerController();
         });
         this.cameras.main.on('camerafadeoutcomplete', this.changeScene.bind(this));
-        // save active key into the game object to get it in other events.
-        this.game.currentScene = this.key;
         if(this.withTSAnimation){
             // @NOTE: replaced animations from database by layers with name convention.
             for(let layerIndex in this.layers){
@@ -118,66 +114,6 @@ class SceneDynamic extends Phaser.Scene
         this.tilesetAnimation = new TilesetAnimation();
         this.tilesetAnimation.register(layer, this.tileset.tileData);
         this.tilesetAnimation.start();
-    }
-
-    registerController()
-    {
-        // @TODO: controllers will be part of the configuration in the database.
-        if(document.getElementById(share.UP)){
-            this.hold(share.UP, this.player.up.bind(this.player));
-        }
-        if(document.getElementById(share.DOWN)){
-            this.hold(share.DOWN, this.player.down.bind(this.player));
-        }
-        if(document.getElementById(share.LEFT)){
-            this.hold(share.LEFT, this.player.left.bind(this.player));
-        }
-        if(document.getElementById(share.RIGHT)){
-            this.hold(share.RIGHT, this.player.right.bind(this.player));
-        }
-    }
-
-    hold(buttonId, action)
-    {
-        let btn = document.getElementById(buttonId);
-        let t;
-        let repeat = () => {
-            action();
-            t = setTimeout(repeat, this.timeout);
-        };
-        btn.addEventListener('mousedown', (e) => {
-            e.preventDefault();
-            if(this.transition === false){
-                repeat();
-            }
-        });
-        btn.addEventListener('mouseup', (e) => {
-            e.preventDefault();
-            clearTimeout(t);
-            if (this.transition === false) {
-                this.player.stop();
-            }
-        });
-        btn.addEventListener('mouseout', (e) => {
-            e.preventDefault();
-            clearTimeout(t);
-            if (this.transition === false) {
-                this.player.stop();
-            }
-        });
-        btn.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            if (this.transition === false) {
-                repeat();
-            }
-        });
-        btn.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            clearTimeout(t);
-            if (this.transition === false) {
-                this.player.stop();
-            }
-        });
     }
 
 }

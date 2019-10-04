@@ -96,6 +96,7 @@ class ScenePreloader extends Phaser.Scene
             }
             if(this.gameManager.config.get('client/general/uiVisibility/uiBoxLeft')) {
                 this.uiBoxLeft = this.add.dom(120, 420).createFromCache('uiBoxLeft');
+                this.registerControllers(this.uiBoxLeft);
             }
             if(this.gameManager.config.get('client/general/uiVisibility/sceneLabel')){
                 this.uiSceneLabel = this.add.dom(20, 20).createFromCache('uiSceneLabel');
@@ -151,6 +152,59 @@ class ScenePreloader extends Phaser.Scene
             frames: this.anims.generateFrameNumbers(share.IMAGE_PLAYER, {start: 0, end: 2}),
             frameRate: this.configuredFrameRate,
             repeat: -1
+        });
+    }
+
+    registerControllers(controllersBox)
+    {
+        // @TODO: controllers will be part of the configuration in the database.
+        let btnUp = controllersBox.getChildByProperty('id', share.UP);
+        if(btnUp){
+            this.hold(btnUp, share.UP);
+        }
+        let btnDown = controllersBox.getChildByProperty('id', share.DOWN);
+        if(btnDown){
+            this.hold(btnDown, share.DOWN);
+        }
+        let btnLeft = controllersBox.getChildByProperty('id', share.LEFT);
+        if(btnLeft){
+            this.hold(btnLeft, share.LEFT);
+        }
+        let btnRight = controllersBox.getChildByProperty('id', share.RIGHT);
+        if(btnRight){
+            this.hold(btnRight, share.RIGHT);
+        }
+    }
+
+    hold(btn, action)
+    {
+        let t;
+        let repeat = () => {
+            this.gameManager.activeRoomEvents.room.send({dir: action});
+            t = setTimeout(repeat, this.timeout);
+        };
+        btn.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            repeat();
+        });
+        btn.addEventListener('mouseup', (e) => {
+            e.preventDefault();
+            clearTimeout(t);
+            this.gameManager.activeRoomEvents.room.send({act: share.STOP});
+        });
+        btn.addEventListener('mouseout', (e) => {
+            e.preventDefault();
+            clearTimeout(t);
+            this.gameManager.activeRoomEvents.room.send({act: share.STOP});
+        });
+        btn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            repeat();
+        });
+        btn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            clearTimeout(t);
+            this.gameManager.activeRoomEvents.room.send({act: share.STOP});
         });
     }
 
