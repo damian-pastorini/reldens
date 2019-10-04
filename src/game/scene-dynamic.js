@@ -124,21 +124,22 @@ class SceneDynamic extends Phaser.Scene
     {
         // @TODO: controllers will be part of the configuration in the database.
         if(document.getElementById(share.UP)){
-            this.hold(document.getElementById(share.UP), this.player.up.bind(this.player));
+            this.hold(share.UP, this.player.up.bind(this.player));
         }
         if(document.getElementById(share.DOWN)){
-            this.hold(document.getElementById(share.DOWN), this.player.down.bind(this.player));
+            this.hold(share.DOWN, this.player.down.bind(this.player));
         }
         if(document.getElementById(share.LEFT)){
-            this.hold(document.getElementById(share.LEFT), this.player.left.bind(this.player));
+            this.hold(share.LEFT, this.player.left.bind(this.player));
         }
         if(document.getElementById(share.RIGHT)){
-            this.hold(document.getElementById(share.RIGHT), this.player.right.bind(this.player));
+            this.hold(share.RIGHT, this.player.right.bind(this.player));
         }
     }
 
-    hold(btn, action)
+    hold(buttonId, action)
     {
+        let btn = document.getElementById(buttonId);
         let t;
         let repeat = () => {
             action();
@@ -151,6 +152,13 @@ class SceneDynamic extends Phaser.Scene
             }
         });
         btn.addEventListener('mouseup', (e) => {
+            e.preventDefault();
+            clearTimeout(t);
+            if (this.transition === false) {
+                this.player.stop();
+            }
+        });
+        btn.addEventListener('mouseout', (e) => {
             e.preventDefault();
             clearTimeout(t);
             if (this.transition === false) {
