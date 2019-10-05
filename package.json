@@ -30,6 +30,7 @@
     "scripts": {
         "start": "node .",
         "dev-start": "rm -R dist && mkdir dist && cp -r pub/assets dist/assets/ && node .",
+        "dev-start-win": "rmdir /S dist && md dist && xcopy \"pub/assets\" \"dist/assets\" /O /X /E /H /K && node .",
         "install-db": "knex migrate:up --env production"
     },
     "engines": {
