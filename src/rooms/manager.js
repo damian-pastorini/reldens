@@ -7,8 +7,7 @@
  */
 
 const Rooms = require('./model');
-const RoomGame = require('./game');
-const RoomScene = require('./scene');
+const configuredClasses = require('../../config/rooms-classes');
 const share = require('../utils/constants');
 
 class RoomsManager
@@ -28,6 +27,7 @@ class RoomsManager
             this.messageActions = false;
             console.log('INFO - None additional message actions to be defined.');
         }
+        this.configuredClasses = configuredClasses;
     }
 
     async defineRoomsInGameServer(gameServer, props)
@@ -35,7 +35,7 @@ class RoomsManager
         // loaded rooms counter:
         let counter = 0;
         // lobby room:
-        gameServer.define(share.ROOM_GAME, RoomGame, props);
+        gameServer.define(share.ROOM_GAME, this.configuredClasses['RoomGame'], props);
         console.log('INFO - Loaded game room using stored configuration.', props.config);
         // define extra rooms (if any, for example features rooms):
         if(this.defineRooms){
@@ -56,8 +56,12 @@ class RoomsManager
                 config: props.config,
                 messageActions: this.messageActions
             };
+            let roomClass = this.configuredClasses['RoomScene'];
+            if(room.roomClass && this.configuredClasses.hasOwnProperty(room.roomClass)){
+                roomClass = this.configuredClasses[room.roomClass];
+            }
             // define the room including all the props:
-            gameServer.define(room.roomName, RoomScene, roomProps);
+            gameServer.define(room.roomName, roomClass, roomProps);
             counter++;
             console.log(`INFO - Loaded room: ${room.roomName}`);
         }
@@ -107,7 +111,8 @@ class RoomsManager
             roomMap: room.map_filename,
             sceneImages: room.scene_images,
             changePoints: [],
-            returnPoints: []
+            returnPoints: [],
+            roomClass: room.room_class
         };
         // assign to room:
         for (let changePoint of room.rooms_change_points){

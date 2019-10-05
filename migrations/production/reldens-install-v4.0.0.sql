@@ -29,35 +29,56 @@ CREATE TABLE IF NOT EXISTS `chat` (
   CONSTRAINT `FK__scenes` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
-
 -- Dumping structure for table reldens.config
 CREATE TABLE IF NOT EXISTS `config` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `scope` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
   `path` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
   `value` text COLLATE utf8_unicode_ci NOT NULL,
+  `type` varchar(2) COLLATE utf8_unicode_ci NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=39 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table reldens.config: ~15 rows (approximately)
+-- Dumping data for table reldens.config: ~36 rows (approximately)
 /*!40000 ALTER TABLE `config` DISABLE KEYS */;
-INSERT INTO `config` (`id`, `scope`, `path`, `value`) VALUES
-	(1, 'server', 'rooms/validation/valid', 'room_game,chat_global'),
-	(2, 'server', 'rooms/initialState/scene', 'ReldensTown'),
-	(3, 'server', 'rooms/initialState/x', '400'),
-	(4, 'server', 'rooms/initialState/y', '345'),
-	(5, 'server', 'rooms/initialState/dir', 'down'),
-	(6, 'server', 'players/initialStats/hp', '100'),
-	(7, 'server', 'players/initialStats/mp', '100'),
-	(8, 'server', 'players/initialStats/stamina', '100'),
-	(9, 'server', 'players/initialStats/atk', '100'),
-	(10, 'server', 'players/initialStats/def', '100'),
-	(11, 'server', 'players/initialStats/dodge', '100'),
-	(12, 'server', 'players/initialStats/speed', '100'),
-	(13, 'server', 'rooms/validation/enabled', '1'),
-	(14, 'server', 'rooms/world/gravity_enabled', '0'),
-	(16, 'server', 'players/size/width', '25'),
-	(17, 'server', 'players/size/height', '25');
+INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
+	(1, 'server', 'rooms/validation/valid', 'room_game,chat_global', 't'),
+	(2, 'server', 'rooms/initialState/scene', 'ReldensTown', 't'),
+	(3, 'server', 'rooms/initialState/x', '400', 'i'),
+	(4, 'server', 'rooms/initialState/y', '345', 'i'),
+	(5, 'server', 'rooms/initialState/dir', 'down', 't'),
+	(6, 'server', 'players/initialStats/hp', '100', 'i'),
+	(7, 'server', 'players/initialStats/mp', '100', 'i'),
+	(8, 'server', 'players/initialStats/stamina', '100', 'i'),
+	(9, 'server', 'players/initialStats/atk', '100', 'i'),
+	(10, 'server', 'players/initialStats/def', '100', 'i'),
+	(11, 'server', 'players/initialStats/dodge', '100', 'i'),
+	(12, 'server', 'players/initialStats/speed', '100', 'i'),
+	(13, 'server', 'rooms/validation/enabled', '1', 'b'),
+	(14, 'server', 'rooms/world/gravity_enabled', '0', 'b'),
+	(16, 'server', 'players/size/width', '25', 'i'),
+	(17, 'server', 'players/size/height', '25', 'i'),
+	(18, 'server', 'general/controls/allow_simultaneous_keys', '0', 'b'),
+	(19, 'server', 'rooms/world/timestep', '0.04', 'i'),
+	(20, 'feature', 'chat/messages/broadcast_join', '1', 'b'),
+	(21, 'feature', 'chat/messages/broadcast_leave', '1', 'b'),
+	(22, 'feature', 'chat/messages/global_enabled', '1', 'b'),
+	(23, 'feature', 'chat/messages/global_allowed_roles', '1,9000', 't'),
+	(24, 'server', 'players/physicsBody/speed', '180', 'i'),
+	(25, 'client', 'players/animations/fadeDuration', '1000', 'i'),
+	(26, 'client', 'general/uiVisibility/uiBoxRight', '1', 'b'),
+	(27, 'client', 'general/uiVisibility/uiBoxPlayerStats', '1', 'b'),
+	(28, 'client', 'general/uiVisibility/uiBoxLeft', '1', 'b'),
+	(29, 'client', 'general/tileData/width', '16', 'i'),
+	(30, 'client', 'general/tileData/height', '16', 'i'),
+	(31, 'client', 'general/tileData/margin', '1', 'i'),
+	(32, 'client', 'general/tileData/spacing', '2', 'i'),
+	(33, 'client', 'players/size/width', '52', 'i'),
+	(34, 'client', 'players/size/height', '71', 'i'),
+	(35, 'client', 'general/animations/frameRate', '10', 'i'),
+	(36, 'client', 'map/layersDepth/belowPlayer', '0', 'i'),
+	(37, 'client', 'map/layersDepth/changePoints', '0', 'i'),
+	(38, 'client', 'general/uiVisibility/sceneLabel', '1', 'b');
 /*!40000 ALTER TABLE `config` ENABLE KEYS */;
 
 -- Dumping structure for table reldens.features
@@ -147,16 +168,17 @@ CREATE TABLE IF NOT EXISTS `rooms` (
   `title` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
   `map_filename` varchar(255) COLLATE utf8_unicode_ci NOT NULL COMMENT 'The map JSON file name.',
   `scene_images` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `room_class` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `key` (`name`)
 ) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping data for table reldens.rooms: ~3 rows (approximately)
 /*!40000 ALTER TABLE `rooms` DISABLE KEYS */;
-INSERT INTO `rooms` (`id`, `name`, `title`, `map_filename`, `scene_images`) VALUES
-	(2, 'ReldensHouse_1', 'House - 1', 'reldens-house-1', 'reldens-house-1'),
-	(3, 'ReldensHouse_2', 'House - 2', 'reldens-house-2', 'reldens-house-2'),
-	(4, 'ReldensTown', 'Town', 'reldens-town', 'reldens-town');
+INSERT INTO `rooms` (`id`, `name`, `title`, `map_filename`, `scene_images`, `room_class`) VALUES
+	(2, 'ReldensHouse_1', 'House - 1', 'reldens-house-1', 'reldens-house-1', NULL),
+	(3, 'ReldensHouse_2', 'House - 2', 'reldens-house-2', 'reldens-house-2', NULL),
+	(4, 'ReldensTown', 'Town', 'reldens-town', 'reldens-town', NULL);
 /*!40000 ALTER TABLE `rooms` ENABLE KEYS */;
 
 -- Dumping structure for table reldens.rooms_change_points
