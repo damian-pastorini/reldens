@@ -215,10 +215,7 @@ class RoomEvents
         }
         this.gameManager.room = room;
         let currentScene = this.gameEngine.scene.getScene(player.state.scene);
-        let currentPlayer = new PlayerEngine(currentScene, player, this.gameManager.config);
-        currentPlayer.socket = room;
-        currentPlayer.playerId = room.sessionId;
-        currentPlayer.username = player.username;
+        let currentPlayer = this.createPlayerEngineInstance(currentScene, player, this.gameManager.config, room);
         currentScene.player = currentPlayer;
         currentScene.player.create();
         if(room.state.players){
@@ -268,6 +265,11 @@ class RoomEvents
     createSceneInstance(sceneName, sceneData, config)
     {
         return new DynamicScene(sceneName, sceneData, config);
+    }
+
+    createPlayerEngineInstance(currentScene, player, config, room)
+    {
+        return new PlayerEngine(currentScene, player, config, room);
     }
 
 }
