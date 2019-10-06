@@ -27,6 +27,8 @@ class ServerManager
     constructor(config)
     {
         this.projectRoot = config.projectRoot;
+        console.log('INFO - Defined project root:', this.projectRoot);
+        this.events = ServerEvents;
     }
 
     /**
@@ -35,7 +37,7 @@ class ServerManager
      */
     async start()
     {
-        console.log('Server Manager - Start!');
+        console.log('INFO - Starting Server Manager!');
         ServerEvents.emit('serverStart', {serverManager: this});
         this.app = express();
         this.app.use(cors());
