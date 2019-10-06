@@ -24,14 +24,19 @@ const RoomsManager = require('../rooms/manager');
 class ServerManager
 {
 
+    constructor(config)
+    {
+        this.projectRoot = config.projectRoot;
+    }
+
     /**
-     * @param config
+     *
      * @returns {Promise<void>}
      */
-    async start(config)
+    async start()
     {
         console.log('Server Manager - Start!');
-        ServerEvents.emit('serverStart', {serverManager: this, config: config});
+        ServerEvents.emit('serverStart', {serverManager: this});
         this.app = express();
         this.app.use(cors());
         this.app.use(express.json());
@@ -81,7 +86,7 @@ class ServerManager
         this.gameServer.listen(configServer.port);
         console.log('INFO - Listening on '+configServer.host+':'+configServer.port);
         // create bundle:
-        this.bundler = new Parcel(config.projectRoot+'/pub/index.html');
+        this.bundler = new Parcel(this.projectRoot+'/pub/index.html');
         this.app.use(this.bundler.middleware());
         ServerEvents.emit('serverReady', {serverManager: this});
     }
