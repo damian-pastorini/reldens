@@ -42,7 +42,7 @@
         "@babel/runtime-corejs2": "^7.6.2",
         "@colyseus/monitor": "^0.11.5",
         "bcrypt": "^3.0.6",
-        "colyseus": "^0.11.15",
+        "colyseus": "^0.11.16",
         "colyseus.js": "^0.11.2",
         "cors": "^2.8.5",
         "dotenv": "^8.1.0",
