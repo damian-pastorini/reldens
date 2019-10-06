@@ -31,46 +31,14 @@ class RoomEvents
         this.room = room;
         // listen to changes coming from the server:
         this.room.state.players.onChange = (player, key) => {
-            // do not move player if is changing scene:
+            // do not move the player if is changing scene:
             if(player.state.scene !== this.roomName){
                 return;
             }
             this.getSceneData(this.room);
             let currentScene = this.getActiveScene();
             if(currentScene.player && currentScene.player.players.hasOwnProperty(key)){
-                let playerSprite = currentScene.player.players[key];
-                if(playerSprite){
-                    // @NOTE: player speed is defined by the server.
-                    if(player.state.x !== playerSprite.x && playerSprite.anims){
-                        if(player.state.x < playerSprite.x){
-                            playerSprite.anims.play(share.LEFT, true);
-                        } else {
-                            playerSprite.anims.play(share.RIGHT, true);
-                        }
-                        playerSprite.x = parseFloat(player.state.x);
-                    }
-                    if(player.state.y !== playerSprite.y && playerSprite.anims){
-                        if(player.state.y < playerSprite.y){
-                            playerSprite.anims.play(share.UP, true);
-                        } else {
-                            playerSprite.anims.play(share.DOWN, true);
-                        }
-                        playerSprite.y = parseFloat(player.state.y);
-                    }
-                    // player stop action:
-                    if(player.mov !== playerSprite.mov && playerSprite.anims){
-                        if(!player.mov){
-                            playerSprite.anims.stop();
-                        }
-                        playerSprite.mov = player.mov;
-                    }
-                    // player change direction action:
-                    if(player.state.dir !== playerSprite.dir){
-                        playerSprite.dir = player.state.dir;
-                        playerSprite.anims.play(player.state.dir, true);
-                        playerSprite.anims.stop();
-                    }
-                }
+                currentScene.player.runPlayerAnimation(key, player);
             }
         };
         this.room.state.players.onRemove = (player, key) => {
@@ -79,10 +47,9 @@ class RoomEvents
                 window.location.reload();
             } else {
                 let currentScene = this.getActiveScene();
-                if(currentScene.player.players.hasOwnProperty(key)){
+                if(currentScene.player && currentScene.player.players.hasOwnProperty(key)){
                     // remove your player entity from the game world:
-                    currentScene.player.players[key].destroy();
-                    delete currentScene.player.players[key];
+                    currentScene.player.removePlayer(key);
                 }
             }
         };
@@ -114,7 +81,11 @@ class RoomEvents
         // create players or change scenes:
         this.room.onMessage((message) => {
             this.getSceneData(this.room);
-            if(message.act === share.CHANGED_SCENE && message.scene === this.room.name && this.room.sessionId !== message.id){
+            if(
+                message.act === share.CHANGED_SCENE
+                && message.scene === this.room.name
+                && this.room.sessionId !== message.id
+            ){
                 let currentScene = this.getActiveScene();
                 // if other users enter in the current scene we need to add them:
                 let {id, x, y, dir} = message;
@@ -215,8 +186,7 @@ class RoomEvents
         }
         this.gameManager.room = room;
         let currentScene = this.gameEngine.scene.getScene(player.state.scene);
-        let currentPlayer = this.createPlayerEngineInstance(currentScene, player, this.gameManager.config, room);
-        currentScene.player = currentPlayer;
+        currentScene.player = this.createPlayerEngineInstance(currentScene, player, this.gameManager.config, room);
         currentScene.player.create();
         if(room.state.players){
             for(let idx in room.state.players){

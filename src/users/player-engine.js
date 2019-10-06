@@ -45,6 +45,47 @@ class PlayerEngine
         return this.players[id];
     }
 
+    runPlayerAnimation(playerId, player)
+    {
+        let playerSprite = this.players[playerId];
+        // @NOTE: player speed is defined by the server.
+        if(player.state.x !== playerSprite.x && playerSprite.anims){
+            if(player.state.x < playerSprite.x){
+                playerSprite.anims.play(share.LEFT, true);
+            } else {
+                playerSprite.anims.play(share.RIGHT, true);
+            }
+            playerSprite.x = player.state.x;
+        }
+        if(player.state.y !== playerSprite.y && playerSprite.anims){
+            if(player.state.y < playerSprite.y){
+                playerSprite.anims.play(share.UP, true);
+            } else {
+                playerSprite.anims.play(share.DOWN, true);
+            }
+            playerSprite.y = player.state.y;
+        }
+        // player stop action:
+        if(player.mov !== playerSprite.mov && playerSprite.anims){
+            if(!player.mov){
+                playerSprite.anims.stop();
+            }
+            playerSprite.mov = player.mov;
+        }
+        // player change direction action:
+        if(player.state.dir !== playerSprite.dir){
+            playerSprite.dir = player.state.dir;
+            playerSprite.anims.play(player.state.dir, true);
+            playerSprite.anims.stop();
+        }
+    }
+
+    removePlayer(key)
+    {
+        this.players[key].destroy();
+        delete this.players[key];
+    }
+
     left()
     {
         this.room.send({dir: share.LEFT});

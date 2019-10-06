@@ -25,8 +25,7 @@ class State extends Schema
 
     createPlayer(id, playerData)
     {
-        let newPlayer = new Player(playerData, id);
-        this.players[id] = newPlayer;
+        this.players[id] =  new Player(playerData, id);
         return this.players[id];
     }
 

@@ -12,6 +12,7 @@ const express = require('express');
 const cors = require('cors');
 const Parcel = require('parcel-bundler');
 const configServer = require('../../config/server');
+const ServerEvents = require('./server-events');
 const GameServer = require('./game-server');
 const DataServer = require('../storage/data-server');
 const ConfigManager = require('../config/manager');
@@ -30,6 +31,7 @@ class ServerManager
     async start(config)
     {
         console.log('Server Manager - Start!');
+        ServerEvents.emit('serverStart', {serverManager: this, config: config});
         this.app = express();
         this.app.use(cors());
         this.app.use(express.json());
@@ -48,10 +50,12 @@ class ServerManager
         this.configManager = new ConfigManager();
         // load configurations and get a config processor instance:
         let configProcessor = await this.configManager.loadConfigurations();
+        ServerEvents.emit('serverConfigReady', {serverManager: this, configProcessor: configProcessor});
         // features manager:
         this.featuresManager = new FeaturesManager();
         // load the available features list and append to the config, this way we will pass the list to the client:
         configProcessor.availableFeaturesList = await this.featuresManager.loadFeatures();
+        ServerEvents.emit('serverConfigFeaturesReady', {serverManager: this, configProcessor: configProcessor});
         // users manager:
         this.usersManager = new UsersManager();
         // the rooms manager will receive the features rooms to be defined:
@@ -59,6 +63,7 @@ class ServerManager
             defineRooms: this.featuresManager.featuresWithRooms,
             messageActions: this.featuresManager.messageActions
         });
+        ServerEvents.emit('serverBeforeLoginManager', {serverManager: this});
         // login manager:
         this.loginManager = new LoginManager({
             config: configProcessor,
@@ -66,16 +71,19 @@ class ServerManager
             roomsManager: this.roomsManager
         });
         // prepare rooms:
+        ServerEvents.emit('serverBeforeDefineRooms', {serverManager: this});
         await this.roomsManager.defineRoomsInGameServer(this.gameServer, {
             loginManager: this.loginManager,
             config: configProcessor
         });
         // after the rooms were loaded then finish the server process:
+        ServerEvents.emit('serverBeforeListen', {serverManager: this});
         this.gameServer.listen(configServer.port);
         console.log('INFO - Listening on '+configServer.host+':'+configServer.port);
         // create bundle:
         this.bundler = new Parcel(config.projectRoot+'/pub/index.html');
         this.app.use(this.bundler.middleware());
+        ServerEvents.emit('serverReady', {serverManager: this});
     }
 
 }
