@@ -20,14 +20,16 @@ const FeaturesManager = require('../features/manager');
 const UsersManager = require('../users/manager');
 const LoginManager = require('./login');
 const RoomsManager = require('../rooms/manager');
+const Installer = require('./installer');
 
 class ServerManager
 {
 
     constructor(config)
     {
-        this.projectRoot = config.projectRoot;
+        this.projectRoot = config.projectRoot || './';
         console.log('INFO - Defined project root:', this.projectRoot);
+        this.getInstaller().validateOrCreateSkeleton(config);
         this.events = ServerEvents;
     }
 
@@ -88,9 +90,19 @@ class ServerManager
         this.gameServer.listen(configServer.port);
         console.log('INFO - Listening on '+configServer.host+':'+configServer.port);
         // create bundle:
-        this.bundler = new Parcel(this.projectRoot+'/pub/index.html');
+        this.bundler = this.createBundler(this.projectRoot+'/pub/index.html');
         this.app.use(this.bundler.middleware());
         ServerEvents.emit('serverReady', {serverManager: this});
+    }
+
+    createBundler(fullPath)
+    {
+        return new Parcel(fullPath);
+    }
+
+    getInstaller()
+    {
+        return Installer;
     }
 
 }

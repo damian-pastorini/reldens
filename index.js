@@ -12,10 +12,13 @@ dotenv.config();
 // server class:
 const ServerManager = require('./src/server/manager');
 // exports server manager:
-module.exports.ServerManager = ServerManager;
+module.exports = ServerManager;
+
+// ----------------------------------------------------------------------------------------------
 
 // @TODO: prepare everything for NPM package and remove all the code below, just keep a commented example.
 
+/*
 // create a server instance passing the current root:
 let appServer = new ServerManager({projectRoot: __dirname});
 // customize as you need changing the information in the database and using events:
@@ -30,6 +33,9 @@ appServer.start().then(() => {
 }).catch((err) => {
     console.log('ERROR - Server error:', err);
 });
+*/
+
+// ----------------------------------------------------------------------------------------------
 
 // use example:
 /* @NOTE: this will be after the package modifications for npm publication.

@@ -3,6 +3,7 @@
     "version": "4.0.0",
     "description": "Reldens - MMORPG Creator",
     "main": "index.js",
+    "source": true,
     "homepage": "https://github.com/damian-pastorini/reldens",
     "repository": {
         "type": "git",
@@ -29,6 +30,7 @@
     },
     "scripts": {
         "start": "node .",
+        "install-skeleton": "cp ./node_modules/reldens/pub ./ && cp ./node_modules/reldens/config ./ && mkdir dist && cp -r pub/assets dist/assets/",
         "dev-start": "rm -R dist && mkdir dist && cp -r pub/assets dist/assets/ && node .",
         "dev-start-win": "rmdir /S dist && md dist && xcopy \"pub/assets\" \"dist/assets\" /O /X /E /H /K && node .",
         "install-db": "knex migrate:up --env production"
@@ -49,7 +51,7 @@
         "express": "^4.17.1",
         "glslify": "^7.0.0",
         "jquery": "^3.4.1",
-        "jquery-validation": "^1.19.0",
+        "jquery-validation": "^1.19.1",
         "knex": "^0.19.3",
         "mustache": "^3.1.0",
         "mysql": "^2.17.1",

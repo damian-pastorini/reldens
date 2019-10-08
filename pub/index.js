@@ -9,7 +9,7 @@
 const $ = require('jquery');
 const validate = require('jquery-validation');
 // @TODO: change relative path to package reldens/src/game/manager.
-const GameManager = require('../src/game/manager');
+const GameManager = require('reldens/src/game/manager');
 
 $(document).ready(function($){
 
