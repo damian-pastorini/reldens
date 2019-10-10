@@ -13,7 +13,7 @@ module.exports = {
             max: 10
         },
         migrations: {
-            directory: './migrations/development',
+            directory: './node_modules/reldens/migrations/development',
             tableName: 'knex_migrations'
         }
     },
@@ -31,7 +31,7 @@ module.exports = {
             max: 10
         },
         migrations: {
-            directory: './migrations/production',
+            directory: './node_modules/reldens/migrations/production',
             tableName: 'knex_migrations'
         }
     }
