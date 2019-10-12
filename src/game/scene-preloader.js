@@ -14,7 +14,8 @@ class ScenePreloader extends Phaser.Scene
 
     constructor(preloaderName, preloadMapKey, preloadImages, uiScene, gameManager)
     {
-        super({ key: preloaderName });
+        super({key: preloaderName});
+        this.preloaderName = preloaderName;
         this.preloadMapKey = preloadMapKey;
         this.preloadImages = preloadImages;
         this.uiScene = uiScene;
@@ -244,6 +245,9 @@ class ScenePreloader extends Phaser.Scene
         for(let child of this.children.list){
             child.destroy();
         }
+        this.loadingText.destroy();
+        this.assetText.destroy();
+        this.percentText.destroy();
         this.scene.shutdown();
     }
 
