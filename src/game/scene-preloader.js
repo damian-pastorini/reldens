@@ -76,6 +76,7 @@ class ScenePreloader extends Phaser.Scene
         this.load.spritesheet(share.IMAGE_PLAYER, 'assets/sprites/player-1.png', playerSpriteSize);
         // interface assets:
         this.load.image(share.ICON_STATS, 'assets/icons/book.png');
+        this.load.on('fileprogress', this.onFileProgress, this);
         this.load.on('progress', this.onLoadProgress, this);
         this.load.on('complete', this.onLoadComplete, this);
         this.configuredFrameRate = this.gameManager.config.get('client/general/animations/frameRate') || 10;
@@ -216,6 +217,26 @@ class ScenePreloader extends Phaser.Scene
         Rectangle.CenterOn(this.progressRect, main.centerX, main.centerY);
         this.progressCompleteRect = Phaser.Geom.Rectangle.Clone(this.progressRect);
         this.progressBar = this.add.graphics();
+        let width = this.cameras.main.width;
+        let height = this.cameras.main.height;
+        this.loadingText = this.add.text(width / 2, height / 2 - 50, 'Loading...', {
+            fontFamily: 'Verdana, Geneva, sans-serif',
+            fontSize: '20px'
+        });
+        this.loadingText.setOrigin(0.5, 0.5);
+        this.loadingText.setFill('#ffffff');
+        this.percentText = this.add.text(width / 2, height / 2 - 5, '0%', {
+            fontFamily: 'Verdana, Geneva, sans-serif',
+            fontSize: '18px'
+        });
+        this.percentText.setOrigin(0.5, 0.5);
+        this.percentText.setFill('#666666');
+        this.assetText = this.add.text(width / 2, height / 2 + 50, '', {
+            fontFamily: 'Verdana, Geneva, sans-serif',
+            fontSize: '18px'
+        });
+        this.assetText.setFill('#ffffff');
+        this.assetText.setOrigin(0.5, 0.5);
     }
 
     onLoadComplete()
@@ -226,8 +247,15 @@ class ScenePreloader extends Phaser.Scene
         this.scene.shutdown();
     }
 
+    onFileProgress(file)
+    {
+        this.assetText.setText('Loading asset: '+file.key);
+    }
+
     onLoadProgress(progress)
     {
+        let progressText = parseInt(progress * 100) + '%';
+        this.percentText.setText(progressText);
         let color = (0xffffff);
         this.progressRect.width = progress * this.progressCompleteRect.width;
         this.progressBar
