@@ -173,13 +173,16 @@ class RoomEvents
     createEngineScene(player, room, previousScene, sceneData)
     {
         if(!this.gameEngine.scene.getScene(player.state.scene)){
-            let phaserDynamicScene = this.createSceneInstance(player.state.scene, sceneData, this.gameManager.config);
-            this.gameEngine.scene.add(player.state.scene, phaserDynamicScene, false);
+            let engineDynamicScene = this.createSceneInstance(player.state.scene, sceneData, this.gameManager.config);
+            this.gameEngine.scene.add(player.state.scene, engineDynamicScene, false);
         }
         if(!this.gameManager.room){
             this.gameEngine.scene.start(player.state.scene);
         } else {
-            if(previousScene){
+            if(previousScene && this.gameEngine.scene.getScene(previousScene)){
+                // destroy previous scene tileset:
+                this.gameEngine.scene.getScene(previousScene).changeScene();
+                // stop the previous scene and start the new one:
                 this.gameEngine.scene.stop(previousScene);
                 this.gameEngine.scene.start(player.state.scene);
             }
@@ -225,8 +228,8 @@ class RoomEvents
     {
         if(!this.gameEngine.scene.getScene(this.roomName)){
             if(this.sceneData){
-                let phaserDynamicScene = this.createSceneInstance(this.roomName, this.sceneData, this.gameManager.config);
-                this.gameEngine.scene.add(this.roomName, phaserDynamicScene, false);
+                let engineDynamicScene = this.createSceneInstance(this.roomName, this.sceneData, this.gameManager.config);
+                this.gameEngine.scene.add(this.roomName, engineDynamicScene, false);
             }
         }
         return this.gameEngine.scene.getScene(this.roomName);

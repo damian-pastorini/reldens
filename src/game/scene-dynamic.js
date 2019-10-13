@@ -11,7 +11,7 @@ class SceneDynamic extends Phaser.Scene
         this.params = data;
         this.layers = {};
         this.transition = true;
-        this.withTSAnimation = false;
+        this.useTsAnimation = false;
         this.configManager = config;
     }
 
@@ -28,7 +28,7 @@ class SceneDynamic extends Phaser.Scene
         this.keyUp = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP);
         this.keyDown = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.DOWN);
         this.map = this.add.tilemap(this.params.roomMap);
-        this.withTSAnimation = this.hasTSAnimation();
+        this.useTsAnimation = this.hasTsAnimation();
         this.tileset = this.map.addTilesetImage(this.params.roomMap);
         this.registerLayers();
         this.cameras.main.on('camerafadeincomplete', () => {
@@ -40,16 +40,10 @@ class SceneDynamic extends Phaser.Scene
                 }
             });
         });
-        this.cameras.main.on('camerafadeoutcomplete', this.changeScene.bind(this));
-        if(this.withTSAnimation){
-            // @NOTE: replaced animations from database by layers with name convention.
-            for(let layerIndex in this.layers){
-                if(this.layers.hasOwnProperty(layerIndex)){
-                    let layer = this.layers[layerIndex];
-                    if(layer.layer.name.indexOf('animations') !== -1){
-                        this.registerTilesetAnimation(layer);
-                    }
-                }
+        for(let layerIndex in this.layers){
+            let layer = this.layers[layerIndex];
+            if(layer.layer.name.indexOf('animations') !== -1){
+                this.registerTilesetAnimation(layer);
             }
         }
     }
@@ -71,40 +65,45 @@ class SceneDynamic extends Phaser.Scene
 
     changeScene()
     {
-        if(this.withTSAnimation){
+        if(this.useTsAnimation){
             this.tilesetAnimation.destroy();
         }
     }
 
-    hasTSAnimation()
+    hasTsAnimation()
     {
-        for(let i=0; i<this.map.layers.length; i++){
-            if(this.map.layers[i].name.indexOf('animations') !== -1){
-                this.withTSAnimation = true;
+        let result = false;
+        for(let layer of this.map.layers){
+            if(layer.name.indexOf('animations') !== -1){
+                result = true;
                 break;
             }
         }
+        return result;
     }
 
     registerLayers()
     {
-        for(let i = 0; i < this.map.layers.length; i++){
+        let idx = 0;
+        for(let layer of this.map.layers){
             let margin = this.configManager.get('client/general/tileData/margin');
             let spacing = this.configManager.get('client/general/tileData/spacing');
-            if(this.withTSAnimation){
-                this.layers[i] = this.map.createDynamicLayer(this.map.layers[i].name, this.tileset, margin, spacing);
+            let layerName = layer.name;
+            if(this.useTsAnimation){
+                this.layers[idx] = this.map.createDynamicLayer(layerName, this.tileset, margin, spacing);
             } else {
-                this.layers[i] = this.map.createStaticLayer(this.map.layers[i].name, this.tileset, margin, spacing);
+                this.layers[idx] = this.map.createStaticLayer(layerName, this.tileset, margin, spacing);
             }
-            if(this.map.layers[i].name.indexOf('below-player') !== -1){
-                this.layers[i].setDepth(this.configManager.get('client/map/layersDepth/belowPlayer'));
+            if(layerName.indexOf('below-player') !== -1){
+                this.layers[idx].setDepth(this.configManager.get('client/map/layersDepth/belowPlayer'));
             }
-            if(this.map.layers[i].name.indexOf('over-player') !== -1){
-                this.layers[i].setDepth(i);
+            if(layerName.indexOf('over-player') !== -1){
+                this.layers[idx].setDepth(idx);
             }
-            if(this.map.layers[i].name.indexOf('change-points') !== -1){
-                this.layers[i].setDepth(this.configManager.get('client/map/layersDepth/changePoints'));
+            if(layerName.indexOf('change-points') !== -1){
+                this.layers[idx].setDepth(this.configManager.get('client/map/layersDepth/changePoints'));
             }
+            idx++;
         }
     }
 
