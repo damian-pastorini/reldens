@@ -69,6 +69,7 @@ class SceneDynamic extends Phaser.Scene
 
     changeScene()
     {
+        this.objectsAnimations = {};
         if(this.useTsAnimation){
             this.tilesetAnimation.destroy();
         }
