@@ -26,6 +26,8 @@ class P2world extends P2.World
         }
         // @TODO: as part of the future admin panel this will be an upload option.
         this.mapJson = require('../../pub/assets/maps/'+this.sceneTiledMapFile);
+        // objects:
+        this.objectsManager = options.objectsManager;
         // create world limits:
         this.createLimits();
         // add collisions:
@@ -64,9 +66,8 @@ class P2world extends P2.World
                                 if(changePoints[tileIndex]){
                                     console.log('INFO - Created change point on tileIndex:', tileIndex);
                                     // @NOTE: we make the change point smaller so the user needs to walk into to hit it.
-                                    let bodyChangePoint = this.createWall((tileW/2), (tileH/2), posX, posY);
+                                    let bodyChangePoint = this.createPlayerCollisionBody((tileW/2), (tileH/2), posX, posY);
                                     bodyChangePoint.changeScenePoint = changePoints[tileIndex];
-                                    bodyChangePoint.isWall = true;
                                     this.addBody(bodyChangePoint);
                                 } else {
                                     console.log('ERROR - Change point not created:', tileIndex, changePoints[tileIndex]);
@@ -74,10 +75,30 @@ class P2world extends P2.World
                             }
                             if(layer.name.indexOf('collisions') !== -1){
                                 // create a box to fill the space:
-                                let bodyWall = this.createWall(tileW, tileH, posX, posY);
+                                let bodyWall = this.createPlayerCollisionBody(tileW, tileH, posX, posY);
                                 bodyWall.isWall = true;
                                 this.addBody(bodyWall);
                             }
+                        }
+                        // objects will be found by layer name + tile index:
+                        let objectIndex = layer.name + tileIndex;
+                        // this will validate if the object class exists and return an instance of it:
+                        let roomObject = this.objectsManager.getObjectData(objectIndex);
+                        // if the data and the instance was created:
+                        if(roomObject){
+                            // create the body:
+                            let bodyObject = this.createPlayerCollisionBody(tileW, tileH, posX, posY, 0, false);
+                            bodyObject.isRoomObject = true;
+                            // save position in room object:
+                            this.objectsManager.objectsAnimationsData[objectIndex].x = posX;
+                            this.objectsManager.objectsAnimationsData[objectIndex].y = posY;
+                            roomObject.x = posX;
+                            roomObject.y = posY;
+                            // assign the room object to the body:
+                            bodyObject.roomObject = roomObject;
+                            console.log('INFO - Created object for objectIndex:', objectIndex);
+                            // try to get object instance from project root:
+                            this.addBody(bodyObject);
                         }
                     }
                 }
@@ -94,37 +115,44 @@ class P2world extends P2.World
             mapH = this.mapJson.height * blockH,
             worldLimit = 1;
         // create world boundary, up wall:
-        let upWall = this.createWall((mapW+blockW), worldLimit, (mapW/2), 1);
+        let upWall = this.createPlayerCollisionBody((mapW+blockW), worldLimit, (mapW/2), 1);
         upWall.isWorldWall = true;
         this.addBody(upWall);
         // create world boundary, down wall:
-        let downWall = this.createWall((mapW+blockW), worldLimit, (mapW/2), (mapH-worldLimit));
+        let downWall = this.createPlayerCollisionBody((mapW+blockW), worldLimit, (mapW/2), (mapH-worldLimit));
         downWall.isWorldWall = true;
         this.addBody(downWall);
         // create world boundary, left wall:
-        let leftWall = this.createWall(worldLimit, (mapH+blockH), 1, (mapH/2));
+        let leftWall = this.createPlayerCollisionBody(worldLimit, (mapH+blockH), 1, (mapH/2));
         leftWall.isWorldWall = true;
         this.addBody(leftWall);
         // create world boundary, right wall:
-        let rightWall = this.createWall(worldLimit, (mapH+blockH), (mapW-worldLimit), (mapH/2));
+        let rightWall = this.createPlayerCollisionBody(worldLimit, (mapH+blockH), (mapW-worldLimit), (mapH/2));
         rightWall.isWorldWall = true;
         this.addBody(rightWall);
     }
 
-    createWall(width, height, x, y)
+    createPlayerCollisionBody(width, height, x, y, mass = 1, collisionResponse = true)
     {
-        let boxShape = new P2.Box({ width: width, height: height});
-        boxShape.collisionGroup = share.COL_GROUND;
-        boxShape.collisionMask = share.COL_PLAYER | share.COL_ENEMY;
+        let boxShape = this.createPlayerCollisionShape(width, height, collisionResponse);
         let bodyConfig = {
+            mass: mass,
             position: [x, y],
-            mass: 1,
             type: P2.Body.STATIC,
             fixedRotation: true
         };
         let boxBody = new P2.Body(bodyConfig);
         boxBody.addShape(boxShape);
         return boxBody;
+    }
+
+    createPlayerCollisionShape(width, height, collisionResponse = true)
+    {
+        let boxShape = new P2.Box({ width: width, height: height});
+        boxShape.collisionGroup = share.COL_GROUND;
+        boxShape.collisionMask = share.COL_PLAYER | share.COL_ENEMY;
+        boxShape.collisionResponse = collisionResponse;
+        return boxShape;
     }
 
     getSceneChangePoints(mapData)

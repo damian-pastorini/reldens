@@ -10,12 +10,13 @@ const RoomLogin = require('./login');
 const State = require('./state');
 const P2world = require('../world/p2world');
 const CollisionsManager = require('../world/collisions-manager');
+const ObjectsManager = require('../objects/manager');
 const share = require('../utils/constants');
 
 class RoomScene extends RoomLogin
 {
 
-    onCreate(options)
+    async onCreate(options)
     {
         // parent config:
         super.onCreate(options);
@@ -24,21 +25,33 @@ class RoomScene extends RoomLogin
         console.log('INFO - INIT ROOM:', this.roomName);
         // this.roomId = options.room.roomId;
         this.sceneId = this.roomId;
-        // @NOTE: in the future not all the scene information will be sent to the client. This is because we could have
-        // hidden information to be discovered.
-        let roomState = new State(options.roomData);
-        this.setState(roomState);
+        // @NOTE: we create an instance of the objects manager for each room-scene, this is on purpose so all the
+        // related object instances will be removed when the room is disposed.
+        this.objectsManager = new ObjectsManager(options);
+        // load the objects from the storage:
+        await this.objectsManager.loadObjectsByRoomId(options.roomData.roomId);
         // create world:
-        this.createWorld(options.roomData);
-        // note the collisions manager has to be initialized after the world was created:
+        this.createWorld(options.roomData, this.objectsManager);
+        // the collisions manager has to be initialized after the world was created:
         this.collisionsManager = new CollisionsManager(this);
+        // if the room has message actions those are specified here in the room-scene:
         if(options.messageActions){
             this.messageActions = options.messageActions;
         } else {
             this.messageActions = false;
         }
+        // append public objects to the room data:
+        options.roomData.preloadAssets = this.objectsManager.preloadAssets;
+        // append dynamic animations data to the room data:
+        options.roomData.objectsAnimationsData = this.objectsManager.objectsAnimationsData;
+        // @NOTE: as you can see not all the scene information is been sent to the client, this is because we have
+        // hidden information to be discovered (hidden objects are only active on the server side).
+        this.roomData = options.roomData;
+        // room data is saved on the state:
+        let roomState = new State(options.roomData);
+        // after we set the state it will be automatically sync by the game-server:
+        this.setState(roomState);
     }
-
 
     async onJoin(client, options, authResult)
     {
@@ -159,16 +172,16 @@ class RoomScene extends RoomLogin
         }
     }
 
-    createWorld(roomData)
+    createWorld(roomData, objectsManager)
     {
-        let roomWorld = this.getWorldInstance({
+        // create and assign world to room:
+        this.roomWorld = this.getWorldInstance({
             sceneName: this.roomName,
             roomData: roomData,
             gravity: [0, 0],
-            applyGravity: false
+            applyGravity: false,
+            objectsManager: objectsManager
         });
-        // assign world to room:
-        this.roomWorld = roomWorld;
         // start world movement from the config or with the default value:
         this.timeStep = this.config.get('server/rooms/world/timestep') || 0.04;
         this.worldTimer = this.clock.setInterval(() => {
@@ -216,7 +229,7 @@ class RoomScene extends RoomLogin
                         // reconnect is to create the player in the new scene:
                         this.send(client, {act: share.RECONNECT, player: currentPlayer, prev: data.prev});
                     } else {
-                        console.log('ERROR - Save state error:', client.sessionId, err);
+                        console.log('ERROR - Save state error:', client.sessionId);
                     }
                     break;
                 }
@@ -269,7 +282,7 @@ class RoomScene extends RoomLogin
 
     getClientById(clientId)
     {
-        let result;
+        let result = false;
         if(this.clients){
             for(let client of this.clients){
                 if (client.sessionId === clientId){

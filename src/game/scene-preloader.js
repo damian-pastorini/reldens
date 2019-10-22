@@ -7,25 +7,29 @@
  */
 
 const Phaser = require('phaser');
+const AnimationEngine = require('../objects/animation-engine');
 const share = require('../utils/constants');
 
 class ScenePreloader extends Phaser.Scene
 {
 
-    constructor(preloaderName, preloadMapKey, preloadImages, uiScene, gameManager)
+    constructor(props)
     {
-        super({key: preloaderName});
-        this.preloaderName = preloaderName;
-        this.preloadMapKey = preloadMapKey;
-        this.preloadImages = preloadImages;
-        this.uiScene = uiScene;
+        super({key: props.name});
+        this.preloaderName = props.name;
+        this.preloadMapKey = props.map;
+        this.preloadImages = props.images;
+        this.uiScene = props.uiScene;
         this.progressBar = null;
         this.progressCompleteRect = null;
         this.progressRect = null;
         // @TODO: implement player custom avatar.
         // , username
         // this.username = username;
-        this.gameManager = gameManager;
+        this.gameManager = props.gameManager;
+        this.preloadAssets = props.preloadAssets;
+        let currentScene = this.gameManager.activeRoomEvents.getActiveScene();
+        currentScene.objectsAnimationsData = props.objectsAnimationsData;
     }
 
     preload()
@@ -45,7 +49,7 @@ class ScenePreloader extends Phaser.Scene
                 this.load.html('uiBoxPlayerStats', 'assets/html/ui-box-player-stats.html');
                 this.load.html('playerStats', 'assets/html/player-stats.html');
             }
-            // preload features templates:
+            // preload features assets:
             this.gameManager.features.preloadAssets(this);
         }
         // maps:
@@ -66,6 +70,22 @@ class ScenePreloader extends Phaser.Scene
             for(let imageFile of files){
                 let filePath = `assets/maps/${imageFile}.png`;
                 this.load.spritesheet(imageFile, filePath, tileData);
+            }
+        }
+        // preload objects assets:
+        if(this.preloadAssets){
+            for(let asset of this.preloadAssets){
+                if(asset.asset_type === 'spritesheet'){
+                    let assetFilePath = `assets/custom/sprites/${asset.file_1}.png`;
+                    let assetParams = asset.extra_params ? JSON.parse(asset.extra_params) : false;
+                    if(assetParams){
+                        this.load.spritesheet(asset.asset_key, assetFilePath, assetParams);
+                    } else {
+                        console.log('ERROR - Missing spritesheet params:', asset);
+                    }
+                }
+                // example atlas:
+                // this.load.atlas('gems', 'assets/tests/columns/gems.png', 'assets/tests/columns/gems.json');
             }
         }
         let playerSpriteSize = {
@@ -89,6 +109,7 @@ class ScenePreloader extends Phaser.Scene
         if(this.uiScene) {
             // create ui:
             if(this.gameManager.config.get('client/general/uiVisibility/uiBoxRight')){
+                // @TODO: make all positions configurable.
                 this.uiBoxRight = this.add.dom(450, 20).createFromCache('uiBoxRight');
                 // logout:
                 let logoutButton = this.uiBoxRight.getChildByProperty('id', 'logout');
@@ -96,14 +117,14 @@ class ScenePreloader extends Phaser.Scene
                     window.location.reload();
                 });
             }
-            if(this.gameManager.config.get('client/general/uiVisibility/uiBoxLeft')) {
+            if(this.gameManager.config.get('client/general/uiVisibility/uiBoxLeft')){
                 this.uiBoxLeft = this.add.dom(120, 420).createFromCache('uiBoxLeft');
                 this.registerControllers(this.uiBoxLeft);
             }
             if(this.gameManager.config.get('client/general/uiVisibility/sceneLabel')){
                 this.uiSceneLabel = this.add.dom(20, 20).createFromCache('uiSceneLabel');
             }
-            if(this.gameManager.config.get('client/general/uiVisibility/uiBoxPlayerStats')) {
+            if(this.gameManager.config.get('client/general/uiVisibility/uiBoxPlayerStats')){
                 this.uiBoxPlayerStats = this.add.dom(420, 70).createFromCache('uiBoxPlayerStats');
                 let statsBox = this.uiBoxPlayerStats.getChildByProperty('id', 'box-player-stats');
                 let statsButton = this.uiBoxPlayerStats.getChildByProperty('id', 'player-stats-btn');
@@ -128,6 +149,8 @@ class ScenePreloader extends Phaser.Scene
             // @NOTE: since this happens only once and just for the first preloader, here we register the features UI.
             this.gameManager.features.createFeaturesUi(this);
         }
+        // create animations for all the objects in the scene:
+        this.createDynamicAnimations();
         // player animations:
         // @TODO: player animation will be part of the configuration in the database.
         // @TODO: implement player custom avatar.
@@ -135,7 +158,7 @@ class ScenePreloader extends Phaser.Scene
             key: share.LEFT,
             frames: this.anims.generateFrameNumbers(share.IMAGE_PLAYER, {start: 3, end: 5}),
             frameRate: this.configuredFrameRate,
-            repeat:-1
+            repeat: -1
         });
         this.anims.create({
             key: share.RIGHT,
@@ -155,6 +178,21 @@ class ScenePreloader extends Phaser.Scene
             frameRate: this.configuredFrameRate,
             repeat: -1
         });
+    }
+
+    createDynamicAnimations()
+    {
+        let currentScene = this.gameManager.activeRoomEvents.getActiveScene();
+        if(currentScene.objectsAnimationsData){
+            for(let idx in currentScene.objectsAnimationsData){
+                let animProps = currentScene.objectsAnimationsData[idx];
+                animProps.frameRate = this.configuredFrameRate;
+                // create the animation object instance:
+                let animation = new AnimationEngine(this.gameManager, animProps, this);
+                // @NOTE: this will populate the objectsAnimations property in the current scene, see scene-dynamic.
+                animation.createAnimation();
+            }
+        }
     }
 
     registerControllers(controllersBox)

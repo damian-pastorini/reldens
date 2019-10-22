@@ -13,6 +13,10 @@ class SceneDynamic extends Phaser.Scene
         this.transition = true;
         this.useTsAnimation = false;
         this.configManager = config;
+        // this will contain the animations data coming from the server:
+        this.objectsAnimationsData = false;
+        // this will contain the animations objects instances:
+        this.objectsAnimations = {};
     }
 
     init()
@@ -104,6 +108,16 @@ class SceneDynamic extends Phaser.Scene
                 this.layers[idx].setDepth(this.configManager.get('client/map/layersDepth/changePoints'));
             }
             idx++;
+        }
+        // display the animations over the proper layer:
+        this.setObjectsAnimationsDepth();
+    }
+
+    setObjectsAnimationsDepth()
+    {
+        for(let idx in this.objectsAnimations){
+            let objAnimation = this.objectsAnimations[idx];
+            objAnimation.setDepthBasedOnLayer(this);
         }
     }
 

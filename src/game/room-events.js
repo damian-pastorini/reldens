@@ -8,7 +8,7 @@
  */
 
 const PlayerEngine = require('../users/player-engine');
-const DynamicScene = require('./scene-dynamic');
+const SceneDynamic = require('./scene-dynamic');
 const ScenePreloader = require('./scene-preloader');
 const share = require('../utils/constants');
 
@@ -146,7 +146,15 @@ class RoomEvents
         }
         // @TODO: implement player custom avatar.
         // , player.username
-        let scenePreloader = new ScenePreloader(preloaderName, sceneData.roomMap, sceneData.sceneImages, uiScene, this.gameManager);
+        let scenePreloader = this.createPreloaderInstance({
+            name: preloaderName,
+            map: sceneData.roomMap,
+            images: sceneData.sceneImages,
+            uiScene: uiScene,
+            gameManager: this.gameManager,
+            preloadAssets: sceneData.preloadAssets,
+            objectsAnimationsData: sceneData.objectsAnimationsData
+        });
         if(!this.gameEngine.scene.getScene(preloaderName)){
             this.gameEngine.scene.add(preloaderName, scenePreloader, true);
             let preloader = this.gameEngine.scene.getScene(preloaderName);
@@ -173,8 +181,8 @@ class RoomEvents
     createEngineScene(player, room, previousScene, sceneData)
     {
         if(!this.gameEngine.scene.getScene(player.state.scene)){
-            let engineDynamicScene = this.createSceneInstance(player.state.scene, sceneData, this.gameManager.config);
-            this.gameEngine.scene.add(player.state.scene, engineDynamicScene, false);
+            let engineSceneDynamic = this.createSceneInstance(player.state.scene, sceneData, this.gameManager.config);
+            this.gameEngine.scene.add(player.state.scene, engineSceneDynamic, false);
         }
         if(!this.gameManager.room){
             this.gameEngine.scene.start(player.state.scene);
@@ -228,8 +236,8 @@ class RoomEvents
     {
         if(!this.gameEngine.scene.getScene(this.roomName)){
             if(this.sceneData){
-                let engineDynamicScene = this.createSceneInstance(this.roomName, this.sceneData, this.gameManager.config);
-                this.gameEngine.scene.add(this.roomName, engineDynamicScene, false);
+                let engineSceneDynamic = this.createSceneInstance(this.roomName, this.sceneData, this.gameManager.config);
+                this.gameEngine.scene.add(this.roomName, engineSceneDynamic, false);
             }
         }
         return this.gameEngine.scene.getScene(this.roomName);
@@ -237,12 +245,17 @@ class RoomEvents
 
     createSceneInstance(sceneName, sceneData, config)
     {
-        return new DynamicScene(sceneName, sceneData, config);
+        return new SceneDynamic(sceneName, sceneData, config);
     }
 
     createPlayerEngineInstance(currentScene, player, config, room)
     {
         return new PlayerEngine(currentScene, player, config, room);
+    }
+
+    createPreloaderInstance(props)
+    {
+        return new ScenePreloader(props);
     }
 
 }
