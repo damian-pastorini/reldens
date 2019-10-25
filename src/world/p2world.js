@@ -86,6 +86,13 @@ class P2world extends P2.World
                         let roomObject = this.objectsManager.getObjectData(objectIndex);
                         // if the data and the instance was created:
                         if(roomObject){
+                            // handle body fixed position:
+                            if(roomObject.hasOwnProperty('xFix')){
+                                posX += roomObject.xFix;
+                            }
+                            if(roomObject.hasOwnProperty('yFix')){
+                                posY += roomObject.yFix;
+                            }
                             // create the body:
                             let bodyObject = this.createPlayerCollisionBody(tileW, tileH, posX, posY, 0, false);
                             bodyObject.isRoomObject = true;

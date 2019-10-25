@@ -7,7 +7,6 @@
  */
 
 const Phaser = require('phaser');
-const AnimationEngine = require('../objects/animation-engine');
 const share = require('../utils/constants');
 
 class ScenePreloader extends Phaser.Scene
@@ -149,8 +148,6 @@ class ScenePreloader extends Phaser.Scene
             // @NOTE: since this happens only once and just for the first preloader, here we register the features UI.
             this.gameManager.features.createFeaturesUi(this);
         }
-        // create animations for all the objects in the scene:
-        this.createDynamicAnimations();
         // player animations:
         // @TODO: player animation will be part of the configuration in the database.
         // @TODO: implement player custom avatar.
@@ -178,21 +175,6 @@ class ScenePreloader extends Phaser.Scene
             frameRate: this.configuredFrameRate,
             repeat: -1
         });
-    }
-
-    createDynamicAnimations()
-    {
-        let currentScene = this.gameManager.activeRoomEvents.getActiveScene();
-        if(currentScene.objectsAnimationsData){
-            for(let idx in currentScene.objectsAnimationsData){
-                let animProps = currentScene.objectsAnimationsData[idx];
-                animProps.frameRate = this.configuredFrameRate;
-                // create the animation object instance:
-                let animation = new AnimationEngine(this.gameManager, animProps, this);
-                // @NOTE: this will populate the objectsAnimations property in the current scene, see scene-dynamic.
-                animation.createAnimation();
-            }
-        }
     }
 
     registerControllers(controllersBox)

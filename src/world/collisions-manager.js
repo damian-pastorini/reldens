@@ -68,6 +68,7 @@ class CollisionsManager
 
     playerHitObject(currentPlayerBody, otherBody)
     {
+        // console.log('hit Object', currentPlayerBody.playerId, otherBody);
         // now the collisions manager only run the object hit action:
         if(otherBody.roomObject){
             otherBody.roomObject.onHit({playerBody: currentPlayerBody, objectBody: otherBody, room: this.room});

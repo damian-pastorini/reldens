@@ -181,7 +181,7 @@ class RoomEvents
     createEngineScene(player, room, previousScene, sceneData)
     {
         if(!this.gameEngine.scene.getScene(player.state.scene)){
-            let engineSceneDynamic = this.createSceneInstance(player.state.scene, sceneData, this.gameManager.config);
+            let engineSceneDynamic = this.createSceneInstance(player.state.scene, sceneData, this.gameManager);
             this.gameEngine.scene.add(player.state.scene, engineSceneDynamic, false);
         }
         if(!this.gameManager.room){
@@ -236,16 +236,16 @@ class RoomEvents
     {
         if(!this.gameEngine.scene.getScene(this.roomName)){
             if(this.sceneData){
-                let engineSceneDynamic = this.createSceneInstance(this.roomName, this.sceneData, this.gameManager.config);
+                let engineSceneDynamic = this.createSceneInstance(this.roomName, this.sceneData, this.gameManager);
                 this.gameEngine.scene.add(this.roomName, engineSceneDynamic, false);
             }
         }
         return this.gameEngine.scene.getScene(this.roomName);
     }
 
-    createSceneInstance(sceneName, sceneData, config)
+    createSceneInstance(sceneName, sceneData, gameManager)
     {
-        return new SceneDynamic(sceneName, sceneData, config);
+        return new SceneDynamic(sceneName, sceneData, gameManager);
     }
 
     createPlayerEngineInstance(currentScene, player, config, room)

@@ -22,6 +22,21 @@ class AnimationEngine
         this.layerName = props.layerName || false;
         this.x = props.x || 0;
         this.y = props.y || 0;
+        this.positionFix = props.positionFix || false;
+        this.calculateAnimPosition();
+    }
+
+    calculateAnimPosition()
+    {
+        this.animPos = {x: this.x, y: this.y};
+        if(this.positionFix){
+            if(this.positionFix.hasOwnProperty('x')){
+                this.animPos.x = this.x + this.positionFix.x;
+            }
+            if(this.positionFix.hasOwnProperty('y')){
+                this.animPos.y = this.y + this.positionFix.y;
+            }
+        }
     }
 
     createAnimation()
@@ -49,7 +64,7 @@ class AnimationEngine
                     hideOnComplete: this.hideOnComplete
                 };
                 this.currentAnimation = this.currentPreloader.anims.create(createData);
-                this.sceneSprite = currentScene.physics.add.sprite(this.x, this.y, this.animationKey);
+                this.sceneSprite = currentScene.physics.add.sprite(this.animPos.x, this.animPos.y, this.animationKey);
                 currentScene.objectsAnimations[this.animationKey] = this;
             } else {
                 console.log('ERROR - Active scene not found');

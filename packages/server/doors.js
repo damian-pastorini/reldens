@@ -19,11 +19,17 @@ class DoorObject extends AnimationObject
     {
         super(props);
         this.runOnHit = true;
+        // @NOTE: in this example we are changing the position data to run the animation before we hit the change-point.
+        // this.xFix = 0;
+        this.yFix = 16;
         // assign extra public params:
         this.publicParamsObj = Object.assign(this.publicParamsObj, {
             enabled: true,
-            frameStart: 3,
-            frameEnd: 0,
+            // @NOTE: in the same way we can fix the position of the body object in the server we can do it just for
+            // the animation by setting the positionFix.x and positionFix.y which are the valued shared with the client.
+            positionFix: {y: -28},
+            frameStart: 0,
+            frameEnd: 3,
             repeat: 0,
             hideOnComplete: false,
             autoStart: true
