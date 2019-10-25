@@ -7,5 +7,6 @@
  */
 
 module.exports = {
-    chat: require('../src/chat/chat-pack-client')
+    chat: require('../src/chat/chat-pack-client'),
+    objects: require('../src/objects/objects-pack-client')
 };

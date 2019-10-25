@@ -29,14 +29,16 @@ class FeaturesManager
         // get the features from the database:
         let featuresCollection = await FeaturesModel.query();
         for(let featureEntity of featuresCollection){
-            // only include available and enabled features:
+            // add the feature to the codes list:
+            this.featuresCodeList.push(featureEntity.code);
+            // @NOTE: featuresCodeList this will be sent to the client so we need the complete list from the database
+            // to load the features for the client side later.
             if(
+                // only include enabled and available features on the server side config:
                 this.availableFeatures.hasOwnProperty(featureEntity.code)
                 && featureEntity.hasOwnProperty('is_enabled')
                 && featureEntity.is_enabled
             ){
-                // add the feature to the codes list:
-                this.featuresCodeList.push(featureEntity.code);
                 // get feature package server for server side:
                 let featurePackage = this.availableFeatures[featureEntity.code];
                 // set package on entity:

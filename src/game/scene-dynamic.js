@@ -1,10 +1,11 @@
 const Phaser = require('phaser');
 const TilesetAnimation = require('./tileset-animation');
+const AnimationEngine = require('../objects/animation-engine');
 
 class SceneDynamic extends Phaser.Scene
 {
 
-    constructor(key, data, config)
+    constructor(key, data, gameManager)
     {
         super({key});
         this.key = key;
@@ -12,7 +13,14 @@ class SceneDynamic extends Phaser.Scene
         this.layers = {};
         this.transition = true;
         this.useTsAnimation = false;
-        this.configManager = config;
+        this.gameManager = gameManager;
+        this.configManager = gameManager.config;
+        // frame rate:
+        this.configuredFrameRate = this.gameManager.config.get('client/general/animations/frameRate') || 10;
+        // this will contain the animations data coming from the server:
+        this.objectsAnimationsData = false;
+        // this will contain the animations objects instances:
+        this.objectsAnimations = {};
     }
 
     init()
@@ -31,6 +39,12 @@ class SceneDynamic extends Phaser.Scene
         this.useTsAnimation = this.hasTsAnimation();
         this.tileset = this.map.addTilesetImage(this.params.roomMap);
         this.registerLayers();
+        for(let layerIndex in this.layers){
+            let layer = this.layers[layerIndex];
+            if(layer.layer.name.indexOf('animations') !== -1){
+                this.registerTilesetAnimation(layer);
+            }
+        }
         this.cameras.main.on('camerafadeincomplete', () => {
             this.transition = false;
             this.input.keyboard.on('keyup', (event) => {
@@ -40,10 +54,21 @@ class SceneDynamic extends Phaser.Scene
                 }
             });
         });
-        for(let layerIndex in this.layers){
-            let layer = this.layers[layerIndex];
-            if(layer.layer.name.indexOf('animations') !== -1){
-                this.registerTilesetAnimation(layer);
+        // create animations for all the objects in the scene:
+        this.createDynamicAnimations();
+    }
+
+    createDynamicAnimations()
+    {
+        let currentScene = this.gameManager.activeRoomEvents.getActiveScene();
+        if(currentScene.objectsAnimationsData){
+            for(let idx in currentScene.objectsAnimationsData){
+                let animProps = currentScene.objectsAnimationsData[idx];
+                animProps.frameRate = this.configuredFrameRate;
+                // create the animation object instance:
+                let animation = new AnimationEngine(this.gameManager, animProps, this);
+                // @NOTE: this will populate the objectsAnimations property in the current scene, see scene-dynamic.
+                animation.createAnimation();
             }
         }
     }
@@ -65,6 +90,7 @@ class SceneDynamic extends Phaser.Scene
 
     changeScene()
     {
+        this.objectsAnimations = {};
         if(this.useTsAnimation){
             this.tilesetAnimation.destroy();
         }
@@ -104,6 +130,16 @@ class SceneDynamic extends Phaser.Scene
                 this.layers[idx].setDepth(this.configManager.get('client/map/layersDepth/changePoints'));
             }
             idx++;
+        }
+        // display the animations over the proper layer:
+        this.setObjectsAnimationsDepth();
+    }
+
+    setObjectsAnimationsDepth()
+    {
+        for(let idx in this.objectsAnimations){
+            let objAnimation = this.objectsAnimations[idx];
+            objAnimation.setDepthBasedOnLayer(this);
         }
     }
 

@@ -29,7 +29,7 @@ class DataServer
             this.config = dbConfig;
             let {client, host, port, database, user, password} = dbConfig;
             this.connectionString = `${client}://${user}${(password ? ':'+password : '')}@${host}:${port}/${database}`;
-            console.log('INFO - Created DataServer:', this.connectionString);
+            console.log('INFO - Connected to DataServer:', this.connectionString);
         } else {
             throw new Error('ERROR - Missing database full configuration.');
         }

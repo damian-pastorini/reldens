@@ -36,7 +36,7 @@ class RoomsManager
         let counter = 0;
         // lobby room:
         gameServer.define(share.ROOM_GAME, this.configuredClasses['RoomGame'], props);
-        console.log('INFO - Loaded game room using stored configuration.', props.config);
+        console.log('INFO - Loaded game room using stored configuration.');
         // define extra rooms (if any, for example features rooms):
         if(this.defineRooms){
             for(let roomData of this.defineRooms){
