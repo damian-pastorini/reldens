@@ -143,8 +143,8 @@ CREATE TABLE IF NOT EXISTS `objects_assets` (
 -- Dumping data for table reldens.objects_assets: ~2 rows (approximately)
 /*!40000 ALTER TABLE `objects_assets` DISABLE KEYS */;
 INSERT INTO `objects_assets` (`object_asset_id`, `object_id`, `asset_type`, `asset_key`, `file_1`, `file_2`, `extra_params`) VALUES
-	(1, 1, 'spritesheet', 'door_house_1', 'door-a-x2', NULL, '{"frameWidth":32,"frameHeight":64}'),
-	(2, 4, 'spritesheet', 'door_house_2', 'door-a-x2', NULL, '{"frameWidth":32,"frameHeight":64}');
+	(1, 1, 'spritesheet', 'door_house_1', 'door-a-x2', NULL, '{"frameWidth":32,"frameHeight":58}'),
+	(2, 4, 'spritesheet', 'door_house_2', 'door-a-x2', NULL, '{"frameWidth":32,"frameHeight":58}');
 /*!40000 ALTER TABLE `objects_assets` ENABLE KEYS */;
 
 -- Dumping structure for table reldens.players
@@ -184,7 +184,7 @@ CREATE TABLE IF NOT EXISTS `players_state` (
 -- Dumping data for table reldens.players_state: ~4 rows (approximately)
 /*!40000 ALTER TABLE `players_state` DISABLE KEYS */;
 INSERT INTO `players_state` (`id`, `player_id`, `room_id`, `x`, `y`, `dir`) VALUES
-	(3, 1, 4, 400, 345, 'down'),
+	(3, 1, 4, 1266, 684, 'down'),
 	(4, 2, 4, 307, 361, 'down'),
 	(5, 3, 4, 400, 345, 'right'),
 	(6, 4, 4, 400, 345, 'down');
@@ -282,7 +282,7 @@ INSERT INTO `rooms_return_points` (`id`, `room_id`, `direction`, `x`, `y`, `is_d
 	(1, 2, 'up', 400, 470, 1, NULL),
 	(2, 3, 'up', 190, 430, 1, NULL),
 	(3, 4, 'down', 400, 345, 1, 2),
-	(4, 4, 'down', 1274, 670, 0, 3);
+	(4, 4, 'down', 1266, 670, 0, 3);
 /*!40000 ALTER TABLE `rooms_return_points` ENABLE KEYS */;
 
 -- Dumping structure for table reldens.users
@@ -303,7 +303,7 @@ CREATE TABLE IF NOT EXISTS `users` (
 -- Dumping data for table reldens.users: ~3 rows (approximately)
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
 INSERT INTO `users` (`id`, `email`, `username`, `password`, `role_id`, `status`, `created_at`, `updated_at`) VALUES
-	(29, 'dap@dap.com', 'dap', '$2b$10$PQIYGBFyA/69DaowJVTA5ufVWmIUeIOwIK4e6JCAP5Uen0sp0TAHu', 1, 1, '2019-08-02 23:06:14', '2019-10-22 22:02:34'),
+	(29, 'dap@dap.com', 'dap', '$2b$10$PQIYGBFyA/69DaowJVTA5ufVWmIUeIOwIK4e6JCAP5Uen0sp0TAHu', 1, 1, '2019-08-02 23:06:14', '2019-10-25 22:45:45'),
 	(30, 'dap2@dap.com', 'dap2', '$2b$10$Kvjh1XdsMai8Xt2wdivG2.prYvTiW6vJrdnrNPYZenf8qCRLhuZ/a', 9, 1, '2019-08-02 23:06:14', '2019-10-06 13:54:04'),
 	(31, 'dap3@dap.com', 'dap3', '$2b$10$CmtWkhIexIVtcBjwsmEkeOlIhqizViykDFYAKtVrl4sF8KWLuBsxO', 1, 1, '2019-08-02 23:06:14', '2019-09-29 16:14:51'),
 	(32, 'dap4@dap4.com', 'dap4', '$2b$10$X2.NOm1TiE1YVa44Jjf0Vu.YHndsujPqkj/36UHPvTnCnO.LHwXPq', 1, 1, '2019-09-29 14:04:11', '2019-09-29 14:04:11');
