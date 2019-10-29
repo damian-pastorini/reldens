@@ -41,9 +41,9 @@ CREATE TABLE IF NOT EXISTS `config` (
   `value` text COLLATE utf8_unicode_ci NOT NULL,
   `type` varchar(2) COLLATE utf8_unicode_ci NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=39 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=40 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table reldens.config: ~36 rows (approximately)
+-- Dumping data for table reldens.config: ~37 rows (approximately)
 /*!40000 ALTER TABLE `config` DISABLE KEYS */;
 INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(1, 'server', 'rooms/validation/valid', 'room_game,chat_global', 't'),
@@ -82,7 +82,8 @@ INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(35, 'client', 'general/animations/frameRate', '10', 'i'),
 	(36, 'client', 'map/layersDepth/belowPlayer', '0', 'i'),
 	(37, 'client', 'map/layersDepth/changePoints', '0', 'i'),
-	(38, 'client', 'general/uiVisibility/sceneLabel', '1', 'b');
+	(38, 'client', 'general/uiVisibility/sceneLabel', '1', 'b'),
+	(39, 'client', 'general/controls/action_button_hold', '0', 'b');
 /*!40000 ALTER TABLE `config` ENABLE KEYS */;
 
 -- Dumping structure for table reldens.features
@@ -117,13 +118,14 @@ CREATE TABLE IF NOT EXISTS `objects` (
   UNIQUE KEY `room_id_layer_name_tile_index` (`room_id`,`layer_name`,`tile_index`),
   KEY `room_id` (`room_id`),
   CONSTRAINT `FK_objects_rooms` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping data for table reldens.objects: ~2 rows (approximately)
 /*!40000 ALTER TABLE `objects` DISABLE KEYS */;
 INSERT INTO `objects` (`id`, `room_id`, `layer_name`, `tile_index`, `server_path`, `client_key`, `private_params`, `public_params`, `enabled`) VALUES
 	(1, 4, 'ground-collisions', 444, 'packages/server/doors', 'door_house_1', NULL, NULL, 1),
-	(4, 4, 'ground-collisions', 951, 'packages/server/doors', 'door_house_2', NULL, NULL, 1);
+	(4, 4, 'ground-collisions', 951, 'packages/server/doors', 'door_house_2', NULL, NULL, 1),
+	(5, 4, 'house-collisions-over-player', 535, 'packages/server/people', 'people_town_1', NULL, NULL, 1);
 /*!40000 ALTER TABLE `objects` ENABLE KEYS */;
 
 -- Dumping structure for table reldens.objects_assets
@@ -138,13 +140,14 @@ CREATE TABLE IF NOT EXISTS `objects_assets` (
   PRIMARY KEY (`object_asset_id`),
   KEY `object_id` (`object_id`),
   CONSTRAINT `FK_objects_assets_objects` FOREIGN KEY (`object_id`) REFERENCES `objects` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=latin1;
 
--- Dumping data for table reldens.objects_assets: ~2 rows (approximately)
+-- Dumping data for table reldens.objects_assets: ~3 rows (approximately)
 /*!40000 ALTER TABLE `objects_assets` DISABLE KEYS */;
 INSERT INTO `objects_assets` (`object_asset_id`, `object_id`, `asset_type`, `asset_key`, `file_1`, `file_2`, `extra_params`) VALUES
 	(1, 1, 'spritesheet', 'door_house_1', 'door-a-x2', NULL, '{"frameWidth":32,"frameHeight":58}'),
-	(2, 4, 'spritesheet', 'door_house_2', 'door-a-x2', NULL, '{"frameWidth":32,"frameHeight":58}');
+	(2, 4, 'spritesheet', 'door_house_2', 'door-a-x2', NULL, '{"frameWidth":32,"frameHeight":58}'),
+	(3, 5, 'spritesheet', 'people_town_1', 'people-b-x2', NULL, '{"frameWidth":52,"frameHeight":71}');
 /*!40000 ALTER TABLE `objects_assets` ENABLE KEYS */;
 
 -- Dumping structure for table reldens.players
@@ -184,7 +187,7 @@ CREATE TABLE IF NOT EXISTS `players_state` (
 -- Dumping data for table reldens.players_state: ~4 rows (approximately)
 /*!40000 ALTER TABLE `players_state` DISABLE KEYS */;
 INSERT INTO `players_state` (`id`, `player_id`, `room_id`, `x`, `y`, `dir`) VALUES
-	(3, 1, 4, 1266, 684, 'down'),
+	(3, 1, 4, 310, 365, 'down'),
 	(4, 2, 4, 307, 361, 'down'),
 	(5, 3, 4, 400, 345, 'right'),
 	(6, 4, 4, 400, 345, 'down');
@@ -303,7 +306,7 @@ CREATE TABLE IF NOT EXISTS `users` (
 -- Dumping data for table reldens.users: ~3 rows (approximately)
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
 INSERT INTO `users` (`id`, `email`, `username`, `password`, `role_id`, `status`, `created_at`, `updated_at`) VALUES
-	(29, 'dap@dap.com', 'dap', '$2b$10$PQIYGBFyA/69DaowJVTA5ufVWmIUeIOwIK4e6JCAP5Uen0sp0TAHu', 1, 1, '2019-08-02 23:06:14', '2019-10-25 22:45:45'),
+	(29, 'dap@dap.com', 'dap', '$2b$10$PQIYGBFyA/69DaowJVTA5ufVWmIUeIOwIK4e6JCAP5Uen0sp0TAHu', 1, 1, '2019-08-02 23:06:14', '2019-10-29 22:46:50'),
 	(30, 'dap2@dap.com', 'dap2', '$2b$10$Kvjh1XdsMai8Xt2wdivG2.prYvTiW6vJrdnrNPYZenf8qCRLhuZ/a', 9, 1, '2019-08-02 23:06:14', '2019-10-06 13:54:04'),
 	(31, 'dap3@dap.com', 'dap3', '$2b$10$CmtWkhIexIVtcBjwsmEkeOlIhqizViykDFYAKtVrl4sF8KWLuBsxO', 1, 1, '2019-08-02 23:06:14', '2019-09-29 16:14:51'),
 	(32, 'dap4@dap4.com', 'dap4', '$2b$10$X2.NOm1TiE1YVa44Jjf0Vu.YHndsujPqkj/36UHPvTnCnO.LHwXPq', 1, 1, '2019-09-29 14:04:11', '2019-09-29 14:04:11');

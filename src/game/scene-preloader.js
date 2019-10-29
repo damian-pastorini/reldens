@@ -117,7 +117,7 @@ class ScenePreloader extends Phaser.Scene
                 });
             }
             if(this.gameManager.config.get('client/general/uiVisibility/uiBoxLeft')){
-                this.uiBoxLeft = this.add.dom(120, 420).createFromCache('uiBoxLeft');
+                this.uiBoxLeft = this.add.dom(90, 380).createFromCache('uiBoxLeft');
                 this.registerControllers(this.uiBoxLeft);
             }
             if(this.gameManager.config.get('client/general/uiVisibility/sceneLabel')){
@@ -182,35 +182,47 @@ class ScenePreloader extends Phaser.Scene
         // @TODO: controllers will be part of the configuration in the database.
         let btnUp = controllersBox.getChildByProperty('id', share.UP);
         if(btnUp){
-            this.hold(btnUp, share.UP);
+            this.hold(btnUp, {dir: share.UP});
         }
         let btnDown = controllersBox.getChildByProperty('id', share.DOWN);
         if(btnDown){
-            this.hold(btnDown, share.DOWN);
+            this.hold(btnDown, {dir: share.DOWN});
         }
         let btnLeft = controllersBox.getChildByProperty('id', share.LEFT);
         if(btnLeft){
-            this.hold(btnLeft, share.LEFT);
+            this.hold(btnLeft, {dir: share.LEFT});
         }
         let btnRight = controllersBox.getChildByProperty('id', share.RIGHT);
         if(btnRight){
-            this.hold(btnRight, share.RIGHT);
+            this.hold(btnRight, {dir: share.RIGHT});
+        }
+        let btnAction = controllersBox.getChildByProperty('id', share.ACTION);
+        if(btnAction){
+            if(this.gameManager.config.get('client/general/controls/action_button_hold')){
+                this.hold(btnAction, {act: share.ACTION});
+            } else {
+                btnAction.addEventListener('click', (e) => {
+                    this.gameManager.activeRoomEvents.room.send({act: share.ACTION});
+                });
+            }
         }
     }
 
-    hold(btn, action)
+    hold(btn, sendData)
     {
         let t;
         let repeat = () => {
-            this.gameManager.activeRoomEvents.room.send({dir: action});
+            this.gameManager.activeRoomEvents.room.send(sendData);
             t = setTimeout(repeat, this.timeout);
         };
         btn.addEventListener('mousedown', (e) => {
             e.preventDefault();
+            btn.style.opacity = '1';
             repeat();
         });
         btn.addEventListener('mouseup', (e) => {
             e.preventDefault();
+            btn.style.opacity = '0.8';
             clearTimeout(t);
             this.gameManager.activeRoomEvents.room.send({act: share.STOP});
         });
@@ -221,10 +233,12 @@ class ScenePreloader extends Phaser.Scene
         });
         btn.addEventListener('touchstart', (e) => {
             e.preventDefault();
+            btn.style.opacity = '1';
             repeat();
         });
         btn.addEventListener('touchend', (e) => {
             e.preventDefault();
+            btn.style.opacity = '0.8';
             clearTimeout(t);
             this.gameManager.activeRoomEvents.room.send({act: share.STOP});
         });
