@@ -14,7 +14,9 @@ class Installer
 
     validateOrCreateSkeleton(config)
     {
-        let skeletonExists = fs.existsSync(config.projectRoot+'/pub') && fs.existsSync(config.projectRoot+'/config');
+        let skeletonExists = fs.existsSync(config.projectRoot+'/pub')
+            && fs.existsSync(config.projectRoot+'/config')
+            && fs.existsSync(config.projectRoot+'/packages');
         if(!skeletonExists){
             if(!config.hasOwnProperty('installSkeleton')){
                 // alert and stop.
@@ -25,9 +27,11 @@ class Installer
                     +"\n"+' new ReldensServer({projectRoot: __dirname, installSkeleton: true});'+"\n"+"\n";
                 throw new Error(errorMessage);
             } else {
-                // copy /pub and config from node_modules/reldens into the project root:
-                this.copyFolderSync(config.projectRoot+'/node_modules/reldens/pub', config.projectRoot+'/pub');
-                this.copyFolderSync(config.projectRoot+'/node_modules/reldens/config', config.projectRoot+'/config');
+                // copy /pub, /config and /packages from node_modules/reldens into the project root:
+                let nodeRoot = config.projectRoot+'/node_modules/reldens/';
+                this.copyFolderSync(nodeRoot+'pub', config.projectRoot+'/pub');
+                this.copyFolderSync(nodeRoot+'config', config.projectRoot+'/config');
+                this.copyFolderSync(nodeRoot+'packages', config.projectRoot+'/packages');
                 // then copy the "pub" into the "dist" folder so we can get all the assets:
                 this.copyFolderSync(config.projectRoot+'/pub', config.projectRoot+'/dist');
             }

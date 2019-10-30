@@ -10,7 +10,7 @@
  *
  */
 
-const AnimationObject = require('../../src/objects/animation-object');
+const AnimationObject = require('reldens/src/objects/animation-object');
 
 class DoorObject extends AnimationObject
 {
