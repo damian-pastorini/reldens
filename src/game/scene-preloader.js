@@ -254,6 +254,7 @@ class ScenePreloader extends Phaser.Scene
         this.progressBar = this.add.graphics();
         let width = this.cameras.main.width;
         let height = this.cameras.main.height;
+        // @TODO: fonts and messages has to be part of the configuration in the database.
         this.loadingText = this.add.text(width / 2, height / 2 - 50, 'Loading...', {
             fontFamily: 'Verdana, Geneva, sans-serif',
             fontSize: '20px'
