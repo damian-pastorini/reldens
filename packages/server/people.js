@@ -9,7 +9,7 @@
  *
  */
 
-const NpcObject = require('../../src/objects/npc-object');
+const NpcObject = require('reldens/src/objects/npc-object');
 
 class People extends NpcObject
 {
