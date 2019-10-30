@@ -35,6 +35,11 @@ class SceneDynamic extends Phaser.Scene
         this.keyRight = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.RIGHT);
         this.keyUp = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP);
         this.keyDown = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.DOWN);
+        this.input.keyboard.on('keydown', (event) => {
+            if (event.keyCode === 32){
+                this.player.runActions();
+            }
+        });
         this.map = this.add.tilemap(this.params.roomMap);
         this.useTsAnimation = this.hasTsAnimation();
         this.tileset = this.map.addTilesetImage(this.params.roomMap);
@@ -56,6 +61,8 @@ class SceneDynamic extends Phaser.Scene
         });
         // create animations for all the objects in the scene:
         this.createDynamicAnimations();
+        // display the animations over the proper layer:
+        this.setObjectsAnimationsDepth();
     }
 
     createDynamicAnimations()
@@ -124,23 +131,25 @@ class SceneDynamic extends Phaser.Scene
                 this.layers[idx].setDepth(this.configManager.get('client/map/layersDepth/belowPlayer'));
             }
             if(layerName.indexOf('over-player') !== -1){
-                this.layers[idx].setDepth(idx);
+                // we need to set the depth higher than everything else (multiply to get the highest value):
+                this.layers[idx].setDepth(idx * this.map.height * this.map.tileHeight);
             }
             if(layerName.indexOf('change-points') !== -1){
                 this.layers[idx].setDepth(this.configManager.get('client/map/layersDepth/changePoints'));
             }
             idx++;
         }
-        // display the animations over the proper layer:
-        this.setObjectsAnimationsDepth();
     }
 
     setObjectsAnimationsDepth()
     {
+        // @TODO: make this configurable in each object using a dynamic or fixed depth property.
+        /*
         for(let idx in this.objectsAnimations){
             let objAnimation = this.objectsAnimations[idx];
             objAnimation.setDepthBasedOnLayer(this);
         }
+        */
     }
 
     registerTilesetAnimation(layer)

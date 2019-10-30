@@ -24,6 +24,7 @@ class ChatManager
         let insertModel = {
             // @TODO: temporal getting player_id from stats.
             player_id: playerSchema.stats.player_id,
+            // @TODO: cut message at 140 characters.
             message: message,
             message_time: this.getCurrentDate()
         };
