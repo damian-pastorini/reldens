@@ -59,6 +59,8 @@ class ServerManager
         this.configManager = new ConfigManager();
         // load configurations and get a config processor instance:
         let configProcessor = await this.configManager.loadConfigurations();
+        // save project root for later use:
+        configProcessor.projectRoot = this.projectRoot;
         ServerEvents.emit('serverConfigReady', {serverManager: this, configProcessor: configProcessor});
         // features manager:
         this.featuresManager = new FeaturesManager();

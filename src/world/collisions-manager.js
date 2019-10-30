@@ -44,6 +44,9 @@ class CollisionsManager
             if(otherBody.isWall){
                 this.playerHitWall(currentPlayerBody, otherBody);
             }
+            if(otherBody.isRoomObject){
+                this.playerHitObject(currentPlayerBody, otherBody);
+            }
             if(otherBody.isNpc){
                 this.playerHitNpc(currentPlayerBody, otherBody);
             }
@@ -63,9 +66,18 @@ class CollisionsManager
         console.log('hit NPC', currentPlayerBody.playerId, otherBody.isNpc);
     }
 
+    playerHitObject(currentPlayerBody, otherBody)
+    {
+        // console.log('hit Object', currentPlayerBody.playerId, otherBody);
+        // now the collisions manager only run the object hit action:
+        if(otherBody.roomObject){
+            otherBody.roomObject.onHit({playerBody: currentPlayerBody, objectBody: otherBody, room: this.room});
+        }
+    }
+
     playerHitWall(player, wall)
     {
-        // NOTE: we can use wall.material to trigger an action over the player, like:
+        // @NOTE: we can use wall.material to trigger an action over the player, like:
         // wall.material = lava > reduce player.hp in every step
         player.velocity = [0, 0];
     }

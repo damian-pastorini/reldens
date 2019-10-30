@@ -36,5 +36,7 @@ module.exports = {
     FADE_DURATION: 1000,
     SPEED_SERVER: 180,
     // @TODO: implement player custom avatar.
-    IMAGE_PLAYER: 'player'
+    IMAGE_PLAYER: 'player',
+    // objects types:
+    OBJECT_ANIMATION: 'oa'
 };
