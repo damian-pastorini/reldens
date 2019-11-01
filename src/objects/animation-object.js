@@ -17,14 +17,6 @@ class AnimationObject extends BaseObject
         super(props);
         // this is a hardcoded property for this specific object type:
         this.isAnimation = true;
-        // we will use the client_key has key:
-        this.key = props.client_key;
-        // in this specific object type we will use the public params as JSON:
-        this.publicParamsObj = props.public_params ? JSON.parse(props.public_params) : {};
-        this.publicParamsObj.key = this.key;
-        // @NOTE: we need to send the layer name for later calculate the animation depth and show the animation over the
-        // proper layer.
-        this.publicParamsObj.layerName = props.layer_name;
         // the actions will be false as default:
         this.runOnHit = false;
         this.runOnAction = false;

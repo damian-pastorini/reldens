@@ -33,7 +33,7 @@ class UsersManager
         let userData = initialData.data;
         let initState = initialData.state;
         let initStats = initialData.stats;
-        let createdUser = await UsersModel.query()
+        return UsersModel.query()
             .allowInsert('players.[stats, state]')
             .insertWithRelatedAndFetch({
                 email: userData.email,
@@ -59,8 +59,8 @@ class UsersManager
                         dir: initState.dir
                     }
                 }
-            });
-        return createdUser;
+            }
+        );
     }
 
     updateUserLastLogin(username)

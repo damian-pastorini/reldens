@@ -32,7 +32,7 @@ I know it is a huge project but I'll put all I have to make it work, so needless
 ## [Features List](https://github.com/damian-pastorini/reldens/wiki/Features)
 
 
-## [Demo](dev.reldens.com)
+## [Demo](https://dev.reldens.com)
 
 Here you will find a small demo for the results with the last available version from master: 
 
