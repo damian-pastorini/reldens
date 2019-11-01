@@ -33,6 +33,25 @@ class FeaturesClient
 
     attachOnMessageObserversToRoom(roomEvents)
     {
+        /* @TODO: use filters.
+        Object.keys(this.featuresList)
+            .filter(idx => this.featuresList[idx].joinedRoomsOnMessage)
+            .forEach((feature) => {
+                let attachIndex = false;
+                if(feature.joinedRoomsOnMessage.hasOwnProperty(roomEvents.roomName)){
+                    attachIndex = roomEvents.roomName;
+                }
+                if(feature.joinedRoomsOnMessage.hasOwnProperty(share.ROOM_EVENTS)){
+                    attachIndex = share.ROOM_EVENTS;
+                }
+                if(attachIndex){
+                    roomEvents.room.onMessage((message) => {
+                        feature.messageObserver = new feature.joinedRoomsOnMessage[attachIndex]();
+                        feature.messageObserver.observeMessage(message, roomEvents.gameManager);
+                    });
+                }
+            });
+        */
         for(let idx in this.featuresList){
             let feature = this.featuresList[idx];
             if(feature.hasOwnProperty('joinedRoomsOnMessage')){
