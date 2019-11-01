@@ -8,6 +8,7 @@
  *
  */
 
+ // @TODO: - Seiyria - if these don't change, they should be const
 let gravityX = process.env.RELDENS_CLIENT_PHYSICS_GRAVITY_X ? Number(process.env.RELDENS_CLIENT_PHYSICS_GRAVITY_X) : 0;
 let gravityY = process.env.RELDENS_CLIENT_PHYSICS_GRAVITY_Y ? Number(process.env.RELDENS_CLIENT_PHYSICS_GRAVITY_Y) : 0;
 let scaleMode = process.env.RELDENS_CLIENT_SCALE_MODE ?

@@ -23,6 +23,9 @@ class DoorObject extends AnimationObject
         // this.xFix = 0;
         this.yFix = 6;
         // assign extra public params:
+        // @TODO: - Seiyria this seems like the kind of thing a getter would do better, or an ES6 proxy. accessing
+        //   obj.publicParamsObj feels weird, and IMO is an anti pattern - everything on the object should be accessible
+        //   if it is visible. this is another small plug for typescript, since it would let you encapsulate this data
         this.publicParamsObj = Object.assign(this.publicParamsObj, {
             enabled: true,
             // @NOTE: in the same way we can fix the position of the body object in the server we can do it just for

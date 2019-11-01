@@ -43,6 +43,8 @@ class ChatManager
         }
     }
 
+    // @TODO: - Seiyria - just a nitpick, but I would just send Date.now() and use a date parser client side to do this.
+    //   not everyone is in the same timezone.
     getCurrentDate()
     {
         // get date:

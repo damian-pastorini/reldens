@@ -11,6 +11,7 @@ const share = require('../utils/constants');
 
 // define the rooms:
 let joinedRoomsOnMessage = {};
+// @TODO: - Seiyria - it's confusing that there are two places that these variables are coming from.
 joinedRoomsOnMessage[chatConst.CHAT_GLOBAL] = ChatMessageObserver;
 joinedRoomsOnMessage[share.ROOM_EVENTS] = ChatMessageObserver;
 

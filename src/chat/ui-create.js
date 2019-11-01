@@ -13,6 +13,9 @@ class ChatUiCreate
 
     constructor(uiScene = false)
     {
+        // @TODO: - Seiyria - sometimes you throw an error, sometimes you use console.error. you should probably set up
+        //   a log service and centralize all of these calls through a logger service. that will be much better in the
+        //   long term, because it will let you track errors externally without having to add redundant code everywhere
         if(!uiScene){
             console.log('ERROR - UiScene false.');
         }
@@ -51,6 +54,7 @@ class ChatUiCreate
         }
     }
 
+    // @TODO: - Seiyria - this function has a lot of if/else. I would try to size it up so it's flatter.
     sendChatMessage(chatInput, roomEvents)
     {
         // validate if there's something to send:

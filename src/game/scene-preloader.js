@@ -12,6 +12,9 @@ const share = require('../utils/constants');
 class ScenePreloader extends Phaser.Scene
 {
 
+    // @TODO: - Seiyria - one thing that typescript would REALLY help with, is you could have an interface for what
+    //   this props object contains. right now, it could contain anything, but all I know for sure is that it contains
+    //   the props assigned in this ctor.
     constructor(props)
     {
         super({key: props.name});
@@ -35,6 +38,9 @@ class ScenePreloader extends Phaser.Scene
     {
         if(this.uiScene){
             // ui elements:
+            // @TODO: - Seiyria - this sort of getter isn't inherently bad, but you have to remember a lot of paths to
+            //   make it work. I'm not really sure I have a recommendation presently, just that this might be something
+            //   to watch out for in the future
             if(this.gameManager.config.get('client/general/uiVisibility/uiBoxRight')){
                 this.load.html('uiBoxRight', 'assets/html/ui-box-right.html');
             }

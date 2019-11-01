@@ -7,7 +7,7 @@
  *
  */
 
-const configuredFeatures = require('../../config/features-client');
+const { ConfiguredFeatures } = require('./config-client');
 const share = require('../utils/constants');
 
 class FeaturesClient
@@ -24,8 +24,8 @@ class FeaturesClient
         this.featuresCodeList = featuresCodeList;
         for(let idx in featuresCodeList){
             let featureCode = featuresCodeList[idx];
-            if(configuredFeatures.hasOwnProperty(featureCode)){
-                this.featuresList[featureCode] = configuredFeatures[featureCode];
+            if(ConfiguredFeatures.hasOwnProperty(featureCode)){
+                this.featuresList[featureCode] = ConfiguredFeatures[featureCode];
             }
         }
         return this.featuresList;

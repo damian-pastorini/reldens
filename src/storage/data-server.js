@@ -8,7 +8,7 @@
 
 const { Model } = require('objection');
 const Knex = require('knex');
-const configDb = require('../../config/db');
+const { Config } = require('./config');
 
 class DataServer
 {
@@ -22,7 +22,7 @@ class DataServer
     {
         // database configuration can be manually created by passing the connection data or using the general config.
         if(!dbConfig){
-            dbConfig = configDb;
+            dbConfig = Config;
         }
         // if the database config is present:
         if(dbConfig && this.checkParameters(dbConfig)){

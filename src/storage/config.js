@@ -8,7 +8,8 @@
  *
  */
 
-module.exports = {
+// @TODO: - Seiyria - all of these should be documented somewhere. See landoftherair/landoftherair README for an example
+module.exports.Config = {
     client: process.env.RELDENS_DB_CLIENT || 'mysql',
     host: process.env.RELDENS_DB_HOST || '10.0.2.2',
     port: Number(process.env.RELDENS_DB_PORT) || 3306,

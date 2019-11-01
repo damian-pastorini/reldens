@@ -6,7 +6,7 @@
  *
  */
 
-const configuredFeatures = require('../../config/features-server');
+const { ConfiguredFeatures } = require('./config-server');
 const FeaturesModel = require('./model');
 
 class FeaturesManager
@@ -15,7 +15,7 @@ class FeaturesManager
     constructor()
     {
         // all available features listed in config file:
-        this.availableFeatures = configuredFeatures;
+        this.availableFeatures = ConfiguredFeatures;
         // initialize features props:
         this.featuresList = {};
         this.featuresCodeList = [];

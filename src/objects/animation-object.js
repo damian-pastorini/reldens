@@ -12,6 +12,11 @@ const share = require('../utils/constants');
 class AnimationObject extends BaseObject
 {
 
+    // @TODO: - Seiyria ideally, all of your object props should be declared here, so someone can figure out at a glance
+    //   what properties are available. for example:
+    // isAnimation = true
+    // key = '';
+    // this would let you track what properties exist without having to check all the functions on the object
     constructor(props)
     {
         super(props);

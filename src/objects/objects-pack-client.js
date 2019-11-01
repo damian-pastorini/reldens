@@ -11,6 +11,7 @@ const share = require('../utils/constants');
 let joinedRoomsOnMessage = {};
 joinedRoomsOnMessage[share.ROOM_EVENTS] = ObjectsMessageObserver;
 
+// @TODO: - Seiyria - you can just do `module.exports = { joinedRoomsOnMessage }`
 module.exports = {
     // features name convention - joinedRoomsOnMessage are the listeners for the rooms received messages in the client.
     joinedRoomsOnMessage: joinedRoomsOnMessage

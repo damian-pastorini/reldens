@@ -17,6 +17,9 @@ module.exports = ServerManager;
 // ----------------------------------------------------------------------------------------------
 
 // @TODO: prepare everything for NPM package and remove all the code below, just keep a commented example.
+// - use npm build
+// - make the installation works with in an npm script
+// - splite the code back again in server / client otherwise it will be a mess for devs they could end up requiring server code on the client side.
 
 /*
 // create a server instance passing the current root:

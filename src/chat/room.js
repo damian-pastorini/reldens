@@ -39,6 +39,9 @@ class RoomChat extends RoomLogin
         let currentActivePlayer = this.activePlayers[client.sessionId];
         if(currentActivePlayer){
             if(data.act === share.CHAT_ACTION){
+                // @TODO: - Seiyria - I've seen this code in a few places. you may want to create a helper service that
+                //   handles repeated code actions like this, because it is fairly unideal to have duplicated code in
+                //   multiple places
                 let text = data[share.CHAT_MESSAGE].toString().replace('\\', '');
                 let messageObject = {act: share.CHAT_ACTION, f: currentActivePlayer.username};
                 let clientTo = false;

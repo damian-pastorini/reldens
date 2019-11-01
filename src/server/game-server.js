@@ -17,6 +17,8 @@ class GameServer extends ColyseusServer
     {
         super(options);
         // set shutdown callback:
+        // @TODO: - Seiyria - you're going to have trouble with this if you try to access `this` in `runOnShutDown`.
+        //   instead, prefer to do `() => this.runOnShutDown()`
         this.onShutdown(this.runOnShutDown);
     }
 

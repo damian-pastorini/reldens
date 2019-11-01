@@ -6,6 +6,10 @@
  *
  */
 
+// @TODO: - Seiyria - you should really separate your code out a lot more. this should be split into a service that
+//   handles logins, and another service that handles bcrypt-related stuff / persisting the user to the DB. right now,
+//   there's a lot of intertwined code that will make it really hard to test without splitting apart. you should focus
+//   on small, simple, single-feature services
 const bcrypt = require('bcrypt');
 const share = require('../utils/constants');
 

@@ -25,6 +25,18 @@ class ObjectsManager
 
     async loadObjectsByRoomId(roomId)
     {
+        // @TODO: - Seiyria - this code gets way too deep!
+        /*
+        if(!data) {
+            data = await ...
+        }
+
+        if(!data) {
+            ... 
+        }
+
+        this pattern would be better, because you don't need to keep nesting the code
+        */
         if(!this.roomObjectsData){
             this.roomObjectsData = await Objects.query()
                 .eager('[parent_room, objects_assets]')
@@ -33,11 +45,15 @@ class ObjectsManager
             if(this.roomObjectsData){
                 this.roomObjects = {};
                 for(let objectData of this.roomObjectsData){
+                    // @TODO: - Seiyria - you should only try/catch the code that can throw the error
+                    //   (in this case, the require).
                     try {
                         let objectIndex = objectData.layer_name + objectData.tile_index;
                         // dynamic path using the server root:
                         let fullPath = this.config.projectRoot+'/'+objectData.server_path;
                         // here we dynamically require the object class using the path specified in the storage:
+                        // @TODO: - Seiyria - you should have a helper whose sole purpose is lookup and creation of .
+                        //   objects/models - you should NOT be doing dynamic requires like this.
                         let objClass = require(fullPath);
                         let objInstance = new objClass(objectData);
                         // if the result is an animation instance then we can include in the list to send it to the client:
@@ -70,6 +86,7 @@ class ObjectsManager
      * @param objectIndex
      * @returns {boolean}
      */
+     // @TODO: - Seiyria - this could be reduced to `return !!this.roomObjects[objectIndex]`
     getObjectData(objectIndex)
     {
         if(this.roomObjects.hasOwnProperty(objectIndex)){

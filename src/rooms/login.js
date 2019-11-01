@@ -7,6 +7,7 @@
  *
  */
 
+ // @TODO: - Seiyria - can also do `const { Room } = require('colyseus');
 const Room = require('colyseus').Room;
 
 class RoomLogin extends Room
@@ -39,6 +40,7 @@ class RoomLogin extends Room
 
     validateRoom(playerRoomName)
     {
+        // @TODO: - Seiyria - just another boolean but could be named better
         let result = true;
         if(this.config.server.rooms.validation.enabled){
             this.validRooms = this.config.server.rooms.validation.valid.split(',');

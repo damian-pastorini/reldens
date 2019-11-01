@@ -26,6 +26,10 @@ class NpcObject extends BaseObject
 
     onHit(props)
     {
+        // @TODO: - Seiyria - prefer the guard pattern;
+        //   if(!this.runOnHit || !props.room) return
+        //   this will prevent your code from getting too nested, and will make the logic easier to follow since bad
+        //   cases return early
         if(this.runOnHit && props.room){
             let client = props.room.getClientById(props.playerBody.playerId);
             if(!client){

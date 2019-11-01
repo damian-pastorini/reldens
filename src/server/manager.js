@@ -39,6 +39,8 @@ class ServerManager
      */
     async start()
     {
+        // @TODO: - Seiyria - I would split this into express specific setup, and other related setup. it's somewhat
+        //   intertwined here which makes it very hard to follow
         console.log('INFO - Starting Server Manager!');
         ServerEvents.emit('serverStart', {serverManager: this});
         this.app = express();

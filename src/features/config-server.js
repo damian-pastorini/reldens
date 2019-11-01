@@ -6,6 +6,6 @@
  *
  */
 
-module.exports = {
-    chat: require('../src/chat/chat-pack-server')
+module.exports.ConfiguredFeatures = {
+    chat: require('../chat/chat-pack-server')
 };

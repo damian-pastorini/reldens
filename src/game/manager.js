@@ -55,6 +55,7 @@ class GameManager
             // only the current client will get this message:
             if(message.act === share.START_GAME){
                 // initialize the engine and start the game:
+                // @TODO: - Seiyria - async/await
                 this.initEngineAndStartGame(message).then((joinedFirstRoom) => {
                     // @NOTE we leave the game room after the game initialized because at that point the user already
                     // joined the scene room and is pointless to keep this room connected since it doesn't listen for
@@ -83,6 +84,9 @@ class GameManager
         // since the user is now registered:
         this.userData.isNewUser = false;
         // first join the features rooms:
+        // @TODO: - Seiyria - unused variables - you really should have eslint installed, and set it to very strict.
+        //   It will catch errors like this. otherwise, if this function does NOT return anything, just do
+        //   `await this.joinFeaturesRooms()` instead of assigning it to something unused.
         let joinExtraRooms = await this.joinFeaturesRooms();
         // create room events manager:
         let joinedFirstRoom = await this.gameClient.joinOrCreate(initialGameData.player.state.scene, this.userData);
@@ -107,6 +111,7 @@ class GameManager
     {
         for(let idx in this.features.featuresList){
             let feature = this.features.featuresList[idx];
+            // @TODO: - Seiyria - in general, you don't need to do hasOwnProperty, you can just do if(feature.joinRooms)
             if(feature.hasOwnProperty('joinRooms')){
                 for(let joinRoomName of feature.joinRooms){
                     let joinedRoom = await this.gameClient.joinOrCreate(joinRoomName, this.userData);
@@ -177,6 +182,26 @@ class GameManager
      */
     getServerUrl()
     {
+        // @TODO: - Seiyria I would rewrite functions like this to be less nested.
+        /*
+        if(this.clientUrl) return this.clientUrl;
+
+        if(gameServerConfig.serverUrl) {
+            this.clientUrl = gameServerConfig.serverUrl;
+            return this.clientUrl;
+        }
+
+        let host = window.location.hostname;
+        let wsProtocol = 'ws://';
+        let wsPort = (window.location.port ? ':'+window.location.port : '');
+        this.clientUrl = wsProtocol+host+wsPort;
+
+        return this.clientUrl;
+
+        */
+
+        // @TODO: - Seiyria - additionally, when writing functions that have `get` in their name, consider if the
+        //   operations are simple enough to just make them a getter instead of a function
         if(!this.clientUrl){
             if(gameSeverConfig.hasOwnProperty('serverUrl')){
                 this.clientUrl = gameSeverConfig.serverUrl;

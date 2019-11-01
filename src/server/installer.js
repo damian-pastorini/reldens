@@ -6,6 +6,8 @@
  *
  */
 
+// @TODO: - Seiyria - this sort of stuff should be taken care of by an npm script, or something such as
+//   `npx create-reldens-app` (noted again for posterity)
 const fs = require('fs');
 const path = require('path');
 
@@ -18,7 +20,7 @@ class Installer
             && fs.existsSync(config.projectRoot+'/config')
             && fs.existsSync(config.projectRoot+'/packages');
         if(!skeletonExists){
-            if(!config.hasOwnProperty('installSkeleton')){
+            if(!config['installSkeleton']){
                 // alert and stop.
                 let errorMessage = 'ERROR - Skeleton folders does not exists, please make sure you have the project'
                     +' root folders /pub and /config with all the required components on them.'

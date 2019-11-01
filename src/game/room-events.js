@@ -225,6 +225,9 @@ class RoomEvents
         this.room.send({act: share.CLIENT_JOINED});
     }
 
+    // @TODO: - Seiyria - in general, do NOT have a function that says "get", but also has a side effect that sets a
+    //   variable. this gets _really_ confusing. if you still want to do this, name this function something like
+    //   `getsetDefaultSceneData`... just so the function name is clear.
     getSceneData(room)
     {
         if(room.state && (!this.sceneData || room.state !== this.sceneData)){
@@ -233,6 +236,15 @@ class RoomEvents
         return this.sceneData;
     }
 
+    // @TODO: - Seiyria - this function would really benefit from guards. it's just two nested if statements that could
+    //   be moved to the top and cleaned up, like so-
+    /*
+    if(this.gameEngine.scene.getScene(this.roomName)) return ...;
+
+    if(!this.sceneData) return;
+
+    ...
+    */
     getActiveScene()
     {
         if(!this.gameEngine.scene.getScene(this.roomName)){
