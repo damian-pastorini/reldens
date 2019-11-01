@@ -28,6 +28,7 @@ module.exports = {
     DOWN: 'down',
     RIGHT: 'right',
     STOP: 'stop',
+    ACTION: 'action',
     // collisions:
     COL_PLAYER: Math.pow(2,0),
     COL_ENEMY: Math.pow(2,1),

@@ -22,10 +22,12 @@ class CollisionsManager
         if(!this.room.hasOwnProperty('roomWorld')){
             throw new Error('ERROR - Room world not found.');
         }
-        this.room.roomWorld.on('endContact', this.assignCollisions.bind(this));
+        // @TODO: refactor, for now we will use fixed collisions types for each event.
+        this.room.roomWorld.on('beginContact', this.assignBeginCollisions.bind(this));
+        this.room.roomWorld.on('endContact', this.assignEndCollisions.bind(this));
     }
 
-    assignCollisions(evt)
+    assignBeginCollisions(evt)
     {
         let bodyA = evt.bodyA,
             bodyB = evt.bodyB,
@@ -33,25 +35,35 @@ class CollisionsManager
             otherBody = false;
         // cases:
         // - player hit a player
-        // - player hit a wall
-        // - player hit a NPC
+        // - player hit an object (any type, animations, NPC, etc.)
         // - player hit an enemy
         if(bodyA.playerId && bodyB.playerId){
             this.playerHitPlayer(bodyA, bodyB);
         } else {
             currentPlayerBody = bodyA.playerId ? bodyA : bodyB;
             otherBody = bodyA.playerId ? bodyB : bodyA;
-            if(otherBody.isWall){
-                this.playerHitWall(currentPlayerBody, otherBody);
-            }
             if(otherBody.isRoomObject){
                 this.playerHitObject(currentPlayerBody, otherBody);
             }
-            if(otherBody.isNpc){
-                this.playerHitNpc(currentPlayerBody, otherBody);
-            }
             if(otherBody.changeScenePoint){
                 this.playerHitChangePoint(currentPlayerBody, otherBody);
+            }
+        }
+    }
+
+    assignEndCollisions(evt)
+    {
+        let bodyA = evt.bodyA,
+            bodyB = evt.bodyB,
+            currentPlayerBody = false,
+            otherBody = false;
+        // cases:
+        // - player hit a wall
+        if(!bodyA.playerId || !bodyB.playerId){
+            currentPlayerBody = bodyA.playerId ? bodyA : bodyB;
+            otherBody = bodyA.playerId ? bodyB : bodyA;
+            if(otherBody.isWall){
+                this.playerHitWall(currentPlayerBody, otherBody);
             }
         }
     }
@@ -61,14 +73,8 @@ class CollisionsManager
         console.log('hit player!', bodyA.playerId, bodyB.playerId);
     }
 
-    playerHitNpc(currentPlayerBody, otherBody)
-    {
-        console.log('hit NPC', currentPlayerBody.playerId, otherBody.isNpc);
-    }
-
     playerHitObject(currentPlayerBody, otherBody)
     {
-        // console.log('hit Object', currentPlayerBody.playerId, otherBody);
         // now the collisions manager only run the object hit action:
         if(otherBody.roomObject){
             otherBody.roomObject.onHit({playerBody: currentPlayerBody, objectBody: otherBody, room: this.room});

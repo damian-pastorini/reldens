@@ -35,12 +35,12 @@ form .input-box input[type="text"], form .input-box input[type="password"] { wid
 .ux-box { z-index:1001; display:block; margin:0; padding:0; }
 .ux-box-scene-data { background-color:rgba(0, 0, 0, 0.5); padding:10px; }
 .scene-label { color:#fff; }
-.ux-box-left { background-color: rgba(0, 0, 0, 0.5); }
-.ux-box-left button { float:left; width:50px; border:1px solid; padding:2px; }
-.ux-box-left .vertical-buttons { float:left; width:56px; text-align:center; top:0; position:relative; }
-.ux-box-left #left,.ux-box-left #right { position:relative; top:21px; }
-.ux-box-left .vertical-buttons button { float:none; }
-.ux-box-left .vertical-buttons #down { margin-top:23px; }
+.ux-box.ux-box-left img { float:left; width:54px; opacity:0.8; cursor:pointer; }
+.ux-box.ux-box-left img:active { opacity:1 !important; }
+.ux-box-left .vertical-buttons { float:left; width:54px; text-align:center; top:0; position:relative; }
+.ux-box-left #left, .ux-box-left #right { position:relative; top:30px; }
+.ux-box-left #action { position:absolute; top:30px; right:-60px; }
+.ux-box-left .vertical-buttons img { float:none; }
 .ux-box-right { background-color: rgba(0, 0, 0, 0.5); }
 .player-name { padding:10px 0; text-align:center; color:#ffffff; }
 .chat-ui { display:block; float:left; min-width:100px; min-height:80px; background:#000000; opacity:0.7; color:#ffffff; }

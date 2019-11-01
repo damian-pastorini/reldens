@@ -64,6 +64,8 @@ class PlayerEngine
                 playerSprite.anims.play(share.DOWN, true);
             }
             playerSprite.y = player.state.y;
+            // @NOTE: depth has to be set dynamically, this way the player will be above or below other objects.
+            playerSprite.setDepth(playerSprite.y + playerSprite.body.height);
         }
         // player stop action:
         if(player.mov !== playerSprite.mov && playerSprite.anims){
@@ -109,6 +111,11 @@ class PlayerEngine
     stop()
     {
         this.room.send({act: share.STOP});
+    }
+
+    runActions()
+    {
+        this.room.send({act: share.ACTION});
     }
 
 }
