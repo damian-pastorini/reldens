@@ -12,7 +12,7 @@ dotenv.config();
 // server class:
 const ServerManager = require('./src/server/manager');
 // exports server manager:
-module.exports = ServerManager;
+module.exports.ServerManager = ServerManager;
 
 // ----------------------------------------------------------------------------------------------
 

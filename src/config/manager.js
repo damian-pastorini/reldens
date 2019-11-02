@@ -8,10 +8,10 @@
 
 const ConfigProcessor = require('../config/processor');
 const ConfigModel = require('./model');
-const defaultConfigGameEngine = require('../../config/game-engine');
-const defaultConfigInitialState = require('../../config/initial-state');
-const defaultConfigInitialStats = require('../../config/initial-stats');
-const defaultConfigInitialUser = require('../../config/initial-user');
+const defaultConfigGameEngine = require('../game/config');
+const defaultConfigInitialState = require('../users/initial-state');
+const defaultConfigInitialStats = require('../users/initial-stats');
+const defaultConfigInitialUser = require('../users/initial-user');
 
 const CONFIG_TYPE_BOOLEAN = 'b';
 const CONFIG_TYPE_NUMBER = 'i';

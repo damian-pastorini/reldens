@@ -7,7 +7,7 @@
  */
 
 const Rooms = require('./model');
-const configuredClasses = require('../../config/rooms-classes');
+const configuredClasses = require('./rooms-classes');
 const share = require('../utils/constants');
 
 class RoomsManager

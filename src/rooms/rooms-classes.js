@@ -8,12 +8,13 @@
  *
  */
 
+// @TODO: more room classes could be added using events?
 module.exports = {
     // all rooms classes will be defined here so users can override everything.
-    RoomGame: require('../src/rooms/game'),
+    RoomGame: require('./game'),
     // RoomScene this is the default class instance for every room defined in the database that doesn't specify a
     // custom room_class.
-    RoomScene: require('../src/rooms/scene'),
+    RoomScene: require('./scene'),
     // custom class example:
     // a room_class is specified in the database with "MyCustomRoom", which may include custom room onMessage actions
     // then you will need to include it here like:

@@ -17,7 +17,6 @@ class Installer
     validateOrCreateSkeleton(config)
     {
         let skeletonExists = fs.existsSync(config.projectRoot+'/pub')
-            && fs.existsSync(config.projectRoot+'/config')
             && fs.existsSync(config.projectRoot+'/packages');
         if(!skeletonExists){
             if(!config['installSkeleton']){
@@ -32,10 +31,10 @@ class Installer
                 // copy /pub, /config and /packages from node_modules/reldens into the project root:
                 let nodeRoot = config.projectRoot+'/node_modules/reldens/';
                 this.copyFolderSync(nodeRoot+'pub', config.projectRoot+'/pub');
-                this.copyFolderSync(nodeRoot+'config', config.projectRoot+'/config');
                 this.copyFolderSync(nodeRoot+'packages', config.projectRoot+'/packages');
                 // then copy the "pub" into the "dist" folder so we can get all the assets:
                 this.copyFolderSync(config.projectRoot+'/pub', config.projectRoot+'/dist');
+                // @TODO: move builder here.
             }
         }
     }

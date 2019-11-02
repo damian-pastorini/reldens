@@ -9,17 +9,17 @@
  */
 
  // @TODO: - Seiyria - if these don't change, they should be const
-let gravityX = process.env.RELDENS_CLIENT_PHYSICS_GRAVITY_X ? Number(process.env.RELDENS_CLIENT_PHYSICS_GRAVITY_X) : 0;
-let gravityY = process.env.RELDENS_CLIENT_PHYSICS_GRAVITY_Y ? Number(process.env.RELDENS_CLIENT_PHYSICS_GRAVITY_Y) : 0;
-let scaleMode = process.env.RELDENS_CLIENT_SCALE_MODE ?
+const gravityX = process.env.RELDENS_CLIENT_PHYSICS_GRAVITY_X ? Number(process.env.RELDENS_CLIENT_PHYSICS_GRAVITY_X) : 0;
+const gravityY = process.env.RELDENS_CLIENT_PHYSICS_GRAVITY_Y ? Number(process.env.RELDENS_CLIENT_PHYSICS_GRAVITY_Y) : 0;
+const scaleMode = process.env.RELDENS_CLIENT_SCALE_MODE ?
     Number(process.env.RELDENS_CLIENT_SCALE_MODE) : 3; // Phaser.Scale.FIT
-let scaleWidth = process.env.RELDENS_CLIENT_SCALE_WIDTH ? Number(process.env.RELDENS_CLIENT_SCALE_WIDTH) : 500;
-let scaleHeight = process.env.RELDENS_CLIENT_SCALE_HEIGHT ? Number(process.env.RELDENS_CLIENT_SCALE_HEIGHT) : 500;
-let scaleMinWidth = process.env.RELDENS_CLIENT_SCALE_MIN_WIDTH
+const scaleWidth = process.env.RELDENS_CLIENT_SCALE_WIDTH ? Number(process.env.RELDENS_CLIENT_SCALE_WIDTH) : 500;
+const scaleHeight = process.env.RELDENS_CLIENT_SCALE_HEIGHT ? Number(process.env.RELDENS_CLIENT_SCALE_HEIGHT) : 500;
+const scaleMinWidth = process.env.RELDENS_CLIENT_SCALE_MIN_WIDTH
     ? Number(process.env.RELDENS_CLIENT_SCALE_MIN_WIDTH) : 300;
-let scaleMinHeight = process.env.RELDENS_CLIENT_SCALE_MIN_HEIGHT
+const scaleMinHeight = process.env.RELDENS_CLIENT_SCALE_MIN_HEIGHT
     ? Number(process.env.RELDENS_CLIENT_SCALE_MIN_HEIGHT) : 500;
-let scaleAutoCenter = process.env.RELDENS_CLIENT_SCALE_AUTOCENTER
+const scaleAutoCenter = process.env.RELDENS_CLIENT_SCALE_AUTOCENTER
     ? Number(process.env.RELDENS_CLIENT_SCALE_AUTOCENTER) : 1; // Phaser.Scale.CENTER_BOTH
 
 // client config will be sent onJoin.

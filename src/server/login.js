@@ -29,8 +29,8 @@ class LoginManager
             || !this.config.players.hasOwnProperty('initialStats')
         ){
             this.config.players = {
-                initialStats: require('../../config/initial-stats'),
-                initialState: require('../../config/initial-state')
+                initialStats: require('../users/initial-stats'),
+                initialState: require('../users/initial-state')
             };
         }
     }

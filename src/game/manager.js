@@ -12,7 +12,7 @@ const RoomEvents = require('./room-events');
 const FeaturesClient = require('../features/client');
 const ConfigProcessor = require('../config/processor');
 const share = require('../utils/constants');
-const gameSeverConfig = require('../../config/server');
+const gameSeverConfig = require('../server/config');
 
 class GameManager
 {

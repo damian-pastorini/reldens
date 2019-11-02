@@ -6,6 +6,7 @@
  *
  */
 
+// @TODO: this will be included using events?
 module.exports.ConfiguredFeatures = {
     chat: require('../chat/chat-pack-server')
 };
