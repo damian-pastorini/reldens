@@ -1,4 +1,5 @@
 [![Reldens - GitHub - Release](https://www.dwdeveloper.com/media/reldens/reldens-mmorpg-platform.png)](https://github.com/damian-pastorini/reldens)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fdamian-pastorini%2Freldens.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fdamian-pastorini%2Freldens?ref=badge_shield)
 
 [![Reldens - GitHub - Release](https://img.shields.io/github/v/release/damian-pastorini/reldens?color=red&style=for-the-badge)](https://github.com/damian-pastorini/reldens)
 [![Reldens - GitHub - Stars](https://img.shields.io/github/stars/damian-pastorini/reldens?color=green&style=for-the-badge)](https://github.com/damian-pastorini/reldens)
@@ -62,3 +63,7 @@ Join our Discord channel: https://discord.gg/HuJMxUY
 
 
 #### [By DwDeveloper](https://www.dwdeveloper.com/ "DwDeveloper")
+
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fdamian-pastorini%2Freldens.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fdamian-pastorini%2Freldens?ref=badge_large)
