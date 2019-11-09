@@ -38,6 +38,7 @@ class RoomEvents
             this.getSceneData(this.room);
             let currentScene = this.getActiveScene();
             if(currentScene.player && currentScene.player.players.hasOwnProperty(key)){
+                // @TODO: test play animation for other players and re-implement current player animation on key press.
                 currentScene.player.runPlayerAnimation(key, player);
             }
         };

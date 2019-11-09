@@ -41,7 +41,7 @@ class ObjectsManager
                         let objClass = require(fullPath);
                         let objInstance = new objClass(objectData);
                         // if the result is an animation instance then we can include in the list to send it to the client:
-                        if(objInstance.hasOwnProperty('isAnimation')){
+                        if(objInstance.hasOwnProperty('isAnimation') || objInstance.hasOwnProperty('hasAnimation')){
                             this.objectsAnimationsData[objectIndex] = objInstance.getPublicObjectData();
                         }
                         // prepare assets list:

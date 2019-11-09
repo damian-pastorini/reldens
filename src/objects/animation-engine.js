@@ -12,7 +12,7 @@ class AnimationEngine
         this.currentPreloader = currentPreloader;
         this.gameManager = gameManager;
         this.enabled = props.enabled || false;
-        this.animationKey = props.animationKey || false;
+        this.key = props.key || false;
         this.animationSprite = props.animationSprite || false;
         this.frameRate = props.frameRate || false;
         this.frameStart = props.frameStart || 0;
@@ -23,6 +23,8 @@ class AnimationEngine
         this.x = props.x || 0;
         this.y = props.y || 0;
         this.positionFix = props.positionFix || false;
+        this.zeroPad = props.zeroPad || false;
+        this.prefix = props.prefix || false;
         this.calculateAnimPosition();
     }
 
@@ -44,28 +46,27 @@ class AnimationEngine
         if(this.enabled){
             let currentScene = this.gameManager.activeRoomEvents.getActiveScene();
             if(currentScene){
-                // frames: this.anims.generateFrameNames('gems', { prefix: 'diamond_', end: 15, zeroPad: 4 }),
-                /*
-                var mummyAnimation = this.anims.create({
-                    key: 'walk',
-                    frames: this.anims.generateFrameNumbers('mummy'),
-                    frameRate: 16,
-                    repeat: 0
-                });
-                var sprite = this.add.sprite(50, 300, 'mummy');
-                sprite.play('walk');
-                */
                 let animationData = {start: this.frameStart, end: this.frameEnd};
+                if(this.prefix !== false){
+                    animationData.prefix = this.prefix;
+                }
+                if(this.zeroPad !== false){
+                    animationData.zeroPad = this.zeroPad;
+                }
                 let createData = {
-                    key: this.animationKey,
-                    frames: this.currentPreloader.anims.generateFrameNumbers(this.animationKey, animationData),
+                    key: this.key,
+                    frames: this.currentPreloader.anims.generateFrameNumbers(this.key, animationData),
                     frameRate: this.frameRate,
                     repeat: this.repeat,
                     hideOnComplete: this.hideOnComplete
                 };
                 this.currentAnimation = this.currentPreloader.anims.create(createData);
-                this.sceneSprite = currentScene.physics.add.sprite(this.animPos.x, this.animPos.y, this.animationKey);
-                currentScene.objectsAnimations[this.animationKey] = this;
+                this.sceneSprite = currentScene.physics.add.sprite(this.animPos.x, this.animPos.y, this.key);
+                // @NOTE: sprites depth will be set according to their Y position, since the same was applied on the
+                // players sprites and updated as they move the depth is fixed automatically and the objects will get
+                // above or below the player.
+                this.sceneSprite.setDepth(this.y + this.sceneSprite.body.height);
+                currentScene.objectsAnimations[this.key] = this;
             } else {
                 console.log('ERROR - Active scene not found');
             }
@@ -76,22 +77,27 @@ class AnimationEngine
 
     setDepthBasedOnLayer(currentScene)
     {
+        // @TODO: see setObjectsAnimationsDepth() in scene-dynamic line 144.
+        /*
+        console.log('this.layerName', this.layerName);
         let result = 0;
         for(let layerIdx in currentScene.layers){
             let layer = currentScene.layers[layerIdx];
             if(this.layerName === layer.layer.name){
                 result = layer.depth + 1;
+                console.log(this.sceneSprite, 'depth:', result);
                 this.sceneSprite.setDepth(result);
                 break;
             }
         }
         return result;
+        */
     }
 
     runAnimation()
     {
         if(this.sceneSprite){
-            this.sceneSprite.anims.play(this.animationKey, true);
+            this.sceneSprite.anims.play(this.key, true);
         } else {
             console.log('ERROR - Current animation not found.');
         }
