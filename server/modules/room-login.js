@@ -21,10 +21,10 @@ class RoomLogin extends Room
                 let salt = bcrypt.genSaltSync(saltRounds);
                 let hash = bcrypt.hashSync(options.password, salt);
                 // if the email exists:
-                if(rows){
+                if(rows.length > 0){
                     let currentPlayer = rows[0];
                     // check if player status is not active or if the password doesn't match then return an error:
-                    if(currentPlayer.status !== 1 || !bcrypt.compareSync(options.password, currentPlayer.password)){
+                    if(currentPlayer && (currentPlayer.status !== 1 || !bcrypt.compareSync(options.password, currentPlayer.password))){
                         // if the password doesn't match return an error:
                         return reject({msj: 'User already exists.'});
                     } else {
