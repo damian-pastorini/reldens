@@ -49,4 +49,4 @@ class ConfigProcessor
 
 }
 
-module.exports = new ConfigProcessor();
+module.exports.ConfigProcessor = new ConfigProcessor();

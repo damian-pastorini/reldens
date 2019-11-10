@@ -7,6 +7,6 @@
  */
 
 // server class:
-const ServerManager = require('./packages/server/manager');
+const ServerManager = require('./packages/game/server/manager');
 // export server manager:
 module.exports.ServerManager = ServerManager;
