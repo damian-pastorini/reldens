@@ -1,14 +1,12 @@
 /**
  *
- * Reldens - config/game-engine
+ * Reldens - GameConfig
  *
- * Please do not to modify this file!
  * In order to override any of the default values please create an ".env" file in your project root to change the
  * values you need.
  *
  */
 
- // @TODO: - Seiyria - if these don't change, they should be const
 const gravityX = process.env.RELDENS_CLIENT_PHYSICS_GRAVITY_X ? Number(process.env.RELDENS_CLIENT_PHYSICS_GRAVITY_X) : 0;
 const gravityY = process.env.RELDENS_CLIENT_PHYSICS_GRAVITY_Y ? Number(process.env.RELDENS_CLIENT_PHYSICS_GRAVITY_Y) : 0;
 const scaleMode = process.env.RELDENS_CLIENT_SCALE_MODE ?

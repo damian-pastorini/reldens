@@ -8,92 +8,56 @@
 
 const { Model } = require('objection');
 const Knex = require('knex');
+const { Logger } = require('../logger');
+const { ErrorManager } = require('../error-manager.js');
 
 class DataServer
 {
 
-    /**
-     * If dbConfig is not present then everything will be stopped.
-     *
-     * @param dbConfig
-     */
-    constructor(dbConfig = false)
+    constructor()
     {
-        // database configuration can be manually created by passing the connection data or using the general config.
-        if(!dbConfig){
-            // @TODO: use a getter.
-            dbConfig = {
-                // @TODO: - Seiyria - all of these should be documented somewhere. See landoftherair/landoftherair
-                //   README for an example
-                client: process.env.RELDENS_DB_CLIENT || 'mysql',
-                host: process.env.RELDENS_DB_HOST || '10.0.2.2',
-                port: Number(process.env.RELDENS_DB_PORT) || 3306,
-                database: process.env.RELDENS_DB_NAME || 'reldens',
-                user: process.env.RELDENS_DB_USER || 'reldens',
-                password: process.env.RELDENS_DB_PASSWORD || 'reldens',
-                connectionLimit: Number(process.env.RELDENS_DB_LIMIT) || 10
-            };
+        // db config:
+        this.prepareDbConfig();
+        // check for errors:
+        if(!this.config.user){
+            ErrorManager.error('Missing storage user configuration.');
         }
-        // if the database config is present:
-        if(dbConfig && this.checkParameters(dbConfig)){
-            this.config = dbConfig;
-            let {client, host, port, database, user, password} = dbConfig;
-            this.connectionString = `${client}://${user}${(password ? ':'+password : '')}@${host}:${port}/${database}`;
-            console.log('INFO - Connected to DataServer:', this.connectionString);
-        } else {
-            throw new Error('ERROR - Missing database full configuration.');
+        if(!this.config.database){
+            ErrorManager.error('Missing storage database name configuration.');
         }
-        this.prepareObjection();
-        console.log('INFO - Objection Model ready!');
+        // log connection string:
+        let {host, port, database, user, password} = this.config;
+        Logger.info(`${this.client}://${user}${(password ? ':'+password : '')}@${host}:${port}/${database}`);
+        try {
+            this.prepareObjection();
+            Logger.info('Objection JS ready!');
+        } catch (err) {
+            ErrorManager.error('Objection JS - ERROR: '+err);
+        }
     }
 
-    /**
-     * Check the database configured parameters.
-     *
-     * @param dbConfig
-     * @returns {boolean}
-     */
-    checkParameters(dbConfig)
+    prepareDbConfig()
     {
-        // check the parameters required for the connection:
-        if(!dbConfig.hasOwnProperty('client')){
-            throw new Error('ERROR - Missing database client configuration.');
-        }
-        if(!dbConfig.hasOwnProperty('host')){
-            throw new Error('ERROR - Missing database host configuration.');
-        }
-        if(!dbConfig.hasOwnProperty('port')){
-            throw new Error('ERROR - Missing database port configuration.');
-        }
-        if(!dbConfig.hasOwnProperty('host')){
-            throw new Error('ERROR - Missing database host configuration.');
-        }
-        if(!dbConfig.hasOwnProperty('database')){
-            throw new Error('ERROR - Missing database name configuration.');
-        }
-        if(!dbConfig.hasOwnProperty('user')){
-            throw new Error('ERROR - Missing database user configuration.');
-        }
-        return true;
+        // @NOTE: see the sample.env file in the module root for the variables setup.
+        this.client = process.env.RELDENS_DB_CLIENT || 'mysql';
+        this.config = {
+            host: process.env.RELDENS_DB_HOST || 'localhost',
+            port: Number(process.env.RELDENS_DB_PORT) || 3306,
+            database: process.env.RELDENS_DB_NAME || false,
+            user: process.env.RELDENS_DB_USER || false,
+            password: process.env.RELDENS_DB_PASSWORD || '',
+            connectionLimit: Number(process.env.RELDENS_DB_LIMIT) || 10
+        };
     }
 
     prepareObjection()
     {
         // initialize knex, the query builder:
-        this.knex = Knex({
-            client: this.config.client,
-            connection: {
-                host : this.config.host,
-                port: this.config.port,
-                user : this.config.user,
-                password : this.config.password,
-                database : this.config.database
-            }
-        });
+        this.knex = Knex({client: this.client, connection: this.config});
         // give the knex instance to Objection.
         this.model = Model.knex(this.knex);
     }
 
 }
 
-module.exports = DataServer;
+module.exports.DataServer = DataServer;

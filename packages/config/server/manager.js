@@ -7,11 +7,12 @@
  */
 
 const { ConfigProcessor } = require('../processor');
+const { Logger } = require('../../game/logger');
 const { ConfigModel } = require('./model');
 const { GameConfig } = require('../../game/server/config');
-const InitialState = require('../../users/server/initial-state');
-const InitialStats = require('../../users/server/initial-stats');
-const InitialUser = require('../../users/server/initial-user');
+const { InitialState } = require('../../users/server/initial-state');
+const { InitialStats } = require('../../users/server/initial-stats');
+const { InitialUser } = require('../../users/server/initial-user');
 
 const CONFIG_TYPE_BOOLEAN = 'b';
 const CONFIG_TYPE_NUMBER = 'i';
@@ -22,14 +23,16 @@ class ConfigManager
 
     constructor()
     {
-        // config processor:
-        this.processor = ConfigProcessor;
         // initialize config props with default data:
         this.configList = {
             gameEngine: GameConfig,
-            initialState: InitialState,
-            initialStats: InitialStats,
-            initialUser: InitialUser
+            server: {
+                players: {
+                    initialState: InitialState,
+                    initialStats: InitialStats,
+                    initialUser: InitialUser
+                }
+            }
         };
     }
 
@@ -43,32 +46,38 @@ class ConfigManager
         // set them in the manager property so we can find them by path later:
         for(let config of configCollection){
             // create an object for each scope:
-            // if(!Object.prototype.hasOwnProperty.call(this.configList, config.scope)) {
-            // if(!this.configList.hasOwnProperty(config.scope)) {
-            if(!this.configList[config.scope]) {
+            if(!{}.hasOwnProperty.call(this.configList, config.scope)){
                 this.configList[config.scope] = {};
             }
             let pathSplit = config.path.split('/');
             // if path is wrong, less or more than 2 levels and the attribute label:
             if(pathSplit.length !== 3){
                 // log an error and continue:
-                console.log('ERROR - Invalid configuration:', config);
+                Logger.error('Invalid configuration:', config);
                 continue;
             }
-            if(!this.configList[config.scope].hasOwnProperty(pathSplit[0])){
+            if(!{}.hasOwnProperty.call(this.configList[config.scope], pathSplit[0])){
                 this.configList[config.scope][pathSplit[0]] = {};
             }
-            if(!this.configList[config.scope][pathSplit[0]].hasOwnProperty(pathSplit[1])){
+            if(!{}.hasOwnProperty.call(this.configList[config.scope][pathSplit[0]], pathSplit[1])){
                 this.configList[config.scope][pathSplit[0]][pathSplit[1]] = {};
             }
             this.configList[config.scope][pathSplit[0]][pathSplit[1]][pathSplit[2]] = this.getParsedValue(config);
         }
-        // we will return a config processor instance with all the loaded configurations assigned:
-        return Object.assign(this.processor, this.configList);
+    }
+
+    async loadAndGetProcessor()
+    {
+        // load configurations:
+        await this.loadConfigurations();
+        // the config processor instance with contain all the loaded configurations:
+        this.processor = Object.assign(ConfigProcessor, this.configList);
+        return this.processor;
     }
 
     /**
-     * Since everything coming from the database is a string then we parse the config type to return the required value.
+     * Since everything coming from the database is a string then we parse the config type to return the value in the
+     * proper type.
      *
      * @param config
      * @returns {boolean|number|*}
@@ -88,4 +97,4 @@ class ConfigManager
 
 }
 
-module.exports = ConfigManager;
+module.exports.ConfigManager = ConfigManager;

@@ -38,22 +38,7 @@ class BaseObject
         return this.publicParamsObj;
     }
 
-    // @TODO: - Seiyria - this could just be a getter
-    //   (https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/get)
-    /*
     get animationData()
-    {
-        return {
-            act: GameConst.OBJECT_ANIMATION,
-            key: this.key,
-            publicParams: this.publicParamsObj,
-            data: this.metadata,
-            x: this.x,
-            y: this.y
-        };
-    }
-    */
-    getAnimationData()
     {
         return {
             act: GameConst.OBJECT_ANIMATION,

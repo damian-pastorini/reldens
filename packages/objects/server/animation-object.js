@@ -27,7 +27,7 @@ class AnimationObject extends BaseObject
         this.runOnAction = false;
     }
 
-    getAnimationData()
+    get animationData()
     {
         return {
             act: GameConst.OBJECT_ANIMATION,
@@ -45,7 +45,7 @@ class AnimationObject extends BaseObject
             if(!client){
                 console.log('ERROR - Object hit, client not found by playerId:', props.playerBody.playerId);
             } else {
-                props.room.send(client, this.getAnimationData());
+                props.room.send(client, this.animationData);
             }
         }
     }
@@ -57,7 +57,7 @@ class AnimationObject extends BaseObject
             if(!client){
                 console.log('ERROR - Object action, client not found by playerId:', props.playerBody.playerId);
             } else {
-                props.room.send(client, this.getAnimationData());
+                props.room.send(client, this.animationData);
             }
         }
     }

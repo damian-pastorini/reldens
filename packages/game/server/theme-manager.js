@@ -21,7 +21,7 @@ class ThemeManager
             if(fs.existsSync(config.projectRoot + '/theme/' + config.projectTheme)){
                 this.projectTheme = '/theme/'+config.projectTheme;
             } else {
-                Logger.error('Project theme folder does not exists:' + config.projectTheme);
+                Logger.error('Project theme folder does not exists: ' + config.projectTheme);
             }
         }
         // check if the dist folder exists and if not create it:

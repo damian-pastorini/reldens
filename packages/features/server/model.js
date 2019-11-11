@@ -18,4 +18,4 @@ class FeaturesModel extends Model
 
 }
 
-module.exports = FeaturesModel;
+module.exports.FeaturesModel = FeaturesModel;

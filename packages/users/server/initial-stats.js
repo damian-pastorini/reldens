@@ -1,14 +1,13 @@
 /**
  *
- * Reldens - config/initial-stats
+ * Reldens - InitialStats
  *
- * Please do not to modify this file!
  * In order to override any of the default values please create an ".env" file in your project root to change the
  * values you need.
  *
  */
 
-module.exports =  {
+module.exports.InitialStats =  {
     hp: process.env.RELDENS_INITIAL_STATS_HP || 100,
     mp: process.env.RELDENS_INITIAL_STATS_MP || 100,
     stamina: process.env.RELDENS_INITIAL_STATS_STAMINA || 100,

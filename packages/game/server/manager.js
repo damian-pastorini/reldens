@@ -12,11 +12,11 @@ const http = require('http');
 const express = require('express');
 const cors = require('cors');
 const Parcel = require('parcel-bundler');
-const ServerEvents = require('./server-events');
-const GameServer = require('./game-server');
-const DataServer = require('./data-server');
-const ConfigManager = require('../../config/server/manager');
-const FeaturesManager = require('../../features/server/manager');
+const { ServerEvents } = require('./server-events');
+const { GameServer } = require('./game-server');
+const { DataServer } = require('./data-server');
+const { ConfigManager } = require('../../config/server/manager');
+const { FeaturesManager } = require('../../features/server/manager');
 const UsersManager = require('../../users/server/manager');
 const LoginManager = require('./login');
 const RoomsManager = require('../../rooms/server/manager');
@@ -78,8 +78,8 @@ class ServerManager
     {
         // configuration data from database:
         this.configManager = new ConfigManager();
-        // load configurations and get a config processor instance:
-        let configProcessor = await this.configManager.loadConfigurations();
+        // get config processor instance:
+        let configProcessor = await this.configManager.loadAndGetProcessor();
         // save project root for later use:
         configProcessor.projectRoot = this.projectRoot;
         // theme root:
@@ -114,6 +114,7 @@ class ServerManager
 
     async createClientBundle()
     {
+        // @TODO: analyze how to split the bundle from the server and if possible to avoid the middleware from Parcel.
         // create bundle:
         const bundlerOptions = { production: process.env.NODE_ENV === 'production' };
         Logger.info(this.projectRoot + ThemeManager.projectTheme + '/index.html');
@@ -123,4 +124,4 @@ class ServerManager
 
 }
 
-module.exports = ServerManager;
+module.exports.ServerManager = ServerManager;

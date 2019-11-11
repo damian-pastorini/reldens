@@ -7,19 +7,18 @@
  *
  */
 
-const ColyseusServer = require('colyseus').Server;
+const { Server } = require('colyseus');
 const monitor = require('@colyseus/monitor');
+const { Logger } = require('../logger');
 
-class GameServer extends ColyseusServer
+class GameServer extends Server
 {
 
     constructor(options)
     {
         super(options);
         // set shutdown callback:
-        // @TODO: - Seiyria - you're going to have trouble with this if you try to access `this` in `runOnShutDown`.
-        //   instead, prefer to do `() => this.runOnShutDown()`
-        this.onShutdown(this.runOnShutDown);
+        this.onShutdown(() => this.runOnShutDown());
     }
 
     initMonitor()
@@ -29,9 +28,9 @@ class GameServer extends ColyseusServer
 
     runOnShutDown()
     {
-        console.log('INFO - Game Server is going down.');
+        Logger.info('Game Server is going down.');
     }
 
 }
 
-module.exports = GameServer;
+module.exports.GameServer = GameServer;

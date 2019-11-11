@@ -1,3 +1,11 @@
+/**
+ *
+ * Reldens - Logger
+ *
+ * This is a general logger handle.
+ *
+ */
+
 class Logger
 {
 
@@ -6,12 +14,9 @@ class Logger
         console.log('INFO -', data);
     }
 
-    error(data, shouldThrow = false)
+    error(data)
     {
-        console.error('ERROR -', data);
-        if(shouldThrow){
-            throw new Error(data);
-        }
+        console.log('ERROR -', data);
     }
 
 }

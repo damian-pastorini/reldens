@@ -7,7 +7,7 @@
  */
 
 const { ConfiguredFeatures } = require('./config-server');
-const FeaturesModel = require('./model');
+const { FeaturesModel } = require('./model');
 
 class FeaturesManager
 {
@@ -62,4 +62,4 @@ class FeaturesManager
 
 }
 
-module.exports = FeaturesManager;
+module.exports.FeaturesManager = FeaturesManager;

@@ -7,7 +7,7 @@
  */
 
 // @TODO: - Seiyria - you should really separate your code out a lot more. this should be split into a service that
-//   handles logins, and another service that handles bcrypt-related stuff / persisting the user to the DB. right now,
+//   handles login, and another service that handles bcrypt-related stuff / persisting the user to the DB. right now,
 //   there's a lot of intertwined code that will make it really hard to test without splitting apart. you should focus
 //   on small, simple, single-feature services
 const bcrypt = require('bcrypt');
@@ -22,13 +22,15 @@ class LoginManager
         this.usersManager = props.usersManager;
         this.roomsManager = props.roomsManager;
         this.saltRounds = 10;
+        console.log(this.config);
         // if stored config doesn't have the initial scene specified then get the default values:
         if(
-            !this.config.hasOwnProperty('players')
-            || !this.config.players.hasOwnProperty('initialState')
-            || !this.config.players.hasOwnProperty('initialStats')
+            // let hasBarProperty = Object.prototype.hasOwnProperty.call(this.config, 'players');
+            !this.config.server.hasOwnProperty('players')
+            || !this.config.server.players.hasOwnProperty('initialState')
+            || !this.config.server.players.hasOwnProperty('initialStats')
         ){
-            this.config.players = {
+            this.config.server.players = {
                 initialStats: require('../../users/server/initial-stats'),
                 initialState: require('../../users/server/initial-state')
             };
@@ -67,15 +69,15 @@ class LoginManager
             if(userData.isNewUser){
                 try {
                     // insert user, player, player state and player stats:
-                    let initialState = this.config.players.initialState;
+                    let initialState = this.config.server.players.initialState;
                     let initialRoom = await this.roomsManager.loadRoomByName(initialState.scene);
                     initialState.room_id = initialRoom.roomId;
                     let newUser = await this.usersManager.createUserWith({
                         data: userData,
-                        role_id: this.config.initialUser.role_id,
-                        status: this.config.initialUser.status,
+                        role_id: this.config.server.players.initialUser.role_id,
+                        status: this.config.server.players.initialUser.status,
                         state: initialState,
-                        stats: this.config.players.initialStats,
+                        stats: this.config.server.players.initialStats,
                         hash: this.encryptPassword(userData.password)
                     });
                     newUser.players[0].state.scene = initialState.scene;
