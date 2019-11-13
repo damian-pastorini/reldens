@@ -7,6 +7,9 @@
  */
 
 const { Model } = require('objection');
+const { UsersModel } = require('./model');
+const { PlayersStatsModel } = require('./players-stats-model');
+const { PlayersStateModel } = require('./players-state-model');
 
 class PlayersModel extends Model
 {
@@ -18,14 +21,10 @@ class PlayersModel extends Model
 
     static get relationMappings()
     {
-        // to avoid require loop:
-        const Users = require('./model');
-        const PlayersStats = require('./players-stats-model');
-        const PlayersState = require('./players-state-model');
         return {
             parent_user: {
                 relation: Model.BelongsToOneRelation,
-                modelClass: Users,
+                modelClass: UsersModel,
                 join: {
                     from: 'players.user_id',
                     to: 'users.id'
@@ -33,7 +32,7 @@ class PlayersModel extends Model
             },
             stats: {
                 relation: Model.HasOneRelation,
-                modelClass: PlayersStats,
+                modelClass: PlayersStatsModel,
                 join: {
                     from: 'players.id',
                     to: 'players_stats.player_id'
@@ -41,7 +40,7 @@ class PlayersModel extends Model
             },
             state: {
                 relation: Model.HasOneRelation,
-                modelClass: PlayersState,
+                modelClass: PlayersStateModel,
                 join: {
                     from: 'players.id',
                     to: 'players_state.player_id'
@@ -52,4 +51,4 @@ class PlayersModel extends Model
 
 }
 
-module.exports = PlayersModel;
+module.exports.PlayersModel = PlayersModel;

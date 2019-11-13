@@ -16,7 +16,7 @@ class RoomGame extends RoomLogin
 
     async onJoin(client, options, authResult)
     {
-        await this.loginManager.startGame(client, this, authResult);
+        await this.loginManager.startGameEngine(client, this, authResult);
     }
 
 }

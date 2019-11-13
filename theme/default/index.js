@@ -8,7 +8,7 @@
 
 const $ = require('jquery');
 require('jquery-validation');
-const GameManager = require('reldens/packages/game/manager');
+const { GameManager } = require('reldens/client');
 
 $(document).ready(function($){
 

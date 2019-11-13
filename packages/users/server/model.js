@@ -7,6 +7,7 @@
  */
 
 const { Model } = require('objection');
+const { PlayersModel } = require('./players-model');
 
 class UsersModel extends Model
 {
@@ -19,7 +20,6 @@ class UsersModel extends Model
     static get relationMappings()
     {
         // to avoid require loop:
-        const PlayersModel = require('./players-model');
         return {
             players: {
                 relation: Model.HasManyRelation,
@@ -37,11 +37,13 @@ class UsersModel extends Model
         let dateFormat = this.getCurrentDate();
         this.created_at = dateFormat;
         this.updated_at = dateFormat;
+        super.$beforeInsert(queryContext);
     }
 
     $beforeUpdate(modelOptions, queryContext)
     {
         this.updated_at = this.getCurrentDate();
+        super.$beforeUpdate(modelOptions, queryContext);
     }
 
     getCurrentDate()
@@ -54,4 +56,4 @@ class UsersModel extends Model
 
 }
 
-module.exports = UsersModel;
+module.exports.UsersModel = UsersModel;

@@ -217,4 +217,4 @@ class GameManager
 
 }
 
-module.exports = GameManager;
+module.exports.GameManager = GameManager;

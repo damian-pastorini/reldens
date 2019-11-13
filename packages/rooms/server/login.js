@@ -7,8 +7,7 @@
  *
  */
 
- // @TODO: - Seiyria - can also do `const { Room } = require('colyseus');
-const Room = require('colyseus').Room;
+const { Room } = require('colyseus');
 
 class RoomLogin extends Room
 {
@@ -26,7 +25,7 @@ class RoomLogin extends Room
             return false;
         }
         let loginResult = await this.loginManager.attemptLoginOrRegister(options);
-        if(loginResult.hasOwnProperty('error')){
+        if({}.hasOwnProperty.call(loginResult, 'error')){
             // login error.
             throw new Error(loginResult.error);
         }

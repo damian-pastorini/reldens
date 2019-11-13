@@ -5,7 +5,7 @@
  * This class will load the features, parse the configuration file and assign them as required.
  *
  */
-
+// @TODO: replace this config file by events or move it into theme/packages?
 const { ConfiguredFeatures } = require('./config-server');
 const { FeaturesModel } = require('./model');
 
@@ -35,8 +35,8 @@ class FeaturesManager
             // to load the features for the client side later.
             if(
                 // only include enabled and available features on the server side config:
-                this.availableFeatures.hasOwnProperty(featureEntity.code)
-                && featureEntity.hasOwnProperty('is_enabled')
+                {}.hasOwnProperty.call(this.availableFeatures, featureEntity.code)
+                && {}.hasOwnProperty.call(featureEntity, 'is_enabled')
                 && featureEntity.is_enabled
             ){
                 // get feature package server for server side:
@@ -44,12 +44,12 @@ class FeaturesManager
                 // set package on entity:
                 featureEntity.package = featurePackage;
                 // if the feature package has a room then add the room to the list:
-                if(featurePackage.hasOwnProperty('room')){
+                if({}.hasOwnProperty.call(featurePackage, 'room')){
                     this.featuresWithRooms.push({roomName: featureEntity.code, room: featurePackage.room});
                     this.featuresWithRoomsCodeList.push(featureEntity.code);
                 }
                 // if the feature package has an messageActions observer then add the observer to the list:
-                if(featurePackage.hasOwnProperty('messageActions')){
+                if({}.hasOwnProperty.call(featurePackage, 'messageActions')){
                     this.messageActions[featureEntity.code] = featurePackage.messageActions;
                 }
                 // for last add the feature entity to the list:

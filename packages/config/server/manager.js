@@ -53,7 +53,7 @@ class ConfigManager
             // if path is wrong, less or more than 2 levels and the attribute label:
             if(pathSplit.length !== 3){
                 // log an error and continue:
-                Logger.error('Invalid configuration:', config);
+                Logger.error(['Invalid configuration:', config]);
                 continue;
             }
             if(!{}.hasOwnProperty.call(this.configList[config.scope], pathSplit[0])){

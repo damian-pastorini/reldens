@@ -17,7 +17,7 @@ const { GameServer } = require('./game-server');
 const { DataServer } = require('./data-server');
 const { ConfigManager } = require('../../config/server/manager');
 const { FeaturesManager } = require('../../features/server/manager');
-const UsersManager = require('../../users/server/manager');
+const { UsersManager } = require('../../users/server/manager');
 const LoginManager = require('./login');
 const RoomsManager = require('../../rooms/server/manager');
 const { ThemeManager } = require('./theme-manager');
@@ -28,17 +28,27 @@ class ServerManager
 
     constructor(config)
     {
+        // initialize configurations:
+        this.initializeConfiguration(config);
+        // assign the server events singleton so you can access it later:
+        this.events = ServerEvents;
+        DataServer.initialize();
+        ThemeManager.validateOrCreateTheme(config);
+    }
+
+    initializeConfiguration(config)
+    {
+        // save project root:
         this.projectRoot = config.projectRoot || './';
+        Logger.info(['Project root:', this.projectRoot,  '- Module root: ', __dirname]);
+        // setup dotenv to use the project root .env file:
         dotenv.config({debug: process.env.DEBUG, path: this.projectRoot+'/.env'});
+        // setup the server host data:
         this.configServer = {
             port: Number(process.env.PORT) || Number(process.env.RELDENS_APP_PORT) || 8080,
             host: process.env.RELDENS_APP_HOST || 'http://localhost',
             monitor: process.env.RELDENS_MONITOR || false
         };
-        this.events = ServerEvents;
-        this.dataServer = new DataServer();
-        ThemeManager.validateOrCreateTheme(config);
-        Logger.info(['INFO - Defined project root:', this.projectRoot,  __dirname]);
     }
 
     /**

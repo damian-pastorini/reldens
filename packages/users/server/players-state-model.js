@@ -7,6 +7,7 @@
  */
 
 const { Model } = require('objection');
+const { PlayersModel } = require('./players-model');
 
 class PlayersStateModel extends Model
 {
@@ -19,11 +20,10 @@ class PlayersStateModel extends Model
     static get relationMappings()
     {
         // to avoid require loop:
-        const Players = require('./players-model');
         return {
             parent_player: {
                 relation: Model.BelongsToOneRelation,
-                modelClass: Players,
+                modelClass: PlayersModel,
                 join: {
                     from: 'players_state.player_id',
                     to: 'players.id'
@@ -34,4 +34,4 @@ class PlayersStateModel extends Model
 
 }
 
-module.exports = PlayersStateModel;
+module.exports.PlayersStateModel = PlayersStateModel;

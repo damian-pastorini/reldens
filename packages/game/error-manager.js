@@ -11,6 +11,7 @@ class ErrorManager
 
     error(message)
     {
+        // @TODO: evaluate better ways to handle errors, implement email notifications, etc.
         throw new Error('ERROR - ' + message);
     }
 

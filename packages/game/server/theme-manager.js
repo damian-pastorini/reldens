@@ -18,10 +18,10 @@ class ThemeManager
     validateOrCreateTheme(config)
     {
         if(config.projectTheme){
-            if(fs.existsSync(config.projectRoot + '/theme/' + config.projectTheme)){
+            if(fs.existsSync(config.projectRoot + '/theme/'+config.projectTheme)){
                 this.projectTheme = '/theme/'+config.projectTheme;
             } else {
-                Logger.error('Project theme folder does not exists: ' + config.projectTheme);
+                Logger.error('Project theme folder does not exists: '+config.projectTheme);
             }
         }
         // check if the dist folder exists and if not create it:
@@ -30,10 +30,12 @@ class ThemeManager
             let themeExists = fs.existsSync(config.projectRoot + this.projectTheme);
             // if theme folder doesn't exists:
             if(!themeExists){
-                // copy /default theme from node_modules/reldens into the project dist folder:
+                // copy /default theme from node_modules/reldens into the project folder and into the dist folder:
                 let nodeRoot = config.projectRoot+'/node_modules/reldens/';
+                this.copyFolderSync(nodeRoot+'theme', config.projectRoot+'/theme');
                 this.copyFolderSync(nodeRoot+'theme/default', config.projectRoot+'/dist');
             } else {
+                // if theme exists just copy it into the dist folder (assumed that packages folder was considered):
                 this.copyFolderSync(config.projectRoot + this.projectTheme, config.projectRoot+'/dist');
             }
         }

@@ -6,8 +6,9 @@
  *
  */
 
-const UsersModel = require('./model');
-const PlayersStateModel = require('./players-state-model');
+const { UsersModel } = require('./model');
+const { PlayersStateModel } = require('./players-state-model');
+const { ErrorManager } = require('../../game/error-manager');
 
 class UsersManager
 {
@@ -16,13 +17,13 @@ class UsersManager
     {
         let result = false;
         if(!username){
-            throw new Error('ERROR - Missing user name.');
+            ErrorManager.error('Missing user name.');
         }
         let loadedUser = await UsersModel.query()
             .eager('players.[state, stats]')
             .where('username', username)
             .first();
-        if(loadedUser && loadedUser.hasOwnProperty('username')){
+        if(loadedUser){
             result = loadedUser;
         }
         return result;
@@ -80,4 +81,4 @@ class UsersManager
 
 }
 
-module.exports = UsersManager;
+module.exports.UsersManager = UsersManager;

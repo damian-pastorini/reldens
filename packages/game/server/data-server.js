@@ -14,7 +14,7 @@ const { ErrorManager } = require('../error-manager.js');
 class DataServer
 {
 
-    constructor()
+    initialize()
     {
         // db config:
         this.prepareDbConfig();
@@ -25,7 +25,7 @@ class DataServer
         if(!this.config.database){
             ErrorManager.error('Missing storage database name configuration.');
         }
-        // log connection string:
+        // log connection string before prepare objection (in case you have some missing data in the config):
         let {host, port, database, user, password} = this.config;
         Logger.info(`${this.client}://${user}${(password ? ':'+password : '')}@${host}:${port}/${database}`);
         try {
@@ -60,4 +60,4 @@ class DataServer
 
 }
 
-module.exports.DataServer = DataServer;
+module.exports.DataServer = new DataServer();
