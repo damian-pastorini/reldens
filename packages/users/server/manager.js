@@ -34,9 +34,13 @@ class UsersManager
         let userData = initialData.data;
         let initState = initialData.state;
         let initStats = initialData.stats;
+        // @TODO: can this delete be improved? it doesn't looks good, but it was that or set each field manually.
+        // we need to remove the scene prop before insert since it's not a valid field:
+        delete(initState['scene']);
+        // insert data:
         return UsersModel.query()
             .allowInsert('players.[stats, state]')
-            .insertWithRelatedAndFetch({
+            .insertGraphAndFetch({
                 email: userData.email,
                 username: userData.username,
                 password: initialData.hash,
@@ -44,21 +48,8 @@ class UsersManager
                 status: initialData.status,
                 players: {
                     name: userData.username,
-                    stats: {
-                        hp: initStats.hp,
-                        mp: initStats.mp,
-                        stamina: initStats.stamina,
-                        atk: initStats.atk,
-                        def: initStats.def,
-                        dodge: initStats.dodge,
-                        speed: initStats.speed
-                    },
-                    state: {
-                        room_id: initState.room_id,
-                        x: initState.x,
-                        y: initState.y,
-                        dir: initState.dir
-                    }
+                    stats: initStats,
+                    state: initState
                 }
             }
         );

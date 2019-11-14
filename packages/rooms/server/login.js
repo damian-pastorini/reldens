@@ -19,6 +19,7 @@ class RoomLogin extends Room
         this.validateRoomData = false;
     }
 
+    // eslint-disable-next-line no-unused-vars
     async onAuth(client, options, request)
     {
         if(!options){
@@ -39,16 +40,15 @@ class RoomLogin extends Room
 
     validateRoom(playerRoomName)
     {
-        // @TODO: - Seiyria - just another boolean but could be named better
-        let result = true;
+        let isValid = true;
         if(this.config.server.rooms.validation.enabled){
             this.validRooms = this.config.server.rooms.validation.valid.split(',');
             if(this.validRooms.indexOf(this.roomName) === -1 && playerRoomName !== this.roomName){
                 console.log('ERROR - Invalid player room:', playerRoomName, this.roomName);
-                result = false;
+                isValid = false;
             }
         }
-        return result;
+        return isValid;
     }
 
     onDispose()

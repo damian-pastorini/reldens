@@ -32,18 +32,18 @@ class UsersModel extends Model
         };
     }
 
+    // eslint-disable-next-line no-unused-vars
     $beforeInsert(queryContext)
     {
         let dateFormat = this.getCurrentDate();
         this.created_at = dateFormat;
         this.updated_at = dateFormat;
-        super.$beforeInsert(queryContext);
     }
 
+    // eslint-disable-next-line no-unused-vars
     $beforeUpdate(modelOptions, queryContext)
     {
         this.updated_at = this.getCurrentDate();
-        super.$beforeUpdate(modelOptions, queryContext);
     }
 
     getCurrentDate()
