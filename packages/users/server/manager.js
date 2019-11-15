@@ -29,30 +29,12 @@ class UsersManager
         return result;
     }
 
-    async createUserWith(initialData)
+    async createUser(userData)
     {
-        let userData = initialData.data;
-        let initState = initialData.state;
-        let initStats = initialData.stats;
-        // @TODO: can this delete be improved? it doesn't looks good, but it was that or set each field manually.
-        // we need to remove the scene prop before insert since it's not a valid field:
-        delete(initState['scene']);
-        // insert data:
+        // @TODO: this is temporal since for now we only have one player by user.
         return UsersModel.query()
             .allowInsert('players.[stats, state]')
-            .insertGraphAndFetch({
-                email: userData.email,
-                username: userData.username,
-                password: initialData.hash,
-                role_id: initialData.role_id,
-                status: initialData.status,
-                players: {
-                    name: userData.username,
-                    stats: initStats,
-                    state: initState
-                }
-            }
-        );
+            .insertGraphAndFetch(userData);
     }
 
     updateUserLastLogin(username)

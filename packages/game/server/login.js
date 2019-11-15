@@ -71,20 +71,20 @@ class LoginManager
         if(userData.isNewUser){
             try {
                 // insert user, player, player state and player stats:
-                let initialState = this.config.server.players.initialState;
-                // @TODO: change to better save the room id and load the scene name when required. If we do this we
-                //   will be able to remove the roomsManager from this class and keep it more clean.
-                let initialRoom = await this.roomsManager.loadRoomByName(initialState.scene);
-                initialState.room_id = initialRoom.roomId;
-                let newUser = await this.usersManager.createUserWith({
-                    data: userData,
+                let newUser = await this.usersManager.createUser({
+                    email: userData.email,
+                    username: userData.username,
+                    password: PasswordManager.encryptPassword(userData.password),
                     role_id: this.config.server.players.initialUser.role_id,
                     status: this.config.server.players.initialUser.status,
-                    state: initialState,
-                    stats: this.config.server.players.initialStats,
-                    hash: PasswordManager.encryptPassword(userData.password)
+                    players: {
+                        name: userData.username,
+                        stats: this.config.server.players.initialStats,
+                        state: this.config.server.players.initialState
+                    }
                 });
-                newUser.players[0].state.scene = initialState.scene;
+                let initialRoom = await this.roomsManager.loadRoomById(this.config.server.players.initialState.room_id);
+                newUser.players[0].state.scene = initialRoom.name;
                 return {user: newUser};
             } catch (err) {
                 // if there's any error then reject:
