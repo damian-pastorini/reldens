@@ -7,8 +7,6 @@
  */
 
 const { PasswordManager } = require('./password-manager');
-const { GameConst } = require('../constants');
-const { Logger } = require('../logger');
 const { ErrorManager } = require('../error-manager');
 
 class LoginManager
@@ -33,9 +31,9 @@ class LoginManager
         }
         // if the email exists:
         if(user){
-            return await this.getLoginResult(user, userData);
+            return await this.login(user, userData);
         } else {
-            return await this.getRegistrationResult(userData);
+            return await this.register(userData);
         }
     }
 
@@ -46,7 +44,7 @@ class LoginManager
             || !{}.hasOwnProperty.call(userData, 'password'));
     }
 
-    async getLoginResult(user, userData)
+    async login(user, userData)
     {
         // check if player status is not active or if the password doesn't match then return an error:
         if(user.status !== 1 || !PasswordManager.validatePassword(userData.password, user.password)){
@@ -56,8 +54,7 @@ class LoginManager
             try {
                 // if everything is good then just return the user:
                 let player = user.players[0];
-                let playerRoom = await this.roomsManager.loadRoomById(player.state.room_id);
-                player.state.scene = playerRoom.roomName;
+                player.state.scene = await this.getRoomNameById(player.state.room_id);
                 return {user: user};
             } catch (err) {
                 return {error: err};
@@ -65,7 +62,14 @@ class LoginManager
         }
     }
 
-    async getRegistrationResult(userData)
+    // @TODO: creat room association on database and make it load automatically? or keep modules independent some how?
+    async getRoomNameById(roomId)
+    {
+        let playerRoom = await this.roomsManager.loadRoomById(roomId);
+        return playerRoom.roomName;
+    }
+
+    async register(userData)
     {
         // if the email doesn't exists in the database and it's a registration request:
         if(userData.isNewUser){
@@ -83,12 +87,9 @@ class LoginManager
                         state: this.config.server.players.initialState
                     }
                 });
-                let initialRoom = await this.roomsManager.loadRoomById(this.config.server.players.initialState.room_id);
-                newUser.players[0].state.scene = initialRoom.name;
+                newUser.players[0].state.scene = await this.getRoomNameById(this.config.server.players.initialState.room_id);
                 return {user: newUser};
             } catch (err) {
-                // if there's any error then reject:
-                Logger.error(['Unable to register the user.', err]);
                 return {error: 'Unable to register the user.', catch: err};
             }
         } else {
@@ -96,30 +97,13 @@ class LoginManager
         }
     }
 
-    // @TODO: move into the server manager? or maybe into the RoomGame which only responsibility is to start it.
-    async startGameEngine(client, room, authResult)
+    async updateLastLogin(authResult)
     {
-        let user = await this.usersManager.loadUserByUsername(authResult.username);
-        // @NOTE: for now we will only have 1 player per user, that's why we send players[0].
-        let player = user.players[0];
-        let playerRoom = await this.roomsManager.loadRoomById(player.state.room_id);
-        player.state.scene = playerRoom.roomName;
         // update last login date:
         let updated = await this.usersManager.updateUserLastLogin(authResult.username);
         if(!updated){
             ErrorManager.error('User update fail.');
         }
-        // we need to send the engine and all the general and client configurations from the storage:
-        let storedClientAndGeneral = {client: this.config.client, general: this.config.general};
-        let clientFullConfig = Object.assign({}, this.config.gameEngine, storedClientAndGeneral);
-        // client start:
-        room.send(client, {
-            act: GameConst.START_GAME,
-            sessionId: client.sessionId,
-            player: player,
-            gameConfig: clientFullConfig,
-            features: this.config.availableFeaturesList
-        });
     }
 
 }
