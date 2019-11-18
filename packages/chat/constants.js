@@ -8,7 +8,7 @@
  */
 
 // constants:
-module.exports = {
+module.exports.ChatConst = {
     CHAT_ACTION: 'c',
     CHAT_MESSAGE: 'm',
     CHAT_FROM: 'f',
