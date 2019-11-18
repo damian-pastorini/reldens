@@ -6,7 +6,7 @@
  *
  */
 
-const RoomLogin = require('./login');
+const { RoomLogin } = require('./login');
 const State = require('./state');
 const P2world = require('../../world/server/p2world');
 const CollisionsManager = require('../../world/server/collisions-manager');
@@ -305,4 +305,4 @@ class RoomScene extends RoomLogin
 
 }
 
-module.exports = RoomScene;
+module.exports.RoomScene = RoomScene;

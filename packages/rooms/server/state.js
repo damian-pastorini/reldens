@@ -6,10 +6,7 @@
  *
  */
 
-const schema = require('@colyseus/schema');
-const Schema = schema.Schema;
-const type = schema.type;
-const MapSchema = schema.MapSchema;
+const { Schema, MapSchema, type } = require('@colyseus/schema');
 const Player = require('../../users/server/player');
 
 class State extends Schema

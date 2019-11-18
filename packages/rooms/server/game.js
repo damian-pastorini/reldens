@@ -9,7 +9,7 @@
  *
  */
 
-const RoomLogin = require('./login');
+const { RoomLogin } = require('./login');
 const { GameConst } = require('../../game/constants');
 
 class RoomGame extends RoomLogin
@@ -26,7 +26,7 @@ class RoomGame extends RoomLogin
         this.send(client, {
             act: GameConst.START_GAME,
             sessionId: client.sessionId,
-            player: authResult.players[0],
+            player: authResult.players[0], // @TODO: for now we only have one player.
             gameConfig: clientFullConfig,
             features: this.config.availableFeaturesList
         });
@@ -34,4 +34,4 @@ class RoomGame extends RoomLogin
 
 }
 
-module.exports = RoomGame;
+module.exports.RoomGame = RoomGame;

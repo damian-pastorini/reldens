@@ -7,6 +7,7 @@
  */
 
 const { Model } = require('objection');
+const { RoomsModel } = require('./model');
 
 class RoomsReturnPointsModel extends Model
 {
@@ -18,12 +19,10 @@ class RoomsReturnPointsModel extends Model
 
     static get relationMappings()
     {
-        // to avoid require loop:
-        const Rooms = require('./model');
         return {
             parent_room: {
                 relation: Model.BelongsToOneRelation,
-                modelClass: Rooms,
+                modelClass: RoomsModel,
                 join: {
                     from: 'rooms_change_points.room_id',
                     to: 'rooms.id'
@@ -31,7 +30,7 @@ class RoomsReturnPointsModel extends Model
             },
             to_room: {
                 relation: Model.HasOneRelation,
-                modelClass: Rooms,
+                modelClass: RoomsModel,
                 join: {
                     from: 'rooms_return_points.to_room_id',
                     to: 'rooms.id'
@@ -42,4 +41,4 @@ class RoomsReturnPointsModel extends Model
 
 }
 
-module.exports = RoomsReturnPointsModel;
+module.exports.RoomsReturnPointsModel = RoomsReturnPointsModel;

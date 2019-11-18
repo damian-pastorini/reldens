@@ -6,7 +6,7 @@
  *
  */
 
-const RoomLogin = require('../../rooms/server/login');
+const { RoomLogin } = require('../../rooms/server/login');
 const ChatManager = require('./manager');
 const { ChatConst } = require('../constants');
 

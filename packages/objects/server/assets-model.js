@@ -37,4 +37,4 @@ class ObjectsAssetsModel extends Model
 
 }
 
-module.exports = ObjectsAssetsModel;
+module.exports.ObjectsAssetsModel = ObjectsAssetsModel;

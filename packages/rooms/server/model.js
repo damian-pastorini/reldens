@@ -18,12 +18,15 @@ class RoomsModel extends Model
 
     static get relationMappings()
     {
-        const RoomsChangePoints = require('./change-points-model');
-        const RoomsReturnPoints = require('./return-points-model');
+        // @TODO: this is one of the solutions recommended in Objection JS to avoid the require loop.
+        //   https://vincit.github.io/objection.js/guide/relations.html#require-loops > see "Solution 1"
+        //   I would like to avoid using requires like this so this is a probably long-time-temporal solution.
+        const { RoomsChangePointsModel } = require('./change-points-model');
+        const { RoomsReturnPointsModel } = require('./return-points-model');
         return {
             rooms_change_points: {
                 relation: Model.HasManyRelation,
-                modelClass: RoomsChangePoints,
+                modelClass: RoomsChangePointsModel,
                 join: {
                     from: 'rooms.id',
                     to: 'rooms_change_points.room_id'
@@ -31,7 +34,7 @@ class RoomsModel extends Model
             },
             rooms_return_points: {
                 relation: Model.HasManyRelation,
-                modelClass: RoomsReturnPoints,
+                modelClass: RoomsReturnPointsModel,
                 join: {
                     from: 'rooms.id',
                     to: 'rooms_return_points.room_id'
@@ -39,7 +42,7 @@ class RoomsModel extends Model
             },
             next_room: {
                 relation: Model.BelongsToOneRelation,
-                modelClass: RoomsChangePoints,
+                modelClass: RoomsChangePointsModel,
                 join: {
                     from: 'rooms.id',
                     to: 'rooms_change_points.next_room_id'
@@ -47,7 +50,7 @@ class RoomsModel extends Model
             },
             to_room: {
                 relation: Model.BelongsToOneRelation,
-                modelClass: RoomsReturnPoints,
+                modelClass: RoomsReturnPointsModel,
                 join: {
                     from: 'rooms.id',
                     to: 'rooms_change_points.next_room_id'
@@ -58,4 +61,4 @@ class RoomsModel extends Model
 
 }
 
-module.exports = RoomsModel;
+module.exports.RoomsModel = RoomsModel;

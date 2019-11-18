@@ -50,7 +50,7 @@ class ObjectsManager
                     try {
                         let objectIndex = objectData.layer_name + objectData.tile_index;
                         // dynamic path using the server root:
-                        let fullPath = this.config.projectRoot+'/'+objectData.server_path;
+                        let fullPath = this.config.projectRoot+'/'+objectData.object_class_path;
                         // here we dynamically require the object class using the path specified in the storage:
                         // @TODO: - Seiyria - you should have a helper whose sole purpose is lookup and creation of .
                         //   objects/models - you should NOT be doing dynamic requires like this.

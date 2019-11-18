@@ -87,7 +87,8 @@ class LoginManager
                         state: this.config.server.players.initialState
                     }
                 });
-                newUser.players[0].state.scene = await this.getRoomNameById(this.config.server.players.initialState.room_id);
+                let configRoomId = this.config.server.players.initialState.room_id;
+                newUser.players[0].state.scene = await this.getRoomNameById(configRoomId);
                 return {user: newUser};
             } catch (err) {
                 return {error: 'Unable to register the user.', catch: err};
@@ -108,4 +109,4 @@ class LoginManager
 
 }
 
-module.exports = LoginManager;
+module.exports.LoginManager = LoginManager;

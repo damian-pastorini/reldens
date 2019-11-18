@@ -8,6 +8,8 @@
  */
 
 const { Room } = require('colyseus');
+const { ErrorManager } = require('../../game/error-manager');
+const { Logger } = require('../../game/logger');
 
 class RoomLogin extends Room
 {
@@ -28,34 +30,31 @@ class RoomLogin extends Room
         let loginResult = await this.loginManager.attemptLoginOrRegister(options);
         if({}.hasOwnProperty.call(loginResult, 'error')){
             // login error.
-            throw new Error(loginResult.error);
+            ErrorManager.error(loginResult.error);
         }
-        // @TODO: for now we only have one player.
-        if(this.validateRoomData && !this.validateRoom(loginResult.user.players[0].state.scene)){
-            // invalid room.
-            throw new Error('ERROR - Invalid room data.');
+        // @NOTE: validateRoomData is overridden in RoomScene onCreate.
+        if(this.validateRoomData){
+            // @TODO: for now we only have one player.
+            this.validateRoom(loginResult.user.players[0].state.scene);
         }
         return loginResult.user;
     }
 
     validateRoom(playerRoomName)
     {
-        let isValid = true;
         if(this.config.server.rooms.validation.enabled){
             this.validRooms = this.config.server.rooms.validation.valid.split(',');
             if(this.validRooms.indexOf(this.roomName) === -1 && playerRoomName !== this.roomName){
-                console.log('ERROR - Invalid player room:', playerRoomName, this.roomName);
-                isValid = false;
+                ErrorManager.error('Invalid player room: ' + playerRoomName + ' - ' + this.roomName);
             }
         }
-        return isValid;
     }
 
     onDispose()
     {
-        console.log('INFO - ON-DISPOSE Room:', this.roomName);
+        Logger.info('ON-DISPOSE Room: ' + this.roomName);
     }
 
 }
 
-module.exports = RoomLogin;
+module.exports.RoomLogin = RoomLogin;

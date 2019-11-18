@@ -18,8 +18,8 @@ const { DataServer } = require('./data-server');
 const { ConfigManager } = require('../../config/server/manager');
 const { FeaturesManager } = require('../../features/server/manager');
 const { UsersManager } = require('../../users/server/manager');
-const LoginManager = require('./login');
-const RoomsManager = require('../../rooms/server/manager');
+const { LoginManager } = require('./login');
+const { RoomsManager } = require('../../rooms/server/manager');
 const { ThemeManager } = require('./theme-manager');
 const { Logger } = require('../logger');
 
