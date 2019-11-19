@@ -6,7 +6,8 @@
  *
  */
 
-const BaseObject = require('./base-object');
+const { BaseObject } = require('./base-object');
+const { Logger } = require('../../game/logger');
 
 class NpcObject extends BaseObject
 {
@@ -26,29 +27,27 @@ class NpcObject extends BaseObject
 
     onHit(props)
     {
-        // @TODO: - Seiyria - prefer the guard pattern;
-        //   if(!this.runOnHit || !props.room) return
-        //   this will prevent your code from getting too nested, and will make the logic easier to follow since bad
-        //   cases return early
-        if(this.runOnHit && props.room){
-            let client = props.room.getClientById(props.playerBody.playerId);
-            if(!client){
-                console.log('ERROR - Object hit, client not found by playerId:', props.playerBody.playerId);
-            } else {
-                props.room.send(client, this.animationData);
-            }
+        if(!this.runOnHit || !props.room){
+            return;
+        }
+        let client = props.room.getClientById(props.playerBody.playerId);
+        if(!client){
+            Logger.error('Object hit, client not found by playerId: ' + props.playerBody.playerId);
+        } else {
+            props.room.send(client, this.animationData);
         }
     }
 
     onAction(props)
     {
-        if(this.runOnAction && props.room) {
-            let client = props.room.getClientById(props.playerBody.playerId);
-            if(!client){
-                console.log('ERROR - Object action, client not found by playerId:', props.playerBody.playerId);
-            } else {
-                props.room.send(client, this.animationData);
-            }
+        if(!this.runOnAction || !props.room) {
+            return;
+        }
+        let client = props.room.getClientById(props.playerBody.playerId);
+        if(!client){
+            Logger.error('Object action, client not found by playerId: ' + props.playerBody.playerId);
+        } else {
+            props.room.send(client, this.animationData);
         }
     }
 

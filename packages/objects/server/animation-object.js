@@ -6,8 +6,9 @@
  *
  */
 
-const BaseObject = require('./base-object');
+const { BaseObject } = require('./base-object');
 const { GameConst } = require('../../game/constants');
+const { Logger } = require('../../game/logger');
 
 class AnimationObject extends BaseObject
 {
@@ -43,7 +44,7 @@ class AnimationObject extends BaseObject
         if(this.runOnHit && props.room){
             let client = props.room.getClientById(props.playerBody.playerId);
             if(!client){
-                console.log('ERROR - Object hit, client not found by playerId:', props.playerBody.playerId);
+                Logger.error('Object hit, client not found by playerId:', props.playerBody.playerId);
             } else {
                 props.room.send(client, this.animationData);
             }

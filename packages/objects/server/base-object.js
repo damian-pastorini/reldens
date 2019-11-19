@@ -18,9 +18,7 @@ class BaseObject
         Object.assign(this, props);
         // we will use the client_key has the object key:
         this.key = props.client_key;
-        // @TODO: - Seiyria - why is there a JSON.parse here? that seems particularly easy to mess up since JSON is a
-        //   very strict syntax. why can't it just be assumed to be an object?
-        // in this specific object type we will use the public params as JSON:
+        // in this specific object type we will use the public params as JSON, this is coming from the storage:
         this.publicParamsObj = props.public_params ? JSON.parse(props.public_params) : {};
         this.publicParamsObj.key = this.key;
         // @NOTE: we need to send the layer name for later calculate the animation depth and show the animation over the
@@ -52,4 +50,4 @@ class BaseObject
 
 }
 
-module.exports = BaseObject;
+module.exports.BaseObject = BaseObject;
