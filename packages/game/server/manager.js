@@ -124,7 +124,9 @@ class ServerManager
 
     async createClientBundle()
     {
-        // @TODO: analyze how to split the bundle from the server and if possible to avoid the middleware from Parcel.
+        // @TODO:
+        //   - Analyze how to split the bundle from the server and if possible to avoid the middleware from Parcel.
+        //   - Test production mode.
         // create bundle:
         const bundlerOptions = { production: process.env.NODE_ENV === 'production' };
         Logger.info(this.projectRoot + ThemeManager.projectTheme + '/index.html');

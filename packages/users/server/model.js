@@ -19,7 +19,6 @@ class UsersModel extends Model
 
     static get relationMappings()
     {
-        // to avoid require loop:
         return {
             players: {
                 relation: Model.HasManyRelation,

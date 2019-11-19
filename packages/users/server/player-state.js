@@ -7,9 +7,7 @@
  *
  */
 
-const schema = require('@colyseus/schema');
-const Schema = schema.Schema;
-const type = schema.type;
+const { Schema, type } = require('@colyseus/schema');
 
 class PlayerState extends Schema
 {
@@ -32,4 +30,4 @@ type('number')(PlayerState.prototype, 'x');
 type('number')(PlayerState.prototype, 'y');
 type('string')(PlayerState.prototype, 'dir');
 
-module.exports = PlayerState;
+module.exports.PlayerState = PlayerState;

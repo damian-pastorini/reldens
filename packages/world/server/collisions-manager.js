@@ -6,6 +6,9 @@
  *
  */
 
+const { ErrorManager } = require('../../game/error-manager');
+const { Logger } = require('../../game/logger');
+
 class CollisionsManager
 {
 
@@ -19,8 +22,8 @@ class CollisionsManager
     activateCollisions(room)
     {
         this.room = room;
-        if(!this.room.hasOwnProperty('roomWorld')){
-            throw new Error('ERROR - Room world not found.');
+        if(!{}.hasOwnProperty.call(this.room, 'roomWorld')){
+            ErrorManager.error('Room world not found.');
         }
         // @TODO: refactor, for now we will use fixed collisions types for each event.
         this.room.roomWorld.on('beginContact', this.assignBeginCollisions.bind(this));
@@ -81,6 +84,7 @@ class CollisionsManager
         }
     }
 
+    // eslint-disable-next-line no-unused-vars
     playerHitWall(player, wall)
     {
         // @NOTE: we can use wall.material to trigger an action over the player, like:
@@ -91,9 +95,9 @@ class CollisionsManager
     playerHitChangePoint(player, changePoint)
     {
         let playerSchema = this.room.getPlayerFromState(player.playerId);
-        if(player.hasOwnProperty('isChangingScene') && player.isChangingScene){
+        if({}.hasOwnProperty.call(player, 'isChangingScene') && player.isChangingScene){
             // @NOTE: if the player is already changing scene do nothing.
-            console.log('ERROR - Player is busy for a change point');
+            Logger.error('Player is busy for a change point: ' + player.playerId);
             return false;
         } else {
             let playerPosition = {x: player.position[0], y: player.position[1]};
@@ -110,11 +114,11 @@ class CollisionsManager
             // @NOTE: we do not need to change back the isChangingScene property back to false since in the new
             // scene a new body will be created with the value set to false by default.
             this.room.nextSceneInitialPosition(contactClient, changeData).catch((err) => {
-                console.log('ERROR - nextSceneInitialPosition error:', err);
+                Logger.error('nextSceneInitialPosition error: ' + err);
             });
         }
     }
 
 }
 
-module.exports = CollisionsManager;
+module.exports.CollisionsManager = CollisionsManager;

@@ -7,9 +7,12 @@
  */
 
 const P2 = require('p2');
+const { World } = P2;
 const { GameConst } = require('../../game/constants');
+const { Logger } = require('../../game/logger');
+const { ErrorManager } = require('../../game/error-manager');
 
-class P2world extends P2.World
+class P2world extends World
 {
 
     /**
@@ -22,7 +25,7 @@ class P2world extends P2.World
         this.sceneName = options.sceneName || false;
         this.sceneTiledMapFile = options.roomData.roomMap || false;
         if(!this.sceneName || !this.sceneTiledMapFile){
-            console.log('ERROR - World creation missing data in options:', options);
+            ErrorManager.error(['World creation missing data in options:', options]);
         }
         // objects:
         this.objectsManager = options.objectsManager;
@@ -69,13 +72,13 @@ class P2world extends P2.World
                             // look for change points on the layers with the proper name convention:
                             if(layer.name.indexOf('change-points') !== -1){
                                 if(changePoints[tileIndex]){
-                                    console.log('INFO - Created change point on tileIndex:', tileIndex);
+                                    Logger.info('Created change point on tileIndex: ' + tileIndex);
                                     // @NOTE: we make the change point smaller so the user needs to walk into to hit it.
                                     let bodyChangePoint = this.createCollisionBody((tileW/2), (tileH/2), posX, posY);
                                     bodyChangePoint.changeScenePoint = changePoints[tileIndex];
                                     this.addBody(bodyChangePoint);
                                 } else {
-                                    console.log('ERROR - Change point not created:', tileIndex, changePoints[tileIndex]);
+                                    Logger.error(['Change point not created:', tileIndex, changePoints[tileIndex]]);
                                 }
                             }
                             // create collisions for layers with the proper name convention:
@@ -93,29 +96,29 @@ class P2world extends P2.World
                         // if the data and the instance was created:
                         if(roomObject){
                             // handle body fixed position:
-                            if(roomObject.hasOwnProperty('xFix')){
+                            if({}.hasOwnProperty.call(roomObject, 'xFix')){
                                 posX += roomObject.xFix;
                             }
-                            if(roomObject.hasOwnProperty('yFix')){
+                            if({}.hasOwnProperty.call(roomObject, 'yFix')){
                                 posY += roomObject.yFix;
                             }
                             roomObject.x = posX;
                             roomObject.y = posY;
                             // save position in room object:
-                            if(this.objectsManager.objectsAnimationsData.hasOwnProperty(objectIndex)){
+                            if({}.hasOwnProperty.call(this.objectsManager.objectsAnimationsData, objectIndex)){
                                 this.objectsManager.objectsAnimationsData[objectIndex].x = posX;
                                 this.objectsManager.objectsAnimationsData[objectIndex].y = posY;
                             }
                             // by default objects won't have mass:
                             let bodyMass = 0;
                             // unless it is specified in the object itself:
-                            if(roomObject.hasOwnProperty('bodyMass')){
+                            if({}.hasOwnProperty.call(roomObject, 'bodyMass')){
                                 bodyMass = roomObject.bodyMass;
                             }
                             // by default objects collision response:
                             let colResponse = false;
                             // unless it is specified in the object itself:
-                            if(roomObject.hasOwnProperty('collisionResponse')){
+                            if({}.hasOwnProperty.call(roomObject, 'collisionResponse')){
                                 colResponse = roomObject.collisionResponse;
                             }
                             // create the body:
@@ -123,7 +126,7 @@ class P2world extends P2.World
                             bodyObject.isRoomObject = true;
                             // assign the room object to the body:
                             bodyObject.roomObject = roomObject;
-                            console.log('INFO - Created object for objectIndex:', objectIndex);
+                            Logger.info('Created object for objectIndex: ' + objectIndex);
                             // try to get object instance from project root:
                             this.addBody(bodyObject);
                         }
@@ -214,4 +217,4 @@ class P2world extends P2.World
 
 }
 
-module.exports = P2world;
+module.exports.P2world = P2world;

@@ -19,7 +19,6 @@ class PlayersStateModel extends Model
 
     static get relationMappings()
     {
-        // to avoid require loop:
         return {
             parent_player: {
                 relation: Model.BelongsToOneRelation,

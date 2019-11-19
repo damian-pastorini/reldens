@@ -86,4 +86,4 @@ class ObjectsManager
 
 }
 
-module.exports = ObjectsManager;
+module.exports.ObjectsManager = ObjectsManager;

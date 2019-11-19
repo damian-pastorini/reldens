@@ -7,7 +7,7 @@
  */
 
 const { Schema, MapSchema, type } = require('@colyseus/schema');
-const Player = require('../../users/server/player');
+const { Player } = require('../../users/server/player');
 
 class State extends Schema
 {
@@ -28,7 +28,7 @@ class State extends Schema
 
     movePlayer(id, data)
     {
-        if(data.hasOwnProperty('dir')){
+        if({}.hasOwnProperty.call(data, 'dir')){
             this.players[id].mov = true;
             this.players[id].state.dir = data.dir;
             this.players[id].state.x = data.x;
@@ -38,7 +38,7 @@ class State extends Schema
 
     stopPlayer(id, data)
     {
-        if(!this.players[id]){
+        if(!{}.hasOwnProperty.call(this.players, id)){
             // @NOTE: since P2world could run the endContact several times.
         } else {
             let result = true;
@@ -61,4 +61,4 @@ class State extends Schema
 type({ map: Player })(State.prototype, 'players');
 type('string')(State.prototype, 'sceneData');
 
-module.exports = State;
+module.exports.State = State;
