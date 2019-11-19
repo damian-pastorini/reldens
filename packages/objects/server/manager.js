@@ -7,7 +7,8 @@
  *
  */
 
-const Objects = require('./model');
+const { ObjectsModel } = require('./model');
+const { Logger } = require('../../game/logger');
 
 class ObjectsManager
 {
@@ -25,54 +26,43 @@ class ObjectsManager
 
     async loadObjectsByRoomId(roomId)
     {
-        // @TODO: - Seiyria - this code gets way too deep!
-        /*
-        if(!data) {
-            data = await ...
-        }
-
-        if(!data) {
-            ... 
-        }
-
-        this pattern would be better, because you don't need to keep nesting the code
-        */
-        if(!this.roomObjectsData){
-            this.roomObjectsData = await Objects.query()
+        if(!this.roomObjectsData) {
+            this.roomObjectsData = await ObjectsModel.query()
                 .eager('[parent_room, objects_assets]')
                 .where('room_id', roomId)
                 .orderBy('tile_index');
-            if(this.roomObjectsData){
-                this.roomObjects = {};
-                for(let objectData of this.roomObjectsData){
-                    // @TODO: - Seiyria - you should only try/catch the code that can throw the error
-                    //   (in this case, the require).
-                    try {
-                        let objectIndex = objectData.layer_name + objectData.tile_index;
-                        // dynamic path using the server root:
-                        let fullPath = this.config.projectRoot+'/'+objectData.object_class_path;
-                        // here we dynamically require the object class using the path specified in the storage:
-                        // @TODO: - Seiyria - you should have a helper whose sole purpose is lookup and creation of .
-                        //   objects/models - you should NOT be doing dynamic requires like this.
-                        let objClass = require(fullPath);
-                        let objInstance = new objClass(objectData);
-                        // if the result is an animation instance then we can include in the list to send it to the client:
-                        if(objInstance.hasOwnProperty('isAnimation') || objInstance.hasOwnProperty('hasAnimation')){
-                            this.objectsAnimationsData[objectIndex] = objInstance.getPublicObjectData();
-                        }
-                        // prepare assets list:
-                        if(objectData.objects_assets){
-                            for(let asset of objectData.objects_assets){
-                                // @NOTE: assets can be different types, spritesheets, images, atlas, etc. We push them
-                                // here to later send these to the client along with the sceneData.
-                                this.preloadAssets.push(asset);
-                            }
-                        }
-                        // save object:
-                        this.roomObjects[objectIndex] = objInstance;
-                    } catch(err) {
-                        console.log('ERROR - Object class does not exists for objectIndex:', err);
+        }
+        if(this.roomObjectsData){
+            this.roomObjects = {};
+            for(let objectData of this.roomObjectsData){
+                let objectIndex = objectData.layer_name + objectData.tile_index;
+                // dynamic path using the server root:
+                let fullPath = this.config.projectRoot+'/'+objectData.object_class_path;
+                // here we dynamically require the object class using the path specified in the storage:
+                // @TODO: - Seiyria - Create a helper whose sole purpose is lookup and creation of objects/models.
+                //   Avoid dynamic requires like this.
+                try {
+                    let objClass = require(fullPath);
+                    let objInstance = new objClass(objectData);
+                    // if the result is an animation instance then we can include in the list to send it to the client:
+                    if (
+                        {}.hasOwnProperty.call(objInstance, 'isAnimation')
+                        || {}.hasOwnProperty.call(objInstance, 'hasAnimation')
+                    ) {
+                        this.objectsAnimationsData[objectIndex] = objInstance.getPublicObjectData();
                     }
+                    // prepare assets list:
+                    if (objectData.objects_assets) {
+                        for (let asset of objectData.objects_assets) {
+                            // @NOTE: assets can be different types, spritesheets, images, atlas, etc. We push them
+                            // here to later send these to the client along with the sceneData.
+                            this.preloadAssets.push(asset);
+                        }
+                    }
+                    // save object:
+                    this.roomObjects[objectIndex] = objInstance;
+                } catch(err) {
+                    Logger.error('Object class does not exists for objectIndex:', err);
                 }
             }
         }
@@ -84,12 +74,11 @@ class ObjectsManager
      * every object defined if is not going to be used.
      *
      * @param objectIndex
-     * @returns {boolean}
+     * @returns {boolean|*}
      */
-     // @TODO: - Seiyria - this could be reduced to `return !!this.roomObjects[objectIndex]`
     getObjectData(objectIndex)
     {
-        if(this.roomObjects.hasOwnProperty(objectIndex)){
+        if({}.hasOwnProperty.call(this.roomObjects, objectIndex)){
             return this.roomObjects[objectIndex];
         }
         return false;

@@ -7,6 +7,7 @@
  */
 
 const { Model } = require('objection');
+const { ObjectsModel } = require('./model');
 
 class ObjectsAssetsModel extends Model
 {
@@ -18,15 +19,10 @@ class ObjectsAssetsModel extends Model
 
     static get relationMappings()
     {
-        // to avoid require loop:
-        // @TODO: - Seiyria - if you're worrying about circular references, you may need to restructure your code
-        //   instead. all imports should be handled at the top of the file, before any logic resolves. this makes your
-        //   code more testable. ideally, you would also use a DI framework to make your code easier to follow.
-        const Objects = require('./model');
         return {
             parent_object: {
                 relation: Model.BelongsToOneRelation,
-                modelClass: Objects,
+                modelClass: ObjectsModel,
                 join: {
                     from: 'objects_assets.object_id',
                     to: 'objects.id'

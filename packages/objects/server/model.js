@@ -42,4 +42,4 @@ class ObjectsModel extends Model
 
 }
 
-module.exports = ObjectsModel;
+module.exports.ObjectsModel = ObjectsModel;
