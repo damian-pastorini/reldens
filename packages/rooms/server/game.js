@@ -20,8 +20,8 @@ class RoomGame extends RoomLogin
         // update last login:
         await this.loginManager.updateLastLogin(authResult);
         // we need to send the engine and all the general and client configurations from the storage:
-        let storedClientAndGeneral = {client: this.config.client, general: this.config.general};
-        let clientFullConfig = Object.assign({}, this.config.gameEngine, storedClientAndGeneral);
+        let storedClientConfig = {client: this.config.client};
+        let clientFullConfig = Object.assign({}, this.config.gameEngine, storedClientConfig);
         // client start:
         this.send(client, {
             act: GameConst.START_GAME,

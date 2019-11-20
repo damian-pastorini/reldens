@@ -12,15 +12,15 @@ const TemplateEngine = require('mustache');
 class GameEngine extends Game
 {
 
+    // uiScene is where we will keep all the game UI elements:
+    uiScene = false;
+
     constructor(GameConfig)
     {
         super(GameConfig);
-        // @TODO: - Seiyria - when naming variables, prefer something descriptive. if this is supposed to be a boolean,
-        //   name it something like: isBoolean, or hasBoolean. maybe hasUIScene?
-        this.uiScene = false;
         this.TemplateEngine = TemplateEngine;
     }
 
 }
 
-module.exports = GameEngine;
+module.exports.GameEngine = GameEngine;

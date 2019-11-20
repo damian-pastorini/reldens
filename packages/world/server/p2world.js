@@ -78,7 +78,7 @@ class P2world extends World
                                     bodyChangePoint.changeScenePoint = changePoints[tileIndex];
                                     this.addBody(bodyChangePoint);
                                 } else {
-                                    Logger.error(['Change point not created:', tileIndex, changePoints[tileIndex]]);
+                                    Logger.error(['Change point not created for changePoints[tileIndex]:', tileIndex]);
                                 }
                             }
                             // create collisions for layers with the proper name convention:

@@ -11,6 +11,7 @@ class Logger
 
     info(data)
     {
+        // @TODO: implement a configured validation to know which messages should be logged and a notifications system.
         console.log('INFO -', data);
     }
 

@@ -13,7 +13,7 @@ const { GameConfig } = require('../../game/server/config');
 const { InitialState } = require('../../users/server/initial-state');
 const { InitialStats } = require('../../users/server/initial-stats');
 const { InitialUser } = require('../../users/server/initial-user');
-const { ServerEvents } = require('../../game/server/server-events');
+const { EventsManager } = require('../../game/events-manager');
 
 const CONFIG_TYPE_BOOLEAN = 'b';
 const CONFIG_TYPE_NUMBER = 'i';
@@ -42,7 +42,7 @@ class ConfigManager
      */
     async loadConfigurations()
     {
-        ServerEvents.emit('beforeLoadConfigurations', {configManager: this});
+        EventsManager.emit('beforeLoadConfigurations', {configManager: this});
         // get the configurations from the database:
         let configCollection = await ConfigModel.query();
         // set them in the manager property so we can find them by path later:
@@ -66,7 +66,7 @@ class ConfigManager
             }
             this.configList[config.scope][pathSplit[0]][pathSplit[1]][pathSplit[2]] = this.getParsedValue(config);
         }
-        ServerEvents.emit('afterLoadConfigurations', {configManager: this});
+        EventsManager.emit('afterLoadConfigurations', {configManager: this});
     }
 
     async loadAndGetProcessor()
@@ -87,7 +87,7 @@ class ConfigManager
      */
     getParsedValue(config)
     {
-        ServerEvents.emit('beforeGetParsedValue', {configManager: this, config: config});
+        EventsManager.emit('beforeGetParsedValue', {configManager: this, config: config});
         if(config.type === CONFIG_TYPE_TEXT){
             return config.value;
         }

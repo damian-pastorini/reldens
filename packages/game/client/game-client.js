@@ -6,12 +6,11 @@
  *
  */
 
-const ColyseusClient = require('colyseus.js').Client;
+const { Client } = require('colyseus.js');
 
-class GameClient extends ColyseusClient
+class GameClient extends Client
 {
 
-    // @TODO: - Seiyria - this is implied, you don't really need this constructor
     constructor(serverUrl)
     {
         super(serverUrl);

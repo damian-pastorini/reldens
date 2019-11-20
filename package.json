@@ -39,7 +39,7 @@
     "dependencies": {
         "@babel/runtime-corejs2": "^7.6.2",
         "@colyseus/monitor": "^0.11.7",
-        "bcrypt": "^3.0.6",
+        "bcrypt": "^3.0.7",
         "colyseus": "^0.11.22",
         "colyseus.js": "^0.11.5",
         "cors": "^2.8.5",
@@ -48,7 +48,7 @@
         "glslify": "^7.0.0",
         "jquery": "^3.4.1",
         "jquery-validation": "^1.19.1",
-        "knex": "^0.20.1",
+        "knex": "^0.20.2",
         "mustache": "^3.1.0",
         "mysql": "^2.17.1",
         "objection": "^1.6.11",
@@ -59,6 +59,7 @@
     "devDependencies": {
         "@babel/core": "^7.6.2",
         "@babel/plugin-transform-runtime": "^7.6.2",
+        "@babel/plugin-proposal-class-properties": "^7.7.0",
         "eslint": "^6.6.0",
         "eslint-config-standard": "^14.1.0",
         "eslint-plugin-import": "^2.18.2",
