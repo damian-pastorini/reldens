@@ -55,7 +55,7 @@
         "objection": "^1.6.11",
         "p2": "^0.7.1",
         "parcel-bundler": "^1.12.4",
-        "phaser": "^3.20.1"
+        "phaser": "^3.21.0"
     },
     "devDependencies": {
         "@babel/core": "^7.6.2",
