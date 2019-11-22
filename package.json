@@ -39,8 +39,9 @@
     "dependencies": {
         "@babel/runtime-corejs2": "^7.6.2",
         "@colyseus/monitor": "^0.11.7",
+        "@colyseus/schema": "^0.5.8",
         "bcrypt": "^3.0.7",
-        "colyseus": "^0.11.22",
+        "colyseus": "^0.11.23",
         "colyseus.js": "^0.11.5",
         "cors": "^2.8.5",
         "dotenv": "^8.2.0",

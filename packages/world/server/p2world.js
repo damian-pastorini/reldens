@@ -39,17 +39,17 @@ class P2world extends World
         // create world limits:
         this.createLimits();
         // add collisions:
-        this.setMapCollisions(options.roomData);
+        this.createWorldContent(options.roomData);
     }
 
     /**
      * @param mapData
      */
-    setMapCollisions(mapData)
+    createWorldContent(mapData)
     {
         // @TODO: fix maps to create proper body blocks instead of use only boxes for each map block.
         // get scene change points:
-        let changePoints = this.getSceneChangePoints(mapData);
+        this.changePoints = this.getSceneChangePoints(mapData);
         // map data:
         let mapLayers = this.mapJson.layers,
             mapW = this.mapJson.width,
@@ -57,83 +57,93 @@ class P2world extends World
             tileW = this.mapJson.tilewidth,
             tileH = this.mapJson.tileheight;
         for(let layer of mapLayers){
-            // just consider collisions and change points layers:
-            if(layer.name.indexOf('collisions') !== -1 || layer.name.indexOf('change-points') !== -1){
-                let layerData = layer.data;
-                for (let c = 0; c < mapW; c++){
-                    let posX = c * tileW + (tileW/2);
-                    for (let r = 0; r < mapH; r++){
-                        // position in pixels
-                        let posY = r * tileH + (tileH/2);
-                        let tileIndex = r * mapW + c;
-                        let tile = layerData[tileIndex];
-                        // the 0 value are empty tiles without collisions or change points:
-                        if (tile !== 0){
-                            // look for change points on the layers with the proper name convention:
-                            if(layer.name.indexOf('change-points') !== -1){
-                                if(changePoints[tileIndex]){
-                                    Logger.info('Created change point on tileIndex: ' + tileIndex);
-                                    // @NOTE: we make the change point smaller so the user needs to walk into to hit it.
-                                    let bodyChangePoint = this.createCollisionBody((tileW/2), (tileH/2), posX, posY);
-                                    bodyChangePoint.changeScenePoint = changePoints[tileIndex];
-                                    this.addBody(bodyChangePoint);
-                                } else {
-                                    Logger.error(['Change point not created for changePoints[tileIndex]:', tileIndex]);
-                                }
-                            }
-                            // create collisions for layers with the proper name convention:
-                            if(layer.name.indexOf('collisions') !== -1){
-                                // create a box to fill the space:
-                                let bodyWall = this.createCollisionBody(tileW, tileH, posX, posY);
-                                bodyWall.isWall = true;
-                                this.addBody(bodyWall);
-                            }
-                        }
-                        // objects will be found by layer name + tile index:
-                        let objectIndex = layer.name + tileIndex;
-                        // this will validate if the object class exists and return an instance of it:
-                        let roomObject = this.objectsManager.getObjectData(objectIndex);
-                        // if the data and the instance was created:
-                        if(roomObject){
-                            // handle body fixed position:
-                            if({}.hasOwnProperty.call(roomObject, 'xFix')){
-                                posX += roomObject.xFix;
-                            }
-                            if({}.hasOwnProperty.call(roomObject, 'yFix')){
-                                posY += roomObject.yFix;
-                            }
-                            roomObject.x = posX;
-                            roomObject.y = posY;
-                            // save position in room object:
-                            if({}.hasOwnProperty.call(this.objectsManager.objectsAnimationsData, objectIndex)){
-                                this.objectsManager.objectsAnimationsData[objectIndex].x = posX;
-                                this.objectsManager.objectsAnimationsData[objectIndex].y = posY;
-                            }
-                            // by default objects won't have mass:
-                            let bodyMass = 0;
-                            // unless it is specified in the object itself:
-                            if({}.hasOwnProperty.call(roomObject, 'bodyMass')){
-                                bodyMass = roomObject.bodyMass;
-                            }
-                            // by default objects collision response:
-                            let colResponse = false;
-                            // unless it is specified in the object itself:
-                            if({}.hasOwnProperty.call(roomObject, 'collisionResponse')){
-                                colResponse = roomObject.collisionResponse;
-                            }
-                            // create the body:
-                            let bodyObject = this.createCollisionBody(tileW, tileH, posX, posY, bodyMass, colResponse);
-                            bodyObject.isRoomObject = true;
-                            // assign the room object to the body:
-                            bodyObject.roomObject = roomObject;
-                            Logger.info('Created object for objectIndex: ' + objectIndex);
-                            // try to get object instance from project root:
-                            this.addBody(bodyObject);
-                        }
+            let layerData = layer.data;
+            for (let c = 0; c < mapW; c++){
+                let posX = c * tileW + (tileW/2);
+                for (let r = 0; r < mapH; r++){
+                    // position in pixels:
+                    let posY = r * tileH + (tileH/2);
+                    let tileIndex = r * mapW + c;
+                    let tile = layerData[tileIndex];
+                    // the 0 value are empty tiles without collisions or change points:
+                    if (
+                        tile !== 0
+                        && (layer.name.indexOf('change-points') !== -1 || layer.name.indexOf('collisions') !== -1)
+                    ){
+                        this.createCollision(layer.name, tileIndex, tileW, tileH, posX, posY);
+                    }
+                    // objects will be found by layer name + tile index:
+                    let objectIndex = layer.name + tileIndex;
+                    // this will validate if the object class exists and return an instance of it:
+                    let roomObject = this.objectsManager.getObjectData(objectIndex);
+                    // if the data and the instance was created:
+                    if(roomObject){
+                        this.createWorldObject(roomObject, objectIndex, tileW, tileH, posX, posY);
                     }
                 }
             }
         }
+    }
+
+    createCollision(layerName, tileIndex, tileW, tileH, posX, posY)
+    {
+        // look for change points on the layers with the proper name convention:
+        if(layerName.indexOf('change-points') !== -1){
+            if(this.changePoints[tileIndex]){
+                Logger.info('Created change point on tileIndex: ' + tileIndex);
+                // @NOTE: we make the change point smaller so the user needs to walk into to hit it.
+                let bodyChangePoint = this.createCollisionBody((tileW/2), (tileH/2), posX, posY);
+                bodyChangePoint.changeScenePoint = this.changePoints[tileIndex];
+                this.addBody(bodyChangePoint);
+            } else {
+                Logger.error(['Change point not created for this.changePoints[tileIndex]:', tileIndex]);
+            }
+        }
+        // create collisions for layers with the proper name convention:
+        if(layerName.indexOf('collisions') !== -1){
+            // create a box to fill the space:
+            let bodyWall = this.createCollisionBody(tileW, tileH, posX, posY);
+            bodyWall.isWall = true;
+            this.addBody(bodyWall);
+        }
+    }
+
+    createWorldObject(roomObject, objectIndex, tileW, tileH, posX, posY)
+    {
+        // handle body fixed position:
+        if({}.hasOwnProperty.call(roomObject, 'xFix')){
+            posX += roomObject.xFix;
+        }
+        if({}.hasOwnProperty.call(roomObject, 'yFix')){
+            posY += roomObject.yFix;
+        }
+        roomObject.x = posX;
+        roomObject.y = posY;
+        // save position in room object:
+        if({}.hasOwnProperty.call(this.objectsManager.objectsAnimationsData, objectIndex)){
+            this.objectsManager.objectsAnimationsData[objectIndex].x = posX;
+            this.objectsManager.objectsAnimationsData[objectIndex].y = posY;
+        }
+        // by default objects won't have mass:
+        let bodyMass = 0;
+        // unless it is specified in the object itself:
+        if({}.hasOwnProperty.call(roomObject, 'bodyMass')){
+            bodyMass = roomObject.bodyMass;
+        }
+        // by default objects collision response:
+        let colResponse = false;
+        // unless it is specified in the object itself:
+        if({}.hasOwnProperty.call(roomObject, 'collisionResponse')){
+            colResponse = roomObject.collisionResponse;
+        }
+        // create the body:
+        let bodyObject = this.createCollisionBody(tileW, tileH, posX, posY, bodyMass, colResponse);
+        bodyObject.isRoomObject = true;
+        // assign the room object to the body:
+        bodyObject.roomObject = roomObject;
+        Logger.info('Created object for objectIndex: ' + objectIndex);
+        // try to get object instance from project root:
+        this.addBody(bodyObject);
     }
 
     createLimits()

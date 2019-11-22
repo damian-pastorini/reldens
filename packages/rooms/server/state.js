@@ -58,7 +58,7 @@ class State extends Schema
 
 }
 
-type({ map: Player })(State.prototype, 'players');
 type('string')(State.prototype, 'sceneData');
+type({ map: Player })(State.prototype, 'players');
 
 module.exports.State = State;

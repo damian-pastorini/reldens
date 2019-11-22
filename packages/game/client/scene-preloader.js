@@ -2,14 +2,14 @@
  *
  * Reldens - ScenePreloader
  *
- * This class extends Phaser.Scene to preload all the required assets, generate the UI and assign the actions.
+ * This class extends Phaser Scene to preload all the required assets, generate the UI and assign the actions.
  *
  */
 
-const Phaser = require('phaser');
+const { Scene, Geom } = require('phaser');
 const { GameConst } = require('../constants');
 
-class ScenePreloader extends Phaser.Scene
+class ScenePreloader extends Scene
 {
 
     // @TODO: - Seiyria - one thing that typescript would REALLY help with, is you could have an interface for what
@@ -25,9 +25,6 @@ class ScenePreloader extends Phaser.Scene
         this.progressBar = null;
         this.progressCompleteRect = null;
         this.progressRect = null;
-        // @TODO: implement player custom avatar.
-        // , username
-        // this.username = username;
         this.gameManager = props.gameManager;
         this.preloadAssets = props.preloadAssets;
         let currentScene = this.gameManager.activeRoomEvents.getActiveScene();
@@ -38,9 +35,6 @@ class ScenePreloader extends Phaser.Scene
     {
         if(this.uiScene){
             // ui elements:
-            // @TODO: - Seiyria - this sort of getter isn't inherently bad, but you have to remember a lot of paths to
-            //   make it work. I'm not really sure I have a recommendation presently, just that this might be something
-            //   to watch out for in the future
             if(this.gameManager.config.get('client/general/uiVisibility/uiBoxRight')){
                 this.load.html('uiBoxRight', 'assets/html/ui-box-right.html');
             }
@@ -89,8 +83,6 @@ class ScenePreloader extends Phaser.Scene
                         console.log('ERROR - Missing spritesheet params:', asset);
                     }
                 }
-                // example atlas:
-                // this.load.atlas('gems', 'assets/tests/columns/gems.png', 'assets/tests/columns/gems.json');
             }
         }
         let playerSpriteSize = {
@@ -155,8 +147,9 @@ class ScenePreloader extends Phaser.Scene
             this.gameManager.features.createFeaturesUi(this);
         }
         // player animations:
-        // @TODO: player animation will be part of the configuration in the database.
-        // @TODO: implement player custom avatar.
+        // @TODO:
+        //   - Player animation will be part of the configuration in the database.
+        //   - Implement player custom avatar.
         this.anims.create({
             key: GameConst.LEFT,
             frames: this.anims.generateFrameNumbers(GameConst.IMAGE_PLAYER, {start: 3, end: 5}),
@@ -252,11 +245,11 @@ class ScenePreloader extends Phaser.Scene
 
     createProgressBar()
     {
-        let Rectangle = Phaser.Geom.Rectangle;
+        let Rectangle = Geom.Rectangle;
         let main = Rectangle.Clone(this.cameras.main);
         this.progressRect = new Rectangle(0, 0, main.width / 2, 50);
         Rectangle.CenterOn(this.progressRect, main.centerX, main.centerY);
-        this.progressCompleteRect = Phaser.Geom.Rectangle.Clone(this.progressRect);
+        this.progressCompleteRect = Geom.Rectangle.Clone(this.progressRect);
         this.progressBar = this.add.graphics();
         let width = this.cameras.main.width;
         let height = this.cameras.main.height;
