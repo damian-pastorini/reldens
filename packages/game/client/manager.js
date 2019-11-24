@@ -39,7 +39,7 @@ class GameManager
 
     async joinGame(formData, isNewUser = false)
     {
-        EventsManager.emit('beforeJoinGame', {gameManager: this, formData: formData, isNewUser: isNewUser});
+        EventsManager.emit('reldens.beforeJoinGame', {gameManager: this, formData: formData, isNewUser: isNewUser});
         this.initializeClient();
         // login or register:
         if(isNewUser){
@@ -74,7 +74,7 @@ class GameManager
 
     async initEngineAndStartGame(initialGameData)
     {
-        EventsManager.emit('beforeInitEngineAndStartGame', {initialGameData: initialGameData});
+        EventsManager.emit('reldens.beforeInitEngineAndStartGame', {initialGameData: initialGameData});
         if(!{}.hasOwnProperty.call(initialGameData, 'gameConfig')){
             throw new Error('ERROR - Missing game configuration.');
         }

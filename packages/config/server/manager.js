@@ -42,7 +42,7 @@ class ConfigManager
      */
     async loadConfigurations()
     {
-        EventsManager.emit('beforeLoadConfigurations', {configManager: this});
+        EventsManager.emit('reldens.beforeLoadConfigurations', {configManager: this});
         // get the configurations from the database:
         let configCollection = await ConfigModel.query();
         // set them in the manager property so we can find them by path later:
@@ -66,7 +66,7 @@ class ConfigManager
             }
             this.configList[config.scope][pathSplit[0]][pathSplit[1]][pathSplit[2]] = this.getParsedValue(config);
         }
-        EventsManager.emit('afterLoadConfigurations', {configManager: this});
+        EventsManager.emit('reldens.afterLoadConfigurations', {configManager: this});
     }
 
     async loadAndGetProcessor()
@@ -87,7 +87,7 @@ class ConfigManager
      */
     getParsedValue(config)
     {
-        EventsManager.emit('beforeGetParsedValue', {configManager: this, config: config});
+        EventsManager.emit('reldens.beforeGetParsedValue', {configManager: this, config: config});
         if(config.type === CONFIG_TYPE_TEXT){
             return config.value;
         }

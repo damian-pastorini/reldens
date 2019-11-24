@@ -60,16 +60,16 @@ class ServerManager
         this.createServer();
         await this.initializeManagers();
         // after the rooms were loaded then finish the server process:
-        EventsManager.emit('serverBeforeListen', {serverManager: this});
+        EventsManager.emit('reldens.serverBeforeListen', {serverManager: this});
         this.gameServer.listen(this.configServer.port);
         Logger.info('Listening on '+this.configServer.host+':'+this.configServer.port);
         await this.createClientBundle();
-        EventsManager.emit('serverReady', {serverManager: this});
+        EventsManager.emit('reldens.serverReady', {serverManager: this});
     }
 
     createServer()
     {
-        EventsManager.emit('serverStartBegin', {serverManager: this});
+        EventsManager.emit('reldens.serverStartBegin', {serverManager: this});
         this.app = express();
         this.app.use(cors());
         this.app.use(express.json());
@@ -94,20 +94,17 @@ class ServerManager
         configProcessor.projectRoot = this.projectRoot;
         // theme root:
         configProcessor.projectTheme = ThemeManager.projectTheme;
-        EventsManager.emit('serverConfigReady', {serverManager: this, configProcessor: configProcessor});
+        EventsManager.emit('reldens.serverConfigReady', {serverManager: this, configProcessor: configProcessor});
         // features manager:
         this.featuresManager = new FeaturesManager();
         // load the available features list and append to the config, this way we will pass the list to the client:
         configProcessor.availableFeaturesList = await this.featuresManager.loadFeatures();
-        EventsManager.emit('serverConfigFeaturesReady', {serverManager: this, configProcessor: configProcessor});
+        EventsManager.emit('reldens.serverConfigFeaturesReady', {serverManager: this, configProcessor: configProcessor});
         // users manager:
         this.usersManager = new UsersManager();
         // the rooms manager will receive the features rooms to be defined:
-        this.roomsManager = new RoomsManager({
-            defineRooms: this.featuresManager.featuresWithRooms,
-            messageActions: this.featuresManager.messageActions
-        });
-        EventsManager.emit('serverBeforeLoginManager', {serverManager: this});
+        this.roomsManager = new RoomsManager();
+        EventsManager.emit('reldens.serverBeforeLoginManager', {serverManager: this});
         // login manager:
         this.loginManager = new LoginManager({
             config: configProcessor,
@@ -115,7 +112,7 @@ class ServerManager
             roomsManager: this.roomsManager
         });
         // prepare rooms:
-        EventsManager.emit('serverBeforeDefineRooms', {serverManager: this});
+        EventsManager.emit('reldens.serverBeforeDefineRooms', {serverManager: this});
         await this.roomsManager.defineRoomsInGameServer(this.gameServer, {
             loginManager: this.loginManager,
             config: configProcessor

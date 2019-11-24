@@ -7,7 +7,8 @@
  */
 
 const { RoomLogin } = require('../../rooms/server/login');
-const ChatManager = require('./manager');
+const { ChatManager } = require('./manager');
+const { Cleaner } = require('./cleaner');
 const { ChatConst } = require('../constants');
 
 class RoomChat extends RoomLogin
@@ -39,10 +40,7 @@ class RoomChat extends RoomLogin
         let currentActivePlayer = this.activePlayers[client.sessionId];
         if(currentActivePlayer){
             if(data.act === ChatConst.CHAT_ACTION){
-                // @TODO: - Seiyria - I've seen this code in a few places. you may want to create a helper service that
-                //   handles repeated code actions like this, because it is fairly unideal to have duplicated code in
-                //   multiple places
-                let text = data[ChatConst.CHAT_MESSAGE].toString().replace('\\', '');
+                let text = Cleaner.cleanMessage(data[ChatConst.CHAT_MESSAGE]);
                 let messageObject = {act: ChatConst.CHAT_ACTION, f: currentActivePlayer.username};
                 let clientTo = false;
                 let clientToPlayerSchema = false;
@@ -97,6 +95,7 @@ class RoomChat extends RoomLogin
         }
     }
 
+    // eslint-disable-next-line no-unused-vars
     onLeave(client, consented)
     {
         if(this.config.get('feature/chat/messages/broadcast_leave')){
@@ -128,4 +127,4 @@ class RoomChat extends RoomLogin
 
 }
 
-module.exports = RoomChat;
+module.exports.RoomChat = RoomChat;

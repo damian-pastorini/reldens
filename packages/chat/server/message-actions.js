@@ -6,17 +6,18 @@
  *
  */
 
-const ChatManager = require('./manager');
+const { ChatManager } = require('./manager');
+const { Cleaner } = require('./cleaner');
 const { ChatConst } = require('../constants');
 const { GameConst } = require('../../game/constants');
 
-class MessageActions
+class ChatMessageActions
 {
 
     parseMessageAndRunActions(room, data, playerSchema)
     {
         if(data.act === ChatConst.CHAT_ACTION){
-            let message = data[ChatConst.CHAT_MESSAGE].toString().replace('\\', '');
+            let message = Cleaner.cleanMessage(data[ChatConst.CHAT_MESSAGE]);
             let messageData = {act: ChatConst.CHAT_ACTION, m: message, f: playerSchema.username, t: ChatConst.CHAT_TYPE_NORMAL};
             room.broadcast(messageData);
             ChatManager.saveMessage(message, playerSchema, {}, false).catch((err) => {
@@ -35,4 +36,4 @@ class MessageActions
 
 }
 
-module.exports = MessageActions;
+module.exports.ChatMessageActions = new ChatMessageActions();

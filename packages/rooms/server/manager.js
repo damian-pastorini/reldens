@@ -12,37 +12,34 @@ const { RoomScene } = require('./scene');
 const { GameConst } = require('../../game/constants');
 const { Logger } = require('../../game/logger');
 const { ErrorManager } = require('../../game/error-manager');
+const { EventsManager } = require('../../game/events-manager');
 
 class RoomsManager
 {
 
-    constructor(options)
+    constructor()
     {
-        if({}.hasOwnProperty.call(options, 'defineRooms')){
-            this.defineRooms = options.defineRooms;
-        } else {
-            this.defineRooms = false;
-            Logger.info('None extra rooms to be defined.');
-        }
-        if({}.hasOwnProperty.call(options, 'messageActions')){
-            this.messageActions = options.messageActions;
-        } else {
-            this.messageActions = false;
-            Logger.info('None additional message actions to be defined.');
-        }
+        this.defineExtraRooms = [];
     }
 
     async defineRoomsInGameServer(gameServer, props)
     {
+        EventsManager.emit('reldens.roomsDefinition', this.defineExtraRooms);
+        if(!this.defineExtraRooms.length){
+            Logger.info('None extra rooms to be defined.');
+        }
+        // dispatch event to get the global message actions (that will be listen by every room):
+        let globalMessageActions = {};
+        EventsManager.emit('reldens.roomsMessageActionsGlobal', globalMessageActions);
         // loaded rooms counter:
         let counter = 0;
         // lobby room:
-        gameServer.define(GameConst.ROOM_GAME, RoomGame, props);
+        this.defineRoom(gameServer, GameConst.ROOM_GAME, RoomGame, props, globalMessageActions);
         Logger.info('Loaded game room using stored configuration.');
         // define extra rooms (if any, for example features rooms):
-        if(this.defineRooms){
-            for(let roomData of this.defineRooms){
-                gameServer.define(roomData.roomName, roomData.room, props);
+        if(this.defineExtraRooms){
+            for(let roomData of this.defineExtraRooms){
+                this.defineRoom(gameServer, roomData.roomName, roomData.room, props, globalMessageActions);
                 counter++;
                 Logger.info(`Loaded extra room: ${roomData.roomName}`);
             }
@@ -50,30 +47,41 @@ class RoomsManager
         // load rooms data:
         let rooms = await this.loadRooms();
         // register room-scenes from database:
-        for(let room of rooms){
-            // merge room data and props:
-            let roomProps = {
-                roomData: room,
-                loginManager: props.loginManager,
-                config: props.config,
-                messageActions: this.messageActions
-            };
+        for(let roomModel of rooms){
             // @TODO: improve the way a custom room class can be defined to avoid this require.
-            let roomClass = room.roomClassPath ? require(room.roomClassPath) : RoomScene;
+            let roomClass = roomModel.roomClassPath ? require(roomModel.roomClassPath) : RoomScene;
             // define the room including all the props:
-            gameServer.define(room.roomName, roomClass, roomProps);
+            this.defineRoom(gameServer, roomModel.roomName, roomClass, props, globalMessageActions, roomModel);
             counter++;
-            Logger.info(`Loaded room: ${room.roomName}`);
+            Logger.info(`Loaded room: ${roomModel.roomName}`);
         }
         // log defined rooms:
         Logger.info(`Total rooms loaded: ${counter}`);
         return rooms;
     }
 
+    defineRoom(gameServer, roomName, roomClass, props, globalMessageActions, roomModel = false)
+    {
+        let roomMessageActions = Object.assign({}, globalMessageActions);
+        // run message actions event for each room:
+        EventsManager.emit('reldens.roomsMessageActionsByRoom', roomMessageActions, roomName);
+        // merge room data and props:
+        let roomProps = {
+            loginManager: props.loginManager,
+            config: props.config,
+            messageActions: roomMessageActions
+        };
+        if(roomModel){
+            roomProps.roomData = roomModel;
+        }
+        gameServer.define(roomName, roomClass, roomProps);
+    }
+
     async loadRooms()
     {
         // get rooms:
-        let roomsModels = await RoomsModel.query().eager('[rooms_change_points.next_room, rooms_return_points.to_room]');
+        let roomsModels = await RoomsModel.query()
+            .eager('[rooms_change_points.next_room, rooms_return_points.to_room]');
         if(!roomsModels){
             ErrorManager.error('None rooms found in the database. A room is required to run.');
         }

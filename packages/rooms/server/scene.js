@@ -104,7 +104,7 @@ class RoomScene extends RoomLogin
         }
     }
 
-    onMessage(client, data)
+    onMessage(client, messageData)
     {
         // get player:
         let playerSchema = this.getPlayerFromState(client.sessionId);
@@ -112,64 +112,64 @@ class RoomScene extends RoomLogin
             // get player body:
             let bodyToMove = playerSchema.p2body;
             // if player is moving:
-            if({}.hasOwnProperty.call(data, 'dir') && bodyToMove){
+            if({}.hasOwnProperty.call(messageData, 'dir') && bodyToMove){
                 if(this.config.get('server/general/controls/allow_simultaneous_keys') === 1){
                     /* @TODO: implement.
-                    if(data.dir === GameConst.RIGHT){
+                    if(messageData.dir === GameConst.RIGHT){
                         bodyToMove.velocity[0] = GameConst.SPEED_SERVER;
                     }
-                    if(data.dir === GameConst.LEFT){
+                    if(messageData.dir === GameConst.LEFT){
                         bodyToMove.velocity[0] = -GameConst.SPEED_SERVER;
                     }
-                    if(data.dir === GameConst.UP){
+                    if(messageData.dir === GameConst.UP){
                         bodyToMove.velocity[1] = -GameConst.SPEED_SERVER;
                     }
-                    if(data.dir === GameConst.DOWN){
+                    if(messageData.dir === GameConst.DOWN){
                         bodyToMove.velocity[1] = GameConst.SPEED_SERVER;
                     }
                     */
                 } else {
                     let serverSpeed = this.config.get('server/players/physicsBody/speed') || GameConst.SPEED_SERVER;
                     // if body is moving then avoid multiple key press at the same time:
-                    if(data.dir === GameConst.RIGHT && bodyToMove.velocity[1] === 0){
+                    if(messageData.dir === GameConst.RIGHT && bodyToMove.velocity[1] === 0){
                         bodyToMove.velocity[0] = serverSpeed;
                     }
-                    if(data.dir === GameConst.LEFT && bodyToMove.velocity[1] === 0){
+                    if(messageData.dir === GameConst.LEFT && bodyToMove.velocity[1] === 0){
                         bodyToMove.velocity[0] = -serverSpeed;
                     }
-                    if(data.dir === GameConst.UP && bodyToMove.velocity[0] === 0){
+                    if(messageData.dir === GameConst.UP && bodyToMove.velocity[0] === 0){
                         bodyToMove.velocity[1] = -serverSpeed;
                     }
-                    if(data.dir === GameConst.DOWN && bodyToMove.velocity[0] === 0){
+                    if(messageData.dir === GameConst.DOWN && bodyToMove.velocity[0] === 0){
                         bodyToMove.velocity[1] = serverSpeed;
                     }
                 }
-                data.x = bodyToMove.position[0];
-                data.y = bodyToMove.position[1];
-                this.state.movePlayer(client.sessionId, data);
+                messageData.x = bodyToMove.position[0];
+                messageData.y = bodyToMove.position[1];
+                this.state.movePlayer(client.sessionId, messageData);
             }
             // if player stopped:
-            if(data.act === GameConst.STOP){
+            if(messageData.act === GameConst.STOP){
                 // get player body:
                 let bodyToMove = playerSchema.p2body;
                 if(bodyToMove){
                     // stop by setting speed to zero:
                     bodyToMove.velocity[0] = 0;
                     bodyToMove.velocity[1] = 0;
-                    data.x = bodyToMove.position[0];
-                    data.y = bodyToMove.position[1];
-                    this.state.stopPlayer(client.sessionId, data);
+                    messageData.x = bodyToMove.position[0];
+                    messageData.y = bodyToMove.position[1];
+                    this.state.stopPlayer(client.sessionId, messageData);
                 }
             }
             if(this.messageActions){
                 for(let idx in this.messageActions){
-                    this.messageObserver = new this.messageActions[idx]();
-                    this.messageObserver.parseMessageAndRunActions(this, data, playerSchema);
+                    this.messageObserver = this.messageActions[idx];
+                    this.messageObserver.parseMessageAndRunActions(this, messageData, playerSchema);
                 }
             }
             // @NOTE: player states must be requested since are private user data that we can share with other players
             // or broadcast to the rooms.
-            if(data.act === GameConst.PLAYER_STATS){
+            if(messageData.act === GameConst.PLAYER_STATS){
                 this.send(client, {act: GameConst.PLAYER_STATS, stats: playerSchema.stats});
             }
         }

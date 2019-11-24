@@ -6,7 +6,7 @@
  *
  */
 
-const ChatModel = require('./model');
+const { ChatModel } = require('./model');
 
 class ChatManager
 {
@@ -24,14 +24,13 @@ class ChatManager
         let insertModel = {
             // @TODO: temporal getting player_id from stats.
             player_id: playerSchema.stats.player_id,
-            // @TODO: cut message at 140 characters.
             message: message,
             message_time: this.getCurrentDate()
         };
         if(playerSchema.state.room_id){
             insertModel.room_id = playerSchema.state.room_id;
         }
-        if(clientToPlayerSchema.hasOwnProperty('id')){
+        if({}.hasOwnProperty.call(clientToPlayerSchema, 'id')){
             insertModel.private_player_id = clientToPlayerSchema.state.player_id;
         }
         if(messageType){
@@ -43,8 +42,11 @@ class ChatManager
         }
     }
 
-    // @TODO: - Seiyria - just a nitpick, but I would just send Date.now() and use a date parser client side to do this.
-    //   not everyone is in the same timezone.
+    /**
+     * Current date is just for internal use and save the message date on the server side.
+     *
+     * @returns {string}
+     */
     getCurrentDate()
     {
         // get date:
@@ -55,4 +57,4 @@ class ChatManager
 
 }
 
-module.exports = new ChatManager();
+module.exports.ChatManager = new ChatManager();

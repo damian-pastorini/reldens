@@ -8,6 +8,8 @@
  *
  */
 
+const { ChatPack } = require('../../chat/server/pack');
+
 module.exports.ServerCoreFeatures = {
-    chat: require('../../chat/server/chat-pack-server')
+    chat: ChatPack
 };

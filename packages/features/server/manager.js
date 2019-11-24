@@ -19,9 +19,6 @@ class FeaturesManager
         // initialize features props:
         this.featuresList = {};
         this.featuresCodeList = [];
-        this.featuresWithRooms = [];
-        this.featuresWithRoomsCodeList = [];
-        this.messageActions = {};
     }
 
     async loadFeatures()
@@ -43,15 +40,6 @@ class FeaturesManager
                 let featurePackage = this.availableFeatures[featureEntity.code];
                 // set package on entity:
                 featureEntity.package = featurePackage;
-                // if the feature package has a room then add the room to the list:
-                if({}.hasOwnProperty.call(featurePackage, 'room')){
-                    this.featuresWithRooms.push({roomName: featureEntity.code, room: featurePackage.room});
-                    this.featuresWithRoomsCodeList.push(featureEntity.code);
-                }
-                // if the feature package has an messageActions observer then add the observer to the list:
-                if({}.hasOwnProperty.call(featurePackage, 'messageActions')){
-                    this.messageActions[featureEntity.code] = featurePackage.messageActions;
-                }
                 // for last add the feature entity to the list:
                 this.featuresList[featureEntity.code] = featureEntity;
             }
