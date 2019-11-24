@@ -5,8 +5,8 @@
  * This class will load the features, parse the configuration file and assign them as required.
  *
  */
-// @TODO: replace this config file by events or move it into theme/packages?
-const { ConfiguredFeatures } = require('./config-server');
+
+const { ServerCoreFeatures } = require('./config-server');
 const { FeaturesModel } = require('./model');
 
 class FeaturesManager
@@ -15,7 +15,7 @@ class FeaturesManager
     constructor()
     {
         // all available features listed in config file:
-        this.availableFeatures = ConfiguredFeatures;
+        this.availableFeatures = ServerCoreFeatures;
         // initialize features props:
         this.featuresList = {};
         this.featuresCodeList = [];

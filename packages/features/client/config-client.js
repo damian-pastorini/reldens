@@ -1,13 +1,14 @@
 /**
  *
- * Reldens - config/features
+ * Reldens - Client Core Features
  *
- * Please do not to modify this file!
+ * All the core features packages will be available here.
+ * Later we can control if the feature is enable/disable using the configuration in the storage.
+ * Core features will be available as part of the current Reldens version.
  *
  */
 
-// @TODO: this will be included using events?
-module.exports.ConfiguredFeatures = {
+module.exports.ClientCoreFeatures = {
     chat: require('../../chat/client/chat-pack-client'),
     objects: require('../../objects/client/objects-pack-client')
 };

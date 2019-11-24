@@ -7,7 +7,7 @@
  *
  */
 
-const { ConfiguredFeatures } = require('./config-client');
+const { ClientCoreFeatures } = require('./config-client');
 const { GameConst } = require('../../game/constants');
 
 class FeaturesClient
@@ -24,8 +24,8 @@ class FeaturesClient
         this.featuresCodeList = featuresCodeList;
         for(let idx in featuresCodeList){
             let featureCode = featuresCodeList[idx];
-            if({}.hasOwnProperty.call(ConfiguredFeatures, featureCode)){
-                this.featuresList[featureCode] = ConfiguredFeatures[featureCode];
+            if({}.hasOwnProperty.call(ClientCoreFeatures, featureCode)){
+                this.featuresList[featureCode] = ClientCoreFeatures[featureCode];
             }
         }
         return this.featuresList;
