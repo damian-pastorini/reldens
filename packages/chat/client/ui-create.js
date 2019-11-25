@@ -7,6 +7,7 @@
  */
 
 const { ChatConst } = require('../constants');
+const { Input } = require('phaser');
 
 class ChatUiCreate
 {
@@ -46,7 +47,7 @@ class ChatUiCreate
                 });
             }
             chatInput.addEventListener('keyup', (e) => {
-                if(e.keyCode === Phaser.Input.Keyboard.KeyCodes.ENTER){
+                if(e.keyCode === Input.Keyboard.KeyCodes.ENTER){
                     e.preventDefault();
                     this.sendChatMessage(chatInput, this.gameManager.activeRoomEvents);
                 }
@@ -58,7 +59,7 @@ class ChatUiCreate
     sendChatMessage(chatInput, roomEvents)
     {
         // validate if there's something to send:
-        if((!chatInput.value || chatInput.value.trim().length === 0)){
+        if((!chatInput.value || chatInput.value.replace('#', '').replace('@', '').trim().length === 0)){
             return false;
         }
         // both global or private messages use the global chat room:

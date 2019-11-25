@@ -30,7 +30,7 @@ class ChatManager
         if(playerSchema.state.room_id){
             insertModel.room_id = playerSchema.state.room_id;
         }
-        if({}.hasOwnProperty.call(clientToPlayerSchema, 'id')){
+        if(clientToPlayerSchema && {}.hasOwnProperty.call(clientToPlayerSchema, 'id')){
             insertModel.private_player_id = clientToPlayerSchema.state.player_id;
         }
         if(messageType){

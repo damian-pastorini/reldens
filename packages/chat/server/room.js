@@ -9,6 +9,8 @@
 const { RoomLogin } = require('../../rooms/server/login');
 const { ChatManager } = require('./manager');
 const { Cleaner } = require('./cleaner');
+const { ErrorManager } = require('../../game/error-manager');
+const { Logger } = require('../../game/logger');
 const { ChatConst } = require('../constants');
 
 class RoomChat extends RoomLogin
@@ -36,63 +38,86 @@ class RoomChat extends RoomLogin
 
     onMessage(client, data)
     {
+        if(data.act !== ChatConst.CHAT_ACTION){
+            // do nothing if it's not a chat message:
+            return;
+        }
+        let text = Cleaner.cleanMessage(data[ChatConst.CHAT_MESSAGE]);
+        if(
+            text.replace('#', '').trim().length === 0
+            // do not count the player name on private messages:
+            || (text.indexOf('@') !== -1 && text.substr(text.indexOf(' ')).trim().length === 0)
+        ){
+            // do nothing if text is short than 3 characters (including @ and #):
+            return;
+        }
         // get player:
         let currentActivePlayer = this.activePlayers[client.sessionId];
-        if(currentActivePlayer){
-            if(data.act === ChatConst.CHAT_ACTION){
-                let text = Cleaner.cleanMessage(data[ChatConst.CHAT_MESSAGE]);
-                let messageObject = {act: ChatConst.CHAT_ACTION, f: currentActivePlayer.username};
-                let clientTo = false;
-                let clientToPlayerSchema = false;
-                let sentText = 'Message not allowed.';
-                let messageType = false;
-                if(text.indexOf('@') === 0){
-                    let to = data[ChatConst.CHAT_TO];
-                    clientTo = this.getActivePlayerByName(to);
-                    if(clientTo){
-                        clientToPlayerSchema = clientTo.playerData;
-                        messageObject.m = text.substring(text.indexOf(' '));
-                        messageObject.t = ChatConst.CHAT_TYPE_PRIVATE_FROM;
-                        this.send(client, messageObject);
-                        messageObject.t = ChatConst.CHAT_TYPE_PRIVATE_TO;
-                        this.send(clientTo.client, messageObject);
-                    } else {
-                        messageObject.m = 'Player not found: '+to;
-                        messageObject.f = 'System';
-                        messageObject.t = ChatConst.CHAT_TYPE_SYSTEM_ERROR;
-                        this.send(client, messageObject);
-                        messageType = 's';
-                    }
-                } else if(text.indexOf('#') === 0){
-                    let isGlobalEnabled = this.config.get('feature/chat/messages/global_enabled');
-                    let globalAllowedRoles = this.config.get('feature/chat/messages/global_allowed_roles')
-                        .split(',')
-                        .map(Number);
-                    if(isGlobalEnabled && globalAllowedRoles.indexOf(currentActivePlayer.role_id) !== -1){
-                        messageObject.m = text.substring(1);
-                        messageObject.t = ChatConst.CHAT_TYPE_GLOBAL;
-                        this.broadcast(messageObject);
-                        messageType = 'g';
-                    } else {
-                        messageObject.m = 'Global messages not allowed.';
-                        messageObject.f = 'System';
-                        messageObject.t = ChatConst.CHAT_TYPE_SYSTEM_ERROR;
-                        this.send(client, messageObject);
-                        messageType = 's';
-                    }
-                } else {
-                    messageObject.m = sentText+' - '+text;
-                    messageObject.f = 'System';
-                    messageObject.t = ChatConst.CHAT_TYPE_SYSTEM_ERROR;
-                    this.send(client, messageObject);
-                    messageType = 's';
-                }
-                ChatManager.saveMessage(sentText, currentActivePlayer.playerData, clientToPlayerSchema, messageType)
-                    .catch((err) => {
-                        console.log('ERROR - Global chat save error:', err);
-                     });
-            }
+        if(!currentActivePlayer){
+            // throw error if player does not exists:
+            ErrorManager.error('Current Active Player not found: '+client.sessionId);
         }
+        let messageObject = {act: ChatConst.CHAT_ACTION, f: currentActivePlayer.username};
+        if(text.indexOf('@') === 0){
+            this.sendPrivateMessage(client, data[ChatConst.CHAT_TO], text, messageObject, currentActivePlayer);
+        } else if(text.indexOf('#') === 0){
+            this.sendGlobalMessage(client, text, messageObject, currentActivePlayer);
+        }
+    }
+
+    sendPrivateMessage(client, toPlayer, text, messageObject, currentActivePlayer)
+    {
+        let clientTo = this.getActivePlayerByName(toPlayer);
+        let messageType = false;
+        let clientToPlayerSchema = false;
+        if(clientTo){
+            // send message to each client:
+            clientToPlayerSchema = clientTo.playerData;
+            messageObject.m = text.substring(text.indexOf(' '));
+            messageObject.t = ChatConst.CHAT_TYPE_PRIVATE_FROM;
+            this.send(client, messageObject);
+            messageObject.t = ChatConst.CHAT_TYPE_PRIVATE_TO;
+            this.send(clientTo.client, messageObject);
+        } else {
+            let errorMessage = 'Private chat player not found: '+toPlayer;
+            this.sendErrorMessage(client, messageObject, errorMessage);
+            messageType = 's';
+        }
+        ChatManager.saveMessage(messageObject.m, currentActivePlayer.playerData, clientToPlayerSchema, messageType)
+            .catch((err) => {
+                Logger.error('Private chat save error:', err);
+            });
+    }
+
+    sendGlobalMessage(client, text, messageObject, currentActivePlayer)
+    {
+        let messageType = false;
+        let isGlobalEnabled = this.config.get('feature/chat/messages/global_enabled');
+        let globalAllowedRoles = this.config.get('feature/chat/messages/global_allowed_roles')
+            .split(',')
+            .map(Number);
+        if(isGlobalEnabled && globalAllowedRoles.indexOf(currentActivePlayer.role_id) !== -1){
+            messageObject.m = text.substring(1);
+            messageObject.t = ChatConst.CHAT_TYPE_GLOBAL;
+            this.broadcast(messageObject);
+            messageType = 'g';
+        } else {
+            let errorMessage = 'Global messages not allowed.';
+            this.sendErrorMessage(client, messageObject, errorMessage);
+            messageType = 's';
+        }
+        ChatManager.saveMessage(messageObject.m, currentActivePlayer.playerData, false, messageType)
+            .catch((err) => {
+                Logger.error('Global chat save error:', err);
+            });
+    }
+
+    sendErrorMessage(client, messageObject, message)
+    {
+        messageObject.m = message;
+        messageObject.f = 'System';
+        messageObject.t = ChatConst.CHAT_TYPE_SYSTEM_ERROR;
+        this.send(client, messageObject);
     }
 
     // eslint-disable-next-line no-unused-vars
