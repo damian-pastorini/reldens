@@ -61,8 +61,6 @@ class SceneDynamic extends Phaser.Scene
         });
         // create animations for all the objects in the scene:
         this.createDynamicAnimations();
-        // display the animations over the proper layer:
-        this.setObjectsAnimationsDepth();
     }
 
     createDynamicAnimations()
@@ -139,17 +137,6 @@ class SceneDynamic extends Phaser.Scene
             }
             idx++;
         }
-    }
-
-    setObjectsAnimationsDepth()
-    {
-        // @TODO: make this configurable in each object using a dynamic or fixed depth property.
-        /*
-        for(let idx in this.objectsAnimations){
-            let objAnimation = this.objectsAnimations[idx];
-            objAnimation.setDepthBasedOnLayer(this);
-        }
-        */
     }
 
     registerTilesetAnimation(layer)

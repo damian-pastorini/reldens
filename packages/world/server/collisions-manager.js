@@ -73,7 +73,8 @@ class CollisionsManager
 
     playerHitPlayer(bodyA, bodyB)
     {
-        console.log('hit player!', bodyA.playerId, bodyB.playerId);
+        // @TODO: implement players collisions.
+        Logger.info(['Hit player!', bodyA.playerId, bodyB.playerId]);
     }
 
     playerHitObject(currentPlayerBody, otherBody)

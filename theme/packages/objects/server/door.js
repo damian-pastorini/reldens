@@ -12,7 +12,7 @@
 
 const AnimationObject = require('reldens/packages/objects/server/animation-object');
 
-class DoorObject extends AnimationObject
+class Door extends AnimationObject
 {
 
     constructor(props)
@@ -41,4 +41,4 @@ class DoorObject extends AnimationObject
 
 }
 
-module.exports = DoorObject;
+module.exports.Door = Door;

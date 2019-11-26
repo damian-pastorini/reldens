@@ -8,6 +8,7 @@
 
 const { ChatManager } = require('./manager');
 const { Cleaner } = require('./cleaner');
+const { Logger } = require('../../game/logger');
 const { ChatConst } = require('../constants');
 const { GameConst } = require('../../game/constants');
 
@@ -28,7 +29,7 @@ class ChatMessageActions
                 };
                 room.broadcast(messageData);
                 ChatManager.saveMessage(message, playerSchema, {}, false).catch((err) => {
-                    console.log('ERROR - Chat save error:', err);
+                    Logger.error(['Chat save error:', err]);
                 });
             }
         }
@@ -37,7 +38,7 @@ class ChatMessageActions
             room.broadcast({act: ChatConst.CHAT_ACTION, m: sentText, f: 'System', t: ChatConst.CHAT_TYPE_SYSTEM});
             ChatManager.saveMessage(room.roomName, playerSchema, false, ChatConst.CHAT_JOINED)
                 .catch((err) => {
-                    console.log('ERROR - Joined room chat save error:', err);
+                    Logger.error(['Joined room chat save error:', err]);
                 });
         }
     }

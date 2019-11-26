@@ -13,19 +13,15 @@ const { Logger } = require('../../game/logger');
 class AnimationObject extends BaseObject
 {
 
-    // @TODO: - Seiyria ideally, all of your object props should be declared here, so someone can figure out at a glance
-    //   what properties are available. for example:
-    // isAnimation = true
-    // key = '';
-    // this would let you track what properties exist without having to check all the functions on the object
+    // object type:
+    isAnimation = true;
+    // the actions will be false as default:
+    runOnHit = false;
+    runOnAction = false;
+
     constructor(props)
     {
         super(props);
-        // this is a hardcoded property for this specific object type:
-        this.isAnimation = true;
-        // the actions will be false as default:
-        this.runOnHit = false;
-        this.runOnAction = false;
     }
 
     get animationData()
@@ -56,7 +52,7 @@ class AnimationObject extends BaseObject
         if(this.runOnAction && props.room) {
             let client = props.room.getClientById(props.playerBody.playerId);
             if(!client){
-                console.log('ERROR - Object action, client not found by playerId:', props.playerBody.playerId);
+                Logger.error(['Object action, client not found by playerId:', props.playerBody.playerId]);
             } else {
                 props.room.send(client, this.animationData);
             }

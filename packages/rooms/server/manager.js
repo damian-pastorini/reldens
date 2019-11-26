@@ -48,8 +48,19 @@ class RoomsManager
         let rooms = await this.loadRooms();
         // register room-scenes from database:
         for(let roomModel of rooms){
-            // @TODO: improve the way a custom room class can be defined to avoid this require.
-            let roomClass = roomModel.roomClassPath ? require(roomModel.roomClassPath) : RoomScene;
+            let roomClass = RoomScene;
+            if(roomModel.roomClassKey){
+                let roomClassDefinition = props.config.get('server/customClasses/rooms/'+roomModel.room_class_key);
+                if(!roomClassDefinition){
+                    Logger.error([
+                        'RoomsManager custom class not found.',
+                        '- Room ID:', roomModel.id,
+                        '- Custom class:', roomModel.room_class_key
+                    ]);
+                    continue;
+                }
+                roomClass = roomClassDefinition ? roomClassDefinition : RoomScene;
+            }
             // define the room including all the props:
             this.defineRoom(gameServer, roomModel.roomName, roomClass, props, globalMessageActions, roomModel);
             counter++;
@@ -120,7 +131,7 @@ class RoomsManager
             sceneImages: room.scene_images,
             changePoints: [],
             returnPoints: [],
-            roomClassPath: room.room_class_path
+            roomClassPath: room.room_class_key
         };
         // assign to room:
         for (let changePoint of room.rooms_change_points){

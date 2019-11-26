@@ -163,8 +163,12 @@ class RoomScene extends RoomLogin
             }
             if(this.messageActions){
                 for(let idx in this.messageActions){
-                    this.messageObserver = this.messageActions[idx];
-                    this.messageObserver.parseMessageAndRunActions(this, messageData, playerSchema);
+                    let messageObserver = this.messageActions[idx];
+                    if(typeof messageObserver.parseMessageAndRunActions === 'function'){
+                        messageObserver.parseMessageAndRunActions(this, messageData, playerSchema);
+                    } else {
+                        Logger.error(['Broken message observer!', messageObserver]);
+                    }
                 }
             }
             // @NOTE: player states must be requested since are private user data that we can share with other players

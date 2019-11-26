@@ -38,6 +38,8 @@ class ServerManager
 
     initializeConfiguration(config)
     {
+        // configuration data from database:
+        this.configManager = new ConfigManager();
         // save project root:
         this.projectRoot = config.projectRoot || './';
         Logger.info(['Project root:', this.projectRoot,  '- Module root: ', __dirname]);
@@ -49,6 +51,16 @@ class ServerManager
             host: process.env.RELDENS_APP_HOST || 'http://localhost',
             monitor: process.env.RELDENS_MONITOR || false
         };
+        if(config.customClasses){
+            this.configManager.configList.server.customClasses = config.customClasses;
+        } else {
+            Logger.error('\nMissing customClasses definition! Please copy the default file from:'
+                +'\nnode_modules/reldens/theme/packages/server.js'
+                +'\nRequire it and pass it as parameter in your ServerManager initialization.'
+                +'\nFor reference check the theme/project-index.js.sample file, you probably just need to uncomment'
+                +' the customClasses lines.'
+                +'\nNote you can also pass an empty object to avoid this.\n');
+        }
     }
 
     /**
@@ -86,8 +98,6 @@ class ServerManager
 
     async initializeManagers()
     {
-        // configuration data from database:
-        this.configManager = new ConfigManager();
         // get config processor instance:
         let configProcessor = await this.configManager.loadAndGetProcessor();
         // save project root for later use:

@@ -75,25 +75,6 @@ class AnimationEngine
         }
     }
 
-    setDepthBasedOnLayer(currentScene)
-    {
-        // @TODO: see setObjectsAnimationsDepth() in scene-dynamic line 144.
-        /*
-        console.log('this.layerName', this.layerName);
-        let result = 0;
-        for(let layerIdx in currentScene.layers){
-            let layer = currentScene.layers[layerIdx];
-            if(this.layerName === layer.layer.name){
-                result = layer.depth + 1;
-                console.log(this.sceneSprite, 'depth:', result);
-                this.sceneSprite.setDepth(result);
-                break;
-            }
-        }
-        return result;
-        */
-    }
-
     runAnimation()
     {
         if(this.sceneSprite){

@@ -6,19 +6,17 @@
  *
  */
 
-const { ChatConst } = require('../constants');
 const { Input } = require('phaser');
+const { ChatConst } = require('../constants');
+const { Logger } = require('../../game/logger');
 
 class ChatUiCreate
 {
 
     constructor(uiScene = false)
     {
-        // @TODO: - Seiyria - sometimes you throw an error, sometimes you use console.error. you should probably set up
-        //   a log service and centralize all of these calls through a logger service. that will be much better in the
-        //   long term, because it will let you track errors externally without having to add redundant code everywhere
         if(!uiScene){
-            console.log('ERROR - UiScene false.');
+            Logger.error('UiScene false.');
         }
         this.uiScene = uiScene;
     }
@@ -26,7 +24,7 @@ class ChatUiCreate
     createUi()
     {
         if(!this.uiScene){
-            console.log('ERROR - UiScene not defined.');
+            Logger.error('UiScene not defined.');
         }
         this.gameManager = this.uiScene.gameManager;
         this.uiScene.uiChat = this.uiScene.add.dom(360, 420).createFromCache('uiChat');
@@ -55,10 +53,9 @@ class ChatUiCreate
         }
     }
 
-    // @TODO: - Seiyria - this function has a lot of if/else. I would try to size it up so it's flatter.
     sendChatMessage(chatInput, roomEvents)
     {
-        // validate if there's something to send:
+        // validate if there is anything to send:
         if((!chatInput.value || chatInput.value.replace('#', '').replace('@', '').trim().length === 0)){
             return false;
         }
@@ -76,13 +73,13 @@ class ChatUiCreate
                         messageData.t = username;
                         globalChat.send(messageData);
                     } else {
-                        // NOTE: this will be the user not found case but better not show any response here.
+                        // NOTE: this case will be when the user was not found case but better not send any response.
                     }
                 } else {
                     globalChat.send(messageData);
                 }
             } else {
-                console.log('ERROR - Global chat room not found.');
+                Logger.error('Global chat room not found.');
             }
         } else {
             // if is not global then send the message to the current room:

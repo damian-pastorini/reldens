@@ -17,6 +17,7 @@ class ThemeManager
 
     validateOrCreateTheme(config)
     {
+        // check for theme folder:
         if(config.projectTheme){
             if(fs.existsSync(config.projectRoot + '/theme/'+config.projectTheme)){
                 this.projectTheme = '/theme/'+config.projectTheme;
@@ -26,6 +27,7 @@ class ThemeManager
         }
         // check if the dist folder exists and if not create it:
         let distExists = fs.existsSync(config.projectRoot+'/dist');
+        // we check the dist folder since it will be generated automatically on first run:
         if(!distExists){
             let themeExists = fs.existsSync(config.projectRoot + this.projectTheme);
             // if theme folder doesn't exists:

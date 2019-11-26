@@ -7,6 +7,7 @@
  */
 
 const { ChatModel } = require('./model');
+const { Logger } = require('../../game/logger');
 
 class ChatManager
 {
@@ -38,7 +39,7 @@ class ChatManager
         }
         let insertResult = await ChatModel.query().insert(insertModel);
         if(!insertResult){
-            console.log('ERROR - Chat message error.', insertModel);
+            Logger.error(['Chat insert message error.', insertModel]);
         }
     }
 

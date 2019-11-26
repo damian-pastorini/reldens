@@ -36,13 +36,16 @@ class ObjectsManager
             this.roomObjects = {};
             for(let objectData of this.roomObjectsData){
                 let objectIndex = objectData.layer_name + objectData.tile_index;
-                // dynamic path using the server root:
-                let fullPath = this.config.projectRoot+'/'+objectData.object_class_path;
-                // here we dynamically require the object class using the path specified in the storage:
-                // @TODO: - Seiyria - Create a helper whose sole purpose is lookup and creation of objects/models.
-                //   Avoid dynamic requires like this.
                 try {
-                    let objClass = require(fullPath);
+                    let objClass = this.config.get('server/customClasses/objects/'+objectData.object_class_key);
+                    if(!objClass){
+                        Logger.error([
+                            'ObjectManager custom class not found.',
+                            '- Object ID:', objectData.id,
+                            '- Custom class:', objectData.object_class_key
+                        ]);
+                        continue;
+                    }
                     let objInstance = new objClass(objectData);
                     // if the result is an animation instance then we can include in the list to send it to the client:
                     if (

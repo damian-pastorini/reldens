@@ -26,4 +26,4 @@ class People extends NpcObject
 
 }
 
-module.exports = People;
+module.exports.People = People;

@@ -9,6 +9,7 @@
 const schema = require('@colyseus/schema');
 const { Schema, type } = schema;
 const { PlayerState } = require('./player-state');
+const { ErrorManager } = require('../../game/error-manager');
 
 class Player extends Schema
 {
@@ -32,9 +33,7 @@ class Player extends Schema
             // set scene and position:
             this.state = new PlayerState(player.state);
         } catch (err) {
-            let errorMessage = 'ERROR - Missing user data.';
-            console.log(errorMessage, err);
-            throw new Error(errorMessage);
+            ErrorManager.error(['Missing user data.', err]);
         }
     }
 

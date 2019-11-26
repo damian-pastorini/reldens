@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS `chat` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `player_id` int(11) unsigned NOT NULL,
   `room_id` int(11) unsigned DEFAULT NULL,
-  `message` varchar(50) COLLATE utf8_unicode_ci NOT NULL,
+  `message` varchar(140) COLLATE utf8_unicode_ci NOT NULL,
   `private_player_id` int(11) unsigned DEFAULT NULL,
   `message_type` varchar(10) COLLATE utf8_unicode_ci DEFAULT NULL,
   `message_time` timestamp NOT NULL,
@@ -43,19 +43,19 @@ CREATE TABLE IF NOT EXISTS `config` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=40 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table reldens.config: ~37 rows (approximately)
+-- Dumping data for table reldens.config: ~36 rows (approximately)
 /*!40000 ALTER TABLE `config` DISABLE KEYS */;
 INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(1, 'server', 'rooms/validation/valid', 'room_game,chat_global', 't'),
-	(2, 'server', 'rooms/initialState/scene', 'ReldensTown', 't'),
-	(3, 'server', 'rooms/initialState/x', '400', 'i'),
-	(4, 'server', 'rooms/initialState/y', '345', 'i'),
-	(5, 'server', 'rooms/initialState/dir', 'down', 't'),
+	(2, 'server', 'players/initialState/room_id', '4', 'i'),
+	(3, 'server', 'players/initialState/x', '400', 'i'),
+	(4, 'server', 'players/initialState/y', '345', 'i'),
+	(5, 'server', 'players/initialState/dir', 'down', 't'),
 	(6, 'server', 'players/initialStats/hp', '100', 'i'),
 	(7, 'server', 'players/initialStats/mp', '100', 'i'),
 	(8, 'server', 'players/initialStats/stamina', '100', 'i'),
-	(9, 'server', 'players/initialStats/atk', '100', 'i'),
-	(10, 'server', 'players/initialStats/def', '100', 'i'),
+	(9, 'server', 'players/initialStats/atk', '1001', 'i'),
+	(10, 'server', 'players/initialStats/def', '1001', 'i'),
 	(11, 'server', 'players/initialStats/dodge', '100', 'i'),
 	(12, 'server', 'players/initialStats/speed', '100', 'i'),
 	(13, 'server', 'rooms/validation/enabled', '1', 'b'),
@@ -108,7 +108,7 @@ CREATE TABLE IF NOT EXISTS `objects` (
   `room_id` int(11) unsigned NOT NULL,
   `layer_name` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
   `tile_index` int(11) unsigned NOT NULL,
-  `server_path` text COLLATE utf8_unicode_ci NOT NULL,
+  `object_class_key` text COLLATE utf8_unicode_ci NOT NULL,
   `client_key` text COLLATE utf8_unicode_ci NOT NULL,
   `private_params` text COLLATE utf8_unicode_ci,
   `public_params` text COLLATE utf8_unicode_ci,
@@ -122,10 +122,10 @@ CREATE TABLE IF NOT EXISTS `objects` (
 
 -- Dumping data for table reldens.objects: ~2 rows (approximately)
 /*!40000 ALTER TABLE `objects` DISABLE KEYS */;
-INSERT INTO `objects` (`id`, `room_id`, `layer_name`, `tile_index`, `server_path`, `client_key`, `private_params`, `public_params`, `enabled`) VALUES
-	(1, 4, 'ground-collisions', 444, 'packages/server/doors', 'door_house_1', NULL, NULL, 1),
-	(4, 4, 'ground-collisions', 951, 'packages/server/doors', 'door_house_2', NULL, NULL, 1),
-	(5, 4, 'house-collisions-over-player', 535, 'packages/server/people', 'people_town_1', NULL, NULL, 1);
+INSERT INTO `objects` (`id`, `room_id`, `layer_name`, `tile_index`, `object_class_key`, `client_key`, `private_params`, `public_params`, `enabled`) VALUES
+	(1, 4, 'ground-collisions', 444, 'door_1', 'door_house_1', NULL, NULL, 1),
+	(4, 4, 'ground-collisions', 951, 'door_2', 'door_house_2', NULL, NULL, 1),
+	(5, 4, 'house-collisions-over-player', 535, 'npc_1', 'people_town_1', NULL, NULL, 1);
 /*!40000 ALTER TABLE `objects` ENABLE KEYS */;
 
 -- Dumping structure for table reldens.objects_assets
@@ -158,15 +158,16 @@ CREATE TABLE IF NOT EXISTS `players` (
   PRIMARY KEY (`id`),
   KEY `FK_players_users` (`user_id`),
   CONSTRAINT `FK_players_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table reldens.players: ~3 rows (approximately)
+-- Dumping data for table reldens.players: ~5 rows (approximately)
 /*!40000 ALTER TABLE `players` DISABLE KEYS */;
 INSERT INTO `players` (`id`, `user_id`, `name`) VALUES
 	(1, 29, 'dap'),
 	(2, 30, 'dap2'),
 	(3, 31, 'dap3'),
-	(4, 32, 'dap4');
+	(15, 43, 'dap13'),
+	(16, 44, 'dap12');
 /*!40000 ALTER TABLE `players` ENABLE KEYS */;
 
 -- Dumping structure for table reldens.players_state
@@ -182,15 +183,16 @@ CREATE TABLE IF NOT EXISTS `players_state` (
   KEY `FK_player_state_player_stats` (`player_id`),
   CONSTRAINT `FK_player_state_player_stats` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON UPDATE CASCADE,
   CONSTRAINT `FK_player_state_rooms` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table reldens.players_state: ~4 rows (approximately)
+-- Dumping data for table reldens.players_state: ~5 rows (approximately)
 /*!40000 ALTER TABLE `players_state` DISABLE KEYS */;
 INSERT INTO `players_state` (`id`, `player_id`, `room_id`, `x`, `y`, `dir`) VALUES
-	(3, 1, 4, 310, 365, 'down'),
-	(4, 2, 4, 307, 361, 'down'),
+	(3, 1, 4, 315, 367, 'right'),
+	(4, 2, 4, 583, 372, 'down'),
 	(5, 3, 4, 400, 345, 'right'),
-	(6, 4, 4, 400, 345, 'down');
+	(14, 15, 4, 300, 388, 'down'),
+	(15, 16, 4, 508, 381, 'down');
 /*!40000 ALTER TABLE `players_state` ENABLE KEYS */;
 
 -- Dumping structure for table reldens.players_stats
@@ -207,15 +209,16 @@ CREATE TABLE IF NOT EXISTS `players_stats` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `user_id` (`player_id`),
   CONSTRAINT `FK_player_stats_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table reldens.players_stats: ~3 rows (approximately)
+-- Dumping data for table reldens.players_stats: ~5 rows (approximately)
 /*!40000 ALTER TABLE `players_stats` DISABLE KEYS */;
 INSERT INTO `players_stats` (`id`, `player_id`, `hp`, `mp`, `stamina`, `atk`, `def`, `dodge`, `speed`) VALUES
 	(1, 1, 100, 100, 100, 100, 100, 100, 100),
 	(2, 2, 100, 100, 100, 100, 100, 100, 100),
 	(3, 3, 100, 100, 100, 100, 100, 100, 100),
-	(4, 4, 100, 100, 100, 100, 100, 100, 100);
+	(15, 15, 100, 100, 100, 1001, 1001, 100, 100),
+	(16, 16, 100, 100, 100, 1001, 1001, 100, 100);
 /*!40000 ALTER TABLE `players_stats` ENABLE KEYS */;
 
 -- Dumping structure for table reldens.rooms
@@ -225,14 +228,14 @@ CREATE TABLE IF NOT EXISTS `rooms` (
   `title` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
   `map_filename` varchar(255) COLLATE utf8_unicode_ci NOT NULL COMMENT 'The map JSON file name.',
   `scene_images` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
-  `room_class` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `room_class_key` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `key` (`name`)
 ) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping data for table reldens.rooms: ~3 rows (approximately)
 /*!40000 ALTER TABLE `rooms` DISABLE KEYS */;
-INSERT INTO `rooms` (`id`, `name`, `title`, `map_filename`, `scene_images`, `room_class`) VALUES
+INSERT INTO `rooms` (`id`, `name`, `title`, `map_filename`, `scene_images`, `room_class_key`) VALUES
 	(2, 'ReldensHouse_1', 'House - 1', 'reldens-house-1', 'reldens-house-1', NULL),
 	(3, 'ReldensHouse_2', 'House - 2', 'reldens-house-2', 'reldens-house-2', NULL),
 	(4, 'ReldensTown', 'Town', 'reldens-town', 'reldens-town', NULL);
@@ -301,15 +304,16 @@ CREATE TABLE IF NOT EXISTS `users` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `email` (`email`),
   UNIQUE KEY `username` (`username`)
-) ENGINE=InnoDB AUTO_INCREMENT=33 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=45 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table reldens.users: ~3 rows (approximately)
+-- Dumping data for table reldens.users: ~5 rows (approximately)
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
 INSERT INTO `users` (`id`, `email`, `username`, `password`, `role_id`, `status`, `created_at`, `updated_at`) VALUES
-	(29, 'dap@dap.com', 'dap', '$2b$10$PQIYGBFyA/69DaowJVTA5ufVWmIUeIOwIK4e6JCAP5Uen0sp0TAHu', 1, 1, '2019-08-02 23:06:14', '2019-10-29 22:46:50'),
-	(30, 'dap2@dap.com', 'dap2', '$2b$10$Kvjh1XdsMai8Xt2wdivG2.prYvTiW6vJrdnrNPYZenf8qCRLhuZ/a', 9, 1, '2019-08-02 23:06:14', '2019-10-06 13:54:04'),
+	(29, 'dap@dap.com', 'dap', '$2b$10$PQIYGBFyA/69DaowJVTA5ufVWmIUeIOwIK4e6JCAP5Uen0sp0TAHu', 1, 1, '2019-08-02 23:06:14', '2019-11-26 14:02:28'),
+	(30, 'dap2@dap.com', 'dap2', '$2b$10$Kvjh1XdsMai8Xt2wdivG2.prYvTiW6vJrdnrNPYZenf8qCRLhuZ/a', 9, 1, '2019-08-02 23:06:14', '2019-11-26 14:02:21'),
 	(31, 'dap3@dap.com', 'dap3', '$2b$10$CmtWkhIexIVtcBjwsmEkeOlIhqizViykDFYAKtVrl4sF8KWLuBsxO', 1, 1, '2019-08-02 23:06:14', '2019-09-29 16:14:51'),
-	(32, 'dap4@dap4.com', 'dap4', '$2b$10$X2.NOm1TiE1YVa44Jjf0Vu.YHndsujPqkj/36UHPvTnCnO.LHwXPq', 1, 1, '2019-09-29 14:04:11', '2019-09-29 14:04:11');
+	(43, 'dap13@dap13.com', 'dap13', '$2b$10$PG6nUdhNmhy2RUpS4k.g..vJ5k3x0sPRyFlpnVZMTPfuAXgXyFP/y', 1, 1, '2019-11-15 21:47:17', '2019-11-15 21:47:17'),
+	(44, 'dap12@dap12.com', 'dap12', '$2b$10$PFEKucJCDoQq8evXhO.FiuwMEayr0HLEt5UYo/WU9TgXb.wwwPG8W', 1, 1, '2019-11-15 21:58:32', '2019-11-15 21:58:32');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
