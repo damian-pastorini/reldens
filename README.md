@@ -1,7 +1,7 @@
 [![Reldens - GitHub - Release](https://www.dwdeveloper.com/media/reldens/reldens-mmorpg-platform.png)](https://github.com/damian-pastorini/reldens)
 [![Reldens - GitHub - Release](https://img.shields.io/github/v/release/damian-pastorini/reldens?color=red&style=for-the-badge)](https://github.com/damian-pastorini/reldens)
 [![Reldens - GitHub - Stars](https://img.shields.io/github/stars/damian-pastorini/reldens?color=green&style=for-the-badge)](https://github.com/damian-pastorini/reldens)
-[![Reldens - Discord](https://img.shields.io/discord/599108949312143370?style=for-the-badge)](https://github.com/damian-pastorini/reldens)
+[![Reldens - Discord](https://img.shields.io/discord/599108949312143370?style=for-the-badge)](https://discord.gg/HuJMxUY)
 [![Reldens - Licence - MIT](https://img.shields.io/github/license/damian-pastorini/reldens?color=blue&style=for-the-badge)](https://github.com/damian-pastorini/reldens)
 
 
