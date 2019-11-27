@@ -29,13 +29,13 @@ class P2world extends World
         }
         // objects:
         this.objectsManager = options.objectsManager;
-        let themePath = this.objectsManager.config.projectRoot + this.objectsManager.config.projectTheme;
-        // @TODO:
-        //      - As part of the future admin panel this will be an upload option.
-        //      - For now we will have this require here, but is not the best solution, we need to find another way of
-        //       require the maps data dynamically (probably centralize a require loop over all the maps files when the
-        //       server is generated).
-        this.mapJson = require(themePath + '/assets/maps/' + this.sceneTiledMapFile);
+        if(!this.objectsManager.config.server.maps[this.sceneTiledMapFile]){
+            ErrorManager.error([
+                'Map not found:', this.sceneTiledMapFile,
+                'In:', this.objectsManager.config.server.maps
+            ]);
+        }
+        this.mapJson = this.objectsManager.config.server.maps[this.sceneTiledMapFile];
         // create world limits:
         this.createLimits();
         // add collisions:

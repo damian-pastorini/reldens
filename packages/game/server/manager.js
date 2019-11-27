@@ -21,6 +21,7 @@ const { UsersManager } = require('../../users/server/manager');
 const { LoginManager } = require('./login');
 const { RoomsManager } = require('../../rooms/server/manager');
 const { ThemeManager } = require('./theme-manager');
+const { MapsLoader } = require('./maps-loader');
 const { Logger } = require('../logger');
 
 class ServerManager
@@ -34,6 +35,7 @@ class ServerManager
         this.events = EventsManager;
         DataServer.initialize();
         ThemeManager.validateOrCreateTheme(config);
+        MapsLoader.loadMaps(config.projectRoot+ThemeManager.projectTheme, this.configManager);
     }
 
     initializeConfiguration(config)
