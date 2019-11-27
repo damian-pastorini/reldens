@@ -19,13 +19,14 @@ class ThemeManager
     {
         // check for theme folder:
         if(config.projectTheme){
-            if(fs.existsSync(config.projectRoot + '/theme/'+config.projectTheme)){
-                this.projectTheme = '/theme/'+config.projectTheme;
-            } else {
-                Logger.error('Project theme folder does not exists: '+config.projectTheme);
-            }
+            this.projectTheme = '/theme/'+config.projectTheme;
         }
-        // check if the dist folder exists and if not create it:
+        // check if the dist folder exists:
+        let themesFolderExists = fs.existsSync(config.projectRoot+'/theme');
+        if(!themesFolderExists){
+            fs.mkdirSync(config.projectRoot+'/theme');
+        }
+        // check if the dist folder exists:
         let distExists = fs.existsSync(config.projectRoot+'/dist');
         // we check the dist folder since it will be generated automatically on first run:
         if(!distExists){
@@ -34,10 +35,13 @@ class ThemeManager
             if(!themeExists){
                 // copy /default theme from node_modules/reldens into the project folder and into the dist folder:
                 let nodeRoot = config.projectRoot+'/node_modules/reldens/';
-                this.copyFolderSync(nodeRoot+'theme', config.projectRoot+'/theme');
+                this.copyFolderSync(nodeRoot+'theme/default', config.projectRoot+this.projectTheme);
+                this.copyFolderSync(nodeRoot+'theme/packages', config.projectRoot+'/theme/packages');
                 this.copyFolderSync(nodeRoot+'theme/default', config.projectRoot+'/dist');
+                Logger.error('Project theme folder was not found: '+config.projectTheme
+                        +'\nA copy from default has been made.');
             } else {
-                // if theme exists just copy it into the dist folder (assumed that packages folder was considered):
+                // if theme exists just copy it into the dist folder (assumed the packages folder was considered):
                 this.copyFolderSync(config.projectRoot + this.projectTheme, config.projectRoot+'/dist');
             }
         }
