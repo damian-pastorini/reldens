@@ -8,7 +8,7 @@
 
 const { RoomLogin } = require('../../rooms/server/login');
 const { ChatManager } = require('./manager');
-const { Cleaner } = require('./cleaner');
+const { Cleaner } = require('../cleaner');
 const { ErrorManager } = require('../../game/error-manager');
 const { Logger } = require('../../game/logger');
 const { ChatConst } = require('../constants');

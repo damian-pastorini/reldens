@@ -114,7 +114,7 @@ class RoomScene extends RoomLogin
             // if player is moving:
             if({}.hasOwnProperty.call(messageData, 'dir') && bodyToMove){
                 if(this.config.get('server/general/controls/allow_simultaneous_keys') === 1){
-                    /* @TODO: implement.
+                    /* @TODO: implement simultaneous directions movement.
                     if(messageData.dir === GameConst.RIGHT){
                         bodyToMove.velocity[0] = GameConst.SPEED_SERVER;
                     }
@@ -268,17 +268,12 @@ class RoomScene extends RoomLogin
 
     async savePlayerState(sessionId)
     {
-        // set player busy as long the state is been saved:
+        // @TODO: since for now we only have one player by user, playerSchema is actually the currentUser.
         let playerSchema = this.getPlayerFromState(sessionId);
-        let newPlayerData = {
-            room_id: playerSchema.state.room_id,
-            x: playerSchema.state.x,
-            y: playerSchema.state.y,
-            dir: playerSchema.state.dir
-        };
-        // @TODO: temporal getting player_id from stats here.
-        let playerId = playerSchema.stats.player_id;
-        let updateResult = await this.loginManager.usersManager.updateUserStateByPlayerId(playerId, newPlayerData);
+        let {room_id, x, y, dir} = playerSchema.state;
+        let playerId = playerSchema.player_id;
+        let updateResult = await this.loginManager.usersManager
+            .updateUserStateByPlayerId(playerId, {room_id, x, y, dir});
         if(updateResult){
             return playerSchema;
         } else {

@@ -7,7 +7,7 @@
  */
 
 const { ChatManager } = require('./manager');
-const { Cleaner } = require('./cleaner');
+const { Cleaner } = require('../cleaner');
 const { Logger } = require('../../game/logger');
 const { ChatConst } = require('../constants');
 const { GameConst } = require('../../game/constants');

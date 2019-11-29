@@ -34,7 +34,7 @@ class RoomLogin extends Room
         }
         // @NOTE: validateRoomData is overridden in RoomScene onCreate.
         if(this.validateRoomData){
-            // @TODO: for now we only have one player.
+            // @TODO: [0] is temporal since for now we only have one player by user.
             this.validateRoom(loginResult.user.players[0].state.scene);
         }
         return loginResult.user;
@@ -45,7 +45,7 @@ class RoomLogin extends Room
         if(this.config.server.rooms.validation.enabled){
             this.validRooms = this.config.server.rooms.validation.valid.split(',');
             if(this.validRooms.indexOf(this.roomName) === -1 && playerRoomName !== this.roomName){
-                ErrorManager.error('Invalid player room: ' + playerRoomName + ' - ' + this.roomName);
+                ErrorManager.error(['Invalid player room:', playerRoomName, 'Current room:', this.roomName]);
             }
         }
     }

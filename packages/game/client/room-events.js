@@ -273,4 +273,4 @@ class RoomEvents
 
 }
 
-module.exports = RoomEvents;
+module.exports.RoomEvents = RoomEvents;

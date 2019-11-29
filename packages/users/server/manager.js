@@ -31,7 +31,6 @@ class UsersManager
 
     async createUser(userData)
     {
-        // @TODO: this is temporal since for now we only have one player by user.
         return UsersModel.query()
             .allowInsert('players.[stats, state]')
             .insertGraphAndFetch(userData);

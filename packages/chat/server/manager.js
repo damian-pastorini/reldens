@@ -2,7 +2,7 @@
  *
  * Reldens - ChatManager
  *
- * This class will handle the chat features.
+ * This class will handle the chat messages in the storage.
  *
  */
 
@@ -20,11 +20,9 @@ class ChatManager
      */
     async saveMessage(message, playerSchema, clientToPlayerSchema, messageType)
     {
-        // @TODO: fix, playerSchema is actually the currentUser.
-        // console.log('playerSchema:', playerSchema);
+        // @TODO: since for now we only have one player by user, playerSchema is actually the currentUser.
         let insertModel = {
-            // @TODO: temporal getting player_id from stats.
-            player_id: playerSchema.stats.player_id,
+            player_id: playerSchema.player_id,
             message: message,
             message_time: this.getCurrentDate()
         };

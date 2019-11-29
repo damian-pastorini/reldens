@@ -25,7 +25,7 @@ class CollisionsManager
         if(!{}.hasOwnProperty.call(this.room, 'roomWorld')){
             ErrorManager.error('Room world not found.');
         }
-        // @TODO: refactor, for now we will use fixed collisions types for each event.
+        // @TODO: make dynamic, for now we will use fixed collisions types for each event.
         this.room.roomWorld.on('beginContact', this.assignBeginCollisions.bind(this));
         this.room.roomWorld.on('endContact', this.assignEndCollisions.bind(this));
     }

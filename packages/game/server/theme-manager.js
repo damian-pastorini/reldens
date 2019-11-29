@@ -26,11 +26,11 @@ class ThemeManager
         if(!themesFolderExists){
             fs.mkdirSync(config.projectRoot+'/theme');
         }
-        // check if the dist folder exists:
+        // check if the folders exists:
         let distExists = fs.existsSync(config.projectRoot+'/dist');
+        let themeExists = fs.existsSync(config.projectRoot + this.projectTheme);
         // we check the dist folder since it will be generated automatically on first run:
-        if(!distExists){
-            let themeExists = fs.existsSync(config.projectRoot + this.projectTheme);
+        if(!distExists || !themeExists){
             // if theme folder doesn't exists:
             if(!themeExists){
                 // copy /default theme from node_modules/reldens into the project folder and into the dist folder:

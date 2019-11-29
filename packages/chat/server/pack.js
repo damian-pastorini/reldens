@@ -24,13 +24,6 @@ class ChatPack
         EventsManager.on('reldens.roomsMessageActionsGlobal', (roomMessageActions) => {
             roomMessageActions.chat = ChatMessageActions;
         });
-        /*
-        EventsManager.on('reldens.roomsMessageActionsByRoom', (roomMessageActions, roomName) => {
-            if(roomName === 'chat'){
-                roomMessageActions.chat = ChatMessageActions;
-            }
-        });
-        */
     }
 
 }

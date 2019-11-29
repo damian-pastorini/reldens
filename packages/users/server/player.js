@@ -18,12 +18,13 @@ class Player extends Schema
     {
         super();
         try {
-            // @NOTE: for now we only have one player.
+            // @TODO: [0] is temporal since for now we only have one player by user.
             let player = data.players[0];
             // stats for now will use the stats model.
             this.stats = player.stats;
             // player data:
-            this.id = data.id;
+            this.id = data.id; // this is the user id
+            this.player_id = player.id;
             this.sessionId = sessionId;
             this.role_id = data.role_id;
             this.status = data.status;

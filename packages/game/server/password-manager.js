@@ -1,3 +1,11 @@
+/**
+ *
+ * Reldens - PasswordManager
+ *
+ * This module is to handle the passwords encryption.
+ *
+ */
+
 const bcrypt = require('bcrypt');
 
 class PasswordManager

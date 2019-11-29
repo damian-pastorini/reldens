@@ -7,11 +7,12 @@
  */
 
 const { EventsManager } = require('../events-manager');
-const GameClient = require('./game-client');
+const { GameClient } = require('./game-client');
 const { GameEngine } = require('./game-engine');
-const RoomEvents = require('./room-events');
-const FeaturesClient = require('../../features/client/client');
+const { RoomEvents } = require('./room-events');
+const { FeaturesClient } = require('../../features/client/client');
 const { ConfigProcessor } = require('../../config/processor');
+const { Logger } = require('../logger');
 const { GameConst } = require('../constants');
 
 class GameManager
@@ -50,6 +51,7 @@ class GameManager
         this.userData.password = formData['password'];
         // join initial game room, since we return the promise we don't need to catch the error here:
         let gameRoom = await this.gameClient.joinOrCreate(GameConst.ROOM_GAME, this.userData);
+        EventsManager.emit('reldens.joinedGameRoom', gameRoom);
         gameRoom.onMessage(async (message) => {
             // only the current client will get this message:
             if(message.act === GameConst.START_GAME){
@@ -74,7 +76,7 @@ class GameManager
 
     async initEngineAndStartGame(initialGameData)
     {
-        EventsManager.emit('reldens.beforeInitEngineAndStartGame', {initialGameData: initialGameData});
+        EventsManager.emit('reldens.beforeInitEngineAndStartGame', initialGameData);
         if(!{}.hasOwnProperty.call(initialGameData, 'gameConfig')){
             throw new Error('ERROR - Missing game configuration.');
         }
@@ -92,6 +94,7 @@ class GameManager
         await this.joinFeaturesRooms();
         // create room events manager:
         let joinedFirstRoom = await this.gameClient.joinOrCreate(initialGameData.player.state.scene, this.userData);
+        EventsManager.emit('reldens.joinedFirstRoom', joinedFirstRoom);
         if(!joinedFirstRoom){
             // @NOTE: the errors while trying to join a rooms/scene will always be originated in the
             // server. For these errors we will alert the user and reload the window automatically.
@@ -160,7 +163,7 @@ class GameManager
             // @NOTE: the errors while trying to reconnect will always be originated in the server. For these errors we
             // will alert the user and reload the window automatically.
             alert(err);
-            console.log('ERROR - reconnectGameClient:', err, 'message:', message, 'previousRoom:', previousRoom);
+            Logger.error(['Reconnect Game Client:', err, 'message:', message, 'previousRoom:', previousRoom]);
             window.location.reload();
         });
     }

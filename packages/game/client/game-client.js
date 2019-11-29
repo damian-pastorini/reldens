@@ -18,4 +18,4 @@ class GameClient extends Client
 
 }
 
-module.exports = GameClient;
+module.exports.GameClient = GameClient;

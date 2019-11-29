@@ -20,7 +20,9 @@ class MapsLoader
         }
         let mapsFolder = '/assets/maps/';
         let dirCont = fs.readdirSync(themeFolder+mapsFolder);
-        let files = dirCont.filter( function( elm ) {return elm.match(/.*\.(json)/ig);});
+        let files = dirCont.filter(function(elm){
+            return elm.match(/.*\.(json)/ig);
+        });
         configManager.configList.server.maps = {};
         for(let file of files){
             let fileFullPath = themeFolder+mapsFolder+file;

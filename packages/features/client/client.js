@@ -88,4 +88,4 @@ class FeaturesClient
 
 }
 
-module.exports = FeaturesClient;
+module.exports.FeaturesClient = FeaturesClient;
