@@ -7,10 +7,14 @@
  *
  */
 
-const { GameConst } = require('../../game/constants');
+const { Logger } = require('../../game/logger');
 
 class BaseObject
 {
+
+    // object position will be calculated based on the index:
+    x = false;
+    y = false;
 
     constructor(props)
     {
@@ -19,33 +23,15 @@ class BaseObject
         // we will use the client_key has the object key:
         this.key = props.client_key;
         // in this specific object type we will use the public params as JSON, this is coming from the storage:
-        this.publicParamsObj = props.public_params ? JSON.parse(props.public_params) : {};
-        this.publicParamsObj.key = this.key;
+        try {
+            this.clientParams = props.client_params ? JSON.parse(props.client_params) : {};
+        } catch (err) {
+            Logger.error('BaseObject, clientParams JSON error.');
+        }
+        this.clientParams.key = this.key;
         // @NOTE: we need to send the layer name for later calculate the animation depth and show the animation over the
         // proper layer.
-        this.publicParamsObj.layerName = props.layer_name;
-        // object position will be calculated based on the index:
-        this.x = false;
-        this.y = false;
-        // objects metadata:
-        this.metadata = {};
-    }
-
-    getPublicObjectData()
-    {
-        return this.publicParamsObj;
-    }
-
-    get animationData()
-    {
-        return {
-            act: GameConst.OBJECT_ANIMATION,
-            key: this.key,
-            publicParams: this.publicParamsObj,
-            data: this.metadata,
-            x: this.x,
-            y: this.y
-        };
+        this.clientParams.layerName = props.layer_name;
     }
 
 }

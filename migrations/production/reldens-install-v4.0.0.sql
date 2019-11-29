@@ -111,7 +111,7 @@ CREATE TABLE IF NOT EXISTS `objects` (
   `object_class_key` text COLLATE utf8_unicode_ci NOT NULL,
   `client_key` text COLLATE utf8_unicode_ci NOT NULL,
   `private_params` text COLLATE utf8_unicode_ci,
-  `public_params` text COLLATE utf8_unicode_ci,
+  `client_params` text COLLATE utf8_unicode_ci,
   `enabled` int(1) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `id` (`id`),
@@ -122,7 +122,7 @@ CREATE TABLE IF NOT EXISTS `objects` (
 
 -- Dumping data for table reldens.objects: ~2 rows (approximately)
 /*!40000 ALTER TABLE `objects` DISABLE KEYS */;
-INSERT INTO `objects` (`id`, `room_id`, `layer_name`, `tile_index`, `object_class_key`, `client_key`, `private_params`, `public_params`, `enabled`) VALUES
+INSERT INTO `objects` (`id`, `room_id`, `layer_name`, `tile_index`, `object_class_key`, `client_key`, `private_params`, `client_params`, `enabled`) VALUES
 	(1, 4, 'ground-collisions', 444, 'door_1', 'door_house_1', NULL, NULL, 1),
 	(4, 4, 'ground-collisions', 951, 'door_2', 'door_house_2', NULL, NULL, 1),
 	(5, 4, 'house-collisions-over-player', 535, 'npc_1', 'people_town_1', NULL, NULL, 1);
@@ -188,7 +188,7 @@ CREATE TABLE IF NOT EXISTS `players_state` (
 -- Dumping data for table reldens.players_state: ~5 rows (approximately)
 /*!40000 ALTER TABLE `players_state` DISABLE KEYS */;
 INSERT INTO `players_state` (`id`, `player_id`, `room_id`, `x`, `y`, `dir`) VALUES
-	(3, 1, 4, 315, 367, 'right'),
+	(3, 1, 4, 400, 345, 'down'),
 	(4, 2, 4, 583, 372, 'down'),
 	(5, 3, 4, 400, 345, 'right'),
 	(14, 15, 4, 300, 388, 'down'),
@@ -309,7 +309,7 @@ CREATE TABLE IF NOT EXISTS `users` (
 -- Dumping data for table reldens.users: ~5 rows (approximately)
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
 INSERT INTO `users` (`id`, `email`, `username`, `password`, `role_id`, `status`, `created_at`, `updated_at`) VALUES
-	(29, 'dap@dap.com', 'dap', '$2b$10$PQIYGBFyA/69DaowJVTA5ufVWmIUeIOwIK4e6JCAP5Uen0sp0TAHu', 1, 1, '2019-08-02 23:06:14', '2019-11-26 14:02:28'),
+	(29, 'dap@dap.com', 'dap', '$2b$10$PQIYGBFyA/69DaowJVTA5ufVWmIUeIOwIK4e6JCAP5Uen0sp0TAHu', 1, 1, '2019-08-02 23:06:14', '2019-11-29 21:05:53'),
 	(30, 'dap2@dap.com', 'dap2', '$2b$10$Kvjh1XdsMai8Xt2wdivG2.prYvTiW6vJrdnrNPYZenf8qCRLhuZ/a', 9, 1, '2019-08-02 23:06:14', '2019-11-26 14:02:21'),
 	(31, 'dap3@dap.com', 'dap3', '$2b$10$CmtWkhIexIVtcBjwsmEkeOlIhqizViykDFYAKtVrl4sF8KWLuBsxO', 1, 1, '2019-08-02 23:06:14', '2019-09-29 16:14:51'),
 	(43, 'dap13@dap13.com', 'dap13', '$2b$10$PG6nUdhNmhy2RUpS4k.g..vJ5k3x0sPRyFlpnVZMTPfuAXgXyFP/y', 1, 1, '2019-11-15 21:47:17', '2019-11-15 21:47:17'),

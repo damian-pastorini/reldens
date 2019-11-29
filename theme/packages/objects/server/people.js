@@ -18,10 +18,8 @@ class People extends NpcObject
     {
         super(props);
         this.runOnAction = true;
-        // assign extra public params:
-        this.publicParamsObj = Object.assign(this.publicParamsObj, {
-            enabled: true
-        });
+        // assign extra params:
+        Object.assign(this.clientParams, {enabled: true});
     }
 
 }

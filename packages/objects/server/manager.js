@@ -52,7 +52,7 @@ class ObjectsManager
                         {}.hasOwnProperty.call(objInstance, 'isAnimation')
                         || {}.hasOwnProperty.call(objInstance, 'hasAnimation')
                     ) {
-                        this.objectsAnimationsData[objectIndex] = objInstance.getPublicObjectData();
+                        this.objectsAnimationsData[objectIndex] = objInstance.clientParams;
                     }
                     // prepare assets list:
                     if (objectData.objects_assets) {
@@ -65,7 +65,7 @@ class ObjectsManager
                     // save object:
                     this.roomObjects[objectIndex] = objInstance;
                 } catch(err) {
-                    Logger.error('Object class does not exists for objectIndex:', err);
+                    Logger.error('Object class does not exists for objectIndex:', objectIndex);
                 }
             }
         }

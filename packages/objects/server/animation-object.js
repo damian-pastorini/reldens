@@ -29,7 +29,7 @@ class AnimationObject extends BaseObject
         return {
             act: GameConst.OBJECT_ANIMATION,
             key: this.key,
-            publicParams: this.publicParamsObj,
+            clientParams: this.clientParams,
             x: this.x,
             y: this.y
         };
