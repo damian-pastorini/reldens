@@ -31,6 +31,9 @@ class RoomEvents
         this.room = room;
         // listen to changes coming from the server:
         this.room.state.players.onAdd = (player, key) => {
+            if(this.room.state && (!this.sceneData || this.room.state !== this.sceneData)){
+                this.prepareScene();
+            }
             this.playersOnAdd(player, key, previousScene);
         };
         this.room.state.players.onChange = (player, key) => {
@@ -41,36 +44,10 @@ class RoomEvents
         };
         // create players or change scenes:
         this.room.onMessage((message) => {
-            if(
-                message.act === GameConst.CHANGED_SCENE
-                && message.scene === this.room.name
-                && this.room.sessionId !== message.id
-            ){
-                let currentScene = this.getActiveScene();
-                // if other users enter in the current scene we need to add them:
-                let {id, x, y, dir} = message;
-                currentScene.player.addPlayer(id, {x: x, y: y, dir: dir});
-            }
-            // @NOTE: here we don't need to evaluate the id since the reconnect only is sent to the current client.
-            if(message.act === GameConst.RECONNECT){
-                this.gameManager.reconnectGameClient(message, this.room);
-            }
-            // @NOTE: now this method will update the stats every time the stats action is received but the UI will be
-            // created only once in the preloader.
-            if(message.act === GameConst.PLAYER_STATS){
-                this.activatePlayerStats(message);
-            }
+            this.roomOnMessage(message);
         });
         this.room.onLeave((code) => {
-            if (code > 1000) {
-                // @TODO: replace this by a proper disconnection handler.
-                // server error, disconnection:
-                alert('There was a connection error.');
-                window.location.reload();
-            } else {
-                // the client has initiated the disconnection, remove the scene:
-                // this.gameEngine.scene.remove(this.roomName);
-            }
+            this.roomOnLeave(code);
         });
         // @NOTE: here we attach features onMessage actions for the events on the scene-rooms, we may need to do this
         // for every room state change, not only for onMessage but for room.state.onChange, onRemove, onAdd as well.
@@ -79,9 +56,6 @@ class RoomEvents
 
     playersOnAdd(player, key, previousScene)
     {
-        if(this.room.state && (!this.sceneData || this.room.state !== this.sceneData)){
-            this.sceneData = JSON.parse(this.room.state.sceneData);
-        }
         // create current player:
         if(key === this.room.sessionId){
             this.engineStarted = true;
@@ -105,6 +79,15 @@ class RoomEvents
                 let { x, y, dir } = player.state;
                 this.playersQueue[key] = { x, y, dir };
             }
+        }
+    }
+
+    prepareScene()
+    {
+        this.sceneData = JSON.parse(this.room.state.sceneData);
+        if(!this.gameEngine.scene.getScene(this.roomName)){
+            let engineSceneDynamic = this.createSceneInstance(this.roomName, this.sceneData, this.gameManager);
+            this.gameEngine.scene.add(this.roomName, engineSceneDynamic, false);
         }
     }
 
@@ -132,6 +115,45 @@ class RoomEvents
                 // remove your player entity from the game world:
                 currentScene.player.removePlayer(key);
             }
+        }
+    }
+
+    roomOnMessage(message)
+    {
+        if(
+            message.act === GameConst.CHANGED_SCENE
+            && message.scene === this.room.name
+            && this.room.sessionId !== message.id
+        ){
+            let currentScene = this.getActiveScene();
+            // if other users enter in the current scene we need to add them:
+            let {id, x, y, dir} = message;
+            currentScene.player.addPlayer(id, {x: x, y: y, dir: dir});
+        }
+        // @NOTE: here we don't need to evaluate the id since the reconnect only is sent to the current client.
+        if(message.act === GameConst.RECONNECT){
+            this.gameManager.reconnectGameClient(message, this.room);
+        }
+        // @NOTE: now this method will update the stats every time the stats action is received but the UI will be
+        // created only once in the preloader.
+        if(message.act === GameConst.PLAYER_STATS){
+            this.activatePlayerStats(message);
+        }
+    }
+
+    roomOnLeave(code)
+    {
+        // @TODO: replace this by a proper disconnection handler.
+        if (code > 1000) {
+            // server error, disconnection:
+            alert('There was a connection error.');
+            window.location.reload();
+        } else {
+            // the client has initiated the disconnection:
+            // @TODO: test a lost connection case (like turn of the network, but probably the browser was just closed),
+            //   in which case should we remove the scene? Again, force restart the client?
+            //   this.gameEngine.scene.remove(this.roomName);
+            //   window.location.reload();
         }
     }
 
@@ -189,19 +211,15 @@ class RoomEvents
                         }
                     }
                 }
-                this.createEngineScene(player, room, previousScene, this.sceneData);
+                this.createEngineScene(player, room, previousScene);
             });
         } else {
-            this.createEngineScene(player, room, previousScene, this.sceneData);
+            this.createEngineScene(player, room, previousScene);
         }
     }
 
-    createEngineScene(player, room, previousScene, sceneData)
+    createEngineScene(player, room, previousScene)
     {
-        if(!this.gameEngine.scene.getScene(player.state.scene)){
-            let engineSceneDynamic = this.createSceneInstance(player.state.scene, sceneData, this.gameManager);
-            this.gameEngine.scene.add(player.state.scene, engineSceneDynamic, false);
-        }
         if(!this.gameManager.room){
             this.gameEngine.scene.start(player.state.scene);
         } else {
@@ -243,23 +261,8 @@ class RoomEvents
         this.room.send({act: GameConst.CLIENT_JOINED});
     }
 
-    // @TODO: - Seiyria - this function would really benefit from guards. it's just two nested if statements that could
-    //   be moved to the top and cleaned up, like so-
-    /*
-    if(this.gameEngine.scene.getScene(this.roomName)) return ...;
-
-    if(!this.sceneData) return;
-
-    ...
-    */
     getActiveScene()
     {
-        if(!this.gameEngine.scene.getScene(this.roomName)){
-            if(this.sceneData){
-                let engineSceneDynamic = this.createSceneInstance(this.roomName, this.sceneData, this.gameManager);
-                this.gameEngine.scene.add(this.roomName, engineSceneDynamic, false);
-            }
-        }
         return this.gameEngine.scene.getScene(this.roomName);
     }
 
