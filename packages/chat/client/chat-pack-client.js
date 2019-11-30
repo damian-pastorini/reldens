@@ -4,16 +4,14 @@
  *
  */
 
-const ChatMessageObserver = require('./message-observer');
-const ChatUiCreate = require('./ui-create');
+const { ChatMessageObserver } = require('./message-observer');
+const { ChatUiCreate } = require('./ui-create');
 const { ChatConst } = require('../constants');
 const { GameConst } = require('../../game/constants');
 
 // define the rooms:
 let joinedRoomsOnMessage = {};
-// @TODO:
-//   - Seiyria - it's confusing that there are two places that these variables are coming from.
-//   - Replace by observers.
+// @TODO: replace by events.
 joinedRoomsOnMessage[ChatConst.CHAT_GLOBAL] = ChatMessageObserver;
 joinedRoomsOnMessage[GameConst.ROOM_EVENTS] = ChatMessageObserver;
 

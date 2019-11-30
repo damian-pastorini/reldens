@@ -4,15 +4,12 @@
  *
  */
 
-const ObjectsMessageObserver = require('./message-observer');
+const { ObjectsMessageObserver } = require('./message-observer');
 const { GameConst } = require('../../game/constants');
 
+// @TODO: replace by events.
 // define the rooms:
 let joinedRoomsOnMessage = {};
 joinedRoomsOnMessage[GameConst.ROOM_EVENTS] = ObjectsMessageObserver;
 
-// @TODO: - Seiyria - you can just do `module.exports = { joinedRoomsOnMessage }`
-module.exports = {
-    // features name convention - joinedRoomsOnMessage are the listeners for the rooms received messages in the client.
-    joinedRoomsOnMessage: joinedRoomsOnMessage
-};
+module.exports = { joinedRoomsOnMessage };

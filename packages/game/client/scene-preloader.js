@@ -7,14 +7,12 @@
  */
 
 const { Scene, Geom } = require('phaser');
+const { Logger } = require('../logger');
 const { GameConst } = require('../constants');
 
 class ScenePreloader extends Scene
 {
 
-    // @TODO: - Seiyria - one thing that typescript would REALLY help with, is you could have an interface for what
-    //   this props object contains. right now, it could contain anything, but all I know for sure is that it contains
-    //   the props assigned in this ctor.
     constructor(props)
     {
         super({key: props.name});
@@ -80,7 +78,7 @@ class ScenePreloader extends Scene
                     if(assetParams){
                         this.load.spritesheet(asset.asset_key, assetFilePath, assetParams);
                     } else {
-                        console.log('ERROR - Missing spritesheet params:', asset);
+                        Logger.error(['Missing spritesheet params:', asset]);
                     }
                 }
             }
@@ -147,6 +145,11 @@ class ScenePreloader extends Scene
             this.gameManager.features.createFeaturesUi(this);
         }
         // player animations:
+        this.createPlayerAnimations();
+    }
+
+    createPlayerAnimations()
+    {
         // @TODO:
         //   - Player animation will be part of the configuration in the database.
         //   - Implement player custom avatar.
@@ -200,7 +203,7 @@ class ScenePreloader extends Scene
             if(this.gameManager.config.get('client/general/controls/action_button_hold')){
                 this.hold(btnAction, {act: GameConst.ACTION});
             } else {
-                btnAction.addEventListener('click', (e) => {
+                btnAction.addEventListener('click', () => {
                     this.gameManager.activeRoomEvents.room.send({act: GameConst.ACTION});
                 });
             }

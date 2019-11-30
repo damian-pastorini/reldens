@@ -1,26 +1,27 @@
 const { Scene, Input } = require('phaser');
-const TilesetAnimation = require('./tileset-animation');
-const AnimationEngine = require('../../objects/client/animation-engine');
+const { TilesetAnimation } = require('./tileset-animation');
+const { AnimationEngine } = require('../../objects/client/animation-engine');
 
 class SceneDynamic extends Scene
 {
+
+    layers = {};
+    transition = true;
+    useTsAnimation = false;
+    // this will contain the animations data coming from the server:
+    objectsAnimationsData = false;
+    // this will contain the animations objects instances:
+    objectsAnimations = {};
 
     constructor(key, data, gameManager)
     {
         super({key});
         this.key = key;
         this.params = data;
-        this.layers = {};
-        this.transition = true;
-        this.useTsAnimation = false;
         this.gameManager = gameManager;
         this.configManager = gameManager.config;
         // frame rate:
         this.configuredFrameRate = this.gameManager.config.get('client/general/animations/frameRate') || 10;
-        // this will contain the animations data coming from the server:
-        this.objectsAnimationsData = false;
-        // this will contain the animations objects instances:
-        this.objectsAnimations = {};
     }
 
     init()
@@ -66,18 +67,20 @@ class SceneDynamic extends Scene
     createDynamicAnimations()
     {
         let currentScene = this.gameManager.activeRoomEvents.getActiveScene();
-        if(currentScene.objectsAnimationsData){
-            for(let idx in currentScene.objectsAnimationsData){
-                let animProps = currentScene.objectsAnimationsData[idx];
-                animProps.frameRate = this.configuredFrameRate;
-                // create the animation object instance:
-                let animation = new AnimationEngine(this.gameManager, animProps, this);
-                // @NOTE: this will populate the objectsAnimations property in the current scene, see scene-dynamic.
-                animation.createAnimation();
-            }
+        if(!currentScene.objectsAnimationsData){
+            return;
+        }
+        for(let idx in currentScene.objectsAnimationsData){
+            let animProps = currentScene.objectsAnimationsData[idx];
+            animProps.frameRate = this.configuredFrameRate;
+            // create the animation object instance:
+            let animation = new AnimationEngine(this.gameManager, animProps, this);
+            // @NOTE: this will populate the objectsAnimations property in the current scene, see scene-dynamic.
+            animation.createAnimation();
         }
     }
 
+    // eslint-disable-next-line no-unused-vars
     update(time, delta)
     {
         if(this.transition === false){

@@ -10,7 +10,7 @@
  *
  */
 
-const AnimationObject = require('reldens/packages/objects/server/animation-object');
+const { AnimationObject } = require('reldens/packages/objects/server/animation-object');
 
 class Door extends AnimationObject
 {

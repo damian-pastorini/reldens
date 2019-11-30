@@ -27,6 +27,7 @@ class ChatUiCreate
             Logger.error('UiScene not defined.');
         }
         this.gameManager = this.uiScene.gameManager;
+        // @TODO: chat position should be configurable from the storage.
         this.uiScene.uiChat = this.uiScene.add.dom(360, 420).createFromCache('uiChat');
         let chatInput = this.uiScene.uiChat.getChildByProperty('id', ChatConst.CHAT_INPUT);
         let chatSendButton = this.uiScene.uiChat.getChildByProperty('id', ChatConst.CHAT_SEND_BUTTON);
@@ -91,4 +92,4 @@ class ChatUiCreate
 
 }
 
-module.exports = ChatUiCreate;
+module.exports.ChatUiCreate = ChatUiCreate;

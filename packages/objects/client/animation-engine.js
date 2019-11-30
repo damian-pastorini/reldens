@@ -4,6 +4,8 @@
  *
  */
 
+const { Logger } = require('../../game/logger');
+
 class AnimationEngine
 {
 
@@ -32,10 +34,10 @@ class AnimationEngine
     {
         this.animPos = {x: this.x, y: this.y};
         if(this.positionFix){
-            if(this.positionFix.hasOwnProperty('x')){
+            if({}.hasOwnProperty.call(this.positionFix, 'x')){
                 this.animPos.x = this.x + this.positionFix.x;
             }
-            if(this.positionFix.hasOwnProperty('y')){
+            if({}.hasOwnProperty.call(this.positionFix, 'y')){
                 this.animPos.y = this.y + this.positionFix.y;
             }
         }
@@ -43,36 +45,36 @@ class AnimationEngine
 
     createAnimation()
     {
-        if(this.enabled){
-            let currentScene = this.gameManager.activeRoomEvents.getActiveScene();
-            if(currentScene){
-                let animationData = {start: this.frameStart, end: this.frameEnd};
-                if(this.prefix !== false){
-                    animationData.prefix = this.prefix;
-                }
-                if(this.zeroPad !== false){
-                    animationData.zeroPad = this.zeroPad;
-                }
-                let createData = {
-                    key: this.key,
-                    frames: this.currentPreloader.anims.generateFrameNumbers(this.key, animationData),
-                    frameRate: this.frameRate,
-                    repeat: this.repeat,
-                    hideOnComplete: this.hideOnComplete
-                };
-                this.currentAnimation = this.currentPreloader.anims.create(createData);
-                this.sceneSprite = currentScene.physics.add.sprite(this.animPos.x, this.animPos.y, this.key);
-                // @NOTE: sprites depth will be set according to their Y position, since the same was applied on the
-                // players sprites and updated as they move the depth is fixed automatically and the objects will get
-                // above or below the player.
-                this.sceneSprite.setDepth(this.y + this.sceneSprite.body.height);
-                currentScene.objectsAnimations[this.key] = this;
-            } else {
-                console.log('ERROR - Active scene not found');
-            }
-        } else {
-            console.log('ERROR - Animation disabled.');
+        if(!this.enabled){
+            Logger.error('Animation disabled: '+this.key);
+            return;
         }
+        let currentScene = this.gameManager.activeRoomEvents.getActiveScene();
+        if(!currentScene){
+            Logger.error('Active scene not found.');
+            return;
+        }
+        let animationData = {start: this.frameStart, end: this.frameEnd};
+        if(this.prefix !== false){
+            animationData.prefix = this.prefix;
+        }
+        if(this.zeroPad !== false){
+            animationData.zeroPad = this.zeroPad;
+        }
+        let createData = {
+            key: this.key,
+            frames: this.currentPreloader.anims.generateFrameNumbers(this.key, animationData),
+            frameRate: this.frameRate,
+            repeat: this.repeat,
+            hideOnComplete: this.hideOnComplete
+        };
+        this.currentAnimation = this.currentPreloader.anims.create(createData);
+        this.sceneSprite = currentScene.physics.add.sprite(this.animPos.x, this.animPos.y, this.key);
+        // @NOTE: sprites depth will be set according to their Y position, since the same was applied on the
+        // players sprites and updated as they move the depth is fixed automatically and the objects will get
+        // above or below the player.
+        this.sceneSprite.setDepth(this.y + this.sceneSprite.body.height);
+        currentScene.objectsAnimations[this.key] = this;
     }
 
     runAnimation()
@@ -80,10 +82,10 @@ class AnimationEngine
         if(this.sceneSprite){
             this.sceneSprite.anims.play(this.key, true);
         } else {
-            console.log('ERROR - Current animation not found.');
+            Logger.error('Current animation not found: '+this.key);
         }
     }
 
 }
 
-module.exports = AnimationEngine;
+module.exports.AnimationEngine = AnimationEngine;

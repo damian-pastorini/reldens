@@ -9,7 +9,7 @@
  *
  */
 
-const NpcObject = require('reldens/packages/objects/server/npc-object');
+const { NpcObject } = require('reldens/packages/objects/server/npc-object');
 
 class People extends NpcObject
 {
@@ -20,7 +20,7 @@ class People extends NpcObject
         this.runOnAction = true;
         this.playerVisible = true;
         // assign extra params:
-        Object.assign(this.clientParams, {enabled: true});
+        this.clientParams.enabled = true;
     }
 
 }

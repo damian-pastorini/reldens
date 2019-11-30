@@ -76,4 +76,4 @@ class AnimationObject extends BaseObject
 
 }
 
-module.exports = AnimationObject;
+module.exports.AnimationObject = AnimationObject;

@@ -53,4 +53,4 @@ class NpcObject extends BaseObject
 
 }
 
-module.exports = NpcObject;
+module.exports.NpcObject = NpcObject;

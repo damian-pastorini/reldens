@@ -9,12 +9,9 @@
 class TilesetAnimation
 {
 
-    constructor()
-    {
-        this.animations = [];
-        this.registered = {};
-        this.layer = null;
-    }
+    animations = [];
+    registered = {};
+    layer = null;
 
     register(layer, tileData)
     {
@@ -59,4 +56,4 @@ class TilesetAnimation
 
 }
 
-module.exports = TilesetAnimation;
+module.exports.TilesetAnimation = TilesetAnimation;

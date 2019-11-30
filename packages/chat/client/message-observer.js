@@ -33,4 +33,4 @@ class ChatMessageObserver
 
 }
 
-module.exports = ChatMessageObserver;
+module.exports.ChatMessageObserver = ChatMessageObserver;
