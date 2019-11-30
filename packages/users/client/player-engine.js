@@ -120,4 +120,4 @@ class PlayerEngine
 
 }
 
-module.exports = PlayerEngine;
+module.exports.PlayerEngine = PlayerEngine;

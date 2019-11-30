@@ -306,4 +306,4 @@ class ScenePreloader extends Scene
 
 }
 
-module.exports = ScenePreloader;
+module.exports.ScenePreloader = ScenePreloader;

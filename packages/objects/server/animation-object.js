@@ -37,7 +37,10 @@ class AnimationObject extends BaseObject
 
     onHit(props)
     {
-        if(this.runOnHit && props.room){
+        if(!this.runOnHit || !props.room) {
+            return;
+        }
+        if({}.hasOwnProperty.call(this, 'playerVisible') && this.roomVisible){
             let client = props.room.getClientById(props.playerBody.playerId);
             if(!client){
                 Logger.error('Object hit, client not found by playerId:', props.playerBody.playerId);
@@ -45,17 +48,29 @@ class AnimationObject extends BaseObject
                 props.room.send(client, this.animationData);
             }
         }
+        if({}.hasOwnProperty.call(this, 'roomVisible') && this.roomVisible){
+            // run for everyone in the room:
+            props.room.broadcast(this.animationData);
+        }
     }
 
     onAction(props)
     {
-        if(this.runOnAction && props.room) {
+        if(!this.runOnAction || !props.room) {
+            return;
+        }
+        if({}.hasOwnProperty.call(this, 'playerVisible') && this.roomVisible){
+            // run only for the client who executed:
             let client = props.room.getClientById(props.playerBody.playerId);
             if(!client){
                 Logger.error(['Object action, client not found by playerId:', props.playerBody.playerId]);
             } else {
                 props.room.send(client, this.animationData);
             }
+        }
+        if({}.hasOwnProperty.call(this, 'roomVisible') && this.roomVisible){
+            // run for everyone in the room:
+            props.room.broadcast(this.animationData);
         }
     }
 

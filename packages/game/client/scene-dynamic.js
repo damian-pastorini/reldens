@@ -1,8 +1,8 @@
-const Phaser = require('phaser');
+const { Scene, Input } = require('phaser');
 const TilesetAnimation = require('./tileset-animation');
 const AnimationEngine = require('../../objects/client/animation-engine');
 
-class SceneDynamic extends Phaser.Scene
+class SceneDynamic extends Scene
 {
 
     constructor(key, data, gameManager)
@@ -31,10 +31,10 @@ class SceneDynamic extends Phaser.Scene
 
     create()
     {
-        this.keyLeft = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.LEFT);
-        this.keyRight = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.RIGHT);
-        this.keyUp = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP);
-        this.keyDown = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.DOWN);
+        this.keyLeft = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.LEFT);
+        this.keyRight = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.RIGHT);
+        this.keyUp = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.UP);
+        this.keyDown = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.DOWN);
         this.input.keyboard.on('keydown', (event) => {
             if (event.keyCode === 32){
                 this.player.runActions();
@@ -148,4 +148,4 @@ class SceneDynamic extends Phaser.Scene
 
 }
 
-module.exports = SceneDynamic;
+module.exports.SceneDynamic = SceneDynamic;

@@ -18,6 +18,7 @@ class People extends NpcObject
     {
         super(props);
         this.runOnAction = true;
+        this.playerVisible = true;
         // assign extra params:
         Object.assign(this.clientParams, {enabled: true});
     }

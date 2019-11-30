@@ -52,27 +52,27 @@ class RoomChat extends RoomLogin
             return;
         }
         // get player:
-        let currentActivePlayer = this.activePlayers[client.sessionId];
-        if(!currentActivePlayer){
+        let activePlayer = this.activePlayers[client.sessionId];
+        if(!activePlayer){
             // throw error if player does not exists:
             ErrorManager.error('Current Active Player not found: '+client.sessionId);
         }
-        let messageObject = {act: ChatConst.CHAT_ACTION, f: currentActivePlayer.username};
+        let messageObject = {act: ChatConst.CHAT_ACTION, f: activePlayer.username};
         if(text.indexOf('@') === 0){
-            this.sendPrivateMessage(client, data[ChatConst.CHAT_TO], text, messageObject, currentActivePlayer);
+            this.sendPrivateMessage(client, data[ChatConst.CHAT_TO], text, messageObject, activePlayer.playerData);
         } else if(text.indexOf('#') === 0){
-            this.sendGlobalMessage(client, text, messageObject, currentActivePlayer);
+            this.sendGlobalMessage(client, text, messageObject, activePlayer.playerData, activePlayer.role_id);
         }
     }
 
-    sendPrivateMessage(client, toPlayer, text, messageObject, currentActivePlayer)
+    sendPrivateMessage(client, toPlayer, text, messageObject, playerData)
     {
         let clientTo = this.getActivePlayerByName(toPlayer);
         let messageType = false;
-        let clientToPlayerSchema = false;
+        let clientToData = false;
         if(clientTo){
             // send message to each client:
-            clientToPlayerSchema = clientTo.playerData;
+            clientToData = clientTo.playerData;
             messageObject.m = text.substring(text.indexOf(' '));
             messageObject.t = ChatConst.CHAT_TYPE_PRIVATE_FROM;
             this.send(client, messageObject);
@@ -83,20 +83,20 @@ class RoomChat extends RoomLogin
             this.sendErrorMessage(client, messageObject, errorMessage);
             messageType = 's';
         }
-        ChatManager.saveMessage(messageObject.m, currentActivePlayer.playerData, clientToPlayerSchema, messageType)
+        ChatManager.saveMessage(messageObject.m, playerData.id, playerData.state.room_id, clientToData, messageType)
             .catch((err) => {
                 Logger.error('Private chat save error:', err);
             });
     }
 
-    sendGlobalMessage(client, text, messageObject, currentActivePlayer)
+    sendGlobalMessage(client, text, messageObject, playerData, roleId)
     {
         let messageType = false;
         let isGlobalEnabled = this.config.get('feature/chat/messages/global_enabled');
         let globalAllowedRoles = this.config.get('feature/chat/messages/global_allowed_roles')
             .split(',')
             .map(Number);
-        if(isGlobalEnabled && globalAllowedRoles.indexOf(currentActivePlayer.role_id) !== -1){
+        if(isGlobalEnabled && globalAllowedRoles.indexOf(roleId) !== -1){
             messageObject.m = text.substring(1);
             messageObject.t = ChatConst.CHAT_TYPE_GLOBAL;
             this.broadcast(messageObject);
@@ -106,7 +106,7 @@ class RoomChat extends RoomLogin
             this.sendErrorMessage(client, messageObject, errorMessage);
             messageType = 's';
         }
-        ChatManager.saveMessage(messageObject.m, currentActivePlayer.playerData, false, messageType)
+        ChatManager.saveMessage(messageObject.m, playerData.id, playerData.state.room_id, false, messageType)
             .catch((err) => {
                 Logger.error('Global chat save error:', err);
             });
@@ -124,8 +124,8 @@ class RoomChat extends RoomLogin
     onLeave(client, consented)
     {
         if(this.config.get('feature/chat/messages/broadcast_leave')){
-            let currentActivePlayer = this.activePlayers[client.sessionId];
-            let sentText = `${currentActivePlayer.username} has left.`;
+            let activePlayer = this.activePlayers[client.sessionId];
+            let sentText = `${activePlayer.username} has left.`;
             this.broadcast({act: ChatConst.CHAT_ACTION, m: sentText, f: 'System', t: ChatConst.CHAT_TYPE_SYSTEM});
         }
         delete this.activePlayers[client.sessionId];

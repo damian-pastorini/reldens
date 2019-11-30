@@ -7,81 +7,40 @@
  *
  */
 
-const PlayerEngine = require('../../users/client/player-engine');
-const SceneDynamic = require('./scene-dynamic');
-const ScenePreloader = require('./scene-preloader');
+const { PlayerEngine } = require('../../users/client/player-engine');
+const { SceneDynamic } = require('./scene-dynamic');
+const { ScenePreloader } = require('./scene-preloader');
 const { GameConst } = require('../constants');
 
 class RoomEvents
 {
 
+    room = false;
+    sceneData = false;
+    playersQueue = {};
+
     constructor(roomName, gameManager)
     {
         this.gameManager = gameManager;
-        this.gameClient = gameManager.gameClient;
         this.gameEngine = gameManager.gameEngine;
-        this.room = false;
         this.roomName = roomName;
-        this.sceneData = false;
-        this.playersQueue = {};
     }
 
     activateRoom(room, previousScene = false)
     {
         this.room = room;
         // listen to changes coming from the server:
+        this.room.state.players.onAdd = (player, key) => {
+            this.playersOnAdd(player, key, previousScene);
+        };
         this.room.state.players.onChange = (player, key) => {
-            // do not move the player if is changing scene:
-            if(player.state.scene !== this.roomName){
-                return;
-            }
-            this.getSceneData(this.room);
-            let currentScene = this.getActiveScene();
-            if(currentScene.player && currentScene.player.players.hasOwnProperty(key)){
-                // @TODO: test play animation for other players and re-implement current player animation on key press.
-                currentScene.player.runPlayerAnimation(key, player);
-            }
+            this.playersOnChange(player, key);
         };
         this.room.state.players.onRemove = (player, key) => {
-            if(key === this.room.sessionId){
-                alert('Your session ended, please login again.');
-                window.location.reload();
-            } else {
-                let currentScene = this.getActiveScene();
-                if(currentScene.player && currentScene.player.players.hasOwnProperty(key)){
-                    // remove your player entity from the game world:
-                    currentScene.player.removePlayer(key);
-                }
-            }
-        };
-        this.room.state.players.onAdd = (player, key) => {
-            this.getSceneData(this.room);
-            // create current player:
-            if(key === this.room.sessionId){
-                this.engineStarted = true;
-                this.startEngineScene(player, this.room, previousScene);
-                let currentScene = this.getActiveScene();
-                if(currentScene.key === player.state.scene && currentScene.player && currentScene.player.players){
-                    for(let idx in this.playersQueue){
-                        let tmp = this.playersQueue[idx];
-                        currentScene.player.addPlayer(idx, {x: tmp.x, y: tmp.y, dir: tmp.dir});
-                    }
-                }
-            } else {
-                // add new players into the current player scene:
-                if(this.engineStarted){
-                    let currentScene = this.getActiveScene();
-                    if(currentScene.key === player.state.scene && currentScene.player && currentScene.player.players){
-                        currentScene.player.addPlayer(key, {x: player.state.x, y: player.state.y, dir: player.state.dir});
-                    }
-                } else {
-                    this.playersQueue[key] = {x: player.state.x, y: player.state.y, dir: player.state.dir};
-                }
-            }
+            this.playersOnRemove(player, key);
         };
         // create players or change scenes:
         this.room.onMessage((message) => {
-            this.getSceneData(this.room);
             if(
                 message.act === GameConst.CHANGED_SCENE
                 && message.scene === this.room.name
@@ -104,6 +63,7 @@ class RoomEvents
         });
         this.room.onLeave((code) => {
             if (code > 1000) {
+                // @TODO: replace this by a proper disconnection handler.
                 // server error, disconnection:
                 alert('There was a connection error.');
                 window.location.reload();
@@ -117,15 +77,73 @@ class RoomEvents
         this.gameManager.features.attachOnMessageObserversToRoom(this);
     }
 
+    playersOnAdd(player, key, previousScene)
+    {
+        if(this.room.state && (!this.sceneData || this.room.state !== this.sceneData)){
+            this.sceneData = JSON.parse(this.room.state.sceneData);
+        }
+        // create current player:
+        if(key === this.room.sessionId){
+            this.engineStarted = true;
+            this.startEngineScene(player, this.room, previousScene);
+            let currentScene = this.getActiveScene();
+            if(currentScene.key === player.state.scene && currentScene.player && currentScene.player.players){
+                for(let idx in this.playersQueue){
+                    let { x, y, dir } = this.playersQueue[idx];
+                    currentScene.player.addPlayer(idx, { x, y, dir });
+                }
+            }
+        } else {
+            // add new players into the current player scene:
+            if(this.engineStarted){
+                let currentScene = this.getActiveScene();
+                if(currentScene.key === player.state.scene && currentScene.player && currentScene.player.players){
+                    let { x, y, dir } = player.state;
+                    currentScene.player.addPlayer(key, { x, y, dir });
+                }
+            } else {
+                let { x, y, dir } = player.state;
+                this.playersQueue[key] = { x, y, dir };
+            }
+        }
+    }
+
+    playersOnChange(player, key)
+    {
+        // do not move the player if is changing scene:
+        if(player.state.scene !== this.roomName){
+            return;
+        }
+        let currentScene = this.getActiveScene();
+        if(currentScene.player && {}.hasOwnProperty.call(currentScene.player.players, key)){
+            currentScene.player.runPlayerAnimation(key, player);
+        }
+    }
+
+    playersOnRemove(player, key)
+    {
+        if(key === this.room.sessionId){
+            // @TODO: replace this by a proper disconnection handler.
+            alert('Your session ended, please login again.');
+            window.location.reload();
+        } else {
+            let currentScene = this.getActiveScene();
+            if(currentScene.player && {}.hasOwnProperty.call(currentScene.player.players, key)){
+                // remove your player entity from the game world:
+                currentScene.player.removePlayer(key);
+            }
+        }
+    }
+
     activatePlayerStats(message)
     {
         let uiScene = this.gameEngine.uiScene;
         let currentScene = this.getActiveScene();
-        if(currentScene.player && currentScene.player.players.hasOwnProperty(this.room.sessionId)){
+        if(currentScene.player && {}.hasOwnProperty.call(currentScene.player.players, this.room.sessionId)){
             let playerSprite = currentScene.player.players[this.room.sessionId];
             playerSprite.stats = message.stats;
         }
-        if(uiScene && uiScene.hasOwnProperty('uiBoxPlayerStats')){
+        if(uiScene && {}.hasOwnProperty.call(uiScene, 'uiBoxPlayerStats')){
             let statsPanel = uiScene.uiBoxPlayerStats.getChildByProperty('id', 'player-stats-container');
             if(statsPanel){
                 let messageTemplate = uiScene.cache.html.get('playerStats');
@@ -139,8 +157,7 @@ class RoomEvents
 
     startEngineScene(player, room, previousScene = false)
     {
-        let sceneData = this.getSceneData(room);
-        let preloaderName = GameConst.SCENE_PRELOADER+sceneData.roomName;
+        let preloaderName = GameConst.SCENE_PRELOADER+this.sceneData.roomName;
         let uiScene = false;
         if(!this.gameEngine.uiScene){
             uiScene = true;
@@ -149,12 +166,12 @@ class RoomEvents
         // , player.username
         let scenePreloader = this.createPreloaderInstance({
             name: preloaderName,
-            map: sceneData.roomMap,
-            images: sceneData.sceneImages,
+            map: this.sceneData.roomMap,
+            images: this.sceneData.sceneImages,
             uiScene: uiScene,
             gameManager: this.gameManager,
-            preloadAssets: sceneData.preloadAssets,
-            objectsAnimationsData: sceneData.objectsAnimationsData
+            preloadAssets: this.sceneData.preloadAssets,
+            objectsAnimationsData: this.sceneData.objectsAnimationsData
         });
         if(!this.gameEngine.scene.getScene(preloaderName)){
             this.gameEngine.scene.add(preloaderName, scenePreloader, true);
@@ -172,10 +189,10 @@ class RoomEvents
                         }
                     }
                 }
-                this.createEngineScene(player, room, previousScene, sceneData);
+                this.createEngineScene(player, room, previousScene, this.sceneData);
             });
         } else {
-            this.createEngineScene(player, room, previousScene, sceneData);
+            this.createEngineScene(player, room, previousScene, this.sceneData);
         }
     }
 
@@ -204,17 +221,18 @@ class RoomEvents
             for(let idx in room.state.players){
                 let tmp = room.state.players[idx];
                 if(tmp.sessionId && tmp.sessionId !== room.sessionId){
-                    currentScene.player.addPlayer(tmp.sessionId, {x: tmp.state.x, y: tmp.state.y, dir: tmp.state.dir});
+                    let { x, y, dir } = tmp.state;
+                    currentScene.player.addPlayer(tmp.sessionId, { x, y, dir });
                 }
             }
         }
         // update any ui if needed, this event happens once for every scene:
         let uiScene = this.gameEngine.uiScene;
         // if scene label is visible assign the data to the box:
-        if(uiScene.hasOwnProperty('uiSceneLabel')){
+        if({}.hasOwnProperty.call(uiScene, 'uiSceneLabel')){
             let element = uiScene.uiSceneLabel.getChildByProperty('className', 'scene-label');
             if(element){
-                element.innerHTML = this.getSceneData(room).roomTitle;
+                element.innerHTML = this.sceneData.roomTitle;
             }
         }
         // @NOTE: player states must be requested since are private user data that we can share with other players or
@@ -223,17 +241,6 @@ class RoomEvents
         this.room.send({act: GameConst.PLAYER_STATS});
         // send notification about client joined:
         this.room.send({act: GameConst.CLIENT_JOINED});
-    }
-
-    // @TODO: - Seiyria - in general, do NOT have a function that says "get", but also has a side effect that sets a
-    //   variable. this gets _really_ confusing. if you still want to do this, name this function something like
-    //   `getsetDefaultSceneData`... just so the function name is clear.
-    getSceneData(room)
-    {
-        if(room.state && (!this.sceneData || room.state !== this.sceneData)){
-            this.sceneData = JSON.parse(room.state.sceneData);
-        }
-        return this.sceneData;
     }
 
     // @TODO: - Seiyria - this function would really benefit from guards. it's just two nested if statements that could

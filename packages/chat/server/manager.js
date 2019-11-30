@@ -14,20 +14,22 @@ class ChatManager
 
     /**
      * @param message
-     * @param playerSchema
+     * @param playerId
+     * @param roomId
      * @param clientToPlayerSchema
      * @param messageType
+     * @returns {Promise<void>}
      */
-    async saveMessage(message, playerSchema, clientToPlayerSchema, messageType)
+    async saveMessage(message, playerId, roomId, clientToPlayerSchema, messageType)
     {
         // @TODO: since for now we only have one player by user, playerSchema is actually the currentUser.
         let insertModel = {
-            player_id: playerSchema.player_id,
+            player_id: playerId,
             message: message,
             message_time: this.getCurrentDate()
         };
-        if(playerSchema.state.room_id){
-            insertModel.room_id = playerSchema.state.room_id;
+        if(roomId){
+            insertModel.room_id = roomId;
         }
         if(clientToPlayerSchema && {}.hasOwnProperty.call(clientToPlayerSchema, 'id')){
             insertModel.private_player_id = clientToPlayerSchema.state.player_id;
