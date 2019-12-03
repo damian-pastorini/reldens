@@ -94,7 +94,8 @@ class GameManager
         await this.joinFeaturesRooms();
         // create room events manager:
         let joinedFirstRoom = await this.gameClient.joinOrCreate(initialGameData.player.state.scene, this.userData);
-        EventsManager.emit('reldens.joinedFirstRoom', joinedFirstRoom);
+        EventsManager.emit('reldens.joinedRoom', joinedFirstRoom, this);
+        EventsManager.emit('reldens.joinedRoom_'+initialGameData.player.state.scene, joinedFirstRoom, this);
         if(!joinedFirstRoom){
             // @NOTE: the errors while trying to join a rooms/scene will always be originated in the
             // server. For these errors we will alert the user and reload the window automatically.
@@ -128,16 +129,8 @@ class GameManager
                     }
                     // after the room was joined added to the joinedRooms list:
                     this.joinedRooms[joinRoomName] = joinedRoom;
-                    // if the feature as additional message actions then we will observe the messages:
-                    if(
-                        {}.hasOwnProperty.call(feature, 'joinedRoomsOnMessage')
-                        && {}.hasOwnProperty.call(feature.joinedRoomsOnMessage, joinRoomName)
-                    ){
-                        joinedRoom.onMessage((message) => {
-                            feature.messageObserver = new feature.joinedRoomsOnMessage[joinRoomName]();
-                            feature.messageObserver.observeMessage(message, this);
-                        });
-                    }
+                    EventsManager.emit('reldens.joinedRoom', joinedRoom, this);
+                    EventsManager.emit('reldens.joinedRoom_'+joinRoomName, joinedRoom, this);
                 }
             }
         }
@@ -157,6 +150,8 @@ class GameManager
             previousRoom.leave();
             this.activeRoomEvents = newRoomEvents;
             this.room = sceneRoom;
+            EventsManager.emit('reldens.joinedRoom', sceneRoom, this);
+            EventsManager.emit('reldens.joinedRoom_'+message.player.state.scene, sceneRoom, this);
             // start listen to room events:
             newRoomEvents.activateRoom(sceneRoom, message.prev);
         }).catch((err) => {

@@ -7,6 +7,7 @@
  */
 
 const { Scene, Geom } = require('phaser');
+const { EventsManager } = require('../events-manager');
 const { Logger } = require('../logger');
 const { GameConst } = require('../constants');
 
@@ -31,7 +32,9 @@ class ScenePreloader extends Scene
 
     preload()
     {
+        EventsManager.emit('reldens.beforePreload', this);
         if(this.uiScene){
+            EventsManager.emit('reldens.beforePreloadUiScene', this);
             // ui elements:
             if(this.gameManager.config.get('client/general/uiVisibility/uiBoxRight')){
                 this.load.html('uiBoxRight', 'assets/html/ui-box-right.html');
@@ -46,8 +49,7 @@ class ScenePreloader extends Scene
                 this.load.html('uiBoxPlayerStats', 'assets/html/ui-box-player-stats.html');
                 this.load.html('playerStats', 'assets/html/player-stats.html');
             }
-            // preload features assets:
-            this.gameManager.features.preloadAssets(this);
+            EventsManager.emit('reldens.preloadUiScene', this);
         }
         // maps:
         if(this.preloadMapKey){
@@ -101,7 +103,9 @@ class ScenePreloader extends Scene
 
     create()
     {
+        EventsManager.emit('reldens.createPreload', this);
         if(this.uiScene) {
+            EventsManager.emit('reldens.beforeCreateUiScene', this);
             // create ui:
             if(this.gameManager.config.get('client/general/uiVisibility/uiBoxRight')){
                 // @TODO: make all positions configurable.
@@ -141,8 +145,7 @@ class ScenePreloader extends Scene
                     });
                 }
             }
-            // @NOTE: since this happens only once and just for the first preloader, here we register the features UI.
-            this.gameManager.features.createFeaturesUi(this);
+            EventsManager.emit('reldens.createUiScene', this);
         }
         // player animations:
         this.createPlayerAnimations();

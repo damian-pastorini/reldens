@@ -49,9 +49,6 @@ class RoomEvents
         this.room.onLeave((code) => {
             this.roomOnLeave(code);
         });
-        // @NOTE: here we attach features onMessage actions for the events on the scene-rooms, we may need to do this
-        // for every room state change, not only for onMessage but for room.state.onChange, onRemove, onAdd as well.
-        this.gameManager.features.attachOnMessageObserversToRoom(this);
     }
 
     playersOnAdd(player, key, previousScene)

@@ -1,6 +1,6 @@
 const { Scene, Input } = require('phaser');
 const { TilesetAnimation } = require('./tileset-animation');
-const { AnimationEngine } = require('../../objects/client/animation-engine');
+const { EventsManager } = require('../../game/events-manager');
 
 class SceneDynamic extends Scene
 {
@@ -32,6 +32,7 @@ class SceneDynamic extends Scene
 
     create()
     {
+        EventsManager.emit('reldens.beforeSceneDynamicCreate', this);
         this.keyLeft = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.LEFT);
         this.keyRight = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.RIGHT);
         this.keyUp = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.UP);
@@ -60,24 +61,7 @@ class SceneDynamic extends Scene
                 }
             });
         });
-        // create animations for all the objects in the scene:
-        this.createDynamicAnimations();
-    }
-
-    createDynamicAnimations()
-    {
-        let currentScene = this.gameManager.activeRoomEvents.getActiveScene();
-        if(!currentScene.objectsAnimationsData){
-            return;
-        }
-        for(let idx in currentScene.objectsAnimationsData){
-            let animProps = currentScene.objectsAnimationsData[idx];
-            animProps.frameRate = this.configuredFrameRate;
-            // create the animation object instance:
-            let animation = new AnimationEngine(this.gameManager, animProps, this);
-            // @NOTE: this will populate the objectsAnimations property in the current scene, see scene-dynamic.
-            animation.createAnimation();
-        }
+        EventsManager.emit('reldens.afterSceneDynamicCreate', this);
     }
 
     // eslint-disable-next-line no-unused-vars

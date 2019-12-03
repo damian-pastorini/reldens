@@ -7,7 +7,7 @@
  */
 
 const { BaseObject } = require('./base-object');
-const { GameConst } = require('../../game/constants');
+const { ObjectsConst } = require('../constants');
 const { Logger } = require('../../game/logger');
 
 class AnimationObject extends BaseObject
@@ -27,7 +27,7 @@ class AnimationObject extends BaseObject
     get animationData()
     {
         return {
-            act: GameConst.OBJECT_ANIMATION,
+            act: ObjectsConst.OBJECT_ANIMATION,
             key: this.key,
             clientParams: this.clientParams,
             x: this.x,

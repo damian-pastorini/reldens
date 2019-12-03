@@ -17,11 +17,6 @@ module.exports.GameConst = {
     PLAYER_STATS: 'ps',
     ICON_STATS: 'player-stats',
     CLIENT_JOINED: 'cj',
-    FEATURES: 'gf',
-    ROOM_EVENTS: 'roomEvents',
-    PRELOAD_HTML: 'html',
-    PRELOAD_IMAGE: 'image',
-    PRELOAD_SPRITESHEET: 'spritesheet',
     // movement:
     UP: 'up',
     LEFT: 'left',
@@ -37,7 +32,5 @@ module.exports.GameConst = {
     FADE_DURATION: 1000,
     SPEED_SERVER: 180,
     // @TODO: implement player custom avatar.
-    IMAGE_PLAYER: 'player',
-    // objects types:
-    OBJECT_ANIMATION: 'oa'
+    IMAGE_PLAYER: 'player'
 };
