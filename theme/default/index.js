@@ -8,12 +8,14 @@
 
 const $ = require('jquery');
 require('jquery-validation');
+const { CustomClasses } = require('../packages/client');
 const { GameManager } = require('reldens/client');
 
 $(document).ready(function($){
 
     // reldens game:
     let reldens = new GameManager();
+    reldens.setupClasses(CustomClasses);
     window.reldens = reldens;
 
     let $register = $('#register_form'),

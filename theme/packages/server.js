@@ -2,12 +2,9 @@
  *
  * Reldens - Server/CustomClasses
  *
- * This is actually a configuration class, here you must define all your custom objects and rooms classes.
- * Below you will find the custom classes from the default theme:
- * - for objects doors and people.
- * - for rooms TestRoom.
- *
- * The keys for these definitions must match the keys specified in the storage, see tables: objects and rooms.
+ * This is actually a configuration class, here you must define all your custom objects classes.
+ * The keys for these definitions must match the keys specified in the storage, see table: objects.
+ * Below you will find the custom classes from the default theme for objects doors and people.
  *
  */
 

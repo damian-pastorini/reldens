@@ -19,7 +19,6 @@ class Door extends AnimationObject
     {
         super(props);
         this.runOnHit = true;
-        // @TODO: create a timeout option to reset the animation.
         this.roomVisible = true;
         // @NOTE: in this example we are changing the position data to run the animation before we hit the change-point.
         // this.xFix = 0;
@@ -34,7 +33,9 @@ class Door extends AnimationObject
             frameEnd: 3,
             repeat: 0,
             hideOnComplete: false,
-            autoStart: true
+            autoStart: true,
+            // if specified, the restartTime will use a setTimeOut to return to the animation frameStart:
+            restartTime: 2000,
         });
     }
 

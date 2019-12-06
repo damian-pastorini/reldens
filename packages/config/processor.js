@@ -18,7 +18,7 @@ class ConfigProcessor
      * @param path
      * @returns {*}
      */
-    get(path)
+    get(path, avoidLog = false)
     {
         // default value will be always false:
         let result = false;
@@ -31,7 +31,9 @@ class ConfigProcessor
             if({}.hasOwnProperty.call(level1, pathArray[2])){
                 result = level1[pathArray[2]];
             } else {
-                Logger.error('Configuration not defined: ' + path);
+                if(!avoidLog){
+                    Logger.error('Configuration not defined: ' + path);
+                }
             }
         }
         // is the path length is 4 then we return a single value:
@@ -40,7 +42,9 @@ class ConfigProcessor
             if({}.hasOwnProperty.call(level2, pathArray[3])){
                 result = level2[pathArray[3]];
             } else {
-                Logger.error('Configuration not defined:' + path);
+                if(!avoidLog){
+                    Logger.error('Configuration not defined:' + path);
+                }
             }
         }
         if(pathArray.length !== 3 && pathArray.length !== 4){

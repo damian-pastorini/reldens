@@ -38,6 +38,14 @@ class GameManager
         this.playerData = false;
     }
 
+    setupClasses(customClasses)
+    {
+        EventsManager.emit('reldens.setupClasses', this, customClasses);
+        if({}.hasOwnProperty.call(customClasses, 'objects')){
+            this.config.customClasses = customClasses;
+        }
+    }
+
     async joinGame(formData, isNewUser = false)
     {
         EventsManager.emit('reldens.beforeJoinGame', {gameManager: this, formData: formData, isNewUser: isNewUser});

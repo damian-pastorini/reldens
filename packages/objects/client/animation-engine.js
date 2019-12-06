@@ -14,7 +14,7 @@ class AnimationEngine
         this.currentPreloader = currentPreloader;
         this.gameManager = gameManager;
         this.enabled = props.enabled || false;
-        this.key = props.key || false;
+        this.key = props.key;
         this.animationSprite = props.animationSprite || false;
         this.frameRate = props.frameRate || false;
         this.frameStart = props.frameStart || 0;
@@ -27,6 +27,7 @@ class AnimationEngine
         this.positionFix = props.positionFix || false;
         this.zeroPad = props.zeroPad || false;
         this.prefix = props.prefix || false;
+        this.restartTime = {}.hasOwnProperty.call(props, 'restartTime') ? props.restartTime : false;
         this.calculateAnimPosition();
     }
 
@@ -61,15 +62,28 @@ class AnimationEngine
         if(this.zeroPad !== false){
             animationData.zeroPad = this.zeroPad;
         }
+        this.frameNumbers = this.currentPreloader.anims.generateFrameNumbers(this.key, animationData);
         let createData = {
             key: this.key,
-            frames: this.currentPreloader.anims.generateFrameNumbers(this.key, animationData),
+            frames: this.frameNumbers,
             frameRate: this.frameRate,
             repeat: this.repeat,
             hideOnComplete: this.hideOnComplete
         };
         this.currentAnimation = this.currentPreloader.anims.create(createData);
         this.sceneSprite = currentScene.physics.add.sprite(this.animPos.x, this.animPos.y, this.key);
+        if(this.restartTime){
+            this.sceneSprite.on('animationcomplete', () => {
+                    setTimeout(() => {
+                        // if the animation was used to change the scene this won't be available on the user who run it.
+                        if(this.sceneSprite.anims){
+                            this.sceneSprite.anims.restart();
+                            this.sceneSprite.anims.pause();
+                        }
+                    }, this.restartTime);
+                },
+                this);
+        }
         // @NOTE: sprites depth will be set according to their Y position, since the same was applied on the
         // players sprites and updated as they move the depth is fixed automatically and the objects will get
         // above or below the player.
