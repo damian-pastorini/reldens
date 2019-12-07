@@ -1,9 +1,10 @@
 [![Reldens - GitHub - Release](https://www.dwdeveloper.com/media/reldens/reldens-mmorpg-platform.png)](https://github.com/damian-pastorini/reldens)
 [![Reldens - GitHub - Release](https://img.shields.io/github/v/release/damian-pastorini/reldens?color=red&style=for-the-badge)](https://github.com/damian-pastorini/reldens)
 [![Reldens - GitHub - Stars](https://img.shields.io/github/stars/damian-pastorini/reldens?color=green&style=for-the-badge)](https://github.com/damian-pastorini/reldens)
-[![Reldens - Discord](https://img.shields.io/discord/599108949312143370?style=for-the-badge)](https://github.com/damian-pastorini/reldens)
+[![Reldens - Discord](https://img.shields.io/discord/599108949312143370?style=for-the-badge)](https://discord.gg/HuJMxUY)
 [![Reldens - Licence - MIT](https://img.shields.io/github/license/damian-pastorini/reldens?color=blue&style=for-the-badge)](https://github.com/damian-pastorini/reldens)
-
+[![Reldens - Licence - MIT](https://img.shields.io/lgtm/alerts/github/damian-pastorini/reldens?style=for-the-badge)](https://github.com/damian-pastorini/reldens)
+[![Reldens - LGTM - Code](https://img.shields.io/lgtm/grade/javascript/github/damian-pastorini/reldens?style=for-the-badge)](https://github.com/damian-pastorini/reldens)
 
 # Reldens - MMORPG Platform
 
@@ -31,7 +32,7 @@ I know it is a huge project but I'll put all I have to make it work, so needless
 ## [Features List](https://github.com/damian-pastorini/reldens/wiki/Features)
 
 
-## [Demo](dev.reldens.com)
+## [Demo](https://dev.reldens.com)
 
 Here you will find a small demo for the results with the last available version from master: 
 
@@ -44,7 +45,7 @@ Here you will find a small demo for the results with the last available version 
 If you like to contribute or donate to support the project please feel free to contact me at damian.pastorini@gmail.com.
 
 
-## [Coming soon and news!](https://github.com/damian-pastorini/reldens/wiki/Coming-soon-&-News "Coming soon & News archive") > Last update November 1, 2019.
+## [Coming soon and news!](https://github.com/damian-pastorini/reldens/wiki/Coming-soon-&-News "Coming soon & News archive") > Last update December 3, 2019.
 
 
 ## Contact us

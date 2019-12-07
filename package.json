@@ -1,8 +1,8 @@
 {
     "name": "reldens",
     "version": "4.0.0",
-    "description": "Reldens - MMORPG Creator",
-    "main": "index.js",
+    "description": "Reldens - MMORPG Platform",
+    "source": true,
     "homepage": "https://github.com/damian-pastorini/reldens",
     "repository": {
         "type": "git",
@@ -29,37 +29,44 @@
     },
     "scripts": {
         "start": "node .",
-        "dev-start": "rm -R dist && mkdir dist && cp -r pub/assets dist/assets/ && node .",
-        "dev-start-win": "rmdir /S dist && md dist && xcopy \"pub/assets\" \"dist/assets\" /O /X /E /H /K && node .",
         "install-db": "knex migrate:up --env production"
     },
     "engines": {
-        "node": "10.15.1"
+        "node": "13.1.0"
     },
     "author": "Damian A. Pastorini",
     "license": "MIT",
     "dependencies": {
         "@babel/runtime-corejs2": "^7.6.2",
         "@colyseus/monitor": "^0.11.7",
-        "bcrypt": "^3.0.6",
-        "colyseus": "^0.11.20",
-        "colyseus.js": "^0.11.5",
+        "@colyseus/schema": "^0.5.8",
+        "bcrypt": "^3.0.7",
+        "colyseus": "^0.11.24",
+        "colyseus.js": "^0.11.6",
         "cors": "^2.8.5",
-        "dotenv": "^8.1.0",
+        "dotenv": "^8.2.0",
         "express": "^4.17.1",
         "glslify": "^7.0.0",
         "jquery": "^3.4.1",
-        "jquery-validation": "^1.19.0",
-        "knex": "^0.19.5",
+        "jquery-validation": "^1.19.1",
+        "knex": "^0.20.2",
         "mustache": "^3.1.0",
         "mysql": "^2.17.1",
         "objection": "^1.6.11",
         "p2": "^0.7.1",
-        "parcel-bundler": "^1.12.3",
-        "phaser": "^3.19.0"
+        "parcel-bundler": "^1.12.4",
+        "phaser": "^3.21.0"
     },
     "devDependencies": {
         "@babel/core": "^7.6.2",
-        "@babel/plugin-transform-runtime": "^7.6.2"
+        "@babel/plugin-transform-runtime": "^7.6.2",
+        "@babel/plugin-proposal-class-properties": "^7.7.0",
+        "eslint": "^6.6.0",
+        "eslint-config-standard": "^14.1.0",
+        "eslint-plugin-import": "^2.18.2",
+        "eslint-plugin-node": "^10.0.0",
+        "eslint-plugin-promise": "^4.2.1",
+        "eslint-plugin-standard": "^4.0.1",
+        "babel-eslint": "^10.0.3"
     }
 }
