@@ -38,7 +38,7 @@ class SceneDynamic extends Scene
         this.keyUp = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.UP);
         this.keyDown = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.DOWN);
         this.input.keyboard.on('keydown', (event) => {
-            if (event.keyCode === 32){
+            if (event.keyCode === 32 && document.activeElement.tagName.toLowerCase() !== 'input'){
                 this.player.runActions();
             }
         });
