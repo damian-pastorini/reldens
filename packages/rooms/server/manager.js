@@ -59,7 +59,7 @@ class RoomsManager
                     ]);
                     continue;
                 }
-                roomClass = roomClassDefinition ? roomClassDefinition : RoomScene;
+                roomClass = roomClassDefinition;
             }
             // define the room including all the props:
             this.defineRoom(gameServer, roomModel.roomName, roomClass, props, globalMessageActions, roomModel);

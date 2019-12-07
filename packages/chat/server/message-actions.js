@@ -15,7 +15,7 @@ const { GameConst } = require('../../game/constants');
 class ChatMessageActions
 {
 
-    parseMessageAndRunActions(room, data, playerSchema)
+    parseMessageAndRunActions(client, data, room, playerSchema)
     {
         if(data.act === ChatConst.CHAT_ACTION){
             let dataMessage = data[ChatConst.CHAT_MESSAGE];

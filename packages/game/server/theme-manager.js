@@ -51,7 +51,7 @@ class ThemeManager
     {
         fs.mkdirSync(to);
         fs.readdirSync(from).forEach(element => {
-            if (fs.lstatSync(path.join(from, element)).isFile()) {
+            if(fs.lstatSync(path.join(from, element)).isFile()){
                 fs.copyFileSync(path.join(from, element), path.join(to, element));
             } else {
                 this.copyFolderSync(path.join(from, element), path.join(to, element));

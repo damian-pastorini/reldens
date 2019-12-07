@@ -124,6 +124,10 @@ class P2world extends World
             this.objectsManager.objectsAnimationsData[objectIndex].x = posX;
             this.objectsManager.objectsAnimationsData[objectIndex].y = posY;
         }
+        // check and calculate interaction area:
+        if(roomObject.interactionArea){
+            roomObject.setupInteractionArea();
+        }
         // by default objects won't have mass:
         let bodyMass = 0;
         // unless it is specified in the object itself:

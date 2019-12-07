@@ -37,7 +37,7 @@ class AnimationObject extends BaseObject
 
     onHit(props)
     {
-        if(!this.runOnHit || !props.room) {
+        if(!this.runOnHit || !props.room){
             return;
         }
         if({}.hasOwnProperty.call(this, 'playerVisible') && this.roomVisible){
@@ -56,7 +56,7 @@ class AnimationObject extends BaseObject
 
     onAction(props)
     {
-        if(!this.runOnAction || !props.room) {
+        if(!this.runOnAction || !props.room){
             return;
         }
         if({}.hasOwnProperty.call(this, 'playerVisible') && this.roomVisible){

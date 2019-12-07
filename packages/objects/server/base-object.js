@@ -15,6 +15,8 @@ class BaseObject
     // object position will be calculated based on the index:
     x = false;
     y = false;
+    interactionArea = false;
+    interactionLimits = {};
 
     constructor(props)
     {
@@ -29,9 +31,34 @@ class BaseObject
             Logger.error('BaseObject, clientParams JSON error.');
         }
         this.clientParams.key = this.key;
+        this.clientParams.id = this.id;
         // @NOTE: we need to send the layer name for later calculate the animation depth and show the animation over the
         // proper layer.
         this.clientParams.layerName = props.layer_name;
+    }
+
+    setupInteractionArea(margin = false)
+    {
+        // interaction area can be forced by parameter:
+        if(margin){
+            this.interactionArea = margin;
+        }
+        // if there's none interaction area just do nothing:
+        if(!this.interactionArea){
+            return;
+        }
+        this.interactionLimits.left = this.x - this.interactionArea;
+        this.interactionLimits.right = this.x + this.interactionArea;
+        this.interactionLimits.up = this.y - this.interactionArea;
+        this.interactionLimits.down = this.y + this.interactionArea;
+    }
+
+    isValidInteraction(posX, posY)
+    {
+        return posX > this.interactionLimits.left
+            && posX < this.interactionLimits.right
+            && posY > this.interactionLimits.up
+            && posY < this.interactionLimits.down;
     }
 
 }

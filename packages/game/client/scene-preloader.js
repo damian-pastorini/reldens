@@ -104,7 +104,7 @@ class ScenePreloader extends Scene
     create()
     {
         EventsManager.emit('reldens.createPreload', this);
-        if(this.uiScene) {
+        if(this.uiScene){
             EventsManager.emit('reldens.beforeCreateUiScene', this);
             // create ui:
             if(this.gameManager.config.get('client/general/uiVisibility/uiBoxRight')){

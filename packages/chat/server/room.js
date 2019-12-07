@@ -140,7 +140,7 @@ class RoomChat extends RoomLogin
     getActivePlayerByName(playerName)
     {
         let clientTo = false;
-        for (let idx in this.activePlayers) {
+        for(let idx in this.activePlayers){
             let client = this.activePlayers[idx];
             if(client.username === playerName){
                 clientTo = client;

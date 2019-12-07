@@ -1,6 +1,6 @@
 /**
  *
- * Reldens - FeaturesClient
+ * Reldens - FeaturesManager
  *
  * This class will handle the features activation on the client side depending on the configuration received from the
  * server.
@@ -10,7 +10,7 @@
 const { EventsManager } = require('../../game/events-manager');
 const { ClientCoreFeatures } = require('./config-client');
 
-class FeaturesClient
+class FeaturesManager
 {
 
     featuresList = {};
@@ -30,4 +30,4 @@ class FeaturesClient
 
 }
 
-module.exports.FeaturesClient = FeaturesClient;
+module.exports.FeaturesManager = FeaturesManager;

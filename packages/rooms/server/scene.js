@@ -18,6 +18,8 @@ const { ErrorManager } = require('../../game/error-manager');
 class RoomScene extends RoomLogin
 {
 
+    messageActions = {};
+
     async onCreate(options)
     {
         // parent config:
@@ -32,15 +34,16 @@ class RoomScene extends RoomLogin
         this.objectsManager = new ObjectsManager(options);
         // load the objects from the storage:
         await this.objectsManager.loadObjectsByRoomId(options.roomData.roomId);
+        if(this.objectsManager.listenMessages){
+            Object.assign(this.messageActions, this.objectsManager.listenMessagesObjects);
+        }
         // create world:
         this.createWorld(options.roomData, this.objectsManager);
         // the collisions manager has to be initialized after the world was created:
         this.collisionsManager = new CollisionsManager(this);
         // if the room has message actions those are specified here in the room-scene:
         if(options.messageActions){
-            this.messageActions = options.messageActions;
-        } else {
-            this.messageActions = false;
+            Object.assign(this.messageActions, options.messageActions);
         }
         // append public objects to the room data:
         options.roomData.preloadAssets = this.objectsManager.preloadAssets;
@@ -161,11 +164,14 @@ class RoomScene extends RoomLogin
                     this.state.stopPlayer(client.sessionId, messageData);
                 }
             }
+            if(messageData.act === GameConst.ACTION){
+                Logger.info('Player Action!');
+            }
             if(this.messageActions){
                 for(let idx in this.messageActions){
                     let messageObserver = this.messageActions[idx];
                     if(typeof messageObserver.parseMessageAndRunActions === 'function'){
-                        messageObserver.parseMessageAndRunActions(this, messageData, playerSchema);
+                        messageObserver.parseMessageAndRunActions(client, messageData, this, playerSchema);
                     } else {
                         Logger.error(['Broken message observer!', messageObserver]);
                     }
@@ -205,7 +211,7 @@ class RoomScene extends RoomLogin
     async nextSceneInitialPosition(client, data)
     {
         let nextRoom = await this.loginManager.roomsManager.loadRoomByName(data.next);
-        if(!nextRoom) {
+        if(!nextRoom){
             ErrorManager.error('Player room change error. Next room not found: ' + data.next);
         }
         let currentPlayer = this.state.players[client.sessionId];

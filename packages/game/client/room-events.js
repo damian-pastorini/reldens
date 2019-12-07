@@ -141,7 +141,7 @@ class RoomEvents
     roomOnLeave(code)
     {
         // @TODO: replace this by a proper disconnection handler.
-        if (code > 1000) {
+        if(code > 1000){
             // server error, disconnection:
             alert('There was a connection error.');
             window.location.reload();

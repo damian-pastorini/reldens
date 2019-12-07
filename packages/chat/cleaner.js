@@ -11,7 +11,7 @@ class Cleaner
 
     cleanMessage(message)
     {
-        return message.toString().replace('\\', '').substr(0, 140);
+        return message.toString().replace(/\\/g, '').substr(0, 140);
     }
 
 }

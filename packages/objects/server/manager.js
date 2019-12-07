@@ -13,20 +13,23 @@ const { Logger } = require('../../game/logger');
 class ObjectsManager
 {
 
+    // room objects is just the list of the objects in the storage:
+    roomObjectsData = false;
+    // room objects by layer and title are each object instance plus the data from the storage:
+    roomObjects = false;
+    preloadAssets = [];
+    objectsAnimationsData = {};
+    listenMessages = false;
+    listenMessagesObjects = {};
+
     constructor(options)
     {
         this.config = options.config;
-        // room objects is just the list of the objects in the storage:
-        this.roomObjectsData = false;
-        // room objects by layer and title are each object instance plus the data from the storage:
-        this.roomObjects = false;
-        this.preloadAssets = [];
-        this.objectsAnimationsData = {};
     }
 
     async loadObjectsByRoomId(roomId)
     {
-        if(!this.roomObjectsData) {
+        if(!this.roomObjectsData){
             this.roomObjectsData = await ObjectsModel.query()
                 .eager('[parent_room, objects_assets]')
                 .where('room_id', roomId)
@@ -55,12 +58,17 @@ class ObjectsManager
                         this.objectsAnimationsData[objectIndex] = objInstance.clientParams;
                     }
                     // prepare assets list:
-                    if (objectData.objects_assets) {
-                        for (let asset of objectData.objects_assets) {
+                    if(objectData.objects_assets){
+                        for(let asset of objectData.objects_assets){
                             // @NOTE: assets can be different types, spritesheets, images, atlas, etc. We push them
                             // here to later send these to the client along with the sceneData.
                             this.preloadAssets.push(asset);
                         }
+                    }
+                    // prepare object for room messages:
+                    if({}.hasOwnProperty.call(objInstance, 'listenMessages')){
+                        this.listenMessages = true;
+                        this.listenMessagesObjects[objectData.id] = objInstance;
                     }
                     // save object:
                     this.roomObjects[objectIndex] = objInstance;

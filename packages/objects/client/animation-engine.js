@@ -5,6 +5,7 @@
  */
 
 const { Logger } = require('../../game/logger');
+const { ObjectsConst } = require('../constants');
 
 class AnimationEngine
 {
@@ -15,6 +16,7 @@ class AnimationEngine
         this.gameManager = gameManager;
         this.enabled = props.enabled || false;
         this.key = props.key;
+        this.id = props.id;
         this.animationSprite = props.animationSprite || false;
         this.frameRate = props.frameRate || false;
         this.frameStart = props.frameStart || 0;
@@ -27,6 +29,7 @@ class AnimationEngine
         this.positionFix = props.positionFix || false;
         this.zeroPad = props.zeroPad || false;
         this.prefix = props.prefix || false;
+        this.isInteractive = props.isInteractive || false;
         this.restartTime = {}.hasOwnProperty.call(props, 'restartTime') ? props.restartTime : false;
         this.calculateAnimPosition();
     }
@@ -72,6 +75,11 @@ class AnimationEngine
         };
         this.currentAnimation = this.currentPreloader.anims.create(createData);
         this.sceneSprite = currentScene.physics.add.sprite(this.animPos.x, this.animPos.y, this.key);
+        if(this.isInteractive){
+            this.sceneSprite.setInteractive().on('pointerdown', () => {
+                this.gameManager.activeRoomEvents.room.send({act: ObjectsConst.OBJECT_INTERACTION, id: this.id});
+            });
+        }
         if(this.restartTime){
             this.sceneSprite.on('animationcomplete', () => {
                     setTimeout(() => {

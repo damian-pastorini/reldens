@@ -9,7 +9,7 @@ const { EventsManager } = require('../../game/events-manager');
 const { ObjectsConst } = require('../constants');
 const { Logger } = require('../../game/logger');
 
-class Objects
+class ObjectsPack
 {
 
     constructor()
@@ -66,4 +66,4 @@ class Objects
 
 }
 
-module.exports.Objects = Objects;
+module.exports.ObjectsPack = ObjectsPack;

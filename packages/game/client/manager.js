@@ -10,7 +10,7 @@ const { EventsManager } = require('../events-manager');
 const { GameClient } = require('./game-client');
 const { GameEngine } = require('./game-engine');
 const { RoomEvents } = require('./room-events');
-const { FeaturesClient } = require('../../features/client/client');
+const { FeaturesManager } = require('../../features/client/manager');
 const { ConfigProcessor } = require('../../config/processor');
 const { Logger } = require('../logger');
 const { GameConst } = require('../constants');
@@ -27,7 +27,7 @@ class GameManager
         // full game config:
         this.config = ConfigProcessor;
         // features manager:
-        this.features = new FeaturesClient();
+        this.features = new FeaturesManager();
         // active room is the currently connected server room:
         this.activeRoomEvents = false;
         // joined rooms:
