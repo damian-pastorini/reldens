@@ -4,7 +4,7 @@
 [![Reldens - Discord](https://img.shields.io/discord/599108949312143370?style=for-the-badge)](https://discord.gg/HuJMxUY)
 [![Reldens - Licence - MIT](https://img.shields.io/github/license/damian-pastorini/reldens?color=blue&style=for-the-badge)](https://github.com/damian-pastorini/reldens)
 [![Reldens - LGTM - Alerts](https://img.shields.io/lgtm/alerts/github/damian-pastorini/reldens?style=for-the-badge)](https://lgtm.com/projects/g/damian-pastorini/reldens/)
-[![Reldens - LGTM - Code](https://img.shields.io/lgtm/grade/javascript/github/damian-pastorini/reldens?label=Code Quality&style=for-the-badge)](https://lgtm.com/projects/g/damian-pastorini/reldens/)
+[![Reldens - LGTM - Code](https://img.shields.io/lgtm/grade/javascript/github/damian-pastorini/reldens?label=Code%20Quality&style=for-the-badge)](https://lgtm.com/projects/g/damian-pastorini/reldens/)
 
 # Reldens - MMORPG Platform
 
