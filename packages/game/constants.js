@@ -17,6 +17,7 @@ module.exports.GameConst = {
     PLAYER_STATS: 'ps',
     ICON_STATS: 'player-stats',
     CLIENT_JOINED: 'cj',
+    UI: 'ui',
     // movement:
     UP: 'up',
     LEFT: 'left',

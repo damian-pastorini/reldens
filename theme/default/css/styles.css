@@ -42,6 +42,8 @@ form .input-box input[type="text"], form .input-box input[type="password"] { wid
 .ux-box-left #action { position:absolute; top:30px; right:-60px; }
 .ux-box-left .vertical-buttons img { float:none; }
 .ux-box-right { background-color: rgba(0, 0, 0, 0.5); }
+.ux-box-npc-dialog { display:none; float:left; width:240px; height:60px; padding:8px; background:#000000; opacity:0.7; color:#ffffff; word-wrap:break-word; overflow:auto; font-size:12px; }
+.box-close { position:absolute; right:0px; top:-24px; background:#000; opacity:0.8; padding:5px; cursor:pointer; }
 .player-name { padding:10px 0; text-align:center; color:#ffffff; }
 .chat-ui { display:block; float:left; min-width:100px; min-height:80px; background:#000000; opacity:0.7; color:#ffffff; }
 #chat-messages { width:242px; height:90px; word-wrap:break-word; overflow:auto; font-size:12px; }

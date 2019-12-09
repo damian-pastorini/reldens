@@ -136,6 +136,9 @@ class RoomEvents
         if(message.act === GameConst.PLAYER_STATS){
             this.activatePlayerStats(message);
         }
+        if(message.act === GameConst.UI && message.id){
+            this.initUi(message);
+        }
     }
 
     roomOnLeave(code)
@@ -174,25 +177,45 @@ class RoomEvents
         }
     }
 
+    initUi(props)
+    {
+        let uiScene = this.gameEngine.uiScene;
+        if(uiScene && {}.hasOwnProperty.call(uiScene.userInterfaces, props.id)){
+            let uiBox = uiScene.userInterfaces[props.id];
+            if(props.title){
+                let boxTitle = uiBox.getChildByProperty('className', 'box-title');
+                boxTitle.innerHTML = props.title;
+            }
+            if(props.content){
+                let boxContent = uiBox.getChildByProperty('className', 'box-content');
+                boxContent.innerHTML = props.content;
+            }
+            let dialogContainer = uiBox.getChildByID('box-'+props.id);
+            dialogContainer.style.display = 'block';
+        }
+    }
+
     startEngineScene(player, room, previousScene = false)
     {
-        let preloaderName = GameConst.SCENE_PRELOADER+this.sceneData.roomName;
+        this.gameManager.events.emit('reldens.startEngineScene', this, player, room, previousScene);
         let uiScene = false;
         if(!this.gameEngine.uiScene){
             uiScene = true;
         }
+        let preloaderName = GameConst.SCENE_PRELOADER+this.sceneData.roomName;
         // @TODO: implement player custom avatar.
         // , player.username
-        let scenePreloader = this.createPreloaderInstance({
-            name: preloaderName,
-            map: this.sceneData.roomMap,
-            images: this.sceneData.sceneImages,
-            uiScene: uiScene,
-            gameManager: this.gameManager,
-            preloadAssets: this.sceneData.preloadAssets,
-            objectsAnimationsData: this.sceneData.objectsAnimationsData
-        });
         if(!this.gameEngine.scene.getScene(preloaderName)){
+            let scenePreloader = this.createPreloaderInstance({
+                name: preloaderName,
+                map: this.sceneData.roomMap,
+                images: this.sceneData.sceneImages,
+                uiScene: uiScene,
+                gameManager: this.gameManager,
+                preloadAssets: this.sceneData.preloadAssets,
+                objectsAnimationsData: this.sceneData.objectsAnimationsData
+            });
+            this.gameManager.events.emit('reldens.createdPreloaderInstance', this, scenePreloader);
             this.gameEngine.scene.add(preloaderName, scenePreloader, true);
             let preloader = this.gameEngine.scene.getScene(preloaderName);
             preloader.load.on('complete', () => {

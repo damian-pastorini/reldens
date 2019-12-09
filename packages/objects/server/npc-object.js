@@ -8,6 +8,7 @@
 
 const { BaseObject } = require('./base-object');
 const { Logger } = require('../../game/logger');
+const { GameConst } = require('../../game/constants');
 const { ObjectsConst } = require('../constants');
 
 class NpcObject extends BaseObject
@@ -66,7 +67,14 @@ class NpcObject extends BaseObject
             && data.id === this.id
             && this.isValidInteraction(playerSchema.state.x, playerSchema.state.y)
         ){
-            // room.send(client);
+            let activationData = {act: GameConst.UI, id: this.id};
+            if(this.title){
+                activationData.title = this.title;
+            }
+            if(this.content){
+                activationData.content = this.content;
+            }
+            room.send(client, activationData);
         }
     }
 

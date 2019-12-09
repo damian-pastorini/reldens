@@ -14,6 +14,12 @@ const { GameConst } = require('../constants');
 class ScenePreloader extends Scene
 {
 
+    progressBar = null;
+    progressCompleteRect = null;
+    progressRect = null;
+    objectsUi = {};
+    userInterfaces = {};
+
     constructor(props)
     {
         super({key: props.name});
@@ -21,9 +27,6 @@ class ScenePreloader extends Scene
         this.preloadMapKey = props.map;
         this.preloadImages = props.images;
         this.uiScene = props.uiScene;
-        this.progressBar = null;
-        this.progressCompleteRect = null;
-        this.progressRect = null;
         this.gameManager = props.gameManager;
         this.preloadAssets = props.preloadAssets;
         let currentScene = this.gameManager.activeRoomEvents.getActiveScene();

@@ -5,6 +5,7 @@
  */
 
 const { AnimationEngine } = require('../../objects/client/animation-engine');
+const { UserInterface } = require('../../game/client/user-interface');
 const { EventsManager } = require('../../game/events-manager');
 const { ObjectsConst } = require('../constants');
 const { Logger } = require('../../game/logger');
@@ -17,6 +18,9 @@ class ObjectsPack
         // animations run on :
         EventsManager.on('reldens.joinedRoom', (room, gameManager) => {
             this.listenMessages(room, gameManager);
+        });
+        EventsManager.on('reldens.createdPreloaderInstance', (roomEvents, scenePreloader) => {
+            this.prepareObjectsUi(roomEvents.gameManager, roomEvents.sceneData.objectsAnimationsData, scenePreloader);
         });
         // create animations for all the objects in the scene:
         EventsManager.on('reldens.afterSceneDynamicCreate', (sceneDynamic) => {
@@ -34,6 +38,21 @@ class ObjectsPack
                 }
             }
         });
+    }
+
+    prepareObjectsUi(gameManager, objectsAnimationsData, scenePreloader)
+    {
+        for(let idx in objectsAnimationsData){
+            let animProps = objectsAnimationsData[idx];
+            if(!{}.hasOwnProperty.call(animProps, 'ui')){
+                continue;
+            }
+            if(!animProps.id){
+                Logger.error(['Object ID not specified. Skipping registry:', animProps]);
+                continue;
+            }
+            scenePreloader.objectsUi[animProps.id] = new UserInterface(gameManager, animProps.id);
+        }
     }
 
     createDynamicAnimations(sceneDynamic)

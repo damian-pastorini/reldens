@@ -17,6 +17,7 @@ class AnimationEngine
         this.enabled = props.enabled || false;
         this.key = props.key;
         this.id = props.id;
+        this.ui = props.ui || false;
         this.animationSprite = props.animationSprite || false;
         this.frameRate = props.frameRate || false;
         this.frameStart = props.frameStart || 0;

@@ -21,6 +21,9 @@ class People extends NpcObject
         this.playerVisible = true;
         // assign extra params:
         this.clientParams.enabled = true;
+        this.clientParams.ui = true;
+        this.title = 'Alfred:';
+        this.content = 'Hello! My name is Alfred. Now... leave me alone!';
     }
 
 }
