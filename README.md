@@ -3,8 +3,8 @@
 [![Reldens - GitHub - Stars](https://img.shields.io/github/stars/damian-pastorini/reldens?color=green&style=for-the-badge)](https://github.com/damian-pastorini/reldens)
 [![Reldens - Discord](https://img.shields.io/discord/599108949312143370?style=for-the-badge)](https://discord.gg/HuJMxUY)
 [![Reldens - Licence - MIT](https://img.shields.io/github/license/damian-pastorini/reldens?color=blue&style=for-the-badge)](https://github.com/damian-pastorini/reldens)
-[![Reldens - Licence - MIT](https://img.shields.io/lgtm/alerts/github/damian-pastorini/reldens?style=for-the-badge)](https://github.com/damian-pastorini/reldens)
-[![Reldens - LGTM - Code](https://img.shields.io/lgtm/grade/javascript/github/damian-pastorini/reldens?style=for-the-badge)](https://github.com/damian-pastorini/reldens)
+[![Reldens - LGTM - Alerts](https://img.shields.io/lgtm/alerts/github/damian-pastorini/reldens?style=for-the-badge)](https://lgtm.com/projects/g/damian-pastorini/reldens/)
+[![Reldens - LGTM - Code](https://img.shields.io/lgtm/grade/javascript/github/damian-pastorini/reldens?label=Code%20Quality&style=for-the-badge)](https://lgtm.com/projects/g/damian-pastorini/reldens/)
 
 # Reldens - MMORPG Platform
 
@@ -45,7 +45,7 @@ Here you will find a small demo for the results with the last available version 
 If you like to contribute or donate to support the project please feel free to contact me at damian.pastorini@gmail.com.
 
 
-## [Coming soon and news!](https://github.com/damian-pastorini/reldens/wiki/Coming-soon-&-News "Coming soon & News archive") > Last update December 3, 2019.
+## [Coming soon and news!](https://github.com/damian-pastorini/reldens/wiki/Coming-soon-&-News "Coming soon & News archive") > Last update December 8, 2019.
 
 
 ## Contact us
