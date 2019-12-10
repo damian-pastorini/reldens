@@ -91,8 +91,7 @@ class RoomScene extends RoomLogin
             id: client.sessionId,
             width: this.config.get('server/players/size/width'),
             height: this.config.get('server/players/size/height'),
-            x: currentPlayer.state.x,
-            y: currentPlayer.state.y,
+            playerState: currentPlayer.state
         });
     }
 

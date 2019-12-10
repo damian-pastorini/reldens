@@ -6,11 +6,11 @@
  *
  */
 
-const P2 = require('p2');
-const { World } = P2;
-const { GameConst } = require('../../game/constants');
+const { World, Body, Box } = require('p2');
+const { PlayerBody } = require('./player-body');
 const { Logger } = require('../../game/logger');
 const { ErrorManager } = require('../../game/error-manager');
+const { GameConst } = require('../../game/constants');
 
 class P2world extends World
 {
@@ -22,6 +22,7 @@ class P2world extends World
     {
         super(options);
         this.applyGravity = options.applyGravity;
+        this.applyDamping = options.applyDamping || false;
         this.sceneName = options.sceneName || false;
         this.sceneTiledMapFile = options.roomData.roomMap || false;
         if(!this.sceneName || !this.sceneTiledMapFile){
@@ -182,17 +183,17 @@ class P2world extends World
         let bodyConfig = {
             mass: mass,
             position: [x, y],
-            type: P2.Body.STATIC,
+            type: Body.STATIC,
             fixedRotation: true
         };
-        let boxBody = new P2.Body(bodyConfig);
+        let boxBody = new Body(bodyConfig);
         boxBody.addShape(boxShape);
         return boxBody;
     }
 
     createCollisionShape(width, height, collisionResponse = true)
     {
-        let boxShape = new P2.Box({ width: width, height: height});
+        let boxShape = new Box({ width: width, height: height});
         boxShape.collisionGroup = GameConst.COL_GROUND;
         boxShape.collisionMask = GameConst.COL_PLAYER | GameConst.COL_ENEMY;
         boxShape.collisionResponse = collisionResponse;
@@ -212,18 +213,24 @@ class P2world extends World
 
     createPlayerBody(playerData)
     {
-        let boxShape = new P2.Box({width: playerData.width, height: playerData.height});
+        let boxShape = new Box({width: playerData.width, height: playerData.height});
         boxShape.collisionGroup = GameConst.COL_PLAYER;
-        boxShape.collisionMask = GameConst.COL_ENEMY | GameConst.COL_GROUND;
-        let boxBody = new P2.Body({
+        // @TODO: players collision will be configurable, when collisions are active players can push players.
+        boxShape.collisionMask = GameConst.COL_ENEMY | GameConst.COL_GROUND | GameConst.COL_PLAYER;
+        let boxBody = new PlayerBody({
             mass: 1,
-            position: [playerData.x, playerData.y],
-            type: P2.Body.DYNAMIC,
+            position: [playerData.playerState.x, playerData.playerState.y],
+            type: Body.DYNAMIC,
             fixedRotation: true
         });
         boxBody.addShape(boxShape);
         boxBody.playerId = playerData.id;
         boxBody.isChangingScene = false;
+        // @TODO: temporally assigned the player state but we actually need the full player schema here to also stop
+        //   players by setting the mov property to false.
+        boxBody.playerState = playerData.playerState;
+        playerData.playerState.x = boxBody.position[0];
+        playerData.playerState.y = boxBody.position[1];
         this.addBody(boxBody);
         // return body:
         return boxBody;
