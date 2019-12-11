@@ -22,11 +22,11 @@ class AnimationEngine
         this.frameRate = props.frameRate || false;
         this.frameStart = props.frameStart || 0;
         this.frameEnd = props.frameEnd || 0;
+        this.x = props.x || 0;
+        this.y = props.y || 0;
         this.repeat = isNaN(props.repeat) ? -1 : props.repeat;
         this.hideOnComplete = props.hideOnComplete || false;
         this.layerName = props.layerName || false;
-        this.x = props.x || 0;
-        this.y = props.y || 0;
         this.positionFix = props.positionFix || false;
         this.zeroPad = props.zeroPad || false;
         this.prefix = props.prefix || false;
@@ -79,6 +79,7 @@ class AnimationEngine
         if(this.isInteractive){
             this.sceneSprite.setInteractive().on('pointerdown', () => {
                 this.gameManager.activeRoomEvents.room.send({act: ObjectsConst.OBJECT_INTERACTION, id: this.id});
+                currentScene.player.currentTarget = {id: this.id, type: ObjectsConst.TYPE_OBJECT};
             });
         }
         if(this.restartTime){

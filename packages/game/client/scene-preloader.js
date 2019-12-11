@@ -206,11 +206,15 @@ class ScenePreloader extends Scene
         }
         let btnAction = controllersBox.getChildByProperty('id', GameConst.ACTION);
         if(btnAction){
+            let currentScene = this.gameManager.activeRoomEvents.getActiveScene();
             if(this.gameManager.config.get('client/general/controls/action_button_hold')){
-                this.hold(btnAction, {act: GameConst.ACTION});
+                this.hold(btnAction, {act: GameConst.ACTION, target: currentScene.player.currentTarget});
             } else {
                 btnAction.addEventListener('click', () => {
-                    this.gameManager.activeRoomEvents.room.send({act: GameConst.ACTION});
+                    this.gameManager.activeRoomEvents.room.send({
+                        act: GameConst.ACTION,
+                        target: currentScene.player.currentTarget
+                    });
                 });
             }
         }

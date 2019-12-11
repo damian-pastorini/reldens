@@ -30,7 +30,6 @@ class Player extends Schema
             this.status = data.status;
             this.username = data.username;
             this.p2body = false;
-            this.mov = false;
             // set scene and position:
             this.state = new PlayerState(player.state);
         } catch (err) {
@@ -43,7 +42,6 @@ class Player extends Schema
 type('string')(Player.prototype, 'sessionId');
 type('string')(Player.prototype, 'username');
 type('number')(Player.prototype, 'status');
-type('boolean')(Player.prototype, 'mov');
 schema.defineTypes(Player, {state: PlayerState});
 
 module.exports.Player = Player;

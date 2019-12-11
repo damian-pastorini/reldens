@@ -10,8 +10,10 @@ const { RoomLogin } = require('./login');
 const { State } = require('./state');
 const { P2world } = require('../../world/server/p2world');
 const { CollisionsManager } = require('../../world/server/collisions-manager');
+const { InteractionArea } = require('../../world/interaction-area');
 const { ObjectsManager } = require('../../objects/server/manager');
 const { GameConst } = require('../../game/constants');
+const { ObjectsConst } = require('../../objects/constants');
 const { Logger } = require('../../game/logger');
 const { ErrorManager } = require('../../game/error-manager');
 
@@ -39,21 +41,25 @@ class RoomScene extends RoomLogin
         }
         // create world:
         this.createWorld(options.roomData, this.objectsManager);
+        // set world objects normal speed:
+        this.worldSpeed = this.config.get('server/players/physicsBody/speed') || GameConst.SPEED_SERVER;
+        // keys events:
+        this.allowSimultaneous = this.config.get('server/general/controls/allow_simultaneous_keys');
         // the collisions manager has to be initialized after the world was created:
         this.collisionsManager = new CollisionsManager(this);
         // if the room has message actions those are specified here in the room-scene:
         if(options.messageActions){
             Object.assign(this.messageActions, options.messageActions);
         }
-        // append public objects to the room data:
-        options.roomData.preloadAssets = this.objectsManager.preloadAssets;
-        // append dynamic animations data to the room data:
-        options.roomData.objectsAnimationsData = this.objectsManager.objectsAnimationsData;
         // @NOTE: as you can see not all the scene information is been sent to the client, this is because we have
         // hidden information to be discovered (hidden objects are only active on the server side).
         this.roomData = options.roomData;
+        // append public objects to the room data:
+        this.roomData.preloadAssets = this.objectsManager.preloadAssets;
+        // append dynamic animations data to the room data:
+        this.roomData.objectsAnimationsData = this.objectsManager.objectsAnimationsData;
         // room data is saved on the state:
-        let roomState = new State(options.roomData);
+        let roomState = new State(this.roomData);
         // after we set the state it will be automatically sync by the game-server:
         this.setState(roomState);
     }
@@ -115,56 +121,18 @@ class RoomScene extends RoomLogin
             let bodyToMove = playerSchema.p2body;
             // if player is moving:
             if({}.hasOwnProperty.call(messageData, 'dir') && bodyToMove){
-                if(this.config.get('server/general/controls/allow_simultaneous_keys') === 1){
-                    /* @TODO: implement simultaneous directions movement.
-                    if(messageData.dir === GameConst.RIGHT){
-                        bodyToMove.velocity[0] = GameConst.SPEED_SERVER;
-                    }
-                    if(messageData.dir === GameConst.LEFT){
-                        bodyToMove.velocity[0] = -GameConst.SPEED_SERVER;
-                    }
-                    if(messageData.dir === GameConst.UP){
-                        bodyToMove.velocity[1] = -GameConst.SPEED_SERVER;
-                    }
-                    if(messageData.dir === GameConst.DOWN){
-                        bodyToMove.velocity[1] = GameConst.SPEED_SERVER;
-                    }
-                    */
-                } else {
-                    let serverSpeed = this.config.get('server/players/physicsBody/speed') || GameConst.SPEED_SERVER;
-                    // if body is moving then avoid multiple key press at the same time:
-                    if(messageData.dir === GameConst.RIGHT && bodyToMove.velocity[1] === 0){
-                        bodyToMove.velocity[0] = serverSpeed;
-                    }
-                    if(messageData.dir === GameConst.LEFT && bodyToMove.velocity[1] === 0){
-                        bodyToMove.velocity[0] = -serverSpeed;
-                    }
-                    if(messageData.dir === GameConst.UP && bodyToMove.velocity[0] === 0){
-                        bodyToMove.velocity[1] = -serverSpeed;
-                    }
-                    if(messageData.dir === GameConst.DOWN && bodyToMove.velocity[0] === 0){
-                        bodyToMove.velocity[1] = serverSpeed;
-                    }
-                }
-                messageData.x = bodyToMove.position[0];
-                messageData.y = bodyToMove.position[1];
-                this.state.movePlayer(client.sessionId, messageData);
+                bodyToMove.initMove(messageData.dir, this.worldSpeed, this.allowSimultaneous);
             }
             // if player stopped:
-            if(messageData.act === GameConst.STOP){
-                // get player body:
-                let bodyToMove = playerSchema.p2body;
-                if(bodyToMove){
-                    // stop by setting speed to zero:
-                    bodyToMove.velocity[0] = 0;
-                    bodyToMove.velocity[1] = 0;
-                    messageData.x = bodyToMove.position[0];
-                    messageData.y = bodyToMove.position[1];
-                    this.state.stopPlayer(client.sessionId, messageData);
-                }
+            if(messageData.act === GameConst.STOP && bodyToMove){
+                // stop by setting speed to zero:
+                bodyToMove.stopMove();
             }
-            if(messageData.act === GameConst.ACTION){
-                Logger.info('Player Action!');
+            if(messageData.act === GameConst.ACTION && messageData.target){
+                let validTarget = this.validateTarget(messageData.target, playerSchema.state.x, playerSchema.state.y);
+                if(validTarget){
+                    Logger.info(['Player Action!', messageData.target]);
+                }
             }
             if(this.messageActions){
                 for(let idx in this.messageActions){
@@ -307,6 +275,30 @@ class RoomScene extends RoomLogin
             result = this.state.players[playerIndex];
         }
         return result;
+    }
+
+    validateTarget(target, currentX, currentY)
+    {
+        let validTarget = false;
+        if(target.type === GameConst.TYPE_PLAYER){
+            let playerTarget = this.getPlayerFromState(target.id);
+            if(playerTarget){
+                let interactionArea = new InteractionArea();
+                // @TODO: limitDistance will be configurable from several points.
+                let limitDistance = 64;
+                interactionArea.setupInteractionArea(limitDistance, playerTarget.state.x, playerTarget.state.y);
+                if(interactionArea.isValidInteraction(currentX, currentY)){
+                    validTarget = playerTarget;
+                }
+            }
+        }
+        if(target.type === ObjectsConst.TYPE_OBJECT){
+            let objectTarget = this.objectsManager.getObjectById(target.id);
+            if(objectTarget.isValidInteraction(currentX, currentY)){
+                validTarget = objectTarget;
+            }
+        }
+        return validTarget;
     }
 
 }

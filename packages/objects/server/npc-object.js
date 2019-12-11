@@ -30,6 +30,7 @@ class NpcObject extends BaseObject
         this.clientParams.isInteractive = true;
         // @NOTE: interaction area is how far the player can be from the object to validate the actions on click, this
         // area will be the valid-margin surrounding the object.
+        // @TODO: interactionArea will be configurable.
         this.interactionArea = 64;
     }
 

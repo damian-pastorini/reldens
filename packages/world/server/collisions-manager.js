@@ -94,6 +94,7 @@ class CollisionsManager
     // eslint-disable-next-line no-unused-vars
     playerHitPlayer(bodyA, bodyB)
     {
+        // @NOTE: we could run specific events when a player collides with another player.
         // Logger.info(['Hit player!', bodyA.playerId, bodyB.playerId]);
     }
 
@@ -122,7 +123,7 @@ class CollisionsManager
             return false;
         } else {
             let playerPosition = {x: playerBody.position[0], y: playerBody.position[1]};
-            this.room.state.stopPlayer(playerBody.playerId, playerPosition);
+            this.room.state.positionPlayer(playerBody.playerId, playerPosition);
         }
         // scene change data:
         let changeScene = changePoint.changeScenePoint;

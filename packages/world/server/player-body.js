@@ -7,13 +7,13 @@
  *
  */
 
-const { Body } = require('p2');
-const vec2 = require('p2/src/math/vec2');
+const { Body, vec2 } = require('p2');
+const { GameConst } = require('../../game/constants');
 
 class PlayerBody extends Body
 {
 
-    playerState = false;
+    playerState = {};
 
     constructor(options)
     {
@@ -48,10 +48,52 @@ class PlayerBody extends Body
             }
         }
         if(this.playerState){
+            // update position:
             this.playerState.x = this.position[0];
             this.playerState.y = this.position[1];
+            // start or stop animation:
+            this.playerState.mov = (this.velocity[0] !== 0 || this.velocity[1] !== 0);
         }
         this.aabbNeedsUpdate = true;
+    }
+
+    initMove(direction, speed, allowSimultaneous = false)
+    {
+        if(allowSimultaneous){
+            // @TODO: test.
+            if(direction === GameConst.RIGHT){
+                this.velocity[0] = speed;
+            }
+            if(direction === GameConst.LEFT){
+                this.velocity[0] = -speed;
+            }
+            if(direction === GameConst.UP){
+                this.velocity[1] = -speed;
+            }
+            if(direction === GameConst.DOWN){
+                this.velocity[1] = speed;
+            }
+        } else {
+            // if body is moving then avoid multiple key press at the same time:
+            if(direction === GameConst.RIGHT && this.velocity[1] === 0){
+                this.velocity[0] = speed;
+            }
+            if(direction === GameConst.LEFT && this.velocity[1] === 0){
+                this.velocity[0] = -speed;
+            }
+            if(direction === GameConst.UP && this.velocity[0] === 0){
+                this.velocity[1] = -speed;
+            }
+            if(direction === GameConst.DOWN && this.velocity[0] === 0){
+                this.velocity[1] = speed;
+            }
+        }
+    }
+
+    stopMove()
+    {
+        // stop by setting speed to zero:
+        this.velocity = [0, 0];
     }
 
 }

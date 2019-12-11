@@ -8,6 +8,7 @@
 
 const { Schema, MapSchema, type } = require('@colyseus/schema');
 const { Player } = require('../../users/server/player');
+const { Logger } = require('../../game/logger');
 
 class State extends Schema
 {
@@ -22,30 +23,16 @@ class State extends Schema
 
     createPlayer(id, playerData)
     {
-        this.players[id] =  new Player(playerData, id);
+        this.players[id] = new Player(playerData, id);
         return this.players[id];
     }
 
-    movePlayer(id, data)
-    {
-        if({}.hasOwnProperty.call(data, 'dir')){
-            this.players[id].mov = true;
-            this.players[id].state.dir = data.dir;
-            this.players[id].state.x = data.x;
-            this.players[id].state.y = data.y;
-        }
-    }
-
-    stopPlayer(id, data)
+    positionPlayer(id, data)
     {
         if(!{}.hasOwnProperty.call(this.players, id)){
-            // @NOTE: since P2world could run the endContact several times.
+            Logger.error('Player not found! ID: '+id);
         } else {
-            let result = true;
-            if(this.players[id].mov){
-                result = false;
-            }
-            this.players[id].mov = result;
+            this.players[id].state.mov = false;
             this.players[id].state.x = data.x;
             this.players[id].state.y = data.y;
         }

@@ -17,6 +17,7 @@ class ObjectsManager
     roomObjectsData = false;
     // room objects by layer and title are each object instance plus the data from the storage:
     roomObjects = false;
+    roomObjectsById = {};
     preloadAssets = [];
     objectsAnimationsData = {};
     listenMessages = false;
@@ -72,6 +73,7 @@ class ObjectsManager
                     }
                     // save object:
                     this.roomObjects[objectIndex] = objInstance;
+                    this.roomObjectsById[objectData.id] = objInstance;
                 } catch(err) {
                     Logger.error('Object class does not exists for objectIndex:', objectIndex);
                 }
@@ -91,6 +93,14 @@ class ObjectsManager
     {
         if({}.hasOwnProperty.call(this.roomObjects, objectIndex)){
             return this.roomObjects[objectIndex];
+        }
+        return false;
+    }
+
+    getObjectById(objectId)
+    {
+        if({}.hasOwnProperty.call(this.roomObjectsById, objectId)){
+            return this.roomObjectsById[objectId];
         }
         return false;
     }

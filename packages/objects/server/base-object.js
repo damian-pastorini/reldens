@@ -7,19 +7,15 @@
  *
  */
 
+const { InteractionArea } = require('../../world/interaction-area');
 const { Logger } = require('../../game/logger');
 
-class BaseObject
+class BaseObject extends InteractionArea
 {
-
-    // object position will be calculated based on the index:
-    x = false;
-    y = false;
-    interactionArea = false;
-    interactionLimits = {};
 
     constructor(props)
     {
+        super();
         // then we will assign all the properties from the storage automatically as part of this object.
         Object.assign(this, props);
         // we will use the client_key has the object key:
@@ -35,30 +31,6 @@ class BaseObject
         // @NOTE: we need to send the layer name for later calculate the animation depth and show the animation over the
         // proper layer.
         this.clientParams.layerName = props.layer_name;
-    }
-
-    setupInteractionArea(margin = false)
-    {
-        // interaction area can be forced by parameter:
-        if(margin){
-            this.interactionArea = margin;
-        }
-        // if there's none interaction area just do nothing:
-        if(!this.interactionArea){
-            return;
-        }
-        this.interactionLimits.left = this.x - this.interactionArea;
-        this.interactionLimits.right = this.x + this.interactionArea;
-        this.interactionLimits.up = this.y - this.interactionArea;
-        this.interactionLimits.down = this.y + this.interactionArea;
-    }
-
-    isValidInteraction(posX, posY)
-    {
-        return posX > this.interactionLimits.left
-            && posX < this.interactionLimits.right
-            && posY > this.interactionLimits.up
-            && posY < this.interactionLimits.down;
     }
 
 }

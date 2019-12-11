@@ -20,6 +20,7 @@ class PlayerState extends Schema
         this.x = parseFloat(data.x);
         this.y = parseFloat(data.y);
         this.dir = data.dir;
+        this.mov = false;
     }
 
 }
@@ -29,5 +30,6 @@ type('string')(PlayerState.prototype, 'scene');
 type('number')(PlayerState.prototype, 'x');
 type('number')(PlayerState.prototype, 'y');
 type('string')(PlayerState.prototype, 'dir');
+type('boolean')(PlayerState.prototype, 'mov');
 
 module.exports.PlayerState = PlayerState;

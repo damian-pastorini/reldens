@@ -6,6 +6,7 @@
  *
  */
 
+const { Logger } = require('../../game/logger');
 const { GameConst } = require('../../game/constants');
 
 class PlayerEngine
@@ -22,6 +23,7 @@ class PlayerEngine
         this.playerId = room.sessionId;
         this.players = {};
         this.mov = false;
+        this.currentTarget = false;
     }
 
     create()
@@ -42,14 +44,22 @@ class PlayerEngine
         this.players[id] = this.scene.physics.add.sprite(state.x, state.y, GameConst.IMAGE_PLAYER);
         this.players[id].anims.play(state.dir);
         this.players[id].anims.stop();
+        this.players[id].setInteractive().on('pointerdown', () => {
+            // @NOTE: we could send an specific action when the player is been targeted.
+            // this.room.send({act: GameConst.TYPE_PLAYER, id: id});
+            this.currentTarget = {id: id, type: GameConst.TYPE_PLAYER};
+        });
         return this.players[id];
     }
 
     runPlayerAnimation(playerId, player)
     {
         let playerSprite = this.players[playerId];
+        if(!playerSprite.anims){
+            Logger.error('PlayerSprite animation not defined.');
+        }
         // @NOTE: player speed is defined by the server.
-        if(player.state.x !== playerSprite.x && playerSprite.anims){
+        if(player.state.x !== playerSprite.x){
             if(player.state.x < playerSprite.x){
                 playerSprite.anims.play(GameConst.LEFT, true);
             } else {
@@ -57,7 +67,7 @@ class PlayerEngine
             }
             playerSprite.x = player.state.x;
         }
-        if(player.state.y !== playerSprite.y && playerSprite.anims){
+        if(player.state.y !== playerSprite.y){
             if(player.state.y < playerSprite.y){
                 playerSprite.anims.play(GameConst.UP, true);
             } else {
@@ -68,17 +78,9 @@ class PlayerEngine
             playerSprite.setDepth(playerSprite.y + playerSprite.body.height);
         }
         // player stop action:
-        if(player.mov !== playerSprite.mov && playerSprite.anims){
-            if(!player.mov){
-                playerSprite.anims.stop();
-            }
-            playerSprite.mov = player.mov;
-        }
-        // player change direction action:
-        if(player.state.dir !== playerSprite.dir){
-            playerSprite.dir = player.state.dir;
-            playerSprite.anims.play(player.state.dir, true);
+        if(!player.state.mov){
             playerSprite.anims.stop();
+            playerSprite.mov = player.state.mov;
         }
     }
 
@@ -115,7 +117,7 @@ class PlayerEngine
 
     runActions()
     {
-        this.room.send({act: GameConst.ACTION});
+        this.room.send({act: GameConst.ACTION, target: this.currentTarget});
     }
 
 }
