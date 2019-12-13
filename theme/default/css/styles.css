@@ -32,18 +32,21 @@ form .input-box label { float:left; display:block; position:relative; font-size:
 form .input-box input { float:right; display:block; position:relative; }
 form .input-box input[type="text"], form .input-box input[type="password"] { width:50%; }
 .player { width:100px; height:100px; position:absolute; padding-top:24px; box-sizing:border-box; left:0; top:0; }
-.ux-box { z-index:1001; display:block; margin:0; padding:0; }
-.ux-box-scene-data { background-color:rgba(0, 0, 0, 0.5); padding:10px; }
-.scene-label { color:#fff; }
-.ux-box.ux-box-left img { float:left; width:54px; opacity:0.8; cursor:pointer; }
-.ux-box.ux-box-left img:active { opacity:1 !important; }
-.ux-box-left .vertical-buttons { float:left; width:54px; text-align:center; top:0; position:relative; }
-.ux-box-left #left, .ux-box-left #right { position:relative; top:30px; }
-.ux-box-left #action { position:absolute; top:30px; right:-60px; }
-.ux-box-left .vertical-buttons img { float:none; }
-.ux-box-right { background-color: rgba(0, 0, 0, 0.5); }
-.ux-box-npc-dialog { display:none; float:left; width:240px; height:100px; padding:10px 14px; background:#000000; opacity:0.85; color:#ffffff; word-wrap:break-word; overflow:auto; font-size:12px; }
+.ui-box { z-index:1001; display:block; margin:0; padding:0; }
+.box-target { display:none; }
+.ui-box-scene-data, .box-target { background-color:rgba(0, 0, 0, 0.5); padding:10px; }
+.scene-label, .box-target { color:#fff; }
+.ui-box.ui-box-controls img { float:left; width:54px; opacity:0.8; cursor:pointer; }
+.ui-box.ui-box-controls img:active { opacity:1 !important; }
+.ui-box-controls .vertical-buttons { float:left; width:54px; text-align:center; top:0; position:relative; }
+.ui-box-controls #left, .ui-box-controls #right { position:relative; top:30px; }
+.ui-box-controls #action { position:absolute; top:30px; right:-60px; }
+.ui-box-controls .vertical-buttons img { float:none; }
+.ui-box-player { text-align:center; padding:0px 10px; }
+.ui-box-player, .box-player-stats { background-color: rgba(0, 0, 0, 0.5); }
+.ui-box-npc-dialog { display:none; float:left; width:240px; height:100px; padding:10px 14px; background:#000000; opacity:0.85; color:#ffffff; word-wrap:break-word; overflow:auto; font-size:12px; }
 .box-close { display:block; position:relative; background:#000; padding:5px; cursor:pointer; float:right; }
+.close-target { width:24px; position:absolute; right:-12px; top:-8px; }
 .box-close img { width:30px; }
 .box-content { height:40px; overflow:auto; }
 .player-name { padding:10px 0; text-align:center; color:#ffffff; }

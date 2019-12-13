@@ -60,8 +60,8 @@ class RoomEvents
             let currentScene = this.getActiveScene();
             if(currentScene.key === player.state.scene && currentScene.player && currentScene.player.players){
                 for(let idx in this.playersQueue){
-                    let { x, y, dir } = this.playersQueue[idx];
-                    currentScene.player.addPlayer(idx, { x, y, dir });
+                    let { x, y, dir, username } = this.playersQueue[idx];
+                    currentScene.player.addPlayer(idx, { x, y, dir, username: username });
                 }
             }
         } else {
@@ -70,11 +70,11 @@ class RoomEvents
                 let currentScene = this.getActiveScene();
                 if(currentScene.key === player.state.scene && currentScene.player && currentScene.player.players){
                     let { x, y, dir } = player.state;
-                    currentScene.player.addPlayer(key, { x, y, dir });
+                    currentScene.player.addPlayer(key, { x, y, dir, username: player.username });
                 }
             } else {
                 let { x, y, dir } = player.state;
-                this.playersQueue[key] = { x, y, dir };
+                this.playersQueue[key] = { x, y, dir, username: player.username };
             }
         }
     }
@@ -117,6 +117,10 @@ class RoomEvents
 
     roomOnMessage(message)
     {
+        if(message.act === GameConst.GAME_OVER){
+            alert('You died!');
+            window.location.reload();
+        }
         if(
             message.act === GameConst.CHANGED_SCENE
             && message.scene === this.room.name
@@ -124,8 +128,8 @@ class RoomEvents
         ){
             let currentScene = this.getActiveScene();
             // if other users enter in the current scene we need to add them:
-            let {id, x, y, dir} = message;
-            currentScene.player.addPlayer(id, {x: x, y: y, dir: dir});
+            let {id, x, y, dir, username} = message;
+            currentScene.player.addPlayer(id, {x, y, dir, username});
         }
         // @NOTE: here we don't need to evaluate the id since the reconnect only is sent to the current client.
         if(message.act === GameConst.RECONNECT){
@@ -165,8 +169,8 @@ class RoomEvents
             let playerSprite = currentScene.player.players[this.room.sessionId];
             playerSprite.stats = message.stats;
         }
-        if(uiScene && {}.hasOwnProperty.call(uiScene, 'uiBoxPlayerStats')){
-            let statsPanel = uiScene.uiBoxPlayerStats.getChildByProperty('id', 'player-stats-container');
+        if(uiScene && {}.hasOwnProperty.call(uiScene, 'uiPlayerStats')){
+            let statsPanel = uiScene.uiPlayerStats.getChildByProperty('id', 'player-stats-container');
             if(statsPanel){
                 let messageTemplate = uiScene.cache.html.get('playerStats');
                 // @TODO: stats types will be part of the configuration in the database.
@@ -224,8 +228,8 @@ class RoomEvents
                     // assign the preloader:
                     this.gameEngine.uiScene = preloader;
                     // if the box right is present then assign the actions:
-                    if(preloader.uiBoxRight){
-                        let element = preloader.uiBoxRight.getChildByProperty('className', 'player-name');
+                    if(preloader.uiPlayer){
+                        let element = preloader.uiPlayer.getChildByProperty('className', 'player-name');
                         if(element){
                             element.innerHTML = player.username;
                         }
@@ -253,14 +257,14 @@ class RoomEvents
         }
         this.gameManager.room = room;
         let currentScene = this.gameEngine.scene.getScene(player.state.scene);
-        currentScene.player = this.createPlayerEngineInstance(currentScene, player, this.gameManager.config, room);
+        currentScene.player = this.createPlayerEngineInstance(currentScene, player, this.gameManager, room);
         currentScene.player.create();
         if(room.state.players){
             for(let idx in room.state.players){
                 let tmp = room.state.players[idx];
                 if(tmp.sessionId && tmp.sessionId !== room.sessionId){
                     let { x, y, dir } = tmp.state;
-                    currentScene.player.addPlayer(tmp.sessionId, { x, y, dir });
+                    currentScene.player.addPlayer(tmp.sessionId, { x, y, dir, username: tmp.username });
                 }
             }
         }
@@ -291,9 +295,9 @@ class RoomEvents
         return new SceneDynamic(sceneName, sceneData, gameManager);
     }
 
-    createPlayerEngineInstance(currentScene, player, config, room)
+    createPlayerEngineInstance(currentScene, player, gameManager, room)
     {
-        return new PlayerEngine(currentScene, player, config, room);
+        return new PlayerEngine(currentScene, player, gameManager, room);
     }
 
     createPreloaderInstance(props)

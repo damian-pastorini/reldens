@@ -19,6 +19,7 @@ module.exports.GameConst = {
     CLIENT_JOINED: 'cj',
     UI: 'ui',
     TYPE_PLAYER: 'pj',
+    GAME_OVER: 'go',
     // movement:
     UP: 'up',
     LEFT: 'left',

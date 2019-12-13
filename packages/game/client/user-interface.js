@@ -19,7 +19,7 @@ class UserInterface
                 title: this.initialTitle,
                 content: this.initialContent
             });
-            let dialogContainer = dialogBox.getChildByProperty('className', 'ux-box ux-box-npc-dialog');
+            let dialogContainer = dialogBox.getChildByProperty('className', 'ui-box ui-box-npc-dialog');
             dialogContainer.id = 'box-'+this.id;
             let boxClose = dialogBox.getChildByProperty('className', 'box-close');
             if(boxClose){

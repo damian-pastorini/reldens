@@ -8,6 +8,7 @@
 
 const { UsersModel } = require('./model');
 const { PlayersStateModel } = require('./players-state-model');
+const { PlayersStatsModel } = require('./players-stats-model');
 const { ErrorManager } = require('../../game/error-manager');
 
 class UsersManager
@@ -49,6 +50,11 @@ class UsersManager
     updateUserStateByPlayerId(playerId, newState)
     {
         return PlayersStateModel.query().patch(newState).where('player_id', playerId);
+    }
+
+    updateUserStatsByPlayerId(playerId, newStats)
+    {
+        return PlayersStatsModel.query().patch(newStats).where('player_id', playerId);
     }
 
 }

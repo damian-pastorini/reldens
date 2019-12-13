@@ -12,6 +12,7 @@ const { P2world } = require('../../world/server/p2world');
 const { CollisionsManager } = require('../../world/server/collisions-manager');
 const { InteractionArea } = require('../../world/interaction-area');
 const { ObjectsManager } = require('../../objects/server/manager');
+const { AttackShort } = require('../../actions/server/attack-short');
 const { GameConst } = require('../../game/constants');
 const { ObjectsConst } = require('../../objects/constants');
 const { Logger } = require('../../game/logger');
@@ -131,7 +132,33 @@ class RoomScene extends RoomLogin
             if(messageData.act === GameConst.ACTION && messageData.target){
                 let validTarget = this.validateTarget(messageData.target, playerSchema.state.x, playerSchema.state.y);
                 if(validTarget){
-                    Logger.info(['Player Action!', messageData.target]);
+                    // Logger.info(['Player Action!', messageData.target]);
+                    // @NOTE: for now we only have one action which is the short distance attack.
+                    if(
+                        messageData.target.type === GameConst.TYPE_PLAYER
+                        && validTarget.player_id !== playerSchema.player_id
+                    ){
+                        // @TODO: remove all this logic from here :)
+                        AttackShort.execute(playerSchema, validTarget);
+                        // save the stats:
+                        let updateResult = this.loginManager.usersManager
+                            .updateUserStatsByPlayerId(validTarget.player_id, validTarget.stats);
+                        updateResult.catch(() => {
+                            Logger.error('Player stats update error: ' + validTarget.player_id);
+                        });
+                        let targetClient = this.getClientById(validTarget.sessionId);
+                        if(targetClient){
+                            if(validTarget.stats.hp === 0){
+                                // player is dead! reinitialize the stats:
+                                Object.assign(validTarget.stats, this.config.get('server/players/initialStats'));
+                                this.send(targetClient, {act: GameConst.GAME_OVER});
+                                return this.saveStateAndRemovePlayer(validTarget.sessionId);
+                            } else {
+                                // update the target:
+                                this.send(targetClient, {act: GameConst.PLAYER_STATS, stats: validTarget.stats});
+                            }
+                        }
+                    }
                 }
             }
             if(this.messageActions){
@@ -204,6 +231,7 @@ class RoomScene extends RoomLogin
                         x: currentPlayer.state.x,
                         y: currentPlayer.state.y,
                         dir: currentPlayer.state.dir,
+                        username: currentPlayer.username
                     });
                     // remove body from server world:
                     let bodyToRemove = currentPlayer.p2body;

@@ -18,6 +18,7 @@ class AnimationEngine
         this.key = props.key;
         this.id = props.id;
         this.ui = props.ui || false;
+        this.targetName = props.targetName;
         this.animationSprite = props.animationSprite || false;
         this.frameRate = props.frameRate || false;
         this.frameStart = props.frameStart || 0;
@@ -79,6 +80,9 @@ class AnimationEngine
         if(this.isInteractive){
             this.sceneSprite.setInteractive().on('pointerdown', () => {
                 this.gameManager.activeRoomEvents.room.send({act: ObjectsConst.OBJECT_INTERACTION, id: this.id});
+                if(this.targetName){
+                    this.gameManager.gameEngine.showTarget(this.targetName);
+                }
                 currentScene.player.currentTarget = {id: this.id, type: ObjectsConst.TYPE_OBJECT};
             });
         }

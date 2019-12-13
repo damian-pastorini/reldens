@@ -21,6 +21,22 @@ class GameEngine extends Game
         this.TemplateEngine = TemplateEngine;
     }
 
+    showTarget(target)
+    {
+        if({}.hasOwnProperty.call(this.uiScene, 'uiTarget')){
+            this.uiScene.uiTarget.getChildByID('box-target').style.display = 'block';
+            this.uiScene.uiTarget.getChildByID('target-container').innerHTML = target;
+        }
+    }
+
+    clearTarget()
+    {
+        if({}.hasOwnProperty.call(this.uiScene, 'uiTarget')){
+            this.uiScene.uiTarget.getChildByID('box-target').style.display = 'none';
+            this.uiScene.uiTarget.getChildByID('target-container').innerHTML = '';
+        }
+    }
+
 }
 
 module.exports.GameEngine = GameEngine;

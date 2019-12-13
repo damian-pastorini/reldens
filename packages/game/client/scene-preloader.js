@@ -39,19 +39,20 @@ class ScenePreloader extends Scene
         if(this.uiScene){
             EventsManager.emit('reldens.beforePreloadUiScene', this);
             // ui elements:
-            if(this.gameManager.config.get('client/general/uiVisibility/uiBoxRight')){
-                this.load.html('uiBoxRight', 'assets/html/ui-box-right.html');
+            if(this.gameManager.config.get('client/general/uiVisibility/uiPlayer')){
+                this.load.html('uiPlayer', 'assets/html/ui-player.html');
             }
-            if(this.gameManager.config.get('client/general/uiVisibility/uiBoxLeft')){
-                this.load.html('uiBoxLeft', 'assets/html/ui-box-left.html');
+            if(this.gameManager.config.get('client/general/uiVisibility/uiControls')){
+                this.load.html('uiControls', 'assets/html/ui-controls.html');
             }
             if(this.gameManager.config.get('client/general/uiVisibility/sceneLabel')){
                 this.load.html('uiSceneLabel', 'assets/html/ui-scene-label.html');
             }
-            if(this.gameManager.config.get('client/general/uiVisibility/uiBoxPlayerStats')){
-                this.load.html('uiBoxPlayerStats', 'assets/html/ui-box-player-stats.html');
+            if(this.gameManager.config.get('client/general/uiVisibility/uiPlayerStats')){
+                this.load.html('uiPlayerStats', 'assets/html/ui-player-stats.html');
                 this.load.html('playerStats', 'assets/html/player-stats.html');
             }
+            this.load.html('uiTarget', 'assets/html/ui-target.html');
             EventsManager.emit('reldens.preloadUiScene', this);
         }
         // maps:
@@ -110,27 +111,32 @@ class ScenePreloader extends Scene
         if(this.uiScene){
             EventsManager.emit('reldens.beforeCreateUiScene', this);
             // create ui:
-            if(this.gameManager.config.get('client/general/uiVisibility/uiBoxRight')){
+            if(this.gameManager.config.get('client/general/uiVisibility/uiPlayer')){
                 // @TODO: make all positions configurable.
-                this.uiBoxRight = this.add.dom(450, 20).createFromCache('uiBoxRight');
+                this.uiPlayer = this.add.dom(50, 30).createFromCache('uiPlayer');
                 // logout:
-                let logoutButton = this.uiBoxRight.getChildByProperty('id', 'logout');
+                let logoutButton = this.uiPlayer.getChildByProperty('id', 'logout');
                 logoutButton.addEventListener('click', () => {
                     window.location.reload();
                 });
             }
-            if(this.gameManager.config.get('client/general/uiVisibility/uiBoxLeft')){
-                this.uiBoxLeft = this.add.dom(90, 380).createFromCache('uiBoxLeft');
-                this.registerControllers(this.uiBoxLeft);
-            }
+            this.uiTarget = this.add.dom(10, 80).createFromCache('uiTarget');
+            let closeButton = this.uiTarget.getChildByProperty('className', 'close-target');
+            closeButton.addEventListener('click', () => {
+                this.gameManager.gameEngine.clearTarget();
+            });
             if(this.gameManager.config.get('client/general/uiVisibility/sceneLabel')){
-                this.uiSceneLabel = this.add.dom(20, 20).createFromCache('uiSceneLabel');
+                this.uiSceneLabel = this.add.dom(250, 20).createFromCache('uiSceneLabel');
             }
-            if(this.gameManager.config.get('client/general/uiVisibility/uiBoxPlayerStats')){
-                this.uiBoxPlayerStats = this.add.dom(420, 70).createFromCache('uiBoxPlayerStats');
-                let statsBox = this.uiBoxPlayerStats.getChildByProperty('id', 'box-player-stats');
-                let statsButton = this.uiBoxPlayerStats.getChildByProperty('id', 'player-stats-btn');
-                let statsPanel = this.uiBoxPlayerStats.getChildByProperty('id', 'player-stats-container');
+            if(this.gameManager.config.get('client/general/uiVisibility/uiControls')){
+                this.uiControls = this.add.dom(90, 380).createFromCache('uiControls');
+                this.registerControllers(this.uiControls);
+            }
+            if(this.gameManager.config.get('client/general/uiVisibility/uiPlayerStats')){
+                this.uiPlayerStats = this.add.dom(420, 10).createFromCache('uiPlayerStats');
+                let statsBox = this.uiPlayerStats.getChildByProperty('id', 'box-player-stats');
+                let statsButton = this.uiPlayerStats.getChildByProperty('id', 'player-stats-btn');
+                let statsPanel = this.uiPlayerStats.getChildByProperty('id', 'player-stats-container');
                 if(statsButton && statsPanel){
                     let messageTemplate = this.cache.html.get('playerStats');
                     // @TODO: stats types will be part of the configuration in the database.

@@ -16,7 +16,8 @@ class ConfigProcessor
      * return a property of the same processor which should have the configurations assigned.
      *
      * @param path
-     * @returns {*}
+     * @param avoidLog
+     * @returns {boolean}
      */
     get(path, avoidLog = false)
     {

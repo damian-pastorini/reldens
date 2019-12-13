@@ -12,10 +12,11 @@ const { GameConst } = require('../../game/constants');
 class PlayerEngine
 {
 
-    constructor(scene, playerData, gameConfig, room)
+    constructor(scene, playerData, gameManager, room)
     {
         this.scene = scene;
-        this.config = gameConfig;
+        this.config = gameManager.config;
+        this.gameManager = gameManager;
         this.username = playerData.username;
         this.roomName = playerData.state.scene;
         this.state = playerData.state;
@@ -28,7 +29,8 @@ class PlayerEngine
 
     create()
     {
-        this.addPlayer(this.playerId, this.state);
+        let playerData = Object.assign({username: this.username}, this.state);
+        this.addPlayer(this.playerId, playerData);
         let fadeDuration = this.config.get('client/players/animations/fadeDuration') || GameConst.FADE_DURATION;
         this.scene.cameras.main.fadeFrom(fadeDuration);
         this.scene.scene.setVisible(true, this.roomName);
@@ -42,11 +44,14 @@ class PlayerEngine
     {
         // @TODO: implement player custom avatar.
         this.players[id] = this.scene.physics.add.sprite(state.x, state.y, GameConst.IMAGE_PLAYER);
+        this.players[id].username = state.username;
         this.players[id].anims.play(state.dir);
         this.players[id].anims.stop();
         this.players[id].setInteractive().on('pointerdown', () => {
             // @NOTE: we could send an specific action when the player is been targeted.
             // this.room.send({act: GameConst.TYPE_PLAYER, id: id});
+            // update target ui:
+            this.gameManager.gameEngine.showTarget(this.players[id].username);
             this.currentTarget = {id: id, type: GameConst.TYPE_PLAYER};
         });
         return this.players[id];
