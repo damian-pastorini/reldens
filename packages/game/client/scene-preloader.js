@@ -96,6 +96,7 @@ class ScenePreloader extends Scene
         // @TODO: implement player custom avatar.
         // this.load.spritesheet(this.username, 'assets/sprites/'+this.username+'.png', playerSpriteSize);
         this.load.spritesheet(GameConst.IMAGE_PLAYER, 'assets/sprites/player-1.png', playerSpriteSize);
+        this.load.spritesheet(GameConst.ATTACK, 'assets/sprites/weapons-1.png', {frameWidth: 64, frameHeight: 64});
         // interface assets:
         this.load.image(GameConst.ICON_STATS, 'assets/icons/book.png');
         this.load.on('fileprogress', this.onFileProgress, this);
@@ -188,6 +189,13 @@ class ScenePreloader extends Scene
             frames: this.anims.generateFrameNumbers(GameConst.IMAGE_PLAYER, {start: 0, end: 2}),
             frameRate: this.configuredFrameRate,
             repeat: -1
+        });
+        this.anims.create({
+            key: GameConst.ATTACK,
+            frames: this.anims.generateFrameNumbers(GameConst.ATTACK, {start: 25, end: 29}),
+            frameRate: this.configuredFrameRate,
+            repeat: 0,
+            hideOnComplete: true
         });
     }
 

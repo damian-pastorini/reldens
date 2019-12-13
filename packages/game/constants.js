@@ -35,5 +35,6 @@ module.exports.GameConst = {
     FADE_DURATION: 1000,
     SPEED_SERVER: 180,
     // @TODO: implement player custom avatar.
-    IMAGE_PLAYER: 'player'
+    IMAGE_PLAYER: 'player',
+    ATTACK: 'attack'
 };

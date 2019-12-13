@@ -148,6 +148,11 @@ class RoomScene extends RoomLogin
                         });
                         let targetClient = this.getClientById(validTarget.sessionId);
                         if(targetClient){
+                            this.broadcast({
+                                act: GameConst.ATTACK,
+                                atk: playerSchema.sessionId,
+                                def: validTarget.sessionId
+                            });
                             if(validTarget.stats.hp === 0){
                                 // player is dead! reinitialize the stats:
                                 Object.assign(validTarget.stats, this.config.get('server/players/initialStats'));

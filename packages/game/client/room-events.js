@@ -143,6 +143,16 @@ class RoomEvents
         if(message.act === GameConst.UI && message.id){
             this.initUi(message);
         }
+        if(message.act === GameConst.ATTACK){
+            let currentScene = this.getActiveScene();
+            let playerSprite = currentScene.player.players[message.atk];
+            if(playerSprite){
+                let attackSprite = currentScene.physics.add.sprite(playerSprite.x, playerSprite.y, GameConst.ATTACK);
+                attackSprite.anims.play(GameConst.ATTACK, true).on('animationcomplete', () => {
+                    attackSprite.anims.remove(GameConst.ATTACK);
+                });
+            }
+        }
     }
 
     roomOnLeave(code)
