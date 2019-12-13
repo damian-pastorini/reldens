@@ -62,7 +62,7 @@ INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(14, 'server', 'rooms/world/gravity_enabled', '0', 'b'),
 	(16, 'server', 'players/size/width', '25', 'i'),
 	(17, 'server', 'players/size/height', '25', 'i'),
-	(18, 'server', 'general/controls/allow_simultaneous_keys', '0', 'b'),
+	(18, 'server', 'general/controls/allow_simultaneous_keys', '1', 'b'),
 	(19, 'server', 'rooms/world/timestep', '0.04', 'i'),
 	(20, 'feature', 'chat/messages/broadcast_join', '1', 'b'),
 	(21, 'feature', 'chat/messages/broadcast_leave', '1', 'b'),
@@ -70,9 +70,9 @@ INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(23, 'feature', 'chat/messages/global_allowed_roles', '1,9000', 't'),
 	(24, 'server', 'players/physicsBody/speed', '180', 'i'),
 	(25, 'client', 'players/animations/fadeDuration', '1000', 'i'),
-	(26, 'client', 'general/uiVisibility/uiBoxRight', '1', 'b'),
-	(27, 'client', 'general/uiVisibility/uiBoxPlayerStats', '1', 'b'),
-	(28, 'client', 'general/uiVisibility/uiBoxLeft', '1', 'b'),
+	(26, 'client', 'general/uiVisibility/uiPlayer', '1', 'b'),
+	(27, 'client', 'general/uiVisibility/uiPlayerStats', '1', 'b'),
+	(28, 'client', 'general/uiVisibility/uiControls', '1', 'b'),
 	(29, 'client', 'general/tileData/width', '16', 'i'),
 	(30, 'client', 'general/tileData/height', '16', 'i'),
 	(31, 'client', 'general/tileData/margin', '1', 'i'),
@@ -163,8 +163,8 @@ CREATE TABLE IF NOT EXISTS `players` (
 -- Dumping data for table reldens.players: ~5 rows (approximately)
 /*!40000 ALTER TABLE `players` DISABLE KEYS */;
 INSERT INTO `players` (`id`, `user_id`, `name`) VALUES
-	(1, 29, 'dap'),
-	(2, 30, 'dap2'),
+	(1, 29, 'DarthStormrage'),
+	(2, 30, 'Damian'),
 	(3, 31, 'dap3'),
 	(15, 43, 'dap13'),
 	(16, 44, 'dap12');
@@ -188,9 +188,9 @@ CREATE TABLE IF NOT EXISTS `players_state` (
 -- Dumping data for table reldens.players_state: ~5 rows (approximately)
 /*!40000 ALTER TABLE `players_state` DISABLE KEYS */;
 INSERT INTO `players_state` (`id`, `player_id`, `room_id`, `x`, `y`, `dir`) VALUES
-	(3, 1, 4, 400, 345, 'down'),
-	(4, 2, 4, 583, 372, 'down'),
-	(5, 3, 4, 400, 345, 'right'),
+	(3, 1, 4, 449, 373, 'down'),
+	(4, 2, 4, 477, 367, 'down'),
+	(5, 3, 4, 443, 406, 'down'),
 	(14, 15, 4, 300, 388, 'down'),
 	(15, 16, 4, 508, 381, 'down');
 /*!40000 ALTER TABLE `players_state` ENABLE KEYS */;
@@ -214,9 +214,9 @@ CREATE TABLE IF NOT EXISTS `players_stats` (
 -- Dumping data for table reldens.players_stats: ~5 rows (approximately)
 /*!40000 ALTER TABLE `players_stats` DISABLE KEYS */;
 INSERT INTO `players_stats` (`id`, `player_id`, `hp`, `mp`, `stamina`, `atk`, `def`, `dodge`, `speed`) VALUES
-	(1, 1, 100, 100, 100, 100, 100, 100, 100),
-	(2, 2, 100, 100, 100, 100, 100, 100, 100),
-	(3, 3, 100, 100, 100, 100, 100, 100, 100),
+	(1, 1, 40, 100, 100, 1001, 1001, 100, 100),
+	(2, 2, 13, 100, 100, 1001, 1001, 100, 100),
+	(3, 3, 100, 100, 100, 1001, 1001, 100, 100),
 	(15, 15, 100, 100, 100, 1001, 1001, 100, 100),
 	(16, 16, 100, 100, 100, 1001, 1001, 100, 100);
 /*!40000 ALTER TABLE `players_stats` ENABLE KEYS */;
@@ -309,9 +309,9 @@ CREATE TABLE IF NOT EXISTS `users` (
 -- Dumping data for table reldens.users: ~5 rows (approximately)
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
 INSERT INTO `users` (`id`, `email`, `username`, `password`, `role_id`, `status`, `created_at`, `updated_at`) VALUES
-	(29, 'dap@dap.com', 'dap', '$2b$10$PQIYGBFyA/69DaowJVTA5ufVWmIUeIOwIK4e6JCAP5Uen0sp0TAHu', 1, 1, '2019-08-02 23:06:14', '2019-11-29 21:05:53'),
-	(30, 'dap2@dap.com', 'dap2', '$2b$10$Kvjh1XdsMai8Xt2wdivG2.prYvTiW6vJrdnrNPYZenf8qCRLhuZ/a', 9, 1, '2019-08-02 23:06:14', '2019-11-26 14:02:21'),
-	(31, 'dap3@dap.com', 'dap3', '$2b$10$CmtWkhIexIVtcBjwsmEkeOlIhqizViykDFYAKtVrl4sF8KWLuBsxO', 1, 1, '2019-08-02 23:06:14', '2019-09-29 16:14:51'),
+	(29, 'dap@dap.com', 'DarthStormrage', '$2b$10$PQIYGBFyA/69DaowJVTA5ufVWmIUeIOwIK4e6JCAP5Uen0sp0TAHu', 1, 1, '2019-08-02 23:06:14', '2019-12-13 19:08:21'),
+	(30, 'dap2@dap.com', 'dap2', '$2b$10$Kvjh1XdsMai8Xt2wdivG2.prYvTiW6vJrdnrNPYZenf8qCRLhuZ/a', 9, 1, '2019-08-02 23:06:14', '2019-12-13 19:08:36'),
+	(31, 'dap3@dap.com', 'dap3', '$2b$10$CmtWkhIexIVtcBjwsmEkeOlIhqizViykDFYAKtVrl4sF8KWLuBsxO', 1, 1, '2019-08-02 23:06:14', '2019-11-30 10:54:55'),
 	(43, 'dap13@dap13.com', 'dap13', '$2b$10$PG6nUdhNmhy2RUpS4k.g..vJ5k3x0sPRyFlpnVZMTPfuAXgXyFP/y', 1, 1, '2019-11-15 21:47:17', '2019-11-15 21:47:17'),
 	(44, 'dap12@dap12.com', 'dap12', '$2b$10$PFEKucJCDoQq8evXhO.FiuwMEayr0HLEt5UYo/WU9TgXb.wwwPG8W', 1, 1, '2019-11-15 21:58:32', '2019-11-15 21:58:32');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
