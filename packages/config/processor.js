@@ -33,7 +33,7 @@ class ConfigProcessor
                 result = level1[pathArray[2]];
             } else {
                 if(!avoidLog){
-                    Logger.error('Configuration not defined: ' + path);
+                    Logger.error('Configuration level 3 not defined: '+path);
                 }
             }
         }
@@ -44,12 +44,12 @@ class ConfigProcessor
                 result = level2[pathArray[3]];
             } else {
                 if(!avoidLog){
-                    Logger.error('Configuration not defined:' + path);
+                    Logger.error('Configuration level 4 not defined: '+path);
                 }
             }
         }
         if(pathArray.length !== 3 && pathArray.length !== 4){
-            Logger.error('Configuration path length is wrong:' + pathArray.length);
+            Logger.error('Configuration wrong path length: '+pathArray.length);
         }
         return result;
     }

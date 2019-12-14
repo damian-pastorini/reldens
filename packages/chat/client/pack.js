@@ -5,7 +5,7 @@
  */
 
 const { EventsManager } = require('../../game/events-manager');
-const { ChatUiCreate } = require('./ui-create');
+const { ChatUi } = require('./chat-ui');
 const { ChatConst } = require('../constants');
 const { Logger } = require('../../game/logger');
 
@@ -25,7 +25,7 @@ class Chat
             preloadScene.load.html('uiChatMessage', 'assets/features/chat/templates/message.html');
         });
         EventsManager.on('reldens.createUiScene', (preloadScene) => {
-            this.uiCreate = new ChatUiCreate(preloadScene);
+            this.uiCreate = new ChatUi(preloadScene);
             this.uiCreate.createUi();
         });
     }

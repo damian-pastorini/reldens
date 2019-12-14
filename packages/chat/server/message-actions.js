@@ -34,7 +34,7 @@ class ChatMessageActions
                     });
             }
         }
-        if(data.act === GameConst.CLIENT_JOINED && room.config.get('feature/chat/messages/broadcast_join')){
+        if(data.act === GameConst.CLIENT_JOINED && room.config.get('server/chat/messages/broadcast_join')){
             let sentText = `${playerSchema.username} has joined ${room.roomName}.`;
             room.broadcast({act: ChatConst.CHAT_ACTION, m: sentText, f: 'System', t: ChatConst.CHAT_TYPE_SYSTEM});
             ChatManager.saveMessage(

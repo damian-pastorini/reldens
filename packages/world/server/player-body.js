@@ -60,7 +60,6 @@ class PlayerBody extends Body
     initMove(direction, speed, allowSimultaneous = false)
     {
         if(allowSimultaneous){
-            // @TODO: test.
             if(direction === GameConst.RIGHT){
                 this.velocity[0] = speed;
             }

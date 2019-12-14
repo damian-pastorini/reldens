@@ -92,8 +92,8 @@ class RoomChat extends RoomLogin
     sendGlobalMessage(client, text, messageObject, playerData, roleId)
     {
         let messageType = false;
-        let isGlobalEnabled = this.config.get('feature/chat/messages/global_enabled');
-        let globalAllowedRoles = this.config.get('feature/chat/messages/global_allowed_roles')
+        let isGlobalEnabled = this.config.get('server/chat/messages/global_enabled');
+        let globalAllowedRoles = this.config.get('server/chat/messages/global_allowed_roles')
             .split(',')
             .map(Number);
         if(isGlobalEnabled && globalAllowedRoles.indexOf(roleId) !== -1){
@@ -123,7 +123,7 @@ class RoomChat extends RoomLogin
     // eslint-disable-next-line no-unused-vars
     onLeave(client, consented)
     {
-        if(this.config.get('feature/chat/messages/broadcast_leave')){
+        if(this.config.get('server/chat/messages/broadcast_leave')){
             let activePlayer = this.activePlayers[client.sessionId];
             let sentText = `${activePlayer.username} has left.`;
             this.broadcast({act: ChatConst.CHAT_ACTION, m: sentText, f: 'System', t: ChatConst.CHAT_TYPE_SYSTEM});

@@ -39,16 +39,16 @@ class ScenePreloader extends Scene
         if(this.uiScene){
             EventsManager.emit('reldens.beforePreloadUiScene', this);
             // ui elements:
-            if(this.gameManager.config.get('client/general/uiVisibility/uiPlayer')){
+            if(this.gameManager.config.get('client/ui/playerName/enabled')){
                 this.load.html('uiPlayer', 'assets/html/ui-player.html');
             }
-            if(this.gameManager.config.get('client/general/uiVisibility/uiControls')){
+            if(this.gameManager.config.get('client/ui/controls/enabled')){
                 this.load.html('uiControls', 'assets/html/ui-controls.html');
             }
-            if(this.gameManager.config.get('client/general/uiVisibility/sceneLabel')){
+            if(this.gameManager.config.get('client/ui/sceneLabel/enabled')){
                 this.load.html('uiSceneLabel', 'assets/html/ui-scene-label.html');
             }
-            if(this.gameManager.config.get('client/general/uiVisibility/uiPlayerStats')){
+            if(this.gameManager.config.get('client/ui/playerStats/enabled')){
                 this.load.html('uiPlayerStats', 'assets/html/ui-player-stats.html');
                 this.load.html('playerStats', 'assets/html/player-stats.html');
             }
@@ -112,7 +112,7 @@ class ScenePreloader extends Scene
         if(this.uiScene){
             EventsManager.emit('reldens.beforeCreateUiScene', this);
             // create ui:
-            if(this.gameManager.config.get('client/general/uiVisibility/uiPlayer')){
+            if(this.gameManager.config.get('client/ui/playerName/enabled')){
                 // @TODO: make all positions configurable.
                 this.uiPlayer = this.add.dom(50, 30).createFromCache('uiPlayer');
                 // logout:
@@ -126,14 +126,14 @@ class ScenePreloader extends Scene
             closeButton.addEventListener('click', () => {
                 this.gameManager.gameEngine.clearTarget();
             });
-            if(this.gameManager.config.get('client/general/uiVisibility/sceneLabel')){
+            if(this.gameManager.config.get('client/ui/sceneLabel/enabled')){
                 this.uiSceneLabel = this.add.dom(250, 20).createFromCache('uiSceneLabel');
             }
-            if(this.gameManager.config.get('client/general/uiVisibility/uiControls')){
+            if(this.gameManager.config.get('client/ui/controls/enabled')){
                 this.uiControls = this.add.dom(90, 380).createFromCache('uiControls');
                 this.registerControllers(this.uiControls);
             }
-            if(this.gameManager.config.get('client/general/uiVisibility/uiPlayerStats')){
+            if(this.gameManager.config.get('client/ui/playerStats/enabled')){
                 this.uiPlayerStats = this.add.dom(420, 10).createFromCache('uiPlayerStats');
                 let statsBox = this.uiPlayerStats.getChildByProperty('id', 'box-player-stats');
                 let statsButton = this.uiPlayerStats.getChildByProperty('id', 'player-stats-btn');

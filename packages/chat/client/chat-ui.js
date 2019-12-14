@@ -10,25 +10,23 @@ const { Input } = require('phaser');
 const { ChatConst } = require('../constants');
 const { Logger } = require('../../game/logger');
 
-class ChatUiCreate
+class ChatUi
 {
 
     constructor(uiScene = false)
     {
         if(!uiScene){
-            Logger.error('UiScene false.');
+            Logger.error('UiScene not defined.');
         }
         this.uiScene = uiScene;
+        this.gameManager = this.uiScene.gameManager;
     }
 
     createUi()
     {
-        if(!this.uiScene){
-            Logger.error('UiScene not defined.');
-        }
-        this.gameManager = this.uiScene.gameManager;
-        // @TODO: chat position should be configurable from the storage.
-        this.uiScene.uiChat = this.uiScene.add.dom(360, 420).createFromCache('uiChat');
+        let chatX = this.gameManager.config.get('client/chat/position/x');
+        let chatY = this.gameManager.config.get('client/chat/position/y');
+        this.uiScene.uiChat = this.uiScene.add.dom(chatX, chatY).createFromCache('uiChat');
         let chatInput = this.uiScene.uiChat.getChildByProperty('id', ChatConst.CHAT_INPUT);
         let chatSendButton = this.uiScene.uiChat.getChildByProperty('id', ChatConst.CHAT_SEND_BUTTON);
         if(chatInput){
@@ -92,4 +90,4 @@ class ChatUiCreate
 
 }
 
-module.exports.ChatUiCreate = ChatUiCreate;
+module.exports.ChatUi = ChatUi;
