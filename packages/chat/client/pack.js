@@ -37,7 +37,7 @@ class Chat
                 return;
             }
             let uiScene = gameManager.gameEngine.uiScene;
-            if(!uiScene || !uiScene.uiChat){
+            if(!{}.hasOwnProperty.call(uiScene, 'uiChat')){
                 Logger.error('Chat interface not found.');
                 return;
             }

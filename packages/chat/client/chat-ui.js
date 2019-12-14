@@ -13,11 +13,8 @@ const { Logger } = require('../../game/logger');
 class ChatUi
 {
 
-    constructor(uiScene = false)
+    constructor(uiScene)
     {
-        if(!uiScene){
-            Logger.error('UiScene not defined.');
-        }
         this.uiScene = uiScene;
         this.gameManager = this.uiScene.gameManager;
     }

@@ -10,6 +10,7 @@
  */
 
 const { RoomLogin } = require('./login');
+const { EventsManager } = require('../../game/events-manager');
 const { GameConst } = require('../../game/constants');
 
 class RoomGame extends RoomLogin
@@ -17,6 +18,7 @@ class RoomGame extends RoomLogin
 
     async onJoin(client, options, authResult)
     {
+        EventsManager.emit('reldens.onJoinRoomGame', client, options, authResult, this);
         // update last login:
         await this.loginManager.updateLastLogin(authResult);
         // we need to send the engine and all the general and client configurations from the storage:

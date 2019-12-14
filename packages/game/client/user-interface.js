@@ -16,6 +16,7 @@ class UserInterface
 
     constructor(gameManager, id, template = 'assets/html/npc-dialog.html')
     {
+        EventsManager.emit('reldens.defineUserInterface', gameManager, id, template, this);
         this.id = id;
         this.template = template;
         EventsManager.on('reldens.preloadUiScene', (preloadScene) => {
@@ -38,6 +39,7 @@ class UserInterface
             }
             preloadScene.userInterfaces[this.id] = dialogBox;
         });
+        EventsManager.emit('reldens.createdUserInterface', gameManager, id, template, this);
     }
 
 }

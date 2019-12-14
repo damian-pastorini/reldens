@@ -10,6 +10,7 @@ const { World, Body, Box } = require('p2');
 const { PlayerBody } = require('./player-body');
 const { Logger } = require('../../game/logger');
 const { ErrorManager } = require('../../game/error-manager');
+const { EventsManager } = require('../../game/events-manager');
 const { GameConst } = require('../../game/constants');
 
 class P2world extends World

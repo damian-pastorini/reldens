@@ -54,6 +54,7 @@ class RoomEvents
 
     playersOnAdd(player, key, previousScene)
     {
+        EventsManager.emit('reldens.playersOnAdd', player, key, previousScene, this);
         // create current player:
         if(key === this.room.sessionId){
             this.engineStarted = true;
@@ -103,6 +104,7 @@ class RoomEvents
 
     playersOnRemove(player, key)
     {
+        EventsManager.emit('reldens.playersOnRemove', player, key, this);
         if(key === this.room.sessionId){
             // @TODO: improve disconnection handler.
             if(!this.gameManager.gameOver){
@@ -121,6 +123,7 @@ class RoomEvents
     roomOnMessage(message)
     {
         if(message.act === GameConst.GAME_OVER){
+            EventsManager.emit('reldens.gameOver', message, this);
             this.gameManager.gameOver = true;
             alert('You died!');
         }
@@ -129,6 +132,7 @@ class RoomEvents
             && message.scene === this.room.name
             && this.room.sessionId !== message.id
         ){
+            EventsManager.emit('reldens.changedScene', message, this);
             let currentScene = this.getActiveScene();
             // if other users enter in the current scene we need to add them:
             let {id, x, y, dir, username} = message;
@@ -136,17 +140,21 @@ class RoomEvents
         }
         // @NOTE: here we don't need to evaluate the id since the reconnect only is sent to the current client.
         if(message.act === GameConst.RECONNECT){
+            EventsManager.emit('reldens.beforeReconnectGameClient', message, this);
             this.gameManager.reconnectGameClient(message, this.room);
         }
         // @NOTE: now this method will update the stats every time the stats action is received but the UI will be
         // created only once in the preloader.
         if(message.act === GameConst.PLAYER_STATS){
+            EventsManager.emit('reldens.playerStatsUpdate', message, this);
             this.activatePlayerStats(message);
         }
         if(message.act === GameConst.UI && message.id){
+            EventsManager.emit('reldens.initUi', message, this);
             this.initUi(message);
         }
         if(message.act === GameConst.ATTACK){
+            EventsManager.emit('reldens.playerAttack', message, this);
             let currentScene = this.getActiveScene();
             let playerSprite = currentScene.player.players[message.atk];
             if(playerSprite){
@@ -259,6 +267,7 @@ class RoomEvents
 
     createEngineScene(player, room, previousScene)
     {
+        EventsManager.emit('reldens.createEngineScene', player, room, previousScene, this);
         if(!this.gameManager.room){
             this.gameEngine.scene.start(player.state.scene);
         } else {

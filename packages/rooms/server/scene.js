@@ -157,6 +157,7 @@ class RoomScene extends RoomLogin
 
     createWorld(roomData, objectsManager)
     {
+        EventsManager.emit('reldens.createWorld', roomData, objectsManager, this);
         // create and assign world to room:
         this.roomWorld = this.getWorldInstance({
             sceneName: this.roomName,
