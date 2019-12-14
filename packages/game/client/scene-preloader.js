@@ -112,29 +112,35 @@ class ScenePreloader extends Scene
         if(this.uiScene){
             EventsManager.emit('reldens.beforeCreateUiScene', this);
             // create ui:
-            if(this.gameManager.config.get('client/ui/playerName/enabled')){
-                // @TODO: make all positions configurable.
-                this.uiPlayer = this.add.dom(50, 30).createFromCache('uiPlayer');
+            let playerUi = this.getUiConfig('playerName');
+            if(playerUi.enabled){
+                this.uiPlayer = this.add.dom(playerUi.uiX, playerUi.uiY).createFromCache('uiPlayer');
                 // logout:
                 let logoutButton = this.uiPlayer.getChildByProperty('id', 'logout');
                 logoutButton.addEventListener('click', () => {
                     window.location.reload();
                 });
             }
-            this.uiTarget = this.add.dom(10, 80).createFromCache('uiTarget');
-            let closeButton = this.uiTarget.getChildByProperty('className', 'close-target');
-            closeButton.addEventListener('click', () => {
-                this.gameManager.gameEngine.clearTarget();
-            });
-            if(this.gameManager.config.get('client/ui/sceneLabel/enabled')){
-                this.uiSceneLabel = this.add.dom(250, 20).createFromCache('uiSceneLabel');
+            let targetUi = this.getUiConfig('uiTarget');
+            if(targetUi.enabled) {
+                this.uiTarget = this.add.dom(targetUi.uiX, targetUi.uiY).createFromCache('uiTarget');
+                let closeButton = this.uiTarget.getChildByProperty('className', 'close-target');
+                closeButton.addEventListener('click', () => {
+                    this.gameManager.gameEngine.clearTarget();
+                });
             }
-            if(this.gameManager.config.get('client/ui/controls/enabled')){
-                this.uiControls = this.add.dom(90, 380).createFromCache('uiControls');
+            let sceneLabelUi = this.getUiConfig('sceneLabel');
+            if(sceneLabelUi.enabled){
+                this.uiSceneLabel = this.add.dom(sceneLabelUi.uiX, sceneLabelUi.uiY).createFromCache('uiSceneLabel');
+            }
+            let controlsUi = this.getUiConfig('controls');
+            if(controlsUi.enabled){
+                this.uiControls = this.add.dom(controlsUi.uiX, controlsUi.uiY).createFromCache('uiControls');
                 this.registerControllers(this.uiControls);
             }
-            if(this.gameManager.config.get('client/ui/playerStats/enabled')){
-                this.uiPlayerStats = this.add.dom(420, 10).createFromCache('uiPlayerStats');
+            let statsUi = this.getUiConfig('playerStats');
+            if(statsUi.enabled){
+                this.uiPlayerStats = this.add.dom(statsUi.uiX, statsUi.uiY).createFromCache('uiPlayerStats');
                 let statsBox = this.uiPlayerStats.getChildByProperty('id', 'box-player-stats');
                 let statsButton = this.uiPlayerStats.getChildByProperty('id', 'player-stats-btn');
                 let statsPanel = this.uiPlayerStats.getChildByProperty('id', 'player-stats-container');
@@ -159,6 +165,15 @@ class ScenePreloader extends Scene
         }
         // player animations:
         this.createPlayerAnimations();
+    }
+
+    getUiConfig(uiName)
+    {
+        return {
+            enabled: this.gameManager.config.get('client/ui/'+uiName+'/enabled'),
+            uiX: this.gameManager.config.get('client/ui/'+uiName+'/x'),
+            uiY: this.gameManager.config.get('client/ui/'+uiName+'/y')
+        }
     }
 
     createPlayerAnimations()
@@ -281,23 +296,26 @@ class ScenePreloader extends Scene
         let width = this.cameras.main.width;
         let height = this.cameras.main.height;
         // @TODO: fonts and messages has to be part of the configuration in the database.
+        let loadingFont = this.gameManager.config.get('client/ui/loading/font');
+        let loadingFontSize = this.gameManager.config.get('client/ui/loading/fontSize');
+        let loadingAssetsSize = this.gameManager.config.get('client/ui/loading/assetsSize');
         this.loadingText = this.add.text(width / 2, height / 2 - 50, 'Loading...', {
-            fontFamily: 'Verdana, Geneva, sans-serif',
-            fontSize: '20px'
+            fontFamily: loadingFont,
+            fontSize: loadingFontSize
         });
         this.loadingText.setOrigin(0.5, 0.5);
-        this.loadingText.setFill('#ffffff');
+        this.loadingText.setFill(this.gameManager.config.get('client/ui/loading/loadingColor'));
         this.percentText = this.add.text(width / 2, height / 2 - 5, '0%', {
-            fontFamily: 'Verdana, Geneva, sans-serif',
-            fontSize: '18px'
+            fontFamily: loadingFont,
+            fontSize: loadingAssetsSize
         });
         this.percentText.setOrigin(0.5, 0.5);
-        this.percentText.setFill('#666666');
+        this.percentText.setFill(this.gameManager.config.get('client/ui/loading/percentColor'));
         this.assetText = this.add.text(width / 2, height / 2 + 50, '', {
-            fontFamily: 'Verdana, Geneva, sans-serif',
-            fontSize: '18px'
+            fontFamily: loadingFont,
+            fontSize: loadingAssetsSize
         });
-        this.assetText.setFill('#ffffff');
+        this.assetText.setFill(this.gameManager.config.get('client/ui/loading/assetsColor'));
         this.assetText.setOrigin(0.5, 0.5);
     }
 
@@ -314,7 +332,9 @@ class ScenePreloader extends Scene
 
     onFileProgress(file)
     {
-        this.assetText.setText('Loading asset: '+file.key);
+        if(this.gameManager.config.get('client/ui/loading/showAssets')){
+            this.assetText.setText('Loading asset: '+file.key);
+        }
     }
 
     onLoadProgress(progress)
