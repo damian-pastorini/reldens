@@ -11,7 +11,6 @@ const { InteractionArea } = require('../../world/interaction-area');
 const { AttackShort } = require('./attack-short');
 const { GameConst } = require('../../game/constants');
 const { ObjectsConst } = require('../../objects/constants');
-const { Logger } = require('../../game/logger');
 
 class ActionsManager
 {
@@ -29,12 +28,6 @@ class ActionsManager
                     return;
                 }
                 AttackShort.execute(player, target);
-                // save the stats:
-                let updateResult = await scene.loginManager.usersManager
-                    .updateUserStatsByPlayerId(target.player_id, target.stats);
-                if(!updateResult){
-                    Logger.error('Player stats update error: ' + target.player_id);
-                }
                 let targetClient = scene.getClientById(target.sessionId);
                 if(targetClient){
                     scene.broadcast({
@@ -45,9 +38,12 @@ class ActionsManager
                     if(target.stats.hp === 0){
                         // player is dead! reinitialize the stats:
                         Object.assign(target.stats, this.config.get('server/players/initialStats'));
-                        scene.send(targetClient, {act: GameConst.GAME_OVER});
+                        // save the stats:
+                        await scene.savePlayerStats(target);
                         await scene.saveStateAndRemovePlayer(target.sessionId);
+                        scene.send(targetClient, {act: GameConst.GAME_OVER});
                     } else {
+                        await scene.savePlayerStats(target);
                         // update the target:
                         scene.send(targetClient, {act: GameConst.PLAYER_STATS, stats: target.stats});
                     }

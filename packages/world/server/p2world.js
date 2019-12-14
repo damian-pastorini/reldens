@@ -228,11 +228,9 @@ class P2world extends World
         boxBody.addShape(boxShape);
         boxBody.playerId = playerData.id;
         boxBody.isChangingScene = false;
-        // @TODO: temporally assigned the player state but we actually need the full player schema here to also stop
-        //   players by setting the mov property to false.
         boxBody.playerState = playerData.playerState;
-        playerData.playerState.x = boxBody.position[0];
-        playerData.playerState.y = boxBody.position[1];
+        // playerData.playerState.x = boxBody.position[0];
+        // playerData.playerState.y = boxBody.position[1];
         this.addBody(boxBody);
         // return body:
         return boxBody;

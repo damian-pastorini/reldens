@@ -104,8 +104,10 @@ class RoomEvents
     playersOnRemove(player, key)
     {
         if(key === this.room.sessionId){
-            // @TODO: replace this by a proper disconnection handler.
-            alert('Your session ended, please login again.');
+            // @TODO: improve disconnection handler.
+            if(!this.gameManager.gameOver){
+                alert('Your session ended, please login again.');
+            }
             window.location.reload();
         } else {
             let currentScene = this.getActiveScene();
@@ -119,8 +121,8 @@ class RoomEvents
     roomOnMessage(message)
     {
         if(message.act === GameConst.GAME_OVER){
+            this.gameManager.gameOver = true;
             alert('You died!');
-            window.location.reload();
         }
         if(
             message.act === GameConst.CHANGED_SCENE
@@ -158,10 +160,12 @@ class RoomEvents
 
     roomOnLeave(code)
     {
-        // @TODO: replace this by a proper disconnection handler.
+        // @TODO: improve disconnection handler.
         if(code > 1000){
             // server error, disconnection:
-            alert('There was a connection error.');
+            if(!this.gameManager.gameOver){
+                alert('There was a connection error.');
+            }
             window.location.reload();
         } else {
             // the client has initiated the disconnection:
