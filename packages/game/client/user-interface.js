@@ -1,3 +1,10 @@
+/**
+ *
+ * Reldens - UserInterface
+ *
+ * General UI for the game, basic dialog box.
+ *
+ */
 
 const { EventsManager } = require('../events-manager');
 

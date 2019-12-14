@@ -21,6 +21,11 @@ class ActionsManager
         EventsManager.on('reldens.onMessageRunAction', async (message, player, target, scene) => {
             // @NOTE: for now we only have one action which is the short distance attack.
             if(message.target.type === GameConst.TYPE_PLAYER && target.player_id !== player.player_id){
+                if(!player.canAttack){
+                    // @NOTE: player could be running an attack already.
+                    return;
+                }
+                player.canAttack = false;
                 let interactionArea = new InteractionArea();
                 let limitDistance = this.config.get('server/players/actions/interactionDistance');
                 interactionArea.setupInteractionArea(limitDistance, target.state.x, target.state.y);
@@ -47,6 +52,11 @@ class ActionsManager
                         // update the target:
                         scene.send(targetClient, {act: GameConst.PLAYER_STATS, stats: target.stats});
                     }
+                }
+                if(AttackShort.attackDelay){
+                    setTimeout(()=> {
+                        player.canAttack = true;
+                    }, AttackShort.attackDelay);
                 }
             }
             if(message.target.type === ObjectsConst.TYPE_OBJECT){

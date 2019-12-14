@@ -1,6 +1,16 @@
+/**
+ *
+ * Reldens - AttackShort
+ *
+ * Basic short distance attack.
+ *
+ */
 
 class AttackShort
 {
+
+    // attack delay is the time in milliseconds until player can attack again:
+    attackDelay = 500;
 
     execute(attacker, defender)
     {

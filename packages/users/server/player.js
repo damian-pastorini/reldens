@@ -32,6 +32,7 @@ class Player extends Schema
             this.p2body = false;
             // set scene and position:
             this.state = new PlayerState(player.state);
+            this.canAttack = true;
         } catch (err) {
             ErrorManager.error(['Missing user data.', err]);
         }
