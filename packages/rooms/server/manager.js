@@ -97,7 +97,7 @@ class RoomsManager
             ErrorManager.error('None rooms found in the database. A room is required to run.');
         }
         let rooms = [];
-        for (let room of roomsModels){
+        for(let room of roomsModels){
             let temp = this.generateRoomModel(room);
             rooms.push(temp);
         }
@@ -134,11 +134,11 @@ class RoomsManager
             roomClassPath: room.room_class_key
         };
         // assign to room:
-        for (let changePoint of room.rooms_change_points){
+        for(let changePoint of room.rooms_change_points){
             temp.changePoints.push({i: changePoint.tile_index, n: changePoint.next_room.name});
         }
         // assign to room:
-        for (let returnPosition of room.rooms_return_points){
+        for(let returnPosition of room.rooms_return_points){
             // this array translates to D for direction, X and Y for positions, De for default and P for previous room.
             let toRoomName = returnPosition.to_room ? returnPosition.to_room.name : false;
             let posTemp = {D: returnPosition.direction, X: returnPosition.x, Y: returnPosition.y, P: toRoomName};

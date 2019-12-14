@@ -28,8 +28,9 @@ class CollisionsManager
         // @TODO: make dynamic, for now we will use fixed collisions types for each event.
         this.room.roomWorld.on('beginContact', this.assignBeginCollisions.bind(this));
         this.room.roomWorld.on('endContact', this.assignEndCollisions.bind(this));
-        // @TODO: postBroadphase can be used to check pairs in case we disable players collisions but still need to
-        //   test for player overlap player.
+        // @NOTE: postBroadphase will be used to check pairs and test overlap instead of collision, for example, a spell
+        // will overlap the player but not collide with it, if the spell collides with the player it will push it in
+        // the opposite direction because the physics engine.
         // this.room.roomWorld.on('postBroadphase', this.assignPostBroadPhase.bind(this));
     }
 

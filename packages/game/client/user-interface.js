@@ -1,4 +1,6 @@
 
+const { EventsManager } = require('../events-manager');
+
 class UserInterface
 {
 
@@ -9,10 +11,10 @@ class UserInterface
     {
         this.id = id;
         this.template = template;
-        gameManager.events.on('reldens.preloadUiScene', (preloadScene) => {
+        EventsManager.on('reldens.preloadUiScene', (preloadScene) => {
             preloadScene.load.html(this.id, this.template);
         });
-        gameManager.events.on('reldens.createUiScene', (preloadScene) => {
+        EventsManager.on('reldens.createUiScene', (preloadScene) => {
             let dialogBox = preloadScene.add.dom(20, 70).createFromCache(this.id);
             let messageTemplate = preloadScene.cache.html.get(this.id);
             dialogBox.innerHTML = preloadScene.gameManager.gameEngine.TemplateEngine.render(messageTemplate, {

@@ -11,6 +11,7 @@ const { PlayerEngine } = require('../../users/client/player-engine');
 const { SceneDynamic } = require('./scene-dynamic');
 const { ScenePreloader } = require('./scene-preloader');
 const { GameConst } = require('../constants');
+const { EventsManager } = require('../events-manager');
 
 class RoomEvents
 {
@@ -211,7 +212,7 @@ class RoomEvents
 
     startEngineScene(player, room, previousScene = false)
     {
-        this.gameManager.events.emit('reldens.startEngineScene', this, player, room, previousScene);
+        EventsManager.emit('reldens.startEngineScene', this, player, room, previousScene);
         let uiScene = false;
         if(!this.gameEngine.uiScene){
             uiScene = true;
@@ -229,7 +230,7 @@ class RoomEvents
                 preloadAssets: this.sceneData.preloadAssets,
                 objectsAnimationsData: this.sceneData.objectsAnimationsData
             });
-            this.gameManager.events.emit('reldens.createdPreloaderInstance', this, scenePreloader);
+            EventsManager.emit('reldens.createdPreloaderInstance', this, scenePreloader);
             this.gameEngine.scene.add(preloaderName, scenePreloader, true);
             let preloader = this.gameEngine.scene.getScene(preloaderName);
             preloader.load.on('complete', () => {

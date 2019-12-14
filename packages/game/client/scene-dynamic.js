@@ -58,7 +58,7 @@ class SceneDynamic extends Scene
         this.cameras.main.on('camerafadeincomplete', () => {
             this.transition = false;
             this.input.keyboard.on('keyup', (event) => {
-                if (event.keyCode >= 37 && event.keyCode <= 40){
+                if(event.keyCode >= 37 && event.keyCode <= 40){
                     // @NOTE: all keyup events has to be sent.
                     this.player.stop();
                 }

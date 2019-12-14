@@ -48,7 +48,9 @@ class P2world extends World
      */
     createWorldContent(mapData)
     {
-        // @TODO: fix maps to create proper body blocks instead of use only boxes for each map block.
+        // @TODO: analyze and implement blocks groups, for example, all simple collision blocks could be grouped and
+        //   use a single big block to avoid the overload number of small blocks which now impacts in the consumed
+        //   resources.
         // get scene change points:
         this.changePoints = this.getSceneChangePoints(mapData);
         // map data:
@@ -59,15 +61,15 @@ class P2world extends World
             tileH = this.mapJson.tileheight;
         for(let layer of mapLayers){
             let layerData = layer.data;
-            for (let c = 0; c < mapW; c++){
+            for(let c = 0; c < mapW; c++){
                 let posX = c * tileW + (tileW/2);
-                for (let r = 0; r < mapH; r++){
+                for(let r = 0; r < mapH; r++){
                     // position in pixels:
                     let posY = r * tileH + (tileH/2);
                     let tileIndex = r * mapW + c;
                     let tile = layerData[tileIndex];
                     // the 0 value are empty tiles without collisions or change points:
-                    if (
+                    if(
                         tile !== 0
                         && (layer.name.indexOf('change-points') !== -1 || layer.name.indexOf('collisions') !== -1)
                     ){

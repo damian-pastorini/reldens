@@ -31,8 +31,9 @@ class ServerManager
     {
         // initialize configurations:
         this.initializeConfiguration(config);
-        // assign the server events singleton so you can access it later:
+        // server events:
         this.events = EventsManager;
+        // initialize storage:
         DataServer.initialize();
         ThemeManager.validateOrCreateTheme(config);
         MapsLoader.loadMaps(config.projectRoot+ThemeManager.projectTheme, this.configManager);

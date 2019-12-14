@@ -20,6 +20,7 @@ class GameManager
 
     constructor()
     {
+        // client events:
         this.events = EventsManager;
         // @NOTE: the game engine will be initialized after the user logged in the game that way we will get the full
         // game configuration from the server when the game starts.

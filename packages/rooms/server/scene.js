@@ -10,9 +10,9 @@ const { RoomLogin } = require('./login');
 const { State } = require('./state');
 const { P2world } = require('../../world/server/p2world');
 const { CollisionsManager } = require('../../world/server/collisions-manager');
-const { InteractionArea } = require('../../world/interaction-area');
 const { ObjectsManager } = require('../../objects/server/manager');
-const { AttackShort } = require('../../actions/server/attack-short');
+const { ActionsManager } = require('../../actions/server/manager');
+const { EventsManager } = require('../../game/events-manager');
 const { GameConst } = require('../../game/constants');
 const { ObjectsConst } = require('../../objects/constants');
 const { Logger } = require('../../game/logger');
@@ -32,6 +32,8 @@ class RoomScene extends RoomLogin
         Logger.info('INIT ROOM: '+ this.roomName);
         // this.roomId = options.room.roomId;
         this.sceneId = this.roomId;
+        // actions manager:
+        this.actionsManager = new ActionsManager(this.config);
         // @NOTE: we create an instance of the objects manager for each room-scene, this is on purpose so all the
         // related object instances will be removed when the room is disposed.
         this.objectsManager = new ObjectsManager(options);
@@ -130,40 +132,9 @@ class RoomScene extends RoomLogin
                 bodyToMove.stopMove();
             }
             if(messageData.act === GameConst.ACTION && messageData.target){
-                let validTarget = this.validateTarget(messageData.target, playerSchema.state.x, playerSchema.state.y);
+                let validTarget = this.validateTarget(messageData.target);
                 if(validTarget){
-                    // Logger.info(['Player Action!', messageData.target]);
-                    // @NOTE: for now we only have one action which is the short distance attack.
-                    if(
-                        messageData.target.type === GameConst.TYPE_PLAYER
-                        && validTarget.player_id !== playerSchema.player_id
-                    ){
-                        // @TODO: remove all this logic from here :)
-                        AttackShort.execute(playerSchema, validTarget);
-                        // save the stats:
-                        let updateResult = this.loginManager.usersManager
-                            .updateUserStatsByPlayerId(validTarget.player_id, validTarget.stats);
-                        updateResult.catch(() => {
-                            Logger.error('Player stats update error: ' + validTarget.player_id);
-                        });
-                        let targetClient = this.getClientById(validTarget.sessionId);
-                        if(targetClient){
-                            this.broadcast({
-                                act: GameConst.ATTACK,
-                                atk: playerSchema.sessionId,
-                                def: validTarget.sessionId
-                            });
-                            if(validTarget.stats.hp === 0){
-                                // player is dead! reinitialize the stats:
-                                Object.assign(validTarget.stats, this.config.get('server/players/initialStats'));
-                                this.send(targetClient, {act: GameConst.GAME_OVER});
-                                return this.saveStateAndRemovePlayer(validTarget.sessionId);
-                            } else {
-                                // update the target:
-                                this.send(targetClient, {act: GameConst.PLAYER_STATS, stats: validTarget.stats});
-                            }
-                        }
-                    }
+                    EventsManager.emit('reldens.onMessageRunAction', messageData, playerSchema, validTarget, this);
                 }
             }
             if(this.messageActions){
@@ -172,7 +143,7 @@ class RoomScene extends RoomLogin
                     if(typeof messageObserver.parseMessageAndRunActions === 'function'){
                         messageObserver.parseMessageAndRunActions(client, messageData, this, playerSchema);
                     } else {
-                        Logger.error(['Broken message observer!', messageObserver]);
+                        Logger.error(['Invalid message observer!', messageObserver]);
                     }
                 }
             }
@@ -292,7 +263,7 @@ class RoomScene extends RoomLogin
         let result = false;
         if(this.clients){
             for(let client of this.clients){
-                if (client.sessionId === clientId){
+                if(client.sessionId === clientId){
                     result = client;
                     break;
                 }
@@ -310,26 +281,14 @@ class RoomScene extends RoomLogin
         return result;
     }
 
-    validateTarget(target, currentX, currentY)
+    validateTarget(target)
     {
         let validTarget = false;
         if(target.type === GameConst.TYPE_PLAYER){
-            let playerTarget = this.getPlayerFromState(target.id);
-            if(playerTarget){
-                let interactionArea = new InteractionArea();
-                // @TODO: limitDistance will be configurable from several points.
-                let limitDistance = 64;
-                interactionArea.setupInteractionArea(limitDistance, playerTarget.state.x, playerTarget.state.y);
-                if(interactionArea.isValidInteraction(currentX, currentY)){
-                    validTarget = playerTarget;
-                }
-            }
+            validTarget = this.getPlayerFromState(target.id);
         }
         if(target.type === ObjectsConst.TYPE_OBJECT){
-            let objectTarget = this.objectsManager.getObjectById(target.id);
-            if(objectTarget.isValidInteraction(currentX, currentY)){
-                validTarget = objectTarget;
-            }
+            validTarget = this.objectsManager.getObjectById(target.id);
         }
         return validTarget;
     }

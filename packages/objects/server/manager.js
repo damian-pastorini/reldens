@@ -50,12 +50,13 @@ class ObjectsManager
                         ]);
                         continue;
                     }
-                    let objInstance = new objClass(objectData);
+                    let objProps = Object.assign({config: this.config}, objectData);
+                    let objInstance = new objClass(objProps);
                     // if the result is an animation instance then we can include in the list to send it to the client:
-                    if (
+                    if(
                         {}.hasOwnProperty.call(objInstance, 'isAnimation')
                         || {}.hasOwnProperty.call(objInstance, 'hasAnimation')
-                    ) {
+                    ){
                         this.objectsAnimationsData[objectIndex] = objInstance.clientParams;
                     }
                     // prepare assets list:
