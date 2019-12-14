@@ -1,12 +1,12 @@
-.cache
-.idea
-node_modules
-npm-debug*
-ts-node*
-/demo
-/v8-compile-cache*
-database.json
+/.cache
+/.env
+/.idea
+/knexfile.js
 /migrations/*
-!/migrations/prod
-/migrations/prod/config.json
-# /server/config/config.js
+!/migrations/production
+/node_modules
+/npm-debug*
+/test
+/ts-node*
+/v8-compile-cache*
+/dev
