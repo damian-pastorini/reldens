@@ -8,6 +8,9 @@
         "type": "git",
         "url": "https://github.com/damian-pastorini/reldens.git"
     },
+    "publishConfig": {
+        "registry": "https://npm.pkg.github.com/"
+    },
     "keywords": [
         "reldens",
         "game",
