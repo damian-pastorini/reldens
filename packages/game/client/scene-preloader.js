@@ -14,15 +14,14 @@ const { GameConst } = require('../constants');
 class ScenePreloader extends Scene
 {
 
-    progressBar = null;
-    progressCompleteRect = null;
-    progressRect = null;
-    objectsUi = {};
-    userInterfaces = {};
-
     constructor(props)
     {
         super({key: props.name});
+        this.progressBar = null;
+        this.progressCompleteRect = null;
+        this.progressRect = null;
+        this.objectsUi = {};
+        this.userInterfaces = {};
         this.preloaderName = props.name;
         this.preloadMapKey = props.map;
         this.preloadImages = props.images;

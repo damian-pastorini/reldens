@@ -11,12 +11,11 @@ const { EventsManager } = require('../events-manager');
 class UserInterface
 {
 
-    initialTitle = '';
-    initialContent = '';
-
     constructor(gameManager, id, template = 'assets/html/npc-dialog.html')
     {
         EventsManager.emit('reldens.defineUserInterface', gameManager, id, template, this);
+        this.initialTitle = '';
+        this.initialContent = '';
         this.id = id;
         this.template = template;
         EventsManager.on('reldens.preloadUiScene', (preloadScene) => {

@@ -13,11 +13,10 @@ const { GameConst } = require('../../game/constants');
 class PlayerBody extends Body
 {
 
-    playerState = {};
-
     constructor(options)
     {
         super(options);
+        this.playerState = {};
     }
 
     integrate(dt)

@@ -21,10 +21,9 @@ const { ErrorManager } = require('../../game/error-manager');
 class RoomScene extends RoomLogin
 {
 
-    messageActions = {};
-
     async onCreate(options)
     {
+        this.messageActions = {};
         // parent config:
         super.onCreate(options);
         // override super prop:

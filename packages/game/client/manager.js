@@ -18,22 +18,21 @@ const { GameConst } = require('../constants');
 class GameManager
 {
 
-    // active room is the currently connected server room:
-    activeRoomEvents = false;
-    // joined rooms:
-    joinedRooms = {};
-    // user data:
-    userData = {};
-    // player data:
-    playerData = false;
-    // @NOTE: the game engine will be initialized after the user logged in the game that way we will get the full
-    // game configuration from the server when the game starts.
-    gameEngine = false;
-    // game over validator:
-    gameOver = false;
-
     constructor()
     {
+        // active room is the currently connected server room:
+        this.activeRoomEvents = false;
+        // joined rooms:
+        this.joinedRooms = {};
+        // user data:
+        this.userData = {};
+        // player data:
+        this.playerData = false;
+        // @NOTE: the game engine will be initialized after the user logged in the game that way we will get the full
+        // game configuration from the server when the game starts.
+        this.gameEngine = false;
+        // game over validator:
+        this.gameOver = false;
         // client events:
         this.events = EventsManager;
         // full game config:

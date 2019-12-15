@@ -14,10 +14,7 @@ const { InitialState } = require('../../users/server/initial-state');
 const { InitialStats } = require('../../users/server/initial-stats');
 const { InitialUser } = require('../../users/server/initial-user');
 const { EventsManager } = require('../../game/events-manager');
-
-const CONFIG_TYPE_BOOLEAN = 'b';
-const CONFIG_TYPE_NUMBER = 'i';
-const CONFIG_TYPE_TEXT = 't';
+const { ConfigConst } = require('../constants');
 
 class ConfigManager
 {
@@ -88,13 +85,13 @@ class ConfigManager
     getParsedValue(config)
     {
         EventsManager.emit('reldens.beforeGetParsedValue', {configManager: this, config: config});
-        if(config.type === CONFIG_TYPE_TEXT){
+        if(config.type === ConfigConst.CONFIG_TYPE_TEXT){
             return config.value;
         }
-        if(config.type === CONFIG_TYPE_BOOLEAN){
+        if(config.type === ConfigConst.CONFIG_TYPE_BOOLEAN){
             return !(config.value === 'false' || config.value === '0');
         }
-        if(config.type === CONFIG_TYPE_NUMBER){
+        if(config.type === ConfigConst.CONFIG_TYPE_NUMBER){
             return parseFloat(config.value);
         }
     }

@@ -11,10 +11,9 @@ const bcrypt = require('bcrypt');
 class PasswordManager
 {
 
-    saltRounds = 10;
-
     encryptPassword(receivedPassword)
     {
+        this.saltRounds = 10;
         // generate the password hash:
         let salt = bcrypt.genSaltSync(this.saltRounds);
         return bcrypt.hashSync(receivedPassword, salt);

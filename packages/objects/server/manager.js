@@ -13,19 +13,18 @@ const { Logger } = require('../../game/logger');
 class ObjectsManager
 {
 
-    // room objects is just the list of the objects in the storage:
-    roomObjectsData = false;
-    // room objects by layer and title are each object instance plus the data from the storage:
-    roomObjects = false;
-    roomObjectsById = {};
-    preloadAssets = [];
-    objectsAnimationsData = {};
-    listenMessages = false;
-    listenMessagesObjects = {};
-
     constructor(options)
     {
         this.config = options.config;
+        // room objects is just the list of the objects in the storage:
+        this.roomObjectsData = false;
+        // room objects by layer and title are each object instance plus the data from the storage:
+        this.roomObjects = false;
+        this.roomObjectsById = {};
+        this.preloadAssets = [];
+        this.objectsAnimationsData = {};
+        this.listenMessages = false;
+        this.listenMessagesObjects = {};
     }
 
     async loadObjectsByRoomId(roomId)

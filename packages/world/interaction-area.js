@@ -11,13 +11,12 @@
 class InteractionArea
 {
 
-    x = false;
-    y = false;
-    interactionArea = false;
-    interactionLimits = {};
-
     setupInteractionArea(margin = false, x = false, y = false)
     {
+        this.x = false;
+        this.y = false;
+        this.interactionArea = false;
+        this.interactionLimits = {};
         // interaction area can be forced by parameter:
         if(margin){
             this.interactionArea = margin;

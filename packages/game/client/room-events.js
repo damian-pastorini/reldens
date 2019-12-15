@@ -16,12 +16,11 @@ const { EventsManager } = require('../events-manager');
 class RoomEvents
 {
 
-    room = false;
-    sceneData = false;
-    playersQueue = {};
-
     constructor(roomName, gameManager)
     {
+        this.room = false;
+        this.sceneData = false;
+        this.playersQueue = {};
         this.gameManager = gameManager;
         this.gameEngine = gameManager.gameEngine;
         this.roomName = roomName;

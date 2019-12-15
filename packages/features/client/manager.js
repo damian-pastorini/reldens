@@ -13,10 +13,9 @@ const { ClientCoreFeatures } = require('./config-client');
 class FeaturesManager
 {
 
-    featuresList = {};
-
     loadFeatures(featuresCodeList)
     {
+        this.featuresList = {};
         EventsManager.emit('reldens.loadFeatures', this);
         for(let idx in featuresCodeList){
             let featureCode = featuresCodeList[idx];
