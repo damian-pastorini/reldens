@@ -5,14 +5,6 @@ const { EventsManager } = require('../../game/events-manager');
 class SceneDynamic extends Scene
 {
 
-    layers = {};
-    transition = true;
-    useTsAnimation = false;
-    // this will contain the animations data coming from the server:
-    objectsAnimationsData = false;
-    // this will contain the animations objects instances:
-    objectsAnimations = {};
-
     constructor(key, data, gameManager)
     {
         super({key});
@@ -20,6 +12,13 @@ class SceneDynamic extends Scene
         this.params = data;
         this.gameManager = gameManager;
         this.configManager = gameManager.config;
+        this.layers = {};
+        this.transition = true;
+        this.useTsAnimation = false;
+        // this will contain the animations data coming from the server:
+        this.objectsAnimationsData = false;
+        // this will contain the animations objects instances:
+        this.objectsAnimations = {};
         // frame rate:
         this.configuredFrameRate = this.gameManager.config.get('client/general/animations/frameRate') || 10;
     }

@@ -9,11 +9,10 @@
 class AttackShort
 {
 
-    // attack delay is the time in milliseconds until player can attack again:
-    attackDelay = 500;
-
     execute(attacker, defender)
     {
+        // attack delay is the time in milliseconds until player can attack again:
+        this.attackDelay = 500;
         if(attacker.stats.atk >= defender.stats.atk){
             if(defender.stats.hp > 0){
                 defender.stats.hp--;

@@ -12,10 +12,9 @@ const { Logger } = require('../../game/logger');
 class Chat
 {
 
-    joinRooms = [ChatConst.CHAT_GLOBAL];
-
     constructor()
     {
+        this.joinRooms = [ChatConst.CHAT_GLOBAL];
         // chat messages are global for all rooms so we use the generic event for every joined room:
         EventsManager.on('reldens.joinedRoom', (room, gameManager) => {
             this.listenMessages(room, gameManager);

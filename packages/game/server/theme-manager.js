@@ -13,10 +13,9 @@ const { Logger } = require('../logger');
 class ThemeManager
 {
 
-    projectTheme = '/theme/default';
-
     validateOrCreateTheme(config)
     {
+        this.projectTheme = '/theme/default';
         // check for theme folder:
         if(config.projectTheme){
             this.projectTheme = '/theme/'+config.projectTheme;

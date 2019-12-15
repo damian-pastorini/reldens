@@ -9,12 +9,11 @@
 class TilesetAnimation
 {
 
-    animations = [];
-    registered = {};
-    layer = null;
-
     register(layer, tileData)
     {
+        this.animations = [];
+        this.registered = {};
+        this.layer = null;
         this.layer = layer;
         let index = 0;
         for(let i in tileData){

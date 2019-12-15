@@ -13,15 +13,14 @@ const { Logger } = require('../../game/logger');
 class AnimationObject extends BaseObject
 {
 
-    // object type:
-    isAnimation = true;
-    // the actions will be false as default:
-    runOnHit = false;
-    runOnAction = false;
-
     constructor(props)
     {
         super(props);
+        // object type:
+        this.isAnimation = true;
+        // the actions will be false as default:
+        this.runOnHit = false;
+        this.runOnAction = false;
     }
 
     get animationData()

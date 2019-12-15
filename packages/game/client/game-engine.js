@@ -12,12 +12,11 @@ const TemplateEngine = require('mustache');
 class GameEngine extends Game
 {
 
-    // uiScene is where we will keep all the game UI elements:
-    uiScene = false;
-
     constructor(GameConfig)
     {
         super(GameConfig);
+        // uiScene is where we will keep all the game UI elements:
+        this.uiScene = false;
         this.TemplateEngine = TemplateEngine;
     }
 
