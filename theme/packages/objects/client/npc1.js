@@ -14,6 +14,7 @@ class Npc1 extends AnimationEngine
     constructor(gameManager, props, currentPreloader)
     {
         super(gameManager, props, currentPreloader);
+        this.isInteractive = true;
     }
 
 }
