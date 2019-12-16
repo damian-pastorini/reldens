@@ -1,6 +1,6 @@
 {
     "name": "reldens",
-    "version": "4.0.0-beta.5",
+    "version": "4.0.0-beta.6",
     "description": "Reldens - MMORPG Platform",
     "source": true,
     "homepage": "https://github.com/damian-pastorini/reldens",
@@ -29,7 +29,8 @@
     },
     "scripts": {
         "start": "node .",
-        "install-db": "knex migrate:up --env production"
+        "install-db": "knex migrate:up --env production",
+        "build-client": "parcel build packages/game/client/manager.js"
     },
     "engines": {
         "node": "13.1.0"
@@ -37,7 +38,6 @@
     "author": "Damian A. Pastorini",
     "license": "MIT",
     "dependencies": {
-        "@babel/runtime-corejs2": "^7.7.6",
         "@colyseus/monitor": "^0.11.9",
         "@colyseus/schema": "^0.5.11",
         "bcrypt": "^3.0.7",
@@ -59,6 +59,7 @@
     },
     "devDependencies": {
         "@babel/core": "^7.7.5",
+        "@babel/runtime-corejs3": "^7.7.6",
         "@babel/plugin-transform-runtime": "^7.7.6",
         "@babel/plugin-proposal-class-properties": "^7.7.4",
         "eslint": "^6.7.2",
