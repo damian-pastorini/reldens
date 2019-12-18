@@ -39,6 +39,8 @@ Here you will find a small demo for the results with the last available version 
 
 [https://reldens.herokuapp.com/](https://reldens.herokuapp.com/)
 
+[Server Status](https://github.com/damian-pastorini/reldens/wiki/Server-Status)
+
 
 ## Contributions and donations
 If you like to contribute or donate to support the project please feel free to contact me at damian.pastorini@gmail.com.
