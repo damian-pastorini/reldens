@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS `config` (
   `value` text COLLATE utf8_unicode_ci NOT NULL,
   `type` varchar(2) COLLATE utf8_unicode_ci NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=62 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=64 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping data for table reldens.config: ~60 rows (approximately)
 /*!40000 ALTER TABLE `config` DISABLE KEYS */;
@@ -105,7 +105,9 @@ INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(58, 'client', 'ui/loading/loadingColor', '#ffffff', 't'),
 	(59, 'client', 'ui/loading/percentColor', '#666666', 't'),
 	(60, 'client', 'ui/loading/assetsColor', '#ffffff', 't'),
-	(61, 'client', 'ui/loading/showAssets', '1', 'b');
+	(61, 'client', 'ui/loading/showAssets', '1', 'b'),
+	(62, 'client', 'players/animations/basedOnPress', '1', 'b'),
+	(63, 'client', 'players/animations/diagonalHorizontal', '1', 'b');
 /*!40000 ALTER TABLE `config` ENABLE KEYS */;
 
 -- Dumping structure for table reldens.features
@@ -210,8 +212,8 @@ CREATE TABLE IF NOT EXISTS `players_state` (
 -- Dumping data for table reldens.players_state: ~5 rows (approximately)
 /*!40000 ALTER TABLE `players_state` DISABLE KEYS */;
 INSERT INTO `players_state` (`id`, `player_id`, `room_id`, `x`, `y`, `dir`) VALUES
-	(3, 1, 4, 959, 387, 'down'),
-	(4, 2, 4, 984, 393, 'down'),
+	(3, 1, 4, 318, 373, 'right'),
+	(4, 2, 4, 361, 376, 'left'),
 	(5, 3, 4, 443, 406, 'down'),
 	(14, 15, 4, 300, 388, 'down'),
 	(15, 16, 4, 508, 381, 'down');
@@ -236,8 +238,8 @@ CREATE TABLE IF NOT EXISTS `players_stats` (
 -- Dumping data for table reldens.players_stats: ~5 rows (approximately)
 /*!40000 ALTER TABLE `players_stats` DISABLE KEYS */;
 INSERT INTO `players_stats` (`id`, `player_id`, `hp`, `mp`, `stamina`, `atk`, `def`, `dodge`, `speed`) VALUES
-	(1, 1, 46, 100, 100, 1001, 1001, 100, 100),
-	(2, 2, 26, 100, 100, 1001, 1001, 100, 100),
+	(1, 1, 19, 100, 100, 1001, 1001, 100, 100),
+	(2, 2, 13, 100, 100, 1001, 1001, 100, 100),
 	(3, 3, 100, 100, 100, 1001, 1001, 100, 100),
 	(15, 15, 100, 100, 100, 1001, 1001, 100, 100),
 	(16, 16, 100, 100, 100, 1001, 1001, 100, 100);
@@ -331,8 +333,8 @@ CREATE TABLE IF NOT EXISTS `users` (
 -- Dumping data for table reldens.users: ~5 rows (approximately)
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
 INSERT INTO `users` (`id`, `email`, `username`, `password`, `role_id`, `status`, `created_at`, `updated_at`) VALUES
-	(29, 'dap@dap.com', 'DarthStormrage', '$2b$10$PQIYGBFyA/69DaowJVTA5ufVWmIUeIOwIK4e6JCAP5Uen0sp0TAHu', 1, 1, '2019-08-02 23:06:14', '2019-12-14 19:07:14'),
-	(30, 'dap2@dap.com', 'dap2', '$2b$10$Kvjh1XdsMai8Xt2wdivG2.prYvTiW6vJrdnrNPYZenf8qCRLhuZ/a', 9, 1, '2019-08-02 23:06:14', '2019-12-14 19:07:11'),
+	(29, 'dap@dap.com', 'DarthStormrage', '$2b$10$PQIYGBFyA/69DaowJVTA5ufVWmIUeIOwIK4e6JCAP5Uen0sp0TAHu', 1, 1, '2019-08-02 23:06:14', '2019-12-24 07:45:49'),
+	(30, 'dap2@dap.com', 'dap2', '$2b$10$Kvjh1XdsMai8Xt2wdivG2.prYvTiW6vJrdnrNPYZenf8qCRLhuZ/a', 9, 1, '2019-08-02 23:06:14', '2019-12-24 07:45:57'),
 	(31, 'dap3@dap.com', 'dap3', '$2b$10$CmtWkhIexIVtcBjwsmEkeOlIhqizViykDFYAKtVrl4sF8KWLuBsxO', 1, 1, '2019-08-02 23:06:14', '2019-11-30 10:54:55'),
 	(43, 'dap13@dap13.com', 'dap13', '$2b$10$PG6nUdhNmhy2RUpS4k.g..vJ5k3x0sPRyFlpnVZMTPfuAXgXyFP/y', 1, 1, '2019-11-15 21:47:17', '2019-11-15 21:47:17'),
 	(44, 'dap12@dap12.com', 'dap12', '$2b$10$PFEKucJCDoQq8evXhO.FiuwMEayr0HLEt5UYo/WU9TgXb.wwwPG8W', 1, 1, '2019-11-15 21:58:32', '2019-11-15 21:58:32');
