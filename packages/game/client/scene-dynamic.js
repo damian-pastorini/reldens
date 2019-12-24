@@ -74,7 +74,8 @@ class SceneDynamic extends Scene
                 this.player.left();
             } else if(this.keyRight.isDown){
                 this.player.right();
-            } else if(this.keyUp.isDown){
+            }
+            if(this.keyUp.isDown){
                 this.player.up();
             } else if(this.keyDown.isDown){
                 this.player.down();

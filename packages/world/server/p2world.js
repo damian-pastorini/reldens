@@ -223,7 +223,9 @@ class P2world extends World
             mass: 1,
             position: [playerData.playerState.x, playerData.playerState.y],
             type: Body.DYNAMIC,
-            fixedRotation: true
+            fixedRotation: true,
+            animationBasedOnPress: this.objectsManager.config.get('client/players/animations/basedOnPress'),
+            diagonalHorizontal: this.objectsManager.config.get('client/players/animations/diagonalHorizontal')
         });
         boxBody.addShape(boxShape);
         boxBody.playerId = playerData.id;

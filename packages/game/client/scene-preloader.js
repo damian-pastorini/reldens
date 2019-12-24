@@ -121,7 +121,7 @@ class ScenePreloader extends Scene
                 });
             }
             let targetUi = this.getUiConfig('uiTarget');
-            if(targetUi.enabled) {
+            if(targetUi.enabled){
                 this.uiTarget = this.add.dom(targetUi.uiX, targetUi.uiY).createFromCache('uiTarget');
                 let closeButton = this.uiTarget.getChildByProperty('className', 'close-target');
                 closeButton.addEventListener('click', () => {

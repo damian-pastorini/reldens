@@ -24,7 +24,9 @@ class PlayerEngine
         this.playerId = room.sessionId;
         this.players = {};
         this.mov = false;
+        this.dir = false;
         this.currentTarget = false;
+        this.animationBasedOnPress = this.config.get('client/players/animations/basedOnPress');
     }
 
     create()
@@ -63,29 +65,38 @@ class PlayerEngine
         if(!playerSprite.anims){
             Logger.error('PlayerSprite animation not defined.');
         }
-        // @NOTE: player speed is defined by the server.
-        if(player.state.x !== playerSprite.x){
-            if(player.state.x < playerSprite.x){
-                playerSprite.anims.play(GameConst.LEFT, true);
-            } else {
-                playerSprite.anims.play(GameConst.RIGHT, true);
-            }
-            playerSprite.x = player.state.x;
-        }
-        if(player.state.y !== playerSprite.y){
-            if(player.state.y < playerSprite.y){
-                playerSprite.anims.play(GameConst.UP, true);
-            } else {
-                playerSprite.anims.play(GameConst.DOWN, true);
-            }
-            playerSprite.y = player.state.y;
-            // @NOTE: depth has to be set dynamically, this way the player will be above or below other objects.
-            playerSprite.setDepth(playerSprite.y + playerSprite.body.height);
-        }
+        this.playPlayerAnimation(playerSprite, player);
+        playerSprite.x = player.state.x;
+        playerSprite.y = player.state.y;
+        // @NOTE: depth has to be set dynamically, this way the player will be above or below other objects.
+        playerSprite.setDepth(playerSprite.y + playerSprite.body.height);
         // player stop action:
         if(!player.state.mov){
             playerSprite.anims.stop();
             playerSprite.mov = player.state.mov;
+        }
+    }
+
+    playPlayerAnimation(playerSprite, player)
+    {
+        // @NOTE: player speed is defined by the server.
+        if(this.animationBasedOnPress){
+            playerSprite.anims.play(player.state.dir, true);
+        } else {
+            if(player.state.x !== playerSprite.x){
+                if(player.state.x < playerSprite.x){
+                    playerSprite.anims.play(GameConst.LEFT, true);
+                } else {
+                    playerSprite.anims.play(GameConst.RIGHT, true);
+                }
+            }
+            if(player.state.y !== playerSprite.y){
+                if(player.state.y < playerSprite.y){
+                    playerSprite.anims.play(GameConst.UP, true);
+                } else {
+                    playerSprite.anims.play(GameConst.DOWN, true);
+                }
+            }
         }
     }
 

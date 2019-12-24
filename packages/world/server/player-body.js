@@ -17,6 +17,10 @@ class PlayerBody extends Body
     {
         super(options);
         this.playerState = {};
+        this.animationBasedOnPress = options.animationBasedOnPress;
+        this.diagonalHorizontal = options.diagonalHorizontal;
+        // default or initial direction:
+        this.pressedDirection = GameConst.DOWN;
     }
 
     integrate(dt)
@@ -47,28 +51,37 @@ class PlayerBody extends Body
             }
         }
         if(this.playerState){
-            // update position:
-            this.playerState.x = this.position[0];
-            this.playerState.y = this.position[1];
-            // start or stop animation:
-            this.playerState.mov = (this.velocity[0] !== 0 || this.velocity[1] !== 0);
+            this.updatePlayerState();
         }
         this.aabbNeedsUpdate = true;
+    }
+
+    updatePlayerState()
+    {
+        // update position:
+        this.playerState.x = this.position[0];
+        this.playerState.y = this.position[1];
+        // start or stop animation:
+        this.playerState.mov = (this.velocity[0] !== 0 || this.velocity[1] !== 0);
     }
 
     initMove(direction, speed, allowSimultaneous = false)
     {
         if(allowSimultaneous){
             if(direction === GameConst.RIGHT){
+                this.validateAndSetDirection(direction, this.diagonalHorizontal, this.velocity[1]);
                 this.velocity[0] = speed;
             }
             if(direction === GameConst.LEFT){
+                this.validateAndSetDirection(direction, this.diagonalHorizontal, this.velocity[1]);
                 this.velocity[0] = -speed;
             }
             if(direction === GameConst.UP){
+                this.validateAndSetDirection(direction, !this.diagonalHorizontal, this.velocity[0]);
                 this.velocity[1] = -speed;
             }
             if(direction === GameConst.DOWN){
+                this.validateAndSetDirection(direction, !this.diagonalHorizontal, this.velocity[0]);
                 this.velocity[1] = speed;
             }
         } else {
@@ -84,6 +97,15 @@ class PlayerBody extends Body
             }
             if(direction === GameConst.DOWN && this.velocity[0] === 0){
                 this.velocity[1] = speed;
+            }
+        }
+    }
+
+    validateAndSetDirection(direction, diagonal, velocity)
+    {
+        if(this.animationBasedOnPress){
+            if(diagonal || velocity === 0){
+                this.playerState.dir = direction;
             }
         }
     }
