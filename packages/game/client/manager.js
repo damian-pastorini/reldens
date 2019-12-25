@@ -39,6 +39,8 @@ class GameManager
         this.config = ConfigProcessor;
         // features manager:
         this.features = new FeaturesManager();
+        // active scene:
+        this.isChangingScene = false;
     }
 
     setupClasses(customClasses)
@@ -156,6 +158,7 @@ class GameManager
     reconnectGameClient(message, previousRoom)
     {
         let newRoomEvents = this.createRoomEventsInstance(message.player.state.scene);
+        this.isChangingScene = true;
         this.gameClient.joinOrCreate(newRoomEvents.roomName, this.userData).then((sceneRoom) => {
             // leave old room:
             previousRoom.leave();

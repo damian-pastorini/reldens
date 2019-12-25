@@ -34,7 +34,6 @@ class CollisionsManager
         this.room.roomWorld.on('postBroadphase', this.assignPostBroadPhase.bind(this));
     }
 
-
     assignPostBroadPhase(evt)
     {
         let { pairs } = evt;
@@ -48,7 +47,6 @@ class CollisionsManager
             }
         }
     }
-
 
     assignBeginCollisions(evt)
     {

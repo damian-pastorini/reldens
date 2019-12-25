@@ -56,6 +56,7 @@ class SceneDynamic extends Scene
         }
         this.cameras.main.on('camerafadeincomplete', () => {
             this.transition = false;
+            this.gameManager.isChangingScene = false;
             this.input.keyboard.on('keyup', (event) => {
                 if(event.keyCode >= 37 && event.keyCode <= 40){
                     // @NOTE: all keyup events has to be sent.
@@ -69,7 +70,7 @@ class SceneDynamic extends Scene
     // eslint-disable-next-line no-unused-vars
     update(time, delta)
     {
-        if(this.transition === false){
+        if(this.transition === false && !this.gameManager.isChangingScene){
             if(this.keyLeft.isDown){
                 this.player.left();
             } else if(this.keyRight.isDown){
