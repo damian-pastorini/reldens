@@ -164,18 +164,22 @@ class P2world extends World
         // create world boundary, up wall:
         let upWall = this.createCollisionBody((mapW+blockW), worldLimit, (mapW/2), 1);
         upWall.isWorldWall = true;
+        upWall.isWall = true;
         this.addBody(upWall);
         // create world boundary, down wall:
         let downWall = this.createCollisionBody((mapW+blockW), worldLimit, (mapW/2), (mapH-worldLimit));
         downWall.isWorldWall = true;
+        downWall.isWall = true;
         this.addBody(downWall);
         // create world boundary, left wall:
         let leftWall = this.createCollisionBody(worldLimit, (mapH+blockH), 1, (mapH/2));
         leftWall.isWorldWall = true;
+        leftWall.isWall = true;
         this.addBody(leftWall);
         // create world boundary, right wall:
         let rightWall = this.createCollisionBody(worldLimit, (mapH+blockH), (mapW-worldLimit), (mapH/2));
         rightWall.isWorldWall = true;
+        rightWall.isWall = true;
         this.addBody(rightWall);
     }
 
