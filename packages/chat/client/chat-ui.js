@@ -26,6 +26,8 @@ class ChatUi
         this.uiScene.uiChat = this.uiScene.add.dom(chatX, chatY).createFromCache('uiChat');
         let chatInput = this.uiScene.uiChat.getChildByProperty('id', ChatConst.CHAT_INPUT);
         let chatSendButton = this.uiScene.uiChat.getChildByProperty('id', ChatConst.CHAT_SEND_BUTTON);
+        let chatCloseButton = this.uiScene.uiChat.getChildByProperty('id', ChatConst.CHAT_CLOSE_BUTTON);
+        let chatOpenButton = this.uiScene.uiChat.getChildByProperty('id', ChatConst.CHAT_OPEN_BUTTON);
         if(chatInput){
             this.uiScene.input.keyboard.on('keyup_ENTER', () => {
                 let isFocused = (document.activeElement === chatInput);
@@ -38,6 +40,18 @@ class ChatUi
                     e.preventDefault();
                     this.sendChatMessage(chatInput, this.gameManager.activeRoomEvents);
                     chatInput.focus();
+                });
+            }
+            if(chatCloseButton && chatOpenButton){
+                chatCloseButton.addEventListener('click', () => {
+                    let box = this.uiScene.uiChat.getChildByProperty('id', 'chat-ui');
+                    box.style.display = 'none';
+                    chatOpenButton.style.display = 'block';
+                });
+                chatOpenButton.addEventListener('click', () => {
+                    let box = this.uiScene.uiChat.getChildByProperty('id', 'chat-ui');
+                    box.style.display = 'block';
+                    chatOpenButton.style.display = 'none';
                 });
             }
             chatInput.addEventListener('keyup', (e) => {

@@ -32,6 +32,7 @@ class UserInterface
             dialogContainer.id = 'box-'+this.id;
             let boxClose = dialogBox.getChildByProperty('className', 'box-close');
             if(boxClose){
+                boxClose.id = 'box-close-'+this.id;
                 boxClose.addEventListener('click', () => {
                     dialogContainer.style.display = 'none';
                 });
