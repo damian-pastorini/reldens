@@ -9,7 +9,9 @@
  */
 
 const { ChatPack } = require('../../chat/server/pack');
+const { RespawnPack } = require('../../respawn/server/pack');
 
 module.exports.ServerCoreFeatures = {
-    chat: ChatPack
+    chat: ChatPack,
+    respawn: RespawnPack
 };

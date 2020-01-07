@@ -12,6 +12,8 @@ const { Npc1 } = require('./objects/client/npc1');
 
 module.exports.CustomClasses = {
     objects: {
-        people_town_1: Npc1
+        people_town_1: Npc1,
+        enemy_forest_1: Npc1,
+        enemy_forest_2: Npc1
     }
 };

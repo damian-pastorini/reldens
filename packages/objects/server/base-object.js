@@ -24,10 +24,11 @@ class BaseObject extends InteractionArea
         try {
             this.clientParams = props.client_params ? JSON.parse(props.client_params) : {};
         } catch (err) {
-            Logger.error('BaseObject, clientParams JSON error.');
+            Logger.error(['BaseObject, clientParams JSON error:', props.client_params]);
         }
         this.clientParams.key = this.key;
         this.clientParams.id = this.id;
+        this.clientParams.targetName = this.title;
         // @NOTE: we need to send the layer name for later calculate the animation depth and show the animation over the
         // proper layer.
         this.clientParams.layerName = props.layer_name;

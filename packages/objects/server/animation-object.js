@@ -17,6 +17,8 @@ class AnimationObject extends BaseObject
     {
         super(props);
         // object type:
+        this.type = ObjectsConst.TYPE_ANIMATION;
+        this.clientParams.type = this.type;
         this.isAnimation = true;
         // the actions will be false as default:
         this.runOnHit = false;
@@ -26,7 +28,7 @@ class AnimationObject extends BaseObject
     get animationData()
     {
         return {
-            act: ObjectsConst.OBJECT_ANIMATION,
+            act: this.type,
             key: this.key,
             clientParams: this.clientParams,
             x: this.x,
@@ -39,7 +41,7 @@ class AnimationObject extends BaseObject
         if(!this.runOnHit || !props.room){
             return;
         }
-        if({}.hasOwnProperty.call(this, 'playerVisible') && this.roomVisible){
+        if({}.hasOwnProperty.call(this, 'playerVisible') && this.playerVisible){
             let client = props.room.getClientById(props.playerBody.playerId);
             if(!client){
                 Logger.error('Object hit, client not found by playerId:', props.playerBody.playerId);
@@ -58,7 +60,7 @@ class AnimationObject extends BaseObject
         if(!this.runOnAction || !props.room){
             return;
         }
-        if({}.hasOwnProperty.call(this, 'playerVisible') && this.roomVisible){
+        if({}.hasOwnProperty.call(this, 'playerVisible') && this.playerVisible){
             // run only for the client who executed:
             let client = props.room.getClientById(props.playerBody.playerId);
             if(!client){

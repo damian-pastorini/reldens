@@ -21,9 +21,10 @@ class People extends NpcObject
         this.playerVisible = true;
         // assign extra params:
         this.clientParams.enabled = true;
+        // @TODO: all the npc info will be coming from the storage.
         this.clientParams.ui = true;
-        this.clientParams.targetName = 'Alfred';
-        this.title = 'Alfred:';
+        // this.clientParams.targetName = 'Alfred';
+        // this.title = 'Alfred';
         this.content = 'Hello! My name is Alfred. Go to the forest and kill some monsters! Now... leave me alone!';
     }
 

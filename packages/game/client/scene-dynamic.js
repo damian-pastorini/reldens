@@ -87,6 +87,7 @@ class SceneDynamic extends Scene
     changeScene()
     {
         this.objectsAnimations = {};
+        this.objectsAnimationsData = false;
         if(this.useTsAnimation){
             this.tilesetAnimation.destroy();
         }

@@ -40,6 +40,7 @@
     "dependencies": {
         "@colyseus/monitor": "^0.11.9",
         "@colyseus/schema": "^0.5.16",
+        "await-event-emitter": "^1.2.0",
         "bcrypt": "^3.0.7",
         "colyseus": "^0.11.25",
         "colyseus.js": "^0.11.7",

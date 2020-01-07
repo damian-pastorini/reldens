@@ -19,8 +19,8 @@ class ObjectsPack
         EventsManager.on('reldens.joinedRoom', (room, gameManager) => {
             this.listenMessages(room, gameManager);
         });
-        EventsManager.on('reldens.createdPreloaderInstance', (roomEvents, scenePreloader) => {
-            this.prepareObjectsUi(roomEvents.gameManager, roomEvents.sceneData.objectsAnimationsData, scenePreloader);
+        EventsManager.on('reldens.createEngineScene', (player, room, previousScene, roomEvents) => {
+            this.prepareObjectsUi(roomEvents.gameManager, roomEvents.sceneData.objectsAnimationsData, roomEvents.scenePreloader);
         });
         // create animations for all the objects in the scene:
         EventsManager.on('reldens.afterSceneDynamicCreate', (sceneDynamic) => {
@@ -59,6 +59,7 @@ class ObjectsPack
     {
         let currentScene = sceneDynamic.gameManager.activeRoomEvents.getActiveScene();
         if(!currentScene.objectsAnimationsData){
+            Logger.info(['None animations defined on this scene:', currentScene.key]);
             return;
         }
         EventsManager.emit('reldens.createDynamicAnimationsBefore', this, sceneDynamic);

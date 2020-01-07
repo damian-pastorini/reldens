@@ -2,10 +2,10 @@
  *
  * Reldens - EventsManager
  *
- * This will just export a single instance of the EventEmitter.
+ * This will just export a single instance of the AwaitEventEmitter.
  *
  */
 
-const { EventEmitter } = require('events');
+const AwaitEventEmitter = require('await-event-emitter');
 
-module.exports.EventsManager = new EventEmitter();
+module.exports.EventsManager = new AwaitEventEmitter();

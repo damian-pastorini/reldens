@@ -42,7 +42,7 @@ class RoomScene extends RoomLogin
             Object.assign(this.messageActions, this.objectsManager.listenMessagesObjects);
         }
         // create world:
-        this.createWorld(options.roomData, this.objectsManager);
+        await this.createWorld(options.roomData, this.objectsManager);
         // set world objects normal speed:
         this.worldSpeed = this.config.get('server/players/physicsBody/speed') || GameConst.SPEED_SERVER;
         // keys events:
@@ -133,7 +133,10 @@ class RoomScene extends RoomLogin
             if(messageData.act === GameConst.ACTION && messageData.target){
                 let validTarget = this.validateTarget(messageData.target);
                 if(validTarget){
-                    EventsManager.emit('reldens.onMessageRunAction', messageData, playerSchema, validTarget, this);
+                    EventsManager.emit('reldens.onMessageRunAction', messageData, playerSchema, validTarget, this)
+                        .catch((err) => {
+                            Logger.error(['Listener error on onMessageRunAction:', err]);
+                        });
                 }
             }
             if(this.messageActions){
@@ -154,17 +157,21 @@ class RoomScene extends RoomLogin
         }
     }
 
-    createWorld(roomData, objectsManager)
+    async createWorld(roomData, objectsManager)
     {
-        EventsManager.emit('reldens.createWorld', roomData, objectsManager, this);
+        await EventsManager.emit('reldens.createWorld', roomData, objectsManager, this);
         // create and assign world to room:
-        this.roomWorld = this.getWorldInstance({
+        this.roomWorld = this.createWorldInstance({
             sceneName: this.roomName,
             roomData: roomData,
             gravity: [0, 0],
             applyGravity: false,
             objectsManager: objectsManager
         });
+        // create world limits:
+        this.roomWorld.createLimits();
+        // add collisions:
+        await this.roomWorld.createWorldContent(roomData);
         // start world movement from the config or with the default value:
         this.timeStep = this.config.get('server/rooms/world/timestep') || 0.04;
         this.worldTimer = this.clock.setInterval(() => {
@@ -173,7 +180,7 @@ class RoomScene extends RoomLogin
         Logger.info('World created in Room: ' + this.roomName);
     }
 
-    getWorldInstance(data)
+    createWorldInstance(data)
     {
         return new P2world(data);
     }

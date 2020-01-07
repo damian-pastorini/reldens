@@ -18,13 +18,14 @@ class UserInterface
         this.initialContent = '';
         this.id = id;
         this.template = template;
-        EventsManager.on('reldens.preloadUiScene', (preloadScene) => {
+        // eslint-disable-next-line no-unused-vars
+        EventsManager.on('reldens.beforePreload', (preloadScene, uiScene) => {
             preloadScene.load.html(this.id, this.template);
         });
-        EventsManager.on('reldens.createUiScene', (preloadScene) => {
-            let dialogBox = preloadScene.add.dom(20, 70).createFromCache(this.id);
+        EventsManager.on('reldens.createPreload', (preloadScene, uiScene) => {
+            let dialogBox = uiScene.add.dom(20, 70).createFromCache(this.id);
             let messageTemplate = preloadScene.cache.html.get(this.id);
-            dialogBox.innerHTML = preloadScene.gameManager.gameEngine.TemplateEngine.render(messageTemplate, {
+            dialogBox.innerHTML = uiScene.gameManager.gameEngine.parseTemplate(messageTemplate, {
                 title: this.initialTitle,
                 content: this.initialContent
             });
@@ -37,7 +38,7 @@ class UserInterface
                     dialogContainer.style.display = 'none';
                 });
             }
-            preloadScene.userInterfaces[this.id] = dialogBox;
+            uiScene.userInterfaces[this.id] = dialogBox;
         });
         EventsManager.emit('reldens.createdUserInterface', gameManager, id, template, this);
     }

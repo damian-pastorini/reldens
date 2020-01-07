@@ -19,8 +19,8 @@ class ActionsManager
     {
         this.config = config;
         EventsManager.on('reldens.onMessageRunAction', async (message, player, target, scene) => {
-            // @NOTE: for now we only have one action which is the short distance attack, but here we will include a
-            // lot of other actions.
+            // @TODO: for now we only have one action which is the short distance attack, but here we will include a
+            //   lot of other actions.
             if(message.target.type === GameConst.TYPE_PLAYER && target.player_id !== player.player_id){
                 if(!player.canAttack){
                     // @NOTE: player could be running an attack already.
@@ -33,9 +33,9 @@ class ActionsManager
                 if(!interactionArea.isValidInteraction(player.state.x, player.state.y)){
                     return;
                 }
-                EventsManager.emit('reldens.beforeAttackShort', message, player, target, scene);
+                await EventsManager.emit('reldens.beforeAttackShort', message, player, target, scene);
                 AttackShort.execute(player, target);
-                EventsManager.emit('reldens.afterAttackShort', message, player, target, scene);
+                await EventsManager.emit('reldens.afterAttackShort', message, player, target, scene);
                 let targetClient = scene.getClientById(target.sessionId);
                 if(targetClient){
                     scene.broadcast({
@@ -65,7 +65,7 @@ class ActionsManager
             if(message.target.type === ObjectsConst.TYPE_OBJECT){
                 if(target.isValidInteraction(player.state.x, player.state.y)){
                     // @TODO: run object actions.
-                    EventsManager.emit('reldens.objectInteraction', message, player, target, scene);
+                    await EventsManager.emit('reldens.objectInteraction', message, player, target, scene);
                 }
             }
         });

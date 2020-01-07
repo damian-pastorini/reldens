@@ -34,8 +34,11 @@ class ScenePreloader extends Scene
 
     preload()
     {
-        EventsManager.emit('reldens.beforePreload', this);
+        // @NOTE: this event run once for each scene.
+        let eventUiScene = this.uiScene ? this : this.gameManager.gameEngine.uiScene;
+        EventsManager.emit('reldens.beforePreload', this, eventUiScene);
         if(this.uiScene){
+            // @NOTE: the events here run only once over all the game progress.
             EventsManager.emit('reldens.beforePreloadUiScene', this);
             // ui elements:
             if(this.gameManager.config.get('client/ui/playerName/enabled')){
@@ -107,8 +110,11 @@ class ScenePreloader extends Scene
 
     create()
     {
-        EventsManager.emit('reldens.createPreload', this);
+        // @NOTE: this event run once for each scene.
+        let eventUiScene = this.uiScene ? this : this.gameManager.gameEngine.uiScene;
+        EventsManager.emit('reldens.createPreload', this, eventUiScene);
         if(this.uiScene){
+            // @NOTE: the events here run only once over all the game progress.
             EventsManager.emit('reldens.beforeCreateUiScene', this);
             // create ui:
             let playerUi = this.getUiConfig('playerName');
@@ -146,7 +152,7 @@ class ScenePreloader extends Scene
                 if(statsButton && statsPanel){
                     let messageTemplate = this.cache.html.get('playerStats');
                     // @TODO: stats types will be part of the configuration in the database.
-                    statsPanel.innerHTML = this.gameManager.gameEngine.TemplateEngine.render(messageTemplate, {
+                    statsPanel.innerHTML = this.gameManager.gameEngine.parseTemplate(messageTemplate, {
                         stats: this.gameManager.playerData.stats
                     });
                     statsButton.addEventListener('click', () => {

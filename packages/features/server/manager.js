@@ -39,7 +39,10 @@ class FeaturesManager
                 // get feature package server for server side:
                 let featurePackage = this.availableFeatures[featureEntity.code];
                 // set package on entity:
-                featureEntity.package = featurePackage;
+                featureEntity.package = new featurePackage();
+                if(typeof featureEntity.package.setupPack === 'function'){
+                    featureEntity.package.setupPack();
+                }
                 // for last add the feature entity to the list:
                 this.featuresList[featureEntity.code] = featureEntity;
             }

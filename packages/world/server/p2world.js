@@ -8,6 +8,7 @@
 
 const { World, Body, Box } = require('p2');
 const { PlayerBody } = require('./player-body');
+const { EventsManager } = require('../../game/events-manager');
 const { Logger } = require('../../game/logger');
 const { ErrorManager } = require('../../game/error-manager');
 const { GameConst } = require('../../game/constants');
@@ -37,16 +38,12 @@ class P2world extends World
             ]);
         }
         this.mapJson = this.objectsManager.config.server.maps[this.sceneTiledMapFile];
-        // create world limits:
-        this.createLimits();
-        // add collisions:
-        this.createWorldContent(options.roomData);
     }
 
     /**
      * @param mapData
      */
-    createWorldContent(mapData)
+    async createWorldContent(mapData)
     {
         // @TODO: analyze and implement blocks groups, for example, all simple collision blocks could be grouped and
         //   use a single big block to avoid the overload number of small blocks which now impacts in the consumed
@@ -61,6 +58,7 @@ class P2world extends World
             tileH = this.mapJson.tileheight;
         for(let layer of mapLayers){
             let layerData = layer.data;
+            await EventsManager.emit('reldens.parsingMapLayerBefore', layer, this);
             for(let c = 0; c < mapW; c++){
                 let posX = c * tileW + (tileW/2);
                 for(let r = 0; r < mapH; r++){
@@ -80,11 +78,12 @@ class P2world extends World
                     // this will validate if the object class exists and return an instance of it:
                     let roomObject = this.objectsManager.getObjectData(objectIndex);
                     // if the data and the instance was created:
-                    if(roomObject){
+                    if(roomObject && !roomObject.multiple){
                         this.createWorldObject(roomObject, objectIndex, tileW, tileH, posX, posY);
                     }
                 }
             }
+            await EventsManager.emit('reldens.parsingMapLayerAfter', layer, this);
         }
     }
 

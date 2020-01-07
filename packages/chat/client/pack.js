@@ -46,7 +46,7 @@ class Chat
                 return;
             }
             let messageTemplate = uiScene.cache.html.get('uiChatMessage');
-            let output = gameManager.gameEngine.TemplateEngine.render(messageTemplate, {
+            let output = gameManager.gameEngine.parseTemplate(messageTemplate, {
                 from: message[ChatConst.CHAT_FROM],
                 color: ChatConst.colors[message.t],
                 message: message[ChatConst.CHAT_MESSAGE]
