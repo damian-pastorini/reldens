@@ -28,6 +28,7 @@ class AnimationEngine
         this.y = props.y || 0;
         this.repeat = isNaN(props.repeat) ? -1 : props.repeat;
         this.hideOnComplete = props.hideOnComplete || false;
+        this.autoStart = props.autoStart || false;
         this.layerName = props.layerName || false;
         this.positionFix = props.positionFix || false;
         this.zeroPad = props.zeroPad || false;
@@ -78,6 +79,9 @@ class AnimationEngine
         };
         this.currentAnimation = this.currentPreloader.anims.create(createData);
         this.sceneSprite = currentScene.physics.add.sprite(this.animPos.x, this.animPos.y, this.asset_key);
+        if(this.autoStart){
+            this.sceneSprite.anims.play(this.key, true);
+        }
         if(this.isInteractive){
             this.sceneSprite.setInteractive().on('pointerdown', () => {
                 // @TODO: TEMP.

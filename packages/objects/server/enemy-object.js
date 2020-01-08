@@ -22,6 +22,16 @@ class EnemyObject extends NpcObject
         this.runOnAction = true;
         this.runOnHit = true;
         this.roomVisible = true;
+        // assign extra public params:
+        Object.assign(this.clientParams, {
+            enabled: true,
+            frameStart: 0,
+            frameEnd: 3,
+            repeat: -1,
+            hideOnComplete: false,
+            autoStart: true
+        });
+
     }
 
 }
