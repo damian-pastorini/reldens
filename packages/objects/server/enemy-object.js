@@ -11,6 +11,7 @@
 
 const { NpcObject } = require('./npc-object');
 const { ObjectsConst } = require('../constants');
+const { NpcBattle } = require('../../actions/server/npc-battle');
 
 class EnemyObject extends NpcObject
 {
@@ -19,9 +20,11 @@ class EnemyObject extends NpcObject
     {
         super(props);
         this.type = ObjectsConst.TYPE_ENEMY;
-        this.runOnAction = true;
+        // @NOTE: we could run different actions and enemies reactions based on the player action.
+        // this.runOnAction = true;
         this.runOnHit = true;
         this.roomVisible = true;
+        this.randomMovement = true;
         // assign extra public params:
         Object.assign(this.clientParams, {
             enabled: true,
@@ -31,7 +34,12 @@ class EnemyObject extends NpcObject
             hideOnComplete: false,
             autoStart: true
         });
+        this.battle = new NpcBattle();
+    }
 
+    onHit(props)
+    {
+        this.battle.start(props.objectBody, props.playerBody);
     }
 
 }

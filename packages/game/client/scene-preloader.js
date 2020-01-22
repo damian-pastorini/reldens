@@ -99,6 +99,7 @@ class ScenePreloader extends Scene
         // this.load.spritesheet(this.username, 'assets/sprites/'+this.username+'.png', playerSpriteSize);
         this.load.spritesheet(GameConst.IMAGE_PLAYER, 'assets/sprites/player-1.png', playerSpriteSize);
         this.load.spritesheet(GameConst.ATTACK, 'assets/sprites/weapons-1.png', {frameWidth: 64, frameHeight: 64});
+        this.load.spritesheet(GameConst.HIT, 'assets/sprites/impact-1.png', {frameWidth: 64, frameHeight: 64});
         // interface assets:
         this.load.image(GameConst.ICON_STATS, 'assets/icons/book.png');
         this.load.on('fileprogress', this.onFileProgress, this);
@@ -213,6 +214,13 @@ class ScenePreloader extends Scene
         this.anims.create({
             key: GameConst.ATTACK,
             frames: this.anims.generateFrameNumbers(GameConst.ATTACK, {start: 25, end: 29}),
+            frameRate: this.configuredFrameRate,
+            repeat: 0,
+            hideOnComplete: true
+        });
+        this.anims.create({
+            key: GameConst.HIT,
+            frames: this.anims.generateFrameNumbers(GameConst.HIT, {start: 17, end: 19}),
             frameRate: this.configuredFrameRate,
             repeat: 0,
             hideOnComplete: true

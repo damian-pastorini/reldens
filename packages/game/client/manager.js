@@ -53,7 +53,7 @@ class GameManager
 
     async joinGame(formData, isNewUser = false)
     {
-        EventsManager.emit('reldens.beforeJoinGame', {gameManager: this, formData: formData, isNewUser: isNewUser});
+        await EventsManager.emit('reldens.beforeJoinGame', {gameManager: this, formData: formData, isNewUser: isNewUser});
         this.initializeClient();
         // login or register:
         if(isNewUser){
@@ -64,7 +64,7 @@ class GameManager
         this.userData.password = formData['password'];
         // join initial game room, since we return the promise we don't need to catch the error here:
         let gameRoom = await this.gameClient.joinOrCreate(GameConst.ROOM_GAME, this.userData);
-        EventsManager.emit('reldens.joinedGameRoom', gameRoom);
+        await EventsManager.emit('reldens.joinedGameRoom', gameRoom);
         gameRoom.onMessage(async (message) => {
             // only the current client will get this message:
             if(message.act === GameConst.START_GAME){
@@ -89,7 +89,7 @@ class GameManager
 
     async initEngineAndStartGame(initialGameData)
     {
-        EventsManager.emit('reldens.beforeInitEngineAndStartGame', initialGameData);
+        await EventsManager.emit('reldens.beforeInitEngineAndStartGame', initialGameData);
         if(!{}.hasOwnProperty.call(initialGameData, 'gameConfig')){
             throw new Error('ERROR - Missing game configuration.');
         }
@@ -107,14 +107,14 @@ class GameManager
         await this.joinFeaturesRooms();
         // create room events manager:
         let joinedFirstRoom = await this.gameClient.joinOrCreate(initialGameData.player.state.scene, this.userData);
-        EventsManager.emit('reldens.joinedRoom', joinedFirstRoom, this);
-        EventsManager.emit('reldens.joinedRoom_'+initialGameData.player.state.scene, joinedFirstRoom, this);
         if(!joinedFirstRoom){
             // @NOTE: the errors while trying to join a rooms/scene will always be originated in the
             // server. For these errors we will alert the user and reload the window automatically.
             alert('ERROR - There was an error while joining the room: '+initialGameData.player.state.scene);
             window.location.reload();
         }
+        await EventsManager.emit('reldens.joinedRoom', joinedFirstRoom, this);
+        await EventsManager.emit('reldens.joinedRoom_'+initialGameData.player.state.scene, joinedFirstRoom, this);
         // start listening the new room events:
         this.activeRoomEvents = this.createRoomEventsInstance(initialGameData.player.state.scene);
         this.activeRoomEvents.activateRoom(joinedFirstRoom);
@@ -207,6 +207,22 @@ class GameManager
             this.clientUrl = wsProtocol+host+wsPort;
         }
         return this.clientUrl;
+    }
+
+    getActiveScene()
+    {
+        return this.activeRoomEvents.getActiveScene();
+    }
+
+    getActiveScenePreloader()
+    {
+        let activeSceneKey = this.getActiveScene().key;
+        return this.gameEngine.scene.getScene('ScenePreloader'+activeSceneKey);
+    }
+
+    getCurrentPlayer()
+    {
+        return this.getActiveScene().player;
     }
 
 }

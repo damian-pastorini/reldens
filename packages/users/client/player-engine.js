@@ -40,6 +40,7 @@ class PlayerEngine
         this.scene.cameras.main.setBounds(0, 0, this.scene.map.widthInPixels, this.scene.map.heightInPixels);
         this.scene.cameras.main.startFollow(this.players[this.playerId], true);
         this.players[this.playerId].setCollideWorldBounds(true);
+        this.createHealthBar();
     }
 
     addPlayer(id, state)
@@ -59,6 +60,51 @@ class PlayerEngine
         return this.players[id];
     }
 
+    createHealthBar()
+    {
+        if(this.gameManager.config.get('client/ui/uiLifeBar/enabled')){
+            // if the position is fixed then the bar has to go on the ui scene:
+            let lifeBarScene = this.gameManager.getActiveScenePreloader();
+            if(!this.gameManager.config.get('client/ui/uiLifeBar/fixedPosition')){
+                // otherwise the bar will be added in the current scene:
+                lifeBarScene = this.gameManager.getActiveScene();
+            }
+            if(lifeBarScene.uiLifeBar){
+                // lifeBar already created in this scene:
+                return;
+            }
+            this.uiLifeBar = lifeBarScene.add.graphics();
+            this.redrawLifeBar();
+        }
+    }
+
+    redrawLifeBar()
+    {
+        let barHeight = this.gameManager.config.get('client/ui/uiLifeBar/height');
+        let fullBarWidth = this.gameManager.config.get('client/ui/uiLifeBar/width');
+        let fullHp = this.gameManager.config.initialStats.hp;
+        let filledBarWidth = (this.gameManager.playerData.stats.hp * fullBarWidth) / fullHp;
+        let barX = this.gameManager.config.get('client/ui/uiLifeBar/x');
+        let barY = this.gameManager.config.get('client/ui/uiLifeBar/y');
+        if(!this.gameManager.config.get('client/ui/uiLifeBar/fixedPosition')){
+            let currentPlayerState = this.gameManager.getCurrentPlayer().state;
+            barX = currentPlayerState.x - (fullBarWidth / 2);
+            barY = currentPlayerState.y - barHeight - (this.gameManager.config.get('client/players/size/height') / 2);
+        }
+        this.uiLifeBar.clear();
+        this.uiLifeBar.fillStyle(0xff0000, 1);
+        this.uiLifeBar.fillRect(
+            barX,
+            barY,
+            filledBarWidth,
+            barHeight
+        );
+        this.uiLifeBar.lineStyle(1, 0xffffff);
+        this.uiLifeBar.strokeRect(barX, barY, fullBarWidth, barHeight);
+        this.uiLifeBar.alpha = 0.6;
+        this.uiLifeBar.setDepth(100000);
+    }
+
     runPlayerAnimation(playerId, player)
     {
         let playerSprite = this.players[playerId];
@@ -75,6 +121,8 @@ class PlayerEngine
             playerSprite.anims.stop();
             playerSprite.mov = player.state.mov;
         }
+        // redraw life bar all the time:
+        this.redrawLifeBar();
     }
 
     playPlayerAnimation(playerSprite, player)

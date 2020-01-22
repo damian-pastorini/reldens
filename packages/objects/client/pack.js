@@ -15,23 +15,27 @@ class ObjectsPack
 
     constructor()
     {
-        // animations run on :
-        EventsManager.on('reldens.joinedRoom', (room, gameManager) => {
-            this.listenMessages(room, gameManager);
-        });
-        EventsManager.on('reldens.createEngineScene', (player, room, previousScene, roomEvents) => {
-            this.prepareObjectsUi(roomEvents.gameManager, roomEvents.sceneData.objectsAnimationsData, roomEvents.scenePreloader);
+        // @NOTE: the prepare objects ui has to be created before the scenes so we can use the scenes events before
+        // the events were called.
+        // eslint-disable-next-line no-unused-vars
+        EventsManager.on('reldens.startEngineScene', (roomEvents, player, room, previousScene) => {
+            this.prepareObjectsUi(roomEvents.gameManager, roomEvents.sceneData.objectsAnimationsData, roomEvents);
         });
         // create animations for all the objects in the scene:
         EventsManager.on('reldens.afterSceneDynamicCreate', (sceneDynamic) => {
             this.createDynamicAnimations(sceneDynamic);
+        });
+        // listen messages:
+        EventsManager.on('reldens.joinedRoom', (room, gameManager) => {
+            this.listenMessages(room, gameManager);
         });
     }
 
     listenMessages(room, gameManager)
     {
         room.onMessage((message) => {
-            if(message.act === ObjectsConst.OBJECT_ANIMATION){
+            //@TODO: TEMP. just use object types?
+            if(message.act === ObjectsConst.OBJECT_ANIMATION || message.act === ObjectsConst.TYPE_ANIMATION){
                 let currentScene = gameManager.activeRoomEvents.getActiveScene();
                 if({}.hasOwnProperty.call(currentScene.objectsAnimations, message.key)){
                     currentScene.objectsAnimations[message.key].runAnimation();
@@ -40,8 +44,12 @@ class ObjectsPack
         });
     }
 
-    prepareObjectsUi(gameManager, objectsAnimationsData, scenePreloader)
+    prepareObjectsUi(gameManager, objectsAnimationsData, roomEvents)
     {
+        if(!objectsAnimationsData){
+            Logger.info(['None objects animations data.', roomEvents]);
+            return;
+        }
         for(let idx in objectsAnimationsData){
             let animProps = objectsAnimationsData[idx];
             if(!{}.hasOwnProperty.call(animProps, 'ui')){
@@ -51,7 +59,7 @@ class ObjectsPack
                 Logger.error(['Object ID not specified. Skipping registry:', animProps]);
                 continue;
             }
-            scenePreloader.objectsUi[animProps.id] = new UserInterface(gameManager, animProps.id);
+            roomEvents.objectsUi[animProps.id] = new UserInterface(gameManager, animProps.id);
         }
     }
 

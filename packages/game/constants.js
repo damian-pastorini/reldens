@@ -36,5 +36,6 @@ module.exports.GameConst = {
     SPEED_SERVER: 180,
     // @TODO: implement player custom avatar.
     IMAGE_PLAYER: 'player',
-    ATTACK: 'attack'
+    ATTACK: 'attack',
+    HIT: 'hit'
 };

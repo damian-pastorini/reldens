@@ -33,9 +33,9 @@ class Door extends AnimationObject
             frameEnd: 3,
             repeat: 0,
             hideOnComplete: false,
-            autoStart: true,
+            autoStart: false,
             // if specified, the restartTime will use a setTimeOut to return to the animation frameStart:
-            restartTime: 2000,
+            restartTime: 2000
         });
     }
 
