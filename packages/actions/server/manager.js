@@ -26,7 +26,14 @@ class ActionsManager
                     // @NOTE: player could be running an attack already.
                     return;
                 }
-                player.canAttack = false;
+                if(AttackShort.attackDelay){
+                    player.canAttack = false;
+                    setTimeout(()=> {
+                        player.canAttack = true;
+                    }, AttackShort.attackDelay);
+                } else {
+                    player.canAttack = true;
+                }
                 let interactionArea = new InteractionArea();
                 let limitDistance = this.config.get('server/players/actions/interactionDistance');
                 interactionArea.setupInteractionArea(limitDistance, target.state.x, target.state.y);
@@ -55,11 +62,6 @@ class ActionsManager
                         // update the target:
                         scene.send(targetClient, {act: GameConst.PLAYER_STATS, stats: target.stats});
                     }
-                }
-                if(AttackShort.attackDelay){
-                    setTimeout(()=> {
-                        player.canAttack = true;
-                    }, AttackShort.attackDelay);
                 }
             }
             if(message.target.type === ObjectsConst.TYPE_OBJECT){
