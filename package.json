@@ -38,11 +38,11 @@
     "author": "Damian A. Pastorini",
     "license": "MIT",
     "dependencies": {
-        "@colyseus/monitor": "^0.11.9",
-        "@colyseus/schema": "^0.5.16",
+        "@colyseus/monitor": "^0.11.17",
+        "@colyseus/schema": "^0.5.23",
         "await-event-emitter": "^1.2.0",
         "bcrypt": "^3.0.7",
-        "colyseus": "^0.11.25",
+        "colyseus": "^0.11.29",
         "colyseus.js": "^0.11.7",
         "cors": "^2.8.5",
         "dotenv": "^8.2.0",
@@ -50,13 +50,14 @@
         "glslify": "^7.0.0",
         "jquery": "^3.4.1",
         "jquery-validation": "^1.19.1",
-        "knex": "^0.20.4",
-        "mustache": "^3.2.0",
-        "mysql": "^2.17.1",
+        "knex": "^0.20.8",
+        "mustache": "^3.2.1",
+        "mysql": "^2.18.0",
         "objection": "^1.6.11",
         "p2": "^0.7.1",
         "parcel-bundler": "^1.12.4",
-        "phaser": "^3.21.0"
+        "phaser": "^3.22.0",
+        "pathfinding": "^0.4.18"
     },
     "devDependencies": {
         "@babel/core": "^7.7.7",

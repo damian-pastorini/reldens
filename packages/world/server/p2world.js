@@ -7,6 +7,7 @@
  */
 
 const { World, Body, Box } = require('p2');
+const { PathFinder } = require('./path-finder');
 const { PlayerBody } = require('./player-body');
 const { EventsManager } = require('../../game/events-manager');
 const { Logger } = require('../../game/logger');
@@ -38,6 +39,8 @@ class P2world extends World
             ]);
         }
         this.mapJson = this.objectsManager.config.server.maps[this.sceneTiledMapFile];
+        this.pathFinder = new PathFinder();
+        this.pathFinder.createGridFromMap(this.mapJson);
     }
 
     /**
@@ -72,6 +75,7 @@ class P2world extends World
                         && (layer.name.indexOf('change-points') !== -1 || layer.name.indexOf('collisions') !== -1)
                     ){
                         this.createCollision(layer.name, tileIndex, tileW, tileH, posX, posY);
+                        this.pathFinder.grid.setWalkableAt(c, r, false);
                     }
                     // objects will be found by layer name + tile index:
                     let objectIndex = layer.name + tileIndex;
