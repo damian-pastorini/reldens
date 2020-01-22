@@ -61,13 +61,15 @@ class CollisionsManager
         if(bodyA.playerId && bodyB.playerId){
             this.playerHitPlayer(bodyA, bodyB);
         } else {
-            currentPlayerBody = bodyA.playerId ? bodyA : bodyB;
-            otherBody = bodyA.playerId ? bodyB : bodyA;
-            if(otherBody.isRoomObject){
-                this.playerHitObject(currentPlayerBody, otherBody);
-            }
-            if(otherBody.changeScenePoint){
-                this.playerHitChangePoint(currentPlayerBody, otherBody);
+            if(bodyA.playerId || bodyB.playerId){
+                currentPlayerBody = bodyA.playerId ? bodyA : bodyB;
+                otherBody = bodyA.playerId ? bodyB : bodyA;
+                if(otherBody.isRoomObject){
+                    this.playerHitObject(currentPlayerBody, otherBody);
+                }
+                if(otherBody.changeScenePoint){
+                    this.playerHitChangePoint(currentPlayerBody, otherBody);
+                }
             }
         }
     }
