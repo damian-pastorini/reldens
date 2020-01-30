@@ -87,17 +87,16 @@ class AnimationEngine
         }
         if(this.isInteractive){
             this.sceneSprite.setInteractive().on('pointerdown', () => {
-                // @TODO: TEMP.
+                // @TODO: tempId is a temporal fix for multiple objects case.
                 let tempId = (this.key === this.asset_key) ? this.id : this.key;
                 this.gameManager.activeRoomEvents.room.send({
                     act: ObjectsConst.OBJECT_INTERACTION,
-                    id: tempId, // @TODO: TEMP.
+                    id: tempId,
                     type: this.type
                 });
                 if(this.targetName){
                     this.gameManager.gameEngine.showTarget(this.targetName);
                 }
-                // @TODO: TEMP. see tempId.
                 currentScene.player.currentTarget = {id: tempId, type: ObjectsConst.TYPE_OBJECT};
             });
         }

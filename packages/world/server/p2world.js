@@ -27,6 +27,10 @@ class P2world extends World
         this.applyDamping = options.applyDamping || false;
         this.sceneName = options.sceneName || false;
         this.sceneTiledMapFile = options.roomData.roomMap || false;
+        this.tryClosestPath = options.tryClosestPath || false;
+        this.worldSpeed = options.worldSpeed || false;
+        // keys events:
+        this.allowSimultaneous = options.allowSimultaneous;
         if(!this.sceneName || !this.sceneTiledMapFile){
             ErrorManager.error(['World creation missing data in options:', options]);
         }
@@ -40,7 +44,8 @@ class P2world extends World
         }
         this.mapJson = this.objectsManager.config.server.maps[this.sceneTiledMapFile];
         this.pathFinder = new PathFinder();
-        this.pathFinder.createGridFromMap(this.mapJson);
+        this.pathFinder.setWorld(this);
+        this.pathFinder.createGridFromMap();
     }
 
     /**

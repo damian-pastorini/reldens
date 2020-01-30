@@ -19,6 +19,7 @@ class PlayerBody extends Body
         this.playerState = {};
         this.animationBasedOnPress = options.animationBasedOnPress;
         this.diagonalHorizontal = options.diagonalHorizontal;
+        this.autoMoving = false;
         // default or initial direction:
         this.pressedDirection = GameConst.DOWN;
     }
@@ -29,10 +30,10 @@ class PlayerBody extends Body
             f = this.force,
             pos = this.position,
             velo = this.velocity;
-        // Save old position
+        // save old position
         vec2.copy(this.previousPosition, this.position);
         this.previousAngle = this.angle;
-        // Velocity update
+        // velocity update
         if(!this.fixedRotation){
             this.angularVelocity += this.angularForce * this.invInertia * dt;
         }
@@ -43,17 +44,61 @@ class PlayerBody extends Body
         // CCD
         if(!this.integrateToTimeOfImpact(dt)){
             let integrate_velodt = vec2.create();
-            // Regular position update
+            // regular position update
             vec2.scale(integrate_velodt, velo, dt);
             vec2.add(pos, pos, integrate_velodt);
             if(!this.fixedRotation){
                 this.angle += this.angularVelocity * dt;
             }
         }
+        if(this.autoMoving.length){
+            this.speedToNext(pos);
+        }
         if(this.playerState){
             this.updatePlayerState();
         }
         this.aabbNeedsUpdate = true;
+    }
+
+    speedToNext()
+    {
+        // @TODO: this can be improved but for now we can use the cols and rows to follow the path since it doesn't
+        //   needs to be an exact method (it is not the user is choosing each point of the path to follow). In order to
+        //   make it more accurate we need to use the position, but with the current configuration it will be also an
+        //   approximation since there it has issues between the world step and the objects speed, where the position
+        //   is passed in between steps.
+        //   Additionally we still need to include the position fix for the cases where the moving object is bigger
+        //   than a single tile.
+        if(this.currentCol === this.autoMoving[0][0] && this.currentRow === this.autoMoving[0][1]){
+            // if the point was reach then remove it to process the next one:
+            this.autoMoving.shift();
+            if(!this.autoMoving.length){
+                // if there are no more points to process then stop the body and reset the path:
+                this.velocity = [0, 0];
+                this.resetAuto();
+            }
+        } else {
+            if(this.currentCol === this.autoMoving[0][0]){
+                this.velocity[0] = 0;
+            }
+            if(this.currentCol > this.autoMoving[0][0]){
+                this.initMove(GameConst.LEFT, true);
+            }
+            if(this.currentCol < this.autoMoving[0][0]){
+                this.initMove(GameConst.RIGHT, true);
+            }
+            if(this.currentRow === this.autoMoving[0][1]){
+                this.velocity[1] = 0;
+            }
+            if(this.currentRow > this.autoMoving[0][1]){
+                this.initMove(GameConst.UP, true);
+            }
+            if(this.currentRow < this.autoMoving[0][1]){
+                this.initMove(GameConst.DOWN, true);
+            }
+            this.currentCol = Math.floor(this.position[0] / this.world.mapJson.tilewidth);
+            this.currentRow = Math.floor(this.position[1] / this.world.mapJson.tileheight);
+        }
     }
 
     updatePlayerState()
@@ -65,9 +110,19 @@ class PlayerBody extends Body
         this.playerState.mov = (this.velocity[0] !== 0 || this.velocity[1] !== 0);
     }
 
-    initMove(direction, speed, allowSimultaneous = false)
+    resetAuto()
     {
-        if(allowSimultaneous){
+        this.autoMoving = [];
+    }
+
+    initMove(direction, isAuto = false)
+    {
+        if(!isAuto){
+            // if user moves the player then reset the auto move.
+            this.resetAuto();
+        }
+        let speed = this.world.worldSpeed;
+        if(this.world.allowSimultaneous){
             if(direction === GameConst.RIGHT){
                 this.validateAndSetDirection(direction, this.diagonalHorizontal, this.velocity[1]);
                 this.velocity[0] = speed;
@@ -114,6 +169,14 @@ class PlayerBody extends Body
     {
         // stop by setting speed to zero:
         this.velocity = [0, 0];
+    }
+
+    moveToPoint(toPoint)
+    {
+        this.resetAuto();
+        this.currentCol = Math.floor(this.position[0] / this.world.mapJson.tilewidth);
+        this.currentRow = Math.floor(this.position[1] / this.world.mapJson.tileheight);
+        this.autoMoving = this.world.pathFinder.findPath([this.currentCol, this.currentRow], [toPoint.column, toPoint.row]);
     }
 
 }

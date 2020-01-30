@@ -168,6 +168,7 @@ class RoomEvents
             let defenderSprite = currentScene.player.players[message.def];
             if(defenderSprite){
                 let attackSprite = currentScene.physics.add.sprite(defenderSprite.x, defenderSprite.y, GameConst.HIT);
+                attackSprite.setDepth(200000);
                 attackSprite.anims.play(GameConst.HIT, true).on('animationcomplete', () => {
                     attackSprite.anims.remove(GameConst.HIT);
                 });

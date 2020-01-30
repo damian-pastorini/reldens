@@ -27,6 +27,7 @@ module.exports.GameConst = {
     RIGHT: 'right',
     STOP: 'stop',
     ACTION: 'action',
+    POINTER: 'mp',
     // collisions:
     COL_PLAYER: Math.pow(2,0),
     COL_ENEMY: Math.pow(2,1),

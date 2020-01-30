@@ -45,6 +45,14 @@ class SceneDynamic extends Scene
             }
         });
         this.map = this.add.tilemap(this.params.roomMap);
+        this.input.on('pointerdown', (pointer, currentlyOver) => {
+            // @NOTE: avoid double actions, if you target something you will not be moved to the pointer.
+            if(!currentlyOver.length){
+                this.appendRowAndColumn(pointer);
+                this.player.moveToPointer(pointer);
+                // @TODO: run pointer animation.
+            }
+        });
         this.useTsAnimation = this.hasTsAnimation();
         this.tileset = this.map.addTilesetImage(this.params.roomMap);
         this.registerLayers();
@@ -136,6 +144,21 @@ class SceneDynamic extends Scene
         this.tilesetAnimation = new TilesetAnimation();
         this.tilesetAnimation.register(layer, this.tileset.tileData);
         this.tilesetAnimation.start();
+    }
+
+    appendRowAndColumn(pointer)
+    {
+        let tW = this.map.tileWidth;
+        let tH = this.map.tileHeight;
+        // @TODO: this is a temporal fix, we need to make configurable the player body and take it into account for the
+        //   path finder calculations. Between the configurations we need to include one to affect the body size in the
+        //   server, for now every body has a single tile size.
+        let playerH = this.configManager.get('client/players/size/height');
+        let playerW = this.configManager.get('client/players/size/width');
+        let column = Math.ceil((pointer.worldX-(playerW/2)) / tW);
+        let row = Math.ceil((pointer.worldY-(playerH/2)) / tH);
+        pointer.worldColumn = column;
+        pointer.worldRow = row;
     }
 
 }

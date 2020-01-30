@@ -132,6 +132,7 @@ class CollisionsManager
 
     playerHitChangePoint(playerBody, changePoint)
     {
+        playerBody.resetAuto();
         let playerSchema = this.room.getPlayerFromState(playerBody.playerId);
         if({}.hasOwnProperty.call(playerBody, 'isChangingScene') && playerBody.isChangingScene){
             // @NOTE: if the player is already changing scene do nothing.
@@ -152,7 +153,7 @@ class CollisionsManager
             // @NOTE: we do not need to change back the isChangingScene property back to false since in the new
             // scene a new body will be created with the value set to false by default.
             this.room.nextSceneInitialPosition(contactClient, changeData).catch((err) => {
-                Logger.error('nextSceneInitialPosition error: ' + err);
+                Logger.error('nextSceneInitialPosition error: '+err);
             });
         }
     }

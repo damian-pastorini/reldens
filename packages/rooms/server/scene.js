@@ -41,12 +41,12 @@ class RoomScene extends RoomLogin
         if(this.objectsManager.listenMessages){
             Object.assign(this.messageActions, this.objectsManager.listenMessagesObjects);
         }
-        // create world:
-        await this.createWorld(options.roomData, this.objectsManager);
-        // set world objects normal speed:
+        // world objects normal speed:
         this.worldSpeed = this.config.get('server/players/physicsBody/speed') || GameConst.SPEED_SERVER;
         // keys events:
         this.allowSimultaneous = this.config.get('server/general/controls/allow_simultaneous_keys');
+        // create world:
+        await this.createWorld(options.roomData, this.objectsManager);
         // the collisions manager has to be initialized after the world was created:
         this.collisionsManager = new CollisionsManager(this);
         // if the room has message actions those are specified here in the room-scene:
@@ -118,17 +118,21 @@ class RoomScene extends RoomLogin
     {
         // get player:
         let playerSchema = this.getPlayerFromState(client.sessionId);
+        // only process the message if the player exists and has a body:
         if(playerSchema && {}.hasOwnProperty.call(playerSchema, 'p2body')){
             // get player body:
             let bodyToMove = playerSchema.p2body;
             // if player is moving:
             if({}.hasOwnProperty.call(messageData, 'dir') && bodyToMove){
-                bodyToMove.initMove(messageData.dir, this.worldSpeed, this.allowSimultaneous);
+                bodyToMove.initMove(messageData.dir);
             }
             // if player stopped:
             if(messageData.act === GameConst.STOP && bodyToMove){
                 // stop by setting speed to zero:
                 bodyToMove.stopMove();
+            }
+            if(messageData.act === GameConst.POINTER && bodyToMove){
+                bodyToMove.moveToPoint(messageData);
             }
             if(messageData.act === GameConst.ACTION && messageData.target){
                 let validTarget = this.validateTarget(messageData.target);
@@ -166,7 +170,10 @@ class RoomScene extends RoomLogin
             roomData: roomData,
             gravity: [0, 0],
             applyGravity: false,
-            objectsManager: objectsManager
+            objectsManager: objectsManager,
+            tryClosestPath: this.config.get('server/rooms/world/tryClosestPath'),
+            worldSpeed: this.worldSpeed,
+            allowSimultaneous: this.allowSimultaneous
         });
         // create world limits:
         this.roomWorld.createLimits();

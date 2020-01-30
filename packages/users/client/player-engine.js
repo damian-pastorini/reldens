@@ -184,6 +184,18 @@ class PlayerEngine
         this.room.send({act: GameConst.ACTION, target: this.currentTarget});
     }
 
+    moveToPointer(pointer)
+    {
+        let data = {
+            act: GameConst.POINTER,
+            column: pointer.worldColumn,
+            row: pointer.worldRow,
+            x: pointer.worldX,
+            y: pointer.worldY
+        };
+        this.room.send(data);
+    }
+
 }
 
 module.exports.PlayerEngine = PlayerEngine;
