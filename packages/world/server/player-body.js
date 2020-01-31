@@ -183,8 +183,8 @@ class PlayerBody extends Body
     {
         let tW = this.world.mapJson.tilewidth;
         let tH = this.world.mapJson.tilewidth;
-        this.currentCol = Math.round((this.position[0]-(tW/2)) / tW);
-        this.currentRow = Math.round((this.position[1]-(tH/2)) / tH);
+        this.currentCol = Math.round(this.position[0] / tW);
+        this.currentRow = Math.round(this.position[1] / tH);
     }
 
 }
