@@ -78,7 +78,7 @@ class PlayerBody extends Body
                 this.resetAuto();
             }
         } else {
-            if(this.currentCol === this.autoMoving[0][0]){
+            if(this.currentCol === this.autoMoving[0][0] && this.velocity[0] !== 0){
                 this.velocity[0] = 0;
             }
             if(this.currentCol > this.autoMoving[0][0]){
@@ -87,7 +87,7 @@ class PlayerBody extends Body
             if(this.currentCol < this.autoMoving[0][0]){
                 this.initMove(GameConst.RIGHT, true);
             }
-            if(this.currentRow === this.autoMoving[0][1]){
+            if(this.currentRow === this.autoMoving[0][1] && this.velocity[1] !== 0){
                 this.velocity[1] = 0;
             }
             if(this.currentRow > this.autoMoving[0][1]){
@@ -96,8 +96,7 @@ class PlayerBody extends Body
             if(this.currentRow < this.autoMoving[0][1]){
                 this.initMove(GameConst.DOWN, true);
             }
-            this.currentCol = Math.floor(this.position[0] / this.world.mapJson.tilewidth);
-            this.currentRow = Math.floor(this.position[1] / this.world.mapJson.tileheight);
+            this.updateCurrentPoints();
         }
     }
 
@@ -174,9 +173,18 @@ class PlayerBody extends Body
     moveToPoint(toPoint)
     {
         this.resetAuto();
-        this.currentCol = Math.floor(this.position[0] / this.world.mapJson.tilewidth);
-        this.currentRow = Math.floor(this.position[1] / this.world.mapJson.tileheight);
-        this.autoMoving = this.world.pathFinder.findPath([this.currentCol, this.currentRow], [toPoint.column, toPoint.row]);
+        this.updateCurrentPoints();
+        let fromPoints = [this.currentCol, this.currentRow];
+        let toPoints = [toPoint.column, toPoint.row];
+        this.autoMoving = this.world.pathFinder.findPath(fromPoints, toPoints);
+    }
+
+    updateCurrentPoints()
+    {
+        let tW = this.world.mapJson.tilewidth;
+        let tH = this.world.mapJson.tilewidth;
+        this.currentCol = Math.round((this.position[0]-(tW/2)) / tW);
+        this.currentRow = Math.round((this.position[1]-(tH/2)) / tH);
     }
 
 }
