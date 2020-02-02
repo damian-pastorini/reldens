@@ -11,7 +11,7 @@
 
 const { NpcObject } = require('./npc-object');
 const { ObjectsConst } = require('../constants');
-const { NpcBattle } = require('../../actions/server/npc-battle');
+const { Pve } = require('../../actions/server/pve');
 
 class EnemyObject extends NpcObject
 {
@@ -34,7 +34,7 @@ class EnemyObject extends NpcObject
             hideOnComplete: false,
             autoStart: true
         });
-        this.battle = new NpcBattle();
+        this.battle = new Pve();
     }
 
     onHit(props)

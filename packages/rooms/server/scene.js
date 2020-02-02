@@ -78,7 +78,7 @@ class RoomScene extends RoomLogin
                     let savedAndRemoved = await this.saveStateAndRemovePlayer(playerIdx);
                     if(savedAndRemoved){
                         // old player session removed, create it again:
-                        this.createPlayer(client, authResult);
+                        await this.createPlayer(client, authResult);
                     }
                     break;
                 }
@@ -86,14 +86,17 @@ class RoomScene extends RoomLogin
         }
         if(!loggedUserFound){
             // player not logged, create it:
-            this.createPlayer(client, authResult);
+            await this.createPlayer(client, authResult);
         }
     }
 
-    createPlayer(client, authResult)
+    async createPlayer(client, authResult)
     {
+        await EventsManager.emit('reldens.createPlayerBefore', client, authResult);
         // player creation:
         let currentPlayer = this.state.createPlayer(client.sessionId, authResult);
+        // @TODO: stats will be configurable and dynamic with the player-levels system implementation.
+        currentPlayer.initialStats = this.config.get('server/players/initialStats');
         // create body for server physics and assign the body to the player:
         currentPlayer.p2body = this.roomWorld.createPlayerBody({
             id: client.sessionId,
@@ -101,6 +104,7 @@ class RoomScene extends RoomLogin
             height: this.config.get('server/players/size/height'),
             playerState: currentPlayer.state
         });
+        await EventsManager.emit('reldens.createPlayerAfter', client, authResult, currentPlayer);
     }
 
     // eslint-disable-next-line no-unused-vars
@@ -123,7 +127,7 @@ class RoomScene extends RoomLogin
             // get player body:
             let bodyToMove = playerSchema.p2body;
             // if player is moving:
-            if({}.hasOwnProperty.call(messageData, 'dir') && bodyToMove){
+            if({}.hasOwnProperty.call(messageData, 'dir') && bodyToMove && !bodyToMove.isChangingScene){
                 bodyToMove.initMove(messageData.dir);
             }
             // if player stopped:
@@ -312,6 +316,7 @@ class RoomScene extends RoomLogin
             validTarget = this.getPlayerFromState(target.id);
         }
         if(target.type === ObjectsConst.TYPE_OBJECT){
+            // @TODO: check if this works properly with enemies.
             validTarget = this.objectsManager.getObjectById(target.id);
         }
         return validTarget;
