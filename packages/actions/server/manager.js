@@ -27,7 +27,6 @@ class ActionsManager
             for(let idx in this.availableActions){
                 let actionInstance = new this.availableActions[idx]();
                 currentPlayer.actions[idx] = actionInstance;
-                console.log('created action:', idx);
             }
         });
         EventsManager.on('reldens.onMessageRunAction', async (message, playerSchema, target, room) => {

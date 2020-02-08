@@ -98,11 +98,11 @@ class RoomScene extends RoomLogin
         // @TODO: stats will be configurable and dynamic with the player-levels system implementation.
         currentPlayer.initialStats = this.config.get('server/players/initialStats');
         // create body for server physics and assign the body to the player:
-        currentPlayer.p2body = this.roomWorld.createPlayerBody({
+        currentPlayer.physicalBody = this.roomWorld.createPlayerBody({
             id: client.sessionId,
             width: this.config.get('server/players/size/width'),
             height: this.config.get('server/players/size/height'),
-            playerState: currentPlayer.state
+            bodyState: currentPlayer.state
         });
         await EventsManager.emit('reldens.createPlayerAfter', client, authResult, currentPlayer);
     }
@@ -123,9 +123,9 @@ class RoomScene extends RoomLogin
         // get player:
         let playerSchema = this.getPlayerFromState(client.sessionId);
         // only process the message if the player exists and has a body:
-        if(playerSchema && {}.hasOwnProperty.call(playerSchema, 'p2body')){
+        if(playerSchema && {}.hasOwnProperty.call(playerSchema, 'physicalBody')){
             // get player body:
-            let bodyToMove = playerSchema.p2body;
+            let bodyToMove = playerSchema.physicalBody;
             // if player is moving:
             if({}.hasOwnProperty.call(messageData, 'dir') && bodyToMove && !bodyToMove.isChangingScene){
                 bodyToMove.initMove(messageData.dir);
@@ -228,7 +228,7 @@ class RoomScene extends RoomLogin
                         username: currentPlayer.username
                     });
                     // remove body from server world:
-                    let bodyToRemove = currentPlayer.p2body;
+                    let bodyToRemove = currentPlayer.physicalBody;
                     this.roomWorld.removeBody(bodyToRemove);
                     // reconnect is to create the player in the new scene:
                     this.send(client, {act: GameConst.RECONNECT, player: currentPlayer, prev: data.prev});
@@ -248,7 +248,7 @@ class RoomScene extends RoomLogin
         let playerSchema = this.getPlayerFromState(sessionId);
         if(playerSchema){
             // get body:
-            let bodyToRemove = playerSchema.p2body;
+            let bodyToRemove = playerSchema.physicalBody;
             if(bodyToRemove){
                 // remove body:
                 this.roomWorld.removeBody(bodyToRemove);

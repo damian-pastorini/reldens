@@ -38,7 +38,8 @@ class RespawnArea
                         this.instancesCreated[respawnArea.id] = [];
                     }
                     // create object index:
-                    let objectIndex = this.layer.name + '-' + respawnArea.id + '-' + (this.instancesCreated[respawnArea.id].length);
+                    let newIndex = this.instancesCreated[respawnArea.id].length;
+                    let objectIndex = this.layer.name+'-'+respawnArea.id+'-'+newIndex;
                     multipleObj.objProps.client_key = objectIndex;
                     // multipleObj.objProps.clientParams.key = objectIndex;
                     // get random tile:
@@ -50,7 +51,8 @@ class RespawnArea
                     let assetsArr = [];
                     for(let assetData of multipleObj.objProps.objects_assets){
                         assetsArr.push(assetData.asset_key);
-                        break; // @TODO: TEMP.
+                        // @TODO: TEMP, objects could have multiple assets, need to implement and test the case.
+                        break;
                     }
                     objInstance.clientParams.asset_key = assetsArr[0];
                     objInstance.clientParams.enabled = true;

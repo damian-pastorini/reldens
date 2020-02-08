@@ -20,18 +20,13 @@ class AttackShort
         this.hitDamage = 5;
     }
 
+    // eslint-disable-next-line no-unused-vars
     validate(attacker, defender)
     {
         // @TODO: every action or attack values will be configurable.
         // attack delay is the time in milliseconds until player can attack again:
         if(!attacker.actions[this.key].canAttack){
             // @NOTE: player could be running an attack already.
-            return false;
-        }
-        // validate attack range:
-        let interactionArea = new InteractionArea();
-        interactionArea.setupInteractionArea(this.range, defender.state.x, defender.state.y);
-        if(!interactionArea.isValidInteraction(attacker.state.x, attacker.state.y)){
             return false;
         }
         if(this.attackDelay){
@@ -43,6 +38,14 @@ class AttackShort
             attacker.actions[this.key].canAttack = true;
         }
         return true;
+    }
+
+    isInRange(attacker, defender)
+    {
+        // validate attack range:
+        let interactionArea = new InteractionArea();
+        interactionArea.setupInteractionArea(this.range, defender.state.x, defender.state.y);
+        return interactionArea.isValidInteraction(attacker.state.x, attacker.state.y);
     }
 
     async execute(attacker, defender)

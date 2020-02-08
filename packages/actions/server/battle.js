@@ -7,27 +7,31 @@
  */
 
 const { BattleConst } = require('../constants');
+const { GameConst } = require('../../game/constants');
 
 class Battle
 {
 
-    constructor()
+    constructor(props)
     {
-        // the same body can be in battle with multiple bodies:
-        this.inBattleWith = [];
+        // the same player can be in battle with multiple bodies:
+        this.inBattleWith = {};
         // @NOTE: set the battleTimeOff = false will disable the battle mode timer. Battle mode can be use to implement
         // specific behaviors.
-        this.battleTimeOff = false;
+        this.battleTimeOff = props.battleTimeOff || false;
         this.battleTimer = false;
+        this.timerType = props.timerType || BattleConst.BATTLE_TYPE_PER_TARGET;
         this.lastAttack = false;
-        this.timerType = BattleConst.BATTLE_TYPE_PER_TARGET;
     }
 
     async runBattle(playerSchema, target)
     {
         // @NOTE: each attack will have different properties to validate like range, delay, etc.
         // @TODO: temporal hardcoded single action "short-attack".
-        if(!playerSchema.actions['attack-short'].validate(playerSchema, target)){
+        if(
+            !playerSchema.actions['attack-short'].validate(playerSchema, target)
+            || !playerSchema.actions['attack-short'].isInRange(playerSchema, target)
+        ){
             return false;
         }
         // execute and apply the attack:
@@ -52,6 +56,29 @@ class Battle
             useTimerObj.battleTimer = setTimeout(() => {
                 delete this.inBattleWith[target.id];
             }, this.battleTimeOff);
+        }
+    }
+
+    async updateTargetClient(targetClient, targetSchema, attackerId, room)
+    {
+        room.broadcast({
+            act: GameConst.ATTACK,
+            atk: attackerId,
+            def: targetSchema.sessionId
+        });
+        if(targetSchema.stats.hp === 0){
+            // player is dead! reinitialize the stats:
+            targetSchema.stats = targetSchema.initialStats;
+            // save the stats:
+            await room.savePlayerStats(targetSchema);
+            await room.saveStateAndRemovePlayer(targetSchema.sessionId);
+            room.send(targetClient, {act: GameConst.GAME_OVER});
+            return false;
+        } else {
+            await room.savePlayerStats(targetSchema);
+            // update the target:
+            room.send(targetClient, {act: GameConst.PLAYER_STATS, stats: targetSchema.stats});
+            return true;
         }
     }
 

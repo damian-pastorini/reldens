@@ -10,8 +10,10 @@
  */
 
 const { NpcObject } = require('./npc-object');
-const { ObjectsConst } = require('../constants');
 const { Pve } = require('../../actions/server/pve');
+const { AttackShort } = require('../../actions/server/attack-short');
+const { ErrorManager } = require('../../game/error-manager');
+const { ObjectsConst } = require('../constants');
 
 class EnemyObject extends NpcObject
 {
@@ -19,27 +21,47 @@ class EnemyObject extends NpcObject
     constructor(props)
     {
         super(props);
+        this.initialStats = this.config.get('server/players/initialStats');
+        this.stats = this.config.get('server/players/initialStats');
         this.type = ObjectsConst.TYPE_ENEMY;
         // @NOTE: we could run different actions and enemies reactions based on the player action.
         // this.runOnAction = true;
-        this.runOnHit = true;
-        this.roomVisible = true;
-        this.randomMovement = true;
+        // run on hit will make the enemy aggressive when the player enter the in the enemy-object interactive area.
+        this.runOnHit = {}.hasOwnProperty.call(props, 'runOnHit') ? props.runOnHit : true;
+        this.roomVisible = {}.hasOwnProperty.call(props, 'roomVisible') ? props.runOnHit : true;
+        this.randomMovement = {}.hasOwnProperty.call(props, 'randomMovement') ? props.runOnHit : true;
         // assign extra public params:
         Object.assign(this.clientParams, {
             enabled: true,
-            frameStart: 0,
-            frameEnd: 3,
-            repeat: -1,
-            hideOnComplete: false,
-            autoStart: true
+            frameStart: {}.hasOwnProperty.call(props, 'frameStart') ? props.runOnHit : 0,
+            frameEnd: {}.hasOwnProperty.call(props, 'frameEnd') ? props.runOnHit : 3,
+            repeat: {}.hasOwnProperty.call(props, 'repeat') ? props.runOnHit : -1,
+            hideOnComplete: {}.hasOwnProperty.call(props, 'hideOnComplete') ? props.runOnHit : false,
+            autoStart: {}.hasOwnProperty.call(props, 'autoStart') ? props.runOnHit : true
         });
-        this.battle = new Pve();
+        this.battle = new Pve({
+            battleTimeOff: {}.hasOwnProperty.call(props, 'battleTimeOff') ? props.battleTimeOff : 20000,
+            chaseMultiple: {}.hasOwnProperty.call(props, 'chaseMultiple') ? props.chaseMultiple : false
+        });
+        this.battle.setTargetObject(this);
+        this.actions = {'attack-short': new AttackShort()};
     }
 
     onHit(props)
     {
-        this.battle.start(props.objectBody, props.playerBody);
+        if(!props.room || !props.playerBody){
+            // this shouldn't happen :P
+            ErrorManager.error('Required properties room and playerBody not found.');
+        }
+        let roomScene = props.room;
+        let playerSchema = roomScene.getPlayerFromState(props.playerBody.playerId);
+        if(playerSchema){
+            // it the player hit the enemy then it will start the battle with the player because this will be an
+            // aggressive enemy.
+            this.battle.startBattleWith(playerSchema, props.room).catch((err) => {
+                ErrorManager.error(err);
+            });
+        }
     }
 
 }

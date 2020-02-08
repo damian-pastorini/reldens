@@ -23,6 +23,7 @@ class AnimationObject extends BaseObject
         // the actions will be false as default:
         this.runOnHit = false;
         this.runOnAction = false;
+        this.objectBody = false;
     }
 
     get animationData()
@@ -72,6 +73,13 @@ class AnimationObject extends BaseObject
         if({}.hasOwnProperty.call(this, 'roomVisible') && this.roomVisible){
             // run for everyone in the room:
             props.room.broadcast(this.animationData);
+        }
+    }
+
+    chasePlayer(playerSchema)
+    {
+        if(!this.objectBody || !playerSchema.physicalBody){
+            Logger.error(['Body not found.', 'Object:', this.objectBody, 'Player:', playerSchema.physicalBody]);
         }
     }
 

@@ -8,7 +8,8 @@
 
 const { World, Body, Box } = require('p2');
 const { PathFinder } = require('./path-finder');
-const { PlayerBody } = require('./player-body');
+const { PhysicalBody } = require('./physical-body');
+const { BodyState } = require('./body-state');
 const { EventsManager } = require('../../game/events-manager');
 const { Logger } = require('../../game/logger');
 const { ErrorManager } = require('../../game/error-manager');
@@ -152,13 +153,16 @@ class P2world extends World
             colResponse = roomObject.collisionResponse;
         }
         // create the body:
-        let bodyObject = this.createCollisionBody(tileW, tileH, posX, posY, bodyMass, colResponse);
+        let bodyObject = this.createCollisionBody(tileW, tileH, posX, posY, bodyMass, colResponse, true);
         bodyObject.isRoomObject = true;
         // assign the room object to the body:
         bodyObject.roomObject = roomObject;
         Logger.info('Created object for objectIndex: ' + objectIndex);
         // try to get object instance from project root:
         this.addBody(bodyObject);
+        // set data on room object:
+        roomObject.state = bodyObject.bodyState;
+        roomObject.objectBody = bodyObject;
     }
 
     createLimits()
@@ -191,7 +195,7 @@ class P2world extends World
         this.addBody(rightWall);
     }
 
-    createCollisionBody(width, height, x, y, mass = 1, collisionResponse = true)
+    createCollisionBody(width, height, x, y, mass = 1, collisionResponse = true, hasState = false)
     {
         let boxShape = this.createCollisionShape(width, height, collisionResponse);
         let bodyConfig = {
@@ -200,7 +204,14 @@ class P2world extends World
             type: Body.STATIC,
             fixedRotation: true
         };
-        let boxBody = new Body(bodyConfig);
+        let bodyClass = Body;
+        if(hasState){
+            bodyClass = PhysicalBody;
+        }
+        let boxBody = new bodyClass(bodyConfig);
+        if(hasState){
+            boxBody.bodyState = new BodyState({x: x, y: y, dir: GameConst.DOWN, scene: this.sceneName, mov: false});
+        }
         boxBody.addShape(boxShape);
         return boxBody;
     }
@@ -231,9 +242,9 @@ class P2world extends World
         boxShape.collisionGroup = GameConst.COL_PLAYER;
         // @TODO: players collision will be configurable, when collisions are active players can push players.
         boxShape.collisionMask = GameConst.COL_ENEMY | GameConst.COL_GROUND | GameConst.COL_PLAYER;
-        let boxBody = new PlayerBody({
+        let boxBody = new PhysicalBody({
             mass: 1,
-            position: [playerData.playerState.x, playerData.playerState.y],
+            position: [playerData.bodyState.x, playerData.bodyState.y],
             type: Body.DYNAMIC,
             fixedRotation: true,
             animationBasedOnPress: this.objectsManager.config.get('client/players/animations/basedOnPress'),
@@ -242,9 +253,7 @@ class P2world extends World
         boxBody.addShape(boxShape);
         boxBody.playerId = playerData.id;
         boxBody.isChangingScene = false;
-        boxBody.playerState = playerData.playerState;
-        // playerData.playerState.x = boxBody.position[0];
-        // playerData.playerState.y = boxBody.position[1];
+        boxBody.bodyState = playerData.bodyState;
         this.addBody(boxBody);
         // return body:
         return boxBody;
