@@ -7,7 +7,6 @@
  */
 
 const { EventsManager } = require('../../game/events-manager');
-// const { InteractionArea } = require('../../world/interaction-area');
 const { Pvp } = require('./pvp');
 const { AttackShort } = require('./attack-short');
 const { GameConst } = require('../../game/constants');
@@ -25,8 +24,7 @@ class ActionsManager
             let pvpConfig = this.config.get('server/actions/pvp');
             currentPlayer.actions['pvp'] = new Pvp(pvpConfig);
             for(let idx in this.availableActions){
-                let actionInstance = new this.availableActions[idx]();
-                currentPlayer.actions[idx] = actionInstance;
+                currentPlayer.actions[idx] = new this.availableActions[idx]();
             }
         });
         EventsManager.on('reldens.onMessageRunAction', async (message, playerSchema, target, room) => {
