@@ -38,6 +38,11 @@ class RoomScene extends RoomLogin
         this.objectsManager = new ObjectsManager(options);
         // load the objects from the storage:
         await this.objectsManager.loadObjectsByRoomId(options.roomData.roomId);
+        // generate object instances:
+        if(this.objectsManager.roomObjectsData){
+            await this.objectsManager.generateObjects();
+        }
+        // append objects that will listen messages:
         if(this.objectsManager.listenMessages){
             Object.assign(this.messageActions, this.objectsManager.listenMessagesObjects);
         }
@@ -64,6 +69,7 @@ class RoomScene extends RoomLogin
         let roomState = new State(this.roomData);
         // after we set the state it will be automatically sync by the game-server:
         this.setState(roomState);
+        await EventsManager.emit('reldens.sceneRoomOnCreate', this);
     }
 
     async onJoin(client, options, authResult)
@@ -135,7 +141,13 @@ class RoomScene extends RoomLogin
                 // stop by setting speed to zero:
                 bodyToMove.stopMove();
             }
-            if(messageData.act === GameConst.POINTER && bodyToMove){
+            if(
+                messageData.act === GameConst.POINTER
+                && {}.hasOwnProperty.call(messageData, 'column')
+                && {}.hasOwnProperty.call(messageData, 'row')
+                && bodyToMove
+            ){
+                messageData = this.makeValidPoints(messageData);
                 bodyToMove.moveToPoint(messageData);
             }
             if(messageData.act === GameConst.ACTION && messageData.target){
@@ -320,6 +332,15 @@ class RoomScene extends RoomLogin
             validTarget = this.objectsManager.getObjectById(target.id);
         }
         return validTarget;
+    }
+
+    makeValidPoints(points)
+    {
+        points.column = points.column < 0 ? 0 : points.column;
+        points.column = points.column > this.roomWorld.worldWidth ? this.roomWorld.worldWidth : points.column;
+        points.row = points.row < 0 ? 0 : points.row;
+        points.row = points.row > this.roomWorld.worldHeight ? this.roomWorld.worldHeight : points.row;
+        return points;
     }
 
 }

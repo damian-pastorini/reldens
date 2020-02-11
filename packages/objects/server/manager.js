@@ -36,6 +36,10 @@ class ObjectsManager
                 .where('room_id', roomId)
                 .orderBy('tile_index');
         }
+    }
+
+    async generateObjects()
+    {
         if(this.roomObjectsData){
             this.roomObjects = {};
             // @NOTE: allow null index for multiple objects of the same type.

@@ -158,6 +158,9 @@ class RoomEvents
         if(message.act === GameConst.ATTACK){
             EventsManager.emit('reldens.playerAttack', message, this);
             let currentScene = this.getActiveScene();
+            if(!currentScene.player){
+                return;
+            }
             let attackerSprite = currentScene.player.players[message.atk];
             if(attackerSprite){
                 let attackSprite = currentScene.physics.add.sprite(attackerSprite.x, attackerSprite.y, GameConst.ATTACK);

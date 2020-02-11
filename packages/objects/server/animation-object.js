@@ -80,7 +80,12 @@ class AnimationObject extends BaseObject
     {
         if(!this.objectBody || !playerSchema.physicalBody){
             Logger.error(['Body not found.', 'Object:', this.objectBody, 'Player:', playerSchema.physicalBody]);
+            return false;
         }
+        this.objectBody.resetAuto();
+        playerSchema.physicalBody.updateCurrentPoints();
+        let toPoint = {column: playerSchema.physicalBody.currentCol, row: playerSchema.physicalBody.currentRow};
+        return this.objectBody.moveToPoint(toPoint);
     }
 
 }

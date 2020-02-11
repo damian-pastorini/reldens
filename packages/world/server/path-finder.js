@@ -1,6 +1,5 @@
 
-const PF = require('pathfinding');
-const { Grid, AStarFinder } = PF;
+const { Grid, AStarFinder } = require('pathfinding');
 
 class PathFinder
 {
@@ -11,11 +10,6 @@ class PathFinder
         this.world = false;
         this.grid = false;
         this.bodies = {};
-    }
-
-    setWorld(world)
-    {
-        this.world = world;
     }
 
     createGridFromMap()
@@ -67,8 +61,10 @@ class PathFinder
                     }
                 }
             }
-            grid = this.grid.clone();
-            path = this.finder.findPath(from[0], from[1], nodeTo.x, nodeTo.y, grid);
+            if(nodeTo.walkable){
+                grid = this.grid.clone();
+                path = this.finder.findPath(from[0], from[1], nodeTo.x, nodeTo.y, grid);
+            }
         }
         return path;
     }

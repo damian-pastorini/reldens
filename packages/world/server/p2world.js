@@ -9,7 +9,7 @@
 const { World, Body, Box } = require('p2');
 const { PathFinder } = require('./path-finder');
 const { PhysicalBody } = require('./physical-body');
-const { BodyState } = require('./body-state');
+const { ObjectBodyState } = require('./object-body-state');
 const { EventsManager } = require('../../game/events-manager');
 const { Logger } = require('../../game/logger');
 const { ErrorManager } = require('../../game/error-manager');
@@ -45,7 +45,7 @@ class P2world extends World
         }
         this.mapJson = this.objectsManager.config.server.maps[this.sceneTiledMapFile];
         this.pathFinder = new PathFinder();
-        this.pathFinder.setWorld(this);
+        this.pathFinder.world = this;
         this.pathFinder.createGridFromMap();
     }
 
@@ -120,7 +120,7 @@ class P2world extends World
         }
     }
 
-    createWorldObject(roomObject, objectIndex, tileW, tileH, posX, posY)
+    createWorldObject(roomObject, objectIndex, tileW, tileH, posX, posY, pathFinder = false)
     {
         // handle body fixed position:
         if({}.hasOwnProperty.call(roomObject, 'xFix')){
@@ -152,11 +152,16 @@ class P2world extends World
         if({}.hasOwnProperty.call(roomObject, 'collisionResponse')){
             colResponse = roomObject.collisionResponse;
         }
+        // object state:
+        let objHasState = {}.hasOwnProperty.call(roomObject, 'hasState') ? roomObject.hasState : false;
         // create the body:
-        let bodyObject = this.createCollisionBody(tileW, tileH, posX, posY, bodyMass, colResponse, true);
+        let bodyObject = this.createCollisionBody(tileW, tileH, posX, posY, bodyMass, colResponse, objHasState);
         bodyObject.isRoomObject = true;
         // assign the room object to the body:
         bodyObject.roomObject = roomObject;
+        if(pathFinder){
+            bodyObject.pathFinder = pathFinder;
+        }
         Logger.info('Created object for objectIndex: ' + objectIndex);
         // try to get object instance from project root:
         this.addBody(bodyObject);
@@ -210,7 +215,7 @@ class P2world extends World
         }
         let boxBody = new bodyClass(bodyConfig);
         if(hasState){
-            boxBody.bodyState = new BodyState({x: x, y: y, dir: GameConst.DOWN, scene: this.sceneName, mov: false});
+            boxBody.bodyState = new ObjectBodyState({x: x, y: y, dir: GameConst.DOWN, scene: this.sceneName});
         }
         boxBody.addShape(boxShape);
         return boxBody;
@@ -240,7 +245,7 @@ class P2world extends World
     {
         let boxShape = new Box({width: playerData.width, height: playerData.height});
         boxShape.collisionGroup = GameConst.COL_PLAYER;
-        // @TODO: players collision will be configurable, when collisions are active players can push players.
+        // @TODO: players collision will be configurable, for now when collisions are active players can push players.
         boxShape.collisionMask = GameConst.COL_ENEMY | GameConst.COL_GROUND | GameConst.COL_PLAYER;
         let boxBody = new PhysicalBody({
             mass: 1,

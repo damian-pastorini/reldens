@@ -12,8 +12,8 @@
 const { NpcObject } = require('./npc-object');
 const { Pve } = require('../../actions/server/pve');
 const { AttackShort } = require('../../actions/server/attack-short');
-const { ErrorManager } = require('../../game/error-manager');
 const { ObjectsConst } = require('../constants');
+const { Logger } = require('../../game/logger');
 
 class EnemyObject extends NpcObject
 {
@@ -21,6 +21,7 @@ class EnemyObject extends NpcObject
     constructor(props)
     {
         super(props);
+        this.hasState = true;
         this.initialStats = this.config.get('server/players/initialStats');
         this.stats = this.config.get('server/players/initialStats');
         this.type = ObjectsConst.TYPE_ENEMY;
@@ -51,7 +52,8 @@ class EnemyObject extends NpcObject
     {
         if(!props.room || !props.playerBody){
             // this shouldn't happen :P
-            ErrorManager.error('Required properties room and playerBody not found.');
+            Logger.error('Required properties room and playerBody not found.');
+            return;
         }
         let roomScene = props.room;
         let playerSchema = roomScene.getPlayerFromState(props.playerBody.playerId);
@@ -59,7 +61,7 @@ class EnemyObject extends NpcObject
             // it the player hit the enemy then it will start the battle with the player because this will be an
             // aggressive enemy.
             this.battle.startBattleWith(playerSchema, props.room).catch((err) => {
-                ErrorManager.error(err);
+                Logger.error(err);
             });
         }
     }

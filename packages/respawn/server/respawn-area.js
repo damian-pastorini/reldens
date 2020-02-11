@@ -7,6 +7,7 @@
  */
 
 const { RespawnModel } = require('./model');
+const { PathFinder } = require('../../world/server/path-finder');
 
 class RespawnArea
 {
@@ -15,6 +16,9 @@ class RespawnArea
     {
         this.layer = layer;
         this.world = world;
+        this.pathFinder = new PathFinder();
+        this.pathFinder.world = this.world;
+        this.pathFinder.grid = world.pathFinder.grid.clone();
         this.instancesCreated = {};
     }
 
@@ -41,7 +45,6 @@ class RespawnArea
                     let newIndex = this.instancesCreated[respawnArea.id].length;
                     let objectIndex = this.layer.name+'-'+respawnArea.id+'-'+newIndex;
                     multipleObj.objProps.client_key = objectIndex;
-                    // multipleObj.objProps.clientParams.key = objectIndex;
                     // get random tile:
                     let randomTileIndex = this.respawnTiles[Math.floor(Math.random() * this.respawnTiles.length)];
                     let tileData = this.respawnTilesData[randomTileIndex];
@@ -56,12 +59,12 @@ class RespawnArea
                     }
                     objInstance.clientParams.asset_key = assetsArr[0];
                     objInstance.clientParams.enabled = true;
-                    // objInstance.clientParams.key = objectIndex;
                     this.instancesCreated[respawnArea.id].push(objInstance);
                     this.world.objectsManager.objectsAnimationsData[objectIndex] = objInstance.clientParams;
                     this.world.objectsManager.roomObjectsById[objectIndex] = objInstance;
                     let { x, y } = tileData;
-                    this.world.createWorldObject(objInstance, objectIndex, tilewidth, tileheight, x, y);
+                    this.world.createWorldObject(objInstance, objectIndex, tilewidth, tileheight, x, y, this.pathFinder);
+                    // objInstance.objectBody.pathfinder = this.pathFinder;
                 }
             }
         }
@@ -87,6 +90,8 @@ class RespawnArea
                 if(tile !== 0){
                     this.respawnTiles.push(tileIndex);
                     this.respawnTilesData[tileIndex] = {x: posX, y: posY, tile: tile, tile_index: tileIndex};
+                } else {
+                    this.pathFinder.grid.setWalkableAt(c, r, false);
                 }
             }
         }

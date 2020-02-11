@@ -20,8 +20,13 @@ class PhysicalBody extends Body
         this.animationBasedOnPress = options.animationBasedOnPress;
         this.diagonalHorizontal = options.diagonalHorizontal;
         this.autoMoving = false;
+        this.pathFinder = false;
         // default or initial direction:
         this.pressedDirection = GameConst.DOWN;
+        this.currentCol = false;
+        this.currentRow = false;
+        this.originalCol = false;
+        this.originalRow = false;
     }
 
     integrate(dt)
@@ -176,15 +181,48 @@ class PhysicalBody extends Body
         this.updateCurrentPoints();
         let fromPoints = [this.currentCol, this.currentRow];
         let toPoints = [toPoint.column, toPoint.row];
-        this.autoMoving = this.world.pathFinder.findPath(fromPoints, toPoints);
+        this.autoMoving = this.getPathFinder().findPath(fromPoints, toPoints);
+        return this.autoMoving;
     }
 
     updateCurrentPoints()
     {
-        let tW = this.world.mapJson.tilewidth;
-        let tH = this.world.mapJson.tilewidth;
-        this.currentCol = Math.round(this.position[0] / tW);
-        this.currentRow = Math.round(this.position[1] / tH);
+        // if the player disconnects and it's the only one on the room the world would be destroyed at this point:
+        if(!this.world){
+            return;
+        }
+        let currentCol = Math.round(this.position[0] / this.worldWidth);
+        currentCol = currentCol >= 0 ? currentCol : 0;
+        let currentRow = Math.round(this.position[1] / this.worldHeight);
+        currentRow = currentRow >= 0 ? currentRow : 0;
+        if(!this.currentCol){
+            this.originalCol = currentCol;
+        }
+        if(!this.currentRow){
+            this.originalRow = currentRow;
+        }
+        this.currentCol = currentCol;
+        this.currentRow = currentRow;
+    }
+
+    moveToOriginalPoint()
+    {
+        this.moveToPoint({column: this.originalCol, row: this.originalRow});
+    }
+
+    getPathFinder()
+    {
+        return (this.pathFinder ? this.pathFinder : this.world.pathFinder);
+    }
+
+    get worldWidth()
+    {
+        return this.world.mapJson.tilewidth;
+    }
+
+    get worldHeight()
+    {
+        return this.world.mapJson.tileheight;
     }
 
 }

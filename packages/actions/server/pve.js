@@ -39,10 +39,21 @@ class Pve extends Battle
 
     async startBattleWith(playerSchema, room)
     {
+        // @TODO: yeah... a lot could happen and this could be improved by cleaning the timers on specific actions like
+        //   when player disconnects.
+        if(!room || !room.roomWorld || !playerSchema || !room.state || !room.state.players[playerSchema.sessionId]){
+            let playerIndex = this.inBattleWithPlayer.indexOf(playerSchema.player_id);
+            if(playerIndex !== -1){
+                this.inBattleWithPlayer.splice(playerIndex, 1);
+            }
+            this.battleEnded();
+            return false;
+        }
         // @NOTE: in PVE we will have this additional method startBattleWith which is when the environment attacks the
         // player.
         if(!this.targetObject){
             ErrorManager.error('Undefined target for PvE.');
+            this.battleEnded();
             return false;
         }
         // if target (npc) is already in battle with another player then ignore the current attack:
@@ -51,6 +62,7 @@ class Pve extends Battle
             && this.inBattleWithPlayer.length >= 1
             && this.inBattleWithPlayer.indexOf(playerSchema.player_id) === -1
         ){
+            this.battleEnded();
             return false;
         }
         if(this.inBattleWithPlayer.indexOf(playerSchema.player_id) === -1){
@@ -58,9 +70,13 @@ class Pve extends Battle
         }
         // @TODO: temporal hardcoded attack-short since it's the only action we have for now.
         if(!this.targetObject.actions['attack-short'].validate(this.targetObject, playerSchema)){
+            this.battleEnded();
             return false;
         }
         if(this.targetObject.actions['attack-short'].isInRange(this.targetObject, playerSchema)){
+            // reset the path finder in case the object was moving:
+            this.targetObject.objectBody.resetAuto();
+            this.targetObject.objectBody.velocity = [0, 0];
             // execute and apply the attack:
             await this.targetObject.actions['attack-short'].execute(this.targetObject, playerSchema);
             let targetClient = room.getClientById(playerSchema.sessionId);
@@ -72,14 +88,27 @@ class Pve extends Battle
                     setTimeout(() => {
                         this.startBattleWith(playerSchema, room);
                     }, this.targetObject.actions['attack-short'].attackDelay);
+                } else {
+                    // battle end:
+                    this.battleEnded();
                 }
             }
         } else {
-            this.targetObject.chasePlayer(playerSchema);
-            setTimeout(() => {
-                this.startBattleWith(playerSchema, room);
-            }, this.targetObject.actions['attack-short'].attackDelay);
+            let chaseResult = this.targetObject.chasePlayer(playerSchema);
+            if(chaseResult.length){
+                setTimeout(() => {
+                    this.startBattleWith(playerSchema, room);
+                }, this.targetObject.actions['attack-short'].attackDelay);
+            } else {
+                // battle end:
+                this.battleEnded();
+            }
         }
+    }
+
+    battleEnded()
+    {
+        this.targetObject.objectBody.moveToOriginalPoint();
     }
 
 }
