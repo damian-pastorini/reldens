@@ -49,15 +49,6 @@ class ObjectsPack
                 currentScene.objectsAnimations[key].sceneSprite.y = body.y;
             };
         }
-        /*
-        room.onStateChange((state) => {
-            state.bodies.onChange = (body, key) => {
-                let currentScene = gameManager.activeRoomEvents.getActiveScene();
-                currentScene.objectsAnimations[key].sceneSprite.x = body.x;
-                currentScene.objectsAnimations[key].sceneSprite.y = body.y;
-            };
-        });
-        */
     }
 
     prepareObjectsUi(gameManager, objectsAnimationsData, roomEvents)
