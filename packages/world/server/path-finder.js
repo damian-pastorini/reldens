@@ -39,21 +39,27 @@ class PathFinder
             }
             // @TODO: improve how to check the closest nodes.
             // check all closest nodes:
-            let nodeTo = this.grid.getNodeAt(to[0]+newTo[0], to[1]);
-            if(!nodeTo.walkable){
-                nodeTo = this.grid.getNodeAt(to[0], to[1]+newTo[1]);
-                if(!nodeTo.walkable){
-                    nodeTo = this.grid.getNodeAt(to[0]+newTo[0], to[1]+newTo[1]);
-                    if(!nodeTo.walkable){
-                        nodeTo = this.grid.getNodeAt(to[0]-newTo[0], to[1]);
-                        if(!nodeTo.walkable){
-                            nodeTo = this.grid.getNodeAt(to[0], to[1]-newTo[1]);
-                            if(!nodeTo.walkable){
-                                nodeTo = this.grid.getNodeAt(to[0]-newTo[0], to[1]-newTo[1]);
-                                if(!nodeTo.walkable){
-                                    nodeTo = this.grid.getNodeAt(to[0]-newTo[0], to[1]+newTo[1]);
-                                    if(!nodeTo.walkable){
-                                        nodeTo = this.grid.getNodeAt(to[0]+newTo[0], to[1]-newTo[1]);
+            let worldW = this.world.mapJson.width;
+            let worldH = this.world.mapJson.height;
+            let testPointA = (to[0]+newTo[0] > worldW ? to[0]+newTo[0] : worldW);
+            let testPointB = (to[1]+newTo[1] > worldH ? to[1]+newTo[1] : worldH);
+            let testPointC = (to[0]-newTo[0] < 0 ? to[0]-newTo[0] : 0);
+            let testPointD = (to[1]-newTo[1] < 0 ? to[1]-newTo[1] : 0);
+            let nodeTo = this.grid.getNodeAt(testPointA, to[1]);
+            if(nodeTo && !nodeTo.walkable){
+                nodeTo = this.grid.getNodeAt(to[0], testPointB);
+                if(nodeTo && !nodeTo.walkable){
+                    nodeTo = this.grid.getNodeAt(testPointA, testPointB);
+                    if(nodeTo && !nodeTo.walkable){
+                        nodeTo = this.grid.getNodeAt(testPointC, to[1]);
+                        if(nodeTo && !nodeTo.walkable){
+                            nodeTo = this.grid.getNodeAt(to[0], testPointD);
+                            if(nodeTo && !nodeTo.walkable){
+                                nodeTo = this.grid.getNodeAt(testPointC, testPointD);
+                                if(nodeTo && !nodeTo.walkable){
+                                    nodeTo = this.grid.getNodeAt(testPointC, testPointB);
+                                    if(nodeTo && !nodeTo.walkable){
+                                        nodeTo = this.grid.getNodeAt(testPointA, testPointD);
                                     }
                                 }
                             }
@@ -61,7 +67,7 @@ class PathFinder
                     }
                 }
             }
-            if(nodeTo.walkable){
+            if(nodeTo && nodeTo.walkable){
                 grid = this.grid.clone();
                 path = this.finder.findPath(from[0], from[1], nodeTo.x, nodeTo.y, grid);
             }
