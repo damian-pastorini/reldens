@@ -22,8 +22,8 @@ class EnemyObject extends NpcObject
     {
         super(props);
         this.hasState = true;
-        this.initialStats = this.config.get('server/players/initialStats');
-        this.stats = this.config.get('server/players/initialStats');
+        this.initialStats = this.config.get('server/enemies/initialStats');
+        this.stats = this.config.get('server/enemies/initialStats');
         this.type = ObjectsConst.TYPE_ENEMY;
         // @NOTE: we could run different actions and enemies reactions based on the player action.
         // this.runOnAction = true;
