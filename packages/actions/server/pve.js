@@ -36,11 +36,8 @@ class Pve extends Battle
         if(!inBattle){
             return;
         }
-        // console.log('target.stats.hp', target.stats.hp);
-        if(target.stats.hp === 0){
-            // @NOTE: battleEnded is when the enemy dies.
-            this.battleEnded(playerSchema, room);
-        } else {
+        // console.log('target.hp', target.stats.hp, 'player.hp', playerSchema.stats.hp);
+        if(target.stats.hp > 0){
             await this.startBattleWith(playerSchema, room);
         }
     }
@@ -63,7 +60,7 @@ class Pve extends Battle
         }
         // the enemy died:
         if(this.targetObject.stats.hp === 0){
-            this.leaveBattle(playerSchema);
+            this.battleEnded(playerSchema, room);
             return false;
         }
         // if target (npc) is already in battle with another player then ignore the current attack:
