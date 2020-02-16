@@ -215,6 +215,8 @@ class PhysicalBody extends Body
 
     getPathFinder()
     {
+        // @NOTE: body path finder is for when the body has it's own respawn area and grid, the world path finder is for
+        // any object in the room that could be anywhere in the room.
         return (this.pathFinder ? this.pathFinder : this.world.pathFinder);
     }
 

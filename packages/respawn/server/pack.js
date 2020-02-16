@@ -5,7 +5,7 @@
  */
 
 const { EventsManager } = require('../../game/events-manager');
-const { RespawnArea } = require('./respawn-area');
+const { RoomRespawn } = require('./room-respawn');
 const { PackInterface } = require('../../features/server/pack-interface');
 
 class RespawnPack extends PackInterface
@@ -18,7 +18,7 @@ class RespawnPack extends PackInterface
                 if(!world.respawnAreas){
                     world.respawnAreas = [];
                 }
-                let respawnArea = new RespawnArea(layer, world);
+                let respawnArea = new RoomRespawn(layer, world);
                 await respawnArea.activateObjectsRespawn();
                 world.respawnAreas.push(respawnArea);
             }

@@ -9,7 +9,7 @@
 const { RespawnModel } = require('./model');
 const { PathFinder } = require('../../world/server/path-finder');
 
-class RespawnArea
+class RoomRespawn
 {
 
     constructor(layer, world)
@@ -26,7 +26,9 @@ class RespawnArea
     {
         this.parseMapForRespawnTiles();
         this.layerObjects = this.world.objectsManager.roomObjectsByLayer[this.layer.name];
+        // NOTE: this is because a single layer can have multiple respawn areas for different enemies.
         this.respawnAreas = await RespawnModel.query().where('layer', this.layer.name);
+        let {tilewidth, tileheight } = this.world.mapJson;
         for(let idx in this.respawnAreas){
             let respawnArea = this.respawnAreas[idx];
             if(
@@ -35,7 +37,6 @@ class RespawnArea
             ){
                 let multipleObj = this.layerObjects[respawnArea.object_id];
                 let objClass = multipleObj.classInstance;
-                let {tilewidth, tileheight } = this.world.mapJson;
                 for(let qty=0; qty < respawnArea.instances_limit; qty++){
                     // prepare to save the object:
                     if(!{}.hasOwnProperty.call(this.instancesCreated, respawnArea.id)){
@@ -49,22 +50,29 @@ class RespawnArea
                     // add tile data to the object and create object instance:
                     Object.assign(multipleObj.objProps, tileData);
                     let objInstance = new objClass(multipleObj.objProps);
-                    let assetsArr = [];
-                    for(let assetData of multipleObj.objProps.objects_assets){
-                        assetsArr.push(assetData.asset_key);
-                        // @TODO: TEMP, objects could have multiple assets, need to implement and test the case.
-                        break;
-                    }
+                    // @TODO: objects could have multiple assets, need to implement and test the case.
+                    let assetsArr = this.getObjectAssets(multipleObj);
                     objInstance.clientParams.asset_key = assetsArr[0];
                     objInstance.clientParams.enabled = true;
-                    this.instancesCreated[respawnArea.id].push(objInstance);
                     this.world.objectsManager.objectsAnimationsData[objectIndex] = objInstance.clientParams;
                     this.world.objectsManager.roomObjectsById[objectIndex] = objInstance;
                     let { x, y } = tileData;
                     this.world.createWorldObject(objInstance, objectIndex, tilewidth, tileheight, x, y, this.pathFinder);
+                    this.instancesCreated[respawnArea.id].push(objInstance);
                 }
             }
         }
+    }
+
+    getObjectAssets(multipleObj)
+    {
+        let assetsArr = [];
+        for(let assetData of multipleObj.objProps.objects_assets){
+            assetsArr.push(assetData.asset_key);
+            // @TODO: TEMP.
+            break;
+        }
+        return assetsArr;
     }
 
     createObjectIndex(respawnArea)
@@ -108,4 +116,4 @@ class RespawnArea
 
 }
 
-module.exports.RespawnArea = RespawnArea;
+module.exports.RoomRespawn = RoomRespawn;
