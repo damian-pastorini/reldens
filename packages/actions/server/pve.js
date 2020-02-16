@@ -100,7 +100,7 @@ class Pve extends Battle
                 }
             }
         } else {
-            let chaseResult = this.targetObject.chasePlayer(playerSchema);
+            let chaseResult = this.targetObject.chaseBody(playerSchema.physicalBody);
             if(chaseResult.length){
                 setTimeout(() => {
                     this.startBattleWith(playerSchema, room);
@@ -128,7 +128,7 @@ class Pve extends Battle
             Logger.log(['Client not found by sessionId:', playerSchema.sessionId]);
         }
     }
-    
+
     removeInBattlePlayer(playerSchema)
     {
         let playerIndex = this.inBattleWithPlayer.indexOf(playerSchema.player_id);

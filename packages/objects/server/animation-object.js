@@ -76,15 +76,15 @@ class AnimationObject extends BaseObject
         }
     }
 
-    chasePlayer(playerSchema)
+    chaseBody(body)
     {
-        if(!this.objectBody || !playerSchema.physicalBody){
-            Logger.error(['Body not found.', 'Object:', this.objectBody, 'Player:', playerSchema.physicalBody]);
+        if(!this.objectBody || !body){
+            Logger.error(['Body not found.', 'Object:', this.objectBody, 'Player:', body]);
             return false;
         }
         this.objectBody.resetAuto();
-        playerSchema.physicalBody.updateCurrentPoints();
-        let toPoint = {column: playerSchema.physicalBody.currentCol, row: playerSchema.physicalBody.currentRow};
+        body.updateCurrentPoints();
+        let toPoint = {column: body.currentCol, row: body.currentRow};
         return this.objectBody.moveToPoint(toPoint);
     }
 
