@@ -42,12 +42,10 @@ class RespawnArea
                         this.instancesCreated[respawnArea.id] = [];
                     }
                     // create object index:
-                    let newIndex = this.instancesCreated[respawnArea.id].length;
-                    let objectIndex = this.layer.name+'-'+respawnArea.id+'-'+newIndex;
+                    let objectIndex = this.createObjectIndex(respawnArea);
                     multipleObj.objProps.client_key = objectIndex;
                     // get random tile:
-                    let randomTileIndex = this.respawnTiles[Math.floor(Math.random() * this.respawnTiles.length)];
-                    let tileData = this.respawnTilesData[randomTileIndex];
+                    let tileData = this.getRandomTile();
                     // add tile data to the object and create object instance:
                     Object.assign(multipleObj.objProps, tileData);
                     let objInstance = new objClass(multipleObj.objProps);
@@ -64,10 +62,21 @@ class RespawnArea
                     this.world.objectsManager.roomObjectsById[objectIndex] = objInstance;
                     let { x, y } = tileData;
                     this.world.createWorldObject(objInstance, objectIndex, tilewidth, tileheight, x, y, this.pathFinder);
-                    // objInstance.objectBody.pathfinder = this.pathFinder;
                 }
             }
         }
+    }
+
+    createObjectIndex(respawnArea)
+    {
+        let newIndex = this.instancesCreated[respawnArea.id].length;
+        return this.layer.name + '-' + respawnArea.id + '-' + newIndex;
+    }
+
+    getRandomTile()
+    {
+        let randomTileIndex = this.respawnTiles[Math.floor(Math.random() * this.respawnTiles.length)];
+        return this.respawnTilesData[randomTileIndex];
     }
 
     parseMapForRespawnTiles()

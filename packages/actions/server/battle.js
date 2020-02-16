@@ -28,14 +28,12 @@ class Battle
     {
         // @NOTE: each attack will have different properties to validate like range, delay, etc.
         // @TODO: temporal hardcoded single action "short-attack".
-        if(
-            !playerSchema.actions['attack-short'].validate(playerSchema, target)
-            || !playerSchema.actions['attack-short'].isInRange(playerSchema, target)
-        ){
+        let currentAction = playerSchema.actions['attack-short'];
+        if(!currentAction.validate(playerSchema, target) || !currentAction.isInRange(playerSchema, target)){
             return false;
         }
         // execute and apply the attack:
-        await playerSchema.actions['attack-short'].execute(playerSchema, target);
+        await currentAction.execute(playerSchema, target);
         // include the target in the battle list:
         this.lastAttack = Date.now();
         this.inBattleWith[target.id] = {target: target, time: this.lastAttack, battleTimer: false};

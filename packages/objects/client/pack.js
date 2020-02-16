@@ -9,6 +9,7 @@ const { UserInterface } = require('../../game/client/user-interface');
 const { EventsManager } = require('../../game/events-manager');
 const { ObjectsConst } = require('../constants');
 const { Logger } = require('../../game/logger');
+const { BattleConst } = require('../../actions/constants');
 
 class ObjectsPack
 {
@@ -41,8 +42,11 @@ class ObjectsPack
                     currentScene.objectsAnimations[message.key].runAnimation();
                 }
             }
+            if(message.act === BattleConst.BATTLE_ENDED){
+                // console.log('battle ended.');
+            }
         });
-        if(room.state){
+        if(room.state && room.state.bodies){
             room.state.bodies.onChange = (body, key) => {
                 let currentScene = gameManager.activeRoomEvents.getActiveScene();
                 currentScene.objectsAnimations[key].sceneSprite.x = body.x;

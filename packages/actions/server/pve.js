@@ -8,6 +8,8 @@
 
 const { Battle } = require('./battle');
 const { ErrorManager } = require('../../game/error-manager');
+const { Logger } = require('../../game/logger');
+const { BattleConst } = require('../constants');
 
 class Pve extends Battle
 {
@@ -34,7 +36,13 @@ class Pve extends Battle
         if(!inBattle){
             return;
         }
-        await this.startBattleWith(playerSchema, room);
+        // console.log('target.stats.hp', target.stats.hp);
+        if(target.stats.hp === 0){
+            // @NOTE: battleEnded is when the enemy dies.
+            this.battleEnded(playerSchema, room);
+        } else {
+            await this.startBattleWith(playerSchema, room);
+        }
     }
 
     async startBattleWith(playerSchema, room)
@@ -42,18 +50,20 @@ class Pve extends Battle
         // @TODO: yeah... a lot could happen and this could be improved by cleaning the timers on specific actions like
         //   when player disconnects.
         if(!room || !room.roomWorld || !playerSchema || !room.state || !room.state.players[playerSchema.sessionId]){
-            let playerIndex = this.inBattleWithPlayer.indexOf(playerSchema.player_id);
-            if(playerIndex !== -1){
-                this.inBattleWithPlayer.splice(playerIndex, 1);
-            }
-            this.battleEnded();
+            // @NOTE: leaveBattle is used for when the player can't be reached anymore or disconnected.
+            this.leaveBattle(playerSchema);
             return false;
         }
         // @NOTE: in PVE we will have this additional method startBattleWith which is when the environment attacks the
         // player.
         if(!this.targetObject){
             ErrorManager.error('Undefined target for PvE.');
-            this.battleEnded();
+            this.leaveBattle(playerSchema);
+            return false;
+        }
+        // the enemy died:
+        if(this.targetObject.stats.hp === 0){
+            this.leaveBattle(playerSchema);
             return false;
         }
         // if target (npc) is already in battle with another player then ignore the current attack:
@@ -62,7 +72,7 @@ class Pve extends Battle
             && this.inBattleWithPlayer.length >= 1
             && this.inBattleWithPlayer.indexOf(playerSchema.player_id) === -1
         ){
-            this.battleEnded();
+            this.leaveBattle(playerSchema);
             return false;
         }
         if(this.inBattleWithPlayer.indexOf(playerSchema.player_id) === -1){
@@ -70,7 +80,7 @@ class Pve extends Battle
         }
         // @TODO: temporal hardcoded attack-short since it's the only action we have for now.
         if(!this.targetObject.actions['attack-short'].validate(this.targetObject, playerSchema)){
-            this.battleEnded();
+            this.leaveBattle(playerSchema);
             return false;
         }
         if(this.targetObject.actions['attack-short'].isInRange(this.targetObject, playerSchema)){
@@ -89,8 +99,7 @@ class Pve extends Battle
                         this.startBattleWith(playerSchema, room);
                     }, this.targetObject.actions['attack-short'].attackDelay);
                 } else {
-                    // battle end:
-                    this.battleEnded();
+                    this.leaveBattle(playerSchema);
                 }
             }
         } else {
@@ -100,15 +109,35 @@ class Pve extends Battle
                     this.startBattleWith(playerSchema, room);
                 }, this.targetObject.actions['attack-short'].attackDelay);
             } else {
-                // battle end:
-                this.battleEnded();
+                this.leaveBattle(playerSchema);
             }
         }
     }
 
-    battleEnded()
+    leaveBattle(playerSchema)
     {
+        this.removeInBattlePlayer(playerSchema);
         this.targetObject.objectBody.moveToOriginalPoint();
+    }
+
+    battleEnded(playerSchema, room)
+    {
+        this.removeInBattlePlayer(playerSchema);
+        // @TODO: respawn the monster.
+        let client = room.getClientById(playerSchema.sessionId);
+        if(client){
+            room.send(client, {act: BattleConst.BATTLE_ENDED});
+        } else {
+            Logger.log(['Client not found by sessionId:', playerSchema.sessionId]);
+        }
+    }
+    
+    removeInBattlePlayer(playerSchema)
+    {
+        let playerIndex = this.inBattleWithPlayer.indexOf(playerSchema.player_id);
+        if(playerIndex !== -1){
+            this.inBattleWithPlayer.splice(playerIndex, 1);
+        }
     }
 
 }

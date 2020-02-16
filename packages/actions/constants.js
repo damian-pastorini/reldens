@@ -9,5 +9,6 @@
 // constants:
 module.exports.BattleConst = {
     BATTLE_TYPE_PER_TARGET: 'bt',
-    BATTLE_TYPE_GENERAL: 'bg'
+    BATTLE_TYPE_GENERAL: 'bg',
+    BATTLE_ENDED: 'bend'
 };

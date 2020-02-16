@@ -207,6 +207,9 @@ class PhysicalBody extends Body
 
     moveToOriginalPoint()
     {
+        if(!this.originalCol || this.originalRow){
+            this.updateCurrentPoints();
+        }
         this.moveToPoint({column: this.originalCol, row: this.originalRow});
     }
 

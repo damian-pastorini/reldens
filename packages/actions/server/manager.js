@@ -39,7 +39,8 @@ class ActionsManager
             }
             if(message.target.type === ObjectsConst.TYPE_OBJECT){
                 if(target.isValidInteraction(playerSchema.state.x, playerSchema.state.y)){
-                    // @TODO: run object actions.
+                    // @TODO: temporal the only action for now is the short-attack with will trigger the pve.
+                    await target.battle.runBattle(playerSchema, target, room);
                     await EventsManager.emit('reldens.objectInteraction', message, playerSchema, target, room);
                 }
             }
