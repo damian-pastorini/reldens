@@ -46,6 +46,32 @@ class EnemyObject extends NpcObject
         });
         this.battle.setTargetObject(this);
         this.actions = {'attack-short': new AttackShort()};
+        this.respawnTime = false;
+        this.respawnTimer = false;
+        this.respawnLayer = false;
+    }
+
+    respawn()
+    {
+        // @NOTE: here we move the body to some place where it can't be reach so it doesn't collide with anything, this
+        // will also make it invisible because the update in the client will move the sprite outside the view.
+        this.objectBody.position = [-1000, -1000];
+        if(this.respawnTime){
+            this.respawnTimer = setTimeout(() => {
+                this.restoreObject();
+            }, this.respawnTime);
+        } else {
+            this.restoreObject();
+        }
+    }
+
+    restoreObject()
+    {
+        let respawnArea = this.objectBody.world.respawnAreas[this.respawnLayer];
+        let randomTile = respawnArea.getRandomTile();
+        let { x, y } = randomTile;
+        this.objectBody.position = [x, y];
+        this.stats = this.initialStats;
     }
 
     onHit(props)

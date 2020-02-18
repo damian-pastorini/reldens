@@ -38,5 +38,6 @@ module.exports.GameConst = {
     // @TODO: implement player custom avatar.
     IMAGE_PLAYER: 'player',
     ATTACK: 'attack',
-    HIT: 'hit'
+    HIT: 'hit',
+    DEATH: 'death'
 };

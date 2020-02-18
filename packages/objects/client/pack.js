@@ -10,6 +10,7 @@ const { EventsManager } = require('../../game/events-manager');
 const { ObjectsConst } = require('../constants');
 const { Logger } = require('../../game/logger');
 const { BattleConst } = require('../../actions/constants');
+const { GameConst } = require('../../game/constants');
 
 class ObjectsPack
 {
@@ -43,7 +44,12 @@ class ObjectsPack
                 }
             }
             if(message.act === BattleConst.BATTLE_ENDED){
-                // console.log('battle ended.');
+                let currentScene = gameManager.activeRoomEvents.getActiveScene();
+                let skeletonSprite = currentScene.physics.add.sprite(message.x, message.y, GameConst.DEATH);
+                skeletonSprite.setDepth(200000);
+                skeletonSprite.anims.play(GameConst.DEATH, true).on('animationcomplete', () => {
+                    skeletonSprite.anims.remove(GameConst.DEATH);
+                });
             }
         });
         if(room.state && room.state.bodies){

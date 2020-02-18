@@ -24,6 +24,7 @@ class P2world extends World
     constructor(options)
     {
         super(options);
+        this.roomId = options.roomData.roomId;
         this.applyGravity = options.applyGravity;
         this.applyDamping = options.applyDamping || false;
         this.sceneName = options.sceneName || false;
@@ -44,6 +45,7 @@ class P2world extends World
             ]);
         }
         this.mapJson = this.objectsManager.config.server.maps[this.sceneTiledMapFile];
+        this.respawnAreas = false;
         this.pathFinder = new PathFinder();
         this.pathFinder.world = this;
         this.pathFinder.createGridFromMap();

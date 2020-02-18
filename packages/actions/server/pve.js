@@ -36,7 +36,6 @@ class Pve extends Battle
         if(!inBattle){
             return;
         }
-        // console.log('target.hp', target.stats.hp, 'player.hp', playerSchema.stats.hp);
         if(target.stats.hp > 0){
             await this.startBattleWith(playerSchema, room);
         }
@@ -120,10 +119,15 @@ class Pve extends Battle
     battleEnded(playerSchema, room)
     {
         this.removeInBattlePlayer(playerSchema);
-        // @TODO: respawn the monster.
+        let actionData = {
+            act: BattleConst.BATTLE_ENDED,
+            x: this.targetObject.objectBody.position[0],
+            y: this.targetObject.objectBody.position[1]
+        };
+        this.targetObject.respawn();
         let client = room.getClientById(playerSchema.sessionId);
         if(client){
-            room.send(client, {act: BattleConst.BATTLE_ENDED});
+            room.send(client, actionData);
         } else {
             Logger.log(['Client not found by sessionId:', playerSchema.sessionId]);
         }

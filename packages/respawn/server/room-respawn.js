@@ -26,11 +26,11 @@ class RoomRespawn
     {
         this.parseMapForRespawnTiles();
         this.layerObjects = this.world.objectsManager.roomObjectsByLayer[this.layer.name];
-        // NOTE: this is because a single layer can have multiple respawn areas for different enemies.
-        this.respawnAreas = await RespawnModel.query().where('layer', this.layer.name);
         let {tilewidth, tileheight } = this.world.mapJson;
-        for(let idx in this.respawnAreas){
-            let respawnArea = this.respawnAreas[idx];
+        // NOTE: this is because a single layer could have multiple respawn definitions for each enemy type.
+        this.respawnDefinitions = await RespawnModel.query().where('layer', this.layer.name);
+        for(let idx in this.respawnDefinitions){
+            let respawnArea = this.respawnDefinitions[idx];
             if(
                 {}.hasOwnProperty.call(this.layerObjects, respawnArea.object_id)
                 && {}.hasOwnProperty.call(this.layerObjects[respawnArea.object_id], 'respawn')
@@ -58,6 +58,8 @@ class RoomRespawn
                     this.world.objectsManager.roomObjectsById[objectIndex] = objInstance;
                     let { x, y } = tileData;
                     this.world.createWorldObject(objInstance, objectIndex, tilewidth, tileheight, x, y, this.pathFinder);
+                    objInstance.respawnTime = respawnArea.respawn_time;
+                    objInstance.respawnLayer = this.layer.name;
                     this.instancesCreated[respawnArea.id].push(objInstance);
                 }
             }
