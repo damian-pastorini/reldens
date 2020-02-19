@@ -156,24 +156,39 @@ class RoomEvents
             this.initUi(message);
         }
         if(message.act === GameConst.ATTACK){
+            // @TODO: improve.
             EventsManager.emit('reldens.playerAttack', message, this);
             let currentScene = this.getActiveScene();
             if(!currentScene.player){
                 return;
             }
-            let attackerSprite = currentScene.player.players[message.atk];
+            let attackerSprite = false;
+            let defenderSprite = false;
+            let isPvP = (!{}.hasOwnProperty.call(message, 'type') || message.type === 'pvp');
+            if(isPvP){
+                attackerSprite = currentScene.player.players[message.atk];
+                defenderSprite = currentScene.player.players[message.def];
+            } else {
+                if({}.hasOwnProperty.call(currentScene.objectsAnimations, message.atk)){
+                    attackerSprite = currentScene.objectsAnimations[message.atk].sceneSprite;
+                    defenderSprite = currentScene.player.players[message.def];
+                }
+                if({}.hasOwnProperty.call(currentScene.objectsAnimations, message.def)){
+                    defenderSprite = currentScene.objectsAnimations[message.def].sceneSprite;
+                    attackerSprite = currentScene.player.players[message.atk];
+                }
+            }
             if(attackerSprite){
                 let attackSprite = currentScene.physics.add.sprite(attackerSprite.x, attackerSprite.y, GameConst.ATTACK);
                 attackSprite.anims.play(GameConst.ATTACK, true).on('animationcomplete', () => {
                     attackSprite.anims.remove(GameConst.ATTACK);
                 });
             }
-            let defenderSprite = currentScene.player.players[message.def];
             if(defenderSprite){
-                let attackSprite = currentScene.physics.add.sprite(defenderSprite.x, defenderSprite.y, GameConst.HIT);
-                attackSprite.setDepth(200000);
-                attackSprite.anims.play(GameConst.HIT, true).on('animationcomplete', () => {
-                    attackSprite.anims.remove(GameConst.HIT);
+                let hitSprite = currentScene.physics.add.sprite(defenderSprite.x, defenderSprite.y, GameConst.HIT);
+                hitSprite.setDepth(200000);
+                hitSprite.anims.play(GameConst.HIT, true).on('animationcomplete', () => {
+                    hitSprite.anims.remove(GameConst.HIT);
                 });
             }
         }

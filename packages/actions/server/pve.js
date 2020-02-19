@@ -9,6 +9,7 @@
 const { Battle } = require('./battle');
 const { ErrorManager } = require('../../game/error-manager');
 const { Logger } = require('../../game/logger');
+const { GameConst } = require('../../game/constants');
 const { BattleConst } = require('../constants');
 
 class Pve extends Battle
@@ -19,6 +20,7 @@ class Pve extends Battle
         super(props);
         this.chaseMultiple = {}.hasOwnProperty.call(props, 'chaseMultiple') ? props.chaseMultiple : false;
         this.inBattleWithPlayer = [];
+        this.pvType = 'pve';
     }
 
     setTargetObject(targetObject)
@@ -36,6 +38,12 @@ class Pve extends Battle
         if(!inBattle){
             return;
         }
+        room.broadcast({
+            act: GameConst.ATTACK,
+            atk: playerSchema.sessionId,
+            def: this.targetObject.key,
+            type: this.pvType
+        });
         if(target.stats.hp > 0){
             await this.startBattleWith(playerSchema, room);
         }
@@ -118,12 +126,14 @@ class Pve extends Battle
 
     battleEnded(playerSchema, room)
     {
+        // @TODO: implement battle end in both pve and pvp.
         this.removeInBattlePlayer(playerSchema);
         let actionData = {
             act: BattleConst.BATTLE_ENDED,
             x: this.targetObject.objectBody.position[0],
             y: this.targetObject.objectBody.position[1]
         };
+        room.broadcast(actionData);
         this.targetObject.respawn();
         let client = room.getClientById(playerSchema.sessionId);
         if(client){
