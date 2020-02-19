@@ -147,6 +147,9 @@ class RoomsManager
             }
             temp.returnPoints.push(posTemp);
         }
+        if(!temp.returnPoints.length){
+            Logger.error(['None return points found for room:', temp.roomName, temp.roomId]);
+        }
         return temp;
     }
 

@@ -18,12 +18,13 @@ class RoomGame extends RoomLogin
 
     async onJoin(client, options, authResult)
     {
-        EventsManager.emit('reldens.onJoinRoomGame', client, options, authResult, this);
+        await EventsManager.emit('reldens.onJoinRoomGame', client, options, authResult, this);
         // update last login:
         await this.loginManager.updateLastLogin(authResult);
         // we need to send the engine and all the general and client configurations from the storage:
         let storedClientConfig = {client: this.config.client};
-        let clientFullConfig = Object.assign({}, this.config.gameEngine, storedClientConfig);
+        let initialStats = {initialStats: this.config.get('server/players/initialStats')};
+        let clientFullConfig = Object.assign({}, this.config.gameEngine, storedClientConfig, initialStats);
         // client start:
         this.send(client, {
             act: GameConst.START_GAME,

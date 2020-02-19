@@ -38,15 +38,20 @@ class RoomScene extends RoomLogin
         this.objectsManager = new ObjectsManager(options);
         // load the objects from the storage:
         await this.objectsManager.loadObjectsByRoomId(options.roomData.roomId);
+        // generate object instances:
+        if(this.objectsManager.roomObjectsData){
+            await this.objectsManager.generateObjects();
+        }
+        // append objects that will listen messages:
         if(this.objectsManager.listenMessages){
             Object.assign(this.messageActions, this.objectsManager.listenMessagesObjects);
         }
-        // create world:
-        this.createWorld(options.roomData, this.objectsManager);
-        // set world objects normal speed:
+        // world objects normal speed:
         this.worldSpeed = this.config.get('server/players/physicsBody/speed') || GameConst.SPEED_SERVER;
         // keys events:
         this.allowSimultaneous = this.config.get('server/general/controls/allow_simultaneous_keys');
+        // create world:
+        await this.createWorld(options.roomData, this.objectsManager);
         // the collisions manager has to be initialized after the world was created:
         this.collisionsManager = new CollisionsManager(this);
         // if the room has message actions those are specified here in the room-scene:
@@ -64,6 +69,7 @@ class RoomScene extends RoomLogin
         let roomState = new State(this.roomData);
         // after we set the state it will be automatically sync by the game-server:
         this.setState(roomState);
+        await EventsManager.emit('reldens.sceneRoomOnCreate', this);
     }
 
     async onJoin(client, options, authResult)
@@ -78,7 +84,7 @@ class RoomScene extends RoomLogin
                     let savedAndRemoved = await this.saveStateAndRemovePlayer(playerIdx);
                     if(savedAndRemoved){
                         // old player session removed, create it again:
-                        this.createPlayer(client, authResult);
+                        await this.createPlayer(client, authResult);
                     }
                     break;
                 }
@@ -86,21 +92,25 @@ class RoomScene extends RoomLogin
         }
         if(!loggedUserFound){
             // player not logged, create it:
-            this.createPlayer(client, authResult);
+            await this.createPlayer(client, authResult);
         }
     }
 
-    createPlayer(client, authResult)
+    async createPlayer(client, authResult)
     {
+        await EventsManager.emit('reldens.createPlayerBefore', client, authResult);
         // player creation:
         let currentPlayer = this.state.createPlayer(client.sessionId, authResult);
+        // @TODO: stats will be configurable and dynamic with the player-levels system implementation.
+        currentPlayer.initialStats = this.config.get('server/players/initialStats');
         // create body for server physics and assign the body to the player:
-        currentPlayer.p2body = this.roomWorld.createPlayerBody({
+        currentPlayer.physicalBody = this.roomWorld.createPlayerBody({
             id: client.sessionId,
             width: this.config.get('server/players/size/width'),
             height: this.config.get('server/players/size/height'),
-            playerState: currentPlayer.state
+            bodyState: currentPlayer.state
         });
+        await EventsManager.emit('reldens.createPlayerAfter', client, authResult, currentPlayer);
     }
 
     // eslint-disable-next-line no-unused-vars
@@ -118,22 +128,35 @@ class RoomScene extends RoomLogin
     {
         // get player:
         let playerSchema = this.getPlayerFromState(client.sessionId);
-        if(playerSchema && {}.hasOwnProperty.call(playerSchema, 'p2body')){
+        // only process the message if the player exists and has a body:
+        if(playerSchema && {}.hasOwnProperty.call(playerSchema, 'physicalBody')){
             // get player body:
-            let bodyToMove = playerSchema.p2body;
+            let bodyToMove = playerSchema.physicalBody;
             // if player is moving:
-            if({}.hasOwnProperty.call(messageData, 'dir') && bodyToMove){
-                bodyToMove.initMove(messageData.dir, this.worldSpeed, this.allowSimultaneous);
+            if({}.hasOwnProperty.call(messageData, 'dir') && bodyToMove && !bodyToMove.isChangingScene){
+                bodyToMove.initMove(messageData.dir);
             }
             // if player stopped:
             if(messageData.act === GameConst.STOP && bodyToMove){
                 // stop by setting speed to zero:
                 bodyToMove.stopMove();
             }
+            if(
+                messageData.act === GameConst.POINTER
+                && {}.hasOwnProperty.call(messageData, 'column')
+                && {}.hasOwnProperty.call(messageData, 'row')
+                && bodyToMove
+            ){
+                messageData = this.makeValidPoints(messageData);
+                bodyToMove.moveToPoint(messageData);
+            }
             if(messageData.act === GameConst.ACTION && messageData.target){
                 let validTarget = this.validateTarget(messageData.target);
                 if(validTarget){
-                    EventsManager.emit('reldens.onMessageRunAction', messageData, playerSchema, validTarget, this);
+                    EventsManager.emit('reldens.onMessageRunAction', messageData, playerSchema, validTarget, this)
+                        .catch((err) => {
+                            Logger.error(['Listener error on onMessageRunAction:', err]);
+                        });
                 }
             }
             if(this.messageActions){
@@ -154,17 +177,24 @@ class RoomScene extends RoomLogin
         }
     }
 
-    createWorld(roomData, objectsManager)
+    async createWorld(roomData, objectsManager)
     {
-        EventsManager.emit('reldens.createWorld', roomData, objectsManager, this);
+        await EventsManager.emit('reldens.createWorld', roomData, objectsManager, this);
         // create and assign world to room:
-        this.roomWorld = this.getWorldInstance({
+        this.roomWorld = this.createWorldInstance({
             sceneName: this.roomName,
             roomData: roomData,
             gravity: [0, 0],
             applyGravity: false,
-            objectsManager: objectsManager
+            objectsManager: objectsManager,
+            tryClosestPath: this.config.get('server/rooms/world/tryClosestPath'),
+            worldSpeed: this.worldSpeed,
+            allowSimultaneous: this.allowSimultaneous
         });
+        // create world limits:
+        this.roomWorld.createLimits();
+        // add collisions:
+        await this.roomWorld.createWorldContent(roomData);
         // start world movement from the config or with the default value:
         this.timeStep = this.config.get('server/rooms/world/timestep') || 0.04;
         this.worldTimer = this.clock.setInterval(() => {
@@ -173,7 +203,7 @@ class RoomScene extends RoomLogin
         Logger.info('World created in Room: ' + this.roomName);
     }
 
-    getWorldInstance(data)
+    createWorldInstance(data)
     {
         return new P2world(data);
     }
@@ -210,7 +240,7 @@ class RoomScene extends RoomLogin
                         username: currentPlayer.username
                     });
                     // remove body from server world:
-                    let bodyToRemove = currentPlayer.p2body;
+                    let bodyToRemove = currentPlayer.physicalBody;
                     this.roomWorld.removeBody(bodyToRemove);
                     // reconnect is to create the player in the new scene:
                     this.send(client, {act: GameConst.RECONNECT, player: currentPlayer, prev: data.prev});
@@ -230,7 +260,7 @@ class RoomScene extends RoomLogin
         let playerSchema = this.getPlayerFromState(sessionId);
         if(playerSchema){
             // get body:
-            let bodyToRemove = playerSchema.p2body;
+            let bodyToRemove = playerSchema.physicalBody;
             if(bodyToRemove){
                 // remove body:
                 this.roomWorld.removeBody(bodyToRemove);
@@ -298,9 +328,19 @@ class RoomScene extends RoomLogin
             validTarget = this.getPlayerFromState(target.id);
         }
         if(target.type === ObjectsConst.TYPE_OBJECT){
+            // @TODO: check if this works properly with enemies.
             validTarget = this.objectsManager.getObjectById(target.id);
         }
         return validTarget;
+    }
+
+    makeValidPoints(points)
+    {
+        points.column = points.column < 0 ? 0 : points.column;
+        points.column = points.column > this.roomWorld.worldWidth ? this.roomWorld.worldWidth : points.column;
+        points.row = points.row < 0 ? 0 : points.row;
+        points.row = points.row > this.roomWorld.worldHeight ? this.roomWorld.worldHeight : points.row;
+        return points;
     }
 
 }

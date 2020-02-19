@@ -8,6 +8,7 @@
 
 const { Game } = require('phaser');
 const TemplateEngine = require('mustache');
+const { EventsManager } = require('../events-manager');
 
 class GameEngine extends Game
 {
@@ -18,6 +19,14 @@ class GameEngine extends Game
         // uiScene is where we will keep all the game UI elements:
         this.uiScene = false;
         this.TemplateEngine = TemplateEngine;
+        EventsManager.on('reldens.beforeReconnectGameClient', () => {
+            this.clearTarget();
+        });
+    }
+
+    parseTemplate(template, view, partials, tags)
+    {
+        return this.TemplateEngine.render(template, view, partials, tags);
     }
 
     showTarget(target)
@@ -31,6 +40,8 @@ class GameEngine extends Game
     clearTarget()
     {
         if({}.hasOwnProperty.call(this.uiScene, 'uiTarget')){
+            let currentScene = this.uiScene.gameManager.activeRoomEvents.getActiveScene();
+            currentScene.player.currentTarget = false;
             this.uiScene.uiTarget.getChildByID('box-target').style.display = 'none';
             this.uiScene.uiTarget.getChildByID('target-container').innerHTML = '';
         }

@@ -31,20 +31,22 @@ class CollisionsManager
         // @NOTE: postBroadphase will be used to check pairs and test overlap instead of collision, for example, a spell
         // will overlap the player but not collide with it, if the spell collides with the player it will push it in
         // the opposite direction because the physics engine.
-        // this.room.roomWorld.on('postBroadphase', this.assignPostBroadPhase.bind(this));
+        this.room.roomWorld.on('postBroadphase', this.assignPostBroadPhase.bind(this));
     }
 
-    /*
     assignPostBroadPhase(evt)
     {
         let { pairs } = evt;
         if(pairs.length > 1){
             for(let body of pairs){
                 // Logger.log('pairs!', body.playerId);
+                if(body.playerId && body.pStop){
+                    body.velocity = [0, 0];
+                    body.pStop = false;
+                }
             }
         }
     }
-    */
 
     assignBeginCollisions(evt)
     {
@@ -59,13 +61,15 @@ class CollisionsManager
         if(bodyA.playerId && bodyB.playerId){
             this.playerHitPlayer(bodyA, bodyB);
         } else {
-            currentPlayerBody = bodyA.playerId ? bodyA : bodyB;
-            otherBody = bodyA.playerId ? bodyB : bodyA;
-            if(otherBody.isRoomObject){
-                this.playerHitObject(currentPlayerBody, otherBody);
-            }
-            if(otherBody.changeScenePoint){
-                this.playerHitChangePoint(currentPlayerBody, otherBody);
+            if(bodyA.playerId || bodyB.playerId){
+                currentPlayerBody = bodyA.playerId ? bodyA : bodyB;
+                otherBody = bodyA.playerId ? bodyB : bodyA;
+                if(otherBody.isRoomObject){
+                    this.playerHitObject(currentPlayerBody, otherBody);
+                }
+                if(otherBody.changeScenePoint){
+                    this.playerHitChangePoint(currentPlayerBody, otherBody);
+                }
             }
         }
     }
@@ -83,6 +87,9 @@ class CollisionsManager
             otherBody = bodyA.playerId ? bodyB : bodyA;
             if(otherBody.isWall){
                 this.playerHitWall(playerBody, otherBody);
+            }
+            if(otherBody.isRoomObject){
+                this.playerHitObjectEnd(playerBody, otherBody);
             }
         }
         // - player stops pushing a player:
@@ -112,11 +119,20 @@ class CollisionsManager
     {
         // @NOTE: we can use wall.material to trigger an action over the player, like:
         // wall.material = lava > reduce player.hp in every step
+        playerBody.pStop = true;
+        playerBody.velocity = [0, 0];
+    }
+
+    // eslint-disable-next-line no-unused-vars
+    playerHitObjectEnd(playerBody, object)
+    {
+        playerBody.pStop = true;
         playerBody.velocity = [0, 0];
     }
 
     playerHitChangePoint(playerBody, changePoint)
     {
+        playerBody.resetAuto();
         let playerSchema = this.room.getPlayerFromState(playerBody.playerId);
         if({}.hasOwnProperty.call(playerBody, 'isChangingScene') && playerBody.isChangingScene){
             // @NOTE: if the player is already changing scene do nothing.
@@ -137,7 +153,7 @@ class CollisionsManager
             // @NOTE: we do not need to change back the isChangingScene property back to false since in the new
             // scene a new body will be created with the value set to false by default.
             this.room.nextSceneInitialPosition(contactClient, changeData).catch((err) => {
-                Logger.error('nextSceneInitialPosition error: ' + err);
+                Logger.error('nextSceneInitialPosition error: '+err);
             });
         }
     }

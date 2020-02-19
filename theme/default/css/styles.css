@@ -44,13 +44,11 @@ form .input-box input[type="text"], form .input-box input[type="password"] { wid
 .ui-box-controls .vertical-buttons img { float:none; }
 .ui-box-player { text-align:center; padding:0px 10px; }
 .ui-box-player, .box-player-stats { background-color: rgba(0, 0, 0, 0.5); }
-.ui-box-npc-dialog { display:none; float:left; width:240px; height:100px; padding:10px 14px; background:#000000; opacity:0.85; color:#ffffff; word-wrap:break-word; overflow:auto; font-size:12px; }
-.box-close { display:block; position:relative; background:#000; padding:5px; cursor:pointer; float:right; }
-.close-target { width:24px; position:absolute; right:-12px; top:-8px; }
-.box-close img { width:30px; }
-.box-content { height:40px; overflow:auto; }
+.ui-box-npc-dialog { display:none; float:left; width:240px; height:100px; padding:10px 14px; background:#000000; opacity:0.85; color:#ffffff; word-wrap:break-word; overflow:hidden; font-size:12px; }
+.box-close, .close-target { width:24px; position:absolute; right:-12px; top:-8px; }
+.box-content { min-height:40px; max-height:70px; overflow:auto; margin:10px 0px; }
 .player-name { padding:10px 0; text-align:center; color:#ffffff; }
-.chat-ui { display:block; float:left; min-width:100px; min-height:80px; background:#000000; opacity:0.7; color:#ffffff; }
+.chat-ui { display:none; float:left; position: relative; top:-60px; left:-196px; min-width:100px; min-height:80px; background:#000000; opacity:0.8; color:#ffffff; }
 #chat-messages { width:242px; height:90px; word-wrap:break-word; overflow:auto; font-size:12px; }
 #chat-input { width:80%; }
 #chat-send { position:absolute; bottom:0px; right:0; }
@@ -61,3 +59,4 @@ form .input-box input[type="text"], form .input-box input[type="password"] { wid
 span.stat-label { float:left; width:48%; margin-right:2%; display:block; text-align:right; color:#00ffff; }
 span.stat-value { float:left; width:50%; display:block; text-align:left; }
 .loading-container { float:left; text-align:center; width:100%; }
+#chat-open { cursor:pointer; }

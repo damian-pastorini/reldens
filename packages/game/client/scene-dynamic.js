@@ -45,6 +45,14 @@ class SceneDynamic extends Scene
             }
         });
         this.map = this.add.tilemap(this.params.roomMap);
+        this.input.on('pointerdown', (pointer, currentlyOver) => {
+            // @NOTE: avoid double actions, if you target something you will not be moved to the pointer.
+            if(!currentlyOver.length){
+                this.appendRowAndColumn(pointer);
+                this.player.moveToPointer(pointer);
+                // @TODO: run pointer animation.
+            }
+        });
         this.useTsAnimation = this.hasTsAnimation();
         this.tileset = this.map.addTilesetImage(this.params.roomMap);
         this.registerLayers();
@@ -56,6 +64,7 @@ class SceneDynamic extends Scene
         }
         this.cameras.main.on('camerafadeincomplete', () => {
             this.transition = false;
+            this.gameManager.isChangingScene = false;
             this.input.keyboard.on('keyup', (event) => {
                 if(event.keyCode >= 37 && event.keyCode <= 40){
                     // @NOTE: all keyup events has to be sent.
@@ -69,12 +78,13 @@ class SceneDynamic extends Scene
     // eslint-disable-next-line no-unused-vars
     update(time, delta)
     {
-        if(this.transition === false){
+        if(this.transition === false && !this.gameManager.isChangingScene){
             if(this.keyLeft.isDown){
                 this.player.left();
             } else if(this.keyRight.isDown){
                 this.player.right();
-            } else if(this.keyUp.isDown){
+            }
+            if(this.keyUp.isDown){
                 this.player.up();
             } else if(this.keyDown.isDown){
                 this.player.down();
@@ -85,6 +95,7 @@ class SceneDynamic extends Scene
     changeScene()
     {
         this.objectsAnimations = {};
+        this.objectsAnimationsData = false;
         if(this.useTsAnimation){
             this.tilesetAnimation.destroy();
         }
@@ -133,6 +144,28 @@ class SceneDynamic extends Scene
         this.tilesetAnimation = new TilesetAnimation();
         this.tilesetAnimation.register(layer, this.tileset.tileData);
         this.tilesetAnimation.start();
+    }
+
+    appendRowAndColumn(pointer)
+    {
+        let tW = this.map.tileWidth;
+        let tH = this.map.tileHeight;
+        // @TODO: this is a temporal fix, we need to make configurable the player body and take it into account for the
+        //   path finder calculations. Between the configurations we need to include one to affect the body size in the
+        //   server, for now all the bodies get the same tile size. See related issue #54.
+        let confH = this.configManager.get('client/players/size/height');
+        let playerH = confH - tH;
+        if(this.player.state.y < pointer.worldY){
+            playerH = confH / 2;
+        }
+        let playerW2 = this.configManager.get('client/players/size/width') / 4;
+        if(this.player.state.x > pointer.worldX){
+            playerW2 = -(playerW2);
+        }
+        let column = Math.round((pointer.worldX+playerW2) / tW);
+        let row = Math.round((pointer.worldY-playerH) / tH);
+        pointer.worldColumn = column;
+        pointer.worldRow = row;
     }
 
 }

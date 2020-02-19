@@ -20,14 +20,17 @@ class RoomEvents
     {
         this.room = false;
         this.sceneData = false;
+        this.scenePreloader = false;
         this.playersQueue = {};
         this.gameManager = gameManager;
         this.gameEngine = gameManager.gameEngine;
         this.roomName = roomName;
+        this.objectsUi = {};
     }
 
     activateRoom(room, previousScene = false)
     {
+        EventsManager.emit('reldens.activateRoom', room, this.gameManager);
         this.room = room;
         // listen to changes coming from the server:
         this.room.state.players.onAdd = (player, key) => {
@@ -146,7 +149,7 @@ class RoomEvents
         // created only once in the preloader.
         if(message.act === GameConst.PLAYER_STATS){
             EventsManager.emit('reldens.playerStatsUpdate', message, this);
-            this.activatePlayerStats(message);
+            this.updatePlayerStats(message);
         }
         if(message.act === GameConst.UI && message.id){
             EventsManager.emit('reldens.initUi', message, this);
@@ -155,11 +158,22 @@ class RoomEvents
         if(message.act === GameConst.ATTACK){
             EventsManager.emit('reldens.playerAttack', message, this);
             let currentScene = this.getActiveScene();
-            let playerSprite = currentScene.player.players[message.atk];
-            if(playerSprite){
-                let attackSprite = currentScene.physics.add.sprite(playerSprite.x, playerSprite.y, GameConst.ATTACK);
+            if(!currentScene.player){
+                return;
+            }
+            let attackerSprite = currentScene.player.players[message.atk];
+            if(attackerSprite){
+                let attackSprite = currentScene.physics.add.sprite(attackerSprite.x, attackerSprite.y, GameConst.ATTACK);
                 attackSprite.anims.play(GameConst.ATTACK, true).on('animationcomplete', () => {
                     attackSprite.anims.remove(GameConst.ATTACK);
+                });
+            }
+            let defenderSprite = currentScene.player.players[message.def];
+            if(defenderSprite){
+                let attackSprite = currentScene.physics.add.sprite(defenderSprite.x, defenderSprite.y, GameConst.HIT);
+                attackSprite.setDepth(200000);
+                attackSprite.anims.play(GameConst.HIT, true).on('animationcomplete', () => {
+                    attackSprite.anims.remove(GameConst.HIT);
                 });
             }
         }
@@ -183,23 +197,28 @@ class RoomEvents
         }
     }
 
-    activatePlayerStats(message)
+    updatePlayerStats(message)
     {
-        let uiScene = this.gameEngine.uiScene;
         let currentScene = this.getActiveScene();
-        if(currentScene.player && {}.hasOwnProperty.call(currentScene.player.players, this.room.sessionId)){
-            let playerSprite = currentScene.player.players[this.room.sessionId];
-            playerSprite.stats = message.stats;
+        if(!currentScene.player || !{}.hasOwnProperty.call(currentScene.player.players, this.room.sessionId)){
+            return;
         }
+        let playerSprite = currentScene.player.players[this.room.sessionId];
+        playerSprite.stats = message.stats;
+        this.gameManager.playerData.stats = message.stats;
+        let uiScene = this.gameEngine.uiScene;
         if(uiScene && {}.hasOwnProperty.call(uiScene, 'uiPlayerStats')){
             let statsPanel = uiScene.uiPlayerStats.getChildByProperty('id', 'player-stats-container');
             if(statsPanel){
                 let messageTemplate = uiScene.cache.html.get('playerStats');
                 // @TODO: stats types will be part of the configuration in the database.
-                statsPanel.innerHTML = this.gameManager.gameEngine.TemplateEngine.render(messageTemplate, {
+                statsPanel.innerHTML = this.gameManager.gameEngine.parseTemplate(messageTemplate, {
                     stats: message.stats
                 });
             }
+        }
+        if(this.gameManager.config.get('client/ui/uiLifeBar/enabled')){
+            currentScene.player.redrawLifeBar();
         }
     }
 
@@ -218,6 +237,12 @@ class RoomEvents
             }
             let dialogContainer = uiBox.getChildByID('box-'+props.id);
             dialogContainer.style.display = 'block';
+            // set box depth over the other boxes:
+            uiBox.setDepth(2);
+            // on dialog display clear the current target:
+            if(this.gameManager.config.get('client/ui/uiTarget/hideOnDialog')){
+                this.gameEngine.clearTarget();
+            }
         }
     }
 
@@ -232,7 +257,7 @@ class RoomEvents
         // @TODO: implement player custom avatar.
         // , player.username
         if(!this.gameEngine.scene.getScene(preloaderName)){
-            let scenePreloader = this.createPreloaderInstance({
+            this.scenePreloader = this.createPreloaderInstance({
                 name: preloaderName,
                 map: this.sceneData.roomMap,
                 images: this.sceneData.sceneImages,
@@ -241,8 +266,8 @@ class RoomEvents
                 preloadAssets: this.sceneData.preloadAssets,
                 objectsAnimationsData: this.sceneData.objectsAnimationsData
             });
-            EventsManager.emit('reldens.createdPreloaderInstance', this, scenePreloader);
-            this.gameEngine.scene.add(preloaderName, scenePreloader, true);
+            this.gameEngine.scene.add(preloaderName, this.scenePreloader, true);
+            EventsManager.emit('reldens.createdPreloaderInstance', this, this.scenePreloader);
             let preloader = this.gameEngine.scene.getScene(preloaderName);
             preloader.load.on('complete', () => {
                 // set ui on first preloader scene:
@@ -260,6 +285,10 @@ class RoomEvents
                 this.createEngineScene(player, room, previousScene);
             });
         } else {
+            let currentScene = this.getActiveScene();
+            currentScene.objectsAnimationsData = this.sceneData.objectsAnimationsData;
+            this.scenePreloader = this.gameEngine.scene.getScene(preloaderName);
+            EventsManager.emit('reldens.createdPreloaderRecurring', this, this.scenePreloader);
             this.createEngineScene(player, room, previousScene);
         }
     }

@@ -6,19 +6,19 @@
  *
  */
 
-const { BaseObject } = require('./base-object');
-const { Logger } = require('../../game/logger');
+const { AnimationObject } = require('./animation-object');
 const { GameConst } = require('../../game/constants');
 const { ObjectsConst } = require('../constants');
 
-class NpcObject extends BaseObject
+class NpcObject extends AnimationObject
 {
 
     constructor(props)
     {
         super(props);
         // this is a hardcoded property for this specific object type:
-        this.isNpc = true;
+        this.type = ObjectsConst.TYPE_NPC;
+        this.isAnimation = true;
         this.hasAnimation = true;
         this.hasMass = 1;
         this.collisionResponse = true;
@@ -27,36 +27,11 @@ class NpcObject extends BaseObject
         this.runOnAction = false;
         this.listenMessages = true;
         // interactive objects will react on click:
+        this.clientParams.type = ObjectsConst.TYPE_NPC;
         this.clientParams.isInteractive = true;
         // @NOTE: interaction area is how far the player can be from the object to validate the actions on click, this
         // area will be the valid-margin surrounding the object.
         this.interactionArea = this.config.get('server/objects/actions/interactionsDistance');
-    }
-
-    onHit(props)
-    {
-        if(!this.runOnHit || !props.room){
-            return;
-        }
-        let client = props.room.getClientById(props.playerBody.playerId);
-        if(!client){
-            Logger.error('Object hit, client not found by playerId: ' + props.playerBody.playerId);
-        } else {
-            props.room.send(client, this.animationData);
-        }
-    }
-
-    onAction(props)
-    {
-        if(!this.runOnAction || !props.room){
-            return;
-        }
-        let client = props.room.getClientById(props.playerBody.playerId);
-        if(!client){
-            Logger.error('Object action, client not found by playerId: ' + props.playerBody.playerId);
-        } else {
-            props.room.send(client, this.animationData);
-        }
     }
 
     parseMessageAndRunActions(client, data, room, playerSchema)

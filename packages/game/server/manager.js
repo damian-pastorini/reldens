@@ -45,7 +45,7 @@ class ServerManager
         this.configManager = new ConfigManager();
         // save project root:
         this.projectRoot = config.projectRoot || './';
-        Logger.info(['Project root:', this.projectRoot,  '- Module root: ', __dirname]);
+        Logger.info(['Project root:', this.projectRoot, 'Module root:', __dirname]);
         // setup dotenv to use the project root .env file:
         dotenv.config({debug: process.env.DEBUG, path: this.projectRoot+'/.env'});
         // setup the server host data:

@@ -1,17 +1,18 @@
 /**
  *
- * Reldens - Chat Server Package.
+ * Reldens - Chat Server Package
  *
  */
 
 const { RoomChat } = require('./room');
 const { ChatMessageActions } = require('./message-actions');
 const { EventsManager } = require('../../game/events-manager');
+const { PackInterface } = require('../../features/server/pack-interface');
 
-class ChatPack
+class ChatPack extends PackInterface
 {
 
-    constructor()
+    setupPack()
     {
         // rooms is the list of the current feature rooms names that later will be sent to the client and used to join.
         this.rooms = ['chat'];
@@ -28,4 +29,4 @@ class ChatPack
 
 }
 
-module.exports.ChatPack = new ChatPack();
+module.exports.ChatPack = ChatPack;

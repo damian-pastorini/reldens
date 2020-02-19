@@ -34,8 +34,11 @@ class ScenePreloader extends Scene
 
     preload()
     {
-        EventsManager.emit('reldens.beforePreload', this);
+        // @NOTE: this event run once for each scene.
+        let eventUiScene = this.uiScene ? this : this.gameManager.gameEngine.uiScene;
+        EventsManager.emit('reldens.beforePreload', this, eventUiScene);
         if(this.uiScene){
+            // @NOTE: the events here run only once over all the game progress.
             EventsManager.emit('reldens.beforePreloadUiScene', this);
             // ui elements:
             if(this.gameManager.config.get('client/ui/playerName/enabled')){
@@ -96,6 +99,8 @@ class ScenePreloader extends Scene
         // this.load.spritesheet(this.username, 'assets/sprites/'+this.username+'.png', playerSpriteSize);
         this.load.spritesheet(GameConst.IMAGE_PLAYER, 'assets/sprites/player-1.png', playerSpriteSize);
         this.load.spritesheet(GameConst.ATTACK, 'assets/sprites/weapons-1.png', {frameWidth: 64, frameHeight: 64});
+        this.load.spritesheet(GameConst.HIT, 'assets/sprites/impact-1.png', {frameWidth: 64, frameHeight: 64});
+        this.load.spritesheet(GameConst.DEATH, 'assets/sprites/object-1.png', {frameWidth: 64, frameHeight: 64});
         // interface assets:
         this.load.image(GameConst.ICON_STATS, 'assets/icons/book.png');
         this.load.on('fileprogress', this.onFileProgress, this);
@@ -107,8 +112,11 @@ class ScenePreloader extends Scene
 
     create()
     {
-        EventsManager.emit('reldens.createPreload', this);
+        // @NOTE: this event run once for each scene.
+        let eventUiScene = this.uiScene ? this : this.gameManager.gameEngine.uiScene;
+        EventsManager.emit('reldens.createPreload', this, eventUiScene);
         if(this.uiScene){
+            // @NOTE: the events here run only once over all the game progress.
             EventsManager.emit('reldens.beforeCreateUiScene', this);
             // create ui:
             let playerUi = this.getUiConfig('playerName');
@@ -121,7 +129,7 @@ class ScenePreloader extends Scene
                 });
             }
             let targetUi = this.getUiConfig('uiTarget');
-            if(targetUi.enabled) {
+            if(targetUi.enabled){
                 this.uiTarget = this.add.dom(targetUi.uiX, targetUi.uiY).createFromCache('uiTarget');
                 let closeButton = this.uiTarget.getChildByProperty('className', 'close-target');
                 closeButton.addEventListener('click', () => {
@@ -146,7 +154,7 @@ class ScenePreloader extends Scene
                 if(statsButton && statsPanel){
                     let messageTemplate = this.cache.html.get('playerStats');
                     // @TODO: stats types will be part of the configuration in the database.
-                    statsPanel.innerHTML = this.gameManager.gameEngine.TemplateEngine.render(messageTemplate, {
+                    statsPanel.innerHTML = this.gameManager.gameEngine.parseTemplate(messageTemplate, {
                         stats: this.gameManager.playerData.stats
                     });
                     statsButton.addEventListener('click', () => {
@@ -208,6 +216,20 @@ class ScenePreloader extends Scene
             key: GameConst.ATTACK,
             frames: this.anims.generateFrameNumbers(GameConst.ATTACK, {start: 25, end: 29}),
             frameRate: this.configuredFrameRate,
+            repeat: 0,
+            hideOnComplete: true
+        });
+        this.anims.create({
+            key: GameConst.HIT,
+            frames: this.anims.generateFrameNumbers(GameConst.HIT, {start: 17, end: 19}),
+            frameRate: this.configuredFrameRate,
+            repeat: 0,
+            hideOnComplete: true
+        });
+        this.anims.create({
+            key: GameConst.DEATH,
+            frames: this.anims.generateFrameNumbers(GameConst.DEATH, {start: 10, end: 11}),
+            frameRate: 1,
             repeat: 0,
             hideOnComplete: true
         });

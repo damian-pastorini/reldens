@@ -79,7 +79,7 @@ class RoomChat extends RoomLogin
             messageObject.t = ChatConst.CHAT_TYPE_PRIVATE_TO;
             this.send(clientTo.client, messageObject);
         } else {
-            let errorMessage = 'Private chat player not found: '+toPlayer;
+            let errorMessage = 'Private chat player not found '+toPlayer;
             this.sendErrorMessage(client, messageObject, errorMessage);
             messageType = 's';
         }

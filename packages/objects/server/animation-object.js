@@ -17,16 +17,19 @@ class AnimationObject extends BaseObject
     {
         super(props);
         // object type:
+        this.type = ObjectsConst.TYPE_ANIMATION;
+        this.clientParams.type = this.type;
         this.isAnimation = true;
         // the actions will be false as default:
         this.runOnHit = false;
         this.runOnAction = false;
+        this.objectBody = false;
     }
 
     get animationData()
     {
         return {
-            act: ObjectsConst.OBJECT_ANIMATION,
+            act: this.type,
             key: this.key,
             clientParams: this.clientParams,
             x: this.x,
@@ -39,7 +42,7 @@ class AnimationObject extends BaseObject
         if(!this.runOnHit || !props.room){
             return;
         }
-        if({}.hasOwnProperty.call(this, 'playerVisible') && this.roomVisible){
+        if({}.hasOwnProperty.call(this, 'playerVisible') && this.playerVisible){
             let client = props.room.getClientById(props.playerBody.playerId);
             if(!client){
                 Logger.error('Object hit, client not found by playerId:', props.playerBody.playerId);
@@ -58,7 +61,7 @@ class AnimationObject extends BaseObject
         if(!this.runOnAction || !props.room){
             return;
         }
-        if({}.hasOwnProperty.call(this, 'playerVisible') && this.roomVisible){
+        if({}.hasOwnProperty.call(this, 'playerVisible') && this.playerVisible){
             // run only for the client who executed:
             let client = props.room.getClientById(props.playerBody.playerId);
             if(!client){
@@ -71,6 +74,18 @@ class AnimationObject extends BaseObject
             // run for everyone in the room:
             props.room.broadcast(this.animationData);
         }
+    }
+
+    chaseBody(body)
+    {
+        if(!this.objectBody || !body){
+            Logger.error(['Body not found.', 'Object:', this.objectBody, 'Player:', body]);
+            return false;
+        }
+        this.objectBody.resetAuto();
+        body.updateCurrentPoints();
+        let toPoint = {column: body.currentCol, row: body.currentRow};
+        return this.objectBody.moveToPoint(toPoint);
     }
 
 }

@@ -27,6 +27,7 @@ module.exports.GameConst = {
     RIGHT: 'right',
     STOP: 'stop',
     ACTION: 'action',
+    POINTER: 'mp',
     // collisions:
     COL_PLAYER: Math.pow(2,0),
     COL_ENEMY: Math.pow(2,1),
@@ -36,5 +37,7 @@ module.exports.GameConst = {
     SPEED_SERVER: 180,
     // @TODO: implement player custom avatar.
     IMAGE_PLAYER: 'player',
-    ATTACK: 'attack'
+    ATTACK: 'attack',
+    HIT: 'hit',
+    DEATH: 'death'
 };

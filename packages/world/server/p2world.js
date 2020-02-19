@@ -7,7 +7,10 @@
  */
 
 const { World, Body, Box } = require('p2');
-const { PlayerBody } = require('./player-body');
+const { PathFinder } = require('./path-finder');
+const { PhysicalBody } = require('./physical-body');
+const { ObjectBodyState } = require('./object-body-state');
+const { EventsManager } = require('../../game/events-manager');
 const { Logger } = require('../../game/logger');
 const { ErrorManager } = require('../../game/error-manager');
 const { GameConst } = require('../../game/constants');
@@ -21,10 +24,15 @@ class P2world extends World
     constructor(options)
     {
         super(options);
+        this.roomId = options.roomData.roomId;
         this.applyGravity = options.applyGravity;
         this.applyDamping = options.applyDamping || false;
         this.sceneName = options.sceneName || false;
         this.sceneTiledMapFile = options.roomData.roomMap || false;
+        this.tryClosestPath = options.tryClosestPath || false;
+        this.worldSpeed = options.worldSpeed || false;
+        // keys events:
+        this.allowSimultaneous = options.allowSimultaneous;
         if(!this.sceneName || !this.sceneTiledMapFile){
             ErrorManager.error(['World creation missing data in options:', options]);
         }
@@ -37,16 +45,16 @@ class P2world extends World
             ]);
         }
         this.mapJson = this.objectsManager.config.server.maps[this.sceneTiledMapFile];
-        // create world limits:
-        this.createLimits();
-        // add collisions:
-        this.createWorldContent(options.roomData);
+        this.respawnAreas = false;
+        this.pathFinder = new PathFinder();
+        this.pathFinder.world = this;
+        this.pathFinder.createGridFromMap();
     }
 
     /**
      * @param mapData
      */
-    createWorldContent(mapData)
+    async createWorldContent(mapData)
     {
         // @TODO: analyze and implement blocks groups, for example, all simple collision blocks could be grouped and
         //   use a single big block to avoid the overload number of small blocks which now impacts in the consumed
@@ -61,6 +69,7 @@ class P2world extends World
             tileH = this.mapJson.tileheight;
         for(let layer of mapLayers){
             let layerData = layer.data;
+            await EventsManager.emit('reldens.parsingMapLayerBefore', layer, this);
             for(let c = 0; c < mapW; c++){
                 let posX = c * tileW + (tileW/2);
                 for(let r = 0; r < mapH; r++){
@@ -74,17 +83,19 @@ class P2world extends World
                         && (layer.name.indexOf('change-points') !== -1 || layer.name.indexOf('collisions') !== -1)
                     ){
                         this.createCollision(layer.name, tileIndex, tileW, tileH, posX, posY);
+                        this.pathFinder.grid.setWalkableAt(c, r, false);
                     }
                     // objects will be found by layer name + tile index:
                     let objectIndex = layer.name + tileIndex;
                     // this will validate if the object class exists and return an instance of it:
                     let roomObject = this.objectsManager.getObjectData(objectIndex);
                     // if the data and the instance was created:
-                    if(roomObject){
+                    if(roomObject && !roomObject.multiple){
                         this.createWorldObject(roomObject, objectIndex, tileW, tileH, posX, posY);
                     }
                 }
             }
+            await EventsManager.emit('reldens.parsingMapLayerAfter', layer, this);
         }
     }
 
@@ -111,7 +122,7 @@ class P2world extends World
         }
     }
 
-    createWorldObject(roomObject, objectIndex, tileW, tileH, posX, posY)
+    createWorldObject(roomObject, objectIndex, tileW, tileH, posX, posY, pathFinder = false)
     {
         // handle body fixed position:
         if({}.hasOwnProperty.call(roomObject, 'xFix')){
@@ -143,14 +154,22 @@ class P2world extends World
         if({}.hasOwnProperty.call(roomObject, 'collisionResponse')){
             colResponse = roomObject.collisionResponse;
         }
+        // object state:
+        let objHasState = {}.hasOwnProperty.call(roomObject, 'hasState') ? roomObject.hasState : false;
         // create the body:
-        let bodyObject = this.createCollisionBody(tileW, tileH, posX, posY, bodyMass, colResponse);
+        let bodyObject = this.createCollisionBody(tileW, tileH, posX, posY, bodyMass, colResponse, objHasState);
         bodyObject.isRoomObject = true;
         // assign the room object to the body:
         bodyObject.roomObject = roomObject;
+        if(pathFinder){
+            bodyObject.pathFinder = pathFinder;
+        }
         Logger.info('Created object for objectIndex: ' + objectIndex);
         // try to get object instance from project root:
         this.addBody(bodyObject);
+        // set data on room object:
+        roomObject.state = bodyObject.bodyState;
+        roomObject.objectBody = bodyObject;
     }
 
     createLimits()
@@ -164,22 +183,26 @@ class P2world extends World
         // create world boundary, up wall:
         let upWall = this.createCollisionBody((mapW+blockW), worldLimit, (mapW/2), 1);
         upWall.isWorldWall = true;
+        upWall.isWall = true;
         this.addBody(upWall);
         // create world boundary, down wall:
         let downWall = this.createCollisionBody((mapW+blockW), worldLimit, (mapW/2), (mapH-worldLimit));
         downWall.isWorldWall = true;
+        downWall.isWall = true;
         this.addBody(downWall);
         // create world boundary, left wall:
         let leftWall = this.createCollisionBody(worldLimit, (mapH+blockH), 1, (mapH/2));
         leftWall.isWorldWall = true;
+        leftWall.isWall = true;
         this.addBody(leftWall);
         // create world boundary, right wall:
         let rightWall = this.createCollisionBody(worldLimit, (mapH+blockH), (mapW-worldLimit), (mapH/2));
         rightWall.isWorldWall = true;
+        rightWall.isWall = true;
         this.addBody(rightWall);
     }
 
-    createCollisionBody(width, height, x, y, mass = 1, collisionResponse = true)
+    createCollisionBody(width, height, x, y, mass = 1, collisionResponse = true, hasState = false)
     {
         let boxShape = this.createCollisionShape(width, height, collisionResponse);
         let bodyConfig = {
@@ -188,7 +211,14 @@ class P2world extends World
             type: Body.STATIC,
             fixedRotation: true
         };
-        let boxBody = new Body(bodyConfig);
+        let bodyClass = Body;
+        if(hasState){
+            bodyClass = PhysicalBody;
+        }
+        let boxBody = new bodyClass(bodyConfig);
+        if(hasState){
+            boxBody.bodyState = new ObjectBodyState({x: x, y: y, dir: GameConst.DOWN, scene: this.sceneName});
+        }
         boxBody.addShape(boxShape);
         return boxBody;
     }
@@ -217,20 +247,20 @@ class P2world extends World
     {
         let boxShape = new Box({width: playerData.width, height: playerData.height});
         boxShape.collisionGroup = GameConst.COL_PLAYER;
-        // @TODO: players collision will be configurable, when collisions are active players can push players.
+        // @TODO: players collision will be configurable, for now when collisions are active players can push players.
         boxShape.collisionMask = GameConst.COL_ENEMY | GameConst.COL_GROUND | GameConst.COL_PLAYER;
-        let boxBody = new PlayerBody({
+        let boxBody = new PhysicalBody({
             mass: 1,
-            position: [playerData.playerState.x, playerData.playerState.y],
+            position: [playerData.bodyState.x, playerData.bodyState.y],
             type: Body.DYNAMIC,
-            fixedRotation: true
+            fixedRotation: true,
+            animationBasedOnPress: this.objectsManager.config.get('client/players/animations/basedOnPress'),
+            diagonalHorizontal: this.objectsManager.config.get('client/players/animations/diagonalHorizontal')
         });
         boxBody.addShape(boxShape);
         boxBody.playerId = playerData.id;
         boxBody.isChangingScene = false;
-        boxBody.playerState = playerData.playerState;
-        // playerData.playerState.x = boxBody.position[0];
-        // playerData.playerState.y = boxBody.position[1];
+        boxBody.bodyState = playerData.bodyState;
         this.addBody(boxBody);
         // return body:
         return boxBody;

@@ -21,6 +21,7 @@ class ObjectsManager
         // room objects by layer and title are each object instance plus the data from the storage:
         this.roomObjects = false;
         this.roomObjectsById = {};
+        this.roomObjectsByLayer = {};
         this.preloadAssets = [];
         this.objectsAnimationsData = {};
         this.listenMessages = false;
@@ -35,15 +36,21 @@ class ObjectsManager
                 .where('room_id', roomId)
                 .orderBy('tile_index');
         }
+    }
+
+    async generateObjects()
+    {
         if(this.roomObjectsData){
             this.roomObjects = {};
+            // @NOTE: allow null index for multiple objects of the same type.
             for(let objectData of this.roomObjectsData){
-                let objectIndex = objectData.layer_name + objectData.tile_index;
+                let appendIndex = (objectData.tile_index ? objectData.tile_index : objectData.id);
+                let objectIndex = objectData.layer_name + appendIndex;
                 try {
                     let objClass = this.config.get('server/customClasses/objects/'+objectData.object_class_key);
                     if(!objClass){
                         Logger.error([
-                            'ObjectManager custom class not found.',
+                            'ObjectManager class not found.',
                             '- Object ID:', objectData.id,
                             '- Custom class:', objectData.object_class_key
                         ]);
@@ -58,6 +65,14 @@ class ObjectsManager
                     ){
                         this.objectsAnimationsData[objectIndex] = objInstance.clientParams;
                     }
+                    if({}.hasOwnProperty.call(objInstance, 'multiple')){
+                        objInstance.objProps = objProps;
+                    }
+                    // prepare object for room messages:
+                    if({}.hasOwnProperty.call(objInstance, 'listenMessages')){
+                        this.listenMessages = true;
+                        this.listenMessagesObjects[objectData.id] = objInstance;
+                    }
                     // prepare assets list:
                     if(objectData.objects_assets){
                         for(let asset of objectData.objects_assets){
@@ -66,14 +81,13 @@ class ObjectsManager
                             this.preloadAssets.push(asset);
                         }
                     }
-                    // prepare object for room messages:
-                    if({}.hasOwnProperty.call(objInstance, 'listenMessages')){
-                        this.listenMessages = true;
-                        this.listenMessagesObjects[objectData.id] = objInstance;
-                    }
                     // save object:
                     this.roomObjects[objectIndex] = objInstance;
                     this.roomObjectsById[objectData.id] = objInstance;
+                    if(!this.roomObjectsByLayer[objectData.layer_name]){
+                        this.roomObjectsByLayer[objectData.layer_name] = {};
+                    }
+                    this.roomObjectsByLayer[objectData.layer_name][objectData.id] = objInstance;
                 } catch(err) {
                     Logger.error('Object class does not exists for objectIndex:', objectIndex);
                 }

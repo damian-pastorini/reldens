@@ -8,6 +8,7 @@
 
 const { Schema, MapSchema, type } = require('@colyseus/schema');
 const { Player } = require('../../users/server/player');
+const { ObjectBodyState } = require('../../world/server/object-body-state');
 const { Logger } = require('../../game/logger');
 
 class State extends Schema
@@ -19,6 +20,7 @@ class State extends Schema
         // @NOTE: this JSON is to send the scene data to the client, here we could remove data we don't want to send.
         this.sceneData = JSON.stringify(roomData);
         this.players = new MapSchema();
+        this.bodies = new MapSchema();
     }
 
     createPlayer(id, playerData)
@@ -46,6 +48,7 @@ class State extends Schema
 }
 
 type('string')(State.prototype, 'sceneData');
-type({ map: Player })(State.prototype, 'players');
+type({map: Player})(State.prototype, 'players');
+type({map: ObjectBodyState})(State.prototype, 'bodies');
 
 module.exports.State = State;

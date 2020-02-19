@@ -8,7 +8,7 @@
 
 const schema = require('@colyseus/schema');
 const { Schema, type } = schema;
-const { PlayerState } = require('./player-state');
+const { BodyState } = require('../../world/server/body-state');
 const { ErrorManager } = require('../../game/error-manager');
 
 class Player extends Schema
@@ -29,9 +29,9 @@ class Player extends Schema
             this.role_id = data.role_id;
             this.status = data.status;
             this.username = data.username;
-            this.p2body = false;
+            this.physicalBody = false;
             // set scene and position:
-            this.state = new PlayerState(player.state);
+            this.state = new BodyState(player.state);
             this.canAttack = true;
         } catch (err) {
             ErrorManager.error(['Missing user data.', err]);
@@ -43,6 +43,6 @@ class Player extends Schema
 type('string')(Player.prototype, 'sessionId');
 type('string')(Player.prototype, 'username');
 type('number')(Player.prototype, 'status');
-schema.defineTypes(Player, {state: PlayerState});
+schema.defineTypes(Player, {state: BodyState});
 
 module.exports.Player = Player;
