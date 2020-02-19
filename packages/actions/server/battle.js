@@ -22,6 +22,7 @@ class Battle
         this.battleTimer = false;
         this.timerType = props.timerType || BattleConst.BATTLE_TYPE_PER_TARGET;
         this.lastAttack = false;
+        this.pvType = false;
     }
 
     async runBattle(playerSchema, target)
@@ -62,7 +63,8 @@ class Battle
         room.broadcast({
             act: GameConst.ATTACK,
             atk: attackerId,
-            def: targetSchema.sessionId
+            def: targetSchema.sessionId,
+            type: this.pvType || 'pvp'
         });
         if(targetSchema.stats.hp === 0){
             // player is dead! reinitialize the stats:
