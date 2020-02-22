@@ -35,9 +35,9 @@ I know it is a huge project but I'll put all I have to make it work, so needless
 
 Here you will find a small demo for the results with the last available version from master: 
 
-[https://dev.reldens.com](https://dev.reldens.com)
+[http://dev.reldens.com](http://dev.reldens.com)
 
-[https://reldens.herokuapp.com/](https://reldens.herokuapp.com/)
+[http://reldens.herokuapp.com/](http://reldens.herokuapp.com/)
 
 [Server Status](https://github.com/damian-pastorini/reldens/wiki/Server-Status)
 
