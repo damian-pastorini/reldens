@@ -48,7 +48,7 @@ class ObjectsPack
                 let skeletonSprite = currentScene.physics.add.sprite(message.x, message.y, GameConst.DEATH);
                 skeletonSprite.setDepth(200000);
                 skeletonSprite.anims.play(GameConst.DEATH, true).on('animationcomplete', () => {
-                    skeletonSprite.anims.remove(GameConst.DEATH);
+                    skeletonSprite.destroy();
                 });
             }
         });

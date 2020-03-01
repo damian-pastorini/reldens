@@ -181,14 +181,14 @@ class RoomEvents
             if(attackerSprite){
                 let attackSprite = currentScene.physics.add.sprite(attackerSprite.x, attackerSprite.y, GameConst.ATTACK);
                 attackSprite.anims.play(GameConst.ATTACK, true).on('animationcomplete', () => {
-                    attackSprite.anims.remove(GameConst.ATTACK);
+                    attackSprite.destroy();
                 });
             }
             if(defenderSprite){
                 let hitSprite = currentScene.physics.add.sprite(defenderSprite.x, defenderSprite.y, GameConst.HIT);
                 hitSprite.setDepth(200000);
                 hitSprite.anims.play(GameConst.HIT, true).on('animationcomplete', () => {
-                    hitSprite.anims.remove(GameConst.HIT);
+                    hitSprite.destroy();
                 });
             }
         }

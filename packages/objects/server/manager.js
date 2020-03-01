@@ -47,6 +47,7 @@ class ObjectsManager
                 let appendIndex = (objectData.tile_index ? objectData.tile_index : objectData.id);
                 let objectIndex = objectData.layer_name + appendIndex;
                 try {
+                    // @NOTE: this configurations are coming from the theme/packages/objects/server.js file.
                     let objClass = this.config.get('server/customClasses/objects/'+objectData.object_class_key);
                     if(!objClass){
                         Logger.error([

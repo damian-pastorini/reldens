@@ -1,6 +1,7 @@
 const { Scene, Input } = require('phaser');
 const { TilesetAnimation } = require('./tileset-animation');
 const { EventsManager } = require('../../game/events-manager');
+const { GameConst } = require('../../game/constants');
 
 class SceneDynamic extends Scene
 {
@@ -15,6 +16,7 @@ class SceneDynamic extends Scene
         this.layers = {};
         this.transition = true;
         this.useTsAnimation = false;
+        this.arrowSprite = false;
         // this will contain the animations data coming from the server:
         this.objectsAnimationsData = false;
         // this will contain the animations objects instances:
@@ -46,11 +48,20 @@ class SceneDynamic extends Scene
         });
         this.map = this.add.tilemap(this.params.roomMap);
         this.input.on('pointerdown', (pointer, currentlyOver) => {
-            // @NOTE: avoid double actions, if you target something you will not be moved to the pointer.
+            // @TODO: temporal avoid double actions, if you target something you will not be moved to the pointer, in
+            //   a future release this will be configurable so you can walk to objects and they get activated, for
+            //   example, click on and NPC, automatically walk close and automatically get a dialog opened.
             if(!currentlyOver.length){
                 this.appendRowAndColumn(pointer);
                 this.player.moveToPointer(pointer);
-                // @TODO: run pointer animation.
+                if(this.arrowSprite){
+                    this.arrowSprite.destroy();
+                }
+                this.arrowSprite = this.physics.add.sprite(pointer.worldX, pointer.worldY, GameConst.ARROW_DOWN);
+                this.arrowSprite.setDepth(2000000);
+                this.arrowSprite.anims.play(GameConst.ARROW_DOWN, true).on('animationcomplete', () => {
+                    this.arrowSprite.destroy();
+                });
             }
         });
         this.useTsAnimation = this.hasTsAnimation();
