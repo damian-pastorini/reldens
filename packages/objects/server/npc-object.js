@@ -32,6 +32,7 @@ class NpcObject extends AnimationObject
         // @NOTE: interaction area is how far the player can be from the object to validate the actions on click, this
         // area will be the valid-margin surrounding the object.
         this.interactionArea = this.config.get('server/objects/actions/interactionsDistance');
+        this.options = {};
     }
 
     parseMessageAndRunActions(client, data, room, playerSchema)
@@ -48,6 +49,13 @@ class NpcObject extends AnimationObject
             }
             if(this.content){
                 activationData.content = this.content;
+            }
+            if(Object.entries(this.options).length > 0){
+                activationData.options = {};
+                for(let idx in this.options){
+                    let option = this.options[idx];
+                    activationData.options[idx] = {label: option.label, value: option.value};
+                }
             }
             room.send(client, activationData);
         }

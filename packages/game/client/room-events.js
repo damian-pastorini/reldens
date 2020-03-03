@@ -244,11 +244,38 @@ class RoomEvents
             let uiBox = uiScene.userInterfaces[props.id];
             if(props.title){
                 let boxTitle = uiBox.getChildByProperty('className', 'box-title');
-                boxTitle.innerHTML = props.title;
+                if(boxTitle){
+                    boxTitle.innerHTML = props.title;
+                }
             }
             if(props.content){
                 let boxContent = uiBox.getChildByProperty('className', 'box-content');
-                boxContent.innerHTML = props.content;
+                if(boxContent){
+                    boxContent.innerHTML = props.content;
+                    // @TODO: IMPROVE! I need time to focus on this which I don't have right now :(
+                    if(props.options){
+                        for(let idx in props.options){
+                            let {label, value} = props.options[idx];
+                            let buttonTemplate = uiScene.cache.html.get('uiButton');
+                            let templateVars = {id: idx, object_id: props.id, label, value};
+                            let buttonHtml = this.gameManager.gameEngine.parseTemplate(buttonTemplate, templateVars);
+                            boxContent.innerHTML += buttonHtml;
+                            // @TODO: temporal fix to avoid rendering time issue.
+                            setTimeout(()=>{
+                                let buttonElement = boxContent.querySelector('#opt-'+idx+'-'+props.id);
+                                buttonElement.addEventListener('click', (event) => {
+                                    let optionSend = {
+                                        id: props.id,
+                                        act: GameConst.BUTTON_OPTION,
+                                        value: event.originalTarget.getAttribute('data-option-value')
+                                    };
+                                    this.room.send(optionSend);
+                                });
+                            }, 0);
+                        }
+                    }
+
+                }
             }
             let dialogContainer = uiBox.getChildByID('box-'+props.id);
             dialogContainer.style.display = 'block';

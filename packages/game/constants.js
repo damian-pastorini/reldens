@@ -20,6 +20,7 @@ module.exports.GameConst = {
     UI: 'ui',
     TYPE_PLAYER: 'pj',
     GAME_OVER: 'go',
+    BUTTON_OPTION: 'btn-opt',
     // movement:
     UP: 'up',
     LEFT: 'left',

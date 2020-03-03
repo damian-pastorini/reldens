@@ -55,6 +55,7 @@ class ScenePreloader extends Scene
                 this.load.html('playerStats', 'assets/html/player-stats.html');
             }
             this.load.html('uiTarget', 'assets/html/ui-target.html');
+            this.load.html('uiButton', 'assets/html/ui-button.html');
             EventsManager.emit('reldens.preloadUiScene', this);
         }
         // maps:
@@ -101,7 +102,10 @@ class ScenePreloader extends Scene
         this.load.spritesheet(GameConst.ATTACK, 'assets/sprites/weapons-1.png', {frameWidth: 64, frameHeight: 64});
         this.load.spritesheet(GameConst.HIT, 'assets/sprites/impact-1.png', {frameWidth: 64, frameHeight: 64});
         this.load.spritesheet(GameConst.DEATH, 'assets/sprites/object-1.png', {frameWidth: 64, frameHeight: 64});
-        this.load.spritesheet(GameConst.ARROW_DOWN, 'assets/sprites/arrow-w-down.png', {frameWidth: 32, frameHeight: 32});
+        if(this.gameManager.config.get('client/ui/pointer/show')){
+            let pointerData = {frameWidth: 32, frameHeight: 32};
+            this.load.spritesheet(GameConst.ARROW_DOWN, 'assets/sprites/arrow-w-down.png', pointerData);
+        }
         // interface assets:
         this.load.image(GameConst.ICON_STATS, 'assets/icons/book.png');
         this.load.on('fileprogress', this.onFileProgress, this);
@@ -234,13 +238,15 @@ class ScenePreloader extends Scene
             repeat: 0,
             hideOnComplete: true
         });
-        this.anims.create({
-            key: GameConst.ARROW_DOWN,
-            frames: this.anims.generateFrameNumbers(GameConst.ARROW_DOWN, {start: 1, end: 4}),
-            frameRate: 6,
-            repeat: 3,
-            hideOnComplete: true
-        });
+        if(this.gameManager.config.get('client/ui/pointer/show')){
+            this.anims.create({
+                key: GameConst.ARROW_DOWN,
+                frames: this.anims.generateFrameNumbers(GameConst.ARROW_DOWN, {start: 1, end: 4}),
+                frameRate: 6,
+                repeat: 3,
+                hideOnComplete: true
+            });
+        }
     }
 
     registerControllers(controllersBox)

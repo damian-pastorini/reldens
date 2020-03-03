@@ -54,14 +54,7 @@ class SceneDynamic extends Scene
             if(!currentlyOver.length){
                 this.appendRowAndColumn(pointer);
                 this.player.moveToPointer(pointer);
-                if(this.arrowSprite){
-                    this.arrowSprite.destroy();
-                }
-                this.arrowSprite = this.physics.add.sprite(pointer.worldX, pointer.worldY, GameConst.ARROW_DOWN);
-                this.arrowSprite.setDepth(2000000);
-                this.arrowSprite.anims.play(GameConst.ARROW_DOWN, true).on('animationcomplete', () => {
-                    this.arrowSprite.destroy();
-                });
+                this.updatePointerObject(pointer);
             }
         });
         this.useTsAnimation = this.hasTsAnimation();
@@ -177,6 +170,21 @@ class SceneDynamic extends Scene
         let row = Math.round((pointer.worldY-playerH) / tH);
         pointer.worldColumn = column;
         pointer.worldRow = row;
+    }
+
+    updatePointerObject(pointer)
+    {
+        if(!this.configManager.get('client/ui/pointer/show')){
+            return;
+        }
+        if(this.arrowSprite){
+            this.arrowSprite.destroy();
+        }
+        this.arrowSprite = this.physics.add.sprite(pointer.worldX, pointer.worldY, GameConst.ARROW_DOWN);
+        this.arrowSprite.setDepth(2000000);
+        this.arrowSprite.anims.play(GameConst.ARROW_DOWN, true).on('animationcomplete', () => {
+            this.arrowSprite.destroy();
+        });
     }
 
 }

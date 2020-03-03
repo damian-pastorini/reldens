@@ -60,3 +60,4 @@ span.stat-label { float:left; width:48%; margin-right:2%; display:block; text-al
 span.stat-value { float:left; width:50%; display:block; text-align:left; }
 .loading-container { float:left; text-align:center; width:100%; }
 #chat-open { cursor:pointer; }
+.ui-box-button-option { display:inline-block; margin:10px; }
