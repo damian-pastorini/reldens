@@ -184,14 +184,27 @@ class RoomEvents
                     attackSprite.destroy();
                 });
             }
+            // @TODO: broadcast hit at the time we broadcast the attack hit.
             if(defenderSprite){
-                let hitSprite = currentScene.physics.add.sprite(defenderSprite.x, defenderSprite.y, GameConst.HIT);
-                hitSprite.setDepth(200000);
-                hitSprite.anims.play(GameConst.HIT, true).on('animationcomplete', () => {
-                    hitSprite.destroy();
-                });
+                this.runHitAnimation(defenderSprite.x, defenderSprite.y);
             }
         }
+        if(message.act === GameConst.HIT){
+            this.runHitAnimation(message.x, message.y);
+            if({}.hasOwnProperty.call(message, 'destroy')){
+
+            }
+        }
+    }
+
+    runHitAnimation(x, y)
+    {
+        let currentScene = this.getActiveScene();
+        let hitSprite = currentScene.physics.add.sprite(x, y, GameConst.HIT);
+        hitSprite.setDepth(200000);
+        hitSprite.anims.play(GameConst.HIT, true).on('animationcomplete', () => {
+            hitSprite.destroy();
+        });
     }
 
     roomOnLeave(code)

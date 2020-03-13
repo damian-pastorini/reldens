@@ -107,6 +107,16 @@ class PhysicalBody extends Body
 
     updateBodyState()
     {
+        // @TODO: remove from here or change property name from isBullet to shouldRemove or shouldStop on world
+        //   boundaries.
+        if({}.hasOwnProperty.call(this, 'isBullet') && this.isBullet){
+            if(
+                this.position[0] < 0 || this.position[0] > (this.worldWidth * this.worldTileWidth)
+                || this.position[1] < 0 || this.position[1] > (this.worldHeight * this.worldTileHeight)
+            ){
+                this.world.removeBodies.push(this);
+            }
+        }
         // update position:
         this.bodyState.x = this.position[0];
         this.bodyState.y = this.position[1];
@@ -191,9 +201,9 @@ class PhysicalBody extends Body
         if(!this.world){
             return;
         }
-        let currentCol = Math.round(this.position[0] / this.worldWidth);
+        let currentCol = Math.round(this.position[0] / this.worldTileWidth);
         currentCol = currentCol >= 0 ? currentCol : 0;
-        let currentRow = Math.round(this.position[1] / this.worldHeight);
+        let currentRow = Math.round(this.position[1] / this.worldTileHeight);
         currentRow = currentRow >= 0 ? currentRow : 0;
         if(!this.currentCol){
             this.originalCol = currentCol;
@@ -220,14 +230,24 @@ class PhysicalBody extends Body
         return (this.pathFinder ? this.pathFinder : this.world.pathFinder);
     }
 
-    get worldWidth()
+    get worldTileWidth()
     {
         return this.world.mapJson.tilewidth;
     }
 
-    get worldHeight()
+    get worldTileHeight()
     {
         return this.world.mapJson.tileheight;
+    }
+
+    get worldWidth()
+    {
+        return this.world.mapJson.width;
+    }
+
+    get worldHeight()
+    {
+        return this.world.mapJson.height;
     }
 
 }

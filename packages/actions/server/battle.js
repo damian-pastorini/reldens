@@ -22,19 +22,36 @@ class Battle
         this.battleTimer = false;
         this.timerType = props.timerType || BattleConst.BATTLE_TYPE_PER_TARGET;
         this.lastAttack = false;
-        this.pvType = false;
+        this.battleType = false;
     }
 
-    async runBattle(playerSchema, target)
+    // @TODO: fix / improve battleType implementation.
+    async runBattle(playerSchema, target, battleType, room)
     {
         // @NOTE: each attack will have different properties to validate like range, delay, etc.
-        // @TODO: temporal hardcoded single action "short-attack".
-        let currentAction = playerSchema.actions['attack-short'];
-        if(!currentAction.validate(playerSchema, target) || !currentAction.isInRange(playerSchema, target)){
+        let runAction = 'attack-short'; // default action
+        if(playerSchema.currentAction && {}.hasOwnProperty.call(playerSchema.actions, playerSchema.currentAction)){
+            runAction = playerSchema.currentAction;
+        }
+        let currentAction = playerSchema.actions[runAction];
+        currentAction.room = room;
+        currentAction.currentBattle = this;
+        let inRange = currentAction.isInRange(playerSchema, target);
+        if(!inRange){
+            return false;
+        }
+        let validAttack = currentAction.validate(playerSchema, target);
+        if(!validAttack){
             return false;
         }
         // execute and apply the attack:
-        await currentAction.execute(playerSchema, target);
+        playerSchema.broadcastKey = playerSchema.sessionId;
+        if(target.isRoomObject){
+            target.broadcastKey = target.key;
+        } else if({}.hasOwnProperty.call(target, 'sessionId')){
+            target.broadcastKey = target.sessionId;
+        }
+        let executeResult = await currentAction.execute(playerSchema, target, battleType, room);
         // include the target in the battle list:
         this.lastAttack = Date.now();
         this.inBattleWith[target.id] = {target: target, time: this.lastAttack, battleTimer: false};
@@ -43,7 +60,8 @@ class Battle
             useTimerObj = this.inBattleWith[target.id];
         }
         this.setTimerOn(useTimerObj, target);
-        return true;
+        playerSchema.currentAction = false; // reset action.
+        return executeResult;
     }
 
     setTimerOn(useTimerObj, target)
@@ -60,17 +78,17 @@ class Battle
 
     async updateTargetClient(targetClient, targetSchema, attackerId, room)
     {
-        room.broadcast({
-            act: GameConst.ATTACK,
-            atk: attackerId,
-            def: targetSchema.sessionId,
-            type: this.pvType || 'pvp'
-        });
         if(targetSchema.stats.hp === 0){
             // player is dead! reinitialize the stats:
             targetSchema.stats = targetSchema.initialStats;
             // save the stats:
             await room.savePlayerStats(targetSchema);
+            let actionData = {
+                act: BattleConst.BATTLE_ENDED,
+                x: targetSchema.state.x,
+                y: targetSchema.state.y
+            };
+            room.broadcast(actionData);
             await room.saveStateAndRemovePlayer(targetSchema.sessionId);
             room.send(targetClient, {act: GameConst.GAME_OVER});
             return false;

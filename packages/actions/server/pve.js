@@ -7,9 +7,7 @@
  */
 
 const { Battle } = require('./battle');
-const { ErrorManager } = require('../../game/error-manager');
 const { Logger } = require('../../game/logger');
-const { GameConst } = require('../../game/constants');
 const { BattleConst } = require('../constants');
 
 class Pve extends Battle
@@ -20,7 +18,7 @@ class Pve extends Battle
         super(props);
         this.chaseMultiple = {}.hasOwnProperty.call(props, 'chaseMultiple') ? props.chaseMultiple : false;
         this.inBattleWithPlayer = [];
-        this.pvType = 'pve';
+        this.battleType = 'pve';
     }
 
     setTargetObject(targetObject)
@@ -28,24 +26,22 @@ class Pve extends Battle
         this.targetObject = targetObject;
     }
 
-    async runBattle(playerSchema, target, room)
+    // @TODO: make pvp available by configuration.
+    async runBattle(playerSchema, target, battleType, room)
     {
-        // @NOTE: run battle method is for when the player attacks any target. PVE can be started in different ways, as
-        // how the current enemy-object entity is setup when the player collision with the enemy the enemy will start
-        // the battle, but normally the battle would start if the player attack the target (which will be the
-        // difference between passive and aggressive enemies).
-        let inBattle = await super.runBattle(playerSchema, target);
-        if(!inBattle){
-            return;
-        }
-        room.broadcast({
-            act: GameConst.ATTACK,
-            atk: playerSchema.sessionId,
-            def: this.targetObject.key,
-            type: this.pvType
-        });
-        if(target.stats.hp > 0){
-            await this.startBattleWith(playerSchema, room);
+        // setup broadcast keys:
+        this.targetObject.broadcastKey = this.targetObject.key;
+        playerSchema.broadcastKey = playerSchema.sessionId;
+        // @NOTE: run battle method is for when the player attacks any target. PVE can be started in different ways,
+        // depending how the current enemy-object was implemented, for example the PVE can start when the player just
+        // collides with the enemy (instead of attack it) an aggressive enemy could start the battle automatically.
+        let inBattle = await super.runBattle(playerSchema, target, battleType, room);
+        if(inBattle === 'pve'){
+            if(target.stats.hp > 0){
+                await this.startBattleWith(playerSchema, room);
+            } else {
+                await this.battleEnded(playerSchema, room);
+            }
         }
     }
 
@@ -61,13 +57,16 @@ class Pve extends Battle
         // @NOTE: in PVE we will have this additional method startBattleWith which is when the environment attacks the
         // player.
         if(!this.targetObject){
-            ErrorManager.error('Undefined target for PvE.');
+            Logger.error('Undefined target for PvE.');
             this.leaveBattle(playerSchema);
             return false;
         }
+        // setup broadcast keys:
+        this.targetObject.broadcastKey = this.targetObject.key;
+        playerSchema.broadcastKey = playerSchema.sessionId;
         // the enemy died:
         if(this.targetObject.stats.hp === 0){
-            this.battleEnded(playerSchema, room);
+            await this.battleEnded(playerSchema, room);
             return false;
         }
         // if target (npc) is already in battle with another player then ignore the current attack:
@@ -92,13 +91,14 @@ class Pve extends Battle
             this.targetObject.objectBody.resetAuto();
             this.targetObject.objectBody.velocity = [0, 0];
             // execute and apply the attack:
-            await this.targetObject.actions['attack-short'].execute(this.targetObject, playerSchema);
+            await this.targetObject.actions['attack-short'].execute(this.targetObject, playerSchema, 'pve', room);
             let targetClient = room.getClientById(playerSchema.sessionId);
             if(targetClient){
-                let updateResult = await this.updateTargetClient(targetClient, playerSchema, this.targetObject.key, room).catch((err) => {
-                    ErrorManager.error(err);
+                let update = await this.updateTargetClient(targetClient, playerSchema, this.targetObject.key, room)
+                    .catch((err) => {
+                    Logger.error(err);
                 });
-                if(updateResult){
+                if(update){
                     setTimeout(() => {
                         this.startBattleWith(playerSchema, room);
                     }, this.targetObject.actions['attack-short'].attackDelay);

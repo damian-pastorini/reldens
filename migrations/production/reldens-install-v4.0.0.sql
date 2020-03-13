@@ -27,82 +27,10 @@ CREATE TABLE IF NOT EXISTS `chat` (
   CONSTRAINT `FK__players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON UPDATE CASCADE,
   CONSTRAINT `FK__players_2` FOREIGN KEY (`private_player_id`) REFERENCES `players` (`id`) ON UPDATE CASCADE,
   CONSTRAINT `FK__scenes` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=72 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table reldens.chat: ~71 rows (approximately)
+-- Dumping data for table reldens.chat: ~0 rows (approximately)
 /*!40000 ALTER TABLE `chat` DISABLE KEYS */;
-INSERT INTO `chat` (`id`, `player_id`, `room_id`, `message`, `private_player_id`, `message_type`, `message_time`) VALUES
-	(1, 1, 5, 'ReldensForest', NULL, 'j', '2020-02-24 20:10:59'),
-	(2, 1, 4, 'ReldensTown', NULL, 'j', '2020-02-24 20:11:07'),
-	(3, 1, 2, 'ReldensHouse_1', NULL, 'j', '2020-02-24 20:11:51'),
-	(4, 2, 5, 'ReldensForest', NULL, 'j', '2020-02-25 16:38:59'),
-	(5, 1, 2, 'ReldensHouse_1', NULL, 'j', '2020-02-25 16:46:46'),
-	(6, 1, 4, 'ReldensTown', NULL, 'j', '2020-02-25 16:46:53'),
-	(7, 1, 4, 'ReldensTown', NULL, 'j', '2020-02-26 06:48:16'),
-	(8, 1, 5, 'ReldensForest', NULL, 'j', '2020-02-26 06:49:10'),
-	(9, 1, 5, 'ReldensForest', NULL, 'j', '2020-02-26 06:59:42'),
-	(10, 1, 4, 'ReldensTown', NULL, 'j', '2020-02-26 07:00:15'),
-	(11, 1, 4, 'ReldensTown', NULL, 'j', '2020-02-26 08:05:33'),
-	(12, 1, 5, 'ReldensForest', NULL, 'j', '2020-02-26 08:08:12'),
-	(13, 1, 5, 'ReldensForest', NULL, 'j', '2020-02-26 08:16:41'),
-	(14, 1, 5, 'ReldensForest', NULL, 'j', '2020-02-26 08:18:07'),
-	(15, 1, 5, 'ReldensForest', NULL, 'j', '2020-02-26 20:41:35'),
-	(16, 1, 4, 'ReldensTown', NULL, 'j', '2020-02-26 20:41:38'),
-	(17, 1, 4, 'ReldensTown', NULL, 'j', '2020-02-26 21:55:03'),
-	(18, 1, 4, 'ReldensTown', NULL, 'j', '2020-02-27 10:01:17'),
-	(19, 1, 4, 'ReldensTown', NULL, 'j', '2020-02-27 10:17:31'),
-	(20, 1, 4, 'ReldensTown', NULL, 'j', '2020-02-27 10:21:16'),
-	(21, 1, 4, 'ReldensTown', NULL, 'j', '2020-02-27 10:21:25'),
-	(22, 1, 4, 'ReldensTown', NULL, 'j', '2020-02-27 20:11:54'),
-	(23, 1, 4, 'ReldensTown', NULL, 'j', '2020-02-29 06:41:04'),
-	(24, 1, 4, 'ReldensTown', NULL, 'j', '2020-02-29 06:47:53'),
-	(25, 1, 4, 'ReldensTown', NULL, 'j', '2020-02-29 06:50:56'),
-	(26, 1, 4, 'ReldensTown', NULL, 'j', '2020-03-01 12:47:23'),
-	(27, 1, 4, 'ReldensTown', NULL, 'j', '2020-03-01 12:55:22'),
-	(28, 1, 4, 'ReldensTown', NULL, 'j', '2020-03-01 13:03:26'),
-	(29, 1, 4, 'ReldensTown', NULL, 'j', '2020-03-01 13:08:11'),
-	(30, 1, 4, 'ReldensTown', NULL, 'j', '2020-03-01 13:25:30'),
-	(31, 1, 5, 'ReldensForest', NULL, 'j', '2020-03-01 13:25:48'),
-	(32, 1, 5, 'ReldensForest', NULL, 'j', '2020-03-01 15:55:43'),
-	(33, 1, 5, 'ReldensForest', NULL, 'j', '2020-03-01 20:04:33'),
-	(34, 1, 4, 'ReldensTown', NULL, 'j', '2020-03-01 20:04:37'),
-	(35, 1, 4, 'ReldensTown', NULL, 'j', '2020-03-01 20:43:46'),
-	(36, 1, 4, 'ReldensTown', NULL, 'j', '2020-03-01 21:16:29'),
-	(37, 1, 4, 'ReldensTown', NULL, 'j', '2020-03-01 21:42:11'),
-	(38, 1, 4, 'ReldensTown', NULL, 'j', '2020-03-01 21:45:21'),
-	(39, 1, 4, 'ReldensTown', NULL, 'j', '2020-03-01 22:18:46'),
-	(40, 1, 4, 'ReldensTown', NULL, 'j', '2020-03-01 22:20:51'),
-	(41, 1, 4, 'ReldensTown', NULL, 'j', '2020-03-01 22:23:45'),
-	(42, 1, 4, 'ReldensTown', NULL, 'j', '2020-03-01 22:26:20'),
-	(43, 1, 4, 'ReldensTown', NULL, 'j', '2020-03-01 22:27:48'),
-	(44, 1, 4, 'ReldensTown', NULL, 'j', '2020-03-01 22:29:07'),
-	(45, 1, 4, 'ReldensTown', NULL, 'j', '2020-03-01 22:38:34'),
-	(46, 1, 4, 'ReldensTown', NULL, 'j', '2020-03-01 22:43:26'),
-	(47, 1, 4, 'ReldensTown', NULL, 'j', '2020-03-01 22:47:21'),
-	(48, 1, 4, 'ReldensTown', NULL, 'j', '2020-03-02 07:16:40'),
-	(49, 1, 4, 'ReldensTown', NULL, 'j', '2020-03-02 07:16:50'),
-	(50, 1, 4, 'ReldensTown', NULL, 'j', '2020-03-02 08:17:08'),
-	(51, 1, 4, 'ReldensTown', NULL, 'j', '2020-03-02 08:17:43'),
-	(52, 1, 4, 'ReldensTown', NULL, 'j', '2020-03-02 08:21:39'),
-	(53, 1, 4, 'ReldensTown', NULL, 'j', '2020-03-02 08:22:47'),
-	(54, 1, 4, 'ReldensTown', NULL, 'j', '2020-03-02 08:40:02'),
-	(55, 1, 4, 'ReldensTown', NULL, 'j', '2020-03-02 11:29:32'),
-	(56, 1, 4, 'ReldensTown', NULL, 'j', '2020-03-02 11:31:47'),
-	(57, 1, 4, 'ReldensTown', NULL, 'j', '2020-03-02 12:21:27'),
-	(58, 1, 4, 'ReldensTown', NULL, 'j', '2020-03-02 12:34:50'),
-	(59, 1, 4, 'ReldensTown', NULL, 'j', '2020-03-02 12:35:28'),
-	(60, 1, 4, 'ReldensTown', NULL, 'j', '2020-03-02 12:39:07'),
-	(61, 1, 4, 'ReldensTown', NULL, 'j', '2020-03-02 12:45:29'),
-	(62, 1, 4, 'ReldensTown', NULL, 'j', '2020-03-02 16:54:16'),
-	(63, 1, 4, 'ReldensTown', NULL, 'j', '2020-03-02 18:01:42'),
-	(64, 1, 4, 'ReldensTown', NULL, 'j', '2020-03-02 18:05:09'),
-	(65, 1, 4, 'ReldensTown', NULL, 'j', '2020-03-03 11:38:53'),
-	(66, 1, 4, 'ReldensTown', NULL, 'j', '2020-03-03 13:10:14'),
-	(67, 1, 4, 'ReldensTown', NULL, 'j', '2020-03-03 13:23:38'),
-	(68, 1, 4, 'ReldensTown', NULL, 'j', '2020-03-03 13:28:51'),
-	(69, 1, 5, 'ReldensForest', NULL, 'j', '2020-03-03 13:29:06'),
-	(70, 1, 4, 'ReldensTown', NULL, 'j', '2020-03-03 13:29:26'),
-	(71, 1, 4, 'ReldensTown', NULL, 'j', '2020-03-03 15:07:27');
 /*!40000 ALTER TABLE `chat` ENABLE KEYS */;
 
 -- Dumping structure for table reldens.config
@@ -167,8 +95,8 @@ INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(48, 'client', 'ui/uiTarget/y', '85', 'i'),
 	(49, 'client', 'ui/sceneLabel/x', '250', 'i'),
 	(50, 'client', 'ui/sceneLabel/y', '20', 'i'),
-	(51, 'client', 'ui/controls/x', '90', 'i'),
-	(52, 'client', 'ui/controls/y', '400', 'i'),
+	(51, 'client', 'ui/controls/x', '120', 'i'),
+	(52, 'client', 'ui/controls/y', '390', 'i'),
 	(53, 'client', 'ui/playerStats/x', '420', 'i'),
 	(54, 'client', 'ui/playerStats/y', '10', 'i'),
 	(55, 'client', 'ui/loading/font', 'Verdana, Geneva, sans-serif', 't'),
@@ -311,8 +239,8 @@ CREATE TABLE IF NOT EXISTS `players_state` (
 -- Dumping data for table reldens.players_state: ~5 rows (approximately)
 /*!40000 ALTER TABLE `players_state` DISABLE KEYS */;
 INSERT INTO `players_state` (`id`, `player_id`, `room_id`, `x`, `y`, `dir`) VALUES
-	(3, 1, 4, 329, 409, 'left'),
-	(4, 2, 5, 612, 708, 'left'),
+	(3, 1, 5, 690, 748, 'down'),
+	(4, 2, 5, 603, 477, 'left'),
 	(5, 3, 4, 443, 406, 'down'),
 	(14, 15, 4, 300, 388, 'down'),
 	(15, 16, 4, 508, 381, 'down');
@@ -337,8 +265,8 @@ CREATE TABLE IF NOT EXISTS `players_stats` (
 -- Dumping data for table reldens.players_stats: ~5 rows (approximately)
 /*!40000 ALTER TABLE `players_stats` DISABLE KEYS */;
 INSERT INTO `players_stats` (`id`, `player_id`, `hp`, `mp`, `stamina`, `atk`, `def`, `dodge`, `speed`) VALUES
-	(1, 1, 100, 100, 100, 1001, 1001, 100, 100),
-	(2, 2, 80, 100, 100, 1001, 1001, 100, 100),
+	(1, 1, 55, 100, 100, 1001, 1001, 100, 100),
+	(2, 2, 64, 100, 100, 1001, 1001, 100, 100),
 	(3, 3, 100, 100, 100, 1001, 1001, 100, 100),
 	(15, 15, 100, 100, 100, 1001, 1001, 100, 100),
 	(16, 16, 100, 100, 100, 1001, 1001, 100, 100);
@@ -460,8 +388,8 @@ CREATE TABLE IF NOT EXISTS `users` (
 -- Dumping data for table reldens.users: ~5 rows (approximately)
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
 INSERT INTO `users` (`id`, `email`, `username`, `password`, `role_id`, `status`, `created_at`, `updated_at`) VALUES
-	(29, 'dap@dap.com', 'DarthStormrage', '$2b$10$PQIYGBFyA/69DaowJVTA5ufVWmIUeIOwIK4e6JCAP5Uen0sp0TAHu', 1, 1, '2019-08-02 23:06:14', '2020-03-03 15:07:26'),
-	(30, 'dap2@dap.com', 'dap2', '$2b$10$Kvjh1XdsMai8Xt2wdivG2.prYvTiW6vJrdnrNPYZenf8qCRLhuZ/a', 9, 1, '2019-08-02 23:06:14', '2020-02-25 16:38:58'),
+	(29, 'dap@dap.com', 'DarthStormrage', '$2b$10$PQIYGBFyA/69DaowJVTA5ufVWmIUeIOwIK4e6JCAP5Uen0sp0TAHu', 1, 1, '2019-08-02 23:06:14', '2020-03-13 21:26:20'),
+	(30, 'dap2@dap.com', 'dap2', '$2b$10$Kvjh1XdsMai8Xt2wdivG2.prYvTiW6vJrdnrNPYZenf8qCRLhuZ/a', 9, 1, '2019-08-02 23:06:14', '2020-03-13 16:48:25'),
 	(31, 'dap3@dap.com', 'dap3', '$2b$10$CmtWkhIexIVtcBjwsmEkeOlIhqizViykDFYAKtVrl4sF8KWLuBsxO', 1, 1, '2019-08-02 23:06:14', '2019-11-30 10:54:55'),
 	(43, 'dap13@dap13.com', 'dap13', '$2b$10$PG6nUdhNmhy2RUpS4k.g..vJ5k3x0sPRyFlpnVZMTPfuAXgXyFP/y', 1, 1, '2019-11-15 21:47:17', '2019-11-15 21:47:17'),
 	(44, 'dap12@dap12.com', 'dap12', '$2b$10$PFEKucJCDoQq8evXhO.FiuwMEayr0HLEt5UYo/WU9TgXb.wwwPG8W', 1, 1, '2019-11-15 21:58:32', '2019-11-15 21:58:32');

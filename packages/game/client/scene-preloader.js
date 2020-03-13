@@ -17,6 +17,7 @@ class ScenePreloader extends Scene
     constructor(props)
     {
         super({key: props.name});
+        this.holdTimer = null;
         this.progressBar = null;
         this.progressCompleteRect = null;
         this.progressRect = null;
@@ -102,6 +103,7 @@ class ScenePreloader extends Scene
         this.load.spritesheet(GameConst.ATTACK, 'assets/sprites/weapons-1.png', {frameWidth: 64, frameHeight: 64});
         this.load.spritesheet(GameConst.HIT, 'assets/sprites/impact-1.png', {frameWidth: 64, frameHeight: 64});
         this.load.spritesheet(GameConst.DEATH, 'assets/sprites/object-1.png', {frameWidth: 64, frameHeight: 64});
+        this.load.spritesheet(GameConst.BULLET, 'assets/sprites/earth-1.png', {frameWidth: 64, frameHeight: 64});
         if(this.gameManager.config.get('client/ui/pointer/show')){
             let pointerData = {frameWidth: 32, frameHeight: 32};
             this.load.spritesheet(GameConst.ARROW_DOWN, 'assets/sprites/arrow-w-down.png', pointerData);
@@ -193,58 +195,27 @@ class ScenePreloader extends Scene
         // @TODO:
         //   - Player animation will be part of the configuration in the database.
         //   - Implement player custom avatar.
-        this.anims.create({
-            key: GameConst.LEFT,
-            frames: this.anims.generateFrameNumbers(GameConst.IMAGE_PLAYER, {start: 3, end: 5}),
-            frameRate: this.configuredFrameRate,
-            repeat: -1
-        });
-        this.anims.create({
-            key: GameConst.RIGHT,
-            frames: this.anims.generateFrameNumbers(GameConst.IMAGE_PLAYER, {start: 6, end: 8}),
-            frameRate: this.configuredFrameRate,
-            repeat: -1
-        });
-        this.anims.create({
-            key: GameConst.UP,
-            frames: this.anims.generateFrameNumbers(GameConst.IMAGE_PLAYER, {start: 9, end: 11}),
-            frameRate: this.configuredFrameRate,
-            repeat: -1
-        });
-        this.anims.create({
-            key: GameConst.DOWN,
-            frames: this.anims.generateFrameNumbers(GameConst.IMAGE_PLAYER, {start: 0, end: 2}),
-            frameRate: this.configuredFrameRate,
-            repeat: -1
-        });
-        this.anims.create({
-            key: GameConst.ATTACK,
-            frames: this.anims.generateFrameNumbers(GameConst.ATTACK, {start: 25, end: 29}),
-            frameRate: this.configuredFrameRate,
-            repeat: 0,
-            hideOnComplete: true
-        });
-        this.anims.create({
-            key: GameConst.HIT,
-            frames: this.anims.generateFrameNumbers(GameConst.HIT, {start: 17, end: 19}),
-            frameRate: this.configuredFrameRate,
-            repeat: 0,
-            hideOnComplete: true
-        });
-        this.anims.create({
-            key: GameConst.DEATH,
-            frames: this.anims.generateFrameNumbers(GameConst.DEATH, {start: 10, end: 11}),
-            frameRate: 1,
-            repeat: 0,
-            hideOnComplete: true
-        });
+        let availableAnimations = [
+            {k: GameConst.LEFT, img: GameConst.IMAGE_PLAYER, start: 3, end: 5, repeat: -1, hide: false},
+            {k: GameConst.RIGHT, img: GameConst.IMAGE_PLAYER, start: 6, end: 8, repeat: -1, hide: false},
+            {k: GameConst.UP, img: GameConst.IMAGE_PLAYER, start: 9, end: 11, repeat: -1, hide: false},
+            {k: GameConst.DOWN, img: GameConst.IMAGE_PLAYER, start: 0, end: 2, repeat: -1, hide: false},
+            {k: GameConst.ATTACK, img: GameConst.ATTACK, start: 25, end: 29, repeat: 0},
+            {k: GameConst.HIT, img: GameConst.HIT, start:17, end: 19, repeat: 0},
+            {k: GameConst.DEATH, img: GameConst.DEATH, start: 10, end: 11, repeat: 0, rate: 1},
+            {k: GameConst.BULLET, img: GameConst.BULLET, start: 1, end: 2, repeat: -1, rate: 1}
+        ];
         if(this.gameManager.config.get('client/ui/pointer/show')){
+            let arrowAnim = {k: GameConst.ARROW_DOWN, img: GameConst.ARROW_DOWN, start: 1, end: 4, repeat: 3, rate: 6};
+            availableAnimations.push(arrowAnim);
+        }
+        for(let anim of availableAnimations){
             this.anims.create({
-                key: GameConst.ARROW_DOWN,
-                frames: this.anims.generateFrameNumbers(GameConst.ARROW_DOWN, {start: 1, end: 4}),
-                frameRate: 6,
-                repeat: 3,
-                hideOnComplete: true
+                key: anim.k,
+                frames: this.anims.generateFrameNumbers(anim.img, {start: anim.start, end: anim.end}),
+                frameRate: {}.hasOwnProperty.call(anim, 'rate') ? anim.rate : this.configuredFrameRate,
+                repeat: anim.repeat,
+                hideOnComplete: {}.hasOwnProperty.call(anim, 'hide') ? anim.hide : true,
             });
         }
     }
@@ -252,72 +223,90 @@ class ScenePreloader extends Scene
     registerControllers(controllersBox)
     {
         // @TODO: controllers will be part of the configuration in the database.
-        let btnUp = controllersBox.getChildByProperty('id', GameConst.UP);
-        if(btnUp){
-            this.hold(btnUp, {dir: GameConst.UP});
+        this.setupDirButtonInBox(GameConst.UP, controllersBox);
+        this.setupDirButtonInBox(GameConst.DOWN, controllersBox);
+        this.setupDirButtonInBox(GameConst.LEFT, controllersBox);
+        this.setupDirButtonInBox(GameConst.RIGHT, controllersBox);
+        this.setupActionButtonInBox(GameConst.ACTION, controllersBox);
+        this.setupActionButtonInBox(GameConst.BULLET, controllersBox);
+    }
+
+    setupDirButtonInBox(dir, box)
+    {
+        let btn = box.getChildByProperty('id', dir);
+        if(btn){
+            this.hold(btn, {dir: dir});
         }
-        let btnDown = controllersBox.getChildByProperty('id', GameConst.DOWN);
-        if(btnDown){
-            this.hold(btnDown, {dir: GameConst.DOWN});
-        }
-        let btnLeft = controllersBox.getChildByProperty('id', GameConst.LEFT);
-        if(btnLeft){
-            this.hold(btnLeft, {dir: GameConst.LEFT});
-        }
-        let btnRight = controllersBox.getChildByProperty('id', GameConst.RIGHT);
-        if(btnRight){
-            this.hold(btnRight, {dir: GameConst.RIGHT});
-        }
-        let btnAction = controllersBox.getChildByProperty('id', GameConst.ACTION);
-        if(btnAction){
-            let currentScene = this.gameManager.activeRoomEvents.getActiveScene();
+    }
+
+    setupActionButtonInBox(action, box)
+    {
+        let btnBullet = box.getChildByProperty('id', action);
+        if(btnBullet){
             if(this.gameManager.config.get('client/general/controls/action_button_hold')){
-                this.hold(btnAction, {act: GameConst.ACTION, target: currentScene.player.currentTarget});
+                this.hold(btnBullet, action);
             } else {
-                btnAction.addEventListener('click', () => {
-                    this.gameManager.activeRoomEvents.room.send({
+                btnBullet.addEventListener('click', () => {
+                    let currentScene = this.gameManager.activeRoomEvents.getActiveScene();
+                    let dataSend = {
                         act: GameConst.ACTION,
-                        target: currentScene.player.currentTarget
-                    });
+                        target: currentScene.player.currentTarget,
+                        type: action
+                    };
+                    this.gameManager.activeRoomEvents.room.send(dataSend);
                 });
             }
         }
     }
 
-    hold(btn, sendData)
+    hold(button, action)
     {
-        let t;
-        let repeat = () => {
-            this.gameManager.activeRoomEvents.room.send(sendData);
-            t = setTimeout(repeat, this.timeout);
-        };
-        btn.addEventListener('mousedown', (e) => {
-            e.preventDefault();
-            btn.style.opacity = '1';
-            repeat();
+        button.addEventListener('mousedown', (event) => {
+            this.startHold(event, button, action);
         });
-        btn.addEventListener('mouseup', (e) => {
-            e.preventDefault();
-            btn.style.opacity = '0.8';
-            clearTimeout(t);
-            this.gameManager.activeRoomEvents.room.send({act: GameConst.STOP});
+        button.addEventListener('mouseup', (event) => {
+            this.endHold(event, button);
         });
-        btn.addEventListener('mouseout', (e) => {
-            e.preventDefault();
-            clearTimeout(t);
-            this.gameManager.activeRoomEvents.room.send({act: GameConst.STOP});
+        button.addEventListener('mouseout', (event) => {
+            this.endHold(event, button);
         });
-        btn.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            btn.style.opacity = '1';
-            repeat();
+        button.addEventListener('touchstart', (event) => {
+            this.startHold(event, button, action);
         });
-        btn.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            btn.style.opacity = '0.8';
-            clearTimeout(t);
-            this.gameManager.activeRoomEvents.room.send({act: GameConst.STOP});
+        button.addEventListener('touchend', (event) => {
+            this.endHold(event, button);
         });
+    }
+
+    startHold(event, button, action)
+    {
+        event.preventDefault();
+        button.style.opacity = '1';
+        let currentScene = this.gameManager.activeRoomEvents.getActiveScene();
+        let dataSend = action;
+        // @TODO: temporal until we make buttons fully configurable.
+        if(!{}.hasOwnProperty.call(action, 'dir')){
+            dataSend = {
+                act: action,
+                target: currentScene.player.currentTarget,
+                type: GameConst.ACTION
+            };
+        }
+        this.repeatHold(dataSend);
+    }
+
+    endHold(event, button)
+    {
+        event.preventDefault();
+        button.style.opacity = '0.8';
+        clearTimeout(this.holdTimer);
+        this.gameManager.activeRoomEvents.room.send({act: GameConst.STOP});
+    }
+
+    repeatHold(sendData)
+    {
+        this.gameManager.activeRoomEvents.room.send(sendData);
+        this.holdTimer = setTimeout(() => { this.repeatHold(sendData); }, (this.timeout || 0));
     }
 
     createProgressBar()

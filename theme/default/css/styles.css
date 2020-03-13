@@ -40,8 +40,8 @@ form .input-box input[type="text"], form .input-box input[type="password"] { wid
 .ui-box.ui-box-controls img:active { opacity:1 !important; }
 .ui-box-controls .vertical-buttons { float:left; width:54px; text-align:center; top:0; position:relative; }
 .ui-box-controls #left, .ui-box-controls #right { position:relative; top:30px; }
-.ui-box-controls #action { position:absolute; top:30px; right:-60px; }
 .ui-box-controls .vertical-buttons img { float:none; }
+.ui-box-controls .vertical-buttons.action-buttons { margin-left:10px; }
 .ui-box-player { text-align:center; padding:0px 10px; }
 .ui-box-player, .box-player-stats { background-color: rgba(0, 0, 0, 0.5); }
 .ui-box-npc-dialog { display:none; float:left; width:240px; height:100px; padding:10px 14px; background:#000000; opacity:0.85; color:#ffffff; word-wrap:break-word; overflow:hidden; font-size:12px; }
