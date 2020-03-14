@@ -33,7 +33,8 @@ class AttackBullet extends AttackBase
     {
         // @TODO: shoot bullet on world starting from attacker body, pass this attack as parameter assign it to the
         //   body and execute the attack when the bullet collides.
-        let world = attacker.physicalBody.world;
+        let world = {}.hasOwnProperty.call(attacker, 'physicalBody')
+            ? attacker.physicalBody.world : attacker.objectBody.world;
         this.attacker = attacker;
         this.defender = defender;
         return this.shootBullet(attacker.state, defender.state, world);

@@ -81,17 +81,24 @@ class Pve extends Battle
         if(this.inBattleWithPlayer.indexOf(playerSchema.player_id) === -1){
             this.inBattleWithPlayer.push(playerSchema.player_id);
         }
-        // @TODO: temporal hardcoded attack-short since it's the only action we have for now.
-        if(!this.targetObject.actions['attack-short'].validate(this.targetObject, playerSchema)){
+        let objActionIdx = Math.floor(Math.random() * this.targetObject.actionsKeys.length);
+        let objectActionKey = this.targetObject.actionsKeys[objActionIdx];
+        let objectAction = this.targetObject.actions[objectActionKey];
+        objectAction.room = room;
+        objectAction.currentBattle = this;
+        if(!objectAction.validate(this.targetObject, playerSchema)){
             this.leaveBattle(playerSchema);
             return false;
         }
-        if(this.targetObject.actions['attack-short'].isInRange(this.targetObject, playerSchema)){
+        if(objectAction.isInRange(this.targetObject, playerSchema)){
             // reset the path finder in case the object was moving:
             this.targetObject.objectBody.resetAuto();
             this.targetObject.objectBody.velocity = [0, 0];
             // execute and apply the attack:
-            await this.targetObject.actions['attack-short'].execute(this.targetObject, playerSchema, 'pve', room);
+            let runBattle = await objectAction.execute(this.targetObject, playerSchema, 'pve', room);
+            if(runBattle !== 'pve'){
+                return;
+            }
             let targetClient = room.getClientById(playerSchema.sessionId);
             if(targetClient){
                 let update = await this.updateTargetClient(targetClient, playerSchema, this.targetObject.key, room)
@@ -101,17 +108,18 @@ class Pve extends Battle
                 if(update){
                     setTimeout(() => {
                         this.startBattleWith(playerSchema, room);
-                    }, this.targetObject.actions['attack-short'].attackDelay);
+                    }, objectAction.attackDelay);
                 } else {
                     this.leaveBattle(playerSchema);
                 }
             }
         } else {
+            // @TODO: fix chase behavior when a bullet attack is available.
             let chaseResult = this.targetObject.chaseBody(playerSchema.physicalBody);
             if(chaseResult.length){
                 setTimeout(() => {
                     this.startBattleWith(playerSchema, room);
-                }, this.targetObject.actions['attack-short'].attackDelay);
+                }, objectAction.attackDelay);
             } else {
                 this.leaveBattle(playerSchema);
             }

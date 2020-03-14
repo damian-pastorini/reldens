@@ -49,9 +49,14 @@ class EnemyObject extends NpcObject
         // @TODO: make dynamic and improve.
         let attackShort = new AttackShort();
         attackShort.attacker = this;
-        let attackBullet = new AttackBullet();
-        attackBullet.attacker = this;
-        this.actions = {'attack-short': attackShort, 'attack-bullet': attackBullet};
+        this.actionsKeys = ['attack-short'];
+        this.actions = {'attack-short': attackShort};
+        if(this.config.get('server/enemies/defaultAttacks/attackBullet')){
+            let attackBullet = new AttackBullet();
+            attackBullet.attacker = this;
+            this.actionsKeys.push('attack-bullet');
+            this.actions['attack-bullet'] = attackBullet;
+        }
         this.respawnTime = false;
         this.respawnTimer = false;
         this.respawnLayer = false;

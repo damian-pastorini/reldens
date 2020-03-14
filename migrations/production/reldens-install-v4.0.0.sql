@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS `config` (
   `value` text COLLATE utf8_unicode_ci NOT NULL,
   `type` varchar(2) COLLATE utf8_unicode_ci NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=83 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=84 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping data for table reldens.config: ~80 rows (approximately)
 /*!40000 ALTER TABLE `config` DISABLE KEYS */;
@@ -125,7 +125,8 @@ INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(79, 'server', 'enemies/initialStats/mp', '20', 'i'),
 	(80, 'server', 'enemies/initialStats/speed', '100', 'i'),
 	(81, 'server', 'enemies/initialStats/stamina', '100', 'i'),
-	(82, 'client', 'ui/pointer/show', '1', 'b');
+	(82, 'client', 'ui/pointer/show', '1', 'b'),
+	(83, 'server', 'enemies/defaultAttacks/attackBullet', '0', 'b');
 /*!40000 ALTER TABLE `config` ENABLE KEYS */;
 
 -- Dumping structure for table reldens.features
@@ -239,7 +240,7 @@ CREATE TABLE IF NOT EXISTS `players_state` (
 -- Dumping data for table reldens.players_state: ~5 rows (approximately)
 /*!40000 ALTER TABLE `players_state` DISABLE KEYS */;
 INSERT INTO `players_state` (`id`, `player_id`, `room_id`, `x`, `y`, `dir`) VALUES
-	(3, 1, 5, 690, 748, 'down'),
+	(3, 1, 5, 685, 712, 'down'),
 	(4, 2, 5, 603, 477, 'left'),
 	(5, 3, 4, 443, 406, 'down'),
 	(14, 15, 4, 300, 388, 'down'),
@@ -265,7 +266,7 @@ CREATE TABLE IF NOT EXISTS `players_stats` (
 -- Dumping data for table reldens.players_stats: ~5 rows (approximately)
 /*!40000 ALTER TABLE `players_stats` DISABLE KEYS */;
 INSERT INTO `players_stats` (`id`, `player_id`, `hp`, `mp`, `stamina`, `atk`, `def`, `dodge`, `speed`) VALUES
-	(1, 1, 55, 100, 100, 1001, 1001, 100, 100),
+	(1, 1, 28, 100, 100, 1001, 1001, 100, 100),
 	(2, 2, 64, 100, 100, 1001, 1001, 100, 100),
 	(3, 3, 100, 100, 100, 1001, 1001, 100, 100),
 	(15, 15, 100, 100, 100, 1001, 1001, 100, 100),
@@ -388,7 +389,7 @@ CREATE TABLE IF NOT EXISTS `users` (
 -- Dumping data for table reldens.users: ~5 rows (approximately)
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
 INSERT INTO `users` (`id`, `email`, `username`, `password`, `role_id`, `status`, `created_at`, `updated_at`) VALUES
-	(29, 'dap@dap.com', 'DarthStormrage', '$2b$10$PQIYGBFyA/69DaowJVTA5ufVWmIUeIOwIK4e6JCAP5Uen0sp0TAHu', 1, 1, '2019-08-02 23:06:14', '2020-03-13 21:26:20'),
+	(29, 'dap@dap.com', 'DarthStormrage', '$2b$10$PQIYGBFyA/69DaowJVTA5ufVWmIUeIOwIK4e6JCAP5Uen0sp0TAHu', 1, 1, '2019-08-02 23:06:14', '2020-03-14 13:53:22'),
 	(30, 'dap2@dap.com', 'dap2', '$2b$10$Kvjh1XdsMai8Xt2wdivG2.prYvTiW6vJrdnrNPYZenf8qCRLhuZ/a', 9, 1, '2019-08-02 23:06:14', '2020-03-13 16:48:25'),
 	(31, 'dap3@dap.com', 'dap3', '$2b$10$CmtWkhIexIVtcBjwsmEkeOlIhqizViykDFYAKtVrl4sF8KWLuBsxO', 1, 1, '2019-08-02 23:06:14', '2019-11-30 10:54:55'),
 	(43, 'dap13@dap13.com', 'dap13', '$2b$10$PG6nUdhNmhy2RUpS4k.g..vJ5k3x0sPRyFlpnVZMTPfuAXgXyFP/y', 1, 1, '2019-11-15 21:47:17', '2019-11-15 21:47:17'),
