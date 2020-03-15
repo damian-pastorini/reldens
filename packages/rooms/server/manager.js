@@ -92,7 +92,7 @@ class RoomsManager
     {
         // get rooms:
         let roomsModels = await RoomsModel.query()
-            .eager('[rooms_change_points.next_room, rooms_return_points.to_room]');
+            .withGraphFetched('[rooms_change_points.next_room, rooms_return_points.to_room]');
         if(!roomsModels){
             ErrorManager.error('None rooms found in the database. A room is required to run.');
         }
@@ -107,7 +107,7 @@ class RoomsManager
     async loadRoomById(roomId)
     {
         let room = await RoomsModel.query()
-            .eager('[rooms_change_points.next_room, rooms_return_points.to_room]')
+            .withGraphFetched('[rooms_change_points.next_room, rooms_return_points.to_room]')
             .findById(roomId);
         return this.generateRoomModel(room);
     }
@@ -115,7 +115,7 @@ class RoomsManager
     async loadRoomByName(roomName)
     {
         let room = await RoomsModel.query()
-            .eager('[rooms_change_points.next_room, rooms_return_points.to_room]')
+            .withGraphFetched('[rooms_change_points.next_room, rooms_return_points.to_room]')
             .where('name', roomName)
             .first();
         return this.generateRoomModel(room);

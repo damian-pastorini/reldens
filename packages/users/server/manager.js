@@ -21,7 +21,7 @@ class UsersManager
             ErrorManager.error('Missing user name.');
         }
         let loadedUser = await UsersModel.query()
-            .eager('players.[state, stats]')
+            .withGraphFetched('players.[state, stats]')
             .where('username', username)
             .first();
         if(loadedUser){
