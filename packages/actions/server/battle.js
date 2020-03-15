@@ -86,7 +86,8 @@ class Battle
             let actionData = {
                 act: BattleConst.BATTLE_ENDED,
                 x: targetSchema.state.x,
-                y: targetSchema.state.y
+                y: targetSchema.state.y,
+                t: targetSchema.sessionId
             };
             room.broadcast(actionData);
             await room.saveStateAndRemovePlayer(targetSchema.sessionId);

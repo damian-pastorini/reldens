@@ -32,7 +32,7 @@ class ObjectsManager
     {
         if(!this.roomObjectsData){
             this.roomObjectsData = await ObjectsModel.query()
-                .eager('[parent_room, objects_assets]')
+                .withGraphFetched('[parent_room, objects_assets]')
                 .where('room_id', roomId)
                 .orderBy('tile_index');
         }

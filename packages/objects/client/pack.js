@@ -51,6 +51,9 @@ class ObjectsPack
                 skeletonSprite.anims.play(GameConst.DEATH, true).on('animationcomplete', () => {
                     skeletonSprite.destroy();
                 });
+                if({}.hasOwnProperty.call(message, 't') && message.t === currentScene.player.currentTarget.id){
+                    gameManager.gameEngine.clearTarget();
+                }
             }
         });
         if(room.state && room.state.bodies){

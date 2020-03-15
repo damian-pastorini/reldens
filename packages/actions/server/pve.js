@@ -139,7 +139,8 @@ class Pve extends Battle
         let actionData = {
             act: BattleConst.BATTLE_ENDED,
             x: this.targetObject.objectBody.position[0],
-            y: this.targetObject.objectBody.position[1]
+            y: this.targetObject.objectBody.position[1],
+            t: this.targetObject.key
         };
         room.broadcast(actionData);
         this.targetObject.respawn();
