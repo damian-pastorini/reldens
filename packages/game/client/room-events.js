@@ -181,17 +181,30 @@ class RoomEvents
             if(attackerSprite){
                 let attackSprite = currentScene.physics.add.sprite(attackerSprite.x, attackerSprite.y, GameConst.ATTACK);
                 attackSprite.anims.play(GameConst.ATTACK, true).on('animationcomplete', () => {
-                    attackSprite.anims.remove(GameConst.ATTACK);
+                    attackSprite.destroy();
                 });
             }
+            // @TODO: broadcast hit at the time we broadcast the attack hit.
             if(defenderSprite){
-                let hitSprite = currentScene.physics.add.sprite(defenderSprite.x, defenderSprite.y, GameConst.HIT);
-                hitSprite.setDepth(200000);
-                hitSprite.anims.play(GameConst.HIT, true).on('animationcomplete', () => {
-                    hitSprite.anims.remove(GameConst.HIT);
-                });
+                this.runHitAnimation(defenderSprite.x, defenderSprite.y);
             }
         }
+        if(message.act === GameConst.HIT){
+            this.runHitAnimation(message.x, message.y);
+            if({}.hasOwnProperty.call(message, 'destroy')){
+
+            }
+        }
+    }
+
+    runHitAnimation(x, y)
+    {
+        let currentScene = this.getActiveScene();
+        let hitSprite = currentScene.physics.add.sprite(x, y, GameConst.HIT);
+        hitSprite.setDepth(200000);
+        hitSprite.anims.play(GameConst.HIT, true).on('animationcomplete', () => {
+            hitSprite.destroy();
+        });
     }
 
     roomOnLeave(code)
@@ -244,11 +257,38 @@ class RoomEvents
             let uiBox = uiScene.userInterfaces[props.id];
             if(props.title){
                 let boxTitle = uiBox.getChildByProperty('className', 'box-title');
-                boxTitle.innerHTML = props.title;
+                if(boxTitle){
+                    boxTitle.innerHTML = props.title;
+                }
             }
             if(props.content){
                 let boxContent = uiBox.getChildByProperty('className', 'box-content');
-                boxContent.innerHTML = props.content;
+                if(boxContent){
+                    boxContent.innerHTML = props.content;
+                    // @TODO: IMPROVE! I need time to focus on this which I don't have right now :(
+                    if(props.options){
+                        for(let idx in props.options){
+                            let {label, value} = props.options[idx];
+                            let buttonTemplate = uiScene.cache.html.get('uiButton');
+                            let templateVars = {id: idx, object_id: props.id, label, value};
+                            let buttonHtml = this.gameManager.gameEngine.parseTemplate(buttonTemplate, templateVars);
+                            boxContent.innerHTML += buttonHtml;
+                            // @TODO: temporal fix to avoid rendering time issue.
+                            setTimeout(()=>{
+                                let buttonElement = boxContent.querySelector('#opt-'+idx+'-'+props.id);
+                                buttonElement.addEventListener('click', (event) => {
+                                    let optionSend = {
+                                        id: props.id,
+                                        act: GameConst.BUTTON_OPTION,
+                                        value: event.originalTarget.getAttribute('data-option-value')
+                                    };
+                                    this.room.send(optionSend);
+                                });
+                            }, 0);
+                        }
+                    }
+
+                }
             }
             let dialogContainer = uiBox.getChildByID('box-'+props.id);
             dialogContainer.style.display = 'block';

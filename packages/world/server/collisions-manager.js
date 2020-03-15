@@ -39,7 +39,6 @@ class CollisionsManager
         let { pairs } = evt;
         if(pairs.length > 1){
             for(let body of pairs){
-                // Logger.log('pairs!', body.playerId);
                 if(body.playerId && body.pStop){
                     body.velocity = [0, 0];
                     body.pStop = false;
@@ -57,7 +56,7 @@ class CollisionsManager
         // cases:
         // - player hit a player
         // - player hit an object (any type, animations, NPC, etc.)
-        // - player hit an enemy
+        // - object hit object (bullets will hit objects)
         if(bodyA.playerId && bodyB.playerId){
             this.playerHitPlayer(bodyA, bodyB);
         } else {
@@ -70,6 +69,8 @@ class CollisionsManager
                 if(otherBody.changeScenePoint){
                     this.playerHitChangePoint(currentPlayerBody, otherBody);
                 }
+            } else {
+                this.objectHitObject(bodyA, bodyB);
             }
         }
     }
@@ -155,6 +156,18 @@ class CollisionsManager
             this.room.nextSceneInitialPosition(contactClient, changeData).catch((err) => {
                 Logger.error('nextSceneInitialPosition error: '+err);
             });
+        }
+    }
+
+    objectHitObject(bodyA, bodyB)
+    {
+        let aPriority = {}.hasOwnProperty.call(bodyA, 'hitPriority');
+        let bPriority = {}.hasOwnProperty.call(bodyB, 'hitPriority');
+        let onHitData = {bodyA: bodyA, bodyB: bodyB, room: this.room};
+        if((!aPriority && !bPriority) || (aPriority && (!bPriority || aPriority > bPriority))){
+            bodyA.roomObject.onHit(onHitData);
+        } else {
+            bodyB.roomObject.onHit(onHitData);
         }
     }
 

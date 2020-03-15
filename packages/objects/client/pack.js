@@ -31,6 +31,7 @@ class ObjectsPack
         EventsManager.on('reldens.joinedRoom', (room, gameManager) => {
             this.listenMessages(room, gameManager);
         });
+        this.bullets = [];
     }
 
     listenMessages(room, gameManager)
@@ -48,15 +49,34 @@ class ObjectsPack
                 let skeletonSprite = currentScene.physics.add.sprite(message.x, message.y, GameConst.DEATH);
                 skeletonSprite.setDepth(200000);
                 skeletonSprite.anims.play(GameConst.DEATH, true).on('animationcomplete', () => {
-                    skeletonSprite.anims.remove(GameConst.DEATH);
+                    skeletonSprite.destroy();
                 });
             }
         });
         if(room.state && room.state.bodies){
+            room.state.bodies.onAdd = (body, key) => {
+                if(key.indexOf('bullet') !== -1){
+                    let currentScene = gameManager.activeRoomEvents.getActiveScene();
+                    let bulletSprite = currentScene.physics.add.sprite(body.x, body.y, GameConst.BULLET);
+                    bulletSprite.setDepth(200000);
+                    this.bullets[key] = bulletSprite;
+                }
+            };
+            room.state.bodies.onRemove = (body, key) => {
+                if(key.indexOf('bullet') !== -1 && {}.hasOwnProperty.call(this.bullets, key)){
+                    this.bullets[key].destroy();
+                    delete this.bullets[key];
+                }
+            };
             room.state.bodies.onChange = (body, key) => {
-                let currentScene = gameManager.activeRoomEvents.getActiveScene();
-                currentScene.objectsAnimations[key].sceneSprite.x = body.x;
-                currentScene.objectsAnimations[key].sceneSprite.y = body.y;
+                if(key.indexOf('bullet') !== -1){
+                    this.bullets[key].x = body.x;
+                    this.bullets[key].y = body.y;
+                } else {
+                    let currentScene = gameManager.activeRoomEvents.getActiveScene();
+                    currentScene.objectsAnimations[key].sceneSprite.x = body.x;
+                    currentScene.objectsAnimations[key].sceneSprite.y = body.y;
+                }
             };
         }
     }

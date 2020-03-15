@@ -49,6 +49,7 @@ class P2world extends World
         this.pathFinder = new PathFinder();
         this.pathFinder.world = this;
         this.pathFinder.createGridFromMap();
+        this.removeBodies = [];
     }
 
     /**
@@ -217,7 +218,13 @@ class P2world extends World
         }
         let boxBody = new bodyClass(bodyConfig);
         if(hasState){
-            boxBody.bodyState = new ObjectBodyState({x: x, y: y, dir: GameConst.DOWN, scene: this.sceneName});
+            boxBody.bodyState = new ObjectBodyState({
+                x: x,
+                y: y,
+                dir: GameConst.DOWN,
+                scene: this.sceneName,
+                id: boxBody.id
+            });
         }
         boxBody.addShape(boxShape);
         return boxBody;

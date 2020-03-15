@@ -6,59 +6,44 @@
  *
  */
 
-const { InteractionArea } = require('../../world/interaction-area');
+const { AttackBase } = require('./attack-base');
+const { GameConst } = require('../../game/constants');
 
-class AttackShort
+class AttackShort extends AttackBase
 {
 
     constructor()
     {
-        this.attackDelay = 500;
-        this.key = 'attack-short';
-        this.canAttack = true;
-        this.range = 40;
-        this.hitDamage = 5;
+        super({
+            attackDelay: 500,
+            key: 'attack-short',
+            canAttack: true,
+            range: 50,
+            hitDamage: 5
+        });
     }
 
-    // eslint-disable-next-line no-unused-vars
-    validate(attacker, defender)
+    async execute(attacker, defender, battleType, room)
     {
-        // @TODO: every action or attack values will be configurable.
-        // attack delay is the time in milliseconds until player can attack again:
-        if(!attacker.actions[this.key].canAttack){
-            // @NOTE: player could be running an attack already.
-            return false;
-        }
-        if(this.attackDelay){
-            attacker.actions[this.key].canAttack = false;
-            setTimeout(()=> {
-                attacker.actions[this.key].canAttack = true;
-            }, this.attackDelay);
-        } else {
-            attacker.actions[this.key].canAttack = true;
-        }
-        return true;
-    }
-
-    isInRange(attacker, defender)
-    {
-        // validate attack range:
-        let interactionArea = new InteractionArea();
-        interactionArea.setupInteractionArea(this.range, defender.state.x, defender.state.y);
-        return interactionArea.isValidInteraction(attacker.state.x, attacker.state.y);
-    }
-
-    async execute(attacker, defender)
-    {
-        if(attacker.stats.atk >= defender.stats.atk){
-            if(defender.stats.hp > 0){
-                defender.stats.hp -= this.hitDamage;
+        room.broadcast({
+            act: GameConst.ATTACK,
+            atk: attacker.broadcastKey,
+            def: defender.broadcastKey,
+            type: battleType
+        });
+        await super.execute(attacker, defender, battleType, room);
+        if(
+            {}.hasOwnProperty.call(this.attacker, 'player_id')
+            && {}.hasOwnProperty.call(this.defender, 'objectBody')
+            && this.currentBattle
+        ){
+            if(this.defender.stats.hp > 0){
+                await this.currentBattle.startBattleWith(this.attacker, this.room);
+            } else {
+                await this.battleEnded(this.attacker, this.room);
             }
         }
-        // avoid getting below 0:
-        if(defender.stats.hp < 0){
-            defender.stats.hp = 0;
-        }
+        return battleType;
     }
 
 }

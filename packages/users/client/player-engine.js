@@ -80,6 +80,9 @@ class PlayerEngine
 
     redrawLifeBar()
     {
+        if(!this.uiLifeBar){
+            return;
+        }
         let barHeight = this.gameManager.config.get('client/ui/uiLifeBar/height');
         let fullBarWidth = this.gameManager.config.get('client/ui/uiLifeBar/width');
         let fullHp = this.gameManager.config.initialStats.hp;
@@ -121,8 +124,10 @@ class PlayerEngine
             playerSprite.anims.stop();
             playerSprite.mov = player.state.mov;
         }
-        // redraw life bar all the time:
-        this.redrawLifeBar();
+        if(this.gameManager.config.get('client/ui/uiLifeBar/enabled')){
+            // redraw life bar all the time:
+            this.redrawLifeBar();
+        }
     }
 
     playPlayerAnimation(playerSprite, player)

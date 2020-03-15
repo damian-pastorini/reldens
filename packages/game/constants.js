@@ -20,6 +20,7 @@ module.exports.GameConst = {
     UI: 'ui',
     TYPE_PLAYER: 'pj',
     GAME_OVER: 'go',
+    BUTTON_OPTION: 'btn-opt',
     // movement:
     UP: 'up',
     LEFT: 'left',
@@ -27,7 +28,9 @@ module.exports.GameConst = {
     RIGHT: 'right',
     STOP: 'stop',
     ACTION: 'action',
+    BULLET: 'attack-bullet',
     POINTER: 'mp',
+    ARROW_DOWN: 'ard',
     // collisions:
     COL_PLAYER: Math.pow(2,0),
     COL_ENEMY: Math.pow(2,1),

@@ -11,10 +11,11 @@ const { Battle } = require('./battle');
 class Pvp extends Battle
 {
 
-    async runBattle(player, target, room)
+    // @TODO: make pvp available by configuration.
+    async runBattle(player, target, battleType, room)
     {
         // @NOTE: run battle method is for when the player attacks a target.
-        let inBattle = await super.runBattle(player, target);
+        let inBattle = await super.runBattle(player, target, battleType, room);
         if(!inBattle){
             return;
         }

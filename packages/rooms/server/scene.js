@@ -126,6 +126,10 @@ class RoomScene extends RoomLogin
 
     onMessage(client, messageData)
     {
+        if(!messageData){
+            // Logger.error(['Empty message data:', messageData]);
+            return;
+        }
         // get player:
         let playerSchema = this.getPlayerFromState(client.sessionId);
         // only process the message if the player exists and has a body:
@@ -199,6 +203,13 @@ class RoomScene extends RoomLogin
         this.timeStep = this.config.get('server/rooms/world/timestep') || 0.04;
         this.worldTimer = this.clock.setInterval(() => {
             this.roomWorld.step(this.timeStep);
+            if(this.roomWorld.removeBodies.length){
+                for(let removeBody of this.roomWorld.removeBodies){
+                    this.roomWorld.removeBody(removeBody);
+                }
+                // reset the array after remove all bodies:
+                this.roomWorld.removeBodies = [];
+            }
         }, 1000 * this.timeStep);
         Logger.info('World created in Room: ' + this.roomName);
     }

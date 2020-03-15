@@ -12,6 +12,7 @@
 const { NpcObject } = require('./npc-object');
 const { Pve } = require('../../actions/server/pve');
 const { AttackShort } = require('../../actions/server/attack-short');
+const { AttackBullet } = require('../../actions/server/attack-bullet');
 const { ObjectsConst } = require('../constants');
 const { Logger } = require('../../game/logger');
 
@@ -45,7 +46,17 @@ class EnemyObject extends NpcObject
             chaseMultiple: {}.hasOwnProperty.call(props, 'chaseMultiple') ? props.chaseMultiple : false
         });
         this.battle.setTargetObject(this);
-        this.actions = {'attack-short': new AttackShort()};
+        // @TODO: make dynamic and improve.
+        let attackShort = new AttackShort();
+        attackShort.attacker = this;
+        this.actionsKeys = ['attack-short'];
+        this.actions = {'attack-short': attackShort};
+        if(this.config.get('server/enemies/defaultAttacks/attackBullet')){
+            let attackBullet = new AttackBullet();
+            attackBullet.attacker = this;
+            this.actionsKeys.push('attack-bullet');
+            this.actions['attack-bullet'] = attackBullet;
+        }
         this.respawnTime = false;
         this.respawnTimer = false;
         this.respawnLayer = false;

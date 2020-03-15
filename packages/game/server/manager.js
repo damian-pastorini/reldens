@@ -135,14 +135,20 @@ class ServerManager
 
     async createClientBundle()
     {
-        // @TODO:
-        //   - Analyze how to split the bundle from the server and if possible to avoid the middleware from Parcel.
-        //   - Test production mode.
+        let runBundler = process.env.RELDENS_PARCEL_RUN_BUNDLER || false;
+        if(!runBundler){
+            return;
+        }
         // create bundle:
-        const bundlerOptions = { production: process.env.NODE_ENV === 'production' };
+        const bundlerOptions = {
+            production: process.env.NODE_ENV === 'production',
+            sourceMaps: process.env.RELDENS_PARCEL_SOURCEMAPS || false
+        };
         Logger.info(this.projectRoot + ThemeManager.projectTheme + '/index.html');
-        this.bundler = await new Parcel(this.projectRoot + ThemeManager.projectTheme + '/index.html', bundlerOptions);
-        this.app.use(this.bundler.middleware());
+        this.bundler = new Parcel(this.projectRoot + ThemeManager.projectTheme + '/index.html', bundlerOptions);
+        await this.bundler.bundle();
+        let middleware = this.bundler.middleware();
+        this.app.use(middleware);
     }
 
 }
