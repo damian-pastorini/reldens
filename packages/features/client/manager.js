@@ -7,7 +7,7 @@
  *
  */
 
-const { EventsManager } = require('../../game/events-manager');
+const { EventsManager } = require('@reldens/utils');
 const { ClientCoreFeatures } = require('./config-client');
 
 class FeaturesManager

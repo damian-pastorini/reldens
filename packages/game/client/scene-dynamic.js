@@ -1,6 +1,12 @@
+/**
+ *
+ * Reldens - SceneDynamic
+ *
+ */
+
 const { Scene, Input } = require('phaser');
 const { TilesetAnimation } = require('./tileset-animation');
-const { EventsManager } = require('../../game/events-manager');
+const { EventsManager } = require('@reldens/utils');
 const { GameConst } = require('../../game/constants');
 
 class SceneDynamic extends Scene

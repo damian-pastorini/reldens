@@ -12,9 +12,8 @@ const http = require('http');
 const express = require('express');
 const cors = require('cors');
 const Parcel = require('parcel-bundler');
-const { EventsManager } = require('../events-manager');
 const { GameServer } = require('./game-server');
-const { DataServer } = require('./data-server');
+const { DataServer } = require('@reldens/storage');
 const { ConfigManager } = require('../../config/server/manager');
 const { FeaturesManager } = require('../../features/server/manager');
 const { UsersManager } = require('../../users/server/manager');
@@ -22,7 +21,7 @@ const { LoginManager } = require('./login');
 const { RoomsManager } = require('../../rooms/server/manager');
 const { ThemeManager } = require('./theme-manager');
 const { MapsLoader } = require('./maps-loader');
-const { Logger } = require('../logger');
+const { Logger, EventsManager } = require('@reldens/utils');
 
 class ServerManager
 {
@@ -73,19 +72,19 @@ class ServerManager
     async start()
     {
         Logger.info('Starting Server Manager!');
-        this.createServer();
+        await this.createServer();
         await this.initializeManagers();
         // after the rooms were loaded then finish the server process:
-        EventsManager.emit('reldens.serverBeforeListen', {serverManager: this});
-        this.gameServer.listen(this.configServer.port);
+        await EventsManager.emit('reldens.serverBeforeListen', {serverManager: this});
+        await this.gameServer.listen(this.configServer.port);
         Logger.info('Listening on '+this.configServer.host+':'+this.configServer.port);
         await this.createClientBundle();
-        EventsManager.emit('reldens.serverReady', {serverManager: this});
+        await EventsManager.emit('reldens.serverReady', {serverManager: this});
     }
 
-    createServer()
+    async createServer()
     {
-        EventsManager.emit('reldens.serverStartBegin', {serverManager: this});
+        await EventsManager.emit('reldens.serverStartBegin', {serverManager: this});
         this.app = express();
         this.app.use(cors());
         this.app.use(express.json());
@@ -108,17 +107,17 @@ class ServerManager
         configProcessor.projectRoot = this.projectRoot;
         // theme root:
         configProcessor.projectTheme = ThemeManager.projectTheme;
-        EventsManager.emit('reldens.serverConfigReady', {serverManager: this, configProcessor: configProcessor});
+        await EventsManager.emit('reldens.serverConfigReady', {serverManager: this, configProcessor: configProcessor});
         // features manager:
         this.featuresManager = new FeaturesManager();
         // load the available features list and append to the config, this way we will pass the list to the client:
         configProcessor.availableFeaturesList = await this.featuresManager.loadFeatures();
-        EventsManager.emit('reldens.serverConfigFeaturesReady', {serverManager: this, configProcessor: configProcessor});
+        await EventsManager.emit('reldens.serverConfigFeaturesReady', {serverManager: this, configProcessor: configProcessor});
         // users manager:
         this.usersManager = new UsersManager();
         // the rooms manager will receive the features rooms to be defined:
         this.roomsManager = new RoomsManager();
-        EventsManager.emit('reldens.serverBeforeLoginManager', {serverManager: this});
+        await EventsManager.emit('reldens.serverBeforeLoginManager', {serverManager: this});
         // login manager:
         this.loginManager = new LoginManager({
             config: configProcessor,
@@ -126,7 +125,7 @@ class ServerManager
             roomsManager: this.roomsManager
         });
         // prepare rooms:
-        EventsManager.emit('reldens.serverBeforeDefineRooms', {serverManager: this});
+        await EventsManager.emit('reldens.serverBeforeDefineRooms', {serverManager: this});
         await this.roomsManager.defineRoomsInGameServer(this.gameServer, {
             loginManager: this.loginManager,
             config: configProcessor

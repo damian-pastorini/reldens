@@ -6,7 +6,7 @@
  *
  */
 
-const { Logger } = require('../../game/logger');
+const { Logger } = require('@reldens/utils');
 const { GameConst } = require('../../game/constants');
 
 class PlayerEngine

@@ -10,9 +10,7 @@ const { World, Body, Box } = require('p2');
 const { PathFinder } = require('./path-finder');
 const { PhysicalBody } = require('./physical-body');
 const { ObjectBodyState } = require('./object-body-state');
-const { EventsManager } = require('../../game/events-manager');
-const { Logger } = require('../../game/logger');
-const { ErrorManager } = require('../../game/error-manager');
+const { Logger, ErrorManager, EventsManager } = require('@reldens/utils');
 const { GameConst } = require('../../game/constants');
 
 class P2world extends World

@@ -10,9 +10,7 @@ const { RoomsModel } = require('./model');
 const { RoomGame } = require('./game');
 const { RoomScene } = require('./scene');
 const { GameConst } = require('../../game/constants');
-const { Logger } = require('../../game/logger');
-const { ErrorManager } = require('../../game/error-manager');
-const { EventsManager } = require('../../game/events-manager');
+const { Logger, ErrorManager, EventsManager } = require('@reldens/utils');
 
 class RoomsManager
 {

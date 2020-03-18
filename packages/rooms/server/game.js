@@ -10,7 +10,7 @@
  */
 
 const { RoomLogin } = require('./login');
-const { EventsManager } = require('../../game/events-manager');
+const { EventsManager } = require('@reldens/utils');
 const { GameConst } = require('../../game/constants');
 
 class RoomGame extends RoomLogin

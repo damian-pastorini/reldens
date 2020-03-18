@@ -6,8 +6,7 @@
  *
  */
 
-const { ErrorManager } = require('../../game/error-manager');
-const { Logger } = require('../../game/logger');
+const { Logger, ErrorManager } = require('@reldens/utils');
 
 class CollisionsManager
 {

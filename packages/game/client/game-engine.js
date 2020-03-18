@@ -8,7 +8,7 @@
 
 const { Game } = require('phaser');
 const TemplateEngine = require('mustache');
-const { EventsManager } = require('../events-manager');
+const { EventsManager } = require('@reldens/utils');
 
 class GameEngine extends Game
 {

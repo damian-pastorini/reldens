@@ -12,11 +12,9 @@ const { P2world } = require('../../world/server/p2world');
 const { CollisionsManager } = require('../../world/server/collisions-manager');
 const { ObjectsManager } = require('../../objects/server/manager');
 const { ActionsManager } = require('../../actions/server/manager');
-const { EventsManager } = require('../../game/events-manager');
 const { GameConst } = require('../../game/constants');
 const { ObjectsConst } = require('../../objects/constants');
-const { Logger } = require('../../game/logger');
-const { ErrorManager } = require('../../game/error-manager');
+const { Logger, ErrorManager, EventsManager } = require('@reldens/utils');
 
 class RoomScene extends RoomLogin
 {

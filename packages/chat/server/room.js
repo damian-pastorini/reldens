@@ -9,8 +9,7 @@
 const { RoomLogin } = require('../../rooms/server/login');
 const { ChatManager } = require('./manager');
 const { Cleaner } = require('../cleaner');
-const { ErrorManager } = require('../../game/error-manager');
-const { Logger } = require('../../game/logger');
+const { Logger, ErrorManager } = require('@reldens/utils');
 const { ChatConst } = require('../constants');
 
 class RoomChat extends RoomLogin

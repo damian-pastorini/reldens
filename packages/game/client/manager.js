@@ -6,13 +6,12 @@
  *
  */
 
-const { EventsManager } = require('../events-manager');
 const { GameClient } = require('./game-client');
 const { GameEngine } = require('./game-engine');
 const { RoomEvents } = require('./room-events');
 const { FeaturesManager } = require('../../features/client/manager');
 const { ConfigProcessor } = require('../../config/processor');
-const { Logger } = require('../logger');
+const { Logger, EventsManager } = require('@reldens/utils');
 const { GameConst } = require('../constants');
 
 class GameManager

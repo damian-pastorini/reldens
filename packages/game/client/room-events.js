@@ -11,7 +11,7 @@ const { PlayerEngine } = require('../../users/client/player-engine');
 const { SceneDynamic } = require('./scene-dynamic');
 const { ScenePreloader } = require('./scene-preloader');
 const { GameConst } = require('../constants');
-const { EventsManager } = require('../events-manager');
+const { EventsManager } = require('@reldens/utils');
 
 class RoomEvents
 {

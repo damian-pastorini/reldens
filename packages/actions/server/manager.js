@@ -6,7 +6,7 @@
  *
  */
 
-const { EventsManager } = require('../../game/events-manager');
+const { EventsManager } = require('@reldens/utils');
 const { Pvp } = require('./pvp');
 const { AttackShort } = require('./attack-short');
 const { AttackBullet } = require('./attack-bullet');
@@ -46,7 +46,7 @@ class ActionsManager
                 }
                 playerSchema.actions['pvp'].runBattle(playerSchema, target, 'pvp', room);
             }
-            if(message.target.type === ObjectsConst.TYPE_OBJECT){
+            if(message.target.type === ObjectsConst.TYPE_OBJECT && {}.hasOwnProperty.call(target, 'battle')){
                 target.battle.targetObject = target;
                 await target.battle.runBattle(playerSchema, target, 'pve', room);
             }

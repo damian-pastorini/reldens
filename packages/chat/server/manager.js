@@ -7,7 +7,7 @@
  */
 
 const { ChatModel } = require('./model');
-const { Logger } = require('../../game/logger');
+const { Logger } = require('@reldens/utils');
 
 class ChatManager
 {

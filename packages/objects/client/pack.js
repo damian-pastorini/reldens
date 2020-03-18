@@ -6,9 +6,8 @@
 
 const { AnimationEngine } = require('../../objects/client/animation-engine');
 const { UserInterface } = require('../../game/client/user-interface');
-const { EventsManager } = require('../../game/events-manager');
 const { ObjectsConst } = require('../constants');
-const { Logger } = require('../../game/logger');
+const { Logger, EventsManager } = require('@reldens/utils');
 const { BattleConst } = require('../../actions/constants');
 const { GameConst } = require('../../game/constants');
 

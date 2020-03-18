@@ -7,7 +7,7 @@
  */
 
 const { PasswordManager } = require('./password-manager');
-const { ErrorManager } = require('../error-manager');
+const { ErrorManager } = require('@reldens/utils');
 
 class LoginManager
 {

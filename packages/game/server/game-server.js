@@ -9,7 +9,7 @@
 
 const { Server } = require('colyseus');
 const monitor = require('@colyseus/monitor');
-const { Logger } = require('../logger');
+const { Logger } = require('@reldens/utils');
 
 class GameServer extends Server
 {

@@ -8,7 +8,7 @@
  */
 
 const { ObjectsModel } = require('./model');
-const { Logger } = require('../../game/logger');
+const { Logger } = require('@reldens/utils');
 
 class ObjectsManager
 {
