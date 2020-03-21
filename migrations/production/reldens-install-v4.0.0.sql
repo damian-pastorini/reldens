@@ -189,7 +189,7 @@ CREATE TABLE IF NOT EXISTS `objects_assets` (
   PRIMARY KEY (`object_asset_id`),
   KEY `object_id` (`object_id`),
   CONSTRAINT `FK_objects_assets_objects` FOREIGN KEY (`object_id`) REFERENCES `objects` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8_unicode_ci;
 
 -- Dumping data for table reldens.objects_assets: ~6 rows (approximately)
 /*!40000 ALTER TABLE `objects_assets` DISABLE KEYS */;
@@ -279,7 +279,7 @@ CREATE TABLE IF NOT EXISTS `respawn` (
   `object_id` int(11) unsigned NOT NULL,
   `respawn_time` int(11) unsigned NOT NULL DEFAULT '0',
   `instances_limit` int(11) unsigned NOT NULL DEFAULT '0',
-  `layer` varchar(255) CHARACTER SET latin1 NOT NULL,
+  `layer` varchar(255) CHARACTER SET utf8_unicode_ci NOT NULL,
   PRIMARY KEY (`id`),
   KEY `respawn_object_id` (`object_id`),
   CONSTRAINT `FK_respawn_objects` FOREIGN KEY (`object_id`) REFERENCES `objects` (`id`) ON UPDATE CASCADE

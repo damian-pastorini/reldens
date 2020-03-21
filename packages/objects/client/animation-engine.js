@@ -28,7 +28,7 @@ class AnimationEngine
         this.y = props.y || 0;
         this.repeat = isNaN(props.repeat) ? -1 : props.repeat;
         this.hideOnComplete = props.hideOnComplete || false;
-        // @NOTE: you can not combine destroyOnComplete with repeat = -1, because an animation with infinite
+        // @NOTE: you cannot combine destroyOnComplete with repeat = -1, because an animation with infinite
         // repetitions will never trigger the complete event.
         this.destroyOnComplete = props.destroyOnComplete || false;
         this.autoStart = props.autoStart || false;
