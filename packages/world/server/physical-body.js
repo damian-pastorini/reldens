@@ -202,9 +202,9 @@ class PhysicalBody extends Body
             return;
         }
         let currentCol = Math.round(this.position[0] / this.worldTileWidth);
-        currentCol = currentCol >= 0 ? currentCol : 0;
+        currentCol = (currentCol >= 0) ? ((currentCol > this.worldWidth) ? (this.worldWidth) : currentCol) : 0;
         let currentRow = Math.round(this.position[1] / this.worldTileHeight);
-        currentRow = currentRow >= 0 ? currentRow : 0;
+        currentRow = (currentRow >= 0) ? ((currentRow > this.worldHeight) ? (this.worldHeight) : currentRow) : 0;
         if(!this.currentCol){
             this.originalCol = currentCol;
         }
