@@ -52,7 +52,7 @@ class GameManager
 
     async joinGame(formData, isNewUser = false)
     {
-        await EventsManager.emit('reldens.beforeJoinGame', {gameManager: this, formData: formData, isNewUser: isNewUser});
+        await EventsManager.emit('reldens.beforeJoinGame', {gameManager: this, formData, isNewUser});
         this.initializeClient();
         // login or register:
         if(isNewUser){
