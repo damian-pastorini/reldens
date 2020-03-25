@@ -53,7 +53,7 @@ If you like to contribute or donate to support the project please feel free to c
 Join our Discord channel: https://discord.gg/HuJMxUY
 
 
-## [Installation](https://github.com/damian-pastorini/reldens/wiki/New-v4.0.0-beta.6-Installation "Installation")
+## [Installation](https://github.com/damian-pastorini/reldens/wiki/New-v4.0.0-beta.x-Installation "Installation")
 
 
 ## [How To](https://github.com/damian-pastorini/reldens/wiki/How-To "How To")
