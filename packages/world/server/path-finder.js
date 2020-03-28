@@ -30,7 +30,7 @@ class PathFinder
         if(this.world.onlyWalkeable){
             let nodeTo = this.grid.getNodeAt(to[0], to[1]);
             if(nodeTo && !nodeTo.walkable){
-                return;
+                return false;
             }
         }
         // we need a new grid clone for every path find.

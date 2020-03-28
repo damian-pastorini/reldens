@@ -200,6 +200,9 @@ class PhysicalBody extends Body
         let fromPoints = [this.currentCol, this.currentRow];
         let toPoints = [toPoint.column, toPoint.row];
         this.autoMoving = this.getPathFinder().findPath(fromPoints, toPoints);
+        if(!this.autoMoving){
+             this.stopMove();
+        }
         return this.autoMoving;
     }
 
