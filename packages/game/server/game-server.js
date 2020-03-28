@@ -8,7 +8,7 @@
  */
 
 const { Server } = require('colyseus');
-const monitor = require('@colyseus/monitor');
+const Monitor = require('@colyseus/monitor');
 const { Logger } = require('@reldens/utils');
 
 class GameServer extends Server
@@ -23,7 +23,7 @@ class GameServer extends Server
 
     initMonitor()
     {
-        return monitor.monitor(this);
+        return Monitor.monitor(this);
     }
 
     runOnShutDown()
