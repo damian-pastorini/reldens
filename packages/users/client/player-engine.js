@@ -27,6 +27,8 @@ class PlayerEngine
         this.dir = false;
         this.currentTarget = false;
         this.animationBasedOnPress = this.config.get('client/players/animations/basedOnPress');
+        this.topOff = this.gameManager.config.get('client/players/size/topOffset');
+        this.leftOff = this.gameManager.config.get('client/players/size/leftOffset');
     }
 
     create()
@@ -115,8 +117,8 @@ class PlayerEngine
             Logger.error('PlayerSprite animation not defined.');
         }
         this.playPlayerAnimation(playerSprite, player);
-        playerSprite.x = player.state.x;
-        playerSprite.y = player.state.y;
+        playerSprite.x = player.state.x - this.leftOff;
+        playerSprite.y = player.state.y - this.topOff;
         // @NOTE: depth has to be set dynamically, this way the player will be above or below other objects.
         playerSprite.setDepth(playerSprite.y + playerSprite.body.height);
         // player stop action:
@@ -195,8 +197,8 @@ class PlayerEngine
             act: GameConst.POINTER,
             column: pointer.worldColumn,
             row: pointer.worldRow,
-            x: pointer.worldX,
-            y: pointer.worldY
+            x: pointer.worldX + this.leftOff,
+            y: pointer.worldY + this.topOff
         };
         this.room.send(data);
     }

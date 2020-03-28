@@ -28,6 +28,7 @@ class P2world extends World
         this.sceneName = options.sceneName || false;
         this.sceneTiledMapFile = options.roomData.roomMap || false;
         this.tryClosestPath = options.tryClosestPath || false;
+        this.onlyWalkeable = options.onlyWalkeable || false;
         this.worldSpeed = options.worldSpeed || false;
         // keys events:
         this.allowSimultaneous = options.allowSimultaneous;
@@ -82,6 +83,9 @@ class P2world extends World
                         && (layer.name.indexOf('change-points') !== -1 || layer.name.indexOf('collisions') !== -1)
                     ){
                         this.createCollision(layer.name, tileIndex, tileW, tileH, posX, posY);
+                        this.pathFinder.grid.setWalkableAt(c, r, false);
+                    }
+                    if(tile === 0 && layer.name.indexOf('pathfinder') !== -1){
                         this.pathFinder.grid.setWalkableAt(c, r, false);
                     }
                     // objects will be found by layer name + tile index:

@@ -108,6 +108,11 @@ class CollisionsManager
 
     playerHitObject(playerBody, otherBody)
     {
+        // if the player collides with something we need to restart the pathfinder if it was active:
+        if(playerBody.autoMoving && playerBody.autoMoving.length > 1){
+            let destPoint = playerBody.autoMoving.pop();
+            playerBody.moveToPoint({column: destPoint[0], row: destPoint[1]});
+        }
         // now the collisions manager only run the object hit action:
         if(otherBody.roomObject){
             otherBody.roomObject.onHit({playerBody: playerBody, objectBody: otherBody, room: this.room});
@@ -119,8 +124,14 @@ class CollisionsManager
     {
         // @NOTE: we can use wall.material to trigger an action over the player, like:
         // wall.material = lava > reduce player.hp in every step
-        playerBody.pStop = true;
-        playerBody.velocity = [0, 0];
+        // if the player collides with something we need to restart the pathfinder if it was active:
+        if(playerBody.autoMoving && playerBody.autoMoving.length > 1){
+            let destPoint = playerBody.autoMoving.pop();
+            playerBody.moveToPoint({column: destPoint[0], row: destPoint[1]});
+        } else {
+            playerBody.pStop = true;
+            playerBody.velocity = [0, 0];
+        }
     }
 
     // eslint-disable-next-line no-unused-vars

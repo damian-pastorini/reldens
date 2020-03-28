@@ -163,17 +163,8 @@ class SceneDynamic extends Scene
         // @TODO: this is a temporal fix, we need to make configurable the player body and take it into account for the
         //   path finder calculations. Between the configurations we need to include one to affect the body size in the
         //   server, for now all the bodies get the same tile size. See related issue #54.
-        let confH = this.configManager.get('client/players/size/height');
-        let playerH = confH - tH;
-        if(this.player.state.y < pointer.worldY){
-            playerH = confH / 2;
-        }
-        let playerW2 = this.configManager.get('client/players/size/width') / 4;
-        if(this.player.state.x > pointer.worldX){
-            playerW2 = -(playerW2);
-        }
-        let column = Math.round((pointer.worldX+playerW2) / tW);
-        let row = Math.round((pointer.worldY-playerH) / tH);
+        let column = Math.round(pointer.worldX / tW);
+        let row = Math.round(pointer.worldY / tH);
         pointer.worldColumn = column;
         pointer.worldRow = row;
     }

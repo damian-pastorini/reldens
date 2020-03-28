@@ -27,6 +27,12 @@ class PathFinder
 
     findPath(from, to)
     {
+        if(this.world.onlyWalkeable){
+            let nodeTo = this.grid.getNodeAt(to[0], to[1]);
+            if(nodeTo && !nodeTo.walkable){
+                return;
+            }
+        }
         // we need a new grid clone for every path find.
         let grid = this.grid.clone();
         let path = this.finder.findPath(from[0], from[1], to[0], to[1], grid);

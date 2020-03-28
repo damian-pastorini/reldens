@@ -56,7 +56,7 @@ class PhysicalBody extends Body
                 this.angle += this.angularVelocity * dt;
             }
         }
-        if(this.autoMoving.length){
+        if(this.autoMoving && this.autoMoving.length){
             this.speedToNext(pos);
         }
         if(this.bodyState){
@@ -107,6 +107,14 @@ class PhysicalBody extends Body
 
     updateBodyState()
     {
+        // only update the body if it moves:
+        if(
+            this.bodyState.x === this.position[0] && this.bodyState.y === this.position[1]
+            && this.velocity[0] === 0 && this.velocity[1] === 0
+        ){
+            this.bodyState.mov = false;
+            return;
+        }
         // @TODO: remove from here or change property name from isBullet to shouldRemove or shouldStop on world
         //   boundaries.
         if({}.hasOwnProperty.call(this, 'isBullet') && this.isBullet){
