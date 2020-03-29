@@ -94,7 +94,7 @@ class ServerManager
         // game monitor:
         if(this.configServer.monitor){
             // (optional) attach web monitoring panel:
-            this.app.use('/monitor', this.gameServer.initMonitor());
+            this.app.use('/colyseus', this.gameServer.initMonitor());
             Logger.info('Attached monitor.');
         }
     }
