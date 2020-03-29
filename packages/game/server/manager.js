@@ -51,7 +51,12 @@ class ServerManager
         this.configServer = {
             port: Number(process.env.PORT) || Number(process.env.RELDENS_APP_PORT) || 8080,
             host: process.env.RELDENS_APP_HOST || 'http://localhost',
-            monitor: process.env.RELDENS_MONITOR || false
+            monitor: {
+                enabled: process.env.RELDENS_MONITOR || false,
+                auth: process.env.RELDENS_MONITOR_AUTH || false,
+                user: process.env.RELDENS_MONITOR_USER,
+                pass: process.env.RELDENS_MONITOR_PASS,
+            }
         };
         if(config.customClasses){
             this.configManager.configList.server.customClasses = config.customClasses;
@@ -91,11 +96,9 @@ class ServerManager
         this.appServer = http.createServer(this.app);
         // create game server instance:
         this.gameServer = new GameServer({server: this.appServer, express: this.app});
-        // game monitor:
-        if(this.configServer.monitor){
-            // (optional) attach web monitoring panel:
-            this.app.use('/colyseus', this.gameServer.initMonitor());
-            Logger.info('Attached monitor.');
+        // attach web monitoring panel (optional):
+        if(this.configServer.monitor.enabled){
+            this.gameServer.attachMonitor(this.app, this.configServer.monitor);
         }
     }
 

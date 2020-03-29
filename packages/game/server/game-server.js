@@ -9,6 +9,7 @@
 
 const { Server } = require('colyseus');
 const Monitor = require('@colyseus/monitor');
+const basicAuth = require('express-basic-auth');
 const { Logger } = require('@reldens/utils');
 
 class GameServer extends Server
@@ -21,9 +22,22 @@ class GameServer extends Server
         this.onShutdown(() => this.runOnShutDown());
     }
 
-    initMonitor()
+    attachMonitor(app, config)
     {
-        return Monitor.monitor(this);
+        if(config.auth && config.user && config.pass){
+            // @TODO: in the future we will check if the logged user has permissions to see the monitor.
+            let users = {};
+            users[config.user] = config.pass;
+            let basicAuthMiddleware = basicAuth({
+                users: users,
+                // sends WWW-Authenticate header, which will prompt the user to fill credentials in:
+                challenge: true
+            });
+            app.use('/colyseus', basicAuthMiddleware, Monitor.monitor(this));
+        } else {
+            app.use('/colyseus', Monitor.monitor(this));
+        }
+        Logger.info('Attached monitor.');
     }
 
     runOnShutDown()
