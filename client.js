@@ -7,6 +7,6 @@
  */
 
 // game class:
-const { GameManager } = require('./packages/game/client/manager');
+const { GameManager } = require('./dist/manager');
 // export game manager:
 module.exports.GameManager = GameManager;
