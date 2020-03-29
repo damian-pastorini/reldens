@@ -1,6 +1,6 @@
 {
     "name": "reldens",
-    "version": "4.0.0-beta.10",
+    "version": "4.0.0-beta.11",
     "description": "Reldens - MMORPG Platform",
     "source": true,
     "homepage": "https://github.com/damian-pastorini/reldens",
@@ -38,7 +38,7 @@
     "author": "Damian A. Pastorini",
     "license": "MIT",
     "dependencies": {
-        "@reldens/utils": "^0.1.1",
+        "@reldens/utils": "^0.1.5",
         "@reldens/storage": "^0.1.0",
         "@colyseus/monitor": "^0.12.1",
         "@colyseus/schema": "^0.5.34",
