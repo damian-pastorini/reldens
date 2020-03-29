@@ -6,7 +6,7 @@
 
 const { RoomChat } = require('./room');
 const { ChatMessageActions } = require('./message-actions');
-const { EventsManager } = require('../../game/events-manager');
+const { EventsManager } = require('@reldens/utils');
 const { PackInterface } = require('../../features/server/pack-interface');
 
 class ChatPack extends PackInterface

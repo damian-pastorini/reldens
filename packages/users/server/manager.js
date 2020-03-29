@@ -9,7 +9,7 @@
 const { UsersModel } = require('./model');
 const { PlayersStateModel } = require('./players-state-model');
 const { PlayersStatsModel } = require('./players-stats-model');
-const { ErrorManager } = require('../../game/error-manager');
+const { ErrorManager } = require('@reldens/utils');
 
 class UsersManager
 {

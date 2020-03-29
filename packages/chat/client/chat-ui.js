@@ -8,7 +8,7 @@
 
 const { Input } = require('phaser');
 const { ChatConst } = require('../constants');
-const { Logger } = require('../../game/logger');
+const { Logger } = require('@reldens/utils');
 
 class ChatUi
 {

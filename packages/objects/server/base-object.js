@@ -8,7 +8,7 @@
  */
 
 const { InteractionArea } = require('../../world/interaction-area');
-const { Logger } = require('../../game/logger');
+const { Logger } = require('@reldens/utils');
 
 class BaseObject extends InteractionArea
 {

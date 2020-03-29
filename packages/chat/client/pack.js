@@ -4,10 +4,9 @@
  *
  */
 
-const { EventsManager } = require('../../game/events-manager');
 const { ChatUi } = require('./chat-ui');
 const { ChatConst } = require('../constants');
-const { Logger } = require('../../game/logger');
+const { Logger, EventsManager } = require('@reldens/utils');
 
 class Chat
 {

@@ -7,8 +7,7 @@
  */
 
 const { Scene, Geom } = require('phaser');
-const { EventsManager } = require('../events-manager');
-const { Logger } = require('../logger');
+const { Logger, EventsManager } = require('@reldens/utils');
 const { GameConst } = require('../constants');
 
 class ScenePreloader extends Scene

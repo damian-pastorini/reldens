@@ -4,7 +4,7 @@
  *
  */
 
-const { EventsManager } = require('../../game/events-manager');
+const { EventsManager } = require('@reldens/utils');
 const { RoomRespawn } = require('./room-respawn');
 const { PackInterface } = require('../../features/server/pack-interface');
 

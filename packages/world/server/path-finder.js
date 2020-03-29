@@ -14,9 +14,10 @@ class PathFinder
 
     createGridFromMap()
     {
-        // @NOTE: here we create an empty grid with the size of the current scene, then we mark the collisions when the
-        // layers and world contents are created. See class P2world, line 83, method "setWalkableAt".
-        this.grid = new Grid(this.world.mapJson.width, this.world.mapJson.height);
+        // @NOTE: here we create an empty grid with the size of the current scene +1 (because the index starts at zero).
+        // We mark the collisions on this grid when the layers and world contents are created.
+        // See class P2world, line 83, method "setWalkableAt".
+        this.grid = new Grid(this.world.mapJson.width+1, this.world.mapJson.height+1);
     }
 
     addBodyToProcess(body)
@@ -26,6 +27,12 @@ class PathFinder
 
     findPath(from, to)
     {
+        if(this.world.onlyWalkeable){
+            let nodeTo = this.grid.getNodeAt(to[0], to[1]);
+            if(nodeTo && !nodeTo.walkable){
+                return false;
+            }
+        }
         // we need a new grid clone for every path find.
         let grid = this.grid.clone();
         let path = this.finder.findPath(from[0], from[1], to[0], to[1], grid);

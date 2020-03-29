@@ -6,7 +6,7 @@
  *
  */
 
-const { EventsManager } = require('../events-manager');
+const { EventsManager } = require('@reldens/utils');
 
 class UserInterface
 {

@@ -8,7 +8,7 @@
 
 const { BaseObject } = require('./base-object');
 const { ObjectsConst } = require('../constants');
-const { Logger } = require('../../game/logger');
+const { Logger } = require('@reldens/utils');
 
 class AnimationObject extends BaseObject
 {

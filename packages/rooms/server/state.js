@@ -9,7 +9,7 @@
 const { Schema, MapSchema, type } = require('@colyseus/schema');
 const { Player } = require('../../users/server/player');
 const { ObjectBodyState } = require('../../world/server/object-body-state');
-const { Logger } = require('../../game/logger');
+const { Logger } = require('@reldens/utils');
 
 class State extends Schema
 {

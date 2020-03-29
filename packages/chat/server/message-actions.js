@@ -8,7 +8,7 @@
 
 const { ChatManager } = require('./manager');
 const { Cleaner } = require('../cleaner');
-const { Logger } = require('../../game/logger');
+const { Logger } = require('@reldens/utils');
 const { ChatConst } = require('../constants');
 const { GameConst } = require('../../game/constants');
 

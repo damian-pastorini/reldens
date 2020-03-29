@@ -44,6 +44,12 @@ class Battle
         if(!validAttack){
             return false;
         }
+        if(!currentAction.attacker){
+            currentAction.attacker = playerSchema;
+        }
+        if(!currentAction.defender){
+            currentAction.defender = target;
+        }
         // execute and apply the attack:
         playerSchema.broadcastKey = playerSchema.sessionId;
         if(target.isRoomObject){

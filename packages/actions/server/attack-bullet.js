@@ -117,6 +117,18 @@ class AttackBullet extends AttackBase
                 } else {
                     await this.currentBattle.battleEnded(this.attacker, this.room);
                 }
+            } else {
+                if({}.hasOwnProperty.call(this.defender, 'player_id')){
+                    let targetClient = this.room.getClientById(this.defender.sessionId);
+                    if(targetClient){
+                        await this.currentBattle.updateTargetClient(
+                            targetClient,
+                            this.defender,
+                            this.attacker.sessionId,
+                            this.room
+                        );
+                    }
+                }
             }
         } else {
             // the bullet hit something else:

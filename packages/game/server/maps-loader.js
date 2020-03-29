@@ -8,7 +8,7 @@
  */
 
 const fs = require('fs');
-const { ErrorManager } = require('../error-manager');
+const { ErrorManager } = require('@reldens/utils');
 
 class MapsLoader
 {
@@ -27,7 +27,7 @@ class MapsLoader
         for(let file of files){
             let fileFullPath = themeFolder+mapsFolder+file;
             let fileName = file.replace('.json', '');
-            // @NOTE: this is not the best but is the only dynamic required I didn't find a good way to avoid yet.
+            // @TODO: improve, this is not a good practice but is the only dynamic required I wasn't able to avoid yet.
             configManager.configList.server.maps[fileName] = require(fileFullPath);
         }
     }

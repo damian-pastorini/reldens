@@ -7,13 +7,12 @@
  */
 
 const { ConfigProcessor } = require('../processor');
-const { Logger } = require('../../game/logger');
+const { Logger, EventsManager } = require('@reldens/utils');
 const { ConfigModel } = require('./model');
 const { GameConfig } = require('../../game/server/config');
 const { InitialState } = require('../../users/server/initial-state');
 const { InitialStats } = require('../../users/server/initial-stats');
 const { InitialUser } = require('../../users/server/initial-user');
-const { EventsManager } = require('../../game/events-manager');
 const { ConfigConst } = require('../constants');
 
 class ConfigManager

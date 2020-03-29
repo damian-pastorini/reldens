@@ -11,7 +11,7 @@ const { PlayerEngine } = require('../../users/client/player-engine');
 const { SceneDynamic } = require('./scene-dynamic');
 const { ScenePreloader } = require('./scene-preloader');
 const { GameConst } = require('../constants');
-const { EventsManager } = require('../events-manager');
+const { EventsManager } = require('@reldens/utils');
 
 class RoomEvents
 {
@@ -138,7 +138,9 @@ class RoomEvents
             let currentScene = this.getActiveScene();
             // if other users enter in the current scene we need to add them:
             let {id, x, y, dir, username} = message;
-            currentScene.player.addPlayer(id, {x, y, dir, username});
+            let topOff = this.gameManager.config.get('client/players/size/topOffset');
+            let leftOff = this.gameManager.config.get('client/players/size/leftOffset');
+            currentScene.player.addPlayer(id, {x:(x-leftOff), y:(y-topOff), dir, username});
         }
         // @NOTE: here we don't need to evaluate the id since the reconnect only is sent to the current client.
         if(message.act === GameConst.RECONNECT){

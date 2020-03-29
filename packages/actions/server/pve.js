@@ -7,7 +7,7 @@
  */
 
 const { Battle } = require('./battle');
-const { Logger } = require('../../game/logger');
+const { Logger } = require('@reldens/utils');
 const { BattleConst } = require('../constants');
 
 class Pve extends Battle

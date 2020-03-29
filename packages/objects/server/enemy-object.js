@@ -14,7 +14,7 @@ const { Pve } = require('../../actions/server/pve');
 const { AttackShort } = require('../../actions/server/attack-short');
 const { AttackBullet } = require('../../actions/server/attack-bullet');
 const { ObjectsConst } = require('../constants');
-const { Logger } = require('../../game/logger');
+const { Logger } = require('@reldens/utils');
 
 class EnemyObject extends NpcObject
 {
