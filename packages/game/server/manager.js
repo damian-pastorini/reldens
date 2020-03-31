@@ -11,7 +11,7 @@ const dotenv = require('dotenv');
 const http = require('http');
 const express = require('express');
 const cors = require('cors');
-const Parcel = require('parcel-bundler');
+const { AwaitMiddleware } = require('./await-middleware');
 const { GameServer } = require('./game-server');
 const { DataServer } = require('@reldens/storage');
 const { ConfigManager } = require('../../config/server/manager');
@@ -139,17 +139,17 @@ class ServerManager
     {
         let runBundler = process.env.RELDENS_PARCEL_RUN_BUNDLER || false;
         if(!runBundler){
-            return;
+            return false;
         }
         // create bundle:
         const bundlerOptions = {
             production: process.env.NODE_ENV === 'production',
             sourceMaps: process.env.RELDENS_PARCEL_SOURCEMAPS || false
         };
-        Logger.info(this.projectRoot + ThemeManager.projectTheme + '/index.html');
-        this.bundler = new Parcel(this.projectRoot + ThemeManager.projectTheme + '/index.html', bundlerOptions);
-        await this.bundler.bundle();
-        let middleware = this.bundler.middleware();
+        let indexPath = this.projectRoot + ThemeManager.projectTheme + '/index.html';
+        Logger.info('Running bundle on: ' + indexPath);
+        this.bundler = new AwaitMiddleware(indexPath, bundlerOptions);
+        let middleware = await this.bundler.middleware();
         this.app.use(middleware);
     }
 
