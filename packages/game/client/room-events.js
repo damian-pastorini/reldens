@@ -181,9 +181,10 @@ class RoomEvents
                 }
             }
             if(attackerSprite){
-                let attackSprite = currentScene.physics.add.sprite(attackerSprite.x, attackerSprite.y, GameConst.ATTACK);
-                attackSprite.anims.play(GameConst.ATTACK, true).on('animationcomplete', () => {
-                    attackSprite.destroy();
+                let attackAnim = currentScene.physics.add.sprite(attackerSprite.x, attackerSprite.y, GameConst.ATTACK);
+                attackAnim.setDepth(200000);
+                attackAnim.anims.play(GameConst.ATTACK, true).on('animationcomplete', () => {
+                    attackAnim.destroy();
                 });
             }
             // @TODO: broadcast hit at the time we broadcast the attack hit.
