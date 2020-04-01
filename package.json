@@ -39,7 +39,7 @@
     "license": "MIT",
     "dependencies": {
         "@reldens/utils": "^0.1.5",
-        "@reldens/storage": "^0.1.0",
+        "@reldens/storage": "^0.1.1",
         "@colyseus/monitor": "^0.12.1",
         "@colyseus/schema": "^0.5.35",
         "bcrypt": "^4.0.1",
