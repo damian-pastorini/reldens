@@ -79,8 +79,9 @@ class RoomScene extends RoomLogin
                 let player = this.state.players[playerIdx];
                 if(player.username === options.username){
                     loggedUserFound = true;
+                    let savedStats = await this.savePlayerStats(player);
                     let savedAndRemoved = await this.saveStateAndRemovePlayer(playerIdx);
-                    if(savedAndRemoved){
+                    if(savedAndRemoved && savedStats){
                         // old player session removed, create it again:
                         await this.createPlayer(client, authResult);
                     }
@@ -116,9 +117,11 @@ class RoomScene extends RoomLogin
     {
         let playerSchema = this.getPlayerFromState(client.sessionId);
         if(playerSchema){
-            this.saveStateAndRemovePlayer(client.sessionId).catch((err) => {
-                Logger.error(['Player save error:', playerSchema.username, playerSchema.state, err]);
-            });
+            let savedStats = await this.savePlayerStats(playerSchema);
+            let savedAndRemoved = await this.saveStateAndRemovePlayer(client.sessionId);
+            if(!savedStats || !savedAndRemoved){
+                Logger.error(['Player save error:', playerSchema.username, playerSchema.state, playerSchema.stats]);
+            }
         }
     }
 
