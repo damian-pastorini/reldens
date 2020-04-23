@@ -43,7 +43,7 @@
         "@colyseus/monitor": "^0.12.1",
         "@colyseus/schema": "^0.5.34",
         "bcrypt": "^4.0.1",
-        "colyseus": "^0.12.4",
+        "colyseus": "^0.13.0",
         "colyseus.js": "^0.12.2",
         "cors": "^2.8.5",
         "dotenv": "^8.2.0",
