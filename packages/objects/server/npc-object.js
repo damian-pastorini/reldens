@@ -39,7 +39,8 @@ class NpcObject extends AnimationObject
     {
         // validate for object interaction, object id and interaction area:
         if(
-            data.act === ObjectsConst.OBJECT_INTERACTION
+            {}.hasOwnProperty.call(data, 'act')
+            && data.act === ObjectsConst.OBJECT_INTERACTION
             && data.id === this.id
             && this.isValidInteraction(playerSchema.state.x, playerSchema.state.y)
         ){

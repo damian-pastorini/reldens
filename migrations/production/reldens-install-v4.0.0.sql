@@ -41,9 +41,9 @@ CREATE TABLE IF NOT EXISTS `config` (
   `value` text COLLATE utf8_unicode_ci NOT NULL,
   `type` varchar(2) COLLATE utf8_unicode_ci NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=87 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=89 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table reldens.config: ~81 rows (approximately)
+-- Dumping data for table reldens.config: ~80 rows (approximately)
 /*!40000 ALTER TABLE `config` DISABLE KEYS */;
 INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(1, 'server', 'rooms/validation/valid', 'room_game,chat_global', 't'),
@@ -87,7 +87,7 @@ INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(40, 'client', 'chat/position/x', '440', 'i'),
 	(41, 'client', 'chat/position/y', '450', 'i'),
 	(42, 'server', 'players/actions/interactionDistance', '40', 'i'),
-	(43, 'server', 'objects/actions/interactionsDistance', '64', 'i'),
+	(43, 'server', 'objects/actions/interactionsDistance', '80', 'i'),
 	(44, 'client', 'ui/playerName/enabled', '1', 'b'),
 	(45, 'client', 'ui/playerName/y', '30', 'i'),
 	(46, 'client', 'ui/uiLifeBar/enabled', '1', 'b'),
@@ -129,7 +129,9 @@ INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(83, 'server', 'enemies/defaultAttacks/attackBullet', '0', 'b'),
 	(84, 'client', 'players/size/topOffset', '20', 'i'),
 	(85, 'client', 'players/size/leftOffset', '0', 'i'),
-	(86, 'server', 'rooms/world/onlyWalkeable', '1', 'b');
+	(86, 'server', 'rooms/world/onlyWalkeable', '1', 'b'),
+	(87, 'client', 'inventory/position/y', '450', 'i'),
+	(88, 'client', 'inventory/position/x', '380', 'i');
 /*!40000 ALTER TABLE `config` ENABLE KEYS */;
 
 -- Dumping structure for table reldens.features
@@ -139,14 +141,15 @@ CREATE TABLE IF NOT EXISTS `features` (
   `title` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
   `is_enabled` int(11) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping data for table reldens.features: ~1 rows (approximately)
 /*!40000 ALTER TABLE `features` DISABLE KEYS */;
 INSERT INTO `features` (`id`, `code`, `title`, `is_enabled`) VALUES
 	(1, 'chat', 'Chat', 1),
 	(2, 'objects', 'Objects', 1),
-	(3, 'respawn', 'Respawn', 1);
+	(3, 'respawn', 'Respawn', 1),
+	(4, 'inventory', 'Inventory', 1);
 /*!40000 ALTER TABLE `features` ENABLE KEYS */;
 
 -- Dumping structure for table reldens.items_group
@@ -157,10 +160,12 @@ CREATE TABLE IF NOT EXISTS `items_group` (
   `items_limit` int(1) NOT NULL DEFAULT '0',
   `limit_per_item` int(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='The group table is to save the groups settings.';
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='The group table is to save the groups settings.';
 
 -- Dumping data for table reldens.items_group: ~0 rows (approximately)
 /*!40000 ALTER TABLE `items_group` DISABLE KEYS */;
+INSERT INTO `items_group` (`id`, `key`, `label`, `items_limit`, `limit_per_item`) VALUES
+	(1, 'equipment', 'Equipment', 0, 0);
 /*!40000 ALTER TABLE `items_group` ENABLE KEYS */;
 
 -- Dumping structure for table reldens.items_inventory
@@ -168,36 +173,49 @@ CREATE TABLE IF NOT EXISTS `items_inventory` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `owner_id` int(11) NOT NULL,
   `item_id` int(11) NOT NULL,
-  `item_qty` int(11) NOT NULL,
-  `remaining_uses` int(11) NOT NULL,
-  `is_active` int(1) NOT NULL COMMENT 'For example equiped or not equiped items.',
+  `qty` int(11) NOT NULL DEFAULT '0',
+  `remaining_uses` int(11) DEFAULT NULL,
+  `is_active` int(1) DEFAULT NULL COMMENT 'For example equipped or not equipped items.',
   PRIMARY KEY (`id`),
   KEY `FK_items_inventory_items_item` (`item_id`),
   CONSTRAINT `FK_items_inventory_items_item` FOREIGN KEY (`item_id`) REFERENCES `items_item` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Inventory table is to save the items for each owner.';
+) ENGINE=InnoDB AUTO_INCREMENT=56 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Inventory table is to save the items for each owner.';
 
--- Dumping data for table reldens.items_inventory: ~0 rows (approximately)
+-- Dumping data for table reldens.items_inventory: ~6 rows (approximately)
 /*!40000 ALTER TABLE `items_inventory` DISABLE KEYS */;
+INSERT INTO `items_inventory` (`id`, `owner_id`, `item_id`, `qty`, `remaining_uses`, `is_active`) VALUES
+	(1, 1, 1, 134, NULL, NULL),
+	(2, 2, 1, 5, NULL, NULL),
+	(3, 2, 2, 1, NULL, NULL),
+	(4, 2, 2, 1, NULL, NULL),
+	(5, 1, 3, 5, NULL, NULL),
+	(55, 1, 2, 1, NULL, NULL);
 /*!40000 ALTER TABLE `items_inventory` ENABLE KEYS */;
 
 -- Dumping structure for table reldens.items_item
 CREATE TABLE IF NOT EXISTS `items_item` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `key` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
-  `group_id` int(11) NOT NULL,
+  `group_id` int(11) DEFAULT NULL,
   `label` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
-  `description` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `description` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   `qty_limit` int(11) NOT NULL DEFAULT '0' COMMENT 'Default 0 to unlimited qty.',
   `uses_limit` int(11) NOT NULL DEFAULT '1' COMMENT 'Default 1 use per item (0 = unlimited).',
+  `useTimeOut` int(11) DEFAULT NULL,
+  `execTimeOut` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `id` (`id`),
   UNIQUE KEY `key` (`key`),
   KEY `group_id` (`group_id`),
   CONSTRAINT `FK_items_item_items_group` FOREIGN KEY (`group_id`) REFERENCES `items_group` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='List of all available items in the system.';
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='List of all available items in the system.';
 
--- Dumping data for table reldens.items_item: ~0 rows (approximately)
+-- Dumping data for table reldens.items_item: ~3 rows (approximately)
 /*!40000 ALTER TABLE `items_item` DISABLE KEYS */;
+INSERT INTO `items_item` (`id`, `key`, `group_id`, `label`, `description`, `qty_limit`, `uses_limit`, `useTimeOut`, `execTimeOut`) VALUES
+	(1, 'coins', NULL, 'Coins', NULL, 0, 1, NULL, NULL),
+	(2, 'branch', NULL, 'Tree branch', 'An useless tree branch (for now)', 0, 1, NULL, NULL),
+	(3, 'heal_potion_20', NULL, 'Heal Potion', 'A heal potion that will restore 20 HP.', 0, 1, NULL, NULL);
 /*!40000 ALTER TABLE `items_item` ENABLE KEYS */;
 
 -- Dumping structure for table reldens.items_item_modifiers
@@ -234,7 +252,7 @@ CREATE TABLE IF NOT EXISTS `objects` (
   KEY `room_id` (`room_id`),
   KEY `object_class_key` (`object_class_key`),
   CONSTRAINT `FK_objects_rooms` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping data for table reldens.objects: ~6 rows (approximately)
 /*!40000 ALTER TABLE `objects` DISABLE KEYS */;
@@ -244,7 +262,8 @@ INSERT INTO `objects` (`id`, `room_id`, `layer_name`, `tile_index`, `object_clas
 	(5, 4, 'house-collisions-over-player', 535, 'npc_1', 'people_town_1', 'Alfred', NULL, NULL, 1),
 	(6, 5, 'respawn-area-monsters-lvl-1-2', NULL, 'enemy_1', 'enemy_forest_1', 'Tree', NULL, NULL, 1),
 	(7, 5, 'respawn-area-monsters-lvl-1-2', NULL, 'enemy_2', 'enemy_forest_2', 'Tree Punch', NULL, NULL, 1),
-	(8, 4, 'house-collisions-over-player', 538, 'npc_2', 'healer_1', 'Mamon', NULL, NULL, 1);
+	(8, 4, 'house-collisions-over-player', 538, 'npc_2', 'healer_1', 'Mamon', NULL, NULL, 1),
+	(10, 4, 'house-collisions-over-player', 560, 'npc_3', 'merchant_1', 'Gimly', NULL, NULL, 1);
 /*!40000 ALTER TABLE `objects` ENABLE KEYS */;
 
 -- Dumping structure for table reldens.objects_assets
@@ -259,7 +278,7 @@ CREATE TABLE IF NOT EXISTS `objects_assets` (
   PRIMARY KEY (`object_asset_id`),
   KEY `object_id` (`object_id`),
   CONSTRAINT `FK_objects_assets_objects` FOREIGN KEY (`object_id`) REFERENCES `objects` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping data for table reldens.objects_assets: ~6 rows (approximately)
 /*!40000 ALTER TABLE `objects_assets` DISABLE KEYS */;
@@ -269,7 +288,8 @@ INSERT INTO `objects_assets` (`object_asset_id`, `object_id`, `asset_type`, `ass
 	(3, 5, 'spritesheet', 'people_town_1', 'people-b-x2', NULL, '{"frameWidth":52,"frameHeight":71}'),
 	(4, 6, 'spritesheet', 'enemy_forest_1', 'monster-treant', NULL, '{"frameWidth":47,"frameHeight":50}'),
 	(5, 7, 'spritesheet', 'enemy_forest_2', 'monster-golem2', NULL, '{"frameWidth":47,"frameHeight":50}'),
-	(6, 8, 'spritesheet', 'healer_1', 'healer-1', NULL, '{"frameWidth":52,"frameHeight":71}');
+	(6, 8, 'spritesheet', 'healer_1', 'healer-1', NULL, '{"frameWidth":52,"frameHeight":71}'),
+	(7, 10, 'spritesheet', 'merchant_1', 'people-d-x2', NULL, '{"frameWidth":52,"frameHeight":71}');
 /*!40000 ALTER TABLE `objects_assets` ENABLE KEYS */;
 
 -- Dumping structure for table reldens.players
@@ -310,8 +330,8 @@ CREATE TABLE IF NOT EXISTS `players_state` (
 -- Dumping data for table reldens.players_state: ~5 rows (approximately)
 /*!40000 ALTER TABLE `players_state` DISABLE KEYS */;
 INSERT INTO `players_state` (`id`, `player_id`, `room_id`, `x`, `y`, `dir`) VALUES
-	(3, 1, 5, 670, 521, 'up'),
-	(4, 2, 5, 637, 636, 'right'),
+	(3, 1, 5, 647, 753, 'down'),
+	(4, 2, 5, 700, 736, 'down'),
 	(5, 3, 4, 443, 406, 'down'),
 	(14, 15, 4, 300, 388, 'down'),
 	(15, 16, 4, 508, 381, 'down');
@@ -336,8 +356,8 @@ CREATE TABLE IF NOT EXISTS `players_stats` (
 -- Dumping data for table reldens.players_stats: ~5 rows (approximately)
 /*!40000 ALTER TABLE `players_stats` DISABLE KEYS */;
 INSERT INTO `players_stats` (`id`, `player_id`, `hp`, `mp`, `stamina`, `atk`, `def`, `dodge`, `speed`) VALUES
-	(1, 1, 100, 100, 100, 1001, 1001, 100, 100),
-	(2, 2, 94, 100, 100, 1001, 1001, 100, 100),
+	(1, 1, 75, 100, 100, 1001, 1001, 100, 100),
+	(2, 2, 50, 100, 100, 1001, 1001, 100, 100),
 	(3, 3, 100, 100, 100, 1001, 1001, 100, 100),
 	(15, 15, 100, 100, 100, 1001, 1001, 100, 100),
 	(16, 16, 100, 100, 100, 1001, 1001, 100, 100);
@@ -459,8 +479,8 @@ CREATE TABLE IF NOT EXISTS `users` (
 -- Dumping data for table reldens.users: ~5 rows (approximately)
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
 INSERT INTO `users` (`id`, `email`, `username`, `password`, `role_id`, `status`, `created_at`, `updated_at`) VALUES
-	(29, 'dap@dap.com', 'DarthStormrage', '$2b$10$PQIYGBFyA/69DaowJVTA5ufVWmIUeIOwIK4e6JCAP5Uen0sp0TAHu', 1, 1, '2019-08-02 23:06:14', '2020-03-28 21:07:41'),
-	(30, 'dap2@dap.com', 'dap2', '$2b$10$Kvjh1XdsMai8Xt2wdivG2.prYvTiW6vJrdnrNPYZenf8qCRLhuZ/a', 9, 1, '2019-08-02 23:06:14', '2020-03-23 16:39:23'),
+	(29, 'dap@dap.com', 'DarthStormrage', '$2b$10$PQIYGBFyA/69DaowJVTA5ufVWmIUeIOwIK4e6JCAP5Uen0sp0TAHu', 1, 1, '2019-08-02 23:06:14', '2020-05-08 08:10:17'),
+	(30, 'dap2@dap.com', 'dap2', '$2b$10$Kvjh1XdsMai8Xt2wdivG2.prYvTiW6vJrdnrNPYZenf8qCRLhuZ/a', 9, 1, '2019-08-02 23:06:14', '2020-04-26 17:23:37'),
 	(31, 'dap3@dap.com', 'dap3', '$2b$10$CmtWkhIexIVtcBjwsmEkeOlIhqizViykDFYAKtVrl4sF8KWLuBsxO', 1, 1, '2019-08-02 23:06:14', '2019-11-30 10:54:55'),
 	(43, 'dap13@dap13.com', 'dap13', '$2b$10$PG6nUdhNmhy2RUpS4k.g..vJ5k3x0sPRyFlpnVZMTPfuAXgXyFP/y', 1, 1, '2019-11-15 21:47:17', '2019-11-15 21:47:17'),
 	(44, 'dap12@dap12.com', 'dap12', '$2b$10$PFEKucJCDoQq8evXhO.FiuwMEayr0HLEt5UYo/WU9TgXb.wwwPG8W', 1, 1, '2019-11-15 21:58:32', '2019-11-15 21:58:32');

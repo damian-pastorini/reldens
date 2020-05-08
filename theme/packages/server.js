@@ -11,8 +11,11 @@
 const { Door } = require('./objects/server/door');
 const { People } = require('./objects/server/people');
 const { Healer } = require('./objects/server/healer');
+const { Merchant } = require('./objects/server/merchant');
 const { Enemy1 } = require('./objects/server/enemy1');
 const { Enemy2 } = require('./objects/server/enemy2');
+const { Single } = require('./inventory/items/single');
+const { HealPotion } = require('./inventory/items/heal-potion');
 
 module.exports.CustomClasses = {
     objects: {
@@ -20,7 +23,12 @@ module.exports.CustomClasses = {
         door_2: Door,
         npc_1: People,
         npc_2: Healer,
+        npc_3: Merchant,
         enemy_1: Enemy1,
         enemy_2: Enemy2
+    },
+    inventory: {
+        coins: Single,
+        heal_potion_20: HealPotion
     }
 };

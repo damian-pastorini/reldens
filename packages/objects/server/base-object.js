@@ -20,6 +20,7 @@ class BaseObject extends InteractionArea
         Object.assign(this, props);
         // we will use the client_key has the object key:
         this.key = props.client_key;
+        this.uid = this.key + Date.now();
         // in this specific object type we will use the public params as JSON, this is coming from the storage:
         try {
             this.clientParams = props.client_params ? JSON.parse(props.client_params) : {};
@@ -32,6 +33,13 @@ class BaseObject extends InteractionArea
         // @NOTE: we need to send the layer name for later calculate the animation depth and show the animation over the
         // proper layer.
         this.clientParams.layerName = props.layer_name;
+    }
+
+    // @NOTE: passing the eventsManager here is a temporal fix since npm link doesn't work well with objects instances.
+    // eslint-disable-next-line no-unused-vars
+    runAdditionalSetup(eventsManager)
+    {
+        // @TODO: implement what you need here.
     }
 
 }

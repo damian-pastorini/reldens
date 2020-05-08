@@ -109,7 +109,7 @@ class RoomScene extends RoomLogin
             height: this.config.get('server/players/size/height'),
             bodyState: currentPlayer.state
         });
-        await EventsManager.emit('reldens.createPlayerAfter', client, authResult, currentPlayer);
+        await EventsManager.emit('reldens.createPlayerAfter', client, authResult, currentPlayer, this);
     }
 
     // eslint-disable-next-line no-unused-vars
@@ -309,6 +309,7 @@ class RoomScene extends RoomLogin
         if(!updateResult){
             Logger.error('Player stats update error: ' + target.player_id);
         }
+        return updateResult;
     }
 
     getClientById(clientId)
@@ -354,6 +355,27 @@ class RoomScene extends RoomLogin
         points.row = points.row < 0 ? 0 : points.row;
         points.row = points.row > this.roomWorld.worldHeight ? this.roomWorld.worldHeight : points.row;
         return points;
+    }
+
+    onDispose()
+    {
+        if(!this.roomWorld.respawnAreas){
+            return;
+        }
+        // clean up the listeners!
+        for(let rI in this.roomWorld.respawnAreas){
+            let instC = this.roomWorld.respawnAreas[rI].instancesCreated;
+            for(let i in instC){
+                let res = instC[i];
+                for(let obj of res){
+                    if({}.hasOwnProperty.call(obj, 'battleEndListener')){
+                        // Logger.info(['Turning off listener on reldens.battleEnded for object:', obj.key]);
+                        EventsManager.off('reldens.battleEnded', obj.battleEndListener);
+                    }
+                }
+            }
+        }
+        Logger.info('ON-DISPOSE Room: ' + this.roomName);
     }
 
 }

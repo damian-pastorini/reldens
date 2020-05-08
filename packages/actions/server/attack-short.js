@@ -40,7 +40,7 @@ class AttackShort extends AttackBase
             if(this.defender.stats.hp > 0){
                 await this.currentBattle.startBattleWith(this.attacker, this.room);
             } else {
-                await this.battleEnded(this.attacker, this.room);
+                await this.currentBattle.battleEnded(this.attacker, this.room);
             }
         }
         return battleType;

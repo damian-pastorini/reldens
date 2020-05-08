@@ -47,11 +47,13 @@ class ChatUi
                     let box = this.uiScene.uiChat.getChildByProperty('id', 'chat-ui');
                     box.style.display = 'none';
                     chatOpenButton.style.display = 'block';
+                    this.uiScene.uiChat.setDepth(1);
                 });
                 chatOpenButton.addEventListener('click', () => {
                     let box = this.uiScene.uiChat.getChildByProperty('id', 'chat-ui');
                     box.style.display = 'block';
                     chatOpenButton.style.display = 'none';
+                    this.uiScene.uiChat.setDepth(4);
                 });
             }
             chatInput.addEventListener('keyup', (e) => {

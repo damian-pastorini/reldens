@@ -19,6 +19,7 @@ let appServer = new ServerManager({
     // customClasses: CustomClasses // {} // custom configured custom classes
 });
 // setup as you need:
+// eslint-disable-next-line no-unused-vars
 appServer.events.on('reldens.serverConfigFeaturesReady', (serverManager, configProcessor) => {
     console.log('INFO - Events test reldens.serverConfigFeaturesReady success!');
 });

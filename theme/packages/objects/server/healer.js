@@ -9,6 +9,7 @@
 
 const { NpcObject } = require('reldens/packages/objects/server/npc-object');
 const { GameConst } = require('reldens/packages/game/constants');
+const { HealPotion } = require('../../inventory/items/heal-potion');
 const { Logger } = require('@reldens/utils');
 
 class Healer extends NpcObject
@@ -46,6 +47,26 @@ class Healer extends NpcObject
                 }).catch((err) => {
                     Logger.error(err);
                 });
+            } else {
+                let responseMessage = 'Then I will give you an item for later, you never know...';
+                let activationData = {act: GameConst.UI, id: this.id, content: responseMessage};
+                room.send(client, activationData);
+                // @TODO: server MUST LOAD all the items available, so we can later can create items instances easier.
+                let itemProps = {
+                    id: 3,
+                    key: 'heal_potion_20',
+                    manager: playerSchema.inventory.manager,
+                    label: 'Heal Potion',
+                    description: 'A heal potion that will restore 20 HP.',
+                    qty: 1
+                };
+                let healPotion = new HealPotion(itemProps);
+                // @TODO: include a setProps method on item-base.
+                healPotion.item_id = 3; // this value will be always coming from the database.
+                playerSchema.inventory.manager.addItem(healPotion).catch((err) => {
+                    Logger.error(['Error while adding item "heal_potion_20":', err]);
+                });
+
             }
         }
     }

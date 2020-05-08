@@ -10,6 +10,7 @@ const { GameClient } = require('./game-client');
 const { GameEngine } = require('./game-engine');
 const { RoomEvents } = require('./room-events');
 const { FeaturesManager } = require('../../features/client/manager');
+const { GameDom } = require('./game-dom');
 const { ConfigProcessor } = require('../../config/processor');
 const { Logger, EventsManager } = require('@reldens/utils');
 const { GameConst } = require('../constants');
@@ -40,14 +41,14 @@ class GameManager
         this.features = new FeaturesManager();
         // active scene:
         this.isChangingScene = false;
+        // dom manager:
+        this.gameDom = new GameDom();
     }
 
     setupClasses(customClasses)
     {
         EventsManager.emit('reldens.setupClasses', this, customClasses);
-        if({}.hasOwnProperty.call(customClasses, 'objects')){
-            this.config.customClasses = customClasses;
-        }
+        this.config.customClasses = customClasses;
     }
 
     async joinGame(formData, isNewUser = false)

@@ -1,0 +1,18 @@
+<div class="item-box" id="item-{{id}}">
+    <div class="image-container">
+        <img src="/assets/custom/items/{{key}}.png"/>
+    </div>
+    <div class="item-data-container">
+        <span class="item-label">{{label}}</span>
+        <span class="item-description">{{description}}</span>
+        <div class="item-use"></div>
+        <div class="item-trash" id="item-trash-{{id}}">
+            <img src="/assets/features/inventory/assets/trash.png"/>
+            <div class="trash-confirm" id="trash-confirm-{{id}}">
+                Are you sure?<br/>
+                <span class="conf-yes" id="trash-confirmed-{{id}}">Yes</span> / <span id="trash-cancel-{{id}}">No</span>
+            </div>
+        </div>
+    </div>
+    <div class="item-qty" id="item-qty-{{id}}">{{qty}}</div>
+</div>

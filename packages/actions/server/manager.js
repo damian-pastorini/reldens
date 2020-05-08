@@ -21,7 +21,8 @@ class ActionsManager
         this.config = config;
         // @TODO: load dynamically and clean up.
         this.availableActions = {'attack-short': AttackShort, 'attack-bullet': AttackBullet};
-        EventsManager.on('reldens.createPlayerAfter', (client, authResult, currentPlayer) => {
+        // eslint-disable-next-line no-unused-vars
+        EventsManager.on('reldens.createPlayerAfter', (client, authResult, currentPlayer, room) => {
             currentPlayer.actions = {};
             let pvpConfig = this.config.get('server/actions/pvp');
             currentPlayer.actions['pvp'] = new Pvp(pvpConfig);

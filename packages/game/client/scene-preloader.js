@@ -56,6 +56,7 @@ class ScenePreloader extends Scene
             }
             this.load.html('uiTarget', 'assets/html/ui-target.html');
             this.load.html('uiButton', 'assets/html/ui-button.html');
+            this.load.html('uiOptionsContainer', 'assets/html/ui-options-container.html');
             EventsManager.emit('reldens.preloadUiScene', this);
         }
         // maps:
