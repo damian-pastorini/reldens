@@ -28,6 +28,13 @@ class InventoryUi
             inventoryCloseButton.addEventListener('click', () => {
                 let box = this.uiScene.uiInventory.getChildByProperty('id', 'inventory-ui');
                 box.style.display = 'none';
+                let inventoryPanel = this.uiScene.uiInventory.getChildByProperty('id', InventoryConst.INVENTORY_ITEMS);
+                inventoryPanel.querySelectorAll('.item-box .image-container img').forEach(function(element){
+                    element.style.border = 'none';
+                });
+                inventoryPanel.querySelectorAll('.item-data-container').forEach(function(element){
+                    element.style.display = 'none';
+                });
                 inventoryOpenButton.style.display = 'block';
                 this.uiScene.uiInventory.setDepth(1);
             });

@@ -1,6 +1,5 @@
 
 const { EnemyObject } = require('reldens/packages/objects/server/enemy-object');
-const { ItemBase } = require('@reldens/items-system');
 const { Logger } = require('@reldens/utils');
 
 class Enemy1Object extends EnemyObject
@@ -20,20 +19,9 @@ class Enemy1Object extends EnemyObject
         if(this.uid !== pveInstance.targetObject.uid){
             return false;
         }
-        // @TODO: server MUST LOAD all the items available, so we can later can create items instances easier.
-        let itemProps = {
-            id: 2,
-            key: 'branch',
-            manager: playerSchema.inventory.manager,
-            label: 'Tree branch',
-            description: 'An useless tree branch (for now)',
-            qty: 1
-        };
-        let treeBranch = new ItemBase(itemProps);
-        // @TODO: include a setProps method on item-base.
-        treeBranch.item_id = 2; // this value will be always coming from the database.
+        let treeBranch = playerSchema.inventory.createItemInstance('branch');
         playerSchema.inventory.manager.addItem(treeBranch).catch((err) => {
-            Logger.error(['Error while adding item "coins":', err]);
+            Logger.error(['Error while adding item "branch":', err]);
         });
     }
 

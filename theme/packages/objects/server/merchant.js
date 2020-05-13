@@ -10,7 +10,6 @@
 const { NpcObject } = require('reldens/packages/objects/server/npc-object');
 const { GameConst } = require('reldens/packages/game/constants');
 const { Logger } = require('@reldens/utils');
-const { Coin } = require('../../inventory/items/coin');
 
 class Merchant extends NpcObject
 {
@@ -22,8 +21,8 @@ class Merchant extends NpcObject
         this.playerVisible = true;
         // assign extra params:
         this.clientParams.enabled = true;
-        // @TODO: all the npc info will be coming from the storage.
         this.clientParams.ui = true;
+        // @TODO: all the npc info will be coming from the storage.
         this.content = 'Hi there! Do you want a coin? These are useless test coins.';
         this.options = {
             option1: {label: 'Sure!', value: 1},
@@ -36,17 +35,7 @@ class Merchant extends NpcObject
         super.parseMessageAndRunActions(client, data, room, playerSchema);
         if(data.act === GameConst.BUTTON_OPTION && data.id === this.id){
             if(Number(data.value) === 1){
-                // @TODO: server MUST LOAD all the items available, so we can later can create items instances easier.
-                let itemProps = {
-                    id: 1,
-                    key: 'coins',
-                    manager: playerSchema.inventory.manager,
-                    label: 'Coins',
-                    qty: 1
-                };
-                let coin = new Coin(itemProps);
-                // @TODO: include a setProps method on item-base.
-                coin.item_id = 1; // this value will be always coming from the database.
+                let coin = playerSchema.inventory.createItemInstance('coins');
                 playerSchema.inventory.manager.addItem(coin).catch((err) => {
                     Logger.error(['Error while adding item "coins":', err]);
                 });

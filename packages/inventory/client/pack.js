@@ -51,7 +51,6 @@ class InventoryPack
                 for(let idx in manager.items){
                     let item = manager.items[idx];
                     let output = this.createItemBox(item, preloadScene.gameManager, preloadScene);
-                    // inventoryPanel.innerHTML += output;
                     preloadScene.gameManager.gameDom.appendToElement('#'+InventoryConst.INVENTORY_ITEMS, output);
                     this.setupButtonsActions(inventoryPanel, idx, item, preloadScene);
                 }
@@ -66,9 +65,17 @@ class InventoryPack
         let gameManager = uiScene.gameManager;
         gameManager.inventory.manager.events.on(ItemsEvents.ADD_ITEM, (inventory, item) => {
             let output = this.createItemBox(item, gameManager, uiScene);
-            // inventoryPanel.innerHTML += output;
             gameManager.gameDom.appendToElement('#'+InventoryConst.INVENTORY_ITEMS, output);
             this.setupButtonsActions(inventoryPanel, item.getInventoryId(), item, uiScene, false);
+        });
+        gameManager.inventory.manager.events.on(ItemsEvents.SET_ITEMS, (props) => {
+            inventoryPanel.innerHTML = '';
+            for(let idx in props.items){
+                let item = props.items[idx];
+                let output = this.createItemBox(item, gameManager, uiScene);
+                gameManager.gameDom.appendToElement('#'+InventoryConst.INVENTORY_ITEMS, output);
+                this.setupButtonsActions(inventoryPanel, item.getInventoryId(), item, uiScene, false);
+            }
         });
         // eslint-disable-next-line no-unused-vars
         gameManager.inventory.manager.events.on(ItemsEvents.MODIFY_ITEM_QTY, (item, inventory, op, key, qty) => {
@@ -117,7 +124,6 @@ class InventoryPack
         // show item trash:
         let buttonElement = inventoryPanel.querySelector('#item-trash-' + idx + ' img');
         if(buttonElement){
-            // eslint-disable-next-line no-unused-vars
             buttonElement.addEventListener('click', () => {
                 inventoryPanel.querySelector('#trash-confirm-' + idx).style.display = 'block';
             });
@@ -132,8 +138,7 @@ class InventoryPack
                 preloadScene.gameManager.room.send(optionSend);
             });
         }
-        // show if item is usable or equipable:
-
+        // @TODO: show if item is usable or equipment.
         // end.
     }
 

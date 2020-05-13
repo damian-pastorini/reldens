@@ -73,12 +73,12 @@ class RoomEvents
             if(this.engineStarted){
                 let currentScene = this.getActiveScene();
                 if(currentScene.key === player.state.scene && currentScene.player && currentScene.player.players){
-                    let { x, y, dir } = player.state;
-                    currentScene.player.addPlayer(key, { x, y, dir, username: player.username });
+                    let {x, y, dir} = player.state;
+                    currentScene.player.addPlayer(key, {x, y, dir, username: player.username});
                 }
             } else {
-                let { x, y, dir } = player.state;
-                this.playersQueue[key] = { x, y, dir, username: player.username };
+                let {x, y, dir} = player.state;
+                this.playersQueue[key] = {x, y, dir, username: player.username};
             }
         }
     }

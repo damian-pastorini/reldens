@@ -4,7 +4,8 @@
  *
  */
 
-const { ItemsServer } = require('@reldens/items-system');
+const { ItemsServer, ItemBase } = require('@reldens/items-system');
+const { ModelsManager } = require('@reldens/items-system/lib/server/storage/models-manager');
 const { EventsManager } = require('@reldens/utils');
 const { PackInterface } = require('../../features/server/pack-interface');
 const { InventoryMessageActions } = require('./message-actions');
@@ -14,8 +15,23 @@ class InventoryPack extends PackInterface
 
     setupPack()
     {
-        EventsManager.on('reldens.serverStartBegin', () => {
-            // @TODO: load items list.
+        EventsManager.on('reldens.serverReady', async (event) => {
+            // use the inventory models manager to get the items list loaded:
+            let itemsModelsManager = new ModelsManager();
+            let itemsModelsList = await itemsModelsManager.models.item.query();
+            if(itemsModelsList.length){
+                let itemsList = {};
+                let configProcessor = event.serverManager.configManager.processor;
+                let inventoryClasses = configProcessor.get('server/customClasses/inventory');
+                for(let itemModel of itemsModelsList){
+                    let itemClass = ItemBase;
+                    if({}.hasOwnProperty.call(inventoryClasses, itemModel.key)){
+                        itemClass = inventoryClasses[itemModel.key];
+                    }
+                    itemsList[itemModel.key] = {class: itemClass, data: itemModel};
+                }
+                configProcessor.inventory = {items: {itemsModels: itemsModelsList, itemsList}};
+            }
         });
         // eslint-disable-next-line no-unused-vars
         EventsManager.on('reldens.createPlayerAfter', async (client, authResult, currentPlayer, room) => {
@@ -29,6 +45,7 @@ class InventoryPack extends PackInterface
 
     async createInventory(client, currentPlayer, room)
     {
+        // @TODO: improve asap (remove all methods defined here).
         // wrap the client:
         let clientWrapper = {
             send: (data) => {
@@ -55,6 +72,19 @@ class InventoryPack extends PackInterface
         let inventoryServer = new ItemsServer(serverProps);
         // for now I will load all the items here and then create instances for later assign them to their owner:
         await inventoryServer.dataServer.loadOwnerItems();
+        inventoryServer.createItemInstance = (key, qty) => {
+            let result = false;
+            let itemData = room.config.get('inventory/items/itemsList/'+key);
+            if(itemData){
+                let itemProps = Object.assign({}, itemData['data'], {
+                    manager: inventoryServer.manager,
+                    item_id: itemData['data'].id,
+                    qty: (typeof qty !== 'undefined') ? qty : 1
+                });
+                result = new itemData['class'](itemProps);
+            }
+            return result;
+        };
         return inventoryServer;
     }
 
