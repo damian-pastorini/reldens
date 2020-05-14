@@ -9,7 +9,6 @@
 
 const { NpcObject } = require('reldens/packages/objects/server/npc-object');
 const { GameConst } = require('reldens/packages/game/constants');
-const { HealPotion } = require('../../inventory/items/heal-potion');
 const { Logger } = require('@reldens/utils');
 
 class Healer extends NpcObject
