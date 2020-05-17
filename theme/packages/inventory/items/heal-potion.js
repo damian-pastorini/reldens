@@ -12,7 +12,8 @@ class HealPotion extends ItemUsable
             key: 'heal_potion_20',
             propertyKey: 'stats/hp',
             operation: ItemsConst.OPS.INC,
-            value: {}.hasOwnProperty.call(props, 'value') ? props.value : 20
+            value: {}.hasOwnProperty.call(props, 'value') ? props.value : 20,
+            maxProperty: 'initialStats/hp'
         };
         this.modifiers = {
             healHp20: new Modifier(modProps)

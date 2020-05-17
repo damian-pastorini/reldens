@@ -301,13 +301,17 @@ class RoomScene extends RoomLogin
         }
     }
 
-    async savePlayerStats(target)
+    async savePlayerStats(target, updateClient)
     {
         // save the stats:
         let updateResult = await this.loginManager.usersManager
             .updateUserStatsByPlayerId(target.player_id, target.stats);
         if(!updateResult){
             Logger.error('Player stats update error: ' + target.player_id);
+        } else {
+            if(updateClient){
+                this.send(updateClient, {act: GameConst.PLAYER_STATS, stats: target.stats});
+            }
         }
         return updateResult;
     }

@@ -11,10 +11,11 @@ let pref = 'ivp'
 
 // constants:
 module.exports.InventoryConst = {
-    INVENTORY_ACTION: 'iA',
-    INVENTORY_ITEMS: 'inventory-items',
-    INVENTORY_CLOSE_BUTTON: 'inventory-close',
-    INVENTORY_OPEN_BUTTON: 'inventory-open',
+    ITEMS: 'inventory-items',
+    CLOSE_BUTTON: 'inventory-close',
+    OPEN_BUTTON: 'inventory-open',
     INVENTORY_PREF: pref,
-    INVENTORY_ACTION_REMOVE: pref+'Rm'
+    ACTION_REMOVE: pref+'Rm',
+    ACTION_USE: pref+'Use',
+    ACTION_EQUIP: pref+'Eqi'
 };

@@ -65,10 +65,12 @@ span.stat-value { float:left; width:50%; display:block; text-align:left; }
 .inventory-ui { display:none; float:left; position: relative; top:-300px; left:-250px; min-width:160px; min-height:200px; padding:10px; background:#000000; opacity:0.8; color:#ffffff; }
 #inventory-items { position:relative; width:268px; height:200px; word-wrap:break-word; overflow:auto; font-size:12px; }
 .item-box { float:left; display:block; width:50px; height:50px; margin-bottom:6px; }
-.item-box .item-data-container { display:none; position:absolute; top:40px; left:16%; z-index:2; width:64%; text-align:center; background:#000; padding:4px; color:#fff; border:1px solid #fff; font-style:italic; }
+.item-box .item-data-container { display:none; position:absolute; top:54px; left:16%; z-index:2; width:64%; text-align:center; background:#000; padding:4px; color:#fff; border:1px solid #fff; font-style:italic; }
 .item-box:nth-child(4n) .item-data-container, .item-box:nth-child(5n) .item-data-container { right:50px; left:auto; }
 .item-label, .item-description { display:block; }
 .item-box .item-qty, .item-box .image-container { display:block; float:left; width:100%; text-align:center; cursor:pointer; }
-.item-box .item-trash img { max-width:32px; margin-top:5px; cursor:pointer; }
+.item-box .actions-container { display:block; width:100%; position:relative; }
+.item-box .actions-container .item-action-block { position:relative; float:left; max-width:32px; margin:5px 5px 0px; }
+.item-box .actions-container .item-action-block img { max-width:32px; cursor:pointer; }
 .item-box .trash-confirm { display:none; }
 .item-box .trash-confirm span { cursor:pointer; padding:5px; border:1px solid; margin:5px; display: inline-block; }

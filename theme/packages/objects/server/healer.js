@@ -37,11 +37,10 @@ class Healer extends NpcObject
             if(Number(data.value) === 1){
                 // update and save the player:
                 playerSchema.stats.hp = playerSchema.initialStats.hp;
-                room.savePlayerStats(playerSchema).then(() => {
+                room.savePlayerStats(playerSchema, client).then(() => {
                     // update ui box:
                     let activationData = {act: GameConst.UI, id: this.id, content: 'Your HP points has been restored!'};
                     // update the target:
-                    room.send(client, {act: GameConst.PLAYER_STATS, stats: playerSchema.stats});
                     room.send(client, activationData);
                 }).catch((err) => {
                     Logger.error(err);

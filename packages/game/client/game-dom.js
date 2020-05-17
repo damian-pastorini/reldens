@@ -1,4 +1,4 @@
-
+// @TODO: replace with React, Vue or some other better option.
 const $ = require('jquery');
 
 class GameDom

@@ -22,13 +22,13 @@ class InventoryUi
         let inventoryX = this.gameManager.config.get('client/inventory/position/x');
         let inventoryY = this.gameManager.config.get('client/inventory/position/y');
         this.uiScene.uiInventory = this.uiScene.add.dom(inventoryX, inventoryY).createFromCache('uiInventory');
-        let inventoryCloseButton = this.uiScene.uiInventory.getChildByProperty('id', InventoryConst.INVENTORY_CLOSE_BUTTON);
-        let inventoryOpenButton = this.uiScene.uiInventory.getChildByProperty('id', InventoryConst.INVENTORY_OPEN_BUTTON);
+        let inventoryCloseButton = this.uiScene.uiInventory.getChildByProperty('id', InventoryConst.CLOSE_BUTTON);
+        let inventoryOpenButton = this.uiScene.uiInventory.getChildByProperty('id', InventoryConst.OPEN_BUTTON);
         if(inventoryCloseButton && inventoryOpenButton){
             inventoryCloseButton.addEventListener('click', () => {
                 let box = this.uiScene.uiInventory.getChildByProperty('id', 'inventory-ui');
                 box.style.display = 'none';
-                let inventoryPanel = this.uiScene.uiInventory.getChildByProperty('id', InventoryConst.INVENTORY_ITEMS);
+                let inventoryPanel = this.uiScene.uiInventory.getChildByProperty('id', InventoryConst.ITEMS);
                 inventoryPanel.querySelectorAll('.item-box .image-container img').forEach(function(element){
                     element.style.border = 'none';
                 });

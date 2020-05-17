@@ -43,7 +43,7 @@ class InventoryPack extends PackInterface
         });
     }
 
-    async createInventory(client, currentPlayer, room)
+    async createInventory(client, playerSchema, room)
     {
         // @TODO: improve asap (remove all methods defined here).
         // wrap the client:
@@ -52,15 +52,15 @@ class InventoryPack extends PackInterface
                 room.send(client, data);
             }
         };
-        // @TODO: implement currentPlayer.persistData() (see onExecutedItem(item) in ModelsManager class), and test.
+        // @TODO: implement playerSchema.persistData() (see onExecutedItem(item) in ModelsManager class), and test.
         // eslint-disable-next-line no-unused-vars
-        currentPlayer.persistData = async (params) => {
+        playerSchema.persistData = async (params) => {
             // persist data in player:
-            await currentPlayer.savePlayerState(currentPlayer.sessionId);
-            await currentPlayer.savePlayerStats(currentPlayer);
+            await room.savePlayerState(playerSchema.sessionId);
+            await room.savePlayerStats(playerSchema, client);
         };
         let serverProps = {
-            owner: currentPlayer,
+            owner: playerSchema,
             client: clientWrapper,
             persistence: true,
             ownerIdProperty: 'player_id'
