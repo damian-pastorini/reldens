@@ -14,6 +14,7 @@ class InventoryPack
 
     constructor()
     {
+        this.itemSprites = {};
         // then we can use the event manager to append the feature in every action required:
         // eslint-disable-next-line no-unused-vars
         EventsManager.on('reldens.playersOnAdd', (player, key, previousScene, roomEvents) => {
@@ -27,6 +28,9 @@ class InventoryPack
                     }
                     // create inventory instance:
                     roomEvents.gameManager.inventory = new Receiver(receiverProps);
+                    roomEvents.gameManager.inventory.onExecuting = (message) => {
+                        this.executingItem(message, roomEvents.gameManager);
+                    };
                 }
                 // listen to room messages:
                 roomEvents.room.onMessage((message) => {
@@ -176,6 +180,71 @@ class InventoryPack
             id: item.getInventoryId(),
             equipStatus: item.equipped ? 'equipped' : 'unequipped'
         });
+    }
+
+    executingItem(message, gameManager)
+    {
+        // @TODO: improve, split in several classes, methods and functionalities.
+        let item = message.item;
+        if(!{}.hasOwnProperty.call(item, 'animationData')){
+            return false;
+        }
+        let animKey = 'aK_'+item.key;
+        let currentScene = gameManager.getActiveScene();
+        currentScene.load.spritesheet(animKey, 'assets/custom/sprites/'+item.key+'.png', {
+            frameWidth: item.animationData.frameWidth || 64,
+            frameHeight: item.animationData.frameHeight || 64
+        });
+        currentScene.load.on('complete', () => {
+            if({}.hasOwnProperty.call(this.itemSprites, animKey)){
+                // sprite already running:
+                return false;
+            }
+            let createData = {
+                key: animKey,
+                frames: currentScene.anims.generateFrameNumbers(animKey, {
+                    start: item.animationData.start || 0,
+                    end: item.animationData.end || 1
+                }),
+                frameRate: {}.hasOwnProperty.call(item.animationData, 'rate') ?
+                    item.animationData.rate : currentScene.configuredFrameRate,
+                repeat: item.animationData.repeat || 3,
+                hideOnComplete: {}.hasOwnProperty.call(item.animationData, 'hide') ?
+                    item.animationData.hide : true,
+            };
+            let x, y = 0;
+            let targetId = (item.animationData.startsOnTarget && {}.hasOwnProperty.call(message.target, 'sessionId')) ?
+                message.target.sessionId : gameManager.getCurrentPlayer().sessionId;
+            let playerSprite = currentScene.player.players[targetId];
+            if(item.animationData.usePlayerPosition){
+                currentScene.anims.create(createData);
+                x = playerSprite.x;
+                y = playerSprite.y;
+            }
+            if({}.hasOwnProperty.call(item.animationData, 'fixedX')){
+                x = item.animationData.fixedX;
+            }
+            if({}.hasOwnProperty.call(item.animationData, 'fixedY')){
+                y = item.animationData.fixedY;
+            }
+            if(item.animationData.closeInventoryOnUse){
+                gameManager.gameDom.getElement('#inventory-close').click();
+            }
+            this.itemSprites[animKey] = currentScene.physics.add.sprite(x, y, animKey);
+            this.itemSprites[animKey].setDepth(2000000);
+            if(item.animationData.followPlayer){
+                playerSprite.moveSprites[animKey] = this.itemSprites[animKey];
+            }
+            this.itemSprites[animKey].anims.play(animKey, true).on('animationcomplete', () => {
+                if(item.animationData.destroyOnComplete){
+                    this.itemSprites[animKey].destroy();
+                    if(item.animationData.followPlayer){
+                        delete this.itemSprites[animKey];
+                    }
+                }
+            });
+        });
+        currentScene.load.start();
     }
 
 }

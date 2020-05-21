@@ -194,9 +194,6 @@ class RoomEvents
         }
         if(message.act === GameConst.HIT){
             this.runHitAnimation(message.x, message.y);
-            if({}.hasOwnProperty.call(message, 'destroy')){
-
-            }
         }
     }
 
@@ -286,7 +283,7 @@ class RoomEvents
                                     let optionSend = {
                                         id: props.id,
                                         act: GameConst.BUTTON_OPTION,
-                                        value: event.originalTarget.getAttribute('data-option-value')
+                                        value: event.target.getAttribute('data-option-value')
                                     };
                                     this.room.send(optionSend);
                                 });

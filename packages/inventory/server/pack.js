@@ -50,6 +50,9 @@ class InventoryPack extends PackInterface
         let clientWrapper = {
             send: (data) => {
                 room.send(client, data);
+            },
+            broadcast: (data) => {
+                room.broadcast(data);
             }
         };
         // @TODO: implement playerSchema.persistData() (see onExecutedItem(item) in ModelsManager class), and test.
@@ -70,6 +73,8 @@ class InventoryPack extends PackInterface
             serverProps.itemClasses = inventoryClasses;
         }
         let inventoryServer = new ItemsServer(serverProps);
+        // broadcast player sessionId to share animations:
+        inventoryServer.client.sendTargetProps.broadcast.push('sessionId');
         // for now I will load all the items here and then create instances for later assign them to their owner:
         await inventoryServer.dataServer.loadOwnerItems();
         inventoryServer.createItemInstance = (key, qty) => {

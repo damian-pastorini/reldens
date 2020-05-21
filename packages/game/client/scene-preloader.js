@@ -100,6 +100,7 @@ class ScenePreloader extends Scene
         // @TODO: implement player custom avatar.
         // this.load.spritesheet(this.username, 'assets/sprites/'+this.username+'.png', playerSpriteSize);
         this.load.spritesheet(GameConst.IMAGE_PLAYER, 'assets/sprites/player-1.png', playerSpriteSize);
+        // @TODO: make all these configurable from the storage.
         this.load.spritesheet(GameConst.ATTACK, 'assets/sprites/weapons-1.png', {frameWidth: 64, frameHeight: 64});
         this.load.spritesheet(GameConst.HIT, 'assets/sprites/impact-1.png', {frameWidth: 64, frameHeight: 64});
         this.load.spritesheet(GameConst.DEATH, 'assets/sprites/object-1.png', {frameWidth: 64, frameHeight: 64});
@@ -193,7 +194,7 @@ class ScenePreloader extends Scene
     createPlayerAnimations()
     {
         // @TODO:
-        //   - Player animation will be part of the configuration in the database.
+        //   - All the animations will be part of the configuration in the database.
         //   - Implement player custom avatar.
         let availableAnimations = [
             {k: GameConst.LEFT, img: GameConst.IMAGE_PLAYER, start: 3, end: 5, repeat: -1, hide: false},

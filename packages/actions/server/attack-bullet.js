@@ -14,19 +14,25 @@ const { Body } = require('p2');
 class AttackBullet extends AttackBase
 {
 
-    constructor()
+    constructor(props)
     {
+        if(!props){
+            props = {};
+        }
         // @TODO: all the attack configuration will be coming from the database.
         super({
-            attackDelay: 1000,
-            key: 'attack-bullet',
-            canAttack: true,
-            range: 250,
-            hitDamage: 3
+            attackDelay: {}.hasOwnProperty.call(props, 'attackDelay') ? props.attackDelay : 1000,
+            key: {}.hasOwnProperty.call(props, 'key') ? props.key : 'attack-bullet',
+            canAttack: {}.hasOwnProperty.call(props, 'canAttack') ? props.canAttack : true,
+            range: {}.hasOwnProperty.call(props, 'range') ? props.range : 250,
+            hitDamage: {}.hasOwnProperty.call(props, 'hitDamage') ? props.hitDamage : 3
         });
         this.attacker = false;
         this.defender = false;
-        this.hitPriority = 2;
+        this.hitPriority = {}.hasOwnProperty.call(props, 'hitPriority') ? props.hitPriority : 2;
+        this.magnitude = {}.hasOwnProperty.call(props, 'magnitude') ? props.magnitude : 350;
+        this.bulletW = {}.hasOwnProperty.call(props, 'bulletW') ? props.bulletW : 5;
+        this.bulletH = {}.hasOwnProperty.call(props, 'bulletH') ? props.bulletH : 5;
     }
 
     async execute(attacker, defender)
@@ -42,15 +48,14 @@ class AttackBullet extends AttackBase
 
     shootBullet(fromPosition, toPosition, world)
     {
-        let magnitude = 350;
-        let bulletW = 30;
-        let bulletH = 30;
-        let bulletY = fromPosition.y + ((toPosition.y > fromPosition.y) ? bulletW : -bulletW);
-        let bulletX = fromPosition.x + ((toPosition.x > fromPosition.x) ? bulletW : -bulletW);
+        let wTH = (world.mapJson.tileheight / 2) + (this.bulletH / 2);
+        let wTW = (world.mapJson.tilewidth / 2) + (this.bulletW / 2);
+        let bulletY = fromPosition.y + ((toPosition.y > fromPosition.y) ? wTH : -wTH);
+        let bulletX = fromPosition.x + ((toPosition.x > fromPosition.x) ? wTW : -wTW);
         let y = toPosition.y - bulletY;
         let x = toPosition.x - bulletX;
         let angleByVelocity = Math.atan2(y, x);
-        let bulletBody = world.createCollisionBody(bulletW, bulletH, bulletX, bulletY, 1, true, true);
+        let bulletBody = world.createCollisionBody(this.bulletW, this.bulletH, bulletX, bulletY, 1, true, true);
         bulletBody.shapes[0].collisionGroup = GameConst.COL_PLAYER;
         bulletBody.shapes[0].collisionMask = GameConst.COL_ENEMY | GameConst.COL_GROUND | GameConst.COL_PLAYER;
         bulletBody.type = Body.DYNAMIC;
@@ -66,8 +71,8 @@ class AttackBullet extends AttackBase
         this.room.state.bodies['bullet'+bulletBody.id] = bulletBody.bodyState;
         // then speed up in the target direction:
         bulletBody.angle = Math.atan2(y, x) * 180 / Math.PI;
-        bulletBody.velocity[0] = magnitude * Math.cos(angleByVelocity);
-        bulletBody.velocity[1] = magnitude * Math.sin(angleByVelocity);
+        bulletBody.velocity[0] = this.magnitude * Math.cos(angleByVelocity);
+        bulletBody.velocity[1] = this.magnitude * Math.sin(angleByVelocity);
         // since the enemy won't be hit until the bullet reach the target we need to return false to avoid the onHit
         // automatic actions (for example pve init).
         return false;

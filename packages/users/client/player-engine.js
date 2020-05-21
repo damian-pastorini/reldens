@@ -59,6 +59,7 @@ class PlayerEngine
             this.gameManager.gameEngine.showTarget(this.players[id].username);
             this.currentTarget = {id: id, type: GameConst.TYPE_PLAYER};
         });
+        this.players[id].moveSprites = {};
         return this.players[id];
     }
 
@@ -129,6 +130,13 @@ class PlayerEngine
         if(this.gameManager.config.get('client/ui/uiLifeBar/enabled')){
             // redraw life bar all the time:
             this.redrawLifeBar();
+        }
+        if(Object.keys(playerSprite.moveSprites).length){
+            for(let i in playerSprite.moveSprites){
+                let sprite = playerSprite.moveSprites[i];
+                sprite.x = playerSprite.x;
+                sprite.y = playerSprite.y;
+            }
         }
     }
 

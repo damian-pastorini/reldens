@@ -10,7 +10,7 @@
 
 const { Npc1 } = require('./objects/client/npc1');
 const { Single } = require('./inventory/items/single');
-const { SingleUsable } = require('./inventory/items/single-usable');
+const { HealPotion } = require('./inventory/items/heal-potion');
 
 module.exports.CustomClasses = {
     objects: {
@@ -20,6 +20,6 @@ module.exports.CustomClasses = {
     },
     inventory: {
         coins: Single,
-        heal_potion_20: SingleUsable
+        heal_potion_20: HealPotion
     }
 };
