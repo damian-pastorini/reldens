@@ -244,8 +244,8 @@ class P2world extends World
     getSceneChangePoints(mapData)
     {
         let changePoints = {};
-        for(let cp in mapData.changePoints){
-            let cPoint = mapData.changePoints[cp];
+        for(let i of Object.keys(mapData.changePoints)){
+            let cPoint = mapData.changePoints[i];
             // example: {"i":167, "n":"other_scene_key_1"}
             changePoints[cPoint.i] = cPoint.n;
         }

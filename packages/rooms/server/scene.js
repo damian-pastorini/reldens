@@ -75,12 +75,12 @@ class RoomScene extends RoomLogin
         // check if user is already logged and disconnect from the previous client:
         let loggedUserFound = false;
         if(this.state.players){
-            for(let playerIdx in this.state.players){
-                let player = this.state.players[playerIdx];
+            for(let i of Object.keys(this.state.players)){
+                let player = this.state.players[i];
                 if(player.username === options.username){
                     loggedUserFound = true;
                     let savedStats = await this.savePlayerStats(player);
-                    let savedAndRemoved = await this.saveStateAndRemovePlayer(playerIdx);
+                    let savedAndRemoved = await this.saveStateAndRemovePlayer(i);
                     if(savedAndRemoved && savedStats){
                         // old player session removed, create it again:
                         await this.createPlayer(client, authResult);
@@ -165,8 +165,8 @@ class RoomScene extends RoomLogin
                 }
             }
             if(this.messageActions){
-                for(let idx in this.messageActions){
-                    let messageObserver = this.messageActions[idx];
+                for(let i of Object.keys(this.messageActions)){
+                    let messageObserver = this.messageActions[i];
                     if(typeof messageObserver.parseMessageAndRunActions === 'function'){
                         messageObserver.parseMessageAndRunActions(client, messageData, this, playerSchema);
                     } else {
@@ -367,9 +367,9 @@ class RoomScene extends RoomLogin
             return;
         }
         // clean up the listeners!
-        for(let rI in this.roomWorld.respawnAreas){
+        for(let rI of Object.keys(this.roomWorld.respawnAreas)){
             let instC = this.roomWorld.respawnAreas[rI].instancesCreated;
-            for(let i in instC){
+            for(let i of Object.keys(instC)){
                 let res = instC[i];
                 for(let obj of res){
                     if({}.hasOwnProperty.call(obj, 'battleEndListener')){

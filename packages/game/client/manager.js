@@ -128,8 +128,8 @@ class GameManager
      */
     async joinFeaturesRooms()
     {
-        for(let idx in this.features.featuresList){
-            let feature = this.features.featuresList[idx];
+        for(let i of Object.keys(this.features.featuresList)){
+            let feature = this.features.featuresList[i];
             if({}.hasOwnProperty.call(feature, 'joinRooms')){
                 for(let joinRoomName of feature.joinRooms){
                     let joinedRoom = await this.gameClient.joinOrCreate(joinRoomName, this.userData);

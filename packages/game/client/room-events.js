@@ -63,9 +63,9 @@ class RoomEvents
             this.startEngineScene(player, this.room, previousScene);
             let currentScene = this.getActiveScene();
             if(currentScene.key === player.state.scene && currentScene.player && currentScene.player.players){
-                for(let idx in this.playersQueue){
-                    let { x, y, dir, username } = this.playersQueue[idx];
-                    currentScene.player.addPlayer(idx, { x, y, dir, username: username });
+                for(let i of Object.keys(this.playersQueue)){
+                    let { x, y, dir, username } = this.playersQueue[i];
+                    currentScene.player.addPlayer(i, { x, y, dir, username: username });
                 }
             }
         } else {
@@ -270,15 +270,15 @@ class RoomEvents
                         let optionsContainer = uiScene.cache.html.get('uiOptionsContainer');
                         boxContent.innerHTML += optionsContainer;
                         let buttonsContainer = uiBox.getChildByProperty('className', 'box-options-container');
-                        for(let idx in props.options){
-                            let {label, value} = props.options[idx];
+                        for(let i of Object.keys(props.options)){
+                            let {label, value} = props.options[i];
                             let buttonTemplate = uiScene.cache.html.get('uiButton');
-                            let templateVars = {id: idx, object_id: props.id, label, value};
+                            let templateVars = {id: i, object_id: props.id, label, value};
                             let buttonHtml = this.gameManager.gameEngine.parseTemplate(buttonTemplate, templateVars);
                             buttonsContainer.innerHTML += buttonHtml;
                             // @TODO: temporal fix to avoid rendering time issue.
                             setTimeout(()=>{
-                                let buttonElement = boxContent.querySelector('#opt-'+idx+'-'+props.id);
+                                let buttonElement = boxContent.querySelector('#opt-'+i+'-'+props.id);
                                 buttonElement.addEventListener('click', (event) => {
                                     let optionSend = {
                                         id: props.id,
@@ -370,8 +370,8 @@ class RoomEvents
         currentScene.player = this.createPlayerEngineInstance(currentScene, player, this.gameManager, room);
         currentScene.player.create();
         if(room.state.players){
-            for(let idx in room.state.players){
-                let tmp = room.state.players[idx];
+            for(let i of Object.keys(room.state.players)){
+                let tmp = room.state.players[i];
                 if(tmp.sessionId && tmp.sessionId !== room.sessionId){
                     let { x, y, dir } = tmp.state;
                     currentScene.player.addPlayer(tmp.sessionId, { x, y, dir, username: tmp.username });

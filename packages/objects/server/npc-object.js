@@ -53,9 +53,9 @@ class NpcObject extends AnimationObject
             }
             if(Object.entries(this.options).length > 0){
                 activationData.options = {};
-                for(let idx in this.options){
-                    let option = this.options[idx];
-                    activationData.options[idx] = {label: option.label, value: option.value};
+                for(let i of Object.keys(this.options)){
+                    let option = this.options[i];
+                    activationData.options[i] = {label: option.label, value: option.value};
                 }
             }
             room.send(client, activationData);

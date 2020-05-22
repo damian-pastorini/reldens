@@ -132,7 +132,7 @@ class PlayerEngine
             this.redrawLifeBar();
         }
         if(Object.keys(playerSprite.moveSprites).length){
-            for(let i in playerSprite.moveSprites){
+            for(let i of Object.keys(playerSprite.moveSprites)){
                 let sprite = playerSprite.moveSprites[i];
                 sprite.x = playerSprite.x;
                 sprite.y = playerSprite.y;

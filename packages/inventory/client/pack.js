@@ -54,11 +54,11 @@ class InventoryPack
             }
             let manager = preloadScene.gameManager.inventory.manager;
             if(Object.keys(manager.items).length){
-                for(let idx in manager.items){
-                    let item = manager.items[idx];
+                for(let i of Object.keys(manager.items)){
+                    let item = manager.items[i];
                     let output = this.createItemBox(item, preloadScene.gameManager, preloadScene);
                     preloadScene.gameManager.gameDom.appendToElement('#'+InventoryConst.ITEMS, output);
-                    this.setupButtonsActions(inventoryPanel, idx, item, preloadScene);
+                    this.setupButtonsActions(inventoryPanel, i, item, preloadScene);
                 }
             }
             // listen for inventory events:
@@ -76,8 +76,8 @@ class InventoryPack
         });
         gameManager.inventory.manager.events.on(ItemsEvents.SET_ITEMS, (props) => {
             inventoryPanel.innerHTML = '';
-            for(let idx in props.items){
-                let item = props.items[idx];
+            for(let i of Object.keys(props.items)){
+                let item = props.items[i];
                 let output = this.createItemBox(item, gameManager, uiScene);
                 gameManager.gameDom.appendToElement('#'+InventoryConst.ITEMS, output);
                 this.setupButtonsActions(inventoryPanel, item.getInventoryId(), item, uiScene);

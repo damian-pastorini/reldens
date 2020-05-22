@@ -89,8 +89,8 @@ class ObjectsPack
             Logger.info(['None objects animations data.', roomEvents]);
             return;
         }
-        for(let idx in objectsAnimationsData){
-            let animProps = objectsAnimationsData[idx];
+        for(let i of Object.keys(objectsAnimationsData)){
+            let animProps = objectsAnimationsData[i];
             if(!{}.hasOwnProperty.call(animProps, 'ui')){
                 continue;
             }
@@ -110,8 +110,8 @@ class ObjectsPack
             return;
         }
         EventsManager.emit('reldens.createDynamicAnimationsBefore', this, sceneDynamic);
-        for(let idx in currentScene.objectsAnimationsData){
-            let animProps = currentScene.objectsAnimationsData[idx];
+        for(let i of Object.keys(currentScene.objectsAnimationsData)){
+            let animProps = currentScene.objectsAnimationsData[i];
             if(!animProps.key){
                 Logger.error(['Animation key not specified. Skipping registry:', animProps]);
                 continue;

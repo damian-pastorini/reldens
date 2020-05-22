@@ -14,7 +14,7 @@ const { Healer } = require('./objects/server/healer');
 const { Merchant } = require('./objects/server/merchant');
 const { Enemy1 } = require('./objects/server/enemy1');
 const { Enemy2 } = require('./objects/server/enemy2');
-const { Single } = require('./inventory/items/single');
+const { ItemSingle } = require('@reldens/items-system');
 const { HealPotion } = require('./inventory/items/heal-potion');
 
 module.exports.CustomClasses = {
@@ -28,7 +28,7 @@ module.exports.CustomClasses = {
         enemy_2: Enemy2
     },
     inventory: {
-        coins: Single,
+        coins: ItemSingle,
         heal_potion_20: HealPotion
     }
 };

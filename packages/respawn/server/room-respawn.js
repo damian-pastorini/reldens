@@ -30,8 +30,8 @@ class RoomRespawn
         let {tilewidth, tileheight } = this.world.mapJson;
         // NOTE: this is because a single layer could have multiple respawn definitions for each enemy type.
         this.respawnDefinitions = await RespawnModel.query().where('layer', this.layer.name);
-        for(let idx in this.respawnDefinitions){
-            let respawnArea = this.respawnDefinitions[idx];
+        for(let i of Object.keys(this.respawnDefinitions)){
+            let respawnArea = this.respawnDefinitions[i];
             if(
                 {}.hasOwnProperty.call(this.layerObjects, respawnArea.object_id)
                 && {}.hasOwnProperty.call(this.layerObjects[respawnArea.object_id], 'respawn')

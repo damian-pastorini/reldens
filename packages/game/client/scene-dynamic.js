@@ -66,8 +66,8 @@ class SceneDynamic extends Scene
         this.useTsAnimation = this.hasTsAnimation();
         this.tileset = this.map.addTilesetImage(this.params.roomMap);
         this.registerLayers();
-        for(let layerIndex in this.layers){
-            let layer = this.layers[layerIndex];
+        for(let i of Object.keys(this.layers)){
+            let layer = this.layers[i];
             if(layer.layer.name.indexOf('animations') !== -1){
                 this.registerTilesetAnimation(layer);
             }
