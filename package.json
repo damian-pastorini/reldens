@@ -40,7 +40,7 @@
     "dependencies": {
         "@reldens/utils": "^0.1.5",
         "@reldens/storage": "^0.1.2",
-        "@reldens/items-system": "^0.3.0",
+        "@reldens/items-system": "^0.4.0",
         "@colyseus/monitor": "^0.12.1",
         "@colyseus/schema": "^0.5.35",
         "bcrypt": "^4.0.1",
