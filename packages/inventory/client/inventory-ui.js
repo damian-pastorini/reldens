@@ -19,30 +19,38 @@ class InventoryUi
 
     createUi()
     {
-        let inventoryX = this.gameManager.config.get('client/inventory/position/x');
-        let inventoryY = this.gameManager.config.get('client/inventory/position/y');
-        this.uiScene.uiInventory = this.uiScene.add.dom(inventoryX, inventoryY).createFromCache('uiInventory');
-        let inventoryCloseButton = this.uiScene.uiInventory.getChildByProperty('id', InventoryConst.CLOSE_BUTTON);
-        let inventoryOpenButton = this.uiScene.uiInventory.getChildByProperty('id', InventoryConst.OPEN_BUTTON);
-        if(inventoryCloseButton && inventoryOpenButton){
-            inventoryCloseButton.addEventListener('click', () => {
-                let box = this.uiScene.uiInventory.getChildByProperty('id', 'inventory-ui');
+        this.create('inventory', 5);
+        this.create('equipment', 4);
+    }
+
+    create(codeName, depth)
+    {
+        let uiName = 'ui'+codeName.replace(codeName[0], codeName[0].toUpperCase());
+        let consName = codeName.toUpperCase();
+        let posX = this.gameManager.config.get('client/'+codeName+'/position/x');
+        let posY = this.gameManager.config.get('client/'+codeName+'/position/y');
+        this.uiScene[uiName] = this.uiScene.add.dom(posX, posY).createFromCache(uiName);
+        let closeButton = this.uiScene[uiName].getChildByProperty('id', InventoryConst[consName+'_CLOSE']);
+        let openButton = this.uiScene[uiName].getChildByProperty('id', InventoryConst[consName+'_OPEN']);
+        if(closeButton && openButton){
+            closeButton.addEventListener('click', () => {
+                let box = this.uiScene[uiName].getChildByProperty('id', codeName+'-ui');
                 box.style.display = 'none';
-                let inventoryPanel = this.uiScene.uiInventory.getChildByProperty('id', InventoryConst.ITEMS);
-                inventoryPanel.querySelectorAll('.item-box .image-container img').forEach(function(element){
+                let uiPanel = this.uiScene[uiName].getChildByProperty('id', InventoryConst[consName+'_ITEMS']);
+                uiPanel.querySelectorAll('.item-box .image-container img').forEach(function(element){
                     element.style.border = 'none';
                 });
-                inventoryPanel.querySelectorAll('.item-data-container').forEach(function(element){
+                uiPanel.querySelectorAll('.item-data-container').forEach(function(element){
                     element.style.display = 'none';
                 });
-                inventoryOpenButton.style.display = 'block';
-                this.uiScene.uiInventory.setDepth(1);
+                openButton.style.display = 'block';
+                this.uiScene[uiName].setDepth(1);
             });
-            inventoryOpenButton.addEventListener('click', () => {
-                let box = this.uiScene.uiInventory.getChildByProperty('id', 'inventory-ui');
+            openButton.addEventListener('click', () => {
+                let box = this.uiScene[uiName].getChildByProperty('id', codeName+'-ui');
                 box.style.display = 'block';
-                inventoryOpenButton.style.display = 'none';
-                this.uiScene.uiInventory.setDepth(4);
+                openButton.style.display = 'none';
+                this.uiScene[uiName].setDepth(depth);
             });
         }
     }

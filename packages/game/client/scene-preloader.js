@@ -55,7 +55,8 @@ class ScenePreloader extends Scene
                 this.load.html('playerStats', 'assets/html/player-stats.html');
             }
             this.load.html('uiTarget', 'assets/html/ui-target.html');
-            this.load.html('uiButton', 'assets/html/ui-button.html');
+            this.load.html('uiOptionButton', 'assets/html/ui-option-button.html');
+            this.load.html('uiOptionIcon', 'assets/html/ui-option-icon.html');
             this.load.html('uiOptionsContainer', 'assets/html/ui-options-container.html');
             EventsManager.emit('reldens.preloadUiScene', this);
         }
@@ -126,7 +127,7 @@ class ScenePreloader extends Scene
         if(this.uiScene){
             // @NOTE: the events here run only once over all the game progress.
             EventsManager.emit('reldens.beforeCreateUiScene', this);
-            // create ui:
+            // create uiPlayer:
             let playerUi = this.getUiConfig('playerName');
             if(playerUi.enabled){
                 this.uiPlayer = this.add.dom(playerUi.uiX, playerUi.uiY).createFromCache('uiPlayer');
@@ -136,6 +137,7 @@ class ScenePreloader extends Scene
                     window.location.reload();
                 });
             }
+            // create uiTarget:
             let targetUi = this.getUiConfig('uiTarget');
             if(targetUi.enabled){
                 this.uiTarget = this.add.dom(targetUi.uiX, targetUi.uiY).createFromCache('uiTarget');
@@ -144,38 +146,44 @@ class ScenePreloader extends Scene
                     this.gameManager.gameEngine.clearTarget();
                 });
             }
+            // create uiSceneLabel:
             let sceneLabelUi = this.getUiConfig('sceneLabel');
             if(sceneLabelUi.enabled){
                 this.uiSceneLabel = this.add.dom(sceneLabelUi.uiX, sceneLabelUi.uiY).createFromCache('uiSceneLabel');
             }
+            // create uiControls:
             let controlsUi = this.getUiConfig('controls');
             if(controlsUi.enabled){
                 this.uiControls = this.add.dom(controlsUi.uiX, controlsUi.uiY).createFromCache('uiControls');
                 this.registerControllers(this.uiControls);
             }
+            // create uiPlayerStats:
             let statsUi = this.getUiConfig('playerStats');
             if(statsUi.enabled){
                 this.uiPlayerStats = this.add.dom(statsUi.uiX, statsUi.uiY).createFromCache('uiPlayerStats');
-                let statsBox = this.uiPlayerStats.getChildByProperty('id', 'box-player-stats');
-                let statsButton = this.uiPlayerStats.getChildByProperty('id', 'player-stats-btn');
-                let statsPanel = this.uiPlayerStats.getChildByProperty('id', 'player-stats-container');
-                if(statsButton && statsPanel){
-                    let messageTemplate = this.cache.html.get('playerStats');
-                    // @TODO: stats types will be part of the configuration in the database.
-                    statsPanel.innerHTML = this.gameManager.gameEngine.parseTemplate(messageTemplate, {
-                        stats: this.gameManager.playerData.stats
+                let closeButton = this.uiPlayerStats.getChildByProperty('id', 'player-stats-close');
+                let openButton = this.uiPlayerStats.getChildByProperty('id', 'player-stats-open');
+                if(closeButton && openButton){
+                    closeButton.addEventListener('click', () => {
+                        let box = this.uiPlayerStats.getChildByProperty('id', 'player-stats-ui');
+                        box.style.display = 'none';
+                        openButton.style.display = 'block';
+                        this.uiPlayerStats.setDepth(1);
                     });
-                    statsButton.addEventListener('click', () => {
-                        if(statsPanel.style.display === 'none'){
-                            statsPanel.style.display = 'block';
-                            statsBox.style.left = '-80px';
-                        } else {
-                            statsPanel.style.display = 'none';
-                            statsBox.style.left = '0px';
-                        }
+                    openButton.addEventListener('click', () => {
+                        let box = this.uiPlayerStats.getChildByProperty('id', 'player-stats-ui');
+                        box.style.display = 'block';
+                        openButton.style.display = 'none';
+                        this.uiPlayerStats.setDepth(4);
                     });
                 }
+                let statsPanel = this.uiPlayerStats.getChildByProperty('id', 'player-stats-container');
+                let messageTemplate = this.cache.html.get('playerStats');
+                statsPanel.innerHTML = this.gameManager.gameEngine.parseTemplate(messageTemplate, {
+                    stats: this.gameManager.playerData.stats
+                });
             }
+            // end event:
             EventsManager.emit('reldens.createUiScene', this);
         }
         // player animations:

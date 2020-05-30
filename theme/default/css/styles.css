@@ -14,7 +14,7 @@ body { font-family:Verdana, Geneva, sans-serif; margin:0; padding:0; }
 .header { height:10%; min-height:46px; }
 .footer { height:6%; min-height:20px; }
 .content { height:84%; }
-button, input[type="button"], input[type="submit"], #player-stats-btn { cursor:pointer; }
+button, input[type="button"], input[type="submit"] { cursor:pointer; }
 .game-container { background-color:#000; }
 .header h1 { float:left; position:relative; display:block; width:96%; margin:1% 2%; padding:0; text-align:center; }
 .col-2 { float:left; display:block; position:relative; width:46%; margin:0; padding:0 2%; }
@@ -42,8 +42,7 @@ form .input-box input[type="text"], form .input-box input[type="password"] { wid
 .ui-box-controls #left, .ui-box-controls #right { position:relative; top:30px; }
 .ui-box-controls .vertical-buttons img { float:none; }
 .ui-box-controls .vertical-buttons.action-buttons { margin-left:10px; }
-.ui-box-player { text-align:center; padding:0px 10px; }
-.ui-box-player, .box-player-stats { background-color: rgba(0, 0, 0, 0.5); }
+.ui-box-player { text-align:center; padding:0px 10px; background-color: rgba(0, 0, 0, 0.5); }
 .ui-box-npc-dialog { display:none; float:left; width:240px; min-height:150px; padding:10px 14px; background:#000000; opacity:0.85; color:#ffffff; word-wrap:break-word; overflow:hidden; font-size:12px; }
 .box-close, .close-target { width:24px; position:absolute; right:-12px; top:-8px; }
 .box-content { min-height:40px; max-height:120px; overflow:auto; margin:10px 0px; }
@@ -53,18 +52,21 @@ form .input-box input[type="text"], form .input-box input[type="password"] { wid
 #chat-messages { width:242px; height:90px; word-wrap:break-word; overflow:auto; font-size:12px; }
 #chat-input { width:80%; }
 #chat-send { position:absolute; bottom:0px; right:0; }
-.box-player-stats { display:block; float:left; position:absolute; padding:10px; }
-.player-stats-btn-container { float:right; }
-#player-stats-btn { float:right; }
-#player-stats-container { display:block; float:right; width:120px; margin-top:10px; color:#ffffff; }
 span.stat-label { float:left; width:48%; margin-right:2%; display:block; text-align:right; color:#00ffff; }
 span.stat-value { float:left; width:50%; display:block; text-align:left; }
 .loading-container { float:left; text-align:center; width:100%; }
-#chat-open, #inventory-open { cursor:pointer; }
-.ui-box-button-option { display:inline-block; margin:10px; }
-.inventory-ui { display:none; float:left; position: relative; top:-300px; left:-250px; min-width:160px; min-height:200px; padding:10px; background:#000000; opacity:0.8; color:#ffffff; }
-#inventory-items { position:relative; width:268px; height:200px; word-wrap:break-word; overflow:auto; font-size:12px; }
-.item-box { float:left; display:block; width:50px; height:50px; margin-bottom:6px; }
+#player-stats-open, #chat-open, #inventory-open, #equipment-open { cursor:pointer; }
+#player-stats-open, #equipment-open { background:rgba(0, 0, 0, 0.5); padding:10px; max-width:40px; }
+.ui-box-button-option { display:inline-block; margin:10px; cursor:pointer; }
+.player-stats-ui, .inventory-ui, .equipment-ui { display:none; float:left; position:relative; min-height:100px; padding:10px; background:#000000; opacity:0.8; color:#ffffff; }
+.inventory-ui { min-width:160px; top:-300px; right:270px; }
+.equipment-ui { min-width:160px; top:40px; right:310px; }
+.player-stats-ui { min-width:100px; top:50px; right:150px; font-size:14px; }
+#player-stats-container, #inventory-items, #equipment-items { position:relative; word-wrap:break-word; overflow:auto; font-size:12px; }
+#player-stats-container { width:100px; height:110px; }
+#inventory-items { width:268px; height:200px; }
+#equipment-items { width:268px; height:225px; }
+.item-box, .group-item-block { float:left; display:block; width:50px; height:50px; margin-bottom:6px; }
 .item-box .item-data-container { display:none; position:absolute; top:54px; left:16%; z-index:2; width:64%; text-align:center; background:#000; padding:4px; color:#fff; border:1px solid #fff; font-style:italic; }
 .item-box:nth-child(4n) .item-data-container, .item-box:nth-child(5n) .item-data-container { right:50px; left:auto; }
 .item-label, .item-description { display:block; }
@@ -74,3 +76,18 @@ span.stat-value { float:left; width:50%; display:block; text-align:left; }
 .item-box .actions-container .item-action-block img { max-width:32px; cursor:pointer; }
 .item-box .trash-confirm { display:none; }
 .item-box .trash-confirm span { cursor:pointer; padding:5px; border:1px solid; margin:5px; display: inline-block; }
+.group-item-block { position:relative; }
+.group-item-block .equip-group-icon { position:absolute; top:0px; left:0px; width:100%; height:100%; z-index:1; opacity:0.2; border:1px solid #ffffff; }
+.group-item-block .equipped-item { position:relative; top:0px; left:0px; z-index:2; }
+.group-item-block .image-container img { min-width:50px; }
+.group-item-block .item-qty, .group-item-block .item-data-container .item-description, .group-item-block .item-data-container .item-trash { display:none; }
+.group-item-block .item-data-container { min-width:50px; }
+.group-item-block .item-data-container .actions-container .item-action-block { float:none; margin:5px auto; }
+#group-item-helmet, #group-item-boots { display:block; width:100%; }
+#group-item-helmet .equip-group-icon, #group-item-boots .equip-group-icon { max-width:50px; left:40%; }
+#group-item-helmet .equipped-item, #group-item-boots .equipped-item { display:block; margin:0 auto; max-width:50px; min-height:50px; }
+#group-item-weapon, #group-item-shield, #group-item-armor, #group-item-gauntlets { display:block; width:50%; }
+#group-item-weapon .equip-group-icon, #group-item-armor .equip-group-icon { max-width:50px; right:20px; left:auto; }
+#group-item-shield .equip-group-icon, #group-item-gauntlets .equip-group-icon { max-width:50px; right:auto; left:20px; }
+#group-item-weapon .equipped-item, #group-item-armor .equipped-item { position:absolute; right:20px; left:auto; }
+#group-item-shield .equipped-item, #group-item-gauntlets .equipped-item { position:absolute; right:auto; left:20px; }

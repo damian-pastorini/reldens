@@ -52,7 +52,12 @@ class PlayerEngine
         this.players[id].username = state.username;
         this.players[id].anims.play(state.dir);
         this.players[id].anims.stop();
-        this.players[id].setInteractive().on('pointerdown', () => {
+        this.players[id].setInteractive().on('pointerdown', (ev) => {
+            // @NOTE: we avoid to run object interactions while an UI element is open, if we click on the UI the
+            // elements in the background scene should not be executed.
+            if(ev.downElement.nodeName !== 'CANVAS'){
+                return false;
+            }
             // @NOTE: we could send an specific action when the player is been targeted.
             // this.room.send({act: GameConst.TYPE_PLAYER, id: id});
             // update target ui:

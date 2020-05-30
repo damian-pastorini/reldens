@@ -267,30 +267,33 @@ class RoomEvents
                     boxContent.innerHTML = props.content;
                     // @TODO: IMPROVE! I need time to focus on this which I don't have right now :(
                     if(props.options){
-                        let optionsContainer = uiScene.cache.html.get('uiOptionsContainer');
+                        let optionsContainerTemplate = uiScene.cache.html.get('uiOptionsContainer');
+                        let optionsContainer = this.gameManager.gameEngine.parseTemplate(optionsContainerTemplate,
+                            {id: 'ui-'+props.id});
                         boxContent.innerHTML += optionsContainer;
-                        let buttonsContainer = uiBox.getChildByProperty('className', 'box-options-container');
                         for(let i of Object.keys(props.options)){
-                            let {label, value} = props.options[i];
-                            let buttonTemplate = uiScene.cache.html.get('uiButton');
-                            let templateVars = {id: i, object_id: props.id, label, value};
+                            let {label, value, icon} = props.options[i];
+                            let optTemplate = icon ? 'Icon' : 'Button';
+                            let buttonTemplate = uiScene.cache.html.get('uiOption'+optTemplate);
+                            let templateVars = {
+                                id: i,
+                                object_id: props.id,
+                                label,
+                                value,
+                                icon: '/assets/custom/items/'+icon+'.png'
+                            };
                             let buttonHtml = this.gameManager.gameEngine.parseTemplate(buttonTemplate, templateVars);
-                            buttonsContainer.innerHTML += buttonHtml;
-                            // @TODO: temporal fix to avoid rendering time issue.
-                            setTimeout(()=>{
-                                let buttonElement = boxContent.querySelector('#opt-'+i+'-'+props.id);
-                                buttonElement.addEventListener('click', (event) => {
-                                    let optionSend = {
-                                        id: props.id,
-                                        act: GameConst.BUTTON_OPTION,
-                                        value: event.target.getAttribute('data-option-value')
-                                    };
-                                    this.room.send(optionSend);
-                                });
-                            }, 0);
+                            this.gameManager.gameDom.appendToElement('#ui-'+props.id, buttonHtml);
+                            this.gameManager.gameDom.getElement('#opt-'+i+'-'+props.id).on('click', (event) => {
+                                let optionSend = {
+                                    id: props.id,
+                                    act: GameConst.BUTTON_OPTION,
+                                    value: event.target.getAttribute('data-option-value')
+                                };
+                                this.room.send(optionSend);
+                            });
                         }
                     }
-
                 }
             }
             let dialogContainer = uiBox.getChildByID('box-'+props.id);

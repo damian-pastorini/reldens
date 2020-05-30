@@ -86,7 +86,12 @@ class AnimationEngine
             this.sceneSprite.anims.play(this.key, true);
         }
         if(this.isInteractive){
-            this.sceneSprite.setInteractive().on('pointerdown', () => {
+            this.sceneSprite.setInteractive().on('pointerdown', (ev) => {
+                // @NOTE: we avoid to run object interactions while an UI element is open, if we click on the UI the
+                // elements in the background scene should not be executed.
+                if(ev.downElement.nodeName !== 'CANVAS'){
+                    return false;
+                }
                 // @TODO: tempId is a temporal fix for multiple objects case.
                 let tempId = (this.key === this.asset_key) ? this.id : this.key;
                 this.gameManager.activeRoomEvents.room.send({

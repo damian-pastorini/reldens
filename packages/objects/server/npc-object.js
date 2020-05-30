@@ -33,6 +33,8 @@ class NpcObject extends AnimationObject
         // area will be the valid-margin surrounding the object.
         this.interactionArea = this.config.get('server/objects/actions/interactionsDistance');
         this.options = {};
+        this.sendInvalidOptionMessage = false;
+        this.invalidOptionMessage = 'I do not understand.';
     }
 
     parseMessageAndRunActions(client, data, room, playerSchema)
@@ -51,15 +53,28 @@ class NpcObject extends AnimationObject
             if(this.content){
                 activationData.content = this.content;
             }
-            if(Object.entries(this.options).length > 0){
-                activationData.options = {};
-                for(let i of Object.keys(this.options)){
-                    let option = this.options[i];
-                    activationData.options[i] = {label: option.label, value: option.value};
-                }
+            if(Object.keys(this.options).length > 0){
+                // @TODO: extend feature to generate different flows, for example request confirmation about a choice.
+                activationData.options = this.options;
             }
             room.send(client, activationData);
         }
+    }
+
+    isValidOption(data)
+    {
+        return !(data.act !== GameConst.BUTTON_OPTION || data.id !== this.id);
+    }
+
+    isValidIndexValue(optionIdx, room, client)
+    {
+        if(!{}.hasOwnProperty.call(this.options, optionIdx)){
+            if(this.sendInvalidOptionMessage){
+                room.send(client, {act: GameConst.UI, id: this.id, content: this.invalidOptionMessage});
+            }
+            return false;
+        }
+        return true;
     }
 
 }

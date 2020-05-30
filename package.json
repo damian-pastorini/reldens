@@ -40,7 +40,7 @@
     "dependencies": {
         "@reldens/utils": "^0.1.5",
         "@reldens/storage": "^0.1.2",
-        "@reldens/items-system": "^0.2.0",
+        "@reldens/items-system": "^0.3.0",
         "@colyseus/monitor": "^0.12.1",
         "@colyseus/schema": "^0.5.35",
         "bcrypt": "^4.0.1",
@@ -51,7 +51,7 @@
         "express": "^4.17.1",
         "express-basic-auth": "^1.2.0",
         "jquery": "^3.5.1",
-        "jquery-validation": "^1.19.1",
+        "jquery-validation": "^1.19.2",
         "mustache": "^4.0.1",
         "mysql": "^2.18.1",
         "p2": "^0.7.1",
@@ -60,11 +60,11 @@
         "pathfinding": "^0.4.18"
     },
     "devDependencies": {
-        "@babel/core": "^7.9.6",
-        "@babel/runtime-corejs3": "^7.9.6",
-        "@babel/plugin-transform-runtime": "^7.9.6",
+        "@babel/core": "^7.10.0",
+        "@babel/runtime-corejs3": "^7.10.0",
+        "@babel/plugin-transform-runtime": "^7.10.0",
         "@babel/plugin-proposal-class-properties": "^7.8.3",
-        "eslint": "^7.0.0",
+        "eslint": "^7.1.0",
         "eslint-config-standard": "^14.1.1",
         "eslint-plugin-import": "^2.20.2",
         "eslint-plugin-node": "^11.1.0",

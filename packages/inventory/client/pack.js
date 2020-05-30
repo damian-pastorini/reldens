@@ -22,9 +22,13 @@ class InventoryPack
                 if(!roomEvents.gameManager.inventory){
                     // create inventory instance only once:
                     let receiverProps = {owner: player};
-                    let inventoryClasses = roomEvents.gameManager.config.customClasses.inventory;
+                    let inventoryClasses = roomEvents.gameManager.config.customClasses.inventory.items;
                     if(inventoryClasses){
                         receiverProps.itemClasses = inventoryClasses;
+                    }
+                    let groupClasses = roomEvents.gameManager.config.customClasses.inventory.groups;
+                    if(groupClasses){
+                        receiverProps.groupClasses = groupClasses;
                     }
                     // create inventory instance:
                     roomEvents.gameManager.inventory = new Receiver(receiverProps);
@@ -40,47 +44,55 @@ class InventoryPack
         });
         EventsManager.on('reldens.preloadUiScene', (preloadScene) => {
             preloadScene.load.html('uiInventory', 'assets/features/inventory/templates/ui-inventory.html');
+            preloadScene.load.html('uiEquipment', 'assets/features/inventory/templates/ui-equipment.html');
             preloadScene.load.html('uiInventoryItem', 'assets/features/inventory/templates/item.html');
             preloadScene.load.html('uiInventoryItemUse', 'assets/features/inventory/templates/usable.html');
             preloadScene.load.html('uiInventoryItemEquip', 'assets/features/inventory/templates/equip.html');
+            preloadScene.load.html('uiInventoryGroup', 'assets/features/inventory/templates/group.html');
         });
         EventsManager.on('reldens.createUiScene', (preloadScene) => {
             this.uiCreate = new InventoryUi(preloadScene);
             this.uiCreate.createUi();
-            let inventoryPanel = preloadScene.uiInventory.getChildByProperty('id', InventoryConst.ITEMS);
-            if(!inventoryPanel){
-                Logger.error('Inventory UI not found.', inventoryPanel);
+            let inventoryPanel = preloadScene.uiInventory.getChildByProperty('id', InventoryConst.INVENTORY_ITEMS);
+            let equipmentPanel = preloadScene.uiEquipment.getChildByProperty('id', InventoryConst.EQUIPMENT_ITEMS);
+            if(!inventoryPanel || !equipmentPanel){
+                Logger.error(['Inventory/Equipment UI not found.', inventoryPanel, equipmentPanel]);
                 return false;
             }
             let manager = preloadScene.gameManager.inventory.manager;
+            // first time load and then we listen the events to get the updates:
+            if(Object.keys(manager.groups).length){
+                preloadScene.gameManager.gameDom.getElement('#'+InventoryConst.EQUIPMENT_ITEMS).html('');
+                let orderedGroups = this.sortGroups(manager.groups);
+                for(let i of orderedGroups){
+                    let output = this.createGroupBox(manager.groups[i], preloadScene.gameManager, preloadScene);
+                    preloadScene.gameManager.gameDom.appendToElement('#'+InventoryConst.EQUIPMENT_ITEMS, output);
+                }
+            }
             if(Object.keys(manager.items).length){
                 for(let i of Object.keys(manager.items)){
                     let item = manager.items[i];
-                    let output = this.createItemBox(item, preloadScene.gameManager, preloadScene);
-                    preloadScene.gameManager.gameDom.appendToElement('#'+InventoryConst.ITEMS, output);
-                    this.setupButtonsActions(inventoryPanel, i, item, preloadScene);
+                    this.displayItem(item, preloadScene, equipmentPanel, inventoryPanel, i);
                 }
             }
             // listen for inventory events:
-            this.listenInventoryEvents(preloadScene, inventoryPanel);
+            this.listenInventoryEvents(preloadScene, inventoryPanel, equipmentPanel);
         });
     }
 
-    listenInventoryEvents(uiScene, inventoryPanel)
+    listenInventoryEvents(uiScene, inventoryPanel, equipmentPanel)
     {
         let gameManager = uiScene.gameManager;
         gameManager.inventory.manager.events.on(ItemsEvents.ADD_ITEM, (inventory, item) => {
             let output = this.createItemBox(item, gameManager, uiScene);
-            gameManager.gameDom.appendToElement('#'+InventoryConst.ITEMS, output);
+            gameManager.gameDom.appendToElement('#'+InventoryConst.INVENTORY_ITEMS, output);
             this.setupButtonsActions(inventoryPanel, item.getInventoryId(), item, uiScene);
         });
         gameManager.inventory.manager.events.on(ItemsEvents.SET_ITEMS, (props) => {
             inventoryPanel.innerHTML = '';
             for(let i of Object.keys(props.items)){
                 let item = props.items[i];
-                let output = this.createItemBox(item, gameManager, uiScene);
-                gameManager.gameDom.appendToElement('#'+InventoryConst.ITEMS, output);
-                this.setupButtonsActions(inventoryPanel, item.getInventoryId(), item, uiScene);
+                this.displayItem(item, uiScene, equipmentPanel, inventoryPanel, i);
             }
         });
         // eslint-disable-next-line no-unused-vars
@@ -91,6 +103,33 @@ class InventoryPack
         gameManager.inventory.manager.events.on(ItemsEvents.REMOVE_ITEM, (inventory, itemKey) => {
             uiScene.uiInventory.getChildByID('item-'+itemKey).remove();
         });
+        gameManager.inventory.manager.events.on(ItemsEvents.SET_GROUPS, (props) => {
+            gameManager.gameDom.getElement('#'+InventoryConst.EQUIPMENT_ITEMS).html('');
+            let orderedGroups = this.sortGroups(props.groups);
+            for(let i of orderedGroups){
+                let output = this.createGroupBox(props.groups[i], gameManager, uiScene);
+                gameManager.gameDom.appendToElement('#'+InventoryConst.EQUIPMENT_ITEMS, output);
+            }
+        });
+    }
+
+    displayItem(item, uiScene, equipmentPanel, inventoryPanel, itemIdx)
+    {
+        let output = this.createItemBox(item, uiScene.gameManager, uiScene);
+        if(item.isType(ItemsConst.TYPE_EQUIPMENT) && item.equipped){
+            let group = this.getGroupById(item.group_id, uiScene.gameManager);
+            if(group && uiScene.gameManager.gameDom.getElement('#group-item-'+group.key+' .equipped-item').length){
+                uiScene.gameManager.gameDom.updateContent('#group-item-'+group.key+' .equipped-item', output);
+            } else {
+                // @TODO: make this append optional.
+                // Logger.error('Group element not found. Group ID: '+item.group_id);
+                uiScene.gameManager.gameDom.appendToElement('#'+InventoryConst.EQUIPMENT_ITEMS, output);
+            }
+            this.setupButtonsActions(equipmentPanel, itemIdx, item, uiScene);
+        } else {
+            uiScene.gameManager.gameDom.appendToElement('#'+InventoryConst.INVENTORY_ITEMS, output);
+            this.setupButtonsActions(inventoryPanel, itemIdx, item, uiScene);
+        }
     }
 
     createItemBox(item, gameManager, uiScene)
@@ -102,8 +141,25 @@ class InventoryPack
             description: item.description,
             id: item.getInventoryId(),
             qty: item.qty,
-            usable: (item.type === ItemsConst.TYPE_USABLE) ? this.getUsableContent(item, gameManager, uiScene) : '',
-            equipment: (item.type === ItemsConst.TYPE_EQUIPMENT) ? this.getEquipmentContent(item, gameManager, uiScene) : ''
+            usable: item.isType(ItemsConst.TYPE_USABLE) ? this.getUsableContent(item, gameManager, uiScene) : '',
+            equipment: item.isType(ItemsConst.TYPE_EQUIPMENT) ? this.getEquipContent(item, gameManager, uiScene) : ''
+        });
+    }
+
+    sortGroups(groups)
+    {
+        return Object.keys(groups).sort((a,b) => {
+            return (groups[a].sort > groups[b].sort) ? 1 : -1;
+        });
+    }
+
+    createGroupBox(group, gameManager, uiScene)
+    {
+        let messageTemplate = uiScene.cache.html.get('uiInventoryGroup');
+        return gameManager.gameEngine.parseTemplate(messageTemplate, {
+            key: group.key,
+            label: group.label,
+            description: group.description
         });
     }
 
@@ -149,12 +205,12 @@ class InventoryPack
             });
         }
         // use:
-        if(item.type === ItemsConst.TYPE_USABLE){
+        if(item.isType(ItemsConst.TYPE_USABLE)){
             let useBtn = domMan.getElement('#item-use-'+idx);
             useBtn.on('click', this.clickedBox.bind(this, idx, InventoryConst.ACTION_USE, preloadScene));
         }
         // equip / unequip:
-        if(item.type === ItemsConst.TYPE_EQUIPMENT){
+        if(item.isType(ItemsConst.TYPE_EQUIPMENT)){
             let equipBtn = domMan.getElement('#item-equip-'+idx);
             equipBtn.on('click', this.clickedBox.bind(this, idx, InventoryConst.ACTION_EQUIP, preloadScene));
         }
@@ -173,7 +229,7 @@ class InventoryPack
         });
     }
 
-    getEquipmentContent(item, gameManager, uiScene)
+    getEquipContent(item, gameManager, uiScene)
     {
         let messageTemplate = uiScene.cache.html.get('uiInventoryItemEquip');
         return gameManager.gameEngine.parseTemplate(messageTemplate, {
@@ -245,6 +301,22 @@ class InventoryPack
             });
         });
         currentScene.load.start();
+    }
+
+    getGroupById(groupId, gameManager)
+    {
+        let result = false;
+        let groups = Object.keys(gameManager.inventory.manager.groups);
+        if(groups.length){
+            for(let i of groups){
+                let group = gameManager.inventory.manager.groups[i];
+                if(group.id === groupId){
+                    result = group;
+                    break;
+                }
+            }
+        }
+        return result;
     }
 
 }
