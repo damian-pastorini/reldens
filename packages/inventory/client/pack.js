@@ -111,17 +111,27 @@ class InventoryPack
                 gameManager.gameDom.appendToElement('#'+InventoryConst.EQUIPMENT_ITEMS, output);
             }
         });
+        gameManager.inventory.manager.events.on(ItemsEvents.EQUIP_ITEM, (item) => {
+            this.displayItem(item, uiScene, equipmentPanel, inventoryPanel, item.getInventoryId());
+        });
+        gameManager.inventory.manager.events.on(ItemsEvents.UNEQUIP_ITEM, (item) => {
+            this.displayItem(item, uiScene, equipmentPanel, inventoryPanel, item.getInventoryId());
+        });
     }
 
     displayItem(item, uiScene, equipmentPanel, inventoryPanel, itemIdx)
     {
         let output = this.createItemBox(item, uiScene.gameManager, uiScene);
+        let existentElement = uiScene.gameManager.gameDom.getElement('#item-'+item.getInventoryId());
+        if(existentElement.length){
+            existentElement.remove();
+        }
         if(item.isType(ItemsConst.TYPE_EQUIPMENT) && item.equipped){
-            let group = this.getGroupById(item.group_id, uiScene.gameManager);
+            let group = this.getGroupById(item.group_id, uiScene.gameManager.inventory.manager.groups);
             if(group && uiScene.gameManager.gameDom.getElement('#group-item-'+group.key+' .equipped-item').length){
                 uiScene.gameManager.gameDom.updateContent('#group-item-'+group.key+' .equipped-item', output);
             } else {
-                // @TODO: make this append optional.
+                // @TODO: make this append optional for now we will leave it to make the equipment action visible.
                 // Logger.error('Group element not found. Group ID: '+item.group_id);
                 uiScene.gameManager.gameDom.appendToElement('#'+InventoryConst.EQUIPMENT_ITEMS, output);
             }
@@ -130,6 +140,13 @@ class InventoryPack
             uiScene.gameManager.gameDom.appendToElement('#'+InventoryConst.INVENTORY_ITEMS, output);
             this.setupButtonsActions(inventoryPanel, itemIdx, item, uiScene);
         }
+    }
+
+    updateEquipmentStatus(item, gameManager)
+    {
+        let currentItemElement = gameManager.gameDom.getElement('#item-equip-'+item.idx);
+        let newStatusImg = '/assets/features/inventory/assets/'+(item.equipped ? 'equipped' : 'unequipped')+'.png';
+        currentItemElement.src = newStatusImg;
     }
 
     createItemBox(item, gameManager, uiScene)
@@ -170,6 +187,10 @@ class InventoryPack
         let domMan = preloadScene.gameManager.gameDom;
         // show item data:
         let itemImage = inventoryPanel.querySelector('#item-' + idx + ' .image-container img');
+        if(!itemImage){
+            Logger.error(['Missing image.', itemImage]);
+            return false;
+        }
         itemImage.addEventListener('click', () => {
             let details = inventoryPanel.querySelector('#item-' + idx + ' .item-data-container');
             let show = false;
@@ -189,6 +210,10 @@ class InventoryPack
         });
         // show item trash:
         let buttonElement = inventoryPanel.querySelector('#item-trash-' + idx + ' img');
+        if(!itemImage){
+            Logger.error(['Missing button.', buttonElement]);
+            return false;
+        }
         if(buttonElement){
             buttonElement.addEventListener('click', () => {
                 inventoryPanel.querySelector('#trash-confirm-' + idx).style.display = 'block';
@@ -303,13 +328,13 @@ class InventoryPack
         currentScene.load.start();
     }
 
-    getGroupById(groupId, gameManager)
+    getGroupById(groupId, groupsList)
     {
         let result = false;
-        let groups = Object.keys(gameManager.inventory.manager.groups);
+        let groups = Object.keys(groupsList);
         if(groups.length){
             for(let i of groups){
-                let group = gameManager.inventory.manager.groups[i];
+                let group = groupsList[i];
                 if(group.id === groupId){
                     result = group;
                     break;

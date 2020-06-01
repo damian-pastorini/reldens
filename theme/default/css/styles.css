@@ -44,7 +44,7 @@ form .input-box input[type="text"], form .input-box input[type="password"] { wid
 .ui-box-controls .vertical-buttons.action-buttons { margin-left:10px; }
 .ui-box-player { text-align:center; padding:0px 10px; background-color: rgba(0, 0, 0, 0.5); }
 .ui-box-npc-dialog { display:none; float:left; width:240px; min-height:150px; padding:10px 14px; background:#000000; opacity:0.85; color:#ffffff; word-wrap:break-word; overflow:hidden; font-size:12px; }
-.box-close, .close-target { width:24px; position:absolute; right:-12px; top:-8px; }
+.box-close, .close-target { width:24px; position:absolute; right:-12px; top:-8px; cursor:pointer; }
 .box-content { min-height:40px; max-height:120px; overflow:auto; margin:10px 0px; }
 .box-options-container { display:block; }
 .player-name { padding:10px 0; text-align:center; color:#ffffff; }
