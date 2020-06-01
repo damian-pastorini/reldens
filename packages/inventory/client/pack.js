@@ -210,7 +210,7 @@ class InventoryPack
         });
         // show item trash:
         let buttonElement = inventoryPanel.querySelector('#item-trash-' + idx + ' img');
-        if(!itemImage){
+        if(!buttonElement){
             Logger.error(['Missing button.', buttonElement]);
             return false;
         }
