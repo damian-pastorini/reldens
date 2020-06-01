@@ -214,21 +214,19 @@ class InventoryPack
             Logger.error(['Missing button.', buttonElement]);
             return false;
         }
-        if(buttonElement){
-            buttonElement.addEventListener('click', () => {
-                inventoryPanel.querySelector('#trash-confirm-' + idx).style.display = 'block';
-            });
-            inventoryPanel.querySelector('#trash-cancel-' + idx).addEventListener('click', () => {
-                inventoryPanel.querySelector('#trash-confirm-' + idx).style.display = 'none';
-            });
-            inventoryPanel.querySelector('#trash-confirmed-' + idx).addEventListener('click', () => {
-                let optionSend = {
-                    idx: idx,
-                    act: InventoryConst.ACTION_REMOVE
-                };
-                preloadScene.gameManager.room.send(optionSend);
-            });
-        }
+        buttonElement.addEventListener('click', () => {
+            inventoryPanel.querySelector('#trash-confirm-' + idx).style.display = 'block';
+        });
+        inventoryPanel.querySelector('#trash-cancel-' + idx).addEventListener('click', () => {
+            inventoryPanel.querySelector('#trash-confirm-' + idx).style.display = 'none';
+        });
+        inventoryPanel.querySelector('#trash-confirmed-' + idx).addEventListener('click', () => {
+            let optionSend = {
+                idx: idx,
+                act: InventoryConst.ACTION_REMOVE
+            };
+            preloadScene.gameManager.room.send(optionSend);
+        });
         // use:
         if(item.isType(ItemsConst.TYPE_USABLE)){
             let useBtn = domMan.getElement('#item-use-'+idx);
