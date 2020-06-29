@@ -22,7 +22,6 @@ class ConfigManager
     {
         // initialize config props with default data:
         this.configList = {
-            gameEngine: GameConfig,
             server: {
                 players: {
                     initialState: InitialState,
@@ -38,6 +37,8 @@ class ConfigManager
      */
     async loadConfigurations()
     {
+        let gameConfig = new GameConfig();
+        this.configList.gameEngine = gameConfig.getConfig();
         EventsManager.emit('reldens.beforeLoadConfigurations', {configManager: this});
         // get the configurations from the database:
         let configCollection = await ConfigModel.query();

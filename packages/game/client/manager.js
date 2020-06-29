@@ -75,6 +75,16 @@ class GameManager
                 gameRoom.leave();
             }
         });
+        // responsive full screen:
+        this.events.on('reldens.afterSceneDynamicCreate', () => {
+            if(this.config.get('client/ui/screen/responsive')){
+                this.gameEngine.updateGameSize(this);
+                // @TODO: remove window from here.
+                this.gameDom.getElement(window).resize(() => {
+                    this.gameEngine.updateGameSize(this);
+                });
+            }
+        });
         // @NOTE: we return the gameRoom here to control the login result actions in the index script.
         return gameRoom;
     }
@@ -118,6 +128,7 @@ class GameManager
         // start listening the new room events:
         this.activeRoomEvents = this.createRoomEventsInstance(initialGameData.player.state.scene);
         this.activeRoomEvents.activateRoom(joinedFirstRoom);
+        await EventsManager.emit('reldens.afterInitEngineAndStartGame', initialGameData, joinedFirstRoom);
         return joinedFirstRoom;
     }
 

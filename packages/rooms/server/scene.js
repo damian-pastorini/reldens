@@ -77,7 +77,7 @@ class RoomScene extends RoomLogin
         if(this.state.players){
             for(let i of Object.keys(this.state.players)){
                 let player = this.state.players[i];
-                if(player.username === options.username){
+                if(player.username.toLowerCase() === options.username.toLowerCase()){
                     loggedUserFound = true;
                     let savedStats = await this.savePlayerStats(player);
                     let savedAndRemoved = await this.saveStateAndRemovePlayer(i);

@@ -26,6 +26,7 @@ class ScenePreloader extends Scene
         this.preloadMapKey = props.map;
         this.preloadImages = props.images;
         this.uiScene = props.uiScene;
+        this.elementsUi = {};
         this.gameManager = props.gameManager;
         this.preloadAssets = props.preloadAssets;
         let currentScene = this.gameManager.activeRoomEvents.getActiveScene();
@@ -136,6 +137,8 @@ class ScenePreloader extends Scene
                 logoutButton.addEventListener('click', () => {
                     window.location.reload();
                 });
+                // @TODO: TEMPORAL, replace references by this.
+                this.elementsUi['playerName'] = this.uiPlayer;
             }
             // create uiTarget:
             let targetUi = this.getUiConfig('uiTarget');
@@ -150,12 +153,16 @@ class ScenePreloader extends Scene
             let sceneLabelUi = this.getUiConfig('sceneLabel');
             if(sceneLabelUi.enabled){
                 this.uiSceneLabel = this.add.dom(sceneLabelUi.uiX, sceneLabelUi.uiY).createFromCache('uiSceneLabel');
+                // @TODO: TEMPORAL, replace references by this.
+                this.elementsUi['sceneLabel'] = this.uiSceneLabel;
             }
             // create uiControls:
             let controlsUi = this.getUiConfig('controls');
             if(controlsUi.enabled){
                 this.uiControls = this.add.dom(controlsUi.uiX, controlsUi.uiY).createFromCache('uiControls');
                 this.registerControllers(this.uiControls);
+                // @TODO: TEMPORAL, replace references by this.
+                this.elementsUi['controls'] = this.uiControls;
             }
             // create uiPlayerStats:
             let statsUi = this.getUiConfig('playerStats');
@@ -182,6 +189,8 @@ class ScenePreloader extends Scene
                 statsPanel.innerHTML = this.gameManager.gameEngine.parseTemplate(messageTemplate, {
                     stats: this.gameManager.playerData.stats
                 });
+                // @TODO: TEMPORAL, replace references by this.
+                this.elementsUi['playerStats'] = this.uiPlayerStats;
             }
             // end event:
             EventsManager.emit('reldens.createUiScene', this);
@@ -190,13 +199,33 @@ class ScenePreloader extends Scene
         this.createPlayerAnimations();
     }
 
-    getUiConfig(uiName)
+    getUiConfig(uiName, newWidth, newHeight)
     {
+        let {uiX, uiY} = this.getUiPosition(uiName, newWidth, newHeight);
         return {
             enabled: this.gameManager.config.get('client/ui/'+uiName+'/enabled'),
-            uiX: this.gameManager.config.get('client/ui/'+uiName+'/x'),
-            uiY: this.gameManager.config.get('client/ui/'+uiName+'/y')
+            uiX: uiX,
+            uiY: uiY
         }
+    }
+
+    getUiPosition(uiName, newWidth, newHeight)
+    {
+        let uiX = this.gameManager.config.get('client/ui/'+uiName+'/x');
+        let uiY = this.gameManager.config.get('client/ui/'+uiName+'/y');
+        if(this.gameManager.config.get('client/ui/screen/responsive')){
+            let rX = this.gameManager.config.get('client/ui/'+uiName+'/responsiveX');
+            let rY = this.gameManager.config.get('client/ui/'+uiName+'/responsiveY');
+            if(!newWidth){
+                newWidth = this.gameManager.gameDom.getElement('.game-container').width();
+            }
+            if(!newHeight){
+                newHeight = this.gameManager.gameDom.getElement('.game-container').height();
+            }
+            uiX = rX ? rX * newWidth / 100 : 0;
+            uiY = rY ? rY * newHeight / 100 : 0;
+        }
+        return {uiX, uiY};
     }
 
     createPlayerAnimations()

@@ -23,7 +23,9 @@ class UserInterface
             preloadScene.load.html(this.id, this.template);
         });
         EventsManager.on('reldens.createPreload', (preloadScene, uiScene) => {
-            let dialogBox = uiScene.add.dom(20, 70).createFromCache(this.id);
+            let {newWidth, newHeight} = uiScene.gameManager.gameEngine.getCurrentScreenSize(uiScene.gameManager);
+            let {uiX, uiY} = uiScene.getUiPosition('npcDialog', newWidth, newHeight);
+            let dialogBox = uiScene.add.dom(uiX, uiY).createFromCache(this.id);
             let messageTemplate = preloadScene.cache.html.get(this.id);
             dialogBox.innerHTML = uiScene.gameManager.gameEngine.parseTemplate(messageTemplate, {
                 title: this.initialTitle,

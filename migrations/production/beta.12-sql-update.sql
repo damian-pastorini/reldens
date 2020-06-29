@@ -6,23 +6,53 @@
 
 # config values:
 
-INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'inventory/position/x', '400', 'i');
-INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'inventory/position/y', '450', 'i');
-
 UPDATE `config` SET `value`='140' WHERE  `path`='objects/actions/interactionsDistance';
 
 UPDATE `config` SET `value`='100' WHERE  `path`='players/initialStats/atk';
 UPDATE `config` SET `value`='100' WHERE  `path`='players/initialStats/def';
-
 UPDATE `config` SET `value`='100' WHERE  `path`='enemies/initialStats/atk';
 UPDATE `config` SET `value`='100' WHERE  `path`='enemies/initialStats/def';
+
+UPDATE `config` SET `path`='ui/uiChat/x' WHERE `path`='chat/position/x';
+UPDATE `config` SET `path`='ui/uiChat/y' WHERE `path`='chat/position/y';
 
 UPDATE `config` SET `value`='430' WHERE  `path`='ui/playerStats/x';
 UPDATE `config` SET `value`='20' WHERE  `path`='ui/playerStats/y';
 
-UPDATE `config` SET `value`='380' WHERE  `path`='inventory/position/x';
-UPDATE `config` SET `value`='430' WHERE  `path`='equipment/position/x';
-UPDATE `config` SET `value`='90' WHERE  `path`='equipment/position/y';
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/screen/responsive', '1', 'b');
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/uiTarget/responsiveY', '0', 'i');
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/uiTarget/responsiveX', '0', 'i');
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/inventory/enabled', '1', 'b');
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/inventory/x', '380', 'i');
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/inventory/y', '450', 'i');
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/inventory/responsiveY', '0', 'i');
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/inventory/responsiveX', '100', 'i');
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/equipment/enabled', '1', 'b');
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/equipment/x', '430', 'i');
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/equipment/y', '90', 'i');
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/equipment/responsiveY', '0', 'i');
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/equipment/responsiveX', '100', 'i');
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/uiLifeBar/responsiveY', '0', 'i');
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/uiLifeBar/responsiveX', '40', 'i');
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/sceneLabel/responsiveY', '0', 'i');
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/sceneLabel/responsiveX', '50', 'i');
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/playerStats/responsiveY', '0', 'i');
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/playerStats/responsiveX', '100', 'i');
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/playerName/responsiveY', '0', 'i');
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/playerName/responsiveX', '0', 'i');
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/controls/responsiveY', '100', 'i');
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/controls/responsiveX', '0', 'i');
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/chat/responsiveY', '100', 'i');
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/chat/responsiveX', '100', 'i');
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/chat/enabled', '1', 'b');
+
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/npcDialog/x', '120', 'i');
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/npcDialog/y', '100', 'i');
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/npcDialog/responsiveX', '10', 'i');
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/npcDialog/responsiveY', '10', 'i');
+
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/maximum/x', '1280', 'i');
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/maximum/y', '720', 'i');
 
 # player stats update:
 

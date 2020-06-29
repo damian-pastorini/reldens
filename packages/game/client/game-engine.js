@@ -29,6 +29,45 @@ class GameEngine extends Game
         return this.TemplateEngine.render(template, view, partials, tags);
     }
 
+    updateGameSize(manager)
+    {
+        // get the window size:
+        let {newWidth, newHeight} = this.getCurrentScreenSize(manager);
+        setTimeout(() => {
+            EventsManager.emit('reldens.updateGameSizeBefore', this, newWidth, newHeight);
+            manager.gameEngine.scale.setGameSize(newWidth, newHeight);
+            for(let key of Object.keys(this.uiScene.elementsUi)){
+                let {uiX, uiY} = this.uiScene.getUiConfig(key, newWidth, newHeight);
+                let uiElement = this.uiScene.elementsUi[key];
+                uiElement.x = uiX;
+                uiElement.y = uiY;
+            }
+            EventsManager.emit('reldens.updateGameSizeAfter', this, newWidth, newHeight);
+        }, 500);
+    }
+
+    getCurrentScreenSize(manager)
+    {
+        let containerWidth = manager.gameDom.getElement('.game-container').width();
+        let containerHeight = manager.gameDom.getElement('.game-container').height();
+        let newWidth = containerWidth;
+        let newHeight = containerHeight;
+        let mapWidth = 0, mapHeight = 0;
+        let activeScene = manager.getActiveScene();
+        if(activeScene && activeScene.map){
+            // get the map max values and use the
+            mapWidth = activeScene.map.width * activeScene.map.tileWidth;
+            newWidth = Math.min(containerWidth, mapWidth);
+            mapHeight = activeScene.map.height * activeScene.map.tileHeight;
+            newHeight = Math.min(containerHeight, mapHeight);
+        }
+        let maxUiW = Number(manager.config.get('client/ui/maximum/x'));
+        newWidth = Math.min(newWidth, maxUiW);
+        let maxUiY = Number(manager.config.get('client/ui/maximum/y'));
+        newHeight = Math.min(newHeight, maxUiY);
+        return {newWidth, newHeight};
+    }
+
     showTarget(target)
     {
         if({}.hasOwnProperty.call(this.uiScene, 'uiTarget')){
