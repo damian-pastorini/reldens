@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS `config` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=119 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table reldens.config: ~105 rows (approximately)
+-- Dumping data for table reldens.config: ~99 rows (approximately)
 /*!40000 ALTER TABLE `config` DISABLE KEYS */;
 INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(1, 'server', 'rooms/validation/valid', 'room_game,chat_global', 't'),
@@ -216,7 +216,7 @@ CREATE TABLE IF NOT EXISTS `items_inventory` (
   PRIMARY KEY (`id`),
   KEY `FK_items_inventory_items_item` (`item_id`),
   CONSTRAINT `FK_items_inventory_items_item` FOREIGN KEY (`item_id`) REFERENCES `items_item` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=97 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Inventory table is to save the items for each owner.';
+) ENGINE=InnoDB AUTO_INCREMENT=99 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Inventory table is to save the items for each owner.';
 
 -- Dumping data for table reldens.items_inventory: ~8 rows (approximately)
 /*!40000 ALTER TABLE `items_inventory` DISABLE KEYS */;
@@ -231,7 +231,9 @@ INSERT INTO `items_inventory` (`id`, `owner_id`, `item_id`, `qty`, `remaining_us
 	(93, 1, 5, 1, NULL, 0),
 	(94, 1, 4, 1, NULL, 1),
 	(95, 2, 4, 1, 0, 1),
-	(96, 2, 5, 1, 0, 0);
+	(96, 2, 5, 1, 0, 0),
+	(97, 2, 3, 1, 0, 0),
+	(98, 2, 2, 1, 0, 0);
 /*!40000 ALTER TABLE `items_inventory` ENABLE KEYS */;
 
 -- Dumping structure for table reldens.items_item
@@ -376,8 +378,8 @@ CREATE TABLE IF NOT EXISTS `players_state` (
 -- Dumping data for table reldens.players_state: ~5 rows (approximately)
 /*!40000 ALTER TABLE `players_state` DISABLE KEYS */;
 INSERT INTO `players_state` (`id`, `player_id`, `room_id`, `x`, `y`, `dir`) VALUES
-	(3, 1, 4, 1072, 468, 'down'),
-	(4, 2, 4, 1097, 469, 'left'),
+	(3, 1, 4, 799, 468, 'left'),
+	(4, 2, 4, 903, 490, 'left'),
 	(5, 3, 4, 443, 449, 'right'),
 	(14, 15, 4, 300, 388, 'down'),
 	(15, 16, 4, 508, 381, 'down');
@@ -402,8 +404,8 @@ CREATE TABLE IF NOT EXISTS `players_stats` (
 -- Dumping data for table reldens.players_stats: ~5 rows (approximately)
 /*!40000 ALTER TABLE `players_stats` DISABLE KEYS */;
 INSERT INTO `players_stats` (`id`, `player_id`, `hp`, `mp`, `stamina`, `atk`, `def`, `dodge`, `speed`) VALUES
-	(1, 1, 54, 100, 100, 105, 100, 100, 100),
-	(2, 2, 17, 100, 100, 105, 100, 100, 100),
+	(1, 1, 46, 100, 100, 105, 100, 100, 100),
+	(2, 2, 100, 100, 100, 105, 100, 100, 100),
 	(3, 3, 100, 100, 100, 100, 100, 100, 100),
 	(15, 15, 100, 100, 100, 100, 100, 100, 100),
 	(16, 16, 100, 100, 100, 100, 100, 100, 100);
@@ -466,10 +468,10 @@ CREATE TABLE IF NOT EXISTS `rooms_change_points` (
 -- Dumping data for table reldens.rooms_change_points: ~8 rows (approximately)
 /*!40000 ALTER TABLE `rooms_change_points` DISABLE KEYS */;
 INSERT INTO `rooms_change_points` (`id`, `room_id`, `tile_index`, `next_room_id`) VALUES
-	(1, 2, 491, 4),
-	(2, 2, 492, 4),
-	(3, 3, 187, 4),
-	(4, 3, 188, 4),
+	(1, 2, 816, 4),
+	(2, 2, 817, 4),
+	(3, 3, 778, 4),
+	(4, 3, 779, 4),
 	(5, 4, 444, 2),
 	(6, 4, 951, 3),
 	(7, 4, 18, 5),
@@ -497,8 +499,8 @@ CREATE TABLE IF NOT EXISTS `rooms_return_points` (
 -- Dumping data for table reldens.rooms_return_points: ~8 rows (approximately)
 /*!40000 ALTER TABLE `rooms_return_points` DISABLE KEYS */;
 INSERT INTO `rooms_return_points` (`id`, `room_id`, `direction`, `x`, `y`, `is_default`, `to_room_id`) VALUES
-	(1, 2, 'up', 400, 470, 1, NULL),
-	(2, 3, 'up', 190, 430, 1, NULL),
+	(1, 2, 'up', 548, 615, 1, NULL),
+	(2, 3, 'up', 640, 600, 1, NULL),
 	(3, 4, 'down', 400, 345, 1, 2),
 	(4, 4, 'down', 1266, 670, 0, 3),
 	(5, 5, 'up', 640, 768, 0, 4),
@@ -525,8 +527,8 @@ CREATE TABLE IF NOT EXISTS `users` (
 -- Dumping data for table reldens.users: ~5 rows (approximately)
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
 INSERT INTO `users` (`id`, `email`, `username`, `password`, `role_id`, `status`, `created_at`, `updated_at`) VALUES
-	(29, 'dap@dap.com', 'DarthStormrage', '$2b$10$PQIYGBFyA/69DaowJVTA5ufVWmIUeIOwIK4e6JCAP5Uen0sp0TAHu', 1, 1, '2019-08-02 23:06:14', '2020-06-29 22:08:01'),
-	(30, 'dap2@dap.com', 'dap2', '$2b$10$Kvjh1XdsMai8Xt2wdivG2.prYvTiW6vJrdnrNPYZenf8qCRLhuZ/a', 9, 1, '2019-08-02 23:06:14', '2020-06-29 22:09:08'),
+	(29, 'dap@dap.com', 'DarthStormrage', '$2b$10$PQIYGBFyA/69DaowJVTA5ufVWmIUeIOwIK4e6JCAP5Uen0sp0TAHu', 1, 1, '2019-08-02 23:06:14', '2020-06-30 20:02:28'),
+	(30, 'dap2@dap.com', 'dap2', '$2b$10$Kvjh1XdsMai8Xt2wdivG2.prYvTiW6vJrdnrNPYZenf8qCRLhuZ/a', 9, 1, '2019-08-02 23:06:14', '2020-06-30 20:07:02'),
 	(31, 'dap3@dap.com', 'dap3', '$2b$10$CmtWkhIexIVtcBjwsmEkeOlIhqizViykDFYAKtVrl4sF8KWLuBsxO', 1, 1, '2019-08-02 23:06:14', '2020-05-22 08:35:51'),
 	(43, 'dap13@dap13.com', 'dap13', '$2b$10$PG6nUdhNmhy2RUpS4k.g..vJ5k3x0sPRyFlpnVZMTPfuAXgXyFP/y', 1, 1, '2019-11-15 21:47:17', '2019-11-15 21:47:17'),
 	(44, 'dap12@dap12.com', 'dap12', '$2b$10$PFEKucJCDoQq8evXhO.FiuwMEayr0HLEt5UYo/WU9TgXb.wwwPG8W', 1, 1, '2019-11-15 21:58:32', '2019-11-15 21:58:32');

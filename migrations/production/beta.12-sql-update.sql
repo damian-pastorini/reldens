@@ -6,18 +6,18 @@
 
 # config values:
 
-UPDATE `config` SET `value`='140' WHERE  `path`='objects/actions/interactionsDistance';
+UPDATE `config` SET `value`='140' WHERE `path`='objects/actions/interactionsDistance';
 
-UPDATE `config` SET `value`='100' WHERE  `path`='players/initialStats/atk';
-UPDATE `config` SET `value`='100' WHERE  `path`='players/initialStats/def';
-UPDATE `config` SET `value`='100' WHERE  `path`='enemies/initialStats/atk';
-UPDATE `config` SET `value`='100' WHERE  `path`='enemies/initialStats/def';
+UPDATE `config` SET `value`='100' WHERE `path`='players/initialStats/atk';
+UPDATE `config` SET `value`='100' WHERE `path`='players/initialStats/def';
+UPDATE `config` SET `value`='100' WHERE `path`='enemies/initialStats/atk';
+UPDATE `config` SET `value`='100' WHERE `path`='enemies/initialStats/def';
 
 UPDATE `config` SET `path`='ui/uiChat/x' WHERE `path`='chat/position/x';
 UPDATE `config` SET `path`='ui/uiChat/y' WHERE `path`='chat/position/y';
 
-UPDATE `config` SET `value`='430' WHERE  `path`='ui/playerStats/x';
-UPDATE `config` SET `value`='20' WHERE  `path`='ui/playerStats/y';
+UPDATE `config` SET `value`='430' WHERE `path`='ui/playerStats/x';
+UPDATE `config` SET `value`='20' WHERE `path`='ui/playerStats/y';
 
 INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/screen/responsive', '1', 'b');
 INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/uiTarget/responsiveY', '0', 'i');
@@ -57,6 +57,14 @@ INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/ma
 # player stats update:
 
 UPDATE players_stats SET atk=100, def=100;
+
+# rooms updates:
+UPDATE `rooms_change_points` SET `tile_index`='816' WHERE `id`=1;
+UPDATE `rooms_change_points` SET `tile_index`='817' WHERE `id`=2;
+UPDATE `rooms_return_points` SET `x`='548', `y`='615' WHERE `id`=1;
+UPDATE `rooms_return_points` SET `x`='548', `y`='615' WHERE `id`=1;
+UPDATE `rooms_change_points` SET `tile_index`='778' WHERE `id`=3;
+UPDATE `rooms_return_points` SET `x`='640', `y`='600' WHERE `id`=2;
 
 # new objects:
 
