@@ -11,6 +11,7 @@ const dotenv = require('dotenv');
 const http = require('http');
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const { AwaitMiddleware } = require('./await-middleware');
 const { GameServer } = require('./game-server');
 const { DataServer } = require('@reldens/storage');
@@ -93,6 +94,11 @@ class ServerManager
         this.app = express();
         this.app.use(cors());
         this.app.use(express.json());
+        if(process.env.RELDENS_EXPRESS_SERVE_STATICS){
+            // automatically serve dist files:
+            let distPath = path.join(this.projectRoot, 'dist');
+            this.app.use('/', express.static(distPath));
+        }
         this.appServer = http.createServer(this.app);
         // create game server instance:
         this.gameServer = new GameServer({server: this.appServer, express: this.app});
