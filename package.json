@@ -31,8 +31,10 @@
     },
     "scripts": {
         "start": "node .",
-        "install-db": "knex migrate:up --env production",
-        "build-client": "parcel build packages/game/client/manager.js --no-source-maps"
+        "install-db": "knex migrate:up --env production"
+    },
+    "engines": {
+        "node": "13.1.0"
     },
     "dependencies": {
         "@reldens/utils": "^0.1.5",
