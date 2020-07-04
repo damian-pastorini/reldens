@@ -8,8 +8,8 @@
 
 const $ = require('jquery');
 require('jquery-validation');
-const { CustomClasses } = require('../packages/client');
 const { GameManager } = require('reldens/client');
+const { CustomClasses } = require('../packages/client');
 
 $(document).ready(function($){
 
