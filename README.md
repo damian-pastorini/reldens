@@ -52,7 +52,7 @@ Or:
 [Become a Patron!](https://www.patreon.com/bePatron?u=18074832)
 
 
-## [Coming soon and news!](https://github.com/damian-pastorini/reldens/wiki/Coming-soon-&-News "Coming soon & News archive") > Last update March 31, 2020.
+## [Coming soon and news!](https://github.com/damian-pastorini/reldens/wiki/Coming-soon-&-News "Coming soon & News archive") > Last update June 23, 2020.
 
 
 ## Contact us
