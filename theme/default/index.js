@@ -8,8 +8,8 @@
 
 const $ = require('jquery');
 require('jquery-validation');
-const { CustomClasses } = require('../packages/client');
 const { GameManager } = require('reldens/client');
+const { CustomClasses } = require('../packages/client');
 
 $(document).ready(function($){
 
@@ -19,7 +19,8 @@ $(document).ready(function($){
     window.reldens = reldens;
 
     let $register = $('#register_form'),
-        $login = $('#login_form');
+        $login = $('#login_form'),
+        $fullScreen = $('.full-screen-btn');
 
     function restartError(submittedForm)
     {
@@ -38,6 +39,7 @@ $(document).ready(function($){
             $('.loading-container').hide();
             $('.forms-container').detach();
             $('.game-container').show();
+            $('.full-screen-btn').show();
         }).catch((data) => {
             // @NOTE: game room errors should be always because some wrong login or registration data. For these cases
             // we will check the isNewUser variable to know where display the error.
@@ -90,5 +92,26 @@ $(document).ready(function($){
         });
         $login.validate();
     }
+
+    if($fullScreen.length){
+        $fullScreen.on('click', (e) => {
+            e.preventDefault();
+            if(document.fullscreenEnabled){
+                document.body.requestFullscreen();
+            }
+            $('.header').hide();
+            $('.footer').hide();
+            $('.content').css('height', '100%');
+            reldens.gameEngine.updateGameSize(reldens);
+        });
+    }
+
+    document.addEventListener('fullscreenchange', () => {
+        if (!document.fullscreenElement) {
+            $('.header').show();
+            $('.footer').show();
+            $('.content').css('height', '84%');
+        }
+    });
 
 });

@@ -8,6 +8,7 @@
 
 const { RespawnModel } = require('./model');
 const { PathFinder } = require('../../world/server/path-finder');
+const { EventsManager } = require('@reldens/utils');
 
 class RoomRespawn
 {
@@ -29,8 +30,8 @@ class RoomRespawn
         let {tilewidth, tileheight } = this.world.mapJson;
         // NOTE: this is because a single layer could have multiple respawn definitions for each enemy type.
         this.respawnDefinitions = await RespawnModel.query().where('layer', this.layer.name);
-        for(let idx in this.respawnDefinitions){
-            let respawnArea = this.respawnDefinitions[idx];
+        for(let i of Object.keys(this.respawnDefinitions)){
+            let respawnArea = this.respawnDefinitions[i];
             if(
                 {}.hasOwnProperty.call(this.layerObjects, respawnArea.object_id)
                 && {}.hasOwnProperty.call(this.layerObjects[respawnArea.object_id], 'respawn')
@@ -50,8 +51,9 @@ class RoomRespawn
                     // add tile data to the object and create object instance:
                     Object.assign(multipleObj.objProps, tileData);
                     let objInstance = new objClass(multipleObj.objProps);
-                    // @TODO: objects could have multiple assets, need to implement and test the case.
+                    objInstance.runAdditionalSetup(EventsManager);
                     let assetsArr = this.getObjectAssets(multipleObj);
+                    // @TODO: objects could have multiple assets, need to implement and test the case.
                     objInstance.clientParams.asset_key = assetsArr[0];
                     objInstance.clientParams.enabled = true;
                     this.world.objectsManager.objectsAnimationsData[objectIndex] = objInstance.clientParams;
@@ -71,8 +73,6 @@ class RoomRespawn
         let assetsArr = [];
         for(let assetData of multipleObj.objProps.objects_assets){
             assetsArr.push(assetData.asset_key);
-            // @TODO: TEMP.
-            break;
         }
         return assetsArr;
     }

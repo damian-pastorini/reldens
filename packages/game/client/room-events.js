@@ -63,9 +63,9 @@ class RoomEvents
             this.startEngineScene(player, this.room, previousScene);
             let currentScene = this.getActiveScene();
             if(currentScene.key === player.state.scene && currentScene.player && currentScene.player.players){
-                for(let idx in this.playersQueue){
-                    let { x, y, dir, username } = this.playersQueue[idx];
-                    currentScene.player.addPlayer(idx, { x, y, dir, username: username });
+                for(let i of Object.keys(this.playersQueue)){
+                    let { x, y, dir, username } = this.playersQueue[i];
+                    currentScene.player.addPlayer(i, { x, y, dir, username: username });
                 }
             }
         } else {
@@ -73,12 +73,12 @@ class RoomEvents
             if(this.engineStarted){
                 let currentScene = this.getActiveScene();
                 if(currentScene.key === player.state.scene && currentScene.player && currentScene.player.players){
-                    let { x, y, dir } = player.state;
-                    currentScene.player.addPlayer(key, { x, y, dir, username: player.username });
+                    let {x, y, dir} = player.state;
+                    currentScene.player.addPlayer(key, {x, y, dir, username: player.username});
                 }
             } else {
-                let { x, y, dir } = player.state;
-                this.playersQueue[key] = { x, y, dir, username: player.username };
+                let {x, y, dir} = player.state;
+                this.playersQueue[key] = {x, y, dir, username: player.username};
             }
         }
     }
@@ -194,9 +194,6 @@ class RoomEvents
         }
         if(message.act === GameConst.HIT){
             this.runHitAnimation(message.x, message.y);
-            if({}.hasOwnProperty.call(message, 'destroy')){
-
-            }
         }
     }
 
@@ -270,27 +267,33 @@ class RoomEvents
                     boxContent.innerHTML = props.content;
                     // @TODO: IMPROVE! I need time to focus on this which I don't have right now :(
                     if(props.options){
-                        for(let idx in props.options){
-                            let {label, value} = props.options[idx];
-                            let buttonTemplate = uiScene.cache.html.get('uiButton');
-                            let templateVars = {id: idx, object_id: props.id, label, value};
+                        let optionsContainerTemplate = uiScene.cache.html.get('uiOptionsContainer');
+                        let optionsContainer = this.gameManager.gameEngine.parseTemplate(optionsContainerTemplate,
+                            {id: 'ui-'+props.id});
+                        boxContent.innerHTML += optionsContainer;
+                        for(let i of Object.keys(props.options)){
+                            let {label, value, icon} = props.options[i];
+                            let optTemplate = icon ? 'Icon' : 'Button';
+                            let buttonTemplate = uiScene.cache.html.get('uiOption'+optTemplate);
+                            let templateVars = {
+                                id: i,
+                                object_id: props.id,
+                                label,
+                                value,
+                                icon: '/assets/custom/items/'+icon+'.png'
+                            };
                             let buttonHtml = this.gameManager.gameEngine.parseTemplate(buttonTemplate, templateVars);
-                            boxContent.innerHTML += buttonHtml;
-                            // @TODO: temporal fix to avoid rendering time issue.
-                            setTimeout(()=>{
-                                let buttonElement = boxContent.querySelector('#opt-'+idx+'-'+props.id);
-                                buttonElement.addEventListener('click', (event) => {
-                                    let optionSend = {
-                                        id: props.id,
-                                        act: GameConst.BUTTON_OPTION,
-                                        value: event.originalTarget.getAttribute('data-option-value')
-                                    };
-                                    this.room.send(optionSend);
-                                });
-                            }, 0);
+                            this.gameManager.gameDom.appendToElement('#ui-'+props.id, buttonHtml);
+                            this.gameManager.gameDom.getElement('#opt-'+i+'-'+props.id).on('click', (event) => {
+                                let optionSend = {
+                                    id: props.id,
+                                    act: GameConst.BUTTON_OPTION,
+                                    value: event.target.getAttribute('data-option-value')
+                                };
+                                this.room.send(optionSend);
+                            });
                         }
                     }
-
                 }
             }
             let dialogContainer = uiBox.getChildByID('box-'+props.id);
@@ -370,8 +373,8 @@ class RoomEvents
         currentScene.player = this.createPlayerEngineInstance(currentScene, player, this.gameManager, room);
         currentScene.player.create();
         if(room.state.players){
-            for(let idx in room.state.players){
-                let tmp = room.state.players[idx];
+            for(let i of Object.keys(room.state.players)){
+                let tmp = room.state.players[i];
                 if(tmp.sessionId && tmp.sessionId !== room.sessionId){
                     let { x, y, dir } = tmp.state;
                     currentScene.player.addPlayer(tmp.sessionId, { x, y, dir, username: tmp.username });

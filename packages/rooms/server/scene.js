@@ -75,12 +75,13 @@ class RoomScene extends RoomLogin
         // check if user is already logged and disconnect from the previous client:
         let loggedUserFound = false;
         if(this.state.players){
-            for(let playerIdx in this.state.players){
-                let player = this.state.players[playerIdx];
-                if(player.username === options.username){
+            for(let i of Object.keys(this.state.players)){
+                let player = this.state.players[i];
+                if(player.username.toLowerCase() === options.username.toLowerCase()){
                     loggedUserFound = true;
-                    let savedAndRemoved = await this.saveStateAndRemovePlayer(playerIdx);
-                    if(savedAndRemoved){
+                    let savedStats = await this.savePlayerStats(player);
+                    let savedAndRemoved = await this.saveStateAndRemovePlayer(i);
+                    if(savedAndRemoved && savedStats){
                         // old player session removed, create it again:
                         await this.createPlayer(client, authResult);
                     }
@@ -108,7 +109,7 @@ class RoomScene extends RoomLogin
             height: this.config.get('server/players/size/height'),
             bodyState: currentPlayer.state
         });
-        await EventsManager.emit('reldens.createPlayerAfter', client, authResult, currentPlayer);
+        await EventsManager.emit('reldens.createPlayerAfter', client, authResult, currentPlayer, this);
     }
 
     // eslint-disable-next-line no-unused-vars
@@ -116,9 +117,11 @@ class RoomScene extends RoomLogin
     {
         let playerSchema = this.getPlayerFromState(client.sessionId);
         if(playerSchema){
-            this.saveStateAndRemovePlayer(client.sessionId).catch((err) => {
-                Logger.error(['Player save error:', playerSchema.username, playerSchema.state, err]);
-            });
+            let savedStats = await this.savePlayerStats(playerSchema);
+            let savedAndRemoved = await this.saveStateAndRemovePlayer(client.sessionId);
+            if(!savedStats || !savedAndRemoved){
+                Logger.error(['Player save error:', playerSchema.username, playerSchema.state, playerSchema.stats]);
+            }
         }
     }
 
@@ -162,8 +165,8 @@ class RoomScene extends RoomLogin
                 }
             }
             if(this.messageActions){
-                for(let idx in this.messageActions){
-                    let messageObserver = this.messageActions[idx];
+                for(let i of Object.keys(this.messageActions)){
+                    let messageObserver = this.messageActions[i];
                     if(typeof messageObserver.parseMessageAndRunActions === 'function'){
                         messageObserver.parseMessageAndRunActions(client, messageData, this, playerSchema);
                     } else {
@@ -298,14 +301,19 @@ class RoomScene extends RoomLogin
         }
     }
 
-    async savePlayerStats(target)
+    async savePlayerStats(target, updateClient)
     {
         // save the stats:
         let updateResult = await this.loginManager.usersManager
             .updateUserStatsByPlayerId(target.player_id, target.stats);
         if(!updateResult){
             Logger.error('Player stats update error: ' + target.player_id);
+        } else {
+            if(updateClient){
+                this.send(updateClient, {act: GameConst.PLAYER_STATS, stats: target.stats});
+            }
         }
+        return updateResult;
     }
 
     getClientById(clientId)
@@ -351,6 +359,27 @@ class RoomScene extends RoomLogin
         points.row = points.row < 0 ? 0 : points.row;
         points.row = points.row > this.roomWorld.worldHeight ? this.roomWorld.worldHeight : points.row;
         return points;
+    }
+
+    onDispose()
+    {
+        if(!this.roomWorld.respawnAreas){
+            return;
+        }
+        // clean up the listeners!
+        for(let rI of Object.keys(this.roomWorld.respawnAreas)){
+            let instC = this.roomWorld.respawnAreas[rI].instancesCreated;
+            for(let i of Object.keys(instC)){
+                let res = instC[i];
+                for(let obj of res){
+                    if({}.hasOwnProperty.call(obj, 'battleEndListener')){
+                        // Logger.info(['Turning off listener on reldens.battleEnded for object:', obj.key]);
+                        EventsManager.off('reldens.battleEnded', obj.battleEndListener);
+                    }
+                }
+            }
+        }
+        Logger.info('ON-DISPOSE Room: ' + this.roomName);
     }
 
 }

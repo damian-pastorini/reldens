@@ -11,6 +11,7 @@ const dotenv = require('dotenv');
 const http = require('http');
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const { AwaitMiddleware } = require('./await-middleware');
 const { GameServer } = require('./game-server');
 const { DataServer } = require('@reldens/storage');
@@ -35,7 +36,7 @@ class ServerManager
         // initialize storage:
         DataServer.initialize();
         ThemeManager.validateOrCreateTheme(config);
-        MapsLoader.loadMaps(config.projectRoot+ThemeManager.projectTheme, this.configManager);
+        MapsLoader.loadMaps(path.join(config.projectRoot, ThemeManager.projectTheme), this.configManager);
     }
 
     initializeConfiguration(config)
@@ -46,7 +47,7 @@ class ServerManager
         this.projectRoot = config.projectRoot || './';
         Logger.info(['Project root:', this.projectRoot, 'Module root:', __dirname]);
         // setup dotenv to use the project root .env file:
-        dotenv.config({debug: process.env.DEBUG, path: this.projectRoot+'/.env'});
+        dotenv.config({debug: process.env.DEBUG, path: path.join(this.projectRoot, '.env')});
         // setup the server host data:
         this.configServer = {
             port: Number(process.env.PORT) || Number(process.env.RELDENS_APP_PORT) || 8080,
@@ -93,6 +94,11 @@ class ServerManager
         this.app = express();
         this.app.use(cors());
         this.app.use(express.json());
+        if(process.env.RELDENS_EXPRESS_SERVE_STATICS){
+            // automatically serve dist files:
+            let distPath = path.join(this.projectRoot, 'dist');
+            this.app.use('/', express.static(distPath));
+        }
         this.appServer = http.createServer(this.app);
         // create game server instance:
         this.gameServer = new GameServer({server: this.appServer, express: this.app});
@@ -141,12 +147,18 @@ class ServerManager
         if(!runBundler){
             return false;
         }
+        if(process.env.RELDENS_ON_BUNDLE_RESET_DIST){
+            await ThemeManager.resetDist();
+        }
+        if(process.env.RELDENS_ON_BUNDLE_RESET_DIST || process.env.RELDENS_ON_BUNDLE_COPY_ASSETS){
+            await ThemeManager.copyAssetsToDist();
+        }
         // create bundle:
         const bundlerOptions = {
             production: process.env.NODE_ENV === 'production',
             sourceMaps: process.env.RELDENS_PARCEL_SOURCEMAPS || false
         };
-        let indexPath = this.projectRoot + ThemeManager.projectTheme + '/index.html';
+        let indexPath = path.join(this.projectRoot, ThemeManager.projectTheme, 'index.html');
         Logger.info('Running bundle on: ' + indexPath);
         this.bundler = new AwaitMiddleware(indexPath, bundlerOptions);
         let middleware = await this.bundler.middleware();

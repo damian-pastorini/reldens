@@ -7,47 +7,52 @@
  *
  */
 
-const gravityX = process.env.RELDENS_CLIENT_PHYSICS_GRAVITY_X ? Number(process.env.RELDENS_CLIENT_PHYSICS_GRAVITY_X) : 0;
-const gravityY = process.env.RELDENS_CLIENT_PHYSICS_GRAVITY_Y ? Number(process.env.RELDENS_CLIENT_PHYSICS_GRAVITY_Y) : 0;
-const scaleMode = process.env.RELDENS_CLIENT_SCALE_MODE ?
-    Number(process.env.RELDENS_CLIENT_SCALE_MODE) : 3; // Phaser.Scale.FIT
-const scaleWidth = process.env.RELDENS_CLIENT_SCALE_WIDTH ? Number(process.env.RELDENS_CLIENT_SCALE_WIDTH) : 500;
-const scaleHeight = process.env.RELDENS_CLIENT_SCALE_HEIGHT ? Number(process.env.RELDENS_CLIENT_SCALE_HEIGHT) : 500;
-const scaleMinWidth = process.env.RELDENS_CLIENT_SCALE_MIN_WIDTH
-    ? Number(process.env.RELDENS_CLIENT_SCALE_MIN_WIDTH) : 300;
-const scaleMinHeight = process.env.RELDENS_CLIENT_SCALE_MIN_HEIGHT
-    ? Number(process.env.RELDENS_CLIENT_SCALE_MIN_HEIGHT) : 500;
-const scaleAutoCenter = process.env.RELDENS_CLIENT_SCALE_AUTOCENTER
-    ? Number(process.env.RELDENS_CLIENT_SCALE_AUTOCENTER) : 1; // Phaser.Scale.CENTER_BOTH
-
 // client config will be sent onJoin.
-module.exports.GameConfig = {
-    // @NOTE: the game server URL will be part of the configuration in the database.
-    serverUrl: process.env.RELDENS_GAMESERVER_URL || false,
-    type: process.env.RELDENS_CLIENT_TYPE ? Number(process.env.RELDENS_CLIENT_TYPE) : 0, // Phaser.AUTO
-    parent: process.env.RELDENS_CLIENT_PARENT || 'reldens',
-    dom: {
-        createContainer: process.env.RELDENS_CLIENT_DOM || true
-    },
-    physics: {
-        default: process.env.RELDENS_CLIENT_PHYSICS_DEFAULT || 'arcade',
-        arcade: {
-            gravity: {
-                x: gravityX,
-                y: gravityY,
+class GameConfig
+{
+
+    getConfig()
+    {
+        return {
+            // @NOTE: the game server URL will be part of the configuration in the database.
+            serverUrl: process.env.RELDENS_GAMESERVER_URL || false,
+            type: process.env.RELDENS_CLIENT_TYPE ? Number(process.env.RELDENS_CLIENT_TYPE) : 0, // Phaser.AUTO
+            parent: process.env.RELDENS_CLIENT_PARENT || 'reldens',
+            dom: {
+                createContainer: process.env.RELDENS_CLIENT_DOM || true
             },
-            debug: process.env.RELDENS_CLIENT_PHYSICS_DEBUG || false
+            physics: {
+                default: process.env.RELDENS_CLIENT_PHYSICS_DEFAULT || 'arcade',
+                arcade: {
+                    gravity: {
+                        x: (process.env.RELDENS_CLIENT_PHYSICS_GRAVITY_X
+                            ? Number(process.env.RELDENS_CLIENT_PHYSICS_GRAVITY_X) : 0),
+                        y: process.env.RELDENS_CLIENT_PHYSICS_GRAVITY_Y
+                            ? Number(process.env.RELDENS_CLIENT_PHYSICS_GRAVITY_Y) : 0,
+                    },
+                    debug: process.env.RELDENS_CLIENT_PHYSICS_DEBUG || false
+                }
+            },
+            scale: {
+                parent: process.env.RELDENS_CLIENT_SCALE_PARENT || 'reldens',
+                // mode = 3 = Phaser.Scale.FIT
+                mode: (process.env.RELDENS_CLIENT_SCALE_MODE ? Number(process.env.RELDENS_CLIENT_SCALE_MODE) : 3),
+                // note: these will be just the starting if the responsive is enabled (default).
+                width: (process.env.RELDENS_CLIENT_SCALE_WIDTH ? Number(process.env.RELDENS_CLIENT_SCALE_WIDTH) : 740),
+                height: (process.env.RELDENS_CLIENT_SCALE_HEIGHT ? Number(process.env.RELDENS_CLIENT_SCALE_HEIGHT) : 360),
+                min: {
+                    width: (process.env.RELDENS_CLIENT_SCALE_MIN_WIDTH
+                        ? Number(process.env.RELDENS_CLIENT_SCALE_MIN_WIDTH) : 360),
+                    height: (process.env.RELDENS_CLIENT_SCALE_MIN_HEIGHT
+                        ? Number(process.env.RELDENS_CLIENT_SCALE_MIN_HEIGHT) : 360)
+                },
+                // autocenter = 1 = Phaser.Scale.CENTER_BOTH
+                autoCenter: (process.env.RELDENS_CLIENT_SCALE_AUTOCENTER
+                    ? Number(process.env.RELDENS_CLIENT_SCALE_AUTOCENTER) : 1),
+            }
         }
-    },
-    scale: {
-        parent: process.env.RELDENS_CLIENT_SCALE_PARENT || 'reldens',
-        mode: scaleMode,
-        width: scaleWidth,
-        height: scaleHeight,
-        min: {
-            width: scaleMinWidth,
-            height: scaleMinHeight
-        },
-        autoCenter: scaleAutoCenter
     }
-};
+
+}
+
+module.exports.GameConfig = GameConfig;

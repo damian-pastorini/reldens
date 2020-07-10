@@ -21,13 +21,14 @@ class ActionsManager
         this.config = config;
         // @TODO: load dynamically and clean up.
         this.availableActions = {'attack-short': AttackShort, 'attack-bullet': AttackBullet};
-        EventsManager.on('reldens.createPlayerAfter', (client, authResult, currentPlayer) => {
+        // eslint-disable-next-line no-unused-vars
+        EventsManager.on('reldens.createPlayerAfter', (client, authResult, currentPlayer, room) => {
             currentPlayer.actions = {};
             let pvpConfig = this.config.get('server/actions/pvp');
             currentPlayer.actions['pvp'] = new Pvp(pvpConfig);
-            for(let idx in this.availableActions){
-                currentPlayer.actions[idx] = new this.availableActions[idx]();
-                currentPlayer.actions[idx].attacker = currentPlayer;
+            for(let i of Object.keys(this.availableActions)){
+                currentPlayer.actions[i] = new this.availableActions[i]();
+                currentPlayer.actions[i].attacker = currentPlayer;
             }
         });
         EventsManager.on('reldens.onMessageRunAction', async (message, playerSchema, target, room) => {
@@ -44,7 +45,7 @@ class ActionsManager
                 if(target.player_id === playerSchema.player_id){
                     return;
                 }
-                playerSchema.actions['pvp'].runBattle(playerSchema, target, 'pvp', room);
+                await playerSchema.actions['pvp'].runBattle(playerSchema, target, 'pvp', room);
             }
             if(message.target.type === ObjectsConst.TYPE_OBJECT && {}.hasOwnProperty.call(target, 'battle')){
                 target.battle.targetObject = target;

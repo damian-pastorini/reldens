@@ -21,9 +21,10 @@ class ChatUi
 
     createUi()
     {
-        let chatX = this.gameManager.config.get('client/chat/position/x');
-        let chatY = this.gameManager.config.get('client/chat/position/y');
-        this.uiScene.uiChat = this.uiScene.add.dom(chatX, chatY).createFromCache('uiChat');
+        let {uiX, uiY} = this.uiScene.getUiConfig('chat');
+        this.uiScene.uiChat = this.uiScene.add.dom(uiX, uiY).createFromCache('uiChat');
+        // @TODO: TEMPORAL, replace references by this.
+        this.uiScene.elementsUi['chat'] = this.uiScene.uiChat;
         let chatInput = this.uiScene.uiChat.getChildByProperty('id', ChatConst.CHAT_INPUT);
         let chatSendButton = this.uiScene.uiChat.getChildByProperty('id', ChatConst.CHAT_SEND_BUTTON);
         let chatCloseButton = this.uiScene.uiChat.getChildByProperty('id', ChatConst.CHAT_CLOSE_BUTTON);
@@ -47,11 +48,13 @@ class ChatUi
                     let box = this.uiScene.uiChat.getChildByProperty('id', 'chat-ui');
                     box.style.display = 'none';
                     chatOpenButton.style.display = 'block';
+                    this.uiScene.uiChat.setDepth(1);
                 });
                 chatOpenButton.addEventListener('click', () => {
                     let box = this.uiScene.uiChat.getChildByProperty('id', 'chat-ui');
                     box.style.display = 'block';
                     chatOpenButton.style.display = 'none';
+                    this.uiScene.uiChat.setDepth(4);
                 });
             }
             chatInput.addEventListener('keyup', (e) => {

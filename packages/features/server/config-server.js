@@ -10,8 +10,10 @@
 
 const { ChatPack } = require('../../chat/server/pack');
 const { RespawnPack } = require('../../respawn/server/pack');
+const { InventoryPack } = require('../../inventory/server/pack');
 
 module.exports.ServerCoreFeatures = {
     chat: ChatPack,
-    respawn: RespawnPack
+    respawn: RespawnPack,
+    inventory: InventoryPack
 };

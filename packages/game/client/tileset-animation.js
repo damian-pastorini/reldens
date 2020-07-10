@@ -16,7 +16,7 @@ class TilesetAnimation
         this.layer = null;
         this.layer = layer;
         let index = 0;
-        for(let i in tileData){
+        for(let i of Object.keys(tileData)){
             let tile = tileData[i];
             tile.id = index++;
             tile.init = i;
@@ -26,8 +26,8 @@ class TilesetAnimation
 
     start()
     {
-        for(let anm of this.animations){
-            this.repeat(anm.id, anm.animation, anm.init, 0);
+        for(let anim of this.animations){
+            this.repeat(anim.id, anim.animation, anim.init, 0);
         }
     }
 
@@ -46,7 +46,7 @@ class TilesetAnimation
 
     destroy()
     {
-        for(let i in this.registered){
+        for(let i of Object.keys(this.registered)){
             if(this.registered[i]){
                 clearTimeout(this.registered[i]);
             }

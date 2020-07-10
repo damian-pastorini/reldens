@@ -17,8 +17,8 @@ class FeaturesManager
     {
         this.featuresList = {};
         EventsManager.emit('reldens.loadFeatures', this);
-        for(let idx in featuresCodeList){
-            let featureCode = featuresCodeList[idx];
+        for(let i of Object.keys(featuresCodeList)){
+            let featureCode = featuresCodeList[i];
             if({}.hasOwnProperty.call(ClientCoreFeatures, featureCode)){
                 this.featuresList[featureCode] = new ClientCoreFeatures[featureCode]();
                 EventsManager.emit('reldens.loadFeature_'+featureCode, this.featuresList[featureCode], this);

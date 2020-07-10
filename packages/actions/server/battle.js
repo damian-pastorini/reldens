@@ -100,9 +100,7 @@ class Battle
             room.send(targetClient, {act: GameConst.GAME_OVER});
             return false;
         } else {
-            await room.savePlayerStats(targetSchema);
-            // update the target:
-            room.send(targetClient, {act: GameConst.PLAYER_STATS, stats: targetSchema.stats});
+            await room.savePlayerStats(targetSchema, targetClient);
             return true;
         }
     }

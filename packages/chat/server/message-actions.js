@@ -17,7 +17,7 @@ class ChatMessageActions
 
     parseMessageAndRunActions(client, data, room, playerSchema)
     {
-        if(data.act === ChatConst.CHAT_ACTION){
+        if({}.hasOwnProperty.call(data, 'act') && data.act === ChatConst.CHAT_ACTION){
             let dataMessage = data[ChatConst.CHAT_MESSAGE];
             if(dataMessage.trim().replace('#', '').replace('@', '').length > 0){
                 let message = Cleaner.cleanMessage(dataMessage);

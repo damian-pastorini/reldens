@@ -13,9 +13,9 @@ const { Logger } = require('@reldens/utils');
 class ObjectsManager
 {
 
-    constructor(options)
+    constructor(props)
     {
-        this.config = options.config;
+        this.config = props.config;
         // room objects is just the list of the objects in the storage:
         this.roomObjectsData = false;
         // room objects by layer and title are each object instance plus the data from the storage:

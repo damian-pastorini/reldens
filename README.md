@@ -45,6 +45,12 @@ Here you will find a small demo for the results with the last available version 
 ## Contributions and donations
 If you like to contribute or donate to support the project please feel free to contact me at damian.pastorini@gmail.com.
 
+Or:
+
+[![ko-fi](https://www.ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/I2I81VISA)
+
+[Become a Patron!](https://www.patreon.com/bePatron?u=18074832)
+
 
 ## [Coming soon and news!](https://github.com/damian-pastorini/reldens/wiki/Coming-soon-&-News "Coming soon & News archive") > Last update June 23, 2020.
 

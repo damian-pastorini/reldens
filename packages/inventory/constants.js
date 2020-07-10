@@ -1,0 +1,24 @@
+/**
+ *
+ * Reldens - chat/constants
+ *
+ * Inventory constants.
+ * Here we use shortcuts since these are used for all the communications between server and client.
+ *
+ */
+
+let pref = 'ivp'
+
+// constants:
+module.exports.InventoryConst = {
+    INVENTORY_ITEMS: 'inventory-items',
+    INVENTORY_OPEN: 'inventory-open',
+    INVENTORY_CLOSE: 'inventory-close',
+    EQUIPMENT_ITEMS: 'equipment-items',
+    EQUIPMENT_CLOSE: 'equipment-close',
+    EQUIPMENT_OPEN: 'equipment-open',
+    INVENTORY_PREF: pref,
+    ACTION_REMOVE: pref+'Rm',
+    ACTION_USE: pref+'Use',
+    ACTION_EQUIP: pref+'Eqi'
+};

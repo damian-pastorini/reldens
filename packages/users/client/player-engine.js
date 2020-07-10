@@ -52,13 +52,19 @@ class PlayerEngine
         this.players[id].username = state.username;
         this.players[id].anims.play(state.dir);
         this.players[id].anims.stop();
-        this.players[id].setInteractive().on('pointerdown', () => {
+        this.players[id].setInteractive({useHandCursor: true}).on('pointerdown', (ev) => {
+            // @NOTE: we avoid to run object interactions while an UI element is open, if we click on the UI the
+            // elements in the background scene should not be executed.
+            if(ev.downElement.nodeName !== 'CANVAS'){
+                return false;
+            }
             // @NOTE: we could send an specific action when the player is been targeted.
             // this.room.send({act: GameConst.TYPE_PLAYER, id: id});
             // update target ui:
             this.gameManager.gameEngine.showTarget(this.players[id].username);
             this.currentTarget = {id: id, type: GameConst.TYPE_PLAYER};
         });
+        this.players[id].moveSprites = {};
         return this.players[id];
     }
 
@@ -67,7 +73,8 @@ class PlayerEngine
         if(this.gameManager.config.get('client/ui/uiLifeBar/enabled')){
             // if the position is fixed then the bar has to go on the ui scene:
             let lifeBarScene = this.gameManager.getActiveScenePreloader();
-            if(!this.gameManager.config.get('client/ui/uiLifeBar/fixedPosition')){
+            let useFixedPosition = this.gameManager.config.get('client/ui/uiLifeBar/fixedPosition');
+            if(!useFixedPosition){
                 // otherwise the bar will be added in the current scene:
                 lifeBarScene = this.gameManager.getActiveScene();
             }
@@ -76,6 +83,10 @@ class PlayerEngine
                 return;
             }
             this.uiLifeBar = lifeBarScene.add.graphics();
+            // @TODO: TEMPORAL, replace references by this.
+            if(useFixedPosition){
+                this.gameManager.gameEngine.uiScene.elementsUi['uiLifeBar'] = this.uiLifeBar;
+            }
             this.redrawLifeBar();
         }
     }
@@ -89,23 +100,22 @@ class PlayerEngine
         let fullBarWidth = this.gameManager.config.get('client/ui/uiLifeBar/width');
         let fullHp = this.gameManager.config.initialStats.hp;
         let filledBarWidth = (this.gameManager.playerData.stats.hp * fullBarWidth) / fullHp;
-        let barX = this.gameManager.config.get('client/ui/uiLifeBar/x');
-        let barY = this.gameManager.config.get('client/ui/uiLifeBar/y');
+        let {uiX, uiY} = this.gameManager.gameEngine.uiScene.getUiConfig('uiLifeBar');
         if(!this.gameManager.config.get('client/ui/uiLifeBar/fixedPosition')){
             let currentPlayerState = this.gameManager.getCurrentPlayer().state;
-            barX = currentPlayerState.x - (fullBarWidth / 2);
-            barY = currentPlayerState.y - barHeight - (this.gameManager.config.get('client/players/size/height') / 2);
+            uiX = currentPlayerState.x - (fullBarWidth / 2);
+            uiY = currentPlayerState.y - barHeight - (this.gameManager.config.get('client/players/size/height'));
         }
         this.uiLifeBar.clear();
         this.uiLifeBar.fillStyle(0xff0000, 1);
         this.uiLifeBar.fillRect(
-            barX,
-            barY,
+            uiX,
+            uiY,
             filledBarWidth,
             barHeight
         );
         this.uiLifeBar.lineStyle(1, 0xffffff);
-        this.uiLifeBar.strokeRect(barX, barY, fullBarWidth, barHeight);
+        this.uiLifeBar.strokeRect(uiX, uiY, fullBarWidth, barHeight);
         this.uiLifeBar.alpha = 0.6;
         this.uiLifeBar.setDepth(100000);
     }
@@ -129,6 +139,13 @@ class PlayerEngine
         if(this.gameManager.config.get('client/ui/uiLifeBar/enabled')){
             // redraw life bar all the time:
             this.redrawLifeBar();
+        }
+        if(Object.keys(playerSprite.moveSprites).length){
+            for(let i of Object.keys(playerSprite.moveSprites)){
+                let sprite = playerSprite.moveSprites[i];
+                sprite.x = playerSprite.x;
+                sprite.y = playerSprite.y;
+            }
         }
     }
 

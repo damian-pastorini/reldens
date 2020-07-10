@@ -10,6 +10,7 @@ const { GameClient } = require('./game-client');
 const { GameEngine } = require('./game-engine');
 const { RoomEvents } = require('./room-events');
 const { FeaturesManager } = require('../../features/client/manager');
+const { GameDom } = require('./game-dom');
 const { ConfigProcessor } = require('../../config/processor');
 const { Logger, EventsManager } = require('@reldens/utils');
 const { GameConst } = require('../constants');
@@ -40,14 +41,14 @@ class GameManager
         this.features = new FeaturesManager();
         // active scene:
         this.isChangingScene = false;
+        // dom manager:
+        this.gameDom = new GameDom();
     }
 
     setupClasses(customClasses)
     {
         EventsManager.emit('reldens.setupClasses', this, customClasses);
-        if({}.hasOwnProperty.call(customClasses, 'objects')){
-            this.config.customClasses = customClasses;
-        }
+        this.config.customClasses = customClasses;
     }
 
     async joinGame(formData, isNewUser = false)
@@ -72,6 +73,16 @@ class GameManager
                 // joined the scene room and is pointless to keep this room connected since it doesn't listen for
                 // any package.
                 gameRoom.leave();
+            }
+        });
+        // responsive full screen:
+        this.events.on('reldens.afterSceneDynamicCreate', () => {
+            if(this.config.get('client/ui/screen/responsive')){
+                this.gameEngine.updateGameSize(this);
+                // @TODO: remove window from here.
+                this.gameDom.getElement(window).resize(() => {
+                    this.gameEngine.updateGameSize(this);
+                });
             }
         });
         // @NOTE: we return the gameRoom here to control the login result actions in the index script.
@@ -117,6 +128,7 @@ class GameManager
         // start listening the new room events:
         this.activeRoomEvents = this.createRoomEventsInstance(initialGameData.player.state.scene);
         this.activeRoomEvents.activateRoom(joinedFirstRoom);
+        await EventsManager.emit('reldens.afterInitEngineAndStartGame', initialGameData, joinedFirstRoom);
         return joinedFirstRoom;
     }
 
@@ -127,8 +139,8 @@ class GameManager
      */
     async joinFeaturesRooms()
     {
-        for(let idx in this.features.featuresList){
-            let feature = this.features.featuresList[idx];
+        for(let i of Object.keys(this.features.featuresList)){
+            let feature = this.features.featuresList[i];
             if({}.hasOwnProperty.call(feature, 'joinRooms')){
                 for(let joinRoomName of feature.joinRooms){
                     let joinedRoom = await this.gameClient.joinOrCreate(joinRoomName, this.userData);

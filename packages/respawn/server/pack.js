@@ -27,12 +27,12 @@ class RespawnPack extends PackInterface
             // @TODO: improve.
             // append all the room objects body state to the room state:
             if(room.roomWorld && room.roomWorld.respawnAreas){
-                for(let areaIdx in room.roomWorld.respawnAreas){
-                    let area = room.roomWorld.respawnAreas[areaIdx];
+                for(let a of Object.keys(room.roomWorld.respawnAreas)){
+                    let area = room.roomWorld.respawnAreas[a];
                     // @NOTE: the instancesCreated are each respawn definition for each enemy type for the specified
                     // layer in the storage.
-                    for(let instanceIdx in area.instancesCreated){
-                        let instanceObjects = area.instancesCreated[instanceIdx];
+                    for(let i of Object.keys(area.instancesCreated)){
+                        let instanceObjects = area.instancesCreated[i];
                         // each instance is an array of objects:
                         for(let objInstance of instanceObjects){
                             // @NOTE: for these objects we associate the state to get the position automatically

@@ -8,6 +8,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const del = require('del');
 const { Logger } = require('@reldens/utils');
 
 class ThemeManager
@@ -15,35 +16,57 @@ class ThemeManager
 
     validateOrCreateTheme(config)
     {
-        this.projectTheme = '/theme/default';
+        this.projectTheme = path.join('theme', 'default');
+        this.projectRoot = config.projectRoot;
         // check for theme folder:
         if(config.projectTheme){
-            this.projectTheme = '/theme/'+config.projectTheme;
+            this.projectTheme = path.join('theme', config.projectTheme);
         }
         // check if the dist folder exists:
-        let themesFolderExists = fs.existsSync(config.projectRoot+'/theme');
+        let themesFolderExists = fs.existsSync(path.join(this.projectRoot, 'theme'));
         if(!themesFolderExists){
-            fs.mkdirSync(config.projectRoot+'/theme');
+            fs.mkdirSync(path.join(this.projectRoot, 'theme'));
         }
         // check if the folders exists:
-        let distExists = fs.existsSync(config.projectRoot+'/dist');
-        let themeExists = fs.existsSync(config.projectRoot + this.projectTheme);
+        let rootDist = path.join(this.projectRoot, 'dist');
+        let distExists = fs.existsSync(rootDist);
+        let rootTheme = path.join(this.projectRoot, this.projectTheme);
+        let themeExists = fs.existsSync(rootTheme);
         // we check the dist folder since it will be generated automatically on first run:
         if(!distExists || !themeExists){
             // if theme folder doesn't exists:
             if(!themeExists){
                 // copy /default theme from node_modules/reldens into the project folder and into the dist folder:
-                let nodeRoot = config.projectRoot+'/node_modules/reldens/';
-                this.copyFolderSync(nodeRoot+'theme/default', config.projectRoot+this.projectTheme);
-                this.copyFolderSync(nodeRoot+'theme/packages', config.projectRoot+'/theme/packages');
-                this.copyFolderSync(nodeRoot+'theme/default', config.projectRoot+'/dist');
+                let nodeRoot = path.join(this.projectRoot, 'node_modules', 'reldens');
+                let nodeTheme = path.join(nodeRoot, 'theme');
+                let themeDefault = path.join(nodeTheme, 'default');
+                let themePackages = path.join(nodeTheme, 'packages');
+                this.copyFolderSync(themeDefault, rootTheme);
+                this.copyFolderSync(themePackages, path.join(this.projectRoot, 'theme', 'packages'));
+                this.copyFolderSync(themeDefault, path.join(this.projectRoot, 'dist'));
                 Logger.error('Project theme folder was not found: '+config.projectTheme
                         +'\nA copy from default has been made.');
             } else {
                 // if theme exists just copy it into the dist folder (assumed the packages folder was considered):
-                this.copyFolderSync(config.projectRoot + this.projectTheme, config.projectRoot+'/dist');
+                this.copyFolderSync(rootTheme, rootDist);
             }
         }
+    }
+
+    async resetDist()
+    {
+        let distFolder = path.join(this.projectRoot, 'dist');
+        if(fs.existsSync(distFolder)){
+            await del(distFolder);
+            fs.mkdirSync(distFolder);
+        }
+    }
+
+    copyAssetsToDist()
+    {
+        let themeAssets = path.join(this.projectRoot, this.projectTheme, 'assets');
+        let distAssets = path.join(this.projectRoot, 'dist', 'assets');
+        this.copyFolderSync(themeAssets, distAssets);
     }
 
     copyFolderSync(from, to)

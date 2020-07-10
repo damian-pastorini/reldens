@@ -13,6 +13,7 @@ class Npc1 extends AnimationEngine
 
     constructor(gameManager, props, currentPreloader)
     {
+        // @TODO: apply some customization for the example.
         super(gameManager, props, currentPreloader);
     }
 

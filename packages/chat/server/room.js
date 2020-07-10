@@ -15,14 +15,14 @@ const { ChatConst } = require('../constants');
 class RoomChat extends RoomLogin
 {
 
-    onCreate(options)
+    onCreate(props)
     {
         // parent config:
-        super.onCreate(options);
+        super.onCreate(props);
         this.activePlayers = {};
     }
 
-    onJoin(client, options, authResult)
+    onJoin(client, props, authResult)
     {
         // we do not need to create a player entity since we only need the name for the chat:
         this.activePlayers[client.sessionId] = {
@@ -139,8 +139,8 @@ class RoomChat extends RoomLogin
     getActivePlayerByName(playerName)
     {
         let clientTo = false;
-        for(let idx in this.activePlayers){
-            let client = this.activePlayers[idx];
+        for(let i of Object.keys(this.activePlayers)){
+            let client = this.activePlayers[i];
             if(client.username === playerName){
                 clientTo = client;
                 break;

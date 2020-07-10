@@ -7,7 +7,7 @@
  */
 
 const { Battle } = require('./battle');
-const { Logger } = require('@reldens/utils');
+const { Logger, EventsManager } = require('@reldens/utils');
 const { BattleConst } = require('../constants');
 
 class Pve extends Battle
@@ -150,6 +150,7 @@ class Pve extends Battle
         } else {
             Logger.log(['Client not found by sessionId:', playerSchema.sessionId]);
         }
+        EventsManager.emit('reldens.battleEnded', playerSchema, this, actionData);
     }
 
     removeInBattlePlayer(playerSchema)
