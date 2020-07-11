@@ -188,7 +188,7 @@ class InventoryPack
         // show item data:
         let itemImage = inventoryPanel.querySelector('#item-' + idx + ' .image-container img');
         if(!itemImage){
-            Logger.error(['Missing image.', itemImage]);
+            Logger.error(['Missing image element.', '#item-' + idx]);
             return false;
         }
         itemImage.addEventListener('click', () => {

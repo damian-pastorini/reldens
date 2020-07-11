@@ -13,8 +13,8 @@ UPDATE `config` SET `value`='100' WHERE `path`='players/initialStats/def';
 UPDATE `config` SET `value`='100' WHERE `path`='enemies/initialStats/atk';
 UPDATE `config` SET `value`='100' WHERE `path`='enemies/initialStats/def';
 
-UPDATE `config` SET `path`='ui/uiChat/x' WHERE `path`='chat/position/x';
-UPDATE `config` SET `path`='ui/uiChat/y' WHERE `path`='chat/position/y';
+UPDATE `config` SET `path`='ui/chat/x' WHERE `path`='chat/position/x';
+UPDATE `config` SET `path`='ui/chat/y' WHERE `path`='chat/position/y';
 
 UPDATE `config` SET `value`='430' WHERE `path`='ui/playerStats/x';
 UPDATE `config` SET `value`='20' WHERE `path`='ui/playerStats/y';
@@ -76,11 +76,13 @@ INSERT INTO `objects` (`id`, `room_id`, `layer_name`, `tile_index`, `object_clas
 
 /*!40000 ALTER TABLE `objects_assets` DISABLE KEYS */;
 INSERT INTO `objects_assets` (`object_asset_id`, `object_id`, `asset_type`, `asset_key`, `file_1`, `file_2`, `extra_params`) VALUES
-	(7, 10, 'spritesheet', 'merchant_1', 'people-d-x2', NULL, '{"frameWidth":52,"frameHeight":71}'),
-	(8, 12, 'spritesheet', 'weapons_master_1', 'people-c-x2', NULL, '{"frameWidth":52,"frameHeight":71}');
+	(9, 10, 'spritesheet', 'merchant_1', 'people-d-x2', NULL, '{"frameWidth":52,"frameHeight":71}'),
+	(10, 12, 'spritesheet', 'weapons_master_1', 'people-c-x2', NULL, '{"frameWidth":52,"frameHeight":71}');
 /*!40000 ALTER TABLE `objects_assets` ENABLE KEYS */;
 
 # inventory first deploy:
+
+INSERT INTO `features` (`code`, `title`, `is_enabled`) VALUES ('inventory', 'Inventory', 1);
 
 CREATE TABLE IF NOT EXISTS `items_group` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
