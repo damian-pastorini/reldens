@@ -28,7 +28,13 @@ I know it is a huge project but I'll put all I have to make it work, so needless
 + Phaser 3
 
 
-## [Features List](https://github.com/damian-pastorini/reldens/wiki/Features)
+## [Features List](https://www.reldens.com/features)
+
+
+## [Coming soon and news!](https://www.reldens.com/news "Coming soon & News")
+
+
+## [Installation](https://www.reldens.com/installation "Installation")
 
 
 ## [Demo](https://dev.reldens.com)
@@ -39,7 +45,9 @@ Here you will find a small demo for the results with the last available version 
 
 [http://reldens.herokuapp.com/](http://reldens.herokuapp.com/)
 
-[Server Status](https://github.com/damian-pastorini/reldens/wiki/Server-Status)
+
+## Contact us
+Join our Discord channel: https://discord.gg/HuJMxUY
 
 
 ## Contributions and donations
@@ -52,27 +60,11 @@ Or:
 [Become a Patron!](https://www.patreon.com/bePatron?u=18074832)
 
 
-## [Coming soon and news!](https://github.com/damian-pastorini/reldens/wiki/Coming-soon-&-News "Coming soon & News archive") > Last update June 23, 2020.
-
-
-## Contact us
-Join our Discord channel: https://discord.gg/HuJMxUY
-
-
-## [Installation](https://github.com/damian-pastorini/reldens/wiki/New-v4.0.0-beta.x-Installation "Installation")
-
-
-## [How To](https://github.com/damian-pastorini/reldens/wiki/How-To "How To")
-
-
-## [Change Log](https://github.com/damian-pastorini/dwdgame/wiki/Change-Log "Change Log")
-
-
-#### [By DwDeveloper](https://www.dwdeveloper.com/ "DwDeveloper")
-
-
 ## License
 
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fdamian-pastorini%2Freldens.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fdamian-pastorini%2Freldens?ref=badge_shield)
 
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fdamian-pastorini%2Freldens.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fdamian-pastorini%2Freldens?ref=badge_large)
+
+
+#### [By DwDeveloper](https://www.dwdeveloper.com/ "DwDeveloper")
