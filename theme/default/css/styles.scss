@@ -9,6 +9,7 @@ $reldensFont: "Play", sans-serif;
 $cReldens: #2f7dde;
 $cDarkBlue: #37517e;
 $cWhite: #ffffff;
+$cBlack: #000000;
 
 body {
     font-family:$normalFont;
@@ -18,7 +19,7 @@ body {
 }
 
 .text-black {
-    color: #000000;
+    color: $cBlack;
 }
 
 .wrapper,
@@ -36,7 +37,11 @@ body {
 
 .wrapper,
 .game-container {
-    height:100%;
+    height: 100%;
+}
+
+.wrapper {
+    overflow: hidden;
 }
 
 .header,
@@ -123,6 +128,8 @@ button, input[type="button"], input[type="submit"] { cursor:pointer; }
 @media (max-width:725px) {
     .col-2 { width:100%; padding:0; }
     .header h1 { font-size: 1.6em; }
+    .footer { display: none; }
+    .content { height: 92%; }
 }
 
 #login_form,
@@ -235,7 +242,7 @@ span.stat-value { float:left; width:50%; display:block; text-align:left; }
 .item-box .actions-container { display:block; width:100%; position:relative; }
 .item-box .actions-container .item-action-block { position:relative; float:left; max-width:32px; margin:5px 5px 0; }
 .item-box .actions-container .item-action-block img { max-width:32px; cursor:pointer; }
-.item-box .trash-confirm { display:none; }
+.item-box .trash-confirm { display:none; min-width:96px; }
 .item-box .trash-confirm span { cursor:pointer; padding:5px; border:1px solid; margin:5px; display:inline-block; }
 .group-item-block { position:relative; }
 .group-item-block .equip-group-icon { position:absolute; top:0px; left:0px; width:100%; height:100%; z-index:1; opacity:0.2; border:1px solid #ffffff; }

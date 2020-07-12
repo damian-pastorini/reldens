@@ -293,7 +293,7 @@ class RoomScene extends RoomLogin
         let {room_id, x, y, dir} = playerSchema.state;
         let playerId = playerSchema.player_id;
         let updateResult = await this.loginManager.usersManager
-            .updateUserStateByPlayerId(playerId, {room_id, x, y, dir});
+            .updateUserStateByPlayerId(playerId, {room_id, x: parseInt(x), y: parseInt(y), dir});
         if(updateResult){
             return playerSchema;
         } else {

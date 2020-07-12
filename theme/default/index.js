@@ -40,6 +40,7 @@ $(document).ready(function($){
             $('.forms-container').detach();
             $('.game-container').show();
             $('.full-screen-btn').show();
+            $('body').css('background', '#000000');
         }).catch((data) => {
             // @NOTE: game room errors should be always because some wrong login or registration data. For these cases
             // we will check the isNewUser variable to know where display the error.

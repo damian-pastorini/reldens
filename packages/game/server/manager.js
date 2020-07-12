@@ -35,6 +35,7 @@ class ServerManager
         this.events = EventsManager;
         // initialize storage:
         DataServer.initialize();
+        DataServer.initialized = Date.now();
         ThemeManager.validateOrCreateTheme(config);
         MapsLoader.loadMaps(path.join(config.projectRoot, ThemeManager.projectTheme), this.configManager);
     }

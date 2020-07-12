@@ -2,8 +2,8 @@ module.exports = {
     development: {
         client: 'mysql',
         connection: {
-            host: '10.0.2.2',
-            database: 'testdb',
+            host: 'localhost',
+            database: 'reldens_test',
             user: 'reldens',
             password: 'reldens',
             multipleStatements: true
@@ -20,7 +20,7 @@ module.exports = {
     production: {
         client: 'mysql',
         connection: {
-            host: '10.0.2.2',
+            host: 'localhost',
             database: 'reldens',
             user: 'reldens',
             password: 'reldens',
