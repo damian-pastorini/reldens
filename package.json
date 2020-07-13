@@ -37,8 +37,8 @@
     "dependencies": {
         "@colyseus/monitor": "^0.12.2",
         "@colyseus/schema": "^0.5.40",
-        "@reldens/items-system": "^0.5.4",
-        "@reldens/storage": "^0.1.6",
+        "@reldens/items-system": "^0.5.5",
+        "@reldens/storage": "^0.1.7",
         "@reldens/utils": "^0.1.7",
         "bcrypt": "^5.0.0",
         "colyseus": "^0.12.6",
