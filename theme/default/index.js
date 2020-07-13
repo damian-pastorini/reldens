@@ -18,6 +18,11 @@ $(document).ready(function($){
     reldens.setupClasses(CustomClasses);
     window.reldens = reldens;
 
+    // client event listener example with version display:
+    reldens.events.on('reldens.afterInitEngineAndStartGame', () => {
+        $('#current-version').html(reldens.config.version+' -');
+    });
+
     let $register = $('#register_form'),
         $login = $('#login_form'),
         $fullScreen = $('.full-screen-btn');
