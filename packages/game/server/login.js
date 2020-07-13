@@ -62,12 +62,13 @@ class LoginManager
         }
     }
 
-    // @TODO: create room association with player in database and make it load automatically? or keep modules
-    //   independent some how? Analyze.
     async getRoomNameById(roomId)
     {
         let playerRoom = await this.roomsManager.loadRoomById(roomId);
-        return playerRoom.roomName;
+        if(playerRoom){
+            return playerRoom.roomName;
+        }
+        return 'Map';
     }
 
     async register(userData)

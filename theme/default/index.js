@@ -18,6 +18,11 @@ $(document).ready(function($){
     reldens.setupClasses(CustomClasses);
     window.reldens = reldens;
 
+    // client event listener example with version display:
+    reldens.events.on('reldens.afterInitEngineAndStartGame', () => {
+        $('#current-version').html(reldens.config.version+' -');
+    });
+
     let $register = $('#register_form'),
         $login = $('#login_form'),
         $fullScreen = $('.full-screen-btn');
@@ -40,6 +45,7 @@ $(document).ready(function($){
             $('.forms-container').detach();
             $('.game-container').show();
             $('.full-screen-btn').show();
+            $('body').css('background', '#000000');
         }).catch((data) => {
             // @NOTE: game room errors should be always because some wrong login or registration data. For these cases
             // we will check the isNewUser variable to know where display the error.

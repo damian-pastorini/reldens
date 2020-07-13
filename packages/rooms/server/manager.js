@@ -17,6 +17,9 @@ class RoomsManager
 
     constructor()
     {
+        this.loadedRooms = false;
+        this.loadedRoomsById = false;
+        this.loadedRoomsByName = false;
         this.defineExtraRooms = [];
     }
 
@@ -88,35 +91,57 @@ class RoomsManager
 
     async loadRooms()
     {
-        // get rooms:
-        let roomsModels = await RoomsModel.query()
-            .withGraphFetched('[rooms_change_points.next_room, rooms_return_points.to_room]');
-        if(!roomsModels){
-            ErrorManager.error('None rooms found in the database. A room is required to run.');
+        // @TODO: this will change when hot-plug is introduced.
+        if(!this.loadedRooms){
+            // get rooms:
+            let roomsModels = await RoomsModel.query()
+                .withGraphFetched('[rooms_change_points.next_room, rooms_return_points.to_room]');
+            if(!roomsModels){
+                ErrorManager.error('None rooms found in the database. A room is required to run.');
+            }
+            let rooms = [];
+            let roomsById = {};
+            let roomsByName = {};
+            for(let room of roomsModels){
+                let temp = this.generateRoomModel(room);
+                rooms.push(temp);
+                roomsById[room.id] = temp;
+                roomsByName[room.name] = temp;
+            }
+            this.loadedRooms = rooms;
+            this.loadedRoomsById = roomsById;
+            this.loadedRoomsByName = roomsByName;
         }
-        let rooms = [];
-        for(let room of roomsModels){
-            let temp = this.generateRoomModel(room);
-            rooms.push(temp);
-        }
-        return rooms;
+        return this.loadedRooms;
     }
 
     async loadRoomById(roomId)
     {
+        if(this.loadedRoomsById[roomId]){
+            return this.loadedRoomsById[roomId];
+        }
         let room = await RoomsModel.query()
             .withGraphFetched('[rooms_change_points.next_room, rooms_return_points.to_room]')
             .findById(roomId);
-        return this.generateRoomModel(room);
+        if(room){
+            return this.generateRoomModel(room);
+        }
+        return false;
     }
 
     async loadRoomByName(roomName)
     {
+        if(this.loadedRoomsByName[roomName]){
+            return this.loadedRoomsByName[roomName];
+        }
         let room = await RoomsModel.query()
             .withGraphFetched('[rooms_change_points.next_room, rooms_return_points.to_room]')
             .where('name', roomName)
             .first();
-        return this.generateRoomModel(room);
+        if(room){
+            return this.generateRoomModel(room);
+        }
+        return false;
     }
 
     generateRoomModel(room)

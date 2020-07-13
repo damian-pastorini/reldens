@@ -14,6 +14,7 @@ const { InitialState } = require('../../users/server/initial-state');
 const { InitialStats } = require('../../users/server/initial-stats');
 const { InitialUser } = require('../../users/server/initial-user');
 const { ConfigConst } = require('../constants');
+const PackageData = require('../../../package.json');
 
 class ConfigManager
 {
@@ -39,6 +40,7 @@ class ConfigManager
     {
         let gameConfig = new GameConfig();
         this.configList.gameEngine = gameConfig.getConfig();
+        this.configList.gameEngine.version = PackageData.version;
         EventsManager.emit('reldens.beforeLoadConfigurations', {configManager: this});
         // get the configurations from the database:
         let configCollection = await ConfigModel.query();

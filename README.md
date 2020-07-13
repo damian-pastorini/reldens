@@ -21,7 +21,7 @@ I know it is a huge project but I'll put all I have to make it work, so needless
 
 
 ## Built with
-+ Node.js (Express.js)
++ Node JS
 + MySQL
 + Parcel
 + Colyseus
@@ -50,7 +50,7 @@ Here you will find a small demo for the results with the last available version 
 Join our Discord channel: https://discord.gg/HuJMxUY
 
 
-## Contributions and donations
+## Support us! :)
 If you like to contribute or donate to support the project please feel free to contact me at damian.pastorini@gmail.com.
 
 Or:
