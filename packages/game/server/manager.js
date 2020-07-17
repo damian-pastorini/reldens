@@ -20,6 +20,7 @@ const { FeaturesManager } = require('../../features/server/manager');
 const { UsersManager } = require('../../users/server/manager');
 const { LoginManager } = require('./login');
 const { RoomsManager } = require('../../rooms/server/manager');
+const { Mailer } = require('./mailer');
 const { ThemeManager } = require('./theme-manager');
 const { MapsLoader } = require('./maps-loader');
 const { Logger, EventsManager } = require('@reldens/utils');
@@ -84,6 +85,7 @@ class ServerManager
         await EventsManager.emit('reldens.serverBeforeListen', {serverManager: this});
         await this.gameServer.listen(this.configServer.port);
         Logger.info('Listening on '+this.configServer.host+':'+this.configServer.port);
+        this.configManager.configList.server.baseUrl = this.configServer.host+':'+this.configServer.port;
         await this.createClientBundle();
         await EventsManager.emit('reldens.serverReady', {serverManager: this});
     }
@@ -117,11 +119,18 @@ class ServerManager
         // theme root:
         configProcessor.projectTheme = ThemeManager.projectTheme;
         await EventsManager.emit('reldens.serverConfigReady', {serverManager: this, configProcessor: configProcessor});
+        // mailer:
+        this.mailer = new Mailer();
+        Logger.info(['Mailer Configured:', this.mailer.isEnabled()]);
+        await this.setupForgotPassword();
         // features manager:
         this.featuresManager = new FeaturesManager();
         // load the available features list and append to the config, this way we will pass the list to the client:
         configProcessor.availableFeaturesList = await this.featuresManager.loadFeatures();
-        await EventsManager.emit('reldens.serverConfigFeaturesReady', {serverManager: this, configProcessor: configProcessor});
+        await EventsManager.emit('reldens.serverConfigFeaturesReady', {
+            serverManager: this,
+            configProcessor: configProcessor
+        });
         // users manager:
         this.usersManager = new UsersManager();
         // the rooms manager will receive the features rooms to be defined:
@@ -131,7 +140,9 @@ class ServerManager
         this.loginManager = new LoginManager({
             config: configProcessor,
             usersManager: this.usersManager,
-            roomsManager: this.roomsManager
+            roomsManager: this.roomsManager,
+            mailer: this.mailer,
+            themeManager: ThemeManager
         });
         // prepare rooms:
         await EventsManager.emit('reldens.serverBeforeDefineRooms', {serverManager: this});
@@ -163,6 +174,32 @@ class ServerManager
         this.bundler = new AwaitMiddleware(indexPath, bundlerOptions);
         let middleware = await this.bundler.middleware();
         this.app.use(middleware);
+    }
+
+    async setupForgotPassword()
+    {
+        this.app.use('/reset-password', async (req, res) => {
+            let rEmail = req.query.email;
+            let rId = req.query.id;
+            let user = false;
+            let resetResult = '';
+            if(rEmail && rId){
+                user = await this.usersManager.loadUserByEmail(rEmail);
+            }
+            if(!user || user.password !== rId){
+                let resetErrorPath = path.join('assets', 'email', 'reset-error.html');
+                resetResult = await ThemeManager.loadAndRenderTemplate(resetErrorPath);
+            } else {
+                let newPass = this.loginManager.pwManager.makeId(12);
+                let newPassHash = this.loginManager.pwManager.encryptPassword(newPass);
+                await this.usersManager.updateUserByEmail(rEmail, {password: newPassHash});
+                let resetSuccessPath = path.join('assets', 'email', 'reset-success.html');
+                resetResult = await ThemeManager.loadAndRenderTemplate(resetSuccessPath, {newPass: newPass});
+            }
+            let resetPath = path.join('assets', 'email', 'reset.html');
+            let content = await ThemeManager.loadAndRenderTemplate(resetPath, {resetResult: resetResult});
+            res.send(content);
+        });
     }
 
 }

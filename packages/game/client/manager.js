@@ -53,7 +53,13 @@ class GameManager
 
     async joinGame(formData, isNewUser = false)
     {
+        // reset the user data in the object in case another form was used before:
+        this.userData = {};
         await EventsManager.emit('reldens.beforeJoinGame', {gameManager: this, formData, isNewUser});
+        if({}.hasOwnProperty.call(formData, 'forgot')){
+            this.userData.forgot = 1;
+            this.userData.email = formData['email'];
+        }
         this.initializeClient();
         // login or register:
         if(isNewUser){
@@ -64,7 +70,7 @@ class GameManager
         this.userData.password = formData['password'];
         // join initial game room, since we return the promise we don't need to catch the error here:
         let gameRoom = await this.gameClient.joinOrCreate(GameConst.ROOM_GAME, this.userData);
-        await EventsManager.emit('reldens.joinedGameRoom', gameRoom);
+        await EventsManager.emit('reldens.beforeJoinGameRoom', gameRoom);
         gameRoom.onMessage(async (message) => {
             // only the current client will get this message:
             if(message.act === GameConst.START_GAME){

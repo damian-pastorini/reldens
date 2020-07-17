@@ -30,6 +30,22 @@ class UsersManager
         return result;
     }
 
+    async loadUserByEmail(email)
+    {
+        let result = false;
+        if(!email){
+            ErrorManager.error('Missing email.');
+        }
+        let loadedUser = await UsersModel.query()
+            .withGraphFetched('players.[state, stats]')
+            .where('email', email)
+            .first();
+        if(loadedUser){
+            result = loadedUser;
+        }
+        return result;
+    }
+
     async createUser(userData)
     {
         return UsersModel.query()
@@ -45,6 +61,12 @@ class UsersManager
         let dateFormat = date.toISOString().slice(0, 19).replace('T', ' ');
         // save user:
         return UsersModel.query().patch({updated_at: dateFormat}).where('username', username);
+    }
+
+    updateUserByEmail(email, updatePatch)
+    {
+        // save user:
+        return UsersModel.query().patch(updatePatch).where('email', email);
     }
 
     updateUserStateByPlayerId(playerId, newState)

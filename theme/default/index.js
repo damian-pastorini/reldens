@@ -25,6 +25,7 @@ $(document).ready(function($){
 
     let $register = $('#register_form'),
         $login = $('#login_form'),
+        $forgot = $('#forgot_form'),
         $fullScreen = $('.full-screen-btn');
 
     function restartError(submittedForm)
@@ -97,6 +98,24 @@ $(document).ready(function($){
             startGame(formData, false);
         });
         $login.validate();
+    }
+
+    if($forgot.length){
+        restartError($forgot);
+        $forgot.on('submit', (e) => {
+            e.preventDefault();
+            if(!$forgot.valid()){
+                return false;
+            }
+            $forgot.find('.loading-container').show();
+            let formData = {
+                formId: $forgot.attr('id'),
+                forgot: true,
+                email: $forgot.find('#forgot_email').val()
+            };
+            startGame(formData, false);
+        });
+        $forgot.validate();
     }
 
     if($fullScreen.length){

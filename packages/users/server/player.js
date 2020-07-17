@@ -42,7 +42,7 @@ class Player extends Schema
 
 type('string')(Player.prototype, 'sessionId');
 type('string')(Player.prototype, 'username');
-type('number')(Player.prototype, 'status');
+type('string')(Player.prototype, 'status');
 schema.defineTypes(Player, {state: BodyState});
 
 module.exports.Player = Player;

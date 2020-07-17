@@ -26,7 +26,7 @@ class RoomLogin extends Room
         if(!options){
             return false;
         }
-        let loginResult = await this.loginManager.attemptLoginOrRegister(options);
+        let loginResult = await this.loginManager.processUserRequest(options);
         if({}.hasOwnProperty.call(loginResult, 'error')){
             // login error.
             ErrorManager.error(loginResult.error);
