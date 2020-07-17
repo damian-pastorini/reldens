@@ -216,7 +216,7 @@ CREATE TABLE IF NOT EXISTS `items_inventory` (
   PRIMARY KEY (`id`),
   KEY `FK_items_inventory_items_item` (`item_id`),
   CONSTRAINT `FK_items_inventory_items_item` FOREIGN KEY (`item_id`) REFERENCES `items_item` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=99 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Inventory table is to save the items for each owner.';
+) ENGINE=InnoDB AUTO_INCREMENT=101 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Inventory table is to save the items for each owner.';
 
 -- Dumping data for table reldens.items_inventory: ~8 rows (approximately)
 /*!40000 ALTER TABLE `items_inventory` DISABLE KEYS */;
@@ -233,7 +233,9 @@ INSERT INTO `items_inventory` (`id`, `owner_id`, `item_id`, `qty`, `remaining_us
 	(95, 2, 4, 1, 0, 1),
 	(96, 2, 5, 1, 0, 0),
 	(97, 2, 3, 1, 0, 0),
-	(98, 2, 2, 1, 0, 0);
+	(98, 2, 2, 1, 0, 0),
+	(99, 1, 2, 1, 0, 0),
+	(100, 2, 2, 1, 0, 0);
 /*!40000 ALTER TABLE `items_inventory` ENABLE KEYS */;
 
 -- Dumping structure for table reldens.items_item
@@ -378,9 +380,9 @@ CREATE TABLE IF NOT EXISTS `players_state` (
 -- Dumping data for table reldens.players_state: ~5 rows (approximately)
 /*!40000 ALTER TABLE `players_state` DISABLE KEYS */;
 INSERT INTO `players_state` (`id`, `player_id`, `room_id`, `x`, `y`, `dir`) VALUES
-	(3, 1, 4, 799, 468, 'left'),
-	(4, 2, 4, 903, 490, 'left'),
-	(5, 3, 4, 443, 449, 'right'),
+	(3, 1, 4, 1086, 513, 'right'),
+	(4, 2, 4, 730, 416, 'down'),
+	(5, 3, 4, 385, 449, 'right'),
 	(14, 15, 4, 300, 388, 'down'),
 	(15, 16, 4, 508, 381, 'down');
 /*!40000 ALTER TABLE `players_state` ENABLE KEYS */;
@@ -404,7 +406,7 @@ CREATE TABLE IF NOT EXISTS `players_stats` (
 -- Dumping data for table reldens.players_stats: ~5 rows (approximately)
 /*!40000 ALTER TABLE `players_stats` DISABLE KEYS */;
 INSERT INTO `players_stats` (`id`, `player_id`, `hp`, `mp`, `stamina`, `atk`, `def`, `dodge`, `speed`) VALUES
-	(1, 1, 46, 100, 100, 105, 100, 100, 100),
+	(1, 1, 100, 100, 100, 100, 100, 100, 100),
 	(2, 2, 100, 100, 100, 105, 100, 100, 100),
 	(3, 3, 100, 100, 100, 100, 100, 100, 100),
 	(15, 15, 100, 100, 100, 100, 100, 100, 100),
@@ -516,7 +518,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   `username` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
   `password` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
   `role_id` int(10) unsigned NOT NULL,
-  `status` int(10) unsigned NOT NULL,
+  `status` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
