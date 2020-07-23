@@ -2,7 +2,8 @@
 <html>
 <head>
     <title>DwDeveloper - Reldens | MMORPG Platform</title>
-    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i|Play:300,300i,400,400i,500,500i,600,600i,700,700i" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i|Play:300,300i,400,400i,500,500i,600,600i,700,700i" rel="stylesheet"/>
+    <link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/4.6.0/firebase-ui-auth.css"/>
     <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon/apple-touch-icon.png"/>
     <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon/favicon-32x32.png"/>
     <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon/favicon-16x16.png"/>
@@ -21,30 +22,35 @@
         </div>
         <div class="content">
             <div class="forms-container">
-                <div class="col-2">
-                    <!-- login form -->
-                    <form name="login_form" id="login_form" class="login_form" action="#" method="post">
-                        <h3 class="form-title">Login</h3>
-                        <div class="input-box">
-                            <label for="username">Username</label>
-                            <input type="text" name="username" id="username" class="required"/>
-                        </div>
-                        <div class="input-box">
-                            <label for="password">Password</label>
-                            <input type="password" name="password" id="password" class="required"/>
-                        </div>
-                        <div class="input-box">
-                            <input type="submit" value="Submit"/>
-                        </div>
-                        <div class="loading-container" style="display:none;">
-                            <img src="/assets/web/loading.gif" alt="Loading..."/>
-                        </div>
-                        <div class="input-box response-error" style="display:none;">Login error please try again.</div>
-                    </form>
+                <div class="col-2 col-left">
+                    <div class="row row-1">
+                        <!-- login form -->
+                        <form name="login_form" id="login_form" class="login_form" action="#" method="post">
+                            <h3 class="form-title">Login</h3>
+                            <div class="input-box">
+                                <label for="username">Username</label>
+                                <input type="text" name="username" id="username" class="required"/>
+                            </div>
+                            <div class="input-box">
+                                <label for="password">Password</label>
+                                <input type="password" name="password" id="password" class="required"/>
+                            </div>
+                            <div class="input-box">
+                                <input type="submit" value="Submit"/>
+                            </div>
+                            <div class="loading-container" style="display:none;">
+                                <img src="/assets/web/loading.gif" alt="Loading..."/>
+                            </div>
+                            <div class="input-box response-error" style="display:none;">Login error please try again.</div>
+                        </form>
+                    </div>
+                    <div class="row row-2">
+                        <div id="firebaseui-auth-container"></div>
+                    </div>
                 </div>
-                <div class="col-2">
-                    <!-- register form -->
-                    <div class="row">
+                <div class="col-2 col-right">
+                    <div class="row row-1">
+                        <!-- register form -->
                         <form name="register_form" id="register_form" class="register_form" action="#" method="post">
                             <h3 class="form-title">Create Account</h3>
                             <div class="input-box">
@@ -74,8 +80,8 @@
                             </div>
                         </form>
                     </div>
-                    <!-- forgot password -->
-                    <div class="row">
+                    <div class="row row-2">
+                        <!-- forgot password -->
                         <form name="forgot_form" id="forgot_form" class="forgot_form" action="#" method="post">
                             <h3 class="form-title">Forgot password</h3>
                             <div class="input-box">

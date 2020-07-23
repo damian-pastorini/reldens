@@ -14,6 +14,7 @@ const { GameDom } = require('./game-dom');
 const { ConfigProcessor } = require('../../config/processor');
 const { Logger, EventsManager } = require('@reldens/utils');
 const { GameConst } = require('../constants');
+const { FirebaseConnector } = require('../../firebase/client/connector');
 
 class GameManager
 {
@@ -43,6 +44,8 @@ class GameManager
         this.isChangingScene = false;
         // dom manager:
         this.gameDom = new GameDom();
+        // firebase:
+        this.firebase = new FirebaseConnector(this);
     }
 
     setupClasses(customClasses)
@@ -212,18 +215,17 @@ class GameManager
      */
     getServerUrl()
     {
-        if(this.clientUrl){
-            return this.clientUrl;
-        }
-        if({}.hasOwnProperty.call(this.config, 'serverUrl')){
-            this.clientUrl = this.config.serverUrl;
+        if(this.serverUrl){
+            // you can specify the client URL before initialize the client (see
+            return this.serverUrl;
         } else {
+            // or you can let the address be detected using the current access point:
             let host = window.location.hostname;
-            let wsProtocol = 'ws://';
+            let wsProtocol = window.location.protocol.indexOf('https') === 0 ? 'wss://' : 'ws://';
             let wsPort = (window.location.port ? ':'+window.location.port : '');
-            this.clientUrl = wsProtocol+host+wsPort;
+            this.serverUrl = wsProtocol+host+wsPort;
         }
-        return this.clientUrl;
+        return this.serverUrl;
     }
 
     getActiveScene()

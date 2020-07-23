@@ -16,7 +16,34 @@ $(document).ready(function($){
     // reldens game:
     let reldens = new GameManager();
     reldens.setupClasses(CustomClasses);
-    window.reldens = reldens;
+    // @NOTE: here you could specify your server URL if it's not the same as for the client.
+    // reldens.serverUrl = 'wss://my-custom-url.com';
+    // @NOTE: important for firebase to work the next two methods has to be run in the coded order
+    // > firebase.initAuth
+    // > firebase.authUi.start
+    // replace all the [values] and uncomment to initialize firebase:
+    let firebaseConfig = {
+        // your config here.
+    };
+    reldens.firebase.initAuth(firebaseConfig);
+    reldens.firebase.authUi.start(reldens.firebase.containerId, {
+        signInOptions: [
+            // uncomment, add or remove options as you need:
+            // reldens.firebase.auth.EmailAuthProvider.PROVIDER_ID
+            reldens.firebase.app.auth.GoogleAuthProvider.PROVIDER_ID,
+            reldens.firebase.app.auth.FacebookAuthProvider.PROVIDER_ID,
+            // reldens.firebase.auth.TwitterAuthProvider.PROVIDER_ID,
+            reldens.firebase.app.auth.GithubAuthProvider.PROVIDER_ID
+        ],
+        // the signInSuccessWithAuthResult callback is here to avoid any missing redirect warnings we don't use:
+        callbacks: {
+            // eslint-disable-next-line no-unused-vars
+            signInSuccessWithAuthResult: (currentUser, credential, redirectUrl) => {
+                // avoid redirect:
+                return false;
+            }
+        }
+    });
 
     // client event listener example with version display:
     reldens.events.on('reldens.afterInitEngineAndStartGame', () => {
@@ -28,7 +55,7 @@ $(document).ready(function($){
         $forgot = $('#forgot_form'),
         $fullScreen = $('.full-screen-btn');
 
-    function restartError(submittedForm)
+    function resetErrorBlock(submittedForm)
     {
         let $errorBlock = $(submittedForm).find('.response-error');
         $(submittedForm).find('input').on('focus', () => {
@@ -56,7 +83,7 @@ $(document).ready(function($){
     }
 
     if($register.length){
-        restartError($register);
+        resetErrorBlock($register);
         $register.on('submit', (e) => {
             e.preventDefault();
             // validate form:
@@ -82,7 +109,7 @@ $(document).ready(function($){
     }
 
     if($login.length){
-        restartError($login);
+        resetErrorBlock($login);
         $login.on('submit', (e) => {
             e.preventDefault();
             if(!$login.valid()){
@@ -101,7 +128,7 @@ $(document).ready(function($){
     }
 
     if($forgot.length){
-        restartError($forgot);
+        resetErrorBlock($forgot);
         $forgot.on('submit', (e) => {
             e.preventDefault();
             if(!$forgot.valid()){
@@ -131,12 +158,16 @@ $(document).ready(function($){
         });
     }
 
+    // responsive screen behavior:
     document.addEventListener('fullscreenchange', () => {
-        if (!document.fullscreenElement) {
+        if (!document.fullscreenElement){
             $('.header').show();
             $('.footer').show();
             $('.content').css('height', '84%');
         }
     });
+
+    // global access is not actually required, the app can be fully encapsulated, I'm leaving this here for easy tests:
+    window.reldens = reldens;
 
 });

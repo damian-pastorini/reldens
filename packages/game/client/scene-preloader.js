@@ -135,6 +135,7 @@ class ScenePreloader extends Scene
                 // logout:
                 let logoutButton = this.uiPlayer.getChildByProperty('id', 'logout');
                 logoutButton.addEventListener('click', () => {
+                    this.app.auth().signOut();
                     window.location.reload();
                 });
                 // @TODO: TEMPORAL, replace references by this.
