@@ -50,13 +50,13 @@ class Mailer
             return false;
         }
         if(!this.transporter || !this.service || !this.user || !this.pass){
-            Logger.error(['Transporter configuration:',
+            Logger.error(['Transporter configuration not specified:',
                 this.transporter,
                 this.service,
                 this.user,
                 this.pass
             ]);
-            ErrorManager.error('Transporter configuration not specified.');
+            ErrorManager.error('E-mail error, please try again later or contact the administrator.');
             return false;
         }
         if(!props.to || !props.subject || (!props.text && !props.html)){

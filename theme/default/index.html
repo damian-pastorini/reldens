@@ -41,11 +41,26 @@
                             <div class="loading-container" style="display:none;">
                                 <img src="/assets/web/loading.gif" alt="Loading..."/>
                             </div>
-                            <div class="input-box response-error" style="display:none;">Login error please try again.</div>
+                            <div class="input-box response-error" style="display:none;">Login error, please try again.</div>
                         </form>
                     </div>
                     <div class="row row-2">
-                        <div id="firebaseui-auth-container"></div>
+                        <form name="firebase_login" id="firebase_login" class="firebase_login" action="#" method="post">
+                            <h3 class="form-title">Firebase Login</h3>
+                            <div class="input-box">
+                                <label for="username">Username</label>
+                                <input type="text" name="firebase_username" id="firebase_username" class="required"/>
+                            </div>
+                            <!--
+                            <div class="input-box">
+                                <input type="submit" value="Show Login Options"/>
+                            </div>
+                            -->
+                            <div class="input-box response-error" style="display:none;">Login error, please try again.</div>
+                        </form>
+                        <div class="firebase-container">
+                            <div id="firebaseui-auth-container" style="display:none;"></div>
+                        </div>
                     </div>
                 </div>
                 <div class="col-2 col-right">

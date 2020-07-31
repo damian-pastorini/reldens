@@ -7,7 +7,7 @@
 const FirebaseApp = require('firebase/app');
 const FirebaseAnalytics = require('firebase/analytics');
 const FirebaseUi = require('firebaseui');
-const { ErrorManager } = require('@reldens/utils');
+const { ErrorManager, Logger } = require('@reldens/utils');
 
 class FirebaseConnector
 {
@@ -22,42 +22,46 @@ class FirebaseConnector
         this.app = FirebaseApp;
         this.ui = FirebaseUi;
         this.authUi = false;
+        this.isActive = false;
         this.containerId = '#firebaseui-auth-container';
+        // eslint-disable-next-line no-unused-vars
+        this.gameManager.events.on('reldens.beforeJoinGame', (props) => {
+            // firebase check:
+            if(props.formData['formId'] === 'firebase_login'){
+                props.gameManager.userData.isFirebaseLogin = true;
+            }
+        });
     }
 
-    initAuth(props)
+    initAuth(firebaseConfig, uiConfig)
     {
-        this.app.initializeApp(props);
-        if({}.hasOwnProperty.call(props, 'measurementId')){
+        // validate props:
+        if(!firebaseConfig || !uiConfig){
+            Logger.error('Missing firebase configuration.');
+            return false;
+        }
+        this.firebaseConfig = firebaseConfig;
+        this.uiConfig = uiConfig;
+        // initialize app:
+        this.app.initializeApp(this.firebaseConfig);
+        // check for analytics id and initialize if present:
+        if({}.hasOwnProperty.call(this.firebaseConfig, 'measurementId')){
             this.app.analytics();
         }
+        // initialize auth ui:
         this.authUi = new this.ui.auth.AuthUI(this.app.auth());
-        this.app.auth().onAuthStateChanged((user) => {
-            if(user){
-                // user is signed in:
-                // let displayName = user.displayName;
-                // let email = user.email;
-                // let emailVerified = user.emailVerified;
-                // let photoURL = user.photoURL;
-                // let isAnonymous = user.isAnonymous;
-                let uid = user.uid;
-                let providerData = user.providerData;
-                console.log('firebase auth changed:', uid, user.email, providerData);
-                let loggedLinks = '<div class="firebase-logged-container">'
-                    +'<button type="button" id="firebase-continue">Continue logged as: '+user.email+'</button>'
-                    +'<button type="button" id="firebase-logout">'+user.email+' logout</button>'
-                    +'</div>';
-                // onclick="javascript:reldens.firebase.app.auth().signOut()"
-                this.gameManager.gameDom.appendToElement(this.containerId, loggedLinks);
-                let logoutBtn = this.gameManager.gameDom.getElement('#firebase-logout').on('click', () => {
-                    this.app.auth().signOut();
-                });
-            } else {
-                // user is signed out:
-                console.log('logged out?');
-            }
-            return false;
-        });
+        // if callbacks or sign-in success result was not customized then we will use a return false for our default.
+        if(!{}.hasOwnProperty.call(this.uiConfig, 'callbacks')){
+            this.uiConfig.callbacks = {};
+        }
+        // our signInSuccessWithAuthResult default callback is to avoid any missing redirect warnings we don't use:
+        if(!{}.hasOwnProperty.call(this.uiConfig.callbacks, 'signInSuccessWithAuthResult')){
+            // eslint-disable-next-line no-unused-vars
+            this.uiConfig.callbacks.signInSuccessWithAuthResult = (currentUser, credential, redirectUrl) => {
+                // avoid redirect:
+                return false;
+            };
+        }
     }
 
 }

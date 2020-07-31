@@ -135,7 +135,9 @@ class ScenePreloader extends Scene
                 // logout:
                 let logoutButton = this.uiPlayer.getChildByProperty('id', 'logout');
                 logoutButton.addEventListener('click', () => {
-                    this.app.auth().signOut();
+                    if(this.gameManager.firebase.isActive){
+                        this.gameManager.firebase.app.auth().signOut();
+                    }
                     window.location.reload();
                 });
                 // @TODO: TEMPORAL, replace references by this.

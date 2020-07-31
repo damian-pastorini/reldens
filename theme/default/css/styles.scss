@@ -135,7 +135,8 @@ button, input[type="button"], input[type="submit"] { cursor:pointer; }
 
 #login_form,
 #register_form,
-#forgot_form {
+#forgot_form,
+#firebase_login {
     max-width:400px;
     display:block;
     margin:0 auto;
@@ -230,6 +231,7 @@ span.stat-value { float:left; width:50%; display:block; text-align:left; }
 #player-stats-container, #inventory-items, #equipment-items { position:relative; word-wrap:break-word; overflow:auto; font-size:12px; }
 #player-stats-container { width:100px; height:110px; }
 #forgot_reset { margin: 0 auto; max-width: 720px; }
+.firebase-container { display:block; float:left; width:100%; margin:0; padding:0; }
 
 /*
  * @TODO: move these as part of the inventory module and generate css importing each feature/module css file.

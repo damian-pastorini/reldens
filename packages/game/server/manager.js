@@ -9,6 +9,8 @@
 
 const dotenv = require('dotenv');
 const http = require('http');
+const https = require('https');
+const fs = require('fs');
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -101,7 +103,26 @@ class ServerManager
             let distPath = path.join(this.projectRoot, 'dist');
             this.app.use('/', express.static(distPath));
         }
-        this.appServer = http.createServer(this.app);
+        let runningHttps = false;
+        if(process.env.RELDENS_EXPRESS_USE_HTTPS){
+            // read certificates:
+            const credentials = {
+                key: fs.readFileSync(process.env.RELDENS_EXPRESS_HTTPS_PRIVATE_KEY, 'utf8'),
+                cert: fs.readFileSync(process.env.RELDENS_EXPRESS_HTTPS_CERT, 'utf8')
+            };
+            if(process.env.RELDENS_EXPRESS_HTTPS_CHAIN){
+                credentials['ca'] = fs.readFileSync(process.env.RELDENS_EXPRESS_HTTPS_CHAIN, 'utf8');
+            }
+            if(process.env.RELDENS_EXPRESS_HTTPS_PASSPHRASE){
+                credentials['passphrase'] = process.env.RELDENS_EXPRESS_HTTPS_PASSPHRASE;
+            }
+            this.appServer = https.createServer(credentials, this.app);
+            runningHttps = true;
+        }
+        // if https is not running then by default we will run on http:
+        if(!runningHttps){
+            this.appServer = http.createServer(this.app);
+        }
         // create game server instance:
         this.gameServer = new GameServer({server: this.appServer, express: this.app});
         // attach web monitoring panel (optional):

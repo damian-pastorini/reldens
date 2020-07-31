@@ -29,7 +29,11 @@ class LoginManager
             return await this.processForgotPassword(userData);
         }
         if(!this.isValidData(userData)){
-            return {error: 'Missing user login data.'};
+            let errorMessage = 'Incomplete user login data.';
+            if(!userData.username.length){
+                errorMessage = 'Please, complete your username, the same is always required to login.';
+            }
+            return {error: errorMessage};
         }
         // search if the user already exists:
         let user = await this.usersManager.loadUserByUsername(userData.username);
@@ -48,7 +52,10 @@ class LoginManager
     {
         return !(!userData
             || !{}.hasOwnProperty.call(userData, 'username')
-            || !{}.hasOwnProperty.call(userData, 'password'));
+            || !{}.hasOwnProperty.call(userData, 'password')
+            || !userData.username.length
+            || !userData.password.length
+        );
     }
 
     async login(user, userData)
@@ -85,7 +92,11 @@ class LoginManager
                 // check if an user with the email exists:
                 let user = await this.usersManager.loadUserByEmail(userData.email);
                 if(user){
-                    return {error: 'Registration error, please contact the administrator.'};
+                    let message = 'Registration error, please contact the administrator.';
+                    if(userData.isFirebaseLogin){
+                        message = 'Login error, wrong username.';
+                    }
+                    return {error: message};
                 }
                 // if the email doesn't exists in the database and it's a registration request:
                 // insert user, player, player state and player stats:
