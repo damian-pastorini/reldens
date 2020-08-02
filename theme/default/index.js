@@ -20,87 +20,83 @@ $(document).ready(function($){
     // @NOTE: at this point you could specify or override a lot of configurations like your server URL.
     // reldens.serverUrl = 'wss://my-custom-url.com';
     // replace all the [values] and uncomment to initialize firebase:
-    let firebaseConfig = {
-        apiKey: "AIzaSyDXHdjrFtSCBlrenFeuCrc-T9S336iaM5g",
-        authDomain: "reldens.firebaseapp.com",
-        databaseURL: "https://reldens.firebaseio.com",
-        projectId: "reldens",
-        storageBucket: "reldens.appspot.com",
-        messagingSenderId: "940263846157",
-        appId: "1:940263846157:web:8cee4ce5a54ab2ad4e8044",
-        measurementId: "G-PKMD9DWNEX"
-    };
-    let uiConfig = {
-        signInOptions: [
-            // uncomment, add or remove options as you need:
-            // reldens.firebase.auth.EmailAuthProvider.PROVIDER_ID
-            reldens.firebase.app.auth.GoogleAuthProvider.PROVIDER_ID,
-            reldens.firebase.app.auth.FacebookAuthProvider.PROVIDER_ID,
-            // reldens.firebase.auth.TwitterAuthProvider.PROVIDER_ID,
-            reldens.firebase.app.auth.GithubAuthProvider.PROVIDER_ID
-        ],
-        // this is to avoid the redirect in the game window:
-        signInFlow: 'popup'
-    };
-
-    reldens.firebase.initAuth(firebaseConfig, uiConfig);
-
-    // logout on refresh:
-    window.onbeforeunload = () => {
-        if(reldens.firebase.isActive){
-            reldens.firebase.app.auth().signOut();
+    $.getJSON('/reldens-firebase', (response) => {
+        if(!response.enabled){
+            return false;
         }
-    };
+        let firebaseConfig = response.firebaseConfig;
+        let uiConfig = {
+            signInOptions: [
+                // uncomment, add or remove options as you need:
+                // reldens.firebase.auth.EmailAuthProvider.PROVIDER_ID
+                reldens.firebase.app.auth.GoogleAuthProvider.PROVIDER_ID,
+                reldens.firebase.app.auth.FacebookAuthProvider.PROVIDER_ID,
+                // reldens.firebase.auth.TwitterAuthProvider.PROVIDER_ID,
+                reldens.firebase.app.auth.GithubAuthProvider.PROVIDER_ID
+            ],
+            // this is to avoid the redirect in the game window:
+            signInFlow: 'popup'
+        };
+        reldens.firebase.initAuth(firebaseConfig, uiConfig);
 
-    // check the current auth state:
-    reldens.firebase.app.auth().onAuthStateChanged((user) => {
-        if(user){
-            reldens.firebase.isActive = true;
-            let formData = {
-                formId: 'firebase_login',
-                email: user.email,
-                username: $('#firebase_username').val(),
-                password: user.uid
-            };
-            startGame(formData, true);
-        } else {
-            // if not logged then start the auth ui:
-            reldens.firebase.isActive = false;
-            reldens.gameDom.getElement(reldens.firebase.containerId).html('');
-            reldens.firebase.authUi.start(reldens.firebase.containerId, reldens.firebase.uiConfig);
-        }
-        return false;
-    });
-
-    let $firebaseLogin = $('#firebase_login');
-
-    if($firebaseLogin.length){
-        $firebaseLogin.on('submit', (e) => {
-            e.preventDefault();
-            // validate form:
-            if(!$firebaseLogin.valid()){
-                return false;
+        // logout on refresh:
+        window.onbeforeunload = () => {
+            if(reldens.firebase.isActive){
+                reldens.firebase.app.auth().signOut();
             }
-            // show login options:
-            $('#firebaseui-auth-container').show();
+        };
+
+        // check the current auth state:
+        reldens.firebase.app.auth().onAuthStateChanged((user) => {
+            if(user){
+                reldens.firebase.isActive = true;
+                let formData = {
+                    formId: 'firebase_login',
+                    email: user.email,
+                    username: $('#firebase_username').val(),
+                    password: user.uid
+                };
+                startGame(formData, true);
+            } else {
+                // if not logged then start the auth ui:
+                reldens.firebase.isActive = false;
+                reldens.gameDom.getElement(reldens.firebase.containerId).html('');
+                reldens.firebase.authUi.start(reldens.firebase.containerId, reldens.firebase.uiConfig);
+            }
+            return false;
         });
 
-        let $firebaseUser = $('#firebase_username');
-        if($firebaseUser.length){
-            // show login options:
-            // @NOTE here you could always display the options or include a length validation like:
-            // if($firebaseUser.val().length){
-            $('#firebaseui-auth-container').show();
-            // }
-            // and only display the options after the user completed the username field (see index.html around line 54).
-            $firebaseUser.on('change', () => {
-                resetErrorBlock('#firebase_login');
+        let $firebaseLogin = $('#firebase_login');
+
+        if($firebaseLogin.length){
+            $firebaseLogin.on('submit', (e) => {
+                e.preventDefault();
+                // validate form:
+                if(!$firebaseLogin.valid()){
+                    return false;
+                }
+                // show login options:
+                $('#firebaseui-auth-container').show();
             });
-            $firebaseUser.on('focus', () => {
-                resetErrorBlock('#firebase_login');
-            });
+
+            let $firebaseUser = $('#firebase_username');
+            if($firebaseUser.length){
+                // show login options:
+                // @NOTE here you could always display the options or include a length validation like:
+                // if($firebaseUser.val().length){
+                $('#firebaseui-auth-container').show();
+                // }
+                // and only display the options after the user completed the username field (see index.html around line 54).
+                $firebaseUser.on('change', () => {
+                    resetErrorBlock('#firebase_login');
+                });
+                $firebaseUser.on('focus', () => {
+                    resetErrorBlock('#firebase_login');
+                });
+            }
         }
-    }
+
+    });
 
     // client event listener example with version display:
     reldens.events.on('reldens.afterInitEngineAndStartGame', () => {

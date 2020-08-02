@@ -26,6 +26,7 @@ I know it is a huge project but I'll put all I have to make it work, so needless
 + Parcel
 + Colyseus
 + Phaser 3
++ Firebase
 
 
 ## [Features List](https://www.reldens.com/features)
