@@ -1,5 +1,5 @@
 
-const { ItemSingleEquipment, Modifier, ItemsConst } = require('@reldens/items-system');
+const { ItemSingleEquipment } = require('@reldens/items-system');
 
 class Spear extends ItemSingleEquipment
 {

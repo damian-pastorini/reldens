@@ -5,7 +5,7 @@
  * Custom animation object sample.
  *
  */
-const { ItemSingleUsable, Modifier, ItemsConst } = require('@reldens/items-system');
+const { ItemSingleUsable } = require('@reldens/items-system');
 
 class HealPotion extends ItemSingleUsable
 {
