@@ -7,8 +7,6 @@
  */
 
 const { Model } = require('objection');
-const { RoomsModel } = require('../../rooms/server/model');
-const { ObjectsAssetsModel } = require('./assets-model');
 
 class ObjectsModel extends Model
 {
@@ -20,6 +18,8 @@ class ObjectsModel extends Model
 
     static get relationMappings()
     {
+        const { RoomsModel } = require('../../rooms/server/model');
+        const { ObjectsAssetsModel } = require('./assets-model');
         return {
             parent_room: {
                 relation: Model.HasOneRelation,
