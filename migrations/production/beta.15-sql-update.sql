@@ -4,7 +4,7 @@
 ALTER TABLE `users` ALTER `status` DROP DEFAULT;
 ALTER TABLE `users` CHANGE COLUMN `status` `status` VARCHAR(255) NOT NULL AFTER `role_id`;
 
-INSERT INTO `reldens`.`features` (`code`, `title`, `is_enabled`) VALUES ('firebase', 'Firebase', '1');
+INSERT INTO `features` (`code`, `title`, `is_enabled`) VALUES ('firebase', 'Firebase', '1');
 
 # Missing key and fixed operation field type in modifiers table:
 
