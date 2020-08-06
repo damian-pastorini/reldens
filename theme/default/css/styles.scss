@@ -16,6 +16,7 @@ body {
     margin:0;
     padding:0;
     background-color: $cWhite;
+    overflow: hidden;
 }
 
 .text-black {
@@ -122,8 +123,9 @@ button, input[type="button"], input[type="submit"] { cursor:pointer; }
 
 .game-container { background-color:#000; }
 
-.col-2 { float:left; display:block; position:relative; width:46%; margin:0; padding:2%; }
+.row { float:left; display:block; position:relative; width:100%; margin:0; padding:0; }
 
+.col-2 { float:left; display:block; position:relative; width:46%; margin:0; padding:2%; }
 
 @media (max-width:725px) {
     .col-2 { width:100%; padding:0; }
@@ -133,7 +135,9 @@ button, input[type="button"], input[type="submit"] { cursor:pointer; }
 }
 
 #login_form,
-#register_form {
+#register_form,
+#forgot_form,
+#firebase_login {
     max-width:400px;
     display:block;
     margin:0 auto;
@@ -159,7 +163,7 @@ form {
             display:block;
             position:relative;
             font-size:12px;
-            margin-top:8px;
+            margin-top:4px;
             width:42%;
             text-align:right;
         }
@@ -227,6 +231,8 @@ span.stat-value { float:left; width:50%; display:block; text-align:left; }
 .player-stats-ui { min-width:100px; top:64px; right:200px; font-size:14px; }
 #player-stats-container, #inventory-items, #equipment-items { position:relative; word-wrap:break-word; overflow:auto; font-size:12px; }
 #player-stats-container { width:100px; height:110px; }
+#forgot_reset { margin: 0 auto; max-width: 720px; }
+.firebase-container { display:block; float:left; width:100%; margin:0; padding:0; }
 
 /*
  * @TODO: move these as part of the inventory module and generate css importing each feature/module css file.

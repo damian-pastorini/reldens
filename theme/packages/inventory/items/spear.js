@@ -1,5 +1,5 @@
 
-const { ItemSingleEquipment, Modifier, ItemsConst } = require('@reldens/items-system');
+const { ItemSingleEquipment } = require('@reldens/items-system');
 
 class Spear extends ItemSingleEquipment
 {
@@ -8,16 +8,6 @@ class Spear extends ItemSingleEquipment
     {
         super(props);
         this.removeAfterUse = true;
-        // @TODO: modifiers should be loaded from the storage.
-        let modProps = {
-            key: 'atk',
-            propertyKey: 'stats/atk',
-            operation: ItemsConst.OPS.INC_P,
-            value: {}.hasOwnProperty.call(props, 'value') ? props.value : 3
-        };
-        this.modifiers = {
-            damage: new Modifier(modProps)
-        };
         // @NOTE: we can use the same object and setup the animation data here since we never execute / use this item,
         // though the item instance is created on the client, it's never executed so we can call this data when we get
         // the item confirmation that was executed on the server.

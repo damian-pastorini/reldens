@@ -19,9 +19,6 @@ class ChatModel extends Model
 
     static get relationMappings()
     {
-        // @TODO: this is one of the solutions recommended in Objection JS to avoid the require loop.
-        //   https://vincit.github.io/objection.js/guide/relations.html#require-loops > see "Solution 1"
-        //   I would like to avoid using requires like this so this is a temporal solution.
         const { PlayersModel } = require('../../users/server/players-model');
         return {
             chat_room: {

@@ -14,6 +14,7 @@ const { GameDom } = require('./game-dom');
 const { ConfigProcessor } = require('../../config/processor');
 const { Logger, EventsManager } = require('@reldens/utils');
 const { GameConst } = require('../constants');
+const { FirebaseConnector } = require('../../firebase/client/connector');
 
 class GameManager
 {
@@ -43,17 +44,25 @@ class GameManager
         this.isChangingScene = false;
         // dom manager:
         this.gameDom = new GameDom();
+        // firebase:
+        this.firebase = new FirebaseConnector(this);
     }
 
     setupClasses(customClasses)
     {
-        EventsManager.emit('reldens.setupClasses', this, customClasses);
+        this.events.emit('reldens.setupClasses', this, customClasses);
         this.config.customClasses = customClasses;
     }
 
     async joinGame(formData, isNewUser = false)
     {
-        await EventsManager.emit('reldens.beforeJoinGame', {gameManager: this, formData, isNewUser});
+        // reset the user data in the object in case another form was used before:
+        this.userData = {};
+        await this.events.emit('reldens.beforeJoinGame', {gameManager: this, formData, isNewUser});
+        if({}.hasOwnProperty.call(formData, 'forgot')){
+            this.userData.forgot = 1;
+            this.userData.email = formData['email'];
+        }
         this.initializeClient();
         // login or register:
         if(isNewUser){
@@ -64,7 +73,7 @@ class GameManager
         this.userData.password = formData['password'];
         // join initial game room, since we return the promise we don't need to catch the error here:
         let gameRoom = await this.gameClient.joinOrCreate(GameConst.ROOM_GAME, this.userData);
-        await EventsManager.emit('reldens.joinedGameRoom', gameRoom);
+        await this.events.emit('reldens.beforeJoinGameRoom', gameRoom);
         gameRoom.onMessage(async (message) => {
             // only the current client will get this message:
             if(message.act === GameConst.START_GAME){
@@ -99,7 +108,7 @@ class GameManager
 
     async initEngineAndStartGame(initialGameData)
     {
-        await EventsManager.emit('reldens.beforeInitEngineAndStartGame', initialGameData);
+        await this.events.emit('reldens.beforeInitEngineAndStartGame', initialGameData);
         if(!{}.hasOwnProperty.call(initialGameData, 'gameConfig')){
             throw new Error('ERROR - Missing game configuration.');
         }
@@ -123,12 +132,12 @@ class GameManager
             alert('ERROR - There was an error while joining the room: '+initialGameData.player.state.scene);
             window.location.reload();
         }
-        await EventsManager.emit('reldens.joinedRoom', joinedFirstRoom, this);
-        await EventsManager.emit('reldens.joinedRoom_'+initialGameData.player.state.scene, joinedFirstRoom, this);
+        await this.events.emit('reldens.joinedRoom', joinedFirstRoom, this);
+        await this.events.emit('reldens.joinedRoom_'+initialGameData.player.state.scene, joinedFirstRoom, this);
         // start listening the new room events:
         this.activeRoomEvents = this.createRoomEventsInstance(initialGameData.player.state.scene);
         this.activeRoomEvents.activateRoom(joinedFirstRoom);
-        await EventsManager.emit('reldens.afterInitEngineAndStartGame', initialGameData, joinedFirstRoom);
+        await this.events.emit('reldens.afterInitEngineAndStartGame', initialGameData, joinedFirstRoom);
         return joinedFirstRoom;
     }
 
@@ -153,8 +162,8 @@ class GameManager
                     }
                     // after the room was joined added to the joinedRooms list:
                     this.joinedRooms[joinRoomName] = joinedRoom;
-                    EventsManager.emit('reldens.joinedRoom', joinedRoom, this);
-                    EventsManager.emit('reldens.joinedRoom_'+joinRoomName, joinedRoom, this);
+                    this.events.emit('reldens.joinedRoom', joinedRoom, this);
+                    this.events.emit('reldens.joinedRoom_'+joinRoomName, joinedRoom, this);
                 }
             }
         }
@@ -175,8 +184,8 @@ class GameManager
             previousRoom.leave();
             this.activeRoomEvents = newRoomEvents;
             this.room = sceneRoom;
-            EventsManager.emit('reldens.joinedRoom', sceneRoom, this);
-            EventsManager.emit('reldens.joinedRoom_'+message.player.state.scene, sceneRoom, this);
+            this.events.emit('reldens.joinedRoom', sceneRoom, this);
+            this.events.emit('reldens.joinedRoom_'+message.player.state.scene, sceneRoom, this);
             // start listen to room events:
             newRoomEvents.activateRoom(sceneRoom, message.prev);
         }).catch((err) => {
@@ -206,18 +215,17 @@ class GameManager
      */
     getServerUrl()
     {
-        if(this.clientUrl){
-            return this.clientUrl;
-        }
-        if({}.hasOwnProperty.call(this.config, 'serverUrl')){
-            this.clientUrl = this.config.serverUrl;
+        if(this.serverUrl){
+            // you can specify the client URL before initialize the client (see
+            return this.serverUrl;
         } else {
+            // or you can let the address be detected using the current access point:
             let host = window.location.hostname;
-            let wsProtocol = 'ws://';
+            let wsProtocol = window.location.protocol.indexOf('https') === 0 ? 'wss://' : 'ws://';
             let wsPort = (window.location.port ? ':'+window.location.port : '');
-            this.clientUrl = wsProtocol+host+wsPort;
+            this.serverUrl = wsProtocol+host+wsPort;
         }
-        return this.clientUrl;
+        return this.serverUrl;
     }
 
     getActiveScene()

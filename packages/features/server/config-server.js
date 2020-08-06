@@ -11,9 +11,11 @@
 const { ChatPack } = require('../../chat/server/pack');
 const { RespawnPack } = require('../../respawn/server/pack');
 const { InventoryPack } = require('../../inventory/server/pack');
+const { FirebasePack } = require('../../firebase/server/pack');
 
 module.exports.ServerCoreFeatures = {
     chat: ChatPack,
     respawn: RespawnPack,
-    inventory: InventoryPack
+    inventory: InventoryPack,
+    firebase: FirebasePack
 };

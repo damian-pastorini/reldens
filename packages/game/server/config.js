@@ -15,7 +15,6 @@ class GameConfig
     {
         return {
             // @NOTE: the game server URL will be part of the configuration in the database.
-            serverUrl: process.env.RELDENS_GAMESERVER_URL || false,
             type: process.env.RELDENS_CLIENT_TYPE ? Number(process.env.RELDENS_CLIENT_TYPE) : 0, // Phaser.AUTO
             parent: process.env.RELDENS_CLIENT_PARENT || 'reldens',
             dom: {

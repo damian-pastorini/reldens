@@ -7,9 +7,6 @@
  */
 
 const { Model } = require('objection');
-const { UsersModel } = require('./model');
-const { PlayersStatsModel } = require('./players-stats-model');
-const { PlayersStateModel } = require('./players-state-model');
 
 class PlayersModel extends Model
 {
@@ -21,6 +18,9 @@ class PlayersModel extends Model
 
     static get relationMappings()
     {
+        const { UsersModel } = require('./model');
+        const { PlayersStatsModel } = require('./players-stats-model');
+        const { PlayersStateModel } = require('./players-state-model');
         return {
             parent_user: {
                 relation: Model.BelongsToOneRelation,

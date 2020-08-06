@@ -39,7 +39,7 @@ class BaseObject extends InteractionArea
     // eslint-disable-next-line no-unused-vars
     runAdditionalSetup(eventsManager)
     {
-        // @TODO: implement what you need here.
+        // @NOTE: implement what you need here.
     }
 
 }

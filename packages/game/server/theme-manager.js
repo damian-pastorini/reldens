@@ -9,6 +9,7 @@
 const fs = require('fs');
 const path = require('path');
 const del = require('del');
+const TemplateEngine = require('mustache');
 const { Logger } = require('@reldens/utils');
 
 class ThemeManager
@@ -79,6 +80,17 @@ class ThemeManager
                 this.copyFolderSync(path.join(from, element), path.join(to, element));
             }
         });
+    }
+
+    async loadAndRenderTemplate(filePath, params)
+    {
+        let fullPath = path.join(this.projectRoot, this.projectTheme, filePath);
+        if(!fs.existsSync(fullPath)) {
+            Logger.error(['Template not found.', fullPath]);
+            return false;
+        }
+        let fileContent = fs.readFileSync(fullPath, {encoding:'utf8', flag:'r'});
+        return TemplateEngine.render(fileContent, params);
     }
 
 }

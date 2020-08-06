@@ -11,12 +11,92 @@ require('jquery-validation');
 const { GameManager } = require('reldens/client');
 const { CustomClasses } = require('../packages/client');
 
+// @TODO: move everything from this file as part of the core project and include events to manage the theme.
 $(document).ready(function($){
 
     // reldens game:
     let reldens = new GameManager();
     reldens.setupClasses(CustomClasses);
-    window.reldens = reldens;
+    // @NOTE: at this point you could specify or override a lot of configurations like your server URL.
+    // reldens.serverUrl = 'wss://my-custom-url.com';
+    // replace all the [values] and uncomment to initialize firebase:
+    $.getJSON('/reldens-firebase', (response) => {
+        if(!response.enabled){
+            return false;
+        }
+        let firebaseConfig = response.firebaseConfig;
+        let uiConfig = {
+            signInOptions: [
+                // uncomment, add or remove options as you need:
+                // reldens.firebase.auth.EmailAuthProvider.PROVIDER_ID
+                reldens.firebase.app.auth.GoogleAuthProvider.PROVIDER_ID,
+                reldens.firebase.app.auth.FacebookAuthProvider.PROVIDER_ID,
+                // reldens.firebase.auth.TwitterAuthProvider.PROVIDER_ID,
+                reldens.firebase.app.auth.GithubAuthProvider.PROVIDER_ID
+            ],
+            // this is to avoid the redirect in the game window:
+            signInFlow: 'popup'
+        };
+        reldens.firebase.initAuth(firebaseConfig, uiConfig);
+
+        // logout on refresh:
+        window.onbeforeunload = () => {
+            if(reldens.firebase.isActive){
+                reldens.firebase.app.auth().signOut();
+            }
+        };
+
+        // check the current auth state:
+        reldens.firebase.app.auth().onAuthStateChanged((user) => {
+            if(user){
+                reldens.firebase.isActive = true;
+                let formData = {
+                    formId: 'firebase_login',
+                    email: user.email,
+                    username: $('#firebase_username').val(),
+                    password: user.uid
+                };
+                startGame(formData, true);
+            } else {
+                // if not logged then start the auth ui:
+                reldens.firebase.isActive = false;
+                reldens.gameDom.getElement(reldens.firebase.containerId).html('');
+                reldens.firebase.authUi.start(reldens.firebase.containerId, reldens.firebase.uiConfig);
+            }
+            return false;
+        });
+
+        let $firebaseLogin = $('#firebase_login');
+
+        if($firebaseLogin.length){
+            $firebaseLogin.on('submit', (e) => {
+                e.preventDefault();
+                // validate form:
+                if(!$firebaseLogin.valid()){
+                    return false;
+                }
+                // show login options:
+                $('#firebaseui-auth-container').show();
+            });
+
+            let $firebaseUser = $('#firebase_username');
+            if($firebaseUser.length){
+                // show login options:
+                // @NOTE here you could always display the options or include a length validation like:
+                // if($firebaseUser.val().length){
+                $('#firebaseui-auth-container').show();
+                // }
+                // and only display the options after the user completed the username field (see index.html around line 54).
+                $firebaseUser.on('change', () => {
+                    resetErrorBlock('#firebase_login');
+                });
+                $firebaseUser.on('focus', () => {
+                    resetErrorBlock('#firebase_login');
+                });
+            }
+        }
+
+    });
 
     // client event listener example with version display:
     reldens.events.on('reldens.afterInitEngineAndStartGame', () => {
@@ -25,9 +105,10 @@ $(document).ready(function($){
 
     let $register = $('#register_form'),
         $login = $('#login_form'),
+        $forgot = $('#forgot_form'),
         $fullScreen = $('.full-screen-btn');
 
-    function restartError(submittedForm)
+    function resetErrorBlock(submittedForm)
     {
         let $errorBlock = $(submittedForm).find('.response-error');
         $(submittedForm).find('input').on('focus', () => {
@@ -51,11 +132,14 @@ $(document).ready(function($){
             // we will check the isNewUser variable to know where display the error.
             $('.loading-container').hide();
             $('#'+formData.formId+' .response-error').html(data).show();
+            if(formData.formId === 'firebase_login'){
+                reldens.firebase.app.auth().signOut();
+            }
         });
     }
 
     if($register.length){
-        restartError($register);
+        resetErrorBlock($register);
         $register.on('submit', (e) => {
             e.preventDefault();
             // validate form:
@@ -81,7 +165,7 @@ $(document).ready(function($){
     }
 
     if($login.length){
-        restartError($login);
+        resetErrorBlock($login);
         $login.on('submit', (e) => {
             e.preventDefault();
             if(!$login.valid()){
@@ -99,6 +183,24 @@ $(document).ready(function($){
         $login.validate();
     }
 
+    if($forgot.length){
+        resetErrorBlock($forgot);
+        $forgot.on('submit', (e) => {
+            e.preventDefault();
+            if(!$forgot.valid()){
+                return false;
+            }
+            $forgot.find('.loading-container').show();
+            let formData = {
+                formId: $forgot.attr('id'),
+                forgot: true,
+                email: $forgot.find('#forgot_email').val()
+            };
+            startGame(formData, false);
+        });
+        $forgot.validate();
+    }
+
     if($fullScreen.length){
         $fullScreen.on('click', (e) => {
             e.preventDefault();
@@ -112,12 +214,16 @@ $(document).ready(function($){
         });
     }
 
+    // responsive screen behavior:
     document.addEventListener('fullscreenchange', () => {
-        if (!document.fullscreenElement) {
+        if (!document.fullscreenElement){
             $('.header').show();
             $('.footer').show();
             $('.content').css('height', '84%');
         }
     });
+
+    // global access is not actually required, the app can be fully encapsulated, I'm leaving this here for easy tests:
+    window.reldens = reldens;
 
 });
