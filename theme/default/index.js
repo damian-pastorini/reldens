@@ -106,7 +106,8 @@ $(document).ready(function($){
     let $register = $('#register_form'),
         $login = $('#login_form'),
         $forgot = $('#forgot_form'),
-        $fullScreen = $('.full-screen-btn');
+        $fullScreen = $('.full-screen-btn'),
+        $body = $('body');
 
     function resetErrorBlock(submittedForm)
     {
@@ -123,10 +124,13 @@ $(document).ready(function($){
         // you can include here the room as parameter:
         gameRoom.then(() => {
             $('.loading-container').hide();
+            $('.footer').hide();
             $('.forms-container').detach();
             $('.game-container').show();
             $('.full-screen-btn').show();
-            $('body').css('background', '#000000');
+            $body.css('background', '#000000');
+            $body.css('overflow', 'hidden');
+            $('.content').css('height', '92%');
         }).catch((data) => {
             // @NOTE: game room errors should be always because some wrong login or registration data. For these cases
             // we will check the isNewUser variable to know where display the error.
@@ -218,7 +222,6 @@ $(document).ready(function($){
     document.addEventListener('fullscreenchange', () => {
         if (!document.fullscreenElement){
             $('.header').show();
-            $('.footer').show();
             $('.content').css('height', '84%');
         }
     });

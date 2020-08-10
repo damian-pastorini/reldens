@@ -232,6 +232,7 @@ span.stat-value { float:left; width:50%; display:block; text-align:left; }
 #player-stats-container, #inventory-items, #equipment-items { position:relative; word-wrap:break-word; overflow:auto; font-size:12px; }
 #player-stats-container { width:100px; height:110px; }
 #forgot_reset { margin: 0 auto; max-width: 720px; }
+#firebaseui-auth-container { display:block; max-width:400px; margin:10px auto; padding:6px 0; background:#f2f2f2; }
 .firebase-container { display:block; float:left; width:100%; margin:0; padding:0; }
 
 /*
@@ -251,8 +252,8 @@ span.stat-value { float:left; width:50%; display:block; text-align:left; }
 .item-box .trash-confirm { display:none; min-width:96px; }
 .item-box .trash-confirm span { cursor:pointer; padding:5px; border:1px solid; margin:5px; display:inline-block; }
 .group-item-block { position:relative; }
-.group-item-block .equip-group-icon { position:absolute; top:0px; left:0px; width:100%; height:100%; z-index:1; opacity:0.2; border:1px solid #ffffff; }
-.group-item-block .equipped-item { position:relative; top:0px; left:0px; z-index:2; }
+.group-item-block .equip-group-icon { position:absolute; top:0; left:0; width:100%; height:100%; z-index:1; opacity:0.2; border:1px solid #ffffff; }
+.group-item-block .equipped-item { position:relative; top:0; left:0; z-index:2; }
 .group-item-block .image-container img { min-width:50px; }
 .group-item-block .item-qty, .group-item-block .item-data-container .item-description, .group-item-block .item-data-container .item-trash { display:none; }
 .group-item-block .item-data-container { min-width:50px; }
