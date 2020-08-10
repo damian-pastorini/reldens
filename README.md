@@ -46,7 +46,7 @@ Here you will find a small demo for the results with the last available version 
 
 
 ## Contact us
-Join our Discord channel: https://discord.gg/HuJMxUY or send us an email to  [info@dwdeveloper.com](mailto:info@dwdeveloper.com).
+Join our Discord channel: [https://discord.gg/HuJMxUY](https://discord.gg/HuJMxUY) or send us an email to  [info@dwdeveloper.com](mailto:info@dwdeveloper.com).
 
 
 ## Support us! :)
