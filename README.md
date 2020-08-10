@@ -42,23 +42,20 @@ I know it is a huge project but I'll put all I have to make it work, so needless
 
 Here you will find a small demo for the results with the last available version from master: 
 
-[http://dev.reldens.com](http://dev.reldens.com)
-
-[http://reldens.herokuapp.com/](http://reldens.herokuapp.com/)
+[https://demo.reldens.com](https://demo.reldens.com)
 
 
 ## Contact us
-Join our Discord channel: https://discord.gg/HuJMxUY
+Join our Discord channel: https://discord.gg/HuJMxUY or send us an email to  [info@dwdeveloper.com](mailto:info@dwdeveloper.com).
 
 
 ## Support us! :)
-If you like to contribute or donate to support the project please feel free to contact me at damian.pastorini@gmail.com.
 
-Or:
+[![Ko-fi](https://img.shields.io/badge/Reldens-Support%20us%20on%20Ko--Fi-blue?style=for-the-badge)](https://ko-fi.com/I2I81VISA) 
 
-[![ko-fi](https://www.ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/I2I81VISA)
+[![Patroen](https://img.shields.io/badge/Reldens-Become%20a%20Patroen-blue?style=for-the-badge)](https://www.patreon.com/bePatron?u=18074832)
 
-[Become a Patron!](https://www.patreon.com/bePatron?u=18074832)
+If you like to contribute in anyway or donate to support the project please also feel free to contact me at [info@dwdeveloper.com](mailto:info@dwdeveloper.com).
 
 
 ## License
