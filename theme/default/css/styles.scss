@@ -16,7 +16,6 @@ body {
     margin:0;
     padding:0;
     background-color: $cWhite;
-    overflow: hidden;
 }
 
 .text-black {
@@ -52,7 +51,7 @@ body {
 
 .header {
     position: relative;
-    min-height:8%;
+    height:8%;
     background-color:#000000;
 
     h1 {
@@ -61,7 +60,7 @@ body {
         display:block;
         width:100%;
         margin:0;
-        padding:1% 0;
+        padding:0;
         text-align:center;
         font-family:$reldensFont;
         font-size:2em;
@@ -71,6 +70,13 @@ body {
             font-weight:bold;
         }
 
+    }
+
+    @media (max-height:390px){
+        h1 {
+            font-size:1em;
+            padding-top:0.2em;
+        }
     }
 
     .full-screen-btn {
@@ -129,7 +135,6 @@ button, input[type="button"], input[type="submit"] { cursor:pointer; }
 
 @media (max-width:725px) {
     .col-2 { width:100%; padding:0; }
-    .header h1 { font-size: 1.6em; }
     .footer { display: none; }
     .content { height: 92%; }
 }
