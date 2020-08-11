@@ -106,15 +106,17 @@ class PlayerEngine
             uiX = currentPlayerState.x - (fullBarWidth / 2);
             uiY = currentPlayerState.y - barHeight - (this.gameManager.config.get('client/players/size/height'));
         }
+        let fillColor = (0xff0000);
         this.uiLifeBar.clear();
-        this.uiLifeBar.fillStyle(0xff0000, 1);
+        this.uiLifeBar.fillStyle(fillColor, 1);
         this.uiLifeBar.fillRect(
             uiX,
             uiY,
             filledBarWidth,
             barHeight
         );
-        this.uiLifeBar.lineStyle(1, 0xffffff);
+        let lineColor = (0xffffff);
+        this.uiLifeBar.lineStyle(1, lineColor);
         this.uiLifeBar.strokeRect(uiX, uiY, fullBarWidth, barHeight);
         this.uiLifeBar.alpha = 0.6;
         this.uiLifeBar.setDepth(100000);

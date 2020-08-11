@@ -5,6 +5,7 @@ exports.up = function(knex) {
     return knex.raw(sql);
 };
 
+// eslint-disable-next-line no-unused-vars
 exports.down = function(knex) {
     // nothing to do in the first version.
 };

@@ -129,7 +129,7 @@ INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(83, 'server', 'enemies/defaultAttacks/attackBullet', '0', 'b'),
 	(84, 'client', 'players/size/topOffset', '20', 'i'),
 	(85, 'client', 'players/size/leftOffset', '0', 'i'),
-	(86, 'server', 'rooms/world/onlyWalkeable', '1', 'b'),
+	(86, 'server', 'rooms/world/onlyWalkable', '1', 'b'),
 	(87, 'client', 'ui/inventory/y', '450', 'i'),
 	(88, 'client', 'ui/inventory/x', '380', 'i'),
 	(89, 'client', 'ui/equipment/x', '430', 'i'),

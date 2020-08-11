@@ -193,7 +193,7 @@ class RoomScene extends RoomLogin
             applyGravity: false,
             objectsManager: objectsManager,
             tryClosestPath: this.config.get('server/rooms/world/tryClosestPath'),
-            onlyWalkeable: this.config.get('server/rooms/world/onlyWalkeable'),
+            onlyWalkable: this.config.get('server/rooms/world/onlyWalkable'),
             worldSpeed: this.worldSpeed,
             allowSimultaneous: this.allowSimultaneous
         });

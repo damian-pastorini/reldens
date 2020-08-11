@@ -407,10 +407,11 @@ class ScenePreloader extends Scene
         let progressText = parseInt(progress * 100) + '%';
         this.percentText.setText(progressText);
         let color = (0xffffff);
+        let fillColor = (0x222222);
         this.progressRect.width = progress * this.progressCompleteRect.width;
         this.progressBar
             .clear()
-            .fillStyle(0x222222)
+            .fillStyle(fillColor)
             .fillRectShape(this.progressCompleteRect)
             .fillStyle(color)
             .fillRectShape(this.progressRect);

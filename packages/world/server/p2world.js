@@ -28,7 +28,7 @@ class P2world extends World
         this.sceneName = options.sceneName || false;
         this.sceneTiledMapFile = options.roomData.roomMap || false;
         this.tryClosestPath = options.tryClosestPath || false;
-        this.onlyWalkeable = options.onlyWalkeable || false;
+        this.onlyWalkable = options.onlyWalkable || false;
         this.worldSpeed = options.worldSpeed || false;
         // keys events:
         this.allowSimultaneous = options.allowSimultaneous;
