@@ -55,6 +55,8 @@ Join our Discord channel: [https://discord.gg/HuJMxUY](https://discord.gg/HuJMxU
 
 [![Patroen](https://img.shields.io/badge/Reldens-Become%20a%20Patroen-blue?style=for-the-badge)](https://www.patreon.com/bePatron?u=18074832)
 
+[![Paypal](https://img.shields.io/badge/Reldens-Paypal%20Donation-blue?style=for-the-badge)](https://www.paypal.com/paypalme/damianpastorini)
+
 If you like to contribute in anyway or donate to support the project please also feel free to contact me at [info@dwdeveloper.com](mailto:info@dwdeveloper.com).
 
 
