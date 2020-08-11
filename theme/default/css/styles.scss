@@ -124,7 +124,9 @@ body {
     background-color: $cWhite;
 }
 
-button, input[type="button"], input[type="submit"] {
+button,
+input[type="button"],
+input[type="submit"] {
     cursor: pointer;
 }
 
@@ -413,7 +415,10 @@ span.stat-value {
     width: 100%;
 }
 
-#player-stats-open, #chat-open, #inventory-open, #equipment-open {
+#player-stats-open,
+#chat-open,
+#inventory-open,
+#equipment-open {
     cursor: pointer;
     position: relative;
 }
@@ -424,7 +429,9 @@ span.stat-value {
     left: -60px;
 }
 
-#player-stats-open, #inventory-open, #equipment-open {
+#player-stats-open,
+#inventory-open,
+#equipment-open {
     background: rgba(0, 0, 0, 0.5);
     padding: 10px;
     max-width: 40px;
@@ -451,7 +458,9 @@ span.stat-value {
     cursor: pointer;
 }
 
-.player-stats-ui, .inventory-ui, .equipment-ui {
+.player-stats-ui,
+.inventory-ui,
+.equipment-ui {
     display: none;
     float: left;
     position: relative;
@@ -487,7 +496,9 @@ span.stat-value {
     font-size: 14px;
 }
 
-#player-stats-container, #inventory-items, #equipment-items {
+#player-stats-container,
+#inventory-items,
+#equipment-items {
     position: relative;
     word-wrap: break-word;
     overflow: auto;
@@ -534,7 +545,8 @@ span.stat-value {
     height: 225px;
 }
 
-.item-box, .group-item-block {
+.item-box,
+.group-item-block {
     float: left;
     display: block;
     width: 50px;
@@ -557,16 +569,19 @@ span.stat-value {
     font-style: italic;
 }
 
-.item-box:nth-child(4n) .item-data-container, .item-box:nth-child(5n) .item-data-container {
+.item-box:nth-child(4n) .item-data-container,
+.item-box:nth-child(5n) .item-data-container {
     right: 50px;
     left: auto;
 }
 
-.item-label, .item-description {
+.item-label,
+.item-description {
     display: block;
 }
 
-.item-box .item-qty, .item-box .image-container {
+.item-box .item-qty,
+.item-box .image-container {
     display: block;
     float: left;
     width: 100%;
@@ -631,7 +646,9 @@ span.stat-value {
     min-width: 50px;
 }
 
-.group-item-block .item-qty, .group-item-block .item-data-container .item-description, .group-item-block .item-data-container .item-trash {
+.group-item-block .item-qty,
+.group-item-block .item-data-container .item-description,
+.group-item-block .item-data-container .item-trash {
     display: none;
 }
 
@@ -649,42 +666,51 @@ span.stat-value {
     width: 100%;
 }
 
-#group-item-helmet .equip-group-icon, #group-item-boots .equip-group-icon {
+#group-item-helmet .equip-group-icon,
+#group-item-boots .equip-group-icon {
     max-width: 50px;
     left: 40%;
 }
 
-#group-item-helmet .equipped-item, #group-item-boots .equipped-item {
+#group-item-helmet .equipped-item,
+#group-item-boots .equipped-item {
     display: block;
     margin: 0 auto;
     max-width: 50px;
     min-height: 50px;
 }
 
-#group-item-weapon, #group-item-shield, #group-item-armor, #group-item-gauntlets {
+#group-item-weapon,
+#group-item-shield,
+#group-item-armor,
+#group-item-gauntlets {
     display: block;
     width: 50%;
 }
 
-#group-item-weapon .equip-group-icon, #group-item-armor .equip-group-icon {
+#group-item-weapon .equip-group-icon,
+#group-item-armor .equip-group-icon {
     max-width: 50px;
     right: 20px;
     left: auto;
 }
 
-#group-item-shield .equip-group-icon, #group-item-gauntlets .equip-group-icon {
+#group-item-shield .equip-group-icon,
+#group-item-gauntlets .equip-group-icon {
     max-width: 50px;
     right: auto;
     left: 20px;
 }
 
-#group-item-weapon .equipped-item, #group-item-armor .equipped-item {
+#group-item-weapon .equipped-item,
+#group-item-armor .equipped-item {
     position: absolute;
     right: 20px;
     left: auto;
 }
 
-#group-item-shield .equipped-item, #group-item-gauntlets .equipped-item {
+#group-item-shield .equipped-item,
+#group-item-gauntlets .equipped-item {
     position: absolute;
     right: auto;
     left: 20px;
