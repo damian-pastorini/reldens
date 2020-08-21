@@ -90,7 +90,10 @@ class ObjectsManager
                     }
                     this.roomObjectsByLayer[objectData.layer_name][objectData.id] = objInstance;
                 } catch(err) {
-                    Logger.error('Object class does not exists for objectIndex:', objectIndex);
+                    Logger.error([
+                        'Error while generating object:', err,
+                        'Object Index:', objectIndex
+                    ]);
                 }
             }
         }

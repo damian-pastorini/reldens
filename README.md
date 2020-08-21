@@ -30,6 +30,7 @@ I know it is a huge project but I'll put all I have to make it work, so needless
 
 
 ## [Features List](https://www.reldens.com/features)
+[Request a feature here: https://www.reldens.com/features-request](https://www.reldens.com/features-request)
 
 
 ## [Coming soon and news!](https://www.reldens.com/news "Coming soon & News")

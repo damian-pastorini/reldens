@@ -19,7 +19,7 @@ class ActionsManager
     constructor(config)
     {
         this.config = config;
-        // @TODO: load dynamically and clean up.
+        // @TODO: load dynamically player skills here and clean up.
         this.availableActions = {'attack-short': AttackShort, 'attack-bullet': AttackBullet};
         // eslint-disable-next-line no-unused-vars
         EventsManager.on('reldens.createPlayerAfter', (client, authResult, currentPlayer, room) => {

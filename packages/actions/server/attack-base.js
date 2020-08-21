@@ -6,47 +6,52 @@
  *
  */
 
-const { InteractionArea } = require('../../world/interaction-area');
+const { InteractionArea, ErrorManager } = require('@reldens/utils');
 
 class AttackBase
 {
 
     constructor(props)
     {
-        // @TODO: create configurations for these default values.
-        this.attackDelay = {}.hasOwnProperty.call(props, 'attackDelay') ? props.attackDelay : false;
-        this.key = {}.hasOwnProperty.call(props, 'key') ? props.key : 'attack-base';
-        this.canAttack = {}.hasOwnProperty.call(props, 'canAttack') ? props.canAttack : true;
-        this.range = {}.hasOwnProperty.call(props, 'range') ? props.range : 40;
-        this.hitDamage = {}.hasOwnProperty.call(props, 'hitDamage') ? props.hitDamage : 1;
-        this.room = false;
-        this.currentBattle = false;
+        if(!{}.hasOwnProperty.call(props, 'key')){
+            ErrorManager.error('Missing skill key.');
+        }
+        this.key = props.key;
+        this.skillDelay = {}.hasOwnProperty.call(props, 'skillDelay') ? props.skillDelay : 0;
+        this.canActivate = {}.hasOwnProperty.call(props, 'canActivate') ? props.canActivate : true;
+        this.range = {}.hasOwnProperty.call(props, 'range') ? props.range : 0;
+        this.hitDamage = {}.hasOwnProperty.call(props, 'hitDamage') ? props.hitDamage : 0;
         this.attacker = false;
         this.defender = false;
+        this.room = false;
+        this.currentBattle = false;
     }
 
     // eslint-disable-next-line no-unused-vars
     validate(attacker, defender)
     {
-        // @TODO: every action or attack values will be configurable.
-        // attack delay is the time in milliseconds until player can attack again:
-        if(!attacker.actions[this.key].canAttack){
+        // the delay is the time in milliseconds until player can use the skill again:
+        if(!attacker.actions[this.key].canActivate){
             // @NOTE: player could be running an attack already.
             return false;
         }
-        if(this.attackDelay){
-            attacker.actions[this.key].canAttack = false;
+        if(this.skillDelay > 0){
+            attacker.actions[this.key].canActivate = false;
             setTimeout(()=> {
-                attacker.actions[this.key].canAttack = true;
-            }, this.attackDelay);
+                attacker.actions[this.key].canActivate = true;
+            }, this.skillDelay);
         } else {
-            attacker.actions[this.key].canAttack = true;
+            attacker.actions[this.key].canActivate = true;
         }
         return true;
     }
 
     isInRange(attacker, defender)
     {
+        // if range is 0 then the attack range is infinity:
+        if(this.range === 0){
+            return true;
+        }
         // validate attack range:
         let interactionArea = new InteractionArea();
         interactionArea.setupInteractionArea(this.range, defender.state.x, defender.state.y);

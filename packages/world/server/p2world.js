@@ -275,6 +275,38 @@ class P2world extends World
         return boxBody;
     }
 
+    shootBullet(fromPosition, toPosition, bulletObject)
+    {
+        let { bulletW, bulletH} = bulletObject;
+        let wTH = (this.mapJson.tileheight / 2) + (bulletH / 2);
+        let wTW = (this.mapJson.tilewidth / 2) + (bulletW / 2);
+        let bulletY = fromPosition.y + ((toPosition.y > fromPosition.y) ? wTH : -wTH);
+        let bulletX = fromPosition.x + ((toPosition.x > fromPosition.x) ? wTW : -wTW);
+        let y = toPosition.y - bulletY;
+        let x = toPosition.x - bulletX;
+        let angleByVelocity = Math.atan2(y, x);
+        let bulletBody = this.createCollisionBody(bulletW, bulletH, bulletX, bulletY, 1, true, true);
+        bulletBody.shapes[0].collisionGroup = GameConst.COL_PLAYER;
+        bulletBody.shapes[0].collisionMask = GameConst.COL_ENEMY | GameConst.COL_GROUND | GameConst.COL_PLAYER;
+        bulletBody.type = 1; // Body.DYNAMIC;
+        bulletBody.updateMassProperties();
+        bulletBody.isRoomObject = true;
+        bulletBody.roomObject = bulletObject;
+        bulletBody.hitPriority = bulletObject.hitPriority ? bulletObject.hitPriority : 2;
+        bulletBody.isBullet = true;
+        // append body to world:
+        this.addBody(bulletBody);
+        // and state on room map schema:
+        // @NOTE: this index here will be the animation key since the bullet state doesn't have a key property.
+        bulletObject.room.state.bodies['bullet'+bulletBody.id] = bulletBody.bodyState;
+        // then speed up in the target direction:
+        bulletBody.angle = Math.atan2(y, x) * 180 / Math.PI;
+        bulletBody.velocity[0] = bulletObject.magnitude * Math.cos(angleByVelocity);
+        bulletBody.velocity[1] = bulletObject.magnitude * Math.sin(angleByVelocity);
+        // since the enemy won't be hit until the bullet reach the target we need to return false to avoid the onHit
+        // automatic actions (for example pve init).
+    }
+
 }
 
 module.exports.P2world = P2world;

@@ -15,9 +15,9 @@ class AttackShort extends AttackBase
     constructor()
     {
         super({
-            attackDelay: 500,
+            skillDelay: 500,
             key: 'attack-short',
-            canAttack: true,
+            canActivate: true,
             range: 50,
             hitDamage: 5
         });

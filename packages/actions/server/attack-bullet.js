@@ -9,7 +9,6 @@
 
 const { AttackBase } = require('./attack-base');
 const { GameConst } = require('../../game/constants');
-const { Body } = require('p2');
 
 class AttackBullet extends AttackBase
 {
@@ -21,9 +20,9 @@ class AttackBullet extends AttackBase
         }
         // @TODO: all the attack configuration will be coming from the database.
         super({
-            attackDelay: {}.hasOwnProperty.call(props, 'attackDelay') ? props.attackDelay : 1000,
+            skillDelay: {}.hasOwnProperty.call(props, 'skillDelay') ? props.skillDelay : 1000,
             key: {}.hasOwnProperty.call(props, 'key') ? props.key : 'attack-bullet',
-            canAttack: {}.hasOwnProperty.call(props, 'canAttack') ? props.canAttack : true,
+            canActivate: {}.hasOwnProperty.call(props, 'canActivate') ? props.canActivate : true,
             range: {}.hasOwnProperty.call(props, 'range') ? props.range : 250,
             hitDamage: {}.hasOwnProperty.call(props, 'hitDamage') ? props.hitDamage : 3
         });
@@ -37,44 +36,12 @@ class AttackBullet extends AttackBase
 
     async execute(attacker, defender)
     {
-        // @TODO: shoot bullet on world starting from attacker body, pass this attack as parameter assign it to the
-        //   body and execute the attack when the bullet collides.
         let world = {}.hasOwnProperty.call(attacker, 'physicalBody')
             ? attacker.physicalBody.world : attacker.objectBody.world;
         this.attacker = attacker;
         this.defender = defender;
-        return this.shootBullet(attacker.state, defender.state, world);
-    }
-
-    shootBullet(fromPosition, toPosition, world)
-    {
-        let wTH = (world.mapJson.tileheight / 2) + (this.bulletH / 2);
-        let wTW = (world.mapJson.tilewidth / 2) + (this.bulletW / 2);
-        let bulletY = fromPosition.y + ((toPosition.y > fromPosition.y) ? wTH : -wTH);
-        let bulletX = fromPosition.x + ((toPosition.x > fromPosition.x) ? wTW : -wTW);
-        let y = toPosition.y - bulletY;
-        let x = toPosition.x - bulletX;
-        let angleByVelocity = Math.atan2(y, x);
-        let bulletBody = world.createCollisionBody(this.bulletW, this.bulletH, bulletX, bulletY, 1, true, true);
-        bulletBody.shapes[0].collisionGroup = GameConst.COL_PLAYER;
-        bulletBody.shapes[0].collisionMask = GameConst.COL_ENEMY | GameConst.COL_GROUND | GameConst.COL_PLAYER;
-        bulletBody.type = Body.DYNAMIC;
-        bulletBody.updateMassProperties();
-        bulletBody.isRoomObject = true;
-        bulletBody.roomObject = this;
-        bulletBody.hitPriority = this.hitPriority;
-        bulletBody.isBullet = true;
-        // append body to world:
-        world.addBody(bulletBody);
-        // and state on room map schema:
-        // @TODO: this index here will be the animation key since the bullet state doesn't have a key property.
-        this.room.state.bodies['bullet'+bulletBody.id] = bulletBody.bodyState;
-        // then speed up in the target direction:
-        bulletBody.angle = Math.atan2(y, x) * 180 / Math.PI;
-        bulletBody.velocity[0] = this.magnitude * Math.cos(angleByVelocity);
-        bulletBody.velocity[1] = this.magnitude * Math.sin(angleByVelocity);
-        // since the enemy won't be hit until the bullet reach the target we need to return false to avoid the onHit
-        // automatic actions (for example pve init).
+        // return this.shootBullet(attacker.state, defender.state, world);
+        world.shootBullet(attacker.state, defender.state, this);
         return false;
     }
 

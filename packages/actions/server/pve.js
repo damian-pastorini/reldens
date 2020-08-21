@@ -108,7 +108,7 @@ class Pve extends Battle
                 if(update){
                     setTimeout(() => {
                         this.startBattleWith(playerSchema, room);
-                    }, objectAction.attackDelay);
+                    }, objectAction.skillDelay);
                 } else {
                     this.leaveBattle(playerSchema);
                 }
@@ -119,7 +119,7 @@ class Pve extends Battle
             if(chaseResult.length){
                 setTimeout(() => {
                     this.startBattleWith(playerSchema, room);
-                }, objectAction.attackDelay);
+                }, objectAction.skillDelay);
             } else {
                 this.leaveBattle(playerSchema);
             }
