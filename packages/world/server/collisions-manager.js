@@ -115,7 +115,7 @@ class CollisionsManager
         }
         // now the collisions manager only run the object hit action:
         if(otherBody.roomObject){
-            otherBody.roomObject.onHit({playerBody: playerBody, objectBody: otherBody, room: this.room});
+            otherBody.roomObject.onHit({bodyA: playerBody, bodyB: otherBody, room: this.room});
         }
     }
 

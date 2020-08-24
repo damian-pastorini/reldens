@@ -87,13 +87,14 @@ class EnemyObject extends NpcObject
 
     onHit(props)
     {
-        if(!props.room || !props.playerBody){
+        let playerBody = {}.hasOwnProperty.call(props.bodyA, 'playerId') ? props.bodyA : props.bodyB;
+        if(!props.room || !playerBody){
             // this shouldn't happen :P
             Logger.error('Required properties room and playerBody not found.');
             return;
         }
         let roomScene = props.room;
-        let playerSchema = roomScene.getPlayerFromState(props.playerBody.playerId);
+        let playerSchema = roomScene.getPlayerFromState(playerBody.playerId);
         if(playerSchema){
             // it the player hit the enemy then it will start the battle with the player because this will be an
             // aggressive enemy.

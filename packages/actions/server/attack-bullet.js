@@ -40,45 +40,26 @@ class AttackBullet extends AttackBase
             ? attacker.physicalBody.world : attacker.objectBody.world;
         this.attacker = attacker;
         this.defender = defender;
-        // return this.shootBullet(attacker.state, defender.state, world);
         world.shootBullet(attacker.state, defender.state, this);
         return false;
     }
 
-    // props will receive an object with the hit data:
     async onHit(props)
     {
-        // @TODO: clean up and simplify.
-        let execute = false;
-        // if the hit has a player then the second body will be always the bullet:
-        if({}.hasOwnProperty.call(props, 'playerBody')){
-            // @TODO: validate if current hit is the target player.
-            // bullet hit player: {playerBody: playerBody, objectBody: otherBody, room: this.room}
-            this.removeBullet(props.objectBody);
-            execute = true;
+        // first run bullets hit:
+        let bulletsCheck = this.executeBullets(props);
+        // none bullets:
+        if(!bulletsCheck){
+            return false;
         }
-        // if both bodies are non-players bodies and the defender is also an object then validate if the hit object is
-        // the same registered as defender:
-        if(
-            {}.hasOwnProperty.call(props, 'bodyA')
-            && {}.hasOwnProperty.call(props, 'bodyB')
-            // @NOTE: defender could be a player and don't have an objectBody.
-            && {}.hasOwnProperty.call(this.defender, 'objectBody')
-        ){
-            // bullet hit object: {bodyA: bodyA, bodyB: bodyB, room: this.room}
-            // if one body is the bullet we need to validate that the second one is the target object (or defender):
-            if(props.bodyA.isBullet && props.bodyB.id === this.defender.objectBody.id){
-                this.removeBullet(props.bodyA);
-                execute = true;
-            }
-            if(props.bodyB.isBullet && props.bodyA.id === this.defender.objectBody.id){
-                this.removeBullet(props.bodyB);
-                execute = true;
-            }
-        }
-        if(execute){
-            this.room.broadcast({act: GameConst.HIT, x: this.defender.state.x, y: this.defender.state.y});
+        // get and validate defender which could be a player or an object:
+        let validDefender = this.getValidDefender(props);
+        // @TODO: refactor to complete the non target validation case, so the defender could be actually any player, or
+        //      any object.
+        if(validDefender){
+            // run battle damage:
             await super.execute(this.attacker, this.defender);
+            // re-run the process if pve:
             if(
                 {}.hasOwnProperty.call(this.attacker, 'player_id')
                 && {}.hasOwnProperty.call(this.defender, 'objectBody')
@@ -90,6 +71,7 @@ class AttackBullet extends AttackBase
                     await this.currentBattle.battleEnded(this.attacker, this.room);
                 }
             } else {
+                // update the clients if pvp:
                 if({}.hasOwnProperty.call(this.defender, 'player_id')){
                     let targetClient = this.room.getClientById(this.defender.sessionId);
                     if(targetClient){
@@ -102,14 +84,45 @@ class AttackBullet extends AttackBase
                     }
                 }
             }
-        } else {
-            // the bullet hit something else:
-            let bulletBody = props.bodyA.isBullet ? props.bodyA : props.bodyB;
-            // destroy the bullet and run the hit animation:
-            this.removeBullet(bulletBody);
-            this.room.broadcast({act: GameConst.HIT, x: bulletBody.position[0], y: bulletBody.position[1]});
         }
         return false;
+    }
+
+    executeBullets(props)
+    {
+        let bulletsCheck = false;
+        // both objects could be bullets, so remove them is needed and broadcast the hit:
+        if(props.bodyA.isBullet){
+            this.removeBullet(props.bodyA);
+            this.room.broadcast({act: GameConst.HIT, x: props.bodyA.position[0], y: props.bodyA.position[1]});
+            bulletsCheck = true;
+        }
+        if(props.bodyB.isBullet){
+            this.removeBullet(props.bodyB);
+            this.room.broadcast({act: GameConst.HIT, x: props.bodyB.position[0], y: props.bodyB.position[1]});
+            bulletsCheck = true;
+        }
+        return bulletsCheck;
+    }
+
+    getValidDefender(props)
+    {
+        // we already validate if one of the bodies is a bullet so the other will be always a player or an object:
+        let validDefender = false;
+        // target defender is an object:
+        if({}.hasOwnProperty.call(this.defender, 'objectBody')){
+            validDefender = props.bodyA.id === this.defender.objectBody.id ? props.bodyA :
+                (props.bodyB.id === this.defender.objectBody.id ? props.bodyB : false);
+        }
+        // target defender is a player:
+        if({}.hasOwnProperty.call(this.defender, 'player_id')){
+            let defenderBody = {}.hasOwnProperty.call(props.bodyA, 'playerId') ? props.bodyA :
+                ({}.hasOwnProperty.call(props.bodyB, 'playerId') ? props.bodyB : false);
+            if(defenderBody && (!this.validateTargetById || defenderBody.playerId === this.defender.sessionId)){
+                validDefender = defenderBody;
+            }
+        }
+        return validDefender;
     }
 
     removeBullet(body)
