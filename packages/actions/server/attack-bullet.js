@@ -32,6 +32,7 @@ class AttackBullet extends AttackBase
         this.magnitude = {}.hasOwnProperty.call(props, 'magnitude') ? props.magnitude : 350;
         this.bulletW = {}.hasOwnProperty.call(props, 'bulletW') ? props.bulletW : 5;
         this.bulletH = {}.hasOwnProperty.call(props, 'bulletH') ? props.bulletH : 5;
+        this.validateTargetId = {}.hasOwnProperty.call(props, 'validateTargetId') ? props.validateTargetId : false;
     }
 
     async execute(attacker, defender)
@@ -48,36 +49,49 @@ class AttackBullet extends AttackBase
     {
         // first run bullets hit:
         let bulletsCheck = this.executeBullets(props);
-        // none bullets:
-        if(!bulletsCheck){
+        let notTheBullet = bulletsCheck[0].key === 'bodyA' ? 'bodyB' : 'bodyA';
+        // none bullets or both bullets:
+        if(bulletsCheck.length !== 1){
+            // @TODO: implement bullets bodies without collisions between each other.
             return false;
         }
         // get and validate defender which could be a player or an object:
-        let validDefender = this.getValidDefender(props);
-        // @TODO: refactor to complete the non target validation case, so the defender could be actually any player, or
-        //      any object.
+        let validDefender = this.getValidDefender(props, notTheBullet);
         if(validDefender){
+            // override defender only if target validation is disabled:
+            if(!this.validateTargetId){
+                this.defender = validDefender;
+            }
             // run battle damage:
-            await super.execute(this.attacker, this.defender);
+            await super.execute(this.attacker, validDefender);
             // re-run the process if pve:
             if(
                 {}.hasOwnProperty.call(this.attacker, 'player_id')
-                && {}.hasOwnProperty.call(this.defender, 'objectBody')
+                && {}.hasOwnProperty.call(validDefender, 'objectBody')
                 && this.currentBattle
             ){
-                if(this.defender.stats.hp > 0){
-                    await this.currentBattle.startBattleWith(this.attacker, this.room);
+                if(validDefender.stats.hp > 0){
+                    if(!this.validateTargetId){
+                        // if target validation is disabled then any target could start the battle (pve):
+                        if({}.hasOwnProperty.call(validDefender, 'battle')){
+                            validDefender.battle.targetObject = validDefender;
+                            await validDefender.battle.startBattleWith(this.attacker, this.room);
+                        }
+                    } else {
+                        // if target validation is enabled then we can only start the battle with the target:
+                        await this.currentBattle.startBattleWith(this.attacker, this.room);
+                    }
                 } else {
                     await this.currentBattle.battleEnded(this.attacker, this.room);
                 }
             } else {
                 // update the clients if pvp:
-                if({}.hasOwnProperty.call(this.defender, 'player_id')){
-                    let targetClient = this.room.getClientById(this.defender.sessionId);
+                if({}.hasOwnProperty.call(validDefender, 'player_id')){
+                    let targetClient = this.room.getClientById(validDefender.sessionId);
                     if(targetClient){
                         await this.currentBattle.updateTargetClient(
                             targetClient,
-                            this.defender,
+                            validDefender,
                             this.attacker.sessionId,
                             this.room
                         );
@@ -90,36 +104,49 @@ class AttackBullet extends AttackBase
 
     executeBullets(props)
     {
-        let bulletsCheck = false;
+        let bulletsCheck = [];
         // both objects could be bullets, so remove them is needed and broadcast the hit:
         if(props.bodyA.isBullet){
             this.removeBullet(props.bodyA);
             this.room.broadcast({act: GameConst.HIT, x: props.bodyA.position[0], y: props.bodyA.position[1]});
-            bulletsCheck = true;
+            bulletsCheck.push({key: 'bodyA', obj: props.bodyA});
         }
         if(props.bodyB.isBullet){
             this.removeBullet(props.bodyB);
             this.room.broadcast({act: GameConst.HIT, x: props.bodyB.position[0], y: props.bodyB.position[1]});
-            bulletsCheck = true;
+            bulletsCheck.push({key: 'bodyB', obj: props.bodyB});
         }
         return bulletsCheck;
     }
 
-    getValidDefender(props)
+    getValidDefender(props, defenderBodyKey)
     {
         // we already validate if one of the bodies is a bullet so the other will be always a player or an object:
         let validDefender = false;
-        // target defender is an object:
-        if({}.hasOwnProperty.call(this.defender, 'objectBody')){
-            validDefender = props.bodyA.id === this.defender.objectBody.id ? props.bodyA :
-                (props.bodyB.id === this.defender.objectBody.id ? props.bodyB : false);
-        }
-        // target defender is a player:
-        if({}.hasOwnProperty.call(this.defender, 'player_id')){
-            let defenderBody = {}.hasOwnProperty.call(props.bodyA, 'playerId') ? props.bodyA :
-                ({}.hasOwnProperty.call(props.bodyB, 'playerId') ? props.bodyB : false);
-            if(defenderBody && (!this.validateTargetById || defenderBody.playerId === this.defender.sessionId)){
-                validDefender = defenderBody;
+        if(this.validateTargetId){
+            // target defender is an object:
+            if(
+                {}.hasOwnProperty.call(this.defender, 'objectBody')
+                && {}.hasOwnProperty.call(props[defenderBodyKey], 'roomObject')
+                && props[defenderBodyKey].roomObject.id === this.defender.id
+            ){
+                validDefender = this.defender;
+            }
+            // target defender is a player:
+            if(
+                {}.hasOwnProperty.call(this.defender, 'player_id')
+                && {}.hasOwnProperty.call(props[defenderBodyKey], 'playerId')
+                && props[defenderBodyKey].playerId === this.defender.sessionId
+            ){
+                validDefender = this.defender;
+            }
+        } else {
+            // target defender is a player:
+            if({}.hasOwnProperty.call(props[defenderBodyKey], 'playerId')){
+                validDefender = this.room.state.players[props[defenderBodyKey].playerId];
+            } else {
+                // target defender is an object:
+                validDefender = props[defenderBodyKey].roomObject;
             }
         }
         return validDefender;

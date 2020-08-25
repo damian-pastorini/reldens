@@ -57,7 +57,7 @@ class RoomRespawn
                     objInstance.clientParams.asset_key = assetsArr[0];
                     objInstance.clientParams.enabled = true;
                     this.world.objectsManager.objectsAnimationsData[objectIndex] = objInstance.clientParams;
-                    this.world.objectsManager.roomObjectsById[objectIndex] = objInstance;
+                    this.world.objectsManager.roomObjects[objectIndex] = objInstance;
                     let { x, y } = tileData;
                     this.world.createWorldObject(objInstance, objectIndex, tilewidth, tileheight, x, y, this.pathFinder);
                     objInstance.respawnTime = respawnArea.respawn_time;

@@ -25,7 +25,6 @@ class AttackBase
         this.defender = false;
         this.room = false;
         this.currentBattle = false;
-        this.validateTargetById = {}.hasOwnProperty.call(props, 'validateTargetById') ? props.validateTargetById : true;
     }
 
     // eslint-disable-next-line no-unused-vars

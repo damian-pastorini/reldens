@@ -346,8 +346,7 @@ class RoomScene extends RoomLogin
             validTarget = this.getPlayerFromState(target.id);
         }
         if(target.type === ObjectsConst.TYPE_OBJECT){
-            // @TODO: check if this works properly with enemies.
-            validTarget = this.objectsManager.getObjectById(target.id);
+            validTarget = this.objectsManager.roomObjects[target.id];
         }
         return validTarget;
     }

@@ -36,6 +36,10 @@ class Pve extends Battle
         // depending how the current enemy-object was implemented, for example the PVE can start when the player just
         // collides with the enemy (instead of attack it) an aggressive enemy could start the battle automatically.
         let inBattle = await super.runBattle(playerSchema, target, battleType, room);
+        if(playerSchema.currentAction === 'attack-bullet'){
+            // the battle will start when the bullet hit the target:
+            return false;
+        }
         if(inBattle === 'pve'){
             if(target.stats.hp > 0){
                 await this.startBattleWith(playerSchema, room);

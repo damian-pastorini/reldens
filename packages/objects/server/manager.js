@@ -20,7 +20,6 @@ class ObjectsManager
         this.roomObjectsData = false;
         // room objects by layer and title are each object instance plus the data from the storage:
         this.roomObjects = false;
-        this.roomObjectsById = {};
         this.roomObjectsByLayer = {};
         this.preloadAssets = [];
         this.objectsAnimationsData = {};
@@ -84,7 +83,6 @@ class ObjectsManager
                     }
                     // save object:
                     this.roomObjects[objectIndex] = objInstance;
-                    this.roomObjectsById[objectData.id] = objInstance;
                     if(!this.roomObjectsByLayer[objectData.layer_name]){
                         this.roomObjectsByLayer[objectData.layer_name] = {};
                     }
@@ -111,14 +109,6 @@ class ObjectsManager
     {
         if({}.hasOwnProperty.call(this.roomObjects, objectIndex)){
             return this.roomObjects[objectIndex];
-        }
-        return false;
-    }
-
-    getObjectById(objectId)
-    {
-        if({}.hasOwnProperty.call(this.roomObjectsById, objectId)){
-            return this.roomObjectsById[objectId];
         }
         return false;
     }
