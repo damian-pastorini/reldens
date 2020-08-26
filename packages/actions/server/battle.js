@@ -6,7 +6,7 @@
  *
  */
 
-const { BattleConst } = require('../constants');
+const { ActionsConst } = require('../constants');
 const { GameConst } = require('../../game/constants');
 
 class Battle
@@ -20,7 +20,7 @@ class Battle
         // specific behaviors.
         this.battleTimeOff = props.battleTimeOff || false;
         this.battleTimer = false;
-        this.timerType = props.timerType || BattleConst.BATTLE_TYPE_PER_TARGET;
+        this.timerType = props.timerType || ActionsConst.BATTLE_TYPE_PER_TARGET;
         this.lastAttack = false;
         this.battleType = false;
     }
@@ -59,8 +59,8 @@ class Battle
         // include the target in the battle list:
         this.lastAttack = Date.now();
         this.inBattleWith[target.id] = {target: target, time: this.lastAttack, battleTimer: false};
-        let useTimerObj = this; // BattleConst.BATTLE_TYPE_GENERAL
-        if(this.timerType === BattleConst.BATTLE_TYPE_PER_TARGET){
+        let useTimerObj = this; // ActionsConst.BATTLE_TYPE_GENERAL
+        if(this.timerType === ActionsConst.BATTLE_TYPE_PER_TARGET){
             useTimerObj = this.inBattleWith[target.id];
         }
         this.setTimerOn(useTimerObj, target);
@@ -88,7 +88,7 @@ class Battle
             // save the stats:
             await room.savePlayerStats(targetSchema);
             let actionData = {
-                act: BattleConst.BATTLE_ENDED,
+                act: ActionsConst.BATTLE_ENDED,
                 x: targetSchema.state.x,
                 y: targetSchema.state.y,
                 t: targetSchema.sessionId

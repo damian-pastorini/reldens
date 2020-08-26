@@ -8,7 +8,7 @@
 
 const { Battle } = require('./battle');
 const { Logger, EventsManager } = require('@reldens/utils');
-const { BattleConst } = require('../constants');
+const { ActionsConst } = require('../constants');
 
 class Pve extends Battle
 {
@@ -141,7 +141,7 @@ class Pve extends Battle
         // @TODO: implement battle end in both pve and pvp.
         this.removeInBattlePlayer(playerSchema);
         let actionData = {
-            act: BattleConst.BATTLE_ENDED,
+            act: ActionsConst.BATTLE_ENDED,
             x: this.targetObject.objectBody.position[0],
             y: this.targetObject.objectBody.position[1],
             t: this.targetObject.key

@@ -13,7 +13,6 @@ const { CollisionsManager } = require('../../world/server/collisions-manager');
 const { ObjectsManager } = require('../../objects/server/manager');
 const { ActionsManager } = require('../../actions/server/manager');
 const { GameConst } = require('../../game/constants');
-const { ObjectsConst } = require('../../objects/constants');
 const { Logger, ErrorManager, EventsManager } = require('@reldens/utils');
 
 class RoomScene extends RoomLogin
@@ -128,8 +127,8 @@ class RoomScene extends RoomLogin
     onMessage(client, messageData)
     {
         if(!messageData){
-            // Logger.error(['Empty message data:', messageData]);
-            return;
+            Logger.error(['Empty message data:', messageData]);
+            return false;
         }
         // get player:
         let playerSchema = this.getPlayerFromState(client.sessionId);
@@ -154,15 +153,6 @@ class RoomScene extends RoomLogin
             ){
                 messageData = this.makeValidPoints(messageData);
                 bodyToMove.moveToPoint(messageData);
-            }
-            if(messageData.act === GameConst.ACTION && messageData.target){
-                let validTarget = this.validateTarget(messageData.target);
-                if(validTarget){
-                    EventsManager.emit('reldens.onMessageRunAction', messageData, playerSchema, validTarget, this)
-                        .catch((err) => {
-                            Logger.error(['Listener error on onMessageRunAction:', err]);
-                        });
-                }
             }
             if(this.messageActions){
                 for(let i of Object.keys(this.messageActions)){
@@ -337,18 +327,6 @@ class RoomScene extends RoomLogin
             result = this.state.players[playerIndex];
         }
         return result;
-    }
-
-    validateTarget(target)
-    {
-        let validTarget = false;
-        if(target.type === GameConst.TYPE_PLAYER){
-            validTarget = this.getPlayerFromState(target.id);
-        }
-        if(target.type === ObjectsConst.TYPE_OBJECT){
-            validTarget = this.objectsManager.roomObjects[target.id];
-        }
-        return validTarget;
     }
 
     makeValidPoints(points)

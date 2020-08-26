@@ -8,7 +8,7 @@ const { AnimationEngine } = require('../../objects/client/animation-engine');
 const { UserInterface } = require('../../game/client/user-interface');
 const { ObjectsConst } = require('../constants');
 const { Logger, EventsManager } = require('@reldens/utils');
-const { BattleConst } = require('../../actions/constants');
+const { ActionsConst } = require('../../actions/constants');
 const { GameConst } = require('../../game/constants');
 
 class ObjectsPack
@@ -43,7 +43,7 @@ class ObjectsPack
                     currentScene.objectsAnimations[message.key].runAnimation();
                 }
             }
-            if(message.act === BattleConst.BATTLE_ENDED){
+            if(message.act === ActionsConst.BATTLE_ENDED){
                 let currentScene = gameManager.activeRoomEvents.getActiveScene();
                 let skeletonSprite = currentScene.physics.add.sprite(message.x, message.y, GameConst.DEATH);
                 skeletonSprite.setDepth(200000);
