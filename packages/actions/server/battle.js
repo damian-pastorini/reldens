@@ -22,40 +22,15 @@ class Battle
         this.battleTimer = false;
         this.timerType = props.timerType || ActionsConst.BATTLE_TYPE_PER_TARGET;
         this.lastAttack = false;
-        this.battleType = false;
     }
 
-    // @TODO: fix / improve battleType implementation.
-    async runBattle(playerSchema, target, battleType, room)
+    // eslint-disable-next-line no-unused-vars
+    async runBattle(playerSchema, target, room)
     {
         // @NOTE: each attack will have different properties to validate like range, delay, etc.
-        let runAction = 'attack-short'; // default action
-        if(playerSchema.currentAction && {}.hasOwnProperty.call(playerSchema.actions, playerSchema.currentAction)){
-            runAction = playerSchema.currentAction;
-        }
-        let currentAction = playerSchema.actions[runAction];
-        currentAction.room = room;
+        let currentAction = playerSchema.actions[playerSchema.currentAction];
         currentAction.currentBattle = this;
-        let inRange = currentAction.isInRange(playerSchema, target);
-        if(!inRange){
-            return false;
-        }
-        let validAttack = currentAction.validate(playerSchema, target);
-        if(!validAttack){
-            return false;
-        }
-        if(!currentAction.attacker){
-            currentAction.attacker = playerSchema;
-        }
-        currentAction.defender = target;
-        // execute and apply the attack:
-        playerSchema.broadcastKey = playerSchema.sessionId;
-        if(target.isRoomObject){
-            target.broadcastKey = target.key;
-        } else if({}.hasOwnProperty.call(target, 'sessionId')){
-            target.broadcastKey = target.sessionId;
-        }
-        let executeResult = await currentAction.execute(playerSchema, target, battleType, room);
+        let executeResult = await currentAction.execute(target);
         // include the target in the battle list:
         this.lastAttack = Date.now();
         this.inBattleWith[target.id] = {target: target, time: this.lastAttack, battleTimer: false};

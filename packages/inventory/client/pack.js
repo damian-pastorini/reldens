@@ -291,9 +291,16 @@ class InventoryPack
                 hideOnComplete: {}.hasOwnProperty.call(item.animationData, 'hide') ?
                     item.animationData.hide : true,
             };
-            let x, y = 0;
-            let targetId = (item.animationData.startsOnTarget && {}.hasOwnProperty.call(message.target, 'sessionId')) ?
-                message.target.sessionId : gameManager.getCurrentPlayer().sessionId;
+            let x = 0, y = 0;
+            let targetId = (
+                    item.animationData.startsOnTarget
+                    && {}.hasOwnProperty.call(message.target, 'playerId')
+                    && message.target.playerId
+                ) ? message.target.playerId : currentScene.player.playerId;
+            if(!targetId || !{}.hasOwnProperty.call(currentScene.player.players, targetId)){
+                Logger.error('Player sprite not found.');
+                return false;
+            }
             let playerSprite = currentScene.player.players[targetId];
             if(item.animationData.usePlayerPosition){
                 currentScene.anims.create(createData);

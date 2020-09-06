@@ -45,17 +45,28 @@ class EnemyObject extends NpcObject
             battleTimeOff: {}.hasOwnProperty.call(props, 'battleTimeOff') ? props.battleTimeOff : 20000,
             chaseMultiple: {}.hasOwnProperty.call(props, 'chaseMultiple') ? props.chaseMultiple : false
         });
+        // enemy created, setting broadcastKey:
+        this.broadcastKey = this.client_key;
         this.battle.setTargetObject(this);
-        // @TODO: make dynamic and improve.
-        let attackShort = new AttackShort();
-        attackShort.attacker = this;
-        this.actionsKeys = ['attack-short'];
-        this.actions = {'attack-short': attackShort};
+        // @TODO: load enemy skills from storage and implement here.
+        let skillProps = {
+            owner: this,
+            key: 'attack-short',
+            affectedProperty: 'stats/hp',
+            skillDelay: 600,
+            range: 50,
+            hitDamage: 5,
+            rangePropertyX: 'state/x',
+            rangePropertyY: 'state/y'
+        };
+        let attackShort = new AttackShort(skillProps);
+        this.actionsKeys = ['attackShort'];
+        this.actions = {'attackShort': attackShort};
         if(this.config.get('server/enemies/defaultAttacks/attackBullet')){
             let attackBullet = new AttackBullet();
             attackBullet.attacker = this;
-            this.actionsKeys.push('attack-bullet');
-            this.actions['attack-bullet'] = attackBullet;
+            this.actionsKeys.push('attackBullet');
+            this.actions['attackBullet'] = attackBullet;
         }
         this.respawnTime = false;
         this.respawnTimer = false;

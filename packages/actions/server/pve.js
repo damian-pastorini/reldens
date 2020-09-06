@@ -18,7 +18,6 @@ class Pve extends Battle
         super(props);
         this.chaseMultiple = {}.hasOwnProperty.call(props, 'chaseMultiple') ? props.chaseMultiple : false;
         this.inBattleWithPlayer = [];
-        this.battleType = 'pve';
     }
 
     setTargetObject(targetObject)
@@ -27,25 +26,20 @@ class Pve extends Battle
     }
 
     // @TODO: make pvp available by configuration.
-    async runBattle(playerSchema, target, battleType, room)
+    async runBattle(playerSchema, target, room)
     {
-        // setup broadcast keys:
-        this.targetObject.broadcastKey = this.targetObject.key;
-        playerSchema.broadcastKey = playerSchema.sessionId;
         // @NOTE: run battle method is for when the player attacks any target. PVE can be started in different ways,
         // depending how the current enemy-object was implemented, for example the PVE can start when the player just
         // collides with the enemy (instead of attack it) an aggressive enemy could start the battle automatically.
-        let inBattle = await super.runBattle(playerSchema, target, battleType, room);
-        if(playerSchema.currentAction === 'attack-bullet'){
+        let attackResult = await super.runBattle(playerSchema, target, room);
+        if(!attackResult || playerSchema.currentAction === 'attackBullet'){
             // the battle will start when the bullet hit the target:
             return false;
         }
-        if(inBattle === 'pve'){
-            if(target.stats.hp > 0){
-                await this.startBattleWith(playerSchema, room);
-            } else {
-                await this.battleEnded(playerSchema, room);
-            }
+        if(target.stats.hp > 0){
+            await this.startBattleWith(playerSchema, room);
+        } else {
+            await this.battleEnded(playerSchema, room);
         }
     }
 
@@ -65,9 +59,6 @@ class Pve extends Battle
             this.leaveBattle(playerSchema);
             return false;
         }
-        // setup broadcast keys:
-        this.targetObject.broadcastKey = this.targetObject.key;
-        playerSchema.broadcastKey = playerSchema.sessionId;
         // the enemy died:
         if(this.targetObject.stats.hp === 0){
             await this.battleEnded(playerSchema, room);
@@ -90,19 +81,19 @@ class Pve extends Battle
         let objectAction = this.targetObject.actions[objectActionKey];
         objectAction.room = room;
         objectAction.currentBattle = this;
-        if(!objectAction.validate(this.targetObject, playerSchema)){
+        if(!objectAction.validate()){
             this.leaveBattle(playerSchema);
             return false;
         }
-        if(objectAction.isInRange(this.targetObject, playerSchema)){
+        let ownerPos = {x: this.targetObject.state.x, y: this.targetObject.state.y};
+        let targetPos = {x: playerSchema.state.x, y: playerSchema.state.y};
+        let inRange = objectAction.isInRange(ownerPos, targetPos);
+        if(inRange){
             // reset the path finder in case the object was moving:
             this.targetObject.objectBody.resetAuto();
             this.targetObject.objectBody.velocity = [0, 0];
             // execute and apply the attack:
-            let runBattle = await objectAction.execute(this.targetObject, playerSchema, 'pve', room);
-            if(runBattle !== 'pve'){
-                return;
-            }
+            await objectAction.execute(playerSchema);
             let targetClient = room.getClientById(playerSchema.sessionId);
             if(targetClient){
                 let update = await this.updateTargetClient(targetClient, playerSchema, this.targetObject.key, room)

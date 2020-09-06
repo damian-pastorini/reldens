@@ -28,7 +28,7 @@ module.exports.GameConst = {
     RIGHT: 'right',
     STOP: 'stop',
     ACTION: 'action',
-    BULLET: 'attack-bullet',
+    BULLET: 'attackBullet',
     POINTER: 'mp',
     ARROW_DOWN: 'ard',
     // collisions:

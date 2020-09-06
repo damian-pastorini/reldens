@@ -24,24 +24,29 @@ class ActionsPack extends PackInterface
             currentPlayer.actions = {};
             let pvpConfig = room.config.get('server/actions/pvp');
             currentPlayer.actions['pvp'] = new Pvp(pvpConfig);
+            currentPlayer.executePhysicalSkill = (target, bulletObject) => {
+                let from = {x: currentPlayer.state.x, y: currentPlayer.state.y};
+                let to = {x: target.state.x, y: target.state.y};
+                let bulletBody = currentPlayer.physicalBody.world.shootBullet(from, to, bulletObject);
+                bulletBody.onHit = (onHitData) => {
+                    bulletObject.onHit(onHitData);
+                };
+                return false;
+            };
+            // player created, setting broadcastKey:
+            currentPlayer.broadcastKey = currentPlayer.sessionId;
             for(let i of Object.keys(room.actionsManager.availableActions)){
-                currentPlayer.actions[i] = new room.actionsManager.availableActions[i]();
-                currentPlayer.actions[i].attacker = currentPlayer;
+                let action = room.actionsManager.availableActions[i];
+                action['props'].owner = currentPlayer;
+                currentPlayer.actions[i] = new action['actClass'](action['props']);
             }
         });
         EventsManager.on('reldens.onMessageRunAction', async (message, playerSchema, target, room) => {
-            let runAction = message.type;
-            if(message.type === 'action'){
-                // for pvp or pve the default action will be the attack-short:
-                runAction = 'attack-short';
-            }
-            playerSchema.currentAction = runAction;
             if(message.target.type === GameConst.TYPE_PLAYER){
-                await playerSchema.actions['pvp'].runBattle(playerSchema, target, 'pvp', room);
+                await playerSchema.actions['pvp'].runBattle(playerSchema, target, room);
             }
             if(message.target.type === ObjectsConst.TYPE_OBJECT && {}.hasOwnProperty.call(target, 'battle')){
-                target.battle.targetObject = target;
-                await target.battle.runBattle(playerSchema, target, 'pve', room);
+                await target.battle.runBattle(playerSchema, target, room);
             }
         });
     }

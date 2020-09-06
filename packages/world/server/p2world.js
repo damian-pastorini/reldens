@@ -277,15 +277,15 @@ class P2world extends World
 
     shootBullet(fromPosition, toPosition, bulletObject)
     {
-        let { bulletW, bulletH} = bulletObject;
-        let wTH = (this.mapJson.tileheight / 2) + (bulletH / 2);
-        let wTW = (this.mapJson.tilewidth / 2) + (bulletW / 2);
+        let { objectWidth, objectHeight} = bulletObject;
+        let wTH = (this.mapJson.tileheight / 2) + (objectHeight / 2);
+        let wTW = (this.mapJson.tilewidth / 2) + (objectWidth / 2);
         let bulletY = fromPosition.y + ((toPosition.y > fromPosition.y) ? wTH : -wTH);
         let bulletX = fromPosition.x + ((toPosition.x > fromPosition.x) ? wTW : -wTW);
         let y = toPosition.y - bulletY;
         let x = toPosition.x - bulletX;
         let angleByVelocity = Math.atan2(y, x);
-        let bulletBody = this.createCollisionBody(bulletW, bulletH, bulletX, bulletY, 1, true, true);
+        let bulletBody = this.createCollisionBody(objectWidth, objectHeight, bulletX, bulletY, 1, true, true);
         bulletBody.shapes[0].collisionGroup = GameConst.COL_PLAYER;
         bulletBody.shapes[0].collisionMask = GameConst.COL_ENEMY | GameConst.COL_GROUND | GameConst.COL_PLAYER;
         bulletBody.type = 1; // Body.DYNAMIC;
@@ -305,6 +305,7 @@ class P2world extends World
         bulletBody.velocity[1] = bulletObject.magnitude * Math.sin(angleByVelocity);
         // since the enemy won't be hit until the bullet reach the target we need to return false to avoid the onHit
         // automatic actions (for example pve init).
+        return bulletBody;
     }
 
 }

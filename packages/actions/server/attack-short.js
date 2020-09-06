@@ -6,44 +6,41 @@
  *
  */
 
-const { AttackBase } = require('./attack-base');
+const { Attack } = require('@reldens/skills');
 const { GameConst } = require('../../game/constants');
 
-class AttackShort extends AttackBase
+class AttackShort extends Attack
 {
 
-    constructor()
+    constructor(props)
     {
-        super({
-            skillDelay: 500,
-            key: 'attack-short',
-            canActivate: true,
-            range: 50,
-            hitDamage: 5
-        });
+        super(props);
+        this.room = false;
+        this.currentBattle = false;
     }
 
-    async execute(attacker, defender, battleType, room)
+    async runSkillLogic()
     {
-        room.broadcast({
-            act: GameConst.ATTACK,
-            atk: attacker.broadcastKey,
-            def: defender.broadcastKey,
-            type: battleType
-        });
-        await super.execute(attacker, defender, battleType, room);
+        if(this.room){
+            this.room.broadcast({
+                act: GameConst.ATTACK,
+                owner: this.owner.broadcastKey,
+                target: this.target.broadcastKey
+            });
+        }
+        await super.runSkillLogic();
         if(
-            {}.hasOwnProperty.call(this.attacker, 'player_id')
-            && {}.hasOwnProperty.call(this.defender, 'objectBody')
+            {}.hasOwnProperty.call(this.owner, 'player_id')
+            && {}.hasOwnProperty.call(this.target, 'objectBody')
             && this.currentBattle
         ){
-            if(this.defender.stats.hp > 0){
-                await this.currentBattle.startBattleWith(this.attacker, this.room);
+            if(this.getAffectedPropertyValue(this.target) > 0){
+                await this.currentBattle.startBattleWith(this.owner, this.room);
             } else {
-                await this.currentBattle.battleEnded(this.attacker, this.room);
+                await this.currentBattle.battleEnded(this.owner, this.room);
             }
         }
-        return battleType;
+        return true;
     }
 
 }

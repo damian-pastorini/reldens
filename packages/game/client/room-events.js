@@ -157,54 +157,6 @@ class RoomEvents
             EventsManager.emit('reldens.initUi', message, this);
             this.initUi(message);
         }
-        if(message.act === GameConst.ATTACK){
-            // @TODO: improve.
-            EventsManager.emit('reldens.playerAttack', message, this);
-            let currentScene = this.getActiveScene();
-            if(!currentScene.player){
-                return;
-            }
-            let attackerSprite = false;
-            let defenderSprite = false;
-            let isPvP = (!{}.hasOwnProperty.call(message, 'type') || message.type === 'pvp');
-            if(isPvP){
-                attackerSprite = currentScene.player.players[message.atk];
-                defenderSprite = currentScene.player.players[message.def];
-            } else {
-                if({}.hasOwnProperty.call(currentScene.objectsAnimations, message.atk)){
-                    attackerSprite = currentScene.objectsAnimations[message.atk].sceneSprite;
-                    defenderSprite = currentScene.player.players[message.def];
-                }
-                if({}.hasOwnProperty.call(currentScene.objectsAnimations, message.def)){
-                    defenderSprite = currentScene.objectsAnimations[message.def].sceneSprite;
-                    attackerSprite = currentScene.player.players[message.atk];
-                }
-            }
-            if(attackerSprite){
-                let attackAnim = currentScene.physics.add.sprite(attackerSprite.x, attackerSprite.y, GameConst.ATTACK);
-                attackAnim.setDepth(200000);
-                attackAnim.anims.play(GameConst.ATTACK, true).on('animationcomplete', () => {
-                    attackAnim.destroy();
-                });
-            }
-            // @TODO: broadcast hit at the time we broadcast the attack hit.
-            if(defenderSprite){
-                this.runHitAnimation(defenderSprite.x, defenderSprite.y);
-            }
-        }
-        if(message.act === GameConst.HIT){
-            this.runHitAnimation(message.x, message.y);
-        }
-    }
-
-    runHitAnimation(x, y)
-    {
-        let currentScene = this.getActiveScene();
-        let hitSprite = currentScene.physics.add.sprite(x, y, GameConst.HIT);
-        hitSprite.setDepth(200000);
-        hitSprite.anims.play(GameConst.HIT, true).on('animationcomplete', () => {
-            hitSprite.destroy();
-        });
     }
 
     roomOnLeave(code)

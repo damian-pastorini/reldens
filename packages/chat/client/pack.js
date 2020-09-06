@@ -8,7 +8,7 @@ const { ChatUi } = require('./chat-ui');
 const { ChatConst } = require('../constants');
 const { Logger, EventsManager } = require('@reldens/utils');
 
-class Chat
+class ChatPack
 {
 
     constructor()
@@ -45,6 +45,7 @@ class Chat
                 return;
             }
             let messageTemplate = uiScene.cache.html.get('uiChatMessage');
+            // @TODO: implement chat notification balloon.
             let output = gameManager.gameEngine.parseTemplate(messageTemplate, {
                 from: message[ChatConst.CHAT_FROM],
                 color: ChatConst.colors[message.t],
@@ -57,4 +58,4 @@ class Chat
 
 }
 
-module.exports.Chat = Chat;
+module.exports.ChatPack = ChatPack;
