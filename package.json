@@ -42,7 +42,7 @@
         "@reldens/utils": "^0.1.7",
         "bcrypt": "^5.0.0",
         "colyseus": "^0.12.6",
-        "colyseus.js": "^0.12.2",
+        "colyseus.js": "^0.13.2",
         "core-js": "^3.6.5",
         "cors": "^2.8.5",
         "del": "^5.1.0",
