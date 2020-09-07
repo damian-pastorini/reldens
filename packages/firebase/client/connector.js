@@ -57,7 +57,7 @@ class FirebaseConnector
         // our signInSuccessWithAuthResult default callback is to avoid any missing redirect warnings we don't use:
         if(!{}.hasOwnProperty.call(this.uiConfig.callbacks, 'signInSuccessWithAuthResult')){
             // eslint-disable-next-line no-unused-vars
-            this.uiConfig.callbacks.signInSuccessWithAuthResult = (currentUser, credential, redirectUrl) => {
+            this.uiConfig.callbacks.signInSuccessWithAuthResult = (authResult, redirectUrl) => {
                 // avoid redirect:
                 return false;
             };
