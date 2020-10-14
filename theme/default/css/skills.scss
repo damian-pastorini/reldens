@@ -1,0 +1,26 @@
+.class-path-container,
+.level-container,
+.experience-container {
+    display: block;
+    width: 100%;
+    margin: 6px auto 0;
+}
+
+.level-container,
+.experience-container {
+    font-size: 11px;
+}
+
+.experience-container {
+
+    div {
+        float: left;
+        margin: 0 8px 0 0;
+    }
+
+    .current-experience::after {
+        content: '/';
+        margin: 0 4px;
+    }
+
+}

@@ -8,7 +8,7 @@
 
 const { Game } = require('phaser');
 const TemplateEngine = require('mustache');
-const { EventsManager } = require('@reldens/utils');
+const { EventsManagerSingleton } = require('@reldens/utils');
 
 class GameEngine extends Game
 {
@@ -19,7 +19,7 @@ class GameEngine extends Game
         // uiScene is where we will keep all the game UI elements:
         this.uiScene = false;
         this.TemplateEngine = TemplateEngine;
-        EventsManager.on('reldens.beforeReconnectGameClient', () => {
+        EventsManagerSingleton.on('reldens.beforeReconnectGameClient', () => {
             this.clearTarget();
         });
     }
@@ -34,7 +34,7 @@ class GameEngine extends Game
         // get the window size:
         let {newWidth, newHeight} = this.getCurrentScreenSize(manager);
         setTimeout(() => {
-            EventsManager.emit('reldens.updateGameSizeBefore', this, newWidth, newHeight);
+            EventsManagerSingleton.emit('reldens.updateGameSizeBefore', this, newWidth, newHeight);
             manager.gameEngine.scale.setGameSize(newWidth, newHeight);
             for(let key of Object.keys(this.uiScene.elementsUi)){
                 let {uiX, uiY} = this.uiScene.getUiConfig(key, newWidth, newHeight);
@@ -42,7 +42,7 @@ class GameEngine extends Game
                 uiElement.x = uiX;
                 uiElement.y = uiY;
             }
-            EventsManager.emit('reldens.updateGameSizeAfter', this, newWidth, newHeight);
+            EventsManagerSingleton.emit('reldens.updateGameSizeAfter', this, newWidth, newHeight);
         }, 500);
     }
 

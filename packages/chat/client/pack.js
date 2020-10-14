@@ -6,7 +6,8 @@
 
 const { ChatUi } = require('./chat-ui');
 const { ChatConst } = require('../constants');
-const { Logger, EventsManager } = require('@reldens/utils');
+const { Logger } = require('@reldens/utils');
+const { EventsManagerSingleton } = require('@reldens/utils');
 
 class ChatPack
 {
@@ -15,16 +16,16 @@ class ChatPack
     {
         this.joinRooms = [ChatConst.CHAT_GLOBAL];
         // chat messages are global for all rooms so we use the generic event for every joined room:
-        EventsManager.on('reldens.joinedRoom', (room, gameManager) => {
+        EventsManagerSingleton.on('reldens.joinedRoom', (room, gameManager) => {
             this.listenMessages(room, gameManager);
         });
-        EventsManager.on('reldens.preloadUiScene', (preloadScene) => {
+        EventsManagerSingleton.on('reldens.preloadUiScene', (preloadScene) => {
             preloadScene.load.html('uiChat', 'assets/features/chat/templates/ui-chat.html');
             preloadScene.load.html('uiChatMessage', 'assets/features/chat/templates/message.html');
         });
-        EventsManager.on('reldens.createUiScene', (preloadScene) => {
-            this.uiCreate = new ChatUi(preloadScene);
-            this.uiCreate.createUi();
+        EventsManagerSingleton.on('reldens.createUiScene', (preloadScene) => {
+            this.uiManager = new ChatUi(preloadScene);
+            this.uiManager.createUi();
         });
     }
 

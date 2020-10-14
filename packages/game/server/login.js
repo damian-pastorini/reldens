@@ -30,7 +30,7 @@ class LoginManager
         }
         if(!this.isValidData(userData)){
             let errorMessage = 'Incomplete user login data.';
-            if(!userData.username.length){
+            if(!userData.username){
                 errorMessage = 'Please, complete your username, the same is always required to login.';
             }
             return {error: errorMessage};
@@ -108,6 +108,7 @@ class LoginManager
                     status: this.config.server.players.initialUser.status,
                     players: {
                         name: userData.username,
+                        // @TODO: fix initialStats cases (new users and users that could be in a different level).
                         stats: this.config.server.players.initialStats,
                         state: this.config.server.players.initialState
                     }

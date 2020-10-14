@@ -7,8 +7,9 @@
  */
 
 const { Scene, Geom } = require('phaser');
-const { Logger, EventsManager } = require('@reldens/utils');
+const { Logger } = require('@reldens/utils');
 const { GameConst } = require('../constants');
+const { EventsManagerSingleton } = require('@reldens/utils');
 
 class ScenePreloader extends Scene
 {
@@ -37,10 +38,10 @@ class ScenePreloader extends Scene
     {
         // @NOTE: this event run once for each scene.
         let eventUiScene = this.uiScene ? this : this.gameManager.gameEngine.uiScene;
-        EventsManager.emit('reldens.beforePreload', this, eventUiScene);
+        EventsManagerSingleton.emit('reldens.beforePreload', this, eventUiScene);
         if(this.uiScene){
             // @NOTE: the events here run only once over all the game progress.
-            EventsManager.emit('reldens.beforePreloadUiScene', this);
+            EventsManagerSingleton.emit('reldens.beforePreloadUiScene', this);
             // ui elements:
             if(this.gameManager.config.get('client/ui/playerName/enabled')){
                 this.load.html('uiPlayer', 'assets/html/ui-player.html');
@@ -59,7 +60,7 @@ class ScenePreloader extends Scene
             this.load.html('uiOptionButton', 'assets/html/ui-option-button.html');
             this.load.html('uiOptionIcon', 'assets/html/ui-option-icon.html');
             this.load.html('uiOptionsContainer', 'assets/html/ui-options-container.html');
-            EventsManager.emit('reldens.preloadUiScene', this);
+            EventsManagerSingleton.emit('reldens.preloadUiScene', this);
         }
         // maps:
         if(this.preloadMapKey){
@@ -124,10 +125,10 @@ class ScenePreloader extends Scene
     {
         // @NOTE: this event run once for each scene.
         let eventUiScene = this.uiScene ? this : this.gameManager.gameEngine.uiScene;
-        EventsManager.emit('reldens.createPreload', this, eventUiScene);
+        EventsManagerSingleton.emit('reldens.createPreload', this, eventUiScene);
         if(this.uiScene){
             // @NOTE: the events here run only once over all the game progress.
-            EventsManager.emit('reldens.beforeCreateUiScene', this);
+            EventsManagerSingleton.emit('reldens.beforeCreateUiScene', this);
             // create uiPlayer:
             let playerUi = this.getUiConfig('playerName');
             if(playerUi.enabled){
@@ -187,16 +188,11 @@ class ScenePreloader extends Scene
                         this.uiPlayerStats.setDepth(4);
                     });
                 }
-                let statsPanel = this.uiPlayerStats.getChildByProperty('id', 'player-stats-container');
-                let messageTemplate = this.cache.html.get('playerStats');
-                statsPanel.innerHTML = this.gameManager.gameEngine.parseTemplate(messageTemplate, {
-                    stats: this.gameManager.playerData.stats
-                });
                 // @TODO: TEMPORAL, replace references by this.
                 this.elementsUi['playerStats'] = this.uiPlayerStats;
             }
             // end event:
-            EventsManager.emit('reldens.createUiScene', this);
+            EventsManagerSingleton.emit('reldens.createUiScene', this);
         }
         // player animations:
         this.createPlayerAnimations();
@@ -339,6 +335,7 @@ class ScenePreloader extends Scene
     endHold(event, button)
     {
         event.preventDefault();
+        // @TODO: remove, make configurable.
         button.style.opacity = '0.8';
         clearTimeout(this.holdTimer);
         this.gameManager.activeRoomEvents.room.send({act: GameConst.STOP});

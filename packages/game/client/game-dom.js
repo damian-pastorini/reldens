@@ -13,6 +13,9 @@ class GameDom
     {
         let element = $(querySelector);
         let $newContent = $(newContent);
+        if(!element || !$newContent){
+            return false;
+        }
         element.append($newContent);
         return element;
     }
@@ -20,6 +23,9 @@ class GameDom
     updateContent(querySelector, newContent)
     {
         let element = $(querySelector);
+        if(!element){
+            return false;
+        }
         element.html(newContent);
         return element;
     }

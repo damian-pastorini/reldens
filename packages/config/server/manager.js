@@ -7,14 +7,14 @@
  */
 
 const { ConfigProcessor } = require('../processor');
-const { Logger, EventsManager } = require('@reldens/utils');
+const { Logger } = require('@reldens/utils');
 const { ConfigModel } = require('./model');
 const { GameConfig } = require('../../game/server/config');
 const { InitialState } = require('../../users/server/initial-state');
-const { InitialStats } = require('../../users/server/initial-stats');
 const { InitialUser } = require('../../users/server/initial-user');
 const { ConfigConst } = require('../constants');
 const PackageData = require('../../../package.json');
+const { EventsManagerSingleton } = require('@reldens/utils');
 
 class ConfigManager
 {
@@ -24,9 +24,9 @@ class ConfigManager
         // initialize config props with default data:
         this.configList = {
             server: {
+                // @TODO: move to users pack (append initial state and initial user to the config using events).
                 players: {
                     initialState: InitialState,
-                    initialStats: InitialStats,
                     initialUser: InitialUser
                 }
             }
@@ -41,7 +41,7 @@ class ConfigManager
         let gameConfig = new GameConfig();
         this.configList.gameEngine = gameConfig.getConfig();
         this.configList.gameEngine.version = PackageData.version;
-        EventsManager.emit('reldens.beforeLoadConfigurations', {configManager: this});
+        EventsManagerSingleton.emit('reldens.beforeLoadConfigurations', {configManager: this});
         // get the configurations from the database:
         let configCollection = await ConfigModel.loadAll();
         // set them in the manager property so we can find them by path later:
@@ -65,7 +65,7 @@ class ConfigManager
             }
             this.configList[config.scope][pathSplit[0]][pathSplit[1]][pathSplit[2]] = this.getParsedValue(config);
         }
-        EventsManager.emit('reldens.afterLoadConfigurations', {configManager: this});
+        EventsManagerSingleton.emit('reldens.afterLoadConfigurations', {configManager: this});
     }
 
     async loadAndGetProcessor()
@@ -86,7 +86,7 @@ class ConfigManager
      */
     getParsedValue(config)
     {
-        EventsManager.emit('reldens.beforeGetParsedValue', {configManager: this, config: config});
+        EventsManagerSingleton.emit('reldens.beforeGetParsedValue', {configManager: this, config: config});
         if(config.type === ConfigConst.CONFIG_TYPE_TEXT){
             return config.value;
         }

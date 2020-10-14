@@ -6,23 +6,23 @@
  *
  */
 
-const { EventsManager } = require('@reldens/utils');
+const { EventsManagerSingleton } = require('@reldens/utils');
 
 class UserInterface
 {
 
     constructor(gameManager, id, template = 'assets/html/npc-dialog.html')
     {
-        EventsManager.emit('reldens.defineUserInterface', gameManager, id, template, this);
+        EventsManagerSingleton.emit('reldens.defineUserInterface', gameManager, id, template, this);
         this.initialTitle = '';
         this.initialContent = '';
         this.id = id;
         this.template = template;
         // eslint-disable-next-line no-unused-vars
-        EventsManager.on('reldens.beforePreload', (preloadScene, uiScene) => {
+        EventsManagerSingleton.on('reldens.beforePreload', (preloadScene, uiScene) => {
             preloadScene.load.html(this.id, this.template);
         });
-        EventsManager.on('reldens.createPreload', (preloadScene, uiScene) => {
+        EventsManagerSingleton.on('reldens.createPreload', (preloadScene, uiScene) => {
             let {newWidth, newHeight} = uiScene.gameManager.gameEngine.getCurrentScreenSize(uiScene.gameManager);
             let {uiX, uiY} = uiScene.getUiPosition('npcDialog', newWidth, newHeight);
             let dialogBox = uiScene.add.dom(uiX, uiY).createFromCache(this.id);
@@ -42,7 +42,7 @@ class UserInterface
             }
             uiScene.userInterfaces[this.id] = dialogBox;
         });
-        EventsManager.emit('reldens.createdUserInterface', gameManager, id, template, this);
+        EventsManagerSingleton.emit('reldens.createdUserInterface', gameManager, id, template, this);
     }
 
 }

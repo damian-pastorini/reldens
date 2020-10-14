@@ -12,7 +12,8 @@ const { P2world } = require('../../world/server/p2world');
 const { CollisionsManager } = require('../../world/server/collisions-manager');
 const { ObjectsManager } = require('../../objects/server/manager');
 const { GameConst } = require('../../game/constants');
-const { Logger, ErrorManager, EventsManager } = require('@reldens/utils');
+const { Logger, ErrorManager } = require('@reldens/utils');
+const { EventsManagerSingleton } = require('@reldens/utils');
 
 class RoomScene extends RoomLogin
 {
@@ -63,7 +64,7 @@ class RoomScene extends RoomLogin
         let roomState = new State(this.roomData);
         // after we set the state it will be automatically sync by the game-server:
         this.setState(roomState);
-        await EventsManager.emit('reldens.sceneRoomOnCreate', this);
+        await EventsManagerSingleton.emit('reldens.sceneRoomOnCreate', this);
     }
 
     async onJoin(client, options, authResult)
@@ -93,7 +94,7 @@ class RoomScene extends RoomLogin
 
     async createPlayer(client, authResult)
     {
-        await EventsManager.emit('reldens.createPlayerBefore', client, authResult);
+        await EventsManagerSingleton.emit('reldens.createPlayerBefore', client, authResult, this);
         // player creation:
         let currentPlayer = this.state.createPlayer(client.sessionId, authResult);
         // @TODO: stats will be configurable and dynamic with the player-levels system implementation.
@@ -105,7 +106,7 @@ class RoomScene extends RoomLogin
             height: this.config.get('server/players/size/height'),
             bodyState: currentPlayer.state
         });
-        await EventsManager.emit('reldens.createPlayerAfter', client, authResult, currentPlayer, this);
+        await EventsManagerSingleton.emit('reldens.createPlayerAfter', client, authResult, currentPlayer, this);
     }
 
     // eslint-disable-next-line no-unused-vars
@@ -171,7 +172,7 @@ class RoomScene extends RoomLogin
 
     async createWorld(roomData, objectsManager)
     {
-        await EventsManager.emit('reldens.createWorld', roomData, objectsManager, this);
+        await EventsManagerSingleton.emit('reldens.createWorld', roomData, objectsManager, this);
         // create and assign world to room:
         this.roomWorld = this.createWorldInstance({
             sceneName: this.roomName,
@@ -265,6 +266,8 @@ class RoomScene extends RoomLogin
                 // remove body:
                 this.roomWorld.removeBody(bodyToRemove);
             }
+            // remove the events:
+            EventsManagerSingleton.offByMasterKey('p'+playerSchema['player_id']);
             // remove player:
             this.state.removePlayer(sessionId);
         } else {
@@ -290,17 +293,28 @@ class RoomScene extends RoomLogin
 
     async savePlayerStats(target, updateClient)
     {
+        // @TODO: for now we are always updating all the stats but this can be improved to save only the changed ones.
         // save the stats:
-        let updateResult = await this.loginManager.usersManager
-            .updateUserStatsByPlayerId(target.player_id, target.stats);
-        if(!updateResult){
-            Logger.error('Player stats update error: ' + target.player_id);
-        } else {
-            if(updateClient){
-                this.send(updateClient, {act: GameConst.PLAYER_STATS, stats: target.stats});
+        for(let i of Object.keys(target.stats)){
+            let statCurrentValue = target.stats[i];
+            let statId = this.config.server.players.initialStats[i].id;
+            let updateCurrentResult = await this.loginManager.usersManager
+                .updateCurrentStatByPlayerId(target.player_id, statId, statCurrentValue);
+            if(!updateCurrentResult){
+                ErrorManager.error('Player base stats update error: ' + target.player_id);
+            }
+            // @TODO: fix to update these when required.
+            let statBaseValue = target.statsBase[i];
+            let updateBaseResult = await this.loginManager.usersManager
+                .updateBaseStatByPlayerId(target.player_id, statId, statBaseValue);
+            if(!updateBaseResult){
+                ErrorManager.error('Player current stats update error: ' + target.player_id);
             }
         }
-        return updateResult;
+        if(updateClient){
+            this.send(updateClient, {act: GameConst.PLAYER_STATS, stats: target.stats});
+        }
+        return true;
     }
 
     getClientById(clientId)
@@ -348,7 +362,7 @@ class RoomScene extends RoomLogin
                 for(let obj of res){
                     if({}.hasOwnProperty.call(obj, 'battleEndListener')){
                         // Logger.info(['Turning off listener on reldens.battleEnded for object:', obj.key]);
-                        EventsManager.off('reldens.battleEnded', obj.battleEndListener);
+                        EventsManagerSingleton.off('reldens.battleEnded', obj.battleEndListener);
                     }
                 }
             }

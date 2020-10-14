@@ -3,6 +3,12 @@
 
 UPDATE `config` SET `path`='rooms/world/onlyWalkable' WHERE `path`='rooms/world/onlyWalkeable';
 
+INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (44, 'client', 'ui/skills/enabled', '1', 'b');
+INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (101, 'client', 'ui/skills/responsiveX', '0', 'i');
+INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (100, 'client', 'ui/skills/responsiveY', '0', 'i');
+INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (26, 'client', 'ui/skills/x', '50', 'i');
+INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (45, 'client', 'ui/skills/y', '30', 'i');
+
 # Feature pack:
 
 INSERT INTO `features` (`code`, `title`, `is_enabled`) VALUES ('actions', 'Actions', '1');
@@ -402,3 +408,91 @@ CREATE TABLE IF NOT EXISTS `skills_skill_target_effects_conditions` (
 INSERT INTO skills_owners_class_path (class_path_id, owner_id, currentLevel, currentExp)
     SELECT 1 AS class_path_id, id AS owner_id, 1 AS currentLevel, 0 AS currentExp
     FROM players;
+
+#######################################################################################################################
+
+# Stats:
+
+RENAME TABLE `players_stats` TO `players_stats_back`;
+
+CREATE TABLE `players_current_stats` (
+	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+	`player_id` INT(10) UNSIGNED NOT NULL,
+	`stat_id` INT(10) UNSIGNED NOT NULL,
+	`value` INT(10) UNSIGNED NOT NULL,
+	PRIMARY KEY (`id`) USING BTREE,
+	UNIQUE INDEX `user_id` (`player_id`) USING BTREE,
+	CONSTRAINT `FK_player_current_stats_players` FOREIGN KEY (`player_id`) REFERENCES `reldens`.`players` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT
+)
+COLLATE='utf8_unicode_ci'
+ENGINE=InnoDB
+AUTO_INCREMENT=1
+;
+
+CREATE TABLE `players_base_stats` (
+	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+	`player_id` INT(10) UNSIGNED NOT NULL,
+	`stat_id` INT(10) UNSIGNED NOT NULL,
+	`value` INT(10) UNSIGNED NOT NULL,
+	PRIMARY KEY (`id`) USING BTREE,
+	UNIQUE INDEX `user_id` (`player_id`) USING BTREE,
+	CONSTRAINT `FK_player_base_stats_players` FOREIGN KEY (`player_id`) REFERENCES `reldens`.`players` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT
+)
+COLLATE='utf8_unicode_ci'
+ENGINE=InnoDB
+AUTO_INCREMENT=1
+;
+
+CREATE TABLE `players_stats` (
+	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+	`key` VARCHAR(255) NOT NULL,
+	`label` VARCHAR(255) NOT NULL,
+	`description` VARCHAR(255) NOT NULL,
+	`value` VARCHAR(255) NOT NULL,
+	PRIMARY KEY (`id`) USING BTREE
+)
+COLLATE='utf8_unicode_ci'
+ENGINE=InnoDB
+AUTO_INCREMENT=1
+;
+
+INSERT INTO `players_stats` (`id`, `key`, `label`, `description`, `base_value`) VALUES (1, 'hp', 'HP', 'Player life points', 100);
+INSERT INTO `players_stats` (`id`, `key`, `label`, `description`, `base_value`) VALUES (2, 'mp', 'MP', 'Player magic points', 100);
+INSERT INTO `players_stats` (`id`, `key`, `label`, `description`, `base_value`) VALUES (3, 'atk', 'Atk', 'Player attack points', 100);
+INSERT INTO `players_stats` (`id`, `key`, `label`, `description`, `base_value`) VALUES (4, 'def', 'Def', 'Player defense points', 100);
+INSERT INTO `players_stats` (`id`, `key`, `label`, `description`, `base_value`) VALUES (5, 'dodge', 'Dodge', 'Player dodge points', 100);
+INSERT INTO `players_stats` (`id`, `key`, `label`, `description`, `base_value`) VALUES (6, 'speed', 'Speed', 'Player speed point', 100);
+INSERT INTO `players_stats` (`id`, `key`, `label`, `description`, `base_value`) VALUES (7, 'aim', 'Aim', 'Player aim points', 100);
+INSERT INTO `players_stats` (`id`, `key`, `label`, `description`, `base_value`) VALUES (8, 'stamina', 'Stamina', 'Player stamina points', 100);
+INSERT INTO `players_stats` (`id`, `key`, `label`, `description`, `base_value`) VALUES (9, 'mgk-atk', 'Magic Atk', 'Player magic attack', 100);
+INSERT INTO `players_stats` (`id`, `key`, `label`, `description`, `base_value`) VALUES (10, 'mgk-def', 'Magic Def', 'Player magic defense', 100);
+
+
+INSERT INTO players_stats_base (id, player_id, stat_id, value)
+SELECT NULL, p.id AS playerId, ps.id AS statId, ps.base_value AS statValue FROM players AS p JOIN players_stats AS ps;
+
+INSERT INTO players_stats_current (id, player_id, stat_id, value);
+SELECT NULL, p.id AS playerId, ps.id AS statId, ps.base_value AS statValue FROM players AS p JOIN players_stats AS ps;
+
+INSERT INTO `features` (`id`, `code`, `title`, `is_enabled`) VALUES (NULL, 'users', 'Users', 1);
+DELETE FROM config WHERE path LIKE '%players/initialStats/%';
+ALTER TABLE `players_stats` ADD UNIQUE INDEX `key` (`key`);
+
+RENAME TABLE `players_stats` TO `stats`;
+
+SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
+DROP TABLE `players_stats_base`;
+SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
+
+RENAME TABLE `players_stats_current` TO `players_stats`;
+
+ALTER TABLE `players_stats` ADD COLUMN `base_value` INT(10) UNSIGNED NOT NULL AFTER `stat_id`;
+
+UPDATE skills_owners_class_path SET currentLevel = 1, currentExp = 0;
+UPDATE players_stats SET value = 100, base_value = 100;
+UPDATE items_inventory SET is_active = 0 WHERE is_active = 1;
+
+INSERT IGNORE INTO players_stats (id, player_id, stat_id, base_value, value)
+SELECT NULL, p.id AS playerId, ps.id AS statId, ps.base_value AS statValue, ps.base_value AS currentValue
+    FROM players AS p
+    JOIN players_stats AS ps;

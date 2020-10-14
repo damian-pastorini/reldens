@@ -41,6 +41,7 @@ class TypePhysicalEffect extends PhysicalEffect
                 && {}.hasOwnProperty.call(validDefender, 'objectBody')
                 && this.currentBattle
             ){
+                // @TODO: replace hp by the defender affected attribute from the skills system.
                 if(validDefender.stats.hp > 0){
                     if(!this.validateTargetOnHit){
                         // if target validation is disabled then any target could start the battle (pve):
@@ -53,6 +54,7 @@ class TypePhysicalEffect extends PhysicalEffect
                         await this.currentBattle.startBattleWith(this.owner, this.room);
                     }
                 } else {
+                    // battle ended checkpoint:
                     await this.currentBattle.battleEnded(this.owner, this.room);
                 }
             } else {

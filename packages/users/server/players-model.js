@@ -19,7 +19,6 @@ class PlayersModel extends ModelClass
     static get relationMappings()
     {
         const { UsersModel } = require('./model');
-        const { PlayersStatsModel } = require('./players-stats-model');
         const { PlayersStateModel } = require('./players-state-model');
         return {
             parent_user: {
@@ -30,30 +29,15 @@ class PlayersModel extends ModelClass
                     to: 'users.id'
                 }
             },
-            stats: {
-                relation: ModelClass.HasOneRelation,
-                modelClass: PlayersStatsModel,
-                join: {
-                    from: 'players.id',
-                    to: 'players_stats.player_id'
-                }
-            },
             state: {
                 relation: ModelClass.HasOneRelation,
                 modelClass: PlayersStateModel,
                 join: {
                     from: 'players.id',
-                    to: 'players_state.player_id'
+                    to: PlayersStateModel.tableName+'.player_id'
                 }
             }
         }
-    }
-
-    static updateBy(field, fieldValue, updatePatch)
-    {
-        return this.query()
-            .patch(updatePatch)
-            .where(field, fieldValue);
     }
 
 }

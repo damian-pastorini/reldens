@@ -42,7 +42,6 @@ class PlayerEngine
         this.scene.cameras.main.setBounds(0, 0, this.scene.map.widthInPixels, this.scene.map.heightInPixels);
         this.scene.cameras.main.startFollow(this.players[this.playerId], true);
         this.players[this.playerId].setCollideWorldBounds(true);
-        this.createHealthBar();
     }
 
     addPlayer(id, state)
@@ -70,6 +69,7 @@ class PlayerEngine
 
     createHealthBar()
     {
+        // @TODO: remove from player engine, create using pack events.
         if(this.gameManager.config.get('client/ui/uiLifeBar/enabled')){
             // if the position is fixed then the bar has to go on the ui scene:
             let lifeBarScene = this.gameManager.getActiveScenePreloader();
@@ -87,18 +87,19 @@ class PlayerEngine
             if(useFixedPosition){
                 this.gameManager.gameEngine.uiScene.elementsUi['uiLifeBar'] = this.uiLifeBar;
             }
-            this.redrawLifeBar();
         }
     }
 
     redrawLifeBar()
     {
+        // @TODO: remove from player engine, redraw using pack events.
         if(!this.uiLifeBar){
             return;
         }
         let barHeight = this.gameManager.config.get('client/ui/uiLifeBar/height');
         let fullBarWidth = this.gameManager.config.get('client/ui/uiLifeBar/width');
-        let fullHp = this.gameManager.config.initialStats.hp;
+        let fullHp = this.gameManager.config.initialStats.hp['base_value'];
+        // @TODO: replace HP by player affected stat for battle.
         let filledBarWidth = (this.gameManager.playerData.stats.hp * fullBarWidth) / fullHp;
         let {uiX, uiY} = this.gameManager.gameEngine.uiScene.getUiConfig('uiLifeBar');
         if(!this.gameManager.config.get('client/ui/uiLifeBar/fixedPosition')){

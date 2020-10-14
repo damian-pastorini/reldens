@@ -8,7 +8,7 @@
 
 const { RespawnModel } = require('./model');
 const { PathFinder } = require('../../world/server/path-finder');
-const { EventsManager } = require('@reldens/utils');
+const { EventsManagerSingleton } = require('@reldens/utils');
 
 class RoomRespawn
 {
@@ -51,7 +51,7 @@ class RoomRespawn
                     // add tile data to the object and create object instance:
                     Object.assign(multipleObj.objProps, tileData);
                     let objInstance = new objClass(multipleObj.objProps);
-                    objInstance.runAdditionalSetup(EventsManager);
+                    objInstance.runAdditionalSetup(EventsManagerSingleton);
                     let assetsArr = this.getObjectAssets(multipleObj);
                     // @TODO: objects could have multiple assets, need to implement and test the case.
                     objInstance.clientParams.asset_key = assetsArr[0];

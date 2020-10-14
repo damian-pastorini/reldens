@@ -56,7 +56,7 @@ class UsersModel extends ModelClass
     static loadUserBy(field, value)
     {
         return this.query()
-            .withGraphFetched('players.[state, stats]')
+            .withGraphFetched('players.[state]')
             .where(field, value)
             .first()
     }
@@ -64,15 +64,8 @@ class UsersModel extends ModelClass
     static saveUser(userData)
     {
         return this.query()
-            .allowInsert('players.[stats, state]')
+            .allowInsert('players.[state]')
             .insertGraphAndFetch(userData);
-    }
-
-    static updateBy(field, fieldValue, updatePatch)
-    {
-        return this.query()
-            .patch(updatePatch)
-            .where(field, fieldValue);
     }
 
 }

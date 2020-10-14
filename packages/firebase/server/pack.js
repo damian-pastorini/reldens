@@ -4,7 +4,7 @@
  *
  */
 
-const { EventsManager } = require('@reldens/utils');
+const { EventsManagerSingleton } = require('@reldens/utils');
 const { PackInterface } = require('../../features/server/pack-interface');
 
 class FirebasePack extends PackInterface
@@ -12,7 +12,7 @@ class FirebasePack extends PackInterface
 
     setupPack()
     {
-        EventsManager.on('reldens.serverBeforeListen', (props) => {
+        EventsManagerSingleton.on('reldens.serverBeforeListen', (props) => {
             props.serverManager.app.get('/reldens-firebase', (req, res) => {
                 let jsonResponse = {enabled: false};
                 if(process.env.RELDENS_FIREBASE_ENABLE){

@@ -13,7 +13,7 @@ class Npc1 extends AnimationEngine
 
     constructor(gameManager, props, currentPreloader)
     {
-        // @TODO: apply some customization for the example.
+        // @TODO - BETA.17: apply some example customization like secondary custom animation.
         super(gameManager, props, currentPreloader);
     }
 

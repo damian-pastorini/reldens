@@ -6,7 +6,7 @@
  *
  */
 
-const { Logger, EventsManager, sc } = require('@reldens/utils');
+const { Logger, sc } = require('@reldens/utils');
 const { GameConst } = require('../../game/constants');
 const { ActionsConst } = require('../../actions/constants');
 const { ObjectsConst } = require('../../objects/constants');
@@ -29,10 +29,14 @@ class ActionsMessageActions
                 }
                 // set the room:
                 currentAction.room = room;
-                EventsManager.emit('reldens.onMessageRunAction', data, playerSchema, validTarget, room)
-                    .catch((err) => {
-                        Logger.error(['Listener error on onMessageRunAction:', err]);
-                    });
+                // @TODO: temporal action on a player will cause a PvP and on an object will cause a PvE.
+                if(data.target.type === GameConst.TYPE_PLAYER){
+                    playerSchema.actions['pvp'].runBattle(playerSchema, validTarget, room);
+                }
+                if(data.target.type === ObjectsConst.TYPE_OBJECT && sc.hasOwn(validTarget, 'battle')){
+                    validTarget.battle.runBattle(playerSchema, validTarget, room);
+                }
+
             }
         }
     }

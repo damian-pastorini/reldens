@@ -1,3 +1,8 @@
+/**
+ *
+ * Reldens - Enemy
+ *
+ */
 
 const { EnemyObject } = require('reldens/packages/objects/server/enemy-object');
 const { Logger, sc } = require('@reldens/utils');
@@ -7,7 +12,12 @@ class Enemy1Object extends EnemyObject
 
     runAdditionalSetup(eventsManager)
     {
-        eventsManager.on('reldens.battleEnded', this.onBattleEnd.bind(this));
+        eventsManager.onWithKey(
+            this.getBattleEndEvent(),
+            this.onBattleEnd.bind(this),
+            this.getEventRemoveKey(),
+            this.getEventMasterKey()
+        );
         let dataArr = eventsManager.listeners('reldens.battleEnded');
         this.battleEndListener = dataArr[dataArr.length -1];
     }
@@ -15,6 +25,12 @@ class Enemy1Object extends EnemyObject
     // eslint-disable-next-line no-unused-vars
     onBattleEnd(playerSchema, pveInstance, actionData)
     {
+        console.log('RUNNING BATTLE END EVENT:',
+            this.getBattleEndEvent(),
+            this.getEventRemoveKey(),
+            this.getEventMasterKey(),
+            this.uid, '/', pveInstance.targetObject.uid
+        );
         // validate unique id for battle end event:
         if(this.uid !== pveInstance.targetObject.uid){
             return false;

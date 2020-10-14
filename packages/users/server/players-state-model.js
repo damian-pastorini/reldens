@@ -31,13 +31,6 @@ class PlayersStateModel extends ModelClass
         }
     }
 
-    static updateBy(field, fieldValue, updatePatch)
-    {
-        return this.query()
-            .patch(updatePatch)
-            .where(field, fieldValue);
-    }
-
 }
 
 module.exports.PlayersStateModel = PlayersStateModel;

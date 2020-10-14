@@ -1,6 +1,6 @@
 /**
  *
- * Reldens - ChatUiCreate
+ * Reldens - InventoryUi
  *
  * This class will handle the inventory UI and assign all the related events and actions.
  *

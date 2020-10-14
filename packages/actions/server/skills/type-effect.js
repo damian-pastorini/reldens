@@ -35,8 +35,6 @@ class TypeEffect extends Effect
         ){
             if(this.getAffectedPropertyValue(this.target) > 0){
                 await this.currentBattle.startBattleWith(this.owner, this.room);
-            } else {
-                await this.currentBattle.battleEnded(this.owner, this.room);
             }
         }
         return true;

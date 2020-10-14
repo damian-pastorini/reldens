@@ -10,8 +10,9 @@ const { World, Body, Box } = require('p2');
 const { PathFinder } = require('./path-finder');
 const { PhysicalBody } = require('./physical-body');
 const { ObjectBodyState } = require('./object-body-state');
-const { Logger, ErrorManager, EventsManager } = require('@reldens/utils');
+const { Logger, ErrorManager } = require('@reldens/utils');
 const { GameConst } = require('../../game/constants');
+const { EventsManagerSingleton } = require('@reldens/utils');
 
 class P2world extends World
 {
@@ -69,7 +70,7 @@ class P2world extends World
             tileH = this.mapJson.tileheight;
         for(let layer of mapLayers){
             let layerData = layer.data;
-            await EventsManager.emit('reldens.parsingMapLayerBefore', layer, this);
+            await EventsManagerSingleton.emit('reldens.parsingMapLayerBefore', layer, this);
             for(let c = 0; c < mapW; c++){
                 let posX = c * tileW + (tileW/2);
                 for(let r = 0; r < mapH; r++){
@@ -98,7 +99,7 @@ class P2world extends World
                     }
                 }
             }
-            await EventsManager.emit('reldens.parsingMapLayerAfter', layer, this);
+            await EventsManagerSingleton.emit('reldens.parsingMapLayerAfter', layer, this);
         }
     }
 

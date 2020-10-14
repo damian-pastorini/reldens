@@ -8,6 +8,7 @@
 
 const { ServerCoreFeatures } = require('./config-server');
 const { FeaturesModel } = require('./model');
+const { Logger } = require('@reldens/utils');
 
 class FeaturesManager
 {
@@ -45,6 +46,7 @@ class FeaturesManager
                 }
                 // for last add the feature entity to the list:
                 this.featuresList[featureEntity.code] = featureEntity;
+                Logger.info('Enabled feature: ' + featureEntity.code);
             }
         }
         // return the features code list:

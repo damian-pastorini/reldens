@@ -6,7 +6,7 @@
 
 const { Scene, Input } = require('phaser');
 const { TilesetAnimation } = require('./tileset-animation');
-const { EventsManager } = require('@reldens/utils');
+const { EventsManagerSingleton } = require('@reldens/utils');
 const { GameConst } = require('../../game/constants');
 
 class SceneDynamic extends Scene
@@ -39,7 +39,7 @@ class SceneDynamic extends Scene
 
     create()
     {
-        EventsManager.emit('reldens.beforeSceneDynamicCreate', this);
+        EventsManagerSingleton.emit('reldens.beforeSceneDynamicCreate', this);
         this.keyLeft = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.LEFT);
         this.keyRight = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.RIGHT);
         this.keyUp = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.UP);
@@ -82,7 +82,7 @@ class SceneDynamic extends Scene
                 }
             });
         });
-        EventsManager.emit('reldens.afterSceneDynamicCreate', this);
+        EventsManagerSingleton.emit('reldens.afterSceneDynamicCreate', this);
     }
 
     // eslint-disable-next-line no-unused-vars

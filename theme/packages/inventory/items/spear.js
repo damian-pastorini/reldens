@@ -1,3 +1,10 @@
+/**
+ *
+ * Reldens - Spear
+ *
+ * Custom animation object sample.
+ *
+ */
 
 const { ItemSingleEquipment } = require('@reldens/items-system');
 

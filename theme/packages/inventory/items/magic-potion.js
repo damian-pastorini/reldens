@@ -1,10 +1,11 @@
 /**
  *
- * Reldens - Npc1
+ * Reldens - MagicPotion
  *
  * Custom animation object sample.
  *
  */
+
 const { ItemSingleUsable } = require('@reldens/items-system');
 
 class MagicPotion extends ItemSingleUsable

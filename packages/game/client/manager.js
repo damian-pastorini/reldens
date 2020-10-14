@@ -12,9 +12,10 @@ const { RoomEvents } = require('./room-events');
 const { FeaturesManager } = require('../../features/client/manager');
 const { GameDom } = require('./game-dom');
 const { ConfigProcessor } = require('../../config/processor');
-const { Logger, EventsManager } = require('@reldens/utils');
+const { Logger } = require('@reldens/utils');
 const { GameConst } = require('../constants');
 const { FirebaseConnector } = require('../../firebase/client/connector');
+const { EventsManagerSingleton } = require('@reldens/utils');
 
 class GameManager
 {
@@ -35,7 +36,7 @@ class GameManager
         // game over validator:
         this.gameOver = false;
         // client events:
-        this.events = EventsManager;
+        this.events = EventsManagerSingleton;
         // full game config:
         this.config = ConfigProcessor;
         // features manager:
@@ -136,7 +137,7 @@ class GameManager
         await this.events.emit('reldens.joinedRoom_'+initialGameData.player.state.scene, joinedFirstRoom, this);
         // start listening the new room events:
         this.activeRoomEvents = this.createRoomEventsInstance(initialGameData.player.state.scene);
-        this.activeRoomEvents.activateRoom(joinedFirstRoom);
+        await this.activeRoomEvents.activateRoom(joinedFirstRoom);
         await this.events.emit('reldens.afterInitEngineAndStartGame', initialGameData, joinedFirstRoom);
         return joinedFirstRoom;
     }
@@ -179,7 +180,7 @@ class GameManager
     {
         let newRoomEvents = this.createRoomEventsInstance(message.player.state.scene);
         this.isChangingScene = true;
-        this.gameClient.joinOrCreate(newRoomEvents.roomName, this.userData).then((sceneRoom) => {
+        this.gameClient.joinOrCreate(newRoomEvents.roomName, this.userData).then(async (sceneRoom) => {
             // leave old room:
             previousRoom.leave();
             this.activeRoomEvents = newRoomEvents;
@@ -187,7 +188,7 @@ class GameManager
             this.events.emit('reldens.joinedRoom', sceneRoom, this);
             this.events.emit('reldens.joinedRoom_'+message.player.state.scene, sceneRoom, this);
             // start listen to room events:
-            newRoomEvents.activateRoom(sceneRoom, message.prev);
+            await newRoomEvents.activateRoom(sceneRoom, message.prev);
         }).catch((err) => {
             // @NOTE: the errors while trying to reconnect will always be originated in the server. For these errors we
             // will alert the user and reload the window automatically.

@@ -20,8 +20,6 @@ class Player extends Schema
         try {
             // @TODO: [0] is temporal since for now we only have one player by user.
             let player = data.players[0];
-            // stats for now will use the stats model.
-            this.stats = player.stats;
             // player data:
             this.id = data.id; // this is the user id
             this.player_id = player.id;
@@ -32,6 +30,9 @@ class Player extends Schema
             this.physicalBody = false;
             // set scene and position:
             this.state = new BodyState(player.state);
+            // stats for now will use the stats model.
+            this.stats = player.stats; // thi is the current value
+            this.statsBase = player.statsBase; // this is the base or max value
         } catch (err) {
             ErrorManager.error(['Missing user data.', err]);
         }

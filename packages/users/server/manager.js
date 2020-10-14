@@ -45,11 +45,6 @@ class UsersManager
         return UsersModel.saveUser(userData);
     }
 
-    updateEntityBy(model, field, fieldValue, updatePatch)
-    {
-        return model.updateBy(field, fieldValue, updatePatch);
-    }
-
     updateUserLastLogin(username)
     {
         // get date:
@@ -57,22 +52,31 @@ class UsersManager
         // format:
         let dateFormat = date.toISOString().slice(0, 19).replace('T', ' ');
         // save user:
-        return this.updateEntityBy(UsersModel, 'username', username, {updated_at: dateFormat});
+        return UsersModel.updateBy('username', username, {updated_at: dateFormat});
     }
 
     updateUserByEmail(email, updatePatch)
     {
-        return this.updateEntityBy(UsersModel, 'email', email, updatePatch);
+        return UsersModel.updateBy('email', email, updatePatch);
     }
 
     updateUserStateByPlayerId(playerId, newState)
     {
-        return this.updateEntityBy(PlayersStateModel, 'player_id', playerId, newState);
+        return PlayersStateModel.updateBy('player_id', playerId, newState);
     }
 
-    updateUserStatsByPlayerId(playerId, newStats)
+    async updateCurrentStatByPlayerId(playerId, statId, statValue)
     {
-        return this.updateEntityBy(PlayersStatsModel, 'player_id', playerId, newStats);
+        return PlayersStatsModel.query()
+            .patch({value: statValue})
+            .where({player_id: playerId, stat_id: statId});
+    }
+
+    async updateBaseStatByPlayerId(playerId, statId, statValue)
+    {
+        return PlayersStatsModel.query()
+            .patch({base_value: statValue})
+            .where({player_id: playerId, stat_id: statId});
     }
 
 }

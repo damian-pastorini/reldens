@@ -10,7 +10,8 @@ const { RoomsModel } = require('./model');
 const { RoomGame } = require('./game');
 const { RoomScene } = require('./scene');
 const { GameConst } = require('../../game/constants');
-const { Logger, ErrorManager, EventsManager } = require('@reldens/utils');
+const { Logger, ErrorManager } = require('@reldens/utils');
+const { EventsManagerSingleton } = require('@reldens/utils');
 
 class RoomsManager
 {
@@ -25,13 +26,13 @@ class RoomsManager
 
     async defineRoomsInGameServer(gameServer, props)
     {
-        EventsManager.emit('reldens.roomsDefinition', this.defineExtraRooms);
+        EventsManagerSingleton.emit('reldens.roomsDefinition', this.defineExtraRooms);
         if(!this.defineExtraRooms.length){
             Logger.info('None extra rooms to be defined.');
         }
         // dispatch event to get the global message actions (that will be listen by every room):
         let globalMessageActions = {};
-        EventsManager.emit('reldens.roomsMessageActionsGlobal', globalMessageActions);
+        EventsManagerSingleton.emit('reldens.roomsMessageActionsGlobal', globalMessageActions);
         // loaded rooms counter:
         let counter = 0;
         // lobby room:
@@ -76,7 +77,7 @@ class RoomsManager
     {
         let roomMessageActions = Object.assign({}, globalMessageActions);
         // run message actions event for each room:
-        EventsManager.emit('reldens.roomsMessageActionsByRoom', roomMessageActions, roomName);
+        EventsManagerSingleton.emit('reldens.roomsMessageActionsByRoom', roomMessageActions, roomName);
         // merge room data and props:
         let roomProps = {
             loginManager: props.loginManager,

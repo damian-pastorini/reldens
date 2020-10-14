@@ -65,6 +65,7 @@ class Battle
 
     async updateTargetClient(targetClient, targetSchema, attackerId, room)
     {
+        // @TODO: replace hp by the defender affected attribute from the skills system.
         if(targetSchema.stats.hp === 0){
             // player is dead! reinitialize the stats:
             targetSchema.stats = targetSchema.initialStats;

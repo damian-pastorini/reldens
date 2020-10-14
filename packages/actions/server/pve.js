@@ -7,8 +7,9 @@
  */
 
 const { Battle } = require('./battle');
-const { Logger, EventsManager } = require('@reldens/utils');
+const { Logger } = require('@reldens/utils');
 const { ActionsConst } = require('../constants');
+const { EventsManagerSingleton } = require('@reldens/utils');
 
 class Pve extends Battle
 {
@@ -32,13 +33,16 @@ class Pve extends Battle
         // depending how the current enemy-object was implemented, for example the PVE can start when the player just
         // collides with the enemy (instead of attack it) an aggressive enemy could start the battle automatically.
         let attackResult = await super.runBattle(playerSchema, target, room);
-        if(!attackResult || playerSchema.currentAction === 'attackBullet'){
-            // the battle will start when the bullet hit the target:
+        if(!attackResult){
+            // @NOTE: the attack result can be false because different reasons, for example it could be a physical
+            // attack for which matter we won't start the battle until the physical body hits the target.
             return false;
         }
+        // @TODO: replace hp by the defender affected attribute from the skills system.
         if(target.stats.hp > 0){
             await this.startBattleWith(playerSchema, room);
         } else {
+            // physical attacks or effects will run the battleEnded, normal attacks or effects will hit this case:
             await this.battleEnded(playerSchema, room);
         }
     }
@@ -59,9 +63,10 @@ class Pve extends Battle
             this.leaveBattle(playerSchema);
             return false;
         }
+        // @TODO: replace hp by the defender affected attribute from the skills system.
         // the enemy died:
-        if(this.targetObject.stats.hp === 0){
-            await this.battleEnded(playerSchema, room);
+        if(this.targetObject.stats.hp <= 0){
+            // battle ended checkpoint:
             return false;
         }
         // if target (npc) is already in battle with another player then ignore the current attack:
@@ -145,7 +150,7 @@ class Pve extends Battle
         } else {
             Logger.log(['Client not found by sessionId:', playerSchema.sessionId]);
         }
-        EventsManager.emit('reldens.battleEnded', playerSchema, this, actionData);
+        EventsManagerSingleton.emit(this.targetObject.getBattleEndEvent(), playerSchema, this, actionData);
     }
 
     removeInBattlePlayer(playerSchema)
