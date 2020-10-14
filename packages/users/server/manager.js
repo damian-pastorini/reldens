@@ -20,10 +20,7 @@ class UsersManager
         if(!username){
             ErrorManager.error('Missing user name.');
         }
-        let loadedUser = await UsersModel.query()
-            .withGraphFetched('players.[state, stats]')
-            .where('username', username)
-            .first();
+        let loadedUser = await UsersModel.loadUserBy('username', username);
         if(loadedUser){
             result = loadedUser;
         }
@@ -36,10 +33,7 @@ class UsersManager
         if(!email){
             ErrorManager.error('Missing email.');
         }
-        let loadedUser = await UsersModel.query()
-            .withGraphFetched('players.[state, stats]')
-            .where('email', email)
-            .first();
+        let loadedUser = await UsersModel.loadUserBy('email', email);
         if(loadedUser){
             result = loadedUser;
         }
@@ -48,9 +42,12 @@ class UsersManager
 
     async createUser(userData)
     {
-        return UsersModel.query()
-            .allowInsert('players.[stats, state]')
-            .insertGraphAndFetch(userData);
+        return UsersModel.saveUser(userData);
+    }
+
+    updateEntityBy(model, field, fieldValue, updatePatch)
+    {
+        return model.updateBy(field, fieldValue, updatePatch);
     }
 
     updateUserLastLogin(username)
@@ -60,23 +57,22 @@ class UsersManager
         // format:
         let dateFormat = date.toISOString().slice(0, 19).replace('T', ' ');
         // save user:
-        return UsersModel.query().patch({updated_at: dateFormat}).where('username', username);
+        return this.updateEntityBy(UsersModel, 'username', username, {updated_at: dateFormat});
     }
 
     updateUserByEmail(email, updatePatch)
     {
-        // save user:
-        return UsersModel.query().patch(updatePatch).where('email', email);
+        return this.updateEntityBy(UsersModel, 'email', email, updatePatch);
     }
 
     updateUserStateByPlayerId(playerId, newState)
     {
-        return PlayersStateModel.query().patch(newState).where('player_id', playerId);
+        return this.updateEntityBy(PlayersStateModel, 'player_id', playerId, newState);
     }
 
     updateUserStatsByPlayerId(playerId, newStats)
     {
-        return PlayersStatsModel.query().patch(newStats).where('player_id', playerId);
+        return this.updateEntityBy(PlayersStatsModel, 'player_id', playerId, newStats);
     }
 
 }

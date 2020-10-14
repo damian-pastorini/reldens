@@ -7,6 +7,8 @@
  *
  */
 
+// @TODO: all these will be configurable from the storage.
+
 module.exports.InitialStats =  {
     hp: process.env.RELDENS_INITIAL_STATS_HP || 100,
     mp: process.env.RELDENS_INITIAL_STATS_MP || 100,
@@ -14,5 +16,6 @@ module.exports.InitialStats =  {
     atk: process.env.RELDENS_INITIAL_STATS_ATK || 100,
     def: process.env.RELDENS_INITIAL_STATS_DEF || 100,
     dodge: process.env.RELDENS_INITIAL_STATS_DODGE || 100,
+    aim: process.env.RELDENS_INITIAL_STATS_AIM || 100,
     speed: process.env.RELDENS_INITIAL_STATS_SPEED || 100
 };

@@ -1,6 +1,6 @@
 
 const { EnemyObject } = require('reldens/packages/objects/server/enemy-object');
-const { Logger } = require('@reldens/utils');
+const { Logger, sc } = require('@reldens/utils');
 
 class Enemy1Object extends EnemyObject
 {
@@ -18,6 +18,9 @@ class Enemy1Object extends EnemyObject
         // validate unique id for battle end event:
         if(this.uid !== pveInstance.targetObject.uid){
             return false;
+        }
+        if(sc.hasOwn(playerSchema, 'skillsServer')){
+            playerSchema.skillsServer.classPath.addExperience(50);
         }
         let treeBranch = playerSchema.inventory.createItemInstance('branch');
         playerSchema.inventory.manager.addItem(treeBranch).catch((err) => {

@@ -24,7 +24,7 @@ class FeaturesManager
     async loadFeatures()
     {
         // get the features from the database:
-        let featuresCollection = await FeaturesModel.query();
+        let featuresCollection = await FeaturesModel.loadAll();
         for(let featureEntity of featuresCollection){
             // add the feature to the codes list:
             this.featuresCodeList.push(featureEntity.code);

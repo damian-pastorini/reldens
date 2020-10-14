@@ -6,6 +6,7 @@
  *
  */
 
+const { Logger } = require('@reldens/utils');
 const { ActionsConst } = require('../constants');
 const { GameConst } = require('../../game/constants');
 
@@ -28,7 +29,14 @@ class Battle
     async runBattle(playerSchema, target, room)
     {
         // @NOTE: each attack will have different properties to validate like range, delay, etc.
-        let currentAction = playerSchema.actions[playerSchema.currentAction];
+        // @TODO: remove .actions and use skills?
+        let currentAction = playerSchema.actions[playerSchema.currentAction] ?
+            playerSchema.actions[playerSchema.currentAction] :
+            playerSchema.skillsServer.classPath.currentSkills[playerSchema.currentAction];
+        if(!currentAction){
+            Logger.error(['Actions not defined for this player.', 'ID:', playerSchema.player_id]);
+            return false;
+        }
         currentAction.currentBattle = this;
         let executeResult = await currentAction.execute(target);
         // include the target in the battle list:

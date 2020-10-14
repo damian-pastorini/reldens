@@ -23,23 +23,23 @@ class ChatManager
     async saveMessage(message, playerId, roomId, clientToPlayerSchema, messageType)
     {
         // @TODO: since for now we only have one player by user, playerSchema is actually the currentUser.
-        let insertModel = {
+        let entryData = {
             player_id: playerId,
             message: message,
             message_time: this.getCurrentDate()
         };
         if(roomId){
-            insertModel.room_id = roomId;
+            entryData.room_id = roomId;
         }
         if(clientToPlayerSchema && {}.hasOwnProperty.call(clientToPlayerSchema, 'id')){
-            insertModel.private_player_id = clientToPlayerSchema.state.player_id;
+            entryData.private_player_id = clientToPlayerSchema.state.player_id;
         }
         if(messageType){
-            insertModel.message_type = messageType;
+            entryData.message_type = messageType;
         }
-        let insertResult = await ChatModel.query().insert(insertModel);
+        let insertResult = await ChatModel.saveEntry(entryData);
         if(!insertResult){
-            Logger.error(['Chat insert message error.', insertModel]);
+            Logger.error(['Chat insert message error.', entryData]);
         }
     }
 

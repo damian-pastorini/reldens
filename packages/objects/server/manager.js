@@ -30,10 +30,7 @@ class ObjectsManager
     async loadObjectsByRoomId(roomId)
     {
         if(!this.roomObjectsData){
-            this.roomObjectsData = await ObjectsModel.query()
-                .withGraphFetched('[parent_room, objects_assets]')
-                .where('room_id', roomId)
-                .orderBy('tile_index');
+            this.roomObjectsData = await ObjectsModel.loadRoomObjects(roomId);
         }
     }
 

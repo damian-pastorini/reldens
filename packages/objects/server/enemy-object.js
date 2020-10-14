@@ -11,8 +11,7 @@
 
 const { NpcObject } = require('./npc-object');
 const { Pve } = require('../../actions/server/pve');
-const { AttackShort } = require('../../actions/server/attack-short');
-const { AttackBullet } = require('../../actions/server/attack-bullet');
+const { TypeAttack, TypePhysicalAttack } = require('../../actions/server/skills/types');
 const { ObjectsConst } = require('../constants');
 const { Logger } = require('@reldens/utils');
 
@@ -59,11 +58,24 @@ class EnemyObject extends NpcObject
             rangePropertyX: 'state/x',
             rangePropertyY: 'state/y'
         };
-        let attackShort = new AttackShort(skillProps);
+        let attackShort = new TypeAttack(skillProps);
         this.actionsKeys = ['attackShort'];
         this.actions = {'attackShort': attackShort};
         if(this.config.get('server/enemies/defaultAttacks/attackBullet')){
-            let attackBullet = new AttackBullet();
+            let attackBullet = new TypePhysicalAttack({
+                owner: this,
+                key: 'attack-bullet',
+                affectedProperty: 'stats/hp',
+                skillDelay: 1000,
+                range: 250,
+                hitDamage: 3,
+                hitPriority: 2,
+                magnitude: 350,
+                objectWidth: 5,
+                objectHeight: 5,
+                rangePropertyX: 'state/x',
+                rangePropertyY: 'state/y'
+            });
             attackBullet.attacker = this;
             this.actionsKeys.push('attackBullet');
             this.actions['attackBullet'] = attackBullet;

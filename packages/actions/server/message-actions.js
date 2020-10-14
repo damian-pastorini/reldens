@@ -6,7 +6,7 @@
  *
  */
 
-const { Logger, EventsManager } = require('@reldens/utils');
+const { Logger, EventsManager, sc } = require('@reldens/utils');
 const { GameConst } = require('../../game/constants');
 const { ActionsConst } = require('../../actions/constants');
 const { ObjectsConst } = require('../../objects/constants');
@@ -19,7 +19,7 @@ class ActionsMessageActions
         if(data.act === GameConst.ACTION && data.target){
             let validTarget = this.validateTarget(data.target, room);
             if(validTarget){
-                let currentAction = this.setPlayerCurrentAction(playerSchema, data);
+                let currentAction = this.preparePlayerCurrentAction(playerSchema, data);
                 if(!currentAction){
                     return false;
                 }
@@ -37,7 +37,7 @@ class ActionsMessageActions
         }
     }
 
-    setPlayerCurrentAction(playerSchema, data)
+    preparePlayerCurrentAction(playerSchema, data)
     {
         let runAction = data.type;
         // @TODO: temporal default action, we will always send the action type so it will never be "action".
@@ -45,11 +45,20 @@ class ActionsMessageActions
             // for pvp or pve the default action will be the attack-short:
             runAction = 'attackShort';
         }
-        if(!runAction || !{}.hasOwnProperty.call(playerSchema.actions, runAction)){
+        if(
+            !runAction ||
+            (
+                // @TODO: remove .actions and use skills?
+                !sc.hasOwn(playerSchema.actions, runAction)
+                && !sc.hasOwn(playerSchema.skillsServer.classPath.currentSkills, runAction)
+            )
+        ){
+            Logger.error(['Action not available:', runAction]);
             return false;
         }
         playerSchema.currentAction = runAction;
-        return playerSchema.actions[runAction];
+        return playerSchema.actions[runAction] ?
+            playerSchema.actions[runAction] : playerSchema.skillsServer.classPath.currentSkills[runAction];
     }
 
     validateTarget(target, room)

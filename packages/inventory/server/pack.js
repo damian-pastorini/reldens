@@ -15,6 +15,7 @@ class InventoryPack extends PackInterface
 
     setupPack()
     {
+        // @TODO: refactor pack to extract the models and classes generation to the external packages.
         this.inventoryModelsManager = new ModelsManager();
         EventsManager.on('reldens.serverReady', async (event) => {
             let configProcessor = event.serverManager.configManager.processor;
@@ -46,7 +47,7 @@ class InventoryPack extends PackInterface
     async loadItemsFullList(configProcessor)
     {
         // use the inventory models manager to get the items list loaded:
-        let itemsModelsList = await this.inventoryModelsManager.models.item.query();
+        let itemsModelsList = await this.inventoryModelsManager.models.item.loadAll();
         if(itemsModelsList.length){
             let itemsList = {};
             let inventoryClasses = configProcessor.get('server/customClasses/inventory/items');
@@ -64,7 +65,8 @@ class InventoryPack extends PackInterface
     async loadGroupsFullList(configProcessor)
     {
         // use the inventory models manager to get the items list loaded:
-        let groupModelsList = await this.inventoryModelsManager.models.group.query();
+        console.log('model group:', this.inventoryModelsManager.models.group);
+        let groupModelsList = await this.inventoryModelsManager.models.group.loadAll();
         if(groupModelsList.length){
             let groupList = {};
             let groupBaseData = {};
@@ -94,7 +96,7 @@ class InventoryPack extends PackInterface
                 room.broadcast(data);
             }
         };
-        // @TODO: implement playerSchema.persistData() (see onExecutedItem(item) in ModelsManager class), and test.
+        // @TODO: implement playerSchema.persistData() (see onExecutedItem in ModelsManager class), and test.
         // eslint-disable-next-line no-unused-vars
         playerSchema.persistData = async (params) => {
             // persist data in player:

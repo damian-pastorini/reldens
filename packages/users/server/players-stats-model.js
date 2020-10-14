@@ -6,9 +6,9 @@
  *
  */
 
-const { Model } = require('objection');
+const { ModelClass } = require('@reldens/storage');
 
-class PlayersStatsModel extends Model
+class PlayersStatsModel extends ModelClass
 {
 
     static get tableName()
@@ -21,7 +21,7 @@ class PlayersStatsModel extends Model
         const { PlayersModel } = require('./players-model');
         return {
             parent_player: {
-                relation: Model.BelongsToOneRelation,
+                relation: ModelClass.BelongsToOneRelation,
                 modelClass: PlayersModel,
                 join: {
                     from: 'players_stats.player_id',
@@ -29,6 +29,13 @@ class PlayersStatsModel extends Model
                 }
             }
         }
+    }
+
+    static updateBy(field, fieldValue, updatePatch)
+    {
+        return this.query()
+            .patch(updatePatch)
+            .where(field, fieldValue);
     }
 
 }

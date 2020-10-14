@@ -41,5 +41,9 @@ module.exports.CustomClasses = {
             spear: Spear
         },
         groups: {}
+    },
+    skills: {
+        skillsList: {},
+        classPath: {}
     }
 };

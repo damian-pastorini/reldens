@@ -11,7 +11,6 @@ const { State } = require('./state');
 const { P2world } = require('../../world/server/p2world');
 const { CollisionsManager } = require('../../world/server/collisions-manager');
 const { ObjectsManager } = require('../../objects/server/manager');
-const { ActionsManager } = require('../../actions/server/manager');
 const { GameConst } = require('../../game/constants');
 const { Logger, ErrorManager, EventsManager } = require('@reldens/utils');
 
@@ -28,8 +27,6 @@ class RoomScene extends RoomLogin
         Logger.info('INIT ROOM: '+ this.roomName);
         // this.roomId = options.room.roomId;
         this.sceneId = this.roomId;
-        // actions manager:
-        this.actionsManager = new ActionsManager(this.config);
         // @NOTE: we create an instance of the objects manager for each room-scene, this is on purpose so all the
         // related object instances will be removed when the room is disposed.
         this.objectsManager = new ObjectsManager(options);

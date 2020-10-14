@@ -4,6 +4,7 @@
  *
  */
 
+const { Receiver } = require('@reldens/skills');
 const { EventsManager } = require('@reldens/utils');
 const { GameConst } = require('../../game/constants');
 
@@ -15,6 +16,21 @@ class ActionsPack
         // eslint-disable-next-line no-unused-vars
         EventsManager.on('reldens.joinedRoom', (room, gameManager) => {
             this.listenMessages(room, gameManager);
+        });
+        EventsManager.on('reldens.playersOnAdd', (player, key, previousScene, roomEvents) => {
+            if(key === roomEvents.room.sessionId){
+                if(!roomEvents.gameManager.skills){
+                    // create skills instance only once:
+                    let receiverProps = {owner: player};
+                    // @TODO: setup custom classes here if required.
+                    // create skills receiver instance:
+                    roomEvents.gameManager.skills = new Receiver(receiverProps);
+                }
+                // listen to room messages:
+                roomEvents.room.onMessage((message) => {
+                    roomEvents.gameManager.skills.processMessage(message);
+                });
+            }
         });
     }
 

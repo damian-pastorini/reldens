@@ -6,10 +6,10 @@
  *
  */
 
-const { Model } = require('objection');
+const { ModelClass } = require('@reldens/storage');
 const { PlayersModel } = require('./players-model');
 
-class UsersModel extends Model
+class UsersModel extends ModelClass
 {
 
     static get tableName()
@@ -21,7 +21,7 @@ class UsersModel extends Model
     {
         return {
             players: {
-                relation: Model.HasManyRelation,
+                relation: ModelClass.HasManyRelation,
                 modelClass: PlayersModel,
                 join: {
                     from: 'users.id',
@@ -51,6 +51,28 @@ class UsersModel extends Model
         let date = new Date();
         // format:
         return date.toISOString().slice(0, 19).replace('T', ' ');
+    }
+
+    static loadUserBy(field, value)
+    {
+        return this.query()
+            .withGraphFetched('players.[state, stats]')
+            .where(field, value)
+            .first()
+    }
+
+    static saveUser(userData)
+    {
+        return this.query()
+            .allowInsert('players.[stats, state]')
+            .insertGraphAndFetch(userData);
+    }
+
+    static updateBy(field, fieldValue, updatePatch)
+    {
+        return this.query()
+            .patch(updatePatch)
+            .where(field, fieldValue);
     }
 
 }

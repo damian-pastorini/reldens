@@ -43,7 +43,7 @@ class ConfigManager
         this.configList.gameEngine.version = PackageData.version;
         EventsManager.emit('reldens.beforeLoadConfigurations', {configManager: this});
         // get the configurations from the database:
-        let configCollection = await ConfigModel.query();
+        let configCollection = await ConfigModel.loadAll();
         // set them in the manager property so we can find them by path later:
         for(let config of configCollection){
             // create an object for each scope:

@@ -94,8 +94,7 @@ class RoomsManager
         // @TODO: this will change when hot-plug is introduced.
         if(!this.loadedRooms){
             // get rooms:
-            let roomsModels = await RoomsModel.query()
-                .withGraphFetched('[rooms_change_points.next_room, rooms_return_points.to_room]');
+            let roomsModels = await RoomsModel.loadFullData();
             if(!roomsModels){
                 ErrorManager.error('None rooms found in the database. A room is required to run.');
             }
@@ -120,9 +119,7 @@ class RoomsManager
         if(this.loadedRoomsById[roomId]){
             return this.loadedRoomsById[roomId];
         }
-        let room = await RoomsModel.query()
-            .withGraphFetched('[rooms_change_points.next_room, rooms_return_points.to_room]')
-            .findById(roomId);
+        let room = await RoomsModel.loadById(roomId);
         if(room){
             return this.generateRoomModel(room);
         }
@@ -134,10 +131,7 @@ class RoomsManager
         if(this.loadedRoomsByName[roomName]){
             return this.loadedRoomsByName[roomName];
         }
-        let room = await RoomsModel.query()
-            .withGraphFetched('[rooms_change_points.next_room, rooms_return_points.to_room]')
-            .where('name', roomName)
-            .first();
+        let room = await RoomsModel.loadByName(roomName);
         if(room){
             return this.generateRoomModel(room);
         }

@@ -6,9 +6,9 @@
  *
  */
 
-const { Model } = require('objection');
+const { ModelClass } = require('@reldens/storage');
 
-class FeaturesModel extends Model
+class FeaturesModel extends ModelClass
 {
 
     static get tableName()

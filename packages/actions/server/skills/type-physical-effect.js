@@ -1,16 +1,16 @@
 /**
  *
- * Reldens - AttackBullet
+ * Reldens - TypePhysicalEffect
  *
- * Basic long distance attack as "bullet", this attack will use a world object and collisions to validate the target
- * and hit.
+ * Base physical effect ("bullet" like). This skill will use a world object and collisions to validate the target and
+ * hit.
  *
  */
 
-const { PhysicalAttack } = require('@reldens/skills');
-const { GameConst } = require('../../game/constants');
+const { PhysicalEffect } = require('@reldens/skills');
+const { GameConst } = require('../../../game/constants');
 
-class AttackBullet extends PhysicalAttack
+class TypePhysicalEffect extends PhysicalEffect
 {
 
     constructor(props)
@@ -105,4 +105,4 @@ class AttackBullet extends PhysicalAttack
 
 }
 
-module.exports.AttackBullet = AttackBullet;
+module.exports = TypePhysicalEffect;

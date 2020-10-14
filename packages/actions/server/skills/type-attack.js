@@ -1,15 +1,15 @@
 /**
  *
- * Reldens - AttackShort
+ * Reldens - TypeAttack
  *
- * Basic short distance attack.
+ * Base attack skill class.
  *
  */
 
 const { Attack } = require('@reldens/skills');
-const { GameConst } = require('../../game/constants');
+const { GameConst } = require('../../../game/constants');
 
-class AttackShort extends Attack
+class TypeAttack extends Attack
 {
 
     constructor(props)
@@ -45,4 +45,4 @@ class AttackShort extends Attack
 
 }
 
-module.exports.AttackShort = AttackShort;
+module.exports = TypeAttack;

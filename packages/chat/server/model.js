@@ -6,10 +6,10 @@
  *
  */
 
-const { Model } = require('objection');
+const { ModelClass } = require('@reldens/storage');
 const { RoomsModel } = require('../../rooms/server/model');
 
-class ChatModel extends Model
+class ChatModel extends ModelClass
 {
 
     static get tableName()
@@ -22,7 +22,7 @@ class ChatModel extends Model
         const { PlayersModel } = require('../../users/server/players-model');
         return {
             chat_room: {
-                relation: Model.HasManyRelation,
+                relation: ModelClass.HasManyRelation,
                 modelClass: RoomsModel,
                 join: {
                     from: 'room.id',
@@ -30,7 +30,7 @@ class ChatModel extends Model
                 }
             },
             chat_player_id: {
-                relation: Model.HasManyRelation,
+                relation: ModelClass.HasManyRelation,
                 modelClass: PlayersModel,
                 join: {
                     from: 'player_id',
@@ -38,7 +38,7 @@ class ChatModel extends Model
                 }
             },
             chat_private_player_id: {
-                relation: Model.HasManyRelation,
+                relation: ModelClass.HasManyRelation,
                 modelClass: PlayersModel,
                 join: {
                     from: 'private_player_id',
@@ -46,6 +46,11 @@ class ChatModel extends Model
                 }
             }
         };
+    }
+
+    static saveEntry(entryData)
+    {
+        return this.query().insert(entryData);
     }
 
 }
