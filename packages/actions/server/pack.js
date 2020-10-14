@@ -90,11 +90,11 @@ class ActionsPack extends PackInterface
         });
         // eslint-disable-next-line no-unused-vars
         EventsManager.on(SkillsEvents.LEVEL_EXPERIENCE_ADDED, (levelSet, number) => {
-            console.log('WON EXP!', number, ' > TOTAL:', levelSet.currentExp);
+            // console.log('WON EXP!', number, ' > TOTAL:', levelSet.currentExp);
         });
         // eslint-disable-next-line no-unused-vars
         EventsManager.on(SkillsEvents.LEVEL_UP, (levelSet, number) => {
-            console.log('LEVEL UP!!', levelSet.currentLevel);
+            // console.log('LEVEL UP!!', levelSet.currentLevel);
         });
     }
 

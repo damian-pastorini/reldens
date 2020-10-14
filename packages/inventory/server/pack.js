@@ -65,7 +65,6 @@ class InventoryPack extends PackInterface
     async loadGroupsFullList(configProcessor)
     {
         // use the inventory models manager to get the items list loaded:
-        console.log('model group:', this.inventoryModelsManager.models.group);
         let groupModelsList = await this.inventoryModelsManager.models.group.loadAll();
         if(groupModelsList.length){
             let groupList = {};
