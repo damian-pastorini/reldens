@@ -36,7 +36,7 @@
     },
     "dependencies": {
         "@colyseus/monitor": "^0.12.2",
-        "@colyseus/schema": "^0.5.41",
+        "@colyseus/schema": "^1.0.3",
         "@reldens/items-system": "^0.5.7",
         "@reldens/storage": "^0.1.7",
         "@reldens/utils": "^0.1.7",
