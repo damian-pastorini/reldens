@@ -35,7 +35,7 @@
         "rebuildCss": "parcel build theme/default/css/styles.scss --no-source-maps --out-dir theme/default/css"
     },
     "dependencies": {
-        "@colyseus/monitor": "^0.12.2",
+        "@colyseus/monitor": "^0.14.0",
         "@colyseus/schema": "^0.5.41",
         "@reldens/items-system": "^0.5.7",
         "@reldens/storage": "^0.1.7",
