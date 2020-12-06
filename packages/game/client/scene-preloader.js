@@ -52,9 +52,10 @@ class ScenePreloader extends Scene
             if(this.gameManager.config.get('client/ui/sceneLabel/enabled')){
                 this.load.html('sceneLabel', 'assets/html/ui-scene-label.html');
             }
+            // @TODO - BETA.17: move everything related to player stats into the users pack or create a new pack.
             if(this.gameManager.config.get('client/ui/playerStats/enabled')){
                 this.load.html('uiPlayerStats', 'assets/html/ui-player-stats.html');
-                this.load.html('playerStats', 'assets/html/player-stats.html');
+                this.load.html('playerStat', 'assets/html/player-stat.html');
             }
             this.load.html('uiTarget', 'assets/html/ui-target.html');
             this.load.html('uiOptionButton', 'assets/html/ui-option-button.html');
@@ -103,7 +104,8 @@ class ScenePreloader extends Scene
         // @TODO - BETA.17: implement player custom avatar.
         // this.load.spritesheet(this.username, 'assets/sprites/'+this.username+'.png', playerSpriteSize);
         this.load.spritesheet(GameConst.IMAGE_PLAYER, 'assets/sprites/player-1.png', playerSpriteSize);
-        // @TODO - BETA.16 - R16-1b: replace these by skills related if available otherwise these will be configurable from the storage.
+        // @TODO - BETA.16 - R16-1b: replace these by skills related if available otherwise these will be configurable
+        //   from the storage.
         this.load.spritesheet(GameConst.ATTACK, 'assets/sprites/weapons-1.png', {frameWidth: 64, frameHeight: 64});
         this.load.spritesheet(GameConst.HIT, 'assets/sprites/impact-1.png', {frameWidth: 64, frameHeight: 64});
         this.load.spritesheet(GameConst.DEATH, 'assets/sprites/object-1.png', {frameWidth: 64, frameHeight: 64});

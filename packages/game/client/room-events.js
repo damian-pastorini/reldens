@@ -191,7 +191,7 @@ class RoomEvents
         if(uiScene && {}.hasOwnProperty.call(uiScene, 'uiPlayerStats')){
             let statsPanel = uiScene.uiPlayerStats.getChildByProperty('id', 'player-stats-container');
             if(statsPanel){
-                let messageTemplate = uiScene.cache.html.get('playerStats');
+                let messageTemplate = uiScene.cache.html.get('playerStat');
                 statsPanel.innerHTML = '';
                 // @TODO: make stats show max value if configured (so for example you can see HP 10/200).
                 for(let i of Object.keys(message.stats)){
