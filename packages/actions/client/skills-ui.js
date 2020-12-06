@@ -51,12 +51,10 @@ class SkillsUi
 
     create(codeName, depth)
     {
-        let uiName = 'ui'+codeName.replace(codeName[0], codeName[0].toUpperCase());
         let {uiX, uiY} = this.uiScene.getUiConfig(codeName);
-        this.uiScene[uiName] = this.uiScene.add.dom(uiX, uiY).createFromCache(uiName);
-        this.uiScene[uiName].setDepth(depth);
-        // @TODO - BETA.17 - REFACTOR: TEMPORAL, replace references by this.uiScene.elementsUi[codeName].
-        this.uiScene.elementsUi[codeName] = this.uiScene[uiName];
+        let generatedUi = this.uiScene.add.dom(uiX, uiY).createFromCache(codeName);
+        generatedUi.setDepth(depth);
+        this.uiScene.elementsUi[codeName] = generatedUi;
     }
 
     updateContainer()
