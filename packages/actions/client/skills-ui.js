@@ -22,7 +22,7 @@ class SkillsUi
         this.appendToUiContainer('#ui-player-extras', 'uiClassPath');
         this.appendToUiContainer('#ui-player-extras', 'uiLevel');
         this.appendToUiContainer('#ui-player-extras', 'uiExperience');
-        // @TODO: make skills buttons on client side load dynamically.
+        // @TODO - BETA.16 - R16-1a: make skills buttons on client side load dynamically.
         // this.create('skills', 2);
         /*
         let skillsPanel = this.uiScene.skillsPanel.getChildByProperty('id', 'skills-list');
@@ -55,7 +55,7 @@ class SkillsUi
         let {uiX, uiY} = this.uiScene.getUiConfig(codeName);
         this.uiScene[uiName] = this.uiScene.add.dom(uiX, uiY).createFromCache(uiName);
         this.uiScene[uiName].setDepth(depth);
-        // @TODO: TEMPORAL, replace references by this.
+        // @TODO - BETA.17 - REFACTOR: TEMPORAL, replace references by this.uiScene.elementsUi[codeName].
         this.uiScene.elementsUi[codeName] = this.uiScene[uiName];
     }
 
@@ -70,9 +70,9 @@ class SkillsUi
         */
     }
 
+    /*
     listenSkillsEvents(uiScene, skillsPanel)
     {
-        /*
         let gameManager = uiScene.gameManager;
         let masterKey = 'p'+gameManager.skills.manager.getOwnerId();
         gameManager.skills.manager.listenEvent(ItemsEvents.ADD_ITEM, (skills, skill) => {
@@ -92,8 +92,8 @@ class SkillsUi
             let qtyBox = uiScene.uiInventory.getChildByID('skill-qty-'+skill.id);
             qtyBox.innerHTML = skill.qty;
         }, 'modifyItemQtyPack', masterKey);
-        */
     }
+    */
 
 }
 

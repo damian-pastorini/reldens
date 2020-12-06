@@ -43,7 +43,7 @@ class ActionsPack
             uiScene.load.html('uiClassPath', 'assets/features/skills/templates/ui-class-path.html');
             uiScene.load.html('uiLevel', 'assets/features/skills/templates/ui-level.html');
             uiScene.load.html('uiExperience', 'assets/features/skills/templates/ui-experience.html');
-            // @TODO: make skills buttons on client side load dynamically.
+            // @TODO - BETA.16 - R16-1a: make skills buttons on client side load dynamically.
             // uiScene.load.html('uiSkills', 'assets/features/skills/templates/ui-skills.html');
         });
         EventsManagerSingleton.on('reldens.createUiScene', (preloadScene) => {

@@ -7,7 +7,7 @@
  */
 
 const { Receiver } = require('@reldens/skills');
-const { EventsManagerSingleton } = require('@reldens/utils');
+const { EventsManagerSingleton, sc } = require('@reldens/utils');
 const { GameConst } = require('../../game/constants');
 
 class ReceiverWrapper extends Receiver
@@ -38,18 +38,18 @@ class ReceiverWrapper extends Receiver
             let ownerSprite = false;
             let targetSprite = false;
             let isPvP = (
-                {}.hasOwnProperty.call(currentScene.player.players, message.owner)
-                && {}.hasOwnProperty.call(currentScene.player.players, message.target)
+                sc.hasOwn(currentScene.player.players, message.owner)
+                && sc.hasOwn(currentScene.player.players, message.target)
             );
             if(isPvP){
                 ownerSprite = currentScene.player.players[message.owner];
                 targetSprite = currentScene.player.players[message.target];
             } else {
-                if({}.hasOwnProperty.call(currentScene.objectsAnimations, message.owner)){
+                if(sc.hasOwn(currentScene.objectsAnimations, message.owner)){
                     ownerSprite = currentScene.objectsAnimations[message.owner].sceneSprite;
                     targetSprite = currentScene.player.players[message.target];
                 }
-                if({}.hasOwnProperty.call(currentScene.objectsAnimations, message.target)){
+                if(sc.hasOwn(currentScene.objectsAnimations, message.target)){
                     targetSprite = currentScene.objectsAnimations[message.target].sceneSprite;
                     ownerSprite = currentScene.player.players[message.owner];
                 }
@@ -98,7 +98,7 @@ class ReceiverWrapper extends Receiver
     onInitClassPathEnd(message)
     {
         this.updateLevelAndExperience(message);
-        // @TODO: update skills, etc.
+        // @TODO- TEST: update skills, etc. is this needed?
     }
 
     onLevelUp(message)

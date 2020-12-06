@@ -12,10 +12,9 @@ const { RoomEvents } = require('./room-events');
 const { FeaturesManager } = require('../../features/client/manager');
 const { GameDom } = require('./game-dom');
 const { ConfigProcessor } = require('../../config/processor');
-const { Logger } = require('@reldens/utils');
 const { GameConst } = require('../constants');
 const { FirebaseConnector } = require('../../firebase/client/connector');
-const { EventsManagerSingleton } = require('@reldens/utils');
+const { EventsManagerSingleton, Logger, sc } = require('@reldens/utils');
 
 class GameManager
 {
@@ -243,6 +242,15 @@ class GameManager
     getCurrentPlayer()
     {
         return this.getActiveScene().player;
+    }
+
+    getUiElement(uiName)
+    {
+        if(!sc.hasOwn(this.gameEngine, 'uiScene')){
+            Logger.error('UI Scene not defined.');
+            return false;
+        }
+        return this.gameEngine.uiScene.getUiElement(uiName);
     }
 
 }

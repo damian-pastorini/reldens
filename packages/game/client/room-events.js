@@ -344,10 +344,10 @@ class RoomEvents
             }
         }
         // update any ui if needed, this event happens once for every scene:
-        let uiScene = this.gameEngine.uiScene;
+        let sceneLabel = this.gameManager.getUiElement('sceneLabel');
         // if scene label is visible assign the data to the box:
-        if({}.hasOwnProperty.call(uiScene, 'uiSceneLabel')){
-            let element = uiScene.uiSceneLabel.getChildByProperty('className', 'scene-label');
+        if(sceneLabel){
+            let element = sceneLabel.getChildByProperty('className', 'scene-label');
             if(element){
                 element.innerHTML = this.sceneData.roomTitle;
             }

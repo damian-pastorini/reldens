@@ -7,10 +7,9 @@
 const { AnimationEngine } = require('../../objects/client/animation-engine');
 const { UserInterface } = require('../../game/client/user-interface');
 const { ObjectsConst } = require('../constants');
-const { Logger } = require('@reldens/utils');
 const { ActionsConst } = require('../../actions/constants');
 const { GameConst } = require('../../game/constants');
-const { EventsManagerSingleton } = require('@reldens/utils');
+const { EventsManagerSingleton, Logger, sc } = require('@reldens/utils');
 
 class ObjectsPack
 {
@@ -40,7 +39,7 @@ class ObjectsPack
             //@TODO: TEMP. just use object types?
             if(message.act === ObjectsConst.OBJECT_ANIMATION || message.act === ObjectsConst.TYPE_ANIMATION){
                 let currentScene = gameManager.activeRoomEvents.getActiveScene();
-                if({}.hasOwnProperty.call(currentScene.objectsAnimations, message.key)){
+                if(sc.hasOwn(currentScene.objectsAnimations, message.key)){
                     currentScene.objectsAnimations[message.key].runAnimation();
                 }
             }
@@ -51,7 +50,7 @@ class ObjectsPack
                 skeletonSprite.anims.play(GameConst.DEATH, true).on('animationcomplete', () => {
                     skeletonSprite.destroy();
                 });
-                if({}.hasOwnProperty.call(message, 't') && message.t === currentScene.player.currentTarget.id){
+                if(sc.hasOwn(message, 't') && message.t === currentScene.player.currentTarget.id){
                     gameManager.gameEngine.clearTarget();
                 }
             }
@@ -66,7 +65,7 @@ class ObjectsPack
                 }
             };
             room.state.bodies.onRemove = (body, key) => {
-                if(key.indexOf('bullet') !== -1 && {}.hasOwnProperty.call(this.bullets, key)){
+                if(key.indexOf('bullet') !== -1 && sc.hasOwn(this.bullets, key)){
                     this.bullets[key].destroy();
                     delete this.bullets[key];
                 }
@@ -77,8 +76,10 @@ class ObjectsPack
                     this.bullets[key].y = body.y;
                 } else {
                     let currentScene = gameManager.activeRoomEvents.getActiveScene();
-                    currentScene.objectsAnimations[key].sceneSprite.x = body.x;
-                    currentScene.objectsAnimations[key].sceneSprite.y = body.y;
+                    if(sc.hasOwn(currentScene.objectsAnimations, key)){
+                        currentScene.objectsAnimations[key].sceneSprite.x = body.x;
+                        currentScene.objectsAnimations[key].sceneSprite.y = body.y;
+                    }
                 }
             };
         }
@@ -92,7 +93,7 @@ class ObjectsPack
         }
         for(let i of Object.keys(objectsAnimationsData)){
             let animProps = objectsAnimationsData[i];
-            if(!{}.hasOwnProperty.call(animProps, 'ui')){
+            if(!sc.hasOwn(animProps, 'ui')){
                 continue;
             }
             if(!animProps.id){

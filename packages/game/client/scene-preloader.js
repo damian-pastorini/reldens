@@ -7,7 +7,7 @@
  */
 
 const { Scene, Geom } = require('phaser');
-const { Logger } = require('@reldens/utils');
+const { Logger, sc } = require('@reldens/utils');
 const { GameConst } = require('../constants');
 const { EventsManagerSingleton } = require('@reldens/utils');
 
@@ -50,7 +50,7 @@ class ScenePreloader extends Scene
                 this.load.html('uiControls', 'assets/html/ui-controls.html');
             }
             if(this.gameManager.config.get('client/ui/sceneLabel/enabled')){
-                this.load.html('uiSceneLabel', 'assets/html/ui-scene-label.html');
+                this.load.html('sceneLabel', 'assets/html/ui-scene-label.html');
             }
             if(this.gameManager.config.get('client/ui/playerStats/enabled')){
                 this.load.html('uiPlayerStats', 'assets/html/ui-player-stats.html');
@@ -66,7 +66,7 @@ class ScenePreloader extends Scene
         if(this.preloadMapKey){
             this.load.tilemapTiledJSON(this.preloadMapKey, `assets/maps/${this.preloadMapKey}.json`);
         }
-        // @TODO: test a multiple tiles images case.
+        // @TODO - BETA.17 - TEST: test a multiple tiles images case.
         // map tiles images:
         if(this.preloadImages){
             // @NOTE: we need the preloadImages and tile data here because the JSON map file is not loaded yet.
@@ -100,10 +100,10 @@ class ScenePreloader extends Scene
             frameWidth: this.gameManager.config.get('client/players/size/width') || 52,
             frameHeight: this.gameManager.config.get('client/players/size/height') || 71
         };
-        // @TODO: implement player custom avatar.
+        // @TODO - BETA.17: implement player custom avatar.
         // this.load.spritesheet(this.username, 'assets/sprites/'+this.username+'.png', playerSpriteSize);
         this.load.spritesheet(GameConst.IMAGE_PLAYER, 'assets/sprites/player-1.png', playerSpriteSize);
-        // @TODO: make all these configurable from the storage.
+        // @TODO - BETA.16 - R16-1b: replace these by skills related if available otherwise these will be configurable from the storage.
         this.load.spritesheet(GameConst.ATTACK, 'assets/sprites/weapons-1.png', {frameWidth: 64, frameHeight: 64});
         this.load.spritesheet(GameConst.HIT, 'assets/sprites/impact-1.png', {frameWidth: 64, frameHeight: 64});
         this.load.spritesheet(GameConst.DEATH, 'assets/sprites/object-1.png', {frameWidth: 64, frameHeight: 64});
@@ -153,12 +153,11 @@ class ScenePreloader extends Scene
                     this.gameManager.gameEngine.clearTarget();
                 });
             }
-            // create uiSceneLabel:
+            // create ui sceneLabel:
             let sceneLabelUi = this.getUiConfig('sceneLabel');
             if(sceneLabelUi.enabled){
-                this.uiSceneLabel = this.add.dom(sceneLabelUi.uiX, sceneLabelUi.uiY).createFromCache('uiSceneLabel');
-                // @TODO: TEMPORAL, replace references by this.
-                this.elementsUi['sceneLabel'] = this.uiSceneLabel;
+                this.elementsUi['sceneLabel'] = this.add.dom(sceneLabelUi.uiX, sceneLabelUi.uiY)
+                    .createFromCache('sceneLabel');
             }
             // create uiControls:
             let controlsUi = this.getUiConfig('controls');
@@ -413,6 +412,16 @@ class ScenePreloader extends Scene
             .fillStyle(color)
             .fillRectShape(this.progressRect);
     }
+
+    getUiElement(uiName)
+    {
+        if(!sc.hasOwn(this.elementsUi, uiName)){
+            Logger.error(['UI not found:', uiName]);
+            return false;
+        }
+        return this.elementsUi[uiName];
+    }
+
 
 }
 
