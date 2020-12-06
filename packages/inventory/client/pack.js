@@ -32,7 +32,7 @@ class InventoryPack
                     }
                     // create inventory instance:
                     roomEvents.gameManager.inventory = new Receiver(receiverProps);
-                    // @TODO: extend the Receiver class for this override.
+                    // @TODO - BETA.16: extend the Receiver class for this override.
                     roomEvents.gameManager.inventory.onExecuting = (message) => {
                         this.executingItem(message, roomEvents.gameManager);
                     };
@@ -44,18 +44,20 @@ class InventoryPack
             }
         });
         EventsManagerSingleton.on('reldens.preloadUiScene', (preloadScene) => {
-            preloadScene.load.html('uiInventory', 'assets/features/inventory/templates/ui-inventory.html');
-            preloadScene.load.html('uiEquipment', 'assets/features/inventory/templates/ui-equipment.html');
-            preloadScene.load.html('uiInventoryItem', 'assets/features/inventory/templates/item.html');
-            preloadScene.load.html('uiInventoryItemUse', 'assets/features/inventory/templates/usable.html');
-            preloadScene.load.html('uiInventoryItemEquip', 'assets/features/inventory/templates/equip.html');
-            preloadScene.load.html('uiInventoryGroup', 'assets/features/inventory/templates/group.html');
+            preloadScene.load.html('inventory', 'assets/features/inventory/templates/ui-inventory.html');
+            preloadScene.load.html('equipment', 'assets/features/inventory/templates/ui-equipment.html');
+            preloadScene.load.html('inventoryItem', 'assets/features/inventory/templates/item.html');
+            preloadScene.load.html('inventoryItemUse', 'assets/features/inventory/templates/usable.html');
+            preloadScene.load.html('inventoryItemEquip', 'assets/features/inventory/templates/equip.html');
+            preloadScene.load.html('inventoryGroup', 'assets/features/inventory/templates/group.html');
         });
         EventsManagerSingleton.on('reldens.createUiScene', (preloadScene) => {
             this.uiManager = new InventoryUi(preloadScene);
             this.uiManager.createUi();
-            let inventoryPanel = preloadScene.uiInventory.getChildByProperty('id', InventoryConst.INVENTORY_ITEMS);
-            let equipmentPanel = preloadScene.uiEquipment.getChildByProperty('id', InventoryConst.EQUIPMENT_ITEMS);
+            let inventoryPanel = preloadScene.getUiElement('inventory')
+                .getChildByProperty('id', InventoryConst.INVENTORY_ITEMS);
+            let equipmentPanel = preloadScene.getUiElement('equipment')
+                .getChildByProperty('id', InventoryConst.EQUIPMENT_ITEMS);
             if(!inventoryPanel || !equipmentPanel){
                 Logger.error(['Inventory/Equipment UI not found.', inventoryPanel, equipmentPanel]);
                 return false;
@@ -99,11 +101,11 @@ class InventoryPack
         }, 'setItemsPack', masterKey);
         // eslint-disable-next-line no-unused-vars
         gameManager.inventory.manager.listenEvent(ItemsEvents.MODIFY_ITEM_QTY, (item, inventory, op, key, qty) => {
-            let qtyBox = uiScene.uiInventory.getChildByID('item-qty-'+item.getInventoryId());
+            let qtyBox = uiScene.getUiElement('inventory').getChildByID('item-qty-'+item.getInventoryId());
             qtyBox.innerHTML = item.qty;
         }, 'modifyItemQtyPack', masterKey);
         gameManager.inventory.manager.listenEvent(ItemsEvents.REMOVE_ITEM, (inventory, itemKey) => {
-            uiScene.uiInventory.getChildByID('item-'+itemKey).remove();
+            uiScene.getUiElement('inventory').getChildByID('item-'+itemKey).remove();
         }, 'removeItemPack', masterKey);
         gameManager.inventory.manager.listenEvent(ItemsEvents.SET_GROUPS, (props) => {
             gameManager.gameDom.getElement('#'+InventoryConst.EQUIPMENT_ITEMS).html('');
@@ -153,7 +155,7 @@ class InventoryPack
 
     createItemBox(item, gameManager, uiScene)
     {
-        let messageTemplate = uiScene.cache.html.get('uiInventoryItem');
+        let messageTemplate = uiScene.cache.html.get('inventoryItem');
         return gameManager.gameEngine.parseTemplate(messageTemplate, {
             key: item.key,
             label: item.label,
@@ -174,7 +176,7 @@ class InventoryPack
 
     createGroupBox(group, gameManager, uiScene)
     {
-        let messageTemplate = uiScene.cache.html.get('uiInventoryGroup');
+        let messageTemplate = uiScene.cache.html.get('inventoryGroup');
         return gameManager.gameEngine.parseTemplate(messageTemplate, {
             key: group.key,
             label: group.label,
@@ -248,7 +250,7 @@ class InventoryPack
 
     getUsableContent(item, gameManager, uiScene)
     {
-        let messageTemplate = uiScene.cache.html.get('uiInventoryItemUse');
+        let messageTemplate = uiScene.cache.html.get('inventoryItemUse');
         return gameManager.gameEngine.parseTemplate(messageTemplate, {
             id: item.getInventoryId()
         });
@@ -256,7 +258,7 @@ class InventoryPack
 
     getEquipContent(item, gameManager, uiScene)
     {
-        let messageTemplate = uiScene.cache.html.get('uiInventoryItemEquip');
+        let messageTemplate = uiScene.cache.html.get('inventoryItemEquip');
         return gameManager.gameEngine.parseTemplate(messageTemplate, {
             id: item.getInventoryId(),
             equipStatus: item.equipped ? 'equipped' : 'unequipped'

@@ -25,17 +25,16 @@ class InventoryUi
 
     create(codeName, depth)
     {
-        let uiName = 'ui'+codeName.replace(codeName[0], codeName[0].toUpperCase());
         let consName = codeName.toUpperCase();
         let {uiX, uiY} = this.uiScene.getUiConfig(codeName);
-        this.uiScene[uiName] = this.uiScene.add.dom(uiX, uiY).createFromCache(uiName);
-        let closeButton = this.uiScene[uiName].getChildByProperty('id', InventoryConst[consName+'_CLOSE']);
-        let openButton = this.uiScene[uiName].getChildByProperty('id', InventoryConst[consName+'_OPEN']);
+        let newUiObject = this.uiScene.add.dom(uiX, uiY).createFromCache(codeName);
+        let closeButton = newUiObject.getChildByProperty('id', InventoryConst[consName+'_CLOSE']);
+        let openButton = newUiObject.getChildByProperty('id', InventoryConst[consName+'_OPEN']);
         if(closeButton && openButton){
             closeButton.addEventListener('click', () => {
-                let box = this.uiScene[uiName].getChildByProperty('id', codeName+'-ui');
+                let box = newUiObject.getChildByProperty('id', codeName+'-ui');
                 box.style.display = 'none';
-                let uiPanel = this.uiScene[uiName].getChildByProperty('id', InventoryConst[consName+'_ITEMS']);
+                let uiPanel = newUiObject.getChildByProperty('id', InventoryConst[consName+'_ITEMS']);
                 uiPanel.querySelectorAll('.item-box .image-container img').forEach(function(element){
                     element.style.border = 'none';
                 });
@@ -43,17 +42,16 @@ class InventoryUi
                     element.style.display = 'none';
                 });
                 openButton.style.display = 'block';
-                this.uiScene[uiName].setDepth(1);
+                newUiObject.setDepth(1);
             });
             openButton.addEventListener('click', () => {
-                let box = this.uiScene[uiName].getChildByProperty('id', codeName+'-ui');
+                let box = newUiObject.getChildByProperty('id', codeName+'-ui');
                 box.style.display = 'block';
                 openButton.style.display = 'none';
-                this.uiScene[uiName].setDepth(depth);
+                newUiObject.setDepth(depth);
             });
         }
-        // @TODO: TEMPORAL, replace references by this.
-        this.uiScene.elementsUi[codeName] = this.uiScene[uiName];
+        this.uiScene.elementsUi[codeName] = newUiObject;
     }
 
 }

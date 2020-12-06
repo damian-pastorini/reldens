@@ -89,7 +89,7 @@ class SkillsUi
         }, 'setItemsPack', masterKey);
         // eslint-disable-next-line no-unused-vars
         gameManager.skills.manager.listenEvent(ItemsEvents.MODIFY_ITEM_QTY, (skill, skills, op, key, qty) => {
-            let qtyBox = uiScene.uiInventory.getChildByID('skill-qty-'+skill.id);
+            let qtyBox = uiScene.getUiElement('inventory').getChildByID('skill-qty-'+skill.id);
             qtyBox.innerHTML = skill.qty;
         }, 'modifyItemQtyPack', masterKey);
     }

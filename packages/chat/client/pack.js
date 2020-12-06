@@ -46,7 +46,7 @@ class ChatPack
                 return;
             }
             let messageTemplate = gameManager.gameEngine.uiScene.cache.html.get('chatMessage');
-            // @TODO: implement chat notification balloon.
+            // @TODO - BETA.16: implement chat notifications balloon.
             let output = gameManager.gameEngine.parseTemplate(messageTemplate, {
                 from: message[ChatConst.CHAT_FROM],
                 color: ChatConst.colors[message.t],
