@@ -20,8 +20,8 @@ class ChatPack
             this.listenMessages(room, gameManager);
         });
         EventsManagerSingleton.on('reldens.preloadUiScene', (preloadScene) => {
-            preloadScene.load.html('uiChat', 'assets/features/chat/templates/ui-chat.html');
-            preloadScene.load.html('uiChatMessage', 'assets/features/chat/templates/message.html');
+            preloadScene.load.html('chat', 'assets/features/chat/templates/ui-chat.html');
+            preloadScene.load.html('chatMessage', 'assets/features/chat/templates/message.html');
         });
         EventsManagerSingleton.on('reldens.createUiScene', (preloadScene) => {
             this.uiManager = new ChatUi(preloadScene);
@@ -35,17 +35,17 @@ class ChatPack
             if(message.act !== ChatConst.CHAT_ACTION){
                 return;
             }
-            let uiScene = gameManager.gameEngine.uiScene;
-            if(!{}.hasOwnProperty.call(uiScene, 'uiChat')){
+            let uiChat = gameManager.getUiElement('chat');
+            if(!uiChat){
                 Logger.error('Chat interface not found.');
                 return;
             }
-            let readPanel = uiScene.uiChat.getChildByProperty('id', ChatConst.CHAT_MESSAGES);
+            let readPanel = uiChat.getChildByProperty('id', ChatConst.CHAT_MESSAGES);
             if(!readPanel){
                 Logger.error('Chat UI not found.');
                 return;
             }
-            let messageTemplate = uiScene.cache.html.get('uiChatMessage');
+            let messageTemplate = gameManager.gameEngine.uiScene.cache.html.get('chatMessage');
             // @TODO: implement chat notification balloon.
             let output = gameManager.gameEngine.parseTemplate(messageTemplate, {
                 from: message[ChatConst.CHAT_FROM],
