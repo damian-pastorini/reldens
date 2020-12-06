@@ -54,7 +54,7 @@ class ScenePreloader extends Scene
             }
             // @TODO - BETA.17: move everything related to player stats into the users pack or create a new pack.
             if(this.gameManager.config.get('client/ui/playerStats/enabled')){
-                this.load.html('uiPlayerStats', 'assets/html/ui-player-stats.html');
+                this.load.html('playerStats', 'assets/html/ui-player-stats.html');
                 this.load.html('playerStat', 'assets/html/player-stat.html');
             }
             this.load.html('uiTarget', 'assets/html/ui-target.html');
@@ -166,28 +166,27 @@ class ScenePreloader extends Scene
                     .createFromCache('controls');
                 this.registerControllers(this.elementsUi['controls']);
             }
-            // create uiPlayerStats:
+            // create ui playerStats:
             let statsUi = this.getUiConfig('playerStats');
             if(statsUi.enabled){
-                this.uiPlayerStats = this.add.dom(statsUi.uiX, statsUi.uiY).createFromCache('uiPlayerStats');
-                let closeButton = this.uiPlayerStats.getChildByProperty('id', 'player-stats-close');
-                let openButton = this.uiPlayerStats.getChildByProperty('id', 'player-stats-open');
+                this.elementsUi['playerStats'] = this.add.dom(statsUi.uiX, statsUi.uiY)
+                    .createFromCache('playerStats');
+                let closeButton = this.elementsUi['playerStats'].getChildByProperty('id', 'player-stats-close');
+                let openButton = this.elementsUi['playerStats'].getChildByProperty('id', 'player-stats-open');
                 if(closeButton && openButton){
                     closeButton.addEventListener('click', () => {
-                        let box = this.uiPlayerStats.getChildByProperty('id', 'player-stats-ui');
+                        let box = this.elementsUi['playerStats'].getChildByProperty('id', 'player-stats-ui');
                         box.style.display = 'none';
                         openButton.style.display = 'block';
-                        this.uiPlayerStats.setDepth(1);
+                        this.elementsUi['playerStats'].setDepth(1);
                     });
                     openButton.addEventListener('click', () => {
-                        let box = this.uiPlayerStats.getChildByProperty('id', 'player-stats-ui');
+                        let box = this.elementsUi['playerStats'].getChildByProperty('id', 'player-stats-ui');
                         box.style.display = 'block';
                         openButton.style.display = 'none';
-                        this.uiPlayerStats.setDepth(4);
+                        this.elementsUi['playerStats'].setDepth(4);
                     });
                 }
-                // @TODO: TEMPORAL, replace references by this.
-                this.elementsUi['playerStats'] = this.uiPlayerStats;
             }
             // end event:
             EventsManagerSingleton.emit('reldens.createUiScene', this);

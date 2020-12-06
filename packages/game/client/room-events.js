@@ -11,7 +11,7 @@ const { PlayerEngine } = require('../../users/client/player-engine');
 const { SceneDynamic } = require('./scene-dynamic');
 const { ScenePreloader } = require('./scene-preloader');
 const { GameConst } = require('../constants');
-const { EventsManagerSingleton, Logger } = require('@reldens/utils');
+const { EventsManagerSingleton, Logger, sc } = require('@reldens/utils');
 
 class RoomEvents
 {
@@ -99,7 +99,7 @@ class RoomEvents
             return;
         }
         let currentScene = this.getActiveScene();
-        if(currentScene.player && {}.hasOwnProperty.call(currentScene.player.players, key)){
+        if(currentScene.player && sc.hasOwn(currentScene.player.players, key)){
             currentScene.player.runPlayerAnimation(key, player);
         }
     }
@@ -115,7 +115,7 @@ class RoomEvents
             window.location.reload();
         } else {
             let currentScene = this.getActiveScene();
-            if(currentScene.player && {}.hasOwnProperty.call(currentScene.player.players, key)){
+            if(currentScene.player && sc.hasOwn(currentScene.player.players, key)){
                 // remove your player entity from the game world:
                 currentScene.player.removePlayer(key);
             }
@@ -180,20 +180,20 @@ class RoomEvents
     updatePlayerStats(message)
     {
         let currentScene = this.getActiveScene();
-        if(!currentScene.player || !{}.hasOwnProperty.call(currentScene.player.players, this.room.sessionId)){
+        if(!currentScene.player || !sc.hasOwn(currentScene.player.players, this.room.sessionId)){
             Logger.error('For some reason you hit this case which should not happen.');
             return;
         }
         let playerSprite = currentScene.player.players[this.room.sessionId];
         playerSprite.stats = message.stats;
         this.gameManager.playerData.stats = message.stats;
-        let uiScene = this.gameEngine.uiScene;
-        if(uiScene && {}.hasOwnProperty.call(uiScene, 'uiPlayerStats')){
-            let statsPanel = uiScene.uiPlayerStats.getChildByProperty('id', 'player-stats-container');
+        let playerStats = this.gameManager.getUiElement('playerStats');
+        if(playerStats){
+            let statsPanel = playerStats.getChildByProperty('id', 'player-stats-container');
             if(statsPanel){
-                let messageTemplate = uiScene.cache.html.get('playerStat');
+                let messageTemplate = this.gameEngine.uiScene.cache.html.get('playerStat');
                 statsPanel.innerHTML = '';
-                // @TODO: make stats show max value if configured (so for example you can see HP 10/200).
+                // @TODO - BETA.16: make stats show max value if configured (so for example you can see HP 10/200).
                 for(let i of Object.keys(message.stats)){
                     statsPanel.innerHTML = statsPanel.innerHTML
                         + this.gameManager.gameEngine.parseTemplate(messageTemplate, {
@@ -214,7 +214,7 @@ class RoomEvents
     initUi(props)
     {
         let uiScene = this.gameEngine.uiScene;
-        if(!uiScene || {}.hasOwnProperty.call(uiScene.userInterfaces, props.id)){
+        if(!uiScene || sc.hasOwn(uiScene.userInterfaces, props.id)){
             return false;
         }
         let uiBox = uiScene.userInterfaces[props.id];
