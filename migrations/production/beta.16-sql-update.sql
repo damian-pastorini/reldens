@@ -467,7 +467,6 @@ INSERT INTO `players_stats` (`id`, `key`, `label`, `description`, `base_value`) 
 INSERT INTO `players_stats` (`id`, `key`, `label`, `description`, `base_value`) VALUES (9, 'mgk-atk', 'Magic Atk', 'Player magic attack', 100);
 INSERT INTO `players_stats` (`id`, `key`, `label`, `description`, `base_value`) VALUES (10, 'mgk-def', 'Magic Def', 'Player magic defense', 100);
 
-
 INSERT INTO players_stats_base (id, player_id, stat_id, value)
 SELECT NULL, p.id AS playerId, ps.id AS statId, ps.base_value AS statValue FROM players AS p JOIN players_stats AS ps;
 
@@ -496,3 +495,14 @@ INSERT IGNORE INTO players_stats (id, player_id, stat_id, base_value, value)
 SELECT NULL, p.id AS playerId, ps.id AS statId, ps.base_value AS statValue, ps.base_value AS currentValue
     FROM players AS p
     JOIN players_stats AS ps;
+
+
+#######################################################################################################################
+
+# Config:
+
+UPDATE `config` SET path = 'ui/playerBox/enabled' WHERE path = 'ui/playerName/enabled' LIMIT 1;
+UPDATE `config` SET path = 'ui/playerBox/responsiveX' WHERE path = 'ui/playerName/responsiveX' LIMIT 1;
+UPDATE `config` SET path = 'ui/playerBox/responsiveY' WHERE path = 'ui/playerName/responsiveY' LIMIT 1;
+UPDATE `config` SET path = 'ui/playerBox/x' WHERE path = 'ui/playerName/x' LIMIT 1;
+UPDATE `config` SET path = 'ui/playerBox/y' WHERE path = 'ui/playerName/y' LIMIT 1;

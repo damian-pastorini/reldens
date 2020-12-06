@@ -43,8 +43,8 @@ class ScenePreloader extends Scene
             // @NOTE: the events here run only once over all the game progress.
             EventsManagerSingleton.emit('reldens.beforePreloadUiScene', this);
             // ui elements:
-            if(this.gameManager.config.get('client/ui/playerName/enabled')){
-                this.load.html('uiPlayer', 'assets/html/ui-player.html');
+            if(this.gameManager.config.get('client/ui/playerBox/enabled')){
+                this.load.html('playerBox', 'assets/html/ui-player-box.html');
             }
             if(this.gameManager.config.get('client/ui/controls/enabled')){
                 this.load.html('uiControls', 'assets/html/ui-controls.html');
@@ -131,20 +131,18 @@ class ScenePreloader extends Scene
         if(this.uiScene){
             // @NOTE: the events here run only once over all the game progress.
             EventsManagerSingleton.emit('reldens.beforeCreateUiScene', this);
-            // create uiPlayer:
-            let playerUi = this.getUiConfig('playerName');
-            if(playerUi.enabled){
-                this.uiPlayer = this.add.dom(playerUi.uiX, playerUi.uiY).createFromCache('uiPlayer');
+            // create playerBox:
+            let playerBox = this.getUiConfig('playerBox');
+            if(playerBox.enabled){
+                this.elementsUi['playerBox'] = this.add.dom(playerBox.uiX, playerBox.uiY).createFromCache('playerBox');
                 // logout:
-                let logoutButton = this.uiPlayer.getChildByProperty('id', 'logout');
+                let logoutButton = this.elementsUi['playerBox'].getChildByProperty('id', 'logout');
                 logoutButton.addEventListener('click', () => {
                     if(this.gameManager.firebase.isActive){
                         this.gameManager.firebase.app.auth().signOut();
                     }
                     window.location.reload();
                 });
-                // @TODO: TEMPORAL, replace references by this.
-                this.elementsUi['playerName'] = this.uiPlayer;
             }
             // create uiTarget:
             let targetUi = this.getUiConfig('uiTarget');

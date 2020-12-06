@@ -298,8 +298,9 @@ class RoomEvents
                     // assign the preloader:
                     this.gameEngine.uiScene = preloader;
                     // if the box right is present then assign the actions:
-                    if(preloader.uiPlayer){
-                        let element = preloader.uiPlayer.getChildByProperty('className', 'player-name');
+                    let playerBox = this.gameManager.getUiElement('playerBox');
+                    if(playerBox){
+                        let element = playerBox.getChildByProperty('className', 'player-name');
                         if(element){
                             element.innerHTML = player.username;
                         }
