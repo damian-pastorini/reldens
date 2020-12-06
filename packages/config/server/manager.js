@@ -24,7 +24,7 @@ class ConfigManager
         // initialize config props with default data:
         this.configList = {
             server: {
-                // @TODO: move to users pack (append initial state and initial user to the config using events).
+                // @TODO - BETA.16 - R16-5: move to users pack, append initial data to the config using events.
                 players: {
                     initialState: InitialState,
                     initialUser: InitialUser
@@ -33,9 +33,6 @@ class ConfigManager
         };
     }
 
-    /**
-     * @returns {Promise<{}|*>}
-     */
     async loadConfigurations()
     {
         let gameConfig = new GameConfig();

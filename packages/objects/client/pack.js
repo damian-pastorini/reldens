@@ -36,7 +36,7 @@ class ObjectsPack
     listenMessages(room, gameManager)
     {
         room.onMessage((message) => {
-            //@TODO: TEMP. just use object types?
+            //@TODO - BETA.17: use object types, this will change with the Colyseus upgrade.
             if(message.act === ObjectsConst.OBJECT_ANIMATION || message.act === ObjectsConst.TYPE_ANIMATION){
                 let currentScene = gameManager.activeRoomEvents.getActiveScene();
                 if(sc.hasOwn(currentScene.objectsAnimations, message.key)){

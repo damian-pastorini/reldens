@@ -29,7 +29,8 @@ class RoomGame extends RoomLogin
         this.send(client, {
             act: GameConst.START_GAME,
             sessionId: client.sessionId,
-            player: authResult.players[0], // @TODO: [0] is temporal since for now we only have one player by user.
+            // @TODO - BETA.17: index [0] is temporal since for now we only have one player by user.
+            player: authResult.players[0],
             gameConfig: clientFullConfig,
             features: this.config.availableFeaturesList
         });

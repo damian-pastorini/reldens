@@ -92,7 +92,7 @@ class RoomsManager
 
     async loadRooms()
     {
-        // @TODO: this will change when hot-plug is introduced.
+        // @TODO - BETA.17: this will change when hot-plug is introduced.
         if(!this.loadedRooms){
             // get rooms:
             let roomsModels = await RoomsModel.loadFullData();

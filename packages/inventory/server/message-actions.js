@@ -29,9 +29,9 @@ class InventoryMessageActions
             playerSchema.inventory.manager.items[data.idx].use();
         }
         if(data.act === InventoryConst.ACTION_EQUIP){
-            // @TODO: this is temporal since for now we are only allowing one item per group. In the future we will use
-            //   inventory groups properly on the server side to validate if the item can be equipped checking the
-            //   group items limit (this also would help to avoid looping on all the items).
+            // @TODO - BETA.17: this is temporal since for now we are only allowing one item per group. In the future
+            //   we will use inventory groups properly on the server side to validate if the item can be equipped
+            //   checking the group items limit (this also would help to avoid looping on all the items).
             let item = playerSchema.inventory.manager.items[data.idx];
             if(!item.equipped){
                 this.unEquipPrevious(item.group_id, playerSchema.inventory.manager.items);

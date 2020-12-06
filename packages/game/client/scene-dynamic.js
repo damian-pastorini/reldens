@@ -54,9 +54,10 @@ class SceneDynamic extends Scene
         });
         this.map = this.add.tilemap(this.params.roomMap);
         this.input.on('pointerdown', (pointer, currentlyOver) => {
-            // @TODO: temporal avoid double actions, if you target something you will not be moved to the pointer, in
-            //   a future release this will be configurable so you can walk to objects and they get activated, for
-            //   example, click on and NPC, automatically walk close and automatically get a dialog opened.
+            // @TODO - BETA.17: temporal avoid double actions, if you target something you will not be moved to the
+            //   pointer, in a future release this will be configurable so you can walk to objects and they get
+            //   activated, for example, click on and NPC, automatically walk close and automatically get a dialog
+            //   opened.
             if(!currentlyOver.length){
                 this.appendRowAndColumn(pointer);
                 this.player.moveToPointer(pointer);
@@ -160,9 +161,9 @@ class SceneDynamic extends Scene
     {
         let tW = this.map.tileWidth;
         let tH = this.map.tileHeight;
-        // @TODO: this is a temporal fix, we need to make configurable the player body and take it into account for the
-        //   path finder calculations. Between the configurations we need to include one to affect the body size in the
-        //   server, for now all the bodies get the same tile size. See related issue #54.
+        // @TODO - BETA.17: this is a temporal fix, we need to make configurable the player body and take it into
+        //   account for the path finder calculations. Between the configurations we need to include one to affect the
+        //   body size in the server, for now all the bodies get the same tile size. See related issue #54.
         let column = Math.round(pointer.worldX / tW);
         let row = Math.round(pointer.worldY / tH);
         pointer.worldColumn = column;

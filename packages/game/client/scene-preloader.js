@@ -67,7 +67,7 @@ class ScenePreloader extends Scene
         if(this.preloadMapKey){
             this.load.tilemapTiledJSON(this.preloadMapKey, `assets/maps/${this.preloadMapKey}.json`);
         }
-        // @TODO - BETA.17 - TEST: test a multiple tiles images case.
+        // @TODO - BETA.17 - CHECK: test a multiple tiles images case.
         // map tiles images:
         if(this.preloadImages){
             // @NOTE: we need the preloadImages and tile data here because the JSON map file is not loaded yet.
@@ -226,14 +226,14 @@ class ScenePreloader extends Scene
 
     createPlayerAnimations()
     {
-        // @TODO:
-        //   - All the animations will be part of the configuration in the database.
-        //   - Implement player custom avatar.
+        // @TODO - BETA.17: all the animations will be part of the configuration in the database.
         let availableAnimations = [
             {k: GameConst.LEFT, img: GameConst.IMAGE_PLAYER, start: 3, end: 5, repeat: -1, hide: false},
             {k: GameConst.RIGHT, img: GameConst.IMAGE_PLAYER, start: 6, end: 8, repeat: -1, hide: false},
             {k: GameConst.UP, img: GameConst.IMAGE_PLAYER, start: 9, end: 11, repeat: -1, hide: false},
             {k: GameConst.DOWN, img: GameConst.IMAGE_PLAYER, start: 0, end: 2, repeat: -1, hide: false},
+            // @TODO - BETA.16 - R16-1b: replace these by skills related if available otherwise these will be
+            //   configurable from the storage.
             {k: GameConst.ATTACK, img: GameConst.ATTACK, start: 25, end: 29, repeat: 0},
             {k: GameConst.HIT, img: GameConst.HIT, start:17, end: 19, repeat: 0},
             {k: GameConst.DEATH, img: GameConst.DEATH, start: 10, end: 11, repeat: 0, rate: 1},
@@ -256,7 +256,8 @@ class ScenePreloader extends Scene
 
     registerControllers(controllersBox)
     {
-        // @TODO: controllers will be part of the configuration in the database.
+        // @TODO - BETA.17: controllers will be part of the configuration in the database.
+        // @TODO - BETA.16 - R16-7: add W-A-S-D as directional controllers.
         this.setupDirButtonInBox(GameConst.UP, controllersBox);
         this.setupDirButtonInBox(GameConst.DOWN, controllersBox);
         this.setupDirButtonInBox(GameConst.LEFT, controllersBox);
@@ -318,7 +319,7 @@ class ScenePreloader extends Scene
         button.style.opacity = '1';
         let currentScene = this.gameManager.activeRoomEvents.getActiveScene();
         let dataSend = action;
-        // @TODO: temporal until we make buttons fully configurable.
+        // @TODO - BETA.17: controllers will be part of the configuration in the database.
         if(!{}.hasOwnProperty.call(action, 'dir')){
             dataSend = {
                 act: action,
@@ -332,7 +333,7 @@ class ScenePreloader extends Scene
     endHold(event, button)
     {
         event.preventDefault();
-        // @TODO: remove, make configurable.
+        // @TODO - BETA.16 - R16-8: make configurable on hold buttons effect.
         button.style.opacity = '0.8';
         clearTimeout(this.holdTimer);
         this.gameManager.activeRoomEvents.room.send({act: GameConst.STOP});
@@ -354,7 +355,6 @@ class ScenePreloader extends Scene
         this.progressBar = this.add.graphics();
         let width = this.cameras.main.width;
         let height = this.cameras.main.height;
-        // @TODO: fonts and messages has to be part of the configuration in the database.
         let loadingFont = this.gameManager.config.get('client/ui/loading/font');
         let loadingFontSize = this.gameManager.config.get('client/ui/loading/fontSize');
         let loadingAssetsSize = this.gameManager.config.get('client/ui/loading/assetsSize');

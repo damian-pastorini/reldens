@@ -6,20 +6,21 @@
 
 const { ItemsServer, ItemBase, ItemGroup, ItemsConst } = require('@reldens/items-system');
 const { ModelsManager } = require('@reldens/items-system/lib/server/storage/models-manager');
-const { EventsManagerSingleton } = require('@reldens/utils');
+const { EventsManagerSingleton, sc } = require('@reldens/utils');
 const { PackInterface } = require('../../features/server/pack-interface');
 const { InventoryMessageActions } = require('./message-actions');
+const { ClientWrapper } = require('../../game/server/client-wrapper');
 
 class InventoryPack extends PackInterface
 {
 
     setupPack()
     {
-        // @TODO: refactor pack to extract the models and classes generation to the external packages.
+        // @TODO - BETA.17: refactor pack to extract the models and classes generation to the external packages.
         this.inventoryModelsManager = new ModelsManager();
         EventsManagerSingleton.on('reldens.serverReady', async (event) => {
             let configProcessor = event.serverManager.configManager.processor;
-            if(!{}.hasOwnProperty.call(configProcessor, 'inventory')){
+            if(!sc.hasOwn(configProcessor, 'inventory')){
                 configProcessor.inventory = {};
             }
             await this.loadItemsFullList(configProcessor);
@@ -53,7 +54,7 @@ class InventoryPack extends PackInterface
             let inventoryClasses = configProcessor.get('server/customClasses/inventory/items');
             for(let itemModel of itemsModelsList){
                 let itemClass = ItemBase;
-                if({}.hasOwnProperty.call(inventoryClasses, itemModel.key)){
+                if(sc.hasOwn(inventoryClasses, itemModel.key)){
                     itemClass = inventoryClasses[itemModel.key];
                 }
                 itemsList[itemModel.key] = {class: itemClass, data: itemModel};
@@ -72,7 +73,7 @@ class InventoryPack extends PackInterface
             let inventoryClasses = configProcessor.get('server/customClasses/inventory/groups');
             for(let groupModel of groupModelsList){
                 let groupClass = ItemGroup;
-                if({}.hasOwnProperty.call(inventoryClasses, groupModel.key)){
+                if(sc.hasOwn(inventoryClasses, groupModel.key)){
                     groupClass = inventoryClasses[groupModel.key];
                 }
                 groupList[groupModel.key] = {class: groupClass, data: groupModel};
@@ -85,17 +86,10 @@ class InventoryPack extends PackInterface
 
     async createInventory(client, playerSchema, room)
     {
-        // @TODO: improve (remove all methods defined here, create a proper wrapper class).
         // wrap the client:
-        let clientWrapper = {
-            send: (data) => {
-                room.send(client, data);
-            },
-            broadcast: (data) => {
-                room.broadcast(data);
-            }
-        };
-        // @TODO: implement playerSchema.persistData() (see onExecutedItem in ModelsManager class), and test.
+        let clientWrapper = new ClientWrapper(client, room);
+        // @TODO - BETA.17: implement owner wrapper for playerSchema persistData function, see onExecutedItem in
+        //   ModelsManager class.
         // eslint-disable-next-line no-unused-vars
         playerSchema.persistData = async (params) => {
             // persist data in player:

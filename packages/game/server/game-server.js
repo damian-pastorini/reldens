@@ -25,7 +25,6 @@ class GameServer extends Server
     attachMonitor(app, config)
     {
         if(config.auth && config.user && config.pass){
-            // @TODO: in the future we will check if the logged user has permissions to see the monitor.
             let users = {};
             users[config.user] = config.pass;
             let basicAuthMiddleware = basicAuth({

@@ -5,7 +5,7 @@
  */
 
 const { Receiver, ItemsEvents, ItemsConst } = require('@reldens/items-system');
-const { EventsManagerSingleton, Logger } = require('@reldens/utils');
+const { EventsManagerSingleton, Logger, sc } = require('@reldens/utils');
 const { InventoryUi } = require('./inventory-ui');
 const { InventoryConst } = require('../constants');
 
@@ -32,7 +32,7 @@ class InventoryPack
                     }
                     // create inventory instance:
                     roomEvents.gameManager.inventory = new Receiver(receiverProps);
-                    // @TODO - BETA.16: extend the Receiver class for this override.
+                    // @TODO - BETA.16 - R16-10: extend the Receiver class for this override.
                     roomEvents.gameManager.inventory.onExecuting = (message) => {
                         this.executingItem(message, roomEvents.gameManager);
                     };
@@ -135,7 +135,8 @@ class InventoryPack
             if(group && uiScene.gameManager.gameDom.getElement('#group-item-'+group.key+' .equipped-item').length){
                 uiScene.gameManager.gameDom.updateContent('#group-item-'+group.key+' .equipped-item', output);
             } else {
-                // @TODO: make this append optional for now we will leave it to make the equipment action visible.
+                // @TODO - BETA.17: make this append optional for now we will leave it to make the equipment action
+                //   visible.
                 // Logger.error('Group element not found. Group ID: '+item.group_id);
                 uiScene.gameManager.gameDom.appendToElement('#'+InventoryConst.EQUIPMENT_ITEMS, output);
             }
@@ -184,9 +185,9 @@ class InventoryPack
         });
     }
 
-    // @TODO: improve and move all the styles into an external class, and make it configurable.
     setupButtonsActions(inventoryPanel, idx, item, preloadScene)
     {
+        // @TODO - BETA.17: improve and move all the styles into an external class, and make it configurable.
         // shortcuts:
         let domMan = preloadScene.gameManager.gameDom;
         // show item data:
@@ -267,9 +268,9 @@ class InventoryPack
 
     executingItem(message, gameManager)
     {
-        // @TODO: improve, split in several classes, methods and functionalities.
+        // @TODO - BETA.17: improve, split in several classes, methods and functionalities.
         let item = message.item;
-        if(!{}.hasOwnProperty.call(item, 'animationData')){
+        if(!sc.hasOwn(item, 'animationData')){
             return false;
         }
         let animKey = 'aK_'+item.key;
@@ -279,7 +280,7 @@ class InventoryPack
             frameHeight: item.animationData.frameHeight || 64
         });
         currentScene.load.on('complete', () => {
-            if({}.hasOwnProperty.call(this.itemSprites, animKey)){
+            if(sc.hasOwn(this.itemSprites, animKey)){
                 // sprite already running:
                 return false;
             }
@@ -289,19 +290,19 @@ class InventoryPack
                     start: item.animationData.start || 0,
                     end: item.animationData.end || 1
                 }),
-                frameRate: {}.hasOwnProperty.call(item.animationData, 'rate') ?
+                frameRate: sc.hasOwn(item.animationData, 'rate') ?
                     item.animationData.rate : currentScene.configuredFrameRate,
                 repeat: item.animationData.repeat || 3,
-                hideOnComplete: {}.hasOwnProperty.call(item.animationData, 'hide') ?
+                hideOnComplete: sc.hasOwn(item.animationData, 'hide') ?
                     item.animationData.hide : true,
             };
             let x = 0, y = 0;
             let targetId = (
                     item.animationData.startsOnTarget
-                    && {}.hasOwnProperty.call(message.target, 'playerId')
+                    && sc.hasOwn(message.target, 'playerId')
                     && message.target.playerId
                 ) ? message.target.playerId : currentScene.player.playerId;
-            if(!targetId || !{}.hasOwnProperty.call(currentScene.player.players, targetId)){
+            if(!targetId || !sc.hasOwn(currentScene.player.players, targetId)){
                 Logger.error('Player sprite not found.');
                 return false;
             }
@@ -311,10 +312,10 @@ class InventoryPack
                 x = playerSprite.x;
                 y = playerSprite.y;
             }
-            if({}.hasOwnProperty.call(item.animationData, 'fixedX')){
+            if(sc.hasOwn(item.animationData, 'fixedX')){
                 x = item.animationData.fixedX;
             }
-            if({}.hasOwnProperty.call(item.animationData, 'fixedY')){
+            if(sc.hasOwn(item.animationData, 'fixedY')){
                 y = item.animationData.fixedY;
             }
             if(item.animationData.closeInventoryOnUse){

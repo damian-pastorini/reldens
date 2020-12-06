@@ -53,7 +53,7 @@ class RoomRespawn
                     let objInstance = new objClass(multipleObj.objProps);
                     objInstance.runAdditionalSetup(EventsManagerSingleton);
                     let assetsArr = this.getObjectAssets(multipleObj);
-                    // @TODO: objects could have multiple assets, need to implement and test the case.
+                    // @TODO - BETA.17: objects could have multiple assets, need to implement and test the case.
                     objInstance.clientParams.asset_key = assetsArr[0];
                     objInstance.clientParams.enabled = true;
                     this.world.objectsManager.objectsAnimationsData[objectIndex] = objInstance.clientParams;

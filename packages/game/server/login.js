@@ -108,7 +108,8 @@ class LoginManager
                     status: this.config.server.players.initialUser.status,
                     players: {
                         name: userData.username,
-                        // @TODO: fix initialStats cases (new users and users that could be in a different level).
+                        // @TODO - BETA.16 - R16-9: fix initialStats cases, new users and users that could be in a
+                        //   different level.
                         stats: this.config.server.players.initialStats,
                         state: this.config.server.players.initialState
                     }
@@ -158,7 +159,7 @@ class LoginManager
         let resetLink = this.config.server.baseUrl + '/reset-password?email='+userData.email+'&id='+oldPassword;
         let subject = process.env.RELDENS_MAILER_FORGOT_PASSWORD_SUBJECT || 'Forgot password';
         let content = await this.themeManager.loadAndRenderTemplate(emailPath, {resetLink: resetLink});
-        // @TODO: make all system messages configurable.
+        // @TODO - BETA.17: make all system messages configurable.
         return await this.mailer.sendEmail({
             to: userData.email,
             subject: subject,

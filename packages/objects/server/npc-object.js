@@ -54,7 +54,8 @@ class NpcObject extends AnimationObject
                 activationData.content = this.content;
             }
             if(Object.keys(this.options).length > 0){
-                // @TODO: extend feature to generate different flows, for example request confirmation about a choice.
+                // @TODO - BETA.17: extend feature to generate different flows, this will help on easily create quests,
+                //   for example we could request confirmation about a choice.
                 activationData.options = this.options;
             }
             room.send(client, activationData);

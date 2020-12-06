@@ -27,7 +27,7 @@ class TypePhysicalEffect extends PhysicalEffect
         let notTheBullet = bulletsCheck[0].key === 'bodyA' ? 'bodyB' : 'bodyA';
         // none bullets or both bullets:
         if(bulletsCheck.length !== 1){
-            // @TODO: implement bullets bodies without collisions between each other.
+            // @TODO - BETA.17: implement bullets bodies without collisions between each other.
             return false;
         }
         // get and validate defender which could be a player or an object:
@@ -41,7 +41,7 @@ class TypePhysicalEffect extends PhysicalEffect
                 && {}.hasOwnProperty.call(validDefender, 'objectBody')
                 && this.currentBattle
             ){
-                // @TODO: replace hp by the defender affected attribute from the skills system.
+                // @TODO - BETA.16 - R16-2: replace hp by the defender affected attribute from the skills system.
                 if(validDefender.stats.hp > 0){
                     if(!this.validateTargetOnHit){
                         // if target validation is disabled then any target could start the battle (pve):

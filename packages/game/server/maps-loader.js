@@ -28,7 +28,8 @@ class MapsLoader
         for(let file of files){
             let fileFullPath = path.join(themeFolder, mapsFolder, file);
             let fileName = file.replace('.json', '');
-            // @TODO: improve, this is not a good practice but is the only dynamic required I wasn't able to avoid yet.
+            // @TODO - BETA.17: improve, this is not a good practice but is the only dynamic required I wasn't able
+            //   to avoid yet.
             configManager.configList.server.maps[fileName] = require(fileFullPath);
         }
     }

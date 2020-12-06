@@ -26,9 +26,9 @@ class Pve extends Battle
         this.targetObject = targetObject;
     }
 
-    // @TODO: make pvp available by configuration.
     async runBattle(playerSchema, target, room)
     {
+        // @TODO - BETA.17: make pvp available by configuration.
         // @NOTE: run battle method is for when the player attacks any target. PVE can be started in different ways,
         // depending how the current enemy-object was implemented, for example the PVE can start when the player just
         // collides with the enemy (instead of attack it) an aggressive enemy could start the battle automatically.
@@ -38,7 +38,7 @@ class Pve extends Battle
             // attack for which matter we won't start the battle until the physical body hits the target.
             return false;
         }
-        // @TODO: replace hp by the defender affected attribute from the skills system.
+        // @TODO - BETA.16 - R16-2: replace hp by the defender affected attribute from the skills system.
         if(target.stats.hp > 0){
             await this.startBattleWith(playerSchema, room);
         } else {
@@ -49,8 +49,8 @@ class Pve extends Battle
 
     async startBattleWith(playerSchema, room)
     {
-        // @TODO: yeah... a lot could happen and this could be improved by cleaning the timers on specific actions like
-        //   when player disconnects.
+        // @TODO - BETA.17: yeah... a lot could happen and this could be improved by cleaning the timers on specific
+        //   actions like when player disconnects.
         if(!room || !room.roomWorld || !playerSchema || !room.state || !room.state.players[playerSchema.sessionId]){
             // @NOTE: leaveBattle is used for when the player can't be reached anymore or disconnected.
             this.leaveBattle(playerSchema);
@@ -63,7 +63,7 @@ class Pve extends Battle
             this.leaveBattle(playerSchema);
             return false;
         }
-        // @TODO: replace hp by the defender affected attribute from the skills system.
+        // @TODO - BETA.16 - R16-2: replace hp by the defender affected attribute from the skills system.
         // the enemy died:
         if(this.targetObject.stats.hp <= 0){
             // battle ended checkpoint:
@@ -114,7 +114,7 @@ class Pve extends Battle
                 }
             }
         } else {
-            // @TODO: fix chase behavior when a bullet attack is available.
+            // @TODO - BETA.17: fix chase behavior when a bullet attack is available on enemies.
             let chaseResult = this.targetObject.chaseBody(playerSchema.physicalBody);
             if(chaseResult.length){
                 setTimeout(() => {
@@ -134,7 +134,7 @@ class Pve extends Battle
 
     battleEnded(playerSchema, room)
     {
-        // @TODO: implement battle end in both pve and pvp.
+        // @TODO - BETA.17 - CHECK: implement battle end in both pve and pvp.
         this.removeInBattlePlayer(playerSchema);
         let actionData = {
             act: ActionsConst.BATTLE_ENDED,

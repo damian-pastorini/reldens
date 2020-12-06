@@ -29,7 +29,7 @@ class ActionsMessageActions
                 }
                 // set the room:
                 currentAction.room = room;
-                // @TODO: temporal action on a player will cause a PvP and on an object will cause a PvE.
+                // @TODO - BETA.17: make default action configurable, temporally it will be a basic attack.
                 if(data.target.type === GameConst.TYPE_PLAYER){
                     playerSchema.actions['pvp'].runBattle(playerSchema, validTarget, room);
                 }
@@ -44,7 +44,7 @@ class ActionsMessageActions
     preparePlayerCurrentAction(playerSchema, data)
     {
         let runAction = data.type;
-        // @TODO: temporal default action, we will always send the action type so it will never be "action".
+        // @TODO - BETA.17: make default action configurable, temporally it will be a basic attack.
         if(data.type === 'action'){
             // for pvp or pve the default action will be the attack-short:
             runAction = 'attackShort';
@@ -52,7 +52,7 @@ class ActionsMessageActions
         if(
             !runAction ||
             (
-                // @TODO: remove .actions and use skills?
+                // @TODO - BETA.16 - R16-3: analyze, remove .actions and use skills?
                 !sc.hasOwn(playerSchema.actions, runAction)
                 && !sc.hasOwn(playerSchema.skillsServer.classPath.currentSkills, runAction)
             )

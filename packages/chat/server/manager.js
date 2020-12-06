@@ -12,17 +12,8 @@ const { Logger } = require('@reldens/utils');
 class ChatManager
 {
 
-    /**
-     * @param message
-     * @param playerId
-     * @param roomId
-     * @param clientToPlayerSchema
-     * @param messageType
-     * @returns {Promise<void>}
-     */
     async saveMessage(message, playerId, roomId, clientToPlayerSchema, messageType)
     {
-        // @TODO: since for now we only have one player by user, playerSchema is actually the currentUser.
         let entryData = {
             player_id: playerId,
             message: message,
@@ -45,8 +36,6 @@ class ChatManager
 
     /**
      * Current date is just for internal use and save the message date on the server side.
-     *
-     * @returns {string}
      */
     getCurrentDate()
     {

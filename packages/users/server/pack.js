@@ -43,7 +43,7 @@ class UsersPack extends PackInterface
     // eslint-disable-next-line no-unused-vars
     async onCreatePlayerBefore(client, authResult, room)
     {
-        // @TODO: [0] is temporal since for now we only have one player by user.
+        // @TODO - BETA.17: index [0] is temporal since for now we only have one player by user.
         let player = authResult.players[0];
         let {stats, statsBase} = await this.processStatsData('playerStats', player.id);
         player.stats = stats;

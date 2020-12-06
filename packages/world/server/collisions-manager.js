@@ -24,7 +24,7 @@ class CollisionsManager
         if(!{}.hasOwnProperty.call(this.room, 'roomWorld')){
             ErrorManager.error('Room world not found.');
         }
-        // @TODO: make dynamic, for now we will use fixed collisions types for each event.
+        // @TODO - BETA.17: make dynamic, for now we will use fixed collisions types for each event.
         this.room.roomWorld.on('beginContact', this.assignBeginCollisions.bind(this));
         this.room.roomWorld.on('endContact', this.assignEndCollisions.bind(this));
         // @NOTE: postBroadphase will be used to check pairs and test overlap instead of collision, for example, a spell

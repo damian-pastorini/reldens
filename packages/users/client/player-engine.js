@@ -69,7 +69,7 @@ class PlayerEngine
 
     createHealthBar()
     {
-        // @TODO - BETA.16: remove from player engine, create using the user pack and events.
+        // @TODO - BETA.16 - R16-12: remove from player engine, create using the user pack and events.
         if(this.gameManager.config.get('client/ui/lifeBar/enabled')){
             // if the position is fixed then the bar has to go on the ui scene:
             let lifeBarScene = this.gameManager.getActiveScenePreloader();
@@ -91,14 +91,14 @@ class PlayerEngine
 
     redrawLifeBar()
     {
-        // @TODO: remove from player engine, redraw using pack events.
+        // @TODO - BETA.16 - R16-12: remove from player engine, create using the user pack and events.
         if(!this.lifeBar){
             return;
         }
         let barHeight = this.gameManager.config.get('client/ui/lifeBar/height');
         let fullBarWidth = this.gameManager.config.get('client/ui/lifeBar/width');
         let fullHp = this.gameManager.config.initialStats.hp['base_value'];
-        // @TODO: replace HP by player affected stat for battle.
+        // @TODO - BETA.16 - R16-2: replace hp by the defender affected attribute from the skills system.
         let filledBarWidth = (this.gameManager.playerData.stats.hp * fullBarWidth) / fullHp;
         let {uiX, uiY} = this.gameManager.gameEngine.uiScene.getUiConfig('lifeBar');
         if(!this.gameManager.config.get('client/ui/lifeBar/fixedPosition')){

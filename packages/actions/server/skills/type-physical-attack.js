@@ -9,6 +9,7 @@
 
 const { PhysicalAttack } = require('@reldens/skills');
 const { GameConst } = require('../../../game/constants');
+const { sc } = require('@reldens/utils');
 
 class TypePhysicalAttack extends PhysicalAttack
 {
@@ -20,7 +21,7 @@ class TypePhysicalAttack extends PhysicalAttack
         this.currentBattle = false;
         // @NOTE: hit priority is something specifically from reldens physics engine, in order to change this value you
         // need to extend this class and send a new one as parameter in the constructor.
-        this.hitPriority = {}.hasOwnProperty.call(props, 'hitPriority') ? props.hitPriority : 2;
+        this.hitPriority = sc.hasOwn(props, 'hitPriority') ? props.hitPriority : 2;
     }
 
     async onHit(props)
@@ -30,7 +31,7 @@ class TypePhysicalAttack extends PhysicalAttack
         let notTheBullet = bulletsCheck[0].key === 'bodyA' ? 'bodyB' : 'bodyA';
         // none bullets or both bullets:
         if(bulletsCheck.length !== 1){
-            // @TODO: implement bullets bodies without collisions between each other.
+            // @TODO - BETA.17: implement bullets bodies without collisions between each other.
             return false;
         }
         // get and validate defender which could be a player or an object:
@@ -40,15 +41,15 @@ class TypePhysicalAttack extends PhysicalAttack
             await super.executeOnHit(validDefender);
             // re-run the process if pve:
             if(
-                {}.hasOwnProperty.call(this.owner, 'player_id')
-                && {}.hasOwnProperty.call(validDefender, 'objectBody')
+                sc.hasOwn(this.owner, 'player_id')
+                && sc.hasOwn(validDefender, 'objectBody')
                 && this.currentBattle
             ){
-                // @TODO: replace hp by the defender affected attribute from the skills system.
+                // @TODO - BETA.16 - R16-2: replace hp by the defender affected attribute from the skills system.
                 if(validDefender.stats.hp > 0){
                     if(!this.validateTargetOnHit){
                         // if target validation is disabled then any target could start the battle (pve):
-                        if({}.hasOwnProperty.call(validDefender, 'battle')){
+                        if(sc.hasOwn(validDefender, 'battle')){
                             validDefender.battle.targetObject = validDefender;
                             await validDefender.battle.startBattleWith(this.owner, this.room);
                         }
@@ -62,7 +63,7 @@ class TypePhysicalAttack extends PhysicalAttack
                 }
             } else {
                 // update the clients if pvp:
-                if({}.hasOwnProperty.call(validDefender, 'player_id')){
+                if(sc.hasOwn(validDefender, 'player_id')){
                     let targetClient = this.room.getClientById(validDefender.broadcastKey);
                     if(targetClient){
                         await this.currentBattle.updateTargetClient(
@@ -98,7 +99,7 @@ class TypePhysicalAttack extends PhysicalAttack
     getValidDefender(props, defenderBodyKey)
     {
         // we already validate if one of the bodies is a bullet so the other will be always a player or an object:
-        return {}.hasOwnProperty.call(props[defenderBodyKey], 'playerId') ?
+        return sc.hasOwn(props[defenderBodyKey], 'playerId') ?
             this.room.state.players[props[defenderBodyKey].playerId] : props[defenderBodyKey].roomObject;
     }
 

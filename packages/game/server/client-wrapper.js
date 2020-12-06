@@ -2,7 +2,7 @@
  *
  * Reldens - ClientWrapper
  *
- * Server side client wrapper for @reldens/skills.
+ * Server side client wrapper for send and broadcast method.
  *
  */
 

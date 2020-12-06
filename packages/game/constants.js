@@ -38,8 +38,10 @@ module.exports.GameConst = {
     // default data:
     FADE_DURATION: 1000,
     SPEED_SERVER: 180,
-    // @TODO: implement player custom avatar.
+    // @TODO - BETA.17 - F901: implement player custom avatar.
     IMAGE_PLAYER: 'player',
+    // @TODO - BETA.16 - R16-1b: replace these by skills related if available otherwise these will be configurable from
+    //   the storage.
     ATTACK: 'attack',
     HIT: 'hit',
     DEATH: 'death'

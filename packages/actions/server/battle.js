@@ -29,7 +29,7 @@ class Battle
     async runBattle(playerSchema, target, room)
     {
         // @NOTE: each attack will have different properties to validate like range, delay, etc.
-        // @TODO: remove .actions and use skills?
+        // @TODO - BETA.16 - R16-3: analyze, remove .actions and use skills?
         let currentAction = playerSchema.actions[playerSchema.currentAction] ?
             playerSchema.actions[playerSchema.currentAction] :
             playerSchema.skillsServer.classPath.currentSkills[playerSchema.currentAction];
@@ -65,7 +65,7 @@ class Battle
 
     async updateTargetClient(targetClient, targetSchema, attackerId, room)
     {
-        // @TODO: replace hp by the defender affected attribute from the skills system.
+        // @TODO - BETA.16 - R16-2: replace hp by the defender affected attribute from the skills system.
         if(targetSchema.stats.hp === 0){
             // player is dead! reinitialize the stats:
             targetSchema.stats = targetSchema.initialStats;

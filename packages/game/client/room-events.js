@@ -108,7 +108,7 @@ class RoomEvents
     {
         EventsManagerSingleton.emit('reldens.playersOnRemove', player, key, this);
         if(key === this.room.sessionId){
-            // @TODO: improve disconnection handler.
+            // @TODO - BETA.17: improve disconnection handler.
             if(!this.gameManager.gameOver){
                 alert('Your session ended, please login again.');
             }
@@ -161,7 +161,7 @@ class RoomEvents
 
     roomOnLeave(code)
     {
-        // @TODO: improve disconnection handler.
+        // @TODO - BETA.17: improve disconnection handler.
         if(code > 1000){
             // server error, disconnection:
             if(!this.gameManager.gameOver){
@@ -170,8 +170,8 @@ class RoomEvents
             window.location.reload();
         } else {
             // the client has initiated the disconnection:
-            // @TODO: test a lost connection case (like turn of the network, but probably the browser was just closed),
-            //   in which case should we remove the scene? Again, force restart the client?
+            // @TODO - BETA.17: test a lost connection case (like turn of the network, but probably the browser was
+            //   just closed), in which case should we remove the scene? Again, force restart the client?
             //   this.gameEngine.scene.remove(this.roomName);
             //   window.location.reload();
         }
@@ -193,7 +193,7 @@ class RoomEvents
             if(statsPanel){
                 let messageTemplate = this.gameEngine.uiScene.cache.html.get('playerStat');
                 statsPanel.innerHTML = '';
-                // @TODO - BETA.16: make stats show max value if configured (so for example you can see HP 10/200).
+                // @TODO - BETA.16 - R16-6: make stats show max value if configured (so for example you can see HP 10/200).
                 for(let i of Object.keys(message.stats)){
                     statsPanel.innerHTML = statsPanel.innerHTML
                         + this.gameManager.gameEngine.parseTemplate(messageTemplate, {
@@ -228,7 +228,7 @@ class RoomEvents
             let boxContent = uiBox.getChildByProperty('className', 'box-content');
             if(boxContent){
                 boxContent.innerHTML = props.content;
-                // @TODO: IMPROVE! I need time to focus on this which I don't have right now :(
+                // @TODO - BETA.17: IMPROVE! I need time to focus on this which I don't have right now :(
                 if(props.options){
                     let optionsContainerTemplate = uiScene.cache.html.get('uiOptionsContainer');
                     let optionsContainer = this.gameManager.gameEngine.parseTemplate(optionsContainerTemplate,
@@ -277,7 +277,7 @@ class RoomEvents
             uiScene = true;
         }
         let preloaderName = GameConst.SCENE_PRELOADER+this.sceneData.roomName;
-        // @TODO: implement player custom avatar.
+        // @TODO - BETA.17 - F901: implement player custom avatar.
         // , player.username
         if(!this.gameEngine.scene.getScene(preloaderName)){
             this.scenePreloader = this.createPreloaderInstance({

@@ -97,7 +97,7 @@ class RoomScene extends RoomLogin
         await EventsManagerSingleton.emit('reldens.createPlayerBefore', client, authResult, this);
         // player creation:
         let currentPlayer = this.state.createPlayer(client.sessionId, authResult);
-        // @TODO: stats will be configurable and dynamic with the player-levels system implementation.
+        // @TODO - BETA.16 - R16-9: fix initialStats cases, new users and users that could be in a different level.
         currentPlayer.initialStats = this.config.get('server/players/initialStats');
         // create body for server physics and assign the body to the player:
         currentPlayer.physicalBody = this.roomWorld.createPlayerBody({
@@ -278,7 +278,6 @@ class RoomScene extends RoomLogin
 
     async savePlayerState(sessionId)
     {
-        // @TODO: since for now we only have one player by user, playerSchema is actually the currentUser.
         let playerSchema = this.getPlayerFromState(sessionId);
         let {room_id, x, y, dir} = playerSchema.state;
         let playerId = playerSchema.player_id;
@@ -293,7 +292,8 @@ class RoomScene extends RoomLogin
 
     async savePlayerStats(target, updateClient)
     {
-        // @TODO: for now we are always updating all the stats but this can be improved to save only the changed ones.
+        // @TODO - BETA.17: for now we are always updating all the stats but this can be improved to save only the
+        //   ones that changed.
         // save the stats:
         for(let i of Object.keys(target.stats)){
             let statCurrentValue = target.stats[i];
@@ -303,7 +303,7 @@ class RoomScene extends RoomLogin
             if(!updateCurrentResult){
                 ErrorManager.error('Player base stats update error: ' + target.player_id);
             }
-            // @TODO: fix to update these when required.
+            // @TODO - BETA.16 - R16-11: fix to update these when required.
             let statBaseValue = target.statsBase[i];
             let updateBaseResult = await this.loginManager.usersManager
                 .updateBaseStatByPlayerId(target.player_id, statId, statBaseValue);
