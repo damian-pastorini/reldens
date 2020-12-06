@@ -47,7 +47,7 @@ class ScenePreloader extends Scene
                 this.load.html('playerBox', 'assets/html/ui-player-box.html');
             }
             if(this.gameManager.config.get('client/ui/controls/enabled')){
-                this.load.html('uiControls', 'assets/html/ui-controls.html');
+                this.load.html('controls', 'assets/html/ui-controls.html');
             }
             if(this.gameManager.config.get('client/ui/sceneLabel/enabled')){
                 this.load.html('sceneLabel', 'assets/html/ui-scene-label.html');
@@ -159,13 +159,12 @@ class ScenePreloader extends Scene
                 this.elementsUi['sceneLabel'] = this.add.dom(sceneLabelUi.uiX, sceneLabelUi.uiY)
                     .createFromCache('sceneLabel');
             }
-            // create uiControls:
+            // create controls:
             let controlsUi = this.getUiConfig('controls');
             if(controlsUi.enabled){
-                this.uiControls = this.add.dom(controlsUi.uiX, controlsUi.uiY).createFromCache('uiControls');
-                this.registerControllers(this.uiControls);
-                // @TODO: TEMPORAL, replace references by this.
-                this.elementsUi['controls'] = this.uiControls;
+                this.elementsUi['controls'] = this.add.dom(controlsUi.uiX, controlsUi.uiY)
+                    .createFromCache('controls');
+                this.registerControllers(this.elementsUi['controls']);
             }
             // create uiPlayerStats:
             let statsUi = this.getUiConfig('playerStats');
