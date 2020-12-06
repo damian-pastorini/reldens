@@ -506,3 +506,12 @@ UPDATE `config` SET path = 'ui/playerBox/responsiveX' WHERE path = 'ui/playerNam
 UPDATE `config` SET path = 'ui/playerBox/responsiveY' WHERE path = 'ui/playerName/responsiveY' LIMIT 1;
 UPDATE `config` SET path = 'ui/playerBox/x' WHERE path = 'ui/playerName/x' LIMIT 1;
 UPDATE `config` SET path = 'ui/playerBox/y' WHERE path = 'ui/playerName/y' LIMIT 1;
+
+UPDATE `config` SET path = 'ui/lifeBar/enabled' WHERE path = 'ui/uiLifeBar/enabled';
+UPDATE `config` SET path = 'ui/lifeBar/fixedPosition' WHERE path = 'ui/uiLifeBar/fixedPosition';
+UPDATE `config` SET path = 'ui/lifeBar/height' WHERE path = 'ui/uiLifeBar/height';
+UPDATE `config` SET path = 'ui/lifeBar/responsiveX' WHERE path = 'ui/uiLifeBar/responsiveX';
+UPDATE `config` SET path = 'ui/lifeBar/responsiveY' WHERE path = 'ui/uiLifeBar/responsiveY';
+UPDATE `config` SET path = 'ui/lifeBar/width' WHERE path = 'ui/uiLifeBar/width';
+UPDATE `config` SET path = 'ui/lifeBar/x' WHERE path = 'ui/uiLifeBar/x';
+UPDATE `config` SET path = 'ui/lifeBar/y' WHERE path = 'ui/uiLifeBar/y';

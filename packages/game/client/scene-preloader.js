@@ -101,7 +101,7 @@ class ScenePreloader extends Scene
             frameWidth: this.gameManager.config.get('client/players/size/width') || 52,
             frameHeight: this.gameManager.config.get('client/players/size/height') || 71
         };
-        // @TODO - BETA.17: implement player custom avatar.
+        // @TODO - BETA.17 - F901: implement player custom avatar.
         // this.load.spritesheet(this.username, 'assets/sprites/'+this.username+'.png', playerSpriteSize);
         this.load.spritesheet(GameConst.IMAGE_PLAYER, 'assets/sprites/player-1.png', playerSpriteSize);
         // @TODO - BETA.16 - R16-1b: replace these by skills related if available otherwise these will be configurable

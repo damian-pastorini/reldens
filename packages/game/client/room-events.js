@@ -203,8 +203,8 @@ class RoomEvents
                 }
             }
         }
-        if(this.gameManager.config.get('client/ui/uiLifeBar/enabled')){
-            if(!currentScene.player.uiLifeBar){
+        if(this.gameManager.config.get('client/ui/lifeBar/enabled')){
+            if(!currentScene.player.lifeBar){
                 currentScene.player.createHealthBar();
             }
             currentScene.player.redrawLifeBar();

@@ -46,7 +46,7 @@ class PlayerEngine
 
     addPlayer(id, state)
     {
-        // @TODO: implement player custom avatar.
+        // @TODO - BETA.17 - F901: implement player custom avatar.
         this.players[id] = this.scene.physics.add.sprite(state.x, state.y, GameConst.IMAGE_PLAYER);
         this.players[id].username = state.username;
         this.players[id].anims.play(state.dir);
@@ -69,23 +69,22 @@ class PlayerEngine
 
     createHealthBar()
     {
-        // @TODO: remove from player engine, create using pack events.
-        if(this.gameManager.config.get('client/ui/uiLifeBar/enabled')){
+        // @TODO - BETA.16: remove from player engine, create using the user pack and events.
+        if(this.gameManager.config.get('client/ui/lifeBar/enabled')){
             // if the position is fixed then the bar has to go on the ui scene:
             let lifeBarScene = this.gameManager.getActiveScenePreloader();
-            let useFixedPosition = this.gameManager.config.get('client/ui/uiLifeBar/fixedPosition');
+            let useFixedPosition = this.gameManager.config.get('client/ui/lifeBar/fixedPosition');
             if(!useFixedPosition){
                 // otherwise the bar will be added in the current scene:
                 lifeBarScene = this.gameManager.getActiveScene();
             }
-            if(lifeBarScene.uiLifeBar){
+            if(lifeBarScene.lifeBar){
                 // lifeBar already created in this scene:
                 return;
             }
-            this.uiLifeBar = lifeBarScene.add.graphics();
-            // @TODO: TEMPORAL, replace references by this.
+            this.lifeBar = lifeBarScene.add.graphics();
             if(useFixedPosition){
-                this.gameManager.gameEngine.uiScene.elementsUi['uiLifeBar'] = this.uiLifeBar;
+                this.gameManager.gameEngine.uiScene.elementsUi['lifeBar'] = this.lifeBar;
             }
         }
     }
@@ -93,34 +92,34 @@ class PlayerEngine
     redrawLifeBar()
     {
         // @TODO: remove from player engine, redraw using pack events.
-        if(!this.uiLifeBar){
+        if(!this.lifeBar){
             return;
         }
-        let barHeight = this.gameManager.config.get('client/ui/uiLifeBar/height');
-        let fullBarWidth = this.gameManager.config.get('client/ui/uiLifeBar/width');
+        let barHeight = this.gameManager.config.get('client/ui/lifeBar/height');
+        let fullBarWidth = this.gameManager.config.get('client/ui/lifeBar/width');
         let fullHp = this.gameManager.config.initialStats.hp['base_value'];
         // @TODO: replace HP by player affected stat for battle.
         let filledBarWidth = (this.gameManager.playerData.stats.hp * fullBarWidth) / fullHp;
-        let {uiX, uiY} = this.gameManager.gameEngine.uiScene.getUiConfig('uiLifeBar');
-        if(!this.gameManager.config.get('client/ui/uiLifeBar/fixedPosition')){
+        let {uiX, uiY} = this.gameManager.gameEngine.uiScene.getUiConfig('lifeBar');
+        if(!this.gameManager.config.get('client/ui/lifeBar/fixedPosition')){
             let currentPlayerState = this.gameManager.getCurrentPlayer().state;
             uiX = currentPlayerState.x - (fullBarWidth / 2);
             uiY = currentPlayerState.y - barHeight - (this.gameManager.config.get('client/players/size/height'));
         }
         let fillColor = (0xff0000);
-        this.uiLifeBar.clear();
-        this.uiLifeBar.fillStyle(fillColor, 1);
-        this.uiLifeBar.fillRect(
+        this.lifeBar.clear();
+        this.lifeBar.fillStyle(fillColor, 1);
+        this.lifeBar.fillRect(
             uiX,
             uiY,
             filledBarWidth,
             barHeight
         );
         let lineColor = (0xffffff);
-        this.uiLifeBar.lineStyle(1, lineColor);
-        this.uiLifeBar.strokeRect(uiX, uiY, fullBarWidth, barHeight);
-        this.uiLifeBar.alpha = 0.6;
-        this.uiLifeBar.setDepth(100000);
+        this.lifeBar.lineStyle(1, lineColor);
+        this.lifeBar.strokeRect(uiX, uiY, fullBarWidth, barHeight);
+        this.lifeBar.alpha = 0.6;
+        this.lifeBar.setDepth(100000);
     }
 
     runPlayerAnimation(playerId, player)
@@ -139,7 +138,7 @@ class PlayerEngine
             playerSprite.anims.stop();
             playerSprite.mov = player.state.mov;
         }
-        if(this.gameManager.config.get('client/ui/uiLifeBar/enabled')){
+        if(this.gameManager.config.get('client/ui/lifeBar/enabled')){
             // redraw life bar all the time:
             this.redrawLifeBar();
         }
