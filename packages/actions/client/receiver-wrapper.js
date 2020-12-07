@@ -98,7 +98,7 @@ class ReceiverWrapper extends Receiver
     onInitClassPathEnd(message)
     {
         this.updateLevelAndExperience(message);
-        // @TODO - BETA.16 - CHECK: update skills, etc. is this needed?
+        // @TODO - BETA.16 - R16-13 - CHECK: update skills, etc. is this needed?
     }
 
     onLevelUp(message)

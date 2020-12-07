@@ -108,8 +108,8 @@ class LoginManager
                     status: this.config.server.players.initialUser.status,
                     players: {
                         name: userData.username,
-                        // @TODO - BETA.16 - R16-9: fix initialStats cases, new users and users that could be in a
-                        //   different level.
+                        // @TODO - BETA.16 - R16-5: move to users pack and fix initialStats cases, new users and users
+                        //   that could be in a different level.
                         stats: this.config.server.players.initialStats,
                         state: this.config.server.players.initialState
                     }

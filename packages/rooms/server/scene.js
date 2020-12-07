@@ -97,7 +97,8 @@ class RoomScene extends RoomLogin
         await EventsManagerSingleton.emit('reldens.createPlayerBefore', client, authResult, this);
         // player creation:
         let currentPlayer = this.state.createPlayer(client.sessionId, authResult);
-        // @TODO - BETA.16 - R16-9: fix initialStats cases, new users and users that could be in a different level.
+        // @TODO - BETA.16 - R16-5: move to users pack and fix initialStats cases, new users and users that could be
+        //   in a different level.
         currentPlayer.initialStats = this.config.get('server/players/initialStats');
         // create body for server physics and assign the body to the player:
         currentPlayer.physicalBody = this.roomWorld.createPlayerBody({
@@ -303,7 +304,7 @@ class RoomScene extends RoomLogin
             if(!updateCurrentResult){
                 ErrorManager.error('Player base stats update error: ' + target.player_id);
             }
-            // @TODO - BETA.16 - R16-11: fix to update these when required.
+            // @TODO - BETA.16 - R16-11: fix to update the base stats when required.
             let statBaseValue = target.statsBase[i];
             let updateBaseResult = await this.loginManager.usersManager
                 .updateBaseStatByPlayerId(target.player_id, statId, statBaseValue);
