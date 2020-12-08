@@ -97,9 +97,9 @@ class PlayerEngine
         }
         let barHeight = this.gameManager.config.get('client/ui/lifeBar/height');
         let fullBarWidth = this.gameManager.config.get('client/ui/lifeBar/width');
-        let fullHp = this.gameManager.config.initialStats.hp['base_value'];
-        // @TODO - BETA.16 - R16-2: replace hp by the defender affected attribute from the skills system.
-        let filledBarWidth = (this.gameManager.playerData.stats.hp * fullBarWidth) / fullHp;
+        let affectedProperty = this.gameManager.config.get('client/actions/skills/affectedProperty');
+        let fullValue = this.gameManager.playerData.statsBase[affectedProperty];
+        let filledBarWidth = (this.gameManager.playerData.stats[affectedProperty] * fullBarWidth) / fullValue;
         let {uiX, uiY} = this.gameManager.gameEngine.uiScene.getUiConfig('lifeBar');
         if(!this.gameManager.config.get('client/ui/lifeBar/fixedPosition')){
             let currentPlayerState = this.gameManager.getCurrentPlayer().state;

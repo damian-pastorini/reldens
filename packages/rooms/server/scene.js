@@ -166,7 +166,12 @@ class RoomScene extends RoomLogin
             // @NOTE: player states must be requested since are private user data that we can share with other players
             // or broadcast to the rooms.
             if(messageData.act === GameConst.PLAYER_STATS){
-                this.send(client, {act: GameConst.PLAYER_STATS, stats: playerSchema.stats});
+                // @TODO - BETA.16 - R16-11: fix to update the base stats when required.
+                this.send(client, {
+                    act: GameConst.PLAYER_STATS,
+                    stats: playerSchema.stats,
+                    statsBase: playerSchema.statsBase
+                });
             }
         }
     }
@@ -313,7 +318,12 @@ class RoomScene extends RoomLogin
             }
         }
         if(updateClient){
-            this.send(updateClient, {act: GameConst.PLAYER_STATS, stats: target.stats});
+            // @TODO - BETA.16 - R16-11: fix to update the base stats when required.
+            this.send(updateClient, {
+                act: GameConst.PLAYER_STATS,
+                stats: target.stats,
+                statsBase: target.statsBase
+            });
         }
         return true;
     }

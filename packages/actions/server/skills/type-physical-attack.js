@@ -45,8 +45,7 @@ class TypePhysicalAttack extends PhysicalAttack
                 && sc.hasOwn(validDefender, 'objectBody')
                 && this.currentBattle
             ){
-                // @TODO - BETA.16 - R16-2: replace hp by the defender affected attribute from the skills system.
-                if(validDefender.stats.hp > 0){
+                if(validDefender.stats[this.room.config.get('client/actions/skills/affectedProperty')] > 0){
                     if(!this.validateTargetOnHit){
                         // if target validation is disabled then any target could start the battle (pve):
                         if(sc.hasOwn(validDefender, 'battle')){

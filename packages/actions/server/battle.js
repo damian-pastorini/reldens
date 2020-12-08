@@ -65,8 +65,7 @@ class Battle
 
     async updateTargetClient(targetClient, targetSchema, attackerId, room)
     {
-        // @TODO - BETA.16 - R16-2: replace hp by the defender affected attribute from the skills system.
-        if(targetSchema.stats.hp === 0){
+        if(targetSchema.stats[room.config.get('client/actions/skills/affectedProperty')] === 0){
             // player is dead! reinitialize the stats:
             targetSchema.stats = targetSchema.initialStats;
             // save the stats:

@@ -515,3 +515,5 @@ UPDATE `config` SET path = 'ui/lifeBar/responsiveY' WHERE path = 'ui/uiLifeBar/r
 UPDATE `config` SET path = 'ui/lifeBar/width' WHERE path = 'ui/uiLifeBar/width';
 UPDATE `config` SET path = 'ui/lifeBar/x' WHERE path = 'ui/uiLifeBar/x';
 UPDATE `config` SET path = 'ui/lifeBar/y' WHERE path = 'ui/uiLifeBar/y';
+
+INSERT INTO `reldens`.`config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'actions/skills/affectedProperty', 'hp', 't');

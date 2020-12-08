@@ -62,6 +62,7 @@ class ActionsPack extends PackInterface
             room.config.skills.skillsList
         );
         if(classPathData){
+            classPathData.affectedProperty = room.config.get('client/actions/skills/affectedProperty');
             classPathData.client = new ClientWrapper(client, room);
             currentPlayer.skillsServer = new SkillsServer(classPathData);
         }

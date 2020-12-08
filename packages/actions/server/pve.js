@@ -38,8 +38,7 @@ class Pve extends Battle
             // attack for which matter we won't start the battle until the physical body hits the target.
             return false;
         }
-        // @TODO - BETA.16 - R16-2: replace hp by the defender affected attribute from the skills system.
-        if(target.stats.hp > 0){
+        if(target.stats[room.config.get('client/actions/skills/affectedProperty')] > 0){
             await this.startBattleWith(playerSchema, room);
         } else {
             // physical attacks or effects will run the battleEnded, normal attacks or effects will hit this case:
@@ -63,9 +62,8 @@ class Pve extends Battle
             this.leaveBattle(playerSchema);
             return false;
         }
-        // @TODO - BETA.16 - R16-2: replace hp by the defender affected attribute from the skills system.
         // the enemy died:
-        if(this.targetObject.stats.hp <= 0){
+        if(this.targetObject.stats[room.config.get('client/actions/skills/affectedProperty')] <= 0){
             // battle ended checkpoint:
             return false;
         }
