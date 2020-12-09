@@ -257,7 +257,6 @@ class ScenePreloader extends Scene
     registerControllers(controllersBox)
     {
         // @TODO - BETA.17: controllers will be part of the configuration in the database.
-        // @TODO - BETA.16 - R16-7: add W-A-S-D as directional controllers.
         this.setupDirButtonInBox(GameConst.UP, controllersBox);
         this.setupDirButtonInBox(GameConst.DOWN, controllersBox);
         this.setupDirButtonInBox(GameConst.LEFT, controllersBox);
@@ -316,6 +315,7 @@ class ScenePreloader extends Scene
     startHold(event, button, action)
     {
         event.preventDefault();
+        // @TODO - BETA.16 - R16-8: make configurable on hold buttons effect.
         button.style.opacity = '1';
         let currentScene = this.gameManager.activeRoomEvents.getActiveScene();
         let dataSend = action;
