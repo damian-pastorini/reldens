@@ -16,7 +16,7 @@ INSERT INTO `features` (`code`, `title`, `is_enabled`) VALUES ('actions', 'Actio
 # Stats:
 ALTER TABLE `players_stats` ADD COLUMN `aim` INT(10) UNSIGNED NOT NULL AFTER `dodge`;
 UPDATE players_stats SET aim = 100;
-INSERT INTO `reldens`.`config` (`scope`, `path`, `value`, `type`) VALUES ('server', 'players/initialStats/aim', '100', 'i');
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('server', 'players/initialStats/aim', '100', 'i');
 
 #######################################################################################################################
 # Skills system:
@@ -422,7 +422,7 @@ CREATE TABLE `players_current_stats` (
 	`value` INT(10) UNSIGNED NOT NULL,
 	PRIMARY KEY (`id`) USING BTREE,
 	UNIQUE INDEX `user_id` (`player_id`) USING BTREE,
-	CONSTRAINT `FK_player_current_stats_players` FOREIGN KEY (`player_id`) REFERENCES `reldens`.`players` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT
+	CONSTRAINT `FK_player_current_stats_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT
 )
 COLLATE='utf8_unicode_ci'
 ENGINE=InnoDB
@@ -436,7 +436,7 @@ CREATE TABLE `players_base_stats` (
 	`value` INT(10) UNSIGNED NOT NULL,
 	PRIMARY KEY (`id`) USING BTREE,
 	UNIQUE INDEX `user_id` (`player_id`) USING BTREE,
-	CONSTRAINT `FK_player_base_stats_players` FOREIGN KEY (`player_id`) REFERENCES `reldens`.`players` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT
+	CONSTRAINT `FK_player_base_stats_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT
 )
 COLLATE='utf8_unicode_ci'
 ENGINE=InnoDB
@@ -516,4 +516,5 @@ UPDATE `config` SET path = 'ui/lifeBar/width' WHERE path = 'ui/uiLifeBar/width';
 UPDATE `config` SET path = 'ui/lifeBar/x' WHERE path = 'ui/uiLifeBar/x';
 UPDATE `config` SET path = 'ui/lifeBar/y' WHERE path = 'ui/uiLifeBar/y';
 
-INSERT INTO `reldens`.`config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'actions/skills/affectedProperty', 'hp', 't');
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'actions/skills/affectedProperty', 'hp', 't');
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/controls/opacityEffect', '1', 'b');

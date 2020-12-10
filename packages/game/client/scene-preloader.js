@@ -315,8 +315,10 @@ class ScenePreloader extends Scene
     startHold(event, button, action)
     {
         event.preventDefault();
-        // @TODO - BETA.16 - R16-8: make configurable on hold buttons effect.
-        button.style.opacity = '1';
+        if(this.gameManager.config.get('client/ui/controls/opacityEffect')){
+            // @TODO - BETA.17: improve and move all the styles into an external class, and make it configurable.
+            button.style.opacity = '1';
+        }
         let currentScene = this.gameManager.activeRoomEvents.getActiveScene();
         let dataSend = action;
         // @TODO - BETA.17: controllers will be part of the configuration in the database.
@@ -333,8 +335,10 @@ class ScenePreloader extends Scene
     endHold(event, button)
     {
         event.preventDefault();
-        // @TODO - BETA.16 - R16-8: make configurable on hold buttons effect.
-        button.style.opacity = '0.8';
+        if(this.gameManager.config.get('client/ui/controls/opacityEffect')){
+            // @TODO - BETA.17: improve and move all the styles into an external class, and make it configurable.
+            button.style.opacity = '0.8';
+        }
         clearTimeout(this.holdTimer);
         this.gameManager.activeRoomEvents.room.send({act: GameConst.STOP});
     }
