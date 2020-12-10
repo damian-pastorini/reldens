@@ -29,7 +29,7 @@ class ChatUi
         let chatOpenButton = uiChat.getChildByProperty('id', ChatConst.CHAT_OPEN_BUTTON);
         if(chatInput){
             this.uiScene.input.keyboard.on('keyup_ENTER', () => {
-                let isFocused = (document.activeElement === chatInput);
+                let isFocused = (this.gameManager.gameDom.activeElement() === chatInput);
                 if(!isFocused){
                     chatInput.focus();
                 }

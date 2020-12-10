@@ -43,11 +43,35 @@ class SceneDynamic extends Scene
         // @TODO - BETA.17: controllers will be part of the configuration in the database.
         // @TODO - BETA.16 - R16-7: add W-A-S-D as directional controllers.
         this.keyLeft = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.LEFT);
+        this.keyA = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.A);
         this.keyRight = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.RIGHT);
+        this.keyD = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.D);
         this.keyUp = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.UP);
+        this.keyW = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.W);
         this.keyDown = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.DOWN);
+        this.keyS = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.S);
+        let keys = [
+            Input.Keyboard.KeyCodes.LEFT,
+            Input.Keyboard.KeyCodes.A,
+            Input.Keyboard.KeyCodes.RIGHT,
+            Input.Keyboard.KeyCodes.D,
+            Input.Keyboard.KeyCodes.UP,
+            Input.Keyboard.KeyCodes.W,
+            Input.Keyboard.KeyCodes.DOWN,
+            Input.Keyboard.KeyCodes.S
+        ];
+        this.gameManager.gameDom.getElement('input').on('focus', () => {
+            for(let keyCode of keys){
+                this.input.keyboard.removeCapture(keyCode);
+            }
+        });
+        this.gameManager.gameDom.getElement('input').on('blur', () => {
+            for(let keyCode of keys) {
+                this.input.keyboard.addCapture(keyCode);
+            }
+        });
         this.input.keyboard.on('keydown', (event) => {
-            if(event.keyCode === 32 && document.activeElement.tagName.toLowerCase() !== 'input'){
+            if(event.keyCode === 32 && !this.gameManager.gameDom.insideInput()){
                 this.player.runActions();
             }
             if(event.keyCode === 27){
@@ -60,6 +84,9 @@ class SceneDynamic extends Scene
             //   pointer, in a future release this will be configurable so you can walk to objects and they get
             //   activated, for example, click on and NPC, automatically walk close and automatically get a dialog
             //   opened.
+            if(this.gameManager.gameDom.insideInput()){
+                this.gameManager.gameDom.activeElement().blur();
+            }
             if(!currentlyOver.length){
                 this.appendRowAndColumn(pointer);
                 this.player.moveToPointer(pointer);
@@ -78,8 +105,15 @@ class SceneDynamic extends Scene
         this.cameras.main.on('camerafadeincomplete', () => {
             this.transition = false;
             this.gameManager.isChangingScene = false;
+            // @TODO - BETA.16 - R16-7: add W-A-S-D as directional controllers.
             this.input.keyboard.on('keyup', (event) => {
-                if(event.keyCode >= 37 && event.keyCode <= 40){
+                // stop all directional keys:
+                if(event.keyCode >= 37 && event.keyCode <= 40 || (
+                    event.keyCode === 87
+                    || event.keyCode === 65
+                    || event.keyCode === 83
+                    || event.keyCode === 68
+                )){
                     // @NOTE: all keyup events has to be sent.
                     this.player.stop();
                 }
@@ -91,17 +125,20 @@ class SceneDynamic extends Scene
     // eslint-disable-next-line no-unused-vars
     update(time, delta)
     {
+        if(this.gameManager.gameDom.insideInput()){
+            return true;
+        }
         if(this.transition === false && !this.gameManager.isChangingScene){
             // @TODO - BETA.17: controllers will be part of the configuration in the database.
             // @TODO - BETA.16 - R16-7: add W-A-S-D as directional controllers.
-            if(this.keyLeft.isDown){
+            if(this.keyLeft.isDown || this.keyA.isDown){
                 this.player.left();
-            } else if(this.keyRight.isDown){
+            } else if(this.keyRight.isDown || this.keyD.isDown){
                 this.player.right();
             }
-            if(this.keyUp.isDown){
+            if(this.keyUp.isDown || this.keyW.isDown){
                 this.player.up();
-            } else if(this.keyDown.isDown){
+            } else if(this.keyDown.isDown || this.keyS.isDown){
                 this.player.down();
             }
         }

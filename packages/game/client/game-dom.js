@@ -35,6 +35,16 @@ class GameDom
         $(querySelector).remove();
     }
 
+    activeElement()
+    {
+        return document.activeElement;
+    }
+
+    insideInput()
+    {
+        return (this.activeElement().tagName.toLowerCase() === 'input');
+    }
+
 }
 
 module.exports.GameDom = GameDom;
