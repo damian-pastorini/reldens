@@ -316,8 +316,7 @@ class ScenePreloader extends Scene
     {
         event.preventDefault();
         if(this.gameManager.config.get('client/ui/controls/opacityEffect')){
-            // @TODO - BETA.17: improve and move all the styles into an external class, and make it configurable.
-            button.style.opacity = '1';
+            button.classList.add('button-opacity-off');
         }
         let currentScene = this.gameManager.activeRoomEvents.getActiveScene();
         let dataSend = action;
@@ -336,8 +335,7 @@ class ScenePreloader extends Scene
     {
         event.preventDefault();
         if(this.gameManager.config.get('client/ui/controls/opacityEffect')){
-            // @TODO - BETA.17: improve and move all the styles into an external class, and make it configurable.
-            button.style.opacity = '0.8';
+            button.classList.remove('button-opacity-off');
         }
         clearTimeout(this.holdTimer);
         this.gameManager.activeRoomEvents.room.send({act: GameConst.STOP});
