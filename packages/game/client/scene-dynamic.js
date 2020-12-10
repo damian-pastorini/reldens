@@ -41,7 +41,6 @@ class SceneDynamic extends Scene
     {
         EventsManagerSingleton.emit('reldens.beforeSceneDynamicCreate', this);
         // @TODO - BETA.17: controllers will be part of the configuration in the database.
-        // @TODO - BETA.16 - R16-7: add W-A-S-D as directional controllers.
         this.keyLeft = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.LEFT);
         this.keyA = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.A);
         this.keyRight = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.RIGHT);
@@ -105,7 +104,6 @@ class SceneDynamic extends Scene
         this.cameras.main.on('camerafadeincomplete', () => {
             this.transition = false;
             this.gameManager.isChangingScene = false;
-            // @TODO - BETA.16 - R16-7: add W-A-S-D as directional controllers.
             this.input.keyboard.on('keyup', (event) => {
                 // stop all directional keys:
                 if(event.keyCode >= 37 && event.keyCode <= 40 || (
@@ -130,7 +128,6 @@ class SceneDynamic extends Scene
         }
         if(this.transition === false && !this.gameManager.isChangingScene){
             // @TODO - BETA.17: controllers will be part of the configuration in the database.
-            // @TODO - BETA.16 - R16-7: add W-A-S-D as directional controllers.
             if(this.keyLeft.isDown || this.keyA.isDown){
                 this.player.left();
             } else if(this.keyRight.isDown || this.keyD.isDown){
