@@ -307,14 +307,24 @@ class RoomScene extends RoomLogin
             let updateCurrentResult = await this.loginManager.usersManager
                 .updateCurrentStatByPlayerId(target.player_id, statId, statCurrentValue);
             if(!updateCurrentResult){
-                ErrorManager.error('Player base stats update error: ' + target.player_id);
+                ErrorManager.error([
+                    'Player base stats update error: ' + target.player_id,
+                    statId,
+                    statCurrentValue,
+                    target.stats[i]
+                ]);
             }
             // @TODO - BETA.16 - R16-11: fix to update the base stats when required.
             let statBaseValue = target.statsBase[i];
             let updateBaseResult = await this.loginManager.usersManager
                 .updateBaseStatByPlayerId(target.player_id, statId, statBaseValue);
             if(!updateBaseResult){
-                ErrorManager.error('Player current stats update error: ' + target.player_id);
+                ErrorManager.error([
+                    'Player current stats update error: ' + target.player_id,
+                    statId,
+                    statBaseValue,
+                    target.statsBase[i]
+                ]);
             }
         }
         if(updateClient){
