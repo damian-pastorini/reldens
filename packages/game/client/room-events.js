@@ -218,7 +218,7 @@ class RoomEvents
     initUi(props)
     {
         let uiScene = this.gameEngine.uiScene;
-        if(!uiScene || sc.hasOwn(uiScene.userInterfaces, props.id)){
+        if(!uiScene || !sc.hasOwn(uiScene.userInterfaces, props.id)){
             return false;
         }
         let uiBox = uiScene.userInterfaces[props.id];
