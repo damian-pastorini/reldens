@@ -29,7 +29,6 @@ class Battle
     async runBattle(playerSchema, target, room)
     {
         // @NOTE: each attack will have different properties to validate like range, delay, etc.
-        // @TODO - BETA.16 - R16-3: analyze, remove .actions and use skills?
         let currentAction = playerSchema.actions[playerSchema.currentAction] ?
             playerSchema.actions[playerSchema.currentAction] :
             playerSchema.skillsServer.classPath.currentSkills[playerSchema.currentAction];
