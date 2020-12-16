@@ -2,6 +2,17 @@
  *
  * Reldens - AnimationEngine
  *
+ * Objects flow:
+ *
+ * When you create an NpcObject this can/should be set as "interactive", around line 92, after the validation
+ * if(this.isInteractive){
+ * This will activate the onpointerdown event so when you click on the object it will send the action
+ * ObjectsConst.OBJECT_INTERACTION
+ * Along with it's own ID and type.
+ * The server will pick up this information and validate it on the NpcObject.parseMessageAndRunActions method around
+ * line 60, and return an UI message to open a UI dialog box, updated with the information coming in the message, see
+ * RoomEvents.initUi method.
+ *
  */
 
 const { Logger } = require('@reldens/utils');
@@ -94,11 +105,12 @@ class AnimationEngine
                 }
                 // @TODO - BETA.17 - CHECK: tempId is a temporal fix for multiple objects case.
                 let tempId = (this.key === this.asset_key) ? this.id : this.key;
-                this.gameManager.activeRoomEvents.room.send({
+                let dataSend = {
                     act: ObjectsConst.OBJECT_INTERACTION,
                     id: tempId,
                     type: this.type
-                });
+                };
+                this.gameManager.activeRoomEvents.room.send(dataSend);
                 if(this.targetName){
                     this.gameManager.gameEngine.showTarget(this.targetName);
                 }

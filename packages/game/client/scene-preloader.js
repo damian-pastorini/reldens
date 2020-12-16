@@ -247,9 +247,9 @@ class ScenePreloader extends Scene
             this.anims.create({
                 key: anim.k,
                 frames: this.anims.generateFrameNumbers(anim.img, {start: anim.start, end: anim.end}),
-                frameRate: {}.hasOwnProperty.call(anim, 'rate') ? anim.rate : this.configuredFrameRate,
+                frameRate: sc.hasOwn(anim, 'rate') ? anim.rate : this.configuredFrameRate,
                 repeat: anim.repeat,
-                hideOnComplete: {}.hasOwnProperty.call(anim, 'hide') ? anim.hide : true,
+                hideOnComplete: sc.hasOwn(anim, 'hide') ? anim.hide : true,
             });
         }
     }
@@ -261,8 +261,24 @@ class ScenePreloader extends Scene
         this.setupDirButtonInBox(GameConst.DOWN, controllersBox);
         this.setupDirButtonInBox(GameConst.LEFT, controllersBox);
         this.setupDirButtonInBox(GameConst.RIGHT, controllersBox);
-        this.setupActionButtonInBox(GameConst.ACTION, controllersBox);
-        this.setupActionButtonInBox(GameConst.BULLET, controllersBox);
+        // if the default action is not specified we won't show the button:
+        let defaultActionKey = this.gameManager.config.get('client/ui/controls/defaultActionKey');
+        if(defaultActionKey){
+            let actionBox = this.createActionBox(defaultActionKey);
+            this.gameManager.gameDom.appendToElement('.action-buttons', actionBox);
+            this.setupActionButtonInBox(defaultActionKey, controllersBox);
+        }
+        // @TODO - BETA.16 - R16-1a: make skills buttons on client side load dynamically.
+        // this.setupActionButtonInBox(GameConst.BULLET, controllersBox);
+    }
+
+    createActionBox(actionKey)
+    {
+        let skillTemplate = this.cache.html.get('actionBox');
+        return this.gameManager.gameEngine.parseTemplate(skillTemplate, {
+            key: actionKey,
+            actionName: actionKey
+        });
     }
 
     setupDirButtonInBox(dir, box)
@@ -275,12 +291,12 @@ class ScenePreloader extends Scene
 
     setupActionButtonInBox(action, box)
     {
-        let btnBullet = box.getChildByProperty('id', action);
-        if(btnBullet){
+        let actionButton = box.getChildByProperty('id', action);
+        if(actionButton){
             if(this.gameManager.config.get('client/general/controls/action_button_hold')){
-                this.hold(btnBullet, action);
+                this.hold(actionButton, action);
             } else {
-                btnBullet.addEventListener('click', () => {
+                actionButton.addEventListener('click', () => {
                     let currentScene = this.gameManager.activeRoomEvents.getActiveScene();
                     let dataSend = {
                         act: GameConst.ACTION,
@@ -321,11 +337,11 @@ class ScenePreloader extends Scene
         let currentScene = this.gameManager.activeRoomEvents.getActiveScene();
         let dataSend = action;
         // @TODO - BETA.17: controllers will be part of the configuration in the database.
-        if(!{}.hasOwnProperty.call(action, 'dir')){
+        if(!sc.hasOwn(action, 'dir')){
             dataSend = {
-                act: action,
+                act: GameConst.ACTION,
                 target: currentScene.player.currentTarget,
-                type: GameConst.ACTION
+                type: action.type
             };
         }
         this.repeatHold(dataSend);
@@ -344,7 +360,9 @@ class ScenePreloader extends Scene
     repeatHold(sendData)
     {
         this.gameManager.activeRoomEvents.room.send(sendData);
-        this.holdTimer = setTimeout(() => { this.repeatHold(sendData); }, (this.timeout || 0));
+        this.holdTimer = setTimeout(() => {
+            this.repeatHold(sendData);
+        }, (this.timeout || 0));
     }
 
     createProgressBar()
@@ -413,10 +431,12 @@ class ScenePreloader extends Scene
             .fillRectShape(this.progressRect);
     }
 
-    getUiElement(uiName)
+    getUiElement(uiName, logError = true)
     {
         if(!sc.hasOwn(this.elementsUi, uiName)){
-            Logger.error(['UI not found:', uiName]);
+            if(logError){
+                Logger.error(['UI not found:', uiName]);
+            }
             return false;
         }
         return this.elementsUi[uiName];

@@ -162,8 +162,8 @@ class GameManager
                     }
                     // after the room was joined added to the joinedRooms list:
                     this.joinedRooms[joinRoomName] = joinedRoom;
-                    this.events.emit('reldens.joinedRoom', joinedRoom, this);
-                    this.events.emit('reldens.joinedRoom_'+joinRoomName, joinedRoom, this);
+                    await this.events.emit('reldens.joinedRoom', joinedRoom, this);
+                    await this.events.emit('reldens.joinedRoom_'+joinRoomName, joinedRoom, this);
                 }
             }
         }
@@ -244,13 +244,25 @@ class GameManager
         return this.getActiveScene().player;
     }
 
-    getUiElement(uiName)
+    getUiElement(uiName, logError = true)
     {
-        if(!sc.hasOwn(this.gameEngine, 'uiScene')){
-            Logger.error('UI Scene not defined.');
+        if(!sc.hasOwn(this.gameEngine, 'uiScene') || !this.gameEngine.uiScene){
+            if(logError){
+                Logger.error('UI Scene not defined.');
+            }
             return false;
         }
-        return this.gameEngine.uiScene.getUiElement(uiName);
+        return this.gameEngine.uiScene.getUiElement(uiName, logError);
+    }
+
+    getFeature(featureKey)
+    {
+        let featuresList = this.features.featuresList;
+        if(!sc.hasOwn(featuresList, featureKey)){
+            Logger.error(['Feature key not defined:', featureKey]);
+            return false;
+        }
+        return featuresList[featureKey];
     }
 
 }

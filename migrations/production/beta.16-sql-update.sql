@@ -518,3 +518,30 @@ UPDATE `config` SET path = 'ui/lifeBar/y' WHERE path = 'ui/uiLifeBar/y';
 
 INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'actions/skills/affectedProperty', 'hp', 't');
 INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/controls/opacityEffect', '1', 'b');
+
+INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (NULL, 'client', 'ui/skills/y', '390', 'i');
+INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (NULL, 'client', 'ui/skills/x', '230', 'i');
+INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (NULL, 'client', 'ui/skills/responsiveY', '100', 'i');
+INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (NULL, 'client', 'ui/skills/responsiveX', '0', 'i');
+INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (NULL, 'client', 'ui/skills/enabled', '1', 'b');
+
+UPDATE `items_item_modifiers` SET `maxProperty`='statsBase/hp' WHERE  `key`='heal_potion_20';
+UPDATE `items_item_modifiers` SET `maxProperty`='statsBase/mp' WHERE  `key`='magic_potion_20';
+
+INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (NULL, 'client', 'ui/controls/defaultActionKey', 'attackShort', 't');
+
+# Fireball:
+INSERT INTO `skills_skill` (`id`, `key`, `type`, `autoValidation`, `skillDelay`, `castTime`, `usesLimit`, `range`, `rangeAutomaticValidation`, `rangePropertyX`, `rangePropertyY`, `rangeTargetPropertyX`, `rangeTargetPropertyY`, `allowSelfTarget`, `criticalChance`, `criticalMultiplier`, `criticalFixedValue`) VALUES (3, 'fireball', '4', 0, 1500, 2000, 0, 280, 1, 'state/x', 'state/y', NULL, NULL, 0, 10, 2, 0);
+INSERT INTO `skills_skill_attack` (`id`, `skill_id`, `affectedProperty`, `allowEffectBelowZero`, `hitDamage`, `applyDirectDamage`, `attackProperties`, `defenseProperties`, `aimProperties`, `dodgeProperties`, `dodgeFullEnabled`, `dodgeOverAimSuccess`, `damageAffected`, `criticalAffected`) VALUES (3, 3, 'stats/hp', 0, 7, 0, 'stats/atk,stats/stamina,stats/speed', 'stats/def,stats/stamina,stats/speed', 'stats/aim', 'stats/dodge', 1, 2, 0, 0);
+INSERT INTO `skills_skill_physical_data` (`skill_id`, `magnitude`, `objectWidth`, `objectHeight`) VALUES ('3', '550', '5', '5');
+INSERT INTO `skills_class_path_level_skills` (`class_path_id`, `level_key`, `skill_id`) VALUES ('1', '5', '3');
+
+# Bullet:
+INSERT INTO `skills_skill_owner_conditions` (`id`, `skill_id`, `key`, `property_key`, `operation`, `value`) VALUES (1, 1, 'available_mp', 'stats/mp', 'ge', '5');
+INSERT INTO `skills_skill_owner_effects` (`id`, `skill_id`, `key`, `property_key`, `operation`, `value`, `minValue`, `maxValue`, `minProperty`, `maxProperty`) VALUES (1, 1, 'dec_mp', 'stats/mp', 2, '5', '0', '', NULL, NULL);
+
+
+
+# Chat:
+
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/chat/defaultOpen', '1', 'b');

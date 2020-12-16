@@ -198,12 +198,14 @@ class RoomEvents
                 statsPanel.innerHTML = '';
                 // @TODO - BETA.16 - R16-6: make stats show max value if configured (so for example you can see HP
                 //   10/200).
-                for(let i of Object.keys(message.stats)){
-                    statsPanel.innerHTML = statsPanel.innerHTML
-                        + this.gameManager.gameEngine.parseTemplate(messageTemplate, {
-                        statLabel: i,
-                        statValue: message.stats[i]
-                    });
+                if(sc.hasOwn(message, 'stats') && message.stats){
+                    for(let i of Object.keys(message.stats)){
+                        statsPanel.innerHTML = statsPanel.innerHTML
+                            + this.gameManager.gameEngine.parseTemplate(messageTemplate, {
+                                statLabel: i,
+                                statValue: message.stats[i]
+                            });
+                    }
                 }
             }
         }

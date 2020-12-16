@@ -25,12 +25,6 @@ class Enemy1Object extends EnemyObject
     // eslint-disable-next-line no-unused-vars
     onBattleEnd(playerSchema, pveInstance, actionData)
     {
-        console.log('RUNNING BATTLE END EVENT:',
-            this.getBattleEndEvent(),
-            this.getEventRemoveKey(),
-            this.getEventMasterKey(),
-            this.uid, '/', pveInstance.targetObject.uid
-        );
         // validate unique id for battle end event:
         if(this.uid !== pveInstance.targetObject.uid){
             return false;

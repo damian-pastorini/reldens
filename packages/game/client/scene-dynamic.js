@@ -70,6 +70,7 @@ class SceneDynamic extends Scene
             }
         });
         this.input.keyboard.on('keydown', (event) => {
+            // @TODO - BETA.17: make configurable the keys related to the actions and skills.
             if(event.keyCode === 32 && !this.gameManager.gameDom.insideInput()){
                 this.player.runActions();
             }

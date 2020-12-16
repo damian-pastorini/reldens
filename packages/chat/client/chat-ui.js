@@ -54,6 +54,9 @@ class ChatUi
                     chatOpenButton.style.display = 'none';
                     uiChat.setDepth(4);
                 });
+                if(this.gameManager.config.get('client/ui/chat/defaultOpen')){
+                    chatOpenButton.click();
+                }
             }
             chatInput.addEventListener('keyup', (e) => {
                 if(e.keyCode === Input.Keyboard.KeyCodes.ENTER){

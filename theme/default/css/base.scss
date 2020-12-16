@@ -200,7 +200,7 @@ form {
             display: block;
             position: relative;
             font-size: 12px;
-            margin-top: 4px;
+            margin-top: 10px;
             width: 42%;
             text-align: right;
         }
@@ -209,6 +209,8 @@ form {
             float: right;
             display: block;
             position: relative;
+            border: 1px solid $cLightGrey;
+            padding: 8px;
         }
 
         input[type="text"],
@@ -288,27 +290,35 @@ form {
 
 }
 
-.ui-box-controls .vertical-buttons {
-    float: left;
-    width: 54px;
-    text-align: center;
-    top: 0;
-    position: relative;
+.ui-box-controls {
 
-    img {
-        float: none;
+    .action-buttons, .vertical-buttons {
+        float: left;
+        width: 54px;
+        text-align: center;
+        top: 0;
+        position: relative;
+
+        img {
+            float: none;
+        }
+
     }
 
-}
+    .action-buttons {
+        width: auto;
 
-.ui-box-controls #left,
-.ui-box-controls #right {
-    position: relative;
-    top: 30px;
-}
+        img {
+            margin-left: 10px;
+        }
 
-.ui-box-controls .vertical-buttons.action-buttons {
-    margin-left: 10px;
+    }
+
+    #left, #right {
+        position: relative;
+        top: 30px;
+    }
+
 }
 
 .button-opacity-off {

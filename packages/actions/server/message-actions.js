@@ -29,7 +29,7 @@ class ActionsMessageActions
                 }
                 // set the room:
                 currentAction.room = room;
-                // @TODO - BETA.17: make default action configurable, temporally it will be a basic attack.
+                // @TODO - BETA.17: make default action with players configurable, temporally it will be a basic attack.
                 if(data.target.type === GameConst.TYPE_PLAYER){
                     playerSchema.actions['pvp'].runBattle(playerSchema, validTarget, room);
                 }
@@ -44,15 +44,15 @@ class ActionsMessageActions
     preparePlayerCurrentAction(playerSchema, data)
     {
         let runAction = data.type;
-        // @TODO - BETA.17: make default action configurable, temporally it will be a basic attack.
-        if(data.type === 'action'){
-            // for pvp or pve the default action will be the attack-short:
-            runAction = 'attackShort';
-        }
         if(
             !runAction ||
             (
-                // @TODO - BETA.16 - R16-3: analyze, remove .actions and use skills?
+                // @NOTE: actions could be anything the player will apply on the target, for example an action button
+                // could send the type "dig", and that will run an action that will make the player "find something".
+                // For that matter the action could always validate the target as true anywhere on the ground, so the
+                // current position / layer on the map could be validated. On the other hand skills have their own
+                // behavior and in most of the cases will trigger a battle, these comes from an specific system though
+                // access directly from there.
                 !sc.hasOwn(playerSchema.actions, runAction)
                 && !sc.hasOwn(playerSchema.skillsServer.classPath.currentSkills, runAction)
             )

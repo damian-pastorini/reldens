@@ -33,10 +33,10 @@ class ServerManager
     constructor(config)
     {
         try {
-            // initialize configurations:
-            this.initializeConfiguration(config);
             // server events:
             this.events = EventsManagerSingleton;
+            // initialize configurations:
+            this.initializeConfiguration(config);
             // initialize storage:
             DataServer.initialize();
             ThemeManager.validateOrCreateTheme(config);
@@ -145,7 +145,10 @@ class ServerManager
         configProcessor.projectRoot = this.projectRoot;
         // theme root:
         configProcessor.projectTheme = ThemeManager.projectTheme;
-        await EventsManagerSingleton.emit('reldens.serverConfigReady', {serverManager: this, configProcessor: configProcessor});
+        await EventsManagerSingleton.emit('reldens.serverConfigReady', {
+            serverManager: this,
+            configProcessor: configProcessor
+        });
         // mailer:
         this.mailer = new Mailer();
         Logger.info(['Mailer Configured:', this.mailer.isEnabled()]);

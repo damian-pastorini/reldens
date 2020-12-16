@@ -76,7 +76,7 @@ class Healer extends NpcObject
                     let activationData = {act: GameConst.UI, id: this.id, content: responseMessage};
                     room.send(client, activationData);
                 } else {
-                    Logger.error('Error while adding items.');
+                    Logger.error(['Error while adding items.', result]);
                     return false;
                 }
             }).catch((err) => {

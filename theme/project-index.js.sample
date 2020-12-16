@@ -18,6 +18,8 @@ let appServer = new ServerManager({
     projectTheme: 'custom-game-theme-test', // if the project theme is not specified then "default" will be used
     customClasses: CustomClasses // {} // custom configured custom classes
 });
+// events debug:
+// appServer.events = true;
 // setup as you need:
 // eslint-disable-next-line no-unused-vars
 appServer.events.on('reldens.serverConfigFeaturesReady', (serverManager, configProcessor) => {

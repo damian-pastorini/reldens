@@ -1,6 +1,6 @@
 /**
  *
- * Reldens - ReceiverWarpper
+ * Reldens - ReceiverWrapper
  *
  * Reldens/Skills Receiver custom implementation to include gameManager and room references.
  *
@@ -24,7 +24,7 @@ class ReceiverWrapper extends Receiver
     processMessage(message)
     {
         let currentScene = this.gameManager.getActiveScene();
-        if(!currentScene.player){
+        if(!currentScene || !currentScene.player){
             // @NOTE: if player still not set and it's a skills message we will process the message after the player
             // instance was created.
             if(this.isValidMessage(message)){
@@ -97,13 +97,24 @@ class ReceiverWrapper extends Receiver
 
     onInitClassPathEnd(message)
     {
+        // @NOTE: careful with messages received and double ui elements generation.
+        if(this.gameManager.skills && this.gameManager.skills.uiCreated){
+            return false;
+        }
+        this.gameManager.skills.uiCreated = true;
         this.updateLevelAndExperience(message);
+        this.gameManager.skills.skills = message.data.skl;
+        this.gameManager.getFeature('actions').uiManager.appendSkills(message.data.skl);
         // @TODO - BETA.16 - R16-13 - CHECK: update skills, etc. is this needed?
     }
 
     onLevelUp(message)
     {
         this.updateLevelAndExperience(message);
+        if(sc.hasOwn(message.data, 'skl')){
+            Object.assign(this.gameManager.skills.skills, message.data.skl);
+            this.gameManager.getFeature('actions').uiManager.appendSkills(message.data.skl);
+        }
     }
 
     onLevelExperienceAdded(message)
