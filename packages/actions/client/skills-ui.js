@@ -21,7 +21,6 @@ class SkillsUi
         this.appendToUiContainer('#ui-player-extras', 'skillsClassPath');
         this.appendToUiContainer('#ui-player-extras', 'skillsLevel');
         this.appendToUiContainer('#ui-player-extras', 'skillsExperience');
-        // @TODO - BETA.16 - R16-1a: make skills buttons on client side load dynamically.
         this.createUiBox('skills', 7);
     }
 

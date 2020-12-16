@@ -268,8 +268,6 @@ class ScenePreloader extends Scene
             this.gameManager.gameDom.appendToElement('.action-buttons', actionBox);
             this.setupActionButtonInBox(defaultActionKey, controllersBox);
         }
-        // @TODO - BETA.16 - R16-1a: make skills buttons on client side load dynamically.
-        // this.setupActionButtonInBox(GameConst.BULLET, controllersBox);
     }
 
     createActionBox(actionKey)

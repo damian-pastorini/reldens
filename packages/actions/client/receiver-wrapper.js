@@ -105,7 +105,6 @@ class ReceiverWrapper extends Receiver
         this.updateLevelAndExperience(message);
         this.gameManager.skills.skills = message.data.skl;
         this.gameManager.getFeature('actions').uiManager.appendSkills(message.data.skl);
-        // @TODO - BETA.16 - R16-13 - CHECK: update skills, etc. is this needed?
     }
 
     onLevelUp(message)

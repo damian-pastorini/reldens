@@ -43,7 +43,6 @@ class ActionsPack
             uiScene.load.html('skillsClassPath', 'assets/features/skills/templates/ui-class-path.html');
             uiScene.load.html('skillsLevel', 'assets/features/skills/templates/ui-level.html');
             uiScene.load.html('skillsExperience', 'assets/features/skills/templates/ui-experience.html');
-            // @TODO - BETA.16 - R16-1a: make skills buttons on client side load dynamically.
             uiScene.load.html('skills', 'assets/features/skills/templates/ui-skills.html');
             uiScene.load.html('skillBox', 'assets/features/skills/templates/ui-skill-box.html');
             uiScene.load.html('actionBox', 'assets/html/ui-action-box.html');
