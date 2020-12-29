@@ -36,7 +36,7 @@ class ReceiverWrapper extends Receiver
         // @TODO - BETA.16 - R16-1b: replace these by skills related if available otherwise these will be configurable
         //   from the storage.
         // message.act === GameConst.ATTACK ||
-        if(message.act.indexOf('_atk') !== -1){
+        if(message.act.indexOf('_atk') !== -1 || message.act.indexOf('_eff') !== -1){
             EventsManagerSingleton.emit('reldens.playerAttack', message, this.room);
             let ownerSprite = false;
             let targetSprite = false;
