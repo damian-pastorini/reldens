@@ -151,6 +151,14 @@ class AnimationEngine
         }
     }
 
+    getPosition()
+    {
+        return {
+            x: this.x,
+            y: this.y
+        }
+    }
+
 }
 
 module.exports.AnimationEngine = AnimationEngine;

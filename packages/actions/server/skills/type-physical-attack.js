@@ -8,7 +8,6 @@
  */
 
 const { PhysicalAttack } = require('@reldens/skills');
-const { GameConst } = require('../../../game/constants');
 const { sc } = require('@reldens/utils');
 
 class TypePhysicalAttack extends PhysicalAttack
@@ -21,7 +20,9 @@ class TypePhysicalAttack extends PhysicalAttack
         this.currentBattle = false;
         // @NOTE: hit priority is something specifically from reldens physics engine, in order to change this value you
         // need to extend this class and send a new one as parameter in the constructor.
-        this.hitPriority = sc.hasOwn(props, 'hitPriority') ? props.hitPriority : 2;
+        this.hitPriority = sc.getDef(props, 'hitPriority', 2);
+        // the animation direction is a custom property on the skill calculated on the server to be send to the client:
+        this.animDir = sc.getDef(props, 'animDir', false);
     }
 
     async onHit(props)
@@ -80,16 +81,19 @@ class TypePhysicalAttack extends PhysicalAttack
 
     executeBullets(props)
     {
+        // @TODO - BETA.16 - R16-1b: replace these by skills related if available otherwise these will be configurable
+        //   from the storage.
         let bulletsCheck = [];
+        let hitKey = sc.getDef(this.room.config.client.skills.animations, this.key+'_hit', 'default_hit');
         // both objects could be bullets, so remove them is needed and broadcast the hit:
         if(props.bodyA.isBullet){
             this.removeBullet(props.bodyA);
-            this.room.broadcast({act: GameConst.HIT, x: props.bodyA.position[0], y: props.bodyA.position[1]});
+            this.room.broadcast({act: hitKey, x: props.bodyA.position[0], y: props.bodyA.position[1]});
             bulletsCheck.push({key: 'bodyA', obj: props.bodyA});
         }
         if(props.bodyB.isBullet){
             this.removeBullet(props.bodyB);
-            this.room.broadcast({act: GameConst.HIT, x: props.bodyB.position[0], y: props.bodyB.position[1]});
+            this.room.broadcast({act: hitKey, x: props.bodyB.position[0], y: props.bodyB.position[1]});
             bulletsCheck.push({key: 'bodyB', obj: props.bodyB});
         }
         return bulletsCheck;
@@ -105,7 +109,7 @@ class TypePhysicalAttack extends PhysicalAttack
     removeBullet(body)
     {
         body.world.removeBodies.push(body);
-        delete this.room.state.bodies['bullet'+body.id];
+        delete this.room.state.bodies[this.key+'_bullet_'+body.id];
     }
 
 }

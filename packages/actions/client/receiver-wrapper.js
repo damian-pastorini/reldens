@@ -8,7 +8,7 @@
 
 const { Receiver } = require('@reldens/skills');
 const { EventsManagerSingleton, sc } = require('@reldens/utils');
-const { GameConst } = require('../../game/constants');
+// const { GameConst } = require('../../game/constants');
 
 class ReceiverWrapper extends Receiver
 {
@@ -33,7 +33,10 @@ class ReceiverWrapper extends Receiver
             return true;
         }
         super.processMessage(message);
-        if(message.act === GameConst.ATTACK){
+        // @TODO - BETA.16 - R16-1b: replace these by skills related if available otherwise these will be configurable
+        //   from the storage.
+        // message.act === GameConst.ATTACK ||
+        if(message.act.indexOf('_atk') !== -1){
             EventsManagerSingleton.emit('reldens.playerAttack', message, this.room);
             let ownerSprite = false;
             let targetSprite = false;
@@ -55,26 +58,42 @@ class ReceiverWrapper extends Receiver
                 }
             }
             if(ownerSprite){
-                let ownerAnim = currentScene.physics.add.sprite(ownerSprite.x, ownerSprite.y, GameConst.ATTACK);
+                // @TODO - BETA.16 - R16-1b: replace these by skills related if available otherwise these will be
+                //   configurable from the storage.
+                let ownerAnim = currentScene.physics.add.sprite(ownerSprite.x, ownerSprite.y, message.act);
                 ownerAnim.setDepth(200000);
-                ownerAnim.anims.play(GameConst.ATTACK, true).on('animationcomplete', () => {
+                // @TODO - BETA.17 - Refactor and implement animDir = 1 (both): up_right, up_left, down_right,
+                //   down_left.
+                let playDir = '';
+                if(sc.hasOwn(this.gameManager.gameEngine.uiScene.directionalAnimations, message.act)){
+                    let animDir = this.gameManager.gameEngine.uiScene.directionalAnimations[message.act];
+                    playDir = (animDir === 3) ?
+                        (ownerSprite.x < targetSprite.x ? '_right' : '_left')
+                        : (ownerSprite.y < targetSprite.y ? '_down' : '_up');
+                }
+                ownerAnim.anims.play(message.act+playDir, true).on('animationcomplete', () => {
                     ownerAnim.destroy();
                 });
             }
             if(targetSprite){
-                this.runHitAnimation(targetSprite.x, targetSprite.y, currentScene);
+                let hitKey = message.act.substring(0, message.act.indexOf('_atk'));
+                this.runHitAnimation(targetSprite.x, targetSprite.y, currentScene, hitKey);
             }
         }
-        if(message.act === GameConst.HIT){
-            this.runHitAnimation(message.x, message.y, currentScene);
+        // if(message.act === GameConst.HIT){
+        if(message.act.indexOf('_hit') !== -1){
+            this.runHitAnimation(message.x, message.y, currentScene, message.act);
         }
     }
 
-    runHitAnimation(x, y, currentScene)
+    runHitAnimation(x, y, currentScene, hitKey)
     {
-        let hitSprite = currentScene.physics.add.sprite(x, y, GameConst.HIT);
+        // @TODO - BETA.16 - R16-1b: replace these by skills related if available otherwise these will be configurable
+        //   from the storage.
+        let hitAnimKey = sc.hasOwn(this.gameManager.config.client.skills.animations, hitKey) ? hitKey : 'default_hit';
+        let hitSprite = currentScene.physics.add.sprite(x, y, hitAnimKey);
         hitSprite.setDepth(200000);
-        hitSprite.anims.play(GameConst.HIT, true).on('animationcomplete', () => {
+        hitSprite.anims.play(hitAnimKey, true).on('animationcomplete', () => {
             hitSprite.destroy();
         });
     }
@@ -119,6 +138,39 @@ class ReceiverWrapper extends Receiver
     onLevelExperienceAdded(message)
     {
         this.gameManager.gameDom.updateContent('.experience-container .current-experience', message.data.exp);
+    }
+
+    // @TODO - Improve skills animations (no more rock throw! let's some real spells and weapons!).
+    // eslint-disable-next-line no-unused-vars
+    onSkillBeforeCast(message)
+    {
+        // cast animation:
+        let currentScene = this.gameManager.getActiveScene();
+        let castKey = message.data.skillKey+'_cast';
+        // @TODO - BETA.16 - R16-1b: replace these by skills related if available otherwise these will be configurable
+        //   from the storage.
+        let castAnimKey = sc.hasOwn(this.gameManager.config.client.skills.animations, castKey)
+            ? castKey : 'default_cast';
+        let castSprite = currentScene.physics.add.sprite(message.data.x, message.data.y, castAnimKey);
+        let animationSprite = currentScene.getAnimationByKey(castAnimKey);
+        let destroyTime = sc.getDef(animationSprite, 'destroyTime', false);
+        let ownerSprite = this.gameManager.getCurrentPlayer().players[message.data.extraData.oK];
+        // the default value will be the caster depth - 1 so the animation will be played below the player.
+        let depth = sc.hasOwn(animationSprite, 'depthByPlayer') && animationSprite['depthByPlayer'] === 'above'
+            ? ownerSprite.depth + 1 : ownerSprite.depth - 0.1;
+        castSprite.depthByPlayer = animationSprite.depthByPlayer;
+        castSprite.setDepth(depth);
+        let blockMovement = sc.getDef(animationSprite, 'blockMovement', false);
+        if(!blockMovement){
+            ownerSprite.moveSprites[castAnimKey+'_'+ownerSprite.playerId] = castSprite;
+        }
+        castSprite.anims.play(castAnimKey, true);
+        if(destroyTime){
+            setTimeout(() => {
+                castSprite.destroy();
+                delete ownerSprite.moveSprites[castAnimKey+'_'+ownerSprite.playerId];
+            }, destroyTime)
+        }
     }
 
 }

@@ -13,15 +13,18 @@ const { ClientCoreFeatures } = require('./config-client');
 class FeaturesManager
 {
 
-    loadFeatures(featuresCodeList)
+    async loadFeatures(featuresCodeList)
     {
         this.featuresList = {};
-        EventsManagerSingleton.emit('reldens.loadFeatures', this);
+        await EventsManagerSingleton.emit('reldens.loadFeatures', this);
         for(let i of Object.keys(featuresCodeList)){
             let featureCode = featuresCodeList[i];
             if({}.hasOwnProperty.call(ClientCoreFeatures, featureCode)){
                 this.featuresList[featureCode] = new ClientCoreFeatures[featureCode]();
-                EventsManagerSingleton.emit('reldens.loadFeature_'+featureCode, this.featuresList[featureCode], this);
+                await EventsManagerSingleton.emit('reldens.loadFeature_'+featureCode,
+                    this.featuresList[featureCode],
+                    this
+                );
             }
         }
         return this.featuresList;

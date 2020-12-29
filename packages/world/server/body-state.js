@@ -17,6 +17,8 @@ class BodyState extends Schema
         super();
         this.room_id = data.room_id;
         this.scene = data.scene;
+        // @TODO - BETA.16 - R16-1b: required key for animations.
+        this.key = data.key || '';
         this.x = parseFloat(data.x);
         this.y = parseFloat(data.y);
         this.dir = data.dir;
@@ -27,6 +29,7 @@ class BodyState extends Schema
 
 type('number')(BodyState.prototype, 'room_id');
 type('string')(BodyState.prototype, 'scene');
+type('string')(BodyState.prototype, 'key');
 type('number')(BodyState.prototype, 'x');
 type('number')(BodyState.prototype, 'y');
 type('string')(BodyState.prototype, 'dir');

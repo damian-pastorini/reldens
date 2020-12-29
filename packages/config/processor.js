@@ -12,12 +12,8 @@ class ConfigProcessor
 {
 
     /**
-     * This method will receive a path that's should be always composed by 4 parameters split by a slash and will
+     * This method will receive a path that's should be always composed by 3 or 4 parameters split by a slash and will
      * return a property of the same processor which should have the configurations assigned.
-     *
-     * @param path
-     * @param avoidLog
-     * @returns {boolean}
      */
     get(path, avoidLog = false)
     {

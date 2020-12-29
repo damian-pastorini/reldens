@@ -7,7 +7,7 @@
  */
 
 const { Attack } = require('@reldens/skills');
-const { GameConst } = require('../../../game/constants');
+const { sc } = require('@reldens/utils');
 
 class TypeAttack extends Attack
 {
@@ -22,18 +22,17 @@ class TypeAttack extends Attack
     async runSkillLogic()
     {
         if(this.room){
+            // @TODO - BETA.16 - R16-1b: replace these by skills related if available otherwise these will be
+            //   configurable from the storage.
+            let skillAction = sc.getDef(this.room.config.client.skills.animations, this.key+'_atk', 'default_atk');
             this.room.broadcast({
-                act: GameConst.ATTACK,
+                act: skillAction,
                 owner: this.owner.broadcastKey,
                 target: this.target.broadcastKey
             });
         }
         await super.runSkillLogic();
-        if(
-            {}.hasOwnProperty.call(this.owner, 'player_id')
-            && {}.hasOwnProperty.call(this.target, 'objectBody')
-            && this.currentBattle
-        ){
+        if(sc.hasOwn(this.owner, 'player_id') && sc.hasOwn(this.target, 'objectBody') && this.currentBattle){
             if(this.getAffectedPropertyValue(this.target) > 0){
                 await this.currentBattle.startBattleWith(this.owner, this.room);
             }

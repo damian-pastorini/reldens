@@ -7,7 +7,7 @@
  *
  */
 
-const { InteractionArea, Logger } = require('@reldens/utils');
+const { InteractionArea, Logger, sc } = require('@reldens/utils');
 
 class BaseObject extends InteractionArea
 {
@@ -22,7 +22,7 @@ class BaseObject extends InteractionArea
         this.uid = this.key + Date.now();
         // in this specific object type we will use the public params as JSON, this is coming from the storage:
         try {
-            this.clientParams = props.client_params ? JSON.parse(props.client_params) : {};
+            this.clientParams = sc.getJson(props.client_params, {});
         } catch (err) {
             Logger.error(['BaseObject, clientParams JSON error:', props.client_params]);
         }

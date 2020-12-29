@@ -23,6 +23,7 @@ class Battle
         this.battleTimer = false;
         this.timerType = props.timerType || ActionsConst.BATTLE_TYPE_PER_TARGET;
         this.lastAttack = false;
+        this.lastAttackKey = false;
     }
 
     // eslint-disable-next-line no-unused-vars
@@ -37,6 +38,7 @@ class Battle
             return false;
         }
         currentAction.currentBattle = this;
+        this.lastAttackKey = currentAction.key;
         let executeResult = await currentAction.execute(target);
         // include the target in the battle list:
         this.lastAttack = Date.now();
@@ -73,7 +75,8 @@ class Battle
                 act: ActionsConst.BATTLE_ENDED,
                 x: targetSchema.state.x,
                 y: targetSchema.state.y,
-                t: targetSchema.sessionId
+                t: targetSchema.sessionId,
+                k: this.lastAttackKey
             };
             room.broadcast(actionData);
             await room.saveStateAndRemovePlayer(targetSchema.sessionId);

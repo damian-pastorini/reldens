@@ -12,7 +12,7 @@ const { P2world } = require('../../world/server/p2world');
 const { CollisionsManager } = require('../../world/server/collisions-manager');
 const { ObjectsManager } = require('../../objects/server/manager');
 const { GameConst } = require('../../game/constants');
-const { Logger, ErrorManager } = require('@reldens/utils');
+const { Logger, ErrorManager, sc } = require('@reldens/utils');
 const { EventsManagerSingleton } = require('@reldens/utils');
 
 class RoomScene extends RoomLogin
@@ -132,11 +132,17 @@ class RoomScene extends RoomLogin
         // get player:
         let playerSchema = this.getPlayerFromState(client.sessionId);
         // only process the message if the player exists and has a body:
-        if(playerSchema && {}.hasOwnProperty.call(playerSchema, 'physicalBody')){
+        if(playerSchema && sc.hasOwn(playerSchema, 'physicalBody')){
             // get player body:
             let bodyToMove = playerSchema.physicalBody;
+            // @TODO - BETA.16 - R16-1b: fixed skills blocked by casting.
             // if player is moving:
-            if({}.hasOwnProperty.call(messageData, 'dir') && bodyToMove && !bodyToMove.isChangingScene){
+            if(
+                sc.hasOwn(messageData, 'dir') 
+                && bodyToMove
+                && !bodyToMove.isChangingScene
+                && !bodyToMove.isBlocked
+            ){
                 bodyToMove.initMove(messageData.dir);
             }
             // if player stopped:
@@ -146,9 +152,11 @@ class RoomScene extends RoomLogin
             }
             if(
                 messageData.act === GameConst.POINTER
-                && {}.hasOwnProperty.call(messageData, 'column')
-                && {}.hasOwnProperty.call(messageData, 'row')
+                && sc.hasOwn(messageData, 'column')
+                && sc.hasOwn(messageData, 'row')
                 && bodyToMove
+                && !bodyToMove.isChangingScene
+                && !bodyToMove.isBlocked
             ){
                 messageData = this.makeValidPoints(messageData);
                 bodyToMove.moveToPoint(messageData);
@@ -381,7 +389,7 @@ class RoomScene extends RoomLogin
             for(let i of Object.keys(instC)){
                 let res = instC[i];
                 for(let obj of res){
-                    if({}.hasOwnProperty.call(obj, 'battleEndListener')){
+                    if(sc.hasOwn(obj, 'battleEndListener')){
                         // Logger.info(['Turning off listener on reldens.battleEnded for object:', obj.key]);
                         EventsManagerSingleton.off('reldens.battleEnded', obj.battleEndListener);
                     }

@@ -134,11 +134,13 @@ class Pve extends Battle
     {
         // @TODO - BETA.17 - CHECK: implement battle end in both pve and pvp.
         this.removeInBattlePlayer(playerSchema);
+        // @TODO - BETA.16 - R16-1b: more information was required for the skills animations.
         let actionData = {
             act: ActionsConst.BATTLE_ENDED,
             x: this.targetObject.objectBody.position[0],
             y: this.targetObject.objectBody.position[1],
-            t: this.targetObject.key
+            t: this.targetObject.key,
+            k: this.lastAttackKey
         };
         room.broadcast(actionData);
         this.targetObject.respawn();

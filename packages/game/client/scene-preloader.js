@@ -30,6 +30,8 @@ class ScenePreloader extends Scene
         this.elementsUi = {};
         this.gameManager = props.gameManager;
         this.preloadAssets = props.preloadAssets;
+        // @TODO - Improve skills animations (no more rock throw! let's some real spells and weapons!)
+        this.directionalAnimations = {};
         let currentScene = this.gameManager.activeRoomEvents.getActiveScene();
         currentScene.objectsAnimationsData = props.objectsAnimationsData;
     }
@@ -78,6 +80,7 @@ class ScenePreloader extends Scene
                 spacing: this.gameManager.config.get('client/general/tileData/spacing') || 2
             };
             let files = this.preloadImages.split(',');
+            // @TODO - BETA.17: remove the hardcoded file extensions.
             for(let imageFile of files){
                 let filePath = `assets/maps/${imageFile}.png`;
                 this.load.spritesheet(imageFile, filePath, tileData);
@@ -85,10 +88,11 @@ class ScenePreloader extends Scene
         }
         // preload objects assets:
         if(this.preloadAssets){
+            // @TODO - BETA.17: remove the hardcoded file extensions.
             for(let asset of this.preloadAssets){
                 if(asset.asset_type === 'spritesheet'){
                     let assetFilePath = `assets/custom/sprites/${asset.file_1}.png`;
-                    let assetParams = asset.extra_params ? JSON.parse(asset.extra_params) : false;
+                    let assetParams = sc.getJson(asset.extra_params);
                     if(assetParams){
                         this.load.spritesheet(asset.asset_key, assetFilePath, assetParams);
                     } else {
@@ -106,10 +110,12 @@ class ScenePreloader extends Scene
         this.load.spritesheet(GameConst.IMAGE_PLAYER, 'assets/sprites/player-1.png', playerSpriteSize);
         // @TODO - BETA.16 - R16-1b: replace these by skills related if available otherwise these will be configurable
         //   from the storage.
+        /*
         this.load.spritesheet(GameConst.ATTACK, 'assets/sprites/weapons-1.png', {frameWidth: 64, frameHeight: 64});
+        this.load.spritesheet(GameConst.BULLET, 'assets/sprites/earth-1.png', {frameWidth: 64, frameHeight: 64});
         this.load.spritesheet(GameConst.HIT, 'assets/sprites/impact-1.png', {frameWidth: 64, frameHeight: 64});
         this.load.spritesheet(GameConst.DEATH, 'assets/sprites/object-1.png', {frameWidth: 64, frameHeight: 64});
-        this.load.spritesheet(GameConst.BULLET, 'assets/sprites/earth-1.png', {frameWidth: 64, frameHeight: 64});
+        */
         if(this.gameManager.config.get('client/ui/pointer/show')){
             let pointerData = {frameWidth: 32, frameHeight: 32};
             this.load.spritesheet(GameConst.ARROW_DOWN, 'assets/sprites/arrow-w-down.png', pointerData);
@@ -234,13 +240,22 @@ class ScenePreloader extends Scene
             {k: GameConst.DOWN, img: GameConst.IMAGE_PLAYER, start: 0, end: 2, repeat: -1, hide: false},
             // @TODO - BETA.16 - R16-1b: replace these by skills related if available otherwise these will be
             //   configurable from the storage.
+            /*
             {k: GameConst.ATTACK, img: GameConst.ATTACK, start: 25, end: 29, repeat: 0},
+            {k: GameConst.BULLET, img: GameConst.BULLET, start: 1, end: 2, repeat: -1, rate: 1},
             {k: GameConst.HIT, img: GameConst.HIT, start:17, end: 19, repeat: 0},
-            {k: GameConst.DEATH, img: GameConst.DEATH, start: 10, end: 11, repeat: 0, rate: 1},
-            {k: GameConst.BULLET, img: GameConst.BULLET, start: 1, end: 2, repeat: -1, rate: 1}
+            {k: GameConst.DEATH, img: GameConst.DEATH, start: 10, end: 11, repeat: 0, rate: 1}
+            */
         ];
         if(this.gameManager.config.get('client/ui/pointer/show')){
-            let arrowAnim = {k: GameConst.ARROW_DOWN, img: GameConst.ARROW_DOWN, start: 1, end: 4, repeat: 3, rate: 6};
+            let arrowAnim = {
+                k: GameConst.ARROW_DOWN,
+                img: GameConst.ARROW_DOWN, // this is the loaded image key
+                start: 1,
+                end: 4,
+                repeat: 3,
+                rate: 6
+            };
             availableAnimations.push(arrowAnim);
         }
         for(let anim of availableAnimations){

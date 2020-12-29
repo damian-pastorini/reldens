@@ -7,6 +7,7 @@
  */
 
 const { Effect } = require('@reldens/skills');
+const { sc } = require('@reldens/utils');
 
 class TypeEffect extends Effect
 {
@@ -21,18 +22,17 @@ class TypeEffect extends Effect
     async runSkillLogic()
     {
         if(this.room){
+            // @TODO - BETA.16 - R16-1b: replace these by skills related if available otherwise these will be
+            //   configurable from the storage.
+            let skillAction = sc.getDef(this.room.config.client.skills.animations, this.key+'_eff', 'default_eff');
             this.room.broadcast({
-                act: this.key,
+                act: skillAction,
                 owner: this.owner.broadcastKey,
                 target: this.target.broadcastKey
             });
         }
         await super.runSkillLogic();
-        if(
-            {}.hasOwnProperty.call(this.owner, 'player_id')
-            && {}.hasOwnProperty.call(this.target, 'objectBody')
-            && this.currentBattle
-        ){
+        if(sc.hasOwn(this.owner, 'player_id') && sc.hasOwn(this.target, 'objectBody') && this.currentBattle){
             if(this.getAffectedPropertyValue(this.target) > 0){
                 await this.currentBattle.startBattleWith(this.owner, this.room);
             }

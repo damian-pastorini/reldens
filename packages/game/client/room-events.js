@@ -85,7 +85,7 @@ class RoomEvents
 
     prepareScene()
     {
-        this.sceneData = JSON.parse(this.room.state.sceneData);
+        this.sceneData = sc.getJson(this.room.state.sceneData);
         if(!this.gameEngine.scene.getScene(this.roomName)){
             let engineSceneDynamic = this.createSceneInstance(this.roomName, this.sceneData, this.gameManager);
             this.gameEngine.scene.add(this.roomName, engineSceneDynamic, false);

@@ -6,7 +6,7 @@
 
 const { Scene, Input } = require('phaser');
 const { TilesetAnimation } = require('./tileset-animation');
-const { EventsManagerSingleton } = require('@reldens/utils');
+const { EventsManagerSingleton, sc } = require('@reldens/utils');
 const { GameConst } = require('../../game/constants');
 
 class SceneDynamic extends Scene
@@ -71,9 +71,11 @@ class SceneDynamic extends Scene
         });
         this.input.keyboard.on('keydown', (event) => {
             // @TODO - BETA.17: make configurable the keys related to the actions and skills.
+            // keyCode = 32 > spacebar
             if(event.keyCode === 32 && !this.gameManager.gameDom.insideInput()){
                 this.player.runActions();
             }
+            // keyCode = 27 > esc
             if(event.keyCode === 27){
                 this.gameManager.gameEngine.clearTarget();
             }
@@ -106,7 +108,7 @@ class SceneDynamic extends Scene
             this.transition = false;
             this.gameManager.isChangingScene = false;
             this.input.keyboard.on('keyup', (event) => {
-                // stop all directional keys:
+                // stop all directional keys (arrows and wasd):
                 if(event.keyCode >= 37 && event.keyCode <= 40 || (
                     event.keyCode === 87
                     || event.keyCode === 65
@@ -222,6 +224,14 @@ class SceneDynamic extends Scene
         this.arrowSprite.anims.play(GameConst.ARROW_DOWN, true).on('animationcomplete', () => {
             this.arrowSprite.destroy();
         });
+    }
+
+    getAnimationByKey(key)
+    {
+        if(!this.anims || !this.anims.anims || !this.anims.anims.entries){
+            return false;
+        }
+        return sc.getDef(this.anims.anims.entries, key, false);
     }
 
 }

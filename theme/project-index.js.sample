@@ -19,7 +19,7 @@ let appServer = new ServerManager({
     customClasses: CustomClasses // {} // custom configured custom classes
 });
 // events debug:
-// appServer.events = true;
+// appServer.events.debug = 'all'; // or any string containing multiple events keys.
 // setup as you need:
 // eslint-disable-next-line no-unused-vars
 appServer.events.on('reldens.serverConfigFeaturesReady', (serverManager, configProcessor) => {

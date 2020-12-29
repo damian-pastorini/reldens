@@ -16,6 +16,11 @@ class ActionsMessageActions
 
     parseMessageAndRunActions(client, data, room, playerSchema)
     {
+        let bodyToMove = playerSchema.physicalBody;
+        if(playerSchema.isCasting || bodyToMove.isBlocked || bodyToMove.isChangingScene){
+            // if body is blocked do NOTHING! it could be because a scene change, or a skill activation or an item
+            return false;
+        }
         if(data.act === GameConst.ACTION && data.target){
             let validTarget = this.validateTarget(data.target, room);
             if(validTarget){

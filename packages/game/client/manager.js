@@ -108,7 +108,9 @@ class GameManager
 
     async initEngineAndStartGame(initialGameData)
     {
-        await this.events.emit('reldens.beforeInitEngineAndStartGame', initialGameData);
+        // @TODO - BETA.16 - R16-1b: replace these by skills related if available otherwise these will be configurable
+        //   from the storage.
+        await this.events.emit('reldens.beforeInitEngineAndStartGame', initialGameData, this);
         if(!{}.hasOwnProperty.call(initialGameData, 'gameConfig')){
             throw new Error('ERROR - Missing game configuration.');
         }
@@ -116,10 +118,10 @@ class GameManager
         this.playerData = initialGameData.player;
         // apply the initial config to the processor:
         Object.assign(this.config, initialGameData.gameConfig);
+        // features list:
+        await this.features.loadFeatures(initialGameData.features);
         // initialize game engine:
         this.gameEngine = new GameEngine(initialGameData.gameConfig);
-        // features list:
-        this.features.loadFeatures(initialGameData.features);
         // since the user is now registered:
         this.userData.isNewUser = false;
         // first join the features rooms:
@@ -184,8 +186,8 @@ class GameManager
             previousRoom.leave();
             this.activeRoomEvents = newRoomEvents;
             this.room = sceneRoom;
-            this.events.emit('reldens.joinedRoom', sceneRoom, this);
-            this.events.emit('reldens.joinedRoom_'+message.player.state.scene, sceneRoom, this);
+            await this.events.emit('reldens.joinedRoom', sceneRoom, this);
+            await this.events.emit('reldens.joinedRoom_'+message.player.state.scene, sceneRoom, this);
             // start listen to room events:
             await newRoomEvents.activateRoom(sceneRoom, message.prev);
         }).catch((err) => {
@@ -263,6 +265,11 @@ class GameManager
             return false;
         }
         return featuresList[featureKey];
+    }
+
+    getAnimationByKey(key)
+    {
+        return this.getActiveScene().getAnimationByKey(key);
     }
 
 }

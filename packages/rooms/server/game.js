@@ -25,15 +25,17 @@ class RoomGame extends RoomLogin
         let storedClientConfig = {client: this.config.client};
         let initialStats = {initialStats: this.config.get('server/players/initialStats')};
         let clientFullConfig = Object.assign({}, this.config.gameEngine, storedClientConfig, initialStats);
-        // client start:
-        this.send(client, {
+        let superInitialGameData = {
             act: GameConst.START_GAME,
             sessionId: client.sessionId,
             // @TODO - BETA.17: index [0] is temporal since for now we only have one player by user.
             player: authResult.players[0],
             gameConfig: clientFullConfig,
             features: this.config.availableFeaturesList
-        });
+        };
+        await EventsManagerSingleton.emit('reldens.beforeSuperInitialGameData', superInitialGameData, this);
+        // client start:
+        this.send(client, superInitialGameData);
     }
 
 }

@@ -2,9 +2,12 @@
  *
  * Reldens - Actions Server Package
  *
+ * This pack will append to the config processor all the information required by both the server and the client.
+ * This will also create an instance of each skill to be called and used on the players later.
+ *
  */
 
-const { SkillConst, SkillsServer } = require('@reldens/skills');
+const { SkillConst, SkillsServer, SkillsEvents } = require('@reldens/skills');
 const { ModelsManager } = require('@reldens/skills/lib/server/storage/models-manager');
 const { EventsManagerSingleton, sc } = require('@reldens/utils');
 const { ActionsMessageActions } = require('./message-actions');
@@ -12,6 +15,7 @@ const { ClientWrapper } = require('../../game/server/client-wrapper');
 const { PackInterface } = require('../../features/server/pack-interface');
 const { Pvp } = require('./pvp');
 const { TypeAttack, TypeEffect, TypePhysicalAttack, TypePhysicalEffect } = require('./skills/types');
+const { AnimationsModel } = require('./animations-model');
 
 class ActionsPack extends PackInterface
 {
@@ -47,6 +51,7 @@ class ActionsPack extends PackInterface
         await this.loadSkillsFullList(configProcessor);
         await this.loadGroupsFullList(configProcessor);
         await this.loadClassPathFullList(configProcessor);
+        await this.appendSkillsAnimations(configProcessor);
     }
 
     async onCreatePlayerAfter(client, authResult, currentPlayer, room)
@@ -65,6 +70,7 @@ class ActionsPack extends PackInterface
             classPathData.affectedProperty = room.config.get('client/actions/skills/affectedProperty');
             classPathData.client = new ClientWrapper(client, room);
             currentPlayer.skillsServer = new SkillsServer(classPathData);
+            this.listenEvents(currentPlayer.skillsServer.classPath);
         }
     }
 
@@ -99,15 +105,111 @@ class ActionsPack extends PackInterface
         if(pvpConfig){
             currentPlayer.actions['pvp'] = new Pvp(pvpConfig);
         }
-        currentPlayer.executePhysicalSkill = (target, bulletObject) => {
+        // @TODO - BETA.16 - R16-1b: new custom player methods were required and other modified for the skills
+        //   animations.
+        currentPlayer.executePhysicalSkill = (target, executedSkill) => {
             let from = {x: currentPlayer.state.x, y: currentPlayer.state.y};
             let to = {x: target.state.x, y: target.state.y};
-            let bulletBody = currentPlayer.physicalBody.world.shootBullet(from, to, bulletObject);
+            let animData = sc.getDef(room.config.client.skills.animations, executedSkill.key+'_bullet', false);
+            if(animData){
+                executedSkill.animDir = sc.getDef(animData.animationData, 'dir', false);
+            }
+            let bulletBody = currentPlayer.physicalBody.world.shootBullet(from, to, executedSkill);
             bulletBody.onHit = (onHitData) => {
-                bulletObject.onHit(onHitData);
+                executedSkill.onHit(onHitData);
             };
             return false;
         };
+        currentPlayer.getPosition = () => {
+            return {
+                x: currentPlayer.state.x,
+                y: currentPlayer.state.y
+            };
+        };
+        currentPlayer.getSkillExtraData = (params) => {
+            return this.prepareExtraData(params);
+        }
+    }
+
+    prepareExtraData(params)
+    {
+        // @TODO - BETA.17 - Refactor and replace by constants.
+        let extraData = {};
+        if(sc.hasOwn(params, 'target')){
+            if(sc.hasOwn(params.target, 'uid')){
+                extraData.tT = 'e'; // enemy
+                extraData.tK = params.target.uid;
+            }
+            if(sc.hasOwn(params.target, 'sessionId')){
+                extraData.tT = 'p';
+                extraData.tK = params.target.sessionId;
+            }
+        }
+        if(sc.hasOwn(params, 'skill')){
+            if(sc.hasOwn(params.skill.owner, 'uid')){
+                extraData.oT = 'e'; // enemy
+                extraData.oK = params.skill.owner.uid;
+            }
+            if(sc.hasOwn(params.skill.owner, 'sessionId')){
+                extraData.oT = 'p';
+                extraData.oK = params.skill.owner.sessionId;
+            }
+        }
+        return extraData;
+    }
+
+    async appendSkillsAnimations(config)
+    {
+        let models = await AnimationsModel.loadAllWithSkill();
+        if(models.length){
+            for(let skillAnim of models){
+                let animationData = sc.getJson(skillAnim.animationData, {});
+                let customDataJson = sc.getJson(skillAnim.skill.customData);
+                if(customDataJson){
+                    if(sc.hasOwn(customDataJson, 'blockMovement')){
+                        animationData.blockMovement = customDataJson.blockMovement;
+                    }
+                }
+                config.client.skills.animations[skillAnim.skill.key+'_'+skillAnim.key] = {
+                    skillId: skillAnim.skill_id,
+                    skillKey: skillAnim.skill.key,
+                    key: skillAnim.key,
+                    class: skillAnim.classKey,
+                    animationData: animationData
+                }
+            }
+        }
+        return config.client.skills.animations;
+    }
+
+    listenEvents(classPath)
+    {
+        // @TODO - Improve skills animations (no more rock throw! let's some real spells and weapons!).
+        let ownerId = classPath.getOwnerId();
+        // eslint-disable-next-line no-unused-vars
+        classPath.listenEvent(SkillsEvents.SKILL_BEFORE_CAST, async (skill, target) => {
+            let customDataJson = sc.getJson(skill.customData);
+            if(
+                !customDataJson
+                || !sc.getDef(customDataJson, 'blockMovement', false)
+                || !sc.hasOwn(skill.owner, 'physicalBody')
+            ){
+                return;
+            }
+            skill.owner.physicalBody.isBlocked = true;
+        }, 'skillBeforeCastPack', 'p'+ownerId);
+        // eslint-disable-next-line no-unused-vars
+        classPath.listenEvent(SkillsEvents.SKILL_AFTER_CAST, async (skill, target, skillLogicResult) => {
+            let customDataJson = sc.getJson(skill.customData);
+            if(
+                !customDataJson
+                || !sc.getDef(customDataJson, 'blockMovement', false)
+                || !sc.hasOwn(skill.owner, 'physicalBody')
+            ){
+                return;
+            }
+            skill.owner.physicalBody.isBlocked = false;
+        }, 'skillAfterCastPack', 'p'+ownerId);
     }
 
 }

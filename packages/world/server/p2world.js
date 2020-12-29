@@ -10,7 +10,7 @@ const { World, Body, Box } = require('p2');
 const { PathFinder } = require('./path-finder');
 const { PhysicalBody } = require('./physical-body');
 const { ObjectBodyState } = require('./object-body-state');
-const { Logger, ErrorManager } = require('@reldens/utils');
+const { Logger, ErrorManager, sc } = require('@reldens/utils');
 const { GameConst } = require('../../game/constants');
 const { EventsManagerSingleton } = require('@reldens/utils');
 
@@ -206,8 +206,17 @@ class P2world extends World
         this.addBody(rightWall);
     }
 
-    createCollisionBody(width, height, x, y, mass = 1, collisionResponse = true, hasState = false)
-    {
+    createCollisionBody(
+        width,
+        height,
+        x,
+        y,
+        mass = 1,
+        collisionResponse = true,
+        hasState = false,
+        bodyKey = false,
+        dir = false
+    ) {
         let boxShape = this.createCollisionShape(width, height, collisionResponse);
         let bodyConfig = {
             mass: mass,
@@ -224,9 +233,10 @@ class P2world extends World
             boxBody.bodyState = new ObjectBodyState({
                 x: x,
                 y: y,
-                dir: GameConst.DOWN,
+                dir: dir || GameConst.DOWN,
                 scene: this.sceneName,
-                id: boxBody.id
+                id: boxBody.id,
+                key: bodyKey || ''
             });
         }
         boxBody.addShape(boxShape);
@@ -271,6 +281,7 @@ class P2world extends World
         boxBody.addShape(boxShape);
         boxBody.playerId = playerData.id;
         boxBody.isChangingScene = false;
+        boxBody.isBlocked = false;
         boxBody.bodyState = playerData.bodyState;
         this.addBody(boxBody);
         // return body:
@@ -287,7 +298,20 @@ class P2world extends World
         let y = toPosition.y - bulletY;
         let x = toPosition.x - bulletX;
         let angleByVelocity = Math.atan2(y, x);
-        let bulletBody = this.createCollisionBody(objectWidth, objectHeight, bulletX, bulletY, 1, true, true);
+        // @TODO - BETA.16 - R16-1b: required key for animations.
+        let bulletKey = (bulletObject.key ? bulletObject.key : '');
+        let direction = this.calculateDirection(bulletObject, fromPosition, toPosition);
+        let bulletBody = this.createCollisionBody(
+            objectWidth,
+            objectHeight,
+            bulletX,
+            bulletY,
+            1,
+            true,
+            true,
+            bulletKey,
+            direction
+        );
         bulletBody.shapes[0].collisionGroup = GameConst.COL_PLAYER;
         bulletBody.shapes[0].collisionMask = GameConst.COL_ENEMY | GameConst.COL_GROUND | GameConst.COL_PLAYER;
         bulletBody.type = 1; // Body.DYNAMIC;
@@ -300,7 +324,7 @@ class P2world extends World
         this.addBody(bulletBody);
         // and state on room map schema:
         // @NOTE: this index here will be the animation key since the bullet state doesn't have a key property.
-        bulletObject.room.state.bodies['bullet'+bulletBody.id] = bulletBody.bodyState;
+        bulletObject.room.state.bodies[bulletKey+'_bullet_'+bulletBody.id] = bulletBody.bodyState;
         // then speed up in the target direction:
         bulletBody.angle = Math.atan2(y, x) * 180 / Math.PI;
         bulletBody.velocity[0] = bulletObject.magnitude * Math.cos(angleByVelocity);
@@ -308,6 +332,15 @@ class P2world extends World
         // since the enemy won't be hit until the bullet reach the target we need to return false to avoid the onHit
         // automatic actions (for example pve init).
         return bulletBody;
+    }
+
+    // @TODO - BETA.16 - R16-1b: required direction for animations.
+    calculateDirection(bulletObject, fromPosition, toPosition)
+    {
+        let animDir = sc.getDef(bulletObject, 'animDir', false);
+        return animDir === 3 ?
+            (fromPosition.x < toPosition.x ? GameConst.RIGHT : GameConst.LEFT)
+            : (fromPosition.y < toPosition.y ? GameConst.DOWN : GameConst.UP);
     }
 
 }

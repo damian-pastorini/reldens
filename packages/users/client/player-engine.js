@@ -6,7 +6,7 @@
  *
  */
 
-const { Logger } = require('@reldens/utils');
+const { Logger, sc } = require('@reldens/utils');
 const { GameConst } = require('../../game/constants');
 
 class PlayerEngine
@@ -64,6 +64,7 @@ class PlayerEngine
             this.currentTarget = {id: id, type: GameConst.TYPE_PLAYER};
         });
         this.players[id].moveSprites = {};
+        this.players[id].setDepth(this.players[id].y + this.players[id].body.height);
         return this.players[id];
     }
 
@@ -132,7 +133,8 @@ class PlayerEngine
         playerSprite.x = player.state.x - this.leftOff;
         playerSprite.y = player.state.y - this.topOff;
         // @NOTE: depth has to be set dynamically, this way the player will be above or below other objects.
-        playerSprite.setDepth(playerSprite.y + playerSprite.body.height);
+        let playerNewDepth = playerSprite.y + playerSprite.body.height;
+        playerSprite.setDepth(playerNewDepth);
         // player stop action:
         if(!player.state.mov){
             playerSprite.anims.stop();
@@ -145,8 +147,14 @@ class PlayerEngine
         if(Object.keys(playerSprite.moveSprites).length){
             for(let i of Object.keys(playerSprite.moveSprites)){
                 let sprite = playerSprite.moveSprites[i];
-                sprite.x = playerSprite.x;
-                sprite.y = playerSprite.y;
+                // @TODO - BETA.16 - R16-1b: fixed animations depth, for moving skills and cast animations.
+                sprite.x = playerSprite.x + this.leftOff;
+                sprite.y = playerSprite.y + this.topOff;
+                // by default moving sprites will be always below the player:
+                let spriteDepth = sc.hasOwn(sprite, 'depthByPlayer') && sprite['depthByPlayer'] === 'above'
+                    ? playerNewDepth + 1 : playerNewDepth - 0.1;
+                sprite.setDepth(spriteDepth);
+
             }
         }
     }
@@ -207,7 +215,11 @@ class PlayerEngine
 
     runActions()
     {
-        this.room.send({act: GameConst.ACTION, target: this.currentTarget});
+        this.room.send({
+            act: GameConst.ACTION,
+            type: this.config.get('client/ui/controls/defaultActionKey'),
+            target: this.currentTarget
+        });
     }
 
     moveToPointer(pointer)

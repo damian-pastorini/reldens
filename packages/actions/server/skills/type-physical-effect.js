@@ -8,7 +8,7 @@
  */
 
 const { PhysicalEffect } = require('@reldens/skills');
-const { GameConst } = require('../../../game/constants');
+const { sc } = require('@reldens/utils');
 
 class TypePhysicalEffect extends PhysicalEffect
 {
@@ -18,6 +18,11 @@ class TypePhysicalEffect extends PhysicalEffect
         super(props);
         this.room = false;
         this.currentBattle = false;
+        // @NOTE: hit priority is something specifically from reldens physics engine, in order to change this value you
+        // need to extend this class and send a new one as parameter in the constructor.
+        this.hitPriority = sc.getDef(props, 'hitPriority', 2);
+        // the animation direction is a custom property on the skill calculated on the server to be send to the client:
+        this.animDir = sc.getDef(props, 'animDir', false);
     }
 
     async onHit(props)
@@ -37,14 +42,14 @@ class TypePhysicalEffect extends PhysicalEffect
             await super.executeOnHit(validDefender);
             // re-run the process if pve:
             if(
-                {}.hasOwnProperty.call(this.owner, 'player_id')
-                && {}.hasOwnProperty.call(validDefender, 'objectBody')
+                sc.hasOwn(this.owner, 'player_id')
+                && sc.hasOwn(validDefender, 'objectBody')
                 && this.currentBattle
             ){
                 if(validDefender.stats[this.room.config.get('client/actions/skills/affectedProperty')] > 0){
                     if(!this.validateTargetOnHit){
                         // if target validation is disabled then any target could start the battle (pve):
-                        if({}.hasOwnProperty.call(validDefender, 'battle')){
+                        if(sc.hasOwn(validDefender, 'battle')){
                             validDefender.battle.targetObject = validDefender;
                             await validDefender.battle.startBattleWith(this.owner, this.room);
                         }
@@ -58,7 +63,7 @@ class TypePhysicalEffect extends PhysicalEffect
                 }
             } else {
                 // update the clients if pvp:
-                if({}.hasOwnProperty.call(validDefender, 'player_id')){
+                if(sc.hasOwn(validDefender, 'player_id')){
                     let targetClient = this.room.getClientById(validDefender.broadcastKey);
                     if(targetClient){
                         await this.currentBattle.updateTargetClient(
@@ -76,16 +81,19 @@ class TypePhysicalEffect extends PhysicalEffect
 
     executeBullets(props)
     {
+        // @TODO - BETA.16 - R16-1b: replace these by skills related if available otherwise these will be configurable
+        //   from the storage.
         let bulletsCheck = [];
+        let hitKey = sc.getDef(this.room.config.client.skills.animations, this.key+'_hit', 'default_hit');
         // both objects could be bullets, so remove them is needed and broadcast the hit:
         if(props.bodyA.isBullet){
             this.removeBullet(props.bodyA);
-            this.room.broadcast({act: GameConst.HIT, x: props.bodyA.position[0], y: props.bodyA.position[1]});
+            this.room.broadcast({act: hitKey, x: props.bodyA.position[0], y: props.bodyA.position[1]});
             bulletsCheck.push({key: 'bodyA', obj: props.bodyA});
         }
         if(props.bodyB.isBullet){
             this.removeBullet(props.bodyB);
-            this.room.broadcast({act: GameConst.HIT, x: props.bodyB.position[0], y: props.bodyB.position[1]});
+            this.room.broadcast({act: hitKey, x: props.bodyB.position[0], y: props.bodyB.position[1]});
             bulletsCheck.push({key: 'bodyB', obj: props.bodyB});
         }
         return bulletsCheck;
@@ -94,14 +102,14 @@ class TypePhysicalEffect extends PhysicalEffect
     getValidDefender(props, defenderBodyKey)
     {
         // we already validate if one of the bodies is a bullet so the other will be always a player or an object:
-        return {}.hasOwnProperty.call(props[defenderBodyKey], 'playerId') ?
+        return sc.hasOwn(props[defenderBodyKey], 'playerId') ?
             this.room.state.players[props[defenderBodyKey].playerId] : props[defenderBodyKey].roomObject;
     }
 
     removeBullet(body)
     {
         body.world.removeBodies.push(body);
-        delete this.room.state.bodies['bullet'+body.id];
+        delete this.room.state.bodies[this.key+'_bullet_'+body.id];
     }
 
 }

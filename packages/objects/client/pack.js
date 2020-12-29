@@ -8,7 +8,6 @@ const { AnimationEngine } = require('../../objects/client/animation-engine');
 const { UserInterface } = require('../../game/client/user-interface');
 const { ObjectsConst } = require('../constants');
 const { ActionsConst } = require('../../actions/constants');
-const { GameConst } = require('../../game/constants');
 const { EventsManagerSingleton, Logger, sc } = require('@reldens/utils');
 
 class ObjectsPack
@@ -44,10 +43,14 @@ class ObjectsPack
                 }
             }
             if(message.act === ActionsConst.BATTLE_ENDED){
+                // @TODO - BETA.16 - R16-1b: replace these by skills related if available otherwise these will be
+                //   configurable from the storage.
+                let deathKey = sc.hasOwn(gameManager.config.client.skills.animations, message.k+'_death') ?
+                    message.k+'_death' : 'default_death';
                 let currentScene = gameManager.activeRoomEvents.getActiveScene();
-                let skeletonSprite = currentScene.physics.add.sprite(message.x, message.y, GameConst.DEATH);
+                let skeletonSprite = currentScene.physics.add.sprite(message.x, message.y, deathKey); // GameConst.DEATH
                 skeletonSprite.setDepth(200000);
-                skeletonSprite.anims.play(GameConst.DEATH, true).on('animationcomplete', () => {
+                skeletonSprite.anims.play(deathKey, true).on('animationcomplete', () => { // GameConst.DEATH
                     skeletonSprite.destroy();
                 });
                 if(sc.hasOwn(message, 't') && message.t === currentScene.player.currentTarget.id){
@@ -59,7 +62,17 @@ class ObjectsPack
             room.state.bodies.onAdd = (body, key) => {
                 if(key.indexOf('bullet') !== -1){
                     let currentScene = gameManager.activeRoomEvents.getActiveScene();
-                    let bulletSprite = currentScene.physics.add.sprite(body.x, body.y, GameConst.BULLET);
+                    // @TODO - BETA.16 - R16-1b: replace these by skills related if available otherwise these will be
+                    //   configurable from the storage.
+                    let animKey = 'default_bullet';
+                    let skillBullet = (body.key ? body.key+'_' : '')+'bullet';
+                    if(sc.hasOwn(gameManager.gameEngine.uiScene.directionalAnimations, skillBullet)){
+                        skillBullet = skillBullet+'_'+body.dir;
+                    }
+                    if(sc.hasOwn(currentScene.anims.anims.entries, skillBullet)){
+                        animKey = skillBullet;
+                    }
+                    let bulletSprite = currentScene.physics.add.sprite(body.x, body.y, animKey); // GameConst.BULLET
                     bulletSprite.setDepth(200000);
                     this.bullets[key] = bulletSprite;
                 }

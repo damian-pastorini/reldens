@@ -6,7 +6,7 @@
 
 const { ReceiverWrapper } = require('./receiver-wrapper');
 const { SkillsUi } = require('./skills-ui');
-const { EventsManagerSingleton } = require('@reldens/utils');
+const { EventsManagerSingleton, sc } = require('@reldens/utils');
 
 class ActionsPack
 {
@@ -19,6 +19,15 @@ class ActionsPack
                     // create skills instance only once:
                     let receiverProps = {
                         owner: player
+                    };
+                    // @TODO - BETA.16 - R16-1b: position method was required for the skills in order to get the proper
+                    //   owner and target position.
+                    // @TODO - BETA.17 - Refactor and use a wrapper.
+                    player.getPosition = () => {
+                        return {
+                            x: this.state.x,
+                            y: this.state.y
+                        };
                     };
                     // create skills receiver instance:
                     roomEvents.gameManager.skills = new ReceiverWrapper(receiverProps, roomEvents);
@@ -46,11 +55,167 @@ class ActionsPack
             uiScene.load.html('skills', 'assets/features/skills/templates/ui-skills.html');
             uiScene.load.html('skillBox', 'assets/features/skills/templates/ui-skill-box.html');
             uiScene.load.html('actionBox', 'assets/html/ui-action-box.html');
+            // @TODO - BETA.16 - R16-1b: replace these by skills related if available otherwise these will be
+            //   configurable from the storage.
+            // @NOTES
+            // - All the skills animations will be stored in a single table, and sent to the skills manager after
+            // it's initialized.
+            // - One of the table fields is going to be a JSON with the generic animation information.
+            // - In this loader we will evaluate if the animation has a custom class and if the class implements the
+            // proper animation initialization method. If that's the case we will run the init method allowing the
+            // animation has it's complete custom behavior.
+            // - If the skill animation doesn't have a custom class we will check if it's an spritesheet type to load
+            // it properly.
+            // - When a skill is executed we will have 5 name conventions to look for the proper animation:
+            // [skill-key] + '_atk'
+            // [skill-key] + '_cast'
+            // [skill-key] + '_bullet'
+            // [skill-key] + '_hit'
+            // [skill-key] + '_death'
+            // IMPORTANT: animations with custom classes will have to run their own logic to load the required data,
+            // this doesn't mean you can't have a skill that will have a custom class for the attack, but the default
+            // spritesheets used for the other cases.
+            // - For get the default animations you will find specific configuration entries for each "key":
+            // "default_atk", "default_cast", "default_bullet", "default_hit", "default_death".
+            // For these configurations the config type JSON => "j" was implemented.
+            this.loopSkillsAnd('preload', uiScene);
+        });
+        EventsManagerSingleton.on('reldens.createPreload', (preloadScene) => {
+            this.loopSkillsAnd('create', preloadScene);
         });
         EventsManagerSingleton.on('reldens.createUiScene', (preloadScene) => {
             this.uiManager = new SkillsUi(preloadScene);
             this.uiManager.createUi();
         });
+    }
+
+    loopSkillsAnd(command, uiScene)
+    {
+        // preload defaults:
+        let animations = uiScene.gameManager.config.get('client/skills/animations');
+        if(animations){
+            for(let i of Object.keys(animations)){
+                let data = animations[i];
+                if(!data.animationData.enabled){
+                    continue;
+                }
+                this[command+'Animation'](data, uiScene);
+            }
+        }
+    }
+
+    preloadAnimation(data, uiScene)
+    {
+        // @TODO - BETA.17: remove the hardcoded file extensions.
+        // @NOTE: here we use have two keys, the animation key and the animationData.img, this is because we could have
+        // a single sprite with multiple attacks, and use the start and end frame to run the required one.
+        if(sc.hasOwn(data.animationData, ['type', 'img']) && data.animationData.type === 'spritesheet'){
+            // try load directions:
+            // - 1: both
+            // - 2: up/down
+            // - 3: left/right
+            let animDir = sc.getDef(data.animationData, 'dir', 0);
+            if(animDir > 0){
+                // @TODO - BETA.17 - Refactor and implement animDir = 1 (both): up_right, up_left, down_right,
+                //   down_left.
+                if(animDir === 2){
+                    uiScene.load.spritesheet(
+                        this.getAnimationKey(data, 'up'),
+                        'assets/custom/actions/sprites/'+data.animationData.img+'_up.png',
+                        data.animationData
+                    );
+                    uiScene.load.spritesheet(
+                        this.getAnimationKey(data, 'down'),
+                        'assets/custom/actions/sprites/'+data.animationData.img+'_down.png',
+                        data.animationData
+                    );
+                }
+                if(animDir === 3){
+                    uiScene.load.spritesheet(
+                        this.getAnimationKey(data, 'left'),
+                        'assets/custom/actions/sprites/'+data.animationData.img+'_left.png',
+                        data.animationData
+                    );
+                    uiScene.load.spritesheet(
+                        this.getAnimationKey(data, 'right'),
+                        'assets/custom/actions/sprites/'+data.animationData.img+'_right.png',
+                        data.animationData
+                    );
+                }
+            } else {
+                uiScene.load.spritesheet(
+                    this.getAnimationKey(data),
+                    'assets/custom/actions/sprites/'+data.animationData.img+'.png',
+                    data.animationData
+                );
+            }
+        }
+        if(data.classKey && typeof data.classKey.prepareAnimation === 'function'){
+            data.classKey.prepareAnimation({data, uiScene, pack: this});
+        }
+    }
+
+    createAnimation(data, uiScene)
+    {
+        if(sc.hasOwn(data.animationData, ['type', 'img']) && data.animationData.type === 'spritesheet'){
+            let animDir = sc.getDef(data.animationData, 'dir', 0);
+            if(animDir > 0){
+                // @TODO - BETA.17 - Refactor and implement animDir = 1 (both): up_right, up_left, down_right,
+                //   down_left.
+                uiScene.directionalAnimations[this.getAnimationKey(data)] = data.animationData.dir;
+                if(animDir === 2){
+                    this.createWithDirection(data, uiScene, 'up');
+                    this.createWithDirection(data, uiScene, 'down');
+                }
+                if(animDir === 3){
+                    this.createWithDirection(data, uiScene, 'left');
+                    this.createWithDirection(data, uiScene, 'right');
+                }
+            } else {
+                this.createWithDirection(data, uiScene);
+            }
+        }
+        if(data.classKey && typeof data.classKey.createAnimation === 'function'){
+            data.classKey.createAnimation({data, uiScene, pack: this});
+        }
+    }
+
+    createWithDirection(data, uiScene, direction = false)
+    {
+        let animationCreateData = this.prepareAnimationData(data, uiScene, direction);
+        let animation = uiScene.anims.create(animationCreateData);
+        if(sc.hasOwn(data.animationData, 'destroyTime')){
+            animation.destroyTime = data.animationData.destroyTime;
+        }
+        if(sc.hasOwn(data.animationData, 'depthByPlayer')){
+            animation.depthByPlayer = data.animationData.depthByPlayer;
+        }
+    }
+
+    prepareAnimationData(data, uiScene, direction = false)
+    {
+        // @NOTE: here we use have two keys, the animation key and the animationData.img, this is because we could have
+        // a single sprite with multiple attacks, and use the start and end frame to run the required one.
+        let imageKey = this.getAnimationKey(data, direction);
+        let animationCreateData = {
+            key: this.getAnimationKey(data, direction),
+            frames: uiScene.anims.generateFrameNumbers(imageKey, data.animationData),
+            hideOnComplete: sc.getDef(data.animationData, 'hide', true),
+        };
+        if(sc.hasOwn(data.animationData, 'duration')){
+            animationCreateData.duration = data.animationData.duration;
+        } else {
+            animationCreateData.frameRate = sc.getDef(data.animationData, 'rate', uiScene.configuredFrameRate);
+        }
+        if(sc.hasOwn(data.animationData, 'repeat')){
+            animationCreateData.repeat = data.animationData.repeat;
+        }
+        return animationCreateData;
+    }
+
+    getAnimationKey(data, direction = false)
+    {
+        return (data.skillKey ? data.skillKey+'_' : '')+data.key+(direction ? '_'+direction : '');
     }
 
 }

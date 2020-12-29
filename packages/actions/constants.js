@@ -13,5 +13,6 @@ module.exports.ActionsConst = {
     BATTLE_ENDED: 'bend',
     TARGET_POSITION: 'tgp',
     TARGET_PLAYER: 'tga',
-    TARGET_OBJECT: 'tgo'
+    TARGET_OBJECT: 'tgo',
+    FULL_SKILLS_LIST: 'fkl'
 };

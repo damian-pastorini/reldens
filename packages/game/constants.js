@@ -27,8 +27,6 @@ module.exports.GameConst = {
     DOWN: 'down',
     RIGHT: 'right',
     STOP: 'stop',
-    ACTION: 'action',
-    BULLET: 'attackBullet',
     POINTER: 'mp',
     ARROW_DOWN: 'ard',
     // collisions:
@@ -39,10 +37,15 @@ module.exports.GameConst = {
     FADE_DURATION: 1000,
     SPEED_SERVER: 180,
     // @TODO - BETA.17 - F901: implement player custom avatar.
+    // default image key:
     IMAGE_PLAYER: 'player',
+    // @TODO - BETA.16?17?: move to actions package.
+    ACTION: 'action',
     // @TODO - BETA.16 - R16-1b: replace these by skills related if available otherwise these will be configurable from
     //   the storage.
-    ATTACK: 'attack',
-    HIT: 'hit',
-    DEATH: 'death'
+    // default basic images keys:
+    // ATTACK: 'attack',
+    // HIT: 'hit',
+    // DEATH: 'death',
+    // BULLET: 'attackBullet',
 };
