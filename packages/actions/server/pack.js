@@ -115,10 +115,13 @@ class ActionsPack extends PackInterface
             if(animData){
                 executedSkill.animDir = sc.getDef(animData.animationData, 'dir', false);
             }
-            let bulletBody = currentPlayer.physicalBody.world.shootBullet(from, to, executedSkill);
-            bulletBody.onHit = (onHitData) => {
-                executedSkill.onHit(onHitData);
-            };
+            // player disconnection would cause the physicalBody to be removed so we need to validate it:
+            if(currentPlayer.physicalBody){
+                let bulletBody = currentPlayer.physicalBody.world.shootBullet(from, to, executedSkill);
+                bulletBody.onHit = (onHitData) => {
+                    executedSkill.onHit(onHitData);
+                };
+            }
             return false;
         };
         currentPlayer.getPosition = () => {
