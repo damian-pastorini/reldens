@@ -22,6 +22,7 @@ class NpcObject extends AnimationObject
         this.hasAnimation = true;
         this.hasMass = 1;
         this.collisionResponse = true;
+        this.eventsPrefix = 'npc';
         // the actions will be false as default:
         this.runOnHit = false;
         this.runOnAction = false;

@@ -20,6 +20,7 @@ class BaseObject extends InteractionArea
         // we will use the client_key has the object key:
         this.key = props.client_key;
         this.uid = this.key + Date.now();
+        this.eventsPrefix = 'bo';
         // in this specific object type we will use the public params as JSON, this is coming from the storage:
         try {
             this.clientParams = sc.getJson(props.client_params, {});

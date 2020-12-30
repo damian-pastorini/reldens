@@ -28,6 +28,7 @@ class Player extends Schema
             this.status = data.status;
             this.username = data.username;
             this.physicalBody = false;
+            this.eventsPrefix = 'p'+player.id+'.'+this.sessionId;
             // set scene and position:
             this.state = new BodyState(player.state);
             // stats for now will use the stats model.

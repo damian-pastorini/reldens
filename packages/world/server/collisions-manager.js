@@ -171,6 +171,7 @@ class CollisionsManager
 
     objectHitObject(bodyA, bodyB)
     {
+        // @TODO: BETA.17 - Fix bullet hit bullet.
         let aPriority = {}.hasOwnProperty.call(bodyA, 'hitPriority');
         let bPriority = {}.hasOwnProperty.call(bodyB, 'hitPriority');
         let onHitData = {bodyA: bodyA, bodyB: bodyB, room: this.room};

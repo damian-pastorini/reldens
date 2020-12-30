@@ -148,7 +148,7 @@ class Pve extends Battle
         if(client){
             room.send(client, actionData);
         } else {
-            Logger.log(['Client not found by sessionId:', playerSchema.sessionId]);
+            Logger.info(['Client not found by sessionId:', playerSchema.sessionId]);
         }
         EventsManagerSingleton.emit(this.targetObject.getBattleEndEvent(), playerSchema, this, actionData);
     }

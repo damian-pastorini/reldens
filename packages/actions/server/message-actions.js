@@ -87,4 +87,4 @@ class ActionsMessageActions
 
 }
 
-module.exports.ActionsMessageActions = new ActionsMessageActions();
+module.exports.ActionsMessageActions = ActionsMessageActions;

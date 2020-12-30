@@ -13,7 +13,7 @@ const { NpcObject } = require('./npc-object');
 const { Pve } = require('../../actions/server/pve');
 const { TypeAttack, TypePhysicalAttack } = require('../../actions/server/skills/types');
 const { ObjectsConst } = require('../constants');
-const { Logger, sc } = require('@reldens/utils');
+const { EventsManagerSingleton, Logger, sc } = require('@reldens/utils');
 
 class EnemyObject extends NpcObject
 {
@@ -25,6 +25,7 @@ class EnemyObject extends NpcObject
         this.initialStats = Object.assign({}, this.config.get('server/enemies/initialStats'));
         this.stats = Object.assign({}, this.config.get('server/enemies/initialStats'));
         this.type = ObjectsConst.TYPE_ENEMY;
+        this.eventsPrefix = 'eo';
         // @NOTE: we could run different actions and enemies reactions based on the player action.
         // this.runOnAction = true;
         // run on hit will make the enemy aggressive when the player enter the in the enemy-object interactive area.
@@ -67,7 +68,8 @@ class EnemyObject extends NpcObject
             range: 50,
             hitDamage: 5,
             rangePropertyX: 'state/x',
-            rangePropertyY: 'state/y'
+            rangePropertyY: 'state/y',
+            events: EventsManagerSingleton
         };
         let attackShort = new TypeAttack(skillProps);
         this.actionsKeys = ['attackShort'];
@@ -88,7 +90,8 @@ class EnemyObject extends NpcObject
             objectWidth: 5,
             objectHeight: 5,
             rangePropertyX: 'state/x',
-            rangePropertyY: 'state/y'
+            rangePropertyY: 'state/y',
+            events: EventsManagerSingleton
         });
         attackBullet.attacker = this;
         this.actionsKeys.push('attackBullet');

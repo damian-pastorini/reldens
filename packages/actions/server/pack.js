@@ -28,7 +28,7 @@ class ActionsPack extends PackInterface
         });
         // eslint-disable-next-line no-unused-vars
         EventsManagerSingleton.on('reldens.roomsMessageActionsByRoom', async (roomMessageActions, roomName) => {
-            roomMessageActions.actions = ActionsMessageActions;
+            roomMessageActions.actions = new ActionsMessageActions();
         });
         EventsManagerSingleton.on('reldens.createPlayerAfter', async (client, authResult, currentPlayer, room) => {
             await this.onCreatePlayerAfter(client, authResult, currentPlayer, room);
@@ -71,7 +71,7 @@ class ActionsPack extends PackInterface
             classPathData.affectedProperty = room.config.get('client/actions/skills/affectedProperty');
             classPathData.client = new ClientWrapper(client, room);
             currentPlayer.skillsServer = new SkillsServer(classPathData);
-            this.listenEvents(currentPlayer.skillsServer.classPath);
+            this.prepareEventsListeners(currentPlayer.skillsServer.classPath);
         }
     }
 
@@ -186,10 +186,10 @@ class ActionsPack extends PackInterface
         return config.client.skills.animations;
     }
 
-    listenEvents(classPath)
+    prepareEventsListeners(classPath)
     {
         // @TODO - Improve skills animations (no more rock throw! let's some real spells and weapons!).
-        let ownerId = classPath.getOwnerId();
+        let ownerId = classPath.getOwnerEventKey();
         // eslint-disable-next-line no-unused-vars
         classPath.listenEvent(SkillsEvents.SKILL_BEFORE_CAST, async (skill, target) => {
             let customDataJson = sc.getJson(skill.customData);
@@ -201,7 +201,7 @@ class ActionsPack extends PackInterface
                 return;
             }
             skill.owner.physicalBody.isBlocked = true;
-        }, 'skillBeforeCastPack', 'p'+ownerId);
+        }, 'skillBeforeCastPack', ownerId);
         // eslint-disable-next-line no-unused-vars
         classPath.listenEvent(SkillsEvents.SKILL_AFTER_CAST, async (skill, target, skillLogicResult) => {
             let customDataJson = sc.getJson(skill.customData);
@@ -213,7 +213,7 @@ class ActionsPack extends PackInterface
                 return;
             }
             skill.owner.physicalBody.isBlocked = false;
-        }, 'skillAfterCastPack', 'p'+ownerId);
+        }, 'skillAfterCastPack', ownerId);
     }
 
 }

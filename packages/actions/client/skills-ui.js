@@ -24,7 +24,7 @@ class SkillsUi
         this.createUiBox('skills', 7);
     }
 
-    appendSkills(skills, waitLoad = false)
+    appendSkills(skills)
     {
         let skillsList = Object.keys(skills);
         // if the default action is a skill we won't show a duplicated box:
@@ -34,19 +34,7 @@ class SkillsUi
                 if(skill === this.defaultAction){
                     continue;
                 }
-                if(waitLoad){
-                    /*
-                    this.uiScene.load.spritesheet(skill, 'assets/custom/sprites/skills'+skill+'.png', {
-                        frameWidth: skill.animationData.frameWidth || 64,
-                        frameHeight: skill.animationData.frameHeight || 64
-                    });
-                    this.uiScene.load.on('complete', () => {
-
-                    });
-                    */
-                } else {
-                    this.createSkillBox(skill);
-                }
+                this.createSkillBox(skill);
             }
         }
     }

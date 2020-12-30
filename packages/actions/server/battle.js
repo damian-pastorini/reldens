@@ -66,9 +66,10 @@ class Battle
 
     async updateTargetClient(targetClient, targetSchema, attackerId, room)
     {
-        if(targetSchema.stats[room.config.get('client/actions/skills/affectedProperty')] === 0){
-            // player is dead! reinitialize the stats:
-            targetSchema.stats = targetSchema.initialStats;
+        let affectedProperty = room.config.get('client/actions/skills/affectedProperty');
+        if(targetSchema.stats[affectedProperty] === 0){
+            // player is dead! reinitialize the stats using it's base value:
+            targetSchema.stats = targetSchema.statsBase;
             // save the stats:
             await room.savePlayerStats(targetSchema);
             let actionData = {

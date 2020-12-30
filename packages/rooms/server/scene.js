@@ -99,7 +99,6 @@ class RoomScene extends RoomLogin
         let currentPlayer = this.state.createPlayer(client.sessionId, authResult);
         // @TODO - BETA.16 - R16-5: move to users pack and fix initialStats cases, new users and users that could be
         //   in a different level.
-        currentPlayer.initialStats = this.config.get('server/players/initialStats');
         // create body for server physics and assign the body to the player:
         currentPlayer.physicalBody = this.roomWorld.createPlayerBody({
             id: client.sessionId,
@@ -281,7 +280,7 @@ class RoomScene extends RoomLogin
                 this.roomWorld.removeBody(bodyToRemove);
             }
             // remove the events:
-            EventsManagerSingleton.offByMasterKey('p'+playerSchema['player_id']);
+            EventsManagerSingleton.offByMasterKey(playerSchema.eventsPrefix+playerSchema.player_id);
             // remove player:
             this.state.removePlayer(sessionId);
         } else {
@@ -310,30 +309,13 @@ class RoomScene extends RoomLogin
         //   ones that changed.
         // save the stats:
         for(let i of Object.keys(target.stats)){
-            let statCurrentValue = target.stats[i];
             let statId = this.config.server.players.initialStats[i].id;
-            let updateCurrentResult = await this.loginManager.usersManager
-                .updateCurrentStatByPlayerId(target.player_id, statId, statCurrentValue);
-            if(!updateCurrentResult){
-                ErrorManager.error([
-                    'Player base stats update error: ' + target.player_id,
-                    statId,
-                    statCurrentValue,
-                    target.stats[i]
-                ]);
-            }
             // @TODO - BETA.16 - R16-11: fix to update the base stats when required.
-            let statBaseValue = target.statsBase[i];
-            let updateBaseResult = await this.loginManager.usersManager
-                .updateBaseStatByPlayerId(target.player_id, statId, statBaseValue);
-            if(!updateBaseResult){
-                ErrorManager.error([
-                    'Player current stats update error: ' + target.player_id,
-                    statId,
-                    statBaseValue,
-                    target.statsBase[i]
-                ]);
-            }
+            let statPatch = {
+                value: target.stats[i],
+                base_value: target.statsBase[i]
+            };
+            await this.loginManager.usersManager.updatePlayerStatByIds(target.player_id, statId, statPatch);
         }
         if(updateClient){
             // @TODO - BETA.16 - R16-11: fix to update the base stats when required.

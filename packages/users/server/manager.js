@@ -65,17 +65,10 @@ class UsersManager
         return PlayersStateModel.updateBy('player_id', playerId, newState);
     }
 
-    async updateCurrentStatByPlayerId(playerId, statId, statValue)
+    async updatePlayerStatByIds(playerId, statId, statPatch)
     {
         return PlayersStatsModel.query()
-            .patch({value: statValue})
-            .where({player_id: playerId, stat_id: statId});
-    }
-
-    async updateBaseStatByPlayerId(playerId, statId, statValue)
-    {
-        return PlayersStatsModel.query()
-            .patch({base_value: statValue})
+            .patch(statPatch)
             .where({player_id: playerId, stat_id: statId});
     }
 

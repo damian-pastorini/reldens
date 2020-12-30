@@ -20,6 +20,7 @@ class AnimationObject extends BaseObject
         this.type = ObjectsConst.TYPE_ANIMATION;
         this.clientParams.type = this.type;
         this.isAnimation = true;
+        this.eventsPrefix = 'ao';
         // the actions will be false as default:
         this.runOnHit = false;
         this.runOnAction = false;
