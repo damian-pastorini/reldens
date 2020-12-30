@@ -362,6 +362,9 @@ class RoomScene extends RoomLogin
 
     onDispose()
     {
+        Logger.info('ON-DISPOSE Room: ' + this.roomName);
+        // @TODO - BETA.17 - Replace this by a master key related to the room ID and just remove all the events related
+        //   to this room.
         if(!this.roomWorld.respawnAreas){
             return;
         }
@@ -372,13 +375,11 @@ class RoomScene extends RoomLogin
                 let res = instC[i];
                 for(let obj of res){
                     if(sc.hasOwn(obj, 'battleEndListener')){
-                        // Logger.info(['Turning off listener on reldens.battleEnded for object:', obj.key]);
-                        EventsManagerSingleton.off('reldens.battleEnded', obj.battleEndListener);
+                        EventsManagerSingleton.offWithKey(obj.uid+'battleEnd', 'battleRoom');
                     }
                 }
             }
         }
-        Logger.info('ON-DISPOSE Room: ' + this.roomName);
     }
 
 }

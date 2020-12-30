@@ -41,7 +41,7 @@
         "@reldens/modifiers": "^0.4.5",
         "@reldens/skills": "^0.3.0-beta.2",
         "@reldens/storage": "^0.4.0",
-        "@reldens/utils": "^0.4.2",
+        "@reldens/utils": "^0.4.3",
         "bcrypt": "^5.0.0",
         "colyseus": "^0.12.6",
         "colyseus.js": "^0.12.2",
