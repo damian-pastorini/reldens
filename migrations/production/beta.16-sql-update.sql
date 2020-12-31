@@ -283,17 +283,17 @@ CREATE TABLE IF NOT EXISTS `skills_skill_group_relation` (
 /*!40000 ALTER TABLE `skills_skill_group_relation` ENABLE KEYS */;
 
 -- Dumping structure for table skills_skill_owner_conditions
-CREATE TABLE IF NOT EXISTS `skills_skill_owner_conditions` (
-  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-  `skill_id` int(11) unsigned NOT NULL,
-  `key` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
-  `property_key` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
-  `operation` varchar(50) COLLATE utf32_unicode_ci NOT NULL COMMENT 'eq,ne,lt,gt,le,ge',
-  `value` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `skill_id` (`skill_id`),
-  CONSTRAINT `FK_skills_skill_owner_conditions_skills_skill` FOREIGN KEY (`skill_id`) REFERENCES `skills_skill` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf32 COLLATE=utf32_unicode_ci;
+CREATE TABLE `skills_skill_owner_conditions` (
+	`id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+	`skill_id` INT(11) UNSIGNED NOT NULL,
+	`key` VARCHAR(255) NOT NULL COLLATE 'utf8_unicode_ci',
+	`property_key` VARCHAR(255) NOT NULL COLLATE 'utf8_unicode_ci',
+	`conditional` VARCHAR(50) NOT NULL COMMENT 'eq,ne,lt,gt,le,ge' COLLATE 'utf32_unicode_ci',
+	`value` VARCHAR(255) NOT NULL COLLATE 'utf8_unicode_ci',
+	PRIMARY KEY (`id`) USING BTREE,
+	INDEX `skill_id` (`skill_id`) USING BTREE,
+	CONSTRAINT `FK_skills_skill_owner_conditions_skills_skill` FOREIGN KEY (`skill_id`) REFERENCES `reldens`.`skills_skill` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT
+) COLLATE='utf32_unicode_ci' ENGINE=InnoDB;
 
 -- Dumping data for table skills_skill_owner_conditions: ~1 rows (approximately)
 /*!40000 ALTER TABLE `skills_skill_owner_conditions` DISABLE KEYS */;
