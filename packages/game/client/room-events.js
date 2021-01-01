@@ -30,7 +30,7 @@ class RoomEvents
 
     async activateRoom(room, previousScene = false)
     {
-        EventsManagerSingleton.emit('reldens.activateRoom', room, this.gameManager);
+        await EventsManagerSingleton.emit('reldens.activateRoom', room, this.gameManager);
         this.room = room;
         // listen to changes coming from the server:
         this.room.state.players.onAdd = (player, key) => {
@@ -162,19 +162,15 @@ class RoomEvents
 
     roomOnLeave(code)
     {
-        // @TODO - BETA.17: improve disconnection handler.
         if(code > 1000){
-            // server error, disconnection:
+            // server error, handle disconnection:
             if(!this.gameManager.gameOver){
+                // @TODO - BETA.17: improve disconnection handler.
                 alert('There was a connection error.');
             }
             this.gameManager.gameDom.getWindow().location.reload();
         } else {
-            // the client has initiated the disconnection:
-            // @TODO - BETA.17: test a lost connection case (like turn of the network, but probably the browser was
-            //   just closed), in which case should we remove the scene? Again, force restart the client?
-            //   this.gameEngine.scene.remove(this.roomName);
-            //   window.location.reload();
+            // NOTE: the client has initiated the disconnection, this is also triggered when the users change the room.
         }
     }
 
