@@ -17,7 +17,6 @@ class BodyState extends Schema
         super();
         this.room_id = data.room_id;
         this.scene = data.scene;
-        // @TODO - BETA.16 - R16-1b: required key for animations.
         this.key = data.key || '';
         this.x = parseFloat(data.x);
         this.y = parseFloat(data.y);

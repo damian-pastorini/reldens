@@ -147,7 +147,6 @@ class PlayerEngine
         if(Object.keys(playerSprite.moveSprites).length){
             for(let i of Object.keys(playerSprite.moveSprites)){
                 let sprite = playerSprite.moveSprites[i];
-                // @TODO - BETA.16 - R16-1b: fixed animations depth, for moving skills and cast animations.
                 sprite.x = playerSprite.x + this.leftOff;
                 sprite.y = playerSprite.y + this.topOff;
                 // by default moving sprites will be always below the player:

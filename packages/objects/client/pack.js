@@ -43,14 +43,13 @@ class ObjectsPack
                 }
             }
             if(message.act === ActionsConst.BATTLE_ENDED){
-                // @TODO - BETA.16 - R16-1b: replace these by skills related if available otherwise these will be
-                //   configurable from the storage.
+                // @TODO - BETA.17: replace all defaults by constants.
                 let deathKey = sc.hasOwn(gameManager.config.client.skills.animations, message.k+'_death') ?
                     message.k+'_death' : 'default_death';
                 let currentScene = gameManager.activeRoomEvents.getActiveScene();
-                let skeletonSprite = currentScene.physics.add.sprite(message.x, message.y, deathKey); // GameConst.DEATH
+                let skeletonSprite = currentScene.physics.add.sprite(message.x, message.y, deathKey);
                 skeletonSprite.setDepth(200000);
-                skeletonSprite.anims.play(deathKey, true).on('animationcomplete', () => { // GameConst.DEATH
+                skeletonSprite.anims.play(deathKey, true).on('animationcomplete', () => {
                     skeletonSprite.destroy();
                 });
                 if(sc.hasOwn(message, 't') && message.t === currentScene.player.currentTarget.id){
@@ -62,8 +61,6 @@ class ObjectsPack
             room.state.bodies.onAdd = (body, key) => {
                 if(key.indexOf('bullet') !== -1){
                     let currentScene = gameManager.activeRoomEvents.getActiveScene();
-                    // @TODO - BETA.16 - R16-1b: replace these by skills related if available otherwise these will be
-                    //   configurable from the storage.
                     let animKey = 'default_bullet';
                     let skillBullet = (body.key ? body.key+'_' : '')+'bullet';
                     if(sc.hasOwn(gameManager.gameEngine.uiScene.directionalAnimations, skillBullet)){
@@ -72,7 +69,7 @@ class ObjectsPack
                     if(sc.hasOwn(currentScene.anims.anims.entries, skillBullet)){
                         animKey = skillBullet;
                     }
-                    let bulletSprite = currentScene.physics.add.sprite(body.x, body.y, animKey); // GameConst.BULLET
+                    let bulletSprite = currentScene.physics.add.sprite(body.x, body.y, animKey);
                     bulletSprite.setDepth(200000);
                     this.bullets[key] = bulletSprite;
                 }

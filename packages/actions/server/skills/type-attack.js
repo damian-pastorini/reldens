@@ -22,8 +22,7 @@ class TypeAttack extends Attack
     async runSkillLogic()
     {
         if(this.room){
-            // @TODO - BETA.16 - R16-1b: replace these by skills related if available otherwise these will be
-            //   configurable from the storage.
+            // @TODO - BETA.17 - Replace all the defaults by constants.
             let skillAction = sc.getDef(this.room.config.client.skills.animations, this.key+'_atk', 'default_atk');
             this.room.broadcast({
                 act: skillAction,

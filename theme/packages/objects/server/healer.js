@@ -44,7 +44,7 @@ class Healer extends NpcObject
             givePotions = false;
             // update and save the player:
             let affectedProperty = room.config.get('client/actions/skills/affectedProperty');
-            playerSchema.stats[affectedProperty] = playerSchema.initialStats[affectedProperty]['base_value'];
+            playerSchema.stats[affectedProperty] = playerSchema.statsBase[affectedProperty];
             room.savePlayerStats(playerSchema, client).then(() => {
                 // update ui box:
                 let activationData = {act: GameConst.UI, id: this.id, content: 'Your HP points has been restored!'};
@@ -57,7 +57,7 @@ class Healer extends NpcObject
         if(this.options[optionIdx].value === 3){
             givePotions = false;
             // update and save the player:
-            playerSchema.stats.mp = playerSchema.initialStats.mp['base_value'];
+            playerSchema.stats.mp = playerSchema.statsBase.mp;
             room.savePlayerStats(playerSchema, client).then(() => {
                 // update ui box:
                 let activationData = {act: GameConst.UI, id: this.id, content: 'Your MP points has been restored!'};

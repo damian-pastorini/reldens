@@ -8,7 +8,6 @@
 
 const { Receiver } = require('@reldens/skills');
 const { EventsManagerSingleton, sc } = require('@reldens/utils');
-// const { GameConst } = require('../../game/constants');
 
 class ReceiverWrapper extends Receiver
 {
@@ -33,9 +32,6 @@ class ReceiverWrapper extends Receiver
             return true;
         }
         super.processMessage(message);
-        // @TODO - BETA.16 - R16-1b: replace these by skills related if available otherwise these will be configurable
-        //   from the storage.
-        // message.act === GameConst.ATTACK ||
         if(message.act.indexOf('_atk') !== -1 || message.act.indexOf('_eff') !== -1){
             EventsManagerSingleton.emit('reldens.playerAttack', message, this.room);
             let ownerSprite = false;
@@ -58,8 +54,6 @@ class ReceiverWrapper extends Receiver
                 }
             }
             if(ownerSprite){
-                // @TODO - BETA.16 - R16-1b: replace these by skills related if available otherwise these will be
-                //   configurable from the storage.
                 let ownerAnim = currentScene.physics.add.sprite(ownerSprite.x, ownerSprite.y, message.act);
                 ownerAnim.setDepth(200000);
                 // @TODO - BETA.17 - Refactor and implement animDir = 1 (both): up_right, up_left, down_right,
@@ -88,8 +82,6 @@ class ReceiverWrapper extends Receiver
 
     runHitAnimation(x, y, currentScene, hitKey)
     {
-        // @TODO - BETA.16 - R16-1b: replace these by skills related if available otherwise these will be configurable
-        //   from the storage.
         let hitAnimKey = sc.hasOwn(this.gameManager.config.client.skills.animations, hitKey) ? hitKey : 'default_hit';
         let hitSprite = currentScene.physics.add.sprite(x, y, hitAnimKey);
         hitSprite.setDepth(200000);
@@ -147,8 +139,6 @@ class ReceiverWrapper extends Receiver
         // cast animation:
         let currentScene = this.gameManager.getActiveScene();
         let castKey = message.data.skillKey+'_cast';
-        // @TODO - BETA.16 - R16-1b: replace these by skills related if available otherwise these will be configurable
-        //   from the storage.
         let castAnimKey = sc.hasOwn(this.gameManager.config.client.skills.animations, castKey)
             ? castKey : 'default_cast';
         let castSprite = currentScene.physics.add.sprite(message.data.x, message.data.y, castAnimKey);

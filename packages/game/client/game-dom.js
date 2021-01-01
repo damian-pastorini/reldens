@@ -4,6 +4,16 @@ const $ = require('jquery');
 class GameDom
 {
 
+    getWindow()
+    {
+        return window;
+    }
+
+    getWindowElement()
+    {
+        return $(window);
+    }
+
     getElement(querySelector)
     {
         return $(querySelector);

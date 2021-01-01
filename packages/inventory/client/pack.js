@@ -4,9 +4,10 @@
  *
  */
 
-const { Receiver, ItemsEvents, ItemsConst } = require('@reldens/items-system');
-const { EventsManagerSingleton, Logger, sc } = require('@reldens/utils');
+const { ItemsEvents, ItemsConst } = require('@reldens/items-system');
+const { EventsManagerSingleton, Logger } = require('@reldens/utils');
 const { InventoryUi } = require('./inventory-ui');
+const { InventoryReceiver } = require('./inventory-receiver');
 const { InventoryConst } = require('../constants');
 
 class InventoryPack
@@ -15,33 +16,9 @@ class InventoryPack
     constructor()
     {
         this.itemSprites = {};
-        // then we can use the event manager to append the feature in every action required:
         // eslint-disable-next-line no-unused-vars
         EventsManagerSingleton.on('reldens.playersOnAdd', (player, key, previousScene, roomEvents) => {
-            if(key === roomEvents.room.sessionId){
-                if(!roomEvents.gameManager.inventory){
-                    // create inventory instance only once:
-                    let receiverProps = {owner: player, ownerIdProperty: 'sessionId'};
-                    let inventoryClasses = roomEvents.gameManager.config.customClasses.inventory.items;
-                    if(inventoryClasses){
-                        receiverProps.itemClasses = inventoryClasses;
-                    }
-                    let groupClasses = roomEvents.gameManager.config.customClasses.inventory.groups;
-                    if(groupClasses){
-                        receiverProps.groupClasses = groupClasses;
-                    }
-                    // create inventory instance:
-                    roomEvents.gameManager.inventory = new Receiver(receiverProps);
-                    // @TODO - BETA.16 - R16-10: extend the Receiver class for this override.
-                    roomEvents.gameManager.inventory.onExecuting = (message) => {
-                        this.executingItem(message, roomEvents.gameManager);
-                    };
-                }
-                // listen to room messages:
-                roomEvents.room.onMessage((message) => {
-                    roomEvents.gameManager.inventory.processMessage(message);
-                });
-            }
+            this.onPlayerAdd(key, roomEvents, player);
         });
         EventsManagerSingleton.on('reldens.preloadUiScene', (preloadScene) => {
             preloadScene.load.html('inventory', 'assets/features/inventory/templates/ui-inventory.html');
@@ -52,35 +29,74 @@ class InventoryPack
             preloadScene.load.html('inventoryGroup', 'assets/features/inventory/templates/group.html');
         });
         EventsManagerSingleton.on('reldens.createUiScene', (preloadScene) => {
-            this.uiManager = new InventoryUi(preloadScene);
-            this.uiManager.createUi();
-            let inventoryPanel = preloadScene.getUiElement('inventory')
-                .getChildByProperty('id', InventoryConst.INVENTORY_ITEMS);
-            let equipmentPanel = preloadScene.getUiElement('equipment')
-                .getChildByProperty('id', InventoryConst.EQUIPMENT_ITEMS);
-            if(!inventoryPanel || !equipmentPanel){
-                Logger.error(['Inventory/Equipment UI not found.', inventoryPanel, equipmentPanel]);
-                return false;
-            }
-            let manager = preloadScene.gameManager.inventory.manager;
-            // first time load and then we listen the events to get the updates:
-            if(Object.keys(manager.groups).length){
-                preloadScene.gameManager.gameDom.getElement('#'+InventoryConst.EQUIPMENT_ITEMS).html('');
-                let orderedGroups = this.sortGroups(manager.groups);
-                for(let i of orderedGroups){
-                    let output = this.createGroupBox(manager.groups[i], preloadScene.gameManager, preloadScene);
-                    preloadScene.gameManager.gameDom.appendToElement('#'+InventoryConst.EQUIPMENT_ITEMS, output);
-                }
-            }
-            if(Object.keys(manager.items).length){
-                for(let i of Object.keys(manager.items)){
-                    let item = manager.items[i];
-                    this.displayItem(item, preloadScene, equipmentPanel, inventoryPanel, i);
-                }
-            }
-            // listen for inventory events:
-            this.listenInventoryEvents(preloadScene, inventoryPanel, equipmentPanel);
+            return this.onPreloadUiScene(preloadScene);
         });
+    }
+
+    onPreloadUiScene(preloadScene)
+    {
+        this.uiManager = new InventoryUi(preloadScene);
+        this.uiManager.createUi();
+        let inventoryPanel = preloadScene.getUiElement('inventory')
+            .getChildByProperty('id', InventoryConst.INVENTORY_ITEMS);
+        let equipmentPanel = preloadScene.getUiElement('equipment')
+            .getChildByProperty('id', InventoryConst.EQUIPMENT_ITEMS);
+        if(!inventoryPanel || !equipmentPanel){
+            Logger.error(['Inventory/Equipment UI not found.', inventoryPanel, equipmentPanel]);
+            return false;
+        }
+        let manager = preloadScene.gameManager.inventory.manager;
+        // first time load and then we listen the events to get the updates:
+        if(Object.keys(manager.groups).length){
+            preloadScene.gameManager.gameDom.getElement('#' + InventoryConst.EQUIPMENT_ITEMS).html('');
+            let orderedGroups = this.sortGroups(manager.groups);
+            for (let i of orderedGroups){
+                let output = this.createGroupBox(manager.groups[i], preloadScene.gameManager, preloadScene);
+                preloadScene.gameManager.gameDom.appendToElement('#' + InventoryConst.EQUIPMENT_ITEMS, output);
+            }
+        }
+        if(Object.keys(manager.items).length){
+            for (let i of Object.keys(manager.items)){
+                let item = manager.items[i];
+                this.displayItem(item, preloadScene, equipmentPanel, inventoryPanel, i);
+            }
+        }
+        // listen for inventory events:
+        this.listenInventoryEvents(preloadScene, inventoryPanel, equipmentPanel);
+    }
+
+    onPlayerAdd(key, roomEvents, player)
+    {
+        if(key === roomEvents.room.sessionId){
+            if(!roomEvents.gameManager.inventory){
+                // create inventory instance only once:
+                let receiverProps = {
+                    owner: player,
+                    ownerIdProperty: 'sessionId',
+                    gameManager: roomEvents.gameManager
+                };
+                let inventoryClasses = roomEvents.gameManager.config.customClasses.inventory.items;
+                if(inventoryClasses){
+                    receiverProps.itemClasses = inventoryClasses;
+                }
+                let groupClasses = roomEvents.gameManager.config.customClasses.inventory.groups;
+                if(groupClasses){
+                    receiverProps.groupClasses = groupClasses;
+                }
+                // create inventory instance:
+                roomEvents.gameManager.inventory = new InventoryReceiver(receiverProps);
+                // @TODO - BETA.16 - R16-10: extend the Receiver class for this override.
+                /*
+                roomEvents.gameManager.inventory.onExecuting = (message) => {
+                    this.executingItem(message, roomEvents.gameManager);
+                };
+                */
+            }
+            // listen to room messages:
+            roomEvents.room.onMessage((message) => {
+                roomEvents.gameManager.inventory.processMessage(message);
+            });
+        }
     }
 
     listenInventoryEvents(uiScene, inventoryPanel, equipmentPanel)
@@ -108,6 +124,9 @@ class InventoryPack
             uiScene.getUiElement('inventory').getChildByID('item-'+itemKey).remove();
         }, 'removeItemPack', masterKey);
         gameManager.inventory.manager.listenEvent(ItemsEvents.SET_GROUPS, (props) => {
+            if(gameManager.gameDom.getElement('#'+InventoryConst.EQUIPMENT_ITEMS).html() !== ''){
+                return;
+            }
             gameManager.gameDom.getElement('#'+InventoryConst.EQUIPMENT_ITEMS).html('');
             let orderedGroups = this.sortGroups(props.groups);
             for(let i of orderedGroups){
@@ -264,78 +283,6 @@ class InventoryPack
             id: item.getInventoryId(),
             equipStatus: item.equipped ? 'equipped' : 'unequipped'
         });
-    }
-
-    executingItem(message, gameManager)
-    {
-        // @TODO - BETA.17: improve, split in several classes, methods and functionalities.
-        let item = message.item;
-        if(!sc.hasOwn(item, 'animationData')){
-            return false;
-        }
-        let animKey = 'aK_'+item.key;
-        let currentScene = gameManager.getActiveScene();
-        currentScene.load.spritesheet(animKey, 'assets/custom/sprites/'+item.key+'.png', {
-            frameWidth: item.animationData.frameWidth || 64,
-            frameHeight: item.animationData.frameHeight || 64
-        });
-        currentScene.load.on('complete', () => {
-            if(sc.hasOwn(this.itemSprites, animKey)){
-                // sprite already running:
-                return false;
-            }
-            let createData = {
-                key: animKey,
-                frames: currentScene.anims.generateFrameNumbers(animKey, {
-                    start: item.animationData.start || 0,
-                    end: item.animationData.end || 1
-                }),
-                frameRate: sc.hasOwn(item.animationData, 'rate') ?
-                    item.animationData.rate : currentScene.configuredFrameRate,
-                repeat: item.animationData.repeat || 3,
-                hideOnComplete: sc.hasOwn(item.animationData, 'hide') ?
-                    item.animationData.hide : true,
-            };
-            let x = 0, y = 0;
-            let targetId = (
-                    item.animationData.startsOnTarget
-                    && sc.hasOwn(message.target, 'playerId')
-                    && message.target.playerId
-                ) ? message.target.playerId : currentScene.player.playerId;
-            if(!targetId || !sc.hasOwn(currentScene.player.players, targetId)){
-                Logger.error('Player sprite not found.');
-                return false;
-            }
-            let playerSprite = currentScene.player.players[targetId];
-            if(item.animationData.usePlayerPosition){
-                currentScene.anims.create(createData);
-                x = playerSprite.x;
-                y = playerSprite.y;
-            }
-            if(sc.hasOwn(item.animationData, 'fixedX')){
-                x = item.animationData.fixedX;
-            }
-            if(sc.hasOwn(item.animationData, 'fixedY')){
-                y = item.animationData.fixedY;
-            }
-            if(item.animationData.closeInventoryOnUse){
-                gameManager.gameDom.getElement('#inventory-close').click();
-            }
-            this.itemSprites[animKey] = currentScene.physics.add.sprite(x, y, animKey);
-            this.itemSprites[animKey].setDepth(2000000);
-            if(item.animationData.followPlayer){
-                playerSprite.moveSprites[animKey] = this.itemSprites[animKey];
-            }
-            this.itemSprites[animKey].anims.play(animKey, true).on('animationcomplete', () => {
-                if(item.animationData.destroyOnComplete){
-                    this.itemSprites[animKey].destroy();
-                    if(item.animationData.followPlayer){
-                        delete this.itemSprites[animKey];
-                    }
-                }
-            });
-        });
-        currentScene.load.start();
     }
 
     getGroupById(groupId, groupsList)

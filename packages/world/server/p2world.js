@@ -298,7 +298,6 @@ class P2world extends World
         let y = toPosition.y - bulletY;
         let x = toPosition.x - bulletX;
         let angleByVelocity = Math.atan2(y, x);
-        // @TODO - BETA.16 - R16-1b: required key for animations.
         let bulletKey = (bulletObject.key ? bulletObject.key : '');
         let direction = this.calculateDirection(bulletObject, fromPosition, toPosition);
         let bulletBody = this.createCollisionBody(
@@ -334,7 +333,6 @@ class P2world extends World
         return bulletBody;
     }
 
-    // @TODO - BETA.16 - R16-1b: required direction for animations.
     calculateDirection(bulletObject, fromPosition, toPosition)
     {
         let animDir = sc.getDef(bulletObject, 'animDir', false);

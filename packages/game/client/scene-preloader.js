@@ -108,14 +108,6 @@ class ScenePreloader extends Scene
         // @TODO - BETA.17 - F901: implement player custom avatar.
         // this.load.spritesheet(this.username, 'assets/sprites/'+this.username+'.png', playerSpriteSize);
         this.load.spritesheet(GameConst.IMAGE_PLAYER, 'assets/sprites/player-1.png', playerSpriteSize);
-        // @TODO - BETA.16 - R16-1b: replace these by skills related if available otherwise these will be configurable
-        //   from the storage.
-        /*
-        this.load.spritesheet(GameConst.ATTACK, 'assets/sprites/weapons-1.png', {frameWidth: 64, frameHeight: 64});
-        this.load.spritesheet(GameConst.BULLET, 'assets/sprites/earth-1.png', {frameWidth: 64, frameHeight: 64});
-        this.load.spritesheet(GameConst.HIT, 'assets/sprites/impact-1.png', {frameWidth: 64, frameHeight: 64});
-        this.load.spritesheet(GameConst.DEATH, 'assets/sprites/object-1.png', {frameWidth: 64, frameHeight: 64});
-        */
         if(this.gameManager.config.get('client/ui/pointer/show')){
             let pointerData = {frameWidth: 32, frameHeight: 32};
             this.load.spritesheet(GameConst.ARROW_DOWN, 'assets/sprites/arrow-w-down.png', pointerData);
@@ -147,7 +139,7 @@ class ScenePreloader extends Scene
                     if(this.gameManager.firebase.isActive){
                         this.gameManager.firebase.app.auth().signOut();
                     }
-                    window.location.reload();
+                    this.gameManager.gameDom.getWindow().location.reload();
                 });
             }
             // create uiTarget:
@@ -237,15 +229,7 @@ class ScenePreloader extends Scene
             {k: GameConst.LEFT, img: GameConst.IMAGE_PLAYER, start: 3, end: 5, repeat: -1, hide: false},
             {k: GameConst.RIGHT, img: GameConst.IMAGE_PLAYER, start: 6, end: 8, repeat: -1, hide: false},
             {k: GameConst.UP, img: GameConst.IMAGE_PLAYER, start: 9, end: 11, repeat: -1, hide: false},
-            {k: GameConst.DOWN, img: GameConst.IMAGE_PLAYER, start: 0, end: 2, repeat: -1, hide: false},
-            // @TODO - BETA.16 - R16-1b: replace these by skills related if available otherwise these will be
-            //   configurable from the storage.
-            /*
-            {k: GameConst.ATTACK, img: GameConst.ATTACK, start: 25, end: 29, repeat: 0},
-            {k: GameConst.BULLET, img: GameConst.BULLET, start: 1, end: 2, repeat: -1, rate: 1},
-            {k: GameConst.HIT, img: GameConst.HIT, start:17, end: 19, repeat: 0},
-            {k: GameConst.DEATH, img: GameConst.DEATH, start: 10, end: 11, repeat: 0, rate: 1}
-            */
+            {k: GameConst.DOWN, img: GameConst.IMAGE_PLAYER, start: 0, end: 2, repeat: -1, hide: false}
         ];
         if(this.gameManager.config.get('client/ui/pointer/show')){
             let arrowAnim = {

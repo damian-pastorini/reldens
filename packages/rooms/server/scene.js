@@ -134,7 +134,6 @@ class RoomScene extends RoomLogin
         if(playerSchema && sc.hasOwn(playerSchema, 'physicalBody')){
             // get player body:
             let bodyToMove = playerSchema.physicalBody;
-            // @TODO - BETA.16 - R16-1b: fixed skills blocked by casting.
             // if player is moving:
             if(
                 sc.hasOwn(messageData, 'dir') 

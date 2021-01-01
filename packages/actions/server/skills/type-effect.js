@@ -22,8 +22,6 @@ class TypeEffect extends Effect
     async runSkillLogic()
     {
         if(this.room){
-            // @TODO - BETA.16 - R16-1b: replace these by skills related if available otherwise these will be
-            //   configurable from the storage.
             let skillAction = sc.getDef(this.room.config.client.skills.animations, this.key+'_eff', 'default_eff');
             this.room.broadcast({
                 act: skillAction,

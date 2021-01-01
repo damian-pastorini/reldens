@@ -20,8 +20,6 @@ class ActionsPack
                     let receiverProps = {
                         owner: player
                     };
-                    // @TODO - BETA.16 - R16-1b: position method was required for the skills in order to get the proper
-                    //   owner and target position.
                     // @TODO - BETA.17 - Refactor and use a wrapper.
                     player.getPosition = () => {
                         return {
@@ -55,29 +53,6 @@ class ActionsPack
             uiScene.load.html('skills', 'assets/features/skills/templates/ui-skills.html');
             uiScene.load.html('skillBox', 'assets/features/skills/templates/ui-skill-box.html');
             uiScene.load.html('actionBox', 'assets/html/ui-action-box.html');
-            // @TODO - BETA.16 - R16-1b: replace these by skills related if available otherwise these will be
-            //   configurable from the storage.
-            // @NOTES
-            // - All the skills animations will be stored in a single table, and sent to the skills manager after
-            // it's initialized.
-            // - One of the table fields is going to be a JSON with the generic animation information.
-            // - In this loader we will evaluate if the animation has a custom class and if the class implements the
-            // proper animation initialization method. If that's the case we will run the init method allowing the
-            // animation has it's complete custom behavior.
-            // - If the skill animation doesn't have a custom class we will check if it's an spritesheet type to load
-            // it properly.
-            // - When a skill is executed we will have 5 name conventions to look for the proper animation:
-            // [skill-key] + '_atk'
-            // [skill-key] + '_cast'
-            // [skill-key] + '_bullet'
-            // [skill-key] + '_hit'
-            // [skill-key] + '_death'
-            // IMPORTANT: animations with custom classes will have to run their own logic to load the required data,
-            // this doesn't mean you can't have a skill that will have a custom class for the attack, but the default
-            // spritesheets used for the other cases.
-            // - For get the default animations you will find specific configuration entries for each "key":
-            // "default_atk", "default_cast", "default_bullet", "default_hit", "default_death".
-            // For these configurations the config type JSON => "j" was implemented.
             this.loopSkillsAnd('preload', uiScene);
         });
         EventsManagerSingleton.on('reldens.createPreload', (preloadScene) => {
@@ -111,7 +86,7 @@ class ActionsPack
         // a single sprite with multiple attacks, and use the start and end frame to run the required one.
         if(sc.hasOwn(data.animationData, ['type', 'img']) && data.animationData.type === 'spritesheet'){
             // try load directions:
-            // - 1: both
+            // - 1: both (this is to include diagonals)
             // - 2: up/down
             // - 3: left/right
             let animDir = sc.getDef(data.animationData, 'dir', 0);

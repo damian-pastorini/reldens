@@ -112,7 +112,7 @@ class RoomEvents
             if(!this.gameManager.gameOver){
                 alert('Your session ended, please login again.');
             }
-            window.location.reload();
+            this.gameManager.gameDom.getWindow().location.reload();
         } else {
             let currentScene = this.getActiveScene();
             if(currentScene.player && sc.hasOwn(currentScene.player.players, key)){
@@ -168,7 +168,7 @@ class RoomEvents
             if(!this.gameManager.gameOver){
                 alert('There was a connection error.');
             }
-            window.location.reload();
+            this.gameManager.gameDom.getWindow().location.reload();
         } else {
             // the client has initiated the disconnection:
             // @TODO - BETA.17: test a lost connection case (like turn of the network, but probably the browser was

@@ -41,11 +41,4 @@ module.exports.GameConst = {
     IMAGE_PLAYER: 'player',
     // @TODO - BETA.16?17?: move to actions package.
     ACTION: 'action',
-    // @TODO - BETA.16 - R16-1b: replace these by skills related if available otherwise these will be configurable from
-    //   the storage.
-    // default basic images keys:
-    // ATTACK: 'attack',
-    // HIT: 'hit',
-    // DEATH: 'death',
-    // BULLET: 'attackBullet',
 };

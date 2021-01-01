@@ -106,8 +106,6 @@ class ActionsPack extends PackInterface
         if(pvpConfig){
             currentPlayer.actions['pvp'] = new Pvp(pvpConfig);
         }
-        // @TODO - BETA.16 - R16-1b: new custom player methods were required and other modified for the skills
-        //   animations.
         currentPlayer.executePhysicalSkill = (target, executedSkill) => {
             let from = {x: currentPlayer.state.x, y: currentPlayer.state.y};
             let to = {x: target.state.x, y: target.state.y};

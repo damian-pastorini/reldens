@@ -81,8 +81,6 @@ class TypePhysicalEffect extends PhysicalEffect
 
     executeBullets(props)
     {
-        // @TODO - BETA.16 - R16-1b: replace these by skills related if available otherwise these will be configurable
-        //   from the storage.
         let bulletsCheck = [];
         let hitKey = sc.getDef(this.room.config.client.skills.animations, this.key+'_hit', 'default_hit');
         // both objects could be bullets, so remove them is needed and broadcast the hit:
