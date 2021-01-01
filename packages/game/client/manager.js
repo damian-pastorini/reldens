@@ -88,7 +88,6 @@ class GameManager
         this.events.on('reldens.afterSceneDynamicCreate', () => {
             if(this.config.get('client/ui/screen/responsive')){
                 this.gameEngine.updateGameSize(this);
-                // @TODO - BETA.16 - R16-14 - CHECK: remove window from here?
                 this.gameDom.getWindowElement().resize(() => {
                     this.gameEngine.updateGameSize(this);
                 });

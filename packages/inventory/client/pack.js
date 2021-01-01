@@ -85,12 +85,6 @@ class InventoryPack
                 }
                 // create inventory instance:
                 roomEvents.gameManager.inventory = new InventoryReceiver(receiverProps);
-                // @TODO - BETA.16 - R16-10: extend the Receiver class for this override.
-                /*
-                roomEvents.gameManager.inventory.onExecuting = (message) => {
-                    this.executingItem(message, roomEvents.gameManager);
-                };
-                */
             }
             // listen to room messages:
             roomEvents.room.onMessage((message) => {
@@ -124,6 +118,7 @@ class InventoryPack
             uiScene.getUiElement('inventory').getChildByID('item-'+itemKey).remove();
         }, 'removeItemPack', masterKey);
         gameManager.inventory.manager.listenEvent(ItemsEvents.SET_GROUPS, (props) => {
+            // @TODO - BETA.17 - If groups are re-set or updated we will need to update the items as well.
             if(gameManager.gameDom.getElement('#'+InventoryConst.EQUIPMENT_ITEMS).html() !== ''){
                 return;
             }
