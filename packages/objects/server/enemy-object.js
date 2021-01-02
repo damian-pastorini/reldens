@@ -57,7 +57,7 @@ class EnemyObject extends NpcObject
         this.respawnTimer = false;
         this.respawnLayer = false;
     }
-    
+
     setupDefaultAction()
     {
         let skillProps = {
@@ -117,6 +117,7 @@ class EnemyObject extends NpcObject
     {
         // @NOTE: here we move the body to some place where it can't be reach so it doesn't collide with anything, this
         // will also make it invisible because the update in the client will move the sprite outside the view.
+        this.objectBody.resetAuto().stopMove();
         this.objectBody.position = [-1000, -1000];
         if(this.respawnTime){
             this.respawnTimer = setTimeout(() => {
@@ -133,6 +134,8 @@ class EnemyObject extends NpcObject
         let randomTile = respawnArea.getRandomTile();
         let { x, y } = randomTile;
         this.objectBody.position = [x, y];
+        this.objectBody.originalCol = x;
+        this.objectBody.originalRow = y;
         this.stats = this.initialStats;
     }
 

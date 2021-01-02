@@ -116,7 +116,7 @@ class PhysicalBody extends Body
             return;
         }
         // @TODO - BETA.16 - R16-12: remove from here or change property name from isBullet to shouldRemove or
-        //  shouldStop on world boundaries.
+        //   shouldStop on world boundaries.
         if({}.hasOwnProperty.call(this, 'isBullet') && this.isBullet){
             if(
                 this.position[0] < 0 || this.position[0] > (this.worldWidth * this.worldTileWidth)
@@ -135,6 +135,7 @@ class PhysicalBody extends Body
     resetAuto()
     {
         this.autoMoving = [];
+        return this;
     }
 
     initMove(direction, isAuto = false)
@@ -191,6 +192,7 @@ class PhysicalBody extends Body
     {
         // stop by setting speed to zero:
         this.velocity = [0, 0];
+        return this;
     }
 
     moveToPoint(toPoint)
@@ -224,6 +226,7 @@ class PhysicalBody extends Body
         }
         this.currentCol = currentCol;
         this.currentRow = currentRow;
+        return this;
     }
 
     moveToOriginalPoint()
