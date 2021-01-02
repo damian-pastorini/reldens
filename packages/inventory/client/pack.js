@@ -15,7 +15,6 @@ class InventoryPack
 
     constructor()
     {
-        this.itemSprites = {};
         // eslint-disable-next-line no-unused-vars
         EventsManagerSingleton.on('reldens.playersOnAdd', (player, key, previousScene, roomEvents) => {
             this.onPlayerAdd(key, roomEvents, player);

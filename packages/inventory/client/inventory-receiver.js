@@ -11,6 +11,7 @@ class InventoryReceiver extends Receiver
         }
         super(props);
         this.gameManager = props.gameManager;
+        this.itemSprites = {};
     }
 
     onExecuting(message)
