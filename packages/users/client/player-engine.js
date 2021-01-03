@@ -160,7 +160,6 @@ class PlayerEngine
                 let spriteDepth = sc.hasOwn(sprite, 'depthByPlayer') && sprite['depthByPlayer'] === 'above'
                     ? playerNewDepth + 1 : playerNewDepth - 0.1;
                 sprite.setDepth(spriteDepth);
-
             }
         }
     }

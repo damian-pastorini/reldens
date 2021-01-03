@@ -8,7 +8,7 @@
 
 const path = require('path');
 const { PasswordManager } = require('./password-manager');
-const { ErrorManager } = require('@reldens/utils');
+const { ErrorManager, EventsManagerSingleton } = require('@reldens/utils');
 
 class LoginManager
 {
@@ -99,23 +99,24 @@ class LoginManager
                     return {error: message};
                 }
                 // if the email doesn't exists in the database and it's a registration request:
-                // insert user, player, player state and player stats:
+                // insert user, player, player state, player stats, class path:
                 let newUser = await this.usersManager.createUser({
                     email: userData.email,
                     username: userData.username,
                     password: this.pwManager.encryptPassword(userData.password),
                     role_id: this.config.server.players.initialUser.role_id,
                     status: this.config.server.players.initialUser.status,
-                    players: {
+                    players: [{
                         name: userData.username,
                         // @TODO - BETA.16 - R16-5: move to users pack and fix initialStats cases, new users and users
                         //   that could be in a different level.
-                        stats: this.config.server.players.initialStats,
+                        // @NOTE: new users will always use the same initial state and it is part of this package.
                         state: this.config.server.players.initialState
-                    }
+                    }]
                 });
                 let configRoomId = this.config.server.players.initialState.room_id;
                 newUser.players[0].state.scene = await this.getRoomNameById(configRoomId);
+                await EventsManagerSingleton.emit('reldens.createNewUserAfter', newUser, this);
                 return {user: newUser};
             } catch (err) {
                 return {error: 'Unable to register the user.', catch: err};

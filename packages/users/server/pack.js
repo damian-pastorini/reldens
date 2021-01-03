@@ -4,6 +4,8 @@
  *
  */
 
+const { InitialState } = require('../../users/server/initial-state');
+const { InitialUser } = require('../../users/server/initial-user');
 const { PackInterface } = require('../../features/server/pack-interface');
 const { ModelsManager } = require('./models-manager');
 const { EventsManagerSingleton, sc } = require('@reldens/utils');
@@ -25,6 +27,11 @@ class UsersPack extends PackInterface
     async onServerReady(event)
     {
         let configProcessor = event.serverManager.configManager.processor;
+        if(!sc.hasOwn(configProcessor.server, 'players')){
+            configProcessor.server.players = {};
+        }
+        configProcessor.server.players.initialState = InitialState;
+        configProcessor.server.players.initialUser = InitialUser;
         if(sc.hasOwn(configProcessor.server.players, 'initialStats')){
             return true;
         }

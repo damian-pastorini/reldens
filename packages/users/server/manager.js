@@ -9,6 +9,7 @@
 const { UsersModel } = require('./model');
 const { PlayersStateModel } = require('./players-state-model');
 const { PlayersStatsModel } = require('./players-stats-model');
+const { StatsModel } = require('./stats-model');
 const { ErrorManager } = require('@reldens/utils');
 
 class UsersManager
@@ -42,7 +43,22 @@ class UsersManager
 
     async createUser(userData)
     {
-        return UsersModel.saveUser(userData);
+        // save user in storage:
+        let savedUser = await UsersModel.saveUser(userData);
+        // save stats:
+        let statsList = await StatsModel.query();
+        if(statsList){
+            for(let stat of statsList){
+                let statData = {
+                    player_id: savedUser.players[0].id,
+                    stat_id: stat['id'],
+                    base_value: stat['base_value'],
+                    value: stat['base_value']
+                };
+                await PlayersStatsModel.query().insert(statData);
+            }
+        }
+        return savedUser;
     }
 
     updateUserLastLogin(username)

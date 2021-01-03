@@ -8,7 +8,7 @@
  */
 
 const { Room } = require('colyseus');
-const { Logger, ErrorManager } = require('@reldens/utils');
+const { Logger, ErrorManager, sc } = require('@reldens/utils');
 
 class RoomLogin extends Room
 {
@@ -27,7 +27,7 @@ class RoomLogin extends Room
             return false;
         }
         let loginResult = await this.loginManager.processUserRequest(options);
-        if({}.hasOwnProperty.call(loginResult, 'error')){
+        if(sc.hasOwn(loginResult, 'error')){
             // login error.
             ErrorManager.error(loginResult.error);
         }

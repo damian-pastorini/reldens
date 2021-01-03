@@ -18,6 +18,8 @@ ALTER TABLE `players_stats` ADD COLUMN `aim` INT(10) UNSIGNED NOT NULL AFTER `do
 UPDATE players_stats SET aim = 100;
 INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('server', 'players/initialStats/aim', '100', 'i');
 
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('server', 'players/actions/initialClassPathId', '1', 'i');
+
 #######################################################################################################################
 # Skills system:
 #######################################################################################################################

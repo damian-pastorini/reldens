@@ -33,6 +33,16 @@ class ActionsPack extends PackInterface
         EventsManagerSingleton.on('reldens.createPlayerAfter', async (client, authResult, currentPlayer, room) => {
             await this.onCreatePlayerAfter(client, authResult, currentPlayer, room);
         });
+        EventsManagerSingleton.on('reldens.createNewUserAfter', async (newUser, loginManager) => {
+            let initialClassPathId = loginManager.config.get('server/players/actions/initialClassPathId');
+            let data = {
+                class_path_id: initialClassPathId,
+                owner_id: newUser.players[0].id,
+                currentLevel: 1,
+                currentExp: 0
+            };
+            return this.skillsModelsManager.models['ownersClassPath'].query().insert(data);
+        });
     }
 
     async onServerReady(event)
