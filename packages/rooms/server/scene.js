@@ -97,8 +97,7 @@ class RoomScene extends RoomLogin
         await EventsManagerSingleton.emit('reldens.createPlayerBefore', client, authResult, this);
         // player creation:
         let currentPlayer = this.state.createPlayer(client.sessionId, authResult);
-        // @TODO - BETA.16 - R16-5: move to users pack and fix initialStats cases, new users and users that could be
-        //   in a different level.
+        // @TODO - BETA.17 - Create player body using a new pack in the world package.
         // create body for server physics and assign the body to the player:
         currentPlayer.physicalBody = this.roomWorld.createPlayerBody({
             id: client.sessionId,
@@ -130,6 +129,7 @@ class RoomScene extends RoomLogin
         }
         // get player:
         let playerSchema = this.getPlayerFromState(client.sessionId);
+        // @TODO - BETA.17 - Move to a new pack in the world package.
         // only process the message if the player exists and has a body:
         if(playerSchema && sc.hasOwn(playerSchema, 'physicalBody')){
             // get player body:

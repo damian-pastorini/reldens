@@ -196,7 +196,7 @@ class ActionsPack extends PackInterface
 
     prepareEventsListeners(classPath)
     {
-        // @TODO - Improve skills animations (no more rock throw! let's some real spells and weapons!).
+        // @TODO - BETA.16 - Improve skills animations (no more just rocks throw! let's add some spells and weapons!).
         let ownerId = classPath.getOwnerEventKey();
         // eslint-disable-next-line no-unused-vars
         classPath.listenEvent(SkillsEvents.SKILL_BEFORE_CAST, async (skill, target) => {
