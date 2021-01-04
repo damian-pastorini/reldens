@@ -6,8 +6,7 @@
 
 const { ChatUi } = require('./chat-ui');
 const { ChatConst } = require('../constants');
-const { Logger } = require('@reldens/utils');
-const { EventsManagerSingleton } = require('@reldens/utils');
+const { EventsManagerSingleton, Logger } = require('@reldens/utils');
 
 class ChatPack
 {

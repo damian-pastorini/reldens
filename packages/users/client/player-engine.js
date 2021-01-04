@@ -6,7 +6,7 @@
  *
  */
 
-const { Logger, sc } = require('@reldens/utils');
+const { EventsManagerSingleton, Logger, sc } = require('@reldens/utils');
 const { GameConst } = require('../../game/constants');
 
 class PlayerEngine
@@ -78,6 +78,7 @@ class PlayerEngine
     createHealthBar()
     {
         // @TODO - BETA.16 - R16-12: remove from player engine, create using the user pack and events.
+        /*
         if(this.gameManager.config.get('client/ui/lifeBar/enabled')){
             // if the position is fixed then the bar has to go on the ui scene:
             let lifeBarScene = this.gameManager.getActiveScenePreloader();
@@ -95,11 +96,13 @@ class PlayerEngine
                 this.gameManager.gameEngine.uiScene.elementsUi['lifeBar'] = this.lifeBar;
             }
         }
+        */
     }
 
     redrawLifeBar()
     {
         // @TODO - BETA.16 - R16-12: remove from player engine, create using the user pack and events.
+        /*
         if(!this.lifeBar){
             return;
         }
@@ -128,6 +131,7 @@ class PlayerEngine
         this.lifeBar.strokeRect(uiX, uiY, fullBarWidth, barHeight);
         this.lifeBar.alpha = 0.6;
         this.lifeBar.setDepth(100000);
+        */
     }
 
     runPlayerAnimation(playerId, player)
@@ -147,10 +151,13 @@ class PlayerEngine
             playerSprite.anims.stop();
             playerSprite.mov = player.state.mov;
         }
+        /*
         if(this.gameManager.config.get('client/ui/lifeBar/enabled')){
             // redraw life bar all the time:
             this.redrawLifeBar();
         }
+        */
+        EventsManagerSingleton.emit('reldens.runPlayerAnimation', this);
         if(Object.keys(playerSprite.moveSprites).length){
             for(let i of Object.keys(playerSprite.moveSprites)){
                 let sprite = playerSprite.moveSprites[i];

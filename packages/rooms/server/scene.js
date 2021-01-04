@@ -367,7 +367,7 @@ class RoomScene extends RoomLogin
         // @TODO - BETA.17 - Replace this by a master key related to the room ID and just remove all the events related
         //   to this room.
         if(!this.roomWorld.respawnAreas){
-            return;
+            return true;
         }
         // clean up the listeners!
         for(let rI of Object.keys(this.roomWorld.respawnAreas)){
