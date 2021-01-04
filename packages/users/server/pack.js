@@ -40,6 +40,7 @@ class UsersPack extends PackInterface
         let statsData = await this.modelsManager.stats.loadAll();
         if(statsData){
             for(let stat of statsData){
+                stat.data = sc.getJson(stat.customData);
                 this.stats[stat.id] = stat;
                 this.statsByKey[stat.key] = stat;
             }

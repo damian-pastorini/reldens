@@ -199,7 +199,11 @@ class RoomEvents
                         statsPanel.innerHTML = statsPanel.innerHTML
                             + this.gameManager.gameEngine.parseTemplate(messageTemplate, {
                                 statLabel: i,
-                                statValue: message.stats[i]
+                                statValue: message.stats[i]+(
+                                    sc.hasOwn(this.gameManager.config.initialStats[i], 'data')
+                                    && sc.getDef(this.gameManager.config.initialStats[i].data, 'showBase', false)
+                                    ? ' / '+message.statsBase[i] : ''
+                                )
                             });
                     }
                 }
