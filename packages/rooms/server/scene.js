@@ -169,10 +169,13 @@ class RoomScene extends RoomLogin
                     }
                 }
             }
-            // @NOTE: player states must be requested since are private user data that we can share with other players
+            // @NOTE:
+            // - Player states must be requested since are private user data that we can share with other players
             // or broadcast to the rooms.
+            // - Considering base value could be changed temporally by a skill or item modifier will be really hard to
+            // identify which calls and cases would require only the stat data or the statBase so we will always send
+            // both values. This could be improved in the future but for now it doesn't have a considerable impact.
             if(messageData.act === GameConst.PLAYER_STATS){
-                // @TODO - BETA.16 - R16-11: fix to update the base stats when required.
                 this.send(client, {
                     act: GameConst.PLAYER_STATS,
                     stats: playerSchema.stats,
@@ -309,7 +312,7 @@ class RoomScene extends RoomLogin
         // save the stats:
         for(let i of Object.keys(target.stats)){
             let statId = this.config.server.players.initialStats[i].id;
-            // @TODO - BETA.16 - R16-11: fix to update the base stats when required.
+            // we can use a single update query so we can easily update both value and base_value:
             let statPatch = {
                 value: target.stats[i],
                 base_value: target.statsBase[i]
@@ -317,7 +320,6 @@ class RoomScene extends RoomLogin
             await this.loginManager.usersManager.updatePlayerStatByIds(target.player_id, statId, statPatch);
         }
         if(updateClient){
-            // @TODO - BETA.16 - R16-11: fix to update the base stats when required.
             this.send(updateClient, {
                 act: GameConst.PLAYER_STATS,
                 stats: target.stats,

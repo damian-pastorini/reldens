@@ -149,7 +149,6 @@ class RoomEvents
         }
         // @NOTE: now this method will update the stats every time the stats action is received but the UI will be
         // created only once in the preloader.
-        // @TODO - BETA.16 - R16-11: fix to update the base stats when required.
         if(message.act === GameConst.PLAYER_STATS){
             EventsManagerSingleton.emit('reldens.playerStatsUpdate', message, this);
             this.updatePlayerStats(message);
@@ -183,7 +182,6 @@ class RoomEvents
         }
         let playerSprite = currentScene.player.players[this.room.sessionId];
         playerSprite.stats = message.stats;
-        // @TODO - BETA.16 - R16-11: fix to update the base stats when required.
         this.gameManager.playerData.stats = message.stats;
         this.gameManager.playerData.statsBase = message.statsBase;
         let playerStats = this.gameManager.getUiElement('playerStats');
@@ -359,7 +357,6 @@ class RoomEvents
         }
         // @NOTE: player states must be requested since are private user data that we can share with other players or
         // broadcast to the rooms.
-        // @TODO - BETA.16 - R16-11: fix to update the base stats when required.
         // request player stats after the player was added to the scene:
         this.room.send({act: GameConst.PLAYER_STATS});
         // send notification about client joined:
