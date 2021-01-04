@@ -29,7 +29,7 @@ class PathFinder
     {
         if(this.world.onlyWalkable){
             let nodeTo = this.grid.getNodeAt(to[0], to[1]);
-            if(nodeTo && !nodeTo.walkable){
+            if(!nodeTo || (nodeTo && !nodeTo.walkable)){
                 return false;
             }
         }
