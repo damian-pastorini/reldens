@@ -205,16 +205,7 @@ class RoomEvents
                 }
             }
         }
-        // @TODO - BETA.16 - R16-12: remove from player engine, create using the user pack and events.
         EventsManagerSingleton.emit('reldens.playerStatsUpdateAfter', message, this);
-        /*
-        if(this.gameManager.config.get('client/ui/lifeBar/enabled')){
-            if(!currentScene.player.lifeBar){
-                currentScene.player.createHealthBar();
-            }
-            currentScene.player.redrawLifeBar();
-        }
-        */
     }
 
     initUi(props)

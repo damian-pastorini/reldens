@@ -115,8 +115,8 @@ class PhysicalBody extends Body
             this.bodyState.mov = false;
             return;
         }
-        // @TODO - BETA.16 - R16-12: remove from here or change property name from isBullet to shouldRemove or
-        //   shouldStop on world boundaries.
+        // @NOTE: the word "bullet" will be part of our glossary to refer to bodies that will be created, moved, and
+        // destroyed on hit or that reach the world boundaries.
         if({}.hasOwnProperty.call(this, 'isBullet') && this.isBullet){
             if(
                 this.position[0] < 0 || this.position[0] > (this.worldWidth * this.worldTileWidth)
