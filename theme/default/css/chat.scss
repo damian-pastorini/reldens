@@ -46,3 +46,19 @@
     top: -60px;
     left: -60px;
 }
+
+#notification-balloon {
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    padding: 5px;
+    line-height: 15px;
+    height: 15px;
+    width: 15px;
+    background-color: red;
+    color: #ffffff;
+    border-radius: 50%;
+    display: none;
+    text-align: center;
+    font-size: 14px;
+}

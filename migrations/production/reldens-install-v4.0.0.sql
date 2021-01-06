@@ -42,9 +42,9 @@ CREATE TABLE IF NOT EXISTS `config` (
   `value` text COLLATE utf8_unicode_ci NOT NULL,
   `type` varchar(2) COLLATE utf8_unicode_ci NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=174 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=176 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table reldens.config: ~119 rows (approximately)
+-- Dumping data for table reldens.config: ~121 rows (approximately)
 /*!40000 ALTER TABLE `config` DISABLE KEYS */;
 INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(1, 'server', 'rooms/validation/valid', 'room_game,chat_global', 't'),
@@ -170,7 +170,9 @@ INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(170, 'client', 'skills/animations/default_cast', '{"key": "default_cast","animationData":{"enabled":false,"type":"spritesheet","img":"default_cast","frameWidth":64,"frameHeight":64,"start":0,"end":3,"repeat":0}}', 'j'),
 	(171, 'client', 'skills/animations/default_death', '{"key":"default_death","animationData":{"enabled":true,"type":"spritesheet","img":"default_death","frameWidth":64,"frameHeight":64,"start":0,"end":1,"repeat":0,"rate":1}}', 'j'),
 	(172, 'client', 'skills/animations/default_hit', '{"key":"default_hit","animationData":{"enabled":true,"type":"spritesheet","img":"default_hit","frameWidth":64,"frameHeight":64,"start":0,"end":3,"repeat":0}}', 'j'),
-	(173, 'server', 'players/actions/initialClassPathId', '1', 'i');
+	(173, 'server', 'players/actions/initialClassPathId', '1', 'i'),
+	(174, 'client', 'ui/chat/notificationBalloon', '1', 'b'),
+	(175, 'client', 'ui/chat/damageMessages', '1', 'b');
 /*!40000 ALTER TABLE `config` ENABLE KEYS */;
 
 -- Dumping structure for table reldens.features
@@ -228,9 +230,9 @@ CREATE TABLE IF NOT EXISTS `items_inventory` (
   PRIMARY KEY (`id`),
   KEY `FK_items_inventory_items_item` (`item_id`),
   CONSTRAINT `FK_items_inventory_items_item` FOREIGN KEY (`item_id`) REFERENCES `items_item` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=79 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Inventory table is to save the items for each owner.';
+) ENGINE=InnoDB AUTO_INCREMENT=86 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Inventory table is to save the items for each owner.';
 
--- Dumping data for table reldens.items_inventory: ~11 rows (approximately)
+-- Dumping data for table reldens.items_inventory: ~18 rows (approximately)
 /*!40000 ALTER TABLE `items_inventory` DISABLE KEYS */;
 INSERT INTO `items_inventory` (`id`, `owner_id`, `item_id`, `qty`, `remaining_uses`, `is_active`) VALUES
 	(52, 1, 2, 1, 0, 0),
@@ -243,7 +245,14 @@ INSERT INTO `items_inventory` (`id`, `owner_id`, `item_id`, `qty`, `remaining_us
 	(71, 1, 2, 1, 0, 0),
 	(72, 1, 2, 1, 0, 0),
 	(77, 1, 2, 1, 0, 0),
-	(78, 1, 2, 1, 0, 0);
+	(78, 1, 2, 1, 0, 0),
+	(79, 1, 2, 1, 0, 0),
+	(80, 1, 2, 1, 0, 0),
+	(81, 1, 2, 1, 0, 0),
+	(82, 1, 2, 1, 0, 0),
+	(83, 1, 2, 1, 0, 0),
+	(84, 1, 2, 1, 0, 0),
+	(85, 1, 2, 1, 0, 0);
 /*!40000 ALTER TABLE `items_inventory` ENABLE KEYS */;
 
 -- Dumping structure for table reldens.items_item
@@ -398,8 +407,8 @@ CREATE TABLE IF NOT EXISTS `players_state` (
 -- Dumping data for table reldens.players_state: ~7 rows (approximately)
 /*!40000 ALTER TABLE `players_state` DISABLE KEYS */;
 INSERT INTO `players_state` (`id`, `player_id`, `room_id`, `x`, `y`, `dir`) VALUES
-	(3, 1, 5, 855, 672, 'right'),
-	(4, 2, 5, 739, 690, 'right'),
+	(3, 1, 5, 1017, 701, 'right'),
+	(4, 2, 5, 957, 704, 'right'),
 	(5, 3, 5, 1055, 37, 'up'),
 	(19, 17, 5, 719, 644, 'left'),
 	(22, 20, 4, 400, 345, 'down'),
@@ -425,19 +434,19 @@ CREATE TABLE IF NOT EXISTS `players_stats` (
 -- Dumping data for table reldens.players_stats: ~50 rows (approximately)
 /*!40000 ALTER TABLE `players_stats` DISABLE KEYS */;
 INSERT INTO `players_stats` (`id`, `player_id`, `stat_id`, `base_value`, `value`) VALUES
-	(1, 1, 1, 100, 100),
+	(1, 1, 1, 160, 80),
 	(2, 2, 1, 100, 100),
 	(3, 3, 1, 100, 100),
 	(4, 17, 1, 100, 100),
-	(5, 1, 2, 100, 100),
+	(5, 1, 2, 120, 55),
 	(6, 2, 2, 100, 100),
 	(7, 3, 2, 100, 100),
 	(8, 17, 2, 100, 100),
-	(9, 1, 3, 100, 100),
+	(9, 1, 3, 100, 160),
 	(10, 2, 3, 100, 100),
 	(11, 3, 3, 100, 100),
 	(12, 17, 3, 100, 100),
-	(13, 1, 4, 100, 100),
+	(13, 1, 4, 100, 130),
 	(14, 2, 4, 100, 100),
 	(15, 3, 4, 100, 100),
 	(16, 17, 4, 100, 100),
@@ -754,7 +763,7 @@ CREATE TABLE IF NOT EXISTS `skills_owners_class_path` (
 -- Dumping data for table reldens.skills_owners_class_path: ~5 rows (approximately)
 /*!40000 ALTER TABLE `skills_owners_class_path` DISABLE KEYS */;
 INSERT INTO `skills_owners_class_path` (`id`, `class_path_id`, `owner_id`, `currentLevel`, `currentExp`) VALUES
-	(1, 1, 1, 1, 0),
+	(1, 1, 1, 7, 350),
 	(2, 1, 2, 1, 0),
 	(3, 1, 3, 1, 0),
 	(4, 1, 17, 1, 0),
@@ -1022,8 +1031,8 @@ CREATE TABLE IF NOT EXISTS `users` (
 -- Dumping data for table reldens.users: ~7 rows (approximately)
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
 INSERT INTO `users` (`id`, `email`, `username`, `password`, `role_id`, `status`, `created_at`, `updated_at`) VALUES
-	(29, 'dap@dap.com', 'dap', '$2b$10$PQIYGBFyA/69DaowJVTA5ufVWmIUeIOwIK4e6JCAP5Uen0sp0TAHu', 1, '1595011283764', '2019-08-02 23:06:14', '2021-01-04 23:24:11'),
-	(30, 'dap2@dap.com', 'dap2', '$2b$10$Kvjh1XdsMai8Xt2wdivG2.prYvTiW6vJrdnrNPYZenf8qCRLhuZ/a', 9, '1', '2019-08-02 23:06:14', '2021-01-01 23:37:46'),
+	(29, 'dap@dap.com', 'dap', '$2b$10$PQIYGBFyA/69DaowJVTA5ufVWmIUeIOwIK4e6JCAP5Uen0sp0TAHu', 1, '1595011283764', '2019-08-02 23:06:14', '2021-01-06 23:29:28'),
+	(30, 'dap2@dap.com', 'dap2', '$2b$10$Kvjh1XdsMai8Xt2wdivG2.prYvTiW6vJrdnrNPYZenf8qCRLhuZ/a', 9, '1', '2019-08-02 23:06:14', '2021-01-06 23:29:31'),
 	(31, 'dap3@dap.com', 'dap3', '$2b$10$CmtWkhIexIVtcBjwsmEkeOlIhqizViykDFYAKtVrl4sF8KWLuBsxO', 1, '1', '2019-08-02 23:06:14', '2020-11-09 21:47:31'),
 	(45, 'damian.pastorini@gmail.com', 'Fire Test', '$2b$10$RtF9w7zAbkL/.CP0UTss6O/TtWQtpr5npoaYmBe2fRokJWfU4skZW', 1, '1', '2020-07-28 21:34:39', '2020-11-09 21:34:39'),
 	(51, 'dap4@dap.com', 'dap4', '$2b$10$g4HP2ie0gPJ1NcnEAw79/umApkJAW17QDFV2olo1Ew0IgV1L9SZhC', 1, '1', '2021-01-03 23:13:45', '2021-01-03 23:13:45'),

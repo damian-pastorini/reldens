@@ -14,6 +14,9 @@ class UsersPack
     {
         EventsManagerSingleton.on('reldens.playerStatsUpdateAfter', (message, roomEvents) => {
             // @TODO - BETA.17: make optional display other players lifeBar.
+            if(this.lifeBarUi){
+                return;
+            }
             this.lifeBarUi = (new LifebarUi()).setup({
                 gameManager: roomEvents.gameManager,
                 player: roomEvents.gameManager.getCurrentPlayer()

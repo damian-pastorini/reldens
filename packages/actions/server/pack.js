@@ -80,6 +80,7 @@ class ActionsPack extends PackInterface
             classPathData.events = EventsManagerSingleton;
             classPathData.affectedProperty = room.config.get('client/actions/skills/affectedProperty');
             classPathData.client = new ClientWrapper(client, room);
+            // append skills server to player:
             currentPlayer.skillsServer = new SkillsServer(classPathData);
             this.prepareEventsListeners(currentPlayer.skillsServer.classPath);
         }
@@ -222,6 +223,7 @@ class ActionsPack extends PackInterface
             }
             skill.owner.physicalBody.isBlocked = false;
         }, 'skillAfterCastPack', ownerId);
+        EventsManagerSingleton.emit('reldens.actionsPrepareEventsListeners', this, classPath);
     }
 
 }

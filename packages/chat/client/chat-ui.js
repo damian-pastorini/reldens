@@ -27,6 +27,7 @@ class ChatUi
         let chatSendButton = uiChat.getChildByProperty('id', ChatConst.CHAT_SEND_BUTTON);
         let chatCloseButton = uiChat.getChildByProperty('id', ChatConst.CHAT_CLOSE_BUTTON);
         let chatOpenButton = uiChat.getChildByProperty('id', ChatConst.CHAT_OPEN_BUTTON);
+        let chatBalloon = uiChat.getChildByProperty('id', ChatConst.CHAT_BALLOON);
         if(chatInput){
             this.uiScene.input.keyboard.on('keyup_ENTER', () => {
                 let isFocused = (this.gameManager.gameDom.activeElement() === chatInput);
@@ -53,6 +54,9 @@ class ChatUi
                     box.style.display = 'block';
                     chatOpenButton.style.display = 'none';
                     uiChat.setDepth(4);
+                    if(this.gameManager.config.get('client/ui/chat/notificationBalloon')){
+                        chatBalloon.style.display = 'none';
+                    }
                 });
                 if(this.gameManager.config.get('client/ui/chat/defaultOpen')){
                     chatOpenButton.click();

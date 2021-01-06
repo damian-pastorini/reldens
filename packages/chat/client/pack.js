@@ -52,7 +52,15 @@ class ChatPack
                 message: message[ChatConst.CHAT_MESSAGE]
             });
             readPanel.innerHTML += output;
-            readPanel.scrollTo(0, readPanel.scrollHeight);
+            // @TODO - BETA.17: replace all the in-code styles by classes, do this refactor while replacing jQuery.
+            if(uiChat.getChildByProperty('id', 'chat-ui').style.display === 'block'){
+                readPanel.scrollTo(0, readPanel.scrollHeight);
+            } else {
+                if(gameManager.config.get('client/ui/chat/notificationBalloon')){
+                    let chatBalloon = uiChat.getChildByProperty('id', ChatConst.CHAT_BALLOON);
+                    chatBalloon.style.display = 'block';
+                }
+            }
         });
     }
 

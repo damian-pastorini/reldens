@@ -8,7 +8,7 @@
 
 const { ChatManager } = require('./manager');
 const { Cleaner } = require('../cleaner');
-const { Logger } = require('@reldens/utils');
+const { Logger, sc } = require('@reldens/utils');
 const { ChatConst } = require('../constants');
 const { GameConst } = require('../../game/constants');
 
@@ -17,7 +17,7 @@ class ChatMessageActions
 
     parseMessageAndRunActions(client, data, room, playerSchema)
     {
-        if({}.hasOwnProperty.call(data, 'act') && data.act === ChatConst.CHAT_ACTION){
+        if(sc.hasOwn(data, 'act') && data.act === ChatConst.CHAT_ACTION){
             let dataMessage = data[ChatConst.CHAT_MESSAGE];
             if(dataMessage.trim().replace('#', '').replace('@', '').length > 0){
                 let message = Cleaner.cleanMessage(dataMessage);
@@ -36,7 +36,7 @@ class ChatMessageActions
         }
         if(data.act === GameConst.CLIENT_JOINED && room.config.get('server/chat/messages/broadcast_join')){
             let sentText = `${playerSchema.username} has joined ${room.roomName}.`;
-            room.broadcast({act: ChatConst.CHAT_ACTION, m: sentText, f: 'System', t: ChatConst.CHAT_TYPE_SYSTEM});
+            room.broadcast({act: ChatConst.CHAT_ACTION, m: sentText, f: 'Sys', t: ChatConst.CHAT_TYPE_SYSTEM});
             ChatManager.saveMessage(
                 room.roomName, playerSchema.player_id, playerSchema.state.room_id, false, ChatConst.CHAT_JOINED
                 ).catch((err) => {

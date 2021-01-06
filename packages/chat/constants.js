@@ -19,6 +19,7 @@ module.exports.ChatConst = {
     CHAT_SEND_BUTTON: 'chat-send',
     CHAT_CLOSE_BUTTON: 'chat-close',
     CHAT_OPEN_BUTTON: 'chat-open',
+    CHAT_BALLOON: 'notification-balloon',
     CHAT_GLOBAL: 'chat',
     CHAT_JOINED: 'j',
     CHAT_TYPE_NORMAL: 'ctn',

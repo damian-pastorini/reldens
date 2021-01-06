@@ -8,7 +8,7 @@
 
 const { ServerCoreFeatures } = require('./config-server');
 const { FeaturesModel } = require('./model');
-const { Logger } = require('@reldens/utils');
+const { Logger, sc } = require('@reldens/utils');
 
 class FeaturesManager
 {
@@ -33,8 +33,8 @@ class FeaturesManager
             // to load the features for the client side later.
             if(
                 // only include enabled and available features on the server side config:
-                {}.hasOwnProperty.call(this.availableFeatures, featureEntity.code)
-                && {}.hasOwnProperty.call(featureEntity, 'is_enabled')
+                sc.hasOwn(this.availableFeatures, featureEntity.code)
+                && sc.hasOwn(featureEntity, 'is_enabled')
                 && featureEntity.is_enabled
             ){
                 // get feature package server for server side:

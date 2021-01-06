@@ -114,7 +114,7 @@ class RoomChat extends RoomLogin
     sendErrorMessage(client, messageObject, message)
     {
         messageObject.m = message;
-        messageObject.f = 'System';
+        messageObject.f = 'Sys';
         messageObject.t = ChatConst.CHAT_TYPE_SYSTEM_ERROR;
         this.send(client, messageObject);
     }
@@ -125,7 +125,7 @@ class RoomChat extends RoomLogin
         if(this.config.get('server/chat/messages/broadcast_leave')){
             let activePlayer = this.activePlayers[client.sessionId];
             let sentText = `${activePlayer.username} has left.`;
-            this.broadcast({act: ChatConst.CHAT_ACTION, m: sentText, f: 'System', t: ChatConst.CHAT_TYPE_SYSTEM});
+            this.broadcast({act: ChatConst.CHAT_ACTION, m: sentText, f: 'Sys', t: ChatConst.CHAT_TYPE_SYSTEM});
         }
         delete this.activePlayers[client.sessionId];
     }

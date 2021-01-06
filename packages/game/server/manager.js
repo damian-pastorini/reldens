@@ -147,7 +147,7 @@ class ServerManager
         configProcessor.projectTheme = ThemeManager.projectTheme;
         await EventsManagerSingleton.emit('reldens.serverConfigReady', {
             serverManager: this,
-            configProcessor: configProcessor
+            configProcessor
         });
         // mailer:
         this.mailer = new Mailer();
@@ -159,7 +159,7 @@ class ServerManager
         configProcessor.availableFeaturesList = await this.featuresManager.loadFeatures();
         await EventsManagerSingleton.emit('reldens.serverConfigFeaturesReady', {
             serverManager: this,
-            configProcessor: configProcessor
+            configProcessor
         });
         // users manager:
         this.usersManager = new UsersManager();

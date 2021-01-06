@@ -1,4 +1,4 @@
-
+const { sc } = require('@reldens/utils');
 const { Grid, AStarFinder } = require('pathfinding');
 
 class PathFinder
@@ -28,7 +28,7 @@ class PathFinder
     findPath(from, to)
     {
         if(this.world.onlyWalkable){
-            let nodeTo = this.grid.getNodeAt(to[0], to[1]);
+            let nodeTo = sc.hasOwn(this.grid, 'nodes') ? this.grid.getNodeAt(to[0], to[1]) : false;
             if(!nodeTo || !nodeTo.walkable){
                 return false;
             }

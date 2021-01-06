@@ -581,3 +581,5 @@ INSERT INTO `skills_skill_animations` (`id`, `skill_id`, `key`, `classKey`, `ani
 # Chat:
 
 INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/chat/defaultOpen', '1', 'b');
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/chat/notificationBalloon', '1', 'b');
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/chat/damageMessages', '1', 'b');
