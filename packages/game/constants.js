@@ -38,7 +38,5 @@ module.exports.GameConst = {
     SPEED_SERVER: 180,
     // @TODO - BETA.17 - F901: implement player custom avatar.
     // default image key:
-    IMAGE_PLAYER: 'player',
-    // @TODO - BETA.16?17?: move to actions package.
-    ACTION: 'action',
+    IMAGE_PLAYER: 'player'
 };

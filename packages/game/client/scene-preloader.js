@@ -9,6 +9,7 @@
 const { Scene, Geom } = require('phaser');
 const { Logger, sc } = require('@reldens/utils');
 const { GameConst } = require('../constants');
+const { ActionsConst } = require('../../actions/constants');
 const { EventsManagerSingleton } = require('@reldens/utils');
 
 class ScenePreloader extends Scene
@@ -296,7 +297,7 @@ class ScenePreloader extends Scene
                 actionButton.addEventListener('click', () => {
                     let currentScene = this.gameManager.activeRoomEvents.getActiveScene();
                     let dataSend = {
-                        act: GameConst.ACTION,
+                        act: ActionsConst.ACTION,
                         target: currentScene.player.currentTarget,
                         type: action
                     };
@@ -336,7 +337,7 @@ class ScenePreloader extends Scene
         // @TODO - BETA.17: controllers will be part of the configuration in the database.
         if(!sc.hasOwn(action, 'dir')){
             dataSend = {
-                act: GameConst.ACTION,
+                act: ActionsConst.ACTION,
                 target: currentScene.player.currentTarget,
                 type: action.type
             };

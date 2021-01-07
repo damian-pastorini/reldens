@@ -8,6 +8,7 @@
 
 const { EventsManagerSingleton, Logger, sc } = require('@reldens/utils');
 const { GameConst } = require('../../game/constants');
+const { ActionsConst } = require('../../actions/constants');
 
 class PlayerEngine
 {
@@ -163,7 +164,7 @@ class PlayerEngine
     runActions()
     {
         this.room.send({
-            act: GameConst.ACTION,
+            act: ActionsConst.ACTION,
             type: this.config.get('client/ui/controls/defaultActionKey'),
             target: this.currentTarget
         });
