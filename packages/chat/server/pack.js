@@ -51,7 +51,7 @@ class ChatPack extends PackInterface
                 ).catch((err) => {
                     Logger.error(['Joined room chat save error:', err]);
                 });
-            });
+            }, 'skillAttackApplyDamageChat', classPath.owner[classPath.ownerIdProperty]);
         });
     }
 

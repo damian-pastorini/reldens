@@ -22,7 +22,8 @@ class TypeEffect extends Effect
     async runSkillLogic()
     {
         if(this.room){
-            let skillAction = sc.getDef(this.room.config.client.skills.animations, this.key+'_eff', 'default_eff');
+            let effKey = this.key+'_eff';
+            let skillAction = effKey; // sc.hasOwn(this.room.config.client.skills.animations, effKey) ? effKey : 'default_eff';
             this.room.broadcast({
                 act: skillAction,
                 owner: this.owner.broadcastKey,
@@ -31,9 +32,7 @@ class TypeEffect extends Effect
         }
         await super.runSkillLogic();
         if(sc.hasOwn(this.owner, 'player_id') && sc.hasOwn(this.target, 'objectBody') && this.currentBattle){
-            if(this.getAffectedPropertyValue(this.target) > 0){
-                await this.currentBattle.startBattleWith(this.owner, this.room);
-            }
+            await this.currentBattle.startBattleWith(this.owner, this.room);
         }
         return true;
     }

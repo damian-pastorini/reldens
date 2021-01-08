@@ -119,6 +119,7 @@ class ActionsPack extends PackInterface
         }
         currentPlayer.executePhysicalSkill = (target, executedSkill) => {
             let from = {x: currentPlayer.state.x, y: currentPlayer.state.y};
+            executedSkill.initialPosition = from;
             let to = {x: target.state.x, y: target.state.y};
             let animData = sc.getDef(room.config.client.skills.animations, executedSkill.key+'_bullet', false);
             if(animData){
@@ -188,7 +189,7 @@ class ActionsPack extends PackInterface
                     skillKey: skillAnim.skill.key,
                     key: skillAnim.key,
                     class: skillAnim.classKey,
-                    animationData: animationData
+                    animationData
                 }
             }
         }

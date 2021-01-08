@@ -7,7 +7,7 @@
  */
 
 const { Receiver } = require('@reldens/skills');
-const { EventsManagerSingleton, sc } = require('@reldens/utils');
+const { EventsManagerSingleton, Logger, sc } = require('@reldens/utils');
 
 class ReceiverWrapper extends Receiver
 {
@@ -34,6 +34,8 @@ class ReceiverWrapper extends Receiver
         super.processMessage(message);
         if(message.act.indexOf('_atk') !== -1 || message.act.indexOf('_eff') !== -1){
             EventsManagerSingleton.emit('reldens.playerAttack', message, this.room);
+            let actKey = (message.act.indexOf('_eff') !== -1) ? '_eff' : '_atk';
+            let animKey = message.act.substring(0, message.act.indexOf(actKey));
             let ownerSprite = false;
             let targetSprite = false;
             let isPvP = (
@@ -54,27 +56,27 @@ class ReceiverWrapper extends Receiver
                 }
             }
             if(ownerSprite){
-                let ownerAnim = currentScene.physics.add.sprite(ownerSprite.x, ownerSprite.y, message.act);
+                let actAnimKey = sc.hasOwn(this.gameManager.config.client.skills.animations, animKey)
+                    ? animKey : 'default'+actKey;
+                let ownerAnim = currentScene.physics.add.sprite(ownerSprite.x, ownerSprite.y, actAnimKey);
                 ownerAnim.setDepth(200000);
                 // @TODO - BETA.17 - Refactor and implement animDir = 1 (both): up_right, up_left, down_right,
                 //   down_left.
                 let playDir = '';
-                if(sc.hasOwn(this.gameManager.gameEngine.uiScene.directionalAnimations, message.act)){
-                    let animDir = this.gameManager.gameEngine.uiScene.directionalAnimations[message.act];
+                if(sc.hasOwn(this.gameManager.gameEngine.uiScene.directionalAnimations, actAnimKey)){
+                    let animDir = this.gameManager.gameEngine.uiScene.directionalAnimations[actAnimKey];
                     playDir = (animDir === 3) ?
                         (ownerSprite.x < targetSprite.x ? '_right' : '_left')
                         : (ownerSprite.y < targetSprite.y ? '_down' : '_up');
                 }
-                ownerAnim.anims.play(message.act+playDir, true).on('animationcomplete', () => {
+                ownerAnim.anims.play(actAnimKey+playDir, true).on('animationcomplete', () => {
                     ownerAnim.destroy();
                 });
             }
             if(targetSprite){
-                let hitKey = message.act.substring(0, message.act.indexOf('_atk'));
-                this.runHitAnimation(targetSprite.x, targetSprite.y, currentScene, hitKey);
+                this.runHitAnimation(targetSprite.x, targetSprite.y, currentScene, animKey+'_hit');
             }
         }
-        // if(message.act === GameConst.HIT){
         if(message.act.indexOf('_hit') !== -1){
             this.runHitAnimation(message.x, message.y, currentScene, message.act);
         }
@@ -141,8 +143,14 @@ class ReceiverWrapper extends Receiver
         let castKey = message.data.skillKey+'_cast';
         let castAnimKey = sc.hasOwn(this.gameManager.config.client.skills.animations, castKey)
             ? castKey : 'default_cast';
-        let castSprite = currentScene.physics.add.sprite(message.data.x, message.data.y, castAnimKey);
         let animationSprite = currentScene.getAnimationByKey(castAnimKey);
+        if(!animationSprite){
+            if(castAnimKey.indexOf('default_') !== 0){
+                Logger.error('Animation sprite not found', castAnimKey);
+            }
+            return false;
+        }
+        let castSprite = currentScene.physics.add.sprite(message.data.x, message.data.y, castAnimKey);
         let destroyTime = sc.getDef(animationSprite, 'destroyTime', false);
         let ownerSprite = this.gameManager.getCurrentPlayer().players[message.data.extraData.oK];
         // the default value will be the caster depth - 1 so the animation will be played below the player.
