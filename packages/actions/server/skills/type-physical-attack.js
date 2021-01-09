@@ -82,7 +82,8 @@ class TypePhysicalAttack extends PhysicalAttack
     executeBullets(props)
     {
         let bulletsCheck = [];
-        let hitKey = this.key+'_hit'; // sc.getDef(this.room.config.client.skills.animations, this.key+'_hit', 'default_hit');
+        // @TODO - BETA.17 - Replace all the defaults by constants.
+        let hitKey = this.key+'_hit';
         // both objects could be bullets, so remove them is needed and broadcast the hit:
         if(props.bodyA.isBullet){
             this.removeBullet(props.bodyA);

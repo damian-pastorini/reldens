@@ -23,8 +23,7 @@ class TypeAttack extends Attack
     {
         if(this.room){
             // @TODO - BETA.17 - Replace all the defaults by constants.
-            let atkKey = this.key+'_atk';
-            let skillAction = atkKey; // sc.hasOwn(this.room.config.client.skills.animations, atkKey) ? atkKey : 'default_atk';
+            let skillAction = this.key+'_atk';
             this.room.broadcast({
                 act: skillAction,
                 owner: this.owner.broadcastKey,

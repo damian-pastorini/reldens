@@ -55,9 +55,10 @@ class ReceiverWrapper extends Receiver
                     ownerSprite = currentScene.player.players[message.owner];
                 }
             }
-            if(ownerSprite){
-                let actAnimKey = sc.hasOwn(this.gameManager.config.client.skills.animations, animKey)
-                    ? animKey : 'default'+actKey;
+            // @TODO - BETA.17 - Refactor to use a single play animation method and make sure the animation is valid.
+            let actAnimKey = sc.hasOwn(this.gameManager.config.client.skills.animations, animKey)
+                ? animKey : 'default'+actKey;
+            if(ownerSprite && currentScene.getAnimationByKey(actAnimKey)){
                 let ownerAnim = currentScene.physics.add.sprite(ownerSprite.x, ownerSprite.y, actAnimKey);
                 ownerAnim.setDepth(200000);
                 // @TODO - BETA.17 - Refactor and implement animDir = 1 (both): up_right, up_left, down_right,
@@ -85,6 +86,9 @@ class ReceiverWrapper extends Receiver
     runHitAnimation(x, y, currentScene, hitKey)
     {
         let hitAnimKey = sc.hasOwn(this.gameManager.config.client.skills.animations, hitKey) ? hitKey : 'default_hit';
+        if(!currentScene.getAnimationByKey(hitAnimKey)){
+            return false;
+        }
         let hitSprite = currentScene.physics.add.sprite(x, y, hitAnimKey);
         hitSprite.setDepth(200000);
         hitSprite.anims.play(hitAnimKey, true).on('animationcomplete', () => {

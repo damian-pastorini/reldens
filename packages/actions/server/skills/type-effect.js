@@ -22,8 +22,8 @@ class TypeEffect extends Effect
     async runSkillLogic()
     {
         if(this.room){
-            let effKey = this.key+'_eff';
-            let skillAction = effKey; // sc.hasOwn(this.room.config.client.skills.animations, effKey) ? effKey : 'default_eff';
+            // @TODO - BETA.17 - Replace all the defaults by constants.
+            let skillAction = this.key+'_eff';
             this.room.broadcast({
                 act: skillAction,
                 owner: this.owner.broadcastKey,
