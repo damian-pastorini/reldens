@@ -30,9 +30,7 @@ class Battle
     async runBattle(playerSchema, target, room)
     {
         // @NOTE: each attack will have different properties to validate like range, delay, etc.
-        let currentAction = playerSchema.actions[playerSchema.currentAction] ?
-            playerSchema.actions[playerSchema.currentAction] :
-            playerSchema.skillsServer.classPath.currentSkills[playerSchema.currentAction];
+        let currentAction = this.getCurrentAction(playerSchema);
         if(!currentAction){
             Logger.error(['Actions not defined for this player.', 'ID:', playerSchema.player_id]);
             return false;
@@ -50,6 +48,12 @@ class Battle
         this.setTimerOn(useTimerObj, target);
         playerSchema.currentAction = false; // reset action.
         return executeResult;
+    }
+
+    getCurrentAction(playerSchema) {
+        return playerSchema.actions[playerSchema.currentAction] ?
+            playerSchema.actions[playerSchema.currentAction] :
+            playerSchema.skillsServer.classPath.currentSkills[playerSchema.currentAction];
     }
 
     setTimerOn(useTimerObj, target)
