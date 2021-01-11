@@ -148,7 +148,7 @@ class InventoryPack
             if(group && uiScene.gameManager.gameDom.getElement('#group-item-'+group.key+' .equipped-item').length){
                 uiScene.gameManager.gameDom.updateContent('#group-item-'+group.key+' .equipped-item', output);
             } else {
-                // @TODO - BETA.17: make this append optional for now we will leave it to make the equipment action
+                // @TODO - BETA.17 - Make this append optional for now we will leave it to make the equipment action
                 //   visible.
                 // Logger.error('Group element not found. Group ID: '+item.group_id);
                 uiScene.gameManager.gameDom.appendToElement('#'+InventoryConst.EQUIPMENT_ITEMS, output);
@@ -200,7 +200,7 @@ class InventoryPack
 
     setupButtonsActions(inventoryPanel, idx, item, preloadScene)
     {
-        // @TODO - BETA.17: improve and move all the styles into an external class, and make it configurable.
+        // @TODO - BETA.17 - Improve and move all the styles into an external class, and make it configurable.
         // shortcuts:
         let domMan = preloadScene.gameManager.gameDom;
         // show item data:

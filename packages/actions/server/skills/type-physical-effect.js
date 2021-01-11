@@ -32,7 +32,7 @@ class TypePhysicalEffect extends PhysicalEffect
         let notTheBullet = bulletsCheck[0].key === 'bodyA' ? 'bodyB' : 'bodyA';
         // none bullets or both bullets:
         if(bulletsCheck.length !== 1){
-            // @TODO - BETA.17: implement bullets bodies without collisions between each other.
+            // @TODO - BETA.17 - Implement bullets bodies without collisions between each other.
             return false;
         }
         // get and validate defender which could be a player or an object:
@@ -40,6 +40,14 @@ class TypePhysicalEffect extends PhysicalEffect
         if(validDefender){
             // run battle damage:
             await super.executeOnHit(validDefender);
+            let hitKey = this.key+'_hit';
+            this.room.broadcast({
+                act: hitKey,
+                x: notTheBullet.position[0],
+                y: notTheBullet.position[1],
+                owner: this.owner.broadcastKey,
+                target: validDefender.broadcastKey
+            });
             // re-run the process if pve:
             if(
                 sc.hasOwn(this.owner, 'player_id')
@@ -83,16 +91,13 @@ class TypePhysicalEffect extends PhysicalEffect
     {
         let bulletsCheck = [];
         // @TODO - BETA.17 - Replace all the defaults by constants.
-        let hitKey = this.key+'_hit';
         // both objects could be bullets, so remove them is needed and broadcast the hit:
         if(props.bodyA.isBullet){
             this.removeBullet(props.bodyA);
-            this.room.broadcast({act: hitKey, x: props.bodyA.position[0], y: props.bodyA.position[1]});
             bulletsCheck.push({key: 'bodyA', obj: props.bodyA});
         }
         if(props.bodyB.isBullet){
             this.removeBullet(props.bodyB);
-            this.room.broadcast({act: hitKey, x: props.bodyB.position[0], y: props.bodyB.position[1]});
             bulletsCheck.push({key: 'bodyB', obj: props.bodyB});
         }
         return bulletsCheck;

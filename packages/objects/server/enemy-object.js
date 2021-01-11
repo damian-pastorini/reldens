@@ -48,7 +48,7 @@ class EnemyObject extends NpcObject
         // enemy created, setting broadcastKey:
         this.broadcastKey = this.client_key;
         this.battle.setTargetObject(this);
-        // @TODO - BETA.17: load enemy skills from storage and implement here.
+        // @TODO - BETA.17 - Load enemy skills from storage and implement here.
         this.setupDefaultAction();
         if(this.config.get('server/enemies/defaultAttacks/attackBullet')){
             this.setupPhysicalAction();

@@ -158,7 +158,7 @@ class LoginManager
         let resetLink = this.config.server.baseUrl + '/reset-password?email='+userData.email+'&id='+oldPassword;
         let subject = process.env.RELDENS_MAILER_FORGOT_PASSWORD_SUBJECT || 'Forgot password';
         let content = await this.themeManager.loadAndRenderTemplate(emailPath, {resetLink: resetLink});
-        // @TODO - BETA.17: make all system messages configurable.
+        // @TODO - BETA.17 - Make all system messages configurable.
         return await this.mailer.sendEmail({
             to: userData.email,
             subject: subject,

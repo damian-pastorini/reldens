@@ -65,7 +65,8 @@ class SkillsUi
         let skillTemplate = this.uiScene.cache.html.get('skillBox');
         return this.gameManager.gameEngine.parseTemplate(skillTemplate, {
             key: skill,
-            // @TODO - BETA.17: get all the required skill data on the client, from the label to the delay time counter.
+            // @TODO - BETA.17 - Get all the required skill data on the client, from the label to the delay time
+            //   counter.
             skillName: skill
         });
     }

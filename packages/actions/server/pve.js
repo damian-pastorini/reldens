@@ -28,7 +28,7 @@ class Pve extends Battle
 
     async runBattle(playerSchema, target, room)
     {
-        // @TODO - BETA.17: make pvp available by configuration.
+        // @TODO - BETA.17 - Make PvP available by configuration.
         // @NOTE: run battle method is for when the player attacks any target. PVE can be started in different ways,
         // depending how the current enemy-object was implemented, for example the PVE can start when the player just
         // collides with the enemy (instead of attack it) an aggressive enemy could start the battle automatically.
@@ -48,7 +48,7 @@ class Pve extends Battle
 
     async startBattleWith(playerSchema, room)
     {
-        // @TODO - BETA.17: yeah... a lot could happen and this could be improved by cleaning the timers on specific
+        // @TODO - BETA.17 - Yeah... a lot could happen and this could be improved by cleaning the timers on specific
         //   actions like when player disconnects.
         if(!room || !room.roomWorld || !playerSchema || !room.state || !room.state.players[playerSchema.sessionId]){
             // @NOTE: leaveBattle is used for when the player can't be reached anymore or disconnected.
@@ -112,7 +112,7 @@ class Pve extends Battle
                 }
             }
         } else {
-            // @TODO - BETA.17: fix chase behavior when a bullet attack is available on enemies.
+            // @TODO - BETA.17 - Fix chase behavior when a bullet attack is available on enemies.
             let chaseResult = this.targetObject.chaseBody(playerSchema.physicalBody);
             if(chaseResult.length){
                 setTimeout(() => {
@@ -132,7 +132,7 @@ class Pve extends Battle
 
     battleEnded(playerSchema, room)
     {
-        // @TODO - BETA.17 - CHECK: implement battle end in both pve and pvp.
+        // @TODO - BETA.17 - CHECK - Implement battle end in both pve and pvp.
         this.removeInBattlePlayer(playerSchema);
         let actionData = {
             act: ActionsConst.BATTLE_ENDED,

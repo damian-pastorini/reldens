@@ -307,7 +307,7 @@ class RoomScene extends RoomLogin
 
     async savePlayerStats(target, updateClient)
     {
-        // @TODO - BETA.17: for now we are always updating all the stats but this can be improved to save only the
+        // @TODO - BETA.17 - For now we are always updating all the stats but this can be improved to save only the
         //   ones that changed.
         // save the stats:
         for(let i of Object.keys(target.stats)){

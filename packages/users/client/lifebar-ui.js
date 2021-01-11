@@ -41,6 +41,13 @@ class LifebarUi
         if(!this.lifeBar || !this.gameManager.config.get('client/ui/lifeBar/enabled')){
             return false;
         }
+        if(this.player.playerId !== this.gameManager.getCurrentPlayer().playerId){
+            this.player = this.gameManager.getCurrentPlayer();
+        }
+        if(!this.lifeBar.scene){
+            this.lifeBar.destroy();
+            this.createHealthBar();
+        }
         let barHeight = this.gameManager.config.get('client/ui/lifeBar/height');
         let fullBarWidth = this.gameManager.config.get('client/ui/lifeBar/width');
         let affectedProperty = this.gameManager.config.get('client/actions/skills/affectedProperty');
@@ -51,7 +58,7 @@ class LifebarUi
             let currentPlayerState = this.player.state;
             uiX = currentPlayerState.x - (fullBarWidth / 2);
             let playerHeight = this.gameManager.config.get('client/players/size/height');
-            // @TODO - BETA.17: fix player top position.
+            // @TODO - BETA.17 - Fix player top position.
             uiY = currentPlayerState.y - barHeight - playerHeight;
         }
         let fillColor = (0xff0000);

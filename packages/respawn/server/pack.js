@@ -24,7 +24,7 @@ class RespawnPack extends PackInterface
             }
         });
         EventsManagerSingleton.on('reldens.sceneRoomOnCreate', async (room) => {
-            // @TODO - BETA.17: improve.
+            // @TODO - BETA.17 - Improve.
             // append all the room objects body state to the room state:
             if(room.roomWorld && room.roomWorld.respawnAreas){
                 for(let a of Object.keys(room.roomWorld.respawnAreas)){

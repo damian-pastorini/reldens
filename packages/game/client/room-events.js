@@ -108,7 +108,7 @@ class RoomEvents
     {
         EventsManagerSingleton.emit('reldens.playersOnRemove', player, key, this);
         if(key === this.room.sessionId){
-            // @TODO - BETA.17: improve disconnection handler.
+            // @TODO - BETA.17 - Improve disconnection handler.
             if(!this.gameManager.gameOver){
                 alert('Your session ended, please login again.');
             }
@@ -164,7 +164,7 @@ class RoomEvents
         if(code > 1000){
             // server error, handle disconnection:
             if(!this.gameManager.gameOver){
-                // @TODO - BETA.17: improve disconnection handler.
+                // @TODO - BETA.17 - Improve disconnection handler.
                 alert('There was a connection error.');
             }
             this.gameManager.gameDom.getWindow().location.reload();
@@ -225,7 +225,7 @@ class RoomEvents
             let boxContent = uiBox.getChildByProperty('className', 'box-content');
             if(boxContent){
                 boxContent.innerHTML = props.content;
-                // @TODO - BETA.17: IMPROVE! I need time to focus on this which I don't have right now :(
+                // @TODO - BETA.17 - IMPROVE! I need time to focus on this which I don't have right now :(
                 if(props.options){
                     let optionsContainerTemplate = uiScene.cache.html.get('uiOptionsContainer');
                     let optionsContainer = this.gameManager.gameEngine.parseTemplate(optionsContainerTemplate,
@@ -274,7 +274,7 @@ class RoomEvents
             uiScene = true;
         }
         let preloaderName = GameConst.SCENE_PRELOADER+this.sceneData.roomName;
-        // @TODO - BETA.17 - F901: implement player custom avatar.
+        // @TODO - BETA.17 - F901 - implement player custom avatar.
         // , player.username
         if(!this.gameEngine.scene.getScene(preloaderName)){
             this.scenePreloader = this.createPreloaderInstance({

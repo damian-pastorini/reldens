@@ -81,7 +81,7 @@ class ActionsPack
 
     preloadAnimation(data, uiScene)
     {
-        // @TODO - BETA.17: remove the hardcoded file extensions.
+        // @TODO - BETA.17 - Remove the hardcoded file extensions.
         // @NOTE: here we use have two keys, the animation key and the animationData.img, this is because we could have
         // a single sprite with multiple attacks, and use the start and end frame to run the required one.
         if(sc.hasOwn(data.animationData, ['type', 'img']) && data.animationData.type === 'spritesheet'){

@@ -13,7 +13,7 @@ class UsersPack
     constructor()
     {
         EventsManagerSingleton.on('reldens.playerStatsUpdateAfter', (message, roomEvents) => {
-            // @TODO - BETA.17: make optional display other players lifeBar.
+            // @TODO - BETA.17 - Make optional display other players lifeBar.
             if(this.lifeBarUi){
                 return;
             }
@@ -31,9 +31,15 @@ class UsersPack
             }
         });
         // eslint-disable-next-line no-unused-vars
-        EventsManagerSingleton.on('reldens.runPlayerAnimation', (playerEngine) => {
-            this.lifeBarUi.redrawLifeBar();
+        EventsManagerSingleton.on('reldens.runPlayerAnimation', (playerEngine, playerId, player) => {
+            if(playerEngine.playerId === playerId){
+                this.lifeBarUi.redrawLifeBar();
+            }
         });
+        EventsManagerSingleton.on('reldens.changedScene', (message, roomEvents) => {
+            this.lifeBarUi.player = roomEvents.gameManager.getCurrentPlayer();
+        });
+
     }
 
 }

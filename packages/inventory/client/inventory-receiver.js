@@ -16,7 +16,7 @@ class InventoryReceiver extends Receiver
 
     onExecuting(message)
     {
-        // @TODO - BETA.17: improve, split in several classes, methods and functionalities.
+        // @TODO - BETA.17 - Improve, split in several classes, methods and functionalities.
         let item = message.item;
         if(!sc.hasOwn(item, 'animationData')){
             return false;
@@ -77,8 +77,9 @@ class InventoryReceiver extends Receiver
             this.itemSprites[animKey].anims.play(animKey, true).on('animationcomplete', () => {
                 if(item.animationData.destroyOnComplete){
                     this.itemSprites[animKey].destroy();
+                    delete this.itemSprites[animKey];
                     if(item.animationData.followPlayer){
-                        delete this.itemSprites[animKey];
+                        delete playerSprite.moveSprites[animKey];
                     }
                 }
             });

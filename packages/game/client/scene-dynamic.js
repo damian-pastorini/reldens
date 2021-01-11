@@ -40,7 +40,7 @@ class SceneDynamic extends Scene
     create()
     {
         EventsManagerSingleton.emit('reldens.beforeSceneDynamicCreate', this);
-        // @TODO - BETA.17: controllers will be part of the configuration in the database.
+        // @TODO - BETA.17 - Controllers will be part of the configuration in the database.
         this.keyLeft = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.LEFT);
         this.keyA = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.A);
         this.keyRight = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.RIGHT);
@@ -70,7 +70,7 @@ class SceneDynamic extends Scene
             }
         });
         this.input.keyboard.on('keydown', (event) => {
-            // @TODO - BETA.17: make configurable the keys related to the actions and skills.
+            // @TODO - BETA.17 - Make configurable the keys related to the actions and skills.
             // keyCode = 32 > spacebar
             if(event.keyCode === 32 && !this.gameManager.gameDom.insideInput()){
                 this.player.runActions();
@@ -82,7 +82,7 @@ class SceneDynamic extends Scene
         });
         this.map = this.add.tilemap(this.params.roomMap);
         this.input.on('pointerdown', (pointer, currentlyOver) => {
-            // @TODO - BETA.17: temporal avoid double actions, if you target something you will not be moved to the
+            // @TODO - BETA.17 - Temporal avoid double actions, if you target something you will not be moved to the
             //   pointer, in a future release this will be configurable so you can walk to objects and they get
             //   activated, for example, click on and NPC, automatically walk close and automatically get a dialog
             //   opened.
@@ -130,7 +130,7 @@ class SceneDynamic extends Scene
             return true;
         }
         if(this.transition === false && !this.gameManager.isChangingScene){
-            // @TODO - BETA.17: controllers will be part of the configuration in the database.
+            // @TODO - BETA.17 - Controllers will be part of the configuration in the database.
             if(this.keyLeft.isDown || this.keyA.isDown){
                 this.player.left();
             } else if(this.keyRight.isDown || this.keyD.isDown){
@@ -202,7 +202,7 @@ class SceneDynamic extends Scene
     {
         let tW = this.map.tileWidth;
         let tH = this.map.tileHeight;
-        // @TODO - BETA.17: this is a temporal fix, we need to make configurable the player body and take it into
+        // @TODO - BETA.17 - This is a temporal fix, we need to make configurable the player body and take it into
         //   account for the path finder calculations. Between the configurations we need to include one to affect the
         //   body size in the server, for now all the bodies get the same tile size. See related issue #54.
         let column = Math.round(pointer.worldX / tW);

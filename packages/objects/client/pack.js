@@ -35,7 +35,7 @@ class ObjectsPack
     listenMessages(room, gameManager)
     {
         room.onMessage((message) => {
-            //@TODO - BETA.17: use object types, this will change with the Colyseus upgrade.
+            // @TODO - BETA.17 - use object types, this will change with the Colyseus upgrade.
             if(message.act === ObjectsConst.OBJECT_ANIMATION || message.act === ObjectsConst.TYPE_ANIMATION){
                 let currentScene = gameManager.activeRoomEvents.getActiveScene();
                 if(sc.hasOwn(currentScene.objectsAnimations, message.key)){
@@ -43,7 +43,7 @@ class ObjectsPack
                 }
             }
             if(message.act === ActionsConst.BATTLE_ENDED){
-                // @TODO - BETA.17: replace all defaults by constants.
+                // @TODO - BETA.17 - Replace all defaults by constants.
                 let deathKey = sc.hasOwn(gameManager.config.client.skills.animations, message.k+'_death') ?
                     message.k+'_death' : 'default_death';
                 let currentScene = gameManager.activeRoomEvents.getActiveScene();
@@ -87,11 +87,31 @@ class ObjectsPack
                 } else {
                     let currentScene = gameManager.activeRoomEvents.getActiveScene();
                     if(sc.hasOwn(currentScene.objectsAnimations, key)){
-                        currentScene.objectsAnimations[key].sceneSprite.x = body.x;
-                        currentScene.objectsAnimations[key].sceneSprite.y = body.y;
+                        let objectAnimation = currentScene.objectsAnimations[key];
+                        let objectNewDepth = body.y + body.height;
+                        objectAnimation.sceneSprite.setDepth(objectNewDepth);
+                        objectAnimation.sceneSprite.x = body.x;
+                        objectAnimation.sceneSprite.y = body.y;
+                        this.moveSpritesObjects(objectAnimation, body.x, body.y, objectNewDepth);
                     }
                 }
             };
+        }
+    }
+
+    moveSpritesObjects(currentObj, x, y, objectNewDepth)
+    {
+        if(Object.keys(currentObj.moveSprites).length){
+            for(let i of Object.keys(currentObj.moveSprites)){
+                let sprite = currentObj.moveSprites[i];
+                sprite.x = x;
+                sprite.y = y;
+                // by default moving sprites will be always below the player:
+                let spriteDepth = sc.hasOwn(currentObj.animationData, 'depthByPlayer')
+                && currentObj.animationData['depthByPlayer'] === 'above'
+                    ? objectNewDepth + 1 : objectNewDepth - 0.1;
+                sprite.setDepth(spriteDepth);
+            }
         }
     }
 

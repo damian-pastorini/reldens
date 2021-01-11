@@ -67,7 +67,7 @@ class PhysicalBody extends Body
 
     speedToNext()
     {
-        // @TODO - BETA.17: this can be improved but for now we can use the cols and rows to follow the path since it
+        // @TODO - BETA.17 - This can be improved but for now we can use the cols and rows to follow the path since it
         //   doesn't needs to be an exact method (it is not the user is choosing each point of the path to follow).
         //   In order to make it more accurate we need to use the position, but with the current configuration it will
         //   be also an approximation since there it has issues between the world step and the objects speed, where

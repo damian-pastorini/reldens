@@ -1,4 +1,4 @@
-// @TODO - BETA.17: replace with React, Vue or some other better option.
+// @TODO - BETA.17 - Replace with React, Vue or some other better option.
 const $ = require('jquery');
 
 class GameDom

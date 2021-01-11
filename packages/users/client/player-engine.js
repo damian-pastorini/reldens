@@ -54,7 +54,7 @@ class PlayerEngine
             this.players[id].anims.stop();
             return this.players[id];
         }
-        // @TODO - BETA.17 - F901: implement player custom avatar.
+        // @TODO - BETA.17 - F901 - Implement player custom avatar.
         this.players[id] = this.scene.physics.add.sprite(state.x, state.y, GameConst.IMAGE_PLAYER);
         this.players[id].username = state.username;
         this.players[id].anims.play(state.dir);
@@ -93,12 +93,12 @@ class PlayerEngine
             playerSprite.anims.stop();
             playerSprite.mov = player.state.mov;
         }
-        EventsManagerSingleton.emit('reldens.runPlayerAnimation', this);
+        EventsManagerSingleton.emit('reldens.runPlayerAnimation', this, playerId, player);
         if(Object.keys(playerSprite.moveSprites).length){
             for(let i of Object.keys(playerSprite.moveSprites)){
                 let sprite = playerSprite.moveSprites[i];
-                sprite.x = playerSprite.x + this.leftOff;
-                sprite.y = playerSprite.y + this.topOff;
+                sprite.x = playerSprite.x;
+                sprite.y = playerSprite.y;
                 // by default moving sprites will be always below the player:
                 let spriteDepth = sc.hasOwn(sprite, 'depthByPlayer') && sprite['depthByPlayer'] === 'above'
                     ? playerNewDepth + 1 : playerNewDepth - 0.1;

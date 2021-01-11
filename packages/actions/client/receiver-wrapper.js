@@ -38,6 +38,7 @@ class ReceiverWrapper extends Receiver
             let animKey = message.act.substring(0, message.act.indexOf(actKey));
             let ownerSprite = false;
             let targetSprite = false;
+            let targetType = 'p';
             let isPvP = (
                 sc.hasOwn(currentScene.player.players, message.owner)
                 && sc.hasOwn(currentScene.player.players, message.target)
@@ -53,6 +54,7 @@ class ReceiverWrapper extends Receiver
                 if(sc.hasOwn(currentScene.objectsAnimations, message.target)){
                     targetSprite = currentScene.objectsAnimations[message.target].sceneSprite;
                     ownerSprite = currentScene.player.players[message.owner];
+                    targetType = 'o';
                 }
             }
             // @TODO - BETA.17 - Refactor to use a single play animation method and make sure the animation is valid.
@@ -75,7 +77,7 @@ class ReceiverWrapper extends Receiver
                 });
             }
             if(targetSprite){
-                this.runHitAnimation(targetSprite.x, targetSprite.y, currentScene, animKey+'_hit');
+                this.runHitAnimation(targetSprite.x, targetSprite.y, currentScene, animKey+'_hit', message.target, targetType);
             }
         }
         if(message.act.indexOf('_hit') !== -1){
@@ -83,21 +85,45 @@ class ReceiverWrapper extends Receiver
         }
     }
 
-    runHitAnimation(x, y, currentScene, hitKey)
+    runHitAnimation(x, y, currentScene, hitKey, targetKey, targetType)
     {
         let hitAnimKey = sc.hasOwn(this.gameManager.config.client.skills.animations, hitKey) ? hitKey : 'default_hit';
         if(!currentScene.getAnimationByKey(hitAnimKey)){
             return false;
         }
+        let targetSprite = false;
+        let targetSpriteId = false;
+        if(targetType === 'p'){
+            targetSprite = this.gameManager.getCurrentPlayer().players[targetKey];
+            targetSpriteId = targetSprite.playerId;
+        }
+        if(targetType === 'o'){
+            targetSprite = currentScene.objectsAnimations[targetKey];
+            targetSpriteId = targetKey;
+        }
         let hitSprite = currentScene.physics.add.sprite(x, y, hitAnimKey);
-        hitSprite.setDepth(200000);
+        if(targetSprite){
+            targetSprite.moveSprites[hitAnimKey+'_'+targetSpriteId] = hitSprite;
+            let animData = this.gameManager.config.client.skills.animations[hitKey];
+            let depth = sc.hasOwn(animData.animationData, 'depthByPlayer')
+                && animData.animationData['depthByPlayer'] === 'above'
+                ? targetSprite.depth + 1 : targetSprite.depth - 0.1;
+            hitSprite.depthByPlayer = animData.animationData.depthByPlayer;
+            hitSprite.setDepth(depth);
+        } else {
+            hitSprite.setDepth(200000);
+        }
         hitSprite.anims.play(hitAnimKey, true).on('animationcomplete', () => {
             hitSprite.destroy();
+            if(targetSprite){
+                delete targetSprite.moveSprites[hitAnimKey+'_'+targetSpriteId];
+            }
         });
     }
 
     updateLevelAndExperience(message)
     {
+        // @TODO - BETA.17 - Make all messages and classes configurable.
         this.gameManager.gameDom.updateContent('.level-container .level-label', 'Level '+message.data.lvl);
         this.gameManager.gameDom.updateContent('.experience-container .current-experience', message.data.exp);
         if(message.data.lab){
@@ -138,7 +164,7 @@ class ReceiverWrapper extends Receiver
         this.gameManager.gameDom.updateContent('.experience-container .current-experience', message.data.exp);
     }
 
-    // @TODO - Improve skills animations (no more rock throw! let's some real spells and weapons!).
+    // @TODO - BETA.16 - Improve skills animations (no more rock throw! let's some real spells and weapons!).
     // eslint-disable-next-line no-unused-vars
     onSkillBeforeCast(message)
     {
@@ -154,9 +180,11 @@ class ReceiverWrapper extends Receiver
             }
             return false;
         }
-        let castSprite = currentScene.physics.add.sprite(message.data.x, message.data.y, castAnimKey);
-        let destroyTime = sc.getDef(animationSprite, 'destroyTime', false);
         let ownerSprite = this.gameManager.getCurrentPlayer().players[message.data.extraData.oK];
+        let spriteX = ownerSprite.x;
+        let spriteY = ownerSprite.y;
+        let castSprite = currentScene.physics.add.sprite(spriteX, spriteY, castAnimKey);
+        let destroyTime = sc.getDef(animationSprite, 'destroyTime', false);
         // the default value will be the caster depth - 1 so the animation will be played below the player.
         let depth = sc.hasOwn(animationSprite, 'depthByPlayer') && animationSprite['depthByPlayer'] === 'above'
             ? ownerSprite.depth + 1 : ownerSprite.depth - 0.1;

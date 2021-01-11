@@ -14,7 +14,7 @@ class Pvp extends Battle
 
     async runBattle(player, target, room)
     {
-        // @TODO - BETA.17: make pvp available by configuration.
+        // @TODO - BETA.17 - Make PvP available by configuration.
         // can't fight with yourself:
         if(player.sessionId === target.sessionId){
             await this.executeAction(player, target);

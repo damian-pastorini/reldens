@@ -55,7 +55,7 @@ class NpcObject extends AnimationObject
                 activationData.content = this.content;
             }
             if(Object.keys(this.options).length > 0){
-                // @TODO - BETA.17: extend feature to generate different flows, this will help on easily create quests,
+                // @TODO - BETA.17 - Extend feature to generate different flows, this will help on easily create quests,
                 //   for example we could request confirmation about a choice.
                 activationData.options = this.options;
             }
