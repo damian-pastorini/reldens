@@ -77,7 +77,14 @@ class ReceiverWrapper extends Receiver
                 });
             }
             if(targetSprite){
-                this.runHitAnimation(targetSprite.x, targetSprite.y, currentScene, animKey+'_hit', message.target, targetType);
+                this.runHitAnimation(
+                    targetSprite.x,
+                    targetSprite.y,
+                    currentScene,
+                    animKey+'_hit',
+                    message.target,
+                    targetType
+                );
             }
         }
         if(message.act.indexOf('_hit') !== -1){
@@ -87,8 +94,9 @@ class ReceiverWrapper extends Receiver
 
     runHitAnimation(x, y, currentScene, hitKey, targetKey, targetType)
     {
-        let hitAnimKey = sc.hasOwn(this.gameManager.config.client.skills.animations, hitKey) ? hitKey : 'default_hit';
-        if(!currentScene.getAnimationByKey(hitAnimKey)){
+        let allAnimations = this.gameManager.config.client.skills.animations;
+        let hitAnimKey = sc.getDef(allAnimations, hitKey) ? hitKey : 'default_hit';
+        if(!currentScene.getAnimationByKey(hitAnimKey) || sc.getDef(allAnimations, hitAnimKey)){
             return false;
         }
         let targetSprite = false;
@@ -104,7 +112,7 @@ class ReceiverWrapper extends Receiver
         let hitSprite = currentScene.physics.add.sprite(x, y, hitAnimKey);
         if(targetSprite){
             targetSprite.moveSprites[hitAnimKey+'_'+targetSpriteId] = hitSprite;
-            let animData = this.gameManager.config.client.skills.animations[hitKey];
+            let animData = allAnimations[hitAnimKey];
             let depth = sc.hasOwn(animData.animationData, 'depthByPlayer')
                 && animData.animationData['depthByPlayer'] === 'above'
                 ? targetSprite.depth + 1 : targetSprite.depth - 0.1;

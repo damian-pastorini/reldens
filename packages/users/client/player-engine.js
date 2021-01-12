@@ -55,7 +55,7 @@ class PlayerEngine
             return this.players[id];
         }
         // @TODO - BETA.17 - F901 - Implement player custom avatar.
-        this.players[id] = this.scene.physics.add.sprite(state.x, state.y, GameConst.IMAGE_PLAYER);
+        this.players[id] = this.scene.physics.add.sprite(state.x, (state.y - this.topOff), GameConst.IMAGE_PLAYER);
         this.players[id].username = state.username;
         this.players[id].anims.play(state.dir);
         this.players[id].anims.stop();

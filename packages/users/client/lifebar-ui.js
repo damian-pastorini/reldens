@@ -58,8 +58,7 @@ class LifebarUi
             let currentPlayerState = this.player.state;
             uiX = currentPlayerState.x - (fullBarWidth / 2);
             let playerHeight = this.gameManager.config.get('client/players/size/height');
-            // @TODO - BETA.17 - Fix player top position.
-            uiY = currentPlayerState.y - barHeight - playerHeight;
+            uiY = currentPlayerState.y - barHeight - playerHeight + sc.getDef(this.player, 'topOff', 0);
         }
         let fillColor = (0xff0000);
         this.lifeBar.clear();
