@@ -31,7 +31,6 @@ class ScenePreloader extends Scene
         this.elementsUi = {};
         this.gameManager = props.gameManager;
         this.preloadAssets = props.preloadAssets;
-        // @TODO - BETA.16 - Improve skills animations (no more rock throw! let's some real spells and weapons!)
         this.directionalAnimations = {};
         let currentScene = this.gameManager.activeRoomEvents.getActiveScene();
         currentScene.objectsAnimationsData = props.objectsAnimationsData;

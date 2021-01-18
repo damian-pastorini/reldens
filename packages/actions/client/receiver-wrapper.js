@@ -95,8 +95,8 @@ class ReceiverWrapper extends Receiver
     runHitAnimation(x, y, currentScene, hitKey, targetKey, targetType)
     {
         let allAnimations = this.gameManager.config.client.skills.animations;
-        let hitAnimKey = sc.getDef(allAnimations, hitKey) ? hitKey : 'default_hit';
-        if(!currentScene.getAnimationByKey(hitAnimKey) || sc.getDef(allAnimations, hitAnimKey)){
+        let hitAnimKey = sc.hasOwn(allAnimations, hitKey) ? hitKey : 'default_hit';
+        if(!currentScene.getAnimationByKey(hitAnimKey) || !sc.hasOwn(allAnimations, hitAnimKey)){
             return false;
         }
         let targetSprite = false;
@@ -172,7 +172,6 @@ class ReceiverWrapper extends Receiver
         this.gameManager.gameDom.updateContent('.experience-container .current-experience', message.data.exp);
     }
 
-    // @TODO - BETA.16 - Improve skills animations (no more rock throw! let's some real spells and weapons!).
     // eslint-disable-next-line no-unused-vars
     onSkillBeforeCast(message)
     {

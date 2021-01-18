@@ -88,7 +88,7 @@ class ObjectsPack
                     let currentScene = gameManager.activeRoomEvents.getActiveScene();
                     if(sc.hasOwn(currentScene.objectsAnimations, key)){
                         let objectAnimation = currentScene.objectsAnimations[key];
-                        let objectNewDepth = body.y + body.height;
+                        let objectNewDepth = body.y + objectAnimation.sceneSprite.height;
                         objectAnimation.sceneSprite.setDepth(objectNewDepth);
                         objectAnimation.sceneSprite.x = body.x;
                         objectAnimation.sceneSprite.y = body.y;
@@ -101,7 +101,7 @@ class ObjectsPack
 
     moveSpritesObjects(currentObj, x, y, objectNewDepth)
     {
-        if(Object.keys(currentObj.moveSprites).length){
+        if(currentObj.moveSprites && Object.keys(currentObj.moveSprites).length){
             for(let i of Object.keys(currentObj.moveSprites)){
                 let sprite = currentObj.moveSprites[i];
                 sprite.x = x;

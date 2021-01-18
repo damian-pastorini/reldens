@@ -26,6 +26,7 @@ class SkillsUi
 
     appendSkills(skills)
     {
+        // @TODO - BETA.17 - implement skills groups.
         let skillsList = Object.keys(skills);
         // if the default action is a skill we won't show a duplicated box:
         if(skillsList.length){

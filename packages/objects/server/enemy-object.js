@@ -22,8 +22,10 @@ class EnemyObject extends NpcObject
     {
         super(props);
         this.hasState = true;
-        this.initialStats = Object.assign({}, this.config.get('server/enemies/initialStats'));
-        this.stats = Object.assign({}, this.config.get('server/enemies/initialStats'));
+        // @TODO - BETA.17 - Remove from config and make stats load dynamically (passed on props, coming from storage).
+        let configStats = this.config.get('server/enemies/initialStats');
+        this.initialStats = Object.assign({}, configStats);
+        this.stats = Object.assign({}, configStats);
         this.type = ObjectsConst.TYPE_ENEMY;
         this.eventsPrefix = 'eo';
         // @NOTE: we could run different actions and enemies reactions based on the player action.
