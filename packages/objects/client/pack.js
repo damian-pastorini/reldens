@@ -7,9 +7,8 @@
 const { AnimationEngine } = require('../../objects/client/animation-engine');
 const { UserInterface } = require('../../game/client/user-interface');
 const { ObjectsConst } = require('../constants');
-const { Logger, EventsManager } = require('@reldens/utils');
-const { BattleConst } = require('../../actions/constants');
-const { GameConst } = require('../../game/constants');
+const { ActionsConst } = require('../../actions/constants');
+const { EventsManagerSingleton, Logger, sc } = require('@reldens/utils');
 
 class ObjectsPack
 {
@@ -19,15 +18,15 @@ class ObjectsPack
         // @NOTE: the prepare objects ui has to be created before the scenes so we can use the scenes events before
         // the events were called.
         // eslint-disable-next-line no-unused-vars
-        EventsManager.on('reldens.startEngineScene', (roomEvents, player, room, previousScene) => {
+        EventsManagerSingleton.on('reldens.startEngineScene', (roomEvents, player, room, previousScene) => {
             this.prepareObjectsUi(roomEvents.gameManager, roomEvents.sceneData.objectsAnimationsData, roomEvents);
         });
         // create animations for all the objects in the scene:
-        EventsManager.on('reldens.afterSceneDynamicCreate', (sceneDynamic) => {
+        EventsManagerSingleton.on('reldens.afterSceneDynamicCreate', (sceneDynamic) => {
             this.createDynamicAnimations(sceneDynamic);
         });
         // listen messages:
-        EventsManager.on('reldens.joinedRoom', (room, gameManager) => {
+        EventsManagerSingleton.on('reldens.joinedRoom', (room, gameManager) => {
             this.listenMessages(room, gameManager);
         });
         this.bullets = [];
@@ -36,21 +35,24 @@ class ObjectsPack
     listenMessages(room, gameManager)
     {
         room.onMessage((message) => {
-            //@TODO: TEMP. just use object types?
+            // @TODO - BETA.17 - use object types, this will change with the Colyseus upgrade.
             if(message.act === ObjectsConst.OBJECT_ANIMATION || message.act === ObjectsConst.TYPE_ANIMATION){
                 let currentScene = gameManager.activeRoomEvents.getActiveScene();
-                if({}.hasOwnProperty.call(currentScene.objectsAnimations, message.key)){
+                if(sc.hasOwn(currentScene.objectsAnimations, message.key)){
                     currentScene.objectsAnimations[message.key].runAnimation();
                 }
             }
-            if(message.act === BattleConst.BATTLE_ENDED){
+            if(message.act === ActionsConst.BATTLE_ENDED){
+                // @TODO - BETA.17 - Replace all defaults by constants.
+                let deathKey = sc.hasOwn(gameManager.config.client.skills.animations, message.k+'_death') ?
+                    message.k+'_death' : 'default_death';
                 let currentScene = gameManager.activeRoomEvents.getActiveScene();
-                let skeletonSprite = currentScene.physics.add.sprite(message.x, message.y, GameConst.DEATH);
+                let skeletonSprite = currentScene.physics.add.sprite(message.x, message.y, deathKey);
                 skeletonSprite.setDepth(200000);
-                skeletonSprite.anims.play(GameConst.DEATH, true).on('animationcomplete', () => {
+                skeletonSprite.anims.play(deathKey, true).on('animationcomplete', () => {
                     skeletonSprite.destroy();
                 });
-                if({}.hasOwnProperty.call(message, 't') && message.t === currentScene.player.currentTarget.id){
+                if(sc.hasOwn(message, 't') && message.t === currentScene.player.currentTarget.id){
                     gameManager.gameEngine.clearTarget();
                 }
             }
@@ -59,13 +61,21 @@ class ObjectsPack
             room.state.bodies.onAdd = (body, key) => {
                 if(key.indexOf('bullet') !== -1){
                     let currentScene = gameManager.activeRoomEvents.getActiveScene();
-                    let bulletSprite = currentScene.physics.add.sprite(body.x, body.y, GameConst.BULLET);
+                    let animKey = 'default_bullet';
+                    let skillBullet = (body.key ? body.key+'_' : '')+'bullet';
+                    if(sc.hasOwn(gameManager.gameEngine.uiScene.directionalAnimations, skillBullet)){
+                        skillBullet = skillBullet+'_'+body.dir;
+                    }
+                    if(sc.hasOwn(currentScene.anims.anims.entries, skillBullet)){
+                        animKey = skillBullet;
+                    }
+                    let bulletSprite = currentScene.physics.add.sprite(body.x, body.y, animKey);
                     bulletSprite.setDepth(200000);
                     this.bullets[key] = bulletSprite;
                 }
             };
             room.state.bodies.onRemove = (body, key) => {
-                if(key.indexOf('bullet') !== -1 && {}.hasOwnProperty.call(this.bullets, key)){
+                if(key.indexOf('bullet') !== -1 && sc.hasOwn(this.bullets, key)){
                     this.bullets[key].destroy();
                     delete this.bullets[key];
                 }
@@ -76,10 +86,32 @@ class ObjectsPack
                     this.bullets[key].y = body.y;
                 } else {
                     let currentScene = gameManager.activeRoomEvents.getActiveScene();
-                    currentScene.objectsAnimations[key].sceneSprite.x = body.x;
-                    currentScene.objectsAnimations[key].sceneSprite.y = body.y;
+                    if(sc.hasOwn(currentScene.objectsAnimations, key)){
+                        let objectAnimation = currentScene.objectsAnimations[key];
+                        let objectNewDepth = body.y + objectAnimation.sceneSprite.height;
+                        objectAnimation.sceneSprite.setDepth(objectNewDepth);
+                        objectAnimation.sceneSprite.x = body.x;
+                        objectAnimation.sceneSprite.y = body.y;
+                        this.moveSpritesObjects(objectAnimation, body.x, body.y, objectNewDepth);
+                    }
                 }
             };
+        }
+    }
+
+    moveSpritesObjects(currentObj, x, y, objectNewDepth)
+    {
+        if(currentObj.moveSprites && Object.keys(currentObj.moveSprites).length){
+            for(let i of Object.keys(currentObj.moveSprites)){
+                let sprite = currentObj.moveSprites[i];
+                sprite.x = x;
+                sprite.y = y;
+                // by default moving sprites will be always below the player:
+                let spriteDepth = sc.hasOwn(currentObj.animationData, 'depthByPlayer')
+                && currentObj.animationData['depthByPlayer'] === 'above'
+                    ? objectNewDepth + 1 : objectNewDepth - 0.1;
+                sprite.setDepth(spriteDepth);
+            }
         }
     }
 
@@ -91,7 +123,7 @@ class ObjectsPack
         }
         for(let i of Object.keys(objectsAnimationsData)){
             let animProps = objectsAnimationsData[i];
-            if(!{}.hasOwnProperty.call(animProps, 'ui')){
+            if(!sc.hasOwn(animProps, 'ui')){
                 continue;
             }
             if(!animProps.id){
@@ -109,7 +141,7 @@ class ObjectsPack
             Logger.info(['None animations defined on this scene:', currentScene.key]);
             return;
         }
-        EventsManager.emit('reldens.createDynamicAnimationsBefore', this, sceneDynamic);
+        EventsManagerSingleton.emit('reldens.createDynamicAnimationsBefore', this, sceneDynamic);
         for(let i of Object.keys(currentScene.objectsAnimationsData)){
             let animProps = currentScene.objectsAnimationsData[i];
             if(!animProps.key){
@@ -117,7 +149,7 @@ class ObjectsPack
                 continue;
             }
             animProps.frameRate = sceneDynamic.configuredFrameRate;
-            EventsManager.emit('reldens.createDynamicAnimation_'+animProps.key, this, animProps);
+            EventsManagerSingleton.emit('reldens.createDynamicAnimation_'+animProps.key, this, animProps);
             // check for custom class:
             let classDefinition = sceneDynamic.gameManager.config.get('customClasses/objects/'+animProps.key, true);
             if(!classDefinition){

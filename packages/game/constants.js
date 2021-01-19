@@ -27,8 +27,6 @@ module.exports.GameConst = {
     DOWN: 'down',
     RIGHT: 'right',
     STOP: 'stop',
-    ACTION: 'action',
-    BULLET: 'attack-bullet',
     POINTER: 'mp',
     ARROW_DOWN: 'ard',
     // collisions:
@@ -38,9 +36,7 @@ module.exports.GameConst = {
     // default data:
     FADE_DURATION: 1000,
     SPEED_SERVER: 180,
-    // @TODO: implement player custom avatar.
-    IMAGE_PLAYER: 'player',
-    ATTACK: 'attack',
-    HIT: 'hit',
-    DEATH: 'death'
+    // @TODO - BETA.17 - F901 - Implement player custom avatar.
+    // default image key:
+    IMAGE_PLAYER: 'player'
 };

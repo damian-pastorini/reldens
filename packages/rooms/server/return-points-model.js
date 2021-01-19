@@ -6,10 +6,10 @@
  *
  */
 
-const { Model } = require('objection');
+const { ModelClass } = require('@reldens/storage');
 const { RoomsModel } = require('./model');
 
-class RoomsReturnPointsModel extends Model
+class RoomsReturnPointsModel extends ModelClass
 {
 
     static get tableName()
@@ -21,7 +21,7 @@ class RoomsReturnPointsModel extends Model
     {
         return {
             parent_room: {
-                relation: Model.BelongsToOneRelation,
+                relation: ModelClass.BelongsToOneRelation,
                 modelClass: RoomsModel,
                 join: {
                     from: 'rooms_change_points.room_id',
@@ -29,7 +29,7 @@ class RoomsReturnPointsModel extends Model
                 }
             },
             to_room: {
-                relation: Model.HasOneRelation,
+                relation: ModelClass.HasOneRelation,
                 modelClass: RoomsModel,
                 join: {
                     from: 'rooms_return_points.to_room_id',

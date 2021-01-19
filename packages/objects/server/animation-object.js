@@ -20,6 +20,7 @@ class AnimationObject extends BaseObject
         this.type = ObjectsConst.TYPE_ANIMATION;
         this.clientParams.type = this.type;
         this.isAnimation = true;
+        this.eventsPrefix = 'ao';
         // the actions will be false as default:
         this.runOnHit = false;
         this.runOnAction = false;
@@ -43,9 +44,10 @@ class AnimationObject extends BaseObject
             return;
         }
         if({}.hasOwnProperty.call(this, 'playerVisible') && this.playerVisible){
-            let client = props.room.getClientById(props.playerBody.playerId);
+            let playerBody = {}.hasOwnProperty.call(props.bodyA, 'playerId') ? props.bodyA : props.bodyB;
+            let client = props.room.getClientById(playerBody.playerId);
             if(!client){
-                Logger.error('Object hit, client not found by playerId:', props.playerBody.playerId);
+                Logger.error('Object hit, client not found by playerId:', playerBody.playerId);
             } else {
                 props.room.send(client, this.animationData);
             }

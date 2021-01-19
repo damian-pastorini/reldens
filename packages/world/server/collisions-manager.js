@@ -24,7 +24,7 @@ class CollisionsManager
         if(!{}.hasOwnProperty.call(this.room, 'roomWorld')){
             ErrorManager.error('Room world not found.');
         }
-        // @TODO: make dynamic, for now we will use fixed collisions types for each event.
+        // @TODO - BETA.17 - Make dynamic, for now we will use fixed collisions types for each event.
         this.room.roomWorld.on('beginContact', this.assignBeginCollisions.bind(this));
         this.room.roomWorld.on('endContact', this.assignEndCollisions.bind(this));
         // @NOTE: postBroadphase will be used to check pairs and test overlap instead of collision, for example, a spell
@@ -115,7 +115,7 @@ class CollisionsManager
         }
         // now the collisions manager only run the object hit action:
         if(otherBody.roomObject){
-            otherBody.roomObject.onHit({playerBody: playerBody, objectBody: otherBody, room: this.room});
+            otherBody.roomObject.onHit({bodyA: playerBody, bodyB: otherBody, room: this.room});
         }
     }
 
@@ -171,6 +171,7 @@ class CollisionsManager
 
     objectHitObject(bodyA, bodyB)
     {
+        // @TODO - BETA.17 - Fix bullet hit bullet.
         let aPriority = {}.hasOwnProperty.call(bodyA, 'hitPriority');
         let bPriority = {}.hasOwnProperty.call(bodyB, 'hitPriority');
         let onHitData = {bodyA: bodyA, bodyB: bodyB, room: this.room};

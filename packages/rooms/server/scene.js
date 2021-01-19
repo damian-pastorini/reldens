@@ -11,10 +11,9 @@ const { State } = require('./state');
 const { P2world } = require('../../world/server/p2world');
 const { CollisionsManager } = require('../../world/server/collisions-manager');
 const { ObjectsManager } = require('../../objects/server/manager');
-const { ActionsManager } = require('../../actions/server/manager');
 const { GameConst } = require('../../game/constants');
-const { ObjectsConst } = require('../../objects/constants');
-const { Logger, ErrorManager, EventsManager } = require('@reldens/utils');
+const { Logger, ErrorManager, sc } = require('@reldens/utils');
+const { EventsManagerSingleton } = require('@reldens/utils');
 
 class RoomScene extends RoomLogin
 {
@@ -29,8 +28,6 @@ class RoomScene extends RoomLogin
         Logger.info('INIT ROOM: '+ this.roomName);
         // this.roomId = options.room.roomId;
         this.sceneId = this.roomId;
-        // actions manager:
-        this.actionsManager = new ActionsManager(this.config);
         // @NOTE: we create an instance of the objects manager for each room-scene, this is on purpose so all the
         // related object instances will be removed when the room is disposed.
         this.objectsManager = new ObjectsManager(options);
@@ -67,7 +64,7 @@ class RoomScene extends RoomLogin
         let roomState = new State(this.roomData);
         // after we set the state it will be automatically sync by the game-server:
         this.setState(roomState);
-        await EventsManager.emit('reldens.sceneRoomOnCreate', this);
+        await EventsManagerSingleton.emit('reldens.sceneRoomOnCreate', this);
     }
 
     async onJoin(client, options, authResult)
@@ -97,11 +94,10 @@ class RoomScene extends RoomLogin
 
     async createPlayer(client, authResult)
     {
-        await EventsManager.emit('reldens.createPlayerBefore', client, authResult);
+        await EventsManagerSingleton.emit('reldens.createPlayerBefore', client, authResult, this);
         // player creation:
         let currentPlayer = this.state.createPlayer(client.sessionId, authResult);
-        // @TODO: stats will be configurable and dynamic with the player-levels system implementation.
-        currentPlayer.initialStats = this.config.get('server/players/initialStats');
+        // @TODO - BETA.17 - Create player body using a new pack in the world package.
         // create body for server physics and assign the body to the player:
         currentPlayer.physicalBody = this.roomWorld.createPlayerBody({
             id: client.sessionId,
@@ -109,7 +105,7 @@ class RoomScene extends RoomLogin
             height: this.config.get('server/players/size/height'),
             bodyState: currentPlayer.state
         });
-        await EventsManager.emit('reldens.createPlayerAfter', client, authResult, currentPlayer, this);
+        await EventsManagerSingleton.emit('reldens.createPlayerAfter', client, authResult, currentPlayer, this);
     }
 
     // eslint-disable-next-line no-unused-vars
@@ -128,17 +124,23 @@ class RoomScene extends RoomLogin
     onMessage(client, messageData)
     {
         if(!messageData){
-            // Logger.error(['Empty message data:', messageData]);
-            return;
+            Logger.error(['Empty message data:', messageData]);
+            return false;
         }
         // get player:
         let playerSchema = this.getPlayerFromState(client.sessionId);
+        // @TODO - BETA.17 - Move to a new pack in the world package.
         // only process the message if the player exists and has a body:
-        if(playerSchema && {}.hasOwnProperty.call(playerSchema, 'physicalBody')){
+        if(playerSchema && sc.hasOwn(playerSchema, 'physicalBody')){
             // get player body:
             let bodyToMove = playerSchema.physicalBody;
             // if player is moving:
-            if({}.hasOwnProperty.call(messageData, 'dir') && bodyToMove && !bodyToMove.isChangingScene){
+            if(
+                sc.hasOwn(messageData, 'dir') 
+                && bodyToMove
+                && !bodyToMove.isChangingScene
+                && !bodyToMove.isBlocked
+            ){
                 bodyToMove.initMove(messageData.dir);
             }
             // if player stopped:
@@ -148,21 +150,14 @@ class RoomScene extends RoomLogin
             }
             if(
                 messageData.act === GameConst.POINTER
-                && {}.hasOwnProperty.call(messageData, 'column')
-                && {}.hasOwnProperty.call(messageData, 'row')
+                && sc.hasOwn(messageData, 'column')
+                && sc.hasOwn(messageData, 'row')
                 && bodyToMove
+                && !bodyToMove.isChangingScene
+                && !bodyToMove.isBlocked
             ){
                 messageData = this.makeValidPoints(messageData);
                 bodyToMove.moveToPoint(messageData);
-            }
-            if(messageData.act === GameConst.ACTION && messageData.target){
-                let validTarget = this.validateTarget(messageData.target);
-                if(validTarget){
-                    EventsManager.emit('reldens.onMessageRunAction', messageData, playerSchema, validTarget, this)
-                        .catch((err) => {
-                            Logger.error(['Listener error on onMessageRunAction:', err]);
-                        });
-                }
             }
             if(this.messageActions){
                 for(let i of Object.keys(this.messageActions)){
@@ -174,17 +169,25 @@ class RoomScene extends RoomLogin
                     }
                 }
             }
-            // @NOTE: player states must be requested since are private user data that we can share with other players
+            // @NOTE:
+            // - Player states must be requested since are private user data that we can share with other players
             // or broadcast to the rooms.
+            // - Considering base value could be changed temporally by a skill or item modifier will be really hard to
+            // identify which calls and cases would require only the stat data or the statBase so we will always send
+            // both values. This could be improved in the future but for now it doesn't have a considerable impact.
             if(messageData.act === GameConst.PLAYER_STATS){
-                this.send(client, {act: GameConst.PLAYER_STATS, stats: playerSchema.stats});
+                this.send(client, {
+                    act: GameConst.PLAYER_STATS,
+                    stats: playerSchema.stats,
+                    statsBase: playerSchema.statsBase
+                });
             }
         }
     }
 
     async createWorld(roomData, objectsManager)
     {
-        await EventsManager.emit('reldens.createWorld', roomData, objectsManager, this);
+        await EventsManagerSingleton.emit('reldens.createWorld', roomData, objectsManager, this);
         // create and assign world to room:
         this.roomWorld = this.createWorldInstance({
             sceneName: this.roomName,
@@ -193,7 +196,7 @@ class RoomScene extends RoomLogin
             applyGravity: false,
             objectsManager: objectsManager,
             tryClosestPath: this.config.get('server/rooms/world/tryClosestPath'),
-            onlyWalkeable: this.config.get('server/rooms/world/onlyWalkeable'),
+            onlyWalkable: this.config.get('server/rooms/world/onlyWalkable'),
             worldSpeed: this.worldSpeed,
             allowSimultaneous: this.allowSimultaneous
         });
@@ -278,6 +281,8 @@ class RoomScene extends RoomLogin
                 // remove body:
                 this.roomWorld.removeBody(bodyToRemove);
             }
+            // remove the events:
+            EventsManagerSingleton.offByMasterKey(playerSchema.eventsPrefix+playerSchema.player_id);
             // remove player:
             this.state.removePlayer(sessionId);
         } else {
@@ -288,7 +293,6 @@ class RoomScene extends RoomLogin
 
     async savePlayerState(sessionId)
     {
-        // @TODO: since for now we only have one player by user, playerSchema is actually the currentUser.
         let playerSchema = this.getPlayerFromState(sessionId);
         let {room_id, x, y, dir} = playerSchema.state;
         let playerId = playerSchema.player_id;
@@ -303,17 +307,26 @@ class RoomScene extends RoomLogin
 
     async savePlayerStats(target, updateClient)
     {
+        // @TODO - BETA.17 - For now we are always updating all the stats but this can be improved to save only the
+        //   ones that changed.
         // save the stats:
-        let updateResult = await this.loginManager.usersManager
-            .updateUserStatsByPlayerId(target.player_id, target.stats);
-        if(!updateResult){
-            Logger.error('Player stats update error: ' + target.player_id);
-        } else {
-            if(updateClient){
-                this.send(updateClient, {act: GameConst.PLAYER_STATS, stats: target.stats});
-            }
+        for(let i of Object.keys(target.stats)){
+            let statId = this.config.server.players.initialStats[i].id;
+            // we can use a single update query so we can easily update both value and base_value:
+            let statPatch = {
+                value: target.stats[i],
+                base_value: target.statsBase[i]
+            };
+            await this.loginManager.usersManager.updatePlayerStatByIds(target.player_id, statId, statPatch);
         }
-        return updateResult;
+        if(updateClient){
+            this.send(updateClient, {
+                act: GameConst.PLAYER_STATS,
+                stats: target.stats,
+                statsBase: target.statsBase
+            });
+        }
+        return true;
     }
 
     getClientById(clientId)
@@ -339,19 +352,6 @@ class RoomScene extends RoomLogin
         return result;
     }
 
-    validateTarget(target)
-    {
-        let validTarget = false;
-        if(target.type === GameConst.TYPE_PLAYER){
-            validTarget = this.getPlayerFromState(target.id);
-        }
-        if(target.type === ObjectsConst.TYPE_OBJECT){
-            // @TODO: check if this works properly with enemies.
-            validTarget = this.objectsManager.getObjectById(target.id);
-        }
-        return validTarget;
-    }
-
     makeValidPoints(points)
     {
         points.column = points.column < 0 ? 0 : points.column;
@@ -363,8 +363,11 @@ class RoomScene extends RoomLogin
 
     onDispose()
     {
+        Logger.info('ON-DISPOSE Room: ' + this.roomName);
+        // @TODO - BETA.17 - Replace this by a master key related to the room ID and just remove all the events related
+        //   to this room.
         if(!this.roomWorld.respawnAreas){
-            return;
+            return true;
         }
         // clean up the listeners!
         for(let rI of Object.keys(this.roomWorld.respawnAreas)){
@@ -372,14 +375,12 @@ class RoomScene extends RoomLogin
             for(let i of Object.keys(instC)){
                 let res = instC[i];
                 for(let obj of res){
-                    if({}.hasOwnProperty.call(obj, 'battleEndListener')){
-                        // Logger.info(['Turning off listener on reldens.battleEnded for object:', obj.key]);
-                        EventsManager.off('reldens.battleEnded', obj.battleEndListener);
+                    if(sc.hasOwn(obj, 'battleEndListener')){
+                        EventsManagerSingleton.offWithKey(obj.uid+'battleEnd', 'battleRoom');
                     }
                 }
             }
         }
-        Logger.info('ON-DISPOSE Room: ' + this.roomName);
     }
 
 }

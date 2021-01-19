@@ -8,7 +8,7 @@
 
 const path = require('path');
 const { PasswordManager } = require('./password-manager');
-const { ErrorManager } = require('@reldens/utils');
+const { ErrorManager, EventsManagerSingleton } = require('@reldens/utils');
 
 class LoginManager
 {
@@ -30,7 +30,7 @@ class LoginManager
         }
         if(!this.isValidData(userData)){
             let errorMessage = 'Incomplete user login data.';
-            if(!userData.username.length){
+            if(!userData.username){
                 errorMessage = 'Please, complete your username, the same is always required to login.';
             }
             return {error: errorMessage};
@@ -99,21 +99,22 @@ class LoginManager
                     return {error: message};
                 }
                 // if the email doesn't exists in the database and it's a registration request:
-                // insert user, player, player state and player stats:
+                // insert user, player, player state, player stats, class path:
                 let newUser = await this.usersManager.createUser({
                     email: userData.email,
                     username: userData.username,
                     password: this.pwManager.encryptPassword(userData.password),
                     role_id: this.config.server.players.initialUser.role_id,
                     status: this.config.server.players.initialUser.status,
-                    players: {
+                    players: [{
                         name: userData.username,
-                        stats: this.config.server.players.initialStats,
+                        // @NOTE: new users will always use the same initial state and it is part of this package.
                         state: this.config.server.players.initialState
-                    }
+                    }]
                 });
                 let configRoomId = this.config.server.players.initialState.room_id;
                 newUser.players[0].state.scene = await this.getRoomNameById(configRoomId);
+                await EventsManagerSingleton.emit('reldens.createNewUserAfter', newUser, this);
                 return {user: newUser};
             } catch (err) {
                 return {error: 'Unable to register the user.', catch: err};
@@ -157,7 +158,7 @@ class LoginManager
         let resetLink = this.config.server.baseUrl + '/reset-password?email='+userData.email+'&id='+oldPassword;
         let subject = process.env.RELDENS_MAILER_FORGOT_PASSWORD_SUBJECT || 'Forgot password';
         let content = await this.themeManager.loadAndRenderTemplate(emailPath, {resetLink: resetLink});
-        // @TODO: make all system messages configurable.
+        // @TODO - BETA.17 - Make all system messages configurable.
         return await this.mailer.sendEmail({
             to: userData.email,
             subject: subject,

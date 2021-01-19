@@ -7,14 +7,11 @@
  */
 
 const { ConfigProcessor } = require('../processor');
-const { Logger, EventsManager } = require('@reldens/utils');
 const { ConfigModel } = require('./model');
 const { GameConfig } = require('../../game/server/config');
-const { InitialState } = require('../../users/server/initial-state');
-const { InitialStats } = require('../../users/server/initial-stats');
-const { InitialUser } = require('../../users/server/initial-user');
 const { ConfigConst } = require('../constants');
 const PackageData = require('../../../package.json');
+const { EventsManagerSingleton, Logger, sc } = require('@reldens/utils');
 
 class ConfigManager
 {
@@ -23,27 +20,18 @@ class ConfigManager
     {
         // initialize config props with default data:
         this.configList = {
-            server: {
-                players: {
-                    initialState: InitialState,
-                    initialStats: InitialStats,
-                    initialUser: InitialUser
-                }
-            }
+            server: {}
         };
     }
 
-    /**
-     * @returns {Promise<{}|*>}
-     */
     async loadConfigurations()
     {
         let gameConfig = new GameConfig();
         this.configList.gameEngine = gameConfig.getConfig();
         this.configList.gameEngine.version = PackageData.version;
-        EventsManager.emit('reldens.beforeLoadConfigurations', {configManager: this});
+        await EventsManagerSingleton.emit('reldens.beforeLoadConfigurations', {configManager: this});
         // get the configurations from the database:
-        let configCollection = await ConfigModel.query();
+        let configCollection = await ConfigModel.loadAll();
         // set them in the manager property so we can find them by path later:
         for(let config of configCollection){
             // create an object for each scope:
@@ -54,7 +42,7 @@ class ConfigManager
             // if path is wrong, less or more than 2 levels and the attribute label:
             if(pathSplit.length !== 3){
                 // log an error and continue:
-                Logger.error(['Invalid configuration:', config]);
+                Logger.error('Invalid configuration:', config);
                 continue;
             }
             if(!{}.hasOwnProperty.call(this.configList[config.scope], pathSplit[0])){
@@ -63,9 +51,9 @@ class ConfigManager
             if(!{}.hasOwnProperty.call(this.configList[config.scope][pathSplit[0]], pathSplit[1])){
                 this.configList[config.scope][pathSplit[0]][pathSplit[1]] = {};
             }
-            this.configList[config.scope][pathSplit[0]][pathSplit[1]][pathSplit[2]] = this.getParsedValue(config);
+            this.configList[config.scope][pathSplit[0]][pathSplit[1]][pathSplit[2]] = await this.getParsedValue(config);
         }
-        EventsManager.emit('reldens.afterLoadConfigurations', {configManager: this});
+        await EventsManagerSingleton.emit('reldens.afterLoadConfigurations', {configManager: this});
     }
 
     async loadAndGetProcessor()
@@ -80,13 +68,10 @@ class ConfigManager
     /**
      * Since everything coming from the database is a string then we parse the config type to return the value in the
      * proper type.
-     *
-     * @param config
-     * @returns {boolean|number|*}
      */
-    getParsedValue(config)
+    async getParsedValue(config)
     {
-        EventsManager.emit('reldens.beforeGetParsedValue', {configManager: this, config: config});
+        await EventsManagerSingleton.emit('reldens.beforeGetParsedValue', {configManager: this, config: config});
         if(config.type === ConfigConst.CONFIG_TYPE_TEXT){
             return config.value;
         }
@@ -96,6 +81,14 @@ class ConfigManager
         if(config.type === ConfigConst.CONFIG_TYPE_NUMBER){
             return parseFloat(config.value);
         }
+        if(config.type === ConfigConst.CONFIG_TYPE_JSON){
+            try {
+                return sc.getJson(config.value);
+            } catch (e) {
+                Logger.error('Invalid JSON on configuration:', config);
+            }
+        }
+        return config.value;
     }
 
 }

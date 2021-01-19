@@ -1,8 +1,18 @@
-// @TODO: replace with React, Vue or some other better option.
+// @TODO - BETA.17 - Replace with React, Vue or some other better option.
 const $ = require('jquery');
 
 class GameDom
 {
+
+    getWindow()
+    {
+        return window;
+    }
+
+    getWindowElement()
+    {
+        return $(window);
+    }
 
     getElement(querySelector)
     {
@@ -13,6 +23,9 @@ class GameDom
     {
         let element = $(querySelector);
         let $newContent = $(newContent);
+        if(!element || !$newContent){
+            return false;
+        }
         element.append($newContent);
         return element;
     }
@@ -20,6 +33,9 @@ class GameDom
     updateContent(querySelector, newContent)
     {
         let element = $(querySelector);
+        if(!element){
+            return false;
+        }
         element.html(newContent);
         return element;
     }
@@ -27,6 +43,16 @@ class GameDom
     removeElement(querySelector)
     {
         $(querySelector).remove();
+    }
+
+    activeElement()
+    {
+        return document.activeElement;
+    }
+
+    insideInput()
+    {
+        return (this.activeElement().tagName.toLowerCase() === 'input');
     }
 
 }

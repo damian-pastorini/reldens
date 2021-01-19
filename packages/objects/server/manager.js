@@ -20,7 +20,6 @@ class ObjectsManager
         this.roomObjectsData = false;
         // room objects by layer and title are each object instance plus the data from the storage:
         this.roomObjects = false;
-        this.roomObjectsById = {};
         this.roomObjectsByLayer = {};
         this.preloadAssets = [];
         this.objectsAnimationsData = {};
@@ -31,10 +30,7 @@ class ObjectsManager
     async loadObjectsByRoomId(roomId)
     {
         if(!this.roomObjectsData){
-            this.roomObjectsData = await ObjectsModel.query()
-                .withGraphFetched('[parent_room, objects_assets]')
-                .where('room_id', roomId)
-                .orderBy('tile_index');
+            this.roomObjectsData = await ObjectsModel.loadRoomObjects(roomId);
         }
     }
 
@@ -84,13 +80,15 @@ class ObjectsManager
                     }
                     // save object:
                     this.roomObjects[objectIndex] = objInstance;
-                    this.roomObjectsById[objectData.id] = objInstance;
                     if(!this.roomObjectsByLayer[objectData.layer_name]){
                         this.roomObjectsByLayer[objectData.layer_name] = {};
                     }
                     this.roomObjectsByLayer[objectData.layer_name][objectData.id] = objInstance;
                 } catch(err) {
-                    Logger.error('Object class does not exists for objectIndex:', objectIndex);
+                    Logger.error([
+                        'Error while generating object:', err,
+                        'Object Index:', objectIndex
+                    ]);
                 }
             }
         }
@@ -108,14 +106,6 @@ class ObjectsManager
     {
         if({}.hasOwnProperty.call(this.roomObjects, objectIndex)){
             return this.roomObjects[objectIndex];
-        }
-        return false;
-    }
-
-    getObjectById(objectId)
-    {
-        if({}.hasOwnProperty.call(this.roomObjectsById, objectId)){
-            return this.roomObjectsById[objectId];
         }
         return false;
     }

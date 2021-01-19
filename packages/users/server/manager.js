@@ -9,6 +9,7 @@
 const { UsersModel } = require('./model');
 const { PlayersStateModel } = require('./players-state-model');
 const { PlayersStatsModel } = require('./players-stats-model');
+const { StatsModel } = require('./stats-model');
 const { ErrorManager } = require('@reldens/utils');
 
 class UsersManager
@@ -20,10 +21,7 @@ class UsersManager
         if(!username){
             ErrorManager.error('Missing user name.');
         }
-        let loadedUser = await UsersModel.query()
-            .withGraphFetched('players.[state, stats]')
-            .where('username', username)
-            .first();
+        let loadedUser = await UsersModel.loadUserBy('username', username);
         if(loadedUser){
             result = loadedUser;
         }
@@ -36,10 +34,7 @@ class UsersManager
         if(!email){
             ErrorManager.error('Missing email.');
         }
-        let loadedUser = await UsersModel.query()
-            .withGraphFetched('players.[state, stats]')
-            .where('email', email)
-            .first();
+        let loadedUser = await UsersModel.loadUserBy('email', email);
         if(loadedUser){
             result = loadedUser;
         }
@@ -48,9 +43,22 @@ class UsersManager
 
     async createUser(userData)
     {
-        return UsersModel.query()
-            .allowInsert('players.[stats, state]')
-            .insertGraphAndFetch(userData);
+        // save user in storage:
+        let savedUser = await UsersModel.saveUser(userData);
+        // save stats:
+        let statsList = await StatsModel.query();
+        if(statsList){
+            for(let stat of statsList){
+                let statData = {
+                    player_id: savedUser.players[0].id,
+                    stat_id: stat['id'],
+                    base_value: stat['base_value'],
+                    value: stat['base_value']
+                };
+                await PlayersStatsModel.query().insert(statData);
+            }
+        }
+        return savedUser;
     }
 
     updateUserLastLogin(username)
@@ -60,23 +68,24 @@ class UsersManager
         // format:
         let dateFormat = date.toISOString().slice(0, 19).replace('T', ' ');
         // save user:
-        return UsersModel.query().patch({updated_at: dateFormat}).where('username', username);
+        return UsersModel.updateBy('username', username, {updated_at: dateFormat});
     }
 
     updateUserByEmail(email, updatePatch)
     {
-        // save user:
-        return UsersModel.query().patch(updatePatch).where('email', email);
+        return UsersModel.updateBy('email', email, updatePatch);
     }
 
     updateUserStateByPlayerId(playerId, newState)
     {
-        return PlayersStateModel.query().patch(newState).where('player_id', playerId);
+        return PlayersStateModel.updateBy('player_id', playerId, newState);
     }
 
-    updateUserStatsByPlayerId(playerId, newStats)
+    async updatePlayerStatByIds(playerId, statId, statPatch)
     {
-        return PlayersStatsModel.query().patch(newStats).where('player_id', playerId);
+        return PlayersStatsModel.query()
+            .patch(statPatch)
+            .where({player_id: playerId, stat_id: statId});
     }
 
 }

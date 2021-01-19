@@ -1,10 +1,11 @@
 /**
  *
- * Reldens - Npc1
+ * Reldens - HealPotion
  *
  * Custom animation object sample.
  *
  */
+
 const { ItemSingleUsable } = require('@reldens/items-system');
 
 class HealPotion extends ItemSingleUsable

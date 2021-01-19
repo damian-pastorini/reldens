@@ -12,9 +12,9 @@ const { RoomEvents } = require('./room-events');
 const { FeaturesManager } = require('../../features/client/manager');
 const { GameDom } = require('./game-dom');
 const { ConfigProcessor } = require('../../config/processor');
-const { Logger, EventsManager } = require('@reldens/utils');
 const { GameConst } = require('../constants');
 const { FirebaseConnector } = require('../../firebase/client/connector');
+const { EventsManagerSingleton, Logger, sc } = require('@reldens/utils');
 
 class GameManager
 {
@@ -35,7 +35,7 @@ class GameManager
         // game over validator:
         this.gameOver = false;
         // client events:
-        this.events = EventsManager;
+        this.events = EventsManagerSingleton;
         // full game config:
         this.config = ConfigProcessor;
         // features manager:
@@ -88,8 +88,7 @@ class GameManager
         this.events.on('reldens.afterSceneDynamicCreate', () => {
             if(this.config.get('client/ui/screen/responsive')){
                 this.gameEngine.updateGameSize(this);
-                // @TODO: remove window from here.
-                this.gameDom.getElement(window).resize(() => {
+                this.gameDom.getWindowElement().resize(() => {
                     this.gameEngine.updateGameSize(this);
                 });
             }
@@ -108,7 +107,7 @@ class GameManager
 
     async initEngineAndStartGame(initialGameData)
     {
-        await this.events.emit('reldens.beforeInitEngineAndStartGame', initialGameData);
+        await this.events.emit('reldens.beforeInitEngineAndStartGame', initialGameData, this);
         if(!{}.hasOwnProperty.call(initialGameData, 'gameConfig')){
             throw new Error('ERROR - Missing game configuration.');
         }
@@ -116,10 +115,10 @@ class GameManager
         this.playerData = initialGameData.player;
         // apply the initial config to the processor:
         Object.assign(this.config, initialGameData.gameConfig);
+        // features list:
+        await this.features.loadFeatures(initialGameData.features);
         // initialize game engine:
         this.gameEngine = new GameEngine(initialGameData.gameConfig);
-        // features list:
-        this.features.loadFeatures(initialGameData.features);
         // since the user is now registered:
         this.userData.isNewUser = false;
         // first join the features rooms:
@@ -130,13 +129,13 @@ class GameManager
             // @NOTE: the errors while trying to join a rooms/scene will always be originated in the
             // server. For these errors we will alert the user and reload the window automatically.
             alert('ERROR - There was an error while joining the room: '+initialGameData.player.state.scene);
-            window.location.reload();
+            this.gameDom.getWindow().location.reload();
         }
         await this.events.emit('reldens.joinedRoom', joinedFirstRoom, this);
         await this.events.emit('reldens.joinedRoom_'+initialGameData.player.state.scene, joinedFirstRoom, this);
         // start listening the new room events:
         this.activeRoomEvents = this.createRoomEventsInstance(initialGameData.player.state.scene);
-        this.activeRoomEvents.activateRoom(joinedFirstRoom);
+        await this.activeRoomEvents.activateRoom(joinedFirstRoom);
         await this.events.emit('reldens.afterInitEngineAndStartGame', initialGameData, joinedFirstRoom);
         return joinedFirstRoom;
     }
@@ -158,12 +157,12 @@ class GameManager
                         // will alert the user and reload the window automatically. Here the received "data" will
                         // be the actual error message.
                         alert('ERROR - There was an error while joining the room '+joinRoomName);
-                        window.location.reload();
+                        this.gameDom.getWindow().location.reload();
                     }
                     // after the room was joined added to the joinedRooms list:
                     this.joinedRooms[joinRoomName] = joinedRoom;
-                    this.events.emit('reldens.joinedRoom', joinedRoom, this);
-                    this.events.emit('reldens.joinedRoom_'+joinRoomName, joinedRoom, this);
+                    await this.events.emit('reldens.joinedRoom', joinedRoom, this);
+                    await this.events.emit('reldens.joinedRoom_'+joinRoomName, joinedRoom, this);
                 }
             }
         }
@@ -179,21 +178,21 @@ class GameManager
     {
         let newRoomEvents = this.createRoomEventsInstance(message.player.state.scene);
         this.isChangingScene = true;
-        this.gameClient.joinOrCreate(newRoomEvents.roomName, this.userData).then((sceneRoom) => {
+        this.gameClient.joinOrCreate(newRoomEvents.roomName, this.userData).then(async (sceneRoom) => {
             // leave old room:
             previousRoom.leave();
             this.activeRoomEvents = newRoomEvents;
             this.room = sceneRoom;
-            this.events.emit('reldens.joinedRoom', sceneRoom, this);
-            this.events.emit('reldens.joinedRoom_'+message.player.state.scene, sceneRoom, this);
+            await this.events.emit('reldens.joinedRoom', sceneRoom, this);
+            await this.events.emit('reldens.joinedRoom_'+message.player.state.scene, sceneRoom, this);
             // start listen to room events:
-            newRoomEvents.activateRoom(sceneRoom, message.prev);
+            await newRoomEvents.activateRoom(sceneRoom, message.prev);
         }).catch((err) => {
             // @NOTE: the errors while trying to reconnect will always be originated in the server. For these errors we
             // will alert the user and reload the window automatically.
             alert(err);
             Logger.error(['Reconnect Game Client:', err, 'message:', message, 'previousRoom:', previousRoom]);
-            window.location.reload();
+            this.gameDom.getWindow().location.reload();
         });
     }
 
@@ -220,9 +219,9 @@ class GameManager
             return this.serverUrl;
         } else {
             // or you can let the address be detected using the current access point:
-            let host = window.location.hostname;
-            let wsProtocol = window.location.protocol.indexOf('https') === 0 ? 'wss://' : 'ws://';
-            let wsPort = (window.location.port ? ':'+window.location.port : '');
+            let host = this.gameDom.getWindow().location.hostname;
+            let wsProtocol = this.gameDom.getWindow().location.protocol.indexOf('https') === 0 ? 'wss://' : 'ws://';
+            let wsPort = (this.gameDom.getWindow().location.port ? ':'+this.gameDom.getWindow().location.port : '');
             this.serverUrl = wsProtocol+host+wsPort;
         }
         return this.serverUrl;
@@ -242,6 +241,32 @@ class GameManager
     getCurrentPlayer()
     {
         return this.getActiveScene().player;
+    }
+
+    getUiElement(uiName, logError = true)
+    {
+        if(!sc.hasOwn(this.gameEngine, 'uiScene') || !this.gameEngine.uiScene){
+            if(logError){
+                Logger.error('UI Scene not defined.');
+            }
+            return false;
+        }
+        return this.gameEngine.uiScene.getUiElement(uiName, logError);
+    }
+
+    getFeature(featureKey)
+    {
+        let featuresList = this.features.featuresList;
+        if(!sc.hasOwn(featuresList, featureKey)){
+            Logger.error(['Feature key not defined:', featureKey]);
+            return false;
+        }
+        return featuresList[featureKey];
+    }
+
+    getAnimationByKey(key)
+    {
+        return this.getActiveScene().getAnimationByKey(key);
     }
 
 }

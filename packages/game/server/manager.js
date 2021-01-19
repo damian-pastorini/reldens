@@ -25,21 +25,26 @@ const { RoomsManager } = require('../../rooms/server/manager');
 const { Mailer } = require('./mailer');
 const { ThemeManager } = require('./theme-manager');
 const { MapsLoader } = require('./maps-loader');
-const { Logger, EventsManager } = require('@reldens/utils');
+const { EventsManagerSingleton, Logger } = require('@reldens/utils');
 
 class ServerManager
 {
 
     constructor(config)
     {
-        // initialize configurations:
-        this.initializeConfiguration(config);
-        // server events:
-        this.events = EventsManager;
-        // initialize storage:
-        DataServer.initialize();
-        ThemeManager.validateOrCreateTheme(config);
-        MapsLoader.loadMaps(path.join(config.projectRoot, ThemeManager.projectTheme), this.configManager);
+        try {
+            // server events:
+            this.events = EventsManagerSingleton;
+            // initialize configurations:
+            this.initializeConfiguration(config);
+            // initialize storage:
+            DataServer.initialize();
+            ThemeManager.validateOrCreateTheme(config);
+            MapsLoader.loadMaps(path.join(config.projectRoot, ThemeManager.projectTheme), this.configManager);
+        } catch (e) {
+            Logger.error('Broken ServerManager. ' + e.message);
+            process.exit();
+        }
     }
 
     initializeConfiguration(config)
@@ -50,7 +55,8 @@ class ServerManager
         this.projectRoot = config.projectRoot || './';
         Logger.info(['Project root:', this.projectRoot, 'Module root:', __dirname]);
         // setup dotenv to use the project root .env file:
-        dotenv.config({debug: process.env.DEBUG, path: path.join(this.projectRoot, '.env')});
+        let envPath = path.join(this.projectRoot, '.env');
+        dotenv.config({debug: process.env.DEBUG, path: envPath});
         // setup the server host data:
         this.configServer = {
             port: Number(process.env.PORT) || Number(process.env.RELDENS_APP_PORT) || 8080,
@@ -84,17 +90,17 @@ class ServerManager
         await this.createServer();
         await this.initializeManagers();
         // after the rooms were loaded then finish the server process:
-        await EventsManager.emit('reldens.serverBeforeListen', {serverManager: this});
+        await EventsManagerSingleton.emit('reldens.serverBeforeListen', {serverManager: this});
         await this.gameServer.listen(this.configServer.port);
         Logger.info('Listening on '+this.configServer.host+':'+this.configServer.port);
         this.configManager.configList.server.baseUrl = this.configServer.host+':'+this.configServer.port;
         await this.createClientBundle();
-        await EventsManager.emit('reldens.serverReady', {serverManager: this});
+        await EventsManagerSingleton.emit('reldens.serverReady', {serverManager: this});
     }
 
     async createServer()
     {
-        await EventsManager.emit('reldens.serverStartBegin', {serverManager: this});
+        await EventsManagerSingleton.emit('reldens.serverStartBegin', {serverManager: this});
         this.app = express();
         this.app.use(cors());
         this.app.use(express.json());
@@ -139,7 +145,10 @@ class ServerManager
         configProcessor.projectRoot = this.projectRoot;
         // theme root:
         configProcessor.projectTheme = ThemeManager.projectTheme;
-        await EventsManager.emit('reldens.serverConfigReady', {serverManager: this, configProcessor: configProcessor});
+        await EventsManagerSingleton.emit('reldens.serverConfigReady', {
+            serverManager: this,
+            configProcessor
+        });
         // mailer:
         this.mailer = new Mailer();
         Logger.info(['Mailer Configured:', this.mailer.isEnabled()]);
@@ -148,15 +157,15 @@ class ServerManager
         this.featuresManager = new FeaturesManager();
         // load the available features list and append to the config, this way we will pass the list to the client:
         configProcessor.availableFeaturesList = await this.featuresManager.loadFeatures();
-        await EventsManager.emit('reldens.serverConfigFeaturesReady', {
+        await EventsManagerSingleton.emit('reldens.serverConfigFeaturesReady', {
             serverManager: this,
-            configProcessor: configProcessor
+            configProcessor
         });
         // users manager:
         this.usersManager = new UsersManager();
         // the rooms manager will receive the features rooms to be defined:
         this.roomsManager = new RoomsManager();
-        await EventsManager.emit('reldens.serverBeforeLoginManager', {serverManager: this});
+        await EventsManagerSingleton.emit('reldens.serverBeforeLoginManager', {serverManager: this});
         // login manager:
         this.loginManager = new LoginManager({
             config: configProcessor,
@@ -166,7 +175,7 @@ class ServerManager
             themeManager: ThemeManager
         });
         // prepare rooms:
-        await EventsManager.emit('reldens.serverBeforeDefineRooms', {serverManager: this});
+        await EventsManagerSingleton.emit('reldens.serverBeforeDefineRooms', {serverManager: this});
         await this.roomsManager.defineRoomsInGameServer(this.gameServer, {
             loginManager: this.loginManager,
             config: configProcessor

@@ -6,8 +6,9 @@
  *
  */
 
-const { Logger } = require('@reldens/utils');
+const { EventsManagerSingleton, Logger, sc } = require('@reldens/utils');
 const { GameConst } = require('../../game/constants');
+const { ActionsConst } = require('../../actions/constants');
 
 class PlayerEngine
 {
@@ -42,13 +43,19 @@ class PlayerEngine
         this.scene.cameras.main.setBounds(0, 0, this.scene.map.widthInPixels, this.scene.map.heightInPixels);
         this.scene.cameras.main.startFollow(this.players[this.playerId], true);
         this.players[this.playerId].setCollideWorldBounds(true);
-        this.createHealthBar();
     }
 
     addPlayer(id, state)
     {
-        // @TODO: implement player custom avatar.
-        this.players[id] = this.scene.physics.add.sprite(state.x, state.y, GameConst.IMAGE_PLAYER);
+        if(sc.hasOwn(this.players, id)){
+            // player sprite already exists, update it and return it:
+            this.players[id].username = state.username;
+            this.players[id].anims.play(state.dir);
+            this.players[id].anims.stop();
+            return this.players[id];
+        }
+        // @TODO - BETA.17 - F901 - Implement player custom avatar.
+        this.players[id] = this.scene.physics.add.sprite(state.x, (state.y - this.topOff), GameConst.IMAGE_PLAYER);
         this.players[id].username = state.username;
         this.players[id].anims.play(state.dir);
         this.players[id].anims.stop();
@@ -65,59 +72,8 @@ class PlayerEngine
             this.currentTarget = {id: id, type: GameConst.TYPE_PLAYER};
         });
         this.players[id].moveSprites = {};
+        this.players[id].setDepth(this.players[id].y + this.players[id].body.height);
         return this.players[id];
-    }
-
-    createHealthBar()
-    {
-        if(this.gameManager.config.get('client/ui/uiLifeBar/enabled')){
-            // if the position is fixed then the bar has to go on the ui scene:
-            let lifeBarScene = this.gameManager.getActiveScenePreloader();
-            let useFixedPosition = this.gameManager.config.get('client/ui/uiLifeBar/fixedPosition');
-            if(!useFixedPosition){
-                // otherwise the bar will be added in the current scene:
-                lifeBarScene = this.gameManager.getActiveScene();
-            }
-            if(lifeBarScene.uiLifeBar){
-                // lifeBar already created in this scene:
-                return;
-            }
-            this.uiLifeBar = lifeBarScene.add.graphics();
-            // @TODO: TEMPORAL, replace references by this.
-            if(useFixedPosition){
-                this.gameManager.gameEngine.uiScene.elementsUi['uiLifeBar'] = this.uiLifeBar;
-            }
-            this.redrawLifeBar();
-        }
-    }
-
-    redrawLifeBar()
-    {
-        if(!this.uiLifeBar){
-            return;
-        }
-        let barHeight = this.gameManager.config.get('client/ui/uiLifeBar/height');
-        let fullBarWidth = this.gameManager.config.get('client/ui/uiLifeBar/width');
-        let fullHp = this.gameManager.config.initialStats.hp;
-        let filledBarWidth = (this.gameManager.playerData.stats.hp * fullBarWidth) / fullHp;
-        let {uiX, uiY} = this.gameManager.gameEngine.uiScene.getUiConfig('uiLifeBar');
-        if(!this.gameManager.config.get('client/ui/uiLifeBar/fixedPosition')){
-            let currentPlayerState = this.gameManager.getCurrentPlayer().state;
-            uiX = currentPlayerState.x - (fullBarWidth / 2);
-            uiY = currentPlayerState.y - barHeight - (this.gameManager.config.get('client/players/size/height'));
-        }
-        this.uiLifeBar.clear();
-        this.uiLifeBar.fillStyle(0xff0000, 1);
-        this.uiLifeBar.fillRect(
-            uiX,
-            uiY,
-            filledBarWidth,
-            barHeight
-        );
-        this.uiLifeBar.lineStyle(1, 0xffffff);
-        this.uiLifeBar.strokeRect(uiX, uiY, fullBarWidth, barHeight);
-        this.uiLifeBar.alpha = 0.6;
-        this.uiLifeBar.setDepth(100000);
     }
 
     runPlayerAnimation(playerId, player)
@@ -130,21 +86,23 @@ class PlayerEngine
         playerSprite.x = player.state.x - this.leftOff;
         playerSprite.y = player.state.y - this.topOff;
         // @NOTE: depth has to be set dynamically, this way the player will be above or below other objects.
-        playerSprite.setDepth(playerSprite.y + playerSprite.body.height);
+        let playerNewDepth = playerSprite.y + playerSprite.body.height;
+        playerSprite.setDepth(playerNewDepth);
         // player stop action:
         if(!player.state.mov){
             playerSprite.anims.stop();
             playerSprite.mov = player.state.mov;
         }
-        if(this.gameManager.config.get('client/ui/uiLifeBar/enabled')){
-            // redraw life bar all the time:
-            this.redrawLifeBar();
-        }
+        EventsManagerSingleton.emit('reldens.runPlayerAnimation', this, playerId, player);
         if(Object.keys(playerSprite.moveSprites).length){
             for(let i of Object.keys(playerSprite.moveSprites)){
                 let sprite = playerSprite.moveSprites[i];
                 sprite.x = playerSprite.x;
                 sprite.y = playerSprite.y;
+                // by default moving sprites will be always below the player:
+                let spriteDepth = sc.hasOwn(sprite, 'depthByPlayer') && sprite['depthByPlayer'] === 'above'
+                    ? playerNewDepth + 1 : playerNewDepth - 0.1;
+                sprite.setDepth(spriteDepth);
             }
         }
     }
@@ -205,7 +163,11 @@ class PlayerEngine
 
     runActions()
     {
-        this.room.send({act: GameConst.ACTION, target: this.currentTarget});
+        this.room.send({
+            act: ActionsConst.ACTION,
+            type: this.config.get('client/ui/controls/defaultActionKey'),
+            target: this.currentTarget
+        });
     }
 
     moveToPointer(pointer)

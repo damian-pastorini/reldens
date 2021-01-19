@@ -10,7 +10,8 @@ const { RoomsModel } = require('./model');
 const { RoomGame } = require('./game');
 const { RoomScene } = require('./scene');
 const { GameConst } = require('../../game/constants');
-const { Logger, ErrorManager, EventsManager } = require('@reldens/utils');
+const { Logger, ErrorManager } = require('@reldens/utils');
+const { EventsManagerSingleton } = require('@reldens/utils');
 
 class RoomsManager
 {
@@ -25,17 +26,17 @@ class RoomsManager
 
     async defineRoomsInGameServer(gameServer, props)
     {
-        EventsManager.emit('reldens.roomsDefinition', this.defineExtraRooms);
+        await EventsManagerSingleton.emit('reldens.roomsDefinition', this.defineExtraRooms);
         if(!this.defineExtraRooms.length){
             Logger.info('None extra rooms to be defined.');
         }
         // dispatch event to get the global message actions (that will be listen by every room):
         let globalMessageActions = {};
-        EventsManager.emit('reldens.roomsMessageActionsGlobal', globalMessageActions);
+        await EventsManagerSingleton.emit('reldens.roomsMessageActionsGlobal', globalMessageActions);
         // loaded rooms counter:
         let counter = 0;
         // lobby room:
-        this.defineRoom(gameServer, GameConst.ROOM_GAME, RoomGame, props, globalMessageActions);
+        await this.defineRoom(gameServer, GameConst.ROOM_GAME, RoomGame, props, globalMessageActions);
         Logger.info('Loaded game room using stored configuration.');
         // define extra rooms (if any, for example features rooms):
         if(this.defineExtraRooms){
@@ -63,7 +64,7 @@ class RoomsManager
                 roomClass = roomClassDefinition;
             }
             // define the room including all the props:
-            this.defineRoom(gameServer, roomModel.roomName, roomClass, props, globalMessageActions, roomModel);
+            await this.defineRoom(gameServer, roomModel.roomName, roomClass, props, globalMessageActions, roomModel);
             counter++;
             Logger.info(`Loaded room: ${roomModel.roomName}`);
         }
@@ -72,11 +73,11 @@ class RoomsManager
         return rooms;
     }
 
-    defineRoom(gameServer, roomName, roomClass, props, globalMessageActions, roomModel = false)
+    async defineRoom(gameServer, roomName, roomClass, props, globalMessageActions, roomModel = false)
     {
         let roomMessageActions = Object.assign({}, globalMessageActions);
         // run message actions event for each room:
-        EventsManager.emit('reldens.roomsMessageActionsByRoom', roomMessageActions, roomName);
+        await EventsManagerSingleton.emit('reldens.roomsMessageActionsByRoom', roomMessageActions, roomName);
         // merge room data and props:
         let roomProps = {
             loginManager: props.loginManager,
@@ -91,11 +92,10 @@ class RoomsManager
 
     async loadRooms()
     {
-        // @TODO: this will change when hot-plug is introduced.
+        // @TODO - BETA.17 - This will change when hot-plug is introduced.
         if(!this.loadedRooms){
             // get rooms:
-            let roomsModels = await RoomsModel.query()
-                .withGraphFetched('[rooms_change_points.next_room, rooms_return_points.to_room]');
+            let roomsModels = await RoomsModel.loadFullData();
             if(!roomsModels){
                 ErrorManager.error('None rooms found in the database. A room is required to run.');
             }
@@ -120,9 +120,7 @@ class RoomsManager
         if(this.loadedRoomsById[roomId]){
             return this.loadedRoomsById[roomId];
         }
-        let room = await RoomsModel.query()
-            .withGraphFetched('[rooms_change_points.next_room, rooms_return_points.to_room]')
-            .findById(roomId);
+        let room = await RoomsModel.loadById(roomId);
         if(room){
             return this.generateRoomModel(room);
         }
@@ -134,10 +132,7 @@ class RoomsManager
         if(this.loadedRoomsByName[roomName]){
             return this.loadedRoomsByName[roomName];
         }
-        let room = await RoomsModel.query()
-            .withGraphFetched('[rooms_change_points.next_room, rooms_return_points.to_room]')
-            .where('name', roomName)
-            .first();
+        let room = await RoomsModel.loadByName(roomName);
         if(room){
             return this.generateRoomModel(room);
         }

@@ -1,0 +1,64 @@
+/**
+ *
+ * Reldens - Styles - Chat
+ *
+ */
+
+.chat-ui {
+    display: none;
+    float: left;
+    position: relative;
+    top: -150px;
+    left: -290px;
+    padding: 15px;
+    min-width: 100px;
+    min-height: 80px;
+    background: #000000;
+    opacity: 0.8;
+    color: $cWhite;
+}
+
+#chat-messages {
+    width: 242px;
+    height: 90px;
+    word-wrap: break-word;
+    overflow: auto;
+    font-size: 12px;
+}
+
+#chat-input {
+    width: 80%;
+}
+
+#chat-send {
+    position: absolute;
+    bottom: 15px;
+    right: 15px;
+}
+
+#chat-open {
+    cursor: pointer;
+    position: relative;
+}
+
+#chat-open {
+    position: absolute;
+    top: -60px;
+    left: -60px;
+}
+
+#notification-balloon {
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    padding: 5px;
+    line-height: 15px;
+    height: 15px;
+    width: 15px;
+    background-color: red;
+    color: #ffffff;
+    border-radius: 50%;
+    display: none;
+    text-align: center;
+    font-size: 14px;
+}

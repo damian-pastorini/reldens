@@ -6,18 +6,14 @@
  *
  */
 
-const { Logger } = require('@reldens/utils');
+const { Logger, sc } = require('@reldens/utils');
 
 class ConfigProcessor
 {
 
     /**
-     * This method will receive a path that's should be always composed by 4 parameters split by a slash and will
+     * This method will receive a path that's should be always composed by 3 or 4 parameters split by a slash and will
      * return a property of the same processor which should have the configurations assigned.
-     *
-     * @param path
-     * @param avoidLog
-     * @returns {boolean}
      */
     get(path, avoidLog = false)
     {
@@ -29,7 +25,7 @@ class ConfigProcessor
         // if the path length is 3 then we need to return a full group of configurations:
         if(pathArray.length === 3){
             let level1 = ((this[pathArray[0]] || {})[pathArray[1]] || {});
-            if({}.hasOwnProperty.call(level1, pathArray[2])){
+            if(sc.hasOwn(level1, pathArray[2])){
                 result = level1[pathArray[2]];
             } else {
                 if(!avoidLog){
@@ -40,7 +36,7 @@ class ConfigProcessor
         // is the path length is 4 then we return a single value:
         if(pathArray.length === 4){
             let level2 = (((this[pathArray[0]] || {})[pathArray[1]] || {})[pathArray[2]] || {});
-            if({}.hasOwnProperty.call(level2, pathArray[3])){
+            if(sc.hasOwn(level2, pathArray[3])){
                 result = level2[pathArray[3]];
             } else {
                 if(!avoidLog){

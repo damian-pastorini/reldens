@@ -8,7 +8,7 @@
 
 const { RespawnModel } = require('./model');
 const { PathFinder } = require('../../world/server/path-finder');
-const { EventsManager } = require('@reldens/utils');
+const { EventsManagerSingleton } = require('@reldens/utils');
 
 class RoomRespawn
 {
@@ -29,7 +29,7 @@ class RoomRespawn
         this.layerObjects = this.world.objectsManager.roomObjectsByLayer[this.layer.name];
         let {tilewidth, tileheight } = this.world.mapJson;
         // NOTE: this is because a single layer could have multiple respawn definitions for each enemy type.
-        this.respawnDefinitions = await RespawnModel.query().where('layer', this.layer.name);
+        this.respawnDefinitions = await RespawnModel.loadByLayerName(this.layer.name);
         for(let i of Object.keys(this.respawnDefinitions)){
             let respawnArea = this.respawnDefinitions[i];
             if(
@@ -51,13 +51,13 @@ class RoomRespawn
                     // add tile data to the object and create object instance:
                     Object.assign(multipleObj.objProps, tileData);
                     let objInstance = new objClass(multipleObj.objProps);
-                    objInstance.runAdditionalSetup(EventsManager);
+                    objInstance.runAdditionalSetup(EventsManagerSingleton);
                     let assetsArr = this.getObjectAssets(multipleObj);
-                    // @TODO: objects could have multiple assets, need to implement and test the case.
+                    // @TODO - BETA.17 - Objects could have multiple assets, need to implement and test the case.
                     objInstance.clientParams.asset_key = assetsArr[0];
                     objInstance.clientParams.enabled = true;
                     this.world.objectsManager.objectsAnimationsData[objectIndex] = objInstance.clientParams;
-                    this.world.objectsManager.roomObjectsById[objectIndex] = objInstance;
+                    this.world.objectsManager.roomObjects[objectIndex] = objInstance;
                     let { x, y } = tileData;
                     this.world.createWorldObject(objInstance, objectIndex, tilewidth, tileheight, x, y, this.pathFinder);
                     objInstance.respawnTime = respawnArea.respawn_time;

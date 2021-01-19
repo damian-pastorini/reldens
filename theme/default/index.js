@@ -11,12 +11,14 @@ require('jquery-validation');
 const { GameManager } = require('reldens/client');
 const { CustomClasses } = require('../packages/client');
 
-// @TODO: move everything from this file as part of the core project and include events to manage the theme.
+// @TODO - BETA.17: move everything from this file as part of the core project and include events to manage the theme.
 $(document).ready(function($){
 
     // reldens game:
     let reldens = new GameManager();
     reldens.setupClasses(CustomClasses);
+    // debug events (warning! this will output in the console ALL the event listeners and every event fired):
+    // reldens.events.debug = 'all';
     // @NOTE: at this point you could specify or override a lot of configurations like your server URL.
     // reldens.serverUrl = 'wss://my-custom-url.com';
     // replace all the [values] and uncomment to initialize firebase:

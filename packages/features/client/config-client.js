@@ -8,12 +8,16 @@
  *
  */
 
-const { Chat } = require('../../chat/client/pack');
+const { ChatPack } = require('../../chat/client/pack');
 const { ObjectsPack } = require('../../objects/client/pack');
 const { InventoryPack } = require('../../inventory/client/pack');
+const { ActionsPack } = require('../../actions/client/pack');
+const { UsersPack } = require('../../users/client/pack');
 
 module.exports.ClientCoreFeatures = {
-    chat: Chat,
+    chat: ChatPack,
     objects: ObjectsPack,
-    inventory: InventoryPack
+    inventory: InventoryPack,
+    actions: ActionsPack,
+    users: UsersPack
 };

@@ -85,7 +85,7 @@ class ThemeManager
     async loadAndRenderTemplate(filePath, params)
     {
         let fullPath = path.join(this.projectRoot, this.projectTheme, filePath);
-        if(!fs.existsSync(fullPath)) {
+        if(!fs.existsSync(fullPath)){
             Logger.error(['Template not found.', fullPath]);
             return false;
         }

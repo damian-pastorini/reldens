@@ -6,9 +6,9 @@
  *
  */
 
-const { Model } = require('objection');
+const { ModelClass } = require('@reldens/storage');
 
-class ObjectsModel extends Model
+class ObjectsModel extends ModelClass
 {
 
     static get tableName()
@@ -22,7 +22,7 @@ class ObjectsModel extends Model
         const { ObjectsAssetsModel } = require('./assets-model');
         return {
             parent_room: {
-                relation: Model.HasOneRelation,
+                relation: ModelClass.HasOneRelation,
                 modelClass: RoomsModel,
                 join: {
                     from: 'objects.room_id',
@@ -30,7 +30,7 @@ class ObjectsModel extends Model
                 }
             },
             objects_assets: {
-                relation: Model.HasManyRelation,
+                relation: ModelClass.HasManyRelation,
                 modelClass: ObjectsAssetsModel,
                 join: {
                     from: 'objects.id',
@@ -38,6 +38,14 @@ class ObjectsModel extends Model
                 }
             }
         }
+    }
+
+    static loadRoomObjects(roomId)
+    {
+        return this.query()
+            .withGraphFetched('[parent_room, objects_assets]')
+            .where('room_id', roomId)
+            .orderBy('tile_index');
     }
 
 }

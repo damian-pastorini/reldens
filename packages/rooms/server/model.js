@@ -6,9 +6,9 @@
  *
  */
 
-const { Model } = require('objection');
+const { ModelClass } = require('@reldens/storage');
 
-class RoomsModel extends Model
+class RoomsModel extends ModelClass
 {
 
     static get tableName()
@@ -22,7 +22,7 @@ class RoomsModel extends Model
         const { RoomsReturnPointsModel } = require('./return-points-model');
         return {
             rooms_change_points: {
-                relation: Model.HasManyRelation,
+                relation: ModelClass.HasManyRelation,
                 modelClass: RoomsChangePointsModel,
                 join: {
                     from: 'rooms.id',
@@ -30,7 +30,7 @@ class RoomsModel extends Model
                 }
             },
             rooms_return_points: {
-                relation: Model.HasManyRelation,
+                relation: ModelClass.HasManyRelation,
                 modelClass: RoomsReturnPointsModel,
                 join: {
                     from: 'rooms.id',
@@ -38,7 +38,7 @@ class RoomsModel extends Model
                 }
             },
             next_room: {
-                relation: Model.BelongsToOneRelation,
+                relation: ModelClass.BelongsToOneRelation,
                 modelClass: RoomsChangePointsModel,
                 join: {
                     from: 'rooms.id',
@@ -46,7 +46,7 @@ class RoomsModel extends Model
                 }
             },
             to_room: {
-                relation: Model.BelongsToOneRelation,
+                relation: ModelClass.BelongsToOneRelation,
                 modelClass: RoomsReturnPointsModel,
                 join: {
                     from: 'rooms.id',
@@ -54,6 +54,27 @@ class RoomsModel extends Model
                 }
             }
         };
+    }
+
+    static loadFullData()
+    {
+        return this.query()
+            .withGraphFetched('[rooms_change_points.next_room, rooms_return_points.to_room]');
+    }
+
+    static loadById(roomId)
+    {
+        return this.query()
+            .withGraphFetched('[rooms_change_points.next_room, rooms_return_points.to_room]')
+            .findById(roomId);
+    }
+
+    static loadByName(name)
+    {
+        return this.query()
+            .withGraphFetched('[rooms_change_points.next_room, rooms_return_points.to_room]')
+            .where('name', name)
+            .first();
     }
 
 }

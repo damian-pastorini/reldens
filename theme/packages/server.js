@@ -17,6 +17,7 @@ const { Enemy1 } = require('./objects/server/enemy1');
 const { Enemy2 } = require('./objects/server/enemy2');
 const { ItemSingle } = require('@reldens/items-system');
 const { HealPotion } = require('./inventory/items/heal-potion');
+const { MagicPotion } = require('./inventory/items/magic-potion');
 const { Axe } = require('./inventory/items/axe');
 const { Spear } = require('./inventory/items/spear');
 
@@ -35,9 +36,14 @@ module.exports.CustomClasses = {
         items: {
             coins: ItemSingle,
             heal_potion_20: HealPotion,
+            magic_potion_20: MagicPotion,
             axe: Axe,
             spear: Spear
         },
         groups: {}
+    },
+    skills: {
+        skillsList: {},
+        classPath: {}
     }
 };

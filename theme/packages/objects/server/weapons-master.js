@@ -22,7 +22,7 @@ class WeaponsMaster extends NpcObject
         // assign extra params:
         this.clientParams.enabled = true;
         this.clientParams.ui = true;
-        // @TODO: all the npc info will be coming from the storage.
+        // @TODO - BETA.17: all the npc info will be coming from the storage.
         this.content = `Hi I'm the weapons master, choose your weapon and go kill some monsters!`;
         this.options = {
             op1: {key: 'axe', label: 'Axe', value: 1, icon: 'axe'},

@@ -1,4 +1,4 @@
-
+const { sc } = require('@reldens/utils');
 const { Grid, AStarFinder } = require('pathfinding');
 
 class PathFinder
@@ -27,9 +27,9 @@ class PathFinder
 
     findPath(from, to)
     {
-        if(this.world.onlyWalkeable){
-            let nodeTo = this.grid.getNodeAt(to[0], to[1]);
-            if(nodeTo && !nodeTo.walkable){
+        if(this.world.onlyWalkable){
+            let nodeTo = sc.hasOwn(this.grid, 'nodes') ? this.grid.getNodeAt(to[0], to[1]) : false;
+            if(!nodeTo || !nodeTo.walkable){
                 return false;
             }
         }
@@ -44,7 +44,7 @@ class PathFinder
             if(from[1] < to[1]){
                 newTo[1] = -1;
             }
-            // @TODO: improve how to check the closest nodes.
+            // @TODO - BETA.17 - Improve how to check the closest nodes.
             // check all closest nodes:
             let worldW = this.world.mapJson.width;
             let worldH = this.world.mapJson.height;

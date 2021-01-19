@@ -7,8 +7,9 @@
  */
 
 const { Battle } = require('./battle');
-const { Logger, EventsManager } = require('@reldens/utils');
-const { BattleConst } = require('../constants');
+const { Logger } = require('@reldens/utils');
+const { ActionsConst } = require('../constants');
+const { EventsManagerSingleton } = require('@reldens/utils');
 
 class Pve extends Battle
 {
@@ -18,7 +19,6 @@ class Pve extends Battle
         super(props);
         this.chaseMultiple = {}.hasOwnProperty.call(props, 'chaseMultiple') ? props.chaseMultiple : false;
         this.inBattleWithPlayer = [];
-        this.battleType = 'pve';
     }
 
     setTargetObject(targetObject)
@@ -26,29 +26,30 @@ class Pve extends Battle
         this.targetObject = targetObject;
     }
 
-    // @TODO: make pvp available by configuration.
-    async runBattle(playerSchema, target, battleType, room)
+    async runBattle(playerSchema, target, room)
     {
-        // setup broadcast keys:
-        this.targetObject.broadcastKey = this.targetObject.key;
-        playerSchema.broadcastKey = playerSchema.sessionId;
+        // @TODO - BETA.17 - Make PvP available by configuration.
         // @NOTE: run battle method is for when the player attacks any target. PVE can be started in different ways,
         // depending how the current enemy-object was implemented, for example the PVE can start when the player just
         // collides with the enemy (instead of attack it) an aggressive enemy could start the battle automatically.
-        let inBattle = await super.runBattle(playerSchema, target, battleType, room);
-        if(inBattle === 'pve'){
-            if(target.stats.hp > 0){
-                await this.startBattleWith(playerSchema, room);
-            } else {
-                await this.battleEnded(playerSchema, room);
-            }
+        let attackResult = await super.runBattle(playerSchema, target, room);
+        if(!attackResult){
+            // @NOTE: the attack result can be false because different reasons, for example it could be a physical
+            // attack for which matter we won't start the battle until the physical body hits the target.
+            return false;
+        }
+        if(target.stats[room.config.get('client/actions/skills/affectedProperty')] > 0){
+            await this.startBattleWith(playerSchema, room);
+        } else {
+            // physical attacks or effects will run the battleEnded, normal attacks or effects will hit this case:
+            await this.battleEnded(playerSchema, room);
         }
     }
 
     async startBattleWith(playerSchema, room)
     {
-        // @TODO: yeah... a lot could happen and this could be improved by cleaning the timers on specific actions like
-        //   when player disconnects.
+        // @TODO - BETA.17 - Yeah... a lot could happen and this could be improved by cleaning the timers on specific
+        //   actions like when player disconnects.
         if(!room || !room.roomWorld || !playerSchema || !room.state || !room.state.players[playerSchema.sessionId]){
             // @NOTE: leaveBattle is used for when the player can't be reached anymore or disconnected.
             this.leaveBattle(playerSchema);
@@ -61,12 +62,9 @@ class Pve extends Battle
             this.leaveBattle(playerSchema);
             return false;
         }
-        // setup broadcast keys:
-        this.targetObject.broadcastKey = this.targetObject.key;
-        playerSchema.broadcastKey = playerSchema.sessionId;
         // the enemy died:
-        if(this.targetObject.stats.hp === 0){
-            await this.battleEnded(playerSchema, room);
+        if(this.targetObject.stats[room.config.get('client/actions/skills/affectedProperty')] <= 0){
+            // battle ended checkpoint:
             return false;
         }
         // if target (npc) is already in battle with another player then ignore the current attack:
@@ -86,19 +84,19 @@ class Pve extends Battle
         let objectAction = this.targetObject.actions[objectActionKey];
         objectAction.room = room;
         objectAction.currentBattle = this;
-        if(!objectAction.validate(this.targetObject, playerSchema)){
+        if(!objectAction.validate()){
             this.leaveBattle(playerSchema);
             return false;
         }
-        if(objectAction.isInRange(this.targetObject, playerSchema)){
+        let ownerPos = {x: this.targetObject.state.x, y: this.targetObject.state.y};
+        let targetPos = {x: playerSchema.state.x, y: playerSchema.state.y};
+        let inRange = objectAction.isInRange(ownerPos, targetPos);
+        if(inRange){
             // reset the path finder in case the object was moving:
             this.targetObject.objectBody.resetAuto();
             this.targetObject.objectBody.velocity = [0, 0];
             // execute and apply the attack:
-            let runBattle = await objectAction.execute(this.targetObject, playerSchema, 'pve', room);
-            if(runBattle !== 'pve'){
-                return;
-            }
+            await objectAction.execute(playerSchema);
             let targetClient = room.getClientById(playerSchema.sessionId);
             if(targetClient){
                 let update = await this.updateTargetClient(targetClient, playerSchema, this.targetObject.key, room)
@@ -108,18 +106,18 @@ class Pve extends Battle
                 if(update){
                     setTimeout(() => {
                         this.startBattleWith(playerSchema, room);
-                    }, objectAction.attackDelay);
+                    }, objectAction.skillDelay);
                 } else {
                     this.leaveBattle(playerSchema);
                 }
             }
         } else {
-            // @TODO: fix chase behavior when a bullet attack is available.
+            // @TODO - BETA.17 - Fix chase behavior when a bullet attack is available on enemies.
             let chaseResult = this.targetObject.chaseBody(playerSchema.physicalBody);
             if(chaseResult.length){
                 setTimeout(() => {
                     this.startBattleWith(playerSchema, room);
-                }, objectAction.attackDelay);
+                }, objectAction.skillDelay);
             } else {
                 this.leaveBattle(playerSchema);
             }
@@ -134,13 +132,14 @@ class Pve extends Battle
 
     battleEnded(playerSchema, room)
     {
-        // @TODO: implement battle end in both pve and pvp.
+        // @TODO - BETA.17 - CHECK - Implement battle end in both pve and pvp.
         this.removeInBattlePlayer(playerSchema);
         let actionData = {
-            act: BattleConst.BATTLE_ENDED,
+            act: ActionsConst.BATTLE_ENDED,
             x: this.targetObject.objectBody.position[0],
             y: this.targetObject.objectBody.position[1],
-            t: this.targetObject.key
+            t: this.targetObject.key,
+            k: this.lastAttackKey
         };
         room.broadcast(actionData);
         this.targetObject.respawn();
@@ -148,9 +147,9 @@ class Pve extends Battle
         if(client){
             room.send(client, actionData);
         } else {
-            Logger.log(['Client not found by sessionId:', playerSchema.sessionId]);
+            Logger.info(['Client not found by sessionId:', playerSchema.sessionId]);
         }
-        EventsManager.emit('reldens.battleEnded', playerSchema, this, actionData);
+        EventsManagerSingleton.emit(this.targetObject.getBattleEndEvent(), playerSchema, this, actionData);
     }
 
     removeInBattlePlayer(playerSchema)

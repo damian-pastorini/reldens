@@ -8,7 +8,7 @@
  */
 
 const { Room } = require('colyseus');
-const { Logger, ErrorManager } = require('@reldens/utils');
+const { Logger, ErrorManager, sc } = require('@reldens/utils');
 
 class RoomLogin extends Room
 {
@@ -27,13 +27,13 @@ class RoomLogin extends Room
             return false;
         }
         let loginResult = await this.loginManager.processUserRequest(options);
-        if({}.hasOwnProperty.call(loginResult, 'error')){
+        if(sc.hasOwn(loginResult, 'error')){
             // login error.
             ErrorManager.error(loginResult.error);
         }
         // @NOTE: validateRoomData is overridden in RoomScene onCreate.
         if(this.validateRoomData){
-            // @TODO: [0] is temporal since for now we only have one player by user.
+            // @TODO - BETA.17 - Index [0] is temporal since for now we only have one player by user.
             this.validateRoom(loginResult.user.players[0].state.scene);
         }
         return loginResult.user;

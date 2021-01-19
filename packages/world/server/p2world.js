@@ -10,8 +10,9 @@ const { World, Body, Box } = require('p2');
 const { PathFinder } = require('./path-finder');
 const { PhysicalBody } = require('./physical-body');
 const { ObjectBodyState } = require('./object-body-state');
-const { Logger, ErrorManager, EventsManager } = require('@reldens/utils');
+const { Logger, ErrorManager, sc } = require('@reldens/utils');
 const { GameConst } = require('../../game/constants');
+const { EventsManagerSingleton } = require('@reldens/utils');
 
 class P2world extends World
 {
@@ -28,7 +29,7 @@ class P2world extends World
         this.sceneName = options.sceneName || false;
         this.sceneTiledMapFile = options.roomData.roomMap || false;
         this.tryClosestPath = options.tryClosestPath || false;
-        this.onlyWalkeable = options.onlyWalkeable || false;
+        this.onlyWalkable = options.onlyWalkable || false;
         this.worldSpeed = options.worldSpeed || false;
         // keys events:
         this.allowSimultaneous = options.allowSimultaneous;
@@ -56,9 +57,9 @@ class P2world extends World
      */
     async createWorldContent(mapData)
     {
-        // @TODO: analyze and implement blocks groups, for example, all simple collision blocks could be grouped and
-        //   use a single big block to avoid the overload number of small blocks which now impacts in the consumed
-        //   resources.
+        // @TODO - BETA.17 - Analyze and implement blocks groups, for example, all simple collision blocks could be
+        //   grouped and use a single big block to avoid the overload number of small blocks which now impacts in the
+        //   consumed resources.
         // get scene change points:
         this.changePoints = this.getSceneChangePoints(mapData);
         // map data:
@@ -69,7 +70,7 @@ class P2world extends World
             tileH = this.mapJson.tileheight;
         for(let layer of mapLayers){
             let layerData = layer.data;
-            await EventsManager.emit('reldens.parsingMapLayerBefore', layer, this);
+            await EventsManagerSingleton.emit('reldens.parsingMapLayerBefore', layer, this);
             for(let c = 0; c < mapW; c++){
                 let posX = c * tileW + (tileW/2);
                 for(let r = 0; r < mapH; r++){
@@ -98,7 +99,7 @@ class P2world extends World
                     }
                 }
             }
-            await EventsManager.emit('reldens.parsingMapLayerAfter', layer, this);
+            await EventsManagerSingleton.emit('reldens.parsingMapLayerAfter', layer, this);
         }
     }
 
@@ -205,8 +206,17 @@ class P2world extends World
         this.addBody(rightWall);
     }
 
-    createCollisionBody(width, height, x, y, mass = 1, collisionResponse = true, hasState = false)
-    {
+    createCollisionBody(
+        width,
+        height,
+        x,
+        y,
+        mass = 1,
+        collisionResponse = true,
+        hasState = false,
+        bodyKey = false,
+        dir = false
+    ) {
         let boxShape = this.createCollisionShape(width, height, collisionResponse);
         let bodyConfig = {
             mass: mass,
@@ -223,9 +233,10 @@ class P2world extends World
             boxBody.bodyState = new ObjectBodyState({
                 x: x,
                 y: y,
-                dir: GameConst.DOWN,
+                dir: dir || GameConst.DOWN,
                 scene: this.sceneName,
-                id: boxBody.id
+                id: boxBody.id,
+                key: bodyKey || ''
             });
         }
         boxBody.addShape(boxShape);
@@ -256,7 +267,8 @@ class P2world extends World
     {
         let boxShape = new Box({width: playerData.width, height: playerData.height});
         boxShape.collisionGroup = GameConst.COL_PLAYER;
-        // @TODO: players collision will be configurable, for now when collisions are active players can push players.
+        // @TODO - BETA.17 - Players collision will be configurable, for now when collisions are active players can
+        //   push players.
         boxShape.collisionMask = GameConst.COL_ENEMY | GameConst.COL_GROUND | GameConst.COL_PLAYER;
         let boxBody = new PhysicalBody({
             mass: 1,
@@ -269,10 +281,64 @@ class P2world extends World
         boxBody.addShape(boxShape);
         boxBody.playerId = playerData.id;
         boxBody.isChangingScene = false;
+        boxBody.isBlocked = false;
         boxBody.bodyState = playerData.bodyState;
         this.addBody(boxBody);
         // return body:
         return boxBody;
+    }
+
+    shootBullet(fromPosition, toPosition, bulletObject)
+    {
+        let { objectWidth, objectHeight} = bulletObject;
+        let wTH = (this.mapJson.tileheight / 2) + (objectHeight / 2);
+        let wTW = (this.mapJson.tilewidth / 2) + (objectWidth / 2);
+        let bulletY = fromPosition.y + ((toPosition.y > fromPosition.y) ? wTH : -wTH);
+        let bulletX = fromPosition.x + ((toPosition.x > fromPosition.x) ? wTW : -wTW);
+        let y = toPosition.y - bulletY;
+        let x = toPosition.x - bulletX;
+        let angleByVelocity = Math.atan2(y, x);
+        let bulletKey = (bulletObject.key ? bulletObject.key : '');
+        let direction = this.calculateDirection(bulletObject, fromPosition, toPosition);
+        let bulletBody = this.createCollisionBody(
+            objectWidth,
+            objectHeight,
+            bulletX,
+            bulletY,
+            1,
+            true,
+            true,
+            bulletKey,
+            direction
+        );
+        bulletBody.shapes[0].collisionGroup = GameConst.COL_PLAYER;
+        bulletBody.shapes[0].collisionMask = GameConst.COL_ENEMY | GameConst.COL_GROUND | GameConst.COL_PLAYER;
+        bulletBody.type = 1; // Body.DYNAMIC;
+        bulletBody.updateMassProperties();
+        bulletBody.isRoomObject = true;
+        bulletBody.roomObject = bulletObject;
+        bulletBody.hitPriority = bulletObject.hitPriority ? bulletObject.hitPriority : 2;
+        bulletBody.isBullet = true;
+        // append body to world:
+        this.addBody(bulletBody);
+        // and state on room map schema:
+        // @NOTE: this index here will be the animation key since the bullet state doesn't have a key property.
+        bulletObject.room.state.bodies[bulletKey+'_bullet_'+bulletBody.id] = bulletBody.bodyState;
+        // then speed up in the target direction:
+        bulletBody.angle = Math.atan2(y, x) * 180 / Math.PI;
+        bulletBody.velocity[0] = bulletObject.magnitude * Math.cos(angleByVelocity);
+        bulletBody.velocity[1] = bulletObject.magnitude * Math.sin(angleByVelocity);
+        // since the enemy won't be hit until the bullet reach the target we need to return false to avoid the onHit
+        // automatic actions (for example pve init).
+        return bulletBody;
+    }
+
+    calculateDirection(bulletObject, fromPosition, toPosition)
+    {
+        let animDir = sc.getDef(bulletObject, 'animDir', false);
+        return animDir === 3 ?
+            (fromPosition.x < toPosition.x ? GameConst.RIGHT : GameConst.LEFT)
+            : (fromPosition.y < toPosition.y ? GameConst.DOWN : GameConst.UP);
     }
 
 }

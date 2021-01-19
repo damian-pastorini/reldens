@@ -67,11 +67,11 @@ class PhysicalBody extends Body
 
     speedToNext()
     {
-        // @TODO: this can be improved but for now we can use the cols and rows to follow the path since it doesn't
-        //   needs to be an exact method (it is not the user is choosing each point of the path to follow). In order to
-        //   make it more accurate we need to use the position, but with the current configuration it will be also an
-        //   approximation since there it has issues between the world step and the objects speed, where the position
-        //   is passed in between steps.
+        // @TODO - BETA.17 - This can be improved but for now we can use the cols and rows to follow the path since it
+        //   doesn't needs to be an exact method (it is not the user is choosing each point of the path to follow).
+        //   In order to make it more accurate we need to use the position, but with the current configuration it will
+        //   be also an approximation since there it has issues between the world step and the objects speed, where
+        //   the position is passed in between steps.
         //   Additionally we still need to include the position fix for the cases where the moving object is bigger
         //   than a single tile.
         if(this.currentCol === this.autoMoving[0][0] && this.currentRow === this.autoMoving[0][1]){
@@ -115,8 +115,8 @@ class PhysicalBody extends Body
             this.bodyState.mov = false;
             return;
         }
-        // @TODO: remove from here or change property name from isBullet to shouldRemove or shouldStop on world
-        //   boundaries.
+        // @NOTE: the word "bullet" will be part of our glossary to refer to bodies that will be created, moved, and
+        // destroyed on hit or that reach the world boundaries.
         if({}.hasOwnProperty.call(this, 'isBullet') && this.isBullet){
             if(
                 this.position[0] < 0 || this.position[0] > (this.worldWidth * this.worldTileWidth)
@@ -135,6 +135,7 @@ class PhysicalBody extends Body
     resetAuto()
     {
         this.autoMoving = [];
+        return this;
     }
 
     initMove(direction, isAuto = false)
@@ -191,6 +192,7 @@ class PhysicalBody extends Body
     {
         // stop by setting speed to zero:
         this.velocity = [0, 0];
+        return this;
     }
 
     moveToPoint(toPoint)
@@ -224,6 +226,7 @@ class PhysicalBody extends Body
         }
         this.currentCol = currentCol;
         this.currentRow = currentRow;
+        return this;
     }
 
     moveToOriginalPoint()

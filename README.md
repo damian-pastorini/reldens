@@ -30,6 +30,7 @@ I know it is a huge project but I'll put all I have to make it work, so needless
 
 
 ## [Features List](https://www.reldens.com/features)
+[Request a feature here: https://www.reldens.com/features-request](https://www.reldens.com/features-request)
 
 
 ## [Coming soon and news!](https://www.reldens.com/news "Coming soon & News")
@@ -54,6 +55,8 @@ Join our Discord channel: [https://discord.gg/HuJMxUY](https://discord.gg/HuJMxU
 [![Ko-fi](https://img.shields.io/badge/Reldens-Support%20us%20on%20Ko--Fi-blue?style=for-the-badge)](https://ko-fi.com/I2I81VISA) 
 
 [![Patroen](https://img.shields.io/badge/Reldens-Become%20a%20Patroen-blue?style=for-the-badge)](https://www.patreon.com/bePatron?u=18074832)
+
+[![Paypal](https://img.shields.io/badge/Reldens-Paypal%20Donation-blue?style=for-the-badge)](https://www.paypal.com/paypalme/damianpastorini)
 
 If you like to contribute in anyway or donate to support the project please also feel free to contact me at [info@dwdeveloper.com](mailto:info@dwdeveloper.com).
 

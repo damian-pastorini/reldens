@@ -22,6 +22,7 @@ class NpcObject extends AnimationObject
         this.hasAnimation = true;
         this.hasMass = 1;
         this.collisionResponse = true;
+        this.eventsPrefix = 'npc';
         // the actions will be false as default:
         this.runOnHit = false;
         this.runOnAction = false;
@@ -54,7 +55,8 @@ class NpcObject extends AnimationObject
                 activationData.content = this.content;
             }
             if(Object.keys(this.options).length > 0){
-                // @TODO: extend feature to generate different flows, for example request confirmation about a choice.
+                // @TODO - BETA.17 - Extend feature to generate different flows, this will help on easily create quests,
+                //   for example we could request confirmation about a choice.
                 activationData.options = this.options;
             }
             room.send(client, activationData);

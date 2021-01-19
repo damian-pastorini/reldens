@@ -6,14 +6,19 @@
  *
  */
 
-const { Model } = require('objection');
+const { ModelClass } = require('@reldens/storage');
 
-class RespawnModel extends Model
+class RespawnModel extends ModelClass
 {
 
     static get tableName()
     {
         return 'respawn';
+    }
+
+    static loadByLayerName(layerName)
+    {
+        return this.query().where('layer', layerName);
     }
 
 }

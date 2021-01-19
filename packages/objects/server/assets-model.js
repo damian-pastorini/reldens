@@ -6,10 +6,10 @@
  *
  */
 
-const { Model } = require('objection');
+const { ModelClass } = require('@reldens/storage');
 const { ObjectsModel } = require('./model');
 
-class ObjectsAssetsModel extends Model
+class ObjectsAssetsModel extends ModelClass
 {
 
     static get tableName()
@@ -21,7 +21,7 @@ class ObjectsAssetsModel extends Model
     {
         return {
             parent_object: {
-                relation: Model.BelongsToOneRelation,
+                relation: ModelClass.BelongsToOneRelation,
                 modelClass: ObjectsModel,
                 join: {
                     from: 'objects_assets.object_id',

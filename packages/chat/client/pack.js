@@ -6,25 +6,25 @@
 
 const { ChatUi } = require('./chat-ui');
 const { ChatConst } = require('../constants');
-const { Logger, EventsManager } = require('@reldens/utils');
+const { EventsManagerSingleton, Logger } = require('@reldens/utils');
 
-class Chat
+class ChatPack
 {
 
     constructor()
     {
         this.joinRooms = [ChatConst.CHAT_GLOBAL];
         // chat messages are global for all rooms so we use the generic event for every joined room:
-        EventsManager.on('reldens.joinedRoom', (room, gameManager) => {
+        EventsManagerSingleton.on('reldens.joinedRoom', (room, gameManager) => {
             this.listenMessages(room, gameManager);
         });
-        EventsManager.on('reldens.preloadUiScene', (preloadScene) => {
-            preloadScene.load.html('uiChat', 'assets/features/chat/templates/ui-chat.html');
-            preloadScene.load.html('uiChatMessage', 'assets/features/chat/templates/message.html');
+        EventsManagerSingleton.on('reldens.preloadUiScene', (preloadScene) => {
+            preloadScene.load.html('chat', 'assets/features/chat/templates/ui-chat.html');
+            preloadScene.load.html('chatMessage', 'assets/features/chat/templates/message.html');
         });
-        EventsManager.on('reldens.createUiScene', (preloadScene) => {
-            this.uiCreate = new ChatUi(preloadScene);
-            this.uiCreate.createUi();
+        EventsManagerSingleton.on('reldens.createUiScene', (preloadScene) => {
+            this.uiManager = new ChatUi(preloadScene);
+            this.uiManager.createUi();
         });
     }
 
@@ -34,27 +34,35 @@ class Chat
             if(message.act !== ChatConst.CHAT_ACTION){
                 return;
             }
-            let uiScene = gameManager.gameEngine.uiScene;
-            if(!{}.hasOwnProperty.call(uiScene, 'uiChat')){
+            let uiChat = gameManager.getUiElement('chat');
+            if(!uiChat){
                 Logger.error('Chat interface not found.');
                 return;
             }
-            let readPanel = uiScene.uiChat.getChildByProperty('id', ChatConst.CHAT_MESSAGES);
+            let readPanel = uiChat.getChildByProperty('id', ChatConst.CHAT_MESSAGES);
             if(!readPanel){
                 Logger.error('Chat UI not found.');
                 return;
             }
-            let messageTemplate = uiScene.cache.html.get('uiChatMessage');
+            let messageTemplate = gameManager.gameEngine.uiScene.cache.html.get('chatMessage');
             let output = gameManager.gameEngine.parseTemplate(messageTemplate, {
                 from: message[ChatConst.CHAT_FROM],
                 color: ChatConst.colors[message.t],
                 message: message[ChatConst.CHAT_MESSAGE]
             });
             readPanel.innerHTML += output;
-            readPanel.scrollTo(0, readPanel.scrollHeight);
+            // @TODO - BETA.17 - Replace all the in-code styles by classes, do this refactor while replacing jQuery.
+            if(uiChat.getChildByProperty('id', 'chat-ui').style.display === 'block'){
+                readPanel.scrollTo(0, readPanel.scrollHeight);
+            } else {
+                if(gameManager.config.get('client/ui/chat/notificationBalloon')){
+                    let chatBalloon = uiChat.getChildByProperty('id', ChatConst.CHAT_BALLOON);
+                    chatBalloon.style.display = 'block';
+                }
+            }
         });
     }
 
 }
 
-module.exports.Chat = Chat;
+module.exports.ChatPack = ChatPack;

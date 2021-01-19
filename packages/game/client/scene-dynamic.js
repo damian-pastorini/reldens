@@ -6,7 +6,7 @@
 
 const { Scene, Input } = require('phaser');
 const { TilesetAnimation } = require('./tileset-animation');
-const { EventsManager } = require('@reldens/utils');
+const { EventsManagerSingleton, sc } = require('@reldens/utils');
 const { GameConst } = require('../../game/constants');
 
 class SceneDynamic extends Scene
@@ -39,24 +39,56 @@ class SceneDynamic extends Scene
 
     create()
     {
-        EventsManager.emit('reldens.beforeSceneDynamicCreate', this);
+        EventsManagerSingleton.emit('reldens.beforeSceneDynamicCreate', this);
+        // @TODO - BETA.17 - Controllers will be part of the configuration in the database.
         this.keyLeft = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.LEFT);
+        this.keyA = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.A);
         this.keyRight = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.RIGHT);
+        this.keyD = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.D);
         this.keyUp = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.UP);
+        this.keyW = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.W);
         this.keyDown = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.DOWN);
+        this.keyS = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.S);
+        let keys = [
+            Input.Keyboard.KeyCodes.LEFT,
+            Input.Keyboard.KeyCodes.A,
+            Input.Keyboard.KeyCodes.RIGHT,
+            Input.Keyboard.KeyCodes.D,
+            Input.Keyboard.KeyCodes.UP,
+            Input.Keyboard.KeyCodes.W,
+            Input.Keyboard.KeyCodes.DOWN,
+            Input.Keyboard.KeyCodes.S
+        ];
+        this.gameManager.gameDom.getElement('input').on('focus', () => {
+            for(let keyCode of keys){
+                this.input.keyboard.removeCapture(keyCode);
+            }
+        });
+        this.gameManager.gameDom.getElement('input').on('blur', () => {
+            for(let keyCode of keys) {
+                this.input.keyboard.addCapture(keyCode);
+            }
+        });
         this.input.keyboard.on('keydown', (event) => {
-            if(event.keyCode === 32 && document.activeElement.tagName.toLowerCase() !== 'input'){
+            // @TODO - BETA.17 - Make configurable the keys related to the actions and skills.
+            // keyCode = 32 > spacebar
+            if(event.keyCode === 32 && !this.gameManager.gameDom.insideInput()){
                 this.player.runActions();
             }
+            // keyCode = 27 > esc
             if(event.keyCode === 27){
                 this.gameManager.gameEngine.clearTarget();
             }
         });
         this.map = this.add.tilemap(this.params.roomMap);
         this.input.on('pointerdown', (pointer, currentlyOver) => {
-            // @TODO: temporal avoid double actions, if you target something you will not be moved to the pointer, in
-            //   a future release this will be configurable so you can walk to objects and they get activated, for
-            //   example, click on and NPC, automatically walk close and automatically get a dialog opened.
+            // @TODO - BETA.17 - Temporal avoid double actions, if you target something you will not be moved to the
+            //   pointer, in a future release this will be configurable so you can walk to objects and they get
+            //   activated, for example, click on and NPC, automatically walk close and automatically get a dialog
+            //   opened.
+            if(this.gameManager.gameDom.insideInput()){
+                this.gameManager.gameDom.activeElement().blur();
+            }
             if(!currentlyOver.length){
                 this.appendRowAndColumn(pointer);
                 this.player.moveToPointer(pointer);
@@ -76,27 +108,37 @@ class SceneDynamic extends Scene
             this.transition = false;
             this.gameManager.isChangingScene = false;
             this.input.keyboard.on('keyup', (event) => {
-                if(event.keyCode >= 37 && event.keyCode <= 40){
+                // stop all directional keys (arrows and wasd):
+                if(event.keyCode >= 37 && event.keyCode <= 40 || (
+                    event.keyCode === 87
+                    || event.keyCode === 65
+                    || event.keyCode === 83
+                    || event.keyCode === 68
+                )){
                     // @NOTE: all keyup events has to be sent.
                     this.player.stop();
                 }
             });
         });
-        EventsManager.emit('reldens.afterSceneDynamicCreate', this);
+        EventsManagerSingleton.emit('reldens.afterSceneDynamicCreate', this);
     }
 
     // eslint-disable-next-line no-unused-vars
     update(time, delta)
     {
+        if(this.gameManager.gameDom.insideInput()){
+            return true;
+        }
         if(this.transition === false && !this.gameManager.isChangingScene){
-            if(this.keyLeft.isDown){
+            // @TODO - BETA.17 - Controllers will be part of the configuration in the database.
+            if(this.keyLeft.isDown || this.keyA.isDown){
                 this.player.left();
-            } else if(this.keyRight.isDown){
+            } else if(this.keyRight.isDown || this.keyD.isDown){
                 this.player.right();
             }
-            if(this.keyUp.isDown){
+            if(this.keyUp.isDown || this.keyW.isDown){
                 this.player.up();
-            } else if(this.keyDown.isDown){
+            } else if(this.keyDown.isDown || this.keyS.isDown){
                 this.player.down();
             }
         }
@@ -160,9 +202,9 @@ class SceneDynamic extends Scene
     {
         let tW = this.map.tileWidth;
         let tH = this.map.tileHeight;
-        // @TODO: this is a temporal fix, we need to make configurable the player body and take it into account for the
-        //   path finder calculations. Between the configurations we need to include one to affect the body size in the
-        //   server, for now all the bodies get the same tile size. See related issue #54.
+        // @TODO - BETA.17 - This is a temporal fix, we need to make configurable the player body and take it into
+        //   account for the path finder calculations. Between the configurations we need to include one to affect the
+        //   body size in the server, for now all the bodies get the same tile size. See related issue #54.
         let column = Math.round(pointer.worldX / tW);
         let row = Math.round(pointer.worldY / tH);
         pointer.worldColumn = column;
@@ -182,6 +224,14 @@ class SceneDynamic extends Scene
         this.arrowSprite.anims.play(GameConst.ARROW_DOWN, true).on('animationcomplete', () => {
             this.arrowSprite.destroy();
         });
+    }
+
+    getAnimationByKey(key)
+    {
+        if(!this.anims || !this.anims.anims || !this.anims.anims.entries){
+            return false;
+        }
+        return sc.getDef(this.anims.anims.entries, key, false);
     }
 
 }

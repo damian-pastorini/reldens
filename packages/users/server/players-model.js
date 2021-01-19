@@ -6,9 +6,9 @@
  *
  */
 
-const { Model } = require('objection');
+const { ModelClass } = require('@reldens/storage');
 
-class PlayersModel extends Model
+class PlayersModel extends ModelClass
 {
 
     static get tableName()
@@ -19,31 +19,22 @@ class PlayersModel extends Model
     static get relationMappings()
     {
         const { UsersModel } = require('./model');
-        const { PlayersStatsModel } = require('./players-stats-model');
         const { PlayersStateModel } = require('./players-state-model');
         return {
             parent_user: {
-                relation: Model.BelongsToOneRelation,
+                relation: ModelClass.BelongsToOneRelation,
                 modelClass: UsersModel,
                 join: {
                     from: 'players.user_id',
                     to: 'users.id'
                 }
             },
-            stats: {
-                relation: Model.HasOneRelation,
-                modelClass: PlayersStatsModel,
-                join: {
-                    from: 'players.id',
-                    to: 'players_stats.player_id'
-                }
-            },
             state: {
-                relation: Model.HasOneRelation,
+                relation: ModelClass.HasOneRelation,
                 modelClass: PlayersStateModel,
                 join: {
                     from: 'players.id',
-                    to: 'players_state.player_id'
+                    to: PlayersStateModel.tableName+'.player_id'
                 }
             }
         }

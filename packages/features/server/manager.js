@@ -8,6 +8,7 @@
 
 const { ServerCoreFeatures } = require('./config-server');
 const { FeaturesModel } = require('./model');
+const { Logger, sc } = require('@reldens/utils');
 
 class FeaturesManager
 {
@@ -24,7 +25,7 @@ class FeaturesManager
     async loadFeatures()
     {
         // get the features from the database:
-        let featuresCollection = await FeaturesModel.query();
+        let featuresCollection = await FeaturesModel.loadAll();
         for(let featureEntity of featuresCollection){
             // add the feature to the codes list:
             this.featuresCodeList.push(featureEntity.code);
@@ -32,8 +33,8 @@ class FeaturesManager
             // to load the features for the client side later.
             if(
                 // only include enabled and available features on the server side config:
-                {}.hasOwnProperty.call(this.availableFeatures, featureEntity.code)
-                && {}.hasOwnProperty.call(featureEntity, 'is_enabled')
+                sc.hasOwn(this.availableFeatures, featureEntity.code)
+                && sc.hasOwn(featureEntity, 'is_enabled')
                 && featureEntity.is_enabled
             ){
                 // get feature package server for server side:
@@ -45,6 +46,7 @@ class FeaturesManager
                 }
                 // for last add the feature entity to the list:
                 this.featuresList[featureEntity.code] = featureEntity;
+                Logger.info('Enabled feature: ' + featureEntity.code);
             }
         }
         // return the features code list:
