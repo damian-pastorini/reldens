@@ -30,6 +30,7 @@ class PlayerEngine
         this.animationBasedOnPress = this.config.get('client/players/animations/basedOnPress');
         this.topOff = this.gameManager.config.get('client/players/size/topOffset');
         this.leftOff = this.gameManager.config.get('client/players/size/leftOffset');
+        this.collideWorldBounds = this.gameManager.config.get('client/players/animations/collideWorldBounds');
     }
 
     create()
@@ -42,7 +43,6 @@ class PlayerEngine
         this.scene.physics.world.setBounds(0, 0, this.scene.map.widthInPixels, this.scene.map.heightInPixels);
         this.scene.cameras.main.setBounds(0, 0, this.scene.map.widthInPixels, this.scene.map.heightInPixels);
         this.scene.cameras.main.startFollow(this.players[this.playerId], true);
-        this.players[this.playerId].setCollideWorldBounds(true);
     }
 
     addPlayer(id, state)
@@ -73,6 +73,7 @@ class PlayerEngine
         });
         this.players[id].moveSprites = {};
         this.players[id].setDepth(this.players[id].y + this.players[id].body.height);
+        this.players[id].setCollideWorldBounds(this.collideWorldBounds);
         return this.players[id];
     }
 

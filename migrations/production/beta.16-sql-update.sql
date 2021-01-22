@@ -1,4 +1,4 @@
-
+SET FOREIGN_KEY_CHECKS=0;
 # Config:
 UPDATE `config` SET `path`='rooms/world/onlyWalkable' WHERE `path`='rooms/world/onlyWalkeable';
 UPDATE `config` SET path = 'ui/playerBox/enabled' WHERE path = 'ui/playerName/enabled' LIMIT 1;
@@ -494,3 +494,4 @@ UPDATE players_stats SET `value` = 100, base_value = 100;
 UPDATE items_inventory SET is_active = 0 WHERE is_active = 1;
 
 #######################################################################################################################
+SET FOREIGN_KEY_CHECKS=1;
