@@ -45,7 +45,7 @@ class RoomsModel extends ModelClass
                     to: 'rooms_change_points.next_room_id'
                 }
             },
-            to_room: {
+            from_room: {
                 relation: ModelClass.BelongsToOneRelation,
                 modelClass: RoomsReturnPointsModel,
                 join: {
@@ -59,20 +59,20 @@ class RoomsModel extends ModelClass
     static loadFullData()
     {
         return this.query()
-            .withGraphFetched('[rooms_change_points.next_room, rooms_return_points.to_room]');
+            .withGraphFetched('[rooms_change_points.next_room, rooms_return_points.from_room]');
     }
 
     static loadById(roomId)
     {
         return this.query()
-            .withGraphFetched('[rooms_change_points.next_room, rooms_return_points.to_room]')
+            .withGraphFetched('[rooms_change_points.next_room, rooms_return_points.from_room]')
             .findById(roomId);
     }
 
     static loadByName(name)
     {
         return this.query()
-            .withGraphFetched('[rooms_change_points.next_room, rooms_return_points.to_room]')
+            .withGraphFetched('[rooms_change_points.next_room, rooms_return_points.from_room]')
             .where('name', name)
             .first();
     }
