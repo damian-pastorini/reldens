@@ -177,8 +177,8 @@ class PlayerEngine
             act: GameConst.POINTER,
             column: pointer.worldColumn,
             row: pointer.worldRow,
-            x: pointer.worldX + this.leftOff,
-            y: pointer.worldY + this.topOff
+            x: pointer.worldX - this.leftOff,
+            y: pointer.worldY - this.topOff
         };
         this.room.send(data);
     }

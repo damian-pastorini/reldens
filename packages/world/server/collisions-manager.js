@@ -81,7 +81,6 @@ class CollisionsManager
                 currentPlayerBody = bodyA.playerId ? bodyA : bodyB;
                 otherBody = bodyA.playerId ? bodyB : bodyA;
                 if(otherBody.isRoomObject){
-                    console.log('player hit object', currentPlayerBody.playerId, otherBody.key);
                     this.playerHitObject(currentPlayerBody, otherBody);
                 }
                 if(otherBody.changeScenePoint){

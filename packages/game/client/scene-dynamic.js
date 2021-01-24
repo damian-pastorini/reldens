@@ -6,7 +6,7 @@
 
 const { Scene, Input } = require('phaser');
 const { TilesetAnimation } = require('./tileset-animation');
-const { EventsManagerSingleton, sc } = require('@reldens/utils');
+const { EventsManagerSingleton, Logger, sc } = require('@reldens/utils');
 const { GameConst } = require('../../game/constants');
 
 class SceneDynamic extends Scene
@@ -90,7 +90,9 @@ class SceneDynamic extends Scene
                 this.gameManager.gameDom.activeElement().blur();
             }
             if(!currentlyOver.length){
-                this.appendRowAndColumn(pointer);
+                if(!this.appendRowAndColumn(pointer)){
+                    return false;
+                }
                 this.player.moveToPointer(pointer);
                 this.updatePointerObject(pointer);
             }
@@ -200,15 +202,17 @@ class SceneDynamic extends Scene
 
     appendRowAndColumn(pointer)
     {
-        let tW = this.map.tileWidth;
-        let tH = this.map.tileHeight;
-        // @TODO - BETA.17 - This is a temporal fix, we need to make configurable the player body and take it into
-        //   account for the path finder calculations. Between the configurations we need to include one to affect the
-        //   body size in the server, for now all the bodies get the same tile size. See related issue #54.
-        let column = Math.round(pointer.worldX / tW);
-        let row = Math.round(pointer.worldY / tH);
-        pointer.worldColumn = column;
-        pointer.worldRow = row;
+        let worldToTileXY = this.map.worldToTileXY(pointer.worldX, pointer.worldY);
+        let playerToTileXY = this.map.worldToTileXY(this.player.state.x, this.player.state.y);
+        if(!worldToTileXY || !playerToTileXY){
+            Logger.error('Move to pointer error.');
+            return false;
+        }
+        pointer.worldColumn = worldToTileXY.x;
+        pointer.worldRow = worldToTileXY.y;
+        pointer.playerOriginCol = playerToTileXY.x;
+        pointer.playerOriginRow = playerToTileXY.y;
+        return pointer;
     }
 
     updatePointerObject(pointer)
@@ -219,7 +223,8 @@ class SceneDynamic extends Scene
         if(this.arrowSprite){
             this.arrowSprite.destroy();
         }
-        this.arrowSprite = this.physics.add.sprite(pointer.worldX, pointer.worldY, GameConst.ARROW_DOWN);
+        // @TODO - BETA.17 - Make pointer sprite data configurable. Here the -16 is half of the sprite height.
+        this.arrowSprite = this.physics.add.sprite(pointer.worldX, pointer.worldY - 16, GameConst.ARROW_DOWN);
         this.arrowSprite.setDepth(2000000);
         this.arrowSprite.anims.play(GameConst.ARROW_DOWN, true).on('animationcomplete', () => {
             this.arrowSprite.destroy();
