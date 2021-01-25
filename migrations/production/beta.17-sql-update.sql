@@ -31,13 +31,25 @@ ALTER TABLE `rooms_return_points`
 ALTER TABLE `rooms_return_points`
 	DROP FOREIGN KEY `FK_scenes_return_points_rooms`;
 ALTER TABLE `rooms_return_points`
-	ADD CONSTRAINT `FK_scenes_return_points_rooms` FOREIGN KEY (`room_id`) REFERENCES `reldens`.`rooms` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT;
+	ADD CONSTRAINT `FK_scenes_return_points_rooms` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT;
 ALTER TABLE `rooms_return_points`
 	DROP FOREIGN KEY `FK_rooms_return_points_rooms`,
 	DROP FOREIGN KEY `FK_scenes_return_points_rooms`;
 ALTER TABLE `rooms_return_points`
-	ADD CONSTRAINT `FK_rooms_return_points_rooms_from_room_id` FOREIGN KEY (`from_room_id`) REFERENCES `reldens`.`rooms` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT,
-	ADD CONSTRAINT `FK_rooms_return_points_rooms_room_id` FOREIGN KEY (`room_id`) REFERENCES `reldens`.`rooms` (`id`) ON UPDATE CASCADE ON DELETE NO ACTION;
+	ADD CONSTRAINT `FK_rooms_return_points_rooms_from_room_id` FOREIGN KEY (`from_room_id`) REFERENCES `rooms` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT,
+	ADD CONSTRAINT `FK_rooms_return_points_rooms_room_id` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON UPDATE CASCADE ON DELETE NO ACTION;
+
+# Atk and Def modifiers for level up:
+
+INSERT INTO `skills_levels_modifiers` (`id`, `level_key`, `key`, `property_key`, `operation`, `value`, `minValue`, `maxValue`, `minProperty`, `maxProperty`) VALUES (NULL, 1, 'inc_atk', 'statsBase/atk', 1, '10', NULL, NULL, NULL, NULL);
+INSERT INTO `skills_levels_modifiers` (`id`, `level_key`, `key`, `property_key`, `operation`, `value`, `minValue`, `maxValue`, `minProperty`, `maxProperty`) VALUES (NULL, 1, 'inc_def', 'statsBase/def', 1, '10', NULL, NULL, NULL, NULL);
+INSERT INTO `skills_levels_modifiers` (`id`, `level_key`, `key`, `property_key`, `operation`, `value`, `minValue`, `maxValue`, `minProperty`, `maxProperty`) VALUES (NULL, 4, 'inc_def', 'statsBase/def', 1, '10', NULL, NULL, NULL, NULL);
+INSERT INTO `skills_levels_modifiers` (`id`, `level_key`, `key`, `property_key`, `operation`, `value`, `minValue`, `maxValue`, `minProperty`, `maxProperty`) VALUES (NULL, 4, 'inc_atk', 'statsBase/atk', 1, '10', NULL, NULL, NULL, NULL);
+INSERT INTO `skills_levels_modifiers` (`id`, `level_key`, `key`, `property_key`, `operation`, `value`, `minValue`, `maxValue`, `minProperty`, `maxProperty`) VALUES (NULL, 2, 'inc_def', 'statsBase/def', 1, '10', NULL, NULL, NULL, NULL);
+INSERT INTO `skills_levels_modifiers` (`id`, `level_key`, `key`, `property_key`, `operation`, `value`, `minValue`, `maxValue`, `minProperty`, `maxProperty`) VALUES (NULL, 2, 'inc_atk', 'statsBase/atk', 1, '10', NULL, NULL, NULL, NULL);
+INSERT INTO `skills_levels_modifiers` (`id`, `level_key`, `key`, `property_key`, `operation`, `value`, `minValue`, `maxValue`, `minProperty`, `maxProperty`) VALUES (NULL, 5, 'inc_atk', 'statsBase/atk', 1, '10', NULL, NULL, NULL, NULL);
+INSERT INTO `skills_levels_modifiers` (`id`, `level_key`, `key`, `property_key`, `operation`, `value`, `minValue`, `maxValue`, `minProperty`, `maxProperty`) VALUES (NULL, 6, 'inc_atk', 'statsBase/atk', 1, '10', NULL, NULL, NULL, NULL);
+INSERT INTO `skills_levels_modifiers` (`id`, `level_key`, `key`, `property_key`, `operation`, `value`, `minValue`, `maxValue`, `minProperty`, `maxProperty`) VALUES (NULL, 7, 'inc_atk', 'statsBase/atk', 1, '10', NULL, NULL, NULL, NULL);
 
 
 #######################################################################################################################
