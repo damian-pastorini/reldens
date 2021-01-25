@@ -49,8 +49,7 @@ class InventoryPack extends PackInterface
     async loadItemsFullList(configProcessor)
     {
         // use the inventory models manager to get the items list loaded:
-        let itemsModelsList = await this.inventoryModelsManager.models.item.loadAll()
-            .withGraphFetched('[items_modifiers]');
+        let itemsModelsList = await this.inventoryModelsManager.models.item.loadItemFullData();
         if(itemsModelsList.length){
             let itemsList = {};
             let inventoryClasses = configProcessor.get('server/customClasses/inventory/items');
