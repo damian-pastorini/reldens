@@ -117,7 +117,22 @@ class ActionsPack extends PackInterface
         if(pvpConfig){
             currentPlayer.actions['pvp'] = new Pvp(pvpConfig);
         }
-        currentPlayer.executePhysicalSkill = (target, executedSkill) => {
+        currentPlayer.executePhysicalSkill = async (target, executedSkill) => {
+            let messageData = Object.assign({
+                    skillKey: executedSkill.key
+                },
+                executedSkill.owner.getPosition()
+            );
+            if(typeof executedSkill.owner.getSkillExtraData === 'function'){
+                let params = {skill: executedSkill, target};
+                Object.assign(messageData, {extraData: executedSkill.owner.getSkillExtraData(params)});
+            }
+            await currentPlayer.skillsServer.client.runBehaviors(
+                messageData,
+                SkillConst.ACTION_SKILL_AFTER_CAST,
+                SkillConst.BEHAVIOR_BROADCAST,
+                executedSkill.getOwnerId()
+            );
             let from = {x: currentPlayer.state.x, y: currentPlayer.state.y};
             executedSkill.initialPosition = from;
             let to = {x: target.state.x, y: target.state.y};

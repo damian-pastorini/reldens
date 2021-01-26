@@ -8,6 +8,7 @@
 
 const { Receiver } = require('@reldens/skills');
 const { EventsManagerSingleton, Logger, sc } = require('@reldens/utils');
+const { GameConst } = require('../../game/constants');
 
 class ReceiverWrapper extends Receiver
 {
@@ -208,6 +209,56 @@ class ReceiverWrapper extends Receiver
                 delete ownerSprite.moveSprites[castAnimKey+'_'+ownerSprite.playerId];
             }, destroyTime)
         }
+    }
+
+    // eslint-disable-next-line no-unused-vars
+    onSkillAfterCast(message)
+    {
+        let currentPlayer = this.gameManager.getCurrentPlayer();
+        if(
+            !sc.hasOwn(message.data.extraData, 'oT') || !sc.hasOwn(message.data.extraData, 'oK')
+            || message.data.extraData.oT !== 'p'
+            || !sc.hasOwn(currentPlayer.players, message.data.extraData.oK)
+        ){
+            return false;
+        }
+        let currentScene = this.gameManager.getActiveScene();
+        let ownerSprite = this.gameManager.getCurrentPlayer().players[message.data.extraData.oK];
+        let playDirection = this.getPlayDirection(currentPlayer, currentScene);
+        if(playDirection){
+            ownerSprite.anims.play(playDirection, true);
+            ownerSprite.anims.stop();
+        }
+    }
+
+    getPlayDirection(currentPlayer, currentScene)
+    {
+        let playDirection = false;
+        if(!currentPlayer.currentTarget.id){
+            return false
+        }
+        let targetX = false;
+        let targetY = false;
+        if(sc.hasOwn(currentScene.objectsAnimations, currentPlayer.currentTarget.id)){
+            let target = currentScene.objectsAnimations[currentPlayer.currentTarget.id];
+            targetX = target.x;
+            targetY = target.y;
+        }
+        if(sc.hasOwn(currentPlayer.players, currentPlayer.currentTarget.id)){
+            let target = currentPlayer.players[currentPlayer.currentTarget.id];
+            targetX = target.x;
+            targetY = target.y;
+        }
+        if(!targetX){
+            return false;
+        }
+        let playX = targetX - currentPlayer.state.x;
+        let playY = targetY - currentPlayer.state.y;
+        playDirection = (playX >= 0) ? GameConst.RIGHT : GameConst.LEFT;
+        if(Math.abs(playX) < Math.abs(playY)){
+            playDirection = (playY >= 0) ? GameConst.DOWN : GameConst.UP;
+        }
+        return playDirection;
     }
 
 }
