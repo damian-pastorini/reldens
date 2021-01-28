@@ -18,6 +18,7 @@ INSERT INTO `rooms_change_points` (`id`, `room_id`, `tile_index`, `next_room_id`
 INSERT INTO `rooms_return_points` (`id`, `room_id`, `direction`, `x`, `y`, `is_default`, `to_room_id`) VALUES (9, 6, 'right', 820, 500, 0, 2);
 INSERT INTO `rooms_return_points` (`id`, `room_id`, `direction`, `x`, `y`, `is_default`, `to_room_id`) VALUES (10, 6, 'right', 820, 500, 0, 2);
 INSERT INTO `rooms_return_points` (`id`, `room_id`, `direction`, `x`, `y`, `is_default`, `to_room_id`) VALUES (11, 2, 'left', 720, 540, 0, 6);
+UPDATE `rooms_return_points` SET `is_default`='0', `from_room_id`='4' WHERE  `id`=1 AND `room_id`=2;
 
 # Rename field "to_room_id" to "from_room_id":
 ALTER TABLE `rooms_return_points`
