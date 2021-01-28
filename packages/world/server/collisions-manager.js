@@ -6,11 +6,14 @@
  *
  */
 
-const { Logger, ErrorManager } = require('@reldens/utils');
+const { Logger, ErrorManager, sc } = require('@reldens/utils');
 
 class CollisionsManager
 {
 
+    /**
+     * @param room RoomScene
+     */
     constructor(room = false)
     {
         if(room){
@@ -21,7 +24,8 @@ class CollisionsManager
     activateCollisions(room)
     {
         this.room = room;
-        if(!{}.hasOwnProperty.call(this.room, 'roomWorld')){
+        this.bulletsStopOnPlayer = room.config.get('server/rooms/world/bulletsStopOnPlayer');
+        if(!sc.hasOwn(this.room, 'roomWorld')){
             ErrorManager.error('Room world not found.');
         }
         // @TODO - BETA.17 - Make dynamic, for now we will use fixed collisions types for each event.
@@ -37,11 +41,25 @@ class CollisionsManager
     {
         let { pairs } = evt;
         if(pairs.length > 1){
+            let bullet = false;
+            let player = false;
             for(let body of pairs){
                 if(body.playerId && body.pStop){
                     body.velocity = [0, 0];
                     body.pStop = false;
                 }
+                if(body.playerId){
+                    player = body;
+                }
+                if(body.isBullet){
+                    bullet = body;
+                }
+            }
+            if(this.bulletsStopOnPlayer && player && bullet){
+                player.velocity = [0, 0];
+                player.pStop = false;
+                bullet.velocity = [0, 0];
+                bullet.pStop = false;
             }
         }
     }
@@ -145,7 +163,7 @@ class CollisionsManager
     {
         playerBody.resetAuto();
         let playerSchema = this.room.getPlayerFromState(playerBody.playerId);
-        if({}.hasOwnProperty.call(playerBody, 'isChangingScene') && playerBody.isChangingScene){
+        if(sc.hasOwn(playerBody, 'isChangingScene') && playerBody.isChangingScene){
             // @NOTE: if the player is already changing scene do nothing.
             Logger.error('Player is busy for a change point: ' + playerBody.playerId);
             return false;
@@ -172,8 +190,8 @@ class CollisionsManager
     objectHitObject(bodyA, bodyB)
     {
         // @TODO - BETA.17 - Fix bullet hit bullet.
-        let aPriority = {}.hasOwnProperty.call(bodyA, 'hitPriority');
-        let bPriority = {}.hasOwnProperty.call(bodyB, 'hitPriority');
+        let aPriority = sc.hasOwn(bodyA, 'hitPriority');
+        let bPriority = sc.hasOwn(bodyB, 'hitPriority');
         let onHitData = {bodyA: bodyA, bodyB: bodyB, room: this.room};
         if((!aPriority && !bPriority) || (aPriority && (!bPriority || aPriority > bPriority))){
             bodyA.roomObject.onHit(onHitData);

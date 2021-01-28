@@ -67,13 +67,6 @@ class PhysicalBody extends Body
 
     speedToNext()
     {
-        // @TODO - BETA.17 - This can be improved but for now we can use the cols and rows to follow the path since it
-        //   doesn't needs to be an exact method (it is not the user is choosing each point of the path to follow).
-        //   In order to make it more accurate we need to use the position, but with the current configuration it will
-        //   be also an approximation since there it has issues between the world step and the objects speed, where
-        //   the position is passed in between steps.
-        //   Additionally we still need to include the position fix for the cases where the moving object is bigger
-        //   than a single tile.
         if(this.currentCol === this.autoMoving[0][0] && this.currentRow === this.autoMoving[0][1]){
             // if the point was reach then remove it to process the next one:
             this.autoMoving.shift();
@@ -214,10 +207,7 @@ class PhysicalBody extends Body
         if(!this.world){
             return;
         }
-        let currentCol = Math.round(this.position[0] / this.worldTileWidth);
-        currentCol = (currentCol >= 0) ? ((currentCol > this.worldWidth) ? (this.worldWidth) : currentCol) : 0;
-        let currentRow = Math.round(this.position[1] / this.worldTileHeight);
-        currentRow = (currentRow >= 0) ? ((currentRow > this.worldHeight) ? (this.worldHeight) : currentRow) : 0;
+        let {currentCol, currentRow} = this.positionToTiles(this.position[0], this.position[1]);
         if(!this.currentCol){
             this.originalCol = currentCol;
         }
@@ -235,6 +225,15 @@ class PhysicalBody extends Body
             this.updateCurrentPoints();
         }
         this.moveToPoint({column: this.originalCol, row: this.originalRow});
+    }
+
+    positionToTiles(x, y)
+    {
+        let currentCol = Math.round((x - (this.worldTileWidth/2)) / this.worldTileWidth);
+        currentCol = (currentCol >= 0) ? ((currentCol > this.worldWidth) ? (this.worldWidth) : currentCol) : 0;
+        let currentRow = Math.round((y - (this.worldTileHeight/2)) / this.worldTileHeight);
+        currentRow = (currentRow >= 0) ? ((currentRow > this.worldHeight) ? (this.worldHeight) : currentRow) : 0;
+        return {currentCol, currentRow};
     }
 
     getPathFinder()

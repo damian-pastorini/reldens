@@ -28,11 +28,11 @@ class RoomsReturnPointsModel extends ModelClass
                     to: 'rooms.id'
                 }
             },
-            to_room: {
+            from_room: {
                 relation: ModelClass.HasOneRelation,
                 modelClass: RoomsModel,
                 join: {
-                    from: 'rooms_return_points.to_room_id',
+                    from: 'rooms_return_points.from_room_id',
                     to: 'rooms.id'
                 }
             }

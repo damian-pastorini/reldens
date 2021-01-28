@@ -46,7 +46,7 @@ class UsersManager
         // save user in storage:
         let savedUser = await UsersModel.saveUser(userData);
         // save stats:
-        let statsList = await StatsModel.query();
+        let statsList = await StatsModel.loadAll();
         if(statsList){
             for(let stat of statsList){
                 let statData = {

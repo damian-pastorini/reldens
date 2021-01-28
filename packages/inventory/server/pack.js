@@ -7,6 +7,7 @@
 const { ItemsServer, ItemBase, ItemGroup, ItemsConst } = require('@reldens/items-system');
 const { ModelsManager } = require('@reldens/items-system/lib/server/storage/models-manager');
 const { EventsManagerSingleton, sc } = require('@reldens/utils');
+const { Modifier, ModifierConst } = require('@reldens/modifiers');
 const { PackInterface } = require('../../features/server/pack-interface');
 const { InventoryMessageActions } = require('./message-actions');
 const { ClientWrapper } = require('../../game/server/client-wrapper');
@@ -48,12 +49,15 @@ class InventoryPack extends PackInterface
     async loadItemsFullList(configProcessor)
     {
         // use the inventory models manager to get the items list loaded:
-        let itemsModelsList = await this.inventoryModelsManager.models.item.loadAll();
+        let itemsModelsList = await this.inventoryModelsManager.models.item.loadItemFullData();
         if(itemsModelsList.length){
             let itemsList = {};
             let inventoryClasses = configProcessor.get('server/customClasses/inventory/items');
             for(let itemModel of itemsModelsList){
                 let itemClass = ItemBase;
+                if(itemModel.items_modifiers){
+                    itemModel.modifiers = this.generateItemModifiers(itemModel);
+                }
                 if(sc.hasOwn(inventoryClasses, itemModel.key)){
                     itemClass = inventoryClasses[itemModel.key];
                 }
@@ -61,6 +65,18 @@ class InventoryPack extends PackInterface
             }
             configProcessor.inventory.items = {itemsModels: itemsModelsList, itemsList};
         }
+    }
+
+    generateItemModifiers(itemModel)
+    {
+        let modifiers = {};
+        for(let modifierData of itemModel.items_modifiers){
+            if(modifierData.operation !== ModifierConst.OPS.SET){
+                modifierData.value = Number(modifierData.value);
+            }
+            modifiers[modifierData.id] = new Modifier(modifierData);
+        }
+        return modifiers;
     }
 
     async loadGroupsFullList(configProcessor)
@@ -120,6 +136,11 @@ class InventoryPack extends PackInterface
             let result = false;
             let itemData = room.config.get('inventory/items/itemsList/'+key);
             if(itemData){
+                if(itemData['data'].modifiers){
+                    for(let i of Object.keys(itemData['data'].modifiers)){
+                        itemData['data'].modifiers[i].target = playerSchema;
+                    }
+                }
                 let itemProps = Object.assign({}, itemData['data'], {
                     manager: inventoryServer.manager,
                     item_id: itemData['data'].id,

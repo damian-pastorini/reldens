@@ -109,6 +109,7 @@ class ScenePreloader extends Scene
         // this.load.spritesheet(this.username, 'assets/sprites/'+this.username+'.png', playerSpriteSize);
         this.load.spritesheet(GameConst.IMAGE_PLAYER, 'assets/sprites/player-1.png', playerSpriteSize);
         if(this.gameManager.config.get('client/ui/pointer/show')){
+            // @TODO - BETA.17 - Make pointer sprite data configurable.
             let pointerData = {frameWidth: 32, frameHeight: 32};
             this.load.spritesheet(GameConst.ARROW_DOWN, 'assets/sprites/arrow-w-down.png', pointerData);
         }
