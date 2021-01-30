@@ -39,13 +39,13 @@
         "@colyseus/schema": "^0.5.41",
         "@reldens/items-system": "^0.9.5",
         "@reldens/modifiers": "^0.4.7",
-        "@reldens/skills": "^0.3.1",
+        "@reldens/skills": "^0.3.2",
         "@reldens/storage": "^0.4.1",
         "@reldens/utils": "^0.4.3",
         "bcrypt": "^5.0.0",
         "colyseus": "^0.12.6",
         "colyseus.js": "^0.12.2",
-        "core-js": "^3.8.1",
+        "core-js": "^3.8.3",
         "cors": "^2.8.5",
         "del": "^6.0.0",
         "dotenv": "^8.2.0",
@@ -54,7 +54,7 @@
         "firebase": "^7.24.0",
         "firebaseui": "^4.7.0",
         "jquery": "^3.5.1",
-        "jquery-validation": "^1.19.2",
+        "jquery-validation": "^1.19.3",
         "mustache": "^4.1.0",
         "mysql": "^2.18.1",
         "nodemailer": "^6.4.17",
@@ -66,12 +66,12 @@
     },
     "devDependencies": {
         "babel-eslint": "^10.1.0",
-        "eslint": "^7.12.1",
-        "eslint-config-standard": "^16.0.0",
+        "eslint": "^7.18.0",
+        "eslint-config-standard": "^16.0.2",
         "eslint-plugin-import": "^2.22.1",
         "eslint-plugin-node": "^11.1.0",
         "eslint-plugin-promise": "^4.2.1",
-        "eslint-plugin-standard": "^4.0.2",
-        "sass": "^1.28.0"
+        "eslint-plugin-standard": "^5.0.0",
+        "sass": "^1.32.5"
     }
 }

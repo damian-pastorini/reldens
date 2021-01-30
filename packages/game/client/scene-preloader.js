@@ -101,19 +101,13 @@ class ScenePreloader extends Scene
                 }
             }
         }
-        let playerSpriteSize = {
-            frameWidth: this.gameManager.config.get('client/players/size/width') || 52,
-            frameHeight: this.gameManager.config.get('client/players/size/height') || 71
-        };
-        // @TODO - BETA.17 - F901 - Implement player custom avatar.
-        // this.load.spritesheet(this.username, 'assets/sprites/'+this.username+'.png', playerSpriteSize);
-        this.load.spritesheet(GameConst.IMAGE_PLAYER, 'assets/sprites/player-1.png', playerSpriteSize);
+        this.preloadPlayerDefaultSprite();
         if(this.gameManager.config.get('client/ui/pointer/show')){
             // @TODO - BETA.17 - Make pointer sprite data configurable.
             let pointerData = {frameWidth: 32, frameHeight: 32};
             this.load.spritesheet(GameConst.ARROW_DOWN, 'assets/sprites/arrow-w-down.png', pointerData);
         }
-        // interface assets:
+        // @TODO - BETA.17 - Move everything related to player stats into the users pack or create a new pack.
         this.load.image(GameConst.ICON_STATS, 'assets/icons/book.png');
         this.load.on('fileprogress', this.onFileProgress, this);
         this.load.on('progress', this.onLoadProgress, this);
@@ -221,6 +215,17 @@ class ScenePreloader extends Scene
             uiY = rY ? rY * newHeight / 100 : 0;
         }
         return {uiX, uiY};
+    }
+
+    preloadPlayerDefaultSprite()
+    {
+        let playerSpriteSize = {
+            frameWidth: this.gameManager.config.get('client/players/size/width') || 52,
+            frameHeight: this.gameManager.config.get('client/players/size/height') || 71
+        };
+        // @TODO - BETA.17 - F901 - Implement player custom avatar.
+        let playerFallbackImg = this.gameManager.config.get('client/players/animations/fallbackImage') || 'player-base';
+        this.load.spritesheet(GameConst.IMAGE_PLAYER, 'assets/sprites/' + playerFallbackImg + '.png', playerSpriteSize);
     }
 
     createPlayerAnimations()

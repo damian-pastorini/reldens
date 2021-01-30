@@ -183,6 +183,14 @@ class PlayerEngine
         this.room.send(data);
     }
 
+    getPosition()
+    {
+        return {
+            x: this.players[this.playerId].x,
+            y: this.players[this.playerId].y
+        };
+    }
+
 }
 
 module.exports.PlayerEngine = PlayerEngine;

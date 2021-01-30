@@ -28,7 +28,12 @@ class PathFinder
     findPath(from, to)
     {
         if(this.world.onlyWalkable){
-            let nodeTo = sc.hasOwn(this.grid, 'nodes') ? this.grid.getNodeAt(to[0], to[1]) : false;
+            let nodeTo = false;
+            try {
+                nodeTo = sc.hasOwn(this.grid, 'nodes') ? this.grid.getNodeAt(to[0], to[1]) : false;
+            } catch (err) {
+                // Logger.error('Node not found.');
+            }
             if(!nodeTo || !nodeTo.walkable){
                 return false;
             }

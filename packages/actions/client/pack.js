@@ -6,6 +6,7 @@
 
 const { ReceiverWrapper } = require('./receiver-wrapper');
 const { SkillsUi } = require('./skills-ui');
+const { SkillConst } = require('@reldens/skills');
 const { EventsManagerSingleton, sc } = require('@reldens/utils');
 
 class ActionsPack
@@ -13,47 +14,14 @@ class ActionsPack
 
     constructor()
     {
+        EventsManagerSingleton.on('reldens.preloadUiScene', (uiScene) => {
+            this.onPreloadUiScene(uiScene);
+        });
         EventsManagerSingleton.on('reldens.playersOnAdd', (player, key, previousScene, roomEvents) => {
-            if(key === roomEvents.room.sessionId){
-                if(!roomEvents.gameManager.skills){
-                    // create skills instance only once:
-                    let receiverProps = {
-                        owner: player
-                    };
-                    // @TODO - BETA.17 - Refactor and use a wrapper.
-                    player.getPosition = () => {
-                        return {
-                            x: this.state.x,
-                            y: this.state.y
-                        };
-                    };
-                    // create skills receiver instance:
-                    roomEvents.gameManager.skills = new ReceiverWrapper(receiverProps, roomEvents);
-                }
-                // listen to room messages:
-                roomEvents.room.onMessage((message) => {
-                    roomEvents.gameManager.skills.processMessage(message);
-                });
-            }
+            this.onPlayersOnAdd(key, roomEvents, player);
         });
         EventsManagerSingleton.on('reldens.playersOnAddReady', (player, key, previousScene, roomEvents) => {
-            if(key === roomEvents.room.sessionId){
-                if(roomEvents.gameManager.skills.queueMessages.length){
-                    for(let message of roomEvents.gameManager.skills.queueMessages){
-                        // process queue messages:
-                        roomEvents.gameManager.skills.processMessage(message);
-                    }
-                }
-            }
-        });
-        EventsManagerSingleton.on('reldens.preloadUiScene', (uiScene) => {
-            uiScene.load.html('skillsClassPath', 'assets/features/skills/templates/ui-class-path.html');
-            uiScene.load.html('skillsLevel', 'assets/features/skills/templates/ui-level.html');
-            uiScene.load.html('skillsExperience', 'assets/features/skills/templates/ui-experience.html');
-            uiScene.load.html('skills', 'assets/features/skills/templates/ui-skills.html');
-            uiScene.load.html('skillBox', 'assets/features/skills/templates/ui-skill-box.html');
-            uiScene.load.html('actionBox', 'assets/html/ui-action-box.html');
-            this.loopSkillsAnd('preload', uiScene);
+            this.onPlayersOnAddReady(player, key, roomEvents);
         });
         EventsManagerSingleton.on('reldens.createPreload', (preloadScene) => {
             this.loopSkillsAnd('create', preloadScene);
@@ -64,18 +32,73 @@ class ActionsPack
         });
     }
 
+    onPlayersOnAddReady(player, key, roomEvents){
+        if(key !== roomEvents.room.sessionId){
+            return false;
+        }
+        if(!roomEvents.gameManager.skills){
+            // create skills receiver instance:
+            roomEvents.gameManager.skills = new ReceiverWrapper({owner: player}, roomEvents);
+        }
+        if(!roomEvents.gameManager.skillsQueue.length){
+            return false;
+        }
+        for(let message of roomEvents.gameManager.skillsQueue){
+            // process queue messages:
+            roomEvents.gameManager.skills.processMessage(message);
+        }
+    }
+
+    onPlayersOnAdd(key, roomEvents){
+        if(key !== roomEvents.room.sessionId){
+            return false;
+        }
+        // listen to room messages:
+        roomEvents.room.onMessage((message) => {
+            this.processOrQueueMessage(message, roomEvents.gameManager);
+        });
+    }
+
+    processOrQueueMessage(message, gameManager)
+    {
+        if(message.act.indexOf(SkillConst.ACTIONS_PREF) !== 0){
+            return false;
+        }
+        let currentScene = gameManager.getActiveScene();
+        if(currentScene && currentScene.player){
+            gameManager.skills.processMessage(message);
+        } else {
+            if(!sc.hasOwn(gameManager, 'skillsQueue')){
+                gameManager.skillsQueue = [];
+            }
+            gameManager.skillsQueue.push(message);
+        }
+    }
+
+    onPreloadUiScene(uiScene)
+    {
+        uiScene.load.html('skillsClassPath', 'assets/features/skills/templates/ui-class-path.html');
+        uiScene.load.html('skillsLevel', 'assets/features/skills/templates/ui-level.html');
+        uiScene.load.html('skillsExperience', 'assets/features/skills/templates/ui-experience.html');
+        uiScene.load.html('skills', 'assets/features/skills/templates/ui-skills.html');
+        uiScene.load.html('skillBox', 'assets/features/skills/templates/ui-skill-box.html');
+        uiScene.load.html('actionBox', 'assets/html/ui-action-box.html');
+        this.loopSkillsAnd('preload', uiScene);
+    }
+
     loopSkillsAnd(command, uiScene)
     {
         // preload defaults:
         let animations = uiScene.gameManager.config.get('client/skills/animations');
-        if(animations){
-            for(let i of Object.keys(animations)){
-                let data = animations[i];
-                if(!data.animationData.enabled){
-                    continue;
-                }
-                this[command+'Animation'](data, uiScene);
+        if(!animations) {
+            return false;
+        }
+        for(let i of Object.keys(animations)){
+            let data = animations[i];
+            if(!data.animationData.enabled){
+                continue;
             }
+            this[command+'Animation'](data, uiScene);
         }
     }
 
@@ -93,7 +116,7 @@ class ActionsPack
             if(animDir > 0){
                 // @TODO - BETA.17 - Refactor and implement animDir = 1 (both): up_right, up_left, down_right,
                 //   down_left.
-                if(animDir === 2){
+                if(animDir === 1 || animDir === 2){
                     uiScene.load.spritesheet(
                         this.getAnimationKey(data, 'up'),
                         'assets/custom/actions/sprites/'+data.animationData.img+'_up.png',
@@ -105,7 +128,7 @@ class ActionsPack
                         data.animationData
                     );
                 }
-                if(animDir === 3){
+                if(animDir === 1 || animDir === 3){
                     uiScene.load.spritesheet(
                         this.getAnimationKey(data, 'left'),
                         'assets/custom/actions/sprites/'+data.animationData.img+'_left.png',
@@ -138,11 +161,11 @@ class ActionsPack
                 // @TODO - BETA.17 - Refactor and implement animDir = 1 (both): up_right, up_left, down_right,
                 //   down_left.
                 uiScene.directionalAnimations[this.getAnimationKey(data)] = data.animationData.dir;
-                if(animDir === 2){
+                if(animDir === 1 || animDir === 2){
                     this.createWithDirection(data, uiScene, 'up');
                     this.createWithDirection(data, uiScene, 'down');
                 }
-                if(animDir === 3){
+                if(animDir === 1 || animDir === 3){
                     this.createWithDirection(data, uiScene, 'left');
                     this.createWithDirection(data, uiScene, 'right');
                 }

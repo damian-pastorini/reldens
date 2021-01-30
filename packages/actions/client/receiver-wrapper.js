@@ -18,19 +18,13 @@ class ReceiverWrapper extends Receiver
         super(props);
         this.gameManager = roomEvents.gameManager;
         this.room = roomEvents.room;
-        this.queueMessages = [];
     }
 
     processMessage(message)
     {
         let currentScene = this.gameManager.getActiveScene();
         if(!currentScene || !currentScene.player){
-            // @NOTE: if player still not set and it's a skills message we will process the message after the player
-            // instance was created.
-            if(this.isValidMessage(message)){
-                this.queueMessages.push(message);
-            }
-            return true;
+            return false;
         }
         super.processMessage(message);
         if(message.act.indexOf('_atk') !== -1 || message.act.indexOf('_eff') !== -1){
@@ -137,10 +131,6 @@ class ReceiverWrapper extends Receiver
         this.gameManager.gameDom.updateContent('.experience-container .current-experience', message.data.exp);
         if(message.data.lab){
             this.gameManager.gameDom.updateContent('.class-path-container .class-path-label', message.data.lab);
-        }
-        // @NOTE: level label could override the path label.
-        if(message.data.nl){
-            this.gameManager.gameDom.updateContent('.class-path-container .class-path-label', message.data.nl);
         }
         if(message.data.ne){
             this.gameManager.gameDom.updateContent('.experience-container .next-level-experience', message.data.ne);
