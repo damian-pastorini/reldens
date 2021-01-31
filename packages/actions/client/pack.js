@@ -61,7 +61,12 @@ class ActionsPack
 
     processOrQueueMessage(message, gameManager)
     {
-        if(message.act.indexOf(SkillConst.ACTIONS_PREF) !== 0){
+        if(
+            message.act.indexOf(SkillConst.ACTIONS_PREF) !== 0
+            && message.act.indexOf('_atk') === -1
+            && message.act.indexOf('_eff') === -1
+            && message.act.indexOf('_hit') === -1
+        ){
             return false;
         }
         let currentScene = gameManager.getActiveScene();

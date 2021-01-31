@@ -62,9 +62,10 @@ class EnemyObject extends NpcObject
 
     setupDefaultAction()
     {
+        // @TODO - BETA.17 - Replace by skill reference.
         let skillProps = {
             owner: this,
-            key: 'attack-short',
+            key: 'attackShort',
             affectedProperty: 'stats/hp',
             skillDelay: 600,
             range: 50,
@@ -82,7 +83,7 @@ class EnemyObject extends NpcObject
     {
         let attackBullet = new TypePhysicalAttack({
             owner: this,
-            key: 'attack-bullet',
+            key: 'attackBullet',
             affectedProperty: 'stats/hp',
             skillDelay: 1000,
             range: 250,
