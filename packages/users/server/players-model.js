@@ -40,6 +40,12 @@ class PlayersModel extends ModelClass
         }
     }
 
+    static savePlayer(playerData)
+    {
+        return this.query()
+            .insertGraphAndFetch(playerData);
+    }
+
 }
 
 module.exports.PlayersModel = PlayersModel;

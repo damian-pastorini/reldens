@@ -7,6 +7,7 @@
  */
 
 const { UsersModel } = require('./model');
+const { PlayersModel } = require('./players-model');
 const { PlayersStateModel } = require('./players-state-model');
 const { PlayersStatsModel } = require('./players-stats-model');
 const { StatsModel } = require('./stats-model');
@@ -43,14 +44,33 @@ class UsersManager
 
     async createUser(userData)
     {
-        // save user in storage:
-        let savedUser = await UsersModel.saveUser(userData);
+        return await UsersModel.saveUser(userData);
+    }
+
+    async isNameAvailable(playerName)
+    {
+        let player = await PlayersModel.loadBy('name', playerName);
+        return !!player;
+    }
+
+    async createPlayer(playerData)
+    {
+        let newPlayerModel = await PlayersModel.savePlayer(playerData);
+        if(!newPlayerModel){
+            return false;
+        }
+        await this.generatePlayerStats(newPlayerModel.id);
+        return newPlayerModel;
+    }
+
+    async generatePlayerStats(playerId)
+    {
         // save stats:
         let statsList = await StatsModel.loadAll();
-        if(statsList){
-            for(let stat of statsList){
+        if (statsList){
+            for (let stat of statsList){
                 let statData = {
-                    player_id: savedUser.players[0].id,
+                    player_id: playerId,
                     stat_id: stat['id'],
                     base_value: stat['base_value'],
                     value: stat['base_value']
@@ -58,7 +78,6 @@ class UsersManager
                 await PlayersStatsModel.query().insert(statData);
             }
         }
-        return savedUser;
     }
 
     updateUserLastLogin(username)

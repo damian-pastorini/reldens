@@ -196,8 +196,8 @@ class RoomEvents
                             + this.gameManager.gameEngine.parseTemplate(messageTemplate, {
                                 statLabel: i,
                                 statValue: message.stats[i]+(
-                                    sc.hasOwn(this.gameManager.config.initialStats[i], 'data')
-                                    && sc.getDef(this.gameManager.config.initialStats[i].data, 'showBase', false)
+                                    sc.hasOwn(this.gameManager.config.client.players.initialStats[i], 'data')
+                                    && sc.getDef(this.gameManager.config.client.players.initialStats[i].data, 'showBase', false)
                                     ? ' / '+message.statsBase[i] : ''
                                 )
                             });
@@ -268,7 +268,7 @@ class RoomEvents
 
     async startEngineScene(player, room, previousScene = false)
     {
-        EventsManagerSingleton.emit('reldens.startEngineScene', this, player, room, previousScene);
+        await EventsManagerSingleton.emit('reldens.startEngineScene', this, player, room, previousScene);
         let uiScene = false;
         if(!this.gameEngine.uiScene){
             uiScene = true;
@@ -287,7 +287,7 @@ class RoomEvents
                 objectsAnimationsData: this.sceneData.objectsAnimationsData
             });
             this.gameEngine.scene.add(preloaderName, this.scenePreloader, true);
-            EventsManagerSingleton.emit('reldens.createdPreloaderInstance', this, this.scenePreloader);
+            await EventsManagerSingleton.emit('reldens.createdPreloaderInstance', this, this.scenePreloader);
             let preloader = this.gameEngine.scene.getScene(preloaderName);
             preloader.load.on('complete', async () => {
                 // set ui on first preloader scene:
@@ -309,14 +309,14 @@ class RoomEvents
             let currentScene = this.getActiveScene();
             currentScene.objectsAnimationsData = this.sceneData.objectsAnimationsData;
             this.scenePreloader = this.gameEngine.scene.getScene(preloaderName);
-            EventsManagerSingleton.emit('reldens.createdPreloaderRecurring', this, this.scenePreloader);
+            await EventsManagerSingleton.emit('reldens.createdPreloaderRecurring', this, this.scenePreloader);
             await this.createEngineScene(player, room, previousScene);
         }
     }
 
     async createEngineScene(player, room, previousScene)
     {
-        EventsManagerSingleton.emit('reldens.createEngineScene', player, room, previousScene, this);
+        await EventsManagerSingleton.emit('reldens.createEngineScene', player, room, previousScene, this);
         if(!this.gameManager.room){
             this.gameEngine.scene.start(player.state.scene);
         } else {

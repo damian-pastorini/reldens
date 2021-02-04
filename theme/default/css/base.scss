@@ -15,6 +15,10 @@ body {
     color: $cBlack;
 }
 
+.hidden {
+    display: none;
+}
+
 .wrapper,
 .header,
 .footer,
@@ -116,7 +120,13 @@ body {
 .content {
     height: 86%;
     min-height: 300px;
-    background-color: $cWhite;
+    background-color: $cBlack;
+
+    .forms-container {
+        float: left;
+        background-color: $cWhite;
+    }
+
 }
 
 button,
@@ -126,7 +136,7 @@ input[type="submit"] {
 }
 
 .game-container {
-    background-color: #000;
+    background-color: $cBlack;
 }
 
 .row {
@@ -136,6 +146,13 @@ input[type="submit"] {
     width: 100%;
     margin: 0;
     padding: 0;
+}
+
+.disclaimer {
+    text-align: center;
+    max-width: 80%;
+    margin: 0 auto;
+    padding: 10px 2%;
 }
 
 .col-2 {
@@ -195,6 +212,10 @@ form {
         float: left;
         margin-bottom: 10px;
 
+        &.hidden {
+            display: none;
+        }
+
         label {
             float: left;
             display: block;
@@ -216,6 +237,57 @@ form {
         input[type="text"],
         input[type="password"] {
             width: 50%;
+            max-width: 268px;
+        }
+
+    }
+
+}
+
+#player-selection {
+    background: $cWhite;
+    max-width: 500px;
+    margin: 40px auto 0;
+
+    .selection-forms-container {
+        margin: 0 auto;
+        display: block;
+        width: 100%;
+        background: $cWhite;
+        float: left;
+        padding: 20px;
+
+        form {
+            float: left;
+            width: 100%;
+            display: block;
+
+            &.hidden {
+                display: none;
+            }
+
+            #select-element {
+                display: block;
+                position: relative;
+                float: none;
+                max-width: 400px;
+                margin: 0 auto;
+                border: 1px solid $cLightGrey;
+                padding: 8px;
+                text-align: center;
+            }
+
+            .player_creation_additional_info {
+                display: block;
+                float: left;
+                width: 100%;
+            }
+
+            .center-submit {
+                float: none;
+                margin: 0 auto;
+            }
+
         }
 
     }

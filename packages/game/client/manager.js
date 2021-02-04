@@ -46,6 +46,8 @@ class GameManager
         this.gameDom = new GameDom();
         // firebase:
         this.firebase = new FirebaseConnector(this);
+        // init engine validator:
+        this.canInitEngine = true;
     }
 
     setupClasses(customClasses)
@@ -59,7 +61,7 @@ class GameManager
         // reset the user data in the object in case another form was used before:
         this.userData = {};
         await this.events.emit('reldens.beforeJoinGame', {gameManager: this, formData, isNewUser});
-        if({}.hasOwnProperty.call(formData, 'forgot')){
+        if(sc.hasOwn(formData, 'forgot')){
             this.userData.forgot = 1;
             this.userData.email = formData['email'];
         }
@@ -72,16 +74,29 @@ class GameManager
         this.userData.username = formData['username'];
         this.userData.password = formData['password'];
         // join initial game room, since we return the promise we don't need to catch the error here:
-        let gameRoom = await this.gameClient.joinOrCreate(GameConst.ROOM_GAME, this.userData);
-        await this.events.emit('reldens.beforeJoinGameRoom', gameRoom);
-        gameRoom.onMessage(async (message) => {
+        this.gameRoom = await this.gameClient.joinOrCreate(GameConst.ROOM_GAME, this.userData);
+        await this.events.emit('reldens.beforeJoinGameRoom', this.gameRoom);
+        this.gameRoom.onMessage(async (message) => {
             // only the current client will get this message:
             if(message.act === GameConst.START_GAME){
-                await this.initEngineAndStartGame(message);
+                this.initialGameData = message;
+                await this.beforeStartGame();
                 // @NOTE we leave the game room after the game initialized because at that point the user already
                 // joined the scene room and is pointless to keep this room connected since it doesn't listen for
                 // any package.
-                gameRoom.leave();
+                // this.gameRoom.leave();
+            }
+            if(message.act === GameConst.CREATE_PLAYER_RESULT){
+                if(message.error){
+                    let errorElement = this.gameDom.getElement('.player_create_form .response-error');
+                    errorElement.html(message.message);
+                    errorElement.removeClass('hidden');
+                    return false;
+                }
+                this.initialGameData.player = message.player;
+                let playerSelection = this.gameDom.getElement('#player-selection');
+                playerSelection.addClass('hidden');
+                await this.initEngine();
             }
         });
         // responsive full screen:
@@ -94,7 +109,7 @@ class GameManager
             }
         });
         // @NOTE: we return the gameRoom here to control the login result actions in the index script.
-        return gameRoom;
+        return this.gameRoom;
     }
 
     initializeClient()
@@ -105,38 +120,53 @@ class GameManager
         this.gameClient = new GameClient(serverUrl);
     }
 
-    async initEngineAndStartGame(initialGameData)
+    async beforeStartGame()
     {
-        await this.events.emit('reldens.beforeInitEngineAndStartGame', initialGameData, this);
-        if(!{}.hasOwnProperty.call(initialGameData, 'gameConfig')){
+        await this.events.emit('reldens.beforeInitEngineAndStartGame', this.initialGameData, this);
+        if(!sc.hasOwn(this.initialGameData, 'gameConfig')){
             throw new Error('ERROR - Missing game configuration.');
         }
-        // save original player data:
-        this.playerData = initialGameData.player;
         // apply the initial config to the processor:
-        Object.assign(this.config, initialGameData.gameConfig);
+        Object.assign(this.config, this.initialGameData.gameConfig);
         // features list:
-        await this.features.loadFeatures(initialGameData.features);
+        await this.features.loadFeatures(this.initialGameData.features);
+        await this.events.emit('reldens.beforeCreateEngine', this.initialGameData, this);
+        if(!this.canInitEngine){
+            return false;
+        }
+        return await this.initEngine();
+    }
+
+    async initEngine()
+    {
+        // we don't need the user on the game room anymore:
+        this.gameRoom.leave();
+        // save the selected player data:
+        this.playerData = this.initialGameData.player;
+        this.userData.selectedPlayer = this.initialGameData.player.id;
         // initialize game engine:
-        this.gameEngine = new GameEngine(initialGameData.gameConfig);
+        this.gameEngine = new GameEngine(this.initialGameData.gameConfig);
         // since the user is now registered:
         this.userData.isNewUser = false;
         // first join the features rooms:
         await this.joinFeaturesRooms();
         // create room events manager:
-        let joinedFirstRoom = await this.gameClient.joinOrCreate(initialGameData.player.state.scene, this.userData);
-        if(!joinedFirstRoom){
+        let joinedFirstRoom = await this.gameClient.joinOrCreate(
+            this.initialGameData.player.state.scene,
+            this.userData
+        );
+        if (!joinedFirstRoom) {
             // @NOTE: the errors while trying to join a rooms/scene will always be originated in the
             // server. For these errors we will alert the user and reload the window automatically.
-            alert('ERROR - There was an error while joining the room: '+initialGameData.player.state.scene);
+            alert('ERROR - There was an error while joining the room: ' + this.initialGameData.player.state.scene);
             this.gameDom.getWindow().location.reload();
         }
         await this.events.emit('reldens.joinedRoom', joinedFirstRoom, this);
-        await this.events.emit('reldens.joinedRoom_'+initialGameData.player.state.scene, joinedFirstRoom, this);
+        await this.events.emit('reldens.joinedRoom_' + this.initialGameData.player.state.scene, joinedFirstRoom, this);
         // start listening the new room events:
-        this.activeRoomEvents = this.createRoomEventsInstance(initialGameData.player.state.scene);
+        this.activeRoomEvents = this.createRoomEventsInstance(this.initialGameData.player.state.scene);
         await this.activeRoomEvents.activateRoom(joinedFirstRoom);
-        await this.events.emit('reldens.afterInitEngineAndStartGame', initialGameData, joinedFirstRoom);
+        await this.events.emit('reldens.afterInitEngineAndStartGame', this.initialGameData, joinedFirstRoom);
         return joinedFirstRoom;
     }
 
@@ -149,7 +179,7 @@ class GameManager
     {
         for(let i of Object.keys(this.features.featuresList)){
             let feature = this.features.featuresList[i];
-            if({}.hasOwnProperty.call(feature, 'joinRooms')){
+            if(sc.hasOwn(feature, 'joinRooms')){
                 for(let joinRoomName of feature.joinRooms){
                     let joinedRoom = await this.gameClient.joinOrCreate(joinRoomName, this.userData);
                     if(!joinedRoom){

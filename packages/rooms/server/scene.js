@@ -69,6 +69,10 @@ class RoomScene extends RoomLogin
 
     async onJoin(client, options, authResult)
     {
+        if(sc.hasOwn(options, 'selectedPlayer')){
+            authResult.selectedPlayer = options.selectedPlayer;
+            authResult.player = this.getPlayerById(authResult.players, options.selectedPlayer);
+        }
         // check if user is already logged and disconnect from the previous client:
         let loggedUserFound = false;
         if(this.state.players){
@@ -80,7 +84,7 @@ class RoomScene extends RoomLogin
                     let savedAndRemoved = await this.saveStateAndRemovePlayer(i);
                     if(savedAndRemoved && savedStats){
                         // old player session removed, create it again:
-                        await this.createPlayer(client, authResult);
+                        await this.createPlayerOnScene(client, authResult);
                     }
                     break;
                 }
@@ -88,15 +92,28 @@ class RoomScene extends RoomLogin
         }
         if(!loggedUserFound){
             // player not logged, create it:
-            await this.createPlayer(client, authResult);
+            await this.createPlayerOnScene(client, authResult);
         }
     }
 
-    async createPlayer(client, authResult)
+
+    getPlayerById(players, playerId)
+    {
+        let result = false;
+        for(let player of players){
+            if(player.id === playerId){
+                result = player;
+                break;
+            }
+        }
+        return result;
+    }
+
+    async createPlayerOnScene(client, authResult)
     {
         await EventsManagerSingleton.emit('reldens.createPlayerBefore', client, authResult, this);
         // player creation:
-        let currentPlayer = this.state.createPlayer(client.sessionId, authResult);
+        let currentPlayer = this.state.createPlayerSchema(authResult, client.sessionId);
         // @TODO - BETA.17 - Create player body using a new pack in the world package.
         // create body for server physics and assign the body to the player:
         currentPlayer.physicalBody = this.roomWorld.createPlayerBody({
@@ -106,6 +123,7 @@ class RoomScene extends RoomLogin
             bodyState: currentPlayer.state
         });
         await EventsManagerSingleton.emit('reldens.createPlayerAfter', client, authResult, currentPlayer, this);
+        return currentPlayer;
     }
 
     // eslint-disable-next-line no-unused-vars
@@ -311,7 +329,7 @@ class RoomScene extends RoomLogin
         //   ones that changed.
         // save the stats:
         for(let i of Object.keys(target.stats)){
-            let statId = this.config.server.players.initialStats[i].id;
+            let statId = this.config.client.players.initialStats[i].id;
             // we can use a single update query so we can easily update both value and base_value:
             let statPatch = {
                 value: target.stats[i],

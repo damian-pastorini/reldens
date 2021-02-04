@@ -45,6 +45,11 @@ class GameDom
         $(querySelector).remove();
     }
 
+    createElement(type)
+    {
+        return document.createElement(type);
+    }
+
     activeElement()
     {
         return document.activeElement;

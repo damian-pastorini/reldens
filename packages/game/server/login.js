@@ -8,7 +8,7 @@
 
 const path = require('path');
 const { PasswordManager } = require('./password-manager');
-const { ErrorManager, EventsManagerSingleton } = require('@reldens/utils');
+const { EventsManagerSingleton, ErrorManager, sc } = require('@reldens/utils');
 
 class LoginManager
 {
@@ -25,7 +25,7 @@ class LoginManager
 
     async processUserRequest(userData = false)
     {
-        if({}.hasOwnProperty.call(userData, 'forgot')){
+        if(sc.hasOwn(userData, 'forgot')){
             return await this.processForgotPassword(userData);
         }
         if(!this.isValidData(userData)){
@@ -51,8 +51,8 @@ class LoginManager
     isValidData(userData)
     {
         return !(!userData
-            || !{}.hasOwnProperty.call(userData, 'username')
-            || !{}.hasOwnProperty.call(userData, 'password')
+            || !sc.hasOwn(userData, 'username')
+            || !sc.hasOwn(userData, 'password')
             || !userData.username.length
             || !userData.password.length
         );
@@ -66,9 +66,14 @@ class LoginManager
             return {error: 'User already exists or invalid user data.'};
         } else {
             try {
+                // set the scene on the user players:
+                if(user.players){
+                    for(let player of user.players){
+                        let roomNameById = await this.getRoomNameById(player.state.room_id);
+                        player.state.scene = roomNameById;
+                    }
+                }
                 // if everything is good then just return the user:
-                let player = user.players[0];
-                player.state.scene = await this.getRoomNameById(player.state.room_id);
                 return {user: user};
             } catch (err) {
                 return {error: err};
@@ -105,15 +110,17 @@ class LoginManager
                     username: userData.username,
                     password: this.pwManager.encryptPassword(userData.password),
                     role_id: this.config.server.players.initialUser.role_id,
-                    status: this.config.server.players.initialUser.status,
+                    status: this.config.server.players.initialUser.status
+                    /*
                     players: [{
                         name: userData.username,
                         // @NOTE: new users will always use the same initial state and it is part of this package.
                         state: this.config.server.players.initialState
                     }]
+                    */
                 });
-                let configRoomId = this.config.server.players.initialState.room_id;
-                newUser.players[0].state.scene = await this.getRoomNameById(configRoomId);
+                // let configRoomId = this.config.server.players.initialState.room_id;
+                // newUser.players[0].state.scene = await this.getRoomNameById(configRoomId);
                 await EventsManagerSingleton.emit('reldens.createNewUserAfter', newUser, this);
                 return {user: newUser};
             } catch (err) {
@@ -121,6 +128,29 @@ class LoginManager
             }
         } else {
             return {error: 'Unable to authenticate the user.'};
+        }
+    }
+
+    async createNewPlayer(loginData)
+    {
+        let playerData = {
+            name: loginData['new_player_name'],
+            user_id: loginData.user_id,
+            state: this.config.server.players.initialState
+        };
+        await EventsManagerSingleton.emit('reldens.createNewPlayerBefore', loginData, playerData, this);
+        let isNameAvailable = await this.usersManager.isNameAvailable(playerData.name);
+        if(!isNameAvailable){
+            return {error: true, message: 'The player name is not available, please choose another name.'};
+        }
+        try {
+            let player = await this.usersManager.createPlayer(playerData);
+            let configRoomId = this.config.server.players.initialState.room_id;
+            player.state.scene = await this.getRoomNameById(configRoomId);
+            await EventsManagerSingleton.emit('reldens.createdNewPlayer', player, loginData, this);
+            return {error: false, player};
+        } catch (err) {
+            return {error: true, message: 'There was an error creating your player, please try again.'};
         }
     }
 
@@ -135,7 +165,7 @@ class LoginManager
 
     async processForgotPassword(userData)
     {
-        if(!{}.hasOwnProperty.call(userData, 'email')){
+        if(!sc.hasOwn(userData, 'email')){
             return {error: 'Please complete your email.'};
         }
         let user = await this.usersManager.loadUserByEmail(userData.email);

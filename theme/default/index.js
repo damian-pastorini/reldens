@@ -128,7 +128,7 @@ $(document).ready(function($){
             $('.loading-container').hide();
             $('.footer').hide();
             $('.forms-container').detach();
-            $('.game-container').show();
+            $('.game-container').removeClass('hidden');
             $('.full-screen-btn').show();
             $body.css('background', '#000000');
             $body.css('overflow', 'hidden');

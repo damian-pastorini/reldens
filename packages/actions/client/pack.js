@@ -17,6 +17,12 @@ class ActionsPack
         EventsManagerSingleton.on('reldens.preloadUiScene', (uiScene) => {
             this.onPreloadUiScene(uiScene);
         });
+        EventsManagerSingleton.on('reldens.beforeCreateEngine', (initialGameData, gameManager) => {
+            let playersConfig = initialGameData.gameConfig.client.players;
+            if(playersConfig.multiplePlayers && playersConfig.multiplePlayers.enabled && initialGameData.classesData){
+                this.populateClassesSelector(initialGameData.classesData, gameManager);
+            }
+        });
         EventsManagerSingleton.on('reldens.playersOnAdd', (player, key, previousScene, roomEvents) => {
             this.onPlayersOnAdd(key, roomEvents, player);
         });
@@ -32,7 +38,31 @@ class ActionsPack
         });
     }
 
-    onPlayersOnAddReady(player, key, roomEvents){
+    populateClassesSelector(classesData, gameManager)
+    {
+        let playerAdditional = gameManager.gameDom.getElement('.player_creation_additional_info');
+        if(playerAdditional){
+            let div = gameManager.gameDom.createElement('div');
+            div.id = 'class-path-selector-box';
+            div.classList.add('input-box');
+            let label = gameManager.gameDom.createElement('label');
+            label.for = 'class-path-select';
+            label.innerText = 'Select Your Class-Path';
+            div.append(label);
+            let select = gameManager.gameDom.createElement('select');
+            select.id = 'class-path-select';
+            select.name = 'class_path_select';
+            for(let id of Object.keys(classesData)){
+                let option = new Option(classesData[id].label, id);
+                select.append(option);
+            }
+            div.append(select);
+            playerAdditional.append(div);
+        }
+    }
+
+    onPlayersOnAddReady(player, key, roomEvents)
+    {
         if(key !== roomEvents.room.sessionId){
             return false;
         }
@@ -49,7 +79,8 @@ class ActionsPack
         }
     }
 
-    onPlayersOnAdd(key, roomEvents){
+    onPlayersOnAdd(key, roomEvents)
+    {
         if(key !== roomEvents.room.sessionId){
             return false;
         }

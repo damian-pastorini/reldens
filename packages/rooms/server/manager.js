@@ -41,7 +41,7 @@ class RoomsManager
         // define extra rooms (if any, for example features rooms):
         if(this.defineExtraRooms){
             for(let roomData of this.defineExtraRooms){
-                this.defineRoom(gameServer, roomData.roomName, roomData.room, props, globalMessageActions);
+                await this.defineRoom(gameServer, roomData.roomName, roomData.room, props, globalMessageActions);
                 counter++;
                 Logger.info(`Loaded extra room: ${roomData.roomName}`);
             }

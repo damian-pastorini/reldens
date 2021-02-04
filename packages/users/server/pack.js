@@ -19,8 +19,8 @@ class UsersPack extends PackInterface
         EventsManagerSingleton.on('reldens.serverReady', async (event) => {
             await this.onServerReady(event);
         });
-        EventsManagerSingleton.on('reldens.createPlayerBefore', async (client, authResult, currentPlayer, room) => {
-            await this.onCreatePlayerBefore(client, authResult, currentPlayer, room);
+        EventsManagerSingleton.on('reldens.createPlayerAfter', async (client, authResult, currentPlayer, room) => {
+            await this.onCreatePlayerAfter(client, authResult, currentPlayer, room);
         });
     }
 
@@ -30,9 +30,12 @@ class UsersPack extends PackInterface
         if(!sc.hasOwn(configProcessor.server, 'players')){
             configProcessor.server.players = {};
         }
+        if(!sc.hasOwn(configProcessor.client, 'players')){
+            configProcessor.client.players = {};
+        }
         configProcessor.server.players.initialState = InitialState;
         configProcessor.server.players.initialUser = InitialUser;
-        if(sc.hasOwn(configProcessor.server.players, 'initialStats')){
+        if(sc.hasOwn(configProcessor.client.players, 'initialStats')){
             return true;
         }
         this.stats = {};
@@ -45,17 +48,16 @@ class UsersPack extends PackInterface
                 this.statsByKey[stat.key] = stat;
             }
         }
-        configProcessor.server.players.initialStats = this.statsByKey;
+        configProcessor.client.players.initialStats = this.statsByKey;
     }
 
     // eslint-disable-next-line no-unused-vars
-    async onCreatePlayerBefore(client, authResult, room)
+    async onCreatePlayerAfter(client, authResult, currentPlayer, room)
     {
         // @TODO - BETA.17 - Index [0] is temporal since for now we only have one player by user.
-        let player = authResult.players[0];
-        let {stats, statsBase} = await this.processStatsData('playerStats', player.id);
-        player.stats = stats;
-        player.statsBase = statsBase;
+        let {stats, statsBase} = await this.processStatsData('playerStats', currentPlayer.player_id);
+        currentPlayer.stats = stats;
+        currentPlayer.statsBase = statsBase;
     }
 
     async processStatsData(model, playerId)

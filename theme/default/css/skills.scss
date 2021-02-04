@@ -1,3 +1,14 @@
+#class-path-select {
+    width: 54%;
+    max-width: 268px;
+    float: right;
+    display: block;
+    position: relative;
+    border: 1px solid $cLightGrey;
+    padding: 8px 1%;
+    margin: 0;
+}
+
 .class-path-container,
 .level-container,
 .experience-container {

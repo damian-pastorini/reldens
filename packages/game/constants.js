@@ -10,6 +10,8 @@
 // constants:
 module.exports.GameConst = {
     START_GAME: 's',
+    CREATE_PLAYER: 'cp',
+    CREATE_PLAYER_RESULT: 'cps',
     CHANGED_SCENE: 'cs',
     RECONNECT: 'r',
     ROOM_GAME: 'room_game',

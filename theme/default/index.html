@@ -22,6 +22,12 @@
         </div>
         <div class="content">
             <div class="forms-container">
+                <div class="row">
+                    <div class="disclaimer">
+                        Disclaimer: Reldens is not just a game, is a platform to create games.
+                        <br/>This is a demo to show how many features are available on the platform.
+                    </div>
+                </div>
                 <div class="col-2 col-left">
                     <div class="row row-1">
                         <!-- login form -->
@@ -51,11 +57,6 @@
                                 <label for="username">Username</label>
                                 <input type="text" name="firebase_username" id="firebase_username" class="required"/>
                             </div>
-                            <!--
-                            <div class="input-box">
-                                <input type="submit" value="Show Login Options"/>
-                            </div>
-                            -->
                             <div class="input-box response-error" style="display:none;">Login error, please try again.</div>
                         </form>
                         <div class="firebase-container">
@@ -116,7 +117,36 @@
                     </div>
                 </div>
             </div>
-            <div class="game-container" style="display:none;">
+            <div id="player-selection" class="hidden">
+                <div class="selection-forms-container">
+                    <form name="player_selector_form" id="player_selector_form" class="player_selector_form hidden" action="#" method="post">
+                        <h3 class="form-title">Select Player</h3>
+                        <div class="input-box">
+                            <select class="input-box" id="select-element"></select>
+                        </div>
+                        <div class="player_selection_additional_info"></div>
+                        <div class="input-box">
+                            <input type="submit" value="Start" class="center-submit"/>
+                        </div>
+                    </form>
+                    <form name="player_create_form" id="player_create_form" class="player_create_form" action="#" method="post">
+                        <h3 class="form-title">Create Player</h3>
+                        <div class="input-box">
+                            <label for="new_player_name">Player Name</label>
+                            <input type="text" name="new_player_name" id="new_player_name" class="required"/>
+                        </div>
+                        <div class="player_creation_additional_info"></div>
+                        <div class="input-box">
+                            <input type="submit" value="Create & Start"/>
+                        </div>
+                        <div class="loading-container hidden">
+                            <img src="/assets/web/loading.gif" alt="Loading..."/>
+                        </div>
+                        <div class="input-box response-error hidden">There was an error.</div>
+                    </form>
+                </div>
+            </div>
+            <div class="game-container hidden">
                 <div id="reldens"></div>
             </div>
         </div>

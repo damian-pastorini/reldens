@@ -8,6 +8,11 @@ SET FOREIGN_KEY_CHECKS = 0;
 
 INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'players/animations/fallbackImage', 'player-base', 't');
 UPDATE `config` SET `value`='' WHERE  `path`= 'ui/controls/defaultActionKey';
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'players/multiplePlayers/enabled', '1', 'b');
+
+# Multiple players:
+
+ALTER TABLE `players` ADD UNIQUE INDEX `name` (`name`);
 
 # Update skills system:
 
