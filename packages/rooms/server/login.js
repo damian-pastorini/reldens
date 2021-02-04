@@ -40,8 +40,21 @@ class RoomLogin extends Room
         */
         if(sc.hasOwn(options, 'selectedPlayer')){
             loginResult.selectedPlayer = options.selectedPlayer;
+            loginResult.user.player = this.getPlayerById(loginResult.user.players, options.selectedPlayer);
         }
         return loginResult.user;
+    }
+
+    getPlayerById(players, playerId)
+    {
+        let result = false;
+        for(let player of players){
+            if(player.id === playerId){
+                result = player;
+                break;
+            }
+        }
+        return result;
     }
 
     validateRoom(playerRoomName)

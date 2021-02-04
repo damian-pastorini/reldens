@@ -96,7 +96,6 @@ class RoomScene extends RoomLogin
         }
     }
 
-
     getPlayerById(players, playerId)
     {
         let result = false;
