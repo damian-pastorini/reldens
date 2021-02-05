@@ -37,13 +37,13 @@ INSERT INTO `skills_class_path_level_skills` (`class_path_id`, `level_key`, `ski
 
 ALTER TABLE `skills_levels` DROP INDEX `key`, ADD UNIQUE INDEX `key_level_set_id` (`key`, `level_set_id`);
 
-INSERT INTO `reldens`.`skills_levels` (`key`, `label`, `required_experience`, `level_set_id`) VALUES ('1', '1', '0', '2');
-INSERT INTO `reldens`.`skills_levels` (`key`, `label`, `required_experience`, `level_set_id`) VALUES ('1', '1', '0', '3');
-INSERT INTO `reldens`.`skills_levels` (`key`, `label`, `required_experience`, `level_set_id`) VALUES ('1', '1', '0', '4');
+INSERT INTO `skills_levels` (`key`, `label`, `required_experience`, `level_set_id`) VALUES ('1', '1', '0', '2');
+INSERT INTO `skills_levels` (`key`, `label`, `required_experience`, `level_set_id`) VALUES ('1', '1', '0', '3');
+INSERT INTO `skills_levels` (`key`, `label`, `required_experience`, `level_set_id`) VALUES ('1', '1', '0', '4');
 
-INSERT INTO `reldens`.`skills_levels` (`key`, `label`, `required_experience`, `level_set_id`) VALUES ('4', '4', '200', '2');
-INSERT INTO `reldens`.`skills_levels` (`key`, `label`, `required_experience`, `level_set_id`) VALUES ('4', '4', '200', '3');
-INSERT INTO `reldens`.`skills_levels` (`key`, `label`, `required_experience`, `level_set_id`) VALUES ('4', '4', '200', '4');
+INSERT INTO `skills_levels` (`key`, `label`, `required_experience`, `level_set_id`) VALUES ('4', '4', '200', '2');
+INSERT INTO `skills_levels` (`key`, `label`, `required_experience`, `level_set_id`) VALUES ('4', '4', '200', '3');
+INSERT INTO `skills_levels` (`key`, `label`, `required_experience`, `level_set_id`) VALUES ('4', '4', '200', '4');
 
 ALTER TABLE `skills_class_path_level_skills`
     CHANGE COLUMN `level_key` `level_id` INT(11) UNSIGNED NOT NULL AFTER `class_path_id`,
@@ -54,7 +54,7 @@ DELETE FROM skills_class_path_level_skills;
 DELETE FROM skills_class_path_level_labels;
 
 ALTER TABLE `skills_class_path_level_skills`
-    ADD CONSTRAINT `FK_skills_class_path_level_skills_skills_levels` FOREIGN KEY (`level_id`) REFERENCES `skills_levels` (`id`) ON UPDATE CASCADE;
+    ADD CONSTRAINT `FK_skills_class_path_level_skills_skills_levels_id` FOREIGN KEY (`level_id`) REFERENCES `skills_levels` (`id`) ON UPDATE CASCADE;
 
 ALTER TABLE `skills_class_path_level_labels`
     CHANGE COLUMN `level_key` `level_id` INT(11) UNSIGNED NOT NULL AFTER `class_path_id`,
