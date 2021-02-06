@@ -35,7 +35,7 @@ class UsersPack
 
     onPlayerStatsUpdateAfter(roomEvents)
     {
-        // @TODO - BETA.17 - Make optional display other players lifeBar.
+        // @TODO - BETA - Make optional display other players lifeBar.
         if(this.lifeBarUi){
             return;
         }

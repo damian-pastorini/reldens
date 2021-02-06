@@ -32,7 +32,7 @@ class TypePhysicalAttack extends PhysicalAttack
         let notTheBullet = bulletsCheck[0].key === 'bodyA' ? 'bodyB' : 'bodyA';
         // none bullets or both bullets:
         if(bulletsCheck.length !== 1){
-            // @TODO - BETA.17 - Implement bullets bodies without collisions between each other.
+            // @TODO - BETA - Implement bullets bodies without collisions between each other.
             return false;
         }
         // get and validate defender which could be a player or an object:
@@ -90,7 +90,7 @@ class TypePhysicalAttack extends PhysicalAttack
     executeBullets(props)
     {
         let bulletsCheck = [];
-        // @TODO - BETA.17 - Replace all the defaults by constants.
+        // @TODO - BETA - Replace all the defaults by constants.
         // both objects could be bullets, so remove them is needed and broadcast the hit:
         if(props.bodyA.isBullet){
             this.removeBullet(props.bodyA);

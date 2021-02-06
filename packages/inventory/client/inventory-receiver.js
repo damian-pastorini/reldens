@@ -16,7 +16,7 @@ class InventoryReceiver extends Receiver
 
     onExecuting(message)
     {
-        // @TODO - BETA.17 - Improve, split in several classes, methods and functionalities.
+        // @TODO - BETA - Improve, split in several classes, methods and functionalities.
         let item = message.item;
         if(!sc.hasOwn(item, 'animationData')){
             return false;

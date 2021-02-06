@@ -57,7 +57,7 @@ class P2world extends World
      */
     async createWorldContent(mapData)
     {
-        // @TODO - BETA.17 - Analyze and implement blocks groups, for example, all simple collision blocks could be
+        // @TODO - BETA - Analyze and implement blocks groups, for example, all simple collision blocks could be
         //   grouped and use a single big block to avoid the overload number of small blocks which now impacts in the
         //   consumed resources.
         // get scene change points:
@@ -267,7 +267,7 @@ class P2world extends World
     {
         let boxShape = new Box({width: playerData.width, height: playerData.height});
         boxShape.collisionGroup = GameConst.COL_PLAYER;
-        // @TODO - BETA.17 - Players collision will be configurable, for now when collisions are active players can
+        // @TODO - BETA - Players collision will be configurable, for now when collisions are active players can
         //   push players.
         boxShape.collisionMask = GameConst.COL_ENEMY | GameConst.COL_GROUND | GameConst.COL_PLAYER;
         let boxBody = new PhysicalBody({

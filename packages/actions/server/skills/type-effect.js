@@ -22,7 +22,7 @@ class TypeEffect extends Effect
     async runSkillLogic()
     {
         if(this.room){
-            // @TODO - BETA.17 - Replace all the defaults by constants.
+            // @TODO - BETA - Replace all the defaults by constants.
             let skillAction = this.key+'_eff';
             this.room.broadcast({
                 act: skillAction,

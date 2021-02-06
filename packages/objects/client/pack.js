@@ -35,7 +35,7 @@ class ObjectsPack
     listenMessages(room, gameManager)
     {
         room.onMessage((message) => {
-            // @TODO - BETA.17 - Use object types, this will change with the Colyseus upgrade.
+            // @TODO - BETA - Use object types, this will change with the Colyseus upgrade.
             if(message.act === ObjectsConst.OBJECT_ANIMATION || message.act === ObjectsConst.TYPE_ANIMATION){
                 let currentScene = gameManager.activeRoomEvents.getActiveScene();
                 if(sc.hasOwn(currentScene.objectsAnimations, message.key)){
@@ -43,7 +43,7 @@ class ObjectsPack
                 }
             }
             if(message.act === ActionsConst.BATTLE_ENDED){
-                // @TODO - BETA.17 - Replace all defaults by constants.
+                // @TODO - BETA - Replace all defaults by constants.
                 let deathKey = sc.hasOwn(gameManager.config.client.skills.animations, message.k+'_death') ?
                     message.k+'_death' : 'default_death';
                 let currentScene = gameManager.activeRoomEvents.getActiveScene();

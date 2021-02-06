@@ -17,7 +17,7 @@ class InventoryPack extends PackInterface
 
     setupPack()
     {
-        // @TODO - BETA.17 - Refactor pack to extract the models and classes generation to the external packages.
+        // @TODO - BETA - Refactor pack to extract the models and classes generation to the external packages.
         this.inventoryModelsManager = new ModelsManager();
         EventsManagerSingleton.on('reldens.serverReady', async (event) => {
             let configProcessor = event.serverManager.configManager.processor;

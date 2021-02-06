@@ -22,7 +22,7 @@ class TypeAttack extends Attack
     async runSkillLogic()
     {
         if(this.room){
-            // @TODO - BETA.17 - Replace all the defaults by constants.
+            // @TODO - BETA - Replace all the defaults by constants.
             let skillAction = this.key+'_atk';
             this.room.broadcast({
                 act: skillAction,

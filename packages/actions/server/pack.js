@@ -86,7 +86,7 @@ class ActionsPack extends PackInterface
                 if(!classPathCollection){
                     continue;
                 }
-                // @TODO - BETA.17 - Temporal index[0] for a single class path by player.
+                // @TODO - BETA - Temporal index[0] for a single class path by player.
                 let classPath = classPathCollection[0];
                 player.additionalLabel = ' - LvL '+classPath.currentLevel
                     +' - '+classPath.owner_full_class_path.label;
@@ -193,7 +193,7 @@ class ActionsPack extends PackInterface
 
     prepareExtraData(params)
     {
-        // @TODO - BETA.17 - Refactor and replace by constants.
+        // @TODO - BETA - Refactor and replace by constants.
         let extraData = {};
         if(sc.hasOwn(params, 'target')){
             if(sc.hasOwn(params.target, 'uid')){

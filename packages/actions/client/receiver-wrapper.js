@@ -52,13 +52,13 @@ class ReceiverWrapper extends Receiver
                     targetType = 'o';
                 }
             }
-            // @TODO - BETA.17 - Refactor to use a single play animation method and make sure the animation is valid.
+            // @TODO - BETA - Refactor to use a single play animation method and make sure the animation is valid.
             let actAnimKey = sc.hasOwn(this.gameManager.config.client.skills.animations, animKey)
                 ? animKey : 'default'+actKey;
             if(ownerSprite && currentScene.getAnimationByKey(actAnimKey)){
                 let ownerAnim = currentScene.physics.add.sprite(ownerSprite.x, ownerSprite.y, actAnimKey);
                 ownerAnim.setDepth(200000);
-                // @TODO - BETA.17 - Refactor and implement animDir = 1 (both): up_right, up_left, down_right,
+                // @TODO - BETA - Refactor and implement animDir = 1 (both): up_right, up_left, down_right,
                 //   down_left.
                 let playDir = '';
                 if(sc.hasOwn(this.gameManager.gameEngine.uiScene.directionalAnimations, actAnimKey)){
@@ -126,7 +126,7 @@ class ReceiverWrapper extends Receiver
 
     updateLevelAndExperience(message)
     {
-        // @TODO - BETA.17 - Make all messages and classes configurable.
+        // @TODO - BETA - Make all messages and classes configurable.
         this.gameManager.gameDom.updateContent('.level-container .level-label', 'Level '+message.data.lvl);
         this.gameManager.gameDom.updateContent('.experience-container .current-experience', message.data.exp);
         if(message.data.lab){

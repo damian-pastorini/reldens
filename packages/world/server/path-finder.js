@@ -49,7 +49,7 @@ class PathFinder
             if(from[1] < to[1]){
                 newTo[1] = -1;
             }
-            // @TODO - BETA.17 - Improve how to check the closest nodes.
+            // @TODO - BETA - Improve how to check the closest nodes.
             // check all closest nodes:
             let worldW = this.world.mapJson.width;
             let worldH = this.world.mapJson.height;

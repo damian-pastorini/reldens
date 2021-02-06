@@ -51,7 +51,7 @@ class ChatPack
                 message: message[ChatConst.CHAT_MESSAGE]
             });
             readPanel.innerHTML += output;
-            // @TODO - BETA.17 - Replace all the in-code styles by classes, do this refactor while replacing jQuery.
+            // @TODO - BETA - Replace all the in-code styles by classes, do this refactor while replacing jQuery.
             if(uiChat.getChildByProperty('id', 'chat-ui').style.display === 'block'){
                 readPanel.scrollTo(0, readPanel.scrollHeight);
             } else {

@@ -22,7 +22,7 @@ class EnemyObject extends NpcObject
     {
         super(props);
         this.hasState = true;
-        // @TODO - BETA.17 - Remove from config and make enemy stats load dynamically (passed on props from storage).
+        // @TODO - BETA - Remove from config and make enemy stats load dynamically (passed on props from storage).
         let configStats = this.config.get('server/enemies/initialStats');
         this.initialStats = Object.assign({}, configStats);
         this.stats = Object.assign({}, configStats);
@@ -50,7 +50,7 @@ class EnemyObject extends NpcObject
         // enemy created, setting broadcastKey:
         this.broadcastKey = this.client_key;
         this.battle.setTargetObject(this);
-        // @TODO - BETA.17 - Load enemy skills from storage and implement here.
+        // @TODO - BETA - Load enemy skills from storage and implement here.
         this.setupDefaultAction();
         if(this.config.get('server/enemies/defaultAttacks/attackBullet')){
             this.setupPhysicalAction();
@@ -62,7 +62,7 @@ class EnemyObject extends NpcObject
 
     setupDefaultAction()
     {
-        // @TODO - BETA.17 - Replace by skill reference.
+        // @TODO - BETA - Replace by skill reference.
         let skillProps = {
             owner: this,
             key: 'attackShort',

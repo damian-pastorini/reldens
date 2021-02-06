@@ -14,7 +14,7 @@ class Pvp extends Battle
 
     async runBattle(player, target, room)
     {
-        // @TODO - BETA.17 - Make PvP available by configuration.
+        // @TODO - BETA - Make PvP available by configuration.
         // can't fight with yourself:
         if(player.sessionId === target.sessionId){
             await this.executeAction(player, target);
@@ -39,7 +39,7 @@ class Pvp extends Battle
             Logger.error(['Actions not defined for this player.', 'ID:', playerSchema.player_id]);
             return false;
         }
-        // @TODO - BETA.17 - Move self target validation to skills npm package.
+        // @TODO - BETA - Move self target validation to skills npm package.
         if(!currentAction.allowSelfTarget){
             return false;
         }

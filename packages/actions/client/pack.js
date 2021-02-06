@@ -166,7 +166,7 @@ class ActionsPack
 
     preloadAnimation(data, uiScene)
     {
-        // @TODO - BETA.17 - Remove the hardcoded file extensions.
+        // @TODO - BETA - Remove the hardcoded file extensions.
         // @NOTE: here we use have two keys, the animation key and the animationData.img, this is because we could have
         // a single sprite with multiple attacks, and use the start and end frame to run the required one.
         if(sc.hasOwn(data.animationData, ['type', 'img']) && data.animationData.type === 'spritesheet'){
@@ -176,7 +176,7 @@ class ActionsPack
             // - 3: left/right
             let animDir = sc.getDef(data.animationData, 'dir', 0);
             if(animDir > 0){
-                // @TODO - BETA.17 - Refactor and implement animDir = 1 (both): up_right, up_left, down_right,
+                // @TODO - BETA - Refactor and implement animDir = 1 (both): up_right, up_left, down_right,
                 //   down_left.
                 if(animDir === 1 || animDir === 2){
                     uiScene.load.spritesheet(
@@ -220,7 +220,7 @@ class ActionsPack
         if(sc.hasOwn(data.animationData, ['type', 'img']) && data.animationData.type === 'spritesheet'){
             let animDir = sc.getDef(data.animationData, 'dir', 0);
             if(animDir > 0){
-                // @TODO - BETA.17 - Refactor and implement animDir = 1 (both): up_right, up_left, down_right,
+                // @TODO - BETA - Refactor and implement animDir = 1 (both): up_right, up_left, down_right,
                 //   down_left.
                 uiScene.directionalAnimations[this.getAnimationKey(data)] = data.animationData.dir;
                 if(animDir === 1 || animDir === 2){

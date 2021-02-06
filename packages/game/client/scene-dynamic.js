@@ -40,7 +40,7 @@ class SceneDynamic extends Scene
     create()
     {
         EventsManagerSingleton.emit('reldens.beforeSceneDynamicCreate', this);
-        // @TODO - BETA.17 - Controllers will be part of the configuration in the database.
+        // @TODO - BETA - Controllers will be part of the configuration in the database.
         this.keyLeft = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.LEFT);
         this.keyA = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.A);
         this.keyRight = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.RIGHT);
@@ -70,7 +70,7 @@ class SceneDynamic extends Scene
             }
         });
         this.input.keyboard.on('keydown', (event) => {
-            // @TODO - BETA.17 - Make configurable the keys related to the actions and skills.
+            // @TODO - BETA - Make configurable the keys related to the actions and skills.
             // keyCode = 32 > spacebar
             if(event.keyCode === 32 && !this.gameManager.gameDom.insideInput()){
                 this.player.runActions();
@@ -82,7 +82,7 @@ class SceneDynamic extends Scene
         });
         this.map = this.add.tilemap(this.params.roomMap);
         this.input.on('pointerdown', (pointer, currentlyOver) => {
-            // @TODO - BETA.17 - Temporal avoid double actions, if you target something you will not be moved to the
+            // @TODO - BETA - Temporal avoid double actions, if you target something you will not be moved to the
             //   pointer, in a future release this will be configurable so you can walk to objects and they get
             //   activated, for example, click on and NPC, automatically walk close and automatically get a dialog
             //   opened.
@@ -132,7 +132,7 @@ class SceneDynamic extends Scene
             return true;
         }
         if(this.transition === false && !this.gameManager.isChangingScene){
-            // @TODO - BETA.17 - Controllers will be part of the configuration in the database.
+            // @TODO - BETA - Controllers will be part of the configuration in the database.
             if(this.keyLeft.isDown || this.keyA.isDown){
                 this.player.left();
             } else if(this.keyRight.isDown || this.keyD.isDown){
@@ -223,7 +223,7 @@ class SceneDynamic extends Scene
         if(this.arrowSprite){
             this.arrowSprite.destroy();
         }
-        // @TODO - BETA.17 - Make pointer sprite data configurable. Here the -16 is half of the sprite height.
+        // @TODO - BETA - Make pointer sprite data configurable. Here the -16 is half of the sprite height.
         this.arrowSprite = this.physics.add.sprite(pointer.worldX, pointer.worldY - 16, GameConst.ARROW_DOWN);
         this.arrowSprite.setDepth(2000000);
         this.arrowSprite.anims.play(GameConst.ARROW_DOWN, true).on('animationcomplete', () => {

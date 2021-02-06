@@ -103,7 +103,7 @@ class AnimationEngine
                 if(ev.downElement.nodeName !== 'CANVAS'){
                     return false;
                 }
-                // @TODO - BETA.17 - CHECK - TempId is a temporal fix for multiple objects case.
+                // @TODO - BETA - CHECK - TempId is a temporal fix for multiple objects case.
                 let tempId = (this.key === this.asset_key) ? this.id : this.key;
                 let dataSend = {
                     act: ObjectsConst.OBJECT_INTERACTION,

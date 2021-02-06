@@ -121,7 +121,7 @@ class RoomScene extends RoomLogin
         };
         await EventsManagerSingleton.emit('reldens.createdPlayerSchema', client, authResult, currentPlayer, this);
         this.state.addPlayerToState(currentPlayer, client.sessionId);
-        // @TODO - BETA.17 - Create player body using a new pack in the world package.
+        // @TODO - BETA - Create player body using a new pack in the world package.
         // create body for server physics and assign the body to the player:
         currentPlayer.physicalBody = this.roomWorld.createPlayerBody({
             id: client.sessionId,
@@ -154,7 +154,7 @@ class RoomScene extends RoomLogin
         }
         // get player:
         let playerSchema = this.getPlayerFromState(client.sessionId);
-        // @TODO - BETA.17 - Move to a new pack in the world package.
+        // @TODO - BETA - Move to a new pack in the world package.
         // only process the message if the player exists and has a body:
         if(playerSchema && sc.hasOwn(playerSchema, 'physicalBody')){
             // get player body:
@@ -333,7 +333,7 @@ class RoomScene extends RoomLogin
 
     async savePlayerStats(target, updateClient)
     {
-        // @TODO - BETA.17 - For now we are always updating all the stats but this can be improved to save only the
+        // @TODO - BETA - For now we are always updating all the stats but this can be improved to save only the
         //   ones that changed.
         // save the stats:
         for(let i of Object.keys(target.stats)){
@@ -390,7 +390,7 @@ class RoomScene extends RoomLogin
     onDispose()
     {
         Logger.info('ON-DISPOSE Room: ' + this.roomName);
-        // @TODO - BETA.17 - Replace this by a master key related to the room ID and just remove all the events related
+        // @TODO - BETA - Replace this by a master key related to the room ID and just remove all the events related
         //   to this room.
         if(!this.roomWorld.respawnAreas){
             return true;
