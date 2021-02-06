@@ -33,7 +33,7 @@ class ActionsPack extends PackInterface
         EventsManagerSingleton.on('reldens.roomsMessageActionsByRoom', async (roomMessageActions, roomName) => {
             roomMessageActions.actions = new ActionsMessageActions();
         });
-        EventsManagerSingleton.on('reldens.createPlayerAfter', async (client, authResult, currentPlayer, room) => {
+        EventsManagerSingleton.on('reldens.createdPlayerSchema', async (client, authResult, currentPlayer, room) => {
             await this.onCreatePlayerAfter(client, authResult, currentPlayer, room);
         });
         EventsManagerSingleton.on('reldens.createdNewPlayer', async (player, loginData, loginManager) => {
@@ -81,14 +81,17 @@ class ActionsPack extends PackInterface
         if(roomGame.config.get('client/players/multiplePlayers/enabled') && superInitialGameData.players){
             for(let i of Object.keys(superInitialGameData.players)){
                 let player = superInitialGameData.players[i];
-                let classPath = await this.skillsModelsManager.models['ownersClassPath']
+                let classPathCollection = await this.skillsModelsManager.models['ownersClassPath']
                     .loadOwnerClassPath(player.id);
-                if(!classPath){
+                if(!classPathCollection){
                     continue;
                 }
                 // @TODO - BETA.17 - Temporal index[0] for a single class path by player.
-                player.additionalLabel = ' - LvL '+classPath[0].currentLevel
-                    +' - '+classPath[0].owner_full_class_path.label;
+                let classPath = classPathCollection[0];
+                player.additionalLabel = ' - LvL '+classPath.currentLevel
+                    +' - '+classPath.owner_full_class_path.label;
+                player.currentClassPathLabel =
+                player.playerAvatar = classPath.owner_full_class_path.key;
             }
         }
     }
@@ -96,8 +99,6 @@ class ActionsPack extends PackInterface
     async onCreatePlayerAfter(client, authResult, currentPlayer, room)
     {
         this.appendActionsToPlayer(currentPlayer, room);
-        // player created, setting broadcastKey:
-        currentPlayer.broadcastKey = currentPlayer.sessionId;
         // prepare player classPath and skills data:
         let classPathData = await this.skillsModelsManager.prepareClassPathData(
             currentPlayer,
@@ -111,6 +112,7 @@ class ActionsPack extends PackInterface
             classPathData.client = new ClientWrapper(client, room);
             // append skills server to player:
             currentPlayer.skillsServer = new SkillsServer(classPathData);
+            currentPlayer.avatarKey = classPathData.key;
             this.prepareEventsListeners(currentPlayer.skillsServer.classPath);
         }
     }

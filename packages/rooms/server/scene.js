@@ -113,6 +113,14 @@ class RoomScene extends RoomLogin
         await EventsManagerSingleton.emit('reldens.createPlayerBefore', client, authResult, this);
         // player creation:
         let currentPlayer = this.state.createPlayerSchema(authResult, client.sessionId);
+        // eslint-disable-next-line no-unused-vars
+        currentPlayer.persistData = async (params) => {
+            // persist data in player:
+            await this.savePlayerState(currentPlayer.sessionId);
+            await this.savePlayerStats(currentPlayer, client);
+        };
+        await EventsManagerSingleton.emit('reldens.createdPlayerSchema', client, authResult, currentPlayer, this);
+        this.state.addPlayerToState(currentPlayer, client.sessionId);
         // @TODO - BETA.17 - Create player body using a new pack in the world package.
         // create body for server physics and assign the body to the player:
         currentPlayer.physicalBody = this.roomWorld.createPlayerBody({
@@ -270,7 +278,8 @@ class RoomScene extends RoomLogin
                         x: currentPlayer.state.x,
                         y: currentPlayer.state.y,
                         dir: currentPlayer.state.dir,
-                        username: currentPlayer.username
+                        username: currentPlayer.username,
+                        avatarKey: currentPlayer.avatarKey
                     });
                     // remove body from server world:
                     let bodyToRemove = currentPlayer.physicalBody;

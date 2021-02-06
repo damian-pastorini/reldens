@@ -57,6 +57,13 @@ class RoomEvents
     async playersOnAdd(player, key, previousScene)
     {
         await EventsManagerSingleton.emit('reldens.playersOnAdd', player, key, previousScene, this);
+        let addPlayerData = {
+            x: player.state.x,
+            y: player.state.y,
+            dir: player.state.dir,
+            username: player.username,
+            avatarKey: player.avatarKey
+        };
         // create current player:
         if(key === this.room.sessionId){
             this.engineStarted = true;
@@ -64,8 +71,7 @@ class RoomEvents
             let currentScene = this.getActiveScene();
             if(currentScene.key === player.state.scene && currentScene.player && currentScene.player.players){
                 for(let i of Object.keys(this.playersQueue)){
-                    let { x, y, dir, username } = this.playersQueue[i];
-                    currentScene.player.addPlayer(i, { x, y, dir, username: username });
+                    currentScene.player.addPlayer(i, this.playersQueue[i]);
                 }
             }
         } else {
@@ -73,12 +79,10 @@ class RoomEvents
             if(this.engineStarted){
                 let currentScene = this.getActiveScene();
                 if(currentScene.key === player.state.scene && currentScene.player && currentScene.player.players){
-                    let {x, y, dir} = player.state;
-                    currentScene.player.addPlayer(key, {x, y, dir, username: player.username});
+                    currentScene.player.addPlayer(key, addPlayerData);
                 }
             } else {
-                let {x, y, dir} = player.state;
-                this.playersQueue[key] = {x, y, dir, username: player.username};
+                this.playersQueue[key] = addPlayerData;
             }
         }
     }
@@ -137,10 +141,11 @@ class RoomEvents
             EventsManagerSingleton.emit('reldens.changedScene', message, this);
             let currentScene = this.getActiveScene();
             // if other users enter in the current scene we need to add them:
-            let {id, x, y, dir, username} = message;
+            let {id, x, y, dir, username, avatarKey} = message;
             let topOff = this.gameManager.config.get('client/players/size/topOffset');
             let leftOff = this.gameManager.config.get('client/players/size/leftOffset');
-            currentScene.player.addPlayer(id, {x:(x-leftOff), y:(y-topOff), dir, username});
+            let addPlayerData = {x:(x-leftOff), y:(y-topOff), dir, username, avatarKey};
+            currentScene.player.addPlayer(id, addPlayerData);
         }
         // @NOTE: here we don't need to evaluate the id since the reconnect only is sent to the current client.
         if(message.act === GameConst.RECONNECT){
@@ -275,7 +280,6 @@ class RoomEvents
         }
         let preloaderName = GameConst.SCENE_PRELOADER+this.sceneData.roomName;
         // @TODO - BETA.17 - F901 - implement player custom avatar.
-        // , player.username
         if(!this.gameEngine.scene.getScene(preloaderName)){
             this.scenePreloader = this.createPreloaderInstance({
                 name: preloaderName,
@@ -299,7 +303,7 @@ class RoomEvents
                     if(playerBox){
                         let element = playerBox.getChildByProperty('className', 'player-name');
                         if(element){
-                            element.innerHTML = player.username;
+                            element.innerHTML = this.gameManager.playerData.name;
                         }
                     }
                 }
@@ -336,8 +340,14 @@ class RoomEvents
             for(let i of Object.keys(room.state.players)){
                 let tmp = room.state.players[i];
                 if(tmp.sessionId && tmp.sessionId !== room.sessionId){
-                    let { x, y, dir } = tmp.state;
-                    currentScene.player.addPlayer(tmp.sessionId, { x, y, dir, username: tmp.username });
+                    let addPlayerData = {
+                        x: tmp.state.x,
+                        y: tmp.state.y,
+                        dir: tmp.state.dir,
+                        username: tmp.username,
+                        avatarKey: tmp.avatarKey
+                    };
+                    currentScene.player.addPlayer(tmp.sessionId, addPlayerData);
                 }
             }
         }

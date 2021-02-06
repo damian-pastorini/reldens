@@ -19,6 +19,7 @@ class PlayerEngine
         this.config = gameManager.config;
         this.gameManager = gameManager;
         this.username = playerData.username;
+        this.avatarKey = playerData.avatarKey;
         this.roomName = playerData.state.scene;
         this.state = playerData.state;
         this.room = room;
@@ -35,8 +36,15 @@ class PlayerEngine
 
     create()
     {
-        let playerData = Object.assign({username: this.username}, this.state);
-        this.addPlayer(this.playerId, playerData);
+        // let playerData = Object.assign({username: this.username}, this.state);
+        let addPlayerData = {
+            x: this.state.x,
+            y: this.state.y,
+            dir: this.state.dir,
+            username: this.username,
+            avatarKey: this.avatarKey
+        };
+        this.addPlayer(this.playerId, addPlayerData);
         let fadeDuration = this.config.get('client/players/animations/fadeDuration') || GameConst.FADE_DURATION;
         this.scene.cameras.main.fadeFrom(fadeDuration);
         this.scene.scene.setVisible(true, this.roomName);
@@ -45,19 +53,22 @@ class PlayerEngine
         this.scene.cameras.main.startFollow(this.players[this.playerId], true);
     }
 
-    addPlayer(id, state)
+    addPlayer(id, addPlayerData)
     {
+        let {x, y, dir, username, avatarKey} = addPlayerData;
         if(sc.hasOwn(this.players, id)){
             // player sprite already exists, update it and return it:
-            this.players[id].username = state.username;
-            this.players[id].anims.play(state.dir);
+            this.players[id].username = username;
+            this.players[id].avatarKey = avatarKey;
+            this.players[id].anims.play(avatarKey+'_'+dir);
             this.players[id].anims.stop();
             return this.players[id];
         }
         // @TODO - BETA.17 - F901 - Implement player custom avatar.
-        this.players[id] = this.scene.physics.add.sprite(state.x, (state.y - this.topOff), GameConst.IMAGE_PLAYER);
-        this.players[id].username = state.username;
-        this.players[id].anims.play(state.dir);
+        this.players[id] = this.scene.physics.add.sprite(x, (y - this.topOff), avatarKey);
+        this.players[id].username = username;
+        this.players[id].avatarKey = avatarKey;
+        this.players[id].anims.play(avatarKey+'_'+dir);
         this.players[id].anims.stop();
         this.players[id].setInteractive({useHandCursor: true}).on('pointerdown', (ev) => {
             // @NOTE: we avoid to run object interactions while an UI element is open, if we click on the UI the
@@ -112,20 +123,21 @@ class PlayerEngine
     {
         // @NOTE: player speed is defined by the server.
         if(this.animationBasedOnPress){
-            playerSprite.anims.play(player.state.dir, true);
+            playerSprite.anims.play(player.avatarKey+'_'+player.state.dir, true);
         } else {
+            let { avatarKey } = player;
             if(player.state.x !== playerSprite.x){
                 if(player.state.x < playerSprite.x){
-                    playerSprite.anims.play(GameConst.LEFT, true);
+                    playerSprite.anims.play(avatarKey+'_'+GameConst.LEFT, true);
                 } else {
-                    playerSprite.anims.play(GameConst.RIGHT, true);
+                    playerSprite.anims.play(avatarKey+'_'+GameConst.RIGHT, true);
                 }
             }
             if(player.state.y !== playerSprite.y){
                 if(player.state.y < playerSprite.y){
-                    playerSprite.anims.play(GameConst.UP, true);
+                    playerSprite.anims.play(avatarKey+'_'+GameConst.UP, true);
                 } else {
-                    playerSprite.anims.play(GameConst.DOWN, true);
+                    playerSprite.anims.play(avatarKey+'_'+GameConst.DOWN, true);
                 }
             }
         }

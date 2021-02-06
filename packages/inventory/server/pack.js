@@ -104,14 +104,6 @@ class InventoryPack extends PackInterface
     {
         // wrap the client:
         let clientWrapper = new ClientWrapper(client, room);
-        // @TODO - BETA.17 - Implement owner wrapper for playerSchema persistData function, see onExecutedItem in
-        //   ModelsManager class.
-        // eslint-disable-next-line no-unused-vars
-        playerSchema.persistData = async (params) => {
-            // persist data in player:
-            await room.savePlayerState(playerSchema.sessionId);
-            await room.savePlayerStats(playerSchema, client);
-        };
         let serverProps = {
             owner: playerSchema,
             client: clientWrapper,

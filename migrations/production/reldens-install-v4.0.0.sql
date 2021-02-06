@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS `chat` (
   CONSTRAINT `FK__scenes` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table reldens.chat: ~82 rows (approximately)
+-- Dumping data for table reldens.chat: ~52 rows (approximately)
 /*!40000 ALTER TABLE `chat` DISABLE KEYS */;
 /*!40000 ALTER TABLE `chat` ENABLE KEYS */;
 
@@ -42,9 +42,9 @@ CREATE TABLE IF NOT EXISTS `config` (
   `value` text COLLATE utf8_unicode_ci NOT NULL,
   `type` varchar(2) COLLATE utf8_unicode_ci NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=180 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=181 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table reldens.config: ~119 rows (approximately)
+-- Dumping data for table reldens.config: ~118 rows (approximately)
 /*!40000 ALTER TABLE `config` DISABLE KEYS */;
 INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(1, 'server', 'rooms/validation/valid', 'room_game,chat_global', 't'),
@@ -176,7 +176,8 @@ INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(176, 'server', 'enemies/initialStats/aim', '10', 'i'),
 	(177, 'client', 'players/animations/collideWorldBounds', '1', 'b'),
 	(178, 'server', 'rooms/world/bulletsStopOnPlayer', '1', 'b'),
-	(179, 'client', 'players/animations/fallbackImage', 'player-base', 't');
+	(179, 'client', 'players/animations/fallbackImage', 'player-base', 't'),
+	(180, 'client', 'players/multiplePlayers/enabled', '1', 'b');
 /*!40000 ALTER TABLE `config` ENABLE KEYS */;
 
 -- Dumping structure for table reldens.features
@@ -234,9 +235,9 @@ CREATE TABLE IF NOT EXISTS `items_inventory` (
   PRIMARY KEY (`id`),
   KEY `FK_items_inventory_items_item` (`item_id`),
   CONSTRAINT `FK_items_inventory_items_item` FOREIGN KEY (`item_id`) REFERENCES `items_item` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=162 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Inventory table is to save the items for each owner.';
+) ENGINE=InnoDB AUTO_INCREMENT=107 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Inventory table is to save the items for each owner.';
 
--- Dumping data for table reldens.items_inventory: ~66 rows (approximately)
+-- Dumping data for table reldens.items_inventory: ~13 rows (approximately)
 /*!40000 ALTER TABLE `items_inventory` DISABLE KEYS */;
 INSERT INTO `items_inventory` (`id`, `owner_id`, `item_id`, `qty`, `remaining_uses`, `is_active`) VALUES
 	(52, 1, 2, 1, 0, 0),
@@ -246,8 +247,8 @@ INSERT INTO `items_inventory` (`id`, `owner_id`, `item_id`, `qty`, `remaining_us
 	(56, 1, 3, 5, 0, 0),
 	(59, 1, 2, 1, 0, 0),
 	(89, 2, 2, 1, 0, 0),
-	(101, 2, 3, 10, 0, 0),
-	(102, 2, 6, 11, 0, 0),
+	(101, 2, 3, 12, 0, 0),
+	(102, 2, 6, 13, 0, 0),
 	(103, 1, 6, 5, 0, 0);
 /*!40000 ALTER TABLE `items_inventory` ENABLE KEYS */;
 
@@ -369,9 +370,10 @@ CREATE TABLE IF NOT EXISTS `players` (
   `user_id` int(10) unsigned NOT NULL,
   `name` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
   PRIMARY KEY (`id`),
+  UNIQUE KEY `name` (`name`),
   KEY `FK_players_users` (`user_id`),
   CONSTRAINT `FK_players_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=25 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=43 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping data for table reldens.players: ~11 rows (approximately)
 /*!40000 ALTER TABLE `players` DISABLE KEYS */;
@@ -395,13 +397,13 @@ CREATE TABLE IF NOT EXISTS `players_state` (
   KEY `FK_player_state_player_stats` (`player_id`),
   CONSTRAINT `FK_player_state_player_stats` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON UPDATE CASCADE,
   CONSTRAINT `FK_player_state_rooms` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=27 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=42 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping data for table reldens.players_state: ~11 rows (approximately)
 /*!40000 ALTER TABLE `players_state` DISABLE KEYS */;
 INSERT INTO `players_state` (`id`, `player_id`, `room_id`, `x`, `y`, `dir`) VALUES
-	(3, 1, 5, 640, 724, 'left'),
-	(4, 2, 4, 1009, 437, 'up'),
+	(3, 1, 5, 725, 616, 'down'),
+	(4, 2, 4, 978, 429, 'right'),
 	(5, 3, 6, 837, 476, 'down'),
 	(19, 17, 5, 719, 644, 'left');
 /*!40000 ALTER TABLE `players_state` ENABLE KEYS */;
@@ -419,17 +421,17 @@ CREATE TABLE IF NOT EXISTS `players_stats` (
   KEY `user_id` (`player_id`) USING BTREE,
   CONSTRAINT `FK_player_current_stats_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON UPDATE CASCADE,
   CONSTRAINT `FK_players_current_stats_players_stats` FOREIGN KEY (`stat_id`) REFERENCES `stats` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=118 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=268 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping data for table reldens.players_stats: ~110 rows (approximately)
 /*!40000 ALTER TABLE `players_stats` DISABLE KEYS */;
 INSERT INTO `players_stats` (`id`, `player_id`, `stat_id`, `base_value`, `value`) VALUES
-	(1, 1, 1, 200, 58),
-	(2, 2, 1, 160, 111),
+	(1, 1, 1, 200, 193),
+	(2, 2, 1, 160, 83),
 	(3, 3, 1, 100, 100),
 	(4, 17, 1, 100, 100),
-	(5, 1, 2, 160, 35),
-	(6, 2, 2, 160, 155),
+	(5, 1, 2, 160, 30),
+	(6, 2, 2, 160, 95),
 	(7, 3, 2, 100, 100),
 	(8, 17, 2, 100, 100),
 	(9, 1, 3, 100, 105),
@@ -668,7 +670,7 @@ CREATE TABLE IF NOT EXISTS `skills_levels` (
   CONSTRAINT `FK_skills_levels_skills_levels_set` FOREIGN KEY (`level_set_id`) REFERENCES `skills_levels_set` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table reldens.skills_levels: ~13 rows (approximately)
+-- Dumping data for table reldens.skills_levels: ~12 rows (approximately)
 /*!40000 ALTER TABLE `skills_levels` DISABLE KEYS */;
 INSERT INTO `skills_levels` (`id`, `key`, `label`, `required_experience`, `level_set_id`) VALUES
 	(1, 1, '1', 0, 1),
@@ -702,9 +704,9 @@ CREATE TABLE IF NOT EXISTS `skills_levels_modifiers` (
   KEY `modifier_id` (`key`) USING BTREE,
   KEY `level_key` (`level_id`) USING BTREE,
   CONSTRAINT `FK_skills_levels_modifiers_skills_levels` FOREIGN KEY (`level_id`) REFERENCES `skills_levels` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Modifiers table.';
+) ENGINE=InnoDB AUTO_INCREMENT=25 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Modifiers table.';
 
--- Dumping data for table reldens.skills_levels_modifiers: ~0 rows (approximately)
+-- Dumping data for table reldens.skills_levels_modifiers: ~2 rows (approximately)
 /*!40000 ALTER TABLE `skills_levels_modifiers` DISABLE KEYS */;
 INSERT INTO `skills_levels_modifiers` (`id`, `level_id`, `key`, `property_key`, `operation`, `value`, `minValue`, `maxValue`, `minProperty`, `maxProperty`) VALUES
 	(23, 1, 'inc_atk', 'stats/atk', 1, '10', NULL, NULL, NULL, NULL),
@@ -735,7 +737,7 @@ CREATE TABLE IF NOT EXISTS `skills_levels_set` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table reldens.skills_levels_set: ~4 rows (approximately)
+-- Dumping data for table reldens.skills_levels_set: ~3 rows (approximately)
 /*!40000 ALTER TABLE `skills_levels_set` DISABLE KEYS */;
 INSERT INTO `skills_levels_set` (`id`, `autoFillRanges`) VALUES
 	(1, 1),
@@ -754,13 +756,13 @@ CREATE TABLE IF NOT EXISTS `skills_owners_class_path` (
   PRIMARY KEY (`id`),
   KEY `level_set_id` (`class_path_id`) USING BTREE,
   CONSTRAINT `FK_skills_owners_class_path_skills_class_path` FOREIGN KEY (`class_path_id`) REFERENCES `skills_class_path` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=25 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping data for table reldens.skills_owners_class_path: ~11 rows (approximately)
 /*!40000 ALTER TABLE `skills_owners_class_path` DISABLE KEYS */;
 INSERT INTO `skills_owners_class_path` (`id`, `class_path_id`, `owner_id`, `currentLevel`, `currentExp`) VALUES
 	(1, 1, 1, 8, 2050),
-	(2, 1, 2, 8, 500),
+	(2, 1, 2, 8, 550),
 	(3, 1, 3, 1, 0),
 	(4, 1, 17, 1, 0);
 /*!40000 ALTER TABLE `skills_owners_class_path` ENABLE KEYS */;
@@ -1026,14 +1028,14 @@ CREATE TABLE IF NOT EXISTS `users` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `email` (`email`),
   UNIQUE KEY `username` (`username`)
-) ENGINE=InnoDB AUTO_INCREMENT=53 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=68 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table reldens.users: ~11 rows (approximately)
+-- Dumping data for table reldens.users: ~5 rows (approximately)
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
 INSERT INTO `users` (`id`, `email`, `username`, `password`, `role_id`, `status`, `created_at`, `updated_at`) VALUES
-	(29, 'dap@dap.com', 'dap', '$2b$10$PQIYGBFyA/69DaowJVTA5ufVWmIUeIOwIK4e6JCAP5Uen0sp0TAHu', 1, '1595011283764', '2019-08-02 23:06:14', '2021-01-31 22:04:47'),
-	(30, 'dap2@dap.com', 'dap2', '$2b$10$Kvjh1XdsMai8Xt2wdivG2.prYvTiW6vJrdnrNPYZenf8qCRLhuZ/a', 9, '1', '2019-08-02 23:06:14', '2021-01-29 22:16:47'),
-	(31, 'dap3@dap.com', 'dap3', '$2b$10$CmtWkhIexIVtcBjwsmEkeOlIhqizViykDFYAKtVrl4sF8KWLuBsxO', 1, '1', '2019-08-02 23:06:14', '2021-01-29 22:06:45'),
+	(29, 'dap@dap.com', 'dap', '$2b$10$PQIYGBFyA/69DaowJVTA5ufVWmIUeIOwIK4e6JCAP5Uen0sp0TAHu', 1, '1595011283764', '2019-08-02 23:06:14', '2021-02-06 23:10:52'),
+	(30, 'dap2@dap.com', 'dap2', '$2b$10$Kvjh1XdsMai8Xt2wdivG2.prYvTiW6vJrdnrNPYZenf8qCRLhuZ/a', 9, '1', '2019-08-02 23:06:14', '2021-02-06 23:10:56'),
+	(31, 'dap3@dap.com', 'dap3', '$2b$10$CmtWkhIexIVtcBjwsmEkeOlIhqizViykDFYAKtVrl4sF8KWLuBsxO', 1, '1', '2019-08-02 23:06:14', '2021-02-01 21:48:37'),
 	(45, 'damian.pastorini@gmail.com', 'Fire Test', '$2b$10$RtF9w7zAbkL/.CP0UTss6O/TtWQtpr5npoaYmBe2fRokJWfU4skZW', 1, '1', '2020-07-28 21:34:39', '2020-11-09 21:34:39');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 

@@ -34,6 +34,10 @@ class ScenePreloader extends Scene
         this.directionalAnimations = {};
         let currentScene = this.gameManager.activeRoomEvents.getActiveScene();
         currentScene.objectsAnimationsData = props.objectsAnimationsData;
+        this.playerSpriteSize = {
+            frameWidth: this.gameManager.config.get('client/players/size/width') || 52,
+            frameHeight: this.gameManager.config.get('client/players/size/height') || 71
+        };
     }
 
     preload()
@@ -185,7 +189,9 @@ class ScenePreloader extends Scene
             EventsManagerSingleton.emit('reldens.createUiScene', this);
         }
         // player animations:
-        this.createPlayerAnimations();
+        this.createPlayerAnimations(GameConst.IMAGE_PLAYER);
+        // path finder arrow:
+        this.createArrowAnimation();
     }
 
     getUiConfig(uiName, newWidth, newHeight)
@@ -219,24 +225,31 @@ class ScenePreloader extends Scene
 
     preloadPlayerDefaultSprite()
     {
-        let playerSpriteSize = {
-            frameWidth: this.gameManager.config.get('client/players/size/width') || 52,
-            frameHeight: this.gameManager.config.get('client/players/size/height') || 71
-        };
         // @TODO - BETA.17 - F901 - Implement player custom avatar.
-        let playerFallbackImg = this.gameManager.config.get('client/players/animations/fallbackImage') || 'player-base';
-        this.load.spritesheet(GameConst.IMAGE_PLAYER, 'assets/sprites/' + playerFallbackImg + '.png', playerSpriteSize);
+        let fallbackImage = this.gameManager.config.get('client/players/animations/fallbackImage') || 'player-base';
+        this.load.spritesheet(
+            GameConst.IMAGE_PLAYER,
+            'assets/custom/sprites/'+fallbackImage+'.png',
+            this.playerSpriteSize
+        );
     }
 
-    createPlayerAnimations()
+    createPlayerAnimations(avatarKey)
     {
         // @TODO - BETA.17 - All the animations will be part of the configuration in the database.
         let availableAnimations = [
-            {k: GameConst.LEFT, img: GameConst.IMAGE_PLAYER, start: 3, end: 5, repeat: -1, hide: false},
-            {k: GameConst.RIGHT, img: GameConst.IMAGE_PLAYER, start: 6, end: 8, repeat: -1, hide: false},
-            {k: GameConst.UP, img: GameConst.IMAGE_PLAYER, start: 9, end: 11, repeat: -1, hide: false},
-            {k: GameConst.DOWN, img: GameConst.IMAGE_PLAYER, start: 0, end: 2, repeat: -1, hide: false}
+            {k: avatarKey+'_'+GameConst.LEFT, img: avatarKey, start: 3, end: 5, repeat: -1, hide: false},
+            {k: avatarKey+'_'+GameConst.RIGHT, img: avatarKey, start: 6, end: 8, repeat: -1, hide: false},
+            {k: avatarKey+'_'+GameConst.UP, img: avatarKey, start: 9, end: 11, repeat: -1, hide: false},
+            {k: avatarKey+'_'+GameConst.DOWN, img: avatarKey, start: 0, end: 2, repeat: -1, hide: false}
         ];
+        for(let anim of availableAnimations){
+            this.createAnimationWith(anim);
+        }
+    }
+
+    createArrowAnimation()
+    {
         if(this.gameManager.config.get('client/ui/pointer/show')){
             let arrowAnim = {
                 k: GameConst.ARROW_DOWN,
@@ -246,17 +259,19 @@ class ScenePreloader extends Scene
                 repeat: 3,
                 rate: 6
             };
-            availableAnimations.push(arrowAnim);
+            this.createAnimationWith(arrowAnim);
         }
-        for(let anim of availableAnimations){
-            this.anims.create({
-                key: anim.k,
-                frames: this.anims.generateFrameNumbers(anim.img, {start: anim.start, end: anim.end}),
-                frameRate: sc.hasOwn(anim, 'rate') ? anim.rate : this.configuredFrameRate,
-                repeat: anim.repeat,
-                hideOnComplete: sc.hasOwn(anim, 'hide') ? anim.hide : true,
-            });
-        }
+    }
+
+    createAnimationWith(anim)
+    {
+        this.anims.create({
+            key: anim.k,
+            frames: this.anims.generateFrameNumbers(anim.img, {start: anim.start, end: anim.end}),
+            frameRate: sc.hasOwn(anim, 'rate') ? anim.rate : this.configuredFrameRate,
+            repeat: anim.repeat,
+            hideOnComplete: sc.hasOwn(anim, 'hide') ? anim.hide : true,
+        });
     }
 
     registerControllers(controllersBox)

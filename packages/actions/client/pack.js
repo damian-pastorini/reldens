@@ -24,13 +24,14 @@ class ActionsPack
             }
         });
         EventsManagerSingleton.on('reldens.playersOnAdd', (player, key, previousScene, roomEvents) => {
-            this.onPlayersOnAdd(key, roomEvents, player);
+            this.onPlayersOnAdd(player, key, roomEvents);
         });
         EventsManagerSingleton.on('reldens.playersOnAddReady', (player, key, previousScene, roomEvents) => {
             this.onPlayersOnAddReady(player, key, roomEvents);
         });
         EventsManagerSingleton.on('reldens.createPreload', (preloadScene) => {
             this.loopSkillsAnd('create', preloadScene);
+            this.createAvatarsAnimations(preloadScene);
         });
         EventsManagerSingleton.on('reldens.createUiScene', (preloadScene) => {
             this.uiManager = new SkillsUi(preloadScene);
@@ -79,7 +80,7 @@ class ActionsPack
         }
     }
 
-    onPlayersOnAdd(key, roomEvents)
+    onPlayersOnAdd(player, key, roomEvents)
     {
         if(key !== roomEvents.room.sessionId){
             return false;
@@ -119,7 +120,20 @@ class ActionsPack
         uiScene.load.html('skills', 'assets/features/skills/templates/ui-skills.html');
         uiScene.load.html('skillBox', 'assets/features/skills/templates/ui-skill-box.html');
         uiScene.load.html('actionBox', 'assets/html/ui-action-box.html');
+        this.preloadClassPaths(uiScene);
         this.loopSkillsAnd('preload', uiScene);
+    }
+
+    preloadClassPaths(uiScene)
+    {
+        let classesData = sc.getDef(uiScene.gameManager.initialGameData, 'classesData', false);
+        if(!classesData){
+            return false;
+        }
+        for(let i of Object.keys(classesData)){
+            let avatarKey = classesData[i].key;
+            uiScene.load.spritesheet(avatarKey, 'assets/custom/sprites/'+avatarKey+'.png', uiScene.playerSpriteSize);
+        }
     }
 
     loopSkillsAnd(command, uiScene)
@@ -135,6 +149,18 @@ class ActionsPack
                 continue;
             }
             this[command+'Animation'](data, uiScene);
+        }
+    }
+
+    createAvatarsAnimations(preloadScene)
+    {
+        let classesData = sc.getDef(preloadScene.gameManager.initialGameData, 'classesData', false);
+        if(!classesData){
+            return false;
+        }
+        for(let i of Object.keys(classesData)){
+            let avatarKey = classesData[i].key;
+            preloadScene.createPlayerAnimations(avatarKey);
         }
     }
 
