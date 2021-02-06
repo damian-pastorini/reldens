@@ -38,7 +38,6 @@ module.exports.GameConst = {
     // default data:
     FADE_DURATION: 1000,
     SPEED_SERVER: 180,
-    // @TODO - BETA.17 - F901 - Implement player custom avatar.
     // default image key:
     IMAGE_PLAYER: 'player'
 };

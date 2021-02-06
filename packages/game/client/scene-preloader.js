@@ -225,7 +225,6 @@ class ScenePreloader extends Scene
 
     preloadPlayerDefaultSprite()
     {
-        // @TODO - BETA.17 - F901 - Implement player custom avatar.
         let fallbackImage = this.gameManager.config.get('client/players/animations/fallbackImage') || 'player-base';
         this.load.spritesheet(
             GameConst.IMAGE_PLAYER,

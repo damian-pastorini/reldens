@@ -22,7 +22,7 @@ class EnemyObject extends NpcObject
     {
         super(props);
         this.hasState = true;
-        // @TODO - BETA.17 - Remove from config and make stats load dynamically (passed on props, coming from storage).
+        // @TODO - BETA.17 - Remove from config and make enemy stats load dynamically (passed on props from storage).
         let configStats = this.config.get('server/enemies/initialStats');
         this.initialStats = Object.assign({}, configStats);
         this.stats = Object.assign({}, configStats);

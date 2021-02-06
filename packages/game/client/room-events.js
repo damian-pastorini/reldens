@@ -279,7 +279,6 @@ class RoomEvents
             uiScene = true;
         }
         let preloaderName = GameConst.SCENE_PRELOADER+this.sceneData.roomName;
-        // @TODO - BETA.17 - F901 - implement player custom avatar.
         if(!this.gameEngine.scene.getScene(preloaderName)){
             this.scenePreloader = this.createPreloaderInstance({
                 name: preloaderName,

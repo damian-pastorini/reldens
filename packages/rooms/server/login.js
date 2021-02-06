@@ -17,6 +17,7 @@ class RoomLogin extends Room
     {
         this.config = options.config;
         this.loginManager = options.loginManager;
+        // @NOTE: validateRoomData is overridden in RoomScene onCreate.
         this.validateRoomData = false;
     }
 
@@ -31,13 +32,6 @@ class RoomLogin extends Room
             // login error.
             ErrorManager.error(loginResult.error);
         }
-        /*
-        // @NOTE: validateRoomData is overridden in RoomScene onCreate.
-        if(this.validateRoomData){
-            // @TODO - BETA.17 - Index [0] is temporal since for now we only have one player by user.
-            this.validateRoom(loginResult.user.players[0].state.scene);
-        }
-        */
         if(sc.hasOwn(options, 'selectedPlayer')){
             loginResult.selectedPlayer = options.selectedPlayer;
             loginResult.user.player = this.getPlayerById(loginResult.user.players, options.selectedPlayer);

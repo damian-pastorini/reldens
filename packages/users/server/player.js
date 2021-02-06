@@ -19,7 +19,6 @@ class Player extends Schema
     {
         super();
         try {
-            // @TODO - BETA.17 - Index [0] is temporal since for now we only have one player by user.
             let player = data.player;
             // player data:
             this.id = data.id; // this is the user id

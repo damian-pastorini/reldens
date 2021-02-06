@@ -27,7 +27,6 @@ class RoomGame extends RoomLogin
         let superInitialGameData = {
             act: GameConst.START_GAME,
             sessionId: client.sessionId,
-            // @TODO - BETA.17 - Index [0] is temporal since for now we only have one player by user.
             players: authResult.players,
             // if multiplayer is disabled then we will use the first one as default:
             player: authResult.players[0],

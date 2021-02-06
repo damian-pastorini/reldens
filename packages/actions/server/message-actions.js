@@ -34,8 +34,6 @@ class ActionsMessageActions
                 }
                 // set the room:
                 currentAction.room = room;
-                // @TODO - BETA.17 - Make default action with players configurable, temporally it will be a basic
-                //   attack.
                 if(data.target.type === GameConst.TYPE_PLAYER){
                     playerSchema.actions['pvp'].runBattle(playerSchema, validTarget, room);
                 }

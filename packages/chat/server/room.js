@@ -30,7 +30,6 @@ class RoomChat extends RoomLogin
             sessionId: client.sessionId,
             username: authResult.username,
             role_id: authResult.role_id,
-            // @TODO - BETA.17 - Index [0] is temporal since for now we only have one player by user.
             playerData: authResult.player,
             client: client
         };
