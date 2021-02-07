@@ -28,6 +28,7 @@ class Player extends Schema
             this.role_id = data.role_id;
             this.status = data.status;
             this.username = data.username;
+            this.playerName = player.name;
             this.physicalBody = false;
             this.eventsPrefix = 'p'+player.id+'.'+this.sessionId;
             // set scene and position:
@@ -45,6 +46,7 @@ class Player extends Schema
 
 type('string')(Player.prototype, 'sessionId');
 type('string')(Player.prototype, 'username');
+type('string')(Player.prototype, 'playerName');
 type('string')(Player.prototype, 'status');
 type('string')(Player.prototype, 'avatarKey');
 type('string')(Player.prototype, 'broadcastKey');

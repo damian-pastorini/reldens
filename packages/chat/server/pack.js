@@ -42,7 +42,7 @@ class ChatPack extends PackInterface
                 let sendMessage = (skill.propertyManager.getPropertyValue(target, skill.affectedProperty) - newValue)+' hit';
                 let messageObject = {
                     act: ChatConst.CHAT_ACTION,
-                    f: skill.owner.username,
+                    f: skill.owner.playerName,
                     m: sendMessage
                 };
                 client.send(messageObject);
