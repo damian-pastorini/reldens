@@ -73,6 +73,9 @@ class RoomScene extends RoomLogin
             authResult.selectedPlayer = options.selectedPlayer;
             authResult.player = this.getPlayerById(authResult.players, options.selectedPlayer);
         }
+        if(this.validateRoomData){
+            this.validateRoom(authResult.player.state.scene);
+        }
         // check if user is already logged and disconnect from the previous client:
         let loggedUserFound = false;
         if(this.state.players){
