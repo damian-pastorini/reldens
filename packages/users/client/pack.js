@@ -36,17 +36,16 @@ class UsersPack
     onPlayerStatsUpdateAfter(roomEvents)
     {
         // @TODO - BETA - Make optional display other players lifeBar.
-        if(this.lifeBarUi){
-            return;
+        if(!this.lifeBarUi){
+            this.lifeBarUi = (new LifebarUi()).setup({
+                gameManager: roomEvents.gameManager,
+                player: roomEvents.gameManager.getCurrentPlayer()
+            });
         }
-        this.lifeBarUi = (new LifebarUi()).setup({
-            gameManager: roomEvents.gameManager,
-            player: roomEvents.gameManager.getCurrentPlayer()
-        });
         if(this.lifeBarUi && roomEvents.gameManager.config.get('client/ui/lifeBar/enabled')){
             if(!this.lifeBarUi.lifeBar){
                 if(!this.lifeBarUi.createHealthBar()){
-                    return;
+                    return false;
                 }
             }
             this.lifeBarUi.redrawLifeBar();

@@ -180,35 +180,38 @@ class RoomEvents
 
     updatePlayerStats(message)
     {
+        if(!sc.hasOwn(message, 'stats') || !message.stats){
+            return false;
+        }
         let currentScene = this.getActiveScene();
         if(!currentScene.player || !sc.hasOwn(currentScene.player.players, this.room.sessionId)){
             Logger.error('For some reason you hit this case which should not happen.');
-            return;
+            return false;
         }
         let playerSprite = currentScene.player.players[this.room.sessionId];
         playerSprite.stats = message.stats;
         this.gameManager.playerData.stats = message.stats;
         this.gameManager.playerData.statsBase = message.statsBase;
         let playerStats = this.gameManager.getUiElement('playerStats');
-        if(playerStats){
-            let statsPanel = playerStats.getChildByProperty('id', 'player-stats-container');
-            if(statsPanel){
-                let messageTemplate = this.gameEngine.uiScene.cache.html.get('playerStat');
-                statsPanel.innerHTML = '';
-                if(sc.hasOwn(message, 'stats') && message.stats){
-                    for(let i of Object.keys(message.stats)){
-                        statsPanel.innerHTML = statsPanel.innerHTML
-                            + this.gameManager.gameEngine.parseTemplate(messageTemplate, {
-                                statLabel: i,
-                                statValue: message.stats[i]+(
-                                    sc.hasOwn(this.gameManager.config.client.players.initialStats[i], 'data')
-                                    && sc.getDef(this.gameManager.config.client.players.initialStats[i].data, 'showBase', false)
-                                    ? ' / '+message.statsBase[i] : ''
-                                )
-                            });
-                    }
-                }
-            }
+        if(!playerStats){
+            return false;
+        }
+        let statsPanel = playerStats.getChildByProperty('id', 'player-stats-container');
+        if(!statsPanel){
+            return false;
+        }
+        let messageTemplate = this.gameEngine.uiScene.cache.html.get('playerStat');
+        statsPanel.innerHTML = '';
+        for(let i of Object.keys(message.stats)){
+            let parsedStatsTemplate = this.gameManager.gameEngine.parseTemplate(messageTemplate, {
+                statLabel: i,
+                statValue: message.stats[i]+(
+                    sc.hasOwn(this.gameManager.config.client.players.initialStats[i], 'data')
+                    && sc.getDef(this.gameManager.config.client.players.initialStats[i].data, 'showBase', false)
+                        ? ' / '+message.statsBase[i] : ''
+                )
+            });
+            statsPanel.innerHTML = statsPanel.innerHTML+parsedStatsTemplate;
         }
         EventsManagerSingleton.emit('reldens.playerStatsUpdateAfter', message, this);
     }
