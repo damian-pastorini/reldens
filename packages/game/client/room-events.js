@@ -61,7 +61,7 @@ class RoomEvents
             x: player.state.x,
             y: player.state.y,
             dir: player.state.dir,
-            username: player.username,
+            playerName: player.playerName,
             avatarKey: player.avatarKey
         };
         // create current player:
@@ -141,10 +141,10 @@ class RoomEvents
             EventsManagerSingleton.emit('reldens.changedScene', message, this);
             let currentScene = this.getActiveScene();
             // if other users enter in the current scene we need to add them:
-            let {id, x, y, dir, username, avatarKey} = message;
+            let {id, x, y, dir, playerName, avatarKey} = message;
             let topOff = this.gameManager.config.get('client/players/size/topOffset');
             let leftOff = this.gameManager.config.get('client/players/size/leftOffset');
-            let addPlayerData = {x:(x-leftOff), y:(y-topOff), dir, username, avatarKey};
+            let addPlayerData = {x:(x-leftOff), y:(y-topOff), dir, playerName, avatarKey};
             currentScene.player.addPlayer(id, addPlayerData);
         }
         // @NOTE: here we don't need to evaluate the id since the reconnect only is sent to the current client.
@@ -346,7 +346,7 @@ class RoomEvents
                         x: tmp.state.x,
                         y: tmp.state.y,
                         dir: tmp.state.dir,
-                        username: tmp.username,
+                        playerName: tmp.playerName,
                         avatarKey: tmp.avatarKey
                     };
                     currentScene.player.addPlayer(tmp.sessionId, addPlayerData);

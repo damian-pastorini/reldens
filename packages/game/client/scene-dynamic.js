@@ -81,7 +81,18 @@ class SceneDynamic extends Scene
             }
         });
         this.map = this.add.tilemap(this.params.roomMap);
+        // disable default context menu:
+        if(this.gameManager.config.get('client/ui/controls/disableContextMenu')){
+            this.gameManager.gameDom.getElement(document).on('contextmenu', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+            });
+        }
         this.input.on('pointerdown', (pointer, currentlyOver) => {
+            let primaryMove = this.gameManager.config.get('client/ui/controls/primaryMove');
+            if((!pointer.primaryDown && primaryMove) || (pointer.primaryDown && !primaryMove)){
+                return false;
+            }
             // @TODO - BETA - Temporal avoid double actions, if you target something you will not be moved to the
             //   pointer, in a future release this will be configurable so you can walk to objects and they get
             //   activated, for example, click on and NPC, automatically walk close and automatically get a dialog

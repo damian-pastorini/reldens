@@ -281,7 +281,7 @@ class RoomScene extends RoomLogin
                         x: currentPlayer.state.x,
                         y: currentPlayer.state.y,
                         dir: currentPlayer.state.dir,
-                        username: currentPlayer.username,
+                        playerName: currentPlayer.playerName,
                         avatarKey: currentPlayer.avatarKey
                     });
                     // remove body from server world:

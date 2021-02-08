@@ -18,7 +18,7 @@ class PlayerEngine
         this.scene = scene;
         this.config = gameManager.config;
         this.gameManager = gameManager;
-        this.username = playerData.username;
+        this.playerName = playerData.playerName;
         this.avatarKey = playerData.avatarKey;
         this.roomName = playerData.state.scene;
         this.state = playerData.state;
@@ -36,12 +36,11 @@ class PlayerEngine
 
     create()
     {
-        // let playerData = Object.assign({username: this.username}, this.state);
         let addPlayerData = {
             x: this.state.x,
             y: this.state.y,
             dir: this.state.dir,
-            username: this.username,
+            playerName: this.playerName,
             avatarKey: this.avatarKey
         };
         this.addPlayer(this.playerId, addPlayerData);
@@ -55,17 +54,17 @@ class PlayerEngine
 
     addPlayer(id, addPlayerData)
     {
-        let {x, y, dir, username, avatarKey} = addPlayerData;
+        let {x, y, dir, playerName, avatarKey} = addPlayerData;
         if(sc.hasOwn(this.players, id)){
             // player sprite already exists, update it and return it:
-            this.players[id].username = username;
+            this.players[id].playerName = playerName;
             this.players[id].avatarKey = avatarKey;
             this.players[id].anims.play(avatarKey+'_'+dir);
             this.players[id].anims.stop();
             return this.players[id];
         }
         this.players[id] = this.scene.physics.add.sprite(x, (y - this.topOff), avatarKey);
-        this.players[id].username = username;
+        this.players[id].playerName = playerName;
         this.players[id].avatarKey = avatarKey;
         this.players[id].anims.play(avatarKey+'_'+dir);
         this.players[id].anims.stop();
@@ -78,7 +77,7 @@ class PlayerEngine
             // @NOTE: we could send an specific action when the player is been targeted.
             // this.room.send({act: GameConst.TYPE_PLAYER, id: id});
             // update target ui:
-            this.gameManager.gameEngine.showTarget(this.players[id].username);
+            this.gameManager.gameEngine.showTarget(this.players[id].playerName);
             this.currentTarget = {id: id, type: GameConst.TYPE_PLAYER};
         });
         this.players[id].moveSprites = {};
