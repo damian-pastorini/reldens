@@ -106,7 +106,9 @@ class ReceiverWrapper extends Receiver
         }
         let hitSprite = currentScene.physics.add.sprite(x, y, hitAnimKey);
         if(targetSprite){
-            targetSprite.moveSprites[hitAnimKey+'_'+targetSpriteId] = hitSprite;
+            if(sc.hasOwn(targetSprite, 'targetSprite')){
+                targetSprite.moveSprites[hitAnimKey+'_'+targetSpriteId] = hitSprite;
+            }
             let animData = allAnimations[hitAnimKey];
             let depth = sc.hasOwn(animData.animationData, 'depthByPlayer')
                 && animData.animationData['depthByPlayer'] === 'above'
@@ -118,7 +120,7 @@ class ReceiverWrapper extends Receiver
         }
         hitSprite.anims.play(hitAnimKey, true).on('animationcomplete', () => {
             hitSprite.destroy();
-            if(targetSprite){
+            if(targetSprite && sc.hasOwn(targetSprite, 'moveSprites')){
                 delete targetSprite.moveSprites[hitAnimKey+'_'+targetSpriteId];
             }
         });

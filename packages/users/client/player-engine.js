@@ -59,6 +59,7 @@ class PlayerEngine
             // player sprite already exists, update it and return it:
             this.players[id].playerName = playerName;
             this.players[id].avatarKey = avatarKey;
+            this.players[id].playerId = id;
             this.players[id].anims.play(avatarKey+'_'+dir);
             this.players[id].anims.stop();
             return this.players[id];
@@ -66,6 +67,7 @@ class PlayerEngine
         this.players[id] = this.scene.physics.add.sprite(x, (y - this.topOff), avatarKey);
         this.players[id].playerName = playerName;
         this.players[id].avatarKey = avatarKey;
+        this.players[id].playerId = id;
         this.players[id].anims.play(avatarKey+'_'+dir);
         this.players[id].anims.stop();
         this.players[id].setInteractive({useHandCursor: true}).on('pointerdown', (ev) => {

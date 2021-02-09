@@ -24,7 +24,7 @@ CREATE TABLE `skills_class_level_up_animations` (
 ) COLLATE='utf8_unicode_ci' ENGINE=InnoDB;
 
 # Single level up for all classes and levels:
-INSERT INTO `skills_class_level_up_animations` (`animationData`) VALUES ('{"enabled":true,"type":"spritesheet","img":"heal_cast","frameWidth":64,"frameHeight":70,"start":0,"end":3,"repeat":-1,"destroyTime":2000}');
+INSERT INTO `skills_class_level_up_animations` (`animationData`) VALUES ('{"enabled":true,"type":"spritesheet","img":"heal_cast","frameWidth":64,"frameHeight":70,"start":0,"end":3,"repeat":-1,"destroyTime":2000,"depthByPlayer":"above"}');
 
 #######################################################################################################################
 

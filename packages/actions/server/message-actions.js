@@ -61,7 +61,7 @@ class ActionsMessageActions
                 && !sc.hasOwn(playerSchema.skillsServer.classPath.currentSkills, runAction)
             )
         ){
-            Logger.error(['Action not available:', runAction]);
+            Logger.error('Action not available:', runAction, data);
             return false;
         }
         playerSchema.currentAction = runAction;
