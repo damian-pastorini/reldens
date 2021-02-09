@@ -216,7 +216,7 @@ class P2world extends World
         hasState = false,
         bodyKey = false,
         dir = false
-    ) {
+    ){
         let boxShape = this.createCollisionShape(width, height, collisionResponse);
         let bodyConfig = {
             mass: mass,

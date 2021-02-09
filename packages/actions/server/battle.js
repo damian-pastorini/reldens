@@ -50,7 +50,8 @@ class Battle
         return executeResult;
     }
 
-    getCurrentAction(playerSchema) {
+    getCurrentAction(playerSchema)
+    {
         return playerSchema.actions[playerSchema.currentAction] ?
             playerSchema.actions[playerSchema.currentAction] :
             playerSchema.skillsServer.classPath.currentSkills[playerSchema.currentAction];

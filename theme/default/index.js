@@ -222,7 +222,7 @@ $(document).ready(function($){
 
     // responsive screen behavior:
     document.addEventListener('fullscreenchange', () => {
-        if (!document.fullscreenElement){
+        if(!document.fullscreenElement){
             $('.header').show();
             $('.content').css('height', '84%');
         }

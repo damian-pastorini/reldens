@@ -165,7 +165,7 @@ class ActionsPack
 
     loopAnimationsAnd(animations, command, uiScene)
     {
-        if(!animations) {
+        if(!animations){
             return false;
         }
         for(let i of Object.keys(animations)){

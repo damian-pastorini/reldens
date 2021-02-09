@@ -122,7 +122,7 @@ class GameEngine extends Game
                 continue;
             }
             let dist = Math.hypot(players[i].x-currentPlayer.state.x, players[i].y-currentPlayer.state.y);
-            if(currentPlayer.currentTarget.id !== players[i].id && (!closerTarget || closerTarget.dist > dist)) {
+            if(currentPlayer.currentTarget.id !== players[i].id && (!closerTarget || closerTarget.dist > dist)){
                 closerTarget = {id: [i].id, type: ObjectsConst.TYPE_OBJECT, dist};
                 targetName = players[i].targetName;
             }

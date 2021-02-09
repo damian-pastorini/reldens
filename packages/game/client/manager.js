@@ -155,7 +155,7 @@ class GameManager
             this.initialGameData.player.state.scene,
             this.userData
         );
-        if (!joinedFirstRoom) {
+        if(!joinedFirstRoom){
             // @NOTE: the errors while trying to join a rooms/scene will always be originated in the
             // server. For these errors we will alert the user and reload the window automatically.
             alert('ERROR - There was an error while joining the room: ' + this.initialGameData.player.state.scene);

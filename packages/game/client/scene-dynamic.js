@@ -65,7 +65,7 @@ class SceneDynamic extends Scene
             }
         });
         this.gameManager.gameDom.getElement('input').on('blur', () => {
-            for(let keyCode of keys) {
+            for(let keyCode of keys){
                 this.input.keyboard.addCapture(keyCode);
             }
         });

@@ -130,9 +130,9 @@ class UsersPack
     serialize(data)
     {
         let obj = {};
-        for (let [key, value] of data) {
-            if (obj[key] !== undefined) {
-                if (!Array.isArray(obj[key])) {
+        for(let [key, value] of data){
+            if(obj[key] !== undefined){
+                if(!Array.isArray(obj[key])){
                     obj[key] = [obj[key]];
                 }
                 obj[key].push(value);
