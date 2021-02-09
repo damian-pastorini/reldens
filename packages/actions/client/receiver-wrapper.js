@@ -110,7 +110,7 @@ class ReceiverWrapper extends Receiver
             let animData = allAnimations[hitAnimKey];
             let depth = sc.hasOwn(animData.animationData, 'depthByPlayer')
                 && animData.animationData['depthByPlayer'] === 'above'
-                ? targetSprite.depth + 1 : targetSprite.depth - 0.1;
+                ? targetSprite.depth+1 : targetSprite.depth - 0.1;
             hitSprite.depthByPlayer = animData.animationData.depthByPlayer;
             hitSprite.setDepth(depth);
         } else {
@@ -156,6 +156,31 @@ class ReceiverWrapper extends Receiver
             Object.assign(this.gameManager.skills.skills, message.data.skl);
             this.gameManager.getFeature('actions').uiManager.appendSkills(message.data.skl);
         }
+        let levelUpAnimKey = this.getLevelUpAnimationKey(message.data.skl);
+        if(levelUpAnimKey){
+            this.playPlayerAnimation(this.gameManager.getCurrentPlayer().playerId, levelUpAnimKey);
+        }
+    }
+
+    getLevelUpAnimationKey(level)
+    {
+        let animationsListObj = this.gameManager.config.client.levels.animations;
+        let exactKey = 'level_'+this.gameManager.playerData.avatarKey+'_'+level;
+        if(sc.hasOwn(animationsListObj, exactKey)){
+            return exactKey;
+        }
+        let avatarKey = 'level_'+this.gameManager.playerData.avatarKey;
+        if(sc.hasOwn(animationsListObj, avatarKey)){
+            return avatarKey;
+        }
+        let levelKey = 'level_'+level;
+        if(sc.hasOwn(animationsListObj, levelKey)){
+            return levelKey;
+        }
+        if(sc.hasOwn(animationsListObj, 'level_default')){
+            return 'level_default';
+        }
+        return false;
     }
 
     onLevelExperienceAdded(message)
@@ -167,36 +192,41 @@ class ReceiverWrapper extends Receiver
     onSkillBeforeCast(message)
     {
         // cast animation:
-        let currentScene = this.gameManager.getActiveScene();
         let castKey = message.data.skillKey+'_cast';
         let castAnimKey = sc.hasOwn(this.gameManager.config.client.skills.animations, castKey)
             ? castKey : 'default_cast';
-        let animationSprite = currentScene.getAnimationByKey(castAnimKey);
-        if(!animationSprite){
-            if(castAnimKey.indexOf('default_') !== 0){
-                Logger.error('Animation sprite not found', castAnimKey);
+        this.playPlayerAnimation(message.data.extraData.oK, castAnimKey);
+    }
+
+    playPlayerAnimation(ownerId, animationKey)
+    {
+        let currentScene = this.gameManager.getActiveScene();
+        let sceneAnimation = currentScene.getAnimationByKey(animationKey);
+        if(!sceneAnimation){
+            if(animationKey.indexOf('default') === -1){
+                Logger.error('Animation sprite not found', animationKey);
             }
             return false;
         }
-        let ownerSprite = this.gameManager.getCurrentPlayer().players[message.data.extraData.oK];
+        let ownerSprite = this.gameManager.getCurrentPlayer().players[ownerId];
         let spriteX = ownerSprite.x;
         let spriteY = ownerSprite.y;
-        let castSprite = currentScene.physics.add.sprite(spriteX, spriteY, castAnimKey);
-        let destroyTime = sc.getDef(animationSprite, 'destroyTime', false);
+        let animationSprite = currentScene.physics.add.sprite(spriteX, spriteY, animationKey);
+        let destroyTime = sc.getDef(sceneAnimation, 'destroyTime', false);
         // the default value will be the caster depth - 1 so the animation will be played below the player.
-        let depth = sc.hasOwn(animationSprite, 'depthByPlayer') && animationSprite['depthByPlayer'] === 'above'
+        let depth = sc.hasOwn(sceneAnimation, 'depthByPlayer') && sceneAnimation['depthByPlayer'] === 'above'
             ? ownerSprite.depth + 1 : ownerSprite.depth - 0.1;
-        castSprite.depthByPlayer = animationSprite.depthByPlayer;
-        castSprite.setDepth(depth);
-        let blockMovement = sc.getDef(animationSprite, 'blockMovement', false);
+        animationSprite.depthByPlayer = sceneAnimation.depthByPlayer;
+        animationSprite.setDepth(depth);
+        let blockMovement = sc.getDef(sceneAnimation, 'blockMovement', false);
         if(!blockMovement){
-            ownerSprite.moveSprites[castAnimKey+'_'+ownerSprite.playerId] = castSprite;
+            ownerSprite.moveSprites[animationKey+'_'+ownerSprite.playerId] = animationSprite;
         }
-        castSprite.anims.play(castAnimKey, true);
+        animationSprite.anims.play(animationKey, true);
         if(destroyTime){
             setTimeout(() => {
-                castSprite.destroy();
-                delete ownerSprite.moveSprites[castAnimKey+'_'+ownerSprite.playerId];
+                animationSprite.destroy();
+                delete ownerSprite.moveSprites[animationKey+'_'+ownerSprite.playerId];
             }, destroyTime)
         }
     }

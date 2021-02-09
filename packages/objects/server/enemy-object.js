@@ -103,12 +103,12 @@ class EnemyObject extends NpcObject
 
     getBattleEndEvent()
     {
-        return this.uid+'.reldens.battleEnded';
+        return this.key+'.reldens.battleEnded';
     }
 
     getEventRemoveKey()
     {
-        return this.uid+'battleEnd';
+        return this.key+'battleEnd';
     }
 
     getEventMasterKey()

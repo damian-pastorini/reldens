@@ -16,6 +16,7 @@ const { PackInterface } = require('../../features/server/pack-interface');
 const { Pvp } = require('./pvp');
 const { TypeAttack, TypeEffect, TypePhysicalAttack, TypePhysicalEffect } = require('./skills/types');
 const { AnimationsModel } = require('./animations-model');
+const { LevelAnimationsModel } = require('./level-animations-model');
 
 class ActionsPack extends PackInterface
 {
@@ -66,6 +67,7 @@ class ActionsPack extends PackInterface
         await this.loadGroupsFullList(configProcessor);
         await this.loadClassPathFullList(configProcessor);
         await this.appendSkillsAnimations(configProcessor);
+        await this.appendLevelsAnimations(configProcessor);
     }
 
     async onBeforeSuperInitialGameData(superInitialGameData, roomGame)
@@ -91,7 +93,7 @@ class ActionsPack extends PackInterface
                 player.additionalLabel = ' - LvL '+classPath.currentLevel
                     +' - '+classPath.owner_full_class_path.label;
                 player.currentClassPathLabel =
-                player.playerAvatar = classPath.owner_full_class_path.key;
+                player.avatarKey = classPath.owner_full_class_path.key;
             }
         }
     }
@@ -196,9 +198,9 @@ class ActionsPack extends PackInterface
         // @TODO - BETA - Refactor and replace by constants.
         let extraData = {};
         if(sc.hasOwn(params, 'target')){
-            if(sc.hasOwn(params.target, 'uid')){
+            if(sc.hasOwn(params.target, 'key')){
                 extraData.tT = 'e'; // enemy
-                extraData.tK = params.target.uid;
+                extraData.tK = params.target.key;
             }
             if(sc.hasOwn(params.target, 'sessionId')){
                 extraData.tT = 'p';
@@ -206,9 +208,9 @@ class ActionsPack extends PackInterface
             }
         }
         if(sc.hasOwn(params, 'skill')){
-            if(sc.hasOwn(params.skill.owner, 'uid')){
+            if(sc.hasOwn(params.skill.owner, 'key')){
                 extraData.oT = 'e'; // enemy
-                extraData.oK = params.skill.owner.uid;
+                extraData.oK = params.skill.owner.key;
             }
             if(sc.hasOwn(params.skill.owner, 'sessionId')){
                 extraData.oT = 'p';
@@ -240,6 +242,33 @@ class ActionsPack extends PackInterface
             }
         }
         return config.client.skills.animations;
+    }
+
+    async appendLevelsAnimations(config)
+    {
+        if(!sc.hasOwn(config.client, 'levels')){
+            config.client.levels = {};
+        }
+        let models = await LevelAnimationsModel.loadAllWithClassAndLevel();
+        if(models.length){
+            if(!sc.hasOwn(config.client.levels, 'animations')){
+                config.client.levels.animations = {};
+            }
+            for(let levelAnim of models){
+                let animationData = sc.getJson(levelAnim.animationData, {});
+                let animKey = 'level_' + ((!levelAnim.level && !levelAnim.class_path) ? 'default' : (
+                    levelAnim.class_path ? levelAnim.class_path.key : ''
+                    + (levelAnim.level ? (levelAnim.class_path ? '_' : '')+levelAnim.level.id : '')
+                ));
+                config.client.levels.animations[animKey] = {
+                    key: animKey,
+                    levelId: levelAnim.level ? levelAnim.level.id : null,
+                    classKey: levelAnim.class_path ? levelAnim.class_path.key : null,
+                    animationData
+                }
+            }
+        }
+        return config.client.levels.animations;
     }
 
     prepareEventsListeners(classPath)

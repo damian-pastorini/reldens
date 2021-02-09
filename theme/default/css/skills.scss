@@ -9,6 +9,13 @@
     margin: 0;
 }
 
+.player_selection_additional_info,
+.avatar-container {
+    display: block;
+    float: left;
+    width: 100%;
+}
+
 .class-path-container,
 .level-container,
 .experience-container {

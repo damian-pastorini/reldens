@@ -132,6 +132,7 @@ class SceneDynamic extends Scene
                     this.player.stop();
                 }
             });
+            this.gameManager.gameDom.activeElement().blur();
         });
         EventsManagerSingleton.emit('reldens.afterSceneDynamicCreate', this);
     }

@@ -20,7 +20,7 @@ class ActionsPack
         EventsManagerSingleton.on('reldens.beforeCreateEngine', (initialGameData, gameManager) => {
             let playersConfig = initialGameData.gameConfig.client.players;
             if(playersConfig.multiplePlayers && playersConfig.multiplePlayers.enabled && initialGameData.classesData){
-                this.populateClassesSelector(initialGameData.classesData, gameManager);
+                this.populateClassesSelector(initialGameData.classesData, gameManager, playersConfig);
             }
         });
         EventsManagerSingleton.on('reldens.playersOnAdd', (player, key, previousScene, roomEvents) => {
@@ -30,7 +30,10 @@ class ActionsPack
             this.onPlayersOnAddReady(player, key, roomEvents);
         });
         EventsManagerSingleton.on('reldens.createPreload', (preloadScene) => {
-            this.loopSkillsAnd('create', preloadScene);
+            let levelsAnimations = preloadScene.gameManager.config.get('client/levels/animations');
+            this.loopAnimationsAnd(levelsAnimations, 'create', preloadScene);
+            let skillsAnimations = preloadScene.gameManager.config.get('client/skills/animations');
+            this.loopAnimationsAnd(skillsAnimations, 'create', preloadScene);
             this.createAvatarsAnimations(preloadScene);
         });
         EventsManagerSingleton.on('reldens.createUiScene', (preloadScene) => {
@@ -39,7 +42,7 @@ class ActionsPack
         });
     }
 
-    populateClassesSelector(classesData, gameManager)
+    populateClassesSelector(classesData, gameManager, playersConfig)
     {
         let playerAdditional = gameManager.gameDom.getElement('.player_creation_additional_info');
         if(playerAdditional){
@@ -49,17 +52,40 @@ class ActionsPack
             let label = gameManager.gameDom.createElement('label');
             label.for = 'class-path-select';
             label.innerText = 'Select Your Class-Path';
-            div.append(label);
             let select = gameManager.gameDom.createElement('select');
             select.id = 'class-path-select';
             select.name = 'class_path_select';
             for(let id of Object.keys(classesData)){
                 let option = new Option(classesData[id].label, id);
+                option.dataset.key = classesData[id].key;
                 select.append(option);
             }
+            div.append(label);
             div.append(select);
+            let avatarDiv = gameManager.gameDom.createElement('div');
+            avatarDiv.className = 'avatar-container';
+            this.appendAvatarOnSelector(select, avatarDiv, gameManager, playersConfig);
+            div.append(avatarDiv);
             playerAdditional.append(div);
         }
+    }
+
+    appendAvatarOnSelector(select, container, gameManager, playersConfig)
+    {
+        let avatar = gameManager.gameDom.createElement('div');
+        let avatarKey = select.options[select.selectedIndex].dataset.key;
+        avatar.classList.add('class-path-select-avatar');
+        avatar.style.backgroundImage = `url('/assets/custom/sprites/${avatarKey}.png')`;
+        avatar.style.backgroundPosition = 'top left';
+        avatar.style.display = 'block';
+        avatar.style.width = playersConfig.size.width+'px';
+        avatar.style.height = playersConfig.size.height+'px';
+        avatar.style.margin = '10px auto';
+        select.addEventListener('change', () => {
+            let avatarKey = select.options[select.selectedIndex].dataset.key;
+            avatar.style.backgroundImage = `url('/assets/custom/sprites/${avatarKey}.png')`;
+        });
+        container.append(avatar);
     }
 
     onPlayersOnAddReady(player, key, roomEvents)
@@ -121,7 +147,8 @@ class ActionsPack
         uiScene.load.html('skillBox', 'assets/features/skills/templates/ui-skill-box.html');
         uiScene.load.html('actionBox', 'assets/html/ui-action-box.html');
         this.preloadClassPaths(uiScene);
-        this.loopSkillsAnd('preload', uiScene);
+        this.loopAnimationsAnd(uiScene.gameManager.config.get('client/levels/animations'), 'preload', uiScene);
+        this.loopAnimationsAnd(uiScene.gameManager.config.get('client/skills/animations'), 'preload', uiScene);
     }
 
     preloadClassPaths(uiScene)
@@ -136,10 +163,8 @@ class ActionsPack
         }
     }
 
-    loopSkillsAnd(command, uiScene)
+    loopAnimationsAnd(animations, command, uiScene)
     {
-        // preload defaults:
-        let animations = uiScene.gameManager.config.get('client/skills/animations');
         if(!animations) {
             return false;
         }
@@ -258,7 +283,7 @@ class ActionsPack
         // a single sprite with multiple attacks, and use the start and end frame to run the required one.
         let imageKey = this.getAnimationKey(data, direction);
         let animationCreateData = {
-            key: this.getAnimationKey(data, direction),
+            key: imageKey,
             frames: uiScene.anims.generateFrameNumbers(imageKey, data.animationData),
             hideOnComplete: sc.getDef(data.animationData, 'hide', true),
         };

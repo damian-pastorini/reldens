@@ -99,7 +99,14 @@ class UsersPack
             let player = initialGameData.players[i];
             let optionLabel = player.name+(player.additionalLabel || '');
             let option = new Option(optionLabel, player.id);
+            option.dataset.key = player.avatarKey;
             select.append(option);
+        }
+        let avatarContainer = gameManager.gameDom.getElement('.player_selection_additional_info');
+        if(avatarContainer){
+            let playersConfig = initialGameData.gameConfig.client.players;
+            gameManager.features.featuresList.actions
+                .appendAvatarOnSelector(select[0], avatarContainer[0], gameManager, playersConfig);
         }
         form.removeClass('hidden');
     }

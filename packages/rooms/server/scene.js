@@ -405,7 +405,7 @@ class RoomScene extends RoomLogin
                 let res = instC[i];
                 for(let obj of res){
                     if(sc.hasOwn(obj, 'battleEndListener')){
-                        EventsManagerSingleton.offWithKey(obj.uid+'battleEnd', 'battleRoom');
+                        EventsManagerSingleton.offWithKey(obj.key+'battleEnd', 'battleRoom');
                     }
                 }
             }
