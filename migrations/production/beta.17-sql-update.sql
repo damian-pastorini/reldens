@@ -8,6 +8,11 @@ SET FOREIGN_KEY_CHECKS = 0;
 INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/controls/tabTarget', '1', 'b');
 INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/controls/disableContextMenu', '1', 'b');
 INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/controls/primaryMove', '1', 'b');
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/instructions/enabled', '1', 'b');
+INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (NULL, 'client', 'ui/instructions/responsiveX', '100', 'i');
+INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (NULL, 'client', 'ui/instructions/responsiveY', '100', 'i');
+INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (NULL, 'client', 'ui/instructions/x', '380', 'i');
+INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (NULL, 'client', 'ui/instructions/y', '940', 'i');
 
 # Skills level up animations:
 

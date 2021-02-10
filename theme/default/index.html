@@ -17,6 +17,7 @@
 <body>
     <div class="wrapper">
         <div class="header">
+            <button class="instructions-btn instructions-btn-header hidden">instructions</button>
             <h1 class="title">- <strong>reldens</strong> - <span id="current-version">demo -</span></h1>
             <button class="full-screen-btn">go full screen</button>
         </div>
@@ -115,6 +116,19 @@
                             </div>
                         </form>
                     </div>
+                </div>
+            </div>
+            <div id="instructions" class="hidden">
+                <div class="instructions-content">
+                    <h3>Instructions</h3>
+                    <ul>
+                        <li>Move with the arrows or using W-A-S-D.</li>
+                        <li>Use left click to follow a path but for now to change to another scene you need to walk through the change point (like the bridge at the top, or the houses doors).</li>
+                        <li>Use right-click or TAB to target near enemies or players.</li>
+                        <li>You must have a target to execute a skill/action.</li>
+                        <li>Use the screen-buttons to activate the different player skills/actions.</li>
+                    </ul>
+                    <img id="instructions-close" class="box-close" src="/assets/controls/bx.png" alt="close"/>
                 </div>
             </div>
             <div id="player-selection" class="hidden">

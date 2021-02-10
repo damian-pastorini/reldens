@@ -58,6 +58,9 @@ class ScenePreloader extends Scene
             if(this.gameManager.config.get('client/ui/sceneLabel/enabled')){
                 this.load.html('sceneLabel', 'assets/html/ui-scene-label.html');
             }
+            if(this.gameManager.config.get('client/ui/instructions/enabled')){
+                this.load.html('instructions', 'assets/html/ui-instructions.html');
+            }
             // @TODO - BETA - Move everything related to player stats into the users pack or create a new pack.
             if(this.gameManager.config.get('client/ui/playerStats/enabled')){
                 this.load.html('playerStats', 'assets/html/ui-player-stats.html');
@@ -163,6 +166,29 @@ class ScenePreloader extends Scene
                     .createFromCache('controls');
                 this.registerControllers(this.elementsUi['controls']);
             }
+            // @TODO - BETA - Replace all different DOM references and standardize with Vue or React.
+            // create instructions:
+            let instructionsUi = this.getUiConfig('instructions');
+            if(instructionsUi.enabled){
+                this.elementsUi['instructions'] = this.add.dom(instructionsUi.uiX, instructionsUi.uiY)
+                    .createFromCache('instructions');
+                let instructionsBox = this.gameManager.gameDom.getElement('#instructions');
+                if(instructionsBox){
+                    let closeButton = this.gameManager.gameDom.getElement('#instructions-close');
+                    if(closeButton){
+                        closeButton.on('click', () => {
+                            instructionsBox.hide();
+                        });
+                    }
+                    let openButton = this.elementsUi['instructions'].getChildByProperty('id', 'instructions-open');
+                    if(openButton){
+                        openButton.addEventListener('click', () => {
+                            instructionsBox.show();
+                        });
+                    }
+                }
+            }
+            // @TODO - BETA - Move everything related to player stats into the users pack or create a new pack.
             // create ui playerStats:
             let statsUi = this.getUiConfig('playerStats');
             if(statsUi.enabled){
