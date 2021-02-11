@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS `chat` (
   CONSTRAINT `FK__scenes` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table reldens.chat: ~0 rows (approximately)
+-- Dumping data for table reldens.chat: ~12 rows (approximately)
 /*!40000 ALTER TABLE `chat` DISABLE KEYS */;
 /*!40000 ALTER TABLE `chat` ENABLE KEYS */;
 
@@ -42,9 +42,9 @@ CREATE TABLE IF NOT EXISTS `config` (
   `value` text COLLATE utf8_unicode_ci NOT NULL,
   `type` varchar(2) COLLATE utf8_unicode_ci NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=184 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=198 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table reldens.config: ~135 rows (approximately)
+-- Dumping data for table reldens.config: ~118 rows (approximately)
 /*!40000 ALTER TABLE `config` DISABLE KEYS */;
 INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(1, 'server', 'rooms/validation/valid', 'room_game,chat_global', 't'),
@@ -185,7 +185,16 @@ INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(185, 'client', 'ui/instructions/responsiveX', '100', 'i'),
 	(186, 'client', 'ui/instructions/responsiveY', '100', 'i'),
 	(187, 'client', 'ui/instructions/x', '380', 'i'),
-	(188, 'client', 'ui/instructions/y', '940', 'i');
+	(188, 'client', 'ui/instructions/y', '940', 'i'),
+	(189, 'client', 'ui/players/showNames', '1', 'b'),
+	(190, 'client', 'ui/players/nameHeight', '15', 'i'),
+	(191, 'client', 'ui/players/nameFill', '#ffffff', 't'),
+	(192, 'client', 'ui/players/nameStroke', '#000000', 't'),
+	(193, 'client', 'ui/players/nameStrokeThickness', '4', 'i'),
+	(194, 'client', 'ui/players/nameShadowColor', 'rgba(0,0,0,0.7)', 't'),
+	(195, 'client', 'ui/players/nameFontFamily', 'Verdana, Geneva, sans-serif', 't'),
+	(196, 'client', 'ui/players/nameFontSize', '12', 'i'),
+	(197, 'client', 'ui/lifeBar/top', '10', 'i');
 /*!40000 ALTER TABLE `config` ENABLE KEYS */;
 
 -- Dumping structure for table reldens.features
@@ -197,7 +206,7 @@ CREATE TABLE IF NOT EXISTS `features` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table reldens.features: ~7 rows (approximately)
+-- Dumping data for table reldens.features: ~6 rows (approximately)
 /*!40000 ALTER TABLE `features` DISABLE KEYS */;
 INSERT INTO `features` (`id`, `code`, `title`, `is_enabled`) VALUES
 	(1, 'chat', 'Chat', 1),
@@ -243,7 +252,7 @@ CREATE TABLE IF NOT EXISTS `items_inventory` (
   PRIMARY KEY (`id`),
   KEY `FK_items_inventory_items_item` (`item_id`),
   CONSTRAINT `FK_items_inventory_items_item` FOREIGN KEY (`item_id`) REFERENCES `items_item` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=145 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Inventory table is to save the items for each owner.';
+) ENGINE=InnoDB AUTO_INCREMENT=104 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Inventory table is to save the items for each owner.';
 
 -- Dumping data for table reldens.items_inventory: ~10 rows (approximately)
 /*!40000 ALTER TABLE `items_inventory` DISABLE KEYS */;
@@ -278,7 +287,7 @@ CREATE TABLE IF NOT EXISTS `items_item` (
   CONSTRAINT `FK_items_item_items_group` FOREIGN KEY (`group_id`) REFERENCES `items_group` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='List of all available items in the system.';
 
--- Dumping data for table reldens.items_item: ~6 rows (approximately)
+-- Dumping data for table reldens.items_item: ~5 rows (approximately)
 /*!40000 ALTER TABLE `items_item` DISABLE KEYS */;
 INSERT INTO `items_item` (`id`, `key`, `group_id`, `label`, `description`, `qty_limit`, `uses_limit`, `useTimeOut`, `execTimeOut`) VALUES
 	(1, 'coins', NULL, 'Coins', NULL, 0, 1, NULL, NULL),
@@ -303,7 +312,7 @@ CREATE TABLE IF NOT EXISTS `items_item_modifiers` (
   CONSTRAINT `FK_items_item_modifiers_items_item` FOREIGN KEY (`item_id`) REFERENCES `items_item` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Modifiers is the way we will affect the item owner.';
 
--- Dumping data for table reldens.items_item_modifiers: ~4 rows (approximately)
+-- Dumping data for table reldens.items_item_modifiers: ~3 rows (approximately)
 /*!40000 ALTER TABLE `items_item_modifiers` DISABLE KEYS */;
 INSERT INTO `items_item_modifiers` (`id`, `item_id`, `key`, `property_key`, `operation`, `value`, `maxProperty`) VALUES
 	(1, 4, 'atk', 'stats/atk', 5, '5', NULL),
@@ -381,7 +390,7 @@ CREATE TABLE IF NOT EXISTS `players` (
   UNIQUE KEY `name` (`name`),
   KEY `FK_players_users` (`user_id`),
   CONSTRAINT `FK_players_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=49 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping data for table reldens.players: ~4 rows (approximately)
 /*!40000 ALTER TABLE `players` DISABLE KEYS */;
@@ -405,13 +414,13 @@ CREATE TABLE IF NOT EXISTS `players_state` (
   KEY `FK_player_state_player_stats` (`player_id`),
   CONSTRAINT `FK_player_state_player_stats` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON UPDATE CASCADE,
   CONSTRAINT `FK_player_state_rooms` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=48 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping data for table reldens.players_state: ~4 rows (approximately)
 /*!40000 ALTER TABLE `players_state` DISABLE KEYS */;
 INSERT INTO `players_state` (`id`, `player_id`, `room_id`, `x`, `y`, `dir`) VALUES
-	(3, 1, 5, 920, 653, 'left'),
-	(4, 2, 4, 934, 501, 'right'),
+	(3, 1, 5, 715, 650, 'down'),
+	(4, 2, 5, 624, 659, 'up'),
 	(5, 3, 6, 837, 476, 'down'),
 	(19, 17, 5, 691, 707, 'down');
 /*!40000 ALTER TABLE `players_state` ENABLE KEYS */;
@@ -429,12 +438,12 @@ CREATE TABLE IF NOT EXISTS `players_stats` (
   KEY `user_id` (`player_id`) USING BTREE,
   CONSTRAINT `FK_player_current_stats_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON UPDATE CASCADE,
   CONSTRAINT `FK_players_current_stats_players_stats` FOREIGN KEY (`stat_id`) REFERENCES `stats` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=328 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=58 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping data for table reldens.players_stats: ~40 rows (approximately)
 /*!40000 ALTER TABLE `players_stats` DISABLE KEYS */;
 INSERT INTO `players_stats` (`id`, `player_id`, `stat_id`, `base_value`, `value`) VALUES
-	(1, 1, 1, 200, 153),
+	(1, 1, 1, 200, 58),
 	(2, 2, 1, 160, 83),
 	(3, 3, 1, 100, 100),
 	(4, 17, 1, 100, 100),
@@ -595,7 +604,7 @@ CREATE TABLE IF NOT EXISTS `skills_class_level_up_animations` (
   CONSTRAINT `FK_skills_class_level_up_skills_levels` FOREIGN KEY (`level_id`) REFERENCES `skills_levels` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table reldens.skills_class_level_up_animations: ~1 rows (approximately)
+-- Dumping data for table reldens.skills_class_level_up_animations: ~0 rows (approximately)
 /*!40000 ALTER TABLE `skills_class_level_up_animations` DISABLE KEYS */;
 INSERT INTO `skills_class_level_up_animations` (`id`, `class_path_id`, `level_id`, `animationData`) VALUES
 	(1, NULL, NULL, '{"enabled":true,"type":"spritesheet","img":"heal_cast","frameWidth":64,"frameHeight":70,"start":0,"end":3,"repeat":-1,"destroyTime":2000,"depthByPlayer":"above"}');
@@ -697,7 +706,7 @@ CREATE TABLE IF NOT EXISTS `skills_levels` (
   CONSTRAINT `FK_skills_levels_skills_levels_set` FOREIGN KEY (`level_set_id`) REFERENCES `skills_levels_set` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table reldens.skills_levels: ~13 rows (approximately)
+-- Dumping data for table reldens.skills_levels: ~12 rows (approximately)
 /*!40000 ALTER TABLE `skills_levels` DISABLE KEYS */;
 INSERT INTO `skills_levels` (`id`, `key`, `label`, `required_experience`, `level_set_id`) VALUES
 	(1, 1, '1', 0, 1),
@@ -764,7 +773,7 @@ CREATE TABLE IF NOT EXISTS `skills_levels_set` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table reldens.skills_levels_set: ~4 rows (approximately)
+-- Dumping data for table reldens.skills_levels_set: ~3 rows (approximately)
 /*!40000 ALTER TABLE `skills_levels_set` DISABLE KEYS */;
 INSERT INTO `skills_levels_set` (`id`, `autoFillRanges`) VALUES
 	(1, 1),
@@ -783,7 +792,7 @@ CREATE TABLE IF NOT EXISTS `skills_owners_class_path` (
   PRIMARY KEY (`id`),
   KEY `level_set_id` (`class_path_id`) USING BTREE,
   CONSTRAINT `FK_skills_owners_class_path_skills_class_path` FOREIGN KEY (`class_path_id`) REFERENCES `skills_class_path` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=31 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping data for table reldens.skills_owners_class_path: ~4 rows (approximately)
 /*!40000 ALTER TABLE `skills_owners_class_path` DISABLE KEYS */;
@@ -818,7 +827,7 @@ CREATE TABLE IF NOT EXISTS `skills_skill` (
   UNIQUE KEY `key` (`key`)
 ) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table reldens.skills_skill: ~4 rows (approximately)
+-- Dumping data for table reldens.skills_skill: ~3 rows (approximately)
 /*!40000 ALTER TABLE `skills_skill` DISABLE KEYS */;
 INSERT INTO `skills_skill` (`id`, `key`, `type`, `autoValidation`, `skillDelay`, `castTime`, `usesLimit`, `range`, `rangeAutomaticValidation`, `rangePropertyX`, `rangePropertyY`, `rangeTargetPropertyX`, `rangeTargetPropertyY`, `allowSelfTarget`, `criticalChance`, `criticalMultiplier`, `criticalFixedValue`, `customData`) VALUES
 	(1, 'attackBullet', '4', 0, 1000, 0, 0, 250, 1, 'state/x', 'state/y', NULL, NULL, 0, 10, 2, 0, NULL),
@@ -872,7 +881,7 @@ CREATE TABLE IF NOT EXISTS `skills_skill_attack` (
   CONSTRAINT `FK__skills_skill_attack` FOREIGN KEY (`skill_id`) REFERENCES `skills_skill` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table reldens.skills_skill_attack: ~3 rows (approximately)
+-- Dumping data for table reldens.skills_skill_attack: ~2 rows (approximately)
 /*!40000 ALTER TABLE `skills_skill_attack` DISABLE KEYS */;
 INSERT INTO `skills_skill_attack` (`id`, `skill_id`, `affectedProperty`, `allowEffectBelowZero`, `hitDamage`, `applyDirectDamage`, `attackProperties`, `defenseProperties`, `aimProperties`, `dodgeProperties`, `dodgeFullEnabled`, `dodgeOverAimSuccess`, `damageAffected`, `criticalAffected`) VALUES
 	(1, 1, 'stats/hp', 0, 3, 0, 'stats/atk,stats/stamina,stats/speed', 'stats/def,stats/stamina,stats/speed', 'stats/aim', 'stats/dodge', 1, 2, 0, 0),
@@ -968,7 +977,7 @@ CREATE TABLE IF NOT EXISTS `skills_skill_physical_data` (
   CONSTRAINT `FK_skills_skill_physical_data_skills_skill` FOREIGN KEY (`skill_id`) REFERENCES `skills_skill` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table reldens.skills_skill_physical_data: ~2 rows (approximately)
+-- Dumping data for table reldens.skills_skill_physical_data: ~0 rows (approximately)
 /*!40000 ALTER TABLE `skills_skill_physical_data` DISABLE KEYS */;
 INSERT INTO `skills_skill_physical_data` (`id`, `skill_id`, `magnitude`, `objectWidth`, `objectHeight`, `validateTargetOnHit`) VALUES
 	(1, 1, 350, 5, 5, 0),
@@ -992,7 +1001,7 @@ CREATE TABLE IF NOT EXISTS `skills_skill_target_effects` (
   CONSTRAINT `FK_skills_skill_effect_modifiers` FOREIGN KEY (`skill_id`) REFERENCES `skills_skill` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Modifiers table.';
 
--- Dumping data for table reldens.skills_skill_target_effects: ~1 rows (approximately)
+-- Dumping data for table reldens.skills_skill_target_effects: ~0 rows (approximately)
 /*!40000 ALTER TABLE `skills_skill_target_effects` DISABLE KEYS */;
 INSERT INTO `skills_skill_target_effects` (`id`, `skill_id`, `key`, `property_key`, `operation`, `value`, `minValue`, `maxValue`, `minProperty`, `maxProperty`) VALUES
 	(1, 4, 'heal', 'stats/hp', 1, '10', '0', '0', NULL, 'statsBase/hp');
@@ -1055,14 +1064,14 @@ CREATE TABLE IF NOT EXISTS `users` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `email` (`email`),
   UNIQUE KEY `username` (`username`)
-) ENGINE=InnoDB AUTO_INCREMENT=69 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=46 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping data for table reldens.users: ~4 rows (approximately)
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
 INSERT INTO `users` (`id`, `email`, `username`, `password`, `role_id`, `status`, `created_at`, `updated_at`) VALUES
-	(29, 'dap@dap.com', 'dap', '$2b$10$PQIYGBFyA/69DaowJVTA5ufVWmIUeIOwIK4e6JCAP5Uen0sp0TAHu', 1, '1595011283764', '2019-08-02 23:06:14', '2021-02-10 19:46:29'),
-	(30, 'dap2@dap.com', 'dap2', '$2b$10$Kvjh1XdsMai8Xt2wdivG2.prYvTiW6vJrdnrNPYZenf8qCRLhuZ/a', 9, '1', '2019-08-02 23:06:14', '2021-02-10 22:16:47'),
-	(31, 'dap3@dap.com', 'dap3', '$2b$10$CmtWkhIexIVtcBjwsmEkeOlIhqizViykDFYAKtVrl4sF8KWLuBsxO', 1, '1', '2019-08-02 23:06:14', '2021-02-08 14:37:39'),
+	(29, 'dap@dap.com', 'dap', '$2b$10$PQIYGBFyA/69DaowJVTA5ufVWmIUeIOwIK4e6JCAP5Uen0sp0TAHu', 1, '1595011283764', '2019-08-02 23:06:14', '2021-02-11 16:28:55'),
+	(30, 'dap2@dap.com', 'dap2', '$2b$10$Kvjh1XdsMai8Xt2wdivG2.prYvTiW6vJrdnrNPYZenf8qCRLhuZ/a', 9, '1', '2019-08-02 23:06:14', '2021-02-11 16:29:19'),
+	(31, 'dap3@dap.com', 'dap3', '$2b$10$CmtWkhIexIVtcBjwsmEkeOlIhqizViykDFYAKtVrl4sF8KWLuBsxO', 1, '1', '2019-08-02 23:06:14', '2021-02-10 22:58:18'),
 	(45, 'damian.pastorini@gmail.com', 'Fire Test', '$2b$10$RtF9w7zAbkL/.CP0UTss6O/TtWQtpr5npoaYmBe2fRokJWfU4skZW', 1, '1', '2020-07-28 21:34:39', '2021-02-09 21:54:46');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 
