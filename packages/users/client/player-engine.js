@@ -54,22 +54,20 @@ class PlayerEngine
 
     addPlayer(id, addPlayerData)
     {
-        let {x, y, dir, playerName, avatarKey} = addPlayerData;
         if(sc.hasOwn(this.players, id)){
             // player sprite already exists, update it and return it:
-            this.players[id].playerName = playerName;
-            this.players[id].avatarKey = avatarKey;
-            this.players[id].playerId = id;
-            this.players[id].anims.play(avatarKey+'_'+dir);
-            this.players[id].anims.stop();
             return this.players[id];
         }
+        let {x, y, dir, playerName, avatarKey} = addPlayerData;
         this.players[id] = this.scene.physics.add.sprite(x, (y - this.topOff), avatarKey);
         this.players[id].playerName = playerName;
         this.players[id].avatarKey = avatarKey;
         this.players[id].playerId = id;
         this.players[id].anims.play(avatarKey+'_'+dir);
         this.players[id].anims.stop();
+        if(this.gameManager.config.get('client/ui/players/showNames')){
+            this.attachNameToPlayerSprite(this.players[id]);
+        }
         this.players[id].setInteractive({useHandCursor: true}).on('pointerdown', (ev) => {
             // @NOTE: we avoid to run object interactions while an UI element is open, if we click on the UI the
             // elements in the background scene should not be executed.
@@ -106,6 +104,12 @@ class PlayerEngine
             playerSprite.mov = player.state.mov;
         }
         EventsManagerSingleton.emit('reldens.runPlayerAnimation', this, playerId, player);
+        let nameConfig = this.gameManager.config.get('client/ui/players');
+        if(nameConfig.showNames && playerSprite.nameSprite){
+            let relativeNamePosition = this.getNamePosition(playerSprite, nameConfig);
+            playerSprite.nameSprite.x = relativeNamePosition.x;
+            playerSprite.nameSprite.y = relativeNamePosition.y;
+        }
         if(Object.keys(playerSprite.moveSprites).length){
             for(let i of Object.keys(playerSprite.moveSprites)){
                 let sprite = playerSprite.moveSprites[i];
@@ -143,8 +147,46 @@ class PlayerEngine
         }
     }
 
+    attachNameToPlayerSprite(playerSprite)
+    {
+        let nameConfig = this.gameManager.config.get('client/ui/players');
+        // defaults:
+        let fontSize = nameConfig.nameFontSize || 12;
+        let relativeNamePosition = this.getNamePosition(playerSprite, nameConfig);
+        // create sprite:
+        let nameSprite = this.scene.add.text(
+            // center name in player position:
+            relativeNamePosition.x,
+            // put the name above the player (can be changed by modifying the nameHeight config):
+            relativeNamePosition.y,
+            playerSprite.playerName, {fontFamily: nameConfig.nameFontFamily, fontSize: fontSize+'px'}
+        );
+        nameSprite.style.fill = nameConfig.nameFill;
+        nameSprite.style.align = 'center';
+        nameSprite.style.stroke = nameConfig.nameStroke;
+        nameSprite.style.strokeThickness = nameConfig.nameStrokeThickness;
+        nameSprite.style.setShadow(5, 5, nameConfig.nameShadowColor, 5);
+        nameSprite.setDepth = 100000;
+        playerSprite.nameSprite = nameSprite;
+    }
+
+    getNamePosition(playerSprite, nameConfig = false)
+    {
+        // defaults:
+        let nameHeight = nameConfig.nameHeight || 18;
+        // center name in player position:
+        let x = playerSprite.x - ((playerSprite.playerName.length * 4));
+        // put the name above the player (can be changed by modifying the nameHeight config):
+        let y = playerSprite.y
+            - nameHeight
+            - playerSprite.height
+            + sc.getDef(this, 'topOff', 0);
+        return {x, y};
+    }
+
     removePlayer(key)
     {
+        this.players[key].nameSprite.destroy();
         this.players[key].destroy();
         delete this.players[key];
     }

@@ -13,6 +13,16 @@ INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (NULL, 'cli
 INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (NULL, 'client', 'ui/instructions/responsiveY', '100', 'i');
 INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (NULL, 'client', 'ui/instructions/x', '380', 'i');
 INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (NULL, 'client', 'ui/instructions/y', '940', 'i');
+INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (NULL, 'client', 'ui/players/showNames', '1', 'b');
+INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (NULL, 'client', 'ui/players/nameHeight', '15', 'i');
+INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (NULL, 'client', 'ui/players/nameFill', '#ffffff', 't');
+INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (NULL, 'client', 'ui/players/nameStroke', '#000000', 't');
+INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (NULL, 'client', 'ui/players/nameStrokeThickness', '4', 'i');
+INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (NULL, 'client', 'ui/players/nameShadowColor', 'rgba(0,0,0,0.7)', 't');
+INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (NULL, 'client', 'ui/players/nameFontFamily', 'Verdana, Geneva, sans-serif', 't');
+INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (NULL, 'client', 'ui/players/nameFontSize', '12', 'i');
+
+INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (NULL, 'client', 'ui/lifeBar/top', '10', 'i');
 
 # Skills level up animations:
 
