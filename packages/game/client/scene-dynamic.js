@@ -237,7 +237,7 @@ class SceneDynamic extends Scene
         }
         // @TODO - BETA - Make pointer sprite data configurable. Here the -16 is half of the sprite height.
         this.arrowSprite = this.physics.add.sprite(pointer.worldX, pointer.worldY - 16, GameConst.ARROW_DOWN);
-        this.arrowSprite.setDepth(2000000);
+        this.arrowSprite.setDepth(500000);
         this.arrowSprite.anims.play(GameConst.ARROW_DOWN, true).on('animationcomplete', () => {
             this.arrowSprite.destroy();
         });

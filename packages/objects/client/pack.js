@@ -70,7 +70,7 @@ class ObjectsPack
                         animKey = skillBullet;
                     }
                     let bulletSprite = currentScene.physics.add.sprite(body.x, body.y, animKey);
-                    bulletSprite.setDepth(200000);
+                    bulletSprite.setDepth(300000);
                     this.bullets[key] = bulletSprite;
                 }
             };

@@ -74,7 +74,7 @@ class LifebarUi
         this.lifeBar.lineStyle(1, lineColor);
         this.lifeBar.strokeRect(uiX, uiY, fullBarWidth, barHeight);
         this.lifeBar.alpha = 0.6;
-        this.lifeBar.setDepth(100000);
+        this.lifeBar.setDepth(300000);
     }
 
 }

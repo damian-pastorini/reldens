@@ -3,6 +3,7 @@
 SET FOREIGN_KEY_CHECKS = 0;
 
 #######################################################################################################################
+
 # Config:
 
 INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/controls/tabTarget', '1', 'b');
@@ -21,8 +22,8 @@ INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (NULL, 'cli
 INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (NULL, 'client', 'ui/players/nameShadowColor', 'rgba(0,0,0,0.7)', 't');
 INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (NULL, 'client', 'ui/players/nameFontFamily', 'Verdana, Geneva, sans-serif', 't');
 INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (NULL, 'client', 'ui/players/nameFontSize', '12', 'i');
-
 INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (NULL, 'client', 'ui/lifeBar/top', '10', 'i');
+UPDATE `config` SET `value`='{"key":"default_hit","animationData":{"enabled":true,"type":"spritesheet","img":"default_hit","frameWidth":64,"frameHeight":64,"start":0,"end":3,"repeat":0,"depthByPlayer":"above"}}' WHERE `path`='skills/animations/default_hit';
 
 # Skills level up animations:
 
@@ -39,6 +40,7 @@ CREATE TABLE `skills_class_level_up_animations` (
 ) COLLATE='utf8_unicode_ci' ENGINE=InnoDB;
 
 # Single level up for all classes and levels:
+
 INSERT INTO `skills_class_level_up_animations` (`animationData`) VALUES ('{"enabled":true,"type":"spritesheet","img":"heal_cast","frameWidth":64,"frameHeight":70,"start":0,"end":3,"repeat":-1,"destroyTime":2000,"depthByPlayer":"above"}');
 
 #######################################################################################################################

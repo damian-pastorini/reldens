@@ -166,7 +166,7 @@ class PlayerEngine
         nameSprite.style.stroke = nameConfig.nameStroke;
         nameSprite.style.strokeThickness = nameConfig.nameStrokeThickness;
         nameSprite.style.setShadow(5, 5, nameConfig.nameShadowColor, 5);
-        nameSprite.setDepth = 100000;
+        nameSprite.setDepth(200000);
         playerSprite.nameSprite = nameSprite;
     }
 

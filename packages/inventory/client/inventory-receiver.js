@@ -70,7 +70,7 @@ class InventoryReceiver extends Receiver
                 this.gameManager.gameDom.getElement('#inventory-close').click();
             }
             this.itemSprites[animKey] = currentScene.physics.add.sprite(x, y, animKey);
-            this.itemSprites[animKey].setDepth(2000000);
+            this.itemSprites[animKey].setDepth(100000);
             if(item.animationData.followPlayer){
                 playerSprite.moveSprites[animKey] = this.itemSprites[animKey];
             }

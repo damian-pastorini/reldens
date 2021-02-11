@@ -112,11 +112,11 @@ class ReceiverWrapper extends Receiver
             let animData = allAnimations[hitAnimKey];
             let depth = sc.hasOwn(animData.animationData, 'depthByPlayer')
                 && animData.animationData['depthByPlayer'] === 'above'
-                ? targetSprite.depth+1 : targetSprite.depth - 0.1;
+                ? targetSprite.depth+100 : targetSprite.depth - 0.1;
             hitSprite.depthByPlayer = animData.animationData.depthByPlayer;
             hitSprite.setDepth(depth);
         } else {
-            hitSprite.setDepth(200000);
+            hitSprite.setDepth(300000);
         }
         hitSprite.anims.play(hitAnimKey, true).on('animationcomplete', () => {
             hitSprite.destroy();
