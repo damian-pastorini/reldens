@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS `config` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=198 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table reldens.config: ~148 rows (approximately)
+-- Dumping data for table reldens.config: ~157 rows (approximately)
 /*!40000 ALTER TABLE `config` DISABLE KEYS */;
 INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(1, 'server', 'rooms/validation/valid', 'room_game,chat_global', 't'),
@@ -203,7 +203,8 @@ INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(203, 'client', 'actions/damage/fontSize', '14', 'i'),
 	(204, 'client', 'actions/damage/stroke', '#000000', 't'),
 	(205, 'client', 'actions/damage/strokeThickness', '4', 'i'),
-	(206, 'client', 'actions/damage/shadowColor', 'rgba(0,0,0,0.7)', 't');
+	(206, 'client', 'actions/damage/shadowColor', 'rgba(0,0,0,0.7)', 't'),
+	(207, 'client', 'actions/damage/showAll', '0', 'b');
 /*!40000 ALTER TABLE `config` ENABLE KEYS */;
 
 -- Dumping structure for table reldens.features
@@ -428,8 +429,8 @@ CREATE TABLE IF NOT EXISTS `players_state` (
 -- Dumping data for table reldens.players_state: ~4 rows (approximately)
 /*!40000 ALTER TABLE `players_state` DISABLE KEYS */;
 INSERT INTO `players_state` (`id`, `player_id`, `room_id`, `x`, `y`, `dir`) VALUES
-	(3, 1, 5, 686, 714, 'down'),
-	(4, 2, 4, 571, 514, 'left'),
+	(3, 1, 5, 886, 655, 'left'),
+	(4, 2, 5, 1109, 109, 'left'),
 	(5, 3, 6, 837, 476, 'down'),
 	(19, 17, 5, 691, 707, 'down');
 /*!40000 ALTER TABLE `players_state` ENABLE KEYS */;
@@ -452,12 +453,12 @@ CREATE TABLE IF NOT EXISTS `players_stats` (
 -- Dumping data for table reldens.players_stats: ~40 rows (approximately)
 /*!40000 ALTER TABLE `players_stats` DISABLE KEYS */;
 INSERT INTO `players_stats` (`id`, `player_id`, `stat_id`, `base_value`, `value`) VALUES
-	(1, 1, 1, 200, 58),
-	(2, 2, 1, 160, 90),
+	(1, 1, 1, 200, 68),
+	(2, 2, 1, 160, 37),
 	(3, 3, 1, 100, 100),
 	(4, 17, 1, 100, 100),
 	(5, 1, 2, 160, 5),
-	(6, 2, 2, 160, 155),
+	(6, 2, 2, 160, 140),
 	(7, 3, 2, 100, 100),
 	(8, 17, 2, 100, 95),
 	(9, 1, 3, 100, 105),
@@ -806,8 +807,8 @@ CREATE TABLE IF NOT EXISTS `skills_owners_class_path` (
 -- Dumping data for table reldens.skills_owners_class_path: ~4 rows (approximately)
 /*!40000 ALTER TABLE `skills_owners_class_path` DISABLE KEYS */;
 INSERT INTO `skills_owners_class_path` (`id`, `class_path_id`, `owner_id`, `currentLevel`, `currentExp`) VALUES
-	(1, 1, 1, 8, 2440),
-	(2, 1, 2, 8, 550),
+	(1, 1, 1, 8, 2640),
+	(2, 1, 2, 8, 1100),
 	(3, 1, 3, 1, 0),
 	(4, 1, 17, 5, 100);
 /*!40000 ALTER TABLE `skills_owners_class_path` ENABLE KEYS */;
@@ -1078,8 +1079,8 @@ CREATE TABLE IF NOT EXISTS `users` (
 -- Dumping data for table reldens.users: ~4 rows (approximately)
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
 INSERT INTO `users` (`id`, `email`, `username`, `password`, `role_id`, `status`, `created_at`, `updated_at`) VALUES
-	(29, 'dap@dap.com', 'dap', '$2b$10$PQIYGBFyA/69DaowJVTA5ufVWmIUeIOwIK4e6JCAP5Uen0sp0TAHu', 1, '1595011283764', '2019-08-02 23:06:14', '2021-02-12 14:07:49'),
-	(30, 'dap2@dap.com', 'dap2', '$2b$10$Kvjh1XdsMai8Xt2wdivG2.prYvTiW6vJrdnrNPYZenf8qCRLhuZ/a', 9, '1', '2019-08-02 23:06:14', '2021-02-11 22:59:28'),
+	(29, 'dap@dap.com', 'dap', '$2b$10$PQIYGBFyA/69DaowJVTA5ufVWmIUeIOwIK4e6JCAP5Uen0sp0TAHu', 1, '1595011283764', '2019-08-02 23:06:14', '2021-02-12 16:03:21'),
+	(30, 'dap2@dap.com', 'dap2', '$2b$10$Kvjh1XdsMai8Xt2wdivG2.prYvTiW6vJrdnrNPYZenf8qCRLhuZ/a', 9, '1', '2019-08-02 23:06:14', '2021-02-12 16:03:24'),
 	(31, 'dap3@dap.com', 'dap3', '$2b$10$CmtWkhIexIVtcBjwsmEkeOlIhqizViykDFYAKtVrl4sF8KWLuBsxO', 1, '1', '2019-08-02 23:06:14', '2021-02-10 22:58:18'),
 	(45, 'damian.pastorini@gmail.com', 'Fire Test', '$2b$10$RtF9w7zAbkL/.CP0UTss6O/TtWQtpr5npoaYmBe2fRokJWfU4skZW', 1, '1', '2020-07-28 21:34:39', '2021-02-09 21:54:46');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;

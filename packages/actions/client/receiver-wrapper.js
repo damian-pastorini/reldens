@@ -259,9 +259,12 @@ class ReceiverWrapper extends Receiver
         if(!damageConfig.enabled){
             return false;
         }
-        let currentScene = this.gameManager.getActiveScene();
         let currentPlayer = this.gameManager.getCurrentPlayer();
-        let target = this.getTargetObjectFromExtraData(message.data.extraData, currentScene, currentPlayer);
+        if(!damageConfig.showAll && message.data.extraData.oK !== currentPlayer.playerId){
+            return false;
+        }
+        let currentScene = this.gameManager.getActiveScene();
+        let target = this.getObjectFromExtraData('t', message.data.extraData, currentScene, currentPlayer);
         if(!target){
             return false;
         }
@@ -283,7 +286,7 @@ class ReceiverWrapper extends Receiver
     getPlayDirection(extraData, ownerSprite, currentPlayer, currentScene)
     {
         let playDirection = false;
-        let target = this.getTargetObjectFromExtraData(extraData, currentScene, currentPlayer);
+        let target = this.getObjectFromExtraData('t', extraData, currentScene, currentPlayer);
         if(!target){
             return false;
         }
@@ -296,16 +299,18 @@ class ReceiverWrapper extends Receiver
         return playDirection;
     }
 
-    getTargetObjectFromExtraData(extraData, currentScene, currentPlayer)
+    getObjectFromExtraData(objKey, extraData, currentScene, currentPlayer)
     {
-        let target = false;
-        if(extraData.tT !== 'p' && sc.hasOwn(currentScene.objectsAnimations, extraData.tK)){
-            target = currentScene.objectsAnimations[extraData.tK];
+        // objKey = t > target
+        // objKey = o > owner
+        let returnObj = false;
+        if(extraData[objKey+'T'] !== 'p' && sc.hasOwn(currentScene.objectsAnimations, extraData[objKey+'K'])){
+            returnObj = currentScene.objectsAnimations[extraData[objKey+'K']];
         }
-        if(extraData.tT === 'p' && sc.hasOwn(currentPlayer.players, extraData.tK)){
-            target = currentPlayer.players[extraData.tK];
+        if(extraData[objKey+'T'] === 'p' && sc.hasOwn(currentPlayer.players, extraData[objKey+'K'])){
+            returnObj = currentPlayer.players[extraData[objKey+'K']];
         }
-        return target;
+        return returnObj;
     }
 
 }
