@@ -227,6 +227,33 @@ class SceneDynamic extends Scene
         return pointer;
     }
 
+    createFloatingText(
+        x,
+        y,
+        message,
+        color,
+        font,
+        fontSize = 14,
+        duration = 600,
+        top = 50,
+        stroke = '#000000',
+        strokeThickness = 4,
+        shadowColor = 'rgba(0,0,0,0.7)'
+    ){
+        let damageSprite = this.add.text(x, y, message, {fontFamily: font, fontSize: fontSize+'px'});
+        damageSprite.style.setColor(color);
+        damageSprite.style.setAlign('center');
+        damageSprite.style.setStroke(stroke, strokeThickness);
+        damageSprite.style.setShadow(5, 5, shadowColor, 5);
+        damageSprite.setDepth(200000);
+        this.add.tween({
+            targets: damageSprite, duration, ease: 'Exponential.In', y: y - top,
+            onComplete: () => {
+                damageSprite.destroy();
+            }
+        });
+    }
+
     updatePointerObject(pointer)
     {
         if(!this.configManager.get('client/ui/pointer/show')){

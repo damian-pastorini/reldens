@@ -253,16 +253,37 @@ class ReceiverWrapper extends Receiver
         }
     }
 
+    onSkillAttackApplyDamage(message)
+    {
+        let damageConfig = this.gameManager.config.get('client/actions/damage');
+        if(!damageConfig.enabled){
+            return false;
+        }
+        let currentScene = this.gameManager.getActiveScene();
+        let currentPlayer = this.gameManager.getCurrentPlayer();
+        let target = this.getTargetObjectFromExtraData(message.data.extraData, currentScene, currentPlayer);
+        if(!target){
+            return false;
+        }
+        currentScene.createFloatingText(
+            target.x,
+            target.y,
+            message.data.d,
+            damageConfig.color,
+            damageConfig.font,
+            damageConfig.fontSize,
+            damageConfig.duration,
+            damageConfig.top,
+            damageConfig.stroke,
+            damageConfig.strokeThickness,
+            damageConfig.shadowColor
+        );
+    }
+
     getPlayDirection(extraData, ownerSprite, currentPlayer, currentScene)
     {
         let playDirection = false;
-        let target = false;
-        if(extraData.tT !== 'p' && sc.hasOwn(currentScene.objectsAnimations, extraData.tK)){
-            target = currentScene.objectsAnimations[extraData.tK];
-        }
-        if(extraData.tT === 'p' && sc.hasOwn(currentPlayer.players, extraData.tK)){
-            target = currentPlayer.players[extraData.tK];
-        }
+        let target = this.getTargetObjectFromExtraData(extraData, currentScene, currentPlayer);
         if(!target){
             return false;
         }
@@ -273,6 +294,18 @@ class ReceiverWrapper extends Receiver
             playDirection = (playY >= 0) ? GameConst.DOWN : GameConst.UP;
         }
         return playDirection;
+    }
+
+    getTargetObjectFromExtraData(extraData, currentScene, currentPlayer)
+    {
+        let target = false;
+        if(extraData.tT !== 'p' && sc.hasOwn(currentScene.objectsAnimations, extraData.tK)){
+            target = currentScene.objectsAnimations[extraData.tK];
+        }
+        if(extraData.tT === 'p' && sc.hasOwn(currentPlayer.players, extraData.tK)){
+            target = currentPlayer.players[extraData.tK];
+        }
+        return target;
     }
 
 }

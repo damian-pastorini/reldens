@@ -161,10 +161,9 @@ class PlayerEngine
             relativeNamePosition.y,
             playerSprite.playerName, {fontFamily: nameConfig.nameFontFamily, fontSize: fontSize+'px'}
         );
-        nameSprite.style.fill = nameConfig.nameFill;
-        nameSprite.style.align = 'center';
-        nameSprite.style.stroke = nameConfig.nameStroke;
-        nameSprite.style.strokeThickness = nameConfig.nameStrokeThickness;
+        nameSprite.style.setFill(nameConfig.nameFill);
+        nameSprite.style.setAlign('center');
+        nameSprite.style.setStroke(nameConfig.nameStroke, nameConfig.nameStrokeThickness);
         nameSprite.style.setShadow(5, 5, nameConfig.nameShadowColor, 5);
         nameSprite.setDepth(200000);
         playerSprite.nameSprite = nameSprite;
