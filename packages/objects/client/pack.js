@@ -92,6 +92,8 @@ class ObjectsPack
                         objectAnimation.sceneSprite.setDepth(objectNewDepth);
                         objectAnimation.sceneSprite.x = body.x;
                         objectAnimation.sceneSprite.y = body.y;
+                        objectAnimation.x = body.x;
+                        objectAnimation.y = body.y;
                         this.moveSpritesObjects(objectAnimation, body.x, body.y, objectNewDepth);
                     }
                 }
