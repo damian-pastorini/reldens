@@ -24,7 +24,6 @@ class ChatPack extends PackInterface
             // here we are adding the chat room to be defined in the game server:
             roomsList.push({roomName: 'chat', room: RoomChat});
         });
-        // eslint-disable-next-line no-unused-vars
         EventsManagerSingleton.on('reldens.serverConfigFeaturesReady', (props) => {
             this.chatConfig = props.configProcessor.get('client/ui/chat');
         });
@@ -37,9 +36,10 @@ class ChatPack extends PackInterface
             if(!this.chatConfig.damageMessages){
                 return;
             }
-            classPath.listenEvent(SkillsEvents.SKILL_ATTACK_APPLY_DAMAGE, (skill, target, newValue) => {
+            // eslint-disable-next-line no-unused-vars
+            classPath.listenEvent(SkillsEvents.SKILL_ATTACK_APPLY_DAMAGE, (skill, target, damage, newValue) => {
                 let client = skill.owner.skillsServer.client.client;
-                let sendMessage = (skill.propertyManager.getPropertyValue(target, skill.affectedProperty) - newValue)+' hit';
+                let sendMessage = damage+' hit';
                 let messageObject = {
                     act: ChatConst.CHAT_ACTION,
                     f: skill.owner.playerName,
