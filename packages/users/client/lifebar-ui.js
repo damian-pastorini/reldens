@@ -12,17 +12,20 @@ class LifebarUi
         }
         this.gameManager = props.gameManager;
         this.player = props.player;
+        this.barConfig = this.gameManager.config.get('client/ui/lifeBar');
+        this.affectedProperty = this.gameManager.config.get('client/actions/skills/affectedProperty');
+        this.playerSize = this.gameManager.config.get('client/players/size');
         return this;
     }
 
     createHealthBar()
     {
-        if(!this.gameManager.config.get('client/ui/lifeBar/enabled')){
+        if(!this.barConfig.enabled){
             return false;
         }
         // if the position is fixed then the bar has to go on the ui scene:
         let lifeBarScene = this.gameManager.getActiveScenePreloader();
-        let useFixedPosition = this.gameManager.config.get('client/ui/lifeBar/fixedPosition');
+        let useFixedPosition = this.barConfig.fixedPosition;
         if(!useFixedPosition){
             // otherwise the bar will be added in the current scene:
             lifeBarScene = this.gameManager.getActiveScene();
@@ -38,7 +41,7 @@ class LifebarUi
 
     redrawLifeBar()
     {
-        if(!this.lifeBar || !this.gameManager.config.get('client/ui/lifeBar/enabled')){
+        if(!this.lifeBar || !this.barConfig.enabled){
             return false;
         }
         if(this.player.playerId !== this.gameManager.getCurrentPlayer().playerId){
@@ -48,30 +51,25 @@ class LifebarUi
             this.lifeBar.destroy();
             this.createHealthBar();
         }
-        let barHeight = this.gameManager.config.get('client/ui/lifeBar/height');
-        let barTop = this.gameManager.config.get('client/ui/lifeBar/top');
-        let fullBarWidth = this.gameManager.config.get('client/ui/lifeBar/width');
-        let affectedProperty = this.gameManager.config.get('client/actions/skills/affectedProperty');
-        let fullValue = this.gameManager.playerData.statsBase[affectedProperty];
-        let filledBarWidth = (this.gameManager.playerData.stats[affectedProperty] * fullBarWidth) / fullValue;
-        let {uiX, uiY} = this.gameManager.gameEngine.uiScene.getUiConfig('lifeBar');
-        if(!this.gameManager.config.get('client/ui/lifeBar/fixedPosition')){
-            let currentPlayerState = this.player.state;
-            uiX = currentPlayerState.x - (fullBarWidth / 2);
-            let playerHeight = this.gameManager.config.get('client/players/size/height');
-            uiY = currentPlayerState.y - barHeight - barTop - playerHeight + sc.getDef(this.player, 'topOff', 0);
+        let barHeight = this.barConfig.height;
+        let barTop = this.barConfig.top;
+        let fullBarWidth = this.barConfig.width;
+        let fullValue = this.gameManager.playerData.statsBase[this.affectedProperty];
+        let filledBarWidth = (this.gameManager.playerData.stats[this.affectedProperty] * fullBarWidth) / fullValue;
+        let uiX = this.barConfig.x,
+            uiY = this.barConfig.y;
+        if(!this.barConfig.fixedPosition){
+            uiX = this.player.state.x - (fullBarWidth / 2);
+            uiY = this.player.state.y
+                - barHeight
+                - barTop
+                - this.playerSize.height
+                + sc.getDef(this.player, 'topOff', 0);
         }
-        let fillColor = (0xff0000);
         this.lifeBar.clear();
-        this.lifeBar.fillStyle(fillColor, 1);
-        this.lifeBar.fillRect(
-            uiX,
-            uiY,
-            filledBarWidth,
-            barHeight
-        );
-        let lineColor = (0xffffff);
-        this.lifeBar.lineStyle(1, lineColor);
+        this.lifeBar.fillStyle(parseInt(this.barConfig.fillStyle), 1);
+        this.lifeBar.fillRect(uiX, uiY, filledBarWidth, barHeight);
+        this.lifeBar.lineStyle(1, parseInt(this.barConfig.lineStyle));
         this.lifeBar.strokeRect(uiX, uiY, fullBarWidth, barHeight);
         this.lifeBar.alpha = 0.6;
         this.lifeBar.setDepth(300000);

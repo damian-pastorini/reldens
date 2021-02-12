@@ -35,7 +35,7 @@ class ObjectsPack
     listenMessages(room, gameManager)
     {
         room.onMessage((message) => {
-            // @TODO - BETA - Use object types, this will change with the Colyseus upgrade.
+            // @TODO - BETA - Act will be replaced with the next Colyseus upgrade.
             if(message.act === ObjectsConst.OBJECT_ANIMATION || message.act === ObjectsConst.TYPE_ANIMATION){
                 let currentScene = gameManager.activeRoomEvents.getActiveScene();
                 if(sc.hasOwn(currentScene.objectsAnimations, message.key)){
