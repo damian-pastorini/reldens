@@ -264,7 +264,7 @@ class ReceiverWrapper extends Receiver
             return false;
         }
         let currentScene = this.gameManager.getActiveScene();
-        let target = this.getObjectFromExtraData('t', message.data.extraData, currentScene, currentPlayer);
+        let target = currentScene.getObjectFromExtraData('t', message.data.extraData, currentPlayer);
         if(!target){
             return false;
         }
@@ -286,7 +286,7 @@ class ReceiverWrapper extends Receiver
     getPlayDirection(extraData, ownerSprite, currentPlayer, currentScene)
     {
         let playDirection = false;
-        let target = this.getObjectFromExtraData('t', extraData, currentScene, currentPlayer);
+        let target = currentScene.getObjectFromExtraData('t', extraData, currentPlayer);
         if(!target){
             return false;
         }
@@ -297,20 +297,6 @@ class ReceiverWrapper extends Receiver
             playDirection = (playY >= 0) ? GameConst.DOWN : GameConst.UP;
         }
         return playDirection;
-    }
-
-    getObjectFromExtraData(objKey, extraData, currentScene, currentPlayer)
-    {
-        // objKey = t > target
-        // objKey = o > owner
-        let returnObj = false;
-        if(extraData[objKey+'T'] !== 'p' && sc.hasOwn(currentScene.objectsAnimations, extraData[objKey+'K'])){
-            returnObj = currentScene.objectsAnimations[extraData[objKey+'K']];
-        }
-        if(extraData[objKey+'T'] === 'p' && sc.hasOwn(currentPlayer.players, extraData[objKey+'K'])){
-            returnObj = currentPlayer.players[extraData[objKey+'K']];
-        }
-        return returnObj;
     }
 
 }

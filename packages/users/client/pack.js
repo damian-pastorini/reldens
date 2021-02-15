@@ -17,39 +17,10 @@ class UsersPack
         EventsManagerSingleton.on('reldens.beforeCreateEngine', (initialGameData, gameManager) => {
             this.initialGameData = initialGameData;
             this.onBeforeCreateEngine(initialGameData, gameManager);
-        });
-        EventsManagerSingleton.on('reldens.playerStatsUpdateAfter', (message, roomEvents) => {
-            this.onPlayerStatsUpdateAfter(roomEvents);
-        });
-        // eslint-disable-next-line no-unused-vars
-        EventsManagerSingleton.on('reldens.runPlayerAnimation', (playerEngine, playerId, player) => {
-            if(playerEngine.playerId === playerId){
-                this.lifeBarUi.redrawLifeBar();
+            if(!this.lifeBarUi){
+                this.lifeBarUi = (new LifebarUi()).setup(gameManager);
             }
         });
-        EventsManagerSingleton.on('reldens.changedScene', (message, roomEvents) => {
-            this.lifeBarUi.player = roomEvents.gameManager.getCurrentPlayer();
-        });
-
-    }
-
-    onPlayerStatsUpdateAfter(roomEvents)
-    {
-        // @TODO - BETA - Make optional display other players lifeBar.
-        if(!this.lifeBarUi){
-            this.lifeBarUi = (new LifebarUi()).setup({
-                gameManager: roomEvents.gameManager,
-                player: roomEvents.gameManager.getCurrentPlayer()
-            });
-        }
-        if(this.lifeBarUi && roomEvents.gameManager.config.get('client/ui/lifeBar/enabled')){
-            if(!this.lifeBarUi.lifeBar){
-                if(!this.lifeBarUi.createHealthBar()){
-                    return false;
-                }
-            }
-            this.lifeBarUi.redrawLifeBar();
-        }
     }
 
     onBeforeCreateEngine(initialGameData, gameManager)
@@ -142,7 +113,6 @@ class UsersPack
         }
         return obj;
     }
-
 
     getPlayerById(players, playerId)
     {

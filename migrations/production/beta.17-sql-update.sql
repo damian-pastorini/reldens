@@ -36,6 +36,13 @@ INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (NULL, 'cli
 INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (NULL, 'client', 'actions/damage/shadowColor', 'rgba(0,0,0,0.7)', 't');
 INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (NULL, 'client', 'ui/lifeBar/fillStyle', '0xff0000', 't');
 INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (NULL, 'client', 'ui/lifeBar/lineStyle', '0xffffff', 't');
+INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (NULL, 'client', 'ui/lifeBar/showAllPlayers', '1', 'b');
+INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (NULL, 'client', 'ui/lifeBar/showEnemies ', '1', 'b');
+# Note: these will put the lifeBar fixed below the player data box in the top/left corner.
+UPDATE `config` SET `value`= '5' WHERE `path` = 'ui/lifeBar/x';
+UPDATE `config` SET `value`= '12' WHERE `path` = 'ui/lifeBar/y';
+UPDATE `config` SET `value`= '1' WHERE `path` = 'ui/lifeBar/responsiveX';
+UPDATE `config` SET `value`= '24' WHERE `path` = 'ui/lifeBar/responsiveY';
 
 # Skills level up animations:
 

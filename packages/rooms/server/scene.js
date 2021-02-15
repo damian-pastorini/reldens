@@ -26,7 +26,6 @@ class RoomScene extends RoomLogin
         // override super prop:
         this.validateRoomData = true;
         Logger.info('INIT ROOM: '+ this.roomName);
-        // this.roomId = options.room.roomId;
         this.sceneId = this.roomId;
         // @NOTE: we create an instance of the objects manager for each room-scene, this is on purpose so all the
         // related object instances will be removed when the room is disposed.
@@ -349,6 +348,8 @@ class RoomScene extends RoomLogin
             await this.loginManager.usersManager.updatePlayerStatByIds(target.player_id, statId, statPatch);
         }
         if(updateClient){
+            // @TODO - BETA - Convert all events in constants and consolidate them in a single file.
+            await EventsManagerSingleton.emit('reldens.savePlayerStatsUpdateClient', updateClient, target, this);
             this.send(updateClient, {
                 act: GameConst.PLAYER_STATS,
                 stats: target.stats,

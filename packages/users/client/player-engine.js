@@ -83,6 +83,7 @@ class PlayerEngine
         this.players[id].moveSprites = {};
         this.players[id].setDepth(this.players[id].y + this.players[id].body.height);
         this.players[id].setCollideWorldBounds(this.collideWorldBounds);
+        EventsManagerSingleton.emit('reldens.playerEngineAddPlayer', this, id, addPlayerData);
         return this.players[id];
     }
 

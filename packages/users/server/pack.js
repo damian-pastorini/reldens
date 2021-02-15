@@ -9,6 +9,7 @@ const { InitialUser } = require('../../users/server/initial-user');
 const { PackInterface } = require('../../features/server/pack-interface');
 const { ModelsManager } = require('./models-manager');
 const { EventsManagerSingleton, sc } = require('@reldens/utils');
+const { UsersConst } = require('../constants');
 
 class UsersPack extends PackInterface
 {
@@ -16,11 +17,41 @@ class UsersPack extends PackInterface
     setupPack()
     {
         this.modelsManager = ModelsManager;
+        this.lifeBarConfig = false;
+        this.skillsAffectedProperty = false;
         EventsManagerSingleton.on('reldens.serverReady', async (event) => {
             await this.onServerReady(event);
         });
-        EventsManagerSingleton.on('reldens.createPlayerAfter', async (client, authResult, currentPlayer, room) => {
-            await this.onCreatePlayerAfter(client, authResult, currentPlayer, room);
+        EventsManagerSingleton.on('reldens.createPlayerAfter', async (client, authResult, currentPlayer, roomScene) => {
+            await this.onCreatePlayerAfter(client, authResult, currentPlayer, roomScene);
+            if(!this.lifeBarConfig){
+                this.lifeBarConfig = roomScene.config.get('client/ui/lifeBar');
+            }
+            if(!this.skillsAffectedProperty){
+                this.skillsAffectedProperty = roomScene.config.get('client/actions/skills/affectedProperty');
+            }
+            if(this.lifeBarConfig.enabled){
+                if(this.lifeBarConfig.showAllPlayers){
+                    for(let i of Object.keys(roomScene.state.players)){
+                        let player = roomScene.state.players[i];
+                        let updateData = {
+                            act: UsersConst.ACTION_LIFEBAR_UPDATE,
+                            oT: 'p',
+                            oK: player.sessionId,
+                            newValue: player.stats[this.skillsAffectedProperty],
+                            totalValue: player.statsBase[this.skillsAffectedProperty]
+                        };
+                        roomScene.broadcast(updateData);
+                    }
+                } else {
+                    await this.onSavePlayerStatsUpdateClient(client, currentPlayer, roomScene);
+                }
+            }
+        });
+        EventsManagerSingleton.on('reldens.savePlayerStatsUpdateClient', async (client, target, roomScene) => {
+            if(this.lifeBarConfig.enabled){
+                await this.onSavePlayerStatsUpdateClient(client, target, roomScene);
+            }
         });
     }
 
@@ -72,6 +103,25 @@ class UsersPack extends PackInterface
             }
         }
         return {stats, statsBase};
+    }
+
+    // eslint-disable-next-line no-unused-vars
+    async onSavePlayerStatsUpdateClient(client, target, roomScene)
+    {
+        let updateData = {
+            act: UsersConst.ACTION_LIFEBAR_UPDATE,
+            oT: 'p',
+            oK: target.sessionId,
+            newValue: target.stats[this.skillsAffectedProperty],
+            totalValue: target.statsBase[this.skillsAffectedProperty]
+        };
+        if(this.lifeBarConfig.showAllPlayers){
+            roomScene.broadcast(updateData);
+        } else {
+            if(client.sessionId === target.sessionId){
+                roomScene.send(client, updateData);
+            }
+        }
     }
 
 }

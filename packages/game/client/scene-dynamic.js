@@ -7,7 +7,7 @@
 const { Scene, Input } = require('phaser');
 const { TilesetAnimation } = require('./tileset-animation');
 const { EventsManagerSingleton, Logger, sc } = require('@reldens/utils');
-const { GameConst } = require('../../game/constants');
+const { GameConst } = require('../constants');
 
 class SceneDynamic extends Scene
 {
@@ -276,6 +276,20 @@ class SceneDynamic extends Scene
             return false;
         }
         return sc.getDef(this.anims.anims.entries, key, false);
+    }
+
+    getObjectFromExtraData(objKey, extraData, currentPlayer)
+    {
+        // objKey = t > target
+        // objKey = o > owner
+        let returnObj = false;
+        if(extraData[objKey+'T'] !== 'p' && sc.hasOwn(this.objectsAnimations, extraData[objKey+'K'])){
+            returnObj = this.objectsAnimations[extraData[objKey+'K']];
+        }
+        if(extraData[objKey+'T'] === 'p' && sc.hasOwn(currentPlayer.players, extraData[objKey+'K'])){
+            returnObj = currentPlayer.players[extraData[objKey+'K']];
+        }
+        return returnObj;
     }
 
 }
