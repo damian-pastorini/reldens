@@ -80,7 +80,8 @@ class ObjectsPack
                     delete this.bullets[key];
                 }
             };
-            room.state.bodies.onChange = (body, key) => {
+            room.state.bodies.onChange = async (body, key) => {
+                await EventsManagerSingleton.emit('reldens.objectBodyChange', {body, key});
                 if(key.indexOf('bullet') !== -1){
                     this.bullets[key].x = body.x;
                     this.bullets[key].y = body.y;
@@ -94,9 +95,11 @@ class ObjectsPack
                         objectAnimation.sceneSprite.y = body.y;
                         objectAnimation.x = body.x;
                         objectAnimation.y = body.y;
+                        objectAnimation.inState = body.inState;
                         this.moveSpritesObjects(objectAnimation, body.x, body.y, objectNewDepth);
                     }
                 }
+                await EventsManagerSingleton.emit('reldens.objectBodyChanged', {body, key});
             };
         }
     }

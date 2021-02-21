@@ -7,9 +7,9 @@
  */
 
 const { Battle } = require('./battle');
-const { Logger } = require('@reldens/utils');
 const { ActionsConst } = require('../constants');
-const { EventsManagerSingleton } = require('@reldens/utils');
+const { GameConst } = require('../../game/constants');
+const { EventsManagerSingleton, Logger, sc } = require('@reldens/utils');
 
 class Pve extends Battle
 {
@@ -17,7 +17,7 @@ class Pve extends Battle
     constructor(props)
     {
         super(props);
-        this.chaseMultiple = {}.hasOwnProperty.call(props, 'chaseMultiple') ? props.chaseMultiple : false;
+        this.chaseMultiple = sc.getDef(props, 'chaseMultiple', false);
         this.inBattleWithPlayer = [];
     }
 
@@ -26,23 +26,31 @@ class Pve extends Battle
         this.targetObject = targetObject;
     }
 
-    async runBattle(playerSchema, target, room)
+    async runBattle(playerSchema, target, roomScene)
     {
         // @TODO - BETA - Make PvP available by configuration.
         // @NOTE: run battle method is for when the player attacks any target. PVE can be started in different ways,
         // depending how the current enemy-object was implemented, for example the PVE can start when the player just
         // collides with the enemy (instead of attack it) an aggressive enemy could start the battle automatically.
-        let attackResult = await super.runBattle(playerSchema, target, room);
+        let attackResult = await super.runBattle(playerSchema, target, roomScene);
         if(!attackResult){
             // @NOTE: the attack result can be false because different reasons, for example it could be a physical
             // attack for which matter we won't start the battle until the physical body hits the target.
             return false;
         }
-        if(target.stats[room.config.get('client/actions/skills/affectedProperty')] > 0){
-            await this.startBattleWith(playerSchema, room);
+        let affectedProperty = roomScene.config.get('client/actions/skills/affectedProperty');
+        await EventsManagerSingleton.emit('reldens.runBattlePveAfter', {
+            playerSchema,
+            target,
+            roomScene,
+            attackResult,
+            affectedProperty
+        });
+        if(target.stats[affectedProperty] > 0){
+            await this.startBattleWith(playerSchema, roomScene);
         } else {
             // physical attacks or effects will run the battleEnded, normal attacks or effects will hit this case:
-            await this.battleEnded(playerSchema, room);
+            await this.battleEnded(playerSchema, roomScene);
         }
     }
 
@@ -133,6 +141,7 @@ class Pve extends Battle
     battleEnded(playerSchema, room)
     {
         // @TODO - BETA - CHECK - Implement battle end in both pve and pvp.
+        this.targetObject.inState = GameConst.STATUS.DEATH;
         this.removeInBattlePlayer(playerSchema);
         let actionData = {
             act: ActionsConst.BATTLE_ENDED,

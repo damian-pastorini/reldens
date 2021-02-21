@@ -13,6 +13,7 @@ const { NpcObject } = require('./npc-object');
 const { Pve } = require('../../actions/server/pve');
 const { TypeAttack, TypePhysicalAttack } = require('../../actions/server/skills/types');
 const { ObjectsConst } = require('../constants');
+const { GameConst } = require('../../game/constants');
 const { EventsManagerSingleton, Logger, sc } = require('@reldens/utils');
 
 class EnemyObject extends NpcObject
@@ -31,21 +32,21 @@ class EnemyObject extends NpcObject
         // @NOTE: we could run different actions and enemies reactions based on the player action.
         // this.runOnAction = true;
         // run on hit will make the enemy aggressive when the player enter the in the enemy-object interactive area.
-        this.runOnHit = sc.hasOwn(props, 'runOnHit') ? props.runOnHit : true;
-        this.roomVisible = sc.hasOwn(props, 'roomVisible') ? props.runOnHit : true;
-        this.randomMovement = sc.hasOwn(props, 'randomMovement') ? props.runOnHit : true;
+        this.runOnHit = sc.getDef(props, 'runOnHit', true);
+        this.roomVisible = sc.getDef(props, 'roomVisible', true);
+        this.randomMovement = sc.getDef(props, 'randomMovement', true);
         // assign extra public params:
         Object.assign(this.clientParams, {
             enabled: true,
-            frameStart: sc.hasOwn(props, 'frameStart') ? props.runOnHit : 0,
-            frameEnd: sc.hasOwn(props, 'frameEnd') ? props.runOnHit : 3,
-            repeat: sc.hasOwn(props, 'repeat') ? props.runOnHit : -1,
-            hideOnComplete: sc.hasOwn(props, 'hideOnComplete') ? props.runOnHit : false,
-            autoStart: sc.hasOwn(props, 'autoStart') ? props.runOnHit : true
+            frameStart: sc.getDef(props, 'frameStart', 0),
+            frameEnd: sc.getDef(props, 'frameEnd', 3),
+            repeat: sc.getDef(props, 'repeat', -1),
+            hideOnComplete: sc.getDef(props, 'hideOnComplete', false),
+            autoStart: sc.getDef(props, 'autoStart', true)
         });
         this.battle = new Pve({
-            battleTimeOff: sc.hasOwn(props, 'battleTimeOff') ? props.battleTimeOff : 20000,
-            chaseMultiple: sc.hasOwn(props, 'chaseMultiple') ? props.chaseMultiple : false
+            battleTimeOff: sc.getDef(props, 'battleTimeOff', 20000),
+            chaseMultiple: sc.getDef(props, 'chaseMultiple', false)
         });
         // enemy created, setting broadcastKey:
         this.broadcastKey = this.client_key;
@@ -140,6 +141,7 @@ class EnemyObject extends NpcObject
         this.objectBody.originalCol = x;
         this.objectBody.originalRow = y;
         this.stats = this.initialStats;
+        this.inState = GameConst.STATUS.ACTIVE;
     }
 
     onHit(props)

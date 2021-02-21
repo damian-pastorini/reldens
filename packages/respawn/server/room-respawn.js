@@ -8,7 +8,7 @@
 
 const { RespawnModel } = require('./model');
 const { PathFinder } = require('../../world/server/path-finder');
-const { EventsManagerSingleton } = require('@reldens/utils');
+const { EventsManagerSingleton, sc } = require('@reldens/utils');
 
 class RoomRespawn
 {
@@ -33,14 +33,14 @@ class RoomRespawn
         for(let i of Object.keys(this.respawnDefinitions)){
             let respawnArea = this.respawnDefinitions[i];
             if(
-                {}.hasOwnProperty.call(this.layerObjects, respawnArea.object_id)
-                && {}.hasOwnProperty.call(this.layerObjects[respawnArea.object_id], 'respawn')
+                sc.hasOwn(this.layerObjects, respawnArea.object_id)
+                && sc.hasOwn(this.layerObjects[respawnArea.object_id], 'respawn')
             ){
                 let multipleObj = this.layerObjects[respawnArea.object_id];
                 let objClass = multipleObj.classInstance;
                 for(let qty=0; qty < respawnArea.instances_limit; qty++){
                     // prepare to save the object:
-                    if(!{}.hasOwnProperty.call(this.instancesCreated, respawnArea.id)){
+                    if(!sc.hasOwn(this.instancesCreated, respawnArea.id)){
                         this.instancesCreated[respawnArea.id] = [];
                     }
                     // create object index:
@@ -58,7 +58,7 @@ class RoomRespawn
                     objInstance.clientParams.enabled = true;
                     this.world.objectsManager.objectsAnimationsData[objectIndex] = objInstance.clientParams;
                     this.world.objectsManager.roomObjects[objectIndex] = objInstance;
-                    this.world.createWorldObject(
+                    await this.world.createWorldObject(
                         objInstance,
                         objectIndex,
                         tilewidth,

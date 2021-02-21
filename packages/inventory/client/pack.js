@@ -49,13 +49,13 @@ class InventoryPack
         if(Object.keys(manager.groups).length){
             preloadScene.gameManager.gameDom.getElement('#' + InventoryConst.EQUIPMENT_ITEMS).html('');
             let orderedGroups = this.sortGroups(manager.groups);
-            for (let i of orderedGroups){
+            for(let i of orderedGroups){
                 let output = this.createGroupBox(manager.groups[i], preloadScene.gameManager, preloadScene);
                 preloadScene.gameManager.gameDom.appendToElement('#' + InventoryConst.EQUIPMENT_ITEMS, output);
             }
         }
         if(Object.keys(manager.items).length){
-            for (let i of Object.keys(manager.items)){
+            for(let i of Object.keys(manager.items)){
                 let item = manager.items[i];
                 this.displayItem(item, preloadScene, equipmentPanel, inventoryPanel, i);
             }

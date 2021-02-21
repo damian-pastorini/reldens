@@ -68,7 +68,7 @@ class UsersManager
         // save stats:
         let statsList = await StatsModel.loadAll();
         if(statsList){
-            for (let stat of statsList){
+            for(let stat of statsList){
                 let statData = {
                     player_id: playerId,
                     stat_id: stat['id'],

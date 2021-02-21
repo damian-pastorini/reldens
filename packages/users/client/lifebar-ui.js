@@ -5,6 +5,8 @@
  */
 
 const { UsersConst } = require('../constants');
+const { ActionsConst } = require('../../actions/constants');
+const { GameConst } = require('../../game/constants');
 const { EventsManagerSingleton, sc } = require('@reldens/utils');
 
 class LifebarUi
@@ -54,7 +56,34 @@ class LifebarUi
         EventsManagerSingleton.on('reldens.playerEngineAddPlayer', (playerEngine, addedPlayerId, addedPlayerData) => {
             this.processLifeBarQueue();
         });
+        EventsManagerSingleton.on('reldens.objectBodyChanged', (event) => {
+            let {key} = event;
+            let currentObject = sc.getDef(this.gameManager.getActiveScene().objectsAnimations, key, false);
+            if(!currentObject){
+                return false;
+            }
+            if(sc.hasOwn(this.lifeBars, key)){
+                this.lifeBars[key].destroy();
+            }
+            this.lifeBars[key] = this.gameManager.getActiveScene().add.graphics();
+            let {x, y} = this.calculateObjectLifeBarPosition(currentObject);
+            this.drawBar(
+                this.lifeBars[key],
+                currentObject[this.barProperty+'Total'],
+                currentObject[this.barProperty+'Value'],
+                x,
+                y
+            );
+        });
         return this;
+    }
+
+    calculateObjectLifeBarPosition(currentObject)
+    {
+        return {
+            x: currentObject.x - (currentObject.sceneSprite.width / 2),
+            y: currentObject.y - (currentObject.sceneSprite.height / 2) - this.barConfig.height - this.barConfig.top
+        };
     }
 
     setFixedPosition(newWidth, newHeight)
@@ -83,28 +112,85 @@ class LifebarUi
     {
         room.onMessage((message) => {
             if(message.act === UsersConst.ACTION_LIFEBAR_UPDATE){
-                let currentPlayer = this.gameManager.getCurrentPlayer();
-                if(!currentPlayer || !currentPlayer.players || !currentPlayer.players[message.oK]){
-                    if(!sc.hasOwn(this.gameManager, 'lifeBarQueue')){
-                        this.gameManager.lifeBarQueue = [];
-                    }
-                    this.gameManager.lifeBarQueue.push(message);
-                    return false;
+                if(message.oT === 'o' && this.barConfig.showEnemies){
+                    this.processObjectLifeBarMessage(message, true);
                 }
-                this.processLifeBarUpdate(message);
+                if(message.oT === 'p'){
+                    this.processPlayerLifeBarMessage(message, true);
+                }
+            }
+            if(message.act === ActionsConst.BATTLE_ENDED){
+                if(sc.hasOwn(this.lifeBars, message.t)){
+                    this.lifeBars[message.t].destroy();
+                }
             }
         });
     }
 
-    processLifeBarUpdate(message)
+    canShow(playerId)
     {
-        let currentPlayer = this.gameManager.getCurrentPlayer();
-        if(!sc.hasOwn(currentPlayer.players, message.oK)){
+        return this.barConfig.showAllPlayers || playerId === this.gameManager.getCurrentPlayer().playerId;
+    }
+
+    processObjectLifeBarMessage(message, queue = false)
+    {
+        let currentObject = sc.getDef(this.gameManager.getActiveScene().objectsAnimations, message.oK, false);
+        if(!currentObject || currentObject.isDead){
+            if(queue){
+                this.queueLifeBarMessage(message);
+            }
             return false;
         }
-        this.updateAndDraw(message.oK, message.totalValue, message.newValue);
+        currentObject[this.barProperty+'Total'] = message.totalValue;
+        currentObject[this.barProperty+'Value'] = message.newValue;
+        this.drawObjectLifeBar(currentObject, message);
     }
-    
+
+    queueLifeBarMessage(message)
+    {
+        if(!sc.hasOwn(this.gameManager, 'lifeBarQueue')){
+            this.gameManager.lifeBarQueue = [];
+        }
+        this.gameManager.lifeBarQueue.push(message);
+    }
+
+    drawObjectLifeBar(currentObject, message)
+    {
+        let objectKey = message.oK;
+        if(sc.hasOwn(this.lifeBars, objectKey)){
+            this.lifeBars[objectKey].destroy();
+        }
+        if(currentObject.inState === GameConst.STATUS.DEATH){
+            return false;
+        }
+        this.lifeBars[objectKey] = this.gameManager.getActiveScene().add.graphics();
+        let {x, y} = this.calculateObjectLifeBarPosition(currentObject);
+        this.drawBar(
+            this.lifeBars[objectKey],
+            message.totalValue,
+            message.newValue,
+            x,
+            y
+        );
+    }
+
+    processPlayerLifeBarMessage(message, queue = false)
+    {
+        let currentPlayer = this.gameManager.getCurrentPlayer();
+        if(!currentPlayer || !currentPlayer.players || !currentPlayer.players[message.oK]){
+            if(queue){
+                this.queueLifeBarMessage(message);
+            }
+            return false;
+        }
+        if(message.oT === 'o' && this.barConfig.showEnemies){
+            this.processObjectLifeBarMessage(message);
+        }
+        if(message.oT === 'p' && this.canShow(message.oK)){
+            this.updateAndDraw(message.oK, message.totalValue, message.newValue);
+        }
+    }
+
     updateAndDraw(playerId, total, newValue)
     {
         let currentPlayer = this.gameManager.getCurrentPlayer();
@@ -120,7 +206,12 @@ class LifebarUi
         }
         for(let message of this.gameManager.lifeBarQueue){
             // process queue messages:
-            this.processLifeBarUpdate(message);
+            if(message.oT === 'o' && this.barConfig.showEnemies){
+                this.processObjectLifeBarMessage(message);
+            }
+            if(message.oT === 'p' && this.canShow(message.oK)){
+                this.processPlayerLifeBarMessage(message);
+            }
         }
     }
 
@@ -128,6 +219,9 @@ class LifebarUi
     {
         if(sc.hasOwn(this.lifeBars, playerId)){
             this.lifeBars[playerId].destroy();
+        }
+        if(!this.canShow(playerId)){
+            return false;
         }
         let barData = this.prepareBarData(playerId);
         let barHeight = this.barConfig.height;

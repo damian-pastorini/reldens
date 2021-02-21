@@ -8,6 +8,7 @@
  */
 
 const { Schema, type } = require('@colyseus/schema');
+const { GameConst } = require('../../game/constants');
 
 class BodyState extends Schema
 {
@@ -22,6 +23,7 @@ class BodyState extends Schema
         this.y = parseFloat(data.y);
         this.dir = data.dir;
         this.mov = false;
+        this.inState = GameConst.STATUS.ACTIVE;
     }
 
 }
@@ -33,5 +35,6 @@ type('number')(BodyState.prototype, 'x');
 type('number')(BodyState.prototype, 'y');
 type('string')(BodyState.prototype, 'dir');
 type('boolean')(BodyState.prototype, 'mov');
+type('number')(BodyState.prototype, 'inState');
 
 module.exports.BodyState = BodyState;

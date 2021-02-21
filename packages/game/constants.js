@@ -39,5 +39,10 @@ module.exports.GameConst = {
     FADE_DURATION: 1000,
     SPEED_SERVER: 180,
     // default image key:
-    IMAGE_PLAYER: 'player'
+    IMAGE_PLAYER: 'player',
+    STATUS: {
+        ACTIVE: 1,
+        DISABLED: 1,
+        DEATH: 3
+    }
 };

@@ -10,9 +10,8 @@ const { World, Body, Box } = require('p2');
 const { PathFinder } = require('./path-finder');
 const { PhysicalBody } = require('./physical-body');
 const { ObjectBodyState } = require('./object-body-state');
-const { Logger, ErrorManager, sc } = require('@reldens/utils');
+const { EventsManagerSingleton, Logger, ErrorManager, sc } = require('@reldens/utils');
 const { GameConst } = require('../../game/constants');
-const { EventsManagerSingleton } = require('@reldens/utils');
 
 class P2world extends World
 {
@@ -95,7 +94,7 @@ class P2world extends World
                     let roomObject = this.objectsManager.getObjectData(objectIndex);
                     // if the data and the instance was created:
                     if(roomObject && !roomObject.multiple){
-                        this.createWorldObject(roomObject, objectIndex, tileW, tileH, posX, posY);
+                        await this.createWorldObject(roomObject, objectIndex, tileW, tileH, posX, posY);
                     }
                 }
             }
@@ -129,16 +128,16 @@ class P2world extends World
     createWorldObject(roomObject, objectIndex, tileW, tileH, posX, posY, pathFinder = false)
     {
         // handle body fixed position:
-        if({}.hasOwnProperty.call(roomObject, 'xFix')){
+        if(sc.hasOwn(roomObject, 'xFix')){
             posX += roomObject.xFix;
         }
-        if({}.hasOwnProperty.call(roomObject, 'yFix')){
+        if(sc.hasOwn(roomObject, 'yFix')){
             posY += roomObject.yFix;
         }
         roomObject.x = posX;
         roomObject.y = posY;
         // save position in room object:
-        if({}.hasOwnProperty.call(this.objectsManager.objectsAnimationsData, objectIndex)){
+        if(sc.hasOwn(this.objectsManager.objectsAnimationsData, objectIndex)){
             this.objectsManager.objectsAnimationsData[objectIndex].x = posX;
             this.objectsManager.objectsAnimationsData[objectIndex].y = posY;
         }
@@ -147,19 +146,11 @@ class P2world extends World
             roomObject.setupInteractionArea();
         }
         // by default objects won't have mass:
-        let bodyMass = 0;
-        // unless it is specified in the object itself:
-        if({}.hasOwnProperty.call(roomObject, 'bodyMass')){
-            bodyMass = roomObject.bodyMass;
-        }
+        let bodyMass = sc.getDef(roomObject, 'bodyMass', 0);
         // by default objects collision response:
-        let colResponse = false;
-        // unless it is specified in the object itself:
-        if({}.hasOwnProperty.call(roomObject, 'collisionResponse')){
-            colResponse = roomObject.collisionResponse;
-        }
+        let colResponse = sc.hasOwn(roomObject, 'collisionResponse', false);
         // object state:
-        let objHasState = {}.hasOwnProperty.call(roomObject, 'hasState') ? roomObject.hasState : false;
+        let objHasState = sc.getDef(roomObject, 'hasState', false);
         // create the body:
         let bodyObject = this.createCollisionBody(tileW, tileH, posX, posY, bodyMass, colResponse, objHasState);
         bodyObject.isRoomObject = true;
@@ -174,6 +165,20 @@ class P2world extends World
         // set data on room object:
         roomObject.state = bodyObject.bodyState;
         roomObject.objectBody = bodyObject;
+        EventsManagerSingleton.emit('reldens.createdWorldObject', {
+            p2world: this,
+            roomObject,
+            bodyObject,
+            bodyMass,
+            colResponse,
+            objHasState,
+            objectIndex,
+            tileW,
+            tileH,
+            posX,
+            posY,
+            pathFinder
+        });
     }
 
     createLimits()
