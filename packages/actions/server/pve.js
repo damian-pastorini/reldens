@@ -151,7 +151,7 @@ class Pve extends Battle
             k: this.lastAttackKey
         };
         room.broadcast(actionData);
-        this.targetObject.respawn();
+        this.targetObject.respawn(room);
         let client = room.getClientById(playerSchema.sessionId);
         if(client){
             room.send(client, actionData);

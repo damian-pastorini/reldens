@@ -35,6 +35,7 @@ class NpcObject extends AnimationObject
         this.interactionArea = this.config.get('server/objects/actions/interactionsDistance');
         this.options = {};
         this.sendInvalidOptionMessage = false;
+        // @TODO - BETA - Make message configurable.
         this.invalidOptionMessage = 'I do not understand.';
     }
 

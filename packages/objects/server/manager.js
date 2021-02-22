@@ -40,8 +40,6 @@ class ObjectsManager
             this.roomObjects = {};
             // @NOTE: allow null index for multiple objects of the same type.
             for(let objectData of this.roomObjectsData){
-                let appendIndex = (objectData.tile_index ? objectData.tile_index : objectData.id);
-                let objectIndex = objectData.layer_name + appendIndex;
                 try {
                     // @NOTE: this configurations are coming from the theme/packages/objects/server.js file.
                     let objClass = this.config.get('server/customClasses/objects/'+objectData.object_class_key);
@@ -60,7 +58,7 @@ class ObjectsManager
                         {}.hasOwnProperty.call(objInstance, 'isAnimation')
                         || {}.hasOwnProperty.call(objInstance, 'hasAnimation')
                     ){
-                        this.objectsAnimationsData[objectIndex] = objInstance.clientParams;
+                        this.objectsAnimationsData[objInstance.objectIndex] = objInstance.clientParams;
                     }
                     if({}.hasOwnProperty.call(objInstance, 'multiple')){
                         objInstance.objProps = objProps;
@@ -79,7 +77,7 @@ class ObjectsManager
                         }
                     }
                     // save object:
-                    this.roomObjects[objectIndex] = objInstance;
+                    this.roomObjects[objInstance.objectIndex] = objInstance;
                     if(!this.roomObjectsByLayer[objectData.layer_name]){
                         this.roomObjectsByLayer[objectData.layer_name] = {};
                     }
@@ -87,7 +85,7 @@ class ObjectsManager
                 } catch(err) {
                     Logger.error([
                         'Error while generating object:', err,
-                        'Object Index:', objectIndex
+                        'Object Data:', objectData
                     ]);
                 }
             }

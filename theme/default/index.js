@@ -136,6 +136,7 @@ $(document).ready(function($){
         }).catch((data) => {
             // @NOTE: game room errors should be always because some wrong login or registration data. For these cases
             // we will check the isNewUser variable to know where display the error.
+            reldens.submitedForm = false;
             $('.loading-container').hide();
             $('#'+formData.formId+' .response-error').html(data).show();
             if(formData.formId === 'firebase_login'){
@@ -177,6 +178,10 @@ $(document).ready(function($){
             if(!$login.valid()){
                 return false;
             }
+            if(reldens.submitedForm){
+                return false;
+            }
+            reldens.submitedForm = true;
             $login.find('.loading-container').show();
             let formData = {
                 formId: $login.attr('id'),

@@ -95,6 +95,8 @@ class ObjectsPack
                         objectAnimation.sceneSprite.y = body.y;
                         objectAnimation.x = body.x;
                         objectAnimation.y = body.y;
+                        objectAnimation.animPos.x = body.x;
+                        objectAnimation.animPos.y = body.y;
                         objectAnimation.inState = body.inState;
                         this.moveSpritesObjects(objectAnimation, body.x, body.y, objectNewDepth);
                     }

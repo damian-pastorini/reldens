@@ -93,6 +93,10 @@ class UsersPack
             errorElement.addClass('hidden');
             let formData = new FormData($formElement[0]);
             let serializedForm = this.serialize(formData);
+            if(serializedForm['new_player_name'].toString().length < 3){
+                return false;
+            }
+            gameManager.submitedForm = true;
             gameManager.gameRoom.send({act: GameConst.CREATE_PLAYER, formData: serializedForm});
             return false;
         });

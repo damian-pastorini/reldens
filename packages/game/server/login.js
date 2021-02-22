@@ -133,6 +133,9 @@ class LoginManager
 
     async createNewPlayer(loginData)
     {
+        if(loginData['new_player_name'].toString().length < 3){
+            return {error: true, message: 'Invalid player name, please choose another name.'};
+        }
         let playerData = {
             name: loginData['new_player_name'],
             user_id: loginData.user_id,

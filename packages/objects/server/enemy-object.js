@@ -117,7 +117,7 @@ class EnemyObject extends NpcObject
         return 'battleRoom';
     }
 
-    respawn()
+    respawn(room)
     {
         // @NOTE: here we move the body to some place where it can't be reach so it doesn't collide with anything, this
         // will also make it invisible because the update in the client will move the sprite outside the view.
@@ -125,14 +125,14 @@ class EnemyObject extends NpcObject
         this.objectBody.position = [-1000, -1000];
         if(this.respawnTime){
             this.respawnTimer = setTimeout(() => {
-                this.restoreObject();
+                this.restoreObject(room);
             }, this.respawnTime);
         } else {
-            this.restoreObject();
+            this.restoreObject(room);
         }
     }
 
-    restoreObject()
+    restoreObject(room)
     {
         let respawnArea = this.objectBody.world.respawnAreas[this.respawnLayer];
         let randomTile = respawnArea.getRandomTile();
@@ -140,6 +140,18 @@ class EnemyObject extends NpcObject
         this.objectBody.position = [x, y];
         this.objectBody.originalCol = x;
         this.objectBody.originalRow = y;
+        // @TODO - BETA - Fix this! My eyes are bleeding...
+        room.objectsManager.objectsAnimationsData[this.key].x = x;
+        room.objectsManager.objectsAnimationsData[this.key].y = y;
+        room.objectsManager.roomObjects[this.key].x = x;
+        room.objectsManager.roomObjects[this.key].y = y;
+        // this is the real fix, update the room scene data which is the data sent to the client on join:
+        let roomSceneData = JSON.parse(room.state.sceneData);
+        roomSceneData.objectsAnimationsData[this.key].x = x;
+        roomSceneData.objectsAnimationsData[this.key].y = y;
+        room.state.sceneData = JSON.stringify(roomSceneData);
+        this.x = x;
+        this.y = y;
         this.stats = this.initialStats;
         this.inState = GameConst.STATUS.ACTIVE;
     }
