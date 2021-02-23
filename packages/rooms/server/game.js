@@ -29,7 +29,7 @@ class RoomGame extends RoomLogin
             sessionId: client.sessionId,
             players: authResult.players,
             // if multiplayer is disabled then we will use the first one as default:
-            player: authResult.players[0],
+            player: authResult.players ? authResult.players[0] : false,
             gameConfig: clientFullConfig,
             features: this.config.availableFeaturesList
         };
