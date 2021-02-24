@@ -8,6 +8,7 @@
 
 const { Game, Input } = require('phaser');
 const TemplateEngine = require('mustache');
+const { GameConst } = require('../constants');
 const { ObjectsConst } = require('../../objects/constants');
 const { EventsManagerSingleton } = require('@reldens/utils');
 
@@ -112,8 +113,8 @@ class GameEngine extends Game
                 continue;
             }
             let dist = Math.hypot(objects[i].x-currentPlayer.state.x, objects[i].y-currentPlayer.state.y);
-            if(currentPlayer.currentTarget.id !== objects[i].id && (!closerTarget || closerTarget.dist > dist)){
-                closerTarget = {id: objects[i].id, type: ObjectsConst.TYPE_OBJECT, dist};
+            if(currentPlayer.currentTarget.id !== objects[i].key && (!closerTarget || closerTarget.dist > dist)){
+                closerTarget = {id: objects[i].key, type: ObjectsConst.TYPE_OBJECT, dist};
                 targetName = objects[i].targetName;
             }
         }
@@ -123,7 +124,7 @@ class GameEngine extends Game
             }
             let dist = Math.hypot(players[i].x-currentPlayer.state.x, players[i].y-currentPlayer.state.y);
             if(currentPlayer.currentTarget.id !== players[i].id && (!closerTarget || closerTarget.dist > dist)){
-                closerTarget = {id: [i].id, type: ObjectsConst.TYPE_OBJECT, dist};
+                closerTarget = {id: [i].id, type: GameConst.TYPE_PLAYER, dist};
                 targetName = players[i].targetName;
             }
         }
