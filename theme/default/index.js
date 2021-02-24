@@ -109,6 +109,7 @@ $(document).ready(function($){
         $login = $('#login_form'),
         $forgot = $('#forgot_form'),
         $fullScreen = $('.full-screen-btn'),
+        $yourLogo = $('#your-logo'),
         $body = $('body');
 
     function resetErrorBlock(submittedForm)
@@ -129,7 +130,8 @@ $(document).ready(function($){
             $('.footer').hide();
             $('.forms-container').detach();
             $('.game-container').removeClass('hidden');
-            $('.full-screen-btn').show();
+            $fullScreen.show();
+            $yourLogo.removeClass('hidden');
             $body.css('background', '#000000');
             $body.css('overflow', 'hidden');
             $('.content').css('height', '92%');
