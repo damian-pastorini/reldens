@@ -22,6 +22,7 @@ module.exports.GameConst = {
     UI: 'ui',
     TYPE_PLAYER: 'pj',
     GAME_OVER: 'go',
+    REVIVED: 'rv',
     BUTTON_OPTION: 'btn-opt',
     // movement:
     UP: 'up',

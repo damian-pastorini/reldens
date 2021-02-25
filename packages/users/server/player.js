@@ -37,6 +37,7 @@ class Player extends Schema
             this.stats = player.stats; // thi is the current value
             this.statsBase = player.statsBase; // this is the base or max value
             this.avatarKey = GameConst.IMAGE_PLAYER;
+            this.inState = GameConst.STATUS.ACTIVE;
         } catch (err) {
             ErrorManager.error(['Missing user data.', err]);
         }

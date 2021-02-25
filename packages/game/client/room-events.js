@@ -115,8 +115,8 @@ class RoomEvents
             // @TODO - BETA - Improve disconnection handler.
             if(!this.gameManager.gameOver){
                 alert('Your session ended, please login again.');
+                this.gameManager.gameDom.getWindow().location.reload();
             }
-            this.gameManager.gameDom.getWindow().location.reload();
         } else {
             let currentScene = this.getActiveScene();
             if(currentScene.player && sc.hasOwn(currentScene.player.players, key)){
@@ -131,7 +131,16 @@ class RoomEvents
         if(message.act === GameConst.GAME_OVER){
             EventsManagerSingleton.emit('reldens.gameOver', message, this);
             this.gameManager.gameOver = true;
-            alert('You died!');
+            let currentPlayer = this.gameManager.getCurrentPlayer();
+            let currentPlayerSprite = currentPlayer.players[currentPlayer.playerId];
+            currentPlayerSprite.visible = false;
+            this.gameManager.gameDom.getElement('#game-over').removeClass('hidden');
+        }
+        if(message.act === GameConst.REVIVED){
+            let currentPlayer = this.gameManager.getCurrentPlayer();
+            let currentPlayerSprite = currentPlayer.players[currentPlayer.playerId];
+            this.gameManager.gameDom.getElement('#game-over').addClass('hidden');
+            currentPlayerSprite.visible = true;
         }
         if(
             message.act === GameConst.CHANGED_SCENE

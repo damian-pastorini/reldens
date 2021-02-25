@@ -156,6 +156,9 @@ class RoomScene extends RoomLogin
         }
         // get player:
         let playerSchema = this.getPlayerFromState(client.sessionId);
+        if(playerSchema.inState === GameConst.STATUS.DEATH){
+            return false;
+        }
         // @TODO - BETA - Move to a new pack in the world package.
         // only process the message if the player exists and has a body:
         if(playerSchema && sc.hasOwn(playerSchema, 'physicalBody')){
