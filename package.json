@@ -39,7 +39,7 @@
         "@colyseus/schema": "^0.5.41",
         "@reldens/items-system": "^0.9.5",
         "@reldens/modifiers": "^0.4.7",
-        "@reldens/skills": "^0.3.6",
+        "@reldens/skills": "^0.3.7",
         "@reldens/storage": "^0.4.1",
         "@reldens/utils": "^0.4.3",
         "bcrypt": "^5.0.0",

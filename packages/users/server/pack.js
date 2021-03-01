@@ -18,6 +18,7 @@ class UsersPack extends PackInterface
     setupPack()
     {
         this.modelsManager = ModelsManager;
+        // @TODO - BETA - Move LifeBar to it's own package.
         this.lifeBarConfig = false;
         this.lifeProp = false;
         EventsManagerSingleton.on('reldens.serverReady', async (event) => {
@@ -91,6 +92,16 @@ class UsersPack extends PackInterface
                 };
                 roomScene.broadcast(updateData);
             }
+        });
+        EventsManagerSingleton.on('reldens.restoreObjectAfter', (event) => {
+            let updateData = {
+                act: UsersConst.ACTION_LIFEBAR_UPDATE,
+                oT: 'o',
+                oK: event.enemyObject.broadcastKey,
+                newValue: event.enemyObject.stats[this.lifeProp],
+                totalValue: event.enemyObject.stats[this.lifeProp]
+            };
+            event.room.broadcast(updateData);
         });
     }
 

@@ -63,6 +63,10 @@ CREATE TABLE `skills_class_level_up_animations` (
 
 INSERT INTO `skills_class_level_up_animations` (`animationData`) VALUES ('{"enabled":true,"type":"spritesheet","img":"heal_cast","frameWidth":64,"frameHeight":70,"start":0,"end":3,"repeat":-1,"destroyTime":2000,"depthByPlayer":"above"}');
 
+# Skills module update:
+
+ALTER TABLE `skills_levels_set` ADD COLUMN `autoFillExperienceMultiplier` INT(1) UNSIGNED NULL DEFAULT NULL AFTER `autoFillRanges`;
+
 #######################################################################################################################
 
 SET FOREIGN_KEY_CHECKS = 1;

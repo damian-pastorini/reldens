@@ -124,7 +124,7 @@ class EnemyObject extends NpcObject
         this.objectBody.resetAuto().stopMove();
         this.objectBody.position = [-1000, -1000];
         if(this.respawnTime){
-            this.respawnTimer = setTimeout(() => {
+            this.respawnTimer = setTimeout(async () => {
                 this.restoreObject(room);
             }, this.respawnTime);
         } else {
@@ -134,6 +134,8 @@ class EnemyObject extends NpcObject
 
     restoreObject(room)
     {
+        this.stats = Object.assign({}, this.initialStats);
+        this.inState = GameConst.STATUS.ACTIVE;
         let respawnArea = this.objectBody.world.respawnAreas[this.respawnLayer];
         let randomTile = respawnArea.getRandomTile();
         let { x, y } = randomTile;
@@ -152,8 +154,7 @@ class EnemyObject extends NpcObject
         room.state.sceneData = JSON.stringify(roomSceneData);
         this.x = x;
         this.y = y;
-        this.stats = this.initialStats;
-        this.inState = GameConst.STATUS.ACTIVE;
+        EventsManagerSingleton.emit('reldens.restoreObjectAfter', {enemyObject: this, room});
     }
 
     onHit(props)
