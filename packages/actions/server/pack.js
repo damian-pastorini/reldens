@@ -7,7 +7,7 @@
  *
  */
 
-const { SkillConst, SkillsServer, SkillsEvents } = require('@reldens/skills');
+const { SkillsServer, SkillConst, SkillsEvents } = require('@reldens/skills');
 const { ModelsManager } = require('@reldens/skills/lib/server/storage/models-manager');
 const { EventsManagerSingleton, sc } = require('@reldens/utils');
 const { ActionsMessageActions } = require('./message-actions');
@@ -16,6 +16,7 @@ const { PackInterface } = require('../../features/server/pack-interface');
 const { Pvp } = require('./pvp');
 const { TypeAttack, TypeEffect, TypePhysicalAttack, TypePhysicalEffect } = require('./skills/types');
 const { AnimationsModel } = require('./animations-model');
+const { LevelAnimationsModel } = require('./level-animations-model');
 
 class ActionsPack extends PackInterface
 {
@@ -26,18 +27,22 @@ class ActionsPack extends PackInterface
         EventsManagerSingleton.on('reldens.serverReady', async (event) => {
             await this.onServerReady(event);
         });
+        EventsManagerSingleton.on('reldens.beforeSuperInitialGameData', async (superInitialGameData, roomGame) => {
+            await this.onBeforeSuperInitialGameData(superInitialGameData, roomGame);
+        });
         // eslint-disable-next-line no-unused-vars
         EventsManagerSingleton.on('reldens.roomsMessageActionsByRoom', async (roomMessageActions, roomName) => {
             roomMessageActions.actions = new ActionsMessageActions();
         });
-        EventsManagerSingleton.on('reldens.createPlayerAfter', async (client, authResult, currentPlayer, room) => {
+        EventsManagerSingleton.on('reldens.createdPlayerSchema', async (client, authResult, currentPlayer, room) => {
             await this.onCreatePlayerAfter(client, authResult, currentPlayer, room);
         });
-        EventsManagerSingleton.on('reldens.createNewUserAfter', async (newUser, loginManager) => {
-            let initialClassPathId = loginManager.config.get('server/players/actions/initialClassPathId');
+        EventsManagerSingleton.on('reldens.createdNewPlayer', async (player, loginData, loginManager) => {
+            let defaultClassPathId = loginManager.config.get('server/players/actions/initialClassPathId');
+            let initialClassPathId = sc.getDef(loginData, 'class_path_select', defaultClassPathId);
             let data = {
                 class_path_id: initialClassPathId,
-                owner_id: newUser.players[0].id,
+                owner_id: player.id,
                 currentLevel: 1,
                 currentExp: 0
             };
@@ -62,13 +67,40 @@ class ActionsPack extends PackInterface
         await this.loadGroupsFullList(configProcessor);
         await this.loadClassPathFullList(configProcessor);
         await this.appendSkillsAnimations(configProcessor);
+        await this.appendLevelsAnimations(configProcessor);
+    }
+
+    async onBeforeSuperInitialGameData(superInitialGameData, roomGame)
+    {
+        if(roomGame.config.skills.classPaths.classPathsByKey){
+            let classPathsLabelsByKey = {};
+            for(let i of Object.keys(roomGame.config.skills.classPaths.classPathsByKey)){
+                let classPath = roomGame.config.skills.classPaths.classPathsByKey[i];
+                classPathsLabelsByKey[classPath.data.id] = {key: i, label: classPath.data.label};
+            }
+            superInitialGameData.classesData = classPathsLabelsByKey;
+        }
+        if(roomGame.config.get('client/players/multiplePlayers/enabled') && superInitialGameData.players){
+            for(let i of Object.keys(superInitialGameData.players)){
+                let player = superInitialGameData.players[i];
+                let classPathCollection = await this.skillsModelsManager.models['ownersClassPath']
+                    .loadOwnerClassPath(player.id);
+                if(!classPathCollection){
+                    continue;
+                }
+                // @TODO - BETA - Temporal index[0] for a single class path by player.
+                let classPath = classPathCollection[0];
+                player.additionalLabel = ' - LvL '+classPath.currentLevel
+                    +' - '+classPath.owner_full_class_path.label;
+                player.currentClassPathLabel =
+                player.avatarKey = classPath.owner_full_class_path.key;
+            }
+        }
     }
 
     async onCreatePlayerAfter(client, authResult, currentPlayer, room)
     {
         this.appendActionsToPlayer(currentPlayer, room);
-        // player created, setting broadcastKey:
-        currentPlayer.broadcastKey = currentPlayer.sessionId;
         // prepare player classPath and skills data:
         let classPathData = await this.skillsModelsManager.prepareClassPathData(
             currentPlayer,
@@ -82,6 +114,7 @@ class ActionsPack extends PackInterface
             classPathData.client = new ClientWrapper(client, room);
             // append skills server to player:
             currentPlayer.skillsServer = new SkillsServer(classPathData);
+            currentPlayer.avatarKey = classPathData.key;
             this.prepareEventsListeners(currentPlayer.skillsServer.classPath);
         }
     }
@@ -162,12 +195,12 @@ class ActionsPack extends PackInterface
 
     prepareExtraData(params)
     {
-        // @TODO - BETA.17 - Refactor and replace by constants.
+        // @TODO - BETA - Refactor and replace by constants.
         let extraData = {};
         if(sc.hasOwn(params, 'target')){
-            if(sc.hasOwn(params.target, 'uid')){
+            if(sc.hasOwn(params.target, 'key')){
                 extraData.tT = 'e'; // enemy
-                extraData.tK = params.target.uid;
+                extraData.tK = params.target.key;
             }
             if(sc.hasOwn(params.target, 'sessionId')){
                 extraData.tT = 'p';
@@ -175,9 +208,9 @@ class ActionsPack extends PackInterface
             }
         }
         if(sc.hasOwn(params, 'skill')){
-            if(sc.hasOwn(params.skill.owner, 'uid')){
+            if(sc.hasOwn(params.skill.owner, 'key')){
                 extraData.oT = 'e'; // enemy
-                extraData.oK = params.skill.owner.uid;
+                extraData.oK = params.skill.owner.key;
             }
             if(sc.hasOwn(params.skill.owner, 'sessionId')){
                 extraData.oT = 'p';
@@ -209,6 +242,33 @@ class ActionsPack extends PackInterface
             }
         }
         return config.client.skills.animations;
+    }
+
+    async appendLevelsAnimations(config)
+    {
+        if(!sc.hasOwn(config.client, 'levels')){
+            config.client.levels = {};
+        }
+        let models = await LevelAnimationsModel.loadAllWithClassAndLevel();
+        if(models.length){
+            if(!sc.hasOwn(config.client.levels, 'animations')){
+                config.client.levels.animations = {};
+            }
+            for(let levelAnim of models){
+                let animationData = sc.getJson(levelAnim.animationData, {});
+                let animKey = 'level_' + ((!levelAnim.level && !levelAnim.class_path) ? 'default' : (
+                    levelAnim.class_path ? levelAnim.class_path.key : ''
+                    + (levelAnim.level ? (levelAnim.class_path ? '_' : '')+levelAnim.level.id : '')
+                ));
+                config.client.levels.animations[animKey] = {
+                    key: animKey,
+                    levelId: levelAnim.level ? levelAnim.level.id : null,
+                    classKey: levelAnim.class_path ? levelAnim.class_path.key : null,
+                    animationData
+                }
+            }
+        }
+        return config.client.levels.animations;
     }
 
     prepareEventsListeners(classPath)

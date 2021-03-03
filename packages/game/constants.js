@@ -10,6 +10,8 @@
 // constants:
 module.exports.GameConst = {
     START_GAME: 's',
+    CREATE_PLAYER: 'cp',
+    CREATE_PLAYER_RESULT: 'cps',
     CHANGED_SCENE: 'cs',
     RECONNECT: 'r',
     ROOM_GAME: 'room_game',
@@ -20,6 +22,7 @@ module.exports.GameConst = {
     UI: 'ui',
     TYPE_PLAYER: 'pj',
     GAME_OVER: 'go',
+    REVIVED: 'rv',
     BUTTON_OPTION: 'btn-opt',
     // movement:
     UP: 'up',
@@ -36,7 +39,11 @@ module.exports.GameConst = {
     // default data:
     FADE_DURATION: 1000,
     SPEED_SERVER: 180,
-    // @TODO - BETA.17 - F901 - Implement player custom avatar.
     // default image key:
-    IMAGE_PLAYER: 'player'
+    IMAGE_PLAYER: 'player',
+    STATUS: {
+        ACTIVE: 1,
+        DISABLED: 1,
+        DEATH: 3
+    }
 };

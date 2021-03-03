@@ -13,6 +13,7 @@ const { NpcObject } = require('./npc-object');
 const { Pve } = require('../../actions/server/pve');
 const { TypeAttack, TypePhysicalAttack } = require('../../actions/server/skills/types');
 const { ObjectsConst } = require('../constants');
+const { GameConst } = require('../../game/constants');
 const { EventsManagerSingleton, Logger, sc } = require('@reldens/utils');
 
 class EnemyObject extends NpcObject
@@ -22,7 +23,7 @@ class EnemyObject extends NpcObject
     {
         super(props);
         this.hasState = true;
-        // @TODO - BETA.17 - Remove from config and make stats load dynamically (passed on props, coming from storage).
+        // @TODO - BETA - Remove from config and make enemy stats load dynamically (passed on props from storage).
         let configStats = this.config.get('server/enemies/initialStats');
         this.initialStats = Object.assign({}, configStats);
         this.stats = Object.assign({}, configStats);
@@ -31,26 +32,26 @@ class EnemyObject extends NpcObject
         // @NOTE: we could run different actions and enemies reactions based on the player action.
         // this.runOnAction = true;
         // run on hit will make the enemy aggressive when the player enter the in the enemy-object interactive area.
-        this.runOnHit = sc.hasOwn(props, 'runOnHit') ? props.runOnHit : true;
-        this.roomVisible = sc.hasOwn(props, 'roomVisible') ? props.runOnHit : true;
-        this.randomMovement = sc.hasOwn(props, 'randomMovement') ? props.runOnHit : true;
+        this.runOnHit = sc.getDef(props, 'runOnHit', true);
+        this.roomVisible = sc.getDef(props, 'roomVisible', true);
+        this.randomMovement = sc.getDef(props, 'randomMovement', true);
         // assign extra public params:
         Object.assign(this.clientParams, {
             enabled: true,
-            frameStart: sc.hasOwn(props, 'frameStart') ? props.runOnHit : 0,
-            frameEnd: sc.hasOwn(props, 'frameEnd') ? props.runOnHit : 3,
-            repeat: sc.hasOwn(props, 'repeat') ? props.runOnHit : -1,
-            hideOnComplete: sc.hasOwn(props, 'hideOnComplete') ? props.runOnHit : false,
-            autoStart: sc.hasOwn(props, 'autoStart') ? props.runOnHit : true
+            frameStart: sc.getDef(props, 'frameStart', 0),
+            frameEnd: sc.getDef(props, 'frameEnd', 3),
+            repeat: sc.getDef(props, 'repeat', -1),
+            hideOnComplete: sc.getDef(props, 'hideOnComplete', false),
+            autoStart: sc.getDef(props, 'autoStart', true)
         });
         this.battle = new Pve({
-            battleTimeOff: sc.hasOwn(props, 'battleTimeOff') ? props.battleTimeOff : 20000,
-            chaseMultiple: sc.hasOwn(props, 'chaseMultiple') ? props.chaseMultiple : false
+            battleTimeOff: sc.getDef(props, 'battleTimeOff', 20000),
+            chaseMultiple: sc.getDef(props, 'chaseMultiple', false)
         });
         // enemy created, setting broadcastKey:
         this.broadcastKey = this.client_key;
         this.battle.setTargetObject(this);
-        // @TODO - BETA.17 - Load enemy skills from storage and implement here.
+        // @TODO - BETA - Load enemy skills from storage and implement here.
         this.setupDefaultAction();
         if(this.config.get('server/enemies/defaultAttacks/attackBullet')){
             this.setupPhysicalAction();
@@ -62,9 +63,10 @@ class EnemyObject extends NpcObject
 
     setupDefaultAction()
     {
+        // @TODO - BETA - Replace by skill reference.
         let skillProps = {
             owner: this,
-            key: 'attack-short',
+            key: 'attackShort',
             affectedProperty: 'stats/hp',
             skillDelay: 600,
             range: 50,
@@ -82,7 +84,7 @@ class EnemyObject extends NpcObject
     {
         let attackBullet = new TypePhysicalAttack({
             owner: this,
-            key: 'attack-bullet',
+            key: 'attackBullet',
             affectedProperty: 'stats/hp',
             skillDelay: 1000,
             range: 250,
@@ -102,12 +104,12 @@ class EnemyObject extends NpcObject
 
     getBattleEndEvent()
     {
-        return this.uid+'.reldens.battleEnded';
+        return this.key+'.reldens.battleEnded';
     }
 
     getEventRemoveKey()
     {
-        return this.uid+'battleEnd';
+        return this.key+'battleEnd';
     }
 
     getEventMasterKey()
@@ -115,30 +117,44 @@ class EnemyObject extends NpcObject
         return 'battleRoom';
     }
 
-    respawn()
+    respawn(room)
     {
         // @NOTE: here we move the body to some place where it can't be reach so it doesn't collide with anything, this
         // will also make it invisible because the update in the client will move the sprite outside the view.
         this.objectBody.resetAuto().stopMove();
         this.objectBody.position = [-1000, -1000];
         if(this.respawnTime){
-            this.respawnTimer = setTimeout(() => {
-                this.restoreObject();
+            this.respawnTimer = setTimeout(async () => {
+                this.restoreObject(room);
             }, this.respawnTime);
         } else {
-            this.restoreObject();
+            this.restoreObject(room);
         }
     }
 
-    restoreObject()
+    restoreObject(room)
     {
+        this.stats = Object.assign({}, this.initialStats);
+        this.inState = GameConst.STATUS.ACTIVE;
         let respawnArea = this.objectBody.world.respawnAreas[this.respawnLayer];
         let randomTile = respawnArea.getRandomTile();
         let { x, y } = randomTile;
         this.objectBody.position = [x, y];
         this.objectBody.originalCol = x;
         this.objectBody.originalRow = y;
-        this.stats = this.initialStats;
+        // @TODO - BETA - Fix this! My eyes are bleeding...
+        room.objectsManager.objectsAnimationsData[this.key].x = x;
+        room.objectsManager.objectsAnimationsData[this.key].y = y;
+        room.objectsManager.roomObjects[this.key].x = x;
+        room.objectsManager.roomObjects[this.key].y = y;
+        // this is the real fix, update the room scene data which is the data sent to the client on join:
+        let roomSceneData = JSON.parse(room.state.sceneData);
+        roomSceneData.objectsAnimationsData[this.key].x = x;
+        roomSceneData.objectsAnimationsData[this.key].y = y;
+        room.state.sceneData = JSON.stringify(roomSceneData);
+        this.x = x;
+        this.y = y;
+        EventsManagerSingleton.emit('reldens.restoreObjectAfter', {enemyObject: this, room});
     }
 
     onHit(props)

@@ -17,7 +17,7 @@ class InventoryPack extends PackInterface
 
     setupPack()
     {
-        // @TODO - BETA.17 - Refactor pack to extract the models and classes generation to the external packages.
+        // @TODO - BETA - Refactor pack to extract the models and classes generation to the external packages.
         this.inventoryModelsManager = new ModelsManager();
         EventsManagerSingleton.on('reldens.serverReady', async (event) => {
             let configProcessor = event.serverManager.configManager.processor;
@@ -104,14 +104,6 @@ class InventoryPack extends PackInterface
     {
         // wrap the client:
         let clientWrapper = new ClientWrapper(client, room);
-        // @TODO - BETA.17 - Implement owner wrapper for playerSchema persistData function, see onExecutedItem in
-        //   ModelsManager class.
-        // eslint-disable-next-line no-unused-vars
-        playerSchema.persistData = async (params) => {
-            // persist data in player:
-            await room.savePlayerState(playerSchema.sessionId);
-            await room.savePlayerStats(playerSchema, client);
-        };
         let serverProps = {
             owner: playerSchema,
             client: clientWrapper,

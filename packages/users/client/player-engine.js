@@ -18,7 +18,8 @@ class PlayerEngine
         this.scene = scene;
         this.config = gameManager.config;
         this.gameManager = gameManager;
-        this.username = playerData.username;
+        this.playerName = playerData.playerName;
+        this.avatarKey = playerData.avatarKey;
         this.roomName = playerData.state.scene;
         this.state = playerData.state;
         this.room = room;
@@ -35,8 +36,14 @@ class PlayerEngine
 
     create()
     {
-        let playerData = Object.assign({username: this.username}, this.state);
-        this.addPlayer(this.playerId, playerData);
+        let addPlayerData = {
+            x: this.state.x,
+            y: this.state.y,
+            dir: this.state.dir,
+            playerName: this.playerName,
+            avatarKey: this.avatarKey
+        };
+        this.addPlayer(this.playerId, addPlayerData);
         let fadeDuration = this.config.get('client/players/animations/fadeDuration') || GameConst.FADE_DURATION;
         this.scene.cameras.main.fadeFrom(fadeDuration);
         this.scene.scene.setVisible(true, this.roomName);
@@ -45,20 +52,22 @@ class PlayerEngine
         this.scene.cameras.main.startFollow(this.players[this.playerId], true);
     }
 
-    addPlayer(id, state)
+    addPlayer(id, addPlayerData)
     {
         if(sc.hasOwn(this.players, id)){
             // player sprite already exists, update it and return it:
-            this.players[id].username = state.username;
-            this.players[id].anims.play(state.dir);
-            this.players[id].anims.stop();
             return this.players[id];
         }
-        // @TODO - BETA.17 - F901 - Implement player custom avatar.
-        this.players[id] = this.scene.physics.add.sprite(state.x, (state.y - this.topOff), GameConst.IMAGE_PLAYER);
-        this.players[id].username = state.username;
-        this.players[id].anims.play(state.dir);
+        let {x, y, dir, playerName, avatarKey} = addPlayerData;
+        this.players[id] = this.scene.physics.add.sprite(x, (y - this.topOff), avatarKey);
+        this.players[id].playerName = playerName;
+        this.players[id].avatarKey = avatarKey;
+        this.players[id].playerId = id;
+        this.players[id].anims.play(avatarKey+'_'+dir);
         this.players[id].anims.stop();
+        if(this.gameManager.config.get('client/ui/players/showNames')){
+            this.attachNameToPlayerSprite(this.players[id]);
+        }
         this.players[id].setInteractive({useHandCursor: true}).on('pointerdown', (ev) => {
             // @NOTE: we avoid to run object interactions while an UI element is open, if we click on the UI the
             // elements in the background scene should not be executed.
@@ -68,12 +77,13 @@ class PlayerEngine
             // @NOTE: we could send an specific action when the player is been targeted.
             // this.room.send({act: GameConst.TYPE_PLAYER, id: id});
             // update target ui:
-            this.gameManager.gameEngine.showTarget(this.players[id].username);
+            this.gameManager.gameEngine.showTarget(this.players[id].playerName);
             this.currentTarget = {id: id, type: GameConst.TYPE_PLAYER};
         });
         this.players[id].moveSprites = {};
         this.players[id].setDepth(this.players[id].y + this.players[id].body.height);
         this.players[id].setCollideWorldBounds(this.collideWorldBounds);
+        EventsManagerSingleton.emit('reldens.playerEngineAddPlayer', this, id, addPlayerData);
         return this.players[id];
     }
 
@@ -95,6 +105,12 @@ class PlayerEngine
             playerSprite.mov = player.state.mov;
         }
         EventsManagerSingleton.emit('reldens.runPlayerAnimation', this, playerId, player);
+        let nameConfig = this.gameManager.config.get('client/ui/players');
+        if(nameConfig.showNames && playerSprite.nameSprite){
+            let relativeNamePosition = this.getNamePosition(playerSprite, nameConfig);
+            playerSprite.nameSprite.x = relativeNamePosition.x;
+            playerSprite.nameSprite.y = relativeNamePosition.y;
+        }
         if(Object.keys(playerSprite.moveSprites).length){
             for(let i of Object.keys(playerSprite.moveSprites)){
                 let sprite = playerSprite.moveSprites[i];
@@ -112,27 +128,65 @@ class PlayerEngine
     {
         // @NOTE: player speed is defined by the server.
         if(this.animationBasedOnPress){
-            playerSprite.anims.play(player.state.dir, true);
+            playerSprite.anims.play(player.avatarKey+'_'+player.state.dir, true);
         } else {
+            let { avatarKey } = player;
             if(player.state.x !== playerSprite.x){
                 if(player.state.x < playerSprite.x){
-                    playerSprite.anims.play(GameConst.LEFT, true);
+                    playerSprite.anims.play(avatarKey+'_'+GameConst.LEFT, true);
                 } else {
-                    playerSprite.anims.play(GameConst.RIGHT, true);
+                    playerSprite.anims.play(avatarKey+'_'+GameConst.RIGHT, true);
                 }
             }
             if(player.state.y !== playerSprite.y){
                 if(player.state.y < playerSprite.y){
-                    playerSprite.anims.play(GameConst.UP, true);
+                    playerSprite.anims.play(avatarKey+'_'+GameConst.UP, true);
                 } else {
-                    playerSprite.anims.play(GameConst.DOWN, true);
+                    playerSprite.anims.play(avatarKey+'_'+GameConst.DOWN, true);
                 }
             }
         }
     }
 
+    attachNameToPlayerSprite(playerSprite)
+    {
+        let nameConfig = this.gameManager.config.get('client/ui/players');
+        // defaults:
+        let fontSize = nameConfig.nameFontSize || 12;
+        let relativeNamePosition = this.getNamePosition(playerSprite, nameConfig);
+        // create sprite:
+        let nameSprite = this.scene.add.text(
+            // center name in player position:
+            relativeNamePosition.x,
+            // put the name above the player (can be changed by modifying the nameHeight config):
+            relativeNamePosition.y,
+            playerSprite.playerName, {fontFamily: nameConfig.nameFontFamily, fontSize: fontSize+'px'}
+        );
+        nameSprite.style.setFill(nameConfig.nameFill);
+        nameSprite.style.setAlign('center');
+        nameSprite.style.setStroke(nameConfig.nameStroke, nameConfig.nameStrokeThickness);
+        nameSprite.style.setShadow(5, 5, nameConfig.nameShadowColor, 5);
+        nameSprite.setDepth(200000);
+        playerSprite.nameSprite = nameSprite;
+    }
+
+    getNamePosition(playerSprite, nameConfig = false)
+    {
+        // defaults:
+        let nameHeight = nameConfig.nameHeight || 18;
+        // center name in player position:
+        let x = playerSprite.x - ((playerSprite.playerName.length * 4));
+        // put the name above the player (can be changed by modifying the nameHeight config):
+        let y = playerSprite.y
+            - nameHeight
+            - playerSprite.height
+            + sc.getDef(this, 'topOff', 0);
+        return {x, y};
+    }
+
     removePlayer(key)
     {
+        this.players[key].nameSprite.destroy();
         this.players[key].destroy();
         delete this.players[key];
     }
@@ -181,6 +235,14 @@ class PlayerEngine
             y: pointer.worldY - this.topOff
         };
         this.room.send(data);
+    }
+
+    getPosition()
+    {
+        return {
+            x: this.players[this.playerId].x,
+            y: this.players[this.playerId].y
+        };
     }
 
 }

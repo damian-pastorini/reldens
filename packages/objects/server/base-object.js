@@ -17,6 +17,8 @@ class BaseObject extends InteractionArea
         super();
         // then we will assign all the properties from the storage automatically as part of this object.
         Object.assign(this, props);
+        this.appendIndex = sc.getDef(props, 'tile_index', props.id);
+        this.objectIndex = props.layer_name + this.appendIndex;
         // we will use the client_key has the object key:
         this.key = props.client_key;
         this.uid = this.key + Date.now();

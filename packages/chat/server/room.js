@@ -28,9 +28,9 @@ class RoomChat extends RoomLogin
         this.activePlayers[client.sessionId] = {
             id: authResult.id,
             sessionId: client.sessionId,
-            username: authResult.username,
+            playerName: authResult.player.name,
             role_id: authResult.role_id,
-            playerData: authResult.players[0],
+            playerData: authResult.player,
             client: client
         };
     }
@@ -56,7 +56,7 @@ class RoomChat extends RoomLogin
             // throw error if player does not exists:
             ErrorManager.error('Current Active Player not found: '+client.sessionId);
         }
-        let messageObject = {act: ChatConst.CHAT_ACTION, f: activePlayer.username};
+        let messageObject = {act: ChatConst.CHAT_ACTION, f: activePlayer.playerName};
         if(text.indexOf('@') === 0){
             this.sendPrivateMessage(client, data[ChatConst.CHAT_TO], text, messageObject, activePlayer.playerData);
         } else if(text.indexOf('#') === 0){
@@ -124,7 +124,7 @@ class RoomChat extends RoomLogin
     {
         if(this.config.get('server/chat/messages/broadcast_leave')){
             let activePlayer = this.activePlayers[client.sessionId];
-            let sentText = `${activePlayer.username} has left.`;
+            let sentText = `${activePlayer.playerName} has left.`;
             this.broadcast({act: ChatConst.CHAT_ACTION, m: sentText, f: 'Sys', t: ChatConst.CHAT_TYPE_SYSTEM});
         }
         delete this.activePlayers[client.sessionId];
@@ -141,7 +141,7 @@ class RoomChat extends RoomLogin
         let clientTo = false;
         for(let i of Object.keys(this.activePlayers)){
             let client = this.activePlayers[i];
-            if(client.username === playerName){
+            if(client.playerName === playerName){
                 clientTo = client;
                 break;
             }

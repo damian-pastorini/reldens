@@ -87,9 +87,9 @@ class ChatUi
             if(roomEvents.gameManager.joinedRooms[ChatConst.CHAT_GLOBAL]){
                 let globalChat = roomEvents.gameManager.joinedRooms[ChatConst.CHAT_GLOBAL];
                 if(chatInput.value.indexOf('@') === 0){
-                    let username = chatInput.value.substring(1, chatInput.value.indexOf(' '));
-                    if(username !== '@'){
-                        messageData.t = username;
+                    let playerName = chatInput.value.substring(1, chatInput.value.indexOf(' '));
+                    if(playerName !== '@'){
+                        messageData.t = playerName;
                         globalChat.send(messageData);
                     } else {
                         // NOTE: this case will be when the user was not found case but better not send any response.

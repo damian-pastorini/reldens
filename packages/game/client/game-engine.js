@@ -6,8 +6,10 @@
  *
  */
 
-const { Game } = require('phaser');
+const { Game, Input } = require('phaser');
 const TemplateEngine = require('mustache');
+const { GameConst } = require('../constants');
+const { ObjectsConst } = require('../../objects/constants');
 const { EventsManagerSingleton } = require('@reldens/utils');
 
 class GameEngine extends Game
@@ -21,6 +23,9 @@ class GameEngine extends Game
         this.TemplateEngine = TemplateEngine;
         EventsManagerSingleton.on('reldens.beforeReconnectGameClient', () => {
             this.clearTarget();
+        });
+        EventsManagerSingleton.on('reldens.beforeSceneDynamicCreate', (sceneDynamic) => {
+            this.setupTabTarget(sceneDynamic);
         });
     }
 
@@ -84,6 +89,47 @@ class GameEngine extends Game
             this.uiScene.uiTarget.getChildByID('box-target').style.display = 'none';
             this.uiScene.uiTarget.getChildByID('target-container').innerHTML = '';
         }
+    }
+
+    setupTabTarget(sceneDynamic)
+    {
+        sceneDynamic.keyTab = sceneDynamic.input.keyboard.addKey(Input.Keyboard.KeyCodes.TAB);
+        sceneDynamic.input.keyboard.on('keydown', (event) => {
+            if(event.keyCode === 9){
+                this.tabTarget();
+            }
+        });
+    }
+
+    tabTarget()
+    {
+        let currentPlayer = this.uiScene.gameManager.getCurrentPlayer();
+        let objects = this.uiScene.gameManager.getActiveScene().objectsAnimations;
+        let players = currentPlayer.players;
+        let closerTarget = false;
+        let targetName = '';
+        for(let i of Object.keys(objects)){
+            if(!objects[i].targetName){
+                continue;
+            }
+            let dist = Math.hypot(objects[i].x-currentPlayer.state.x, objects[i].y-currentPlayer.state.y);
+            if(currentPlayer.currentTarget.id !== objects[i].key && (!closerTarget || closerTarget.dist > dist)){
+                closerTarget = {id: objects[i].key, type: ObjectsConst.TYPE_OBJECT, dist};
+                targetName = objects[i].targetName;
+            }
+        }
+        for(let i of Object.keys(players)){
+            if(currentPlayer.playerName === players[i].playerName){
+                continue;
+            }
+            let dist = Math.hypot(players[i].x-currentPlayer.state.x, players[i].y-currentPlayer.state.y);
+            if(currentPlayer.currentTarget.id !== players[i].id && (!closerTarget || closerTarget.dist > dist)){
+                closerTarget = {id: [i].id, type: GameConst.TYPE_PLAYER, dist};
+                targetName = players[i].targetName;
+            }
+        }
+        currentPlayer.currentTarget = closerTarget;
+        this.showTarget(targetName);
     }
 
 }

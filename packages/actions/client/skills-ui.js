@@ -26,7 +26,7 @@ class SkillsUi
 
     appendSkills(skills)
     {
-        // @TODO - BETA.17 - implement skills groups.
+        // @TODO - BETA - Implement skills groups.
         let skillsList = Object.keys(skills);
         // if the default action is a skill we won't show a duplicated box:
         if(skillsList.length){
@@ -66,7 +66,7 @@ class SkillsUi
         let skillTemplate = this.uiScene.cache.html.get('skillBox');
         return this.gameManager.gameEngine.parseTemplate(skillTemplate, {
             key: skill,
-            // @TODO - BETA.17 - Get all the required skill data on the client, from the label to the delay time
+            // @TODO - BETA - Get all the required skill data on the client, from the label to the delay time
             //   counter.
             skillName: skill
         });

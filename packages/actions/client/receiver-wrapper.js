@@ -18,19 +18,13 @@ class ReceiverWrapper extends Receiver
         super(props);
         this.gameManager = roomEvents.gameManager;
         this.room = roomEvents.room;
-        this.queueMessages = [];
     }
 
     processMessage(message)
     {
         let currentScene = this.gameManager.getActiveScene();
         if(!currentScene || !currentScene.player){
-            // @NOTE: if player still not set and it's a skills message we will process the message after the player
-            // instance was created.
-            if(this.isValidMessage(message)){
-                this.queueMessages.push(message);
-            }
-            return true;
+            return false;
         }
         super.processMessage(message);
         if(message.act.indexOf('_atk') !== -1 || message.act.indexOf('_eff') !== -1){
@@ -58,13 +52,13 @@ class ReceiverWrapper extends Receiver
                     targetType = 'o';
                 }
             }
-            // @TODO - BETA.17 - Refactor to use a single play animation method and make sure the animation is valid.
+            // @TODO - BETA - Refactor to use a single play animation method and make sure the animation is valid.
             let actAnimKey = sc.hasOwn(this.gameManager.config.client.skills.animations, animKey)
                 ? animKey : 'default'+actKey;
             if(ownerSprite && currentScene.getAnimationByKey(actAnimKey)){
                 let ownerAnim = currentScene.physics.add.sprite(ownerSprite.x, ownerSprite.y, actAnimKey);
                 ownerAnim.setDepth(200000);
-                // @TODO - BETA.17 - Refactor and implement animDir = 1 (both): up_right, up_left, down_right,
+                // @TODO - BETA - Refactor and implement animDir = 1 (both): up_right, up_left, down_right,
                 //   down_left.
                 let playDir = '';
                 if(sc.hasOwn(this.gameManager.gameEngine.uiScene.directionalAnimations, actAnimKey)){
@@ -112,19 +106,21 @@ class ReceiverWrapper extends Receiver
         }
         let hitSprite = currentScene.physics.add.sprite(x, y, hitAnimKey);
         if(targetSprite){
-            targetSprite.moveSprites[hitAnimKey+'_'+targetSpriteId] = hitSprite;
+            if(sc.hasOwn(targetSprite, 'targetSprite')){
+                targetSprite.moveSprites[hitAnimKey+'_'+targetSpriteId] = hitSprite;
+            }
             let animData = allAnimations[hitAnimKey];
             let depth = sc.hasOwn(animData.animationData, 'depthByPlayer')
                 && animData.animationData['depthByPlayer'] === 'above'
-                ? targetSprite.depth + 1 : targetSprite.depth - 0.1;
+                ? targetSprite.depth+100 : targetSprite.depth - 0.1;
             hitSprite.depthByPlayer = animData.animationData.depthByPlayer;
             hitSprite.setDepth(depth);
         } else {
-            hitSprite.setDepth(200000);
+            hitSprite.setDepth(300000);
         }
         hitSprite.anims.play(hitAnimKey, true).on('animationcomplete', () => {
             hitSprite.destroy();
-            if(targetSprite){
+            if(targetSprite && sc.hasOwn(targetSprite, 'moveSprites')){
                 delete targetSprite.moveSprites[hitAnimKey+'_'+targetSpriteId];
             }
         });
@@ -132,15 +128,11 @@ class ReceiverWrapper extends Receiver
 
     updateLevelAndExperience(message)
     {
-        // @TODO - BETA.17 - Make all messages and classes configurable.
+        // @TODO - BETA - Make all messages and classes configurable.
         this.gameManager.gameDom.updateContent('.level-container .level-label', 'Level '+message.data.lvl);
         this.gameManager.gameDom.updateContent('.experience-container .current-experience', message.data.exp);
         if(message.data.lab){
             this.gameManager.gameDom.updateContent('.class-path-container .class-path-label', message.data.lab);
-        }
-        // @NOTE: level label could override the path label.
-        if(message.data.nl){
-            this.gameManager.gameDom.updateContent('.class-path-container .class-path-label', message.data.nl);
         }
         if(message.data.ne){
             this.gameManager.gameDom.updateContent('.experience-container .next-level-experience', message.data.ne);
@@ -166,6 +158,31 @@ class ReceiverWrapper extends Receiver
             Object.assign(this.gameManager.skills.skills, message.data.skl);
             this.gameManager.getFeature('actions').uiManager.appendSkills(message.data.skl);
         }
+        let levelUpAnimKey = this.getLevelUpAnimationKey(message.data.skl);
+        if(levelUpAnimKey){
+            this.playPlayerAnimation(this.gameManager.getCurrentPlayer().playerId, levelUpAnimKey);
+        }
+    }
+
+    getLevelUpAnimationKey(level)
+    {
+        let animationsListObj = this.gameManager.config.client.levels.animations;
+        let exactKey = 'level_'+this.gameManager.playerData.avatarKey+'_'+level;
+        if(sc.hasOwn(animationsListObj, exactKey)){
+            return exactKey;
+        }
+        let avatarKey = 'level_'+this.gameManager.playerData.avatarKey;
+        if(sc.hasOwn(animationsListObj, avatarKey)){
+            return avatarKey;
+        }
+        let levelKey = 'level_'+level;
+        if(sc.hasOwn(animationsListObj, levelKey)){
+            return levelKey;
+        }
+        if(sc.hasOwn(animationsListObj, 'level_default')){
+            return 'level_default';
+        }
+        return false;
     }
 
     onLevelExperienceAdded(message)
@@ -177,36 +194,41 @@ class ReceiverWrapper extends Receiver
     onSkillBeforeCast(message)
     {
         // cast animation:
-        let currentScene = this.gameManager.getActiveScene();
         let castKey = message.data.skillKey+'_cast';
         let castAnimKey = sc.hasOwn(this.gameManager.config.client.skills.animations, castKey)
             ? castKey : 'default_cast';
-        let animationSprite = currentScene.getAnimationByKey(castAnimKey);
-        if(!animationSprite){
-            if(castAnimKey.indexOf('default_') !== 0){
-                Logger.error('Animation sprite not found', castAnimKey);
+        this.playPlayerAnimation(message.data.extraData.oK, castAnimKey);
+    }
+
+    playPlayerAnimation(ownerId, animationKey)
+    {
+        let currentScene = this.gameManager.getActiveScene();
+        let sceneAnimation = currentScene.getAnimationByKey(animationKey);
+        if(!sceneAnimation){
+            if(animationKey.indexOf('default') === -1){
+                Logger.error('Animation sprite not found', animationKey);
             }
             return false;
         }
-        let ownerSprite = this.gameManager.getCurrentPlayer().players[message.data.extraData.oK];
+        let ownerSprite = this.gameManager.getCurrentPlayer().players[ownerId];
         let spriteX = ownerSprite.x;
         let spriteY = ownerSprite.y;
-        let castSprite = currentScene.physics.add.sprite(spriteX, spriteY, castAnimKey);
-        let destroyTime = sc.getDef(animationSprite, 'destroyTime', false);
+        let animationSprite = currentScene.physics.add.sprite(spriteX, spriteY, animationKey);
+        let destroyTime = sc.getDef(sceneAnimation, 'destroyTime', false);
         // the default value will be the caster depth - 1 so the animation will be played below the player.
-        let depth = sc.hasOwn(animationSprite, 'depthByPlayer') && animationSprite['depthByPlayer'] === 'above'
+        let depth = sc.hasOwn(sceneAnimation, 'depthByPlayer') && sceneAnimation['depthByPlayer'] === 'above'
             ? ownerSprite.depth + 1 : ownerSprite.depth - 0.1;
-        castSprite.depthByPlayer = animationSprite.depthByPlayer;
-        castSprite.setDepth(depth);
-        let blockMovement = sc.getDef(animationSprite, 'blockMovement', false);
+        animationSprite.depthByPlayer = sceneAnimation.depthByPlayer;
+        animationSprite.setDepth(depth);
+        let blockMovement = sc.getDef(sceneAnimation, 'blockMovement', false);
         if(!blockMovement){
-            ownerSprite.moveSprites[castAnimKey+'_'+ownerSprite.playerId] = castSprite;
+            ownerSprite.moveSprites[animationKey+'_'+ownerSprite.playerId] = animationSprite;
         }
-        castSprite.anims.play(castAnimKey, true);
+        animationSprite.anims.play(animationKey, true);
         if(destroyTime){
             setTimeout(() => {
-                castSprite.destroy();
-                delete ownerSprite.moveSprites[castAnimKey+'_'+ownerSprite.playerId];
+                animationSprite.destroy();
+                delete ownerSprite.moveSprites[animationKey+'_'+ownerSprite.playerId];
             }, destroyTime)
         }
     }
@@ -224,36 +246,52 @@ class ReceiverWrapper extends Receiver
         }
         let currentScene = this.gameManager.getActiveScene();
         let ownerSprite = this.gameManager.getCurrentPlayer().players[message.data.extraData.oK];
-        let playDirection = this.getPlayDirection(currentPlayer, currentScene);
+        let playDirection = this.getPlayDirection(message.data.extraData, ownerSprite, currentPlayer, currentScene);
         if(playDirection){
-            ownerSprite.anims.play(playDirection, true);
+            ownerSprite.anims.play(ownerSprite.avatarKey+'_'+playDirection, true);
             ownerSprite.anims.stop();
         }
     }
 
-    getPlayDirection(currentPlayer, currentScene)
+    onSkillAttackApplyDamage(message)
     {
-        let playDirection = false;
-        if(!currentPlayer.currentTarget.id){
-            return false
-        }
-        let targetX = false;
-        let targetY = false;
-        if(sc.hasOwn(currentScene.objectsAnimations, currentPlayer.currentTarget.id)){
-            let target = currentScene.objectsAnimations[currentPlayer.currentTarget.id];
-            targetX = target.x;
-            targetY = target.y;
-        }
-        if(sc.hasOwn(currentPlayer.players, currentPlayer.currentTarget.id)){
-            let target = currentPlayer.players[currentPlayer.currentTarget.id];
-            targetX = target.x;
-            targetY = target.y;
-        }
-        if(!targetX){
+        let damageConfig = this.gameManager.config.get('client/actions/damage');
+        if(!damageConfig.enabled){
             return false;
         }
-        let playX = targetX - currentPlayer.state.x;
-        let playY = targetY - currentPlayer.state.y;
+        let currentPlayer = this.gameManager.getCurrentPlayer();
+        if(!damageConfig.showAll && message.data.extraData.oK !== currentPlayer.playerId){
+            return false;
+        }
+        let currentScene = this.gameManager.getActiveScene();
+        let target = currentScene.getObjectFromExtraData('t', message.data.extraData, currentPlayer);
+        if(!target){
+            return false;
+        }
+        currentScene.createFloatingText(
+            target.x,
+            target.y,
+            message.data.d,
+            damageConfig.color,
+            damageConfig.font,
+            damageConfig.fontSize,
+            damageConfig.duration,
+            damageConfig.top,
+            damageConfig.stroke,
+            damageConfig.strokeThickness,
+            damageConfig.shadowColor
+        );
+    }
+
+    getPlayDirection(extraData, ownerSprite, currentPlayer, currentScene)
+    {
+        let playDirection = false;
+        let target = currentScene.getObjectFromExtraData('t', extraData, currentPlayer);
+        if(!target){
+            return false;
+        }
+        let playX = target.x - ownerSprite.x;
+        let playY = target.y - ownerSprite.y;
         playDirection = (playX >= 0) ? GameConst.RIGHT : GameConst.LEFT;
         if(Math.abs(playX) < Math.abs(playY)){
             playDirection = (playY >= 0) ? GameConst.DOWN : GameConst.UP;

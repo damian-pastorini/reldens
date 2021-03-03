@@ -9,7 +9,7 @@
  *
  */
 
-const { EnemyObject } = require('reldens/packages/objects/server/enemy-object');
+const { Enemy2Object } = require('./enemy2-object');
 const { MultipleObject } = require('reldens/packages/objects/server/multiple');
 
 class Enemy2 extends MultipleObject
@@ -18,7 +18,7 @@ class Enemy2 extends MultipleObject
     constructor(props)
     {
         super(props);
-        this.classInstance = EnemyObject;
+        this.classInstance = Enemy2Object;
         this.respawn = true;
     }
 

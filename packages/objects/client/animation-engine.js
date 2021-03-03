@@ -92,7 +92,9 @@ class AnimationEngine
             hideOnComplete: this.hideOnComplete
         };
         this.currentAnimation = this.currentPreloader.anims.create(createData);
-        this.sceneSprite = currentScene.physics.add.sprite(this.animPos.x, this.animPos.y, this.asset_key);
+        let spriteX = this.positionFix ? this.animPos.x : this.x;
+        let spriteY = this.positionFix ? this.animPos.y : this.y;
+        this.sceneSprite = currentScene.physics.add.sprite(spriteX, spriteY, this.asset_key);
         if(this.autoStart){
             this.sceneSprite.anims.play(this.key, true);
         }
@@ -103,7 +105,7 @@ class AnimationEngine
                 if(ev.downElement.nodeName !== 'CANVAS'){
                     return false;
                 }
-                // @TODO - BETA.17 - CHECK - TempId is a temporal fix for multiple objects case.
+                // @TODO - BETA - CHECK - TempId is a temporal fix for multiple objects case.
                 let tempId = (this.key === this.asset_key) ? this.id : this.key;
                 let dataSend = {
                     act: ObjectsConst.OBJECT_INTERACTION,

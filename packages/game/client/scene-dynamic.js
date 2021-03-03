@@ -7,7 +7,7 @@
 const { Scene, Input } = require('phaser');
 const { TilesetAnimation } = require('./tileset-animation');
 const { EventsManagerSingleton, Logger, sc } = require('@reldens/utils');
-const { GameConst } = require('../../game/constants');
+const { GameConst } = require('../constants');
 
 class SceneDynamic extends Scene
 {
@@ -40,7 +40,7 @@ class SceneDynamic extends Scene
     create()
     {
         EventsManagerSingleton.emit('reldens.beforeSceneDynamicCreate', this);
-        // @TODO - BETA.17 - Controllers will be part of the configuration in the database.
+        // @TODO - BETA - Controllers will be part of the configuration in the database.
         this.keyLeft = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.LEFT);
         this.keyA = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.A);
         this.keyRight = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.RIGHT);
@@ -65,12 +65,12 @@ class SceneDynamic extends Scene
             }
         });
         this.gameManager.gameDom.getElement('input').on('blur', () => {
-            for(let keyCode of keys) {
+            for(let keyCode of keys){
                 this.input.keyboard.addCapture(keyCode);
             }
         });
         this.input.keyboard.on('keydown', (event) => {
-            // @TODO - BETA.17 - Make configurable the keys related to the actions and skills.
+            // @TODO - BETA - Make configurable the keys related to the actions and skills.
             // keyCode = 32 > spacebar
             if(event.keyCode === 32 && !this.gameManager.gameDom.insideInput()){
                 this.player.runActions();
@@ -81,8 +81,19 @@ class SceneDynamic extends Scene
             }
         });
         this.map = this.add.tilemap(this.params.roomMap);
+        // disable default context menu:
+        if(this.gameManager.config.get('client/ui/controls/disableContextMenu')){
+            this.gameManager.gameDom.getElement(document).on('contextmenu', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+            });
+        }
         this.input.on('pointerdown', (pointer, currentlyOver) => {
-            // @TODO - BETA.17 - Temporal avoid double actions, if you target something you will not be moved to the
+            let primaryMove = this.gameManager.config.get('client/ui/controls/primaryMove');
+            if((!pointer.primaryDown && primaryMove) || (pointer.primaryDown && !primaryMove)){
+                return false;
+            }
+            // @TODO - BETA - Temporal avoid double actions, if you target something you will not be moved to the
             //   pointer, in a future release this will be configurable so you can walk to objects and they get
             //   activated, for example, click on and NPC, automatically walk close and automatically get a dialog
             //   opened.
@@ -121,6 +132,7 @@ class SceneDynamic extends Scene
                     this.player.stop();
                 }
             });
+            this.gameManager.gameDom.activeElement().blur();
         });
         EventsManagerSingleton.emit('reldens.afterSceneDynamicCreate', this);
     }
@@ -132,7 +144,7 @@ class SceneDynamic extends Scene
             return true;
         }
         if(this.transition === false && !this.gameManager.isChangingScene){
-            // @TODO - BETA.17 - Controllers will be part of the configuration in the database.
+            // @TODO - BETA - Controllers will be part of the configuration in the database.
             if(this.keyLeft.isDown || this.keyA.isDown){
                 this.player.left();
             } else if(this.keyRight.isDown || this.keyD.isDown){
@@ -215,6 +227,33 @@ class SceneDynamic extends Scene
         return pointer;
     }
 
+    createFloatingText(
+        x,
+        y,
+        message,
+        color,
+        font,
+        fontSize = 14,
+        duration = 600,
+        top = 50,
+        stroke = '#000000',
+        strokeThickness = 4,
+        shadowColor = 'rgba(0,0,0,0.7)'
+    ){
+        let damageSprite = this.add.text(x, y, message, {fontFamily: font, fontSize: fontSize+'px'});
+        damageSprite.style.setColor(color);
+        damageSprite.style.setAlign('center');
+        damageSprite.style.setStroke(stroke, strokeThickness);
+        damageSprite.style.setShadow(5, 5, shadowColor, 5);
+        damageSprite.setDepth(200000);
+        this.add.tween({
+            targets: damageSprite, duration, ease: 'Exponential.In', y: y - top,
+            onComplete: () => {
+                damageSprite.destroy();
+            }
+        });
+    }
+
     updatePointerObject(pointer)
     {
         if(!this.configManager.get('client/ui/pointer/show')){
@@ -223,9 +262,9 @@ class SceneDynamic extends Scene
         if(this.arrowSprite){
             this.arrowSprite.destroy();
         }
-        // @TODO - BETA.17 - Make pointer sprite data configurable. Here the -16 is half of the sprite height.
+        // @TODO - BETA - Make pointer sprite data configurable. Here the -16 is half of the sprite height.
         this.arrowSprite = this.physics.add.sprite(pointer.worldX, pointer.worldY - 16, GameConst.ARROW_DOWN);
-        this.arrowSprite.setDepth(2000000);
+        this.arrowSprite.setDepth(500000);
         this.arrowSprite.anims.play(GameConst.ARROW_DOWN, true).on('animationcomplete', () => {
             this.arrowSprite.destroy();
         });
@@ -237,6 +276,20 @@ class SceneDynamic extends Scene
             return false;
         }
         return sc.getDef(this.anims.anims.entries, key, false);
+    }
+
+    getObjectFromExtraData(objKey, extraData, currentPlayer)
+    {
+        // objKey = t > target
+        // objKey = o > owner
+        let returnObj = false;
+        if(extraData[objKey+'T'] !== 'p' && sc.hasOwn(this.objectsAnimations, extraData[objKey+'K'])){
+            returnObj = this.objectsAnimations[extraData[objKey+'K']];
+        }
+        if(extraData[objKey+'T'] === 'p' && sc.hasOwn(currentPlayer.players, extraData[objKey+'K'])){
+            returnObj = currentPlayer.players[extraData[objKey+'K']];
+        }
+        return returnObj;
     }
 
 }

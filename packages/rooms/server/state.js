@@ -23,9 +23,14 @@ class State extends Schema
         this.bodies = new MapSchema();
     }
 
-    createPlayer(id, playerData)
+    createPlayerSchema(playerData, id)
     {
-        this.players[id] = new Player(playerData, id);
+        return new Player(playerData, id);
+    }
+
+    addPlayerToState(playerSchema, id)
+    {
+        this.players[id] = playerSchema;
         return this.players[id];
     }
 

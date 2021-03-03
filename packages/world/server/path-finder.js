@@ -28,7 +28,12 @@ class PathFinder
     findPath(from, to)
     {
         if(this.world.onlyWalkable){
-            let nodeTo = sc.hasOwn(this.grid, 'nodes') ? this.grid.getNodeAt(to[0], to[1]) : false;
+            let nodeTo = false;
+            try {
+                nodeTo = sc.hasOwn(this.grid, 'nodes') ? this.grid.getNodeAt(to[0], to[1]) : false;
+            } catch (err) {
+                // Logger.error('Node not found.');
+            }
             if(!nodeTo || !nodeTo.walkable){
                 return false;
             }
@@ -44,7 +49,7 @@ class PathFinder
             if(from[1] < to[1]){
                 newTo[1] = -1;
             }
-            // @TODO - BETA.17 - Improve how to check the closest nodes.
+            // @TODO - BETA - Improve how to check the closest nodes.
             // check all closest nodes:
             let worldW = this.world.mapJson.width;
             let worldH = this.world.mapJson.height;

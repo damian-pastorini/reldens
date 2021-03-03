@@ -57,6 +57,13 @@ class RoomEvents
     async playersOnAdd(player, key, previousScene)
     {
         await EventsManagerSingleton.emit('reldens.playersOnAdd', player, key, previousScene, this);
+        let addPlayerData = {
+            x: player.state.x,
+            y: player.state.y,
+            dir: player.state.dir,
+            playerName: player.playerName,
+            avatarKey: player.avatarKey
+        };
         // create current player:
         if(key === this.room.sessionId){
             this.engineStarted = true;
@@ -64,8 +71,7 @@ class RoomEvents
             let currentScene = this.getActiveScene();
             if(currentScene.key === player.state.scene && currentScene.player && currentScene.player.players){
                 for(let i of Object.keys(this.playersQueue)){
-                    let { x, y, dir, username } = this.playersQueue[i];
-                    currentScene.player.addPlayer(i, { x, y, dir, username: username });
+                    currentScene.player.addPlayer(i, this.playersQueue[i]);
                 }
             }
         } else {
@@ -73,12 +79,10 @@ class RoomEvents
             if(this.engineStarted){
                 let currentScene = this.getActiveScene();
                 if(currentScene.key === player.state.scene && currentScene.player && currentScene.player.players){
-                    let {x, y, dir} = player.state;
-                    currentScene.player.addPlayer(key, {x, y, dir, username: player.username});
+                    currentScene.player.addPlayer(key, addPlayerData);
                 }
             } else {
-                let {x, y, dir} = player.state;
-                this.playersQueue[key] = {x, y, dir, username: player.username};
+                this.playersQueue[key] = addPlayerData;
             }
         }
     }
@@ -108,11 +112,11 @@ class RoomEvents
     {
         EventsManagerSingleton.emit('reldens.playersOnRemove', player, key, this);
         if(key === this.room.sessionId){
-            // @TODO - BETA.17 - Improve disconnection handler.
+            // @TODO - BETA - Improve disconnection handler.
             if(!this.gameManager.gameOver){
                 alert('Your session ended, please login again.');
+                this.gameManager.gameDom.getWindow().location.reload();
             }
-            this.gameManager.gameDom.getWindow().location.reload();
         } else {
             let currentScene = this.getActiveScene();
             if(currentScene.player && sc.hasOwn(currentScene.player.players, key)){
@@ -127,7 +131,16 @@ class RoomEvents
         if(message.act === GameConst.GAME_OVER){
             EventsManagerSingleton.emit('reldens.gameOver', message, this);
             this.gameManager.gameOver = true;
-            alert('You died!');
+            let currentPlayer = this.gameManager.getCurrentPlayer();
+            let currentPlayerSprite = currentPlayer.players[currentPlayer.playerId];
+            currentPlayerSprite.visible = false;
+            this.gameManager.gameDom.getElement('#game-over').removeClass('hidden');
+        }
+        if(message.act === GameConst.REVIVED){
+            let currentPlayer = this.gameManager.getCurrentPlayer();
+            let currentPlayerSprite = currentPlayer.players[currentPlayer.playerId];
+            this.gameManager.gameDom.getElement('#game-over').addClass('hidden');
+            currentPlayerSprite.visible = true;
         }
         if(
             message.act === GameConst.CHANGED_SCENE
@@ -137,10 +150,11 @@ class RoomEvents
             EventsManagerSingleton.emit('reldens.changedScene', message, this);
             let currentScene = this.getActiveScene();
             // if other users enter in the current scene we need to add them:
-            let {id, x, y, dir, username} = message;
+            let {id, x, y, dir, playerName, avatarKey} = message;
             let topOff = this.gameManager.config.get('client/players/size/topOffset');
             let leftOff = this.gameManager.config.get('client/players/size/leftOffset');
-            currentScene.player.addPlayer(id, {x:(x-leftOff), y:(y-topOff), dir, username});
+            let addPlayerData = {x:(x-leftOff), y:(y-topOff), dir, playerName, avatarKey};
+            currentScene.player.addPlayer(id, addPlayerData);
         }
         // @NOTE: here we don't need to evaluate the id since the reconnect only is sent to the current client.
         if(message.act === GameConst.RECONNECT){
@@ -164,7 +178,7 @@ class RoomEvents
         if(code > 1000){
             // server error, handle disconnection:
             if(!this.gameManager.gameOver){
-                // @TODO - BETA.17 - Improve disconnection handler.
+                // @TODO - BETA - Improve disconnection handler.
                 alert('There was a connection error.');
             }
             this.gameManager.gameDom.getWindow().location.reload();
@@ -175,35 +189,38 @@ class RoomEvents
 
     updatePlayerStats(message)
     {
+        if(!sc.hasOwn(message, 'stats') || !message.stats){
+            return false;
+        }
         let currentScene = this.getActiveScene();
         if(!currentScene.player || !sc.hasOwn(currentScene.player.players, this.room.sessionId)){
             Logger.error('For some reason you hit this case which should not happen.');
-            return;
+            return false;
         }
         let playerSprite = currentScene.player.players[this.room.sessionId];
         playerSprite.stats = message.stats;
         this.gameManager.playerData.stats = message.stats;
         this.gameManager.playerData.statsBase = message.statsBase;
         let playerStats = this.gameManager.getUiElement('playerStats');
-        if(playerStats){
-            let statsPanel = playerStats.getChildByProperty('id', 'player-stats-container');
-            if(statsPanel){
-                let messageTemplate = this.gameEngine.uiScene.cache.html.get('playerStat');
-                statsPanel.innerHTML = '';
-                if(sc.hasOwn(message, 'stats') && message.stats){
-                    for(let i of Object.keys(message.stats)){
-                        statsPanel.innerHTML = statsPanel.innerHTML
-                            + this.gameManager.gameEngine.parseTemplate(messageTemplate, {
-                                statLabel: i,
-                                statValue: message.stats[i]+(
-                                    sc.hasOwn(this.gameManager.config.initialStats[i], 'data')
-                                    && sc.getDef(this.gameManager.config.initialStats[i].data, 'showBase', false)
-                                    ? ' / '+message.statsBase[i] : ''
-                                )
-                            });
-                    }
-                }
-            }
+        if(!playerStats){
+            return false;
+        }
+        let statsPanel = playerStats.getChildByProperty('id', 'player-stats-container');
+        if(!statsPanel){
+            return false;
+        }
+        let messageTemplate = this.gameEngine.uiScene.cache.html.get('playerStat');
+        statsPanel.innerHTML = '';
+        for(let i of Object.keys(message.stats)){
+            let parsedStatsTemplate = this.gameManager.gameEngine.parseTemplate(messageTemplate, {
+                statLabel: i,
+                statValue: message.stats[i]+(
+                    sc.hasOwn(this.gameManager.config.client.players.initialStats[i], 'data')
+                    && sc.getDef(this.gameManager.config.client.players.initialStats[i].data, 'showBase', false)
+                        ? ' / '+message.statsBase[i] : ''
+                )
+            });
+            statsPanel.innerHTML = statsPanel.innerHTML+parsedStatsTemplate;
         }
         EventsManagerSingleton.emit('reldens.playerStatsUpdateAfter', message, this);
     }
@@ -225,7 +242,7 @@ class RoomEvents
             let boxContent = uiBox.getChildByProperty('className', 'box-content');
             if(boxContent){
                 boxContent.innerHTML = props.content;
-                // @TODO - BETA.17 - IMPROVE! I need time to focus on this which I don't have right now :(
+                // @TODO - BETA - IMPROVE! I need time to focus on this which I don't have right now :(
                 if(props.options){
                     let optionsContainerTemplate = uiScene.cache.html.get('uiOptionsContainer');
                     let optionsContainer = this.gameManager.gameEngine.parseTemplate(optionsContainerTemplate,
@@ -268,14 +285,12 @@ class RoomEvents
 
     async startEngineScene(player, room, previousScene = false)
     {
-        EventsManagerSingleton.emit('reldens.startEngineScene', this, player, room, previousScene);
+        await EventsManagerSingleton.emit('reldens.startEngineScene', this, player, room, previousScene);
         let uiScene = false;
         if(!this.gameEngine.uiScene){
             uiScene = true;
         }
         let preloaderName = GameConst.SCENE_PRELOADER+this.sceneData.roomName;
-        // @TODO - BETA.17 - F901 - implement player custom avatar.
-        // , player.username
         if(!this.gameEngine.scene.getScene(preloaderName)){
             this.scenePreloader = this.createPreloaderInstance({
                 name: preloaderName,
@@ -287,7 +302,7 @@ class RoomEvents
                 objectsAnimationsData: this.sceneData.objectsAnimationsData
             });
             this.gameEngine.scene.add(preloaderName, this.scenePreloader, true);
-            EventsManagerSingleton.emit('reldens.createdPreloaderInstance', this, this.scenePreloader);
+            await EventsManagerSingleton.emit('reldens.createdPreloaderInstance', this, this.scenePreloader);
             let preloader = this.gameEngine.scene.getScene(preloaderName);
             preloader.load.on('complete', async () => {
                 // set ui on first preloader scene:
@@ -299,7 +314,7 @@ class RoomEvents
                     if(playerBox){
                         let element = playerBox.getChildByProperty('className', 'player-name');
                         if(element){
-                            element.innerHTML = player.username;
+                            element.innerHTML = this.gameManager.playerData.name;
                         }
                     }
                 }
@@ -309,14 +324,14 @@ class RoomEvents
             let currentScene = this.getActiveScene();
             currentScene.objectsAnimationsData = this.sceneData.objectsAnimationsData;
             this.scenePreloader = this.gameEngine.scene.getScene(preloaderName);
-            EventsManagerSingleton.emit('reldens.createdPreloaderRecurring', this, this.scenePreloader);
+            await EventsManagerSingleton.emit('reldens.createdPreloaderRecurring', this, this.scenePreloader);
             await this.createEngineScene(player, room, previousScene);
         }
     }
 
     async createEngineScene(player, room, previousScene)
     {
-        EventsManagerSingleton.emit('reldens.createEngineScene', player, room, previousScene, this);
+        await EventsManagerSingleton.emit('reldens.createEngineScene', player, room, previousScene, this);
         if(!this.gameManager.room){
             this.gameEngine.scene.start(player.state.scene);
         } else {
@@ -336,8 +351,14 @@ class RoomEvents
             for(let i of Object.keys(room.state.players)){
                 let tmp = room.state.players[i];
                 if(tmp.sessionId && tmp.sessionId !== room.sessionId){
-                    let { x, y, dir } = tmp.state;
-                    currentScene.player.addPlayer(tmp.sessionId, { x, y, dir, username: tmp.username });
+                    let addPlayerData = {
+                        x: tmp.state.x,
+                        y: tmp.state.y,
+                        dir: tmp.state.dir,
+                        playerName: tmp.playerName,
+                        avatarKey: tmp.avatarKey
+                    };
+                    currentScene.player.addPlayer(tmp.sessionId, addPlayerData);
                 }
             }
         }

@@ -34,6 +34,10 @@ class ScenePreloader extends Scene
         this.directionalAnimations = {};
         let currentScene = this.gameManager.activeRoomEvents.getActiveScene();
         currentScene.objectsAnimationsData = props.objectsAnimationsData;
+        this.playerSpriteSize = {
+            frameWidth: this.gameManager.config.get('client/players/size/width') || 52,
+            frameHeight: this.gameManager.config.get('client/players/size/height') || 71
+        };
     }
 
     preload()
@@ -54,7 +58,10 @@ class ScenePreloader extends Scene
             if(this.gameManager.config.get('client/ui/sceneLabel/enabled')){
                 this.load.html('sceneLabel', 'assets/html/ui-scene-label.html');
             }
-            // @TODO - BETA.17 - Move everything related to player stats into the users pack or create a new pack.
+            if(this.gameManager.config.get('client/ui/instructions/enabled')){
+                this.load.html('instructions', 'assets/html/ui-instructions.html');
+            }
+            // @TODO - BETA - Move everything related to player stats into the users pack or create a new pack.
             if(this.gameManager.config.get('client/ui/playerStats/enabled')){
                 this.load.html('playerStats', 'assets/html/ui-player-stats.html');
                 this.load.html('playerStat', 'assets/html/player-stat.html');
@@ -69,7 +76,7 @@ class ScenePreloader extends Scene
         if(this.preloadMapKey){
             this.load.tilemapTiledJSON(this.preloadMapKey, `assets/maps/${this.preloadMapKey}.json`);
         }
-        // @TODO - BETA.17 - CHECK - Test a multiple tiles images case.
+        // @TODO - BETA - CHECK - Test a multiple tiles images case.
         // map tiles images:
         if(this.preloadImages){
             // @NOTE: we need the preloadImages and tile data here because the JSON map file is not loaded yet.
@@ -80,7 +87,7 @@ class ScenePreloader extends Scene
                 spacing: this.gameManager.config.get('client/general/tileData/spacing') || 2
             };
             let files = this.preloadImages.split(',');
-            // @TODO - BETA.17 - Remove the hardcoded file extensions.
+            // @TODO - BETA - Remove the hardcoded file extensions.
             for(let imageFile of files){
                 let filePath = `assets/maps/${imageFile}.png`;
                 this.load.spritesheet(imageFile, filePath, tileData);
@@ -88,7 +95,7 @@ class ScenePreloader extends Scene
         }
         // preload objects assets:
         if(this.preloadAssets){
-            // @TODO - BETA.17 - Remove the hardcoded file extensions.
+            // @TODO - BETA - Remove the hardcoded file extensions.
             for(let asset of this.preloadAssets){
                 if(asset.asset_type === 'spritesheet'){
                     let assetFilePath = `assets/custom/sprites/${asset.file_1}.png`;
@@ -101,19 +108,13 @@ class ScenePreloader extends Scene
                 }
             }
         }
-        let playerSpriteSize = {
-            frameWidth: this.gameManager.config.get('client/players/size/width') || 52,
-            frameHeight: this.gameManager.config.get('client/players/size/height') || 71
-        };
-        // @TODO - BETA.17 - F901 - Implement player custom avatar.
-        // this.load.spritesheet(this.username, 'assets/sprites/'+this.username+'.png', playerSpriteSize);
-        this.load.spritesheet(GameConst.IMAGE_PLAYER, 'assets/sprites/player-1.png', playerSpriteSize);
+        this.preloadPlayerDefaultSprite();
         if(this.gameManager.config.get('client/ui/pointer/show')){
-            // @TODO - BETA.17 - Make pointer sprite data configurable.
+            // @TODO - BETA - Make pointer sprite data configurable.
             let pointerData = {frameWidth: 32, frameHeight: 32};
             this.load.spritesheet(GameConst.ARROW_DOWN, 'assets/sprites/arrow-w-down.png', pointerData);
         }
-        // interface assets:
+        // @TODO - BETA - Move everything related to player stats into the users pack or create a new pack.
         this.load.image(GameConst.ICON_STATS, 'assets/icons/book.png');
         this.load.on('fileprogress', this.onFileProgress, this);
         this.load.on('progress', this.onLoadProgress, this);
@@ -165,6 +166,29 @@ class ScenePreloader extends Scene
                     .createFromCache('controls');
                 this.registerControllers(this.elementsUi['controls']);
             }
+            // @TODO - BETA - Replace all different DOM references and standardize with Vue or React.
+            // create instructions:
+            let instructionsUi = this.getUiConfig('instructions');
+            if(instructionsUi.enabled){
+                this.elementsUi['instructions'] = this.add.dom(instructionsUi.uiX, instructionsUi.uiY)
+                    .createFromCache('instructions');
+                let instructionsBox = this.gameManager.gameDom.getElement('#instructions');
+                if(instructionsBox){
+                    let closeButton = this.gameManager.gameDom.getElement('#instructions-close');
+                    if(closeButton){
+                        closeButton.on('click', () => {
+                            instructionsBox.hide();
+                        });
+                    }
+                    let openButton = this.elementsUi['instructions'].getChildByProperty('id', 'instructions-open');
+                    if(openButton){
+                        openButton.addEventListener('click', () => {
+                            instructionsBox.show();
+                        });
+                    }
+                }
+            }
+            // @TODO - BETA - Move everything related to player stats into the users pack or create a new pack.
             // create ui playerStats:
             let statsUi = this.getUiConfig('playerStats');
             if(statsUi.enabled){
@@ -191,7 +215,9 @@ class ScenePreloader extends Scene
             EventsManagerSingleton.emit('reldens.createUiScene', this);
         }
         // player animations:
-        this.createPlayerAnimations();
+        this.createPlayerAnimations(GameConst.IMAGE_PLAYER);
+        // path finder arrow:
+        this.createArrowAnimation();
     }
 
     getUiConfig(uiName, newWidth, newHeight)
@@ -223,15 +249,32 @@ class ScenePreloader extends Scene
         return {uiX, uiY};
     }
 
-    createPlayerAnimations()
+    preloadPlayerDefaultSprite()
     {
-        // @TODO - BETA.17 - All the animations will be part of the configuration in the database.
+        let fallbackImage = this.gameManager.config.get('client/players/animations/fallbackImage') || 'player-base';
+        this.load.spritesheet(
+            GameConst.IMAGE_PLAYER,
+            'assets/custom/sprites/'+fallbackImage+'.png',
+            this.playerSpriteSize
+        );
+    }
+
+    createPlayerAnimations(avatarKey)
+    {
+        // @TODO - BETA - All the animations will be part of the configuration in the database.
         let availableAnimations = [
-            {k: GameConst.LEFT, img: GameConst.IMAGE_PLAYER, start: 3, end: 5, repeat: -1, hide: false},
-            {k: GameConst.RIGHT, img: GameConst.IMAGE_PLAYER, start: 6, end: 8, repeat: -1, hide: false},
-            {k: GameConst.UP, img: GameConst.IMAGE_PLAYER, start: 9, end: 11, repeat: -1, hide: false},
-            {k: GameConst.DOWN, img: GameConst.IMAGE_PLAYER, start: 0, end: 2, repeat: -1, hide: false}
+            {k: avatarKey+'_'+GameConst.LEFT, img: avatarKey, start: 3, end: 5, repeat: -1, hide: false},
+            {k: avatarKey+'_'+GameConst.RIGHT, img: avatarKey, start: 6, end: 8, repeat: -1, hide: false},
+            {k: avatarKey+'_'+GameConst.UP, img: avatarKey, start: 9, end: 11, repeat: -1, hide: false},
+            {k: avatarKey+'_'+GameConst.DOWN, img: avatarKey, start: 0, end: 2, repeat: -1, hide: false}
         ];
+        for(let anim of availableAnimations){
+            this.createAnimationWith(anim);
+        }
+    }
+
+    createArrowAnimation()
+    {
         if(this.gameManager.config.get('client/ui/pointer/show')){
             let arrowAnim = {
                 k: GameConst.ARROW_DOWN,
@@ -241,22 +284,24 @@ class ScenePreloader extends Scene
                 repeat: 3,
                 rate: 6
             };
-            availableAnimations.push(arrowAnim);
+            this.createAnimationWith(arrowAnim);
         }
-        for(let anim of availableAnimations){
-            this.anims.create({
-                key: anim.k,
-                frames: this.anims.generateFrameNumbers(anim.img, {start: anim.start, end: anim.end}),
-                frameRate: sc.hasOwn(anim, 'rate') ? anim.rate : this.configuredFrameRate,
-                repeat: anim.repeat,
-                hideOnComplete: sc.hasOwn(anim, 'hide') ? anim.hide : true,
-            });
-        }
+    }
+
+    createAnimationWith(anim)
+    {
+        this.anims.create({
+            key: anim.k,
+            frames: this.anims.generateFrameNumbers(anim.img, {start: anim.start, end: anim.end}),
+            frameRate: sc.hasOwn(anim, 'rate') ? anim.rate : this.configuredFrameRate,
+            repeat: anim.repeat,
+            hideOnComplete: sc.hasOwn(anim, 'hide') ? anim.hide : true,
+        });
     }
 
     registerControllers(controllersBox)
     {
-        // @TODO - BETA.17 - Controllers will be part of the configuration in the database.
+        // @TODO - BETA - Controllers will be part of the configuration in the database.
         this.setupDirButtonInBox(GameConst.UP, controllersBox);
         this.setupDirButtonInBox(GameConst.DOWN, controllersBox);
         this.setupDirButtonInBox(GameConst.LEFT, controllersBox);
@@ -334,7 +379,7 @@ class ScenePreloader extends Scene
         }
         let currentScene = this.gameManager.activeRoomEvents.getActiveScene();
         let dataSend = action;
-        // @TODO - BETA.17 - Controllers will be part of the configuration in the database.
+        // @TODO - BETA - Controllers will be part of the configuration in the database.
         if(!sc.hasOwn(action, 'dir')){
             dataSend = {
                 act: ActionsConst.ACTION,

@@ -28,7 +28,7 @@ class CollisionsManager
         if(!sc.hasOwn(this.room, 'roomWorld')){
             ErrorManager.error('Room world not found.');
         }
-        // @TODO - BETA.17 - Make dynamic, for now we will use fixed collisions types for each event.
+        // @TODO - BETA - Make dynamic, for now we will use fixed collisions types for each event.
         this.room.roomWorld.on('beginContact', this.assignBeginCollisions.bind(this));
         this.room.roomWorld.on('endContact', this.assignEndCollisions.bind(this));
         // @NOTE: postBroadphase will be used to check pairs and test overlap instead of collision, for example, a spell
@@ -189,7 +189,7 @@ class CollisionsManager
 
     objectHitObject(bodyA, bodyB)
     {
-        // @TODO - BETA.17 - Fix bullet hit bullet.
+        // @TODO - BETA - Fix bullet hit bullet.
         let aPriority = sc.hasOwn(bodyA, 'hitPriority');
         let bPriority = sc.hasOwn(bodyB, 'hitPriority');
         let onHitData = {bodyA: bodyA, bodyB: bodyB, room: this.room};

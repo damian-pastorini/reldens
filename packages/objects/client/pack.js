@@ -35,7 +35,7 @@ class ObjectsPack
     listenMessages(room, gameManager)
     {
         room.onMessage((message) => {
-            // @TODO - BETA.17 - use object types, this will change with the Colyseus upgrade.
+            // @TODO - BETA - Act will be replaced with the next Colyseus upgrade.
             if(message.act === ObjectsConst.OBJECT_ANIMATION || message.act === ObjectsConst.TYPE_ANIMATION){
                 let currentScene = gameManager.activeRoomEvents.getActiveScene();
                 if(sc.hasOwn(currentScene.objectsAnimations, message.key)){
@@ -43,7 +43,7 @@ class ObjectsPack
                 }
             }
             if(message.act === ActionsConst.BATTLE_ENDED){
-                // @TODO - BETA.17 - Replace all defaults by constants.
+                // @TODO - BETA - Replace all defaults by constants.
                 let deathKey = sc.hasOwn(gameManager.config.client.skills.animations, message.k+'_death') ?
                     message.k+'_death' : 'default_death';
                 let currentScene = gameManager.activeRoomEvents.getActiveScene();
@@ -70,7 +70,7 @@ class ObjectsPack
                         animKey = skillBullet;
                     }
                     let bulletSprite = currentScene.physics.add.sprite(body.x, body.y, animKey);
-                    bulletSprite.setDepth(200000);
+                    bulletSprite.setDepth(300000);
                     this.bullets[key] = bulletSprite;
                 }
             };
@@ -80,7 +80,8 @@ class ObjectsPack
                     delete this.bullets[key];
                 }
             };
-            room.state.bodies.onChange = (body, key) => {
+            room.state.bodies.onChange = async (body, key) => {
+                await EventsManagerSingleton.emit('reldens.objectBodyChange', {body, key});
                 if(key.indexOf('bullet') !== -1){
                     this.bullets[key].x = body.x;
                     this.bullets[key].y = body.y;
@@ -92,9 +93,15 @@ class ObjectsPack
                         objectAnimation.sceneSprite.setDepth(objectNewDepth);
                         objectAnimation.sceneSprite.x = body.x;
                         objectAnimation.sceneSprite.y = body.y;
+                        objectAnimation.x = body.x;
+                        objectAnimation.y = body.y;
+                        objectAnimation.animPos.x = body.x;
+                        objectAnimation.animPos.y = body.y;
+                        objectAnimation.inState = body.inState;
                         this.moveSpritesObjects(objectAnimation, body.x, body.y, objectNewDepth);
                     }
                 }
+                await EventsManagerSingleton.emit('reldens.objectBodyChanged', {body, key});
             };
         }
     }

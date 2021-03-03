@@ -35,6 +35,7 @@ class NpcObject extends AnimationObject
         this.interactionArea = this.config.get('server/objects/actions/interactionsDistance');
         this.options = {};
         this.sendInvalidOptionMessage = false;
+        // @TODO - BETA - Make message configurable.
         this.invalidOptionMessage = 'I do not understand.';
     }
 
@@ -55,7 +56,7 @@ class NpcObject extends AnimationObject
                 activationData.content = this.content;
             }
             if(Object.keys(this.options).length > 0){
-                // @TODO - BETA.17 - Extend feature to generate different flows, this will help on easily create quests,
+                // @TODO - BETA - Extend feature to generate different flows, this will help on easily create quests,
                 //   for example we could request confirmation about a choice.
                 activationData.options = this.options;
             }
