@@ -6,7 +6,11 @@ SET FOREIGN_KEY_CHECKS = 0;
 
 # Config:
 
-INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('server', 'players/gameOver/TimeOut', '1', 'b');
+UPDATE `config` SET `value`='940' WHERE `scope` = 'client' AND `path` = 'ui/chat/y';
+UPDATE `config` SET `value`='10' WHERE `scope` = 'client' AND `path` = 'ui/uiTarget/x';
+UPDATE `config` SET `value`='85' WHERE `scope` = 'client' AND `path` = 'ui/uiTarget/y';
+UPDATE `config` SET `type`='s' WHERE `scope` = 'server' AND `path` = 'actions/pvp/timerType';
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('server', 'players/gameOver/timeOut', '10000', 'i');
 INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/controls/tabTarget', '1', 'b');
 INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/controls/disableContextMenu', '1', 'b');
 INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/controls/primaryMove', '1', 'b');
@@ -23,7 +27,7 @@ INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (NULL, 'cli
 INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (NULL, 'client', 'ui/players/nameShadowColor', 'rgba(0,0,0,0.7)', 't');
 INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (NULL, 'client', 'ui/players/nameFontFamily', 'Verdana, Geneva, sans-serif', 't');
 INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (NULL, 'client', 'ui/players/nameFontSize', '12', 'i');
-INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (NULL, 'client', 'ui/lifeBar/top', '10', 'i');
+INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (NULL, 'client', 'ui/lifeBar/top', '5', 'i');
 UPDATE `config` SET `value`='{"key":"default_hit","animationData":{"enabled":true,"type":"spritesheet","img":"default_hit","frameWidth":64,"frameHeight":64,"start":0,"end":3,"repeat":0,"depthByPlayer":"above"}}' WHERE `path`='skills/animations/default_hit';
 INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (NULL, 'client', 'actions/damage/enabled', '1', 'b');
 INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (NULL, 'client', 'actions/damage/showAll', '0', 'b');

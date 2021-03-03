@@ -91,7 +91,7 @@ class Battle
                 targetSchema.stats[affectedProperty] = targetSchema.statsBase[affectedProperty];
                 await room.savePlayerStats(targetSchema, targetClient);
                 room.send(targetClient, {act: GameConst.REVIVED});
-            }, (room.config.get('server/players/gameOver/TimeOut') || 1));
+            }, (room.config.get('server/players/gameOver/timeOut') || 1));
             return false;
         } else {
             await room.savePlayerStats(targetSchema, targetClient);
