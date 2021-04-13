@@ -176,14 +176,14 @@ class ScenePreloader extends Scene
                 if(instructionsBox){
                     let closeButton = this.gameManager.gameDom.getElement('#instructions-close');
                     if(closeButton){
-                        closeButton.on('click', () => {
-                            instructionsBox.hide();
+                        closeButton.addEventListener('click', () => {
+                            instructionsBox.style.display = 'none';
                         });
                     }
                     let openButton = this.elementsUi['instructions'].getChildByProperty('id', 'instructions-open');
                     if(openButton){
                         openButton.addEventListener('click', () => {
-                            instructionsBox.show();
+                            instructionsBox.style.display = 'block';
                         });
                     }
                 }
@@ -238,10 +238,10 @@ class ScenePreloader extends Scene
             let rX = this.gameManager.config.get('client/ui/'+uiName+'/responsiveX');
             let rY = this.gameManager.config.get('client/ui/'+uiName+'/responsiveY');
             if(!newWidth){
-                newWidth = this.gameManager.gameDom.getElement('.game-container').width();
+                newWidth = this.gameManager.gameDom.getElement('.game-container').offsetWidth;
             }
             if(!newHeight){
-                newHeight = this.gameManager.gameDom.getElement('.game-container').height();
+                newHeight = this.gameManager.gameDom.getElement('.game-container').offsetHeight;
             }
             uiX = rX ? rX * newWidth / 100 : 0;
             uiY = rY ? rY * newHeight / 100 : 0;

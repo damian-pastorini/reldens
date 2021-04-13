@@ -59,12 +59,12 @@ class SceneDynamic extends Scene
             Input.Keyboard.KeyCodes.DOWN,
             Input.Keyboard.KeyCodes.S
         ];
-        this.gameManager.gameDom.getElement('input').on('focus', () => {
+        this.gameManager.gameDom.getElement('input').addEventListener('focus', () => {
             for(let keyCode of keys){
                 this.input.keyboard.removeCapture(keyCode);
             }
         });
-        this.gameManager.gameDom.getElement('input').on('blur', () => {
+        this.gameManager.gameDom.getElement('input').addEventListener('blur', () => {
             for(let keyCode of keys){
                 this.input.keyboard.addCapture(keyCode);
             }
@@ -83,7 +83,7 @@ class SceneDynamic extends Scene
         this.map = this.add.tilemap(this.params.roomMap);
         // disable default context menu:
         if(this.gameManager.config.get('client/ui/controls/disableContextMenu')){
-            this.gameManager.gameDom.getElement(document).on('contextmenu', (event) => {
+            this.gameManager.gameDom.getDocument().addEventListener('contextmenu', (event) => {
                 event.preventDefault();
                 event.stopPropagation();
             });

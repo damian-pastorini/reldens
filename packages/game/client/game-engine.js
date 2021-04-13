@@ -53,8 +53,8 @@ class GameEngine extends Game
 
     getCurrentScreenSize(manager)
     {
-        let containerWidth = manager.gameDom.getElement('.game-container').width();
-        let containerHeight = manager.gameDom.getElement('.game-container').height();
+        let containerWidth = manager.gameDom.getElement('.game-container').offsetWidth;
+        let containerHeight = manager.gameDom.getElement('.game-container').offsetHeight;
         let newWidth = containerWidth;
         let newHeight = containerHeight;
         let mapWidth = 0, mapHeight = 0;

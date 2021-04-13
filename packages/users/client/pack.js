@@ -40,7 +40,7 @@ class UsersPack
         }
         // for every other case we will stop the normal execution of the engine and show the selection/creation block:
         gameManager.canInitEngine = false;
-        playerSelection.removeClass('hidden');
+        playerSelection.classList.remove('hidden');
         // if multiplayer is enabled and the user already has a player then setup the selector form:
         if(isMultiplayerEnabled && playersCount){
             this.preparePlayerSelector(playerSelection, initialGameData, gameManager);
@@ -55,10 +55,12 @@ class UsersPack
         if(!form || !select){
             return false;
         }
-        form.on('submit', () => {
-            let selectedPlayer = this.getPlayerById(initialGameData.players, Number(select.val()));
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            let selectedOption = select.options[select.selectedIndex].value;
+            let selectedPlayer = this.getPlayerById(initialGameData.players, Number(selectedOption));
             if(selectedPlayer){
-                playerSelection.addClass('hidden');
+                playerSelection.classList.add('hidden');
                 gameManager.initialGameData.player = selectedPlayer;
                 gameManager.initEngine().catch((err) => {
                     Logger.error(err);
@@ -77,9 +79,9 @@ class UsersPack
         if(avatarContainer){
             let playersConfig = initialGameData.gameConfig.client.players;
             gameManager.features.featuresList.actions
-                .appendAvatarOnSelector(select[0], avatarContainer[0], gameManager, playersConfig);
+                .appendAvatarOnSelector(select, avatarContainer, gameManager, playersConfig);
         }
-        form.removeClass('hidden');
+        form.classList.remove('hidden');
     }
 
     preparePlayerCreator(playerSelection, initialGameData, gameManager)
@@ -88,9 +90,10 @@ class UsersPack
         if(!$formElement){
             return;
         }
-        $formElement.on('submit', () => {
+        $formElement.addEventListener('submit', (e) => {
+            e.preventDefault();
             let errorElement = gameManager.gameDom.getElement('#player_create_form .response-error');
-            errorElement.addClass('hidden');
+            errorElement.classList.add('hidden');
             let formData = new FormData($formElement[0]);
             let serializedForm = this.serialize(formData);
             if(serializedForm['new_player_name'].toString().length < 3){

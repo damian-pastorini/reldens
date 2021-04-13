@@ -6,23 +6,21 @@
  *
  */
 
-const $ = require('jquery');
-require('jquery-validation');
 const { GameManager } = require('reldens/client');
 const { CustomClasses } = require('../packages/client');
 
 // @TODO - BETA.17: move everything from this file as part of the core project and include events to manage the theme.
-$(document).ready(function($){
-
+window.addEventListener('DOMContentLoaded', () => {
     // reldens game:
     let reldens = new GameManager();
+    let dom = reldens.gameDom;
     reldens.setupClasses(CustomClasses);
     // debug events (warning! this will output in the console ALL the event listeners and every event fired):
     // reldens.events.debug = 'all';
     // @NOTE: at this point you could specify or override a lot of configurations like your server URL.
     // reldens.serverUrl = 'wss://my-custom-url.com';
     // replace all the [values] and uncomment to initialize firebase:
-    $.getJSON('/reldens-firebase', (response) => {
+    dom.getJSON('/reldens-firebase', (err, response) => {
         if(!response.enabled){
             return false;
         }
@@ -42,11 +40,11 @@ $(document).ready(function($){
         reldens.firebase.initAuth(firebaseConfig, uiConfig);
 
         // logout on refresh:
-        window.onbeforeunload = () => {
+        window.addEventListener('beforeunload', () => {
             if(reldens.firebase.isActive){
                 reldens.firebase.app.auth().signOut();
             }
-        };
+        });
 
         // check the current auth state:
         reldens.firebase.app.auth().onAuthStateChanged((user) => {
@@ -55,45 +53,47 @@ $(document).ready(function($){
                 let formData = {
                     formId: 'firebase_login',
                     email: user.email,
-                    username: $('#firebase_username').val(),
+                    username: dom.getElement('#firebase_username').value,
                     password: user.uid
                 };
                 startGame(formData, true);
             } else {
                 // if not logged then start the auth ui:
                 reldens.firebase.isActive = false;
-                reldens.gameDom.getElement(reldens.firebase.containerId).html('');
+                dom.getElement(reldens.firebase.containerId).innerHTML = '';
                 reldens.firebase.authUi.start(reldens.firebase.containerId, reldens.firebase.uiConfig);
             }
             return false;
         });
 
-        let $firebaseLogin = $('#firebase_login');
+        let $firebaseLogin = dom.getElement('#firebase_login');
 
-        if($firebaseLogin.length){
-            $firebaseLogin.on('submit', (e) => {
+        if($firebaseLogin){
+            $firebaseLogin.addEventListener('submit', (e) => {
                 e.preventDefault();
                 // validate form:
-                if(!$firebaseLogin.valid()){
+                if(!$firebaseLogin.checkValidity()){
                     return false;
                 }
                 // show login options:
-                $('#firebaseui-auth-container').show();
+                dom.getElement('#firebaseui-auth-container').style.display = 'block';
+                dom.getElement('#firebaseui-auth-container').classList.remove('hidden');
             });
 
-            let $firebaseUser = $('#firebase_username');
-            if($firebaseUser.length){
+            let $firebaseUser = dom.getElement('#firebase_username');
+            if($firebaseUser){
                 // show login options:
                 // @NOTE here you could always display the options or include a length validation like:
-                // if($firebaseUser.val().length){
-                $('#firebaseui-auth-container').show();
+                // if($firebaseUser.value.length){
+                dom.getElement('#firebaseui-auth-container').style.display = 'block';
+                dom.getElement('#firebaseui-auth-container').classList.remove('hidden');
                 // }
                 // and only display the options after the user completed the username field (see index.html around line 54).
-                $firebaseUser.on('change', () => {
-                    resetErrorBlock('#firebase_login');
+                $firebaseUser.addEventListener('change', () => {
+                    resetErrorBlock($firebaseLogin);
                 });
-                $firebaseUser.on('focus', () => {
-                    resetErrorBlock('#firebase_login');
+                $firebaseUser.addEventListener('focus', () => {
+                    resetErrorBlock($firebaseLogin);
                 });
             }
         }
@@ -102,20 +102,20 @@ $(document).ready(function($){
 
     // client event listener example with version display:
     reldens.events.on('reldens.afterInitEngineAndStartGame', () => {
-        $('#current-version').html(reldens.config.version+' -');
+        dom.getElement('#current-version').innerHTML = reldens.config.version+' -';
     });
 
-    let $register = $('#register_form'),
-        $login = $('#login_form'),
-        $forgot = $('#forgot_form'),
-        $fullScreen = $('.full-screen-btn'),
-        $body = $('body');
+    let $register = dom.getElement('#register_form'),
+        $login = dom.getElement('#login_form'),
+        $forgot = dom.getElement('#forgot_form'),
+        $fullScreen = dom.getElement('.full-screen-btn'),
+        $body = dom.getElement('body');
 
     function resetErrorBlock(submittedForm)
     {
-        let $errorBlock = $(submittedForm).find('.response-error');
-        $(submittedForm).find('input').on('focus', () => {
-            $errorBlock.hide();
+        let $errorBlock = submittedForm.querySelector('.response-error');
+        submittedForm.querySelector('input').addEventListener('focus', () => {
+            $errorBlock.style.display = 'none';
         });
     }
 
@@ -125,102 +125,97 @@ $(document).ready(function($){
         let gameRoom = reldens.joinGame(formData, isNewUser);
         // you can include here the room as parameter:
         gameRoom.then(() => {
-            $('.loading-container').hide();
-            $('.footer').hide();
-            $('.forms-container').detach();
-            $('.game-container').removeClass('hidden');
-            $fullScreen.show();
-            $body.css('background', '#000000');
-            $body.css('overflow', 'hidden');
-            $('.content').css('height', '92%');
-        }).catch((data) => {
+            dom.getElement('.loading-container').style.display = 'none';
+            dom.getElement('.footer').style.display = 'none';
+            dom.getElement('.forms-container').remove();
+            dom.getElement('.game-container').classList.remove('hidden');
+            $fullScreen.style.display = 'block';
+            $body.style.background = '#000000';
+            $body.style.overflow = 'hidden';
+            dom.getElement('.content').style.height = '92%';
+        }).catch((err) => {
             // @NOTE: game room errors should be always because some wrong login or registration data. For these cases
             // we will check the isNewUser variable to know where display the error.
             reldens.submitedForm = false;
-            $('.loading-container').hide();
-            $('#'+formData.formId+' .response-error').html(data).show();
+            dom.getElement('.loading-container').style.display = 'none';
+            let errorElement = dom.getElement('#'+formData.formId+' .response-error');
+            errorElement.innerHTML = err;
+            errorElement.style.display = 'block';
             if(formData.formId === 'firebase_login'){
                 reldens.firebase.app.auth().signOut();
             }
         });
     }
 
-    if($register.length){
+    if($register){
         resetErrorBlock($register);
-        $register.on('submit', (e) => {
+        $register.addEventListener('submit', (e) => {
             e.preventDefault();
             // validate form:
-            if(!$register.valid()){
+            if(!$register.checkValidity()){
                 return false;
             }
-            $register.find('.loading-container').show();
+            $register.querySelector('.loading-container').style.display = 'block';
+            $register.querySelector('.loading-container').classList.remove('hidden');
             let formData = {
-                formId: $register.attr('id'),
-                email: $register.find('#reg_email').val(),
-                username: $register.find('#reg_username').val(),
-                password: $register.find('#reg_password').val()
+                formId: $register.id,
+                email: $register.querySelector('#reg_email').value,
+                username: $register.querySelector('#reg_username').value,
+                password: $register.querySelector('#reg_password').value
             };
             startGame(formData, true);
         });
-        $register.validate({
-            rules: {
-                reg_re_password: {
-                    equalTo: '#reg_password'
-                }
-            }
-        });
     }
 
-    if($login.length){
+    if($login){
         resetErrorBlock($login);
-        $login.on('submit', (e) => {
+        $login.addEventListener('submit', (e) => {
             e.preventDefault();
-            if(!$login.valid()){
+            if(!$login.checkValidity()){
                 return false;
             }
             if(reldens.submitedForm){
                 return false;
             }
             reldens.submitedForm = true;
-            $login.find('.loading-container').show();
+            $login.querySelector('.loading-container').style.display = 'block';
+            $login.querySelector('.loading-container').classList.remove('hidden');
             let formData = {
-                formId: $login.attr('id'),
-                email: $login.find('#email').val(),
-                username: $login.find('#username').val(),
-                password: $login.find('#password').val()
+                formId: $login.id,
+                username: $login.querySelector('#username').value,
+                password: $login.querySelector('#password').value
             };
             startGame(formData, false);
         });
-        $login.validate();
     }
 
-    if($forgot.length){
+    if($forgot){
         resetErrorBlock($forgot);
-        $forgot.on('submit', (e) => {
+        $forgot.addEventListener('submit', (e) => {
             e.preventDefault();
-            if(!$forgot.valid()){
+            if(!$forgot.checkValidity()){
                 return false;
             }
-            $forgot.find('.loading-container').show();
+            $forgot.querySelector('.loading-container').style.display = 'block';
+            $forgot.querySelector('.loading-container').classList.remove('hidden');
             let formData = {
-                formId: $forgot.attr('id'),
+                formId: $forgot.id,
                 forgot: true,
-                email: $forgot.find('#forgot_email').val()
+                email: $forgot.querySelector('#forgot_email').value
             };
             startGame(formData, false);
         });
-        $forgot.validate();
     }
 
-    if($fullScreen.length){
-        $fullScreen.on('click', (e) => {
+    if($fullScreen){
+        $fullScreen.addEventListener('click', (e) => {
             e.preventDefault();
             if(document.fullscreenEnabled){
                 document.body.requestFullscreen();
             }
-            $('.header').hide();
-            $('.footer').hide();
-            $('.content').css('height', '100%');
+            dom.getElement('.header').style.display = 'none';
+            dom.getElement('.footer').style.display = 'none';
+            dom.getElement('.content').style.height = '100%';
             reldens.gameEngine.updateGameSize(reldens);
         });
     }
@@ -228,8 +223,8 @@ $(document).ready(function($){
     // responsive screen behavior:
     document.addEventListener('fullscreenchange', () => {
         if(!document.fullscreenElement){
-            $('.header').show();
-            $('.content').css('height', '84%');
+            dom.getElement('.header').style.display = 'block';
+            dom.getElement('.content').style.height = '84%';
         }
     });
 
