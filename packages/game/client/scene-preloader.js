@@ -261,16 +261,41 @@ class ScenePreloader extends Scene
 
     createPlayerAnimations(avatarKey)
     {
-        // @TODO - BETA - All the animations will be part of the configuration in the database.
-        let availableAnimations = [
-            {k: avatarKey+'_'+GameConst.LEFT, img: avatarKey, start: 3, end: 5, repeat: -1, hide: false},
-            {k: avatarKey+'_'+GameConst.RIGHT, img: avatarKey, start: 6, end: 8, repeat: -1, hide: false},
-            {k: avatarKey+'_'+GameConst.UP, img: avatarKey, start: 9, end: 11, repeat: -1, hide: false},
-            {k: avatarKey+'_'+GameConst.DOWN, img: avatarKey, start: 0, end: 2, repeat: -1, hide: false}
+        let defaultFrames = this.gameManager.config.get('client/players/animations/defaultFrames');
+        let availableAnimations = [{
+                k: avatarKey + '_' + GameConst.LEFT,
+                img: avatarKey,
+                start: defaultFrames.left.start || 3,
+                end: defaultFrames.left.end || 5,
+                repeat: -1,
+                hide: false
+            }, {
+                k: avatarKey + '_' + GameConst.RIGHT,
+                img: avatarKey,
+                start: defaultFrames.right.start || 6,
+                end: defaultFrames.right.end || 8,
+                repeat: -1,
+                hide: false
+            }, {
+                k: avatarKey + '_' + GameConst.UP,
+                img: avatarKey,
+                start: defaultFrames.up.start || 9,
+                end: defaultFrames.up.end || 11,
+                repeat: -1,
+                hide: false
+            }, {
+                k: avatarKey + '_' + GameConst.DOWN,
+                img: avatarKey,
+                start: defaultFrames.down.start || 0,
+                end: defaultFrames.down.end || 2,
+                repeat: -1,
+                hide: false
+            }
         ];
         for(let anim of availableAnimations){
             this.createAnimationWith(anim);
         }
+        EventsManagerSingleton.emit('reldens.createPlayerAnimations', this, avatarKey);
     }
 
     createArrowAnimation()
