@@ -10,8 +10,15 @@ const { Logger, sc } = require('@reldens/utils');
 class Enemy1Object extends EnemyObject
 {
 
+    constructor(props)
+    {
+        super(props);
+        this.isAggressive = true;
+    }
+
     runAdditionalSetup(eventsManager)
     {
+        super.runAdditionalSetup(eventsManager);
         eventsManager.onWithKey(
             this.getBattleEndEvent(),
             this.onBattleEnd.bind(this),

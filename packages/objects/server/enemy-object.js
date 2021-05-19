@@ -24,7 +24,7 @@ class EnemyObject extends NpcObject
         super(props);
         this.hasState = true;
         // @TODO - BETA - Remove from config and make enemy stats load dynamically (passed on props from storage).
-        let configStats = this.config.get('server/enemies/initialStats');
+        let configStats = sc.getDef(props, 'initialStats', this.config.get('server/enemies/initialStats'));
         this.initialStats = Object.assign({}, configStats);
         this.stats = Object.assign({}, configStats);
         this.type = ObjectsConst.TYPE_ENEMY;
@@ -35,6 +35,8 @@ class EnemyObject extends NpcObject
         this.runOnHit = sc.getDef(props, 'runOnHit', true);
         this.roomVisible = sc.getDef(props, 'roomVisible', true);
         this.randomMovement = sc.getDef(props, 'randomMovement', true);
+        this.startBattleOnHit = sc.getDef(props, 'startBattleOnHit', true);
+        this.isAggressive = sc.getDef(props, 'isAggressive', false);
         // assign extra public params:
         Object.assign(this.clientParams, {
             enabled: true,
@@ -59,6 +61,35 @@ class EnemyObject extends NpcObject
         this.respawnTime = false;
         this.respawnTimer = false;
         this.respawnLayer = false;
+    }
+
+    runAdditionalSetup(eventsManager)
+    {
+        super.runAdditionalSetup(eventsManager);
+        if(!this.isAggressive){
+            return;
+        }
+        eventsManager.on('reldens.sceneRoomOnCreate', (room) => {
+            room.roomWorld.on('postBroadphase', (event) => {
+                if(!this.battle.inBattleWithPlayer.length){
+                    this.waitForPlayersToEnterRespawnArea(event, room);
+                }
+            });
+        });
+    }
+
+    waitForPlayersToEnterRespawnArea(event, room)
+    {
+        for(let body of event.target.bodies){
+            if(body.playerId){
+                let {currentCol, currentRow} = body.positionToTiles(body.position[0], body.position[1]);
+                let tileIndex = currentRow * body.worldWidth + currentCol;
+                let respawnArea = body.world.respawnAreas[this.respawnLayer];
+                if(sc.hasOwn(respawnArea.respawnTilesData, tileIndex)){
+                    this.startBattleWithPlayer({bodyA: body, room: room});
+                }
+            }
+        }
     }
 
     setupDefaultAction()
@@ -158,6 +189,13 @@ class EnemyObject extends NpcObject
     }
 
     onHit(props)
+    {
+        if(this.startBattleOnHit){
+            this.startBattleWithPlayer(props);
+        }
+    }
+
+    startBattleWithPlayer(props)
     {
         let playerBody = sc.hasOwn(props.bodyA, 'playerId') ? props.bodyA : props.bodyB;
         if(!props.room || !playerBody){
