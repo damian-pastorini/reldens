@@ -85,7 +85,7 @@ class EnemyObject extends NpcObject
                 let {currentCol, currentRow} = body.positionToTiles(body.position[0], body.position[1]);
                 let tileIndex = currentRow * body.worldWidth + currentCol;
                 let respawnArea = body.world.respawnAreas[this.respawnLayer];
-                if(sc.hasOwn(respawnArea.respawnTilesData, tileIndex)){
+                if(respawnArea && sc.hasOwn(respawnArea.respawnTilesData, tileIndex)){
                     this.startBattleWithPlayer({bodyA: body, room: room});
                 }
             }

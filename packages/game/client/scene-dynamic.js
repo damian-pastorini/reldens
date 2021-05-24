@@ -8,6 +8,7 @@ const { Scene, Input } = require('phaser');
 const { TilesetAnimation } = require('./tileset-animation');
 const { EventsManagerSingleton, Logger, sc } = require('@reldens/utils');
 const { GameConst } = require('../constants');
+const { Minimap } = require('./minimap');
 
 class SceneDynamic extends Scene
 {
@@ -29,6 +30,8 @@ class SceneDynamic extends Scene
         this.objectsAnimations = {};
         // frame rate:
         this.configuredFrameRate = this.gameManager.config.get('client/general/animations/frameRate') || 10;
+        let minimapConfig = this.gameManager.config.get('client/ui/minimap');
+        this.minimap = minimapConfig.enabled ? new Minimap(minimapConfig) : false;
     }
 
     init()
@@ -133,6 +136,7 @@ class SceneDynamic extends Scene
                 }
             });
             this.gameManager.gameDom.activeElement().blur();
+            this.minimap.createMap(this, this.gameManager.getCurrentPlayerAnimation());
         });
         EventsManagerSingleton.emit('reldens.afterSceneDynamicCreate', this);
     }

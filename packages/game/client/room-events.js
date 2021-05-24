@@ -73,6 +73,7 @@ class RoomEvents
                 for(let i of Object.keys(this.playersQueue)){
                     currentScene.player.addPlayer(i, this.playersQueue[i]);
                 }
+                await EventsManagerSingleton.emit('reldens.playersQueue', player, key, previousScene, this);
             }
         } else {
             // add new players into the current player scene:
@@ -384,6 +385,7 @@ class RoomEvents
             previousScene,
             this
         );
+        await EventsManagerSingleton.emit('reldens.createEngineSceneDone', currentScene, previousScene, this);
     }
 
     getActiveScene()

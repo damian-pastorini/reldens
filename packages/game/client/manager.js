@@ -274,6 +274,11 @@ class GameManager
         return this.getActiveScene().player;
     }
 
+    getCurrentPlayerAnimation()
+    {
+        return this.getActiveScene().player.players[this.getActiveScene().player.playerId];
+    }
+
     getUiElement(uiName, logError = true)
     {
         if(!sc.hasOwn(this.gameEngine, 'uiScene') || !this.gameEngine.uiScene){
