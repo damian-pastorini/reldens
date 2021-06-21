@@ -56,6 +56,9 @@ class RoomRespawn
                     // @TODO - BETA - Objects could have multiple assets, need to implement and test the case.
                     objInstance.clientParams.asset_key = assetsArr[0];
                     objInstance.clientParams.enabled = true;
+                    if(sc.hasOwn(multipleObj, 'multipleAnimations')){
+                        objInstance.clientParams.animations = multipleObj.multipleAnimations;
+                    }
                     this.world.objectsManager.objectsAnimationsData[objectIndex] = objInstance.clientParams;
                     this.world.objectsManager.roomObjects[objectIndex] = objInstance;
                     await this.world.createWorldObject(

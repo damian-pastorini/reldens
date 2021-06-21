@@ -37,15 +37,6 @@ class EnemyObject extends NpcObject
         this.randomMovement = sc.getDef(props, 'randomMovement', true);
         this.startBattleOnHit = sc.getDef(props, 'startBattleOnHit', true);
         this.isAggressive = sc.getDef(props, 'isAggressive', false);
-        // assign extra public params:
-        Object.assign(this.clientParams, {
-            enabled: true,
-            frameStart: sc.getDef(props, 'frameStart', 0),
-            frameEnd: sc.getDef(props, 'frameEnd', 3),
-            repeat: sc.getDef(props, 'repeat', -1),
-            hideOnComplete: sc.getDef(props, 'hideOnComplete', false),
-            autoStart: sc.getDef(props, 'autoStart', true)
-        });
         this.battle = new Pve({
             battleTimeOff: sc.getDef(props, 'battleTimeOff', 20000),
             chaseMultiple: sc.getDef(props, 'chaseMultiple', false)

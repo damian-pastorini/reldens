@@ -7,7 +7,7 @@
  *
  */
 
-const { EventsManagerSingleton } = require('@reldens/utils');
+const { EventsManagerSingleton, sc } = require('@reldens/utils');
 const { ClientCoreFeatures } = require('./config-client');
 
 class FeaturesManager
@@ -19,7 +19,7 @@ class FeaturesManager
         await EventsManagerSingleton.emit('reldens.loadFeatures', this);
         for(let i of Object.keys(featuresCodeList)){
             let featureCode = featuresCodeList[i];
-            if({}.hasOwnProperty.call(ClientCoreFeatures, featureCode)){
+            if(sc.hasOwn(ClientCoreFeatures, featureCode)){
                 this.featuresList[featureCode] = new ClientCoreFeatures[featureCode]();
                 await EventsManagerSingleton.emit('reldens.loadFeature_'+featureCode,
                     this.featuresList[featureCode],

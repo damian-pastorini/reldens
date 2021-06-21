@@ -34,6 +34,8 @@ class GameManager
         this.gameEngine = false;
         // game over validator:
         this.gameOver = false;
+        // disconnection validator:
+        this.forcedDisconnection = false;
         // client events:
         this.events = EventsManagerSingleton;
         // full game config:

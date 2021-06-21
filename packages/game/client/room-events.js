@@ -176,15 +176,12 @@ class RoomEvents
 
     roomOnLeave(code)
     {
-        if(code > 1000){
-            // server error, handle disconnection:
-            if(!this.gameManager.gameOver){
-                // @TODO - BETA - Improve disconnection handler.
-                alert('There was a connection error.');
-            }
-            this.gameManager.gameDom.getWindow().location.reload();
+        // @TODO - BETA - Improve disconnection handler.
+        // server disconnection handler:
+        if(code > 1000 && !this.gameManager.gameOver && !this.gameManager.forcedDisconnection){
+            Logger.error('There was a connection error.', ['Error Code:', code]);
         } else {
-            // NOTE: the client has initiated the disconnection, this is also triggered when the users change the room.
+            // @NOTE: the client can initiate the disconnection, this is also triggered when the users change the room.
         }
     }
 

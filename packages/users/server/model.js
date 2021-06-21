@@ -64,7 +64,6 @@ class UsersModel extends ModelClass
     static saveUser(userData)
     {
         return this.query()
-            // .allowGraph('players.[state]')
             .insertGraphAndFetch(userData);
     }
 

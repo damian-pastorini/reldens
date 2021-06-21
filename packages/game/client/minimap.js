@@ -30,7 +30,8 @@ class Minimap
             .setBackgroundColor(this.camBackgroundColor)
             .setZoom(this.camZoom)
             .startFollow(playerSprite)
-            .setRoundPixels(true);
+            .setRoundPixels(true)
+            .setVisible(false);
         this.roundMap = sc.getDef(this.config, 'roundMap', false);
         if(this.roundMap){
             // @NOTE: because of the camara zoom the circle size append to the preload scene is different from the map
@@ -62,6 +63,7 @@ class Minimap
             sc.getDef(this.config, 'circleFillColor', 1),
             sc.getDef(this.config, 'circleFillAlpha', 0)
         );
+        this.circle.setVisible(false);
     }
 
     createRoundCamera(scene)

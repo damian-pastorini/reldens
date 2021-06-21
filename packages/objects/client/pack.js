@@ -98,7 +98,25 @@ class ObjectsPack
                         objectAnimation.animPos.x = body.x;
                         objectAnimation.animPos.y = body.y;
                         objectAnimation.inState = body.inState;
+                        let animToPlay = sc.getByPriority(currentScene.anims.anims.entries, [
+                            objectAnimation.key+'_'+body.dir,
+                            objectAnimation.layerName+'_'+objectAnimation.id+'_'+body.dir,
+                            objectAnimation.key
+                        ]);
+                        if(animToPlay){
+                            objectAnimation.sceneSprite.anims.play(animToPlay, true);
+                        }
                         this.moveSpritesObjects(objectAnimation, body.x, body.y, objectNewDepth);
+                        if(!body.mov){
+                            objectAnimation.sceneSprite.anims.stop();
+                            objectAnimation.sceneSprite.mov = body.mov;
+                            if(objectAnimation.autoStart){
+                                let autoStartAnim = objectAnimation.autoStart === true ?
+                                    objectAnimation.key : objectAnimation.autoStart === ObjectsConst.DYNAMIC_ANIMATION
+                                        ? animToPlay : objectAnimation.autoStart;
+                                objectAnimation.sceneSprite.anims.play(autoStartAnim);
+                            }
+                        }
                     }
                 }
                 await EventsManagerSingleton.emit('reldens.objectBodyChanged', {body, key});

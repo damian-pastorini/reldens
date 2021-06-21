@@ -32,6 +32,7 @@ class ScenePreloader extends Scene
         this.gameManager = props.gameManager;
         this.preloadAssets = props.preloadAssets;
         this.directionalAnimations = {};
+        this.objectsAnimations = {};
         let currentScene = this.gameManager.activeRoomEvents.getActiveScene();
         currentScene.objectsAnimationsData = props.objectsAnimationsData;
         this.playerSpriteSize = {
@@ -65,6 +66,13 @@ class ScenePreloader extends Scene
             if(this.gameManager.config.get('client/ui/playerStats/enabled')){
                 this.load.html('playerStats', 'assets/html/ui-player-stats.html');
                 this.load.html('playerStat', 'assets/html/player-stat.html');
+            }
+            if(this.gameManager.config.get('client/ui/minimap/enabled')){
+                this.load.html('minimap', 'assets/html/ui-minimap.html');
+            }
+            if(this.gameManager.config.get('client/ui/settings/enabled')){
+                this.load.html('settings', 'assets/html/ui-settings.html');
+                this.load.html('settings-content', 'assets/html/ui-settings-content.html');
             }
             this.load.html('uiTarget', 'assets/html/ui-target.html');
             this.load.html('uiOptionButton', 'assets/html/ui-option-button.html');
@@ -138,6 +146,7 @@ class ScenePreloader extends Scene
                 // logout:
                 let logoutButton = this.elementsUi['playerBox'].getChildByProperty('id', 'logout');
                 logoutButton.addEventListener('click', () => {
+                    this.gameManager.forcedDisconnection = true;
                     if(this.gameManager.firebase.isActive){
                         this.gameManager.firebase.app.auth().signOut();
                     }
@@ -208,6 +217,55 @@ class ScenePreloader extends Scene
                         box.style.display = 'block';
                         openButton.style.display = 'none';
                         this.elementsUi['playerStats'].setDepth(4);
+                    });
+                }
+            }
+            // create ui minimap:
+            let minimapUi = this.getUiConfig('minimap');
+            if(minimapUi.enabled){
+                this.elementsUi['minimap'] = this.add.dom(statsUi.uiX, statsUi.uiY)
+                    .createFromCache('minimap');
+                let closeButton = this.elementsUi['minimap'].getChildByProperty('id', 'minimap-close');
+                let openButton = this.elementsUi['minimap'].getChildByProperty('id', 'minimap-open');
+                if(closeButton && openButton){
+                    let minimap = this.gameManager.getActiveScene().minimap;
+                    closeButton.addEventListener('click', () => {
+                        let box = this.elementsUi['minimap'].getChildByProperty('id', 'minimap-ui');
+                        box.style.display = 'none';
+                        openButton.style.display = 'block';
+                        minimap.minimapCamera.setVisible(false);
+                        if(minimap.circle) {
+                            minimap.circle.setVisible(false);
+                        }
+                    });
+                    openButton.addEventListener('click', () => {
+                        let box = this.elementsUi['minimap'].getChildByProperty('id', 'minimap-ui');
+                        box.style.display = 'block';
+                        openButton.style.display = 'none';
+                        minimap.minimapCamera.setVisible(true);
+                        if(minimap.circle){
+                            minimap.circle.setVisible(true);
+                        }
+                    });
+                }
+            }
+            // create ui settings:
+            let settingsUi = this.getUiConfig('settings');
+            if(settingsUi.enabled){
+                this.elementsUi['settings'] = this.add.dom(statsUi.uiX, statsUi.uiY).createFromCache('settings');
+                let settingsTemplate = this.cache.html.get('settings-content');
+                this.gameManager.gameDom.appendToElement('.content', settingsTemplate);
+                let uiSettingsBox = this.gameManager.gameDom.getElement('#settings-ui');
+                let closeButton = this.gameManager.gameDom.getElement('#settings-close');
+                let openButton = this.elementsUi['settings'].getChildByProperty('id', 'settings-open');
+                if(closeButton && openButton){
+                    closeButton.addEventListener('click', () => {
+                        uiSettingsBox.style.display = 'none';
+                        openButton.style.display = 'block';
+                    });
+                    openButton.addEventListener('click', () => {
+                        uiSettingsBox.style.display = 'block';
+                        openButton.style.display = 'none';
                     });
                 }
             }

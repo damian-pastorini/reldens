@@ -42,7 +42,7 @@ class FeaturesManager
                 // set package on entity:
                 featureEntity.package = new featurePackage();
                 if(typeof featureEntity.package.setupPack === 'function'){
-                    featureEntity.package.setupPack();
+                    await featureEntity.package.setupPack();
                 }
                 // for last add the feature entity to the list:
                 this.featuresList[featureEntity.code] = featureEntity;

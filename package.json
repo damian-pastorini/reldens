@@ -42,7 +42,7 @@
         "@reldens/modifiers": "^0.4.7",
         "@reldens/skills": "^0.3.7",
         "@reldens/storage": "^0.4.1",
-        "@reldens/utils": "^0.4.3",
+        "@reldens/utils": "^0.4.4",
         "bcrypt": "^5.0.1",
         "colyseus": "^0.12.6",
         "colyseus.js": "^0.12.2",
@@ -60,7 +60,7 @@
         "p2": "^0.7.1",
         "parcel-bundler": "1.12.5",
         "pathfinding": "^0.4.18",
-        "phaser": "^3.24.1",
+        "phaser": "3.24.1",
         "regenerator-runtime": "^0.13.7"
     },
     "devDependencies": {

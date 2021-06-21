@@ -94,7 +94,7 @@ class UsersPack
             e.preventDefault();
             let errorElement = gameManager.gameDom.getElement('#player_create_form .response-error');
             errorElement.classList.add('hidden');
-            let formData = new FormData($formElement[0]);
+            let formData = new FormData($formElement);
             let serializedForm = this.serialize(formData);
             if(serializedForm['new_player_name'].toString().length < 3){
                 return false;

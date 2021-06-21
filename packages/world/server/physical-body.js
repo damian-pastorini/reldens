@@ -9,6 +9,7 @@
 
 const { Body, vec2 } = require('p2');
 const { GameConst } = require('../../game/constants');
+const { sc } = require('@reldens/utils');
 
 class PhysicalBody extends Body
 {
@@ -102,15 +103,17 @@ class PhysicalBody extends Body
     {
         // only update the body if it moves:
         if(
-            this.bodyState.x === this.position[0] && this.bodyState.y === this.position[1]
-            && this.velocity[0] === 0 && this.velocity[1] === 0
+            this.bodyState.x === this.position[0]
+            && this.bodyState.y === this.position[1]
+            && this.velocity[0] === 0
+            && this.velocity[1] === 0
         ){
             this.bodyState.mov = false;
             return;
         }
         // @NOTE: the word "bullet" will be part of our glossary to refer to bodies that will be created, moved, and
         // destroyed on hit or that reach the world boundaries.
-        if({}.hasOwnProperty.call(this, 'isBullet') && this.isBullet){
+        if(sc.isTrue(this, 'isBullet')){
             if(
                 this.position[0] < 0 || this.position[0] > (this.worldWidth * this.worldTileWidth)
                 || this.position[1] < 0 || this.position[1] > (this.worldHeight * this.worldTileHeight)
@@ -174,7 +177,7 @@ class PhysicalBody extends Body
 
     validateAndSetDirection(direction, diagonal, velocity)
     {
-        if(this.animationBasedOnPress){
+        if(this.animationBasedOnPress || this.bodyState.autoDirection){
             if(diagonal || velocity === 0){
                 this.bodyState.dir = direction;
             }

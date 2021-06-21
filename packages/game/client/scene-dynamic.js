@@ -82,6 +82,10 @@ class SceneDynamic extends Scene
             if(event.keyCode === 27){
                 this.gameManager.gameEngine.clearTarget();
             }
+            // keyCode = 116 > F5
+            if(event.keyCode === 116){
+                this.gameManager.forcedDisconnection = true;
+            }
         });
         this.map = this.add.tilemap(this.params.roomMap);
         // disable default context menu:
@@ -266,8 +270,8 @@ class SceneDynamic extends Scene
         if(this.arrowSprite){
             this.arrowSprite.destroy();
         }
-        // @TODO - BETA - Make pointer sprite data configurable. Here the -16 is half of the sprite height.
-        this.arrowSprite = this.physics.add.sprite(pointer.worldX, pointer.worldY - 16, GameConst.ARROW_DOWN);
+        let topOffSet = this.configManager.get('client/ui/pointer/topOffSet') || 16;
+        this.arrowSprite = this.physics.add.sprite(pointer.worldX, pointer.worldY - topOffSet, GameConst.ARROW_DOWN);
         this.arrowSprite.setDepth(500000);
         this.arrowSprite.anims.play(GameConst.ARROW_DOWN, true).on('animationcomplete', () => {
             this.arrowSprite.destroy();
