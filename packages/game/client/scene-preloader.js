@@ -228,11 +228,11 @@ class ScenePreloader extends Scene
                 let closeButton = this.elementsUi['minimap'].getChildByProperty('id', 'minimap-close');
                 let openButton = this.elementsUi['minimap'].getChildByProperty('id', 'minimap-open');
                 if(closeButton && openButton){
-                    let minimap = this.gameManager.getActiveScene().minimap;
                     closeButton.addEventListener('click', () => {
                         let box = this.elementsUi['minimap'].getChildByProperty('id', 'minimap-ui');
                         box.style.display = 'none';
                         openButton.style.display = 'block';
+                        let minimap = this.gameManager.getActiveScene().minimap;
                         minimap.minimapCamera.setVisible(false);
                         if(minimap.circle) {
                             minimap.circle.setVisible(false);
@@ -242,6 +242,7 @@ class ScenePreloader extends Scene
                         let box = this.elementsUi['minimap'].getChildByProperty('id', 'minimap-ui');
                         box.style.display = 'block';
                         openButton.style.display = 'none';
+                        let minimap = this.gameManager.getActiveScene().minimap;
                         minimap.minimapCamera.setVisible(true);
                         if(minimap.circle){
                             minimap.circle.setVisible(true);
