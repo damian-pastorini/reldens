@@ -47,6 +47,9 @@ class Minimap
 
     addMinimapCircle(scene)
     {
+        if(this.circle){
+            return true;
+        }
         let activeScenePreloader = scene.gameManager.getActiveScenePreloader();
         this.circle = activeScenePreloader.add.circle(
             sc.getDef(this.config, 'circleX', 220),
@@ -68,10 +71,11 @@ class Minimap
 
     createRoundCamera(scene)
     {
-        this.pipelineInstance = new Renderer.WebGL.Pipelines.TextureTintPipeline({
-            game: scene.game,
-            renderer: scene.game.renderer,
-            fragShader: `
+        if(!this.minimapPipeline || !this.minimapCamera){
+            this.pipelineInstance = new Renderer.WebGL.Pipelines.TextureTintPipeline({
+                game: scene.game,
+                renderer: scene.game.renderer,
+                fragShader: `
                 precision mediump float;
                 uniform sampler2D uMainSampler;
                 varying vec2 outTexCoord;
@@ -84,8 +88,9 @@ class Minimap
                         gl_FragColor = texture2D(uMainSampler, outTexCoord);
                     }
                 }`
-        });
-        this.minimapPipeline = scene.game.renderer.addPipeline('MinimapPipeline_' + scene.key, this.pipelineInstance);
+            });
+            this.minimapPipeline = scene.game.renderer.addPipeline('MinimapPipeline_' + scene.key, this.pipelineInstance);
+        }
         this.minimapCamera.setRenderToTexture(this.minimapPipeline);
     }
 

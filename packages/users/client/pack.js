@@ -6,6 +6,7 @@
 
 const { EventsManagerSingleton, Logger, sc } = require('@reldens/utils');
 const { LifebarUi } = require('./lifebar-ui');
+const { PlayerStatsUi } = require('./player-stats-ui');
 const { GameConst } = require('../../game/constants');
 
 class UsersPack
@@ -18,9 +19,12 @@ class UsersPack
             this.initialGameData = initialGameData;
             this.onBeforeCreateEngine(initialGameData, gameManager);
             if(!this.lifeBarUi){
-                this.lifeBarUi = (new LifebarUi()).setup(gameManager);
+                this.lifeBarUi = new LifebarUi();
+                this.lifeBarUi.setup(gameManager);
             }
         });
+        this.playerStatsUi = new PlayerStatsUi({eventsManager: EventsManagerSingleton});
+        this.playerStatsUi.setup();
     }
 
     onBeforeCreateEngine(initialGameData, gameManager)
@@ -95,7 +99,7 @@ class UsersPack
             let errorElement = gameManager.gameDom.getElement('#player_create_form .response-error');
             errorElement.classList.add('hidden');
             let formData = new FormData($formElement);
-            let serializedForm = this.serialize(formData);
+            let serializedForm = sc.serializeFormData(formData);
             if(serializedForm['new_player_name'].toString().length < 3){
                 return false;
             }
@@ -103,22 +107,6 @@ class UsersPack
             gameManager.gameRoom.send({act: GameConst.CREATE_PLAYER, formData: serializedForm});
             return false;
         });
-    }
-
-    serialize(data)
-    {
-        let obj = {};
-        for(let [key, value] of data){
-            if(obj[key] !== undefined){
-                if(!Array.isArray(obj[key])){
-                    obj[key] = [obj[key]];
-                }
-                obj[key].push(value);
-            } else {
-                obj[key] = value;
-            }
-        }
-        return obj;
     }
 
     getPlayerById(players, playerId)

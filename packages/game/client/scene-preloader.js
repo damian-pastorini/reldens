@@ -62,11 +62,6 @@ class ScenePreloader extends Scene
             if(this.gameManager.config.get('client/ui/instructions/enabled')){
                 this.load.html('instructions', 'assets/html/ui-instructions.html');
             }
-            // @TODO - BETA - Move everything related to player stats into the users pack or create a new pack.
-            if(this.gameManager.config.get('client/ui/playerStats/enabled')){
-                this.load.html('playerStats', 'assets/html/ui-player-stats.html');
-                this.load.html('playerStat', 'assets/html/player-stat.html');
-            }
             if(this.gameManager.config.get('client/ui/minimap/enabled')){
                 this.load.html('minimap', 'assets/html/ui-minimap.html');
             }
@@ -197,52 +192,35 @@ class ScenePreloader extends Scene
                     }
                 }
             }
-            // @TODO - BETA - Move everything related to player stats into the users pack or create a new pack.
-            // create ui playerStats:
-            let statsUi = this.getUiConfig('playerStats');
-            if(statsUi.enabled){
-                this.elementsUi['playerStats'] = this.add.dom(statsUi.uiX, statsUi.uiY)
-                    .createFromCache('playerStats');
-                let closeButton = this.elementsUi['playerStats'].getChildByProperty('id', 'player-stats-close');
-                let openButton = this.elementsUi['playerStats'].getChildByProperty('id', 'player-stats-open');
-                if(closeButton && openButton){
-                    closeButton.addEventListener('click', () => {
-                        let box = this.elementsUi['playerStats'].getChildByProperty('id', 'player-stats-ui');
-                        box.style.display = 'none';
-                        openButton.style.display = 'block';
-                        this.elementsUi['playerStats'].setDepth(1);
-                    });
-                    openButton.addEventListener('click', () => {
-                        let box = this.elementsUi['playerStats'].getChildByProperty('id', 'player-stats-ui');
-                        box.style.display = 'block';
-                        openButton.style.display = 'none';
-                        this.elementsUi['playerStats'].setDepth(4);
-                    });
-                }
-            }
             // create ui minimap:
             let minimapUi = this.getUiConfig('minimap');
             if(minimapUi.enabled){
-                this.elementsUi['minimap'] = this.add.dom(statsUi.uiX, statsUi.uiY)
+                this.elementsUi['minimap'] = this.add.dom(minimapUi.uiX, minimapUi.uiY)
                     .createFromCache('minimap');
                 let closeButton = this.elementsUi['minimap'].getChildByProperty('id', 'minimap-close');
                 let openButton = this.elementsUi['minimap'].getChildByProperty('id', 'minimap-open');
                 if(closeButton && openButton){
                     closeButton.addEventListener('click', () => {
+                        let minimap = this.gameManager.getActiveScene().minimap;
+                        if(!minimap.minimapCamera){
+                            return false;
+                        }
                         let box = this.elementsUi['minimap'].getChildByProperty('id', 'minimap-ui');
                         box.style.display = 'none';
                         openButton.style.display = 'block';
-                        let minimap = this.gameManager.getActiveScene().minimap;
                         minimap.minimapCamera.setVisible(false);
                         if(minimap.circle) {
                             minimap.circle.setVisible(false);
                         }
                     });
                     openButton.addEventListener('click', () => {
+                        let minimap = this.gameManager.getActiveScene().minimap;
+                        if(!minimap.minimapCamera){
+                            return false;
+                        }
                         let box = this.elementsUi['minimap'].getChildByProperty('id', 'minimap-ui');
                         box.style.display = 'block';
                         openButton.style.display = 'none';
-                        let minimap = this.gameManager.getActiveScene().minimap;
                         minimap.minimapCamera.setVisible(true);
                         if(minimap.circle){
                             minimap.circle.setVisible(true);
@@ -253,7 +231,7 @@ class ScenePreloader extends Scene
             // create ui settings:
             let settingsUi = this.getUiConfig('settings');
             if(settingsUi.enabled){
-                this.elementsUi['settings'] = this.add.dom(statsUi.uiX, statsUi.uiY).createFromCache('settings');
+                this.elementsUi['settings'] = this.add.dom(settingsUi.uiX, settingsUi.uiY).createFromCache('settings');
                 let settingsTemplate = this.cache.html.get('settings-content');
                 this.gameManager.gameDom.appendToElement('.content', settingsTemplate);
                 let uiSettingsBox = this.gameManager.gameDom.getElement('#settings-ui');
