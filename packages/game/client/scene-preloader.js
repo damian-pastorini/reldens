@@ -7,10 +7,12 @@
  */
 
 const { Scene, Geom } = require('phaser');
-const { Logger, sc } = require('@reldens/utils');
+const { EventsManagerSingleton, Logger, sc } = require('@reldens/utils');
+const { MinimapUi } = require('./minimap-ui');
+const { InstructionsUi } = require('./instructions-ui');
+const { SettingsUi } = require('./settings-ui');
 const { GameConst } = require('../constants');
 const { ActionsConst } = require('../../actions/constants');
-const { EventsManagerSingleton } = require('@reldens/utils');
 
 class ScenePreloader extends Scene
 {
@@ -172,81 +174,22 @@ class ScenePreloader extends Scene
             }
             // @TODO - BETA - Replace all different DOM references and standardize with Vue or React.
             // create instructions:
-            let instructionsUi = this.getUiConfig('instructions');
-            if(instructionsUi.enabled){
-                this.elementsUi['instructions'] = this.add.dom(instructionsUi.uiX, instructionsUi.uiY)
-                    .createFromCache('instructions');
-                let instructionsBox = this.gameManager.gameDom.getElement('#instructions');
-                if(instructionsBox){
-                    let closeButton = this.gameManager.gameDom.getElement('#instructions-close');
-                    if(closeButton){
-                        closeButton.addEventListener('click', () => {
-                            instructionsBox.style.display = 'none';
-                        });
-                    }
-                    let openButton = this.elementsUi['instructions'].getChildByProperty('id', 'instructions-open');
-                    if(openButton){
-                        openButton.addEventListener('click', () => {
-                            instructionsBox.style.display = 'block';
-                        });
-                    }
-                }
+            let instConfig = this.getUiConfig('instructions');
+            if(instConfig.enabled){
+                this.instructionsUi = new InstructionsUi();
+                this.instructionsUi.setup(instConfig, this);
             }
             // create ui minimap:
-            let minimapUi = this.getUiConfig('minimap');
-            if(minimapUi.enabled){
-                this.elementsUi['minimap'] = this.add.dom(minimapUi.uiX, minimapUi.uiY)
-                    .createFromCache('minimap');
-                let closeButton = this.elementsUi['minimap'].getChildByProperty('id', 'minimap-close');
-                let openButton = this.elementsUi['minimap'].getChildByProperty('id', 'minimap-open');
-                if(closeButton && openButton){
-                    closeButton.addEventListener('click', () => {
-                        let minimap = this.gameManager.getActiveScene().minimap;
-                        if(!minimap.minimapCamera){
-                            return false;
-                        }
-                        let box = this.elementsUi['minimap'].getChildByProperty('id', 'minimap-ui');
-                        box.style.display = 'none';
-                        openButton.style.display = 'block';
-                        minimap.minimapCamera.setVisible(false);
-                        if(minimap.circle) {
-                            minimap.circle.setVisible(false);
-                        }
-                    });
-                    openButton.addEventListener('click', () => {
-                        let minimap = this.gameManager.getActiveScene().minimap;
-                        if(!minimap.minimapCamera){
-                            return false;
-                        }
-                        let box = this.elementsUi['minimap'].getChildByProperty('id', 'minimap-ui');
-                        box.style.display = 'block';
-                        openButton.style.display = 'none';
-                        minimap.minimapCamera.setVisible(true);
-                        if(minimap.circle){
-                            minimap.circle.setVisible(true);
-                        }
-                    });
-                }
+            let minimapConfig = this.getUiConfig('minimap');
+            if(minimapConfig.enabled){
+                this.minimapUi = new MinimapUi();
+                this.minimapUi.setup(minimapConfig, this);
             }
             // create ui settings:
-            let settingsUi = this.getUiConfig('settings');
-            if(settingsUi.enabled){
-                this.elementsUi['settings'] = this.add.dom(settingsUi.uiX, settingsUi.uiY).createFromCache('settings');
-                let settingsTemplate = this.cache.html.get('settings-content');
-                this.gameManager.gameDom.appendToElement('.content', settingsTemplate);
-                let uiSettingsBox = this.gameManager.gameDom.getElement('#settings-ui');
-                let closeButton = this.gameManager.gameDom.getElement('#settings-close');
-                let openButton = this.elementsUi['settings'].getChildByProperty('id', 'settings-open');
-                if(closeButton && openButton){
-                    closeButton.addEventListener('click', () => {
-                        uiSettingsBox.style.display = 'none';
-                        openButton.style.display = 'block';
-                    });
-                    openButton.addEventListener('click', () => {
-                        uiSettingsBox.style.display = 'block';
-                        openButton.style.display = 'none';
-                    });
-                }
+            let settingsConfig = this.getUiConfig('settings');
+            if(settingsConfig.enabled){
+                this.settingsUi = new SettingsUi();
+                this.settingsUi.setup(settingsConfig, this);
             }
             // end event:
             EventsManagerSingleton.emit('reldens.createUiScene', this);
