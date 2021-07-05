@@ -73,6 +73,7 @@ class RoomEvents
                 for(let i of Object.keys(this.playersQueue)){
                     currentScene.player.addPlayer(i, this.playersQueue[i]);
                 }
+                await EventsManagerSingleton.emit('reldens.playersQueue', player, key, previousScene, this);
             }
         } else {
             // add new players into the current player scene:
@@ -134,12 +135,12 @@ class RoomEvents
             let currentPlayer = this.gameManager.getCurrentPlayer();
             let currentPlayerSprite = currentPlayer.players[currentPlayer.playerId];
             currentPlayerSprite.visible = false;
-            this.gameManager.gameDom.getElement('#game-over').removeClass('hidden');
+            this.gameManager.gameDom.getElement('#game-over').classList.remove('hidden');
         }
         if(message.act === GameConst.REVIVED){
             let currentPlayer = this.gameManager.getCurrentPlayer();
             let currentPlayerSprite = currentPlayer.players[currentPlayer.playerId];
-            this.gameManager.gameDom.getElement('#game-over').addClass('hidden');
+            this.gameManager.gameDom.getElement('#game-over').classList.add('hidden');
             currentPlayerSprite.visible = true;
         }
         if(
@@ -175,15 +176,12 @@ class RoomEvents
 
     roomOnLeave(code)
     {
-        if(code > 1000){
-            // server error, handle disconnection:
-            if(!this.gameManager.gameOver){
-                // @TODO - BETA - Improve disconnection handler.
-                alert('There was a connection error.');
-            }
-            this.gameManager.gameDom.getWindow().location.reload();
+        // @TODO - BETA - Improve disconnection handler.
+        // server disconnection handler:
+        if(code > 1000 && !this.gameManager.gameOver && !this.gameManager.forcedDisconnection){
+            Logger.error('There was a connection error.', ['Error Code:', code]);
         } else {
-            // NOTE: the client has initiated the disconnection, this is also triggered when the users change the room.
+            // @NOTE: the client can initiate the disconnection, this is also triggered when the users change the room.
         }
     }
 
@@ -261,7 +259,8 @@ class RoomEvents
                         };
                         let buttonHtml = this.gameManager.gameEngine.parseTemplate(buttonTemplate, templateVars);
                         this.gameManager.gameDom.appendToElement('#ui-'+props.id, buttonHtml);
-                        this.gameManager.gameDom.getElement('#opt-'+i+'-'+props.id).on('click', (event) => {
+                        this.gameManager.gameDom.getElement('#opt-'+i+'-'+props.id)
+                            .addEventListener('click', (event) => {
                             let optionSend = {
                                 id: props.id,
                                 act: GameConst.BUTTON_OPTION,
@@ -383,6 +382,7 @@ class RoomEvents
             previousScene,
             this
         );
+        await EventsManagerSingleton.emit('reldens.createEngineSceneDone', currentScene, previousScene, this);
     }
 
     getActiveScene()

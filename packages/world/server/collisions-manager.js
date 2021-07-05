@@ -24,10 +24,10 @@ class CollisionsManager
     activateCollisions(room)
     {
         this.room = room;
-        this.bulletsStopOnPlayer = room.config.get('server/rooms/world/bulletsStopOnPlayer');
         if(!sc.hasOwn(this.room, 'roomWorld')){
             ErrorManager.error('Room world not found.');
         }
+        this.bulletsStopOnPlayer = room.config.get('server/rooms/world/bulletsStopOnPlayer');
         // @TODO - BETA - Make dynamic, for now we will use fixed collisions types for each event.
         this.room.roomWorld.on('beginContact', this.assignBeginCollisions.bind(this));
         this.room.roomWorld.on('endContact', this.assignEndCollisions.bind(this));

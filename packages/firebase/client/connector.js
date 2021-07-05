@@ -24,12 +24,99 @@ class FirebaseConnector
         this.authUi = false;
         this.isActive = false;
         this.containerId = '#firebaseui-auth-container';
+        this.startGameCallback = () => {};
+        this.resetErrorBlockCallback = () => {};
         // eslint-disable-next-line no-unused-vars
         this.gameManager.events.on('reldens.beforeJoinGame', (props) => {
             // firebase check:
             if(props.formData['formId'] === 'firebase_login'){
                 props.gameManager.userData.isFirebaseLogin = true;
             }
+        });
+    }
+
+    startFirebase()
+    {
+        this.gameManager.gameDom.getJSON('/reldens-firebase', (err, response) => {
+            if(!response.enabled){
+                return false;
+            }
+            let firebaseConfig = response.firebaseConfig;
+            let uiConfig = {
+                signInOptions: [
+                    // uncomment, add or remove options as you need:
+                    // this.auth.EmailAuthProvider.PROVIDER_ID
+                    this.app.auth.GoogleAuthProvider.PROVIDER_ID,
+                    this.app.auth.FacebookAuthProvider.PROVIDER_ID,
+                    // this.auth.TwitterAuthProvider.PROVIDER_ID,
+                    this.app.auth.GithubAuthProvider.PROVIDER_ID
+                ],
+                // this is to avoid the redirect in the game window:
+                signInFlow: 'popup'
+            };
+            this.initAuth(firebaseConfig, uiConfig);
+
+            // logout on refresh:
+            this.gameManager.gameDom.getWindow().addEventListener('beforeunload', () => {
+                if(this.isActive){
+                    this.app.auth().signOut();
+                }
+            });
+
+            // check the current auth state:
+            this.app.auth().onAuthStateChanged((user) => {
+                if(user){
+                    this.isActive = true;
+                    let formData = {
+                        formId: 'firebase_login',
+                        email: user.email,
+                        username: this.gameManager.gameDom.getElement('#firebase_username').value,
+                        password: user.uid
+                    };
+                    this.startGameCallback(formData, true);
+                } else {
+                    // if not logged then start the auth ui:
+                    this.isActive = false;
+                    if(this.gameManager.gameDom.getElement(this.containerId)){
+                        this.gameManager.gameDom.getElement(this.containerId).innerHTML = '';
+                    }
+                    this.authUi.start(this.containerId, this.uiConfig);
+                }
+                return false;
+            });
+
+            let firebaseLogin = this.gameManager.gameDom.getElement('#firebase_login');
+
+            if(firebaseLogin){
+                firebaseLogin.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    // validate form:
+                    if(!firebaseLogin.checkValidity()){
+                        return false;
+                    }
+                    // show login options:
+                    this.gameManager.gameDom.getElement('#firebaseui-auth-container').style.display = 'block';
+                    this.gameManager.gameDom.getElement('#firebaseui-auth-container').classList.remove('hidden');
+                });
+
+                let firebaseUser = this.gameManager.gameDom.getElement('#firebase_username');
+                if(firebaseUser){
+                    // show login options:
+                    // @NOTE here you could always display the options or include a length validation like:
+                    // if(firebaseUser.value.length){
+                    this.gameManager.gameDom.getElement('#firebaseui-auth-container').style.display = 'block';
+                    this.gameManager.gameDom.getElement('#firebaseui-auth-container').classList.remove('hidden');
+                    // }
+                    // and only display the options after the user completed the username field (see index.html around line 54).
+                    firebaseUser.addEventListener('change', () => {
+                        this.resetErrorBlockCallback(firebaseLogin);
+                    });
+                    firebaseUser.addEventListener('focus', () => {
+                        this.resetErrorBlockCallback(firebaseLogin);
+                    });
+                }
+            }
+
         });
     }
 

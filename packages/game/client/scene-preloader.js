@@ -7,10 +7,12 @@
  */
 
 const { Scene, Geom } = require('phaser');
-const { Logger, sc } = require('@reldens/utils');
+const { EventsManagerSingleton, Logger, sc } = require('@reldens/utils');
+const { MinimapUi } = require('./minimap-ui');
+const { InstructionsUi } = require('./instructions-ui');
+const { SettingsUi } = require('./settings-ui');
 const { GameConst } = require('../constants');
 const { ActionsConst } = require('../../actions/constants');
-const { EventsManagerSingleton } = require('@reldens/utils');
 
 class ScenePreloader extends Scene
 {
@@ -32,6 +34,7 @@ class ScenePreloader extends Scene
         this.gameManager = props.gameManager;
         this.preloadAssets = props.preloadAssets;
         this.directionalAnimations = {};
+        this.objectsAnimations = {};
         let currentScene = this.gameManager.activeRoomEvents.getActiveScene();
         currentScene.objectsAnimationsData = props.objectsAnimationsData;
         this.playerSpriteSize = {
@@ -61,10 +64,12 @@ class ScenePreloader extends Scene
             if(this.gameManager.config.get('client/ui/instructions/enabled')){
                 this.load.html('instructions', 'assets/html/ui-instructions.html');
             }
-            // @TODO - BETA - Move everything related to player stats into the users pack or create a new pack.
-            if(this.gameManager.config.get('client/ui/playerStats/enabled')){
-                this.load.html('playerStats', 'assets/html/ui-player-stats.html');
-                this.load.html('playerStat', 'assets/html/player-stat.html');
+            if(this.gameManager.config.get('client/ui/minimap/enabled')){
+                this.load.html('minimap', 'assets/html/ui-minimap.html');
+            }
+            if(this.gameManager.config.get('client/ui/settings/enabled')){
+                this.load.html('settings', 'assets/html/ui-settings.html');
+                this.load.html('settings-content', 'assets/html/ui-settings-content.html');
             }
             this.load.html('uiTarget', 'assets/html/ui-target.html');
             this.load.html('uiOptionButton', 'assets/html/ui-option-button.html');
@@ -138,6 +143,7 @@ class ScenePreloader extends Scene
                 // logout:
                 let logoutButton = this.elementsUi['playerBox'].getChildByProperty('id', 'logout');
                 logoutButton.addEventListener('click', () => {
+                    this.gameManager.forcedDisconnection = true;
                     if(this.gameManager.firebase.isActive){
                         this.gameManager.firebase.app.auth().signOut();
                     }
@@ -168,48 +174,22 @@ class ScenePreloader extends Scene
             }
             // @TODO - BETA - Replace all different DOM references and standardize with Vue or React.
             // create instructions:
-            let instructionsUi = this.getUiConfig('instructions');
-            if(instructionsUi.enabled){
-                this.elementsUi['instructions'] = this.add.dom(instructionsUi.uiX, instructionsUi.uiY)
-                    .createFromCache('instructions');
-                let instructionsBox = this.gameManager.gameDom.getElement('#instructions');
-                if(instructionsBox){
-                    let closeButton = this.gameManager.gameDom.getElement('#instructions-close');
-                    if(closeButton){
-                        closeButton.on('click', () => {
-                            instructionsBox.hide();
-                        });
-                    }
-                    let openButton = this.elementsUi['instructions'].getChildByProperty('id', 'instructions-open');
-                    if(openButton){
-                        openButton.addEventListener('click', () => {
-                            instructionsBox.show();
-                        });
-                    }
-                }
+            let instConfig = this.getUiConfig('instructions');
+            if(instConfig.enabled){
+                this.instructionsUi = new InstructionsUi();
+                this.instructionsUi.setup(instConfig, this);
             }
-            // @TODO - BETA - Move everything related to player stats into the users pack or create a new pack.
-            // create ui playerStats:
-            let statsUi = this.getUiConfig('playerStats');
-            if(statsUi.enabled){
-                this.elementsUi['playerStats'] = this.add.dom(statsUi.uiX, statsUi.uiY)
-                    .createFromCache('playerStats');
-                let closeButton = this.elementsUi['playerStats'].getChildByProperty('id', 'player-stats-close');
-                let openButton = this.elementsUi['playerStats'].getChildByProperty('id', 'player-stats-open');
-                if(closeButton && openButton){
-                    closeButton.addEventListener('click', () => {
-                        let box = this.elementsUi['playerStats'].getChildByProperty('id', 'player-stats-ui');
-                        box.style.display = 'none';
-                        openButton.style.display = 'block';
-                        this.elementsUi['playerStats'].setDepth(1);
-                    });
-                    openButton.addEventListener('click', () => {
-                        let box = this.elementsUi['playerStats'].getChildByProperty('id', 'player-stats-ui');
-                        box.style.display = 'block';
-                        openButton.style.display = 'none';
-                        this.elementsUi['playerStats'].setDepth(4);
-                    });
-                }
+            // create ui minimap:
+            let minimapConfig = this.getUiConfig('minimap');
+            if(minimapConfig.enabled){
+                this.minimapUi = new MinimapUi();
+                this.minimapUi.setup(minimapConfig, this);
+            }
+            // create ui settings:
+            let settingsConfig = this.getUiConfig('settings');
+            if(settingsConfig.enabled){
+                this.settingsUi = new SettingsUi();
+                this.settingsUi.setup(settingsConfig, this);
             }
             // end event:
             EventsManagerSingleton.emit('reldens.createUiScene', this);
@@ -238,10 +218,10 @@ class ScenePreloader extends Scene
             let rX = this.gameManager.config.get('client/ui/'+uiName+'/responsiveX');
             let rY = this.gameManager.config.get('client/ui/'+uiName+'/responsiveY');
             if(!newWidth){
-                newWidth = this.gameManager.gameDom.getElement('.game-container').width();
+                newWidth = this.gameManager.gameDom.getElement('.game-container').offsetWidth;
             }
             if(!newHeight){
-                newHeight = this.gameManager.gameDom.getElement('.game-container').height();
+                newHeight = this.gameManager.gameDom.getElement('.game-container').offsetHeight;
             }
             uiX = rX ? rX * newWidth / 100 : 0;
             uiY = rY ? rY * newHeight / 100 : 0;
@@ -261,16 +241,41 @@ class ScenePreloader extends Scene
 
     createPlayerAnimations(avatarKey)
     {
-        // @TODO - BETA - All the animations will be part of the configuration in the database.
-        let availableAnimations = [
-            {k: avatarKey+'_'+GameConst.LEFT, img: avatarKey, start: 3, end: 5, repeat: -1, hide: false},
-            {k: avatarKey+'_'+GameConst.RIGHT, img: avatarKey, start: 6, end: 8, repeat: -1, hide: false},
-            {k: avatarKey+'_'+GameConst.UP, img: avatarKey, start: 9, end: 11, repeat: -1, hide: false},
-            {k: avatarKey+'_'+GameConst.DOWN, img: avatarKey, start: 0, end: 2, repeat: -1, hide: false}
+        let defaultFrames = this.gameManager.config.get('client/players/animations/defaultFrames');
+        let availableAnimations = [{
+                k: avatarKey + '_' + GameConst.LEFT,
+                img: avatarKey,
+                start: defaultFrames.left.start || 3,
+                end: defaultFrames.left.end || 5,
+                repeat: -1,
+                hide: false
+            }, {
+                k: avatarKey + '_' + GameConst.RIGHT,
+                img: avatarKey,
+                start: defaultFrames.right.start || 6,
+                end: defaultFrames.right.end || 8,
+                repeat: -1,
+                hide: false
+            }, {
+                k: avatarKey + '_' + GameConst.UP,
+                img: avatarKey,
+                start: defaultFrames.up.start || 9,
+                end: defaultFrames.up.end || 11,
+                repeat: -1,
+                hide: false
+            }, {
+                k: avatarKey + '_' + GameConst.DOWN,
+                img: avatarKey,
+                start: defaultFrames.down.start || 0,
+                end: defaultFrames.down.end || 2,
+                repeat: -1,
+                hide: false
+            }
         ];
         for(let anim of availableAnimations){
             this.createAnimationWith(anim);
         }
+        EventsManagerSingleton.emit('reldens.createPlayerAnimations', this, avatarKey);
     }
 
     createArrowAnimation()

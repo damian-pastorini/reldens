@@ -6,6 +6,7 @@
 
 const { EventsManagerSingleton, Logger, sc } = require('@reldens/utils');
 const { LifebarUi } = require('./lifebar-ui');
+const { PlayerStatsUi } = require('./player-stats-ui');
 const { GameConst } = require('../../game/constants');
 
 class UsersPack
@@ -18,9 +19,12 @@ class UsersPack
             this.initialGameData = initialGameData;
             this.onBeforeCreateEngine(initialGameData, gameManager);
             if(!this.lifeBarUi){
-                this.lifeBarUi = (new LifebarUi()).setup(gameManager);
+                this.lifeBarUi = new LifebarUi();
+                this.lifeBarUi.setup(gameManager);
             }
         });
+        this.playerStatsUi = new PlayerStatsUi({eventsManager: EventsManagerSingleton});
+        this.playerStatsUi.setup();
     }
 
     onBeforeCreateEngine(initialGameData, gameManager)
@@ -40,7 +44,7 @@ class UsersPack
         }
         // for every other case we will stop the normal execution of the engine and show the selection/creation block:
         gameManager.canInitEngine = false;
-        playerSelection.removeClass('hidden');
+        playerSelection.classList.remove('hidden');
         // if multiplayer is enabled and the user already has a player then setup the selector form:
         if(isMultiplayerEnabled && playersCount){
             this.preparePlayerSelector(playerSelection, initialGameData, gameManager);
@@ -55,10 +59,12 @@ class UsersPack
         if(!form || !select){
             return false;
         }
-        form.on('submit', () => {
-            let selectedPlayer = this.getPlayerById(initialGameData.players, Number(select.val()));
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            let selectedOption = select.options[select.selectedIndex].value;
+            let selectedPlayer = this.getPlayerById(initialGameData.players, Number(selectedOption));
             if(selectedPlayer){
-                playerSelection.addClass('hidden');
+                playerSelection.classList.add('hidden');
                 gameManager.initialGameData.player = selectedPlayer;
                 gameManager.initEngine().catch((err) => {
                     Logger.error(err);
@@ -77,9 +83,9 @@ class UsersPack
         if(avatarContainer){
             let playersConfig = initialGameData.gameConfig.client.players;
             gameManager.features.featuresList.actions
-                .appendAvatarOnSelector(select[0], avatarContainer[0], gameManager, playersConfig);
+                .appendAvatarOnSelector(select, avatarContainer, gameManager, playersConfig);
         }
-        form.removeClass('hidden');
+        form.classList.remove('hidden');
     }
 
     preparePlayerCreator(playerSelection, initialGameData, gameManager)
@@ -88,11 +94,12 @@ class UsersPack
         if(!$formElement){
             return;
         }
-        $formElement.on('submit', () => {
+        $formElement.addEventListener('submit', (e) => {
+            e.preventDefault();
             let errorElement = gameManager.gameDom.getElement('#player_create_form .response-error');
-            errorElement.addClass('hidden');
-            let formData = new FormData($formElement[0]);
-            let serializedForm = this.serialize(formData);
+            errorElement.classList.add('hidden');
+            let formData = new FormData($formElement);
+            let serializedForm = sc.serializeFormData(formData);
             if(serializedForm['new_player_name'].toString().length < 3){
                 return false;
             }
@@ -100,22 +107,6 @@ class UsersPack
             gameManager.gameRoom.send({act: GameConst.CREATE_PLAYER, formData: serializedForm});
             return false;
         });
-    }
-
-    serialize(data)
-    {
-        let obj = {};
-        for(let [key, value] of data){
-            if(obj[key] !== undefined){
-                if(!Array.isArray(obj[key])){
-                    obj[key] = [obj[key]];
-                }
-                obj[key].push(value);
-            } else {
-                obj[key] = value;
-            }
-        }
-        return obj;
     }
 
     getPlayerById(players, playerId)

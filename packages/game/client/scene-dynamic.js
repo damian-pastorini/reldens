@@ -8,6 +8,7 @@ const { Scene, Input } = require('phaser');
 const { TilesetAnimation } = require('./tileset-animation');
 const { EventsManagerSingleton, Logger, sc } = require('@reldens/utils');
 const { GameConst } = require('../constants');
+const { Minimap } = require('./minimap');
 
 class SceneDynamic extends Scene
 {
@@ -29,6 +30,8 @@ class SceneDynamic extends Scene
         this.objectsAnimations = {};
         // frame rate:
         this.configuredFrameRate = this.gameManager.config.get('client/general/animations/frameRate') || 10;
+        let minimapConfig = this.gameManager.config.get('client/ui/minimap');
+        this.minimap = minimapConfig.enabled ? new Minimap(minimapConfig) : false;
     }
 
     init()
@@ -59,12 +62,12 @@ class SceneDynamic extends Scene
             Input.Keyboard.KeyCodes.DOWN,
             Input.Keyboard.KeyCodes.S
         ];
-        this.gameManager.gameDom.getElement('input').on('focus', () => {
+        this.gameManager.gameDom.getElement('input').addEventListener('focus', () => {
             for(let keyCode of keys){
                 this.input.keyboard.removeCapture(keyCode);
             }
         });
-        this.gameManager.gameDom.getElement('input').on('blur', () => {
+        this.gameManager.gameDom.getElement('input').addEventListener('blur', () => {
             for(let keyCode of keys){
                 this.input.keyboard.addCapture(keyCode);
             }
@@ -79,11 +82,15 @@ class SceneDynamic extends Scene
             if(event.keyCode === 27){
                 this.gameManager.gameEngine.clearTarget();
             }
+            // keyCode = 116 > F5
+            if(event.keyCode === 116){
+                this.gameManager.forcedDisconnection = true;
+            }
         });
         this.map = this.add.tilemap(this.params.roomMap);
         // disable default context menu:
         if(this.gameManager.config.get('client/ui/controls/disableContextMenu')){
-            this.gameManager.gameDom.getElement(document).on('contextmenu', (event) => {
+            this.gameManager.gameDom.getDocument().addEventListener('contextmenu', (event) => {
                 event.preventDefault();
                 event.stopPropagation();
             });
@@ -133,6 +140,7 @@ class SceneDynamic extends Scene
                 }
             });
             this.gameManager.gameDom.activeElement().blur();
+            this.minimap.createMap(this, this.gameManager.getCurrentPlayerAnimation());
         });
         EventsManagerSingleton.emit('reldens.afterSceneDynamicCreate', this);
     }
@@ -262,8 +270,8 @@ class SceneDynamic extends Scene
         if(this.arrowSprite){
             this.arrowSprite.destroy();
         }
-        // @TODO - BETA - Make pointer sprite data configurable. Here the -16 is half of the sprite height.
-        this.arrowSprite = this.physics.add.sprite(pointer.worldX, pointer.worldY - 16, GameConst.ARROW_DOWN);
+        let topOffSet = this.configManager.get('client/ui/pointer/topOffSet') || 16;
+        this.arrowSprite = this.physics.add.sprite(pointer.worldX, pointer.worldY - topOffSet, GameConst.ARROW_DOWN);
         this.arrowSprite.setDepth(500000);
         this.arrowSprite.anims.play(GameConst.ARROW_DOWN, true).on('animationcomplete', () => {
             this.arrowSprite.destroy();

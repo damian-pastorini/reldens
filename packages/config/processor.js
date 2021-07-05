@@ -22,30 +22,24 @@ class ConfigProcessor
         // since the amount of parameters should be always 3 (for a config group) or 4 (for a single value) then we can
         // easily split the path:
         let pathArray = path.split('/');
-        // if the path length is 3 then we need to return a full group of configurations:
-        if(pathArray.length === 3){
-            let level1 = ((this[pathArray[0]] || {})[pathArray[1]] || {});
-            if(sc.hasOwn(level1, pathArray[2])){
-                result = level1[pathArray[2]];
-            } else {
-                if(!avoidLog){
-                    Logger.error('Configuration level 3 not defined: '+path);
+        // verify path size:
+        if(pathArray.length >= 3){
+            let levelCheck = (this[pathArray[0]] || {});
+            for(let i = 1; i < pathArray.length; i++){
+                if(!sc.hasOwn(levelCheck, pathArray[i])){
+                    if(!avoidLog){
+                        Logger.error('Configuration level '+i+' not defined: '+path);
+                    }
+                    levelCheck = false;
+                    break;
                 }
+                levelCheck = levelCheck[pathArray[i]];
             }
-        }
-        // is the path length is 4 then we return a single value:
-        if(pathArray.length === 4){
-            let level2 = (((this[pathArray[0]] || {})[pathArray[1]] || {})[pathArray[2]] || {});
-            if(sc.hasOwn(level2, pathArray[3])){
-                result = level2[pathArray[3]];
-            } else {
-                if(!avoidLog){
-                    Logger.error('Configuration level 4 not defined: '+path);
-                }
+            result = levelCheck;
+        } else {
+            if(!avoidLog){
+                Logger.error('Path level is too low:', path);
             }
-        }
-        if(pathArray.length !== 3 && pathArray.length !== 4){
-            Logger.error('Configuration wrong path length: '+pathArray.length);
         }
         return result;
     }

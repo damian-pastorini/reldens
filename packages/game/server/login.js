@@ -111,16 +111,7 @@ class LoginManager
                     password: this.pwManager.encryptPassword(userData.password),
                     role_id: this.config.server.players.initialUser.role_id,
                     status: this.config.server.players.initialUser.status
-                    /*
-                    players: [{
-                        name: userData.username,
-                        // @NOTE: new users will always use the same initial state and it is part of this package.
-                        state: this.config.server.players.initialState
-                    }]
-                    */
                 });
-                // let configRoomId = this.config.server.players.initialState.room_id;
-                // newUser.players[0].state.scene = await this.getRoomNameById(configRoomId);
                 await EventsManagerSingleton.emit('reldens.createNewUserAfter', newUser, this);
                 return {user: newUser};
             } catch (err) {

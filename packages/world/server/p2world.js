@@ -152,7 +152,16 @@ class P2world extends World
         // object state:
         let objHasState = sc.getDef(roomObject, 'hasState', false);
         // create the body:
-        let bodyObject = this.createCollisionBody(tileW, tileH, posX, posY, bodyMass, colResponse, objHasState);
+        let bodyObject = this.createCollisionBody(
+            tileW,
+            tileH,
+            posX,
+            posY,
+            bodyMass,
+            colResponse,
+            objHasState,
+            objectIndex
+        );
         bodyObject.isRoomObject = true;
         // assign the room object to the body:
         bodyObject.roomObject = roomObject;
@@ -241,7 +250,8 @@ class P2world extends World
                 dir: dir || GameConst.DOWN,
                 scene: this.sceneName,
                 id: boxBody.id,
-                key: bodyKey || ''
+                key: bodyKey || '',
+                room_id: this.roomId
             });
         }
         boxBody.addShape(boxShape);

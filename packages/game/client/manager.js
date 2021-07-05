@@ -34,6 +34,8 @@ class GameManager
         this.gameEngine = false;
         // game over validator:
         this.gameOver = false;
+        // disconnection validator:
+        this.forcedDisconnection = false;
         // client events:
         this.events = EventsManagerSingleton;
         // full game config:
@@ -89,13 +91,14 @@ class GameManager
             if(message.act === GameConst.CREATE_PLAYER_RESULT){
                 if(message.error){
                     let errorElement = this.gameDom.getElement('.player_create_form .response-error');
-                    errorElement.html(message.message);
-                    errorElement.removeClass('hidden');
+                    errorElement.innerHTML = message.message;
+                    errorElement.style.display = 'block';
+                    errorElement.classList.remove('hidden');
                     return false;
                 }
                 this.initialGameData.player = message.player;
                 let playerSelection = this.gameDom.getElement('#player-selection');
-                playerSelection.addClass('hidden');
+                playerSelection.classList.add('hidden');
                 await this.initEngine();
             }
         });
@@ -103,7 +106,7 @@ class GameManager
         this.events.on('reldens.afterSceneDynamicCreate', () => {
             if(this.config.get('client/ui/screen/responsive')){
                 this.gameEngine.updateGameSize(this);
-                this.gameDom.getWindowElement().resize(() => {
+                this.gameDom.getWindow().addEventListener('resize', () => {
                     this.gameEngine.updateGameSize(this);
                 });
             }
@@ -271,6 +274,11 @@ class GameManager
     getCurrentPlayer()
     {
         return this.getActiveScene().player;
+    }
+
+    getCurrentPlayerAnimation()
+    {
+        return this.getActiveScene().player.players[this.getActiveScene().player.playerId];
     }
 
     getUiElement(uiName, logError = true)

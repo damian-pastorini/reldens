@@ -35,23 +35,18 @@ class ConfigManager
         // set them in the manager property so we can find them by path later:
         for(let config of configCollection){
             // create an object for each scope:
-            if(!{}.hasOwnProperty.call(this.configList, config.scope)){
+            if(!sc.hasOwn(this.configList, config.scope)){
                 this.configList[config.scope] = {};
             }
             let pathSplit = config.path.split('/');
             // if path is wrong, less or more than 2 levels and the attribute label:
-            if(pathSplit.length !== 3){
+            if(pathSplit.length < 3){
                 // log an error and continue:
                 Logger.error('Invalid configuration:', config);
                 continue;
             }
-            if(!{}.hasOwnProperty.call(this.configList[config.scope], pathSplit[0])){
-                this.configList[config.scope][pathSplit[0]] = {};
-            }
-            if(!{}.hasOwnProperty.call(this.configList[config.scope][pathSplit[0]], pathSplit[1])){
-                this.configList[config.scope][pathSplit[0]][pathSplit[1]] = {};
-            }
-            this.configList[config.scope][pathSplit[0]][pathSplit[1]][pathSplit[2]] = await this.getParsedValue(config);
+            let parsedValue = await this.getParsedValue(config);
+            this.loopObjectAndAssignProperty(this.configList[config.scope], pathSplit, parsedValue);
         }
         await EventsManagerSingleton.emit('reldens.afterLoadConfigurations', {configManager: this});
     }
@@ -63,6 +58,21 @@ class ConfigManager
         // the config processor instance with contain all the loaded configurations:
         this.processor = Object.assign(ConfigProcessor, this.configList);
         return this.processor;
+    }
+
+    loopObjectAndAssignProperty(configList, pathSplit, parsedValue)
+    {
+        let idx = pathSplit[0];
+        if(!sc.hasOwn(configList, idx)){
+            if(pathSplit.length > 1){
+                configList[idx] = {};
+            } else {
+                configList[idx] = parsedValue;
+            }
+        }
+        if(pathSplit.length > 1){
+            this.loopObjectAndAssignProperty(configList[idx], pathSplit.slice(1, pathSplit.length), parsedValue);
+        }
     }
 
     /**

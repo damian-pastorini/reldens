@@ -148,7 +148,7 @@ class RoomScene extends RoomLogin
         }
     }
 
-    onMessage(client, messageData)
+    async onMessage(client, messageData)
     {
         if(!messageData){
             Logger.error(['Empty message data:', messageData]);
@@ -193,7 +193,7 @@ class RoomScene extends RoomLogin
                 for(let i of Object.keys(this.messageActions)){
                     let messageObserver = this.messageActions[i];
                     if(typeof messageObserver.parseMessageAndRunActions === 'function'){
-                        messageObserver.parseMessageAndRunActions(client, messageData, this, playerSchema);
+                        await messageObserver.parseMessageAndRunActions(client, messageData, this, playerSchema);
                     } else {
                         Logger.error(['Invalid message observer!', messageObserver]);
                     }

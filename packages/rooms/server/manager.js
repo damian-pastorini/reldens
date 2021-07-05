@@ -22,6 +22,7 @@ class RoomsManager
         this.loadedRoomsById = false;
         this.loadedRoomsByName = false;
         this.defineExtraRooms = [];
+        this.definedRooms = {};
     }
 
     async defineRoomsInGameServer(gameServer, props)
@@ -70,7 +71,8 @@ class RoomsManager
         }
         // log defined rooms:
         Logger.info(`Total rooms loaded: ${counter}`);
-        return rooms;
+        await EventsManagerSingleton.emit('reldens.defineRoomsInGameServerDone', this);
+        return this.definedRooms;
     }
 
     async defineRoom(gameServer, roomName, roomClass, props, globalMessageActions, roomModel = false)
@@ -88,6 +90,7 @@ class RoomsManager
             roomProps.roomData = roomModel;
         }
         gameServer.define(roomName, roomClass, roomProps);
+        this.definedRooms[roomName] = {roomClass, roomProps};
     }
 
     async loadRooms()

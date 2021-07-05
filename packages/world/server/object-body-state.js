@@ -9,6 +9,7 @@
 
 const { type } = require('@colyseus/schema');
 const { BodyState } = require('./body-state');
+const { sc } = require('@reldens/utils');
 
 class ObjectBodyState extends BodyState
 {
@@ -17,6 +18,7 @@ class ObjectBodyState extends BodyState
     {
         super(data);
         this.id = data.id;
+        this.autoDirection = sc.getDef(data, 'autoDirection', true);
     }
 
 }
