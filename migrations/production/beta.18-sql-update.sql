@@ -76,54 +76,87 @@ INSERT INTO `objects_animations` (`id`, `object_id`, `animationKey`, `animationD
 
 INSERT INTO `features` (`code`, `title`, `is_enabled`) VALUES ('audio', 'Audio', '1');
 
-CREATE TABLE `audio_categories` (
-	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-	`category_key` VARCHAR(255) NOT NULL COLLATE 'utf8_unicode_ci',
-	`category_label` VARCHAR(255) NOT NULL COLLATE 'utf8_unicode_ci',
-	`enabled` INT(1) NOT NULL DEFAULT '0',
-	`single_audio` INT(10) NOT NULL DEFAULT '0',
-	PRIMARY KEY (`id`) USING BTREE,
-	UNIQUE INDEX `category_key` (`category_key`) USING BTREE,
-	UNIQUE INDEX `category_label` (`category_label`) USING BTREE
-) COLLATE='utf8_unicode_ci' ENGINE=InnoDB;
+CREATE TABLE IF NOT EXISTS `audio_categories` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `category_key` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `category_label` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `enabled` int NOT NULL DEFAULT '0',
+  `single_audio` int NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `category_key` (`category_key`),
+  UNIQUE KEY `category_label` (`category_label`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
-CREATE TABLE `audio` (
-	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-	`audio_key` VARCHAR(255) NOT NULL COLLATE 'utf8_unicode_ci',
-	`files_name` VARCHAR(255) NOT NULL COLLATE 'utf8_unicode_ci',
-	`config` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8_unicode_ci',
-	`room_id` INT(10) UNSIGNED NULL DEFAULT NULL,
-	`category_id` INT(10) UNSIGNED NULL DEFAULT NULL,
-	PRIMARY KEY (`id`) USING BTREE,
-	UNIQUE INDEX `audio_key` (`audio_key`) USING BTREE,
-	INDEX `FK_audio_rooms` (`room_id`) USING BTREE,
-	INDEX `FK_audio_audio_categories` (`category_id`) USING BTREE,
-	CONSTRAINT `FK_audio_audio_categories` FOREIGN KEY (`category_id`) REFERENCES `audio_categories` (`id`) ON UPDATE CASCADE ON DELETE CASCADE,
-	CONSTRAINT `FK_audio_rooms` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON UPDATE SET NULL ON DELETE SET NULL
-) COLLATE='utf8_unicode_ci' ENGINE=InnoDB;
+CREATE TABLE IF NOT EXISTS `audio` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `audio_key` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `files_name` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `config` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+  `room_id` int unsigned DEFAULT NULL,
+  `category_id` int unsigned DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `audio_key` (`audio_key`),
+  KEY `FK_audio_rooms` (`room_id`),
+  KEY `FK_audio_audio_categories` (`category_id`),
+  CONSTRAINT `FK_audio_audio_categories` FOREIGN KEY (`category_id`) REFERENCES `audio_categories` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `FK_audio_rooms` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON DELETE SET NULL ON UPDATE SET NULL
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
-CREATE TABLE `audio_markers` (
-	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-	`audio_id` INT(10) UNSIGNED NOT NULL,
-	`marker_key` VARCHAR(255) NOT NULL COLLATE 'utf8_unicode_ci',
-	`start` INT(10) UNSIGNED NOT NULL,
-	`duration` INT(10) UNSIGNED NOT NULL,
-	`config` TEXT NULL DEFAULT NULL COLLATE 'utf8_unicode_ci',
-	PRIMARY KEY (`id`) USING BTREE,
-	INDEX `audio_id` (`audio_id`) USING BTREE,
-	CONSTRAINT `FK_audio_markers_audio` FOREIGN KEY (`audio_id`) REFERENCES `audio` (`id`) ON UPDATE CASCADE ON DELETE NO ACTION
-) COLLATE='utf8_unicode_ci' ENGINE=InnoDB;
+CREATE TABLE IF NOT EXISTS `audio_markers` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `audio_id` int unsigned NOT NULL,
+  `marker_key` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `start` int unsigned NOT NULL,
+  `duration` int unsigned NOT NULL,
+  `config` text COLLATE utf8_unicode_ci,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `audio_id_marker_key` (`audio_id`,`marker_key`),
+  KEY `audio_id` (`audio_id`),
+  CONSTRAINT `FK_audio_markers_audio` FOREIGN KEY (`audio_id`) REFERENCES `audio` (`id`) ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
-CREATE TABLE `audio_player_config` (
-	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-	`player_id` INT(10) UNSIGNED NOT NULL,
-	`category_id` INT(10) UNSIGNED NULL DEFAULT NULL,
-	`enabled` INT(1) UNSIGNED NULL DEFAULT NULL,
-	PRIMARY KEY (`id`) USING BTREE,
-	UNIQUE INDEX `player_id_category_id` (`player_id`, `category_id`) USING BTREE,
-	INDEX `FK_audio_player_config_audio_categories` (`category_id`) USING BTREE,
-	CONSTRAINT `FK_audio_player_config_audio_categories` FOREIGN KEY (`category_id`) REFERENCES `reldens`.`audio_categories` (`id`) ON UPDATE CASCADE ON DELETE NO ACTION,
-	CONSTRAINT `FK_audio_player_config_players` FOREIGN KEY (`player_id`) REFERENCES `reldens`.`players` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT
-) COLLATE='utf8_unicode_ci' ENGINE=InnoDB;
+CREATE TABLE IF NOT EXISTS `audio_player_config` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `player_id` int unsigned NOT NULL,
+  `category_id` int unsigned DEFAULT NULL,
+  `enabled` int unsigned DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `player_id_category_id` (`player_id`,`category_id`),
+  KEY `FK_audio_player_config_audio_categories` (`category_id`),
+  CONSTRAINT `FK_audio_player_config_audio_categories` FOREIGN KEY (`category_id`) REFERENCES `audio_categories` (`id`) ON UPDATE CASCADE,
+  CONSTRAINT `FK_audio_player_config_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+INSERT INTO `audio_categories` (`id`, `category_key`, `category_label`, `enabled`, `single_audio`) VALUES
+	(NULL, 'music', 'Music', 1, 1),
+	(NULL, 'sound', 'Sound', 1, 0);
+
+SET @music_category = (SELECT id FROM audio_categories WHERE `category_key` = 'music');
+SET @sound_category = (SELECT id FROM audio_categories WHERE `category_key` = 'sound');
+SET @reldens_town_room_id = (SELECT id FROM rooms WHERE `name` = 'ReldensTown');
+
+INSERT INTO `audio` (`id`, `audio_key`, `files_name`, `config`, `room_id`, `category_id`) VALUES
+	(NULL, 'footstep', 'footstep.ogg,footstep.mp3', NULL, NULL, @sound_category),
+	(NULL, 'ReldensTownAudio', 'reldens-town.ogg,reldens-town.mp3', NULL, @reldens_town_room_id, @music_category),
+	(NULL, 'intro', 'intro.ogg,intro.mp3', NULL, NULL, @music_category);
+
+SET @reldens_town_audio_id = (SELECT id FROM audio WHERE `audio_key` = 'footstep');
+SET @footstep_audio_id = (SELECT id FROM audio WHERE `audio_key` = 'ReldensTownAudio');
+
+INSERT INTO `audio_markers` (`id`, `audio_id`, `marker_key`, `start`, `duration`, `config`) VALUES
+	(NULL, @reldens_town_audio_id, 'ReldensTown', 0, 41, NULL),
+	(NULL, @footstep_audio_id,'journeyman_right', 0, 1, NULL),
+	(NULL, @footstep_audio_id,'journeyman_left', 0, 1, NULL),
+	(NULL, @footstep_audio_id,'journeyman_up', 0, 1, NULL),
+	(NULL, @footstep_audio_id,'journeyman_down', 0, 1, NULL),
+	(NULL, @footstep_audio_id,'r_journeyman_right', 0, 1, NULL),
+	(NULL, @footstep_audio_id,'r_journeyman_left', 0, 1, NULL),
+	(NULL, @footstep_audio_id,'r_journeyman_up', 0, 1, NULL),
+	(NULL, @footstep_audio_id,'r_journeyman_down', 0, 1, NULL);
+
+INSERT IGNORE INTO `audio_player_config` (`id`, `player_id`, `category_id`, `enabled`)
+    SELECT NULL, p.id AS playerId, ac.id AS audioCategoryId, 1
+        FROM players AS p
+        JOIN audio_categories AS ac;
 
 ## -------------------------------------------------------------------------------------------------------------------
