@@ -25,7 +25,8 @@ class AudioUi
         let audioSettingsTemplate = this.uiScene.cache.html.get('audio');
         let audioCategoryTemplate = this.uiScene.cache.html.get('audio-category');
         let categoriesRows = '';
-        for(let audioCategory of this.gameManager.audioManager.categories){
+        for(let i of Object.keys(this.gameManager.audioManager.categories)){
+            let audioCategory = this.gameManager.audioManager.categories[i];
             categoriesRows = categoriesRows + this.gameManager.gameEngine.parseTemplate(audioCategoryTemplate, {
                 categoryId: audioCategory.id,
                 categoryLabel: audioCategory.category_label,
@@ -40,8 +41,8 @@ class AudioUi
         let audioSettingInputs = this.gameManager.gameDom.getElements('.audio-setting');
         if(audioSettingInputs.length){
             for(let settingInput of audioSettingInputs){
-                settingInput.addEventListener('click', () => {
-                    this.gameManager.audioManager.setAudio(this.id, settingInput.checked);
+                settingInput.addEventListener('click', (event) => {
+                    this.gameManager.audioManager.setAudio(event.target.dataset['categoryKey'], settingInput.checked);
                     this.sendAudioUpdate(settingInput.value, settingInput.checked, this.gameManager.activeRoomEvents);
                 });
             }

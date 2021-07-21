@@ -28,7 +28,7 @@ class AudioModel extends ModelClass
                     to: RoomsModel.tableName+'.id'
                 }
             },
-            categories: {
+            category: {
                 relation: ModelClass.HasOneRelation,
                 modelClass: AudioCategoriesModel,
                 join: {
@@ -50,14 +50,14 @@ class AudioModel extends ModelClass
     static loadRoomAudios(roomId)
     {
         return this.query()
-            .withGraphFetched('[parent_room, categories, markers]')
+            .withGraphFetched('[parent_room, category, markers]')
             .where('room_id', roomId);
     }
 
     static loadGlobalAudios()
     {
         return this.query()
-            .withGraphFetched('[categories, markers]')
+            .withGraphFetched('[category, markers]')
             .where('room_id', null);
     }
 

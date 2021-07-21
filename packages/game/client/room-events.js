@@ -336,7 +336,7 @@ class RoomEvents
         } else {
             if(previousScene && this.gameEngine.scene.getScene(previousScene)){
                 // destroy previous scene tileset:
-                this.gameEngine.scene.getScene(previousScene).changeScene();
+                await this.gameEngine.scene.getScene(previousScene).changeScene();
                 // stop the previous scene and start the new one:
                 this.gameEngine.scene.stop(previousScene);
                 this.gameEngine.scene.start(player.state.scene);

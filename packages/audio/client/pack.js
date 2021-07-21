@@ -4,79 +4,96 @@
  *
  */
 
-const { EventsManagerSingleton } = require('@reldens/utils');
+const { EventsManagerSingleton, sc } = require('@reldens/utils');
 const { AudioManager } = require('./manager');
+const { SceneAudioPlayer } = require('./scene-audio-player');
+const { MessagesListener } = require('./messages-listener');
 const { AudioUi } = require('./audio-ui');
-const { AudioConst } = require('../constants');
 
 class AudioPack
 {
 
     constructor()
     {
-        this.defaultAudioConfig = {
-            mute: false,
-            volume: 1,
-            rate: 1,
-            detune: 0,
-            seek: 0,
-            loop: true,
-            delay: 0
-        };
+        this.messagesListener = new MessagesListener();
+        this.sceneAudioPlayer = SceneAudioPlayer;
+        this.initialAudiosData = {};
+        this.listenEvents();
+    }
+
+    listenEvents()
+    {
         EventsManagerSingleton.on('reldens.beforeCreateEngine', (initialGameData, gameManager) => {
             gameManager.audioManager = new AudioManager();
+            this.initialAudiosData = sc.getDef(initialGameData, 'audio', {});
         });
         EventsManagerSingleton.on('reldens.joinedRoom', (room, gameManager) => {
-            this.listenMessages(room, gameManager);
+            let defaultAudioConfig = gameManager.config.get('client/general/audio/defaultAudioConfig', true);
+            gameManager.audioManager.updateDefaultConfig(defaultAudioConfig);
+            this.messagesListener.listenMessages(room, gameManager);
         });
         EventsManagerSingleton.on('reldens.preloadUiScene', (preloadScene) => {
             preloadScene.load.html('audio', 'assets/html/ui-audio.html');
             preloadScene.load.html('audio-category', 'assets/html/ui-audio-category-row.html');
+            let globalAudiosData = sc.getDef(this.initialAudiosData, 'global', false);
+            if(globalAudiosData){
+                preloadScene.gameManager.audioManager.loadGlobalAudios(
+                    preloadScene,
+                    globalAudiosData
+                );
+            }
         });
         EventsManagerSingleton.on('reldens.createUiScene', (preloadScene) => {
             this.uiManager = new AudioUi(preloadScene);
             this.uiManager.createUi();
+            let globalAudiosData = sc.getDef(this.initialAudiosData, 'global', false);
+            if(globalAudiosData){
+                let audioManager = preloadScene.gameManager.audioManager;
+                audioManager['globalAudios'] = audioManager.generateAudios(
+                    preloadScene,
+                    globalAudiosData
+                );
+            }
         });
-    }
-
-    listenMessages(room, gameManager)
-    {
-        room.onMessage((message) => {
-            if(message.act !== AudioConst.AUDIO_UPDATE){
-                return;
+        EventsManagerSingleton.on('reldens.afterSceneDynamicCreate', (sceneDynamic) => {
+            let audioManager = sceneDynamic.gameManager.audioManager;
+            if(!audioManager){
+                return false;
             }
-            if(message.categories){
-                gameManager.audioManager.categories = message.categories;
-            }
-            let currentScene = gameManager.gameEngine.scene.getScene(room.name);
-            for(let audio of message.audios){
-                let filesName = audio.files_name.split(',');
-                let filesArr = [];
-                for(let fileName of filesName){
-                    filesArr.push('assets/audio/'+fileName);
-                }
-                currentScene.load.audio(audio.audio_key, filesArr);
-            }
-            currentScene.load.start();
-            currentScene.load.on('complete', () => {
-                let generatedAudios = {};
-                for(let audio of message.audios){
-                    let soundConfig = Object.assign({}, this.defaultAudioConfig, (audio.config || {}));
-                    let soundInstance = currentScene.sound.add(audio.audio_key, soundConfig);
-                    if(audio.markers.length){
-                        for(let marker of audio.markers){
-                            let markerConfig = Object.assign({}, soundConfig, (marker.config || {}), {
-                                name: marker.marker_key,
-                                start: marker.start,
-                                duration: marker.duration,
-                            });
-                            soundInstance.addMarker(markerConfig);
-                        }
-                    }
-                    generatedAudios[audio.audio_key] = {data: audio, soundInstance};
-                }
-                gameManager.audioManager.roomAudios = generatedAudios;
+            this.sceneAudioPlayer.associateSceneAnimationsAudios(audioManager, sceneDynamic);
+            sceneDynamic.cameras.main.on('camerafadeincomplete', () => {
+                this.sceneAudioPlayer.playSceneAudio(audioManager, sceneDynamic);
             });
+        });
+        EventsManagerSingleton.on('reldens.changeSceneDestroyPrevious', (sceneDynamic) => {
+            let audioManager = sceneDynamic.gameManager.audioManager;
+            let playingAudioCategories = audioManager.playing;
+            if(!Object.keys(playingAudioCategories).length){
+                return false;
+            }
+            for(let i of Object.keys(playingAudioCategories)){
+                let playingAudioCategory = playingAudioCategories[i];
+                let categoryData = audioManager.categories[i];
+                if(categoryData.single_audio && typeof playingAudioCategory.stop === 'function'){
+                    playingAudioCategory.stop();
+                    delete playingAudioCategories[i];
+                    continue;
+                }
+                if(!categoryData.single_audio && !Object.keys(playingAudioCategory).length){
+                    continue;
+                }
+                for(let a of Object.keys(playingAudioCategory)){
+                    let playingAudio = playingAudioCategory[a];
+                    if(typeof playingAudio.stop === 'function'){
+                        playingAudio.stop();
+                        delete playingAudio[i];
+                    }
+                }
+            }
+            return true;
+        });
+        EventsManagerSingleton.on('reldens.allAudiosLoaded', (audioManager, audios, currentScene) => {
+            this.sceneAudioPlayer.playSceneAudio(audioManager, currentScene);
         });
     }
 

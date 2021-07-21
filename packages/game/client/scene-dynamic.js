@@ -6,7 +6,7 @@
 
 const { Scene, Input } = require('phaser');
 const { TilesetAnimation } = require('./tileset-animation');
-const { EventsManagerSingleton, Logger, sc } = require('@reldens/utils');
+const { Logger, sc } = require('@reldens/utils');
 const { GameConst } = require('../constants');
 const { Minimap } = require('./minimap');
 
@@ -42,7 +42,7 @@ class SceneDynamic extends Scene
 
     create()
     {
-        EventsManagerSingleton.emit('reldens.beforeSceneDynamicCreate', this);
+        this.gameManager.events.emit('reldens.beforeSceneDynamicCreate', this);
         // @TODO - BETA - Controllers will be part of the configuration in the database.
         this.keyLeft = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.LEFT);
         this.keyA = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.A);
@@ -142,7 +142,7 @@ class SceneDynamic extends Scene
             this.gameManager.gameDom.activeElement().blur();
             this.minimap.createMap(this, this.gameManager.getCurrentPlayerAnimation());
         });
-        EventsManagerSingleton.emit('reldens.afterSceneDynamicCreate', this);
+        this.gameManager.events.emit('reldens.afterSceneDynamicCreate', this);
     }
 
     // eslint-disable-next-line no-unused-vars
@@ -166,8 +166,9 @@ class SceneDynamic extends Scene
         }
     }
 
-    changeScene()
+    async changeScene()
     {
+        await this.gameManager.events.emit('reldens.changeSceneDestroyPrevious', this);
         this.objectsAnimations = {};
         this.objectsAnimationsData = false;
         if(this.useTsAnimation){
