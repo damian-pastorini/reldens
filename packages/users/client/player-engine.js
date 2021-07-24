@@ -68,17 +68,18 @@ class PlayerEngine
         if(this.gameManager.config.get('client/ui/players/showNames')){
             this.attachNameToPlayerSprite(this.players[id]);
         }
-        this.players[id].setInteractive({useHandCursor: true}).on('pointerdown', (ev) => {
+        this.players[id].setInteractive({useHandCursor: true}).on('pointerdown', (e) => {
             // @NOTE: we avoid to run object interactions while an UI element is open, if we click on the UI the
             // elements in the background scene should not be executed.
-            if(ev.downElement.nodeName !== 'CANVAS'){
+            if(e.downElement.nodeName !== 'CANVAS'){
                 return false;
             }
             // @NOTE: we could send an specific action when the player is been targeted.
             // this.room.send({act: GameConst.TYPE_PLAYER, id: id});
             // update target ui:
-            this.gameManager.gameEngine.showTarget(this.players[id].playerName);
+            let previousTarget = Object.assign({}, this.currentTarget);
             this.currentTarget = {id: id, type: GameConst.TYPE_PLAYER};
+            this.gameManager.gameEngine.showTarget(this.players[id].playerName, this.currentTarget, previousTarget);
         });
         this.players[id].moveSprites = {};
         this.players[id].setDepth(this.players[id].y + this.players[id].body.height);

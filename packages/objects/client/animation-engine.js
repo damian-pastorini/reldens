@@ -108,10 +108,10 @@ class AnimationEngine
             this.sceneSprite.anims.play(this.key, true);
         }
         if(this.isInteractive){
-            this.sceneSprite.setInteractive({useHandCursor: true}).on('pointerdown', (ev) => {
+            this.sceneSprite.setInteractive({useHandCursor: true}).on('pointerdown', (e) => {
                 // @NOTE: we avoid to run object interactions while an UI element is open, if we click on the UI the
                 // elements in the background scene should not be executed.
-                if(ev.downElement.nodeName !== 'CANVAS'){
+                if(e.downElement.nodeName !== 'CANVAS'){
                     return false;
                 }
                 // @TODO - BETA - CHECK - TempId is a temporal fix for multiple objects case.
@@ -123,9 +123,11 @@ class AnimationEngine
                 };
                 this.gameManager.activeRoomEvents.room.send(dataSend);
                 if(this.targetName){
-                    this.gameManager.gameEngine.showTarget(this.targetName);
+                    let previousTarget = Object.assign({}, currentScene.player.currentTarget);
+                    let thisTarget = {id: tempId, type: ObjectsConst.TYPE_OBJECT};
+                    currentScene.player.currentTarget = thisTarget;
+                    this.gameManager.gameEngine.showTarget(this.targetName, thisTarget, previousTarget);
                 }
-                currentScene.player.currentTarget = {id: tempId, type: ObjectsConst.TYPE_OBJECT};
             });
         }
         if(this.restartTime){

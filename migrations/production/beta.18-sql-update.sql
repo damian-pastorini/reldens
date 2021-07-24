@@ -46,6 +46,8 @@ INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (NULL, 'cli
 
 INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (NULL, 'client', 'ui/pointer/topOffSet', 16, 'i');
 
+INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (NULL, 'client', 'ui/lifeBar/showOnClick', '1', 'b');
+
 
 ## -------------------------------------------------------------------------------------------------------------------
 

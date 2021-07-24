@@ -10,7 +10,7 @@ const { Game, Input } = require('phaser');
 const TemplateEngine = require('mustache');
 const { GameConst } = require('../constants');
 const { ObjectsConst } = require('../../objects/constants');
-const { EventsManagerSingleton } = require('@reldens/utils');
+const { EventsManagerSingleton, sc } = require('@reldens/utils');
 
 class GameEngine extends Game
 {
@@ -73,22 +73,25 @@ class GameEngine extends Game
         return {newWidth, newHeight};
     }
 
-    showTarget(target)
+    showTarget(targetName, target, previousTarget)
     {
-        if({}.hasOwnProperty.call(this.uiScene, 'uiTarget')){
+        if(sc.hasOwn(this.uiScene, 'uiTarget')){
             this.uiScene.uiTarget.getChildByID('box-target').style.display = 'block';
-            this.uiScene.uiTarget.getChildByID('target-container').innerHTML = target;
+            this.uiScene.uiTarget.getChildByID('target-container').innerHTML = targetName;
         }
+        EventsManagerSingleton.emit('reldens.gameEngineShowTarget', this, target, previousTarget);
     }
 
     clearTarget()
     {
-        if({}.hasOwnProperty.call(this.uiScene, 'uiTarget')){
-            let currentScene = this.uiScene.gameManager.activeRoomEvents.getActiveScene();
+        let currentScene = this.uiScene.gameManager.activeRoomEvents.getActiveScene();
+        let clearedTargetData = Object.assign({}, currentScene.player.currentTarget);
+        if(sc.hasOwn(this.uiScene, 'uiTarget')){
             currentScene.player.currentTarget = false;
             this.uiScene.uiTarget.getChildByID('box-target').style.display = 'none';
             this.uiScene.uiTarget.getChildByID('target-container').innerHTML = '';
         }
+        EventsManagerSingleton.emit('reldens.gameEngineClearTarget', this, clearedTargetData);
     }
 
     setupTabTarget(sceneDynamic)
@@ -108,6 +111,7 @@ class GameEngine extends Game
         let players = currentPlayer.players;
         let closerTarget = false;
         let targetName = '';
+        let previousTarget = currentPlayer.currentTarget ? Object.assign({}, currentPlayer.currentTarget) : false;
         for(let i of Object.keys(objects)){
             if(!objects[i].targetName){
                 continue;
@@ -124,12 +128,13 @@ class GameEngine extends Game
             }
             let dist = Math.hypot(players[i].x-currentPlayer.state.x, players[i].y-currentPlayer.state.y);
             if(currentPlayer.currentTarget.id !== players[i].id && (!closerTarget || closerTarget.dist > dist)){
-                closerTarget = {id: [i].id, type: GameConst.TYPE_PLAYER, dist};
-                targetName = players[i].targetName;
+                closerTarget = {id: i, type: GameConst.TYPE_PLAYER, dist};
+                targetName = players[i].playerName;
             }
         }
         currentPlayer.currentTarget = closerTarget;
-        this.showTarget(targetName);
+        this.showTarget(targetName, closerTarget, previousTarget);
+        EventsManagerSingleton.emit('reldens.gameEngineTabTarget', this, closerTarget, previousTarget);
     }
 
 }
