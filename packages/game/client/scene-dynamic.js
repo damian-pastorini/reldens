@@ -192,8 +192,8 @@ class SceneDynamic extends Scene
     {
         let idx = 0;
         for(let layer of this.map.layers){
-            let margin = this.configManager.get('client/general/tileData/margin');
-            let spacing = this.configManager.get('client/general/tileData/spacing');
+            let margin = this.configManager.get('client/map/tileData/margin');
+            let spacing = this.configManager.get('client/map/tileData/spacing');
             let layerName = layer.name;
             if(this.useTsAnimation){
                 this.layers[idx] = this.map.createDynamicLayer(layerName, this.tileset, margin, spacing);

@@ -10,8 +10,7 @@ const { RoomsModel } = require('./model');
 const { RoomGame } = require('./game');
 const { RoomScene } = require('./scene');
 const { GameConst } = require('../../game/constants');
-const { Logger, ErrorManager } = require('@reldens/utils');
-const { EventsManagerSingleton } = require('@reldens/utils');
+const { Logger, ErrorManager, EventsManagerSingleton, sc } = require('@reldens/utils');
 
 class RoomsManager
 {
@@ -120,24 +119,29 @@ class RoomsManager
 
     async loadRoomById(roomId)
     {
-        if(this.loadedRoomsById[roomId]){
-            return this.loadedRoomsById[roomId];
-        }
-        let room = await RoomsModel.loadById(roomId);
-        if(room){
-            return this.generateRoomModel(room);
-        }
-        return false;
+        return this.loadRoomBy('id', roomId);
     }
 
     async loadRoomByName(roomName)
     {
-        if(this.loadedRoomsByName[roomName]){
-            return this.loadedRoomsByName[roomName];
+        return this.loadRoomBy('name', roomName);
+    }
+
+    async loadRoomBy(property, value)
+    {
+        property = property.charAt(0).toUpperCase()+property.slice(1);
+        let managerProperty = 'loadedRoomsBy'+property;
+        if(this[managerProperty][value]){
+            return this[managerProperty][value];
         }
-        let room = await RoomsModel.loadByName(roomName);
+        let loadByMethodName = 'loadBy'+property;
+        let room = await RoomsModel[loadByMethodName](value);
         if(room){
-            return this.generateRoomModel(room);
+            let temp = this.generateRoomModel(room);
+            this.loadedRooms.push(temp);
+            this.loadedRoomsById[room.id] = temp;
+            this.loadedRoomsByName[room.name] = temp;
+            return temp;
         }
         return false;
     }
@@ -152,7 +156,8 @@ class RoomsManager
             sceneImages: room.scene_images,
             changePoints: [],
             returnPoints: [],
-            roomClassPath: room.room_class_key
+            roomClassPath: room.room_class_key,
+            returnPointDefault: false
         };
         // assign to room:
         for(let changePoint of room.rooms_change_points){
@@ -163,13 +168,17 @@ class RoomsManager
             // this array translates to D for direction, X and Y for positions, De for default and P for previous room.
             let toRoomName = returnPosition.from_room ? returnPosition.from_room.name : false;
             let posTemp = {D: returnPosition.direction, X: returnPosition.x, Y: returnPosition.y, P: toRoomName};
-            if({}.hasOwnProperty.call(returnPosition, 'is_default') && returnPosition.is_default){
+            if(sc.hasOwn(returnPosition, 'is_default') && returnPosition.is_default){
                 posTemp.De = returnPosition.is_default;
+                temp.returnPointDefault = posTemp;
             }
             temp.returnPoints.push(posTemp);
         }
         if(!temp.returnPoints.length){
             Logger.error(['None return points found for room:', temp.roomName, temp.roomId]);
+        }
+        if(!temp.returnPointDefault){
+            temp.returnPointDefault = temp.returnPoints[0];
         }
         return temp;
     }

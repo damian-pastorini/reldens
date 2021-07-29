@@ -18,7 +18,7 @@ class LoginManager
         this.config = props.config;
         this.usersManager = props.usersManager;
         this.roomsManager = props.roomsManager;
-        this.pwManager = PasswordManager;
+        this.passwordManager = PasswordManager;
         this.mailer = props.mailer;
         this.themeManager = props.themeManager;
     }
@@ -61,7 +61,7 @@ class LoginManager
     async login(user, userData)
     {
         // check if the passwords match:
-        if(!this.pwManager.validatePassword(userData.password, user.password)){
+        if(!this.passwordManager.validatePassword(userData.password, user.password)){
             // if the password doesn't match return an error:
             return {error: 'User already exists or invalid user data.'};
         } else {
@@ -69,8 +69,18 @@ class LoginManager
                 // set the scene on the user players:
                 if(user.players){
                     for(let player of user.players){
-                        let roomNameById = await this.getRoomNameById(player.state.room_id);
-                        player.state.scene = roomNameById;
+                        if(!player.state){
+                            continue;
+                        }
+                        let config = this.config.get('client/rooms/selection');
+                        if(
+                            config.allowOnLogin
+                            && userData['selectedScene']
+                            && userData['selectedScene'] !== '@lastLocation'
+                        ){
+                            await this.applySelectedLocation(player, userData['selectedScene']);
+                        }
+                        player.state.scene = await this.getRoomNameById(player.state.room_id);
                     }
                 }
                 // if everything is good then just return the user:
@@ -79,6 +89,15 @@ class LoginManager
                 return {error: err};
             }
         }
+    }
+
+    async applySelectedLocation(player, selectedScene)
+    {
+        let selectedRoom = await this.roomsManager.loadRoomByName(selectedScene);
+        if(!selectedRoom){
+            return false;
+        }
+        player.state = this.getStateObjectFromRoom(selectedRoom);
     }
 
     async getRoomNameById(roomId)
@@ -108,7 +127,7 @@ class LoginManager
                 let newUser = await this.usersManager.createUser({
                     email: userData.email,
                     username: userData.username,
-                    password: this.pwManager.encryptPassword(userData.password),
+                    password: this.passwordManager.encryptPassword(userData.password),
                     role_id: this.config.server.players.initialUser.role_id,
                     status: this.config.server.players.initialUser.status
                 });
@@ -127,10 +146,11 @@ class LoginManager
         if(loginData['new_player_name'].toString().length < 3){
             return {error: true, message: 'Invalid player name, please choose another name.'};
         }
+        let initialState = await this.prepareInitialState(loginData['selectedScene']);
         let playerData = {
             name: loginData['new_player_name'],
             user_id: loginData.user_id,
-            state: this.config.server.players.initialState
+            state: initialState
         };
         await EventsManagerSingleton.emit('reldens.createNewPlayerBefore', loginData, playerData, this);
         let isNameAvailable = await this.usersManager.isNameAvailable(playerData.name);
@@ -139,13 +159,35 @@ class LoginManager
         }
         try {
             let player = await this.usersManager.createPlayer(playerData);
-            let configRoomId = this.config.server.players.initialState.room_id;
-            player.state.scene = await this.getRoomNameById(configRoomId);
+            player.state.scene = await this.getRoomNameById(initialState.room_id);
             await EventsManagerSingleton.emit('reldens.createdNewPlayer', player, loginData, this);
             return {error: false, player};
         } catch (err) {
             return {error: true, message: 'There was an error creating your player, please try again.'};
         }
+    }
+
+    async prepareInitialState(roomName)
+    {
+        let config = this.config.get('client/rooms/selection');
+        if(!config.allowOnRegistration || !roomName){
+            return this.config.server.players.initialState;
+        }
+        let selectedRoom = await this.roomsManager.loadRoomByName(roomName);
+        if(!selectedRoom){
+            return this.config.server.players.initialState;
+        }
+        return this.getStateObjectFromRoom(selectedRoom);
+    }
+
+    getStateObjectFromRoom(selectedRoom)
+    {
+        return {
+            room_id: selectedRoom.roomId,
+            x: selectedRoom.returnPointDefault.X,
+            y: selectedRoom.returnPointDefault.Y,
+            dir: selectedRoom.returnPointDefault.D
+        };
     }
 
     async updateLastLogin(authResult)

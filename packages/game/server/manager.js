@@ -220,8 +220,8 @@ class ServerManager
                 let resetErrorPath = path.join('assets', 'email', 'reset-error.html');
                 resetResult = await ThemeManager.loadAndRenderTemplate(resetErrorPath);
             } else {
-                let newPass = this.loginManager.pwManager.makeId(12);
-                let newPassHash = this.loginManager.pwManager.encryptPassword(newPass);
+                let newPass = this.loginManager.passwordManager.makeId(12);
+                let newPassHash = this.loginManager.passwordManager.encryptPassword(newPass);
                 await this.usersManager.updateUserByEmail(rEmail, {password: newPassHash});
                 let resetSuccessPath = path.join('assets', 'email', 'reset-success.html');
                 resetResult = await ThemeManager.loadAndRenderTemplate(resetSuccessPath, {newPass: newPass});

@@ -55,7 +55,7 @@ class UsersPack
     preparePlayerSelector(playerSelection, initialGameData, gameManager)
     {
         let form = gameManager.gameDom.getElement('#player_selector_form');
-        let select = gameManager.gameDom.getElement('#select-element');
+        let select = gameManager.gameDom.getElement('#player-select-element');
         if(!form || !select){
             return false;
         }
@@ -66,6 +66,13 @@ class UsersPack
             if(selectedPlayer){
                 playerSelection.classList.add('hidden');
                 gameManager.initialGameData.player = selectedPlayer;
+                gameManager.events.emit('reldens.onPreparePlayerSelectorFormSubmit',
+                    this,
+                    form,
+                    select,
+                    selectedPlayer,
+                    gameManager
+                );
                 gameManager.initEngine().catch((err) => {
                     Logger.error(err);
                 });

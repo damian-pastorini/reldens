@@ -53,7 +53,11 @@ class RoomLogin extends Room
 
     validateRoom(playerRoomName)
     {
-        if(this.config.server.rooms.validation.enabled){
+        if(
+            this.config.server.rooms.validation.enabled
+            && !this.config.client.rooms.selection.allowOnRegistration
+            && !this.config.client.rooms.selection.allowOnLogin
+        ){
             this.validRooms = this.config.server.rooms.validation.valid.split(',');
             if(this.validRooms.indexOf(this.roomName) === -1 && playerRoomName !== this.roomName){
                 ErrorManager.error(['Invalid player room:', playerRoomName, 'Current room:', this.roomName]);

@@ -15,6 +15,7 @@ const { InventoryPack } = require('../../inventory/server/pack');
 const { FirebasePack } = require('../../firebase/server/pack');
 const { UsersPack } = require('../../users/server/pack');
 const { AudioPack } = require('../../audio/server/pack');
+const { RoomsPack } = require('../../rooms/server/pack');
 
 module.exports.ServerCoreFeatures = {
     chat: ChatPack,
@@ -23,5 +24,6 @@ module.exports.ServerCoreFeatures = {
     firebase: FirebasePack,
     actions: ActionsPack,
     users: UsersPack,
-    audio: AudioPack
+    audio: AudioPack,
+    rooms: RoomsPack
 };

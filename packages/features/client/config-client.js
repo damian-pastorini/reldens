@@ -14,6 +14,7 @@ const { InventoryPack } = require('../../inventory/client/pack');
 const { ActionsPack } = require('../../actions/client/pack');
 const { UsersPack } = require('../../users/client/pack');
 const { AudioPack } = require('../../audio/client/pack');
+const { RoomsPack } = require('../../rooms/client/pack');
 
 module.exports.ClientCoreFeatures = {
     chat: ChatPack,
@@ -21,5 +22,6 @@ module.exports.ClientCoreFeatures = {
     inventory: InventoryPack,
     actions: ActionsPack,
     users: UsersPack,
-    audio: AudioPack
+    audio: AudioPack,
+    rooms: RoomsPack
 };

@@ -20,15 +20,23 @@
                 display: none;
             }
 
-            #select-element {
+            .select-element {
                 display: block;
                 position: relative;
                 float: none;
-                max-width: 400px;
                 margin: 0 auto;
                 border: 1px solid $cLightGrey;
                 padding: 8px;
                 text-align: center;
+            }
+
+            .scene-select {
+                width: 54%;
+                max-width: 268px;
+                float: right;
+                padding: 8px 1%;
+                margin: 0;
+                text-align: left;
             }
 
             .player_creation_additional_info {

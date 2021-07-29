@@ -192,7 +192,7 @@ class RoomEvents
         }
         let currentScene = this.getActiveScene();
         if(!currentScene.player || !sc.hasOwn(currentScene.player.players, this.room.sessionId)){
-            Logger.error('For some reason you hit this case which should not happen.');
+            Logger.error('For some reason you hit this case which should not happen.', this.room, currentScene);
             return false;
         }
         let playerSprite = currentScene.player.players[this.room.sessionId];

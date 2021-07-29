@@ -8,6 +8,7 @@
 
 const { GameManager } = require('reldens/client');
 const { CustomClasses } = require('../packages/client');
+const { GameConst } = require('reldens/packages/game/constants');
 
 // @TODO - BETA.17: move everything from this file as part of the core project and include events to manage the theme.
 window.addEventListener('DOMContentLoaded', () => {
@@ -52,16 +53,22 @@ window.addEventListener('DOMContentLoaded', () => {
             dom.getElement('.game-container').classList.remove('hidden');
             fullScreen.style.display = 'block';
             body.style.background = '#000000';
-            body.style.overflow = 'hidden';
             dom.getElement('.content').style.height = '92%';
+            reldens.gameRoom.onMessage(async (message) => {
+                if(message.act === GameConst.CREATE_PLAYER_RESULT && !message.error){
+                    dom.getElement('body').style.overflow = 'hidden';
+                }
+            });
         }).catch((err) => {
             // @NOTE: game room errors should be always because some wrong login or registration data. For these cases
             // we will check the isNewUser variable to know where display the error.
             reldens.submitedForm = false;
             dom.getElement('.loading-container').style.display = 'none';
             let errorElement = dom.getElement('#'+formData.formId+' .response-error');
-            errorElement.innerHTML = err;
-            errorElement.style.display = 'block';
+            if(errorElement){
+                errorElement.innerHTML = err;
+                errorElement.style.display = 'block';
+            }
             if(formData.formId === 'firebase_login'){
                 reldens.firebase.app.auth().signOut();
             }

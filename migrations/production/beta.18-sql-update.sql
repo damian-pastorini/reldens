@@ -48,6 +48,29 @@ INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (NULL, 'cli
 
 INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (NULL, 'client', 'ui/lifeBar/showOnClick', '1', 'b');
 
+INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (NULL, 'client', 'rooms/selection/allowOnRegistration', '1', 'b');
+INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (NULL, 'client', 'rooms/selection/allowOnLogin', '1', 'b');
+INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (NULL, 'client', 'rooms/selection/registrationAvailableRooms', '*', 't');
+INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (NULL, 'client', 'rooms/selection/loginLastLocation', '1', 'b');
+INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (NULL, 'client', 'rooms/selection/loginLastLocationLabel', 'Last Location', 't');
+INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES (NULL, 'client', 'rooms/selection/loginAvailableRooms', '*', 't');
+
+UPDATE `config` SET `path` = 'map/tileData/height' WHERE `path` = 'general/tileData/height';
+UPDATE `config` SET `path` = 'map/tileData/margin' WHERE `path` = 'general/tileData/margin';
+UPDATE `config` SET `path` = 'map/tileData/spacing' WHERE `path` = 'general/tileData/spacing';
+UPDATE `config` SET `path` = 'map/tileData/width' WHERE `path` = 'general/tileData/width';
+
+## -------------------------------------------------------------------------------------------------------------------
+
+# Players:
+
+ALTER TABLE `players` ADD COLUMN `created_at` TIMESTAMP NOT NULL DEFAULT NOW() AFTER `name`;
+
+## -------------------------------------------------------------------------------------------------------------------
+
+# World feature pack:
+
+INSERT INTO `features` (`code`, `title`, `is_enabled`) VALUES ('rooms', 'Rooms', '1');
 
 ## -------------------------------------------------------------------------------------------------------------------
 
@@ -154,7 +177,39 @@ INSERT INTO `audio_markers` (`id`, `audio_id`, `marker_key`, `start`, `duration`
 	(NULL, @footstep_audio_id,'r_journeyman_right', 0, 1, NULL),
 	(NULL, @footstep_audio_id,'r_journeyman_left', 0, 1, NULL),
 	(NULL, @footstep_audio_id,'r_journeyman_up', 0, 1, NULL),
-	(NULL, @footstep_audio_id,'r_journeyman_down', 0, 1, NULL);
+	(NULL, @footstep_audio_id,'r_journeyman_down', 0, 1, NULL),
+	(NULL, @footstep_audio_id,'sorcerer_right', 0, 1, NULL),
+    (NULL, @footstep_audio_id,'sorcerer_left', 0, 1, NULL),
+    (NULL, @footstep_audio_id,'sorcerer_up', 0, 1, NULL),
+    (NULL, @footstep_audio_id,'sorcerer_down', 0, 1, NULL),
+    (NULL, @footstep_audio_id,'r_sorcerer_right', 0, 1, NULL),
+    (NULL, @footstep_audio_id,'r_sorcerer_left', 0, 1, NULL),
+    (NULL, @footstep_audio_id,'r_sorcerer_up', 0, 1, NULL),
+    (NULL, @footstep_audio_id,'r_sorcerer_down', 0, 1, NULL),
+    (NULL, @footstep_audio_id,'warlock_right', 0, 1, NULL),
+    (NULL, @footstep_audio_id,'warlock_left', 0, 1, NULL),
+    (NULL, @footstep_audio_id,'warlock_up', 0, 1, NULL),
+    (NULL, @footstep_audio_id,'warlock_down', 0, 1, NULL),
+    (NULL, @footstep_audio_id,'r_warlock_right', 0, 1, NULL),
+    (NULL, @footstep_audio_id,'r_warlock_left', 0, 1, NULL),
+    (NULL, @footstep_audio_id,'r_warlock_up', 0, 1, NULL),
+    (NULL, @footstep_audio_id,'r_warlock_down', 0, 1, NULL),
+    (NULL, @footstep_audio_id,'swordsman_right', 0, 1, NULL),
+    (NULL, @footstep_audio_id,'swordsman_left', 0, 1, NULL),
+    (NULL, @footstep_audio_id,'swordsman_up', 0, 1, NULL),
+    (NULL, @footstep_audio_id,'swordsman_down', 0, 1, NULL),
+    (NULL, @footstep_audio_id,'r_swordsman_right', 0, 1, NULL),
+    (NULL, @footstep_audio_id,'r_swordsman_left', 0, 1, NULL),
+    (NULL, @footstep_audio_id,'r_swordsman_up', 0, 1, NULL),
+    (NULL, @footstep_audio_id,'r_swordsman_down', 0, 1, NULL),
+    (NULL, @footstep_audio_id,'warrior_right', 0, 1, NULL),
+    (NULL, @footstep_audio_id,'warrior_left', 0, 1, NULL),
+    (NULL, @footstep_audio_id,'warrior_up', 0, 1, NULL),
+    (NULL, @footstep_audio_id,'warrior_down', 0, 1, NULL),
+    (NULL, @footstep_audio_id,'r_warrior_right', 0, 1, NULL),
+    (NULL, @footstep_audio_id,'r_warrior_left', 0, 1, NULL),
+    (NULL, @footstep_audio_id,'r_warrior_up', 0, 1, NULL),
+    (NULL, @footstep_audio_id,'r_warrior_down', 0, 1, NULL);
 
 INSERT IGNORE INTO `audio_player_config` (`id`, `player_id`, `category_id`, `enabled`)
     SELECT NULL, p.id AS playerId, ac.id AS audioCategoryId, 1

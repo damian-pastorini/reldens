@@ -85,7 +85,7 @@ class ActionsPack extends PackInterface
                 let player = superInitialGameData.players[i];
                 let classPathCollection = await this.skillsModelsManager.models['ownersClassPath']
                     .loadOwnerClassPath(player.id);
-                if(!classPathCollection){
+                if(!classPathCollection.length){
                     continue;
                 }
                 // @TODO - BETA - Temporal index[0] for a single class path by player.

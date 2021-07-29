@@ -86,10 +86,10 @@ class ScenePreloader extends Scene
         if(this.preloadImages){
             // @NOTE: we need the preloadImages and tile data here because the JSON map file is not loaded yet.
             let tileData = {
-                frameWidth: this.gameManager.config.get('client/general/tileData/width') || 16,
-                frameHeight: this.gameManager.config.get('client/general/tileData/height') || 16,
-                margin: this.gameManager.config.get('client/general/tileData/margin') || 1,
-                spacing: this.gameManager.config.get('client/general/tileData/spacing') || 2
+                frameWidth: this.gameManager.config.get('client/map/tileData/width') || 16,
+                frameHeight: this.gameManager.config.get('client/map/tileData/height') || 16,
+                margin: this.gameManager.config.get('client/map/tileData/margin') || 1,
+                spacing: this.gameManager.config.get('client/map/tileData/spacing') || 2
             };
             let files = this.preloadImages.split(',');
             // @TODO - BETA - Remove the hardcoded file extensions.
