@@ -5,7 +5,7 @@
  */
 
 const { EventsManagerSingleton } = require('@reldens/utils');
-const { PackInterface } = require('../../features/server/pack-interface');
+const { PackInterface } = require('../../features/pack-interface');
 
 class FirebasePack extends PackInterface
 {

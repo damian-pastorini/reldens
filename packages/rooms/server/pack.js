@@ -4,7 +4,7 @@
  *
  */
 
-const { PackInterface } = require('../../features/server/pack-interface');
+const { PackInterface } = require('../../features/pack-interface');
 const { EventsManagerSingleton, sc } = require('@reldens/utils');
 
 class RoomsPack extends PackInterface

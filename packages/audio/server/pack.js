@@ -4,7 +4,7 @@
  *
  */
 
-const { PackInterface } = require('../../features/server/pack-interface');
+const { PackInterface } = require('../../features/pack-interface');
 const { EventsManagerSingleton } = require('@reldens/utils');
 const { AudioManager } = require('./manager');
 const { AudioConst } = require('../constants');

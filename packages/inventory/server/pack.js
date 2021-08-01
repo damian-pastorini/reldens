@@ -8,7 +8,7 @@ const { ItemsServer, ItemBase, ItemGroup, ItemsConst } = require('@reldens/items
 const { ModelsManager } = require('@reldens/items-system/lib/server/storage/models-manager');
 const { EventsManagerSingleton, sc } = require('@reldens/utils');
 const { Modifier, ModifierConst } = require('@reldens/modifiers');
-const { PackInterface } = require('../../features/server/pack-interface');
+const { PackInterface } = require('../../features/pack-interface');
 const { InventoryMessageActions } = require('./message-actions');
 const { ClientWrapper } = require('../../game/server/client-wrapper');
 

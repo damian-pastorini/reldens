@@ -8,7 +8,7 @@ const { RoomChat } = require('./room');
 const { ChatMessageActions } = require('./message-actions');
 const { ChatManager } = require('./manager');
 const { ChatConst } = require('../constants');
-const { PackInterface } = require('../../features/server/pack-interface');
+const { PackInterface } = require('../../features/pack-interface');
 const { EventsManagerSingleton, Logger } = require('@reldens/utils');
 const { SkillsEvents } = require('@reldens/skills');
 

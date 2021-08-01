@@ -6,7 +6,7 @@
 
 const { EventsManagerSingleton } = require('@reldens/utils');
 const { RoomRespawn } = require('./room-respawn');
-const { PackInterface } = require('../../features/server/pack-interface');
+const { PackInterface } = require('../../features/pack-interface');
 
 class RespawnPack extends PackInterface
 {

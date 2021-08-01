@@ -6,7 +6,7 @@
 
 const { InitialState } = require('../../users/server/initial-state');
 const { InitialUser } = require('../../users/server/initial-user');
-const { PackInterface } = require('../../features/server/pack-interface');
+const { PackInterface } = require('../../features/pack-interface');
 const { ModelsManager } = require('./models-manager');
 const { EventsManagerSingleton, sc } = require('@reldens/utils');
 const { UsersConst } = require('../constants');
