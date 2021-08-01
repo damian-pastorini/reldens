@@ -5,7 +5,7 @@
  */
 
 const { PackInterface } = require('../../features/pack-interface');
-const { EventsManagerSingleton } = require('@reldens/utils');
+const { Logger, sc } = require('@reldens/utils');
 const { AudioManager } = require('./manager');
 const { AudioConst } = require('../constants');
 
@@ -18,15 +18,19 @@ class AudioPack extends PackInterface
         this.audioManager = false;
     }
 
-    setupPack()
+    setupPack(props)
     {
-        EventsManagerSingleton.on('reldens.serverBeforeDefineRooms', async (props) => {
+        this.events = sc.getDef(props, 'events', false);
+        if(!this.events){
+            Logger.error('EventsManaged undefined in AudioPack.');
+        }
+        this.events.on('reldens.serverBeforeDefineRooms', async (props) => {
             this.audioManager = new AudioManager();
             await this.audioManager.loadAudioCategories();
             await this.audioManager.loadGlobalAudios();
             props.serverManager.audioManager = this.audioManager;
         });
-        EventsManagerSingleton.on('reldens.defineRoomsInGameServerDone', (roomsManager) => {
+        this.events.on('reldens.defineRoomsInGameServerDone', (roomsManager) => {
             let definedRoomsNames = Object.keys(roomsManager.definedRooms);
             if(definedRoomsNames.length){
                 for(let roomName of definedRoomsNames){
@@ -39,12 +43,12 @@ class AudioPack extends PackInterface
             }
         });
         // eslint-disable-next-line no-unused-vars
-        EventsManagerSingleton.on('reldens.beforeSuperInitialGameData', (superInitialGameData, serverManager) => {
+        this.events.on('reldens.beforeSuperInitialGameData', (superInitialGameData, serverManager) => {
             superInitialGameData.audio = {
                 global: this.audioManager.globalAudios
             };
         });
-        EventsManagerSingleton.on('reldens.createPlayerAfter', (client, authResult, currentPlayer, roomScene) => {
+        this.events.on('reldens.createPlayerAfter', (client, authResult, currentPlayer, roomScene) => {
             roomScene.send(client, {
                 act: AudioConst.AUDIO_UPDATE,
                 roomId: roomScene.roomData.roomId,
@@ -52,7 +56,7 @@ class AudioPack extends PackInterface
                 categories: this.audioManager.categories
             });
         });
-        EventsManagerSingleton.on('reldens.roomsMessageActionsGlobal', (roomMessageActions) => {
+        this.events.on('reldens.roomsMessageActionsGlobal', (roomMessageActions) => {
             roomMessageActions.audio = this.audioManager;
         });
     }

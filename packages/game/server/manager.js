@@ -8,13 +8,6 @@
  */
 
 const dotenv = require('dotenv');
-/*
-const http = require('http');
-const https = require('https');
-const fs = require('fs');
-const express = require('express');
-const cors = require('cors');
-*/
 const path = require('path');
 const { AwaitMiddleware } = require('./await-middleware');
 const { GameServer } = require('./game-server');
@@ -129,7 +122,7 @@ class ServerManager
         Logger.info(['Mailer Configured:', this.mailer.isEnabled()]);
         await this.setupForgotPassword();
         // features manager:
-        this.featuresManager = new FeaturesManager();
+        this.featuresManager = new FeaturesManager({events: this.events});
         // load the available features list and append to the config, this way we will pass the list to the client:
         configProcessor.availableFeaturesList = await this.featuresManager.loadFeatures();
         await this.events.emit('reldens.serverConfigFeaturesReady', {

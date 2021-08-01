@@ -9,7 +9,7 @@
 
 const { SkillsServer, SkillConst, SkillsEvents } = require('@reldens/skills');
 const { ModelsManager } = require('@reldens/skills/lib/server/storage/models-manager');
-const { EventsManagerSingleton, sc } = require('@reldens/utils');
+const { Logger, sc } = require('@reldens/utils');
 const { ActionsMessageActions } = require('./message-actions');
 const { ClientWrapper } = require('../../game/server/client-wrapper');
 const { PackInterface } = require('../../features/pack-interface');
@@ -21,23 +21,27 @@ const { LevelAnimationsModel } = require('./level-animations-model');
 class ActionsPack extends PackInterface
 {
 
-    setupPack()
+    setupPack(props)
     {
-        this.skillsModelsManager = new ModelsManager({events: EventsManagerSingleton});
-        EventsManagerSingleton.on('reldens.serverReady', async (event) => {
+        this.events = sc.getDef(props, 'events', false);
+        if(!this.events){
+            Logger.error('EventsManaged undefined in ActionsPack.');
+        }
+        this.skillsModelsManager = new ModelsManager({events: this.events});
+        this.events.on('reldens.serverReady', async (event) => {
             await this.onServerReady(event);
         });
-        EventsManagerSingleton.on('reldens.beforeSuperInitialGameData', async (superInitialGameData, roomGame) => {
+        this.events.on('reldens.beforeSuperInitialGameData', async (superInitialGameData, roomGame) => {
             await this.onBeforeSuperInitialGameData(superInitialGameData, roomGame);
         });
         // eslint-disable-next-line no-unused-vars
-        EventsManagerSingleton.on('reldens.roomsMessageActionsByRoom', async (roomMessageActions, roomName) => {
+        this.events.on('reldens.roomsMessageActionsByRoom', async (roomMessageActions, roomName) => {
             roomMessageActions.actions = new ActionsMessageActions();
         });
-        EventsManagerSingleton.on('reldens.createdPlayerSchema', async (client, authResult, currentPlayer, room) => {
+        this.events.on('reldens.createdPlayerSchema', async (client, authResult, currentPlayer, room) => {
             await this.onCreatePlayerAfter(client, authResult, currentPlayer, room);
         });
-        EventsManagerSingleton.on('reldens.createdNewPlayer', async (player, loginData, loginManager) => {
+        this.events.on('reldens.createdNewPlayer', async (player, loginData, loginManager) => {
             let defaultClassPathId = loginManager.config.get('server/players/actions/initialClassPathId');
             let initialClassPathId = sc.getDef(loginData, 'class_path_select', defaultClassPathId);
             let data = {
@@ -109,7 +113,7 @@ class ActionsPack extends PackInterface
             room.config.skills.skillsList
         );
         if(classPathData){
-            classPathData.events = EventsManagerSingleton;
+            classPathData.events = this.events;
             classPathData.affectedProperty = room.config.get('client/actions/skills/affectedProperty');
             classPathData.client = new ClientWrapper(client, room);
             // append skills server to player:
@@ -298,7 +302,7 @@ class ActionsPack extends PackInterface
             }
             skill.owner.physicalBody.isBlocked = false;
         }, 'skillAfterCastPack', ownerId);
-        EventsManagerSingleton.emit('reldens.actionsPrepareEventsListeners', this, classPath);
+        this.events.emit('reldens.actionsPrepareEventsListeners', this, classPath);
     }
 
 }
