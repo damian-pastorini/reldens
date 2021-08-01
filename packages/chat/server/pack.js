@@ -9,30 +9,34 @@ const { ChatMessageActions } = require('./message-actions');
 const { ChatManager } = require('./manager');
 const { ChatConst } = require('../constants');
 const { PackInterface } = require('../../features/pack-interface');
-const { EventsManagerSingleton, Logger } = require('@reldens/utils');
+const { Logger, sc } = require('@reldens/utils');
 const { SkillsEvents } = require('@reldens/skills');
 
 class ChatPack extends PackInterface
 {
 
-    setupPack()
+    setupPack(props)
     {
+        this.events = sc.getDef(props, 'events', false);
+        if(!this.events){
+            Logger.error('EventsManager undefined in ChatPack.');
+        }
         // rooms is the list of the current feature rooms names that later will be sent to the client and used to join.
         this.rooms = ['chat'];
         // then we can use the event manager to append the feature in every action required:
-        EventsManagerSingleton.on('reldens.roomsDefinition', (roomsList) => {
+        this.events.on('reldens.roomsDefinition', (roomsList) => {
             // here we are adding the chat room to be defined in the game server:
             roomsList.push({roomName: 'chat', room: RoomChat});
         });
-        EventsManagerSingleton.on('reldens.serverConfigFeaturesReady', (props) => {
+        this.events.on('reldens.serverConfigFeaturesReady', (props) => {
             this.chatConfig = props.configProcessor.get('client/ui/chat');
         });
         // when the client sent a message to any room it will be checked by all the global messages defined:
-        EventsManagerSingleton.on('reldens.roomsMessageActionsGlobal', (roomMessageActions) => {
+        this.events.on('reldens.roomsMessageActionsGlobal', (roomMessageActions) => {
             roomMessageActions.chat = ChatMessageActions;
         });
         // eslint-disable-next-line no-unused-vars
-        EventsManagerSingleton.on('reldens.actionsPrepareEventsListeners', async (actionsPack, classPath) => {
+        this.events.on('reldens.actionsPrepareEventsListeners', async (actionsPack, classPath) => {
             if(!this.chatConfig.damageMessages){
                 return;
             }

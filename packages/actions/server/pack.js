@@ -25,7 +25,7 @@ class ActionsPack extends PackInterface
     {
         this.events = sc.getDef(props, 'events', false);
         if(!this.events){
-            Logger.error('EventsManaged undefined in ActionsPack.');
+            Logger.error('EventsManager undefined in ActionsPack.');
         }
         this.skillsModelsManager = new ModelsManager({events: this.events});
         this.events.on('reldens.serverReady', async (event) => {

@@ -22,7 +22,7 @@ class AudioPack extends PackInterface
     {
         this.events = sc.getDef(props, 'events', false);
         if(!this.events){
-            Logger.error('EventsManaged undefined in AudioPack.');
+            Logger.error('EventsManager undefined in AudioPack.');
         }
         this.events.on('reldens.serverBeforeDefineRooms', async (props) => {
             this.audioManager = new AudioManager();

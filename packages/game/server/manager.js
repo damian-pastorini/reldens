@@ -46,7 +46,7 @@ class ServerManager
     initializeConfiguration(config)
     {
         // configuration data from database:
-        this.configManager = new ConfigManager();
+        this.configManager = new ConfigManager({events: this.events});
         // save project root:
         this.projectRoot = config.projectRoot || './';
         Logger.info(['Project root:', this.projectRoot, 'Module root:', __dirname]);

@@ -11,13 +11,17 @@ const { ConfigModel } = require('./model');
 const { GameConfig } = require('../../game/server/config');
 const { ConfigConst } = require('../constants');
 const PackageData = require('../../../package.json');
-const { EventsManagerSingleton, Logger, sc } = require('@reldens/utils');
+const { Logger, sc } = require('@reldens/utils');
 
 class ConfigManager
 {
 
-    constructor()
+    constructor(props)
     {
+        this.events = sc.getDef(props, 'events', false);
+        if(!this.events){
+            Logger.error('EventsManager undefined in ConfigManager.');
+        }
         // initialize config props with default data:
         this.configList = {
             server: {}
@@ -29,7 +33,7 @@ class ConfigManager
         let gameConfig = new GameConfig();
         this.configList.gameEngine = gameConfig.getConfig();
         this.configList.gameEngine.version = PackageData.version;
-        await EventsManagerSingleton.emit('reldens.beforeLoadConfigurations', {configManager: this});
+        await this.events.emit('reldens.beforeLoadConfigurations', {configManager: this});
         // get the configurations from the database:
         let configCollection = await ConfigModel.loadAll();
         // set them in the manager property so we can find them by path later:
@@ -48,7 +52,7 @@ class ConfigManager
             let parsedValue = await this.getParsedValue(config);
             this.loopObjectAndAssignProperty(this.configList[config.scope], pathSplit, parsedValue);
         }
-        await EventsManagerSingleton.emit('reldens.afterLoadConfigurations', {configManager: this});
+        await this.events.emit('reldens.afterLoadConfigurations', {configManager: this});
     }
 
     async loadAndGetProcessor()
@@ -81,7 +85,7 @@ class ConfigManager
      */
     async getParsedValue(config)
     {
-        await EventsManagerSingleton.emit('reldens.beforeGetParsedValue', {configManager: this, config: config});
+        await this.events.emit('reldens.beforeGetParsedValue', {configManager: this, config: config});
         if(config.type === ConfigConst.CONFIG_TYPE_TEXT){
             return config.value;
         }

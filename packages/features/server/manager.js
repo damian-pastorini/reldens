@@ -22,7 +22,7 @@ class FeaturesManager
         this.featuresCodeList = [];
         this.events = sc.getDef(props, 'events', false);
         if(!this.events){
-            Logger.error('EventsManaged undefined in FeaturesManager.');
+            Logger.error('EventsManager undefined in FeaturesManager.');
         }
     }
 
