@@ -9,9 +9,9 @@ const { Logger } = require('@reldens/utils');
 class PackInterface
 {
 
-    setupPack()
+    setupPack(props)
     {
-        Logger.error('Setup pack not implemented.');
+        Logger.error('Setup pack not implemented.', props);
     }
 
 }
