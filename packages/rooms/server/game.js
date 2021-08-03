@@ -10,7 +10,7 @@
  */
 
 const { RoomLogin } = require('./login');
-const { EventsManagerSingleton, sc } = require('@reldens/utils');
+const { sc } = require('@reldens/utils');
 const { GameConst } = require('../../game/constants');
 
 class RoomGame extends RoomLogin
@@ -18,7 +18,7 @@ class RoomGame extends RoomLogin
 
     async onJoin(client, options, authResult)
     {
-        await EventsManagerSingleton.emit('reldens.onJoinRoomGame', client, options, authResult, this);
+        await this.events.emit('reldens.onJoinRoomGame', client, options, authResult, this);
         // update last login:
         await this.loginManager.updateLastLogin(authResult);
         // we need to send the engine and all the general and client configurations from the storage:
@@ -33,7 +33,7 @@ class RoomGame extends RoomLogin
             gameConfig: clientFullConfig,
             features: this.config.availableFeaturesList
         };
-        await EventsManagerSingleton.emit('reldens.beforeSuperInitialGameData', superInitialGameData, this);
+        await this.events.emit('reldens.beforeSuperInitialGameData', superInitialGameData, this);
         // client start:
         this.send(client, superInitialGameData);
     }

@@ -9,7 +9,7 @@
 const { Battle } = require('./battle');
 const { ActionsConst } = require('../constants');
 const { GameConst } = require('../../game/constants');
-const { EventsManagerSingleton, Logger, sc } = require('@reldens/utils');
+const { Logger, sc } = require('@reldens/utils');
 
 class Pve extends Battle
 {
@@ -39,7 +39,7 @@ class Pve extends Battle
             return false;
         }
         let affectedProperty = roomScene.config.get('client/actions/skills/affectedProperty');
-        await EventsManagerSingleton.emit('reldens.runBattlePveAfter', {
+        await this.events.emit('reldens.runBattlePveAfter', {
             playerSchema,
             target,
             roomScene,
@@ -158,7 +158,7 @@ class Pve extends Battle
         } else {
             Logger.info(['Client not found by sessionId:', playerSchema.sessionId]);
         }
-        EventsManagerSingleton.emit(this.targetObject.getBattleEndEvent(), playerSchema, this, actionData);
+        this.events.emit(this.targetObject.getBattleEndEvent(), playerSchema, this, actionData);
     }
 
     removeInBattlePlayer(playerSchema)

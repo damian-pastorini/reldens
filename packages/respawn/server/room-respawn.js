@@ -8,18 +8,22 @@
 
 const { RespawnModel } = require('./model');
 const { PathFinder } = require('../../world/server/path-finder');
-const { EventsManagerSingleton, sc } = require('@reldens/utils');
+const { Logger, sc } = require('@reldens/utils');
 
 class RoomRespawn
 {
 
-    constructor(layer, world)
+    constructor(props)
     {
-        this.layer = layer;
-        this.world = world;
+        this.events = sc.getDef(props, 'events', false);
+        if(!this.events){
+            Logger.error('EventsManager undefined in RoomRespawn.');
+        }
+        this.layer = props.layer;
+        this.world = props.world;
         this.pathFinder = new PathFinder();
         this.pathFinder.world = this.world;
-        this.pathFinder.grid = world.pathFinder.grid.clone();
+        this.pathFinder.grid = props.world.pathFinder.grid.clone();
         this.instancesCreated = {};
     }
 
@@ -46,12 +50,13 @@ class RoomRespawn
                     // create object index:
                     let objectIndex = this.createObjectIndex(respawnArea);
                     multipleObj.objProps.client_key = objectIndex;
+                    multipleObj.objProps.events = this.events;
                     // get random tile:
                     let tileData = this.getRandomTile();
                     // add tile data to the object and create object instance:
                     Object.assign(multipleObj.objProps, tileData);
                     let objInstance = new objClass(multipleObj.objProps);
-                    objInstance.runAdditionalSetup(EventsManagerSingleton);
+                    objInstance.runAdditionalSetup();
                     let assetsArr = this.getObjectAssets(multipleObj);
                     // @TODO - BETA - Objects could have multiple assets, need to implement and test the case.
                     objInstance.clientParams.asset_key = assetsArr[0];

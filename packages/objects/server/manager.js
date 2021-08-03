@@ -16,6 +16,10 @@ class ObjectsManager
     constructor(props)
     {
         this.config = props.config;
+        this.events = sc.getDef(props, 'events', false);
+        if(!this.events){
+            Logger.error('EventsManager undefined in ObjectsManager.');
+        }
         // room objects is just the list of the objects in the storage:
         this.roomObjectsData = false;
         // room objects by layer and title are each object instance plus the data from the storage:
@@ -51,7 +55,7 @@ class ObjectsManager
                         ]);
                         continue;
                     }
-                    let objProps = Object.assign({config: this.config}, objectData);
+                    let objProps = Object.assign({config: this.config, events: this.events}, objectData);
                     let objInstance = new objClass(objProps);
                     // if the result is an animation instance then we can include in the list to send it to the client:
                     if(sc.hasOwn(objInstance, 'isAnimation') || sc.hasOwn(objInstance, 'hasAnimation')){

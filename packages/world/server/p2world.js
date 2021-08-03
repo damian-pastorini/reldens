@@ -10,18 +10,19 @@ const { World, Body, Box } = require('p2');
 const { PathFinder } = require('./path-finder');
 const { PhysicalBody } = require('./physical-body');
 const { ObjectBodyState } = require('./object-body-state');
-const { EventsManagerSingleton, Logger, ErrorManager, sc } = require('@reldens/utils');
 const { GameConst } = require('../../game/constants');
+const { ErrorManager, Logger, sc } = require('@reldens/utils');
 
 class P2world extends World
 {
 
-    /**
-     * @param options
-     */
     constructor(options)
     {
         super(options);
+        this.events = sc.getDef(options, 'events', false);
+        if(!this.events){
+            Logger.error('EventsManager undefined in P2world.');
+        }
         this.roomId = options.roomData.roomId;
         this.applyGravity = options.applyGravity;
         this.applyDamping = options.applyDamping || false;
@@ -69,7 +70,7 @@ class P2world extends World
             tileH = this.mapJson.tileheight;
         for(let layer of mapLayers){
             let layerData = layer.data;
-            await EventsManagerSingleton.emit('reldens.parsingMapLayerBefore', layer, this);
+            await this.events.emit('reldens.parsingMapLayerBefore', layer, this);
             for(let c = 0; c < mapW; c++){
                 let posX = c * tileW + (tileW/2);
                 for(let r = 0; r < mapH; r++){
@@ -98,7 +99,7 @@ class P2world extends World
                     }
                 }
             }
-            await EventsManagerSingleton.emit('reldens.parsingMapLayerAfter', layer, this);
+            await this.events.emit('reldens.parsingMapLayerAfter', layer, this);
         }
     }
 
@@ -174,7 +175,7 @@ class P2world extends World
         // set data on room object:
         roomObject.state = bodyObject.bodyState;
         roomObject.objectBody = bodyObject;
-        EventsManagerSingleton.emit('reldens.createdWorldObject', {
+        this.events.emit('reldens.createdWorldObject', {
             p2world: this,
             roomObject,
             bodyObject,

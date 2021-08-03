@@ -14,7 +14,7 @@ const { Pve } = require('../../actions/server/pve');
 const { TypeAttack, TypePhysicalAttack } = require('../../actions/server/skills/types');
 const { ObjectsConst } = require('../constants');
 const { GameConst } = require('../../game/constants');
-const { EventsManagerSingleton, Logger, sc } = require('@reldens/utils');
+const { Logger, sc } = require('@reldens/utils');
 
 class EnemyObject extends NpcObject
 {
@@ -39,7 +39,8 @@ class EnemyObject extends NpcObject
         this.isAggressive = sc.getDef(props, 'isAggressive', false);
         this.battle = new Pve({
             battleTimeOff: sc.getDef(props, 'battleTimeOff', 20000),
-            chaseMultiple: sc.getDef(props, 'chaseMultiple', false)
+            chaseMultiple: sc.getDef(props, 'chaseMultiple', false),
+            events: this.events
         });
         // enemy created, setting broadcastKey:
         this.broadcastKey = this.client_key;
@@ -54,13 +55,13 @@ class EnemyObject extends NpcObject
         this.respawnLayer = false;
     }
 
-    runAdditionalSetup(eventsManager)
+    runAdditionalSetup()
     {
-        super.runAdditionalSetup(eventsManager);
+        super.runAdditionalSetup();
         if(!this.isAggressive){
             return;
         }
-        eventsManager.on('reldens.sceneRoomOnCreate', (room) => {
+        this.events.on('reldens.sceneRoomOnCreate', (room) => {
             room.roomWorld.on('postBroadphase', (event) => {
                 if(!this.battle.inBattleWithPlayer.length){
                     this.waitForPlayersToEnterRespawnArea(event, room);
@@ -95,7 +96,7 @@ class EnemyObject extends NpcObject
             hitDamage: 5,
             rangePropertyX: 'state/x',
             rangePropertyY: 'state/y',
-            events: EventsManagerSingleton
+            events: this.events
         };
         let attackShort = new TypeAttack(skillProps);
         this.actionsKeys = ['attackShort'];
@@ -117,7 +118,7 @@ class EnemyObject extends NpcObject
             objectHeight: 5,
             rangePropertyX: 'state/x',
             rangePropertyY: 'state/y',
-            events: EventsManagerSingleton
+            events: this.events
         });
         attackBullet.attacker = this;
         this.actionsKeys.push('attackBullet');
@@ -176,7 +177,7 @@ class EnemyObject extends NpcObject
         room.state.sceneData = JSON.stringify(roomSceneData);
         this.x = x;
         this.y = y;
-        EventsManagerSingleton.emit('reldens.restoreObjectAfter', {enemyObject: this, room});
+        this.events.emit('reldens.restoreObjectAfter', {enemyObject: this, room});
     }
 
     onHit(props)

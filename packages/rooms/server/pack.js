@@ -5,14 +5,18 @@
  */
 
 const { PackInterface } = require('../../features/pack-interface');
-const { EventsManagerSingleton, sc } = require('@reldens/utils');
+const { Logger, sc } = require('@reldens/utils');
 
 class RoomsPack extends PackInterface
 {
 
-    setupPack()
+    setupPack(props)
     {
-        EventsManagerSingleton.on('reldens.beforeSuperInitialGameData', async (superInitialGameData, roomGame) => {
+        this.events = sc.getDef(props, 'events', false);
+        if(!this.events){
+            Logger.error('EventsManager undefined in RoomsPack.');
+        }
+        this.events.on('reldens.beforeSuperInitialGameData', async (superInitialGameData, roomGame) => {
             await this.onBeforeSuperInitialGameData(superInitialGameData, roomGame);
         });
     }

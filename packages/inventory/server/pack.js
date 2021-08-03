@@ -6,7 +6,7 @@
 
 const { ItemsServer, ItemBase, ItemGroup, ItemsConst } = require('@reldens/items-system');
 const { ModelsManager } = require('@reldens/items-system/lib/server/storage/models-manager');
-const { EventsManagerSingleton, sc } = require('@reldens/utils');
+const { Logger, sc } = require('@reldens/utils');
 const { Modifier, ModifierConst } = require('@reldens/modifiers');
 const { PackInterface } = require('../../features/pack-interface');
 const { InventoryMessageActions } = require('./message-actions');
@@ -15,11 +15,15 @@ const { ClientWrapper } = require('../../game/server/client-wrapper');
 class InventoryPack extends PackInterface
 {
 
-    setupPack()
+    setupPack(props)
     {
+        this.events = sc.getDef(props, 'events', false);
+        if(!this.events){
+            Logger.error('EventsManager undefined in InventoryPack.');
+        }
         // @TODO - BETA - Refactor pack to extract the models and classes generation to the external packages.
         this.inventoryModelsManager = new ModelsManager();
-        EventsManagerSingleton.on('reldens.serverReady', async (event) => {
+        this.events.on('reldens.serverReady', async (event) => {
             let configProcessor = event.serverManager.configManager.processor;
             if(!sc.hasOwn(configProcessor, 'inventory')){
                 configProcessor.inventory = {};
@@ -28,7 +32,7 @@ class InventoryPack extends PackInterface
             await this.loadGroupsFullList(configProcessor);
         });
         // eslint-disable-next-line no-unused-vars
-        EventsManagerSingleton.on('reldens.createPlayerAfter', async (client, authResult, currentPlayer, room) => {
+        this.events.on('reldens.createPlayerAfter', async (client, authResult, currentPlayer, room) => {
             // create player inventory:
             currentPlayer.inventory = await this.createInventory(client, currentPlayer, room);
             // @NOTE: here we send the groups data to generate the player interface instead of set them in the current
@@ -41,7 +45,7 @@ class InventoryPack extends PackInterface
             });
         });
         // when the client sent a message to any room it will be checked by all the global messages defined:
-        EventsManagerSingleton.on('reldens.roomsMessageActionsGlobal', (roomMessageActions) => {
+        this.events.on('reldens.roomsMessageActionsGlobal', (roomMessageActions) => {
             roomMessageActions.inventory = InventoryMessageActions;
         });
     }
@@ -109,7 +113,7 @@ class InventoryPack extends PackInterface
             client: clientWrapper,
             persistence: true,
             ownerIdProperty: 'player_id',
-            eventsManager: EventsManagerSingleton
+            eventsManager: this.events
         };
         let inventoryClasses = room.config.get('server/customClasses/inventory/items');
         if(inventoryClasses){

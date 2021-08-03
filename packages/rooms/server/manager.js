@@ -10,13 +10,17 @@ const { RoomsModel } = require('./model');
 const { RoomGame } = require('./game');
 const { RoomScene } = require('./scene');
 const { GameConst } = require('../../game/constants');
-const { Logger, ErrorManager, EventsManagerSingleton, sc } = require('@reldens/utils');
+const { ErrorManager, Logger, sc } = require('@reldens/utils');
 
 class RoomsManager
 {
 
-    constructor()
+    constructor(props)
     {
+        this.events = sc.getDef(props, 'events', false);
+        if(!this.events){
+            Logger.error('EventsManager undefined in RoomsManager.');
+        }
         this.loadedRooms = false;
         this.loadedRoomsById = false;
         this.loadedRoomsByName = false;
@@ -26,13 +30,13 @@ class RoomsManager
 
     async defineRoomsInGameServer(gameServer, props)
     {
-        await EventsManagerSingleton.emit('reldens.roomsDefinition', this.defineExtraRooms);
+        await this.events.emit('reldens.roomsDefinition', this.defineExtraRooms);
         if(!this.defineExtraRooms.length){
             Logger.info('None extra rooms to be defined.');
         }
         // dispatch event to get the global message actions (that will be listen by every room):
         let globalMessageActions = {};
-        await EventsManagerSingleton.emit('reldens.roomsMessageActionsGlobal', globalMessageActions);
+        await this.events.emit('reldens.roomsMessageActionsGlobal', globalMessageActions);
         // loaded rooms counter:
         let counter = 0;
         // lobby room:
@@ -70,7 +74,7 @@ class RoomsManager
         }
         // log defined rooms:
         Logger.info(`Total rooms loaded: ${counter}`);
-        await EventsManagerSingleton.emit('reldens.defineRoomsInGameServerDone', this);
+        await this.events.emit('reldens.defineRoomsInGameServerDone', this);
         return this.definedRooms;
     }
 
@@ -78,12 +82,13 @@ class RoomsManager
     {
         let roomMessageActions = Object.assign({}, globalMessageActions);
         // run message actions event for each room:
-        await EventsManagerSingleton.emit('reldens.roomsMessageActionsByRoom', roomMessageActions, roomName);
+        await this.events.emit('reldens.roomsMessageActionsByRoom', roomMessageActions, roomName);
         // merge room data and props:
         let roomProps = {
             loginManager: props.loginManager,
             config: props.config,
-            messageActions: roomMessageActions
+            messageActions: roomMessageActions,
+            events: this.events
         };
         if(roomModel){
             roomProps.roomData = roomModel;

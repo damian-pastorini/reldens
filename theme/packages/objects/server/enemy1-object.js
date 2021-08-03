@@ -16,16 +16,16 @@ class Enemy1Object extends EnemyObject
         this.isAggressive = true;
     }
 
-    runAdditionalSetup(eventsManager)
+    runAdditionalSetup()
     {
-        super.runAdditionalSetup(eventsManager);
-        eventsManager.onWithKey(
+        super.runAdditionalSetup();
+        this.events.onWithKey(
             this.getBattleEndEvent(),
             this.onBattleEnd.bind(this),
             this.getEventRemoveKey(),
             this.getEventMasterKey()
         );
-        let dataArr = eventsManager.listeners('reldens.battleEnded');
+        let dataArr = this.events.listeners('reldens.battleEnded');
         this.battleEndListener = dataArr[dataArr.length -1];
     }
 

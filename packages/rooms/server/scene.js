@@ -13,7 +13,6 @@ const { CollisionsManager } = require('../../world/server/collisions-manager');
 const { ObjectsManager } = require('../../objects/server/manager');
 const { GameConst } = require('../../game/constants');
 const { Logger, ErrorManager, sc } = require('@reldens/utils');
-const { EventsManagerSingleton } = require('@reldens/utils');
 
 class RoomScene extends RoomLogin
 {
@@ -29,7 +28,8 @@ class RoomScene extends RoomLogin
         this.sceneId = this.roomId;
         // @NOTE: we create an instance of the objects manager for each room-scene, this is on purpose so all the
         // related object instances will be removed when the room is disposed.
-        this.objectsManager = new ObjectsManager(options);
+        let objectsManagerConfig = Object.assign({events: this.events}, options);
+        this.objectsManager = new ObjectsManager(objectsManagerConfig);
         // load the objects from the storage:
         await this.objectsManager.loadObjectsByRoomId(options.roomData.roomId);
         // generate object instances:
@@ -63,7 +63,7 @@ class RoomScene extends RoomLogin
         let roomState = new State(this.roomData);
         // after we set the state it will be automatically sync by the game-server:
         this.setState(roomState);
-        await EventsManagerSingleton.emit('reldens.sceneRoomOnCreate', this);
+        await this.events.emit('reldens.sceneRoomOnCreate', this);
     }
 
     async onJoin(client, options, authResult)
@@ -112,7 +112,7 @@ class RoomScene extends RoomLogin
 
     async createPlayerOnScene(client, authResult)
     {
-        await EventsManagerSingleton.emit('reldens.createPlayerBefore', client, authResult, this);
+        await this.events.emit('reldens.createPlayerBefore', client, authResult, this);
         // player creation:
         let currentPlayer = this.state.createPlayerSchema(authResult, client.sessionId);
         // eslint-disable-next-line no-unused-vars
@@ -121,7 +121,7 @@ class RoomScene extends RoomLogin
             await this.savePlayerState(currentPlayer.sessionId);
             await this.savePlayerStats(currentPlayer, client);
         };
-        await EventsManagerSingleton.emit('reldens.createdPlayerSchema', client, authResult, currentPlayer, this);
+        await this.events.emit('reldens.createdPlayerSchema', client, authResult, currentPlayer, this);
         this.state.addPlayerToState(currentPlayer, client.sessionId);
         // @TODO - BETA - Create player body using a new pack in the world package.
         // create body for server physics and assign the body to the player:
@@ -131,7 +131,7 @@ class RoomScene extends RoomLogin
             height: this.config.get('server/players/size/height'),
             bodyState: currentPlayer.state
         });
-        await EventsManagerSingleton.emit('reldens.createPlayerAfter', client, authResult, currentPlayer, this);
+        await this.events.emit('reldens.createPlayerAfter', client, authResult, currentPlayer, this);
         return currentPlayer;
     }
 
@@ -217,7 +217,7 @@ class RoomScene extends RoomLogin
 
     async createWorld(roomData, objectsManager)
     {
-        await EventsManagerSingleton.emit('reldens.createWorld', roomData, objectsManager, this);
+        await this.events.emit('reldens.createWorld', roomData, objectsManager, this);
         // create and assign world to room:
         this.roomWorld = this.createWorldInstance({
             sceneName: this.roomName,
@@ -228,7 +228,8 @@ class RoomScene extends RoomLogin
             tryClosestPath: this.config.get('server/rooms/world/tryClosestPath'),
             onlyWalkable: this.config.get('server/rooms/world/onlyWalkable'),
             worldSpeed: this.worldSpeed,
-            allowSimultaneous: this.allowSimultaneous
+            allowSimultaneous: this.allowSimultaneous,
+            events: this.events
         });
         // create world limits:
         this.roomWorld.createLimits();
@@ -313,7 +314,7 @@ class RoomScene extends RoomLogin
                 this.roomWorld.removeBody(bodyToRemove);
             }
             // remove the events:
-            EventsManagerSingleton.offByMasterKey(playerSchema.eventsPrefix+playerSchema.player_id);
+            this.events.offByMasterKey(playerSchema.eventsPrefix+playerSchema.player_id);
             // remove player:
             this.state.removePlayer(sessionId);
         } else {
@@ -352,7 +353,7 @@ class RoomScene extends RoomLogin
         }
         if(updateClient){
             // @TODO - BETA - Convert all events in constants and consolidate them in a single file.
-            await EventsManagerSingleton.emit('reldens.savePlayerStatsUpdateClient', updateClient, target, this);
+            await this.events.emit('reldens.savePlayerStatsUpdateClient', updateClient, target, this);
             this.send(updateClient, {
                 act: GameConst.PLAYER_STATS,
                 stats: target.stats,
@@ -409,7 +410,7 @@ class RoomScene extends RoomLogin
                 let res = instC[i];
                 for(let obj of res){
                     if(sc.hasOwn(obj, 'battleEndListener')){
-                        EventsManagerSingleton.offWithKey(obj.key+'battleEnd', 'battleRoom');
+                        this.events.offWithKey(obj.key+'battleEnd', 'battleRoom');
                     }
                 }
             }

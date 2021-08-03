@@ -8,23 +8,27 @@ const { InitialState } = require('../../users/server/initial-state');
 const { InitialUser } = require('../../users/server/initial-user');
 const { PackInterface } = require('../../features/pack-interface');
 const { ModelsManager } = require('./models-manager');
-const { EventsManagerSingleton, sc } = require('@reldens/utils');
 const { UsersConst } = require('../constants');
 const { ObjectsConst } = require('../../objects/constants');
+const { Logger, sc } = require('@reldens/utils');
 
 class UsersPack extends PackInterface
 {
 
-    setupPack()
+    setupPack(props)
     {
+        this.events = sc.getDef(props, 'events', false);
+        if(!this.events){
+            Logger.error('EventsManager undefined in UsersPack.');
+        }
         this.modelsManager = ModelsManager;
         // @TODO - BETA - Move LifeBar to it's own package.
         this.lifeBarConfig = false;
         this.lifeProp = false;
-        EventsManagerSingleton.on('reldens.serverReady', async (event) => {
+        this.events.on('reldens.serverReady', async (event) => {
             await this.onServerReady(event);
         });
-        EventsManagerSingleton.on('reldens.createPlayerAfter', async (client, authResult, currentPlayer, roomScene) => {
+        this.events.on('reldens.createPlayerAfter', async (client, authResult, currentPlayer, roomScene) => {
             await this.onCreatePlayerAfterAppendStats(client, authResult, currentPlayer, roomScene);
         });
     }
@@ -46,14 +50,14 @@ class UsersPack extends PackInterface
         if(!this.lifeProp){
             this.lifeProp = configProcessor.get('client/actions/skills/affectedProperty');
         }
-        EventsManagerSingleton.on('reldens.createPlayerAfter', async (client, authResult, currentPlayer, roomScene) => {
+        this.events.on('reldens.createPlayerAfter', async (client, authResult, currentPlayer, roomScene) => {
             await this.updatePlayersLifebar(roomScene, client, currentPlayer);
             await this.updateEnemiesLifebar(roomScene);
         });
-        EventsManagerSingleton.on('reldens.savePlayerStatsUpdateClient', async (client, target, roomScene) => {
+        this.events.on('reldens.savePlayerStatsUpdateClient', async (client, target, roomScene) => {
             await this.onSavePlayerStatsUpdateClient(client, target, roomScene);
         });
-        EventsManagerSingleton.on('reldens.runBattlePveAfter', async (event) => {
+        this.events.on('reldens.runBattlePveAfter', async (event) => {
             if(!this.lifeBarConfig.showEnemies && !this.lifeBarConfig.showOnClick){
                 return false;
             }
@@ -71,7 +75,7 @@ class UsersPack extends PackInterface
             };
             roomScene.broadcast(updateData);
         });
-        EventsManagerSingleton.on('reldens.restoreObjectAfter', (event) => {
+        this.events.on('reldens.restoreObjectAfter', (event) => {
             let updateData = {
                 act: UsersConst.ACTION_LIFEBAR_UPDATE,
                 oT: 'o',

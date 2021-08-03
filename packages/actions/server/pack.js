@@ -150,7 +150,7 @@ class ActionsPack extends PackInterface
     appendActionsToPlayer(currentPlayer, room)
     {
         currentPlayer.actions = {};
-        let pvpConfig = room.config.get('server/actions/pvp');
+        let pvpConfig = Object.assign({events: this.events}, room.config.get('server/actions/pvp'));
         if(pvpConfig){
             currentPlayer.actions['pvp'] = new Pvp(pvpConfig);
         }

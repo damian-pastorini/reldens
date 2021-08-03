@@ -8,13 +8,17 @@
  */
 
 const { Room } = require('colyseus');
-const { Logger, ErrorManager, sc } = require('@reldens/utils');
+const { ErrorManager, Logger, sc } = require('@reldens/utils');
 
 class RoomLogin extends Room
 {
 
     onCreate(options)
     {
+        this.events = sc.getDef(options, 'events', false);
+        if(!this.events){
+            Logger.error('EventsManager undefined in RoomLogin.');
+        }
         this.config = options.config;
         this.loginManager = options.loginManager;
         // @NOTE: validateRoomData is overridden in RoomScene onCreate.

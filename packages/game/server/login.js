@@ -8,7 +8,7 @@
 
 const path = require('path');
 const { PasswordManager } = require('./password-manager');
-const { EventsManagerSingleton, ErrorManager, sc } = require('@reldens/utils');
+const { ErrorManager, Logger, sc } = require('@reldens/utils');
 
 class LoginManager
 {
@@ -21,6 +21,10 @@ class LoginManager
         this.passwordManager = PasswordManager;
         this.mailer = props.mailer;
         this.themeManager = props.themeManager;
+        this.events = sc.getDef(props, 'events', false);
+        if(!this.events){
+            Logger.error('EventsManager undefined in LoginManager.');
+        }
     }
 
     async processUserRequest(userData = false)
@@ -131,7 +135,7 @@ class LoginManager
                     role_id: this.config.server.players.initialUser.role_id,
                     status: this.config.server.players.initialUser.status
                 });
-                await EventsManagerSingleton.emit('reldens.createNewUserAfter', newUser, this);
+                await this.events.emit('reldens.createNewUserAfter', newUser, this);
                 return {user: newUser};
             } catch (err) {
                 return {error: 'Unable to register the user.', catch: err};
@@ -152,7 +156,7 @@ class LoginManager
             user_id: loginData.user_id,
             state: initialState
         };
-        await EventsManagerSingleton.emit('reldens.createNewPlayerBefore', loginData, playerData, this);
+        await this.events.emit('reldens.createNewPlayerBefore', loginData, playerData, this);
         let isNameAvailable = await this.usersManager.isNameAvailable(playerData.name);
         if(!isNameAvailable){
             return {error: true, message: 'The player name is not available, please choose another name.'};
@@ -160,7 +164,7 @@ class LoginManager
         try {
             let player = await this.usersManager.createPlayer(playerData);
             player.state.scene = await this.getRoomNameById(initialState.room_id);
-            await EventsManagerSingleton.emit('reldens.createdNewPlayer', player, loginData, this);
+            await this.events.emit('reldens.createdNewPlayer', player, loginData, this);
             return {error: false, player};
         } catch (err) {
             return {error: true, message: 'There was an error creating your player, please try again.'};
