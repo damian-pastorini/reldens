@@ -7,36 +7,44 @@
 const { ReceiverWrapper } = require('./receiver-wrapper');
 const { SkillsUi } = require('./skills-ui');
 const { SkillConst } = require('@reldens/skills');
-const { EventsManagerSingleton, sc } = require('@reldens/utils');
+const { Logger, sc } = require('@reldens/utils');
 
 class ActionsPack
 {
 
-    constructor()
+    setupPack(props)
     {
-        EventsManagerSingleton.on('reldens.preloadUiScene', (uiScene) => {
+        this.gameManager = sc.getDef(props, 'gameManager', false);
+        if(!this.gameManager){
+            Logger.error('Game Manager undefined in ActionsPack.');
+        }
+        this.events = sc.getDef(props, 'events', false);
+        if(!this.events){
+            Logger.error('EventsManager undefined in ActionsPack.');
+        }
+        this.events.on('reldens.preloadUiScene', (uiScene) => {
             this.onPreloadUiScene(uiScene);
         });
-        EventsManagerSingleton.on('reldens.beforeCreateEngine', (initialGameData, gameManager) => {
+        this.events.on('reldens.beforeCreateEngine', (initialGameData, gameManager) => {
             let playersConfig = initialGameData.gameConfig.client.players;
             if(playersConfig.multiplePlayers && playersConfig.multiplePlayers.enabled && initialGameData.classesData){
                 this.populateClassesSelector(initialGameData.classesData, gameManager, playersConfig);
             }
         });
-        EventsManagerSingleton.on('reldens.playersOnAdd', (player, key, previousScene, roomEvents) => {
+        this.events.on('reldens.playersOnAdd', (player, key, previousScene, roomEvents) => {
             this.onPlayersOnAdd(player, key, roomEvents);
         });
-        EventsManagerSingleton.on('reldens.playersOnAddReady', (player, key, previousScene, roomEvents) => {
+        this.events.on('reldens.playersOnAddReady', (player, key, previousScene, roomEvents) => {
             this.onPlayersOnAddReady(player, key, roomEvents);
         });
-        EventsManagerSingleton.on('reldens.createPreload', (preloadScene) => {
+        this.events.on('reldens.createPreload', (preloadScene) => {
             let levelsAnimations = preloadScene.gameManager.config.get('client/levels/animations');
             this.loopAnimationsAnd(levelsAnimations, 'create', preloadScene);
             let skillsAnimations = preloadScene.gameManager.config.get('client/skills/animations');
             this.loopAnimationsAnd(skillsAnimations, 'create', preloadScene);
             this.createAvatarsAnimations(preloadScene);
         });
-        EventsManagerSingleton.on('reldens.createUiScene', (preloadScene) => {
+        this.events.on('reldens.createUiScene', (preloadScene) => {
             this.uiManager = new SkillsUi(preloadScene);
             this.uiManager.createUi();
         });
@@ -95,7 +103,7 @@ class ActionsPack
         }
         if(!roomEvents.gameManager.skills){
             // create skills receiver instance:
-            roomEvents.gameManager.skills = new ReceiverWrapper({owner: player}, roomEvents);
+            roomEvents.gameManager.skills = new ReceiverWrapper({owner: player, roomEvents, events: this.events});
         }
         if(!roomEvents.gameManager.skillsQueue.length){
             return false;

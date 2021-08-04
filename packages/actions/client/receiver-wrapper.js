@@ -7,17 +7,21 @@
  */
 
 const { Receiver } = require('@reldens/skills');
-const { EventsManagerSingleton, Logger, sc } = require('@reldens/utils');
+const { Logger, sc } = require('@reldens/utils');
 const { GameConst } = require('../../game/constants');
 
 class ReceiverWrapper extends Receiver
 {
 
-    constructor(props, roomEvents)
+    constructor(props)
     {
         super(props);
-        this.gameManager = roomEvents.gameManager;
-        this.room = roomEvents.room;
+        this.gameManager = props.roomEvents.gameManager;
+        this.room = props.roomEvents.room;
+        this.events = sc.getDef(props, 'events', false);
+        if(!this.events){
+            Logger.error('EventsManager undefined in ReceiverWrapper.');
+        }
     }
 
     processMessage(message)
@@ -28,7 +32,7 @@ class ReceiverWrapper extends Receiver
         }
         super.processMessage(message);
         if(message.act.indexOf('_atk') !== -1 || message.act.indexOf('_eff') !== -1){
-            EventsManagerSingleton.emit('reldens.playerAttack', message, this.room);
+            this.events.emit('reldens.playerAttack', message, this.room);
             let actKey = (message.act.indexOf('_eff') !== -1) ? '_eff' : '_atk';
             let animKey = message.act.substring(0, message.act.indexOf(actKey));
             let ownerSprite = false;

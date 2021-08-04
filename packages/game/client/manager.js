@@ -41,7 +41,7 @@ class GameManager
         // full game config:
         this.config = ConfigProcessor;
         // features manager:
-        this.features = new FeaturesManager();
+        this.features = new FeaturesManager({gameManager: this, events: this.events});
         // active scene:
         this.isChangingScene = false;
         // dom manager:
@@ -153,7 +153,7 @@ class GameManager
         this.userData.selectedPlayer = this.initialGameData.player.id;
         this.userData.selectedScene = this.initialGameData.selectedScene;
         // initialize game engine:
-        this.gameEngine = new GameEngine(this.initialGameData.gameConfig);
+        this.gameEngine = new GameEngine(this.initialGameData.gameConfig, this.events);
         // since the user is now registered:
         this.userData.isNewUser = false;
         // first join the features rooms:
@@ -180,7 +180,7 @@ class GameManager
         await this.events.emit('reldens.joinedRoom', joinedFirstRoom, this);
         await this.events.emit('reldens.joinedRoom_' + playerScene, joinedFirstRoom, this);
         // start listening the new room events:
-        this.activeRoomEvents = this.createRoomEventsInstance(playerScene);
+        this.activeRoomEvents = this.createRoomEventsInstance(playerScene, this.events);
         await this.activeRoomEvents.activateRoom(joinedFirstRoom);
         await this.events.emit('reldens.afterInitEngineAndStartGame', this.initialGameData, joinedFirstRoom);
         return joinedFirstRoom;
@@ -242,22 +242,11 @@ class GameManager
         });
     }
 
-    /**
-     * Create RoomEvents instance.
-     *
-     * @param roomName
-     * @returns {RoomEvents}
-     */
     createRoomEventsInstance(roomName)
     {
-        return new RoomEvents(roomName, this);
+        return new RoomEvents(roomName, this, this.events);
     }
 
-    /**
-     * Generate server URL from configuration or using the current url data.
-     *
-     * @returns {*}
-     */
     getServerUrl()
     {
         if(this.serverUrl){
