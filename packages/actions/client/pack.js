@@ -6,10 +6,11 @@
 
 const { ReceiverWrapper } = require('./receiver-wrapper');
 const { SkillsUi } = require('./skills-ui');
+const { PackInterface } = require('../../features/pack-interface');
 const { SkillConst } = require('@reldens/skills');
 const { Logger, sc } = require('@reldens/utils');
 
-class ActionsPack
+class ActionsPack extends PackInterface
 {
 
     setupPack(props)
