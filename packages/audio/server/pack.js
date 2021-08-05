@@ -48,12 +48,14 @@ class AudioPack extends PackInterface
                 global: this.audioManager.globalAudios
             };
         });
-        this.events.on('reldens.createPlayerAfter', (client, authResult, currentPlayer, roomScene) => {
+        this.events.on('reldens.createPlayerAfter', async (client, authResult, currentPlayer, roomScene) => {
+            let playerConfig = await this.audioManager.loadAudioPlayerConfig(currentPlayer.player_id);
             roomScene.send(client, {
                 act: AudioConst.AUDIO_UPDATE,
                 roomId: roomScene.roomData.roomId,
                 audios: this.audioManager.roomsAudios[roomScene.roomData.roomId],
-                categories: this.audioManager.categories
+                categories: this.audioManager.categories,
+                playerConfig: playerConfig
             });
         });
         this.events.on('reldens.roomsMessageActionsGlobal', (roomMessageActions) => {

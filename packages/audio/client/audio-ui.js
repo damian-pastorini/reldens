@@ -6,7 +6,9 @@
  *
  */
 
+const { SceneAudioPlayer } = require('./scene-audio-player');
 const { AudioConst } = require('../constants');
+const { sc } = require('@reldens/utils');
 
 class AudioUi
 {
@@ -15,23 +17,30 @@ class AudioUi
     {
         this.uiScene = uiScene;
         this.gameManager = this.uiScene.gameManager;
+        this.audioManager = this.gameManager.audioManager;
+        this.sceneAudioPlayer = SceneAudioPlayer;
     }
 
     createUi()
     {
-        if(!this.gameManager.audioManager.categories){
+        if(!this.audioManager.categories){
             return;
         }
         let audioSettingsTemplate = this.uiScene.cache.html.get('audio');
         let audioCategoryTemplate = this.uiScene.cache.html.get('audio-category');
         let categoriesRows = '';
-        for(let i of Object.keys(this.gameManager.audioManager.categories)){
-            let audioCategory = this.gameManager.audioManager.categories[i];
+        for(let i of Object.keys(this.audioManager.categories)){
+            let audioCategory = this.audioManager.categories[i];
+            let audioEnabled = sc.getDef(
+                this.audioManager.playerConfig,
+                audioCategory.id,
+                audioCategory.enabled
+            );
             categoriesRows = categoriesRows + this.gameManager.gameEngine.parseTemplate(audioCategoryTemplate, {
                 categoryId: audioCategory.id,
                 categoryLabel: audioCategory.category_label,
                 categoryKey: audioCategory.category_key,
-                categoryChecked: audioCategory.enabled ? ' checked="checked"' : ''
+                categoryChecked: audioEnabled ? ' checked="checked"' : ''
             });
         }
         let audioSettingsContent = this.gameManager.gameEngine.parseTemplate(audioSettingsTemplate, {
@@ -42,8 +51,12 @@ class AudioUi
         if(audioSettingInputs.length){
             for(let settingInput of audioSettingInputs){
                 settingInput.addEventListener('click', (event) => {
-                    this.gameManager.audioManager.setAudio(event.target.dataset['categoryKey'], settingInput.checked);
+                    this.audioManager.setAudio(event.target.dataset['categoryKey'], settingInput.checked);
                     this.sendAudioUpdate(settingInput.value, settingInput.checked, this.gameManager.activeRoomEvents);
+                    this.sceneAudioPlayer.playSceneAudio(
+                        this.audioManager,
+                        this.gameManager.getActiveScene()
+                    );
                 });
             }
         }
@@ -51,8 +64,11 @@ class AudioUi
 
     sendAudioUpdate(updateType, updateValue, roomEvents)
     {
-        let messageData = {act: AudioConst.AUDIO_UPDATE, up: updateValue, ck: updateType};
-        roomEvents.room.send(messageData);
+        roomEvents.room.send({
+            act: AudioConst.AUDIO_UPDATE,
+            up: updateValue,
+            ck: updateType
+        });
     }
 
 }

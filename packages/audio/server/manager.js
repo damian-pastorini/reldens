@@ -48,16 +48,28 @@ class AudioManager
         return this.roomsAudios[roomId];
     }
 
+    async loadAudioPlayerConfig(playerId)
+    {
+        let configModels = await this.models.AudioPlayerConfigModel.query().where('player_id', playerId);
+        let playerConfig = {};
+        if(configModels.length > 0){
+            for(let config of configModels){
+                playerConfig[config['category_id']] = config['enabled'];
+            }
+        }
+        return playerConfig;
+    }
+
     // eslint-disable-next-line no-unused-vars
     async parseMessageAndRunActions(client, message, room, playerSchema)
     {
         if(message.act !== AudioConst.AUDIO_UPDATE){
-            return;
+            return false;
         }
         let currentPlayer = room.getPlayerFromState(client.sessionId);
         let audioCategory = await this.models.audioCategories.loadBy('category_key', message.ck).first();
         if(!currentPlayer || currentPlayer.playerId || !audioCategory){
-            return;
+            return false;
         }
         let updatePatch = {
             player_id: currentPlayer.player_id,

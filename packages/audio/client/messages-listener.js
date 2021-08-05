@@ -21,6 +21,9 @@ class MessagesListener
             if(message.act !== AudioConst.AUDIO_UPDATE){
                 return;
             }
+            if(message.playerConfig){
+                gameManager.audioManager.playerConfig = message.playerConfig;
+            }
             if(message.categories){
                 gameManager.audioManager.addCategories(message.categories);
                 gameManager.events.emit('reldens.audioManagerUpdateCategoriesLoaded', this, room, gameManager, message);

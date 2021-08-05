@@ -4,8 +4,8 @@
  *
  */
 
-const { sc } = require('@reldens/utils');
 const { AudioConst } = require('../constants');
+const { sc } = require('@reldens/utils');
 
 class SceneAudioPlayer
 {
@@ -98,7 +98,8 @@ class SceneAudioPlayer
         // the category on/off at any time.
         let audioCategoryKey = associatedAudio.audio.data.category.category_key;
         let audioCategory = sc.getDef(audioManager.categories, audioCategoryKey, false);
-        if(!audioCategory || !audioCategory.enabled){
+        let audioEnabled = sc.getDef(audioManager.playerConfig, audioCategory.id, audioCategory.enabled);
+        if(!audioCategory || !audioEnabled){
             return false;
         }
         let audioInstance = associatedAudio.audio.audioInstance;

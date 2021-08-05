@@ -29,7 +29,7 @@ class AudioPack extends PackInterface
     listenEvents()
     {
         this.events.on('reldens.beforeCreateEngine', (initialGameData, gameManager) => {
-            gameManager.audioManager = new AudioManager();
+            gameManager.audioManager = new AudioManager({events: this.events});
             this.initialAudiosData = sc.getDef(initialGameData, 'audio', {});
         });
         this.events.on('reldens.joinedRoom', (room, gameManager) => {

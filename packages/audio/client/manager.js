@@ -4,16 +4,21 @@
  *
  */
 
-const { sc } = require('@reldens/utils');
+const { Logger, sc } = require('@reldens/utils');
 
 class AudioManager
 {
 
     constructor(props)
     {
+        this.events = sc.getDef(props, 'events', false);
+        if(!this.events){
+            Logger.error('EventsManager undefined in ChatPack.');
+        }
         this.globalAudios = sc.getDef(props, 'globalAudios', {});
         this.roomsAudios = sc.getDef(props, 'roomsAudios', {});
         this.categories = sc.getDef(props, 'categories', {});
+        this.playerConfig = sc.getDef(props, 'playerConfig', {});
         this.playing = {};
         this.defaultAudioConfig = {
             mute: false,
@@ -28,28 +33,33 @@ class AudioManager
 
     setAudio(audioType, enabled)
     {
-        let isEnabled = Boolean(enabled);
-        this.categories[audioType].enabled = isEnabled;
+        this.events.emit('reldens.setAudio', {
+            audioManager: this,
+            categoryKey: audioType,
+            enabled
+        });
+        let category = this.categories[audioType];
+        this.playerConfig[category.id] = enabled ? 1 : 0;
         if(!sc.hasOwn(this.playing, audioType)){
             return true;
         }
-        let playOrStop = isEnabled ? 'play' : 'stop';
+        let playOrStop = enabled ? 'play' : 'stop';
         // if is single track we will stop or play the last audio:
-        if(this.categories[audioType].single_audio && typeof this.playing[audioType].stop === 'function'){
+        if(category.single_audio && typeof this.playing[audioType][playOrStop] === 'function'){
             this.playing[audioType][playOrStop]();
-            this.playing[audioType].mute = !isEnabled;
+            this.playing[audioType].mute = !enabled;
             return true;
         }
         // if is multi-track we will only stop all the audios but replay them only when the events require it:
         let audioTypesKeys = Object.keys(this.playing[audioType]);
-        if(!this.categories[audioType].single_audio && audioTypesKeys.length){
+        if(!category.single_audio && audioTypesKeys.length){
             for(let i of audioTypesKeys){
                 let playingAudio = this.playing[audioType][i];
                 if(playingAudio && typeof playingAudio.stop === 'function'){
-                    if(!isEnabled){
+                    if(!enabled){
                         playingAudio.stop();
                     }
-                    playingAudio.mute = !isEnabled;
+                    playingAudio.mute = !enabled;
                 }
             }
             return true
