@@ -62,17 +62,17 @@ class SceneDynamic extends Scene
             Input.Keyboard.KeyCodes.DOWN,
             Input.Keyboard.KeyCodes.S
         ];
-        this.gameManager.gameDom.getElement('input').addEventListener('focus', () => {
-            for(let keyCode of keys){
-                this.input.keyboard.removeCapture(keyCode);
-            }
-        });
-        this.gameManager.gameDom.getElement('input').addEventListener('blur', () => {
-            for(let keyCode of keys){
-                this.input.keyboard.addCapture(keyCode);
-            }
-        });
+        let inputElements = this.gameManager.gameDom.getElements('input');
+        for(let inputElement of inputElements){
+            this.loopKeysAddListenerToElement(keys, inputElement, 'focusin', 'removeCapture');
+            this.loopKeysAddListenerToElement(keys, inputElement, 'click', 'removeCapture');
+            this.loopKeysAddListenerToElement(keys, inputElement, 'focusout', 'addCapture');
+            this.loopKeysAddListenerToElement(keys, inputElement, 'blur', 'addCapture');
+        }
         this.input.keyboard.on('keydown', (event) => {
+            if(this.gameManager.gameDom.insideInput()){
+                return false;
+            }
             // @TODO - BETA - Make configurable the keys related to the actions and skills.
             // keyCode = 32 > spacebar
             if(event.keyCode === 32 && !this.gameManager.gameDom.insideInput()){
@@ -299,6 +299,15 @@ class SceneDynamic extends Scene
             returnObj = currentPlayer.players[extraData[objKey+'K']];
         }
         return returnObj;
+    }
+
+    loopKeysAddListenerToElement(keys, element, eventName, action)
+    {
+        element.addEventListener(eventName, () => {
+            for(let keyCode of keys){
+                this.input.keyboard[action](keyCode);
+            }
+        });
     }
 
 }

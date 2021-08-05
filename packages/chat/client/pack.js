@@ -6,23 +6,28 @@
 
 const { ChatUi } = require('./chat-ui');
 const { ChatConst } = require('../constants');
-const { EventsManagerSingleton, Logger } = require('@reldens/utils');
+const { PackInterface } = require('../../features/pack-interface');
+const { Logger, sc} = require('@reldens/utils');
 
-class ChatPack
+class ChatPack extends PackInterface
 {
 
-    constructor()
+    setupPack(props)
     {
+        this.events = sc.getDef(props, 'events', false);
+        if(!this.events){
+            Logger.error('EventsManager undefined in ChatPack.');
+        }
         this.joinRooms = [ChatConst.CHAT_GLOBAL];
         // chat messages are global for all rooms so we use the generic event for every joined room:
-        EventsManagerSingleton.on('reldens.joinedRoom', (room, gameManager) => {
+        this.events.on('reldens.joinedRoom', (room, gameManager) => {
             this.listenMessages(room, gameManager);
         });
-        EventsManagerSingleton.on('reldens.preloadUiScene', (preloadScene) => {
+        this.events.on('reldens.preloadUiScene', (preloadScene) => {
             preloadScene.load.html('chat', 'assets/features/chat/templates/ui-chat.html');
             preloadScene.load.html('chatMessage', 'assets/features/chat/templates/message.html');
         });
-        EventsManagerSingleton.on('reldens.createUiScene', (preloadScene) => {
+        this.events.on('reldens.createUiScene', (preloadScene) => {
             this.uiManager = new ChatUi(preloadScene);
             this.uiManager.createUi();
         });
