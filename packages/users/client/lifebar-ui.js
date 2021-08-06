@@ -8,10 +8,15 @@ const { UsersConst } = require('../constants');
 const { ActionsConst } = require('../../actions/constants');
 const { GameConst } = require('../../game/constants');
 const { ObjectsConst } = require('../../objects/constants');
-const { EventsManagerSingleton, sc } = require('@reldens/utils');
+const { sc } = require('@reldens/utils');
 
 class LifebarUi
 {
+
+    constructor(props)
+    {
+        this.events = props.events;
+    }
 
     setup(gameManager)
     {
@@ -25,19 +30,19 @@ class LifebarUi
         this.barProperty = this.gameManager.config.get('client/actions/skills/affectedProperty');
         this.playerSize = this.gameManager.config.get('client/players/size');
         this.lifeBars = {};
-        EventsManagerSingleton.on('reldens.playerStatsUpdateAfter', (message, roomEvents) => {
+        this.events.on('reldens.playerStatsUpdateAfter', (message, roomEvents) => {
             this.onPlayerStatsUpdateAfter(message, roomEvents);
         });
         // eslint-disable-next-line no-unused-vars
-        EventsManagerSingleton.on('reldens.joinedRoom', (room, gameManager) => {
+        this.events.on('reldens.joinedRoom', (room, gameManager) => {
             this.listenMessages(room);
         });
         // eslint-disable-next-line no-unused-vars
-        EventsManagerSingleton.on('reldens.runPlayerAnimation', (playerEngine, playerId, player) => {
+        this.events.on('reldens.runPlayerAnimation', (playerEngine, playerId, player) => {
             this.drawLifeBar(playerId);
         });
         // eslint-disable-next-line no-unused-vars
-        EventsManagerSingleton.on('reldens.updateGameSizeBefore', (gameEngine, newWidth, newHeight) => {
+        this.events.on('reldens.updateGameSizeBefore', (gameEngine, newWidth, newHeight) => {
             if(!this.barConfig.fixedPosition){
                 return false;
             }
@@ -45,26 +50,26 @@ class LifebarUi
             this.drawLifeBar(this.gameManager.getCurrentPlayer().playerId);
         });
         // eslint-disable-next-line no-unused-vars
-        EventsManagerSingleton.on('reldens.playersOnRemove', (player, key, roomEvents) => {
+        this.events.on('reldens.playersOnRemove', (player, key, roomEvents) => {
             this.removeLifeBar(key);
         });
         // eslint-disable-next-line no-unused-vars
-        EventsManagerSingleton.on('reldens.playersOnAddReady', (player, key, previousScene, roomEvents) => {
+        this.events.on('reldens.playersOnAddReady', (player, key, previousScene, roomEvents) => {
             this.processLifeBarQueue();
         });
         // eslint-disable-next-line no-unused-vars
-        EventsManagerSingleton.on('reldens.playerEngineAddPlayer', (playerEngine, addedPlayerId, addedPlayerData) => {
+        this.events.on('reldens.playerEngineAddPlayer', (playerEngine, addedPlayerId, addedPlayerData) => {
             this.processLifeBarQueue();
         });
-        EventsManagerSingleton.on('reldens.objectBodyChanged', (event) => {
+        this.events.on('reldens.objectBodyChanged', (event) => {
             return this.generateObjectLifeBar(event.key);
         });
         // eslint-disable-next-line no-unused-vars
-        EventsManagerSingleton.on('reldens.gameEngineShowTarget', (gameEngine, target, previousTarget) => {
+        this.events.on('reldens.gameEngineShowTarget', (gameEngine, target, previousTarget) => {
             this.showTargetLifeBar(target, previousTarget);
         });
         // eslint-disable-next-line no-unused-vars
-        EventsManagerSingleton.on('reldens.gameEngineClearTarget', (gameEngine, previousTarget) => {
+        this.events.on('reldens.gameEngineClearTarget', (gameEngine, previousTarget) => {
             this.clearPreviousBar(previousTarget);
         });
         return this;

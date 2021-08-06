@@ -5,21 +5,29 @@
  */
 
 const { ItemsEvents, ItemsConst } = require('@reldens/items-system');
-const { EventsManagerSingleton, Logger } = require('@reldens/utils');
 const { InventoryUi } = require('./inventory-ui');
 const { InventoryReceiver } = require('./inventory-receiver');
 const { InventoryConst } = require('../constants');
+const { Logger, sc} = require('@reldens/utils');
 
 class InventoryPack
 {
 
-    constructor()
+    setupPack(props)
     {
+        this.gameManager = sc.getDef(props, 'gameManager', false);
+        if(!this.gameManager){
+            Logger.error('Game Manager undefined in InventoryPack.');
+        }
+        this.events = sc.getDef(props, 'events', false);
+        if(!this.events){
+            Logger.error('EventsManager undefined in InventoryPack.');
+        }
         // eslint-disable-next-line no-unused-vars
-        EventsManagerSingleton.on('reldens.playersOnAdd', (player, key, previousScene, roomEvents) => {
+        this.events.on('reldens.playersOnAdd', (player, key, previousScene, roomEvents) => {
             this.onPlayerAdd(key, roomEvents, player);
         });
-        EventsManagerSingleton.on('reldens.preloadUiScene', (preloadScene) => {
+        this.events.on('reldens.preloadUiScene', (preloadScene) => {
             preloadScene.load.html('inventory', 'assets/features/inventory/templates/ui-inventory.html');
             preloadScene.load.html('equipment', 'assets/features/inventory/templates/ui-equipment.html');
             preloadScene.load.html('inventoryItem', 'assets/features/inventory/templates/item.html');
@@ -27,7 +35,7 @@ class InventoryPack
             preloadScene.load.html('inventoryItemEquip', 'assets/features/inventory/templates/equip.html');
             preloadScene.load.html('inventoryGroup', 'assets/features/inventory/templates/group.html');
         });
-        EventsManagerSingleton.on('reldens.createUiScene', (preloadScene) => {
+        this.events.on('reldens.createUiScene', (preloadScene) => {
             return this.onPreloadUiScene(preloadScene);
         });
     }

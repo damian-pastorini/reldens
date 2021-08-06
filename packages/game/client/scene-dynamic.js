@@ -31,7 +31,12 @@ class SceneDynamic extends Scene
         // frame rate:
         this.configuredFrameRate = this.gameManager.config.get('client/general/animations/frameRate') || 10;
         let minimapConfig = this.gameManager.config.get('client/ui/minimap');
-        this.minimap = minimapConfig.enabled ? new Minimap(minimapConfig) : false;
+        this.minimap = minimapConfig.enabled ? this.createMinimapInstance(minimapConfig) : false;
+    }
+
+    createMinimapInstance(config)
+    {
+        return new Minimap({config, events: this.gameManager.events});
     }
 
     init()

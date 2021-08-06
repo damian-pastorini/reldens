@@ -7,12 +7,12 @@
  */
 
 const { Scene, Geom } = require('phaser');
-const { EventsManagerSingleton, Logger, sc } = require('@reldens/utils');
 const { MinimapUi } = require('./minimap-ui');
 const { InstructionsUi } = require('./instructions-ui');
 const { SettingsUi } = require('./settings-ui');
 const { GameConst } = require('../constants');
 const { ActionsConst } = require('../../actions/constants');
+const { Logger, sc } = require('@reldens/utils');
 
 class ScenePreloader extends Scene
 {
@@ -32,6 +32,7 @@ class ScenePreloader extends Scene
         this.uiScene = props.uiScene;
         this.elementsUi = {};
         this.gameManager = props.gameManager;
+        this.eventsManager = props.gameManager.events;
         this.preloadAssets = props.preloadAssets;
         this.directionalAnimations = {};
         this.objectsAnimations = {};
@@ -47,10 +48,10 @@ class ScenePreloader extends Scene
     {
         // @NOTE: this event run once for each scene.
         let eventUiScene = this.uiScene ? this : this.gameManager.gameEngine.uiScene;
-        EventsManagerSingleton.emit('reldens.beforePreload', this, eventUiScene);
+        this.eventsManager.emit('reldens.beforePreload', this, eventUiScene);
         if(this.uiScene){
             // @NOTE: the events here run only once over all the game progress.
-            EventsManagerSingleton.emit('reldens.beforePreloadUiScene', this);
+            this.eventsManager.emit('reldens.beforePreloadUiScene', this);
             // ui elements:
             if(this.gameManager.config.get('client/ui/playerBox/enabled')){
                 this.load.html('playerBox', 'assets/html/ui-player-box.html');
@@ -75,7 +76,7 @@ class ScenePreloader extends Scene
             this.load.html('uiOptionButton', 'assets/html/ui-option-button.html');
             this.load.html('uiOptionIcon', 'assets/html/ui-option-icon.html');
             this.load.html('uiOptionsContainer', 'assets/html/ui-options-container.html');
-            EventsManagerSingleton.emit('reldens.preloadUiScene', this);
+            this.eventsManager.emit('reldens.preloadUiScene', this);
         }
         // maps:
         if(this.preloadMapKey){
@@ -132,10 +133,10 @@ class ScenePreloader extends Scene
     {
         // @NOTE: this event run once for each scene.
         let eventUiScene = this.uiScene ? this : this.gameManager.gameEngine.uiScene;
-        EventsManagerSingleton.emit('reldens.createPreload', this, eventUiScene);
+        this.eventsManager.emit('reldens.createPreload', this, eventUiScene);
         if(this.uiScene){
             // @NOTE: the events here run only once over all the game progress.
-            EventsManagerSingleton.emit('reldens.beforeCreateUiScene', this);
+            this.eventsManager.emit('reldens.beforeCreateUiScene', this);
             // create playerBox:
             let playerBox = this.getUiConfig('playerBox');
             if(playerBox.enabled){
@@ -192,7 +193,7 @@ class ScenePreloader extends Scene
                 this.settingsUi.setup(settingsConfig, this);
             }
             // end event:
-            EventsManagerSingleton.emit('reldens.createUiScene', this);
+            this.eventsManager.emit('reldens.createUiScene', this);
         }
         // player animations:
         this.createPlayerAnimations(GameConst.IMAGE_PLAYER);
@@ -275,7 +276,7 @@ class ScenePreloader extends Scene
         for(let anim of availableAnimations){
             this.createAnimationWith(anim);
         }
-        EventsManagerSingleton.emit('reldens.createPlayerAnimations', this, avatarKey);
+        this.eventsManager.emit('reldens.createPlayerAnimations', this, avatarKey);
     }
 
     createArrowAnimation()

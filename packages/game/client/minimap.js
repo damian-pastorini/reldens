@@ -5,14 +5,15 @@
  */
 
 const { Renderer } = require('phaser');
-const { EventsManagerSingleton, sc } = require('@reldens/utils');
+const { sc } = require('@reldens/utils');
 
 class Minimap
 {
 
-    constructor(minimapConfig)
+    constructor(props)
     {
-        this.config = minimapConfig;
+        this.config = props.config;
+        this.events = props.events;
     }
 
     createMap(scene, playerSprite)
@@ -42,7 +43,7 @@ class Minimap
             }
             this.createRoundCamera(scene);
         }
-        EventsManagerSingleton.emit('reldens.createdMinimap', this);
+        this.events.emit('reldens.createdMinimap', this);
     }
 
     addMinimapCircle(scene)

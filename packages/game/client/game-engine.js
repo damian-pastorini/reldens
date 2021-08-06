@@ -10,23 +10,18 @@ const { Game, Input } = require('phaser');
 const TemplateEngine = require('mustache');
 const { GameConst } = require('../constants');
 const { ObjectsConst } = require('../../objects/constants');
-const { EventsManagerSingleton, sc } = require('@reldens/utils');
+const { sc } = require('@reldens/utils');
 
 class GameEngine extends Game
 {
 
-    constructor(GameConfig)
+    constructor(props)
     {
-        super(GameConfig);
+        super(props.config);
         // uiScene is where we will keep all the game UI elements:
         this.uiScene = false;
         this.TemplateEngine = TemplateEngine;
-        EventsManagerSingleton.on('reldens.beforeReconnectGameClient', () => {
-            this.clearTarget();
-        });
-        EventsManagerSingleton.on('reldens.beforeSceneDynamicCreate', (sceneDynamic) => {
-            this.setupTabTarget(sceneDynamic);
-        });
+        this.eventsManager = props.events;
     }
 
     parseTemplate(template, view, partials, tags)
@@ -39,15 +34,15 @@ class GameEngine extends Game
         // get the window size:
         let {newWidth, newHeight} = this.getCurrentScreenSize(manager);
         setTimeout(() => {
-            EventsManagerSingleton.emit('reldens.updateGameSizeBefore', this, newWidth, newHeight);
-            manager.gameEngine.scale.setGameSize(newWidth, newHeight);
+            this.eventsManager.emit('reldens.updateGameSizeBefore', this, newWidth, newHeight);
+            this.scale.setGameSize(newWidth, newHeight);
             for(let key of Object.keys(this.uiScene.elementsUi)){
                 let {uiX, uiY} = this.uiScene.getUiConfig(key, newWidth, newHeight);
                 let uiElement = this.uiScene.elementsUi[key];
                 uiElement.x = uiX;
                 uiElement.y = uiY;
             }
-            EventsManagerSingleton.emit('reldens.updateGameSizeAfter', this, newWidth, newHeight);
+            this.eventsManager.emit('reldens.updateGameSizeAfter', this, newWidth, newHeight);
         }, 500);
     }
 
@@ -79,7 +74,7 @@ class GameEngine extends Game
             this.uiScene.uiTarget.getChildByID('box-target').style.display = 'block';
             this.uiScene.uiTarget.getChildByID('target-container').innerHTML = targetName;
         }
-        EventsManagerSingleton.emit('reldens.gameEngineShowTarget', this, target, previousTarget);
+        this.eventsManager.emit('reldens.gameEngineShowTarget', this, target, previousTarget);
     }
 
     clearTarget()
@@ -91,7 +86,7 @@ class GameEngine extends Game
             this.uiScene.uiTarget.getChildByID('box-target').style.display = 'none';
             this.uiScene.uiTarget.getChildByID('target-container').innerHTML = '';
         }
-        EventsManagerSingleton.emit('reldens.gameEngineClearTarget', this, clearedTargetData);
+        this.eventsManager.emit('reldens.gameEngineClearTarget', this, clearedTargetData);
     }
 
     setupTabTarget(sceneDynamic)
@@ -134,7 +129,7 @@ class GameEngine extends Game
         }
         currentPlayer.currentTarget = closerTarget;
         this.showTarget(targetName, closerTarget, previousTarget);
-        EventsManagerSingleton.emit('reldens.gameEngineTabTarget', this, closerTarget, previousTarget);
+        this.eventsManager.emit('reldens.gameEngineTabTarget', this, closerTarget, previousTarget);
     }
 
 }

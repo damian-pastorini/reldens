@@ -4,7 +4,7 @@
  *
  */
 
-const { EventsManagerSingleton, Logger, sc } = require('@reldens/utils');
+const { Logger, sc } = require('@reldens/utils');
 const { LifebarUi } = require('./lifebar-ui');
 const { PlayerStatsUi } = require('./player-stats-ui');
 const { GameConst } = require('../../game/constants');
@@ -12,18 +12,26 @@ const { GameConst } = require('../../game/constants');
 class UsersPack
 {
 
-    constructor()
+    setupPack(props)
     {
+        this.gameManager = sc.getDef(props, 'gameManager', false);
+        if(!this.gameManager){
+            Logger.error('Game Manager undefined in InventoryPack.');
+        }
+        this.events = sc.getDef(props, 'events', false);
+        if(!this.events){
+            Logger.error('EventsManager undefined in InventoryPack.');
+        }
         this.initialGameData = {};
-        EventsManagerSingleton.on('reldens.beforeCreateEngine', (initialGameData, gameManager) => {
+        this.events.on('reldens.beforeCreateEngine', (initialGameData, gameManager) => {
             this.initialGameData = initialGameData;
             this.onBeforeCreateEngine(initialGameData, gameManager);
             if(!this.lifeBarUi){
-                this.lifeBarUi = new LifebarUi();
+                this.lifeBarUi = new LifebarUi({events: this.events});
                 this.lifeBarUi.setup(gameManager);
             }
         });
-        this.playerStatsUi = new PlayerStatsUi({eventsManager: EventsManagerSingleton});
+        this.playerStatsUi = new PlayerStatsUi({events: this.events});
         this.playerStatsUi.setup();
     }
 

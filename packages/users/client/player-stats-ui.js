@@ -4,14 +4,12 @@
  *
  */
 
-const { EventsManagerSingleton, sc } = require('@reldens/utils');
-
 class PlayerStatsUi
 {
 
     constructor(props)
     {
-        this.events = sc.getDef(props, 'eventsManager', EventsManagerSingleton);
+        this.events = props.events;
     }
 
     setup()

@@ -4,14 +4,22 @@
  *
  */
 
-const { EventsManagerSingleton, sc } = require('@reldens/utils');
+const { Logger, sc} = require('@reldens/utils');
 
 class RoomsPack
 {
 
-    constructor()
+    setupPack(props)
     {
-        EventsManagerSingleton.on('reldens.beforeCreateEngine', (initialGameData, gameManager) => {
+        this.gameManager = sc.getDef(props, 'gameManager', false);
+        if(!this.gameManager){
+            Logger.error('Game Manager undefined in InventoryPack.');
+        }
+        this.events = sc.getDef(props, 'events', false);
+        if(!this.events){
+            Logger.error('EventsManager undefined in InventoryPack.');
+        }
+        this.events.on('reldens.beforeCreateEngine', (initialGameData, gameManager) => {
             let playersConfig = initialGameData.gameConfig.client.players;
             let multiConfig = sc.getDef(playersConfig, 'multiplePlayers', false);
             if(
@@ -26,7 +34,7 @@ class RoomsPack
                 this.populateSceneSelector(initialGameData.roomSelection, gameManager);
             }
         });
-        EventsManagerSingleton.on('reldens.onPreparePlayerSelectorFormSubmit', (usersPack,
+        this.events.on('reldens.onPreparePlayerSelectorFormSubmit', (usersPack,
             form,
             select,
             selectedPlayer,

@@ -6,7 +6,7 @@
  *
  */
 
-const { EventsManagerSingleton, Logger, sc } = require('@reldens/utils');
+const { Logger, sc } = require('@reldens/utils');
 const { GameConst } = require('../../game/constants');
 const { ActionsConst } = require('../../actions/constants');
 
@@ -18,6 +18,7 @@ class PlayerEngine
         this.scene = scene;
         this.config = gameManager.config;
         this.gameManager = gameManager;
+        this.events = gameManager.events;
         this.playerName = playerData.playerName;
         this.avatarKey = playerData.avatarKey;
         this.roomName = playerData.state.scene;
@@ -84,7 +85,7 @@ class PlayerEngine
         this.players[id].moveSprites = {};
         this.players[id].setDepth(this.players[id].y + this.players[id].body.height);
         this.players[id].setCollideWorldBounds(this.collideWorldBounds);
-        EventsManagerSingleton.emit('reldens.playerEngineAddPlayer', this, id, addPlayerData);
+        this.events.emit('reldens.playerEngineAddPlayer', this, id, addPlayerData);
         return this.players[id];
     }
 
@@ -105,7 +106,7 @@ class PlayerEngine
             playerSprite.anims.stop();
             playerSprite.mov = player.state.mov;
         }
-        EventsManagerSingleton.emit('reldens.runPlayerAnimation', this, playerId, player);
+        this.events.emit('reldens.runPlayerAnimation', this, playerId, player);
         let nameConfig = this.gameManager.config.get('client/ui/players');
         if(nameConfig.showNames && playerSprite.nameSprite){
             let relativeNamePosition = this.getNamePosition(playerSprite, nameConfig);

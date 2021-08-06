@@ -153,7 +153,7 @@ class GameManager
         this.userData.selectedPlayer = this.initialGameData.player.id;
         this.userData.selectedScene = this.initialGameData.selectedScene;
         // initialize game engine:
-        this.gameEngine = new GameEngine(this.initialGameData.gameConfig, this.events);
+        this.gameEngine = new GameEngine({config: this.initialGameData.gameConfig, events: this.events});
         // since the user is now registered:
         this.userData.isNewUser = false;
         // first join the features rooms:

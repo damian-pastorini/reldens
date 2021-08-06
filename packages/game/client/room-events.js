@@ -11,7 +11,7 @@ const { PlayerEngine } = require('../../users/client/player-engine');
 const { SceneDynamic } = require('./scene-dynamic');
 const { ScenePreloader } = require('./scene-preloader');
 const { GameConst } = require('../constants');
-const { EventsManagerSingleton, Logger, sc } = require('@reldens/utils');
+const { Logger, sc } = require('@reldens/utils');
 
 class RoomEvents
 {
@@ -25,12 +25,13 @@ class RoomEvents
         this.gameManager = gameManager;
         this.gameEngine = gameManager.gameEngine;
         this.roomName = roomName;
+        this.events = gameManager.events;
         this.objectsUi = {};
     }
 
     async activateRoom(room, previousScene = false)
     {
-        await EventsManagerSingleton.emit('reldens.activateRoom', room, this.gameManager);
+        await this.events.emit('reldens.activateRoom', room, this.gameManager);
         this.room = room;
         // listen to changes coming from the server:
         this.room.state.players.onAdd = (player, key) => {
@@ -56,7 +57,7 @@ class RoomEvents
 
     async playersOnAdd(player, key, previousScene)
     {
-        await EventsManagerSingleton.emit('reldens.playersOnAdd', player, key, previousScene, this);
+        await this.events.emit('reldens.playersOnAdd', player, key, previousScene, this);
         let addPlayerData = {
             x: player.state.x,
             y: player.state.y,
@@ -73,7 +74,7 @@ class RoomEvents
                 for(let i of Object.keys(this.playersQueue)){
                     currentScene.player.addPlayer(i, this.playersQueue[i]);
                 }
-                await EventsManagerSingleton.emit('reldens.playersQueue', player, key, previousScene, this);
+                await this.events.emit('reldens.playersQueue', player, key, previousScene, this);
             }
         } else {
             // add new players into the current player scene:
@@ -111,7 +112,7 @@ class RoomEvents
 
     playersOnRemove(player, key)
     {
-        EventsManagerSingleton.emit('reldens.playersOnRemove', player, key, this);
+        this.events.emit('reldens.playersOnRemove', player, key, this);
         if(key === this.room.sessionId){
             // @TODO - BETA - Improve disconnection handler.
             if(!this.gameManager.gameOver){
@@ -130,7 +131,7 @@ class RoomEvents
     roomOnMessage(message)
     {
         if(message.act === GameConst.GAME_OVER){
-            EventsManagerSingleton.emit('reldens.gameOver', message, this);
+            this.events.emit('reldens.gameOver', message, this);
             this.gameManager.gameOver = true;
             let currentPlayer = this.gameManager.getCurrentPlayer();
             let currentPlayerSprite = currentPlayer.players[currentPlayer.playerId];
@@ -148,7 +149,7 @@ class RoomEvents
             && message.scene === this.room.name
             && this.room.sessionId !== message.id
         ){
-            EventsManagerSingleton.emit('reldens.changedScene', message, this);
+            this.events.emit('reldens.changedScene', message, this);
             let currentScene = this.getActiveScene();
             // if other users enter in the current scene we need to add them:
             let {id, x, y, dir, playerName, avatarKey} = message;
@@ -159,17 +160,17 @@ class RoomEvents
         }
         // @NOTE: here we don't need to evaluate the id since the reconnect only is sent to the current client.
         if(message.act === GameConst.RECONNECT){
-            EventsManagerSingleton.emit('reldens.beforeReconnectGameClient', message, this);
+            this.events.emit('reldens.beforeReconnectGameClient', message, this);
             this.gameManager.reconnectGameClient(message, this.room);
         }
         // @NOTE: now this method will update the stats every time the stats action is received but the UI will be
         // created only once in the preloader.
         if(message.act === GameConst.PLAYER_STATS){
-            EventsManagerSingleton.emit('reldens.playerStatsUpdateBefore', message, this);
+            this.events.emit('reldens.playerStatsUpdateBefore', message, this);
             this.updatePlayerStats(message);
         }
         if(message.act === GameConst.UI && message.id){
-            EventsManagerSingleton.emit('reldens.initUi', message, this);
+            this.events.emit('reldens.initUi', message, this);
             this.initUi(message);
         }
     }
@@ -220,7 +221,7 @@ class RoomEvents
             });
             statsPanel.innerHTML = statsPanel.innerHTML+parsedStatsTemplate;
         }
-        EventsManagerSingleton.emit('reldens.playerStatsUpdateAfter', message, this);
+        this.events.emit('reldens.playerStatsUpdateAfter', message, this);
     }
 
     initUi(props)
@@ -284,7 +285,7 @@ class RoomEvents
 
     async startEngineScene(player, room, previousScene = false)
     {
-        await EventsManagerSingleton.emit('reldens.startEngineScene', this, player, room, previousScene);
+        await this.events.emit('reldens.startEngineScene', this, player, room, previousScene);
         let uiScene = false;
         if(!this.gameEngine.uiScene){
             uiScene = true;
@@ -301,7 +302,7 @@ class RoomEvents
                 objectsAnimationsData: this.sceneData.objectsAnimationsData
             });
             this.gameEngine.scene.add(preloaderName, this.scenePreloader, true);
-            await EventsManagerSingleton.emit('reldens.createdPreloaderInstance', this, this.scenePreloader);
+            await this.events.emit('reldens.createdPreloaderInstance', this, this.scenePreloader);
             let preloader = this.gameEngine.scene.getScene(preloaderName);
             preloader.load.on('complete', async () => {
                 // set ui on first preloader scene:
@@ -323,14 +324,14 @@ class RoomEvents
             let currentScene = this.getActiveScene();
             currentScene.objectsAnimationsData = this.sceneData.objectsAnimationsData;
             this.scenePreloader = this.gameEngine.scene.getScene(preloaderName);
-            await EventsManagerSingleton.emit('reldens.createdPreloaderRecurring', this, this.scenePreloader);
+            await this.events.emit('reldens.createdPreloaderRecurring', this, this.scenePreloader);
             await this.createEngineScene(player, room, previousScene);
         }
     }
 
     async createEngineScene(player, room, previousScene)
     {
-        await EventsManagerSingleton.emit('reldens.createEngineScene', player, room, previousScene, this);
+        await this.events.emit('reldens.createEngineScene', player, room, previousScene, this);
         if(!this.gameManager.room){
             this.gameEngine.scene.start(player.state.scene);
         } else {
@@ -376,13 +377,13 @@ class RoomEvents
         this.room.send({act: GameConst.PLAYER_STATS});
         // send notification about client joined:
         this.room.send({act: GameConst.CLIENT_JOINED});
-        await EventsManagerSingleton.emit('reldens.playersOnAddReady',
+        await this.events.emit('reldens.playersOnAddReady',
             currentScene.player,
             currentScene.player.playerId,
             previousScene,
             this
         );
-        await EventsManagerSingleton.emit('reldens.createEngineSceneDone', currentScene, previousScene, this);
+        await this.events.emit('reldens.createEngineSceneDone', currentScene, previousScene, this);
     }
 
     getActiveScene()
