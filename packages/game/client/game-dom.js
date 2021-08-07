@@ -89,4 +89,4 @@ class GameDom
 
 }
 
-module.exports.GameDom = GameDom;
+module.exports.GameDom = new GameDom();

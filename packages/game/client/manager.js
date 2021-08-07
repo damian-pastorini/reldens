@@ -45,7 +45,7 @@ class GameManager
         // active scene:
         this.isChangingScene = false;
         // dom manager:
-        this.gameDom = new GameDom();
+        this.gameDom = GameDom;
         // firebase:
         this.firebase = new FirebaseConnector(this);
         // init engine validator:

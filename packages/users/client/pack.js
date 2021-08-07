@@ -97,8 +97,11 @@ class UsersPack
         let avatarContainer = gameManager.gameDom.getElement('.player_selection_additional_info');
         if(avatarContainer){
             let playersConfig = initialGameData.gameConfig.client.players;
-            gameManager.features.featuresList.actions
-                .appendAvatarOnSelector(select, avatarContainer, gameManager, playersConfig);
+            gameManager.getFeature('actions').playerSelector.appendAvatarOnSelector(
+                select,
+                avatarContainer,
+                playersConfig
+            );
         }
         form.classList.remove('hidden');
     }
