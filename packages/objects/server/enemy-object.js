@@ -140,7 +140,7 @@ class EnemyObject extends NpcObject
         return 'battleRoom';
     }
 
-    respawn(room)
+    async respawn(room)
     {
         // @NOTE: here we move the body to some place where it can't be reach so it doesn't collide with anything, this
         // will also make it invisible because the update in the client will move the sprite outside the view.
@@ -148,14 +148,14 @@ class EnemyObject extends NpcObject
         this.objectBody.position = [-1000, -1000];
         if(this.respawnTime){
             this.respawnTimer = setTimeout(async () => {
-                this.restoreObject(room);
+                await this.restoreObject(room);
             }, this.respawnTime);
         } else {
-            this.restoreObject(room);
+            await this.restoreObject(room);
         }
     }
 
-    restoreObject(room)
+    async restoreObject(room)
     {
         this.stats = Object.assign({}, this.initialStats);
         this.inState = GameConst.STATUS.ACTIVE;
@@ -177,7 +177,7 @@ class EnemyObject extends NpcObject
         room.state.sceneData = JSON.stringify(roomSceneData);
         this.x = x;
         this.y = y;
-        this.events.emit('reldens.restoreObjectAfter', {enemyObject: this, room});
+        await this.events.emit('reldens.restoreObjectAfter', {enemyObject: this, room});
     }
 
     onHit(props)

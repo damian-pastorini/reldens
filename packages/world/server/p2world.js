@@ -126,7 +126,7 @@ class P2world extends World
         }
     }
 
-    createWorldObject(roomObject, objectIndex, tileW, tileH, posX, posY, pathFinder = false)
+    async createWorldObject(roomObject, objectIndex, tileW, tileH, posX, posY, pathFinder = false)
     {
         // handle body fixed position:
         if(sc.hasOwn(roomObject, 'xFix')){
@@ -175,7 +175,7 @@ class P2world extends World
         // set data on room object:
         roomObject.state = bodyObject.bodyState;
         roomObject.objectBody = bodyObject;
-        this.events.emit('reldens.createdWorldObject', {
+        await this.events.emit('reldens.createdWorldObject', {
             p2world: this,
             roomObject,
             bodyObject,

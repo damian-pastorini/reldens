@@ -50,8 +50,8 @@ class AudioUi
         let audioSettingInputs = this.gameManager.gameDom.getElements('.audio-setting');
         if(audioSettingInputs.length){
             for(let settingInput of audioSettingInputs){
-                settingInput.addEventListener('click', (event) => {
-                    this.audioManager.setAudio(event.target.dataset['categoryKey'], settingInput.checked);
+                settingInput.addEventListener('click', async (event) => {
+                    await this.audioManager.setAudio(event.target.dataset['categoryKey'], settingInput.checked);
                     this.sendAudioUpdate(settingInput.value, settingInput.checked, this.gameManager.activeRoomEvents);
                     this.sceneAudioPlayer.playSceneAudio(
                         this.audioManager,

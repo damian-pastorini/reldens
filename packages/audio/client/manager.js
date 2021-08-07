@@ -31,9 +31,9 @@ class AudioManager
         };
     }
 
-    setAudio(audioType, enabled)
+    async setAudio(audioType, enabled)
     {
-        this.events.emit('reldens.setAudio', {
+        await this.events.emit('reldens.setAudio', {
             audioManager: this,
             categoryKey: audioType,
             enabled
@@ -153,7 +153,7 @@ class AudioManager
         }
     }
 
-    loadAudiosInScene(audios, currentScene)
+    async loadAudiosInScene(audios, currentScene)
     {
         let newAudiosCounter = 0;
         for(let audio of audios){
@@ -165,16 +165,16 @@ class AudioManager
             for(let fileName of filesName){
                 filesArr.push('assets/audio/'+fileName);
             }
-            currentScene.load.audio(audio.audio_key, filesArr).once('complete', () => {
+            currentScene.load.audio(audio.audio_key, filesArr).once('complete', async () => {
                 if(!sc.hasOwn(this.roomsAudios, currentScene.key)){
                     this.roomsAudios[currentScene.key] = {};
                 }
                 this.roomsAudios[currentScene.key][audio.audio_key] = this.generateAudio(currentScene, audio);
                 newAudiosCounter++;
                 if(newAudiosCounter === audios.length){
-                    currentScene.gameManager.events.emit('reldens.allAudiosLoaded', this, audios, currentScene, audio);
+                    await currentScene.gameManager.events.emit('reldens.allAudiosLoaded', this, audios, currentScene, audio);
                 }
-                currentScene.gameManager.events.emit('reldens.audioLoaded', this, audios, currentScene, audio);
+                await currentScene.gameManager.events.emit('reldens.audioLoaded', this, audios, currentScene, audio);
             });
         }
         currentScene.load.start();

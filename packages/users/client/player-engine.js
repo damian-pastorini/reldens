@@ -85,7 +85,7 @@ class PlayerEngine
         this.players[id].moveSprites = {};
         this.players[id].setDepth(this.players[id].y + this.players[id].body.height);
         this.players[id].setCollideWorldBounds(this.collideWorldBounds);
-        this.events.emit('reldens.playerEngineAddPlayer', this, id, addPlayerData);
+        this.events.emitSync('reldens.playerEngineAddPlayer', this, id, addPlayerData);
         return this.players[id];
     }
 
@@ -106,7 +106,7 @@ class PlayerEngine
             playerSprite.anims.stop();
             playerSprite.mov = player.state.mov;
         }
-        this.events.emit('reldens.runPlayerAnimation', this, playerId, player);
+        this.events.emitSync('reldens.runPlayerAnimation', this, playerId, player);
         let nameConfig = this.gameManager.config.get('client/ui/players');
         if(nameConfig.showNames && playerSprite.nameSprite){
             let relativeNamePosition = this.getNamePosition(playerSprite, nameConfig);

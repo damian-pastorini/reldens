@@ -74,7 +74,7 @@ class UsersPack
             if(selectedPlayer){
                 playerSelection.classList.add('hidden');
                 gameManager.initialGameData.player = selectedPlayer;
-                gameManager.events.emit('reldens.onPreparePlayerSelectorFormSubmit',
+                gameManager.events.emitSync('reldens.onPreparePlayerSelectorFormSubmit',
                     this,
                     form,
                     select,

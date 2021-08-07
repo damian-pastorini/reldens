@@ -47,7 +47,7 @@ class SceneDynamic extends Scene
 
     create()
     {
-        this.gameManager.events.emit('reldens.beforeSceneDynamicCreate', this);
+        this.gameManager.events.emitSync('reldens.beforeSceneDynamicCreate', this);
         // @TODO - BETA - Controllers will be part of the configuration in the database.
         this.keyLeft = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.LEFT);
         this.keyA = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.A);
@@ -147,7 +147,7 @@ class SceneDynamic extends Scene
             this.gameManager.gameDom.activeElement().blur();
             this.minimap.createMap(this, this.gameManager.getCurrentPlayerAnimation());
         });
-        this.gameManager.events.emit('reldens.afterSceneDynamicCreate', this);
+        this.gameManager.events.emitSync('reldens.afterSceneDynamicCreate', this);
     }
 
     // eslint-disable-next-line no-unused-vars

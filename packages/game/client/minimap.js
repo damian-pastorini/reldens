@@ -43,7 +43,7 @@ class Minimap
             }
             this.createRoundCamera(scene);
         }
-        this.events.emit('reldens.createdMinimap', this);
+        this.events.emitSync('reldens.createdMinimap', this);
     }
 
     addMinimapCircle(scene)

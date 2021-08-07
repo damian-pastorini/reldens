@@ -47,8 +47,8 @@ class RoomEvents
             this.playersOnRemove(player, key);
         };
         // create players or change scenes:
-        this.room.onMessage((message) => {
-            this.roomOnMessage(message);
+        this.room.onMessage(async (message) => {
+            await this.roomOnMessage(message);
         });
         this.room.onLeave((code) => {
             this.roomOnLeave(code);
@@ -112,7 +112,7 @@ class RoomEvents
 
     playersOnRemove(player, key)
     {
-        this.events.emit('reldens.playersOnRemove', player, key, this);
+        this.events.emitSync('reldens.playersOnRemove', player, key, this);
         if(key === this.room.sessionId){
             // @TODO - BETA - Improve disconnection handler.
             if(!this.gameManager.gameOver){
@@ -128,10 +128,10 @@ class RoomEvents
         }
     }
 
-    roomOnMessage(message)
+    async roomOnMessage(message)
     {
         if(message.act === GameConst.GAME_OVER){
-            this.events.emit('reldens.gameOver', message, this);
+            await this.events.emit('reldens.gameOver', message, this);
             this.gameManager.gameOver = true;
             let currentPlayer = this.gameManager.getCurrentPlayer();
             let currentPlayerSprite = currentPlayer.players[currentPlayer.playerId];
@@ -149,7 +149,7 @@ class RoomEvents
             && message.scene === this.room.name
             && this.room.sessionId !== message.id
         ){
-            this.events.emit('reldens.changedScene', message, this);
+            await this.events.emit('reldens.changedScene', message, this);
             let currentScene = this.getActiveScene();
             // if other users enter in the current scene we need to add them:
             let {id, x, y, dir, playerName, avatarKey} = message;
@@ -160,17 +160,17 @@ class RoomEvents
         }
         // @NOTE: here we don't need to evaluate the id since the reconnect only is sent to the current client.
         if(message.act === GameConst.RECONNECT){
-            this.events.emit('reldens.beforeReconnectGameClient', message, this);
+            await this.events.emit('reldens.beforeReconnectGameClient', message, this);
             this.gameManager.reconnectGameClient(message, this.room);
         }
         // @NOTE: now this method will update the stats every time the stats action is received but the UI will be
         // created only once in the preloader.
         if(message.act === GameConst.PLAYER_STATS){
-            this.events.emit('reldens.playerStatsUpdateBefore', message, this);
-            this.updatePlayerStats(message);
+            await this.events.emit('reldens.playerStatsUpdateBefore', message, this);
+            await this.updatePlayerStats(message);
         }
         if(message.act === GameConst.UI && message.id){
-            this.events.emit('reldens.initUi', message, this);
+            await this.events.emit('reldens.initUi', message, this);
             this.initUi(message);
         }
     }
@@ -186,7 +186,7 @@ class RoomEvents
         }
     }
 
-    updatePlayerStats(message)
+    async updatePlayerStats(message)
     {
         if(!sc.hasOwn(message, 'stats') || !message.stats){
             return false;
@@ -221,7 +221,7 @@ class RoomEvents
             });
             statsPanel.innerHTML = statsPanel.innerHTML+parsedStatsTemplate;
         }
-        this.events.emit('reldens.playerStatsUpdateAfter', message, this);
+        await this.events.emit('reldens.playerStatsUpdateAfter', message, this);
     }
 
     initUi(props)

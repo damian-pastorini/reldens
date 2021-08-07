@@ -54,7 +54,7 @@ class GameManager
 
     setupClasses(customClasses)
     {
-        this.events.emit('reldens.setupClasses', this, customClasses);
+        this.events.emitSync('reldens.setupClasses', this, customClasses);
         this.config.customClasses = customClasses;
     }
 

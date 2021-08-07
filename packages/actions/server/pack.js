@@ -119,7 +119,7 @@ class ActionsPack extends PackInterface
             // append skills server to player:
             currentPlayer.skillsServer = new SkillsServer(classPathData);
             currentPlayer.avatarKey = classPathData.key;
-            this.prepareEventsListeners(currentPlayer.skillsServer.classPath);
+            await this.prepareEventsListeners(currentPlayer.skillsServer.classPath);
         }
     }
 
@@ -275,7 +275,7 @@ class ActionsPack extends PackInterface
         return config.client.levels.animations;
     }
 
-    prepareEventsListeners(classPath)
+    async prepareEventsListeners(classPath)
     {
         let ownerId = classPath.getOwnerEventKey();
         // eslint-disable-next-line no-unused-vars
@@ -302,7 +302,7 @@ class ActionsPack extends PackInterface
             }
             skill.owner.physicalBody.isBlocked = false;
         }, 'skillAfterCastPack', ownerId);
-        this.events.emit('reldens.actionsPrepareEventsListeners', this, classPath);
+        await this.events.emit('reldens.actionsPrepareEventsListeners', this, classPath);
     }
 
 }

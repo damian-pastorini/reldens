@@ -138,7 +138,7 @@ class Pve extends Battle
         this.targetObject.objectBody.moveToOriginalPoint();
     }
 
-    battleEnded(playerSchema, room)
+    async battleEnded(playerSchema, room)
     {
         // @TODO - BETA - CHECK - Implement battle end in both pve and pvp.
         this.targetObject.inState = GameConst.STATUS.DEATH;
@@ -151,14 +151,14 @@ class Pve extends Battle
             k: this.lastAttackKey
         };
         room.broadcast(actionData);
-        this.targetObject.respawn(room);
+        await this.targetObject.respawn(room);
         let client = room.getClientById(playerSchema.sessionId);
         if(client){
             room.send(client, actionData);
         } else {
             Logger.info(['Client not found by sessionId:', playerSchema.sessionId]);
         }
-        this.events.emit(this.targetObject.getBattleEndEvent(), playerSchema, this, actionData);
+        await this.events.emit(this.targetObject.getBattleEndEvent(), playerSchema, this, actionData);
     }
 
     removeInBattlePlayer(playerSchema)

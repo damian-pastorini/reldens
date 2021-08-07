@@ -32,7 +32,7 @@ class ReceiverWrapper extends Receiver
         }
         super.processMessage(message);
         if(message.act.indexOf('_atk') !== -1 || message.act.indexOf('_eff') !== -1){
-            this.events.emit('reldens.playerAttack', message, this.room);
+            this.events.emitSync('reldens.playerAttack', message, this.room);
             let actKey = (message.act.indexOf('_eff') !== -1) ? '_eff' : '_atk';
             let animKey = message.act.substring(0, message.act.indexOf(actKey));
             let ownerSprite = false;
