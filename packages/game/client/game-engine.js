@@ -22,6 +22,12 @@ class GameEngine extends Game
         this.uiScene = false;
         this.TemplateEngine = TemplateEngine;
         this.eventsManager = props.events;
+        this.eventsManager.on('reldens.beforeReconnectGameClient', () => {
+            this.clearTarget();
+        });
+        this.eventsManager.on('reldens.beforeSceneDynamicCreate', (sceneDynamic) => {
+            this.setupTabTarget(sceneDynamic);
+        });
     }
 
     parseTemplate(template, view, partials, tags)
@@ -92,6 +98,7 @@ class GameEngine extends Game
     setupTabTarget(sceneDynamic)
     {
         sceneDynamic.keyTab = sceneDynamic.input.keyboard.addKey(Input.Keyboard.KeyCodes.TAB);
+        sceneDynamic.input.keyboard['addCapture'](Input.Keyboard.KeyCodes.TAB);
         sceneDynamic.input.keyboard.on('keydown', (event) => {
             if(event.keyCode === 9){
                 this.tabTarget();
