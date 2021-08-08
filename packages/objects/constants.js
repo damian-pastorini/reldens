@@ -14,5 +14,6 @@ module.exports.ObjectsConst = {
     TYPE_OBJECT: 'o1',
     TYPE_ANIMATION: 'o2',
     TYPE_NPC: 'o3',
-    TYPE_ENEMY: 'o4'
+    TYPE_ENEMY: 'o4',
+    DYNAMIC_ANIMATION: 'dyn'
 };

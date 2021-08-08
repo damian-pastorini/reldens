@@ -8,7 +8,7 @@
 
 const { BaseObject } = require('./base-object');
 const { ObjectsConst } = require('../constants');
-const { Logger } = require('@reldens/utils');
+const { Logger, sc } = require('@reldens/utils');
 
 class AnimationObject extends BaseObject
 {
@@ -25,6 +25,16 @@ class AnimationObject extends BaseObject
         this.runOnHit = false;
         this.runOnAction = false;
         this.objectBody = false;
+        // assign extra public params:
+        this.clientParams = Object.assign({
+            enabled: true,
+            frameStart: sc.getDef(props, 'frameStart', 0),
+            // @NOTE: default animations considered are 3 columns sprites.
+            frameEnd: sc.getDef(props, 'frameEnd', 3),
+            repeat: sc.getDef(props, 'repeat', -1),
+            hideOnComplete: sc.getDef(props, 'hideOnComplete', false),
+            autoStart: sc.getDef(props, 'autoStart', false)
+        }, this.clientParams);
     }
 
     get animationData()
@@ -43,8 +53,8 @@ class AnimationObject extends BaseObject
         if(!this.runOnHit || !props.room){
             return;
         }
-        if({}.hasOwnProperty.call(this, 'playerVisible') && this.playerVisible){
-            let playerBody = {}.hasOwnProperty.call(props.bodyA, 'playerId') ? props.bodyA : props.bodyB;
+        if(sc.isTrue(this, 'playerVisible')){
+            let playerBody = sc.hasOwn(props.bodyA, 'playerId') ? props.bodyA : props.bodyB;
             let client = props.room.getClientById(playerBody.playerId);
             if(!client){
                 Logger.error('Object hit, client not found by playerId:', playerBody.playerId);
@@ -52,7 +62,7 @@ class AnimationObject extends BaseObject
                 props.room.send(client, this.animationData);
             }
         }
-        if({}.hasOwnProperty.call(this, 'roomVisible') && this.roomVisible){
+        if(sc.isTrue(this, 'roomVisible')){
             // run for everyone in the room:
             props.room.broadcast(this.animationData);
         }
@@ -63,7 +73,7 @@ class AnimationObject extends BaseObject
         if(!this.runOnAction || !props.room){
             return;
         }
-        if({}.hasOwnProperty.call(this, 'playerVisible') && this.playerVisible){
+        if(sc.isTrue(this, 'playerVisible')){
             // run only for the client who executed:
             let client = props.room.getClientById(props.playerBody.playerId);
             if(!client){
@@ -72,7 +82,7 @@ class AnimationObject extends BaseObject
                 props.room.send(client, this.animationData);
             }
         }
-        if({}.hasOwnProperty.call(this, 'roomVisible') && this.roomVisible){
+        if(sc.isTrue(this, 'roomVisible')){
             // run for everyone in the room:
             props.room.broadcast(this.animationData);
         }

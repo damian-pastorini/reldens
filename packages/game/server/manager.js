@@ -8,15 +8,11 @@
  */
 
 const dotenv = require('dotenv');
-const http = require('http');
-const https = require('https');
-const fs = require('fs');
-const express = require('express');
-const cors = require('cors');
 const path = require('path');
 const { AwaitMiddleware } = require('./await-middleware');
 const { GameServer } = require('./game-server');
 const { DataServer } = require('@reldens/storage');
+const { AppServer } = require('./app-server');
 const { ConfigManager } = require('../../config/server/manager');
 const { FeaturesManager } = require('../../features/server/manager');
 const { UsersManager } = require('../../users/server/manager');
@@ -50,7 +46,7 @@ class ServerManager
     initializeConfiguration(config)
     {
         // configuration data from database:
-        this.configManager = new ConfigManager();
+        this.configManager = new ConfigManager({events: this.events});
         // save project root:
         this.projectRoot = config.projectRoot || './';
         Logger.info(['Project root:', this.projectRoot, 'Module root:', __dirname]);
@@ -81,54 +77,26 @@ class ServerManager
         }
     }
 
-    /**
-     * @returns {Promise<void>}
-     */
     async start()
     {
         Logger.info('Starting Server Manager!');
         await this.createServer();
         await this.initializeManagers();
         // after the rooms were loaded then finish the server process:
-        await EventsManagerSingleton.emit('reldens.serverBeforeListen', {serverManager: this});
+        await this.events.emit('reldens.serverBeforeListen', {serverManager: this});
         await this.gameServer.listen(this.configServer.port);
         Logger.info('Listening on '+this.configServer.host+':'+this.configServer.port);
         this.configManager.configList.server.baseUrl = this.configServer.host+':'+this.configServer.port;
         await this.createClientBundle();
-        await EventsManagerSingleton.emit('reldens.serverReady', {serverManager: this});
+        await this.events.emit('reldens.serverReady', {serverManager: this});
     }
 
     async createServer()
     {
-        await EventsManagerSingleton.emit('reldens.serverStartBegin', {serverManager: this});
-        this.app = express();
-        this.app.use(cors());
-        this.app.use(express.json());
-        if(process.env.RELDENS_EXPRESS_SERVE_STATICS){
-            // automatically serve dist files:
-            let distPath = path.join(this.projectRoot, 'dist');
-            this.app.use('/', express.static(distPath));
-        }
-        let runningHttps = false;
-        if(process.env.RELDENS_EXPRESS_USE_HTTPS){
-            // read certificates:
-            const credentials = {
-                key: fs.readFileSync(process.env.RELDENS_EXPRESS_HTTPS_PRIVATE_KEY, 'utf8'),
-                cert: fs.readFileSync(process.env.RELDENS_EXPRESS_HTTPS_CERT, 'utf8')
-            };
-            if(process.env.RELDENS_EXPRESS_HTTPS_CHAIN){
-                credentials['ca'] = fs.readFileSync(process.env.RELDENS_EXPRESS_HTTPS_CHAIN, 'utf8');
-            }
-            if(process.env.RELDENS_EXPRESS_HTTPS_PASSPHRASE){
-                credentials['passphrase'] = process.env.RELDENS_EXPRESS_HTTPS_PASSPHRASE;
-            }
-            this.appServer = https.createServer(credentials, this.app);
-            runningHttps = true;
-        }
-        // if https is not running then by default we will run on http:
-        if(!runningHttps){
-            this.appServer = http.createServer(this.app);
-        }
+        await this.events.emit('reldens.serverStartBegin', {serverManager: this});
+        let {app, appServer} = AppServer.createAppServer(this.projectRoot);
+        this.app = app;
+        this.appServer = appServer;
         // create game server instance:
         this.gameServer = new GameServer({server: this.appServer, express: this.app});
         // attach web monitoring panel (optional):
@@ -145,7 +113,7 @@ class ServerManager
         configProcessor.projectRoot = this.projectRoot;
         // theme root:
         configProcessor.projectTheme = ThemeManager.projectTheme;
-        await EventsManagerSingleton.emit('reldens.serverConfigReady', {
+        await this.events.emit('reldens.serverConfigReady', {
             serverManager: this,
             configProcessor
         });
@@ -154,28 +122,29 @@ class ServerManager
         Logger.info(['Mailer Configured:', this.mailer.isEnabled()]);
         await this.setupForgotPassword();
         // features manager:
-        this.featuresManager = new FeaturesManager();
+        this.featuresManager = new FeaturesManager({events: this.events});
         // load the available features list and append to the config, this way we will pass the list to the client:
         configProcessor.availableFeaturesList = await this.featuresManager.loadFeatures();
-        await EventsManagerSingleton.emit('reldens.serverConfigFeaturesReady', {
+        await this.events.emit('reldens.serverConfigFeaturesReady', {
             serverManager: this,
             configProcessor
         });
         // users manager:
         this.usersManager = new UsersManager();
         // the rooms manager will receive the features rooms to be defined:
-        this.roomsManager = new RoomsManager();
-        await EventsManagerSingleton.emit('reldens.serverBeforeLoginManager', {serverManager: this});
+        this.roomsManager = new RoomsManager({events: this.events});
+        await this.events.emit('reldens.serverBeforeLoginManager', {serverManager: this});
         // login manager:
         this.loginManager = new LoginManager({
             config: configProcessor,
             usersManager: this.usersManager,
             roomsManager: this.roomsManager,
             mailer: this.mailer,
-            themeManager: ThemeManager
+            themeManager: ThemeManager,
+            events: this.events
         });
         // prepare rooms:
-        await EventsManagerSingleton.emit('reldens.serverBeforeDefineRooms', {serverManager: this});
+        await this.events.emit('reldens.serverBeforeDefineRooms', {serverManager: this});
         await this.roomsManager.defineRoomsInGameServer(this.gameServer, {
             loginManager: this.loginManager,
             config: configProcessor
@@ -220,8 +189,8 @@ class ServerManager
                 let resetErrorPath = path.join('assets', 'email', 'reset-error.html');
                 resetResult = await ThemeManager.loadAndRenderTemplate(resetErrorPath);
             } else {
-                let newPass = this.loginManager.pwManager.makeId(12);
-                let newPassHash = this.loginManager.pwManager.encryptPassword(newPass);
+                let newPass = this.loginManager.passwordManager.makeId(12);
+                let newPassHash = this.loginManager.passwordManager.encryptPassword(newPass);
                 await this.usersManager.updateUserByEmail(rEmail, {password: newPassHash});
                 let resetSuccessPath = path.join('assets', 'email', 'reset-success.html');
                 resetResult = await ThemeManager.loadAndRenderTemplate(resetSuccessPath, {newPass: newPass});

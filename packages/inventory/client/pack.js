@@ -5,21 +5,30 @@
  */
 
 const { ItemsEvents, ItemsConst } = require('@reldens/items-system');
-const { EventsManagerSingleton, Logger } = require('@reldens/utils');
 const { InventoryUi } = require('./inventory-ui');
 const { InventoryReceiver } = require('./inventory-receiver');
 const { InventoryConst } = require('../constants');
+const { PackInterface } = require('../../features/pack-interface');
+const { Logger, sc } = require('@reldens/utils');
 
-class InventoryPack
+class InventoryPack extends PackInterface
 {
 
-    constructor()
+    setupPack(props)
     {
+        this.gameManager = sc.getDef(props, 'gameManager', false);
+        if(!this.gameManager){
+            Logger.error('Game Manager undefined in InventoryPack.');
+        }
+        this.events = sc.getDef(props, 'events', false);
+        if(!this.events){
+            Logger.error('EventsManager undefined in InventoryPack.');
+        }
         // eslint-disable-next-line no-unused-vars
-        EventsManagerSingleton.on('reldens.playersOnAdd', (player, key, previousScene, roomEvents) => {
+        this.events.on('reldens.playersOnAdd', (player, key, previousScene, roomEvents) => {
             this.onPlayerAdd(key, roomEvents, player);
         });
-        EventsManagerSingleton.on('reldens.preloadUiScene', (preloadScene) => {
+        this.events.on('reldens.preloadUiScene', (preloadScene) => {
             preloadScene.load.html('inventory', 'assets/features/inventory/templates/ui-inventory.html');
             preloadScene.load.html('equipment', 'assets/features/inventory/templates/ui-equipment.html');
             preloadScene.load.html('inventoryItem', 'assets/features/inventory/templates/item.html');
@@ -27,7 +36,7 @@ class InventoryPack
             preloadScene.load.html('inventoryItemEquip', 'assets/features/inventory/templates/equip.html');
             preloadScene.load.html('inventoryGroup', 'assets/features/inventory/templates/group.html');
         });
-        EventsManagerSingleton.on('reldens.createUiScene', (preloadScene) => {
+        this.events.on('reldens.createUiScene', (preloadScene) => {
             return this.onPreloadUiScene(preloadScene);
         });
     }
@@ -47,7 +56,7 @@ class InventoryPack
         let manager = preloadScene.gameManager.inventory.manager;
         // first time load and then we listen the events to get the updates:
         if(Object.keys(manager.groups).length){
-            preloadScene.gameManager.gameDom.getElement('#' + InventoryConst.EQUIPMENT_ITEMS).html('');
+            preloadScene.gameManager.gameDom.getElement('#' + InventoryConst.EQUIPMENT_ITEMS).innerHTML = '';
             let orderedGroups = this.sortGroups(manager.groups);
             for(let i of orderedGroups){
                 let output = this.createGroupBox(manager.groups[i], preloadScene.gameManager, preloadScene);
@@ -118,10 +127,10 @@ class InventoryPack
         }, 'removeItemPack', masterKey);
         gameManager.inventory.manager.listenEvent(ItemsEvents.SET_GROUPS, (props) => {
             // @TODO - BETA - If groups are re-set or updated we will need to update the items as well.
-            if(gameManager.gameDom.getElement('#'+InventoryConst.EQUIPMENT_ITEMS).html() !== ''){
+            if(gameManager.gameDom.getElement('#'+InventoryConst.EQUIPMENT_ITEMS).innerHTML !== ''){
                 return;
             }
-            gameManager.gameDom.getElement('#'+InventoryConst.EQUIPMENT_ITEMS).html('');
+            gameManager.gameDom.getElement('#'+InventoryConst.EQUIPMENT_ITEMS).innerHTML = '';
             let orderedGroups = this.sortGroups(props.groups);
             for(let i of orderedGroups){
                 let output = this.createGroupBox(props.groups[i], gameManager, uiScene);
@@ -140,12 +149,12 @@ class InventoryPack
     {
         let output = this.createItemBox(item, uiScene.gameManager, uiScene);
         let existentElement = uiScene.gameManager.gameDom.getElement('#item-'+item.getInventoryId());
-        if(existentElement.length){
+        if(existentElement){
             existentElement.remove();
         }
         if(item.isType(ItemsConst.TYPE_EQUIPMENT) && item.equipped){
             let group = this.getGroupById(item.group_id, uiScene.gameManager.inventory.manager.groups);
-            if(group && uiScene.gameManager.gameDom.getElement('#group-item-'+group.key+' .equipped-item').length){
+            if(group && uiScene.gameManager.gameDom.getElement('#group-item-'+group.key+' .equipped-item')){
                 uiScene.gameManager.gameDom.updateContent('#group-item-'+group.key+' .equipped-item', output);
             } else {
                 // @TODO - BETA - Make this append optional for now we will leave it to make the equipment action
@@ -248,12 +257,12 @@ class InventoryPack
         // use:
         if(item.isType(ItemsConst.TYPE_USABLE)){
             let useBtn = domMan.getElement('#item-use-'+idx);
-            useBtn.on('click', this.clickedBox.bind(this, idx, InventoryConst.ACTION_USE, preloadScene));
+            useBtn.addEventListener('click', this.clickedBox.bind(this, idx, InventoryConst.ACTION_USE, preloadScene));
         }
         // equip / unequip:
         if(item.isType(ItemsConst.TYPE_EQUIPMENT)){
             let equipBtn = domMan.getElement('#item-equip-'+idx);
-            equipBtn.on('click', this.clickedBox.bind(this, idx, InventoryConst.ACTION_EQUIP, preloadScene));
+            equipBtn.addEventListener('click', this.clickedBox.bind(this, idx, InventoryConst.ACTION_EQUIP, preloadScene));
         }
     }
 

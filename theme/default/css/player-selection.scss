@@ -1,0 +1,57 @@
+#player-selection {
+    background: $cWhite;
+    max-width: 500px;
+    margin: 40px auto 0;
+
+    .selection-forms-container {
+        margin: 0 auto;
+        display: block;
+        width: 88%;
+        background: $cWhite;
+        float: left;
+        padding: 6%;
+
+        form {
+            float: left;
+            width: 100%;
+            display: block;
+
+            &.hidden {
+                display: none;
+            }
+
+            .select-element {
+                display: block;
+                position: relative;
+                float: none;
+                margin: 0 auto;
+                border: 1px solid $cLightGrey;
+                padding: 8px;
+                text-align: center;
+            }
+
+            .scene-select {
+                width: 54%;
+                max-width: 268px;
+                float: right;
+                padding: 8px 1%;
+                margin: 0;
+                text-align: left;
+            }
+
+            .player_creation_additional_info {
+                display: block;
+                float: left;
+                width: 100%;
+            }
+
+            .center-submit {
+                float: none;
+                margin: 0 auto;
+            }
+
+        }
+
+    }
+
+}

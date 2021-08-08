@@ -34,16 +34,18 @@ class GameManager
         this.gameEngine = false;
         // game over validator:
         this.gameOver = false;
+        // disconnection validator:
+        this.forcedDisconnection = false;
         // client events:
         this.events = EventsManagerSingleton;
         // full game config:
         this.config = ConfigProcessor;
         // features manager:
-        this.features = new FeaturesManager();
+        this.features = new FeaturesManager({gameManager: this, events: this.events});
         // active scene:
         this.isChangingScene = false;
         // dom manager:
-        this.gameDom = new GameDom();
+        this.gameDom = GameDom;
         // firebase:
         this.firebase = new FirebaseConnector(this);
         // init engine validator:
@@ -52,7 +54,7 @@ class GameManager
 
     setupClasses(customClasses)
     {
-        this.events.emit('reldens.setupClasses', this, customClasses);
+        this.events.emitSync('reldens.setupClasses', this, customClasses);
         this.config.customClasses = customClasses;
     }
 
@@ -89,13 +91,18 @@ class GameManager
             if(message.act === GameConst.CREATE_PLAYER_RESULT){
                 if(message.error){
                     let errorElement = this.gameDom.getElement('.player_create_form .response-error');
-                    errorElement.html(message.message);
-                    errorElement.removeClass('hidden');
+                    if(errorElement){
+                        errorElement.innerHTML = message.message;
+                        errorElement.style.display = 'block';
+                        errorElement.classList.remove('hidden');
+                    }
                     return false;
                 }
                 this.initialGameData.player = message.player;
                 let playerSelection = this.gameDom.getElement('#player-selection');
-                playerSelection.addClass('hidden');
+                if(playerSelection){
+                    playerSelection.classList.add('hidden');
+                }
                 await this.initEngine();
             }
         });
@@ -103,7 +110,7 @@ class GameManager
         this.events.on('reldens.afterSceneDynamicCreate', () => {
             if(this.config.get('client/ui/screen/responsive')){
                 this.gameEngine.updateGameSize(this);
-                this.gameDom.getWindowElement().resize(() => {
+                this.gameDom.getWindow().addEventListener('resize', () => {
                     this.gameEngine.updateGameSize(this);
                 });
             }
@@ -144,27 +151,36 @@ class GameManager
         // save the selected player data:
         this.playerData = this.initialGameData.player;
         this.userData.selectedPlayer = this.initialGameData.player.id;
+        this.userData.selectedScene = this.initialGameData.selectedScene;
         // initialize game engine:
-        this.gameEngine = new GameEngine(this.initialGameData.gameConfig);
+        this.gameEngine = new GameEngine({config: this.initialGameData.gameConfig, events: this.events});
         // since the user is now registered:
         this.userData.isNewUser = false;
         // first join the features rooms:
         await this.joinFeaturesRooms();
         // create room events manager:
+        let playerScene = sc.hasOwn(this.initialGameData, 'selectedScene')
+            && this.initialGameData.selectedScene !== '@lastLocation'
+            ? this.initialGameData.selectedScene : this.initialGameData.player.state.scene;
+        this.initialGameData.player.state.scene = playerScene;
         let joinedFirstRoom = await this.gameClient.joinOrCreate(
-            this.initialGameData.player.state.scene,
+            playerScene,
             this.userData
         );
         if(!joinedFirstRoom){
             // @NOTE: the errors while trying to join a rooms/scene will always be originated in the
             // server. For these errors we will alert the user and reload the window automatically.
-            alert('ERROR - There was an error while joining the room: ' + this.initialGameData.player.state.scene);
+            alert('ERROR - There was an error while joining the room: ' + playerScene);
             this.gameDom.getWindow().location.reload();
         }
+        // @NOTE: remove the selected scene after the player used it because the login data will be used again every
+        // time the player change the scene.
+        delete this.initialGameData.selectedScene;
+        delete this.userData.selectedScene;
         await this.events.emit('reldens.joinedRoom', joinedFirstRoom, this);
-        await this.events.emit('reldens.joinedRoom_' + this.initialGameData.player.state.scene, joinedFirstRoom, this);
+        await this.events.emit('reldens.joinedRoom_' + playerScene, joinedFirstRoom, this);
         // start listening the new room events:
-        this.activeRoomEvents = this.createRoomEventsInstance(this.initialGameData.player.state.scene);
+        this.activeRoomEvents = this.createRoomEventsInstance(playerScene, this.events);
         await this.activeRoomEvents.activateRoom(joinedFirstRoom);
         await this.events.emit('reldens.afterInitEngineAndStartGame', this.initialGameData, joinedFirstRoom);
         return joinedFirstRoom;
@@ -226,22 +242,11 @@ class GameManager
         });
     }
 
-    /**
-     * Create RoomEvents instance.
-     *
-     * @param roomName
-     * @returns {RoomEvents}
-     */
     createRoomEventsInstance(roomName)
     {
-        return new RoomEvents(roomName, this);
+        return new RoomEvents(roomName, this, this.events);
     }
 
-    /**
-     * Generate server URL from configuration or using the current url data.
-     *
-     * @returns {*}
-     */
     getServerUrl()
     {
         if(this.serverUrl){
@@ -271,6 +276,12 @@ class GameManager
     getCurrentPlayer()
     {
         return this.getActiveScene().player;
+    }
+
+    getCurrentPlayerAnimation()
+    {
+        let current = this.getCurrentPlayer();
+        return current.players[current.playerId];
     }
 
     getUiElement(uiName, logError = true)

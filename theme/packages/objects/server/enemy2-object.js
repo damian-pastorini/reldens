@@ -10,15 +10,15 @@ const { sc } = require('@reldens/utils');
 class Enemy2Object extends EnemyObject
 {
 
-    runAdditionalSetup(eventsManager)
+    runAdditionalSetup()
     {
-        eventsManager.onWithKey(
+        this.events.onWithKey(
             this.getBattleEndEvent(),
             this.onBattleEnd.bind(this),
             this.getEventRemoveKey(),
             this.getEventMasterKey()
         );
-        let dataArr = eventsManager.listeners('reldens.battleEnded');
+        let dataArr = this.events.listeners('reldens.battleEnded');
         this.battleEndListener = dataArr[dataArr.length -1];
     }
 

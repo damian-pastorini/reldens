@@ -1,0 +1,18 @@
+#minimap-open {
+    cursor: pointer;
+    position: relative;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 10px;
+    max-width: 40px;
+    top: 0;
+    left: 0;
+}
+
+.minimap-ui {
+    position: relative;
+    top: 26px;
+    left: 26px;
+    display: none;
+    float: left;
+    background: transparent;
+}

@@ -8,7 +8,7 @@
  */
 
 const { ObjectsModel } = require('./model');
-const { Logger } = require('@reldens/utils');
+const { Logger, sc } = require('@reldens/utils');
 
 class ObjectsManager
 {
@@ -16,6 +16,10 @@ class ObjectsManager
     constructor(props)
     {
         this.config = props.config;
+        this.events = sc.getDef(props, 'events', false);
+        if(!this.events){
+            Logger.error('EventsManager undefined in ObjectsManager.');
+        }
         // room objects is just the list of the objects in the storage:
         this.roomObjectsData = false;
         // room objects by layer and title are each object instance plus the data from the storage:
@@ -51,20 +55,26 @@ class ObjectsManager
                         ]);
                         continue;
                     }
-                    let objProps = Object.assign({config: this.config}, objectData);
+                    let objProps = Object.assign({config: this.config, events: this.events}, objectData);
                     let objInstance = new objClass(objProps);
                     // if the result is an animation instance then we can include in the list to send it to the client:
-                    if(
-                        {}.hasOwnProperty.call(objInstance, 'isAnimation')
-                        || {}.hasOwnProperty.call(objInstance, 'hasAnimation')
-                    ){
+                    if(sc.hasOwn(objInstance, 'isAnimation') || sc.hasOwn(objInstance, 'hasAnimation')){
                         this.objectsAnimationsData[objInstance.objectIndex] = objInstance.clientParams;
                     }
-                    if({}.hasOwnProperty.call(objInstance, 'multiple')){
+                    if(sc.hasOwn(objInstance, 'multiple')){
                         objInstance.objProps = objProps;
                     }
+                    // prepare assets list:
+                    if(objectData.objects_animations){
+                        objInstance.multipleAnimations = {};
+                        for(let anim of objectData.objects_animations){
+                            // @NOTE: assets can be different types, spritesheets, images, atlas, etc. We push them
+                            // here to later send these to the client along with the sceneData.
+                            objInstance.multipleAnimations[anim.animationKey] = sc.getJson(anim.animationData);
+                        }
+                    }
                     // prepare object for room messages:
-                    if({}.hasOwnProperty.call(objInstance, 'listenMessages')){
+                    if(sc.hasOwn(objInstance, 'listenMessages')){
                         this.listenMessages = true;
                         this.listenMessagesObjects[objectData.id] = objInstance;
                     }
@@ -102,7 +112,7 @@ class ObjectsManager
      */
     getObjectData(objectIndex)
     {
-        if({}.hasOwnProperty.call(this.roomObjects, objectIndex)){
+        if(sc.hasOwn(this.roomObjects, objectIndex)){
             return this.roomObjects[objectIndex];
         }
         return false;

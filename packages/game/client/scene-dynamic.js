@@ -6,8 +6,9 @@
 
 const { Scene, Input } = require('phaser');
 const { TilesetAnimation } = require('./tileset-animation');
-const { EventsManagerSingleton, Logger, sc } = require('@reldens/utils');
+const { Logger, sc } = require('@reldens/utils');
 const { GameConst } = require('../constants');
+const { Minimap } = require('./minimap');
 
 class SceneDynamic extends Scene
 {
@@ -29,6 +30,13 @@ class SceneDynamic extends Scene
         this.objectsAnimations = {};
         // frame rate:
         this.configuredFrameRate = this.gameManager.config.get('client/general/animations/frameRate') || 10;
+        let minimapConfig = this.gameManager.config.get('client/ui/minimap');
+        this.minimap = minimapConfig.enabled ? this.createMinimapInstance(minimapConfig) : false;
+    }
+
+    createMinimapInstance(config)
+    {
+        return new Minimap({config, events: this.gameManager.events});
     }
 
     init()
@@ -39,7 +47,7 @@ class SceneDynamic extends Scene
 
     create()
     {
-        EventsManagerSingleton.emit('reldens.beforeSceneDynamicCreate', this);
+        this.gameManager.events.emitSync('reldens.beforeSceneDynamicCreate', this);
         // @TODO - BETA - Controllers will be part of the configuration in the database.
         this.keyLeft = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.LEFT);
         this.keyA = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.A);
@@ -59,17 +67,17 @@ class SceneDynamic extends Scene
             Input.Keyboard.KeyCodes.DOWN,
             Input.Keyboard.KeyCodes.S
         ];
-        this.gameManager.gameDom.getElement('input').on('focus', () => {
-            for(let keyCode of keys){
-                this.input.keyboard.removeCapture(keyCode);
-            }
-        });
-        this.gameManager.gameDom.getElement('input').on('blur', () => {
-            for(let keyCode of keys){
-                this.input.keyboard.addCapture(keyCode);
-            }
-        });
+        let inputElements = this.gameManager.gameDom.getElements('input');
+        for(let inputElement of inputElements){
+            this.loopKeysAddListenerToElement(keys, inputElement, 'focusin', 'removeCapture');
+            this.loopKeysAddListenerToElement(keys, inputElement, 'click', 'removeCapture');
+            this.loopKeysAddListenerToElement(keys, inputElement, 'focusout', 'addCapture');
+            this.loopKeysAddListenerToElement(keys, inputElement, 'blur', 'addCapture');
+        }
         this.input.keyboard.on('keydown', (event) => {
+            if(this.gameManager.gameDom.insideInput()){
+                return false;
+            }
             // @TODO - BETA - Make configurable the keys related to the actions and skills.
             // keyCode = 32 > spacebar
             if(event.keyCode === 32 && !this.gameManager.gameDom.insideInput()){
@@ -79,11 +87,15 @@ class SceneDynamic extends Scene
             if(event.keyCode === 27){
                 this.gameManager.gameEngine.clearTarget();
             }
+            // keyCode = 116 > F5
+            if(event.keyCode === 116){
+                this.gameManager.forcedDisconnection = true;
+            }
         });
         this.map = this.add.tilemap(this.params.roomMap);
         // disable default context menu:
         if(this.gameManager.config.get('client/ui/controls/disableContextMenu')){
-            this.gameManager.gameDom.getElement(document).on('contextmenu', (event) => {
+            this.gameManager.gameDom.getDocument().addEventListener('contextmenu', (event) => {
                 event.preventDefault();
                 event.stopPropagation();
             });
@@ -133,8 +145,9 @@ class SceneDynamic extends Scene
                 }
             });
             this.gameManager.gameDom.activeElement().blur();
+            this.minimap.createMap(this, this.gameManager.getCurrentPlayerAnimation());
         });
-        EventsManagerSingleton.emit('reldens.afterSceneDynamicCreate', this);
+        this.gameManager.events.emitSync('reldens.afterSceneDynamicCreate', this);
     }
 
     // eslint-disable-next-line no-unused-vars
@@ -158,8 +171,9 @@ class SceneDynamic extends Scene
         }
     }
 
-    changeScene()
+    async changeScene()
     {
+        await this.gameManager.events.emit('reldens.changeSceneDestroyPrevious', this);
         this.objectsAnimations = {};
         this.objectsAnimationsData = false;
         if(this.useTsAnimation){
@@ -183,8 +197,8 @@ class SceneDynamic extends Scene
     {
         let idx = 0;
         for(let layer of this.map.layers){
-            let margin = this.configManager.get('client/general/tileData/margin');
-            let spacing = this.configManager.get('client/general/tileData/spacing');
+            let margin = this.configManager.get('client/map/tileData/margin');
+            let spacing = this.configManager.get('client/map/tileData/spacing');
             let layerName = layer.name;
             if(this.useTsAnimation){
                 this.layers[idx] = this.map.createDynamicLayer(layerName, this.tileset, margin, spacing);
@@ -262,8 +276,8 @@ class SceneDynamic extends Scene
         if(this.arrowSprite){
             this.arrowSprite.destroy();
         }
-        // @TODO - BETA - Make pointer sprite data configurable. Here the -16 is half of the sprite height.
-        this.arrowSprite = this.physics.add.sprite(pointer.worldX, pointer.worldY - 16, GameConst.ARROW_DOWN);
+        let topOffSet = this.configManager.get('client/ui/pointer/topOffSet') || 16;
+        this.arrowSprite = this.physics.add.sprite(pointer.worldX, pointer.worldY - topOffSet, GameConst.ARROW_DOWN);
         this.arrowSprite.setDepth(500000);
         this.arrowSprite.anims.play(GameConst.ARROW_DOWN, true).on('animationcomplete', () => {
             this.arrowSprite.destroy();
@@ -290,6 +304,15 @@ class SceneDynamic extends Scene
             returnObj = currentPlayer.players[extraData[objKey+'K']];
         }
         return returnObj;
+    }
+
+    loopKeysAddListenerToElement(keys, element, eventName, action)
+    {
+        element.addEventListener(eventName, () => {
+            for(let keyCode of keys){
+                this.input.keyboard[action](keyCode);
+            }
+        });
     }
 
 }

@@ -6,7 +6,7 @@
  *
  */
 
-const { Logger } = require('@reldens/utils');
+const { Logger, sc} = require('@reldens/utils');
 const { ActionsConst } = require('../constants');
 const { GameConst } = require('../../game/constants');
 
@@ -24,6 +24,10 @@ class Battle
         this.timerType = props.timerType || ActionsConst.BATTLE_TYPE_PER_TARGET;
         this.lastAttack = false;
         this.lastAttackKey = false;
+        this.events = sc.getDef(props, 'events', false);
+        if(!this.events){
+            Logger.error('EventsManager undefined in Battle.');
+        }
     }
 
     // eslint-disable-next-line no-unused-vars

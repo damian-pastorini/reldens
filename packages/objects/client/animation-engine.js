@@ -15,7 +15,7 @@
  *
  */
 
-const { Logger } = require('@reldens/utils');
+const { Logger, sc } = require('@reldens/utils');
 const { ObjectsConst } = require('../constants');
 
 class AnimationEngine
@@ -48,18 +48,26 @@ class AnimationEngine
         this.zeroPad = props.zeroPad || false;
         this.prefix = props.prefix || false;
         this.isInteractive = props.isInteractive || false;
-        this.restartTime = {}.hasOwnProperty.call(props, 'restartTime') ? props.restartTime : false;
+        this.restartTime = sc.getDef(props, 'restartTime', false);
         this.calculateAnimPosition();
+        this.extraAnimations = {};
+        // @NOTE: having this here we will get the animations generated for each object instance, so normally you would
+        // get duplicated animations for any respawn "multiple" object, BUT, at the same time, you could have an
+        // animation for an specific instance ID, we need to keep this here and check if the animation already exists on
+        // the preloader list to avoid generate it again.
+        if(sc.hasOwn(props, 'animations')){
+            this.createObjectAnimations(props.animations);
+        }
     }
 
     calculateAnimPosition()
     {
         this.animPos = {x: this.x, y: this.y};
         if(this.positionFix){
-            if({}.hasOwnProperty.call(this.positionFix, 'x')){
+            if(sc.hasOwn(this.positionFix, 'x')){
                 this.animPos.x = this.x + this.positionFix.x;
             }
-            if({}.hasOwnProperty.call(this.positionFix, 'y')){
+            if(sc.hasOwn(this.positionFix, 'y')){
                 this.animPos.y = this.y + this.positionFix.y;
             }
         }
@@ -92,6 +100,7 @@ class AnimationEngine
             hideOnComplete: this.hideOnComplete
         };
         this.currentAnimation = this.currentPreloader.anims.create(createData);
+        this.currentPreloader.objectsAnimations[this.key] = this.currentAnimation;
         let spriteX = this.positionFix ? this.animPos.x : this.x;
         let spriteY = this.positionFix ? this.animPos.y : this.y;
         this.sceneSprite = currentScene.physics.add.sprite(spriteX, spriteY, this.asset_key);
@@ -99,10 +108,10 @@ class AnimationEngine
             this.sceneSprite.anims.play(this.key, true);
         }
         if(this.isInteractive){
-            this.sceneSprite.setInteractive({useHandCursor: true}).on('pointerdown', (ev) => {
+            this.sceneSprite.setInteractive({useHandCursor: true}).on('pointerdown', (e) => {
                 // @NOTE: we avoid to run object interactions while an UI element is open, if we click on the UI the
                 // elements in the background scene should not be executed.
-                if(ev.downElement.nodeName !== 'CANVAS'){
+                if(e.downElement.nodeName !== 'CANVAS'){
                     return false;
                 }
                 // @TODO - BETA - CHECK - TempId is a temporal fix for multiple objects case.
@@ -114,9 +123,11 @@ class AnimationEngine
                 };
                 this.gameManager.activeRoomEvents.room.send(dataSend);
                 if(this.targetName){
-                    this.gameManager.gameEngine.showTarget(this.targetName);
+                    let previousTarget = Object.assign({}, currentScene.player.currentTarget);
+                    let thisTarget = {id: tempId, type: ObjectsConst.TYPE_OBJECT};
+                    currentScene.player.currentTarget = thisTarget;
+                    this.gameManager.gameEngine.showTarget(this.targetName, thisTarget, previousTarget);
                 }
-                currentScene.player.currentTarget = {id: tempId, type: ObjectsConst.TYPE_OBJECT};
             });
         }
         if(this.restartTime){
@@ -158,6 +169,31 @@ class AnimationEngine
         return {
             x: this.x,
             y: this.y
+        }
+    }
+
+    createObjectAnimations(animations)
+    {
+        for(let i of Object.keys(animations)){
+            if(sc.hasOwn(this.currentPreloader.objectsAnimations, i)){
+                continue;
+            }
+            let animData = animations[i];
+            let frameNumbers = this.currentPreloader.anims.generateFrameNumbers(
+                (animData['asset_key'] || this.asset_key), {
+                    start: animData['start'] || this.frameStart,
+                    end: animData['end'] || this.frameEnd
+                }
+            );
+            let createData = {
+                key: i,
+                frames: frameNumbers,
+                frameRate: animData['frameRate'] || this.frameRate,
+                repeat: animData['repeat'] || this.repeat,
+                hideOnComplete: animData['hideOnComplete'] || this.hideOnComplete,
+                asset_key: animData['asset_key'] || this.asset_key
+            };
+            this.currentPreloader.objectsAnimations[i] = this.currentPreloader.anims.create(createData);
         }
     }
 

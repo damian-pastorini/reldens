@@ -8,13 +8,17 @@
  */
 
 const { Room } = require('colyseus');
-const { Logger, ErrorManager, sc } = require('@reldens/utils');
+const { ErrorManager, Logger, sc } = require('@reldens/utils');
 
 class RoomLogin extends Room
 {
 
     onCreate(options)
     {
+        this.events = sc.getDef(options, 'events', false);
+        if(!this.events){
+            Logger.error('EventsManager undefined in RoomLogin.');
+        }
         this.config = options.config;
         this.loginManager = options.loginManager;
         // @NOTE: validateRoomData is overridden in RoomScene onCreate.
@@ -53,7 +57,11 @@ class RoomLogin extends Room
 
     validateRoom(playerRoomName)
     {
-        if(this.config.server.rooms.validation.enabled){
+        if(
+            this.config.server.rooms.validation.enabled
+            && !this.config.client.rooms.selection.allowOnRegistration
+            && !this.config.client.rooms.selection.allowOnLogin
+        ){
             this.validRooms = this.config.server.rooms.validation.valid.split(',');
             if(this.validRooms.indexOf(this.roomName) === -1 && playerRoomName !== this.roomName){
                 ErrorManager.error(['Invalid player room:', playerRoomName, 'Current room:', this.roomName]);

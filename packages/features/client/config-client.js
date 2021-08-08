@@ -13,11 +13,15 @@ const { ObjectsPack } = require('../../objects/client/pack');
 const { InventoryPack } = require('../../inventory/client/pack');
 const { ActionsPack } = require('../../actions/client/pack');
 const { UsersPack } = require('../../users/client/pack');
+const { AudioPack } = require('../../audio/client/pack');
+const { RoomsPack } = require('../../rooms/client/pack');
 
 module.exports.ClientCoreFeatures = {
     chat: ChatPack,
     objects: ObjectsPack,
     inventory: InventoryPack,
     actions: ActionsPack,
-    users: UsersPack
+    users: UsersPack,
+    audio: AudioPack,
+    rooms: RoomsPack
 };

@@ -6,7 +6,7 @@
  *
  */
 
-const { EventsManagerSingleton, Logger, sc } = require('@reldens/utils');
+const { Logger, sc } = require('@reldens/utils');
 const { GameConst } = require('../../game/constants');
 const { ActionsConst } = require('../../actions/constants');
 
@@ -18,6 +18,7 @@ class PlayerEngine
         this.scene = scene;
         this.config = gameManager.config;
         this.gameManager = gameManager;
+        this.events = gameManager.events;
         this.playerName = playerData.playerName;
         this.avatarKey = playerData.avatarKey;
         this.roomName = playerData.state.scene;
@@ -68,22 +69,23 @@ class PlayerEngine
         if(this.gameManager.config.get('client/ui/players/showNames')){
             this.attachNameToPlayerSprite(this.players[id]);
         }
-        this.players[id].setInteractive({useHandCursor: true}).on('pointerdown', (ev) => {
+        this.players[id].setInteractive({useHandCursor: true}).on('pointerdown', (e) => {
             // @NOTE: we avoid to run object interactions while an UI element is open, if we click on the UI the
             // elements in the background scene should not be executed.
-            if(ev.downElement.nodeName !== 'CANVAS'){
+            if(e.downElement.nodeName !== 'CANVAS'){
                 return false;
             }
             // @NOTE: we could send an specific action when the player is been targeted.
             // this.room.send({act: GameConst.TYPE_PLAYER, id: id});
             // update target ui:
-            this.gameManager.gameEngine.showTarget(this.players[id].playerName);
+            let previousTarget = Object.assign({}, this.currentTarget);
             this.currentTarget = {id: id, type: GameConst.TYPE_PLAYER};
+            this.gameManager.gameEngine.showTarget(this.players[id].playerName, this.currentTarget, previousTarget);
         });
         this.players[id].moveSprites = {};
         this.players[id].setDepth(this.players[id].y + this.players[id].body.height);
         this.players[id].setCollideWorldBounds(this.collideWorldBounds);
-        EventsManagerSingleton.emit('reldens.playerEngineAddPlayer', this, id, addPlayerData);
+        this.events.emitSync('reldens.playerEngineAddPlayer', this, id, addPlayerData);
         return this.players[id];
     }
 
@@ -104,7 +106,7 @@ class PlayerEngine
             playerSprite.anims.stop();
             playerSprite.mov = player.state.mov;
         }
-        EventsManagerSingleton.emit('reldens.runPlayerAnimation', this, playerId, player);
+        this.events.emitSync('reldens.runPlayerAnimation', this, playerId, player);
         let nameConfig = this.gameManager.config.get('client/ui/players');
         if(nameConfig.showNames && playerSprite.nameSprite){
             let relativeNamePosition = this.getNamePosition(playerSprite, nameConfig);

@@ -17,6 +17,9 @@ class BaseObject extends InteractionArea
         super();
         // then we will assign all the properties from the storage automatically as part of this object.
         Object.assign(this, props);
+        if(!this.events){
+            Logger.error('EventsManager undefined in BaseObject.');
+        }
         this.appendIndex = sc.getDef(props, 'tile_index', props.id);
         this.objectIndex = props.layer_name + this.appendIndex;
         // we will use the client_key has the object key:
@@ -37,9 +40,8 @@ class BaseObject extends InteractionArea
         this.clientParams.layerName = props.layer_name;
     }
 
-    // @NOTE: passing the eventsManager here is a temporal fix since npm link doesn't work well with objects instances.
     // eslint-disable-next-line no-unused-vars
-    runAdditionalSetup(eventsManager)
+    runAdditionalSetup(props)
     {
         // @NOTE: implement what you need here.
     }

@@ -6,25 +6,29 @@
 
 const { InitialState } = require('../../users/server/initial-state');
 const { InitialUser } = require('../../users/server/initial-user');
-const { PackInterface } = require('../../features/server/pack-interface');
+const { PackInterface } = require('../../features/pack-interface');
 const { ModelsManager } = require('./models-manager');
-const { EventsManagerSingleton, sc } = require('@reldens/utils');
 const { UsersConst } = require('../constants');
 const { ObjectsConst } = require('../../objects/constants');
+const { Logger, sc } = require('@reldens/utils');
 
 class UsersPack extends PackInterface
 {
 
-    setupPack()
+    setupPack(props)
     {
+        this.events = sc.getDef(props, 'events', false);
+        if(!this.events){
+            Logger.error('EventsManager undefined in UsersPack.');
+        }
         this.modelsManager = ModelsManager;
         // @TODO - BETA - Move LifeBar to it's own package.
         this.lifeBarConfig = false;
         this.lifeProp = false;
-        EventsManagerSingleton.on('reldens.serverReady', async (event) => {
+        this.events.on('reldens.serverReady', async (event) => {
             await this.onServerReady(event);
         });
-        EventsManagerSingleton.on('reldens.createPlayerAfter', async (client, authResult, currentPlayer, roomScene) => {
+        this.events.on('reldens.createPlayerAfter', async (client, authResult, currentPlayer, roomScene) => {
             await this.onCreatePlayerAfterAppendStats(client, authResult, currentPlayer, roomScene);
         });
     }
@@ -46,18 +50,15 @@ class UsersPack extends PackInterface
         if(!this.lifeProp){
             this.lifeProp = configProcessor.get('client/actions/skills/affectedProperty');
         }
-        EventsManagerSingleton.on('reldens.createPlayerAfter', async (client, authResult, currentPlayer, roomScene) => {
-            if(this.lifeBarConfig.showAllPlayers){
-                this.updateAllPlayersLifeBars(roomScene);
-            } else {
-                await this.onSavePlayerStatsUpdateClient(client, currentPlayer, roomScene);
-            }
+        this.events.on('reldens.createPlayerAfter', async (client, authResult, currentPlayer, roomScene) => {
+            await this.updatePlayersLifebar(roomScene, client, currentPlayer);
+            await this.updateEnemiesLifebar(roomScene);
         });
-        EventsManagerSingleton.on('reldens.savePlayerStatsUpdateClient', async (client, target, roomScene) => {
+        this.events.on('reldens.savePlayerStatsUpdateClient', async (client, target, roomScene) => {
             await this.onSavePlayerStatsUpdateClient(client, target, roomScene);
         });
-        EventsManagerSingleton.on('reldens.runBattlePveAfter', async (event) => {
-            if(!this.lifeBarConfig.showEnemies){
+        this.events.on('reldens.runBattlePveAfter', async (event) => {
+            if(!this.lifeBarConfig.showEnemies && !this.lifeBarConfig.showOnClick){
                 return false;
             }
             let {target, roomScene} = event;
@@ -74,26 +75,7 @@ class UsersPack extends PackInterface
             };
             roomScene.broadcast(updateData);
         });
-        EventsManagerSingleton.on('reldens.createPlayerAfter', (client, authResult, currentPlayer, roomScene) => {
-            if(!this.lifeBarConfig.showEnemies){
-                return false;
-            }
-            for(let i of Object.keys(roomScene.objectsManager.roomObjects)){
-                let obj = roomScene.objectsManager.roomObjects[i];
-                if(obj.type !== ObjectsConst.TYPE_ENEMY){
-                    continue;
-                }
-                let updateData = {
-                    act: UsersConst.ACTION_LIFEBAR_UPDATE,
-                    oT: 'o',
-                    oK: obj.broadcastKey,
-                    newValue: obj.stats[this.lifeProp],
-                    totalValue: obj.initialStats[this.lifeProp]
-                };
-                roomScene.broadcast(updateData);
-            }
-        });
-        EventsManagerSingleton.on('reldens.restoreObjectAfter', (event) => {
+        this.events.on('reldens.restoreObjectAfter', (event) => {
             let updateData = {
                 act: UsersConst.ACTION_LIFEBAR_UPDATE,
                 oT: 'o',
@@ -105,7 +87,37 @@ class UsersPack extends PackInterface
         });
     }
 
-    updateAllPlayersLifeBars(roomScene)
+    async updatePlayersLifebar(roomScene, client, currentPlayer)
+    {
+        if(this.lifeBarConfig.showAllPlayers || this.lifeBarConfig.showOnClick){
+            await this.updateAllPlayersLifeBars(roomScene);
+        } else {
+            await this.onSavePlayerStatsUpdateClient(client, currentPlayer, roomScene);
+        }
+    }
+
+    async updateEnemiesLifebar(roomScene)
+    {
+        if(!this.lifeBarConfig.showEnemies && !this.lifeBarConfig.showOnClick){
+            return false;
+        }
+        for(let i of Object.keys(roomScene.objectsManager.roomObjects)){
+            let obj = roomScene.objectsManager.roomObjects[i];
+            if(obj.type !== ObjectsConst.TYPE_ENEMY){
+                continue;
+            }
+            let updateData = {
+                act: UsersConst.ACTION_LIFEBAR_UPDATE,
+                oT: 'o',
+                oK: obj.broadcastKey,
+                newValue: obj.stats[this.lifeProp],
+                totalValue: obj.initialStats[this.lifeProp]
+            };
+            roomScene.broadcast(updateData);
+        }
+    }
+
+    async updateAllPlayersLifeBars(roomScene)
     {
         for(let i of Object.keys(roomScene.state.players)){
             let player = roomScene.state.players[i];
@@ -169,10 +181,13 @@ class UsersPack extends PackInterface
         return {stats, statsBase};
     }
 
-    // eslint-disable-next-line no-unused-vars
     async onSavePlayerStatsUpdateClient(client, target, roomScene)
     {
-        if(client.sessionId !== target.sessionId && !this.lifeBarConfig.showAllPlayers){
+        if(
+            client.sessionId !== target.sessionId
+            && !this.lifeBarConfig.showAllPlayers
+            && !this.lifeBarConfig.showOnClick
+        ){
             return false;
         }
         let updateData = {
@@ -182,7 +197,7 @@ class UsersPack extends PackInterface
             newValue: target.stats[this.lifeProp],
             totalValue: target.statsBase[this.lifeProp]
         };
-        if(this.lifeBarConfig.showAllPlayers){
+        if(this.lifeBarConfig.showAllPlayers || this.lifeBarConfig.showOnClick){
             roomScene.broadcast(updateData);
         } else {
             roomScene.send(client, updateData);

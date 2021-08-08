@@ -4,26 +4,30 @@
  *
  */
 
-const { EventsManagerSingleton } = require('@reldens/utils');
+const { Logger, sc } = require('@reldens/utils');
 const { RoomRespawn } = require('./room-respawn');
-const { PackInterface } = require('../../features/server/pack-interface');
+const { PackInterface } = require('../../features/pack-interface');
 
 class RespawnPack extends PackInterface
 {
 
-    setupPack()
+    setupPack(props)
     {
-        EventsManagerSingleton.on('reldens.parsingMapLayerBefore', async (layer, world) => {
+        this.events = sc.getDef(props, 'events', false);
+        if(!this.events){
+            Logger.error('EventsManager undefined in RespawnPack.');
+        }
+        this.events.on('reldens.parsingMapLayerBefore', async (layer, world) => {
             if(layer.name.indexOf('respawn-area') !== -1){
                 if(!world.respawnAreas){
                     world.respawnAreas = {};
                 }
-                let respawnArea = new RoomRespawn(layer, world);
+                let respawnArea = new RoomRespawn({layer, world, events: this.events});
                 await respawnArea.activateObjectsRespawn();
                 world.respawnAreas[layer.name] = respawnArea;
             }
         });
-        EventsManagerSingleton.on('reldens.sceneRoomOnCreate', async (room) => {
+        this.events.on('reldens.sceneRoomOnCreate', async (room) => {
             // @TODO - BETA - Improve.
             // append all the room objects body state to the room state:
             if(room.roomWorld && room.roomWorld.respawnAreas){

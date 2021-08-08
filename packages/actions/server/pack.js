@@ -9,10 +9,10 @@
 
 const { SkillsServer, SkillConst, SkillsEvents } = require('@reldens/skills');
 const { ModelsManager } = require('@reldens/skills/lib/server/storage/models-manager');
-const { EventsManagerSingleton, sc } = require('@reldens/utils');
+const { Logger, sc } = require('@reldens/utils');
 const { ActionsMessageActions } = require('./message-actions');
 const { ClientWrapper } = require('../../game/server/client-wrapper');
-const { PackInterface } = require('../../features/server/pack-interface');
+const { PackInterface } = require('../../features/pack-interface');
 const { Pvp } = require('./pvp');
 const { TypeAttack, TypeEffect, TypePhysicalAttack, TypePhysicalEffect } = require('./skills/types');
 const { AnimationsModel } = require('./animations-model');
@@ -21,23 +21,27 @@ const { LevelAnimationsModel } = require('./level-animations-model');
 class ActionsPack extends PackInterface
 {
 
-    setupPack()
+    setupPack(props)
     {
-        this.skillsModelsManager = new ModelsManager({events: EventsManagerSingleton});
-        EventsManagerSingleton.on('reldens.serverReady', async (event) => {
+        this.events = sc.getDef(props, 'events', false);
+        if(!this.events){
+            Logger.error('EventsManager undefined in ActionsPack.');
+        }
+        this.skillsModelsManager = new ModelsManager({events: this.events});
+        this.events.on('reldens.serverReady', async (event) => {
             await this.onServerReady(event);
         });
-        EventsManagerSingleton.on('reldens.beforeSuperInitialGameData', async (superInitialGameData, roomGame) => {
+        this.events.on('reldens.beforeSuperInitialGameData', async (superInitialGameData, roomGame) => {
             await this.onBeforeSuperInitialGameData(superInitialGameData, roomGame);
         });
         // eslint-disable-next-line no-unused-vars
-        EventsManagerSingleton.on('reldens.roomsMessageActionsByRoom', async (roomMessageActions, roomName) => {
+        this.events.on('reldens.roomsMessageActionsByRoom', async (roomMessageActions, roomName) => {
             roomMessageActions.actions = new ActionsMessageActions();
         });
-        EventsManagerSingleton.on('reldens.createdPlayerSchema', async (client, authResult, currentPlayer, room) => {
+        this.events.on('reldens.createdPlayerSchema', async (client, authResult, currentPlayer, room) => {
             await this.onCreatePlayerAfter(client, authResult, currentPlayer, room);
         });
-        EventsManagerSingleton.on('reldens.createdNewPlayer', async (player, loginData, loginManager) => {
+        this.events.on('reldens.createdNewPlayer', async (player, loginData, loginManager) => {
             let defaultClassPathId = loginManager.config.get('server/players/actions/initialClassPathId');
             let initialClassPathId = sc.getDef(loginData, 'class_path_select', defaultClassPathId);
             let data = {
@@ -85,7 +89,7 @@ class ActionsPack extends PackInterface
                 let player = superInitialGameData.players[i];
                 let classPathCollection = await this.skillsModelsManager.models['ownersClassPath']
                     .loadOwnerClassPath(player.id);
-                if(!classPathCollection){
+                if(!classPathCollection.length){
                     continue;
                 }
                 // @TODO - BETA - Temporal index[0] for a single class path by player.
@@ -109,13 +113,13 @@ class ActionsPack extends PackInterface
             room.config.skills.skillsList
         );
         if(classPathData){
-            classPathData.events = EventsManagerSingleton;
+            classPathData.events = this.events;
             classPathData.affectedProperty = room.config.get('client/actions/skills/affectedProperty');
             classPathData.client = new ClientWrapper(client, room);
             // append skills server to player:
             currentPlayer.skillsServer = new SkillsServer(classPathData);
             currentPlayer.avatarKey = classPathData.key;
-            this.prepareEventsListeners(currentPlayer.skillsServer.classPath);
+            await this.prepareEventsListeners(currentPlayer.skillsServer.classPath);
         }
     }
 
@@ -146,7 +150,7 @@ class ActionsPack extends PackInterface
     appendActionsToPlayer(currentPlayer, room)
     {
         currentPlayer.actions = {};
-        let pvpConfig = room.config.get('server/actions/pvp');
+        let pvpConfig = Object.assign({events: this.events}, room.config.get('server/actions/pvp'));
         if(pvpConfig){
             currentPlayer.actions['pvp'] = new Pvp(pvpConfig);
         }
@@ -271,7 +275,7 @@ class ActionsPack extends PackInterface
         return config.client.levels.animations;
     }
 
-    prepareEventsListeners(classPath)
+    async prepareEventsListeners(classPath)
     {
         let ownerId = classPath.getOwnerEventKey();
         // eslint-disable-next-line no-unused-vars
@@ -298,7 +302,7 @@ class ActionsPack extends PackInterface
             }
             skill.owner.physicalBody.isBlocked = false;
         }, 'skillAfterCastPack', ownerId);
-        EventsManagerSingleton.emit('reldens.actionsPrepareEventsListeners', this, classPath);
+        await this.events.emit('reldens.actionsPrepareEventsListeners', this, classPath);
     }
 
 }

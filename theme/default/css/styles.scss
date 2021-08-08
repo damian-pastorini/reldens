@@ -13,6 +13,11 @@ $cLightGrey: #ccc;
 $cBlack: #000;
 
 @import "base";
+@import "player-selection";
+@import "game-over";
+@import "instructions";
+@import "settings";
+@import "minimap";
 @import "skills";
 @import "firebase";
 @import "chat";

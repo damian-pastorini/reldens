@@ -8,25 +8,34 @@ const { AnimationEngine } = require('../../objects/client/animation-engine');
 const { UserInterface } = require('../../game/client/user-interface');
 const { ObjectsConst } = require('../constants');
 const { ActionsConst } = require('../../actions/constants');
-const { EventsManagerSingleton, Logger, sc } = require('@reldens/utils');
+const { PackInterface } = require('../../features/pack-interface');
+const { Logger, sc } = require('@reldens/utils');
 
-class ObjectsPack
+class ObjectsPack extends PackInterface
 {
 
-    constructor()
+    setupPack(props)
     {
+        this.gameManager = sc.getDef(props, 'gameManager', false);
+        if(!this.gameManager){
+            Logger.error('Game Manager undefined in InventoryPack.');
+        }
+        this.events = sc.getDef(props, 'events', false);
+        if(!this.events){
+            Logger.error('EventsManager undefined in InventoryPack.');
+        }
         // @NOTE: the prepare objects ui has to be created before the scenes so we can use the scenes events before
         // the events were called.
         // eslint-disable-next-line no-unused-vars
-        EventsManagerSingleton.on('reldens.startEngineScene', (roomEvents, player, room, previousScene) => {
-            this.prepareObjectsUi(roomEvents.gameManager, roomEvents.sceneData.objectsAnimationsData, roomEvents);
+        this.events.on('reldens.startEngineScene', async (roomEvents, player, room, previousScene) => {
+            await this.prepareObjectsUi(roomEvents.gameManager, roomEvents.sceneData.objectsAnimationsData, roomEvents);
         });
         // create animations for all the objects in the scene:
-        EventsManagerSingleton.on('reldens.afterSceneDynamicCreate', (sceneDynamic) => {
-            this.createDynamicAnimations(sceneDynamic);
+        this.events.on('reldens.afterSceneDynamicCreate', async (sceneDynamic) => {
+            await this.createDynamicAnimations(sceneDynamic);
         });
         // listen messages:
-        EventsManagerSingleton.on('reldens.joinedRoom', (room, gameManager) => {
+        this.events.on('reldens.joinedRoom', (room, gameManager) => {
             this.listenMessages(room, gameManager);
         });
         this.bullets = [];
@@ -81,7 +90,7 @@ class ObjectsPack
                 }
             };
             room.state.bodies.onChange = async (body, key) => {
-                await EventsManagerSingleton.emit('reldens.objectBodyChange', {body, key});
+                await this.events.emit('reldens.objectBodyChange', {body, key});
                 if(key.indexOf('bullet') !== -1){
                     this.bullets[key].x = body.x;
                     this.bullets[key].y = body.y;
@@ -98,10 +107,28 @@ class ObjectsPack
                         objectAnimation.animPos.x = body.x;
                         objectAnimation.animPos.y = body.y;
                         objectAnimation.inState = body.inState;
+                        let animToPlay = sc.getByPriority(currentScene.anims.anims.entries, [
+                            objectAnimation.key+'_'+body.dir,
+                            objectAnimation.layerName+'_'+objectAnimation.id+'_'+body.dir,
+                            objectAnimation.key
+                        ]);
+                        if(animToPlay){
+                            objectAnimation.sceneSprite.anims.play(animToPlay, true);
+                        }
                         this.moveSpritesObjects(objectAnimation, body.x, body.y, objectNewDepth);
+                        if(!body.mov){
+                            objectAnimation.sceneSprite.anims.stop();
+                            objectAnimation.sceneSprite.mov = body.mov;
+                            if(objectAnimation.autoStart){
+                                let autoStartAnim = objectAnimation.autoStart === true ?
+                                    objectAnimation.key : objectAnimation.autoStart === ObjectsConst.DYNAMIC_ANIMATION
+                                        ? animToPlay : objectAnimation.autoStart;
+                                objectAnimation.sceneSprite.anims.play(autoStartAnim);
+                            }
+                        }
                     }
                 }
-                await EventsManagerSingleton.emit('reldens.objectBodyChanged', {body, key});
+                await this.events.emit('reldens.objectBodyChanged', {body, key});
             };
         }
     }
@@ -122,7 +149,7 @@ class ObjectsPack
         }
     }
 
-    prepareObjectsUi(gameManager, objectsAnimationsData, roomEvents)
+    async prepareObjectsUi(gameManager, objectsAnimationsData, roomEvents)
     {
         if(!objectsAnimationsData){
             Logger.info(['None objects animations data.', roomEvents]);
@@ -138,17 +165,23 @@ class ObjectsPack
                 continue;
             }
             roomEvents.objectsUi[animProps.id] = new UserInterface(gameManager, animProps.id);
+            await gameManager.events.emit('reldens.createdUserInterface', {
+                gameManager,
+                id: animProps.id,
+                userInterface: roomEvents.objectsUi[animProps.id],
+                objectsPack: this
+            });
         }
     }
 
-    createDynamicAnimations(sceneDynamic)
+    async createDynamicAnimations(sceneDynamic)
     {
         let currentScene = sceneDynamic.gameManager.activeRoomEvents.getActiveScene();
         if(!currentScene.objectsAnimationsData){
             Logger.info(['None animations defined on this scene:', currentScene.key]);
             return;
         }
-        EventsManagerSingleton.emit('reldens.createDynamicAnimationsBefore', this, sceneDynamic);
+        await this.events.emit('reldens.createDynamicAnimationsBefore', this, sceneDynamic);
         for(let i of Object.keys(currentScene.objectsAnimationsData)){
             let animProps = currentScene.objectsAnimationsData[i];
             if(!animProps.key){
@@ -156,7 +189,7 @@ class ObjectsPack
                 continue;
             }
             animProps.frameRate = sceneDynamic.configuredFrameRate;
-            EventsManagerSingleton.emit('reldens.createDynamicAnimation_'+animProps.key, this, animProps);
+            await this.events.emit('reldens.createDynamicAnimation_'+animProps.key, this, animProps);
             // check for custom class:
             let classDefinition = sceneDynamic.gameManager.config.get('customClasses/objects/'+animProps.key, true);
             if(!classDefinition){

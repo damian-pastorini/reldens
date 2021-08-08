@@ -10,29 +10,33 @@ const { RoomsModel } = require('./model');
 const { RoomGame } = require('./game');
 const { RoomScene } = require('./scene');
 const { GameConst } = require('../../game/constants');
-const { Logger, ErrorManager } = require('@reldens/utils');
-const { EventsManagerSingleton } = require('@reldens/utils');
+const { ErrorManager, Logger, sc } = require('@reldens/utils');
 
 class RoomsManager
 {
 
-    constructor()
+    constructor(props)
     {
+        this.events = sc.getDef(props, 'events', false);
+        if(!this.events){
+            Logger.error('EventsManager undefined in RoomsManager.');
+        }
         this.loadedRooms = false;
         this.loadedRoomsById = false;
         this.loadedRoomsByName = false;
         this.defineExtraRooms = [];
+        this.definedRooms = {};
     }
 
     async defineRoomsInGameServer(gameServer, props)
     {
-        await EventsManagerSingleton.emit('reldens.roomsDefinition', this.defineExtraRooms);
+        await this.events.emit('reldens.roomsDefinition', this.defineExtraRooms);
         if(!this.defineExtraRooms.length){
             Logger.info('None extra rooms to be defined.');
         }
         // dispatch event to get the global message actions (that will be listen by every room):
         let globalMessageActions = {};
-        await EventsManagerSingleton.emit('reldens.roomsMessageActionsGlobal', globalMessageActions);
+        await this.events.emit('reldens.roomsMessageActionsGlobal', globalMessageActions);
         // loaded rooms counter:
         let counter = 0;
         // lobby room:
@@ -70,24 +74,27 @@ class RoomsManager
         }
         // log defined rooms:
         Logger.info(`Total rooms loaded: ${counter}`);
-        return rooms;
+        await this.events.emit('reldens.defineRoomsInGameServerDone', this);
+        return this.definedRooms;
     }
 
     async defineRoom(gameServer, roomName, roomClass, props, globalMessageActions, roomModel = false)
     {
         let roomMessageActions = Object.assign({}, globalMessageActions);
         // run message actions event for each room:
-        await EventsManagerSingleton.emit('reldens.roomsMessageActionsByRoom', roomMessageActions, roomName);
+        await this.events.emit('reldens.roomsMessageActionsByRoom', roomMessageActions, roomName);
         // merge room data and props:
         let roomProps = {
             loginManager: props.loginManager,
             config: props.config,
-            messageActions: roomMessageActions
+            messageActions: roomMessageActions,
+            events: this.events
         };
         if(roomModel){
             roomProps.roomData = roomModel;
         }
         gameServer.define(roomName, roomClass, roomProps);
+        this.definedRooms[roomName] = {roomClass, roomProps};
     }
 
     async loadRooms()
@@ -117,24 +124,29 @@ class RoomsManager
 
     async loadRoomById(roomId)
     {
-        if(this.loadedRoomsById[roomId]){
-            return this.loadedRoomsById[roomId];
-        }
-        let room = await RoomsModel.loadById(roomId);
-        if(room){
-            return this.generateRoomModel(room);
-        }
-        return false;
+        return this.loadRoomBy('id', roomId);
     }
 
     async loadRoomByName(roomName)
     {
-        if(this.loadedRoomsByName[roomName]){
-            return this.loadedRoomsByName[roomName];
+        return this.loadRoomBy('name', roomName);
+    }
+
+    async loadRoomBy(property, value)
+    {
+        property = property.charAt(0).toUpperCase()+property.slice(1);
+        let managerProperty = 'loadedRoomsBy'+property;
+        if(this[managerProperty][value]){
+            return this[managerProperty][value];
         }
-        let room = await RoomsModel.loadByName(roomName);
+        let loadByMethodName = 'loadBy'+property;
+        let room = await RoomsModel[loadByMethodName](value);
         if(room){
-            return this.generateRoomModel(room);
+            let temp = this.generateRoomModel(room);
+            this.loadedRooms.push(temp);
+            this.loadedRoomsById[room.id] = temp;
+            this.loadedRoomsByName[room.name] = temp;
+            return temp;
         }
         return false;
     }
@@ -149,7 +161,8 @@ class RoomsManager
             sceneImages: room.scene_images,
             changePoints: [],
             returnPoints: [],
-            roomClassPath: room.room_class_key
+            roomClassPath: room.room_class_key,
+            returnPointDefault: false
         };
         // assign to room:
         for(let changePoint of room.rooms_change_points){
@@ -160,13 +173,17 @@ class RoomsManager
             // this array translates to D for direction, X and Y for positions, De for default and P for previous room.
             let toRoomName = returnPosition.from_room ? returnPosition.from_room.name : false;
             let posTemp = {D: returnPosition.direction, X: returnPosition.x, Y: returnPosition.y, P: toRoomName};
-            if({}.hasOwnProperty.call(returnPosition, 'is_default') && returnPosition.is_default){
+            if(sc.hasOwn(returnPosition, 'is_default') && returnPosition.is_default){
                 posTemp.De = returnPosition.is_default;
+                temp.returnPointDefault = posTemp;
             }
             temp.returnPoints.push(posTemp);
         }
         if(!temp.returnPoints.length){
             Logger.error(['None return points found for room:', temp.roomName, temp.roomId]);
+        }
+        if(!temp.returnPointDefault){
+            temp.returnPointDefault = temp.returnPoints[0];
         }
         return temp;
     }
