@@ -4,9 +4,10 @@
  *
  */
 
-const { Logger, sc} = require('@reldens/utils');
+const { PackInterface } = require('../../features/pack-interface');
+const { Logger, sc } = require('@reldens/utils');
 
-class RoomsPack
+class RoomsPack extends PackInterface
 {
 
     setupPack(props)

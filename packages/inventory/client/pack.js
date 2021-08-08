@@ -8,9 +8,10 @@ const { ItemsEvents, ItemsConst } = require('@reldens/items-system');
 const { InventoryUi } = require('./inventory-ui');
 const { InventoryReceiver } = require('./inventory-receiver');
 const { InventoryConst } = require('../constants');
-const { Logger, sc} = require('@reldens/utils');
+const { PackInterface } = require('../../features/pack-interface');
+const { Logger, sc } = require('@reldens/utils');
 
-class InventoryPack
+class InventoryPack extends PackInterface
 {
 
     setupPack(props)

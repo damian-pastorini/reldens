@@ -8,9 +8,10 @@ const { AnimationEngine } = require('../../objects/client/animation-engine');
 const { UserInterface } = require('../../game/client/user-interface');
 const { ObjectsConst } = require('../constants');
 const { ActionsConst } = require('../../actions/constants');
+const { PackInterface } = require('../../features/pack-interface');
 const { Logger, sc } = require('@reldens/utils');
 
-class ObjectsPack
+class ObjectsPack extends PackInterface
 {
 
     setupPack(props)

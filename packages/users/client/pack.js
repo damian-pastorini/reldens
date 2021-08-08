@@ -4,12 +4,13 @@
  *
  */
 
-const { Logger, sc } = require('@reldens/utils');
 const { LifebarUi } = require('./lifebar-ui');
 const { PlayerStatsUi } = require('./player-stats-ui');
 const { GameConst } = require('../../game/constants');
+const { PackInterface } = require('../../features/pack-interface');
+const { Logger, sc } = require('@reldens/utils');
 
-class UsersPack
+class UsersPack extends PackInterface
 {
 
     setupPack(props)
