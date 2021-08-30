@@ -4,10 +4,7 @@
  *
  */
 
-const { AudioModel } = require('./model');
-const { AudioCategoriesModel } = require('./audio-categories');
-const { AudioMarkersModel } = require('./audio-markers');
-const { AudioPlayerConfigModel } = require('./audio-player-config');
+const { rawRegisteredEntities } = require('./registered-entities');
 const { AudioConst } = require('../constants');
 const { sc } = require('@reldens/utils');
 
@@ -16,12 +13,7 @@ class AudioManager
 
     constructor()
     {
-        this.models = {
-            audio: AudioModel,
-            audioCategories: AudioCategoriesModel,
-            audioMarkers: AudioMarkersModel,
-            AudioPlayerConfigModel: AudioPlayerConfigModel
-        };
+        this.models = rawRegisteredEntities;
         this.categories = {};
         this.globalAudios = {};
         this.roomsAudios = {};

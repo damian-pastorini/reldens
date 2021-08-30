@@ -11,7 +11,8 @@ const dotenv = require('dotenv');
 const path = require('path');
 const { AwaitMiddleware } = require('./await-middleware');
 const { GameServer } = require('./game-server');
-const { DataServer } = require('@reldens/storage');
+const { ObjectionJsDataServer } = require('@reldens/storage');
+const { DataServerConfig } = require('./data-server-config');
 const { AppServer } = require('./app-server');
 const { ConfigManager } = require('../../config/server/manager');
 const { FeaturesManager } = require('../../features/server/manager');
@@ -21,26 +22,40 @@ const { RoomsManager } = require('../../rooms/server/manager');
 const { Mailer } = require('./mailer');
 const { ThemeManager } = require('./theme-manager');
 const { MapsLoader } = require('./maps-loader');
-const { EventsManagerSingleton, Logger } = require('@reldens/utils');
+const { EntitiesLoader } = require('./entities-loader');
+const { EventsManagerSingleton, Logger, sc } = require('@reldens/utils');
 
 class ServerManager
 {
 
-    constructor(config)
+    constructor(config, eventsManager, dataServerDriver)
     {
         try {
             // server events:
-            this.events = EventsManagerSingleton;
+            this.events = eventsManager || EventsManagerSingleton;
             // initialize configurations:
             this.initializeConfiguration(config);
             // initialize storage:
-            DataServer.initialize();
+            this.initializeStorage(config, dataServerDriver);
+            // initialize theme and maps:
             ThemeManager.validateOrCreateTheme(config);
             MapsLoader.loadMaps(path.join(config.projectRoot, ThemeManager.projectTheme), this.configManager);
         } catch (e) {
             Logger.error('Broken ServerManager. ' + e.message);
             process.exit();
         }
+    }
+
+    initializeStorage(config, dataServerDriver)
+    {
+        let rawEntities = EntitiesLoader.loadEntities(this.projectRoot);
+        this.dataServerConfig = DataServerConfig.prepareDbConfig(config);
+        this.dataServerConfig.rawEntities = Object.assign(
+            rawEntities,
+            sc.getDef(config, 'rawEntities', {})
+        );
+        this.dataServer = dataServerDriver || new ObjectionJsDataServer(this.dataServerConfig);
+        this.dataServer.connect(); // can't auto-connect on the constructor
     }
 
     initializeConfiguration(config)

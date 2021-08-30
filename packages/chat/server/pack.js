@@ -4,7 +4,7 @@
  *
  */
 
-const { RoomChat } = require('./room');
+const { RoomChat } = require('./room-chat');
 const { ChatMessageActions } = require('./message-actions');
 const { ChatManager } = require('./manager');
 const { ChatConst } = require('../constants');

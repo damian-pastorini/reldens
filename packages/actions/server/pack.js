@@ -56,6 +56,16 @@ class ActionsPack extends PackInterface
 
     async onServerReady(event)
     {
+        let configProcessor = this.prepareConfigProcessor(event);
+        await this.loadSkillsFullList(configProcessor);
+        await this.loadGroupsFullList(configProcessor);
+        await this.loadClassPathFullList(configProcessor);
+        await this.appendSkillsAnimations(configProcessor);
+        await this.appendLevelsAnimations(configProcessor);
+    }
+
+    prepareConfigProcessor(event)
+    {
         let configProcessor = event.serverManager.configManager.processor;
         if(!sc.hasOwn(configProcessor, 'skills')){
             configProcessor.skills = {skillsList: {}};
@@ -67,11 +77,7 @@ class ActionsPack extends PackInterface
         configProcessor.skills.defaultSkills[SkillConst.SKILL_TYPE_EFFECT] = TypeEffect;
         configProcessor.skills.defaultSkills[SkillConst.SKILL_TYPE_PHYSICAL_ATTACK] = TypePhysicalAttack;
         configProcessor.skills.defaultSkills[SkillConst.SKILL_TYPE_PHYSICAL_EFFECT] = TypePhysicalEffect;
-        await this.loadSkillsFullList(configProcessor);
-        await this.loadGroupsFullList(configProcessor);
-        await this.loadClassPathFullList(configProcessor);
-        await this.appendSkillsAnimations(configProcessor);
-        await this.appendLevelsAnimations(configProcessor);
+        return configProcessor;
     }
 
     async onBeforeSuperInitialGameData(superInitialGameData, roomGame)

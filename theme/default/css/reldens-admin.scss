@@ -1,0 +1,15 @@
+/*
+ * Reldens - Administration Panel - AdminJS styles customizations
+ */
+
+section.gNHxbm.adminjs_Box {
+    display: flex;
+    flex-direction: column;
+    align-content: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.adminjs_Text section svg {
+    display: none;
+}

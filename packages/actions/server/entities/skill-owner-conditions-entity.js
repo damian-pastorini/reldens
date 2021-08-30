@@ -1,0 +1,44 @@
+/**
+ *
+ * Reldens - SkillOwnerConditionsEntity
+ *
+ */
+
+const { AdminEntityProperties } = require('../../../admin/server/admin-entity-properties');
+
+class SkillOwnerConditionsEntity extends AdminEntityProperties
+{
+
+    static propertiesConfig(extraProps)
+    {
+        let properties = {
+            id: {},
+            skill_id: {
+                type: 'reference',
+                reference: 'skills_skill'
+            },
+            key: {
+                isTitle: true
+            },
+            property_key: {},
+            conditional: {},
+            value: {},
+        };
+
+        let listPropertiesKeys = Object.keys(properties);
+        let editPropertiesKeys = [...listPropertiesKeys];
+
+        editPropertiesKeys.splice(editPropertiesKeys.indexOf('id'), 1);
+
+        return Object.assign({
+            listProperties: listPropertiesKeys,
+            showProperties: Object.keys(properties),
+            filterProperties: listPropertiesKeys,
+            editProperties: editPropertiesKeys,
+            properties
+        }, extraProps);
+    }
+
+}
+
+module.exports.SkillOwnerConditionsEntity = SkillOwnerConditionsEntity;
