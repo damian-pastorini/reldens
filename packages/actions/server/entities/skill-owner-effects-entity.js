@@ -16,16 +16,39 @@ class SkillOwnerEffectsEntity extends AdminEntityProperties
             id: {},
             skill_id: {
                 type: 'reference',
-                reference: 'skills_skill'
+                reference: 'skills_skill',
+                isRequired: true
             },
             key: {
-                isTitle: true
+                isTitle: true,
+                isRequired: true
             },
-            property_key: {},
-            operation: {},
-            value: {},
-            minValue: {},
-            maxValue: {},
+            property_key: {
+                isRequired: true
+            },
+            operation: {
+                availableValues: [
+                    {value: 1, label: 'Increment'},
+                    {value: 2, label: 'Decrease'},
+                    {value: 3, label: 'Divide'},
+                    {value: 4, label: 'Multiply'},
+                    {value: 5, label: 'Increment Percentage'},
+                    {value: 6, label: 'Decrease Percentage'},
+                    {value: 7, label: 'Set'},
+                    {value: 8, label: 'Method'},
+                    {value: 9, label: 'Set Number'}
+                ],
+                isRequired: true
+            },
+            value: {
+                isRequired: true
+            },
+            minValue: {
+                isRequired: true
+            },
+            maxValue: {
+                isRequired: true
+            },
             minProperty: {},
             maxProperty: {},
         };

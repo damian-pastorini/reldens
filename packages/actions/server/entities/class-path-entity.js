@@ -13,13 +13,16 @@ class ClassPathEntity extends AdminEntityProperties
     {
         let properties = {
             id: {},
-            key: {},
+            key: {
+                isRequired: true
+            },
             label: {
                 isTitle: true
             },
             levels_set_id: {
                 type: 'reference',
-                reference: 'skills_levels_set'
+                reference: 'skills_levels_set',
+                isRequired: true
             },
         };
 

@@ -21,7 +21,9 @@ class LevelUpAnimationsEntity extends AdminEntityProperties
                 type: 'reference',
                 reference: 'skills_levels'
             },
-            animationData: {}
+            animationData: {
+                isRequired: true
+            }
         };
 
         let listPropertiesKeys = Object.keys(properties);

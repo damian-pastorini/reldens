@@ -1,6 +1,6 @@
 /**
  *
- * Reldens - Respawn Area
+ * Reldens - RoomRespawn
  *
  * This will generate and activate the respawn areas.
  *
@@ -37,48 +37,48 @@ class RoomRespawn
         for(let i of Object.keys(this.respawnDefinitions)){
             let respawnArea = this.respawnDefinitions[i];
             if(
-                sc.hasOwn(this.layerObjects, respawnArea.object_id)
-                && sc.hasOwn(this.layerObjects[respawnArea.object_id], 'respawn')
+                !sc.hasOwn(this.layerObjects, respawnArea.object_id)
+                || !sc.hasOwn(this.layerObjects[respawnArea.object_id], 'respawn')
             ){
-                let multipleObj = this.layerObjects[respawnArea.object_id];
-                let objClass = multipleObj.classInstance;
-                for(let qty=0; qty < respawnArea.instances_limit; qty++){
-                    // prepare to save the object:
-                    if(!sc.hasOwn(this.instancesCreated, respawnArea.id)){
-                        this.instancesCreated[respawnArea.id] = [];
-                    }
-                    // create object index:
-                    let objectIndex = this.createObjectIndex(respawnArea);
-                    multipleObj.objProps.client_key = objectIndex;
-                    multipleObj.objProps.events = this.events;
-                    // get random tile:
-                    let tileData = this.getRandomTile();
-                    // add tile data to the object and create object instance:
-                    Object.assign(multipleObj.objProps, tileData);
-                    let objInstance = new objClass(multipleObj.objProps);
-                    objInstance.runAdditionalSetup();
-                    let assetsArr = this.getObjectAssets(multipleObj);
-                    // @TODO - BETA - Objects could have multiple assets, need to implement and test the case.
-                    objInstance.clientParams.asset_key = assetsArr[0];
-                    objInstance.clientParams.enabled = true;
-                    if(sc.hasOwn(multipleObj, 'multipleAnimations')){
-                        objInstance.clientParams.animations = multipleObj.multipleAnimations;
-                    }
-                    this.world.objectsManager.objectsAnimationsData[objectIndex] = objInstance.clientParams;
-                    this.world.objectsManager.roomObjects[objectIndex] = objInstance;
-                    await this.world.createWorldObject(
-                        objInstance,
-                        objectIndex,
-                        tilewidth,
-                        tileheight,
-                        tileData.x,
-                        tileData.y,
-                        this.pathFinder
-                    );
-                    objInstance.respawnTime = respawnArea.respawn_time;
-                    objInstance.respawnLayer = this.layer.name;
-                    this.instancesCreated[respawnArea.id].push(objInstance);
+                continue;
+            }
+            let multipleObj = this.layerObjects[respawnArea.object_id];
+            let objClass = multipleObj.classInstance;
+            for(let qty=0; qty < respawnArea.instances_limit; qty++){
+                // prepare to save the object:
+                if(!sc.hasOwn(this.instancesCreated, respawnArea.id)){
+                    this.instancesCreated[respawnArea.id] = [];
                 }
+                // create object index:
+                let objectIndex = this.createObjectIndex(respawnArea);
+                multipleObj.objProps.client_key = objectIndex;
+                multipleObj.objProps.events = this.events;
+                let tileData = this.getRandomTile();
+                // add tile data to the object and create object instance:
+                Object.assign(multipleObj.objProps, tileData);
+                let objInstance = new objClass(multipleObj.objProps);
+                objInstance.runAdditionalSetup();
+                let assetsArr = this.getObjectAssets(multipleObj);
+                // @TODO - BETA - Objects could have multiple assets, need to implement and test the case.
+                objInstance.clientParams.asset_key = assetsArr[0];
+                objInstance.clientParams.enabled = true;
+                if(sc.hasOwn(multipleObj, 'multipleAnimations')){
+                    objInstance.clientParams.animations = multipleObj.multipleAnimations;
+                }
+                this.world.objectsManager.objectsAnimationsData[objectIndex] = objInstance.clientParams;
+                this.world.objectsManager.roomObjects[objectIndex] = objInstance;
+                await this.world.createWorldObject(
+                    objInstance,
+                    objectIndex,
+                    tilewidth,
+                    tileheight,
+                    tileData.x,
+                    tileData.y,
+                    this.pathFinder
+                );
+                objInstance.respawnTime = respawnArea.respawn_time;
+                objInstance.respawnLayer = this.layer.name;
+                this.instancesCreated[respawnArea.id].push(objInstance);
             }
         }
     }

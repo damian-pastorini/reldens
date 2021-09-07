@@ -15,10 +15,18 @@ class SkillGroupsEntity extends AdminEntityProperties
             id: {},
             key: {
                 isTitle: true,
+                isRequired: true
             },
-            label: {},
-            description: {},
-            sort: {}
+            label: {
+                isRequired: true
+            },
+            description: {
+                isRequired: true
+            },
+            sort: {
+                type: 'number',
+                isRequired: true
+            }
         };
 
         let listPropertiesKeys = Object.keys(properties);

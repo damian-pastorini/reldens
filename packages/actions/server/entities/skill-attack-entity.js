@@ -16,20 +16,52 @@ class SkillAttackEntity extends AdminEntityProperties
             id: {},
             skill_id: {
                 type: 'reference',
-                reference: 'skills_skill'
+                reference: 'skills_skill',
+                isRequired: true
             },
-            affectedProperty: {},
-            allowEffectBelowZero: {},
-            hitDamage: {},
-            applyDirectDamage: {},
-            attackProperties: {},
-            defenseProperties: {},
-            aimProperties: {},
-            dodgeProperties: {},
-            dodgeFullEnabled: {},
-            dodgeOverAimSuccess: {},
-            damageAffected: {},
-            criticalAffected: {}
+            affectedProperty: {
+                isRequired: true
+            },
+            allowEffectBelowZero: {
+                type: 'boolean',
+                isRequired: true
+            },
+            hitDamage: {
+                type: 'number',
+                isRequired: true
+            },
+            applyDirectDamage: {
+                type: 'boolean',
+                isRequired: true
+            },
+            attackProperties: {
+                isRequired: true
+            },
+            defenseProperties: {
+                isRequired: true
+            },
+            aimProperties: {
+                isRequired: true
+            },
+            dodgeProperties: {
+                isRequired: true
+            },
+            dodgeFullEnabled: {
+                type: 'boolean',
+                isRequired: true
+            },
+            dodgeOverAimSuccess: {
+                type: 'boolean',
+                isRequired: true
+            },
+            damageAffected: {
+                type: 'boolean',
+                isRequired: true
+            },
+            criticalAffected: {
+                type: 'boolean',
+                isRequired: true
+            }
         };
 
         let listPropertiesKeys = Object.keys(properties);

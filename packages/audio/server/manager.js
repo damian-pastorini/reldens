@@ -42,7 +42,7 @@ class AudioManager
 
     async loadAudioPlayerConfig(playerId)
     {
-        let configModels = await this.models.AudioPlayerConfigModel.query().where('player_id', playerId);
+        let configModels = await this.models.audioPlayerConfigModel.query().where('player_id', playerId);
         let playerConfig = {};
         if(configModels.length > 0){
             for(let config of configModels){

@@ -28,20 +28,29 @@ class ChatMessageActions
                     t: ChatConst.CHAT_TYPE_NORMAL
                 };
                 room.broadcast(messageData);
-                ChatManager.saveMessage(message, playerSchema.player_id, playerSchema.state.room_id, {}, false)
-                    .catch((err) => {
-                        Logger.error(['Chat save error:', err]);
-                    });
+                ChatManager.saveMessage(
+                    message,
+                    playerSchema.player_id,
+                    playerSchema.state.room_id,
+                    false,
+                    ChatConst.CHAT_MESSAGE
+                ).catch((err) => {
+                    Logger.error(['Chat save error:', err]);
+                });
             }
         }
         if(data.act === GameConst.CLIENT_JOINED && room.config.get('server/chat/messages/broadcast_join')){
             let sentText = `${playerSchema.playerName} has joined ${room.roomName}.`;
             room.broadcast({act: ChatConst.CHAT_ACTION, m: sentText, f: 'Sys', t: ChatConst.CHAT_TYPE_SYSTEM});
             ChatManager.saveMessage(
-                room.roomName, playerSchema.player_id, playerSchema.state.room_id, false, ChatConst.CHAT_JOINED
-                ).catch((err) => {
-                    Logger.error(['Joined room chat save error:', err]);
-                });
+                room.roomName,
+                playerSchema.player_id,
+                playerSchema.state.room_id,
+                false,
+                ChatConst.CHAT_JOINED
+            ).catch((err) => {
+                Logger.error(['Joined room chat save error:', err]);
+            });
         }
     }
 

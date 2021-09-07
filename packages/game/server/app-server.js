@@ -45,7 +45,7 @@ class AppServer
         if(!runningHttps){
             appServer = http.createServer(app);
         }
-        return {app, appServer};
+        return {app, appServer, express};
     }
 }
 

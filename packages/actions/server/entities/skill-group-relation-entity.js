@@ -15,11 +15,13 @@ class SkillGroupRelationEntity extends AdminEntityProperties
             id: {},
             skill_id: {
                 type: 'reference',
-                reference: 'skills_skill'
+                reference: 'skills_skill',
+                isRequired: true
             },
             group_id: {
                 type: 'reference',
-                reference: 'skills_groups'
+                reference: 'skills_groups',
+                isRequired: true
             }
         };
 

@@ -25,11 +25,21 @@ class LoginManager
         if(!this.events){
             Logger.error('EventsManager undefined in LoginManager.');
         }
+        this.listenEvents();
+    }
+
+    listenEvents()
+    {
+        this.events.on('reldens.serverBeforeListen', (props) => {
+            props.serverManager.app.get('/reldens-mailer-enabled', (req, res) => {
+                res.json({enabled: this.mailer.isEnabled()});
+            });
+        });
     }
 
     async processUserRequest(userData = false)
     {
-        if(sc.hasOwn(userData, 'forgot')){
+        if(sc.hasOwn(userData, 'forgot') && this.mailer.isEnabled()){
             return await this.processForgotPassword(userData);
         }
         if(!this.isValidData(userData)){

@@ -67,7 +67,7 @@ class RoomChat extends RoomLogin
     sendPrivateMessage(client, toPlayer, text, messageObject, playerData)
     {
         let clientTo = this.getActivePlayerByName(toPlayer);
-        let messageType = false;
+        let messageType = ChatConst.CHAT_PRIVATE;
         let clientToData = false;
         if(clientTo){
             // send message to each client:
@@ -82,15 +82,20 @@ class RoomChat extends RoomLogin
             this.sendErrorMessage(client, messageObject, errorMessage);
             messageType = 's';
         }
-        ChatManager.saveMessage(messageObject.m, playerData.id, playerData.state.room_id, clientToData, messageType)
-            .catch((err) => {
-                Logger.error('Private chat save error:', err);
-            });
+        ChatManager.saveMessage(
+            messageObject.m,
+            playerData.id,
+            playerData.state.room_id,
+            clientToData,
+            messageType
+        ).catch((err) => {
+            Logger.error('Private chat save error:', err);
+        });
     }
 
     sendGlobalMessage(client, text, messageObject, playerData, roleId)
     {
-        let messageType = false;
+        let messageType = 'g';
         let isGlobalEnabled = this.config.get('server/chat/messages/global_enabled');
         let globalAllowedRoles = this.config.get('server/chat/messages/global_allowed_roles')
             .split(',')
@@ -99,16 +104,20 @@ class RoomChat extends RoomLogin
             messageObject.m = text.substring(1);
             messageObject.t = ChatConst.CHAT_TYPE_GLOBAL;
             this.broadcast(messageObject);
-            messageType = 'g';
         } else {
             let errorMessage = 'Global messages not allowed.';
             this.sendErrorMessage(client, messageObject, errorMessage);
             messageType = 's';
         }
-        ChatManager.saveMessage(messageObject.m, playerData.id, playerData.state.room_id, false, messageType)
-            .catch((err) => {
-                Logger.error('Global chat save error:', err);
-            });
+        ChatManager.saveMessage(
+            messageObject.m,
+            playerData.id,
+            playerData.state.room_id,
+            false,
+            messageType
+        ).catch((err) => {
+            Logger.error('Global chat save error:', err);
+        });
     }
 
     sendErrorMessage(client, messageObject, message)

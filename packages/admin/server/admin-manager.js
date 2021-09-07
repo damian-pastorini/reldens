@@ -15,7 +15,6 @@ class AdminManager
 
     constructor(props)
     {
-        this.serverManager = props.serverManager;
         this.app = props.app;
         this.config = props.config;
         this.databases = sc.getDef(props, 'databases', []);
@@ -23,6 +22,7 @@ class AdminManager
         this.router = false;
         this.adminJs = false;
         this.useSecureLogin = false;
+        this.authenticateCallback = sc.getDef(props, 'authenticateCallback', () => { return true; });
     }
 
     setupAdmin()
@@ -53,7 +53,6 @@ class AdminManager
                 component: AdminJS.bundle('./dashboard-component')
             },
         };
-        this.serverManager.events.emit('reldens.beforeCreateAdmin', this, adminJsConfig, AdminJS);
         this.adminJs = new AdminJS(adminJsConfig);
         this.router = this.createRouter();
         this.app.use(this.adminJs.options.rootPath, this.router);
@@ -66,7 +65,7 @@ class AdminManager
                 loginWelcome: 'Administration Panel - Login'
             },
             labels: {
-                navigation: 'Administration Panel',
+                navigation: 'Reldens - Administration Panel',
                 adminVersion: 'Admin: {{version}}',
                 loginWelcome: 'Reldens'
             }
@@ -84,21 +83,10 @@ class AdminManager
     {
         return !this.useSecureLogin ? AdminJSExpress.buildRouter(this.adminJs)
             : AdminJSExpress.buildAuthenticatedRouter(this.adminJs, {
-            authenticate: async (email, password) => {
-                let user = await this.serverManager.usersManager.loadUserByEmail(email);
-                if(user && user.role_id === 99){
-                    let result = this.serverManager.loginManager.passwordManager.validatePassword(
-                        password,
-                        user.password
-                    );
-                    if(result){
-                        return user;
-                    }
-                }
-                return false;
-            },
-            cookiePassword: (process.env.ADMIN_COOKIE_PASSWORD || 'secret-password-used-to-secure-the-admin-cookie')
-        });
+                authenticate: this.authenticateCallback,
+                cookiePassword: (process.env.ADMIN_COOKIE_PASSWORD || 'secret-password-to-secure-the-admin-cookie')
+            }
+        );
     }
 
     static prepareResources(rawResources)
@@ -117,7 +105,7 @@ class AdminManager
                         return rawResource.rawEntity.tableName
                     },
                     options: {
-                        parent: sc.hasOwn(rawResource.config, 'parentItemLabel') ? { // || rawResource.tableName.split('_')[0],
+                        navigation: sc.hasOwn(rawResource.config, 'parentItemLabel') ? {
                             name: rawResource.config.parentItemLabel,
                             icon: rawResource.config.icon || 'List'
                         } : null,
@@ -125,8 +113,10 @@ class AdminManager
                         showProperties: rawResource.config.showProperties || [],
                         filterProperties: rawResource.config.filterProperties || [],
                         editProperties: rawResource.config.editProperties || [],
-                        properties: rawResource.config.properties || []
-                    }
+                        properties: rawResource.config.properties || [],
+                        sort: sc.getDef(rawResource.config, 'sort', null)
+                    },
+                    features: sc.getDef(rawResource.config, 'features', [])
                 };
                 registeredResources.push(objectionDriverResource);
             }

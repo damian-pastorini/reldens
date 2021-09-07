@@ -15,14 +15,22 @@ class OwnersClassPathEntity extends AdminEntityProperties
             id: {},
             class_path_id: {
                 type: 'reference',
-                reference: 'skills_class_path'
+                reference: 'skills_class_path',
+                isRequired: true
             },
             owner_id: {
                 type: 'reference',
-                reference: 'players'
+                reference: 'players',
+                isRequired: true
             },
-            currentLevel: {},
-            currentExp: {}
+            currentLevel: {
+                type: 'number',
+                isRequired: true
+            },
+            currentExp: {
+                type: 'number',
+                isRequired: true
+            }
         };
 
         let listPropertiesKeys = Object.keys(properties);

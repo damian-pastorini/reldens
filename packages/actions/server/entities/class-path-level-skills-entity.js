@@ -15,15 +15,18 @@ class ClassPathLevelSkillsEntity extends AdminEntityProperties
             id: {},
             class_path_id: {
                 type: 'reference',
-                reference: 'skills_class_path'
+                reference: 'skills_class_path',
+                isRequired: true
             },
             level_id: {
                 type: 'reference',
-                reference: 'skills_levels'
+                reference: 'skills_levels',
+                isRequired: true
             },
             skill_id: {
                 type: 'reference',
-                reference: 'skills_skill'
+                reference: 'skills_skill',
+                isRequired: true
             },
         };
 

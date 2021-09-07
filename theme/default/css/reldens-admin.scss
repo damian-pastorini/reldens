@@ -13,3 +13,19 @@ section.gNHxbm.adminjs_Box {
 .adminjs_Text section svg {
     display: none;
 }
+
+.adminjs_Resources .adminjs_Box {
+    padding-left: 32px;
+    padding-right: 32px;
+
+    label {
+        margin: 0 0 10px 0;
+        padding: 0;
+        text-align: center;
+    }
+}
+
+.adminjs_TableCell section audio {
+    display: block;
+    margin-bottom: 0.25rem;
+}

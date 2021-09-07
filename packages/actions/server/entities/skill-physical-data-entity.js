@@ -15,12 +15,25 @@ class SkillPhysicalDataEntity extends AdminEntityProperties
             id: {},
             skill_id: {
                 type: 'reference',
-                reference: 'skills_skill'
+                reference: 'skills_skill',
+                isRequired: true
             },
-            magnitude: {},
-            objectWidth: {},
-            objectHeight: {},
-            validateTargetOnHit: {}
+            magnitude: {
+                type: 'number',
+                isRequired: true
+            },
+            objectWidth: {
+                type: 'number',
+                isRequired: true
+            },
+            objectHeight: {
+                type: 'number',
+                isRequired: true
+            },
+            validateTargetOnHit: {
+                type: 'boolean',
+                isRequired: true
+            }
         };
 
         let listPropertiesKeys = Object.keys(properties);

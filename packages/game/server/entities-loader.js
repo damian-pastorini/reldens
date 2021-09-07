@@ -11,8 +11,11 @@ const { sc } = require('@reldens/utils');
 class EntitiesLoader
 {
 
-    static loadEntities(projectRoot, withConfig=false, withTranslations = false)
+    static loadEntities(props)
     {
+        let projectRoot = props.projectRoot;
+        let withConfig = sc.getDef(props, 'withConfig', false);
+        let withTranslations = sc.getDef(props, 'withTranslations', false );
         let packages = path.join(projectRoot, 'node_modules', 'reldens', 'packages');
         let files = [];
         this.getFiles(packages, files);
@@ -20,23 +23,27 @@ class EntitiesLoader
         let translations = {};
         for(let file of files){
             let classPath = file.replace('.js', '');
-            const {rawRegisteredEntities, entitiesConfig, entitiesTranslations} = require(classPath);
-            // @TODO: TEMPORAL CONFIG CONDITION, REMOVE THIS IF!!!
-            if(!rawRegisteredEntities || (withConfig && !entitiesConfig)){
+            let {rawRegisteredEntities, entitiesConfig, entitiesTranslations} = require(classPath);
+            let invalidConfig = withConfig && !entitiesConfig;
+            if(!rawRegisteredEntities || invalidConfig){
                 continue;
             }
             let exportedEntitiesList = Object.keys(rawRegisteredEntities);
             if(exportedEntitiesList.length){
                 for(let i of exportedEntitiesList){
-                    // @TODO: TEMPORAL, REMOVE THIS IF!!!
-                    if(withConfig && !sc.hasOwn(entitiesConfig, i)){
-                        continue;
-                    }
                     entities[i] = withConfig ?
-                        {rawEntity: rawRegisteredEntities[i], config: (entitiesConfig[i] || {})} :
-                        rawRegisteredEntities[i];
+                        {rawEntity: rawRegisteredEntities[i], config: ((typeof entitiesConfig === 'function'
+                            ? entitiesConfig(props)[i]
+                            : entitiesConfig[i])
+                        || {})}
+                        : rawRegisteredEntities[i];
                     if(withTranslations && entitiesTranslations && Object.keys(entitiesTranslations).length){
-                        Object.assign(translations, entitiesTranslations);
+                        for(let i of Object.keys(entitiesTranslations)){
+                            if(!translations[i]){
+                                translations[i] = {};
+                            }
+                            Object.assign(translations[i], entitiesTranslations[i]);
+                        }
                     }
                 }
             }

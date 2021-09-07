@@ -22,7 +22,9 @@ class InventoryPack extends PackInterface
             Logger.error('EventsManager undefined in InventoryPack.');
         }
         // @TODO - BETA - Refactor pack to extract the models and classes generation to the external packages.
-        this.inventoryModelsManager = new ModelsManager();
+        this.events.on('reldens.serverBeforeListen', async (event) => {
+            this.inventoryModelsManager = new ModelsManager(event.serverManager.dataServer);
+        });
         this.events.on('reldens.serverReady', async (event) => {
             let configProcessor = event.serverManager.configManager.processor;
             if(!sc.hasOwn(configProcessor, 'inventory')){
@@ -113,7 +115,8 @@ class InventoryPack extends PackInterface
             client: clientWrapper,
             persistence: true,
             ownerIdProperty: 'player_id',
-            eventsManager: this.events
+            eventsManager: this.events,
+            modelsManager: this.inventoryModelsManager
         };
         let inventoryClasses = room.config.get('server/customClasses/inventory/items');
         if(inventoryClasses){

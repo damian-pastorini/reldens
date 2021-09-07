@@ -4,9 +4,9 @@
  *
  */
 
-const { BaseResource, BaseRecord} = require('adminjs');
+const { BaseResource, BaseRecord } = require('adminjs');
 const { ObjectionDriverProperty } = require('./objection-driver-property');
-const { sc } = require('@reldens/utils');
+const { ErrorManager, sc } = require('@reldens/utils');
 
 class ObjectionDriverResource extends BaseResource
 {
@@ -17,9 +17,9 @@ class ObjectionDriverResource extends BaseResource
         this.rawConfig = config;
         this.model = model;
         this.label = model.tableName;
-        this.findExactFilter = sc.getDef(config, 'findExactFilter', false);
         this.idProperty = false;
         this.propertiesObject = this.prepareProperties(config);
+        this.callbacks = sc.getDef(config, 'callbacks', {});
     }
 
     prepareProperties(config)
@@ -79,6 +79,11 @@ class ObjectionDriverResource extends BaseResource
         return this.name();
     }
 
+    propertyId()
+    {
+        return this.idProperty.path();
+    }
+
     property(path)
     {
         return this.propertiesObject[path];
@@ -92,58 +97,163 @@ class ObjectionDriverResource extends BaseResource
     async find(resourceWithFilters, options)
     {
         let query = this.model.query();
-        this.appendFilters(query, resourceWithFilters.filters);
-        let results = await query.limit(options.limit)
+        this.appendQueryFilters(query, resourceWithFilters.filters);
+        let loadedData = await query.limit(options.limit)
             .offset(options.offset || 0)
             .orderBy(options.sort.sortBy, options.sort.direction);
-        if(!results){
-            return null;
+        let result = !loadedData ? null : loadedData.map((loadedResult) => {
+            loadedResult = !this.rawConfig.arrayColumns ? loadedResult : this.prepareEntityData(loadedResult);
+            return new BaseRecord(loadedResult, this);
+        });
+        let callback = sc.getDef(this.callbacks, 'find', false);
+        if(callback){
+            callback(result, resourceWithFilters, options, this);
         }
-        return results.map((result) => new BaseRecord(result, this));
+        return result;
     }
 
     async findMany(ids)
     {
-        let results = await this.model.query().findByIds(ids);
-        if(!results){
-            return null;
+        let loadedData = await this.model.query().findByIds(ids);
+        let result = !loadedData ? null : loadedData.map((loadedResult) => {
+            loadedResult = !this.rawConfig.arrayColumns ? loadedResult : this.prepareEntityData(loadedResult);
+            return new BaseRecord(loadedResult, this);
+        });
+        let callback = sc.getDef(this.callbacks, 'findMany', false);
+        if(callback){
+            callback(result, ids, this);
         }
-        return results.map((result) => new BaseRecord(result, this));
+        return result;
     }
 
     async findOne(id)
     {
-        let result = await this.model.query().where(this.idProperty.path(), id).first();
-        if(!result){
-            return null;
+        let loadedData = await this.model.query().where(this.propertyId(), id).first();
+        loadedData = !this.rawConfig.arrayColumns ? loadedData : this.prepareEntityData(loadedData);
+        let result = !loadedData ? null: new BaseRecord(loadedData, this);
+        let callback = sc.getDef(this.callbacks, 'findOne', false);
+        if(callback){
+            callback(result, id, this);
         }
-        return new BaseRecord(result, this);
+        return result;
     }
 
     async count(resourceWithFilters)
     {
         let query = this.model.query();
-        this.appendFilters(query, resourceWithFilters.filters);
+        this.appendQueryFilters(query, resourceWithFilters.filters);
         let count = await query.count().first();
-        return count ? count['count(*)'] : 0;
+        let result = count ? count['count(*)'] : 0;
+        let callback = sc.getDef(this.callbacks, 'count', false);
+        if(callback){
+            callback(result, resourceWithFilters, this);
+        }
+        return result;
     }
 
     async create(params)
     {
-        return await this.model.query().insert(params);
+        let preparedParams = this.prepareParams(params);
+        this.validateParams(preparedParams);
+        let result = await this.model.query().insert(preparedParams);
+        let callback = sc.getDef(this.callbacks, 'create', false);
+        if(callback){
+            callback(result, preparedParams, params, this);
+        }
+        return result;
     }
 
     async update(id, params)
     {
-        return await this.model.query().patch(params).where({id});
+        let preparedParams = this.prepareParams(params);
+        this.validateParams(preparedParams, true);
+        let result = await this.model.query().patch(preparedParams).where(this.propertyId(), id);
+        let callback = sc.getDef(this.callbacks, 'update', false);
+        if(callback){
+            callback(result, id, preparedParams, params, this);
+        }
+        return result;
     }
 
     async delete(id)
     {
-        return await this.model.query().where({id}).delete();
+        let result = await this.model.query().where(this.propertyId(), id).delete();
+        let callback = sc.getDef(this.callbacks, 'delete', false);
+        if(callback){
+            callback(result, id, this);
+        }
+        return result;
     }
 
-    appendFilters(query, filtersList)
+    prepareEntityData(loadedData)
+    {
+        for(let i of Object.keys(this.rawConfig.arrayColumns)){
+            let arrayColumn = this.rawConfig.arrayColumns[i];
+            loadedData[i] = loadedData[i].split(arrayColumn.splitBy);
+        }
+        return loadedData;
+    }
+
+    prepareParams(params)
+    {
+        let toDelete = [];
+        for(let i of Object.keys(params)){
+            // remove virtual properties:
+            let rawProperty = sc.getDef(this.rawConfig.properties, i, false);
+            if(
+                // delete virtual properties:
+                (rawProperty && rawProperty.isVirtual)
+                // delete not-array undefined properties:
+                || (i.indexOf('.') === -1 && !rawProperty)
+            ){
+                toDelete.push(i);
+                continue;
+            }
+            // avoid not-array properties:
+            if(!this.rawConfig.arrayColumns && i.indexOf('.') === -1){
+                continue;
+            }
+            // get array property index:
+            let paramKey = i.split('.')[0];
+            rawProperty = sc.getDef(this.rawConfig.properties, paramKey, false);
+            let arrayColumn = sc.getDef(this.rawConfig.arrayColumns, paramKey, false);
+            if(!arrayColumn || !rawProperty || !rawProperty.isArray){
+                toDelete.push(i);
+                continue;
+            }
+            // convert array property into single property with concatenated values:
+            params[paramKey] = !params[paramKey] ? params[i] : params[paramKey]+arrayColumn.splitBy+params[i];
+            // delete the original property with index:
+            toDelete.push(i);
+        }
+        // delete properties queue:
+        if(toDelete.length){
+            for(let i of toDelete){
+                delete params[i];
+            }
+        }
+        return params;
+    }
+
+    validateParams(params, update = false)
+    {
+        for(let i of Object.keys(this.propertiesObject))
+        {
+            let prop = this.propertiesObject[i];
+            if(!prop.column.isRequired || prop.column.isId || prop.column.isVirtual || prop.column.isArray){
+                continue;
+            }
+            if(update === false && (!sc.hasOwn(params, i) || !params[i])){
+                ErrorManager.error('Query failed error. Invalid or missing value for: '+i, {
+                    isUpdate: update === false,
+                    paramsMissingKey: !sc.hasOwn(params, i),
+                    paramFalse: !params[i]
+                });
+            }
+        }
+    }
+
+    appendQueryFilters(query, filtersList)
     {
         let filtersKeys = Object.keys(filtersList);
         if(!filtersKeys.length){
@@ -152,7 +262,11 @@ class ObjectionDriverResource extends BaseResource
         let filters = {};
         for(let i of filtersKeys){
             let filter = filtersList[i];
-            if(this.rawConfig.properties[i].type === 'reference'){
+            let rawConfigFilterProperties = this.rawConfig.properties[i];
+            if(rawConfigFilterProperties.isVirtual){
+                continue;
+            }
+            if(rawConfigFilterProperties.type === 'reference'){
                 filters[filter.path] = filter.value;
             } else {
                 query.where(filter.path, 'like', '%'+filter.value+'%');

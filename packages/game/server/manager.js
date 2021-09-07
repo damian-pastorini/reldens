@@ -30,16 +30,34 @@ class ServerManager
 
     constructor(config, eventsManager, dataServerDriver)
     {
+        // initialize properties:
+        this.express = false;
+        this.app = false;
+        this.appServer = false;
+        this.gameServer = false;
+        this.dataServerConfig = false;
+        this.dataServer = false;
+        this.configManager = false;
+        this.projectRoot = false;
+        this.configServer = false;
+        this.mailer = false;
+        this.featuresManager = false;
+        this.roomsManager = false;
+        this.loginManager = false;
+        this.usersManager = false;
+        this.bundler = false;
+        // server events:
+        this.events = eventsManager || EventsManagerSingleton;
         try {
-            // server events:
-            this.events = eventsManager || EventsManagerSingleton;
             // initialize configurations:
             this.initializeConfiguration(config);
+            // initialize theme:
+            this.themeManager = new ThemeManager();
+            this.themeManager.validateOrCreateTheme(config);
             // initialize storage:
             this.initializeStorage(config, dataServerDriver);
-            // initialize theme and maps:
-            ThemeManager.validateOrCreateTheme(config);
-            MapsLoader.loadMaps(path.join(config.projectRoot, ThemeManager.projectTheme), this.configManager);
+            // load maps:
+            MapsLoader.loadMaps(this.themeManager.themeFullPath, this.configManager);
         } catch (e) {
             Logger.error('Broken ServerManager. ' + e.message);
             process.exit();
@@ -48,7 +66,7 @@ class ServerManager
 
     initializeStorage(config, dataServerDriver)
     {
-        let rawEntities = EntitiesLoader.loadEntities(this.projectRoot);
+        let rawEntities = EntitiesLoader.loadEntities({projectRoot: this.projectRoot});
         this.dataServerConfig = DataServerConfig.prepareDbConfig(config);
         this.dataServerConfig.rawEntities = Object.assign(
             rawEntities,
@@ -109,9 +127,7 @@ class ServerManager
     async createServer()
     {
         await this.events.emit('reldens.serverStartBegin', {serverManager: this});
-        let {app, appServer} = AppServer.createAppServer(this.projectRoot);
-        this.app = app;
-        this.appServer = appServer;
+        Object.assign(this, AppServer.createAppServer(this.projectRoot));
         // create game server instance:
         this.gameServer = new GameServer({server: this.appServer, express: this.app});
         // attach web monitoring panel (optional):
@@ -127,7 +143,8 @@ class ServerManager
         // save project root for later use:
         configProcessor.projectRoot = this.projectRoot;
         // theme root:
-        configProcessor.projectTheme = ThemeManager.projectTheme;
+        configProcessor.projectTheme = this.themeManager.projectTheme;
+        configProcessor.themeFullPath = this.themeManager.themeFullPath;
         await this.events.emit('reldens.serverConfigReady', {
             serverManager: this,
             configProcessor
@@ -155,7 +172,7 @@ class ServerManager
             usersManager: this.usersManager,
             roomsManager: this.roomsManager,
             mailer: this.mailer,
-            themeManager: ThemeManager,
+            themeManager: this.themeManager,
             events: this.events
         });
         // prepare rooms:
@@ -173,17 +190,17 @@ class ServerManager
             return false;
         }
         if(process.env.RELDENS_ON_BUNDLE_RESET_DIST){
-            await ThemeManager.resetDist();
+            await this.themeManager.resetDist();
         }
         if(process.env.RELDENS_ON_BUNDLE_RESET_DIST || process.env.RELDENS_ON_BUNDLE_COPY_ASSETS){
-            await ThemeManager.copyAssetsToDist();
+            await this.themeManager.copyAssetsToDist();
         }
         // create bundle:
         const bundlerOptions = {
             production: process.env.NODE_ENV === 'production',
             sourceMaps: process.env.RELDENS_PARCEL_SOURCEMAPS || false
         };
-        let indexPath = path.join(this.projectRoot, ThemeManager.projectTheme, 'index.html');
+        let indexPath = path.join(this.projectRoot, this.themeManager.projectTheme, 'index.html');
         Logger.info('Running bundle on: ' + indexPath);
         this.bundler = new AwaitMiddleware(indexPath, bundlerOptions);
         let middleware = await this.bundler.middleware();
@@ -202,16 +219,16 @@ class ServerManager
             }
             if(!user || user.password !== rId){
                 let resetErrorPath = path.join('assets', 'email', 'reset-error.html');
-                resetResult = await ThemeManager.loadAndRenderTemplate(resetErrorPath);
+                resetResult = await this.themeManager.loadAndRenderTemplate(resetErrorPath);
             } else {
                 let newPass = this.loginManager.passwordManager.makeId(12);
                 let newPassHash = this.loginManager.passwordManager.encryptPassword(newPass);
                 await this.usersManager.updateUserByEmail(rEmail, {password: newPassHash});
                 let resetSuccessPath = path.join('assets', 'email', 'reset-success.html');
-                resetResult = await ThemeManager.loadAndRenderTemplate(resetSuccessPath, {newPass: newPass});
+                resetResult = await this.themeManager.loadAndRenderTemplate(resetSuccessPath, {newPass: newPass});
             }
             let resetPath = path.join('assets', 'email', 'reset.html');
-            let content = await ThemeManager.loadAndRenderTemplate(resetPath, {resetResult: resetResult});
+            let content = await this.themeManager.loadAndRenderTemplate(resetPath, {resetResult: resetResult});
             res.send(content);
         });
     }

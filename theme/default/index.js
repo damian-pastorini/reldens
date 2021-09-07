@@ -33,6 +33,8 @@ window.addEventListener('DOMContentLoaded', () => {
         fullScreen = dom.getElement('.full-screen-btn'),
         body = dom.getElement('body');
 
+    reldens.displayForgotPassword();
+
     function resetErrorBlock(submittedForm)
     {
         let $errorBlock = submittedForm.querySelector('.response-error');

@@ -15,13 +15,17 @@ class AnimationsEntity extends AdminEntityProperties
             id: {},
             skill_id: {
                 type: 'reference',
-                reference: 'skills_skill'
+                reference: 'skills_skill',
+                isRequired: true
             },
             key: {
-                isTitle: true
+                isTitle: true,
+                isRequired: true
             },
             classKey: {},
-            animationData: {}
+            animationData: {
+                isRequired: true
+            }
         };
 
         let listPropertiesKeys = Object.keys(properties);

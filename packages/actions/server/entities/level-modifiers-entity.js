@@ -16,14 +16,33 @@ class LevelModifiersEntity extends AdminEntityProperties
             id: {},
             level_id: {
                 type: 'reference',
-                reference: 'skills_levels'
+                reference: 'skills_levels',
+                isRequired: true
             },
             key: {
-                isTitle: true
+                isTitle: true,
+                isRequired: true
             },
-            property_key: {},
-            operation: {},
-            value: {},
+            property_key: {
+                isRequired: true
+            },
+            operation: {
+                availableValues: [
+                    {value: 1, label: 'Increment'},
+                    {value: 2, label: 'Decrease'},
+                    {value: 3, label: 'Divide'},
+                    {value: 4, label: 'Multiply'},
+                    {value: 5, label: 'Increment Percentage'},
+                    {value: 6, label: 'Decrease Percentage'},
+                    {value: 7, label: 'Set'},
+                    {value: 8, label: 'Method'},
+                    {value: 9, label: 'Set Number'}
+                ],
+                isRequired: true
+            },
+            value: {
+                isRequired: true
+            },
             minValue: {},
             maxValue: {},
             minProperty: {},

@@ -58,6 +58,15 @@ class GameManager
         this.config.customClasses = customClasses;
     }
 
+    displayForgotPassword()
+    {
+        this.gameDom.getJSON('/reldens-mailer-enabled', (err, response) => {
+            if(response.enabled) {
+                this.gameDom.getElement('.forgot-password-container').classList.remove('hidden');
+            }
+        });
+    }
+
     async joinGame(formData, isNewUser = false)
     {
         // reset the user data in the object in case another form was used before:

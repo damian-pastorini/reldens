@@ -20,6 +20,11 @@ class ObjectionDriverProperty extends BaseProperty
         return this.column.position || 0;
     }
 
+    type()
+    {
+        return this.column.type || 'string';
+    }
+
     isEditable()
     {
         return this.column.isEditable || false;
@@ -33,11 +38,6 @@ class ObjectionDriverProperty extends BaseProperty
     isSortable()
     {
         return this.column.isSortable || true;
-    }
-
-    isEnum()
-    {
-        return this.column.isEnum || false;
     }
 
     isTitle()
@@ -68,11 +68,6 @@ class ObjectionDriverProperty extends BaseProperty
     isVirtual()
     {
         return this.column.isVirtual || false;
-    }
-
-    type()
-    {
-        return this.column.type || 'string';
     }
 
 }

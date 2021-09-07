@@ -9,8 +9,8 @@ const { ChatMessageActions } = require('./message-actions');
 const { ChatManager } = require('./manager');
 const { ChatConst } = require('../constants');
 const { PackInterface } = require('../../features/pack-interface');
-const { Logger, sc } = require('@reldens/utils');
 const { SkillsEvents } = require('@reldens/skills');
+const { Logger, sc } = require('@reldens/utils');
 
 class ChatPack extends PackInterface
 {
@@ -51,7 +51,11 @@ class ChatPack extends PackInterface
                 };
                 client.send(messageObject);
                 ChatManager.saveMessage(
-                    sendMessage, skill.owner.player_id, skill.owner.state.room_id, false, ChatConst.CHAT_JOINED
+                    sendMessage,
+                    skill.owner.player_id,
+                    skill.owner.state.room_id,
+                    false,
+                    ChatConst.CHAT_DAMAGE
                 ).catch((err) => {
                     Logger.error(['Joined room chat save error:', err]);
                 });

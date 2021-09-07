@@ -13,8 +13,13 @@ class LevelsSetEntity extends AdminEntityProperties
     {
         let properties = {
             id: {},
-            autoFillRanges: {},
-            autoFillExperienceMultiplier: {},
+            autoFillRanges: {
+                type: 'boolean',
+                isRequired: true
+            },
+            autoFillExperienceMultiplier: {
+                type: 'boolean'
+            },
         };
 
         let listPropertiesKeys = Object.keys(properties);

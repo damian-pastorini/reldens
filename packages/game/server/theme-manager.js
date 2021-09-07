@@ -23,6 +23,7 @@ class ThemeManager
         if(config.projectTheme){
             this.projectTheme = path.join('theme', config.projectTheme);
         }
+        this.themeFullPath = path.join(this.projectRoot, this.projectTheme);
         // check if the dist folder exists:
         let themesFolderExists = fs.existsSync(path.join(this.projectRoot, 'theme'));
         if(!themesFolderExists){
@@ -95,4 +96,4 @@ class ThemeManager
 
 }
 
-module.exports.ThemeManager = new ThemeManager();
+module.exports.ThemeManager = ThemeManager;

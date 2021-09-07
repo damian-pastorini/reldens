@@ -15,14 +15,22 @@ class SkillOwnerConditionsEntity extends AdminEntityProperties
             id: {},
             skill_id: {
                 type: 'reference',
-                reference: 'skills_skill'
+                reference: 'skills_skill',
+                isRequired: true
             },
             key: {
-                isTitle: true
+                isTitle: true,
+                isRequired: true
             },
-            property_key: {},
-            conditional: {},
-            value: {},
+            property_key: {
+                isRequired: true
+            },
+            conditional: {
+                isRequired: true
+            },
+            value: {
+                isRequired: true
+            },
         };
 
         let listPropertiesKeys = Object.keys(properties);

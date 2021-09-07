@@ -15,14 +15,17 @@ class ClassPathLevelLabelEntity extends AdminEntityProperties
             id: {},
             class_path_id: {
                 type: 'reference',
-                reference: 'skills_class_path'
+                reference: 'skills_class_path',
+                isRequired: true
             },
             level_id: {
                 type: 'reference',
-                reference: 'skills_levels'
+                reference: 'skills_levels',
+                isRequired: true
             },
             label: {
-                isTitle: true
+                isTitle: true,
+                isRequired: true
             },
         };
 
