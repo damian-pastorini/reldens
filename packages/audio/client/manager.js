@@ -4,6 +4,7 @@
  *
  */
 
+const { AudioConst } = require('../constants');
 const { Logger, sc } = require('@reldens/utils');
 
 class AudioManager
@@ -73,7 +74,7 @@ class AudioManager
             let filesName = audio.files_name.split(',');
             let filesArr = [];
             for(let fileName of filesName){
-                filesArr.push('assets/audio/'+fileName);
+                filesArr.push(AudioConst.AUDIO_BUCKET+'/'+fileName);
             }
             onScene.load.audio(audio.audio_key, filesArr);
         }
@@ -163,7 +164,7 @@ class AudioManager
             let filesName = audio.files_name.split(',');
             let filesArr = [];
             for(let fileName of filesName){
-                filesArr.push('assets/audio/'+fileName);
+                filesArr.push(AudioConst.AUDIO_BUCKET+'/'+fileName);
             }
             currentScene.load.audio(audio.audio_key, filesArr).once('complete', async () => {
                 if(!sc.hasOwn(this.roomsAudios, currentScene.key)){

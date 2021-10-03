@@ -17,7 +17,7 @@ class AudioPlayerConfigModel extends ModelClass
     static get relationMappings()
     {
         const { AudioCategoriesModel } = require('./audio-categories');
-        const { PlayersModel } = require('../../users/server/players-model');
+        const { PlayersModel } = require('../../../../users/server/players-model');
         return {
             player_owner: {
                 relation: ModelClass.HasOneRelation,
@@ -38,10 +38,22 @@ class AudioPlayerConfigModel extends ModelClass
         }
     }
 
-    static insertConfig(configData)
+    static loadByPlayerId(playerId)
+    {
+        return this.query().where('player_id', playerId);
+    }
+
+    static loadPlayerConfig(playerId, categoryId)
     {
         return this.query()
-            .insertGraphAndFetch(configData);
+            .where('player_id', playerId)
+            .where('category_id', categoryId)
+            .first();
+    }
+
+    static insertConfig(configData)
+    {
+        return this.query().insertGraphAndFetch(configData);
     }
 
     static saveConfigByPlayerAndCategory(playerId, categoryId, enabled)

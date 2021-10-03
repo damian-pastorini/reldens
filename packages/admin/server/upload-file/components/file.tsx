@@ -25,7 +25,7 @@ const SingleFile: FC<SingleFileProps> = (props) => {
         if (mimeType && AudioMimeTypes.includes(mimeType as any)) {
             return (
                 <Box>
-                    {name}<br/>
+                    <span className="audio-file-name">{name}</span>
                     <audio controls src={path}>
                         Your browser does not support the
                         <code>audio</code>

@@ -21,7 +21,7 @@ class AudioManager
 
     async loadAudioCategories()
     {
-        this.categories = await this.models.audioCategories.query().where('enabled', 1);
+        this.categories = await this.models.audioCategories.loadEnabled();
     }
 
     async loadGlobalAudios()
@@ -42,7 +42,7 @@ class AudioManager
 
     async loadAudioPlayerConfig(playerId)
     {
-        let configModels = await this.models.audioPlayerConfigModel.query().where('player_id', playerId);
+        let configModels = await this.models.audioPlayerConfigModel.loadByPlayerId(playerId);
         let playerConfig = {};
         if(configModels.length > 0){
             for(let config of configModels){
@@ -68,10 +68,10 @@ class AudioManager
             category_id: audioCategory.id,
             enabled: (message.up ? 1 : 0)
         };
-        let playerConfig = await this.models.AudioPlayerConfigModel.query()
-            .where('player_id', currentPlayer.player_id)
-            .where('category_id', audioCategory.id)
-            .first();
+        let playerConfig = await this.models.AudioPlayerConfigModel.loadPlayerConfig(
+            currentPlayer.player_id,
+            audioCategory.id
+        );
         if(playerConfig){
             await this.models.AudioPlayerConfigModel.saveConfigByPlayerAndCategory(
                 currentPlayer.player_id,

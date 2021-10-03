@@ -16,7 +16,7 @@ class AudioModel extends ModelClass
 
     static get relationMappings()
     {
-        const { RoomsModel } = require('../../rooms/server/model');
+        const { RoomsModel } = require('../../../../rooms/server/model');
         const { AudioCategoriesModel } = require('./audio-categories');
         const { AudioMarkersModel } = require('./audio-markers');
         return {
@@ -51,14 +51,16 @@ class AudioModel extends ModelClass
     {
         return this.query()
             .withGraphFetched('[parent_room, category, markers]')
-            .where('room_id', roomId);
+            .where('room_id', roomId)
+            .where('enabled', 1);
     }
 
     static loadGlobalAudios()
     {
         return this.query()
             .withGraphFetched('[category, markers]')
-            .where('room_id', null);
+            .where('room_id', null)
+            .where('enabled', 1);
     }
 
 }

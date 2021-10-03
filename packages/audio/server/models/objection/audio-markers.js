@@ -16,7 +16,7 @@ class AudioMarkersModel extends ModelClass
 
     static get relationMappings()
     {
-        const { AudioModel } = require('./model');
+        const { AudioModel } = require('./audio');
         return {
             parent_audio: {
                 relation: ModelClass.HasOneRelation,

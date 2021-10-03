@@ -4,10 +4,10 @@
  *
  */
 
-const { AudioCategoriesModel } = require('./audio-categories');
-const { AudioMarkersModel } = require('./audio-markers');
-const { AudioPlayerConfigModel } = require('./audio-player-config');
-const { AudioModel } = require('./model');
+const { AudioCategoriesModel } = require('./models/objection/audio-categories');
+const { AudioMarkersModel } = require('./models/objection/audio-markers');
+const { AudioPlayerConfigModel } = require('./models/objection/audio-player-config');
+const { AudioModel } = require('./models/objection/audio');
 const { AudioEntity } = require('./entities/audio-entity');
 const { AudioCategoriesEntity } = require('./entities/audio-categories-entity');
 const { AudioMarkersEntity } = require('./entities/audio-markers-entity');

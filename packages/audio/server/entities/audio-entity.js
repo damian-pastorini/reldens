@@ -8,6 +8,7 @@ const { AdminEntityProperties } = require('../../../admin/server/admin-entity-pr
 const { uploadFileFeature } = require('../../../admin/server/upload-file/upload-file.feature');
 const { AdminLocalProvider } = require('../../../admin/server/upload-file/admin-local-provider');
 const { MimeTypes } = require('../../../admin/server/upload-file/mime-types');
+const { AudioConst } = require('../../constants');
 const { sc } = require('@reldens/utils');
 
 class AudioEntity extends AdminEntityProperties
@@ -36,6 +37,9 @@ class AudioEntity extends AdminEntityProperties
             category_id: {
                 type: 'reference',
                 reference: 'audio_categories'
+            },
+            enabled: {
+                type: 'boolean'
             }
         };
 
@@ -78,7 +82,7 @@ class AudioEntity extends AdminEntityProperties
             properties,
             features,
             arrayColumns,
-            bucketPath: '/assets/audio/'/* ,
+            bucketPath: '/'+AudioConst.AUDIO_BUCKET+'/'/* ,
             callbacks: {
                 create: () => {
                     console.log('Created Audio Callback');
