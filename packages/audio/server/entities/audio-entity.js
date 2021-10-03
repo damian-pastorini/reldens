@@ -78,20 +78,15 @@ class AudioEntity extends AdminEntityProperties
             properties,
             features,
             arrayColumns,
-            bucketPath: '/assets/audio/'
-            /*
+            bucketPath: '/assets/audio/'/* ,
             callbacks: {
-                find: () => {
-                    console.log('find test callback');
-                },
-                count: () => {
-                    console.log('count test callback');
+                create: () => {
+                    console.log('Created Audio Callback');
                 },
                 update: () => {
-                    console.log('update test callback');
+                    console.log('Updated Audio Callback');
                 }
-            }
-            */
+            } */
         }, extraProps);
     }
 

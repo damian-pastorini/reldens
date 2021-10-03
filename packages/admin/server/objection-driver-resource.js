@@ -6,7 +6,7 @@
 
 const { BaseResource, BaseRecord } = require('adminjs');
 const { ObjectionDriverProperty } = require('./objection-driver-property');
-const { ErrorManager, sc } = require('@reldens/utils');
+const { Logger, ErrorManager, sc } = require('@reldens/utils');
 
 class ObjectionDriverResource extends BaseResource
 {
@@ -210,7 +210,7 @@ class ObjectionDriverResource extends BaseResource
                 continue;
             }
             // avoid not-array properties:
-            if(!this.rawConfig.arrayColumns && i.indexOf('.') === -1){
+            if(!this.rawConfig.arrayColumns || i.indexOf('.') === -1){
                 continue;
             }
             // get array property index:
@@ -244,11 +244,13 @@ class ObjectionDriverResource extends BaseResource
                 continue;
             }
             if(update === false && (!sc.hasOwn(params, i) || !params[i])){
-                ErrorManager.error('Query failed error. Invalid or missing value for: '+i, {
-                    isUpdate: update === false,
-                    paramsMissingKey: !sc.hasOwn(params, i),
-                    paramFalse: !params[i]
+                let queryTypeString = !update ? 'Creation' : 'Update';
+                Logger.error({
+                    isUpdate: update,
+                    missingKey: i,
+                    params: params
                 });
+                ErrorManager.error(queryTypeString+' query failed error. Invalid or missing value for: '+i);
             }
         }
     }
