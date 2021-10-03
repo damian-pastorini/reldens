@@ -16,15 +16,15 @@ const DEFAULT_FILE_PROPERTY = 'file';
 const DEFAULT_FILE_PATH_PROPERTY = 'filePath';
 const DEFAULT_FILES_TO_DELETE_PROPERTY = 'filesToDelete';
 
-const lookupForMimeTypes = (params) => {
+const lookupForMimeTypes = (params, properties) => {
     let mimeParams = {};
     for(let i of Object.keys(params)){
         // key or key. are the only valid strings
-        if(i.indexOf('key') !== 0 || (i.indexOf('key') === 0 && i.indexOf('key.') === -1)){
+        if(i.indexOf(properties.key) !== 0 || (i.indexOf(properties.key) === 0 && i.indexOf(properties.key+'.') === -1)){
             continue
         }
         let param = params[i];
-        let mimeKey = i.replace('key', 'mimeType');
+        let mimeKey = i.replace(properties.key, 'mimeType');
         mimeParams[mimeKey] = lookup(params.bucketPath + param);
     }
     return Object.assign(params, mimeParams);
@@ -35,7 +35,7 @@ const fillRecordWithPath = async (record, context, uploadOptions) => {
     const key = AdminJS.flat.get(record === null || record === void 0 ? void 0 : record.params, properties.key);
     let params = AdminJS.flat.set(record.params, properties.filePath, key);
     params.bucketPath = context.resource.rawConfig.bucketPath;
-    lookupForMimeTypes(params);
+    lookupForMimeTypes(params, properties);
     return Object.assign(Object.assign({}, record), {params});
 };
 
