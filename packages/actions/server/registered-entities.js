@@ -21,8 +21,8 @@ const { SkillGroupRelationEntity } = require('./entities/skill-group-relation-en
 const { SkillGroupsEntity } = require('./entities/skill-groups-entity');
 const { SkillOwnerConditionsEntity } = require('./entities/skill-owner-conditions-entity');
 const { SkillOwnerEffectsEntity } = require('./entities/skill-owner-effects-entity');
-const { AnimationsModel } = require('./animations-model');
-const { LevelAnimationsModel } = require('./level-animations-model');
+const { SkillAnimationsModel } = require('./models/skill-animations-model');
+const { ClassLevelUpAnimationsModel } = require('./models/class-level-up-animations-model');
 const SkillsPackModels = require('@reldens/skills/lib/server/storage/models/index');
 
 let entitiesTranslations = {
@@ -47,8 +47,8 @@ let entitiesTranslations = {
 };
 
 let rawRegisteredEntities = Object.assign({
-        animations: AnimationsModel,
-        levelAnimations: LevelAnimationsModel,
+        animations: SkillAnimationsModel,
+        levelAnimations: ClassLevelUpAnimationsModel,
     }, SkillsPackModels
 );
 

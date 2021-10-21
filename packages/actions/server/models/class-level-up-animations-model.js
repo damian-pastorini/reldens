@@ -1,12 +1,12 @@
 /**
  *
- * Reldens - LevelAnimationsModel
+ * Reldens - ClassLevelUpAnimationsModel
  *
  */
 
 const { ModelClass } = require('@reldens/storage');
 
-class LevelAnimationsModel extends ModelClass
+class ClassLevelUpAnimationsModel extends ModelClass
 {
 
     static get tableName()
@@ -38,11 +38,6 @@ class LevelAnimationsModel extends ModelClass
         }
     }
 
-    static loadAllWithClassAndLevel()
-    {
-        return this.query().withGraphFetched('[class_path, level]');
-    }
-
 }
 
-module.exports.LevelAnimationsModel = LevelAnimationsModel;
+module.exports.ClassLevelUpAnimationsModel = ClassLevelUpAnimationsModel;

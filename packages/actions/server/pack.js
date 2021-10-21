@@ -15,8 +15,8 @@ const { ClientWrapper } = require('../../game/server/client-wrapper');
 const { PackInterface } = require('../../features/pack-interface');
 const { Pvp } = require('./pvp');
 const { TypeAttack, TypeEffect, TypePhysicalAttack, TypePhysicalEffect } = require('./skills/types');
-const { AnimationsModel } = require('./animations-model');
-const { LevelAnimationsModel } = require('./level-animations-model');
+const { SkillAnimationsModel } = require('./models/skill-animations-model');
+const { ClassLevelUpAnimationsModel } = require('./models/class-level-up-animations-model');
 
 class ActionsPack extends PackInterface
 {
@@ -232,7 +232,7 @@ class ActionsPack extends PackInterface
 
     async appendSkillsAnimations(config)
     {
-        let models = await AnimationsModel.loadAllWithSkill();
+        let models = await SkillAnimationsModel.loadAll(true);
         if(models.length){
             for(let skillAnim of models){
                 let animationData = sc.getJson(skillAnim.animationData, {});
@@ -259,7 +259,7 @@ class ActionsPack extends PackInterface
         if(!sc.hasOwn(config.client, 'levels')){
             config.client.levels = {};
         }
-        let models = await LevelAnimationsModel.loadAllWithClassAndLevel();
+        let models = await ClassLevelUpAnimationsModel.loadAll(true);
         if(models.length){
             if(!sc.hasOwn(config.client.levels, 'animations')){
                 config.client.levels.animations = {};

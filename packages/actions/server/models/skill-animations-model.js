@@ -1,12 +1,12 @@
 /**
  *
- * Reldens - AnimationModel
+ * Reldens - SkillAnimationsModel
  *
  */
 
 const { ModelClass } = require('@reldens/storage');
 
-class AnimationsModel extends ModelClass
+class SkillAnimationsModel extends ModelClass
 {
 
     static get tableName()
@@ -29,11 +29,6 @@ class AnimationsModel extends ModelClass
         }
     }
 
-    static loadAllWithSkill()
-    {
-        return this.query().withGraphFetched('skill');
-    }
-
 }
 
-module.exports.AnimationsModel = AnimationsModel;
+module.exports.SkillAnimationsModel = SkillAnimationsModel;

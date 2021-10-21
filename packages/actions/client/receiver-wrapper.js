@@ -233,7 +233,7 @@ class ReceiverWrapper extends Receiver
             setTimeout(() => {
                 animationSprite.destroy();
                 delete ownerSprite.moveSprites[animationKey+'_'+ownerSprite.playerId];
-            }, destroyTime)
+            }, destroyTime);
         }
     }
 

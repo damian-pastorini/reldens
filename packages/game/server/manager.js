@@ -66,10 +66,10 @@ class ServerManager
 
     initializeStorage(config, dataServerDriver)
     {
-        let rawEntities = EntitiesLoader.loadEntities({projectRoot: this.projectRoot});
         this.dataServerConfig = DataServerConfig.prepareDbConfig(config);
+        let loadedEntities = EntitiesLoader.loadEntities({projectRoot: this.projectRoot});
         this.dataServerConfig.rawEntities = Object.assign(
-            rawEntities,
+            sc.getDef(loadedEntities, 'entities', {}),
             sc.getDef(config, 'rawEntities', {})
         );
         this.dataServer = dataServerDriver || new ObjectionJsDataServer(this.dataServerConfig);

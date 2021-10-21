@@ -63,7 +63,7 @@ class AudioManager
                     playingAudio.mute = !enabled;
                 }
             }
-            return true
+            return true;
         }
         return false;
     }
@@ -207,7 +207,7 @@ class AudioManager
                     if(sound.isPlaying){
                         sound.stop();
                     }
-                    delete currentScene.sound.remove(sound);
+                    currentScene.sound.remove(sound);
                     return true;
                 }
             }
