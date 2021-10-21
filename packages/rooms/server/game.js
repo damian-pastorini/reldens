@@ -10,11 +10,17 @@
  */
 
 const { RoomLogin } = require('./login');
-const { sc } = require('@reldens/utils');
+const { Logger, sc } = require('@reldens/utils');
 const { GameConst } = require('../../game/constants');
 
 class RoomGame extends RoomLogin
 {
+
+    onCreate(props)
+    {
+        super.onCreate(props);
+        Logger.info('Created RoomGame: '+this.roomName+' - ID: '+this.roomId);
+    }
 
     async onJoin(client, options, authResult)
     {

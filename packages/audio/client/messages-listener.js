@@ -18,23 +18,11 @@ class MessagesListener
     listenMessages(room, gameManager)
     {
         room.onMessage(async (message) => {
-            if(message.act !== AudioConst.AUDIO_UPDATE){
-                return;
+            if(message.act === AudioConst.AUDIO_UPDATE){
+                await gameManager.audioManager.processUpdateData(message, room, gameManager);
             }
-            if(message.playerConfig){
-                gameManager.audioManager.playerConfig = message.playerConfig;
-            }
-            if(message.categories){
-                gameManager.audioManager.addCategories(message.categories);
-                await gameManager.events.emit('reldens.audioManagerUpdateCategoriesLoaded', this, room, gameManager, message);
-            }
-            if(message.audios){
-                let currentScene = gameManager.gameEngine.scene.getScene(room.name);
-                await gameManager.audioManager.loadAudiosInScene(
-                    message.audios,
-                    currentScene
-                );
-                await gameManager.events.emit('reldens.audioManagerUpdateAudiosLoaded', this, room, gameManager, message);
+            if(message.act === AudioConst.AUDIO_DELETE){
+                await gameManager.audioManager.processDeleteData(message, room, gameManager);
             }
         });
     }

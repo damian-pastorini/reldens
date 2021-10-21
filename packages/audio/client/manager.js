@@ -93,7 +93,7 @@ class AudioManager
     {
         let soundConfig = Object.assign({}, this.defaultAudioConfig, (audio.config || {}));
         let audioInstance = onScene.sound.add(audio.audio_key, soundConfig);
-        if(audio.markers.length){
+        if(audio.markers && audio.markers.length > 0){
             for(let marker of audio.markers){
                 let markerConfig = Object.assign({}, soundConfig, (marker.config || {}), {
                     name: marker.marker_key,
@@ -158,7 +158,10 @@ class AudioManager
     {
         let newAudiosCounter = 0;
         for(let audio of audios){
-            if(this.audioExistsInScene(audio.audio_key, currentScene)){
+            if(this.audioExistsInScene(audio.audio_key, currentScene) || !audio.files_name){
+                if(!audio.files_name){
+                    // Logger.error('Missing audio data:', audio);
+                }
                 continue;
             }
             let filesName = audio.files_name.split(',');
@@ -166,24 +169,55 @@ class AudioManager
             for(let fileName of filesName){
                 filesArr.push(AudioConst.AUDIO_BUCKET+'/'+fileName);
             }
-            currentScene.load.audio(audio.audio_key, filesArr).once('complete', async () => {
+            currentScene.load.audio(audio.audio_key, filesArr).on('complete', async () => {
                 if(!sc.hasOwn(this.roomsAudios, currentScene.key)){
                     this.roomsAudios[currentScene.key] = {};
                 }
                 this.roomsAudios[currentScene.key][audio.audio_key] = this.generateAudio(currentScene, audio);
                 newAudiosCounter++;
                 if(newAudiosCounter === audios.length){
-                    await currentScene.gameManager.events.emit('reldens.allAudiosLoaded', this, audios, currentScene, audio);
+                    await currentScene.gameManager.events.emit(
+                        'reldens.allAudiosLoaded',
+                        this,
+                        audios,
+                        currentScene,
+                        audio
+                    );
                 }
-                await currentScene.gameManager.events.emit('reldens.audioLoaded', this, audios, currentScene, audio);
+                await currentScene.gameManager.events.emit(
+                    'reldens.audioLoaded',
+                    this,
+                    audios,
+                    currentScene,
+                    audio
+                );
             });
         }
         currentScene.load.start();
     }
 
+    removeAudiosFromScene(audios, currentScene)
+    {
+        if(!sc.hasOwn(currentScene.sound, 'sounds') || !sc.isArray(currentScene.sound.sounds)){
+            return false;
+        }
+        for(let audio of audios){
+            for(let sound of currentScene.sound.sounds){
+                if(sound.key === audio.audio_key){
+                    if(sound.isPlaying){
+                        sound.stop();
+                    }
+                    delete currentScene.sound.remove(sound);
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     audioExistsInScene(audioKey, currentScene)
     {
-        if(!sc.isArray(currentScene.sound, 'sounds')){
+        if(!sc.hasOwn(currentScene.sound, 'sounds') || !sc.isArray(currentScene.sound.sounds)){
             return false;
         }
         for(let sound of currentScene.sound.sounds){
@@ -198,6 +232,55 @@ class AudioManager
     {
         if(defaultAudioConfig){
             Object.assign(this.defaultAudioConfig, defaultAudioConfig);
+        }
+    }
+
+    async processUpdateData(message, room, gameManager)
+    {
+        if(message.playerConfig){
+            this.playerConfig = message.playerConfig;
+        }
+        if(message.categories){
+            this.addCategories(message.categories);
+            await this.events.emit(
+                'reldens.audioManagerUpdateCategoriesLoaded',
+                this,
+                room,
+                gameManager,
+                message
+            );
+        }
+        if(message.audios.length > 0){
+            let currentScene = gameManager.gameEngine.scene.getScene(room.name);
+            await this.loadAudiosInScene(
+                message.audios,
+                currentScene
+            );
+            await this.events.emit(
+                'reldens.audioManagerUpdateAudiosLoaded',
+                this,
+                room,
+                gameManager,
+                message
+            );
+        }
+    }
+
+    async processDeleteData(message, room, gameManager)
+    {
+        if(message.audios.length > 0){
+            let currentScene = gameManager.gameEngine.scene.getScene(room.name);
+            this.removeAudiosFromScene(
+                message.audios,
+                currentScene
+            );
+            await this.events.emit(
+                'reldens.audioManagerDeleteAudios',
+                this,
+                room,
+                gameManager,
+                message
+            );
         }
     }
 

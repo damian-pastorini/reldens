@@ -24,7 +24,7 @@ class RoomScene extends RoomLogin
         super.onCreate(options);
         // override super prop:
         this.validateRoomData = true;
-        Logger.info('INIT ROOM: '+ this.roomName);
+        Logger.info('Created RoomScene: '+this.roomName+' - ID: '+this.roomId);
         this.sceneId = this.roomId;
         // @NOTE: we create an instance of the objects manager for each room-scene, this is on purpose so all the
         // related object instances will be removed when the room is disposed.

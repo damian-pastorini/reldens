@@ -98,7 +98,7 @@ class AudioPack extends PackInterface
             return true;
         });
         this.events.on('reldens.allAudiosLoaded', (audioManager, audios, currentScene) => {
-            this.sceneAudioPlayer.playSceneAudio(audioManager, currentScene);
+            this.sceneAudioPlayer.playSceneAudio(audioManager, currentScene, true);
         });
     }
 

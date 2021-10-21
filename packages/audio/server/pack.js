@@ -25,7 +25,7 @@ class AudioPack extends PackInterface
             Logger.error('EventsManager undefined in AudioPack.');
         }
         this.events.on('reldens.serverBeforeDefineRooms', async (props) => {
-            this.audioManager = new AudioManager();
+            this.audioManager = new AudioManager(props.serverManager);
             await this.audioManager.loadAudioCategories();
             await this.audioManager.loadGlobalAudios();
             props.serverManager.audioManager = this.audioManager;
@@ -50,13 +50,14 @@ class AudioPack extends PackInterface
         });
         this.events.on('reldens.createPlayerAfter', async (client, authResult, currentPlayer, roomScene) => {
             let playerConfig = await this.audioManager.loadAudioPlayerConfig(currentPlayer.player_id);
-            roomScene.send(client, {
+            let data = {
                 act: AudioConst.AUDIO_UPDATE,
                 roomId: roomScene.roomData.roomId,
                 audios: this.audioManager.roomsAudios[roomScene.roomData.roomId],
                 categories: this.audioManager.categories,
                 playerConfig: playerConfig
-            });
+            };
+            roomScene.send(client, data);
         });
         this.events.on('reldens.roomsMessageActionsGlobal', (roomMessageActions) => {
             roomMessageActions.audio = this.audioManager;

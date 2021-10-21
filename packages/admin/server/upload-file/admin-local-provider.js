@@ -51,6 +51,20 @@ class AdminLocalProvider extends BaseProvider
         return path.join(...paths);
     }
 
+    static async copyFile(from, to)
+    {
+        return await fs.promises.copyFile(from, to);
+    }
+
+    static async deleteFile(fileFullPath)
+    {
+        try {
+            await fs.promises.unlink(fileFullPath);
+        } catch (err) {
+            // Logger.error(err);
+        }
+    }
+
 }
 
 module.exports.AdminLocalProvider = AdminLocalProvider;

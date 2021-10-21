@@ -23,6 +23,7 @@ class RoomLogin extends Room
         this.loginManager = options.loginManager;
         // @NOTE: validateRoomData is overridden in RoomScene onCreate.
         this.validateRoomData = false;
+        options.roomsManager.createdInstances[this.roomId] = this;
     }
 
     // eslint-disable-next-line no-unused-vars

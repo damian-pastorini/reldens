@@ -15,6 +15,11 @@ class ObjectsAssetsModel extends ModelClass
         return 'objects_assets';
     }
 
+    static get idColumn()
+    {
+        return 'object_asset_id';
+    }
+
     static get relationMappings()
     {
         return {
@@ -22,8 +27,8 @@ class ObjectsAssetsModel extends ModelClass
                 relation: ModelClass.BelongsToOneRelation,
                 modelClass: ObjectsModel,
                 join: {
-                    from: 'objects_assets.object_id',
-                    to: 'objects.id'
+                    from: this.tableName+'.object_id',
+                    to: ObjectsModel.tableName+'.id'
                 }
             }
         }

@@ -168,19 +168,25 @@ class ObjectionDriverResource extends BaseResource
         let preparedParams = this.prepareParams(params);
         this.validateParams(preparedParams, true);
         let result = await this.model.query().patch(preparedParams).where(this.propertyId(), id);
+        let model = await this.model.loadById(id, true);
         let callback = sc.getDef(this.callbacks, 'update', false);
         if(callback){
-            callback(result, id, preparedParams, params, this);
+            callback(model, result, id, preparedParams, params, this);
         }
         return result;
     }
 
     async delete(id)
     {
+        let model = await this.model.loadById(id, true);
+        let beforeCallback = sc.getDef(this.callbacks, 'beforeDelete', false);
+        if(beforeCallback){
+            beforeCallback(model, id, this);
+        }
         let result = await this.model.query().where(this.propertyId(), id).delete();
-        let callback = sc.getDef(this.callbacks, 'delete', false);
-        if(callback){
-            callback(result, id, this);
+        let afterCallback = sc.getDef(this.callbacks, 'afterDelete', false);
+        if(afterCallback){
+            afterCallback(result, id, this);
         }
         return result;
     }
@@ -237,7 +243,8 @@ class ObjectionDriverResource extends BaseResource
 
     validateParams(params, update = false)
     {
-        for(let i of Object.keys(this.propertiesObject))
+        let propsKeys = Object.keys(this.propertiesObject);
+        for(let i of propsKeys)
         {
             let prop = this.propertiesObject[i];
             if(!prop.column.isRequired || prop.column.isId || prop.column.isVirtual || prop.column.isArray){

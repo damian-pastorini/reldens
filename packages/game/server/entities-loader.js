@@ -29,22 +29,24 @@ class EntitiesLoader
                 continue;
             }
             let exportedEntitiesList = Object.keys(rawRegisteredEntities);
-            if(exportedEntitiesList.length){
-                for(let i of exportedEntitiesList){
-                    entities[i] = withConfig ?
-                        {rawEntity: rawRegisteredEntities[i], config: ((typeof entitiesConfig === 'function'
-                            ? entitiesConfig(props)[i]
-                            : entitiesConfig[i])
-                        || {})}
-                        : rawRegisteredEntities[i];
-                    if(withTranslations && entitiesTranslations && Object.keys(entitiesTranslations).length){
-                        for(let i of Object.keys(entitiesTranslations)){
-                            if(!translations[i]){
-                                translations[i] = {};
-                            }
-                            Object.assign(translations[i], entitiesTranslations[i]);
-                        }
+            if(!exportedEntitiesList.length){
+                continue;
+            }
+            for(let i of exportedEntitiesList){
+                entities[i] = withConfig ?
+                    {rawEntity: rawRegisteredEntities[i], config: ((typeof entitiesConfig === 'function'
+                        ? entitiesConfig(props)[i]
+                        : entitiesConfig[i])
+                    || {})}
+                    : rawRegisteredEntities[i];
+                if(!withTranslations || !entitiesTranslations || !Object.keys(entitiesTranslations).length){
+                    continue;
+                }
+                for(let i of Object.keys(entitiesTranslations)){
+                    if(!translations[i]){
+                        translations[i] = {};
                     }
+                    Object.assign(translations[i], entitiesTranslations[i]);
                 }
             }
         }

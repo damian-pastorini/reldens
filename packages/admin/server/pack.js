@@ -23,6 +23,7 @@ class AdminPack extends PackInterface
             let bucket = serverManager.configManager.processor.themeFullPath;
             serverManager.app.use('/uploads', serverManager.express.static(bucket));
             let loadEntitiesOptions = {
+                serverManager,
                 projectRoot: serverManager.projectRoot,
                 projectTheme: serverManager.configManager.processor.projectTheme,
                 bucketFullPath: bucket,

@@ -19,6 +19,7 @@ class RoomChat extends RoomLogin
     {
         // parent config:
         super.onCreate(props);
+        Logger.info('Created RoomChat: '+this.roomName+' - ID: '+this.roomId);
         this.activePlayers = {};
     }
 

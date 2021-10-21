@@ -26,6 +26,7 @@ class RoomsManager
         this.loadedRoomsByName = false;
         this.defineExtraRooms = [];
         this.definedRooms = {};
+        this.createdInstances = {};
     }
 
     async defineRoomsInGameServer(gameServer, props)
@@ -88,7 +89,8 @@ class RoomsManager
             loginManager: props.loginManager,
             config: props.config,
             messageActions: roomMessageActions,
-            events: this.events
+            events: this.events,
+            roomsManager: this
         };
         if(roomModel){
             roomProps.roomData = roomModel;
