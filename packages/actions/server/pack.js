@@ -15,8 +15,7 @@ const { ClientWrapper } = require('../../game/server/client-wrapper');
 const { PackInterface } = require('../../features/pack-interface');
 const { Pvp } = require('./pvp');
 const { TypeAttack, TypeEffect, TypePhysicalAttack, TypePhysicalEffect } = require('./skills/types');
-const { SkillAnimationsModel } = require('./models/skill-animations-model');
-const { ClassLevelUpAnimationsModel } = require('./models/class-level-up-animations-model');
+const { ActionsConst } = require('../constants');
 
 class ActionsPack extends PackInterface
 {
@@ -27,7 +26,8 @@ class ActionsPack extends PackInterface
         if(!this.events){
             Logger.error('EventsManager undefined in ActionsPack.');
         }
-        this.skillsModelsManager = new ModelsManager({events: this.events});
+        this.dataServer = sc.getDef(props, 'dataServer', false);
+        this.skillsModelsManager = new ModelsManager({events: this.events, dataServer: this.dataServer});
         this.events.on('reldens.serverReady', async (event) => {
             await this.onServerReady(event);
         });
@@ -50,7 +50,7 @@ class ActionsPack extends PackInterface
                 currentLevel: 1,
                 currentExp: 0
             };
-            return this.skillsModelsManager.models['ownersClassPath'].query().insert(data);
+            return this.dataServer.entityManager.get('ownersClassPath').create(data);
         });
     }
 
@@ -93,15 +93,12 @@ class ActionsPack extends PackInterface
         if(roomGame.config.get('client/players/multiplePlayers/enabled') && superInitialGameData.players){
             for(let i of Object.keys(superInitialGameData.players)){
                 let player = superInitialGameData.players[i];
-                let classPathCollection = await this.skillsModelsManager.models['ownersClassPath']
-                    .loadOwnerClassPath(player.id);
-                if(!classPathCollection.length){
+                let classPath = await this.dataServer.entityManager.get('ownersClassPath')
+                    .loadOneByWithRelations('owner_id', player.id, 'owner_full_class_path');
+                if(!classPath){
                     continue;
                 }
-                // @TODO - BETA - Temporal index[0] for a single class path by player.
-                let classPath = classPathCollection[0];
-                player.additionalLabel = ' - LvL '+classPath.currentLevel
-                    +' - '+classPath.owner_full_class_path.label;
+                player.additionalLabel = ' - LvL '+classPath.currentLevel+' - '+classPath.owner_full_class_path.label;
                 player.currentClassPathLabel =
                 player.avatarKey = classPath.owner_full_class_path.key;
             }
@@ -140,7 +137,7 @@ class ActionsPack extends PackInterface
 
     async loadGroupsFullList(configProcessor)
     {
-        let groupsModels = await this.skillsModelsManager.models.skillGroups.loadAll();
+        let groupsModels = await this.dataServer.entityManager.get('skillGroups').loadAll();
         if(groupsModels.length){
             configProcessor.skills.groups = groupsModels;
         }
@@ -205,26 +202,25 @@ class ActionsPack extends PackInterface
 
     prepareExtraData(params)
     {
-        // @TODO - BETA - Refactor and replace by constants.
         let extraData = {};
         if(sc.hasOwn(params, 'target')){
             if(sc.hasOwn(params.target, 'key')){
-                extraData.tT = 'e'; // enemy
-                extraData.tK = params.target.key;
+                extraData[ActionsConst.DATA_TARGET_TYPE] = ActionsConst.DATA_TYPE_VALUE_ENEMY;
+                extraData[ActionsConst.DATA_TARGET_KEY] = params.target.key;
             }
             if(sc.hasOwn(params.target, 'sessionId')){
-                extraData.tT = 'p';
-                extraData.tK = params.target.sessionId;
+                extraData[ActionsConst.DATA_TARGET_TYPE] = ActionsConst.DATA_TYPE_VALUE_PLAYER;
+                extraData[ActionsConst.DATA_TARGET_KEY] = params.target.sessionId;
             }
         }
         if(sc.hasOwn(params, 'skill')){
             if(sc.hasOwn(params.skill.owner, 'key')){
-                extraData.oT = 'e'; // enemy
-                extraData.oK = params.skill.owner.key;
+                extraData[ActionsConst.DATA_OWNER_TYPE] = ActionsConst.DATA_TYPE_VALUE_ENEMY;
+                extraData[ActionsConst.DATA_OWNER_KEY] = params.skill.owner.key;
             }
             if(sc.hasOwn(params.skill.owner, 'sessionId')){
-                extraData.oT = 'p';
-                extraData.oK = params.skill.owner.sessionId;
+                extraData[ActionsConst.DATA_OWNER_TYPE] = ActionsConst.DATA_TYPE_VALUE_PLAYER;
+                extraData[ActionsConst.DATA_OWNER_KEY] = params.skill.owner.sessionId;
             }
         }
         return extraData;
@@ -232,7 +228,7 @@ class ActionsPack extends PackInterface
 
     async appendSkillsAnimations(config)
     {
-        let models = await SkillAnimationsModel.loadAll(true);
+        let models = await this.dataServer.entityManager.get('animations').loadAllWithRelations();
         if(models.length){
             for(let skillAnim of models){
                 let animationData = sc.getJson(skillAnim.animationData, {});
@@ -259,7 +255,7 @@ class ActionsPack extends PackInterface
         if(!sc.hasOwn(config.client, 'levels')){
             config.client.levels = {};
         }
-        let models = await ClassLevelUpAnimationsModel.loadAll(true);
+        let models = await this.dataServer.entityManager.get('levelAnimations').loadAllWithRelations();
         if(models.length){
             if(!sc.hasOwn(config.client.levels, 'animations')){
                 config.client.levels.animations = {};

@@ -4,9 +4,9 @@
  *
  */
 
-const { ModelClass } = require('@reldens/storage');
+const { ModelClassDeprecated } = require('@reldens/storage');
 
-class AudioModel extends ModelClass
+class AudioModel extends ModelClassDeprecated
 {
 
     static get tableName()
@@ -21,7 +21,7 @@ class AudioModel extends ModelClass
         const { AudioMarkersModel } = require('./audio-markers');
         return {
             parent_room: {
-                relation: ModelClass.HasOneRelation,
+                relation: ModelClassDeprecated.HasOneRelation,
                 modelClass: RoomsModel,
                 join: {
                     from: this.tableName+'.room_id',
@@ -29,7 +29,7 @@ class AudioModel extends ModelClass
                 }
             },
             category: {
-                relation: ModelClass.HasOneRelation,
+                relation: ModelClassDeprecated.HasOneRelation,
                 modelClass: AudioCategoriesModel,
                 join: {
                     from: this.tableName+'.category_id',
@@ -37,7 +37,7 @@ class AudioModel extends ModelClass
                 }
             },
             markers: {
-                relation: ModelClass.HasManyRelation,
+                relation: ModelClassDeprecated.HasManyRelation,
                 modelClass: AudioMarkersModel,
                 join: {
                     from: this.tableName+'.id',

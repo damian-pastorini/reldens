@@ -6,9 +6,9 @@
  *
  */
 
-const { ModelClass } = require('@reldens/storage');
+const { ModelClassDeprecated } = require('@reldens/storage');
 
-class RespawnModel extends ModelClass
+class RespawnModel extends ModelClassDeprecated
 {
 
     static get tableName()

@@ -32,13 +32,14 @@ class LevelUpAnimationsEntity extends AdminEntityProperties
         listPropertiesKeys.splice(listPropertiesKeys.indexOf('animationData'), 1);
         editPropertiesKeys.splice(editPropertiesKeys.indexOf('id'), 1);
 
-        return Object.assign({
+        return {
             listProperties: listPropertiesKeys,
             showProperties: Object.keys(properties),
             filterProperties: listPropertiesKeys,
             editProperties: editPropertiesKeys,
-            properties
-        }, extraProps);
+            properties,
+            ...extraProps
+        };
     }
 
 }

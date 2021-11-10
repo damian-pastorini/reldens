@@ -95,13 +95,14 @@ class SkillEntity extends AdminEntityProperties
 
         editPropertiesKeys.splice(editPropertiesKeys.indexOf('id'), 1);
 
-        return Object.assign({
+        return {
             listProperties: listPropertiesKeys,
             showProperties: Object.keys(properties),
             filterProperties: listPropertiesKeys,
             editProperties: editPropertiesKeys,
-            properties
-        }, extraProps);
+            properties,
+            ...extraProps
+        };
     }
 
 }

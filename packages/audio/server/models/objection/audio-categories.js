@@ -4,9 +4,9 @@
  *
  */
 
-const { ModelClass } = require('@reldens/storage');
+const { ModelClassDeprecated } = require('@reldens/storage');
 
-class AudioCategoriesModel extends ModelClass
+class AudioCategoriesModel extends ModelClassDeprecated
 {
 
     static get tableName()

@@ -24,6 +24,7 @@ class FeaturesManager
         if(!this.events){
             Logger.error('EventsManager undefined in FeaturesManager.');
         }
+        this.dataServer = sc.getDef(props, 'dataServer', false);
     }
 
     async loadFeatures()
@@ -46,7 +47,7 @@ class FeaturesManager
                 // set package on entity:
                 featureEntity.package = new featurePackage();
                 if(typeof featureEntity.package.setupPack === 'function'){
-                    await featureEntity.package.setupPack({events: this.events});
+                    await featureEntity.package.setupPack({events: this.events, dataServer: this.dataServer});
                 }
                 // for last add the feature entity to the list:
                 this.featuresList[featureEntity.code] = featureEntity;

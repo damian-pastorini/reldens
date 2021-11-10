@@ -4,10 +4,10 @@
  *
  */
 
-const { ModelClass } = require('@reldens/storage');
+const { ModelClassDeprecated } = require('@reldens/storage');
 const { ObjectsModel } = require('./model');
 
-class ObjectsAnimationsModel extends ModelClass
+class ObjectsAnimationsModel extends ModelClassDeprecated
 {
 
     static get tableName()
@@ -19,7 +19,7 @@ class ObjectsAnimationsModel extends ModelClass
     {
         return {
             parent_object: {
-                relation: ModelClass.BelongsToOneRelation,
+                relation: ModelClassDeprecated.BelongsToOneRelation,
                 modelClass: ObjectsModel,
                 join: {
                     from: 'objects_animations.object_id',

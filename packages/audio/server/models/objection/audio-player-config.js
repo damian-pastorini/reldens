@@ -4,9 +4,9 @@
  *
  */
 
-const { ModelClass } = require('@reldens/storage');
+const { ModelClassDeprecated } = require('@reldens/storage');
 
-class AudioPlayerConfigModel extends ModelClass
+class AudioPlayerConfigModel extends ModelClassDeprecated
 {
 
     static get tableName()
@@ -20,7 +20,7 @@ class AudioPlayerConfigModel extends ModelClass
         const { PlayersModel } = require('../../../../users/server/players-model');
         return {
             player_owner: {
-                relation: ModelClass.HasOneRelation,
+                relation: ModelClassDeprecated.HasOneRelation,
                 modelClass: PlayersModel,
                 join: {
                     from: this.tableName+'.player_id',
@@ -28,7 +28,7 @@ class AudioPlayerConfigModel extends ModelClass
                 }
             },
             category: {
-                relation: ModelClass.HasOneRelation,
+                relation: ModelClassDeprecated.HasOneRelation,
                 modelClass: AudioCategoriesModel,
                 join: {
                     from: this.tableName+'.category_id',

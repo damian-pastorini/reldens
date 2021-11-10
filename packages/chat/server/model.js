@@ -6,10 +6,10 @@
  *
  */
 
-const { ModelClass } = require('@reldens/storage');
+const { ModelClassDeprecated } = require('@reldens/storage');
 const { RoomsModel } = require('../../rooms/server/model');
 
-class ChatModel extends ModelClass
+class ChatModel extends ModelClassDeprecated
 {
 
     static get tableName()
@@ -22,7 +22,7 @@ class ChatModel extends ModelClass
         const { PlayersModel } = require('../../users/server/players-model');
         return {
             chat_room: {
-                relation: ModelClass.HasManyRelation,
+                relation: ModelClassDeprecated.HasManyRelation,
                 modelClass: RoomsModel,
                 join: {
                     from: 'room.id',
@@ -30,7 +30,7 @@ class ChatModel extends ModelClass
                 }
             },
             chat_player_id: {
-                relation: ModelClass.HasManyRelation,
+                relation: ModelClassDeprecated.HasManyRelation,
                 modelClass: PlayersModel,
                 join: {
                     from: 'player_id',
@@ -38,7 +38,7 @@ class ChatModel extends ModelClass
                 }
             },
             chat_private_player_id: {
-                relation: ModelClass.HasManyRelation,
+                relation: ModelClassDeprecated.HasManyRelation,
                 modelClass: PlayersModel,
                 join: {
                     from: 'private_player_id',

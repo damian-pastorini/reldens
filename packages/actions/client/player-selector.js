@@ -24,6 +24,10 @@ class PlayerSelector
 
     populateClassesSelector(classesData, playersConfig)
     {
+        if(!classesData){
+            Logger.error('Classes not defined, can not populate the classes selector.');
+            return false;
+        }
         if(!sc.getDef(playersConfig.multiplePlayers, 'enabled', classesData)){
             return false;
         }

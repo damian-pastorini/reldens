@@ -6,10 +6,9 @@
  *
  */
 
-const { ModelClass } = require('@reldens/storage');
-const { RoomsModel } = require('./model');
+const { ModelClassDeprecated } = require('@reldens/storage');
 
-class RoomsReturnPointsModel extends ModelClass
+class RoomsReturnPointsModel extends ModelClassDeprecated
 {
 
     static get tableName()
@@ -19,9 +18,10 @@ class RoomsReturnPointsModel extends ModelClass
 
     static get relationMappings()
     {
+        const { RoomsModel } = require('./model');
         return {
             parent_room: {
-                relation: ModelClass.BelongsToOneRelation,
+                relation: ModelClassDeprecated.BelongsToOneRelation,
                 modelClass: RoomsModel,
                 join: {
                     from: 'rooms_change_points.room_id',
@@ -29,7 +29,7 @@ class RoomsReturnPointsModel extends ModelClass
                 }
             },
             from_room: {
-                relation: ModelClass.HasOneRelation,
+                relation: ModelClassDeprecated.HasOneRelation,
                 modelClass: RoomsModel,
                 join: {
                     from: 'rooms_return_points.from_room_id',

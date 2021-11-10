@@ -4,9 +4,9 @@
  *
  */
 
-const { ModelClass } = require('@reldens/storage');
+const { ModelClassDeprecated } = require('@reldens/storage');
 
-class ClassLevelUpAnimationsModel extends ModelClass
+class ClassLevelUpAnimationsModel extends ModelClassDeprecated
 {
 
     static get tableName()
@@ -20,7 +20,7 @@ class ClassLevelUpAnimationsModel extends ModelClass
         const { LevelModel } = require('@reldens/skills/lib/server/storage/models/level');
         return {
             class_path: {
-                relation: ModelClass.HasOneRelation,
+                relation: ClassLevelUpAnimationsModel.HasOneRelation,
                 modelClass: ClassPathModel,
                 join: {
                     from: this.tableName+'.class_path_id',
@@ -28,7 +28,7 @@ class ClassLevelUpAnimationsModel extends ModelClass
                 }
             },
             level: {
-                relation: ModelClass.HasOneRelation,
+                relation: ClassLevelUpAnimationsModel.HasOneRelation,
                 modelClass: LevelModel,
                 join: {
                     from: this.tableName+'.level_id',

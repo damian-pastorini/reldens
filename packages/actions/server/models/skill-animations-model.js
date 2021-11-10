@@ -4,9 +4,9 @@
  *
  */
 
-const { ModelClass } = require('@reldens/storage');
+const { ModelClassDeprecated } = require('@reldens/storage');
 
-class SkillAnimationsModel extends ModelClass
+class SkillAnimationsModel extends ModelClassDeprecated
 {
 
     static get tableName()
@@ -19,7 +19,7 @@ class SkillAnimationsModel extends ModelClass
         const { SkillModel } = require('@reldens/skills/lib/server/storage/models/skill');
         return {
             skill: {
-                relation: ModelClass.HasOneRelation,
+                relation: SkillAnimationsModel.HasOneRelation,
                 modelClass: SkillModel,
                 join: {
                     from: this.tableName+'.skill_id',

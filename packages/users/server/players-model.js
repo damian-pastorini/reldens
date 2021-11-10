@@ -6,9 +6,9 @@
  *
  */
 
-const { ModelClass } = require('@reldens/storage');
+const { ModelClassDeprecated } = require('@reldens/storage');
 
-class PlayersModel extends ModelClass
+class PlayersModel extends ModelClassDeprecated
 {
 
     static get tableName()
@@ -22,7 +22,7 @@ class PlayersModel extends ModelClass
         const { PlayersStateModel } = require('./players-state-model');
         return {
             parent_user: {
-                relation: ModelClass.BelongsToOneRelation,
+                relation: ModelClassDeprecated.BelongsToOneRelation,
                 modelClass: UsersModel,
                 join: {
                     from: 'players.user_id',
@@ -30,7 +30,7 @@ class PlayersModel extends ModelClass
                 }
             },
             state: {
-                relation: ModelClass.HasOneRelation,
+                relation: ModelClassDeprecated.HasOneRelation,
                 modelClass: PlayersStateModel,
                 join: {
                     from: 'players.id',
