@@ -6,7 +6,7 @@
  *
  */
 
-const { RoomsModel } = require('./model');
+const { RoomsModel } = require('./models/objection-js/rooms-model');
 const { RoomGame } = require('./game');
 const { RoomScene } = require('./scene');
 const { GameConst } = require('../../game/constants');

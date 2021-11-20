@@ -7,7 +7,6 @@
  */
 
 const { ServerCoreFeatures } = require('./config-server');
-const { FeaturesModel } = require('./model');
 const { Logger, sc } = require('@reldens/utils');
 
 class FeaturesManager
@@ -30,7 +29,7 @@ class FeaturesManager
     async loadFeatures()
     {
         // get the features from the database:
-        let featuresCollection = await FeaturesModel.loadAll();
+        let featuresCollection = await this.dataServer.getEntity('features').loadAll();
         for(let featureEntity of featuresCollection){
             // add the feature to the codes list:
             this.featuresCodeList.push(featureEntity.code);

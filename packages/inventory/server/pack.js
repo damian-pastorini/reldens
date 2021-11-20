@@ -23,7 +23,7 @@ class InventoryPack extends PackInterface
         }
         // @TODO - BETA - Refactor pack to extract the models and classes generation to the external packages.
         this.events.on('reldens.serverBeforeListen', async (event) => {
-            this.inventoryModelsManager = new ModelsManager(event.serverManager.dataServer);
+            this.inventoryModelsManager = new ModelsManager({dataServer: event.serverManager.dataServer});
         });
         this.events.on('reldens.serverReady', async (event) => {
             let configProcessor = event.serverManager.configManager.processor;
@@ -55,7 +55,7 @@ class InventoryPack extends PackInterface
     async loadItemsFullList(configProcessor)
     {
         // use the inventory models manager to get the items list loaded:
-        let itemsModelsList = await this.inventoryModelsManager.models.item.loadItemFullData();
+        let itemsModelsList = await this.inventoryModelsManager.getEntity('item').loadAllWithRelations();
         if(itemsModelsList.length){
             let itemsList = {};
             let inventoryClasses = configProcessor.get('server/customClasses/inventory/items');
@@ -88,7 +88,7 @@ class InventoryPack extends PackInterface
     async loadGroupsFullList(configProcessor)
     {
         // use the inventory models manager to get the items list loaded:
-        let groupModelsList = await this.inventoryModelsManager.models.group.loadAll();
+        let groupModelsList = await this.inventoryModelsManager.getEntity('group').loadAll();
         if(groupModelsList.length){
             let groupList = {};
             let groupBaseData = {};

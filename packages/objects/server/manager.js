@@ -7,7 +7,7 @@
  *
  */
 
-const { ObjectsModel } = require('./model');
+const { ObjectsModel } = require('./models/objection-js/objects-model');
 const { Logger, sc } = require('@reldens/utils');
 
 class ObjectsManager

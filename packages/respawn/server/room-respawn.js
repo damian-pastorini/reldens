@@ -6,7 +6,7 @@
  *
  */
 
-const { RespawnModel } = require('./model');
+const { RespawnModel } = require('./models/objection-js/respawn-model');
 const { PathFinder } = require('../../world/server/path-finder');
 const { Logger, sc } = require('@reldens/utils');
 

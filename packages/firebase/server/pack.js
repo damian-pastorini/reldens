@@ -4,7 +4,7 @@
  *
  */
 
-const { sc, Logger} = require('@reldens/utils');
+const { Logger, sc } = require('@reldens/utils');
 const { PackInterface } = require('../../features/pack-interface');
 
 class FirebasePack extends PackInterface

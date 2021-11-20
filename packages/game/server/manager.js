@@ -30,7 +30,6 @@ class ServerManager
 
     constructor(config, eventsManager, dataServerDriver)
     {
-        // initialize properties:
         this.express = false;
         this.app = false;
         this.appServer = false;
@@ -46,7 +45,6 @@ class ServerManager
         this.loginManager = false;
         this.usersManager = false;
         this.bundler = false;
-        // server events:
         this.events = eventsManager || EventsManagerSingleton;
         try {
             // initialize configurations:
@@ -56,10 +54,13 @@ class ServerManager
             this.themeManager.validateOrCreateTheme(config);
             // initialize storage:
             this.initializeStorage(config, dataServerDriver);
+            // set storage driver on configuration manager:
+            this.configManager.dataServer = this.dataServer;
             // load maps:
             MapsLoader.loadMaps(this.themeManager.themeFullPath, this.configManager);
         } catch (e) {
-            Logger.error('Broken ServerManager. ' + e.message);
+            Logger.error('Broken ServerManager.', e.message, e.stack);
+            // @TODO - BETA - Improve error handler to not kill the process or automatically restart it.
             process.exit();
         }
     }
@@ -67,7 +68,10 @@ class ServerManager
     initializeStorage(config, dataServerDriver)
     {
         this.dataServerConfig = DataServerConfig.prepareDbConfig(config);
-        let loadedEntities = EntitiesLoader.loadEntities({projectRoot: this.projectRoot});
+        let loadedEntities = EntitiesLoader.loadEntities({
+            projectRoot: this.projectRoot,
+            storageDriver: this.dataServerConfig.storageDriver
+        });
         this.dataServerConfig.rawEntities = Object.assign(
             sc.getDef(loadedEntities, 'entities', {}),
             sc.getDef(config, 'rawEntities', {})
@@ -162,7 +166,7 @@ class ServerManager
             configProcessor
         });
         // users manager:
-        this.usersManager = new UsersManager();
+        this.usersManager = new UsersManager({events: this.events, dataServer: this.dataServer});
         // the rooms manager will receive the features rooms to be defined:
         this.roomsManager = new RoomsManager({events: this.events});
         await this.events.emit('reldens.serverBeforeLoginManager', {serverManager: this});

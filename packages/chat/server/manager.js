@@ -6,7 +6,7 @@
  *
  */
 
-const { ChatModel } = require('./model');
+const { ChatModel } = require('./models/objection-js/chat-model');
 const { Logger, sc } = require('@reldens/utils');
 const { ChatConst } = require('../constants');
 

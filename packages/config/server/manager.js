@@ -7,7 +7,6 @@
  */
 
 const { ConfigProcessor } = require('../processor');
-const { ConfigModel } = require('./model');
 const { GameConfig } = require('../../game/server/config');
 const { ConfigConst } = require('../constants');
 const PackageData = require('../../../package.json');
@@ -22,6 +21,7 @@ class ConfigManager
         if(!this.events){
             Logger.error('EventsManager undefined in ConfigManager.');
         }
+        this.dataServer = sc.getDef(props, 'dataServer', false);
         // initialize config props with default data:
         this.configList = {
             server: {}
@@ -35,7 +35,7 @@ class ConfigManager
         this.configList.gameEngine.version = PackageData.version;
         await this.events.emit('reldens.beforeLoadConfigurations', {configManager: this});
         // get the configurations from the database:
-        let configCollection = await ConfigModel.loadAll();
+        let configCollection = await this.dataServer.getEntity('config').loadAll();
         // set them in the manager property so we can find them by path later:
         for(let config of configCollection){
             // create an object for each scope:

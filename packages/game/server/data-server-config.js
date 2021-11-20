@@ -14,8 +14,9 @@ class DataServerConfig
     static prepareDbConfig(props)
     {
         // @NOTE: see the sample.env file in the module root for the variables setup.
-        let {host, port, database, user, password, client, connectionLimit, poolMin, poolMax} = props;
+        let {host, port, database, user, password, client, connectionLimit, poolMin, poolMax, storageDriver} = props;
         client = client || process.env.RELDENS_DB_CLIENT || 'mysql';
+        storageDriver = storageDriver || process.env.RELDENS_STORAGE_DRIVER || 'objection-js';
         let config = {
             host: host || process.env.RELDENS_DB_HOST || 'localhost',
             port: Number((port || process.env.RELDENS_DB_PORT || 3306)),
@@ -40,7 +41,7 @@ class DataServerConfig
         };
         let pass = config.password ? ':' + config.password : '';
         let connectString = `${client}://${config.user}${pass}@${config.host}:${config.port}/${config.database}`;
-        return {client, config, poolConfig, connectString};
+        return {client, config, poolConfig, connectString, storageDriver};
     }
 
 }

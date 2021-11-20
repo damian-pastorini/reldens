@@ -28,9 +28,15 @@ class AdminPack extends PackInterface
                 projectTheme: serverManager.configManager.processor.projectTheme,
                 bucketFullPath: bucket,
                 withConfig: true,
-                withTranslations: true
+                withTranslations: true,
+                storageDriver: serverManager.dataServerConfig.storageDriver
             };
-            let {entities, translations} = EntitiesLoader.loadEntities(loadEntitiesOptions);
+            let loadedEntities = EntitiesLoader.loadEntities(loadEntitiesOptions);
+            if(false === loadedEntities){
+                Logger.error('Entities could not be loaded.');
+                return false;
+            }
+            let {entities, translations} = loadedEntities;
             serverManager.dataServer.resources = AdminManager.prepareResources(entities);
             this.events.emit('reldens.beforeCreateAdminManager', this, event);
             serverManager.serverAdmin = new AdminManager({

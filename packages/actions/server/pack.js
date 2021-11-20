@@ -7,7 +7,8 @@
  *
  */
 
-const { SkillsServer, SkillConst, SkillsEvents } = require('@reldens/skills');
+const { SkillConst, SkillsEvents } = require('@reldens/skills');
+const SkillsServer = require('@reldens/skills/lib/server');
 const { ModelsManager } = require('@reldens/skills/lib/server/storage/models-manager');
 const { Logger, sc } = require('@reldens/utils');
 const { ActionsMessageActions } = require('./message-actions');
@@ -116,9 +117,15 @@ class ActionsPack extends PackInterface
             room.config.skills.skillsList
         );
         if(classPathData){
-            classPathData.events = this.events;
-            classPathData.affectedProperty = room.config.get('client/actions/skills/affectedProperty');
-            classPathData.client = new ClientWrapper(client, room);
+            Object.assign(classPathData, {
+                // use the same events manager instance from the skills server:
+                events: this.events,
+                // activate storage:
+                persistence: true,
+                dataServer: this.dataServer,
+                affectedProperty: room.config.get('client/actions/skills/affectedProperty'),
+                client: new ClientWrapper(client, room)
+            });
             // append skills server to player:
             currentPlayer.skillsServer = new SkillsServer(classPathData);
             currentPlayer.avatarKey = classPathData.key;
@@ -228,9 +235,9 @@ class ActionsPack extends PackInterface
 
     async appendSkillsAnimations(config)
     {
-        let models = await this.dataServer.entityManager.get('animations').loadAllWithRelations();
-        if(models.length){
-            for(let skillAnim of models){
+        let animationsModels = await this.dataServer.entityManager.get('animations').loadAllWithRelations();
+        if(animationsModels.length){
+            for(let skillAnim of animationsModels){
                 let animationData = sc.getJson(skillAnim.animationData, {});
                 let customDataJson = sc.getJson(skillAnim.skill.customData);
                 if(customDataJson){
@@ -255,12 +262,12 @@ class ActionsPack extends PackInterface
         if(!sc.hasOwn(config.client, 'levels')){
             config.client.levels = {};
         }
-        let models = await this.dataServer.entityManager.get('levelAnimations').loadAllWithRelations();
-        if(models.length){
+        let levelsAnimationsModels = await this.dataServer.entityManager.get('levelAnimations').loadAllWithRelations();
+        if(levelsAnimationsModels.length){
             if(!sc.hasOwn(config.client.levels, 'animations')){
                 config.client.levels.animations = {};
             }
-            for(let levelAnim of models){
+            for(let levelAnim of levelsAnimationsModels){
                 let animationData = sc.getJson(levelAnim.animationData, {});
                 let animKey = 'level_' + ((!levelAnim.level && !levelAnim.class_path) ? 'default' : (
                     levelAnim.class_path ? levelAnim.class_path.key : ''

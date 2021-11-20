@@ -6,7 +6,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { sc } = require('@reldens/utils');
+const { Logger, sc } = require('@reldens/utils');
 
 class EntitiesLoader
 {
@@ -18,7 +18,15 @@ class EntitiesLoader
         let withTranslations = sc.getDef(props, 'withTranslations', false );
         let packages = path.join(projectRoot, 'node_modules', 'reldens', 'packages');
         let files = [];
-        this.getFiles(packages, files);
+        let storageDriver = sc.getDef(props, 'storageDriver', 'objection-js');
+        if(!sc.hasOwn(props, 'storageDriver')){
+            Logger.info('Storage driver not specified, using objection-js as default.');
+        }
+        this.getFiles(packages, files, storageDriver);
+        if(files.length === 0){
+            Logger.error('None registered-entities files found for the specified storage driver: '+storageDriver);
+            return false;
+        }
         let entities = {};
         let translations = {};
         for(let file of files){
@@ -53,14 +61,14 @@ class EntitiesLoader
         return {entities, translations};
     }
 
-    static getFiles(path, files)
+    static getFiles(path, files, storageDriver)
     {
         fs.readdirSync(path).forEach((file) => {
             let subPath = path+'/'+file;
             if(fs.lstatSync(subPath).isDirectory()){
-                this.getFiles(subPath, files);
+                this.getFiles(subPath, files, storageDriver);
             } else {
-                if(file.indexOf('registered-entities.js') === 0){
+                if(file.indexOf('registered-entities-'+storageDriver+'.js') === 0){
                     files.push(subPath);
                 }
             }

@@ -4,7 +4,7 @@
  *
  */
 
-const { rawRegisteredEntities } = require('./registered-entities');
+const { rawRegisteredEntities } = require('./models/objection-js/registered-entities-objection-js');
 const { AudioConst } = require('../constants');
 const { sc } = require('@reldens/utils');
 
