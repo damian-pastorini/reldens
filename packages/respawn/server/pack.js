@@ -17,12 +17,16 @@ class RespawnPack extends PackInterface
         if(!this.events){
             Logger.error('EventsManager undefined in RespawnPack.');
         }
+        this.dataServer = sc.getDef(props, 'dataServer', false);
+        if(!this.dataServer){
+            Logger.error('DataServer undefined in RespawnPack.');
+        }
         this.events.on('reldens.parsingMapLayerBefore', async (layer, world) => {
             if(layer.name.indexOf('respawn-area') !== -1){
                 if(!world.respawnAreas){
                     world.respawnAreas = {};
                 }
-                let respawnArea = new RoomRespawn({layer, world, events: this.events});
+                let respawnArea = new RoomRespawn({layer, world, events: this.events, dataServer: this.dataServer});
                 await respawnArea.activateObjectsRespawn();
                 world.respawnAreas[layer.name] = respawnArea;
             }

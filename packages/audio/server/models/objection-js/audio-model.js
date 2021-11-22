@@ -47,22 +47,6 @@ class AudioModel extends ObjectionJsRawModel
         }
     }
 
-    static loadRoomAudios(roomId)
-    {
-        return this.query()
-            .withGraphFetched('[parent_room, category, markers]')
-            .where('room_id', roomId)
-            .where('enabled', 1);
-    }
-
-    static loadGlobalAudios()
-    {
-        return this.query()
-            .withGraphFetched('[category, markers]')
-            .where('room_id', null)
-            .where('enabled', 1);
-    }
-
 }
 
 module.exports.AudioModel = AudioModel;

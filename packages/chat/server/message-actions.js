@@ -15,6 +15,11 @@ const { GameConst } = require('../../game/constants');
 class ChatMessageActions
 {
 
+    constructor(props)
+    {
+        this.chatManager = new ChatManager({dataServer: props.dataServer});
+    }
+
     parseMessageAndRunActions(client, data, room, playerSchema)
     {
         if(sc.hasOwn(data, 'act') && data.act === ChatConst.CHAT_ACTION){
@@ -28,7 +33,7 @@ class ChatMessageActions
                     t: ChatConst.CHAT_TYPE_NORMAL
                 };
                 room.broadcast(messageData);
-                ChatManager.saveMessage(
+                this.chatManager.saveMessage(
                     message,
                     playerSchema.player_id,
                     playerSchema.state.room_id,
@@ -42,7 +47,7 @@ class ChatMessageActions
         if(data.act === GameConst.CLIENT_JOINED && room.config.get('server/chat/messages/broadcast_join')){
             let sentText = `${playerSchema.playerName} has joined ${room.roomName}.`;
             room.broadcast({act: ChatConst.CHAT_ACTION, m: sentText, f: 'Sys', t: ChatConst.CHAT_TYPE_SYSTEM});
-            ChatManager.saveMessage(
+            this.chatManager.saveMessage(
                 room.roomName,
                 playerSchema.player_id,
                 playerSchema.state.room_id,
@@ -56,4 +61,4 @@ class ChatMessageActions
 
 }
 
-module.exports.ChatMessageActions = new ChatMessageActions();
+module.exports.ChatMessageActions = ChatMessageActions;

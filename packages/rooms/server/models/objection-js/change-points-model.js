@@ -2,12 +2,9 @@
  *
  * Reldens - RoomsChangePointsModel
  *
- * Rooms Change Points storage model, this class will load, add, edit, delete the values in the storage.
- *
  */
 
 const { ObjectionJsRawModel } = require('@reldens/storage');
-const { RoomsModel } = require('./rooms-model');
 
 class RoomsChangePointsModel extends ObjectionJsRawModel
 {
@@ -19,21 +16,22 @@ class RoomsChangePointsModel extends ObjectionJsRawModel
 
     static get relationMappings()
     {
+        const { RoomsModel } = require('./rooms-model');
         return {
             parent_room: {
                 relation: this.BelongsToOneRelation,
                 modelClass: RoomsModel,
                 join: {
-                    from: 'rooms_change_points.room_id',
-                    to: 'rooms.id'
+                    from: this.tableName+'.room_id',
+                    to: RoomsModel.tableName+'.id'
                 }
             },
             next_room: {
                 relation: this.HasOneRelation,
                 modelClass: RoomsModel,
                 join: {
-                    from: 'rooms_change_points.next_room_id',
-                    to: 'rooms.id'
+                    from: this.tableName+'.next_room_id',
+                    to: RoomsModel.tableName+'.id'
                 }
             }
         }

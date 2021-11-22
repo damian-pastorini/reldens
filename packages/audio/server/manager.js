@@ -4,31 +4,33 @@
  *
  */
 
-const { rawRegisteredEntities } = require('./models/objection-js/registered-entities-objection-js');
 const { AudioConst } = require('../constants');
 const { sc } = require('@reldens/utils');
 
 class AudioManager
 {
 
-    constructor(serverManager)
+    constructor(props)
     {
-        this.models = rawRegisteredEntities;
         this.categories = {};
         this.globalAudios = []; // an array of global audios
         this.roomsAudios = {}; // each room id will have it's own array of audios
-        this.serverManager = serverManager;
+        this.roomsManager = props.roomsManager;
+        this.dataServer = props.dataServer;
     }
 
     async loadAudioCategories()
     {
-        this.categories = await this.models.audioCategories.loadEnabled();
+        this.categories = await this.dataServer.getEntity('audioCategories').loadBy('enabled', 1);
     }
 
     async loadGlobalAudios()
     {
         if(!Object.keys(this.globalAudios).length){
-            this.globalAudios = await this.models.audio.loadGlobalAudios();
+            this.globalAudios = await this.dataServer.getEntity('audio').loadWithRelations(
+                {room_id: null, enabled: 1},
+                ['category', 'markers']
+            );
         }
         return this.globalAudios;
     }
@@ -36,14 +38,17 @@ class AudioManager
     async loadRoomAudios(roomId)
     {
         if(!sc.hasOwn(this.roomsAudios, roomId)){
-            this.roomsAudios[roomId] = await this.models.audio.loadRoomAudios(roomId);
+            this.roomsAudios[roomId] = await this.dataServer.getEntity('audio').loadWithRelations(
+                {room_id: roomId, enabled: 1},
+                ['parent_room', 'category', 'markers']
+            );
         }
         return this.roomsAudios[roomId];
     }
 
     async loadAudioPlayerConfig(playerId)
     {
-        let configModels = await this.models.audioPlayerConfigModel.loadByPlayerId(playerId);
+        let configModels = await this.dataServer.getEntity('audioPlayerConfigModel').loadBy('player_id', playerId);
         let playerConfig = {};
         if(configModels.length > 0){
             for(let config of configModels){
@@ -60,7 +65,7 @@ class AudioManager
             return false;
         }
         let currentPlayer = room.getPlayerFromState(client.sessionId);
-        let audioCategory = await this.models.audioCategories.loadBy('category_key', message.ck).first();
+        let audioCategory = await this.dataServer.getEntity('audioCategories').loadOneBy('category_key', message.ck);
         if(!currentPlayer || currentPlayer.playerId || !audioCategory){
             return false;
         }
@@ -69,18 +74,17 @@ class AudioManager
             category_id: audioCategory.id,
             enabled: (message.up ? 1 : 0)
         };
-        let playerConfig = await this.models.AudioPlayerConfigModel.loadPlayerConfig(
-            currentPlayer.player_id,
-            audioCategory.id
-        );
+        let playerConfig = await this.dataServer.getEntity('audioPlayerConfigModel').loadOneBy({
+            player_id: currentPlayer.player_id,
+            category_id: audioCategory.id
+        });
         if(playerConfig){
-            await this.models.AudioPlayerConfigModel.saveConfigByPlayerAndCategory(
-                currentPlayer.player_id,
-                audioCategory.id,
-                (message.up ? 1 : 0)
+            await this.dataServer.getEntity('audioPlayerConfigModel').update(
+                {player_id: currentPlayer.player_id, category_id: audioCategory.id},
+                {enabled: (message.up ? 1 : 0)}
             );
         } else {
-            await this.models.AudioPlayerConfigModel.insertConfig(updatePatch);
+            await this.dataServer.getEntity('audioPlayerConfigModel').createWithRelations(updatePatch);
         }
     }
 
@@ -99,7 +103,7 @@ class AudioManager
             this.roomsAudios[roomId] = [];
         }
         this.roomsAudios[roomId].push(newAudioModel);
-        let roomInstance = this.findRoom(roomId, this.serverManager.roomsManager.createdInstances);
+        let roomInstance = this.findRoom(roomId, this.roomsManager.createdInstances);
         if(!roomInstance){
             // @NOTE: since the room could not be created yet (because none is connected), we don't need to broadcast
             // the new audio, it will be loaded automatically when the room is created.
@@ -116,8 +120,8 @@ class AudioManager
     hotPlugGlobalAudio(newAudioModel)
     {
         this.globalAudios.push(newAudioModel);
-        for(let i of this.serverManager.roomsManager.createdInstances){
-            let roomInstance = this.serverManager.roomsManager.createdInstances[i];
+        for(let i of this.roomsManager.createdInstances){
+            let roomInstance = this.roomsManager.createdInstances[i];
             let broadcastData = {
                 act: AudioConst.AUDIO_UPDATE,
                 roomId: i,
@@ -142,7 +146,7 @@ class AudioManager
                 roomAudios.splice(roomAudios.indexOf(audio), 1);
             }
         }
-        let roomInstance = this.findRoom(roomId, this.serverManager.roomsManager.createdInstances);
+        let roomInstance = this.findRoom(roomId, this.roomsManager.createdInstances);
         if(!roomInstance){
             return true;
         }
@@ -161,8 +165,8 @@ class AudioManager
                 this.globalAudios.splice(this.globalAudios.indexOf(audio), 1);
             }
         }
-        for(let i of this.serverManager.roomsManager.createdInstances){
-            let roomInstance = this.serverManager.roomsManager.createdInstances[i];
+        for(let i of this.roomsManager.createdInstances){
+            let roomInstance = this.roomsManager.createdInstances[i];
             let broadcastData = {
                 act: AudioConst.AUDIO_DELETE,
                 roomId: i,

@@ -14,11 +14,6 @@ class AudioCategoriesModel extends ObjectionJsRawModel
         return 'audio_categories';
     }
 
-    static loadEnabled()
-    {
-        return this.query().where('enabled', 1);
-    }
-
 }
 
 module.exports.AudioCategoriesModel = AudioCategoriesModel;

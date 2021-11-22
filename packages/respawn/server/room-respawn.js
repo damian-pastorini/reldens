@@ -2,11 +2,8 @@
  *
  * Reldens - RoomRespawn
  *
- * This will generate and activate the respawn areas.
- *
  */
 
-const { RespawnModel } = require('./models/objection-js/respawn-model');
 const { PathFinder } = require('../../world/server/path-finder');
 const { Logger, sc } = require('@reldens/utils');
 
@@ -18,6 +15,10 @@ class RoomRespawn
         this.events = sc.getDef(props, 'events', false);
         if(!this.events){
             Logger.error('EventsManager undefined in RoomRespawn.');
+        }
+        this.dataServer = sc.getDef(props, 'dataServer', false);
+        if(!this.dataServer){
+            Logger.error('DataServer undefined in RoomRespawn.');
         }
         this.layer = props.layer;
         this.world = props.world;
@@ -33,7 +34,7 @@ class RoomRespawn
         this.layerObjects = this.world.objectsManager.roomObjectsByLayer[this.layer.name];
         let {tilewidth, tileheight } = this.world.mapJson;
         // NOTE: this is because a single layer could have multiple respawn definitions for each enemy type.
-        this.respawnDefinitions = await RespawnModel.loadByLayerName(this.layer.name);
+        this.respawnDefinitions = await this.dataServer.getEntity('respawn').loadBy('layer', this.layer.name);
         for(let i of Object.keys(this.respawnDefinitions)){
             let respawnArea = this.respawnDefinitions[i];
             if(

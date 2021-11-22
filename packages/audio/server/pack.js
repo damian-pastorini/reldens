@@ -5,9 +5,9 @@
  */
 
 const { PackInterface } = require('../../features/pack-interface');
-const { Logger, sc } = require('@reldens/utils');
 const { AudioManager } = require('./manager');
 const { AudioConst } = require('../constants');
+const { Logger, sc } = require('@reldens/utils');
 
 class AudioPack extends PackInterface
 {
@@ -24,13 +24,20 @@ class AudioPack extends PackInterface
         if(!this.events){
             Logger.error('EventsManager undefined in AudioPack.');
         }
+        this.dataServer = sc.getDef(props, 'dataServer', false);
+        if(!this.dataServer){
+            Logger.error('DataServer undefined in AudioPack.');
+        }
         this.events.on('reldens.serverBeforeDefineRooms', async (props) => {
-            this.audioManager = new AudioManager(props.serverManager);
+            this.audioManager = new AudioManager({
+                roomsManager: props.serverManager.roomsManager,
+                dataServer: this.dataServer
+            });
             await this.audioManager.loadAudioCategories();
             await this.audioManager.loadGlobalAudios();
             props.serverManager.audioManager = this.audioManager;
         });
-        this.events.on('reldens.defineRoomsInGameServerDone', (roomsManager) => {
+        this.events.on('reldens.defineRoomsInGameServerDone', async (roomsManager) => {
             let definedRoomsNames = Object.keys(roomsManager.definedRooms);
             if(definedRoomsNames.length){
                 for(let roomName of definedRoomsNames){
@@ -38,7 +45,7 @@ class AudioPack extends PackInterface
                     if(!definedRoomData.roomProps.roomData || !definedRoomData.roomProps.roomData.roomId){
                         continue;
                     }
-                    this.audioManager.loadRoomAudios(definedRoomData.roomProps.roomData.roomId);
+                    await this.audioManager.loadRoomAudios(definedRoomData.roomProps.roomData.roomId);
                 }
             }
         });

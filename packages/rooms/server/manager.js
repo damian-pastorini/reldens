@@ -6,7 +6,6 @@
  *
  */
 
-const { RoomsModel } = require('./models/objection-js/rooms-model');
 const { RoomGame } = require('./game');
 const { RoomScene } = require('./scene');
 const { GameConst } = require('../../game/constants');
@@ -20,6 +19,10 @@ class RoomsManager
         this.events = sc.getDef(props, 'events', false);
         if(!this.events){
             Logger.error('EventsManager undefined in RoomsManager.');
+        }
+        this.dataServer = sc.getDef(props, 'dataServer', false);
+        if(!this.dataServer){
+            Logger.error('DataServer undefined in RoomsManager.');
         }
         this.loadedRooms = false;
         this.loadedRoomsById = false;
@@ -38,7 +41,6 @@ class RoomsManager
         // dispatch event to get the global message actions (that will be listen by every room):
         let globalMessageActions = {};
         await this.events.emit('reldens.roomsMessageActionsGlobal', globalMessageActions);
-        // loaded rooms counter:
         let counter = 0;
         // lobby room:
         await this.defineRoom(gameServer, GameConst.ROOM_GAME, RoomGame, props, globalMessageActions);
@@ -51,9 +53,8 @@ class RoomsManager
                 Logger.info(`Loaded extra room: ${roomData.roomName}`);
             }
         }
-        // load rooms data:
         let rooms = await this.loadRooms();
-        // register room-scenes from database:
+        // register room-scenes from storage:
         for(let roomModel of rooms){
             let roomClass = RoomScene;
             if(roomModel.roomClassKey){
@@ -73,7 +74,6 @@ class RoomsManager
             counter++;
             Logger.info(`Loaded room: ${roomModel.roomName}`);
         }
-        // log defined rooms:
         Logger.info(`Total rooms loaded: ${counter}`);
         await this.events.emit('reldens.defineRoomsInGameServerDone', this);
         return this.definedRooms;
@@ -84,7 +84,6 @@ class RoomsManager
         let roomMessageActions = Object.assign({}, globalMessageActions);
         // run message actions event for each room:
         await this.events.emit('reldens.roomsMessageActionsByRoom', roomMessageActions, roomName);
-        // merge room data and props:
         let roomProps = {
             loginManager: props.loginManager,
             config: props.config,
@@ -103,8 +102,10 @@ class RoomsManager
     {
         // @TODO - BETA - This will change when hot-plug is introduced.
         if(!this.loadedRooms){
-            // get rooms:
-            let roomsModels = await RoomsModel.loadFullData();
+            let roomsModels = await this.dataServer.getEntity('rooms').loadAllWithRelations([
+                'rooms_change_points.next_room',
+                'rooms_return_points.from_room'
+            ]);
             if(!roomsModels){
                 ErrorManager.error('None rooms found in the database. A room is required to run.');
             }
@@ -136,13 +137,12 @@ class RoomsManager
 
     async loadRoomBy(property, value)
     {
-        property = property.charAt(0).toUpperCase()+property.slice(1);
-        let managerProperty = 'loadedRoomsBy'+property;
+        let propertyLabel = property.charAt(0).toUpperCase()+property.slice(1);
+        let managerProperty = 'loadedRoomsBy'+propertyLabel;
         if(this[managerProperty][value]){
             return this[managerProperty][value];
         }
-        let loadByMethodName = 'loadBy'+property;
-        let room = await RoomsModel[loadByMethodName](value);
+        let room = await this.dataServer.getEntity('rooms').loadBy(property, value);
         if(room){
             let temp = this.generateRoomModel(room);
             this.loadedRooms.push(temp);

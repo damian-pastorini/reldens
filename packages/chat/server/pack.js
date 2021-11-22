@@ -21,6 +21,11 @@ class ChatPack extends PackInterface
         if(!this.events){
             Logger.error('EventsManager undefined in ChatPack.');
         }
+        this.dataServer = sc.getDef(props, 'dataServer', false);
+        if(!this.dataServer){
+            Logger.error('DataServer undefined in ChatPack.');
+        }
+        this.chatManager = new ChatManager({dataServer: this.dataServer});
         // rooms is the list of the current feature rooms names that later will be sent to the client and used to join.
         this.rooms = ['chat'];
         // then we can use the event manager to append the feature in every action required:
@@ -33,7 +38,7 @@ class ChatPack extends PackInterface
         });
         // when the client sent a message to any room it will be checked by all the global messages defined:
         this.events.on('reldens.roomsMessageActionsGlobal', (roomMessageActions) => {
-            roomMessageActions.chat = ChatMessageActions;
+            roomMessageActions.chat = new ChatMessageActions({dataServer: this.dataServer});
         });
         // eslint-disable-next-line no-unused-vars
         this.events.on('reldens.actionsPrepareEventsListeners', async (actionsPack, classPath) => {
@@ -50,7 +55,7 @@ class ChatPack extends PackInterface
                     m: sendMessage
                 };
                 client.send(messageObject);
-                ChatManager.saveMessage(
+                this.chatManager.saveMessage(
                     sendMessage,
                     skill.owner.player_id,
                     skill.owner.state.room_id,

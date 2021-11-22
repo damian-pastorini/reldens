@@ -19,6 +19,7 @@ class RoomLogin extends Room
         if(!this.events){
             Logger.error('EventsManager undefined in RoomLogin.');
         }
+        this.dataServer = sc.getDef(options, 'dataServer', false);
         this.config = options.config;
         this.loginManager = options.loginManager;
         // @NOTE: validateRoomData is overridden in RoomScene onCreate.

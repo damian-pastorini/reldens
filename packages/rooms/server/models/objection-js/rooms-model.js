@@ -2,8 +2,6 @@
  *
  * Reldens - RoomsModel
  *
- * Rooms storage model, this class will load, add, edit, delete the values in the storage.
- *
  */
 
 const { ObjectionJsRawModel } = require('@reldens/storage');
@@ -26,55 +24,34 @@ class RoomsModel extends ObjectionJsRawModel
                 modelClass: RoomsChangePointsModel,
                 join: {
                     from: 'rooms.id',
-                    to: 'rooms_change_points.room_id'
+                    to: RoomsChangePointsModel.tableName+'.room_id'
                 }
             },
             rooms_return_points: {
                 relation: this.HasManyRelation,
                 modelClass: RoomsReturnPointsModel,
                 join: {
-                    from: 'rooms.id',
-                    to: 'rooms_return_points.room_id'
+                    from: this.tableName+'.id',
+                    to: RoomsReturnPointsModel.tableName+'.room_id'
                 }
             },
             next_room: {
                 relation: this.BelongsToOneRelation,
                 modelClass: RoomsChangePointsModel,
                 join: {
-                    from: 'rooms.id',
-                    to: 'rooms_change_points.next_room_id'
+                    from: this.tableName+'.id',
+                    to: RoomsChangePointsModel.tableName+'.next_room_id'
                 }
             },
             from_room: {
                 relation: this.BelongsToOneRelation,
                 modelClass: RoomsReturnPointsModel,
                 join: {
-                    from: 'rooms.id',
-                    to: 'rooms_change_points.next_room_id'
+                    from: this.tableName+'.id',
+                    to: RoomsReturnPointsModel.tableName+'.next_room_id'
                 }
             }
         };
-    }
-
-    static loadFullData()
-    {
-        return this.query()
-            .withGraphFetched('[rooms_change_points.next_room, rooms_return_points.from_room]');
-    }
-
-    static loadById(roomId)
-    {
-        return this.query()
-            .withGraphFetched('[rooms_change_points.next_room, rooms_return_points.from_room]')
-            .findById(roomId);
-    }
-
-    static loadByName(name)
-    {
-        return this.query()
-            .withGraphFetched('[rooms_change_points.next_room, rooms_return_points.from_room]')
-            .where('name', name)
-            .first();
     }
 
 }

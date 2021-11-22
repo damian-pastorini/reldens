@@ -2,8 +2,6 @@
  *
  * Reldens - RoomsReturnPointsModel
  *
- * Rooms Return Points storage model, this class will load, add, edit, delete the values in the storage.
- *
  */
 
 const { ObjectionJsRawModel } = require('@reldens/storage');
@@ -24,16 +22,16 @@ class RoomsReturnPointsModel extends ObjectionJsRawModel
                 relation: this.BelongsToOneRelation,
                 modelClass: RoomsModel,
                 join: {
-                    from: 'rooms_change_points.room_id',
-                    to: 'rooms.id'
+                    from: this.tableName+'.room_id',
+                    to: RoomsModel.tableName+'.id'
                 }
             },
             from_room: {
                 relation: this.HasOneRelation,
                 modelClass: RoomsModel,
                 join: {
-                    from: 'rooms_return_points.from_room_id',
-                    to: 'rooms.id'
+                    from: this.tableName+'.from_room_id',
+                    to: RoomsModel.tableName+'.id'
                 }
             }
         }

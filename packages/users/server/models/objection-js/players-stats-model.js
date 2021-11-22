@@ -25,16 +25,16 @@ class PlayersStatsModel extends ObjectionJsRawModel
                 relation: this.HasOneRelation,
                 modelClass: PlayersModel,
                 join: {
-                    from: 'players_stats.player_id',
-                    to: 'players.id'
+                    from: this.tableName+'.player_id',
+                    to: PlayersModel.tableName+'.id'
                 }
             },
             parent_stat: {
                 relation: this.HasOneRelation,
                 modelClass: StatsModel,
                 join: {
-                    from: 'players_stats.stat_id',
-                    to: 'stats.id'
+                    from: this.tableName+'.stat_id',
+                    to: StatsModel.tableName+'.id'
                 }
             }
         }

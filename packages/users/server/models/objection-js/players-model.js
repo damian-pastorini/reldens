@@ -2,8 +2,6 @@
  *
  * Reldens - PlayersModel
  *
- * Players storage model, this class will load, add, edit, delete the values in the storage.
- *
  */
 
 const { ObjectionJsRawModel } = require('@reldens/storage');
@@ -25,15 +23,15 @@ class PlayersModel extends ObjectionJsRawModel
                 relation: this.BelongsToOneRelation,
                 modelClass: UsersModel,
                 join: {
-                    from: 'players.user_id',
-                    to: 'users.id'
+                    from: this.tableName+'.user_id',
+                    to: UsersModel.tableName+'.id'
                 }
             },
             state: {
                 relation: this.HasOneRelation,
                 modelClass: PlayersStateModel,
                 join: {
-                    from: 'players.id',
+                    from: this.tableName+'.id',
                     to: PlayersStateModel.tableName+'.player_id'
                 }
             }

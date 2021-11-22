@@ -7,7 +7,6 @@
  */
 
 const { ObjectionJsRawModel } = require('@reldens/storage');
-const { RoomsModel } = require('../../../../rooms/server/models/objection-js/rooms-model');
 
 class ChatModel extends ObjectionJsRawModel
 {
@@ -19,38 +18,34 @@ class ChatModel extends ObjectionJsRawModel
 
     static get relationMappings()
     {
+        const { RoomsModel } = require('../../../../rooms/server/models/objection-js/rooms-model');
         const { PlayersModel } = require('../../../../users/server/models/objection-js/players-model');
         return {
             chat_room: {
                 relation: this.HasManyRelation,
                 modelClass: RoomsModel,
                 join: {
-                    from: 'room.id',
-                    to: 'rooms.id'
+                    from: this.tableName+'.room_id',
+                    to: RoomsModel.tableName+'.id'
                 }
             },
             chat_player_id: {
                 relation: this.HasManyRelation,
                 modelClass: PlayersModel,
                 join: {
-                    from: 'player_id',
-                    to: 'players.id'
+                    from: this.tableName+'.player_id',
+                    to: PlayersModel.tableName+'.id'
                 }
             },
             chat_private_player_id: {
                 relation: this.HasManyRelation,
                 modelClass: PlayersModel,
                 join: {
-                    from: 'private_player_id',
-                    to: 'players.id'
+                    from: this.tableName+'.private_player_id',
+                    to: PlayersModel.tableName+'.id'
                 }
             }
         };
-    }
-
-    static saveEntry(entryData)
-    {
-        return this.query().insert(entryData);
     }
 
 }

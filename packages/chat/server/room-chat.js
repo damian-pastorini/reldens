@@ -17,9 +17,9 @@ class RoomChat extends RoomLogin
 
     onCreate(props)
     {
-        // parent config:
         super.onCreate(props);
         Logger.info('Created RoomChat: '+this.roomName+' - ID: '+this.roomId);
+        this.chatManager = new ChatManager(props.dataServer);
         this.activePlayers = {};
     }
 
@@ -83,7 +83,7 @@ class RoomChat extends RoomLogin
             this.sendErrorMessage(client, messageObject, errorMessage);
             messageType = 's';
         }
-        ChatManager.saveMessage(
+        this.chatManager.saveMessage(
             messageObject.m,
             playerData.id,
             playerData.state.room_id,
@@ -110,7 +110,7 @@ class RoomChat extends RoomLogin
             this.sendErrorMessage(client, messageObject, errorMessage);
             messageType = 's';
         }
-        ChatManager.saveMessage(
+        this.chatManager.saveMessage(
             messageObject.m,
             playerData.id,
             playerData.state.room_id,

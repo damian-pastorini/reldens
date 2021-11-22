@@ -168,7 +168,7 @@ class ServerManager
         // users manager:
         this.usersManager = new UsersManager({events: this.events, dataServer: this.dataServer});
         // the rooms manager will receive the features rooms to be defined:
-        this.roomsManager = new RoomsManager({events: this.events});
+        this.roomsManager = new RoomsManager({events: this.events, dataServer: this.dataServer});
         await this.events.emit('reldens.serverBeforeLoginManager', {serverManager: this});
         // login manager:
         this.loginManager = new LoginManager({
@@ -183,7 +183,8 @@ class ServerManager
         await this.events.emit('reldens.serverBeforeDefineRooms', {serverManager: this});
         await this.roomsManager.defineRoomsInGameServer(this.gameServer, {
             loginManager: this.loginManager,
-            config: configProcessor
+            config: configProcessor,
+            dataServer: this.dataServer
         });
     }
 

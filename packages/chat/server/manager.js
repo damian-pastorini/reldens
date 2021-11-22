@@ -2,16 +2,21 @@
  *
  * Reldens - ChatManager
  *
- * This class will handle the chat messages in the storage.
- *
  */
 
-const { ChatModel } = require('./models/objection-js/chat-model');
-const { Logger, sc } = require('@reldens/utils');
 const { ChatConst } = require('../constants');
+const { Logger, sc } = require('@reldens/utils');
 
 class ChatManager
 {
+
+    constructor(props)
+    {
+        this.dataServer = sc.getDef(props, 'dataServer', false);
+        if(!this.dataServer){
+            Logger.error('DataServer undefined in ChatManager.');
+        }
+    }
 
     async saveMessage(message, playerId, roomId, clientToPlayerSchema, messageType)
     {
@@ -27,12 +32,12 @@ class ChatManager
         if(clientToPlayerSchema && sc.hasOwn(clientToPlayerSchema, 'id')){
             entryData.private_player_id = clientToPlayerSchema.state.player_id;
         }
-        let insertResult = await ChatModel.saveEntry(entryData);
+        let insertResult = await this.dataServer.getEntity('chat').create(entryData);
         if(!insertResult){
-            Logger.error(['Chat insert message error.', entryData]);
+            Logger.error('Chat message save error.', entryData);
         }
     }
 
 }
 
-module.exports.ChatManager = new ChatManager();
+module.exports.ChatManager = ChatManager;
