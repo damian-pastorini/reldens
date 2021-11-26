@@ -101,7 +101,6 @@ class DriverResource extends BaseResource
         this.model.sortBy = options.sort.sortBy;
         this.model.sortDirection = options.sort.direction;
         let prepareFilters = this.prepareFilters(resourceWithFilters.filters);
-        console.log(prepareFilters);
         let loadedData = await this.model.load(prepareFilters);
         let result = !loadedData ? null : loadedData.map((loadedResult) => {
             loadedResult = !this.rawConfig.arrayColumns ? loadedResult : this.prepareEntityData(loadedResult);
