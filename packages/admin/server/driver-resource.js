@@ -1,14 +1,14 @@
 /**
  *
- * Reldens - ObjectionDriverResource
+ * Reldens - DriverResource
  *
  */
 
 const { BaseResource, BaseRecord } = require('adminjs');
-const { ObjectionDriverProperty } = require('./objection-driver-property');
-const { Logger, ErrorManager, sc } = require('@reldens/utils');
+const { DriverProperty } = require('./driver-property');
+const { ErrorManager, Logger, sc } = require('@reldens/utils');
 
-class ObjectionDriverResource extends BaseResource
+class DriverResource extends BaseResource
 {
 
     constructor(model, config)
@@ -16,7 +16,7 @@ class ObjectionDriverResource extends BaseResource
         super(model);
         this.rawConfig = config;
         this.model = model;
-        this.label = model.tableName;
+        this.label = model.name();
         this.idProperty = false;
         this.propertiesObject = this.prepareProperties(config);
         this.callbacks = sc.getDef(config, 'callbacks', {});
@@ -33,7 +33,7 @@ class ObjectionDriverResource extends BaseResource
             let rawProp = config.properties[i];
             let isId = Boolean(sc.getDef(rawProp, 'isId', (i === 'id')));
             let isTitle = sc.getDef(rawProp, 'isTitle', false);
-            properties[i] = new ObjectionDriverProperty({
+            properties[i] = new DriverProperty({
                 isId,
                 path: sc.getDef(rawProp, 'path', i),
                 type: sc.getDef(rawProp, 'type', 'string'),
@@ -44,7 +44,7 @@ class ObjectionDriverResource extends BaseResource
                 isDisabled: sc.getDef(rawProp, 'isDisabled', false),
                 isRequired: sc.getDef(rawProp, 'isRequired', false),
                 isVirtual: sc.getDef(rawProp, 'isVirtual', false),
-                isTitle,
+                isTitle
             });
             if(isTitle){
                 hasTitle = true;
@@ -66,17 +66,17 @@ class ObjectionDriverResource extends BaseResource
 
     databaseName()
     {
-        return this.model.knex().client.config.connection.database || '';
+        return this.model.databaseName() || '';
     }
 
     name()
     {
-        return this.model.tableName || '';
+        return this.model.name() || '';
     }
 
     id()
     {
-        return this.name();
+        return this.model.tableName();
     }
 
     propertyId()
@@ -96,25 +96,27 @@ class ObjectionDriverResource extends BaseResource
 
     async find(resourceWithFilters, options)
     {
-        let query = this.model.query();
-        this.appendQueryFilters(query, resourceWithFilters.filters);
-        let loadedData = await query.limit(options.limit)
-            .offset(options.offset || 0)
-            .orderBy(options.sort.sortBy, options.sort.direction);
+        this.model.limit = options.limit || 0;
+        this.model.offset = options.offset || 0;
+        this.model.sortBy = options.sort.sortBy;
+        this.model.sortDirection = options.sort.direction;
+        let prepareFilters = this.prepareFilters(resourceWithFilters.filters);
+        console.log(prepareFilters);
+        let loadedData = await this.model.load(prepareFilters);
         let result = !loadedData ? null : loadedData.map((loadedResult) => {
             loadedResult = !this.rawConfig.arrayColumns ? loadedResult : this.prepareEntityData(loadedResult);
             return new BaseRecord(loadedResult, this);
         });
         let callback = sc.getDef(this.callbacks, 'find', false);
         if(callback){
-            callback(result, resourceWithFilters, options, this);
+            callback(result, loadedData, resourceWithFilters, prepareFilters, options, this);
         }
         return result;
     }
 
     async findMany(ids)
     {
-        let loadedData = await this.model.query().findByIds(ids);
+        let loadedData = await this.model.loadByIds(ids);
         let result = !loadedData ? null : loadedData.map((loadedResult) => {
             loadedResult = !this.rawConfig.arrayColumns ? loadedResult : this.prepareEntityData(loadedResult);
             return new BaseRecord(loadedResult, this);
@@ -128,7 +130,7 @@ class ObjectionDriverResource extends BaseResource
 
     async findOne(id)
     {
-        let loadedData = await this.model.query().where(this.propertyId(), id).first();
+        let loadedData = await this.model.loadById(id);
         loadedData = !this.rawConfig.arrayColumns ? loadedData : this.prepareEntityData(loadedData);
         let result = !loadedData ? null: new BaseRecord(loadedData, this);
         let callback = sc.getDef(this.callbacks, 'findOne', false);
@@ -140,13 +142,11 @@ class ObjectionDriverResource extends BaseResource
 
     async count(resourceWithFilters)
     {
-        let query = this.model.query();
-        this.appendQueryFilters(query, resourceWithFilters.filters);
-        let count = await query.count().first();
-        let result = count ? count['count(*)'] : 0;
+        let prepareFilters = this.prepareFilters(resourceWithFilters.filters);
+        let result = this.model.count(prepareFilters);
         let callback = sc.getDef(this.callbacks, 'count', false);
         if(callback){
-            callback(result, resourceWithFilters, this);
+            callback(result, resourceWithFilters, prepareFilters, this);
         }
         return result;
     }
@@ -155,7 +155,7 @@ class ObjectionDriverResource extends BaseResource
     {
         let preparedParams = this.prepareParams(params);
         this.validateParams(preparedParams);
-        let result = await this.model.query().insert(preparedParams);
+        let result = await this.model.create(preparedParams);
         let callback = sc.getDef(this.callbacks, 'create', false);
         if(callback){
             callback(result, preparedParams, params, this);
@@ -167,23 +167,22 @@ class ObjectionDriverResource extends BaseResource
     {
         let preparedParams = this.prepareParams(params);
         this.validateParams(preparedParams, true);
-        let result = await this.model.query().patch(preparedParams).where(this.propertyId(), id);
-        let model = await this.model.loadById(id, true);
+        let result = await this.model.updateById(id, preparedParams);
         let callback = sc.getDef(this.callbacks, 'update', false);
         if(callback){
-            callback(model, result, id, preparedParams, params, this);
+            callback(result, id, preparedParams, params, this);
         }
         return result;
     }
 
     async delete(id)
     {
-        let model = await this.model.loadById(id, true);
+        let model = await this.model.loadById(id);
         let beforeCallback = sc.getDef(this.callbacks, 'beforeDelete', false);
         if(beforeCallback){
-            beforeCallback(model, id, this);
+            await beforeCallback(model, id, this);
         }
-        let result = await this.model.query().where(this.propertyId(), id).delete();
+        let result = await this.model.delete(id);
         let afterCallback = sc.getDef(this.callbacks, 'afterDelete', false);
         if(afterCallback){
             afterCallback(result, id, this);
@@ -262,11 +261,11 @@ class ObjectionDriverResource extends BaseResource
         }
     }
 
-    appendQueryFilters(query, filtersList)
+    prepareFilters(filtersList)
     {
         let filtersKeys = Object.keys(filtersList);
-        if(!filtersKeys.length){
-            return false;
+        if(0 === filtersKeys.length){
+            return {};
         }
         let filters = {};
         for(let i of filtersKeys){
@@ -277,15 +276,17 @@ class ObjectionDriverResource extends BaseResource
             }
             if(rawConfigFilterProperties.type === 'reference'){
                 filters[filter.path] = filter.value;
-            } else {
-                query.where(filter.path, 'like', '%'+filter.value+'%');
+                continue;
             }
+            if(rawConfigFilterProperties.type === 'boolean'){
+                filters[filter.path] = (filter.value === 'true');
+                continue;
+            }
+            filters[filter.path] = {operator: 'like', value: '%'+filter.value+'%'};
         }
-        if(Object.keys(filters).length){
-            query.where(filters);
-        }
+        return filters;
     }
 
 }
 
-module.exports.ObjectionDriverResource = ObjectionDriverResource;
+module.exports.DriverResource = DriverResource;

@@ -2,8 +2,6 @@
  *
  * Reldens - DataServerConfig
  *
- * This module handle the database connection and queries.
- *
  */
 
 const { ErrorManager } = require('@reldens/utils');

@@ -13,7 +13,7 @@ class EntitiesLoader
 
     static loadEntities(props)
     {
-        let projectRoot = props.projectRoot;
+        let projectRoot = props.serverManager.projectRoot;
         let withConfig = sc.getDef(props, 'withConfig', false);
         let withTranslations = sc.getDef(props, 'withTranslations', false );
         let packages = path.join(projectRoot, 'node_modules', 'reldens', 'packages');
@@ -28,6 +28,7 @@ class EntitiesLoader
             return false;
         }
         let entities = {};
+        let entitiesRaw = {};
         let translations = {};
         for(let file of files){
             let classPath = file.replace('.js', '');
@@ -41,6 +42,7 @@ class EntitiesLoader
                 continue;
             }
             for(let i of exportedEntitiesList){
+                entitiesRaw[i] = rawRegisteredEntities[i];
                 entities[i] = withConfig ?
                     {rawEntity: rawRegisteredEntities[i], config: ((typeof entitiesConfig === 'function'
                         ? entitiesConfig(props)[i]
@@ -58,7 +60,7 @@ class EntitiesLoader
                 }
             }
         }
-        return {entities, translations};
+        return {entities, entitiesRaw, translations};
     }
 
     static getFiles(path, files, storageDriver)

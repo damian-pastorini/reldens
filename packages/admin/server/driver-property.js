@@ -1,12 +1,12 @@
 /**
  *
- * Reldens - ObjectionDriverProperty
+ * Reldens - DriverProperty
  *
  */
 
 const { BaseProperty } = require('adminjs');
 
-class ObjectionDriverProperty extends BaseProperty
+class DriverProperty extends BaseProperty
 {
 
     constructor(entityProperty)
@@ -72,4 +72,4 @@ class ObjectionDriverProperty extends BaseProperty
 
 }
 
-module.exports.ObjectionDriverProperty = ObjectionDriverProperty;
+module.exports.DriverProperty = DriverProperty;

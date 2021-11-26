@@ -4,8 +4,8 @@
  *
  */
 
-const { ObjectionDriverDatabase } = require('./objection-driver-database');
-const { ObjectionDriverResource } = require('./objection-driver-resource');
+const { DriverDatabase } = require('./driver-database');
+const { DriverResource } = require('./driver-resource');
 const AdminJS = require('adminjs');
 const AdminJSExpress = require('@adminjs/express');
 const { sc } = require('@reldens/utils');
@@ -28,8 +28,8 @@ class AdminManager
     setupAdmin()
     {
         AdminJS.registerAdapter({
-            Database: ObjectionDriverDatabase,
-            Resource: ObjectionDriverResource
+            Database: DriverDatabase,
+            Resource: DriverResource
         });
         this.rootPath = (process.env.ADMIN_ROUTE_PATH || '/reldens-admin');
         let adminJsConfig = {
@@ -91,35 +91,33 @@ class AdminManager
 
     static prepareResources(rawResources)
     {
-        let registeredResources = [];
-        if(!rawResources){
-            return registeredResources;
-        }
         let rawResourcesKeys = Object.keys(rawResources);
-        if(rawResourcesKeys.length > 1){
-            for(let i of rawResourcesKeys){
-                let rawResource = rawResources[i];
-                let objectionDriverResource = {
-                    resource: new ObjectionDriverResource(rawResource.rawEntity, rawResource.config),
-                    id: () => {
-                        return rawResource.rawEntity.tableName
-                    },
-                    options: {
-                        navigation: sc.hasOwn(rawResource.config, 'parentItemLabel') ? {
-                            name: rawResource.config.parentItemLabel,
-                            icon: rawResource.config.icon || 'List'
-                        } : null,
-                        listProperties: rawResource.config.listProperties || [],
-                        showProperties: rawResource.config.showProperties || [],
-                        filterProperties: rawResource.config.filterProperties || [],
-                        editProperties: rawResource.config.editProperties || [],
-                        properties: rawResource.config.properties || [],
-                        sort: sc.getDef(rawResource.config, 'sort', null)
-                    },
-                    features: sc.getDef(rawResource.config, 'features', [])
-                };
-                registeredResources.push(objectionDriverResource);
-            }
+        if(!rawResources || 0 === rawResourcesKeys.length){
+            return [];
+        }
+        let registeredResources = [];
+        for(let i of rawResourcesKeys){
+            let rawResource = rawResources[i];
+            let objectionDriverResource = {
+                resource: new DriverResource(rawResource.rawEntity, rawResource.config),
+                id: () => {
+                    return rawResource.rawEntity.tableName();
+                },
+                options: {
+                    navigation: sc.hasOwn(rawResource.config, 'parentItemLabel') ? {
+                        name: rawResource.config.parentItemLabel,
+                        icon: rawResource.config.icon || 'List'
+                    } : null,
+                    listProperties: rawResource.config.listProperties || [],
+                    showProperties: rawResource.config.showProperties || [],
+                    filterProperties: rawResource.config.filterProperties || [],
+                    editProperties: rawResource.config.editProperties || [],
+                    properties: rawResource.config.properties || [],
+                    sort: sc.getDef(rawResource.config, 'sort', null)
+                },
+                features: sc.getDef(rawResource.config, 'features', [])
+            };
+            registeredResources.push(objectionDriverResource);
         }
         return registeredResources;
     }

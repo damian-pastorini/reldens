@@ -6,7 +6,6 @@
 
 const { AdminManager } = require('./admin-manager');
 const { PackInterface } = require('../../features/pack-interface');
-const { EntitiesLoader } = require('../../game/server/entities-loader');
 const { Logger, sc } = require('@reldens/utils');
 
 class AdminPack extends PackInterface
@@ -22,21 +21,7 @@ class AdminPack extends PackInterface
             let serverManager = event.serverManager;
             let bucket = serverManager.configManager.processor.themeFullPath;
             serverManager.app.use('/uploads', serverManager.express.static(bucket));
-            let loadEntitiesOptions = {
-                serverManager,
-                projectRoot: serverManager.projectRoot,
-                projectTheme: serverManager.configManager.processor.projectTheme,
-                bucketFullPath: bucket,
-                withConfig: true,
-                withTranslations: true,
-                storageDriver: serverManager.dataServerConfig.storageDriver
-            };
-            let loadedEntities = EntitiesLoader.loadEntities(loadEntitiesOptions);
-            if(false === loadedEntities){
-                Logger.error('Entities could not be loaded.');
-                return false;
-            }
-            let {entities, translations} = loadedEntities;
+            let entities = serverManager.dataServerConfig.preparedEntities;
             serverManager.dataServer.resources = AdminManager.prepareResources(entities);
             this.events.emit('reldens.beforeCreateAdminManager', this, event);
             serverManager.serverAdmin = new AdminManager({
@@ -44,7 +29,7 @@ class AdminPack extends PackInterface
                 app: serverManager.app,
                 config: serverManager.configServer,
                 databases: [serverManager.dataServer],
-                translations,
+                translations: serverManager.dataServerConfig.translations,
                 authenticateCallback: async (email, password) => {
                     let user = await serverManager.usersManager.loadUserByEmail(email);
                     if(user && user.role_id === 99){

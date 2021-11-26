@@ -1,12 +1,12 @@
 /**
  *
- * Reldens - ObjectionDriverDatabase
+ * Reldens - DriverDatabase
  *
  */
 
 const { BaseDatabase } = require('adminjs');
 
-class ObjectionDriverDatabase extends BaseDatabase
+class DriverDatabase extends BaseDatabase
 {
 
     constructor(orm)
@@ -27,4 +27,4 @@ class ObjectionDriverDatabase extends BaseDatabase
 
 }
 
-module.exports.ObjectionDriverDatabase = ObjectionDriverDatabase;
+module.exports.DriverDatabase = DriverDatabase;

@@ -165,7 +165,11 @@ class AudioManager
                 this.globalAudios.splice(this.globalAudios.indexOf(audio), 1);
             }
         }
-        for(let i of this.roomsManager.createdInstances){
+        let createdRooms = Object.keys(this.roomsManager.createdInstances);
+        if(0 === createdRooms.length){
+            return false;
+        }
+        for(let i of createdRooms){
             let roomInstance = this.roomsManager.createdInstances[i];
             let broadcastData = {
                 act: AudioConst.AUDIO_DELETE,

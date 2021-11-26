@@ -11,10 +11,9 @@ const dotenv = require('dotenv');
 const path = require('path');
 const { AwaitMiddleware } = require('./await-middleware');
 const { GameServer } = require('./game-server');
-const { ObjectionJsDataServer } = require('@reldens/storage');
-const { DataServerConfig } = require('./data-server-config');
 const { AppServer } = require('./app-server');
 const { ConfigManager } = require('../../config/server/manager');
+const { DataServerInitializer } = require('./data-server-initializer');
 const { FeaturesManager } = require('../../features/server/manager');
 const { UsersManager } = require('../../users/server/manager');
 const { LoginManager } = require('./login');
@@ -22,29 +21,30 @@ const { RoomsManager } = require('../../rooms/server/manager');
 const { Mailer } = require('./mailer');
 const { ThemeManager } = require('./theme-manager');
 const { MapsLoader } = require('./maps-loader');
-const { EntitiesLoader } = require('./entities-loader');
-const { EventsManagerSingleton, Logger, sc } = require('@reldens/utils');
+const { EventsManagerSingleton, Logger } = require('@reldens/utils');
 
 class ServerManager
 {
 
+    express = false;
+    app = false;
+    appServer = false;
+    gameServer = false;
+    dataServerConfig = {};
+    dataServer = false;
+    configManager = {};
+    projectRoot = false;
+    configServer = false;
+    mailer = false;
+    featuresManager = false;
+    roomsManager = false;
+    loginManager = false;
+    usersManager = false;
+    bundler = false;
+    translations = {};
+
     constructor(config, eventsManager, dataServerDriver)
     {
-        this.express = false;
-        this.app = false;
-        this.appServer = false;
-        this.gameServer = false;
-        this.dataServerConfig = false;
-        this.dataServer = false;
-        this.configManager = false;
-        this.projectRoot = false;
-        this.configServer = false;
-        this.mailer = false;
-        this.featuresManager = false;
-        this.roomsManager = false;
-        this.loginManager = false;
-        this.usersManager = false;
-        this.bundler = false;
         this.events = eventsManager || EventsManagerSingleton;
         try {
             // initialize configurations:
@@ -67,17 +67,14 @@ class ServerManager
 
     initializeStorage(config, dataServerDriver)
     {
-        this.dataServerConfig = DataServerConfig.prepareDbConfig(config);
-        let loadedEntities = EntitiesLoader.loadEntities({
-            projectRoot: this.projectRoot,
-            storageDriver: this.dataServerConfig.storageDriver
-        });
-        this.dataServerConfig.rawEntities = Object.assign(
-            sc.getDef(loadedEntities, 'entities', {}),
-            sc.getDef(config, 'rawEntities', {})
+        let {dataServerConfig, dataServer} = DataServerInitializer.initializeEntitiesAndDriver(
+            config,
+            dataServerDriver,
+            this
         );
-        this.dataServer = dataServerDriver || new ObjectionJsDataServer(this.dataServerConfig);
-        this.dataServer.connect(); // can't auto-connect on the constructor
+        this.dataServerConfig = dataServerConfig;
+        this.dataServer = dataServer;
+        dataServer.connect(); // can't auto-connect on the constructor
     }
 
     initializeConfiguration(config)
