@@ -7,9 +7,10 @@
 const { AdminEntityProperties } = require('../../../admin/server/admin-entity-properties');
 const { uploadFileFeature } = require('../../../admin/server/upload-file/upload-file.feature');
 const { AdminLocalProvider } = require('../../../admin/server/upload-file/admin-local-provider');
+const { AudioHotPlugCallbacks } = require('../audio-hot-plug-callbacks');
 const { MimeTypes } = require('../../../admin/server/upload-file/mime-types');
 const { AudioConst } = require('../../constants');
-const { Logger, sc } = require('@reldens/utils');
+const { sc } = require('@reldens/utils');
 
 class AudioEntity extends AdminEntityProperties
 {
@@ -78,8 +79,8 @@ class AudioEntity extends AdminEntityProperties
         let callbacks = {
             // @NOTE: we create audio files with this callback because the file_name update happens here when we use
             // the upload plugin.
-            update: this.updateCallback(projectConfig, bucket),
-            beforeDelete: this.beforeDeleteCallback(projectConfig, bucket)
+            update: AudioHotPlugCallbacks.updateCallback(projectConfig, bucket),
+            beforeDelete: AudioHotPlugCallbacks.beforeDeleteCallback(projectConfig, bucket)
         };
 
         return Object.assign({
@@ -93,48 +94,6 @@ class AudioEntity extends AdminEntityProperties
             bucketPath: '/'+AudioConst.AUDIO_BUCKET+'/',
             callbacks
         }, extraProps);
-    }
-
-    static beforeDeleteCallback(projectConfig, bucket)
-    {
-        return async (model, id, resource) => {
-            let distPath = AdminLocalProvider.joinPath(projectConfig.projectRoot, 'dist', 'assets', 'audio');
-            let files = model.files_name.split(',');
-            for(let file of files){
-                let fileFrom = AdminLocalProvider.joinPath(bucket, file);
-                let fileTo = AdminLocalProvider.joinPath(distPath, file);
-                await AdminLocalProvider.deleteFile(fileFrom);
-                await AdminLocalProvider.deleteFile(fileTo);
-            }
-            projectConfig.serverManager.audioManager.hotUnplugAudio({
-                newAudioModel: model,
-                id: Number(id),
-                resource
-            });
-        };
-    }
-
-    static updateCallback(projectConfig, bucket)
-    {
-        return async (model, result, id, preparedParams, params, resource) => {
-            if(!params.files_name){
-                Logger.error('Missing result data:', params);
-                return;
-            }
-            let distPath = AdminLocalProvider.joinPath(projectConfig.projectRoot, 'dist', 'assets', 'audio');
-            let files = params.files_name.split(',');
-            for(let file of files){
-                let fileFrom = AdminLocalProvider.joinPath(bucket, file);
-                let fileTo = AdminLocalProvider.joinPath(distPath, file);
-                await AdminLocalProvider.copyFile(fileFrom, fileTo);
-            }
-            projectConfig.serverManager.audioManager.hotPlugNewAudio({
-                newAudioModel: model,
-                preparedParams,
-                params,
-                resource
-            });
-        };
     }
 
 }

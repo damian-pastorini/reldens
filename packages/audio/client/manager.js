@@ -198,7 +198,10 @@ class AudioManager
 
     removeAudiosFromScene(audios, currentScene)
     {
-        if(!sc.hasOwn(currentScene.sound, 'sounds') || !sc.isArray(currentScene.sound.sounds)){
+        if(!currentScene || !sc.hasOwn(currentScene.sound, 'sounds') || !sc.isArray(currentScene.sound.sounds)){
+            return false;
+        }
+        if(0 === audios.length || 0 === currentScene.sound.sounds.length){
             return false;
         }
         for(let audio of audios){

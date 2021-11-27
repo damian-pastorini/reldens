@@ -8,9 +8,11 @@ const fs = require('fs');
 const path = require('path');
 const { ERROR_MESSAGES } = require('@adminjs/upload/build/features/upload-file/constants');
 const { BaseProvider } = require('@adminjs/upload');
+const { sc } = require('@reldens/utils');
 
 class AdminLocalProvider extends BaseProvider
 {
+
     constructor(options)
     {
         super(options.bucket);
@@ -53,13 +55,16 @@ class AdminLocalProvider extends BaseProvider
 
     static async copyFile(from, to)
     {
-        return await fs.promises.copyFile(from, to);
+        let origin = sc.isArray(from) ? this.joinPath(...from) : from;
+        let dest = sc.isArray(to) ? this.joinPath(...to) : to;
+        return await fs.promises.copyFile(origin, dest);
     }
 
-    static async deleteFile(fileFullPath)
+    static async deleteFile(filePath)
     {
         try {
-            await fs.promises.unlink(fileFullPath);
+            let deleteFile = sc.isArray(filePath) ? this.joinPath(...filePath) : filePath
+            await fs.promises.unlink(deleteFile);
         } catch (err) {
             // Logger.error(err);
         }
