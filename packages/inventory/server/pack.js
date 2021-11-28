@@ -4,13 +4,14 @@
  *
  */
 
-const { ItemsServer, ItemBase, ItemGroup, ItemsConst } = require('@reldens/items-system');
-const { ModelsManager } = require('@reldens/items-system/lib/server/storage/models-manager');
-const { Logger, sc } = require('@reldens/utils');
-const { Modifier, ModifierConst } = require('@reldens/modifiers');
 const { PackInterface } = require('../../features/pack-interface');
 const { InventoryMessageActions } = require('./message-actions');
-const { ClientWrapper } = require('../../game/server/client-wrapper');
+const { ItemsDataGenerator } = require('./items-data-generator');
+const { PlayerInventoryFactory } = require('./player-inventory-factory');
+const { GroupsDataGenerator } = require('./groups-data-generator');
+const { ItemsConst } = require('@reldens/items-system');
+const { ModelsManager } = require('@reldens/items-system/lib/server/storage/models-manager');
+const { Logger, sc } = require('@reldens/utils');
 
 class InventoryPack extends PackInterface
 {
@@ -30,13 +31,20 @@ class InventoryPack extends PackInterface
             if(!sc.hasOwn(configProcessor, 'inventory')){
                 configProcessor.inventory = {};
             }
-            await this.loadItemsFullList(configProcessor);
-            await this.loadGroupsFullList(configProcessor);
+            await ItemsDataGenerator.appendItemsFullList(configProcessor, this.inventoryModelsManager);
+            await GroupsDataGenerator.appendGroupsFullList(configProcessor, this.inventoryModelsManager);
         });
         // eslint-disable-next-line no-unused-vars
         this.events.on('reldens.createPlayerAfter', async (client, authResult, currentPlayer, room) => {
             // create player inventory:
-            currentPlayer.inventory = await this.createInventory(client, currentPlayer, room);
+            // currentPlayer.inventory = await this.createInventory(client, currentPlayer, room);
+            currentPlayer.inventory = await PlayerInventoryFactory.createInventory(
+                client,
+                currentPlayer,
+                room,
+                this.events,
+                this.inventoryModelsManager
+            );
             // @NOTE: here we send the groups data to generate the player interface instead of set them in the current
             // player inventory because for this specific implementation we don't need recursive groups lists in the
             // server for each player.
@@ -50,106 +58,6 @@ class InventoryPack extends PackInterface
         this.events.on('reldens.roomsMessageActionsGlobal', (roomMessageActions) => {
             roomMessageActions.inventory = InventoryMessageActions;
         });
-    }
-
-    async loadItemsFullList(configProcessor)
-    {
-        // use the inventory models manager to get the items list loaded:
-        let itemsModelsList = await this.inventoryModelsManager.getEntity('item').loadAllWithRelations();
-        if(itemsModelsList.length){
-            let itemsList = {};
-            let inventoryClasses = configProcessor.get('server/customClasses/inventory/items');
-            for(let itemModel of itemsModelsList){
-                let itemClass = ItemBase;
-                if(itemModel.items_modifiers){
-                    itemModel.modifiers = this.generateItemModifiers(itemModel);
-                }
-                if(sc.hasOwn(inventoryClasses, itemModel.key)){
-                    itemClass = inventoryClasses[itemModel.key];
-                }
-                itemsList[itemModel.key] = {class: itemClass, data: itemModel};
-            }
-            configProcessor.inventory.items = {itemsModels: itemsModelsList, itemsList};
-        }
-    }
-
-    generateItemModifiers(itemModel)
-    {
-        let modifiers = {};
-        for(let modifierData of itemModel.items_modifiers){
-            if(modifierData.operation !== ModifierConst.OPS.SET){
-                modifierData.value = Number(modifierData.value);
-            }
-            modifiers[modifierData.id] = new Modifier(modifierData);
-        }
-        return modifiers;
-    }
-
-    async loadGroupsFullList(configProcessor)
-    {
-        // use the inventory models manager to get the items list loaded:
-        let groupModelsList = await this.inventoryModelsManager.getEntity('group').loadAll();
-        if(groupModelsList.length){
-            let groupList = {};
-            let groupBaseData = {};
-            let inventoryClasses = configProcessor.get('server/customClasses/inventory/groups');
-            for(let groupModel of groupModelsList){
-                let groupClass = ItemGroup;
-                if(sc.hasOwn(inventoryClasses, groupModel.key)){
-                    groupClass = inventoryClasses[groupModel.key];
-                }
-                groupList[groupModel.key] = {class: groupClass, data: groupModel};
-                let {id, key, label, description, sort} = groupModel;
-                groupBaseData[key] = {id, key, label, description, sort};
-            }
-            configProcessor.inventory.groups = {groupModels: groupModelsList, groupList, groupBaseData};
-        }
-    }
-
-    async createInventory(client, playerSchema, room)
-    {
-        // wrap the client:
-        let clientWrapper = new ClientWrapper(client, room);
-        let serverProps = {
-            owner: playerSchema,
-            client: clientWrapper,
-            persistence: true,
-            ownerIdProperty: 'player_id',
-            eventsManager: this.events,
-            modelsManager: this.inventoryModelsManager
-        };
-        let inventoryClasses = room.config.get('server/customClasses/inventory/items');
-        if(inventoryClasses){
-            serverProps.itemClasses = inventoryClasses;
-        }
-        let groupClasses = room.config.get('server/customClasses/inventory/groups');
-        if(groupClasses){
-            serverProps.groupClasses = groupClasses;
-        }
-        let inventoryServer = new ItemsServer(serverProps);
-        // broadcast player sessionId to share animations:
-        inventoryServer.client.sendTargetProps.broadcast.push('sessionId');
-        // for now I will load all the items here and then create instances for later assign them to their owner:
-        await inventoryServer.dataServer.loadOwnerItems();
-        inventoryServer.createItemInstance = (key, qty) => {
-            let result = false;
-            let itemData = room.config.get('inventory/items/itemsList/'+key);
-            if(itemData){
-                if(itemData['data'].modifiers){
-                    for(let i of Object.keys(itemData['data'].modifiers)){
-                        itemData['data'].modifiers[i].target = playerSchema;
-                    }
-                }
-                let itemProps = Object.assign({}, itemData['data'], {
-                    manager: inventoryServer.manager,
-                    item_id: itemData['data'].id,
-                    qty: (typeof qty !== 'undefined') ? qty : 1
-                });
-                result = new itemData['class'](itemProps);
-            }
-            return result;
-        };
-        return inventoryServer;
     }
 
 }
