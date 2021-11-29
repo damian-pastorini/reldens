@@ -1,13 +1,13 @@
 /**
  *
- * Reldens - AudioHotPlugCallbacks
+ * Reldens - GroupHotPlugCallbacks
  *
  */
 
 const { AdminDistHelper } = require('../../admin/server/upload-file/admin-dist-helper');
 const { Logger } = require('@reldens/utils');
 
-class AudioHotPlugCallbacks
+class GroupHotPlugCallbacks
 {
 
     static beforeDeleteCallback(projectConfig, bucket, distFolder)
@@ -18,7 +18,7 @@ class AudioHotPlugCallbacks
                 bucket,
                 model.files_name
             );
-            projectConfig.serverManager.audioManager.hotUnplugAudio({
+            projectConfig.serverManager.inventory.hotUnplugAudio({
                 newAudioModel: model,
                 id: Number(id),
                 resource
@@ -38,7 +38,7 @@ class AudioHotPlugCallbacks
                 model.files_name,
                 distFolder
             );
-            projectConfig.serverManager.audioManager.hotPlugNewAudio({
+            projectConfig.serverManager.inventory.hotPlugNewAudio({
                 newAudioModel: model,
                 preparedParams,
                 params,
@@ -49,4 +49,4 @@ class AudioHotPlugCallbacks
 
 }
 
-module.exports.AudioHotPlugCallbacks = AudioHotPlugCallbacks;
+module.exports.GroupHotPlugCallbacks = GroupHotPlugCallbacks;

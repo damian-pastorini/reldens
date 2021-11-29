@@ -10,20 +10,19 @@ const fs = require('fs');
 const path = require('path');
 const del = require('del');
 const TemplateEngine = require('mustache');
-const { Logger } = require('@reldens/utils');
+const { Logger, sc } = require('@reldens/utils');
 
 class ThemeManager
 {
 
     validateOrCreateTheme(config)
     {
-        this.projectTheme = path.join('theme', 'default');
+        let projectThemeFolder = sc.getDef(config, 'projectTheme', 'default');
+        this.projectTheme = path.join('theme', projectThemeFolder);
         this.projectRoot = config.projectRoot;
-        // check for theme folder:
-        if(config.projectTheme){
-            this.projectTheme = path.join('theme', config.projectTheme);
-        }
         this.themeFullPath = path.join(this.projectRoot, this.projectTheme);
+        let projectDistFolder = sc.getDef(config, 'projectDistFolder', 'dist');
+        this.distFullPath = path.join(this.projectRoot, projectDistFolder);
         // check if the dist folder exists:
         let themesFolderExists = fs.existsSync(path.join(this.projectRoot, 'theme'));
         if(!themesFolderExists){

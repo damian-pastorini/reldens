@@ -20,5 +20,6 @@ module.exports.InventoryConst = {
     INVENTORY_PREF: pref,
     ACTION_REMOVE: pref+'Rm',
     ACTION_USE: pref+'Use',
-    ACTION_EQUIP: pref+'Eqi'
+    ACTION_EQUIP: pref+'Eqi',
+    GROUP_BUCKET: 'assets/custom/groups'
 };

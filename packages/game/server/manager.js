@@ -146,6 +146,7 @@ class ServerManager
         // theme root:
         configProcessor.projectTheme = this.themeManager.projectTheme;
         configProcessor.themeFullPath = this.themeManager.themeFullPath;
+        configProcessor.distFullPath = this.themeManager.distFullPath;
         await this.events.emit('reldens.serverConfigReady', {
             serverManager: this,
             configProcessor

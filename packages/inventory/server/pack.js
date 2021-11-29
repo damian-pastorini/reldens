@@ -22,7 +22,6 @@ class InventoryPack extends PackInterface
         if(!this.events){
             Logger.error('EventsManager undefined in InventoryPack.');
         }
-        // @TODO - BETA - Refactor pack to extract the models and classes generation to the external packages.
         this.events.on('reldens.serverBeforeListen', async (event) => {
             this.inventoryModelsManager = new ModelsManager({dataServer: event.serverManager.dataServer});
         });

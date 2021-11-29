@@ -20,6 +20,7 @@ class DataServerInitializer
             projectRoot: serverManager.projectRoot,
             projectTheme: config.projectTheme,
             bucketFullPath: serverManager.themeManager.themeFullPath,
+            distFullPath: serverManager.themeManager.distFullPath,
             withConfig: true,
             withTranslations: true,
             storageDriver: dataServerConfig.storageDriver

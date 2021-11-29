@@ -5,8 +5,8 @@
  */
 
 const { AdminEntityProperties } = require('../../../admin/server/admin-entity-properties');
-const { uploadFileFeature } = require('../../../admin/server/upload-file/upload-file.feature');
 const { AdminLocalProvider } = require('../../../admin/server/upload-file/admin-local-provider');
+const { uploadFileFeature } = require('../../../admin/server/upload-file/upload-file.feature');
 const { AudioHotPlugCallbacks } = require('../audio-hot-plug-callbacks');
 const { MimeTypes } = require('../../../admin/server/upload-file/mime-types');
 const { AudioConst } = require('../../constants');
@@ -15,9 +15,9 @@ const { sc } = require('@reldens/utils');
 class AudioEntity extends AdminEntityProperties
 {
 
-    static propertiesConfig(extraProps, projectConfig)
+    static propertiesDefinition()
     {
-        let properties = {
+        return {
             id: {},
             audio_key: {
                 isTitle: true,
@@ -41,9 +41,17 @@ class AudioEntity extends AdminEntityProperties
             },
             enabled: {
                 type: 'boolean'
+            },
+            hot_plug: {
+                type: 'boolean',
+                isVirtual: true
             }
         };
+    }
 
+    static propertiesConfig(extraProps, projectConfig)
+    {
+        let properties = this.propertiesDefinition();
         let arrayColumns = {files_name: {splitBy: ','}};
 
         let showProperties = Object.keys(properties);
@@ -57,6 +65,8 @@ class AudioEntity extends AdminEntityProperties
         editProperties = sc.removeFromArray(editProperties, ['id', 'files_name']);
 
         let bucket = AdminLocalProvider.joinPath(projectConfig.bucketFullPath, 'assets', 'audio');
+        let distFolder = AdminLocalProvider.joinPath(projectConfig.distFullPath, 'assets', 'audio');
+
         let features = [
             uploadFileFeature({
                 provider: new AdminLocalProvider({
@@ -77,10 +87,9 @@ class AudioEntity extends AdminEntityProperties
         ];
 
         let callbacks = {
-            // @NOTE: we create audio files with this callback because the file_name update happens here when we use
-            // the upload plugin.
-            update: AudioHotPlugCallbacks.updateCallback(projectConfig, bucket),
-            beforeDelete: AudioHotPlugCallbacks.beforeDeleteCallback(projectConfig, bucket)
+            // @NOTE: we use the update callback because that's when the file_name is updated with the upload plugin.
+            update: AudioHotPlugCallbacks.updateCallback(projectConfig, bucket, distFolder),
+            beforeDelete: AudioHotPlugCallbacks.beforeDeleteCallback(projectConfig, bucket, distFolder)
         };
 
         return Object.assign({

@@ -13,6 +13,8 @@ INSERT INTO `features` (`code`, `title`, `is_enabled`) VALUES ('admin', 'Admin',
 # Audio improvement:
 
 ALTER TABLE `audio` ADD COLUMN `enabled` INT(10) UNSIGNED NULL DEFAULT '1' AFTER `category_id`;
+ALTER TABLE `audio` CHANGE COLUMN `files_name` `files_name` TEXT NOT NULL COLLATE 'utf8_unicode_ci' AFTER `audio_key`;
+
 
 #######################################################################################################################
 

@@ -24,12 +24,12 @@ let itemsConfig = {
     icon: 'Box'
 };
 
-let entitiesConfig = {
+let entitiesConfig = (projectConfig) => { return {
     item: ItemEntity.propertiesConfig(itemsConfig),
-    group: GroupEntity.propertiesConfig(itemsConfig),
+    group: GroupEntity.propertiesConfig(itemsConfig, projectConfig),
     inventory: InventoryEntity.propertiesConfig(itemsConfig),
     modifiers: ModifiersEntity.propertiesConfig(itemsConfig)
-};
+}};
 
 module.exports.rawRegisteredEntities = rawRegisteredEntities;
 
