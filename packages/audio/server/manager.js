@@ -120,7 +120,11 @@ class AudioManager
     hotPlugGlobalAudio(newAudioModel)
     {
         this.globalAudios.push(newAudioModel);
-        for(let i of this.roomsManager.createdInstances){
+        let createdRooms = Object.keys(this.roomsManager.createdInstances);
+        if(0 === createdRooms.length){
+            return false;
+        }
+        for(let i of createdRooms){
             let roomInstance = this.roomsManager.createdInstances[i];
             let broadcastData = {
                 act: AudioConst.AUDIO_UPDATE,
@@ -180,9 +184,13 @@ class AudioManager
         }
     }
 
-    findRoom(roomId, instancesList)
+    findRoom(roomId, instancesList = {})
     {
-        for(let i of Object.keys(instancesList)){
+        let roomInstances = Object.keys(instancesList);
+        if(0 === roomInstances.length) {
+            return false;
+        }
+        for(let i of roomInstances){
             let room = instancesList[i];
             if(!room.roomData){
                 continue;

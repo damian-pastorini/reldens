@@ -6,6 +6,7 @@
 
 const { DriverDatabase } = require('./driver-database');
 const { DriverResource } = require('./driver-resource');
+const { AdminTranslations } = require('./admin-translations');
 const AdminJS = require('adminjs');
 const AdminJSExpress = require('@adminjs/express');
 const { sc } = require('@reldens/utils');
@@ -43,40 +44,21 @@ class AdminManager
                 logo: '/assets/web/reldens-your-logo-mage.png',
             },
             locale: {
-                translations: this.prepareTranslations()
+                translations: AdminTranslations.appendTranslations(this.translations)
             },
             assets: {
                 styles: ['/css/reldens-admin.css'],
             },
             dashboard: {
-                handler: async () => {},
+                handler: () => {
+                    return { manager: this }
+                },
                 component: AdminJS.bundle('./dashboard-component')
             },
         };
         this.adminJs = new AdminJS(adminJsConfig);
         this.router = this.createRouter();
         this.app.use(this.adminJs.options.rootPath, this.router);
-    }
-
-    prepareTranslations()
-    {
-        let translations = {
-            messages: {
-                loginWelcome: 'Administration Panel - Login'
-            },
-            labels: {
-                navigation: 'Reldens - Administration Panel',
-                adminVersion: 'Admin: {{version}}',
-                loginWelcome: 'Reldens'
-            }
-        };
-        for(let i of Object.keys(this.translations)){
-            if (!translations[i]) {
-                translations[i] = {};
-            }
-            Object.assign(translations[i], this.translations[i]);
-        }
-        return translations;
     }
 
     createRouter()

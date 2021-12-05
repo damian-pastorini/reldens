@@ -8,7 +8,7 @@ const fs = require('fs');
 const path = require('path');
 const { ERROR_MESSAGES } = require('@adminjs/upload/build/features/upload-file/constants');
 const { BaseProvider } = require('@adminjs/upload');
-const { sc } = require('@reldens/utils');
+const { Logger, sc } = require('@reldens/utils');
 
 class AdminLocalProvider extends BaseProvider
 {
@@ -25,6 +25,9 @@ class AdminLocalProvider extends BaseProvider
     // eslint-disable-next-line
     async upload(uploadedFile, key, actionContext)
     {
+        if(!uploadedFile){
+            return false;
+        }
         // adjusting file path according to OS:
         const filePath = this.isWin32 ? this.path(key) : this.path(key).slice(1);
         await fs.promises.mkdir(path.dirname(filePath), { recursive: true });
@@ -57,7 +60,12 @@ class AdminLocalProvider extends BaseProvider
     {
         let origin = sc.isArray(from) ? this.joinPath(...from) : from;
         let dest = sc.isArray(to) ? this.joinPath(...to) : to;
-        return await fs.promises.copyFile(origin, dest);
+        try {
+            return await fs.promises.copyFile(origin, dest);
+        } catch (error) {
+            Logger.error(error.message);
+            return false;
+        }
     }
 
     static async deleteFile(filePath)

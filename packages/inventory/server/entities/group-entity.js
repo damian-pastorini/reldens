@@ -28,7 +28,7 @@ class GroupEntity extends AdminEntityProperties
             },
             description: {},
             files_name: {
-                isRequired: true,
+                isRequired: false,
                 isArray: true
             },
             uploadedFile: {
@@ -44,10 +44,6 @@ class GroupEntity extends AdminEntityProperties
             limit_per_item: {
                 type: 'number',
                 isRequired: true
-            },
-            hot_plug: {
-                type: 'boolean',
-                isVirtual: true
             }
         };
     }
@@ -55,7 +51,6 @@ class GroupEntity extends AdminEntityProperties
     static propertiesConfig(extraProps, projectConfig)
     {
         let properties = this.propertiesDefinition();
-
         let arrayColumns = {files_name: {splitBy: ','}};
 
         let showProperties = Object.keys(properties);
@@ -67,11 +62,10 @@ class GroupEntity extends AdminEntityProperties
         listProperties = sc.removeFromArray(listProperties, [
             'files_name',
             'description',
-            'sort',
             'items_limit',
             'limit_per_item'
         ]);
-        filterProperties = sc.removeFromArray(filterProperties, ['uploadedFile', 'sort']);
+        filterProperties = sc.removeFromArray(filterProperties, ['uploadedFile']);
         editProperties = sc.removeFromArray(editProperties, ['id', 'files_name']);
 
         let bucket = AdminLocalProvider.joinPath(projectConfig.bucketFullPath, 'assets', 'custom', 'groups');
@@ -86,7 +80,7 @@ class GroupEntity extends AdminEntityProperties
                     file: 'uploadedFile',
                     key: 'files_name'
                 },
-                multiple: true,
+                multiple: false,
                 uploadPath: (record, filename) => {
                     return `${filename}`;
                 },

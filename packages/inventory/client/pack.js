@@ -203,7 +203,8 @@ class InventoryPack extends PackInterface
         return gameManager.gameEngine.parseTemplate(messageTemplate, {
             key: group.key,
             label: group.label,
-            description: group.description
+            description: group.description,
+            fileName: group.files_name
         });
     }
 

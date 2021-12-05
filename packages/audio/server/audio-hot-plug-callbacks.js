@@ -5,7 +5,6 @@
  */
 
 const { AdminDistHelper } = require('../../admin/server/upload-file/admin-dist-helper');
-const { Logger } = require('@reldens/utils');
 
 class AudioHotPlugCallbacks
 {
@@ -28,16 +27,18 @@ class AudioHotPlugCallbacks
 
     static updateCallback(projectConfig, bucket, distFolder)
     {
-        return async (model, id, preparedParams, params, resource) => {
-            if(!params.files_name){
-                Logger.error('Missing result data:', params);
+        return async (model, id, preparedParams, params, originalParams, resource) => {
+            if(true !== Boolean(model.enabled)){
                 return false;
             }
-            await AdminDistHelper.copyBucketFilesToDist(
-                bucket,
-                model.files_name,
-                distFolder
-            );
+            if(params.files_name){
+                await AdminDistHelper.copyBucketFilesToDist(
+                    bucket,
+                    model.files_name,
+                    distFolder
+                );
+            }
+            // @TODO - How about an audio update?? -----------------------------------------------< FIX >
             projectConfig.serverManager.audioManager.hotPlugNewAudio({
                 newAudioModel: model,
                 preparedParams,

@@ -20,7 +20,12 @@ const SingleFile: FC<SingleFileProps> = (props) => {
     const {name, path, mimeType, width} = props;
     if (path && path.length) {
         if (mimeType && ImageMimeTypes.includes(mimeType as any)) {
-            return (<img src={path} style={{maxHeight: width, maxWidth: width}} alt={name}/>);
+            return (
+                <Box>
+                    <span className="audio-file-name">{name}</span>
+                    <img src={path} style={{maxHeight: width, maxWidth: width}} alt={name}/>
+                </Box>
+            );
         }
         if (mimeType && AudioMimeTypes.includes(mimeType as any)) {
             return (
@@ -60,7 +65,7 @@ const File: FC<Props> = ({width, record, property}) => {
             path={record.params.bucketPath + name}
             name={name}
             width={width}
-            mimeType={record.params.mimeType}
+            mimeType={record.params['mimeType.0']}
         />
     }
     return (

@@ -152,24 +152,26 @@ class DriverResource extends BaseResource
 
     async create(params)
     {
+        let originalParams = Object.assign({}, params);
         let preparedParams = this.prepareParams(params);
         this.validateParams(preparedParams);
         let result = await this.model.create(preparedParams);
         let callback = sc.getDef(this.callbacks, 'create', false);
         if(callback){
-            callback(result, preparedParams, params, this);
+            callback(result, preparedParams, params, originalParams, this);
         }
         return result;
     }
 
     async update(id, params)
     {
+        let originalParams = Object.assign({}, params);
         let preparedParams = this.prepareParams(params);
         this.validateParams(preparedParams, true);
         let result = await this.model.updateById(id, preparedParams);
         let callback = sc.getDef(this.callbacks, 'update', false);
         if(callback){
-            callback(result, id, preparedParams, params, this);
+            callback(result, id, preparedParams, params, originalParams, this);
         }
         return result;
     }
@@ -192,6 +194,10 @@ class DriverResource extends BaseResource
     prepareEntityData(loadedData)
     {
         for(let i of Object.keys(this.rawConfig.arrayColumns)){
+            if('string' !== typeof loadedData[i]){
+                loadedData[i] = [''];
+                continue;
+            }
             let arrayColumn = this.rawConfig.arrayColumns[i];
             loadedData[i] = loadedData[i].split(arrayColumn.splitBy);
         }

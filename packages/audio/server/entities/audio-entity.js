@@ -41,10 +41,6 @@ class AudioEntity extends AdminEntityProperties
             },
             enabled: {
                 type: 'boolean'
-            },
-            hot_plug: {
-                type: 'boolean',
-                isVirtual: true
             }
         };
     }
