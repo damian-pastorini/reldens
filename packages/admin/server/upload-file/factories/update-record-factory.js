@@ -58,7 +58,7 @@ module.exports.updateRecordFactory = (uploadOptionsWithDefault, provider, proper
                 // fixed:
                 // ...([record.get(properties.key)] || []),
                 let params = AdminJS.flat.set({}, properties.key, [
-                    ...([record.get(properties.key)] || []),
+                    ...([record.get(properties.key)]),
                     ...keys,
                 ]);
                 if (properties.bucket) {
