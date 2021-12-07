@@ -38,7 +38,6 @@ class AudioHotPlugCallbacks
                     distFolder
                 );
             }
-            // @TODO - How about an audio update?? -----------------------------------------------< FIX >
             projectConfig.serverManager.audioManager.hotPlugNewAudio({
                 newAudioModel: model,
                 preparedParams,

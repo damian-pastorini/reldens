@@ -1,4 +1,4 @@
-import React, {FC, useState, useEffect} from 'react'
+import React, { FC, useState, useEffect } from 'react'
 import {EditPropertyProps, flat} from 'adminjs'
 import {DropZone, FormGroup, Label, DropZoneItem} from '@adminjs/design-system'
 import PropertyCustom from '../types/property-custom.type'

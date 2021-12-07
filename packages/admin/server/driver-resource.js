@@ -194,11 +194,10 @@ class DriverResource extends BaseResource
     prepareEntityData(loadedData)
     {
         for(let i of Object.keys(this.rawConfig.arrayColumns)){
-            if('string' !== typeof loadedData[i]){
-                loadedData[i] = [''];
+            let arrayColumn = this.rawConfig.arrayColumns[i];
+            if('string' !== typeof loadedData[i] || !sc.hasOwn(arrayColumn, 'splitBy')){
                 continue;
             }
-            let arrayColumn = this.rawConfig.arrayColumns[i];
             loadedData[i] = loadedData[i].split(arrayColumn.splitBy);
         }
         return loadedData;

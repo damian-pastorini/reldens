@@ -87,6 +87,7 @@ class GroupEntity extends AdminEntityProperties
                 validation: {
                     mimeTypes: MimeTypes.image
                 },
+                propertiesDefinition: properties
             })
         ];
 

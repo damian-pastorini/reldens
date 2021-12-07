@@ -79,6 +79,7 @@ class AudioEntity extends AdminEntityProperties
                 validation: {
                     mimeTypes: MimeTypes.audio
                 },
+                propertiesDefinition: properties
             })
         ];
 

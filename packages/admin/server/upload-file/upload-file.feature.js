@@ -4,14 +4,14 @@
  *
  */
 
+const { updateRecordFactory } = require('./factories/update-record-factory');
 const AdminJS = require('adminjs');
 const { getProvider } = require('@adminjs/upload/build/features/upload-file/utils/get-provider');
-const { updateRecordFactory } = require('@adminjs/upload/build/features/upload-file/factories/update-record-factory');
 const { deleteFileFactory } = require('@adminjs/upload/build/features/upload-file/factories/delete-file-factory');
 const { deleteFilesFactory } = require('@adminjs/upload/build/features/upload-file/factories/delete-files-factory');
 const { stripPayloadFactory } = require('@adminjs/upload/build/features/upload-file/factories/strip-payload-factory');
-const { sc } = require('@reldens/utils');
 const { lookup } = require('mime-types');
+const { sc } = require('@reldens/utils');
 const DEFAULT_FILE_PROPERTY = 'file';
 const DEFAULT_FILE_PATH_PROPERTY = 'filePath';
 const DEFAULT_FILES_TO_DELETE_PROPERTY = 'filesToDelete';
@@ -40,7 +40,7 @@ const fillRecordWithPath = async (record, context, uploadOptions) => {
 };
 
 const uploadFileFeature = (config) => {
-    const { provider: providerOptions, validation, multiple } = config;
+    const { provider: providerOptions, validation, multiple, propertiesDefinition } = config;
     const configWithDefault = Object.assign(Object.assign({}, config), {
         properties: Object.assign(Object.assign({}, config.properties), {
             file: sc.getDef(config.properties, 'file', DEFAULT_FILE_PROPERTY),
@@ -54,7 +54,7 @@ const uploadFileFeature = (config) => {
         throw new Error('ERROR NO_KEY_PROPERTY');
     }
     const stripFileFromPayload = stripPayloadFactory(configWithDefault);
-    const updateRecord = updateRecordFactory(configWithDefault, provider);
+    const updateRecord = updateRecordFactory(configWithDefault, provider, propertiesDefinition);
     const deleteFile = deleteFileFactory(configWithDefault, provider);
     const deleteFiles = deleteFilesFactory(configWithDefault, provider);
     const fillPath = async (response, request, context) => {
