@@ -20,7 +20,6 @@ module.exports.updateRecordFactory = (uploadOptionsWithDefault, provider, proper
             return response;
         }
         if(record && record.isValid()){
-            let deleteEmpty = false;
             if(multiple && filesToDelete && filesToDelete.length){
                 const filesData = filesToDelete.map((index) => ({
                     key: record.get(properties.key)[index],
@@ -46,7 +45,6 @@ module.exports.updateRecordFactory = (uploadOptionsWithDefault, provider, proper
                     // response.notice.type = 'error';
                     await record.update(newParams);
                 }
-                deleteEmpty = true;
             }
             if(multiple && files && files.length){
                 const uploadedFiles = files;
@@ -59,9 +57,8 @@ module.exports.updateRecordFactory = (uploadOptionsWithDefault, provider, proper
                 // ...(record.get(properties.key) || []),
                 // fixed:
                 // ...([record.get(properties.key)] || []),
-                let recordData = false === deleteEmpty ? ([record.get(properties.key)] || []) : [];
                 let params = AdminJS.flat.set({}, properties.key, [
-                    ...(recordData),
+                    ...([record.get(properties.key)] || []),
                     ...keys,
                 ]);
                 if (properties.bucket) {
@@ -114,7 +111,7 @@ module.exports.updateRecordFactory = (uploadOptionsWithDefault, provider, proper
                     properties.filename && { [properties.filename]: uploadedFile.name }
                 );
                 await record.update(params);
-                const oldKey = oldRecordParams[properties.key] && oldRecordParams[properties.key];
+                const oldKey = oldRecordParams[properties.key];
                 const oldBucket = (properties.bucket && oldRecordParams[properties.bucket]) || provider.bucket;
                 if (oldKey && oldBucket && (oldKey !== key || oldBucket !== provider.bucket)) {
                     await provider.delete(oldKey, oldBucket, context);
