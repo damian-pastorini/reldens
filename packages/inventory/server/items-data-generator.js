@@ -11,23 +11,18 @@ const { sc } = require('@reldens/utils');
 class ItemsDataGenerator
 {
 
-    static async appendItemsFullList(configProcessor, inventoryModelsManager)
+    static appendItemsList(configProcessor, itemsModelsList)
     {
-        // use the inventory models manager to get the items list loaded:
-        let itemsModelsList = await inventoryModelsManager.getEntity('item').loadAllWithRelations();
         if(0 === itemsModelsList.length){
             return {};
         }
         let itemsList = {};
         let inventoryClasses = configProcessor.get('server/customClasses/inventory/items');
         for(let itemModel of itemsModelsList){
-            let itemClass = ItemBase;
             if(itemModel.items_modifiers){
                 itemModel.modifiers = this.generateItemModifiers(itemModel);
             }
-            if(sc.hasOwn(inventoryClasses, itemModel.key)){
-                itemClass = inventoryClasses[itemModel.key];
-            }
+            let itemClass = sc.getDef(inventoryClasses, itemModel.key, ItemBase);
             itemsList[itemModel.key] = {class: itemClass, data: itemModel};
         }
         configProcessor.inventory.items = {itemsModels: itemsModelsList, itemsList};

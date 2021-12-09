@@ -30,8 +30,21 @@ class InventoryPack extends PackInterface
             if(!sc.hasOwn(configProcessor, 'inventory')){
                 configProcessor.inventory = {};
             }
-            await ItemsDataGenerator.appendItemsFullList(configProcessor, this.inventoryModelsManager);
-            await GroupsDataGenerator.appendGroupsFullList(configProcessor, this.inventoryModelsManager);
+            if(!sc.hasOwn(configProcessor, 'groups')){
+                configProcessor.inventory.groups = {
+                    groupModels: [],
+                    groupList: {},
+                    groupBaseData: {}
+                };
+            }
+            ItemsDataGenerator.appendItemsList(
+                configProcessor,
+                await this.inventoryModelsManager.getEntity('item').loadAllWithRelations()
+            );
+            GroupsDataGenerator.appendGroupsList(
+                configProcessor,
+                await this.inventoryModelsManager.getEntity('group').loadAll()
+            );
         });
         // eslint-disable-next-line no-unused-vars
         this.events.on('reldens.createPlayerAfter', async (client, authResult, currentPlayer, room) => {

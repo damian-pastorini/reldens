@@ -8,6 +8,7 @@ const AdminJS = require('adminjs');
 const { buildRemotePath } = require('@adminjs/upload/build/features/upload-file/utils/build-remote-path');
 const { DB_PROPERTIES } = require('@adminjs/upload/build/features/upload-file/constants');
 const { getNamespaceFromContext } = require('@adminjs/upload/build/features/upload-file/factories/strip-payload-factory');
+const { sc } = require('@reldens/utils');
 
 module.exports.updateRecordFactory = (uploadOptionsWithDefault, provider, propertiesDefinition) => {
     const { properties, uploadPath, multiple } = uploadOptionsWithDefault;
@@ -20,6 +21,7 @@ module.exports.updateRecordFactory = (uploadOptionsWithDefault, provider, proper
             return response;
         }
         if(record && record.isValid()){
+            let emptyFirst = false;
             if(multiple && filesToDelete && filesToDelete.length){
                 const filesData = filesToDelete.map((index) => ({
                     key: record.get(properties.key)[index],
@@ -37,12 +39,24 @@ module.exports.updateRecordFactory = (uploadOptionsWithDefault, provider, proper
                     }
                     return params;
                 }, {});
-                if(0 === newParams[properties.key].length && !propertiesDefinition[properties.key].isRequired){
-                    newParams[properties.key] = '';
+                let isRequired = propertiesDefinition[properties.key].isRequired;
+                let testCounter = Object.assign({}, newParams);
+                delete testCounter[properties.key];
+                let newParamsCount = Object.keys(testCounter).length;
+                let validKeyProperty = sc.hasOwn(newParams, properties.key)
+                    && sc.isArray(newParams[properties.key])
+                    && 0 < newParams[properties.key].length;
+                let bothEmpty = (0 === newParamsCount && false === validKeyProperty);
+                let newFilesPresent = sc.isArray(files) && 0 === files.length;
+                if(bothEmpty){
+                    if(isRequired && newFilesPresent){
+                        response.notice.message = 'A file is required.';
+                        response.notice.type = 'error';
+                        return response;
+                    }
+                    emptyFirst = true;
                 }
-                if(0 < newParams[properties.key].length || !propertiesDefinition[properties.key].isRequired){
-                    // response.notice.message = 'ERROR';
-                    // response.notice.type = 'error';
+                if((0 < newParamsCount && false === validKeyProperty) || false === isRequired){
                     await record.update(newParams);
                 }
             }
@@ -57,8 +71,9 @@ module.exports.updateRecordFactory = (uploadOptionsWithDefault, provider, proper
                 // ...(record.get(properties.key) || []),
                 // fixed:
                 // ...([record.get(properties.key)] || []),
+                let recordData = emptyFirst ? [] : [record.get(properties.key)];
                 let params = AdminJS.flat.set({}, properties.key, [
-                    ...([record.get(properties.key)]),
+                    ...recordData,
                     ...keys,
                 ]);
                 if (properties.bucket) {

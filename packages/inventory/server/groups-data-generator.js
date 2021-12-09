@@ -10,28 +10,36 @@ const { sc } = require('@reldens/utils');
 class GroupsDataGenerator
 {
 
-    static async appendGroupsFullList(configProcessor, inventoryModelsManager)
+    static appendGroupsList(configProcessor, groupModelsList)
     {
-        // use the inventory models manager to get the items list loaded:
-        let groupModelsList = await inventoryModelsManager.getEntity('group').loadAll();
         if(0 === groupModelsList.length){
-            return {};
+            return false;
         }
-        let groupList = {};
-        let groupBaseData = {};
+        configProcessor.inventory.groups.groupModels.push(...groupModelsList);
         let inventoryClasses = configProcessor.get('server/customClasses/inventory/groups');
         for(let groupModel of groupModelsList){
-            let groupClass = ItemGroup;
-            if(sc.hasOwn(inventoryClasses, groupModel.key)){
-                groupClass = inventoryClasses[groupModel.key];
-            }
-            groupList[groupModel.key] = {class: groupClass, data: groupModel};
+            let groupClass = sc.getDef(inventoryClasses, groupModel.key, ItemGroup);
             let {id, key, label, description, sort} = groupModel;
-            groupBaseData[key] = {id, key, label, description, sort};
+            configProcessor.inventory.groups.groupList[groupModel.key] = {class: groupClass, data: groupModel};
+            configProcessor.inventory.groups.groupBaseData[key] = {id, key, label, description, sort};
         }
-        configProcessor.inventory.groups = {groupModels: groupModelsList, groupList, groupBaseData};
-        return configProcessor.inventory.groups;
+        return true;
     }
+
+    static appendGroup(configProcessor, groupModel)
+    {
+        if(!groupModel){
+            return false;
+        }
+        configProcessor.inventory.groups.groupModels.push(groupModel);
+        let inventoryClasses = configProcessor.get('server/customClasses/inventory/groups');
+        let groupClass = sc.getDef(inventoryClasses, groupModel.key, ItemGroup);
+        let {id, key, label, description, sort} = groupModel;
+        configProcessor.inventory.groups.groupList[groupModel.key] = {class: groupClass, data: groupModel};
+        configProcessor.inventory.groups.groupBaseData[key] = {id, key, label, description, sort};
+        return true;
+    }
+
 }
 
 module.exports.GroupsDataGenerator = GroupsDataGenerator;
