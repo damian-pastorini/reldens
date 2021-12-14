@@ -87,7 +87,7 @@ class ServerManager
         // setup dotenv to use the project root .env file:
         let envPath = path.join(this.projectRoot, '.env');
         dotenv.config({debug: process.env.DEBUG, path: envPath});
-        // setup the server host data:
+        // set the server host data:
         this.configServer = {
             port: Number(process.env.PORT) || Number(process.env.RELDENS_APP_PORT) || 8080,
             host: process.env.RELDENS_APP_HOST || 'http://localhost',
@@ -98,6 +98,9 @@ class ServerManager
                 pass: process.env.RELDENS_MONITOR_PASS,
             }
         };
+        // hot-plug feature:
+        this.isHotPlugEnabled = process.env.RELDENS_HOT_PLUG || false;
+        // custom classes:
         if(config.customClasses){
             this.configManager.configList.server.customClasses = config.customClasses;
         } else {

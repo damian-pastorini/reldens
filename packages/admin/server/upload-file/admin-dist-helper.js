@@ -5,12 +5,17 @@
  */
 
 const { AdminLocalProvider } = require('./admin-local-provider');
+const { Logger } = require('@reldens/utils');
 
 class AdminDistHelper
 {
 
     static async removeBucketAndDistFiles(distPath, bucket, filesName)
     {
+        if('string' !== typeof filesName){
+            Logger.error('Undefined files.', distPath, bucket, filesName);
+            return false;
+        }
         let files = filesName.split(',');
         if(0 === files.length){
             return false;
@@ -23,6 +28,10 @@ class AdminDistHelper
 
     static async copyBucketFilesToDist(bucket, filesName, distPath)
     {
+        if('string' !== typeof filesName){
+            Logger.error('Undefined files.', distPath, bucket, filesName);
+            return false;
+        }
         let files = filesName.split(',');
         if (0 === files.length) {
             return false;

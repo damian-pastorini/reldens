@@ -13,6 +13,7 @@ const { CollisionsManager } = require('../../world/server/collisions-manager');
 const { ObjectsManager } = require('../../objects/server/manager');
 const { GameConst } = require('../../game/constants');
 const { Logger, ErrorManager, sc } = require('@reldens/utils');
+const { RoomsConst } = require('../constants');
 
 class RoomScene extends RoomLogin
 {
@@ -22,6 +23,7 @@ class RoomScene extends RoomLogin
         this.messageActions = {};
         // parent config:
         super.onCreate(options);
+        this.roomType = RoomsConst.ROOM_TYPE_SCENE;
         // override super prop:
         this.validateRoomData = true;
         Logger.info('Created RoomScene: '+this.roomName+' - ID: '+this.roomId);

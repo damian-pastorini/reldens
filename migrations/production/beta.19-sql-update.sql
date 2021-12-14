@@ -19,6 +19,8 @@ ALTER TABLE `audio_markers` ADD CONSTRAINT `FK_audio_markers_audio` FOREIGN KEY 
 
 UPDATE `items_group` AS `ig` SET `ig`.`files_name` = CONCAT(`ig`.`key`, '.png');
 
+## -------------------------------------------------------------------------------------------------------------------
+
 # Chat FK fixes:
 
 ALTER TABLE `chat`

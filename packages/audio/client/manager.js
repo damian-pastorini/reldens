@@ -93,6 +93,7 @@ class AudioManager
     {
         let soundConfig = Object.assign({}, this.defaultAudioConfig, (audio.config || {}));
         let audioInstance = onScene.sound.add(audio.audio_key, soundConfig);
+        console.log(audio, audioInstance);
         if(audio.markers && audio.markers.length > 0){
             for(let marker of audio.markers){
                 let markerConfig = Object.assign({}, soundConfig, (marker.config || {}), {
@@ -169,7 +170,8 @@ class AudioManager
             for(let fileName of filesName){
                 filesArr.push(AudioConst.AUDIO_BUCKET+'/'+fileName);
             }
-            currentScene.load.audio(audio.audio_key, filesArr).on('complete', async () => {
+            // eslint-disable-next-line no-unused-vars
+            currentScene.load.audio(audio.audio_key, filesArr).on('complete', async (audioInstance) => {
                 if(!sc.hasOwn(this.roomsAudios, currentScene.key)){
                     this.roomsAudios[currentScene.key] = {};
                 }

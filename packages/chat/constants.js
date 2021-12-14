@@ -38,5 +38,6 @@ module.exports.ChatConst = {
         ctg: '#ffff00',
         cts: '#2ecc71',
         ctse: '#ff0000'
-    }
+    },
+    ROOM_TYPE_CHAT: 'chat'
 };

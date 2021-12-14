@@ -11,6 +11,9 @@ class AudioHotPlugCallbacks
 
     static beforeDeleteCallback(projectConfig, bucket, distFolder)
     {
+        if(false === projectConfig.isHotPlugEnabled){
+            return false;
+        }
         return async (model, id, resource) => {
             await AdminDistHelper.removeBucketAndDistFiles(
                 distFolder,
@@ -27,6 +30,9 @@ class AudioHotPlugCallbacks
 
     static updateCallback(projectConfig, bucket, distFolder)
     {
+        if(false === projectConfig.isHotPlugEnabled){
+            return false;
+        }
         return async (model, id, preparedParams, params, originalParams, resource) => {
             if(true !== Boolean(model.enabled)){
                 return false;

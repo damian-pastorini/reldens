@@ -36,7 +36,7 @@ class ConfigManager
         await this.events.emit('reldens.beforeLoadConfigurations', {configManager: this});
         // get the configurations from the database:
         let configCollection = await this.dataServer.getEntity('config').loadAll();
-        // set them in the manager property so we can find them by path later:
+        // set them in the manager property to find them by path later:
         for(let config of configCollection){
             // create an object for each scope:
             if(!sc.hasOwn(this.configList, config.scope)){

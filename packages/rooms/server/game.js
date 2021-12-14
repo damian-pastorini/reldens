@@ -10,8 +10,9 @@
  */
 
 const { RoomLogin } = require('./login');
-const { Logger, sc } = require('@reldens/utils');
+const { RoomsConst } = require('../constants');
 const { GameConst } = require('../../game/constants');
+const { Logger, sc } = require('@reldens/utils');
 
 class RoomGame extends RoomLogin
 {
@@ -19,6 +20,7 @@ class RoomGame extends RoomLogin
     onCreate(props)
     {
         super.onCreate(props);
+        this.roomType = RoomsConst.ROOM_TYPE_GAME;
         Logger.info('Created RoomGame: '+this.roomName+' - ID: '+this.roomId);
     }
 

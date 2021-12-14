@@ -8,6 +8,7 @@
  */
 
 const { Room } = require('colyseus');
+const { RoomsConst } = require('../constants');
 const { ErrorManager, Logger, sc } = require('@reldens/utils');
 
 class RoomLogin extends Room
@@ -15,6 +16,7 @@ class RoomLogin extends Room
 
     onCreate(options)
     {
+        this.roomType = RoomsConst.ROOM_TYPE_LOGIN;
         this.events = sc.getDef(options, 'events', false);
         if(!this.events){
             Logger.error('EventsManager undefined in RoomLogin.');

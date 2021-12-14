@@ -103,7 +103,7 @@ module.exports.updateRecordFactory = (uploadOptionsWithDefault, provider, proper
                 await record.update(params);
                 return Object.assign(Object.assign({}, response), { record: record.toJSON(context.currentAdmin) });
             }
-            if (!multiple && files && files.length) {
+            if(!multiple && files && files.length){
                 const uploadedFile = files[0];
                 const oldRecordParams = Object.assign({}, record.params);
                 const key = buildRemotePath(record, uploadedFile, uploadPath);
@@ -135,10 +135,16 @@ module.exports.updateRecordFactory = (uploadOptionsWithDefault, provider, proper
             }
             // someone wants to remove one file
             if(!multiple && files === null){
+                let isRequired = propertiesDefinition[properties.key].isRequired;
+                if(isRequired){
+                    response.notice.message = 'A file is required.';
+                    response.notice.type = 'error';
+                    return response;
+                }
                 const bucket = (properties.bucket && record.get(properties.bucket)) || provider.bucket;
                 const key = record.get(properties.key);
                 // and file exists
-                if (key && bucket) {
+                if(key && bucket){
                     const params = Object.assign(
                         Object.assign(
                             Object.assign(

@@ -21,6 +21,7 @@ class DataServerInitializer
             projectTheme: config.projectTheme,
             bucketFullPath: serverManager.themeManager.themeFullPath,
             distFullPath: serverManager.themeManager.distFullPath,
+            isHotPlugEnabled: serverManager.isHotPlugEnabled,
             withConfig: true,
             withTranslations: true,
             storageDriver: dataServerConfig.storageDriver

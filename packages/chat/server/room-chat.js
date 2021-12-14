@@ -18,8 +18,9 @@ class RoomChat extends RoomLogin
     onCreate(props)
     {
         super.onCreate(props);
-        Logger.info('Created RoomChat: '+this.roomName+' - ID: '+this.roomId);
-        this.chatManager = new ChatManager(props.dataServer);
+        this.roomType = ChatConst.ROOM_TYPE_CHAT;
+        Logger.info('Created RoomChat: '+this.roomName+' - ID: '+this.roomId+' - Type: '+ChatConst.ROOM_TYPE_CHAT);
+        this.chatManager = new ChatManager({dataServer: props.dataServer});
         this.activePlayers = {};
     }
 
@@ -48,13 +49,13 @@ class RoomChat extends RoomLogin
             // do not count the player name on private messages:
             || (text.indexOf('@') !== -1 && text.substr(text.indexOf(' ')).trim().length === 0)
         ){
-            // do nothing if text is short than 3 characters (including @ and #):
+            // do nothing if text is shorter than 3 characters (including @ and #):
             return;
         }
         // get player:
         let activePlayer = this.activePlayers[client.sessionId];
         if(!activePlayer){
-            // throw error if player does not exists:
+            // throw error if player do not exist:
             ErrorManager.error('Current Active Player not found: '+client.sessionId);
         }
         let messageObject = {act: ChatConst.CHAT_ACTION, f: activePlayer.playerName};
