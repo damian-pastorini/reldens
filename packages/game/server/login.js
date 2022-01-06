@@ -130,7 +130,7 @@ class LoginManager
                 // check if an user with the email exists:
                 let user = await this.usersManager.loadUserByEmail(userData.email);
                 if(user){
-                    let message = 'Registration error, please contact the administrator.';
+                    let message = 'Registration error, invalid credentials.';
                     if(userData.isFirebaseLogin){
                         message = 'Login error, wrong username.';
                     }

@@ -108,7 +108,7 @@ class DriverResource extends BaseResource
         });
         let callback = sc.getDef(this.callbacks, 'find', false);
         if(callback){
-            callback(result, loadedData, resourceWithFilters, prepareFilters, options, this);
+            await callback(result, loadedData, resourceWithFilters, prepareFilters, options, this);
         }
         return result;
     }
@@ -122,7 +122,7 @@ class DriverResource extends BaseResource
         });
         let callback = sc.getDef(this.callbacks, 'findMany', false);
         if(callback){
-            callback(result, ids, this);
+            await callback(result, ids, this);
         }
         return result;
     }
@@ -134,7 +134,7 @@ class DriverResource extends BaseResource
         let result = !loadedData ? null: new BaseRecord(loadedData, this);
         let callback = sc.getDef(this.callbacks, 'findOne', false);
         if(callback){
-            callback(result, id, this);
+            await callback(result, id, this);
         }
         return result;
     }
@@ -142,7 +142,7 @@ class DriverResource extends BaseResource
     async count(resourceWithFilters)
     {
         let prepareFilters = this.prepareFilters(resourceWithFilters.filters);
-        let result = this.model.count(prepareFilters);
+        let result = await this.model.count(prepareFilters);
         let callback = sc.getDef(this.callbacks, 'count', false);
         if(callback){
             callback(result, resourceWithFilters, prepareFilters, this);
@@ -155,10 +155,14 @@ class DriverResource extends BaseResource
         let originalParams = Object.assign({}, params);
         let preparedParams = this.prepareParams(params);
         this.validateParams(preparedParams);
+        let beforeCallback = sc.getDef(this.callbacks, 'beforeCreate', false);
+        if(beforeCallback){
+            await beforeCallback(preparedParams, params, originalParams, this);
+        }
         let result = await this.model.create(preparedParams);
-        let callback = sc.getDef(this.callbacks, 'create', false);
-        if(callback){
-            callback(result, preparedParams, params, originalParams, this);
+        let afterCallback = sc.getDef(this.callbacks, 'afterCreate', false);
+        if(afterCallback){
+            await afterCallback(result, preparedParams, params, originalParams, this);
         }
         return result;
     }
@@ -168,10 +172,15 @@ class DriverResource extends BaseResource
         let originalParams = Object.assign({}, params);
         let preparedParams = this.prepareParams(params);
         this.validateParams(preparedParams, true);
+        let originalModel = await this.model.loadById(id);
+        let beforeUpdateCallback = sc.getDef(this.callbacks, 'beforeUpdate', false);
+        if(beforeUpdateCallback){
+            await beforeUpdateCallback(originalModel, id, preparedParams, params, originalParams, this);
+        }
         let result = await this.model.updateById(id, preparedParams);
-        let callback = sc.getDef(this.callbacks, 'update', false);
-        if(callback){
-            callback(result, id, preparedParams, params, originalParams, this);
+        let afterCallback = sc.getDef(this.callbacks, 'afterUpdate', false);
+        if(afterCallback){
+            await afterCallback(result, id, preparedParams, params, originalParams, this);
         }
         return result;
     }
@@ -186,7 +195,7 @@ class DriverResource extends BaseResource
         let result = await this.model.delete(id);
         let afterCallback = sc.getDef(this.callbacks, 'afterDelete', false);
         if(afterCallback){
-            afterCallback(result, id, this);
+            await afterCallback(result, id, this);
         }
         return result;
     }

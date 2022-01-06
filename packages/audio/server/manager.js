@@ -13,8 +13,8 @@ class AudioManager
     constructor(props)
     {
         this.categories = {};
-        this.globalAudios = []; // an array of global audios
-        this.roomsAudios = {}; // each room id will have it's own array of audios
+        this.globalAudios = {};
+        this.roomsAudios = {}; // each room id will have its own array of audios
         this.roomsManager = props.roomsManager;
         this.dataServer = props.dataServer;
     }
@@ -26,22 +26,25 @@ class AudioManager
 
     async loadGlobalAudios()
     {
-        if(!Object.keys(this.globalAudios).length){
-            this.globalAudios = await this.dataServer.getEntity('audio').loadWithRelations(
+        if(0 === Object.keys(this.globalAudios).length){
+            let loadedGlobalAudios = await this.dataServer.getEntity('audio').loadWithRelations(
                 {room_id: null, enabled: 1},
                 ['category', 'markers']
             );
+            this.globalAudios = sc.convertArrayToObjectByKeys(loadedGlobalAudios, 'audio_key');
         }
+
         return this.globalAudios;
     }
 
     async loadRoomAudios(roomId)
     {
         if(!sc.hasOwn(this.roomsAudios, roomId)){
-            this.roomsAudios[roomId] = await this.dataServer.getEntity('audio').loadWithRelations(
+            let loadedRoomAudios = await this.dataServer.getEntity('audio').loadWithRelations(
                 {room_id: roomId, enabled: 1},
                 ['parent_room', 'category', 'markers']
             );
+            this.roomsAudios[roomId] = sc.convertArrayToObjectByKeys(loadedRoomAudios, 'audio_key');
         }
         return this.roomsAudios[roomId];
     }
@@ -69,40 +72,31 @@ class AudioManager
         if(!currentPlayer || currentPlayer.playerId || !audioCategory){
             return false;
         }
-        let updatePatch = {
-            player_id: currentPlayer.player_id,
-            category_id: audioCategory.id,
-            enabled: (message.up ? 1 : 0)
-        };
-        let playerConfig = await this.dataServer.getEntity('audioPlayerConfigModel').loadOneBy({
+        let audioPlayerConfigModel = this.dataServer.getEntity('audioPlayerConfigModel');
+        let filters = {
             player_id: currentPlayer.player_id,
             category_id: audioCategory.id
-        });
-        if(playerConfig){
-            await this.dataServer.getEntity('audioPlayerConfigModel').update(
-                {player_id: currentPlayer.player_id, category_id: audioCategory.id},
-                {enabled: (message.up ? 1 : 0)}
-            );
-        } else {
-            await this.dataServer.getEntity('audioPlayerConfigModel').createWithRelations(updatePatch);
-        }
+        };
+        let playerConfig = await audioPlayerConfigModel.loadOne(filters);
+        let updatePatch = {enabled: (message.up ? 1 : 0)};
+        playerConfig
+            ? await audioPlayerConfigModel.update(filters, updatePatch)
+            : await audioPlayerConfigModel.createWithRelations(Object.assign(updatePatch, filters));
     }
 
-    hotPlugNewAudio(options)
+    hotPlugAudio(options)
     {
         let { newAudioModel } = options;
-        let roomId = newAudioModel.room_id;
-        !roomId && newAudioModel.enabled
-            ? this.hotPlugGlobalAudio(newAudioModel)
-            : this.hotPlugRoomAudio(roomId, newAudioModel);
+        !newAudioModel.room_id ? this.hotPlugGlobalAudio(newAudioModel) : this.hotPlugRoomAudio(newAudioModel);
     }
 
-    hotPlugRoomAudio(roomId, newAudioModel)
+    hotPlugRoomAudio(newAudioModel)
     {
+        let roomId = newAudioModel.room_id;
         if(!sc.hasOwn(this.roomsAudios, roomId)){
-            this.roomsAudios[roomId] = [];
+            this.roomsAudios[roomId] = {};
         }
-        this.roomsAudios[roomId].push(newAudioModel);
+        this.roomsAudios[roomId][newAudioModel.id] = newAudioModel;
         let roomInstance = this.findRoom(roomId, this.roomsManager.createdInstances);
         if(!roomInstance){
             // @NOTE: since the room could not be created yet (because none is connected), we don't need to broadcast
@@ -111,7 +105,7 @@ class AudioManager
         }
         let data = {
             act: AudioConst.AUDIO_UPDATE,
-            roomId: roomId,
+            roomId,
             audios: [newAudioModel]
         };
         roomInstance.broadcast(data);
@@ -119,7 +113,7 @@ class AudioManager
 
     hotPlugGlobalAudio(newAudioModel)
     {
-        this.globalAudios.push(newAudioModel);
+        this.globalAudios[newAudioModel.id] = newAudioModel;
         let createdRooms = Object.keys(this.roomsManager.createdInstances);
         if(0 === createdRooms.length){
             return false;
@@ -129,8 +123,9 @@ class AudioManager
             let broadcastData = {
                 act: AudioConst.AUDIO_UPDATE,
                 roomId: i,
-                audios: [newAudioModel]
+                audios: {}
             };
+            broadcastData['audios'][newAudioModel.id] = newAudioModel;
             roomInstance.broadcast(broadcastData);
         }
     }
@@ -138,37 +133,31 @@ class AudioManager
     hotUnplugAudio(props)
     {
         let {newAudioModel, id} = props;
-        let roomId = newAudioModel.room_id;
-        roomId ? this.hotUnplugRoomAudio(roomId, newAudioModel, id) : this.hotUnplugGlobalAudio(newAudioModel, id);
+        newAudioModel.room_id ? this.hotUnplugRoomAudio(newAudioModel, id) : this.hotUnplugGlobalAudio(newAudioModel, id);
     }
 
-    hotUnplugRoomAudio(roomId, newAudioModel, id)
+    hotUnplugRoomAudio(newAudioModel, id)
     {
-        let roomAudios = this.roomsAudios[newAudioModel.room_id];
-        for(let audio of roomAudios){
-            if(audio.id === id){
-                roomAudios.splice(roomAudios.indexOf(audio), 1);
-            }
+        let roomAudiosList = sc.getDef(this.roomsAudios, newAudioModel.room_id, false);
+        if(false !== roomAudiosList && sc.hasOwn(roomAudiosList, id)){
+            delete this.roomsAudios[newAudioModel.room_id][id];
         }
-        let roomInstance = this.findRoom(roomId, this.roomsManager.createdInstances);
+        let roomInstance = this.findRoom(newAudioModel.room_id, this.roomsManager.createdInstances);
         if(!roomInstance){
             return true;
         }
         let data = {
             act: AudioConst.AUDIO_DELETE,
-            roomId: roomId,
-            audios: [newAudioModel]
+            roomId: newAudioModel.room_id,
+            audios: {}
         };
+        data['audios'][newAudioModel.id] = newAudioModel;
         roomInstance.broadcast(data);
     }
 
     hotUnplugGlobalAudio(newAudioModel, id)
     {
-        for(let audio of this.globalAudios){
-            if(audio.id === id){
-                this.globalAudios.splice(this.globalAudios.indexOf(audio), 1);
-            }
-        }
+        delete this.globalAudios[id];
         let createdRooms = Object.keys(this.roomsManager.createdInstances);
         if(0 === createdRooms.length){
             return false;
@@ -178,8 +167,9 @@ class AudioManager
             let broadcastData = {
                 act: AudioConst.AUDIO_DELETE,
                 roomId: i,
-                audios: [newAudioModel]
+                audios: {}
             };
+            broadcastData['audios'][newAudioModel.id] = newAudioModel;
             roomInstance.broadcast(broadcastData);
         }
     }

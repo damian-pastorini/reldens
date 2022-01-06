@@ -179,7 +179,7 @@ class RoomEvents
     {
         // @TODO - BETA - Improve disconnection handler.
         // server disconnection handler:
-        if(code > 1000 && !this.gameManager.gameOver && !this.gameManager.forcedDisconnection){
+        if(code > 1001 && !this.gameManager.gameOver && !this.gameManager.forcedDisconnection){
             Logger.error('There was a connection error.', ['Error Code:', code]);
         } else {
             // @NOTE: the client can initiate the disconnection, this is also triggered when the users change the room.

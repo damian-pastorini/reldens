@@ -23,7 +23,7 @@ class EntitiesLoader
             Logger.info('Storage driver not specified, using objection-js as default.');
         }
         this.getFiles(packages, files, storageDriver);
-        if(files.length === 0){
+        if(0 === files.length){
             Logger.error('None registered-entities files found for the specified storage driver: '+storageDriver);
             return false;
         }

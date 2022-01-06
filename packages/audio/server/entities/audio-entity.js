@@ -72,7 +72,7 @@ class AudioEntity extends AdminEntityProperties
                     file: 'uploadedFile',
                     key: 'files_name'
                 },
-                multiple: true,
+                multiple: false,
                 uploadPath: (record, filename) => {
                     return `${filename}`;
                 },
@@ -85,7 +85,8 @@ class AudioEntity extends AdminEntityProperties
 
         let callbacks = {
             // @NOTE: we use the update callback because that's when the file_name is updated with the upload plugin.
-            update: AudioHotPlugCallbacks.updateCallback(projectConfig, bucket, distFolder),
+            beforeUpdate: AudioHotPlugCallbacks.beforeUpdateCallback(projectConfig, bucket, distFolder),
+            afterUpdate: AudioHotPlugCallbacks.afterUpdateCallback(projectConfig, bucket, distFolder),
             beforeDelete: AudioHotPlugCallbacks.beforeDeleteCallback(projectConfig, bucket, distFolder)
         };
 

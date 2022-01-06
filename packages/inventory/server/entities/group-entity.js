@@ -93,7 +93,7 @@ class GroupEntity extends AdminEntityProperties
 
         let callbacks = {
             // @NOTE: we use the update callback because that's when the file_name is updated with the upload plugin.
-            update: GroupHotPlugCallbacks.updateCallback(projectConfig, bucket, distFolder),
+            afterUpdate: GroupHotPlugCallbacks.afterUpdateCallback(projectConfig, bucket, distFolder),
             beforeDelete: GroupHotPlugCallbacks.beforeDeleteCallback(projectConfig, bucket, distFolder)
         };
 

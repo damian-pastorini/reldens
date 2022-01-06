@@ -5,25 +5,27 @@
  */
 
 const { AudioConst } = require('../constants');
-const { sc } = require('@reldens/utils');
+const { Logger, sc } = require('@reldens/utils');
 
 class SceneAudioPlayer
 {
 
     playSceneAudio(audioManager, sceneDynamic, forcePlay)
     {
+        let sceneAudio = sceneDynamic['associatedAudio'];
         if(
-            (sceneDynamic['associatedAudio'] === false && forcePlay !== true)
-            || (sceneDynamic['associatedAudio'] && sceneDynamic['associatedAudio'].audio.audioInstance.isPlaying)
+            forcePlay !== true
+            && (sceneAudio === false || (sceneAudio && sceneAudio.audio.audioInstance.isPlaying))
         ){
             return false;
         }
         sceneDynamic['associatedAudio'] = audioManager.findAudio(sceneDynamic.key, sceneDynamic.key);
+
         if(sceneDynamic['associatedAudio']){
             this.playSpriteAudio(sceneDynamic['associatedAudio'], sceneDynamic.key, audioManager);
             return sceneDynamic['associatedAudio'];
         }
-        return true;
+        return false;
     }
 
     associateSceneAnimationsAudios(audioManager, sceneDynamic)
@@ -92,6 +94,10 @@ class SceneAudioPlayer
         // audio here is just the storage reference.
         // - We need to check the category enable every time the audio could be reproduced because the user can turn
         // the category on/off at any time.
+        if(!associatedAudio || !associatedAudio.audio || !associatedAudio.audio.data){
+            Logger.error('Missing associated audio data.', associatedAudio);
+            return false;
+        }
         let audioCategoryKey = associatedAudio.audio.data.category.category_key;
         let audioCategory = sc.getDef(audioManager.categories, audioCategoryKey, false);
         let audioEnabled = sc.getDef(audioManager.playerConfig, audioCategory.id, audioCategory.enabled);

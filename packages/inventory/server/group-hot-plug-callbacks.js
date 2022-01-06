@@ -31,7 +31,7 @@ class GroupHotPlugCallbacks
         };
     }
 
-    static updateCallback(projectConfig, bucket, distFolder)
+    static afterUpdateCallback(projectConfig, bucket, distFolder)
     {
         if(false === projectConfig.isHotPlugEnabled){
             return false;

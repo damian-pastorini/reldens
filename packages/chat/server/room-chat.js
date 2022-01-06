@@ -9,7 +9,7 @@
 const { RoomLogin } = require('../../rooms/server/login');
 const { ChatManager } = require('./manager');
 const { Cleaner } = require('../cleaner');
-const { Logger, ErrorManager } = require('@reldens/utils');
+const { Logger, ErrorManager, sc} = require('@reldens/utils');
 const { ChatConst } = require('../constants');
 
 class RoomChat extends RoomLogin
@@ -20,7 +20,11 @@ class RoomChat extends RoomLogin
         super.onCreate(props);
         this.roomType = ChatConst.ROOM_TYPE_CHAT;
         Logger.info('Created RoomChat: '+this.roomName+' - ID: '+this.roomId+' - Type: '+ChatConst.ROOM_TYPE_CHAT);
-        this.chatManager = new ChatManager({dataServer: props.dataServer});
+        let dataServer = sc.getDef(this, 'dataServer', false);
+        if(!dataServer){
+            Logger.error('DataServer undefined in RoomChat.');
+        }
+        this.chatManager = new ChatManager({dataServer: this.dataServer});
         this.activePlayers = {};
     }
 

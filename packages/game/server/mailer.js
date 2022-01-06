@@ -56,7 +56,7 @@ class Mailer
                 this.user,
                 this.pass
             ]);
-            ErrorManager.error('E-mail error, please try again later or contact the administrator.');
+            ErrorManager.error('E-mail error, please try again later.');
             return false;
         }
         if(!props.to || !props.subject || (!props.text && !props.html)){

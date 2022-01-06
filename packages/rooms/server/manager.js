@@ -89,7 +89,8 @@ class RoomsManager
             config: props.config,
             messageActions: roomMessageActions,
             events: this.events,
-            roomsManager: this
+            roomsManager: this,
+            dataServer: this.dataServer
         };
         if(roomModel){
             roomProps.roomData = roomModel;

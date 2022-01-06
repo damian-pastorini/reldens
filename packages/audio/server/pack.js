@@ -51,9 +51,7 @@ class AudioPack extends PackInterface
         });
         // eslint-disable-next-line no-unused-vars
         this.events.on('reldens.beforeSuperInitialGameData', (superInitialGameData, serverManager) => {
-            superInitialGameData.audio = {
-                global: this.audioManager.globalAudios
-            };
+            superInitialGameData.audio = {globalAudios: this.audioManager.globalAudios};
         });
         this.events.on('reldens.createPlayerAfter', async (client, authResult, currentPlayer, roomScene) => {
             let playerConfig = await this.audioManager.loadAudioPlayerConfig(currentPlayer.player_id);
