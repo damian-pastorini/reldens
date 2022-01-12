@@ -4,9 +4,9 @@
  *
  */
 
-const { AdminEntityProperties } = require('../../../admin/server/admin-entity-properties');
+const { EntityProperties } = require('../../../game/server/entity-properties');
 
-class ConfigEntity extends AdminEntityProperties
+class ConfigEntity extends EntityProperties
 {
 
     static propertiesConfig(extraProps)

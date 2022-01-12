@@ -1,12 +1,12 @@
 /**
  *
- * Reldens - AdminEntityProperties
+ * Reldens - EntityProperties
  *
  */
 
 const { Logger } = require('@reldens/utils');
 
-class AdminEntityProperties
+class EntityProperties
 {
 
     static propertiesDefinition()
@@ -22,4 +22,4 @@ class AdminEntityProperties
 
 }
 
-module.exports.AdminEntityProperties = AdminEntityProperties;
+module.exports.EntityProperties = EntityProperties;

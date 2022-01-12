@@ -4,11 +4,11 @@
  *
  */
 
-const { AdminEntityProperties } = require('../../../admin/server/admin-entity-properties');
+const { EntityProperties } = require('../../../game/server/entity-properties');
 const { ItemsConst } = require('@reldens/items-system');
 const { sc } = require('@reldens/utils');
 
-class ItemEntity extends AdminEntityProperties
+class ItemEntity extends EntityProperties
 {
 
     static propertiesConfig(extraProps)

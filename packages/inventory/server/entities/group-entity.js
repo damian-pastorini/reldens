@@ -4,7 +4,7 @@
  *
  */
 
-const { AdminEntityProperties } = require('../../../admin/server/admin-entity-properties');
+const { EntityProperties } = require('../../../game/server/entity-properties');
 const { AdminLocalProvider } = require('../../../admin/server/upload-file/admin-local-provider');
 const { uploadFileFeature } = require('../../../admin/server/upload-file/upload-file.feature');
 const { GroupHotPlugCallbacks } = require('../group-hot-plug-callbacks');
@@ -12,7 +12,7 @@ const { MimeTypes } = require('../../../admin/server/upload-file/mime-types');
 const { InventoryConst } = require('../../constants');
 const { sc } = require('@reldens/utils');
 
-class GroupEntity extends AdminEntityProperties
+class GroupEntity extends EntityProperties
 {
 
     static propertiesDefinition()

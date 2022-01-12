@@ -4,7 +4,7 @@
  *
  */
 
-const { AdminEntityProperties } = require('../../../admin/server/admin-entity-properties');
+const { EntityProperties } = require('../../../game/server/entity-properties');
 const { AdminLocalProvider } = require('../../../admin/server/upload-file/admin-local-provider');
 const { uploadFileFeature } = require('../../../admin/server/upload-file/upload-file.feature');
 const { AudioHotPlugCallbacks } = require('../audio-hot-plug-callbacks');
@@ -12,7 +12,7 @@ const { MimeTypes } = require('../../../admin/server/upload-file/mime-types');
 const { AudioConst } = require('../../constants');
 const { sc } = require('@reldens/utils');
 
-class AudioEntity extends AdminEntityProperties
+class AudioEntity extends EntityProperties
 {
 
     static propertiesDefinition()

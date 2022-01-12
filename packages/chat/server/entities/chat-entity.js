@@ -4,10 +4,10 @@
  *
  */
 
-const { AdminEntityProperties } = require('../../../admin/server/admin-entity-properties');
+const { EntityProperties } = require('../../../game/server/entity-properties');
 const { ChatConst } = require('../../constants');
 
-class ChatEntity extends AdminEntityProperties
+class ChatEntity extends EntityProperties
 {
 
     static propertiesConfig(extraProps)

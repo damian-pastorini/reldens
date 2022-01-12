@@ -4,9 +4,9 @@
  *
  */
 
-const { AdminEntityProperties } = require('../../../admin/server/admin-entity-properties');
+const { EntityProperties } = require('../../../game/server/entity-properties');
 
-class InventoryEntity extends AdminEntityProperties
+class InventoryEntity extends EntityProperties
 {
 
     static propertiesConfig(extraProps)
