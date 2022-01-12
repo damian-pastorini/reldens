@@ -55,7 +55,7 @@ class AudioUi
         let audioCategoriesKeys = Object.keys(this.audioManager.categories);
         for(let i of audioCategoriesKeys){
             let audioCategory = this.audioManager.categories[i];
-            let audioEnabled = sc.getDef(this.audioManager.playerConfig, audioCategory.id, audioCategory.enabled);
+            let audioEnabled = sc.get(this.audioManager.playerConfig, audioCategory.id, audioCategory.enabled);
             categoriesRows = categoriesRows + this.gameManager.gameEngine.parseTemplate(audioCategoryTemplate, {
                 categoryId: audioCategory.id,
                 categoryLabel: audioCategory.category_label,

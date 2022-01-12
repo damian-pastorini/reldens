@@ -18,7 +18,7 @@ class GroupsDataGenerator
         configProcessor.inventory.groups.groupModels.push(...groupModelsList);
         let inventoryClasses = configProcessor.get('server/customClasses/inventory/groups');
         for(let groupModel of groupModelsList){
-            let groupClass = sc.getDef(inventoryClasses, groupModel.key, ItemGroup);
+            let groupClass = sc.get(inventoryClasses, groupModel.key, ItemGroup);
             let {id, key, label, description, sort, files_name} = groupModel;
             configProcessor.inventory.groups.groupList[groupModel.key] = {class: groupClass, data: groupModel};
             configProcessor.inventory.groups.groupBaseData[key] = {id, key, label, description, sort, files_name};
@@ -33,7 +33,7 @@ class GroupsDataGenerator
         }
         configProcessor.inventory.groups.groupModels.push(groupModel);
         let inventoryClasses = configProcessor.get('server/customClasses/inventory/groups');
-        let groupClass = sc.getDef(inventoryClasses, groupModel.key, ItemGroup);
+        let groupClass = sc.get(inventoryClasses, groupModel.key, ItemGroup);
         let {id, key, label, description, sort, files_name} = groupModel;
         configProcessor.inventory.groups.groupList[groupModel.key] = {class: groupClass, data: groupModel};
         configProcessor.inventory.groups.groupBaseData[key] = {id, key, label, description, sort, files_name};

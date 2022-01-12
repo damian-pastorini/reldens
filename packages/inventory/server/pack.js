@@ -16,7 +16,7 @@ class InventoryPack extends PackInterface
 
     setupPack(props)
     {
-        this.events = sc.getDef(props, 'events', false);
+        this.events = sc.get(props, 'events', false);
         if(!this.events){
             Logger.error('EventsManager undefined in InventoryPack.');
         }

@@ -105,7 +105,7 @@ class LifebarUi
         if(sc.hasOwn(this.lifeBars, key)){
             this.lifeBars[key].destroy();
         }
-        let currentObject = sc.getDef(this.gameManager.getActiveScene().objectsAnimations, key, false);
+        let currentObject = sc.get(this.gameManager.getActiveScene().objectsAnimations, key, false);
         if(!sc.hasOwn(currentObject, this.barProperty+'Total')){
             return false;
         }
@@ -188,7 +188,7 @@ class LifebarUi
 
     processObjectLifeBarMessage(message, queue = false)
     {
-        let currentObject = sc.getDef(
+        let currentObject = sc.get(
             this.gameManager.getActiveScene().objectsAnimations,
             message[ActionsConst.DATA_OWNER_KEY],
             false
@@ -316,7 +316,7 @@ class LifebarUi
         let player = this.gameManager.getCurrentPlayer().players[playerId];
         let fullValue = player[this.barProperty+'Total'];
         let filledValue = player[this.barProperty+'Value'];
-        let ownerTop = sc.getDef(player, 'topOff', 0) - this.playerSize.height;
+        let ownerTop = sc.get(player, 'topOff', 0) - this.playerSize.height;
         return {player, fullValue, filledValue, ownerTop};
     }
 
@@ -345,7 +345,7 @@ class LifebarUi
 
     getCurrentTargetId()
     {
-        return sc.getDef(this.gameManager.getCurrentPlayer().currentTarget, 'id', false);
+        return sc.get(this.gameManager.getCurrentPlayer().currentTarget, 'id', false);
     }
 
 }

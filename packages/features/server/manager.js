@@ -19,11 +19,11 @@ class FeaturesManager
         // initialize features props:
         this.featuresList = {};
         this.featuresCodeList = [];
-        this.events = sc.getDef(props, 'events', false);
+        this.events = sc.get(props, 'events', false);
         if(!this.events){
             Logger.error('EventsManager undefined in FeaturesManager.');
         }
-        this.dataServer = sc.getDef(props, 'dataServer', false);
+        this.dataServer = sc.get(props, 'dataServer', false);
     }
 
     async loadFeatures()

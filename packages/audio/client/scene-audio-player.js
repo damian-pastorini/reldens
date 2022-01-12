@@ -99,8 +99,8 @@ class SceneAudioPlayer
             return false;
         }
         let audioCategoryKey = associatedAudio.audio.data.category.category_key;
-        let audioCategory = sc.getDef(audioManager.categories, audioCategoryKey, false);
-        let audioEnabled = sc.getDef(audioManager.playerConfig, audioCategory.id, audioCategory.enabled);
+        let audioCategory = sc.get(audioManager.categories, audioCategoryKey, false);
+        let audioEnabled = sc.get(audioManager.playerConfig, audioCategory.id, audioCategory.enabled);
         if(!audioCategory || !audioEnabled){
             return false;
         }

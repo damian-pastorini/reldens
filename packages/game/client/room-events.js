@@ -91,7 +91,7 @@ class RoomEvents
 
     prepareScene()
     {
-        this.sceneData = sc.getJson(this.room.state.sceneData);
+        this.sceneData = sc.toJson(this.room.state.sceneData);
         if(!this.gameEngine.scene.getScene(this.roomName)){
             let engineSceneDynamic = this.createSceneInstance(this.roomName, this.sceneData, this.gameManager);
             this.gameEngine.scene.add(this.roomName, engineSceneDynamic, false);
@@ -215,7 +215,7 @@ class RoomEvents
                 statLabel: i,
                 statValue: message.stats[i]+(
                     sc.hasOwn(this.gameManager.config.client.players.initialStats[i], 'data')
-                    && sc.getDef(this.gameManager.config.client.players.initialStats[i].data, 'showBase', false)
+                    && sc.get(this.gameManager.config.client.players.initialStats[i].data, 'showBase', false)
                         ? ' / '+message.statsBase[i] : ''
                 )
             });

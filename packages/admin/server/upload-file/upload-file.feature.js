@@ -43,9 +43,9 @@ const uploadFileFeature = (config) => {
     const { provider: providerOptions, validation, multiple, propertiesDefinition } = config;
     const configWithDefault = Object.assign(Object.assign({}, config), {
         properties: Object.assign(Object.assign({}, config.properties), {
-            file: sc.getDef(config.properties, 'file', DEFAULT_FILE_PROPERTY),
-            filePath: sc.getDef(config.properties, 'filePath', DEFAULT_FILE_PATH_PROPERTY),
-            filesToDelete: sc.getDef(config.properties, 'filesToDelete', DEFAULT_FILES_TO_DELETE_PROPERTY),
+            file: sc.get(config.properties, 'file', DEFAULT_FILE_PROPERTY),
+            filePath: sc.get(config.properties, 'filePath', DEFAULT_FILE_PATH_PROPERTY),
+            filesToDelete: sc.get(config.properties, 'filesToDelete', DEFAULT_FILES_TO_DELETE_PROPERTY),
         })
     });
     const { properties } = configWithDefault;

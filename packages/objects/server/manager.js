@@ -16,7 +16,7 @@ class ObjectsManager
     constructor(props)
     {
         this.config = props.config;
-        this.events = sc.getDef(props, 'events', false);
+        this.events = sc.get(props, 'events', false);
         if(!this.events){
             Logger.error('EventsManager undefined in ObjectsManager.');
         }
@@ -70,7 +70,7 @@ class ObjectsManager
                         for(let anim of objectData.objects_animations){
                             // @NOTE: assets can be different types, spritesheets, images, atlas, etc. We push them
                             // here to later send these to the client along with the sceneData.
-                            objInstance.multipleAnimations[anim.animationKey] = sc.getJson(anim.animationData);
+                            objInstance.multipleAnimations[anim.animationKey] = sc.toJson(anim.animationData);
                         }
                     }
                     // prepare object for room messages:

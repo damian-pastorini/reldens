@@ -18,14 +18,14 @@ class Minimap
 
     createMap(scene, playerSprite)
     {
-        this.autoWidth = scene.map.widthInPixels / sc.getDef(this.config, 'mapWidthDivisor', 1);
-        this.camWidth = sc.getDef(this.config, 'fixedWidth', this.autoWidth);
-        this.autoHeight = scene.map.heightInPixels / sc.getDef(this.config, 'mapHeightDivisor', 1);
-        this.camHeight = sc.getDef(this.config, 'fixedHeight', this.autoHeight);
-        this.camX = sc.getDef(this.config, 'camX', 0);
-        this.camY = sc.getDef(this.config, 'camY', 0);
-        this.camBackgroundColor = sc.getDef(this.config, 'camBackgroundColor', 'rgba(0,0,0,0.6)');
-        this.camZoom = sc.getDef(this.config, 'camZoom', 0.35);
+        this.autoWidth = scene.map.widthInPixels / sc.get(this.config, 'mapWidthDivisor', 1);
+        this.camWidth = sc.get(this.config, 'fixedWidth', this.autoWidth);
+        this.autoHeight = scene.map.heightInPixels / sc.get(this.config, 'mapHeightDivisor', 1);
+        this.camHeight = sc.get(this.config, 'fixedHeight', this.autoHeight);
+        this.camX = sc.get(this.config, 'camX', 0);
+        this.camY = sc.get(this.config, 'camY', 0);
+        this.camBackgroundColor = sc.get(this.config, 'camBackgroundColor', 'rgba(0,0,0,0.6)');
+        this.camZoom = sc.get(this.config, 'camZoom', 0.35);
         this.minimapCamera = scene.cameras.add(this.camX, this.camY, this.camWidth, this.camHeight)
             .setName('minimap')
             .setBackgroundColor(this.camBackgroundColor)
@@ -33,11 +33,11 @@ class Minimap
             .startFollow(playerSprite)
             .setRoundPixels(true)
             .setVisible(false);
-        this.roundMap = sc.getDef(this.config, 'roundMap', false);
+        this.roundMap = sc.get(this.config, 'roundMap', false);
         if(this.roundMap){
             // @NOTE: because of the camara zoom the circle size append to the preload scene is different from the map
             // size.
-            this.addCircle = sc.getDef(this.config, 'addCircle', false);
+            this.addCircle = sc.get(this.config, 'addCircle', false);
             if(this.addCircle){
                 this.addMinimapCircle(scene);
             }
@@ -53,19 +53,19 @@ class Minimap
         }
         let activeScenePreloader = scene.gameManager.getActiveScenePreloader();
         this.circle = activeScenePreloader.add.circle(
-            sc.getDef(this.config, 'circleX', 220),
-            sc.getDef(this.config, 'circleY', 88),
-            sc.getDef(this.config, 'circleRadio', 80.35),
-            sc.getDef(this.config, 'circleColor', 'rgb(0,0,0)'),
-            sc.getDef(this.config, 'circleAlpha', 1)
+            sc.get(this.config, 'circleX', 220),
+            sc.get(this.config, 'circleY', 88),
+            sc.get(this.config, 'circleRadio', 80.35),
+            sc.get(this.config, 'circleColor', 'rgb(0,0,0)'),
+            sc.get(this.config, 'circleAlpha', 1)
         );
         this.circle.setStrokeStyle(
-            sc.getDef(this.config, 'circleStrokeLineWidth', 6),
-            sc.getDef(this.config, 'circleStrokeColor', 0),
-            sc.getDef(this.config, 'circleStrokeAlpha', 0.6));
+            sc.get(this.config, 'circleStrokeLineWidth', 6),
+            sc.get(this.config, 'circleStrokeColor', 0),
+            sc.get(this.config, 'circleStrokeAlpha', 0.6));
         this.circle.setFillStyle(
-            sc.getDef(this.config, 'circleFillColor', 1),
-            sc.getDef(this.config, 'circleFillAlpha', 0)
+            sc.get(this.config, 'circleFillColor', 1),
+            sc.get(this.config, 'circleFillAlpha', 0)
         );
         this.circle.setVisible(false);
     }

@@ -105,7 +105,7 @@ class ScenePreloader extends Scene
             for(let asset of this.preloadAssets){
                 if(asset.asset_type === 'spritesheet'){
                     let assetFilePath = `assets/custom/sprites/${asset.file_1}.png`;
-                    let assetParams = sc.getJson(asset.extra_params);
+                    let assetParams = sc.toJson(asset.extra_params);
                     if(assetParams){
                         this.load.spritesheet(asset.asset_key, assetFilePath, assetParams);
                     } else {

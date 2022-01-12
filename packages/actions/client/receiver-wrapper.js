@@ -19,7 +19,7 @@ class ReceiverWrapper extends Receiver
         super(props);
         this.gameManager = props.roomEvents.gameManager;
         this.room = props.roomEvents.room;
-        this.events = sc.getDef(props, 'events', false);
+        this.events = sc.get(props, 'events', false);
         if(!this.events){
             Logger.error('EventsManager undefined in ReceiverWrapper.');
         }
@@ -219,13 +219,13 @@ class ReceiverWrapper extends Receiver
         let spriteX = ownerSprite.x;
         let spriteY = ownerSprite.y;
         let animationSprite = currentScene.physics.add.sprite(spriteX, spriteY, animationKey);
-        let destroyTime = sc.getDef(sceneAnimation, 'destroyTime', false);
+        let destroyTime = sc.get(sceneAnimation, 'destroyTime', false);
         // the default value will be the caster depth - 1 so the animation will be played below the player.
         let depth = sc.hasOwn(sceneAnimation, 'depthByPlayer') && sceneAnimation['depthByPlayer'] === 'above'
             ? ownerSprite.depth + 1 : ownerSprite.depth - 0.1;
         animationSprite.depthByPlayer = sceneAnimation.depthByPlayer;
         animationSprite.setDepth(depth);
-        let blockMovement = sc.getDef(sceneAnimation, 'blockMovement', false);
+        let blockMovement = sc.get(sceneAnimation, 'blockMovement', false);
         if(!blockMovement){
             ownerSprite.moveSprites[animationKey+'_'+ownerSprite.playerId] = animationSprite;
         }

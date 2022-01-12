@@ -28,12 +28,12 @@ class AnimationObject extends BaseObject
         // assign extra public params:
         this.clientParams = Object.assign({
             enabled: true,
-            frameStart: sc.getDef(props, 'frameStart', 0),
+            frameStart: sc.get(props, 'frameStart', 0),
             // @NOTE: default animations considered are 3 columns sprites.
-            frameEnd: sc.getDef(props, 'frameEnd', 3),
-            repeat: sc.getDef(props, 'repeat', -1),
-            hideOnComplete: sc.getDef(props, 'hideOnComplete', false),
-            autoStart: sc.getDef(props, 'autoStart', false)
+            frameEnd: sc.get(props, 'frameEnd', 3),
+            repeat: sc.get(props, 'repeat', -1),
+            hideOnComplete: sc.get(props, 'hideOnComplete', false),
+            autoStart: sc.get(props, 'autoStart', false)
         }, this.clientParams);
     }
 

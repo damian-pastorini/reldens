@@ -17,11 +17,11 @@ class ConfigManager
 
     constructor(props)
     {
-        this.events = sc.getDef(props, 'events', false);
+        this.events = sc.get(props, 'events', false);
         if(!this.events){
             Logger.error('EventsManager undefined in ConfigManager.');
         }
-        this.dataServer = sc.getDef(props, 'dataServer', false);
+        this.dataServer = sc.get(props, 'dataServer', false);
         // initialize config props with default data:
         this.configList = {
             server: {}
@@ -97,7 +97,7 @@ class ConfigManager
         }
         if(config.type === ConfigConst.CONFIG_TYPE_JSON){
             try {
-                return sc.getJson(config.value);
+                return sc.toJson(config.value);
             } catch (e) {
                 Logger.error('Invalid JSON on configuration:', config);
             }

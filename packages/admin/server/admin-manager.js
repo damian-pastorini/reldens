@@ -18,12 +18,12 @@ class AdminManager
     {
         this.app = props.app;
         this.config = props.config;
-        this.databases = sc.getDef(props, 'databases', []);
-        this.translations = sc.getDef(props, 'translations', {});
+        this.databases = sc.get(props, 'databases', []);
+        this.translations = sc.get(props, 'translations', {});
         this.router = false;
         this.adminJs = false;
         this.useSecureLogin = false;
-        this.authenticateCallback = sc.getDef(props, 'authenticateCallback', () => { return true; });
+        this.authenticateCallback = sc.get(props, 'authenticateCallback', () => { return true; });
     }
 
     setupAdmin()
@@ -95,9 +95,9 @@ class AdminManager
                     filterProperties: rawResource.config.filterProperties || [],
                     editProperties: rawResource.config.editProperties || [],
                     properties: rawResource.config.properties || [],
-                    sort: sc.getDef(rawResource.config, 'sort', null)
+                    sort: sc.get(rawResource.config, 'sort', null)
                 },
-                features: sc.getDef(rawResource.config, 'features', [])
+                features: sc.get(rawResource.config, 'features', [])
             };
             registeredResources.push(objectionDriverResource);
         }

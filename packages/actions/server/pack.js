@@ -23,11 +23,11 @@ class ActionsPack extends PackInterface
 
     setupPack(props)
     {
-        this.events = sc.getDef(props, 'events', false);
+        this.events = sc.get(props, 'events', false);
         if(!this.events){
             Logger.error('EventsManager undefined in ActionsPack.');
         }
-        this.dataServer = sc.getDef(props, 'dataServer', false);
+        this.dataServer = sc.get(props, 'dataServer', false);
         this.skillsModelsManager = new ModelsManager({events: this.events, dataServer: this.dataServer});
         this.events.on('reldens.serverReady', async (event) => {
             await this.onServerReady(event);
@@ -44,7 +44,7 @@ class ActionsPack extends PackInterface
         });
         this.events.on('reldens.createdNewPlayer', async (player, loginData, loginManager) => {
             let defaultClassPathId = loginManager.config.get('server/players/actions/initialClassPathId');
-            let initialClassPathId = sc.getDef(loginData, 'class_path_select', defaultClassPathId);
+            let initialClassPathId = sc.get(loginData, 'class_path_select', defaultClassPathId);
             let data = {
                 class_path_id: initialClassPathId,
                 owner_id: player.id,
@@ -183,9 +183,9 @@ class ActionsPack extends PackInterface
             let from = {x: currentPlayer.state.x, y: currentPlayer.state.y};
             executedSkill.initialPosition = from;
             let to = {x: target.state.x, y: target.state.y};
-            let animData = sc.getDef(room.config.client.skills.animations, executedSkill.key+'_bullet', false);
+            let animData = sc.get(room.config.client.skills.animations, executedSkill.key+'_bullet', false);
             if(animData){
-                executedSkill.animDir = sc.getDef(animData.animationData, 'dir', false);
+                executedSkill.animDir = sc.get(animData.animationData, 'dir', false);
             }
             // player disconnection would cause the physicalBody to be removed so we need to validate it:
             if(currentPlayer.physicalBody){
@@ -238,8 +238,8 @@ class ActionsPack extends PackInterface
         let animationsModels = await this.dataServer.entityManager.get('animations').loadAllWithRelations();
         if(animationsModels.length){
             for(let skillAnim of animationsModels){
-                let animationData = sc.getJson(skillAnim.animationData, {});
-                let customDataJson = sc.getJson(skillAnim.skill.customData);
+                let animationData = sc.toJson(skillAnim.animationData, {});
+                let customDataJson = sc.toJson(skillAnim.skill.customData);
                 if(customDataJson){
                     if(sc.hasOwn(customDataJson, 'blockMovement')){
                         animationData.blockMovement = customDataJson.blockMovement;
@@ -268,7 +268,7 @@ class ActionsPack extends PackInterface
                 config.client.levels.animations = {};
             }
             for(let levelAnim of levelsAnimationsModels){
-                let animationData = sc.getJson(levelAnim.animationData, {});
+                let animationData = sc.toJson(levelAnim.animationData, {});
                 let animKey = 'level_' + ((!levelAnim.level && !levelAnim.class_path) ? 'default' : (
                     levelAnim.class_path ? levelAnim.class_path.key : ''
                     + (levelAnim.level ? (levelAnim.class_path ? '_' : '')+levelAnim.level.id : '')
@@ -289,10 +289,10 @@ class ActionsPack extends PackInterface
         let ownerId = classPath.getOwnerEventKey();
         // eslint-disable-next-line no-unused-vars
         classPath.listenEvent(SkillsEvents.SKILL_BEFORE_CAST, async (skill, target) => {
-            let customDataJson = sc.getJson(skill.customData);
+            let customDataJson = sc.toJson(skill.customData);
             if(
                 !customDataJson
-                || !sc.getDef(customDataJson, 'blockMovement', false)
+                || !sc.get(customDataJson, 'blockMovement', false)
                 || !sc.hasOwn(skill.owner, 'physicalBody')
             ){
                 return;
@@ -301,10 +301,10 @@ class ActionsPack extends PackInterface
         }, 'skillBeforeCastPack', ownerId);
         // eslint-disable-next-line no-unused-vars
         classPath.listenEvent(SkillsEvents.SKILL_AFTER_CAST, async (skill, target, skillLogicResult) => {
-            let customDataJson = sc.getJson(skill.customData);
+            let customDataJson = sc.toJson(skill.customData);
             if(
                 !customDataJson
-                || !sc.getDef(customDataJson, 'blockMovement', false)
+                || !sc.get(customDataJson, 'blockMovement', false)
                 || !sc.hasOwn(skill.owner, 'physicalBody')
             ){
                 return;

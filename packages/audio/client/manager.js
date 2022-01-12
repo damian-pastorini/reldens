@@ -12,14 +12,14 @@ class AudioManager
 
     constructor(props)
     {
-        this.events = sc.getDef(props, 'events', false);
+        this.events = sc.get(props, 'events', false);
         if(!this.events){
             Logger.error('EventsManager undefined in ChatPack.');
         }
-        this.globalAudios = sc.getDef(props, 'globalAudios', {});
-        this.roomsAudios = sc.getDef(props, 'roomsAudios', {});
-        this.categories = sc.getDef(props, 'categories', {});
-        this.playerConfig = sc.getDef(props, 'playerConfig', {});
+        this.globalAudios = sc.get(props, 'globalAudios', {});
+        this.roomsAudios = sc.get(props, 'roomsAudios', {});
+        this.categories = sc.get(props, 'categories', {});
+        this.playerConfig = sc.get(props, 'playerConfig', {});
         this.playing = {};
         this.defaultAudioConfig = {
             mute: false,
@@ -279,7 +279,7 @@ class AudioManager
             this.addCategories(message.categories);
             await this.events.emit('reldens.audioManagerUpdateCategoriesLoaded', this, room, gameManager, message);
         }
-        let audios = sc.getDef(message, 'audios', {});
+        let audios = sc.get(message, 'audios', {});
         if(0 < Object.keys(audios).length){
             let currentScene = gameManager.gameEngine.scene.getScene(room.name);
             await this.loadAudiosInScene(audios, currentScene);

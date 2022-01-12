@@ -11,11 +11,11 @@ class UsersManager
 
     constructor(props)
     {
-        this.events = sc.getDef(props, 'events', false);
+        this.events = sc.get(props, 'events', false);
         if(!this.events){
             Logger.error('EventsManager undefined in UsersManager.');
         }
-        this.dataServer = sc.getDef(props, 'dataServer', false);
+        this.dataServer = sc.get(props, 'dataServer', false);
         if(!this.dataServer){
             Logger.error('DataServer undefined in UsersManager.');
         }

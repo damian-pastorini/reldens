@@ -21,7 +21,7 @@ class LoginManager
         this.passwordManager = PasswordManager;
         this.mailer = props.mailer;
         this.themeManager = props.themeManager;
-        this.events = sc.getDef(props, 'events', false);
+        this.events = sc.get(props, 'events', false);
         if(!this.events){
             Logger.error('EventsManager undefined in LoginManager.');
         }

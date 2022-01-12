@@ -16,10 +16,10 @@ class EntitiesLoader
             Logger.error('Packages path undefined.');
             return false;
         }
-        let withConfig = sc.getDef(props, 'withConfig', false);
-        let withTranslations = sc.getDef(props, 'withTranslations', false );
+        let withConfig = sc.get(props, 'withConfig', false);
+        let withTranslations = sc.get(props, 'withTranslations', false );
         let files = [];
-        let storageDriver = sc.getDef(props, 'storageDriver', 'objection-js');
+        let storageDriver = sc.get(props, 'storageDriver', 'objection-js');
         if(!sc.hasOwn(props, 'storageDriver')){
             Logger.info('Storage driver not specified, using objection-js as default.');
         }

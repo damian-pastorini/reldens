@@ -16,11 +16,11 @@ class UsersPack extends PackInterface
 
     setupPack(props)
     {
-        this.events = sc.getDef(props, 'events', false);
+        this.events = sc.get(props, 'events', false);
         if(!this.events){
             Logger.error('EventsManager undefined in UsersPack.');
         }
-        this.dataServer = sc.getDef(props, 'dataServer', false);
+        this.dataServer = sc.get(props, 'dataServer', false);
         if(!this.dataServer){
             Logger.error('DataServer undefined in UsersPack.');
         }
@@ -152,7 +152,7 @@ class UsersPack extends PackInterface
         let statsData = await this.dataServer.getEntity('stats').loadAll();
         if(statsData){
             for(let stat of statsData){
-                stat.data = sc.getJson(stat.customData);
+                stat.data = sc.toJson(stat.customData);
                 this.stats[stat.id] = stat;
                 this.statsByKey[stat.key] = stat;
             }

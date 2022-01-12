@@ -19,7 +19,7 @@ class DriverResource extends BaseResource
         this.label = model.name();
         this.idProperty = false;
         this.propertiesObject = this.prepareProperties(config);
-        this.callbacks = sc.getDef(config, 'callbacks', {});
+        this.callbacks = sc.get(config, 'callbacks', {});
     }
 
     prepareProperties(config)
@@ -31,19 +31,19 @@ class DriverResource extends BaseResource
         let hasTitle = false;
         for(let i of Object.keys(config.properties)){
             let rawProp = config.properties[i];
-            let isId = Boolean(sc.getDef(rawProp, 'isId', (i === 'id')));
-            let isTitle = sc.getDef(rawProp, 'isTitle', false);
+            let isId = Boolean(sc.get(rawProp, 'isId', (i === 'id')));
+            let isTitle = sc.get(rawProp, 'isTitle', false);
             properties[i] = new DriverProperty({
                 isId,
-                path: sc.getDef(rawProp, 'path', i),
-                type: sc.getDef(rawProp, 'type', 'string'),
-                position: sc.getDef(rawProp, 'position', 0),
-                isArray: sc.getDef(rawProp, 'isArray', false),
-                isVisible: sc.getDef(rawProp, 'isVisible', false),
-                hideLabel: sc.getDef(rawProp, 'hideLabel', false),
-                isDisabled: sc.getDef(rawProp, 'isDisabled', false),
-                isRequired: sc.getDef(rawProp, 'isRequired', false),
-                isVirtual: sc.getDef(rawProp, 'isVirtual', false),
+                path: sc.get(rawProp, 'path', i),
+                type: sc.get(rawProp, 'type', 'string'),
+                position: sc.get(rawProp, 'position', 0),
+                isArray: sc.get(rawProp, 'isArray', false),
+                isVisible: sc.get(rawProp, 'isVisible', false),
+                hideLabel: sc.get(rawProp, 'hideLabel', false),
+                isDisabled: sc.get(rawProp, 'isDisabled', false),
+                isRequired: sc.get(rawProp, 'isRequired', false),
+                isVirtual: sc.get(rawProp, 'isVirtual', false),
                 isTitle
             });
             if(isTitle){
@@ -106,7 +106,7 @@ class DriverResource extends BaseResource
             loadedResult = !this.rawConfig.arrayColumns ? loadedResult : this.prepareEntityData(loadedResult);
             return new BaseRecord(loadedResult, this);
         });
-        let callback = sc.getDef(this.callbacks, 'find', false);
+        let callback = sc.get(this.callbacks, 'find', false);
         if(callback){
             await callback(result, loadedData, resourceWithFilters, prepareFilters, options, this);
         }
@@ -120,7 +120,7 @@ class DriverResource extends BaseResource
             loadedResult = !this.rawConfig.arrayColumns ? loadedResult : this.prepareEntityData(loadedResult);
             return new BaseRecord(loadedResult, this);
         });
-        let callback = sc.getDef(this.callbacks, 'findMany', false);
+        let callback = sc.get(this.callbacks, 'findMany', false);
         if(callback){
             await callback(result, ids, this);
         }
@@ -132,7 +132,7 @@ class DriverResource extends BaseResource
         let loadedData = await this.model.loadById(id);
         loadedData = !this.rawConfig.arrayColumns ? loadedData : this.prepareEntityData(loadedData);
         let result = !loadedData ? null: new BaseRecord(loadedData, this);
-        let callback = sc.getDef(this.callbacks, 'findOne', false);
+        let callback = sc.get(this.callbacks, 'findOne', false);
         if(callback){
             await callback(result, id, this);
         }
@@ -143,7 +143,7 @@ class DriverResource extends BaseResource
     {
         let prepareFilters = this.prepareFilters(resourceWithFilters.filters);
         let result = await this.model.count(prepareFilters);
-        let callback = sc.getDef(this.callbacks, 'count', false);
+        let callback = sc.get(this.callbacks, 'count', false);
         if(callback){
             callback(result, resourceWithFilters, prepareFilters, this);
         }
@@ -155,12 +155,12 @@ class DriverResource extends BaseResource
         let originalParams = Object.assign({}, params);
         let preparedParams = this.prepareParams(params);
         this.validateParams(preparedParams);
-        let beforeCallback = sc.getDef(this.callbacks, 'beforeCreate', false);
+        let beforeCallback = sc.get(this.callbacks, 'beforeCreate', false);
         if(beforeCallback){
             await beforeCallback(preparedParams, params, originalParams, this);
         }
         let result = await this.model.create(preparedParams);
-        let afterCallback = sc.getDef(this.callbacks, 'afterCreate', false);
+        let afterCallback = sc.get(this.callbacks, 'afterCreate', false);
         if(afterCallback){
             await afterCallback(result, preparedParams, params, originalParams, this);
         }
@@ -173,12 +173,12 @@ class DriverResource extends BaseResource
         let preparedParams = this.prepareParams(params);
         this.validateParams(preparedParams, true);
         let originalModel = await this.model.loadById(id);
-        let beforeUpdateCallback = sc.getDef(this.callbacks, 'beforeUpdate', false);
+        let beforeUpdateCallback = sc.get(this.callbacks, 'beforeUpdate', false);
         if(beforeUpdateCallback){
             await beforeUpdateCallback(originalModel, id, preparedParams, params, originalParams, this);
         }
         let result = await this.model.updateById(id, preparedParams);
-        let afterCallback = sc.getDef(this.callbacks, 'afterUpdate', false);
+        let afterCallback = sc.get(this.callbacks, 'afterUpdate', false);
         if(afterCallback){
             await afterCallback(result, id, preparedParams, params, originalParams, this);
         }
@@ -188,12 +188,12 @@ class DriverResource extends BaseResource
     async delete(id)
     {
         let model = await this.model.loadById(id);
-        let beforeCallback = sc.getDef(this.callbacks, 'beforeDelete', false);
+        let beforeCallback = sc.get(this.callbacks, 'beforeDelete', false);
         if(beforeCallback){
             await beforeCallback(model, id, this);
         }
         let result = await this.model.delete(id);
-        let afterCallback = sc.getDef(this.callbacks, 'afterDelete', false);
+        let afterCallback = sc.get(this.callbacks, 'afterDelete', false);
         if(afterCallback){
             await afterCallback(result, id, this);
         }
@@ -217,7 +217,7 @@ class DriverResource extends BaseResource
         let toDelete = [];
         for(let i of Object.keys(params)){
             // remove virtual properties:
-            let rawProperty = sc.getDef(this.rawConfig.properties, i, false);
+            let rawProperty = sc.get(this.rawConfig.properties, i, false);
             if(
                 // delete virtual properties:
                 (rawProperty && rawProperty.isVirtual)
@@ -233,8 +233,8 @@ class DriverResource extends BaseResource
             }
             // get array property index:
             let paramKey = i.split('.')[0];
-            rawProperty = sc.getDef(this.rawConfig.properties, paramKey, false);
-            let arrayColumn = sc.getDef(this.rawConfig.arrayColumns, paramKey, false);
+            rawProperty = sc.get(this.rawConfig.properties, paramKey, false);
+            let arrayColumn = sc.get(this.rawConfig.arrayColumns, paramKey, false);
             if(!arrayColumn || !rawProperty || !rawProperty.isArray){
                 toDelete.push(i);
                 continue;

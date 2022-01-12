@@ -138,7 +138,7 @@ class AudioManager
 
     hotUnplugRoomAudio(newAudioModel, id)
     {
-        let roomAudiosList = sc.getDef(this.roomsAudios, newAudioModel.room_id, false);
+        let roomAudiosList = sc.get(this.roomsAudios, newAudioModel.room_id, false);
         if(false !== roomAudiosList && sc.hasOwn(roomAudiosList, id)){
             delete this.roomsAudios[newAudioModel.room_id][id];
         }

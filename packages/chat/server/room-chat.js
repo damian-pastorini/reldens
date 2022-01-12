@@ -20,7 +20,7 @@ class RoomChat extends RoomLogin
         super.onCreate(props);
         this.roomType = ChatConst.ROOM_TYPE_CHAT;
         Logger.info('Created RoomChat: '+this.roomName+' - ID: '+this.roomId+' - Type: '+ChatConst.ROOM_TYPE_CHAT);
-        let dataServer = sc.getDef(this, 'dataServer', false);
+        let dataServer = sc.get(this, 'dataServer', false);
         if(!dataServer){
             Logger.error('DataServer undefined in RoomChat.');
         }

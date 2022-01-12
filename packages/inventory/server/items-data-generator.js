@@ -22,7 +22,7 @@ class ItemsDataGenerator
             if(itemModel.items_modifiers){
                 itemModel.modifiers = this.generateItemModifiers(itemModel);
             }
-            let itemClass = sc.getDef(inventoryClasses, itemModel.key, ItemBase);
+            let itemClass = sc.get(inventoryClasses, itemModel.key, ItemBase);
             itemsList[itemModel.key] = {class: itemClass, data: itemModel};
         }
         configProcessor.inventory.items = {itemsModels: itemsModelsList, itemsList};

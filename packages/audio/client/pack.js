@@ -16,7 +16,7 @@ class AudioPack extends PackInterface
 
     setupPack(props)
     {
-        this.events = sc.getDef(props, 'events', false);
+        this.events = sc.get(props, 'events', false);
         if(!this.events){
             Logger.error('EventsManager undefined in AudioPack.');
         }
@@ -30,7 +30,7 @@ class AudioPack extends PackInterface
     {
         this.events.on('reldens.beforeCreateEngine', (initialGameData, gameManager) => {
             gameManager.audioManager = new AudioManager({events: this.events});
-            this.initialAudiosData = sc.getDef(initialGameData, 'audio', {});
+            this.initialAudiosData = sc.get(initialGameData, 'audio', {});
         });
         this.events.on('reldens.joinedRoom', (room, gameManager) => {
             let defaultAudioConfig = gameManager.config.get('client/general/audio/defaultAudioConfig', true);
@@ -42,7 +42,7 @@ class AudioPack extends PackInterface
             preloadScene.load.html('audio-category', 'assets/html/ui-audio-category-row.html');
             await preloadScene.gameManager.audioManager.preloadGlobalAudios(
                 preloadScene,
-                sc.getDef(this.initialAudiosData, 'globalAudios', {})
+                sc.get(this.initialAudiosData, 'globalAudios', {})
             );
         });
         this.events.on('reldens.createUiScene', (preloadScene) => {
@@ -50,7 +50,7 @@ class AudioPack extends PackInterface
             this.uiManager.createUi();
             preloadScene.gameManager.audioManager.generateGlobalAudios(
                 preloadScene,
-                sc.getDef(this.initialAudiosData, 'globalAudios', {})
+                sc.get(this.initialAudiosData, 'globalAudios', {})
             );
         });
         this.events.on('reldens.afterSceneDynamicCreate', async (sceneDynamic) => {

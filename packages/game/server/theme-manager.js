@@ -45,7 +45,7 @@ class ThemeManager
     setupPaths(props)
     {
         this.projectRoot = props.projectRoot;
-        this.projectThemeName = sc.getDef(props, 'projectThemeName', GameConst.THEMES.DEFAULT);
+        this.projectThemeName = sc.get(props, 'projectThemeName', GameConst.THEMES.DEFAULT);
         this.reldensModulePath = path.join(this.projectRoot, 'node_modules', 'reldens');
         this.reldensModulePackagesPath = path.join(this.reldensModulePath, GameConst.THEMES.PACKAGES);
         this.reldensModuleThemePath = path.join(this.reldensModulePath, GameConst.THEMES.THEME);

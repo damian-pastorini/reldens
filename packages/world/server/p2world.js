@@ -19,7 +19,7 @@ class P2world extends World
     constructor(options)
     {
         super(options);
-        this.events = sc.getDef(options, 'events', false);
+        this.events = sc.get(options, 'events', false);
         if(!this.events){
             Logger.error('EventsManager undefined in P2world.');
         }
@@ -147,11 +147,11 @@ class P2world extends World
             roomObject.setupInteractionArea();
         }
         // by default objects won't have mass:
-        let bodyMass = sc.getDef(roomObject, 'bodyMass', 0);
+        let bodyMass = sc.get(roomObject, 'bodyMass', 0);
         // by default objects collision response:
         let colResponse = sc.hasOwn(roomObject, 'collisionResponse', false);
         // object state:
-        let objHasState = sc.getDef(roomObject, 'hasState', false);
+        let objHasState = sc.get(roomObject, 'hasState', false);
         // create the body:
         let bodyObject = this.createCollisionBody(
             tileW,
@@ -351,7 +351,7 @@ class P2world extends World
 
     calculateDirection(bulletObject, fromPosition, toPosition)
     {
-        let animDir = sc.getDef(bulletObject, 'animDir', false);
+        let animDir = sc.get(bulletObject, 'animDir', false);
         return animDir === 3 ?
             (fromPosition.x < toPosition.x ? GameConst.RIGHT : GameConst.LEFT)
             : (fromPosition.y < toPosition.y ? GameConst.DOWN : GameConst.UP);

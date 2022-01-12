@@ -27,7 +27,7 @@ class AudioHotPlugCallbacks
         }
         // eslint-disable-next-line no-unused-vars
         return async (model, id, preparedParams, params, originalParams, resource) => {
-            let isEnabled = Boolean(sc.getDef(params, 'enabled', true));
+            let isEnabled = Boolean(sc.get(params, 'enabled', true));
             if(isEnabled && preparedParams.files_name !== model.files_name){
                 await AdminDistHelper.copyBucketFilesToDist(bucket, params.files_name, distFolder);
             }

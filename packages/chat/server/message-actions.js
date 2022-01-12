@@ -17,7 +17,7 @@ class ChatMessageActions
 
     constructor(props)
     {
-        let dataServer = sc.getDef(props, 'dataServer', false);
+        let dataServer = sc.get(props, 'dataServer', false);
         if(!dataServer){
             Logger.error('DataServer undefined in ChatMessageActions.');
         }

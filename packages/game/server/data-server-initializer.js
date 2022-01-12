@@ -27,8 +27,8 @@ class DataServerInitializer
         };
         let loadedEntities = EntitiesLoader.loadEntities(loadEntitiesOptions);
         dataServerConfig.loadedEntities = loadedEntities.entities;
-        dataServerConfig.translations = sc.getDef(loadedEntities, 'translations', {});
-        dataServerConfig.rawEntities = Object.assign(loadedEntities.entitiesRaw, sc.getDef(config, 'rawEntities', {}));
+        dataServerConfig.translations = sc.get(loadedEntities, 'translations', {});
+        dataServerConfig.rawEntities = Object.assign(loadedEntities.entitiesRaw, sc.get(config, 'rawEntities', {}));
         let dataServer = dataServerDriver || new ObjectionJsDataServer(dataServerConfig);
         dataServerConfig.preparedEntities = this.prepareEntities(
             dataServerConfig.loadedEntities,

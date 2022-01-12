@@ -48,7 +48,7 @@ class AnimationEngine
         this.zeroPad = props.zeroPad || false;
         this.prefix = props.prefix || false;
         this.isInteractive = props.isInteractive || false;
-        this.restartTime = sc.getDef(props, 'restartTime', false);
+        this.restartTime = sc.get(props, 'restartTime', false);
         this.calculateAnimPosition();
         this.extraAnimations = {};
         // @NOTE: having this here we will get the animations generated for each object instance, so normally you would

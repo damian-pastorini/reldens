@@ -11,11 +11,11 @@ class PreloaderHandler
 
     constructor(props)
     {
-        this.gameManager = sc.getDef(props, 'gameManager', false);
+        this.gameManager = sc.get(props, 'gameManager', false);
         if(!this.gameManager){
             Logger.error('Game Manager undefined in ActionsPack PreloaderHandler.');
         }
-        this.events = sc.getDef(props, 'events', false);
+        this.events = sc.get(props, 'events', false);
         if(!this.events){
             Logger.error('EventsManager undefined in ActionsPack PreloaderHandler.');
         }
@@ -40,7 +40,7 @@ class PreloaderHandler
 
     preloadClassPaths(uiScene)
     {
-        let classesData = sc.getDef(this.initialGameData, 'classesData', false);
+        let classesData = sc.get(this.initialGameData, 'classesData', false);
         if(!classesData){
             return false;
         }
@@ -61,7 +61,7 @@ class PreloaderHandler
 
     createAvatarsAnimations(preloadScene)
     {
-        let classesData = sc.getDef(this.initialGameData, 'classesData', false);
+        let classesData = sc.get(this.initialGameData, 'classesData', false);
         if(!classesData){
             return false;
         }
@@ -95,7 +95,7 @@ class PreloaderHandler
             // - 1: both (this is to include diagonals)
             // - 2: up/down
             // - 3: left/right
-            let animDir = sc.getDef(data.animationData, 'dir', 0);
+            let animDir = sc.get(data.animationData, 'dir', 0);
             if(animDir > 0){
                 // @TODO - BETA - Refactor and implement animDir = 1 (both): up_right, up_left, down_right,
                 //   down_left.
@@ -139,7 +139,7 @@ class PreloaderHandler
     createAnimation(data, uiScene)
     {
         if(sc.hasOwn(data.animationData, ['type', 'img']) && data.animationData.type === 'spritesheet'){
-            let animDir = sc.getDef(data.animationData, 'dir', 0);
+            let animDir = sc.get(data.animationData, 'dir', 0);
             if(animDir > 0){
                 // @TODO - BETA - Refactor and implement animDir = 1 (both): up_right, up_left, down_right,
                 //   down_left.
@@ -181,12 +181,12 @@ class PreloaderHandler
         let animationCreateData = {
             key: imageKey,
             frames: uiScene.anims.generateFrameNumbers(imageKey, data.animationData),
-            hideOnComplete: sc.getDef(data.animationData, 'hide', true),
+            hideOnComplete: sc.get(data.animationData, 'hide', true),
         };
         if(sc.hasOwn(data.animationData, 'duration')){
             animationCreateData.duration = data.animationData.duration;
         } else {
-            animationCreateData.frameRate = sc.getDef(data.animationData, 'rate', uiScene.configuredFrameRate);
+            animationCreateData.frameRate = sc.get(data.animationData, 'rate', uiScene.configuredFrameRate);
         }
         if(sc.hasOwn(data.animationData, 'repeat')){
             animationCreateData.repeat = data.animationData.repeat;
