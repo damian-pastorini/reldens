@@ -11,7 +11,7 @@ class DataServerConfig
 
     static prepareDbConfig(props)
     {
-        // @NOTE: see the sample.env file in the module root for the variables setup.
+        // @NOTE: see the .env.dist file in the module root to modify the variables.
         let {host, port, database, user, password, client, connectionLimit, poolMin, poolMax, storageDriver} = props;
         client = client || process.env.RELDENS_DB_CLIENT || 'mysql';
         storageDriver = storageDriver || process.env.RELDENS_STORAGE_DRIVER || 'objection-js';

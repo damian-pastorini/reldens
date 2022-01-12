@@ -15,7 +15,7 @@ const { CustomClasses } = require('./theme/packages/server'); // {} // you can p
 // create a server instance passing the current root:
 let appServer = new ServerManager({
     projectRoot: __dirname, // we need to pass the server root
-    projectTheme: 'custom-game-theme-test', // if the project theme is not specified then "default" will be used
+    projectThemeName: 'custom-game-theme-test', // if the project theme is not specified then "default" will be used
     customClasses: CustomClasses // {} // custom configured custom classes
 });
 // events debug:

@@ -5,7 +5,6 @@
  */
 
 const fs = require('fs');
-const path = require('path');
 const { Logger, sc } = require('@reldens/utils');
 
 class EntitiesLoader
@@ -13,16 +12,18 @@ class EntitiesLoader
 
     static loadEntities(props)
     {
-        let projectRoot = props.serverManager.projectRoot;
+        if(!sc.isTrue(props, 'reldensModulePackagesPath')){
+            Logger.error('Packages path undefined.');
+            return false;
+        }
         let withConfig = sc.getDef(props, 'withConfig', false);
         let withTranslations = sc.getDef(props, 'withTranslations', false );
-        let packages = path.join(projectRoot, 'node_modules', 'reldens', 'packages');
         let files = [];
         let storageDriver = sc.getDef(props, 'storageDriver', 'objection-js');
         if(!sc.hasOwn(props, 'storageDriver')){
             Logger.info('Storage driver not specified, using objection-js as default.');
         }
-        this.getFiles(packages, files, storageDriver);
+        this.getFiles(props.reldensModulePackagesPath, files, storageDriver);
         if(0 === files.length){
             Logger.error('None registered-entities files found for the specified storage driver: '+storageDriver);
             return false;

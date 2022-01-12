@@ -9,7 +9,7 @@
 
 const dotenv = require('dotenv');
 const path = require('path');
-const { AwaitMiddleware } = require('./await-middleware');
+const { BundlerDriverParcelMiddleware } = require('./bundler-driver-parcel-middleware');
 const { GameServer } = require('./game-server');
 const { AppServer } = require('./app-server');
 const { ConfigManager } = require('../../config/server/manager');
@@ -21,7 +21,7 @@ const { RoomsManager } = require('../../rooms/server/manager');
 const { Mailer } = require('./mailer');
 const { ThemeManager } = require('./theme-manager');
 const { MapsLoader } = require('./maps-loader');
-const { EventsManagerSingleton, Logger } = require('@reldens/utils');
+const { EventsManagerSingleton, Logger, sc } = require('@reldens/utils');
 
 class ServerManager
 {
@@ -33,7 +33,7 @@ class ServerManager
     dataServerConfig = {};
     dataServer = false;
     configManager = {};
-    projectRoot = false;
+    projectRoot = './';
     configServer = false;
     mailer = false;
     featuresManager = false;
@@ -50,14 +50,14 @@ class ServerManager
             // initialize configurations:
             this.initializeConfiguration(config);
             // initialize theme:
-            this.themeManager = new ThemeManager();
-            this.themeManager.validateOrCreateTheme(config);
+            this.themeManager = new ThemeManager(config);
+            this.themeManager.validateOrCreateTheme();
             // initialize storage:
             this.initializeStorage(config, dataServerDriver);
             // set storage driver on configuration manager:
             this.configManager.dataServer = this.dataServer;
             // load maps:
-            MapsLoader.loadMaps(this.themeManager.themeFullPath, this.configManager);
+            MapsLoader.loadMaps(this.themeManager.projectThemePath, this.configManager);
         } catch (e) {
             Logger.error('Broken ServerManager.', e.message, e.stack);
             // @TODO - BETA - Improve error handler to not kill the process or automatically restart it.
@@ -82,7 +82,9 @@ class ServerManager
         // configuration data from database:
         this.configManager = new ConfigManager({events: this.events});
         // save project root:
-        this.projectRoot = config.projectRoot || './';
+        if(sc.hasOwn(config, 'projectRoot')){
+            this.projectRoot = config.projectRoot
+        }
         Logger.info(['Project root:', this.projectRoot, 'Module root:', __dirname]);
         // setup dotenv to use the project root .env file:
         let envPath = path.join(this.projectRoot, '.env');
@@ -118,6 +120,7 @@ class ServerManager
     {
         Logger.info('Starting Server Manager!');
         await this.createServer();
+        await this.createGameServer();
         await this.initializeManagers();
         // after the rooms were loaded then finish the server process:
         await this.events.emit('reldens.serverBeforeListen', {serverManager: this});
@@ -131,7 +134,11 @@ class ServerManager
     async createServer()
     {
         await this.events.emit('reldens.serverStartBegin', {serverManager: this});
-        Object.assign(this, AppServer.createAppServer(this.projectRoot));
+        Object.assign(this, AppServer.createAppServer(this.themeManager.distPath));
+    }
+
+    async createGameServer()
+    {
         // create game server instance:
         this.gameServer = new GameServer({server: this.appServer, express: this.app});
         // attach web monitoring panel (optional):
@@ -144,12 +151,8 @@ class ServerManager
     {
         // get config processor instance:
         let configProcessor = await this.configManager.loadAndGetProcessor();
-        // save project root for later use:
-        configProcessor.projectRoot = this.projectRoot;
-        // theme root:
-        configProcessor.projectTheme = this.themeManager.projectTheme;
-        configProcessor.themeFullPath = this.themeManager.themeFullPath;
-        configProcessor.distFullPath = this.themeManager.distFullPath;
+        // save project paths in config:
+        configProcessor.projectPaths = this.themeManager.paths();
         await this.events.emit('reldens.serverConfigReady', {
             serverManager: this,
             configProcessor
@@ -168,7 +171,7 @@ class ServerManager
         });
         // users manager:
         this.usersManager = new UsersManager({events: this.events, dataServer: this.dataServer});
-        // the rooms manager will receive the features rooms to be defined:
+        // the "rooms" manager will receive the features rooms to be defined:
         this.roomsManager = new RoomsManager({events: this.events, dataServer: this.dataServer});
         await this.events.emit('reldens.serverBeforeLoginManager', {serverManager: this});
         // login manager:
@@ -206,9 +209,11 @@ class ServerManager
             production: process.env.NODE_ENV === 'production',
             sourceMaps: process.env.RELDENS_PARCEL_SOURCEMAPS || false
         };
-        let indexPath = path.join(this.projectRoot, this.themeManager.projectTheme, 'index.html');
-        Logger.info('Running bundle on: ' + indexPath);
-        this.bundler = new AwaitMiddleware(indexPath, bundlerOptions);
+        Logger.info('Running bundle on: ' + this.themeManager.projectIndexPath);
+        this.bundler = new BundlerDriverParcelMiddleware(
+            this.themeManager.projectIndexPath,
+            bundlerOptions
+        );
         let middleware = await this.bundler.middleware();
         this.app.use(middleware);
     }

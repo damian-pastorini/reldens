@@ -69,7 +69,7 @@ class GroupEntity extends AdminEntityProperties
         editProperties = sc.removeFromArray(editProperties, ['id', 'files_name']);
 
         let bucket = AdminLocalProvider.joinPath(projectConfig.bucketFullPath, 'assets', 'custom', 'groups');
-        let distFolder = AdminLocalProvider.joinPath(projectConfig.distFullPath, 'assets', 'custom', 'groups');
+        let distFolder = AdminLocalProvider.joinPath(projectConfig.distPath, 'assets', 'custom', 'groups');
 
         let features = [
             uploadFileFeature({

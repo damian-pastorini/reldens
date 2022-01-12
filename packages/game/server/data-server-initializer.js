@@ -17,10 +17,9 @@ class DataServerInitializer
         let dataServerConfig = DataServerConfig.prepareDbConfig(config);
         let loadEntitiesOptions = {
             serverManager: serverManager,
-            projectRoot: serverManager.projectRoot,
-            projectTheme: config.projectTheme,
-            bucketFullPath: serverManager.themeManager.themeFullPath,
-            distFullPath: serverManager.themeManager.distFullPath,
+            reldensModulePackagesPath: serverManager.themeManager.reldensModulePackagesPath,
+            bucketFullPath: serverManager.themeManager.projectThemePath,
+            distPath: serverManager.themeManager.distPath,
             isHotPlugEnabled: serverManager.isHotPlugEnabled,
             withConfig: true,
             withTranslations: true,

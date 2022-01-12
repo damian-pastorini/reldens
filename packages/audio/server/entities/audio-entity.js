@@ -61,7 +61,7 @@ class AudioEntity extends AdminEntityProperties
         editProperties = sc.removeFromArray(editProperties, ['id', 'files_name']);
 
         let bucket = AdminLocalProvider.joinPath(projectConfig.bucketFullPath, 'assets', 'audio');
-        let distFolder = AdminLocalProvider.joinPath(projectConfig.distFullPath, 'assets', 'audio');
+        let distFolder = AdminLocalProvider.joinPath(projectConfig.distPath, 'assets', 'audio');
 
         let features = [
             uploadFileFeature({

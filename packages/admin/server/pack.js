@@ -19,7 +19,8 @@ class AdminPack extends PackInterface
         }
         this.events.on('reldens.serverBeforeListen', async (event) => {
             let serverManager = event.serverManager;
-            let bucket = serverManager.configManager.processor.themeFullPath;
+            let bucket = serverManager.themeManager.projectThemePath;
+            await serverManager.themeManager.buildAdminCss();
             serverManager.app.use('/uploads', serverManager.express.static(bucket));
             let entities = serverManager.dataServerConfig.preparedEntities;
             serverManager.dataServer.resources = AdminManager.prepareResources(entities);

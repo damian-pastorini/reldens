@@ -45,5 +45,18 @@ module.exports.GameConst = {
         ACTIVE: 1,
         DISABLED: 1,
         DEATH: 3
+    },
+    THEMES: {
+        DEFAULT: 'default',
+        ASSETS: 'assets',
+        CSS: 'css',
+        DIST: 'dist',
+        THEME: 'theme',
+        PACKAGES: 'packages',
+        INDEX: 'index.html',
+        SCSS_FILE: 'styles.scss',
+        CSS_FILE: 'styles.css',
+        ADMIN_SCSS_FILE: 'reldens-admin.scss',
+        ADMIN_CSS_FILE: 'reldens-admin.css'
     }
 };
