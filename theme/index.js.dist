@@ -18,6 +18,7 @@ let appServer = new ServerManager({
     projectThemeName: 'custom-game-theme-test', // if the project theme is not specified then "default" will be used
     customClasses: CustomClasses // {} // custom configured custom classes
 });
+console.log('TEST - All these are TEST logs that you can remove from your index file.');
 // events debug:
 // appServer.events.debug = 'all'; // or any string containing multiple events keys.
 // setup as you need:
@@ -26,7 +27,7 @@ appServer.events.on('reldens.serverConfigFeaturesReady', (serverManager, configP
     console.log('TEST - Events test reldens.serverConfigFeaturesReady success!');
 });
 // run the server!
-console.log('Server starting...');
+console.log('TEST - Server starting...');
 appServer.start().then(() => {
     console.log('TEST - SERVER UP AND RUNNING!');
 }).catch((err) => {
