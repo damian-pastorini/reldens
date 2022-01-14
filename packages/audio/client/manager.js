@@ -68,46 +68,6 @@ class AudioManager
         return true;
     }
 
-    async preloadGlobalAudios(onScene, audiosDataCollection)
-    {
-        let audioKeys = Object.keys(audiosDataCollection);
-        if(0 === audioKeys.length){
-            return false;
-        }
-        for(let i of audioKeys){
-            let audio = audiosDataCollection[i];
-            let filesArr = await this.prepareFiles(audio);
-            if(0 === filesArr.length){
-                continue;
-            }
-            onScene.load.audio(audio.audio_key, filesArr);
-        }
-    }
-
-    generateGlobalAudios(onScene, audiosDataCollection)
-    {
-        this.globalAudios = this.generateAudios(onScene, audiosDataCollection);
-    }
-
-    generateAudios(onScene, audiosDataCollection)
-    {
-        let audioKeys = Object.keys(audiosDataCollection);
-        if(0 === audioKeys.length){
-            return {};
-        }
-        let generatedAudios = {};
-        for(let i of audioKeys){
-            let audio = audiosDataCollection[i];
-            let generateAudio = this.generateAudio(onScene, audio);
-            if(false === generateAudio){
-                Logger.error('Audio can not be generated.');
-                continue;
-            }
-            generatedAudios[audio.audio_key] = generateAudio;
-        }
-        return generatedAudios;
-    }
-
     generateAudio(onScene, audio)
     {
         let soundConfig = Object.assign({}, this.defaultAudioConfig, (audio.config || {}));
@@ -178,31 +138,50 @@ class AudioManager
         }
     }
 
-    async loadAudiosInScene(audios, currentScene)
+    async loadGlobalAudios(audios, currentScene)
     {
-        let newAudiosCounter = 0;
-        if(!sc.hasOwn(this.roomsAudios, currentScene.key)){
-            this.roomsAudios[currentScene.key] = {};
-        }
         let audioKeys = Object.keys(audios);
         if(0 === audioKeys.length){
             return false;
         }
-        for(let i of audioKeys){
+        await this.loadByKeys(audioKeys, audios, currentScene, 'globalAudios');
+    }
+
+    async loadAudiosInScene(audios, currentScene)
+    {
+        let audioKeys = Object.keys(audios);
+        if(0 === audioKeys.length){
+            return false;
+        }
+        if(!sc.hasOwn(this.roomsAudios, currentScene.key)){
+            this.roomsAudios[currentScene.key] = {};
+        }
+        await this.loadByKeys(audioKeys, audios, currentScene, 'roomsAudios');
+    }
+
+    async loadByKeys(audioKeys, audios, currentScene, storageKey)
+    {
+        let newAudiosCounter = 0;
+        for (let i of audioKeys) {
             let audio = audios[i];
             this.removeSceneAudioByAudioKey(currentScene, audio.audio_key);
             let filesArr = await this.prepareFiles(audio);
-            if(0 === filesArr.length){
+            if (0 === filesArr.length) {
                 continue;
             }
             let audioLoader = currentScene.load.audio(audio.audio_key, filesArr);
             audioLoader.on('complete', async () => {
                 let generateAudio = this.generateAudio(currentScene, audio);
-                if(false === generateAudio){
-                    Logger.error('AudioLoader can not generate the audio. Audio key:', audio.audio_key);
+                if (false === generateAudio) {
+                    Logger.error('AudioLoader can not generate the audio.', {
+                        'Audio key:': audio.audio_key,
+                        'Storage key:': storageKey,
+                    });
                     return false;
                 }
-                this.roomsAudios[currentScene.key][audio.audio_key] = generateAudio;
+                storageKey === 'roomsAudios'
+                    ? this.roomsAudios[currentScene.key][audio.audio_key] = generateAudio
+                    : this.globalAudios[audio.audio_key] = generateAudio;
                 newAudiosCounter++;
                 await this.fireAudioEvents(audios, currentScene, audio, newAudiosCounter);
             });
@@ -260,6 +239,9 @@ class AudioManager
         }
         if (sc.hasOwn(this.roomsAudios[scene.key], audioKey)) {
             delete this.roomsAudios[scene.key][audioKey];
+        }
+        if (sc.hasOwn(this.globalAudios, audioKey)) {
+            delete this.globalAudios[audioKey];
         }
     }
 

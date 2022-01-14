@@ -40,24 +40,18 @@ class AudioPack extends PackInterface
         this.events.on('reldens.preloadUiScene', async (preloadScene) => {
             preloadScene.load.html('audio', 'assets/html/ui-audio.html');
             preloadScene.load.html('audio-category', 'assets/html/ui-audio-category-row.html');
-            await preloadScene.gameManager.audioManager.preloadGlobalAudios(
-                preloadScene,
-                sc.get(this.initialAudiosData, 'globalAudios', {})
-            );
         });
         this.events.on('reldens.createUiScene', (preloadScene) => {
             this.uiManager = new AudioUi(preloadScene);
             this.uiManager.createUi();
-            preloadScene.gameManager.audioManager.generateGlobalAudios(
-                preloadScene,
-                sc.get(this.initialAudiosData, 'globalAudios', {})
-            );
         });
         this.events.on('reldens.afterSceneDynamicCreate', async (sceneDynamic) => {
             let audioManager = sceneDynamic.gameManager.audioManager;
             if(!audioManager){
                 return false;
             }
+            let globalAudios = sc.get(this.initialAudiosData, 'globalAudios', {});
+            await audioManager.loadGlobalAudios(globalAudios, sceneDynamic);
             await this.messagesListener.processQueue();
             this.sceneAudioPlayer.associateSceneAnimationsAudios(audioManager, sceneDynamic);
             sceneDynamic.cameras.main.on('camerafadeincomplete', () => {

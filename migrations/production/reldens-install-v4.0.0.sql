@@ -1126,7 +1126,7 @@ CREATE TABLE IF NOT EXISTS `skills_owners_class_path` (
 -- Dumping data for table skills_owners_class_path: ~3 rows (approximately)
 /*!40000 ALTER TABLE `skills_owners_class_path` DISABLE KEYS */;
 INSERT INTO `skills_owners_class_path` (`id`, `class_path_id`, `owner_id`, `currentLevel`, `currentExp`) VALUES
-	(1, 1, 1, 8, 1330),
+	(1, 1, 1, 8, 1350),
 	(2, 2, 2, 1, 0),
 	(3, 5, 3, 1, 0);
 /*!40000 ALTER TABLE `skills_owners_class_path` ENABLE KEYS */;
