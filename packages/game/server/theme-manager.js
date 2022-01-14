@@ -170,7 +170,7 @@ class ThemeManager
             Logger.info('File already exists: index.js');
             return false;
         }
-        fs.copyFileSync(path.join(this.reldensModuleThemePath, 'project-index.js.sample'), indexFile);
+        fs.copyFileSync(path.join(this.reldensModuleThemePath, 'index.js.dist'), indexFile);
     }
 
     copyDefaultAssets()

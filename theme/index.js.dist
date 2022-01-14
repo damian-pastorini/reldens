@@ -23,12 +23,12 @@ let appServer = new ServerManager({
 // setup as you need:
 // eslint-disable-next-line no-unused-vars
 appServer.events.on('reldens.serverConfigFeaturesReady', (serverManager, configProcessor) => {
-    console.log('INFO - Events test reldens.serverConfigFeaturesReady success!');
+    console.log('TEST - Events test reldens.serverConfigFeaturesReady success!');
 });
 // run the server!
 console.log('Server starting...');
 appServer.start().then(() => {
-    console.log('INFO - SERVER UP AND RUNNING!');
+    console.log('TEST - SERVER UP AND RUNNING!');
 }).catch((err) => {
-    console.log('ERROR - Server error:', err);
+    console.log('TEST - Server error:', err);
 });
