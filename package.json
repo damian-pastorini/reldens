@@ -29,11 +29,6 @@
     "bugs": {
         "url": "https://github.com/damian-pastorini/reldens/issues"
     },
-    "scripts": {
-        "start": "node .",
-        "install-db": "knex migrate:up --env production",
-        "buildCss": "node ./node_modules/parcel-bundler/bin/cli.js build theme/default/css/styles.scss --no-source-maps --out-dir theme/default/css"
-    },
     "engines": {
         "npm": ">=6.0.0",
         "node": ">=12.0.0"
@@ -45,9 +40,9 @@
         "@babel/core": "^7.16.7",
         "@colyseus/monitor": "^0.12.2",
         "@colyseus/schema": "^0.5.41",
-        "@reldens/items-system": "^0.10.0-beta.29",
+        "@reldens/items-system": "^0.10.0-beta.30",
         "@reldens/modifiers": "^0.10.0-beta.2",
-        "@reldens/skills": "^0.10.0-beta.28",
+        "@reldens/skills": "^0.10.0-beta.29",
         "@reldens/storage": "^0.10.0-beta.29",
         "@reldens/utils": "^0.10.0-beta.3",
         "adminjs": "5.5.1",

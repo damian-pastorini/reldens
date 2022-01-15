@@ -33,7 +33,7 @@ class PlayerInventoryFactory
         let inventoryServer = new ItemsServer(serverProps);
         // broadcast player sessionId to share animations:
         inventoryServer.client.sendTargetProps.broadcast.push('sessionId');
-        // for now I will load all the items here and then create instances for later assign them to their owner:
+        // for now, I will load all the items here and then create instances for later assign them to their owner:
         await inventoryServer.dataServer.loadOwnerItems();
         inventoryServer.createItemInstance = (key, qty) => {
             let itemData = room.config.get('inventory/items/itemsList/'+key);
