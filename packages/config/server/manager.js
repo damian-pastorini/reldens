@@ -8,9 +8,10 @@
 
 const { ConfigProcessor } = require('../processor');
 const { GameConfig } = require('../../game/server/config');
+const { GameCustomClasses } = require('../../game/server/game-custom-classes');
 const { ConfigConst } = require('../constants');
-const PackageData = require('../../../package.json');
 const { Logger, sc } = require('@reldens/utils');
+const PackageData = require('../../../package.json');
 
 class ConfigManager
 {
@@ -26,6 +27,12 @@ class ConfigManager
         this.configList = {
             server: {}
         };
+        let customClasses = props.customClasses || {};
+        this.configList.server.customClasses = customClasses;
+        // custom classes:
+        if({} === customClasses){
+            GameCustomClasses.definitionErrorLog();
+        }
     }
 
     async loadConfigurations()

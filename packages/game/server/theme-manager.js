@@ -83,6 +83,11 @@ class ThemeManager
         };
     }
 
+    assetPath(...args)
+    {
+        return path.join(this.projectAssetsPath, ...args);
+    }
+
     permissionsCheck()
     {
         try {

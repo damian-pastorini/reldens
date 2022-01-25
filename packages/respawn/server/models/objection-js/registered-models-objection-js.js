@@ -5,25 +5,11 @@
  */
 
 const { RespawnModel } = require('./respawn-model');
-const { RespawnEntity } = require('../../entities/respawn-entity');
-
-let entitiesTranslations = {
-    labels: {
-        respawn: 'Respawn Areas'
-    }
-};
+const { entitiesTranslations } = require('../../entities-translations');
+const { entitiesConfig } = require('../../entiites-config');
 
 let rawRegisteredEntities = {
     respawn: RespawnModel
-};
-
-let objectsConfig = {
-    parentItemLabel: null,
-    icon: 'FishMultiple'
-};
-
-let entitiesConfig = {
-    respawn: RespawnEntity.propertiesConfig(objectsConfig)
 };
 
 module.exports.rawRegisteredEntities = rawRegisteredEntities;

@@ -32,4 +32,5 @@ appServer.start().then(() => {
     console.log('TEST - SERVER UP AND RUNNING!');
 }).catch((err) => {
     console.log('TEST - Server error:', err);
+    process.exit();
 });

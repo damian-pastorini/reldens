@@ -5,22 +5,10 @@
  */
 
 const { ConfigModel } = require('./config-model');
-const { ConfigEntity } = require('../../entities/config-entity');
+const { entitiesConfig } = require('../../entities-config');
 
 let rawRegisteredEntities = {
     config: ConfigModel
-};
-
-let configConfig = {
-    parentItemLabel: null,
-    icon: 'Settings',
-    sort: {
-        sortBy: 'path'
-    }
-};
-
-let entitiesConfig = {
-    config: ConfigEntity.propertiesConfig(configConfig)
 };
 
 module.exports.rawRegisteredEntities = rawRegisteredEntities;

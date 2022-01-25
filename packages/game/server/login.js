@@ -6,7 +6,6 @@
  *
  */
 
-const path = require('path');
 const { PasswordManager } = require('./password-manager');
 const { ErrorManager, Logger, sc } = require('@reldens/utils');
 
@@ -49,17 +48,12 @@ class LoginManager
             }
             return {error: errorMessage};
         }
-        // search if the user already exists:
+        // search if the user exists:
         let user = await this.usersManager.loadUserByUsername(userData.username);
         if(!user && !userData.isNewUser){
             return {error: 'Missing user data.'};
         }
-        // if the user exists:
-        if(user){
-            return await this.login(user, userData);
-        } else {
-            return await this.register(userData);
-        }
+        return user ? await this.login(user, userData) :  await this.register(userData);
     }
 
     isValidData(userData)
@@ -127,7 +121,7 @@ class LoginManager
     {
         if(userData.isNewUser){
             try {
-                // check if an user with the email exists:
+                // check if a user with the email exists:
                 let user = await this.usersManager.loadUserByEmail(userData.email);
                 if(user){
                     let message = 'Registration error, invalid credentials.';
@@ -136,7 +130,7 @@ class LoginManager
                     }
                     return {error: message};
                 }
-                // if the email doesn't exists in the database and it's a registration request:
+                // if the email doesn't exist in the database, and it's a registration request:
                 // insert user, player, player state, player stats, class path:
                 let newUser = await this.usersManager.createUser({
                     email: userData.email,
@@ -234,7 +228,7 @@ class LoginManager
 
     async sendForgotPasswordEmail(userData, oldPassword)
     {
-        let emailPath = path.join('assets', 'email', 'forgot.html');
+        let emailPath = this.themeManager.assetPath('email', 'forgot.html');
         let resetLink = this.config.server.baseUrl + '/reset-password?email='+userData.email+'&id='+oldPassword;
         let subject = process.env.RELDENS_MAILER_FORGOT_PASSWORD_SUBJECT || 'Forgot password';
         let content = await this.themeManager.loadAndRenderTemplate(emailPath, {resetLink: resetLink});

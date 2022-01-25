@@ -29,19 +29,33 @@ class DataServerConfig
         if(!config.database){
             ErrorManager.error('Missing storage database name configuration.');
         }
-        let limitEnv = process.env.RELDENS_DB_LIMIT;
-        if(connectionLimit || typeof limitEnv !== 'undefined'){
+        let limitEnv = process.env.RELDENS_DB_LIMIT || 0;
+        if(connectionLimit || 0 < limitEnv){
             config.connectionLimit = Number((connectionLimit || limitEnv));
         }
         let poolConfig = {
             min: Number((poolMin || process.env.RELDENS_DB_POOL_MIN || 2)),
             max: Number((poolMax || process.env.RELDENS_DB_POOL_MAX || 10))
         };
-        let pass = config.password ? ':' + config.password : '';
-        let connectString = `${client}://${config.user}${pass}@${config.host}:${config.port}/${config.database}`;
+        let connectString = this.createConnectionString(client, config);
         return {client, config, poolConfig, connectString, storageDriver};
     }
 
+    static createConnectionString(client, config)
+    {
+        let connectString = process.env.RELDENS_DB_CONNECT_STRING || '';
+        if('' !== connectString){
+            return connectString;
+        }
+        let connectStringOptions = process.env.RELDENS_DB_CONNECT_STRING_OPTIONS || '';
+        return client+'://'
+            +config.user
+            +(config.password ? ':'+config.password : '')
+            +'@'+config.host
+            +':'+config.port
+            +'/'+config.database
+            +(connectStringOptions ? '?'+connectStringOptions : '');
+    }
 }
 
 module.exports.DataServerConfig = DataServerConfig;

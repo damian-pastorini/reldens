@@ -71,7 +71,7 @@ class EntitiesLoader
             if(fs.lstatSync(subPath).isDirectory()){
                 this.getFiles(subPath, files, storageDriver);
             } else {
-                if(file.indexOf('registered-entities-'+storageDriver+'.js') === 0){
+                if(0 === file.indexOf('registered-models-'+storageDriver+'.js')){
                     files.push(subPath);
                 }
             }

@@ -1,15 +1,10 @@
 /**
  *
- * Reldens - Registered Entities
+ * Reldens - Entities Config
  *
  */
 
-const { ChatModel } = require('./chat-model');
-const { ChatEntity } = require('../../entities/chat-entity');
-
-let rawRegisteredEntities = {
-    chat: ChatModel
-};
+const { ChatEntity } = require('./entities/chat-entity');
 
 let chatConfig = {
     parentItemLabel: null,
@@ -23,7 +18,5 @@ let chatConfig = {
 let entitiesConfig = {
     chat: ChatEntity.propertiesConfig(chatConfig)
 };
-
-module.exports.rawRegisteredEntities = rawRegisteredEntities;
 
 module.exports.entitiesConfig = entitiesConfig;

@@ -21,6 +21,8 @@ const { RoomsManager } = require('../../rooms/server/manager');
 const { Mailer } = require('./mailer');
 const { ThemeManager } = require('./theme-manager');
 const { MapsLoader } = require('./maps-loader');
+const { GameServerConfig } = require('./game-server-config');
+const { ForgotPassword } = require('./forgot-password');
 const { EventsManagerSingleton, Logger, sc } = require('@reldens/utils');
 
 class ServerManager
@@ -53,7 +55,10 @@ class ServerManager
             this.themeManager = new ThemeManager(config);
             this.themeManager.validateOrCreateTheme();
             // initialize storage:
-            this.initializeStorage(config, dataServerDriver);
+            this.initializeStorage(config, dataServerDriver).catch((error) => {
+                Logger.error('Storage could not be initialized.', error);
+                process.exit();
+            });
             // set storage driver on configuration manager:
             this.configManager.dataServer = this.dataServer;
             // load maps:
@@ -65,7 +70,7 @@ class ServerManager
         }
     }
 
-    initializeStorage(config, dataServerDriver)
+    async initializeStorage(config, dataServerDriver)
     {
         let {dataServerConfig, dataServer} = DataServerInitializer.initializeEntitiesAndDriver(
             config,
@@ -74,13 +79,15 @@ class ServerManager
         );
         this.dataServerConfig = dataServerConfig;
         this.dataServer = dataServer;
-        dataServer.connect(); // can't auto-connect on the constructor
+        await dataServer.connect(); // can't auto-connect on the constructor
+        await dataServer.generateEntities();
     }
 
     initializeConfiguration(config)
     {
         // configuration data from database:
-        this.configManager = new ConfigManager({events: this.events});
+        let customClasses = config.customClasses || {};
+        this.configManager = new ConfigManager({events: this.events, customClasses});
         // save project root:
         if(sc.hasOwn(config, 'projectRoot')){
             this.projectRoot = config.projectRoot
@@ -90,30 +97,9 @@ class ServerManager
         let envPath = path.join(this.projectRoot, '.env');
         dotenv.config({debug: process.env.DEBUG, path: envPath});
         // set the server host data:
-        this.configServer = {
-            port: Number(process.env.PORT) || Number(process.env.RELDENS_APP_PORT) || 8080,
-            host: process.env.RELDENS_APP_HOST || 'http://localhost',
-            monitor: {
-                enabled: process.env.RELDENS_MONITOR || false,
-                auth: process.env.RELDENS_MONITOR_AUTH || false,
-                user: process.env.RELDENS_MONITOR_USER,
-                pass: process.env.RELDENS_MONITOR_PASS,
-            }
-        };
+        this.configServer = GameServerConfig;
         // hot-plug feature:
         this.isHotPlugEnabled = process.env.RELDENS_HOT_PLUG || false;
-        // custom classes:
-        if(config.customClasses){
-            this.configManager.configList.server.customClasses = config.customClasses;
-        } else {
-            Logger.error('\nMissing customClasses definition!'
-                +'\nYou can pass an empty object to avoid this or copy into your theme the default file from:'
-                +'\nnode_modules/reldens/theme/packages/server.js'
-                +'\nNormally a default copy is been made automatically on the first time you run the project.'
-                +'\nThen you need to require the module and pass it as property in your ServerManager initialization.'
-                +'\nFor reference check the theme/index.js.dist file, you probably just need to uncomment'
-                +' the customClasses related lines.\n');
-        }
     }
 
     async start()
@@ -160,7 +146,7 @@ class ServerManager
         // mailer:
         this.mailer = new Mailer();
         Logger.info(['Mailer Configured:', this.mailer.isEnabled()]);
-        await this.setupForgotPassword();
+        await ForgotPassword.defineRequestOnServerManagerApp(this);
         // features manager:
         this.featuresManager = new FeaturesManager({events: this.events, dataServer: this.dataServer});
         // load the available features list and append to the config, this way we will pass the list to the client:
@@ -194,6 +180,7 @@ class ServerManager
 
     async createClientBundle()
     {
+        // @TODO - BETA - Remove this function, just move to an auto-install on first run feature.
         let runBundler = process.env.RELDENS_PARCEL_RUN_BUNDLER || false;
         if(!runBundler){
             return false;
@@ -214,34 +201,9 @@ class ServerManager
             this.themeManager.projectIndexPath,
             bundlerOptions
         );
+        // @TODO - BETA - Create config RELDENS_USE_PARCEL_MIDDLEWARE.
         let middleware = await this.bundler.middleware();
         this.app.use(middleware);
-    }
-
-    async setupForgotPassword()
-    {
-        this.app.use('/reset-password', async (req, res) => {
-            let rEmail = req.query.email;
-            let rId = req.query.id;
-            let user = false;
-            let resetResult = '';
-            if(rEmail && rId){
-                user = await this.usersManager.loadUserByEmail(rEmail);
-            }
-            if(!user || user.password !== rId){
-                let resetErrorPath = path.join('assets', 'email', 'reset-error.html');
-                resetResult = await this.themeManager.loadAndRenderTemplate(resetErrorPath);
-            } else {
-                let newPass = this.loginManager.passwordManager.makeId(12);
-                let newPassHash = this.loginManager.passwordManager.encryptPassword(newPass);
-                await this.usersManager.updateUserByEmail(rEmail, {password: newPassHash});
-                let resetSuccessPath = path.join('assets', 'email', 'reset-success.html');
-                resetResult = await this.themeManager.loadAndRenderTemplate(resetSuccessPath, {newPass: newPass});
-            }
-            let resetPath = path.join('assets', 'email', 'reset.html');
-            let content = await this.themeManager.loadAndRenderTemplate(resetPath, {resetResult: resetResult});
-            res.send(content);
-        });
     }
 
 }
