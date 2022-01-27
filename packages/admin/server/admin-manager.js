@@ -32,7 +32,7 @@ class AdminManager
             Database: DriverDatabase,
             Resource: DriverResource
         });
-        this.rootPath = (process.env.ADMIN_ROUTE_PATH || '/reldens-admin');
+        this.rootPath = (process.env.RELDENS_ADMIN_ROUTE_PATH || '/reldens-admin');
         let adminJsConfig = {
             databases: this.databases,
             rootPath: this.rootPath,

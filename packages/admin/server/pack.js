@@ -6,6 +6,7 @@
 
 const { AdminManager } = require('./admin-manager');
 const { PackInterface } = require('../../features/pack-interface');
+const { AdminEntitiesGenerator } = require('./admin-entities-generator');
 const { Logger, sc } = require('@reldens/utils');
 
 class AdminPack extends PackInterface
@@ -19,10 +20,17 @@ class AdminPack extends PackInterface
         }
         this.events.on('reldens.serverBeforeListen', async (event) => {
             let serverManager = event.serverManager;
+            this.adminRoleId = props.adminRoleId
+                || serverManager.configManager.adminRoleId
+                || process.env.RELDENS_ADMIN_DEFAULT_ROLE_ID
+                || false;
             let bucket = serverManager.themeManager.projectThemePath;
             await serverManager.themeManager.buildAdminCss();
             serverManager.app.use('/uploads', serverManager.express.static(bucket));
-            let entities = serverManager.dataServerConfig.preparedEntities;
+            let entities = AdminEntitiesGenerator.generateEntities(
+                serverManager.dataServerConfig.loadedEntities,
+                serverManager.dataServer.entityManager.entities
+            );
             serverManager.dataServer.resources = AdminManager.prepareResources(entities);
             this.events.emit('reldens.beforeCreateAdminManager', this, event);
             serverManager.serverAdmin = new AdminManager({
@@ -32,17 +40,11 @@ class AdminPack extends PackInterface
                 databases: [serverManager.dataServer],
                 translations: serverManager.dataServerConfig.translations,
                 authenticateCallback: async (email, password) => {
-                    let user = await serverManager.usersManager.loadUserByEmail(email);
-                    if(user && user.role_id === 99){
-                        let result = serverManager.loginManager.passwordManager.validatePassword(
-                            password,
-                            user.password
-                        );
-                        if(result){
-                            return user;
-                        }
-                    }
-                    return false;
+                    return await serverManager.loginManager.roleAuthenticationCallback(
+                        email,
+                        password,
+                        this.adminRoleId
+                    );
                 }
             });
             serverManager.serverAdmin.setupAdmin();

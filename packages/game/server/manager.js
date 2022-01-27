@@ -72,11 +72,11 @@ class ServerManager
 
     async initializeStorage(config, dataServerDriver)
     {
-        let {dataServerConfig, dataServer} = DataServerInitializer.initializeEntitiesAndDriver(
+        let {dataServerConfig, dataServer} = DataServerInitializer.initializeEntitiesAndDriver({
             config,
             dataServerDriver,
-            this
-        );
+            serverManager: this
+        });
         this.dataServerConfig = dataServerConfig;
         this.dataServer = dataServer;
         await dataServer.connect(); // can't auto-connect on the constructor

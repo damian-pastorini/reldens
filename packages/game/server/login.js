@@ -99,6 +99,22 @@ class LoginManager
         }
     }
 
+    async roleAuthenticationCallback(email, password, roleId = false)
+    {
+        let user = await this.usersManager.loadUserByEmail(email);
+        let validatedRole = !roleId || user.role_id === roleId;
+        if(user && validatedRole){
+            let result = this.passwordManager.validatePassword(
+                password,
+                user.password
+            );
+            if(result){
+                return user;
+            }
+        }
+        return false;
+    }
+
     async applySelectedLocation(player, selectedScene)
     {
         let selectedRoom = await this.roomsManager.loadRoomByName(selectedScene);
