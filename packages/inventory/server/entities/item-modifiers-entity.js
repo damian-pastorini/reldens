@@ -6,7 +6,7 @@
 
 const { EntityProperties } = require('../../../game/server/entity-properties');
 
-class ModifiersEntity extends EntityProperties
+class ItemModifiersEntity extends EntityProperties
 {
 
     static propertiesConfig(extraProps)
@@ -61,4 +61,4 @@ class ModifiersEntity extends EntityProperties
 
 }
 
-module.exports.ModifiersEntity = ModifiersEntity;
+module.exports.ItemModifiersEntity = ItemModifiersEntity;

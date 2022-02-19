@@ -6,8 +6,8 @@
 
 const { DataServerConfig } = require('./data-server-config');
 const { EntitiesLoader } = require('./entities-loader');
-const { ObjectionJsDataServer } = require('@reldens/storage');
-const { sc } = require('@reldens/utils');
+const { ObjectionJsDataServer, MikroOrmDataServer } = require('@reldens/storage');
+const { Logger, sc } = require('@reldens/utils');
 
 class DataServerInitializer
 {
@@ -30,7 +30,12 @@ class DataServerInitializer
         dataServerConfig.loadedEntities = loadedEntities.entities;
         dataServerConfig.translations = sc.get(loadedEntities, 'translations', {});
         dataServerConfig.rawEntities = Object.assign(loadedEntities.entitiesRaw, sc.get(config, 'rawEntities', {}));
-        let dataServer = dataServerDriver || new ObjectionJsDataServer(dataServerConfig);
+        let driversMapped = {
+            'objection-js': ObjectionJsDataServer,
+            'mikro-orm': MikroOrmDataServer
+        }
+        Logger.info('Storage Driver:', dataServerConfig.storageDriver);
+        let dataServer = dataServerDriver || new driversMapped[dataServerConfig.storageDriver](dataServerConfig);
         return {dataServerConfig, dataServer};
     }
 

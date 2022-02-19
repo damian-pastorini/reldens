@@ -4,10 +4,10 @@
  *
  */
 
-const { GroupEntity } = require('./entities/group-entity');
+const { ItemGroupEntity } = require('./entities/item-group-entity');
 const { InventoryEntity } = require('./entities/inventory-entity');
 const { ItemEntity } = require('./entities/item-entity');
-const { ModifiersEntity } = require('./entities/modifiers-entity');
+const { ItemModifiersEntity } = require('./entities/item-modifiers-entity');
 
 let itemsConfig = {
     parentItemLabel: 'Items & Inventory',
@@ -16,9 +16,9 @@ let itemsConfig = {
 
 let entitiesConfig = (projectConfig) => { return {
     item: ItemEntity.propertiesConfig(itemsConfig),
-    group: GroupEntity.propertiesConfig(itemsConfig, projectConfig),
+    itemGroup: ItemGroupEntity.propertiesConfig(itemsConfig, projectConfig),
     inventory: InventoryEntity.propertiesConfig(itemsConfig),
-    modifiers: ModifiersEntity.propertiesConfig(itemsConfig)
+    itemModifiers: ItemModifiersEntity.propertiesConfig(itemsConfig)
 }};
 
 module.exports.entitiesConfig = entitiesConfig;

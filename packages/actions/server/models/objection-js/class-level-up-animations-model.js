@@ -35,7 +35,7 @@ class ClassLevelUpAnimationsModel extends ObjectionJsRawModel
                     to: LevelModel.tableName+'.id'
                 }
             }
-        }
+        };
     }
 
 }

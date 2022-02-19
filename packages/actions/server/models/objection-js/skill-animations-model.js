@@ -26,7 +26,7 @@ class SkillAnimationsModel extends ObjectionJsRawModel
                     to: SkillModel.tableName+'.id'
                 }
             }
-        }
+        };
     }
 
 }

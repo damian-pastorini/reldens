@@ -23,7 +23,7 @@ class ClassPathEntity extends EntityProperties
                 type: 'reference',
                 reference: 'skills_levels_set',
                 isRequired: true
-            },
+            }
         };
 
         let listPropertiesKeys = Object.keys(properties);

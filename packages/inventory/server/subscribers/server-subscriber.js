@@ -29,7 +29,7 @@ class ServerSubscriber
         );
         GroupsDataGenerator.appendGroupsList(
             configProcessor,
-            await inventoryModelsManager.getEntity('group').loadAll()
+            await inventoryModelsManager.getEntity('itemGroup').loadAll()
         );
     }
 

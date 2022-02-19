@@ -19,7 +19,7 @@ class LevelsSetEntity extends EntityProperties
             },
             autoFillExperienceMultiplier: {
                 type: 'boolean'
-            },
+            }
         };
 
         let listPropertiesKeys = Object.keys(properties);

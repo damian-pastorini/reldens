@@ -12,7 +12,7 @@ const { MimeTypes } = require('../../../admin/server/upload-file/mime-types');
 const { InventoryConst } = require('../../constants');
 const { sc } = require('@reldens/utils');
 
-class GroupEntity extends EntityProperties
+class ItemGroupEntity extends EntityProperties
 {
 
     static propertiesDefinition()
@@ -112,4 +112,4 @@ class GroupEntity extends EntityProperties
 
 }
 
-module.exports.GroupEntity = GroupEntity;
+module.exports.ItemGroupEntity = ItemGroupEntity;

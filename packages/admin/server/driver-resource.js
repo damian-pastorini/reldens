@@ -192,7 +192,7 @@ class DriverResource extends BaseResource
         if(beforeCallback){
             await beforeCallback(model, id, this);
         }
-        let result = await this.model.delete(id);
+        let result = await this.model.deleteById(id);
         let afterCallback = sc.get(this.callbacks, 'afterDelete', false);
         if(afterCallback){
             await afterCallback(result, id, this);
