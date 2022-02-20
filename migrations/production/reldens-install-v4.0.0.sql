@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS `audio` (
   CONSTRAINT `FK_audio_rooms` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON DELETE SET NULL ON UPDATE SET NULL
 ) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table audio: ~3 rows (approximately)
+-- Dumping data for table audio: ~2 rows (approximately)
 /*!40000 ALTER TABLE `audio` DISABLE KEYS */;
 INSERT INTO `audio` (`id`, `audio_key`, `files_name`, `config`, `room_id`, `category_id`, `enabled`) VALUES
 	(3, 'footstep', 'footstep.mp3', NULL, NULL, 3, 1),
@@ -150,7 +150,7 @@ CREATE TABLE IF NOT EXISTS `chat` (
   CONSTRAINT `FK__scenes` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table chat: ~98 rows (approximately)
+-- Dumping data for table chat: ~0 rows (approximately)
 /*!40000 ALTER TABLE `chat` DISABLE KEYS */;
 /*!40000 ALTER TABLE `chat` ENABLE KEYS */;
 
@@ -388,7 +388,7 @@ CREATE TABLE IF NOT EXISTS `features` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table features: ~9 rows (approximately)
+-- Dumping data for table features: ~10 rows (approximately)
 /*!40000 ALTER TABLE `features` DISABLE KEYS */;
 INSERT INTO `features` (`id`, `code`, `title`, `is_enabled`) VALUES
 	(1, 'chat', 'Chat', 1),
@@ -409,7 +409,7 @@ CREATE TABLE IF NOT EXISTS `items_group` (
   `key` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `label` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `description` text CHARACTER SET utf8 COLLATE utf8_unicode_ci,
-  `files_name` text COLLATE utf8_unicode_ci,
+  `files_name` text CHARACTER SET utf8 COLLATE utf8_unicode_ci,
   `sort` int DEFAULT NULL,
   `items_limit` int NOT NULL DEFAULT '0',
   `limit_per_item` int NOT NULL DEFAULT '0',
@@ -456,7 +456,7 @@ CREATE TABLE IF NOT EXISTS `items_item` (
   `uses_limit` int NOT NULL DEFAULT '1' COMMENT 'Default 1 use per item (0 = unlimited).',
   `useTimeOut` int DEFAULT NULL,
   `execTimeOut` int DEFAULT NULL,
-  `customData` text COLLATE utf8_unicode_ci,
+  `customData` text CHARACTER SET utf8 COLLATE utf8_unicode_ci,
   PRIMARY KEY (`id`),
   UNIQUE KEY `id` (`id`),
   UNIQUE KEY `key` (`key`),
@@ -590,15 +590,10 @@ CREATE TABLE IF NOT EXISTS `players` (
   UNIQUE KEY `name` (`name`),
   KEY `FK_players_users` (`user_id`),
   CONSTRAINT `FK_players_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table players: ~4 rows (approximately)
+-- Dumping data for table players: ~0 rows (approximately)
 /*!40000 ALTER TABLE `players` DISABLE KEYS */;
-INSERT INTO `players` (`id`, `user_id`, `name`, `created_at`) VALUES
-	(1, 1, 'Darth', '2021-07-24 20:12:41'),
-	(2, 2, 'Player2', '2021-07-24 20:12:41'),
-	(3, 3, 'test', '2021-07-25 10:33:12'),
-	(7, 1, 'test23123', '2021-07-25 11:51:21');
 /*!40000 ALTER TABLE `players` ENABLE KEYS */;
 
 -- Dumping structure for table players_state
@@ -614,14 +609,10 @@ CREATE TABLE IF NOT EXISTS `players_state` (
   KEY `FK_player_state_player_stats` (`player_id`),
   CONSTRAINT `FK_player_state_player_stats` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON UPDATE CASCADE,
   CONSTRAINT `FK_player_state_rooms` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table players_state: ~3 rows (approximately)
+-- Dumping data for table players_state: ~0 rows (approximately)
 /*!40000 ALTER TABLE `players_state` DISABLE KEYS */;
-INSERT INTO `players_state` (`id`, `player_id`, `room_id`, `x`, `y`, `dir`) VALUES
-	(1, 1, 4, 823, 488, 'down'),
-	(2, 2, 4, 676, 451, 'left'),
-	(3, 3, 4, 623, 460, 'down');
 /*!40000 ALTER TABLE `players_state` ENABLE KEYS */;
 
 -- Dumping structure for table players_stats
@@ -637,41 +628,10 @@ CREATE TABLE IF NOT EXISTS `players_stats` (
   KEY `user_id` (`player_id`) USING BTREE,
   CONSTRAINT `FK_player_current_stats_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT `FK_players_current_stats_players_stats` FOREIGN KEY (`stat_id`) REFERENCES `stats` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=71 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table players_stats: ~30 rows (approximately)
+-- Dumping data for table players_stats: ~0 rows (approximately)
 /*!40000 ALTER TABLE `players_stats` DISABLE KEYS */;
-INSERT INTO `players_stats` (`id`, `player_id`, `stat_id`, `base_value`, `value`) VALUES
-	(1, 1, 1, 210, 167),
-	(2, 1, 2, 210, 210),
-	(3, 1, 3, 210, 210),
-	(4, 1, 4, 210, 210),
-	(5, 1, 5, 100, 100),
-	(6, 1, 6, 100, 100),
-	(7, 1, 7, 100, 100),
-	(8, 1, 8, 100, 100),
-	(9, 1, 9, 100, 100),
-	(10, 1, 10, 100, 100),
-	(11, 2, 1, 100, 34),
-	(12, 2, 2, 100, 100),
-	(13, 2, 3, 100, 100),
-	(14, 2, 4, 100, 100),
-	(15, 2, 5, 100, 100),
-	(16, 2, 6, 100, 100),
-	(17, 2, 7, 100, 100),
-	(18, 2, 8, 100, 100),
-	(19, 2, 9, 100, 100),
-	(20, 2, 10, 100, 100),
-	(21, 3, 1, 100, 100),
-	(22, 3, 2, 100, 100),
-	(23, 3, 3, 100, 100),
-	(24, 3, 4, 100, 100),
-	(25, 3, 5, 100, 100),
-	(26, 3, 6, 100, 100),
-	(27, 3, 7, 100, 100),
-	(28, 3, 8, 100, 100),
-	(29, 3, 9, 100, 100),
-	(30, 3, 10, 100, 100);
 /*!40000 ALTER TABLE `players_stats` ENABLE KEYS */;
 
 -- Dumping structure for table respawn
@@ -1121,14 +1081,10 @@ CREATE TABLE IF NOT EXISTS `skills_owners_class_path` (
   PRIMARY KEY (`id`),
   KEY `level_set_id` (`class_path_id`) USING BTREE,
   CONSTRAINT `FK_skills_owners_class_path_skills_class_path` FOREIGN KEY (`class_path_id`) REFERENCES `skills_class_path` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table skills_owners_class_path: ~3 rows (approximately)
+-- Dumping data for table skills_owners_class_path: ~0 rows (approximately)
 /*!40000 ALTER TABLE `skills_owners_class_path` DISABLE KEYS */;
-INSERT INTO `skills_owners_class_path` (`id`, `class_path_id`, `owner_id`, `currentLevel`, `currentExp`) VALUES
-	(1, 1, 1, 8, 1350),
-	(2, 2, 2, 1, 0),
-	(3, 5, 3, 1, 0);
 /*!40000 ALTER TABLE `skills_owners_class_path` ENABLE KEYS */;
 
 -- Dumping structure for table skills_skill
@@ -1364,7 +1320,7 @@ CREATE TABLE IF NOT EXISTS `stats` (
   UNIQUE KEY `key` (`key`) USING BTREE
 ) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table stats: ~10 rows (approximately)
+-- Dumping data for table stats: ~0 rows (approximately)
 /*!40000 ALTER TABLE `stats` DISABLE KEYS */;
 INSERT INTO `stats` (`id`, `key`, `label`, `description`, `base_value`, `customData`) VALUES
 	(1, 'hp', 'HP', 'Player life points', 100, '{"showBase":true}'),
@@ -1392,14 +1348,10 @@ CREATE TABLE IF NOT EXISTS `users` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `email` (`email`),
   UNIQUE KEY `username` (`username`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
--- Dumping data for table users: ~3 rows (approximately)
+-- Dumping data for table users: ~0 rows (approximately)
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` (`id`, `email`, `username`, `password`, `role_id`, `status`, `created_at`, `updated_at`) VALUES
-	(1, 'dap@dap.com', 'Darth', '$2b$10$PQIYGBFyA/69DaowJVTA5ufVWmIUeIOwIK4e6JCAP5Uen0sp0TAHu', 1, '1', '2021-07-22 14:04:28', '2022-01-05 20:50:48'),
-	(2, 'dap2@dap.com', 'dap2', '$2b$10$Y45UhEIg99a3dH5twIpCUua5HUKPwSChYta7PTDrEeQdWsD8.FPHi', 1, '1', '2021-07-22 14:06:53', '2021-12-26 14:54:24'),
-	(3, 'dap3@dap.com', 'dap3', '$2b$10$HYkzjsYUdZiVD8WXToGjvuKtC.WiWag5dD6xburTOSORg5TKngkhm', 1, '1', '2021-07-25 08:29:24', '2021-07-25 08:32:27');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
