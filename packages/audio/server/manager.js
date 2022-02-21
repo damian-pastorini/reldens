@@ -31,7 +31,7 @@ class AudioManager
                 {room_id: null, enabled: 1},
                 ['category', 'markers']
             );
-            this.globalAudios = sc.convertArrayToObjectByKeys(loadedGlobalAudios, 'audio_key');
+            this.globalAudios = sc.convertObjectsArrayToObjectByKeys(loadedGlobalAudios, 'audio_key');
         }
 
         return this.globalAudios;
@@ -44,7 +44,7 @@ class AudioManager
                 {room_id: roomId, enabled: 1},
                 ['parent_room', 'category', 'markers']
             );
-            this.roomsAudios[roomId] = sc.convertArrayToObjectByKeys(loadedRoomAudios, 'audio_key');
+            this.roomsAudios[roomId] = sc.convertObjectsArrayToObjectByKeys(loadedRoomAudios, 'audio_key');
         }
         return this.roomsAudios[roomId];
     }
