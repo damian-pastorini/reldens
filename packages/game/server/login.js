@@ -8,6 +8,7 @@
 
 const { PasswordManager } = require('./password-manager');
 const { ErrorManager, Logger, sc } = require('@reldens/utils');
+const {validate} = require("@babel/core/lib/config/validation/options");
 
 class LoginManager
 {
@@ -102,7 +103,7 @@ class LoginManager
     async roleAuthenticationCallback(email, password, roleId = false)
     {
         let user = await this.usersManager.loadUserByEmail(email);
-        let validatedRole = !roleId || user.role_id === roleId;
+        let validatedRole = !roleId || String(user.role_id) === String(roleId);
         if(user && validatedRole){
             let result = this.passwordManager.validatePassword(
                 password,

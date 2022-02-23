@@ -9,7 +9,7 @@ const { DriverResource } = require('./driver-resource');
 const { AdminTranslations } = require('./admin-translations');
 const AdminJS = require('adminjs');
 const AdminJSExpress = require('@adminjs/express');
-const { sc } = require('@reldens/utils');
+const { Logger, sc } = require('@reldens/utils');
 
 class AdminManager
 {
@@ -22,8 +22,11 @@ class AdminManager
         this.translations = sc.get(props, 'translations', {});
         this.router = false;
         this.adminJs = false;
-        this.useSecureLogin = false;
-        this.authenticateCallback = sc.get(props, 'authenticateCallback', () => { return true; });
+        this.useSecureLogin = Boolean(Number(process.env.RELDENS_ADMIN_SECURE_LOGIN || 0) || false);
+        this.authenticateCallback = sc.get(props, 'authenticateCallback', () => {
+            Logger.info('Authenticate callback undefined.')
+        });
+        this.authCookiePassword = (process.env.ADMIN_COOKIE_PASSWORD || 'secret-password-to-secure-the-admin-cookie');
     }
 
     setupAdmin()
@@ -64,11 +67,12 @@ class AdminManager
     createRouter()
     {
         return !this.useSecureLogin ? AdminJSExpress.buildRouter(this.adminJs)
-            : AdminJSExpress.buildAuthenticatedRouter(this.adminJs, {
-                authenticate: this.authenticateCallback,
-                cookiePassword: (process.env.ADMIN_COOKIE_PASSWORD || 'secret-password-to-secure-the-admin-cookie')
-            }
-        );
+            : AdminJSExpress.buildAuthenticatedRouter(
+                this.adminJs,
+                {authenticate: this.authenticateCallback, cookiePassword: this.authCookiePassword},
+                null,
+                {resave: true, saveUninitialized: true}
+            );
     }
 
     static prepareResources(rawResources)
