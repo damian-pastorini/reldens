@@ -6,7 +6,7 @@
 
 const { ClassLevelUpAnimationsModel } = require('./class-level-up-animations-model');
 const { rawRegisteredEntities } = require('@reldens/skills/lib/server/storage/models/mikro-orm/registered-models-mikro-orm');
-const { entitiesConfig } = require('../../entiites-config');
+const { entitiesConfig } = require('../../entities-config');
 const { entitiesTranslations } = require('../../entities-translations');
 
 Object.assign(rawRegisteredEntities, {

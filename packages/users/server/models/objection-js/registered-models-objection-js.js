@@ -9,7 +9,7 @@ const { StatsModel } = require('./stats-model');
 const { PlayersModel } = require('./players-model');
 const { PlayersStatsModel } = require('./players-stats-model');
 const { PlayersStateModel } = require('./players-state-model');
-const { entitiesConfig } = require('../../entiites-config');
+const { entitiesConfig } = require('../../entities-config');
 
 let rawRegisteredEntities = {
     users: UsersModel,

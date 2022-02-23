@@ -8,7 +8,7 @@ const { RoomsModel } = require('./rooms-model');
 const { RoomsChangePointsModel } = require('./change-points-model');
 const { RoomsReturnPointsModel } = require('./return-points-model');
 const { entitiesTranslations } = require('../../entities-translations');
-const { entitiesConfig } = require('../../entiites-config');
+const { entitiesConfig } = require('../../entities-config');
 
 let rawRegisteredEntities = {
     rooms: RoomsModel,

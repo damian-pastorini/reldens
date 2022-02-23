@@ -6,7 +6,7 @@
 
 const { RespawnModel } = require('./respawn-model');
 const { entitiesTranslations } = require('../../entities-translations');
-const { entitiesConfig } = require('../../entiites-config');
+const { entitiesConfig } = require('../../entities-config');
 
 let rawRegisteredEntities = {
     respawn: RespawnModel
