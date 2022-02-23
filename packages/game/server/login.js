@@ -8,7 +8,6 @@
 
 const { PasswordManager } = require('./password-manager');
 const { ErrorManager, Logger, sc } = require('@reldens/utils');
-const {validate} = require("@babel/core/lib/config/validation/options");
 
 class LoginManager
 {
