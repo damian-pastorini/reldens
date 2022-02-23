@@ -84,7 +84,7 @@ class AdminManager
         let registeredResources = [];
         for(let i of rawResourcesKeys){
             let rawResource = rawResources[i];
-            let objectionDriverResource = {
+            let driverResource = {
                 resource: new DriverResource(rawResource.rawEntity, rawResource.config),
                 id: () => {
                     return rawResource.rawEntity.tableName();
@@ -103,7 +103,7 @@ class AdminManager
                 },
                 features: sc.get(rawResource.config, 'features', [])
             };
-            registeredResources.push(objectionDriverResource);
+            registeredResources.push(driverResource);
         }
         return registeredResources;
     }
