@@ -12,7 +12,7 @@ const { entitiesConfig } = require('../../entities-config');
 
 let rawRegisteredEntities = {
     objectsAnimations: ObjectsAnimationsModel,
-    objectsModel: ObjectsModel,
+    objects: ObjectsModel,
     objectsAssets: ObjectsAssetsModel
 };
 

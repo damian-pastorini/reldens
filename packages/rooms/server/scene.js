@@ -54,7 +54,7 @@ class RoomScene extends RoomLogin
         if(options.messageActions){
             Object.assign(this.messageActions, options.messageActions);
         }
-        // @NOTE: as you can see not all the scene information is been sent to the client, this is because we have
+        // @NOTE: as you can see not all the scene information is being sent to the client, this is because we have
         // hidden information to be discovered (hidden objects are only active on the server side).
         this.roomData = options.roomData;
         // append public objects to the room data:

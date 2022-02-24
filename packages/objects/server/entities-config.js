@@ -14,7 +14,7 @@ let objectsConfig = {
 };
 
 let entitiesConfig = {
-    objectsModel: ObjectsEntity.propertiesConfig(objectsConfig),
+    objects: ObjectsEntity.propertiesConfig(objectsConfig),
     objectsAnimations: ObjectsAnimationsEntity.propertiesConfig(objectsConfig),
     objectsAssets: ObjectsAssetsEntity.propertiesConfig(objectsConfig)
 };

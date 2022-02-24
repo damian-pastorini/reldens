@@ -49,14 +49,6 @@ class ObjectsModel extends ObjectionJsRawModel
         }
     }
 
-    static loadRoomObjects(roomId)
-    {
-        return this.query()
-            .withGraphFetched('[parent_room, objects_assets, objects_animations]')
-            .where('room_id', roomId)
-            .orderBy('tile_index');
-    }
-
 }
 
 module.exports.ObjectsModel = ObjectsModel;

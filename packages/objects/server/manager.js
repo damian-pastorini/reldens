@@ -7,7 +7,6 @@
  *
  */
 
-const { ObjectsModel } = require('./models/objection-js/objects-model');
 const { Logger, sc } = require('@reldens/utils');
 
 class ObjectsManager
@@ -19,6 +18,10 @@ class ObjectsManager
         this.events = sc.get(props, 'events', false);
         if(!this.events){
             Logger.error('EventsManager undefined in ObjectsManager.');
+        }
+        this.dataServer = sc.get(props, 'dataServer', false);
+        if(!this.dataServer){
+            Logger.error('DataServer undefined in ObjectsManager.');
         }
         // room objects is just the list of the objects in the storage:
         this.roomObjectsData = false;
@@ -34,7 +37,12 @@ class ObjectsManager
     async loadObjectsByRoomId(roomId)
     {
         if(!this.roomObjectsData){
-            this.roomObjectsData = await ObjectsModel.loadRoomObjects(roomId);
+            let roomsRepository = this.dataServer.getEntity('objects');
+            roomsRepository.sortBy = 'tile_index';
+            this.roomObjectsData = await roomsRepository.loadByWithRelations(
+                {room_id: roomId},
+                ['parent_room', 'objects_assets', 'objects_animations']
+            );
         }
     }
 
