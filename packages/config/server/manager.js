@@ -7,25 +7,32 @@
  */
 
 const { ConfigProcessor } = require('../processor');
-const { ConfigModel } = require('./model');
 const { GameConfig } = require('../../game/server/config');
+const { GameCustomClasses } = require('../../game/server/game-custom-classes');
 const { ConfigConst } = require('../constants');
-const PackageData = require('../../../package.json');
 const { Logger, sc } = require('@reldens/utils');
+const PackageData = require('../../../package.json');
 
 class ConfigManager
 {
 
     constructor(props)
     {
-        this.events = sc.getDef(props, 'events', false);
+        this.events = sc.get(props, 'events', false);
         if(!this.events){
             Logger.error('EventsManager undefined in ConfigManager.');
         }
+        this.dataServer = sc.get(props, 'dataServer', false);
         // initialize config props with default data:
         this.configList = {
             server: {}
         };
+        let customClasses = props.customClasses || {};
+        this.configList.server.customClasses = customClasses;
+        // custom classes:
+        if({} === customClasses){
+            GameCustomClasses.definitionErrorLog();
+        }
     }
 
     async loadConfigurations()
@@ -35,8 +42,8 @@ class ConfigManager
         this.configList.gameEngine.version = PackageData.version;
         await this.events.emit('reldens.beforeLoadConfigurations', {configManager: this});
         // get the configurations from the database:
-        let configCollection = await ConfigModel.loadAll();
-        // set them in the manager property so we can find them by path later:
+        let configCollection = await this.dataServer.getEntity('config').loadAll();
+        // set them in the manager property to find them by path later:
         for(let config of configCollection){
             // create an object for each scope:
             if(!sc.hasOwn(this.configList, config.scope)){
@@ -97,7 +104,7 @@ class ConfigManager
         }
         if(config.type === ConfigConst.CONFIG_TYPE_JSON){
             try {
-                return sc.getJson(config.value);
+                return sc.toJson(config.value);
             } catch (e) {
                 Logger.error('Invalid JSON on configuration:', config);
             }

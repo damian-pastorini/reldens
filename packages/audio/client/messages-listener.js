@@ -13,30 +13,41 @@ class MessagesListener
     constructor()
     {
         this.sceneAudioPlayer = SceneAudioPlayer;
+        this.queueMessages = [];
+        this.sceneReady = false;
     }
 
     listenMessages(room, gameManager)
     {
         room.onMessage(async (message) => {
-            if(message.act !== AudioConst.AUDIO_UPDATE){
-                return;
-            }
-            if(message.playerConfig){
-                gameManager.audioManager.playerConfig = message.playerConfig;
-            }
-            if(message.categories){
-                gameManager.audioManager.addCategories(message.categories);
-                await gameManager.events.emit('reldens.audioManagerUpdateCategoriesLoaded', this, room, gameManager, message);
-            }
-            if(message.audios){
-                let currentScene = gameManager.gameEngine.scene.getScene(room.name);
-                await gameManager.audioManager.loadAudiosInScene(
-                    message.audios,
-                    currentScene
-                );
-                await gameManager.events.emit('reldens.audioManagerUpdateAudiosLoaded', this, room, gameManager, message);
-            }
+            await this.processMessage(message, room, gameManager);
         });
+    }
+
+    async processQueue()
+    {
+        this.sceneReady = true;
+        if(0 === this.queueMessages.length){
+            return false;
+        }
+        for(let messageData of this.queueMessages){
+            let { message, room, gameManager } = messageData;
+            await this.processMessage(message, room, gameManager);
+        }
+        return true;
+    }
+
+    async processMessage(message, room, gameManager)
+    {
+        if(false === this.sceneReady){
+            this.queueMessages.push({message, room, gameManager});
+        }
+        if(message.act === AudioConst.AUDIO_UPDATE){
+            await gameManager.audioManager.processUpdateData(message, room, gameManager);
+        }
+        if(message.act === AudioConst.AUDIO_DELETE){
+            await gameManager.audioManager.processDeleteData(message, room, gameManager);
+        }
     }
 
 }

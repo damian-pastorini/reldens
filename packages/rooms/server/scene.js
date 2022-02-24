@@ -13,6 +13,7 @@ const { CollisionsManager } = require('../../world/server/collisions-manager');
 const { ObjectsManager } = require('../../objects/server/manager');
 const { GameConst } = require('../../game/constants');
 const { Logger, ErrorManager, sc } = require('@reldens/utils');
+const { RoomsConst } = require('../constants');
 
 class RoomScene extends RoomLogin
 {
@@ -22,9 +23,10 @@ class RoomScene extends RoomLogin
         this.messageActions = {};
         // parent config:
         super.onCreate(options);
+        this.roomType = RoomsConst.ROOM_TYPE_SCENE;
         // override super prop:
         this.validateRoomData = true;
-        Logger.info('INIT ROOM: '+ this.roomName);
+        Logger.info('Created RoomScene: '+this.roomName+' - ID: '+this.roomId);
         this.sceneId = this.roomId;
         // @NOTE: we create an instance of the objects manager for each room-scene, this is on purpose so all the
         // related object instances will be removed when the room is disposed.
@@ -52,7 +54,7 @@ class RoomScene extends RoomLogin
         if(options.messageActions){
             Object.assign(this.messageActions, options.messageActions);
         }
-        // @NOTE: as you can see not all the scene information is been sent to the client, this is because we have
+        // @NOTE: as you can see not all the scene information is being sent to the client, this is because we have
         // hidden information to be discovered (hidden objects are only active on the server side).
         this.roomData = options.roomData;
         // append public objects to the room data:

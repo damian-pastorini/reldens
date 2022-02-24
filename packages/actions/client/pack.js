@@ -16,11 +16,11 @@ class ActionsPack extends PackInterface
 
     setupPack(props)
     {
-        this.gameManager = sc.getDef(props, 'gameManager', false);
+        this.gameManager = sc.get(props, 'gameManager', false);
         if(!this.gameManager){
             Logger.error('Game Manager undefined in ActionsPack.');
         }
-        this.events = sc.getDef(props, 'events', false);
+        this.events = sc.get(props, 'events', false);
         if(!this.events){
             Logger.error('EventsManager undefined in ActionsPack.');
         }

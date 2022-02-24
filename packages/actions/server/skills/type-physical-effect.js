@@ -20,9 +20,9 @@ class TypePhysicalEffect extends PhysicalEffect
         this.currentBattle = false;
         // @NOTE: hit priority is something specifically from reldens physics engine, in order to change this value you
         // need to extend this class and send a new one as parameter in the constructor.
-        this.hitPriority = sc.getDef(props, 'hitPriority', 2);
+        this.hitPriority = sc.get(props, 'hitPriority', 2);
         // the animation direction is a custom property on the skill calculated on the server to be send to the client:
-        this.animDir = sc.getDef(props, 'animDir', false);
+        this.animDir = sc.get(props, 'animDir', false);
     }
 
     async onHit(props)

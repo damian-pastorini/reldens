@@ -6,73 +6,137 @@
  *
  */
 
+const { BundlerDriverParcelMiddleware } = require('./bundler-driver-parcel-middleware');
 const fs = require('fs');
 const path = require('path');
-const del = require('del');
 const TemplateEngine = require('mustache');
-const { Logger } = require('@reldens/utils');
+const { Logger, sc, ErrorManager} = require('@reldens/utils');
+const { GameConst } = require('../constants');
 
 class ThemeManager
 {
 
-    validateOrCreateTheme(config)
+    projectRoot = '';
+    reldensModulePath = '';
+    reldensModulePackagesPath = '';
+    reldensModuleThemePath = '';
+    reldensModuleDefaultThemePath = '';
+    reldensModuleDefaultThemeAssetsPath = '';
+    reldensModuleThemePackagesPath = '';
+    distPath = '';
+    assetsDistPath = '';
+    cssDistPath = '';
+    themePath = '';
+    projectThemeName = GameConst.THEMES.DEFAULT;
+    projectThemePath = '';
+    projectPackagesPath = '';
+    projectAssetsPath = '';
+    projectCssPath = '';
+    projectIndexPath = '';
+
+    constructor(props)
     {
-        this.projectTheme = path.join('theme', 'default');
-        this.projectRoot = config.projectRoot;
-        // check for theme folder:
-        if(config.projectTheme){
-            this.projectTheme = path.join('theme', config.projectTheme);
+        if(!sc.hasOwn(props, 'projectRoot')){
+            ErrorManager.error('Missing project property.');
         }
-        // check if the dist folder exists:
-        let themesFolderExists = fs.existsSync(path.join(this.projectRoot, 'theme'));
-        if(!themesFolderExists){
-            fs.mkdirSync(path.join(this.projectRoot, 'theme'));
-        }
-        // check if the folders exists:
-        let rootDist = path.join(this.projectRoot, 'dist');
-        let distExists = fs.existsSync(rootDist);
-        let rootTheme = path.join(this.projectRoot, this.projectTheme);
-        let themeExists = fs.existsSync(rootTheme);
-        // we check the dist folder since it will be generated automatically on first run:
-        if(!distExists || !themeExists){
-            // if theme folder doesn't exists:
-            if(!themeExists){
-                // copy /default theme from node_modules/reldens into the project folder and into the dist folder:
-                let nodeRoot = path.join(this.projectRoot, 'node_modules', 'reldens');
-                let nodeTheme = path.join(nodeRoot, 'theme');
-                let themeDefault = path.join(nodeTheme, 'default');
-                let themePackages = path.join(nodeTheme, 'packages');
-                this.copyFolderSync(themeDefault, rootTheme);
-                this.copyFolderSync(themePackages, path.join(this.projectRoot, 'theme', 'packages'));
-                this.copyFolderSync(themeDefault, path.join(this.projectRoot, 'dist'));
-                Logger.error('Project theme folder was not found: '+config.projectTheme
-                        +'\nA copy from default has been made.');
-            } else {
-                // if theme exists just copy it into the dist folder (assumed the packages folder was considered):
-                this.copyFolderSync(rootTheme, rootDist);
-            }
+        this.setupPaths(props);
+    }
+
+    setupPaths(props)
+    {
+        this.projectRoot = props.projectRoot;
+        this.projectThemeName = sc.get(props, 'projectThemeName', GameConst.THEMES.DEFAULT);
+        this.reldensModulePath = path.join(this.projectRoot, 'node_modules', 'reldens');
+        this.reldensModulePackagesPath = path.join(this.reldensModulePath, GameConst.THEMES.PACKAGES);
+        this.reldensModuleThemePath = path.join(this.reldensModulePath, GameConst.THEMES.THEME);
+        this.reldensModuleDefaultThemePath = path.join(this.reldensModuleThemePath, GameConst.THEMES.DEFAULT);
+        this.reldensModuleDefaultThemeAssetsPath = path.join(this.reldensModuleDefaultThemePath, GameConst.THEMES.ASSETS);
+        this.reldensModuleThemePackagesPath = path.join(this.reldensModuleThemePath, GameConst.THEMES.PACKAGES);
+        this.distPath = path.join(this.projectRoot, GameConst.THEMES.DIST);
+        this.assetsDistPath = path.join(this.distPath, GameConst.THEMES.ASSETS);
+        this.cssDistPath = path.join(this.distPath, GameConst.THEMES.CSS)
+        this.themePath = path.join(this.projectRoot, GameConst.THEMES.THEME);
+        this.projectThemePath = path.join(this.themePath, this.projectThemeName);
+        this.projectPackagesPath = path.join(this.themePath, GameConst.THEMES.PACKAGES);
+        this.projectAssetsPath = path.join(this.projectThemePath, GameConst.THEMES.ASSETS);
+        this.projectCssPath = path.join(this.projectThemePath, GameConst.THEMES.CSS);
+        this.projectIndexPath = path.join(this.projectThemePath, GameConst.THEMES.INDEX);
+    }
+
+    paths()
+    {
+        return {
+            projectRoot: this.projectRoot,
+            reldensModulePath: this.reldensModulePath,
+            reldensModulePackagesPath: this.reldensModulePackagesPath,
+            reldensModuleThemePath: this.reldensModuleThemePath,
+            reldensModuleDefaultThemePath: this.reldensModuleDefaultThemePath,
+            reldensModuleDefaultThemeAssetsPath: this.reldensModuleDefaultThemeAssetsPath,
+            reldensModuleThemePackagesPath: this.reldensModuleThemePackagesPath,
+            distPath: this.distPath,
+            assetsDistPath: this.assetsDistPath,
+            themePath: this.themePath,
+            projectThemePath: this.projectThemePath,
+            projectPackagesPath: this.projectPackagesPath,
+            projectAssetsPath: this.projectAssetsPath,
+            projectIndexPath: this.projectIndexPath
+        };
+    }
+
+    assetPath(...args)
+    {
+        return path.join(this.projectAssetsPath, ...args);
+    }
+
+    permissionsCheck()
+    {
+        try {
+            let crudTestPath = path.join(this.projectRoot, 'crud-test');
+            fs.mkdirSync(crudTestPath, {recursive: true});
+            fs.rmSync(crudTestPath);
+            return true;
+        } catch (error) {
+            return false;
         }
     }
 
-    async resetDist()
+    resetDist()
     {
-        let distFolder = path.join(this.projectRoot, 'dist');
-        if(fs.existsSync(distFolder)){
-            await del(distFolder);
-            fs.mkdirSync(distFolder);
+        this.removeDist();
+        fs.mkdirSync(this.distPath, {recursive: true});
+        fs.mkdirSync(this.assetsDistPath, {recursive: true});
+        fs.mkdirSync(this.cssDistPath, {recursive: true});
+        Logger.info({'Reset "dist" folder, created:': [this.distPath, this.assetsDistPath, this.cssDistPath]});
+    }
+
+    removeDist()
+    {
+        if(fs.existsSync(this.distPath)){
+            fs.rmSync(this.distPath, {recursive: true});
         }
+    }
+
+    installDefaultTheme()
+    {
+        this.copyFolderSync(this.reldensModuleDefaultThemePath, this.projectThemePath);
+        this.copyFolderSync(this.reldensModuleThemePackagesPath, this.projectPackagesPath);
+        this.copyFolderSync(this.reldensModuleDefaultThemePath, this.distPath);
+        Logger.info({'Install "default" theme:': [
+                [this.reldensModuleDefaultThemePath, this.projectThemePath],
+                [this.reldensModuleThemePackagesPath, this.projectPackagesPath],
+                [this.reldensModuleDefaultThemePath, this.distPath]
+            ]});
     }
 
     copyAssetsToDist()
     {
-        let themeAssets = path.join(this.projectRoot, this.projectTheme, 'assets');
-        let distAssets = path.join(this.projectRoot, 'dist', 'assets');
-        this.copyFolderSync(themeAssets, distAssets);
+        this.copyFolderSync(this.projectAssetsPath, this.assetsDistPath);
+        Logger.info({'Copied "assets" to "dist":': [this.projectAssetsPath, this.assetsDistPath]});
     }
 
     copyFolderSync(from, to)
     {
-        fs.mkdirSync(to);
+        fs.mkdirSync(to, {recursive: true});
         fs.readdirSync(from).forEach(element => {
             if(fs.lstatSync(path.join(from, element)).isFile()){
                 fs.copyFileSync(path.join(from, element), path.join(to, element));
@@ -82,9 +146,181 @@ class ThemeManager
         });
     }
 
+    copyKnexFile()
+    {
+        let knexFile = path.join(this.projectRoot, 'knexfile.js');
+        if(fs.existsSync(knexFile)){
+            Logger.info('File already exists: knexfile.js');
+            return false;
+        }
+        fs.copyFileSync(path.join(this.reldensModulePath, 'knexfile.js.dist'), knexFile);
+        Logger.info('Reminder: edit the knexfile.js file!');
+    }
+
+    copyEnvFile()
+    {
+        let envFile = path.join(this.projectRoot, '.env');
+        if(fs.existsSync(envFile)){
+            Logger.info('File already exists: .env');
+            return false;
+        }
+        fs.copyFileSync(path.join(this.reldensModulePath, '.env.dist'), envFile);
+        Logger.info('Reminder: edit the .env file!');
+    }
+
+    copyIndex()
+    {
+        let indexFile = path.join(this.projectRoot, 'index.js');
+        if(fs.existsSync(indexFile)){
+            Logger.info('File already exists: index.js');
+            return false;
+        }
+        fs.copyFileSync(path.join(this.reldensModuleThemePath, 'index.js.dist'), indexFile);
+    }
+
+    copyDefaultAssets()
+    {
+        this.copyFolderSync(this.reldensModuleDefaultThemeAssetsPath, this.assetsDistPath);
+        Logger.info({'Copied default assets:': [this.reldensModuleDefaultThemeAssetsPath, this.assetsDistPath]});
+    }
+
+    copyDefaultTheme()
+    {
+        this.copyFolderSync(this.reldensModuleDefaultThemePath, this.projectThemePath);
+        Logger.info({'Copied default theme:': [this.reldensModuleDefaultThemePath, this.projectThemePath]});
+    }
+
+    copyCustomAssets()
+    {
+        this.copyFolderSync(this.projectAssetsPath, this.assetsDistPath);
+        Logger.info({'Copied custom assets:': [this.projectAssetsPath, this.assetsDistPath]});
+    }
+
+    copyPackage()
+    {
+        this.copyFolderSync(this.reldensModuleThemePackagesPath, this.projectPackagesPath);
+        Logger.info({'Copied packages:': [this.reldensModuleThemePackagesPath, this.projectPackagesPath]});
+    }
+
+    async buildCss()
+    {
+        let buildData = {
+            production: process.env.NODE_ENV === 'production',
+            sourceMaps: false,
+            publicUrl: './',
+            outDir: this.projectCssPath
+        };
+        let bundler = new BundlerDriverParcelMiddleware(
+            path.join(this.projectCssPath, GameConst.THEMES.SCSS_FILE),
+            buildData
+        );
+        await bundler.bundle();
+    }
+
+    async buildAdminCss()
+    {
+        let adminCss = path.join(this.projectCssPath, GameConst.THEMES.ADMIN_CSS_FILE);
+        if(!fs.existsSync(adminCss)){
+            let buildData = {
+                production: process.env.NODE_ENV === 'production',
+                sourceMaps: false,
+                publicUrl: './',
+                outDir: this.projectCssPath
+            };
+            let bundler = new BundlerDriverParcelMiddleware(
+                path.join(this.projectCssPath, GameConst.THEMES.ADMIN_SCSS_FILE),
+                buildData
+            );
+            await bundler.bundle();
+        }
+        let adminCssDist = path.join(this.cssDistPath, GameConst.THEMES.ADMIN_CSS_FILE);
+        if(!fs.existsSync(this.cssDistPath)){
+            fs.mkdirSync(this.cssDistPath);
+        }
+        if(!fs.existsSync(adminCssDist)){
+            fs.copyFileSync(adminCss, adminCssDist);
+        }
+    }
+
+    async buildSkeleton()
+    {
+        await this.buildCss();
+        await this.buildClient();
+        Logger.info('Built Skeleton.');
+    }
+
+    async buildClient()
+    {
+        let buildData = {
+            production: process.env.NODE_ENV === 'production',
+            sourceMaps: false,
+            outDir: path.join(this.distPath)
+        };
+        let bundler = new BundlerDriverParcelMiddleware(
+            path.join(this.projectThemePath, GameConst.THEMES.INDEX),
+            buildData
+        );
+        await bundler.bundle();
+    }
+
+    copyNew()
+    {
+        this.copyDefaultAssets();
+        this.copyDefaultTheme();
+        this.copyPackage();
+    }
+
+    async fullRebuild()
+    {
+        this.copyNew();
+        await this.buildSkeleton();
+    }
+
+    async installSkeleton()
+    {
+        this.copyServerFiles();
+        this.resetDist();
+        await this.fullRebuild();
+    }
+
+    copyServerFiles()
+    {
+        this.copyEnvFile();
+        this.copyKnexFile();
+        this.copyIndex();
+    }
+
+    distPathExists()
+    {
+        let result = fs.existsSync(this.distPath);
+        Logger.info({'Dist path:': this.distPath, 'Dist folder exists?': result});
+        return result;
+    }
+
+    themePathExists()
+    {
+        let result = fs.existsSync(this.projectThemePath);
+        Logger.info({'Theme path:': this.projectThemePath, 'Theme folder exists?': result});
+        return result;
+    }
+
+    validateOrCreateTheme()
+    {
+        let distExists = this.distPathExists();
+        let themeExists = this.themePathExists();
+        if(false === themeExists){
+            this.installDefaultTheme();
+            Logger.error('Project theme folder was not found: '+this.projectThemeName
+                +'\nA copy from default has been made.');
+        }
+        if(false === distExists){
+            this.copyAssetsToDist();
+        }
+    }
+
     async loadAndRenderTemplate(filePath, params)
     {
-        let fullPath = path.join(this.projectRoot, this.projectTheme, filePath);
+        let fullPath = path.join(this.projectThemePath, filePath);
         if(!fs.existsSync(fullPath)){
             Logger.error(['Template not found.', fullPath]);
             return false;
@@ -95,4 +331,4 @@ class ThemeManager
 
 }
 
-module.exports.ThemeManager = new ThemeManager();
+module.exports.ThemeManager = ThemeManager;

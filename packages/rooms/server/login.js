@@ -8,6 +8,7 @@
  */
 
 const { Room } = require('colyseus');
+const { RoomsConst } = require('../constants');
 const { ErrorManager, Logger, sc } = require('@reldens/utils');
 
 class RoomLogin extends Room
@@ -15,14 +16,17 @@ class RoomLogin extends Room
 
     onCreate(options)
     {
-        this.events = sc.getDef(options, 'events', false);
+        this.roomType = RoomsConst.ROOM_TYPE_LOGIN;
+        this.events = sc.get(options, 'events', false);
         if(!this.events){
             Logger.error('EventsManager undefined in RoomLogin.');
         }
+        this.dataServer = sc.get(options, 'dataServer', false);
         this.config = options.config;
         this.loginManager = options.loginManager;
         // @NOTE: validateRoomData is overridden in RoomScene onCreate.
         this.validateRoomData = false;
+        options.roomsManager.createdInstances[this.roomId] = this;
     }
 
     // eslint-disable-next-line no-unused-vars

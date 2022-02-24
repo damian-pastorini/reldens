@@ -16,11 +16,11 @@ class InventoryPack extends PackInterface
 
     setupPack(props)
     {
-        this.gameManager = sc.getDef(props, 'gameManager', false);
+        this.gameManager = sc.get(props, 'gameManager', false);
         if(!this.gameManager){
             Logger.error('Game Manager undefined in InventoryPack.');
         }
-        this.events = sc.getDef(props, 'events', false);
+        this.events = sc.get(props, 'events', false);
         if(!this.events){
             Logger.error('EventsManager undefined in InventoryPack.');
         }
@@ -29,6 +29,7 @@ class InventoryPack extends PackInterface
             this.onPlayerAdd(key, roomEvents, player);
         });
         this.events.on('reldens.preloadUiScene', (preloadScene) => {
+            // @TODO - BETA - replace by loader replacing snake name file name by camel case for the template key.
             preloadScene.load.html('inventory', 'assets/features/inventory/templates/ui-inventory.html');
             preloadScene.load.html('equipment', 'assets/features/inventory/templates/ui-equipment.html');
             preloadScene.load.html('inventoryItem', 'assets/features/inventory/templates/item.html');
@@ -54,7 +55,7 @@ class InventoryPack extends PackInterface
             return false;
         }
         let manager = preloadScene.gameManager.inventory.manager;
-        // first time load and then we listen the events to get the updates:
+        // first time load, then we listen the events to get the updates:
         if(Object.keys(manager.groups).length){
             preloadScene.gameManager.gameDom.getElement('#' + InventoryConst.EQUIPMENT_ITEMS).innerHTML = '';
             let orderedGroups = this.sortGroups(manager.groups);
@@ -127,14 +128,19 @@ class InventoryPack extends PackInterface
         }, 'removeItemPack', masterKey);
         gameManager.inventory.manager.listenEvent(ItemsEvents.SET_GROUPS, (props) => {
             // @TODO - BETA - If groups are re-set or updated we will need to update the items as well.
-            if(gameManager.gameDom.getElement('#'+InventoryConst.EQUIPMENT_ITEMS).innerHTML !== ''){
-                return;
+            let reEquipItems = false;
+            let equipmentItemsGroups = gameManager.gameDom.getElement('#'+InventoryConst.EQUIPMENT_ITEMS);
+            if(equipmentItemsGroups.innerHTML !== ''){
+                reEquipItems = true;
             }
-            gameManager.gameDom.getElement('#'+InventoryConst.EQUIPMENT_ITEMS).innerHTML = '';
+            equipmentItemsGroups.innerHTML = '';
             let orderedGroups = this.sortGroups(props.groups);
             for(let i of orderedGroups){
                 let output = this.createGroupBox(props.groups[i], gameManager, uiScene);
                 gameManager.gameDom.appendToElement('#'+InventoryConst.EQUIPMENT_ITEMS, output);
+            }
+            if(reEquipItems){
+                this.resetEquippedItemsDisplay(gameManager, uiScene, equipmentPanel, inventoryPanel);
             }
         }, 'setGroupsPack', masterKey);
         gameManager.inventory.manager.listenEvent(ItemsEvents.EQUIP_ITEM, (item) => {
@@ -143,6 +149,20 @@ class InventoryPack extends PackInterface
         gameManager.inventory.manager.listenEvent(ItemsEvents.UNEQUIP_ITEM, (item) => {
             this.displayItem(item, uiScene, equipmentPanel, inventoryPanel, item.getInventoryId());
         }, 'unequipItemPack', masterKey);
+    }
+
+    resetEquippedItemsDisplay(gameManager, uiScene, equipmentPanel, inventoryPanel)
+    {
+        let items = Object.keys(gameManager.inventory.manager.items);
+        if(0 === items.length){
+            return false;
+        }
+        for(let i of items){
+            let item = gameManager.inventory.manager.items[i];
+            if(item.isType(ItemsConst.TYPE_EQUIPMENT) && true === item.equipped){
+                this.displayItem(item, uiScene, equipmentPanel, inventoryPanel, item.getInventoryId());
+            }
+        }
     }
 
     displayItem(item, uiScene, equipmentPanel, inventoryPanel, itemIdx)
@@ -203,7 +223,8 @@ class InventoryPack extends PackInterface
         return gameManager.gameEngine.parseTemplate(messageTemplate, {
             key: group.key,
             label: group.label,
-            description: group.description
+            description: group.description,
+            fileName: group.files_name
         });
     }
 

@@ -22,6 +22,9 @@ module.exports.ChatConst = {
     CHAT_BALLOON: 'notification-balloon',
     CHAT_GLOBAL: 'chat',
     CHAT_JOINED: 'j',
+    CHAT_SYSTEM: 's',
+    CHAT_PRIVATE: 'p',
+    CHAT_DAMAGE: 'd',
     CHAT_TYPE_NORMAL: 'ctn',
     CHAT_TYPE_PRIVATE_FROM: 'ctpf',
     CHAT_TYPE_PRIVATE_TO: 'ctpt',
@@ -35,5 +38,6 @@ module.exports.ChatConst = {
         ctg: '#ffff00',
         cts: '#2ecc71',
         ctse: '#ff0000'
-    }
+    },
+    ROOM_TYPE_CHAT: 'chat'
 };

@@ -9,6 +9,7 @@
 const { Receiver } = require('@reldens/skills');
 const { Logger, sc } = require('@reldens/utils');
 const { GameConst } = require('../../game/constants');
+const { ActionsConst } = require('../constants');
 
 class ReceiverWrapper extends Receiver
 {
@@ -18,7 +19,7 @@ class ReceiverWrapper extends Receiver
         super(props);
         this.gameManager = props.roomEvents.gameManager;
         this.room = props.roomEvents.room;
-        this.events = sc.getDef(props, 'events', false);
+        this.events = sc.get(props, 'events', false);
         if(!this.events){
             Logger.error('EventsManager undefined in ReceiverWrapper.');
         }
@@ -37,7 +38,7 @@ class ReceiverWrapper extends Receiver
             let animKey = message.act.substring(0, message.act.indexOf(actKey));
             let ownerSprite = false;
             let targetSprite = false;
-            let targetType = 'p';
+            let targetType = ActionsConst.DATA_TYPE_VALUE_PLAYER;
             let isPvP = (
                 sc.hasOwn(currentScene.player.players, message.owner)
                 && sc.hasOwn(currentScene.player.players, message.target)
@@ -53,7 +54,7 @@ class ReceiverWrapper extends Receiver
                 if(sc.hasOwn(currentScene.objectsAnimations, message.target)){
                     targetSprite = currentScene.objectsAnimations[message.target].sceneSprite;
                     ownerSprite = currentScene.player.players[message.owner];
-                    targetType = 'o';
+                    targetType = ActionsConst.DATA_TYPE_VALUE_OBJECT;
                 }
             }
             // @TODO - BETA - Refactor to use a single play animation method and make sure the animation is valid.
@@ -100,11 +101,11 @@ class ReceiverWrapper extends Receiver
         }
         let targetSprite = false;
         let targetSpriteId = false;
-        if(targetType === 'p'){
+        if(targetType === ActionsConst.DATA_TYPE_VALUE_PLAYER){
             targetSprite = this.gameManager.getCurrentPlayer().players[targetKey];
             targetSpriteId = targetSprite.playerId;
         }
-        if(targetType === 'o'){
+        if(targetType === ActionsConst.DATA_TYPE_VALUE_OBJECT){
             targetSprite = currentScene.objectsAnimations[targetKey];
             targetSpriteId = targetKey;
         }
@@ -201,7 +202,7 @@ class ReceiverWrapper extends Receiver
         let castKey = message.data.skillKey+'_cast';
         let castAnimKey = sc.hasOwn(this.gameManager.config.client.skills.animations, castKey)
             ? castKey : 'default_cast';
-        this.playPlayerAnimation(message.data.extraData.oK, castAnimKey);
+        this.playPlayerAnimation(message.data.extraData[ActionsConst.DATA_OWNER_KEY], castAnimKey);
     }
 
     playPlayerAnimation(ownerId, animationKey)
@@ -218,13 +219,13 @@ class ReceiverWrapper extends Receiver
         let spriteX = ownerSprite.x;
         let spriteY = ownerSprite.y;
         let animationSprite = currentScene.physics.add.sprite(spriteX, spriteY, animationKey);
-        let destroyTime = sc.getDef(sceneAnimation, 'destroyTime', false);
+        let destroyTime = sc.get(sceneAnimation, 'destroyTime', false);
         // the default value will be the caster depth - 1 so the animation will be played below the player.
         let depth = sc.hasOwn(sceneAnimation, 'depthByPlayer') && sceneAnimation['depthByPlayer'] === 'above'
             ? ownerSprite.depth + 1 : ownerSprite.depth - 0.1;
         animationSprite.depthByPlayer = sceneAnimation.depthByPlayer;
         animationSprite.setDepth(depth);
-        let blockMovement = sc.getDef(sceneAnimation, 'blockMovement', false);
+        let blockMovement = sc.get(sceneAnimation, 'blockMovement', false);
         if(!blockMovement){
             ownerSprite.moveSprites[animationKey+'_'+ownerSprite.playerId] = animationSprite;
         }
@@ -233,7 +234,7 @@ class ReceiverWrapper extends Receiver
             setTimeout(() => {
                 animationSprite.destroy();
                 delete ownerSprite.moveSprites[animationKey+'_'+ownerSprite.playerId];
-            }, destroyTime)
+            }, destroyTime);
         }
     }
 
@@ -242,14 +243,16 @@ class ReceiverWrapper extends Receiver
     {
         let currentPlayer = this.gameManager.getCurrentPlayer();
         if(
-            !sc.hasOwn(message.data.extraData, 'oT') || !sc.hasOwn(message.data.extraData, 'oK')
-            || message.data.extraData.oT !== 'p'
-            || !sc.hasOwn(currentPlayer.players, message.data.extraData.oK)
+            !sc.hasOwn(message.data.extraData, ActionsConst.DATA_OWNER_TYPE)
+            || !sc.hasOwn(message.data.extraData, ActionsConst.DATA_OWNER_KEY)
+            || message.data.extraData[ActionsConst.DATA_OWNER_TYPE] !== ActionsConst.DATA_TYPE_VALUE_PLAYER
+            || !sc.hasOwn(currentPlayer.players, message.data.extraData[ActionsConst.DATA_OWNER_KEY])
         ){
             return false;
         }
         let currentScene = this.gameManager.getActiveScene();
-        let ownerSprite = this.gameManager.getCurrentPlayer().players[message.data.extraData.oK];
+        let ownerSprite = this.gameManager.getCurrentPlayer()
+            .players[message.data.extraData[ActionsConst.DATA_OWNER_KEY]];
         let playDirection = this.getPlayDirection(message.data.extraData, ownerSprite, currentPlayer, currentScene);
         if(playDirection){
             ownerSprite.anims.play(ownerSprite.avatarKey+'_'+playDirection, true);
@@ -264,11 +267,15 @@ class ReceiverWrapper extends Receiver
             return false;
         }
         let currentPlayer = this.gameManager.getCurrentPlayer();
-        if(!damageConfig.showAll && message.data.extraData.oK !== currentPlayer.playerId){
+        if(!damageConfig.showAll && message.data.extraData[ActionsConst.DATA_OWNER_KEY] !== currentPlayer.playerId){
             return false;
         }
         let currentScene = this.gameManager.getActiveScene();
-        let target = currentScene.getObjectFromExtraData('t', message.data.extraData, currentPlayer);
+        let target = currentScene.getObjectFromExtraData(
+            ActionsConst.DATA_OBJECT_KEY_TARGET,
+            message.data.extraData,
+            currentPlayer
+        );
         if(!target){
             return false;
         }
@@ -290,7 +297,11 @@ class ReceiverWrapper extends Receiver
     getPlayDirection(extraData, ownerSprite, currentPlayer, currentScene)
     {
         let playDirection = false;
-        let target = currentScene.getObjectFromExtraData('t', extraData, currentPlayer);
+        let target = currentScene.getObjectFromExtraData(
+            ActionsConst.DATA_OBJECT_KEY_TARGET,
+            extraData,
+            currentPlayer
+        );
         if(!target){
             return false;
         }

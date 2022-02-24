@@ -18,7 +18,7 @@ class ObjectBodyState extends BodyState
     {
         super(data);
         this.id = data.id;
-        this.autoDirection = sc.getDef(data, 'autoDirection', true);
+        this.autoDirection = sc.get(data, 'autoDirection', true);
     }
 
 }

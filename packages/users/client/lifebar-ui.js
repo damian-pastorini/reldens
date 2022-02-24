@@ -105,7 +105,7 @@ class LifebarUi
         if(sc.hasOwn(this.lifeBars, key)){
             this.lifeBars[key].destroy();
         }
-        let currentObject = sc.getDef(this.gameManager.getActiveScene().objectsAnimations, key, false);
+        let currentObject = sc.get(this.gameManager.getActiveScene().objectsAnimations, key, false);
         if(!sc.hasOwn(currentObject, this.barProperty+'Total')){
             return false;
         }
@@ -161,10 +161,13 @@ class LifebarUi
     {
         room.onMessage((message) => {
             if(message.act === UsersConst.ACTION_LIFEBAR_UPDATE){
-                if(message.oT === 'o' && this.barConfig.showEnemies){
+                if(
+                    message[ActionsConst.DATA_OWNER_TYPE] === ActionsConst.DATA_TYPE_VALUE_OBJECT
+                    && this.barConfig.showEnemies
+                ){
                     this.processObjectLifeBarMessage(message, true);
                 }
-                if(message.oT === 'p'){
+                if(message[ActionsConst.DATA_OWNER_TYPE] === ActionsConst.DATA_TYPE_VALUE_PLAYER){
                     this.processPlayerLifeBarMessage(message, true);
                 }
             }
@@ -185,7 +188,11 @@ class LifebarUi
 
     processObjectLifeBarMessage(message, queue = false)
     {
-        let currentObject = sc.getDef(this.gameManager.getActiveScene().objectsAnimations, message.oK, false);
+        let currentObject = sc.get(
+            this.gameManager.getActiveScene().objectsAnimations,
+            message[ActionsConst.DATA_OWNER_KEY],
+            false
+        );
         if(!currentObject || currentObject.isDead){
             if(queue){
                 this.queueLifeBarMessage(message);
@@ -207,14 +214,14 @@ class LifebarUi
 
     drawObjectLifeBar(currentObject, message)
     {
-        let objectKey = message.oK;
+        let objectKey = message[ActionsConst.DATA_OWNER_KEY];
         if(sc.hasOwn(this.lifeBars, objectKey)){
             this.lifeBars[objectKey].destroy();
         }
         if(currentObject.inState === GameConst.STATUS.DEATH){
             return false;
         }
-        if(this.barConfig.showOnClick && message.oK !== this.getCurrentTargetId()){
+        if(this.barConfig.showOnClick && message[ActionsConst.DATA_OWNER_KEY] !== this.getCurrentTargetId()){
             return false;
         }
         this.lifeBars[objectKey] = this.gameManager.getActiveScene().add.graphics();
@@ -231,19 +238,21 @@ class LifebarUi
     processPlayerLifeBarMessage(message, queue = false)
     {
         let currentPlayer = this.gameManager.getCurrentPlayer();
-        if(!currentPlayer || !currentPlayer.players || !currentPlayer.players[message.oK]){
+        let messageOwnerKey = message[ActionsConst.DATA_OWNER_KEY];
+        if(!currentPlayer || !currentPlayer.players || !currentPlayer.players[messageOwnerKey]){
             if(queue){
                 this.queueLifeBarMessage(message);
             }
             return false;
         }
-        if(message.oT === 'o' && this.barConfig.showEnemies){
+        let messageOwnerType = message[ActionsConst.DATA_OWNER_TYPE];
+        if(messageOwnerType === ActionsConst.DATA_TYPE_VALUE_OBJECT && this.barConfig.showEnemies){
             this.processObjectLifeBarMessage(message);
         }
-        if(message.oT === 'p'){
-            this.updatePlayerBarData(message.oK, message.totalValue, message.newValue);
-            if(this.canShow(message.oK)){
-                this.drawLifeBar(message.oK);
+        if(messageOwnerType === ActionsConst.DATA_TYPE_VALUE_PLAYER){
+            this.updatePlayerBarData(messageOwnerKey, message.totalValue, message.newValue);
+            if(this.canShow(messageOwnerKey)){
+                this.drawLifeBar(messageOwnerKey);
             }
         }
     }
@@ -262,10 +271,11 @@ class LifebarUi
         }
         for(let message of this.gameManager.lifeBarQueue){
             // process queue messages:
-            if(message.oT === 'o' && this.barConfig.showEnemies){
+            let messageOwnerType = message[ActionsConst.DATA_OWNER_TYPE];
+            if(messageOwnerType === ActionsConst.DATA_TYPE_VALUE_OBJECT && this.barConfig.showEnemies){
                 this.processObjectLifeBarMessage(message);
             }
-            if(message.oT === 'p'){
+            if(messageOwnerType === ActionsConst.DATA_TYPE_VALUE_PLAYER){
                 this.processPlayerLifeBarMessage(message);
             }
         }
@@ -306,7 +316,7 @@ class LifebarUi
         let player = this.gameManager.getCurrentPlayer().players[playerId];
         let fullValue = player[this.barProperty+'Total'];
         let filledValue = player[this.barProperty+'Value'];
-        let ownerTop = sc.getDef(player, 'topOff', 0) - this.playerSize.height;
+        let ownerTop = sc.get(player, 'topOff', 0) - this.playerSize.height;
         return {player, fullValue, filledValue, ownerTop};
     }
 
@@ -335,7 +345,7 @@ class LifebarUi
 
     getCurrentTargetId()
     {
-        return sc.getDef(this.gameManager.getCurrentPlayer().currentTarget, 'id', false);
+        return sc.get(this.gameManager.getCurrentPlayer().currentTarget, 'id', false);
     }
 
 }

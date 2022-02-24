@@ -91,7 +91,7 @@ class RoomEvents
 
     prepareScene()
     {
-        this.sceneData = sc.getJson(this.room.state.sceneData);
+        this.sceneData = sc.toJson(this.room.state.sceneData);
         if(!this.gameEngine.scene.getScene(this.roomName)){
             let engineSceneDynamic = this.createSceneInstance(this.roomName, this.sceneData, this.gameManager);
             this.gameEngine.scene.add(this.roomName, engineSceneDynamic, false);
@@ -179,7 +179,7 @@ class RoomEvents
     {
         // @TODO - BETA - Improve disconnection handler.
         // server disconnection handler:
-        if(code > 1000 && !this.gameManager.gameOver && !this.gameManager.forcedDisconnection){
+        if(code > 1001 && !this.gameManager.gameOver && !this.gameManager.forcedDisconnection){
             Logger.error('There was a connection error.', ['Error Code:', code]);
         } else {
             // @NOTE: the client can initiate the disconnection, this is also triggered when the users change the room.
@@ -215,7 +215,7 @@ class RoomEvents
                 statLabel: i,
                 statValue: message.stats[i]+(
                     sc.hasOwn(this.gameManager.config.client.players.initialStats[i], 'data')
-                    && sc.getDef(this.gameManager.config.client.players.initialStats[i].data, 'showBase', false)
+                    && sc.get(this.gameManager.config.client.players.initialStats[i].data, 'showBase', false)
                         ? ' / '+message.statsBase[i] : ''
                 )
             });

@@ -17,7 +17,7 @@ class Pve extends Battle
     constructor(props)
     {
         super(props);
-        this.chaseMultiple = sc.getDef(props, 'chaseMultiple', false);
+        this.chaseMultiple = sc.get(props, 'chaseMultiple', false);
         this.inBattleWithPlayer = [];
     }
 

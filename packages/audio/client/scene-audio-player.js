@@ -5,25 +5,27 @@
  */
 
 const { AudioConst } = require('../constants');
-const { sc } = require('@reldens/utils');
+const { Logger, sc } = require('@reldens/utils');
 
 class SceneAudioPlayer
 {
 
-    playSceneAudio(audioManager, sceneDynamic)
+    playSceneAudio(audioManager, sceneDynamic, forcePlay)
     {
+        let sceneAudio = sceneDynamic['associatedAudio'];
         if(
-            sceneDynamic['associatedAudio'] === false
-            || (sceneDynamic['associatedAudio'] && sceneDynamic['associatedAudio'].audio.audioInstance.isPlaying)
+            forcePlay !== true
+            && (sceneAudio === false || (sceneAudio && sceneAudio.audio.audioInstance.isPlaying))
         ){
             return false;
         }
         sceneDynamic['associatedAudio'] = audioManager.findAudio(sceneDynamic.key, sceneDynamic.key);
+
         if(sceneDynamic['associatedAudio']){
             this.playSpriteAudio(sceneDynamic['associatedAudio'], sceneDynamic.key, audioManager);
             return sceneDynamic['associatedAudio'];
         }
-        return true;
+        return false;
     }
 
     associateSceneAnimationsAudios(audioManager, sceneDynamic)
@@ -36,35 +38,35 @@ class SceneAudioPlayer
                 if(sprite.type !== 'Sprite'){
                     continue;
                 }
-                sprite.on('animationstart', (a) => {
-                    let associatedAudio = this.attachAudioToSprite(sprite, a.key, audioManager, sceneDynamic);
+                sprite.on('animationstart', (event) => {
+                    let associatedAudio = this.attachAudioToSprite(sprite, event.key, audioManager, sceneDynamic);
                     if(associatedAudio !== false){
                         this.playSpriteAudio(associatedAudio, sceneDynamic.key, audioManager);
                     }
                 });
-                sprite.on('animationupdate', (a) => {
-                    let animationKey = AudioConst.AUDIO_ANIMATION_KEY_UPDATE+a.key;
+                sprite.on('animationupdate', (event) => {
+                    let animationKey = AudioConst.AUDIO_ANIMATION_KEY_UPDATE+event.key;
                     let associatedAudio = this.attachAudioToSprite(sprite, animationKey, audioManager, sceneDynamic);
                     if(associatedAudio !== false){
                         this.playSpriteAudio(associatedAudio, sceneDynamic.key, audioManager);
                     }
                 });
-                sprite.on('animationcomplete', (a) => {
-                    let animationKey = AudioConst.AUDIO_ANIMATION_KEY_COMPLETE+a.key;
+                sprite.on('animationcomplete', (event) => {
+                    let animationKey = AudioConst.AUDIO_ANIMATION_KEY_COMPLETE+event.key;
                     let associatedAudio = this.attachAudioToSprite(sprite, animationKey, audioManager, sceneDynamic);
                     if(associatedAudio !== false){
                         this.playSpriteAudio(associatedAudio, sceneDynamic.key, audioManager);
                     }
                 });
-                sprite.on('animationrepeat', (a) => {
-                    let animationKey = AudioConst.AUDIO_ANIMATION_KEY_REPEAT+a.key;
+                sprite.on('animationrepeat', (event) => {
+                    let animationKey = AudioConst.AUDIO_ANIMATION_KEY_REPEAT+event.key;
                     let associatedAudio = this.attachAudioToSprite(sprite, animationKey, audioManager, sceneDynamic);
                     if(associatedAudio !== false){
                         this.playSpriteAudio(associatedAudio, sceneDynamic.key, audioManager);
                     }
                 });
-                sprite.on('animationstop', (a) => {
-                    let animationKey = AudioConst.AUDIO_ANIMATION_KEY_STOP+a.key;
+                sprite.on('animationstop', (event) => {
+                    let animationKey = AudioConst.AUDIO_ANIMATION_KEY_STOP+event.key;
                     let associatedAudio = this.attachAudioToSprite(sprite, animationKey, audioManager, sceneDynamic);
                     if(associatedAudio !== false){
                         this.playSpriteAudio(associatedAudio, sceneDynamic.key, audioManager);
@@ -79,12 +81,8 @@ class SceneAudioPlayer
         if(!sc.hasOwn(sprite, 'associatedAudio')){
             sprite['associatedAudio'] = {};
         }
-        if(sprite['associatedAudio'][animationAudioKey] === false){
-            return false;
-        }
-        sprite['associatedAudio'][animationAudioKey] = audioManager.findAudio(animationAudioKey, sceneDynamic.key);
-        if(sprite['associatedAudio'][animationAudioKey] === false){
-            return false;
+        if(!sc.hasOwn(sprite['associatedAudio'], animationAudioKey)){
+            sprite['associatedAudio'][animationAudioKey] = audioManager.findAudio(animationAudioKey, sceneDynamic.key);
         }
         return sprite['associatedAudio'][animationAudioKey];
     }
@@ -96,9 +94,13 @@ class SceneAudioPlayer
         // audio here is just the storage reference.
         // - We need to check the category enable every time the audio could be reproduced because the user can turn
         // the category on/off at any time.
+        if(!associatedAudio || !associatedAudio.audio || !associatedAudio.audio.data){
+            Logger.error('Missing associated audio data.', associatedAudio);
+            return false;
+        }
         let audioCategoryKey = associatedAudio.audio.data.category.category_key;
-        let audioCategory = sc.getDef(audioManager.categories, audioCategoryKey, false);
-        let audioEnabled = sc.getDef(audioManager.playerConfig, audioCategory.id, audioCategory.enabled);
+        let audioCategory = sc.get(audioManager.categories, audioCategoryKey, false);
+        let audioEnabled = sc.get(audioManager.playerConfig, audioCategory.id, audioCategory.enabled);
         if(!audioCategory || !audioEnabled){
             return false;
         }

@@ -7,7 +7,8 @@
  *
  */
 
-const { SkillsServer, SkillConst, SkillsEvents } = require('@reldens/skills');
+const { SkillConst, SkillsEvents } = require('@reldens/skills');
+const SkillsServer = require('@reldens/skills/lib/server');
 const { ModelsManager } = require('@reldens/skills/lib/server/storage/models-manager');
 const { Logger, sc } = require('@reldens/utils');
 const { ActionsMessageActions } = require('./message-actions');
@@ -15,19 +16,19 @@ const { ClientWrapper } = require('../../game/server/client-wrapper');
 const { PackInterface } = require('../../features/pack-interface');
 const { Pvp } = require('./pvp');
 const { TypeAttack, TypeEffect, TypePhysicalAttack, TypePhysicalEffect } = require('./skills/types');
-const { AnimationsModel } = require('./animations-model');
-const { LevelAnimationsModel } = require('./level-animations-model');
+const { ActionsConst } = require('../constants');
 
 class ActionsPack extends PackInterface
 {
 
     setupPack(props)
     {
-        this.events = sc.getDef(props, 'events', false);
+        this.events = sc.get(props, 'events', false);
         if(!this.events){
             Logger.error('EventsManager undefined in ActionsPack.');
         }
-        this.skillsModelsManager = new ModelsManager({events: this.events});
+        this.dataServer = sc.get(props, 'dataServer', false);
+        this.skillsModelsManager = new ModelsManager({events: this.events, dataServer: this.dataServer});
         this.events.on('reldens.serverReady', async (event) => {
             await this.onServerReady(event);
         });
@@ -43,18 +44,28 @@ class ActionsPack extends PackInterface
         });
         this.events.on('reldens.createdNewPlayer', async (player, loginData, loginManager) => {
             let defaultClassPathId = loginManager.config.get('server/players/actions/initialClassPathId');
-            let initialClassPathId = sc.getDef(loginData, 'class_path_select', defaultClassPathId);
+            let initialClassPathId = sc.get(loginData, 'class_path_select', defaultClassPathId);
             let data = {
                 class_path_id: initialClassPathId,
                 owner_id: player.id,
                 currentLevel: 1,
                 currentExp: 0
             };
-            return this.skillsModelsManager.models['ownersClassPath'].query().insert(data);
+            return this.dataServer.entityManager.get('ownersClassPath').create(data);
         });
     }
 
     async onServerReady(event)
+    {
+        let configProcessor = this.prepareConfigProcessor(event);
+        await this.loadSkillsFullList(configProcessor);
+        await this.loadGroupsFullList(configProcessor);
+        await this.loadClassPathFullList(configProcessor);
+        await this.appendSkillsAnimations(configProcessor);
+        await this.appendLevelsAnimations(configProcessor);
+    }
+
+    prepareConfigProcessor(event)
     {
         let configProcessor = event.serverManager.configManager.processor;
         if(!sc.hasOwn(configProcessor, 'skills')){
@@ -67,11 +78,7 @@ class ActionsPack extends PackInterface
         configProcessor.skills.defaultSkills[SkillConst.SKILL_TYPE_EFFECT] = TypeEffect;
         configProcessor.skills.defaultSkills[SkillConst.SKILL_TYPE_PHYSICAL_ATTACK] = TypePhysicalAttack;
         configProcessor.skills.defaultSkills[SkillConst.SKILL_TYPE_PHYSICAL_EFFECT] = TypePhysicalEffect;
-        await this.loadSkillsFullList(configProcessor);
-        await this.loadGroupsFullList(configProcessor);
-        await this.loadClassPathFullList(configProcessor);
-        await this.appendSkillsAnimations(configProcessor);
-        await this.appendLevelsAnimations(configProcessor);
+        return configProcessor;
     }
 
     async onBeforeSuperInitialGameData(superInitialGameData, roomGame)
@@ -87,15 +94,12 @@ class ActionsPack extends PackInterface
         if(roomGame.config.get('client/players/multiplePlayers/enabled') && superInitialGameData.players){
             for(let i of Object.keys(superInitialGameData.players)){
                 let player = superInitialGameData.players[i];
-                let classPathCollection = await this.skillsModelsManager.models['ownersClassPath']
-                    .loadOwnerClassPath(player.id);
-                if(!classPathCollection.length){
+                let classPath = await this.dataServer.entityManager.get('ownersClassPath')
+                    .loadOneByWithRelations('owner_id', player.id, 'owner_full_class_path');
+                if(!classPath){
                     continue;
                 }
-                // @TODO - BETA - Temporal index[0] for a single class path by player.
-                let classPath = classPathCollection[0];
-                player.additionalLabel = ' - LvL '+classPath.currentLevel
-                    +' - '+classPath.owner_full_class_path.label;
+                player.additionalLabel = ' - LvL '+classPath.currentLevel+' - '+classPath.owner_full_class_path.label;
                 player.currentClassPathLabel =
                 player.avatarKey = classPath.owner_full_class_path.key;
             }
@@ -113,9 +117,15 @@ class ActionsPack extends PackInterface
             room.config.skills.skillsList
         );
         if(classPathData){
-            classPathData.events = this.events;
-            classPathData.affectedProperty = room.config.get('client/actions/skills/affectedProperty');
-            classPathData.client = new ClientWrapper(client, room);
+            Object.assign(classPathData, {
+                // use the same events manager instance from the skills server:
+                events: this.events,
+                // activate storage:
+                persistence: true,
+                dataServer: this.dataServer,
+                affectedProperty: room.config.get('client/actions/skills/affectedProperty'),
+                client: new ClientWrapper(client, room)
+            });
             // append skills server to player:
             currentPlayer.skillsServer = new SkillsServer(classPathData);
             currentPlayer.avatarKey = classPathData.key;
@@ -134,7 +144,7 @@ class ActionsPack extends PackInterface
 
     async loadGroupsFullList(configProcessor)
     {
-        let groupsModels = await this.skillsModelsManager.models.skillGroups.loadAll();
+        let groupsModels = await this.dataServer.entityManager.get('skillGroups').loadAll();
         if(groupsModels.length){
             configProcessor.skills.groups = groupsModels;
         }
@@ -173,9 +183,9 @@ class ActionsPack extends PackInterface
             let from = {x: currentPlayer.state.x, y: currentPlayer.state.y};
             executedSkill.initialPosition = from;
             let to = {x: target.state.x, y: target.state.y};
-            let animData = sc.getDef(room.config.client.skills.animations, executedSkill.key+'_bullet', false);
+            let animData = sc.get(room.config.client.skills.animations, executedSkill.key+'_bullet', false);
             if(animData){
-                executedSkill.animDir = sc.getDef(animData.animationData, 'dir', false);
+                executedSkill.animDir = sc.get(animData.animationData, 'dir', false);
             }
             // player disconnection would cause the physicalBody to be removed so we need to validate it:
             if(currentPlayer.physicalBody){
@@ -199,26 +209,25 @@ class ActionsPack extends PackInterface
 
     prepareExtraData(params)
     {
-        // @TODO - BETA - Refactor and replace by constants.
         let extraData = {};
         if(sc.hasOwn(params, 'target')){
             if(sc.hasOwn(params.target, 'key')){
-                extraData.tT = 'e'; // enemy
-                extraData.tK = params.target.key;
+                extraData[ActionsConst.DATA_TARGET_TYPE] = ActionsConst.DATA_TYPE_VALUE_ENEMY;
+                extraData[ActionsConst.DATA_TARGET_KEY] = params.target.key;
             }
             if(sc.hasOwn(params.target, 'sessionId')){
-                extraData.tT = 'p';
-                extraData.tK = params.target.sessionId;
+                extraData[ActionsConst.DATA_TARGET_TYPE] = ActionsConst.DATA_TYPE_VALUE_PLAYER;
+                extraData[ActionsConst.DATA_TARGET_KEY] = params.target.sessionId;
             }
         }
         if(sc.hasOwn(params, 'skill')){
             if(sc.hasOwn(params.skill.owner, 'key')){
-                extraData.oT = 'e'; // enemy
-                extraData.oK = params.skill.owner.key;
+                extraData[ActionsConst.DATA_OWNER_TYPE] = ActionsConst.DATA_TYPE_VALUE_ENEMY;
+                extraData[ActionsConst.DATA_OWNER_KEY] = params.skill.owner.key;
             }
             if(sc.hasOwn(params.skill.owner, 'sessionId')){
-                extraData.oT = 'p';
-                extraData.oK = params.skill.owner.sessionId;
+                extraData[ActionsConst.DATA_OWNER_TYPE] = ActionsConst.DATA_TYPE_VALUE_PLAYER;
+                extraData[ActionsConst.DATA_OWNER_KEY] = params.skill.owner.sessionId;
             }
         }
         return extraData;
@@ -226,11 +235,11 @@ class ActionsPack extends PackInterface
 
     async appendSkillsAnimations(config)
     {
-        let models = await AnimationsModel.loadAllWithSkill();
-        if(models.length){
-            for(let skillAnim of models){
-                let animationData = sc.getJson(skillAnim.animationData, {});
-                let customDataJson = sc.getJson(skillAnim.skill.customData);
+        let animationsModels = await this.dataServer.entityManager.get('animations').loadAllWithRelations();
+        if(animationsModels.length){
+            for(let skillAnim of animationsModels){
+                let animationData = sc.toJson(skillAnim.animationData, {});
+                let customDataJson = sc.toJson(skillAnim.skill.customData);
                 if(customDataJson){
                     if(sc.hasOwn(customDataJson, 'blockMovement')){
                         animationData.blockMovement = customDataJson.blockMovement;
@@ -253,13 +262,13 @@ class ActionsPack extends PackInterface
         if(!sc.hasOwn(config.client, 'levels')){
             config.client.levels = {};
         }
-        let models = await LevelAnimationsModel.loadAllWithClassAndLevel();
-        if(models.length){
+        let levelsAnimationsModels = await this.dataServer.entityManager.get('levelAnimations').loadAllWithRelations();
+        if(levelsAnimationsModels.length){
             if(!sc.hasOwn(config.client.levels, 'animations')){
                 config.client.levels.animations = {};
             }
-            for(let levelAnim of models){
-                let animationData = sc.getJson(levelAnim.animationData, {});
+            for(let levelAnim of levelsAnimationsModels){
+                let animationData = sc.toJson(levelAnim.animationData, {});
                 let animKey = 'level_' + ((!levelAnim.level && !levelAnim.class_path) ? 'default' : (
                     levelAnim.class_path ? levelAnim.class_path.key : ''
                     + (levelAnim.level ? (levelAnim.class_path ? '_' : '')+levelAnim.level.id : '')
@@ -280,10 +289,10 @@ class ActionsPack extends PackInterface
         let ownerId = classPath.getOwnerEventKey();
         // eslint-disable-next-line no-unused-vars
         classPath.listenEvent(SkillsEvents.SKILL_BEFORE_CAST, async (skill, target) => {
-            let customDataJson = sc.getJson(skill.customData);
+            let customDataJson = sc.toJson(skill.customData);
             if(
                 !customDataJson
-                || !sc.getDef(customDataJson, 'blockMovement', false)
+                || !sc.get(customDataJson, 'blockMovement', false)
                 || !sc.hasOwn(skill.owner, 'physicalBody')
             ){
                 return;
@@ -292,10 +301,10 @@ class ActionsPack extends PackInterface
         }, 'skillBeforeCastPack', ownerId);
         // eslint-disable-next-line no-unused-vars
         classPath.listenEvent(SkillsEvents.SKILL_AFTER_CAST, async (skill, target, skillLogicResult) => {
-            let customDataJson = sc.getJson(skill.customData);
+            let customDataJson = sc.toJson(skill.customData);
             if(
                 !customDataJson
-                || !sc.getDef(customDataJson, 'blockMovement', false)
+                || !sc.get(customDataJson, 'blockMovement', false)
                 || !sc.hasOwn(skill.owner, 'physicalBody')
             ){
                 return;

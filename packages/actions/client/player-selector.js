@@ -11,11 +11,11 @@ class PlayerSelector
 
     constructor(props)
     {
-        this.gameManager = sc.getDef(props, 'gameManager', false);
+        this.gameManager = sc.get(props, 'gameManager', false);
         if(!this.gameManager){
             Logger.error('Game Manager undefined in ActionsPack PlayerSelector.');
         }
-        this.events = sc.getDef(props, 'events', false);
+        this.events = sc.get(props, 'events', false);
         if(!this.events){
             Logger.error('EventsManager undefined in ActionsPack PlayerSelector.');
         }
@@ -24,7 +24,11 @@ class PlayerSelector
 
     populateClassesSelector(classesData, playersConfig)
     {
-        if(!sc.getDef(playersConfig.multiplePlayers, 'enabled', classesData)){
+        if(!classesData){
+            Logger.error('Classes not defined, can not populate the classes selector.');
+            return false;
+        }
+        if(!sc.get(playersConfig.multiplePlayers, 'enabled', classesData)){
             return false;
         }
         let playerAdditional = this.gameDom.getElement('.player_creation_additional_info');

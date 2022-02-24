@@ -9,12 +9,12 @@
 
 const fs = require('fs');
 const path = require('path');
-const { ErrorManager } = require('@reldens/utils');
+const { ErrorManager, Logger } = require('@reldens/utils');
 
 class MapsLoader
 {
 
-    loadMaps(themeFolder, configManager)
+    static loadMaps(themeFolder, configManager)
     {
         if(!themeFolder){
             ErrorManager.error('Theme folder not defined!');
@@ -27,13 +27,15 @@ class MapsLoader
         configManager.configList.server.maps = {};
         for(let file of files){
             let fileFullPath = path.join(themeFolder, mapsFolder, file);
-            let fileName = file.replace('.json', '');
-            // @TODO - BETA - Improve, this is not a good practice but is the only dynamic required I wasn't able
-            //   to avoid yet.
-            configManager.configList.server.maps[fileName] = require(fileFullPath);
+            let mapKey = file.replace('.json', '');
+            try {
+                configManager.configList.server.maps[mapKey] = JSON.parse(fs.readFileSync(fileFullPath, 'utf8'));
+            } catch (error) {
+                Logger.error('Load map error.', error.message);
+            }
         }
     }
 
 }
 
-module.exports.MapsLoader = new MapsLoader();
+module.exports.MapsLoader = MapsLoader;

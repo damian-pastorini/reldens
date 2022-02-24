@@ -1,10 +1,10 @@
 {
     "name": "reldens",
-    "version": "4.0.0-beta.18.1",
+    "version": "4.0.0-beta.19",
     "description": "Reldens - MMORPG Platform",
     "author": "Damian A. Pastorini",
     "license": "MIT",
-    "homepage": "https://github.com/damian-pastorini/reldens",
+    "homepage": "https://www.reldens.com/",
     "source": true,
     "repository": {
         "type": "git",
@@ -29,48 +29,54 @@
     "bugs": {
         "url": "https://github.com/damian-pastorini/reldens/issues"
     },
-    "scripts": {
-        "start": "node .",
-        "install-db": "knex migrate:up --env production",
-        "buildCss": "node ./node_modules/parcel-bundler/bin/cli.js build theme/default/css/styles.scss --no-source-maps --out-dir theme/default/css"
+    "engines": {
+        "npm": ">=6.0.0",
+        "node": ">=12.0.0"
     },
     "dependencies": {
-        "@babel/core": "^7.13.15",
+        "@adminjs/design-system": "2.1.2",
+        "@adminjs/express": "4.0.3",
+        "@adminjs/upload": "2.0.2",
+        "@babel/core": "^7.17.5",
         "@colyseus/monitor": "^0.12.2",
         "@colyseus/schema": "^0.5.41",
-        "@reldens/items-system": "^0.9.5",
-        "@reldens/modifiers": "^0.4.7",
-        "@reldens/skills": "^0.3.7",
-        "@reldens/storage": "^0.4.1",
-        "@reldens/utils": "^0.4.5",
+        "@reldens/items-system": "^0.11.0",
+        "@reldens/modifiers": "^0.11.0",
+        "@reldens/skills": "^0.11.0",
+        "@reldens/storage": "^0.11.0",
+        "@reldens/utils": "^0.11.0",
+        "adminjs": "5.7.1",
         "bcrypt": "^5.0.1",
         "colyseus": "^0.12.6",
         "colyseus.js": "^0.12.2",
-        "core-js": "^3.11.2",
+        "core-js": "^3.21.0",
         "cors": "^2.8.5",
-        "del": "^6.0.0",
-        "dotenv": "^8.2.0",
-        "express": "^4.17.1",
-        "express-basic-auth": "^1.2.0",
+        "dotenv": "^16.0.0",
+        "express": "^4.17.2",
+        "express-basic-auth": "^1.2.1",
+        "express-formidable": "^1.2.0",
+        "express-session": "^1.17.2",
         "firebase": "^7.24.0",
         "firebaseui": "^4.7.3",
+        "mime-types": "^2.1.34",
         "mustache": "^4.2.0",
-        "mysql": "^2.18.1",
-        "nodemailer": "^6.6.0",
+        "nodemailer": "^6.7.2",
         "p2": "^0.7.1",
         "parcel-bundler": "1.12.5",
         "pathfinding": "^0.4.18",
         "phaser": "3.24.1",
-        "regenerator-runtime": "^0.13.7"
+        "react": "^16.13.1",
+        "regenerator-runtime": "^0.13.9",
+        "tslib": "^2.3.1"
     },
     "devDependencies": {
         "babel-eslint": "^10.1.0",
-        "eslint": "^7.21.0",
-        "eslint-config-standard": "^16.0.2",
-        "eslint-plugin-import": "^2.22.1",
+        "eslint": "^8.9.0",
+        "eslint-config-standard": "^17.0.0-1",
+        "eslint-plugin-import": "^2.25.4",
         "eslint-plugin-node": "^11.1.0",
-        "eslint-plugin-promise": "^4.3.1",
+        "eslint-plugin-promise": "^6.0.0",
         "eslint-plugin-standard": "^5.0.0",
-        "sass": "^1.32.8"
+        "sass": "^1.49.7"
     }
 }

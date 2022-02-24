@@ -20,7 +20,7 @@ class BaseObject extends InteractionArea
         if(!this.events){
             Logger.error('EventsManager undefined in BaseObject.');
         }
-        this.appendIndex = sc.getDef(props, 'tile_index', props.id);
+        this.appendIndex = sc.get(props, 'tile_index', props.id);
         this.objectIndex = props.layer_name + this.appendIndex;
         // we will use the client_key has the object key:
         this.key = props.client_key;
@@ -28,7 +28,7 @@ class BaseObject extends InteractionArea
         this.eventsPrefix = 'bo';
         // in this specific object type we will use the public params as JSON, this is coming from the storage:
         try {
-            this.clientParams = sc.getJson(props.client_params, {});
+            this.clientParams = sc.toJson(props.client_params, {});
         } catch (err) {
             Logger.error(['BaseObject, clientParams JSON error:', props.client_params]);
         }

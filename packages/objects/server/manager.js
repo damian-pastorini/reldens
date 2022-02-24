@@ -7,7 +7,6 @@
  *
  */
 
-const { ObjectsModel } = require('./model');
 const { Logger, sc } = require('@reldens/utils');
 
 class ObjectsManager
@@ -16,9 +15,13 @@ class ObjectsManager
     constructor(props)
     {
         this.config = props.config;
-        this.events = sc.getDef(props, 'events', false);
+        this.events = sc.get(props, 'events', false);
         if(!this.events){
             Logger.error('EventsManager undefined in ObjectsManager.');
+        }
+        this.dataServer = sc.get(props, 'dataServer', false);
+        if(!this.dataServer){
+            Logger.error('DataServer undefined in ObjectsManager.');
         }
         // room objects is just the list of the objects in the storage:
         this.roomObjectsData = false;
@@ -34,7 +37,12 @@ class ObjectsManager
     async loadObjectsByRoomId(roomId)
     {
         if(!this.roomObjectsData){
-            this.roomObjectsData = await ObjectsModel.loadRoomObjects(roomId);
+            let roomsRepository = this.dataServer.getEntity('objects');
+            roomsRepository.sortBy = 'tile_index';
+            this.roomObjectsData = await roomsRepository.loadByWithRelations(
+                {room_id: roomId},
+                ['parent_room', 'objects_assets', 'objects_animations']
+            );
         }
     }
 
@@ -70,7 +78,7 @@ class ObjectsManager
                         for(let anim of objectData.objects_animations){
                             // @NOTE: assets can be different types, spritesheets, images, atlas, etc. We push them
                             // here to later send these to the client along with the sceneData.
-                            objInstance.multipleAnimations[anim.animationKey] = sc.getJson(anim.animationData);
+                            objInstance.multipleAnimations[anim.animationKey] = sc.toJson(anim.animationData);
                         }
                     }
                     // prepare object for room messages:

@@ -6,7 +6,6 @@
  *
  */
 
-const path = require('path');
 const { PasswordManager } = require('./password-manager');
 const { ErrorManager, Logger, sc } = require('@reldens/utils');
 
@@ -21,15 +20,25 @@ class LoginManager
         this.passwordManager = PasswordManager;
         this.mailer = props.mailer;
         this.themeManager = props.themeManager;
-        this.events = sc.getDef(props, 'events', false);
+        this.events = sc.get(props, 'events', false);
         if(!this.events){
             Logger.error('EventsManager undefined in LoginManager.');
         }
+        this.listenEvents();
+    }
+
+    listenEvents()
+    {
+        this.events.on('reldens.serverBeforeListen', (props) => {
+            props.serverManager.app.get('/reldens-mailer-enabled', (req, res) => {
+                res.json({enabled: this.mailer.isEnabled()});
+            });
+        });
     }
 
     async processUserRequest(userData = false)
     {
-        if(sc.hasOwn(userData, 'forgot')){
+        if(sc.hasOwn(userData, 'forgot') && this.mailer.isEnabled()){
             return await this.processForgotPassword(userData);
         }
         if(!this.isValidData(userData)){
@@ -39,17 +48,12 @@ class LoginManager
             }
             return {error: errorMessage};
         }
-        // search if the user already exists:
+        // search if the user exists:
         let user = await this.usersManager.loadUserByUsername(userData.username);
         if(!user && !userData.isNewUser){
             return {error: 'Missing user data.'};
         }
-        // if the user exists:
-        if(user){
-            return await this.login(user, userData);
-        } else {
-            return await this.register(userData);
-        }
+        return user ? await this.login(user, userData) :  await this.register(userData);
     }
 
     isValidData(userData)
@@ -95,6 +99,22 @@ class LoginManager
         }
     }
 
+    async roleAuthenticationCallback(email, password, roleId = false)
+    {
+        let user = await this.usersManager.loadUserByEmail(email);
+        let validatedRole = !roleId || String(user.role_id) === String(roleId);
+        if(user && validatedRole){
+            let result = this.passwordManager.validatePassword(
+                password,
+                user.password
+            );
+            if(result){
+                return user;
+            }
+        }
+        return false;
+    }
+
     async applySelectedLocation(player, selectedScene)
     {
         let selectedRoom = await this.roomsManager.loadRoomByName(selectedScene);
@@ -117,16 +137,16 @@ class LoginManager
     {
         if(userData.isNewUser){
             try {
-                // check if an user with the email exists:
+                // check if a user with the email exists:
                 let user = await this.usersManager.loadUserByEmail(userData.email);
                 if(user){
-                    let message = 'Registration error, please contact the administrator.';
+                    let message = 'Registration error, invalid credentials.';
                     if(userData.isFirebaseLogin){
                         message = 'Login error, wrong username.';
                     }
                     return {error: message};
                 }
-                // if the email doesn't exists in the database and it's a registration request:
+                // if the email doesn't exist in the database, and it's a registration request:
                 // insert user, player, player state, player stats, class path:
                 let newUser = await this.usersManager.createUser({
                     email: userData.email,
@@ -158,7 +178,7 @@ class LoginManager
         };
         await this.events.emit('reldens.createNewPlayerBefore', loginData, playerData, this);
         let isNameAvailable = await this.usersManager.isNameAvailable(playerData.name);
-        if(!isNameAvailable){
+        if(isNameAvailable){
             return {error: true, message: 'The player name is not available, please choose another name.'};
         }
         try {
@@ -224,7 +244,7 @@ class LoginManager
 
     async sendForgotPasswordEmail(userData, oldPassword)
     {
-        let emailPath = path.join('assets', 'email', 'forgot.html');
+        let emailPath = this.themeManager.assetPath('email', 'forgot.html');
         let resetLink = this.config.server.baseUrl + '/reset-password?email='+userData.email+'&id='+oldPassword;
         let subject = process.env.RELDENS_MAILER_FORGOT_PASSWORD_SUBJECT || 'Forgot password';
         let content = await this.themeManager.loadAndRenderTemplate(emailPath, {resetLink: resetLink});

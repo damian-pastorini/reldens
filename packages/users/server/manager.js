@@ -2,19 +2,24 @@
  *
  * Reldens - UsersManager
  *
- * This class will handle the users from the database.
- *
  */
 
-const { UsersModel } = require('./model');
-const { PlayersModel } = require('./players-model');
-const { PlayersStateModel } = require('./players-state-model');
-const { PlayersStatsModel } = require('./players-stats-model');
-const { StatsModel } = require('./stats-model');
-const { ErrorManager } = require('@reldens/utils');
+const { ErrorManager, Logger, sc } = require('@reldens/utils');
 
 class UsersManager
 {
+
+    constructor(props)
+    {
+        this.events = sc.get(props, 'events', false);
+        if(!this.events){
+            Logger.error('EventsManager undefined in UsersManager.');
+        }
+        this.dataServer = sc.get(props, 'dataServer', false);
+        if(!this.dataServer){
+            Logger.error('DataServer undefined in UsersManager.');
+        }
+    }
 
     async loadUserByUsername(username)
     {
@@ -22,7 +27,8 @@ class UsersManager
         if(!username){
             ErrorManager.error('Missing user name.');
         }
-        let loadedUser = await UsersModel.loadUserBy('username', username);
+        let loadedUser = await this.dataServer.getEntity('users')
+            .loadOneByWithRelations('username', username, ['players.[state]']);
         if(loadedUser){
             result = loadedUser;
         }
@@ -35,7 +41,8 @@ class UsersManager
         if(!email){
             ErrorManager.error('Missing email.');
         }
-        let loadedUser = await UsersModel.loadUserBy('email', email);
+        let loadedUser = await this.dataServer.getEntity('users')
+            .loadOneByWithRelations('email', email, ['players.[state]']);
         if(loadedUser){
             result = loadedUser;
         }
@@ -44,18 +51,17 @@ class UsersManager
 
     async createUser(userData)
     {
-        return await UsersModel.saveUser(userData);
+        return await this.dataServer.getEntity('users').createWithRelations(userData);
     }
 
     async isNameAvailable(playerName)
     {
-        let player = await PlayersModel.loadBy('name', playerName);
-        return !!player;
+        return !!(await this.dataServer.getEntity('players').loadOneBy('name', playerName));
     }
 
     async createPlayer(playerData)
     {
-        let newPlayerModel = await PlayersModel.savePlayer(playerData);
+        let newPlayerModel = await this.dataServer.getEntity('players').createWithRelations(playerData);
         if(!newPlayerModel){
             return false;
         }
@@ -65,9 +71,8 @@ class UsersManager
 
     async generatePlayerStats(playerId)
     {
-        // save stats:
-        let statsList = await StatsModel.loadAll();
-        if(statsList){
+        let statsList = await this.dataServer.getEntity('stats').loadAll();
+        if(0 < statsList.length){
             for(let stat of statsList){
                 let statData = {
                     player_id: playerId,
@@ -75,36 +80,29 @@ class UsersManager
                     base_value: stat['base_value'],
                     value: stat['base_value']
                 };
-                await PlayersStatsModel.query().insert(statData);
+                await this.dataServer.getEntity('playerStats').create(statData);
             }
         }
     }
 
     updateUserLastLogin(username)
     {
-        // get date:
-        let date = new Date();
-        // format:
-        let dateFormat = date.toISOString().slice(0, 19).replace('T', ' ');
-        // save user:
-        return UsersModel.updateBy('username', username, {updated_at: dateFormat});
+        return this.dataServer.getEntity('users').updateBy('username', username, {updated_at: sc.getCurrentDate()});
     }
 
     updateUserByEmail(email, updatePatch)
     {
-        return UsersModel.updateBy('email', email, updatePatch);
+        return this.dataServer.getEntity('users').updateBy('email', email, updatePatch);
     }
 
     updateUserStateByPlayerId(playerId, newState)
     {
-        return PlayersStateModel.updateBy('player_id', playerId, newState);
+        return this.dataServer.getEntity('playerState').updateBy('player_id', playerId, newState);
     }
 
     async updatePlayerStatByIds(playerId, statId, statPatch)
     {
-        return PlayersStatsModel.query()
-            .patch(statPatch)
-            .where({player_id: playerId, stat_id: statId});
+        return this.dataServer.getEntity('playerStats').update({player_id: playerId, stat_id: statId}, statPatch);
     }
 
 }

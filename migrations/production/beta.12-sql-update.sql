@@ -95,7 +95,7 @@ CREATE TABLE IF NOT EXISTS `items_group` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='The group table is to save the groups settings.';
 
--- Dumping data for table reldens.items_group: ~6 rows (approximately)
+-- Dumping data for table items_group: ~6 rows (approximately)
 /*!40000 ALTER TABLE `items_group` DISABLE KEYS */;
 INSERT INTO `items_group` (`id`, `key`, `label`, `description`, `sort`, `items_limit`, `limit_per_item`) VALUES
 	(1, 'weapon', 'Weapon', 'All kinds of weapons.', 2, 1, 0),
@@ -106,7 +106,7 @@ INSERT INTO `items_group` (`id`, `key`, `label`, `description`, `sort`, `items_l
 	(6, 'helmet', 'Helmet', '', 1, 1, 0);
 /*!40000 ALTER TABLE `items_group` ENABLE KEYS */;
 
--- Dumping structure for table reldens.items_inventory
+-- Dumping structure for table items_inventory
 CREATE TABLE IF NOT EXISTS `items_inventory` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `owner_id` int(11) NOT NULL,
@@ -119,7 +119,7 @@ CREATE TABLE IF NOT EXISTS `items_inventory` (
   CONSTRAINT `FK_items_inventory_items_item` FOREIGN KEY (`item_id`) REFERENCES `items_item` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=97 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Inventory table is to save the items for each owner.';
 
--- Dumping data for table reldens.items_inventory: ~10 rows (approximately)
+-- Dumping data for table items_inventory: ~10 rows (approximately)
 /*!40000 ALTER TABLE `items_inventory` DISABLE KEYS */;
 INSERT INTO `items_inventory` (`id`, `owner_id`, `item_id`, `qty`, `remaining_uses`, `is_active`) VALUES
 	(1, 1, 1, 143, NULL, NULL),
@@ -135,7 +135,7 @@ INSERT INTO `items_inventory` (`id`, `owner_id`, `item_id`, `qty`, `remaining_us
 	(96, 2, 5, 1, 0, 0);
 /*!40000 ALTER TABLE `items_inventory` ENABLE KEYS */;
 
--- Dumping structure for table reldens.items_item
+-- Dumping structure for table items_item
 CREATE TABLE IF NOT EXISTS `items_item` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `key` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
@@ -153,7 +153,7 @@ CREATE TABLE IF NOT EXISTS `items_item` (
   CONSTRAINT `FK_items_item_items_group` FOREIGN KEY (`group_id`) REFERENCES `items_group` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='List of all available items in the system.';
 
--- Dumping data for table reldens.items_item: ~5 rows (approximately)
+-- Dumping data for table items_item: ~5 rows (approximately)
 /*!40000 ALTER TABLE `items_item` DISABLE KEYS */;
 INSERT INTO `items_item` (`id`, `key`, `group_id`, `label`, `description`, `qty_limit`, `uses_limit`, `useTimeOut`, `execTimeOut`) VALUES
 	(1, 'coins', NULL, 'Coins', NULL, 0, 1, NULL, NULL),
@@ -163,7 +163,7 @@ INSERT INTO `items_item` (`id`, `key`, `group_id`, `label`, `description`, `qty_
 	(5, 'spear', 1, 'Spear', 'A short distance but powerful weapon.', 0, 0, NULL, NULL);
 /*!40000 ALTER TABLE `items_item` ENABLE KEYS */;
 
--- Dumping structure for table reldens.items_item_modifiers
+-- Dumping structure for table items_item_modifiers
 CREATE TABLE IF NOT EXISTS `items_item_modifiers` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `item_id` int(11) NOT NULL,
@@ -175,7 +175,7 @@ CREATE TABLE IF NOT EXISTS `items_item_modifiers` (
   CONSTRAINT `FK_items_item_modifiers_items_item` FOREIGN KEY (`item_id`) REFERENCES `items_item` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Modifiers is the way we will affect the item owner.';
 
--- Dumping data for table reldens.items_item_modifiers: ~0 rows (approximately)
+-- Dumping data for table items_item_modifiers: ~0 rows (approximately)
 /*!40000 ALTER TABLE `items_item_modifiers` DISABLE KEYS */;
 /*!40000 ALTER TABLE `items_item_modifiers` ENABLE KEYS */;
 

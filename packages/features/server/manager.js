@@ -7,7 +7,6 @@
  */
 
 const { ServerCoreFeatures } = require('./config-server');
-const { FeaturesModel } = require('./model');
 const { Logger, sc } = require('@reldens/utils');
 
 class FeaturesManager
@@ -20,16 +19,17 @@ class FeaturesManager
         // initialize features props:
         this.featuresList = {};
         this.featuresCodeList = [];
-        this.events = sc.getDef(props, 'events', false);
+        this.events = sc.get(props, 'events', false);
         if(!this.events){
             Logger.error('EventsManager undefined in FeaturesManager.');
         }
+        this.dataServer = sc.get(props, 'dataServer', false);
     }
 
     async loadFeatures()
     {
         // get the features from the database:
-        let featuresCollection = await FeaturesModel.loadAll();
+        let featuresCollection = await this.dataServer.getEntity('features').loadAll();
         for(let featureEntity of featuresCollection){
             // add the feature to the codes list:
             this.featuresCodeList.push(featureEntity.code);
@@ -46,7 +46,7 @@ class FeaturesManager
                 // set package on entity:
                 featureEntity.package = new featurePackage();
                 if(typeof featureEntity.package.setupPack === 'function'){
-                    await featureEntity.package.setupPack({events: this.events});
+                    await featureEntity.package.setupPack({events: this.events, dataServer: this.dataServer});
                 }
                 // for last add the feature entity to the list:
                 this.featuresList[featureEntity.code] = featureEntity;

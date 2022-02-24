@@ -182,7 +182,7 @@ class PlayerEngine
         let y = playerSprite.y
             - nameHeight
             - playerSprite.height
-            + sc.getDef(this, 'topOff', 0);
+            + sc.get(this, 'topOff', 0);
         return {x, y};
     }
 

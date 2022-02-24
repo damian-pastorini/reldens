@@ -289,7 +289,7 @@ class SceneDynamic extends Scene
         if(!this.anims || !this.anims.anims || !this.anims.anims.entries){
             return false;
         }
-        return sc.getDef(this.anims.anims.entries, key, false);
+        return sc.get(this.anims.anims.entries, key, false);
     }
 
     getObjectFromExtraData(objKey, extraData, currentPlayer)

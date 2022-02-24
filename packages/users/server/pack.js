@@ -7,7 +7,6 @@
 const { InitialState } = require('../../users/server/initial-state');
 const { InitialUser } = require('../../users/server/initial-user');
 const { PackInterface } = require('../../features/pack-interface');
-const { ModelsManager } = require('./models-manager');
 const { UsersConst } = require('../constants');
 const { ObjectsConst } = require('../../objects/constants');
 const { Logger, sc } = require('@reldens/utils');
@@ -17,11 +16,14 @@ class UsersPack extends PackInterface
 
     setupPack(props)
     {
-        this.events = sc.getDef(props, 'events', false);
+        this.events = sc.get(props, 'events', false);
         if(!this.events){
             Logger.error('EventsManager undefined in UsersPack.');
         }
-        this.modelsManager = ModelsManager;
+        this.dataServer = sc.get(props, 'dataServer', false);
+        if(!this.dataServer){
+            Logger.error('DataServer undefined in UsersPack.');
+        }
         // @TODO - BETA - Move LifeBar to it's own package.
         this.lifeBarConfig = false;
         this.lifeProp = false;
@@ -147,10 +149,10 @@ class UsersPack extends PackInterface
         }
         this.stats = {};
         this.statsByKey = {};
-        let statsData = await this.modelsManager.stats.loadAll();
+        let statsData = await this.dataServer.getEntity('stats').loadAll();
         if(statsData){
             for(let stat of statsData){
-                stat.data = sc.getJson(stat.customData);
+                stat.data = sc.toJson(stat.customData);
                 this.stats[stat.id] = stat;
                 this.statsByKey[stat.key] = stat;
             }
@@ -168,7 +170,7 @@ class UsersPack extends PackInterface
 
     async processStatsData(model, playerId)
     {
-        let loadedStats = await this.modelsManager[model].loadBy('player_id', playerId);
+        let loadedStats = await this.dataServer.getEntity(model).loadBy('player_id', playerId);
         let stats = {};
         let statsBase = {};
         if(loadedStats){

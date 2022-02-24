@@ -24,7 +24,7 @@ class EnemyObject extends NpcObject
         super(props);
         this.hasState = true;
         // @TODO - BETA - Remove from config and make enemy stats load dynamically (passed on props from storage).
-        let configStats = sc.getDef(props, 'initialStats', this.config.get('server/enemies/initialStats'));
+        let configStats = sc.get(props, 'initialStats', this.config.get('server/enemies/initialStats'));
         this.initialStats = Object.assign({}, configStats);
         this.stats = Object.assign({}, configStats);
         this.type = ObjectsConst.TYPE_ENEMY;
@@ -32,14 +32,14 @@ class EnemyObject extends NpcObject
         // @NOTE: we could run different actions and enemies reactions based on the player action.
         // this.runOnAction = true;
         // run on hit will make the enemy aggressive when the player enter the in the enemy-object interactive area.
-        this.runOnHit = sc.getDef(props, 'runOnHit', true);
-        this.roomVisible = sc.getDef(props, 'roomVisible', true);
-        this.randomMovement = sc.getDef(props, 'randomMovement', true);
-        this.startBattleOnHit = sc.getDef(props, 'startBattleOnHit', true);
-        this.isAggressive = sc.getDef(props, 'isAggressive', false);
+        this.runOnHit = sc.get(props, 'runOnHit', true);
+        this.roomVisible = sc.get(props, 'roomVisible', true);
+        this.randomMovement = sc.get(props, 'randomMovement', true);
+        this.startBattleOnHit = sc.get(props, 'startBattleOnHit', true);
+        this.isAggressive = sc.get(props, 'isAggressive', false);
         this.battle = new Pve({
-            battleTimeOff: sc.getDef(props, 'battleTimeOff', 20000),
-            chaseMultiple: sc.getDef(props, 'chaseMultiple', false),
+            battleTimeOff: sc.get(props, 'battleTimeOff', 20000),
+            chaseMultiple: sc.get(props, 'chaseMultiple', false),
             events: this.events
         });
         // enemy created, setting broadcastKey:

@@ -15,6 +15,15 @@ const { GameConst } = require('../../game/constants');
 class ChatMessageActions
 {
 
+    constructor(props)
+    {
+        let dataServer = sc.get(props, 'dataServer', false);
+        if(!dataServer){
+            Logger.error('DataServer undefined in ChatMessageActions.');
+        }
+        this.chatManager = new ChatManager({dataServer: props.dataServer});
+    }
+
     parseMessageAndRunActions(client, data, room, playerSchema)
     {
         if(sc.hasOwn(data, 'act') && data.act === ChatConst.CHAT_ACTION){
@@ -28,23 +37,32 @@ class ChatMessageActions
                     t: ChatConst.CHAT_TYPE_NORMAL
                 };
                 room.broadcast(messageData);
-                ChatManager.saveMessage(message, playerSchema.player_id, playerSchema.state.room_id, {}, false)
-                    .catch((err) => {
-                        Logger.error(['Chat save error:', err]);
-                    });
+                this.chatManager.saveMessage(
+                    message,
+                    playerSchema.player_id,
+                    playerSchema.state.room_id,
+                    false,
+                    ChatConst.CHAT_MESSAGE
+                ).catch((err) => {
+                    Logger.error(['Chat save error:', err]);
+                });
             }
         }
         if(data.act === GameConst.CLIENT_JOINED && room.config.get('server/chat/messages/broadcast_join')){
             let sentText = `${playerSchema.playerName} has joined ${room.roomName}.`;
             room.broadcast({act: ChatConst.CHAT_ACTION, m: sentText, f: 'Sys', t: ChatConst.CHAT_TYPE_SYSTEM});
-            ChatManager.saveMessage(
-                room.roomName, playerSchema.player_id, playerSchema.state.room_id, false, ChatConst.CHAT_JOINED
-                ).catch((err) => {
-                    Logger.error(['Joined room chat save error:', err]);
-                });
+            this.chatManager.saveMessage(
+                room.roomName,
+                playerSchema.player_id,
+                playerSchema.state.room_id,
+                false,
+                ChatConst.CHAT_JOINED
+            ).catch((err) => {
+                Logger.error(['Joined room chat save error:', err]);
+            });
         }
     }
 
 }
 
-module.exports.ChatMessageActions = new ChatMessageActions();
+module.exports.ChatMessageActions = ChatMessageActions;

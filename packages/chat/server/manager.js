@@ -2,49 +2,42 @@
  *
  * Reldens - ChatManager
  *
- * This class will handle the chat messages in the storage.
- *
  */
 
-const { ChatModel } = require('./model');
-const { Logger } = require('@reldens/utils');
+const { ChatConst } = require('../constants');
+const { Logger, sc } = require('@reldens/utils');
 
 class ChatManager
 {
+
+    constructor(props)
+    {
+        this.dataServer = sc.get(props, 'dataServer', false);
+        if(!this.dataServer){
+            Logger.error('DataServer undefined in ChatManager.');
+        }
+    }
 
     async saveMessage(message, playerId, roomId, clientToPlayerSchema, messageType)
     {
         let entryData = {
             player_id: playerId,
             message: message,
-            message_time: this.getCurrentDate()
+            message_time: sc.getCurrentDate(),
+            message_type: messageType || ChatConst.CHAT_MESSAGE
         };
         if(roomId){
             entryData.room_id = roomId;
         }
-        if(clientToPlayerSchema && {}.hasOwnProperty.call(clientToPlayerSchema, 'id')){
+        if(clientToPlayerSchema && sc.hasOwn(clientToPlayerSchema, 'id')){
             entryData.private_player_id = clientToPlayerSchema.state.player_id;
         }
-        if(messageType){
-            entryData.message_type = messageType;
-        }
-        let insertResult = await ChatModel.saveEntry(entryData);
+        let insertResult = await this.dataServer.getEntity('chat').create(entryData);
         if(!insertResult){
-            Logger.error(['Chat insert message error.', entryData]);
+            Logger.error('Chat message save error.', entryData);
         }
-    }
-
-    /**
-     * Current date is just for internal use and save the message date on the server side.
-     */
-    getCurrentDate()
-    {
-        // get date:
-        let date = new Date();
-        // format:
-        return date.toISOString().slice(0, 19).replace('T', ' ');
     }
 
 }
 
-module.exports.ChatManager = new ChatManager();
+module.exports.ChatManager = ChatManager;

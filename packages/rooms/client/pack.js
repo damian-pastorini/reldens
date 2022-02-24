@@ -12,17 +12,17 @@ class RoomsPack extends PackInterface
 
     setupPack(props)
     {
-        this.gameManager = sc.getDef(props, 'gameManager', false);
+        this.gameManager = sc.get(props, 'gameManager', false);
         if(!this.gameManager){
             Logger.error('Game Manager undefined in InventoryPack.');
         }
-        this.events = sc.getDef(props, 'events', false);
+        this.events = sc.get(props, 'events', false);
         if(!this.events){
             Logger.error('EventsManager undefined in InventoryPack.');
         }
         this.events.on('reldens.beforeCreateEngine', (initialGameData, gameManager) => {
             let playersConfig = initialGameData.gameConfig.client.players;
-            let multiConfig = sc.getDef(playersConfig, 'multiplePlayers', false);
+            let multiConfig = sc.get(playersConfig, 'multiplePlayers', false);
             if(
                 initialGameData.roomSelection
                 && (
