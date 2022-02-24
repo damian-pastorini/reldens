@@ -178,7 +178,7 @@ class LoginManager
         };
         await this.events.emit('reldens.createNewPlayerBefore', loginData, playerData, this);
         let isNameAvailable = await this.usersManager.isNameAvailable(playerData.name);
-        if(!isNameAvailable.length){
+        if(isNameAvailable){
             return {error: true, message: 'The player name is not available, please choose another name.'};
         }
         try {

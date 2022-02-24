@@ -56,8 +56,7 @@ class UsersManager
 
     async isNameAvailable(playerName)
     {
-        let player = await this.dataServer.getEntity('players').loadOneBy('playerName', playerName);
-        return !!player;
+        return !!(await this.dataServer.getEntity('players').loadOneBy('name', playerName));
     }
 
     async createPlayer(playerData)
