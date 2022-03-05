@@ -40,13 +40,10 @@ class UsersPack extends PackInterface
     {
         let isMultiplayerEnabled = sc.isTrue(initialGameData.gameConfig.client.players.multiplePlayers, 'enabled');
         let playerSelection = gameManager.gameDom.getElement('#player-selection');
+        // @TODO - BETA - If the player selection container doesn't exists we should create one.
         let playersCount = sc.isTrue(initialGameData, 'players') ? Object.keys(initialGameData.players).length : 0;
-        if(
-            // if multiplayer is disabled and the user already has a player then just allow the engine to be executed:
-            (playersCount <= 1 && !isMultiplayerEnabled)
-            // or if the container for the player selection/creation doesn't exists also allow the normal execution:
-            || !playerSelection
-        ){
+        // if multiplayer is disabled and the user already has a player then just allow the engine to be executed:
+        if(0 < playersCount && !isMultiplayerEnabled){
             // before return set the only player available:
             initialGameData.player = initialGameData.players[0];
             return;
@@ -55,7 +52,7 @@ class UsersPack extends PackInterface
         gameManager.canInitEngine = false;
         playerSelection.classList.remove('hidden');
         // if multiplayer is enabled and the user already has a player then setup the selector form:
-        if(isMultiplayerEnabled && playersCount){
+        if(isMultiplayerEnabled && 0 < playersCount){
             this.preparePlayerSelector(playerSelection, initialGameData, gameManager);
         }
         this.preparePlayerCreator(playerSelection, initialGameData, gameManager);

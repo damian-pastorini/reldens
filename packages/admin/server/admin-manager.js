@@ -13,6 +13,8 @@ const { Logger, sc } = require('@reldens/utils');
 
 class AdminManager
 {
+    router = false;
+    adminJs = false;
 
     constructor(props)
     {
@@ -20,13 +22,13 @@ class AdminManager
         this.config = props.config;
         this.databases = sc.get(props, 'databases', []);
         this.translations = sc.get(props, 'translations', {});
-        this.router = false;
-        this.adminJs = false;
         this.useSecureLogin = Boolean(Number(process.env.RELDENS_ADMIN_SECURE_LOGIN || 0) || false);
         this.authenticateCallback = sc.get(props, 'authenticateCallback', () => {
             Logger.info('Authenticate callback undefined.')
         });
         this.authCookiePassword = (process.env.ADMIN_COOKIE_PASSWORD || 'secret-password-to-secure-the-admin-cookie');
+        this.dashboardComponent = sc.get(props, 'dashboardComponent', false);
+        this.rootPath = sc.get(props, 'rootPath', (process.env.RELDENS_ADMIN_ROUTE_PATH || '/reldens-admin'));
     }
 
     setupAdmin()
@@ -35,28 +37,27 @@ class AdminManager
             Database: DriverDatabase,
             Resource: DriverResource
         });
-        this.rootPath = (process.env.RELDENS_ADMIN_ROUTE_PATH || '/reldens-admin');
         let adminJsConfig = {
             databases: this.databases,
             rootPath: this.rootPath,
             logoutPath: this.rootPath+'/logout',
             loginPath: this.rootPath+'/login',
             branding: {
-                companyName: 'Reldens - Administration Panel',
+                companyName: (process.env.RELDENS_ADMIN_COMPANY_NAME || 'Reldens - Administration Panel'),
                 softwareBrothers: false,
-                logo: '/assets/web/reldens-your-logo-mage.png',
+                logo: (process.env.RELDENS_ADMIN_LOGO_PATH || '/assets/web/reldens-your-logo-mage.png'),
             },
             locale: {
                 translations: AdminTranslations.appendTranslations(this.translations)
             },
             assets: {
-                styles: ['/css/reldens-admin.css'],
+                styles: [(process.env.RELDENS_ADMIN_STYLES_PATH || '/css/reldens-admin.css')],
             },
             dashboard: {
                 handler: () => {
                     return { manager: this }
                 },
-                component: AdminJS.bundle('./dashboard-component')
+                component: this.dashboardComponent || AdminJS.bundle('./dashboard-component')
             },
         };
         this.adminJs = new AdminJS(adminJsConfig);

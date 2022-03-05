@@ -21,7 +21,7 @@ class Healer extends NpcObject
         this.playerVisible = true;
         // assign extra params:
         this.clientParams.enabled = true;
-        // @TODO - BETA.17: all the npc info will be coming from the storage.
+        // @TODO - BETA - All the NPC info will be coming from the storage.
         this.clientParams.ui = true;
         this.content = 'Hi there! I can restore your health, would you like me to do it?';
         this.options = {

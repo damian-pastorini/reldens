@@ -53,7 +53,7 @@ class LoginManager
         if(!user && !userData.isNewUser){
             return {error: 'Missing user data.'};
         }
-        return user ? await this.login(user, userData) :  await this.register(userData);
+        return user ? await this.login(user, userData) : await this.register(userData);
     }
 
     isValidData(userData)
@@ -187,6 +187,7 @@ class LoginManager
             await this.events.emit('reldens.createdNewPlayer', player, loginData, this);
             return {error: false, player};
         } catch (err) {
+            Logger.critical('Player creation error', err);
             return {error: true, message: 'There was an error creating your player, please try again.'};
         }
     }

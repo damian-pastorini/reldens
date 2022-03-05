@@ -28,33 +28,36 @@ class PlayerSelector
             Logger.error('Classes not defined, can not populate the classes selector.');
             return false;
         }
-        if(!sc.get(playersConfig.multiplePlayers, 'enabled', classesData)){
+        let multiConfig = sc.get(playersConfig, 'multiplePlayers', false);
+        if((multiConfig && multiConfig.enabled)){
             return false;
         }
         let playerAdditional = this.gameDom.getElement('.player_creation_additional_info');
-        if(playerAdditional){
-            let div = this.gameDom.createElement('div');
-            div.id = 'class-path-selector-box';
-            div.classList.add('input-box');
-            let label = this.gameDom.createElement('label');
-            label.for = 'class-path-select';
-            label.innerText = 'Select Your Class-Path';
-            let select = this.gameDom.createElement('select');
-            select.id = 'class-path-select';
-            select.name = 'class_path_select';
-            for(let id of Object.keys(classesData)){
-                let option = new Option(classesData[id].label, id);
-                option.dataset.key = classesData[id].key;
-                select.append(option);
-            }
-            div.append(label);
-            div.append(select);
-            let avatarDiv = this.gameDom.createElement('div');
-            avatarDiv.className = 'avatar-container';
-            this.appendAvatarOnSelector(select, avatarDiv, playersConfig);
-            div.append(avatarDiv);
-            playerAdditional.append(div);
+        if(0 === playerAdditional.length){
+            return false
         }
+        // @TODO - BETA - Make all texts configurable and implement snippets for translations.
+        let div = this.gameDom.createElement('div');
+        div.id = 'class-path-selector-box';
+        div.classList.add('input-box');
+        let label = this.gameDom.createElement('label');
+        label.for = 'class-path-select';
+        label.innerText = 'Select Your Class-Path';
+        let select = this.gameDom.createElement('select');
+        select.id = 'class-path-select';
+        select.name = 'class_path_select';
+        for(let id of Object.keys(classesData)){
+            let option = new Option(classesData[id].label, id);
+            option.dataset.key = classesData[id].key;
+            select.append(option);
+        }
+        div.append(label);
+        div.append(select);
+        let avatarDiv = this.gameDom.createElement('div');
+        avatarDiv.className = 'avatar-container';
+        this.appendAvatarOnSelector(select, avatarDiv, playersConfig);
+        div.append(avatarDiv);
+        playerAdditional.append(div);
     }
 
     appendAvatarOnSelector(select, container, playersConfig)

@@ -23,23 +23,18 @@ class RoomsPack extends PackInterface
         this.events.on('reldens.beforeCreateEngine', (initialGameData, gameManager) => {
             let playersConfig = initialGameData.gameConfig.client.players;
             let multiConfig = sc.get(playersConfig, 'multiplePlayers', false);
-            if(
-                initialGameData.roomSelection
-                && (
-                    // multiplayer enabled:
-                    (multiConfig && multiConfig.enabled)
-                    // or registration:
-                    || initialGameData.players.length === 0
-                )
-            ){
+            let playersCount = sc.isTrue(initialGameData, 'players') ? Object.keys(initialGameData.players).length : 0;
+            if(initialGameData.roomSelection && ((multiConfig && multiConfig.enabled) || 0 === playersCount)){
                 this.populateSceneSelector(initialGameData.roomSelection, gameManager);
             }
         });
-        this.events.on('reldens.onPreparePlayerSelectorFormSubmit', (usersPack,
+        this.events.on('reldens.onPreparePlayerSelectorFormSubmit', (
+            usersPack,
             form,
             select,
             selectedPlayer,
-            gameManager) => {
+            gameManager
+        ) => {
             this.appendSelectedScene(gameManager);
         });
     }

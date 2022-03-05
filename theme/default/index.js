@@ -10,7 +10,7 @@ const { GameManager } = require('reldens/client');
 const { CustomClasses } = require('../packages/client');
 const { GameConst } = require('reldens/packages/game/constants');
 
-// @TODO - BETA.17: move everything from this file as part of the core project and include events to manage the theme.
+// @TODO - BETA - Move everything from this file as part of the core project and include events to manage the theme.
 window.addEventListener('DOMContentLoaded', () => {
     // reldens game:
     let reldens = new GameManager();

@@ -23,7 +23,7 @@ console.log('TEST - All these are TEST logs that you can remove from your index 
 // appServer.events.debug = 'all'; // or any string containing multiple events keys.
 // setup as you need:
 // eslint-disable-next-line no-unused-vars
-appServer.events.on('reldens.serverConfigFeaturesReady', (serverManager, configProcessor) => {
+appServer.events.on('reldens.serverConfigFeaturesReady', (props) => {
     console.log('TEST - Events test reldens.serverConfigFeaturesReady success!');
 });
 // run the server!

@@ -43,8 +43,12 @@ class ActionsPack extends PackInterface
             this.uiManager.createUi();
         });
         this.events.on('reldens.beforeCreateEngine', (initialGameData) => {
+            let classesData = sc.get(initialGameData, 'classesData', {});
+            if(0 === Object.keys(classesData).length){
+                return false;
+            }
             this.playerSelector.populateClassesSelector(
-                initialGameData.classesData,
+                classesData,
                 initialGameData.gameConfig.client.players
             );
         });
