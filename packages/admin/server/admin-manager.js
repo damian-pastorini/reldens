@@ -129,7 +129,7 @@ class AdminManager
                 result.buildClient = true;
             }
             if(request.query.shootDownServer){
-                props.serverManager.gameServer.gracefullyShutdown();
+                props.serverManager.gameServer.gracefullyShutdown(false);
                 result.shootDownServer = true; // you will never reach this :)
             }
             return {result};

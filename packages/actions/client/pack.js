@@ -49,7 +49,8 @@ class ActionsPack extends PackInterface
             }
             this.playerSelector.populateClassesSelector(
                 classesData,
-                initialGameData.gameConfig.client.players
+                initialGameData.gameConfig.client.players,
+                initialGameData.player
             );
         });
         this.events.on('reldens.activateRoom', (room) => {

@@ -22,21 +22,22 @@ class PlayerSelector
         this.gameDom = this.gameManager.gameDom;
     }
 
-    populateClassesSelector(classesData, playersConfig)
+    populateClassesSelector(classesData, playersConfig, activePlayer)
     {
         if(!classesData){
             Logger.error('Classes not defined, can not populate the classes selector.');
             return false;
         }
         let multiConfig = sc.get(playersConfig, 'multiplePlayers', false);
-        if((multiConfig && multiConfig.enabled)){
+        if((!multiConfig || !multiConfig.enabled) && activePlayer){
             return false;
         }
         let playerAdditional = this.gameDom.getElement('.player_creation_additional_info');
-        if(0 === playerAdditional.length){
+        if(!playerAdditional){
             return false
         }
         // @TODO - BETA - Make all texts configurable and implement snippets for translations.
+        this.gameDom.getElement('#player_create_form').classList.remove('hidden');
         let div = this.gameDom.createElement('div');
         div.id = 'class-path-selector-box';
         div.classList.add('input-box');
