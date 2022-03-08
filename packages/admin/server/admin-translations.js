@@ -25,7 +25,9 @@ class AdminTranslations
             labels: {
                 navigation: 'Reldens - Administration Panel',
                 adminVersion: 'Admin: {{version}}',
-                loginWelcome: 'Reldens'
+                loginWelcome: 'Reldens',
+                pages: 'Server Management',
+                management: 'Management'
             }
         };
         for(let i of Object.keys(translations)){

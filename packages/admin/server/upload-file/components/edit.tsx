@@ -13,9 +13,8 @@ const Edit: FC<EditPropertyProps> = ({property, record, onChange}) => {
     const [filesToUpload, setFilesToUpload] = useState<Array<File>>([]);
 
     useEffect(() => {
-        // it means means that someone hit save and new file has been uploaded
-        // in this case fliesToUpload should be cleared.
-        // This happens when user turns off redirect after new/edit
+        // It means that someone hit save and new file has been uploaded in this case fliesToUpload should be cleared.
+        // This happens when user turns off redirect after new/edit.
         if (
             (typeof key === 'string' && key !== originalKey)
             || (typeof key !== 'string' && !originalKey)

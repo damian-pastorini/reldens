@@ -15,6 +15,7 @@ class AdminManager
 {
     router = false;
     adminJs = false;
+    pagesHandlers = {};
 
     constructor(props)
     {
@@ -29,6 +30,7 @@ class AdminManager
         this.authCookiePassword = (process.env.ADMIN_COOKIE_PASSWORD || 'secret-password-to-secure-the-admin-cookie');
         this.dashboardComponent = sc.get(props, 'dashboardComponent', false);
         this.rootPath = sc.get(props, 'rootPath', (process.env.RELDENS_ADMIN_ROUTE_PATH || '/reldens-admin'));
+        this.setupPagesHandlers(props);
     }
 
     setupAdmin()
@@ -37,6 +39,7 @@ class AdminManager
             Database: DriverDatabase,
             Resource: DriverResource
         });
+        AdminJS.bundle('./components/sidebar-override', 'Sidebar');
         let adminJsConfig = {
             databases: this.databases,
             rootPath: this.rootPath,
@@ -57,8 +60,15 @@ class AdminManager
                 handler: () => {
                     return { manager: this }
                 },
-                component: this.dashboardComponent || AdminJS.bundle('./dashboard-component')
+                component: this.dashboardComponent || AdminJS.bundle('./components/dashboard')
             },
+            pages: {
+                management: {
+                    icon: 'Settings',
+                    handler: this.pagesHandlers['management'],
+                    component: AdminJS.bundle('./components/management'),
+                }
+            }
         };
         this.adminJs = new AdminJS(adminJsConfig);
         this.router = this.createRouter();
@@ -107,6 +117,23 @@ class AdminManager
             registeredResources.push(driverResource);
         }
         return registeredResources;
+    }
+
+    setupPagesHandlers(props)
+    {
+        this.pagesHandlers['management'] = async (request, response, context) => {
+            let result = {};
+            if(request.query.buildClient){
+                let themeManager = props.serverManager.themeManager;
+                await themeManager.buildClient();
+                result.buildClient = true;
+            }
+            if(request.query.shootDownServer){
+                props.serverManager.gameServer.gracefullyShutdown();
+                result.shootDownServer = true; // you will never reach this :)
+            }
+            return {result};
+        };
     }
 
 }
