@@ -5,7 +5,7 @@
  */
 
 const { Scene, Input } = require('phaser');
-const { TilesetAnimation } = require('./tileset-animation');
+const { TileSetAnimation } = require('./tileset-animation');
 const { Logger, sc } = require('@reldens/utils');
 const { GameConst } = require('../constants');
 const { Minimap } = require('./minimap');
@@ -48,6 +48,88 @@ class SceneDynamic extends Scene
     create()
     {
         this.gameManager.events.emitSync('reldens.beforeSceneDynamicCreate', this);
+        this.createControllerKeys();
+        this.input.keyboard.on('keydown', (event) => {
+            return this.executeKeyDownBehavior(event);
+        });
+        this.map = this.add.tilemap(this.params.roomMap);
+        this.disableContextMenu();
+        this.input.on('pointerdown', (pointer, currentlyOver) => {
+            return this.executePointerDownAction(pointer, currentlyOver);
+        });
+        this.createSceneMap();
+        this.cameras.main.on('camerafadeincomplete', () => {
+            this.transition = false;
+            this.gameManager.isChangingScene = false;
+            this.input.keyboard.on('keyup', (event) => {
+                this.executeKeyUpBehavior(event);
+            });
+            this.gameManager.gameDom.activeElement().blur();
+            this.minimap.createMap(this, this.gameManager.getCurrentPlayerAnimation());
+        });
+        this.gameManager.events.emitSync('reldens.afterSceneDynamicCreate', this);
+    }
+
+    createSceneMap()
+    {
+        this.useTsAnimation = this.hasTsAnimation();
+        this.tileset = this.map.addTilesetImage(this.params.roomMap);
+        this.registerLayers();
+        for(let i of Object.keys(this.layers)){
+            let layer = this.layers[i];
+            if(-1 !== layer.layer.name.indexOf('animations')){
+                this.registerTilesetAnimation(layer);
+            }
+        }
+    }
+
+    disableContextMenu()
+    {
+        if(!this.gameManager.config.get('client/ui/controls/disableContextMenu')){
+            return false;
+        }
+        this.gameManager.gameDom.getDocument().addEventListener('contextmenu', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+        });
+    }
+
+    executeKeyDownBehavior(event)
+    {
+        if (this.gameManager.gameDom.insideInput()) {
+            return false;
+        }
+        // @TODO - BETA - Make configurable the keys related to the actions and skills.
+        // keyCode = 32 > space bar
+        if (event.keyCode === 32 && !this.gameManager.gameDom.insideInput()) {
+            this.player.runActions();
+        }
+        // keyCode = 27 > esc
+        if (event.keyCode === 27) {
+            this.gameManager.gameEngine.clearTarget();
+        }
+        // keyCode = 116 > F5
+        if (event.keyCode === 116) {
+            this.gameManager.forcedDisconnection = true;
+        }
+    }
+
+    executeKeyUpBehavior(event)
+    {
+        // stop all directional keys (arrows and wasd):
+        if(event.keyCode >= 37 && event.keyCode <= 40 || (
+            event.keyCode === 87
+            || event.keyCode === 65
+            || event.keyCode === 83
+            || event.keyCode === 68
+        )){
+            // @NOTE: all keyup events has to be sent.
+            this.player.stop();
+        }
+    }
+
+    createControllerKeys()
+    {
         // @TODO - BETA - Controllers will be part of the configuration in the database.
         this.keyLeft = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.LEFT);
         this.keyA = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.A);
@@ -74,80 +156,32 @@ class SceneDynamic extends Scene
             this.loopKeysAddListenerToElement(keys, inputElement, 'focusout', 'addCapture');
             this.loopKeysAddListenerToElement(keys, inputElement, 'blur', 'addCapture');
         }
-        this.input.keyboard.on('keydown', (event) => {
-            if(this.gameManager.gameDom.insideInput()){
-                return false;
-            }
-            // @TODO - BETA - Make configurable the keys related to the actions and skills.
-            // keyCode = 32 > spacebar
-            if(event.keyCode === 32 && !this.gameManager.gameDom.insideInput()){
-                this.player.runActions();
-            }
-            // keyCode = 27 > esc
-            if(event.keyCode === 27){
-                this.gameManager.gameEngine.clearTarget();
-            }
-            // keyCode = 116 > F5
-            if(event.keyCode === 116){
-                this.gameManager.forcedDisconnection = true;
-            }
-        });
-        this.map = this.add.tilemap(this.params.roomMap);
-        // disable default context menu:
-        if(this.gameManager.config.get('client/ui/controls/disableContextMenu')){
-            this.gameManager.gameDom.getDocument().addEventListener('contextmenu', (event) => {
-                event.preventDefault();
-                event.stopPropagation();
-            });
+    }
+
+    executePointerDownAction(pointer, currentlyOver)
+    {
+        let primaryMove = this.gameManager.config.get('client/ui/controls/primaryMove');
+        if ((!pointer.primaryDown && primaryMove) || (pointer.primaryDown && !primaryMove)) {
+            return false;
         }
-        this.input.on('pointerdown', (pointer, currentlyOver) => {
-            let primaryMove = this.gameManager.config.get('client/ui/controls/primaryMove');
-            if((!pointer.primaryDown && primaryMove) || (pointer.primaryDown && !primaryMove)){
-                return false;
-            }
-            // @TODO - BETA - Temporal avoid double actions, if you target something you will not be moved to the
-            //   pointer, in a future release this will be configurable so you can walk to objects and they get
-            //   activated, for example, click on and NPC, automatically walk close and automatically get a dialog
-            //   opened.
-            if(this.gameManager.gameDom.insideInput()){
-                this.gameManager.gameDom.activeElement().blur();
-            }
-            if(!currentlyOver.length){
-                if(!this.appendRowAndColumn(pointer)){
-                    return false;
-                }
-                this.player.moveToPointer(pointer);
-                this.updatePointerObject(pointer);
-            }
-        });
-        this.useTsAnimation = this.hasTsAnimation();
-        this.tileset = this.map.addTilesetImage(this.params.roomMap);
-        this.registerLayers();
-        for(let i of Object.keys(this.layers)){
-            let layer = this.layers[i];
-            if(layer.layer.name.indexOf('animations') !== -1){
-                this.registerTilesetAnimation(layer);
-            }
-        }
-        this.cameras.main.on('camerafadeincomplete', () => {
-            this.transition = false;
-            this.gameManager.isChangingScene = false;
-            this.input.keyboard.on('keyup', (event) => {
-                // stop all directional keys (arrows and wasd):
-                if(event.keyCode >= 37 && event.keyCode <= 40 || (
-                    event.keyCode === 87
-                    || event.keyCode === 65
-                    || event.keyCode === 83
-                    || event.keyCode === 68
-                )){
-                    // @NOTE: all keyup events has to be sent.
-                    this.player.stop();
-                }
-            });
+        // @TODO - BETA - Temporal avoid double actions, if you target something you will not be moved to the
+        //   pointer, in a future release this will be configurable so you can walk to objects and they get
+        //   activated, for example, click on and NPC, automatically walk close and automatically get a dialog
+        //   opened.
+        if (this.gameManager.gameDom.insideInput()) {
             this.gameManager.gameDom.activeElement().blur();
-            this.minimap.createMap(this, this.gameManager.getCurrentPlayerAnimation());
-        });
-        this.gameManager.events.emitSync('reldens.afterSceneDynamicCreate', this);
+        }
+        if (currentlyOver.length) {
+            return false;
+        }
+        if (!this.appendRowAndColumn(pointer)) {
+            return false;
+        }
+        if (!this.gameManager.config.get('client/players/tapMovement/enabled')) {
+            return false;
+        }
+        this.player.moveToPointer(pointer);
+        this.updatePointerObject(pointer);
     }
 
     // eslint-disable-next-line no-unused-vars
@@ -221,7 +255,7 @@ class SceneDynamic extends Scene
 
     registerTilesetAnimation(layer)
     {
-        this.tilesetAnimation = new TilesetAnimation();
+        this.tilesetAnimation = new TileSetAnimation();
         this.tilesetAnimation.register(layer, this.tileset.tileData);
         this.tilesetAnimation.start();
     }
@@ -294,6 +328,7 @@ class SceneDynamic extends Scene
 
     getObjectFromExtraData(objKey, extraData, currentPlayer)
     {
+        // @TODO - BETA - Replace by constants.
         // objKey = t > target
         // objKey = o > owner
         let returnObj = false;

@@ -6,7 +6,7 @@
  *
  */
 
-class TilesetAnimation
+class TileSetAnimation
 {
 
     register(layer, tileData)
@@ -55,4 +55,4 @@ class TilesetAnimation
 
 }
 
-module.exports.TilesetAnimation = TilesetAnimation;
+module.exports.TileSetAnimation = TileSetAnimation;

@@ -182,6 +182,7 @@ class RoomScene extends RoomLogin
             }
             if(
                 messageData.act === GameConst.POINTER
+                && this.config.get('client/players/tapMovement/enabled')
                 && sc.hasOwn(messageData, 'column')
                 && sc.hasOwn(messageData, 'row')
                 && bodyToMove
