@@ -19,6 +19,7 @@ class AdminManager
 
     constructor(props)
     {
+        this.events = props.events;
         this.app = props.app;
         this.config = props.config;
         this.databases = sc.get(props, 'databases', []);
@@ -70,9 +71,11 @@ class AdminManager
                 }
             }
         };
+        this.events.emit('reldens.beforeAdminJs', {adminManager: this, adminJsConfig});
         this.adminJs = new AdminJS(adminJsConfig);
         this.router = this.createRouter();
         this.app.use(this.adminJs.options.rootPath, this.router);
+        this.events.emit('reldens.afterAdminJs', {adminManager: this});
     }
 
     createRouter()
@@ -129,7 +132,7 @@ class AdminManager
                 result.buildClient = true;
             }
             if(request.query.shootDownServer){
-                props.serverManager.gameServer.gracefullyShutdown(false);
+                props.serverManager.gameServer.gracefullyShutdown();
                 result.shootDownServer = true; // you will never reach this :)
             }
             return {result};

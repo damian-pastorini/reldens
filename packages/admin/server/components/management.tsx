@@ -6,7 +6,7 @@
 
 // @ts-ignore
 import React, { useEffect, useState } from 'react';
-import {Box, H3, Button,  } from '@adminjs/design-system';
+import { Box, H3, Button } from '@adminjs/design-system';
 import { ApiClient, useNotice} from 'adminjs';
 
 const api = new ApiClient();
@@ -26,6 +26,7 @@ const Management = () => {
 
     const handleShootDown = () => {
         if(confirm('Are you sure? This page will not respond anymore after this action.')){
+            addNotice({message: 'Server is down!', type: 'error'});
             api.getPage({pageName: 'management', params: {shootDownServer: true}}).catch(()=>{
                 addNotice({message: 'Server is down.', type: 'error'}); // you will never reach this.
             });
@@ -47,8 +48,14 @@ const Management = () => {
                     <Button onClick={handleBuild}>Re-Build Client</Button>
                 </Box>
                 <Box>
-                    <p>This will regenerate the entire /dist folder with all the associated assets coming from the active theme.</p>
-                    <p>Note: if you did server configuration or contents changes you will need to reset the server manually.</p>
+                    <p>
+                        This will regenerate the entire /dist folder with all the associated assets coming from the
+                        active theme.
+                    </p>
+                    <p style={{fontWeight: 'bold', backgroundColor: '#fff3cd', padding: '1em', marginTop: '1em'}}>
+                        Note: if you did server configuration or contents changes you will need to reset the server
+                        manually.
+                    </p>
                 </Box>
             </Box>
             <Box variant="card">
@@ -57,7 +64,10 @@ const Management = () => {
                     <Button variant="danger" onClick={handleShootDown}>ShootDown Server!</Button>
                 </Box>
                 <Box>
-                    <p style={{fontWeight: 'bold', color: 'red'}}>IMPORTANT: this will END/DESTROY the Node process, even for this Administration Panel.</p>
+                    <p style={{fontWeight: 'bold', color: 'red'}}>
+                        IMPORTANT: this will END/DESTROY the Node process, even for this Administration Panel and this
+                        will not trigger any logouts or perform any data save.
+                    </p>
                 </Box>
             </Box>
         </Box>
