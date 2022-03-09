@@ -124,7 +124,7 @@ class ActionsPack extends PackInterface
                 persistence: true,
                 dataServer: this.dataServer,
                 affectedProperty: room.config.get('client/actions/skills/affectedProperty'),
-                client: new ClientWrapper(client, room)
+                client: new ClientWrapper({client, room})
             });
             // append skills server to player:
             currentPlayer.skillsServer = new SkillsServer(classPathData);

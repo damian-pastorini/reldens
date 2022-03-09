@@ -13,7 +13,7 @@ class PlayerInventoryFactory
     static async createInventory(client, playerSchema, room, events, inventoryModelsManager)
     {
         // wrap the client:
-        let clientWrapper = new ClientWrapper(client, room);
+        let clientWrapper = new ClientWrapper({client, room});
         let serverProps = {
             owner: playerSchema,
             client: clientWrapper,

@@ -32,9 +32,8 @@ class AdminPack extends PackInterface
                 serverManager.dataServer.entityManager.entities
             );
             serverManager.dataServer.resources = AdminManager.prepareResources(entities);
-            this.events.emit('reldens.beforeCreateAdminManager', this, event);
-            serverManager.serverAdmin = new AdminManager({
-                serverManager,
+            let adminManagerConfig = {
+                events: this.events,
                 app: serverManager.app,
                 config: serverManager.configServer,
                 databases: [serverManager.dataServer],
@@ -46,7 +45,10 @@ class AdminPack extends PackInterface
                         this.adminRoleId
                     );
                 }
-            });
+            };
+            this.events.emit('reldens.beforeCreateAdminManager', this, event);
+            serverManager.serverAdmin = new AdminManager(adminManagerConfig);
+            this.events.emit('reldens.beforeSetupAdminManager', this, event);
             serverManager.serverAdmin.setupAdmin();
             this.events.emit('reldens.afterCreateAdminManager', this, event);
         });

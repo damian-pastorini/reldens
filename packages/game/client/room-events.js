@@ -151,14 +151,14 @@ class RoomEvents
         ){
             await this.events.emit('reldens.changedScene', message, this);
             let currentScene = this.getActiveScene();
-            // if other users enter in the current scene we need to add them:
+            // if other users enter the current scene we need to add them:
             let {id, x, y, dir, playerName, avatarKey} = message;
             let topOff = this.gameManager.config.get('client/players/size/topOffset');
             let leftOff = this.gameManager.config.get('client/players/size/leftOffset');
             let addPlayerData = {x:(x-leftOff), y:(y-topOff), dir, playerName, avatarKey};
             currentScene.player.addPlayer(id, addPlayerData);
         }
-        // @NOTE: here we don't need to evaluate the id since the reconnect only is sent to the current client.
+        // @NOTE: here we don't need to evaluate the id since reconnect only is sent to the current client.
         if(message.act === GameConst.RECONNECT){
             await this.events.emit('reldens.beforeReconnectGameClient', message, this);
             this.gameManager.reconnectGameClient(message, this.room);

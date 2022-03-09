@@ -4,11 +4,12 @@
  *
  */
 
+// @ts-ignore
 import React, { useState, useEffect } from 'react';
 import { ApiClient } from 'adminjs';
 import styled from 'styled-components';
 import { Box, H2, H4, Text, Illustration } from '@adminjs/design-system';
-import { useTranslation } from "adminjs/src/frontend/hooks/index";
+import { useTranslation } from 'adminjs/src/frontend/hooks/index';
 
 const api = new ApiClient();
 
@@ -46,7 +47,7 @@ const Dashboard = () => {
         })
     }, []);
 
-    if(!data.manager){
+    if(!data['manager']){
         return (
             <div>{translateMessage('reldensLoading')}</div>
         );

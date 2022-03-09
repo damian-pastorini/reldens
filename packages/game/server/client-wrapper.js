@@ -9,10 +9,10 @@
 class ClientWrapper
 {
 
-    constructor(client, room)
+    constructor(props)
     {
-        this.client = client;
-        this.room = room;
+        this.client = props.client;
+        this.room = props.room;
     }
 
     send(data)

@@ -22,7 +22,7 @@ class Merchant extends NpcObject
         // assign extra params:
         this.clientParams.enabled = true;
         this.clientParams.ui = true;
-        // @TODO - BETA.17: all the npc info will be coming from the storage.
+        // @TODO - BETA - All the NPC info will be coming from the storage.
         this.content = 'Hi there! Do you want a coin? These are useless test coins.';
         this.options = {
             op1: {label: 'Sure!', value: 1},

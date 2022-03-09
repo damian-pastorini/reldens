@@ -13,20 +13,25 @@ const { Logger, sc } = require('@reldens/utils');
 
 class AdminManager
 {
+    router = false;
+    adminJs = false;
+    pagesHandlers = {};
 
     constructor(props)
     {
+        this.events = props.events;
         this.app = props.app;
         this.config = props.config;
         this.databases = sc.get(props, 'databases', []);
         this.translations = sc.get(props, 'translations', {});
-        this.router = false;
-        this.adminJs = false;
         this.useSecureLogin = Boolean(Number(process.env.RELDENS_ADMIN_SECURE_LOGIN || 0) || false);
         this.authenticateCallback = sc.get(props, 'authenticateCallback', () => {
             Logger.info('Authenticate callback undefined.')
         });
         this.authCookiePassword = (process.env.ADMIN_COOKIE_PASSWORD || 'secret-password-to-secure-the-admin-cookie');
+        this.dashboardComponent = sc.get(props, 'dashboardComponent', false);
+        this.rootPath = sc.get(props, 'rootPath', (process.env.RELDENS_ADMIN_ROUTE_PATH || '/reldens-admin'));
+        this.setupPagesHandlers(props);
     }
 
     setupAdmin()
@@ -35,33 +40,42 @@ class AdminManager
             Database: DriverDatabase,
             Resource: DriverResource
         });
-        this.rootPath = (process.env.RELDENS_ADMIN_ROUTE_PATH || '/reldens-admin');
+        AdminJS.bundle('./components/sidebar-override', 'Sidebar');
         let adminJsConfig = {
             databases: this.databases,
             rootPath: this.rootPath,
             logoutPath: this.rootPath+'/logout',
             loginPath: this.rootPath+'/login',
             branding: {
-                companyName: 'Reldens - Administration Panel',
+                companyName: (process.env.RELDENS_ADMIN_COMPANY_NAME || 'Reldens - Administration Panel'),
                 softwareBrothers: false,
-                logo: '/assets/web/reldens-your-logo-mage.png',
+                logo: (process.env.RELDENS_ADMIN_LOGO_PATH || '/assets/web/reldens-your-logo-mage.png'),
             },
             locale: {
                 translations: AdminTranslations.appendTranslations(this.translations)
             },
             assets: {
-                styles: ['/css/reldens-admin.css'],
+                styles: [(process.env.RELDENS_ADMIN_STYLES_PATH || '/css/reldens-admin.css')],
             },
             dashboard: {
                 handler: () => {
                     return { manager: this }
                 },
-                component: AdminJS.bundle('./dashboard-component')
+                component: this.dashboardComponent || AdminJS.bundle('./components/dashboard')
             },
+            pages: {
+                management: {
+                    icon: 'Settings',
+                    handler: this.pagesHandlers['management'],
+                    component: AdminJS.bundle('./components/management'),
+                }
+            }
         };
+        this.events.emit('reldens.beforeAdminJs', {adminManager: this, adminJsConfig});
         this.adminJs = new AdminJS(adminJsConfig);
         this.router = this.createRouter();
         this.app.use(this.adminJs.options.rootPath, this.router);
+        this.events.emit('reldens.afterAdminJs', {adminManager: this});
     }
 
     createRouter()
@@ -106,6 +120,23 @@ class AdminManager
             registeredResources.push(driverResource);
         }
         return registeredResources;
+    }
+
+    setupPagesHandlers(props)
+    {
+        this.pagesHandlers['management'] = async (request, response, context) => {
+            let result = {};
+            if(request.query.buildClient){
+                let themeManager = props.serverManager.themeManager;
+                await themeManager.buildClient();
+                result.buildClient = true;
+            }
+            if(request.query.shootDownServer){
+                props.serverManager.gameServer.gracefullyShutdown();
+                result.shootDownServer = true; // you will never reach this :)
+            }
+            return {result};
+        };
     }
 
 }
