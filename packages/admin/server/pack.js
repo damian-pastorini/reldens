@@ -33,6 +33,7 @@ class AdminPack extends PackInterface
             );
             serverManager.dataServer.resources = AdminManager.prepareResources(entities);
             let adminManagerConfig = {
+                serverManager,
                 events: this.events,
                 app: serverManager.app,
                 config: serverManager.configServer,
