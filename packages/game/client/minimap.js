@@ -4,7 +4,7 @@
  *
  */
 
-const { Renderer, Display } = require('phaser');
+const { Display } = require('phaser');
 const { sc } = require('@reldens/utils');
 
 class Minimap

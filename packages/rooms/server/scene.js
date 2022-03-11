@@ -168,13 +168,13 @@ class RoomScene extends RoomLogin
             bodyToMove.initMove(messageData.dir);
         }
         // if player stopped:
-        if(GameConst.STOP === messageData.act && bodyToMove){
+        if(GameConst.STOP === messageData.act){
             // stop by setting speed to zero:
             bodyToMove.stopMove();
         }
         let isPointer = GameConst.POINTER === messageData.act && this.config.get('client/players/tapMovement/enabled');
         let hasColumnAndRow = sc.hasOwn(messageData, 'column') && sc.hasOwn(messageData, 'row');
-        if(isPointer && hasColumnAndRow && bodyCanMove){
+        if(isPointer && hasColumnAndRow){
             messageData = this.makeValidPoints(messageData);
             bodyToMove.moveToPoint(messageData);
         }
