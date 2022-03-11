@@ -5,7 +5,6 @@
  */
 
 const { ChatConst } = require('../constants');
-const { Logger } = require('@reldens/utils');
 
 class MessagesListener
 {
