@@ -235,9 +235,9 @@ class SceneDynamic extends Scene
             let spacing = this.configManager.get('client/map/tileData/spacing');
             let layerName = layer.name;
             if(this.useTsAnimation){
-                this.layers[idx] = this.map.createDynamicLayer(layerName, this.tileset, margin, spacing);
+                this.layers[idx] = this.map.createLayer(layerName, this.tileset, margin, spacing);
             } else {
-                this.layers[idx] = this.map.createStaticLayer(layerName, this.tileset, margin, spacing);
+                this.layers[idx] = this.map.createLayer(layerName, this.tileset, margin, spacing);
             }
             if(layerName.indexOf('below-player') !== -1){
                 this.layers[idx].setDepth(this.configManager.get('client/map/layersDepth/belowPlayer'));
