@@ -1,14 +1,12 @@
 /**
  *
- * Reldens - ChatUiCreate
- *
- * This class will handle the chat UI and assign all the related events and actions.
+ * Reldens - ChatUi
  *
  */
 
 const { Input } = require('phaser');
 const { ChatConst } = require('../constants');
-const { Logger } = require('@reldens/utils');
+const { Logger, sc } = require('@reldens/utils');
 
 class ChatUi
 {
@@ -17,97 +15,152 @@ class ChatUi
     {
         this.uiScene = uiScene;
         this.gameManager = this.uiScene.gameManager;
+        this.uiChat = {};
+        this.messagesQueu = [];
     }
 
     createUi()
     {
         let {uiX, uiY} = this.uiScene.getUiConfig('chat');
-        let uiChat = this.uiScene.add.dom(uiX, uiY).createFromCache('chat');
-        let chatInput = uiChat.getChildByProperty('id', ChatConst.CHAT_INPUT);
-        let chatSendButton = uiChat.getChildByProperty('id', ChatConst.CHAT_SEND_BUTTON);
-        let chatCloseButton = uiChat.getChildByProperty('id', ChatConst.CHAT_CLOSE_BUTTON);
-        let chatOpenButton = uiChat.getChildByProperty('id', ChatConst.CHAT_OPEN_BUTTON);
-        let chatBalloon = uiChat.getChildByProperty('id', ChatConst.CHAT_BALLOON);
-        if(chatInput){
-            this.uiScene.input.keyboard.on('keyup_ENTER', () => {
-                let isFocused = (this.gameManager.gameDom.activeElement() === chatInput);
-                if(!isFocused){
-                    chatInput.focus();
-                }
-            });
-            if(chatSendButton){
-                chatSendButton.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    this.sendChatMessage(chatInput, this.gameManager.activeRoomEvents);
-                    chatInput.focus();
-                });
+        this.uiChat = this.uiScene.add.dom(uiX, uiY).createFromCache('chat');
+        this.uiScene.elementsUi['chat'] = this.uiChat;
+        let chatInput = this.uiChat.getChildByProperty('id', ChatConst.CHAT_INPUT);
+        if(!chatInput){
+            return false;
+        }
+        this.uiScene.input.keyboard.on('keyup_ENTER', () => {
+            let isFocused = (this.gameManager.gameDom.activeElement() === chatInput);
+            if(!isFocused){
+                chatInput.focus();
             }
-            if(chatCloseButton && chatOpenButton){
-                chatCloseButton.addEventListener('click', () => {
-                    let box = uiChat.getChildByProperty('id', 'chat-ui');
-                    box.style.display = 'none';
-                    chatOpenButton.style.display = 'block';
-                    uiChat.setDepth(1);
-                });
-                chatOpenButton.addEventListener('click', () => {
-                    let box = uiChat.getChildByProperty('id', 'chat-ui');
-                    box.style.display = 'block';
-                    chatOpenButton.style.display = 'none';
-                    uiChat.setDepth(4);
-                    if(this.gameManager.config.get('client/ui/chat/notificationBalloon')){
-                        chatBalloon.style.display = 'none';
-                    }
-                });
-                if(this.gameManager.config.get('client/ui/chat/defaultOpen')){
-                    chatOpenButton.click();
-                }
+        });
+        chatInput.addEventListener('keyup', (e) => {
+            if(e.keyCode === Input.Keyboard.KeyCodes.ENTER){
+                e.preventDefault();
+                this.sendChatMessage(chatInput, this.gameManager.activeRoomEvents);
             }
-            chatInput.addEventListener('keyup', (e) => {
-                if(e.keyCode === Input.Keyboard.KeyCodes.ENTER){
-                    e.preventDefault();
-                    this.sendChatMessage(chatInput, this.gameManager.activeRoomEvents);
-                }
+        });
+        let chatSendButton = this.uiChat.getChildByProperty('id', ChatConst.CHAT_SEND_BUTTON);
+        if(chatSendButton){
+            chatSendButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.sendChatMessage(chatInput, this.gameManager.activeRoomEvents);
+                chatInput.focus();
             });
         }
-        this.uiScene.elementsUi['chat'] = uiChat;
+        let chatCloseButton = this.uiChat.getChildByProperty('id', ChatConst.CHAT_CLOSE_BUTTON);
+        let chatOpenButton = this.uiChat.getChildByProperty('id', ChatConst.CHAT_OPEN_BUTTON);
+        if(chatCloseButton && chatOpenButton){
+            chatCloseButton.addEventListener('click', () => {
+                let box = this.uiChat.getChildByProperty('id', ChatConst.CHAT_UI);
+                box.classList.add('hidden');
+                chatOpenButton.classList.remove('hidden');
+                this.uiChat.setDepth(1);
+            });
+            chatOpenButton.addEventListener('click', () => {
+                let box = this.uiChat.getChildByProperty('id', ChatConst.CHAT_UI);
+                box.classList.remove('hidden');
+                chatOpenButton.classList.add('hidden');
+                this.uiChat.setDepth(4);
+                this.hideNotificationsBalloon();
+            });
+            if(this.gameManager.config.get('client/ui/chat/defaultOpen')){
+                chatOpenButton.click();
+            }
+        }
+    }
+
+    showNotificationBalloon()
+    {
+        this.getActiveBalloon()?.classList.remove('hidden');
+    }
+
+    hideNotificationsBalloon()
+    {
+        this.getActiveBalloon()?.classList.add('hidden');
+    }
+
+    getActiveBalloon()
+    {
+        if(!this.gameManager.config.get('client/ui/chat/notificationBalloon')){
+            return false;
+        }
+        let chatBalloon = this.uiChat.getChildByProperty('id', ChatConst.CHAT_BALLOON);
+        if(!chatBalloon){
+            return false;
+        }
+        return chatBalloon;
+    }
+
+    processMessagesQueue(messages)
+    {
+        if(0 === messages.length){
+            return false;
+        }
+        for(let message of messages){
+            this.attachNewMessage(message);
+        }
+    }
+
+    attachNewMessage(message)
+    {
+        let readPanel = this.uiChat.getChildByProperty('id', ChatConst.CHAT_MESSAGES);
+        if(!readPanel){
+            Logger.error('Chat UI not found.');
+            this.messagesQueu.push(message);
+            return;
+        }
+        let messageTemplate = this.gameManager.gameEngine.uiScene.cache.html.get('chatMessage');
+        let output = this.gameManager.gameEngine.parseTemplate(messageTemplate, {
+            from: message[ChatConst.CHAT_FROM],
+            color: ChatConst.colors[message.t],
+            message: message[ChatConst.CHAT_MESSAGE]
+        });
+        readPanel.innerHTML += output;
+        if (!this.uiChat.getChildByProperty('id', ChatConst.CHAT_UI).classList.contains('hidden')) {
+            readPanel.scrollTo(0, readPanel.scrollHeight);
+        } else {
+            this.showNotificationBalloon();
+        }
     }
 
     sendChatMessage(chatInput, roomEvents)
     {
         // validate if there is anything to send:
-        if((!chatInput.value || chatInput.value.replace('#', '').replace('@', '').trim().length === 0)){
+        if((!chatInput.value || 0 === chatInput.value.replace('#', '').replace('@', '').trim().length)){
             return false;
         }
         // both global or private messages use the global chat room:
-        let isGlobal = (chatInput.value.indexOf('#') === 0 || chatInput.value.indexOf('@') === 0);
+        let isGlobal = (0 === chatInput.value.indexOf('#') || 0 === chatInput.value.indexOf('@'));
         // check if is a global chat (must begin with #) and if the global chat room is ready:
         let messageData = {act: ChatConst.CHAT_ACTION, m: chatInput.value};
-        if(isGlobal){
-            // if is global check the global chat room:
-            if(roomEvents.gameManager.joinedRooms[ChatConst.CHAT_GLOBAL]){
-                let globalChat = roomEvents.gameManager.joinedRooms[ChatConst.CHAT_GLOBAL];
-                if(chatInput.value.indexOf('@') === 0){
-                    let playerName = chatInput.value.substring(1, chatInput.value.indexOf(' '));
-                    if(playerName !== '@'){
-                        messageData.t = playerName;
-                        globalChat.send(messageData);
-                    } else {
-                        // NOTE: this case will be when the user was not found case but better not send any response.
-                    }
-                } else {
-                    globalChat.send(messageData);
-                }
-            } else {
-                Logger.error('Global chat room not found.');
-            }
-        } else {
-            // if is not global then send the message to the current room:
-            roomEvents.room.send(messageData);
-        }
+        isGlobal ? this.useGlobalRoomForMessage(roomEvents, chatInput, messageData) : roomEvents.room.send(messageData);
         // for last empty the input once the message was sent:
         chatInput.value = '';
     }
 
+    useGlobalRoomForMessage(roomEvents, chatInput, messageData)
+    {
+        // if is global check the global chat room:
+        let globalChat = sc.get(roomEvents.gameManager.joinedRooms, ChatConst.CHAT_GLOBAL, false);
+        if(!globalChat){
+            Logger.error('Global chat room not found.');
+            return false;
+        }
+        0 === chatInput.value.indexOf('@')
+            ? this.sendPrivateMessage(chatInput, messageData, globalChat)
+            : globalChat.send(messageData);
+    }
+
+    sendPrivateMessage(chatInput, messageData, globalChat)
+    {
+        let playerName = chatInput.value.substring(1, chatInput.value.indexOf(' '));
+        if('@' === playerName){
+            return false;
+        }
+        messageData.t = playerName;
+        globalChat.send(messageData);
+    }
 }
 
 module.exports.ChatUi = ChatUi;
