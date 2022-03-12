@@ -6,6 +6,7 @@
  *
  */
 
+const { SpriteTextFactory } = require('../../game/client/engine/sprite-text-factory');
 const { Logger, sc } = require('@reldens/utils');
 const { GameConst } = require('../../game/constants');
 const { ActionsConst } = require('../../actions/constants');
@@ -67,15 +68,22 @@ class PlayerEngine
         this.players[id].anims.play(avatarKey+'_'+dir);
         this.players[id].anims.stop();
         if(this.gameManager.config.get('client/ui/players/showNames')){
-            this.attachNameToPlayerSprite(this.players[id]);
+            SpriteTextFactory.attachTextToSprite(
+                this.players[id],
+                this.players[id].playerName,
+                this.gameManager.config.get('client/ui/players/nameText'),
+                this.topOff,
+                'nameSprite',
+                this.scene
+            );
         }
         this.players[id].setInteractive({useHandCursor: true}).on('pointerdown', (e) => {
-            // @NOTE: we avoid to run object interactions while an UI element is open, if we click on the UI the
+            // @NOTE: we avoid execute object interactions while the UI element is open, if we click on the UI the other
             // elements in the background scene should not be executed.
             if(e.downElement.nodeName !== 'CANVAS'){
                 return false;
             }
-            // @NOTE: we could send an specific action when the player is been targeted.
+            // @NOTE: we could send a specific action when the player has been targeted.
             // this.room.send({act: GameConst.TYPE_PLAYER, id: id});
             // update target ui:
             let previousTarget = Object.assign({}, this.currentTarget);
@@ -109,7 +117,12 @@ class PlayerEngine
         this.events.emitSync('reldens.runPlayerAnimation', this, playerId, player);
         let nameConfig = this.gameManager.config.get('client/ui/players');
         if(nameConfig.showNames && playerSprite.nameSprite){
-            let relativeNamePosition = this.getNamePosition(playerSprite, nameConfig);
+            let relativeNamePosition = SpriteTextFactory.getTextPosition(
+                playerSprite,
+                playerSprite.playerName,
+                nameConfig,
+                this.topOff
+            );
             playerSprite.nameSprite.x = relativeNamePosition.x;
             playerSprite.nameSprite.y = relativeNamePosition.y;
         }
@@ -148,42 +161,6 @@ class PlayerEngine
                 }
             }
         }
-    }
-
-    attachNameToPlayerSprite(playerSprite)
-    {
-        let nameConfig = this.gameManager.config.get('client/ui/players');
-        // defaults:
-        let fontSize = nameConfig.nameFontSize || 12;
-        let relativeNamePosition = this.getNamePosition(playerSprite, nameConfig);
-        // create sprite:
-        let nameSprite = this.scene.add.text(
-            // center name in player position:
-            relativeNamePosition.x,
-            // put the name above the player (can be changed by modifying the nameHeight config):
-            relativeNamePosition.y,
-            playerSprite.playerName, {fontFamily: nameConfig.nameFontFamily, fontSize: fontSize+'px'}
-        );
-        nameSprite.style.setFill(nameConfig.nameFill);
-        nameSprite.style.setAlign('center');
-        nameSprite.style.setStroke(nameConfig.nameStroke, nameConfig.nameStrokeThickness);
-        nameSprite.style.setShadow(5, 5, nameConfig.nameShadowColor, 5);
-        nameSprite.setDepth(200000);
-        playerSprite.nameSprite = nameSprite;
-    }
-
-    getNamePosition(playerSprite, nameConfig = false)
-    {
-        // defaults:
-        let nameHeight = nameConfig.nameHeight || 18;
-        // center name in player position:
-        let x = playerSprite.x - ((playerSprite.playerName.length * 4));
-        // put the name above the player (can be changed by modifying the nameHeight config):
-        let y = playerSprite.y
-            - nameHeight
-            - playerSprite.height
-            + sc.get(this, 'topOff', 0);
-        return {x, y};
     }
 
     removePlayer(key)
