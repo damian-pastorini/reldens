@@ -4,6 +4,8 @@
  *
  */
 
+const { sc } = require('@reldens/utils');
+
 class SpriteTextFactory
 {
 
@@ -15,27 +17,28 @@ class SpriteTextFactory
             relativeNamePosition.y,
             text,
             {
-                fontFamily: (textConfig.fontFamily || 'sans-serif'),
-                fontSize: textConfig.fontSize || '12px'
+                fontFamily: sc.get(textConfig, 'fontFamily', 'sans-serif'),
+                fontSize: sc.get(textConfig, 'fontSize', '12px')
             }
         );
-        textSprite.style.setFill((textConfig.fill || '#ffffff'));
-        textSprite.style.setAlign((textConfig.align || 'center'));
-        textSprite.style.setStroke((textConfig.stroke || '#000000'), (textConfig.strokeThickness || 4));
+        textSprite.style.setFill(sc.get(textConfig, 'fill', '#ffffff'));
+        textSprite.style.setAlign(sc.get(textConfig, 'align', 'center'));
+        textSprite.style.setStroke(sc.get(textConfig, 'stroke', '#000000'), sc.get(textConfig, 'strokeThickness', 4));
         textSprite.style.setShadow(
-            (textConfig.shadowX || 5),
-            (textConfig.shadowY || 5),
-            (textConfig.shadowColor || 'rgba(0,0,0,0.7)'),
-            (textConfig.shadowBlur || 5)
+            sc.get(textConfig, 'shadowX', 5),
+            sc.get(textConfig, 'shadowY', 5),
+            sc.get(textConfig, 'shadowColor', 'rgba(0,0,0,0.7)'),
+            sc.get(textConfig, 'shadowBlur', 5)
         );
-        textSprite.setDepth((textConfig.depth || 200000));
+        textSprite.setDepth(sc.get(textConfig, 'depth', 200000));
         sprite[textKeyWord] = textSprite;
+        return textSprite;
     }
 
     static getTextPosition(sprite, text, textConfig, topOff = 0)
     {
-        let height = textConfig.height || 18;
-        let x = sprite.x - ((text.length * (textConfig.textLength || 4)));
+        let height = sc.get(textConfig, 'height', 18);
+        let x = sprite.x - ((text.length * sc.get(textConfig, 'textLength', 4)));
         let y = sprite.y - height - sprite.height + topOff;
         return {x, y};
     }

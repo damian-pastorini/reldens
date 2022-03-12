@@ -7,6 +7,7 @@
 const { Input } = require('phaser');
 const { ChatConst } = require('../constants');
 const { Logger, sc } = require('@reldens/utils');
+const {SpriteTextFactory} = require("../../game/client/engine/sprite-text-factory");
 
 class ChatUi
 {
@@ -33,8 +34,7 @@ class ChatUi
             return false;
         }
         this.uiScene.input.keyboard.on('keyup-ENTER', () => {
-            let isFocused = (this.gameManager.gameDom.activeElement() === this.chatInput);
-            if(!isFocused){
+            if(!this.isFocussedOnChatInput()){
                 this.showChatBox();
                 this.chatInput.focus();
             }
@@ -43,7 +43,12 @@ class ChatUi
             if(event.keyCode === Input.Keyboard.KeyCodes.ENTER){
                 event.preventDefault();
                 this.sendChatMessage();
+                return;
             }
+            this.showIsTyping();
+        });
+        this.chatInput.addEventListener('onfocusout', (event) => {
+            this.hideIsTyping();
         });
         this.chatSendButton = this.uiChat.getChildByProperty('id', ChatConst.CHAT_SEND_BUTTON);
         if(this.chatSendButton){
@@ -66,6 +71,48 @@ class ChatUi
                 this.showChatBox();
             }
         }
+    }
+
+    showOverheadChat(playerSprite, message)
+    {
+        if(!this.gameManager.config.get('client/ui/chat/overheadChat/enabled')){
+            return false;
+        }
+        let textConfig = this.gameManager.config.get('client/ui/chat/overheadText');
+        let textSprite = SpriteTextFactory.attachTextToSprite(
+            playerSprite,
+            message,
+            textConfig,
+            textConfig.topOffset,
+            'overheadTextSprite',
+            this.gameManager.getActiveScene()
+        );
+        // @TODO: attach to player body movement and delete on time out by config.
+    }
+
+    showIsTyping()
+    {
+        let config = this.gameManager.config.get('client/ui/chat/overheadChat');
+        if(!config.enabled || !config.isTyping){
+            return false;
+        }
+        if(!this.isFocussedOnChatInput()){
+            return false;
+        }
+        // @TODO: display gif or animation sprite.
+    }
+
+    hideIsTyping()
+    {
+        if(!this.gameManager.config.get('client/ui/chat/overheadChat/isTyping')){
+            return false;
+        }
+        // @TODO: display gif or animation sprite.
+    }
+
+    isFocussedOnChatInput()
+    {
+        return this.gameManager.gameDom.activeElement() === this.chatInput;
     }
 
     showChatBox()
@@ -132,6 +179,8 @@ class ChatUi
             message: message[ChatConst.CHAT_MESSAGE]
         });
         readPanel.innerHTML += output;
+        let playerSprite = this.fetchPlayerByName(message[ChatConst.CHAT_FROM]);
+        this.showOverheadChat(playerSprite, message[ChatConst.CHAT_MESSAGE]);
         if (!this.uiChat.getChildByProperty('id', ChatConst.CHAT_UI).classList.contains('hidden')) {
             readPanel.scrollTo(0, readPanel.scrollHeight);
         } else {
@@ -139,19 +188,45 @@ class ChatUi
         }
     }
 
+    fetchPlayerByName(playerName)
+    {
+        let players = this.gameManager.getCurrentPlayer().players;
+        let keys = Object.keys(players);
+        if(1 >= keys.length){
+            return false;
+        }
+        for(let i of keys){
+            let player = players[i];
+            if(player.playerName === playerName){
+                return player;
+            }
+        }
+    }
+
     sendChatMessage()
     {
         // validate if there is anything to send:
-        if((!this.chatInput.value || 0 === this.chatInput.value.replace('#', '').replace('@', '').trim().length)){
+        if(!this.isValidMessage()){
             return false;
         }
-        // both global or private messages use the global chat room:
-        let useGlobalRoom = (0 === this.chatInput.value.indexOf('#') || 0 === this.chatInput.value.indexOf('@'));
         // check if is a global chat (must begin with #) and if the global chat room is ready:
         let message = {act: ChatConst.CHAT_ACTION, m: this.chatInput.value};
-        useGlobalRoom ? this.useGlobalRoomForMessage(message) : this.gameManager.activeRoomEvents.room.send(message);
+        // both global or private messages use the global chat room:
+        this.useGlobalRoom()
+            ? this.useGlobalRoomForMessage(message)
+            : this.gameManager.activeRoomEvents.room.send(message);
         // for last empty the input once the message was sent:
         this.chatInput.value = '';
+    }
+
+    useGlobalRoom()
+    {
+        return 0 === this.chatInput.value.indexOf('#') || 0 === this.chatInput.value.indexOf('@');
+    }
+
+    isValidMessage()
+    {
+        return this.chatInput.value && 0 < this.chatInput.value.replace('#', '').replace('@', '').trim().length;
     }
 
     useGlobalRoomForMessage(message)

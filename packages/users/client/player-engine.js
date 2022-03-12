@@ -120,7 +120,7 @@ class PlayerEngine
             let relativeNamePosition = SpriteTextFactory.getTextPosition(
                 playerSprite,
                 playerSprite.playerName,
-                nameConfig,
+                nameConfig.nameText,
                 this.topOff
             );
             playerSprite.nameSprite.x = relativeNamePosition.x;

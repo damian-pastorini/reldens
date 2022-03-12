@@ -10,9 +10,10 @@ INSERT INTO `config` VALUES(NULL, 'client', 'players/tapMovement/enabled', '1', 
 
 # Chat:
 
-INSERT INTO `config` VALUES(NULL, 'client', 'ui/chat/useOverheadChat', '1', 'b');
 INSERT INTO `config` VALUES(NULL, 'client', 'chat/messages/characterLimit', '100', 'i');
 INSERT INTO `config` VALUES(NULL, 'client', 'chat/messages/characterLimitOverhead', '50', 'i');
+INSERT INTO `config` VALUES(NULL, 'client', 'ui/chat/overheadChat/enabled', '1', 'b');
+INSERT INTO `config` VALUES(NULL, 'client', 'ui/chat/overheadChat/isTyping', '1', 'b');
 
 INSERT INTO `config` VALUES(NULL, 'client', 'ui/chat/overheadText/fontFamily', 'Verdana, Geneva, sans-serif', 't');
 INSERT INTO `config` VALUES(NULL, 'client', 'ui/chat/overheadText/fontSize', '12px', 't');
@@ -27,6 +28,7 @@ INSERT INTO `config` VALUES(NULL, 'client', 'ui/chat/overheadText/shadowBlur', '
 INSERT INTO `config` VALUES(NULL, 'client', 'ui/chat/overheadText/depth', '200000', 'i');
 INSERT INTO `config` VALUES(NULL, 'client', 'ui/chat/overheadText/height', '15', 'i');
 INSERT INTO `config` VALUES(NULL, 'client', 'ui/chat/overheadText/textLength', '4', 'i');
+INSERT INTO `config` VALUES(NULL, 'client', 'ui/chat/overheadText/topOffset', '20', 'i');
 
 # Player name:
 
