@@ -33,6 +33,51 @@ class ChatUi
         if(!this.chatInput){
             return false;
         }
+        this.setupKeyPressBehaviors();
+        this.chatInput.addEventListener('onfocusout', (event) => {
+            this.hideIsTyping();
+        });
+        this.setupSendButton();
+        this.setupOpenCloseButtons();
+        if(this.gameManager.config.get('client/ui/chat/overheadChat/enabled')){
+            this.setupOverheadChatEvents();
+        }
+        if (this.gameManager.config.get('client/ui/chat/defaultOpen')) {
+            this.showChatBox();
+        }
+    }
+
+    setupOverheadChatEvents()
+    {
+        this.gameManager.events.on('reldens.runPlayerAnimation', (playerEngine, playerId, player, playerSprite) => {
+            this.updateOverheadTextPosition(playerSprite);
+        });
+    }
+
+    setupOpenCloseButtons()
+    {
+        this.chatCloseButton = this.uiChat.getChildByProperty('id', ChatConst.CHAT_CLOSE_BUTTON);
+        this.chatCloseButton?.addEventListener('click', () => {
+            this.hideChatBox();
+        });
+        this.chatOpenButton = this.uiChat.getChildByProperty('id', ChatConst.CHAT_OPEN_BUTTON);
+        this.chatOpenButton?.addEventListener('click', () => {
+            this.showChatBox();
+        });
+    }
+
+    setupSendButton()
+    {
+        this.chatSendButton = this.uiChat.getChildByProperty('id', ChatConst.CHAT_SEND_BUTTON);
+        this.chatSendButton?.addEventListener('click', (event) => {
+            event.preventDefault();
+            this.sendChatMessage(this.chatInput, this.gameManager.activeRoomEvents);
+            this.chatInput.focus();
+        });
+    }
+
+    setupKeyPressBehaviors()
+    {
         this.uiScene.input.keyboard.on('keyup-ENTER', () => {
             if(!this.isFocussedOnChatInput()){
                 this.showChatBox();
@@ -47,30 +92,6 @@ class ChatUi
             }
             this.showIsTyping();
         });
-        this.chatInput.addEventListener('onfocusout', (event) => {
-            this.hideIsTyping();
-        });
-        this.chatSendButton = this.uiChat.getChildByProperty('id', ChatConst.CHAT_SEND_BUTTON);
-        if(this.chatSendButton){
-            this.chatSendButton.addEventListener('click', (event) => {
-                event.preventDefault();
-                this.sendChatMessage(this.chatInput, this.gameManager.activeRoomEvents);
-                this.chatInput.focus();
-            });
-        }
-        this.chatCloseButton = this.uiChat.getChildByProperty('id', ChatConst.CHAT_CLOSE_BUTTON);
-        this.chatOpenButton = this.uiChat.getChildByProperty('id', ChatConst.CHAT_OPEN_BUTTON);
-        if(this.chatCloseButton && this.chatOpenButton){
-            this.chatCloseButton.addEventListener('click', () => {
-                this.hideChatBox();
-            });
-            this.chatOpenButton.addEventListener('click', () => {
-                this.showChatBox();
-            });
-            if(this.gameManager.config.get('client/ui/chat/defaultOpen')){
-                this.showChatBox();
-            }
-        }
     }
 
     showOverheadChat(playerSprite, message)
@@ -78,8 +99,11 @@ class ChatUi
         if(!this.gameManager.config.get('client/ui/chat/overheadChat/enabled')){
             return false;
         }
+        if(playerSprite['overheadTextSprite']){
+            this.destroyTextSprite(playerSprite);
+        }
         let textConfig = this.gameManager.config.get('client/ui/chat/overheadText');
-        let textSprite = SpriteTextFactory.attachTextToSprite(
+        playerSprite['overheadTextSprite'] = SpriteTextFactory.attachTextToSprite(
             playerSprite,
             message,
             textConfig,
@@ -87,15 +111,37 @@ class ChatUi
             'overheadTextSprite',
             this.gameManager.getActiveScene()
         );
-        playerSprite.moveSprites['overheadTextSprite'] = textSprite;
         let timeOut = sc.get(textConfig, 'timeOut', false);
         if(timeOut){
             setTimeout(() => {
-                textSprite.destroy();
-                delete playerSprite['overheadTextSprite'];
-                delete playerSprite.moveSprites['overheadTextSprite'];
+                this.destroyTextSprite(playerSprite);
             }, timeOut);
         }
+    }
+
+    updateOverheadTextPosition(playerSprite)
+    {
+        let textConfig = this.gameManager.config.get('client/ui/chat/overheadText');
+        if(!playerSprite['overheadTextSprite']){
+            return false;
+        }
+        let relativePosition = SpriteTextFactory.getTextPosition(
+            playerSprite,
+            playerSprite.playerName,
+            textConfig,
+            textConfig.topOff
+        );
+        playerSprite['overheadTextSprite'].x = relativePosition.x;
+        playerSprite['overheadTextSprite'].y = relativePosition.y;
+    }
+
+    destroyTextSprite(playerSprite)
+    {
+        if(!playerSprite['overheadTextSprite']){
+            return false;
+        }
+        playerSprite['overheadTextSprite'].destroy();
+        delete playerSprite['overheadTextSprite'];
     }
 
     showIsTyping()
@@ -229,6 +275,9 @@ class ChatUi
             : this.gameManager.activeRoomEvents.room.send(message);
         // for last empty the input once the message was sent:
         this.chatInput.value = '';
+        if(this.gameManager.config.get('client/ui/chat/overheadChat/closeChatBoxAfterSend')){
+            this.hideChatBox();
+        }
     }
 
     useGlobalRoom()

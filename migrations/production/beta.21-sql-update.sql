@@ -14,12 +14,13 @@ INSERT INTO `config` VALUES(NULL, 'client', 'chat/messages/characterLimit', '100
 INSERT INTO `config` VALUES(NULL, 'client', 'chat/messages/characterLimitOverhead', '50', 'i');
 INSERT INTO `config` VALUES(NULL, 'client', 'ui/chat/overheadChat/enabled', '1', 'b');
 INSERT INTO `config` VALUES(NULL, 'client', 'ui/chat/overheadChat/isTyping', '1', 'b');
+INSERT INTO `config` VALUES(NULL, 'client', 'ui/chat/overheadChat/closeChatBoxAfterSend', '1', 'b');
 
 INSERT INTO `config` VALUES(NULL, 'client', 'ui/chat/overheadText/fontFamily', 'Verdana, Geneva, sans-serif', 't');
 INSERT INTO `config` VALUES(NULL, 'client', 'ui/chat/overheadText/fontSize', '12px', 't');
 INSERT INTO `config` VALUES(NULL, 'client', 'ui/chat/overheadText/fill', '#ffffff', 't');
 INSERT INTO `config` VALUES(NULL, 'client', 'ui/chat/overheadText/align', 'center', 't');
-INSERT INTO `config` VALUES(NULL, 'client', 'ui/chat/overheadText/stroke', '#000000', 't');
+INSERT INTO `config` VALUES(NULL, 'client', 'ui/chat/overheadText/stroke', 'rgba(0,0,0,0.7)', 't');
 INSERT INTO `config` VALUES(NULL, 'client', 'ui/chat/overheadText/strokeThickness', '4', 'i');
 INSERT INTO `config` VALUES(NULL, 'client', 'ui/chat/overheadText/shadowX', '5', 'i');
 INSERT INTO `config` VALUES(NULL, 'client', 'ui/chat/overheadText/shadowY', '5', 'i');
@@ -29,7 +30,7 @@ INSERT INTO `config` VALUES(NULL, 'client', 'ui/chat/overheadText/depth', '20000
 INSERT INTO `config` VALUES(NULL, 'client', 'ui/chat/overheadText/height', '15', 'i');
 INSERT INTO `config` VALUES(NULL, 'client', 'ui/chat/overheadText/textLength', '4', 'i');
 INSERT INTO `config` VALUES(NULL, 'client', 'ui/chat/overheadText/topOffset', '20', 'i');
-INSERT INTO `config` VALUES(NULL, 'client', 'ui/chat/overheadText/timeOut', '3000', 'i');
+INSERT INTO `config` VALUES(NULL, 'client', 'ui/chat/overheadText/timeOut', '5000', 'i');
 
 # Player name:
 

@@ -67,16 +67,17 @@ class PlayerEngine
         this.players[id].playerId = id;
         this.players[id].anims.play(avatarKey+'_'+dir);
         this.players[id].anims.stop();
-        if(this.gameManager.config.get('client/ui/players/showNames')){
-            SpriteTextFactory.attachTextToSprite(
-                this.players[id],
-                this.players[id].playerName,
-                this.gameManager.config.get('client/ui/players/nameText'),
-                this.topOff,
-                'nameSprite',
-                this.scene
-            );
-        }
+        this.showPlayerName(id);
+        this.makePlayerInteractive(id);
+        this.players[id].moveSprites = {};
+        this.players[id].setDepth(this.players[id].y + this.players[id].body.height);
+        this.players[id].setCollideWorldBounds(this.collideWorldBounds);
+        this.events.emitSync('reldens.playerEngineAddPlayer', this, id, addPlayerData);
+        return this.players[id];
+    }
+
+    makePlayerInteractive(id)
+    {
         this.players[id].setInteractive({useHandCursor: true}).on('pointerdown', (e) => {
             // @NOTE: we avoid execute object interactions while the UI element is open, if we click on the UI the other
             // elements in the background scene should not be executed.
@@ -90,11 +91,21 @@ class PlayerEngine
             this.currentTarget = {id: id, type: GameConst.TYPE_PLAYER};
             this.gameManager.gameEngine.showTarget(this.players[id].playerName, this.currentTarget, previousTarget);
         });
-        this.players[id].moveSprites = {};
-        this.players[id].setDepth(this.players[id].y + this.players[id].body.height);
-        this.players[id].setCollideWorldBounds(this.collideWorldBounds);
-        this.events.emitSync('reldens.playerEngineAddPlayer', this, id, addPlayerData);
-        return this.players[id];
+    }
+
+    showPlayerName(id)
+    {
+        if(!this.gameManager.config.get('client/ui/players/showNames')){
+            return false;
+        }
+        SpriteTextFactory.attachTextToSprite(
+            this.players[id],
+            this.players[id].playerName,
+            this.gameManager.config.get('client/ui/players/nameText'),
+            this.topOff,
+            'nameSprite',
+            this.scene
+        );
     }
 
     runPlayerAnimation(playerId, player)
@@ -114,28 +125,39 @@ class PlayerEngine
             playerSprite.anims.stop();
             playerSprite.mov = player.state.mov;
         }
-        this.events.emitSync('reldens.runPlayerAnimation', this, playerId, player);
+        this.events.emitSync('reldens.runPlayerAnimation', this, playerId, player, playerSprite);
+        this.updateNamePosition(playerSprite);
+        this.moveAttachedSprites(playerSprite, playerNewDepth);
+    }
+
+    updateNamePosition(playerSprite)
+    {
         let nameConfig = this.gameManager.config.get('client/ui/players');
-        if(nameConfig.showNames && playerSprite.nameSprite){
-            let relativeNamePosition = SpriteTextFactory.getTextPosition(
-                playerSprite,
-                playerSprite.playerName,
-                nameConfig.nameText,
-                this.topOff
-            );
-            playerSprite.nameSprite.x = relativeNamePosition.x;
-            playerSprite.nameSprite.y = relativeNamePosition.y;
+        if(!nameConfig.showNames || !playerSprite.nameSprite){
+            return false;
         }
-        if(Object.keys(playerSprite.moveSprites).length){
-            for(let i of Object.keys(playerSprite.moveSprites)){
-                let sprite = playerSprite.moveSprites[i];
-                sprite.x = playerSprite.x;
-                sprite.y = playerSprite.y;
-                // by default moving sprites will be always below the player:
-                let spriteDepth = sc.hasOwn(sprite, 'depthByPlayer') && sprite['depthByPlayer'] === 'above'
-                    ? playerNewDepth + 1 : playerNewDepth - 0.1;
-                sprite.setDepth(spriteDepth);
-            }
+        let relativeNamePosition = SpriteTextFactory.getTextPosition(
+            playerSprite,
+            playerSprite.playerName,
+            nameConfig.nameText,
+            this.topOff
+        );
+        playerSprite.nameSprite.x = relativeNamePosition.x;
+        playerSprite.nameSprite.y = relativeNamePosition.y;
+    }
+
+    moveAttachedSprites(playerSprite, playerNewDepth)
+    {
+        let playersKeys = Object.keys(playerSprite.moveSprites);
+        if(0 === playersKeys.length){
+            return false;
+        }
+        for (let i of playersKeys) {
+            let sprite = playerSprite.moveSprites[i];
+            sprite.x = playerSprite.x;
+            sprite.y = playerSprite.y;
+            // by default moving sprites will be always below the player:
+            sprite.setDepth((sc.get(sprite, 'depthByPlayer', '') === 'above' ? playerNewDepth+1 : playerNewDepth-0.1));
         }
     }
 
@@ -144,22 +166,18 @@ class PlayerEngine
         // @NOTE: player speed is defined by the server.
         if(this.animationBasedOnPress){
             playerSprite.anims.play(player.avatarKey+'_'+player.state.dir, true);
-        } else {
-            let { avatarKey } = player;
-            if(player.state.x !== playerSprite.x){
-                if(player.state.x < playerSprite.x){
-                    playerSprite.anims.play(avatarKey+'_'+GameConst.LEFT, true);
-                } else {
-                    playerSprite.anims.play(avatarKey+'_'+GameConst.RIGHT, true);
-                }
-            }
-            if(player.state.y !== playerSprite.y){
-                if(player.state.y < playerSprite.y){
-                    playerSprite.anims.play(avatarKey+'_'+GameConst.UP, true);
-                } else {
-                    playerSprite.anims.play(avatarKey+'_'+GameConst.DOWN, true);
-                }
-            }
+            return;
+        }
+        let { avatarKey } = player;
+        if(player.state.x !== playerSprite.x){
+            player.state.x < playerSprite.x
+                ? playerSprite.anims.play(avatarKey+'_'+GameConst.LEFT, true)
+                : playerSprite.anims.play(avatarKey+'_'+GameConst.RIGHT, true);
+        }
+        if(player.state.y !== playerSprite.y){
+            player.state.y < playerSprite.y
+                ? playerSprite.anims.play(avatarKey+'_'+GameConst.UP, true)
+                : playerSprite.anims.play(avatarKey+'_'+GameConst.DOWN, true);
         }
     }
 
