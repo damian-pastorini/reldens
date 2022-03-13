@@ -103,6 +103,10 @@ class ChatUi
             this.destroyTextSprite(playerSprite);
         }
         let textConfig = this.gameManager.config.get('client/ui/chat/overheadText');
+        message = this.applyTextLimit(
+            message,
+            this.gameManager.config.get('client/chat/messages/characterLimitOverhead')
+        );
         playerSprite['overheadTextSprite'] = SpriteTextFactory.attachTextToSprite(
             playerSprite,
             message,
@@ -268,7 +272,12 @@ class ChatUi
             return false;
         }
         // check if is a global chat (must begin with #) and if the global chat room is ready:
-        let message = {act: ChatConst.CHAT_ACTION, m: this.chatInput.value};
+        let messageAllowedText = this.applyTextLimit(
+            this.chatInput.value,
+            this.gameManager.config.get('client/chat/messages/characterLimit')
+        );
+        let message = {act: ChatConst.CHAT_ACTION, m: messageAllowedText};
+        this.gameManager.events.emitSync('reldens.chatMessageObjectCreated', this, message);
         // both global or private messages use the global chat room:
         this.useGlobalRoom()
             ? this.useGlobalRoomForMessage(message)
@@ -278,6 +287,11 @@ class ChatUi
         if(this.gameManager.config.get('client/ui/chat/overheadChat/closeChatBoxAfterSend')){
             this.hideChatBox();
         }
+    }
+
+    applyTextLimit(text, limit)
+    {
+        return 0 < limit && limit < text.length ? text.substring(0, limit) : text;
     }
 
     useGlobalRoom()

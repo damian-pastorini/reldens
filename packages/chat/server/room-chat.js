@@ -47,11 +47,14 @@ class RoomChat extends RoomLogin
             // do nothing if it's not a chat message:
             return;
         }
-        let text = Cleaner.cleanMessage(data[ChatConst.CHAT_MESSAGE]);
+        let text = Cleaner.cleanMessage(
+            data[ChatConst.CHAT_MESSAGE],
+            this.config.get('client/chat/messages/characterLimit')
+        );
         if(
             text.replace('#', '').trim().length === 0
             // do not count the player name on private messages:
-            || (text.indexOf('@') !== -1 && text.substr(text.indexOf(' ')).trim().length === 0)
+            || (text.indexOf('@') !== -1 && text.substring(text.indexOf(' ')).trim().length === 0)
         ){
             // do nothing if text is shorter than 3 characters (including @ and #):
             return;
