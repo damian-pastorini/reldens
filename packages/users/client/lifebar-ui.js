@@ -304,7 +304,7 @@ class LifebarUi
             uiX = this.fixedPositionX;
             uiY = this.fixedPositionY;
         } else {
-            // otherwise the bar will be added in the current scene:
+            // otherwise, the bar will be added in the current scene:
             this.lifeBars[playerId] = this.gameManager.getActiveScene().add.graphics();
         }
         this.drawBar(this.lifeBars[playerId], barData.fullValue, barData.filledValue, uiX, uiY);

@@ -29,6 +29,7 @@ INSERT INTO `config` VALUES(NULL, 'client', 'ui/chat/overheadText/depth', '20000
 INSERT INTO `config` VALUES(NULL, 'client', 'ui/chat/overheadText/height', '15', 'i');
 INSERT INTO `config` VALUES(NULL, 'client', 'ui/chat/overheadText/textLength', '4', 'i');
 INSERT INTO `config` VALUES(NULL, 'client', 'ui/chat/overheadText/topOffset', '20', 'i');
+INSERT INTO `config` VALUES(NULL, 'client', 'ui/chat/overheadText/timeOut', '3000', 'i');
 
 # Player name:
 

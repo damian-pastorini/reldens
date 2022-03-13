@@ -87,7 +87,15 @@ class ChatUi
             'overheadTextSprite',
             this.gameManager.getActiveScene()
         );
-        // @TODO: attach to player body movement and delete on time out by config.
+        playerSprite.moveSprites['overheadTextSprite'] = textSprite;
+        let timeOut = sc.get(textConfig, 'timeOut', false);
+        if(timeOut){
+            setTimeout(() => {
+                textSprite.destroy();
+                delete playerSprite['overheadTextSprite'];
+                delete playerSprite.moveSprites['overheadTextSprite'];
+            }, timeOut);
+        }
     }
 
     showIsTyping()
@@ -179,8 +187,12 @@ class ChatUi
             message: message[ChatConst.CHAT_MESSAGE]
         });
         readPanel.innerHTML += output;
-        let playerSprite = this.fetchPlayerByName(message[ChatConst.CHAT_FROM]);
-        this.showOverheadChat(playerSprite, message[ChatConst.CHAT_MESSAGE]);
+        if(message[ChatConst.CHAT_FROM]){
+            let playerSprite = this.fetchPlayerByName(message[ChatConst.CHAT_FROM]);
+            if(playerSprite){
+                this.showOverheadChat(playerSprite, message[ChatConst.CHAT_MESSAGE]);
+            }
+        }
         if (!this.uiChat.getChildByProperty('id', ChatConst.CHAT_UI).classList.contains('hidden')) {
             readPanel.scrollTo(0, readPanel.scrollHeight);
         } else {

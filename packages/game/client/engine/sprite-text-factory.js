@@ -37,6 +37,9 @@ class SpriteTextFactory
 
     static getTextPosition(sprite, text, textConfig, topOff = 0)
     {
+        if(!sprite){
+            return {x: 0, y:0};
+        }
         let height = sc.get(textConfig, 'height', 18);
         let x = sprite.x - ((text.length * sc.get(textConfig, 'textLength', 4)));
         let y = sprite.y - height - sprite.height + topOff;
