@@ -9,9 +9,14 @@
 class Cleaner
 {
 
-    cleanMessage(message)
+    cleanMessage(message, characterLimit)
     {
-        return message.toString().replace(/\\/g, '').substr(0, 140);
+        // @TODO - BETA - Implement any clean feature here.
+        let text = message.toString().replace(/\\/g, '');
+        if(0 < characterLimit){
+            return text.substring(0, characterLimit);
+        }
+        return text;
     }
 
 }

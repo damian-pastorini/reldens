@@ -9,7 +9,7 @@
 
 const { NpcObject } = require('reldens/packages/objects/server/npc-object');
 const { GameConst } = require('reldens/packages/game/constants');
-const { Logger } = require('@reldens/utils');
+const { Logger, sc } = require('@reldens/utils');
 
 class Merchant extends NpcObject
 {
@@ -41,7 +41,7 @@ class Merchant extends NpcObject
         let selectedOption = this.options[optionIdx];
         if(selectedOption.value === 1){
             // only give each item once:
-            if({}.hasOwnProperty.call(playerSchema.inventory.manager.items, 'coins')){
+            if(sc.hasOwn(playerSchema.inventory.manager.items, 'coins')){
                 let contentMessage = 'You have too many already.';
                 room.send(client, {act: GameConst.UI, id: this.id, content: contentMessage});
                 return false;

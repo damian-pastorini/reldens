@@ -156,64 +156,50 @@ class RoomScene extends RoomLogin
             Logger.error(['Empty message data:', messageData]);
             return false;
         }
-        // get player:
+        // only process the message if the player exists and has a body:
         let playerSchema = this.getPlayerFromState(client.sessionId);
-        if(playerSchema.inState === GameConst.STATUS.DEATH){
+        let bodyToMove = sc.get(playerSchema, 'physicalBody', false);
+        if(!bodyToMove || GameConst.STATUS.DEATH === playerSchema.inState){
             return false;
         }
-        // @TODO - BETA - Move to a new pack in the world package.
-        // only process the message if the player exists and has a body:
-        if(playerSchema && sc.hasOwn(playerSchema, 'physicalBody')){
-            // get player body:
-            let bodyToMove = playerSchema.physicalBody;
-            // if player is moving:
-            if(
-                sc.hasOwn(messageData, 'dir') 
-                && bodyToMove
-                && !bodyToMove.isChangingScene
-                && !bodyToMove.isBlocked
-            ){
-                bodyToMove.initMove(messageData.dir);
-            }
-            // if player stopped:
-            if(messageData.act === GameConst.STOP && bodyToMove){
-                // stop by setting speed to zero:
-                bodyToMove.stopMove();
-            }
-            if(
-                messageData.act === GameConst.POINTER
-                && sc.hasOwn(messageData, 'column')
-                && sc.hasOwn(messageData, 'row')
-                && bodyToMove
-                && !bodyToMove.isChangingScene
-                && !bodyToMove.isBlocked
-            ){
-                messageData = this.makeValidPoints(messageData);
-                bodyToMove.moveToPoint(messageData);
-            }
-            if(this.messageActions){
-                for(let i of Object.keys(this.messageActions)){
-                    let messageObserver = this.messageActions[i];
-                    if(typeof messageObserver.parseMessageAndRunActions === 'function'){
-                        await messageObserver.parseMessageAndRunActions(client, messageData, this, playerSchema);
-                    } else {
-                        Logger.error(['Invalid message observer!', messageObserver]);
-                    }
+        // if player is moving:
+        let bodyCanMove = !bodyToMove.isChangingScene && !bodyToMove.isBlocked;
+        if(sc.hasOwn(messageData, 'dir') && bodyCanMove){
+            bodyToMove.initMove(messageData.dir);
+        }
+        // if player stopped:
+        if(GameConst.STOP === messageData.act){
+            // stop by setting speed to zero:
+            bodyToMove.stopMove();
+        }
+        let isPointer = GameConst.POINTER === messageData.act && this.config.get('client/players/tapMovement/enabled');
+        let hasColumnAndRow = sc.hasOwn(messageData, 'column') && sc.hasOwn(messageData, 'row');
+        if(isPointer && hasColumnAndRow){
+            messageData = this.makeValidPoints(messageData);
+            bodyToMove.moveToPoint(messageData);
+        }
+        if(this.messageActions){
+            for(let i of Object.keys(this.messageActions)){
+                let messageObserver = this.messageActions[i];
+                if('function' !== typeof messageObserver.parseMessageAndRunActions){
+                    Logger.warning(['Invalid message observer!', messageObserver]);
+                    continue;
                 }
+                await messageObserver.parseMessageAndRunActions(client, messageData, this, playerSchema);
             }
-            // @NOTE:
-            // - Player states must be requested since are private user data that we can share with other players
-            // or broadcast to the rooms.
-            // - Considering base value could be changed temporally by a skill or item modifier will be really hard to
-            // identify which calls and cases would require only the stat data or the statBase so we will always send
-            // both values. This could be improved in the future but for now it doesn't have a considerable impact.
-            if(messageData.act === GameConst.PLAYER_STATS){
-                this.send(client, {
-                    act: GameConst.PLAYER_STATS,
-                    stats: playerSchema.stats,
-                    statsBase: playerSchema.statsBase
-                });
-            }
+        }
+        // @NOTE:
+        // - Player states must be requested since are private user data that we can share with other players
+        // or broadcast to the rooms.
+        // - Considering base value could be changed temporally by a skill or item modifier will be really hard to
+        // identify which calls and cases would require only the stat data or the statBase so we will always send
+        // both values. This could be improved in the future but for now it doesn't have a considerable impact.
+        if(GameConst.PLAYER_STATS === messageData.act){
+            this.send(client, {
+                act: GameConst.PLAYER_STATS,
+                stats: playerSchema.stats,
+                statsBase: playerSchema.statsBase
+            });
         }
     }
 
@@ -268,38 +254,41 @@ class RoomScene extends RoomLogin
             // @NOTE: P === false means there's only one room that would lead to this one. If there's more than one
             // possible return point then validate the previous room.
             // validate if previous room:
-            if(!newPosition.P || newPosition.P === data.prev){
-                currentPlayer.state.scene = data.next;
-                currentPlayer.state.room_id = nextRoom.roomId;
-                currentPlayer.state.x = newPosition.X;
-                currentPlayer.state.y = newPosition.Y;
-                currentPlayer.state.dir = newPosition.D;
-                let stateSaved = await this.savePlayerState(client.sessionId);
-                if(stateSaved){
-                    // @NOTE: we need to broadcast the current player scene change to be removed or added in
-                    // other players.
-                    this.broadcast({
-                        act: GameConst.CHANGED_SCENE,
-                        id: client.sessionId,
-                        scene: currentPlayer.state.scene,
-                        prev: data.prev,
-                        x: currentPlayer.state.x,
-                        y: currentPlayer.state.y,
-                        dir: currentPlayer.state.dir,
-                        playerName: currentPlayer.playerName,
-                        avatarKey: currentPlayer.avatarKey
-                    });
-                    // remove body from server world:
-                    let bodyToRemove = currentPlayer.physicalBody;
-                    this.roomWorld.removeBody(bodyToRemove);
-                    // reconnect is to create the player in the new scene:
-                    this.send(client, {act: GameConst.RECONNECT, player: currentPlayer, prev: data.prev});
-                } else {
-                    Logger.error('Save state error: ' + client.sessionId);
-                }
-                break;
+            if(newPosition.P && newPosition.P !== data.prev){
+                continue;
             }
+            currentPlayer.state.scene = data.next;
+            currentPlayer.state.room_id = nextRoom.roomId;
+            currentPlayer.state.x = newPosition.X;
+            currentPlayer.state.y = newPosition.Y;
+            currentPlayer.state.dir = newPosition.D;
+            let stateSaved = await this.savePlayerState(client.sessionId);
+            stateSaved
+                ? this.broadcastSceneChange(client, currentPlayer, data)
+                : Logger.error('Save state error: ' + client.sessionId);
+            break;
         }
+    }
+
+    broadcastSceneChange(client, currentPlayer, data)
+    {
+        // @NOTE: we need to broadcast the current player scene change to be removed or added in other players.
+        this.broadcast({
+            act: GameConst.CHANGED_SCENE,
+            id: client.sessionId,
+            scene: currentPlayer.state.scene,
+            prev: data.prev,
+            x: currentPlayer.state.x,
+            y: currentPlayer.state.y,
+            dir: currentPlayer.state.dir,
+            playerName: currentPlayer.playerName,
+            avatarKey: currentPlayer.avatarKey
+        });
+        // remove body from server world:
+        let bodyToRemove = currentPlayer.physicalBody;
+        this.roomWorld.removeBody(bodyToRemove);
+        // reconnect is to create the player in the new scene:
+        this.send(client, {act: GameConst.RECONNECT, player: currentPlayer, prev: data.prev});
     }
 
     async saveStateAndRemovePlayer(sessionId)
@@ -308,21 +297,24 @@ class RoomScene extends RoomLogin
         let savedPlayer = await this.savePlayerState(sessionId);
         // first remove player body from current world:
         let playerSchema = this.getPlayerFromState(sessionId);
-        if(playerSchema){
-            // get body:
-            let bodyToRemove = playerSchema.physicalBody;
-            if(bodyToRemove){
-                // remove body:
-                this.roomWorld.removeBody(bodyToRemove);
-            }
-            // remove the events:
-            this.events.offByMasterKey(playerSchema.eventsPrefix+playerSchema.player_id);
-            // remove player:
-            this.state.removePlayer(sessionId);
-        } else {
-            ErrorManager.error('Player not found, session ID: ' + sessionId);
-        }
+        playerSchema
+            ? this.removeAllPlayerReferences(playerSchema, sessionId)
+            : ErrorManager.error('Player not found, session ID: ' + sessionId);
         return savedPlayer;
+    }
+
+    removeAllPlayerReferences(playerSchema, sessionId)
+    {
+        // get body:
+        let bodyToRemove = playerSchema.physicalBody;
+        if (bodyToRemove) {
+            // remove body:
+            this.roomWorld.removeBody(bodyToRemove);
+        }
+        // remove the events:
+        this.events.offByMasterKey(playerSchema.eventsPrefix + playerSchema.player_id);
+        // remove player:
+        this.state.removePlayer(sessionId);
     }
 
     async savePlayerState(sessionId)

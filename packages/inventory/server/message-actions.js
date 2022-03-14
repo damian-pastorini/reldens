@@ -13,7 +13,7 @@ class InventoryMessageActions
 {
 
     // eslint-disable-next-line no-unused-vars
-    parseMessageAndRunActions(client, data, room, playerSchema)
+    async parseMessageAndRunActions(client, data, room, playerSchema)
     {
         if(!{}.hasOwnProperty.call(data, 'act') || data.act.indexOf(InventoryConst.INVENTORY_PREF) !== 0){
             return false;

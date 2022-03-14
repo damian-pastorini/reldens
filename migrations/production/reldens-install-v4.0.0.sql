@@ -162,9 +162,9 @@ CREATE TABLE IF NOT EXISTS `config` (
   `value` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `type` varchar(2) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=220 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=253 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table config: ~210 rows (approximately)
+-- Dumping data for table config: ~236 rows (approximately)
 /*!40000 ALTER TABLE `config` DISABLE KEYS */;
 INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(1, 'server', 'rooms/validation/valid', 'room_game,chat_global', 't'),
@@ -308,13 +308,6 @@ INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(147, 'client', 'ui/instructions/x', '380', 'i'),
 	(148, 'client', 'ui/instructions/y', '940', 'i'),
 	(149, 'client', 'ui/players/showNames', '1', 'b'),
-	(150, 'client', 'ui/players/nameHeight', '15', 'i'),
-	(151, 'client', 'ui/players/nameFill', '#ffffff', 't'),
-	(152, 'client', 'ui/players/nameStroke', '#000000', 't'),
-	(153, 'client', 'ui/players/nameStrokeThickness', '4', 'i'),
-	(154, 'client', 'ui/players/nameShadowColor', 'rgba(0,0,0,0.7)', 't'),
-	(155, 'client', 'ui/players/nameFontFamily', 'Verdana, Geneva, sans-serif', 't'),
-	(156, 'client', 'ui/players/nameFontSize', '12', 'i'),
 	(157, 'client', 'ui/lifeBar/top', '5', 'i'),
 	(158, 'client', 'actions/damage/enabled', '1', 'b'),
 	(159, 'client', 'actions/damage/showAll', '0', 'b'),
@@ -376,7 +369,40 @@ INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(215, 'client', 'rooms/selection/registrationAvailableRooms', '*', 't'),
 	(216, 'client', 'rooms/selection/loginLastLocation', '1', 'b'),
 	(218, 'client', 'rooms/selection/loginAvailableRooms', '*', 't'),
-	(219, 'client', 'rooms/selection/loginLastLocationLabel', 'Last Location', 't');
+	(219, 'client', 'rooms/selection/loginLastLocationLabel', 'Last Location', 't'),
+	(220, 'client', 'players/tapMovement/enabled', '1', 'b'),
+	(221, 'client', 'ui/chat/overheadChat/enabled', '1', 'b'),
+	(222, 'client', 'chat/messages/characterLimit', '10', 'i'),
+	(223, 'client', 'chat/messages/characterLimitOverhead', '5', 'i'),
+	(224, 'client', 'ui/chat/overheadText/fontFamily', 'Verdana, Geneva, sans-serif', 't'),
+	(225, 'client', 'ui/chat/overheadText/fontSize', '12px', 't'),
+	(226, 'client', 'ui/chat/overheadText/fill', '#ffffff', 't'),
+	(227, 'client', 'ui/chat/overheadText/align', 'center', 't'),
+	(228, 'client', 'ui/chat/overheadText/stroke', 'rgba(0,0,0,0.7)', 't'),
+	(229, 'client', 'ui/chat/overheadText/strokeThickness', '20', 'i'),
+	(230, 'client', 'ui/chat/overheadText/shadowX', '5', 'i'),
+	(231, 'client', 'ui/chat/overheadText/shadowY', '5', 'i'),
+	(232, 'client', 'ui/chat/overheadText/shadowColor', 'rgba(0,0,0,0.7)', 't'),
+	(233, 'client', 'ui/chat/overheadText/shadowBlur', '5', 'i'),
+	(234, 'client', 'ui/chat/overheadText/depth', '200000', 'i'),
+	(235, 'client', 'ui/chat/overheadText/height', '15', 'i'),
+	(236, 'client', 'ui/chat/overheadText/textLength', '4', 'i'),
+	(237, 'client', 'ui/players/nameText/fontFamily', 'Verdana, Geneva, sans-serif', 't'),
+	(238, 'client', 'ui/players/nameText/fontSize', '12px', 't'),
+	(239, 'client', 'ui/players/nameText/fill', '#ffffff', 't'),
+	(240, 'client', 'ui/players/nameText/align', 'center', 't'),
+	(241, 'client', 'ui/players/nameText/stroke', '#000000', 't'),
+	(242, 'client', 'ui/players/nameText/strokeThickness', '4', 'i'),
+	(243, 'client', 'ui/players/nameText/shadowX', '5', 'i'),
+	(244, 'client', 'ui/players/nameText/shadowY', '5', 'i'),
+	(245, 'client', 'ui/players/nameText/shadowColor', 'rgba(0,0,0,0.7)', 't'),
+	(246, 'client', 'ui/players/nameText/shadowBlur', '5', 'i'),
+	(247, 'client', 'ui/players/nameText/depth', '200000', 'i'),
+	(248, 'client', 'ui/players/nameText/height', '-90', 'i'),
+	(249, 'client', 'ui/players/nameText/textLength', '4', 'i'),
+	(250, 'client', 'ui/chat/overheadChat/isTyping', '1', 'b'),
+	(251, 'client', 'ui/chat/overheadText/timeOut', '5000', 'i'),
+	(252, 'client', 'ui/chat/overheadChat/closeChatBoxAfterSend', '1', 'b');
 /*!40000 ALTER TABLE `config` ENABLE KEYS */;
 
 -- Dumping structure for table features
@@ -753,7 +779,7 @@ CREATE TABLE IF NOT EXISTS `skills_class_level_up_animations` (
   CONSTRAINT `FK_skills_class_level_up_skills_levels` FOREIGN KEY (`level_id`) REFERENCES `skills_levels` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table skills_class_level_up_animations: ~0 rows (approximately)
+-- Dumping data for table skills_class_level_up_animations: ~1 rows (approximately)
 /*!40000 ALTER TABLE `skills_class_level_up_animations` DISABLE KEYS */;
 INSERT INTO `skills_class_level_up_animations` (`id`, `class_path_id`, `level_id`, `animationData`) VALUES
 	(1, NULL, NULL, '{"enabled":true,"type":"spritesheet","img":"heal_cast","frameWidth":64,"frameHeight":70,"start":0,"end":3,"repeat":-1,"destroyTime":2000,"depthByPlayer":"above"}');
@@ -1202,7 +1228,7 @@ CREATE TABLE IF NOT EXISTS `skills_skill_owner_conditions` (
   CONSTRAINT `FK_skills_skill_owner_conditions_skills_skill` FOREIGN KEY (`skill_id`) REFERENCES `skills_skill` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf32 COLLATE=utf32_unicode_ci;
 
--- Dumping data for table skills_skill_owner_conditions: ~0 rows (approximately)
+-- Dumping data for table skills_skill_owner_conditions: ~1 rows (approximately)
 /*!40000 ALTER TABLE `skills_skill_owner_conditions` DISABLE KEYS */;
 INSERT INTO `skills_skill_owner_conditions` (`id`, `skill_id`, `key`, `property_key`, `conditional`, `value`) VALUES
 	(1, 3, 'available_mp', 'stats/mp', 'ge', '5');
@@ -1225,7 +1251,7 @@ CREATE TABLE IF NOT EXISTS `skills_skill_owner_effects` (
   CONSTRAINT `FK_skills_skill_owner_effects_skills_skill` FOREIGN KEY (`skill_id`) REFERENCES `skills_skill` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci COMMENT='Modifiers table.';
 
--- Dumping data for table skills_skill_owner_effects: ~0 rows (approximately)
+-- Dumping data for table skills_skill_owner_effects: ~1 rows (approximately)
 /*!40000 ALTER TABLE `skills_skill_owner_effects` DISABLE KEYS */;
 INSERT INTO `skills_skill_owner_effects` (`id`, `skill_id`, `key`, `property_key`, `operation`, `value`, `minValue`, `maxValue`, `minProperty`, `maxProperty`) VALUES
 	(2, 3, 'dec_mp', 'stats/mp', 2, '5', '0', '', NULL, NULL);
@@ -1285,7 +1311,7 @@ CREATE TABLE IF NOT EXISTS `skills_skill_target_effects` (
   CONSTRAINT `FK_skills_skill_effect_modifiers` FOREIGN KEY (`skill_id`) REFERENCES `skills_skill` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci COMMENT='Modifiers table.';
 
--- Dumping data for table skills_skill_target_effects: ~0 rows (approximately)
+-- Dumping data for table skills_skill_target_effects: ~1 rows (approximately)
 /*!40000 ALTER TABLE `skills_skill_target_effects` DISABLE KEYS */;
 INSERT INTO `skills_skill_target_effects` (`id`, `skill_id`, `key`, `property_key`, `operation`, `value`, `minValue`, `maxValue`, `minProperty`, `maxProperty`) VALUES
 	(1, 4, 'heal', 'stats/hp', 1, '10', '0', '0', NULL, 'statsBase/hp');
@@ -1320,7 +1346,7 @@ CREATE TABLE IF NOT EXISTS `stats` (
   UNIQUE KEY `key` (`key`) USING BTREE
 ) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table stats: ~0 rows (approximately)
+-- Dumping data for table stats: ~10 rows (approximately)
 /*!40000 ALTER TABLE `stats` DISABLE KEYS */;
 INSERT INTO `stats` (`id`, `key`, `label`, `description`, `base_value`, `customData`) VALUES
 	(1, 'hp', 'HP', 'Player life points', 100, '{"showBase":true}'),

@@ -4,7 +4,7 @@
  *
  */
 
-const { Renderer } = require('phaser');
+const { Display } = require('phaser');
 const { sc } = require('@reldens/utils');
 
 class Minimap
@@ -72,27 +72,16 @@ class Minimap
 
     createRoundCamera(scene)
     {
-        if(!this.minimapPipeline || !this.minimapCamera){
-            this.pipelineInstance = new Renderer.WebGL.Pipelines.TextureTintPipeline({
-                game: scene.game,
-                renderer: scene.game.renderer,
-                fragShader: `
-                precision mediump float;
-                uniform sampler2D uMainSampler;
-                varying vec2 outTexCoord;
-    
-                void main(void)
-                {
-                    if (length(outTexCoord.xy - vec2(0.5, 0.5)) > 0.5) {
-                        discard;
-                    } else {
-                        gl_FragColor = texture2D(uMainSampler, outTexCoord);
-                    }
-                }`
-            });
-            this.minimapPipeline = scene.game.renderer.addPipeline('MinimapPipeline_' + scene.key, this.pipelineInstance);
-        }
-        this.minimapCamera.setRenderToTexture(this.minimapPipeline);
+        this.scope = scene.add.circle(
+            sc.get(this.config, 'circleX', 220),
+            sc.get(this.config, 'circleY', 88),
+            sc.get(this.config, 'circleRadio', 80.35),
+            sc.get(this.config, 'circleColor', 'rgb(0,0,0)'),
+            sc.get(this.config, 'circleAlpha', 1)
+        );
+        this.scope.depth = sc.get(this.config, 'scopeDepth', 102);
+        this.minimapCamera.setMask(new Display.Masks.BitmapMask(scene, this.scope));
+        this.scope.visible = false;
     }
 
 }

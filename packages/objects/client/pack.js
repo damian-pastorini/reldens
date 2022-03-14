@@ -24,7 +24,7 @@ class ObjectsPack extends PackInterface
         if(!this.events){
             Logger.error('EventsManager undefined in InventoryPack.');
         }
-        // @NOTE: the prepare objects ui has to be created before the scenes so we can use the scenes events before
+        // @NOTE: the prepareObjectsUi has to be created before the scenes, so we can use the scenes events before
         // the events were called.
         // eslint-disable-next-line no-unused-vars
         this.events.on('reldens.startEngineScene', async (roomEvents, player, room, previousScene) => {

@@ -14,7 +14,7 @@ const { ObjectsConst } = require('../../objects/constants');
 class ActionsMessageActions
 {
 
-    parseMessageAndRunActions(client, data, room, playerSchema)
+    async parseMessageAndRunActions(client, data, room, playerSchema)
     {
         let bodyToMove = playerSchema.physicalBody;
         if(playerSchema.isCasting || bodyToMove.isBlocked || bodyToMove.isChangingScene){

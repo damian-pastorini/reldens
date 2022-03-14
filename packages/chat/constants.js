@@ -13,6 +13,7 @@ module.exports.ChatConst = {
     CHAT_MESSAGE: 'm',
     CHAT_FROM: 'f',
     CHAT_TO: 't',
+    CHAT_UI: 'chat-ui',
     CHAT_FORM: 'chat-form',
     CHAT_MESSAGES: 'chat-messages',
     CHAT_INPUT: 'chat-input',
