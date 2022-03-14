@@ -157,7 +157,7 @@ class ChatUi
         if(!this.isFocussedOnChatInput()){
             return false;
         }
-        // @TODO: display gif or animation sprite.
+        this.showOverheadChat(this.gameManager.getCurrentPlayerAnimation(), '...');
     }
 
     hideIsTyping()
@@ -165,7 +165,7 @@ class ChatUi
         if(!this.gameManager.config.get('client/ui/chat/overheadChat/isTyping')){
             return false;
         }
-        // @TODO: display gif or animation sprite.
+        this.destroyTextSprite(this.gameManager.getCurrentPlayerAnimation());
     }
 
     isFocussedOnChatInput()
