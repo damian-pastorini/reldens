@@ -39,19 +39,26 @@ class LoginManager
     async processUserRequest(userData = false)
     {
         if(sc.hasOwn(userData, 'forgot') && this.mailer.isEnabled()){
-            return await this.processForgotPassword(userData);
+            let result = await this.processForgotPassword(userData);
+            this.events.emitSync('reldens.processForgotPassword', this, userData, result);
+            return result;
         }
+        this.events.emitSync('reldens.processUserRequestIsValidDataBefore', this, userData);
         if(!this.isValidData(userData)){
             let errorMessage = 'Incomplete user login data.';
             if(!userData.username){
                 errorMessage = 'Please, complete your username, the same is always required to login.';
             }
-            return {error: errorMessage};
+            let result = {error: errorMessage};
+            this.events.emitSync('reldens.invalidData', this, userData, result);
+            return result;
         }
         // search if the user exists:
         let user = await this.usersManager.loadUserByUsername(userData.username);
         if(!user && !userData.isNewUser){
-            return {error: 'Missing user data.'};
+            let result = {error: 'Missing user data.'}
+            this.events.emitSync('reldens.loadUserByUsernameResult', this, userData, result);
+            return result;
         }
         return user ? await this.login(user, userData) : await this.register(userData);
     }
@@ -70,32 +77,37 @@ class LoginManager
     {
         // check if the passwords match:
         if(!this.passwordManager.validatePassword(userData.password, user.password)){
-            // if the password doesn't match return an error:
-            return {error: 'User already exists or invalid user data.'};
-        } else {
-            try {
+            let result = {error: 'User already exists or invalid user data.'};
+            this.events.emitSync('reldens.loginInvalidPassword', this, user, userData, result);
+            return result;
+        }
+        try {
+            if(sc.isArray(user.players) && 0 < user.players.length){
                 // set the scene on the user players:
-                if(user.players){
-                    for(let player of user.players){
-                        if(!player.state){
-                            continue;
-                        }
-                        let config = this.config.get('client/rooms/selection');
-                        if(
-                            config.allowOnLogin
-                            && userData['selectedScene']
-                            && userData['selectedScene'] !== '@lastLocation'
-                        ){
-                            await this.applySelectedLocation(player, userData['selectedScene']);
-                        }
-                        player.state.scene = await this.getRoomNameById(player.state.room_id);
-                    }
-                }
-                // if everything is good then just return the user:
-                return {user: user};
-            } catch (err) {
-                return {error: err};
+                this.events.emitSync('reldens.setSceneOnPlayers', this, user, userData);
+                await this.setSceneOnPlayers(user, userData);
             }
+            let result = {user: user};
+            this.events.emitSync('reldens.loginSuccess', this, user, userData, result);
+            return result;
+        } catch (err) {
+            let result = {error: err};
+            this.events.emitSync('reldens.loginError', this, user, userData, result);
+            return result;
+        }
+    }
+
+    async setSceneOnPlayers(user, userData)
+    {
+        for(let player of user.players){
+            if (!player.state) {
+                continue;
+            }
+            let config = this.config.get('client/rooms/selection');
+            if(config.allowOnLogin && userData['selectedScene'] && userData['selectedScene'] !== '@lastLocation'){
+                await this.applySelectedLocation(player, userData['selectedScene']);
+            }
+            player.state.scene = await this.getRoomNameById(player.state.room_id);
         }
     }
 
@@ -135,40 +147,46 @@ class LoginManager
 
     async register(userData)
     {
-        if(userData.isNewUser){
-            try {
-                // check if a user with the email exists:
-                let user = await this.usersManager.loadUserByEmail(userData.email);
-                if(user){
-                    let message = 'Registration error, invalid credentials.';
-                    if(userData.isFirebaseLogin){
-                        message = 'Login error, wrong username.';
-                    }
-                    return {error: message};
+        if(!userData.isNewUser){
+            let result = {error: 'Unable to authenticate the user.'};
+            await this.events.emit('reldens.register', this, userData, result);
+            return result;
+        }
+        try {
+            // check if a user with the email exists:
+            let user = await this.usersManager.loadUserByEmail(userData.email);
+            if(user){
+                let message = 'Registration error, invalid credentials.';
+                if(userData.isFirebaseLogin){
+                    message = 'Login error, wrong username.';
                 }
-                // if the email doesn't exist in the database, and it's a registration request:
-                // insert user, player, player state, player stats, class path:
-                let newUser = await this.usersManager.createUser({
-                    email: userData.email,
-                    username: userData.username,
-                    password: this.passwordManager.encryptPassword(userData.password),
-                    role_id: this.config.server.players.initialUser.role_id,
-                    status: this.config.server.players.initialUser.status
-                });
-                await this.events.emit('reldens.createNewUserAfter', newUser, this);
-                return {user: newUser};
-            } catch (err) {
-                return {error: 'Unable to register the user.', catch: err};
+                return {error: message};
             }
-        } else {
-            return {error: 'Unable to authenticate the user.'};
+            // if the email doesn't exist in the database, and it's a registration request:
+            // insert user, player, player state, player stats, class path:
+            let newUser = await this.usersManager.createUser({
+                email: userData.email,
+                username: userData.username,
+                password: this.passwordManager.encryptPassword(userData.password),
+                role_id: this.config.server.players.initialUser.role_id,
+                status: this.config.server.players.initialUser.status
+            });
+            let result = {user: newUser};
+            await this.events.emit('reldens.createNewUserAfter', newUser, this, result);
+            return result;
+        } catch (err) {
+            let result = {error: 'Unable to register the user.', catch: err};
+            await this.events.emit('reldens.createNewUserError', this, userData, result);
+            return result;
         }
     }
 
     async createNewPlayer(loginData)
     {
         if(loginData['new_player_name'].toString().length < 3){
-            return {error: true, message: 'Invalid player name, please choose another name.'};
+            let result = {error: true, message: 'Invalid player name, please choose another name.'};
+            await this.events.emit('reldens.playerNewName', this, loginData, result);
+            return result;
         }
         let initialState = await this.prepareInitialState(loginData['selectedScene']);
         let playerData = {
@@ -177,18 +195,23 @@ class LoginManager
             state: initialState
         };
         await this.events.emit('reldens.createNewPlayerBefore', loginData, playerData, this);
-        let isNameAvailable = await this.usersManager.isNameAvailable(playerData.name);
-        if(isNameAvailable){
-            return {error: true, message: 'The player name is not available, please choose another name.'};
+        let isUnavailable = await this.usersManager.isNameAvailable(playerData.name);
+        if(isUnavailable){
+            let result = {error: true, message: 'The player name is not available, please choose another name.'};
+            await this.events.emit('reldens.playerNewNameUnavailable', this, loginData, isUnavailable, result);
+            return result;
         }
         try {
             let player = await this.usersManager.createPlayer(playerData);
             player.state.scene = await this.getRoomNameById(initialState.room_id);
-            await this.events.emit('reldens.createdNewPlayer', player, loginData, this);
-            return {error: false, player};
+            let result = {error: false, player};
+            await this.events.emit('reldens.createdNewPlayer', player, loginData, this, result);
+            return result;
         } catch (err) {
             Logger.critical('Player creation error', err);
-            return {error: true, message: 'There was an error creating your player, please try again.'};
+            let result = {error: true, message: 'There was an error creating your player, please try again.'};
+            await this.events.emit('reldens.createNewPlayerCriticalError', this, loginData, err, result);
+            return result;
         }
     }
 

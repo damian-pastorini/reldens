@@ -49,14 +49,15 @@ class RoomLogin extends Room
 
     getPlayerById(players, playerId)
     {
-        let result = false;
+        if(!sc.isArray(players) || 0 === players.length){
+            return false;
+        }
         for(let player of players){
             if(player.id === playerId){
-                result = player;
-                break;
+                return player;
             }
         }
-        return result;
+        return false;
     }
 
     validateRoom(playerRoomName)
