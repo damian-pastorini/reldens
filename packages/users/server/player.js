@@ -10,7 +10,7 @@ const schema = require('@colyseus/schema');
 const { Schema, type } = schema;
 const { BodyState } = require('../../world/server/body-state');
 const { GameConst } = require('../../game/constants');
-const { ErrorManager, sc } = require('@reldens/utils');
+const { ErrorManager } = require('@reldens/utils');
 
 class Player extends Schema
 {
