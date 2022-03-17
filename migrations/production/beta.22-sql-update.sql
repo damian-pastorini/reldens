@@ -4,6 +4,11 @@ SET FOREIGN_KEY_CHECKS = 0;
 
 #######################################################################################################################
 
+# Config:
+INSERT INTO `config` VALUES(NULL, 'client', 'objects/npc/invalidOptionMessage', 'I do not understand.', 't');
+DELETE FROM `config` WHERE `path` = 'ui/minimap/roundMap';
+INSERT INTO `config` VALUES(NULL, 'client', 'ui/minimap/roundMap', '1', 'b');
+
 # Played Time:
 ALTER TABLE `users`
 	CHANGE COLUMN `email` `email` VARCHAR(255) NOT NULL COLLATE 'utf8_unicode_ci' AFTER `id`,

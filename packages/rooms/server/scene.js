@@ -97,6 +97,7 @@ class RoomScene extends RoomLogin
             if(player.username.toLowerCase() !== options.username.toLowerCase()){
                 continue;
             }
+            await this.events.emit('reldens.disconnectLoggedBefore', {room: this, player, client, options, authResult});
             await this.savePlayedTime(player);
             let savedStats = await this.savePlayerStats(player);
             let savedAndRemoved = await this.saveStateAndRemovePlayer(i);
@@ -318,7 +319,14 @@ class RoomScene extends RoomLogin
         let savedPlayer = await this.savePlayerState(sessionId);
         // first remove player body from current world:
         let playerSchema = this.getPlayerFromState(sessionId);
-        playerSchema
+        let isRemoveReady = true;
+        await this.events.emit('reldens.removeAllPlayerReferencesBefore', {
+            room: this,
+            savedPlayer,
+            playerSchema,
+            isRemoveReady
+        });
+        playerSchema && isRemoveReady
             ? this.removeAllPlayerReferences(playerSchema, sessionId)
             : ErrorManager.error('Player not found, session ID: ' + sessionId);
         return savedPlayer;
@@ -343,10 +351,19 @@ class RoomScene extends RoomLogin
         let playerSchema = this.getPlayerFromState(sessionId);
         let {room_id, x, y, dir} = playerSchema.state;
         let playerId = playerSchema.player_id;
-        let updateResult = await this.loginManager.usersManager.updateUserStateByPlayerId(
+        let updatePatch = {room_id, x: parseInt(x), y: parseInt(y), dir};
+        let updateReady = true;
+        this.events.emitSync('reldens.onSavePlayerStateBefore', {
+            room: this,
+            playerSchema,
             playerId,
-            {room_id, x: parseInt(x), y: parseInt(y), dir}
-        );
+            updatePatch,
+            updateReady
+        });
+        if(!updateReady){
+            return playerSchema;
+        }
+        let updateResult = await this.loginManager.usersManager.updateUserStateByPlayerId(playerId, updatePatch);
         if(!updateResult){
             Logger.error('Player update error: ' + playerId);
         }
@@ -355,9 +372,14 @@ class RoomScene extends RoomLogin
 
     async savePlayerStats(target, updateClient)
     {
-        // @TODO - BETA - For now we are always updating all the stats but this can be improved to save only the
-        //   ones that changed.
+        // @TODO - BETA - For now we are always updating all the stats but this can be improved to save only the ones
+        //   that changed.
         // save the stats:
+        let updateReady = true;
+        this.events.emitSync('reldens.onSavePlayerStatsBefore', {room: this, target, updateClient, updateReady});
+        if(!updateReady){
+            return false;
+        }
         for(let i of Object.keys(target.stats)){
             let statId = this.config.client.players.initialStats[i].id;
             // we can use a single update query so we can easily update both value and base_value:
@@ -368,13 +390,9 @@ class RoomScene extends RoomLogin
             await this.loginManager.usersManager.updatePlayerStatByIds(target.player_id, statId, statPatch);
         }
         if(updateClient){
-            // @TODO - BETA - Convert all events in constants and consolidate them in a single file.
+            // @TODO - BETA - Convert all events in constants and consolidate them in a single file with descriptions.
             await this.events.emit('reldens.savePlayerStatsUpdateClient', updateClient, target, this);
-            this.send(updateClient, {
-                act: GameConst.PLAYER_STATS,
-                stats: target.stats,
-                statsBase: target.statsBase
-            });
+            this.send(updateClient, {act: GameConst.PLAYER_STATS, stats: target.stats, statsBase: target.statsBase});
         }
         return true;
     }

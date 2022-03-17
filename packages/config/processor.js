@@ -17,31 +17,29 @@ class ConfigProcessor
      */
     get(path, avoidLog = false)
     {
-        // default value will be always false:
-        let result = false;
         // since the amount of parameters should be always 3 (for a config group) or 4 (for a single value) then we can
         // easily split the path:
         let pathArray = path.split('/');
         // verify path size:
-        if(pathArray.length >= 3){
-            let levelCheck = (this[pathArray[0]] || {});
-            for(let i = 1; i < pathArray.length; i++){
-                if(!sc.hasOwn(levelCheck, pathArray[i])){
-                    if(!avoidLog){
-                        Logger.error('Configuration level '+i+' not defined: '+path);
-                    }
-                    levelCheck = false;
-                    break;
-                }
-                levelCheck = levelCheck[pathArray[i]];
-            }
-            result = levelCheck;
-        } else {
+        if(pathArray.length < 3){
             if(!avoidLog){
                 Logger.error('Path level is too low:', path);
             }
+            return false;
         }
-        return result;
+        // default value will be always false:
+        let levelCheck = (this[pathArray[0]] || {});
+        for(let i = 1; i < pathArray.length; i++){
+            if(!sc.hasOwn(levelCheck, pathArray[i])){
+                if(!avoidLog){
+                    Logger.error('Configuration level '+i+' not defined: '+path);
+                }
+                levelCheck = false;
+                break;
+            }
+            levelCheck = levelCheck[pathArray[i]];
+        }
+        return levelCheck;
     }
 
 }
