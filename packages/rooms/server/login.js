@@ -44,9 +44,9 @@ class RoomLogin extends Room
             loginResult.selectedPlayer = options.selectedPlayer;
             loginResult.user.player = this.getPlayerById(loginResult.user.players, options.selectedPlayer);
         }
-        let result = loginResult.user;
-        this.events.emitSync('reldens.roomLoginOnAuth', {roomLogin: this, result, client, options, request});
-        return result;
+        let result = {confirm: true};
+        await this.events.emitSync('reldens.roomLoginOnAuth', {roomLogin: this, result, loginResult, client, options, request});
+        return result.confirm ? loginResult.user : false;
     }
 
     getPlayerById(players, playerId)

@@ -263,7 +263,7 @@ class LoginManager
             return {error: 'Reset link already sent.'};
         }
         await this.usersManager.updateUserByEmail(userData.email, {status: Date.now()});
-        return await this.sendForgotPasswordEmail(userData, user.password);
+        return {sendResult: await this.sendForgotPasswordEmail(userData, user.password)};
     }
 
     async sendForgotPasswordEmail(userData, oldPassword)
