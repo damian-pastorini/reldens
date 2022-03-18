@@ -66,7 +66,6 @@ class RoomEvents
             avatarKey: player.avatarKey,
             playedTime: player.playedTime
         };
-        // create current player:
         key === this.room.sessionId
             ? await this.createCurrentPlayer(player, previousScene, key)
             : this.addOtherPlayers(player, key, addPlayerData);
@@ -81,6 +80,7 @@ class RoomEvents
         }
         let currentScene = this.getActiveScene();
         if(!this.isValidScene(currentScene, player)){
+            // we don't want to add players from another scene here:
             return false;
         }
         currentScene.player.addPlayer(key, addPlayerData);
@@ -88,12 +88,12 @@ class RoomEvents
 
     async createCurrentPlayer(player, previousScene, key)
     {
+        this.engineStarted = true;
         await this.startEngineScene(player, this.room, previousScene);
         let currentScene = this.getActiveScene();
         if(!this.isValidScene(currentScene, player)){
             return false;
         }
-        this.engineStarted = true;
         // process players queue after player was created:
         await this.events.emit('reldens.playersQueueBefore', player, key, previousScene, this);
         for(let i of Object.keys(this.playersQueue)){
