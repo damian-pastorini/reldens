@@ -27,9 +27,9 @@ class RoomLogin extends Room
         // @NOTE: validateRoomData is overridden in RoomScene onCreate.
         this.validateRoomData = false;
         options.roomsManager.createdInstances[this.roomId] = this;
+        this.events.emitSync('reldens.roomLoginOnCreate', {roomLogin: this, options});
     }
 
-    // eslint-disable-next-line no-unused-vars
     async onAuth(client, options, request)
     {
         if(!options){
@@ -44,19 +44,22 @@ class RoomLogin extends Room
             loginResult.selectedPlayer = options.selectedPlayer;
             loginResult.user.player = this.getPlayerById(loginResult.user.players, options.selectedPlayer);
         }
-        return loginResult.user;
+        let result = {confirm: true};
+        await this.events.emitSync('reldens.roomLoginOnAuth', {roomLogin: this, result, loginResult, client, options, request});
+        return result.confirm ? loginResult.user : false;
     }
 
     getPlayerById(players, playerId)
     {
-        let result = false;
+        if(!sc.isArray(players) || 0 === players.length){
+            return false;
+        }
         for(let player of players){
             if(player.id === playerId){
-                result = player;
-                break;
+                return player;
             }
         }
-        return result;
+        return false;
     }
 
     validateRoom(playerRoomName)

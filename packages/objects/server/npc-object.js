@@ -73,13 +73,13 @@ class NpcObject extends AnimationObject
 
     isValidIndexValue(optionIdx, room, client)
     {
-        if(!sc.hasOwn(this.options, optionIdx)){
-            if(this.sendInvalidOptionMessage){
-                room.send(client, {act: GameConst.UI, id: this.id, content: this.invalidOptionMessage});
-            }
-            return false;
+        if(sc.hasOwn(this.options, optionIdx)){
+            return true;
         }
-        return true;
+        if(this.sendInvalidOptionMessage){
+            room.send(client, {act: GameConst.UI, id: this.id, content: this.invalidOptionMessage});
+        }
+        return false;
     }
 
 }

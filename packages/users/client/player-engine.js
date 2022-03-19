@@ -27,6 +27,7 @@ class PlayerEngine
         this.room = room;
         this.playerId = room.sessionId;
         this.players = {};
+        this.playedTime = playerData.playedTime;
         this.mov = false;
         this.dir = false;
         this.currentTarget = false;
@@ -43,7 +44,8 @@ class PlayerEngine
             y: this.state.y,
             dir: this.state.dir,
             playerName: this.playerName,
-            avatarKey: this.avatarKey
+            avatarKey: this.avatarKey,
+            playedTime: this.playedTime
         };
         this.addPlayer(this.playerId, addPlayerData);
         let fadeDuration = this.config.get('client/players/animations/fadeDuration') || GameConst.FADE_DURATION;
@@ -60,9 +62,10 @@ class PlayerEngine
             // player sprite already exists, update it and return it:
             return this.players[id];
         }
-        let {x, y, dir, playerName, avatarKey} = addPlayerData;
+        let {x, y, dir, playerName, avatarKey, playedTime} = addPlayerData;
         this.players[id] = this.scene.physics.add.sprite(x, (y - this.topOff), avatarKey);
         this.players[id].playerName = playerName;
+        this.players[id].playedTime = playedTime;
         this.players[id].avatarKey = avatarKey;
         this.players[id].playerId = id;
         this.players[id].anims.play(avatarKey+'_'+dir);

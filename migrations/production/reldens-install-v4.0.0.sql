@@ -162,7 +162,7 @@ CREATE TABLE IF NOT EXISTS `config` (
   `value` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `type` varchar(2) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=253 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=257 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
 -- Dumping data for table config: ~236 rows (approximately)
 /*!40000 ALTER TABLE `config` DISABLE KEYS */;
@@ -297,7 +297,7 @@ INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(136, 'client', 'players/animations/collideWorldBounds', '1', 'b'),
 	(137, 'server', 'rooms/world/bulletsStopOnPlayer', '1', 'b'),
 	(138, 'client', 'players/animations/fallbackImage', 'player-base', 't'),
-	(139, 'client', 'players/multiplePlayers/enabled', '1', 'b'),
+	(139, 'client', 'players/multiplePlayers/enabled', '0', 'b'),
 	(140, 'server', 'players/gameOver/timeOut', '10000', 'i'),
 	(141, 'client', 'ui/controls/tabTarget', '1', 'b'),
 	(142, 'client', 'ui/controls/disableContextMenu', '1', 'b'),
@@ -336,12 +336,10 @@ INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(182, 'client', 'ui/minimap/mapHeightDivisor', '1', 'i'),
 	(183, 'client', 'ui/minimap/fixedWidth', '450', 'i'),
 	(184, 'client', 'ui/minimap/fixedHeight', '450', 'i'),
-	(185, 'client', 'ui/minimap/roundMap', '1', 'b'),
 	(186, 'client', 'ui/minimap/camX', '140', 'i'),
 	(187, 'client', 'ui/minimap/camY', '10', 'i'),
 	(188, 'client', 'ui/minimap/camBackgroundColor', 'rgba(0,0,0,0.6)', 't'),
 	(189, 'client', 'ui/minimap/camZoom', '0.35', 'i'),
-	(190, 'client', 'ui/minimap/roundMap', '1', 'b'),
 	(191, 'client', 'ui/minimap/addCircle', '1', 'b'),
 	(192, 'client', 'ui/minimap/circleX', '220', 'i'),
 	(193, 'client', 'ui/minimap/circleY', '88', 'i'),
@@ -364,16 +362,16 @@ INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(210, 'client', 'ui/settings/y', '280', 'i'),
 	(211, 'client', 'ui/settings/enabled', '1', 'b'),
 	(212, 'client', 'ui/lifeBar/showOnClick', '1', 'b'),
-	(213, 'client', 'rooms/selection/allowOnRegistration', '1', 'b'),
-	(214, 'client', 'rooms/selection/allowOnLogin', '1', 'b'),
+	(213, 'client', 'rooms/selection/allowOnRegistration', '0', 'b'),
+	(214, 'client', 'rooms/selection/allowOnLogin', '0', 'b'),
 	(215, 'client', 'rooms/selection/registrationAvailableRooms', '*', 't'),
 	(216, 'client', 'rooms/selection/loginLastLocation', '1', 'b'),
 	(218, 'client', 'rooms/selection/loginAvailableRooms', '*', 't'),
 	(219, 'client', 'rooms/selection/loginLastLocationLabel', 'Last Location', 't'),
 	(220, 'client', 'players/tapMovement/enabled', '1', 'b'),
 	(221, 'client', 'ui/chat/overheadChat/enabled', '1', 'b'),
-	(222, 'client', 'chat/messages/characterLimit', '10', 'i'),
-	(223, 'client', 'chat/messages/characterLimitOverhead', '5', 'i'),
+	(222, 'client', 'chat/messages/characterLimit', '100', 'i'),
+	(223, 'client', 'chat/messages/characterLimitOverhead', '50', 'i'),
 	(224, 'client', 'ui/chat/overheadText/fontFamily', 'Verdana, Geneva, sans-serif', 't'),
 	(225, 'client', 'ui/chat/overheadText/fontSize', '12px', 't'),
 	(226, 'client', 'ui/chat/overheadText/fill', '#ffffff', 't'),
@@ -402,7 +400,11 @@ INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(249, 'client', 'ui/players/nameText/textLength', '4', 'i'),
 	(250, 'client', 'ui/chat/overheadChat/isTyping', '1', 'b'),
 	(251, 'client', 'ui/chat/overheadText/timeOut', '5000', 'i'),
-	(252, 'client', 'ui/chat/overheadChat/closeChatBoxAfterSend', '1', 'b');
+	(252, 'client', 'ui/chat/overheadChat/closeChatBoxAfterSend', '1', 'b'),
+	(253, 'client', 'players/playedTime/show', '2', 'i'),
+	(254, 'client', 'players/playedTime/label', 'Played Time:<br/>', 't'),
+	(255, 'client', 'objects/npc/invalidOptionMessage', 'I do not understand.', 't'),
+	(256, 'client', 'ui/minimap/roundMap', '1', 'b');
 /*!40000 ALTER TABLE `config` ENABLE KEYS */;
 
 -- Dumping structure for table features
@@ -1364,13 +1366,14 @@ INSERT INTO `stats` (`id`, `key`, `label`, `description`, `base_value`, `customD
 -- Dumping structure for table users
 CREATE TABLE IF NOT EXISTS `users` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `email` varchar(255) NOT NULL,
-  `username` varchar(255) NOT NULL,
-  `password` varchar(255) NOT NULL,
+  `email` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `username` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `password` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `role_id` int unsigned NOT NULL,
-  `status` varchar(255) NOT NULL,
+  `status` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `played_time` int NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   UNIQUE KEY `email` (`email`),
   UNIQUE KEY `username` (`username`)

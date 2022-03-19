@@ -70,6 +70,7 @@ class RoomScene extends RoomLogin
 
     async onJoin(client, options, authResult)
     {
+        await this.events.emit('reldens.joinRoomStart', this, client, options, authResult);
         if(sc.hasOwn(options, 'selectedPlayer')){
             authResult.selectedPlayer = options.selectedPlayer;
             authResult.player = this.getPlayerById(authResult.players, options.selectedPlayer);
@@ -78,38 +79,35 @@ class RoomScene extends RoomLogin
             this.validateRoom(authResult.player.state.scene);
         }
         // check if user is already logged and disconnect from the previous client:
-        let loggedUserFound = false;
-        if(this.state.players){
-            for(let i of Object.keys(this.state.players)){
-                let player = this.state.players[i];
-                if(player.username.toLowerCase() === options.username.toLowerCase()){
-                    loggedUserFound = true;
-                    let savedStats = await this.savePlayerStats(player);
-                    let savedAndRemoved = await this.saveStateAndRemovePlayer(i);
-                    if(savedAndRemoved && savedStats){
-                        // old player session removed, create it again:
-                        await this.createPlayerOnScene(client, authResult);
-                    }
-                    break;
-                }
-            }
-        }
+        let loggedUserFound = await this.disconnectLogged(options, client, authResult);
         if(!loggedUserFound){
             // player not logged, create it:
             await this.createPlayerOnScene(client, authResult);
         }
+        await this.events.emit('reldens.joinRoomEnd', this, client, options, authResult);
     }
 
-    getPlayerById(players, playerId)
+    async disconnectLogged(options, client, authResult)
     {
-        let result = false;
-        for(let player of players){
-            if(player.id === playerId){
-                result = player;
-                break;
-            }
+        if(!this.state.players) {
+            return false;
         }
-        return result;
+        for(let i of Object.keys(this.state.players)){
+            let player = this.state.players[i];
+            if(player.username.toLowerCase() !== options.username.toLowerCase()){
+                continue;
+            }
+            await this.events.emit('reldens.disconnectLoggedBefore', {room: this, player, client, options, authResult});
+            await this.savePlayedTime(player);
+            let savedStats = await this.savePlayerStats(player);
+            let savedAndRemoved = await this.saveStateAndRemovePlayer(i);
+            if (savedAndRemoved && savedStats) {
+                // old player session removed, create it again:
+                await this.createPlayerOnScene(client, authResult);
+            }
+            return true;
+        }
+        return false;
     }
 
     async createPlayerOnScene(client, authResult)
@@ -120,10 +118,14 @@ class RoomScene extends RoomLogin
         // eslint-disable-next-line no-unused-vars
         currentPlayer.persistData = async (params) => {
             // persist data in player:
+            await this.events.emit('reldens.playerPersistDataBefore', client, authResult, currentPlayer, params, this);
+            await this.savePlayedTime(currentPlayer);
             await this.savePlayerState(currentPlayer.sessionId);
             await this.savePlayerStats(currentPlayer, client);
+            await this.events.emit('reldens.playerPersistDataAfter', client, authResult, currentPlayer, params, this);
         };
         await this.events.emit('reldens.createdPlayerSchema', client, authResult, currentPlayer, this);
+        currentPlayer.playStartTime = Date.now();
         this.state.addPlayerToState(currentPlayer, client.sessionId);
         // @TODO - BETA - Create player body using a new pack in the world package.
         // create body for server physics and assign the body to the player:
@@ -141,12 +143,15 @@ class RoomScene extends RoomLogin
     async onLeave(client, consented)
     {
         let playerSchema = this.getPlayerFromState(client.sessionId);
-        if(playerSchema){
-            let savedStats = await this.savePlayerStats(playerSchema);
-            let savedAndRemoved = await this.saveStateAndRemovePlayer(client.sessionId);
-            if(!savedStats || !savedAndRemoved){
-                Logger.error(['Player save error:', playerSchema.username, playerSchema.state, playerSchema.stats]);
-            }
+        if(!playerSchema){
+            Logger.error(['Player save error schema not found for session ID:', client.sessionId]);
+            return;
+        }
+        await this.savePlayedTime(playerSchema);
+        let savedStats = await this.savePlayerStats(playerSchema);
+        let savedAndRemoved = await this.saveStateAndRemovePlayer(client.sessionId);
+        if(!savedStats || !savedAndRemoved){
+            Logger.error(['Player save error:', playerSchema.username, playerSchema.state, playerSchema.stats]);
         }
     }
 
@@ -158,6 +163,33 @@ class RoomScene extends RoomLogin
         }
         // only process the message if the player exists and has a body:
         let playerSchema = this.getPlayerFromState(client.sessionId);
+        if(this.messageActions){
+            await this.executeMessageActions(client, messageData, playerSchema);
+        }
+        await this.executeMovePlayerActions(playerSchema, messageData);
+        this.executePlayerStatsAction(messageData, client, playerSchema);
+    }
+
+    executePlayerStatsAction(messageData, client, playerSchema)
+    {
+        // @NOTE:
+        // - Player states must be requested since are private user data that we can share with other players
+        // or broadcast to the rooms.
+        // - Considering base value could be changed temporally by a skill or item modifier will be really hard to
+        // identify which calls and cases would require only the stat data or the statBase, so we will always send
+        // both values. This could be improved in the future but for now it doesn't have a considerable impact.
+        if(GameConst.PLAYER_STATS !== messageData.act){
+            return false;
+        }
+        this.send(client, {
+            act: GameConst.PLAYER_STATS,
+            stats: playerSchema.stats,
+            statsBase: playerSchema.statsBase
+        });
+    }
+
+    async executeMovePlayerActions(playerSchema, messageData)
+    {
         let bodyToMove = sc.get(playerSchema, 'physicalBody', false);
         if(!bodyToMove || GameConst.STATUS.DEATH === playerSchema.inState){
             return false;
@@ -178,28 +210,17 @@ class RoomScene extends RoomLogin
             messageData = this.makeValidPoints(messageData);
             bodyToMove.moveToPoint(messageData);
         }
-        if(this.messageActions){
-            for(let i of Object.keys(this.messageActions)){
-                let messageObserver = this.messageActions[i];
-                if('function' !== typeof messageObserver.parseMessageAndRunActions){
-                    Logger.warning(['Invalid message observer!', messageObserver]);
-                    continue;
-                }
-                await messageObserver.parseMessageAndRunActions(client, messageData, this, playerSchema);
+    }
+
+    async executeMessageActions(client, messageData, playerSchema)
+    {
+        for(let i of Object.keys(this.messageActions)){
+            let messageObserver = this.messageActions[i];
+            if ('function' !== typeof messageObserver.parseMessageAndRunActions) {
+                Logger.warning(['Invalid message observer!', messageObserver]);
+                continue;
             }
-        }
-        // @NOTE:
-        // - Player states must be requested since are private user data that we can share with other players
-        // or broadcast to the rooms.
-        // - Considering base value could be changed temporally by a skill or item modifier will be really hard to
-        // identify which calls and cases would require only the stat data or the statBase so we will always send
-        // both values. This could be improved in the future but for now it doesn't have a considerable impact.
-        if(GameConst.PLAYER_STATS === messageData.act){
-            this.send(client, {
-                act: GameConst.PLAYER_STATS,
-                stats: playerSchema.stats,
-                statsBase: playerSchema.statsBase
-            });
+            await messageObserver.parseMessageAndRunActions(client, messageData, this, playerSchema);
         }
     }
 
@@ -282,6 +303,7 @@ class RoomScene extends RoomLogin
             y: currentPlayer.state.y,
             dir: currentPlayer.state.dir,
             playerName: currentPlayer.playerName,
+            playedTime: currentPlayer.playedTime,
             avatarKey: currentPlayer.avatarKey
         });
         // remove body from server world:
@@ -297,7 +319,14 @@ class RoomScene extends RoomLogin
         let savedPlayer = await this.savePlayerState(sessionId);
         // first remove player body from current world:
         let playerSchema = this.getPlayerFromState(sessionId);
-        playerSchema
+        let isRemoveReady = true;
+        await this.events.emit('reldens.removeAllPlayerReferencesBefore', {
+            room: this,
+            savedPlayer,
+            playerSchema,
+            isRemoveReady
+        });
+        playerSchema && isRemoveReady
             ? this.removeAllPlayerReferences(playerSchema, sessionId)
             : ErrorManager.error('Player not found, session ID: ' + sessionId);
         return savedPlayer;
@@ -322,20 +351,35 @@ class RoomScene extends RoomLogin
         let playerSchema = this.getPlayerFromState(sessionId);
         let {room_id, x, y, dir} = playerSchema.state;
         let playerId = playerSchema.player_id;
-        let updateResult = await this.loginManager.usersManager
-            .updateUserStateByPlayerId(playerId, {room_id, x: parseInt(x), y: parseInt(y), dir});
-        if(updateResult){
+        let updatePatch = {room_id, x: parseInt(x), y: parseInt(y), dir};
+        let updateReady = true;
+        this.events.emitSync('reldens.onSavePlayerStateBefore', {
+            room: this,
+            playerSchema,
+            playerId,
+            updatePatch,
+            updateReady
+        });
+        if(!updateReady){
             return playerSchema;
-        } else {
+        }
+        let updateResult = await this.loginManager.usersManager.updateUserStateByPlayerId(playerId, updatePatch);
+        if(!updateResult){
             Logger.error('Player update error: ' + playerId);
         }
+        return playerSchema;
     }
 
     async savePlayerStats(target, updateClient)
     {
-        // @TODO - BETA - For now we are always updating all the stats but this can be improved to save only the
-        //   ones that changed.
+        // @TODO - BETA - For now we are always updating all the stats but this can be improved to save only the ones
+        //   that changed.
         // save the stats:
+        let updateReady = true;
+        this.events.emitSync('reldens.onSavePlayerStatsBefore', {room: this, target, updateClient, updateReady});
+        if(!updateReady){
+            return false;
+        }
         for(let i of Object.keys(target.stats)){
             let statId = this.config.client.players.initialStats[i].id;
             // we can use a single update query so we can easily update both value and base_value:
@@ -346,38 +390,44 @@ class RoomScene extends RoomLogin
             await this.loginManager.usersManager.updatePlayerStatByIds(target.player_id, statId, statPatch);
         }
         if(updateClient){
-            // @TODO - BETA - Convert all events in constants and consolidate them in a single file.
+            // @TODO - BETA - Convert all events in constants and consolidate them in a single file with descriptions.
             await this.events.emit('reldens.savePlayerStatsUpdateClient', updateClient, target, this);
-            this.send(updateClient, {
-                act: GameConst.PLAYER_STATS,
-                stats: target.stats,
-                statsBase: target.statsBase
-            });
+            this.send(updateClient, {act: GameConst.PLAYER_STATS, stats: target.stats, statsBase: target.statsBase});
         }
         return true;
     }
 
+    async savePlayedTime(playerSchema)
+    {
+        let currentlyPlayedTime = (Date.now() - playerSchema.playStartTime) / 1000;
+        let playedTime = Number(playerSchema.playedTime)+Number(currentlyPlayedTime.toFixed());
+        playerSchema.playedTime = playedTime;
+        let updateResult = await this.loginManager.usersManager.dataServer.getEntity('users').updateById(
+            playerSchema.id,
+            {played_time: playedTime}
+        );
+        if(!updateResult){
+            Logger.error(['User time update error:', playerSchema.player_id]);
+        }
+        return playerSchema;
+    }
+
     getClientById(clientId)
     {
-        let result = false;
-        if(this.clients){
-            for(let client of this.clients){
-                if(client.sessionId === clientId){
-                    result = client;
-                    break;
-                }
+        if(!this.clients){
+            return false;
+        }
+        for(let client of this.clients){
+            if(client.sessionId === clientId){
+                return client;
             }
         }
-        return result;
+        return false;
     }
 
     getPlayerFromState(playerIndex)
     {
-        let result = false;
-        if(this.state.players[playerIndex]){
-            result = this.state.players[playerIndex];
-        }
-        return result;
+        return sc.get(this.state.players, playerIndex, false);
     }
 
     makeValidPoints(points)
@@ -403,9 +453,10 @@ class RoomScene extends RoomLogin
             for(let i of Object.keys(instC)){
                 let res = instC[i];
                 for(let obj of res){
-                    if(sc.hasOwn(obj, 'battleEndListener')){
-                        this.events.offWithKey(obj.key+'battleEnd', 'battleRoom');
+                    if(!sc.hasOwn(obj, 'battleEndListener')){
+                        continue;
                     }
+                    this.events.offWithKey(obj.key+'battleEnd', 'battleRoom');
                 }
             }
         }

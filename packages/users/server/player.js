@@ -38,6 +38,7 @@ class Player extends Schema
             this.statsBase = player.statsBase; // this is the base or max value
             this.avatarKey = GameConst.IMAGE_PLAYER;
             this.inState = GameConst.STATUS.ACTIVE;
+            this.playedTime = data.played_time;
         } catch (err) {
             ErrorManager.error(['Missing user data.', err]);
         }
@@ -48,6 +49,7 @@ class Player extends Schema
 type('string')(Player.prototype, 'sessionId');
 type('string')(Player.prototype, 'username');
 type('string')(Player.prototype, 'playerName');
+type('number')(Player.prototype, 'playedTime');
 type('string')(Player.prototype, 'status');
 type('string')(Player.prototype, 'avatarKey');
 type('string')(Player.prototype, 'broadcastKey');

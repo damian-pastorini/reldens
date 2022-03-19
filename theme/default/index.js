@@ -1,7 +1,7 @@
 /**
  *
  * Reldens - Index
- * Client main file, this file provide the basic first page with the login and registration forms, and start the
+ * Client main file, this file provides the basic first page with the login and registration forms, and start the
  * GameManager if the request was successfully processed.
  *
  */

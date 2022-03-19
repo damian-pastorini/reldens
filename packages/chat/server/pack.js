@@ -52,7 +52,8 @@ class ChatPack extends PackInterface
                 let messageObject = {
                     act: ChatConst.CHAT_ACTION,
                     f: skill.owner.playerName,
-                    m: sendMessage
+                    m: sendMessage,
+                    t: ChatConst.CHAT_TYPE_SYSTEM_BATTLE
                 };
                 client.send(messageObject);
                 this.chatManager.saveMessage(

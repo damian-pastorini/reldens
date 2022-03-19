@@ -32,6 +32,7 @@ module.exports.ChatConst = {
     CHAT_TYPE_GLOBAL: 'ctg',
     CHAT_TYPE_SYSTEM: 'cts',
     CHAT_TYPE_SYSTEM_ERROR: 'ctse',
+    CHAT_TYPE_SYSTEM_BATTLE: 'ctb',
     colors: {
         ctn: '#ffffff',
         ctpf: '#f39c12',

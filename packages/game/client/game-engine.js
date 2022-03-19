@@ -78,9 +78,33 @@ class GameEngine extends Game
     {
         if(sc.hasOwn(this.uiScene, 'uiTarget')){
             this.uiScene.uiTarget.getChildByID('box-target').style.display = 'block';
-            this.uiScene.uiTarget.getChildByID('target-container').innerHTML = targetName;
+            this.uiScene.uiTarget.getChildByID('target-container').innerHTML = this.targetDisplay(targetName, target);
         }
         this.eventsManager.emit('reldens.gameEngineShowTarget', this, target, previousTarget);
+    }
+
+    targetDisplay(targetName, target)
+    {
+        // @TODO - BETA - Refactor.
+        let gameManager = this.uiScene.gameManager;
+        let showPlayedTime = gameManager.config.get('client/players/playedTime/show');
+        if(0 === showPlayedTime || GameConst.TYPE_PLAYER !== target.type){
+            return targetName;
+        }
+        let currentPlayer = gameManager.getCurrentPlayer();
+        let timeText = '';
+        let label = gameManager.config.get('client/players/playedTime/label');
+        if(0 < showPlayedTime && currentPlayer.playerId === target.id){
+            let element = gameManager.gameDom.createElement('p');
+            element.innerHTML = label+(currentPlayer.playedTime / 60 / 60).toFixed(1)+'hs';
+            timeText = element.outerHTML;
+        }
+        if(2 === showPlayedTime && sc.hasOwn(currentPlayer.players, target.id)){
+            let element = gameManager.gameDom.createElement('p');
+            element.innerHTML = label+(currentPlayer.players[target.id].playedTime / 60 / 60).toFixed(1)+'hs';
+            timeText = element.outerHTML;
+        }
+        return targetName+timeText;
     }
 
     clearTarget()

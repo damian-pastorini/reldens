@@ -237,7 +237,7 @@ class ChatUi
             message: message[ChatConst.CHAT_MESSAGE]
         });
         readPanel.innerHTML += output;
-        if(message[ChatConst.CHAT_FROM]){
+        if(message[ChatConst.CHAT_FROM] && this.isValidMessageType(message.t)){
             let playerSprite = this.fetchPlayerByName(message[ChatConst.CHAT_FROM]);
             if(playerSprite){
                 this.showOverheadChat(playerSprite, message[ChatConst.CHAT_MESSAGE]);
@@ -248,6 +248,13 @@ class ChatUi
         } else {
             this.showNotificationBalloon();
         }
+    }
+
+    isValidMessageType(messageType)
+    {
+        return ChatConst.CHAT_TYPE_SYSTEM !== messageType
+            && ChatConst.CHAT_TYPE_SYSTEM_ERROR !== messageType
+            && ChatConst.CHAT_TYPE_SYSTEM_BATTLE !== messageType;
     }
 
     fetchPlayerByName(playerName)
