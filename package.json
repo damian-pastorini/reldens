@@ -37,7 +37,7 @@
         "@adminjs/design-system": "2.1.2",
         "@adminjs/express": "4.1.0",
         "@adminjs/upload": "2.0.2",
-        "@babel/core": "^7.17.7",
+        "@babel/core": "^7.17.8",
         "@colyseus/monitor": "^0.12.3",
         "@colyseus/schema": "^0.5.41",
         "@reldens/items-system": "^0.11.0",
@@ -56,7 +56,7 @@
         "express-basic-auth": "^1.2.1",
         "express-formidable": "^1.2.0",
         "express-session": "^1.17.2",
-        "firebase": "9.6.8",
+        "firebase": "9.6.9",
         "firebaseui": "6.0.1",
         "mime-types": "^2.1.35",
         "mustache": "^4.2.0",
@@ -71,12 +71,12 @@
     },
     "devDependencies": {
         "babel-eslint": "^10.1.0",
-        "eslint": "^8.9.0",
+        "eslint": "^8.11.0",
         "eslint-config-standard": "^17.0.0-1",
         "eslint-plugin-import": "^2.25.4",
         "eslint-plugin-node": "^11.1.0",
         "eslint-plugin-promise": "^6.0.0",
         "eslint-plugin-standard": "^5.0.0",
-        "sass": "^1.49.7"
+        "sass": "^1.49.9"
     }
 }
