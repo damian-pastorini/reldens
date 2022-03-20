@@ -1,24 +1,24 @@
 /**
  *
- * Reldens - Rooms Client Package.
+ * Reldens - Rooms Client Plugin.
  *
  */
 
-const { PackInterface } = require('../../features/pack-interface');
+const { PluginInterface } = require('../../features/plugin-interface');
 const { Logger, sc } = require('@reldens/utils');
 
-class RoomsPack extends PackInterface
+class RoomsPlugin extends PluginInterface
 {
 
-    setupPack(props)
+    setup(props)
     {
         this.gameManager = sc.get(props, 'gameManager', false);
         if(!this.gameManager){
-            Logger.error('Game Manager undefined in InventoryPack.');
+            Logger.error('Game Manager undefined in InventoryPlugin.');
         }
         this.events = sc.get(props, 'events', false);
         if(!this.events){
-            Logger.error('EventsManager undefined in InventoryPack.');
+            Logger.error('EventsManager undefined in InventoryPlugin.');
         }
         this.events.on('reldens.beforeCreateEngine', (initialGameData, gameManager) => {
             let playersConfig = initialGameData.gameConfig.client.players;
@@ -97,4 +97,4 @@ class RoomsPack extends PackInterface
     }
 }
 
-module.exports.RoomsPack = RoomsPack;
+module.exports.RoomsPlugin = RoomsPlugin;

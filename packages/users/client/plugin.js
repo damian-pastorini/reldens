@@ -1,27 +1,27 @@
 /**
  *
- * Reldens - Users Client Package.
+ * Reldens - Users Client Plugin.
  *
  */
 
 const { LifebarUi } = require('./lifebar-ui');
 const { PlayerStatsUi } = require('./player-stats-ui');
 const { GameConst } = require('../../game/constants');
-const { PackInterface } = require('../../features/pack-interface');
+const { PluginInterface } = require('../../features/plugin-interface');
 const { Logger, sc } = require('@reldens/utils');
 
-class UsersPack extends PackInterface
+class UsersPlugin extends PluginInterface
 {
 
-    setupPack(props)
+    setup(props)
     {
         this.gameManager = sc.get(props, 'gameManager', false);
         if(!this.gameManager){
-            Logger.error('Game Manager undefined in InventoryPack.');
+            Logger.error('Game Manager undefined in InventoryPlugin.');
         }
         this.events = sc.get(props, 'events', false);
         if(!this.events){
-            Logger.error('EventsManager undefined in InventoryPack.');
+            Logger.error('EventsManager undefined in InventoryPlugin.');
         }
         this.initialGameData = {};
         this.events.on('reldens.beforeCreateEngine', (initialGameData, gameManager) => {
@@ -29,11 +29,11 @@ class UsersPack extends PackInterface
             this.onBeforeCreateEngine(initialGameData, gameManager);
             if(!this.lifeBarUi){
                 this.lifeBarUi = new LifebarUi({events: this.events});
-                this.lifeBarUi.setup(gameManager);
+                this.lifeBarUi.createLifeBarUi(gameManager);
             }
         });
         this.playerStatsUi = new PlayerStatsUi({events: this.events});
-        this.playerStatsUi.setup();
+        this.playerStatsUi.createPlayerStatsUi();
     }
 
     onBeforeCreateEngine(initialGameData, gameManager)
@@ -139,4 +139,4 @@ class UsersPack extends PackInterface
 
 }
 
-module.exports.UsersPack = UsersPack;
+module.exports.UsersPlugin = UsersPlugin;

@@ -1,6 +1,6 @@
 /**
  *
- * Reldens - Inventory Client Package
+ * Reldens - Inventory Client Plugin
  *
  */
 
@@ -8,38 +8,43 @@ const { ItemsEvents, ItemsConst } = require('@reldens/items-system');
 const { InventoryUi } = require('./inventory-ui');
 const { InventoryReceiver } = require('./inventory-receiver');
 const { InventoryConst } = require('../constants');
-const { PackInterface } = require('../../features/pack-interface');
+const { PluginInterface } = require('../../features/plugin-interface');
 const { Logger, sc } = require('@reldens/utils');
 
-class InventoryPack extends PackInterface
+class InventoryPlugin extends PluginInterface
 {
 
-    setupPack(props)
+    setup(props)
     {
         this.gameManager = sc.get(props, 'gameManager', false);
         if(!this.gameManager){
-            Logger.error('Game Manager undefined in InventoryPack.');
+            Logger.error('Game Manager undefined in InventoryPlugin.');
         }
         this.events = sc.get(props, 'events', false);
         if(!this.events){
-            Logger.error('EventsManager undefined in InventoryPack.');
+            Logger.error('EventsManager undefined in InventoryPlugin.');
         }
         // eslint-disable-next-line no-unused-vars
         this.events.on('reldens.playersOnAdd', (player, key, previousScene, roomEvents) => {
             this.onPlayerAdd(key, roomEvents, player);
         });
         this.events.on('reldens.preloadUiScene', (preloadScene) => {
-            // @TODO - BETA - replace by loader replacing snake name file name by camel case for the template key.
-            preloadScene.load.html('inventory', 'assets/features/inventory/templates/ui-inventory.html');
-            preloadScene.load.html('equipment', 'assets/features/inventory/templates/ui-equipment.html');
-            preloadScene.load.html('inventoryItem', 'assets/features/inventory/templates/item.html');
-            preloadScene.load.html('inventoryItemUse', 'assets/features/inventory/templates/usable.html');
-            preloadScene.load.html('inventoryItemEquip', 'assets/features/inventory/templates/equip.html');
-            preloadScene.load.html('inventoryGroup', 'assets/features/inventory/templates/group.html');
+            this.preloadTemplates(preloadScene);
         });
         this.events.on('reldens.createUiScene', (preloadScene) => {
             return this.onPreloadUiScene(preloadScene);
         });
+    }
+
+    preloadTemplates(preloadScene)
+    {
+        // @TODO - BETA - replace by loader replacing snake name file name by camel case for the template key.
+        preloadScene.load.html('inventory', 'assets/features/inventory/templates/ui-inventory.html');
+        preloadScene.load.html('equipment', 'assets/features/inventory/templates/ui-equipment.html');
+        preloadScene.load.html('inventoryItem', 'assets/features/inventory/templates/item.html');
+        preloadScene.load.html('inventoryItemUse', 'assets/features/inventory/templates/usable.html');
+        preloadScene.load.html('inventoryItemEquip', 'assets/features/inventory/templates/equip.html');
+        preloadScene.load.html('inventoryGroup', 'assets/features/inventory/templates/group.html');
     }
 
     onPreloadUiScene(preloadScene)
@@ -76,30 +81,35 @@ class InventoryPack extends PackInterface
 
     onPlayerAdd(key, roomEvents, player)
     {
-        if(key === roomEvents.room.sessionId){
-            if(!roomEvents.gameManager.inventory){
-                // create inventory instance only once:
-                let receiverProps = {
-                    owner: player,
-                    ownerIdProperty: 'sessionId',
-                    gameManager: roomEvents.gameManager
-                };
-                let inventoryClasses = roomEvents.gameManager.config.customClasses.inventory.items;
-                if(inventoryClasses){
-                    receiverProps.itemClasses = inventoryClasses;
-                }
-                let groupClasses = roomEvents.gameManager.config.customClasses.inventory.groups;
-                if(groupClasses){
-                    receiverProps.groupClasses = groupClasses;
-                }
-                // create inventory instance:
-                roomEvents.gameManager.inventory = new InventoryReceiver(receiverProps);
-            }
-            // listen to room messages:
-            roomEvents.room.onMessage((message) => {
-                roomEvents.gameManager.inventory.processMessage(message);
-            });
+        if(key !== roomEvents.room.sessionId){
+            return false;
         }
+        if(!roomEvents.gameManager.inventory){
+            this.createInventoryInstance(player, roomEvents);
+        }
+        // listen to room messages:
+        roomEvents.room.onMessage((message) => {
+            roomEvents.gameManager.inventory.processMessage(message);
+        });
+    }
+
+    createInventoryInstance(player, roomEvents)
+    {
+        let receiverProps = {
+            owner: player,
+            ownerIdProperty: 'sessionId',
+            gameManager: roomEvents.gameManager
+        };
+        let inventoryClasses = roomEvents.gameManager.config.customClasses.inventory.items;
+        if (inventoryClasses) {
+            receiverProps.itemClasses = inventoryClasses;
+        }
+        let groupClasses = roomEvents.gameManager.config.customClasses.inventory.groups;
+        if (groupClasses) {
+            receiverProps.groupClasses = groupClasses;
+        }
+        // create inventory instance:
+        roomEvents.gameManager.inventory = new InventoryReceiver(receiverProps);
     }
 
     listenInventoryEvents(uiScene, inventoryPanel, equipmentPanel)
@@ -327,4 +337,4 @@ class InventoryPack extends PackInterface
 
 }
 
-module.exports.InventoryPack = InventoryPack;
+module.exports.InventoryPlugin = InventoryPlugin;

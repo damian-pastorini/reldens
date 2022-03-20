@@ -1,6 +1,6 @@
 /**
  *
- * Reldens - Chat Server Package
+ * Reldens - Chat Server Plugin.
  *
  */
 
@@ -8,22 +8,22 @@ const { RoomChat } = require('./room-chat');
 const { ChatMessageActions } = require('./message-actions');
 const { ChatManager } = require('./manager');
 const { ChatConst } = require('../constants');
-const { PackInterface } = require('../../features/pack-interface');
+const { PluginInterface } = require('../../features/plugin-interface');
 const { SkillsEvents } = require('@reldens/skills');
 const { Logger, sc } = require('@reldens/utils');
 
-class ChatPack extends PackInterface
+class ChatPlugin extends PluginInterface
 {
 
-    setupPack(props)
+    setup(props)
     {
         this.events = sc.get(props, 'events', false);
         if(!this.events){
-            Logger.error('EventsManager undefined in ChatPack.');
+            Logger.error('EventsManager undefined in ChatPlugin.');
         }
         this.dataServer = sc.get(props, 'dataServer', false);
         if(!this.dataServer){
-            Logger.error('DataServer undefined in ChatPack.');
+            Logger.error('DataServer undefined in ChatPlugin.');
         }
         this.chatManager = new ChatManager({dataServer: this.dataServer});
         // rooms is the list of the current feature rooms names that later will be sent to the client and used to join.
@@ -71,4 +71,4 @@ class ChatPack extends PackInterface
 
 }
 
-module.exports.ChatPack = ChatPack;
+module.exports.ChatPlugin = ChatPlugin;

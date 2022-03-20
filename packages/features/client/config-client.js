@@ -2,26 +2,26 @@
  *
  * Reldens - Client Core Features
  *
- * All the core features packages will be available here.
- * Later we can control if the feature is enable/disable using the configuration in the storage.
+ * All the core features plugins will be available here.
+ * Later we can control if the feature is enabled/disabled using the configuration in the storage.
  * Core features will be available as part of the current Reldens version.
  *
  */
 
-const { ChatPack } = require('../../chat/client/pack');
-const { ObjectsPack } = require('../../objects/client/pack');
-const { InventoryPack } = require('../../inventory/client/pack');
-const { ActionsPack } = require('../../actions/client/pack');
-const { UsersPack } = require('../../users/client/pack');
-const { AudioPack } = require('../../audio/client/pack');
-const { RoomsPack } = require('../../rooms/client/pack');
+const { ChatPlugin } = require('../../chat/client/plugin');
+const { ObjectsPlugin } = require('../../objects/client/plugin');
+const { InventoryPlugin } = require('../../inventory/client/plugin');
+const { ActionsPlugin } = require('../../actions/client/plugin');
+const { UsersPlugin } = require('../../users/client/plugin');
+const { AudioPlugin } = require('../../audio/client/plugin');
+const { RoomsPlugin } = require('../../rooms/client/plugin');
 
 module.exports.ClientCoreFeatures = {
-    chat: ChatPack,
-    objects: ObjectsPack,
-    inventory: InventoryPack,
-    actions: ActionsPack,
-    users: UsersPack,
-    audio: AudioPack,
-    rooms: RoomsPack
+    chat: ChatPlugin,
+    objects: ObjectsPlugin,
+    inventory: InventoryPlugin,
+    actions: ActionsPlugin,
+    users: UsersPlugin,
+    audio: AudioPlugin,
+    rooms: RoomsPlugin
 };

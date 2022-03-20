@@ -1,24 +1,24 @@
 /**
  *
- * Reldens - Inventory Server Package
+ * Reldens - Inventory Server Plugin
  *
  */
 
-const { PackInterface } = require('../../features/pack-interface');
+const { PluginInterface } = require('../../features/plugin-interface');
 const { InventoryMessageActions } = require('./message-actions');
 const { PlayerSubscriber } = require('./subscribers/player-subscriber');
 const { ServerSubscriber } = require('./subscribers/server-subscriber');
 const { ModelsManager } = require('@reldens/items-system/lib/server/storage/models-manager');
 const { Logger, sc } = require('@reldens/utils');
 
-class InventoryPack extends PackInterface
+class InventoryPlugin extends PluginInterface
 {
 
-    setupPack(props)
+    setup(props)
     {
         this.events = sc.get(props, 'events', false);
         if(!this.events){
-            Logger.error('EventsManager undefined in InventoryPack.');
+            Logger.error('EventsManager undefined in InventoryPlugin.');
         }
         this.events.on('reldens.serverBeforeListen', async (event) => {
             this.inventoryModelsManager = new ModelsManager({dataServer: event.serverManager.dataServer});
@@ -47,4 +47,4 @@ class InventoryPack extends PackInterface
 
 }
 
-module.exports.InventoryPack = InventoryPack;
+module.exports.InventoryPlugin = InventoryPlugin;

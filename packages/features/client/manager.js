@@ -33,8 +33,8 @@ class FeaturesManager
             let featureCode = featuresCodeList[i];
             if(sc.hasOwn(ClientCoreFeatures, featureCode)){
                 this.featuresList[featureCode] = new ClientCoreFeatures[featureCode]();
-                if(typeof this.featuresList[featureCode].setupPack === 'function'){
-                    this.featuresList[featureCode].setupPack({gameManager: this.gameManager, events: this.events});
+                if('function' === typeof this.featuresList[featureCode].setup){
+                    this.featuresList[featureCode].setup({gameManager: this.gameManager, events: this.events});
                 }
                 await this.events.emit('reldens.loadFeature_'+featureCode,
                     this.featuresList[featureCode],

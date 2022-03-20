@@ -18,7 +18,7 @@ class LifebarUi
         this.events = props.events;
     }
 
-    setup(gameManager)
+    createLifeBarUi(gameManager)
     {
         this.barConfig = gameManager.config.get('client/ui/lifeBar');
         if(!this.barConfig.enabled){
@@ -30,6 +30,12 @@ class LifebarUi
         this.barProperty = this.gameManager.config.get('client/actions/skills/affectedProperty');
         this.playerSize = this.gameManager.config.get('client/players/size');
         this.lifeBars = {};
+        this.listenEvents();
+        return this;
+    }
+
+    listenEvents()
+    {
         this.events.on('reldens.playerStatsUpdateAfter', (message, roomEvents) => {
             this.onPlayerStatsUpdateAfter(message, roomEvents);
         });
@@ -43,7 +49,7 @@ class LifebarUi
         });
         // eslint-disable-next-line no-unused-vars
         this.events.on('reldens.updateGameSizeBefore', (gameEngine, newWidth, newHeight) => {
-            if(!this.barConfig.fixedPosition){
+            if (!this.barConfig.fixedPosition) {
                 return false;
             }
             this.setFixedPosition(newWidth, newHeight);
@@ -72,7 +78,6 @@ class LifebarUi
         this.events.on('reldens.gameEngineClearTarget', (gameEngine, previousTarget) => {
             this.clearPreviousBar(previousTarget);
         });
-        return this;
     }
 
     clearPreviousBar(previousTarget)

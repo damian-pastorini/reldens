@@ -7,7 +7,7 @@
 class SettingsUi
 {
 
-    setup(settingsConfig, scenePreloader)
+    createSettings(settingsConfig, scenePreloader)
     {
         scenePreloader.elementsUi['settings'] = scenePreloader.add.dom(settingsConfig.uiX, settingsConfig.uiY)
             .createFromCache('settings');
@@ -16,16 +16,18 @@ class SettingsUi
         let uiSettingsBox = scenePreloader.gameManager.gameDom.getElement('#settings-ui');
         let closeButton = scenePreloader.gameManager.gameDom.getElement('#settings-close');
         let openButton = scenePreloader.elementsUi['settings'].getChildByProperty('id', 'settings-open');
-        if(closeButton && openButton){
-            closeButton.addEventListener('click', () => {
-                uiSettingsBox.style.display = 'none';
+        closeButton?.addEventListener('click', () => {
+            uiSettingsBox.style.display = 'none';
+            if(openButton){
                 openButton.style.display = 'block';
-            });
-            openButton.addEventListener('click', () => {
-                uiSettingsBox.style.display = 'block';
+            }
+        });
+        openButton?.addEventListener('click', () => {
+            uiSettingsBox.style.display = 'block';
+            if(openButton){
                 openButton.style.display = 'none';
-            });
-        }
+            }
+        });
     }
 
 }

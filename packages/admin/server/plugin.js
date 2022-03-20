@@ -1,22 +1,22 @@
 /**
  *
- * Reldens - AdminPack
+ * Reldens - AdminPlugin
  *
  */
 
 const { AdminManager } = require('./admin-manager');
-const { PackInterface } = require('../../features/pack-interface');
+const { PluginInterface } = require('../../features/plugin-interface');
 const { AdminEntitiesGenerator } = require('./admin-entities-generator');
 const { Logger, sc } = require('@reldens/utils');
 
-class AdminPack extends PackInterface
+class AdminPlugin extends PluginInterface
 {
 
-    setupPack(props)
+    setup(props)
     {
         this.events = sc.get(props, 'events', false);
         if(!this.events){
-            Logger.error('EventsManager undefined in AdminPack.');
+            Logger.error('EventsManager undefined in AdminPlugin.');
         }
         this.events.on('reldens.serverBeforeListen', async (event) => {
             let serverManager = event.serverManager;
@@ -57,4 +57,4 @@ class AdminPack extends PackInterface
 
 }
 
-module.exports.AdminPack = AdminPack;
+module.exports.AdminPlugin = AdminPlugin;

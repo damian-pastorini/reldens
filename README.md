@@ -1,5 +1,5 @@
 [![Reldens - GitHub - Release](https://www.dwdeveloper.com/media/reldens/reldens-mmorpg-platform.png)](https://github.com/damian-pastorini/reldens)
-[![Reldens - GitHub - Release](https://img.shields.io/github/v/release/damian-pastorini/reldens?color=red&style=for-the-badge)](https://github.com/damian-pastorini/reldens)
+[![Reldens - NPM - Release](https://img.shields.io/github/v/release/damian-pastorini/reldens?color=red&style=for-the-badge)](https://www.npmjs.com/package/reldens)
 [![Reldens - GitHub - Stars](https://img.shields.io/github/stars/damian-pastorini/reldens?color=green&style=for-the-badge)](https://github.com/damian-pastorini/reldens)
 [![Reldens - Discord](https://img.shields.io/discord/599108949312143370?style=for-the-badge)](https://discord.gg/HuJMxUY)
 [![Reldens - Licence - MIT](https://img.shields.io/github/license/damian-pastorini/reldens?color=blue&style=for-the-badge)](https://github.com/damian-pastorini/reldens)
@@ -12,12 +12,11 @@ The project main goal is to create a good MMORPG base for anyone to use. A tool 
 
 In a later phase the next step is to make it available for non-developers as well, so normal people could use an interface to create and run the game online.
 
-## Why I've started this project?
-I've always loved the idea of create my own games and I've started to do it long time ago with the old fashion RPG Maker 2000 (yes, as you can tell, I LOVE RPG's and specially the 2D old ones), but in these days I find a much more rich experience in multiplayer games so I've decided to dig into.
+## Main features
 
-When I've started to see all the required stuff that I'd have to learn and all the challenges it has, like avoid been hacked or LAG (stuff you don't care on a single player offline game), I've decided to create a tool using stardard code lenguages that work cross-device to make the project developer-friendly, easy to upgrade, and that can grow along with the tecnology advances.
-
-I know it is a huge project but I'll put all I have to make it work, so needless to say that any kind of support will be really appreciated.
+| The entire game interface                                                                                  |The game-server administration panel to manage all the game contents|
+|------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------|
+|![](https://s3.us-east-1.amazonaws.com/dwd-files/assets/features/_650xAUTO_crop_center-center_none/chat.png)|![](https://s3.us-east-1.amazonaws.com/dwd-files/assets/contents/reldens-admin-audio-markers.PNG)|
 
 
 ## Built with

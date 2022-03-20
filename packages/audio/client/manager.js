@@ -14,7 +14,7 @@ class AudioManager
     {
         this.events = sc.get(props, 'events', false);
         if(!this.events){
-            Logger.error('EventsManager undefined in ChatPack.');
+            Logger.error('EventsManager undefined in ChatPlugin.');
         }
         this.globalAudios = sc.get(props, 'globalAudios', {});
         this.roomsAudios = sc.get(props, 'roomsAudios', {});

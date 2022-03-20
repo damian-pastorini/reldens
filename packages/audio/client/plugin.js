@@ -1,6 +1,6 @@
 /**
  *
- * Reldens - Audio Client Package.
+ * Reldens - Audio Client Plugin.
  *
  */
 
@@ -8,17 +8,17 @@ const { AudioManager } = require('./manager');
 const { SceneAudioPlayer } = require('./scene-audio-player');
 const { MessagesListener } = require('./messages-listener');
 const { AudioUi } = require('./audio-ui');
-const { PackInterface } = require('../../features/pack-interface');
+const { PluginInterface } = require('../../features/plugin-interface');
 const { Logger, sc } = require('@reldens/utils');
 
-class AudioPack extends PackInterface
+class AudioPlugin extends PluginInterface
 {
 
-    setupPack(props)
+    setup(props)
     {
         this.events = sc.get(props, 'events', false);
         if(!this.events){
-            Logger.error('EventsManager undefined in AudioPack.');
+            Logger.error('EventsManager undefined in AudioPlugin.');
         }
         this.messagesListener = new MessagesListener();
         this.sceneAudioPlayer = SceneAudioPlayer;
@@ -68,4 +68,4 @@ class AudioPack extends PackInterface
 
 }
 
-module.exports.AudioPack = AudioPack;
+module.exports.AudioPlugin = AudioPlugin;

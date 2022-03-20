@@ -1,15 +1,15 @@
 /**
  *
- * Reldens - Audio Server Package
+ * Reldens - Audio Server Plugin
  *
  */
 
-const { PackInterface } = require('../../features/pack-interface');
+const { PluginInterface } = require('../../features/plugin-interface');
 const { AudioManager } = require('./manager');
 const { AudioConst } = require('../constants');
 const { Logger, sc } = require('@reldens/utils');
 
-class AudioPack extends PackInterface
+class AudioPlugin extends PluginInterface
 {
 
     constructor()
@@ -18,15 +18,15 @@ class AudioPack extends PackInterface
         this.audioManager = false;
     }
 
-    setupPack(props)
+    setup(props)
     {
         this.events = sc.get(props, 'events', false);
         if(!this.events){
-            Logger.error('EventsManager undefined in AudioPack.');
+            Logger.error('EventsManager undefined in AudioPlugin.');
         }
         this.dataServer = sc.get(props, 'dataServer', false);
         if(!this.dataServer){
-            Logger.error('DataServer undefined in AudioPack.');
+            Logger.error('DataServer undefined in AudioPlugin.');
         }
         this.events.on('reldens.serverBeforeDefineRooms', async (props) => {
             this.audioManager = new AudioManager({
@@ -71,4 +71,4 @@ class AudioPack extends PackInterface
 
 }
 
-module.exports.AudioPack = AudioPack;
+module.exports.AudioPlugin = AudioPlugin;

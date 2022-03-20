@@ -178,19 +178,19 @@ class ScenePreloader extends Scene
             let instConfig = this.getUiConfig('instructions');
             if(instConfig.enabled){
                 this.instructionsUi = new InstructionsUi();
-                this.instructionsUi.setup(instConfig, this);
+                this.instructionsUi.createInstructions(instConfig, this);
             }
             // create ui minimap:
             let minimapConfig = this.getUiConfig('minimap');
             if(minimapConfig.enabled){
                 this.minimapUi = new MinimapUi();
-                this.minimapUi.setup(minimapConfig, this);
+                this.minimapUi.createMinimap(minimapConfig, this);
             }
             // create ui settings:
             let settingsConfig = this.getUiConfig('settings');
             if(settingsConfig.enabled){
                 this.settingsUi = new SettingsUi();
-                this.settingsUi.setup(settingsConfig, this);
+                this.settingsUi.createSettings(settingsConfig, this);
             }
             // end event:
             this.eventsManager.emitSync('reldens.createUiScene', this);

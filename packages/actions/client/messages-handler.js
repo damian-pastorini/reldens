@@ -15,11 +15,11 @@ class MessagesHandler
     {
         this.gameManager = sc.get(props, 'gameManager', false);
         if(!this.gameManager){
-            Logger.error('Game Manager undefined in ActionsPack MessagesHandler.');
+            Logger.error('Game Manager undefined in ActionsPlugin MessagesHandler.');
         }
         this.events = sc.get(props, 'events', false);
         if(!this.events){
-            Logger.error('EventsManager undefined in ActionsPack MessagesHandler.');
+            Logger.error('EventsManager undefined in ActionsPlugin MessagesHandler.');
         }
         this.gameDom = this.gameManager.gameDom;
     }

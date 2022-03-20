@@ -1,8 +1,8 @@
 /**
  *
- * Reldens - Actions Server Package
+ * Reldens - Actions Server Plugin
  *
- * This pack will append to the config processor all the information required by both the server and the client.
+ * This plugin will append to the config processor all the information required by both the server and the client.
  * This will also create an instance of each skill to be called and used on the players later.
  *
  */
@@ -13,19 +13,19 @@ const { ModelsManager } = require('@reldens/skills/lib/server/storage/models-man
 const { Logger, sc } = require('@reldens/utils');
 const { ActionsMessageActions } = require('./message-actions');
 const { ClientWrapper } = require('../../game/server/client-wrapper');
-const { PackInterface } = require('../../features/pack-interface');
+const { PluginInterface } = require('../../features/plugin-interface');
 const { Pvp } = require('./pvp');
 const { TypeAttack, TypeEffect, TypePhysicalAttack, TypePhysicalEffect } = require('./skills/types');
 const { ActionsConst } = require('../constants');
 
-class ActionsPack extends PackInterface
+class ActionsPlugin extends PluginInterface
 {
 
-    setupPack(props)
+    setup(props)
     {
         this.events = sc.get(props, 'events', false);
         if(!this.events){
-            Logger.error('EventsManager undefined in ActionsPack.');
+            Logger.error('EventsManager undefined in ActionsPlugin.');
         }
         this.dataServer = sc.get(props, 'dataServer', false);
         this.skillsModelsManager = new ModelsManager({events: this.events, dataServer: this.dataServer});
@@ -316,4 +316,4 @@ class ActionsPack extends PackInterface
 
 }
 
-module.exports.ActionsPack = ActionsPack;
+module.exports.ActionsPlugin = ActionsPlugin;

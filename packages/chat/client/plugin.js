@@ -1,25 +1,25 @@
 /**
  *
- * Reldens - Chat Client Package.
+ * Reldens - Chat Client Plugin.
  *
  */
 
 const { ChatUi } = require('./chat-ui');
 const { MessagesListener } = require('./messages-listener');
-const { PackInterface } = require('../../features/pack-interface');
+const { PluginInterface } = require('../../features/plugin-interface');
 const { ChatConst } = require('../constants');
 const { Logger, sc } = require('@reldens/utils');
 
-class ChatPack extends PackInterface
+class ChatPlugin extends PluginInterface
 {
 
-    setupPack(props)
+    setup(props)
     {
         this.events = sc.get(props, 'events', false);
         this.messagesQueu = [];
         this.uiManager = false;
         if(!this.events){
-            Logger.error('EventsManager undefined in ChatPack.');
+            Logger.error('EventsManager undefined in ChatPlugin.');
         }
         this.joinRooms = [ChatConst.CHAT_GLOBAL];
         // chat messages are global for all rooms, so we use the generic event for every joined room:
@@ -40,4 +40,4 @@ class ChatPack extends PackInterface
 
 }
 
-module.exports.ChatPack = ChatPack;
+module.exports.ChatPlugin = ChatPlugin;

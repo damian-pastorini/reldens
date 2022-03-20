@@ -45,8 +45,8 @@ class FeaturesManager
                 let featurePackage = this.availableFeatures[featureEntity.code];
                 // set package on entity:
                 featureEntity.package = new featurePackage();
-                if(typeof featureEntity.package.setupPack === 'function'){
-                    await featureEntity.package.setupPack({events: this.events, dataServer: this.dataServer});
+                if('function' === typeof featureEntity.package.setup){
+                    await featureEntity.package.setup({events: this.events, dataServer: this.dataServer});
                 }
                 // for last add the feature entity to the list:
                 this.featuresList[featureEntity.code] = featureEntity;

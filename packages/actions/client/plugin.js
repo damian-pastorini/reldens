@@ -1,28 +1,28 @@
 /**
  *
- * Reldens - Actions Client Package.
+ * Reldens - Actions Client Plugin.
  *
  */
 
 const { SkillsUi } = require('./skills-ui');
-const { PackInterface } = require('../../features/pack-interface');
+const { PluginInterface } = require('../../features/plugin-interface');
 const { PlayerSelector } = require('./player-selector');
 const { PreloaderHandler } = require('./preloader-handler');
 const { MessagesHandler } = require('./messages-handler');
 const { Logger, sc } = require('@reldens/utils');
 
-class ActionsPack extends PackInterface
+class ActionsPlugin extends PluginInterface
 {
 
-    setupPack(props)
+    setup(props)
     {
         this.gameManager = sc.get(props, 'gameManager', false);
         if(!this.gameManager){
-            Logger.error('Game Manager undefined in ActionsPack.');
+            Logger.error('Game Manager undefined in ActionsPlugin.');
         }
         this.events = sc.get(props, 'events', false);
         if(!this.events){
-            Logger.error('EventsManager undefined in ActionsPack.');
+            Logger.error('EventsManager undefined in ActionsPlugin.');
         }
         this.playerSelector = new PlayerSelector(props);
         this.preloaderHandler = new PreloaderHandler(props);
@@ -66,4 +66,4 @@ class ActionsPack extends PackInterface
 
 }
 
-module.exports.ActionsPack = ActionsPack;
+module.exports.ActionsPlugin = ActionsPlugin;

@@ -1,20 +1,20 @@
 /**
  *
- * Reldens - Rooms Server Package
+ * Reldens - Rooms Server Plugin.
  *
  */
 
-const { PackInterface } = require('../../features/pack-interface');
+const { PluginInterface } = require('../../features/plugin-interface');
 const { Logger, sc } = require('@reldens/utils');
 
-class RoomsPack extends PackInterface
+class RoomsPlugin extends PluginInterface
 {
 
-    setupPack(props)
+    setup(props)
     {
         this.events = sc.get(props, 'events', false);
         if(!this.events){
-            Logger.error('EventsManager undefined in RoomsPack.');
+            Logger.error('EventsManager undefined in RoomsPlugin.');
         }
         this.events.on('reldens.beforeSuperInitialGameData', async (superInitialGameData, roomGame) => {
             await this.onBeforeSuperInitialGameData(superInitialGameData, roomGame);
@@ -52,4 +52,4 @@ class RoomsPack extends PackInterface
 
 }
 
-module.exports.RoomsPack = RoomsPack;
+module.exports.RoomsPlugin = RoomsPlugin;

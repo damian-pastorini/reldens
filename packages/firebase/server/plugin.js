@@ -1,20 +1,20 @@
 /**
  *
- * Reldens - Firebase Server Package
+ * Reldens - Firebase Server Plugin
  *
  */
 
-const { PackInterface } = require('../../features/pack-interface');
+const { PluginInterface } = require('../../features/plugin-interface');
 const { Logger, sc } = require('@reldens/utils');
 
-class FirebasePack extends PackInterface
+class FirebasePlugin extends PluginInterface
 {
 
-    setupPack(props)
+    setup(props)
     {
         this.events = sc.get(props, 'events', false);
         if(!this.events){
-            Logger.error('EventsManager undefined in FirebasePack.');
+            Logger.error('EventsManager undefined in FirebasePlugin.');
         }
         this.events.on('reldens.serverBeforeListen', (props) => {
             this.declareFirebaseConfigRequestHandler(props.serverManager.app);
@@ -52,4 +52,4 @@ class FirebasePack extends PackInterface
     }
 }
 
-module.exports.FirebasePack = FirebasePack;
+module.exports.FirebasePlugin = FirebasePlugin;

@@ -1,6 +1,6 @@
 /**
  *
- * Reldens - Objects Client Package.
+ * Reldens - Objects Client Plugin.
  *
  */
 
@@ -8,21 +8,21 @@ const { AnimationEngine } = require('../../objects/client/animation-engine');
 const { UserInterface } = require('../../game/client/user-interface');
 const { ObjectsConst } = require('../constants');
 const { ActionsConst } = require('../../actions/constants');
-const { PackInterface } = require('../../features/pack-interface');
+const { PluginInterface } = require('../../features/plugin-interface');
 const { Logger, sc } = require('@reldens/utils');
 
-class ObjectsPack extends PackInterface
+class ObjectsPlugin extends PluginInterface
 {
 
-    setupPack(props)
+    setup(props)
     {
         this.gameManager = sc.get(props, 'gameManager', false);
         if(!this.gameManager){
-            Logger.error('Game Manager undefined in InventoryPack.');
+            Logger.error('Game Manager undefined in InventoryPlugin.');
         }
         this.events = sc.get(props, 'events', false);
         if(!this.events){
-            Logger.error('EventsManager undefined in InventoryPack.');
+            Logger.error('EventsManager undefined in InventoryPlugin.');
         }
         // @NOTE: the prepareObjectsUi has to be created before the scenes, so we can use the scenes events before
         // the events were called.
@@ -169,7 +169,7 @@ class ObjectsPack extends PackInterface
                 gameManager,
                 id: animProps.id,
                 userInterface: roomEvents.objectsUi[animProps.id],
-                objectsPack: this
+                ObjectsPlugin: this
             });
         }
     }
@@ -205,4 +205,4 @@ class ObjectsPack extends PackInterface
 
 }
 
-module.exports.ObjectsPack = ObjectsPack;
+module.exports.ObjectsPlugin = ObjectsPlugin;

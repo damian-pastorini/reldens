@@ -1,28 +1,28 @@
 /**
  *
- * Reldens - Users Server Package
+ * Reldens - Users Server Plugin.
  *
  */
 
 const { InitialState } = require('../../users/server/initial-state');
 const { InitialUser } = require('../../users/server/initial-user');
-const { PackInterface } = require('../../features/pack-interface');
+const { PluginInterface } = require('../../features/plugin-interface');
 const { UsersConst } = require('../constants');
 const { ObjectsConst } = require('../../objects/constants');
 const { Logger, sc } = require('@reldens/utils');
 
-class UsersPack extends PackInterface
+class UsersPlugin extends PluginInterface
 {
 
-    setupPack(props)
+    setup(props)
     {
         this.events = sc.get(props, 'events', false);
         if(!this.events){
-            Logger.error('EventsManager undefined in UsersPack.');
+            Logger.error('EventsManager undefined in UsersPlugin.');
         }
         this.dataServer = sc.get(props, 'dataServer', false);
         if(!this.dataServer){
-            Logger.error('DataServer undefined in UsersPack.');
+            Logger.error('DataServer undefined in UsersPlugin.');
         }
         // @TODO - BETA - Move LifeBar to it's own package.
         this.lifeBarConfig = false;
@@ -208,4 +208,4 @@ class UsersPack extends PackInterface
 
 }
 
-module.exports.UsersPack = UsersPack;
+module.exports.UsersPlugin = UsersPlugin;

@@ -13,11 +13,11 @@ class PlayerSelector
     {
         this.gameManager = sc.get(props, 'gameManager', false);
         if(!this.gameManager){
-            Logger.error('Game Manager undefined in ActionsPack PlayerSelector.');
+            Logger.error('Game Manager undefined in ActionsPlugin PlayerSelector.');
         }
         this.events = sc.get(props, 'events', false);
         if(!this.events){
-            Logger.error('EventsManager undefined in ActionsPack PlayerSelector.');
+            Logger.error('EventsManager undefined in ActionsPlugin PlayerSelector.');
         }
         this.gameDom = this.gameManager.gameDom;
     }

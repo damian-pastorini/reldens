@@ -13,11 +13,11 @@ class PreloaderHandler
     {
         this.gameManager = sc.get(props, 'gameManager', false);
         if(!this.gameManager){
-            Logger.error('Game Manager undefined in ActionsPack PreloaderHandler.');
+            Logger.error('Game Manager undefined in ActionsPlugin PreloaderHandler.');
         }
         this.events = sc.get(props, 'events', false);
         if(!this.events){
-            Logger.error('EventsManager undefined in ActionsPack PreloaderHandler.');
+            Logger.error('EventsManager undefined in ActionsPlugin PreloaderHandler.');
         }
         this.gameDom = this.gameManager.gameDom;
         this.initialGameData = this.gameManager.initialGameData;
