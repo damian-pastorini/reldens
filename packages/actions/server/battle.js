@@ -76,33 +76,34 @@ class Battle
     async updateTargetClient(targetClient, targetSchema, attackerId, room)
     {
         let affectedProperty = room.config.get('client/actions/skills/affectedProperty');
-        if(targetSchema.stats[affectedProperty] === 0){
-            targetSchema.inState = GameConst.STATUS.DEATH;
-            let actionData = {
-                act: ActionsConst.BATTLE_ENDED,
-                x: targetSchema.state.x,
-                y: targetSchema.state.y,
-                t: targetSchema.sessionId,
-                k: this.lastAttackKey
-            };
-            room.broadcast(actionData);
-            await room.savePlayerState(targetSchema.sessionId);
-            room.send(targetClient, {act: GameConst.GAME_OVER});
-            await room.savePlayerStats(targetSchema, targetClient);
-            setTimeout(async () => {
-                targetSchema.inState = GameConst.STATUS.ACTIVE;
-                // player is dead! reinitialize the stats using it's base value:
-                targetSchema.stats[affectedProperty] = targetSchema.statsBase[affectedProperty];
-                await room.savePlayerStats(targetSchema, targetClient);
-                room.send(targetClient, {act: GameConst.REVIVED});
-            }, (room.config.get('server/players/gameOver/timeOut') || 1));
-            return false;
-        } else {
-            await room.savePlayerStats(targetSchema, targetClient);
-            return true;
-        }
+        return 0 === targetSchema.stats[affectedProperty]
+            ? await this.clientDeathUpdate(targetSchema, room, targetClient, affectedProperty)
+            : await room.savePlayerStats(targetSchema, targetClient);
     }
 
+    async clientDeathUpdate(targetSchema, room, targetClient, affectedProperty)
+    {
+        targetSchema.inState = GameConst.STATUS.DEATH;
+        let actionData = {
+            act: ActionsConst.BATTLE_ENDED,
+            x: targetSchema.state.x,
+            y: targetSchema.state.y,
+            t: targetSchema.sessionId,
+            k: this.lastAttackKey
+        };
+        room.broadcast(actionData);
+        await room.savePlayerState(targetSchema.sessionId);
+        room.send(targetClient, {act: GameConst.GAME_OVER});
+        await room.savePlayerStats(targetSchema, targetClient);
+        setTimeout(async () => {
+            targetSchema.inState = GameConst.STATUS.ACTIVE;
+            // player is dead! reinitialize the stats using its base value:
+            targetSchema.stats[affectedProperty] = targetSchema.statsBase[affectedProperty];
+            await room.savePlayerStats(targetSchema, targetClient);
+            room.send(targetClient, {act: GameConst.REVIVED});
+        }, (room.config.get('server/players/gameOver/timeOut') || 1));
+        return false;
+    }
 }
 
 module.exports.Battle = Battle;

@@ -10,6 +10,8 @@ const { PluginInterface } = require('../../features/plugin-interface');
 const { UsersConst } = require('../constants');
 const { ObjectsConst } = require('../../objects/constants');
 const { Logger, sc } = require('@reldens/utils');
+const { SkillsEvents } = require('@reldens/skills');
+const { ActionsConst } = require('../../actions/constants');
 
 class UsersPlugin extends PluginInterface
 {
@@ -60,33 +62,40 @@ class UsersPlugin extends PluginInterface
             await this.onSavePlayerStatsUpdateClient(client, target, roomScene);
         });
         this.events.on('reldens.runBattlePveAfter', async (event) => {
-            if(!this.lifeBarConfig.showEnemies && !this.lifeBarConfig.showOnClick){
-                return false;
-            }
-            let {target, roomScene} = event;
-            let targetLifePoints = target.stats[this.lifeProp];
-            if(!targetLifePoints){
-                return false;
-            }
-            let updateData = {
-                act: UsersConst.ACTION_LIFEBAR_UPDATE,
-                oT: 'o',
-                oK: target.broadcastKey,
-                newValue: targetLifePoints,
-                totalValue: target.initialStats[this.lifeProp]
-            };
-            roomScene.broadcast(updateData);
+            return this.sendLifeBarUpdate(event);
+        });
+        this.events.on('reldens.actionsPrepareEventsListeners', async (actionsPack, classPath) => {
+            // eslint-disable-next-line no-unused-vars
+            classPath.listenEvent(SkillsEvents.SKILL_ATTACK_APPLY_DAMAGE, (skill, target, damage, newValue) => {
+                let client = skill.owner.skillsServer.client.client;
+                this.broadcastObjectUpdate(client, target);
+            }, 'skillAttackApplyDamageLifebar', classPath.owner[classPath.ownerIdProperty]);
         });
         this.events.on('reldens.restoreObjectAfter', (event) => {
-            let updateData = {
-                act: UsersConst.ACTION_LIFEBAR_UPDATE,
-                oT: 'o',
-                oK: event.enemyObject.broadcastKey,
-                newValue: event.enemyObject.stats[this.lifeProp],
-                totalValue: event.enemyObject.stats[this.lifeProp]
-            };
-            event.room.broadcast(updateData);
+            this.broadcastObjectUpdate(event.room, event.enemyObject);
         });
+    }
+
+    broadcastObjectUpdate(room, enemyObject)
+    {
+        let data = {act: UsersConst.ACTION_LIFEBAR_UPDATE};
+        data[ActionsConst.DATA_OWNER_TYPE] = ActionsConst.DATA_TYPE_VALUE_OBJECT;
+        data[ActionsConst.DATA_OWNER_KEY] = enemyObject.broadcastKey;
+        data['newValue'] = enemyObject.stats[this.lifeProp];
+        data['totalValue'] = enemyObject.initialStats[this.lifeProp];
+        room.broadcast(data);
+    }
+
+    sendLifeBarUpdate(event)
+    {
+        if(!this.lifeBarConfig.showEnemies && !this.lifeBarConfig.showOnClick){
+            return false;
+        }
+        let {target, roomScene} = event;
+        if(!target.stats[this.lifeProp]){
+            return false;
+        }
+        this.broadcastObjectUpdate(roomScene, target)
     }
 
     async updatePlayersLifebar(roomScene, client, currentPlayer)
@@ -173,12 +182,13 @@ class UsersPlugin extends PluginInterface
         let loadedStats = await this.dataServer.getEntity(model).loadBy('player_id', playerId);
         let stats = {};
         let statsBase = {};
-        if(loadedStats){
-            for(let loadedStat of loadedStats){
-                let statData = this.stats[loadedStat.stat_id];
-                stats[statData.key] = loadedStat.value;
-                statsBase[statData.key] = loadedStat.base_value;
-            }
+        if(0 === loadedStats.length){
+            return {stats, statsBase};
+        }
+        for(let loadedStat of loadedStats){
+            let statData = this.stats[loadedStat.stat_id];
+            stats[statData.key] = loadedStat.value;
+            statsBase[statData.key] = loadedStat.base_value;
         }
         return {stats, statsBase};
     }

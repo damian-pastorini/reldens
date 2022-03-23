@@ -139,7 +139,7 @@ class ActionsPlugin extends PluginInterface
         let skillsClasses = configProcessor.get('server/customClasses/skills/skillsList');
         // defined in this same class on the reldens.serverReady listener:
         Object.assign(skillsClasses, configProcessor.skills.defaultSkills);
-        configProcessor.skills = await this.skillsModelsManager.prepareSkillsInstancesList(skillsClasses);
+        configProcessor.skills = await this.skillsModelsManager.generateSkillsDataFromModels(skillsClasses);
     }
 
     async loadGroupsFullList(configProcessor)
@@ -152,9 +152,9 @@ class ActionsPlugin extends PluginInterface
 
     async loadClassPathFullList(configProcessor)
     {
-        let classPathClasses = configProcessor.get('server/customClasses/skills/classPath');
-        configProcessor.skills.classPaths = await this.skillsModelsManager
-            .prepareClassPathInstancesList(classPathClasses);
+        configProcessor.skills.classPaths = await this.skillsModelsManager.generateClassPathInstances(
+            configProcessor.get('server/customClasses/skills/classPath')
+        );
     }
 
     appendActionsToPlayer(currentPlayer, room)

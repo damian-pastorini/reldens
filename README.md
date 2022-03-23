@@ -7,7 +7,6 @@
 
 # Reldens - MMORPG Platform
 
-## About the project
 The project main goal is to create a good MMORPG base for anyone to use. A tool that will give to developers the possibility of create a multiplayer game without the need of deal with all the difficulties to make it work in a secure and efficient way over any network.
 
 In a later phase the next step is to make it available for non-developers as well, so normal people could use an interface to create and run the game online.

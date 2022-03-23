@@ -32,7 +32,7 @@ class TypeAttack extends Attack
         }
         await super.runSkillLogic();
         if(sc.hasOwn(this.owner, 'player_id') && sc.hasOwn(this.target, 'objectBody') && this.currentBattle){
-            if(this.getAffectedPropertyValue(this.target) > 0){
+            if(0 < this.getAffectedPropertyValue(this.target)){
                 await this.currentBattle.startBattleWith(this.owner, this.room);
             }
         }

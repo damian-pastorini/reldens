@@ -8,6 +8,7 @@ const { UsersConst } = require('../constants');
 const { ActionsConst } = require('../../actions/constants');
 const { GameConst } = require('../../game/constants');
 const { ObjectsConst } = require('../../objects/constants');
+const { ObjectsHandler } = require('./objects-handler');
 const { sc } = require('@reldens/utils');
 
 class LifebarUi
@@ -20,6 +21,7 @@ class LifebarUi
 
     createLifeBarUi(gameManager)
     {
+        // @TODO - BETA - General refactor, extract methods into different services.
         this.barConfig = gameManager.config.get('client/ui/lifeBar');
         if(!this.barConfig.enabled){
             return false;
@@ -30,6 +32,7 @@ class LifebarUi
         this.barProperty = this.gameManager.config.get('client/actions/skills/affectedProperty');
         this.playerSize = this.gameManager.config.get('client/players/size');
         this.lifeBars = {};
+        this.lifeDataByKey = {};
         this.listenEvents();
         return this;
     }
@@ -37,7 +40,7 @@ class LifebarUi
     listenEvents()
     {
         this.events.on('reldens.playerStatsUpdateAfter', (message, roomEvents) => {
-            this.onPlayerStatsUpdateAfter(message, roomEvents);
+            this.updatePlayerLifeBar(message, roomEvents);
         });
         // eslint-disable-next-line no-unused-vars
         this.events.on('reldens.joinedRoom', (room, gameManager) => {
@@ -45,30 +48,26 @@ class LifebarUi
         });
         // eslint-disable-next-line no-unused-vars
         this.events.on('reldens.runPlayerAnimation', (playerEngine, playerId, player) => {
-            this.drawLifeBar(playerId);
+            this.drawPlayerLifeBar(playerId);
         });
         // eslint-disable-next-line no-unused-vars
         this.events.on('reldens.updateGameSizeBefore', (gameEngine, newWidth, newHeight) => {
-            if (!this.barConfig.fixedPosition) {
-                return false;
-            }
-            this.setFixedPosition(newWidth, newHeight);
-            this.drawLifeBar(this.gameManager.getCurrentPlayer().playerId);
+            this.drawOnGameResize(newWidth, newHeight);
         });
         // eslint-disable-next-line no-unused-vars
         this.events.on('reldens.playersOnRemove', (player, key, roomEvents) => {
-            this.removeLifeBar(key);
-        });
-        // eslint-disable-next-line no-unused-vars
-        this.events.on('reldens.playersOnAddReady', (player, key, previousScene, roomEvents) => {
-            this.processLifeBarQueue();
+            this.removePlayerLifeBar(key);
         });
         // eslint-disable-next-line no-unused-vars
         this.events.on('reldens.playerEngineAddPlayer', (playerEngine, addedPlayerId, addedPlayerData) => {
             this.processLifeBarQueue();
         });
+        // eslint-disable-next-line no-unused-vars
+        this.events.on('reldens.createAnimationAfter', (animationEngine) => {
+            ObjectsHandler.drawObjectsLifeBar(this);
+        });
         this.events.on('reldens.objectBodyChanged', (event) => {
-            return this.generateObjectLifeBar(event.key);
+            ObjectsHandler.generateObjectLifeBar(event.key, this);
         });
         // eslint-disable-next-line no-unused-vars
         this.events.on('reldens.gameEngineShowTarget', (gameEngine, target, previousTarget) => {
@@ -78,6 +77,15 @@ class LifebarUi
         this.events.on('reldens.gameEngineClearTarget', (gameEngine, previousTarget) => {
             this.clearPreviousBar(previousTarget);
         });
+    }
+
+    drawOnGameResize(newWidth, newHeight)
+    {
+        if(!this.barConfig.fixedPosition){
+            return false;
+        }
+        this.setPlayerLifeBarFixedPosition(newWidth, newHeight);
+        this.drawPlayerLifeBar(this.gameManager.getCurrentPlayer().playerId);
     }
 
     clearPreviousBar(previousTarget)
@@ -98,48 +106,24 @@ class LifebarUi
         }
         this.clearPreviousBar(previousTarget);
         if(target.type === ObjectsConst.TYPE_OBJECT){
-            this.generateObjectLifeBar(target.id);
+            ObjectsHandler.generateObjectLifeBar(target.id, this);
         }
         if(target.type === GameConst.TYPE_PLAYER){
-            this.drawLifeBar(target.id);
+            this.drawPlayerLifeBar(target.id);
         }
     }
 
-    generateObjectLifeBar(key)
+    barPropertyValue()
     {
-        if(sc.hasOwn(this.lifeBars, key)){
-            this.lifeBars[key].destroy();
-        }
-        let currentObject = sc.get(this.gameManager.getActiveScene().objectsAnimations, key, false);
-        if(!sc.hasOwn(currentObject, this.barProperty+'Total')){
-            return false;
-        }
-        if(!currentObject){
-            return false;
-        }
-        if(this.barConfig.showOnClick && key !== this.getCurrentTargetId()){
-            return false;
-        }
-        this.lifeBars[key] = this.gameManager.getActiveScene().add.graphics();
-        let {x, y} = this.calculateObjectLifeBarPosition(currentObject);
-        this.drawBar(
-            this.lifeBars[key],
-            currentObject[this.barProperty + 'Total'],
-            currentObject[this.barProperty + 'Value'],
-            x,
-            y
-        );
+        return this.barProperty + 'Value';
     }
 
-    calculateObjectLifeBarPosition(currentObject)
+    barPropertyTotal()
     {
-        return {
-            x: currentObject.x - (currentObject.sceneSprite.width / 2),
-            y: currentObject.y - (currentObject.sceneSprite.height / 2) - this.barConfig.height - this.barConfig.top
-        };
+        return this.barProperty + 'Total';
     }
 
-    setFixedPosition(newWidth, newHeight)
+    setPlayerLifeBarFixedPosition(newWidth, newHeight)
     {
         if(!newWidth || !newHeight){
             let position = this.gameManager.gameEngine.getCurrentScreenSize(this.gameManager);
@@ -151,7 +135,7 @@ class LifebarUi
         this.fixedPositionY = uiY;
     }
 
-    onPlayerStatsUpdateAfter(message, roomEvents)
+    updatePlayerLifeBar(message, roomEvents)
     {
         let currentPlayer = roomEvents.gameManager.getCurrentPlayer();
         this.updatePlayerBarData(
@@ -159,54 +143,42 @@ class LifebarUi
             message.statsBase[this.barProperty],
             message.stats[this.barProperty]
         );
-        this.drawLifeBar(currentPlayer.playerId);
+        this.drawPlayerLifeBar(currentPlayer.playerId);
     }
 
     listenMessages(room)
     {
         room.onMessage((message) => {
-            if(message.act === UsersConst.ACTION_LIFEBAR_UPDATE){
-                if(
-                    message[ActionsConst.DATA_OWNER_TYPE] === ActionsConst.DATA_TYPE_VALUE_OBJECT
-                    && this.barConfig.showEnemies
-                ){
-                    this.processObjectLifeBarMessage(message, true);
-                }
-                if(message[ActionsConst.DATA_OWNER_TYPE] === ActionsConst.DATA_TYPE_VALUE_PLAYER){
-                    this.processPlayerLifeBarMessage(message, true);
-                }
-            }
-            if(message.act === ActionsConst.BATTLE_ENDED){
-                if(sc.hasOwn(this.lifeBars, message.t)){
-                    this.lifeBars[message.t].destroy();
-                }
-            }
+            this.listenBattleEnd(message);
+            this.listenLifeBarUpdates(message);
         });
     }
 
-    canShow(playerId)
+    listenBattleEnd(message)
+    {
+        if(message.act !== ActionsConst.BATTLE_ENDED){
+            return false;
+        }
+        if(!sc.hasOwn(this.lifeBars, message.t)){
+            return false;
+        }
+        this.lifeBars[message.t].destroy();
+    }
+
+    listenLifeBarUpdates(message)
+    {
+        if(message.act !== UsersConst.ACTION_LIFEBAR_UPDATE){
+            return false;
+        }
+        ObjectsHandler.processObjectLifeBarMessage(message, true, this);
+        this.processPlayerLifeBarMessage(message, true);
+    }
+
+    canShowPlayerLifeBar(playerId)
     {
         return this.barConfig.showAllPlayers
             || playerId === this.gameManager.getCurrentPlayer().playerId
             || (this.barConfig.showOnClick && playerId === this.getCurrentTargetId());
-    }
-
-    processObjectLifeBarMessage(message, queue = false)
-    {
-        let currentObject = sc.get(
-            this.gameManager.getActiveScene().objectsAnimations,
-            message[ActionsConst.DATA_OWNER_KEY],
-            false
-        );
-        if(!currentObject || currentObject.isDead){
-            if(queue){
-                this.queueLifeBarMessage(message);
-            }
-            return false;
-        }
-        currentObject[this.barProperty+'Total'] = message.totalValue;
-        currentObject[this.barProperty+'Value'] = message.newValue;
-        this.drawObjectLifeBar(currentObject, message);
     }
 
     queueLifeBarMessage(message)
@@ -217,31 +189,11 @@ class LifebarUi
         this.gameManager.lifeBarQueue.push(message);
     }
 
-    drawObjectLifeBar(currentObject, message)
-    {
-        let objectKey = message[ActionsConst.DATA_OWNER_KEY];
-        if(sc.hasOwn(this.lifeBars, objectKey)){
-            this.lifeBars[objectKey].destroy();
-        }
-        if(currentObject.inState === GameConst.STATUS.DEATH){
-            return false;
-        }
-        if(this.barConfig.showOnClick && message[ActionsConst.DATA_OWNER_KEY] !== this.getCurrentTargetId()){
-            return false;
-        }
-        this.lifeBars[objectKey] = this.gameManager.getActiveScene().add.graphics();
-        let {x, y} = this.calculateObjectLifeBarPosition(currentObject);
-        this.drawBar(
-            this.lifeBars[objectKey],
-            message.totalValue,
-            message.newValue,
-            x,
-            y
-        );
-    }
-
     processPlayerLifeBarMessage(message, queue = false)
     {
+        if(ActionsConst.DATA_TYPE_VALUE_PLAYER !== message[ActionsConst.DATA_OWNER_TYPE]){
+            return false;
+        }
         let currentPlayer = this.gameManager.getCurrentPlayer();
         let messageOwnerKey = message[ActionsConst.DATA_OWNER_KEY];
         if(!currentPlayer || !currentPlayer.players || !currentPlayer.players[messageOwnerKey]){
@@ -250,48 +202,43 @@ class LifebarUi
             }
             return false;
         }
-        let messageOwnerType = message[ActionsConst.DATA_OWNER_TYPE];
-        if(messageOwnerType === ActionsConst.DATA_TYPE_VALUE_OBJECT && this.barConfig.showEnemies){
-            this.processObjectLifeBarMessage(message);
+        this.updatePlayerBarData(messageOwnerKey, message.totalValue, message.newValue);
+        if(this.canShowPlayerLifeBar(messageOwnerKey)){
+            this.drawPlayerLifeBar(messageOwnerKey);
         }
-        if(messageOwnerType === ActionsConst.DATA_TYPE_VALUE_PLAYER){
-            this.updatePlayerBarData(messageOwnerKey, message.totalValue, message.newValue);
-            if(this.canShow(messageOwnerKey)){
-                this.drawLifeBar(messageOwnerKey);
-            }
-        }
+        return true;
     }
 
     updatePlayerBarData(playerId, total, newValue)
     {
         let currentPlayer = this.gameManager.getCurrentPlayer();
-        currentPlayer.players[playerId][this.barProperty+'Total'] = total;
-        currentPlayer.players[playerId][this.barProperty+'Value'] = newValue;
+        currentPlayer.players[playerId][this.barPropertyTotal()] = total;
+        currentPlayer.players[playerId][this.barPropertyValue()] = newValue;
     }
 
     processLifeBarQueue()
     {
-        if(!this.gameManager.lifeBarQueue.length){
+        if(0 === this.gameManager.lifeBarQueue.length){
             return false;
         }
+        let forDelete = [];
         for(let message of this.gameManager.lifeBarQueue){
-            // process queue messages:
-            let messageOwnerType = message[ActionsConst.DATA_OWNER_TYPE];
-            if(messageOwnerType === ActionsConst.DATA_TYPE_VALUE_OBJECT && this.barConfig.showEnemies){
-                this.processObjectLifeBarMessage(message);
+            if(ObjectsHandler.processObjectLifeBarMessage(message, false, this)){
+                forDelete.push(message);
             }
-            if(messageOwnerType === ActionsConst.DATA_TYPE_VALUE_PLAYER){
-                this.processPlayerLifeBarMessage(message);
+            if(this.processPlayerLifeBarMessage(message, false)){
+                forDelete.push(message);
             }
+        }
+        if(0 < forDelete.length){
+            this.gameManager.lifeBarQueue = this.gameManager.lifeBarQueue.filter(item => !forDelete.includes(item));
         }
     }
 
-    drawLifeBar(playerId)
+    drawPlayerLifeBar(playerId)
     {
-        if(sc.hasOwn(this.lifeBars, playerId)){
-            this.lifeBars[playerId].destroy();
-        }
-        if(!this.canShow(playerId)){
+        this.destroyByKey(playerId);
+        if(!this.canShowPlayerLifeBar(playerId)){
             return false;
         }
         let barData = this.prepareBarData(playerId);
@@ -304,7 +251,7 @@ class LifebarUi
             // if the position is fixed then the bar has to go on the ui scene:
             this.lifeBars[playerId] = this.gameManager.getActiveScenePreloader().add.graphics();
             if(this.fixedPositionX === false || this.fixedPositionY === false){
-                this.setFixedPosition();
+                this.setPlayerLifeBarFixedPosition();
             }
             uiX = this.fixedPositionX;
             uiY = this.fixedPositionY;
@@ -316,16 +263,23 @@ class LifebarUi
         return this;
     }
 
+    destroyByKey(barKey)
+    {
+        if(sc.hasOwn(this.lifeBars, barKey)){
+            this.lifeBars[barKey].destroy();
+        }
+    }
+
     prepareBarData(playerId)
     {
         let player = this.gameManager.getCurrentPlayer().players[playerId];
-        let fullValue = player[this.barProperty+'Total'];
-        let filledValue = player[this.barProperty+'Value'];
+        let fullValue = player[this.barPropertyTotal()];
+        let filledValue = player[this.barPropertyValue()];
         let ownerTop = sc.get(player, 'topOff', 0) - this.playerSize.height;
         return {player, fullValue, filledValue, ownerTop};
     }
 
-    removeLifeBar(playerId)
+    removePlayerLifeBar(playerId)
     {
         if(!sc.hasOwn(this.lifeBars, playerId)){
             return false;
@@ -351,6 +305,11 @@ class LifebarUi
     getCurrentTargetId()
     {
         return sc.get(this.gameManager.getCurrentPlayer().currentTarget, 'id', false);
+    }
+
+    getObjectByKey(objectKey)
+    {
+        return sc.get(this.gameManager.getActiveScene().objectsAnimations, objectKey, false);
     }
 
 }

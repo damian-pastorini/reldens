@@ -33,25 +33,16 @@ class Pve extends Battle
         // depending how the current enemy-object was implemented, for example the PVE can start when the player just
         // collides with the enemy (instead of attack it) an aggressive enemy could start the battle automatically.
         let attackResult = await super.runBattle(playerSchema, target, roomScene);
+        await this.events.emit('reldens.runBattlePveAfter', {playerSchema, target, roomScene, attackResult});
         if(!attackResult){
             // @NOTE: the attack result can be false because different reasons, for example it could be a physical
             // attack for which matter we won't start the battle until the physical body hits the target.
             return false;
         }
-        let affectedProperty = roomScene.config.get('client/actions/skills/affectedProperty');
-        await this.events.emit('reldens.runBattlePveAfter', {
-            playerSchema,
-            target,
-            roomScene,
-            attackResult,
-            affectedProperty
-        });
-        if(target.stats[affectedProperty] > 0){
-            await this.startBattleWith(playerSchema, roomScene);
-        } else {
+        0 < target.stats[roomScene.config.get('client/actions/skills/affectedProperty')]
+            ? await this.startBattleWith(playerSchema, roomScene)
             // physical attacks or effects will run the battleEnded, normal attacks or effects will hit this case:
-            await this.battleEnded(playerSchema, roomScene);
-        }
+            : await this.battleEnded(playerSchema, roomScene);
     }
 
     async startBattleWith(playerSchema, room)
@@ -71,7 +62,7 @@ class Pve extends Battle
             return false;
         }
         // the enemy died:
-        if(this.targetObject.stats[room.config.get('client/actions/skills/affectedProperty')] <= 0){
+        if(0 > this.targetObject.stats[room.config.get('client/actions/skills/affectedProperty')]){
             // battle ended checkpoint:
             return false;
         }
@@ -100,7 +91,7 @@ class Pve extends Battle
         let targetPos = {x: playerSchema.state.x, y: playerSchema.state.y};
         let inRange = objectAction.isInRange(ownerPos, targetPos);
         if(inRange){
-            // reset the path finder in case the object was moving:
+            // reset the pathfinder in case the object was moving:
             this.targetObject.objectBody.resetAuto();
             this.targetObject.objectBody.velocity = [0, 0];
             // execute and apply the attack:

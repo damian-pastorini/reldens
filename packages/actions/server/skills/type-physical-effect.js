@@ -37,54 +37,55 @@ class TypePhysicalEffect extends PhysicalEffect
         }
         // get and validate defender which could be a player or an object:
         let validDefender = this.getValidDefender(props, notTheBullet);
-        if(validDefender){
-            // run battle damage:
-            await super.executeOnHit(validDefender);
-            let hitKey = this.key+'_hit';
-            this.room.broadcast({
-                act: hitKey,
-                x: notTheBullet.position[0],
-                y: notTheBullet.position[1],
-                owner: this.owner.broadcastKey,
-                target: validDefender.broadcastKey
-            });
-            // re-run the process if pve:
-            if(
-                sc.hasOwn(this.owner, 'player_id')
-                && sc.hasOwn(validDefender, 'objectBody')
-                && this.currentBattle
-            ){
-                if(validDefender.stats[this.room.config.get('client/actions/skills/affectedProperty')] > 0){
-                    if(!this.validateTargetOnHit){
-                        // if target validation is disabled then any target could start the battle (pve):
-                        if(sc.hasOwn(validDefender, 'battle')){
-                            validDefender.battle.targetObject = validDefender;
-                            await validDefender.battle.startBattleWith(this.owner, this.room);
-                        }
-                    } else {
-                        // if target validation is enabled then we can only start the battle with the target:
-                        await this.currentBattle.startBattleWith(this.owner, this.room);
-                    }
-                } else {
-                    // battle ended checkpoint:
-                    await this.currentBattle.battleEnded(this.owner, this.room);
-                }
-            } else {
-                // update the clients if pvp:
-                if(sc.hasOwn(validDefender, 'player_id')){
-                    let targetClient = this.room.getClientById(validDefender.broadcastKey);
-                    if(targetClient){
-                        await this.currentBattle.updateTargetClient(
-                            targetClient,
-                            validDefender,
-                            this.owner.sessionId,
-                            this.room
-                        );
-                    }
-                }
-            }
+        if(!validDefender){
+            return false;
         }
+        // run battle damage:
+        await super.executeOnHit(validDefender);
+        let hitKey = this.key+'_hit';
+        this.room.broadcast({
+            act: hitKey,
+            x: notTheBullet.position[0],
+            y: notTheBullet.position[1],
+            owner: this.owner.broadcastKey,
+            target: validDefender.broadcastKey
+        });
+        (sc.hasOwn(this.owner, 'player_id') && sc.hasOwn(validDefender, 'objectBody') && this.currentBattle)
+            ? await this.startPvE(validDefender)
+            : await this.sendUpdateFromPvP(validDefender);
         return false;
+    }
+
+    async sendUpdateFromPvP(validDefender)
+    {
+        if(!sc.hasOwn(validDefender, 'player_id')){
+            return false;
+        }
+        let targetClient = this.room.getClientById(validDefender.broadcastKey);
+        if(!targetClient){
+            return false;
+        }
+        await this.currentBattle.updateTargetClient(targetClient, validDefender, this.owner.sessionId, this.room);
+    }
+
+    async startPvE(validDefender)
+    {
+        // re-run the process if pve:
+        0 < validDefender.stats[this.room.config.get('client/actions/skills/affectedProperty')]
+            ? await this.restartBattle(validDefender)
+            : await this.currentBattle.battleEnded(this.owner, this.room);
+    }
+
+    async restartBattle(validDefender)
+    {
+        if(!this.validateTargetOnHit && sc.hasOwn(validDefender, 'battle')){
+            // if target validation is disabled then any target could start the battle (pve):
+            validDefender.battle.targetObject = validDefender;
+            await validDefender.battle.startBattleWith(this.owner, this.room);
+            return;
+        }
+        // if target validation is enabled then we can only start the battle with the target:
+        await this.currentBattle.startBattleWith(this.owner, this.room);
     }
 
     executeBullets(props)
