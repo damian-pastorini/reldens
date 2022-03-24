@@ -90,37 +90,42 @@ class Pve extends Battle
         let ownerPos = {x: this.targetObject.state.x, y: this.targetObject.state.y};
         let targetPos = {x: playerSchema.state.x, y: playerSchema.state.y};
         let inRange = objectAction.isInRange(ownerPos, targetPos);
-        if(inRange){
-            // reset the pathfinder in case the object was moving:
-            this.targetObject.objectBody.resetAuto();
-            this.targetObject.objectBody.velocity = [0, 0];
-            // execute and apply the attack:
-            await objectAction.execute(playerSchema);
-            let targetClient = room.getClientById(playerSchema.sessionId);
-            if(targetClient){
-                let update = await this.updateTargetClient(targetClient, playerSchema, this.targetObject.key, room)
-                    .catch((err) => {
-                    Logger.error(err);
-                });
-                if(update){
-                    setTimeout(() => {
-                        this.startBattleWith(playerSchema, room);
-                    }, objectAction.skillDelay);
-                } else {
-                    this.leaveBattle(playerSchema);
-                }
-            }
-        } else {
-            // @TODO - BETA - Fix chase behavior when a bullet attack is available on enemies.
-            let chaseResult = this.targetObject.chaseBody(playerSchema.physicalBody);
-            if(chaseResult.length){
-                setTimeout(() => {
-                    this.startBattleWith(playerSchema, room);
-                }, objectAction.skillDelay);
-            } else {
-                this.leaveBattle(playerSchema);
-            }
+        inRange ? await this.attackInRange(objectAction, playerSchema, room)
+            : this.chasePlayer(playerSchema, room, objectAction);
+    }
+
+    chasePlayer(playerSchema, room, objectAction)
+    {
+        // @TODO - BETA - Fix chase behavior when a bullet attack is available on enemies.
+        let chaseResult = this.targetObject.chaseBody(playerSchema.physicalBody);
+        chaseResult.length
+            ? this.startBattleWithDelay(playerSchema, room, objectAction)
+            : this.leaveBattle(playerSchema);
+    }
+
+    async attackInRange(objectAction, playerSchema, room)
+    {
+        // reset the pathfinder in case the object was moving:
+        this.targetObject.objectBody.resetAuto();
+        this.targetObject.objectBody.velocity = [0, 0];
+        // execute and apply the attack:
+        await objectAction.execute(playerSchema);
+        let targetClient = room.getClientById(playerSchema.sessionId);
+        if(!targetClient){
+            return false;
         }
+        let update = await this.updateTargetClient(targetClient, playerSchema, this.targetObject.key, room)
+            .catch((err) => {
+                Logger.error(err);
+            });
+        update ? this.startBattleWithDelay(playerSchema, room, objectAction) : this.leaveBattle(playerSchema);
+    }
+
+    startBattleWithDelay(playerSchema, room, objectAction)
+    {
+        setTimeout(async () => {
+            await this.startBattleWith(playerSchema, room);
+        }, objectAction.skillDelay);
     }
 
     leaveBattle(playerSchema)
@@ -131,7 +136,7 @@ class Pve extends Battle
 
     async battleEnded(playerSchema, room)
     {
-        // @TODO - BETA - CHECK - Implement battle end in both pve and pvp.
+        // @TODO - BETA - Implement battle end in both PvE and PvP.
         this.targetObject.inState = GameConst.STATUS.DEATH;
         this.removeInBattlePlayer(playerSchema);
         let actionData = {
