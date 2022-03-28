@@ -33,7 +33,7 @@ class Commander
         } catch (error) {
             console.error('- Reldens node module folder not found, try `npm install`.');
         }
-        const { ThemeManager } = require('reldens/packages/game/server/theme-manager');
+        const { ThemeManager } = require('reldens/lib/game/server/theme-manager');
         this.themeManager = new ThemeManager(this);
         let parseResult = this.parseArgs();
         if(!parseResult){

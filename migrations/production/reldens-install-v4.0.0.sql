@@ -1,7 +1,7 @@
 -- --------------------------------------------------------
 -- Host:                         localhost
--- Server version:               8.0.27 - MySQL Community Server - GPL
--- Server OS:                    Win64
+-- ServerPlugin version:               8.0.27 - MySQL Community ServerPlugin - GPL
+-- ServerPlugin OS:                    Win64
 -- HeidiSQL Version:             11.3.0.6295
 -- --------------------------------------------------------
 

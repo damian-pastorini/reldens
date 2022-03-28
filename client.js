@@ -10,6 +10,6 @@
 require('core-js/stable');
 require('regenerator-runtime/runtime');
 // game class:
-const { GameManager } = require('./packages/game/client/manager');
+const { GameManager } = require('./lib/game/client/manager');
 // export game manager:
 module.exports.GameManager = GameManager;
