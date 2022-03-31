@@ -1,6 +1,6 @@
 {
     "name": "reldens",
-    "version": "4.0.0-beta.22",
+    "version": "4.0.0-beta.23",
     "description": "Reldens - MMORPG Platform",
     "author": "Damian A. Pastorini",
     "license": "MIT",
@@ -30,8 +30,8 @@
         "url": "https://github.com/damian-pastorini/reldens/issues"
     },
     "engines": {
-        "npm": ">=6.0.0",
-        "node": ">=12.0.0"
+        "node": ">=16.0.0",
+        "npm": ">=8.0.0"
     },
     "dependencies": {
         "@adminjs/design-system": "2.1.2",
@@ -40,11 +40,11 @@
         "@babel/core": "^7.17.8",
         "@colyseus/monitor": "^0.12.3",
         "@colyseus/schema": "^0.5.41",
-        "@reldens/items-system": "^0.11.0",
+        "@reldens/items-system": "^0.12.1",
         "@reldens/modifiers": "^0.11.0",
-        "@reldens/skills": "^0.11.0",
+        "@reldens/skills": "^0.13.0",
         "@reldens/storage": "^0.11.0",
-        "@reldens/utils": "^0.11.0",
+        "@reldens/utils": "^0.12.0",
         "adminjs": "5.7.3",
         "bcrypt": "^5.0.1",
         "colyseus": "0.12.6",
@@ -56,11 +56,11 @@
         "express-basic-auth": "^1.2.1",
         "express-formidable": "^1.2.0",
         "express-session": "^1.17.2",
-        "firebase": "9.6.9",
+        "firebase": "9.6.10",
         "firebaseui": "6.0.1",
         "mime-types": "^2.1.35",
         "mustache": "^4.2.0",
-        "nodemailer": "^6.7.2",
+        "nodemailer": "^6.7.3",
         "p2": "^0.7.1",
         "parcel-bundler": "1.12.5",
         "pathfinding": "^0.4.18",
@@ -71,7 +71,7 @@
     },
     "devDependencies": {
         "babel-eslint": "^10.1.0",
-        "eslint": "^8.11.0",
+        "eslint": "^8.12.0",
         "eslint-config-standard": "^17.0.0-1",
         "eslint-plugin-import": "^2.25.4",
         "eslint-plugin-node": "^11.1.0",

@@ -11,3 +11,5 @@
 /v8-compile-cache*
 /dev
 package-lock.json
+winpty.exe.stackdump
+/.parcel-cache

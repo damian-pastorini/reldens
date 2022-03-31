@@ -7,15 +7,15 @@
  */
 
 const { GameManager } = require('reldens/client');
-const { CustomClasses } = require('../packages/client');
-const { GameConst } = require('reldens/packages/game/constants');
+const { ClientPlugin } = require('../plugins/client-plugin');
+const { GameConst } = require('reldens/lib/game/constants');
 
 // @TODO - BETA - Move everything from this file as part of the core project and include events to manage the theme.
 window.addEventListener('DOMContentLoaded', () => {
     // reldens game:
     let reldens = new GameManager();
     let dom = reldens.gameDom;
-    reldens.setupClasses(CustomClasses);
+    reldens.setupCustomClientPlugin(ClientPlugin);
     // debug events (warning! this will output in the console ALL the event listeners and every event fired):
     // reldens.events.debug = 'all';
     // @NOTE: at this point you could specify or override a lot of configurations like your server URL.
