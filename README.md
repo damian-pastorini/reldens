@@ -1,9 +1,14 @@
 [![Reldens - GitHub - Release](https://www.dwdeveloper.com/media/reldens/reldens-mmorpg-platform.png)](https://github.com/damian-pastorini/reldens)
+
+---
+
 [![Reldens - NPM - Release](https://img.shields.io/github/v/release/damian-pastorini/reldens?color=red&style=for-the-badge)](https://www.npmjs.com/package/reldens)
 [![Reldens - GitHub - Stars](https://img.shields.io/github/stars/damian-pastorini/reldens?color=green&style=for-the-badge)](https://github.com/damian-pastorini/reldens)
 [![Reldens - Discord](https://img.shields.io/discord/599108949312143370?style=for-the-badge)](https://discord.gg/HuJMxUY)
 [![Reldens - Licence - MIT](https://img.shields.io/github/license/damian-pastorini/reldens?color=blue&style=for-the-badge)](https://github.com/damian-pastorini/reldens)
 [![Reldens - LGTM - Code](https://img.shields.io/lgtm/grade/javascript/github/damian-pastorini/reldens?label=LGTM%20-%20Code%20Quality&style=for-the-badge)](https://lgtm.com/projects/g/damian-pastorini/reldens/)
+
+---
 
 # Reldens - MMORPG Platform
 
@@ -11,12 +16,15 @@ The project main goal is to create a good MMORPG base for anyone to use. A tool 
 
 In a later phase the next step is to make it available for non-developers as well, so normal people could use an interface to create and run the game online.
 
-## Main features
+---
 
-| The entire game interface                                                                                  |The game-server administration panel to manage all the game contents|
-|------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------|
-|![](https://s3.us-east-1.amazonaws.com/dwd-files/assets/features/_650xAUTO_crop_center-center_none/chat.png)|![](https://s3.us-east-1.amazonaws.com/dwd-files/assets/contents/reldens-admin-audio-markers.PNG)|
+## What you will get?
 
+| The entire game interface:                                                                                   | The game-server administration panel to manage all the game contents:                             |
+|--------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------|
+| ![](https://s3.us-east-1.amazonaws.com/dwd-files/assets/features/_650xAUTO_crop_center-center_none/chat.png) | ![](https://s3.us-east-1.amazonaws.com/dwd-files/assets/contents/reldens-admin-audio-markers.PNG) |
+
+---
 
 ## Built with
 + Node JS
@@ -26,23 +34,37 @@ In a later phase the next step is to make it available for non-developers as wel
 + Phaser 3
 + Firebase
 
+You will find an event-driven way to change everything that's out of the reach of the options provided by the admin.  
+
+---
 
 ## [Features List](https://www.reldens.com/features)
 [Request a feature here: https://www.reldens.com/features-request](https://www.reldens.com/features-request)
 
+---
 
 ## [Coming soon and news!](https://www.reldens.com/news "Coming soon & News")
 
+---
 
 ## [Installation](https://www.reldens.com/installation "Installation")
 
+---
 
-## [Demo](https://dev.reldens.com)
+## [Demo](https://dev.reldens.com/)
 
-Here you will find a small demo for the results with the last available version from master: 
+We use this demo to show how many features are available.
 
-[https://demo.reldens.com](https://demo.reldens.com)
+To access you can register in the following link (the basic registration will require email, user and password, but
+none real data is required here):
 
+- [https://demo.reldens.com/](https://dev.reldens.com/)
+
+Your email is required to access the server admin:
+
+- [https://demo.reldens.com/reldens-admin/](https://demo.reldens.com/reldens-admin/)
+
+---
 
 ## Contact us
 Join our Discord channel: [https://discord.gg/HuJMxUY](https://discord.gg/HuJMxUY) or send us an email to  [info@dwdeveloper.com](mailto:info@dwdeveloper.com).
