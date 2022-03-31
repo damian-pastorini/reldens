@@ -12,9 +12,12 @@
 
 # Reldens - MMORPG Platform
 
-The project main goal is to create a good MMORPG base for anyone to use. A tool that will give to developers the possibility of create a multiplayer game without the need of deal with all the difficulties to make it work in a secure and efficient way over any network.
+The project main goal is to create a good MMORPG base for anyone to use. A tool that will give to developers the 
+possibility of create a multiplayer game without the need of deal with all the difficulties to make it work in a secure 
+and efficient way over any network.
 
-In a later phase the next step is to make it available for non-developers as well, so normal people could use an interface to create and run the game online.
+In a later phase the next step is to make it available for non-developers as well, so normal people could use an 
+interface to create and run the game online.
 
 ---
 
@@ -33,8 +36,6 @@ In a later phase the next step is to make it available for non-developers as wel
 + Colyseus
 + Phaser 3
 + Firebase
-
-You will find an event-driven way to change everything that's out of the reach of the options provided by the admin.  
 
 ---
 
