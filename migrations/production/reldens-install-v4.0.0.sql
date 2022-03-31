@@ -1,7 +1,7 @@
 -- --------------------------------------------------------
 -- Host:                         localhost
--- ServerPlugin version:               8.0.27 - MySQL Community ServerPlugin - GPL
--- ServerPlugin OS:                    Win64
+-- Server version:               8.0.27 - MySQL Community Server - GPL
+-- Server OS:                    Win64
 -- HeidiSQL Version:             11.3.0.6295
 -- --------------------------------------------------------
 
@@ -150,7 +150,7 @@ CREATE TABLE IF NOT EXISTS `chat` (
   CONSTRAINT `FK__scenes` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table chat: ~242 rows (approximately)
+-- Dumping data for table chat: ~0 rows (approximately)
 /*!40000 ALTER TABLE `chat` DISABLE KEYS */;
 /*!40000 ALTER TABLE `chat` ENABLE KEYS */;
 
@@ -301,7 +301,7 @@ INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(140, 'server', 'players/gameOver/timeOut', '10000', 'i'),
 	(141, 'client', 'ui/controls/tabTarget', '1', 'b'),
 	(142, 'client', 'ui/controls/disableContextMenu', '1', 'b'),
-	(143, 'client', 'ui/controls/primaryMove', '1', 'b'),
+	(143, 'client', 'ui/controls/primaryMove', '0', 'b'),
 	(144, 'client', 'ui/instructions/enabled', '1', 'b'),
 	(145, 'client', 'ui/instructions/responsiveX', '100', 'i'),
 	(146, 'client', 'ui/instructions/responsiveY', '100', 'i'),
@@ -437,7 +437,7 @@ CREATE TABLE IF NOT EXISTS `items_group` (
   `key` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `label` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `description` text CHARACTER SET utf8 COLLATE utf8_unicode_ci,
-  `files_name` text CHARACTER SET utf8 COLLATE utf8_unicode_ci,
+  `files_name` text COLLATE utf8_unicode_ci,
   `sort` int DEFAULT NULL,
   `items_limit` int NOT NULL DEFAULT '0',
   `limit_per_item` int NOT NULL DEFAULT '0',
@@ -484,7 +484,7 @@ CREATE TABLE IF NOT EXISTS `items_item` (
   `uses_limit` int NOT NULL DEFAULT '1' COMMENT 'Default 1 use per item (0 = unlimited).',
   `useTimeOut` int DEFAULT NULL,
   `execTimeOut` int DEFAULT NULL,
-  `customData` text CHARACTER SET utf8 COLLATE utf8_unicode_ci,
+  `customData` text COLLATE utf8_unicode_ci,
   PRIMARY KEY (`id`),
   UNIQUE KEY `id` (`id`),
   UNIQUE KEY `key` (`key`),
@@ -620,7 +620,7 @@ CREATE TABLE IF NOT EXISTS `players` (
   CONSTRAINT `FK_players_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table players: ~0 rows (approximately)
+-- Dumping data for table players: ~1 rows (approximately)
 /*!40000 ALTER TABLE `players` DISABLE KEYS */;
 INSERT INTO `players` (`id`, `user_id`, `name`, `created_at`) VALUES
 	(1, 1, 'Darth', '2022-03-17 20:57:50');
@@ -644,7 +644,7 @@ CREATE TABLE IF NOT EXISTS `players_state` (
 -- Dumping data for table players_state: ~1 rows (approximately)
 /*!40000 ALTER TABLE `players_state` DISABLE KEYS */;
 INSERT INTO `players_state` (`id`, `player_id`, `room_id`, `x`, `y`, `dir`) VALUES
-	(1, 1, 5, 1018, 655, 'down');
+	(1, 1, 5, 715, 721, 'right');
 /*!40000 ALTER TABLE `players_state` ENABLE KEYS */;
 
 -- Dumping structure for table players_stats
@@ -660,15 +660,15 @@ CREATE TABLE IF NOT EXISTS `players_stats` (
   KEY `user_id` (`player_id`) USING BTREE,
   CONSTRAINT `FK_player_current_stats_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT `FK_players_current_stats_players_stats` FOREIGN KEY (`stat_id`) REFERENCES `stats` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=31 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
 -- Dumping data for table players_stats: ~20 rows (approximately)
 /*!40000 ALTER TABLE `players_stats` DISABLE KEYS */;
 INSERT INTO `players_stats` (`id`, `player_id`, `stat_id`, `base_value`, `value`) VALUES
-	(1, 1, 1, 210, 47),
-	(2, 1, 2, 210, 210),
-	(3, 1, 3, 210, 215),
-	(4, 1, 4, 210, 210),
+	(1, 1, 1, 230, 75),
+	(2, 1, 2, 230, 230),
+	(3, 1, 3, 230, 241),
+	(4, 1, 4, 230, 230),
 	(5, 1, 5, 100, 100),
 	(6, 1, 6, 100, 100),
 	(7, 1, 7, 100, 100),
@@ -1129,7 +1129,7 @@ CREATE TABLE IF NOT EXISTS `skills_owners_class_path` (
 -- Dumping data for table skills_owners_class_path: ~1 rows (approximately)
 /*!40000 ALTER TABLE `skills_owners_class_path` DISABLE KEYS */;
 INSERT INTO `skills_owners_class_path` (`id`, `class_path_id`, `owner_id`, `currentLevel`, `currentExp`) VALUES
-	(1, 1, 1, 8, 1510);
+	(1, 1, 1, 9, 2130);
 /*!40000 ALTER TABLE `skills_owners_class_path` ENABLE KEYS */;
 
 -- Dumping structure for table skills_skill
