@@ -9,7 +9,7 @@
 
 const { NpcObject } = require('reldens/lib/objects/server/npc-object');
 const { GameConst } = require('reldens/lib/game/constants');
-const { Logger } = require('@reldens/utils');
+const { Logger, sc } = require('@reldens/utils');
 
 class WeaponsMaster extends NpcObject
 {
@@ -40,7 +40,7 @@ class WeaponsMaster extends NpcObject
         }
         let selectedOption = this.options[optionIdx];
         // only give each item once:
-        if({}.hasOwnProperty.call(playerSchema.inventory.manager.items, selectedOption.key)){
+        if(sc.hasOwn(playerSchema.inventory.manager.items, selectedOption.key)){
             let contentMessage = 'You already have the item.';
             room.send(client, {act: GameConst.UI, id: this.id, content: contentMessage});
             return false;
