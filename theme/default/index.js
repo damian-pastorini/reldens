@@ -14,6 +14,10 @@ const { GameConst } = require('reldens/lib/game/constants');
 window.addEventListener('DOMContentLoaded', () => {
     // reldens game:
     let reldens = new GameManager();
+    // @NOTE: you can specify your game server and your app server URLs in case you serve the client static files from
+    // a different location.
+    // reldens.gameServerUrl = 'ws://localhost:8000';
+    // reldens.appServerUrl = 'http://localhost:8000';
     let dom = reldens.gameDom;
     reldens.setupCustomClientPlugin(ClientPlugin);
     // debug events (warning! this will output in the console ALL the event listeners and every event fired):
