@@ -1,7 +1,7 @@
-import React, { FC, useState, useEffect } from 'react'
-import {EditPropertyProps, flat} from 'adminjs'
-import {DropZone, FormGroup, Label, DropZoneItem} from '@adminjs/design-system'
-import PropertyCustom from '../types/property-custom.type'
+import React, { FC, useState, useEffect } from 'react';
+import {EditPropertyProps, flat} from 'adminjs';
+import {DropZone, FormGroup, Label, DropZoneItem} from '@adminjs/design-system';
+import PropertyCustom from '../types/property-custom.type';
 
 const Edit: FC<EditPropertyProps> = ({property, record, onChange}) => {
     const {params} = record;
@@ -21,17 +21,17 @@ const Edit: FC<EditPropertyProps> = ({property, record, onChange}) => {
             || (typeof key !== 'string' && Array.isArray(key) && key.length !== originalKey.length)
         ) {
             setOriginalKey(key);
-            setFilesToUpload([])
+            setFilesToUpload([]);
         }
     }, [key, originalKey]);
 
     const onUpload = (files: Array<File>): void => {
         setFilesToUpload(files);
-        onChange(custom.fileProperty, files)
+        onChange(custom.fileProperty, files);
     };
 
     const handleRemove = () => {
-        onChange(custom.fileProperty, null)
+        onChange(custom.fileProperty, null);
     };
 
     const handleMultiRemove = (singleKey) => {
@@ -93,7 +93,7 @@ const Edit: FC<EditPropertyProps> = ({property, record, onChange}) => {
                 </>
             ) : ''}
         </FormGroup>
-    )
+    );
 };
 
 export default Edit;
