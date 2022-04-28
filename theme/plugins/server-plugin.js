@@ -12,6 +12,7 @@ const { Merchant } = require('./objects/server/merchant');
 const { WeaponsMaster } = require('./objects/server/weapons-master');
 const { Enemy1 } = require('./objects/server/enemy1');
 const { Enemy2 } = require('./objects/server/enemy2');
+const { SceneGravity } = require('./rooms/scene-gravity');
 const { sc } = require('@reldens/utils');
 
 class ServerPlugin extends PluginInterface
@@ -25,6 +26,9 @@ class ServerPlugin extends PluginInterface
             if(!sc.hasOwn(customClasses, 'objects')){
                 customClasses.objects = {};
             }
+            if(!sc.hasOwn(customClasses, 'roomsClass')){
+                customClasses.roomsClass = {};
+            }
             customClasses.objects['door_1'] = Door;
             customClasses.objects['door_2'] = Door;
             customClasses.objects['npc_1'] = People;
@@ -33,6 +37,7 @@ class ServerPlugin extends PluginInterface
             customClasses.objects['npc_4'] = WeaponsMaster;
             customClasses.objects['enemy_1'] = Enemy1;
             customClasses.objects['enemy_2'] = Enemy2;
+            customClasses.roomsClass['SceneGravity'] = SceneGravity;
         });
     }
 
