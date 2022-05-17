@@ -42,17 +42,17 @@ class WeaponsMaster extends NpcObject
         // only give each item once:
         if(sc.hasOwn(playerSchema.inventory.manager.items, selectedOption.key)){
             let contentMessage = 'You already have the item.';
-            room.send(client, {act: GameConst.UI, id: this.id, content: contentMessage});
+            client.send('game-message', {act: GameConst.UI, id: this.id, content: contentMessage});
             return false;
         }
         let itemObj = playerSchema.inventory.createItemInstance(selectedOption.key);
         playerSchema.inventory.manager.addItem(itemObj).then(() => {
             let contentMessage = 'Do not forget to equip your new '+selectedOption.label+' before go to the battle.';
-            room.send(client, {act: GameConst.UI, id: this.id, content: contentMessage});
+            client.send('game-message', {act: GameConst.UI, id: this.id, content: contentMessage});
         }).catch((err) => {
             Logger.error([`Error while adding item "${selectedOption.key}":`, err]);
             let contentMessage = 'Sorry, I was not able to give you the item, contact the admin.';
-            room.send(client, {act: GameConst.UI, id: this.id, content: contentMessage});
+            client.send('game-message', {act: GameConst.UI, id: this.id, content: contentMessage});
             return false;
         });
     }
