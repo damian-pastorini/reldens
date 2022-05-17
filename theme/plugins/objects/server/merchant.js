@@ -43,22 +43,22 @@ class Merchant extends NpcObject
             // only give each item once:
             if(sc.hasOwn(playerSchema.inventory.manager.items, 'coins')){
                 let contentMessage = 'You have too many already.';
-                room.send(client, {act: GameConst.UI, id: this.id, content: contentMessage});
+                client.send('game-message', {act: GameConst.UI, id: this.id, content: contentMessage});
                 return false;
             }
             let coin = playerSchema.inventory.createItemInstance('coins');
             playerSchema.inventory.manager.addItem(coin).then(() => {
                 let activationData = {act: GameConst.UI, id: this.id, content: 'All yours!'};
-                room.send(client, activationData);
+                client.send('game-message', activationData);
             }).catch((err) => {
                 Logger.error([`Error while adding item "${selectedOption.key}":`, err]);
                 let contentMessage = 'Sorry, I was not able to give you the item, contact the admin.';
-                room.send(client, {act: GameConst.UI, id: this.id, content: contentMessage});
+                client.send('game-message', {act: GameConst.UI, id: this.id, content: contentMessage});
                 return false;
             });
         } else {
             let activationData = {act: GameConst.UI, id: this.id, content: 'Ok...'};
-            room.send(client, activationData);
+            client.send('game-message', activationData);
         }
     }
 

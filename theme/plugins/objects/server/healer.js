@@ -49,7 +49,7 @@ class Healer extends NpcObject
                 // update ui box:
                 let activationData = {act: GameConst.UI, id: this.id, content: 'Your HP points has been restored!'};
                 // update the target:
-                room.send(client, activationData);
+                client.send('game-message', activationData);
             }).catch((err) => {
                 Logger.error(err);
             });
@@ -62,7 +62,7 @@ class Healer extends NpcObject
                 // update ui box:
                 let activationData = {act: GameConst.UI, id: this.id, content: 'Your MP points has been restored!'};
                 // update the target:
-                room.send(client, activationData);
+                client.send('game-message', activationData);
             }).catch((err) => {
                 Logger.error(err);
             });
@@ -74,7 +74,7 @@ class Healer extends NpcObject
                 if(result){
                     let responseMessage = 'Then I will give you some items for later, you never know...';
                     let activationData = {act: GameConst.UI, id: this.id, content: responseMessage};
-                    room.send(client, activationData);
+                    client.send('game-message', activationData);
                 } else {
                     Logger.error(['Error while adding items.', result]);
                     return false;
@@ -82,7 +82,7 @@ class Healer extends NpcObject
             }).catch((err) => {
                 Logger.error(['Error while adding item "heal_potion_20":', err]);
                 let contentMessage = 'Sorry, I was not able to give you the item, contact the admin.';
-                room.send(client, {act: GameConst.UI, id: this.id, content: contentMessage});
+                client.send('game-message', {act: GameConst.UI, id: this.id, content: contentMessage});
                 return false;
             });
         }
