@@ -17,7 +17,12 @@ ALTER TABLE `rooms`	ADD COLUMN `customData` TEXT NULL COLLATE 'utf8_unicode_ci' 
 INSERT INTO `rooms` (`id`, `name`, `title`, `map_filename`, `scene_images`, `room_class_key`, `customData`) VALUES (NULL, 'TopDownRoom', 'Gravity World!', 'reldens-gravity', 'reldens-forest', NULL, '{"gravity":[0,625],"applyGravity":true,"allowPassWallsFromBelow":true,"timeStep":0.012}');
 
 SET @reldens_top_down_demo_room_id = (SELECT `id` FROM `rooms` WHERE `name` = 'TopDownRoom');
-INSERT INTO `rooms_return_points` (`id`, `room_id`, `direction`, `x`, `y`, `is_default`, `from_room_id`) VALUES (NULL, @reldens_top_down_demo_room_id, 'left', 450, 600, 0, NULL);
+INSERT INTO `rooms_return_points` (`id`, `room_id`, `direction`, `x`, `y`, `is_default`, `from_room_id`) VALUES (NULL, @reldens_top_down_demo_room_id, 'left', 340, 600, 0, NULL);
+
+SET @reldens_house2_room_id = (SELECT `id` FROM `rooms` WHERE `name` = 'ReldensHouse_2');
+INSERT INTO `rooms_change_points` (`id`, `room_id`, `tile_index`, `next_room_id`) VALUES (NULL, @reldens_top_down_demo_room_id, 540, @reldens_house2_room_id);
+INSERT INTO `rooms_change_points` (`id`, `room_id`, `tile_index`, `next_room_id`) VALUES (NULL, @reldens_house2_room_id, 500, @reldens_top_down_demo_room_id);
+INSERT INTO `rooms_change_points` (`id`, `room_id`, `tile_index`, `next_room_id`) VALUES (NULL, @reldens_house2_room_id, 780, @reldens_top_down_demo_room_id);
 
 #######################################################################################################################
 
