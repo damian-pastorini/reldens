@@ -11,6 +11,7 @@ const { ClientPlugin } = require('../plugins/client-plugin');
 const { GameConst } = require('reldens/lib/game/constants');
 
 // @TODO - BETA - Move everything from this file as part of the core project and include events to manage the theme.
+// @TODO - BETA - CLEAN THIS THING ASAP!
 window.addEventListener('DOMContentLoaded', () => {
     // reldens game:
     let reldens = new GameManager();
@@ -53,7 +54,9 @@ window.addEventListener('DOMContentLoaded', () => {
         let gameRoom = reldens.joinGame(formData, isNewUser);
         // you can include here the room as parameter:
         gameRoom.then(() => {
-            dom.getElement('.loading-container').style.display = 'none';
+            dom.getElements('.loading-container').forEach((element) => {
+                element.style.display = 'none';
+            });
             dom.getElement('.footer').style.display = 'none';
             dom.getElement('.forms-container').remove();
             dom.getElement('.game-container').classList.remove('hidden');
@@ -69,7 +72,9 @@ window.addEventListener('DOMContentLoaded', () => {
             // @NOTE: game room errors should be always because some wrong login or registration data. For these cases
             // we will check the isNewUser variable to know where display the error.
             reldens.submitedForm = false;
-            dom.getElement('.loading-container').style.display = 'none';
+            dom.getElements('.loading-container').forEach((element) => {
+                element.style.display = 'none';
+            });
             let errorElement = dom.getElement('#'+formData.formId+' .response-error');
             if(errorElement){
                 errorElement.innerHTML = err;

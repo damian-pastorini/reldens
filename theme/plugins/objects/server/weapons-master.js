@@ -31,9 +31,9 @@ class WeaponsMaster extends NpcObject
         this.sendInvalidOptionMessage = true;
     }
 
-    parseMessageAndRunActions(client, data, room, playerSchema)
+    async executeMessageActions(client, data, room, playerSchema)
     {
-        super.parseMessageAndRunActions(client, data, room, playerSchema);
+        await super.executeMessageActions(client, data, room, playerSchema);
         let optionIdx = 'op'+data.value;
         if(!this.isValidOption(data) || !this.isValidIndexValue(optionIdx, room, client)){
             return false;
@@ -42,17 +42,17 @@ class WeaponsMaster extends NpcObject
         // only give each item once:
         if(sc.hasOwn(playerSchema.inventory.manager.items, selectedOption.key)){
             let contentMessage = 'You already have the item.';
-            client.send('game-message', {act: GameConst.UI, id: this.id, content: contentMessage});
+            client.send('*', {act: GameConst.UI, id: this.id, content: contentMessage});
             return false;
         }
         let itemObj = playerSchema.inventory.createItemInstance(selectedOption.key);
         playerSchema.inventory.manager.addItem(itemObj).then(() => {
             let contentMessage = 'Do not forget to equip your new '+selectedOption.label+' before go to the battle.';
-            client.send('game-message', {act: GameConst.UI, id: this.id, content: contentMessage});
+            client.send('*', {act: GameConst.UI, id: this.id, content: contentMessage});
         }).catch((err) => {
             Logger.error([`Error while adding item "${selectedOption.key}":`, err]);
             let contentMessage = 'Sorry, I was not able to give you the item, contact the admin.';
-            client.send('game-message', {act: GameConst.UI, id: this.id, content: contentMessage});
+            client.send('*', {act: GameConst.UI, id: this.id, content: contentMessage});
             return false;
         });
     }
