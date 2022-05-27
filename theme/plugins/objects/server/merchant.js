@@ -31,35 +31,35 @@ class Merchant extends NpcObject
         this.sendInvalidOptionMessage = true;
     }
 
-    parseMessageAndRunActions(client, data, room, playerSchema)
+    async executeMessageActions(client, data, room, playerSchema)
     {
-        super.parseMessageAndRunActions(client, data, room, playerSchema);
+        await super.executeMessageActions(client, data, room, playerSchema);
         let optionIdx = 'op'+data.value;
         if(!this.isValidOption(data) || !this.isValidIndexValue(optionIdx, room, client)){
             return false;
         }
         let selectedOption = this.options[optionIdx];
-        if(selectedOption.value === 1){
-            // only give each item once:
-            if(sc.hasOwn(playerSchema.inventory.manager.items, 'coins')){
-                let contentMessage = 'You have too many already.';
-                client.send('game-message', {act: GameConst.UI, id: this.id, content: contentMessage});
-                return false;
-            }
-            let coin = playerSchema.inventory.createItemInstance('coins');
-            playerSchema.inventory.manager.addItem(coin).then(() => {
-                let activationData = {act: GameConst.UI, id: this.id, content: 'All yours!'};
-                client.send('game-message', activationData);
-            }).catch((err) => {
-                Logger.error([`Error while adding item "${selectedOption.key}":`, err]);
-                let contentMessage = 'Sorry, I was not able to give you the item, contact the admin.';
-                client.send('game-message', {act: GameConst.UI, id: this.id, content: contentMessage});
-                return false;
-            });
-        } else {
+        if(1 !== selectedOption.value){
             let activationData = {act: GameConst.UI, id: this.id, content: 'Ok...'};
-            client.send('game-message', activationData);
+            client.send('*', activationData);
+            return;
         }
+        // only give each item once:
+        if(sc.hasOwn(playerSchema.inventory.manager.items, 'coins')){
+            let contentMessage = 'You have too many already.';
+            client.send('*', {act: GameConst.UI, id: this.id, content: contentMessage});
+            return false;
+        }
+        let coin = playerSchema.inventory.createItemInstance('coins');
+        playerSchema.inventory.manager.addItem(coin).then(() => {
+            let activationData = {act: GameConst.UI, id: this.id, content: 'All yours!'};
+            client.send('*', activationData);
+        }).catch((err) => {
+            Logger.error([`Error while adding item "${selectedOption.key}":`, err]);
+            let contentMessage = 'Sorry, I was not able to give you the item, contact the admin.';
+            client.send('*', {act: GameConst.UI, id: this.id, content: contentMessage});
+            return false;
+        });
     }
 
 }

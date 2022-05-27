@@ -32,62 +32,75 @@ class Healer extends NpcObject
         this.sendInvalidOptionMessage = true;
     }
 
-    parseMessageAndRunActions(client, data, room, playerSchema)
+    async executeMessageActions(client, data, room, playerSchema)
     {
-        super.parseMessageAndRunActions(client, data, room, playerSchema);
+        await super.executeMessageActions(client, data, room, playerSchema);
         let optionIdx = 'op'+data.value;
         if(!this.isValidOption(data) || !this.isValidIndexValue(optionIdx, room, client)){
             return false;
         }
         let givePotions = true;
-        if(this.options[optionIdx].value === 1){
+        if(1 === this.options[optionIdx].value){
             givePotions = false;
-            // update and save the player:
-            let affectedProperty = room.config.get('client/actions/skills/affectedProperty');
-            playerSchema.stats[affectedProperty] = playerSchema.statsBase[affectedProperty];
-            room.savePlayerStats(playerSchema, client).then(() => {
-                // update ui box:
-                let activationData = {act: GameConst.UI, id: this.id, content: 'Your HP points has been restored!'};
-                // update the target:
-                client.send('game-message', activationData);
-            }).catch((err) => {
-                Logger.error(err);
-            });
+            this.restoreHp(room, playerSchema, client);
         }
-        if(this.options[optionIdx].value === 3){
+        if(3 === this.options[optionIdx].value){
             givePotions = false;
-            // update and save the player:
-            playerSchema.stats.mp = playerSchema.statsBase.mp;
-            room.savePlayerStats(playerSchema, client).then(() => {
-                // update ui box:
-                let activationData = {act: GameConst.UI, id: this.id, content: 'Your MP points has been restored!'};
-                // update the target:
-                client.send('game-message', activationData);
-            }).catch((err) => {
-                Logger.error(err);
-            });
+            this.restoreMp(playerSchema, room, client);
         }
         if(givePotions){
-            let healPotion = playerSchema.inventory.createItemInstance('heal_potion_20');
-            let magicPotion = playerSchema.inventory.createItemInstance('magic_potion_20');
-            playerSchema.inventory.manager.addItems([healPotion, magicPotion]).then((result) => {
-                if(result){
-                    let responseMessage = 'Then I will give you some items for later, you never know...';
-                    let activationData = {act: GameConst.UI, id: this.id, content: responseMessage};
-                    client.send('game-message', activationData);
-                } else {
-                    Logger.error(['Error while adding items.', result]);
-                    return false;
-                }
-            }).catch((err) => {
-                Logger.error(['Error while adding item "heal_potion_20":', err]);
-                let contentMessage = 'Sorry, I was not able to give you the item, contact the admin.';
-                client.send('game-message', {act: GameConst.UI, id: this.id, content: contentMessage});
-                return false;
-            });
+            this.giveRewards(playerSchema, client);
         }
     }
 
+    restoreMp(playerSchema, room, client)
+    {
+        // update and save the player:
+        playerSchema.stats.mp = playerSchema.statsBase.mp;
+        room.savePlayerStats(playerSchema, client).then(() => {
+            // update ui box:
+            let activationData = {act: GameConst.UI, id: this.id, content: 'Your MP points has been restored!'};
+            // update the target:
+            client.send('*', activationData);
+        }).catch((err) => {
+            Logger.error(err);
+        });
+    }
+
+    restoreHp(room, playerSchema, client)
+    {
+        // update and save the player:
+        let affectedProperty = room.config.get('client/actions/skills/affectedProperty');
+        playerSchema.stats[affectedProperty] = playerSchema.statsBase[affectedProperty];
+        room.savePlayerStats(playerSchema, client).then(() => {
+            // update ui box:
+            let activationData = {act: GameConst.UI, id: this.id, content: 'Your HP points has been restored!'};
+            // update the target:
+            client.send('*', activationData);
+        }).catch((err) => {
+            Logger.error(err);
+        });
+    }
+
+    giveRewards(playerSchema, client)
+    {
+        let healPotion = playerSchema.inventory.createItemInstance('heal_potion_20');
+        let magicPotion = playerSchema.inventory.createItemInstance('magic_potion_20');
+        playerSchema.inventory.manager.addItems([healPotion, magicPotion]).then((result) => {
+            if(!result){
+                Logger.error(['Error while adding items.', result]);
+                return false;
+            }
+            let responseMessage = 'Then I will give you some items for later, you never know...';
+            let activationData = {act: GameConst.UI, id: this.id, content: responseMessage};
+            client.send('*', activationData);
+        }).catch((err) => {
+            Logger.error(['Error while adding item "heal_potion_20":', err]);
+            let contentMessage = 'Sorry, I was not able to give you the item, contact the admin.';
+            client.send('*', {act: GameConst.UI, id: this.id, content: contentMessage});
+            return false;
+        });
+    }
 }
 
 module.exports.Healer = Healer;
