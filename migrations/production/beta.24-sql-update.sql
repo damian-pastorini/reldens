@@ -9,6 +9,8 @@ UPDATE `config` SET `value` = '1' WHERE `path` = 'rooms/selection/allowOnLogin';
 UPDATE `config` SET `value` = '1' WHERE `path` = 'rooms/selection/allowOnRegistration';
 UPDATE `config` SET `path` = 'rooms/world/timeStep' WHERE `path` = 'rooms/world/timestep';
 DELETE FROM `config` WHERE `path` = 'rooms/world/gravity_enabled';
+INSERT INTO `config` VALUES(NULL, 'client', 'general/engine/clientInterpolation', '0', 'b');
+INSERT INTO `config` VALUES(NULL, 'client', 'general/engine/interpolationSpeed', '0.4', 'i');
 
 # Rooms:
 ALTER TABLE `rooms`	ADD COLUMN `customData` TEXT NULL COLLATE 'utf8_unicode_ci' AFTER `room_class_key`;
