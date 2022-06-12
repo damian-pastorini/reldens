@@ -11,6 +11,12 @@ UPDATE `config` SET `path` = 'rooms/world/timeStep' WHERE `path` = 'rooms/world/
 DELETE FROM `config` WHERE `path` = 'rooms/world/gravity_enabled';
 INSERT INTO `config` VALUES(NULL, 'client', 'general/engine/clientInterpolation', '1', 'b');
 INSERT INTO `config` VALUES(NULL, 'client', 'general/engine/interpolationSpeed', '0.4', 'i');
+INSERT INTO `config` VALUES(NULL, 'client', 'general/engine/clientPrediction', '1', 'b');
+UPDATE `config` SET `scope` = 'client', `path` = 'players/physicalBody/width' WHERE `path` = 'players/size/width' AND `scope` = 'server';
+UPDATE `config` SET `scope` = 'client', `path` = 'players/physicalBody/width' WHERE `path` = 'players/size/width' AND `scope` = 'server';
+
+# Features:
+INSERT INTO `features` (`code`, `title`, `is_enabled`) VALUES ('prediction', 'Prediction', '1');
 
 # Rooms:
 ALTER TABLE `rooms`	ADD COLUMN `customData` TEXT NULL COLLATE 'utf8_unicode_ci' AFTER `room_class_key`;
