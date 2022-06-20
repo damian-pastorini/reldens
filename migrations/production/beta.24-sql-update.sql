@@ -12,8 +12,10 @@ DELETE FROM `config` WHERE `path` = 'rooms/world/gravity_enabled';
 INSERT INTO `config` VALUES(NULL, 'client', 'general/engine/clientInterpolation', '1', 'b');
 INSERT INTO `config` VALUES(NULL, 'client', 'general/engine/interpolationSpeed', '0.4', 'i');
 INSERT INTO `config` VALUES(NULL, 'client', 'general/engine/clientPrediction', '1', 'b');
-UPDATE `config` SET `scope` = 'client', `path` = 'players/physicalBody/width' WHERE `path` = 'players/size/width' AND `scope` = 'server';
-UPDATE `config` SET `scope` = 'client', `path` = 'players/physicalBody/width' WHERE `path` = 'players/size/width' AND `scope` = 'server';
+DELETE FROM `config` WHERE `path` = 'players/size/width' AND `scope` = 'server';
+DELETE FROM `config` WHERE `path` = 'players/size/height' AND `scope` = 'server';
+INSERT INTO `config` VALUES(NULL, 'client', 'players/physicalBody/width', '25', 'i');
+INSERT INTO `config` VALUES(NULL, 'client', 'players/physicalBody/height', '25', 'i');
 
 # Features:
 INSERT INTO `features` (`code`, `title`, `is_enabled`) VALUES ('prediction', 'Prediction', '1');
