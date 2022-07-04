@@ -16,6 +16,7 @@ DELETE FROM `config` WHERE `path` = 'players/size/width' AND `scope` = 'server';
 DELETE FROM `config` WHERE `path` = 'players/size/height' AND `scope` = 'server';
 INSERT INTO `config` VALUES(NULL, 'client', 'players/physicalBody/width', '25', 'i');
 INSERT INTO `config` VALUES(NULL, 'client', 'players/physicalBody/height', '25', 'i');
+UPDATE `config` SET `scope` = 'client' WHERE `path` = 'general/controls/allow_simultaneous_keys';
 
 # Features:
 INSERT INTO `features` (`code`, `title`, `is_enabled`) VALUES ('prediction', 'Prediction', '1');
