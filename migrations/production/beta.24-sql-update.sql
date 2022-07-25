@@ -11,7 +11,7 @@ UPDATE `config` SET `path` = 'rooms/world/timeStep' WHERE `path` = 'rooms/world/
 DELETE FROM `config` WHERE `path` = 'rooms/world/gravity_enabled';
 INSERT INTO `config` VALUES(NULL, 'client', 'general/engine/clientInterpolation', '1', 'b');
 INSERT INTO `config` VALUES(NULL, 'client', 'general/engine/interpolationSpeed', '0.4', 'i');
-INSERT INTO `config` VALUES(NULL, 'client', 'general/engine/clientPrediction', '1', 'b');
+INSERT INTO `config` VALUES(NULL, 'client', 'general/engine/experimentalClientPrediction', '0', 'b');
 DELETE FROM `config` WHERE `path` = 'players/size/width' AND `scope` = 'server';
 DELETE FROM `config` WHERE `path` = 'players/size/height' AND `scope` = 'server';
 INSERT INTO `config` VALUES(NULL, 'client', 'players/physicalBody/width', '25', 'i');
