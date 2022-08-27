@@ -49,7 +49,7 @@ class Healer extends NpcObject
             this.restoreMp(playerSchema, room, client);
         }
         if(givePotions){
-            this.giveRewards(playerSchema, client);
+            await this.giveRewards(playerSchema, client);
         }
     }
 
@@ -82,24 +82,21 @@ class Healer extends NpcObject
         });
     }
 
-    giveRewards(playerSchema, client)
+    async giveRewards(playerSchema, client)
     {
-        let healPotion = playerSchema.inventory.createItemInstance('heal_potion_20');
-        let magicPotion = playerSchema.inventory.createItemInstance('magic_potion_20');
-        playerSchema.inventory.manager.addItems([healPotion, magicPotion]).then((result) => {
-            if(!result){
-                Logger.error(['Error while adding items.', result]);
-                return false;
-            }
-            let responseMessage = 'Then I will give you some items for later, you never know...';
-            let activationData = {act: GameConst.UI, id: this.id, content: responseMessage};
-            client.send('*', activationData);
-        }).catch((err) => {
-            Logger.error(['Error while adding item "heal_potion_20":', err]);
-            let contentMessage = 'Sorry, I was not able to give you the item, contact the admin.';
+        let healPotion = playerSchema.inventory.manager.createItemInstance('heal_potion_20');
+        let magicPotion = playerSchema.inventory.manager.createItemInstance('magic_potion_20');
+        let result = await playerSchema.inventory.manager.addItems([healPotion, magicPotion]);
+        if(!result){
+            Logger.error(['Error while adding items.', result, playerSchema]);
+            let contentMessage = 'Sorry, I was not able to give you any items, contact the administrator.';
             client.send('*', {act: GameConst.UI, id: this.id, content: contentMessage});
             return false;
-        });
+        }
+        let responseMessage = 'Then I will give you some items for later, you never know...';
+        let activationData = {act: GameConst.UI, id: this.id, content: responseMessage};
+        client.send('*', activationData);
+        return true;
     }
 }
 

@@ -36,10 +36,11 @@ class Enemy1Object extends EnemyObject
         if(this.uid !== pveInstance.targetObject.uid){
             return false;
         }
+        // @TODO - BETA - Rewards as items or experience will be coming from the storage.
         if(sc.hasOwn(playerSchema, 'skillsServer')){
             playerSchema.skillsServer.classPath.addExperience(50);
         }
-        let treeBranch = playerSchema.inventory.createItemInstance('branch');
+        let treeBranch = playerSchema.inventory.manager.createItemInstance('branch');
         playerSchema.inventory.manager.addItem(treeBranch).catch((err) => {
             Logger.error(['Error while adding item "branch":', err]);
         });

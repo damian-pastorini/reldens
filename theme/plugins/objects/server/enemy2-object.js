@@ -29,6 +29,7 @@ class Enemy2Object extends EnemyObject
         if(this.uid !== pveInstance.targetObject.uid){
             return false;
         }
+        // @TODO - BETA - Rewards as items or experience will be coming from the storage.
         if(sc.hasOwn(playerSchema, 'skillsServer')){
             playerSchema.skillsServer.classPath.addExperience(20);
         }
