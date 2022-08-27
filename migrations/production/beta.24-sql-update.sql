@@ -35,6 +35,14 @@ INSERT INTO `rooms_change_points` (`id`, `room_id`, `tile_index`, `next_room_id`
 INSERT INTO `rooms_change_points` (`id`, `room_id`, `tile_index`, `next_room_id`) VALUES (NULL, @reldens_house2_room_id, 500, @reldens_top_down_demo_room_id);
 INSERT INTO `rooms_change_points` (`id`, `room_id`, `tile_index`, `next_room_id`) VALUES (NULL, @reldens_house2_room_id, 780, @reldens_top_down_demo_room_id);
 
+# Objects:
+SET @reldens_forest_room_id = (SELECT `id` FROM `rooms` WHERE `name` = 'ReldensForest');
+INSERT INTO `objects` (`id`, `room_id`, `layer_name`, `tile_index`, `object_class_key`, `client_key`, `title`, `private_params`, `client_params`, `enabled`) VALUES (NULL, @reldens_forest_room_id, 'forest-collisions', 258, 'npc_5', 'quest_npc_1', 'Miles', NULL, NULL, 1);
+
+# Objects assets:
+SET @reldens_new_quest_npc_object = (SELECT `id` FROM `objects` WHERE `object_class_key` = 'npc_5' AND `client_key` = 'quest_npc_1');
+INSERT INTO `objects_assets` (`object_asset_id`, `object_id`, `asset_type`, `asset_key`, `file_1`, `file_2`, `extra_params`) VALUES (NULL, 13, 'spritesheet', 'quest_npc_1', 'people-quest-npc', NULL, '{"frameWidth":52,"frameHeight":71}');
+
 #######################################################################################################################
 
 SET FOREIGN_KEY_CHECKS = 1;

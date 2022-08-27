@@ -45,7 +45,7 @@ class WeaponsMaster extends NpcObject
             client.send('*', {act: GameConst.UI, id: this.id, content: contentMessage});
             return false;
         }
-        let itemObj = playerSchema.inventory.createItemInstance(selectedOption.key);
+        let itemObj = playerSchema.inventory.manager.createItemInstance(selectedOption.key);
         playerSchema.inventory.manager.addItem(itemObj).then(() => {
             let contentMessage = 'Do not forget to equip your new '+selectedOption.label+' before go to the battle.';
             client.send('*', {act: GameConst.UI, id: this.id, content: contentMessage});
