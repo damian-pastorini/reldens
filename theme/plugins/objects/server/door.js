@@ -10,7 +10,7 @@
  *
  */
 
-const { AnimationObject } = require('reldens/lib/objects/server/animation-object');
+const { AnimationObject } = require('reldens/lib/objects/server/object/type/animation-object');
 
 class Door extends AnimationObject
 {
@@ -25,7 +25,6 @@ class Door extends AnimationObject
         this.yFix = 6;
         // assign extra public params:
         Object.assign(this.clientParams, {
-            enabled: true,
             // @NOTE: in the same way we can fix the position of the body object in the server we can do it just for
             // the animation by setting the positionFix.x and positionFix.y which are the valued shared with the client.
             positionFix: {y: -18},

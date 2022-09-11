@@ -4,7 +4,7 @@
  *
  */
 
-const { EnemyObject } = require('reldens/lib/objects/server/enemy-object');
+const { EnemyObject } = require('reldens/lib/objects/server/object/type/enemy-object');
 const { Logger, sc } = require('@reldens/utils');
 
 class Enemy1Object extends EnemyObject
@@ -16,12 +16,12 @@ class Enemy1Object extends EnemyObject
         this.isAggressive = true;
     }
 
-    runAdditionalSetup()
+    async runAdditionalRespawnSetup()
     {
-        super.runAdditionalSetup();
+        await super.runAdditionalRespawnSetup();
         this.events.onWithKey(
             this.getBattleEndEvent(),
-            this.onBattleEnd.bind(this),
+            await this.onBattleEnd.bind(this),
             this.getEventRemoveKey(),
             this.getEventMasterKey()
         );
@@ -30,7 +30,7 @@ class Enemy1Object extends EnemyObject
     }
 
     // eslint-disable-next-line no-unused-vars
-    onBattleEnd(playerSchema, pveInstance, actionData)
+    async onBattleEnd(playerSchema, pveInstance, actionData)
     {
         // validate unique id for battle end event:
         if(this.uid !== pveInstance.targetObject.uid){
@@ -38,12 +38,13 @@ class Enemy1Object extends EnemyObject
         }
         // @TODO - BETA - Rewards as items or experience will be coming from the storage.
         if(sc.hasOwn(playerSchema, 'skillsServer')){
-            playerSchema.skillsServer.classPath.addExperience(50);
+            await playerSchema.skillsServer.classPath.addExperience(50);
         }
         let treeBranch = playerSchema.inventory.manager.createItemInstance('branch');
-        playerSchema.inventory.manager.addItem(treeBranch).catch((err) => {
-            Logger.error(['Error while adding item "branch":', err]);
-        });
+        let addResult = await playerSchema.inventory.manager.addItem(treeBranch);
+        if(false === addResult){
+            Logger.error(['Error while adding item "branch".']);
+        }
     }
 
 }

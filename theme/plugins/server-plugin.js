@@ -5,8 +5,8 @@
  */
 
 const { PluginInterface } = require('reldens/lib/features/plugin-interface');
+const { NpcObject } = require('reldens/lib/objects/server/object/type/npc-object')
 const { Door } = require('./objects/server/door');
-const { People } = require('./objects/server/people');
 const { Healer } = require('./objects/server/healer');
 const { Merchant } = require('./objects/server/merchant');
 const { QuestNpc } = require('./objects/server/quest-npc');
@@ -38,7 +38,7 @@ class ServerPlugin extends PluginInterface
         }
         customClasses.objects['door_1'] = Door;
         customClasses.objects['door_2'] = Door;
-        customClasses.objects['npc_1'] = People;
+        customClasses.objects['npc_1'] = NpcObject;
         customClasses.objects['npc_2'] = Healer;
         customClasses.objects['npc_3'] = Merchant;
         customClasses.objects['npc_4'] = WeaponsMaster;

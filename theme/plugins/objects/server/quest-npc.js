@@ -7,28 +7,12 @@
  *
  */
 
-const { NpcObject } = require('reldens/lib/objects/server/npc-object');
+const { NpcObject } = require('reldens/lib/objects/server/object/type/npc-object');
 const { GameConst } = require('reldens/lib/game/constants');
 const { Logger } = require('@reldens/utils');
 
 class QuestNpc extends NpcObject
 {
-
-    constructor(props)
-    {
-        super(props);
-        this.runOnAction = true;
-        this.playerVisible = true;
-        // assign extra params:
-        this.clientParams.enabled = true;
-        this.clientParams.ui = true;
-        this.content = 'Hi there! Do you want a coin? I can give you one if you give me a tree branch.';
-        this.options = {
-            op1: {label: 'Sure!', value: 1},
-            op2: {label: 'No, thank you.', value: 2}
-        };
-        this.sendInvalidOptionMessage = true;
-    }
 
     async executeMessageActions(client, data, room, playerSchema)
     {
@@ -69,6 +53,7 @@ class QuestNpc extends NpcObject
         let activationData = {act: GameConst.UI, id: this.id, content: 'All yours!'};
         client.send('*', activationData);
     }
+
 }
 
 module.exports.QuestNpc = QuestNpc;

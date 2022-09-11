@@ -7,29 +7,12 @@
  *
  */
 
-const { NpcObject } = require('reldens/lib/objects/server/npc-object');
+const { TraderObject } = require('reldens/lib/objects/server/object/type/trader-object');
 const { GameConst } = require('reldens/lib/game/constants');
 const { Logger, sc } = require('@reldens/utils');
 
-class Merchant extends NpcObject
+class Merchant extends TraderObject
 {
-
-    constructor(props)
-    {
-        super(props);
-        this.runOnAction = true;
-        this.playerVisible = true;
-        // assign extra params:
-        this.clientParams.enabled = true;
-        this.clientParams.ui = true;
-        // @TODO - BETA - All the NPC info will be coming from the storage.
-        this.content = 'Hi there! Do you want a coin? I can give you some to buy things.';
-        this.options = {
-            op1: {label: 'Sure!', value: 1},
-            op2: {label: 'No, thank you.', value: 2}
-        };
-        this.sendInvalidOptionMessage = true;
-    }
 
     async executeMessageActions(client, data, room, playerSchema)
     {
