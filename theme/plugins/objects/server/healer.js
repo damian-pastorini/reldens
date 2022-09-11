@@ -7,30 +7,12 @@
  *
  */
 
-const { NpcObject } = require('reldens/lib/objects/server/npc-object');
+const { NpcObject } = require('reldens/lib/objects/server/object/type/npc-object');
 const { GameConst } = require('reldens/lib/game/constants');
 const { Logger } = require('@reldens/utils');
 
 class Healer extends NpcObject
 {
-
-    constructor(props)
-    {
-        super(props);
-        this.runOnAction = true;
-        this.playerVisible = true;
-        // assign extra params:
-        this.clientParams.enabled = true;
-        // @TODO - BETA - All the NPC info will be coming from the storage.
-        this.clientParams.ui = true;
-        this.content = 'Hi there! I can restore your health, would you like me to do it?';
-        this.options = {
-            op1: {label: 'Heal HP', value: 1},
-            op2: {label: 'Nothing...', value: 2},
-            op3: {label: 'Need some MP', value: 3}
-        };
-        this.sendInvalidOptionMessage = true;
-    }
 
     async executeMessageActions(client, data, room, playerSchema)
     {
