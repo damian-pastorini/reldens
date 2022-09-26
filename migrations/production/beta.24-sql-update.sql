@@ -51,13 +51,41 @@ INSERT INTO `objects_assets` (`object_asset_id`, `object_id`, `asset_type`, `ass
 # Objects contents (client_params):
 UPDATE `objects` SET `client_params`='{"content":"Hello! My name is Alfred. Go to the forest and kill some monsters! Now... leave me alone!"}' WHERE `id`= @reldens_object_alfred_id;
 UPDATE `objects` SET `client_params`='{"content":"Hello traveler! I can restore your health, would you like me to do it?","options":{"op1":{"label":"Heal HP","value":1},"op2":{"label":"Nothing...","value":2},"op3":{"label":"Need some MP","value":3}},"enabled":true,"ui":true}' WHERE `id`= @reldens_object_healer_id;
-UPDATE `objects` SET `client_params`='{"content":"Hi there! What would you like to do?","options":{"buy":{"label":"Buy","value":"buy"},"sell":{"label":"Sell","value":"sell"},"trade":{"label":"Trade","value":"trade"}}}' WHERE `id`= @reldens_object_merchant_id;
-UPDATE `objects` SET `client_params`='{"content":"Hi! I am the weapons master, choose your weapon and go kill some monsters!","enabled":true,"ui":true}' WHERE  `id`= @reldens_object_weapons_master_id;
+UPDATE `objects` SET `client_params`='{"content":"Hi there! What would you like to do?","options":{"buy":{"label":"Buy","value":"buy"},"sell":{"label":"Sell","value":"sell"}}}' WHERE `id`= @reldens_object_merchant_id;
+UPDATE `objects` SET `client_params`='{"content":"Hi, I am the weapons master, choose your weapon and go kill some monsters!","options":{"op1":{"key":"axe","label":"Axe","value":1,"icon":"axe"},"op2":{"key":"spear","label":"Spear","value":2,"icon":"spear"}},"ui":true}' WHERE  `id`= @reldens_object_weapons_master_id;
 UPDATE `objects` SET `client_params`='{"content":"Hi there! Do you want a coin? I can give you one if you give me a tree branch.","options":{"op1":{"label":"Sure!","value":1},"op2":{"label":"No, thank you.","value":2}},"enabled":true,"ui":true}' WHERE `id`= @reldens_object_quest_npc;
 
 # Object properties (private_params):
 UPDATE `objects` SET `private_params`='{"runOnAction":true,"playerVisible":true}' WHERE `id` = @reldens_object_alfred_id;
 UPDATE `objects` SET `private_params`='{"runOnAction":true,"playerVisible":true,"sendInvalidOptionMessage":true}' WHERE `id` = @reldens_object_healer_id OR `id` = @reldens_object_merchant_id OR `id` = @reldens_object_weapons_master_id OR `id` = @reldens_object_quest_npc;
+
+# Object new tables:
+
+CREATE TABLE `objects_items_inventory` (
+	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+	`owner_id` INT(10) UNSIGNED NOT NULL,
+	`item_id` INT(10) NOT NULL,
+	`qty` INT(10) NOT NULL DEFAULT '0',
+	`remaining_uses` INT(10) NULL DEFAULT NULL,
+	`is_active` INT(10) NULL DEFAULT NULL COMMENT 'For example equipped or not equipped items.',
+	PRIMARY KEY (`id`) USING BTREE,
+	INDEX `FK_items_inventory_items_item` (`item_id`) USING BTREE,
+	INDEX `FK_objects_items_inventory_objects` (`owner_id`) USING BTREE,
+	CONSTRAINT `FK_objects_items_inventory_objects` FOREIGN KEY (`owner_id`) REFERENCES `objects` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION,
+	CONSTRAINT `objects_items_inventory_ibfk_1` FOREIGN KEY (`item_id`) REFERENCES `items_item` (`id`) ON UPDATE CASCADE ON DELETE NO ACTION
+) COMMENT='Inventory table is to save the items for each owner.' COLLATE='utf8_unicode_ci' ENGINE=InnoDB ROW_FORMAT=COMPACT AUTO_INCREMENT=0;
+
+CREATE TABLE `objects_items_requirements` (
+	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+	`object_id` INT(10) UNSIGNED NOT NULL,
+	`item_key` VARCHAR(255) NOT NULL DEFAULT '' COLLATE 'utf8_unicode_ci',
+	`required_item_key` VARCHAR(255) NOT NULL DEFAULT '' COLLATE 'utf8_unicode_ci',
+	`required_quantity` INT(10) UNSIGNED NOT NULL DEFAULT '0',
+	`auto_remove_requirement` INT(10) UNSIGNED NOT NULL DEFAULT '0',
+	PRIMARY KEY (`id`) USING BTREE,
+	INDEX `FK_objects_items_requirements_objects` (`object_id`) USING BTREE,
+	CONSTRAINT `FK_objects_items_requirements_objects` FOREIGN KEY (`object_id`) REFERENCES `objects` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT
+) COLLATE='utf8_unicode_ci' ENGINE=InnoDB;
 
 #######################################################################################################################
 
