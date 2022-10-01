@@ -45,7 +45,7 @@
         "@parcel/core": "^2.7.0",
         "@parcel/transformer-sass": "^2.7.0",
         "@parcel/transformer-webmanifest": "^2.7.0",
-        "@reldens/items-system": "^0.16.0-beta.7",
+        "@reldens/items-system": "^0.16.0-beta.8",
         "@reldens/modifiers": "^0.17.0",
         "@reldens/skills": "^0.15.0",
         "@reldens/storage": "^0.11.0",
