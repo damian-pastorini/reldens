@@ -87,6 +87,10 @@ CREATE TABLE `objects_items_requirements` (
 	CONSTRAINT `FK_objects_items_requirements_objects` FOREIGN KEY (`object_id`) REFERENCES `objects` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT
 ) COLLATE='utf8_unicode_ci' ENGINE=InnoDB;
 
+# Object items and requirements:
+INSERT INTO `objects_items_inventory` (`id`, `owner_id`, `item_id`, `qty`, `remaining_uses`, `is_active`) VALUES (2, 10, 4, -1, -1, 0);
+INSERT INTO `objects_items_requirements` (`id`, `object_id`, `item_key`, `required_item_key`, `required_quantity`, `auto_remove_requirement`) VALUES (1, 10, 'axe', 'gold', 2, 1);
+
 #######################################################################################################################
 
 SET FOREIGN_KEY_CHECKS = 1;
