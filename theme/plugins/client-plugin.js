@@ -18,6 +18,9 @@ class ClientPlugin extends PluginInterface
         this.events.on('reldens.beforeJoinGame', (props) => {
             this.defineCustomClasses(props);
         });
+        this.events.on('reldens.beforeCreateEngine', (props) => {
+            this.defineEngineDriver(props);
+        })
     }
 
     defineCustomClasses(props)
@@ -31,11 +34,11 @@ class ClientPlugin extends PluginInterface
         this.defineEngineDrivers(props);
     }
 
-    defineEngineDrivers(props)
+    defineEngineDriver(props)
     {
-        props.gameManager.config.client.customClasses.gameEngineDrivers = {
-            phaser: PhaserDriver
-        };
+        if ('phaser' === props.gameConfig.engine) {
+            props.gameConfig.client['engineDriver'] = new PhaserDriver();
+        }
     }
 }
 
