@@ -90,4 +90,4 @@ If you like to contribute in anyway or donate to support the project please also
 
 
 #### [By DwDeveloper](https://www.dwdeveloper.com/ "DwDeveloper")
-By Lucio.
+#### [By Lucio Vicentini](https://www.luciovicentini.com "LucioVicentini")
