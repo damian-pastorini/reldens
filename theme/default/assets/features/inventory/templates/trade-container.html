@@ -2,6 +2,11 @@
     <div class="trade-col-1"></div>
     <div class="trade-col-2"></div>
     <div class="trade-row trade-confirm-actions">
-        {{&confirmBoxContents}}
+        <div class="trade-col-1">
+            {{&confirmRequirements}}
+        </div>
+        <div class="trade-col-2">
+            <button type="button" class="confirm-action confirm-{{tradeActionKey}}">{{tradeActionKey}}</button>
+        </div>
     </div>
 </div>

@@ -30,10 +30,10 @@ class ServerPlugin extends PluginInterface
     defineCustomClasses(props)
     {
         let customClasses = props.serverManager.configManager.configList.server.customClasses;
-        if (!sc.hasOwn(customClasses, 'objects')) {
+        if(!sc.hasOwn(customClasses, 'objects')){
             customClasses.objects = {};
         }
-        if (!sc.hasOwn(customClasses, 'roomsClass')) {
+        if(!sc.hasOwn(customClasses, 'roomsClass')){
             customClasses.roomsClass = {};
         }
         customClasses.objects['door_1'] = Door;

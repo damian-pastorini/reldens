@@ -14,7 +14,7 @@
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
--- Dumping structure for table audio
+-- Dumping structure for table reldens.audio
 CREATE TABLE IF NOT EXISTS `audio` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `audio_key` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
@@ -31,12 +31,12 @@ CREATE TABLE IF NOT EXISTS `audio` (
   CONSTRAINT `FK_audio_rooms` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON DELETE SET NULL ON UPDATE SET NULL
 ) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table audio: ~3 rows (approximately)
+-- Dumping data for table reldens.audio: ~3 rows (approximately)
 INSERT INTO `audio` (`id`, `audio_key`, `files_name`, `config`, `room_id`, `category_id`, `enabled`) VALUES
 	(3, 'footstep', 'footstep.mp3', NULL, NULL, 3, 1),
 	(4, 'ReldensTownAudio', 'reldens-town.mp3', '', 4, 1, 1);
 
--- Dumping structure for table audio_categories
+-- Dumping structure for table reldens.audio_categories
 CREATE TABLE IF NOT EXISTS `audio_categories` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `category_key` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
@@ -48,12 +48,12 @@ CREATE TABLE IF NOT EXISTS `audio_categories` (
   UNIQUE KEY `category_label` (`category_label`)
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table audio_categories: ~2 rows (approximately)
+-- Dumping data for table reldens.audio_categories: ~2 rows (approximately)
 INSERT INTO `audio_categories` (`id`, `category_key`, `category_label`, `enabled`, `single_audio`) VALUES
 	(1, 'music', 'Music', 1, 1),
 	(3, 'sound', 'Sound', 1, 0);
 
--- Dumping structure for table audio_markers
+-- Dumping structure for table reldens.audio_markers
 CREATE TABLE IF NOT EXISTS `audio_markers` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `audio_id` int unsigned NOT NULL,
@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS `audio_markers` (
   CONSTRAINT `FK_audio_markers_audio` FOREIGN KEY (`audio_id`) REFERENCES `audio` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=42 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table audio_markers: ~41 rows (approximately)
+-- Dumping data for table reldens.audio_markers: ~41 rows (approximately)
 INSERT INTO `audio_markers` (`id`, `audio_id`, `marker_key`, `start`, `duration`, `config`) VALUES
 	(1, 4, 'ReldensTown', 0, 41, NULL),
 	(2, 3, 'journeyman_right', 0, 1, NULL),
@@ -111,7 +111,7 @@ INSERT INTO `audio_markers` (`id`, `audio_id`, `marker_key`, `start`, `duration`
 	(40, 3, 'r_warrior_up', 0, 1, NULL),
 	(41, 3, 'r_warrior_down', 0, 1, NULL);
 
--- Dumping structure for table audio_player_config
+-- Dumping structure for table reldens.audio_player_config
 CREATE TABLE IF NOT EXISTS `audio_player_config` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `player_id` int unsigned NOT NULL,
@@ -124,9 +124,9 @@ CREATE TABLE IF NOT EXISTS `audio_player_config` (
   CONSTRAINT `FK_audio_player_config_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table audio_player_config: ~0 rows (approximately)
+-- Dumping data for table reldens.audio_player_config: ~0 rows (approximately)
 
--- Dumping structure for table chat
+-- Dumping structure for table reldens.chat
 CREATE TABLE IF NOT EXISTS `chat` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `player_id` int unsigned NOT NULL,
@@ -144,9 +144,9 @@ CREATE TABLE IF NOT EXISTS `chat` (
   CONSTRAINT `FK__scenes` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table chat: ~104 rows (approximately)
+-- Dumping data for table reldens.chat: ~49 rows (approximately)
 
--- Dumping structure for table config
+-- Dumping structure for table reldens.config
 CREATE TABLE IF NOT EXISTS `config` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `scope` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
@@ -156,7 +156,7 @@ CREATE TABLE IF NOT EXISTS `config` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=264 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table config: ~236 rows (approximately)
+-- Dumping data for table reldens.config: ~236 rows (approximately)
 INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(1, 'server', 'rooms/validation/valid', 'room_game,chat_global', 't'),
 	(2, 'server', 'players/initialState/room_id', '4', 'i'),
@@ -399,7 +399,7 @@ INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(262, 'client', 'players/physicalBody/width', '25', 'i'),
 	(263, 'client', 'players/physicalBody/height', '25', 'i');
 
--- Dumping structure for table features
+-- Dumping structure for table reldens.features
 CREATE TABLE IF NOT EXISTS `features` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `code` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
@@ -408,7 +408,7 @@ CREATE TABLE IF NOT EXISTS `features` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table features: ~9 rows (approximately)
+-- Dumping data for table reldens.features: ~9 rows (approximately)
 INSERT INTO `features` (`id`, `code`, `title`, `is_enabled`) VALUES
 	(1, 'chat', 'Chat', 1),
 	(2, 'objects', 'Objects', 1),
@@ -422,7 +422,7 @@ INSERT INTO `features` (`id`, `code`, `title`, `is_enabled`) VALUES
 	(10, 'admin', 'Admin', 1),
 	(11, 'prediction', 'Prediction', 1);
 
--- Dumping structure for table items_group
+-- Dumping structure for table reldens.items_group
 CREATE TABLE IF NOT EXISTS `items_group` (
   `id` int NOT NULL AUTO_INCREMENT,
   `key` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
@@ -435,7 +435,7 @@ CREATE TABLE IF NOT EXISTS `items_group` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci COMMENT='The group table is to save the groups settings.';
 
--- Dumping data for table items_group: ~6 rows (approximately)
+-- Dumping data for table reldens.items_group: ~6 rows (approximately)
 INSERT INTO `items_group` (`id`, `key`, `label`, `description`, `files_name`, `sort`, `items_limit`, `limit_per_item`) VALUES
 	(1, 'weapon', 'Weapon', 'All kinds of weapons.', 'weapon.png', 2, 1, 0),
 	(2, 'shield', 'Shield', 'Protect with these items.', 'shield.png', 3, 1, 0),
@@ -444,7 +444,7 @@ INSERT INTO `items_group` (`id`, `key`, `label`, `description`, `files_name`, `s
 	(5, 'gauntlets', 'Gauntlets', '', 'gauntlets.png', 5, 1, 0),
 	(6, 'helmet', 'Helmet', '', 'helmet.png', 1, 1, 0);
 
--- Dumping structure for table items_inventory
+-- Dumping structure for table reldens.items_inventory
 CREATE TABLE IF NOT EXISTS `items_inventory` (
   `id` int NOT NULL AUTO_INCREMENT,
   `owner_id` int NOT NULL,
@@ -457,9 +457,9 @@ CREATE TABLE IF NOT EXISTS `items_inventory` (
   CONSTRAINT `FK_items_inventory_items_item` FOREIGN KEY (`item_id`) REFERENCES `items_item` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci COMMENT='Inventory table is to save the items for each owner.';
 
--- Dumping data for table items_inventory: ~3 rows (approximately)
+-- Dumping data for table reldens.items_inventory: ~2 rows (approximately)
 
--- Dumping structure for table items_item
+-- Dumping structure for table reldens.items_item
 CREATE TABLE IF NOT EXISTS `items_item` (
   `id` int NOT NULL AUTO_INCREMENT,
   `key` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
@@ -479,7 +479,7 @@ CREATE TABLE IF NOT EXISTS `items_item` (
   CONSTRAINT `FK_items_item_items_group` FOREIGN KEY (`group_id`) REFERENCES `items_group` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci COMMENT='List of all available items in the system.';
 
--- Dumping data for table items_item: ~6 rows (approximately)
+-- Dumping data for table reldens.items_item: ~6 rows (approximately)
 INSERT INTO `items_item` (`id`, `key`, `type`, `group_id`, `label`, `description`, `qty_limit`, `uses_limit`, `useTimeOut`, `execTimeOut`, `customData`) VALUES
 	(1, 'coins', 3, NULL, 'Coins', NULL, 0, 1, NULL, NULL, NULL),
 	(2, 'branch', 0, NULL, 'Tree branch', 'An useless tree branch (for now)', 0, 1, NULL, NULL, '{"autoRemoveItemOnZeroQty":true}'),
@@ -488,7 +488,7 @@ INSERT INTO `items_item` (`id`, `key`, `type`, `group_id`, `label`, `description
 	(5, 'spear', 4, 1, 'Spear', 'A short distance but powerful weapon.', 0, 0, NULL, NULL, '{"animationData":{"frameWidth":64,"frameHeight":64,"start":6,"end":11,"repeat":0,"hide":true,"destroyOnComplete":true,"usePlayerPosition":true,"closeInventoryOnUse":true,"followPlayer":true,"startsOnTarget":true}}'),
 	(6, 'magic_potion_20', 5, NULL, 'Magic Potion', 'A magic potion that will restore 20 MP.', 0, 1, NULL, NULL, '{"removeAfterUse":true,"animationData":{"frameWidth":64,"frameHeight":64,"start":6,"end":11,"repeat":0,"hide":true,"destroyOnComplete":true,"usePlayerPosition":true,"closeInventoryOnUse":true,"followPlayer":true,"startsOnTarget":true}}');
 
--- Dumping structure for table items_item_modifiers
+-- Dumping structure for table reldens.items_item_modifiers
 CREATE TABLE IF NOT EXISTS `items_item_modifiers` (
   `id` int NOT NULL AUTO_INCREMENT,
   `item_id` int NOT NULL,
@@ -502,14 +502,14 @@ CREATE TABLE IF NOT EXISTS `items_item_modifiers` (
   CONSTRAINT `FK_items_item_modifiers_items_item` FOREIGN KEY (`item_id`) REFERENCES `items_item` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci COMMENT='Modifiers is the way we will affect the item owner.';
 
--- Dumping data for table items_item_modifiers: ~4 rows (approximately)
+-- Dumping data for table reldens.items_item_modifiers: ~4 rows (approximately)
 INSERT INTO `items_item_modifiers` (`id`, `item_id`, `key`, `property_key`, `operation`, `value`, `maxProperty`) VALUES
 	(1, 4, 'atk', 'stats/atk', 5, '5', NULL),
 	(2, 3, 'heal_potion_20', 'stats/hp', 1, '20', 'statsBase/hp'),
 	(3, 5, 'atk', 'stats/atk', 5, '3', NULL),
 	(4, 6, 'magic_potion_20', 'stats/mp', 1, '20', 'statsBase/mp');
 
--- Dumping structure for table objects
+-- Dumping structure for table reldens.objects
 CREATE TABLE IF NOT EXISTS `objects` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `room_id` int unsigned NOT NULL,
@@ -529,7 +529,7 @@ CREATE TABLE IF NOT EXISTS `objects` (
   CONSTRAINT `FK_objects_rooms` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table objects: ~9 rows (approximately)
+-- Dumping data for table reldens.objects: ~9 rows (approximately)
 INSERT INTO `objects` (`id`, `room_id`, `layer_name`, `tile_index`, `object_class_key`, `client_key`, `title`, `private_params`, `client_params`, `enabled`) VALUES
 	(1, 4, 'ground-collisions', 444, 'door_1', 'door_house_1', '', NULL, NULL, 1),
 	(4, 4, 'ground-collisions', 951, 'door_2', 'door_house_2', '', NULL, NULL, 1),
@@ -541,7 +541,7 @@ INSERT INTO `objects` (`id`, `room_id`, `layer_name`, `tile_index`, `object_clas
 	(12, 4, 'house-collisions-over-player', 562, 'npc_4', 'weapons_master_1', 'Barrik', '{"runOnAction":true,"playerVisible":true,"sendInvalidOptionMessage":true}', '{"content":"Hi, I am the weapons master, choose your weapon and go kill some monsters!","options":{"op1":{"key":"axe","label":"Axe","value":1,"icon":"axe"},"op2":{"key":"spear","label":"Spear","value":2,"icon":"spear"}},"ui":true}', 1),
 	(13, 5, 'forest-collisions', 258, 'npc_5', 'quest_npc_1', 'Miles', '{"runOnAction":true,"playerVisible":true,"sendInvalidOptionMessage":true}', '{"content":"Hi there! Do you want a coin? I can give you one if you give me a tree branch.","options":{"op1":{"label":"Sure!","value":1},"op2":{"label":"No, thank you.","value":2}},"ui":true}', 1);
 
--- Dumping structure for table objects_animations
+-- Dumping structure for table reldens.objects_animations
 CREATE TABLE IF NOT EXISTS `objects_animations` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `object_id` int unsigned NOT NULL,
@@ -554,14 +554,14 @@ CREATE TABLE IF NOT EXISTS `objects_animations` (
   CONSTRAINT `FK_objects_animations_objects` FOREIGN KEY (`object_id`) REFERENCES `objects` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table objects_animations: ~4 rows (approximately)
+-- Dumping data for table reldens.objects_animations: ~4 rows (approximately)
 INSERT INTO `objects_animations` (`id`, `object_id`, `animationKey`, `animationData`) VALUES
 	(5, 6, 'respawn-area-monsters-lvl-1-2_6_right', '{"start":6,"end":8}'),
 	(6, 6, 'respawn-area-monsters-lvl-1-2_6_down', '{"start":0,"end":2}'),
 	(7, 6, 'respawn-area-monsters-lvl-1-2_6_left', '{"start":3,"end":5}'),
 	(8, 6, 'respawn-area-monsters-lvl-1-2_6_up', '{"start":9,"end":11}');
 
--- Dumping structure for table objects_assets
+-- Dumping structure for table reldens.objects_assets
 CREATE TABLE IF NOT EXISTS `objects_assets` (
   `object_asset_id` int unsigned NOT NULL AUTO_INCREMENT,
   `object_id` int unsigned NOT NULL,
@@ -575,7 +575,7 @@ CREATE TABLE IF NOT EXISTS `objects_assets` (
   CONSTRAINT `FK_objects_assets_objects` FOREIGN KEY (`object_id`) REFERENCES `objects` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=latin1;
 
--- Dumping data for table objects_assets: ~8 rows (approximately)
+-- Dumping data for table reldens.objects_assets: ~8 rows (approximately)
 INSERT INTO `objects_assets` (`object_asset_id`, `object_id`, `asset_type`, `asset_key`, `file_1`, `file_2`, `extra_params`) VALUES
 	(1, 1, 'spritesheet', 'door_house_1', 'door-a-x2', NULL, '{"frameWidth":32,"frameHeight":58}'),
 	(2, 4, 'spritesheet', 'door_house_2', 'door-a-x2', NULL, '{"frameWidth":32,"frameHeight":58}'),
@@ -587,7 +587,7 @@ INSERT INTO `objects_assets` (`object_asset_id`, `object_id`, `asset_type`, `ass
 	(10, 12, 'spritesheet', 'weapons_master_1', 'people-c-x2', NULL, '{"frameWidth":52,"frameHeight":71}'),
 	(11, 13, 'spritesheet', 'quest_npc_1', 'people-quest-npc', NULL, '{"frameWidth":52,"frameHeight":71}');
 
--- Dumping structure for table objects_items_inventory
+-- Dumping structure for table reldens.objects_items_inventory
 CREATE TABLE IF NOT EXISTS `objects_items_inventory` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `owner_id` int unsigned NOT NULL,
@@ -602,11 +602,11 @@ CREATE TABLE IF NOT EXISTS `objects_items_inventory` (
   CONSTRAINT `objects_items_inventory_ibfk_1` FOREIGN KEY (`item_id`) REFERENCES `items_item` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci ROW_FORMAT=COMPACT COMMENT='Inventory table is to save the items for each owner.';
 
--- Dumping data for table objects_items_inventory: ~0 rows (approximately)
+-- Dumping data for table reldens.objects_items_inventory: ~0 rows (approximately)
 INSERT INTO `objects_items_inventory` (`id`, `owner_id`, `item_id`, `qty`, `remaining_uses`, `is_active`) VALUES
 	(2, 10, 4, -1, -1, 0);
 
--- Dumping structure for table objects_items_requirements
+-- Dumping structure for table reldens.objects_items_requirements
 CREATE TABLE IF NOT EXISTS `objects_items_requirements` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `object_id` int unsigned NOT NULL,
@@ -617,11 +617,30 @@ CREATE TABLE IF NOT EXISTS `objects_items_requirements` (
   PRIMARY KEY (`id`),
   KEY `FK_objects_items_requirements_objects` (`object_id`),
   CONSTRAINT `FK_objects_items_requirements_objects` FOREIGN KEY (`object_id`) REFERENCES `objects` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table objects_items_requirements: ~0 rows (approximately)
+-- Dumping data for table reldens.objects_items_requirements: ~1 rows (approximately)
+INSERT INTO `objects_items_requirements` (`id`, `object_id`, `item_key`, `required_item_key`, `required_quantity`, `auto_remove_requirement`) VALUES
+	(1, 10, 'axe', 'coins', 2, 1);
 
--- Dumping structure for table players
+-- Dumping structure for table reldens.objects_items_rewards
+CREATE TABLE IF NOT EXISTS `objects_items_rewards` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `object_id` int unsigned NOT NULL,
+  `item_key` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+  `reward_item_key` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+  `reward_quantity` int unsigned NOT NULL DEFAULT '0',
+  `reward_item_is_required` int unsigned NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`) USING BTREE,
+  KEY `FK_objects_items_requirements_objects` (`object_id`) USING BTREE,
+  CONSTRAINT `objects_items_rewards_ibfk_1` FOREIGN KEY (`object_id`) REFERENCES `objects` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci ROW_FORMAT=COMPACT;
+
+-- Dumping data for table reldens.objects_items_rewards: ~1 rows (approximately)
+INSERT INTO `objects_items_rewards` (`id`, `object_id`, `item_key`, `reward_item_key`, `reward_quantity`, `reward_item_is_required`) VALUES
+	(1, 10, 'axe', 'coins', 1, 0);
+
+-- Dumping structure for table reldens.players
 CREATE TABLE IF NOT EXISTS `players` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `user_id` int unsigned NOT NULL,
@@ -633,11 +652,11 @@ CREATE TABLE IF NOT EXISTS `players` (
   CONSTRAINT `FK_players_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table players: ~1 rows (approximately)
+-- Dumping data for table reldens.players: ~1 rows (approximately)
 INSERT INTO `players` (`id`, `user_id`, `name`, `created_at`) VALUES
 	(1, 1, 'Darth', '2022-03-17 19:57:50');
 
--- Dumping structure for table players_state
+-- Dumping structure for table reldens.players_state
 CREATE TABLE IF NOT EXISTS `players_state` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `player_id` int unsigned NOT NULL,
@@ -652,11 +671,11 @@ CREATE TABLE IF NOT EXISTS `players_state` (
   CONSTRAINT `FK_player_state_rooms` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table players_state: ~1 rows (approximately)
+-- Dumping data for table reldens.players_state: ~1 rows (approximately)
 INSERT INTO `players_state` (`id`, `player_id`, `room_id`, `x`, `y`, `dir`) VALUES
-	(1, 1, 4, 1026, 466, 'left');
+	(1, 1, 4, 1068, 458, 'right');
 
--- Dumping structure for table players_stats
+-- Dumping structure for table reldens.players_stats
 CREATE TABLE IF NOT EXISTS `players_stats` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `player_id` int unsigned NOT NULL,
@@ -671,11 +690,11 @@ CREATE TABLE IF NOT EXISTS `players_stats` (
   CONSTRAINT `FK_players_current_stats_players_stats` FOREIGN KEY (`stat_id`) REFERENCES `stats` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=111 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table players_stats: ~10 rows (approximately)
+-- Dumping data for table reldens.players_stats: ~10 rows (approximately)
 INSERT INTO `players_stats` (`id`, `player_id`, `stat_id`, `base_value`, `value`) VALUES
 	(1, 1, 1, 280, 280),
 	(2, 1, 2, 280, 280),
-	(3, 1, 3, 280, 330),
+	(3, 1, 3, 280, 345),
 	(4, 1, 4, 280, 280),
 	(5, 1, 5, 100, 100),
 	(6, 1, 6, 100, 100),
@@ -684,7 +703,7 @@ INSERT INTO `players_stats` (`id`, `player_id`, `stat_id`, `base_value`, `value`
 	(9, 1, 9, 100, 100),
 	(10, 1, 10, 100, 100);
 
--- Dumping structure for table respawn
+-- Dumping structure for table reldens.respawn
 CREATE TABLE IF NOT EXISTS `respawn` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `object_id` int unsigned NOT NULL,
@@ -696,12 +715,12 @@ CREATE TABLE IF NOT EXISTS `respawn` (
   CONSTRAINT `FK_respawn_objects` FOREIGN KEY (`object_id`) REFERENCES `objects` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table respawn: ~2 rows (approximately)
+-- Dumping data for table reldens.respawn: ~2 rows (approximately)
 INSERT INTO `respawn` (`id`, `object_id`, `respawn_time`, `instances_limit`, `layer`) VALUES
 	(3, 6, 20000, 2, 'respawn-area-monsters-lvl-1-2'),
 	(4, 7, 10000, 3, 'respawn-area-monsters-lvl-1-2');
 
--- Dumping structure for table rooms
+-- Dumping structure for table reldens.rooms
 CREATE TABLE IF NOT EXISTS `rooms` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `name` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
@@ -714,7 +733,7 @@ CREATE TABLE IF NOT EXISTS `rooms` (
   UNIQUE KEY `key` (`name`)
 ) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table rooms: ~5 rows (approximately)
+-- Dumping data for table reldens.rooms: ~5 rows (approximately)
 INSERT INTO `rooms` (`id`, `name`, `title`, `map_filename`, `scene_images`, `room_class_key`, `customData`) VALUES
 	(2, 'ReldensHouse_1', 'House - 1', 'reldens-house-1', 'reldens-house-1', NULL, NULL),
 	(3, 'ReldensHouse_2', 'House - 2', 'reldens-house-2', 'reldens-house-2', NULL, NULL),
@@ -723,7 +742,7 @@ INSERT INTO `rooms` (`id`, `name`, `title`, `map_filename`, `scene_images`, `roo
 	(6, 'ReldensHouse_1b', 'House - 1 - Floor 2', 'reldens-house-1-2d-floor', 'reldens-house-1-2d-floor', NULL, NULL),
 	(7, 'TopDownRoom', 'Gravity World!', 'reldens-gravity', 'reldens-gravity', 'SceneGravity', '{"gravity":[0,625],"applyGravity":true,"allowPassWallsFromBelow":true, "timeStep":0.012}');
 
--- Dumping structure for table rooms_change_points
+-- Dumping structure for table reldens.rooms_change_points
 CREATE TABLE IF NOT EXISTS `rooms_change_points` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `room_id` int unsigned NOT NULL,
@@ -737,7 +756,7 @@ CREATE TABLE IF NOT EXISTS `rooms_change_points` (
   CONSTRAINT `FK_rooms_change_points_rooms_2` FOREIGN KEY (`next_room_id`) REFERENCES `rooms` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table rooms_change_points: ~17 rows (approximately)
+-- Dumping data for table reldens.rooms_change_points: ~17 rows (approximately)
 INSERT INTO `rooms_change_points` (`id`, `room_id`, `tile_index`, `next_room_id`) VALUES
 	(1, 2, 816, 4),
 	(2, 2, 817, 4),
@@ -757,7 +776,7 @@ INSERT INTO `rooms_change_points` (`id`, `room_id`, `tile_index`, `next_room_id`
 	(16, 3, 500, 7),
 	(17, 3, 780, 7);
 
--- Dumping structure for table rooms_return_points
+-- Dumping structure for table reldens.rooms_return_points
 CREATE TABLE IF NOT EXISTS `rooms_return_points` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `room_id` int unsigned NOT NULL,
@@ -773,7 +792,7 @@ CREATE TABLE IF NOT EXISTS `rooms_return_points` (
   CONSTRAINT `FK_rooms_return_points_rooms_room_id` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table rooms_return_points: ~10 rows (approximately)
+-- Dumping data for table reldens.rooms_return_points: ~10 rows (approximately)
 INSERT INTO `rooms_return_points` (`id`, `room_id`, `direction`, `x`, `y`, `is_default`, `from_room_id`) VALUES
 	(1, 2, 'up', 548, 615, 0, 4),
 	(2, 3, 'up', 640, 600, 1, NULL),
@@ -785,7 +804,7 @@ INSERT INTO `rooms_return_points` (`id`, `room_id`, `direction`, `x`, `y`, `is_d
 	(11, 2, 'left', 720, 540, 0, 6),
 	(12, 7, 'left', 340, 600, 0, NULL);
 
--- Dumping structure for table skills_class_level_up_animations
+-- Dumping structure for table reldens.skills_class_level_up_animations
 CREATE TABLE IF NOT EXISTS `skills_class_level_up_animations` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `class_path_id` int unsigned DEFAULT NULL,
@@ -798,11 +817,11 @@ CREATE TABLE IF NOT EXISTS `skills_class_level_up_animations` (
   CONSTRAINT `FK_skills_class_level_up_skills_levels` FOREIGN KEY (`level_id`) REFERENCES `skills_levels` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table skills_class_level_up_animations: ~0 rows (approximately)
+-- Dumping data for table reldens.skills_class_level_up_animations: ~0 rows (approximately)
 INSERT INTO `skills_class_level_up_animations` (`id`, `class_path_id`, `level_id`, `animationData`) VALUES
 	(1, NULL, NULL, '{"enabled":true,"type":"spritesheet","img":"heal_cast","frameWidth":64,"frameHeight":70,"start":0,"end":3,"repeat":-1,"destroyTime":2000,"depthByPlayer":"above"}');
 
--- Dumping structure for table skills_class_path
+-- Dumping structure for table reldens.skills_class_path
 CREATE TABLE IF NOT EXISTS `skills_class_path` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `key` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
@@ -814,7 +833,7 @@ CREATE TABLE IF NOT EXISTS `skills_class_path` (
   CONSTRAINT `FK_skills_class_path_skills_levels_set` FOREIGN KEY (`levels_set_id`) REFERENCES `skills_levels_set` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table skills_class_path: ~5 rows (approximately)
+-- Dumping data for table reldens.skills_class_path: ~5 rows (approximately)
 INSERT INTO `skills_class_path` (`id`, `key`, `label`, `levels_set_id`) VALUES
 	(1, 'journeyman', 'Journeyman', 1),
 	(2, 'sorcerer', 'Sorcerer', 2),
@@ -822,7 +841,7 @@ INSERT INTO `skills_class_path` (`id`, `key`, `label`, `levels_set_id`) VALUES
 	(4, 'swordsman', 'Swordsman', 4),
 	(5, 'warrior', 'Warrior', 5);
 
--- Dumping structure for table skills_class_path_level_labels
+-- Dumping structure for table reldens.skills_class_path_level_labels
 CREATE TABLE IF NOT EXISTS `skills_class_path_level_labels` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `class_path_id` int unsigned NOT NULL,
@@ -836,7 +855,7 @@ CREATE TABLE IF NOT EXISTS `skills_class_path_level_labels` (
   CONSTRAINT `FK_skills_class_path_level_labels_skills_levels` FOREIGN KEY (`level_id`) REFERENCES `skills_levels` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table skills_class_path_level_labels: ~5 rows (approximately)
+-- Dumping data for table reldens.skills_class_path_level_labels: ~5 rows (approximately)
 INSERT INTO `skills_class_path_level_labels` (`id`, `class_path_id`, `level_id`, `label`) VALUES
 	(1, 1, 3, 'Old Traveler'),
 	(2, 2, 7, 'Fire Master'),
@@ -844,7 +863,7 @@ INSERT INTO `skills_class_path_level_labels` (`id`, `class_path_id`, `level_id`,
 	(4, 4, 15, 'Blade Master'),
 	(5, 5, 19, 'Palading');
 
--- Dumping structure for table skills_class_path_level_skills
+-- Dumping structure for table reldens.skills_class_path_level_skills
 CREATE TABLE IF NOT EXISTS `skills_class_path_level_skills` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `class_path_id` int unsigned NOT NULL,
@@ -860,7 +879,7 @@ CREATE TABLE IF NOT EXISTS `skills_class_path_level_skills` (
   CONSTRAINT `FK_skills_class_path_level_skills_skills_skill` FOREIGN KEY (`skill_id`) REFERENCES `skills_skill` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table skills_class_path_level_skills: ~15 rows (approximately)
+-- Dumping data for table reldens.skills_class_path_level_skills: ~15 rows (approximately)
 INSERT INTO `skills_class_path_level_skills` (`id`, `class_path_id`, `level_id`, `skill_id`) VALUES
 	(1, 1, 1, 2),
 	(2, 1, 3, 1),
@@ -878,7 +897,7 @@ INSERT INTO `skills_class_path_level_skills` (`id`, `class_path_id`, `level_id`,
 	(14, 5, 19, 1),
 	(15, 5, 20, 4);
 
--- Dumping structure for table skills_groups
+-- Dumping structure for table reldens.skills_groups
 CREATE TABLE IF NOT EXISTS `skills_groups` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `key` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
@@ -888,9 +907,9 @@ CREATE TABLE IF NOT EXISTS `skills_groups` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table skills_groups: ~0 rows (approximately)
+-- Dumping data for table reldens.skills_groups: ~0 rows (approximately)
 
--- Dumping structure for table skills_levels
+-- Dumping structure for table reldens.skills_levels
 CREATE TABLE IF NOT EXISTS `skills_levels` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `key` int unsigned NOT NULL,
@@ -903,7 +922,7 @@ CREATE TABLE IF NOT EXISTS `skills_levels` (
   CONSTRAINT `FK_skills_levels_skills_levels_set` FOREIGN KEY (`level_set_id`) REFERENCES `skills_levels_set` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table skills_levels: ~20 rows (approximately)
+-- Dumping data for table reldens.skills_levels: ~20 rows (approximately)
 INSERT INTO `skills_levels` (`id`, `key`, `label`, `required_experience`, `level_set_id`) VALUES
 	(1, 1, '1', 0, 1),
 	(2, 2, '2', 100, 1),
@@ -926,7 +945,7 @@ INSERT INTO `skills_levels` (`id`, `key`, `label`, `required_experience`, `level
 	(19, 5, '5', 338, 5),
 	(20, 10, '10', 2570, 5);
 
--- Dumping structure for table skills_levels_modifiers
+-- Dumping structure for table reldens.skills_levels_modifiers
 CREATE TABLE IF NOT EXISTS `skills_levels_modifiers` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `level_id` int unsigned NOT NULL,
@@ -944,7 +963,7 @@ CREATE TABLE IF NOT EXISTS `skills_levels_modifiers` (
   CONSTRAINT `FK_skills_levels_modifiers_skills_levels` FOREIGN KEY (`level_id`) REFERENCES `skills_levels` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=121 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci COMMENT='Modifiers table.';
 
--- Dumping data for table skills_levels_modifiers: ~120 rows (approximately)
+-- Dumping data for table reldens.skills_levels_modifiers: ~120 rows (approximately)
 INSERT INTO `skills_levels_modifiers` (`id`, `level_id`, `key`, `property_key`, `operation`, `value`, `minValue`, `maxValue`, `minProperty`, `maxProperty`) VALUES
 	(1, 2, 'inc_atk', 'stats/atk', 1, '10', NULL, NULL, NULL, NULL),
 	(2, 2, 'inc_def', 'stats/def', 1, '10', NULL, NULL, NULL, NULL),
@@ -1067,7 +1086,7 @@ INSERT INTO `skills_levels_modifiers` (`id`, `level_id`, `key`, `property_key`, 
 	(119, 20, 'inc_hp', 'statsBase/hp', 1, '50', NULL, NULL, NULL, NULL),
 	(120, 20, 'inc_mp', 'statsBase/mp', 1, '50', NULL, NULL, NULL, NULL);
 
--- Dumping structure for table skills_levels_modifiers_conditions
+-- Dumping structure for table reldens.skills_levels_modifiers_conditions
 CREATE TABLE IF NOT EXISTS `skills_levels_modifiers_conditions` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `levels_modifier_id` int unsigned NOT NULL,
@@ -1080,9 +1099,9 @@ CREATE TABLE IF NOT EXISTS `skills_levels_modifiers_conditions` (
   CONSTRAINT `FK_skills_levels_modifiers_conditions_skills_levels_modifiers` FOREIGN KEY (`levels_modifier_id`) REFERENCES `skills_levels_modifiers` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf32 COLLATE=utf32_unicode_ci;
 
--- Dumping data for table skills_levels_modifiers_conditions: ~0 rows (approximately)
+-- Dumping data for table reldens.skills_levels_modifiers_conditions: ~0 rows (approximately)
 
--- Dumping structure for table skills_levels_set
+-- Dumping structure for table reldens.skills_levels_set
 CREATE TABLE IF NOT EXISTS `skills_levels_set` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `autoFillRanges` int unsigned NOT NULL DEFAULT '0',
@@ -1090,7 +1109,7 @@ CREATE TABLE IF NOT EXISTS `skills_levels_set` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table skills_levels_set: ~5 rows (approximately)
+-- Dumping data for table reldens.skills_levels_set: ~5 rows (approximately)
 INSERT INTO `skills_levels_set` (`id`, `autoFillRanges`, `autoFillExperienceMultiplier`) VALUES
 	(1, 1, NULL),
 	(2, 1, NULL),
@@ -1098,7 +1117,7 @@ INSERT INTO `skills_levels_set` (`id`, `autoFillRanges`, `autoFillExperienceMult
 	(4, 1, NULL),
 	(5, 1, NULL);
 
--- Dumping structure for table skills_owners_class_path
+-- Dumping structure for table reldens.skills_owners_class_path
 CREATE TABLE IF NOT EXISTS `skills_owners_class_path` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `class_path_id` int unsigned NOT NULL,
@@ -1110,11 +1129,11 @@ CREATE TABLE IF NOT EXISTS `skills_owners_class_path` (
   CONSTRAINT `FK_skills_owners_class_path_skills_class_path` FOREIGN KEY (`class_path_id`) REFERENCES `skills_class_path` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table skills_owners_class_path: ~1 rows (approximately)
+-- Dumping data for table reldens.skills_owners_class_path: ~1 rows (approximately)
 INSERT INTO `skills_owners_class_path` (`id`, `class_path_id`, `owner_id`, `currentLevel`, `currentExp`) VALUES
 	(1, 1, 1, 10, 6330);
 
--- Dumping structure for table skills_skill
+-- Dumping structure for table reldens.skills_skill
 CREATE TABLE IF NOT EXISTS `skills_skill` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `key` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
@@ -1138,14 +1157,14 @@ CREATE TABLE IF NOT EXISTS `skills_skill` (
   UNIQUE KEY `key` (`key`) USING BTREE
 ) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table skills_skill: ~4 rows (approximately)
+-- Dumping data for table reldens.skills_skill: ~4 rows (approximately)
 INSERT INTO `skills_skill` (`id`, `key`, `type`, `autoValidation`, `skillDelay`, `castTime`, `usesLimit`, `range`, `rangeAutomaticValidation`, `rangePropertyX`, `rangePropertyY`, `rangeTargetPropertyX`, `rangeTargetPropertyY`, `allowSelfTarget`, `criticalChance`, `criticalMultiplier`, `criticalFixedValue`, `customData`) VALUES
 	(1, 'attackBullet', '4', 0, 1000, 0, 0, 250, 1, 'state/x', 'state/y', NULL, NULL, 0, 10, 2, 0, NULL),
 	(2, 'attackShort', '2', 0, 600, 0, 0, 50, 1, 'state/x', 'state/y', NULL, NULL, 0, 10, 2, 0, NULL),
 	(3, 'fireball', '4', 0, 1500, 2000, 0, 280, 1, 'state/x', 'state/y', NULL, NULL, 0, 10, 2, 0, NULL),
 	(4, 'heal', '3', 0, 1500, 2000, 0, 100, 1, 'state/x', 'state/y', NULL, NULL, 1, 0, 1, 0, NULL);
 
--- Dumping structure for table skills_skill_animations
+-- Dumping structure for table reldens.skills_skill_animations
 CREATE TABLE IF NOT EXISTS `skills_skill_animations` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `skill_id` int unsigned NOT NULL,
@@ -1160,14 +1179,14 @@ CREATE TABLE IF NOT EXISTS `skills_skill_animations` (
   CONSTRAINT `FK_skills_skill_animations_skills_skill` FOREIGN KEY (`skill_id`) REFERENCES `skills_skill` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table skills_skill_animations: ~4 rows (approximately)
+-- Dumping data for table reldens.skills_skill_animations: ~4 rows (approximately)
 INSERT INTO `skills_skill_animations` (`id`, `skill_id`, `key`, `classKey`, `animationData`) VALUES
 	(1, 3, 'bullet', NULL, '{"enabled":true,"type":"spritesheet","img":"fireball_bullet","frameWidth":64,"frameHeight":64,"start":0,"end":3,"repeat":-1,"rate":1,"dir":3}'),
 	(2, 3, 'cast', NULL, '{"enabled":true,"type":"spritesheet","img":"fireball_cast","frameWidth":64,"frameHeight":70,"start":0,"end":3,"repeat":-1,"destroyTime":2000,"depthByPlayer":"above"}'),
 	(3, 4, 'cast', NULL, '{"enabled":true,"type":"spritesheet","img":"heal_cast","frameWidth":64,"frameHeight":70,"start":0,"end":3,"repeat":-1,"destroyTime":2000}'),
 	(6, 4, 'hit', NULL, '{"enabled":true,"type":"spritesheet","img":"heal_hit","frameWidth":64,"frameHeight":70,"start":0,"end":4,"repeat":0,"depthByPlayer":"above"}');
 
--- Dumping structure for table skills_skill_attack
+-- Dumping structure for table reldens.skills_skill_attack
 CREATE TABLE IF NOT EXISTS `skills_skill_attack` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `skill_id` int unsigned NOT NULL,
@@ -1188,13 +1207,13 @@ CREATE TABLE IF NOT EXISTS `skills_skill_attack` (
   CONSTRAINT `FK__skills_skill_attack` FOREIGN KEY (`skill_id`) REFERENCES `skills_skill` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table skills_skill_attack: ~3 rows (approximately)
+-- Dumping data for table reldens.skills_skill_attack: ~3 rows (approximately)
 INSERT INTO `skills_skill_attack` (`id`, `skill_id`, `affectedProperty`, `allowEffectBelowZero`, `hitDamage`, `applyDirectDamage`, `attackProperties`, `defenseProperties`, `aimProperties`, `dodgeProperties`, `dodgeFullEnabled`, `dodgeOverAimSuccess`, `damageAffected`, `criticalAffected`) VALUES
 	(1, 1, 'stats/hp', 0, 3, 0, 'stats/atk,stats/stamina,stats/speed', 'stats/def,stats/stamina,stats/speed', 'stats/aim', 'stats/dodge', 1, 2, 0, 0),
 	(2, 2, 'stats/hp', 0, 5, 0, 'stats/atk,stats/stamina,stats/speed', 'stats/def,stats/stamina,stats/speed', 'stats/aim', 'stats/dodge', 1, 2, 0, 0),
 	(3, 3, 'stats/hp', 0, 7, 0, 'stats/atk,stats/stamina,stats/speed', 'stats/def,stats/stamina,stats/speed', 'stats/aim', 'stats/dodge', 1, 2, 0, 0);
 
--- Dumping structure for table skills_skill_group_relation
+-- Dumping structure for table reldens.skills_skill_group_relation
 CREATE TABLE IF NOT EXISTS `skills_skill_group_relation` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `skill_id` int unsigned NOT NULL,
@@ -1206,9 +1225,9 @@ CREATE TABLE IF NOT EXISTS `skills_skill_group_relation` (
   CONSTRAINT `FK__skills_skill` FOREIGN KEY (`skill_id`) REFERENCES `skills_skill` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table skills_skill_group_relation: ~0 rows (approximately)
+-- Dumping data for table reldens.skills_skill_group_relation: ~0 rows (approximately)
 
--- Dumping structure for table skills_skill_owner_conditions
+-- Dumping structure for table reldens.skills_skill_owner_conditions
 CREATE TABLE IF NOT EXISTS `skills_skill_owner_conditions` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `skill_id` int unsigned NOT NULL,
@@ -1221,11 +1240,11 @@ CREATE TABLE IF NOT EXISTS `skills_skill_owner_conditions` (
   CONSTRAINT `FK_skills_skill_owner_conditions_skills_skill` FOREIGN KEY (`skill_id`) REFERENCES `skills_skill` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf32 COLLATE=utf32_unicode_ci;
 
--- Dumping data for table skills_skill_owner_conditions: ~0 rows (approximately)
+-- Dumping data for table reldens.skills_skill_owner_conditions: ~0 rows (approximately)
 INSERT INTO `skills_skill_owner_conditions` (`id`, `skill_id`, `key`, `property_key`, `conditional`, `value`) VALUES
 	(1, 3, 'available_mp', 'stats/mp', 'ge', '5');
 
--- Dumping structure for table skills_skill_owner_effects
+-- Dumping structure for table reldens.skills_skill_owner_effects
 CREATE TABLE IF NOT EXISTS `skills_skill_owner_effects` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `skill_id` int unsigned NOT NULL,
@@ -1242,11 +1261,11 @@ CREATE TABLE IF NOT EXISTS `skills_skill_owner_effects` (
   CONSTRAINT `FK_skills_skill_owner_effects_skills_skill` FOREIGN KEY (`skill_id`) REFERENCES `skills_skill` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci COMMENT='Modifiers table.';
 
--- Dumping data for table skills_skill_owner_effects: ~0 rows (approximately)
+-- Dumping data for table reldens.skills_skill_owner_effects: ~0 rows (approximately)
 INSERT INTO `skills_skill_owner_effects` (`id`, `skill_id`, `key`, `property_key`, `operation`, `value`, `minValue`, `maxValue`, `minProperty`, `maxProperty`) VALUES
 	(2, 3, 'dec_mp', 'stats/mp', 2, '5', '0', '', NULL, NULL);
 
--- Dumping structure for table skills_skill_owner_effects_conditions
+-- Dumping structure for table reldens.skills_skill_owner_effects_conditions
 CREATE TABLE IF NOT EXISTS `skills_skill_owner_effects_conditions` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `skill_owner_effect_id` int unsigned NOT NULL,
@@ -1259,9 +1278,9 @@ CREATE TABLE IF NOT EXISTS `skills_skill_owner_effects_conditions` (
   CONSTRAINT `FK_skills_skill_owner_effects_conditions_skill_owner_effects` FOREIGN KEY (`skill_owner_effect_id`) REFERENCES `skills_skill_owner_effects` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf32 COLLATE=utf32_unicode_ci;
 
--- Dumping data for table skills_skill_owner_effects_conditions: ~0 rows (approximately)
+-- Dumping data for table reldens.skills_skill_owner_effects_conditions: ~0 rows (approximately)
 
--- Dumping structure for table skills_skill_physical_data
+-- Dumping structure for table reldens.skills_skill_physical_data
 CREATE TABLE IF NOT EXISTS `skills_skill_physical_data` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `skill_id` int unsigned NOT NULL,
@@ -1274,12 +1293,12 @@ CREATE TABLE IF NOT EXISTS `skills_skill_physical_data` (
   CONSTRAINT `FK_skills_skill_physical_data_skills_skill` FOREIGN KEY (`skill_id`) REFERENCES `skills_skill` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table skills_skill_physical_data: ~2 rows (approximately)
+-- Dumping data for table reldens.skills_skill_physical_data: ~2 rows (approximately)
 INSERT INTO `skills_skill_physical_data` (`id`, `skill_id`, `magnitude`, `objectWidth`, `objectHeight`, `validateTargetOnHit`) VALUES
 	(1, 1, 350, 5, 5, 0),
 	(2, 3, 550, 5, 5, 0);
 
--- Dumping structure for table skills_skill_target_effects
+-- Dumping structure for table reldens.skills_skill_target_effects
 CREATE TABLE IF NOT EXISTS `skills_skill_target_effects` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `skill_id` int unsigned NOT NULL,
@@ -1296,11 +1315,11 @@ CREATE TABLE IF NOT EXISTS `skills_skill_target_effects` (
   CONSTRAINT `FK_skills_skill_effect_modifiers` FOREIGN KEY (`skill_id`) REFERENCES `skills_skill` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci COMMENT='Modifiers table.';
 
--- Dumping data for table skills_skill_target_effects: ~0 rows (approximately)
+-- Dumping data for table reldens.skills_skill_target_effects: ~0 rows (approximately)
 INSERT INTO `skills_skill_target_effects` (`id`, `skill_id`, `key`, `property_key`, `operation`, `value`, `minValue`, `maxValue`, `minProperty`, `maxProperty`) VALUES
 	(1, 4, 'heal', 'stats/hp', 1, '10', '0', '0', NULL, 'statsBase/hp');
 
--- Dumping structure for table skills_skill_target_effects_conditions
+-- Dumping structure for table reldens.skills_skill_target_effects_conditions
 CREATE TABLE IF NOT EXISTS `skills_skill_target_effects_conditions` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `skill_target_effect_id` int unsigned NOT NULL,
@@ -1313,9 +1332,9 @@ CREATE TABLE IF NOT EXISTS `skills_skill_target_effects_conditions` (
   CONSTRAINT `FK_skills_skill_target_effects_conditions_skill_target_effects` FOREIGN KEY (`skill_target_effect_id`) REFERENCES `skills_skill_target_effects` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf32 COLLATE=utf32_unicode_ci;
 
--- Dumping data for table skills_skill_target_effects_conditions: ~0 rows (approximately)
+-- Dumping data for table reldens.skills_skill_target_effects_conditions: ~0 rows (approximately)
 
--- Dumping structure for table stats
+-- Dumping structure for table reldens.stats
 CREATE TABLE IF NOT EXISTS `stats` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `key` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
@@ -1327,7 +1346,7 @@ CREATE TABLE IF NOT EXISTS `stats` (
   UNIQUE KEY `key` (`key`) USING BTREE
 ) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table stats: ~10 rows (approximately)
+-- Dumping data for table reldens.stats: ~10 rows (approximately)
 INSERT INTO `stats` (`id`, `key`, `label`, `description`, `base_value`, `customData`) VALUES
 	(1, 'hp', 'HP', 'Player life points', 100, '{"showBase":true}'),
 	(2, 'mp', 'MP', 'Player magic points', 100, '{"showBase":true}'),
@@ -1340,7 +1359,7 @@ INSERT INTO `stats` (`id`, `key`, `label`, `description`, `base_value`, `customD
 	(9, 'mgk-atk', 'Magic Atk', 'Player magic attack', 100, NULL),
 	(10, 'mgk-def', 'Magic Def', 'Player magic defense', 100, NULL);
 
--- Dumping structure for table users
+-- Dumping structure for table reldens.users
 CREATE TABLE IF NOT EXISTS `users` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `email` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
@@ -1356,9 +1375,9 @@ CREATE TABLE IF NOT EXISTS `users` (
   UNIQUE KEY `username` (`username`)
 ) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=latin1;
 
--- Dumping data for table users: ~1 rows (approximately)
+-- Dumping data for table reldens.users: ~1 rows (approximately)
 INSERT INTO `users` (`id`, `email`, `username`, `password`, `role_id`, `status`, `created_at`, `updated_at`, `played_time`) VALUES
-	(1, 'dap@dap.com', 'dap', '$2b$10$RDnURyFoXo7.zcFKVhNcuezJsXXYNslhPBNPzi.crbikFhG8Pnude', 1, '1', '2022-03-17 18:57:44', '2022-09-26 14:22:26', 116157);
+	(1, 'dap@dap.com', 'dap', '$2b$10$RDnURyFoXo7.zcFKVhNcuezJsXXYNslhPBNPzi.crbikFhG8Pnude', 1, '1', '2022-03-17 18:57:44', '2022-10-03 18:47:38', 125783);
 
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
