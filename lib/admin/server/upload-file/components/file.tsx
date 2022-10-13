@@ -1,3 +1,4 @@
+// @ts-ignore
 import React, {FC} from 'react';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import {Icon, Button, Box} from '@adminjs/design-system';
@@ -18,8 +19,8 @@ type SingleFileProps = {
 
 const SingleFile: FC<SingleFileProps> = (props) => {
     const {name, path, mimeType, width} = props;
-    if (path && path.length) {
-        if (mimeType && ImageMimeTypes.includes(mimeType as any)) {
+    if(path && path.length){
+        if(mimeType && ImageMimeTypes.includes(mimeType as any)){
             return (
                 <Box>
                     <span className="audio-file-name">{name}</span>
@@ -27,7 +28,7 @@ const SingleFile: FC<SingleFileProps> = (props) => {
                 </Box>
             );
         }
-        if (mimeType && AudioMimeTypes.includes(mimeType as any)) {
+        if(mimeType && AudioMimeTypes.includes(mimeType as any)){
             return (
                 <Box>
                     <span className="audio-file-name">{name}</span>
@@ -53,14 +54,14 @@ const SingleFile: FC<SingleFileProps> = (props) => {
 const File: FC<Props> = ({width, record, property}) => {
     const {custom} = property as unknown as { custom: PropertyCustom };
     const path = flat.get(record?.params, custom.filePathProperty);
-    if (!path) {
+    if(!path){
         return null;
     }
     const name = flat.get(
         record?.params,
         custom.fileNameProperty ? custom.fileNameProperty : custom.keyProperty,
     );
-    if (!property.custom.multiple) {
+    if(!property.custom.multiple){
         return <SingleFile
             path={record.params.bucketPath + name}
             name={name}

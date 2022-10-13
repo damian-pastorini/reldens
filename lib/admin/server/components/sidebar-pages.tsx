@@ -19,7 +19,7 @@ const SidebarPages: React.FC<Props> = (props) => {
     const location = useLocation();
     const history = useHistory();
 
-    if (!pages || !pages.length) {
+    if(!pages || !pages.length){
         return (<></>);
     }
 
@@ -33,7 +33,7 @@ const SidebarPages: React.FC<Props> = (props) => {
         href: h.pageUrl(page.name),
         onClick: (event, element): void => {
             event.preventDefault();
-            if (element.href) {
+            if(element.href){
                 history.push(element.href, {previousPage: window.location.href})
             }
         },
