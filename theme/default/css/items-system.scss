@@ -258,6 +258,57 @@
     }
 
 }
+.ui-box-npc-dialog.type-trader {
+    min-height: 200px;
+
+    .box-content {
+        min-height: 164px;
+    }
+}
+
+.trade-container {
+
+    .trade-row {
+        position: relative;
+        float: left;
+        display: block;
+        width: 100%;
+
+        &.trade-items-boxes {
+
+            .trade-col {
+                min-height: 138px;
+            }
+
+        }
+
+    }
+
+    .trade-col {
+        position: relative;
+        float: left;
+        display: block;
+        width: 46%;
+        min-width: 100px;
+        min-height: 25px;
+        margin: 0;
+        padding: 0 1%;
+
+        .confirm-action {
+            float: right;
+            min-height: 25px;
+        }
+
+    }
+
+    .trade-items-boxes {
+
+        .trade-col-1 {
+            border-right: 1px solid #fff;
+        }
+    }
+
+}
 
 .trade-item {
     height: 80px;
