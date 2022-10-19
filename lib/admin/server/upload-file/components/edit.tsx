@@ -15,11 +15,11 @@ const Edit: FC<EditPropertyProps> = ({property, record, onChange}) => {
     useEffect(() => {
         // It means that someone hit save and new file has been uploaded in this case fliesToUpload should be cleared.
         // This happens when user turns off redirect after new/edit.
-        if (
+        if(
             (typeof key === 'string' && key !== originalKey)
             || (typeof key !== 'string' && !originalKey)
             || (typeof key !== 'string' && Array.isArray(key) && key.length !== originalKey.length)
-        ) {
+        ){
             setOriginalKey(key);
             setFilesToUpload([]);
         }
@@ -37,9 +37,9 @@ const Edit: FC<EditPropertyProps> = ({property, record, onChange}) => {
     const handleMultiRemove = (singleKey) => {
         const index = (flat.get(record.params, custom.keyProperty) || []).indexOf(singleKey);
         const filesToDelete = flat.get(record.params, custom.filesToDeleteProperty) || [];
-        if (
+        if(
             path && path.length > 0
-        ) {
+        ){
             const newPath = path.map((currentPath, i) => (i !== index ? currentPath : null));
             let newParams = flat.set(
                 record.params,
