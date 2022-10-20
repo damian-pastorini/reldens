@@ -7,7 +7,7 @@
 const { PluginInterface } = require('reldens/lib/features/plugin-interface');
 const { Npc1 } = require('./objects/client/npc1');
 const { sc } = require('@reldens/utils');
-const { PhaserDriver } = require('reldens/lib/game/client/engine/phaser-driver')
+const { PhaserDriver } = require('reldens/lib/game/client/engine/phaser/phaser-driver')
 
 class ClientPlugin extends PluginInterface
 {
