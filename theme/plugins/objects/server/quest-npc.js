@@ -16,13 +16,12 @@ class QuestNpc extends NpcObject
 
     async executeMessageActions(client, data, room, playerSchema)
     {
-        await super.executeMessageActions(client, data, room, playerSchema);
-        let optionIdx = 'op'+data.value;
-        if(!this.isValidOption(data) || !this.isValidIndexValue(optionIdx, room, client)){
+        let superResult = await super.executeMessageActions(client, data, room, playerSchema);
+        if(false === superResult){
             return false;
         }
-        let selectedOption = this.options[optionIdx];
-        if(1 !== selectedOption.value){
+        let selectedOption = this.options[data.value];
+        if('1' !== (selectedOption.value).toString()){
             let activationData = {act: GameConst.UI, id: this.id, content: 'Ok...'};
             client.send('*', activationData);
             return;
