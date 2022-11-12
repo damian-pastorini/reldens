@@ -311,9 +311,28 @@
 }
 
 .trade-item {
-    height: 80px;
+    display: block;
+    position: relative;
+    height: auto;
 
-    .requirement-key img {
+    .trade-action-remove img {
+        max-width: 24px;
+        cursor: pointer;
+    }
+
+    input, button {
+        border: 0;
+        margin: 6px auto 2px;
+        width: 100%;
+        float: none;
+        position: relative;
+        display: block;
+        max-width: 100%;
+        text-align: center;
+        padding: 4px 0;
+    }
+
+    .requirement-key img, .reward-key img {
         max-width: 16px;
     }
 
