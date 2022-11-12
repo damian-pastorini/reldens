@@ -1,4 +1,4 @@
-<div class="item-box trade-item trade-item-{{tradeActionKey}}" id="trade-item-{{id}}">
+<div class="item-box trade-item trade-item-{{tradeActionKey}} trade-item-{{id}}">
     <div class="image-container">
         <img src="/assets/custom/items/{{key}}.png"/>
     </div>
@@ -15,7 +15,7 @@
     <div class="actions-container trade-actions">
         {{&tradeAction}}
     </div>
-    <div class="item-qty" id="item-qty-{{id}}">
-        <input type="number" value="{{quantityDisplay}}"{{quantityMax}} min="1"/>
+    <div class="item-qty item-qty-{{id}}">
+        {{&tradeQuantityContent}}
     </div>
 </div>
