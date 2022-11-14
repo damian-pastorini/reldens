@@ -9,7 +9,7 @@
 
 const { NpcObject } = require('reldens/lib/objects/server/object/type/npc-object');
 const { GameConst } = require('reldens/lib/game/constants');
-const { Logger } = require('@reldens/utils');
+const { Logger, sc } = require('@reldens/utils');
 
 class Healer extends NpcObject
 {
@@ -21,11 +21,15 @@ class Healer extends NpcObject
             return false;
         }
         let givePotions = true;
-        if('1' === (this.options[data.value].value).toString()){
+        let selectedOption = (sc.get(this.options, data.value, {})?.value || '').toString();
+        if('' === selectedOption){
+            return false;
+        }
+        if('1' === selectedOption){
             givePotions = false;
             this.restoreHp(room, playerSchema, client);
         }
-        if('3' === (this.options[data.value].value).toString()){
+        if('3' === selectedOption){
             givePotions = false;
             this.restoreMp(playerSchema, room, client);
         }
