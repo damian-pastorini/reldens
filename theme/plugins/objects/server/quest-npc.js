@@ -9,7 +9,7 @@
 
 const { NpcObject } = require('reldens/lib/objects/server/object/type/npc-object');
 const { GameConst } = require('reldens/lib/game/constants');
-const { Logger } = require('@reldens/utils');
+const { Logger, sc } = require('@reldens/utils');
 
 class QuestNpc extends NpcObject
 {
@@ -20,9 +20,12 @@ class QuestNpc extends NpcObject
         if(false === superResult){
             return false;
         }
-        let selectedOption = this.options[data.value];
+        let selectedOption = sc.get(this.options, data.value, false);
+        if(false === selectedOption){
+            return false;
+        }
         if('1' !== (selectedOption.value).toString()){
-            let activationData = {act: GameConst.UI, id: this.id, content: 'Ok...'};
+            let activationData = {act: GameConst.UI, id: this.id, content: this.content};
             client.send('*', activationData);
             return;
         }

@@ -84,8 +84,12 @@ CREATE TABLE `objects_items_requirements` (
 	`auto_remove_requirement` INT(10) UNSIGNED NOT NULL DEFAULT '0',
 	PRIMARY KEY (`id`) USING BTREE,
 	INDEX `FK_objects_items_requirements_objects` (`object_id`) USING BTREE,
+	INDEX `FK_objects_items_requirements_items_item` (`item_key`) USING BTREE,
+	INDEX `FK_objects_items_requirements_items_item_2` (`required_item_key`) USING BTREE,
+	CONSTRAINT `FK_objects_items_requirements_items_item` FOREIGN KEY (`item_key`) REFERENCES `items_item` (`key`) ON UPDATE NO ACTION ON DELETE NO ACTION,
+	CONSTRAINT `FK_objects_items_requirements_items_item_2` FOREIGN KEY (`required_item_key`) REFERENCES `items_item` (`key`) ON UPDATE NO ACTION ON DELETE NO ACTION,
 	CONSTRAINT `FK_objects_items_requirements_objects` FOREIGN KEY (`object_id`) REFERENCES `objects` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT
-) COLLATE='utf8_unicode_ci' ENGINE=InnoDB;
+) COLLATE='utf8_unicode_ci' ENGINE=InnoDB AUTO_INCREMENT=0;
 
 # Object items and requirements:
 INSERT INTO `objects_items_inventory` (`id`, `owner_id`, `item_id`, `qty`, `remaining_uses`, `is_active`) VALUES (2, 10, 4, -1, -1, 0);
