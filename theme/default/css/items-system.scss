@@ -315,6 +315,10 @@
     position: relative;
     height: auto;
 
+    &.hidden {
+        display: none;
+    }
+
     .trade-action-remove img {
         max-width: 24px;
         cursor: pointer;

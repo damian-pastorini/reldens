@@ -9,6 +9,9 @@
 const { GameManager } = require('reldens/client');
 const { ClientPlugin } = require('../plugins/client-plugin');
 const { GameConst } = require('reldens/lib/game/constants');
+// enable logger:
+// const { Logger } = require('@reldens/utils');
+// Logger.logLevel = 9;
 
 // @TODO - BETA - Move everything from this file as part of the core project and include events to manage the theme.
 // @TODO - BETA - CLEAN THIS THING ASAP!
