@@ -24,7 +24,7 @@ class WeaponsMaster extends NpcObject
         if(false === selectedOption){
             return false;
         }
-        if(sc.hasOwn(playerSchema.inventory.manager.items, selectedOption.key)){
+        if(playerSchema.inventory.manager.findItemByKey(selectedOption.key)){
             let contentMessage = 'You already have the item.';
             client.send('*', {act: GameConst.UI, id: this.id, content: contentMessage});
             return false;
