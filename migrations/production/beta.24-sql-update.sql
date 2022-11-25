@@ -18,6 +18,9 @@ INSERT INTO `config` VALUES(NULL, 'client', 'players/physicalBody/width', '25', 
 INSERT INTO `config` VALUES(NULL, 'client', 'players/physicalBody/height', '25', 'i');
 UPDATE `config` SET `scope` = 'client', `path` = 'general/controls/allowSimultaneousKeys'  WHERE `path` = 'general/controls/allow_simultaneous_keys';
 INSERT INTO `config` VALUES(NULL, 'server', 'objects/actions/closeInteractionOnOutOfReach', '1', 'b');
+INSERT INTO `config` VALUES(NULL, 'client', 'trade/players/awaitTimeOut', '1', 'b');
+INSERT INTO `config` VALUES(NULL, 'client', 'trade/players/timeOut', '8000', 'i');
+
 
 # Features:
 INSERT INTO `features` (`code`, `title`, `is_enabled`) VALUES ('prediction', 'Prediction', '1');
