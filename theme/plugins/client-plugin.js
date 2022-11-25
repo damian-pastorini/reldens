@@ -30,13 +30,11 @@ class ClientPlugin extends PluginInterface
             customClasses.objects = {};
         }
         customClasses.objects['people_town_1'] = Npc1;
-
-        this.defineEngineDrivers(props);
     }
 
     defineEngineDriver(props)
     {
-        if ('phaser' === props.gameConfig.engine) {
+        if ('phaser' === props.gameConfig.selectedGameEngine) {
             props.gameConfig.client['engineDriver'] = new PhaserDriver();
         }
     }
