@@ -1,9 +1,8 @@
 // @ts-ignore
-import React, {FC} from 'react';
-// eslint-disable-next-line import/no-extraneous-dependencies
-import {Icon, Button, Box} from '@adminjs/design-system';
-import {ShowPropertyProps, flat} from 'adminjs';
-import {ImageMimeTypes, AudioMimeTypes} from '@adminjs/upload/src/features/upload-file/types/mime-types.type';
+import React, { FC } from 'react';
+import { Icon, Button, Box } from '@adminjs/design-system';
+import { ShowPropertyProps, flat } from 'adminjs';
+import { ImageMimeTypes, AudioMimeTypes } from '@adminjs/upload/src/features/upload-file/types/mime-types.type';
 import PropertyCustom from '@adminjs/upload/src/features/upload-file//types/property-custom.type';
 
 type Props = ShowPropertyProps & {

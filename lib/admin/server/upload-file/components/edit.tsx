@@ -37,9 +37,7 @@ const Edit: FC<EditPropertyProps> = ({property, record, onChange}) => {
     const handleMultiRemove = (singleKey) => {
         const index = (flat.get(record.params, custom.keyProperty) || []).indexOf(singleKey);
         const filesToDelete = flat.get(record.params, custom.filesToDeleteProperty) || [];
-        if(
-            path && path.length > 0
-        ){
+        if(path && 0 < path.length){
             const newPath = path.map((currentPath, i) => (i !== index ? currentPath : null));
             let newParams = flat.set(
                 record.params,
@@ -47,15 +45,9 @@ const Edit: FC<EditPropertyProps> = ({property, record, onChange}) => {
                 [...filesToDelete, index],
             );
             newParams = flat.set(newParams, custom.filePathProperty, newPath);
-
-            onChange({
-                ...record,
-                params: newParams,
-            })
-        } else {
-            // eslint-disable-next-line
-            // Logger.error('You cannot remove file when there are no uploaded files yet')
+            onChange({...record, params: newParams})
         }
+        // Logger.error('You cannot remove file when there are no uploaded files yet')
     };
 
     return (

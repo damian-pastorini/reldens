@@ -9,17 +9,21 @@ UPDATE `config` SET `value` = '1' WHERE `path` = 'rooms/selection/allowOnLogin';
 UPDATE `config` SET `value` = '1' WHERE `path` = 'rooms/selection/allowOnRegistration';
 UPDATE `config` SET `path` = 'rooms/world/timeStep' WHERE `path` = 'rooms/world/timestep';
 DELETE FROM `config` WHERE `path` = 'rooms/world/gravity_enabled';
-INSERT INTO `config` VALUES(NULL, 'client', 'general/engine/clientInterpolation', '1', 'b');
-INSERT INTO `config` VALUES(NULL, 'client', 'general/engine/interpolationSpeed', '0.4', 'i');
-INSERT INTO `config` VALUES(NULL, 'client', 'general/engine/experimentalClientPrediction', '0', 'b');
+INSERT INTO `config` VALUES (NULL, 'client', 'general/engine/clientInterpolation', '1', 'b');
+INSERT INTO `config` VALUES (NULL, 'client', 'general/engine/interpolationSpeed', '0.4', 'i');
+INSERT INTO `config` VALUES (NULL, 'client', 'general/engine/experimentalClientPrediction', '0', 'b');
 DELETE FROM `config` WHERE `path` = 'players/size/width' AND `scope` = 'server';
 DELETE FROM `config` WHERE `path` = 'players/size/height' AND `scope` = 'server';
-INSERT INTO `config` VALUES(NULL, 'client', 'players/physicalBody/width', '25', 'i');
-INSERT INTO `config` VALUES(NULL, 'client', 'players/physicalBody/height', '25', 'i');
+INSERT INTO `config` VALUES (NULL, 'client', 'players/physicalBody/width', '25', 'i');
+INSERT INTO `config` VALUES (NULL, 'client', 'players/physicalBody/height', '25', 'i');
 UPDATE `config` SET `scope` = 'client', `path` = 'general/controls/allowSimultaneousKeys'  WHERE `path` = 'general/controls/allow_simultaneous_keys';
-INSERT INTO `config` VALUES(NULL, 'server', 'objects/actions/closeInteractionOnOutOfReach', '1', 'b');
-INSERT INTO `config` VALUES(NULL, 'client', 'trade/players/awaitTimeOut', '1', 'b');
-INSERT INTO `config` VALUES(NULL, 'client', 'trade/players/timeOut', '8000', 'i');
+INSERT INTO `config` VALUES (NULL, 'server', 'objects/actions/closeInteractionOnOutOfReach', '1', 'b');
+INSERT INTO `config` VALUES (NULL, 'client', 'trade/players/awaitTimeOut', '1', 'b');
+INSERT INTO `config` VALUES (NULL, 'client', 'trade/players/timeOut', '8000', 'i');
+INSERT INTO `config` VALUES (NULL, 'client', 'ui/default/responsiveX', '10', 'i');
+INSERT INTO `config` VALUES (NULL, 'client', 'ui/default/responsiveY', '10', 'i');
+INSERT INTO `config` VALUES (NULL, 'client', 'ui/default/x', '120', 'i');
+INSERT INTO `config` VALUES (NULL, 'client', 'ui/default/y', '100', 'i');
 
 
 # Features:
