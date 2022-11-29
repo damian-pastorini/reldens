@@ -276,7 +276,7 @@
 
         &.trade-items-boxes {
 
-            .trade-col {
+            .trade-col, .trade-player-col {
                 min-height: 138px;
             }
 
@@ -308,6 +308,17 @@
         }
     }
 
+}
+
+.ui-dialog-box.type-trade {
+    width: 100%;
+
+    .trade-player-col {
+        width: 32%;
+        display: block;
+        float: left;
+        position: relative;
+    }
 }
 
 .trade-item {
