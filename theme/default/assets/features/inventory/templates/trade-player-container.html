@@ -10,8 +10,9 @@
         <div class="trade-player-col trade-col-3 got-from-trade">{{&gotFromTrade}}</div>
     </div>
     <div class="trade-row trade-confirm-actions">
-        <div class="trade-col trade-col-2">
-            <button type="button" class="confirm-action confirm-{{tradeActionKey}}">{{tradeActionLabel}}</button>
-        </div>
+        <button type="button" class="confirm-action confirm-{{tradeActionKey}}">{{confirmLabel}}</button>
+        <button type="button" class="disconfirm-action disconfirm-{{tradeActionKey}}">{{disconfirmLabel}}</button>
+        <button type="button" class="cancel-action cancel-{{tradeActionKey}}">{{cancelLabel}}</button>
+        <span class="player-confirmed">{{playerConfirmedLabel}}</span>
     </div>
 </div>
