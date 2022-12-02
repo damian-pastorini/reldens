@@ -5,7 +5,7 @@
  */
 
 const { PluginInterface } = require('reldens/lib/features/plugin-interface');
-const { NpcObject } = require('reldens/lib/objects/server/object/type/npc-object')
+const { NpcObject } = require('reldens/lib/objects/server/object/type/npc-object');
 const { TraderObject } = require('reldens/lib/objects/server/object/type/trader-object');
 const { Door } = require('./objects/server/door');
 const { Healer } = require('./objects/server/healer');
