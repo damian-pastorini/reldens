@@ -2,7 +2,7 @@
 -- Host:                         localhost
 -- Server version:               8.0.27 - MySQL Community Server - GPL
 -- Server OS:                    Win64
--- HeidiSQL Version:             12.1.0.6537
+-- HeidiSQL Version:             12.2.0.6576
 -- --------------------------------------------------------
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
@@ -144,8 +144,6 @@ CREATE TABLE IF NOT EXISTS `chat` (
   CONSTRAINT `FK__scenes` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table reldens.chat: ~49 rows (approximately)
-
 -- Dumping structure for table reldens.config
 CREATE TABLE IF NOT EXISTS `config` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
@@ -154,9 +152,9 @@ CREATE TABLE IF NOT EXISTS `config` (
   `value` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `type` varchar(2) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=264 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=271 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table reldens.config: ~236 rows (approximately)
+-- Dumping data for table reldens.config: ~247 rows (approximately)
 INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(1, 'server', 'rooms/validation/valid', 'room_game,chat_global', 't'),
 	(2, 'server', 'players/initialState/room_id', '4', 'i'),
@@ -164,7 +162,7 @@ INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(4, 'server', 'players/initialState/y', '345', 'i'),
 	(5, 'server', 'players/initialState/dir', 'down', 't'),
 	(13, 'server', 'rooms/validation/enabled', '1', 'b'),
-	(18, 'client', 'general/controls/allow_simultaneous_keys', '1', 'b'),
+	(18, 'client', 'general/controls/allowSimultaneousKeys', '1', 'b'),
 	(19, 'server', 'rooms/world/timeStep', '0.04', 'i'),
 	(20, 'server', 'chat/messages/broadcast_join', '1', 'b'),
 	(21, 'server', 'chat/messages/broadcast_leave', '1', 'b'),
@@ -397,7 +395,14 @@ INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(258, 'client', 'general/engine/interpolationSpeed', '0.4', 'i'),
 	(259, 'client', 'general/engine/experimentalClientPrediction', '0', 'b'),
 	(262, 'client', 'players/physicalBody/width', '25', 'i'),
-	(263, 'client', 'players/physicalBody/height', '25', 'i');
+	(263, 'client', 'players/physicalBody/height', '25', 'i'),
+	(264, 'server', 'objects/actions/closeInteractionOnOutOfReach', '1', 'b'),
+	(265, 'client', 'trade/players/awaitTimeOut', '1', 'b'),
+	(266, 'client', 'trade/players/timeOut', '8000', 'i'),
+	(267, 'client', 'ui/default/responsiveX', '10', 'i'),
+	(268, 'client', 'ui/default/responsiveY', '10', 'i'),
+	(269, 'client', 'ui/default/x', '120', 'i'),
+	(270, 'client', 'ui/default/y', '100', 'i');
 
 -- Dumping structure for table reldens.features
 CREATE TABLE IF NOT EXISTS `features` (
@@ -408,7 +413,7 @@ CREATE TABLE IF NOT EXISTS `features` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table reldens.features: ~9 rows (approximately)
+-- Dumping data for table reldens.features: ~11 rows (approximately)
 INSERT INTO `features` (`id`, `code`, `title`, `is_enabled`) VALUES
 	(1, 'chat', 'Chat', 1),
 	(2, 'objects', 'Objects', 1),
@@ -457,8 +462,6 @@ CREATE TABLE IF NOT EXISTS `items_inventory` (
   CONSTRAINT `FK_items_inventory_items_item` FOREIGN KEY (`item_id`) REFERENCES `items_item` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci COMMENT='Inventory table is to save the items for each owner.';
 
--- Dumping data for table reldens.items_inventory: ~2 rows (approximately)
-
 -- Dumping structure for table reldens.items_item
 CREATE TABLE IF NOT EXISTS `items_item` (
   `id` int NOT NULL AUTO_INCREMENT,
@@ -482,10 +485,10 @@ CREATE TABLE IF NOT EXISTS `items_item` (
 -- Dumping data for table reldens.items_item: ~6 rows (approximately)
 INSERT INTO `items_item` (`id`, `key`, `type`, `group_id`, `label`, `description`, `qty_limit`, `uses_limit`, `useTimeOut`, `execTimeOut`, `customData`) VALUES
 	(1, 'coins', 3, NULL, 'Coins', NULL, 0, 1, NULL, NULL, NULL),
-	(2, 'branch', 0, NULL, 'Tree branch', 'An useless tree branch (for now)', 0, 1, NULL, NULL, '{"autoRemoveItemOnZeroQty":true}'),
+	(2, 'branch', 0, NULL, 'Tree branch', 'An useless tree branch (for now)', 0, 1, NULL, NULL, NULL),
 	(3, 'heal_potion_20', 5, NULL, 'Heal Potion', 'A heal potion that will restore 20 HP.', 0, 1, NULL, NULL, '{"removeAfterUse":true,"animationData":{"frameWidth":64,"frameHeight":64,"start":6,"end":11,"repeat":0,"hide":true,"destroyOnComplete":true,"usePlayerPosition":true,"closeInventoryOnUse":true,"followPlayer":true,"startsOnTarget":true}}'),
-	(4, 'axe', 4, 1, 'Axe', 'A short distance but powerful weapon.', 0, 0, NULL, NULL, '{"animationData":{"frameWidth":64,"frameHeight":64,"start":6,"end":11,"repeat":0,"hide":true,"destroyOnComplete":true,"usePlayerPosition":true,"closeInventoryOnUse":true,"followPlayer":true,"startsOnTarget":true}}'),
-	(5, 'spear', 4, 1, 'Spear', 'A short distance but powerful weapon.', 0, 0, NULL, NULL, '{"animationData":{"frameWidth":64,"frameHeight":64,"start":6,"end":11,"repeat":0,"hide":true,"destroyOnComplete":true,"usePlayerPosition":true,"closeInventoryOnUse":true,"followPlayer":true,"startsOnTarget":true}}'),
+	(4, 'axe', 1, 1, 'Axe', 'A short distance but powerful weapon.', 0, 0, NULL, NULL, '{"animationData":{"frameWidth":64,"frameHeight":64,"start":6,"end":11,"repeat":0,"hide":true,"destroyOnComplete":true,"usePlayerPosition":true,"closeInventoryOnUse":true,"followPlayer":true,"startsOnTarget":true}}'),
+	(5, 'spear', 1, 1, 'Spear', 'A short distance but powerful weapon.', 0, 0, NULL, NULL, '{"animationData":{"frameWidth":64,"frameHeight":64,"start":6,"end":11,"repeat":0,"hide":true,"destroyOnComplete":true,"usePlayerPosition":true,"closeInventoryOnUse":true,"followPlayer":true,"startsOnTarget":true}}'),
 	(6, 'magic_potion_20', 5, NULL, 'Magic Potion', 'A magic potion that will restore 20 MP.', 0, 1, NULL, NULL, '{"removeAfterUse":true,"animationData":{"frameWidth":64,"frameHeight":64,"start":6,"end":11,"repeat":0,"hide":true,"destroyOnComplete":true,"usePlayerPosition":true,"closeInventoryOnUse":true,"followPlayer":true,"startsOnTarget":true}}');
 
 -- Dumping structure for table reldens.items_item_modifiers
@@ -536,10 +539,10 @@ INSERT INTO `objects` (`id`, `room_id`, `layer_name`, `tile_index`, `object_clas
 	(5, 4, 'house-collisions-over-player', 535, 'npc_1', 'people_town_1', 'Alfred', '{"runOnAction":true,"playerVisible":true}', '{"content":"Hello! My name is Alfred. Go to the forest and kill some monsters! Now... leave me alone!"}', 1),
 	(6, 5, 'respawn-area-monsters-lvl-1-2', NULL, 'enemy_1', 'enemy_forest_1', 'Tree', NULL, '{"autoStart":true}', 1),
 	(7, 5, 'respawn-area-monsters-lvl-1-2', NULL, 'enemy_2', 'enemy_forest_2', 'Tree Punch', NULL, '{"autoStart":true}', 1),
-	(8, 4, 'house-collisions-over-player', 538, 'npc_2', 'healer_1', 'Mamon', '{"runOnAction":true,"playerVisible":true,"sendInvalidOptionMessage":true}', '{"content":"Hello traveler! I can restore your health, would you like me to do it?","options":{"op1":{"label":"Heal HP","value":1},"op2":{"label":"Nothing...","value":2},"op3":{"label":"Need some MP","value":3}},"ui":true}', 1),
-	(10, 4, 'house-collisions-over-player', 560, 'npc_3', 'merchant_1', 'Gimly', '{"runOnAction":true,"playerVisible":true,"sendInvalidOptionMessage":true}', '{"content":"Hi there! What would you like to do?","options":{"buy":{"label":"Buy","value":"buy"},"sell":{"label":"Sell","value":"sell"},"trade":{"label":"Trade","value":"trade"}}}', 1),
-	(12, 4, 'house-collisions-over-player', 562, 'npc_4', 'weapons_master_1', 'Barrik', '{"runOnAction":true,"playerVisible":true,"sendInvalidOptionMessage":true}', '{"content":"Hi, I am the weapons master, choose your weapon and go kill some monsters!","options":{"op1":{"key":"axe","label":"Axe","value":1,"icon":"axe"},"op2":{"key":"spear","label":"Spear","value":2,"icon":"spear"}},"ui":true}', 1),
-	(13, 5, 'forest-collisions', 258, 'npc_5', 'quest_npc_1', 'Miles', '{"runOnAction":true,"playerVisible":true,"sendInvalidOptionMessage":true}', '{"content":"Hi there! Do you want a coin? I can give you one if you give me a tree branch.","options":{"op1":{"label":"Sure!","value":1},"op2":{"label":"No, thank you.","value":2}},"ui":true}', 1);
+	(8, 4, 'house-collisions-over-player', 538, 'npc_2', 'healer_1', 'Mamon', '{"runOnAction":true,"playerVisible":true,"sendInvalidOptionMessage":true}', '{"content":"Hello traveler! I can restore your health, would you like me to do it?","options":{"1":{"label":"Heal HP","value":1},"2":{"label":"Nothing...","value":2},"3":{"label":"Need some MP","value":3}},"ui":true}', 1),
+	(10, 4, 'house-collisions-over-player', 560, 'npc_3', 'merchant_1', 'Gimly', '{"runOnAction":true,"playerVisible":true,"sendInvalidOptionMessage":true}', '{"content":"Hi there! What would you like to do?","options":{"buy":{"label":"Buy","value":"buy"},"sell":{"label":"Sell","value":"sell"}}}', 1),
+	(12, 4, 'house-collisions-over-player', 562, 'npc_4', 'weapons_master_1', 'Barrik', '{"runOnAction":true,"playerVisible":true,"sendInvalidOptionMessage":true}', '{"content":"Hi, I am the weapons master, choose your weapon and go kill some monsters!","options":{"1":{"key":"axe","label":"Axe","value":1,"icon":"axe"},"2":{"key":"spear","label":"Spear","value":2,"icon":"spear"}},"ui":true}', 1),
+	(13, 5, 'forest-collisions', 258, 'npc_5', 'quest_npc_1', 'Miles', '{"runOnAction":true,"playerVisible":true,"sendInvalidOptionMessage":true}', '{"content":"Hi there! Do you want a coin? I can give you one if you give me a tree branch.","options":{"1":{"label":"Sure!","value":1},"2":{"label":"No, thank you.","value":2}},"ui":true}', 1);
 
 -- Dumping structure for table reldens.objects_animations
 CREATE TABLE IF NOT EXISTS `objects_animations` (
@@ -573,7 +576,7 @@ CREATE TABLE IF NOT EXISTS `objects_assets` (
   PRIMARY KEY (`object_asset_id`),
   KEY `object_id` (`object_id`),
   CONSTRAINT `FK_objects_assets_objects` FOREIGN KEY (`object_id`) REFERENCES `objects` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb3;
 
 -- Dumping data for table reldens.objects_assets: ~8 rows (approximately)
 INSERT INTO `objects_assets` (`object_asset_id`, `object_id`, `asset_type`, `asset_key`, `file_1`, `file_2`, `extra_params`) VALUES
@@ -600,11 +603,14 @@ CREATE TABLE IF NOT EXISTS `objects_items_inventory` (
   KEY `FK_objects_items_inventory_objects` (`owner_id`),
   CONSTRAINT `FK_objects_items_inventory_objects` FOREIGN KEY (`owner_id`) REFERENCES `objects` (`id`),
   CONSTRAINT `objects_items_inventory_ibfk_1` FOREIGN KEY (`item_id`) REFERENCES `items_item` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci ROW_FORMAT=COMPACT COMMENT='Inventory table is to save the items for each owner.';
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci ROW_FORMAT=COMPACT COMMENT='Inventory table is to save the items for each owner.';
 
--- Dumping data for table reldens.objects_items_inventory: ~0 rows (approximately)
+-- Dumping data for table reldens.objects_items_inventory: ~3 rows (approximately)
 INSERT INTO `objects_items_inventory` (`id`, `owner_id`, `item_id`, `qty`, `remaining_uses`, `is_active`) VALUES
-	(2, 10, 4, -1, -1, 0);
+	(2, 10, 4, -1, -1, 0),
+	(3, 10, 5, -1, -1, 0),
+	(5, 10, 3, -1, 1, 0),
+	(6, 10, 6, -1, 1, 0);
 
 -- Dumping structure for table reldens.objects_items_requirements
 CREATE TABLE IF NOT EXISTS `objects_items_requirements` (
@@ -616,12 +622,19 @@ CREATE TABLE IF NOT EXISTS `objects_items_requirements` (
   `auto_remove_requirement` int unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   KEY `FK_objects_items_requirements_objects` (`object_id`),
+  KEY `FK_objects_items_requirements_items_item` (`item_key`),
+  KEY `FK_objects_items_requirements_items_item_2` (`required_item_key`),
+  CONSTRAINT `FK_objects_items_requirements_items_item` FOREIGN KEY (`item_key`) REFERENCES `items_item` (`key`),
+  CONSTRAINT `FK_objects_items_requirements_items_item_2` FOREIGN KEY (`required_item_key`) REFERENCES `items_item` (`key`),
   CONSTRAINT `FK_objects_items_requirements_objects` FOREIGN KEY (`object_id`) REFERENCES `objects` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table reldens.objects_items_requirements: ~1 rows (approximately)
+-- Dumping data for table reldens.objects_items_requirements: ~4 rows (approximately)
 INSERT INTO `objects_items_requirements` (`id`, `object_id`, `item_key`, `required_item_key`, `required_quantity`, `auto_remove_requirement`) VALUES
-	(1, 10, 'axe', 'coins', 2, 1);
+	(1, 10, 'axe', 'coins', 5, 1),
+	(2, 10, 'spear', 'coins', 2, 1),
+	(3, 10, 'heal_potion_20', 'coins', 2, 1),
+	(5, 10, 'magic_potion_20', 'coins', 2, 1);
 
 -- Dumping structure for table reldens.objects_items_rewards
 CREATE TABLE IF NOT EXISTS `objects_items_rewards` (
@@ -633,12 +646,19 @@ CREATE TABLE IF NOT EXISTS `objects_items_rewards` (
   `reward_item_is_required` int unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`) USING BTREE,
   KEY `FK_objects_items_requirements_objects` (`object_id`) USING BTREE,
+  KEY `FK_objects_items_rewards_items_item` (`item_key`),
+  KEY `FK_objects_items_rewards_items_item_2` (`reward_item_key`),
+  CONSTRAINT `FK_objects_items_rewards_items_item` FOREIGN KEY (`item_key`) REFERENCES `items_item` (`key`),
+  CONSTRAINT `FK_objects_items_rewards_items_item_2` FOREIGN KEY (`reward_item_key`) REFERENCES `items_item` (`key`),
   CONSTRAINT `objects_items_rewards_ibfk_1` FOREIGN KEY (`object_id`) REFERENCES `objects` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci ROW_FORMAT=COMPACT;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci ROW_FORMAT=COMPACT;
 
--- Dumping data for table reldens.objects_items_rewards: ~1 rows (approximately)
+-- Dumping data for table reldens.objects_items_rewards: ~3 rows (approximately)
 INSERT INTO `objects_items_rewards` (`id`, `object_id`, `item_key`, `reward_item_key`, `reward_quantity`, `reward_item_is_required`) VALUES
-	(1, 10, 'axe', 'coins', 1, 0);
+	(1, 10, 'axe', 'coins', 2, 0),
+	(2, 10, 'spear', 'coins', 1, 0),
+	(3, 10, 'heal_potion_20', 'coins', 1, 0),
+	(5, 10, 'magic_potion_20', 'coins', 1, 0);
 
 -- Dumping structure for table reldens.players
 CREATE TABLE IF NOT EXISTS `players` (
@@ -650,7 +670,7 @@ CREATE TABLE IF NOT EXISTS `players` (
   UNIQUE KEY `name` (`name`),
   KEY `FK_players_users` (`user_id`),
   CONSTRAINT `FK_players_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
 -- Dumping data for table reldens.players: ~1 rows (approximately)
 INSERT INTO `players` (`id`, `user_id`, `name`, `created_at`) VALUES
@@ -669,11 +689,11 @@ CREATE TABLE IF NOT EXISTS `players_state` (
   KEY `FK_player_state_player_stats` (`player_id`),
   CONSTRAINT `FK_player_state_player_stats` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON UPDATE CASCADE,
   CONSTRAINT `FK_player_state_rooms` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
 -- Dumping data for table reldens.players_state: ~1 rows (approximately)
 INSERT INTO `players_state` (`id`, `player_id`, `room_id`, `x`, `y`, `dir`) VALUES
-	(1, 1, 4, 1068, 458, 'right');
+	(1, 1, 5, 696, 705, 'down');
 
 -- Dumping structure for table reldens.players_stats
 CREATE TABLE IF NOT EXISTS `players_stats` (
@@ -688,13 +708,13 @@ CREATE TABLE IF NOT EXISTS `players_stats` (
   KEY `user_id` (`player_id`) USING BTREE,
   CONSTRAINT `FK_player_current_stats_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT `FK_players_current_stats_players_stats` FOREIGN KEY (`stat_id`) REFERENCES `stats` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=111 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table reldens.players_stats: ~10 rows (approximately)
+-- Dumping data for table reldens.players_stats: ~20 rows (approximately)
 INSERT INTO `players_stats` (`id`, `player_id`, `stat_id`, `base_value`, `value`) VALUES
-	(1, 1, 1, 280, 280),
-	(2, 1, 2, 280, 280),
-	(3, 1, 3, 280, 345),
+	(1, 1, 1, 280, 75),
+	(2, 1, 2, 280, 250),
+	(3, 1, 3, 280, 371),
 	(4, 1, 4, 280, 280),
 	(5, 1, 5, 100, 100),
 	(6, 1, 6, 100, 100),
@@ -709,7 +729,7 @@ CREATE TABLE IF NOT EXISTS `respawn` (
   `object_id` int unsigned NOT NULL,
   `respawn_time` int unsigned NOT NULL DEFAULT '0',
   `instances_limit` int unsigned NOT NULL DEFAULT '0',
-  `layer` varchar(255) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL,
+  `layer` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8_unicode_ci NOT NULL,
   PRIMARY KEY (`id`),
   KEY `respawn_object_id` (`object_id`),
   CONSTRAINT `FK_respawn_objects` FOREIGN KEY (`object_id`) REFERENCES `objects` (`id`) ON UPDATE CASCADE
@@ -1127,11 +1147,11 @@ CREATE TABLE IF NOT EXISTS `skills_owners_class_path` (
   PRIMARY KEY (`id`),
   KEY `level_set_id` (`class_path_id`) USING BTREE,
   CONSTRAINT `FK_skills_owners_class_path_skills_class_path` FOREIGN KEY (`class_path_id`) REFERENCES `skills_class_path` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table reldens.skills_owners_class_path: ~1 rows (approximately)
+-- Dumping data for table reldens.skills_owners_class_path: ~2 rows (approximately)
 INSERT INTO `skills_owners_class_path` (`id`, `class_path_id`, `owner_id`, `currentLevel`, `currentExp`) VALUES
-	(1, 1, 1, 10, 6330);
+	(1, 1, 1, 10, 6990);
 
 -- Dumping structure for table reldens.skills_skill
 CREATE TABLE IF NOT EXISTS `skills_skill` (
@@ -1240,7 +1260,7 @@ CREATE TABLE IF NOT EXISTS `skills_skill_owner_conditions` (
   CONSTRAINT `FK_skills_skill_owner_conditions_skills_skill` FOREIGN KEY (`skill_id`) REFERENCES `skills_skill` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf32 COLLATE=utf32_unicode_ci;
 
--- Dumping data for table reldens.skills_skill_owner_conditions: ~0 rows (approximately)
+-- Dumping data for table reldens.skills_skill_owner_conditions: ~1 rows (approximately)
 INSERT INTO `skills_skill_owner_conditions` (`id`, `skill_id`, `key`, `property_key`, `conditional`, `value`) VALUES
 	(1, 3, 'available_mp', 'stats/mp', 'ge', '5');
 
@@ -1261,7 +1281,7 @@ CREATE TABLE IF NOT EXISTS `skills_skill_owner_effects` (
   CONSTRAINT `FK_skills_skill_owner_effects_skills_skill` FOREIGN KEY (`skill_id`) REFERENCES `skills_skill` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci COMMENT='Modifiers table.';
 
--- Dumping data for table reldens.skills_skill_owner_effects: ~0 rows (approximately)
+-- Dumping data for table reldens.skills_skill_owner_effects: ~1 rows (approximately)
 INSERT INTO `skills_skill_owner_effects` (`id`, `skill_id`, `key`, `property_key`, `operation`, `value`, `minValue`, `maxValue`, `minProperty`, `maxProperty`) VALUES
 	(2, 3, 'dec_mp', 'stats/mp', 2, '5', '0', '', NULL, NULL);
 
@@ -1373,11 +1393,11 @@ CREATE TABLE IF NOT EXISTS `users` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `email` (`email`),
   UNIQUE KEY `username` (`username`)
-) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb3;
 
 -- Dumping data for table reldens.users: ~1 rows (approximately)
 INSERT INTO `users` (`id`, `email`, `username`, `password`, `role_id`, `status`, `created_at`, `updated_at`, `played_time`) VALUES
-	(1, 'dap@dap.com', 'dap', '$2b$10$RDnURyFoXo7.zcFKVhNcuezJsXXYNslhPBNPzi.crbikFhG8Pnude', 1, '1', '2022-03-17 18:57:44', '2022-10-03 18:47:38', 125783);
+	(1, 'dap@dap.com', 'dap', '$2b$10$RDnURyFoXo7.zcFKVhNcuezJsXXYNslhPBNPzi.crbikFhG8Pnude', 1, '1', '2022-03-17 18:57:44', '2022-12-02 18:15:40', 556591);
 
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;

@@ -25,7 +25,6 @@ INSERT INTO `config` VALUES (NULL, 'client', 'ui/default/responsiveY', '10', 'i'
 INSERT INTO `config` VALUES (NULL, 'client', 'ui/default/x', '120', 'i');
 INSERT INTO `config` VALUES (NULL, 'client', 'ui/default/y', '100', 'i');
 
-
 # Features:
 INSERT INTO `features` (`code`, `title`, `is_enabled`) VALUES ('prediction', 'Prediction', '1');
 
