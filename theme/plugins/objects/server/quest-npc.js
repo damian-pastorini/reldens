@@ -24,10 +24,12 @@ class QuestNpc extends NpcObject
         if(false === selectedOption){
             return false;
         }
-        if('1' !== (selectedOption.value).toString()){
-            let activationData = {act: GameConst.UI, id: this.id, content: this.content};
-            client.send('*', activationData);
+        if('' === (selectedOption.value).toString()){
             return;
+        }
+        if('2' === (selectedOption.value).toString()){
+            client.send('*', {act: GameConst.CLOSE_UI_ACTION, id: this.id});
+            return true;
         }
         // check the amount of coins:
         let coinsItem = playerSchema.inventory.manager.findItemByKey('coins');
