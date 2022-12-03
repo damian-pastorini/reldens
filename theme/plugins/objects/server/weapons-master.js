@@ -7,54 +7,37 @@
  *
  */
 
-const { NpcObject } = require('reldens/lib/objects/server/npc-object');
+const { NpcObject } = require('reldens/lib/objects/server/object/type/npc-object');
 const { GameConst } = require('reldens/lib/game/constants');
 const { Logger, sc } = require('@reldens/utils');
 
 class WeaponsMaster extends NpcObject
 {
 
-    constructor(props)
+    async executeMessageActions(client, data, room, playerSchema)
     {
-        super(props);
-        this.runOnAction = true;
-        this.playerVisible = true;
-        // assign extra params:
-        this.clientParams.enabled = true;
-        this.clientParams.ui = true;
-        // @TODO - BETA - All the NPC info will be coming from the storage.
-        this.content = `Hi I'm the weapons master, choose your weapon and go kill some monsters!`;
-        this.options = {
-            op1: {key: 'axe', label: 'Axe', value: 1, icon: 'axe'},
-            op2: {key: 'spear', label: 'Spear', value: 2, icon: 'spear'}
-        };
-        this.sendInvalidOptionMessage = true;
-    }
-
-    parseMessageAndRunActions(client, data, room, playerSchema)
-    {
-        super.parseMessageAndRunActions(client, data, room, playerSchema);
-        let optionIdx = 'op'+data.value;
-        if(!this.isValidOption(data) || !this.isValidIndexValue(optionIdx, room, client)){
+        let superResult = await super.executeMessageActions(client, data, room, playerSchema);
+        if(false === superResult){
             return false;
         }
-        let selectedOption = this.options[optionIdx];
-        // only give each item once:
-        if(sc.hasOwn(playerSchema.inventory.manager.items, selectedOption.key)){
+        let selectedOption = sc.get(this.options, data.value, false);
+        if(false === selectedOption){
+            return false;
+        }
+        if(playerSchema.inventory.manager.findItemByKey(selectedOption.key)){
             let contentMessage = 'You already have the item.';
-            room.send(client, {act: GameConst.UI, id: this.id, content: contentMessage});
+            client.send('*', {act: GameConst.UI, id: this.id, content: contentMessage});
             return false;
         }
-        let itemObj = playerSchema.inventory.createItemInstance(selectedOption.key);
-        playerSchema.inventory.manager.addItem(itemObj).then(() => {
-            let contentMessage = 'Do not forget to equip your new '+selectedOption.label+' before go to the battle.';
-            room.send(client, {act: GameConst.UI, id: this.id, content: contentMessage});
-        }).catch((err) => {
-            Logger.error([`Error while adding item "${selectedOption.key}":`, err]);
+        let itemObj = playerSchema.inventory.manager.createItemInstance(selectedOption.key);
+        if(false === await playerSchema.inventory.manager.addItem(itemObj)){
+            Logger.error([`Error while adding item "${selectedOption.key}" on "${this.key}".`]);
             let contentMessage = 'Sorry, I was not able to give you the item, contact the admin.';
-            room.send(client, {act: GameConst.UI, id: this.id, content: contentMessage});
+            client.send('*', {act: GameConst.UI, id: this.id, content: contentMessage});
             return false;
-        });
+        }
+        let contentMessage = 'Do not forget to equip your new '+selectedOption.label+' before go to the battle.';
+        client.send('*', {act: GameConst.UI, id: this.id, content: contentMessage});
     }
 
 }

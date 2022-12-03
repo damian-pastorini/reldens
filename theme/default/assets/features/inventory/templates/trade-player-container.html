@@ -1,0 +1,18 @@
+<div class="trade-container trade-container-{{tradeActionKey}}">
+    <div class="trade-row trade-items-boxes-headers">
+        <div class="trade-player-col trade-col-1 my-items">{{myItemsTitle}}</div>
+        <div class="trade-player-col trade-col-2 pushed-to-trade">{{pushedToTradeTitle}}</div>
+        <div class="trade-player-col trade-col-3 got-from-trade">{{gotFromTradeTitle}}</div>
+    </div>
+    <div class="trade-row trade-items-boxes">
+        <div class="trade-player-col trade-col-1 my-items">{{&myItems}}</div>
+        <div class="trade-player-col trade-col-2 pushed-to-trade">{{&pushedToTrade}}</div>
+        <div class="trade-player-col trade-col-3 got-from-trade">{{&gotFromTrade}}</div>
+    </div>
+    <div class="trade-row trade-confirm-actions">
+        <button type="button" class="confirm-action confirm-{{tradeActionKey}}">{{confirmLabel}}</button>
+        <button type="button" class="disconfirm-action disconfirm-{{tradeActionKey}}">{{disconfirmLabel}}</button>
+        <button type="button" class="cancel-action cancel-{{tradeActionKey}}">{{cancelLabel}}</button>
+        <span class="player-confirmed">{{playerConfirmedLabel}}</span>
+    </div>
+</div>

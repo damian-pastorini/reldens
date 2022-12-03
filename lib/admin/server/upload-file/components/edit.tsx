@@ -1,7 +1,7 @@
-import React, { FC, useState, useEffect } from 'react'
-import {EditPropertyProps, flat} from 'adminjs'
-import {DropZone, FormGroup, Label, DropZoneItem} from '@adminjs/design-system'
-import PropertyCustom from '../types/property-custom.type'
+import React, { FC, useState, useEffect } from 'react';
+import {EditPropertyProps, flat} from 'adminjs';
+import {DropZone, FormGroup, Label, DropZoneItem} from '@adminjs/design-system';
+import PropertyCustom from '../types/property-custom.type';
 
 const Edit: FC<EditPropertyProps> = ({property, record, onChange}) => {
     const {params} = record;
@@ -15,31 +15,29 @@ const Edit: FC<EditPropertyProps> = ({property, record, onChange}) => {
     useEffect(() => {
         // It means that someone hit save and new file has been uploaded in this case fliesToUpload should be cleared.
         // This happens when user turns off redirect after new/edit.
-        if (
+        if(
             (typeof key === 'string' && key !== originalKey)
             || (typeof key !== 'string' && !originalKey)
             || (typeof key !== 'string' && Array.isArray(key) && key.length !== originalKey.length)
-        ) {
+        ){
             setOriginalKey(key);
-            setFilesToUpload([])
+            setFilesToUpload([]);
         }
     }, [key, originalKey]);
 
     const onUpload = (files: Array<File>): void => {
         setFilesToUpload(files);
-        onChange(custom.fileProperty, files)
+        onChange(custom.fileProperty, files);
     };
 
     const handleRemove = () => {
-        onChange(custom.fileProperty, null)
+        onChange(custom.fileProperty, null);
     };
 
     const handleMultiRemove = (singleKey) => {
         const index = (flat.get(record.params, custom.keyProperty) || []).indexOf(singleKey);
         const filesToDelete = flat.get(record.params, custom.filesToDeleteProperty) || [];
-        if (
-            path && path.length > 0
-        ) {
+        if(path && 0 < path.length){
             const newPath = path.map((currentPath, i) => (i !== index ? currentPath : null));
             let newParams = flat.set(
                 record.params,
@@ -47,15 +45,9 @@ const Edit: FC<EditPropertyProps> = ({property, record, onChange}) => {
                 [...filesToDelete, index],
             );
             newParams = flat.set(newParams, custom.filePathProperty, newPath);
-
-            onChange({
-                ...record,
-                params: newParams,
-            })
-        } else {
-            // eslint-disable-next-line
-            // Logger.error('You cannot remove file when there are no uploaded files yet')
+            onChange({...record, params: newParams})
         }
+        // Logger.error('You cannot remove file when there are no uploaded files yet')
     };
 
     return (
@@ -93,7 +85,7 @@ const Edit: FC<EditPropertyProps> = ({property, record, onChange}) => {
                 </>
             ) : ''}
         </FormGroup>
-    )
+    );
 };
 
 export default Edit;

@@ -6,7 +6,7 @@
 [![Reldens - GitHub - Stars](https://img.shields.io/github/stars/damian-pastorini/reldens?color=green&style=for-the-badge)](https://github.com/damian-pastorini/reldens)
 [![Reldens - Discord](https://img.shields.io/discord/599108949312143370?style=for-the-badge)](https://discord.gg/HuJMxUY)
 [![Reldens - Licence - MIT](https://img.shields.io/github/license/damian-pastorini/reldens?color=blue&style=for-the-badge)](https://github.com/damian-pastorini/reldens)
-[![Reldens - LGTM - Code](https://img.shields.io/lgtm/grade/javascript/github/damian-pastorini/reldens?label=LGTM%20-%20Code%20Quality&style=for-the-badge)](https://lgtm.com/projects/g/damian-pastorini/reldens/)
+[![Reldens - CodeQL](https://img.shields.io/github/checks-status/damian-pastorini/reldens/master?style=for-the-badge)](https://github.com/damian-pastorini/reldens/actions?query=workflow%3ACodeQL)
 
 ---
 
@@ -68,7 +68,7 @@ Your email is required to access the server admin:
 ---
 
 ## Contact us
-Join our Discord channel: [https://discord.gg/HuJMxUY](https://discord.gg/HuJMxUY) or send us an email to  [info@dwdeveloper.com](mailto:info@dwdeveloper.com).
+Join our Discord channel: [https://discord.gg/HuJMxUY](https://discord.gg/HuJMxUY) or contact us by email [info@dwdeveloper.com](mailto:info@dwdeveloper.com).
 
 
 ## Support us! :)

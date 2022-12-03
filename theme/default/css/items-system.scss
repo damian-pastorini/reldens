@@ -258,3 +258,109 @@
     }
 
 }
+.ui-dialog-box.type-trader {
+    min-height: 200px;
+
+    .box-content {
+        min-height: 164px;
+    }
+}
+
+.trade-container {
+
+    .player-confirmed {
+        font-weight: bold;
+        color: $cReldens;
+    }
+
+    .trade-row {
+        position: relative;
+        float: left;
+        display: block;
+        width: 100%;
+
+        &.trade-items-boxes {
+
+            .trade-col, .trade-player-col {
+                min-height: 138px;
+            }
+
+        }
+
+    }
+
+    .trade-confirm-actions {
+        border-top: 1px solid $cWhite;
+        padding-top: 10px;
+    }
+
+    .confirm-action,
+    .disconfirm-action,
+    .cancel-action {
+        float: right;
+        min-height: 25px;
+        margin-left: 15px;
+    }
+
+    .trade-col {
+        position: relative;
+        float: left;
+        display: block;
+        width: 46%;
+        min-width: 100px;
+        min-height: 25px;
+        margin: 0;
+        padding: 0 1%;
+    }
+
+    .trade-items-boxes {
+
+        .trade-col-1 {
+            border-right: 1px solid #fff;
+        }
+    }
+
+}
+
+.ui-dialog-box.type-trade {
+    width: 100%;
+
+    .trade-player-col {
+        width: 32%;
+        display: block;
+        float: left;
+        position: relative;
+    }
+}
+
+.trade-item {
+    display: block;
+    position: relative;
+    height: auto;
+
+    &.hidden {
+        display: none;
+    }
+
+    .trade-action-remove img {
+        max-width: 24px;
+        cursor: pointer;
+    }
+
+    input, button {
+        border: 0;
+        margin: 6px auto 2px;
+        width: 100%;
+        float: none;
+        position: relative;
+        display: block;
+        max-width: 100%;
+        text-align: center;
+        padding: 4px 0;
+    }
+
+    .requirement-key img, .reward-key img {
+        max-width: 16px;
+    }
+
+}

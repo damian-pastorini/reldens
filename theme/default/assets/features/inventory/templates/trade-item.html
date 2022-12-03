@@ -1,0 +1,21 @@
+<div class="item-box trade-item trade-item-{{tradeActionKey}} trade-item-{{id}}{{hiddenClass}}">
+    <div class="image-container">
+        <img src="/assets/custom/items/{{key}}.png"/>
+    </div>
+    <div class="item-data-container">
+        <span class="item-label">{{label}}</span>
+        <span class="item-description">{{description}}</span>
+    </div>
+    <div class="trade-requirements">
+        {{&tradeRequirements}}
+    </div>
+    <div class="trade-rewards">
+        {{&tradeRewards}}
+    </div>
+    <div class="actions-container trade-actions">
+        {{&tradeAction}}
+    </div>
+    <div class="item-qty item-qty-{{id}}">
+        {{&tradeQuantityContent}}
+    </div>
+</div>

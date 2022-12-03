@@ -9,11 +9,19 @@
 const { GameManager } = require('reldens/client');
 const { ClientPlugin } = require('../plugins/client-plugin');
 const { GameConst } = require('reldens/lib/game/constants');
+// enable logger:
+// const { Logger } = require('@reldens/utils');
+// Logger.logLevel = 9;
 
 // @TODO - BETA - Move everything from this file as part of the core project and include events to manage the theme.
+// @TODO - BETA - CLEAN THIS THING ASAP!
 window.addEventListener('DOMContentLoaded', () => {
     // reldens game:
     let reldens = new GameManager();
+    // @NOTE: you can specify your game server and your app server URLs in case you serve the client static files from
+    // a different location.
+    // reldens.gameServerUrl = 'ws://localhost:8000';
+    // reldens.appServerUrl = 'http://localhost:8000';
     let dom = reldens.gameDom;
     reldens.setupCustomClientPlugin(ClientPlugin);
     // debug events (warning! this will output in the console ALL the event listeners and every event fired):
@@ -49,7 +57,9 @@ window.addEventListener('DOMContentLoaded', () => {
         let gameRoom = reldens.joinGame(formData, isNewUser);
         // you can include here the room as parameter:
         gameRoom.then(() => {
-            dom.getElement('.loading-container').style.display = 'none';
+            dom.getElements('.loading-container').forEach((element) => {
+                element.style.display = 'none';
+            });
             dom.getElement('.footer').style.display = 'none';
             dom.getElement('.forms-container').remove();
             dom.getElement('.game-container').classList.remove('hidden');
@@ -65,7 +75,9 @@ window.addEventListener('DOMContentLoaded', () => {
             // @NOTE: game room errors should be always because some wrong login or registration data. For these cases
             // we will check the isNewUser variable to know where display the error.
             reldens.submitedForm = false;
-            dom.getElement('.loading-container').style.display = 'none';
+            dom.getElements('.loading-container').forEach((element) => {
+                element.style.display = 'none';
+            });
             let errorElement = dom.getElement('#'+formData.formId+' .response-error');
             if(errorElement){
                 errorElement.innerHTML = err;
