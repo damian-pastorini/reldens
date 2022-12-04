@@ -269,6 +269,7 @@
 .trade-container {
 
     .player-confirmed {
+        float: right;
         font-weight: bold;
         color: $cReldens;
     }
@@ -323,7 +324,14 @@
 }
 
 .ui-dialog-box.type-trade {
-    width: 100%;
+    width: 88%;
+    min-width: 210px;
+    min-height: 200px;
+
+    .box-content {
+        min-height: 164px;
+        max-height: 100%;
+    }
 
     .trade-player-col {
         width: 32%;
