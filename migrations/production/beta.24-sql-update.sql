@@ -24,6 +24,10 @@ INSERT INTO `config` VALUES (NULL, 'client', 'ui/default/responsiveX', '10', 'i'
 INSERT INTO `config` VALUES (NULL, 'client', 'ui/default/responsiveY', '10', 'i');
 INSERT INTO `config` VALUES (NULL, 'client', 'ui/default/x', '120', 'i');
 INSERT INTO `config` VALUES (NULL, 'client', 'ui/default/y', '100', 'i');
+INSERT INTO `config` VALUES (NULL, 'client', 'ui/trade/responsiveX', '5', 'i');
+INSERT INTO `config` VALUES (NULL, 'client', 'ui/trade/responsiveY', '5', 'i');
+INSERT INTO `config` VALUES (NULL, 'client', 'ui/trade/x', '5', 'i');
+INSERT INTO `config` VALUES (NULL, 'client', 'ui/trade/y', '5', 'i');
 
 # Features:
 INSERT INTO `features` (`code`, `title`, `is_enabled`) VALUES ('prediction', 'Prediction', '1');
@@ -119,7 +123,6 @@ CREATE TABLE `objects_items_rewards` (
 ) COLLATE='utf8_unicode_ci' ENGINE=InnoDB ROW_FORMAT=COMPACT AUTO_INCREMENT=0;
 
 # Object items, requirements, rewards:
-INSERT INTO `objects_items_inventory` (`id`, `owner_id`, `item_id`, `qty`, `remaining_uses`, `is_active`) VALUES (2, 10, 4, -1, -1, 0);
 INSERT INTO `objects_items_inventory` (`id`, `owner_id`, `item_id`, `qty`, `remaining_uses`, `is_active`) VALUES (2, 10, 4, -1, -1, 0);
 INSERT INTO `objects_items_inventory` (`id`, `owner_id`, `item_id`, `qty`, `remaining_uses`, `is_active`) VALUES (3, 10, 5, -1, -1, 0);
 INSERT INTO `objects_items_inventory` (`id`, `owner_id`, `item_id`, `qty`, `remaining_uses`, `is_active`) VALUES (5, 10, 3, -1, 1, 0);
