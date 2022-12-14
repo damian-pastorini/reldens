@@ -879,7 +879,7 @@ INSERT INTO `skills_class_path_level_labels` (`id`, `class_path_id`, `level_id`,
 	(2, 2, 7, 'Fire Master'),
 	(3, 3, 11, 'Magus'),
 	(4, 4, 15, 'Blade Master'),
-	(5, 5, 19, 'Palading');
+	(5, 5, 19, 'Paladin');
 
 -- Dumping structure for table skills_class_path_level_skills
 CREATE TABLE IF NOT EXISTS `skills_class_path_level_skills` (
