@@ -8,6 +8,8 @@ Config:
 DELETE FROM `config` WHERE `scope` = 'server' AND `path`='enemies/defaultAttacks/attackBullet';
 INSERT INTO `config` VALUES (NULL, 'server', 'enemies/default/skillKey', 'attackShort', 't');
 INSERT INTO `config` VALUES (NULL, 'server', 'enemies/default/affectedProperty', 'stats/hp', 't');
+INSERT INTO `config` VALUES (NULL, 'client', 'ui/chat/effectMessages', '1', 'b');
+INSERT INTO `config` VALUES (NULL, 'client', 'ui/chat/dodgeMessages', '1', 'b');
 UPDATE `config` SET `value` = 50 WHERE `path` LIKE 'enemies/initialStats/%';
 
 # Skills:
