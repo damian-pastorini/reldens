@@ -10,6 +10,7 @@ INSERT INTO `config` VALUES (NULL, 'server', 'enemies/default/skillKey', 'attack
 INSERT INTO `config` VALUES (NULL, 'server', 'enemies/default/affectedProperty', 'stats/hp', 't');
 INSERT INTO `config` VALUES (NULL, 'client', 'ui/chat/effectMessages', '1', 'b');
 INSERT INTO `config` VALUES (NULL, 'client', 'ui/chat/dodgeMessages', '1', 'b');
+INSERT INTO `config` VALUES (NULL, 'client', 'ui/chat/totalValidTypes', '2', 'i');
 UPDATE `config` SET `value` = 50 WHERE `path` LIKE 'enemies/initialStats/%';
 
 # Skills:
