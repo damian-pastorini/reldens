@@ -17,7 +17,7 @@ UPDATE `config` SET `value` = 50 WHERE `path` LIKE 'enemies/initialStats/%';
 SET @heal_skill_id = (SELECT `id` FROM `skills_skill` WHERE `key` = 'heal');
 INSERT INTO `skills_skill_owner_effects` VALUES (NULL, heal_skill_id, 'dec_mp', 'stats/mp', 2, '2', '0', '', NULL, NULL);
 
-UPDATE `skills_skill_attack` SET `dodgeFullEnabled`=0;
+UPDATE `skills_skill_attack` SET `dodgeFullEnabled`=1;
 
 # Room Gravity:
 SET @top_down_room_id = (SELECT `id` FROM `rooms` WHERE `name` = 'TopDownRoom');
