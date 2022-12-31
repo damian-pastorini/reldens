@@ -21,7 +21,11 @@ UPDATE `skills_skill_attack` SET `dodgeFullEnabled`=1;
 
 # Room Gravity:
 SET @top_down_room_id = (SELECT `id` FROM `rooms` WHERE `name` = 'TopDownRoom');
+SET @house_2_room_id = (SELECT `id` FROM `rooms` WHERE `name` = 'ReldensHouse_2');
+SET @town_room_id = (SELECT `id` FROM `rooms` WHERE `name` = 'ReldensTown');
 UPDATE `rooms` SET `room_class_key`=NULL, `customData`='{"gravity":[0,625],"applyGravity":true,"allowPassWallsFromBelow":true,"timeStep":0.012,"type":"TOP_DOWN_WITH_GRAVITY","useFixedWorldStep":false,"maxSubSteps":5,"movementSpeed":200,"usePathFinder":false}' WHERE `id`= @top_down_room_id;
+UPDATE `rooms_return_points` SET `from_room_id`=@top_down_room_id WHERE `room_id`=@town_room_id;
+INSERT INTO `rooms_return_points` VALUES (@house_2_room_id, 'down', 660, 520, 0, @top_down_room_id);
 
 # Features:
 INSERT INTO `features` VALUES (11, 'prediction', 'Prediction', 0);
