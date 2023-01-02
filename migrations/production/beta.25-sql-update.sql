@@ -89,10 +89,31 @@ INSERT INTO `target_options` VALUES (1, 'Player');
 ALTER TABLE `objects_skills`
 	ADD CONSTRAINT `FK_objects_skills_target_options` FOREIGN KEY (`target`) REFERENCES `target_options` (`target_key`) ON UPDATE NO ACTION ON DELETE NO ACTION;
 
+# Objects IDs:
+SET @enemy_forest_1_id = (SELECT `id` FROM `objects` WHERE `client_key` = 'enemy_forest_1');
+SET @enemy_forest_2_id = (SELECT `id` FROM `objects` WHERE `client_key` = 'enemy_forest_2');
+
 # Append new objects skills:
 SET @attack_bullet_skill_id = (SELECT `id` FROM `skills_skill` WHERE `key` = 'attackBullet');
-SET @enemy_forest_1_id = (SELECT `id` FROM `skills_skill` WHERE `client_key` = 'enemy_forest_1');
 INSERT INTO `objects_skills` VALUES (@enemy_forest_1_id, @attack_bullet_skill_id, 1);
+
+# Objects stats:
+CREATE TABLE `objects_stats` (
+	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+	`object_id` INT(10) UNSIGNED NOT NULL,
+	`stat_id` INT(10) UNSIGNED NOT NULL,
+	`base_value` INT(10) UNSIGNED NOT NULL,
+	`value` INT(10) UNSIGNED NOT NULL,
+	PRIMARY KEY (`id`) USING BTREE,
+	UNIQUE INDEX `object_id_stat_id` (`object_id`, `stat_id`) USING BTREE,
+	INDEX `stat_id` (`stat_id`) USING BTREE,
+	INDEX `user_id` (`object_id`) USING BTREE,
+	CONSTRAINT `FK_objects_current_stats_objects_stats` FOREIGN KEY (`stat_id`) REFERENCES `stats` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT,
+	CONSTRAINT `FK_object_current_stats_objects` FOREIGN KEY (`object_id`) REFERENCES `objects` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT
+) COLLATE='utf8_unicode_ci' ENGINE=InnoDB AUTO_INCREMENT=0;
+
+INSERT INTO `objects_stats` SELECT NULL, @enemy_forest_1_id, `id`, 50, 50 FROM `stats`;
+INSERT INTO `objects_stats` SELECT NULL, @enemy_forest_2_id, `id`, 50, 50 FROM `stats`;
 
 #######################################################################################################################
 

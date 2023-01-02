@@ -683,6 +683,44 @@ CREATE TABLE IF NOT EXISTS `objects_skills` (
 INSERT INTO `objects_skills` (`id`, `object_id`, `skill_id`, `target`) VALUES
 	(1, 6, 1, 1);
 
+-- Dumping structure for table objects_stats
+CREATE TABLE IF NOT EXISTS `objects_stats` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `object_id` int unsigned NOT NULL,
+  `stat_id` int unsigned NOT NULL,
+  `base_value` int unsigned NOT NULL,
+  `value` int unsigned NOT NULL,
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE KEY `object_id_stat_id` (`object_id`,`stat_id`) USING BTREE,
+  KEY `stat_id` (`stat_id`) USING BTREE,
+  KEY `object_id` (`object_id`) USING BTREE,
+  CONSTRAINT `FK_object_current_stats_objects` FOREIGN KEY (`object_id`) REFERENCES `objects` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT `FK_objects_current_stats_objects_stats` FOREIGN KEY (`stat_id`) REFERENCES `stats` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=31 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+
+-- Dumping data for table objects_stats: ~20 rows (approximately)
+INSERT INTO `objects_stats` (`id`, `object_id`, `stat_id`, `base_value`, `value`) VALUES
+	(1, 7, 1, 50, 50),
+	(2, 7, 2, 50, 50),
+	(3, 7, 3, 50, 50),
+	(4, 7, 4, 50, 50),
+	(5, 7, 5, 50, 50),
+	(6, 7, 6, 50, 50),
+	(7, 7, 7, 50, 50),
+	(8, 7, 8, 50, 50),
+	(9, 7, 9, 50, 50),
+	(10, 7, 10, 50, 50),
+	(16, 6, 1, 50, 50),
+	(17, 6, 2, 50, 50),
+	(18, 6, 3, 50, 50),
+	(19, 6, 4, 50, 50),
+	(20, 6, 5, 50, 50),
+	(21, 6, 6, 50, 50),
+	(22, 6, 7, 50, 50),
+	(23, 6, 8, 50, 50),
+	(24, 6, 9, 50, 50),
+	(25, 6, 10, 50, 50);
+
 -- Dumping structure for table operation_types
 CREATE TABLE IF NOT EXISTS `operation_types` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
@@ -737,7 +775,7 @@ CREATE TABLE IF NOT EXISTS `players_state` (
 
 -- Dumping data for table players_state: ~1 rows (approximately)
 INSERT INTO `players_state` (`id`, `player_id`, `room_id`, `x`, `y`, `dir`) VALUES
-	(1, 1, 3, 660, 540, 'down');
+	(1, 1, 5, 976, 681, 'down');
 
 -- Dumping structure for table players_stats
 CREATE TABLE IF NOT EXISTS `players_stats` (
@@ -757,7 +795,7 @@ CREATE TABLE IF NOT EXISTS `players_stats` (
 -- Dumping data for table players_stats: ~10 rows (approximately)
 INSERT INTO `players_stats` (`id`, `player_id`, `stat_id`, `base_value`, `value`) VALUES
 	(1, 1, 1, 280, 178),
-	(2, 1, 2, 280, 134),
+	(2, 1, 2, 280, 129),
 	(3, 1, 3, 280, 371),
 	(4, 1, 4, 280, 280),
 	(5, 1, 5, 100, 100),
@@ -1194,7 +1232,7 @@ CREATE TABLE IF NOT EXISTS `skills_owners_class_path` (
 
 -- Dumping data for table skills_owners_class_path: ~1 rows (approximately)
 INSERT INTO `skills_owners_class_path` (`id`, `class_path_id`, `owner_id`, `currentLevel`, `currentExp`) VALUES
-	(1, 1, 1, 10, 8460);
+	(1, 1, 1, 10, 8480);
 
 -- Dumping structure for table skills_skill
 CREATE TABLE IF NOT EXISTS `skills_skill` (
@@ -1453,7 +1491,7 @@ CREATE TABLE IF NOT EXISTS `users` (
 
 -- Dumping data for table users: ~1 rows (approximately)
 INSERT INTO `users` (`id`, `email`, `username`, `password`, `role_id`, `status`, `created_at`, `updated_at`, `played_time`) VALUES
-	(1, 'dap@dap.com', 'dap', '$2b$10$RDnURyFoXo7.zcFKVhNcuezJsXXYNslhPBNPzi.crbikFhG8Pnude', 1, '1', '2022-03-17 18:57:44', '2022-12-31 20:53:37', 646502);
+	(1, 'dap@dap.com', 'dap', '$2b$10$RDnURyFoXo7.zcFKVhNcuezJsXXYNslhPBNPzi.crbikFhG8Pnude', 1, '1', '2022-03-17 18:57:44', '2023-01-02 00:29:20', 648121);
 
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
