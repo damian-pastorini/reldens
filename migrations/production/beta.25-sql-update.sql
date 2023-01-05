@@ -4,7 +4,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 
 #######################################################################################################################
 
-Config:
+# Config:
 DELETE FROM `config` WHERE `scope` = 'server' AND `path`='enemies/defaultAttacks/attackBullet';
 INSERT INTO `config` VALUES (NULL, 'server', 'enemies/default/skillKey', 'attackShort', 't');
 INSERT INTO `config` VALUES (NULL, 'server', 'enemies/default/affectedProperty', 'stats/hp', 't');
@@ -15,7 +15,7 @@ UPDATE `config` SET `value` = 50 WHERE `path` LIKE 'enemies/initialStats/%';
 
 # Skills:
 SET @heal_skill_id = (SELECT `id` FROM `skills_skill` WHERE `key` = 'heal');
-INSERT INTO `skills_skill_owner_effects` VALUES (NULL, heal_skill_id, 'dec_mp', 'stats/mp', 2, '2', '0', '', NULL, NULL);
+INSERT INTO `skills_skill_owner_effects` VALUES (NULL, @heal_skill_id, 'dec_mp', 'stats/mp', 2, '2', '0', '', NULL, NULL);
 
 UPDATE `skills_skill_attack` SET `dodgeFullEnabled`=1;
 
@@ -25,10 +25,10 @@ SET @house_2_room_id = (SELECT `id` FROM `rooms` WHERE `name` = 'ReldensHouse_2'
 SET @town_room_id = (SELECT `id` FROM `rooms` WHERE `name` = 'ReldensTown');
 UPDATE `rooms` SET `room_class_key`=NULL, `customData`='{"gravity":[0,625],"applyGravity":true,"allowPassWallsFromBelow":true,"timeStep":0.012,"type":"TOP_DOWN_WITH_GRAVITY","useFixedWorldStep":false,"maxSubSteps":5,"movementSpeed":200,"usePathFinder":false}' WHERE `id`= @top_down_room_id;
 UPDATE `rooms_return_points` SET `from_room_id`=@top_down_room_id WHERE `room_id`=@town_room_id;
-INSERT INTO `rooms_return_points` VALUES (@house_2_room_id, 'down', 660, 520, 0, @top_down_room_id);
+INSERT INTO `rooms_return_points` VALUES (NULL, @house_2_room_id, 'down', 660, 520, 0, @top_down_room_id);
 
 # Features:
-INSERT INTO `features` VALUES (11, 'prediction', 'Prediction', 0);
+UPDATE `features` SET `is_enabled` = 0 WHERE `code` = 'prediction';
 
 # Objects skills:
 CREATE TABLE `objects_skills` (
@@ -83,8 +83,8 @@ CREATE TABLE `target_options` (
 	UNIQUE INDEX `target_key` (`target_key`) USING BTREE
 ) COLLATE='utf8_unicode_ci' ENGINE=InnoDB;
 
-INSERT INTO `target_options` VALUES (0, 'Object');
-INSERT INTO `target_options` VALUES (1, 'Player');
+INSERT INTO `target_options` VALUES (NULL, 0, 'Object');
+INSERT INTO `target_options` VALUES (NULL, 1, 'Player');
 
 ALTER TABLE `objects_skills`
 	ADD CONSTRAINT `FK_objects_skills_target_options` FOREIGN KEY (`target`) REFERENCES `target_options` (`target_key`) ON UPDATE NO ACTION ON DELETE NO ACTION;
@@ -95,7 +95,7 @@ SET @enemy_forest_2_id = (SELECT `id` FROM `objects` WHERE `client_key` = 'enemy
 
 # Append new objects skills:
 SET @attack_bullet_skill_id = (SELECT `id` FROM `skills_skill` WHERE `key` = 'attackBullet');
-INSERT INTO `objects_skills` VALUES (@enemy_forest_1_id, @attack_bullet_skill_id, 1);
+INSERT INTO `objects_skills` VALUES (NULL, @enemy_forest_1_id, @attack_bullet_skill_id, 1);
 
 # Objects stats:
 CREATE TABLE `objects_stats` (
@@ -114,6 +114,9 @@ CREATE TABLE `objects_stats` (
 
 INSERT INTO `objects_stats` SELECT NULL, @enemy_forest_1_id, `id`, 50, 50 FROM `stats`;
 INSERT INTO `objects_stats` SELECT NULL, @enemy_forest_2_id, `id`, 50, 50 FROM `stats`;
+
+# Set aggressive object:
+UPDATE `objects` SET `private_params` = '{"isAggressive":true}' WHERE id = @enemy_forest_1_id;
 
 #######################################################################################################################
 
