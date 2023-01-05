@@ -150,7 +150,7 @@ CREATE TABLE IF NOT EXISTS `config` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=283 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table config: ~239 rows (approximately)
+-- Dumping data for table config: ~236 rows (approximately)
 INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(1, 'server', 'rooms/validation/valid', 'room_game,chat_global', 't'),
 	(2, 'server', 'players/initialState/room_id', '4', 'i'),
@@ -541,7 +541,7 @@ INSERT INTO `objects` (`id`, `room_id`, `layer_name`, `tile_index`, `object_clas
 	(1, 4, 'ground-collisions', 444, 'door_1', 'door_house_1', '', NULL, NULL, 1),
 	(4, 4, 'ground-collisions', 951, 'door_2', 'door_house_2', '', NULL, NULL, 1),
 	(5, 4, 'house-collisions-over-player', 535, 'npc_1', 'people_town_1', 'Alfred', '{"runOnAction":true,"playerVisible":true}', '{"content":"Hello! My name is Alfred. Go to the forest and kill some monsters! Now... leave me alone!"}', 1),
-	(6, 5, 'respawn-area-monsters-lvl-1-2', NULL, 'enemy_1', 'enemy_forest_1', 'Tree', '{"isAggressive":true}', '{"autoStart":true}', 0),
+	(6, 5, 'respawn-area-monsters-lvl-1-2', NULL, 'enemy_1', 'enemy_forest_1', 'Tree', '{"isAggressive":true}', '{"autoStart":true}', 1),
 	(7, 5, 'respawn-area-monsters-lvl-1-2', NULL, 'enemy_2', 'enemy_forest_2', 'Tree Punch', NULL, '{"autoStart":true}', 1),
 	(8, 4, 'house-collisions-over-player', 538, 'npc_2', 'healer_1', 'Mamon', '{"runOnAction":true,"playerVisible":true,"sendInvalidOptionMessage":true}', '{"content":"Hello traveler! I can restore your health, would you like me to do it?","options":{"1":{"label":"Heal HP","value":1},"2":{"label":"Nothing...","value":2},"3":{"label":"Need some MP","value":3}},"ui":true}', 1),
 	(10, 4, 'house-collisions-over-player', 560, 'npc_3', 'merchant_1', 'Gimly', '{"runOnAction":true,"playerVisible":true,"sendInvalidOptionMessage":true}', '{"content":"Hi there! What would you like to do?","options":{"buy":{"label":"Buy","value":"buy"},"sell":{"label":"Sell","value":"sell"}}}', 1),
@@ -572,11 +572,11 @@ INSERT INTO `objects_animations` (`id`, `object_id`, `animationKey`, `animationD
 CREATE TABLE IF NOT EXISTS `objects_assets` (
   `object_asset_id` int unsigned NOT NULL AUTO_INCREMENT,
   `object_id` int unsigned NOT NULL,
-  `asset_type` varchar(255) CHARACTER SET latin1 NOT NULL,
-  `asset_key` varchar(255) CHARACTER SET latin1 NOT NULL,
-  `file_1` varchar(255) CHARACTER SET latin1 NOT NULL,
-  `file_2` varchar(255) CHARACTER SET latin1 DEFAULT NULL,
-  `extra_params` text CHARACTER SET latin1,
+  `asset_type` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `asset_key` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `file_1` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `file_2` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+  `extra_params` text CHARACTER SET utf8 COLLATE utf8_unicode_ci,
   PRIMARY KEY (`object_asset_id`),
   KEY `object_id` (`object_id`),
   CONSTRAINT `FK_objects_assets_objects` FOREIGN KEY (`object_id`) REFERENCES `objects` (`id`) ON UPDATE CASCADE
@@ -696,7 +696,7 @@ CREATE TABLE IF NOT EXISTS `objects_stats` (
   KEY `object_id` (`object_id`) USING BTREE,
   CONSTRAINT `FK_object_current_stats_objects` FOREIGN KEY (`object_id`) REFERENCES `objects` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT `FK_objects_current_stats_objects_stats` FOREIGN KEY (`stat_id`) REFERENCES `stats` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=31 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=26 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
 -- Dumping data for table objects_stats: ~20 rows (approximately)
 INSERT INTO `objects_stats` (`id`, `object_id`, `stat_id`, `base_value`, `value`) VALUES
@@ -752,9 +752,9 @@ CREATE TABLE IF NOT EXISTS `players` (
   UNIQUE KEY `name` (`name`),
   KEY `FK_players_users` (`user_id`),
   CONSTRAINT `FK_players_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table players: ~1 rows (approximately)
+-- Dumping data for table players: ~2 rows (approximately)
 INSERT INTO `players` (`id`, `user_id`, `name`, `created_at`) VALUES
 	(1, 1, 'Darth', '2022-03-17 19:57:50');
 
@@ -771,11 +771,11 @@ CREATE TABLE IF NOT EXISTS `players_state` (
   KEY `FK_player_state_player_stats` (`player_id`),
   CONSTRAINT `FK_player_state_player_stats` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON UPDATE CASCADE,
   CONSTRAINT `FK_player_state_rooms` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table players_state: ~1 rows (approximately)
+-- Dumping data for table players_state: ~2 rows (approximately)
 INSERT INTO `players_state` (`id`, `player_id`, `room_id`, `x`, `y`, `dir`) VALUES
-	(1, 1, 5, 976, 681, 'down');
+	(1, 1, 5, 978, 681, 'down');
 
 -- Dumping structure for table players_stats
 CREATE TABLE IF NOT EXISTS `players_stats` (
@@ -790,12 +790,12 @@ CREATE TABLE IF NOT EXISTS `players_stats` (
   KEY `user_id` (`player_id`) USING BTREE,
   CONSTRAINT `FK_player_current_stats_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT `FK_players_current_stats_players_stats` FOREIGN KEY (`stat_id`) REFERENCES `stats` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=151 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=161 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table players_stats: ~10 rows (approximately)
+-- Dumping data for table players_stats: ~20 rows (approximately)
 INSERT INTO `players_stats` (`id`, `player_id`, `stat_id`, `base_value`, `value`) VALUES
-	(1, 1, 1, 280, 178),
-	(2, 1, 2, 280, 129),
+	(1, 1, 1, 280, 158),
+	(2, 1, 2, 280, 125),
 	(3, 1, 3, 280, 371),
 	(4, 1, 4, 280, 280),
 	(5, 1, 5, 100, 100),
@@ -811,7 +811,7 @@ CREATE TABLE IF NOT EXISTS `respawn` (
   `object_id` int unsigned NOT NULL,
   `respawn_time` int unsigned NOT NULL DEFAULT '0',
   `instances_limit` int unsigned NOT NULL DEFAULT '0',
-  `layer` varchar(255) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL,
+  `layer` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   PRIMARY KEY (`id`),
   KEY `respawn_object_id` (`object_id`),
   CONSTRAINT `FK_respawn_objects` FOREIGN KEY (`object_id`) REFERENCES `objects` (`id`) ON UPDATE CASCADE
@@ -1195,7 +1195,7 @@ CREATE TABLE IF NOT EXISTS `skills_levels_modifiers_conditions` (
   `levels_modifier_id` int unsigned NOT NULL,
   `key` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `property_key` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
-  `operation` varchar(50) CHARACTER SET utf32 COLLATE utf32_unicode_ci NOT NULL COMMENT 'eq,ne,lt,gt,le,ge',
+  `operation` varchar(50) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL COMMENT 'eq,ne,lt,gt,le,ge',
   `value` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   PRIMARY KEY (`id`) USING BTREE,
   KEY `levels_modifier_id` (`levels_modifier_id`) USING BTREE,
@@ -1228,9 +1228,9 @@ CREATE TABLE IF NOT EXISTS `skills_owners_class_path` (
   PRIMARY KEY (`id`),
   KEY `level_set_id` (`class_path_id`) USING BTREE,
   CONSTRAINT `FK_skills_owners_class_path_skills_class_path` FOREIGN KEY (`class_path_id`) REFERENCES `skills_class_path` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table skills_owners_class_path: ~1 rows (approximately)
+-- Dumping data for table skills_owners_class_path: ~2 rows (approximately)
 INSERT INTO `skills_owners_class_path` (`id`, `class_path_id`, `owner_id`, `currentLevel`, `currentExp`) VALUES
 	(1, 1, 1, 10, 8480);
 
@@ -1332,7 +1332,7 @@ CREATE TABLE IF NOT EXISTS `skills_skill_owner_conditions` (
   `skill_id` int unsigned NOT NULL,
   `key` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `property_key` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
-  `conditional` varchar(50) CHARACTER SET utf32 COLLATE utf32_unicode_ci NOT NULL COMMENT 'eq,ne,lt,gt,le,ge',
+  `conditional` varchar(50) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL COMMENT 'eq,ne,lt,gt,le,ge',
   `value` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   PRIMARY KEY (`id`) USING BTREE,
   KEY `skill_id` (`skill_id`) USING BTREE,
@@ -1373,7 +1373,7 @@ CREATE TABLE IF NOT EXISTS `skills_skill_owner_effects_conditions` (
   `skill_owner_effect_id` int unsigned NOT NULL,
   `key` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `property_key` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
-  `operation` varchar(50) CHARACTER SET utf32 COLLATE utf32_unicode_ci NOT NULL COMMENT 'eq,ne,lt,gt,le,ge',
+  `operation` varchar(50) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL COMMENT 'eq,ne,lt,gt,le,ge',
   `value` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   PRIMARY KEY (`id`) USING BTREE,
   KEY `skill_owner_effect_id` (`skill_owner_effect_id`) USING BTREE,
@@ -1427,7 +1427,7 @@ CREATE TABLE IF NOT EXISTS `skills_skill_target_effects_conditions` (
   `skill_target_effect_id` int unsigned NOT NULL,
   `key` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `property_key` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
-  `operation` varchar(50) CHARACTER SET utf32 COLLATE utf32_unicode_ci NOT NULL COMMENT 'eq,ne,lt,gt,le,ge',
+  `operation` varchar(50) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL COMMENT 'eq,ne,lt,gt,le,ge',
   `value` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   PRIMARY KEY (`id`) USING BTREE,
   KEY `skill_target_effect_id` (`skill_target_effect_id`) USING BTREE,
@@ -1487,11 +1487,11 @@ CREATE TABLE IF NOT EXISTS `users` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `email` (`email`),
   UNIQUE KEY `username` (`username`)
-) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table users: ~1 rows (approximately)
+-- Dumping data for table users: ~2 rows (approximately)
 INSERT INTO `users` (`id`, `email`, `username`, `password`, `role_id`, `status`, `created_at`, `updated_at`, `played_time`) VALUES
-	(1, 'dap@dap.com', 'dap', '$2b$10$RDnURyFoXo7.zcFKVhNcuezJsXXYNslhPBNPzi.crbikFhG8Pnude', 1, '1', '2022-03-17 18:57:44', '2023-01-02 00:29:20', 648121);
+	(1, 'dap@dap.com', 'dap', '$2b$10$RDnURyFoXo7.zcFKVhNcuezJsXXYNslhPBNPzi.crbikFhG8Pnude', 1, '1', '2022-03-17 18:57:44', '2023-01-05 12:03:19', 649132);
 
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
