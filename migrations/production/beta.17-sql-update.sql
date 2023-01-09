@@ -432,7 +432,7 @@ INSERT INTO `skills_levels_modifiers` (`id`, `level_id`, `key`, `property_key`, 
 INSERT INTO `skills_levels_modifiers` (`id`, `level_id`, `key`, `property_key`, `operation`, `value`, `minValue`, `maxValue`, `minProperty`, `maxProperty`) VALUES (NULL, @currentLevel, 'inc_hp', 'statsBase/hp', 1, '20', NULL, NULL, NULL, NULL);
 INSERT INTO `skills_levels_modifiers` (`id`, `level_id`, `key`, `property_key`, `operation`, `value`, `minValue`, `maxValue`, `minProperty`, `maxProperty`) VALUES (NULL, @currentLevel, 'inc_mp', 'statsBase/mp', 1, '20', NULL, NULL, NULL, NULL);
 --
-INSERT INTO `skills_class_path_level_labels` (`id`, `class_path_id`, `level_id`, `label`) VALUES (NULL, @classPath, @currentLevel, 'Palading');
+INSERT INTO `skills_class_path_level_labels` (`id`, `class_path_id`, `level_id`, `label`) VALUES (NULL, @classPath, @currentLevel, 'Paladin');
 
 ## -------------------------------------------------------------------------------------------------------------------
 

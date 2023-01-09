@@ -79,8 +79,18 @@ Join our Discord channel: [https://discord.gg/HuJMxUY](https://discord.gg/HuJMxU
 
 [![Paypal](https://img.shields.io/badge/Reldens-Paypal%20Donation-blue?style=for-the-badge)](https://www.paypal.com/paypalme/damianpastorini)
 
-If you like to contribute in anyway or donate to support the project please also feel free to contact me at [info@dwdeveloper.com](mailto:info@dwdeveloper.com).
+If you like to contribute in any way or donate to support the project please also feel free to contact me at [info@dwdeveloper.com](mailto:info@dwdeveloper.com).
 
+## Contributors
+
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
+
+<!-- markdownlint-restore -->
+<!-- prettier-ignore-end -->
+
+<!-- ALL-CONTRIBUTORS-LIST:END -->
 
 ## License
 
