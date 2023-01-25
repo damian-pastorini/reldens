@@ -12,6 +12,7 @@ class Enemy2Object extends EnemyObject
 
     async onBattleEnd(playerSchema, pveInstance, actionData)
     {
+        /*
         // validate unique id for battle end event:
         if(this.uid !== pveInstance.targetObject.uid){
             return false;
@@ -20,6 +21,7 @@ class Enemy2Object extends EnemyObject
         if(sc.hasOwn(playerSchema, 'skillsServer')){
             await playerSchema.skillsServer.classPath.addExperience(20);
         }
+        */
     }
 
 }
