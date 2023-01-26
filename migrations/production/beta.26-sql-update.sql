@@ -68,6 +68,50 @@ CREATE TABLE `clan_members` (
 	INDEX `FK__players` (`player_id`) USING BTREE
 ) COLLATE='utf8_unicode_ci' ENGINE=InnoDB;
 
+# Inventory tables fix:
+ALTER TABLE `items_inventory` DROP FOREIGN KEY `FK_items_inventory_items_item`;
+ALTER TABLE `items_item` DROP FOREIGN KEY `FK_items_item_items_group`;
+ALTER TABLE `items_item_modifiers` DROP FOREIGN KEY `FK_items_item_modifiers_items_item`;
+ALTER TABLE `objects_items_inventory` DROP FOREIGN KEY  `objects_items_inventory_ibfk_1`;
+
+ALTER TABLE `items_group`
+    CHANGE COLUMN `id` `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT FIRST;
+ALTER TABLE `items_inventory`
+	CHANGE COLUMN `id` `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT FIRST,
+	CHANGE COLUMN `owner_id` `owner_id` INT(10) UNSIGNED NOT NULL AFTER `id`,
+	CHANGE COLUMN `item_id` `item_id` INT(10) UNSIGNED NOT NULL AFTER `owner_id`;
+ALTER TABLE `items_item`
+	CHANGE COLUMN `id` `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT FIRST,
+	CHANGE COLUMN `group_id` `group_id` INT(10) UNSIGNED NULL DEFAULT NULL AFTER `type`;
+ALTER TABLE `items_item_modifiers`
+	CHANGE COLUMN `id` `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT FIRST,
+	CHANGE COLUMN `item_id` `item_id` INT(10) UNSIGNED NOT NULL AFTER `id`;
+ALTER TABLE `objects_items_inventory`
+	CHANGE COLUMN `item_id` `item_id` INT(10) UNSIGNED NOT NULL AFTER `owner_id`;
+ALTER TABLE `features`
+	CHANGE COLUMN `is_enabled` `is_enabled` TINYINT(1) UNSIGNED NOT NULL DEFAULT 0 AFTER `title`;
+
+ALTER TABLE `items_inventory` ADD CONSTRAINT `FK_items_inventory_items_item` FOREIGN KEY (`item_id`) REFERENCES `items_item` (`id`) ON UPDATE CASCADE ON DELETE NO ACTION;
+ALTER TABLE `items_item` ADD CONSTRAINT `FK_items_item_items_group` FOREIGN KEY (`group_id`) REFERENCES `items_group` (`id`) ON UPDATE CASCADE ON DELETE NO ACTION;
+ALTER TABLE `items_item_modifiers` ADD CONSTRAINT `FK_items_item_modifiers_items_item` FOREIGN KEY (`item_id`) REFERENCES `items_item` (`id`) ON UPDATE CASCADE ON DELETE NO ACTION;
+ALTER TABLE `objects_items_inventory` ADD CONSTRAINT `FK_objects_items_inventory_ibfk_1` FOREIGN KEY (`item_id`) REFERENCES `items_item` (`id`) ON UPDATE CASCADE ON DELETE NO ACTION;
+
+# Rewards:
+CREATE TABLE `rewards` (
+    `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+    `object_id` INT(10) UNSIGNED NOT NULL,
+    `item_id` INT(10) UNSIGNED NOT NULL,
+    `drop_rate` INT(10) UNSIGNED NOT NULL,
+    `drop_quantity` INT(10) UNSIGNED NOT NULL,
+    `is_unique` TINYINT(3) UNSIGNED NOT NULL,
+    `was_given` TINYINT(3) UNSIGNED NOT NULL,
+    PRIMARY KEY (`id`) USING BTREE,
+    INDEX `FK_rewards_items_item` (`item_id`) USING BTREE,
+    INDEX `FK_rewards_objects` (`object_id`) USING BTREE,
+    CONSTRAINT `FK_rewards_items_item` FOREIGN KEY (`item_id`) REFERENCES `items_item` (`id`) ON UPDATE CASCADE ON DELETE NO ACTION,
+    CONSTRAINT `FK_rewards_objects` FOREIGN KEY (`object_id`) REFERENCES `objects` (`id`) ON UPDATE CASCADE ON DELETE NO ACTION
+) COLLATE='utf8_unicode_ci' ENGINE=InnoDB;
+
 #######################################################################################################################
 
 SET FOREIGN_KEY_CHECKS = 1;
