@@ -96,6 +96,10 @@ ALTER TABLE `items_item` ADD CONSTRAINT `FK_items_item_items_group` FOREIGN KEY 
 ALTER TABLE `items_item_modifiers` ADD CONSTRAINT `FK_items_item_modifiers_items_item` FOREIGN KEY (`item_id`) REFERENCES `items_item` (`id`) ON UPDATE CASCADE ON DELETE NO ACTION;
 ALTER TABLE `objects_items_inventory` ADD CONSTRAINT `FK_objects_items_inventory_ibfk_1` FOREIGN KEY (`item_id`) REFERENCES `items_item` (`id`) ON UPDATE CASCADE ON DELETE NO ACTION;
 
+
+# Features:
+INSERT INTO `features` VALUES (NULL, 'rewards', 'Rewards', 1);
+
 # Rewards:
 CREATE TABLE `rewards` (
     `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
