@@ -5,7 +5,6 @@ SET FOREIGN_KEY_CHECKS = 0;
 #######################################################################################################################
 
 # Config Types:
-
 CREATE TABLE `config_types` (
 	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
 	`label` VARCHAR(50) NOT NULL DEFAULT '0' COLLATE 'utf8_unicode_ci',
@@ -31,6 +30,9 @@ UPDATE `config` SET `type` = @boolean_id WHERE `type` = 'b';
 UPDATE `config` SET `type` = @float_id WHERE `type` = 'i';
 UPDATE `config` SET `type` = @json_id WHERE `type` = 'j';
 UPDATE `config` SET `type` = @comma_separated_id WHERE `type` = 'c';
+INSERT INTO `config` VALUES (NULL, 'client', 'ui/options/acceptOrDecline', '{"1":{"label":"Accept","value":1},"2":{"label":"Decline","value":2}}', @json_id);
+INSERT INTO `config` VALUES (NULL, 'client', 'team/labels/requestFromTitle', 'Team request from:', @string_id);
+INSERT INTO `config` VALUES (NULL, 'client', 'team/labels/leaderNameTitle', 'Team leader: %leaderName', @string_id);
 
 ALTER TABLE `config` CHANGE COLUMN `type` `type` INT UNSIGNED NOT NULL COLLATE 'utf8_unicode_ci' AFTER `value`;
 ALTER TABLE `config` ADD CONSTRAINT `FK_config_config_types` FOREIGN KEY (`type`) REFERENCES `config_types` (`id`) ON UPDATE CASCADE ON DELETE NO ACTION;
@@ -47,7 +49,6 @@ INSERT INTO `config` VALUES (NULL, 'client', 'ui/teams/sharedProperties', 'stats
 INSERT INTO `features` VALUES (NULL, 'teams', 'Teams', 1);
 
 # Clan and members:
-
 CREATE TABLE `clan` (
 	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
 	`owner_id` INT(10) UNSIGNED NOT NULL,
