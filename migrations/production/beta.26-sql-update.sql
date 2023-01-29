@@ -43,7 +43,7 @@ INSERT INTO `config` VALUES (NULL, 'client', 'ui/teams/responsiveX', '5', @float
 INSERT INTO `config` VALUES (NULL, 'client', 'ui/teams/responsiveY', '5', @float_id);
 INSERT INTO `config` VALUES (NULL, 'client', 'ui/teams/x', '5', @float_id);
 INSERT INTO `config` VALUES (NULL, 'client', 'ui/teams/y', '5', @float_id);
-INSERT INTO `config` VALUES (NULL, 'client', 'ui/teams/sharedProperties', 'stats/hp,stats/mp', @comma_separated_id);
+INSERT INTO `config` VALUES (NULL, 'client', '{"hp":{"path":"stats/hp","useMax":"statsBase/hp","label":"HP"},"mp":{"path":"stats/mp","useMax":"statsBase/mp","label":"MP"}}', @json_id);
 
 # Features:
 INSERT INTO `features` VALUES (NULL, 'teams', 'Teams', 1);
