@@ -33,6 +33,7 @@ UPDATE `config` SET `type` = @comma_separated_id WHERE `type` = 'c';
 INSERT INTO `config` VALUES (NULL, 'client', 'ui/options/acceptOrDecline', '{"1":{"label":"Accept","value":1},"2":{"label":"Decline","value":2}}', @json_id);
 INSERT INTO `config` VALUES (NULL, 'client', 'team/labels/requestFromTitle', 'Team request from:', @string_id);
 INSERT INTO `config` VALUES (NULL, 'client', 'team/labels/leaderNameTitle', 'Team leader: %leaderName', @string_id);
+INSERT INTO `config` VALUES (NULL, 'client', 'team/labels/propertyMaxValue', '/ %propertyMaxValue', @string_id);
 
 ALTER TABLE `config` CHANGE COLUMN `type` `type` INT UNSIGNED NOT NULL COLLATE 'utf8_unicode_ci' AFTER `value`;
 ALTER TABLE `config` ADD CONSTRAINT `FK_config_config_types` FOREIGN KEY (`type`) REFERENCES `config_types` (`id`) ON UPDATE CASCADE ON DELETE NO ACTION;
@@ -43,7 +44,7 @@ INSERT INTO `config` VALUES (NULL, 'client', 'ui/teams/responsiveX', '5', @float
 INSERT INTO `config` VALUES (NULL, 'client', 'ui/teams/responsiveY', '5', @float_id);
 INSERT INTO `config` VALUES (NULL, 'client', 'ui/teams/x', '5', @float_id);
 INSERT INTO `config` VALUES (NULL, 'client', 'ui/teams/y', '5', @float_id);
-INSERT INTO `config` VALUES (NULL, 'client', '{"hp":{"path":"stats/hp","useMax":"statsBase/hp","label":"HP"},"mp":{"path":"stats/mp","useMax":"statsBase/mp","label":"MP"}}', @json_id);
+INSERT INTO `config` VALUES (NULL, 'client', '{"hp":{"path":"stats/hp","pathMax":"statsBase/hp","label":"HP"},"mp":{"path":"stats/mp","pathMax":"statsBase/mp","label":"MP"}}', @json_id);
 
 # Features:
 INSERT INTO `features` VALUES (NULL, 'teams', 'Teams', 1);

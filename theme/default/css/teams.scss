@@ -1,0 +1,55 @@
+.team-player,
+.property-box,
+.properties-list-container {
+    width: 100%;
+    float: left;
+    display: block;
+    position: relative;
+    padding: 0;
+    margin: 0 0 5px;
+}
+
+.player-name {
+    float: left;
+    display: block;
+    width: 90%;
+    text-align: left;
+}
+
+.team-remove-container {
+    float: left;
+    display: block;
+    width: 10%;
+
+    #team-remove {
+        position: absolute;
+        top: 0;
+        right: 0;
+        max-width: 24px;
+        cursor: pointer;
+    }
+
+}
+
+.property-box {
+    float: left;
+    padding: 0;
+    margin: 0;
+
+    div {
+        float: left;
+    }
+
+    .label {
+        margin-right: 10px;
+    }
+
+    .value {
+        margin-right: 6px;
+    }
+
+}
+
+.team-disband-action {
+    float: right;
+}
