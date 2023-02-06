@@ -101,10 +101,25 @@ ALTER TABLE `objects_items_inventory` ADD CONSTRAINT `FK_objects_items_inventory
 INSERT INTO `features` VALUES (NULL, 'rewards', 'Rewards', 1);
 
 # Rewards:
+CREATE TABLE `rewards_modifiers` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `key` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `property_key` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `operation` int unsigned NOT NULL,
+  `value` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `minValue` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+  `maxValue` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+  `minProperty` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+  `maxProperty` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `modifier_id` (`key`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci COMMENT='Reward Modifiers table.';
+
 CREATE TABLE `rewards` (
     `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
     `object_id` INT(10) UNSIGNED NOT NULL,
-    `item_id` INT(10) UNSIGNED NOT NULL,
+    `item_id` INT(10) UNSIGNED NULL DEFAULT NULL,
+    `modifier_id` INT(10) UNSIGNED NULL DEFAULT NULL,
     `drop_rate` INT(10) UNSIGNED NOT NULL,
     `drop_quantity` INT(10) UNSIGNED NOT NULL,
     `is_unique` TINYINT(3) UNSIGNED NOT NULL,
@@ -113,6 +128,7 @@ CREATE TABLE `rewards` (
     INDEX `FK_rewards_items_item` (`item_id`) USING BTREE,
     INDEX `FK_rewards_objects` (`object_id`) USING BTREE,
     CONSTRAINT `FK_rewards_items_item` FOREIGN KEY (`item_id`) REFERENCES `items_item` (`id`) ON UPDATE CASCADE ON DELETE NO ACTION,
+    CONSTRAINT `FK_rewards_rewards_modifiers` FOREIGN KEY (`modifier_id`) REFERENCES `rewards_modifiers` (`id`) ON UPDATE CASCADE ON DELETE NO ACTION,
     CONSTRAINT `FK_rewards_objects` FOREIGN KEY (`object_id`) REFERENCES `objects` (`id`) ON UPDATE CASCADE ON DELETE NO ACTION
 ) COLLATE='utf8_unicode_ci' ENGINE=InnoDB;
 
