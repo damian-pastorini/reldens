@@ -120,6 +120,7 @@ CREATE TABLE `rewards` (
     `object_id` INT(10) UNSIGNED NOT NULL,
     `item_id` INT(10) UNSIGNED NULL DEFAULT NULL,
     `modifier_id` INT(10) UNSIGNED NULL DEFAULT NULL,
+    `experience` INT(11) UNSIGNED NOT NULL DEFAULT 0,
     `drop_rate` INT(10) UNSIGNED NOT NULL,
     `drop_quantity` INT(10) UNSIGNED NOT NULL,
     `is_unique` TINYINT(3) UNSIGNED NOT NULL DEFAULT 0,
