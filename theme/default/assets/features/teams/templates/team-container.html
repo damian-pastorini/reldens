@@ -1,10 +1,10 @@
-<div class="team-container">
+<div class="team-container team-{{teamId}}">
     <div class="team-row team-players-boxes">
         {{&teamMembers}}
     </div>
     <div class="team-row team-actions">
         <div class="team-disband">
-            <button type="button" class="team-disband-action">{{disbandActionLabel}}</button>
+            <button type="button" class="team-disband-action .leave-{{playerId}}">{{leaveActionLabel}}</button>
         </div>
     </div>
 </div>
