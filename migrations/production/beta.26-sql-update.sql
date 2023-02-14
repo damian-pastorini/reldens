@@ -125,6 +125,7 @@ CREATE TABLE `rewards` (
     `drop_quantity` INT(10) UNSIGNED NOT NULL,
     `is_unique` TINYINT(3) UNSIGNED NOT NULL DEFAULT 0,
     `was_given` TINYINT(3) UNSIGNED NOT NULL DEFAULT 0,
+    `has_drop_body` TINYINT(3) UNSIGNED NOT NULL DEFAULT 0,
     PRIMARY KEY (`id`) USING BTREE,
     INDEX `FK_rewards_items_item` (`item_id`) USING BTREE,
     INDEX `FK_rewards_objects` (`object_id`) USING BTREE,
@@ -132,6 +133,21 @@ CREATE TABLE `rewards` (
     CONSTRAINT `FK_rewards_rewards_modifiers` FOREIGN KEY (`modifier_id`) REFERENCES `rewards_modifiers` (`id`) ON UPDATE CASCADE ON DELETE NO ACTION,
     CONSTRAINT `FK_rewards_objects` FOREIGN KEY (`object_id`) REFERENCES `objects` (`id`) ON UPDATE CASCADE ON DELETE NO ACTION
 ) COLLATE='utf8_unicode_ci' ENGINE=InnoDB;
+
+CREATE TABLE `objects_items_rewards_animations` (
+    `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+    `reward_id` INT(10) UNSIGNED NOT NULL,
+    `asset_type` varchar(255) NOT NULL,
+    `asset_key` varchar(255) NOT NULL,
+    `file` varchar(255) NOT NULL,
+    `extra_params` TEXT NULL,
+    PRIMARY KEY (`id`) USING BTREE,
+    INDEX `FK_objects_items_rewards_animations_rewards` (`reward_id`) USING BTREE,
+    CONSTRAINT `FK_objects_items_rewards_animations_rewards` FOREIGN KEY (`reward_id`) REFERENCES `rewards` (`id`) ON UPDATE CASCADE ON DELETE NO ACTION
+) COLLATE='utf8_unicode_ci' ENGINE=InnoDB;
+
+# Drop Reward Interaction Distance Config
+INSERT INTO `reldens.config` (scope, path, value, type) VALUES ('server', 'rewards/actions/interactionsDistance', '140', 2);
 
 #######################################################################################################################
 
