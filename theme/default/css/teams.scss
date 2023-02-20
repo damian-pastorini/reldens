@@ -1,3 +1,33 @@
+/**
+ *
+ * Reldens - Styles - Teams
+ *
+ */
+
+
+.teams-dialog-box {
+    min-width: 160px;
+    top: 200px;
+    right: 360px;
+}
+
+@media (max-height: 400px) {
+
+    .teams-dialog-box {
+        top: 50px;
+    }
+
+}
+
+.teams-open {
+    position: relative;
+    top: 230px;
+    right: 60px;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 10px;
+    max-width: 40px;
+}
+
 .team-player,
 .property-box,
 .properties-list-container {
