@@ -73,6 +73,33 @@ CREATE TABLE `clan_members` (
 	INDEX `FK__players` (`player_id`) USING BTREE
 ) COLLATE='utf8_unicode_ci' ENGINE=InnoDB;
 
+CREATE TABLE `clan_levels` (
+	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+	`key` INT(10) UNSIGNED NOT NULL,
+	`label` VARCHAR(255) NOT NULL COLLATE 'utf8mb3_unicode_ci',
+	`required_experience` BIGINT(20) UNSIGNED NULL DEFAULT NULL,
+	PRIMARY KEY (`id`) USING BTREE
+) COLLATE='utf8mb3_unicode_ci' ENGINE=InnoDB AUTO_INCREMENT=1;
+
+CREATE TABLE `clan_levels_modifiers` (
+	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+	`level_id` INT(10) UNSIGNED NOT NULL,
+	`key` VARCHAR(255) NOT NULL COLLATE 'utf8mb3_unicode_ci',
+	`property_key` VARCHAR(255) NOT NULL COLLATE 'utf8mb3_unicode_ci',
+	`operation` INT(10) UNSIGNED NOT NULL,
+	`value` VARCHAR(255) NOT NULL COLLATE 'utf8mb3_unicode_ci',
+	`minValue` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_unicode_ci',
+	`maxValue` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_unicode_ci',
+	`minProperty` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_unicode_ci',
+	`maxProperty` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_unicode_ci',
+	PRIMARY KEY (`id`) USING BTREE,
+	INDEX `modifier_id` (`key`) USING BTREE,
+	INDEX `level_key` (`level_id`) USING BTREE,
+	INDEX `FK_clan_levels_modifiers_operation_types` (`operation`) USING BTREE,
+	CONSTRAINT `FK_clan_levels_modifiers_operation_types` FOREIGN KEY (`operation`) REFERENCES `operation_types` (`key`) ON UPDATE NO ACTION ON DELETE NO ACTION,
+	CONSTRAINT `FK_clan_levels_modifiers_clan_levels` FOREIGN KEY (`level_id`) REFERENCES `clan_levels` (`id`) ON UPDATE CASCADE ON DELETE NO ACTION
+) COLLATE='utf8mb3_unicode_ci' ENGINE=InnoDB AUTO_INCREMENT=1;
+
 # Inventory tables fix:
 ALTER TABLE `items_inventory` DROP FOREIGN KEY `FK_items_inventory_items_item`;
 ALTER TABLE `items_item` DROP FOREIGN KEY `FK_items_item_items_group`;
