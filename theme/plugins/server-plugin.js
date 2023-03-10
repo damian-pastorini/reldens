@@ -21,7 +21,7 @@ class ServerPlugin extends PluginInterface
     setup(props)
     {
         this.events = props.events;
-        this.events.on('reldens.serverStartBegin', (props) => {
+        this.events.on('reldens.createAppServer', (props) => {
             this.defineCustomClasses(props);
         });
     }
