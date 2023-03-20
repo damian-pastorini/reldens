@@ -6,7 +6,7 @@
  *
  */
 
-// set logger level and trace:
+// set logger level and trace, this needs to be specified before the game manager is required:
 window.RELDENS_LOG_LEVEL = 9;
 window.RELDENS_ENABLE_TRACE_FOR = 'emergency,alert,critical,error,warning';
 
