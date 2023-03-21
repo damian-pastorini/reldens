@@ -15,6 +15,14 @@
     min-width: 160px;
     top: 250px;
     right: 360px;
+
+    .clan-name-input {
+        outline: none;
+    }
+
+    .default-loading-container img{
+        max-width: 48px;
+    }
 }
 
 @media (max-height: 400px) {
@@ -29,7 +37,7 @@
 
 }
 
-.teams-open {
+.clan-open {
     position: relative;
     top: 230px;
     right: 60px;
@@ -38,9 +46,9 @@
     max-width: 40px;
 }
 
-.clan-open {
+.teams-open {
     position: relative;
-    top: 280px;
+    top: 300px;
     right: 60px;
     background: rgba(0, 0, 0, 0.5);
     padding: 10px;
