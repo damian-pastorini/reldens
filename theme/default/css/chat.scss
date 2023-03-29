@@ -15,6 +15,10 @@
     background: #000000;
     opacity: 0.8;
     color: $cWhite;
+    /* help for chrome issue with scale on phaser dom elements
+    will-change: transform;
+    transform: scale(1.011);
+    */
 }
 
 #chat-messages {

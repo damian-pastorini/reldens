@@ -12,9 +12,16 @@
 }
 
 .clan-dialog-box {
+    float: left;
+    position: relative;
     min-width: 160px;
+    min-height: 100px;
     top: 250px;
     right: 360px;
+    /* help for chrome issue with scale on phaser dom elements
+    will-change: transform;
+    transform: scale(1.009);
+    */
 
     .clan-name-input {
         outline: none;
@@ -83,7 +90,7 @@
     display: block;
     width: 10%;
 
-    #team-remove {
+    .team-remove-button {
         position: absolute;
         top: 0;
         right: 0;

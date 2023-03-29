@@ -78,7 +78,7 @@
         "@parcel/resolver-default": "2.8.0",
         "@parcel/reporter-dev-server": "2.8.0",
         "@parcel/core": "2.8.0",
-        "@reldens/items-system": "^0.18.0",
+        "@reldens/items-system": "^0.18.1",
         "@reldens/modifiers": "^0.19.0",
         "@reldens/skills": "^0.18.0",
         "@reldens/storage": "^0.13.0",
