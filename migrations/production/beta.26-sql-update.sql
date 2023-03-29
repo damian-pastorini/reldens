@@ -141,21 +141,69 @@ ALTER TABLE `items_item` ADD CONSTRAINT `FK_items_item_items_group` FOREIGN KEY 
 ALTER TABLE `items_item_modifiers` ADD CONSTRAINT `FK_items_item_modifiers_items_item` FOREIGN KEY (`item_id`) REFERENCES `items_item` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE `objects_items_inventory` ADD CONSTRAINT `FK_objects_items_inventory_ibfk_1` FOREIGN KEY (`item_id`) REFERENCES `items_item` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION;
 
+
+# Features:
+INSERT INTO `features` VALUES (NULL, 'rewards', 'Rewards', 1);
+
 # Rewards:
+CREATE TABLE `rewards_modifiers` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `key` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `property_key` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `operation` int unsigned NOT NULL,
+  `value` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `minValue` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+  `maxValue` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+  `minProperty` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+  `maxProperty` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `modifier_id` (`key`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci COMMENT='Reward Modifiers table.';
+
 CREATE TABLE `rewards` (
     `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
     `object_id` INT(10) UNSIGNED NOT NULL,
-    `item_id` INT(10) UNSIGNED NOT NULL,
+    `item_id` INT(10) UNSIGNED NULL DEFAULT NULL,
+    `modifier_id` INT(10) UNSIGNED NULL DEFAULT NULL,
+    `experience` INT(11) UNSIGNED NOT NULL DEFAULT 0,
     `drop_rate` INT(10) UNSIGNED NOT NULL,
     `drop_quantity` INT(10) UNSIGNED NOT NULL,
-    `is_unique` TINYINT(3) UNSIGNED NOT NULL,
-    `was_given` TINYINT(3) UNSIGNED NOT NULL,
+    `is_unique` TINYINT(3) UNSIGNED NOT NULL DEFAULT 0,
+    `was_given` TINYINT(3) UNSIGNED NOT NULL DEFAULT 0,
+    `has_drop_body` TINYINT(3) UNSIGNED NOT NULL DEFAULT 0,
     PRIMARY KEY (`id`) USING BTREE,
     INDEX `FK_rewards_items_item` (`item_id`) USING BTREE,
     INDEX `FK_rewards_objects` (`object_id`) USING BTREE,
     CONSTRAINT `FK_rewards_items_item` FOREIGN KEY (`item_id`) REFERENCES `items_item` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION,
+    CONSTRAINT `FK_rewards_rewards_modifiers` FOREIGN KEY (`modifier_id`) REFERENCES `rewards_modifiers` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION,
     CONSTRAINT `FK_rewards_objects` FOREIGN KEY (`object_id`) REFERENCES `objects` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
 ) COLLATE='utf8_unicode_ci' ENGINE=InnoDB;
+
+CREATE TABLE `objects_items_rewards_animations` (
+    `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+    `reward_id` INT(10) UNSIGNED NOT NULL,
+    `asset_type` varchar(255) NOT NULL,
+    `asset_key` varchar(255) NOT NULL,
+    `file` varchar(255) NOT NULL,
+    `extra_params` TEXT NULL,
+    PRIMARY KEY (`id`) USING BTREE,
+    INDEX `FK_objects_items_rewards_animations_rewards` (`reward_id`) USING BTREE,
+    CONSTRAINT `FK_objects_items_rewards_animations_rewards` FOREIGN KEY (`reward_id`) REFERENCES `rewards` (`id`) ON UPDATE CASCADE ON DELETE NO ACTION
+) COLLATE='utf8_unicode_ci' ENGINE=InnoDB;
+
+
+INSERT INTO `rewards` VALUES
+    (1, 7, 2, null, 10, 100, 1, 0, 0, 1),
+    (2, 6, 2, null, 10, 100, 3, 0, 0, 1);
+
+INSERT INTO `objects_items_rewards_animations` VALUES
+    (1, 2, 'spritesheet', 'branch-sprite', 'branch-sprite', '{"start":0,"end":2,"repeat":-1,"frameWidth":32, "frameHeight":32,"depthByPlayer":"above"}'),
+    (2, 1, 'spritesheet', 'branch-sprite', 'branch-sprite', '{"start":0,"end":2,"repeat":-1,"frameWidth":32, "frameHeight":32,"depthByPlayer":"above"}');
+
+# Drop Reward Interaction Distance Config
+INSERT INTO `config` (scope, path, value, type) VALUES ('server', 'rewards/actions/interactionsDistance', '140', 2);
+INSERT INTO `config` (scope, path, value, type) VALUES ('server', 'rewards/disappearTime', '1800000', 2);
+INSERT INTO `config` (scope, path, value, type) VALUES ('client', 'rewards/titles/rewardMessage', 'You obtained %dropQuantity %itemLabel', 1);
 
 #######################################################################################################################
 
