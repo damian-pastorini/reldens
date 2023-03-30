@@ -58,6 +58,9 @@ INSERT INTO `config` VALUES (NULL, 'client', 'ui/clan/x', '430', @float_id);
 INSERT INTO `config` VALUES (NULL, 'client', 'ui/clan/y', '100', @float_id);
 INSERT INTO `config` VALUES (NULL, 'client', 'ui/clan/sharedProperties', '{"hp":{"path":"stats/hp","pathMax":"statsBase/hp","label":"HP"},"mp":{"path":"stats/mp","pathMax":"statsBase/mp","label":"MP"}}', @json_id);
 INSERT INTO `config` VALUES (NULL, 'client', 'ui/controls/allowPrimaryTouch', '1', @boolean_id);
+INSERT INTO `config` VALUES (NULL, 'server', 'rewards/actions/interactionsDistance', '140', @float_id);
+INSERT INTO `config` VALUES (NULL, 'server', 'rewards/actions/disappearTime', '1800000', @float_id);
+INSERT INTO `config` VALUES (NULL, 'client', 'rewards/titles/rewardMessage', 'You obtained %dropQuantity %itemLabel', @string_id);
 
 # Features:
 INSERT INTO `features` VALUES (NULL, 'teams', 'Teams', 1);
@@ -158,7 +161,7 @@ CREATE TABLE `rewards_modifiers` (
   `maxProperty` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `modifier_id` (`key`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci COMMENT='Reward Modifiers table.';
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
 
 CREATE TABLE `rewards` (
     `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -191,7 +194,6 @@ CREATE TABLE `objects_items_rewards_animations` (
     CONSTRAINT `FK_objects_items_rewards_animations_rewards` FOREIGN KEY (`reward_id`) REFERENCES `rewards` (`id`) ON UPDATE CASCADE ON DELETE NO ACTION
 ) COLLATE='utf8_unicode_ci' ENGINE=InnoDB;
 
-
 INSERT INTO `rewards` VALUES
     (1, 7, 2, null, 10, 100, 1, 0, 0, 1),
     (2, 6, 2, null, 10, 100, 3, 0, 0, 1);
@@ -199,11 +201,6 @@ INSERT INTO `rewards` VALUES
 INSERT INTO `objects_items_rewards_animations` VALUES
     (1, 2, 'spritesheet', 'branch-sprite', 'branch-sprite', '{"start":0,"end":2,"repeat":-1,"frameWidth":32, "frameHeight":32,"depthByPlayer":"above"}'),
     (2, 1, 'spritesheet', 'branch-sprite', 'branch-sprite', '{"start":0,"end":2,"repeat":-1,"frameWidth":32, "frameHeight":32,"depthByPlayer":"above"}');
-
-# Drop Reward Interaction Distance Config
-INSERT INTO `config` (scope, path, value, type) VALUES ('server', 'rewards/actions/interactionsDistance', '140', 2);
-INSERT INTO `config` (scope, path, value, type) VALUES ('server', 'rewards/disappearTime', '1800000', 2);
-INSERT INTO `config` (scope, path, value, type) VALUES ('client', 'rewards/titles/rewardMessage', 'You obtained %dropQuantity %itemLabel', 1);
 
 #######################################################################################################################
 
