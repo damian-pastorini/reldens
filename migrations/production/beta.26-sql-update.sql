@@ -32,12 +32,12 @@ UPDATE `config` SET `type` = @json_id WHERE `type` = 'j';
 UPDATE `config` SET `type` = @comma_separated_id WHERE `type` = 'c';
 
 ALTER TABLE `config` CHANGE COLUMN `type` `type` INT UNSIGNED NOT NULL COLLATE 'utf8_unicode_ci' AFTER `value`;
-ALTER TABLE `config` ADD CONSTRAINT `FK_config_config_types` FOREIGN KEY (`type`) REFERENCES `config_types` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE `config` ADD CONSTRAINT `FK_config_config_types` FOREIGN KEY (`type`) REFERENCES `config_types` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
+ALTER TABLE `config` ADD UNIQUE INDEX `scope_path` (`scope`, `path`);
 
 # Config:
 INSERT INTO `config` VALUES (NULL, 'client', 'general/gameEngine/updateGameSizeTimeOut', '500', @float_id);
 INSERT INTO `config` VALUES (NULL, 'client', 'ui/options/acceptOrDecline', '{"1":{"label":"Accept","value":1},"2":{"label":"Decline","value":2}}', @json_id);
-INSERT INTO `config` VALUES (NULL, 'client', 'team/labels/requestFromTitle', 'Team request from:', @string_id);
 INSERT INTO `config` VALUES (NULL, 'client', 'team/labels/requestFromTitle', 'Team request from:', @string_id);
 INSERT INTO `config` VALUES (NULL, 'client', 'team/labels/leaderNameTitle', 'Team leader: %leaderName', @string_id);
 INSERT INTO `config` VALUES (NULL, 'client', 'team/labels/propertyMaxValue', '/ %propertyMaxValue', @string_id);
@@ -47,7 +47,7 @@ INSERT INTO `config` VALUES (NULL, 'client', 'ui/teams/responsiveY', '0', @float
 INSERT INTO `config` VALUES (NULL, 'client', 'ui/teams/x', '430', @float_id);
 INSERT INTO `config` VALUES (NULL, 'client', 'ui/teams/y', '100', @float_id);
 INSERT INTO `config` VALUES (NULL, 'client', 'ui/teams/sharedProperties', '{"hp":{"path":"stats/hp","pathMax":"statsBase/hp","label":"HP"},"mp":{"path":"stats/mp","pathMax":"statsBase/mp","label":"MP"}}', @json_id);
-INSERT INTO `config` VALUES (NULL, 'client', 'clan/labels/requestFromTitle', 'Clan request from:', @string_id);
+INSERT INTO `config` VALUES (NULL, 'client', 'clan/general/openInvites', '1', @boolean_id);
 INSERT INTO `config` VALUES (NULL, 'client', 'clan/labels/requestFromTitle', 'Clan request from:', @string_id);
 INSERT INTO `config` VALUES (NULL, 'client', 'clan/labels/clanTitle', 'Clan: %clanName - Leader: %leaderName', @string_id);
 INSERT INTO `config` VALUES (NULL, 'client', 'clan/labels/propertyMaxValue', '/ %propertyMaxValue', @string_id);
@@ -64,6 +64,7 @@ INSERT INTO `config` VALUES (NULL, 'client', 'rewards/titles/rewardMessage', 'Yo
 
 # Features:
 INSERT INTO `features` VALUES (NULL, 'teams', 'Teams', 1);
+INSERT INTO `features` VALUES (NULL, 'rewards', 'Rewards', 1);
 
 # Clan and members:
 CREATE TABLE `clan` (
@@ -85,9 +86,13 @@ CREATE TABLE `clan_members` (
 	`clan_id` INT(10) UNSIGNED NOT NULL,
 	`player_id` INT(10) UNSIGNED NOT NULL,
 	PRIMARY KEY (`id`) USING BTREE,
+	UNIQUE INDEX `clan_id_player_id` (`clan_id`, `player_id`) USING BTREE,
+	UNIQUE INDEX `player_id` (`player_id`) USING BTREE,
 	INDEX `FK__clan` (`clan_id`) USING BTREE,
-	INDEX `FK__players` (`player_id`) USING BTREE
-) COLLATE='utf8_unicode_ci' ENGINE=InnoDB;
+	INDEX `FK__players` (`player_id`) USING BTREE,
+	CONSTRAINT `FK_clan_members_clan` FOREIGN KEY (`clan_id`) REFERENCES `clan` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION,
+	CONSTRAINT `FK_clan_members_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
+) COLLATE='utf8mb3_unicode_ci' ENGINE=InnoDB;
 
 CREATE TABLE `clan_levels` (
 	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -143,10 +148,6 @@ ALTER TABLE `items_inventory` ADD CONSTRAINT `FK_items_inventory_items_item` FOR
 ALTER TABLE `items_item` ADD CONSTRAINT `FK_items_item_items_group` FOREIGN KEY (`group_id`) REFERENCES `items_group` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE `items_item_modifiers` ADD CONSTRAINT `FK_items_item_modifiers_items_item` FOREIGN KEY (`item_id`) REFERENCES `items_item` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE `objects_items_inventory` ADD CONSTRAINT `FK_objects_items_inventory_ibfk_1` FOREIGN KEY (`item_id`) REFERENCES `items_item` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION;
-
-
-# Features:
-INSERT INTO `features` VALUES (NULL, 'rewards', 'Rewards', 1);
 
 # Rewards:
 CREATE TABLE `rewards_modifiers` (
