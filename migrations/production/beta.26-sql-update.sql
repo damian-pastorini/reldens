@@ -47,7 +47,7 @@ INSERT INTO `config` VALUES (NULL, 'client', 'ui/teams/responsiveY', '0', @float
 INSERT INTO `config` VALUES (NULL, 'client', 'ui/teams/x', '430', @float_id);
 INSERT INTO `config` VALUES (NULL, 'client', 'ui/teams/y', '100', @float_id);
 INSERT INTO `config` VALUES (NULL, 'client', 'ui/teams/sharedProperties', '{"hp":{"path":"stats/hp","pathMax":"statsBase/hp","label":"HP"},"mp":{"path":"stats/mp","pathMax":"statsBase/mp","label":"MP"}}', @json_id);
-INSERT INTO `config` VALUES (NULL, 'client', 'clan/general/openInvites', '1', @boolean_id);
+INSERT INTO `config` VALUES (NULL, 'client', 'clan/general/openInvites', '0', @boolean_id);
 INSERT INTO `config` VALUES (NULL, 'client', 'clan/labels/requestFromTitle', 'Clan request from:', @string_id);
 INSERT INTO `config` VALUES (NULL, 'client', 'clan/labels/clanTitle', 'Clan: %clanName - Leader: %leaderName', @string_id);
 INSERT INTO `config` VALUES (NULL, 'client', 'clan/labels/propertyMaxValue', '/ %propertyMaxValue', @string_id);

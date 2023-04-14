@@ -23,6 +23,13 @@
     transform: scale(1.009);
     */
 
+    .clan-row {
+        display: block;
+        float: left;
+        width: 100%;
+        margin-top: 10px;
+    }
+
     .clan-name-input {
         outline: none;
     }
@@ -30,6 +37,7 @@
     .default-loading-container img{
         max-width: 48px;
     }
+
 }
 
 @media (max-height: 400px) {
