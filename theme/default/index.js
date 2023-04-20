@@ -99,8 +99,12 @@ window.addEventListener('DOMContentLoaded', () => {
         resetErrorBlock(register);
         register.addEventListener('submit', (e) => {
             e.preventDefault();
-            // validate form:
             if(!register.checkValidity()){
+                return false;
+            }
+            if (!acceptTermsConditions.checked) {
+                register.querySelector('.response-error').style.display = 'block';
+                register.querySelector('.response-error').innerHTML = 'Terms and conditions not accepted. Please read the terms and conditions and continue.';
                 return false;
             }
             register.querySelector('.loading-container').style.display = 'block';
@@ -114,6 +118,32 @@ window.addEventListener('DOMContentLoaded', () => {
             startGame(formData, true);
         });
     }
+
+    let termsConditionsContainer = dom.getElement('#terms-conditions');
+    register.querySelector('#term_conditions').addEventListener('click', (ev) => {
+        ev.preventDefault();
+        termsConditionsContainer.classList.remove('hidden');
+        reldens.gameDom.getJSON(reldens.appServerUrl + '/terms-and-conditions', (err, response) => {
+            console.log(err);
+            console.log(response);
+            termsConditionsContainer.querySelector('.loading-container').style.display = 'none';
+            termsConditionsContainer.querySelector('.tacbox').style.display = 'block';
+            if (response.heading) {
+                termsConditionsContainer.querySelector('#heading').innerHTML = response.heading;
+            }
+            if (response.body) {
+                termsConditionsContainer.querySelector('#body').innerHTML = response.body
+            }
+        });
+    });
+
+    let termConditionCloseButton = dom.getElement('#terms-conditions-close');
+    termConditionCloseButton?.addEventListener('click', () => {
+        termsConditionsContainer.classList.add('hidden');
+        termsConditionsContainer.querySelector('.loading-container').style.display = 'block';
+        termsConditionsContainer.querySelector('.tacbox').style.display = 'none';
+    });
+    let acceptTermsConditions = termsConditionsContainer.querySelector('input#accept-terms-conditions');
 
     if(login){
         resetErrorBlock(login);
