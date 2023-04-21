@@ -90,8 +90,8 @@
                                 <label for="reg_re_password">Re-type your password</label>
                                 <input type="password" name="reg_re_password" id="reg_re_password" class="required" required/>
                             </div>
-                            <div class="input-box" style="text-align: center">
-                                <a href="" id="term_conditions" class="">Terms and Conditions</a>
+                            <div class="input-box hidden" id="terms_conditions_link_container" style="text-align: center">
+                                <a href="" id="terms_conditions_link" class="">Terms and Conditions</a>
                             </div>
                             <div class="input-box">
                                 <input type="submit" value="Register"/>
@@ -129,15 +129,11 @@
                 <div class="scrollable">
                     <div class="terms-conditions-text">
                         <h3 id="heading">Terms and conditions</h3>
-                        <div class="loading-container" style="display:block;">
-                            <img src="./assets/web/loading.gif" alt="Loading..."/>
-                        </div>
                         <div id="body"></div>
                     </div>
                     <div class="tacbox" style="display: none;">
-                        <label for="accept-terms-conditions">
-                            <input type="checkbox" id="accept-terms-conditions"/> I agree to these Terms and Conditions
-                        </label>
+                        <input type="checkbox" id="accept-terms-conditions">
+                        <label for="accept-terms-conditions">I agree to these Terms and Conditions</label>
                     </div>
                 </div>
                 <img id="terms-conditions-close" class="box-close" src="./assets/controls/bx.png" alt="close"/>

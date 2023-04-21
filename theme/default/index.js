@@ -119,31 +119,30 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    reldens.gameDom.getJSON(reldens.appServerUrl + '/terms-and-conditions', (err, response) => {
+        if (err || "" === response.body || "" === response.heading || "" === response.checkboxLabel) {
+            dom.getElement('#terms_conditions_link_container', register).classList.add('hidden');
+            return false;
+        }
+        dom.getElement('#heading', termsConditionsContainer).innerHTML = response.heading;
+        dom.getElement('#body', termsConditionsContainer).innerHTML = response.body;
+        dom.getElement('label[for=accept-terms-conditions]', termsConditionsContainer).innerHTML = response.checkboxLabel;
+        dom.getElement('#terms_conditions_link',register).innerHTML = response.heading;
+        dom.getElement('#terms_conditions_link_container', register).classList.remove('hidden');
+    });
     let termsConditionsContainer = dom.getElement('#terms-conditions');
-    register.querySelector('#term_conditions').addEventListener('click', (ev) => {
+    dom.getElement('#terms_conditions_link',register).addEventListener('click', (ev) => {
         ev.preventDefault();
         termsConditionsContainer.classList.remove('hidden');
-        reldens.gameDom.getJSON(reldens.appServerUrl + '/terms-and-conditions', (err, response) => {
-            console.log(err);
-            console.log(response);
-            termsConditionsContainer.querySelector('.loading-container').style.display = 'none';
-            termsConditionsContainer.querySelector('.tacbox').style.display = 'block';
-            if (response.heading) {
-                termsConditionsContainer.querySelector('#heading').innerHTML = response.heading;
-            }
-            if (response.body) {
-                termsConditionsContainer.querySelector('#body').innerHTML = response.body
-            }
-        });
+        dom.getElement('.tacbox', termsConditionsContainer).style.display = 'block';
     });
 
     let termConditionCloseButton = dom.getElement('#terms-conditions-close');
     termConditionCloseButton?.addEventListener('click', () => {
         termsConditionsContainer.classList.add('hidden');
-        termsConditionsContainer.querySelector('.loading-container').style.display = 'block';
-        termsConditionsContainer.querySelector('.tacbox').style.display = 'none';
+        dom.getElement('.tacbox', termsConditionsContainer).style.display = 'none';
     });
-    let acceptTermsConditions = termsConditionsContainer.querySelector('input#accept-terms-conditions');
+    let acceptTermsConditions = dom.getElement('input#accept-terms-conditions', termsConditionsContainer);
 
     if(login){
         resetErrorBlock(login);
