@@ -203,6 +203,8 @@ INSERT INTO `objects_items_rewards_animations` VALUES
     (1, 2, 'spritesheet', 'branch-sprite', 'branch-sprite', '{"start":0,"end":2,"repeat":-1,"frameWidth":32, "frameHeight":32,"depthByPlayer":"above"}'),
     (2, 1, 'spritesheet', 'branch-sprite', 'branch-sprite', '{"start":0,"end":2,"repeat":-1,"frameWidth":32, "frameHeight":32,"depthByPlayer":"above"}');
 
+UPDATE config SET value = 'Played time %playedTimeInHs hs' WHERE path = 'players/playedTime/label';
+
 #######################################################################################################################
 
 SET FOREIGN_KEY_CHECKS = 1;
