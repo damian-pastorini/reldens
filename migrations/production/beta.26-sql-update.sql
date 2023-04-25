@@ -61,6 +61,7 @@ INSERT INTO `config` VALUES (NULL, 'client', 'ui/controls/allowPrimaryTouch', '1
 INSERT INTO `config` VALUES (NULL, 'server', 'rewards/actions/interactionsDistance', '140', @float_id);
 INSERT INTO `config` VALUES (NULL, 'server', 'rewards/actions/disappearTime', '1800000', @float_id);
 INSERT INTO `config` VALUES (NULL, 'client', 'rewards/titles/rewardMessage', 'You obtained %dropQuantity %itemLabel', @string_id);
+UPDATE config SET value = 'Played time %playedTimeInHs hs' WHERE path = 'players/playedTime/label';
 
 # Features:
 INSERT INTO `features` VALUES (NULL, 'teams', 'Teams', 1);
@@ -202,8 +203,6 @@ INSERT INTO `rewards` VALUES
 INSERT INTO `objects_items_rewards_animations` VALUES
     (1, 2, 'spritesheet', 'branch-sprite', 'branch-sprite', '{"start":0,"end":2,"repeat":-1,"frameWidth":32, "frameHeight":32,"depthByPlayer":"above"}'),
     (2, 1, 'spritesheet', 'branch-sprite', 'branch-sprite', '{"start":0,"end":2,"repeat":-1,"frameWidth":32, "frameHeight":32,"depthByPlayer":"above"}');
-
-UPDATE config SET value = 'Played time %playedTimeInHs hs' WHERE path = 'players/playedTime/label';
 
 #######################################################################################################################
 
