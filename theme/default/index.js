@@ -1,8 +1,6 @@
 /**
  *
  * Reldens - Index
- * Client main file, this file provides the basic first page with the login and registration forms, and start the
- * GameManager if the request was successfully processed.
  *
  */
 
@@ -15,6 +13,7 @@ const { ClientPlugin } = require('../plugins/client-plugin');
 const { GameConst } = require('reldens/lib/game/constants');
 
 // @TODO - BETA - Move everything from this file as part of the core project and include events to manage the theme.
+// @TODO - BETA - Make all the texts come from the server or from a translations system.
 // @TODO - BETA - CLEAN THIS THING ASAP!
 window.addEventListener('DOMContentLoaded', () => {
     // reldens game:
@@ -46,9 +45,9 @@ window.addEventListener('DOMContentLoaded', () => {
 
     function resetErrorBlock(submittedForm)
     {
-        let $errorBlock = submittedForm.querySelector('.response-error');
+        let errorBlock = submittedForm.querySelector('.response-error');
         submittedForm.querySelector('input').addEventListener('focus', () => {
-            $errorBlock.style.display = 'none';
+            errorBlock.style.display = 'none';
         });
     }
 
@@ -81,6 +80,7 @@ window.addEventListener('DOMContentLoaded', () => {
             });
             let errorElement = dom.getElement('#'+formData.formId+' .response-error');
             if(errorElement){
+                // @TODO - BETA - Fix message.
                 errorElement.innerHTML = err;
                 errorElement.style.display = 'block';
             }
@@ -97,52 +97,70 @@ window.addEventListener('DOMContentLoaded', () => {
 
     if(register){
         resetErrorBlock(register);
+        let acceptTermsCheckbox = dom.getElement('#accept-terms-and-conditions');
+        let termsContainer = dom.getElement('#terms-and-conditions');
         register.addEventListener('submit', (e) => {
             e.preventDefault();
             if(!register.checkValidity()){
                 return false;
             }
-            if (!acceptTermsConditions.checked) {
+            let password = register.querySelector('#reg_password').value;
+            let rePassword = register.querySelector('#reg_re_password').value;
+            if(password !== rePassword){
                 register.querySelector('.response-error').style.display = 'block';
-                register.querySelector('.response-error').innerHTML = 'Terms and conditions not accepted. Please read the terms and conditions and continue.';
+                register.querySelector('.response-error').innerHTML = 'Password and confirmation does not match.';
                 return false;
             }
+            if (!acceptTermsCheckbox.checked) {
+                register.querySelector('.response-error').style.display = 'block';
+                register.querySelector('.response-error').innerHTML = 'Terms and conditions not accepted.'
+                    +' Please read the terms and conditions and continue.';
+                return false;
+            }
+            termsContainer?.classList.add('hidden');
             register.querySelector('.loading-container').style.display = 'block';
             register.querySelector('.loading-container').classList.remove('hidden');
             let formData = {
                 formId: register.id,
                 email: register.querySelector('#reg_email').value,
                 username: register.querySelector('#reg_username').value,
-                password: register.querySelector('#reg_password').value
+                password: password,
+                rePassword: rePassword
             };
             startGame(formData, true);
         });
+
+        let termsLinkContainer = dom.getElement('.terms-and-conditions-link-container');
+        reldens.gameDom.getJSON(reldens.appServerUrl + '/terms-and-conditions', (err, response) => {
+            if(err || '' === response.body || '' === response.heading || '' === response.checkboxLabel){
+                return false;
+            }
+            dom.updateContent('.terms-heading', response.heading);
+            dom.updateContent('.terms-body', response.body);
+            dom.updateContent('.accept-terms-and-conditions-label', response.checkboxLabel);
+            dom.updateContent('.terms-and-conditions-link', response.heading);
+            let termsLink = dom.getElement('.terms-and-conditions-link');
+            termsLink?.addEventListener('click', (e) => {
+                e.preventDefault();
+                termsContainer?.classList.remove('hidden');
+            });
+            dom.getElement('#terms-and-conditions-close')?.addEventListener('click', () => {
+                termsContainer?.classList.add('hidden');
+            });
+            let errorBlock = dom.getElement('.response-error', register);
+            dom.getElement('.accept-terms-and-conditions-label').addEventListener('click', () => {
+                if(acceptTermsCheckbox.checked){
+                    errorBlock.style.display = 'none';
+                }
+            });
+            acceptTermsCheckbox.addEventListener('click', () => {
+                if(acceptTermsCheckbox.checked){
+                    errorBlock.style.display = 'none';
+                }
+            });
+            termsLinkContainer?.classList.remove('hidden');
+        });
     }
-
-    reldens.gameDom.getJSON(reldens.appServerUrl + '/terms-and-conditions', (err, response) => {
-        if (err || "" === response.body || "" === response.heading || "" === response.checkboxLabel) {
-            dom.getElement('#terms_conditions_link_container', register).classList.add('hidden');
-            return false;
-        }
-        dom.getElement('#heading', termsConditionsContainer).innerHTML = response.heading;
-        dom.getElement('#body', termsConditionsContainer).innerHTML = response.body;
-        dom.getElement('label[for=accept-terms-conditions]', termsConditionsContainer).innerHTML = response.checkboxLabel;
-        dom.getElement('#terms_conditions_link',register).innerHTML = response.heading;
-        dom.getElement('#terms_conditions_link_container', register).classList.remove('hidden');
-    });
-    let termsConditionsContainer = dom.getElement('#terms-conditions');
-    dom.getElement('#terms_conditions_link',register).addEventListener('click', (ev) => {
-        ev.preventDefault();
-        termsConditionsContainer.classList.remove('hidden');
-        dom.getElement('.tacbox', termsConditionsContainer).style.display = 'block';
-    });
-
-    let termConditionCloseButton = dom.getElement('#terms-conditions-close');
-    termConditionCloseButton?.addEventListener('click', () => {
-        termsConditionsContainer.classList.add('hidden');
-        dom.getElement('.tacbox', termsConditionsContainer).style.display = 'none';
-    });
-    let acceptTermsConditions = dom.getElement('input#accept-terms-conditions', termsConditionsContainer);
 
     if(login){
         resetErrorBlock(login);

@@ -61,7 +61,10 @@ INSERT INTO `config` VALUES (NULL, 'client', 'ui/controls/allowPrimaryTouch', '1
 INSERT INTO `config` VALUES (NULL, 'server', 'rewards/actions/interactionsDistance', '140', @float_id);
 INSERT INTO `config` VALUES (NULL, 'server', 'rewards/actions/disappearTime', '1800000', @float_id);
 INSERT INTO `config` VALUES (NULL, 'client', 'rewards/titles/rewardMessage', 'You obtained %dropQuantity %itemLabel', @string_id);
-UPDATE config SET value = 'Played time %playedTimeInHs hs' WHERE path = 'players/playedTime/label';
+INSERT INTO `config` VALUES (NULL, 'client', 'login/terms_and_conditions/body', 'Terms and conditions.', @string_id);
+INSERT INTO `config` VALUES (NULL, 'client', 'login/terms_and_conditions/heading', 'Terms and conditions', @string_id);
+INSERT INTO `config` VALUES (NULL, 'client', 'login/terms_and_conditions/checkbox_label', 'Accept terms and conditions', @string_id);
+UPDATE `config` SET `value` = 'Played time %playedTimeInHs hs' WHERE `path` = 'players/playedTime/label';
 
 # Features:
 INSERT INTO `features` VALUES (NULL, 'teams', 'Teams', 1);
@@ -203,11 +206,6 @@ INSERT INTO `rewards` VALUES
 INSERT INTO `objects_items_rewards_animations` VALUES
     (1, 2, 'spritesheet', 'branch-sprite', 'branch-sprite', '{"start":0,"end":2,"repeat":-1,"frameWidth":32, "frameHeight":32,"depthByPlayer":"above"}'),
     (2, 1, 'spritesheet', 'branch-sprite', 'branch-sprite', '{"start":0,"end":2,"repeat":-1,"frameWidth":32, "frameHeight":32,"depthByPlayer":"above"}');
-
-
-INSERT INTO `config` VALUES (NULL, 'client', 'login/terms_and_conditions/body', 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent vitae laoreet est, eget mattis justo. Donec urna sapien, tincidunt venenatis accumsan eu, molestie at ante. Suspendisse sed semper lacus. Mauris porttitor urna id odio bibendum, non ornare justo finibus. Donec vestibulum condimentum ante, non malesuada nulla porta eu. Proin scelerisque nibh at dolor mattis, sed laoreet nibh gravida. Interdum et malesuada fames ac ante ipsum primis in faucibus. In hac habitasse platea dictumst. Nullam euismod lorem vel imperdiet porttitor. Sed sapien massa, dapibus vitae ante ut, elementum scelerisque diam. Quisque a tempor dui. Suspendisse semper, nibh in faucibus tincidunt, orci est sollicitudin magna, eu ullamcorper dui lacus non ipsum. Praesent vitae orci a eros maximus condimentum ac a quam. In sodales velit lorem, id finibus lacus tempor quis.', @string_id);
-INSERT INTO `config` VALUES (NULL, 'client', 'login/terms_and_conditions/heading', 'Terminos y Condiciones', @string_id);
-INSERT INTO `config` VALUES (NULL, 'client', 'login/terms_and_conditions/checkbox_label', 'Acepto estos terminos y condiciones', @string_id);
 
 #######################################################################################################################
 

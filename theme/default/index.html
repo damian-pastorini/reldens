@@ -59,7 +59,7 @@
                         <form name="firebase_login" id="firebase_login" class="firebase_login" action="#" method="post">
                             <h3 class="form-title">Firebase Login</h3>
                             <div class="input-box">
-                                <label for="username">Username</label>
+                                <label for="firebase_username">Username</label>
                                 <input type="text" name="firebase_username" id="firebase_username" class="required" required/>
                             </div>
                             <div class="input-box response-error" style="display:none;">Login error, please try again.</div>
@@ -90,8 +90,8 @@
                                 <label for="reg_re_password">Re-type your password</label>
                                 <input type="password" name="reg_re_password" id="reg_re_password" class="required" required/>
                             </div>
-                            <div class="input-box hidden" id="terms_conditions_link_container" style="text-align: center">
-                                <a href="" id="terms_conditions_link" class="">Terms and Conditions</a>
+                            <div class="input-box hidden terms-and-conditions-link-container">
+                                <a class="terms-and-conditions-link">By registering you need to accept our Terms and Conditions (click here).</a>
                             </div>
                             <div class="input-box">
                                 <input type="submit" value="Register"/>
@@ -125,18 +125,18 @@
                     </div>
                 </div>
             </div>
-            <div id="terms-conditions" class="hidden">
-                <div class="scrollable">
-                    <div class="terms-conditions-text">
-                        <h3 id="heading">Terms and conditions</h3>
-                        <div id="body"></div>
-                    </div>
-                    <div class="tacbox" style="display: none;">
-                        <input type="checkbox" id="accept-terms-conditions">
-                        <label for="accept-terms-conditions">I agree to these Terms and Conditions</label>
-                    </div>
+            <div id="terms-and-conditions" class="hidden">
+                <div class="terms-and-conditions-text">
+                    <h3 class="terms-heading">Terms and conditions</h3>
+                    <div class="terms-body"></div>
                 </div>
-                <img id="terms-conditions-close" class="box-close" src="./assets/controls/bx.png" alt="close"/>
+                <div class="terms-box">
+                    <input type="checkbox" id="accept-terms-and-conditions">
+                    <label class="accept-terms-and-conditions-label" for="accept-terms-and-conditions">
+                        I agree to these Terms and Conditions
+                    </label>
+                </div>
+                <img id="terms-and-conditions-close" class="box-close" src="./assets/controls/bx.png" alt="close"/>
             </div>
             <div id="instructions" class="hidden">
                 <div class="instructions-content">
