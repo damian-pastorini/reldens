@@ -32,7 +32,7 @@ UPDATE `config` SET `type` = @json_id WHERE `type` = 'j';
 UPDATE `config` SET `type` = @comma_separated_id WHERE `type` = 'c';
 
 ALTER TABLE `config` CHANGE COLUMN `type` `type` INT UNSIGNED NOT NULL COLLATE 'utf8_unicode_ci' AFTER `value`;
-ALTER TABLE `config` ADD CONSTRAINT `FK_config_config_types` FOREIGN KEY (`type`) REFERENCES `config_types` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
+ALTER TABLE `config` ADD CONSTRAINT `FK_config_config_types` FOREIGN KEY (`type`) REFERENCES `config_types` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE `config` ADD UNIQUE INDEX `scope_path` (`scope`, `path`);
 
 # Config:
@@ -61,7 +61,7 @@ INSERT INTO `config` VALUES (NULL, 'client', 'ui/controls/allowPrimaryTouch', '1
 INSERT INTO `config` VALUES (NULL, 'server', 'rewards/actions/interactionsDistance', '140', @float_id);
 INSERT INTO `config` VALUES (NULL, 'server', 'rewards/actions/disappearTime', '1800000', @float_id);
 INSERT INTO `config` VALUES (NULL, 'client', 'rewards/titles/rewardMessage', 'You obtained %dropQuantity %itemLabel', @string_id);
-INSERT INTO `config` VALUES (NULL, 'client', 'login/termsAndConditions/link', 'By registering you need to accept our Terms and Conditions (click here).', @string_id);
+INSERT INTO `config` VALUES (NULL, 'client', 'login/termsAndConditions/link', 'Accept our Terms and Conditions (click here).', @string_id);
 INSERT INTO `config` VALUES (NULL, 'client', 'login/termsAndConditions/heading', 'Terms and conditions', @string_id);
 INSERT INTO `config` VALUES (NULL, 'client', 'login/termsAndConditions/body', 'This is our test terms and conditions content.', @string_id);
 INSERT INTO `config` VALUES (NULL, 'client', 'login/termsAndConditions/checkboxLabel', 'Accept terms and conditions', @string_id);
@@ -72,6 +72,17 @@ INSERT INTO `features` VALUES (NULL, 'teams', 'Teams', 1);
 INSERT INTO `features` VALUES (NULL, 'rewards', 'Rewards', 1);
 
 # Clan and members:
+CREATE TABLE `clan_levels` (
+	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+	`key` INT(10) UNSIGNED NOT NULL,
+	`label` VARCHAR(255) NOT NULL COLLATE 'utf8_unicode_ci',
+	`required_experience` BIGINT(20) UNSIGNED NULL DEFAULT NULL,
+	PRIMARY KEY (`id`) USING BTREE,
+	UNIQUE INDEX `key` (`key`) USING BTREE
+) COLLATE='utf8_unicode_ci' ENGINE=InnoDB AUTO_INCREMENT=1;
+
+INSERT INTO `clan_levels` VALUES (NULL, 1, '1', 0);
+
 CREATE TABLE `clan` (
 	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
 	`owner_id` INT(10) UNSIGNED NOT NULL,
@@ -97,15 +108,7 @@ CREATE TABLE `clan_members` (
 	INDEX `FK__players` (`player_id`) USING BTREE,
 	CONSTRAINT `FK_clan_members_clan` FOREIGN KEY (`clan_id`) REFERENCES `clan` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION,
 	CONSTRAINT `FK_clan_members_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
-) COLLATE='utf8mb3_unicode_ci' ENGINE=InnoDB;
-
-CREATE TABLE `clan_levels` (
-	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-	`key` INT(10) UNSIGNED NOT NULL,
-	`label` VARCHAR(255) NOT NULL COLLATE 'utf8_unicode_ci',
-	`required_experience` BIGINT(20) UNSIGNED NULL DEFAULT NULL,
-	PRIMARY KEY (`id`) USING BTREE
-) COLLATE='utf8_unicode_ci' ENGINE=InnoDB AUTO_INCREMENT=1;
+) COLLATE='utf8_unicode_ci' ENGINE=InnoDB;
 
 CREATE TABLE `clan_levels_modifiers` (
 	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -167,7 +170,7 @@ CREATE TABLE `rewards_modifiers` (
   `maxProperty` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `modifier_id` (`key`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 CREATE TABLE `rewards` (
     `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
