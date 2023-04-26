@@ -61,9 +61,10 @@ INSERT INTO `config` VALUES (NULL, 'client', 'ui/controls/allowPrimaryTouch', '1
 INSERT INTO `config` VALUES (NULL, 'server', 'rewards/actions/interactionsDistance', '140', @float_id);
 INSERT INTO `config` VALUES (NULL, 'server', 'rewards/actions/disappearTime', '1800000', @float_id);
 INSERT INTO `config` VALUES (NULL, 'client', 'rewards/titles/rewardMessage', 'You obtained %dropQuantity %itemLabel', @string_id);
-INSERT INTO `config` VALUES (NULL, 'client', 'login/terms_and_conditions/body', 'Terms and conditions.', @string_id);
-INSERT INTO `config` VALUES (NULL, 'client', 'login/terms_and_conditions/heading', 'Terms and conditions', @string_id);
-INSERT INTO `config` VALUES (NULL, 'client', 'login/terms_and_conditions/checkbox_label', 'Accept terms and conditions', @string_id);
+INSERT INTO `config` VALUES (NULL, 'client', 'login/termsAndConditions/link', 'By registering you need to accept our Terms and Conditions (click here).', @string_id);
+INSERT INTO `config` VALUES (NULL, 'client', 'login/termsAndConditions/heading', 'Terms and conditions', @string_id);
+INSERT INTO `config` VALUES (NULL, 'client', 'login/termsAndConditions/body', 'This is our test terms and conditions content.', @string_id);
+INSERT INTO `config` VALUES (NULL, 'client', 'login/termsAndConditions/checkboxLabel', 'Accept terms and conditions', @string_id);
 UPDATE `config` SET `value` = 'Played time %playedTimeInHs hs' WHERE `path` = 'players/playedTime/label';
 
 # Features:

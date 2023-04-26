@@ -80,8 +80,7 @@ window.addEventListener('DOMContentLoaded', () => {
             });
             let errorElement = dom.getElement('#'+formData.formId+' .response-error');
             if(errorElement){
-                // @TODO - BETA - Fix message.
-                errorElement.innerHTML = err;
+                errorElement.innerHTML = err.message || err;
                 errorElement.style.display = 'block';
             }
             if(formData.formId === 'firebase_login'){
@@ -131,14 +130,18 @@ window.addEventListener('DOMContentLoaded', () => {
         });
 
         let termsLinkContainer = dom.getElement('.terms-and-conditions-link-container');
-        reldens.gameDom.getJSON(reldens.appServerUrl + '/terms-and-conditions', (err, response) => {
-            if(err || '' === response.body || '' === response.heading || '' === response.checkboxLabel){
+        reldens.gameDom.getJSON(reldens.appServerUrl+'/terms-and-conditions', (err, response) => {
+            if(!response.body || !response.heading || !response.checkboxLabel || !response.link){
+                return false;
+            }
+            if(err){
+                // log error.
                 return false;
             }
             dom.updateContent('.terms-heading', response.heading);
             dom.updateContent('.terms-body', response.body);
             dom.updateContent('.accept-terms-and-conditions-label', response.checkboxLabel);
-            dom.updateContent('.terms-and-conditions-link', response.heading);
+            dom.updateContent('.terms-and-conditions-link', response.link);
             let termsLink = dom.getElement('.terms-and-conditions-link');
             termsLink?.addEventListener('click', (e) => {
                 e.preventDefault();
