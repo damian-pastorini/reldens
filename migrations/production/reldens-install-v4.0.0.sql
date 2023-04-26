@@ -1,5 +1,6 @@
 -- --------------------------------------------------------
--- Server version:               8.0.27 - MySQL Community Server - GPL
+-- Host:                         localhost
+-- Server version:               8.0.31 - MySQL Community Server - GPL
 -- Server OS:                    Win64
 -- --------------------------------------------------------
 
@@ -27,9 +28,9 @@ CREATE TABLE IF NOT EXISTS `audio` (
   KEY `FK_audio_audio_categories` (`category_id`),
   CONSTRAINT `FK_audio_audio_categories` FOREIGN KEY (`category_id`) REFERENCES `audio_categories` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `FK_audio_rooms` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON DELETE SET NULL ON UPDATE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table audio: ~3 rows (approximately)
+-- Dumping data for table audio: ~2 rows (approximately)
 INSERT INTO `audio` (`id`, `audio_key`, `files_name`, `config`, `room_id`, `category_id`, `enabled`) VALUES
 	(3, 'footstep', 'footstep.mp3', NULL, NULL, 3, 1),
 	(4, 'ReldensTownAudio', 'reldens-town.mp3', '', 4, 1, 1);
@@ -44,7 +45,7 @@ CREATE TABLE IF NOT EXISTS `audio_categories` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `category_key` (`category_key`),
   UNIQUE KEY `category_label` (`category_label`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping data for table audio_categories: ~2 rows (approximately)
 INSERT INTO `audio_categories` (`id`, `category_key`, `category_label`, `enabled`, `single_audio`) VALUES
@@ -63,7 +64,7 @@ CREATE TABLE IF NOT EXISTS `audio_markers` (
   UNIQUE KEY `audio_id_marker_key` (`audio_id`,`marker_key`),
   KEY `audio_id` (`audio_id`),
   CONSTRAINT `FK_audio_markers_audio` FOREIGN KEY (`audio_id`) REFERENCES `audio` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=42 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=42 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping data for table audio_markers: ~41 rows (approximately)
 INSERT INTO `audio_markers` (`id`, `audio_id`, `marker_key`, `start`, `duration`, `config`) VALUES
@@ -120,7 +121,7 @@ CREATE TABLE IF NOT EXISTS `audio_player_config` (
   KEY `FK_audio_player_config_audio_categories` (`category_id`),
   CONSTRAINT `FK_audio_player_config_audio_categories` FOREIGN KEY (`category_id`) REFERENCES `audio_categories` (`id`) ON UPDATE CASCADE,
   CONSTRAINT `FK_audio_player_config_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping structure for table chat
 CREATE TABLE IF NOT EXISTS `chat` (
@@ -138,7 +139,70 @@ CREATE TABLE IF NOT EXISTS `chat` (
   CONSTRAINT `FK__players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`),
   CONSTRAINT `FK__players_2` FOREIGN KEY (`private_player_id`) REFERENCES `players` (`id`),
   CONSTRAINT `FK__scenes` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- Dumping structure for table clan
+CREATE TABLE IF NOT EXISTS `clan` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `owner_id` int unsigned NOT NULL,
+  `name` varchar(50) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+  `points` int unsigned NOT NULL DEFAULT '0',
+  `level` int unsigned NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `owner_id` (`owner_id`),
+  UNIQUE KEY `name` (`name`),
+  KEY `FK_clan_clan_levels` (`level`),
+  CONSTRAINT `FK_clan_clan_levels` FOREIGN KEY (`level`) REFERENCES `clan_levels` (`key`),
+  CONSTRAINT `FK_clan_players` FOREIGN KEY (`owner_id`) REFERENCES `players` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=63 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- Dumping structure for table clan_levels
+CREATE TABLE IF NOT EXISTS `clan_levels` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `key` int unsigned NOT NULL,
+  `label` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `required_experience` bigint unsigned DEFAULT NULL,
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE KEY `key` (`key`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- Dumping data for table clan_levels: ~1 rows (approximately)
+INSERT INTO `clan_levels` (`id`, `key`, `label`, `required_experience`) VALUES
+	(1, 1, '1', 0);
+
+-- Dumping structure for table clan_levels_modifiers
+CREATE TABLE IF NOT EXISTS `clan_levels_modifiers` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `level_id` int unsigned NOT NULL,
+  `key` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `property_key` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `operation` int unsigned NOT NULL,
+  `value` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `minValue` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+  `maxValue` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+  `minProperty` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+  `maxProperty` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+  PRIMARY KEY (`id`) USING BTREE,
+  KEY `modifier_id` (`key`) USING BTREE,
+  KEY `level_key` (`level_id`) USING BTREE,
+  KEY `FK_clan_levels_modifiers_operation_types` (`operation`) USING BTREE,
+  CONSTRAINT `FK_clan_levels_modifiers_clan_levels` FOREIGN KEY (`level_id`) REFERENCES `clan_levels` (`id`) ON UPDATE CASCADE,
+  CONSTRAINT `FK_clan_levels_modifiers_operation_types` FOREIGN KEY (`operation`) REFERENCES `operation_types` (`key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- Dumping structure for table clan_members
+CREATE TABLE IF NOT EXISTS `clan_members` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `clan_id` int unsigned NOT NULL,
+  `player_id` int unsigned NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `clan_id_player_id` (`clan_id`,`player_id`),
+  UNIQUE KEY `player_id` (`player_id`),
+  KEY `FK__clan` (`clan_id`),
+  KEY `FK__players` (`player_id`),
+  CONSTRAINT `FK_clan_members_clan` FOREIGN KEY (`clan_id`) REFERENCES `clan` (`id`),
+  CONSTRAINT `FK_clan_members_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=67 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping structure for table config
 CREATE TABLE IF NOT EXISTS `config` (
@@ -146,278 +210,323 @@ CREATE TABLE IF NOT EXISTS `config` (
   `scope` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `path` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `value` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
-  `type` varchar(2) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=283 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+  `type` int unsigned NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `scope_path` (`scope`,`path`),
+  KEY `FK_config_config_types` (`type`),
+  CONSTRAINT `FK_config_config_types` FOREIGN KEY (`type`) REFERENCES `config_types` (`id`) ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=315 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table config: ~236 rows (approximately)
+-- Dumping data for table config: ~264 rows (approximately)
 INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
-	(1, 'server', 'rooms/validation/valid', 'room_game,chat_global', 't'),
-	(2, 'server', 'players/initialState/room_id', '4', 'i'),
-	(3, 'server', 'players/initialState/x', '400', 'i'),
-	(4, 'server', 'players/initialState/y', '345', 'i'),
-	(5, 'server', 'players/initialState/dir', 'down', 't'),
-	(13, 'server', 'rooms/validation/enabled', '1', 'b'),
-	(18, 'client', 'general/controls/allowSimultaneousKeys', '1', 'b'),
-	(19, 'server', 'rooms/world/timeStep', '0.04', 'i'),
-	(20, 'server', 'chat/messages/broadcast_join', '1', 'b'),
-	(21, 'server', 'chat/messages/broadcast_leave', '1', 'b'),
-	(22, 'server', 'chat/messages/global_enabled', '1', 'b'),
-	(23, 'server', 'chat/messages/global_allowed_roles', '1,9000', 't'),
-	(24, 'server', 'players/physicsBody/speed', '180', 'i'),
-	(25, 'client', 'players/animations/fadeDuration', '1000', 'i'),
-	(26, 'client', 'ui/playerBox/x', '50', 'i'),
-	(27, 'client', 'ui/playerStats/enabled', '1', 'b'),
-	(28, 'client', 'ui/controls/enabled', '1', 'b'),
-	(29, 'client', 'map/tileData/width', '16', 'i'),
-	(30, 'client', 'map/tileData/height', '16', 'i'),
-	(31, 'client', 'map/tileData/margin', '1', 'i'),
-	(32, 'client', 'map/tileData/spacing', '2', 'i'),
-	(33, 'client', 'players/size/width', '52', 'i'),
-	(34, 'client', 'players/size/height', '71', 'i'),
-	(35, 'client', 'general/animations/frameRate', '10', 'i'),
-	(36, 'client', 'map/layersDepth/belowPlayer', '0', 'i'),
-	(37, 'client', 'map/layersDepth/changePoints', '0', 'i'),
-	(38, 'client', 'ui/sceneLabel/enabled', '1', 'b'),
-	(39, 'client', 'general/controls/action_button_hold', '0', 'b'),
-	(40, 'client', 'ui/chat/x', '440', 'i'),
-	(41, 'client', 'ui/chat/y', '940', 'i'),
-	(42, 'server', 'players/actions/interactionDistance', '40', 'i'),
-	(43, 'server', 'objects/actions/interactionsDistance', '140', 'i'),
-	(44, 'client', 'ui/playerBox/enabled', '1', 'b'),
-	(45, 'client', 'ui/playerBox/y', '30', 'i'),
-	(46, 'client', 'ui/lifeBar/enabled', '1', 'b'),
-	(47, 'client', 'ui/uiTarget/x', '10', 'i'),
-	(48, 'client', 'ui/uiTarget/y', '85', 'i'),
-	(49, 'client', 'ui/sceneLabel/x', '250', 'i'),
-	(50, 'client', 'ui/sceneLabel/y', '20', 'i'),
-	(51, 'client', 'ui/controls/x', '120', 'i'),
-	(52, 'client', 'ui/controls/y', '390', 'i'),
-	(53, 'client', 'ui/playerStats/x', '430', 'i'),
-	(54, 'client', 'ui/playerStats/y', '20', 'i'),
-	(55, 'client', 'ui/loading/font', 'Verdana, Geneva, sans-serif', 't'),
-	(56, 'client', 'ui/loading/fontSize', '20px', 't'),
-	(57, 'client', 'ui/loading/assetsSize', '18px', 't'),
-	(58, 'client', 'ui/loading/loadingColor', '#ffffff', 't'),
-	(59, 'client', 'ui/loading/percentColor', '#666666', 't'),
-	(60, 'client', 'ui/loading/assetsColor', '#ffffff', 't'),
-	(61, 'client', 'ui/loading/showAssets', '1', 'b'),
-	(62, 'client', 'players/animations/basedOnPress', '1', 'b'),
-	(63, 'client', 'players/animations/diagonalHorizontal', '1', 'b'),
-	(64, 'client', 'ui/uiTarget/hideOnDialog', '0', 'b'),
-	(65, 'client', 'ui/uiTarget/enabled', '1', 'b'),
-	(66, 'client', 'ui/lifeBar/x', '5', 'i'),
-	(67, 'client', 'ui/lifeBar/y', '12', 'i'),
-	(68, 'client', 'ui/lifeBar/height', '5', 'i'),
-	(69, 'client', 'ui/lifeBar/width', '50', 'i'),
-	(70, 'client', 'ui/lifeBar/fixedPosition', '0', 'b'),
-	(71, 'server', 'rooms/world/tryClosestPath', '1', 'b'),
-	(72, 'server', 'actions/pvp/battleTimeOff', '20000', 'i'),
-	(73, 'server', 'actions/pvp/timerType', 'bt', 's'),
-	(74, 'server', 'enemies/initialStats/atk', '50', 'i'),
-	(75, 'server', 'enemies/initialStats/def', '50', 'i'),
-	(76, 'server', 'enemies/initialStats/dodge', '50', 'i'),
-	(77, 'server', 'enemies/initialStats/hp', '50', 'i'),
-	(78, 'server', 'enemies/initialStats/mp', '50', 'i'),
-	(79, 'server', 'enemies/initialStats/speed', '50', 'i'),
-	(80, 'server', 'enemies/initialStats/stamina', '50', 'i'),
-	(81, 'client', 'ui/pointer/show', '1', 'b'),
-	(82, 'server', 'enemies/default/skillKey', 'attackShort', 't'),
-	(83, 'client', 'players/size/topOffset', '20', 'i'),
-	(84, 'client', 'players/size/leftOffset', '0', 'i'),
-	(85, 'server', 'rooms/world/onlyWalkable', '1', 'b'),
-	(86, 'client', 'ui/screen/responsive', '1', 'b'),
-	(87, 'client', 'ui/uiTarget/responsiveY', '0', 'i'),
-	(88, 'client', 'ui/uiTarget/responsiveX', '0', 'i'),
-	(89, 'client', 'ui/inventory/enabled', '1', 'b'),
-	(90, 'client', 'ui/inventory/x', '380', 'i'),
-	(91, 'client', 'ui/inventory/y', '450', 'i'),
-	(92, 'client', 'ui/inventory/responsiveY', '0', 'i'),
-	(93, 'client', 'ui/inventory/responsiveX', '100', 'i'),
-	(94, 'client', 'ui/equipment/enabled', '1', 'b'),
-	(95, 'client', 'ui/equipment/x', '430', 'i'),
-	(96, 'client', 'ui/equipment/y', '90', 'i'),
-	(97, 'client', 'ui/equipment/responsiveY', '0', 'i'),
-	(98, 'client', 'ui/equipment/responsiveX', '100', 'i'),
-	(99, 'client', 'ui/lifeBar/responsiveY', '24', 'i'),
-	(100, 'client', 'ui/lifeBar/responsiveX', '1', 'i'),
-	(101, 'client', 'ui/sceneLabel/responsiveY', '0', 'i'),
-	(102, 'client', 'ui/sceneLabel/responsiveX', '50', 'i'),
-	(103, 'client', 'ui/playerStats/responsiveY', '0', 'i'),
-	(104, 'client', 'ui/playerStats/responsiveX', '100', 'i'),
-	(105, 'client', 'ui/playerBox/responsiveY', '0', 'i'),
-	(106, 'client', 'ui/playerBox/responsiveX', '0', 'i'),
-	(107, 'client', 'ui/controls/responsiveY', '100', 'i'),
-	(108, 'client', 'ui/controls/responsiveX', '0', 'i'),
-	(109, 'client', 'ui/chat/responsiveY', '100', 'i'),
-	(110, 'client', 'ui/chat/responsiveX', '100', 'i'),
-	(111, 'client', 'ui/chat/enabled', '1', 'b'),
-	(112, 'client', 'ui/npcDialog/x', '120', 'i'),
-	(113, 'client', 'ui/npcDialog/y', '100', 'i'),
-	(114, 'client', 'ui/npcDialog/responsiveX', '10', 'i'),
-	(115, 'client', 'ui/npcDialog/responsiveY', '10', 'i'),
-	(116, 'client', 'ui/maximum/x', '1280', 'i'),
-	(117, 'client', 'ui/maximum/y', '720', 'i'),
-	(118, 'client', 'ui/chat/defaultOpen', '0', 'b'),
-	(119, 'client', 'ui/chat/notificationBalloon', '1', 'b'),
-	(120, 'client', 'ui/chat/damageMessages', '1', 'b'),
-	(121, 'server', 'players/actions/initialClassPathId', '1', 'i'),
-	(122, 'server', 'enemies/initialStats/aim', '50', 'i'),
-	(123, 'client', 'actions/skills/affectedProperty', 'hp', 't'),
-	(124, 'client', 'ui/controls/opacityEffect', '1', 'b'),
-	(125, 'client', 'ui/skills/y', '390', 'i'),
-	(126, 'client', 'ui/skills/x', '230', 'i'),
-	(127, 'client', 'ui/skills/responsiveY', '100', 'i'),
-	(128, 'client', 'ui/skills/responsiveX', '0', 'i'),
-	(129, 'client', 'ui/skills/enabled', '1', 'b'),
-	(130, 'client', 'skills/animations/default_atk', '{"key":"default_atk","animationData":{"enabled":true,"type":"spritesheet","img":"default_atk","frameWidth":64,"frameHeight":64,"start":0,"end":4,"repeat":0}}', 'j'),
-	(131, 'client', 'skills/animations/default_bullet', '{"key":"default_bullet","animationData":{"enabled":true,"type":"spritesheet","img":"default_bullet","frameWidth":64,"frameHeight":64,"start":0,"end":2,"repeat":-1,"rate":1}}', 'j'),
-	(132, 'client', 'skills/animations/default_cast', '{"key": "default_cast","animationData":{"enabled":false,"type":"spritesheet","img":"default_cast","frameWidth":64,"frameHeight":64,"start":0,"end":3,"repeat":0}}', 'j'),
-	(133, 'client', 'skills/animations/default_death', '{"key":"default_death","animationData":{"enabled":true,"type":"spritesheet","img":"default_death","frameWidth":64,"frameHeight":64,"start":0,"end":1,"repeat":0,"rate":1}}', 'j'),
-	(134, 'client', 'skills/animations/default_hit', '{"key":"default_hit","animationData":{"enabled":true,"type":"spritesheet","img":"default_hit","frameWidth":64,"frameHeight":64,"start":0,"end":3,"repeat":0,"depthByPlayer":"above"}}', 'j'),
-	(135, 'client', 'ui/controls/defaultActionKey', '', 't'),
-	(136, 'client', 'players/animations/collideWorldBounds', '1', 'b'),
-	(137, 'server', 'rooms/world/bulletsStopOnPlayer', '1', 'b'),
-	(138, 'client', 'players/animations/fallbackImage', 'player-base', 't'),
-	(139, 'client', 'players/multiplePlayers/enabled', '1', 'b'),
-	(140, 'server', 'players/gameOver/timeOut', '10000', 'i'),
-	(141, 'client', 'ui/controls/tabTarget', '1', 'b'),
-	(142, 'client', 'ui/controls/disableContextMenu', '1', 'b'),
-	(143, 'client', 'ui/controls/primaryMove', '0', 'b'),
-	(144, 'client', 'ui/instructions/enabled', '1', 'b'),
-	(145, 'client', 'ui/instructions/responsiveX', '100', 'i'),
-	(146, 'client', 'ui/instructions/responsiveY', '100', 'i'),
-	(147, 'client', 'ui/instructions/x', '380', 'i'),
-	(148, 'client', 'ui/instructions/y', '940', 'i'),
-	(149, 'client', 'ui/players/showNames', '1', 'b'),
-	(157, 'client', 'ui/lifeBar/top', '5', 'i'),
-	(158, 'client', 'actions/damage/enabled', '1', 'b'),
-	(159, 'client', 'actions/damage/showAll', '0', 'b'),
-	(160, 'client', 'actions/damage/font', 'Verdana, Geneva, sans-serif', 't'),
-	(161, 'client', 'actions/damage/color', '#ff0000', 't'),
-	(162, 'client', 'actions/damage/duration', '600', 'i'),
-	(163, 'client', 'actions/damage/top', '50', 'i'),
-	(164, 'client', 'actions/damage/fontSize', '14', 'i'),
-	(165, 'client', 'actions/damage/stroke', '#000000', 't'),
-	(166, 'client', 'actions/damage/strokeThickness', '4', 'i'),
-	(167, 'client', 'actions/damage/shadowColor', 'rgba(0,0,0,0.7)', 't'),
-	(168, 'client', 'ui/lifeBar/fillStyle', '0xff0000', 't'),
-	(169, 'client', 'ui/lifeBar/lineStyle', '0xffffff', 't'),
-	(170, 'client', 'ui/lifeBar/showAllPlayers', '0', 'b'),
-	(171, 'client', 'ui/lifeBar/showEnemies', '1', 'b'),
-	(172, 'client', 'players/animations/defaultFrames/left/start', '3', 'i'),
-	(173, 'client', 'players/animations/defaultFrames/left/end', '5', 'i'),
-	(174, 'client', 'players/animations/defaultFrames/right/start', '6', 'i'),
-	(175, 'client', 'players/animations/defaultFrames/right/end', '8', 'i'),
-	(176, 'client', 'players/animations/defaultFrames/up/start', '9', 'i'),
-	(177, 'client', 'players/animations/defaultFrames/up/end', '11', 'i'),
-	(178, 'client', 'players/animations/defaultFrames/down/start', '0', 'i'),
-	(179, 'client', 'players/animations/defaultFrames/down/end', '2', 'i'),
-	(180, 'client', 'ui/minimap/enabled', '1', 'b'),
-	(181, 'client', 'ui/minimap/mapWidthDivisor', '1', 'i'),
-	(182, 'client', 'ui/minimap/mapHeightDivisor', '1', 'i'),
-	(183, 'client', 'ui/minimap/fixedWidth', '450', 'i'),
-	(184, 'client', 'ui/minimap/fixedHeight', '450', 'i'),
-	(186, 'client', 'ui/minimap/camX', '140', 'i'),
-	(187, 'client', 'ui/minimap/camY', '10', 'i'),
-	(188, 'client', 'ui/minimap/camBackgroundColor', 'rgba(0,0,0,0.6)', 't'),
-	(189, 'client', 'ui/minimap/camZoom', '0.35', 'i'),
-	(191, 'client', 'ui/minimap/addCircle', '1', 'b'),
-	(192, 'client', 'ui/minimap/circleX', '220', 'i'),
-	(193, 'client', 'ui/minimap/circleY', '88', 'i'),
-	(194, 'client', 'ui/minimap/circleRadio', '80.35', 'i'),
-	(195, 'client', 'ui/minimap/circleColor', 'rgb(0,0,0)', 't'),
-	(196, 'client', 'ui/minimap/circleAlpha', '1', 'i'),
-	(197, 'client', 'ui/minimap/circleStrokeLineWidth', '6', 'i'),
-	(198, 'client', 'ui/minimap/circleStrokeColor', '0', 'i'),
-	(199, 'client', 'ui/minimap/circleStrokeAlpha', '0.6', 'i'),
-	(200, 'client', 'ui/minimap/circleFillColor', '1', 'i'),
-	(201, 'client', 'ui/minimap/circleFillAlpha', '0', 'i'),
-	(202, 'client', 'ui/pointer/topOffSet', '16', 'i'),
-	(203, 'client', 'ui/minimap/responsiveX', '34', 'i'),
-	(204, 'client', 'ui/minimap/responsiveY', '2.4', 'i'),
-	(205, 'client', 'ui/minimap/x', '180', 'i'),
-	(206, 'client', 'ui/minimap/y', '10', 'i'),
-	(207, 'client', 'ui/settings/responsiveX', '100', 'i'),
-	(208, 'client', 'ui/settings/responsiveY', '100', 'i'),
-	(209, 'client', 'ui/settings/x', '940', 'i'),
-	(210, 'client', 'ui/settings/y', '280', 'i'),
-	(211, 'client', 'ui/settings/enabled', '1', 'b'),
-	(212, 'client', 'ui/lifeBar/showOnClick', '1', 'b'),
-	(213, 'client', 'rooms/selection/allowOnRegistration', '1', 'b'),
-	(214, 'client', 'rooms/selection/allowOnLogin', '1', 'b'),
-	(215, 'client', 'rooms/selection/registrationAvailableRooms', '*', 't'),
-	(216, 'client', 'rooms/selection/loginLastLocation', '1', 'b'),
-	(218, 'client', 'rooms/selection/loginAvailableRooms', '*', 't'),
-	(219, 'client', 'rooms/selection/loginLastLocationLabel', 'Last Location', 't'),
-	(220, 'client', 'players/tapMovement/enabled', '1', 'b'),
-	(221, 'client', 'ui/chat/overheadChat/enabled', '1', 'b'),
-	(222, 'client', 'chat/messages/characterLimit', '100', 'i'),
-	(223, 'client', 'chat/messages/characterLimitOverhead', '50', 'i'),
-	(224, 'client', 'ui/chat/overheadText/fontFamily', 'Verdana, Geneva, sans-serif', 't'),
-	(225, 'client', 'ui/chat/overheadText/fontSize', '12px', 't'),
-	(226, 'client', 'ui/chat/overheadText/fill', '#ffffff', 't'),
-	(227, 'client', 'ui/chat/overheadText/align', 'center', 't'),
-	(228, 'client', 'ui/chat/overheadText/stroke', 'rgba(0,0,0,0.7)', 't'),
-	(229, 'client', 'ui/chat/overheadText/strokeThickness', '20', 'i'),
-	(230, 'client', 'ui/chat/overheadText/shadowX', '5', 'i'),
-	(231, 'client', 'ui/chat/overheadText/shadowY', '5', 'i'),
-	(232, 'client', 'ui/chat/overheadText/shadowColor', 'rgba(0,0,0,0.7)', 't'),
-	(233, 'client', 'ui/chat/overheadText/shadowBlur', '5', 'i'),
-	(234, 'client', 'ui/chat/overheadText/depth', '200000', 'i'),
-	(235, 'client', 'ui/chat/overheadText/height', '15', 'i'),
-	(236, 'client', 'ui/chat/overheadText/textLength', '4', 'i'),
-	(237, 'client', 'ui/players/nameText/fontFamily', 'Verdana, Geneva, sans-serif', 't'),
-	(238, 'client', 'ui/players/nameText/fontSize', '12px', 't'),
-	(239, 'client', 'ui/players/nameText/fill', '#ffffff', 't'),
-	(240, 'client', 'ui/players/nameText/align', 'center', 't'),
-	(241, 'client', 'ui/players/nameText/stroke', '#000000', 't'),
-	(242, 'client', 'ui/players/nameText/strokeThickness', '4', 'i'),
-	(243, 'client', 'ui/players/nameText/shadowX', '5', 'i'),
-	(244, 'client', 'ui/players/nameText/shadowY', '5', 'i'),
-	(245, 'client', 'ui/players/nameText/shadowColor', 'rgba(0,0,0,0.7)', 't'),
-	(246, 'client', 'ui/players/nameText/shadowBlur', '5', 'i'),
-	(247, 'client', 'ui/players/nameText/depth', '200000', 'i'),
-	(248, 'client', 'ui/players/nameText/height', '-90', 'i'),
-	(249, 'client', 'ui/players/nameText/textLength', '4', 'i'),
-	(250, 'client', 'ui/chat/overheadChat/isTyping', '1', 'b'),
-	(251, 'client', 'ui/chat/overheadText/timeOut', '5000', 'i'),
-	(252, 'client', 'ui/chat/overheadChat/closeChatBoxAfterSend', '1', 'b'),
-	(253, 'client', 'players/playedTime/show', '2', 'i'),
-	(254, 'client', 'players/playedTime/label', 'Played Time:<br/>', 't'),
-	(255, 'client', 'objects/npc/invalidOptionMessage', 'I do not understand.', 't'),
-	(256, 'client', 'ui/minimap/roundMap', '1', 'b'),
-	(257, 'client', 'general/engine/clientInterpolation', '1', 'b'),
-	(258, 'client', 'general/engine/interpolationSpeed', '0.4', 'i'),
-	(259, 'client', 'general/engine/experimentalClientPrediction', '0', 'b'),
-	(262, 'client', 'players/physicalBody/width', '25', 'i'),
-	(263, 'client', 'players/physicalBody/height', '25', 'i'),
-	(264, 'server', 'objects/actions/closeInteractionOnOutOfReach', '1', 'b'),
-	(265, 'client', 'trade/players/awaitTimeOut', '1', 'b'),
-	(266, 'client', 'trade/players/timeOut', '8000', 'i'),
-	(267, 'client', 'ui/default/responsiveX', '10', 'i'),
-	(268, 'client', 'ui/default/responsiveY', '10', 'i'),
-	(269, 'client', 'ui/default/x', '120', 'i'),
-	(270, 'client', 'ui/default/y', '100', 'i'),
-	(275, 'client', 'ui/trade/responsiveX', '5', 'i'),
-	(276, 'client', 'ui/trade/responsiveY', '5', 'i'),
-	(277, 'client', 'ui/trade/x', '5', 'i'),
-	(278, 'client', 'ui/trade/y', '5', 'i'),
-	(279, 'server', 'enemies/default/affectedProperty', 'stats/hp', 't'),
-	(280, 'client', 'ui/chat/effectMessages', '1', 'b'),
-	(281, 'client', 'ui/chat/dodgeMessages', '1', 'b'),
-	(282, 'client', 'ui/chat/totalValidTypes', '2', 'i');
+	(1, 'server', 'rooms/validation/valid', 'room_game,chat_global', 1),
+	(2, 'server', 'players/initialState/room_id', '4', 2),
+	(3, 'server', 'players/initialState/x', '400', 2),
+	(4, 'server', 'players/initialState/y', '345', 2),
+	(5, 'server', 'players/initialState/dir', 'down', 1),
+	(13, 'server', 'rooms/validation/enabled', '1', 3),
+	(18, 'client', 'general/controls/allowSimultaneousKeys', '1', 3),
+	(19, 'server', 'rooms/world/timeStep', '0.04', 2),
+	(20, 'server', 'chat/messages/broadcast_join', '1', 3),
+	(21, 'server', 'chat/messages/broadcast_leave', '1', 3),
+	(22, 'server', 'chat/messages/global_enabled', '1', 3),
+	(23, 'server', 'chat/messages/global_allowed_roles', '1,9000', 1),
+	(24, 'server', 'players/physicsBody/speed', '180', 2),
+	(25, 'client', 'players/animations/fadeDuration', '1000', 2),
+	(26, 'client', 'ui/playerBox/x', '50', 2),
+	(27, 'client', 'ui/playerStats/enabled', '1', 3),
+	(28, 'client', 'ui/controls/enabled', '1', 3),
+	(29, 'client', 'map/tileData/width', '16', 2),
+	(30, 'client', 'map/tileData/height', '16', 2),
+	(31, 'client', 'map/tileData/margin', '1', 2),
+	(32, 'client', 'map/tileData/spacing', '2', 2),
+	(33, 'client', 'players/size/width', '52', 2),
+	(34, 'client', 'players/size/height', '71', 2),
+	(35, 'client', 'general/animations/frameRate', '10', 2),
+	(36, 'client', 'map/layersDepth/belowPlayer', '0', 2),
+	(37, 'client', 'map/layersDepth/changePoints', '0', 2),
+	(38, 'client', 'ui/sceneLabel/enabled', '1', 3),
+	(39, 'client', 'general/controls/action_button_hold', '0', 3),
+	(40, 'client', 'ui/chat/x', '440', 2),
+	(41, 'client', 'ui/chat/y', '940', 2),
+	(42, 'server', 'players/actions/interactionDistance', '40', 2),
+	(43, 'server', 'objects/actions/interactionsDistance', '140', 2),
+	(44, 'client', 'ui/playerBox/enabled', '1', 3),
+	(45, 'client', 'ui/playerBox/y', '30', 2),
+	(46, 'client', 'ui/lifeBar/enabled', '1', 3),
+	(47, 'client', 'ui/uiTarget/x', '10', 2),
+	(48, 'client', 'ui/uiTarget/y', '85', 2),
+	(49, 'client', 'ui/sceneLabel/x', '250', 2),
+	(50, 'client', 'ui/sceneLabel/y', '20', 2),
+	(51, 'client', 'ui/controls/x', '120', 2),
+	(52, 'client', 'ui/controls/y', '390', 2),
+	(53, 'client', 'ui/playerStats/x', '430', 2),
+	(54, 'client', 'ui/playerStats/y', '20', 2),
+	(55, 'client', 'ui/loading/font', 'Verdana, Geneva, sans-serif', 1),
+	(56, 'client', 'ui/loading/fontSize', '20px', 1),
+	(57, 'client', 'ui/loading/assetsSize', '18px', 1),
+	(58, 'client', 'ui/loading/loadingColor', '#ffffff', 1),
+	(59, 'client', 'ui/loading/percentColor', '#666666', 1),
+	(60, 'client', 'ui/loading/assetsColor', '#ffffff', 1),
+	(61, 'client', 'ui/loading/showAssets', '1', 3),
+	(62, 'client', 'players/animations/basedOnPress', '1', 3),
+	(63, 'client', 'players/animations/diagonalHorizontal', '1', 3),
+	(64, 'client', 'ui/uiTarget/hideOnDialog', '0', 3),
+	(65, 'client', 'ui/uiTarget/enabled', '1', 3),
+	(66, 'client', 'ui/lifeBar/x', '5', 2),
+	(67, 'client', 'ui/lifeBar/y', '12', 2),
+	(68, 'client', 'ui/lifeBar/height', '5', 2),
+	(69, 'client', 'ui/lifeBar/width', '50', 2),
+	(70, 'client', 'ui/lifeBar/fixedPosition', '0', 3),
+	(71, 'server', 'rooms/world/tryClosestPath', '1', 3),
+	(72, 'server', 'actions/pvp/battleTimeOff', '20000', 2),
+	(73, 'server', 'actions/pvp/timerType', 'bt', 1),
+	(74, 'server', 'enemies/initialStats/atk', '50', 2),
+	(75, 'server', 'enemies/initialStats/def', '50', 2),
+	(76, 'server', 'enemies/initialStats/dodge', '50', 2),
+	(77, 'server', 'enemies/initialStats/hp', '50', 2),
+	(78, 'server', 'enemies/initialStats/mp', '50', 2),
+	(79, 'server', 'enemies/initialStats/speed', '50', 2),
+	(80, 'server', 'enemies/initialStats/stamina', '50', 2),
+	(81, 'client', 'ui/pointer/show', '1', 3),
+	(82, 'server', 'enemies/default/skillKey', 'attackShort', 1),
+	(83, 'client', 'players/size/topOffset', '20', 2),
+	(84, 'client', 'players/size/leftOffset', '0', 2),
+	(85, 'server', 'rooms/world/onlyWalkable', '1', 3),
+	(86, 'client', 'ui/screen/responsive', '1', 3),
+	(87, 'client', 'ui/uiTarget/responsiveY', '0', 2),
+	(88, 'client', 'ui/uiTarget/responsiveX', '0', 2),
+	(89, 'client', 'ui/inventory/enabled', '1', 3),
+	(90, 'client', 'ui/inventory/x', '380', 2),
+	(91, 'client', 'ui/inventory/y', '450', 2),
+	(92, 'client', 'ui/inventory/responsiveY', '0', 2),
+	(93, 'client', 'ui/inventory/responsiveX', '100', 2),
+	(94, 'client', 'ui/equipment/enabled', '1', 3),
+	(95, 'client', 'ui/equipment/x', '430', 2),
+	(96, 'client', 'ui/equipment/y', '90', 2),
+	(97, 'client', 'ui/equipment/responsiveY', '0', 2),
+	(98, 'client', 'ui/equipment/responsiveX', '100', 2),
+	(99, 'client', 'ui/lifeBar/responsiveY', '24', 2),
+	(100, 'client', 'ui/lifeBar/responsiveX', '1', 2),
+	(101, 'client', 'ui/sceneLabel/responsiveY', '0', 2),
+	(102, 'client', 'ui/sceneLabel/responsiveX', '50', 2),
+	(103, 'client', 'ui/playerStats/responsiveY', '0', 2),
+	(104, 'client', 'ui/playerStats/responsiveX', '100', 2),
+	(105, 'client', 'ui/playerBox/responsiveY', '0', 2),
+	(106, 'client', 'ui/playerBox/responsiveX', '0', 2),
+	(107, 'client', 'ui/controls/responsiveY', '100', 2),
+	(108, 'client', 'ui/controls/responsiveX', '0', 2),
+	(109, 'client', 'ui/chat/responsiveY', '100', 2),
+	(110, 'client', 'ui/chat/responsiveX', '100', 2),
+	(111, 'client', 'ui/chat/enabled', '1', 3),
+	(112, 'client', 'ui/npcDialog/x', '120', 2),
+	(113, 'client', 'ui/npcDialog/y', '100', 2),
+	(114, 'client', 'ui/npcDialog/responsiveX', '10', 2),
+	(115, 'client', 'ui/npcDialog/responsiveY', '10', 2),
+	(116, 'client', 'ui/maximum/x', '1280', 2),
+	(117, 'client', 'ui/maximum/y', '720', 2),
+	(118, 'client', 'ui/chat/defaultOpen', '0', 3),
+	(119, 'client', 'ui/chat/notificationBalloon', '1', 3),
+	(120, 'client', 'ui/chat/damageMessages', '1', 3),
+	(121, 'server', 'players/actions/initialClassPathId', '1', 2),
+	(122, 'server', 'enemies/initialStats/aim', '50', 2),
+	(123, 'client', 'actions/skills/affectedProperty', 'hp', 1),
+	(124, 'client', 'ui/controls/opacityEffect', '1', 3),
+	(125, 'client', 'ui/skills/y', '390', 2),
+	(126, 'client', 'ui/skills/x', '230', 2),
+	(127, 'client', 'ui/skills/responsiveY', '100', 2),
+	(128, 'client', 'ui/skills/responsiveX', '0', 2),
+	(129, 'client', 'ui/skills/enabled', '1', 3),
+	(130, 'client', 'skills/animations/default_atk', '{"key":"default_atk","animationData":{"enabled":true,"type":"spritesheet","img":"default_atk","frameWidth":64,"frameHeight":64,"start":0,"end":4,"repeat":0}}', 4),
+	(131, 'client', 'skills/animations/default_bullet', '{"key":"default_bullet","animationData":{"enabled":true,"type":"spritesheet","img":"default_bullet","frameWidth":64,"frameHeight":64,"start":0,"end":2,"repeat":-1,"rate":1}}', 4),
+	(132, 'client', 'skills/animations/default_cast', '{"key": "default_cast","animationData":{"enabled":false,"type":"spritesheet","img":"default_cast","frameWidth":64,"frameHeight":64,"start":0,"end":3,"repeat":0}}', 4),
+	(133, 'client', 'skills/animations/default_death', '{"key":"default_death","animationData":{"enabled":true,"type":"spritesheet","img":"default_death","frameWidth":64,"frameHeight":64,"start":0,"end":1,"repeat":0,"rate":1}}', 4),
+	(134, 'client', 'skills/animations/default_hit', '{"key":"default_hit","animationData":{"enabled":true,"type":"spritesheet","img":"default_hit","frameWidth":64,"frameHeight":64,"start":0,"end":3,"repeat":0,"depthByPlayer":"above"}}', 4),
+	(135, 'client', 'ui/controls/defaultActionKey', '', 1),
+	(136, 'client', 'players/animations/collideWorldBounds', '1', 3),
+	(137, 'server', 'rooms/world/bulletsStopOnPlayer', '1', 3),
+	(138, 'client', 'players/animations/fallbackImage', 'player-base', 1),
+	(139, 'client', 'players/multiplePlayers/enabled', '1', 3),
+	(140, 'server', 'players/gameOver/timeOut', '10000', 2),
+	(141, 'client', 'ui/controls/tabTarget', '1', 3),
+	(142, 'client', 'ui/controls/disableContextMenu', '1', 3),
+	(143, 'client', 'ui/controls/primaryMove', '0', 3),
+	(144, 'client', 'ui/instructions/enabled', '1', 3),
+	(145, 'client', 'ui/instructions/responsiveX', '100', 2),
+	(146, 'client', 'ui/instructions/responsiveY', '100', 2),
+	(147, 'client', 'ui/instructions/x', '380', 2),
+	(148, 'client', 'ui/instructions/y', '940', 2),
+	(149, 'client', 'ui/players/showNames', '1', 3),
+	(157, 'client', 'ui/lifeBar/top', '5', 2),
+	(158, 'client', 'actions/damage/enabled', '1', 3),
+	(159, 'client', 'actions/damage/showAll', '0', 3),
+	(160, 'client', 'actions/damage/font', 'Verdana, Geneva, sans-serif', 1),
+	(161, 'client', 'actions/damage/color', '#ff0000', 1),
+	(162, 'client', 'actions/damage/duration', '600', 2),
+	(163, 'client', 'actions/damage/top', '50', 2),
+	(164, 'client', 'actions/damage/fontSize', '14', 2),
+	(165, 'client', 'actions/damage/stroke', '#000000', 1),
+	(166, 'client', 'actions/damage/strokeThickness', '4', 2),
+	(167, 'client', 'actions/damage/shadowColor', 'rgba(0,0,0,0.7)', 1),
+	(168, 'client', 'ui/lifeBar/fillStyle', '0xff0000', 1),
+	(169, 'client', 'ui/lifeBar/lineStyle', '0xffffff', 1),
+	(170, 'client', 'ui/lifeBar/showAllPlayers', '0', 3),
+	(171, 'client', 'ui/lifeBar/showEnemies', '1', 3),
+	(172, 'client', 'players/animations/defaultFrames/left/start', '3', 2),
+	(173, 'client', 'players/animations/defaultFrames/left/end', '5', 2),
+	(174, 'client', 'players/animations/defaultFrames/right/start', '6', 2),
+	(175, 'client', 'players/animations/defaultFrames/right/end', '8', 2),
+	(176, 'client', 'players/animations/defaultFrames/up/start', '9', 2),
+	(177, 'client', 'players/animations/defaultFrames/up/end', '11', 2),
+	(178, 'client', 'players/animations/defaultFrames/down/start', '0', 2),
+	(179, 'client', 'players/animations/defaultFrames/down/end', '2', 2),
+	(180, 'client', 'ui/minimap/enabled', '1', 3),
+	(181, 'client', 'ui/minimap/mapWidthDivisor', '1', 2),
+	(182, 'client', 'ui/minimap/mapHeightDivisor', '1', 2),
+	(183, 'client', 'ui/minimap/fixedWidth', '450', 2),
+	(184, 'client', 'ui/minimap/fixedHeight', '450', 2),
+	(186, 'client', 'ui/minimap/camX', '140', 2),
+	(187, 'client', 'ui/minimap/camY', '10', 2),
+	(188, 'client', 'ui/minimap/camBackgroundColor', 'rgba(0,0,0,0.6)', 1),
+	(189, 'client', 'ui/minimap/camZoom', '0.35', 2),
+	(191, 'client', 'ui/minimap/addCircle', '1', 3),
+	(192, 'client', 'ui/minimap/circleX', '220', 2),
+	(193, 'client', 'ui/minimap/circleY', '88', 2),
+	(194, 'client', 'ui/minimap/circleRadio', '80.35', 2),
+	(195, 'client', 'ui/minimap/circleColor', 'rgb(0,0,0)', 1),
+	(196, 'client', 'ui/minimap/circleAlpha', '1', 2),
+	(197, 'client', 'ui/minimap/circleStrokeLineWidth', '6', 2),
+	(198, 'client', 'ui/minimap/circleStrokeColor', '0', 2),
+	(199, 'client', 'ui/minimap/circleStrokeAlpha', '0.6', 2),
+	(200, 'client', 'ui/minimap/circleFillColor', '1', 2),
+	(201, 'client', 'ui/minimap/circleFillAlpha', '0', 2),
+	(202, 'client', 'ui/pointer/topOffSet', '16', 2),
+	(203, 'client', 'ui/minimap/responsiveX', '34', 2),
+	(204, 'client', 'ui/minimap/responsiveY', '2.4', 2),
+	(205, 'client', 'ui/minimap/x', '180', 2),
+	(206, 'client', 'ui/minimap/y', '10', 2),
+	(207, 'client', 'ui/settings/responsiveX', '100', 2),
+	(208, 'client', 'ui/settings/responsiveY', '100', 2),
+	(209, 'client', 'ui/settings/x', '940', 2),
+	(210, 'client', 'ui/settings/y', '280', 2),
+	(211, 'client', 'ui/settings/enabled', '1', 3),
+	(212, 'client', 'ui/lifeBar/showOnClick', '1', 3),
+	(213, 'client', 'rooms/selection/allowOnRegistration', '1', 3),
+	(214, 'client', 'rooms/selection/allowOnLogin', '1', 3),
+	(215, 'client', 'rooms/selection/registrationAvailableRooms', '*', 1),
+	(216, 'client', 'rooms/selection/loginLastLocation', '1', 3),
+	(218, 'client', 'rooms/selection/loginAvailableRooms', '*', 1),
+	(219, 'client', 'rooms/selection/loginLastLocationLabel', 'Last Location', 1),
+	(220, 'client', 'players/tapMovement/enabled', '1', 3),
+	(221, 'client', 'ui/chat/overheadChat/enabled', '1', 3),
+	(222, 'client', 'chat/messages/characterLimit', '100', 2),
+	(223, 'client', 'chat/messages/characterLimitOverhead', '50', 2),
+	(224, 'client', 'ui/chat/overheadText/fontFamily', 'Verdana, Geneva, sans-serif', 1),
+	(225, 'client', 'ui/chat/overheadText/fontSize', '12px', 1),
+	(226, 'client', 'ui/chat/overheadText/fill', '#ffffff', 1),
+	(227, 'client', 'ui/chat/overheadText/align', 'center', 1),
+	(228, 'client', 'ui/chat/overheadText/stroke', 'rgba(0,0,0,0.7)', 1),
+	(229, 'client', 'ui/chat/overheadText/strokeThickness', '20', 2),
+	(230, 'client', 'ui/chat/overheadText/shadowX', '5', 2),
+	(231, 'client', 'ui/chat/overheadText/shadowY', '5', 2),
+	(232, 'client', 'ui/chat/overheadText/shadowColor', 'rgba(0,0,0,0.7)', 1),
+	(233, 'client', 'ui/chat/overheadText/shadowBlur', '5', 2),
+	(234, 'client', 'ui/chat/overheadText/depth', '200000', 2),
+	(235, 'client', 'ui/chat/overheadText/height', '15', 2),
+	(236, 'client', 'ui/chat/overheadText/textLength', '4', 2),
+	(237, 'client', 'ui/players/nameText/fontFamily', 'Verdana, Geneva, sans-serif', 1),
+	(238, 'client', 'ui/players/nameText/fontSize', '12px', 1),
+	(239, 'client', 'ui/players/nameText/fill', '#ffffff', 1),
+	(240, 'client', 'ui/players/nameText/align', 'center', 1),
+	(241, 'client', 'ui/players/nameText/stroke', '#000000', 1),
+	(242, 'client', 'ui/players/nameText/strokeThickness', '4', 2),
+	(243, 'client', 'ui/players/nameText/shadowX', '5', 2),
+	(244, 'client', 'ui/players/nameText/shadowY', '5', 2),
+	(245, 'client', 'ui/players/nameText/shadowColor', 'rgba(0,0,0,0.7)', 1),
+	(246, 'client', 'ui/players/nameText/shadowBlur', '5', 2),
+	(247, 'client', 'ui/players/nameText/depth', '200000', 2),
+	(248, 'client', 'ui/players/nameText/height', '-90', 2),
+	(249, 'client', 'ui/players/nameText/textLength', '4', 2),
+	(250, 'client', 'ui/chat/overheadChat/isTyping', '1', 3),
+	(251, 'client', 'ui/chat/overheadText/timeOut', '5000', 2),
+	(252, 'client', 'ui/chat/overheadChat/closeChatBoxAfterSend', '1', 3),
+	(253, 'client', 'players/playedTime/show', '2', 2),
+	(254, 'client', 'players/playedTime/label', 'Played time %playedTimeInHs hs', 1),
+	(255, 'client', 'objects/npc/invalidOptionMessage', 'I do not understand.', 1),
+	(256, 'client', 'ui/minimap/roundMap', '1', 3),
+	(257, 'client', 'general/engine/clientInterpolation', '1', 3),
+	(258, 'client', 'general/engine/interpolationSpeed', '0.4', 2),
+	(259, 'client', 'general/engine/experimentalClientPrediction', '0', 3),
+	(262, 'client', 'players/physicalBody/width', '25', 2),
+	(263, 'client', 'players/physicalBody/height', '25', 2),
+	(264, 'server', 'objects/actions/closeInteractionOnOutOfReach', '1', 3),
+	(265, 'client', 'trade/players/awaitTimeOut', '1', 3),
+	(266, 'client', 'trade/players/timeOut', '8000', 2),
+	(267, 'client', 'ui/default/responsiveX', '10', 2),
+	(268, 'client', 'ui/default/responsiveY', '10', 2),
+	(269, 'client', 'ui/default/x', '120', 2),
+	(270, 'client', 'ui/default/y', '100', 2),
+	(275, 'client', 'ui/trade/responsiveX', '5', 2),
+	(276, 'client', 'ui/trade/responsiveY', '5', 2),
+	(277, 'client', 'ui/trade/x', '5', 2),
+	(278, 'client', 'ui/trade/y', '5', 2),
+	(279, 'server', 'enemies/default/affectedProperty', 'stats/hp', 1),
+	(280, 'client', 'ui/chat/effectMessages', '1', 3),
+	(281, 'client', 'ui/chat/dodgeMessages', '1', 3),
+	(282, 'client', 'ui/chat/totalValidTypes', '2', 2),
+	(283, 'client', 'ui/teams/enabled', '1', 3),
+	(284, 'client', 'ui/teams/responsiveX', '100', 2),
+	(285, 'client', 'ui/teams/responsiveY', '0', 2),
+	(286, 'client', 'ui/teams/x', '430', 2),
+	(287, 'client', 'ui/teams/y', '100', 2),
+	(288, 'client', 'ui/teams/sharedProperties', '{"hp":{"path":"stats/hp","pathMax":"statsBase/hp","label":"HP"},"mp":{"path":"stats/mp","pathMax":"statsBase/mp","label":"MP"}}', 4),
+	(289, 'client', 'ui/options/acceptOrDecline', '{"1":{"label":"Accept","value":1},"2":{"label":"Decline","value":2}}', 4),
+	(290, 'client', 'team/labels/requestFromTitle', 'Team request from:', 1),
+	(291, 'client', 'team/labels/leaderNameTitle', 'Team leader: %leaderName', 1),
+	(293, 'client', 'ui/controls/allowPrimaryTouch', '1', 3),
+	(294, 'client', 'ui/clan/enabled', '1', 3),
+	(295, 'client', 'ui/clan/responsiveX', '100', 2),
+	(296, 'client', 'ui/clan/responsiveY', '0', 2),
+	(297, 'client', 'ui/clan/x', '430', 2),
+	(298, 'client', 'ui/clan/y', '100', 2),
+	(299, 'client', 'ui/clan/sharedProperties', '{"hp":{"path":"stats/hp","pathMax":"statsBase/hp","label":"HP"},"mp":{"path":"stats/mp","pathMax":"statsBase/mp","label":"MP"}}', 4),
+	(300, 'client', 'clan/labels/requestFromTitle', 'Clan request from:', 1),
+	(302, 'client', 'clan/labels/leaderNameTitle', 'Clan leader: %leaderName', 1),
+	(303, 'client', 'clan/labels/propertyMaxValue', '/ %propertyMaxValue', 1),
+	(304, 'server', 'rewards/actions/interactionsDistance', '140', 2),
+	(305, 'server', 'rewards/actions/disappearTime', '1800000', 2),
+	(306, 'client', 'rewards/titles/rewardMessage', 'You obtained %dropQuantity %itemLabel', 1),
+	(307, 'client', 'clan/general/openInvites', '0', 3),
+	(311, 'client', 'login/termsAndConditions/link', 'Accept our Terms and Conditions (click here).', 1),
+	(312, 'client', 'login/termsAndConditions/heading', 'Terms and conditions', 1),
+	(313, 'client', 'login/termsAndConditions/body', 'This is our test terms and conditions content.', 1),
+	(314, 'client', 'login/termsAndConditions/checkboxLabel', 'Accept terms and conditions', 1);
+
+-- Dumping structure for table config_types
+CREATE TABLE IF NOT EXISTS `config_types` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `label` varchar(50) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- Dumping data for table config_types: ~5 rows (approximately)
+INSERT INTO `config_types` (`id`, `label`) VALUES
+	(1, 'string'),
+	(2, 'float'),
+	(3, 'boolean'),
+	(4, 'json'),
+	(5, 'comma_separated');
 
 -- Dumping structure for table features
 CREATE TABLE IF NOT EXISTS `features` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `code` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `title` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
-  `is_enabled` int NOT NULL,
+  `is_enabled` tinyint unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table features: ~9 rows (approximately)
+-- Dumping data for table features: ~12 rows (approximately)
 INSERT INTO `features` (`id`, `code`, `title`, `is_enabled`) VALUES
 	(1, 'chat', 'Chat', 1),
 	(2, 'objects', 'Objects', 1),
@@ -429,20 +538,22 @@ INSERT INTO `features` (`id`, `code`, `title`, `is_enabled`) VALUES
 	(8, 'audio', 'Audio', 1),
 	(9, 'rooms', 'Rooms', 1),
 	(10, 'admin', 'Admin', 1),
-	(11, 'prediction', 'Prediction', 0);
+	(11, 'prediction', 'Prediction', 0),
+	(12, 'teams', 'Teams', 1),
+	(13, 'rewards', 'Rewards', 1);
 
 -- Dumping structure for table items_group
 CREATE TABLE IF NOT EXISTS `items_group` (
-  `id` int NOT NULL AUTO_INCREMENT,
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
   `key` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `label` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `description` text CHARACTER SET utf8 COLLATE utf8_unicode_ci,
-  `files_name` text COLLATE utf8_unicode_ci,
+  `files_name` text CHARACTER SET utf8 COLLATE utf8_unicode_ci,
   `sort` int DEFAULT NULL,
   `items_limit` int NOT NULL DEFAULT '0',
   `limit_per_item` int NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci COMMENT='The group table is to save the groups settings.';
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='The group table is to save the groups settings.';
 
 -- Dumping data for table items_group: ~6 rows (approximately)
 INSERT INTO `items_group` (`id`, `key`, `label`, `description`, `files_name`, `sort`, `items_limit`, `limit_per_item`) VALUES
@@ -455,36 +566,38 @@ INSERT INTO `items_group` (`id`, `key`, `label`, `description`, `files_name`, `s
 
 -- Dumping structure for table items_inventory
 CREATE TABLE IF NOT EXISTS `items_inventory` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `owner_id` int NOT NULL,
-  `item_id` int NOT NULL,
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `owner_id` int unsigned NOT NULL,
+  `item_id` int unsigned NOT NULL,
   `qty` int NOT NULL DEFAULT '0',
   `remaining_uses` int DEFAULT NULL,
   `is_active` int DEFAULT NULL COMMENT 'For example equipped or not equipped items.',
   PRIMARY KEY (`id`),
   KEY `FK_items_inventory_items_item` (`item_id`),
   CONSTRAINT `FK_items_inventory_items_item` FOREIGN KEY (`item_id`) REFERENCES `items_item` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci COMMENT='Inventory table is to save the items for each owner.';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Inventory table is to save the items for each owner.';
+
+-- Dumping data for table items_inventory: ~25 rows (approximately)
 
 -- Dumping structure for table items_item
 CREATE TABLE IF NOT EXISTS `items_item` (
-  `id` int NOT NULL AUTO_INCREMENT,
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
   `key` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `type` int NOT NULL DEFAULT '0',
-  `group_id` int DEFAULT NULL,
+  `group_id` int unsigned DEFAULT NULL,
   `label` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `description` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
   `qty_limit` int NOT NULL DEFAULT '0' COMMENT 'Default 0 to unlimited qty.',
   `uses_limit` int NOT NULL DEFAULT '1' COMMENT 'Default 1 use per item (0 = unlimited).',
   `useTimeOut` int DEFAULT NULL,
   `execTimeOut` int DEFAULT NULL,
-  `customData` text COLLATE utf8_unicode_ci,
+  `customData` text CHARACTER SET utf8 COLLATE utf8_unicode_ci,
   PRIMARY KEY (`id`),
   UNIQUE KEY `id` (`id`),
   UNIQUE KEY `key` (`key`),
   KEY `group_id` (`group_id`),
   CONSTRAINT `FK_items_item_items_group` FOREIGN KEY (`group_id`) REFERENCES `items_group` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci COMMENT='List of all available items in the system.';
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='List of all available items in the system.';
 
 -- Dumping data for table items_item: ~6 rows (approximately)
 INSERT INTO `items_item` (`id`, `key`, `type`, `group_id`, `label`, `description`, `qty_limit`, `uses_limit`, `useTimeOut`, `execTimeOut`, `customData`) VALUES
@@ -497,8 +610,8 @@ INSERT INTO `items_item` (`id`, `key`, `type`, `group_id`, `label`, `description
 
 -- Dumping structure for table items_item_modifiers
 CREATE TABLE IF NOT EXISTS `items_item_modifiers` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `item_id` int NOT NULL,
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `item_id` int unsigned NOT NULL,
   `key` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `property_key` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `operation` int NOT NULL,
@@ -507,7 +620,7 @@ CREATE TABLE IF NOT EXISTS `items_item_modifiers` (
   PRIMARY KEY (`id`),
   KEY `item_id` (`item_id`),
   CONSTRAINT `FK_items_item_modifiers_items_item` FOREIGN KEY (`item_id`) REFERENCES `items_item` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci COMMENT='Modifiers is the way we will affect the item owner.';
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Modifiers is the way we will affect the item owner.';
 
 -- Dumping data for table items_item_modifiers: ~4 rows (approximately)
 INSERT INTO `items_item_modifiers` (`id`, `item_id`, `key`, `property_key`, `operation`, `value`, `maxProperty`) VALUES
@@ -534,7 +647,7 @@ CREATE TABLE IF NOT EXISTS `objects` (
   KEY `room_id` (`room_id`),
   KEY `object_class_key` (`object_class_key`),
   CONSTRAINT `FK_objects_rooms` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping data for table objects: ~9 rows (approximately)
 INSERT INTO `objects` (`id`, `room_id`, `layer_name`, `tile_index`, `object_class_key`, `client_key`, `title`, `private_params`, `client_params`, `enabled`) VALUES
@@ -559,7 +672,7 @@ CREATE TABLE IF NOT EXISTS `objects_animations` (
   KEY `id` (`id`) USING BTREE,
   KEY `object_id` (`object_id`) USING BTREE,
   CONSTRAINT `FK_objects_animations_objects` FOREIGN KEY (`object_id`) REFERENCES `objects` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping data for table objects_animations: ~4 rows (approximately)
 INSERT INTO `objects_animations` (`id`, `object_id`, `animationKey`, `animationData`) VALUES
@@ -580,9 +693,9 @@ CREATE TABLE IF NOT EXISTS `objects_assets` (
   PRIMARY KEY (`object_asset_id`),
   KEY `object_id` (`object_id`),
   CONSTRAINT `FK_objects_assets_objects` FOREIGN KEY (`object_id`) REFERENCES `objects` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table objects_assets: ~8 rows (approximately)
+-- Dumping data for table objects_assets: ~9 rows (approximately)
 INSERT INTO `objects_assets` (`object_asset_id`, `object_id`, `asset_type`, `asset_key`, `file_1`, `file_2`, `extra_params`) VALUES
 	(1, 1, 'spritesheet', 'door_house_1', 'door-a-x2', NULL, '{"frameWidth":32,"frameHeight":58}'),
 	(2, 4, 'spritesheet', 'door_house_2', 'door-a-x2', NULL, '{"frameWidth":32,"frameHeight":58}'),
@@ -598,18 +711,18 @@ INSERT INTO `objects_assets` (`object_asset_id`, `object_id`, `asset_type`, `ass
 CREATE TABLE IF NOT EXISTS `objects_items_inventory` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `owner_id` int unsigned NOT NULL,
-  `item_id` int NOT NULL,
+  `item_id` int unsigned NOT NULL,
   `qty` int NOT NULL DEFAULT '0',
   `remaining_uses` int DEFAULT NULL,
   `is_active` int DEFAULT NULL COMMENT 'For example equipped or not equipped items.',
   PRIMARY KEY (`id`) USING BTREE,
   KEY `FK_items_inventory_items_item` (`item_id`) USING BTREE,
   KEY `FK_objects_items_inventory_objects` (`owner_id`),
-  CONSTRAINT `FK_objects_items_inventory_objects` FOREIGN KEY (`owner_id`) REFERENCES `objects` (`id`),
-  CONSTRAINT `objects_items_inventory_ibfk_1` FOREIGN KEY (`item_id`) REFERENCES `items_item` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci ROW_FORMAT=COMPACT COMMENT='Inventory table is to save the items for each owner.';
+  CONSTRAINT `FK_objects_items_inventory_ibfk_1` FOREIGN KEY (`item_id`) REFERENCES `items_item` (`id`) ON UPDATE CASCADE,
+  CONSTRAINT `FK_objects_items_inventory_objects` FOREIGN KEY (`owner_id`) REFERENCES `objects` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci ROW_FORMAT=COMPACT COMMENT='Inventory table is to save the items for each owner.';
 
--- Dumping data for table objects_items_inventory: ~3 rows (approximately)
+-- Dumping data for table objects_items_inventory: ~4 rows (approximately)
 INSERT INTO `objects_items_inventory` (`id`, `owner_id`, `item_id`, `qty`, `remaining_uses`, `is_active`) VALUES
 	(2, 10, 4, -1, -1, 0),
 	(3, 10, 5, -1, -1, 0),
@@ -620,8 +733,8 @@ INSERT INTO `objects_items_inventory` (`id`, `owner_id`, `item_id`, `qty`, `rema
 CREATE TABLE IF NOT EXISTS `objects_items_requirements` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `object_id` int unsigned NOT NULL,
-  `item_key` varchar(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
-  `required_item_key` varchar(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+  `item_key` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+  `required_item_key` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
   `required_quantity` int unsigned NOT NULL DEFAULT '0',
   `auto_remove_requirement` int unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
@@ -631,7 +744,7 @@ CREATE TABLE IF NOT EXISTS `objects_items_requirements` (
   CONSTRAINT `FK_objects_items_requirements_items_item` FOREIGN KEY (`item_key`) REFERENCES `items_item` (`key`),
   CONSTRAINT `FK_objects_items_requirements_items_item_2` FOREIGN KEY (`required_item_key`) REFERENCES `items_item` (`key`),
   CONSTRAINT `FK_objects_items_requirements_objects` FOREIGN KEY (`object_id`) REFERENCES `objects` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping data for table objects_items_requirements: ~4 rows (approximately)
 INSERT INTO `objects_items_requirements` (`id`, `object_id`, `item_key`, `required_item_key`, `required_quantity`, `auto_remove_requirement`) VALUES
@@ -655,14 +768,32 @@ CREATE TABLE IF NOT EXISTS `objects_items_rewards` (
   CONSTRAINT `FK_objects_items_rewards_items_item` FOREIGN KEY (`item_key`) REFERENCES `items_item` (`key`),
   CONSTRAINT `FK_objects_items_rewards_items_item_2` FOREIGN KEY (`reward_item_key`) REFERENCES `items_item` (`key`),
   CONSTRAINT `objects_items_rewards_ibfk_1` FOREIGN KEY (`object_id`) REFERENCES `objects` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci ROW_FORMAT=COMPACT;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci ROW_FORMAT=COMPACT;
 
--- Dumping data for table objects_items_rewards: ~3 rows (approximately)
+-- Dumping data for table objects_items_rewards: ~4 rows (approximately)
 INSERT INTO `objects_items_rewards` (`id`, `object_id`, `item_key`, `reward_item_key`, `reward_quantity`, `reward_item_is_required`) VALUES
 	(1, 10, 'axe', 'coins', 2, 0),
 	(2, 10, 'spear', 'coins', 1, 0),
 	(3, 10, 'heal_potion_20', 'coins', 1, 0),
 	(5, 10, 'magic_potion_20', 'coins', 1, 0);
+
+-- Dumping structure for table objects_items_rewards_animations
+CREATE TABLE IF NOT EXISTS `objects_items_rewards_animations` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `reward_id` int unsigned NOT NULL,
+  `asset_type` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `asset_key` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `file` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `extra_params` text COLLATE utf8_unicode_ci,
+  PRIMARY KEY (`id`) USING BTREE,
+  KEY `FK_objects_items_rewards_animations_rewards` (`reward_id`) USING BTREE,
+  CONSTRAINT `FK_objects_items_rewards_animations_rewards` FOREIGN KEY (`reward_id`) REFERENCES `rewards` (`id`) ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- Dumping data for table objects_items_rewards_animations: ~2 rows (approximately)
+INSERT INTO `objects_items_rewards_animations` (`id`, `reward_id`, `asset_type`, `asset_key`, `file`, `extra_params`) VALUES
+	(1, 2, 'spritesheet', 'branch-sprite', 'branch-sprite', '{"start":0,"end":2,"repeat":-1,"frameWidth":32, "frameHeight":32,"depthByPlayer":"above"}'),
+	(2, 1, 'spritesheet', 'branch-sprite', 'branch-sprite', '{"start":0,"end":2,"repeat":-1,"frameWidth":32, "frameHeight":32,"depthByPlayer":"above"}');
 
 -- Dumping structure for table objects_skills
 CREATE TABLE IF NOT EXISTS `objects_skills` (
@@ -677,7 +808,7 @@ CREATE TABLE IF NOT EXISTS `objects_skills` (
   CONSTRAINT `FK_objects_skills_objects` FOREIGN KEY (`object_id`) REFERENCES `objects` (`id`) ON UPDATE CASCADE,
   CONSTRAINT `FK_objects_skills_skills_skill` FOREIGN KEY (`skill_id`) REFERENCES `skills_skill` (`id`) ON UPDATE CASCADE,
   CONSTRAINT `FK_objects_skills_target_options` FOREIGN KEY (`target`) REFERENCES `target_options` (`target_key`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping data for table objects_skills: ~1 rows (approximately)
 INSERT INTO `objects_skills` (`id`, `object_id`, `skill_id`, `target`) VALUES
@@ -696,7 +827,7 @@ CREATE TABLE IF NOT EXISTS `objects_stats` (
   KEY `object_id` (`object_id`) USING BTREE,
   CONSTRAINT `FK_object_current_stats_objects` FOREIGN KEY (`object_id`) REFERENCES `objects` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT `FK_objects_current_stats_objects_stats` FOREIGN KEY (`stat_id`) REFERENCES `stats` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=26 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=26 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping data for table objects_stats: ~20 rows (approximately)
 INSERT INTO `objects_stats` (`id`, `object_id`, `stat_id`, `base_value`, `value`) VALUES
@@ -724,11 +855,11 @@ INSERT INTO `objects_stats` (`id`, `object_id`, `stat_id`, `base_value`, `value`
 -- Dumping structure for table operation_types
 CREATE TABLE IF NOT EXISTS `operation_types` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `label` varchar(50) COLLATE utf8_unicode_ci NOT NULL,
+  `label` varchar(50) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `key` int unsigned NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `key` (`key`)
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping data for table operation_types: ~9 rows (approximately)
 INSERT INTO `operation_types` (`id`, `label`, `key`) VALUES
@@ -752,9 +883,9 @@ CREATE TABLE IF NOT EXISTS `players` (
   UNIQUE KEY `name` (`name`),
   KEY `FK_players_users` (`user_id`),
   CONSTRAINT `FK_players_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=22 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table players: ~2 rows (approximately)
+-- Dumping data for table players: ~4 rows (approximately)
 INSERT INTO `players` (`id`, `user_id`, `name`, `created_at`) VALUES
 	(1, 1, 'Darth', '2022-03-17 19:57:50');
 
@@ -771,11 +902,11 @@ CREATE TABLE IF NOT EXISTS `players_state` (
   KEY `FK_player_state_player_stats` (`player_id`),
   CONSTRAINT `FK_player_state_player_stats` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON UPDATE CASCADE,
   CONSTRAINT `FK_player_state_rooms` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table players_state: ~2 rows (approximately)
+-- Dumping data for table players_state: ~4 rows (approximately)
 INSERT INTO `players_state` (`id`, `player_id`, `room_id`, `x`, `y`, `dir`) VALUES
-	(1, 1, 5, 978, 681, 'down');
+	(1, 1, 5, 941, 719, 'right');
 
 -- Dumping structure for table players_stats
 CREATE TABLE IF NOT EXISTS `players_stats` (
@@ -790,13 +921,13 @@ CREATE TABLE IF NOT EXISTS `players_stats` (
   KEY `user_id` (`player_id`) USING BTREE,
   CONSTRAINT `FK_player_current_stats_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT `FK_players_current_stats_players_stats` FOREIGN KEY (`stat_id`) REFERENCES `stats` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=161 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=201 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table players_stats: ~20 rows (approximately)
+-- Dumping data for table players_stats: ~40 rows (approximately)
 INSERT INTO `players_stats` (`id`, `player_id`, `stat_id`, `base_value`, `value`) VALUES
-	(1, 1, 1, 280, 158),
-	(2, 1, 2, 280, 125),
-	(3, 1, 3, 280, 371),
+	(1, 1, 1, 280, 115),
+	(2, 1, 2, 280, 219),
+	(3, 1, 3, 280, 385),
 	(4, 1, 4, 280, 280),
 	(5, 1, 5, 100, 100),
 	(6, 1, 6, 100, 100),
@@ -815,12 +946,53 @@ CREATE TABLE IF NOT EXISTS `respawn` (
   PRIMARY KEY (`id`),
   KEY `respawn_object_id` (`object_id`),
   CONSTRAINT `FK_respawn_objects` FOREIGN KEY (`object_id`) REFERENCES `objects` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping data for table respawn: ~2 rows (approximately)
 INSERT INTO `respawn` (`id`, `object_id`, `respawn_time`, `instances_limit`, `layer`) VALUES
 	(3, 6, 20000, 2, 'respawn-area-monsters-lvl-1-2'),
 	(4, 7, 10000, 3, 'respawn-area-monsters-lvl-1-2');
+
+-- Dumping structure for table rewards
+CREATE TABLE IF NOT EXISTS `rewards` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `object_id` int unsigned NOT NULL,
+  `item_id` int unsigned DEFAULT NULL,
+  `modifier_id` int unsigned DEFAULT NULL,
+  `experience` int unsigned NOT NULL DEFAULT '0',
+  `drop_rate` int unsigned NOT NULL,
+  `drop_quantity` int unsigned NOT NULL,
+  `is_unique` tinyint unsigned NOT NULL DEFAULT '0',
+  `was_given` tinyint unsigned NOT NULL DEFAULT '0',
+  `has_drop_body` tinyint unsigned NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`) USING BTREE,
+  KEY `FK_rewards_items_item` (`item_id`) USING BTREE,
+  KEY `FK_rewards_objects` (`object_id`) USING BTREE,
+  KEY `FK_rewards_rewards_modifiers` (`modifier_id`),
+  CONSTRAINT `FK_rewards_items_item` FOREIGN KEY (`item_id`) REFERENCES `items_item` (`id`),
+  CONSTRAINT `FK_rewards_objects` FOREIGN KEY (`object_id`) REFERENCES `objects` (`id`),
+  CONSTRAINT `FK_rewards_rewards_modifiers` FOREIGN KEY (`modifier_id`) REFERENCES `rewards_modifiers` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- Dumping data for table rewards: ~2 rows (approximately)
+INSERT INTO `rewards` (`id`, `object_id`, `item_id`, `modifier_id`, `experience`, `drop_rate`, `drop_quantity`, `is_unique`, `was_given`, `has_drop_body`) VALUES
+	(1, 7, 2, NULL, 10, 100, 1, 0, 0, 1),
+	(2, 6, 2, NULL, 10, 100, 3, 0, 0, 1);
+
+-- Dumping structure for table rewards_modifiers
+CREATE TABLE IF NOT EXISTS `rewards_modifiers` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `key` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `property_key` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `operation` int unsigned NOT NULL,
+  `value` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `minValue` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+  `maxValue` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+  `minProperty` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+  `maxProperty` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `modifier_id` (`key`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping structure for table rooms
 CREATE TABLE IF NOT EXISTS `rooms` (
@@ -833,9 +1005,9 @@ CREATE TABLE IF NOT EXISTS `rooms` (
   `customData` text CHARACTER SET utf8 COLLATE utf8_unicode_ci,
   PRIMARY KEY (`id`),
   UNIQUE KEY `key` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table rooms: ~5 rows (approximately)
+-- Dumping data for table rooms: ~6 rows (approximately)
 INSERT INTO `rooms` (`id`, `name`, `title`, `map_filename`, `scene_images`, `room_class_key`, `customData`) VALUES
 	(2, 'ReldensHouse_1', 'House - 1', 'reldens-house-1', 'reldens-house-1', NULL, NULL),
 	(3, 'ReldensHouse_2', 'House - 2', 'reldens-house-2', 'reldens-house-2', NULL, NULL),
@@ -856,7 +1028,7 @@ CREATE TABLE IF NOT EXISTS `rooms_change_points` (
   KEY `FK_rooms_change_points_rooms_2` (`next_room_id`),
   CONSTRAINT `FK_rooms_change_points_rooms` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON UPDATE CASCADE,
   CONSTRAINT `FK_rooms_change_points_rooms_2` FOREIGN KEY (`next_room_id`) REFERENCES `rooms` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping data for table rooms_change_points: ~17 rows (approximately)
 INSERT INTO `rooms_change_points` (`id`, `room_id`, `tile_index`, `next_room_id`) VALUES
@@ -892,7 +1064,7 @@ CREATE TABLE IF NOT EXISTS `rooms_return_points` (
   KEY `FK_scenes_return_points_rooms_2` (`from_room_id`) USING BTREE,
   CONSTRAINT `FK_rooms_return_points_rooms_from_room_id` FOREIGN KEY (`from_room_id`) REFERENCES `rooms` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT `FK_rooms_return_points_rooms_room_id` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping data for table rooms_return_points: ~10 rows (approximately)
 INSERT INTO `rooms_return_points` (`id`, `room_id`, `direction`, `x`, `y`, `is_default`, `from_room_id`) VALUES
@@ -918,7 +1090,7 @@ CREATE TABLE IF NOT EXISTS `skills_class_level_up_animations` (
   KEY `FK_skills_class_level_up_skills_levels` (`level_id`) USING BTREE,
   CONSTRAINT `FK_skills_class_level_up_skills_class_path` FOREIGN KEY (`class_path_id`) REFERENCES `skills_class_path` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT `FK_skills_class_level_up_skills_levels` FOREIGN KEY (`level_id`) REFERENCES `skills_levels` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping data for table skills_class_level_up_animations: ~0 rows (approximately)
 INSERT INTO `skills_class_level_up_animations` (`id`, `class_path_id`, `level_id`, `animationData`) VALUES
@@ -934,7 +1106,7 @@ CREATE TABLE IF NOT EXISTS `skills_class_path` (
   UNIQUE KEY `key` (`key`),
   KEY `levels_set_id` (`levels_set_id`),
   CONSTRAINT `FK_skills_class_path_skills_levels_set` FOREIGN KEY (`levels_set_id`) REFERENCES `skills_levels_set` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping data for table skills_class_path: ~5 rows (approximately)
 INSERT INTO `skills_class_path` (`id`, `key`, `label`, `levels_set_id`) VALUES
@@ -956,7 +1128,7 @@ CREATE TABLE IF NOT EXISTS `skills_class_path_level_labels` (
   KEY `level_key` (`level_id`) USING BTREE,
   CONSTRAINT `FK__skills_class_path` FOREIGN KEY (`class_path_id`) REFERENCES `skills_class_path` (`id`) ON UPDATE CASCADE,
   CONSTRAINT `FK_skills_class_path_level_labels_skills_levels` FOREIGN KEY (`level_id`) REFERENCES `skills_levels` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping data for table skills_class_path_level_labels: ~5 rows (approximately)
 INSERT INTO `skills_class_path_level_labels` (`id`, `class_path_id`, `level_id`, `label`) VALUES
@@ -980,7 +1152,7 @@ CREATE TABLE IF NOT EXISTS `skills_class_path_level_skills` (
   CONSTRAINT `FK_skills_class_path_level_skills_skills_levels` FOREIGN KEY (`level_id`) REFERENCES `skills_levels` (`key`) ON UPDATE CASCADE,
   CONSTRAINT `FK_skills_class_path_level_skills_skills_levels_id` FOREIGN KEY (`level_id`) REFERENCES `skills_levels` (`id`) ON UPDATE CASCADE,
   CONSTRAINT `FK_skills_class_path_level_skills_skills_skill` FOREIGN KEY (`skill_id`) REFERENCES `skills_skill` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping data for table skills_class_path_level_skills: ~15 rows (approximately)
 INSERT INTO `skills_class_path_level_skills` (`id`, `class_path_id`, `level_id`, `skill_id`) VALUES
@@ -1008,7 +1180,7 @@ CREATE TABLE IF NOT EXISTS `skills_groups` (
   `description` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `sort` int unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping structure for table skills_levels
 CREATE TABLE IF NOT EXISTS `skills_levels` (
@@ -1021,7 +1193,7 @@ CREATE TABLE IF NOT EXISTS `skills_levels` (
   UNIQUE KEY `key_level_set_id` (`key`,`level_set_id`),
   KEY `level_set_id` (`level_set_id`),
   CONSTRAINT `FK_skills_levels_skills_levels_set` FOREIGN KEY (`level_set_id`) REFERENCES `skills_levels_set` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping data for table skills_levels: ~20 rows (approximately)
 INSERT INTO `skills_levels` (`id`, `key`, `label`, `required_experience`, `level_set_id`) VALUES
@@ -1064,7 +1236,7 @@ CREATE TABLE IF NOT EXISTS `skills_levels_modifiers` (
   KEY `FK_skills_levels_modifiers_operation_types` (`operation`),
   CONSTRAINT `FK_skills_levels_modifiers_operation_types` FOREIGN KEY (`operation`) REFERENCES `operation_types` (`key`),
   CONSTRAINT `FK_skills_levels_modifiers_skills_levels` FOREIGN KEY (`level_id`) REFERENCES `skills_levels` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=121 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci COMMENT='Modifiers table.';
+) ENGINE=InnoDB AUTO_INCREMENT=121 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Modifiers table.';
 
 -- Dumping data for table skills_levels_modifiers: ~120 rows (approximately)
 INSERT INTO `skills_levels_modifiers` (`id`, `level_id`, `key`, `property_key`, `operation`, `value`, `minValue`, `maxValue`, `minProperty`, `maxProperty`) VALUES
@@ -1208,7 +1380,7 @@ CREATE TABLE IF NOT EXISTS `skills_levels_set` (
   `autoFillRanges` int unsigned NOT NULL DEFAULT '0',
   `autoFillExperienceMultiplier` int unsigned DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping data for table skills_levels_set: ~5 rows (approximately)
 INSERT INTO `skills_levels_set` (`id`, `autoFillRanges`, `autoFillExperienceMultiplier`) VALUES
@@ -1228,11 +1400,11 @@ CREATE TABLE IF NOT EXISTS `skills_owners_class_path` (
   PRIMARY KEY (`id`),
   KEY `level_set_id` (`class_path_id`) USING BTREE,
   CONSTRAINT `FK_skills_owners_class_path_skills_class_path` FOREIGN KEY (`class_path_id`) REFERENCES `skills_class_path` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping data for table skills_owners_class_path: ~2 rows (approximately)
 INSERT INTO `skills_owners_class_path` (`id`, `class_path_id`, `owner_id`, `currentLevel`, `currentExp`) VALUES
-	(1, 1, 1, 10, 8480);
+	(1, 1, 1, 10, 9080);
 
 -- Dumping structure for table skills_skill
 CREATE TABLE IF NOT EXISTS `skills_skill` (
@@ -1256,7 +1428,7 @@ CREATE TABLE IF NOT EXISTS `skills_skill` (
   `customData` text CHARACTER SET utf8 COLLATE utf8_unicode_ci COMMENT 'Any custom data, recommended JSON format.',
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE KEY `key` (`key`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping data for table skills_skill: ~4 rows (approximately)
 INSERT INTO `skills_skill` (`id`, `key`, `type`, `autoValidation`, `skillDelay`, `castTime`, `usesLimit`, `range`, `rangeAutomaticValidation`, `rangePropertyX`, `rangePropertyY`, `rangeTargetPropertyX`, `rangeTargetPropertyY`, `allowSelfTarget`, `criticalChance`, `criticalMultiplier`, `criticalFixedValue`, `customData`) VALUES
@@ -1278,7 +1450,7 @@ CREATE TABLE IF NOT EXISTS `skills_skill_animations` (
   KEY `key` (`key`) USING BTREE,
   KEY `skill_id` (`skill_id`) USING BTREE,
   CONSTRAINT `FK_skills_skill_animations_skills_skill` FOREIGN KEY (`skill_id`) REFERENCES `skills_skill` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping data for table skills_skill_animations: ~4 rows (approximately)
 INSERT INTO `skills_skill_animations` (`id`, `skill_id`, `key`, `classKey`, `animationData`) VALUES
@@ -1306,13 +1478,13 @@ CREATE TABLE IF NOT EXISTS `skills_skill_attack` (
   PRIMARY KEY (`id`),
   KEY `skill_id` (`skill_id`),
   CONSTRAINT `FK__skills_skill_attack` FOREIGN KEY (`skill_id`) REFERENCES `skills_skill` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping data for table skills_skill_attack: ~3 rows (approximately)
 INSERT INTO `skills_skill_attack` (`id`, `skill_id`, `affectedProperty`, `allowEffectBelowZero`, `hitDamage`, `applyDirectDamage`, `attackProperties`, `defenseProperties`, `aimProperties`, `dodgeProperties`, `dodgeFullEnabled`, `dodgeOverAimSuccess`, `damageAffected`, `criticalAffected`) VALUES
-	(1, 1, 'stats/hp', 0, 3, 0, 'stats/atk,stats/stamina,stats/speed', 'stats/def,stats/stamina,stats/speed', 'stats/aim', 'stats/dodge', 1, 1, 0, 0),
-	(2, 2, 'stats/hp', 0, 5, 0, 'stats/atk,stats/stamina,stats/speed', 'stats/def,stats/stamina,stats/speed', 'stats/aim', 'stats/dodge', 1, 1, 0, 0),
-	(3, 3, 'stats/hp', 0, 7, 0, 'stats/atk,stats/stamina,stats/speed', 'stats/def,stats/stamina,stats/speed', 'stats/aim', 'stats/dodge', 1, 1, 0, 0);
+	(1, 1, 'stats/hp', 0, 3, 0, 'stats/atk,stats/stamina,stats/speed', 'stats/def,stats/stamina,stats/speed', 'stats/aim', 'stats/dodge', 0, 1, 0, 0),
+	(2, 2, 'stats/hp', 0, 5, 0, 'stats/atk,stats/stamina,stats/speed', 'stats/def,stats/stamina,stats/speed', 'stats/aim', 'stats/dodge', 0, 1, 0, 0),
+	(3, 3, 'stats/hp', 0, 7, 0, 'stats/atk,stats/stamina,stats/speed', 'stats/def,stats/stamina,stats/speed', 'stats/aim', 'stats/dodge', 0, 1, 0, 0);
 
 -- Dumping structure for table skills_skill_group_relation
 CREATE TABLE IF NOT EXISTS `skills_skill_group_relation` (
@@ -1324,7 +1496,7 @@ CREATE TABLE IF NOT EXISTS `skills_skill_group_relation` (
   KEY `skill_id` (`skill_id`),
   CONSTRAINT `FK__skills_groups` FOREIGN KEY (`group_id`) REFERENCES `skills_groups` (`id`) ON UPDATE CASCADE,
   CONSTRAINT `FK__skills_skill` FOREIGN KEY (`skill_id`) REFERENCES `skills_skill` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping structure for table skills_skill_owner_conditions
 CREATE TABLE IF NOT EXISTS `skills_skill_owner_conditions` (
@@ -1360,7 +1532,7 @@ CREATE TABLE IF NOT EXISTS `skills_skill_owner_effects` (
   KEY `FK_skills_skill_owner_effects_operation_types` (`operation`),
   CONSTRAINT `FK_skills_skill_owner_effects_operation_types` FOREIGN KEY (`operation`) REFERENCES `operation_types` (`key`) ON UPDATE CASCADE,
   CONSTRAINT `FK_skills_skill_owner_effects_skills_skill` FOREIGN KEY (`skill_id`) REFERENCES `skills_skill` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci COMMENT='Modifiers table.';
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Modifiers table.';
 
 -- Dumping data for table skills_skill_owner_effects: ~2 rows (approximately)
 INSERT INTO `skills_skill_owner_effects` (`id`, `skill_id`, `key`, `property_key`, `operation`, `value`, `minValue`, `maxValue`, `minProperty`, `maxProperty`) VALUES
@@ -1391,7 +1563,7 @@ CREATE TABLE IF NOT EXISTS `skills_skill_physical_data` (
   PRIMARY KEY (`id`),
   KEY `attack_skill_id` (`skill_id`) USING BTREE,
   CONSTRAINT `FK_skills_skill_physical_data_skills_skill` FOREIGN KEY (`skill_id`) REFERENCES `skills_skill` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping data for table skills_skill_physical_data: ~2 rows (approximately)
 INSERT INTO `skills_skill_physical_data` (`id`, `skill_id`, `magnitude`, `objectWidth`, `objectHeight`, `validateTargetOnHit`) VALUES
@@ -1415,7 +1587,7 @@ CREATE TABLE IF NOT EXISTS `skills_skill_target_effects` (
   KEY `FK_skills_skill_target_effects_operation_types` (`operation`),
   CONSTRAINT `FK_skills_skill_effect_modifiers` FOREIGN KEY (`skill_id`) REFERENCES `skills_skill` (`id`) ON UPDATE CASCADE,
   CONSTRAINT `FK_skills_skill_target_effects_operation_types` FOREIGN KEY (`operation`) REFERENCES `operation_types` (`key`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci COMMENT='Modifiers table.';
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Modifiers table.';
 
 -- Dumping data for table skills_skill_target_effects: ~0 rows (approximately)
 INSERT INTO `skills_skill_target_effects` (`id`, `skill_id`, `key`, `property_key`, `operation`, `value`, `minValue`, `maxValue`, `minProperty`, `maxProperty`) VALUES
@@ -1444,7 +1616,7 @@ CREATE TABLE IF NOT EXISTS `stats` (
   `customData` text CHARACTER SET utf8 COLLATE utf8_unicode_ci,
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE KEY `key` (`key`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping data for table stats: ~10 rows (approximately)
 INSERT INTO `stats` (`id`, `key`, `label`, `description`, `base_value`, `customData`) VALUES
@@ -1463,10 +1635,10 @@ INSERT INTO `stats` (`id`, `key`, `label`, `description`, `base_value`, `customD
 CREATE TABLE IF NOT EXISTS `target_options` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `target_key` tinyint unsigned NOT NULL,
-  `target_label` varchar(50) COLLATE utf8_unicode_ci NOT NULL,
+  `target_label` varchar(50) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `target_key` (`target_key`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping data for table target_options: ~2 rows (approximately)
 INSERT INTO `target_options` (`id`, `target_key`, `target_label`) VALUES
@@ -1487,11 +1659,11 @@ CREATE TABLE IF NOT EXISTS `users` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `email` (`email`),
   UNIQUE KEY `username` (`username`)
-) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=22 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table users: ~2 rows (approximately)
+-- Dumping data for table users: ~5 rows (approximately)
 INSERT INTO `users` (`id`, `email`, `username`, `password`, `role_id`, `status`, `created_at`, `updated_at`, `played_time`) VALUES
-	(1, 'dap@dap.com', 'dap', '$2b$10$RDnURyFoXo7.zcFKVhNcuezJsXXYNslhPBNPzi.crbikFhG8Pnude', 1, '1', '2022-03-17 18:57:44', '2023-01-05 12:03:19', 649132);
+	(1, 'dap@dap.com', 'dap', '$2b$10$RDnURyFoXo7.zcFKVhNcuezJsXXYNslhPBNPzi.crbikFhG8Pnude', 1, '1', '2022-03-17 18:57:44', '2023-04-25 13:00:10', 786295);
 
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
