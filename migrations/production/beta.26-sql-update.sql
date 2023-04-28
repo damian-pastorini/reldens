@@ -71,6 +71,14 @@ UPDATE `config` SET `value` = 'Played time %playedTimeInHs hs' WHERE `path` = 'p
 INSERT INTO `features` VALUES (NULL, 'teams', 'Teams', 1);
 INSERT INTO `features` VALUES (NULL, 'rewards', 'Rewards', 1);
 
+# Rooms return positions fix:
+DELETE FROM `rooms_return_points` WHERE `id` = 6 OR `id` = 8 OR `id` = 10;
+UPDATE `rooms_return_points` SET `is_default` = 1 WHERE `id` = 1;
+UPDATE `rooms_return_points` SET `from_room_id` = 4 WHERE `id` = 2;
+UPDATE `rooms_return_points` SET `from_room_id` = 2 WHERE `id` = 3;
+UPDATE `rooms_return_points` SET `from_room_id` = 3 WHERE `id` = 4;
+UPDATE `rooms_return_points` SET `from_room_id` = 5 WHERE `id` = 7;
+
 # Clan and members:
 CREATE TABLE `clan_levels` (
 	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
