@@ -83,7 +83,7 @@
         "@reldens/skills": "^0.16.6",
         "@reldens/storage": "^0.12.2",
         "@reldens/utils": "^0.17.8",
-        "adminjs": "5.7.3",
+        "adminjs": "7.0.0",
         "bcrypt": "^5.1.0",
         "colyseus": "0.14.24",
         "colyseus.js": "0.14.13",
