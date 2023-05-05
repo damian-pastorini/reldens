@@ -130,3 +130,24 @@
 .team-disband-action {
     float: right;
 }
+
+.clan-member {
+    min-height: 24px;
+    vertical-align: middle;
+    line-height: 24px;
+
+    .member-name {
+        float: left;
+    }
+
+    .clan-remove-container {
+        float: right;
+        cursor: pointer;
+
+        img {
+            max-width: 24px;
+            position: relative;
+            top: 0px;
+        }
+    }
+}
