@@ -493,7 +493,7 @@ INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(300, 'client', 'clan/labels/requestFromTitle', 'Clan request from:', 1),
 	(302, 'client', 'clan/labels/leaderNameTitle', 'Clan leader: %leaderName', 1),
 	(303, 'client', 'clan/labels/propertyMaxValue', '/ %propertyMaxValue', 1),
-	(304, 'server', 'rewards/actions/interactionsDistance', '140', 2),
+	(304, 'server', 'rewards/actions/interactionsDistance', '40', 2),
 	(305, 'server', 'rewards/actions/disappearTime', '1800000', 2),
 	(306, 'client', 'rewards/titles/rewardMessage', 'You obtained %dropQuantity %itemLabel', 1),
 	(307, 'client', 'clan/general/openInvites', '0', 3),

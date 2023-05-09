@@ -58,7 +58,7 @@ INSERT INTO `config` VALUES (NULL, 'client', 'ui/clan/x', '430', @float_id);
 INSERT INTO `config` VALUES (NULL, 'client', 'ui/clan/y', '100', @float_id);
 INSERT INTO `config` VALUES (NULL, 'client', 'ui/clan/sharedProperties', '{"hp":{"path":"stats/hp","pathMax":"statsBase/hp","label":"HP"},"mp":{"path":"stats/mp","pathMax":"statsBase/mp","label":"MP"}}', @json_id);
 INSERT INTO `config` VALUES (NULL, 'client', 'ui/controls/allowPrimaryTouch', '1', @boolean_id);
-INSERT INTO `config` VALUES (NULL, 'server', 'rewards/actions/interactionsDistance', '140', @float_id);
+INSERT INTO `config` VALUES (NULL, 'server', 'rewards/actions/interactionsDistance', '40', @float_id);
 INSERT INTO `config` VALUES (NULL, 'server', 'rewards/actions/disappearTime', '1800000', @float_id);
 INSERT INTO `config` VALUES (NULL, 'client', 'rewards/titles/rewardMessage', 'You obtained %dropQuantity %itemLabel', @string_id);
 INSERT INTO `config` VALUES (NULL, 'client', 'login/termsAndConditions/link', 'Accept our Terms and Conditions (click here).', @string_id);
