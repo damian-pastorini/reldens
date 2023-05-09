@@ -1,0 +1,19 @@
+<div class="clan-container clan-{{clanId}}">
+    <div class="clan-row">
+        <div class="title">{{clanPlayersTitle}}</div>
+        <div class="clan-players-boxes">
+            {{&clanPlayers}}
+        </div>
+    </div>
+    <div class="clan-row">
+        <div class="title">{{clanMembersTitle}}</div>
+        <div class="clan-members-boxes">
+            {{&clanMembers}}
+        </div>
+    </div>
+    <div class="clan-row clan-actions">
+        <div class="clan-disband">
+            <button type="button" class="clan-disband-action leave-{{clanId}}">{{leaveActionLabel}}</button>
+        </div>
+    </div>
+</div>

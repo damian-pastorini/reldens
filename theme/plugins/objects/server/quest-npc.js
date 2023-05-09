@@ -45,7 +45,13 @@ class QuestNpc extends NpcObject
             client.send('*', {act: GameConst.UI, id: this.id, content: contentMessage});
             return false;
         }
-        await playerSchema.inventory.manager.decreaseItemQty(treeItem.uid, 1);
+        let removeResult = await playerSchema.inventory.manager.decreaseItemQty(treeItem.uid, 1);
+        if(false === removeResult){
+            Logger.error(`Error while adding item "${selectedOption.key}"`);
+            let contentMessage = 'Sorry, I was not able to remove the required item, contact the administrator.';
+            client.send('*', {act: GameConst.UI, id: this.id, content: contentMessage});
+            return false;
+        }
         // add the new coin:
         coinsItem = playerSchema.inventory.manager.createItemInstance('coins');
         if(false === await playerSchema.inventory.manager.addItem(coinsItem)){
@@ -56,6 +62,7 @@ class QuestNpc extends NpcObject
         }
         let activationData = {act: GameConst.UI, id: this.id, content: 'All yours!'};
         client.send('*', activationData);
+        return true;
     }
 
 }

@@ -20,6 +20,7 @@ let appServer = new ServerManager({
     projectThemeName: 'custom-game-theme-test', // if the project theme is not specified then "default" will be used
     customPlugin: ServerPlugin
 });
+
 console.log('TEST - All these are TEST logs that you can remove from your index file.');
 
 // events debug:
@@ -29,7 +30,7 @@ appServer.events.on('reldens.serverConfigFeaturesReady', (props) => {
     console.log('TEST - Events test reldens.serverConfigFeaturesReady success!');
 });
 
-// blocked admin actions test:
+// blocked admin actions test (remove to enable the admin actions):
 if('1' === process.env.RELDENS_BLOCKED_ADMIN){
     appServer.events.on('reldens.beforeCreateAdminManager', (adminPack, dispatchedEvent) => {
         for(let adminResource of dispatchedEvent.serverManager.dataServer.resources){
@@ -50,9 +51,12 @@ if('1' === process.env.RELDENS_BLOCKED_ADMIN){
 
 // run the server!
 console.log('TEST - ServerPlugin starting...');
-appServer.start().then(() => {
-    console.log('TEST - SERVER UP AND RUNNING!');
-}).catch((err) => {
-    console.log('TEST - ServerPlugin error:', err);
-    process.exit();
+appServer.createServers().then(() => {
+    console.log('TEST - CREATED APP SERVER AND GAME SERVER INSTANCES!');
+    appServer.start().then(() => {
+        console.log('TEST - SERVER UP AND RUNNING!');
+    }).catch((err) => {
+        console.log('TEST - ServerPlugin error:', err);
+        process.exit();
+    });
 });

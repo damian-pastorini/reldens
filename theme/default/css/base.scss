@@ -294,7 +294,7 @@ form {
 .box-target {
     display: none;
     position: relative;
-    top: 150px;
+    top: 170px;
     left: 10px;
 
     #target-container {
@@ -404,6 +404,10 @@ form {
     position: absolute;
     right: -12px;
     top: -12px;
+    cursor: pointer;
+}
+
+.box-open {
     cursor: pointer;
 }
 
