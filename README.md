@@ -87,14 +87,22 @@ If you like to contribute in any way or donate to support the project please als
 <!-- prettier-ignore-start -->
 <!-- markdownlint-disable -->
 <table>
-  <tr>
-    <td align="center">
-        <a href="https://github.com/luciovicentini">
-            <img src="https://avatars.githubusercontent.com/u/16654212?v=4" width="100px;" alt="Lucio Vicentini"/><br/>
-            <sub><b>Lucio Vicentini</b></sub>
-        </a><br/>
-        <a href="#question-luciovicentini" title="Answering Questions">💬</a> <a href="https://github.com/colyseus/colyseus/commits?author=luciovicentini" title="Code">💻</a></td>
-  </tr>
+    <tr>
+        <td align="center">
+            <a href="https://github.com/luciovicentini">
+                <img src="https://avatars.githubusercontent.com/u/16654212?v=4" width="100px;" alt="Lucio Vicentini"/><br/>
+                <sub><b>Lucio Vicentini</b></sub>
+            </a><br/>
+            <a href="#" title="Answering Questions">💬</a> <a href="https://github.com/damian-pastorini/reldens/commits?author=luciovicentini" title="Code">💻</a>
+        </td>
+        <td align="center">
+            <a href="https://github.com/damian-pastorini">
+                <img src="https://avatars.githubusercontent.com/u/1211779?v=4" width="100px;" alt="Damian Pastorini"/><br/>
+                <sub><b>Damian Pastorini</b></sub>
+            </a><br/>
+            <a href="https://github.com/damian-pastorini/reldens/commits?author=damian-pastorini" title="Owner">💻</a>
+        </td>
+    </tr>
 </table>
 <!-- markdownlint-restore -->
 <!-- prettier-ignore-end -->
