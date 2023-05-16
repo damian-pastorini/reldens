@@ -86,7 +86,16 @@ If you like to contribute in any way or donate to support the project please als
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
 <!-- markdownlint-disable -->
-
+<table>
+  <tr>
+    <td align="center">
+        <a href="https://github.com/luciovicentini">
+            <img src="https://avatars.githubusercontent.com/u/16654212?v=4" width="100px;" alt="Lucio Vicentini"/><br/>
+            <sub><b>Lucio Vicentini</b></sub>
+        </a><br/>
+        <a href="#question-luciovicentini" title="Answering Questions">💬</a> <a href="https://github.com/colyseus/colyseus/commits?author=luciovicentini" title="Code">💻</a></td>
+  </tr>
+</table>
 <!-- markdownlint-restore -->
 <!-- prettier-ignore-end -->
 
