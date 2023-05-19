@@ -21,6 +21,7 @@ class ClientPlugin extends PluginInterface
 
     defineCustomClasses(props)
     {
+        // example on how to define a custom class with a plugin:
         let customClasses = props.gameManager.config.client.customClasses;
         if (!sc.hasOwn(customClasses, 'objects')) {
             customClasses.objects = {};
