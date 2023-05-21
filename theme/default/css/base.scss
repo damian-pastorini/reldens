@@ -8,7 +8,7 @@ body {
     font-family: $normalFont;
     margin: 0;
     padding: 0;
-    background-color: $cWhite;
+    background-color: transparent;
     user-select: none;
 }
 
@@ -40,6 +40,50 @@ body {
 
 .wrapper {
     overflow: hidden;
+}
+
+.game-engine-started {
+    overflow: hidden;
+
+    .footer {
+        display: none;
+    }
+
+    .content {
+        height: 94%;
+    }
+
+    &.full-screen-on {
+        .header {
+            display: none;
+        }
+
+        .content {
+            height: 100%;
+        }
+    }
+}
+
+.game-started {
+    .wrapper {
+        background: $cBlack;
+    }
+
+    .loading-container {
+        display: none;
+    }
+
+    .full-screen-btn {
+        display: block;
+    }
+}
+
+.game-error {
+    .wrapper {
+        .loading-container {
+            display: none;
+        }
+    }
 }
 
 .header,
@@ -135,7 +179,6 @@ body {
 }
 
 .content {
-    height: 86%;
     min-height: 300px;
     background-color: $cBlack;
 
@@ -209,9 +252,9 @@ input[type="submit"] {
 
 }
 
-#login_form,
-#register_form,
-#forgot_form {
+#login-form,
+#register-form,
+#forgot-form {
     max-width: 400px;
     display: block;
     margin: 0 auto;
@@ -382,7 +425,7 @@ form {
     left: 48px;
     padding: 10px;
     background-color: rgba(0, 0, 0, 0.5);
-    text-align: center;
+    text-align: left;
 }
 
 .ui-dialog-box {

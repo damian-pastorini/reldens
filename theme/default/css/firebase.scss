@@ -18,9 +18,13 @@
     width: 100%;
     margin: 0;
     padding: 0;
+
+    &.hidden {
+        display: none;
+    }
 }
 
-#firebase_login {
+#firebase-login {
     max-width: 400px;
     display: block;
     margin: 0 auto;

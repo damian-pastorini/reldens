@@ -36,7 +36,7 @@
                 <div class="col-2 col-left">
                     <div class="row row-1">
                         <!-- login form -->
-                        <form name="login_form" id="login_form" class="login_form" action="#" method="post">
+                        <form name="login-form" id="login-form" class="login-form" action="#" method="post">
                             <h3 class="form-title">Login</h3>
                             <div class="input-box">
                                 <label for="username">Username</label>
@@ -49,46 +49,46 @@
                             <div class="input-box">
                                 <input type="submit" value="Submit"/>
                             </div>
-                            <div class="loading-container" style="display:none;">
+                            <div class="loading-container hidden">
                                 <img src="./assets/web/loading.gif" alt="Loading..."/>
                             </div>
-                            <div class="input-box response-error" style="display:none;">Login error, please try again.</div>
+                            <div class="input-box response-error"></div>
                         </form>
                     </div>
-                    <div class="row row-2">
-                        <form name="firebase_login" id="firebase_login" class="firebase_login" action="#" method="post">
+                    <div class="row row-2 firebase-row-container hidden">
+                        <form name="firebase-login" id="firebase-login" class="firebase-login" action="#" method="post">
                             <h3 class="form-title">Firebase Login</h3>
                             <div class="input-box">
-                                <label for="firebase_username">Username</label>
-                                <input type="text" name="firebase_username" id="firebase_username" class="required" required/>
+                                <label for="firebase-username">Username</label>
+                                <input type="text" name="firebase-username" id="firebase-username" class="required" required/>
                             </div>
-                            <div class="input-box response-error" style="display:none;">Login error, please try again.</div>
+                            <div class="input-box response-error"></div>
                         </form>
                         <div class="firebase-container">
-                            <div id="firebaseui-auth-container" style="display:none;"></div>
+                            <div id="firebaseui-auth-container"></div>
                         </div>
                     </div>
                 </div>
                 <div class="col-2 col-right">
                     <div class="row row-1">
                         <!-- register form -->
-                        <form name="register_form" id="register_form" class="register_form" action="#" method="post">
+                        <form name="register-form" id="register-form" class="register-form" action="#" method="post">
                             <h3 class="form-title">Create Account</h3>
                             <div class="input-box">
-                                <label for="reg_email">Email</label>
-                                <input type="email" name="reg_email" id="reg_email" class="required email" required/>
+                                <label for="reg-email">Email</label>
+                                <input type="email" name="reg-email" id="reg-email" class="required email" required/>
                             </div>
                             <div class="input-box">
-                                <label for="reg_username">Username</label>
-                                <input type="text" name="reg_username" id="reg_username" class="required" required/>
+                                <label for="reg-username">Username</label>
+                                <input type="text" name="reg-username" id="reg-username" class="required" required/>
                             </div>
                             <div class="input-box">
-                                <label for="reg_password">Password</label>
-                                <input type="password" name="reg_password" id="reg_password" class="required" required/>
+                                <label for="reg-password">Password</label>
+                                <input type="password" name="reg-password" id="reg-password" class="required" required/>
                             </div>
                             <div class="input-box">
-                                <label for="reg_re_password">Re-type your password</label>
-                                <input type="password" name="reg_re_password" id="reg_re_password" class="required" required/>
+                                <label for="reg-re-password">Re-type your password</label>
+                                <input type="password" name="reg-re-password" id="reg-re-password" class="required" required/>
                             </div>
                             <div class="input-box hidden terms-and-conditions-link-container">
                                 <a class="terms-and-conditions-link">Accept our Terms and Conditions (click here).</a>
@@ -96,31 +96,27 @@
                             <div class="input-box">
                                 <input type="submit" value="Register"/>
                             </div>
-                            <div class="loading-container" style="display:none;">
+                            <div class="loading-container hidden">
                                 <img src="./assets/web/loading.gif" alt="Loading..."/>
                             </div>
-                            <div class="input-box response-error" style="display:none;">
-                                Registration error, please try with a different email, user or try again later.
-                            </div>
+                            <div class="input-box response-error"></div>
                         </form>
                     </div>
                     <div class="row row-2 forgot-password-container hidden">
                         <!-- forgot password -->
-                        <form name="forgot_form" id="forgot_form" class="forgot_form" action="#" method="post">
+                        <form name="forgot-form" id="forgot-form" class="forgot-form" action="#" method="post">
                             <h3 class="form-title">Forgot password</h3>
                             <div class="input-box">
-                                <label for="forgot_email">Email</label>
-                                <input type="email" name="forgot_email" id="forgot_email" class="required email" required/>
+                                <label for="forgot-email">Email</label>
+                                <input type="email" name="forgot-email" id="forgot-email" class="required email" required/>
                             </div>
                             <div class="input-box">
                                 <input type="submit" value="Request"/>
                             </div>
-                            <div class="loading-container" style="display:none;">
+                            <div class="loading-container hidden">
                                 <img src="./assets/web/loading.gif" alt="Loading..."/>
                             </div>
-                            <div class="input-box response-error" style="display:none;">
-                                Request error, please contact the administrator or again later.
-                            </div>
+                            <div class="input-box response-error"></div>
                         </form>
                     </div>
                 </div>
@@ -162,30 +158,32 @@
             </div>
             <div id="player-selection" class="hidden">
                 <div class="selection-forms-container">
-                    <form name="player_selector_form" id="player_selector_form" class="player_selector_form hidden" action="#" method="post">
-                        <h3 class="form-title">Select Player</h3>
+                    <form name="player-selector-form" id="player-selector-form" class="player-selector-form hidden" action="#" method="post">
+                        <h3 class="form-title">
+                            <label for="player-select-element">Select Player</label>
+                        </h3>
                         <div class="input-box">
                             <select class="input-box select-element" id="player-select-element" name="player-select-element"></select>
                         </div>
-                        <div class="player_selection_additional_info"></div>
+                        <div class="player-selection-additional-info"></div>
                         <div class="input-box">
                             <input type="submit" value="Start" class="center-submit"/>
                         </div>
                     </form>
-                    <form name="player_create_form" id="player_create_form" class="player_create_form hidden" action="#" method="post">
+                    <form name="player-create-form" id="player-create-form" class="player-create-form hidden" action="#" method="post">
                         <h3 class="form-title">Create Player</h3>
                         <div class="input-box">
-                            <label for="new_player_name">Player Name</label>
-                            <input type="text" name="new_player_name" id="new_player_name" class="required" required/>
+                            <label for="new-player-name">Player Name</label>
+                            <input type="text" name="new-player-name" id="new-player-name" class="required" required/>
                         </div>
-                        <div class="player_creation_additional_info"></div>
+                        <div class="player-creation-additional-info"></div>
                         <div class="input-box">
                             <input type="submit" value="Create & Start" class="center-submit"/>
                         </div>
                         <div class="loading-container hidden">
                             <img src="./assets/web/loading.gif" alt="Loading..."/>
                         </div>
-                        <div class="input-box response-error hidden">There was an error.</div>
+                        <div class="input-box response-error"></div>
                     </form>
                 </div>
             </div>
