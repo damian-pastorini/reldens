@@ -30,6 +30,17 @@
         overflow-x: hidden;
         overflow-y: auto;
 
+        .settings-container {
+            display: block;
+            float: left;
+            width: 100%;
+            margin-top: 20px;
+
+            &:first-child {
+                margin-top: 0;
+            }
+        }
+
         .settings-row {
             display: block;
             width: 100%;
