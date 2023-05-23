@@ -1,7 +1,5 @@
 -- --------------------------------------------------------
--- Host:                         127.0.0.1
 -- Server version:               8.0.31 - MySQL Community Server - GPL
--- Server OS:                    Win64
 -- --------------------------------------------------------
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
@@ -121,7 +119,7 @@ CREATE TABLE IF NOT EXISTS `audio_player_config` (
   KEY `FK_audio_player_config_audio_categories` (`category_id`),
   CONSTRAINT `FK_audio_player_config_audio_categories` FOREIGN KEY (`category_id`) REFERENCES `audio_categories` (`id`) ON UPDATE CASCADE,
   CONSTRAINT `FK_audio_player_config_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping structure for table chat
 CREATE TABLE IF NOT EXISTS `chat` (
@@ -130,16 +128,42 @@ CREATE TABLE IF NOT EXISTS `chat` (
   `room_id` int unsigned DEFAULT NULL,
   `message` varchar(140) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `private_player_id` int unsigned DEFAULT NULL,
-  `message_type` varchar(10) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+  `message_type` int unsigned DEFAULT NULL,
   `message_time` timestamp NOT NULL,
   PRIMARY KEY (`id`),
   KEY `user_id` (`player_id`),
   KEY `scene_id` (`room_id`),
   KEY `private_user_id` (`private_player_id`),
+  KEY `FK_chat_chat_message_types` (`message_type`),
   CONSTRAINT `FK__players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`),
   CONSTRAINT `FK__players_2` FOREIGN KEY (`private_player_id`) REFERENCES `players` (`id`),
-  CONSTRAINT `FK__scenes` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=112 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+  CONSTRAINT `FK__scenes` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`),
+  CONSTRAINT `FK_chat_chat_message_types` FOREIGN KEY (`message_type`) REFERENCES `chat_message_types` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- Dumping structure for table chat_message_types
+CREATE TABLE IF NOT EXISTS `chat_message_types` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `key` varchar(50) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `show_tab` int unsigned NOT NULL DEFAULT (0),
+  `also_show_in_type` int unsigned DEFAULT NULL,
+  PRIMARY KEY (`id`) USING BTREE,
+  KEY `FK_chat_message_types_chat_message_types` (`also_show_in_type`),
+  CONSTRAINT `FK_chat_message_types_chat_message_types` FOREIGN KEY (`also_show_in_type`) REFERENCES `chat_message_types` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- Dumping data for table chat_message_types: ~10 rows (approximately)
+INSERT INTO `chat_message_types` (`id`, `key`, `show_tab`, `also_show_in_type`) VALUES
+	(1, 'message', 1, NULL),
+	(2, 'joined', 0, 1),
+	(3, 'system', 0, 1),
+	(4, 'private', 1, 1),
+	(5, 'damage', 0, 1),
+	(6, 'reward', 0, 1),
+	(7, 'skill', 0, 1),
+	(8, 'teams', 1, 1),
+	(9, 'global', 1, 1),
+	(10, 'error', 0, 1);
 
 -- Dumping structure for table clan
 CREATE TABLE IF NOT EXISTS `clan` (
@@ -154,7 +178,7 @@ CREATE TABLE IF NOT EXISTS `clan` (
   KEY `FK_clan_clan_levels` (`level`),
   CONSTRAINT `FK_clan_clan_levels` FOREIGN KEY (`level`) REFERENCES `clan_levels` (`key`),
   CONSTRAINT `FK_clan_players` FOREIGN KEY (`owner_id`) REFERENCES `players` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=81 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping structure for table clan_levels
 CREATE TABLE IF NOT EXISTS `clan_levels` (
@@ -166,7 +190,7 @@ CREATE TABLE IF NOT EXISTS `clan_levels` (
   UNIQUE KEY `key` (`key`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table clan_levels: ~1 rows (approximately)
+-- Dumping data for table clan_levels: ~0 rows (approximately)
 INSERT INTO `clan_levels` (`id`, `key`, `label`, `required_experience`) VALUES
 	(1, 1, '1', 0);
 
@@ -202,7 +226,7 @@ CREATE TABLE IF NOT EXISTS `clan_members` (
   KEY `FK__players` (`player_id`),
   CONSTRAINT `FK_clan_members_clan` FOREIGN KEY (`clan_id`) REFERENCES `clan` (`id`),
   CONSTRAINT `FK_clan_members_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=97 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping structure for table config
 CREATE TABLE IF NOT EXISTS `config` (
@@ -215,9 +239,9 @@ CREATE TABLE IF NOT EXISTS `config` (
   UNIQUE KEY `scope_path` (`scope`,`path`),
   KEY `FK_config_config_types` (`type`),
   CONSTRAINT `FK_config_config_types` FOREIGN KEY (`type`) REFERENCES `config_types` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=315 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=316 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table config: ~282 rows (approximately)
+-- Dumping data for table config: ~283 rows (approximately)
 INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(1, 'server', 'rooms/validation/valid', 'room_game,chat_global', 1),
 	(2, 'server', 'players/initialState/room_id', '4', 2),
@@ -493,14 +517,15 @@ INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(300, 'client', 'clan/labels/requestFromTitle', 'Clan request from:', 1),
 	(302, 'client', 'clan/labels/leaderNameTitle', 'Clan leader: %leaderName', 1),
 	(303, 'client', 'clan/labels/propertyMaxValue', '/ %propertyMaxValue', 1),
-	(304, 'server', 'rewards/actions/interactionsDistance', '40', 2),
+	(304, 'server', 'rewards/actions/interactionsDistance', '140', 2),
 	(305, 'server', 'rewards/actions/disappearTime', '1800000', 2),
 	(306, 'client', 'rewards/titles/rewardMessage', 'You obtained %dropQuantity %itemLabel', 1),
 	(307, 'client', 'clan/general/openInvites', '0', 3),
 	(311, 'client', 'login/termsAndConditions/link', 'Accept our Terms and Conditions (click here).', 1),
 	(312, 'client', 'login/termsAndConditions/heading', 'Terms and conditions', 1),
 	(313, 'client', 'login/termsAndConditions/body', 'This is our test terms and conditions content.', 1),
-	(314, 'client', 'login/termsAndConditions/checkboxLabel', 'Accept terms and conditions', 1);
+	(314, 'client', 'login/termsAndConditions/checkboxLabel', 'Accept terms and conditions', 1),
+	(315, 'client', 'ui/chat/showTabs', '1', 3);
 
 -- Dumping structure for table config_types
 CREATE TABLE IF NOT EXISTS `config_types` (
@@ -523,10 +548,11 @@ CREATE TABLE IF NOT EXISTS `features` (
   `code` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `title` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `is_enabled` tinyint unsigned NOT NULL DEFAULT '0',
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `code` (`code`)
+) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table features: ~13 rows (approximately)
+-- Dumping data for table features: ~14 rows (approximately)
 INSERT INTO `features` (`id`, `code`, `title`, `is_enabled`) VALUES
 	(1, 'chat', 'Chat', 1),
 	(2, 'objects', 'Objects', 1),
@@ -540,7 +566,8 @@ INSERT INTO `features` (`id`, `code`, `title`, `is_enabled`) VALUES
 	(10, 'admin', 'Admin', 1),
 	(11, 'prediction', 'Prediction', 0),
 	(12, 'teams', 'Teams', 1),
-	(13, 'rewards', 'Rewards', 1);
+	(13, 'rewards', 'Rewards', 1),
+	(14, 'snippets', 'Snippets', 1);
 
 -- Dumping structure for table items_group
 CREATE TABLE IF NOT EXISTS `items_group` (
@@ -594,17 +621,19 @@ CREATE TABLE IF NOT EXISTS `items_item` (
   UNIQUE KEY `id` (`id`),
   UNIQUE KEY `key` (`key`),
   KEY `group_id` (`group_id`),
-  CONSTRAINT `FK_items_item_items_group` FOREIGN KEY (`group_id`) REFERENCES `items_group` (`id`) ON UPDATE CASCADE
+  KEY `type` (`type`),
+  CONSTRAINT `FK_items_item_items_group` FOREIGN KEY (`group_id`) REFERENCES `items_group` (`id`) ON UPDATE CASCADE,
+  CONSTRAINT `FK_items_item_items_types` FOREIGN KEY (`type`) REFERENCES `items_types` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='List of all available items in the system.';
 
 -- Dumping data for table items_item: ~6 rows (approximately)
 INSERT INTO `items_item` (`id`, `key`, `type`, `group_id`, `label`, `description`, `qty_limit`, `uses_limit`, `useTimeOut`, `execTimeOut`, `customData`) VALUES
 	(1, 'coins', 3, NULL, 'Coins', NULL, 0, 1, NULL, NULL, NULL),
-	(2, 'branch', 0, NULL, 'Tree branch', 'An useless tree branch (for now)', 0, 1, NULL, NULL, NULL),
-	(3, 'heal_potion_20', 5, NULL, 'Heal Potion', 'A heal potion that will restore 20 HP.', 0, 1, NULL, NULL, '{"removeAfterUse":true,"animationData":{"frameWidth":64,"frameHeight":64,"start":6,"end":11,"repeat":0,"hide":true,"destroyOnComplete":true,"usePlayerPosition":true,"closeInventoryOnUse":true,"followPlayer":true,"startsOnTarget":true}}'),
+	(2, 'branch', 10, NULL, 'Tree branch', 'An useless tree branch (for now)', 0, 1, NULL, NULL, NULL),
+	(3, 'heal_potion_20', 5, NULL, 'Heal Potion', 'A heal potion that will restore 20 HP.', 0, 1, NULL, NULL, '{"animationData":{"frameWidth":64,"frameHeight":64,"start":6,"end":11,"repeat":0,"hide":true,"usePlayerPosition":true,"closeInventoryOnUse":true,"followPlayer":true,"startsOnTarget":true},"removeAfterUse":true}'),
 	(4, 'axe', 1, 1, 'Axe', 'A short distance but powerful weapon.', 0, 0, NULL, NULL, '{"animationData":{"frameWidth":64,"frameHeight":64,"start":6,"end":11,"repeat":0,"hide":true,"destroyOnComplete":true,"usePlayerPosition":true,"closeInventoryOnUse":true,"followPlayer":true,"startsOnTarget":true}}'),
 	(5, 'spear', 1, 1, 'Spear', 'A short distance but powerful weapon.', 0, 0, NULL, NULL, '{"animationData":{"frameWidth":64,"frameHeight":64,"start":6,"end":11,"repeat":0,"hide":true,"destroyOnComplete":true,"usePlayerPosition":true,"closeInventoryOnUse":true,"followPlayer":true,"startsOnTarget":true}}'),
-	(6, 'magic_potion_20', 5, NULL, 'Magic Potion', 'A magic potion that will restore 20 MP.', 0, 1, NULL, NULL, '{"removeAfterUse":true,"animationData":{"frameWidth":64,"frameHeight":64,"start":6,"end":11,"repeat":0,"hide":true,"destroyOnComplete":true,"usePlayerPosition":true,"closeInventoryOnUse":true,"followPlayer":true,"startsOnTarget":true}}');
+	(6, 'magic_potion_20', 5, NULL, 'Magic Potion', 'A magic potion that will restore 20 MP.', 0, 1, NULL, NULL, '{"animationData":{"frameWidth":64,"frameHeight":64,"start":6,"end":11,"repeat":0,"hide":true,"usePlayerPosition":true,"closeInventoryOnUse":true,"followPlayer":true,"startsOnTarget":true},"removeAfterUse":true}');
 
 -- Dumping structure for table items_item_modifiers
 CREATE TABLE IF NOT EXISTS `items_item_modifiers` (
@@ -627,12 +656,44 @@ INSERT INTO `items_item_modifiers` (`id`, `item_id`, `key`, `property_key`, `ope
 	(3, 5, 'atk', 'stats/atk', 5, '3', NULL),
 	(4, 6, 'magic_potion_20', 'stats/mp', 1, '20', 'statsBase/mp');
 
+-- Dumping structure for table items_types
+CREATE TABLE IF NOT EXISTS `items_types` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `key` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `key` (`key`)
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Dumping data for table items_types: ~6 rows (approximately)
+INSERT INTO `items_types` (`id`, `key`) VALUES
+	(10, 'base'),
+	(1, 'equipment'),
+	(3, 'single'),
+	(4, 'single_equipment'),
+	(5, 'single_usable'),
+	(2, 'usable');
+
+-- Dumping structure for table locale
+CREATE TABLE IF NOT EXISTS `locale` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `locale` varchar(5) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `language_code` varchar(2) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `country_code` varchar(2) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `enabled` int unsigned NOT NULL DEFAULT '1',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Dumping data for table locale: ~1 rows (approximately)
+INSERT INTO `locale` (`id`, `locale`, `language_code`, `country_code`, `enabled`) VALUES
+	(1, 'en_US', 'en', 'US', 1);
+
 -- Dumping structure for table objects
 CREATE TABLE IF NOT EXISTS `objects` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `room_id` int unsigned NOT NULL,
   `layer_name` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `tile_index` int unsigned DEFAULT NULL,
+  `class_type` int unsigned DEFAULT NULL,
   `object_class_key` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `client_key` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `title` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
@@ -644,20 +705,22 @@ CREATE TABLE IF NOT EXISTS `objects` (
   UNIQUE KEY `room_id_layer_name_tile_index` (`room_id`,`layer_name`,`tile_index`),
   KEY `room_id` (`room_id`),
   KEY `object_class_key` (`object_class_key`),
+  KEY `class_type` (`class_type`),
+  CONSTRAINT `FK_objects_objects_types` FOREIGN KEY (`class_type`) REFERENCES `objects_types` (`id`) ON UPDATE CASCADE,
   CONSTRAINT `FK_objects_rooms` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping data for table objects: ~9 rows (approximately)
-INSERT INTO `objects` (`id`, `room_id`, `layer_name`, `tile_index`, `object_class_key`, `client_key`, `title`, `private_params`, `client_params`, `enabled`) VALUES
-	(1, 4, 'ground-collisions', 444, 'door_1', 'door_house_1', '', NULL, NULL, 1),
-	(4, 4, 'ground-collisions', 951, 'door_2', 'door_house_2', '', NULL, NULL, 1),
-	(5, 4, 'house-collisions-over-player', 535, 'npc_1', 'people_town_1', 'Alfred', '{"runOnAction":true,"playerVisible":true}', '{"content":"Hello! My name is Alfred. Go to the forest and kill some monsters! Now... leave me alone!"}', 1),
-	(6, 5, 'respawn-area-monsters-lvl-1-2', NULL, 'enemy_1', 'enemy_forest_1', 'Tree', '{"isAggressive":true}', '{"autoStart":true}', 1),
-	(7, 5, 'respawn-area-monsters-lvl-1-2', NULL, 'enemy_2', 'enemy_forest_2', 'Tree Punch', NULL, '{"autoStart":true}', 1),
-	(8, 4, 'house-collisions-over-player', 538, 'npc_2', 'healer_1', 'Mamon', '{"runOnAction":true,"playerVisible":true,"sendInvalidOptionMessage":true}', '{"content":"Hello traveler! I can restore your health, would you like me to do it?","options":{"1":{"label":"Heal HP","value":1},"2":{"label":"Nothing...","value":2},"3":{"label":"Need some MP","value":3}},"ui":true}', 1),
-	(10, 4, 'house-collisions-over-player', 560, 'npc_3', 'merchant_1', 'Gimly', '{"runOnAction":true,"playerVisible":true,"sendInvalidOptionMessage":true}', '{"content":"Hi there! What would you like to do?","options":{"buy":{"label":"Buy","value":"buy"},"sell":{"label":"Sell","value":"sell"}}}', 1),
-	(12, 4, 'house-collisions-over-player', 562, 'npc_4', 'weapons_master_1', 'Barrik', '{"runOnAction":true,"playerVisible":true,"sendInvalidOptionMessage":true}', '{"content":"Hi, I am the weapons master, choose your weapon and go kill some monsters!","options":{"1":{"key":"axe","label":"Axe","value":1,"icon":"axe"},"2":{"key":"spear","label":"Spear","value":2,"icon":"spear"}},"ui":true}', 1),
-	(13, 5, 'forest-collisions', 258, 'npc_5', 'quest_npc_1', 'Miles', '{"runOnAction":true,"playerVisible":true,"sendInvalidOptionMessage":true}', '{"content":"Hi there! Do you want a coin? I can give you one if you give me a tree branch.","options":{"1":{"label":"Sure!","value":1},"2":{"label":"No, thank you.","value":2}},"ui":true}', 1);
+INSERT INTO `objects` (`id`, `room_id`, `layer_name`, `tile_index`, `class_type`, `object_class_key`, `client_key`, `title`, `private_params`, `client_params`, `enabled`) VALUES
+	(1, 4, 'ground-collisions', 444, 2, 'door_1', 'door_house_1', '', '{"runOnHit":true,"roomVisible":true,"yFix":6}', '{"positionFix":{"y":-18},"frameStart":0,"frameEnd":3,"repeat":0,"hideOnComplete":false,"autoStart":false,"restartTime":2000}', 1),
+	(4, 4, 'ground-collisions', 951, 2, 'door_2', 'door_house_2', '', '{"runOnHit":true,"roomVisible":true,"yFix":6}', '{"positionFix":{"y":-18},"frameStart":0,"frameEnd":3,"repeat":0,"hideOnComplete":false,"autoStart":false,"restartTime":2000}', 1),
+	(5, 4, 'house-collisions-over-player', 535, 3, 'npc_1', 'people_town_1', 'Alfred', '{"runOnAction":true,"playerVisible":true}', '{"content":"Hello! My name is Alfred. Go to the forest and kill some monsters! Now... leave me alone!"}', 1),
+	(6, 5, 'respawn-area-monsters-lvl-1-2', NULL, 7, 'enemy_1', 'enemy_forest_1', 'Tree', '{"shouldRespawn":true,"childObjectType":4,"isAggressive":true}', '{"autoStart":true}', 1),
+	(7, 5, 'respawn-area-monsters-lvl-1-2', NULL, 7, 'enemy_2', 'enemy_forest_2', 'Tree Punch', '{"shouldRespawn":true,"childObjectType":4}', '{"autoStart":true}', 1),
+	(8, 4, 'house-collisions-over-player', 538, 3, 'npc_2', 'healer_1', 'Mamon', '{"runOnAction":true,"playerVisible":true,"sendInvalidOptionMessage":true}', '{"content":"Hello traveler! I can restore your health, would you like me to do it?","options":{"1":{"label":"Heal HP","value":1},"2":{"label":"Nothing...","value":2},"3":{"label":"Need some MP","value":3}},"ui":true}', 1),
+	(10, 4, 'house-collisions-over-player', 560, 5, 'npc_3', 'merchant_1', 'Gimly', '{"runOnAction":true,"playerVisible":true,"sendInvalidOptionMessage":true}', '{"content":"Hi there! What would you like to do?","options":{"buy":{"label":"Buy","value":"buy"},"sell":{"label":"Sell","value":"sell"}}}', 1),
+	(12, 4, 'house-collisions-over-player', 562, 3, 'npc_4', 'weapons_master_1', 'Barrik', '{"runOnAction":true,"playerVisible":true,"sendInvalidOptionMessage":true}', '{"content":"Hi, I am the weapons master, choose your weapon and go kill some monsters!","options":{"1":{"key":"axe","label":"Axe","value":1,"icon":"axe"},"2":{"key":"spear","label":"Spear","value":2,"icon":"spear"}},"ui":true}', 1),
+	(13, 5, 'forest-collisions', 258, 3, 'npc_5', 'quest_npc_1', 'Miles', '{"runOnAction":true,"playerVisible":true,"sendInvalidOptionMessage":true}', '{"content":"Hi there! Do you want a coin? I can give you one if you give me a tree branch.","options":{"1":{"label":"Sure!","value":1},"2":{"label":"No, thank you.","value":2}},"ui":true}', 1);
 
 -- Dumping structure for table objects_animations
 CREATE TABLE IF NOT EXISTS `objects_animations` (
@@ -808,7 +871,7 @@ CREATE TABLE IF NOT EXISTS `objects_skills` (
   CONSTRAINT `FK_objects_skills_target_options` FOREIGN KEY (`target`) REFERENCES `target_options` (`target_key`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table objects_skills: ~1 rows (approximately)
+-- Dumping data for table objects_skills: ~0 rows (approximately)
 INSERT INTO `objects_skills` (`id`, `object_id`, `skill_id`, `target`) VALUES
 	(1, 6, 1, 1);
 
@@ -850,6 +913,24 @@ INSERT INTO `objects_stats` (`id`, `object_id`, `stat_id`, `base_value`, `value`
 	(24, 6, 9, 50, 50),
 	(25, 6, 10, 50, 50);
 
+-- Dumping structure for table objects_types
+CREATE TABLE IF NOT EXISTS `objects_types` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `key` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `key` (`key`)
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Dumping data for table objects_types: ~7 rows (approximately)
+INSERT INTO `objects_types` (`id`, `key`) VALUES
+	(2, 'animation'),
+	(1, 'base'),
+	(6, 'drop'),
+	(4, 'enemy'),
+	(7, 'multiple'),
+	(3, 'npc'),
+	(5, 'trader');
+
 -- Dumping structure for table operation_types
 CREATE TABLE IF NOT EXISTS `operation_types` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
@@ -881,7 +962,7 @@ CREATE TABLE IF NOT EXISTS `players` (
   UNIQUE KEY `name` (`name`),
   KEY `FK_players_users` (`user_id`),
   CONSTRAINT `FK_players_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping data for table players: ~2 rows (approximately)
 INSERT INTO `players` (`id`, `user_id`, `name`, `created_at`) VALUES
@@ -900,11 +981,11 @@ CREATE TABLE IF NOT EXISTS `players_state` (
   KEY `FK_player_state_player_stats` (`player_id`),
   CONSTRAINT `FK_player_state_player_stats` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON UPDATE CASCADE,
   CONSTRAINT `FK_player_state_rooms` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=22 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table players_state: ~2 rows (approximately)
+-- Dumping data for table players_state: ~1 rows (approximately)
 INSERT INTO `players_state` (`id`, `player_id`, `room_id`, `x`, `y`, `dir`) VALUES
-	(1, 1, 5, 947, 717, 'left');
+	(1, 1, 5, 753, 567, 'down');
 
 -- Dumping structure for table players_stats
 CREATE TABLE IF NOT EXISTS `players_stats` (
@@ -919,13 +1000,13 @@ CREATE TABLE IF NOT EXISTS `players_stats` (
   KEY `user_id` (`player_id`) USING BTREE,
   CONSTRAINT `FK_player_current_stats_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT `FK_players_current_stats_players_stats` FOREIGN KEY (`stat_id`) REFERENCES `stats` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=211 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping data for table players_stats: ~20 rows (approximately)
 INSERT INTO `players_stats` (`id`, `player_id`, `stat_id`, `base_value`, `value`) VALUES
-	(1, 1, 1, 280, 115),
-	(2, 1, 2, 280, 219),
-	(3, 1, 3, 280, 385),
+	(1, 1, 1, 280, 194),
+	(2, 1, 2, 280, 120),
+	(3, 1, 3, 280, 400),
 	(4, 1, 4, 280, 280),
 	(5, 1, 5, 100, 100),
 	(6, 1, 6, 100, 100),
@@ -1398,9 +1479,9 @@ CREATE TABLE IF NOT EXISTS `skills_owners_class_path` (
   PRIMARY KEY (`id`),
   KEY `level_set_id` (`class_path_id`) USING BTREE,
   CONSTRAINT `FK_skills_owners_class_path_skills_class_path` FOREIGN KEY (`class_path_id`) REFERENCES `skills_class_path` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=22 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table skills_owners_class_path: ~2 rows (approximately)
+-- Dumping data for table skills_owners_class_path: ~1 rows (approximately)
 INSERT INTO `skills_owners_class_path` (`id`, `class_path_id`, `owner_id`, `currentLevel`, `currentExp`) VALUES
 	(1, 1, 1, 10, 9080);
 
@@ -1604,6 +1685,17 @@ CREATE TABLE IF NOT EXISTS `skills_skill_target_effects_conditions` (
   CONSTRAINT `FK_skills_skill_target_effects_conditions_skill_target_effects` FOREIGN KEY (`skill_target_effect_id`) REFERENCES `skills_skill_target_effects` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf32 COLLATE=utf32_unicode_ci;
 
+-- Dumping structure for table snippets
+CREATE TABLE IF NOT EXISTS `snippets` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `locale_id` int unsigned NOT NULL,
+  `key` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `value` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `locale_id` (`locale_id`),
+  CONSTRAINT `FK_snippets_locale` FOREIGN KEY (`locale_id`) REFERENCES `locale` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Dumping structure for table stats
 CREATE TABLE IF NOT EXISTS `stats` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
@@ -1657,11 +1749,28 @@ CREATE TABLE IF NOT EXISTS `users` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `email` (`email`),
   UNIQUE KEY `username` (`username`)
-) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table users: ~2 rows (approximately)
+-- Dumping data for table users: ~1 rows (approximately)
 INSERT INTO `users` (`id`, `email`, `username`, `password`, `role_id`, `status`, `created_at`, `updated_at`, `played_time`) VALUES
-	(1, 'dap@dap.com', 'dap', '$2b$10$RDnURyFoXo7.zcFKVhNcuezJsXXYNslhPBNPzi.crbikFhG8Pnude', 1, '1', '2022-03-17 18:57:44', '2023-05-07 13:28:48', 794406);
+	(1, 'dap@dap.com', 'dap', '$2b$10$RDnURyFoXo7.zcFKVhNcuezJsXXYNslhPBNPzi.crbikFhG8Pnude', 1, '1', '2022-03-17 18:57:44', '2023-07-20 16:13:55', 838993);
+
+-- Dumping structure for table users_locale
+CREATE TABLE IF NOT EXISTS `users_locale` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `locale_id` int unsigned DEFAULT NULL,
+  `user_id` int unsigned DEFAULT NULL,
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE KEY `locale_id_player_id` (`locale_id`,`user_id`) USING BTREE,
+  KEY `locale_id` (`locale_id`) USING BTREE,
+  KEY `player_id` (`user_id`) USING BTREE,
+  CONSTRAINT `FK_players_locale_locale` FOREIGN KEY (`locale_id`) REFERENCES `locale` (`id`),
+  CONSTRAINT `FK_users_locale_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Dumping data for table users_locale: ~1 rows (approximately)
+INSERT INTO `users_locale` (`id`, `locale_id`, `user_id`) VALUES
+	(1, 1, 1);
 
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;

@@ -178,7 +178,7 @@ CREATE TABLE `rewards_modifiers` (
   `maxProperty` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `modifier_id` (`key`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB COLLATE='utf8_unicode_ci';
 
 CREATE TABLE `rewards` (
     `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
