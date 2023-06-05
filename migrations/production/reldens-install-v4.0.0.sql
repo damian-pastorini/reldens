@@ -119,7 +119,7 @@ CREATE TABLE IF NOT EXISTS `audio_player_config` (
   KEY `FK_audio_player_config_audio_categories` (`category_id`),
   CONSTRAINT `FK_audio_player_config_audio_categories` FOREIGN KEY (`category_id`) REFERENCES `audio_categories` (`id`) ON UPDATE CASCADE,
   CONSTRAINT `FK_audio_player_config_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping structure for table chat
 CREATE TABLE IF NOT EXISTS `chat` (
@@ -137,7 +137,7 @@ CREATE TABLE IF NOT EXISTS `chat` (
   CONSTRAINT `FK__players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`),
   CONSTRAINT `FK__players_2` FOREIGN KEY (`private_player_id`) REFERENCES `players` (`id`),
   CONSTRAINT `FK__scenes` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping structure for table clan
 CREATE TABLE IF NOT EXISTS `clan` (
@@ -574,7 +574,7 @@ CREATE TABLE IF NOT EXISTS `items_inventory` (
   PRIMARY KEY (`id`),
   KEY `FK_items_inventory_items_item` (`item_id`),
   CONSTRAINT `FK_items_inventory_items_item` FOREIGN KEY (`item_id`) REFERENCES `items_item` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Inventory table is to save the items for each owner.';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Inventory table is to save the items for each owner.';
 
 -- Dumping structure for table items_item
 CREATE TABLE IF NOT EXISTS `items_item` (
@@ -896,22 +896,9 @@ CREATE TABLE IF NOT EXISTS `players` (
   CONSTRAINT `FK_players_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table players: ~7 rows (approximately)
+-- Dumping data for table players: ~1 rows (approximately)
 INSERT INTO `players` (`id`, `user_id`, `name`, `created_at`) VALUES
 	(1, 1, 'Darth', '2022-03-17 19:57:50');
-
--- Dumping structure for table players_locale
-CREATE TABLE IF NOT EXISTS `players_locale` (
-  `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `locale_id` int unsigned DEFAULT NULL,
-  `player_id` int unsigned DEFAULT NULL,
-  PRIMARY KEY (`id`) USING BTREE,
-  UNIQUE KEY `locale_id_player_id` (`locale_id`,`player_id`) USING BTREE,
-  KEY `locale_id` (`locale_id`) USING BTREE,
-  KEY `player_id` (`player_id`) USING BTREE,
-  CONSTRAINT `FK_players_locale_locale` FOREIGN KEY (`locale_id`) REFERENCES `locale` (`id`),
-  CONSTRAINT `FK_players_locale_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Dumping structure for table players_state
 CREATE TABLE IF NOT EXISTS `players_state` (
@@ -928,9 +915,9 @@ CREATE TABLE IF NOT EXISTS `players_state` (
   CONSTRAINT `FK_player_state_rooms` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table players_state: ~7 rows (approximately)
+-- Dumping data for table players_state: ~1 rows (approximately)
 INSERT INTO `players_state` (`id`, `player_id`, `room_id`, `x`, `y`, `dir`) VALUES
-	(1, 1, 5, 1102, 712, 'down');
+	(1, 1, 5, 847, 696, 'down');
 
 -- Dumping structure for table players_stats
 CREATE TABLE IF NOT EXISTS `players_stats` (
@@ -949,8 +936,8 @@ CREATE TABLE IF NOT EXISTS `players_stats` (
 
 -- Dumping data for table players_stats: ~10 rows (approximately)
 INSERT INTO `players_stats` (`id`, `player_id`, `stat_id`, `base_value`, `value`) VALUES
-	(1, 1, 1, 280, 87),
-	(2, 1, 2, 280, 124),
+	(1, 1, 1, 280, 97),
+	(2, 1, 2, 280, 122),
 	(3, 1, 3, 280, 385),
 	(4, 1, 4, 280, 280),
 	(5, 1, 5, 100, 100),
@@ -1426,7 +1413,7 @@ CREATE TABLE IF NOT EXISTS `skills_owners_class_path` (
   CONSTRAINT `FK_skills_owners_class_path_skills_class_path` FOREIGN KEY (`class_path_id`) REFERENCES `skills_class_path` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table skills_owners_class_path: ~7 rows (approximately)
+-- Dumping data for table skills_owners_class_path: ~1 rows (approximately)
 INSERT INTO `skills_owners_class_path` (`id`, `class_path_id`, `owner_id`, `currentLevel`, `currentExp`) VALUES
 	(1, 1, 1, 10, 9080);
 
@@ -1698,7 +1685,24 @@ CREATE TABLE IF NOT EXISTS `users` (
 
 -- Dumping data for table users: ~1 rows (approximately)
 INSERT INTO `users` (`id`, `email`, `username`, `password`, `role_id`, `status`, `created_at`, `updated_at`, `played_time`) VALUES
-	(1, 'dap@dap.com', 'dap', '$2b$10$RDnURyFoXo7.zcFKVhNcuezJsXXYNslhPBNPzi.crbikFhG8Pnude', 1, '1', '2022-03-17 18:57:44', '2023-05-31 16:43:59', 792826);
+	(1, 'dap@dap.com', 'dap', '$2b$10$RDnURyFoXo7.zcFKVhNcuezJsXXYNslhPBNPzi.crbikFhG8Pnude', 1, '1', '2022-03-17 18:57:44', '2023-06-04 15:49:22', 793221);
+
+-- Dumping structure for table users_locale
+CREATE TABLE IF NOT EXISTS `users_locale` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `locale_id` int unsigned DEFAULT NULL,
+  `user_id` int unsigned DEFAULT NULL,
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE KEY `locale_id_player_id` (`locale_id`,`user_id`) USING BTREE,
+  KEY `locale_id` (`locale_id`) USING BTREE,
+  KEY `player_id` (`user_id`) USING BTREE,
+  CONSTRAINT `FK_players_locale_locale` FOREIGN KEY (`locale_id`) REFERENCES `locale` (`id`),
+  CONSTRAINT `FK_users_locale_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Dumping data for table users_locale: ~1 rows (approximately)
+INSERT INTO `users_locale` (`id`, `locale_id`, `user_id`) VALUES
+	(1, 1, 1);
 
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
