@@ -219,36 +219,6 @@ INSERT INTO `objects_items_rewards_animations` VALUES
     (1, 2, 'spritesheet', 'branch-sprite', 'branch-sprite', '{"start":0,"end":2,"repeat":-1,"frameWidth":32, "frameHeight":32,"depthByPlayer":"above"}'),
     (2, 1, 'spritesheet', 'branch-sprite', 'branch-sprite', '{"start":0,"end":2,"repeat":-1,"frameWidth":32, "frameHeight":32,"depthByPlayer":"above"}');
 
-# Chat UI:
-CREATE TABLE `chat_message_types` (
-	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-	`key` VARCHAR(50) NOT NULL COLLATE 'utf8_unicode_ci',
-	`show_tab` INT(10) UNSIGNED NOT NULL DEFAULT '0',
-	`show_in_general` INT(10) UNSIGNED NOT NULL DEFAULT '1',
-	PRIMARY KEY (`id`) USING BTREE
-) COLLATE='utf8_unicode_ci' ENGINE=InnoDB;
-
-INSERT INTO `chat_message_types` VALUES (1, 'message', 1, 1);
-INSERT INTO `chat_message_types` VALUES (2, 'joined', 0, 1);
-INSERT INTO `chat_message_types` VALUES (3, 'system', 0, 1);
-INSERT INTO `chat_message_types` VALUES (4, 'private', 0, 1);
-INSERT INTO `chat_message_types` VALUES (5, 'damage', 0, 1);
-INSERT INTO `chat_message_types` VALUES (6, 'reward', 0, 1);
-INSERT INTO `chat_message_types` VALUES (7, 'skill', 0, 1);
-INSERT INTO `chat_message_types` VALUES (8, 'teams', 0, 1);
-
-UPDATE `chat` SET `message_type` = 1 WHERE `message_type` = 'm';
-UPDATE `chat` SET `message_type` = 2 WHERE `message_type` = 'j';
-UPDATE `chat` SET `message_type` = 3 WHERE `message_type` = 's';
-UPDATE `chat` SET `message_type` = 4 WHERE `message_type` = 'p';
-UPDATE `chat` SET `message_type` = 5 WHERE `message_type` = 'd';
-UPDATE `chat` SET `message_type` = 6 WHERE `message_type` = 'r';
-UPDATE `chat` SET `message_type` = 7 WHERE `message_type` = 'ss';
-UPDATE `chat` SET `message_type` = 8 WHERE `message_type` = 'ct';
-
-ALTER TABLE `chat` CHANGE COLUMN `message_type` `message_type` INT(10) UNSIGNED NULL AFTER `private_player_id`;
-ALTER TABLE `chat` ADD CONSTRAINT `FK_chat_chat_message_types` FOREIGN KEY (`message_type`) REFERENCES `chat_message_types` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION;
-
 #######################################################################################################################
 
 SET FOREIGN_KEY_CHECKS = 1;
