@@ -14,8 +14,8 @@ const { QuestNpc } = require('./objects/server/quest-npc');
 const { WeaponsMaster } = require('./objects/server/weapons-master');
 const { Enemy1 } = require('./objects/server/enemy1');
 const { Enemy2 } = require('./objects/server/enemy2');
-const { sc } = require('@reldens/utils');
 const { ObjectsConst } = require('reldens/lib/objects/constants');
+const { sc } = require('@reldens/utils');
 
 class ServerPlugin extends PluginInterface
 {

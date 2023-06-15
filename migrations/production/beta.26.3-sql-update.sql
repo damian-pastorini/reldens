@@ -90,6 +90,36 @@ UPDATE `chat` SET `message_type` = @global_id WHERE `message_type` = 'ct';
 ALTER TABLE `chat` CHANGE COLUMN `message_type` `message_type` INT(10) UNSIGNED NULL AFTER `private_player_id`;
 ALTER TABLE `chat` ADD CONSTRAINT `FK_chat_chat_message_types` FOREIGN KEY (`message_type`) REFERENCES `chat_message_types` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION;
 
+# Items types:
+CREATE TABLE `items_types` (
+	`id` INT(10) NOT NULL AUTO_INCREMENT,
+	`key` VARCHAR(255) NOT NULL COLLATE 'utf8_unicode_ci',
+	PRIMARY KEY (`id`) USING BTREE,
+	UNIQUE INDEX `key` (`key`) USING BTREE
+) COLLATE='utf8_unicode_ci' ENGINE=InnoDB;
+
+INSERT INTO `items_types` VALUES(1, 'equipment');
+INSERT INTO `items_types` VALUES(2, 'usable');
+INSERT INTO `items_types` VALUES(3, 'single');
+INSERT INTO `items_types` VALUES(4, 'single_equipment');
+INSERT INTO `items_types` VALUES(5, 'single_usable');
+INSERT INTO `items_types` VALUES(10, 'base');
+
+UPDATE `items_item` SET `type` = 10 WHERE `type` = 0;
+
+ALTER TABLE `items_item`
+	ADD INDEX `type` (`type`),
+	ADD CONSTRAINT `FK_items_item_items_types` FOREIGN KEY (`type`) REFERENCES `items_types` (`id`) ON UPDATE CASCADE ON DELETE NO ACTION;
+
+# Items fix:
+UPDATE `items_item`
+    SET customData = '{"animationData":{"frameWidth":64,"frameHeight":64,"start":6,"end":11,"repeat":0,"hide":true,"usePlayerPosition":true,"closeInventoryOnUse":true,"followPlayer":true,"startsOnTarget":true},"removeAfterUse":true}'
+    WHERE `key` = 'heal_potion_20';
+
+UPDATE `items_item`
+    SET customData = '{"animationData":{"frameWidth":64,"frameHeight":64,"start":6,"end":11,"repeat":0,"hide":true,"usePlayerPosition":true,"closeInventoryOnUse":true,"followPlayer":true,"startsOnTarget":true},"removeAfterUse":true}'
+    WHERE `key` = 'magic_potion_20';
+
 #######################################################################################################################
 
 SET FOREIGN_KEY_CHECKS = 1;
