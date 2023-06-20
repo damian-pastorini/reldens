@@ -13,22 +13,22 @@ SET @comma_separated_id = (SELECT `id` FROM `config_types` WHERE `label` = 'comm
 # Snippets:
 CREATE TABLE `locale` (
 	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-	`locale` VARCHAR(5) NOT NULL COLLATE 'utf8mb4_unicode_ci',
-	`language_code` VARCHAR(2) NOT NULL COLLATE 'utf8mb4_unicode_ci',
-	`country_code` VARCHAR(2) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
+	`locale` VARCHAR(5) NOT NULL COLLATE 'utf8_unicode_ci',
+	`language_code` VARCHAR(2) NOT NULL COLLATE 'utf8_unicode_ci',
+	`country_code` VARCHAR(2) NULL DEFAULT NULL COLLATE 'utf8_unicode_ci',
 	`enabled` INT(10) UNSIGNED NOT NULL DEFAULT '1',
 	PRIMARY KEY (`id`) USING BTREE
-) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB;
+) COLLATE='utf8_unicode_ci' ENGINE=InnoDB;
 
 CREATE TABLE `snippets` (
 	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
 	`locale_id` INT(10) UNSIGNED NOT NULL,
-	`key` VARCHAR(255) NOT NULL COLLATE 'utf8mb4_unicode_ci',
-	`value` TEXT NOT NULL COLLATE 'utf8mb4_unicode_ci',
+	`key` VARCHAR(255) NOT NULL COLLATE 'utf8_unicode_ci',
+	`value` TEXT NOT NULL COLLATE 'utf8_unicode_ci',
 	PRIMARY KEY (`id`) USING BTREE,
 	INDEX `locale_id` (`locale_id`) USING BTREE,
 	CONSTRAINT `FK_snippets_locale` FOREIGN KEY (`locale_id`) REFERENCES `locale` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
-) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB;
+) COLLATE='utf8_unicode_ci' ENGINE=InnoDB;
 
 CREATE TABLE `players_locale` (
 	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -40,12 +40,13 @@ CREATE TABLE `players_locale` (
 	INDEX `player_id` (`player_id`) USING BTREE,
 	CONSTRAINT `FK_players_locale_locale` FOREIGN KEY (`locale_id`) REFERENCES `locale` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION,
 	CONSTRAINT `FK_players_locale_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
-) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB;
+) COLLATE='utf8_unicode_ci' ENGINE=InnoDB;
 
 INSERT INTO `locale` VALUES (1, 'en_US', 'en', 'US');
 
 # Features:
 INSERT INTO `features` VALUES (NULL, 'snippets', 'Snippets', 1);
+INSERT INTO `features` VALUES (NULL, 'objects', 'Objects', 1);
 
 # Chat UI:
 CREATE TABLE `chat_message_types` (
@@ -113,12 +114,49 @@ ALTER TABLE `items_item`
 
 # Items fix:
 UPDATE `items_item`
-    SET customData = '{"animationData":{"frameWidth":64,"frameHeight":64,"start":6,"end":11,"repeat":0,"hide":true,"usePlayerPosition":true,"closeInventoryOnUse":true,"followPlayer":true,"startsOnTarget":true},"removeAfterUse":true}'
+    SET `customData` = '{"animationData":{"frameWidth":64,"frameHeight":64,"start":6,"end":11,"repeat":0,"hide":true,"usePlayerPosition":true,"closeInventoryOnUse":true,"followPlayer":true,"startsOnTarget":true},"removeAfterUse":true}'
     WHERE `key` = 'heal_potion_20';
 
 UPDATE `items_item`
-    SET customData = '{"animationData":{"frameWidth":64,"frameHeight":64,"start":6,"end":11,"repeat":0,"hide":true,"usePlayerPosition":true,"closeInventoryOnUse":true,"followPlayer":true,"startsOnTarget":true},"removeAfterUse":true}'
+    SET `customData` = '{"animationData":{"frameWidth":64,"frameHeight":64,"start":6,"end":11,"repeat":0,"hide":true,"usePlayerPosition":true,"closeInventoryOnUse":true,"followPlayer":true,"startsOnTarget":true},"removeAfterUse":true}'
     WHERE `key` = 'magic_potion_20';
+
+# Objects fix:
+UPDATE `objects`
+    SET `private_params`='{"runOnHit":true,"roomVisible":true,"yFix":6}',
+        `client_params`='{"positionFix":{"y":-18},"frameStart":0,"frameEnd":3,"repeat":0,"hideOnComplete":false,"autoStart":false,"restartTime":2000}'
+    WHERE `object_class_key`='door_1' OR `object_class_key`='door_2';
+
+ALTER TABLE `objects` ADD COLUMN `class_type` INT(10) UNSIGNED NULL DEFAULT NULL AFTER `tile_index`;
+
+CREATE TABLE `objects_types` (
+	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+	`key` VARCHAR(255) NOT NULL COLLATE 'utf8_unicode_ci',
+	PRIMARY KEY (`id`) USING BTREE,
+	UNIQUE INDEX `key` (`key`) USING BTREE
+) COLLATE='utf8_unicode_ci' ENGINE=InnoDB;
+
+INSERT INTO `objects_types` VALUES (1, 'base');
+INSERT INTO `objects_types` VALUES (2, 'animation');
+INSERT INTO `objects_types` VALUES (3, 'npc');
+INSERT INTO `objects_types` VALUES (4, 'enemy');
+INSERT INTO `objects_types` VALUES (5, 'trader');
+INSERT INTO `objects_types` VALUES (6, 'drop');
+INSERT INTO `objects_types` VALUES (7, 'multiple');
+
+ALTER TABLE `objects` ADD INDEX `class_type` (`class_type`);
+
+ALTER TABLE `objects` ADD CONSTRAINT `FK_objects_objects_types` FOREIGN KEY (`class_type`) REFERENCES `objects_types` (`id`) ON UPDATE CASCADE ON DELETE NO ACTION;
+
+UPDATE `objects` SET `class_type`=2 WHERE `object_class_key` = 'door_1' AND `client_key`='door_house_1';
+UPDATE `objects` SET `class_type`=2 WHERE `object_class_key` = 'door_2' AND `client_key`='door_house_2';
+UPDATE `objects` SET `class_type`=3 WHERE `object_class_key` = 'npc_1' AND `client_key`='people_town_1';
+UPDATE `objects` SET `class_type`=7, `private_params` = '{"childObjectType":4,"isAggressive":true}' WHERE `object_class_key` = 'enemy_1' AND `client_key`='enemy_forest_1';
+UPDATE `objects` SET `class_type`=7, `private_params` = '{"childObjectType":4}' WHERE `object_class_key` = 'enemy_2' AND `client_key`='enemy_forest_2';
+UPDATE `objects` SET `class_type`=3 WHERE `object_class_key` = 'npc_2' AND `client_key`='healer_1';
+UPDATE `objects` SET `class_type`=5 WHERE `object_class_key` = 'npc_3' AND `client_key`='merchant_1';
+UPDATE `objects` SET `class_type`=3 WHERE `object_class_key` = 'npc_4' AND `client_key`='weapons_master_1';
+UPDATE `objects` SET `class_type`=3 WHERE `object_class_key` = 'npc_5' AND `client_key`='quest_npc_1';
 
 #######################################################################################################################
 

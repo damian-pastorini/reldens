@@ -17,6 +17,8 @@ class Door extends AnimationObject
 
     constructor(props)
     {
+        // '{"positionFix":{"y":-18},"frameStart":0,"frameEnd":3,"repeat":0,"hideOnComplete":false,"autoStart":false,"restartTime":2000}'
+        // '{"runOnHit":true,"roomVisible":true,"yFix":6}'
         super(props);
         this.runOnHit = true;
         this.roomVisible = true;

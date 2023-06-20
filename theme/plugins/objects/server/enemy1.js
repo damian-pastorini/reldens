@@ -10,7 +10,7 @@
  */
 
 const { Enemy1Object } = require('./enemy1-object');
-const { MultipleObject } = require('reldens/lib/objects/server/multiple');
+const { MultipleObject } = require('reldens/lib/objects/server/object/type/multiple-object');
 
 class Enemy1 extends MultipleObject
 {
