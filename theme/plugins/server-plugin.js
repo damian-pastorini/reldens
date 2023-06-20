@@ -39,8 +39,8 @@ class ServerPlugin extends PluginInterface
         }
         // @TODO - BETA - Clean up all the custom classes, by default these can be all default objects with all the
         //   data coming from the storage. Leave just a custom class as sample like the "Npc1" on the client-plugin.
-        customClasses.objects['door_1'] = Door;
-        customClasses.objects['door_2'] = Door;
+        // customClasses.objects['door_1'] = Door;
+        // customClasses.objects['door_2'] = Door;
         customClasses.objects['npc_1'] = NpcObject;
         customClasses.objects['npc_2'] = Healer;
         customClasses.objects['npc_3'] = TraderObject;
