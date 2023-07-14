@@ -3,9 +3,10 @@
         <div class="trade-col trade-col-1">{{&tradeItemsBuy}}</div>
         <div class="trade-col trade-col-2">{{&tradeItemsSell}}</div>
     </div>
+    <div class="trade-row">{{&lastErrorMessage}}</div>
     <div class="trade-row trade-confirm-actions">
         <div class="trade-col trade-col-1">
-            {{&confirmRequirements}}
+            <div class="trade-row">{{&confirmRequirements}}</div>
         </div>
         <div class="trade-col trade-col-2">
             <button type="button" class="confirm-action confirm-{{tradeActionKey}}">{{tradeActionLabel}}</button>
