@@ -66,12 +66,12 @@ CREATE TABLE `chat_message_types` (
 INSERT INTO `chat_message_types` VALUES (1, 'message', 1, 0);
 INSERT INTO `chat_message_types` VALUES (2, 'joined', 0, 1);
 INSERT INTO `chat_message_types` VALUES (3, 'system', 0, 1);
-INSERT INTO `chat_message_types` VALUES (4, 'private', 0, 1);
+INSERT INTO `chat_message_types` VALUES (4, 'private', 1, 1);
 INSERT INTO `chat_message_types` VALUES (5, 'damage', 0, 1);
 INSERT INTO `chat_message_types` VALUES (6, 'reward', 0, 1);
 INSERT INTO `chat_message_types` VALUES (7, 'skill', 0, 1);
-INSERT INTO `chat_message_types` VALUES (8, 'teams', 0, 1);
-INSERT INTO `chat_message_types` VALUES (9, 'global', 0, 1);
+INSERT INTO `chat_message_types` VALUES (8, 'teams', 1, 1);
+INSERT INTO `chat_message_types` VALUES (9, 'global', 1, 1);
 INSERT INTO `chat_message_types` VALUES (10, 'error', 0, 1);
 
 SET @message_id = (SELECT `id` FROM `chat_message_types` WHERE `label` = 'message');
