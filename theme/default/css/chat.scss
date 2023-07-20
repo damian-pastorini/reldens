@@ -7,11 +7,11 @@
 .chat-ui {
     float: left;
     position: relative;
-    top: -150px;
-    left: -290px;
+    top: -270px;
+    left: -426px;
     padding: 15px;
-    min-width: 100px;
-    min-height: 80px;
+    min-width: 300px;
+    min-height: 200px;
     background: #000000;
     opacity: 0.8;
     color: $cWhite;
@@ -21,16 +21,77 @@
     */
 }
 
+#chat-contents {
+    display: block;
+    font-size: 12px;
+    height: 100%;
+    width: 100%;
+
+    .tabs-container {
+        display: block;
+        position: relative;
+        height: 100%;
+    }
+
+    .tabs-headers {
+        height: 20%;
+        position: relative;
+        display: block;
+        width: 100%;
+        min-height: 26px;
+
+        .tab-label {
+            display: inline-block;
+            padding-right: 6px;
+            border-right: 1px solid #fff;
+            cursor: pointer;
+
+            &.active {
+                font-weight: bold;
+            }
+
+            &:last-child {
+                border-right: none;
+            }
+        }
+    }
+
+    .tabs-contents {
+        height: 60%;
+        display: block;
+        overflow-y: auto;
+        max-height: 150px;
+
+        .tab-content {
+            overflow-y: auto;
+
+            &:first-child {
+                display: block;
+            }
+
+            &.hidden {
+                display: none;
+            }
+        }
+    }
+}
+
 #chat-messages {
-    width: 242px;
-    height: 90px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 92%;
+    height: 72%;
+    padding: 2%;
     word-wrap: break-word;
     overflow: auto;
     font-size: 12px;
 }
 
 #chat-input {
-    width: 80%;
+    position: absolute;
+    bottom: 15px;
+    width: 70%;
     outline: none;
 }
 
@@ -38,6 +99,7 @@
     position: absolute;
     bottom: 15px;
     right: 15px;
+    width: 16%;
 }
 
 #chat-open {

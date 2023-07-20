@@ -63,7 +63,7 @@ CREATE TABLE `chat_message_types` (
 	CONSTRAINT `FK_chat_message_types_chat_message_types` FOREIGN KEY (`also_show_in_type`) REFERENCES `chat_message_types` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
 ) COLLATE='utf8_unicode_ci' ENGINE=InnoDB;
 
-INSERT INTO `chat_message_types` VALUES (1, 'message', 1, 1);
+INSERT INTO `chat_message_types` VALUES (1, 'message', 1, 0);
 INSERT INTO `chat_message_types` VALUES (2, 'joined', 0, 1);
 INSERT INTO `chat_message_types` VALUES (3, 'system', 0, 1);
 INSERT INTO `chat_message_types` VALUES (4, 'private', 0, 1);
