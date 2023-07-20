@@ -10,6 +10,9 @@ SET @float_id = (SELECT `id` FROM `config_types` WHERE `label` = 'float');
 SET @json_id = (SELECT `id` FROM `config_types` WHERE `label` = 'json');
 SET @comma_separated_id = (SELECT `id` FROM `config_types` WHERE `label` = 'comma_separated');
 
+# Config:
+INSERT INTO `config` VALUES (NULL, 'client', 'ui/chat/showTabs', '1', @boolean_id);
+
 # Snippets:
 CREATE TABLE `locale` (
 	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -52,10 +55,12 @@ INSERT INTO `features` VALUES (NULL, 'snippets', 'Snippets', 1);
 # Chat UI:
 CREATE TABLE `chat_message_types` (
 	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-	`key` VARCHAR(50) NOT NULL COLLATE 'utf8_unicode_ci',
+	`key` VARCHAR(50) NOT NULL COLLATE 'utf8mb3_unicode_ci',
 	`show_tab` INT(10) UNSIGNED NOT NULL DEFAULT '0',
-	`show_in_general` INT(10) UNSIGNED NOT NULL DEFAULT '1',
-	PRIMARY KEY (`id`) USING BTREE
+	`also_show_in_type` INT(10) UNSIGNED NULL DEFAULT NULL,
+	PRIMARY KEY (`id`) USING BTREE,
+	INDEX `FK_chat_message_types_chat_message_types` (`also_show_in_type`) USING BTREE,
+	CONSTRAINT `FK_chat_message_types_chat_message_types` FOREIGN KEY (`also_show_in_type`) REFERENCES `chat_message_types` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
 ) COLLATE='utf8_unicode_ci' ENGINE=InnoDB;
 
 INSERT INTO `chat_message_types` VALUES (1, 'message', 1, 1);
