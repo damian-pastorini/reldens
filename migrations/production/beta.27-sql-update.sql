@@ -51,6 +51,7 @@ INSERT INTO `locale` VALUES (1, 'en_US', 'en', 'US');
 ALTER TABLE `features` ADD UNIQUE INDEX `code` (`code`);
 
 INSERT INTO `features` VALUES (NULL, 'snippets', 'Snippets', 1);
+INSERT INTO `features` VALUES (NULL, 'ads', 'Ads', 1);
 
 # Chat UI:
 CREATE TABLE `chat_message_types` (
