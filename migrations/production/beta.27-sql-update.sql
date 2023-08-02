@@ -12,6 +12,8 @@ SET @comma_separated_id = (SELECT `id` FROM `config_types` WHERE `label` = 'comm
 
 # Config:
 INSERT INTO `config` VALUES (NULL, 'client', 'ui/chat/showTabs', '1', @boolean_id);
+INSERT INTO `config` VALUES (NULL, 'client', 'ads/general/providers/crazyGames/enabled', '1', @boolean_id);
+INSERT INTO `config` VALUES (NULL, 'client', 'ads/general/providers/crazyGames/sdkUrl', 'https://sdk.crazygames.com/crazygames-sdk-v2.js', @string_id);
 
 # Snippets:
 CREATE TABLE `locale` (
