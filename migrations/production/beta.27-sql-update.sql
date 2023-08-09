@@ -167,6 +167,44 @@ UPDATE `objects` SET `class_type`=5 WHERE `object_class_key` = 'npc_3' AND `clie
 UPDATE `objects` SET `class_type`=3 WHERE `object_class_key` = 'npc_4' AND `client_key`='weapons_master_1';
 UPDATE `objects` SET `class_type`=3 WHERE `object_class_key` = 'npc_5' AND `client_key`='quest_npc_1';
 
+# Ads:
+CREATE TABLE `ads_providers` (
+	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+	`key` VARCHAR(255) NOT NULL COLLATE 'utf8_unicode_ci',
+	PRIMARY KEY (`id`) USING BTREE,
+	UNIQUE INDEX `key` (`key`) USING BTREE
+) COLLATE='utf8_unicode_ci' ENGINE=InnoDB;
+
+INSERT INTO `ads_providers` (`key`) VALUES ('crazygames');
+
+CREATE TABLE `ads` (
+	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+	`key` VARCHAR(255) NOT NULL COLLATE 'utf8_unicode_ci',
+	`provider_id` INT(10) UNSIGNED NOT NULL,
+	`ads_type` VARCHAR(255) NOT NULL COLLATE 'utf8_unicode_ci',
+	`width` INT(10) UNSIGNED NULL DEFAULT NULL,
+	`height` INT(10) UNSIGNED NULL DEFAULT NULL,
+	`position_top` INT(10) UNSIGNED NULL DEFAULT NULL,
+	`position_bottom` INT(10) UNSIGNED NULL DEFAULT NULL,
+	`position_left` INT(10) UNSIGNED NULL DEFAULT NULL,
+	`position_right` INT(10) UNSIGNED NULL DEFAULT NULL,
+	PRIMARY KEY (`id`) USING BTREE,
+	UNIQUE INDEX `key` (`key`) USING BTREE,
+	INDEX `provider_id` (`provider_id`) USING BTREE,
+	CONSTRAINT `FK_ads_ads_providers` FOREIGN KEY (`provider_id`) REFERENCES `ads_providers` (`id`) ON UPDATE CASCADE ON DELETE NO ACTION
+) COLLATE='utf8_unicode_ci' ENGINE=InnoDB;
+
+CREATE TABLE `ads_items` (
+	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+	`ads_id` INT(10) UNSIGNED NOT NULL,
+	`reward_item_id` INT(10) UNSIGNED NOT NULL,
+	PRIMARY KEY (`id`) USING BTREE,
+	INDEX `ads_id` (`ads_id`) USING BTREE,
+	INDEX `reward_item_id` (`reward_item_id`) USING BTREE,
+	CONSTRAINT `FK_ads_items_ads` FOREIGN KEY (`ads_id`) REFERENCES `ads` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION,
+	CONSTRAINT `FK_ads_items_items_item` FOREIGN KEY (`reward_item_id`) REFERENCES `items_item` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
+) COLLATE='utf8_unicode_ci' ENGINE=InnoDB;
+
 #######################################################################################################################
 
 SET FOREIGN_KEY_CHECKS = 1;
