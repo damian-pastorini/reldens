@@ -177,32 +177,41 @@ CREATE TABLE `ads_providers` (
 
 INSERT INTO `ads_providers` (`key`) VALUES ('crazygames');
 
+CREATE TABLE `ads_types` (
+	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+	`key` VARCHAR(255) NOT NULL COLLATE 'utf8_unicode_ci',
+	PRIMARY KEY (`id`) USING BTREE
+) COLLATE='utf8_unicode_ci' ENGINE=InnoDB;
+
 CREATE TABLE `ads` (
 	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
 	`key` VARCHAR(255) NOT NULL COLLATE 'utf8_unicode_ci',
 	`provider_id` INT(10) UNSIGNED NOT NULL,
-	`ads_type` VARCHAR(255) NOT NULL COLLATE 'utf8_unicode_ci',
+	`ads_type` INT(10) UNSIGNED NOT NULL,
 	`width` INT(10) UNSIGNED NULL DEFAULT NULL,
 	`height` INT(10) UNSIGNED NULL DEFAULT NULL,
 	`position_top` INT(10) UNSIGNED NULL DEFAULT NULL,
 	`position_bottom` INT(10) UNSIGNED NULL DEFAULT NULL,
 	`position_left` INT(10) UNSIGNED NULL DEFAULT NULL,
 	`position_right` INT(10) UNSIGNED NULL DEFAULT NULL,
+	`enabled` INT(10) UNSIGNED NOT NULL DEFAULT '0',
 	PRIMARY KEY (`id`) USING BTREE,
 	UNIQUE INDEX `key` (`key`) USING BTREE,
 	INDEX `provider_id` (`provider_id`) USING BTREE,
-	CONSTRAINT `FK_ads_ads_providers` FOREIGN KEY (`provider_id`) REFERENCES `ads_providers` (`id`) ON UPDATE CASCADE ON DELETE NO ACTION
+	INDEX `ads_type` (`ads_type`) USING BTREE,
+	CONSTRAINT `FK_ads_ads_providers` FOREIGN KEY (`provider_id`) REFERENCES `ads_providers` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION,
+	CONSTRAINT `FK_ads_ads_types` FOREIGN KEY (`ads_type`) REFERENCES `ads_types` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
 ) COLLATE='utf8_unicode_ci' ENGINE=InnoDB;
 
-CREATE TABLE `ads_items` (
+CREATE TABLE `ads_event_video` (
 	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
 	`ads_id` INT(10) UNSIGNED NOT NULL,
-	`reward_item_id` INT(10) UNSIGNED NOT NULL,
+	`event_key` VARCHAR(255) NOT NULL COLLATE 'utf8_unicode_ci',
+	`event_data` TEXT NOT NULL COLLATE 'utf8_unicode_ci',
 	PRIMARY KEY (`id`) USING BTREE,
-	INDEX `ads_id` (`ads_id`) USING BTREE,
-	INDEX `reward_item_id` (`reward_item_id`) USING BTREE,
-	CONSTRAINT `FK_ads_items_ads` FOREIGN KEY (`ads_id`) REFERENCES `ads` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION,
-	CONSTRAINT `FK_ads_items_items_item` FOREIGN KEY (`reward_item_id`) REFERENCES `items_item` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
+	INDEX `ad_id` (`ads_id`) USING BTREE,
+	INDEX `room_id` (`event_key`) USING BTREE,
+	CONSTRAINT `FK_ads_scene_change_video_ads` FOREIGN KEY (`ads_id`) REFERENCES `ads` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
 ) COLLATE='utf8_unicode_ci' ENGINE=InnoDB;
 
 #######################################################################################################################
