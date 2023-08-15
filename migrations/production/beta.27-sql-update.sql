@@ -214,6 +214,14 @@ CREATE TABLE `ads_event_video` (
 	CONSTRAINT `FK_ads_scene_change_video_ads` FOREIGN KEY (`ads_id`) REFERENCES `ads` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
 ) COLLATE='utf8_unicode_ci' ENGINE=InnoDB;
 
+CREATE TABLE `ads_banner` (
+	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+	`ads_id` INT(10) UNSIGNED NOT NULL,
+	`banner_data` TEXT NOT NULL COLLATE 'utf8_unicode_ci',
+	PRIMARY KEY (`id`) USING BTREE,
+	INDEX `ads_id` (`ads_id`) USING BTREE
+) COLLATE='utf8_unicode_ci' ENGINE=InnoDB;
+
 #######################################################################################################################
 
 SET FOREIGN_KEY_CHECKS = 1;
