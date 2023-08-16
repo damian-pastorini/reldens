@@ -84,12 +84,12 @@
         "@reldens/storage": "^0.15.0",
         "@reldens/utils": "^0.20.1",
         "adminjs": "5.7.3",
-        "bcrypt": "5.1.0",
+        "bcrypt": "5.1.1",
         "colyseus": "0.14.24",
         "colyseus.js": "0.14.13",
-        "core-js": "3.26.1",
+        "core-js": "3.32.0",
         "cors": "2.8.5",
-        "dotenv": "16.0.3",
+        "dotenv": "16.3.1",
         "express": "4.18.2",
         "express-basic-auth": "1.2.1",
         "express-formidable": "1.2.0",
@@ -98,12 +98,12 @@
         "firebaseui": "6.0.2",
         "mime-types": "2.1.35",
         "mustache": "4.2.0",
-        "nodemailer": "6.8.0",
+        "nodemailer": "6.9.4",
         "p2": "0.7.1",
         "pathfinding": "0.4.18",
         "phaser": "3.55.2",
         "react": "16.14.0",
-        "regenerator-runtime": "0.13.11",
-        "tslib": "2.5.0"
+        "regenerator-runtime": "0.14.0",
+        "tslib": "2.6.1"
     }
 }
