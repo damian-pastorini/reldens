@@ -185,6 +185,9 @@ CREATE TABLE `ads_types` (
 	UNIQUE INDEX `key` (`key`) USING BTREE
 ) COLLATE='utf8_unicode_ci' ENGINE=InnoDB;
 
+INSERT INTO `ads_types` (`id`, `key`) VALUES (NULL, 'banner');
+INSERT INTO `ads_types` (`id`, `key`) VALUES (NULL, 'eventVideo');
+
 CREATE TABLE `ads` (
 	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
 	`key` VARCHAR(255) NOT NULL COLLATE 'utf8_unicode_ci',
@@ -225,6 +228,9 @@ CREATE TABLE `ads_banner` (
 	UNIQUE INDEX `ads_id` (`ads_id`) USING BTREE,
 	CONSTRAINT `FK_ads_banner_ads` FOREIGN KEY (`ads_id`) REFERENCES `ads` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
 ) COLLATE='utf8_unicode_ci' ENGINE=InnoDB;
+
+# Ads sample data:
+INSERT INTO `ads` (`id`, `key`, `provider_id`, `ads_type`, `width`, `height`, `position_top`, `position_bottom`, `position_left`, `position_right`, `enabled`) VALUES (3, 'fullTimeBanner', 1, 1, 320, 50, NULL, 0, 0, NULL, 1);
 
 #######################################################################################################################
 
