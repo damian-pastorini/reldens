@@ -171,16 +171,18 @@ UPDATE `objects` SET `class_type`=3 WHERE `object_class_key` = 'npc_5' AND `clie
 CREATE TABLE `ads_providers` (
 	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
 	`key` VARCHAR(255) NOT NULL COLLATE 'utf8_unicode_ci',
+	`enabled` INT(10) UNSIGNED NOT NULL DEFAULT '1',
 	PRIMARY KEY (`id`) USING BTREE,
 	UNIQUE INDEX `key` (`key`) USING BTREE
-) COLLATE='utf8_unicode_ci' ENGINE=InnoDB;
+) COLLATE='utf8_unicode_ci' ENGINE=InnoDB AUTO_INCREMENT=2;
 
-INSERT INTO `ads_providers` (`key`) VALUES ('crazygames');
+INSERT INTO `ads_providers` (`key`) VALUES ('crazyGames');
 
 CREATE TABLE `ads_types` (
 	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
 	`key` VARCHAR(255) NOT NULL COLLATE 'utf8_unicode_ci',
-	PRIMARY KEY (`id`) USING BTREE
+	PRIMARY KEY (`id`) USING BTREE,
+	UNIQUE INDEX `key` (`key`) USING BTREE
 ) COLLATE='utf8_unicode_ci' ENGINE=InnoDB;
 
 CREATE TABLE `ads` (
