@@ -209,6 +209,7 @@ CREATE TABLE `ads_event_video` (
 	`event_key` VARCHAR(255) NOT NULL COLLATE 'utf8_unicode_ci',
 	`event_data` TEXT NOT NULL COLLATE 'utf8_unicode_ci',
 	PRIMARY KEY (`id`) USING BTREE,
+	UNIQUE INDEX `ads_id` (`ads_id`) USING BTREE,
 	INDEX `ad_id` (`ads_id`) USING BTREE,
 	INDEX `room_id` (`event_key`) USING BTREE,
 	CONSTRAINT `FK_ads_scene_change_video_ads` FOREIGN KEY (`ads_id`) REFERENCES `ads` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
@@ -219,7 +220,8 @@ CREATE TABLE `ads_banner` (
 	`ads_id` INT(10) UNSIGNED NOT NULL,
 	`banner_data` TEXT NOT NULL COLLATE 'utf8_unicode_ci',
 	PRIMARY KEY (`id`) USING BTREE,
-	INDEX `ads_id` (`ads_id`) USING BTREE
+	UNIQUE INDEX `ads_id` (`ads_id`) USING BTREE,
+	CONSTRAINT `FK_ads_banner_ads` FOREIGN KEY (`ads_id`) REFERENCES `ads` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
 ) COLLATE='utf8_unicode_ci' ENGINE=InnoDB;
 
 #######################################################################################################################
