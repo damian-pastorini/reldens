@@ -192,20 +192,21 @@ CREATE TABLE `ads` (
 	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
 	`key` VARCHAR(255) NOT NULL COLLATE 'utf8_unicode_ci',
 	`provider_id` INT(10) UNSIGNED NOT NULL,
-	`ads_type` INT(10) UNSIGNED NOT NULL,
+	`type_id` INT(10) UNSIGNED NOT NULL,
 	`width` INT(10) UNSIGNED NULL DEFAULT NULL,
 	`height` INT(10) UNSIGNED NULL DEFAULT NULL,
-	`position_top` INT(10) UNSIGNED NULL DEFAULT NULL,
-	`position_bottom` INT(10) UNSIGNED NULL DEFAULT NULL,
-	`position_left` INT(10) UNSIGNED NULL DEFAULT NULL,
-	`position_right` INT(10) UNSIGNED NULL DEFAULT NULL,
+	`position` VARCHAR(50) NULL DEFAULT NULL COLLATE 'utf8_unicode_ci',
+	`top` INT(10) UNSIGNED NULL DEFAULT NULL,
+	`bottom` INT(10) UNSIGNED NULL DEFAULT NULL,
+	`left` INT(10) UNSIGNED NULL DEFAULT NULL,
+	`right` INT(10) UNSIGNED NULL DEFAULT NULL,
 	`enabled` INT(10) UNSIGNED NOT NULL DEFAULT '0',
 	PRIMARY KEY (`id`) USING BTREE,
 	UNIQUE INDEX `key` (`key`) USING BTREE,
 	INDEX `provider_id` (`provider_id`) USING BTREE,
-	INDEX `ads_type` (`ads_type`) USING BTREE,
+	INDEX `type_id` (`type_id`) USING BTREE,
 	CONSTRAINT `FK_ads_ads_providers` FOREIGN KEY (`provider_id`) REFERENCES `ads_providers` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION,
-	CONSTRAINT `FK_ads_ads_types` FOREIGN KEY (`ads_type`) REFERENCES `ads_types` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
+	CONSTRAINT `FK_ads_ads_types` FOREIGN KEY (`type_id`) REFERENCES `ads_types` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
 ) COLLATE='utf8_unicode_ci' ENGINE=InnoDB;
 
 CREATE TABLE `ads_event_video` (
