@@ -1,0 +1,13 @@
+/**
+ *
+ * Reldens - Styles - Ads
+ *
+ */
+
+.ads-banner-container {
+    display: block;
+
+    &.hidden {
+        display: none;
+    }
+}
