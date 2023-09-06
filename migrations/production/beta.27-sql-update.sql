@@ -14,6 +14,7 @@ SET @comma_separated_id = (SELECT `id` FROM `config_types` WHERE `label` = 'comm
 INSERT INTO `config` VALUES (NULL, 'client', 'ui/chat/showTabs', '1', @boolean_id);
 INSERT INTO `config` VALUES (NULL, 'client', 'ads/general/providers/crazyGames/enabled', '1', @boolean_id);
 INSERT INTO `config` VALUES (NULL, 'client', 'ads/general/providers/crazyGames/sdkUrl', 'https://sdk.crazygames.com/crazygames-sdk-v2.js', @string_id);
+INSERT INTO `config` VALUES (NULL, 'client', 'ads/general/providers/crazyGames/videoMinimumDuration', '5000', @float_id);
 
 # Snippets:
 CREATE TABLE `locale` (
@@ -200,6 +201,7 @@ CREATE TABLE `ads` (
 	`bottom` INT(10) UNSIGNED NULL DEFAULT NULL,
 	`left` INT(10) UNSIGNED NULL DEFAULT NULL,
 	`right` INT(10) UNSIGNED NULL DEFAULT NULL,
+	`replay` INT(10) UNSIGNED NULL DEFAULT NULL,
 	`enabled` INT(10) UNSIGNED NOT NULL DEFAULT '0',
 	PRIMARY KEY (`id`) USING BTREE,
 	UNIQUE INDEX `key` (`key`) USING BTREE,
@@ -207,7 +209,7 @@ CREATE TABLE `ads` (
 	INDEX `type_id` (`type_id`) USING BTREE,
 	CONSTRAINT `FK_ads_ads_providers` FOREIGN KEY (`provider_id`) REFERENCES `ads_providers` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION,
 	CONSTRAINT `FK_ads_ads_types` FOREIGN KEY (`type_id`) REFERENCES `ads_types` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
-) COLLATE='utf8_unicode_ci' ENGINE=InnoDB;
+) COLLATE='utf8_unicode_ci' ENGINE=InnoDB AUTO_INCREMENT=1;
 
 CREATE TABLE `ads_event_video` (
 	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -230,8 +232,27 @@ CREATE TABLE `ads_banner` (
 	CONSTRAINT `FK_ads_banner_ads` FOREIGN KEY (`ads_id`) REFERENCES `ads` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
 ) COLLATE='utf8_unicode_ci' ENGINE=InnoDB;
 
+CREATE TABLE `ads_played` (
+	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+	`ads_id` INT(10) UNSIGNED NOT NULL,
+	`player_id` INT(10) UNSIGNED NOT NULL,
+	`started_at` DATETIME NOT NULL DEFAULT '0',
+	`ended_at` DATETIME NULL DEFAULT NULL,
+	PRIMARY KEY (`id`) USING BTREE,
+	INDEX `ads_id` (`ads_id`) USING BTREE,
+	INDEX `player_id` (`player_id`) USING BTREE,
+	CONSTRAINT `FK_ads_played_ads` FOREIGN KEY (`ads_id`) REFERENCES `ads` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION,
+	CONSTRAINT `FK_ads_played_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
+) COLLATE='utf8_unicode_ci' ENGINE=InnoDB AUTO_INCREMENT=1;
+
 # Ads sample data:
-INSERT INTO `ads` (`id`, `key`, `provider_id`, `ads_type`, `width`, `height`, `position_top`, `position_bottom`, `position_left`, `position_right`, `enabled`) VALUES (3, 'fullTimeBanner', 1, 1, 320, 50, NULL, 0, 0, NULL, 1);
+INSERT INTO `ads` (`id`, `key`, `provider_id`, `ads_type`, `width`, `height`, `position_top`, `position_bottom`, `position_left`, `position_right`, `enabled`) VALUES (1, 'fullTimeBanner', 1, 1, 320, 50, NULL, 0, 0, NULL, 1);
+INSERT INTO `ads` (`id`, `key`, `provider_id`, `type_id`, `width`, `height`, `position`, `top`, `bottom`, `left`, `right`, `replay`, `enabled`) VALUES (2, 'ui-banner', 1, 1, 320, 50, NULL, NULL, 80, NULL, 80, NULL, 1);
+INSERT INTO `ads` (`id`, `key`, `provider_id`, `type_id`, `width`, `height`, `position`, `top`, `bottom`, `left`, `right`, `replay`, `enabled`) VALUES (3, 'crazy-games-sample-video', 1, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1);
+
+INSERT INTO `ads_banner` (`id`, `ads_id`, `banner_data`) VALUES (1, 1, '{"fullTime": true}');
+INSERT INTO `ads_banner` (`id`, `ads_id`, `banner_data`) VALUES (2, 2, '{"uiReferenceIds":["box-open-clan","equipment-open","inventory-open","player-stats-open"]}');
+INSERT INTO `ads_event_video` (`id`, `ads_id`, `event_key`, `event_data`) VALUES (1, 3, 'reldens.activatedRoom_ReldensTown', '{"rewardItemKey":"coins","rewardItemQty":1}');
 
 #######################################################################################################################
 
