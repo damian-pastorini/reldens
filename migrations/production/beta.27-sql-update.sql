@@ -15,6 +15,8 @@ INSERT INTO `config` VALUES (NULL, 'client', 'ui/chat/showTabs', '1', @boolean_i
 INSERT INTO `config` VALUES (NULL, 'client', 'ads/general/providers/crazyGames/enabled', '1', @boolean_id);
 INSERT INTO `config` VALUES (NULL, 'client', 'ads/general/providers/crazyGames/sdkUrl', 'https://sdk.crazygames.com/crazygames-sdk-v2.js', @string_id);
 INSERT INTO `config` VALUES (NULL, 'client', 'ads/general/providers/crazyGames/videoMinimumDuration', '5000', @float_id);
+INSERT INTO `config` VALUES (NULL, 'client', 'ads/general/providers/gameMonetize/enabled', '1', @boolean_id);
+INSERT INTO `config` VALUES (NULL, 'client', 'ads/general/providers/gameMonetize/sdkUrl', 'https://api.gamemonetize.com/sdk.js', @string_id);
 
 # Snippets:
 CREATE TABLE `locale` (
@@ -175,9 +177,10 @@ CREATE TABLE `ads_providers` (
 	`enabled` INT(10) UNSIGNED NOT NULL DEFAULT '1',
 	PRIMARY KEY (`id`) USING BTREE,
 	UNIQUE INDEX `key` (`key`) USING BTREE
-) COLLATE='utf8_unicode_ci' ENGINE=InnoDB AUTO_INCREMENT=2;
+) COLLATE='utf8_unicode_ci' ENGINE=InnoDB AUTO_INCREMENT=3;
 
 INSERT INTO `ads_providers` (`key`) VALUES ('crazyGames');
+INSERT INTO `ads_providers` (`key`) VALUES ('gameMonetize');
 
 CREATE TABLE `ads_types` (
 	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
