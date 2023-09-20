@@ -14,7 +14,7 @@ SET @comma_separated_id = (SELECT `id` FROM `config_types` WHERE `label` = 'comm
 INSERT INTO `config` VALUES (NULL, 'client', 'ui/chat/showTabs', '1', @boolean_id);
 INSERT INTO `config` VALUES (NULL, 'client', 'ads/general/providers/crazyGames/enabled', '1', @boolean_id);
 INSERT INTO `config` VALUES (NULL, 'client', 'ads/general/providers/crazyGames/sdkUrl', 'https://sdk.crazygames.com/crazygames-sdk-v2.js', @string_id);
-INSERT INTO `config` VALUES (NULL, 'client', 'ads/general/providers/crazyGames/videoMinimumDuration', '5000', @float_id);
+INSERT INTO `config` VALUES (NULL, 'client', 'ads/general/providers/crazyGames/videoMinimumDuration', '3000', @float_id);
 INSERT INTO `config` VALUES (NULL, 'client', 'ads/general/providers/gameMonetize/enabled', '1', @boolean_id);
 INSERT INTO `config` VALUES (NULL, 'client', 'ads/general/providers/gameMonetize/sdkUrl', 'https://api.gamemonetize.com/sdk.js', @string_id);
 
