@@ -17,6 +17,7 @@ INSERT INTO `config` VALUES (NULL, 'client', 'ads/general/providers/crazyGames/s
 INSERT INTO `config` VALUES (NULL, 'client', 'ads/general/providers/crazyGames/videoMinimumDuration', '3000', @float_id);
 INSERT INTO `config` VALUES (NULL, 'client', 'ads/general/providers/gameMonetize/enabled', '1', @boolean_id);
 INSERT INTO `config` VALUES (NULL, 'client', 'ads/general/providers/gameMonetize/sdkUrl', 'https://api.gamemonetize.com/sdk.js', @string_id);
+INSERT INTO `config` VALUES (NULL, 'client', 'ads/general/providers/gameMonetize/gameId', 'your-game-id-should-be-here', @string_id);
 
 # Snippets:
 CREATE TABLE `locale` (
@@ -255,10 +256,10 @@ CREATE TABLE `ads_played` (
 ) COLLATE='utf8_unicode_ci' ENGINE=InnoDB AUTO_INCREMENT=1;
 
 # Ads sample data:
-INSERT INTO `ads` (`id`, `key`, `provider_id`, `type_id`, `width`, `height`, `position`, `top`, `bottom`, `left`, `right`, `replay`, `enabled`) VALUES (1, 'fullTimeBanner', 1, 1, 320, 50, NULL, NULL, 0, NULL, 80, NULL, 1);
-INSERT INTO `ads` (`id`, `key`, `provider_id`, `type_id`, `width`, `height`, `position`, `top`, `bottom`, `left`, `right`, `replay`, `enabled`) VALUES (2, 'ui-banner', 1, 1, 320, 50, NULL, NULL, 80, NULL, 80, NULL, 1);
-INSERT INTO `ads` (`id`, `key`, `provider_id`, `type_id`, `width`, `height`, `position`, `top`, `bottom`, `left`, `right`, `replay`, `enabled`) VALUES (3, 'crazy-games-sample-video', 1, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 1);
-INSERT INTO `ads` (`id`, `key`, `provider_id`, `type_id`, `width`, `height`, `position`, `top`, `bottom`, `left`, `right`, `replay`, `enabled`) VALUES (4, 'game-monetize-sample-video', 2, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 1);
+INSERT INTO `ads` (`id`, `key`, `provider_id`, `type_id`, `width`, `height`, `position`, `top`, `bottom`, `left`, `right`, `replay`, `enabled`) VALUES (1, 'fullTimeBanner', 1, 1, 320, 50, NULL, NULL, 0, NULL, 80, NULL, 0);
+INSERT INTO `ads` (`id`, `key`, `provider_id`, `type_id`, `width`, `height`, `position`, `top`, `bottom`, `left`, `right`, `replay`, `enabled`) VALUES (2, 'ui-banner', 1, 1, 320, 50, NULL, NULL, 80, NULL, 80, NULL, 0);
+INSERT INTO `ads` (`id`, `key`, `provider_id`, `type_id`, `width`, `height`, `position`, `top`, `bottom`, `left`, `right`, `replay`, `enabled`) VALUES (3, 'crazy-games-sample-video', 1, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 0);
+INSERT INTO `ads` (`id`, `key`, `provider_id`, `type_id`, `width`, `height`, `position`, `top`, `bottom`, `left`, `right`, `replay`, `enabled`) VALUES (4, 'game-monetize-sample-video', 2, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 0);
 
 INSERT INTO `ads_banner` (`id`, `ads_id`, `banner_data`) VALUES (NULL, 1, '{"fullTime": true}');
 INSERT INTO `ads_banner` (`id`, `ads_id`, `banner_data`) VALUES (NULL, 2, '{"uiReferenceIds":["box-open-clan","equipment-open","inventory-open","player-stats-open"]}');

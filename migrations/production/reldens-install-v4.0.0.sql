@@ -36,10 +36,10 @@ CREATE TABLE IF NOT EXISTS `ads` (
 
 -- Dumping data for table ads: ~3 rows (approximately)
 INSERT INTO `ads` (`id`, `key`, `provider_id`, `type_id`, `width`, `height`, `position`, `top`, `bottom`, `left`, `right`, `replay`, `enabled`) VALUES
-	(3, 'fullTimeBanner', 1, 1, 320, 50, NULL, NULL, 0, NULL, 80, NULL, 1),
-	(4, 'ui-banner', 1, 1, 320, 50, NULL, NULL, 80, NULL, 80, NULL, 1),
-	(5, 'crazy-games-sample-video', 1, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 1),
-	(6, 'game-monetize-sample-video', 2, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 1);
+	(3, 'fullTimeBanner', 1, 1, 320, 50, NULL, NULL, 0, NULL, 80, NULL, 0),
+	(4, 'ui-banner', 1, 1, 320, 50, NULL, NULL, 80, NULL, 80, NULL, 0),
+	(5, 'crazy-games-sample-video', 1, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 0),
+	(6, 'game-monetize-sample-video', 2, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 0);
 
 -- Dumping structure for table ads_banner
 CREATE TABLE IF NOT EXISTS `ads_banner` (
@@ -638,7 +638,7 @@ INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(317, 'client', 'ads/general/providers/crazyGames/sdkUrl', 'https://sdk.crazygames.com/crazygames-sdk-v2.js', 1),
 	(319, 'client', 'ads/general/providers/crazyGames/videoMinimumDuration', '3000', 2),
 	(320, 'client', 'ads/general/providers/gameMonetize/sdkUrl', 'https://api.gamemonetize.com/sdk.js', 1),
-	(321, 'client', 'ads/general/providers/gameMonetize/gameId', '9mij4bcnlj6itw4ywvbnkxu7h96hidw0', 1);
+	(321, 'client', 'ads/general/providers/gameMonetize/gameId', 'your-game-id-should-be-here', 1);
 
 -- Dumping structure for table config_types
 CREATE TABLE IF NOT EXISTS `config_types` (
