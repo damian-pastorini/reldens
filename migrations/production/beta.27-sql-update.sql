@@ -39,19 +39,20 @@ CREATE TABLE `snippets` (
 	CONSTRAINT `FK_snippets_locale` FOREIGN KEY (`locale_id`) REFERENCES `locale` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
 ) COLLATE='utf8_unicode_ci' ENGINE=InnoDB;
 
-CREATE TABLE `players_locale` (
+CREATE TABLE `users_locale` (
 	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
 	`locale_id` INT(10) UNSIGNED NULL DEFAULT NULL,
-	`player_id` INT(10) UNSIGNED NULL DEFAULT NULL,
+	`user_id` INT(10) UNSIGNED NULL DEFAULT NULL,
 	PRIMARY KEY (`id`) USING BTREE,
-	UNIQUE INDEX `locale_id_player_id` (`locale_id`, `player_id`) USING BTREE,
+	UNIQUE INDEX `locale_id_player_id` (`locale_id`, `user_id`) USING BTREE,
 	INDEX `locale_id` (`locale_id`) USING BTREE,
-	INDEX `player_id` (`player_id`) USING BTREE,
-	CONSTRAINT `FK_players_locale_locale` FOREIGN KEY (`locale_id`) REFERENCES `locale` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION,
-	CONSTRAINT `FK_players_locale_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
-) COLLATE='utf8_unicode_ci' ENGINE=InnoDB;
+	INDEX `player_id` (`user_id`) USING BTREE,
+	CONSTRAINT `FK_users_locale_locale` FOREIGN KEY (`locale_id`) REFERENCES `locale` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION,
+	CONSTRAINT `FK_users_locale_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
+) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB AUTO_INCREMENT=2;
 
-INSERT INTO `locale` VALUES (NULL, 'en_US', 'en', 'US', true);
+INSERT INTO `locale` VALUES (1, 'en_US', 'en', 'US', true);
+INSERT INTO `users_locale` (`id`, `locale_id`, `user_id`) VALUES (1, 1, 1);
 
 # Features:
 ALTER TABLE `features` ADD UNIQUE INDEX `code` (`code`);
