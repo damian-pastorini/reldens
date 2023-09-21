@@ -4,12 +4,121 @@
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET NAMES utf8 */;
-/*!50503 SET NAMES utf8mb4 */;
+/*!50503 SET NAMES utf8 */;
 /*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
 /*!40103 SET TIME_ZONE='+00:00' */;
 /*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+
+-- Dumping structure for table ads
+CREATE TABLE IF NOT EXISTS `ads` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `key` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `provider_id` int unsigned NOT NULL,
+  `type_id` int unsigned NOT NULL,
+  `width` int unsigned DEFAULT NULL,
+  `height` int unsigned DEFAULT NULL,
+  `position` varchar(50) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `top` int unsigned DEFAULT NULL,
+  `bottom` int unsigned DEFAULT NULL,
+  `left` int unsigned DEFAULT NULL,
+  `right` int unsigned DEFAULT NULL,
+  `replay` int unsigned DEFAULT NULL,
+  `enabled` int unsigned NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `key` (`key`),
+  KEY `provider_id` (`provider_id`),
+  KEY `type_id` (`type_id`) USING BTREE,
+  CONSTRAINT `FK_ads_ads_providers` FOREIGN KEY (`provider_id`) REFERENCES `ads_providers` (`id`),
+  CONSTRAINT `FK_ads_ads_types` FOREIGN KEY (`type_id`) REFERENCES `ads_types` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- Dumping data for table ads: ~3 rows (approximately)
+INSERT INTO `ads` (`id`, `key`, `provider_id`, `type_id`, `width`, `height`, `position`, `top`, `bottom`, `left`, `right`, `replay`, `enabled`) VALUES
+	(3, 'fullTimeBanner', 1, 1, 320, 50, NULL, NULL, 0, NULL, 80, NULL, 1),
+	(4, 'ui-banner', 1, 1, 320, 50, NULL, NULL, 80, NULL, 80, NULL, 1),
+	(5, 'crazy-games-sample-video', 1, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 1),
+	(6, 'game-monetize-sample-video', 2, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 1);
+
+-- Dumping structure for table ads_banner
+CREATE TABLE IF NOT EXISTS `ads_banner` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `ads_id` int unsigned NOT NULL,
+  `banner_data` text COLLATE utf8_unicode_ci NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `ads_id` (`ads_id`),
+  CONSTRAINT `FK_ads_banner_ads` FOREIGN KEY (`ads_id`) REFERENCES `ads` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- Dumping data for table ads_banner: ~0 rows (approximately)
+INSERT INTO `ads_banner` (`id`, `ads_id`, `banner_data`) VALUES
+	(1, 3, '{"fullTime": true}'),
+	(2, 4, '{"uiReferenceIds":["box-open-clan","equipment-open","inventory-open","player-stats-open"]}');
+
+-- Dumping structure for table ads_event_video
+CREATE TABLE IF NOT EXISTS `ads_event_video` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `ads_id` int unsigned NOT NULL,
+  `event_key` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `event_data` text COLLATE utf8_unicode_ci NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `ads_id` (`ads_id`),
+  KEY `ad_id` (`ads_id`) USING BTREE,
+  KEY `room_id` (`event_key`) USING BTREE,
+  CONSTRAINT `FK_ads_scene_change_video_ads` FOREIGN KEY (`ads_id`) REFERENCES `ads` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- Dumping data for table ads_event_video: ~2 rows (approximately)
+INSERT INTO `ads_event_video` (`id`, `ads_id`, `event_key`, `event_data`) VALUES
+	(1, 5, 'activatedRoom_ReldensTown', '{"rewardItemKey":"coins","rewardItemQty":1}'),
+	(2, 6, 'activatedRoom_ReldensForest', '{"rewardItemKey":"coins","rewardItemQty":1}');
+
+-- Dumping structure for table ads_played
+CREATE TABLE IF NOT EXISTS `ads_played` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `ads_id` int unsigned NOT NULL,
+  `player_id` int unsigned NOT NULL,
+  `started_at` datetime NOT NULL DEFAULT (0),
+  `ended_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `ads_id` (`ads_id`),
+  KEY `player_id` (`player_id`),
+  CONSTRAINT `FK_ads_played_ads` FOREIGN KEY (`ads_id`) REFERENCES `ads` (`id`),
+  CONSTRAINT `FK_ads_played_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- Dumping data for table ads_played: ~2 rows (approximately)
+INSERT INTO `ads_played` (`id`, `ads_id`, `player_id`, `started_at`, `ended_at`) VALUES
+	(7, 5, 1, '2023-09-20 21:02:29', '2023-09-20 21:02:34'),
+	(8, 6, 1, '2023-09-20 21:02:16', '2023-09-20 21:02:26');
+
+-- Dumping structure for table ads_providers
+CREATE TABLE IF NOT EXISTS `ads_providers` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `key` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `enabled` int unsigned NOT NULL DEFAULT '1',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `key` (`key`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- Dumping data for table ads_providers: ~1 rows (approximately)
+INSERT INTO `ads_providers` (`id`, `key`, `enabled`) VALUES
+	(1, 'crazyGames', 1),
+	(2, 'gameMonetize', 1);
+
+-- Dumping structure for table ads_types
+CREATE TABLE IF NOT EXISTS `ads_types` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `key` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `key` (`key`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- Dumping data for table ads_types: ~2 rows (approximately)
+INSERT INTO `ads_types` (`id`, `key`) VALUES
+	(1, 'banner'),
+	(2, 'eventVideo');
 
 -- Dumping structure for table audio
 CREATE TABLE IF NOT EXISTS `audio` (
@@ -239,9 +348,9 @@ CREATE TABLE IF NOT EXISTS `config` (
   UNIQUE KEY `scope_path` (`scope`,`path`),
   KEY `FK_config_config_types` (`type`),
   CONSTRAINT `FK_config_config_types` FOREIGN KEY (`type`) REFERENCES `config_types` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=316 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=322 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table config: ~283 rows (approximately)
+-- Dumping data for table config: ~282 rows (approximately)
 INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(1, 'server', 'rooms/validation/valid', 'room_game,chat_global', 1),
 	(2, 'server', 'players/initialState/room_id', '4', 2),
@@ -525,7 +634,11 @@ INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(312, 'client', 'login/termsAndConditions/heading', 'Terms and conditions', 1),
 	(313, 'client', 'login/termsAndConditions/body', 'This is our test terms and conditions content.', 1),
 	(314, 'client', 'login/termsAndConditions/checkboxLabel', 'Accept terms and conditions', 1),
-	(315, 'client', 'ui/chat/showTabs', '1', 3);
+	(315, 'client', 'ui/chat/showTabs', '1', 3),
+	(317, 'client', 'ads/general/providers/crazyGames/sdkUrl', 'https://sdk.crazygames.com/crazygames-sdk-v2.js', 1),
+	(319, 'client', 'ads/general/providers/crazyGames/videoMinimumDuration', '3000', 2),
+	(320, 'client', 'ads/general/providers/gameMonetize/sdkUrl', 'https://api.gamemonetize.com/sdk.js', 1),
+	(321, 'client', 'ads/general/providers/gameMonetize/gameId', '9mij4bcnlj6itw4ywvbnkxu7h96hidw0', 1);
 
 -- Dumping structure for table config_types
 CREATE TABLE IF NOT EXISTS `config_types` (
@@ -550,9 +663,9 @@ CREATE TABLE IF NOT EXISTS `features` (
   `is_enabled` tinyint unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   UNIQUE KEY `code` (`code`)
-) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table features: ~14 rows (approximately)
+-- Dumping data for table features: ~15 rows (approximately)
 INSERT INTO `features` (`id`, `code`, `title`, `is_enabled`) VALUES
 	(1, 'chat', 'Chat', 1),
 	(2, 'objects', 'Objects', 1),
@@ -567,7 +680,8 @@ INSERT INTO `features` (`id`, `code`, `title`, `is_enabled`) VALUES
 	(11, 'prediction', 'Prediction', 0),
 	(12, 'teams', 'Teams', 1),
 	(13, 'rewards', 'Rewards', 1),
-	(14, 'snippets', 'Snippets', 1);
+	(14, 'snippets', 'Snippets', 1),
+	(16, 'ads', 'Ads', 1);
 
 -- Dumping structure for table items_group
 CREATE TABLE IF NOT EXISTS `items_group` (
@@ -659,10 +773,10 @@ INSERT INTO `items_item_modifiers` (`id`, `item_id`, `key`, `property_key`, `ope
 -- Dumping structure for table items_types
 CREATE TABLE IF NOT EXISTS `items_types` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `key` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `key` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `key` (`key`)
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping data for table items_types: ~6 rows (approximately)
 INSERT INTO `items_types` (`id`, `key`) VALUES
@@ -676,12 +790,12 @@ INSERT INTO `items_types` (`id`, `key`) VALUES
 -- Dumping structure for table locale
 CREATE TABLE IF NOT EXISTS `locale` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `locale` varchar(5) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `language_code` varchar(2) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `country_code` varchar(2) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `locale` varchar(5) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `language_code` varchar(2) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `country_code` varchar(2) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
   `enabled` int unsigned NOT NULL DEFAULT '1',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping data for table locale: ~1 rows (approximately)
 INSERT INTO `locale` (`id`, `locale`, `language_code`, `country_code`, `enabled`) VALUES
@@ -916,10 +1030,10 @@ INSERT INTO `objects_stats` (`id`, `object_id`, `stat_id`, `base_value`, `value`
 -- Dumping structure for table objects_types
 CREATE TABLE IF NOT EXISTS `objects_types` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `key` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `key` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `key` (`key`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping data for table objects_types: ~7 rows (approximately)
 INSERT INTO `objects_types` (`id`, `key`) VALUES
@@ -964,7 +1078,7 @@ CREATE TABLE IF NOT EXISTS `players` (
   CONSTRAINT `FK_players_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table players: ~2 rows (approximately)
+-- Dumping data for table players: ~1 rows (approximately)
 INSERT INTO `players` (`id`, `user_id`, `name`, `created_at`) VALUES
 	(1, 1, 'Darth', '2022-03-17 19:57:50');
 
@@ -985,7 +1099,7 @@ CREATE TABLE IF NOT EXISTS `players_state` (
 
 -- Dumping data for table players_state: ~1 rows (approximately)
 INSERT INTO `players_state` (`id`, `player_id`, `room_id`, `x`, `y`, `dir`) VALUES
-	(1, 1, 5, 753, 567, 'down');
+	(1, 1, 4, 736, 429, 'down');
 
 -- Dumping structure for table players_stats
 CREATE TABLE IF NOT EXISTS `players_stats` (
@@ -1002,7 +1116,7 @@ CREATE TABLE IF NOT EXISTS `players_stats` (
   CONSTRAINT `FK_players_current_stats_players_stats` FOREIGN KEY (`stat_id`) REFERENCES `stats` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table players_stats: ~20 rows (approximately)
+-- Dumping data for table players_stats: ~10 rows (approximately)
 INSERT INTO `players_stats` (`id`, `player_id`, `stat_id`, `base_value`, `value`) VALUES
 	(1, 1, 1, 280, 194),
 	(2, 1, 2, 280, 120),
@@ -1689,12 +1803,12 @@ CREATE TABLE IF NOT EXISTS `skills_skill_target_effects_conditions` (
 CREATE TABLE IF NOT EXISTS `snippets` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `locale_id` int unsigned NOT NULL,
-  `key` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `value` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `key` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `value` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   PRIMARY KEY (`id`),
   KEY `locale_id` (`locale_id`),
   CONSTRAINT `FK_snippets_locale` FOREIGN KEY (`locale_id`) REFERENCES `locale` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping structure for table stats
 CREATE TABLE IF NOT EXISTS `stats` (
@@ -1753,7 +1867,7 @@ CREATE TABLE IF NOT EXISTS `users` (
 
 -- Dumping data for table users: ~1 rows (approximately)
 INSERT INTO `users` (`id`, `email`, `username`, `password`, `role_id`, `status`, `created_at`, `updated_at`, `played_time`) VALUES
-	(1, 'dap@dap.com', 'dap', '$2b$10$RDnURyFoXo7.zcFKVhNcuezJsXXYNslhPBNPzi.crbikFhG8Pnude', 1, '1', '2022-03-17 18:57:44', '2023-07-20 16:13:55', 838993);
+	(1, 'dap@dap.com', 'dap', '$2b$10$RDnURyFoXo7.zcFKVhNcuezJsXXYNslhPBNPzi.crbikFhG8Pnude', 1, '1', '2022-03-17 18:57:44', '2023-09-20 19:02:43', 855744);
 
 -- Dumping structure for table users_locale
 CREATE TABLE IF NOT EXISTS `users_locale` (
@@ -1766,7 +1880,7 @@ CREATE TABLE IF NOT EXISTS `users_locale` (
   KEY `player_id` (`user_id`) USING BTREE,
   CONSTRAINT `FK_players_locale_locale` FOREIGN KEY (`locale_id`) REFERENCES `locale` (`id`),
   CONSTRAINT `FK_users_locale_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping data for table users_locale: ~1 rows (approximately)
 INSERT INTO `users_locale` (`id`, `locale_id`, `user_id`) VALUES
