@@ -50,7 +50,7 @@ CREATE TABLE `players_locale` (
 	CONSTRAINT `FK_players_locale_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
 ) COLLATE='utf8_unicode_ci' ENGINE=InnoDB;
 
-INSERT INTO `locale` VALUES (1, 'en_US', 'en', 'US');
+INSERT INTO `locale` VALUES (NULL, 'en_US', 'en', 'US', true);
 
 # Features:
 ALTER TABLE `features` ADD UNIQUE INDEX `code` (`code`);
@@ -80,15 +80,15 @@ INSERT INTO `chat_message_types` VALUES (8, 'teams', 1, 1);
 INSERT INTO `chat_message_types` VALUES (9, 'global', 1, 1);
 INSERT INTO `chat_message_types` VALUES (10, 'error', 0, 1);
 
-SET @message_id = (SELECT `id` FROM `chat_message_types` WHERE `label` = 'message');
-SET @joined_id = (SELECT `id` FROM `chat_message_types` WHERE `label` = 'joined');
-SET @system_id = (SELECT `id` FROM `chat_message_types` WHERE `label` = 'system');
-SET @private_id = (SELECT `id` FROM `chat_message_types` WHERE `label` = 'private');
-SET @damage_id = (SELECT `id` FROM `chat_message_types` WHERE `label` = 'damage');
-SET @reward_id = (SELECT `id` FROM `chat_message_types` WHERE `label` = 'reward');
-SET @skill_id = (SELECT `id` FROM `chat_message_types` WHERE `label` = 'skill');
-SET @teams_id = (SELECT `id` FROM `chat_message_types` WHERE `label` = 'teams');
-SET @global_id = (SELECT `id` FROM `chat_message_types` WHERE `label` = 'global');
+SET @message_id = (SELECT `id` FROM `chat_message_types` WHERE `key` = 'message');
+SET @joined_id = (SELECT `id` FROM `chat_message_types` WHERE `key` = 'joined');
+SET @system_id = (SELECT `id` FROM `chat_message_types` WHERE `key` = 'system');
+SET @private_id = (SELECT `id` FROM `chat_message_types` WHERE `key` = 'private');
+SET @damage_id = (SELECT `id` FROM `chat_message_types` WHERE `key` = 'damage');
+SET @reward_id = (SELECT `id` FROM `chat_message_types` WHERE `key` = 'reward');
+SET @skill_id = (SELECT `id` FROM `chat_message_types` WHERE `key` = 'skill');
+SET @teams_id = (SELECT `id` FROM `chat_message_types` WHERE `key` = 'teams');
+SET @global_id = (SELECT `id` FROM `chat_message_types` WHERE `key` = 'global');
 
 UPDATE `chat` SET `message_type` = @message_id WHERE `message_type` = 'm';
 UPDATE `chat` SET `message_type` = @joined_id WHERE `message_type` = 'j';
