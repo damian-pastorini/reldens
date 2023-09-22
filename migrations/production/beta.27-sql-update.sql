@@ -179,13 +179,7 @@ CREATE TABLE `ads_providers` (
 	`enabled` INT(10) UNSIGNED NOT NULL DEFAULT '1',
 	PRIMARY KEY (`id`) USING BTREE,
 	UNIQUE INDEX `key` (`key`) USING BTREE
-) COLLATE='utf8_unicode_ci' ENGINE=InnoDB AUTO_INCREMENT=3;
-
-INSERT INTO `ads_providers` (`key`) VALUES ('crazyGames');
-INSERT INTO `ads_providers` (`key`) VALUES ('gameMonetize');
-
-SET @crazyGames_id = (SELECT `id` FROM `ads_providers` WHERE `key` = 'crazyGames');
-SET @gameMonetize_id = (SELECT `id` FROM `ads_providers` WHERE `key` = 'gameMonetize');
+) COLLATE='utf8_unicode_ci' ENGINE=InnoDB AUTO_INCREMENT=1;
 
 CREATE TABLE `ads_types` (
 	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -193,12 +187,6 @@ CREATE TABLE `ads_types` (
 	PRIMARY KEY (`id`) USING BTREE,
 	UNIQUE INDEX `key` (`key`) USING BTREE
 ) COLLATE='utf8_unicode_ci' ENGINE=InnoDB;
-
-INSERT INTO `ads_types` (`id`, `key`) VALUES (NULL, 'banner');
-INSERT INTO `ads_types` (`id`, `key`) VALUES (NULL, 'eventVideo');
-
-SET @adTypeBanner_id = (SELECT `id` FROM `ads_providers` WHERE `key` = 'banner');
-SET @adTypeEventVideo_id = (SELECT `id` FROM `ads_providers` WHERE `key` = 'eventVideo');
 
 CREATE TABLE `ads` (
 	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -257,10 +245,22 @@ CREATE TABLE `ads_played` (
 ) COLLATE='utf8_unicode_ci' ENGINE=InnoDB AUTO_INCREMENT=1;
 
 # Ads sample data:
-INSERT INTO `ads` (`id`, `key`, `provider_id`, `type_id`, `width`, `height`, `position`, `top`, `bottom`, `left`, `right`, `replay`, `enabled`) VALUES (1, 'fullTimeBanner', 1, 1, 320, 50, NULL, NULL, 0, NULL, 80, NULL, 0);
-INSERT INTO `ads` (`id`, `key`, `provider_id`, `type_id`, `width`, `height`, `position`, `top`, `bottom`, `left`, `right`, `replay`, `enabled`) VALUES (2, 'ui-banner', 1, 1, 320, 50, NULL, NULL, 80, NULL, 80, NULL, 0);
-INSERT INTO `ads` (`id`, `key`, `provider_id`, `type_id`, `width`, `height`, `position`, `top`, `bottom`, `left`, `right`, `replay`, `enabled`) VALUES (3, 'crazy-games-sample-video', 1, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 0);
-INSERT INTO `ads` (`id`, `key`, `provider_id`, `type_id`, `width`, `height`, `position`, `top`, `bottom`, `left`, `right`, `replay`, `enabled`) VALUES (4, 'game-monetize-sample-video', 2, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 0);
+INSERT INTO `ads_providers` (`key`) VALUES ('crazyGames');
+INSERT INTO `ads_providers` (`key`) VALUES ('gameMonetize');
+
+SET @crazyGames_id = (SELECT `id` FROM `ads_providers` WHERE `key` = 'crazyGames');
+SET @gameMonetize_id = (SELECT `id` FROM `ads_providers` WHERE `key` = 'gameMonetize');
+
+INSERT INTO `ads_types` (`id`, `key`) VALUES (NULL, 'banner');
+INSERT INTO `ads_types` (`id`, `key`) VALUES (NULL, 'eventVideo');
+
+SET @adTypeBanner_id = (SELECT `id` FROM `ads_types` WHERE `key` = 'banner');
+SET @adTypeEventVideo_id = (SELECT `id` FROM `ads_types` WHERE `key` = 'eventVideo');
+
+INSERT INTO `ads` (`id`, `key`, `provider_id`, `type_id`, `width`, `height`, `position`, `top`, `bottom`, `left`, `right`, `replay`, `enabled`) VALUES (1, 'fullTimeBanner', @crazyGames_id, @adTypeBanner_id, 320, 50, NULL, NULL, 0, NULL, 80, NULL, 0);
+INSERT INTO `ads` (`id`, `key`, `provider_id`, `type_id`, `width`, `height`, `position`, `top`, `bottom`, `left`, `right`, `replay`, `enabled`) VALUES (2, 'ui-banner', @crazyGames_id, @adTypeBanner_id, 320, 50, NULL, NULL, 80, NULL, 80, NULL, 0);
+INSERT INTO `ads` (`id`, `key`, `provider_id`, `type_id`, `width`, `height`, `position`, `top`, `bottom`, `left`, `right`, `replay`, `enabled`) VALUES (3, 'crazy-games-sample-video', @crazyGames_id, @adTypeEventVideo_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 0);
+INSERT INTO `ads` (`id`, `key`, `provider_id`, `type_id`, `width`, `height`, `position`, `top`, `bottom`, `left`, `right`, `replay`, `enabled`) VALUES (4, 'game-monetize-sample-video', @gameMonetize_id, @adTypeEventVideo_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 0);
 
 INSERT INTO `ads_banner` (`id`, `ads_id`, `banner_data`) VALUES (NULL, 1, '{"fullTime": true}');
 INSERT INTO `ads_banner` (`id`, `ads_id`, `banner_data`) VALUES (NULL, 2, '{"uiReferenceIds":["box-open-clan","equipment-open","inventory-open","player-stats-open"]}');
