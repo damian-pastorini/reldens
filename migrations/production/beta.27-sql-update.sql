@@ -18,6 +18,10 @@ INSERT INTO `config` VALUES (NULL, 'client', 'ads/general/providers/crazyGames/v
 INSERT INTO `config` VALUES (NULL, 'client', 'ads/general/providers/gameMonetize/enabled', '1', @boolean_id);
 INSERT INTO `config` VALUES (NULL, 'client', 'ads/general/providers/gameMonetize/sdkUrl', 'https://api.gamemonetize.com/sdk.js', @string_id);
 INSERT INTO `config` VALUES (NULL, 'client', 'ads/general/providers/gameMonetize/gameId', 'your-game-id-should-be-here', @string_id);
+INSERT INTO `config` VALUES (NULL, 'client', 'login/termsAndConditions/es/body', 'Este es el contenido de nuestros términos y condiciones de prueba.', @string_id);
+INSERT INTO `config` VALUES (NULL, 'client', 'login/termsAndConditions/es/checkboxLabel', 'Aceptar terminos y condiciones', @string_id);
+INSERT INTO `config` VALUES (NULL, 'client', 'login/termsAndConditions/es/heading', 'Términos y condiciones', @string_id);
+INSERT INTO `config` VALUES (NULL, 'client', 'login/termsAndConditions/es/link', 'Acepta nuestros Términos y Condiciones (haz clic aquí).', @string_id);
 
 # Snippets:
 CREATE TABLE `locale` (
