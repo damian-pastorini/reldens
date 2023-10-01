@@ -15,7 +15,7 @@ INSERT INTO `config` VALUES (NULL, 'client', 'ui/chat/showTabs', '1', @boolean_i
 INSERT INTO `config` VALUES (NULL, 'client', 'ads/general/providers/crazyGames/enabled', '1', @boolean_id);
 INSERT INTO `config` VALUES (NULL, 'client', 'ads/general/providers/crazyGames/sdkUrl', 'https://sdk.crazygames.com/crazygames-sdk-v2.js', @string_id);
 INSERT INTO `config` VALUES (NULL, 'client', 'ads/general/providers/crazyGames/videoMinimumDuration', '3000', @float_id);
-INSERT INTO `config` VALUES (NULL, 'client', 'ads/general/providers/gameMonetize/enabled', '1', @boolean_id);
+INSERT INTO `config` VALUES (NULL, 'client', 'ads/general/providers/gameMonetize/enabled', '0', @boolean_id);
 INSERT INTO `config` VALUES (NULL, 'client', 'ads/general/providers/gameMonetize/sdkUrl', 'https://api.gamemonetize.com/sdk.js', @string_id);
 INSERT INTO `config` VALUES (NULL, 'client', 'ads/general/providers/gameMonetize/gameId', 'your-game-id-should-be-here', @string_id);
 INSERT INTO `config` VALUES (NULL, 'client', 'login/termsAndConditions/es/body', 'Este es el contenido de nuestros términos y condiciones de prueba.', @string_id);
@@ -262,8 +262,8 @@ SET @adTypeBanner_id = (SELECT `id` FROM `ads_types` WHERE `key` = 'banner');
 SET @adTypeEventVideo_id = (SELECT `id` FROM `ads_types` WHERE `key` = 'eventVideo');
 
 INSERT INTO `ads` (`id`, `key`, `provider_id`, `type_id`, `width`, `height`, `position`, `top`, `bottom`, `left`, `right`, `replay`, `enabled`) VALUES (1, 'fullTimeBanner', @crazyGames_id, @adTypeBanner_id, 320, 50, NULL, NULL, 0, NULL, 80, NULL, 0);
-INSERT INTO `ads` (`id`, `key`, `provider_id`, `type_id`, `width`, `height`, `position`, `top`, `bottom`, `left`, `right`, `replay`, `enabled`) VALUES (2, 'ui-banner', @crazyGames_id, @adTypeBanner_id, 320, 50, NULL, NULL, 80, NULL, 80, NULL, 0);
-INSERT INTO `ads` (`id`, `key`, `provider_id`, `type_id`, `width`, `height`, `position`, `top`, `bottom`, `left`, `right`, `replay`, `enabled`) VALUES (3, 'crazy-games-sample-video', @crazyGames_id, @adTypeEventVideo_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 0);
+INSERT INTO `ads` (`id`, `key`, `provider_id`, `type_id`, `width`, `height`, `position`, `top`, `bottom`, `left`, `right`, `replay`, `enabled`) VALUES (2, 'ui-banner', @crazyGames_id, @adTypeBanner_id, 320, 50, NULL, NULL, 80, NULL, 80, NULL, 1);
+INSERT INTO `ads` (`id`, `key`, `provider_id`, `type_id`, `width`, `height`, `position`, `top`, `bottom`, `left`, `right`, `replay`, `enabled`) VALUES (3, 'crazy-games-sample-video', @crazyGames_id, @adTypeEventVideo_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 1);
 INSERT INTO `ads` (`id`, `key`, `provider_id`, `type_id`, `width`, `height`, `position`, `top`, `bottom`, `left`, `right`, `replay`, `enabled`) VALUES (4, 'game-monetize-sample-video', @gameMonetize_id, @adTypeEventVideo_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 0);
 
 INSERT INTO `ads_banner` (`id`, `ads_id`, `banner_data`) VALUES (NULL, 1, '{"fullTime": true}');
