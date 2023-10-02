@@ -22,6 +22,7 @@ INSERT INTO `config` VALUES (NULL, 'client', 'login/termsAndConditions/es/body',
 INSERT INTO `config` VALUES (NULL, 'client', 'login/termsAndConditions/es/checkboxLabel', 'Aceptar terminos y condiciones', @string_id);
 INSERT INTO `config` VALUES (NULL, 'client', 'login/termsAndConditions/es/heading', 'Términos y condiciones', @string_id);
 INSERT INTO `config` VALUES (NULL, 'client', 'login/termsAndConditions/es/link', 'Acepta nuestros Términos y Condiciones (haz clic aquí).', @string_id);
+UPDATE `config` SET `value` = '0.15' WHERE `scope` = 'client' AND `path` = 'ui/minimap/camZoom';
 
 # Snippets:
 CREATE TABLE `locale` (

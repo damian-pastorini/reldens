@@ -520,7 +520,7 @@ INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(186, 'client', 'ui/minimap/camX', '140', 2),
 	(187, 'client', 'ui/minimap/camY', '10', 2),
 	(188, 'client', 'ui/minimap/camBackgroundColor', 'rgba(0,0,0,0.6)', 1),
-	(189, 'client', 'ui/minimap/camZoom', '0.35', 2),
+	(189, 'client', 'ui/minimap/camZoom', '0.15', 2),
 	(191, 'client', 'ui/minimap/addCircle', '1', 3),
 	(192, 'client', 'ui/minimap/circleX', '220', 2),
 	(193, 'client', 'ui/minimap/circleY', '88', 2),

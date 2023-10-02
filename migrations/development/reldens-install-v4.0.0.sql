@@ -4,7 +4,6 @@
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET NAMES utf8 */;
-/*!50503 SET NAMES utf8 */;
 /*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
 /*!40103 SET TIME_ZONE='+00:00' */;
 /*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
@@ -34,12 +33,12 @@ CREATE TABLE IF NOT EXISTS `ads` (
   CONSTRAINT `FK_ads_ads_types` FOREIGN KEY (`type_id`) REFERENCES `ads_types` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table ads: ~3 rows (approximately)
+-- Dumping data for table ads: ~4 rows (approximately)
 INSERT INTO `ads` (`id`, `key`, `provider_id`, `type_id`, `width`, `height`, `position`, `top`, `bottom`, `left`, `right`, `replay`, `enabled`) VALUES
-	(3, 'fullTimeBanner', 1, 1, 320, 50, NULL, NULL, 0, NULL, 80, NULL, 1),
+	(3, 'fullTimeBanner', 1, 1, 320, 50, NULL, NULL, 0, NULL, 80, NULL, 0),
 	(4, 'ui-banner', 1, 1, 320, 50, NULL, NULL, 80, NULL, 80, NULL, 1),
 	(5, 'crazy-games-sample-video', 1, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 1),
-	(6, 'game-monetize-sample-video', 2, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 1);
+	(6, 'game-monetize-sample-video', 2, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 0);
 
 -- Dumping structure for table ads_banner
 CREATE TABLE IF NOT EXISTS `ads_banner` (
@@ -51,7 +50,7 @@ CREATE TABLE IF NOT EXISTS `ads_banner` (
   CONSTRAINT `FK_ads_banner_ads` FOREIGN KEY (`ads_id`) REFERENCES `ads` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table ads_banner: ~0 rows (approximately)
+-- Dumping data for table ads_banner: ~2 rows (approximately)
 INSERT INTO `ads_banner` (`id`, `ads_id`, `banner_data`) VALUES
 	(1, 3, '{"fullTime": true}'),
 	(2, 4, '{"uiReferenceIds":["box-open-clan","equipment-open","inventory-open","player-stats-open"]}');
@@ -90,8 +89,8 @@ CREATE TABLE IF NOT EXISTS `ads_played` (
 
 -- Dumping data for table ads_played: ~2 rows (approximately)
 INSERT INTO `ads_played` (`id`, `ads_id`, `player_id`, `started_at`, `ended_at`) VALUES
-	(7, 5, 1, '2023-09-20 21:02:29', '2023-09-20 21:02:34'),
-	(8, 6, 1, '2023-09-20 21:02:16', '2023-09-20 21:02:26');
+	(7, 5, 1, '2023-10-01 11:37:00', '2023-10-01 11:37:05'),
+	(8, 6, 1, '2023-09-28 21:00:31', '2023-09-28 21:00:41');
 
 -- Dumping structure for table ads_providers
 CREATE TABLE IF NOT EXISTS `ads_providers` (
@@ -102,10 +101,10 @@ CREATE TABLE IF NOT EXISTS `ads_providers` (
   UNIQUE KEY `key` (`key`)
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table ads_providers: ~1 rows (approximately)
+-- Dumping data for table ads_providers: ~2 rows (approximately)
 INSERT INTO `ads_providers` (`id`, `key`, `enabled`) VALUES
 	(1, 'crazyGames', 1),
-	(2, 'gameMonetize', 1);
+	(2, 'gameMonetize', 0);
 
 -- Dumping structure for table ads_types
 CREATE TABLE IF NOT EXISTS `ads_types` (
@@ -299,7 +298,7 @@ CREATE TABLE IF NOT EXISTS `clan_levels` (
   UNIQUE KEY `key` (`key`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table clan_levels: ~0 rows (approximately)
+-- Dumping data for table clan_levels: ~1 rows (approximately)
 INSERT INTO `clan_levels` (`id`, `key`, `label`, `required_experience`) VALUES
 	(1, 1, '1', 0);
 
@@ -348,9 +347,9 @@ CREATE TABLE IF NOT EXISTS `config` (
   UNIQUE KEY `scope_path` (`scope`,`path`),
   KEY `FK_config_config_types` (`type`),
   CONSTRAINT `FK_config_config_types` FOREIGN KEY (`type`) REFERENCES `config_types` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=322 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=326 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table config: ~282 rows (approximately)
+-- Dumping data for table config: ~291 rows (approximately)
 INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(1, 'server', 'rooms/validation/valid', 'room_game,chat_global', 1),
 	(2, 'server', 'players/initialState/room_id', '4', 2),
@@ -521,7 +520,7 @@ INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(186, 'client', 'ui/minimap/camX', '140', 2),
 	(187, 'client', 'ui/minimap/camY', '10', 2),
 	(188, 'client', 'ui/minimap/camBackgroundColor', 'rgba(0,0,0,0.6)', 1),
-	(189, 'client', 'ui/minimap/camZoom', '0.35', 2),
+	(189, 'client', 'ui/minimap/camZoom', '0.15', 2),
 	(191, 'client', 'ui/minimap/addCircle', '1', 3),
 	(192, 'client', 'ui/minimap/circleX', '220', 2),
 	(193, 'client', 'ui/minimap/circleY', '88', 2),
@@ -638,7 +637,11 @@ INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(317, 'client', 'ads/general/providers/crazyGames/sdkUrl', 'https://sdk.crazygames.com/crazygames-sdk-v2.js', 1),
 	(319, 'client', 'ads/general/providers/crazyGames/videoMinimumDuration', '3000', 2),
 	(320, 'client', 'ads/general/providers/gameMonetize/sdkUrl', 'https://api.gamemonetize.com/sdk.js', 1),
-	(321, 'client', 'ads/general/providers/gameMonetize/gameId', '9mij4bcnlj6itw4ywvbnkxu7h96hidw0', 1);
+	(321, 'client', 'ads/general/providers/gameMonetize/gameId', '9mij4bcnlj6itw4ywvbnkxu7h96hidw0', 1),
+	(322, 'client', 'login/termsAndConditions/es/body', 'Este es el contenido de nuestros términos y condiciones de prueba.', 1),
+	(323, 'client', 'login/termsAndConditions/es/checkboxLabel', 'Aceptar terminos y condiciones', 1),
+	(324, 'client', 'login/termsAndConditions/es/heading', 'Términos y condiciones', 1),
+	(325, 'client', 'login/termsAndConditions/es/link', 'Acepta nuestros Términos y Condiciones (haz clic aquí).', 1);
 
 -- Dumping structure for table config_types
 CREATE TABLE IF NOT EXISTS `config_types` (
@@ -985,7 +988,7 @@ CREATE TABLE IF NOT EXISTS `objects_skills` (
   CONSTRAINT `FK_objects_skills_target_options` FOREIGN KEY (`target`) REFERENCES `target_options` (`target_key`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table objects_skills: ~0 rows (approximately)
+-- Dumping data for table objects_skills: ~1 rows (approximately)
 INSERT INTO `objects_skills` (`id`, `object_id`, `skill_id`, `target`) VALUES
 	(1, 6, 1, 1);
 
@@ -1099,7 +1102,7 @@ CREATE TABLE IF NOT EXISTS `players_state` (
 
 -- Dumping data for table players_state: ~1 rows (approximately)
 INSERT INTO `players_state` (`id`, `player_id`, `room_id`, `x`, `y`, `dir`) VALUES
-	(1, 1, 4, 736, 429, 'down');
+	(1, 1, 4, 979, 552, 'down');
 
 -- Dumping structure for table players_stats
 CREATE TABLE IF NOT EXISTS `players_stats` (
@@ -1867,7 +1870,7 @@ CREATE TABLE IF NOT EXISTS `users` (
 
 -- Dumping data for table users: ~1 rows (approximately)
 INSERT INTO `users` (`id`, `email`, `username`, `password`, `role_id`, `status`, `created_at`, `updated_at`, `played_time`) VALUES
-	(1, 'dap@dap.com', 'dap', '$2b$10$RDnURyFoXo7.zcFKVhNcuezJsXXYNslhPBNPzi.crbikFhG8Pnude', 1, '1', '2022-03-17 18:57:44', '2023-09-20 19:02:43', 855744);
+	(1, 'dap@dap.com', 'dap', '$2b$10$RDnURyFoXo7.zcFKVhNcuezJsXXYNslhPBNPzi.crbikFhG8Pnude', 1, '1', '2022-03-17 18:57:44', '2023-10-01 09:37:17', 856025);
 
 -- Dumping structure for table users_locale
 CREATE TABLE IF NOT EXISTS `users_locale` (
