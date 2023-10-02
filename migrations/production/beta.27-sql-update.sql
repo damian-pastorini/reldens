@@ -170,7 +170,7 @@ ALTER TABLE `objects` ADD CONSTRAINT `FK_objects_objects_types` FOREIGN KEY (`cl
 UPDATE `objects` SET `class_type`=2 WHERE `object_class_key` = 'door_1' AND `client_key`='door_house_1';
 UPDATE `objects` SET `class_type`=2 WHERE `object_class_key` = 'door_2' AND `client_key`='door_house_2';
 UPDATE `objects` SET `class_type`=3 WHERE `object_class_key` = 'npc_1' AND `client_key`='people_town_1';
-UPDATE `objects` SET `class_type`=7, `private_params` = '{"shouldRespawn":true,childObjectType":4,"isAggressive":true}' WHERE `object_class_key` = 'enemy_1' AND `client_key`='enemy_forest_1';
+UPDATE `objects` SET `class_type`=7, `private_params` = '{"shouldRespawn":true,"childObjectType":4,"isAggressive":true}' WHERE `object_class_key` = 'enemy_1' AND `client_key`='enemy_forest_1';
 UPDATE `objects` SET `class_type`=7, `private_params` = '{"shouldRespawn":true,"childObjectType":4}' WHERE `object_class_key` = 'enemy_2' AND `client_key`='enemy_forest_2';
 UPDATE `objects` SET `class_type`=3 WHERE `object_class_key` = 'npc_2' AND `client_key`='healer_1';
 UPDATE `objects` SET `class_type`=5 WHERE `object_class_key` = 'npc_3' AND `client_key`='merchant_1';
