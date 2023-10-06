@@ -36,8 +36,8 @@ CREATE TABLE IF NOT EXISTS `ads` (
 -- Dumping data for table ads: ~4 rows (approximately)
 INSERT INTO `ads` (`id`, `key`, `provider_id`, `type_id`, `width`, `height`, `position`, `top`, `bottom`, `left`, `right`, `replay`, `enabled`) VALUES
 	(3, 'fullTimeBanner', 1, 1, 320, 50, NULL, NULL, 0, NULL, 80, NULL, 0),
-	(4, 'ui-banner', 1, 1, 320, 50, NULL, NULL, 80, NULL, 80, NULL, 1),
-	(5, 'crazy-games-sample-video', 1, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 1),
+	(4, 'ui-banner', 1, 1, 320, 50, NULL, NULL, 80, NULL, 80, NULL, 0),
+	(5, 'crazy-games-sample-video', 1, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 0),
 	(6, 'game-monetize-sample-video', 2, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 0);
 
 -- Dumping structure for table ads_banner
@@ -78,7 +78,7 @@ CREATE TABLE IF NOT EXISTS `ads_played` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `ads_id` int unsigned NOT NULL,
   `player_id` int unsigned NOT NULL,
-  `started_at` datetime NOT NULL DEFAULT (0),
+  `started_at` datetime NOT NULL DEFAULT (now()),
   `ended_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `ads_id` (`ads_id`),
@@ -103,7 +103,7 @@ CREATE TABLE IF NOT EXISTS `ads_providers` (
 
 -- Dumping data for table ads_providers: ~2 rows (approximately)
 INSERT INTO `ads_providers` (`id`, `key`, `enabled`) VALUES
-	(1, 'crazyGames', 1),
+	(1, 'crazyGames', 0),
 	(2, 'gameMonetize', 0);
 
 -- Dumping structure for table ads_types
@@ -637,7 +637,7 @@ INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(317, 'client', 'ads/general/providers/crazyGames/sdkUrl', 'https://sdk.crazygames.com/crazygames-sdk-v2.js', 1),
 	(319, 'client', 'ads/general/providers/crazyGames/videoMinimumDuration', '3000', 2),
 	(320, 'client', 'ads/general/providers/gameMonetize/sdkUrl', 'https://api.gamemonetize.com/sdk.js', 1),
-	(321, 'client', 'ads/general/providers/gameMonetize/gameId', '9mij4bcnlj6itw4ywvbnkxu7h96hidw0', 1),
+	(321, 'client', 'ads/general/providers/gameMonetize/gameId', 'your-game-id-should-be-here', 1),
 	(322, 'client', 'login/termsAndConditions/es/body', 'Este es el contenido de nuestros términos y condiciones de prueba.', 1),
 	(323, 'client', 'login/termsAndConditions/es/checkboxLabel', 'Aceptar terminos y condiciones', 1),
 	(324, 'client', 'login/termsAndConditions/es/heading', 'Términos y condiciones', 1),
