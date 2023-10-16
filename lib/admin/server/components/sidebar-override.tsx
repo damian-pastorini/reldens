@@ -1,8 +1,8 @@
 // @ts-ignore
 import React from 'react';
-import styled from 'styled-components';
 import { useSelector } from 'react-redux';
 import { Box, cssClass, themeGet } from '@adminjs/design-system';
+import { styled } from '@adminjs/design-system/styled-components';
 import { BrandingOptions } from 'adminjs/src/adminjs-options.interface';
 import { ResourceJSON, PageJSON } from 'adminjs/src/frontend/interfaces';
 import SidebarBranding from 'adminjs/src/frontend/components/app/sidebar/sidebar-branding';

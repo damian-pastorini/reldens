@@ -7,7 +7,7 @@
 // @ts-ignore
 import React, { useState, useEffect } from 'react';
 import { ApiClient } from 'adminjs';
-import styled from 'styled-components';
+import { styled } from '@adminjs/design-system/styled-components';
 import { Box, H2, H4, Text, Illustration } from '@adminjs/design-system';
 import { useTranslation } from 'adminjs/src/frontend/hooks/index';
 

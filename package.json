@@ -34,9 +34,10 @@
         "npm": ">=8.0.0"
     },
     "dependencies": {
-        "@adminjs/design-system": "2.1.2",
-        "@adminjs/express": "4.1.0",
-        "@adminjs/upload": "2.0.2",
+        "@adminjs/bundler": "3.0.0",
+        "@adminjs/design-system": "4.0.3",
+        "@adminjs/express": "6.0.1",
+        "@adminjs/upload": "4.0.1",
         "@colyseus/monitor": "0.15.1",
         "@colyseus/schema": "2.0.18",
         "@colyseus/ws-transport": "0.15.1",
@@ -84,7 +85,7 @@
         "@reldens/skills": "^0.18.0",
         "@reldens/storage": "^0.15.0",
         "@reldens/utils": "^0.20.1",
-        "adminjs": "5.7.3",
+        "adminjs": "^7.2.2",
         "bcrypt": "5.1.1",
         "colyseus": "0.15.9",
         "colyseus.js": "0.15.14",
@@ -103,7 +104,7 @@
         "p2": "0.7.1",
         "pathfinding": "0.4.18",
         "phaser": "3.60.0",
-        "react": "16.14.0",
+        "react": "^18.1.0",
         "regenerator-runtime": "0.14.0",
         "tslib": "2.6.2"
     }
