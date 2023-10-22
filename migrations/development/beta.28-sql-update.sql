@@ -15,6 +15,7 @@ UPDATE `ads_providers` SET `enabled` = 0;
 UPDATE `ads` SET `enabled` = 0;
 
 UPDATE `config` SET `value` = 0 WHERE `path` = 'ads/general/providers/gameMonetize/enabled' OR `path` = 'ads/general/providers/crazyGames/enabled';
+UPDATE `config` SET `value` = 250 WHERE `path` = 'ui/minimap/x' OR `path` = 'ui/minimap/circleX';
 
 # Group walls config:
 SET @boolean_id = (SELECT `id` FROM `config_types` WHERE `label` = 'boolean');
