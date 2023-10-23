@@ -36,8 +36,8 @@ CREATE TABLE IF NOT EXISTS `ads` (
 -- Dumping data for table ads: ~4 rows (approximately)
 INSERT INTO `ads` (`id`, `key`, `provider_id`, `type_id`, `width`, `height`, `position`, `top`, `bottom`, `left`, `right`, `replay`, `enabled`) VALUES
 	(3, 'fullTimeBanner', 1, 1, 320, 50, NULL, NULL, 0, NULL, 80, NULL, 0),
-	(4, 'ui-banner', 1, 1, 320, 50, NULL, NULL, 80, NULL, 80, NULL, 1),
-	(5, 'crazy-games-sample-video', 1, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 1),
+	(4, 'ui-banner', 1, 1, 320, 50, NULL, NULL, 80, NULL, 80, NULL, 0),
+	(5, 'crazy-games-sample-video', 1, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 0),
 	(6, 'game-monetize-sample-video', 2, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 0);
 
 -- Dumping structure for table ads_banner
@@ -78,18 +78,18 @@ CREATE TABLE IF NOT EXISTS `ads_played` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `ads_id` int unsigned NOT NULL,
   `player_id` int unsigned NOT NULL,
-  `started_at` datetime NOT NULL DEFAULT (0),
+  `started_at` datetime NOT NULL DEFAULT (now()),
   `ended_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `ads_id` (`ads_id`),
   KEY `player_id` (`player_id`),
   CONSTRAINT `FK_ads_played_ads` FOREIGN KEY (`ads_id`) REFERENCES `ads` (`id`),
   CONSTRAINT `FK_ads_played_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping data for table ads_played: ~2 rows (approximately)
 INSERT INTO `ads_played` (`id`, `ads_id`, `player_id`, `started_at`, `ended_at`) VALUES
-	(7, 5, 1, '2023-10-01 11:37:00', '2023-10-01 11:37:05'),
+	(7, 5, 1, '2023-10-17 18:28:17', '2023-10-17 18:28:22'),
 	(8, 6, 1, '2023-09-28 21:00:31', '2023-09-28 21:00:41');
 
 -- Dumping structure for table ads_providers
@@ -103,7 +103,7 @@ CREATE TABLE IF NOT EXISTS `ads_providers` (
 
 -- Dumping data for table ads_providers: ~2 rows (approximately)
 INSERT INTO `ads_providers` (`id`, `key`, `enabled`) VALUES
-	(1, 'crazyGames', 1),
+	(1, 'crazyGames', 0),
 	(2, 'gameMonetize', 0);
 
 -- Dumping structure for table ads_types
@@ -286,7 +286,7 @@ CREATE TABLE IF NOT EXISTS `clan` (
   KEY `FK_clan_clan_levels` (`level`),
   CONSTRAINT `FK_clan_clan_levels` FOREIGN KEY (`level`) REFERENCES `clan_levels` (`key`),
   CONSTRAINT `FK_clan_players` FOREIGN KEY (`owner_id`) REFERENCES `players` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=65 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Dumping structure for table clan_levels
 CREATE TABLE IF NOT EXISTS `clan_levels` (
@@ -347,9 +347,9 @@ CREATE TABLE IF NOT EXISTS `config` (
   UNIQUE KEY `scope_path` (`scope`,`path`),
   KEY `FK_config_config_types` (`type`),
   CONSTRAINT `FK_config_config_types` FOREIGN KEY (`type`) REFERENCES `config_types` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=326 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=330 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table config: ~291 rows (approximately)
+-- Dumping data for table config: ~282 rows (approximately)
 INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(1, 'server', 'rooms/validation/valid', 'room_game,chat_global', 1),
 	(2, 'server', 'players/initialState/room_id', '4', 2),
@@ -520,7 +520,7 @@ INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(186, 'client', 'ui/minimap/camX', '140', 2),
 	(187, 'client', 'ui/minimap/camY', '10', 2),
 	(188, 'client', 'ui/minimap/camBackgroundColor', 'rgba(0,0,0,0.6)', 1),
-	(189, 'client', 'ui/minimap/camZoom', '0.15', 2),
+	(189, 'client', 'ui/minimap/camZoom', '0.35', 2),
 	(191, 'client', 'ui/minimap/addCircle', '1', 3),
 	(192, 'client', 'ui/minimap/circleX', '220', 2),
 	(193, 'client', 'ui/minimap/circleY', '88', 2),
@@ -641,7 +641,10 @@ INSERT INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(322, 'client', 'login/termsAndConditions/es/body', 'Este es el contenido de nuestros términos y condiciones de prueba.', 1),
 	(323, 'client', 'login/termsAndConditions/es/checkboxLabel', 'Aceptar terminos y condiciones', 1),
 	(324, 'client', 'login/termsAndConditions/es/heading', 'Términos y condiciones', 1),
-	(325, 'client', 'login/termsAndConditions/es/link', 'Acepta nuestros Términos y Condiciones (haz clic aquí).', 1);
+	(325, 'client', 'login/termsAndConditions/es/link', 'Acepta nuestros Términos y Condiciones (haz clic aquí).', 1),
+	(327, 'server', 'rooms/world/groupWallsHorizontally', '1', 3),
+	(328, 'server', 'rooms/world/groupWallsVertically', '0', 3),
+	(329, 'client', 'world/debug/enabled', '1', 3);
 
 -- Dumping structure for table config_types
 CREATE TABLE IF NOT EXISTS `config_types` (
@@ -666,9 +669,9 @@ CREATE TABLE IF NOT EXISTS `features` (
   `is_enabled` tinyint unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   UNIQUE KEY `code` (`code`)
-) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Dumping data for table features: ~15 rows (approximately)
+-- Dumping data for table features: ~16 rows (approximately)
 INSERT INTO `features` (`id`, `code`, `title`, `is_enabled`) VALUES
 	(1, 'chat', 'Chat', 1),
 	(2, 'objects', 'Objects', 1),
@@ -684,7 +687,8 @@ INSERT INTO `features` (`id`, `code`, `title`, `is_enabled`) VALUES
 	(12, 'teams', 'Teams', 1),
 	(13, 'rewards', 'Rewards', 1),
 	(14, 'snippets', 'Snippets', 1),
-	(16, 'ads', 'Ads', 1);
+	(16, 'ads', 'Ads', 1),
+	(17, 'world', 'World', 1);
 
 -- Dumping structure for table items_group
 CREATE TABLE IF NOT EXISTS `items_group` (
@@ -1102,7 +1106,7 @@ CREATE TABLE IF NOT EXISTS `players_state` (
 
 -- Dumping data for table players_state: ~1 rows (approximately)
 INSERT INTO `players_state` (`id`, `player_id`, `room_id`, `x`, `y`, `dir`) VALUES
-	(1, 1, 4, 979, 552, 'down');
+	(1, 1, 5, 332, 288, 'down');
 
 -- Dumping structure for table players_stats
 CREATE TABLE IF NOT EXISTS `players_stats` (
@@ -1121,8 +1125,8 @@ CREATE TABLE IF NOT EXISTS `players_stats` (
 
 -- Dumping data for table players_stats: ~10 rows (approximately)
 INSERT INTO `players_stats` (`id`, `player_id`, `stat_id`, `base_value`, `value`) VALUES
-	(1, 1, 1, 280, 194),
-	(2, 1, 2, 280, 120),
+	(1, 1, 1, 280, 81),
+	(2, 1, 2, 280, 85),
 	(3, 1, 3, 280, 400),
 	(4, 1, 4, 280, 280),
 	(5, 1, 5, 100, 100),
@@ -1870,7 +1874,7 @@ CREATE TABLE IF NOT EXISTS `users` (
 
 -- Dumping data for table users: ~1 rows (approximately)
 INSERT INTO `users` (`id`, `email`, `username`, `password`, `role_id`, `status`, `created_at`, `updated_at`, `played_time`) VALUES
-	(1, 'dap@dap.com', 'dap', '$2b$10$RDnURyFoXo7.zcFKVhNcuezJsXXYNslhPBNPzi.crbikFhG8Pnude', 1, '1', '2022-03-17 18:57:44', '2023-10-01 09:37:17', 856025);
+	(1, 'dap@dap.com', 'dap', '$2b$10$RDnURyFoXo7.zcFKVhNcuezJsXXYNslhPBNPzi.crbikFhG8Pnude', 1, '1', '2022-03-17 18:57:44', '2023-10-21 16:51:55', 895864);
 
 -- Dumping structure for table users_locale
 CREATE TABLE IF NOT EXISTS `users_locale` (

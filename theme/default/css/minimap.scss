@@ -12,7 +12,11 @@
     position: relative;
     top: 26px;
     left: 26px;
-    display: none;
+    display: block;
     float: left;
     background: transparent;
+
+    &.hidden {
+        display: none;
+    }
 }
