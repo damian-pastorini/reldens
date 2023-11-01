@@ -4,12 +4,64 @@
  *
  */
 
-body {
-    font-family: $normalFont;
+body, html {
+    height: 100%;
     margin: 0;
     padding: 0;
+}
+
+body {
+    font-family: $normalFont;
     background-color: transparent;
     user-select: none;
+
+    .wrapper {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: 100%;
+        overflow: auto;
+        z-index: 10000;
+        background-size: cover;
+        background-color: $cWhite;
+        background-image: url(../assets/web/reldens-background.png);
+        background-position: center;
+        background-repeat: no-repeat;
+
+        .header,
+        .footer,
+        .content {
+            width: 100%;
+        }
+
+        .header,
+        .footer {
+            color: $cWhite;
+        }
+
+        .header {
+            display: flex;
+            flex-wrap: wrap;
+            flex-direction: row;
+            align-items: center;
+            background-color: $cBlack;
+            height: 14%;
+            max-height: 100px;
+        }
+
+        .content {
+            height: 80%;
+        }
+
+        .footer {
+            display: flex;
+            height: 6%;
+            background-color: $cDarkBlue;
+            padding: min(10px, 1%) 0;
+        }
+
+    }
+
 }
 
 .text-black {
@@ -20,61 +72,49 @@ body {
     display: none;
 }
 
-.wrapper,
-.header,
-.footer,
-.content {
-    float: left;
-    position: relative;
-    display: block;
-    width: 100%;
-    margin: 0;
-    padding: 0;
-    min-width: 300px;
-}
-
-.wrapper,
 .game-container {
     height: 100%;
 }
 
-.wrapper {
-    overflow: hidden;
-    z-index: 10000;
-}
-
-.game-engine-started {
+body.game-engine-started {
     overflow: hidden;
 
-    .footer {
-        display: none;
-    }
+    .wrapper {
+        height: 100%;
+        justify-content: start;
 
-    .content {
-        height: 94%;
+        .content {
+            height: 94%;
+
+            .game-container {
+                display: flex;
+            }
+        }
+
+        .footer {
+            display: none;
+        }
     }
 
     &.full-screen-on {
-        .header {
-            display: none;
-        }
+        .wrapper {
+            .header {
+                display: none;
+            }
 
-        .content {
-            height: 100%;
+            .content {
+                height: 100%;
+            }
         }
     }
 }
 
 .game-started {
-    .wrapper {
-        background: $cBlack;
-    }
-
     .loading-container {
         display: none;
     }
 
-    .full-screen-btn {
+    .header .full-screen-btn {
         display: block;
     }
 }
@@ -87,31 +127,15 @@ body {
     }
 }
 
-.header,
-.footer {
-    color: $cWhite;
-}
-
 .header {
-    position: relative;
-    height: 3.5em;
-    background-color: #000000;
-
     #your-logo {
-        position: relative;
-        float: left;
-        display: block;
-        margin: 0 0 0 10px;
-        padding: 0;
-        max-height: 120%;
-        z-index: 2000;
+        margin-left: 2%;
     }
 
     h1 {
         position: relative;
-        float: left;
         display: block;
-        margin: 0 0 0 20px;
+        margin: 0 0 0 2%;
         padding: 0;
         font-family: $reldensFont;
         font-size: 1.5em;
@@ -132,11 +156,10 @@ body {
 
     }
 
-    .full-screen-btn,
-    .instructions-btn {
+    .full-screen-btn {
         display: none;
         position: absolute;
-        bottom: 0;
+        right: 0;
         background: transparent;
         border: none;
         color: #fff;
@@ -144,35 +167,22 @@ body {
         font-size: 11px;
     }
 
-    .full-screen-btn {
-        right: 0;
-    }
-
-    .instructions-btn {
-        left: 0;
-    }
-
 }
 
 .footer {
-    min-height: 6%;
-    background-color: $cDarkBlue;
-
     .copyright {
         position: relative;
         display: block;
         width: 100%;
-        min-height: 20px;
         margin: 0;
         padding: 0;
         text-align: center;
-        max-height: 100%;
 
         a, a:hover, a:visited {
             display: block;
             color: #fff;
             text-decoration: none;
-            padding: 1% 0;
+            padding: 0;
         }
 
     }
@@ -181,15 +191,12 @@ body {
 
 .content {
     min-height: 300px;
-    background-color: $cBlack;
 
     .forms-container {
-        float: left;
+        display: flex;
+        flex-direction: row;
+        height: 100%;
         width: 100%;
-        background-color: $cWhite;
-        background-image: url(../assets/web/reldens-background.png);
-        background-position: center;
-        background-repeat: no-repeat;
     }
 
 }
@@ -205,15 +212,16 @@ input[type="submit"] {
 }
 
 .row {
-    float: left;
-    display: block;
+    display: flex;
     position: relative;
     width: 100%;
-    margin: 0 0 10px;
+    max-width: 500px;
+    margin: 0 auto 10px;
     padding: 0;
-    background-color: rgba(255,255,255,0.8);
+    background-color: rgba(255, 255, 255, 0.6);
     border: 1px solid #ccc;
-    box-shadow: 10px 10px 14px 2px rgba(0,0,0,0.6);
+    box-shadow: 10px 10px 14px 2px rgba(0, 0, 0, 0.6);
+
     &.hidden {
         display: none;
     }
@@ -228,19 +236,33 @@ input[type="submit"] {
 }
 
 .col-2 {
-    float: left;
-    display: block;
+    display: flex;
     position: relative;
+    flex-direction: column;
+    flex-wrap: wrap;
     width: 46%;
     margin: 0;
     padding: 2%;
 }
 
+.col-left {
+    align-content: end;
+}
+
+.col-right {
+    align-content: start;
+}
+
 @media (max-width: 725px) {
 
+    .row {
+        max-width: none;
+    }
+
     .col-2 {
-        width: 100%;
+        width: 90%;
         padding: 0;
+        margin: 0 auto;
     }
 
     .footer {
@@ -249,17 +271,27 @@ input[type="submit"] {
 
     .content {
         height: 92%;
+
+        .forms-container {
+            flex-direction: column;
+        }
     }
 
+}
+
+@media (min-width: 725px) and (max-width: 751px) {
+    form .input-box.reg-re-password label {
+        margin-top: 1px;
+    }
 }
 
 #login-form,
 #register-form,
 #forgot-form {
-    max-width: 400px;
+    width: 80%;
     display: block;
     margin: 0 auto;
-    padding: 20px;
+    padding: 0;
 }
 
 .response-error {
@@ -277,30 +309,32 @@ h3.form-title {
 }
 
 form {
-
     .input-box {
-        display: block;
+        display: flex;
         position: relative;
+        flex-direction: row;
+        justify-content: space-between;
         width: 100%;
-        float: left;
         margin-bottom: 10px;
 
         &.hidden {
             display: none;
         }
 
+        &.submit-container, &.terms-and-conditions-link-container {
+            justify-content: end;
+        }
+
         label {
-            float: left;
             display: block;
             position: relative;
             font-size: 12px;
             margin-top: 10px;
-            width: 42%;
+            width: 40%;
             text-align: right;
         }
 
         input {
-            float: right;
             display: block;
             position: relative;
             border: 1px solid $cLightGrey;
@@ -308,6 +342,7 @@ form {
         }
 
         input[type="text"],
+        input[type="email"],
         input[type="password"] {
             width: 50%;
             max-width: 268px;
@@ -386,7 +421,6 @@ form {
 }
 
 .ui-box-controls {
-
     .action-buttons, .vertical-buttons {
         float: left;
         width: 54px;
