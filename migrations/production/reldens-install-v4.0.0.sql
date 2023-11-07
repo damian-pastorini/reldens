@@ -8,6 +8,166 @@ SET FOREIGN_KEY_CHECKS = 0;
 
 #######################################################################################################################
 
+CREATE TABLE IF NOT EXISTS `features` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `code` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `title` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `is_enabled` tinyint unsigned NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `code` (`code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
+
+CREATE TABLE IF NOT EXISTS `config_types` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `label` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
+
+CREATE TABLE IF NOT EXISTS `operation_types` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `label` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `key` int unsigned NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `key` (`key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
+
+CREATE TABLE IF NOT EXISTS `target_options` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `target_key` tinyint unsigned NOT NULL,
+  `target_label` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `target_key` (`target_key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
+
+CREATE TABLE IF NOT EXISTS `locale` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `locale` varchar(5) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `language_code` varchar(2) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `country_code` varchar(2) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `enabled` int unsigned NOT NULL DEFAULT '1',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
+
+CREATE TABLE IF NOT EXISTS `users` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `email` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `username` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `password` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `role_id` int unsigned NOT NULL,
+  `status` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `played_time` int NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `email` (`email`),
+  UNIQUE KEY `username` (`username`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
+
+CREATE TABLE IF NOT EXISTS `stats` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `key` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `label` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `base_value` int unsigned NOT NULL,
+  `customData` text COLLATE utf8mb4_unicode_ci,
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE KEY `key` (`key`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
+
+CREATE TABLE IF NOT EXISTS `players` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `user_id` int unsigned NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `name` (`name`),
+  KEY `FK_players_users` (`user_id`),
+  CONSTRAINT `FK_players_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
+
+CREATE TABLE IF NOT EXISTS `rooms` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `title` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `map_filename` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `scene_images` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `room_class_key` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `customData` text COLLATE utf8mb4_unicode_ci,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `key` (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
+
+CREATE TABLE IF NOT EXISTS `rooms_change_points` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `room_id` int unsigned NOT NULL,
+  `tile_index` int unsigned NOT NULL,
+  `next_room_id` int unsigned NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `id` (`id`),
+  KEY `scene_id` (`room_id`),
+  KEY `FK_rooms_change_points_rooms_2` (`next_room_id`),
+  CONSTRAINT `FK_rooms_change_points_rooms` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON UPDATE CASCADE,
+  CONSTRAINT `FK_rooms_change_points_rooms_2` FOREIGN KEY (`next_room_id`) REFERENCES `rooms` (`id`) ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
+
+CREATE TABLE IF NOT EXISTS `rooms_return_points` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `room_id` int unsigned NOT NULL,
+  `direction` varchar(5) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `x` int unsigned NOT NULL,
+  `y` int unsigned NOT NULL,
+  `is_default` int unsigned NOT NULL,
+  `from_room_id` int unsigned DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `FK_scenes_return_points_rooms` (`room_id`),
+  KEY `FK_scenes_return_points_rooms_2` (`from_room_id`) USING BTREE,
+  CONSTRAINT `FK_rooms_return_points_rooms_from_room_id` FOREIGN KEY (`from_room_id`) REFERENCES `rooms` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT `FK_rooms_return_points_rooms_room_id` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
+
+CREATE TABLE IF NOT EXISTS `players_state` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `player_id` int unsigned NOT NULL,
+  `room_id` int unsigned NOT NULL,
+  `x` int unsigned NOT NULL,
+  `y` int unsigned NOT NULL,
+  `dir` varchar(25) COLLATE utf8mb4_unicode_ci NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `FK_player_state_rooms` (`room_id`),
+  KEY `FK_player_state_player_stats` (`player_id`),
+  CONSTRAINT `FK_player_state_player_stats` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON UPDATE CASCADE,
+  CONSTRAINT `FK_player_state_rooms` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
+
+CREATE TABLE IF NOT EXISTS `players_stats` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `player_id` int unsigned NOT NULL,
+  `stat_id` int unsigned NOT NULL,
+  `base_value` int unsigned NOT NULL,
+  `value` int unsigned NOT NULL,
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE KEY `player_id_stat_id` (`player_id`,`stat_id`) USING BTREE,
+  KEY `stat_id` (`stat_id`) USING BTREE,
+  KEY `user_id` (`player_id`) USING BTREE,
+  CONSTRAINT `FK_player_current_stats_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT `FK_players_current_stats_players_stats` FOREIGN KEY (`stat_id`) REFERENCES `stats` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
+
+CREATE TABLE IF NOT EXISTS `ads_providers` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `key` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `enabled` int unsigned NOT NULL DEFAULT '1',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `key` (`key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
+
+CREATE TABLE IF NOT EXISTS `ads_types` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `key` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `key` (`key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
+
 CREATE TABLE IF NOT EXISTS `ads` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `key` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -64,19 +224,15 @@ CREATE TABLE IF NOT EXISTS `ads_played` (
   CONSTRAINT `FK_ads_played_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
 
-CREATE TABLE IF NOT EXISTS `ads_providers` (
+CREATE TABLE IF NOT EXISTS `audio_categories` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `key` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `enabled` int unsigned NOT NULL DEFAULT '1',
+  `category_key` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `category_label` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `enabled` int NOT NULL DEFAULT '0',
+  `single_audio` int NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
-  UNIQUE KEY `key` (`key`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
-
-CREATE TABLE IF NOT EXISTS `ads_types` (
-  `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `key` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `key` (`key`)
+  UNIQUE KEY `category_key` (`category_key`),
+  UNIQUE KEY `category_label` (`category_label`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
 
 CREATE TABLE IF NOT EXISTS `audio` (
@@ -93,17 +249,6 @@ CREATE TABLE IF NOT EXISTS `audio` (
   KEY `FK_audio_audio_categories` (`category_id`),
   CONSTRAINT `FK_audio_audio_categories` FOREIGN KEY (`category_id`) REFERENCES `audio_categories` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `FK_audio_rooms` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON DELETE SET NULL ON UPDATE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
-
-CREATE TABLE IF NOT EXISTS `audio_categories` (
-  `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `category_key` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `category_label` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `enabled` int NOT NULL DEFAULT '0',
-  `single_audio` int NOT NULL DEFAULT '0',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `category_key` (`category_key`),
-  UNIQUE KEY `category_label` (`category_label`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
 
 CREATE TABLE IF NOT EXISTS `audio_markers` (
@@ -131,6 +276,16 @@ CREATE TABLE IF NOT EXISTS `audio_player_config` (
   CONSTRAINT `FK_audio_player_config_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
 
+CREATE TABLE IF NOT EXISTS `chat_message_types` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `key` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `show_tab` int unsigned NOT NULL DEFAULT (0),
+  `also_show_in_type` int unsigned DEFAULT NULL,
+  PRIMARY KEY (`id`) USING BTREE,
+  KEY `FK_chat_message_types_chat_message_types` (`also_show_in_type`),
+  CONSTRAINT `FK_chat_message_types_chat_message_types` FOREIGN KEY (`also_show_in_type`) REFERENCES `chat_message_types` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
+
 CREATE TABLE IF NOT EXISTS `chat` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `player_id` int unsigned NOT NULL,
@@ -150,14 +305,13 @@ CREATE TABLE IF NOT EXISTS `chat` (
   CONSTRAINT `FK_chat_chat_message_types` FOREIGN KEY (`message_type`) REFERENCES `chat_message_types` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
 
-CREATE TABLE IF NOT EXISTS `chat_message_types` (
+CREATE TABLE IF NOT EXISTS `clan_levels` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `key` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `show_tab` int unsigned NOT NULL DEFAULT (0),
-  `also_show_in_type` int unsigned DEFAULT NULL,
+  `key` int unsigned NOT NULL,
+  `label` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `required_experience` bigint unsigned DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE,
-  KEY `FK_chat_message_types_chat_message_types` (`also_show_in_type`),
-  CONSTRAINT `FK_chat_message_types_chat_message_types` FOREIGN KEY (`also_show_in_type`) REFERENCES `chat_message_types` (`id`)
+  UNIQUE KEY `key` (`key`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
 
 CREATE TABLE IF NOT EXISTS `clan` (
@@ -172,15 +326,6 @@ CREATE TABLE IF NOT EXISTS `clan` (
   KEY `FK_clan_clan_levels` (`level`),
   CONSTRAINT `FK_clan_clan_levels` FOREIGN KEY (`level`) REFERENCES `clan_levels` (`key`),
   CONSTRAINT `FK_clan_players` FOREIGN KEY (`owner_id`) REFERENCES `players` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
-
-CREATE TABLE IF NOT EXISTS `clan_levels` (
-  `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `key` int unsigned NOT NULL,
-  `label` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `required_experience` bigint unsigned DEFAULT NULL,
-  PRIMARY KEY (`id`) USING BTREE,
-  UNIQUE KEY `key` (`key`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
 
 CREATE TABLE IF NOT EXISTS `clan_levels_modifiers` (
@@ -227,19 +372,11 @@ CREATE TABLE IF NOT EXISTS `config` (
   CONSTRAINT `FK_config_config_types` FOREIGN KEY (`type`) REFERENCES `config_types` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
 
-CREATE TABLE IF NOT EXISTS `config_types` (
-  `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `label` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '0',
-  PRIMARY KEY (`id`) USING BTREE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
-
-CREATE TABLE IF NOT EXISTS `features` (
-  `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `code` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `title` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `is_enabled` tinyint unsigned NOT NULL DEFAULT '0',
+CREATE TABLE IF NOT EXISTS `items_types` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `key` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `code` (`code`)
+  UNIQUE KEY `key` (`key`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
 
 CREATE TABLE IF NOT EXISTS `items_group` (
@@ -252,18 +389,6 @@ CREATE TABLE IF NOT EXISTS `items_group` (
   `items_limit` int NOT NULL DEFAULT '0',
   `limit_per_item` int NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
-
-CREATE TABLE IF NOT EXISTS `items_inventory` (
-  `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `owner_id` int unsigned NOT NULL,
-  `item_id` int unsigned NOT NULL,
-  `qty` int NOT NULL DEFAULT '0',
-  `remaining_uses` int DEFAULT NULL,
-  `is_active` int DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `FK_items_inventory_items_item` (`item_id`),
-  CONSTRAINT `FK_items_inventory_items_item` FOREIGN KEY (`item_id`) REFERENCES `items_item` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
 
 CREATE TABLE IF NOT EXISTS `items_item` (
@@ -287,6 +412,18 @@ CREATE TABLE IF NOT EXISTS `items_item` (
   CONSTRAINT `FK_items_item_items_types` FOREIGN KEY (`type`) REFERENCES `items_types` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
 
+CREATE TABLE IF NOT EXISTS `items_inventory` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `owner_id` int unsigned NOT NULL,
+  `item_id` int unsigned NOT NULL,
+  `qty` int NOT NULL DEFAULT '0',
+  `remaining_uses` int DEFAULT NULL,
+  `is_active` int DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `FK_items_inventory_items_item` (`item_id`),
+  CONSTRAINT `FK_items_inventory_items_item` FOREIGN KEY (`item_id`) REFERENCES `items_item` (`id`) ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
+
 CREATE TABLE IF NOT EXISTS `items_item_modifiers` (
 	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
 	`item_id` INT(10) UNSIGNED NOT NULL,
@@ -302,20 +439,11 @@ CREATE TABLE IF NOT EXISTS `items_item_modifiers` (
 	CONSTRAINT `FK_items_item_modifiers_operation_types` FOREIGN KEY (`operation`) REFERENCES `operation_types` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
 
-CREATE TABLE IF NOT EXISTS `items_types` (
-  `id` int NOT NULL AUTO_INCREMENT,
+CREATE TABLE IF NOT EXISTS `objects_types` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
   `key` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `key` (`key`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
-
-CREATE TABLE IF NOT EXISTS `locale` (
-  `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `locale` varchar(5) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `language_code` varchar(2) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `country_code` varchar(2) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `enabled` int unsigned NOT NULL DEFAULT '1',
-  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
 
 CREATE TABLE IF NOT EXISTS `objects` (
@@ -410,6 +538,42 @@ CREATE TABLE IF NOT EXISTS `objects_items_rewards` (
   CONSTRAINT `objects_items_rewards_ibfk_1` FOREIGN KEY (`object_id`) REFERENCES `objects` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
 
+CREATE TABLE IF NOT EXISTS `rewards_modifiers` (
+	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+	`key` VARCHAR(255) NOT NULL COLLATE 'utf8mb4_unicode_ci',
+	`property_key` VARCHAR(255) NOT NULL COLLATE 'utf8mb4_unicode_ci',
+	`operation` INT(10) UNSIGNED NOT NULL,
+	`value` VARCHAR(255) NOT NULL COLLATE 'utf8mb4_unicode_ci',
+	`minValue` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
+	`maxValue` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
+	`minProperty` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
+	`maxProperty` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
+	PRIMARY KEY (`id`) USING BTREE,
+	INDEX `modifier_id` (`key`) USING BTREE,
+	INDEX `operation` (`operation`) USING BTREE,
+	CONSTRAINT `FK_rewards_modifiers_operation_types` FOREIGN KEY (`operation`) REFERENCES `operation_types` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
+
+CREATE TABLE IF NOT EXISTS `rewards` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `object_id` int unsigned NOT NULL,
+  `item_id` int unsigned DEFAULT NULL,
+  `modifier_id` int unsigned DEFAULT NULL,
+  `experience` int unsigned NOT NULL DEFAULT '0',
+  `drop_rate` int unsigned NOT NULL,
+  `drop_quantity` int unsigned NOT NULL,
+  `is_unique` tinyint unsigned NOT NULL DEFAULT '0',
+  `was_given` tinyint unsigned NOT NULL DEFAULT '0',
+  `has_drop_body` tinyint unsigned NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`) USING BTREE,
+  KEY `FK_rewards_items_item` (`item_id`) USING BTREE,
+  KEY `FK_rewards_objects` (`object_id`) USING BTREE,
+  KEY `FK_rewards_rewards_modifiers` (`modifier_id`),
+  CONSTRAINT `FK_rewards_items_item` FOREIGN KEY (`item_id`) REFERENCES `items_item` (`id`),
+  CONSTRAINT `FK_rewards_objects` FOREIGN KEY (`object_id`) REFERENCES `objects` (`id`),
+  CONSTRAINT `FK_rewards_rewards_modifiers` FOREIGN KEY (`modifier_id`) REFERENCES `rewards_modifiers` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
+
 CREATE TABLE IF NOT EXISTS `objects_items_rewards_animations` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `reward_id` int unsigned NOT NULL,
@@ -420,6 +584,54 @@ CREATE TABLE IF NOT EXISTS `objects_items_rewards_animations` (
   PRIMARY KEY (`id`) USING BTREE,
   KEY `FK_objects_items_rewards_animations_rewards` (`reward_id`) USING BTREE,
   CONSTRAINT `FK_objects_items_rewards_animations_rewards` FOREIGN KEY (`reward_id`) REFERENCES `rewards` (`id`) ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
+
+CREATE TABLE IF NOT EXISTS `skills_skill_type` (
+	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+	`key` VARCHAR(255) NOT NULL COLLATE 'utf8mb4_unicode_ci',
+	PRIMARY KEY (`id`) USING BTREE,
+	UNIQUE INDEX `key` (`key`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
+
+CREATE TABLE IF NOT EXISTS `skills_levels_set` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `autoFillRanges` int unsigned NOT NULL DEFAULT '0',
+  `autoFillExperienceMultiplier` int unsigned DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
+
+CREATE TABLE IF NOT EXISTS `skills_groups` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `key` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `label` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `sort` int unsigned NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
+
+CREATE TABLE IF NOT EXISTS `skills_skill` (
+	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+	`key` VARCHAR(255) NOT NULL COLLATE 'utf8mb4_unicode_ci',
+	`type` INT(10) UNSIGNED NOT NULL,
+	`autoValidation` INT(10) NOT NULL,
+	`skillDelay` INT(10) NOT NULL,
+	`castTime` INT(10) NOT NULL,
+	`usesLimit` INT(10) NOT NULL DEFAULT '0',
+	`range` INT(10) NOT NULL,
+	`rangeAutomaticValidation` INT(10) NOT NULL,
+	`rangePropertyX` VARCHAR(255) NOT NULL COLLATE 'utf8mb4_unicode_ci',
+	`rangePropertyY` VARCHAR(255) NOT NULL COLLATE 'utf8mb4_unicode_ci',
+	`rangeTargetPropertyX` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
+	`rangeTargetPropertyY` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
+	`allowSelfTarget` INT(10) NOT NULL,
+	`criticalChance` INT(10) NULL DEFAULT NULL,
+	`criticalMultiplier` INT(10) NULL DEFAULT NULL,
+	`criticalFixedValue` INT(10) NULL DEFAULT NULL,
+	`customData` TEXT NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
+	PRIMARY KEY (`id`) USING BTREE,
+	UNIQUE INDEX `key` (`key`) USING BTREE,
+	INDEX `FK_skills_skill_skills_skill_type` (`type`) USING BTREE,
+	CONSTRAINT `FK_skills_skill_skills_skill_type` FOREIGN KEY (`type`) REFERENCES `skills_skill_type` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
 
 CREATE TABLE IF NOT EXISTS `objects_skills` (
@@ -450,60 +662,6 @@ CREATE TABLE IF NOT EXISTS `objects_stats` (
   CONSTRAINT `FK_objects_current_stats_objects_stats` FOREIGN KEY (`stat_id`) REFERENCES `stats` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
 
-CREATE TABLE IF NOT EXISTS `objects_types` (
-  `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `key` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `key` (`key`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
-
-CREATE TABLE IF NOT EXISTS `operation_types` (
-  `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `label` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `key` int unsigned NOT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `key` (`key`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
-
-CREATE TABLE IF NOT EXISTS `players` (
-  `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `user_id` int unsigned NOT NULL,
-  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `name` (`name`),
-  KEY `FK_players_users` (`user_id`),
-  CONSTRAINT `FK_players_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
-
-CREATE TABLE IF NOT EXISTS `players_state` (
-  `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `player_id` int unsigned NOT NULL,
-  `room_id` int unsigned NOT NULL,
-  `x` int unsigned NOT NULL,
-  `y` int unsigned NOT NULL,
-  `dir` varchar(25) COLLATE utf8mb4_unicode_ci NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `FK_player_state_rooms` (`room_id`),
-  KEY `FK_player_state_player_stats` (`player_id`),
-  CONSTRAINT `FK_player_state_player_stats` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON UPDATE CASCADE,
-  CONSTRAINT `FK_player_state_rooms` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
-
-CREATE TABLE IF NOT EXISTS `players_stats` (
-  `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `player_id` int unsigned NOT NULL,
-  `stat_id` int unsigned NOT NULL,
-  `base_value` int unsigned NOT NULL,
-  `value` int unsigned NOT NULL,
-  PRIMARY KEY (`id`) USING BTREE,
-  UNIQUE KEY `player_id_stat_id` (`player_id`,`stat_id`) USING BTREE,
-  KEY `stat_id` (`stat_id`) USING BTREE,
-  KEY `user_id` (`player_id`) USING BTREE,
-  CONSTRAINT `FK_player_current_stats_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
-  CONSTRAINT `FK_players_current_stats_players_stats` FOREIGN KEY (`stat_id`) REFERENCES `stats` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
-
 CREATE TABLE IF NOT EXISTS `respawn` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `object_id` int unsigned NOT NULL,
@@ -515,80 +673,27 @@ CREATE TABLE IF NOT EXISTS `respawn` (
   CONSTRAINT `FK_respawn_objects` FOREIGN KEY (`object_id`) REFERENCES `objects` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
 
-CREATE TABLE IF NOT EXISTS `rewards` (
+CREATE TABLE IF NOT EXISTS `skills_class_path` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `object_id` int unsigned NOT NULL,
-  `item_id` int unsigned DEFAULT NULL,
-  `modifier_id` int unsigned DEFAULT NULL,
-  `experience` int unsigned NOT NULL DEFAULT '0',
-  `drop_rate` int unsigned NOT NULL,
-  `drop_quantity` int unsigned NOT NULL,
-  `is_unique` tinyint unsigned NOT NULL DEFAULT '0',
-  `was_given` tinyint unsigned NOT NULL DEFAULT '0',
-  `has_drop_body` tinyint unsigned NOT NULL DEFAULT '0',
-  PRIMARY KEY (`id`) USING BTREE,
-  KEY `FK_rewards_items_item` (`item_id`) USING BTREE,
-  KEY `FK_rewards_objects` (`object_id`) USING BTREE,
-  KEY `FK_rewards_rewards_modifiers` (`modifier_id`),
-  CONSTRAINT `FK_rewards_items_item` FOREIGN KEY (`item_id`) REFERENCES `items_item` (`id`),
-  CONSTRAINT `FK_rewards_objects` FOREIGN KEY (`object_id`) REFERENCES `objects` (`id`),
-  CONSTRAINT `FK_rewards_rewards_modifiers` FOREIGN KEY (`modifier_id`) REFERENCES `rewards_modifiers` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
-
-CREATE TABLE IF NOT EXISTS `rewards_modifiers` (
-	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-	`key` VARCHAR(255) NOT NULL COLLATE 'utf8mb4_unicode_ci',
-	`property_key` VARCHAR(255) NOT NULL COLLATE 'utf8mb4_unicode_ci',
-	`operation` INT(10) UNSIGNED NOT NULL,
-	`value` VARCHAR(255) NOT NULL COLLATE 'utf8mb4_unicode_ci',
-	`minValue` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
-	`maxValue` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
-	`minProperty` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
-	`maxProperty` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
-	PRIMARY KEY (`id`) USING BTREE,
-	INDEX `modifier_id` (`key`) USING BTREE,
-	INDEX `operation` (`operation`) USING BTREE,
-	CONSTRAINT `FK_rewards_modifiers_operation_types` FOREIGN KEY (`operation`) REFERENCES `operation_types` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
-
-CREATE TABLE IF NOT EXISTS `rooms` (
-  `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `title` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `map_filename` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `scene_images` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `room_class_key` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `customData` text COLLATE utf8mb4_unicode_ci,
+  `key` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `label` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `levels_set_id` int unsigned NOT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `key` (`name`)
+  UNIQUE KEY `key` (`key`),
+  KEY `levels_set_id` (`levels_set_id`),
+  CONSTRAINT `FK_skills_class_path_skills_levels_set` FOREIGN KEY (`levels_set_id`) REFERENCES `skills_levels_set` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
 
-CREATE TABLE IF NOT EXISTS `rooms_change_points` (
+CREATE TABLE IF NOT EXISTS `skills_levels` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `room_id` int unsigned NOT NULL,
-  `tile_index` int unsigned NOT NULL,
-  `next_room_id` int unsigned NOT NULL,
+  `key` int unsigned NOT NULL,
+  `label` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `required_experience` bigint unsigned DEFAULT NULL,
+  `level_set_id` int unsigned NOT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `id` (`id`),
-  KEY `scene_id` (`room_id`),
-  KEY `FK_rooms_change_points_rooms_2` (`next_room_id`),
-  CONSTRAINT `FK_rooms_change_points_rooms` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON UPDATE CASCADE,
-  CONSTRAINT `FK_rooms_change_points_rooms_2` FOREIGN KEY (`next_room_id`) REFERENCES `rooms` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
-
-CREATE TABLE IF NOT EXISTS `rooms_return_points` (
-  `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `room_id` int unsigned NOT NULL,
-  `direction` varchar(5) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `x` int unsigned NOT NULL,
-  `y` int unsigned NOT NULL,
-  `is_default` int unsigned NOT NULL,
-  `from_room_id` int unsigned DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `FK_scenes_return_points_rooms` (`room_id`),
-  KEY `FK_scenes_return_points_rooms_2` (`from_room_id`) USING BTREE,
-  CONSTRAINT `FK_rooms_return_points_rooms_from_room_id` FOREIGN KEY (`from_room_id`) REFERENCES `rooms` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
-  CONSTRAINT `FK_rooms_return_points_rooms_room_id` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON UPDATE CASCADE
+  UNIQUE KEY `key_level_set_id` (`key`,`level_set_id`),
+  KEY `level_set_id` (`level_set_id`),
+  CONSTRAINT `FK_skills_levels_skills_levels_set` FOREIGN KEY (`level_set_id`) REFERENCES `skills_levels_set` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
 
 CREATE TABLE IF NOT EXISTS `skills_class_level_up_animations` (
@@ -601,17 +706,6 @@ CREATE TABLE IF NOT EXISTS `skills_class_level_up_animations` (
   KEY `FK_skills_class_level_up_skills_levels` (`level_id`) USING BTREE,
   CONSTRAINT `FK_skills_class_level_up_skills_class_path` FOREIGN KEY (`class_path_id`) REFERENCES `skills_class_path` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT `FK_skills_class_level_up_skills_levels` FOREIGN KEY (`level_id`) REFERENCES `skills_levels` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
-
-CREATE TABLE IF NOT EXISTS `skills_class_path` (
-  `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `key` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `label` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `levels_set_id` int unsigned NOT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `key` (`key`),
-  KEY `levels_set_id` (`levels_set_id`),
-  CONSTRAINT `FK_skills_class_path_skills_levels_set` FOREIGN KEY (`levels_set_id`) REFERENCES `skills_levels_set` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
 
 CREATE TABLE IF NOT EXISTS `skills_class_path_level_labels` (
@@ -640,27 +734,6 @@ CREATE TABLE IF NOT EXISTS `skills_class_path_level_skills` (
   CONSTRAINT `FK_skills_class_path_level_skills_skills_levels` FOREIGN KEY (`level_id`) REFERENCES `skills_levels` (`key`) ON UPDATE CASCADE,
   CONSTRAINT `FK_skills_class_path_level_skills_skills_levels_id` FOREIGN KEY (`level_id`) REFERENCES `skills_levels` (`id`) ON UPDATE CASCADE,
   CONSTRAINT `FK_skills_class_path_level_skills_skills_skill` FOREIGN KEY (`skill_id`) REFERENCES `skills_skill` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
-
-CREATE TABLE IF NOT EXISTS `skills_groups` (
-  `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `key` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `label` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `description` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `sort` int unsigned NOT NULL DEFAULT '0',
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
-
-CREATE TABLE IF NOT EXISTS `skills_levels` (
-  `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `key` int unsigned NOT NULL,
-  `label` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `required_experience` bigint unsigned DEFAULT NULL,
-  `level_set_id` int unsigned NOT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `key_level_set_id` (`key`,`level_set_id`),
-  KEY `level_set_id` (`level_set_id`),
-  CONSTRAINT `FK_skills_levels_skills_levels_set` FOREIGN KEY (`level_set_id`) REFERENCES `skills_levels_set` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
 
 CREATE TABLE IF NOT EXISTS `skills_levels_modifiers` (
@@ -693,13 +766,6 @@ CREATE TABLE IF NOT EXISTS `skills_levels_modifiers_conditions` (
 	INDEX `levels_modifier_id` (`levels_modifier_id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
 
-CREATE TABLE IF NOT EXISTS `skills_levels_set` (
-  `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `autoFillRanges` int unsigned NOT NULL DEFAULT '0',
-  `autoFillExperienceMultiplier` int unsigned DEFAULT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
-
 CREATE TABLE IF NOT EXISTS `skills_owners_class_path` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `class_path_id` int unsigned NOT NULL,
@@ -709,38 +775,6 @@ CREATE TABLE IF NOT EXISTS `skills_owners_class_path` (
   PRIMARY KEY (`id`),
   KEY `level_set_id` (`class_path_id`) USING BTREE,
   CONSTRAINT `FK_skills_owners_class_path_skills_class_path` FOREIGN KEY (`class_path_id`) REFERENCES `skills_class_path` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
-
-CREATE TABLE IF NOT EXISTS `skills_skill_type` (
-	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-	`key` VARCHAR(255) NOT NULL COLLATE 'utf8mb4_unicode_ci',
-	PRIMARY KEY (`id`) USING BTREE,
-	UNIQUE INDEX `key` (`key`) USING BTREE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
-
-CREATE TABLE IF NOT EXISTS `skills_skill` (
-	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-	`key` VARCHAR(255) NOT NULL COLLATE 'utf8mb4_unicode_ci',
-	`type` INT(10) UNSIGNED NOT NULL,
-	`autoValidation` INT(10) NOT NULL,
-	`skillDelay` INT(10) NOT NULL,
-	`castTime` INT(10) NOT NULL,
-	`usesLimit` INT(10) NOT NULL DEFAULT '0',
-	`range` INT(10) NOT NULL,
-	`rangeAutomaticValidation` INT(10) NOT NULL,
-	`rangePropertyX` VARCHAR(255) NOT NULL COLLATE 'utf8mb4_unicode_ci',
-	`rangePropertyY` VARCHAR(255) NOT NULL COLLATE 'utf8mb4_unicode_ci',
-	`rangeTargetPropertyX` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
-	`rangeTargetPropertyY` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
-	`allowSelfTarget` INT(10) NOT NULL,
-	`criticalChance` INT(10) NULL DEFAULT NULL,
-	`criticalMultiplier` INT(10) NULL DEFAULT NULL,
-	`criticalFixedValue` INT(10) NULL DEFAULT NULL,
-	`customData` TEXT NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
-	PRIMARY KEY (`id`) USING BTREE,
-	UNIQUE INDEX `key` (`key`) USING BTREE,
-	INDEX `FK_skills_skill_skills_skill_type` (`type`) USING BTREE,
-	CONSTRAINT `FK_skills_skill_skills_skill_type` FOREIGN KEY (`type`) REFERENCES `skills_skill_type` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
 
 CREATE TABLE IF NOT EXISTS `skills_skill_animations` (
@@ -880,40 +914,6 @@ CREATE TABLE IF NOT EXISTS `snippets` (
   PRIMARY KEY (`id`),
   KEY `locale_id` (`locale_id`),
   CONSTRAINT `FK_snippets_locale` FOREIGN KEY (`locale_id`) REFERENCES `locale` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
-
-CREATE TABLE IF NOT EXISTS `stats` (
-  `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `key` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `label` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `description` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `base_value` int unsigned NOT NULL,
-  `customData` text COLLATE utf8mb4_unicode_ci,
-  PRIMARY KEY (`id`) USING BTREE,
-  UNIQUE KEY `key` (`key`) USING BTREE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
-
-CREATE TABLE IF NOT EXISTS `target_options` (
-  `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `target_key` tinyint unsigned NOT NULL,
-  `target_label` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `target_key` (`target_key`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
-
-CREATE TABLE IF NOT EXISTS `users` (
-  `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `email` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `username` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `password` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `role_id` int unsigned NOT NULL,
-  `status` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `played_time` int NOT NULL DEFAULT '0',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `email` (`email`),
-  UNIQUE KEY `username` (`username`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
 
 CREATE TABLE IF NOT EXISTS `users_locale` (

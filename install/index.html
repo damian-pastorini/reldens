@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>DwDeveloper - Reldens | MMORPG Platform</title>
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i|Play:300,300i,400,400i,500,500i,600,600i,700,700i" rel="stylesheet"/>
+    <link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/4.6.0/firebase-ui-auth.css"/>
+    <link rel="apple-touch-icon" sizes="180x180" href="./assets/favicon/apple-touch-icon.png"/>
+    <link rel="icon" type="image/png" sizes="32x32" href="./assets/favicon/favicon-32x32.png"/>
+    <link rel="icon" type="image/png" sizes="16x16" href="./assets/favicon/favicon-16x16.png"/>
+    <link rel="manifest" href="./site.webmanifest"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"/>
+    <link rel="stylesheet" type="text/css" href="./css/styles.scss"/>
+</head>
+<body>
+<div class="wrapper">
+    <div class="header">
+        <h1 class="title">
+            - <strong>Reldens</strong> - <span id="current-version">Installer</span>
+        </h1>
+    </div>
+    <div class="content">
+        <div class="forms-container">
+            <div class="row">
+                <form name="install-form" id="install-form" class="install-form" action="/install" method="post">
+                    <h3 class="form-title">Step 1 - Setup your database</h3>
+                    <div class="input-box db-host">
+                        <label for="db-host">Host</label>
+                        <input type="text" name="db-host" id="db-host" class="required" required/>
+                    </div>
+                    <div class="input-box db-name">
+                        <label for="db-name">Database Name</label>
+                        <input type="text" name="db-name" id="db-name" class="required email" required/>
+                    </div>
+                    <div class="input-box db-username">
+                        <label for="db-username">Username</label>
+                        <input type="text" name="db-username" id="db-username" class="required" required/>
+                    </div>
+                    <div class="input-box db-password">
+                        <label for="db-password">Password</label>
+                        <input type="password" name="db-password" id="db-password" class="required" required/>
+                    </div>
+                    <div class="input-box db-basic-config">
+                        <label for="db-basic-config">Install minimal configuration</label>
+                        <input type="checkbox" name="db-basic-config" id="db-basic-config" checked/>
+                    </div>
+                    <div class="db-basic-config-notice">
+                        DANGER: uncheck this is only if you know what you are doing.
+                        Without this you will get all the tables empty, even the ones with default required values.
+                    </div>
+                    <div class="input-box db-sample-data">
+                        <label for="db-sample-data">Install sample data</label>
+                        <input type="checkbox" name="db-sample-data" id="db-sample-data" checked/>
+                    </div>
+                    <div class="input-box submit-container db-submit">
+                        <input type="submit" value="Save"/>
+                    </div>
+                    <div class="input-box response-error"></div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="footer">
+        <div class="copyright">
+            <a href="https://www.dwdeveloper.com/">
+                by D<span class="text-black text-lowercase">w</span><span class="text-capitalize">Developer</span>
+            </a>
+        </div>
+    </div>
+</div>
+</body>
+</html>
