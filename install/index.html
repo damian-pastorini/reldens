@@ -40,12 +40,14 @@
                         <input type="password" name="db-password" id="db-password" class="required" required/>
                     </div>
                     <div class="input-box db-basic-config">
-                        <label for="db-basic-config">Install minimal configuration</label>
-                        <input type="checkbox" name="db-basic-config" id="db-basic-config" checked/>
-                    </div>
-                    <div class="db-basic-config-notice">
-                        DANGER: uncheck this is only if you know what you are doing.
-                        Without this you will get all the tables empty, even the ones with default required values.
+                        <div class="db-basic-config-checkbox">
+                            <label for="db-basic-config">Install minimal configuration</label>
+                            <input type="checkbox" name="db-basic-config" id="db-basic-config" checked/>
+                        </div>
+                        <div class="db-basic-config-notice">
+                            DANGER: uncheck this is only if you know what you are doing.
+                            Without this you will get all the tables empty, even the ones with default required values.
+                        </div>
                     </div>
                     <div class="input-box db-sample-data">
                         <label for="db-sample-data">Install sample data</label>
