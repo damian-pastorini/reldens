@@ -81,60 +81,7 @@ body {
     display: none;
 }
 
-.game-container {
-    height: 100%;
-}
 
-body.game-engine-started {
-    overflow: hidden;
-
-    .wrapper {
-        height: 100%;
-        justify-content: start;
-
-        .content {
-            height: 94%;
-
-            .game-container {
-                display: flex;
-            }
-        }
-
-        .footer {
-            display: none;
-        }
-    }
-
-    &.full-screen-on {
-        .wrapper {
-            .header {
-                display: none;
-            }
-
-            .content {
-                height: 100%;
-            }
-        }
-    }
-}
-
-.game-started {
-    .loading-container {
-        display: none;
-    }
-
-    .header .full-screen-btn {
-        display: block;
-    }
-}
-
-.game-error {
-    .wrapper {
-        .loading-container {
-            display: none;
-        }
-    }
-}
 
 .header {
     #your-logo {
@@ -163,17 +110,6 @@ body.game-engine-started {
             padding-top: 0.2em;
         }
 
-    }
-
-    .full-screen-btn {
-        display: none;
-        position: absolute;
-        right: 0;
-        background: transparent;
-        border: none;
-        color: #fff;
-        padding: 4px;
-        font-size: 11px;
     }
 
 }
@@ -221,10 +157,6 @@ input[type="submit"] {
     cursor: pointer;
 }
 
-.game-container {
-    background-color: $cBlack;
-}
-
 .row {
     display: flex;
     position: relative;
@@ -239,14 +171,6 @@ input[type="submit"] {
     &.hidden {
         display: none;
     }
-}
-
-.disclaimer {
-    text-align: center;
-    max-width: 80%;
-    margin: 0 auto;
-    padding: 10px 2%;
-    background-color: rgba(255,255,255,0.1);
 }
 
 .col-2 {
@@ -299,57 +223,69 @@ input[type="submit"] {
     }
 }
 
-#login-form,
-#register-form,
-#forgot-form {
-    width: 80%;
-    display: block;
-    margin: 0 auto;
-    padding: 0;
-}
-
-.response-error {
-    color: $cRed;
-}
-
 h3.form-title {
     text-align: center;
     background: #f2f2f2;
     padding: 10px 0;
 }
 
-#reldens div:first-child {
-    z-index: 200;
-}
-
-.db-basic-config-notice {
-    font-size: 12px;
-    font-weight: bold;
-    color: $cRed;
-}
-
-.db-basic-config, .db-sample-data {
-    &.input-box {
-        justify-content: end;
-
-        label {
-            width: auto;
-        }
-
-        input {
-            top: 5px;
-        }
-    }
-}
-
 form {
-    .input-box, .db-basic-config-notice {
+    .input-box {
         display: flex;
         position: relative;
         flex-direction: row;
         justify-content: space-between;
         width: 100%;
         margin-bottom: 10px;
+
+        &.db-basic-config {
+            display: flex;
+            flex-direction: column;
+            background: rgba(255,255,255,0.6);
+            margin-bottom: 0;
+
+            label {
+                width: auto;
+            }
+
+            input {
+                top: 5px;
+            }
+
+            .db-basic-config-checkbox {
+                display: flex;
+                flex-direction: row;
+                justify-content: end;
+            }
+
+            .db-basic-config-notice {
+                display: flex;
+                margin-top: 10px;
+                font-size: 12px;
+                font-weight: bold;
+                color: $cRed;
+
+                span {
+                    padding: 10px;
+                }
+            }
+
+        }
+
+        &.db-sample-data, &.app-use-https, &.app-use-monitor, &.app-secure-monitor {
+            justify-content: end;
+            margin-top: 4px;
+            padding: 0 0 6px 0;
+            background: rgba(255, 255, 255, 0.6);
+
+            label {
+                width: auto;
+            }
+
+            input {
+                top: 5px;
+            }
+        }
 
         &.hidden {
             display: none;
@@ -384,229 +320,4 @@ form {
 
     }
 
-}
-
-.player {
-    width: 100px;
-    height: 100px;
-    position: absolute;
-    padding-top: 24px;
-    box-sizing: border-box;
-    left: 0;
-    top: 0;
-}
-
-.ui-box {
-    position: relative;
-    z-index: 1001;
-    display: block;
-    margin: 0;
-    padding: 0;
-}
-
-.box-target {
-    display: none;
-    position: relative;
-    top: 170px;
-    left: 10px;
-
-    #target-container {
-        width: 100%;
-    }
-
-}
-
-.ui-box-scene-data,
-.box-target {
-    background-color: rgba(0, 0, 0, 0.5);
-    padding: 10px;
-}
-
-.scene-label,
-.box-target {
-    color: #fff;
-}
-
-.ui-box-scene-data {
-    top: 20px;
-}
-
-.box-player-stats {
-    top: 20px;
-    left: -60px;
-}
-
-.ui-box.ui-box-controls {
-    position: relative;
-    bottom: 100px;
-    left: 120px;
-
-    img {
-        float: left;
-        width: 54px;
-        opacity: 0.8;
-        cursor: pointer;
-    }
-
-    img:active {
-        opacity: 1;
-    }
-
-}
-
-.ui-box-controls {
-    .action-buttons, .vertical-buttons {
-        float: left;
-        width: 54px;
-        text-align: center;
-        top: 0;
-        position: relative;
-
-        img {
-            float: none;
-        }
-
-    }
-
-    .action-buttons {
-        width: auto;
-
-        img {
-            margin-left: 10px;
-        }
-
-    }
-
-    #left, #right {
-        position: relative;
-        top: 30px;
-    }
-
-}
-
-.button-opacity-off {
-    opacity: 1 !important;
-}
-
-.ui-box-player {
-    float: left;
-    top: 34px;
-    left: 48px;
-    padding: 10px;
-    background-color: rgba(0, 0, 0, 0.5);
-    text-align: left;
-}
-
-.ui-dialog-box {
-    display: none;
-    float: left;
-    width: 240px;
-    min-height: 150px;
-    padding: 10px 14px;
-    background: #000000;
-    opacity: 0.85;
-    color: $cWhite;
-    word-wrap: break-word;
-    font-size: 12px;
-}
-
-.box-close,
-.close-target {
-    width: 24px;
-    position: absolute;
-    right: -12px;
-    top: -12px;
-    cursor: pointer;
-}
-
-.box-open {
-    cursor: pointer;
-}
-
-.box-content {
-    min-height: 40px;
-    max-height: 120px;
-    overflow: auto;
-    margin: 10px 0;
-}
-
-.box-options-container {
-    display: block;
-}
-
-.player-name {
-    padding: 0 0 10px;
-    text-align: center;
-    color: $cWhite;
-}
-
-span.stat-label {
-    float: left;
-    width: 48%;
-    margin-right: 2%;
-    display: block;
-    text-align: right;
-    color: #00ffff;
-}
-
-span.stat-value {
-    float: left;
-    width: 50%;
-    display: block;
-    text-align: left;
-}
-
-.loading-container {
-    float: left;
-    text-align: center;
-    width: 100%;
-}
-
-#player-stats-open {
-    cursor: pointer;
-    position: relative;
-    background: rgba(0, 0, 0, 0.5);
-    padding: 10px;
-    max-width: 40px;
-    top: 20px;
-    right: 60px;
-}
-
-.ui-box-button-option {
-    display: inline-block;
-    margin: 10px;
-    cursor: pointer;
-}
-
-.player-stats-ui {
-    min-width: 100px;
-    top: 64px;
-    right: calc(100% + 72px);
-    font-size: 14px;
-    display: none;
-    float: left;
-    position: relative;
-    min-height: 100px;
-    padding: 10px;
-    background: #000000;
-    opacity: 0.8;
-    color: $cWhite;
-}
-
-#player-stats-container {
-    position: relative;
-    width: 150px;
-    word-wrap: break-word;
-    overflow: auto;
-    font-size: 12px;
-}
-
-#forgot_reset {
-    margin: 0 auto;
-    max-width: 720px;
-}
-
-#ui-player-extras {
-    color: #fff;
-    margin: 10px 0;
 }

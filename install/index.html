@@ -15,21 +15,66 @@
 <div class="wrapper">
     <div class="header">
         <h1 class="title">
-            - <strong>Reldens</strong> - <span id="current-version">Installer</span>
+            - <strong>Reldens</strong> - <span id="current-version">Installation</span>
         </h1>
     </div>
     <div class="content">
         <div class="forms-container">
             <div class="row">
                 <form name="install-form" id="install-form" class="install-form" action="/install" method="post">
-                    <h3 class="form-title">Step 1 - Setup your database</h3>
+                    <h3 class="form-title">- App -</h3>
+                    <div class="input-box app-host">
+                        <label for="app-host">Host</label>
+                        <input type="text" name="app-host" id="app-host" class="required" required/>
+                    </div>
+                    <div class="input-box app-port">
+                        <label for="app-port">Port</label>
+                        <input type="text" name="app-port" id="app-port" class="required" required/>
+                    </div>
+                    <div class="input-box app-use-https">
+                        <label for="app-use-https">Use HTTPS</label>
+                        <input type="checkbox" name="app-use-https" id="app-use-https"/>
+                    </div>
+                    <div class="input-box app-https-key-pem">
+                        <label for="app-https-key-pem">HTTPS path to key.pem</label>
+                        <input type="text" name="app-https-key-pem" id="app-https-key-pem"/>
+                    </div>
+                    <div class="input-box app-https-cert-pem">
+                        <label for="app-https-cert-pem">HTTPS path to cert.pem</label>
+                        <input type="text" name="app-https-cert-pem" id="app-https-cert-pem"/>
+                    </div>
+                    <div class="input-box app-https-chain-pem">
+                        <label for="app-https-chain-pem">HTTPS path to chain pem</label>
+                        <input type="text" name="app-https-chain-pem" id="app-https-chain-pem"/>
+                    </div>
+                    <div class="input-box app-https-passphrase">
+                        <label for="app-https-passphrase">HTTPS passphrase</label>
+                        <input type="text" name="app-https-passphrase" id="app-https-passphrase"/>
+                    </div>
+                    <div class="input-box app-use-monitor">
+                        <label for="app-use-monitor">Enable Monitor</label>
+                        <input type="checkbox" name="app-use-monitor" id="app-use-monitor"/>
+                    </div>
+                    <div class="input-box app-secure-monitor">
+                        <label for="app-secure-monitor">Secure Monitor</label>
+                        <input type="checkbox" name="app-secure-monitor" id="app-secure-monitor"/>
+                    </div>
+                    <div class="input-box app-monitor-user">
+                        <label for="app-monitor-user">Monitor username</label>
+                        <input type="text" name="app-monitor-user" id="app-monitor-user"/>
+                    </div>
+                    <div class="input-box app-monitor-password">
+                        <label for="app-monitor-password">Monitor password</label>
+                        <input type="text" name="app-monitor-password" id="app-monitor-password"/>
+                    </div>
+                    <h3 class="form-title">- Storage -</h3>
                     <div class="input-box db-host">
                         <label for="db-host">Host</label>
                         <input type="text" name="db-host" id="db-host" class="required" required/>
                     </div>
                     <div class="input-box db-name">
                         <label for="db-name">Database Name</label>
-                        <input type="text" name="db-name" id="db-name" class="required email" required/>
+                        <input type="text" name="db-name" id="db-name" class="required" required/>
                     </div>
                     <div class="input-box db-username">
                         <label for="db-username">Username</label>
@@ -45,8 +90,10 @@
                             <input type="checkbox" name="db-basic-config" id="db-basic-config" checked/>
                         </div>
                         <div class="db-basic-config-notice">
-                            DANGER: uncheck this is only if you know what you are doing.
-                            Without this you will get all the tables empty, even the ones with default required values.
+                            <span>
+                                DANGER: uncheck this is only if you know what you are doing.
+                                Without this you will get all the tables empty, even the ones with default required values.
+                            </span>
                         </div>
                     </div>
                     <div class="input-box db-sample-data">
@@ -54,7 +101,7 @@
                         <input type="checkbox" name="db-sample-data" id="db-sample-data" checked/>
                     </div>
                     <div class="input-box submit-container db-submit">
-                        <input type="submit" value="Save"/>
+                        <input type="submit" value="Install"/>
                     </div>
                     <div class="input-box response-error"></div>
                 </form>
