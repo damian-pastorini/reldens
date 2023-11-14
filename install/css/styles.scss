@@ -272,7 +272,15 @@ form {
 
         }
 
-        &.db-sample-data, &.app-use-https, &.app-use-monitor, &.app-secure-monitor {
+        &.db-sample-data,
+        &.app-use-https,
+        &.app-use-monitor,
+        &.app-secure-monitor,
+        &.mailer-enable,
+        &.mailer-secure,
+        &.firebase-enable,
+        &.app-secure-admin,
+        &.app-admin-hot-plug {
             justify-content: end;
             margin-top: 4px;
             padding: 0 0 6px 0;
@@ -287,7 +295,7 @@ form {
             }
         }
 
-        &.hidden {
+        &.hidden, &.https-filter, &.monitor-filter, &.mailer-filter, &.firebase-filter {
             display: none;
         }
 

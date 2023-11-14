@@ -1,8 +1,8 @@
-#######################################################################################################################
+--
 
 SET FOREIGN_KEY_CHECKS = 0;
 
-#######################################################################################################################
+--
 
 TRUNCATE `ads`;
 TRUNCATE `ads_banner`;
@@ -930,13 +930,13 @@ REPLACE INTO `target_options` (`id`, `target_key`, `target_label`) VALUES
 	(2, 1, 'Player');
 
 REPLACE INTO `users` (`id`, `email`, `username`, `password`, `role_id`, `status`, `created_at`, `updated_at`, `played_time`) VALUES
-	(1, 'root@yourgame.com', 'root', '$2b$10$SzjZph10Svebltx8Nmd7lec14wATo7ikEQQ0WEA0YZ188qGWHDu8S', 1, '1', '2022-03-17 18:57:44', '2023-10-21 16:51:55', 0);
+	(1, 'root@yourgame.com', 'root', '$2b$10$SzjZph10Svebltx8Nmd7lec14wATo7ikEQQ0WEA0YZ188qGWHDu8S', 99, '1', '2022-03-17 18:57:44', '2023-10-21 16:51:55', 0);
 
 REPLACE INTO `users_locale` (`id`, `locale_id`, `user_id`) VALUES
 	(1, 1, 1);
 
-#######################################################################################################################
+--
 
 SET FOREIGN_KEY_CHECKS = 1;
 
-#######################################################################################################################
+--

@@ -1,12 +1,12 @@
-#
-# Reldens - Installation
-#
+--
+-- Reldens - Installation
+--
 
-#######################################################################################################################
+--
 
 SET FOREIGN_KEY_CHECKS = 0;
 
-#######################################################################################################################
+--
 
 CREATE TABLE IF NOT EXISTS `features` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
@@ -928,8 +928,8 @@ CREATE TABLE IF NOT EXISTS `users_locale` (
   CONSTRAINT `FK_users_locale_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
 
-#######################################################################################################################
+--
 
 SET FOREIGN_KEY_CHECKS = 1;
 
-#######################################################################################################################
+--

@@ -18,12 +18,12 @@ module.exports = {
         }
     },
     production: {
-        client: [DB-CLIENT],
+        client: '{{&db-client}}',
         connection: {
-            host: [DB-HOST],
-            database: [DB-NAME],
-            user: [DB-USER],
-            password: [DB-PASSWORD],
+            host: '{{&db-host}}',
+            database: '{{&db-name}}',
+            user: '{{&db-username}}',
+            password: '{{&db-password}}',
             multipleStatements: true
         },
         pool: {

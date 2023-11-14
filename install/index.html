@@ -10,6 +10,7 @@
     <link rel="manifest" href="./site.webmanifest"/>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"/>
     <link rel="stylesheet" type="text/css" href="./css/styles.scss"/>
+    <script type="module" src="./index.js"></script>
 </head>
 <body>
 <div class="wrapper">
@@ -22,6 +23,7 @@
         <div class="forms-container">
             <div class="row">
                 <form name="install-form" id="install-form" class="install-form" action="/install" method="post">
+                    <!-- APP -->
                     <h3 class="form-title">- App -</h3>
                     <div class="input-box app-host">
                         <label for="app-host">Host</label>
@@ -31,46 +33,76 @@
                         <label for="app-port">Port</label>
                         <input type="text" name="app-port" id="app-port" class="required" required/>
                     </div>
+                    <div class="input-box app-admin-path">
+                        <label for="app-admin-path">Admin Panel path (default /reldens-admin)</label>
+                        <input type="text" name="app-admin-path" id="app-admin-path"/>
+                    </div>
+                    <div class="input-box app-secure-admin">
+                        <label for="app-secure-admin">Secure Admin</label>
+                        <input type="checkbox" value="1" name="app-secure-admin" id="app-secure-admin" checked/>
+                    </div>
+                    <div class="input-box app-admin-hot-plug">
+                        <label for="app-admin-hot-plug">Hot-Plug</label>
+                        <input type="checkbox" value="1" name="app-admin-hot-plug" id="app-admin-hot-plug" checked/>
+                    </div>
+
+                    <!-- HTTPS -->
                     <div class="input-box app-use-https">
                         <label for="app-use-https">Use HTTPS</label>
-                        <input type="checkbox" name="app-use-https" id="app-use-https"/>
+                        <input type="checkbox" value="1" name="app-use-https" id="app-use-https"/>
                     </div>
-                    <div class="input-box app-https-key-pem">
+                    <div class="input-box app-https-key-pem https-filter">
                         <label for="app-https-key-pem">HTTPS path to key.pem</label>
                         <input type="text" name="app-https-key-pem" id="app-https-key-pem"/>
                     </div>
-                    <div class="input-box app-https-cert-pem">
+                    <div class="input-box app-https-cert-pem https-filter">
                         <label for="app-https-cert-pem">HTTPS path to cert.pem</label>
                         <input type="text" name="app-https-cert-pem" id="app-https-cert-pem"/>
                     </div>
-                    <div class="input-box app-https-chain-pem">
+                    <div class="input-box app-https-chain-pem https-filter">
                         <label for="app-https-chain-pem">HTTPS path to chain pem</label>
                         <input type="text" name="app-https-chain-pem" id="app-https-chain-pem"/>
                     </div>
-                    <div class="input-box app-https-passphrase">
+                    <div class="input-box app-https-passphrase https-filter">
                         <label for="app-https-passphrase">HTTPS passphrase</label>
                         <input type="text" name="app-https-passphrase" id="app-https-passphrase"/>
                     </div>
+
+                    <!-- MONITOR -->
                     <div class="input-box app-use-monitor">
                         <label for="app-use-monitor">Enable Monitor</label>
-                        <input type="checkbox" name="app-use-monitor" id="app-use-monitor"/>
+                        <input type="checkbox" value="1" name="app-use-monitor" id="app-use-monitor"/>
                     </div>
-                    <div class="input-box app-secure-monitor">
+                    <div class="input-box app-secure-monitor monitor-filter">
                         <label for="app-secure-monitor">Secure Monitor</label>
-                        <input type="checkbox" name="app-secure-monitor" id="app-secure-monitor"/>
+                        <input type="checkbox" value="1" name="app-secure-monitor" id="app-secure-monitor"/>
                     </div>
-                    <div class="input-box app-monitor-user">
+                    <div class="input-box app-monitor-user monitor-filter">
                         <label for="app-monitor-user">Monitor username</label>
                         <input type="text" name="app-monitor-user" id="app-monitor-user"/>
                     </div>
-                    <div class="input-box app-monitor-password">
+                    <div class="input-box app-monitor-password monitor-filter">
                         <label for="app-monitor-password">Monitor password</label>
                         <input type="text" name="app-monitor-password" id="app-monitor-password"/>
                     </div>
+
+                    <!-- STORAGE -->
                     <h3 class="form-title">- Storage -</h3>
+                    <div class="input-box db-storage-driver">
+                        <label for="db-storage-driver">Storage Driver (objection-js, mikro-orm)</label>
+                        <input type="text" value="objection-js" name="db-storage-driver" id="db-storage-driver" class="required" required/>
+                    </div>
+                    <div class="input-box db-client">
+                        <label for="db-client">Client (mysql / 3306, mongodb / 27017)</label>
+                        <input type="text" value="mysql" name="db-client" id="db-client" class="required" required/>
+                    </div>
                     <div class="input-box db-host">
                         <label for="db-host">Host</label>
                         <input type="text" name="db-host" id="db-host" class="required" required/>
+                    </div>
+                    <div class="input-box db-port">
+                        <label for="db-port">Port</label>
+                        <input type="text" name="db-port" id="db-port" class="required" required/>
                     </div>
                     <div class="input-box db-name">
                         <label for="db-name">Database Name</label>
@@ -87,7 +119,7 @@
                     <div class="input-box db-basic-config">
                         <div class="db-basic-config-checkbox">
                             <label for="db-basic-config">Install minimal configuration</label>
-                            <input type="checkbox" name="db-basic-config" id="db-basic-config" checked/>
+                            <input type="checkbox" value="1" name="db-basic-config" id="db-basic-config" checked/>
                         </div>
                         <div class="db-basic-config-notice">
                             <span>
@@ -98,9 +130,81 @@
                     </div>
                     <div class="input-box db-sample-data">
                         <label for="db-sample-data">Install sample data</label>
-                        <input type="checkbox" name="db-sample-data" id="db-sample-data" checked/>
+                        <input type="checkbox" value="1" name="db-sample-data" id="db-sample-data" checked/>
                     </div>
-                    <div class="input-box submit-container db-submit">
+
+                    <!-- MAILER -->
+                    <h3 class="form-title">- Mailer -</h3>
+                    <div class="input-box mailer-enable">
+                        <label for="mailer-enable">Enable NodeMailer</label>
+                        <input type="checkbox" value="1" name="mailer-enable" id="mailer-enable"/>
+                    </div>
+                    <div class="input-box mailer-service mailer-filter">
+                        <label for="mailer-service">Service Name or Host</label>
+                        <input type="text" name="mailer-service" id="mailer-service"/>
+                    </div>
+                    <div class="input-box mailer-secure mailer-filter">
+                        <label for="mailer-secure">Secure (true|false > SSL)</label>
+                        <input type="checkbox" value="1" name="mailer-secure" id="mailer-secure"/>
+                    </div>
+                    <div class="input-box mailer-port mailer-filter">
+                        <label for="mailer-port">Port</label>
+                        <input type="text" name="mailer-port" id="mailer-port"/>
+                    </div>
+                    <div class="input-box mailer-username mailer-filter">
+                        <label for="mailer-username">Username</label>
+                        <input type="text" name="mailer-username" id="mailer-username"/>
+                    </div>
+                    <div class="input-box mailer-password mailer-filter">
+                        <label for="mailer-password">Password</label>
+                        <input type="password" name="mailer-password" id="mailer-password"/>
+                    </div>
+                    <div class="input-box mailer-from mailer-filter">
+                        <label for="mailer-from">From email</label>
+                        <input type="text" name="mailer-from" id="mailer-from"/>
+                    </div>
+
+                    <!-- FIREBASE -->
+                    <h3 class="form-title">- Firebase (for login) -</h3>
+                    <div class="input-box firebase-enable">
+                        <label for="firebase-enable">Enable Firebase</label>
+                        <input type="checkbox" value="1" name="firebase-enable" id="firebase-enable"/>
+                    </div>
+                    <div class="input-box firebase-api-key firebase-filter">
+                        <label for="firebase-api-key">API key</label>
+                        <input type="text" name="firebase-api-key" id="firebase-api-key"/>
+                    </div>
+                    <div class="input-box firebase-api-id firebase-filter">
+                        <label for="firebase-api-id">Api ID</label>
+                        <input type="text" name="firebase-api-id" id="firebase-api-id"/>
+                    </div>
+                    <div class="input-box firebase-auth-domain firebase-filter">
+                        <label for="firebase-auth-domain">Auth domain</label>
+                        <input type="text" name="firebase-auth-domain" id="firebase-auth-domain"/>
+                    </div>
+                    <div class="input-box firebase-database-url firebase-filter">
+                        <label for="firebase-database-url">Database URL</label>
+                        <input type="text" name="firebase-database-url" id="firebase-database-url"/>
+                    </div>
+                    <div class="input-box firebase-project-id firebase-filter">
+                        <label for="firebase-project-id">Project ID</label>
+                        <input type="text" name="firebase-project-id" id="firebase-project-id"/>
+                    </div>
+                    <div class="input-box firebase-storage-bucket firebase-filter">
+                        <label for="firebase-storage-bucket">Storage bucket</label>
+                        <input type="text" name="firebase-storage-bucket" id="firebase-storage-bucket"/>
+                    </div>
+                    <div class="input-box firebase-sender-id firebase-filter">
+                        <label for="firebase-sender-id">Sender ID</label>
+                        <input type="text" name="firebase-sender-id" id="firebase-sender-id"/>
+                    </div>
+                    <div class="input-box firebase-measurement-id firebase-filter">
+                        <label for="firebase-measurement-id">Measurement ID (GA)</label>
+                        <input type="text" name="firebase-measurement-id" id="firebase-measurement-id"/>
+                    </div>
+
+                    <!-- SUBMIT -->
+                    <div class="input-box submit-container">
                         <input type="submit" value="Install"/>
                     </div>
                     <div class="input-box response-error"></div>
