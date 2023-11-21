@@ -12,6 +12,8 @@ $cWhite: #fff;
 $cLightGrey: #ccc;
 $cBlack: #000;
 $cRed: #ff0000;
+$titleBackground: #f2f2f2;
+$boxBackground: rgba(255, 255, 255, 0.6);
 
 body, html {
     height: 100%;
@@ -164,7 +166,7 @@ input[type="submit"] {
     max-width: 500px;
     margin: 0 auto 10px;
     padding: 0;
-    background-color: rgba(255, 255, 255, 0.6);
+    background-color: $boxBackground;
     border: 1px solid #ccc;
     box-shadow: 10px 10px 14px 2px rgba(0, 0, 0, 0.6);
 
@@ -225,7 +227,7 @@ input[type="submit"] {
 
 h3.form-title {
     text-align: center;
-    background: #f2f2f2;
+    background: $titleBackground;
     padding: 10px 0;
 }
 
@@ -241,7 +243,7 @@ form {
         &.db-basic-config {
             display: flex;
             flex-direction: column;
-            background: rgba(255,255,255,0.6);
+            background: $boxBackground;
             margin-bottom: 0;
 
             label {
@@ -284,7 +286,7 @@ form {
             justify-content: end;
             margin-top: 4px;
             padding: 0 0 6px 0;
-            background: rgba(255, 255, 255, 0.6);
+            background: $boxBackground;
 
             label {
                 width: auto;
@@ -328,4 +330,26 @@ form {
 
     }
 
+}
+
+.installation-successful {
+    display: block;
+    padding: 10px;
+    background: $boxBackground;
+    text-align: center;
+    text-decoration: none;
+    font-size: 2em;
+    color: #000;
+}
+
+.app-error, .db-error {
+    p {
+        display: none;
+        width: 100%;
+        padding: 2%;
+        background: $boxBackground;
+        font-size: 12px;
+        font-weight: bold;
+        color: $cRed;
+    }
 }

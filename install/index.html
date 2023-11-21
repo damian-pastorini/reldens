@@ -27,11 +27,11 @@
                     <h3 class="form-title">- App -</h3>
                     <div class="input-box app-host">
                         <label for="app-host">Host</label>
-                        <input type="text" name="app-host" id="app-host" class="required" required/>
+                        <input type="text" name="app-host" id="app-host" value="http://localhost" class="required" required/>
                     </div>
                     <div class="input-box app-port">
                         <label for="app-port">Port</label>
-                        <input type="text" name="app-port" id="app-port" class="required" required/>
+                        <input type="text" name="app-port" id="app-port" value="8080" class="required" required/>
                     </div>
                     <div class="input-box app-admin-path">
                         <label for="app-admin-path">Admin Panel path (default /reldens-admin)</label>
@@ -44,6 +44,9 @@
                     <div class="input-box app-admin-hot-plug">
                         <label for="app-admin-hot-plug">Hot-Plug</label>
                         <input type="checkbox" value="1" name="app-admin-hot-plug" id="app-admin-hot-plug" checked/>
+                    </div>
+                    <div class="input-box app-error">
+                        <p class="installation-process-failed">There was an error during the installation process.</p>
                     </div>
 
                     <!-- HTTPS -->
@@ -90,23 +93,23 @@
                     <h3 class="form-title">- Storage -</h3>
                     <div class="input-box db-storage-driver">
                         <label for="db-storage-driver">Storage Driver (objection-js, mikro-orm)</label>
-                        <input type="text" value="objection-js" name="db-storage-driver" id="db-storage-driver" class="required" required/>
+                        <input type="text" name="db-storage-driver" id="db-storage-driver" value="objection-js" class="required" required/>
                     </div>
                     <div class="input-box db-client">
                         <label for="db-client">Client (mysql / 3306, mongodb / 27017)</label>
-                        <input type="text" value="mysql" name="db-client" id="db-client" class="required" required/>
+                        <input type="text" name="db-client" id="db-client" value="mysql" class="required" required/>
                     </div>
                     <div class="input-box db-host">
                         <label for="db-host">Host</label>
-                        <input type="text" name="db-host" id="db-host" class="required" required/>
+                        <input type="text" name="db-host" id="db-host" value="localhost" class="required" required/>
                     </div>
                     <div class="input-box db-port">
                         <label for="db-port">Port</label>
-                        <input type="text" name="db-port" id="db-port" class="required" required/>
+                        <input type="text" name="db-port" id="db-port" value="3306" class="required" required/>
                     </div>
                     <div class="input-box db-name">
                         <label for="db-name">Database Name</label>
-                        <input type="text" name="db-name" id="db-name" class="required" required/>
+                        <input type="text" name="db-name" id="db-name" value="{{db-name}}" class="required" required/>
                     </div>
                     <div class="input-box db-username">
                         <label for="db-username">Username</label>
@@ -115,6 +118,12 @@
                     <div class="input-box db-password">
                         <label for="db-password">Password</label>
                         <input type="password" name="db-password" id="db-password" class="required" required/>
+                    </div>
+                    <div class="input-box db-error">
+                        <p class="connection-failed">Connection failed, please check the storage configuration.</p>
+                        <p class="invalid-driver">Invalid storage driver.</p>
+                        <p class="raw-query-not-found">Method "rawQuery" not found in the specified storage driver.</p>
+                        <p class="db-installation-process-failed">There was an error during the installation process.</p>
                     </div>
                     <div class="input-box db-basic-config">
                         <div class="db-basic-config-checkbox">

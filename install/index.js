@@ -17,4 +17,20 @@ window.addEventListener('load', () => {
         });
     }
 
+    let urlParams = new URL(window.location.href).searchParams;
+    if('1' === urlParams.get('success')){
+        document.querySelector('.forms-container').style.display = 'none';
+        let newLink = document.createElement('a');
+        newLink.href = '/?ready=1';
+        newLink.target = '_blank';
+        newLink.innerHTML = 'Installation successful, click here to open your game!';
+        newLink.classList.add('installation-successful');
+        document.querySelector('.content').append(newLink);
+    }
+
+    let errorCode = (urlParams.get('error') || '').toString();
+    if('' !== errorCode){
+        document.querySelector('.'+errorCode).style.display = 'block';
+    }
+
 });
