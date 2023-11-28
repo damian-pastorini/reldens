@@ -149,8 +149,15 @@
                         <input type="checkbox" value="1" name="mailer-enable" id="mailer-enable"/>
                     </div>
                     <div class="input-box mailer-service mailer-filter">
-                        <label for="mailer-service">Service Name or Host</label>
-                        <input type="text" name="mailer-service" id="mailer-service"/>
+                        <label for="mailer-service">Service</label>
+                        <select name="mailer-service" id="mailer-service">
+                            <option value="sendgrid">SendGrid</option>
+                            <option value="nodemailer">NodeMailer</option>
+                        </select>
+                    </div>
+                    <div class="input-box mailer-host mailer-filter">
+                        <label for="mailer-host">Host</label>
+                        <input type="text" name="mailer-host" id="mailer-host"/>
                     </div>
                     <div class="input-box mailer-secure mailer-filter">
                         <label for="mailer-secure">Secure (true|false > SSL)</label>
