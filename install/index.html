@@ -92,8 +92,11 @@
                     <!-- STORAGE -->
                     <h3 class="form-title">- Storage -</h3>
                     <div class="input-box db-storage-driver">
-                        <label for="db-storage-driver">Storage Driver (objection-js, mikro-orm)</label>
-                        <input type="text" name="db-storage-driver" id="db-storage-driver" value="objection-js" class="required" required/>
+                        <label for="db-storage-driver">Storage Driver</label>
+                        <select name="db-storage-driver" id="db-storage-driver" class="required" required>
+                            <option value="objection-js">Objection JS</option>
+                            <option value="mikro-orm">MikroORM</option>
+                        </select>
                     </div>
                     <div class="input-box db-client">
                         <label for="db-client">Client (mysql / 3306, mongodb / 27017)</label>
@@ -160,7 +163,7 @@
                         <input type="text" name="mailer-host" id="mailer-host"/>
                     </div>
                     <div class="input-box mailer-secure mailer-filter">
-                        <label for="mailer-secure">Secure (true|false > SSL)</label>
+                        <label for="mailer-secure">Secure (SSL)</label>
                         <input type="checkbox" value="1" name="mailer-secure" id="mailer-secure"/>
                     </div>
                     <div class="input-box mailer-port mailer-filter">
