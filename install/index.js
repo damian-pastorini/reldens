@@ -1,3 +1,9 @@
+/**
+ *
+ * Reldens - Install
+ *
+ */
+
 window.addEventListener('load', () => {
 
     const expanders = [
@@ -7,14 +13,21 @@ window.addEventListener('load', () => {
         {key: 'firebase-enable', filterClass: 'firebase-filter'}
     ];
 
+    function toggleExpander(isChecked, expander)
+    {
+        const display = isChecked ? 'flex' : 'none';
+        const elements = document.getElementsByClassName(expander.filterClass);
+        for (let element of elements) {
+            element.style.display = display;
+        }
+    }
+
     for(let expander of expanders){
-        document.getElementById(expander.key).addEventListener('click', (event) => {
-            const display = event?.currentTarget?.checked ? 'flex' : 'none';
-            const elements = document.getElementsByClassName(expander.filterClass);
-            for(let element of elements){
-                element.style.display = display;
-            }
+        let expanderElement = document.getElementById(expander.key);
+        expanderElement.addEventListener('click', (event) => {
+            toggleExpander(event?.currentTarget?.checked, expander);
         });
+        toggleExpander(expanderElement.checked, expander);
     }
 
     let urlParams = new URL(window.location.href).searchParams;
