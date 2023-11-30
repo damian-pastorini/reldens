@@ -258,18 +258,12 @@ form {
                 display: flex;
                 flex-direction: row;
                 justify-content: end;
+                padding: 0 0 6px;
             }
 
             .db-basic-config-notice {
-                display: flex;
-                margin-top: 10px;
-                font-size: 12px;
-                font-weight: bold;
-                color: $cRed;
-
-                span {
-                    padding: 10px;
-                }
+                margin-bottom: 0;
+                background: none;
             }
 
         }
@@ -328,6 +322,27 @@ form {
             max-width: 268px;
         }
 
+    }
+
+    .db-basic-config-notice {
+        display: flex;
+        background: $boxBackground;
+        margin-bottom: 10px;
+        font-size: 12px;
+        font-weight: normal;
+
+        ul {
+            margin-bottom: 0;
+        }
+
+        span {
+            color: $cBlack;
+            padding: 10px;
+            &.danger {
+                font-weight: bold;
+                color: $cRed;
+            }
+        }
     }
 
 }

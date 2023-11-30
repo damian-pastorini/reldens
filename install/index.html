@@ -34,11 +34,11 @@
                         <input type="text" name="app-port" id="app-port" value="{{app-port}}" class="required" required/>
                     </div>
                     <div class="input-box app-admin-path">
-                        <label for="app-admin-path">Admin Panel path (default /reldens-admin)</label>
+                        <label for="app-admin-path">Admin Panel Path</label>
                         <input type="text" name="app-admin-path" id="app-admin-path" value="{{app-admin-path}}"/>
                     </div>
                     <div class="input-box app-secure-admin">
-                        <label for="app-secure-admin">Secure Admin</label>
+                        <label for="app-secure-admin">Secure Admin (login with normal app users)</label>
                         <input type="checkbox" value="1" name="app-secure-admin" id="app-secure-admin"{{&app-secure-admin-checked}}/>
                     </div>
                     <div class="input-box app-admin-hot-plug">
@@ -91,6 +91,15 @@
 
                     <!-- STORAGE -->
                     <h3 class="form-title">- Storage -</h3>
+                    <div class="db-basic-config-notice">
+                        <span>
+                            Default samples:
+                            <ul>
+                                <li>Client: mysql - Port: 3306</li>
+                                <li>Client: mongodb - Port: 27017</li>
+                            </ul>
+                        </span>
+                    </div>
                     <div class="input-box db-storage-driver">
                         <label for="db-storage-driver">Storage Driver</label>
                         <select name="db-storage-driver" id="db-storage-driver" class="required" required>
@@ -99,7 +108,7 @@
                         </select>
                     </div>
                     <div class="input-box db-client">
-                        <label for="db-client">Client (mysql / 3306, mongodb / 27017)</label>
+                        <label for="db-client">Client</label>
                         <input type="text" name="db-client" id="db-client" value="{{db-client}}" class="required" required/>
                     </div>
                     <div class="input-box db-host">
@@ -129,15 +138,18 @@
                         <p class="db-installation-process-failed">There was an error during the installation process.</p>
                     </div>
                     <div class="input-box db-basic-config">
+                        <div class="db-basic-config-notice">
+                            <span class="danger">
+                                DANGER:
+                                <ul>
+                                    <li>The automatic installation for the basic configuration and the sample data are only available for the mysql client.</li>
+                                    <li>Uncheck this is only if you know what you are doing. <br/>Without this you will get all the tables empty, even the ones with default required values.</li>
+                                </ul>
+                            </span>
+                        </div>
                         <div class="db-basic-config-checkbox">
                             <label for="db-basic-config">Install minimal configuration</label>
                             <input type="checkbox" value="1" name="db-basic-config" id="db-basic-config"{{&db-basic-config-checked}}/>
-                        </div>
-                        <div class="db-basic-config-notice">
-                            <span>
-                                DANGER: uncheck this is only if you know what you are doing.
-                                Without this you will get all the tables empty, even the ones with default required values.
-                            </span>
                         </div>
                     </div>
                     <div class="input-box db-sample-data">
