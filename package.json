@@ -96,6 +96,7 @@
         "express": "4.18.2",
         "express-basic-auth": "1.2.1",
         "express-formidable": "1.2.0",
+        "express-rate-limit": "^7.1.5",
         "express-session": "1.17.3",
         "firebase": "10.6.0",
         "firebaseui": "6.1.0",
