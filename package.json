@@ -83,7 +83,7 @@
         "@reldens/modifiers": "^0.20.0",
         "@reldens/skills": "^0.20.0",
         "@reldens/storage": "^0.18.0",
-        "@reldens/utils": "^0.21.0",
+        "@reldens/utils": "^0.21.1",
         "@sendgrid/mail": "^7.7.0",
         "adminjs": "5.7.3",
         "bcrypt": "5.1.1",
