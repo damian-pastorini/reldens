@@ -28,5 +28,9 @@ reldens.events.on('reldens.afterInitEngineAndStartGame', () => {
     reldens.gameDom.getElement('#current-version').innerHTML = reldens.config.version+' -';
 });
 
+reldens.events.on('reldens.startGameAfter', () => {
+    reldens.gameDom.getElement('.row-disclaimer').remove();
+});
+
 // global access is not actually required, the app can be fully encapsulated:
 window.reldens = reldens;

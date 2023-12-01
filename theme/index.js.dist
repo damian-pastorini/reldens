@@ -52,7 +52,7 @@ if('1' === process.env.RELDENS_BLOCKED_ADMIN){
 // run the server!
 console.log('TEST - ServerPlugin starting...');
 appServer.createServers().then(() => {
-    console.log('TEST - CREATED APP SERVER AND GAME SERVER INSTANCES!');
+    console.log('TEST - CREATED APP SERVER INSTANCE!');
     appServer.start().then(() => {
         console.log('TEST - SERVER UP AND RUNNING!');
     }).catch((err) => {

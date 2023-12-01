@@ -85,24 +85,24 @@ class Commander
     help()
     {
         console.info(' - Available commands:'
-            +"\n"+'resetDist               - Delete and create the "dist" folder.'
-            +"\n"+'removeDist              - Delete the "dist" folder.'
-            +"\n"+'installDefaultTheme     - Copy theme and packages from node_modules into the current project theme.'
-            +"\n"+'copyAssetsToDist        - Copy project theme assets into the "dist" folder.'
-            +"\n"+'copyKnexFile            - Copy the knexfile.js sample into the project.'
-            +"\n"+'copyEnvFile             - Copy the .env file sample into the project.'
-            +"\n"+'copyIndex               - Copy the index file sample into the project.'
-            +"\n"+'copyDefaultAssets       - Copy the reldens module default assets into the "dist/assets" folder.'
-            +"\n"+'copyDefaultTheme        - Copy the reldens module default theme into the project theme.'
-            +"\n"+'copyCustomAssets        - Copy the project assets into the "dist/assets" folder.'
-            +"\n"+'copyPackage             - Copy the reldens module packages into the project.'
-            +"\n"+'buildCss                - Builds the project theme styles.'
-            +"\n"+'buildClient             - Builds the project theme index.html.'
-            +"\n"+'buildSkeleton           - Builds the styles and project theme index.html.'
-            +"\n"+'copyNew                 - Copy all default files for the fullRebuild.'
-            +"\n"+'fullRebuild             - Rebuild the Skeleton from scratch.'
-            +"\n"+'installSkeleton         - Installs Skeleton.'
-            +"\n"+'copyServerFiles         - Reset the "dist" folder and runs a fullRebuild.');
+            +"\n"+'resetDist                        - Delete and create the "dist" folder.'
+            +"\n"+'removeDist                       - Delete the "dist" folder.'
+            +"\n"+'installDefaultTheme              - Copy theme and packages from node_modules into the current project theme.'
+            +"\n"+'copyAssetsToDist                 - Copy project theme assets into the "dist" folder.'
+            +"\n"+'copyKnexFile                     - Copy the knexfile.js sample into the project.'
+            +"\n"+'copyEnvFile                      - Copy the .env file sample into the project.'
+            +"\n"+'copyIndex                        - Copy the index file sample into the project.'
+            +"\n"+'copyDefaultAssets                - Copy the reldens module default assets into the "dist/assets" folder.'
+            +"\n"+'copyDefaultTheme                 - Copy the reldens module default theme into the project theme.'
+            +"\n"+'copyCustomAssets                 - Copy the project assets into the "dist/assets" folder.'
+            +"\n"+'copyPackage                      - Copy the reldens module packages into the project.'
+            +"\n"+'buildCss [theme-folder-name]     - Builds the project theme styles.'
+            +"\n"+'buildClient [theme-folder-name]  - Builds the project theme index.html.'
+            +"\n"+'buildSkeleton                    - Builds the styles and project theme index.html.'
+            +"\n"+'copyNew                          - Copy all default files for the fullRebuild.'
+            +"\n"+'fullRebuild                      - Rebuild the Skeleton from scratch.'
+            +"\n"+'installSkeleton                  - Installs Skeleton.'
+            +"\n"+'copyServerFiles                  - Reset the "dist" folder and runs a fullRebuild.');
     }
 
 }

@@ -4,19 +4,22 @@
  *
  */
 
+.firebase-row-container {
+    flex-direction: column;
+}
+
 #firebaseui-auth-container {
     display: block;
     max-width: 400px;
     margin: 10px auto;
     padding: 6px 0;
-    background: #f2f2f2;
 }
 
 .firebase-container {
     display: block;
     float: left;
     width: 100%;
-    margin: 0;
+    margin: 0 0 2%;
     padding: 0;
 
     &.hidden {
@@ -25,8 +28,8 @@
 }
 
 #firebase-login {
-    max-width: 400px;
     display: block;
+    width: 74%;
     margin: 0 auto;
-    padding: 20px;
+    padding: 0;
 }

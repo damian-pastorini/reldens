@@ -63,14 +63,11 @@
         max-height: 150px;
 
         .tab-content {
+            display: none;
             overflow-y: auto;
 
-            &:first-child {
+            &.active {
                 display: block;
-            }
-
-            &.hidden {
-                display: none;
             }
         }
     }

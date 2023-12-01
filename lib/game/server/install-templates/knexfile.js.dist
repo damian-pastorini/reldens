@@ -14,16 +14,16 @@ module.exports = {
         },
         migrations: {
             directory: './node_modules/reldens/migrations/development',
-            tableName: 'knex_migrations'
+            tableName: 'knex_migrations_dev'
         }
     },
     production: {
-        client: 'mysql',
+        client: '{{&db-client}}',
         connection: {
-            host: 'localhost',
-            database: 'reldens',
-            user: 'reldens',
-            password: 'reldens',
+            host: '{{&db-host}}',
+            database: '{{&db-name}}',
+            user: '{{&db-username}}',
+            password: '{{&db-password}}',
             multipleStatements: true
         },
         pool: {

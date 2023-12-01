@@ -1,13 +1,25 @@
+.game-started {
+    &.game-engine-started {
+        #player-selection {
+            display: none;
+        }
+    }
+
+    #player-selection {
+        display: flex;
+    }
+}
+
 #player-selection {
-    background: $cWhite;
+    display: none;
     max-width: 500px;
-    margin: 40px auto 0;
+    margin: 40px auto;
 
     .selection-forms-container {
         margin: 0 auto;
         display: block;
         width: 88%;
-        background: $cWhite;
+        background: rgba(255, 255, 255, 0.6);
         float: left;
         padding: 6%;
 
@@ -60,4 +72,13 @@
 
     }
 
+}
+
+#class-path-selector-box {
+    display: block;
+    float: left;
+
+    label {
+        float: left;
+    }
 }

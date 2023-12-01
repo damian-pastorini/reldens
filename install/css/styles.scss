@@ -1,0 +1,370 @@
+/**
+ *
+ * Reldens - Installer
+ *
+ */
+
+$normalFont: Verdana, Geneva, sans-serif;
+$reldensFont: "Play", sans-serif;
+$cReldens: #2f7dde;
+$cDarkBlue: #37517e;
+$cWhite: #fff;
+$cLightGrey: #ccc;
+$cBlack: #000;
+$cRed: #ff0000;
+$titleBackground: #f2f2f2;
+$boxBackground: rgba(255, 255, 255, 0.6);
+
+body, html {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: $normalFont;
+    background-color: transparent;
+    user-select: none;
+
+    .wrapper {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: 100%;
+        overflow: auto;
+        z-index: 10000;
+        background-size: cover;
+        background-color: $cWhite;
+        background-image: url(../assets/web/reldens-background.png);
+        background-position: center;
+        background-repeat: no-repeat;
+
+        .header,
+        .footer,
+        .content {
+            width: 100%;
+        }
+
+        .header,
+        .footer {
+            color: $cWhite;
+        }
+
+        .header {
+            display: flex;
+            flex-wrap: wrap;
+            flex-direction: row;
+            align-items: center;
+            background-color: $cBlack;
+            height: 14%;
+            max-height: 100px;
+        }
+
+        .content {
+            height: 80%;
+        }
+
+        .footer {
+            display: flex;
+            height: 6%;
+            background-color: $cDarkBlue;
+            padding: min(10px, 1%) 0;
+        }
+
+    }
+
+}
+
+.text-black {
+    color: $cBlack;
+}
+
+.hidden {
+    display: none;
+}
+
+
+
+.header {
+    #your-logo {
+        margin-left: 2%;
+    }
+
+    h1 {
+        position: relative;
+        display: block;
+        margin: 0 auto;
+        padding: 2% 0;
+        font-family: $reldensFont;
+        font-size: 1.5em;
+
+        strong {
+            color: $cReldens;
+            font-weight: bold;
+        }
+
+    }
+
+    @media (max-height: 390px) {
+
+        h1 {
+            font-size: 1em;
+            padding-top: 0.2em;
+        }
+
+    }
+
+}
+
+.footer {
+    .copyright {
+        position: relative;
+        display: block;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        text-align: center;
+
+        a, a:hover, a:visited {
+            display: block;
+            color: #fff;
+            text-decoration: none;
+            padding: 0;
+        }
+
+    }
+
+}
+
+.content {
+    min-height: 300px;
+
+    .forms-container {
+        display: flex;
+        flex-direction: row;
+        height: 100%;
+        width: 100%;
+        justify-content: center;
+
+        .install-form {
+            padding: 4% 8%;
+        }
+    }
+
+}
+
+button,
+input[type="button"],
+input[type="submit"] {
+    cursor: pointer;
+}
+
+.row {
+    display: flex;
+    position: relative;
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto 10px;
+    padding: 0;
+    background-color: $boxBackground;
+    border: 1px solid #ccc;
+    box-shadow: 10px 10px 14px 2px rgba(0, 0, 0, 0.6);
+
+    &.hidden {
+        display: none;
+    }
+}
+
+.col-2 {
+    display: flex;
+    position: relative;
+    flex-direction: column;
+    flex-wrap: wrap;
+    width: 46%;
+    margin: 0;
+    padding: 2%;
+}
+
+.col-left {
+    align-content: end;
+}
+
+.col-right {
+    align-content: start;
+}
+
+@media (max-width: 725px) {
+
+    .row {
+        max-width: none;
+    }
+
+    .col-2 {
+        width: 90%;
+        padding: 0;
+        margin: 0 auto;
+    }
+
+    .footer {
+        display: none;
+    }
+
+    .content {
+        height: 92%;
+
+        .forms-container {
+            flex-direction: column;
+        }
+    }
+
+}
+
+@media (min-width: 725px) and (max-width: 751px) {
+    form .input-box.reg-re-password label {
+        margin-top: 1px;
+    }
+}
+
+h3.form-title {
+    text-align: center;
+    background: $titleBackground;
+    padding: 10px 0;
+}
+
+form {
+    .input-box {
+        display: flex;
+        position: relative;
+        flex-direction: row;
+        justify-content: space-between;
+        width: 100%;
+        margin-bottom: 10px;
+
+        &.db-basic-config {
+            display: flex;
+            flex-direction: column;
+            background: $boxBackground;
+            margin-bottom: 0;
+
+            label {
+                width: auto;
+            }
+
+            input {
+                top: 5px;
+            }
+
+            .db-basic-config-checkbox {
+                display: flex;
+                flex-direction: row;
+                justify-content: end;
+                padding: 0 0 6px;
+            }
+
+            .db-basic-config-notice {
+                margin-bottom: 0;
+                background: none;
+            }
+
+        }
+
+        &.db-sample-data,
+        &.app-use-https,
+        &.app-use-monitor,
+        &.app-secure-monitor,
+        &.mailer-enable,
+        &.mailer-secure,
+        &.firebase-enable,
+        &.app-secure-admin,
+        &.app-admin-hot-plug {
+            justify-content: end;
+            margin-top: 4px;
+            padding: 0 0 6px 0;
+            background: $boxBackground;
+
+            label {
+                width: auto;
+            }
+
+            input {
+                top: 5px;
+            }
+        }
+
+        &.hidden, &.https-filter, &.monitor-filter, &.mailer-filter, &.firebase-filter {
+            display: none;
+        }
+
+        &.submit-container, &.terms-and-conditions-link-container {
+            justify-content: end;
+        }
+
+        label {
+            display: block;
+            position: relative;
+            font-size: 12px;
+            margin-top: 10px;
+            width: 40%;
+            text-align: right;
+        }
+
+        input {
+            display: block;
+            position: relative;
+            border: 1px solid $cLightGrey;
+            padding: 8px;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="password"] {
+            width: 50%;
+            max-width: 268px;
+        }
+
+    }
+
+    .db-basic-config-notice {
+        display: flex;
+        background: $boxBackground;
+        margin-bottom: 10px;
+        font-size: 12px;
+        font-weight: normal;
+
+        ul {
+            margin-bottom: 0;
+        }
+
+        span {
+            color: $cBlack;
+            padding: 10px;
+            &.danger {
+                font-weight: bold;
+                color: $cRed;
+            }
+        }
+    }
+
+}
+
+.installation-successful {
+    display: block;
+    padding: 10px;
+    background: $boxBackground;
+    text-align: center;
+    text-decoration: none;
+    font-size: 2em;
+    color: #000;
+}
+
+.app-error, .db-error {
+    p {
+        display: none;
+        width: 100%;
+        padding: 2%;
+        background: $boxBackground;
+        font-size: 12px;
+        font-weight: bold;
+        color: $cRed;
+    }
+}
