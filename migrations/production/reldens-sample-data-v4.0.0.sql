@@ -232,10 +232,10 @@ REPLACE INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(54, 'client', 'login/termsAndConditions/link', 'Accept our Terms and Conditions (click here).', 1),
 	(55, 'client', 'map/layersDepth/belowPlayer', '0', 2),
 	(56, 'client', 'map/layersDepth/changePoints', '0', 2),
-	(57, 'client', 'map/tileData/height', '16', 2),
+	(57, 'client', 'map/tileData/height', '32', 2),
 	(58, 'client', 'map/tileData/margin', '1', 2),
 	(59, 'client', 'map/tileData/spacing', '2', 2),
-	(60, 'client', 'map/tileData/width', '16', 2),
+	(60, 'client', 'map/tileData/width', '32', 2),
 	(61, 'client', 'objects/npc/invalidOptionMessage', 'I do not understand.', 1),
 	(62, 'client', 'players/animations/basedOnPress', '1', 3),
 	(63, 'client', 'players/animations/collideWorldBounds', '1', 3),
@@ -491,9 +491,10 @@ REPLACE INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(313, 'server', 'rooms/world/bulletsStopOnPlayer', '1', 3),
 	(314, 'server', 'rooms/world/groupWallsHorizontally', '1', 3),
 	(315, 'server', 'rooms/world/groupWallsVertically', '0', 3),
-	(316, 'server', 'rooms/world/onlyWalkable', '1', 3),
-	(317, 'server', 'rooms/world/timeStep', '0.04', 2),
-	(318, 'server', 'rooms/world/tryClosestPath', '1', 3);
+	(316, 'server', 'rooms/world/movementSpeed', '180', 2),
+	(317, 'server', 'rooms/world/onlyWalkable', '1', 3),
+	(318, 'server', 'rooms/world/timeStep', '0.04', 2),
+	(319, 'server', 'rooms/world/tryClosestPath', '1', 3);
 
 REPLACE INTO `features` (`id`, `code`, `title`, `is_enabled`) VALUES
 	(1, 'chat', 'Chat', 1),

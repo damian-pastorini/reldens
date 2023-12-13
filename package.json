@@ -1,6 +1,6 @@
 {
     "name": "reldens",
-    "version": "4.0.0-beta.29",
+    "version": "4.0.0-beta.30",
     "description": "Reldens - MMORPG Platform",
     "author": "Damian A. Pastorini",
     "license": "MIT",
@@ -79,7 +79,7 @@
         "@parcel/transformer-svg": "2.10.0",
         "@parcel/transformer-webmanifest": "2.10.0",
         "@parcel/transformer-worklet": "2.10.0",
-        "@reldens/items-system": "^0.22.0",
+        "@reldens/items-system": "^0.23.0",
         "@reldens/modifiers": "^0.20.0",
         "@reldens/skills": "^0.20.0",
         "@reldens/storage": "^0.18.0",

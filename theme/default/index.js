@@ -25,7 +25,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
 // client event listener example with version display:
 reldens.events.on('reldens.afterInitEngineAndStartGame', () => {
-    reldens.gameDom.getElement('#current-version').innerHTML = reldens.config.version+' -';
+    reldens.gameDom.getElement('#current-version').innerHTML = reldens.config.client.gameEngine.version+' -';
 });
 
 reldens.events.on('reldens.startGameAfter', () => {
