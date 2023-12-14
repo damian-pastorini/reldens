@@ -424,6 +424,7 @@ REPLACE INTO `target_options` (`id`, `target_key`, `target_label`) VALUES
 	(1, 0, 'Object'),
 	(2, 1, 'Player');
 
+-- default user/password: root/root
 REPLACE INTO `users` (`id`, `email`, `username`, `password`, `role_id`, `status`, `created_at`, `updated_at`, `played_time`) VALUES
 	(1, 'root@yourgame.com', 'root', '$2b$10$SzjZph10Svebltx8Nmd7lec14wATo7ikEQQ0WEA0YZ188qGWHDu8S', 99, '1', '2022-03-17 18:57:44', '2023-10-21 16:51:55', 0);
 
