@@ -361,9 +361,10 @@ REPLACE INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(315, 'server', 'rooms/world/bulletsStopOnPlayer', '1', 3),
 	(316, 'server', 'rooms/world/groupWallsHorizontally', '1', 3),
 	(317, 'server', 'rooms/world/groupWallsVertically', '0', 3),
-	(318, 'server', 'rooms/world/onlyWalkable', '1', 3),
-	(319, 'server', 'rooms/world/timeStep', '0.04', 2),
-	(320, 'server', 'rooms/world/tryClosestPath', '1', 3);
+	(318, 'server', 'rooms/world/movementSpeed', '180', 2),
+	(319, 'server', 'rooms/world/onlyWalkable', '1', 3),
+	(320, 'server', 'rooms/world/timeStep', '0.04', 2),
+	(321, 'server', 'rooms/world/tryClosestPath', '1', 3);
 
 REPLACE INTO `features` (`id`, `code`, `title`, `is_enabled`) VALUES
 	(1, 'chat', 'Chat', 1),
