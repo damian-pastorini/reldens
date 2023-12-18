@@ -675,12 +675,12 @@ REPLACE INTO `rewards` (`id`, `object_id`, `item_id`, `modifier_id`, `experience
 	(2, 6, 2, NULL, 10, 100, 3, 0, 0, 1);
 
 REPLACE INTO `rooms` (`id`, `name`, `title`, `map_filename`, `scene_images`, `room_class_key`, `customData`) VALUES
-	(2, 'ReldensHouse_1', 'House - 1', 'reldens-house-1', 'reldens-house-1', NULL, NULL),
-	(3, 'ReldensHouse_2', 'House - 2', 'reldens-house-2', 'reldens-house-2', NULL, NULL),
-	(4, 'ReldensTown', 'Town', 'reldens-town', 'reldens-town', NULL, NULL),
-	(5, 'ReldensForest', 'Forest', 'reldens-forest', 'reldens-forest', NULL, NULL),
-	(6, 'ReldensHouse_1b', 'House - 1 - Floor 2', 'reldens-house-1-2d-floor', 'reldens-house-1-2d-floor', NULL, NULL),
-	(7, 'TopDownRoom', 'Gravity World!', 'reldens-gravity', 'reldens-gravity', NULL, '{"gravity":[0,625],"applyGravity":true,"allowPassWallsFromBelow":true,"timeStep":0.012,"type":"TOP_DOWN_WITH_GRAVITY","useFixedWorldStep":false,"maxSubSteps":5,"movementSpeed":200,"usePathFinder":false}');
+	(2, 'ReldensHouse_1', 'House - 1', 'reldens-house-1', 'reldens-house-1.png', NULL, NULL),
+	(3, 'ReldensHouse_2', 'House - 2', 'reldens-house-2', 'reldens-house-2.png', NULL, NULL),
+	(4, 'ReldensTown', 'Town', 'reldens-town', 'reldens-town.png', NULL, NULL),
+	(5, 'ReldensForest', 'Forest', 'reldens-forest', 'reldens-forest.png', NULL, NULL),
+	(6, 'ReldensHouse_1b', 'House - 1 - Floor 2', 'reldens-house-1-2d-floor', 'reldens-house-1-2d-floor.png', NULL, NULL),
+	(7, 'TopDownRoom', 'Gravity World!', 'reldens-gravity', 'reldens-gravity.png', NULL, '{"gravity":[0,625],"applyGravity":true,"allowPassWallsFromBelow":true,"timeStep":0.012,"type":"TOP_DOWN_WITH_GRAVITY","useFixedWorldStep":false,"maxSubSteps":5,"movementSpeed":200,"usePathFinder":false}');
 
 REPLACE INTO `rooms_change_points` (`id`, `room_id`, `tile_index`, `next_room_id`) VALUES
 	(1, 2, 816, 4),

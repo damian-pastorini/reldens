@@ -1,6 +1,8 @@
+// @ts-ignore
 import React, { FC, useState, useEffect } from 'react';
-import {EditPropertyProps, flat} from 'adminjs';
-import {DropZone, FormGroup, Label, DropZoneItem} from '@adminjs/design-system';
+import { EditPropertyProps, flat } from 'adminjs';
+import { DropZone, FormGroup, Label, DropZoneItem } from '@adminjs/design-system';
+// @ts-ignore
 import PropertyCustom from '../types/property-custom.type';
 
 const Edit: FC<EditPropertyProps> = ({property, record, onChange}) => {
@@ -47,9 +49,9 @@ const Edit: FC<EditPropertyProps> = ({property, record, onChange}) => {
             newParams = flat.set(newParams, custom.filePathProperty, newPath);
             onChange({...record, params: newParams})
         }
-        // Logger.error('You cannot remove file when there are no uploaded files yet')
     };
-
+    // @TODO - BETA - Fix multiple images upload.
+    // let keyArray = custom.multiple && key && key.length && !Array.isArray(key) ? key.split(',') : key;
     return (
         <FormGroup>
             <Label>{property.label}</Label>
@@ -63,7 +65,7 @@ const Edit: FC<EditPropertyProps> = ({property, record, onChange}) => {
                 files={filesToUpload}
             />
             {!custom.multiple && key && path && !filesToUpload.length && file !== null && (
-                <DropZoneItem filename={key} src={path} onRemove={handleRemove}/>
+                <DropZoneItem filename={key} src={record.params.bucketPath + path} onRemove={handleRemove}/>
             )}
             {custom.multiple && key && key.length && path ? (
                 <>
@@ -77,7 +79,7 @@ const Edit: FC<EditPropertyProps> = ({property, record, onChange}) => {
                             <DropZoneItem
                                 key={singleKey}
                                 filename={singleKey}
-                                src={path[index]}
+                                src={record.params.bucketPath + path[index]}
                                 onRemove={() => handleMultiRemove(singleKey)}
                             />
                         ) : ''
