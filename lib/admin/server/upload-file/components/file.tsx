@@ -50,7 +50,7 @@ const SingleFile: FC<SingleFileProps> = (props) => {
             return (
                 <Box>
                     <span className="file-name" data-key-property={upKeyProperty}>
-                        <a href={path} target="_blank">{name}</a>
+                        <a href={path} target="_blank" rel="noopener noreferrer">{name}</a>
                     </span>
                 </Box>
             );
