@@ -25,7 +25,7 @@ As for the latest version released the platform will provide you with the follow
 - Full In-game Chat: Global, by room, and private messages between users with chat types and split in tabs.
 - Player Stats: Fully configurable stats! HP? MP? Magic? Stamina, you can set up as much as you need for your game logic.
 - Items System: Based on @reldens/items-system, create all kinds of items (usable and equipment).
-- Attacks, PVP, and PVE: Short and long-distance attacks, bullets type (can be dodged), target type (can't be dodged), fight with players or with monsters.
+- Attacks, PVP, and PVE: Based on @reldens/skills, you will be able to create all kind of skills, attacks, bullets type (can be dodged), target type (can't be dodged), fight with other players or just with NPCs.
 - NPC's, Enemies, and Respawn Areas: Setup NPC's with different options to interact and create respawn areas.
 - Teams and Clans System: Create, join, dismantle teams and clans, bonus based on clan level, and more.
 - Drops and Rewards: NPCs can drop rewards, and it can be configured to be split among team members.
