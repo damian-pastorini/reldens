@@ -39,7 +39,7 @@ As for the latest version released the platform will provide you with the follow
 - Users Registration: Continue playing later and double login invalidation.
 - Multiple Players Creation
 - Registration and Login Integrated with Firebase.
-- Database Ready: Using MySQL as storage by default you will find everything saved.
+- Database Ready: With multiple drivers for different storage or using MySQL by default all you need will be saved.
 
 ---
 
