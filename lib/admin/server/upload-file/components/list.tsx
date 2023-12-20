@@ -1,3 +1,4 @@
+// @ts-ignore
 import React, { FC } from 'react';
 import { ShowPropertyProps } from 'adminjs';
 

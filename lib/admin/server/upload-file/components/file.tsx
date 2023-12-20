@@ -2,7 +2,11 @@
 import React, { FC } from 'react';
 import { Icon, Button, Box } from '@adminjs/design-system';
 import { ShowPropertyProps, flat } from 'adminjs';
-import { ImageMimeTypes, AudioMimeTypes } from '@adminjs/upload/src/features/upload-file/types/mime-types.type';
+import {
+    ImageMimeTypes,
+    AudioMimeTypes,
+    TextMimeTypes
+} from '@adminjs/upload/src/features/upload-file/types/mime-types.type';
 import PropertyCustom from '@adminjs/upload/src/features/upload-file//types/property-custom.type';
 
 type Props = ShowPropertyProps & {
@@ -14,15 +18,17 @@ type SingleFileProps = {
     path?: string,
     mimeType?: string,
     width?: number | string;
+    upKeyProperty?: string;
 }
 
 const SingleFile: FC<SingleFileProps> = (props) => {
-    const {name, path, mimeType, width} = props;
+    const {name, path, mimeType, width, upKeyProperty} = props;
     if(path && path.length){
         if(mimeType && ImageMimeTypes.includes(mimeType as any)){
             return (
                 <Box>
-                    <span className="audio-file-name">{name}</span>
+                    <span className="image-file-name" data-key-property={upKeyProperty}>{name}</span>
+                    <br/>
                     <img src={path} style={{maxHeight: width, maxWidth: width}} alt={name}/>
                 </Box>
             );
@@ -30,7 +36,8 @@ const SingleFile: FC<SingleFileProps> = (props) => {
         if(mimeType && AudioMimeTypes.includes(mimeType as any)){
             return (
                 <Box>
-                    <span className="audio-file-name">{name}</span>
+                    <span className="audio-file-name" data-key-property={upKeyProperty}>{name}</span>
+                    <br/>
                     <audio controls src={path}>
                         Your browser does not support the
                         <code>audio</code>
@@ -39,10 +46,19 @@ const SingleFile: FC<SingleFileProps> = (props) => {
                 </Box>
             );
         }
+        if(mimeType && TextMimeTypes.includes(mimeType as any)){
+            return (
+                <Box>
+                    <span className="file-name" data-key-property={upKeyProperty}>
+                        <a href={path} target="_blank" rel="noopener noreferrer">{name}</a>
+                    </span>
+                </Box>
+            );
+        }
     }
     return (
         <Box>
-            <Button as="a" href={path} ml="default" size="sm" rounded target="_blank">
+            <Button as="a" href={path} ml="default" size="sm" rounded target="_blank" data-key-property={upKeyProperty}>
                 <Icon icon="DocumentDownload" color="white" mr="default"/>
                 {name}
             </Button>
@@ -65,19 +81,28 @@ const File: FC<Props> = ({width, record, property}) => {
             path={record.params.bucketPath + name}
             name={name}
             width={width}
-            mimeType={record.params['mimeType.0']}
+            // @TODO - BETA - Fix multiple images upload.
+            // mimeTypeKey is accessed here:
+            // mimeType={record.params[custom.keyProperty+'_mimeType']}
+            mimeType={record.params['mimeType_'+custom.keyProperty]}
+            upKeyProperty={custom.keyProperty}
         />
     }
     return (
         <>
             {path.map((singlePath, index) => {
+                let mimeTypeKey = 'mimeType.'+index+'_'+custom.keyProperty+'.'+index;
                 return (
                     <SingleFile
                         key={singlePath}
                         path={record.params.bucketPath + name[index]}
                         name={name[index]}
                         width={width}
-                        mimeType={record.params['mimeType.'+index]}
+                        // @TODO - BETA - Fix multiple images upload.
+                        // mimeTypeKey is accessed here:
+                        // mimeType={record.params[custom.keyProperty+'.'+index+'_mimeType.'+index]}
+                        mimeType={record.params[mimeTypeKey]}
+                        upKeyProperty={custom.keyProperty}
                     />
                 )
             })}

@@ -1,3 +1,4 @@
+// @ts-ignore
 import React, { FC } from 'react';
 import { ShowPropertyProps } from 'adminjs';
 import { FormGroup, Label } from '@adminjs/design-system';
