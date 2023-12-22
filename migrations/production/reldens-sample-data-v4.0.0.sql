@@ -90,10 +90,6 @@ REPLACE INTO `ads_event_video` (`id`, `ads_id`, `event_key`, `event_data`) VALUE
 	(1, 5, 'activatedRoom_ReldensTown', '{"rewardItemKey":"coins","rewardItemQty":1}'),
 	(2, 6, 'activatedRoom_ReldensForest', '{"rewardItemKey":"coins","rewardItemQty":1}');
 
-REPLACE INTO `ads_played` (`id`, `ads_id`, `player_id`, `started_at`, `ended_at`) VALUES
-	(7, 5, 1, '2023-10-17 18:28:17', '2023-10-17 18:28:22'),
-	(8, 6, 1, '2023-09-28 21:00:31', '2023-09-28 21:00:41');
-
 REPLACE INTO `ads_providers` (`id`, `key`, `enabled`) VALUES
 	(1, 'crazyGames', 0),
 	(2, 'gameMonetize', 0);
@@ -675,12 +671,12 @@ REPLACE INTO `rewards` (`id`, `object_id`, `item_id`, `modifier_id`, `experience
 	(2, 6, 2, NULL, 10, 100, 3, 0, 0, 1);
 
 REPLACE INTO `rooms` (`id`, `name`, `title`, `map_filename`, `scene_images`, `room_class_key`, `customData`) VALUES
-	(2, 'ReldensHouse_1', 'House - 1', 'reldens-house-1.json', 'reldens-house-1.png', NULL, NULL),
-	(3, 'ReldensHouse_2', 'House - 2', 'reldens-house-2.json', 'reldens-house-2.png', NULL, NULL),
-	(4, 'ReldensTown', 'Town', 'reldens-town.json', 'reldens-town.png', NULL, NULL),
-	(5, 'ReldensForest', 'Forest', 'reldens-forest.json', 'reldens-forest.png', NULL, NULL),
-	(6, 'ReldensHouse_1b', 'House - 1 - Floor 2', 'reldens-house-1-2d-floor.json', 'reldens-house-1-2d-floor.png', NULL, NULL),
-	(7, 'TopDownRoom', 'Gravity World!', 'reldens-gravity.json', 'reldens-gravity.png', NULL, '{"gravity":[0,625],"applyGravity":true,"allowPassWallsFromBelow":true,"timeStep":0.012,"type":"TOP_DOWN_WITH_GRAVITY","useFixedWorldStep":false,"maxSubSteps":5,"movementSpeed":200,"usePathFinder":false}');
+	(2, 'reldens-house-1', 'House - 1', 'reldens-house-1.json', 'reldens-house-1.png', NULL, NULL),
+	(3, 'reldens-house-2', 'House - 2', 'reldens-house-2.json', 'reldens-house-2.png', NULL, NULL),
+	(4, 'reldens-town', 'Town', 'reldens-town.json', 'reldens-town.png', NULL, NULL),
+	(5, 'reldens-forest', 'Forest', 'reldens-forest.json', 'reldens-forest.png', NULL, NULL),
+	(6, 'reldens-house-1-2d-floor', 'House - 1 - Floor 2', 'reldens-house-1-2d-floor.json', 'reldens-house-1-2d-floor.png', NULL, NULL),
+	(7, 'reldens-gravity', 'Gravity World!', 'reldens-gravity.json', 'reldens-gravity.png', NULL, '{"gravity":[0,625],"applyGravity":true,"allowPassWallsFromBelow":true,"timeStep":0.012,"type":"TOP_DOWN_WITH_GRAVITY","useFixedWorldStep":false,"maxSubSteps":5,"movementSpeed":200,"usePathFinder":false}');
 
 REPLACE INTO `rooms_change_points` (`id`, `room_id`, `tile_index`, `next_room_id`) VALUES
 	(1, 2, 816, 4),
