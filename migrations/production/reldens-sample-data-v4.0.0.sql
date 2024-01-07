@@ -514,7 +514,7 @@ REPLACE INTO `features` (`id`, `code`, `title`, `is_enabled`) VALUES
 	(13, 'rewards', 'Rewards', 1),
 	(14, 'snippets', 'Snippets', 1),
 	(16, 'ads', 'Ads', 1),
-	(17, 'world', 'World', 1);
+	(17, 'world', 'World', 0);
 
 REPLACE INTO `items_group` (`id`, `key`, `label`, `description`, `files_name`, `sort`, `items_limit`, `limit_per_item`) VALUES
 	(1, 'weapon', 'Weapon', 'All kinds of weapons.', 'weapon.png', 2, 1, 0),
