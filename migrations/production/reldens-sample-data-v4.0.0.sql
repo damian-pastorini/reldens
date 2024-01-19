@@ -695,7 +695,7 @@ REPLACE INTO `rooms_change_points` (`id`, `room_id`, `tile_index`, `next_room_id
 	(14, 6, 664, 2),
 	(15, 7, 540, 3),
 	(16, 3, 500, 7),
-	(17, 3, 780, 7);
+	(17, 3, 780, 4);
 
 REPLACE INTO `rooms_return_points` (`id`, `room_id`, `direction`, `x`, `y`, `is_default`, `from_room_id`) VALUES
 	(1, 2, 'up', 548, 615, 1, 4),
