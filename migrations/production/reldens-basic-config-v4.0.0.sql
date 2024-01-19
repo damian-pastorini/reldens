@@ -386,7 +386,7 @@ REPLACE INTO `features` (`id`, `code`, `title`, `is_enabled`) VALUES
 	(13, 'rewards', 'Rewards', 1),
 	(14, 'snippets', 'Snippets', 1),
 	(16, 'ads', 'Ads', 1),
-	(17, 'world', 'World', 1);
+	(17, 'world', 'World', 0);
 
 REPLACE INTO `items_types` (`id`, `key`) VALUES
 	(10, 'base'),

@@ -90,10 +90,6 @@ REPLACE INTO `ads_event_video` (`id`, `ads_id`, `event_key`, `event_data`) VALUE
 	(1, 5, 'activatedRoom_ReldensTown', '{"rewardItemKey":"coins","rewardItemQty":1}'),
 	(2, 6, 'activatedRoom_ReldensForest', '{"rewardItemKey":"coins","rewardItemQty":1}');
 
-REPLACE INTO `ads_played` (`id`, `ads_id`, `player_id`, `started_at`, `ended_at`) VALUES
-	(7, 5, 1, '2023-10-17 18:28:17', '2023-10-17 18:28:22'),
-	(8, 6, 1, '2023-09-28 21:00:31', '2023-09-28 21:00:41');
-
 REPLACE INTO `ads_providers` (`id`, `key`, `enabled`) VALUES
 	(1, 'crazyGames', 0),
 	(2, 'gameMonetize', 0);
@@ -518,7 +514,7 @@ REPLACE INTO `features` (`id`, `code`, `title`, `is_enabled`) VALUES
 	(13, 'rewards', 'Rewards', 1),
 	(14, 'snippets', 'Snippets', 1),
 	(16, 'ads', 'Ads', 1),
-	(17, 'world', 'World', 1);
+	(17, 'world', 'World', 0);
 
 REPLACE INTO `items_group` (`id`, `key`, `label`, `description`, `files_name`, `sort`, `items_limit`, `limit_per_item`) VALUES
 	(1, 'weapon', 'Weapon', 'All kinds of weapons.', 'weapon.png', 2, 1, 0),
@@ -531,10 +527,10 @@ REPLACE INTO `items_group` (`id`, `key`, `label`, `description`, `files_name`, `
 REPLACE INTO `items_item` (`id`, `key`, `type`, `group_id`, `label`, `description`, `qty_limit`, `uses_limit`, `useTimeOut`, `execTimeOut`, `customData`) VALUES
 	(1, 'coins', 3, NULL, 'Coins', NULL, 0, 1, NULL, NULL, NULL),
 	(2, 'branch', 10, NULL, 'Tree branch', 'An useless tree branch (for now)', 0, 1, NULL, NULL, NULL),
-	(3, 'heal_potion_20', 5, NULL, 'Heal Potion', 'A heal potion that will restore 20 HP.', 0, 1, NULL, NULL, '{"animationData":{"frameWidth":64,"frameHeight":64,"start":6,"end":11,"repeat":0,"hide":true,"usePlayerPosition":true,"closeInventoryOnUse":true,"followPlayer":true,"startsOnTarget":true},"removeAfterUse":true}'),
-	(4, 'axe', 1, 1, 'Axe', 'A short distance but powerful weapon.', 0, 0, NULL, NULL, '{"animationData":{"frameWidth":64,"frameHeight":64,"start":6,"end":11,"repeat":0,"hide":true,"destroyOnComplete":true,"usePlayerPosition":true,"closeInventoryOnUse":true,"followPlayer":true,"startsOnTarget":true}}'),
-	(5, 'spear', 1, 1, 'Spear', 'A short distance but powerful weapon.', 0, 0, NULL, NULL, '{"animationData":{"frameWidth":64,"frameHeight":64,"start":6,"end":11,"repeat":0,"hide":true,"destroyOnComplete":true,"usePlayerPosition":true,"closeInventoryOnUse":true,"followPlayer":true,"startsOnTarget":true}}'),
-	(6, 'magic_potion_20', 5, NULL, 'Magic Potion', 'A magic potion that will restore 20 MP.', 0, 1, NULL, NULL, '{"animationData":{"frameWidth":64,"frameHeight":64,"start":6,"end":11,"repeat":0,"hide":true,"usePlayerPosition":true,"closeInventoryOnUse":true,"followPlayer":true,"startsOnTarget":true},"removeAfterUse":true}');
+	(3, 'heal_potion_20', 5, NULL, 'Heal Potion', 'A heal potion that will restore 20 HP.', 0, 1, NULL, NULL, '{"animationData":{"frameWidth":64,"frameHeight":64,"start":6,"end":11,"repeat":0,"usePlayerPosition":true,"followPlayer":true,"startsOnTarget":true},"removeAfterUse":true}'),
+	(4, 'axe', 1, 1, 'Axe', 'A short distance but powerful weapon.', 0, 0, NULL, NULL, '{"animationData":{"frameWidth":64,"frameHeight":64,"start":6,"end":11,"repeat":0,"destroyOnComplete":true,"usePlayerPosition":true,"followPlayer":true,"startsOnTarget":true}}'),
+	(5, 'spear', 1, 1, 'Spear', 'A short distance but powerful weapon.', 0, 0, NULL, NULL, '{"animationData":{"frameWidth":64,"frameHeight":64,"start":6,"end":11,"repeat":0,"destroyOnComplete":true,"usePlayerPosition":true,"followPlayer":true,"startsOnTarget":true}}'),
+	(6, 'magic_potion_20', 5, NULL, 'Magic Potion', 'A magic potion that will restore 20 MP.', 0, 1, NULL, NULL, '{"animationData":{"frameWidth":64,"frameHeight":64,"start":6,"end":11,"repeat":0,"usePlayerPosition":true,"followPlayer":true,"startsOnTarget":true},"removeAfterUse":true}');
 
 REPLACE INTO `items_item_modifiers` (`id`, `item_id`, `key`, `property_key`, `operation`, `value`, `maxProperty`) VALUES
 	(1, 4, 'atk', 'stats/atk', 5, '5', NULL),
@@ -675,12 +671,12 @@ REPLACE INTO `rewards` (`id`, `object_id`, `item_id`, `modifier_id`, `experience
 	(2, 6, 2, NULL, 10, 100, 3, 0, 0, 1);
 
 REPLACE INTO `rooms` (`id`, `name`, `title`, `map_filename`, `scene_images`, `room_class_key`, `customData`) VALUES
-	(2, 'ReldensHouse_1', 'House - 1', 'reldens-house-1.json', 'reldens-house-1.png', NULL, NULL),
-	(3, 'ReldensHouse_2', 'House - 2', 'reldens-house-2.json', 'reldens-house-2.png', NULL, NULL),
-	(4, 'ReldensTown', 'Town', 'reldens-town.json', 'reldens-town.png', NULL, NULL),
-	(5, 'ReldensForest', 'Forest', 'reldens-forest.json', 'reldens-forest.png', NULL, NULL),
-	(6, 'ReldensHouse_1b', 'House - 1 - Floor 2', 'reldens-house-1-2d-floor.json', 'reldens-house-1-2d-floor.png', NULL, NULL),
-	(7, 'TopDownRoom', 'Gravity World!', 'reldens-gravity.json', 'reldens-gravity.png', NULL, '{"gravity":[0,625],"applyGravity":true,"allowPassWallsFromBelow":true,"timeStep":0.012,"type":"TOP_DOWN_WITH_GRAVITY","useFixedWorldStep":false,"maxSubSteps":5,"movementSpeed":200,"usePathFinder":false}');
+	(2, 'reldens-house-1', 'House - 1', 'reldens-house-1.json', 'reldens-house-1.png', NULL, NULL),
+	(3, 'reldens-house-2', 'House - 2', 'reldens-house-2.json', 'reldens-house-2.png', NULL, NULL),
+	(4, 'reldens-town', 'Town', 'reldens-town.json', 'reldens-town.png', NULL, NULL),
+	(5, 'reldens-forest', 'Forest', 'reldens-forest.json', 'reldens-forest.png', NULL, NULL),
+	(6, 'reldens-house-1-2d-floor', 'House - 1 - Floor 2', 'reldens-house-1-2d-floor.json', 'reldens-house-1-2d-floor.png', NULL, NULL),
+	(7, 'reldens-gravity', 'Gravity World!', 'reldens-gravity.json', 'reldens-gravity.png', NULL, '{"gravity":[0,625],"applyGravity":true,"allowPassWallsFromBelow":true,"timeStep":0.012,"type":"TOP_DOWN_WITH_GRAVITY","useFixedWorldStep":false,"maxSubSteps":2,"movementSpeed":160,"usePathFinder":false}');
 
 REPLACE INTO `rooms_change_points` (`id`, `room_id`, `tile_index`, `next_room_id`) VALUES
 	(1, 2, 816, 4),
@@ -699,7 +695,7 @@ REPLACE INTO `rooms_change_points` (`id`, `room_id`, `tile_index`, `next_room_id
 	(14, 6, 664, 2),
 	(15, 7, 540, 3),
 	(16, 3, 500, 7),
-	(17, 3, 780, 7);
+	(17, 3, 780, 4);
 
 REPLACE INTO `rooms_return_points` (`id`, `room_id`, `direction`, `x`, `y`, `is_default`, `from_room_id`) VALUES
 	(1, 2, 'up', 548, 615, 1, 4),

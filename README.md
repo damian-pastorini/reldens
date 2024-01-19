@@ -14,6 +14,10 @@ While the current stage of the platform is tailored for developers, ongoing impr
 
 ---
 
+## [Check our website for the latest news!](https://www.reldens.com/ "Check our website for the latest news")
+
+---
+
 ## [Features Overview](https://www.reldens.com/features)
 [First to mention, if the feature you need is not available, you can request a feature here: https://www.reldens.com/features-request](https://www.reldens.com/features-request)
 
@@ -43,11 +47,9 @@ As for the latest version released the platform will provide you with the follow
 
 ---
 
-## [Check our website for the latest news!](https://www.reldens.com/ "Check our website for the latest news")
+## [Installation](https://www.reldens.com/documentation/installation "Installation")
 
----
-
-## [Installation Guide](https://www.reldens.com/installation "Installation Guide")
+Please follow the Installation Guide: https://www.reldens.com/documentation/installation.
 
 ---
 
