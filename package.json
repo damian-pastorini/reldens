@@ -1,6 +1,6 @@
 {
     "name": "reldens",
-    "version": "4.0.0-beta.31",
+    "version": "4.0.0-beta.31.1",
     "description": "Reldens - MMORPG Platform",
     "author": "Damian A. Pastorini",
     "license": "MIT",
@@ -83,7 +83,7 @@
         "@reldens/modifiers": "^0.21.0",
         "@reldens/skills": "^0.22.0",
         "@reldens/storage": "^0.19.0",
-        "@reldens/utils": "^0.22.0",
+        "@reldens/utils": "^0.23.0",
         "@sendgrid/mail": "7.7.0",
         "adminjs": "5.7.3",
         "bcrypt": "5.1.1",
