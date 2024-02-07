@@ -1,213 +1,217 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <title>DwDeveloper - Reldens | MMORPG Plataforma</title>
+    <title>Reldens | MMORPG Platform | By DwDeveloper</title>
     <meta name="description" content="Reldens, plataforma open source para crear MMORPG games">
     <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i|Play:300,300i,400,400i,500,500i,600,600i,700,700i" rel="stylesheet"/>
     <link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/4.6.0/firebase-ui-auth.css"/>
-    <link rel="apple-touch-icon" sizes="180x180" href="./assets/favicon/apple-touch-icon.png"/>
-    <link rel="icon" type="image/png" sizes="32x32" href="./assets/favicon/favicon-32x32.png"/>
-    <link rel="icon" type="image/png" sizes="16x16" href="./assets/favicon/favicon-16x16.png"/>
-    <link rel="manifest" href="./site.webmanifest"/>
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/favicons/apple-touch-icon.png"/>
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicons/favicon-32x32.png"/>
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicons/favicon-16x16.png"/>
+    <link rel="mask-icon" href="assets/favicons/safari-pinned-tab.svg" color="#000000"/>
+    <link rel="manifest" href="assets/favicons/site.webmanifest"/>
+    <meta name="apple-mobile-web-app-title" content="Reldens"/>
+    <meta name="application-name" content="Reldens"/>
+    <meta name="msapplication-TileColor" content="#37517e"/>
     <meta name="theme-color" content="#37517e">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"/>
     <script type="module" src="./index.js"></script>
     <link rel="stylesheet" type="text/css" href="./css/styles.scss"/>
 </head>
 <body>
-<div class="wrapper">
-    <div class="header">
-        <img id="your-logo" src="./assets/web/reldens-your-logo-mage.png" alt="reldens"/>
-        <h1 class="title">
-            - <strong>reldens</strong> - <span id="current-version">demo -</span>
-            <br/>- tu logo aqui -
-        </h1>
-        <button class="full-screen-btn">pantalla completa</button>
-    </div>
-    <div class="content">
-        <div class="row row-disclaimer">
-            <div class="disclaimer">
-                Descargo: Reldens no es solo un juego, es una plataforma para crear juegos.
-                <br/>Esta es una demostraci&oacute;n para mostrar cu&aacute;ntas funciones est&aacute;n disponibles en la plataforma.
-            </div>
+    <div class="wrapper">
+        <div class="header">
+            <img id="your-logo" src="./assets/web/reldens-your-logo-mage.png" alt="reldens"/>
+            <h1 class="title">
+                - <strong>reldens</strong> - <span id="current-version">demo -</span>
+                <br/>- tu logo aqui -
+            </h1>
+            <button class="full-screen-btn">pantalla completa</button>
         </div>
-        <div class="forms-container">
-            <div class="col-2 col-left">
-                <div class="row row-1">
-                    <form name="register-form" id="register-form" class="register-form" action="#" method="post">
-                        <h3 class="form-title">Crear Cuenta</h3>
-                        <div class="input-box reg-email">
-                            <label for="reg-email">Email</label>
-                            <input type="email" name="reg-email" id="reg-email" class="required email" required/>
-                        </div>
-                        <div class="input-box reg-username">
-                            <label for="reg-username">Nombre de Usuario</label>
-                            <input type="text" name="reg-username" id="reg-username" class="required" required/>
-                        </div>
-                        <div class="input-box reg-password">
-                            <label for="reg-password">Contrase&ntilde;a</label>
-                            <input type="password" name="reg-password" id="reg-password" class="required" required/>
-                        </div>
-                        <div class="input-box reg-re-password">
-                            <label for="reg-re-password">Reescribe contrase&ntilde;a</label>
-                            <input type="password" name="reg-re-password" id="reg-re-password" class="required" required/>
-                        </div>
-                        <div class="input-box hidden terms-and-conditions-link-container">
-                            <a class="terms-and-conditions-link">Acepta nuestros T&aacute;rminos y Condiciones (haz clic aqu&iacute;).</a>
-                        </div>
-                        <div class="input-box submit-container reg-submit">
-                            <input type="submit" value="Registrarse"/>
-                        </div>
-                        <div class="loading-container hidden">
-                            <img src="./assets/web/loading.gif" alt="Loading..."/>
-                        </div>
-                        <div class="input-box response-error"></div>
-                    </form>
-                </div>
-                <div class="row row-2 forgot-password-container hidden">
-                    <form name="forgot-form" id="forgot-form" class="forgot-form" action="#" method="post">
-                        <h3 class="form-title">Olvid&eacute; mi contrase&ntilde;a</h3>
-                        <div class="input-box forgot-email">
-                            <label for="forgot-email">Email</label>
-                            <input type="email" name="forgot-email" id="forgot-email" class="required email" required/>
-                        </div>
-                        <div class="input-box submit-container forgot-submit">
-                            <input type="submit" value="Solicitar"/>
-                        </div>
-                        <div class="loading-container hidden">
-                            <img src="./assets/web/loading.gif" alt="Loading..."/>
-                        </div>
-                        <div class="input-box response-error"></div>
-                    </form>
+        <div class="content">
+            <div class="row row-disclaimer">
+                <div class="disclaimer">
+                    Descargo: Reldens no es solo un juego, es una plataforma para crear juegos.
+                    <br/>Esta es una demostraci&oacute;n para mostrar cu&aacute;ntas funciones est&aacute;n disponibles en la plataforma.
                 </div>
             </div>
-            <div class="col-2 col-right">
-                <div class="row row-1">
-                    <form name="login-form" id="login-form" class="login-form" action="#" method="post">
-                        <h3 class="form-title">Login</h3>
-                        <div class="input-box login-username">
-                            <label for="username">Nombre de Usuario</label>
-                            <input type="text" name="username" id="username" class="required" required/>
-                        </div>
-                        <div class="input-box login-password">
-                            <label for="password">Password</label>
-                            <input type="password" name="password" id="password" class="required" required/>
-                        </div>
-                        <div class="input-box submit-container login-submit">
-                            <input type="submit" value="Entrar"/>
-                        </div>
-                        <div class="loading-container hidden">
-                            <img src="./assets/web/loading.gif" alt="Loading..."/>
-                        </div>
-                        <div class="input-box response-error"></div>
-                    </form>
+            <div class="forms-container">
+                <div class="col-2 col-left">
+                    <div class="row row-1">
+                        <form name="register-form" id="register-form" class="register-form" action="#" method="post">
+                            <h3 class="form-title">Crear Cuenta</h3>
+                            <div class="input-box reg-email">
+                                <label for="reg-email">Email</label>
+                                <input type="email" name="reg-email" id="reg-email" class="required email" required/>
+                            </div>
+                            <div class="input-box reg-username">
+                                <label for="reg-username">Nombre de Usuario</label>
+                                <input type="text" name="reg-username" id="reg-username" class="required" required/>
+                            </div>
+                            <div class="input-box reg-password">
+                                <label for="reg-password">Contrase&ntilde;a</label>
+                                <input type="password" name="reg-password" id="reg-password" class="required" required/>
+                            </div>
+                            <div class="input-box reg-re-password">
+                                <label for="reg-re-password">Reescribe contrase&ntilde;a</label>
+                                <input type="password" name="reg-re-password" id="reg-re-password" class="required" required/>
+                            </div>
+                            <div class="input-box hidden terms-and-conditions-link-container">
+                                <a class="terms-and-conditions-link">Acepta nuestros T&aacute;rminos y Condiciones (haz clic aqu&iacute;).</a>
+                            </div>
+                            <div class="input-box submit-container reg-submit">
+                                <input type="submit" value="Registrarse"/>
+                            </div>
+                            <div class="loading-container hidden">
+                                <img src="./assets/web/loading.gif" alt="Loading..."/>
+                            </div>
+                            <div class="input-box response-error"></div>
+                        </form>
+                    </div>
+                    <div class="row row-2 forgot-password-container hidden">
+                        <form name="forgot-form" id="forgot-form" class="forgot-form" action="#" method="post">
+                            <h3 class="form-title">Olvid&eacute; mi contrase&ntilde;a</h3>
+                            <div class="input-box forgot-email">
+                                <label for="forgot-email">Email</label>
+                                <input type="email" name="forgot-email" id="forgot-email" class="required email" required/>
+                            </div>
+                            <div class="input-box submit-container forgot-submit">
+                                <input type="submit" value="Solicitar"/>
+                            </div>
+                            <div class="loading-container hidden">
+                                <img src="./assets/web/loading.gif" alt="Loading..."/>
+                            </div>
+                            <div class="input-box response-error"></div>
+                        </form>
+                    </div>
                 </div>
-                <div class="row row-2 firebase-row-container hidden">
-                    <form name="firebase-login" id="firebase-login" class="firebase-login" action="#" method="post">
-                        <h3 class="form-title">Firebase Login</h3>
-                        <div class="input-box firebase-username">
-                            <label for="firebase-username">Usuario</label>
-                            <input type="text" name="firebase-username" id="firebase-username" class="required" required/>
+                <div class="col-2 col-right">
+                    <div class="row row-1">
+                        <form name="login-form" id="login-form" class="login-form" action="#" method="post">
+                            <h3 class="form-title">Login</h3>
+                            <div class="input-box login-username">
+                                <label for="username">Nombre de Usuario</label>
+                                <input type="text" name="username" id="username" class="required" required/>
+                            </div>
+                            <div class="input-box login-password">
+                                <label for="password">Password</label>
+                                <input type="password" name="password" id="password" class="required" required/>
+                            </div>
+                            <div class="input-box submit-container login-submit">
+                                <input type="submit" value="Entrar"/>
+                            </div>
+                            <div class="loading-container hidden">
+                                <img src="./assets/web/loading.gif" alt="Loading..."/>
+                            </div>
+                            <div class="input-box response-error"></div>
+                        </form>
+                    </div>
+                    <div class="row row-2 firebase-row-container hidden">
+                        <form name="firebase-login" id="firebase-login" class="firebase-login" action="#" method="post">
+                            <h3 class="form-title">Firebase Login</h3>
+                            <div class="input-box firebase-username">
+                                <label for="firebase-username">Usuario</label>
+                                <input type="text" name="firebase-username" id="firebase-username" class="required" required/>
+                            </div>
+                            <div class="input-box response-error"></div>
+                        </form>
+                        <div class="firebase-container">
+                            <div id="firebaseui-auth-container"></div>
                         </div>
-                        <div class="input-box response-error"></div>
-                    </form>
-                    <div class="firebase-container">
-                        <div id="firebaseui-auth-container"></div>
                     </div>
                 </div>
             </div>
-        </div>
-        <div id="terms-and-conditions" class="hidden">
-            <div class="terms-and-conditions-text">
-                <h3 class="terms-heading">T&aacute;rminos y Condiciones</h3>
-                <div class="terms-body"></div>
+            <div id="terms-and-conditions" class="hidden">
+                <div class="terms-and-conditions-text">
+                    <h3 class="terms-heading">T&aacute;rminos y Condiciones</h3>
+                    <div class="terms-body"></div>
+                </div>
+                <div class="terms-box">
+                    <input type="checkbox" id="accept-terms-and-conditions">
+                    <label class="accept-terms-and-conditions-label" for="accept-terms-and-conditions">
+                        Acepto estos T&aacute;rminos y Condiciones
+                    </label>
+                </div>
+                <img id="terms-and-conditions-close" class="box-close" src="./assets/controls/bx.png" alt="close"/>
             </div>
-            <div class="terms-box">
-                <input type="checkbox" id="accept-terms-and-conditions">
-                <label class="accept-terms-and-conditions-label" for="accept-terms-and-conditions">
-                    Acepto estos T&aacute;rminos y Condiciones
-                </label>
+            <div id="instructions" class="hidden">
+                <div class="instructions-content">
+                    <h3>Instructions</h3>
+                    <ul>
+                        <li>Mu&aacute;vete con las flechas o usando W-A-S-D.</li>
+                        <li>Utiliza el clic izquierdo para seguir un camino, pero por ahora, para cambiar a otra escena, debes atravesar el punto de cambio (como el puente en la parte superior o las puertas de las casas).</li>
+                        <li>Utiliza clic derecho o TAB para apuntar a enemigos o jugadores cercanos.</li>
+                        <li>Debes tener un objetivo para ejecutar una habilidad/acci&oacute;n.</li>
+                        <li>Utiliza los botones de la pantalla para activar las diferentes habilidades/acciones del jugador.</li>
+                    </ul>
+                    <img id="instructions-close" class="box-close" src="./assets/controls/bx.png" alt="close"/>
+                </div>
             </div>
-            <img id="terms-and-conditions-close" class="box-close" src="./assets/controls/bx.png" alt="close"/>
-        </div>
-        <div id="instructions" class="hidden">
-            <div class="instructions-content">
-                <h3>Instructions</h3>
-                <ul>
-                    <li>Mu&aacute;vete con las flechas o usando W-A-S-D.</li>
-                    <li>Utiliza el clic izquierdo para seguir un camino, pero por ahora, para cambiar a otra escena, debes atravesar el punto de cambio (como el puente en la parte superior o las puertas de las casas).</li>
-                    <li>Utiliza clic derecho o TAB para apuntar a enemigos o jugadores cercanos.</li>
-                    <li>Debes tener un objetivo para ejecutar una habilidad/acci&oacute;n.</li>
-                    <li>Utiliza los botones de la pantalla para activar las diferentes habilidades/acciones del jugador.</li>
-                </ul>
-                <img id="instructions-close" class="box-close" src="./assets/controls/bx.png" alt="close"/>
-            </div>
-        </div>
-        <div id="game-over" class="hidden">
-            <div class="game-over-content">
-                <h3>
-                    ¡Moriste!<br/><br/>
-                    S&oacute;lo espera...<br/><br/>
-                    ¡Seras revivido automaticamente para esta demostracion!
-                </h3>
-            </div>
-        </div>
-        <div id="player-selection" class="hidden">
-            <div class="selection-forms-container">
-                <div class="player-selection-form-errors"></div>
-                <form
-                    name="player-selector-form"
-                    id="player-selector-form"
-                    class="player-selector-form hidden"
-                    action="#"
-                    method="post">
-                    <h3 class="form-title">
-                        <label for="player-select-element">Seleccionar Personaje</label>
+            <div id="game-over" class="hidden">
+                <div class="game-over-content">
+                    <h3>
+                        ¡Moriste!<br/><br/>
+                        S&oacute;lo espera...<br/><br/>
+                        ¡Seras revivido automaticamente para esta demostracion!
                     </h3>
-                    <div class="input-box player-select-box">
-                        <select
-                            class="input-box select-element"
-                            id="player-select-element"
-                            name="player-select-element">
-                        </select>
-                    </div>
-                    <div class="player-selection-additional-info"></div>
-                    <div class="input-box submit-container player-select-submit">
-                        <input type="submit" value="Iniciar" class="center-submit"/>
-                    </div>
-                </form>
-                <form name="player-create-form"
-                      id="player-create-form"
-                      class="player-create-form hidden"
-                      action="#"
-                      method="post">
-                    <h3 class="form-title">Create Player</h3>
-                    <div class="input-box player-create-name">
-                        <label for="new-player-name">Nombre</label>
-                        <input type="text" name="new-player-name" id="new-player-name" class="required" required/>
-                    </div>
-                    <div class="player-creation-additional-info"></div>
-                    <div class="input-box submit-container player-create-submit">
-                        <input type="submit" value="Crear y comenzar" class="center-submit"/>
-                    </div>
-                    <div class="loading-container hidden">
-                        <img src="./assets/web/loading.gif" alt="Cargando..."/>
-                    </div>
-                    <div class="input-box response-error"></div>
-                </form>
+                </div>
+            </div>
+            <div id="player-selection" class="hidden">
+                <div class="selection-forms-container">
+                    <div class="player-selection-form-errors"></div>
+                    <form
+                        name="player-selector-form"
+                        id="player-selector-form"
+                        class="player-selector-form hidden"
+                        action="#"
+                        method="post">
+                        <h3 class="form-title">
+                            <label for="player-select-element">Seleccionar Personaje</label>
+                        </h3>
+                        <div class="input-box player-select-box">
+                            <select
+                                class="input-box select-element"
+                                id="player-select-element"
+                                name="player-select-element">
+                            </select>
+                        </div>
+                        <div class="player-selection-additional-info"></div>
+                        <div class="input-box submit-container player-select-submit">
+                            <input type="submit" value="Iniciar" class="center-submit"/>
+                        </div>
+                    </form>
+                    <form name="player-create-form"
+                          id="player-create-form"
+                          class="player-create-form hidden"
+                          action="#"
+                          method="post">
+                        <h3 class="form-title">Create Player</h3>
+                        <div class="input-box player-create-name">
+                            <label for="new-player-name">Nombre</label>
+                            <input type="text" name="new-player-name" id="new-player-name" class="required" required/>
+                        </div>
+                        <div class="player-creation-additional-info"></div>
+                        <div class="input-box submit-container player-create-submit">
+                            <input type="submit" value="Crear y comenzar" class="center-submit"/>
+                        </div>
+                        <div class="loading-container hidden">
+                            <img src="./assets/web/loading.gif" alt="Cargando..."/>
+                        </div>
+                        <div class="input-box response-error"></div>
+                    </form>
+                </div>
+            </div>
+            <div class="game-container hidden">
+                <div id="reldens"></div>
             </div>
         </div>
-        <div class="game-container hidden">
-            <div id="reldens"></div>
+        <div class="footer">
+            <div class="copyright">
+                <a href="https://www.dwdeveloper.com/">
+                    by D<span class="text-black text-lowercase">w</span><span class="text-capitalize">Developer</span>
+                </a>
+            </div>
         </div>
     </div>
-    <div class="footer">
-        <div class="copyright">
-            <a href="https://www.dwdeveloper.com/">
-                by D<span class="text-black text-lowercase">w</span><span class="text-capitalize">Developer</span>
-            </a>
-        </div>
-    </div>
-</div>
 </body>
 </html>
