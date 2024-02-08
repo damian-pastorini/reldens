@@ -29,7 +29,7 @@ reldens.events.on('reldens.afterInitEngineAndStartGame', () => {
 });
 
 reldens.events.on('reldens.startGameAfter', () => {
-    reldens.gameDom.getElement('.row-disclaimer').remove();
+    reldens.gameDom.getElement('.row-disclaimer')?.remove();
 });
 
 // global access is not actually required, the app can be fully encapsulated:
