@@ -100,7 +100,7 @@ REPLACE INTO `ads_types` (`id`, `key`) VALUES
 
 REPLACE INTO `audio` (`id`, `audio_key`, `files_name`, `config`, `room_id`, `category_id`, `enabled`) VALUES
 	(3, 'footstep', 'footstep.mp3', NULL, NULL, 3, 1),
-	(4, 'ReldensTownAudio', 'reldens-town.mp3', '', 4, 1, 1);
+	(4, 'reldens-town', 'reldens-town.mp3', '', 4, 1, 1);
 
 REPLACE INTO `audio_categories` (`id`, `category_key`, `category_label`, `enabled`, `single_audio`) VALUES
 	(1, 'music', 'Music', 1, 1),
