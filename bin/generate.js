@@ -70,7 +70,7 @@ if (-1 === Object.keys(validCommands).indexOf(command)) {
     return false;
 }
 
-let importedJson = fetchFileContents(extractedParams[1] || '')
+let importedJson = fetchFileContents(extractedParams[1] || '');
 
 if ('monsters-experience-per-level' === command) {
     let importedPlayerLevelsJson = fetchFileContents(extractedParams[2] || '');
