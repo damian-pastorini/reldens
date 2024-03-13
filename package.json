@@ -33,6 +33,9 @@
         "node": ">=18.0.0",
         "npm": ">=8.0.0"
     },
+    "bin": {
+        "reldens": "bin/reldens-commands.js"
+    },
     "dependencies": {
         "@adminjs/design-system": "2.1.2",
         "@adminjs/express": "4.1.0",
