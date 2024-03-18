@@ -678,6 +678,7 @@ CREATE TABLE IF NOT EXISTS `skills_class_path` (
   `key` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `label` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `levels_set_id` int unsigned NOT NULL,
+  `enabled` int unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   UNIQUE KEY `key` (`key`),
   KEY `levels_set_id` (`levels_set_id`),
