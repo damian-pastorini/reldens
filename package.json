@@ -87,7 +87,7 @@
         "@parcel/transformer-svg": "2.11.0",
         "@parcel/transformer-webmanifest": "2.11.0",
         "@parcel/transformer-worklet": "2.11.0",
-        "@reldens/game-data-generator": "^0.3.0",
+        "@reldens/game-data-generator": "^0.6.0",
         "@reldens/items-system": "^0.25.0",
         "@reldens/modifiers": "^0.21.0",
         "@reldens/skills": "^0.24.0",
