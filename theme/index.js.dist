@@ -17,7 +17,7 @@ const { ServerPlugin } = require('./theme/plugins/server-plugin');
 // create a server instance passing the current root:
 let appServer = new ServerManager({
     projectRoot: __dirname, // we need to pass the server root
-    projectThemeName: 'custom-game-theme-test', // if the project theme is not specified then "default" will be used
+    projectThemeName: '{{yourThemeName}}', // if the project theme is not specified then "default" will be used
     customPlugin: ServerPlugin
 });
 
