@@ -4,7 +4,6 @@ const fs = require('fs');
 const path = require('path');
 const { ServerManager } = require('../server');
 const { PlayersExperiencePerLevelImporter } = require('../lib/import/server/players-experience-per-level-importer');
-const { MonstersExperiencePerLevelImporter } = require('../lib/import/server/monsters-experience-per-level-importer');
 const { AttributesPerLevelImporter } = require('../lib/import/server/attributes-per-level-importer');
 const { ClassPathsImporter } = require('../lib/import/server/class-paths-importer');
 
@@ -21,14 +20,6 @@ let validCommands = {
             return false;
         }
         let importer = new PlayersExperiencePerLevelImporter(serverManager);
-        await importer.import(data);
-    },
-    'monsters-experience-per-level': async (data, projectThemeName) => {
-        let serverManager = await initializeServer(data, projectThemeName);
-        if (!serverManager) {
-            return false;
-        }
-        let importer = new MonstersExperiencePerLevelImporter(serverManager);
         await importer.import(data);
     },
     'attributes-per-level': async (data, projectThemeName) => {
