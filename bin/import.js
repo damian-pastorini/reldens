@@ -50,10 +50,6 @@ async function initializeServer(data, projectThemeName)
         projectRoot: process.cwd(),
         projectThemeName
     });
-    if (!appServer) {
-        console.error('- Can not initialize server.', projectThemeName);
-        return false;
-    }
     await appServer.initializeStorage(appServer.rawConfig, appServer.dataServerDriver);
     return appServer;
 }
