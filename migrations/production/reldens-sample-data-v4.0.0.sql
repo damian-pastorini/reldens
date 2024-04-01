@@ -712,12 +712,12 @@ REPLACE INTO `rooms_return_points` (`id`, `room_id`, `direction`, `x`, `y`, `is_
 REPLACE INTO `skills_class_level_up_animations` (`id`, `class_path_id`, `level_id`, `animationData`) VALUES
 	(1, NULL, NULL, '{"enabled":true,"type":"spritesheet","img":"heal_cast","frameWidth":64,"frameHeight":70,"start":0,"end":3,"repeat":-1,"destroyTime":2000,"depthByPlayer":"above"}');
 
-REPLACE INTO `skills_class_path` (`id`, `key`, `label`, `levels_set_id`) VALUES
-	(1, 'journeyman', 'Journeyman', 1),
-	(2, 'sorcerer', 'Sorcerer', 2),
-	(3, 'warlock', 'Warlock', 3),
-	(4, 'swordsman', 'Swordsman', 4),
-	(5, 'warrior', 'Warrior', 5);
+REPLACE INTO `skills_class_path` (`id`, `key`, `label`, `levels_set_id`, `enabled`) VALUES
+	(1, 'journeyman', 'Journeyman', 1, 1),
+	(2, 'sorcerer', 'Sorcerer', 2, 1),
+	(3, 'warlock', 'Warlock', 3, 1),
+	(4, 'swordsman', 'Swordsman', 4, 1),
+	(5, 'warrior', 'Warrior', 5, 1);
 
 REPLACE INTO `skills_class_path_level_labels` (`id`, `class_path_id`, `level_id`, `label`) VALUES
 	(1, 1, 3, 'Old Traveler'),
