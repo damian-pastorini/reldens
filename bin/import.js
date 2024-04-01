@@ -6,6 +6,7 @@ const { ServerManager } = require('../server');
 const { PlayersExperiencePerLevelImporter } = require('../lib/import/server/players-experience-per-level-importer');
 const { AttributesPerLevelImporter } = require('../lib/import/server/attributes-per-level-importer');
 const { ClassPathsImporter } = require('../lib/import/server/class-paths-importer');
+const { MapsImporter } = require('../lib/import/server/maps-importer');
 
 let args = process.argv;
 if(2 === args.length){
@@ -38,6 +39,14 @@ let validCommands = {
         let importer = new ClassPathsImporter(serverManager);
         await importer.import(data);
     },
+    'maps': async (data, projectThemeName) => {
+        let serverManager = await initializeServer(data, projectThemeName);
+        if (!serverManager) {
+            return false;
+        }
+        let importer = new MapsImporter(serverManager);
+        await importer.import(data);
+    }
 };
 
 async function initializeServer(data, projectThemeName)
