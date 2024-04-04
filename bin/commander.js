@@ -1,3 +1,5 @@
+#! /usr/bin/env node
+
 /**
  *
  * Reldens - Commands
@@ -10,8 +12,7 @@ const path = require('path');
 class Commander
 {
 
-    scriptPath = __dirname;
-    projectRoot = path.join(this.scriptPath, '../');
+    projectRoot = process.cwd();
     reldensModulePath = path.join(this.projectRoot, 'node_modules', 'reldens');
     projectThemeName = 'default';
 
@@ -31,9 +32,18 @@ class Commander
         try {
             fs.opendirSync(this.reldensModulePath);
         } catch (error) {
-            console.error('- Reldens node module folder not found, try `npm install`.');
+            console.error(
+                '- Reldens node module folder not found, try `npm install`.',
+                {
+                    dirname: __dirname,
+                    filename: __filename,
+                    process: process.cwd(),
+                    modulePath: this.reldensModulePath,
+                    projectRoot: this.projectRoot,
+                }
+            );
         }
-        const { ThemeManager } = require('reldens/lib/game/server/theme-manager');
+        const { ThemeManager } = require('../lib/game/server/theme-manager');
         this.themeManager = new ThemeManager(this);
         let parseResult = this.parseArgs();
         if(!parseResult){
@@ -85,6 +95,7 @@ class Commander
     help()
     {
         console.info(' - Available commands:'
+            +"\n"+'createApp                        - Create base project, copy all default files like in the skeleton.'
             +"\n"+'resetDist                        - Delete and create the "dist" folder.'
             +"\n"+'removeDist                       - Delete the "dist" folder.'
             +"\n"+'installDefaultTheme              - Copy theme and packages from node_modules into the current project theme.'
