@@ -6,7 +6,6 @@
 
 const { PluginInterface } = require('reldens/lib/features/plugin-interface');
 const { Npc1 } = require('./objects/client/npc1');
-const { sc } = require('@reldens/utils');
 
 class ClientPlugin extends PluginInterface
 {
@@ -23,7 +22,7 @@ class ClientPlugin extends PluginInterface
     {
         // example on how to define a custom class with a plugin:
         let customClasses = props.gameManager.config.client.customClasses;
-        if (!sc.hasOwn(customClasses, 'objects')) {
+        if(!customClasses['objects']){
             customClasses.objects = {};
         }
         customClasses.objects['people_town_1'] = Npc1;

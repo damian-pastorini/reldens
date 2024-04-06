@@ -9,7 +9,6 @@
 
 const { NpcObject } = require('reldens/lib/objects/server/object/type/npc-object');
 const { GameConst } = require('reldens/lib/game/constants');
-const { Logger, sc } = require('@reldens/utils');
 
 class WeaponsMaster extends NpcObject
 {
@@ -20,8 +19,8 @@ class WeaponsMaster extends NpcObject
         if(false === superResult){
             return false;
         }
-        let selectedOption = sc.get(this.options, data.value, false);
-        if(false === selectedOption){
+        let selectedOption = this.options[data.value];
+        if(!selectedOption){
             return false;
         }
         if(playerSchema.inventory.manager.findItemByKey(selectedOption.key)){
@@ -31,7 +30,7 @@ class WeaponsMaster extends NpcObject
         }
         let itemObj = playerSchema.inventory.manager.createItemInstance(selectedOption.key);
         if(false === await playerSchema.inventory.manager.addItem(itemObj)){
-            Logger.error([`Error while adding item "${selectedOption.key}" on "${this.key}".`]);
+            console.log([`Error while adding item "${selectedOption.key}" on "${this.key}".`]);
             let contentMessage = 'Sorry, I was not able to give you the item, contact the admin.';
             client.send('*', {act: GameConst.UI, id: this.id, content: contentMessage});
             return false;

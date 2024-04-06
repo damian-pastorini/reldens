@@ -9,7 +9,6 @@
 
 const { NpcObject } = require('reldens/lib/objects/server/object/type/npc-object');
 const { GameConst } = require('reldens/lib/game/constants');
-const { Logger, sc } = require('@reldens/utils');
 
 class Healer extends NpcObject
 {
@@ -21,7 +20,7 @@ class Healer extends NpcObject
             return false;
         }
         let givePotions = true;
-        let selectedOption = (sc.get(this.options, data.value, {})?.value || '').toString();
+        let selectedOption = ((this.options[data.value] || {})?.value || '').toString();
         if('' === selectedOption){
             return false;
         }
@@ -48,7 +47,7 @@ class Healer extends NpcObject
             // update the target:
             client.send('*', activationData);
         }).catch((err) => {
-            Logger.error(err);
+            console.log(err);
         });
     }
 
@@ -63,7 +62,7 @@ class Healer extends NpcObject
             // update the target:
             client.send('*', activationData);
         }).catch((err) => {
-            Logger.error(err);
+            console.log(err);
         });
     }
 
@@ -73,7 +72,7 @@ class Healer extends NpcObject
         let magicPotion = playerSchema.inventory.manager.createItemInstance('magic_potion_20');
         let result = await playerSchema.inventory.manager.addItems([healPotion, magicPotion]);
         if(!result){
-            Logger.error(['Error while adding items.', result, playerSchema]);
+            console.log(['Error while adding items.', result, playerSchema]);
             let contentMessage = 'Sorry, I was not able to give you any items, contact the administrator.';
             client.send('*', {act: GameConst.UI, id: this.id, content: contentMessage});
             return false;

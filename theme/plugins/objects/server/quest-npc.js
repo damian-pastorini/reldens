@@ -9,7 +9,6 @@
 
 const { NpcObject } = require('reldens/lib/objects/server/object/type/npc-object');
 const { GameConst } = require('reldens/lib/game/constants');
-const { Logger, sc } = require('@reldens/utils');
 
 class QuestNpc extends NpcObject
 {
@@ -20,8 +19,8 @@ class QuestNpc extends NpcObject
         if(false === superResult){
             return false;
         }
-        let selectedOption = sc.get(this.options, data.value, false);
-        if(false === selectedOption){
+        let selectedOption = this.options[data.value];
+        if(!selectedOption){
             return false;
         }
         if('' === (selectedOption.value).toString()){
@@ -47,7 +46,7 @@ class QuestNpc extends NpcObject
         }
         let removeResult = await playerSchema.inventory.manager.decreaseItemQty(treeItem.uid, 1);
         if(false === removeResult){
-            Logger.error(`Error while adding item "${selectedOption.key}"`);
+            console.log(`Error while adding item "${selectedOption.key}"`);
             let contentMessage = 'Sorry, I was not able to remove the required item, contact the administrator.';
             client.send('*', {act: GameConst.UI, id: this.id, content: contentMessage});
             return false;
@@ -55,7 +54,7 @@ class QuestNpc extends NpcObject
         // add the new coin:
         coinsItem = playerSchema.inventory.manager.createItemInstance('coins');
         if(false === await playerSchema.inventory.manager.addItem(coinsItem)){
-            Logger.error(`Error while adding item "${selectedOption.key}"`);
+            console.log(`Error while adding item "${selectedOption.key}"`);
             let contentMessage = 'Sorry, I was not able to give you the item, contact the administrator.';
             client.send('*', {act: GameConst.UI, id: this.id, content: contentMessage});
             return false;
