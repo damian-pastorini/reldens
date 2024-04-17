@@ -222,6 +222,10 @@ input[type="submit"] {
     border: 1px solid #ccc;
     box-shadow: 10px 10px 14px 2px rgba(0, 0, 0, 0.6);
 
+    &.row-disclaimer {
+        max-width: 98%;
+    }
+
     &.hidden {
         display: none;
     }
@@ -286,12 +290,17 @@ input[type="submit"] {
 }
 
 #login-form,
+#guest-form,
 #register-form,
 #forgot-form {
     width: 80%;
     display: block;
     margin: 0 auto;
     padding: 0;
+
+    &.hidden {
+        display: none;
+    }
 }
 
 .response-error {
@@ -309,6 +318,10 @@ h3.form-title {
 }
 
 form {
+    &.hidden {
+        display: none;
+    }
+
     .input-box {
         display: flex;
         position: relative;
