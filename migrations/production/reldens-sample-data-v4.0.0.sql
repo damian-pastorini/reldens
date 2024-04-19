@@ -598,8 +598,8 @@ REPLACE INTO `objects_items_rewards` (`id`, `object_id`, `item_key`, `reward_ite
 	(5, 10, 'magic_potion_20', 'coins', 1, 0);
 
 REPLACE INTO `objects_items_rewards_animations` (`id`, `reward_id`, `asset_type`, `asset_key`, `file`, `extra_params`) VALUES
-	(1, 2, 'spritesheet', 'branch-sprite', 'branch-sprite', '{"start":0,"end":2,"repeat":-1,"frameWidth":32, "frameHeight":32,"depthByPlayer":"above"}'),
-	(2, 1, 'spritesheet', 'branch-sprite', 'branch-sprite', '{"start":0,"end":2,"repeat":-1,"frameWidth":32, "frameHeight":32,"depthByPlayer":"above"}');
+	(1, 2, 'spritesheet', 'branch-sprite', 'branch-sprite.png', '{"start":0,"end":2,"repeat":-1,"frameWidth":32, "frameHeight":32,"depthByPlayer":"above"}'),
+	(2, 1, 'spritesheet', 'branch-sprite', 'branch-sprite.png', '{"start":0,"end":2,"repeat":-1,"frameWidth":32, "frameHeight":32,"depthByPlayer":"above"}');
 
 REPLACE INTO `objects_skills` (`id`, `object_id`, `skill_id`, `target`) VALUES
 	(1, 6, 1, 1);
