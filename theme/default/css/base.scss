@@ -336,6 +336,10 @@ form {
 
         &.submit-container, &.terms-and-conditions-link-container {
             justify-content: end;
+
+            &.guest-submit {
+                justify-content: center;
+            }
         }
 
         label {
