@@ -1,4 +1,17 @@
-[![Reldens - GitHub - Release](https://www.dwdeveloper.com/media/reldens/reldens-mmorpg-platform.png)](https://github.com/damian-pastorini/reldens)
+<div style="width: 100%; background-color: #000000; text-align: center;">
+    <a href="https://github.com/damian-pastorini/reldens">
+        <img alt="Reldens - You can make it" src="https://www.dwdeveloper.com/media/reldens/reldens-mmorpg-platform.png"/>
+    </a>
+</div>
+
+---
+
+<div style="text-align: center">
+    <a href="https://discord.gg/HuJMxUY">
+        <h3>Join our Discord community!</h3>
+        <img alt="Reldens - Discord" src="https://img.shields.io/badge/discord-%235865F2?style=for-the-badge&logo=discord&logoColor=white"/>
+    </a>
+</div>
 
 ---
 
