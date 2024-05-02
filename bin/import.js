@@ -5,7 +5,7 @@ const { PlayersExperiencePerLevelImporter } = require('../lib/import/server/play
 const { AttributesPerLevelImporter } = require('../lib/import/server/attributes-per-level-importer');
 const { ClassPathsImporter } = require('../lib/import/server/class-paths-importer');
 const { MapsImporter } = require('../lib/import/server/maps-importer');
-const { fetchFileContents } = require('./fetch-file-contents');
+const { FileHandler } = require('@reldens/utils');
 
 /**
  *
@@ -97,7 +97,7 @@ if (-1 === Object.keys(validCommands).indexOf(command)) {
     return false;
 }
 
-validCommands[command](fetchFileContents(extractedParams[2] || ''), themeName).then(() => {
+validCommands[command](FileHandler.fetchFileContents(extractedParams[2] || ''), themeName).then(() => {
     console.log('Done.');
     process.exit();
 }).catch((error) => {
