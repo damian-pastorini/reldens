@@ -80,14 +80,16 @@ let validCommands = {
         let pathParts = commandParams.mapDataFile.split('/');
         commandParams.mapDataFile = pathParts.pop();
         commandParams.rootFolder = FileHandler.joinPaths(process.cwd(), ...pathParts);
+        // @TODO - BETA - Fix the generated folder placement.
         // this will generate everything under rootFolder/whatever-the-path-is/generated:
         await mapsGenerateModes[commandParams.importMode](commandParams);
+        let generatedFolder = FileHandler.joinPaths(commandParams.rootFolder, 'generated');
         // we need to move the generated data to rootFolder/generated:
         FileHandler.copyFolderSync(
-            FileHandler.joinPaths(commandParams.rootFolder, 'generated'),
+            generatedFolder,
             FileHandler.joinPaths(process.cwd(), 'generated')
         );
-        FileHandler.joinPaths(commandParams.rootFolder, 'generated')
+        // FileHandler.removeFolder(generatedFolder);
     }
 };
 
