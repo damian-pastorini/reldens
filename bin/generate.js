@@ -12,7 +12,9 @@ const {
     MultipleByLoaderGenerator,
     MultipleWithAssociationsByLoaderGenerator
 } = require("@reldens/tile-map-generator");
-const { fetchFileContents } = require('./fetch-file-contents');
+const { FileHandler } = require('../lib/game/server/file-handler');
+const path = require("path");
+const {Logger} = require("@reldens/utils");
 
 /**
  *
@@ -30,7 +32,7 @@ const { fetchFileContents } = require('./fetch-file-contents');
  *
  * $ npx reldens-generate maps ./generate-data/map-composite-data-with-names.json MultipleByLoaderGenerator
  *
- * $ npx reldens-generate maps ./generate-data/map-composite-data-with-associations.json MultipleWithAssociationsByLoaderGenerator
+ * $ RELDENS_LOG_LEVEL=9 npx reldens-generate maps ./generate-data/map-composite-data-with-associations.json MultipleWithAssociationsByLoaderGenerator
  *
  */
 
@@ -75,7 +77,17 @@ let validCommands = {
         if (!mapsGenerateModes[commandParams.importMode]) {
             console.error('- Invalid import mode. Valid options: '+Object.keys(mapsGenerateModes).join(', '));
         }
-        mapsGenerateModes[commandParams.importMode](commandParams);
+        let pathParts = commandParams.mapDataFile.split('/');
+        commandParams.mapDataFile = pathParts.pop();
+        commandParams.rootFolder = FileHandler.joinPaths(process.cwd(), ...pathParts);
+        // this will generate everything under rootFolder/whatever-the-path-is/generated:
+        await mapsGenerateModes[commandParams.importMode](commandParams);
+        // we need to move the generated data to rootFolder/generated:
+        FileHandler.copyFolderSync(
+            FileHandler.joinPaths(commandParams.rootFolder, 'generated'),
+            FileHandler.joinPaths(process.cwd(), 'generated')
+        );
+        FileHandler.joinPaths(commandParams.rootFolder, 'generated')
     }
 };
 
@@ -103,9 +115,23 @@ let importJson = 'monsters-experience-per-level' === command
     || 'attributes-per-level' === command;
 
 if (importJson) {
-    let importedJson = fetchFileContents(extractedParams[1] || '');
+    let filePath = path.join(process.cwd(), extractedParams[1] || '');
+    if(!filePath){
+        Logger.error('Invalid data file path.', process.cwd(), filePath);
+        return false;
+    }
+    let importedJson = FileHandler.fetchFileJson(filePath);
+    if (!importedJson) {
+        console.error('- Can not parse data file.');
+        return false;
+    }
     if ('monsters-experience-per-level' === command) {
-        let importedPlayerLevelsJson = fetchFileContents(extractedParams[2] || '');
+        let secondaryFilePath = path.join(process.cwd(), extractedParams[2] || '');
+        if(!secondaryFilePath){
+            Logger.error('Invalid data file path.', process.cwd(), secondaryFilePath);
+            return false;
+        }
+        let importedPlayerLevelsJson = FileHandler.fetchFileJson(secondaryFilePath);
         if (!importedPlayerLevelsJson) {
             console.error('- Can not parse data file for player levels.');
             return false;
@@ -119,7 +145,6 @@ if (importJson) {
 
 if ('maps' === command) {
     return validCommands[command]({
-        rootFolder: process.cwd()+'/generate-data/',
         mapDataFile: extractedParams[1],
         // mapData: fetchFileContents(extractedParams[1] || ''),
         importMode: extractedParams[2] || ''
