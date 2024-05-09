@@ -29,6 +29,13 @@ ALTER TABLE `objects_skills`
 	CHANGE COLUMN `target_id` `target_id` INT(10) UNSIGNED NOT NULL AFTER `skill_id`,
 	ADD CONSTRAINT `FK_objects_skills_target_options` FOREIGN KEY (`target_id`) REFERENCES `target_options` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION;
 
+ALTER TABLE `objects_skills`
+	DROP FOREIGN KEY `FK_objects_skills_objects`,
+	DROP FOREIGN KEY `FK_objects_skills_skills_skill`;
+ALTER TABLE `objects_skills`
+	ADD CONSTRAINT `FK_objects_skills_objects` FOREIGN KEY (`object_id`) REFERENCES `objects` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION,
+	ADD CONSTRAINT `FK_objects_skills_skills_skill` FOREIGN KEY (`skill_id`) REFERENCES `skills_skill` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION;
+
 -- Targets:
 ALTER TABLE `target_options`
 	CHANGE COLUMN `target_key` `target_key` VARCHAR(50) NOT NULL COLLATE 'utf8mb4_unicode_ci' AFTER `id`;
