@@ -87,7 +87,7 @@
         "@reldens/game-data-generator": "^0.8.0",
         "@reldens/items-system": "^0.26.0",
         "@reldens/modifiers": "^0.22.0",
-        "@reldens/skills": "^0.25.0",
+        "@reldens/skills": "^0.26.0",
         "@reldens/storage": "^0.20.0",
         "@reldens/tile-map-generator": "^0.13.0",
         "@reldens/utils": "^0.32.0",
