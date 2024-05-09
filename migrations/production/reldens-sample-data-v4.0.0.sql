@@ -604,8 +604,8 @@ REPLACE INTO `objects_items_rewards_animations` (`id`, `reward_id`, `asset_type`
 	(1, 2, 'spritesheet', 'branch-sprite', 'branch-sprite.png', '{"start":0,"end":2,"repeat":-1,"frameWidth":32, "frameHeight":32,"depthByPlayer":"above"}'),
 	(2, 1, 'spritesheet', 'branch-sprite', 'branch-sprite.png', '{"start":0,"end":2,"repeat":-1,"frameWidth":32, "frameHeight":32,"depthByPlayer":"above"}');
 
-REPLACE INTO `objects_skills` (`id`, `object_id`, `skill_id`, `target`) VALUES
-	(1, 6, 1, 1);
+REPLACE INTO `objects_skills` (`id`, `object_id`, `skill_id`, `target_id`) VALUES
+	(1, 6, 1, 2);
 
 REPLACE INTO `objects_stats` (`id`, `object_id`, `stat_id`, `base_value`, `value`) VALUES
 	(1, 7, 1, 50, 50),
@@ -953,8 +953,8 @@ REPLACE INTO `stats` (`id`, `key`, `label`, `description`, `base_value`, `custom
 	(10, 'mgk-def', 'Magic Def', 'Player magic defense', 100, NULL);
 
 REPLACE INTO `target_options` (`id`, `target_key`, `target_label`) VALUES
-	(1, 0, 'Object'),
-	(2, 1, 'Player');
+	(1, 'object', 'Object'),
+	(2, 'player', 'Player');
 
 -- default user/password: root/root
 REPLACE INTO `users` (`id`, `email`, `username`, `password`, `role_id`, `status`, `created_at`, `updated_at`, `played_time`) VALUES

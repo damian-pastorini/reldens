@@ -32,11 +32,11 @@ CREATE TABLE IF NOT EXISTS `operation_types` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
 
 CREATE TABLE IF NOT EXISTS `target_options` (
-    `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-    `target_key` TINYINT(3) UNSIGNED NOT NULL,
-    `target_label` VARCHAR(50) COLLATE utf8mb4_unicode_ci NOT NULL,
-    PRIMARY KEY (`id`),
-    UNIQUE KEY `target_key` (`target_key`)
+	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+	`target_key` VARCHAR(50) NOT NULL COLLATE 'utf8mb4_unicode_ci',
+	`target_label` VARCHAR(50) NOT NULL COLLATE 'utf8mb4_unicode_ci',
+	PRIMARY KEY (`id`) USING BTREE,
+	UNIQUE INDEX `target_key` (`target_key`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
 
 CREATE TABLE IF NOT EXISTS `locale` (
@@ -447,23 +447,22 @@ CREATE TABLE IF NOT EXISTS `objects_types` (
 CREATE TABLE IF NOT EXISTS `objects` (
     `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
     `room_id` INT(10) UNSIGNED NOT NULL,
-    `layer_name` VARCHAR(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-    `tile_index` INT(10) UNSIGNED DEFAULT NULL,
-    `class_type` INT(10) UNSIGNED DEFAULT NULL,
-    `object_class_key` VARCHAR(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-    `client_key` TEXT COLLATE utf8mb4_unicode_ci NOT NULL,
-    `title` VARCHAR(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-    `private_params` TEXT COLLATE utf8mb4_unicode_ci,
-    `client_params` TEXT COLLATE utf8mb4_unicode_ci,
+    `layer_name` VARCHAR(255) NOT NULL COLLATE 'utf8mb4_unicode_ci',
+    `tile_index` INT(10) UNSIGNED NULL DEFAULT NULL,
+    `class_type` INT(10) UNSIGNED NULL DEFAULT NULL,
+    `object_class_key` VARCHAR(255) NOT NULL COLLATE 'utf8mb4_unicode_ci',
+    `client_key` TEXT NOT NULL COLLATE 'utf8mb4_unicode_ci',
+    `title` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
+    `private_params` TEXT NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
+    `client_params` TEXT NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
     `enabled` INT(10) NOT NULL,
-    PRIMARY KEY (`id`),
-    UNIQUE KEY `id` (`id`),
-    UNIQUE KEY `room_id_layer_name_tile_index` (`room_id`,`layer_name`,`tile_index`),
-    KEY `room_id` (`room_id`),
-    KEY `object_class_key` (`object_class_key`),
-    KEY `class_type` (`class_type`),
-    CONSTRAINT `FK_objects_objects_types` FOREIGN KEY (`class_type`) REFERENCES `objects_types` (`id`) ON UPDATE CASCADE,
-    CONSTRAINT `FK_objects_rooms` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON UPDATE CASCADE
+    PRIMARY KEY (`id`) USING BTREE,
+    UNIQUE INDEX `object_class_key` (`object_class_key`) USING BTREE,
+    UNIQUE INDEX `room_id_layer_name_tile_index` (`room_id`, `layer_name`, `tile_index`) USING BTREE,
+    INDEX `room_id` (`room_id`) USING BTREE,
+    INDEX `class_type` (`class_type`) USING BTREE,
+    CONSTRAINT `FK_objects_objects_types` FOREIGN KEY (`class_type`) REFERENCES `objects_types` (`id`) ON UPDATE CASCADE ON DELETE NO ACTION,
+    CONSTRAINT `FK_objects_rooms` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON UPDATE CASCADE ON DELETE NO ACTION
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
 
 CREATE TABLE IF NOT EXISTS `objects_animations` (
@@ -636,14 +635,14 @@ CREATE TABLE IF NOT EXISTS `objects_skills` (
     `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
     `object_id` INT(10) UNSIGNED NOT NULL,
     `skill_id` INT(10) UNSIGNED NOT NULL,
-    `target` TINYINT(3) UNSIGNED NOT NULL DEFAULT '1',
-    PRIMARY KEY (`id`),
-    KEY `FK_objects_skills_objects` (`object_id`),
-    KEY `FK_objects_skills_skills_skill` (`skill_id`),
-    KEY `FK_objects_skills_target_options` (`target`),
-    CONSTRAINT `FK_objects_skills_objects` FOREIGN KEY (`object_id`) REFERENCES `objects` (`id`) ON UPDATE CASCADE,
-    CONSTRAINT `FK_objects_skills_skills_skill` FOREIGN KEY (`skill_id`) REFERENCES `skills_skill` (`id`) ON UPDATE CASCADE,
-    CONSTRAINT `FK_objects_skills_target_options` FOREIGN KEY (`target`) REFERENCES `target_options` (`target_key`)
+    `target_id` INT(10) UNSIGNED NOT NULL,
+    PRIMARY KEY (`id`) USING BTREE,
+    INDEX `FK_objects_skills_objects` (`object_id`) USING BTREE,
+    INDEX `FK_objects_skills_skills_skill` (`skill_id`) USING BTREE,
+    INDEX `FK_objects_skills_target_options` (`target_id`) USING BTREE,
+    CONSTRAINT `FK_objects_skills_objects` FOREIGN KEY (`object_id`) REFERENCES `objects` (`id`) ON UPDATE CASCADE ON DELETE NO ACTION,
+    CONSTRAINT `FK_objects_skills_skills_skill` FOREIGN KEY (`skill_id`) REFERENCES `skills_skill` (`id`) ON UPDATE CASCADE ON DELETE NO ACTION,
+    CONSTRAINT `FK_objects_skills_target_options` FOREIGN KEY (`target_id`) REFERENCES `target_options` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
 
 CREATE TABLE IF NOT EXISTS `objects_stats` (
@@ -829,6 +828,8 @@ CREATE TABLE IF NOT EXISTS `skills_skill_owner_conditions` (
     `conditional` ENUM('eq','ne','lt','gt','le','ge') NOT NULL COLLATE 'utf8mb4_unicode_ci',
     `value` VARCHAR(255) NOT NULL COLLATE 'utf8mb4_unicode_ci',
     PRIMARY KEY (`id`) USING BTREE,
+    UNIQUE INDEX `key` (`key`) USING BTREE,
+    UNIQUE INDEX `skill_id_property_key` (`skill_id`, `property_key`) USING BTREE,
     INDEX `skill_id` (`skill_id`) USING BTREE,
     CONSTRAINT `FK_skills_skill_owner_conditions_skills_skill` FOREIGN KEY (`skill_id`) REFERENCES `skills_skill` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';

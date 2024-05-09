@@ -432,8 +432,8 @@ REPLACE INTO `skills_skill_type` (`id`, `key`) VALUES
 	(5, 'physical_effect');
 
 REPLACE INTO `target_options` (`id`, `target_key`, `target_label`) VALUES
-	(1, 0, 'Object'),
-	(2, 1, 'Player');
+	(1, 'object', 'Object'),
+	(2, 'player', 'Player');
 
 -- default user/password: root/root
 REPLACE INTO `users` (`id`, `email`, `username`, `password`, `role_id`, `status`, `created_at`, `updated_at`, `played_time`) VALUES

@@ -13,13 +13,41 @@ INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('server', 'playe
 UPDATE `config` SET `value` = '{"key":"default_bullet","animationData":{"enabled":true,"type":"spritesheet","img":"default_bullet","frameWidth":64,"frameHeight":64,"start":0,"end":2,"repeat":-1,"frameRate":1}}' WHERE `scope` = 'client' AND `path` = 'skills/animations/default_bullet';
 UPDATE `config` SET `value` = '{"key":"default_death","animationData":{"enabled":true,"type":"spritesheet","img":"default_death","frameWidth":64,"frameHeight":64,"start":0,"end":1,"repeat":0,"frameRate":1}}' WHERE `scope` = 'client' AND `path` = 'skills/animations/default_death';
 
+-- Objects:
+ALTER TABLE `objects`
+	DROP INDEX `id`,
+	DROP INDEX `object_class_key`,
+	ADD UNIQUE INDEX `object_class_key` (`object_class_key`);
+
+ALTER TABLE `objects_skills`
+	CHANGE COLUMN `target` `target_id` TINYINT(3) UNSIGNED NOT NULL AFTER `skill_id`,
+	DROP INDEX `FK_objects_skills_target_options`,
+	ADD INDEX `FK_objects_skills_target_options` (`target_id`) USING BTREE;
+ALTER TABLE `objects_skills`
+	DROP FOREIGN KEY `FK_objects_skills_target_options`;
+ALTER TABLE `objects_skills`
+	CHANGE COLUMN `target_id` `target_id` INT(10) UNSIGNED NOT NULL AFTER `skill_id`,
+	ADD CONSTRAINT `FK_objects_skills_target_options` FOREIGN KEY (`target_id`) REFERENCES `target_options` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION;
+
+-- Targets:
+ALTER TABLE `target_options`
+	CHANGE COLUMN `target_key` `target_key` VARCHAR(50) NOT NULL COLLATE 'utf8mb4_unicode_ci' AFTER `id`;
+
+UPDATE `target_options` SET `target_key` = 'object' WHERE `target_label` = 'Object';
+UPDATE `target_options` SET `target_key` = 'player' WHERE `target_label` = 'Player';
+
 -- Skills:
 UPDATE `skills_skill_animations` SET `animationData` = '{"enabled":true,"type":"spritesheet","img":"fireball_bullet","frameWidth":64,"frameHeight":64,"start":0,"end":3,"repeat":-1,"frameRate":1,"dir":3}' WHERE `key` = 'bullet';
+
 ALTER TABLE `skills_skill_attack`
 	CHANGE COLUMN `attackProperties` `attackProperties` TEXT NULL COLLATE 'utf8mb4_unicode_ci' AFTER `applyDirectDamage`,
 	CHANGE COLUMN `defenseProperties` `defenseProperties` TEXT NULL COLLATE 'utf8mb4_unicode_ci' AFTER `attackProperties`,
 	CHANGE COLUMN `aimProperties` `aimProperties` TEXT NULL COLLATE 'utf8mb4_unicode_ci' AFTER `defenseProperties`,
 	CHANGE COLUMN `dodgeProperties` `dodgeProperties` TEXT NULL COLLATE 'utf8mb4_unicode_ci' AFTER `aimProperties`;
+
+ALTER TABLE `skills_skill_owner_conditions`
+    ADD UNIQUE INDEX `key` (`key`),
+    ADD UNIQUE INDEX `skill_id_property_key` (`skill_id`, `property_key`);
 
 -- Rooms:
 UPDATE `rooms` SET `customData` = '{"allowGuest":true}' WHERE `name` IN ('reldens-house-1', 'reldens-town', 'reldens-forest');
