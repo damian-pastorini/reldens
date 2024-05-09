@@ -5,7 +5,8 @@ const { PlayersExperiencePerLevelImporter } = require('../lib/import/server/play
 const { AttributesPerLevelImporter } = require('../lib/import/server/attributes-per-level-importer');
 const { ClassPathsImporter } = require('../lib/import/server/class-paths-importer');
 const { MapsImporter } = require('../lib/import/server/maps-importer');
-const { FileHandler } = require('@reldens/utils');
+const { SkillsImporter } = require('../lib/import/server/skills-importer');
+const { FileHandler } = require('../lib/game/server/file-handler');
 
 /**
  *
@@ -20,6 +21,8 @@ const { FileHandler } = require('@reldens/utils');
  * $ npx reldens-import attributes-per-level custom-game-theme-test generate-data/class-paths-attributes-per-level.json
  *
  * $ npx reldens-import maps custom-game-theme-test generate-data/maps.json
+ *
+ * $ npx reldens-import skills custom-game-theme-test generate-data/skills-data.json
  *
  */
 
@@ -54,6 +57,14 @@ let validCommands = {
             return false;
         }
         let importer = new MapsImporter(serverManager);
+        await importer.import(data);
+    },
+    'skills': async (data, projectThemeName) => {
+        let serverManager = await initializeServer(data, projectThemeName);
+        if (!serverManager) {
+            return false;
+        }
+        let importer = new SkillsImporter(serverManager);
         await importer.import(data);
     }
 };
@@ -97,7 +108,7 @@ if (-1 === Object.keys(validCommands).indexOf(command)) {
     return false;
 }
 
-validCommands[command](FileHandler.fetchFileContents(extractedParams[2] || ''), themeName).then(() => {
+validCommands[command](FileHandler.fetchFileJson(extractedParams[2] || ''), themeName).then(() => {
     console.log('Done.');
     process.exit();
 }).catch((error) => {
