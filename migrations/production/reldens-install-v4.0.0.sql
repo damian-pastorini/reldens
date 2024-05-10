@@ -724,14 +724,14 @@ CREATE TABLE IF NOT EXISTS `skills_class_path_level_skills` (
     `class_path_id` INT(10) UNSIGNED NOT NULL,
     `level_id` INT(10) UNSIGNED NOT NULL,
     `skill_id` INT(10) UNSIGNED NOT NULL,
-    PRIMARY KEY (`id`),
-    KEY `class_path_id` (`class_path_id`),
-    KEY `skill_id` (`skill_id`),
-    KEY `level_key` (`level_id`) USING BTREE,
-    CONSTRAINT `FK_skills_class_path_level_skills_skills_class_path` FOREIGN KEY (`class_path_id`) REFERENCES `skills_class_path` (`id`) ON UPDATE CASCADE,
-    CONSTRAINT `FK_skills_class_path_level_skills_skills_levels` FOREIGN KEY (`level_id`) REFERENCES `skills_levels` (`key`) ON UPDATE CASCADE,
-    CONSTRAINT `FK_skills_class_path_level_skills_skills_levels_id` FOREIGN KEY (`level_id`) REFERENCES `skills_levels` (`id`) ON UPDATE CASCADE,
-    CONSTRAINT `FK_skills_class_path_level_skills_skills_skill` FOREIGN KEY (`skill_id`) REFERENCES `skills_skill` (`id`) ON UPDATE CASCADE
+    PRIMARY KEY (`id`) USING BTREE,
+    UNIQUE INDEX `class_path_id_level_id_skill_id` (`class_path_id`, `level_id`, `skill_id`) USING BTREE,
+    INDEX `class_path_id` (`class_path_id`) USING BTREE,
+    INDEX `skill_id` (`skill_id`) USING BTREE,
+    INDEX `level_key` (`level_id`) USING BTREE,
+    CONSTRAINT `FK_skills_class_path_level_skills_skills_class_path` FOREIGN KEY (`class_path_id`) REFERENCES `skills_class_path` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION,
+    CONSTRAINT `FK_skills_class_path_level_skills_skills_levels_id` FOREIGN KEY (`level_id`) REFERENCES `skills_levels` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION,
+    CONSTRAINT `FK_skills_class_path_level_skills_skills_skill` FOREIGN KEY (`skill_id`) REFERENCES `skills_skill` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
 
 CREATE TABLE IF NOT EXISTS `skills_levels_modifiers` (

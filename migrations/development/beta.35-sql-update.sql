@@ -56,6 +56,21 @@ ALTER TABLE `skills_skill_owner_conditions`
     ADD UNIQUE INDEX `key` (`key`),
     ADD UNIQUE INDEX `skill_id_property_key` (`skill_id`, `property_key`);
 
+ALTER TABLE `skills_class_path_level_skills`
+	ADD UNIQUE INDEX `class_path_id_level_id_skill_id` (`class_path_id`, `level_id`, `skill_id`);
+ALTER TABLE `skills_class_path_level_skills`
+	DROP FOREIGN KEY `FK_skills_class_path_level_skills_skills_class_path`,
+	DROP FOREIGN KEY `FK_skills_class_path_level_skills_skills_levels`,
+	DROP FOREIGN KEY `FK_skills_class_path_level_skills_skills_levels_id`,
+	DROP FOREIGN KEY `FK_skills_class_path_level_skills_skills_skill`;
+ALTER TABLE `skills_class_path_level_skills`
+	ADD CONSTRAINT `FK_skills_class_path_level_skills_skills_class_path` FOREIGN KEY (`class_path_id`) REFERENCES `skills_class_path` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION,
+	ADD CONSTRAINT `FK_skills_class_path_level_skills_skills_levels` FOREIGN KEY (`level_id`) REFERENCES `skills_levels` (`key`) ON UPDATE NO ACTION ON DELETE NO ACTION,
+	ADD CONSTRAINT `FK_skills_class_path_level_skills_skills_levels_id` FOREIGN KEY (`level_id`) REFERENCES `skills_levels` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION,
+	ADD CONSTRAINT `FK_skills_class_path_level_skills_skills_skill` FOREIGN KEY (`skill_id`) REFERENCES `skills_skill` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE `skills_class_path_level_skills`
+	DROP FOREIGN KEY `FK_skills_class_path_level_skills_skills_levels`;
+
 -- Rooms:
 UPDATE `rooms` SET `customData` = '{"allowGuest":true}' WHERE `name` IN ('reldens-house-1', 'reldens-town', 'reldens-forest');
 UPDATE `rooms` SET `customData` = NULL WHERE `name` = 'reldens-house-1-2d-floor';
