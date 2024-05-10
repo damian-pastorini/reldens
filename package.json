@@ -88,7 +88,7 @@
         "@reldens/items-system": "^0.26.0",
         "@reldens/modifiers": "^0.22.0",
         "@reldens/skills": "^0.26.0",
-        "@reldens/storage": "^0.23.0",
+        "@reldens/storage": "^0.24.0",
         "@reldens/tile-map-generator": "^0.13.0",
         "@reldens/utils": "^0.32.0",
         "@sendgrid/mail": "8.1.3",
