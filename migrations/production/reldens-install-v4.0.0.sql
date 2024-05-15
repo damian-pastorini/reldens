@@ -359,15 +359,15 @@ CREATE TABLE IF NOT EXISTS `clan_members` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
 
 CREATE TABLE IF NOT EXISTS `config` (
-    `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-    `scope` VARCHAR(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-    `path` VARCHAR(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-    `value` TEXT COLLATE utf8mb4_unicode_ci NOT NULL,
-    `type` INT(10) UNSIGNED NOT NULL,
-    PRIMARY KEY (`id`),
-    UNIQUE KEY `scope_path` (`scope`,`path`),
-    KEY `FK_config_config_types` (`type`),
-    CONSTRAINT `FK_config_config_types` FOREIGN KEY (`type`) REFERENCES `config_types` (`id`) ON UPDATE CASCADE
+	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+	`scope` VARCHAR(255) NOT NULL COLLATE 'utf8mb4_unicode_ci',
+	`path` VARCHAR(255) NOT NULL COLLATE 'utf8mb4_unicode_ci',
+	`value` TEXT NOT NULL COLLATE 'utf8mb4_unicode_ci',
+	`type` INT(10) UNSIGNED NOT NULL,
+	PRIMARY KEY (`id`) USING BTREE,
+	UNIQUE INDEX `scope_path` (`scope`, `path`) USING BTREE,
+	INDEX `FK_config_config_types` (`type`) USING BTREE,
+	CONSTRAINT `FK_config_config_types` FOREIGN KEY (`type`) REFERENCES `config_types` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
 
 CREATE TABLE IF NOT EXISTS `items_types` (

@@ -10,8 +10,15 @@ INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'gener
 INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('server', 'players/guestUser/roleId', '2', 2);
 INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'gameEngine/banner', '0', 3);
 INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('server', 'players/guestUser/allowOnRooms', '1', 3);
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('server', 'objects/drops/disappearTime', '18000', 2);
 UPDATE `config` SET `value` = '{"key":"default_bullet","animationData":{"enabled":true,"type":"spritesheet","img":"default_bullet","frameWidth":64,"frameHeight":64,"start":0,"end":2,"repeat":-1,"frameRate":1}}' WHERE `scope` = 'client' AND `path` = 'skills/animations/default_bullet';
 UPDATE `config` SET `value` = '{"key":"default_death","animationData":{"enabled":true,"type":"spritesheet","img":"default_death","frameWidth":64,"frameHeight":64,"start":0,"end":1,"repeat":0,"frameRate":1}}' WHERE `scope` = 'client' AND `path` = 'skills/animations/default_death';
+
+-- Config types:
+ALTER TABLE `config`
+	DROP FOREIGN KEY `FK_config_config_types`;
+ALTER TABLE `config`
+	ADD CONSTRAINT `FK_config_config_types` FOREIGN KEY (`type`) REFERENCES `config_types` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION;
 
 -- Objects:
 ALTER TABLE `objects`
@@ -81,6 +88,9 @@ UPDATE `objects_items_rewards_animations` SET `file` = CONCAT(`file`, '.png') WH
 
 -- Items close inventory fix:
 UPDATE items_item SET customData = JSON_REMOVE(customData, '$.animationData.closeInventoryOnUse') WHERE JSON_CONTAINS(customData, '{"animationData":{"closeInventoryOnUse":true}}');
+
+-- Items isDroppable inclusion:
+UPDATE `items_item` SET `customData` = JSON_SET(`customData`, '$.canBeDropped', true);
 
 --
 
