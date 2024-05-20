@@ -552,35 +552,35 @@ CREATE TABLE IF NOT EXISTS `rewards_modifiers` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
 
 CREATE TABLE IF NOT EXISTS `rewards` (
-    `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-    `object_id` INT(10) UNSIGNED NOT NULL,
-    `item_id` INT(10) UNSIGNED DEFAULT NULL,
-    `modifier_id` INT(10) UNSIGNED DEFAULT NULL,
-    `experience` INT(10) UNSIGNED NOT NULL DEFAULT '0',
-    `drop_rate` INT(10) UNSIGNED NOT NULL,
-    `drop_quantity` INT(10) UNSIGNED NOT NULL,
-    `is_unique` TINYINT(3) UNSIGNED NOT NULL DEFAULT '0',
-    `was_given` TINYINT(3) UNSIGNED NOT NULL DEFAULT '0',
-    `has_drop_body` TINYINT(3) UNSIGNED NOT NULL DEFAULT '0',
-    PRIMARY KEY (`id`) USING BTREE,
-    KEY `FK_rewards_items_item` (`item_id`) USING BTREE,
-    KEY `FK_rewards_objects` (`object_id`) USING BTREE,
-    KEY `FK_rewards_rewards_modifiers` (`modifier_id`),
-    CONSTRAINT `FK_rewards_items_item` FOREIGN KEY (`item_id`) REFERENCES `items_item` (`id`),
-    CONSTRAINT `FK_rewards_objects` FOREIGN KEY (`object_id`) REFERENCES `objects` (`id`),
-    CONSTRAINT `FK_rewards_rewards_modifiers` FOREIGN KEY (`modifier_id`) REFERENCES `rewards_modifiers` (`id`)
+	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+	`object_id` INT(10) UNSIGNED NOT NULL,
+	`item_id` INT(10) UNSIGNED NULL DEFAULT NULL,
+	`modifier_id` INT(10) UNSIGNED NULL DEFAULT NULL,
+	`experience` INT(10) UNSIGNED NOT NULL DEFAULT '0',
+	`drop_rate` INT(10) UNSIGNED NOT NULL,
+	`drop_quantity` INT(10) UNSIGNED NOT NULL,
+	`is_unique` TINYINT(3) UNSIGNED NOT NULL DEFAULT '0',
+	`was_given` TINYINT(3) UNSIGNED NOT NULL DEFAULT '0',
+	`has_drop_body` TINYINT(3) UNSIGNED NOT NULL DEFAULT '0',
+	PRIMARY KEY (`id`) USING BTREE,
+	INDEX `FK_rewards_items_item` (`item_id`) USING BTREE,
+	INDEX `FK_rewards_objects` (`object_id`) USING BTREE,
+	INDEX `FK_rewards_rewards_modifiers` (`modifier_id`) USING BTREE,
+	CONSTRAINT `FK_rewards_items_item` FOREIGN KEY (`item_id`) REFERENCES `items_item` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION,
+	CONSTRAINT `FK_rewards_objects` FOREIGN KEY (`object_id`) REFERENCES `objects` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION,
+	CONSTRAINT `FK_rewards_rewards_modifiers` FOREIGN KEY (`modifier_id`) REFERENCES `rewards_modifiers` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
 
-CREATE TABLE IF NOT EXISTS `objects_items_rewards_animations` (
+CREATE TABLE IF NOT EXISTS `drops_animations` (
     `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-    `reward_id` INT(10) UNSIGNED NOT NULL,
-    `asset_type` VARCHAR(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-    `asset_key` VARCHAR(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-    `file` VARCHAR(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-    `extra_params` TEXT COLLATE utf8mb4_unicode_ci,
+    `item_id` INT(10) UNSIGNED NOT NULL,
+    `asset_type` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
+    `asset_key` VARCHAR(255) NOT NULL COLLATE 'utf8mb4_unicode_ci',
+    `file` VARCHAR(255) NOT NULL COLLATE 'utf8mb4_unicode_ci',
+    `extra_params` TEXT NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
     PRIMARY KEY (`id`) USING BTREE,
-    KEY `FK_objects_items_rewards_animations_rewards` (`reward_id`) USING BTREE,
-    CONSTRAINT `FK_objects_items_rewards_animations_rewards` FOREIGN KEY (`reward_id`) REFERENCES `rewards` (`id`) ON UPDATE CASCADE
+    INDEX `item_id` (`item_id`) USING BTREE,
+    CONSTRAINT `FK_drops_animations_items_item` FOREIGN KEY (`item_id`) REFERENCES `items_item` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
 
 CREATE TABLE IF NOT EXISTS `skills_skill_type` (

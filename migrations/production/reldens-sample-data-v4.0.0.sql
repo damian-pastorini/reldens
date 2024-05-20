@@ -530,12 +530,12 @@ REPLACE INTO `items_group` (`id`, `key`, `label`, `description`, `files_name`, `
 	(6, 'helmet', 'Helmet', '', 'helmet.png', 1, 1, 0);
 
 REPLACE INTO `items_item` (`id`, `key`, `type`, `group_id`, `label`, `description`, `qty_limit`, `uses_limit`, `useTimeOut`, `execTimeOut`, `customData`) VALUES
-	(1, 'coins', 3, NULL, 'Coins', NULL, 0, 1, NULL, NULL, NULL),
-	(2, 'branch', 10, NULL, 'Tree branch', 'An useless tree branch (for now)', 0, 1, NULL, NULL, NULL),
-	(3, 'heal_potion_20', 5, NULL, 'Heal Potion', 'A heal potion that will restore 20 HP.', 0, 1, NULL, NULL, '{"animationData":{"frameWidth":64,"frameHeight":64,"start":6,"end":11,"repeat":0,"usePlayerPosition":true,"followPlayer":true,"startsOnTarget":true},"removeAfterUse":true}'),
-	(4, 'axe', 1, 1, 'Axe', 'A short distance but powerful weapon.', 0, 0, NULL, NULL, '{"animationData":{"frameWidth":64,"frameHeight":64,"start":6,"end":11,"repeat":0,"destroyOnComplete":true,"usePlayerPosition":true,"followPlayer":true,"startsOnTarget":true}}'),
-	(5, 'spear', 1, 1, 'Spear', 'A short distance but powerful weapon.', 0, 0, NULL, NULL, '{"animationData":{"frameWidth":64,"frameHeight":64,"start":6,"end":11,"repeat":0,"destroyOnComplete":true,"usePlayerPosition":true,"followPlayer":true,"startsOnTarget":true}}'),
-	(6, 'magic_potion_20', 5, NULL, 'Magic Potion', 'A magic potion that will restore 20 MP.', 0, 1, NULL, NULL, '{"animationData":{"frameWidth":64,"frameHeight":64,"start":6,"end":11,"repeat":0,"usePlayerPosition":true,"followPlayer":true,"startsOnTarget":true},"removeAfterUse":true}');
+	(1, 'coins', 3, NULL, 'Coins', NULL, 0, 1, NULL, NULL, '{"canBeDropped": true}'),
+	(2, 'branch', 10, NULL, 'Tree branch', 'An useless tree branch (for now)', 0, 1, NULL, NULL, '{"canBeDropped": true}'),
+	(3, 'heal_potion_20', 5, NULL, 'Heal Potion', 'A heal potion that will restore 20 HP.', 0, 1, NULL, NULL, '{"canBeDropped":true,"animationData":{"frameWidth":64,"frameHeight":64,"start":6,"end":11,"repeat":0,"usePlayerPosition":true,"followPlayer":true,"startsOnTarget":true},"removeAfterUse":true}'),
+	(4, 'axe', 1, 1, 'Axe', 'A short distance but powerful weapon.', 0, 0, NULL, NULL, '{"canBeDropped":true,"animationData":{"frameWidth":64,"frameHeight":64,"start":6,"end":11,"repeat":0,"destroyOnComplete":true,"usePlayerPosition":true,"followPlayer":true,"startsOnTarget":true}}'),
+	(5, 'spear', 1, 1, 'Spear', 'A short distance but powerful weapon.', 0, 0, NULL, NULL, '{"canBeDropped":true,"animationData":{"frameWidth":64,"frameHeight":64,"start":6,"end":11,"repeat":0,"destroyOnComplete":true,"usePlayerPosition":true,"followPlayer":true,"startsOnTarget":true}}'),
+	(6, 'magic_potion_20', 5, NULL, 'Magic Potion', 'A magic potion that will restore 20 MP.', 0, 1, NULL, NULL, '{"canBeDropped":true,"animationData":{"frameWidth":64,"frameHeight":64,"start":6,"end":11,"repeat":0,"usePlayerPosition":true,"followPlayer":true,"startsOnTarget":true},"removeAfterUse":true}');
 
 REPLACE INTO `items_item_modifiers` (`id`, `item_id`, `key`, `property_key`, `operation`, `value`, `maxProperty`) VALUES
 	(1, 4, 'atk', 'stats/atk', 5, '5', NULL),
@@ -600,9 +600,13 @@ REPLACE INTO `objects_items_rewards` (`id`, `object_id`, `item_key`, `reward_ite
 	(3, 10, 'heal_potion_20', 'coins', 1, 0),
 	(5, 10, 'magic_potion_20', 'coins', 1, 0);
 
-REPLACE INTO `objects_items_rewards_animations` (`id`, `reward_id`, `asset_type`, `asset_key`, `file`, `extra_params`) VALUES
-	(1, 2, 'spritesheet', 'branch-sprite', 'branch-sprite.png', '{"start":0,"end":2,"repeat":-1,"frameWidth":32, "frameHeight":32,"depthByPlayer":"above"}'),
-	(2, 1, 'spritesheet', 'branch-sprite', 'branch-sprite.png', '{"start":0,"end":2,"repeat":-1,"frameWidth":32, "frameHeight":32,"depthByPlayer":"above"}');
+REPLACE INTO `drops_animations` (`id`, `item_id`, `asset_type`, `asset_key`, `file`, `extra_params`) VALUES
+    (1, 1, NULL, 'coins', 'coins.png', '{"start":0,"end":0,"repeat":-1,"frameWidth":32, "frameHeight":32,"depthByPlayer":"above"}'),
+	(2, 2, NULL, 'branch', 'branch.png', '{"start":0,"end":2,"repeat":-1,"frameWidth":32, "frameHeight":32,"depthByPlayer":"above"}'),
+    (3, 3, NULL, 'heal-potion-20', 'heal-potion-20.png', '{"start":0,"end":0,"repeat":-1,"frameWidth":32, "frameHeight":32,"depthByPlayer":"above"}'),
+	(4, 4, NULL, 'axe', 'axe.png', '{"start":0,"end":0,"repeat":-1,"frameWidth":32, "frameHeight":32,"depthByPlayer":"above"}'),
+    (5, 5, NULL, 'spear', 'spear.png', '{"start":0,"end":0,"repeat":-1,"frameWidth":32, "frameHeight":32,"depthByPlayer":"above"}'),
+    (6, 6, NULL, 'magic-potion-20', 'magic-potion-20.png', '{"start":0,"end":0,"repeat":-1,"frameWidth":32, "frameHeight":32,"depthByPlayer":"above"}');
 
 REPLACE INTO `objects_skills` (`id`, `object_id`, `skill_id`, `target_id`) VALUES
 	(1, 6, 1, 2);

@@ -11,6 +11,8 @@ INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('server', 'playe
 INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'gameEngine/banner', '0', 3);
 INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('server', 'players/guestUser/allowOnRooms', '1', 3);
 INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('server', 'objects/drops/disappearTime', '18000', 2);
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('server', 'players/drop/percent', '20', 2);
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('server', 'players/drop/quantity', '2', 2);
 UPDATE `config` SET `value` = '{"key":"default_bullet","animationData":{"enabled":true,"type":"spritesheet","img":"default_bullet","frameWidth":64,"frameHeight":64,"start":0,"end":2,"repeat":-1,"frameRate":1}}' WHERE `scope` = 'client' AND `path` = 'skills/animations/default_bullet';
 UPDATE `config` SET `value` = '{"key":"default_death","animationData":{"enabled":true,"type":"spritesheet","img":"default_death","frameWidth":64,"frameHeight":64,"start":0,"end":1,"repeat":0,"frameRate":1}}' WHERE `scope` = 'client' AND `path` = 'skills/animations/default_death';
 
@@ -42,6 +44,19 @@ ALTER TABLE `objects_skills`
 ALTER TABLE `objects_skills`
 	ADD CONSTRAINT `FK_objects_skills_objects` FOREIGN KEY (`object_id`) REFERENCES `objects` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION,
 	ADD CONSTRAINT `FK_objects_skills_skills_skill` FOREIGN KEY (`skill_id`) REFERENCES `skills_skill` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION;
+
+RENAME TABLE `objects_items_rewards_animations` TO `drops_animations`;
+ALTER TABLE `drops_animations`
+	DROP INDEX `FK_objects_items_rewards_animations_rewards`,
+	DROP FOREIGN KEY `FK_objects_items_rewards_animations_rewards`;
+ALTER TABLE `drops_animations`
+	CHANGE COLUMN `reward_id` `item_id` INT(10) UNSIGNED NOT NULL AFTER `id`;
+ALTER TABLE `drops_animations`
+	ADD INDEX `item_id` (`item_id`);
+ALTER TABLE `drops_animations`
+	ADD CONSTRAINT `FK_drops_animations_items_item` FOREIGN KEY (`item_id`) REFERENCES `items_item` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE `drops_animations`
+	CHANGE COLUMN `asset_type` `asset_type` VARCHAR(255) NULL COLLATE 'utf8mb4_unicode_ci' AFTER `item_id`;
 
 -- Targets:
 ALTER TABLE `target_options`
