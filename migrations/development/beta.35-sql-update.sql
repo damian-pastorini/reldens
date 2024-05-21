@@ -10,7 +10,7 @@ INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'gener
 INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('server', 'players/guestUser/roleId', '2', 2);
 INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'gameEngine/banner', '0', 3);
 INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('server', 'players/guestUser/allowOnRooms', '1', 3);
-INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('server', 'objects/drops/disappearTime', '18000', 2);
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('server', 'objects/drops/disappearTime', '1800000', 2);
 INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('server', 'players/drop/percent', '20', 2);
 INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('server', 'players/drop/quantity', '2', 2);
 UPDATE `config` SET `value` = '{"key":"default_bullet","animationData":{"enabled":true,"type":"spritesheet","img":"default_bullet","frameWidth":64,"frameHeight":64,"start":0,"end":2,"repeat":-1,"frameRate":1}}' WHERE `scope` = 'client' AND `path` = 'skills/animations/default_bullet';
