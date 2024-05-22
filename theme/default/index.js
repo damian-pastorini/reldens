@@ -32,5 +32,45 @@ reldens.events.on('reldens.startGameAfter', () => {
     reldens.gameDom.getElement('.row-disclaimer')?.remove();
 });
 
+reldens.events.on('reldens.activateRoom', (room) => {
+    room.onMessage('*', (message) => {
+        // filter skills before cast message:
+        if('rski.Bc' !== message.act){
+            return;
+        }
+        // skills cold down animation sample:
+        let skillKey = (message.data?.skillKey || '').toString();
+        let skillDelay = Number(message.data?.extraData?.sd || 0);
+        if('' !== skillKey && 0 < skillDelay){
+            let skillElement = reldens.gameDom.getElement('.skill-icon-'+skillKey);
+            if(!skillElement){
+                return;
+            }
+
+            let startTime = Date.now();
+            let endTime = startTime + skillDelay;
+
+            function updateCooldown() {
+                let currentTime = Date.now();
+                let remainingTime = endTime - currentTime;
+                if (remainingTime <= 0) {
+                    skillElement.style.setProperty('--angle', '360deg');
+                    skillElement.classList.remove('cooldown');
+                    return;
+                    // stop the animation when time is up.
+                }
+                let progress = (skillDelay - remainingTime) / skillDelay;
+                let angle = progress * 360;
+                skillElement.style.setProperty('--angle', `${angle}deg`);
+                requestAnimationFrame(updateCooldown);
+            }
+
+            skillElement.classList.add('cooldown');
+            skillElement.style.setProperty('--angle', '0deg');
+            updateCooldown();
+        }
+    });
+});
+
 // global access is not actually required, the app can be fully encapsulated:
 window.reldens = reldens;
