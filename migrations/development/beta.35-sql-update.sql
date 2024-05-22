@@ -67,6 +67,7 @@ UPDATE `target_options` SET `target_key` = 'player' WHERE `target_label` = 'Play
 
 -- Skills:
 UPDATE `skills_skill_animations` SET `animationData` = '{"enabled":true,"type":"spritesheet","img":"fireball_bullet","frameWidth":64,"frameHeight":64,"start":0,"end":3,"repeat":-1,"frameRate":1,"dir":3}' WHERE `key` = 'bullet';
+UPDATE `skills_skill` SET `skillDelay`=5000 WHERE `key` = 'fireball' OR `key` = 'heal';
 
 ALTER TABLE `skills_skill_attack`
 	CHANGE COLUMN `attackProperties` `attackProperties` TEXT NULL COLLATE 'utf8mb4_unicode_ci' AFTER `applyDirectDamage`,
