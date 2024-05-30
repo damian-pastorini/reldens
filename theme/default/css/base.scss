@@ -491,11 +491,14 @@ form {
 
 .ui-box-player {
     float: left;
+    width: 100%;
     top: 34px;
     left: 48px;
+    max-width: 260px;
     padding: 10px;
     background-color: rgba(0, 0, 0, 0.5);
     text-align: left;
+    word-break: break-all;
 }
 
 .ui-dialog-box {
