@@ -17,7 +17,7 @@
 
 # [Reldens - MMORPG Platform](https://www.reldens.com/)
 
-Welcome to Reldens, the MMORPG Platform designed to empower developers in creating multiplayer games.
+Welcome to Reldens, a platform designed to empower developers in creating multiplayer games.
 
 With a wide array of features, Reldens enables developers to craft a rich gaming experience without grappling with the complexities usually associated with making a multiplayer game secure and efficient over any network.
 
