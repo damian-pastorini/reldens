@@ -37,7 +37,7 @@ While the current stage of the platform is tailored for developers, ongoing impr
 As for the latest version released the platform will provide you with the following features.
 
 - Installation GUI: Easy to install through the web.
-- Administration Panel: Manage every single aspect of your game through the panel. Hot-plugs are a key feature and a work in progress.
+- Administration Panel: Manage every single aspect of your game through the panel (WIP, temporally disabled).
 - Trade System: Between Players (trade) and NPCs (buy and sell).
 - Full In-game Chat: Global, by room, and private messages between users with chat types and split in tabs.
 - Player Stats: Fully configurable stats! HP? MP? Magic? Stamina, you can set up as much as you need for your game logic.
@@ -53,8 +53,9 @@ As for the latest version released the platform will provide you with the follow
 - Minimap: Optional configurable minimap.
 - Configurable Visible Players Name and Life-bars.
 - Terms and Conditions: Ready to be set up as you need.
+- Guest Users.
 - Users Registration: Continue playing later and double login invalidation.
-- Multiple Players Creation
+- Multiple Players Creation.
 - Registration and Login Integrated with Firebase.
 - Database Ready: With multiple drivers for different storage or using MySQL by default all you need will be saved.
 
