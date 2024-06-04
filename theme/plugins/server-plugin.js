@@ -8,7 +8,6 @@ const { Healer } = require('./objects/server/healer');
 const { QuestNpc } = require('./objects/server/quest-npc');
 const { WeaponsMaster } = require('./objects/server/weapons-master');
 const { PluginInterface } = require('reldens/lib/features/plugin-interface');
-const { sc } = require('@reldens/utils');
 
 class ServerPlugin extends PluginInterface
 {
@@ -24,10 +23,10 @@ class ServerPlugin extends PluginInterface
     defineCustomClasses(props)
     {
         let customClasses = props.serverManager.configManager.configList.server.customClasses;
-        if(!sc.hasOwn(customClasses, 'objects')){
+        if(!customClasses['objects']){
             customClasses.objects = {};
         }
-        if(!sc.hasOwn(customClasses, 'roomsClass')){
+        if(!customClasses['roomsClass']){
             customClasses.roomsClass = {};
         }
         // @TODO - BETA - Clean up all the custom classes, by default these can be all default objects with all the

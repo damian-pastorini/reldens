@@ -15,6 +15,8 @@
     <meta name="msapplication-TileColor" content="#37517e"/>
     <meta name="theme-color" content="#37517e"/>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"/>
+    <!-- @NOTE: remove the comment below to avoid attaching the client configuration automatically: -->
+    <script type="text/javascript" id="reldens-initial-config"></script>
     <script type="module" src="./index.js"></script>
     <link rel="stylesheet" type="text/css" href="./css/styles.scss"/>
 </head>
@@ -37,6 +39,24 @@
             </div>
             <div class="forms-container">
                 <div class="col-2 col-left">
+                    <div class="row row-0">
+                        <form name="guest-form" id="guest-form" class="guest-form" action="#" method="post">
+                            <h3 class="form-title">Play as a Guest</h3>
+                            <!-- enable the config general/users/allowGuestUserName and uncomment the following to allow guest usernames:
+                            <div class="input-box guest-username">
+                                <label for="guest-username">Username</label>
+                                <input type="text" name="guest-username" id="guest-username" class="required" required/>
+                            </div>
+                            -->
+                            <div class="input-box submit-container guest-submit">
+                                <input type="submit" value="Play"/>
+                            </div>
+                            <div class="loading-container hidden">
+                                <img src="./assets/web/loading.gif" alt="Loading..."/>
+                            </div>
+                            <div class="input-box response-error"></div>
+                        </form>
+                    </div>
                     <div class="row row-1">
                         <form name="register-form" id="register-form" class="register-form" action="#" method="post">
                             <h3 class="form-title">Create Account</h3>
@@ -91,7 +111,7 @@
                             <h3 class="form-title">Login</h3>
                             <div class="input-box login-username">
                                 <label for="username">Username</label>
-                                <input type="text" name="username" id="username" class="required" required/>
+                                <input type="text" name="username" id="username" class="required" required autocomplete="on"/>
                             </div>
                             <div class="input-box login-password">
                                 <label for="password">Password</label>
@@ -108,7 +128,7 @@
                     </div>
                     <div class="row row-2 firebase-row-container hidden">
                         <form name="firebase-login" id="firebase-login" class="firebase-login" action="#" method="post">
-                            <h3 class="form-title">Firebase Login</h3>
+                            <h3 class="form-title">Firebase Registration</h3>
                             <div class="input-box firebase-username">
                                 <label for="firebase-username">Username</label>
                                 <input type="text" name="firebase-username" id="firebase-username" class="required" required/>

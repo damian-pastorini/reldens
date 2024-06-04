@@ -1,10 +1,23 @@
-[![Reldens - GitHub - Release](https://www.dwdeveloper.com/media/reldens/reldens-mmorpg-platform.png)](https://github.com/damian-pastorini/reldens)
+<div style="width: 100%; background-color: #000000; text-align: center;">
+    <a href="https://github.com/damian-pastorini/reldens">
+        <img alt="Reldens - You can make it" src="https://www.dwdeveloper.com/media/reldens/reldens-mmorpg-platform.png"/>
+    </a>
+</div>
+
+---
+
+<div style="text-align: center">
+    <a href="https://discord.gg/HuJMxUY">
+        <h3>Join our Discord community!</h3>
+        <img alt="Reldens - Discord" src="https://img.shields.io/badge/discord-%235865F2?style=for-the-badge&logo=discord&logoColor=white"/>
+    </a>
+</div>
 
 ---
 
 # [Reldens - MMORPG Platform](https://www.reldens.com/)
 
-Welcome to Reldens, the MMORPG Platform designed to empower developers in creating multiplayer games.
+Welcome to Reldens, a platform designed to empower developers in creating multiplayer games.
 
 With a wide array of features, Reldens enables developers to craft a rich gaming experience without grappling with the complexities usually associated with making a multiplayer game secure and efficient over any network.
 
@@ -24,7 +37,7 @@ While the current stage of the platform is tailored for developers, ongoing impr
 As for the latest version released the platform will provide you with the following features.
 
 - Installation GUI: Easy to install through the web.
-- Administration Panel: Manage every single aspect of your game through the panel. Hot-plugs are a key feature and a work in progress.
+- Administration Panel: Manage every single aspect of your game through the panel (WIP, temporally disabled).
 - Trade System: Between Players (trade) and NPCs (buy and sell).
 - Full In-game Chat: Global, by room, and private messages between users with chat types and split in tabs.
 - Player Stats: Fully configurable stats! HP? MP? Magic? Stamina, you can set up as much as you need for your game logic.
@@ -40,8 +53,9 @@ As for the latest version released the platform will provide you with the follow
 - Minimap: Optional configurable minimap.
 - Configurable Visible Players Name and Life-bars.
 - Terms and Conditions: Ready to be set up as you need.
+- Guest Users.
 - Users Registration: Continue playing later and double login invalidation.
-- Multiple Players Creation
+- Multiple Players Creation.
 - Registration and Login Integrated with Firebase.
 - Database Ready: With multiple drivers for different storage or using MySQL by default all you need will be saved.
 

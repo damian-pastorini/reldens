@@ -33,6 +33,11 @@
                         <label for="app-port">Port</label>
                         <input type="text" name="app-port" id="app-port" value="{{app-port}}" class="required" required/>
                     </div>
+                    <div class="input-box app-public-url">
+                        <label for="app-public-url">Public URL (useful if you have a reverse proxy)</label>
+                        <input type="text" name="app-public-url" id="app-public-url" value="{{app-public-url}}" class="required" required/>
+                    </div>
+                    <!--
                     <div class="input-box app-admin-path">
                         <label for="app-admin-path">Admin Panel Path</label>
                         <input type="text" name="app-admin-path" id="app-admin-path" value="{{app-admin-path}}"/>
@@ -45,6 +50,7 @@
                         <label for="app-admin-hot-plug">Hot-Plug</label>
                         <input type="checkbox" value="1" name="app-admin-hot-plug" id="app-admin-hot-plug"{{&app-admin-hot-plug-checked}}/>
                     </div>
+                    -->
                     <div class="input-box app-error">
                         <p class="installation-process-failed">There was an error during the installation process.</p>
                     </div>

@@ -15,6 +15,8 @@
     <meta name="msapplication-TileColor" content="#37517e"/>
     <meta name="theme-color" content="#37517e"/>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"/>
+    <!-- @NOTE: remove the comment below to avoid attaching the client configuration automatically: -->
+    <script type="text/javascript" id="reldens-initial-config"></script>
     <script type="module" src="./index.js"></script>
     <link rel="stylesheet" type="text/css" href="./css/styles.scss"/>
 </head>
@@ -37,6 +39,22 @@
             </div>
             <div class="forms-container">
                 <div class="col-2 col-left">
+                    <div class="row row-0 hidden">
+                        <form name="guest-form" id="guest-form" class="guest-form" action="#" method="post">
+                            <h3 class="form-title">Jugar como invitado</h3>
+                            <div class="input-box guest-username">
+                                <label for="guest-username">Nombre de usuario</label>
+                                <input type="text" name="guest-username" id="guest-username" class="required" required/>
+                            </div>
+                            <div class="input-box submit-container guest-submit">
+                                <input type="submit" value="Jugar"/>
+                            </div>
+                            <div class="loading-container hidden">
+                                <img src="./assets/web/loading.gif" alt="Loading..."/>
+                            </div>
+                            <div class="input-box response-error"></div>
+                        </form>
+                    </div>
                     <div class="row row-1">
                         <form name="register-form" id="register-form" class="register-form" action="#" method="post">
                             <h3 class="form-title">Crear Cuenta</h3>
@@ -57,7 +75,7 @@
                                 <input type="password" name="reg-re-password" id="reg-re-password" class="required" required/>
                             </div>
                             <div class="input-box hidden terms-and-conditions-link-container">
-                                <a class="terms-and-conditions-link">Acepta nuestros T&aacute;rminos y Condiciones (haz clic aqu&iacute;).</a>
+                                <a class="terms-and-conditions-link">Acepta nuestros T&eacute;rminos y Condiciones (haz clic aqu&iacute;).</a>
                             </div>
                             <div class="input-box submit-container reg-submit">
                                 <input type="submit" value="Registrarse"/>
@@ -91,7 +109,7 @@
                             <h3 class="form-title">Login</h3>
                             <div class="input-box login-username">
                                 <label for="username">Nombre de Usuario</label>
-                                <input type="text" name="username" id="username" class="required" required/>
+                                <input type="text" name="username" id="username" class="required" required autocomplete="on"/>
                             </div>
                             <div class="input-box login-password">
                                 <label for="password">Password</label>
@@ -123,13 +141,13 @@
             </div>
             <div id="terms-and-conditions" class="hidden">
                 <div class="terms-and-conditions-text">
-                    <h3 class="terms-heading">T&aacute;rminos y Condiciones</h3>
+                    <h3 class="terms-heading">T&eacute;rminos y Condiciones</h3>
                     <div class="terms-body"></div>
                 </div>
                 <div class="terms-box">
                     <input type="checkbox" id="accept-terms-and-conditions">
                     <label class="accept-terms-and-conditions-label" for="accept-terms-and-conditions">
-                        Acepto estos T&aacute;rminos y Condiciones
+                        Acepto estos T&eacute;rminos y Condiciones
                     </label>
                 </div>
                 <img id="terms-and-conditions-close" class="box-close" src="./assets/controls/bx.png" alt="close"/>
