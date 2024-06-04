@@ -3,7 +3,7 @@
  * Reldens - Load Test Bot
  *
  * Run with:
- * node bot.js --numClients 1 --room room_game --endpoint http://localhost:8080
+ * node bot.js --numClients 10 --room room_game --endpoint http://localhost:8080
  */
 
 const { cli } = require('@colyseus/loadtest');
@@ -25,12 +25,9 @@ async function main (options)
     let gameClient = new GameClient(options.endpoint);
     let gameRoom = await gameClient.joinOrCreate(options.roomName, userData);
 
-    console.log('Joined GameRoom successfully!');
+    console.log('Joined GameRoom successfully!', randomGuestName);
 
     gameRoom.onMessage('*', async (message) => {
-
-        console.log('GameRoom.onMessage', message.act, sc.getCurrentDate());
-
         if(message.error){
             console.log(message.error);
             return false;
@@ -42,7 +39,7 @@ async function main (options)
             gameRoom.send('*', {
                 act: GameConst.CREATE_PLAYER,
                 formData: {
-                    'new-player-name': 'bot-'+randomGuestName+'-player',
+                    'new-player-name': randomGuestName+'-player',
                     'class_path_select': '1'
                 }
             });
@@ -51,23 +48,36 @@ async function main (options)
         if(GameConst.CREATE_PLAYER_RESULT === message.act){
             userData.isNewUser = false;
             userData.selectedPlayer = message.player.id;
-            userData.selectedScene = '';
-            let reldensTownRoom = await gameClient.joinOrCreate('reldens-town', userData);
-            reldensTownRoom.onMessage('*', async (message) => {
-                console.log('Message from ReldensTown Room!', message.act);
+            userData.selectedScene = 'reldens-bots';
+
+            // join the bots room:
+            let reldensBootsRoom = await gameClient.joinOrCreate('reldens-bots', userData);
+            reldensBootsRoom.onMessage('*', async (message) => {
+                console.log('Message from ReldensBots Room!', message.act);
             });
+
+            // join the global chat room:
             let chatRoom = await gameClient.joinOrCreate('chat', userData);
             chatRoom.onMessage('*', async (message) => {
-                console.log('Message from Chat Room!', message.act);
+                // console.log('Message from Chat Room!', message.act);
             });
+
+            // make some random stuff (send chat messages and move randomly):
             setInterval(() => {
-                let messageData = {
+                // every 2s send a general chat message on the room:
+                reldensBootsRoom.send('*', {
                     act: ChatConst.CHAT_ACTION,
                     m: 'Hello, '+userData.username+'! I am the Load Test Bot. I am allowed to send messages to you!'
-                };
-                console.log('Sending message', messageData);
-                reldensTownRoom.send('*', messageData);
-            }, 1000);
+                });
+                // every 2s start moving the player:
+                reldensBootsRoom.send('*', {
+                    dir: sc.randomValueFromArray([GameConst.LEFT, GameConst.RIGHT, GameConst.DOWN, GameConst.UP])
+                });
+                // every second stop moving the player:
+                setTimeout(() => {
+                    reldensBootsRoom.send('*', {act: GameConst.STOP});
+                }, 1000);
+            }, 2000);
         }
     });
 }

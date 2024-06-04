@@ -559,6 +559,8 @@ REPLACE INTO `locale` (`id`, `locale`, `language_code`, `country_code`, `enabled
 
 REPLACE INTO `objects` (`id`, `room_id`, `layer_name`, `tile_index`, `class_type`, `object_class_key`, `client_key`, `title`, `private_params`, `client_params`, `enabled`) VALUES
 	(1, 4, 'ground-collisions', 444, 2, 'door_1', 'door_house_1', '', '{"runOnHit":true,"roomVisible":true,"yFix":6}', '{"positionFix":{"y":-18},"frameStart":0,"frameEnd":3,"repeat":0,"hideOnComplete":false,"autoStart":false,"restartTime":2000}', 1),
+	(2, 8, 'respawn-area-monsters-lvl-1-2', NULL, 7, 'enemy_bot_1', 'enemy_forest_1', 'Tree', '{"shouldRespawn":true,"childObjectType":4,"isAggressive":true}', '{"autoStart":true}', 0),
+	(3, 8, 'respawn-area-monsters-lvl-1-2', NULL, 7, 'enemy_bot_2', 'enemy_forest_2', 'Tree Punch', '{"shouldRespawn":true,"childObjectType":4}', '{"autoStart":true}', 0),
 	(4, 4, 'ground-collisions', 951, 2, 'door_2', 'door_house_2', '', '{"runOnHit":true,"roomVisible":true,"yFix":6}', '{"positionFix":{"y":-18},"frameStart":0,"frameEnd":3,"repeat":0,"hideOnComplete":false,"autoStart":false,"restartTime":2000}', 1),
 	(5, 4, 'house-collisions-over-player', 535, 3, 'npc_1', 'people_town_1', 'Alfred', '{"runOnAction":true,"playerVisible":true}', '{"content":"Hello! My name is Alfred. Go to the forest and kill some monsters! Now... leave me alone!"}', 1),
 	(6, 5, 'respawn-area-monsters-lvl-1-2', NULL, 7, 'enemy_1', 'enemy_forest_1', 'Tree', '{"shouldRespawn":true,"childObjectType":4,"isAggressive":true}', '{"autoStart":true}', 1),
@@ -578,9 +580,11 @@ REPLACE INTO `objects_assets` (`object_asset_id`, `object_id`, `asset_type`, `as
 	(1, 1, 'spritesheet', 'door_house_1', 'door-a-x2.png', '{"frameWidth":32,"frameHeight":58}'),
 	(2, 4, 'spritesheet', 'door_house_2', 'door-a-x2.png', '{"frameWidth":32,"frameHeight":58}'),
 	(3, 5, 'spritesheet', 'people_town_1', 'people-b-x2.png', '{"frameWidth":52,"frameHeight":71}'),
+	(4, 2, 'spritesheet', 'enemy_forest_1', 'monster-treant.png', '{"frameWidth":47,"frameHeight":50}'),
 	(5, 6, 'spritesheet', 'enemy_forest_1', 'monster-treant.png', '{"frameWidth":47,"frameHeight":50}'),
 	(6, 7, 'spritesheet', 'enemy_forest_2', 'monster-golem2.png', '{"frameWidth":47,"frameHeight":50}'),
 	(7, 5, 'spritesheet', 'healer_1', 'healer-1.png', '{"frameWidth":52,"frameHeight":71}'),
+	(8, 3, 'spritesheet', 'enemy_forest_2', 'monster-golem2.png', '{"frameWidth":47,"frameHeight":50}'),
 	(9, 10, 'spritesheet', 'merchant_1', 'people-d-x2.png', '{"frameWidth":52,"frameHeight":71}'),
 	(10, 12, 'spritesheet', 'weapons_master_1', 'people-c-x2.png', '{"frameWidth":52,"frameHeight":71}'),
 	(11, 13, 'spritesheet', 'quest_npc_1', 'people-quest-npc.png', '{"frameWidth":52,"frameHeight":71}');
@@ -675,6 +679,8 @@ REPLACE INTO `players_stats` (`id`, `player_id`, `stat_id`, `base_value`, `value
 	(10, 1, 10, 100, 100);
 
 REPLACE INTO `respawn` (`id`, `object_id`, `respawn_time`, `instances_limit`, `layer`) VALUES
+    (1, 2, 20000, 10, 'respawn-area-monsters-lvl-1-2'),
+    (2, 3, 10000, 20, 'respawn-area-monsters-lvl-1-2'),
 	(3, 6, 20000, 2, 'respawn-area-monsters-lvl-1-2'),
 	(4, 7, 10000, 3, 'respawn-area-monsters-lvl-1-2');
 
@@ -688,7 +694,8 @@ REPLACE INTO `rooms` (`id`, `name`, `title`, `map_filename`, `scene_images`, `ro
 	(4, 'reldens-town', 'Town', 'reldens-town.json', 'reldens-town.png', NULL, '{"allowGuest":true}'),
 	(5, 'reldens-forest', 'Forest', 'reldens-forest.json', 'reldens-forest.png', NULL, '{"allowGuest":true}'),
 	(6, 'reldens-house-1-2d-floor', 'House - 1 - Floor 2', 'reldens-house-1-2d-floor.json', 'reldens-house-1-2d-floor.png', NULL, NULL),
-	(7, 'reldens-gravity', 'Gravity World!', 'reldens-gravity.json', 'reldens-gravity.png', NULL, '{"allowGuest":true,"gravity":[0,625],"applyGravity":true,"allowPassWallsFromBelow":true,"timeStep":0.012,"type":"TOP_DOWN_WITH_GRAVITY","useFixedWorldStep":false,"maxSubSteps":2,"movementSpeed":160,"usePathFinder":false}');
+	(7, 'reldens-gravity', 'Gravity World!', 'reldens-gravity.json', 'reldens-gravity.png', NULL, '{"allowGuest":true,"gravity":[0,625],"applyGravity":true,"allowPassWallsFromBelow":true,"timeStep":0.012,"type":"TOP_DOWN_WITH_GRAVITY","useFixedWorldStep":false,"maxSubSteps":2,"movementSpeed":160,"usePathFinder":false}'),
+    (8, 'reldens-bots', 'Bots Test', 'reldens-bots.json', 'reldens-forest.png', '{"allowGuest":true}');
 
 REPLACE INTO `rooms_change_points` (`id`, `room_id`, `tile_index`, `next_room_id`) VALUES
 	(1, 2, 816, 4),
@@ -715,6 +722,7 @@ REPLACE INTO `rooms_return_points` (`id`, `room_id`, `direction`, `x`, `y`, `is_
 	(3, 4, 'down', 400, 345, 1, 2),
 	(4, 4, 'down', 1266, 670, 0, 3),
 	(5, 5, 'up', 640, 768, 0, 4),
+	(6, 8, 'up', 640, 768, 0, 4),
 	(7, 4, 'down', 615, 64, 0, 5),
 	(9, 6, 'right', 820, 500, 0, 2),
 	(11, 2, 'left', 720, 540, 0, 6),
