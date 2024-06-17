@@ -1,36 +1,19 @@
 /*
- * Reldens - Administration Panel - AdminJS styles customizations
+ * Reldens - Administration Panel
  */
 
-.sc-eDWCr.iwFjAL.adminjs_Box {
-    height: auto;
-}
+.reldens-admin-panel {
 
-section.gNHxbm.adminjs_Box {
-    display: flex;
-    flex-direction: column;
-    align-content: center;
-    justify-content: center;
-    text-align: center;
-}
-
-.adminjs_Text section svg {
-    display: none;
-}
-
-.adminjs_Resources .adminjs_Box {
-    padding-left: 32px;
-    padding-right: 32px;
-
-    label {
-        margin: 0 0 10px 0;
-        padding: 0;
-        text-align: center;
+    .content {
+        display: flex;
     }
-}
 
-.adminjs_TableCell section audio,
-.audio-file-name {
-    display: block;
-    margin-bottom: 0.4rem;
+    .side-bar {
+        padding: 1rem;
+    }
+
+    .main-content {
+        padding: 1rem;
+    }
+
 }
