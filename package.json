@@ -124,7 +124,7 @@
         "firebaseui": "6.1.0",
         "mime-types": "2.1.35",
         "mustache": "4.2.0",
-        "nodemailer": "6.9.13",
+        "nodemailer": "6.9.14",
         "p2": "0.7.1",
         "pathfinding": "0.4.18",
         "phaser": "3.80.1",

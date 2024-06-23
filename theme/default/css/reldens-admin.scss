@@ -2,18 +2,243 @@
  * Reldens - Administration Panel
  */
 
+$normalFont: Verdana, Geneva, sans-serif;
+$reldensFont: "Play", sans-serif;
+$white: #fff;
+$grey: #333;
+$bold: 700;
+
 .reldens-admin-panel {
+    font-family: $normalFont;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 0;
+    font-size: 12px;
+
+    .wrapper {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+    }
+
+    .header {
+        background-color: $grey;
+        padding: 2%;
+        text-align: center;
+
+        .title a {
+            color: $white;
+            text-decoration: none;
+            font-size: 24px;
+            font-weight: $bold;
+            font-family: $reldensFont;
+        }
+    }
 
     .content {
         display: flex;
     }
 
     .side-bar {
-        padding: 1rem;
+        min-width: 250px;
+        width: 240px;
+        padding: 2%;
+        background-color: #2c3e50;
+        color: #ecf0f1;
+        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
     }
 
+    .side-bar-item {
+        &:first-child {
+            h3 {
+                margin-top: 0;
+            }
+        }
+
+        margin-bottom: 2%;
+
+        h3 {
+            margin: 1.5rem 0 1rem;
+            padding: 2% 0 4%;
+            font-size: 16px;
+            border-bottom: 1px solid #34495e;
+        }
+
+        a {
+            display: block;
+            color: #ecf0f1;
+            text-decoration: none;
+            padding: 2%;
+            border-left: 3px solid transparent;
+
+            &:hover, &:focus, &:active {
+                background-color: #34495e;
+                border-left: 3px solid #3498db;
+            }
+        }
+    }
+
+
     .main-content {
-        padding: 1rem;
+        padding: 3%;
+        background-color: $white;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+        margin: 2%;
+        overflow: auto;
+        width: 100%;
+    }
+
+    .entity-list {
+        overflow: auto;
+    }
+
+    .forms-container {
+        width: 96%;
+        max-width: 400px;
+        margin: auto;
+    }
+
+    .form-title {
+        font-size: 22px;
+        margin-bottom: 2%;
+        color: $grey;
+        text-align: center;
+    }
+
+    .input-box {
+        margin: 0 auto 4%;
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 1%;
+        }
+
+        input[type="text"], input[type="password"] {
+            width: 96%;
+            padding: 2%;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        input[type="submit"] {
+            padding: 2%;
+            background-color: #3498db;
+            color: $white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 0 auto;
+            display: flex;
+
+            &:hover {
+                background-color: #2980b9;
+            }
+        }
+    }
+
+    .table-container {
+        width: 96%;
+        margin: auto;
+    }
+
+    h2 {
+        font-size: 22px;
+        margin-bottom: 2%;
+        color: $grey;
+        text-align: center;
+    }
+
+    .list {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 2%;
+        color: #333333;
+        table-layout: auto;
+
+        .row {
+            background-color: #ecf0f1;
+
+            &.row-header {
+                background-color: #34495e;
+                color: #ecf0f1;
+            }
+
+            &:nth-child(even) {
+                background-color: #bdc3c7;
+            }
+        }
+
+        th.field {
+            padding: 1.5rem 0;
+        }
+
+        .field {
+            padding: 0.5rem 0;
+            min-width: min-content;
+            white-space: nowrap;
+            height: auto;
+            border: 1px solid #ccc;
+            text-align: left;
+
+            span {
+                padding: 0 1rem;
+            }
+        }
+
+    }
+
+    .pagination {
+        text-align: center;
+        padding: 2% 0;
+
+        a {
+            margin: 0 1%;
+            padding: 2% 3%;
+            border: 1px solid #ccc;
+            color: #3498db;
+            text-decoration: none;
+
+            &:hover, &:focus, &:active {
+                background-color: #3498db;
+                color: $white;
+            }
+        }
+    }
+
+    .footer {
+        text-align: center;
+        padding: 2%;
+        background-color: $grey;
+        color: $white;
+
+        a {
+            color: $white;
+            text-decoration: none;
+
+            &:hover {
+                text-decoration: underline;
+            }
+        }
+    }
+
+    .copyright {
+        position: relative;
+        display: block;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        text-align: center;
+
+        a, a:hover, a:visited {
+            display: block;
+            color: $white;
+            text-decoration: none;
+            padding: 0;
+        }
+
     }
 
 }
