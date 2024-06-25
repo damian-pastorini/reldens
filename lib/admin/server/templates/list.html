@@ -9,8 +9,10 @@
                 <input type="text" id="filter-{{&name}}" name="filters[{{&name}}]" {{&value}}/>
             </div>
             {{/filters}}
-            <input type="submit" value="Filter"/>
-            <a href="{{&entityListRoute}}">Clear Filters</a>
+            <div class="actions">
+                <input type="submit" value="Filter"/>
+                <a href="{{&entityListRoute}}">Clear Filters</a>
+            </div>
         </form>
     </div>
     <table class="list">

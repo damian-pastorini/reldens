@@ -23,7 +23,7 @@ $bold: 700;
 
     .header {
         background-color: $grey;
-        padding: 2%;
+        padding: 1.5rem;
         text-align: center;
 
         .title a {
@@ -42,7 +42,7 @@ $bold: 700;
     .side-bar {
         min-width: 250px;
         width: 240px;
-        padding: 2%;
+        padding: 2rem;
         background-color: #2c3e50;
         color: #ecf0f1;
         box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
@@ -55,11 +55,11 @@ $bold: 700;
             }
         }
 
-        margin-bottom: 2%;
+        margin-bottom: 0.2rem;
 
         h3 {
             margin: 1.5rem 0 1rem;
-            padding: 2% 0 4%;
+            padding: 1rem 0;
             font-size: 16px;
             border-bottom: 1px solid #34495e;
         }
@@ -68,7 +68,7 @@ $bold: 700;
             display: block;
             color: #ecf0f1;
             text-decoration: none;
-            padding: 2%;
+            padding: 0.3rem;
             border-left: 3px solid transparent;
 
             &:hover, &:focus, &:active {
@@ -80,7 +80,7 @@ $bold: 700;
 
 
     .main-content {
-        padding: 3%;
+        padding: 2rem;
         background-color: $white;
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         border-radius: 8px;
@@ -239,6 +239,140 @@ $bold: 700;
             padding: 0;
         }
 
+    }
+
+    .filters {
+        background-color: #f9f9f9;
+        padding: 2%;
+        margin-bottom: 2%;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+
+        form#filter-form {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-end;
+
+            h4 {
+                width: 100%;
+                margin-bottom: 1%;
+                font-size: 18px;
+                color: $grey;
+            }
+
+            .actions {
+                width: 100%;
+                margin: 1rem 0;
+            }
+
+            .filter {
+                margin-right: 2%;
+                margin-bottom: 1%;
+                display: flex;
+                flex-direction: column;
+
+                label {
+                    font-weight: 600;
+                    margin-bottom: 0.5rem;
+                }
+
+                input[type="text"] {
+                    padding: 0.5rem;
+                    border: 1px solid #ccc;
+                    border-radius: 4px;
+                    min-width: 150px; /* Minimum width for input fields */
+                }
+            }
+
+            input[type="submit"] {
+                padding: 0.5rem 1rem;
+                background-color: #3498db;
+                color: $white;
+                border: none;
+                border-radius: 4px;
+                font-size: 14px;
+                cursor: pointer;
+                margin-right: 2%;
+
+                &:hover {
+                    background-color: #2980b9;
+                }
+            }
+
+            a {
+                padding: 0.5rem 1rem;
+                background-color: #7f8c8d;
+                color: $white;
+                text-decoration: none;
+                border-radius: 4px;
+                font-size: 14px;
+                cursor: pointer;
+
+                &:hover {
+                    background-color: #95a5a6;
+                }
+            }
+        }
+    }
+
+    .entity-view {
+        h2 {
+            font-size: 22px;
+            margin-bottom: 2rem;
+            color: $grey;
+            text-align: center;
+        }
+
+        .view-field {
+            display: flex;
+            justify-content: space-between;
+            padding: 1% 0;
+            border-bottom: 1px solid #ccc;
+
+            .field-name {
+                font-weight: $bold;
+                color: $grey;
+                flex: 1;
+            }
+
+            .field-value {
+                flex: 2;
+                color: #34495e;
+            }
+        }
+
+        .actions {
+            margin-top: 2rem;
+            text-align: center;
+
+            .button {
+                display: inline-block;
+                padding: 1% 2%;
+                margin: 0 1%;
+                text-decoration: none;
+                border-radius: 4px;
+                color: $white;
+                background-color: #3498db;
+                font-size: 14px;
+                cursor: pointer;
+
+                &.edit-button {
+                    background-color: #3498db;
+
+                    &:hover {
+                        background-color: #2980b9;
+                    }
+                }
+
+                &.back-button {
+                    background-color: #7f8c8d;
+
+                    &:hover {
+                        background-color: #95a5a6;
+                    }
+                }
+            }
+        }
     }
 
 }
