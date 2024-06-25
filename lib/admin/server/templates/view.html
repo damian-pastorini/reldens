@@ -1,4 +1,13 @@
 <div class="{{&entityName}}-view">
     <h2>{{&title}}</h2>
-    {{&fields}}
+    {{#fields}}
+    <div class="view-field">
+        <span class="field-name">{{&name}}</span>
+        <span class="field-value">{{&value}}</span>
+    </div>
+    {{/fields}}
+    <div class="actions">
+        <a class="button edit-button" href="{{&entityEditRoute}}">Edit</a>
+        <a class="button back-button" href="{{&entityListRoute}}">Back</a>
+    </div>
 </div>

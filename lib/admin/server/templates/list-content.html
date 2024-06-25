@@ -6,7 +6,11 @@
 {{#rows}}
 <tr class="row">
     {{#fields}}
-    <td class="field"><span>{{&.}}</span></td>
+    <td class="field">
+        <a href="{{&viewLink}}">
+            <span>{{&value}}</span>
+        </a>
+    </td>
     {{/fields}}
 </tr>
 {{/rows}}
