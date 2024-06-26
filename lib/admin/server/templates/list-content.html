@@ -1,23 +1,23 @@
 <tr class="row row-header">
     {{#fieldsHeaders}}
-    <th class="field">
-        <span>{{&.}}</span>
+    <th class="field field-{{&name}}">
+        <span>{{&value}}</span>
     </th>
     {{/fieldsHeaders}}
-    <th class="field">
+    <th class="field field-edit">
         <span>Edit</span>
     </th>
 </tr>
 {{#rows}}
 <tr class="row">
     {{#fields}}
-    <td class="field">
+    <td class="field field-{{&name}}">
         <a href="{{&viewLink}}">
             <span>{{&value}}</span>
         </a>
     </td>
     {{/fields}}
-    <td class="field">
+    <td class="field field-edit">
         <a href="{{&editLink}}">
             <span>
                 <svg
