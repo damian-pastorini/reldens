@@ -223,12 +223,16 @@ $darkBlue: #34495e;
     }
 
     .pagination {
+        width: 100%;
+        display: flex;
+        flex-flow: wrap;
+        justify-content: center;
+        padding: 1rem 0;
         text-align: center;
-        padding: 2% 0;
 
         a {
-            margin: 0 1%;
-            padding: 2% 3%;
+            margin: 0.2rem;
+            padding: 1rem 1.4rem;
             border: 1px solid #ccc;
             color: $lightBlue;
             text-decoration: none;
