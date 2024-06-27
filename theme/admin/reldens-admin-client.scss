@@ -352,7 +352,7 @@ $darkBlue: #34495e;
         }
     }
 
-    .entity-view {
+    .entity-view, .entity-edit {
         h2 {
             font-size: 22px;
             margin-bottom: 2rem;
@@ -360,7 +360,7 @@ $darkBlue: #34495e;
             text-align: center;
         }
 
-        .view-field {
+        .view-field, .edit-field {
             display: flex;
             justify-content: space-between;
             padding: 0;
@@ -397,6 +397,7 @@ $darkBlue: #34495e;
                 background-color: $lightBlue;
                 font-size: 14px;
                 cursor: pointer;
+                border: none;
 
                 &.edit-button {
                     background-color: $lightBlue;
