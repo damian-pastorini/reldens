@@ -460,7 +460,7 @@ REPLACE INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(286, 'server', 'admin/faviconPath', '/assets/web/favicon.ico', 1),
 	(287, 'server', 'admin/logoPath', '/assets/web/reldens-your-logo-mage.png', 1),
 	(288, 'server', 'admin/roleId', '99', 2),
-	(289, 'server', 'admin/stylesPath', '/css/reldens-admin.css', 1),
+	(289, 'server', 'admin/stylesPath', '/css/reldens-admin-client.css', 1),
 	(290, 'server', 'chat/messages/broadcast_join', '1', 3),
 	(291, 'server', 'chat/messages/broadcast_leave', '1', 3),
 	(292, 'server', 'chat/messages/global_allowed_roles', '1,9000', 1),
