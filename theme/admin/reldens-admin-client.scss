@@ -1,0 +1,420 @@
+/*
+ * Reldens - Administration Panel
+ */
+
+$normalFont: Verdana, Geneva, sans-serif;
+$reldensFont: "Play", sans-serif;
+$bold: 600;
+$black: #000000;
+$white: #ffffff;
+$darkGrey: #333333;
+$grey: #7f8c8d;
+$lightGrey: #ecf0f1;
+$lightGrey2: #f9f9f9;
+$lightBlue: #3498db;
+$darkBlue: #34495e;
+
+
+.reldens-admin-panel {
+    font-family: $normalFont;
+    background-color: $lightGrey;
+    margin: 0;
+    padding: 0;
+    font-size: 12px;
+
+    .wrapper {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+    }
+
+    .header {
+        background-color: $darkGrey;
+        padding: 1.5rem;
+        text-align: center;
+
+        .title a {
+            color: $white;
+            text-decoration: none;
+            font-size: 24px;
+            font-weight: $bold;
+            font-family: $reldensFont;
+        }
+    }
+
+    .content {
+        display: flex;
+    }
+
+    .side-bar {
+        min-width: 250px;
+        width: 240px;
+        padding: 2rem;
+        background-color: $darkBlue;
+        color: $lightGrey;
+        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .side-bar-item {
+        &:first-child {
+            h3 {
+                margin-top: 0;
+            }
+        }
+
+        margin-bottom: 0.2rem;
+
+        h3 {
+            margin: 1.5rem 0 0.2rem;
+            padding: 1rem 0;
+            font-size: 16px;
+            border-bottom: 1px solid $darkBlue;
+        }
+
+        a {
+            display: block;
+            color: $lightGrey;
+            text-decoration: none;
+            padding: 0.3rem;
+            border-left: 3px solid transparent;
+
+            &:hover, &:focus, &:active {
+                background-color: $darkBlue;
+                border-left: 3px solid $lightBlue;
+            }
+        }
+    }
+
+
+    .main-content {
+        padding: 2rem;
+        background-color: $white;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+        margin: 2%;
+        overflow: auto;
+        width: 100%;
+    }
+
+    .entity-list {
+        overflow: auto;
+    }
+
+    .forms-container {
+        width: 96%;
+        max-width: 400px;
+        margin: auto;
+    }
+
+    .form-title {
+        font-size: 22px;
+        margin-bottom: 2%;
+        color: $darkGrey;
+        text-align: center;
+    }
+
+    .input-box {
+        margin: 0 auto 4%;
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 1%;
+        }
+
+        input[type='text'], input[type='password'] {
+            width: 96%;
+            padding: 2%;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        input[type='submit'] {
+            padding: 0.6rem 1rem;
+            background-color: $lightBlue;
+            color: $white;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            margin: 0 auto;
+            display: flex;
+
+            &:hover {
+                background-color: $lightBlue;
+            }
+        }
+    }
+
+    .table-container {
+        width: 96%;
+        margin: auto;
+    }
+
+    h2 {
+        font-size: 22px;
+        margin: 0 0 2rem;
+        color: $darkGrey;
+        text-align: center;
+    }
+
+    .list {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 2%;
+        color: $darkGrey;
+        table-layout: auto;
+
+        .row {
+            background-color: $white;
+
+            &.row-header {
+                background-color: $darkBlue;
+                color: $white;
+            }
+
+            &:nth-child(even) {
+                background-color: $lightGrey;
+            }
+        }
+
+        th.field {
+            padding: 1.5rem 0;
+
+            span {
+                color: $white;
+            }
+        }
+
+        .field {
+            padding: 0.5rem 0;
+            min-width: min-content;
+            white-space: nowrap;
+            height: auto;
+            border: 1px solid #ccc;
+            text-align: left;
+
+            a, a:visited {
+                color: $black;
+                text-decoration: none;
+            }
+
+            a:active, a:hover {
+                color: $lightBlue;
+            }
+
+            span {
+                padding: 0 1rem;
+                color: $black;
+            }
+            
+            &-edit {
+                span {
+                    display: block;
+                    text-align: center;
+
+                    svg {
+                        color: $lightBlue;
+                    }
+                }
+            }
+        }
+
+    }
+
+    .pagination {
+        width: 100%;
+        display: flex;
+        flex-flow: wrap;
+        justify-content: center;
+        padding: 1rem 0;
+        text-align: center;
+
+        a {
+            margin: 0.2rem;
+            padding: 1rem 1.4rem;
+            border: 1px solid #ccc;
+            color: $lightBlue;
+            text-decoration: none;
+
+            &:hover, &:focus, &:active {
+                background-color: $lightBlue;
+                color: $white;
+            }
+        }
+    }
+
+    .footer {
+        text-align: center;
+        padding: 2%;
+        background-color: $darkGrey;
+        color: $white;
+
+        a {
+            color: $white;
+            text-decoration: none;
+
+            &:hover {
+                text-decoration: underline;
+            }
+        }
+    }
+
+    .copyright {
+        position: relative;
+        display: block;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        text-align: center;
+
+        a, a:hover, a:visited {
+            display: block;
+            color: $white;
+            text-decoration: none;
+            padding: 0;
+        }
+
+    }
+
+    .filters {
+        background-color: $lightGrey2;
+        padding: 2%;
+        margin-bottom: 2%;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+
+        #filter-form {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-end;
+
+            h4 {
+                width: 100%;
+                margin: 1rem 0;
+                font-size: 14px;
+                color: $darkGrey;
+            }
+
+            .actions {
+                display: flex;
+                width: 100%;
+                margin: 1rem 0;
+            }
+
+            .filter {
+                margin-right: 2%;
+                margin-bottom: 1%;
+                display: flex;
+                flex-direction: column;
+
+                label {
+                    font-weight: 600;
+                    margin-bottom: 0.5rem;
+                }
+
+                input[type="text"] {
+                    padding: 0.5rem;
+                    border: 1px solid #ccc;
+                    border-radius: 4px;
+                    min-width: 150px; /* Minimum width for input fields */
+                }
+            }
+
+            input[type="submit"] {
+                padding: 0.5rem 1rem;
+                background-color: $lightBlue;
+                color: $white;
+                border: none;
+                border-radius: 4px;
+                font-size: 14px;
+                cursor: pointer;
+                margin-right: 2%;
+
+                &:hover {
+                    background-color: $lightBlue;
+                }
+            }
+
+            a {
+                padding: 0.5rem 1rem;
+                background-color: $grey;
+                color: $white;
+                text-decoration: none;
+                border-radius: 4px;
+                font-size: 14px;
+                cursor: pointer;
+
+                &:hover {
+                    background-color: $grey;
+                }
+            }
+        }
+    }
+
+    .entity-view {
+        h2 {
+            font-size: 22px;
+            margin-bottom: 2rem;
+            color: $darkGrey;
+            text-align: center;
+        }
+
+        .view-field {
+            display: flex;
+            justify-content: space-between;
+            padding: 0;
+            margin-bottom: 1rem;
+
+            span {
+                padding: 0.5rem;
+
+                &.field-name {
+                    font-weight: $bold;
+                    color: $darkGrey;
+                    flex: 1;
+                }
+
+                &.field-value {
+                    flex: 2;
+                    color: $darkBlue;
+                    background-color: $lightGrey;
+                }
+            }
+        }
+
+        .actions {
+            margin-top: 2rem;
+            text-align: center;
+
+            .button {
+                display: inline-block;
+                padding: 0.6rem 1rem;
+                margin: 0 0.5rem;
+                text-decoration: none;
+                border-radius: 4px;
+                color: $white;
+                background-color: $lightBlue;
+                font-size: 14px;
+                cursor: pointer;
+
+                &.edit-button {
+                    background-color: $lightBlue;
+
+                    &:hover {
+                        background-color: $lightBlue;
+                    }
+                }
+
+                &.back-button {
+                    background-color: $grey;
+
+                    &:hover {
+                        background-color: $grey;
+                    }
+                }
+            }
+        }
+    }
+
+}
