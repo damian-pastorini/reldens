@@ -222,6 +222,12 @@ $darkBlue: #34495e;
             border: 1px solid #ccc;
             text-align: left;
 
+            button {
+                border: none;
+                background-color: transparent;
+                cursor: pointer;
+            }
+
             a, a:visited {
                 color: $black;
                 text-decoration: none;
@@ -235,19 +241,31 @@ $darkBlue: #34495e;
                 padding: 0 1rem;
                 color: $black;
             }
-            
-            &-edit {
+
+            &-edit, &-delete {
                 span {
                     display: block;
                     text-align: center;
-
-                    svg {
+                    cursor: pointer;
+                }
+            }
+            &-edit {
+                span {
+                    svg, path {
+                        width: 24px;
                         color: $lightBlue;
                     }
                 }
             }
+            &-delete {
+                span {
+                    svg, path {
+                        width: 24px;
+                        fill: $lightBlue;
+                    }
+                }
+            }
         }
-
     }
 
     .pagination {
