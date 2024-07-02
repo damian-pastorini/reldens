@@ -7,6 +7,7 @@ $reldensFont: "Play", sans-serif;
 $bold: 600;
 $black: #000000;
 $white: #ffffff;
+$red: #ff0000;
 $darkGrey: #333333;
 $grey: #7f8c8d;
 $lightGrey: #ecf0f1;
@@ -73,6 +74,14 @@ $darkBlue: #34495e;
             }
         }
 
+        &-danger {
+            color: $white;
+            background-color: $red;
+
+            &:hover {
+                background-color: $red;
+            }
+        }
     }
 
     .side-bar {
@@ -408,6 +417,10 @@ $darkBlue: #34495e;
         .actions {
             margin-top: 2rem;
             text-align: center;
+
+            form {
+                display: inline;
+            }
 
             .button {
                 display: inline-block;

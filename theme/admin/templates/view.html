@@ -9,5 +9,11 @@
     <div class="actions">
         <a class="button button-primary" href="{{&entityEditRoute}}">Edit</a>
         <a class="button button-secondary" href="{{&entityListRoute}}">Back</a>
+        <form class="form-delete" name="delete-form-{{&id}}" id="delete-form-{{&id}}" action="{{&entityDeleteRoute}}" method="post">
+            <span>
+                <input type="hidden" name="ids[]" value="{{&id}}"/>
+                <button class="button button-danger" type="submit">Delete</button>
+            </span>
+        </form>
     </div>
 </div>
