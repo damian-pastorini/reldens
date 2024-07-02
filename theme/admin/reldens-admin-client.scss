@@ -46,6 +46,35 @@ $darkBlue: #34495e;
         display: flex;
     }
 
+    .button {
+
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 4px;
+        font-size: 14px;
+        cursor: pointer;
+        text-decoration: none;
+
+        &-primary {
+            color: $white;
+            background-color: $lightBlue;
+
+            &:hover {
+                background-color: $lightBlue;
+            }
+        }
+
+        &-secondary {
+            color: $white;
+            background-color: $grey;
+
+            &:hover {
+                background-color: $grey;
+            }
+        }
+
+    }
+
     .side-bar {
         min-width: 250px;
         width: 240px;
@@ -91,13 +120,19 @@ $darkBlue: #34495e;
         background-color: $white;
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         border-radius: 8px;
-        margin: 2%;
+        margin: 1.4rem;
         overflow: auto;
         width: 100%;
     }
 
     .entity-list {
         overflow: auto;
+
+        .actions {
+            display: flex;
+            justify-content: end;
+            margin-bottom: 1rem;
+        }
     }
 
     .forms-container {
@@ -130,13 +165,6 @@ $darkBlue: #34495e;
         }
 
         input[type='submit'] {
-            padding: 0.6rem 1rem;
-            background-color: $lightBlue;
-            color: $white;
-            border: none;
-            border-radius: 4px;
-            font-size: 14px;
-            cursor: pointer;
             margin: 0 auto;
             display: flex;
 
@@ -279,8 +307,8 @@ $darkBlue: #34495e;
 
     .filters {
         background-color: $lightGrey2;
-        padding: 2%;
-        margin-bottom: 2%;
+        padding: 1rem;
+        margin-bottom: 1rem;
         border: 1px solid #ccc;
         border-radius: 4px;
 
@@ -288,10 +316,11 @@ $darkBlue: #34495e;
             display: flex;
             flex-wrap: wrap;
             align-items: flex-end;
+            justify-content: space-between;
 
             h4 {
                 width: 100%;
-                margin: 1rem 0;
+                margin: 0 0 1rem 0;
                 font-size: 14px;
                 color: $darkGrey;
             }
@@ -299,12 +328,11 @@ $darkBlue: #34495e;
             .actions {
                 display: flex;
                 width: 100%;
-                margin: 1rem 0;
+                margin: 1rem 0 0 0;
             }
 
             .filter {
-                margin-right: 2%;
-                margin-bottom: 1%;
+                margin-bottom: 1rem;
                 display: flex;
                 flex-direction: column;
 
@@ -322,32 +350,8 @@ $darkBlue: #34495e;
             }
 
             input[type="submit"] {
-                padding: 0.5rem 1rem;
-                background-color: $lightBlue;
-                color: $white;
-                border: none;
-                border-radius: 4px;
-                font-size: 14px;
-                cursor: pointer;
-                margin-right: 2%;
+                margin-right: 1.4rem;
 
-                &:hover {
-                    background-color: $lightBlue;
-                }
-            }
-
-            a {
-                padding: 0.5rem 1rem;
-                background-color: $grey;
-                color: $white;
-                text-decoration: none;
-                border-radius: 4px;
-                font-size: 14px;
-                cursor: pointer;
-
-                &:hover {
-                    background-color: $grey;
-                }
             }
         }
     }
@@ -389,31 +393,7 @@ $darkBlue: #34495e;
 
             .button {
                 display: inline-block;
-                padding: 0.6rem 1rem;
                 margin: 0 0.5rem;
-                text-decoration: none;
-                border-radius: 4px;
-                color: $white;
-                background-color: $lightBlue;
-                font-size: 14px;
-                cursor: pointer;
-                border: none;
-
-                &.edit-button {
-                    background-color: $lightBlue;
-
-                    &:hover {
-                        background-color: $lightBlue;
-                    }
-                }
-
-                &.back-button {
-                    background-color: $grey;
-
-                    &:hover {
-                        background-color: $grey;
-                    }
-                }
             }
         }
     }

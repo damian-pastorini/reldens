@@ -1,5 +1,8 @@
 <div class="entity-list {{&entityName}}-list">
     <h2 class="list-title">{{&title}}</h2>
+    <div class="actions">
+        <a class="button button-primary" href="{{&entityEditRoute}}">Create New</a>
+    </div>
     <div class="filters">
         <form name="filter-form" id="filter-form" action="{{&entityListRoute}}" method="post">
             <h4>Filters:</h4>
@@ -10,8 +13,8 @@
             </div>
             {{/filters}}
             <div class="actions">
-                <input type="submit" value="Filter"/>
-                <a href="{{&entityListRoute}}">Clear Filters</a>
+                <input class="button button-primary button-filter" type="submit" value="Filter"/>
+                <a class="button button-secondary button-clear-filter" href="{{&entityListRoute}}">Clear Filters</a>
             </div>
         </form>
     </div>
