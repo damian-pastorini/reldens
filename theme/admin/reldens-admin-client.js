@@ -5,7 +5,7 @@
  */
 
 window.addEventListener('DOMContentLoaded', () => {
-    // console.log('Reldens - Administration Panel');
+    // delete forms confirmation:
     let forms = document.querySelectorAll('.form-delete');
     if(forms){
         for(let deleteForm of forms){
@@ -14,6 +14,37 @@ window.addEventListener('DOMContentLoaded', () => {
                     event.preventDefault();
                 }
             });
+        }
+    }
+    // sidebar headers click behavior:
+    let sideBarHeaders = document.querySelectorAll('.with-sub-items h3');
+    if(sideBarHeaders){
+        for(let header of sideBarHeaders){
+            header.addEventListener('click', (event) => {
+                event.currentTarget.parentNode.classList.toggle('active');
+            });
+        }
+    }
+    // expand menu on load:
+    let location = window.location;
+    let currentPath = location.pathname;
+    let subItemContainers = document.querySelectorAll('.with-sub-items');
+    if(subItemContainers){
+        let done = false;
+        for(let container of subItemContainers){
+            let links = container.querySelectorAll('.side-bar-item a');
+            for(let link of links){
+                let linkWithoutHost = link.href.replace(location.host, '').replace(location.protocol+'//', '');
+                console.log(currentPath, linkWithoutHost);
+                if(currentPath === linkWithoutHost){
+                    container.classList.add('active');
+                    done = true;
+                    break;
+                }
+            }
+            if(done){
+                break;
+            }
         }
     }
 });

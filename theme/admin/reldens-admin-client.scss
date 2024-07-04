@@ -85,44 +85,71 @@ $darkBlue: #34495e;
     }
 
     .side-bar {
-        min-width: 250px;
-        width: 240px;
-        padding: 2rem;
+        min-width: 230px;
+        padding: 1rem 1rem 1rem 1.5rem;
         background-color: $darkBlue;
         color: $lightGrey;
         box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
     }
 
+    .with-sub-items {
+        &.active {
+            .side-bar-item {
+                display: block;
+
+                &:first-of-type {
+                    margin-top: 1rem;
+                }
+            }
+        }
+
+        .side-bar-item {
+            display: none;
+
+            a {
+                display: block;
+                color: $lightGrey;
+                text-decoration: none;
+                border-left: 3px solid transparent;
+                font-size: 12px;
+                border-left: 3px solid #0000;
+                padding: 0.1rem 0.1rem 0.1rem 0.3rem;
+                margin-top: 0.3rem;
+
+                &:hover, &:focus, &:active {
+                    background-color: $darkBlue;
+                    border-left: 3px solid $lightBlue;
+                }
+            }
+        }
+    }
+
     .side-bar-item {
+        margin-bottom: 0.2rem;
+
         &:first-child {
             h3 {
                 margin-top: 0;
             }
         }
 
-        margin-bottom: 0.2rem;
-
-        h3 {
-            margin: 1.5rem 0 0.2rem;
-            padding: 1rem 0;
-            font-size: 16px;
-            border-bottom: 1px solid $darkBlue;
-        }
-
-        a {
+        h3, a {
             display: block;
+            margin: 1rem 0 0;
+            border: none;
+            padding: 0;
             color: $lightGrey;
             text-decoration: none;
-            padding: 0.3rem;
-            border-left: 3px solid transparent;
-
-            &:hover, &:focus, &:active {
-                background-color: $darkBlue;
-                border-left: 3px solid $lightBlue;
-            }
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 400;
+            border-bottom: 1px solid $darkBlue;
         }
     }
 
+    .user-area {
+        margin-top: 1.5rem;
+    }
 
     .main-content {
         padding: 2rem;
@@ -258,6 +285,7 @@ $darkBlue: #34495e;
                     cursor: pointer;
                 }
             }
+
             &-edit {
                 span {
                     svg, path {
@@ -266,6 +294,7 @@ $darkBlue: #34495e;
                     }
                 }
             }
+
             &-delete {
                 span {
                     svg, path {
