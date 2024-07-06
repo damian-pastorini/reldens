@@ -100,6 +100,12 @@ $darkBlue: #34495e;
                 &:first-of-type {
                     margin-top: 1rem;
                 }
+
+                &.active {
+                    a {
+                        border-left: 3px solid $white;
+                    }
+                }
             }
         }
 
@@ -115,6 +121,7 @@ $darkBlue: #34495e;
                 border-left: 3px solid #0000;
                 padding: 0.1rem 0.1rem 0.1rem 0.3rem;
                 margin-top: 0.3rem;
+                margin-bottom: 0.5rem;
 
                 &:hover, &:focus, &:active {
                     background-color: $darkBlue;

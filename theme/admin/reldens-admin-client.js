@@ -35,8 +35,8 @@ window.addEventListener('DOMContentLoaded', () => {
             let links = container.querySelectorAll('.side-bar-item a');
             for(let link of links){
                 let linkWithoutHost = link.href.replace(location.host, '').replace(location.protocol+'//', '');
-                console.log(currentPath, linkWithoutHost);
                 if(currentPath === linkWithoutHost){
+                    link.parentNode.classList.add('active');
                     container.classList.add('active');
                     done = true;
                     break;
