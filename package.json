@@ -83,7 +83,6 @@
         "@parcel/transformer-json": "2.12.0",
         "@parcel/transformer-jsonld": "2.12.0",
         "@parcel/transformer-less": "2.12.0",
-        "@parcel/transformer-mdx": "2.12.0",
         "@parcel/transformer-postcss": "2.12.0",
         "@parcel/transformer-posthtml": "2.12.0",
         "@parcel/transformer-pug": "2.12.0",
