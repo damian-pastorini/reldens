@@ -151,6 +151,10 @@ $darkBlue: #34495e;
             font-size: 14px;
             font-weight: 400;
             border-bottom: 1px solid $darkBlue;
+
+            &:hover {
+                font-weight: $bold;
+            }
         }
     }
 
