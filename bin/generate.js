@@ -11,10 +11,9 @@ const {
     LayerElementsCompositeLoader,
     MultipleByLoaderGenerator,
     MultipleWithAssociationsByLoaderGenerator
-} = require("@reldens/tile-map-generator");
+} = require('@reldens/tile-map-generator');
 const { FileHandler } = require('../lib/game/server/file-handler');
-const path = require("path");
-const {Logger} = require("@reldens/utils");
+const { Logger } = require('@reldens/utils');
 
 /**
  *
@@ -38,15 +37,15 @@ const {Logger} = require("@reldens/utils");
 
 let mapsGenerateModes = {
     LayerElementsObjectLoader: async (commandParams) => {
-        const loader = new LayerElementsObjectLoader(commandParams);
+        let loader = new LayerElementsObjectLoader(commandParams);
         await loader.load();
-        const generator = new RandomMapGenerator(loader.mapData);
+        let generator = new RandomMapGenerator(loader.mapData);
         return await generator.generate();
     },
     LayerElementsCompositeLoader: async (commandParams) => {
-        const loader = new LayerElementsCompositeLoader(commandParams);
+        let loader = new LayerElementsCompositeLoader(commandParams);
         await loader.load();
-        const generator = new RandomMapGenerator();
+        let generator = new RandomMapGenerator();
         await generator.fromElementsProvider(loader.mapData);
         return await generator.generate();
     },
@@ -58,7 +57,7 @@ let mapsGenerateModes = {
         let generator = new MultipleWithAssociationsByLoaderGenerator({loaderData: commandParams});
         await generator.generate();
     }
-}
+};
 
 let validCommands = {
     'players-experience-per-level': (commandParams) => {
@@ -74,7 +73,7 @@ let validCommands = {
         attributesPerLevel.generate();
     },
     'maps': async (commandParams) => {
-        if (!mapsGenerateModes[commandParams.importMode]) {
+        if(!mapsGenerateModes[commandParams.importMode]){
             console.error('- Invalid import mode. Valid options: '+Object.keys(mapsGenerateModes).join(', '));
         }
         let pathParts = commandParams.mapDataFile.split('/');
@@ -102,12 +101,12 @@ if(2 === args.length){
 let extractedParams = args.slice(2);
 
 let command = extractedParams[0] || false;
-if (!command) {
+if(!command){
     console.error('- Missing command.');
     return false;
 }
 
-if (-1 === Object.keys(validCommands).indexOf(command)) {
+if(-1 === Object.keys(validCommands).indexOf(command)){
     console.error('- Invalid command.', command);
     return false;
 }
@@ -116,25 +115,25 @@ let importJson = 'monsters-experience-per-level' === command
     || 'players-experience-per-level' === command
     || 'attributes-per-level' === command;
 
-if (importJson) {
-    let filePath = path.join(process.cwd(), extractedParams[1] || '');
+if(importJson){
+    let filePath = FileHandler.joinPaths(process.cwd(), extractedParams[1] || '');
     if(!filePath){
         Logger.error('Invalid data file path.', process.cwd(), filePath);
         return false;
     }
     let importedJson = FileHandler.fetchFileJson(filePath);
-    if (!importedJson) {
+    if(!importedJson){
         console.error('- Can not parse data file.');
         return false;
     }
-    if ('monsters-experience-per-level' === command) {
-        let secondaryFilePath = path.join(process.cwd(), extractedParams[2] || '');
+    if('monsters-experience-per-level' === command){
+        let secondaryFilePath = FileHandler.joinPaths(process.cwd(), extractedParams[2] || '');
         if(!secondaryFilePath){
             Logger.error('Invalid data file path.', process.cwd(), secondaryFilePath);
             return false;
         }
         let importedPlayerLevelsJson = FileHandler.fetchFileJson(secondaryFilePath);
-        if (!importedPlayerLevelsJson) {
+        if(!importedPlayerLevelsJson){
             console.error('- Can not parse data file for player levels.');
             return false;
         }
@@ -145,10 +144,9 @@ if (importJson) {
 }
 
 
-if ('maps' === command) {
+if('maps' === command){
     return validCommands[command]({
         mapDataFile: extractedParams[1],
-        // mapData: fetchFileContents(extractedParams[1] || ''),
         importMode: extractedParams[2] || ''
     });
 }
