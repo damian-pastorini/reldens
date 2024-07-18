@@ -454,6 +454,37 @@ $darkBlue: #34495e;
             }
         }
 
+        .view-field .field-value img {
+            max-width: 200px;
+        }
+
+        .edit-field {
+            span {
+                &.field-value {
+                    display: flex;
+                    flex-direction: column;
+                    padding: 0;
+
+                    p {
+                        margin-left: 0.5rem;
+                    }
+
+                    input, select {
+                        margin: 0;
+                        padding: 0.5rem;
+                        border: none;
+                        background: transparent;
+
+                        &:not([disabled]) {
+                            margin: 0;
+                            border: 1px solid #7f8c8d;
+                            background: #fff;
+                        }
+                    }
+                }
+            }
+        }
+
         .actions {
             margin-top: 2rem;
             text-align: center;
