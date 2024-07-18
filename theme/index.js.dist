@@ -34,7 +34,7 @@ appServer.events.on('reldens.serverConfigFeaturesReady', (props) => {
 if('1' === process.env.RELDENS_BLOCKED_ADMIN){
     appServer.events.on('reldens.beforeCreateAdminManager', (adminPack, dispatchedEvent) => {
         for(let adminResource of dispatchedEvent.serverManager.dataServer.resources){
-            console.log('DEMO - Hardcoded event to disable CRUD for: '+ adminResource.resource.model.rawName);
+            console.log('DEMO - Hardcoded event to disable CRUD for: '+ adminResource?.resource?.model?.rawName ?? '');
             adminResource.resource.create = () => { return true; };
             adminResource.resource.update = () => { return true; };
             adminResource.resource.delete = () => { return true; };

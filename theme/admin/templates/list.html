@@ -1,0 +1,27 @@
+<div class="entity-list {{&entityName}}-list">
+    <h2 class="list-title">{{&templateTitle}}</h2>
+    <div class="actions">
+        <a class="button button-primary" href="{{&entityEditRoute}}">Create New</a>
+    </div>
+    <div class="filters">
+        <form name="filter-form" id="filter-form" action="{{&entityListRoute}}" method="post">
+            <h4>Filters:</h4>
+            {{#filters}}
+            <div class="filter">
+                <label for="filter-{{&name}}">{{&name}}</label>
+                <input type="text" id="filter-{{&name}}" name="filters[{{&name}}]" {{&value}}/>
+            </div>
+            {{/filters}}
+            <div class="actions">
+                <input class="button button-primary button-filter" type="submit" value="Filter"/>
+                <a class="button button-secondary button-clear-filter" href="{{&entityListRoute}}">Clear Filters</a>
+            </div>
+        </form>
+    </div>
+    <table class="list">
+        {{&list}}
+    </table>
+    <div class="pagination">
+        {{&pagination}}
+    </div>
+</div>

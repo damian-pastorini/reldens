@@ -1,0 +1,22 @@
+<div class="entity-edit {{&entityName}}-edit">
+    <h2>{{&templateTitle}}</h2>
+    <form name="edit-form" id="edit-form" action="{{&entitySaveRoute}}" method="post"{{&multipartFormData}}>
+        <input type="hidden" name="{{&idProperty}}" value="{{&idValue}}"/>
+        <div class="edit-field">
+            <span class="field-name">{{&idProperty}}</span>
+            <span class="field-value">
+                <input type="text" name="disabled-{{&idProperty}}" value="{{&idValue}}" disabled="disabled"/>
+            </span>
+        </div>
+        {{#editFields}}
+        <div class="edit-field">
+            <span class="field-name">{{&name}}</span>
+            <span class="field-value">{{&value}}</span>
+        </div>
+        {{/editFields}}
+        <div class="actions">
+            <input class="button button-primary button-submit" type="submit" value="Save"/>
+            <a class="button button-secondary button-back" href="{{&entityViewRoute}}">Cancel</a>
+        </div>
+    </form>
+</div>

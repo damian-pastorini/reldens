@@ -94,13 +94,18 @@ ALTER TABLE `skills_class_path_level_skills`
 ALTER TABLE `skills_class_path_level_skills`
 	DROP FOREIGN KEY `FK_skills_class_path_level_skills_skills_levels`;
 
+ALTER TABLE `skills_class_path`
+    ADD COLUMN `enabled` INT(10) UNSIGNED NOT NULL DEFAULT '0' AFTER `levels_set_id`;
+
+UPDATE `skills_class_path` SET `enabled` = 1;
+
 -- Rooms:
 UPDATE `rooms` SET `customData` = '{"allowGuest":true}' WHERE `name` IN ('reldens-house-1', 'reldens-town', 'reldens-forest');
 UPDATE `rooms` SET `customData` = NULL WHERE `name` = 'reldens-house-1-2d-floor';
 UPDATE `rooms` SET `customData` = '{"allowGuest":true,"gravity":[0,625],"applyGravity":true,"allowPassWallsFromBelow":true,"timeStep":0.012,"type":"TOP_DOWN_WITH_GRAVITY","useFixedWorldStep":false,"maxSubSteps":2,"movementSpeed":160,"usePathFinder":false}' WHERE `name` = 'reldens-gravity';
 
 -- Rewards assets fix:
-UPDATE `objects_items_rewards_animations` SET `file` = CONCAT(`file`, '.png') WHERE `file` NOT LIKE '%.png';
+UPDATE `drops_animations` SET `file` = CONCAT(`file`, '.png') WHERE `file` NOT LIKE '%.png';
 
 -- Items close inventory fix:
 UPDATE items_item SET customData = JSON_REMOVE(customData, '$.animationData.closeInventoryOnUse') WHERE JSON_CONTAINS(customData, '{"animationData":{"closeInventoryOnUse":true}}');

@@ -1,0 +1,19 @@
+<div class="entity-view {{&entityName}}-view">
+    <h2>{{&templateTitle}}</h2>
+    {{#fields}}
+    <div class="view-field">
+        <span class="field-name">{{&name}}</span>
+        <span class="field-value">{{&value}}</span>
+    </div>
+    {{/fields}}
+    <div class="actions">
+        <a class="button button-primary" href="{{&entityEditRoute}}">Edit</a>
+        <a class="button button-secondary" href="{{&entityListRoute}}">Back</a>
+        <form class="form-delete" name="delete-form-{{&id}}" id="delete-form-{{&id}}" action="{{&entityDeleteRoute}}" method="post">
+            <span>
+                <input type="hidden" name="ids[]" value="{{&id}}"/>
+                <button class="button button-danger" type="submit">Delete</button>
+            </span>
+        </form>
+    </div>
+</div>
