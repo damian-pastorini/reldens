@@ -7,7 +7,9 @@
 ---
 
 <h3 align="center">
-    <p>Join our Discord community!</p>
+    <p>
+        <a href="https://discord.gg/HuJMxUY">Join our Discord community!</a>
+    </p>
     <a href="https://discord.gg/HuJMxUY">
         <img alt="Reldens - Discord" src="https://img.shields.io/badge/discord-%235865F2?style=for-the-badge&logo=discord&logoColor=white"/>
     </a>
