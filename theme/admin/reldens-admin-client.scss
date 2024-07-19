@@ -14,7 +14,8 @@ $lightGrey: #ecf0f1;
 $lightGrey2: #f9f9f9;
 $lightBlue: #3498db;
 $darkBlue: #34495e;
-
+$green: #05c459;
+$darkGreen: #27ae60;
 
 .reldens-admin-panel {
     font-family: $normalFont;
@@ -27,6 +28,38 @@ $darkBlue: #34495e;
         display: flex;
         flex-direction: column;
         min-height: 100vh;
+    }
+
+    .notification {
+        display: none;
+        position: absolute;
+        top: 1.5rem;
+        right: 1.5rem;
+        padding: 1.5rem 2rem;
+        border-radius: 8px;
+        font-size: 14px;
+
+        &.success, &.error {
+            display: block;
+        }
+
+        &.error {
+            background-color: $red;
+            color: $white;
+        }
+
+        &.success {
+            background-color: $darkGreen;
+            color: $white;
+        }
+
+        .close {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            cursor: pointer;
+            font-weight: $bold;
+        }
     }
 
     .header {
@@ -45,6 +78,7 @@ $darkBlue: #34495e;
 
     .content {
         display: flex;
+        position: relative;
     }
 
     .button {

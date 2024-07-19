@@ -47,4 +47,21 @@ window.addEventListener('DOMContentLoaded', () => {
             }
         }
     }
+    // display notifications from query params:
+    let notificationElement = document.querySelector('.notification');
+    if(notificationElement){
+        let closeNotificationElement = document.querySelector('.notification .close');
+        closeNotificationElement?.addEventListener('click', () => {
+            notificationElement.classList.remove('success', 'error');
+        });
+        let queryParams = new URLSearchParams(location.search);
+        let result = queryParams.get('result');
+        let notificationMessageElement = document.querySelector('.notification .message');
+        if(result && notificationMessageElement){
+            let notificationClass = 'success' === result ? 'success' : 'error';
+            notificationMessageElement.innerHTML = '';
+            notificationElement.classList.add(notificationClass);
+            notificationMessageElement.innerHTML = 'success' === result ? 'Success!' : 'There was an error: '+result;
+        }
+    }
 });
