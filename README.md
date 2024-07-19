@@ -6,12 +6,14 @@
 
 ---
 
-<div style="text-align: center">
+<h3 align="center">
+    <p>
+        <a href="https://discord.gg/HuJMxUY">Join our Discord community!</a>
+    </p>
     <a href="https://discord.gg/HuJMxUY">
-        <h3>Join our Discord community!</h3>
         <img alt="Reldens - Discord" src="https://img.shields.io/badge/discord-%235865F2?style=for-the-badge&logo=discord&logoColor=white"/>
     </a>
-</div>
+</h3>
 
 ---
 
