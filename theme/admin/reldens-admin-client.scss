@@ -8,6 +8,7 @@ $bold: 600;
 $black: #000000;
 $white: #ffffff;
 $red: #ff0000;
+$orange: #d38200;
 $darkGrey: #333333;
 $grey: #7f8c8d;
 $lightGrey: #ecf0f1;
@@ -35,7 +36,7 @@ $darkGreen: #27ae60;
         position: absolute;
         top: 1.5rem;
         right: 1.5rem;
-        padding: 1.5rem 2rem;
+        padding: 1rem 2rem;
         border-radius: 8px;
         font-size: 14px;
 
@@ -105,6 +106,15 @@ $darkGreen: #27ae60;
 
             &:hover {
                 background-color: $grey;
+            }
+        }
+
+        &-warning {
+            color: $white;
+            background-color: $orange;
+
+            &:hover {
+                background-color: $orange;
             }
         }
 
@@ -406,14 +416,23 @@ $darkGreen: #27ae60;
 
     }
 
-    .filters {
+    .alert {
+        font-weight: $bold;
+        color: $red;
+    }
+
+    .shutting-down {
+        margin-bottom: 1rem;
+    }
+
+    .sub-content {
         background-color: $lightGrey2;
         padding: 1rem;
         margin-bottom: 1rem;
         border: 1px solid #ccc;
         border-radius: 4px;
 
-        #filter-form {
+        .sub-content-form {
             display: flex;
             flex-wrap: wrap;
             align-items: flex-end;
@@ -432,7 +451,7 @@ $darkGreen: #27ae60;
                 margin: 1rem 0 0 0;
             }
 
-            .filter {
+            .sub-content-box {
                 margin-bottom: 1rem;
                 display: flex;
                 flex-direction: column;

@@ -1,0 +1,22 @@
+<h2>Server Management</h2>
+<div class="sub-content">
+    <div class="sub-content-box">
+        <h3>Server Maintenance</h3>
+        <form class="sub-content-form management-form confirmation-required" name="management-form" id="management-form" action="{{&actionPath}}" method="post">
+            <div>
+                <label for="shutdown-time">
+                    <span>Shutdown server with user notifications in seconds:</span>
+                    <input type="number" name="shutdown-time" id="shutdown-time" value="{{&shutdownTime}}"/>
+                </label>
+                <p class="alert">IMPORTANT: this will take down the administration panel as well, and you will be logged out.</p>
+                <div class="shutting-down">
+                    <span class="shutting-down-label">{{&shuttingDownLabel}}</span>
+                    <span class="shutting-down-time" data-shutting-down-time="{{&shuttingDownTime}}">
+                        {{&shuttingDownTime}}
+                    </span>
+                </div>
+            </div>
+            <input type="submit" class="button button-{{&submitType}} button-management" value="{{&submitLabel}}"/>
+        </form>
+    </div>
+</div>

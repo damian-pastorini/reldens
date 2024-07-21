@@ -5,8 +5,9 @@
  */
 
 window.addEventListener('DOMContentLoaded', () => {
-    // delete forms confirmation:
-    let forms = document.querySelectorAll('.form-delete');
+
+    // forms with confirmation:
+    let forms = document.querySelectorAll('.form-delete, .confirmation-required');
     if(forms){
         for(let deleteForm of forms){
             deleteForm.addEventListener('submit', (event) => {
@@ -16,6 +17,7 @@ window.addEventListener('DOMContentLoaded', () => {
             });
         }
     }
+
     // sidebar headers click behavior:
     let sideBarHeaders = document.querySelectorAll('.with-sub-items h3');
     if(sideBarHeaders){
@@ -25,6 +27,7 @@ window.addEventListener('DOMContentLoaded', () => {
             });
         }
     }
+
     // expand menu on load:
     let location = window.location;
     let currentPath = location.pathname;
@@ -47,6 +50,19 @@ window.addEventListener('DOMContentLoaded', () => {
             }
         }
     }
+
+    function getCookie(name)
+    {
+        let value = `; ${document.cookie}`;
+        let parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+    }
+
+    function deleteCookie(name)
+    {
+        document.cookie = name + '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+    }
+
     // display notifications from query params:
     let notificationElement = document.querySelector('.notification');
     if(notificationElement){
@@ -56,12 +72,37 @@ window.addEventListener('DOMContentLoaded', () => {
         });
         let queryParams = new URLSearchParams(location.search);
         let result = queryParams.get('result');
+        if(!result){
+            result = getCookie('result');
+            console.log(result);
+        }
         let notificationMessageElement = document.querySelector('.notification .message');
         if(result && notificationMessageElement){
             let notificationClass = 'success' === result ? 'success' : 'error';
             notificationMessageElement.innerHTML = '';
             notificationElement.classList.add(notificationClass);
             notificationMessageElement.innerHTML = 'success' === result ? 'Success!' : 'There was an error: '+result;
+            deleteCookie('result');
+        }
+    }
+
+    // shutdown timer:
+    let shuttingDownTimeElement = document.querySelector('.shutting-down .shutting-down-time');
+    if(shuttingDownTimeElement){
+        let shuttingDownTime = shuttingDownTimeElement.getAttribute('data-shutting-down-time');
+        if(shuttingDownTime){
+            shuttingDownTimeElement.innerHTML = shuttingDownTime+'s';
+            shuttingDownTime = Number(shuttingDownTime);
+            let shuttingDownTimer = setInterval(
+                () => {
+                    shuttingDownTimeElement.innerHTML = shuttingDownTime+'s';
+                    shuttingDownTime--;
+                    if (0 === shuttingDownTime) {
+                        clearInterval(shuttingDownTimer);
+                    }
+                },
+                1000
+            );
         }
     }
 });
