@@ -63,6 +63,15 @@ window.addEventListener('DOMContentLoaded', () => {
         document.cookie = name + '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
     }
 
+    function escapeHTML(str)
+    {
+        return str.replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
     // display notifications from query params:
     let notificationElement = document.querySelector('.notification');
     if(notificationElement){
@@ -81,7 +90,9 @@ window.addEventListener('DOMContentLoaded', () => {
             let notificationClass = 'success' === result ? 'success' : 'error';
             notificationMessageElement.innerHTML = '';
             notificationElement.classList.add(notificationClass);
-            notificationMessageElement.innerHTML = 'success' === result ? 'Success!' : 'There was an error: '+result;
+            notificationMessageElement.innerHTML = 'success' === result
+                ? 'Success!'
+                : 'There was an error: '+escapeHTML(result);
             deleteCookie('result');
         }
     }
@@ -95,7 +106,7 @@ window.addEventListener('DOMContentLoaded', () => {
             shuttingDownTime = Number(shuttingDownTime);
             let shuttingDownTimer = setInterval(
                 () => {
-                    shuttingDownTimeElement.innerHTML = shuttingDownTime+'s';
+                    shuttingDownTimeElement.innerHTML = String(shuttingDownTime)+'s';
                     shuttingDownTime--;
                     if (0 === shuttingDownTime) {
                         clearInterval(shuttingDownTimer);
