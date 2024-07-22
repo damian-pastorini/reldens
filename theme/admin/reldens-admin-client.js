@@ -6,6 +6,29 @@
 
 window.addEventListener('DOMContentLoaded', () => {
 
+    // helpers:
+
+    function getCookie(name)
+    {
+        let value = `; ${document.cookie}`;
+        let parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+    }
+
+    function deleteCookie(name)
+    {
+        document.cookie = name + '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+    }
+
+    function escapeHTML(str)
+    {
+        return str.replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
     // forms with confirmation:
     let forms = document.querySelectorAll('.form-delete, .confirmation-required');
     if(forms){
@@ -51,25 +74,53 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function getCookie(name)
-    {
-        let value = `; ${document.cookie}`;
-        let parts = value.split(`; ${name}=`);
-        if (parts.length === 2) return parts.pop().split(';').shift();
+    // filters toggle visibility:
+    let filtersToggle = document.querySelector('.filters-toggle');
+    let filtersToggleContent = document.querySelector('.filters-toggle-content');
+    if(filtersToggle && filtersToggleContent){
+        filtersToggle.addEventListener('click', () => {
+            filtersToggleContent.classList.toggle('hidden');
+        });
+        let allFilters = document.querySelectorAll('.filters-toggle-content .filter input');
+        let activeFilters = Array.from(allFilters).filter(input => input.value !== '');
+        if(0 < activeFilters.length){
+            filtersToggleContent.classList.remove('hidden');
+        }
     }
 
-    function deleteCookie(name)
-    {
-        document.cookie = name + '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+    // list select all:
+    let listSelect = document.querySelector('.list-select');
+    if(listSelect){
+        listSelect.addEventListener('click', (event) => {
+            console.log('click', event.currentTarget.dataset.checked, event);
+            let checkboxes = document.querySelectorAll('.ids-checkbox');
+            for(let checkbox of checkboxes){
+                checkbox.checked = 1 === Number(event.currentTarget.dataset.checked);
+            }
+            event.currentTarget.dataset.checked = 1 === Number(event.currentTarget.dataset.checked) ? 0 : 1;
+            console.log('changed to:', event.currentTarget.dataset.checked);
+        });
     }
 
-    function escapeHTML(str)
-    {
-        return str.replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
+    // list delete selection:
+    let listDeleteSelection = document.querySelector('.list-delete-selection');
+    let deleteSelectionForm = document.getElementById('delete-selection-form');
+    let hiddenInput = document.querySelector('.hidden-ids-input');
+    if(listDeleteSelection && deleteSelectionForm && hiddenInput){
+        listDeleteSelection.addEventListener('click', () => {
+            if(!confirm('Are you sure?')){
+                return;
+            }
+            let checkboxes = document.querySelectorAll('.ids-checkbox');
+            let ids = [];
+            for(let checkbox of checkboxes){
+                if(checkbox.checked){
+                    ids.push(checkbox.value);
+                }
+            }
+            hiddenInput.value = ids.join(',');
+            deleteSelectionForm.submit();
+        });
     }
 
     // display notifications from query params:
@@ -83,7 +134,6 @@ window.addEventListener('DOMContentLoaded', () => {
         let result = queryParams.get('result');
         if(!result){
             result = getCookie('result');
-            console.log(result);
         }
         let notificationMessageElement = document.querySelector('.notification .message');
         if(result && notificationMessageElement){

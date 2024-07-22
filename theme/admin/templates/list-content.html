@@ -1,4 +1,13 @@
 <tr class="row row-header">
+    <th class="field field-actions">
+        <div class="field-actions-container">
+            <button class="button button-primary list-select" data-checked="1">Select All/None</button>
+            <form name="delete-selection-form" id="delete-selection-form" action="{{&deletePath}}" method="post">
+                <input type="hidden" name="ids" class="hidden-ids-input"/>
+                <button class="button button-danger list-delete-selection">Delete Selection</button>
+            </form>
+        </div>
+    </th>
     {{#fieldsHeaders}}
     <th class="field field-{{&name}}">
         <span>{{&value}}</span>
@@ -13,6 +22,11 @@
 </tr>
 {{#rows}}
 <tr class="row">
+    <td class="field field-actions">
+        <div class="field-actions-container">
+            <input class="ids-checkbox" type="checkbox" name="idsSelection[]" value="{{&id}}"/>
+        </div>
+    </td>
     {{#fields}}
     <td class="field field-{{&name}}">
         <a href="{{&viewLink}}">
@@ -44,7 +58,7 @@
         <form class="form-delete" name="delete-form-{{&id}}" id="delete-form-{{&id}}" action="{{&deleteLink}}" method="post">
             <span>
                 <input type="hidden" name="ids[]" value="{{&id}}"/>
-                <button type="submit">
+                <button class="button-list-delete" type="submit">
                     <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path d="M10,18a1,1,0,0,0,1-1V11a1,1,0,0,0-2,0v6A1,1,0,0,0,10,18ZM20,6H16V5a3,3,0,0,0-3-3H11A3,3,0,0,0,8,5V6H4A1,1,0,0,0,4,8H5V19a3,3,0,0,0,3,3h8a3,3,0,0,0,3-3V8h1a1,1,0,0,0,0-2ZM10,5a1,1,0,0,1,1-1h2a1,1,0,0,1,1,1V6H10Zm7,14a1,1,0,0,1-1,1H8a1,1,0,0,1-1-1V8H17Zm-3-1a1,1,0,0,0,1-1V11a1,1,0,0,0-2,0v6A1,1,0,0,0,14,18Z" fill="#6563ff"/>
                     </svg>

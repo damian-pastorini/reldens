@@ -313,10 +313,22 @@ $darkGreen: #27ae60;
             border: 1px solid #ccc;
             text-align: left;
 
-            button {
+            .button-list-delete {
                 border: none;
                 background-color: transparent;
                 cursor: pointer;
+            }
+
+            .field-actions-container {
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                margin: 0 1rem;
+
+                .button {
+                    margin-bottom: 1rem;
+                }
             }
 
             a, a:visited {
@@ -358,6 +370,20 @@ $darkGreen: #27ae60;
                     }
                 }
             }
+        }
+    }
+
+    .filters-toggle {
+        cursor: pointer;
+    }
+
+    .filters-toggle-content {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+
+        &.hidden {
+            display: none;
         }
     }
 

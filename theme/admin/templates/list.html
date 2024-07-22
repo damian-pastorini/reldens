@@ -4,17 +4,19 @@
         <a class="button button-primary" href="{{&entityEditRoute}}">Create New</a>
     </div>
     <div class="sub-content filters">
-        <form name="sub-content-form filter-form" id="filter-form" action="{{&entityListRoute}}" method="post">
-            <h4>Filters:</h4>
-            {{#filters}}
-            <div class="sub-content-box filter">
-                <label for="filter-{{&propertyKey}}">{{&name}}</label>
-                <input type="text" id="filter-{{&propertyKey}}" name="filters[{{&propertyKey}}]"{{&value}}/>
-            </div>
-            {{/filters}}
-            <div class="actions">
-                <input class="button button-primary button-filter" type="submit" value="Filter"/>
-                <a class="button button-secondary button-clear-filter" href="{{&entityListRoute}}">Clear Filters</a>
+        <form class="sub-content-form filter-form" name="filter-form" id="filter-form" action="{{&entityListRoute}}" method="post">
+            <h4 class="filters-toggle">Filters (show/hide)</h4>
+            <div class="filters-toggle-content hidden">
+                {{#filters}}
+                <div class="sub-content-box filter">
+                    <label for="filter-{{&propertyKey}}">{{&name}}</label>
+                    <input type="text" id="filter-{{&propertyKey}}" name="filters[{{&propertyKey}}]"{{&value}}/>
+                </div>
+                {{/filters}}
+                <div class="actions">
+                    <input class="button button-primary button-filter" type="submit" value="Filter"/>
+                    <a class="button button-secondary button-clear-filter" href="{{&entityListRoute}}">Clear Filters</a>
+                </div>
             </div>
         </form>
     </div>
