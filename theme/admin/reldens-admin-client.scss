@@ -500,6 +500,22 @@ $darkGreen: #27ae60;
 
             }
         }
+
+        textarea {
+            position: relative;
+            display: block;
+            width: 98%;
+            padding: 1%;
+            margin: 1rem 0;
+        }
+    }
+
+    .maps-wizard {
+        .main-option {
+            display: inline-block;
+            cursor: pointer;
+            margin-bottom: 1rem;
+        }
     }
 
     .entity-view, .entity-edit {
