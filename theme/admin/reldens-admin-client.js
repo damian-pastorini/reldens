@@ -166,4 +166,19 @@ window.addEventListener('DOMContentLoaded', () => {
             );
         }
     }
+
+    // maps wizards options display behavior:
+    let mapsWizardsOptions = document.querySelectorAll('.maps-wizard-form .map-wizard-option');
+    if(mapsWizardsOptions){
+        for(let option of mapsWizardsOptions){
+            option.addEventListener('click', (event) => {
+                let wizardOptionsContainer = document.querySelectorAll('.wizard-option-container');
+                for(let container of wizardOptionsContainer){
+                    container.classList.remove('active');
+                }
+                event.currentTarget.parentNode.classList.add('active');
+            });
+        }
+    }
+
 });

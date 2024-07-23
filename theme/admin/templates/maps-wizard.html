@@ -10,12 +10,12 @@
             <div>
                 <p>What would you like to do?</p>
                 <ul>
-                    <li>
-                        <input type="radio" name="maps-wizard-action" id="maps-wizard-action-1" value="elements-object-loader" checked="checked"/>
+                    <li class="wizard-option-container active">
+                        <input class="map-wizard-option" type="radio" name="maps-wizard-action" id="maps-wizard-action-1" value="elements-object-loader" checked="checked"/>
                         <label class="main-option" for="maps-wizard-action-1">
                             Generate a random maps with Layer Elements Object Loader
                         </label>
-                        <div class="maps-wizard-action-1-data">
+                        <div class="maps-wizard-option-content maps-wizard-action-1-data">
                             <div class="input-box">
                                 <label for="tileSheetPath">Tile Sheet (tileSheetPath)</label>
                                 <input type="file" name="tileSheetPath" id="tileSheetPath"/>
@@ -26,12 +26,12 @@
                             </div>
                         </div>
                     </li>
-                    <li>
-                        <input type="radio" name="maps-wizard-action" id="maps-wizard-action-2" value="elements-composite-loader"/>
+                    <li class="wizard-option-container">
+                        <input class="map-wizard-option" type="radio" name="maps-wizard-action" id="maps-wizard-action-2" value="elements-composite-loader"/>
                         <label class="main-option" for="maps-wizard-action-2">
                             Generate a random maps with Layer Elements Composite Loader
                         </label>
-                        <div class="maps-wizard-action-2-data">
+                        <div class="maps-wizard-option-content maps-wizard-action-2-data">
                             <div class="input-box">
                                 <label for="compositeElementsFile">Composite Elements (compositeElementsFile)</label>
                                 <input type="file" name="compositeElementsFile" id="compositeElementsFile"/>
@@ -42,17 +42,21 @@
                             </div>
                         </div>
                     </li>
-                    <li>
-                        <input type="radio" name="maps-wizard-action" id="maps-wizard-action-3" value="3"/>
+                    <li class="wizard-option-container">
+                        <input class="map-wizard-option" type="radio" name="maps-wizard-action" id="maps-wizard-action-3" value="3"/>
                         <label class="main-option" for="maps-wizard-action-3">
                             Generate a random maps with Multiple
                         </label>
+                        <div class="maps-wizard-option-content maps-wizard-action-3-data">
+                        </div>
                     </li>
-                    <li>
-                        <input type="radio" name="maps-wizard-action" id="maps-wizard-action-4" value="4"/>
+                    <li class="wizard-option-container">
+                        <input class="map-wizard-option" type="radio" name="maps-wizard-action" id="maps-wizard-action-4" value="4"/>
                         <label class="main-option" for="maps-wizard-action-4">
                             Generate a random maps with Layer Elements Composite Loader
                         </label>
+                        <div class="maps-wizard-option-content maps-wizard-action-4-data">
+                        </div>
                     </li>
                     <!-- sample commands:
                     $ npx reldens-generate maps ./generate-data/map-data.json LayerElementsObjectLoader
@@ -67,6 +71,7 @@
                 <label for="additional-map-data">Additional map data:</label>
                 <textarea name="additional-map-data" id="additional-map-data" cols="30" rows="10" placeholder="JSON data for map process"></textarea>
             </div>
+            <input type="submit" class="button button-primary button-maps-wizard" value="Generate"/>
         </form>
     </div>
 </div>

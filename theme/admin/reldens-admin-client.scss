@@ -516,6 +516,18 @@ $darkGreen: #27ae60;
             cursor: pointer;
             margin-bottom: 1rem;
         }
+
+        li {
+            .maps-wizard-option-content {
+                display: none;
+            }
+
+            &.active {
+                .maps-wizard-option-content {
+                    display: block;
+                }
+            }
+        }
     }
 
     .entity-view, .entity-edit {
