@@ -8,13 +8,15 @@ $bold: 600;
 $black: #000000;
 $white: #ffffff;
 $red: #ff0000;
+$orange: #d38200;
 $darkGrey: #333333;
 $grey: #7f8c8d;
 $lightGrey: #ecf0f1;
 $lightGrey2: #f9f9f9;
 $lightBlue: #3498db;
 $darkBlue: #34495e;
-
+$green: #05c459;
+$darkGreen: #27ae60;
 
 .reldens-admin-panel {
     font-family: $normalFont;
@@ -27,6 +29,38 @@ $darkBlue: #34495e;
         display: flex;
         flex-direction: column;
         min-height: 100vh;
+    }
+
+    .notification {
+        display: none;
+        position: absolute;
+        top: 1.5rem;
+        right: 1.5rem;
+        padding: 1rem 2rem;
+        border-radius: 8px;
+        font-size: 14px;
+
+        &.success, &.error {
+            display: block;
+        }
+
+        &.error {
+            background-color: $red;
+            color: $white;
+        }
+
+        &.success {
+            background-color: $darkGreen;
+            color: $white;
+        }
+
+        .close {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            cursor: pointer;
+            font-weight: $bold;
+        }
     }
 
     .header {
@@ -45,6 +79,7 @@ $darkBlue: #34495e;
 
     .content {
         display: flex;
+        position: relative;
     }
 
     .button {
@@ -71,6 +106,15 @@ $darkBlue: #34495e;
 
             &:hover {
                 background-color: $grey;
+            }
+        }
+
+        &-warning {
+            color: $white;
+            background-color: $orange;
+
+            &:hover {
+                background-color: $orange;
             }
         }
 
@@ -269,10 +313,22 @@ $darkBlue: #34495e;
             border: 1px solid #ccc;
             text-align: left;
 
-            button {
+            .button-list-delete {
                 border: none;
                 background-color: transparent;
                 cursor: pointer;
+            }
+
+            .field-actions-container {
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                margin: 0 1rem;
+
+                .button {
+                    margin-bottom: 1rem;
+                }
             }
 
             a, a:visited {
@@ -314,6 +370,20 @@ $darkBlue: #34495e;
                     }
                 }
             }
+        }
+    }
+
+    .filters-toggle {
+        cursor: pointer;
+    }
+
+    .filters-toggle-content {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+
+        &.hidden {
+            display: none;
         }
     }
 
@@ -372,14 +442,23 @@ $darkBlue: #34495e;
 
     }
 
-    .filters {
+    .alert {
+        font-weight: $bold;
+        color: $red;
+    }
+
+    .shutting-down {
+        margin-bottom: 1rem;
+    }
+
+    .sub-content {
         background-color: $lightGrey2;
         padding: 1rem;
         margin-bottom: 1rem;
         border: 1px solid #ccc;
         border-radius: 4px;
 
-        #filter-form {
+        .sub-content-form {
             display: flex;
             flex-wrap: wrap;
             align-items: flex-end;
@@ -398,7 +477,7 @@ $darkBlue: #34495e;
                 margin: 1rem 0 0 0;
             }
 
-            .filter {
+            .sub-content-box {
                 margin-bottom: 1rem;
                 display: flex;
                 flex-direction: column;
