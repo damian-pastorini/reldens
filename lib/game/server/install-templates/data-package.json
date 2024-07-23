@@ -1,0 +1,29 @@
+{
+    "name": "reldens-new-project",
+    "version": "0.1.0",
+    "description": "Reldens - New Project",
+    "main": "index.js",
+    "scripts": {
+        "start": "node ."
+    },
+    "engines": {
+        "node": ">=18.0.0",
+        "npm": ">=8.0.0"
+    },
+    "browserslist": [
+        "> 0.5%, last 2 versions, not dead"
+    ],
+    "targets": {
+        "main": false
+    },
+    "alias": {
+        "process": false
+    },
+    "dependencies": {
+        "reldens": "^4.0.0-beta.37"
+    },
+    "devDependencies": {
+        "@reldens/utils": "^0.32.0",
+        "@colyseus/loadtest": "^0.15.3"
+    }
+}
