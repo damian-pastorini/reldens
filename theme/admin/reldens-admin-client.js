@@ -152,7 +152,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if(shuttingDownTimeElement){
         let shuttingDownTime = shuttingDownTimeElement.getAttribute('data-shutting-down-time');
         if(shuttingDownTime){
-            shuttingDownTimeElement.innerHTML = shuttingDownTime+'s';
+            shuttingDownTimeElement.innerHTML = escapeHTML(shuttingDownTime)+'s';
             shuttingDownTime = Number(shuttingDownTime);
             let shuttingDownTimer = setInterval(
                 () => {
