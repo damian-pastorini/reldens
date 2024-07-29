@@ -7,55 +7,76 @@
             action="{{&actionPath}}"
             method="post"
             enctype="multipart/form-data">
-            <div>
+            <input type="hidden" name="mainAction" id="mainAction" value="generate"/>
+            <div class="main-action-container">
                 <p>What would you like to do?</p>
-                <ul>
+                <ul class="wizard-options-container">
                     <li class="wizard-option-container active">
-                        <input class="map-wizard-option" type="radio" name="maps-wizard-action" id="maps-wizard-action-1" value="elements-object-loader" checked="checked"/>
-                        <label class="main-option" for="maps-wizard-action-1">
-                            Generate a random maps with Layer Elements Object Loader
+                        <input class="map-wizard-option with-state" type="radio" name="mapsWizardAction" id="mapsWizardAction-1" value="elements-object-loader" checked="checked"/>
+                        <label class="main-option" for="mapsWizardAction-1">
+                            Generate a SINGLE random map with Layer Elements Object Loader (LayerElementsObjectLoader)
                         </label>
-                        <div class="maps-wizard-option-content maps-wizard-action-1-data">
-                            <div class="input-box">
-                                <label for="tileSheetPath">Tile Sheet (tileSheetPath)</label>
-                                <input type="file" name="tileSheetPath" id="tileSheetPath"/>
-                            </div>
-                            <div class="input-box">
-                                <label for="layerElementsFiles">Layer Elements (layerElementsFiles)</label>
-                                <input type="file" name="layerElementsFiles" id="layerElementsFiles" multiple="multiple"/>
-                            </div>
+                        <div class="maps-wizard-option-content mapsWizardAction-1-data">
+                            <p>
+                                Generator Data example:<br/>
+                                <a href="https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-object/map-data.json" target="_blank">
+                                https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-object/map-data.json
+                                </a>
+                            </p>
+                            <button type="button" class="button button-primary set-sample-data" data-option-value="elements-object-loader">
+                                Set Sample Data in "Generator Data"
+                            </button>
+                            <p>
+                                Expected JSON files examples:<br/>
+                                <a href="https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-object/house-001.json" target="_blank">
+                                    https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-object/house-001.json
+                                </a><br/>
+                                <a href="https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-object/house-002.json" target="_blank">
+                                    https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-object/house-002.json
+                                </a><br/>
+                                <a href="https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-object/tree.json" target="_blank">
+                                    https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-object/tree.json
+                                </a>
+                            </p>
+                            <p>
+                                Expected Images files examples:<br/>
+                                <a href="https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-object/tilesheet.png" target="_blank">
+                                    https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-object/tilesheet.png
+                                </a>
+                            </p>
+                            <p>
+                                Note and disclaimer:<br/>
+                                In the examples above all the tileset JSON files use the same tileset image (this is because we used the already optimized version of the tileset).<br/>
+                                In theory, it should also work if each element has its own image, but this still needs to be tested.<br/>
+                                For now, you can use the composite option to use multiple tileset images and those will be merged by the generator which use the Tile Map Optimizer.
+                            </p>
                         </div>
                     </li>
                     <li class="wizard-option-container">
-                        <input class="map-wizard-option" type="radio" name="maps-wizard-action" id="maps-wizard-action-2" value="elements-composite-loader"/>
-                        <label class="main-option" for="maps-wizard-action-2">
-                            Generate a random maps with Layer Elements Composite Loader
+                        <input class="map-wizard-option" type="radio" name="mapsWizardAction" id="mapsWizardAction-2" value="elements-composite-loader"/>
+                        <label class="main-option" for="mapsWizardAction-2">
+                            Generate a random maps with Layer Elements Composite Loader (LayerElementsCompositeLoader)
                         </label>
-                        <div class="maps-wizard-option-content maps-wizard-action-2-data">
-                            <div class="input-box">
-                                <label for="compositeElementsFile">Composite Elements (compositeElementsFile)</label>
-                                <input type="file" name="compositeElementsFile" id="compositeElementsFile"/>
-                            </div>
-                            <div class="input-box">
-                                <label for="mapDataFile">Map Data (mapDataFile)</label>
-                                <input type="file" name="mapDataFile" id="mapDataFile"/>
-                            </div>
+                        <div class="maps-wizard-option-content mapsWizardAction-2-data">
+
                         </div>
                     </li>
                     <li class="wizard-option-container">
-                        <input class="map-wizard-option" type="radio" name="maps-wizard-action" id="maps-wizard-action-3" value="3"/>
-                        <label class="main-option" for="maps-wizard-action-3">
-                            Generate a random maps with Multiple
+                        <input class="map-wizard-option" type="radio" name="mapsWizardAction" id="mapsWizardAction-3" value="multiple-by-loader"/>
+                        <label class="main-option" for="mapsWizardAction-3">
+                            Generate a random maps by Multiple Loader (MultipleByLoaderGenerator)
                         </label>
-                        <div class="maps-wizard-option-content maps-wizard-action-3-data">
+                        <div class="maps-wizard-option-content mapsWizardAction-3-data">
+
                         </div>
                     </li>
                     <li class="wizard-option-container">
-                        <input class="map-wizard-option" type="radio" name="maps-wizard-action" id="maps-wizard-action-4" value="4"/>
-                        <label class="main-option" for="maps-wizard-action-4">
-                            Generate a random maps with Layer Elements Composite Loader
+                        <input class="map-wizard-option" type="radio" name="mapsWizardAction" id="mapsWizardAction-4" value="multiple-with-association-by-loader"/>
+                        <label class="main-option" for="mapsWizardAction-4">
+                            Generate a random maps with Layer Elements Composite Loader (MultipleWithAssociationsByLoaderGenerator)
                         </label>
-                        <div class="maps-wizard-option-content maps-wizard-action-4-data">
+                        <div class="maps-wizard-option-content mapsWizardAction-4-data">
+
                         </div>
                     </li>
                     <!-- sample commands:
@@ -68,10 +89,79 @@
                     $ RELDENS_LOG_LEVEL=9 npx reldens-generate maps ./generate-data/map-composite-data-with-associations.json MultipleWithAssociationsByLoaderGenerator
                     -->
                 </ul>
-                <label for="additional-map-data">Additional map data:</label>
-                <textarea name="additional-map-data" id="additional-map-data" cols="30" rows="10" placeholder="JSON data for map process"></textarea>
+                <div class="input-box">
+                    <label for="generatorImages">Images</label>
+                    <input type="file" name="generatorImages" id="generatorImages" multiple="multiple"/>
+                </div>
+                <div class="input-box">
+                    <label for="generatorJsonFiles">JSON Files</label>
+                    <input type="file" name="generatorJsonFiles" id="generatorJsonFiles" multiple="multiple"/>
+                </div>
+                <label for="generatorData">Generator data:</label>
+                <textarea name="generatorData" id="generatorData" class="generatorData" cols="30" rows="10" placeholder="JSON data for map generation process" required="required"></textarea>
             </div>
             <input type="submit" class="button button-primary button-maps-wizard" value="Generate"/>
         </form>
     </div>
 </div>
+<script type="text/javascript">
+    let data = {
+        'elements-object-loader': '{\n' +
+        '    "tileSize": 32,\n' +
+        '    "tileSheetPath": "tilesheet.png",\n' +
+        '    "tileSheetName": "tilesheet.png",\n' +
+        '    "imageHeight": 578,\n' +
+        '    "imageWidth": 612,\n' +
+        '    "tileCount": 306,\n' +
+        '    "columns": 18,\n' +
+        '    "margin": 1,\n' +
+        '    "spacing": 2,\n' +
+        '    "elementsQuantity": {\n' +
+        '        "house1": 3,\n' +
+        '        "house2": 2,\n' +
+        '        "tree": 6\n' +
+        '    },\n' +
+        '    "groundTile": 116,\n' +
+        '    "mainPathSize": 3,\n' +
+        '    "blockMapBorder": true,\n' +
+        '    "freeSpaceTilesQuantity": 2,\n' +
+        '    "variableTilesPercentage": 15.0,\n' +
+        '    "pathTile": 121,\n' +
+        '    "collisionLayersForPaths": ["change-points", "collisions", "tree-base"],\n' +
+        '    "randomGroundTiles": [26, 27, 28, 29, 30, 36, 37, 38, 39, 50, 51, 52, 53],\n' +
+        '    "surroundingTiles": {\n' +
+        '        "-1,-1": 127,\n' +
+        '        "-1,0": 124,\n' +
+        '        "-1,1": 130,\n' +
+        '        "0,-1": 126,\n' +
+        '        "0,1": 129,\n' +
+        '        "1,-1": 132,\n' +
+        '        "1,0": 131,\n' +
+        '        "1,1": 133\n' +
+        '    },\n' +
+        '    "corners": {\n' +
+        '        "-1,-1": 285,\n' +
+        '        "-1,1": 284,\n' +
+        '        "1,-1": 283,\n' +
+        '        "1,1": 282\n' +
+        '    },\n' +
+        '    "layerElementsFiles": {\n' +
+        '        "house1": "house-001.json",\n' +
+        '        "house2": "house-002.json",\n' +
+        '        "tree": "tree.json"\n' +
+        '    }\n' +
+        '}',
+
+    };
+
+    let options = document.querySelectorAll('.set-sample-data');
+    let generatorDataElement = document.querySelector('.generatorData');
+    if (generatorDataElement) {
+        for (let option of options) {
+            option.addEventListener('click', () => {
+                generatorDataElement.value = data[option.dataset.optionValue] || '';
+            });
+        }
+    }
+
+</script>

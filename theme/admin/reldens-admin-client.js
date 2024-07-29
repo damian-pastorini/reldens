@@ -92,13 +92,11 @@ window.addEventListener('DOMContentLoaded', () => {
     let listSelect = document.querySelector('.list-select');
     if(listSelect){
         listSelect.addEventListener('click', (event) => {
-            console.log('click', event.currentTarget.dataset.checked, event);
             let checkboxes = document.querySelectorAll('.ids-checkbox');
             for(let checkbox of checkboxes){
                 checkbox.checked = 1 === Number(event.currentTarget.dataset.checked);
             }
             event.currentTarget.dataset.checked = 1 === Number(event.currentTarget.dataset.checked) ? 0 : 1;
-            console.log('changed to:', event.currentTarget.dataset.checked);
         });
     }
 
@@ -167,18 +165,74 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // maps wizards options display behavior:
-    let mapsWizardsOptions = document.querySelectorAll('.maps-wizard-form .map-wizard-option');
-    if(mapsWizardsOptions){
-        for(let option of mapsWizardsOptions){
-            option.addEventListener('click', (event) => {
-                let wizardOptionsContainer = document.querySelectorAll('.wizard-option-container');
-                for(let container of wizardOptionsContainer){
-                    container.classList.remove('active');
+    // maps wizard functions:
+    let mapsWizardsOptions = document.querySelectorAll('.maps-wizard-form .map-wizard-option.with-state');
+    for(let option of mapsWizardsOptions){
+        option.addEventListener('click', (event) => {
+            let wizardOptionsContainer = document.querySelectorAll('.wizard-option-container');
+            for(let container of wizardOptionsContainer){
+                container.classList.remove('active');
+            }
+            event.currentTarget.parentNode.classList.add('active');
+        });
+    }
+
+    let mapCanvasElements = document.querySelectorAll('.mapCanvas');
+    for (let mapCanvas of mapCanvasElements) {
+        fetch(mapCanvas.dataset.mapJson)
+            .then(response => response.json())
+            .then(data => drawMap(mapCanvas, data))
+            .catch(error => console.error('Error fetching JSON:', error));
+    }
+
+    function drawMap(mapCanvas, mapData)
+    {
+        let context = mapCanvas.getContext('2d');
+        let tileset = new Image();
+        tileset.src = mapCanvas.dataset.imageKey;
+        // we are assuming there is only one tileset in mapData.tilesets since the maps are coming from the optimizer:
+        let tilesetInfo = mapData.tilesets.shift();
+        let tileWidth = tilesetInfo.tilewidth;
+        let tileHeight = tilesetInfo.tileheight;
+        let margin = tilesetInfo.margin;
+        let spacing = tilesetInfo.spacing;
+        let columns = tilesetInfo.columns;
+
+        tileset.onload = () => {
+            for(let layer of mapData.layers){
+                if('tilelayer' !== layer.type){
+                    continue;
                 }
-                event.currentTarget.parentNode.classList.add('active');
-            });
-        }
+                let width = layer.width;
+                for(let index = 0; index < layer.data.length; index++){
+                    let tileIndex = Number(layer.data[index]);
+                    if (tileIndex === 0) {
+                        continue;
+                    }
+                    let colIndex = index % width;
+                    let rowIndex = Math.floor(index / width);
+                    // adjusting for 0-based index:
+                    let tileId = tileIndex - 1;
+                    let sx = margin + (tileId % columns) * (tileWidth + spacing);
+                    let sy = margin + Math.floor(tileId / columns) * (tileHeight + spacing);
+                    context.drawImage(
+                        tileset,
+                        sx,
+                        sy,
+                        tileWidth,
+                        tileHeight,
+                        colIndex * tileWidth,
+                        rowIndex * tileHeight,
+                        tileWidth,
+                        tileHeight
+                    );
+                }
+            }
+        };
+
+        tileset.onerror = () => {
+            console.error('Error loading tileset image');
+        };
     }
 
 });
