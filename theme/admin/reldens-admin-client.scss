@@ -35,9 +35,9 @@ $darkGreen: #27ae60;
         display: none;
         position: absolute;
         top: 1.5rem;
-        right: 1.5rem;
-        padding: 1rem 2rem;
-        border-radius: 8px;
+        right: 0;
+        padding: 1rem 5rem 1rem 2rem;
+        border-radius: 8px 0 0 8px;
         font-size: 14px;
 
         &.success, &.error {
@@ -56,8 +56,8 @@ $darkGreen: #27ae60;
 
         .close {
             position: absolute;
-            top: 0.5rem;
-            right: 0.5rem;
+            top: 1rem;
+            right: 1rem;
             cursor: pointer;
             font-weight: $bold;
         }
@@ -530,6 +530,11 @@ $darkGreen: #27ae60;
                 display: flex;
                 flex-direction: column;
                 list-style: none;
+
+                input.map-wizard-option {
+                    position: relative;
+                    top: 2px;
+                }
 
                 label {
                     cursor: pointer;

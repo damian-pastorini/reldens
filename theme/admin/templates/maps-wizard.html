@@ -45,24 +45,65 @@
                                 </a>
                             </p>
                             <p>
-                                Note and disclaimer:<br/>
-                                In the examples above all the tileset JSON files use the same tileset image (this is because we used the already optimized version of the tileset).<br/>
+                                Note:<br/>
+                                In the examples above, all the tileset JSON files use the same tileset image (this is because we used the already optimized version of the tileset).<br/>
+                                Case disclaimer:
                                 In theory, it should also work if each element has its own image, but this still needs to be tested.<br/>
                                 For now, you can use the composite option to use multiple tileset images and those will be merged by the generator which use the Tile Map Optimizer.
                             </p>
                         </div>
                     </li>
                     <li class="wizard-option-container">
-                        <input class="map-wizard-option" type="radio" name="mapsWizardAction" id="mapsWizardAction-2" value="elements-composite-loader"/>
+                        <input class="map-wizard-option with-state" type="radio" name="mapsWizardAction" id="mapsWizardAction-2" value="elements-composite-loader"/>
                         <label class="main-option" for="mapsWizardAction-2">
-                            Generate a random maps with Layer Elements Composite Loader (LayerElementsCompositeLoader)
+                            Generate a SINGLE random map with Layer Elements Composite Loader (LayerElementsCompositeLoader)
                         </label>
                         <div class="maps-wizard-option-content mapsWizardAction-2-data">
-
+                            <p>
+                                Generator Data example:<br/>
+                                <a href="https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/map-composite-data.json" target="_blank">
+                                    https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/map-composite-data.json
+                                </a>
+                            </p>
+                            <button type="button" class="button button-primary set-sample-data" data-option-value="elements-composite-loader">
+                                Set Sample Data in "Generator Data"
+                            </button>
+                            <p>
+                                Expected JSON files examples:<br/>
+                                <a href="https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/reldens-town-composite.json" target="_blank">
+                                    https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/reldens-town-composite.json
+                                </a>
+                            </p>
+                            <p>
+                                Expected Images files examples:<br/>
+                                <a href="https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/outside.png" target="_blank">
+                                    https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/outside.png
+                                </a><br/>
+                                <a href="https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/terrain.png" target="_blank">
+                                    https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/terrain.png
+                                </a><br/>
+                                <a href="https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/house.png" target="_blank">
+                                    https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/house.png
+                                </a><br/>
+                                <a href="https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/doors.png" target="_blank">
+                                    https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/doors.png
+                                </a><br/>
+                                <a href="https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/water.png" target="_blank">
+                                    https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/water.png
+                                </a><br/>
+                                <a href="https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/inside.png" target="_blank">
+                                    https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/inside.png
+                                </a><br/>
+                            </p>
+                            <p>
+                                Note:<br/>
+                                In this case as you can see we have a single tile map JSON file which contains several tilesets with different images.<br/>
+                                All the original contents are 16x16 pixels, so you can see we set "factor: 2" in the sample params to run the optimizer and get 32x32 pixels tiles in the result.
+                            </p>
                         </div>
                     </li>
                     <li class="wizard-option-container">
-                        <input class="map-wizard-option" type="radio" name="mapsWizardAction" id="mapsWizardAction-3" value="multiple-by-loader"/>
+                        <input class="map-wizard-option with-state" type="radio" name="mapsWizardAction" id="mapsWizardAction-3" value="multiple-by-loader"/>
                         <label class="main-option" for="mapsWizardAction-3">
                             Generate a random maps by Multiple Loader (MultipleByLoaderGenerator)
                         </label>
@@ -71,7 +112,7 @@
                         </div>
                     </li>
                     <li class="wizard-option-container">
-                        <input class="map-wizard-option" type="radio" name="mapsWizardAction" id="mapsWizardAction-4" value="multiple-with-association-by-loader"/>
+                        <input class="map-wizard-option with-state" type="radio" name="mapsWizardAction" id="mapsWizardAction-4" value="multiple-with-association-by-loader"/>
                         <label class="main-option" for="mapsWizardAction-4">
                             Generate a random maps with Layer Elements Composite Loader (MultipleWithAssociationsByLoaderGenerator)
                         </label>
@@ -106,51 +147,59 @@
 </div>
 <script type="text/javascript">
     let data = {
-        'elements-object-loader': '{\n' +
-        '    "tileSize": 32,\n' +
-        '    "tileSheetPath": "tilesheet.png",\n' +
-        '    "tileSheetName": "tilesheet.png",\n' +
-        '    "imageHeight": 578,\n' +
-        '    "imageWidth": 612,\n' +
-        '    "tileCount": 306,\n' +
-        '    "columns": 18,\n' +
-        '    "margin": 1,\n' +
-        '    "spacing": 2,\n' +
-        '    "elementsQuantity": {\n' +
-        '        "house1": 3,\n' +
-        '        "house2": 2,\n' +
-        '        "tree": 6\n' +
-        '    },\n' +
-        '    "groundTile": 116,\n' +
-        '    "mainPathSize": 3,\n' +
-        '    "blockMapBorder": true,\n' +
-        '    "freeSpaceTilesQuantity": 2,\n' +
-        '    "variableTilesPercentage": 15.0,\n' +
-        '    "pathTile": 121,\n' +
-        '    "collisionLayersForPaths": ["change-points", "collisions", "tree-base"],\n' +
-        '    "randomGroundTiles": [26, 27, 28, 29, 30, 36, 37, 38, 39, 50, 51, 52, 53],\n' +
-        '    "surroundingTiles": {\n' +
-        '        "-1,-1": 127,\n' +
-        '        "-1,0": 124,\n' +
-        '        "-1,1": 130,\n' +
-        '        "0,-1": 126,\n' +
-        '        "0,1": 129,\n' +
-        '        "1,-1": 132,\n' +
-        '        "1,0": 131,\n' +
-        '        "1,1": 133\n' +
-        '    },\n' +
-        '    "corners": {\n' +
-        '        "-1,-1": 285,\n' +
-        '        "-1,1": 284,\n' +
-        '        "1,-1": 283,\n' +
-        '        "1,1": 282\n' +
-        '    },\n' +
-        '    "layerElementsFiles": {\n' +
-        '        "house1": "house-001.json",\n' +
-        '        "house2": "house-002.json",\n' +
-        '        "tree": "tree.json"\n' +
-        '    }\n' +
-        '}',
+        'elements-object-loader': JSON.stringify({
+            tileSize: 32,
+            tileSheetPath: 'tilesheet.png',
+            tileSheetName: 'tilesheet.png',
+            imageHeight: 578,
+            imageWidth: 612,
+            tileCount: 306,
+            columns: 18,
+            margin: 1,
+            spacing: 2,
+            elementsQuantity: {
+                house1: 3,
+                house2: 2,
+                tree: 6
+            },
+            groundTile: 116,
+            mainPathSize: 3,
+            blockMapBorder: true,
+            freeSpaceTilesQuantity: 2,
+            variableTilesPercentage: 15.0,
+            pathTile: 121,
+            collisionLayersForPaths: ['change-points', 'collisions', 'tree-base'],
+            randomGroundTiles: [26, 27, 28, 29, 30, 36, 37, 38, 39, 50, 51, 52, 53],
+            surroundingTiles: {
+                '-1,-1': 127,
+                '-1,0': 124,
+                '-1,1': 130,
+                '0,-1': 126,
+                '0,1': 129,
+                '1,-1': 132,
+                '1,0': 131,
+                '1,1': 133
+            },
+            corners: {
+                '-1,-1': 285,
+                '-1,1': 284,
+                '1,-1': 283,
+                '1,1': 282
+            },
+            layerElementsFile: {
+                house1: 'house-001.json',
+                house2: 'house-002.json',
+                tree: 'tree.json'
+            }
+        }),
+        'elements-composite-loader': JSON.stringify({
+            factor: 2,
+            mainPathSize: 3,
+            blockMapBorder: true,
+            freeSpaceTilesQuantity: 2,
+            variableTilesPercentage: 15,
+            collisionLayersForPaths: ['change-points', 'collisions', 'tree-base'],
+        })
 
     };
 
