@@ -105,7 +105,7 @@
                     <li class="wizard-option-container">
                         <input class="map-wizard-option with-state" type="radio" name="mapsWizardAction" id="mapsWizardAction-3" value="multiple-by-loader"/>
                         <label class="main-option" for="mapsWizardAction-3">
-                            Generate a random maps by Multiple Loader (MultipleByLoaderGenerator)
+                            Generate MULTIPLE random maps by Multiple Loader (MultipleByLoaderGenerator)
                         </label>
                         <div class="maps-wizard-option-content mapsWizardAction-3-data">
 
@@ -114,7 +114,7 @@
                     <li class="wizard-option-container">
                         <input class="map-wizard-option with-state" type="radio" name="mapsWizardAction" id="mapsWizardAction-4" value="multiple-with-association-by-loader"/>
                         <label class="main-option" for="mapsWizardAction-4">
-                            Generate a random maps with Layer Elements Composite Loader (MultipleWithAssociationsByLoaderGenerator)
+                            Generate MULTIPLE random maps with Layer Elements Composite Loader (MultipleWithAssociationsByLoaderGenerator)
                         </label>
                         <div class="maps-wizard-option-content mapsWizardAction-4-data">
 
@@ -186,7 +186,7 @@
                 '1,-1': 283,
                 '1,1': 282
             },
-            layerElementsFile: {
+            layerElementsFiles: {
                 house1: 'house-001.json',
                 house2: 'house-002.json',
                 tree: 'tree.json'
@@ -199,6 +199,7 @@
             freeSpaceTilesQuantity: 2,
             variableTilesPercentage: 15,
             collisionLayersForPaths: ['change-points', 'collisions', 'tree-base'],
+            compositeElementsFile: 'reldens-town-composite.json'
         })
 
     };

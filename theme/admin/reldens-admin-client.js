@@ -196,7 +196,7 @@ window.addEventListener('DOMContentLoaded', () => {
         let tileHeight = tilesetInfo.tileheight;
         let margin = tilesetInfo.margin;
         let spacing = tilesetInfo.spacing;
-        let columns = tilesetInfo.columns;
+        let columns = tilesetInfo.imagewidth / (tilesetInfo.tilewidth + tilesetInfo.spacing);
 
         tileset.onload = () => {
             for(let layer of mapData.layers){
