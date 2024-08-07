@@ -1,0 +1,40 @@
+<h2>Maps Wizard</h2>
+<div class="sub-content maps-wizard">
+    <div class="sub-content-box">
+        <form class="sub-content-form maps-wizard-form confirmation-required"
+            name="maps-wizard-form"
+            id="maps-wizard-form"
+            action="{{&actionPath}}"
+            method="post"
+            enctype="multipart/form-data">
+            <input type="hidden" name="mainAction" id="mainAction" value="import"/>
+            <input type="hidden" name="generatedMapsHandler" id="generatedMapsHandler" value="{{&generatedMapsHandler}}"/>
+            <div class="main-action-container maps-selection">
+                <p>Select the maps to be imported:</p>
+                <ul class="wizard-options-container">
+                {{#maps}}
+                    <li class="wizard-map-option-container">
+                        <div class="selector-box">
+                            <input class="map-wizard-option" type="checkbox" name="selectedMaps[]" id="maps-wizard-map-option-{{&key}}" value="{{&key}}"/>
+                            <input type="hidden" name="map-title-{{&key}}" id="map-title-{{&key}}" value="{{&key}}"/>
+                            <label class="main-option" for="maps-wizard-map-option-{{&key}}">
+                                {{&key}}
+                            </label>
+                        </div>
+                        <canvas
+                            class="mapCanvas"
+                            width="{{&mapWidth}}"
+                            height="{{&mapHeight}}"
+                            data-tile-width="{{&tileWidth}}"
+                            data-tile-height="{{&tileHeight}}"
+                            data-image-key="{{&mapImage}}"
+                            data-map-json="{{&mapJson}}">
+                        </canvas>
+                    </li>
+                {{/maps}}
+                </ul>
+            </div>
+            <input type="submit" class="button button-primary button-maps-wizard" value="Import Selected Maps"/>
+        </form>
+    </div>
+</div>
