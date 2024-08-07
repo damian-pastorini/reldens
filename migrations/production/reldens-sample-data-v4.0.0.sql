@@ -504,7 +504,10 @@ REPLACE INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(330, 'server', 'rooms/world/movementSpeed', '180', 2),
 	(331, 'server', 'rooms/world/onlyWalkable', '1', 3),
 	(332, 'server', 'rooms/world/timeStep', '0.04', 2),
-	(333, 'server', 'rooms/world/tryClosestPath', '0', 3);
+	(333, 'server', 'rooms/world/tryClosestPath', '0', 3),
+	(334, 'server', 'scores/obtainedScorePerNpc', '5', 2),
+	(335, 'server', 'scores/obtainedScorePerPlayer', '10', 2),
+	(336, 'server', 'scores/useNpcCustomScore', '1', 3);
 
 REPLACE INTO `features` (`id`, `code`, `title`, `is_enabled`) VALUES
 	(1, 'chat', 'Chat', 1),
@@ -522,7 +525,8 @@ REPLACE INTO `features` (`id`, `code`, `title`, `is_enabled`) VALUES
 	(13, 'rewards', 'Rewards', 1),
 	(14, 'snippets', 'Snippets', 1),
 	(16, 'ads', 'Ads', 1),
-	(17, 'world', 'World', 0);
+	(17, 'world', 'World', 0)
+	(18, 'scores', 'Scores', 1);
 
 REPLACE INTO `items_group` (`id`, `key`, `label`, `description`, `files_name`, `sort`, `items_limit`, `limit_per_item`) VALUES
 	(1, 'weapon', 'Weapon', 'All kinds of weapons.', 'weapon.png', 2, 1, 0),
