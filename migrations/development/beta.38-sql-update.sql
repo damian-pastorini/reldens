@@ -8,6 +8,12 @@ SET FOREIGN_KEY_CHECKS = 0;
 INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('server', 'scores/obtainedScorePerPlayer', '10', 2);
 INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('server', 'scores/obtainedScorePerNpc', '5', 2);
 INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('server', 'scores/useNpcCustomScore', '1', 3);
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('server', 'scores/fullTableView/enabled', '1', 3);
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/scores/enabled', '1', 3);
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/scores/responsiveX', '100', 2);
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/scores/responsiveY', '0', 2);
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/scores/x', '430', 2);
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/scores/y', '150', 2);
 
 -- Features:
 INSERT INTO `features` (`code`, `title`, `is_enabled`) VALUES ('scores', 'Scores', 1);

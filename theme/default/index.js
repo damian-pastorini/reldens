@@ -5,7 +5,7 @@
  */
 
 // set logger level and trace, this needs to be specified before the game manager is required:
-window.RELDENS_LOG_LEVEL = 7;
+window.RELDENS_LOG_LEVEL = 9;
 window.RELDENS_ENABLE_TRACE_FOR = 'emergency,alert,critical';
 // debug events (warning! this will output in the console ALL the event listeners and every event fired):
 // reldens.events.debug = 'all';
@@ -34,6 +34,7 @@ reldens.events.on('reldens.startGameAfter', () => {
 
 reldens.events.on('reldens.activateRoom', (room) => {
     room.onMessage('*', (message) => {
+        // @TODO - BETA - Replace 'rski.Bc' by the constant ACTION_SKILL_BEFORE_CAST, standardize events names.
         // filter skills before cast message:
         if('rski.Bc' !== message.act){
             return;

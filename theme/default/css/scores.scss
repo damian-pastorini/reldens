@@ -1,0 +1,29 @@
+/**
+ *
+ * Reldens - Styles - Scores
+ *
+ */
+
+
+.scores-dialog-box {
+    min-width: 160px;
+    top: 260px;
+    right: 360px;
+}
+
+@media (max-height: 400px) {
+
+    .scores-dialog-box {
+        top: 50px;
+    }
+
+}
+
+.scores-open {
+    position: relative;
+    top: 300px;
+    right: 60px;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 10px;
+    max-width: 40px;
+}
