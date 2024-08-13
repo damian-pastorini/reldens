@@ -303,6 +303,15 @@ input[type="submit"] {
     }
 }
 
+.forgot-password-content {
+    flex-direction: column;
+
+    .input-box {
+        padding: 1rem 2rem 2rem;
+        text-align: center;
+    }
+}
+
 .response-error {
     color: #ff0000;
 }
