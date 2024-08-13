@@ -1,3 +1,6 @@
+{{#showScoresTitle}}
+<h3>{{&scoresTitle}}</h3>
+{{/showScoresTitle}}
 <div class="scores-table">
     {{#scores}}
     <div class="score-container">
@@ -5,6 +8,11 @@
         <span class="score-value">{{&score}}</span>
     </div>
     {{/scores}}
+    {{#pages}}
+    <div class="pager-page">
+        <a href="{{&pageLink}}">{{&pageLabel}}</a>
+    </div>
+    {{/pages}}
     {{#showCurrentPlayer}}
     <div class="current-player-score-data">
         <span class="score-value">{{&currentPlayerScore}}</span>

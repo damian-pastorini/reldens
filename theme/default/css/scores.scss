@@ -27,3 +27,21 @@
     padding: 10px;
     max-width: 40px;
 }
+
+.scores-content {
+    flex-direction: column;
+
+    h3 {
+        text-align: center;
+    }
+
+    .scores-table {
+        padding: 1rem 2rem 2rem;
+    }
+
+    .score-container {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+    }
+}
