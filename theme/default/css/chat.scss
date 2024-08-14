@@ -84,6 +84,7 @@
     word-wrap: break-word;
     overflow: auto;
     font-size: 12px;
+    user-select: auto;
 }
 
 #chat-input {
@@ -91,6 +92,7 @@
     bottom: 15px;
     width: 70%;
     outline: none;
+    user-select: auto;
 }
 
 #chat-send {
