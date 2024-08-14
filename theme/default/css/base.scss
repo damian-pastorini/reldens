@@ -13,7 +13,10 @@ body, html {
 body {
     font-family: $normalFont;
     background-color: transparent;
-    user-select: none;
+
+    &.game-engine-started {
+        user-select: none;
+    }
 
     .wrapper {
         display: flex;
@@ -303,6 +306,15 @@ input[type="submit"] {
     }
 }
 
+.forgot-password-content {
+    flex-direction: column;
+
+    .input-box {
+        padding: 1rem 2rem 2rem;
+        text-align: center;
+    }
+}
+
 .response-error {
     color: #ff0000;
 }
@@ -423,6 +435,10 @@ form {
     position: relative;
     bottom: 100px;
     left: 120px;
+
+    &.ui-box-joystick {
+        bottom: 56px;
+    }
 
     img {
         float: left;
