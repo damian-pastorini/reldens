@@ -34,6 +34,7 @@ reldens.events.on('reldens.startGameAfter', () => {
 
 reldens.events.on('reldens.activateRoom', (room) => {
     room.onMessage('*', (message) => {
+        // @TODO - BETA - Replace 'rski.Bc' by the constant ACTION_SKILL_BEFORE_CAST, standardize events names.
         // filter skills before cast message:
         if('rski.Bc' !== message.act){
             return;
