@@ -1,0 +1,15 @@
+{{#showRewardsTitle}}
+<h3>{{&rewardsTitle}}</h3>
+{{/showRewardsTitle}}
+<div class="rewards-table">
+    {{#pendingRewards}}
+    <div class="reward-container reward-{{&rewardKey}}">
+        {{#showRewardImage}}
+        <div class="reward-image-container reward-{{&rewardKey}}">
+            <img class="reward-image" src="{{&rewardImage}}" alt="{{&rewardName}}"/>
+        </div>
+        {{/showRewardImage}}
+        <span class="reward-name">{{&rewardName}}</span>
+    </div>
+    {{/pendingRewards}}
+</div>

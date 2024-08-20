@@ -14,6 +14,14 @@ INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/sc
 INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/scores/responsiveY', '0', 2);
 INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/scores/x', '430', 2);
 INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/scores/y', '150', 2);
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('server', 'rewards/loginReward/enabled', '1', 3);
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('server', 'rewards/playedTimeReward/enabled', '1', 3);
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('server', 'rewards/playedTimeReward/time', '30000', 3);
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/rewards/enabled', '1', 3);
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/rewards/responsiveX', '100', 2);
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/rewards/responsiveY', '0', 2);
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/rewards/x', '430', 2);
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/rewards/y', '200', 2);
 
 -- Features:
 INSERT INTO `features` (`code`, `title`, `is_enabled`) VALUES ('scores', 'Scores', 1);
@@ -40,6 +48,44 @@ CREATE TABLE IF NOT EXISTS `scores_detail` (
 	`kill_npc_id` INT UNSIGNED NULL DEFAULT NULL,
 	PRIMARY KEY (`id`) USING BTREE,
 	INDEX `player_id` (`player_id`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
+
+# Login:
+ALTER TABLE `users` ADD COLUMN `login_count` INT NOT NULL DEFAULT '0' AFTER `played_time`;
+
+CREATE TABLE IF NOT EXISTS `users_login` (
+    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `user_id` INT UNSIGNED NOT NULL,
+    `login_date` TIMESTAMP NOT NULL DEFAULT (now()),
+    `logout_date` TIMESTAMP NULL DEFAULT NULL,
+    PRIMARY KEY (`id`) USING BTREE,
+    INDEX `user_id` (`user_id`) USING BTREE,
+    CONSTRAINT `FK_users_login_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
+
+# Rewards Events:
+CREATE TABLE `rewards_events` (
+	`id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+	`position` INT UNSIGNED NOT NULL DEFAULT '0',
+	`event_key` VARCHAR(255) NOT NULL COLLATE 'utf8mb4_unicode_ci',
+	`event_data` VARCHAR(255) NOT NULL COLLATE 'utf8mb4_unicode_ci',
+	`enabled` TINYINT NOT NULL DEFAULT '0',
+	`active_from` DATETIME NULL DEFAULT NULL,
+	`active_to` DATETIME NULL DEFAULT NULL,
+	PRIMARY KEY (`id`) USING BTREE,
+	INDEX `event_key` (`event_key`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
+
+CREATE TABLE `rewards_events_state` (
+	`id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+	`rewards_events_id` INT UNSIGNED NOT NULL,
+	`player_id` INT UNSIGNED NOT NULL,
+	`state` TEXT NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
+	PRIMARY KEY (`id`) USING BTREE,
+	INDEX `rewards_events_id` (`rewards_events_id`) USING BTREE,
+	INDEX `user_id` (`player_id`) USING BTREE,
+	CONSTRAINT `FK_rewards_events_state_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION,
+	CONSTRAINT `FK__rewards_events` FOREIGN KEY (`rewards_events_id`) REFERENCES `rewards_events` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
 
 --
