@@ -12,7 +12,9 @@ window.addEventListener('DOMContentLoaded', () => {
     {
         let value = `; ${document.cookie}`;
         let parts = value.split(`; ${name}=`);
-        if (parts.length === 2) return parts.pop().split(';').shift();
+        if(2 === parts.length){
+            return parts.pop().split(';').shift()
+        }
     }
 
     function deleteCookie(name)
@@ -156,7 +158,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 () => {
                     shuttingDownTimeElement.innerHTML = escapeHTML(shuttingDownTime)+'s';
                     shuttingDownTime--;
-                    if (0 === shuttingDownTime) {
+                    if(0 === Number(shuttingDownTime)){
                         clearInterval(shuttingDownTimer);
                     }
                 },
@@ -178,7 +180,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     let mapCanvasElements = document.querySelectorAll('.mapCanvas');
-    for (let mapCanvas of mapCanvasElements) {
+    for(let mapCanvas of mapCanvasElements){
         fetch(mapCanvas.dataset.mapJson)
             .then(response => response.json())
             .then(data => drawMap(mapCanvas, data))
@@ -206,7 +208,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 let width = layer.width;
                 for(let index = 0; index < layer.data.length; index++){
                     let tileIndex = Number(layer.data[index]);
-                    if (tileIndex === 0) {
+                    if(0 === tileIndex){
                         continue;
                     }
                     let colIndex = index % width;
