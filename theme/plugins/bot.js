@@ -33,7 +33,7 @@ async function main (options)
             return false;
         }
 
-        if (GameConst.START_GAME === gameMessage.act) {
+        if(GameConst.START_GAME === gameMessage.act){
             userData.password = gameMessage.guestPassword;
             console.log('Game started successfully!');
             gameRoom.send('*', {
