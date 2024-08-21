@@ -64,28 +64,29 @@ CREATE TABLE IF NOT EXISTS `users_login` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
 
 # Rewards Events:
-CREATE TABLE `rewards_events` (
-	`id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-	`position` INT UNSIGNED NOT NULL DEFAULT '0',
-	`event_key` VARCHAR(255) NOT NULL COLLATE 'utf8mb4_unicode_ci',
-	`event_data` VARCHAR(255) NOT NULL COLLATE 'utf8mb4_unicode_ci',
-	`enabled` TINYINT NOT NULL DEFAULT '0',
-	`active_from` DATETIME NULL DEFAULT NULL,
-	`active_to` DATETIME NULL DEFAULT NULL,
-	PRIMARY KEY (`id`) USING BTREE,
-	INDEX `event_key` (`event_key`) USING BTREE
+CREATE TABLE IF NOT EXISTS `rewards_events` (
+    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `label` VARCHAR(255) NOT NULL COLLATE 'utf8mb4_unicode_ci',
+    `event_key` VARCHAR(255) NOT NULL COLLATE 'utf8mb4_unicode_ci',
+    `event_data` VARCHAR(255) NOT NULL COLLATE 'utf8mb4_unicode_ci',
+    `position` INT UNSIGNED NOT NULL DEFAULT '0',
+    `enabled` TINYINT NOT NULL DEFAULT '0',
+    `active_from` DATETIME NULL DEFAULT NULL,
+    `active_to` DATETIME NULL DEFAULT NULL,
+    PRIMARY KEY (`id`) USING BTREE,
+    INDEX `event_key` (`event_key`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
 
-CREATE TABLE `rewards_events_state` (
+CREATE TABLE IF NOT EXISTS `rewards_events_state` (
 	`id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-	`rewards_events_id` INT UNSIGNED NOT NULL,
-	`player_id` INT UNSIGNED NOT NULL,
-	`state` TEXT NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
-	PRIMARY KEY (`id`) USING BTREE,
-	INDEX `rewards_events_id` (`rewards_events_id`) USING BTREE,
-	INDEX `user_id` (`player_id`) USING BTREE,
-	CONSTRAINT `FK_rewards_events_state_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION,
-	CONSTRAINT `FK__rewards_events` FOREIGN KEY (`rewards_events_id`) REFERENCES `rewards_events` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
+    `rewards_events_id` INT UNSIGNED NOT NULL,
+    `player_id` INT UNSIGNED NOT NULL,
+    `state` TEXT NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
+    PRIMARY KEY (`id`) USING BTREE,
+    INDEX `rewards_events_id` (`rewards_events_id`) USING BTREE,
+    INDEX `user_id` (`player_id`) USING BTREE,
+    CONSTRAINT `FK_rewards_events_state_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION,
+    CONSTRAINT `FK__rewards_events` FOREIGN KEY (`rewards_events_id`) REFERENCES `rewards_events` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
 
 --

@@ -630,3 +630,18 @@ span.stat-value {
     color: #fff;
     margin: 10px 0;
 }
+
+.notification-balloon {
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    padding: 5px;
+    line-height: 15px;
+    height: 15px;
+    width: 15px;
+    background-color: red;
+    color: #ffffff;
+    border-radius: 50%;
+    text-align: center;
+    font-size: 14px;
+}

@@ -25,23 +25,79 @@
     right: 60px;
     background: rgba(0, 0, 0, 0.5);
     padding: 10px;
-    max-width: 40px;
+
+    img {
+        max-width: 40px;
+    }
 }
 
-.rewards-content {
-    flex-direction: column;
+#box-rewards {
+    width: 260px;
 
-    h3 {
-        text-align: center;
+    .box-content {
+        min-height: 200px;
     }
+}
 
-    .rewards-table {
-        padding: 1rem 2rem 2rem;
-    }
+.rewards-table {
+    position: relative;
+    word-wrap: break-word;
+    overflow: auto;
+    font-size: 10px;
+    width: 100%;
+    min-height: 120px;
 
-    .rewards-container {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 0.5rem;
+
+    .reward-container {
+        float: left;
+        display: block;
+        width: 50px;
+        height: 50px;
+        margin-bottom: 6px;
+
+        &.reward-active {
+            cursor: pointer;
+        }
+
+        .reward-image-container, .reward-name {
+            display: block;
+            float: left;
+            width: 100%;
+            text-align: center;
+            font-size: 10px;
+        }
+
+        &.reward-inactive {
+            .reward-image-container, .reward-name {
+                opacity: 0.4;
+            }
+        }
+
+        .reward-description {
+            display: none;
+            position: absolute;
+            top: 54px;
+            left: 16%;
+            z-index: 200;
+            max-width: 120px;
+            background: $cBlack;
+            padding: 4px;
+            color: $cWhite;
+            border: 1px solid $cWhite;
+            font-size: 10px;
+            font-style: italic;
+        }
+
+        &:hover {
+            .reward-description {
+                display: block;
+            }
+        }
     }
+}
+
+.reward-container:nth-child(4n) .reward-description,
+.reward-container:nth-child(5n) .reward-description {
+    right: 50px;
+    left: auto;
 }
