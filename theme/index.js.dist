@@ -18,7 +18,7 @@ let appServer = new ServerManager({
     projectRoot: __dirname, // we need to pass the server root
     projectThemeName: '{{yourThemeName}}', // if the project theme is not specified then "default" will be used
     jsSourceMaps: '1' === process.env.RELDENS_JS_SOURCEMAPS, // enable JS source maps to debug the client on your IDE
-    cssSourceMaps: false,
+    cssSourceMaps: '1' === process.env.RELDENS_CSS_SOURCEMAPS,
     customPlugin: ServerPlugin
 });
 

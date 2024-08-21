@@ -15,6 +15,8 @@ class Commander
     projectRoot = process.cwd();
     reldensModulePath = path.join(this.projectRoot, 'node_modules', 'reldens');
     projectThemeName = 'default';
+    jsSourceMaps = '1' === process.env.RELDENS_JS_SOURCEMAPS;
+    cssSourceMaps = '1' === process.env.RELDENS_CSS_SOURCEMAPS;
 
     command = '';
     ready = false;
@@ -39,7 +41,7 @@ class Commander
                     filename: __filename,
                     process: process.cwd(),
                     modulePath: this.reldensModulePath,
-                    projectRoot: this.projectRoot,
+                    projectRoot: this.projectRoot
                 }
             );
         }
