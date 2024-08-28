@@ -67,6 +67,8 @@ CREATE TABLE IF NOT EXISTS `users_login` (
 CREATE TABLE IF NOT EXISTS `rewards_events` (
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
     `label` VARCHAR(255) NOT NULL COLLATE 'utf8mb4_unicode_ci',
+    `description` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
+    `handler_key` VARCHAR(255) NOT NULL COLLATE 'utf8mb4_unicode_ci',
     `event_key` VARCHAR(255) NOT NULL COLLATE 'utf8mb4_unicode_ci',
     `event_data` VARCHAR(255) NOT NULL COLLATE 'utf8mb4_unicode_ci',
     `position` INT UNSIGNED NOT NULL DEFAULT '0',
