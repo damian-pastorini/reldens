@@ -46,6 +46,8 @@ TRUNCATE `players_stats`;
 TRUNCATE `respawn`;
 TRUNCATE `rewards`;
 TRUNCATE `rewards_modifiers`;
+TRUNCATE `rewards_events`;
+TRUNCATE `rewards_events_state`;
 TRUNCATE `rooms`;
 TRUNCATE `rooms_change_points`;
 TRUNCATE `rooms_return_points`;
@@ -705,6 +707,10 @@ REPLACE INTO `respawn` (`id`, `object_id`, `respawn_time`, `instances_limit`, `l
 REPLACE INTO `rewards` (`id`, `object_id`, `item_id`, `modifier_id`, `experience`, `drop_rate`, `drop_quantity`, `is_unique`, `was_given`, `has_drop_body`) VALUES
 	(1, 7, 2, NULL, 10, 100, 1, 0, 0, 1),
 	(2, 6, 2, NULL, 10, 100, 3, 0, 0, 1);
+
+REPLACE INTO `rewards_events` (`id`, `label`, `description`, `handler_key`, `event_key`, `event_data`, `position`, `enabled`, `active_from`, `active_to`) VALUES
+    (1, 'rewards.dailyLogin', 'rewards.dailyDescription', 'login', 'reldens.joinRoomEnd', '{"action":"dailyLogin","items":{"coins":1}}', 0, 1, NULL, NULL),
+    (2, 'rewards.straightDaysLogin', 'rewards.straightDaysDescription', 'login', 'reldens.joinRoomEnd', '{"action":"straightDaysLogin","days":2,"items":{"coins":10}}', 0, 1, NULL, NULL);
 
 REPLACE INTO `rooms` (`id`, `name`, `title`, `map_filename`, `scene_images`, `room_class_key`, `customData`) VALUES
 	(2, 'reldens-house-1', 'House - 1', 'reldens-house-1.json', 'reldens-house-1.png', NULL, '{"allowGuest":true}'),

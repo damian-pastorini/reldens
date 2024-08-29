@@ -32,11 +32,11 @@ CREATE TABLE IF NOT EXISTS `operation_types` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
 
 CREATE TABLE IF NOT EXISTS `target_options` (
-	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-	`target_key` VARCHAR(50) NOT NULL COLLATE 'utf8mb4_unicode_ci',
-	`target_label` VARCHAR(50) NOT NULL COLLATE 'utf8mb4_unicode_ci',
-	PRIMARY KEY (`id`) USING BTREE,
-	UNIQUE INDEX `target_key` (`target_key`) USING BTREE
+    `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+    `target_key` VARCHAR(50) NOT NULL COLLATE 'utf8mb4_unicode_ci',
+    `target_label` VARCHAR(50) NOT NULL COLLATE 'utf8mb4_unicode_ci',
+    PRIMARY KEY (`id`) USING BTREE,
+    UNIQUE INDEX `target_key` (`target_key`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
 
 CREATE TABLE IF NOT EXISTS `locale` (
@@ -359,15 +359,15 @@ CREATE TABLE IF NOT EXISTS `clan_members` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
 
 CREATE TABLE IF NOT EXISTS `config` (
-	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-	`scope` VARCHAR(255) NOT NULL COLLATE 'utf8mb4_unicode_ci',
-	`path` VARCHAR(255) NOT NULL COLLATE 'utf8mb4_unicode_ci',
-	`value` TEXT NOT NULL COLLATE 'utf8mb4_unicode_ci',
-	`type` INT(10) UNSIGNED NOT NULL,
-	PRIMARY KEY (`id`) USING BTREE,
-	UNIQUE INDEX `scope_path` (`scope`, `path`) USING BTREE,
-	INDEX `FK_config_config_types` (`type`) USING BTREE,
-	CONSTRAINT `FK_config_config_types` FOREIGN KEY (`type`) REFERENCES `config_types` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
+    `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+    `scope` VARCHAR(255) NOT NULL COLLATE 'utf8mb4_unicode_ci',
+    `path` VARCHAR(255) NOT NULL COLLATE 'utf8mb4_unicode_ci',
+    `value` TEXT NOT NULL COLLATE 'utf8mb4_unicode_ci',
+    `type` INT(10) UNSIGNED NOT NULL,
+    PRIMARY KEY (`id`) USING BTREE,
+    UNIQUE INDEX `scope_path` (`scope`, `path`) USING BTREE,
+    INDEX `FK_config_config_types` (`type`) USING BTREE,
+    CONSTRAINT `FK_config_config_types` FOREIGN KEY (`type`) REFERENCES `config_types` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
 
 CREATE TABLE IF NOT EXISTS `items_types` (
@@ -552,23 +552,23 @@ CREATE TABLE IF NOT EXISTS `rewards_modifiers` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
 
 CREATE TABLE IF NOT EXISTS `rewards` (
-	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-	`object_id` INT(10) UNSIGNED NOT NULL,
-	`item_id` INT(10) UNSIGNED NULL DEFAULT NULL,
-	`modifier_id` INT(10) UNSIGNED NULL DEFAULT NULL,
-	`experience` INT(10) UNSIGNED NOT NULL DEFAULT '0',
-	`drop_rate` INT(10) UNSIGNED NOT NULL,
-	`drop_quantity` INT(10) UNSIGNED NOT NULL,
-	`is_unique` TINYINT(3) UNSIGNED NOT NULL DEFAULT '0',
-	`was_given` TINYINT(3) UNSIGNED NOT NULL DEFAULT '0',
-	`has_drop_body` TINYINT(3) UNSIGNED NOT NULL DEFAULT '0',
-	PRIMARY KEY (`id`) USING BTREE,
-	INDEX `FK_rewards_items_item` (`item_id`) USING BTREE,
-	INDEX `FK_rewards_objects` (`object_id`) USING BTREE,
-	INDEX `FK_rewards_rewards_modifiers` (`modifier_id`) USING BTREE,
-	CONSTRAINT `FK_rewards_items_item` FOREIGN KEY (`item_id`) REFERENCES `items_item` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION,
-	CONSTRAINT `FK_rewards_objects` FOREIGN KEY (`object_id`) REFERENCES `objects` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION,
-	CONSTRAINT `FK_rewards_rewards_modifiers` FOREIGN KEY (`modifier_id`) REFERENCES `rewards_modifiers` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
+    `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+    `object_id` INT(10) UNSIGNED NOT NULL,
+    `item_id` INT(10) UNSIGNED NULL DEFAULT NULL,
+    `modifier_id` INT(10) UNSIGNED NULL DEFAULT NULL,
+    `experience` INT(10) UNSIGNED NOT NULL DEFAULT '0',
+    `drop_rate` INT(10) UNSIGNED NOT NULL,
+    `drop_quantity` INT(10) UNSIGNED NOT NULL,
+    `is_unique` TINYINT(3) UNSIGNED NOT NULL DEFAULT '0',
+    `was_given` TINYINT(3) UNSIGNED NOT NULL DEFAULT '0',
+    `has_drop_body` TINYINT(3) UNSIGNED NOT NULL DEFAULT '0',
+    PRIMARY KEY (`id`) USING BTREE,
+    INDEX `FK_rewards_items_item` (`item_id`) USING BTREE,
+    INDEX `FK_rewards_objects` (`object_id`) USING BTREE,
+    INDEX `FK_rewards_rewards_modifiers` (`modifier_id`) USING BTREE,
+    CONSTRAINT `FK_rewards_items_item` FOREIGN KEY (`item_id`) REFERENCES `items_item` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION,
+    CONSTRAINT `FK_rewards_objects` FOREIGN KEY (`object_id`) REFERENCES `objects` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION,
+    CONSTRAINT `FK_rewards_rewards_modifiers` FOREIGN KEY (`modifier_id`) REFERENCES `rewards_modifiers` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
 
 CREATE TABLE IF NOT EXISTS `drops_animations` (
@@ -939,26 +939,26 @@ CREATE TABLE IF NOT EXISTS `users_login` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
 
 CREATE TABLE IF NOT EXISTS `scores` (
-	`id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-	`player_id` INT UNSIGNED NOT NULL,
-	`total_score` INT UNSIGNED NOT NULL,
-	`players_kills_count` INT UNSIGNED NOT NULL,
-	`npcs_kills_count` INT UNSIGNED NOT NULL,
-	`last_player_kill_time` DATETIME DEFAULT NULL,
-	`last_npc_kill_time` DATETIME DEFAULT NULL,
-	PRIMARY KEY (`id`) USING BTREE,
-	INDEX `player_id` (`player_id`) USING BTREE
+    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `player_id` INT UNSIGNED NOT NULL,
+    `total_score` INT UNSIGNED NOT NULL,
+    `players_kills_count` INT UNSIGNED NOT NULL,
+    `npcs_kills_count` INT UNSIGNED NOT NULL,
+    `last_player_kill_time` DATETIME DEFAULT NULL,
+    `last_npc_kill_time` DATETIME DEFAULT NULL,
+    PRIMARY KEY (`id`) USING BTREE,
+    INDEX `player_id` (`player_id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
 
 CREATE TABLE IF NOT EXISTS `scores_detail` (
-	`id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-	`player_id` INT UNSIGNED NOT NULL,
-	`obtained_score` INT UNSIGNED NOT NULL,
-	`kill_time` DATETIME NOT NULL,
-	`kill_player_id` INT UNSIGNED NULL DEFAULT NULL,
-	`kill_npc_id` INT UNSIGNED NULL DEFAULT NULL,
-	PRIMARY KEY (`id`) USING BTREE,
-	INDEX `player_id` (`player_id`) USING BTREE
+    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `player_id` INT UNSIGNED NOT NULL,
+    `obtained_score` INT UNSIGNED NOT NULL,
+    `kill_time` DATETIME NOT NULL,
+    `kill_player_id` INT UNSIGNED NULL DEFAULT NULL,
+    `kill_npc_id` INT UNSIGNED NULL DEFAULT NULL,
+    PRIMARY KEY (`id`) USING BTREE,
+    INDEX `player_id` (`player_id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
 
 CREATE TABLE IF NOT EXISTS `rewards_events` (
@@ -977,15 +977,15 @@ CREATE TABLE IF NOT EXISTS `rewards_events` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
 
 CREATE TABLE IF NOT EXISTS `rewards_events_state` (
-	`id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-	`rewards_events_id` INT UNSIGNED NOT NULL,
-	`player_id` INT UNSIGNED NOT NULL,
-	`state` TEXT NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
-	PRIMARY KEY (`id`) USING BTREE,
-	INDEX `rewards_events_id` (`rewards_events_id`) USING BTREE,
-	INDEX `user_id` (`player_id`) USING BTREE,
-	CONSTRAINT `FK_rewards_events_state_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION,
-	CONSTRAINT `FK__rewards_events` FOREIGN KEY (`rewards_events_id`) REFERENCES `rewards_events` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
+    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `rewards_events_id` INT UNSIGNED NOT NULL,
+    `player_id` INT UNSIGNED NOT NULL,
+    `state` TEXT NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
+    PRIMARY KEY (`id`) USING BTREE,
+    INDEX `rewards_events_id` (`rewards_events_id`) USING BTREE,
+    INDEX `user_id` (`player_id`) USING BTREE,
+    CONSTRAINT `FK_rewards_events_state_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION,
+    CONSTRAINT `FK__rewards_events` FOREIGN KEY (`rewards_events_id`) REFERENCES `rewards_events` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
 
 --
