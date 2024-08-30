@@ -22,6 +22,9 @@ INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/re
 INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/rewards/responsiveY', '0', 2);
 INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/rewards/x', '430', 2);
 INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/rewards/y', '200', 2);
+UPDATE `config` SET `value` = '260' WHERE `scope` = 'client' AND `path` = 'ui/minimap/camX';
+UPDATE `config` SET `value` = '42' WHERE `scope` = 'client' AND `path` = 'ui/minimap/responsiveX';
+UPDATE `config` SET `value` = '230' WHERE `scope` = 'client' AND `path` = 'ui/minimap/x';
 
 -- Features:
 INSERT INTO `features` (`code`, `title`, `is_enabled`) VALUES ('scores', 'Scores', 1);
@@ -50,7 +53,7 @@ CREATE TABLE IF NOT EXISTS `scores_detail` (
 	INDEX `player_id` (`player_id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
 
-# Login:
+-- Login:
 ALTER TABLE `users` ADD COLUMN `login_count` INT NOT NULL DEFAULT '0' AFTER `played_time`;
 
 CREATE TABLE IF NOT EXISTS `users_login` (
@@ -63,7 +66,7 @@ CREATE TABLE IF NOT EXISTS `users_login` (
     CONSTRAINT `FK_users_login_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
 
-# Rewards Events:
+-- Rewards Events:
 CREATE TABLE IF NOT EXISTS `rewards_events` (
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
     `label` VARCHAR(255) NOT NULL COLLATE 'utf8mb4_unicode_ci',
@@ -90,6 +93,10 @@ CREATE TABLE IF NOT EXISTS `rewards_events_state` (
     CONSTRAINT `FK_rewards_events_state_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION,
     CONSTRAINT `FK__rewards_events` FOREIGN KEY (`rewards_events_id`) REFERENCES `rewards_events` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
+
+REPLACE INTO `rewards_events` (`id`, `label`, `description`, `handler_key`, `event_key`, `event_data`, `position`, `enabled`, `active_from`, `active_to`) VALUES
+    (1, 'rewards.dailyLogin', 'rewards.dailyDescription', 'login', 'reldens.joinRoomEnd', '{"action":"dailyLogin","items":{"coins":1}}', 0, 1, NULL, NULL),
+    (2, 'rewards.straightDaysLogin', 'rewards.straightDaysDescription', 'login', 'reldens.joinRoomEnd', '{"action":"straightDaysLogin","days":2,"items":{"coins":10}}', 0, 1, NULL, NULL);
 
 --
 
