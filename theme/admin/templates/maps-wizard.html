@@ -168,7 +168,7 @@
                             <p>
                                 Expected JSON files examples:<br/>
                                 <a href="https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/reldens-town-composite-with-associations.json" target="_blank">
-                                    https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/reldens-town-composite.json
+                                    https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/reldens-town-composite-with-associations.json
                                 </a>
                             </p>
                             <p>
@@ -210,7 +210,10 @@
                 <label for="generatorData">Generator data:</label>
                 <textarea name="generatorData" id="generatorData" class="generatorData" cols="30" rows="10" placeholder="JSON data for map generation process" required="required"></textarea>
             </div>
-            <input type="submit" class="button button-primary button-maps-wizard" value="Generate"/>
+            <div class="submit-container">
+                <input type="submit" class="button button-primary button-maps-wizard" value="Generate"/>
+                <img class="hidden loading" src="/assets/web/loading.gif"/>
+            </div>
         </form>
     </div>
 </div>

@@ -126,6 +126,10 @@ $darkGreen: #27ae60;
                 background-color: $red;
             }
         }
+
+        &:disabled {
+            background-color: $grey !important;
+        }
     }
 
     .side-bar {
@@ -567,6 +571,24 @@ $darkGreen: #27ae60;
                     .maps-wizard-option-content {
                         display: block;
                     }
+                }
+            }
+        }
+
+        .maps-wizard-form {
+            align-items: flex-start;
+            flex-direction: column;
+            justify-content: flex-start;
+
+            .submit-container {
+                display: flex;
+            }
+
+            .loading {
+                max-width: 50px;
+
+                &.hidden {
+                    display: none;
                 }
             }
         }

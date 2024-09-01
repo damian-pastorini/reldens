@@ -31,13 +31,23 @@ window.addEventListener('DOMContentLoaded', () => {
             .replace(/'/g, "&#039;");
     }
 
-    // forms with confirmation:
-    let forms = document.querySelectorAll('.form-delete, .confirmation-required');
+    // forms behavior:
+    let forms = document.querySelectorAll('form');
     if(forms){
-        for(let deleteForm of forms){
-            deleteForm.addEventListener('submit', (event) => {
-                if(!confirm('Are you sure?')){
-                    event.preventDefault();
+        for(let form of forms){
+            form.addEventListener('submit', (event) => {
+                let submitButton = document.querySelector('input[type="submit"]');
+                submitButton.disabled = true;
+                let loadingImage = document.querySelector('.submit-container .loading');
+                if(loadingImage){
+                    loadingImage.classList.remove('hidden');
+                }
+                if(form.classList.contains('form-delete') || form.classList.contains('confirmation-required')){
+                    if(!confirm('Are you sure?')){
+                        event.preventDefault();
+                        submitButton.disabled = false;
+                        loadingImage.classList.add('hidden');
+                    }
                 }
             });
         }
