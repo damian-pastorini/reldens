@@ -128,6 +128,7 @@
         "pathfinding": "0.4.18",
         "phaser": "3.80.1",
         "regenerator-runtime": "0.14.1",
+        "tile-extruder": "2.1.0",
         "tslib": "2.7.0"
     }
 }
