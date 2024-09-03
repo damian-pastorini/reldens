@@ -12,10 +12,12 @@
                 <p>What would you like to do?</p>
                 <ul class="wizard-options-container">
                     <li class="wizard-option-container active">
-                        <input class="map-wizard-option with-state" type="radio" name="mapsWizardAction" id="mapsWizardAction-1" value="elements-object-loader" checked="checked"/>
-                        <label class="main-option" for="mapsWizardAction-1">
-                            Generate a SINGLE random map with Layer Elements Object Loader (LayerElementsObjectLoader)
-                        </label>
+                        <div class="checkbox-container">
+                            <input class="map-wizard-option with-state" type="radio" name="mapsWizardAction" id="mapsWizardAction-1" value="elements-object-loader" checked="checked"/>
+                            <label class="main-option" for="mapsWizardAction-1">
+                                Generate a SINGLE random map with Layer Elements Object Loader (LayerElementsObjectLoader)
+                            </label>
+                        </div>
                         <div class="maps-wizard-option-content mapsWizardAction-1-data">
                             <p>
                                 Generator Data example:<br/>
@@ -54,10 +56,12 @@
                         </div>
                     </li>
                     <li class="wizard-option-container">
-                        <input class="map-wizard-option with-state" type="radio" name="mapsWizardAction" id="mapsWizardAction-2" value="elements-composite-loader"/>
-                        <label class="main-option" for="mapsWizardAction-2">
-                            Generate a SINGLE random map with Layer Elements Composite Loader (LayerElementsCompositeLoader)
-                        </label>
+                        <div class="checkbox-container">
+                            <input class="map-wizard-option with-state" type="radio" name="mapsWizardAction" id="mapsWizardAction-2" value="elements-composite-loader"/>
+                            <label class="main-option" for="mapsWizardAction-2">
+                                Generate a SINGLE random map with Layer Elements Composite Loader (LayerElementsCompositeLoader)
+                            </label>
+                        </div>
                         <div class="maps-wizard-option-content mapsWizardAction-2-data">
                             <p>
                                 Generator Data example:<br/>
@@ -103,10 +107,12 @@
                         </div>
                     </li>
                     <li class="wizard-option-container">
-                        <input class="map-wizard-option with-state" type="radio" name="mapsWizardAction" id="mapsWizardAction-3" value="multiple-by-loader"/>
-                        <label class="main-option" for="mapsWizardAction-3">
-                            Generate MULTIPLE random maps by Multiple Loader (MultipleByLoaderGenerator)
-                        </label>
+                        <div class="checkbox-container">
+                            <input class="map-wizard-option with-state" type="radio" name="mapsWizardAction" id="mapsWizardAction-3" value="multiple-by-loader"/>
+                            <label class="main-option" for="mapsWizardAction-3">
+                                Generate MULTIPLE random maps by Multiple Loader (MultipleByLoaderGenerator)
+                            </label>
+                        </div>
                         <div class="maps-wizard-option-content mapsWizardAction-3-data">
                             <p>
                                 Generator Data example:<br/>
@@ -151,10 +157,12 @@
                         </div>
                     </li>
                     <li class="wizard-option-container">
-                        <input class="map-wizard-option with-state" type="radio" name="mapsWizardAction" id="mapsWizardAction-4" value="multiple-with-association-by-loader"/>
-                        <label class="main-option" for="mapsWizardAction-4">
-                            Generate MULTIPLE random maps with Layer Elements Composite Loader (MultipleWithAssociationsByLoaderGenerator)
-                        </label>
+                        <div class="checkbox-container">
+                            <input class="map-wizard-option with-state" type="radio" name="mapsWizardAction" id="mapsWizardAction-4" value="multiple-with-association-by-loader"/>
+                            <label class="main-option" for="mapsWizardAction-4">
+                                Generate MULTIPLE random maps with Layer Elements Composite Loader (MultipleWithAssociationsByLoaderGenerator)
+                            </label>
+                        </div>
                         <div class="maps-wizard-option-content mapsWizardAction-4-data">
                             <p>
                                 Generator Data example:<br/>
@@ -199,6 +207,8 @@
                         </div>
                     </li>
                 </ul>
+                <hr/>
+                <p>NOTE: if you already uploaded all your files and never manually removed them from the "generate-data" folder, you don't need to upload the same files again.</p>
                 <div class="input-box">
                     <label for="generatorImages">Images</label>
                     <input type="file" name="generatorImages" id="generatorImages" multiple="multiple"/>
@@ -207,6 +217,7 @@
                     <label for="generatorJsonFiles">JSON Files</label>
                     <input type="file" name="generatorJsonFiles" id="generatorJsonFiles" multiple="multiple"/>
                 </div>
+                <hr/>
                 <label for="generatorData">Generator data:</label>
                 <textarea name="generatorData" id="generatorData" class="generatorData" cols="30" rows="10" placeholder="JSON data for map generation process" required="required"></textarea>
             </div>
@@ -271,7 +282,8 @@
             freeSpaceTilesQuantity: 2,
             variableTilesPercentage: 15,
             collisionLayersForPaths: ['change-points', 'collisions', 'tree-base'],
-            compositeElementsFile: 'reldens-town-composite.json'
+            compositeElementsFile: 'reldens-town-composite.json',
+            automaticallyExtrudeMaps: '1'
         }),
         'multiple-by-loader': JSON.stringify({
             factor: 2,
@@ -281,7 +293,8 @@
             variableTilesPercentage: 15,
             collisionLayersForPaths: ['change-points', 'collisions', 'tree-base'],
             mapNames: ['map-001', 'map-002', 'map-003'],
-            compositeElementsFile: 'reldens-town-composite.json'
+            compositeElementsFile: 'reldens-town-composite.json',
+            automaticallyExtrudeMaps: '1'
         }),
         'multiple-with-association-by-loader': JSON.stringify({
             factor: 2,
@@ -304,9 +317,11 @@
                 placeElementsOrder: 'inOrder',
                 orderElementsBySize: false,
                 randomizeQuantities: true,
-                applySurroundingPathTiles: false
+                applySurroundingPathTiles: false,
+                automaticallyExtrudeMaps: true
             },
-            compositeElementsFile: 'reldens-town-composite-with-associations.json'
+            compositeElementsFile: 'reldens-town-composite-with-associations.json',
+            automaticallyExtrudeMaps: '1'
         })
     };
 

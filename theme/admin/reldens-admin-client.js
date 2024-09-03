@@ -185,7 +185,7 @@ window.addEventListener('DOMContentLoaded', () => {
             for(let container of wizardOptionsContainer){
                 container.classList.remove('active');
             }
-            event.currentTarget.parentNode.classList.add('active');
+            event.currentTarget.parentNode.parentNode.classList.add('active');
         });
     }
 

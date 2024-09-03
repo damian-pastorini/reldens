@@ -527,7 +527,18 @@ $darkGreen: #27ae60;
                 justify-content: space-between;
                 flex-wrap: wrap;
                 width: 100%;
+
+                input.map-wizard-option {
+                    top: 2px;
+                    margin-right: 0;
+                }
             }
+        }
+
+        .checkbox-container {
+            display: flex;
+            flex-direction: row;
+            font-weight: $bold;
         }
 
         .wizard-options-container {
@@ -536,7 +547,8 @@ $darkGreen: #27ae60;
 
             input.map-wizard-option {
                 position: relative;
-                top: 2px;
+                top: -2px;
+                margin-right: 6px;
             }
 
             .wizard-map-option-container {
@@ -556,6 +568,7 @@ $darkGreen: #27ae60;
 
             .wizard-option-container {
                 list-style: none;
+                margin-bottom: 1rem;
 
                 .main-option {
                     display: inline-block;
