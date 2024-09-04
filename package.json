@@ -120,6 +120,7 @@
         "express-session": "1.18.0",
         "firebase": "10.13.1",
         "firebaseui": "6.1.0",
+        "jimp": "1.2.0",
         "mime-types": "2.1.35",
         "multer": "^1.4.5-lts.1",
         "mustache": "4.2.0",
@@ -128,7 +129,6 @@
         "pathfinding": "0.4.18",
         "phaser": "3.80.1",
         "regenerator-runtime": "0.14.1",
-        "tile-extruder": "2.1.0",
         "tslib": "2.7.0"
     }
 }
