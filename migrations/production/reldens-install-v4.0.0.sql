@@ -50,17 +50,18 @@ CREATE TABLE IF NOT EXISTS `locale` (
 
 CREATE TABLE IF NOT EXISTS `users` (
     `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-    `email` VARCHAR(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-    `username` VARCHAR(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-    `password` VARCHAR(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+    `email` VARCHAR(255) NOT NULL COLLATE 'utf8mb4_unicode_ci',
+    `username` VARCHAR(255) NOT NULL COLLATE 'utf8mb4_unicode_ci',
+    `password` VARCHAR(255) NOT NULL COLLATE 'utf8mb4_unicode_ci',
     `role_id` INT(10) UNSIGNED NOT NULL,
-    `status` VARCHAR(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `status` VARCHAR(255) NOT NULL COLLATE 'utf8mb4_unicode_ci',
+    `created_at` TIMESTAMP NOT NULL DEFAULT (CURRENT_TIMESTAMP),
+    `updated_at` TIMESTAMP NOT NULL DEFAULT (CURRENT_TIMESTAMP) ON UPDATE CURRENT_TIMESTAMP,
     `played_time` INT(10) NOT NULL DEFAULT '0',
-    PRIMARY KEY (`id`),
-    UNIQUE KEY `email` (`email`),
-    UNIQUE KEY `username` (`username`)
+    `login_count` INT(10) NOT NULL DEFAULT '0',
+    PRIMARY KEY (`id`) USING BTREE,
+    UNIQUE INDEX `email` (`email`) USING BTREE,
+    UNIQUE INDEX `username` (`username`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
 
 CREATE TABLE IF NOT EXISTS `stats` (
