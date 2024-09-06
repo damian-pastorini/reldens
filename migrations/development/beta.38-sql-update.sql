@@ -22,9 +22,10 @@ INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/re
 INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/rewards/responsiveY', '0', 2);
 INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/rewards/x', '430', 2);
 INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/rewards/y', '200', 2);
-UPDATE `config` SET `value` = '260' WHERE `scope` = 'client' AND `path` = 'ui/minimap/camX';
+UPDATE `config` SET `value` = '240' WHERE `scope` = 'client' AND `path` = 'ui/minimap/camX';
 UPDATE `config` SET `value` = '42' WHERE `scope` = 'client' AND `path` = 'ui/minimap/responsiveX';
-UPDATE `config` SET `value` = '230' WHERE `scope` = 'client' AND `path` = 'ui/minimap/x';
+UPDATE `config` SET `value` = '330' WHERE `scope` = 'client' AND `path` = 'ui/minimap/x';
+UPDATE `config` SET `value` = '320' WHERE `scope` = 'client' AND `path` = 'ui/minimap/circleX';
 
 -- Features:
 INSERT INTO `features` (`code`, `title`, `is_enabled`) VALUES ('scores', 'Scores', 1);
