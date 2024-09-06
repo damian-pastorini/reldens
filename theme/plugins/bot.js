@@ -14,6 +14,7 @@ const { sc } = require('@reldens/utils');
 
 async function main (options)
 {
+
     let randomGuestName = 'guest-bot-'+sc.randomChars(12);
     let userData = {
         isGuest: true,
@@ -92,6 +93,7 @@ async function main (options)
             }, 2000);
         }
     });
+
 }
 
 cli(main);
