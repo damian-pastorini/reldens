@@ -114,7 +114,7 @@
         "core-js": "3.37.1",
         "cors": "2.8.5",
         "dotenv": "16.4.5",
-        "express": "4.19.2",
+        "express": "4.20.0",
         "express-basic-auth": "1.2.1",
         "express-formidable": "1.2.0",
         "express-rate-limit": "7.3.0",
