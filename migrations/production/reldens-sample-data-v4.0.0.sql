@@ -588,7 +588,9 @@ REPLACE INTO `objects` (`id`, `room_id`, `layer_name`, `tile_index`, `class_type
 	(8, 4, 'house-collisions-over-player', 538, 3, 'npc_2', 'healer_1', 'Mamon', '{"runOnAction":true,"playerVisible":true,"sendInvalidOptionMessage":true}', '{"content":"Hello traveler! I can restore your health, would you like me to do it?","options":{"1":{"label":"Heal HP","value":1},"2":{"label":"Nothing...","value":2},"3":{"label":"Need some MP","value":3}},"ui":true}', 1),
 	(10, 4, 'house-collisions-over-player', 560, 5, 'npc_3', 'merchant_1', 'Gimly', '{"runOnAction":true,"playerVisible":true,"sendInvalidOptionMessage":true}', '{"content":"Hi there! What would you like to do?","options":{"buy":{"label":"Buy","value":"buy"},"sell":{"label":"Sell","value":"sell"}}}', 1),
 	(12, 4, 'house-collisions-over-player', 562, 3, 'npc_4', 'weapons_master_1', 'Barrik', '{"runOnAction":true,"playerVisible":true,"sendInvalidOptionMessage":true}', '{"content":"Hi, I am the weapons master, choose your weapon and go kill some monsters!","options":{"1":{"key":"axe","label":"Axe","value":1,"icon":"axe"},"2":{"key":"spear","label":"Spear","value":2,"icon":"spear"}},"ui":true}', 1),
-	(13, 5, 'forest-collisions', 258, 3, 'npc_5', 'quest_npc_1', 'Miles', '{"runOnAction":true,"playerVisible":true,"sendInvalidOptionMessage":true}', '{"content":"Hi there! Do you want a coin? I can give you one if you give me a tree branch.","options":{"1":{"label":"Sure!","value":1},"2":{"label":"No, thank you.","value":2}},"ui":true}', 1);
+	(13, 5, 'forest-collisions', 258, 3, 'npc_5', 'quest_npc_1', 'Miles', '{"runOnAction":true,"playerVisible":true,"sendInvalidOptionMessage":true}', '{"content":"Hi there! Do you want a coin? I can give you one if you give me a tree branch.","options":{"1":{"label":"Sure!","value":1},"2":{"label":"No, thank you.","value":2}},"ui":true}', 1)
+	(14, 8, 'ground-respawn-area', NULL, 7, 'enemy_bot_b1', 'enemy_forest_1', 'Tree', '{"shouldRespawn":true,"childObjectType":4,"isAggressive":true}', '{"autoStart":true}', 0),
+	(15, 8, 'ground-respawn-area', NULL, 7, 'enemy_bot_b2', 'enemy_forest_2', 'Tree Punch', '{"shouldRespawn":true,"childObjectType":4}', '{"autoStart":true}', 0);
 
 REPLACE INTO `objects_animations` (`id`, `object_id`, `animationKey`, `animationData`) VALUES
 	(5, 6, 'respawn-area-monsters-lvl-1-2_6_right', '{"start":6,"end":8}'),
@@ -607,7 +609,9 @@ REPLACE INTO `objects_assets` (`object_asset_id`, `object_id`, `asset_type`, `as
 	(8, 3, 'spritesheet', 'enemy_forest_2', 'monster-golem2.png', '{"frameWidth":47,"frameHeight":50}'),
 	(9, 10, 'spritesheet', 'merchant_1', 'people-d-x2.png', '{"frameWidth":52,"frameHeight":71}'),
 	(10, 12, 'spritesheet', 'weapons_master_1', 'people-c-x2.png', '{"frameWidth":52,"frameHeight":71}'),
-	(11, 13, 'spritesheet', 'quest_npc_1', 'people-quest-npc.png', '{"frameWidth":52,"frameHeight":71}');
+	(11, 13, 'spritesheet', 'quest_npc_1', 'people-quest-npc.png', '{"frameWidth":52,"frameHeight":71}')
+    (12, 14, 'spritesheet', 'enemy_forest_1', 'monster-treant.png', '{"frameWidth":47,"frameHeight":50}'),
+    (13, 15, 'spritesheet', 'enemy_forest_2', 'monster-golem2.png', '{"frameWidth":47,"frameHeight":50}');
 
 REPLACE INTO `objects_items_inventory` (`id`, `owner_id`, `item_id`, `qty`, `remaining_uses`, `is_active`) VALUES
 	(2, 10, 4, -1, -1, 0),
@@ -639,26 +643,66 @@ REPLACE INTO `objects_skills` (`id`, `object_id`, `skill_id`, `target_id`) VALUE
 	(1, 6, 1, 2);
 
 REPLACE INTO `objects_stats` (`id`, `object_id`, `stat_id`, `base_value`, `value`) VALUES
-	(1, 7, 1, 50, 50),
-	(2, 7, 2, 50, 50),
-	(3, 7, 3, 50, 50),
-	(4, 7, 4, 50, 50),
-	(5, 7, 5, 50, 50),
-	(6, 7, 6, 50, 50),
-	(7, 7, 7, 50, 50),
-	(8, 7, 8, 50, 50),
-	(9, 7, 9, 50, 50),
-	(10, 7, 10, 50, 50),
-	(16, 6, 1, 50, 50),
-	(17, 6, 2, 50, 50),
-	(18, 6, 3, 50, 50),
-	(19, 6, 4, 50, 50),
-	(20, 6, 5, 50, 50),
-	(21, 6, 6, 50, 50),
-	(22, 6, 7, 50, 50),
-	(23, 6, 8, 50, 50),
-	(24, 6, 9, 50, 50),
-	(25, 6, 10, 50, 50);
+	(1, 2, 1, 50, 50),
+    (2, 2, 2, 50, 50),
+    (3, 2, 3, 50, 50),
+    (4, 2, 4, 50, 50),
+    (5, 2, 5, 50, 50),
+    (6, 2, 6, 50, 50),
+    (7, 2, 7, 50, 50),
+    (8, 2, 8, 50, 50),
+    (9, 2, 9, 50, 50),
+    (10, 2, 10, 50, 50),
+    (11, 3, 1, 50, 50),
+    (12, 3, 2, 50, 50),
+    (13, 3, 3, 50, 50),
+    (14, 3, 4, 50, 50),
+    (15, 3, 5, 50, 50),
+    (16, 3, 6, 50, 50),
+    (17, 3, 7, 50, 50),
+    (18, 3, 8, 50, 50),
+    (19, 3, 9, 50, 50),
+    (20, 3, 10, 50, 50),
+    (21, 6, 1, 50, 50),
+    (22, 6, 2, 50, 50),
+    (23, 6, 3, 50, 50),
+    (24, 6, 4, 50, 50),
+    (25, 6, 5, 50, 50),
+    (26, 6, 6, 50, 50),
+    (27, 6, 7, 50, 50),
+    (28, 6, 8, 50, 50),
+    (29, 6, 9, 50, 50),
+    (30, 6, 10, 50, 50),
+    (31, 7, 1, 50, 50),
+    (32, 7, 2, 50, 50),
+    (33, 7, 3, 50, 50),
+    (34, 7, 4, 50, 50),
+    (35, 7, 5, 50, 50),
+    (36, 7, 6, 50, 50),
+    (37, 7, 7, 50, 50),
+    (38, 7, 8, 50, 50),
+    (39, 7, 9, 50, 50),
+    (40, 7, 10, 50, 50),
+    (41, 14, 1, 50, 50),
+    (42, 14, 2, 50, 50),
+    (43, 14, 3, 50, 50),
+    (44, 14, 4, 50, 50),
+    (45, 14, 5, 50, 50),
+    (46, 14, 6, 50, 50),
+    (47, 14, 7, 50, 50),
+    (48, 14, 8, 50, 50),
+    (49, 14, 9, 50, 50),
+    (50, 14, 10, 50, 50),
+    (51, 15, 1, 50, 50),
+    (52, 15, 2, 50, 50),
+    (53, 15, 3, 50, 50),
+    (54, 15, 4, 50, 50),
+    (55, 15, 5, 50, 50),
+    (56, 15, 6, 50, 50),
+    (57, 15, 7, 50, 50),
+    (58, 15, 8, 50, 50),
+    (59, 15, 9, 50, 50),
+    (60, 15, 10, 50, 50);
 
 REPLACE INTO `objects_types` (`id`, `key`) VALUES
 	(2, 'animation'),
@@ -702,7 +746,9 @@ REPLACE INTO `respawn` (`id`, `object_id`, `respawn_time`, `instances_limit`, `l
     (1, 2, 20000, 10, 'respawn-area-monsters-lvl-1-2'),
     (2, 3, 10000, 20, 'respawn-area-monsters-lvl-1-2'),
 	(3, 6, 20000, 2, 'respawn-area-monsters-lvl-1-2'),
-	(4, 7, 10000, 3, 'respawn-area-monsters-lvl-1-2');
+	(4, 7, 10000, 3, 'respawn-area-monsters-lvl-1-2')
+    (5, 14, 20000, 100, 'ground-respawn-area'),
+    (6, 15, 10000, 200, 'ground-respawn-area');
 
 REPLACE INTO `rewards` (`id`, `object_id`, `item_id`, `modifier_id`, `experience`, `drop_rate`, `drop_quantity`, `is_unique`, `was_given`, `has_drop_body`) VALUES
 	(1, 7, 2, NULL, 10, 100, 1, 0, 0, 1),
