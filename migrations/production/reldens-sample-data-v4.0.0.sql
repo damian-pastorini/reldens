@@ -589,8 +589,8 @@ REPLACE INTO `objects` (`id`, `room_id`, `layer_name`, `tile_index`, `class_type
 	(10, 4, 'house-collisions-over-player', 560, 5, 'npc_3', 'merchant_1', 'Gimly', '{"runOnAction":true,"playerVisible":true,"sendInvalidOptionMessage":true}', '{"content":"Hi there! What would you like to do?","options":{"buy":{"label":"Buy","value":"buy"},"sell":{"label":"Sell","value":"sell"}}}', 1),
 	(12, 4, 'house-collisions-over-player', 562, 3, 'npc_4', 'weapons_master_1', 'Barrik', '{"runOnAction":true,"playerVisible":true,"sendInvalidOptionMessage":true}', '{"content":"Hi, I am the weapons master, choose your weapon and go kill some monsters!","options":{"1":{"key":"axe","label":"Axe","value":1,"icon":"axe"},"2":{"key":"spear","label":"Spear","value":2,"icon":"spear"}},"ui":true}', 1),
 	(13, 5, 'forest-collisions', 258, 3, 'npc_5', 'quest_npc_1', 'Miles', '{"runOnAction":true,"playerVisible":true,"sendInvalidOptionMessage":true}', '{"content":"Hi there! Do you want a coin? I can give you one if you give me a tree branch.","options":{"1":{"label":"Sure!","value":1},"2":{"label":"No, thank you.","value":2}},"ui":true}', 1),
-	(14, 8, 'ground-respawn-area', NULL, 7, 'enemy_bot_b1', 'enemy_forest_1', 'Tree', '{"shouldRespawn":true,"childObjectType":4,"isAggressive":true}', '{"autoStart":true}', 0),
-	(15, 8, 'ground-respawn-area', NULL, 7, 'enemy_bot_b2', 'enemy_forest_2', 'Tree Punch', '{"shouldRespawn":true,"childObjectType":4}', '{"autoStart":true}', 0);
+	(14, 9, 'ground-respawn-area', NULL, 7, 'enemy_bot_b1', 'enemy_forest_1', 'Tree', '{"shouldRespawn":true,"childObjectType":4,"isAggressive":true}', '{"autoStart":true}', 1),
+	(15, 9, 'ground-respawn-area', NULL, 7, 'enemy_bot_b2', 'enemy_forest_2', 'Tree Punch', '{"shouldRespawn":true,"childObjectType":4}', '{"autoStart":true}', 1);
 
 REPLACE INTO `objects_animations` (`id`, `object_id`, `animationKey`, `animationData`) VALUES
 	(5, 6, 'respawn-area-monsters-lvl-1-2_6_right', '{"start":6,"end":8}'),
@@ -746,7 +746,7 @@ REPLACE INTO `respawn` (`id`, `object_id`, `respawn_time`, `instances_limit`, `l
     (1, 2, 20000, 10, 'respawn-area-monsters-lvl-1-2'),
     (2, 3, 10000, 20, 'respawn-area-monsters-lvl-1-2'),
 	(3, 6, 20000, 2, 'respawn-area-monsters-lvl-1-2'),
-	(4, 7, 10000, 3, 'respawn-area-monsters-lvl-1-2')
+	(4, 7, 10000, 3, 'respawn-area-monsters-lvl-1-2'),
     (5, 14, 20000, 100, 'ground-respawn-area'),
     (6, 15, 10000, 200, 'ground-respawn-area');
 
@@ -765,7 +765,9 @@ REPLACE INTO `rooms` (`id`, `name`, `title`, `map_filename`, `scene_images`, `ro
 	(5, 'reldens-forest', 'Forest', 'reldens-forest.json', 'reldens-forest.png', NULL, '{"allowGuest":true}'),
 	(6, 'reldens-house-1-2d-floor', 'House - 1 - Floor 2', 'reldens-house-1-2d-floor.json', 'reldens-house-1-2d-floor.png', NULL, NULL),
 	(7, 'reldens-gravity', 'Gravity World!', 'reldens-gravity.json', 'reldens-gravity.png', NULL, '{"allowGuest":true,"gravity":[0,625],"applyGravity":true,"allowPassWallsFromBelow":true,"timeStep":0.012,"type":"TOP_DOWN_WITH_GRAVITY","useFixedWorldStep":false,"maxSubSteps":2,"movementSpeed":160,"usePathFinder":false}'),
-    (8, 'reldens-bots', 'Bots Test', 'reldens-bots.json', 'reldens-forest.png', NULL, '{"allowGuest":true}');
+    (8, 'reldens-bots', 'Bots Test', 'reldens-bots.json', 'reldens-forest.png', NULL, '{"allowGuest":true}'),
+    (9, 'reldens-bots-forest', 'Bots Forest', 'reldens-bots-forest.json', 'reldens-bots-forest.png', NULL, '{"allowGuest":true}'),
+    (10, 'reldens-bots-forest-house-01-n0', 'Bots Forest - House 1-0', 'reldens-bots-forest-house-01-n0.json', 'reldens-bots-forest-house-01-n0.png', NULL, '{"allowGuest":true}');
 
 REPLACE INTO `rooms_change_points` (`id`, `room_id`, `tile_index`, `next_room_id`) VALUES
 	(1, 2, 816, 4),
@@ -784,7 +786,10 @@ REPLACE INTO `rooms_change_points` (`id`, `room_id`, `tile_index`, `next_room_id
 	(14, 6, 664, 2),
 	(15, 7, 540, 3),
 	(16, 3, 500, 7),
-	(17, 3, 780, 4);
+	(17, 3, 780, 4),
+    (18, 9, 20349, 10),
+    (19, 10, 381, 9),
+    (20, 10, 382, 9);
 
 REPLACE INTO `rooms_return_points` (`id`, `room_id`, `direction`, `x`, `y`, `is_default`, `from_room_id`) VALUES
 	(1, 2, 'up', 548, 615, 1, 4),
@@ -797,7 +802,10 @@ REPLACE INTO `rooms_return_points` (`id`, `room_id`, `direction`, `x`, `y`, `is_
 	(9, 6, 'right', 820, 500, 0, 2),
 	(11, 2, 'left', 720, 540, 0, 6),
 	(12, 7, 'left', 340, 600, 0, NULL),
-	(13, 3, 'down', 660, 520, 0, 7);
+	(13, 3, 'down', 660, 520, 0, 7),
+	(14, 9, 'down', 4608, 960, 0, 9),
+    (15, 9, 'down', 1600, 4544, 0, 10),
+    (16, 10, 'up', 64, 544, 1, 9);
 
 REPLACE INTO `skills_class_level_up_animations` (`id`, `class_path_id`, `level_id`, `animationData`) VALUES
 	(1, NULL, NULL, '{"enabled":true,"type":"spritesheet","img":"heal_cast","frameWidth":64,"frameHeight":70,"start":0,"end":3,"repeat":-1,"destroyTime":2000,"depthByPlayer":"above"}');
