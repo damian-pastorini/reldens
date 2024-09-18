@@ -285,8 +285,8 @@ REPLACE INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(109, 'client', 'ui/chat/enabled', '1', 3),
 	(110, 'client', 'ui/chat/notificationBalloon', '1', 3),
 	(111, 'client', 'ui/chat/overheadChat/closeChatBoxAfterSend', '1', 3),
-	(112, 'client', 'ui/chat/overheadChat/enabled', '1', 3),
-	(113, 'client', 'ui/chat/overheadChat/isTyping', '1', 3),
+	(112, 'client', 'ui/chat/overheadChat/enabled', '0', 3),
+	(113, 'client', 'ui/chat/overheadChat/isTyping', '0', 3),
 	(114, 'client', 'ui/chat/overheadText/align', 'center', 1),
 	(115, 'client', 'ui/chat/overheadText/depth', '200000', 2),
 	(116, 'client', 'ui/chat/overheadText/fill', '#ffffff', 1),
@@ -766,7 +766,7 @@ REPLACE INTO `rooms` (`id`, `name`, `title`, `map_filename`, `scene_images`, `ro
 	(6, 'reldens-house-1-2d-floor', 'House - 1 - Floor 2', 'reldens-house-1-2d-floor.json', 'reldens-house-1-2d-floor.png', NULL, NULL),
 	(7, 'reldens-gravity', 'Gravity World!', 'reldens-gravity.json', 'reldens-gravity.png', NULL, '{"allowGuest":true,"gravity":[0,625],"applyGravity":true,"allowPassWallsFromBelow":true,"timeStep":0.012,"type":"TOP_DOWN_WITH_GRAVITY","useFixedWorldStep":false,"maxSubSteps":2,"movementSpeed":160,"usePathFinder":false}'),
     (8, 'reldens-bots', 'Bots Test', 'reldens-bots.json', 'reldens-forest.png', NULL, '{"allowGuest":true}'),
-    (9, 'reldens-bots-forest', 'Bots Forest', 'reldens-bots-forest.json', 'reldens-bots-forest.png', NULL, '{"allowGuest":true}'),
+    (9, 'reldens-bots-forest', 'Bots Forest', 'reldens-bots-forest.json', 'reldens-bots-forest.png', NULL, '{"allowGuest":true,"joinInRandomPlace":true}'),
     (10, 'reldens-bots-forest-house-01-n0', 'Bots Forest - House 1-0', 'reldens-bots-forest-house-01-n0.json', 'reldens-bots-forest-house-01-n0.png', NULL, '{"allowGuest":true}');
 
 REPLACE INTO `rooms_change_points` (`id`, `room_id`, `tile_index`, `next_room_id`) VALUES

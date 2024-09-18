@@ -49,10 +49,10 @@ async function main (options)
         if(GameConst.CREATE_PLAYER_RESULT === gameMessage.act){
             userData.isNewUser = false;
             userData.selectedPlayer = gameMessage.player.id;
-            userData.selectedScene = 'reldens-bots';
+            userData.selectedScene = 'reldens-bots-forest';
 
             // join the bots room:
-            let reldensBootsRoom = await gameClient.joinOrCreate('reldens-bots', userData);
+            let reldensBootsRoom = await gameClient.joinOrCreate('reldens-bots-forest', userData);
             let canMove = true;
             reldensBootsRoom.onMessage('*', async (roomMessage) => {
                 console.log('Message from ReldensBots Room!', roomMessage.act);
@@ -75,22 +75,23 @@ async function main (options)
             // make some random stuff (send chat messages and move randomly):
             setInterval(() => {
                 if(!canMove){
+                    console.log('Player "'+userData.username+'" is dead.');
                     return;
                 }
-                // every 2s send a general chat message on the room:
+                // send a general chat message on the room:
                 reldensBootsRoom.send('*', {
                     act: ChatConst.CHAT_ACTION,
-                    m: 'Hello, '+userData.username+'! I am the Load Test Bot. I am allowed to send messages to you!'
+                    m: 'Hello '+userData.username+'! This is a load test bot message. Date: '+(new Date()).getTime()
                 });
-                // every 2s start moving the player:
+                // start moving the player:
                 reldensBootsRoom.send('*', {
                     dir: sc.randomValueFromArray([GameConst.LEFT, GameConst.RIGHT, GameConst.DOWN, GameConst.UP])
                 });
-                // every second stop moving the player:
+                // stop moving the player:
                 setTimeout(() => {
                     reldensBootsRoom.send('*', {act: GameConst.STOP});
                 }, 1000);
-            }, 2000);
+            }, 3000);
         }
     });
 

@@ -101,7 +101,7 @@ REPLACE INTO `rewards_events` (`id`, `label`, `description`, `handler_key`, `eve
 
 -- Bots Test Rooms:
 INSERT INTO `rooms` (`id`,`name`, `title`, `map_filename`, `scene_images`, `room_class_key`, `customData`) VALUES
-    (9, 'reldens-bots-forest', 'Bots Forest', 'reldens-bots-forest.json', 'reldens-bots-forest.png', NULL, '{"allowGuest":true}'),
+    (9, 'reldens-bots-forest', 'Bots Forest', 'reldens-bots-forest.json', 'reldens-bots-forest.png', NULL, '{"allowGuest":true,"joinInRandomPlace":true}'),
     (10, 'reldens-bots-forest-house-01-n0', 'Bots Forest - House 1-0', 'reldens-bots-forest-house-01-n0.json', 'reldens-bots-forest-house-01-n0.png', NULL, '{"allowGuest":true}');
 
 INSERT INTO `rooms_change_points` (`id`, `room_id`, `tile_index`, `next_room_id`) VALUES
