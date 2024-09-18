@@ -185,8 +185,8 @@ REPLACE INTO `objects_stats` (`id`, `object_id`, `stat_id`, `base_value`, `value
     (60, 15, 10, 50, 50);
 
 INSERT INTO `respawn` (`id`, `object_id`, `respawn_time`, `instances_limit`, `layer`) VALUES
-    (5, 14, 20000, 50, 'ground-respawn-area'),
-    (6, 15, 10000, 50, 'ground-respawn-area');
+    (5, 14, 20000, 200, 'ground-respawn-area'),
+    (6, 15, 10000, 200, 'ground-respawn-area');
 
 --
 
