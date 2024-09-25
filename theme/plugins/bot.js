@@ -54,8 +54,8 @@ async function main (options)
             // join the bots room:
             let reldensBootsRoom = await gameClient.joinOrCreate('reldens-bots-forest', userData);
             let canMove = true;
-            reldensBootsRoom.onMessage('*', async (roomMessage) => {
-                console.log('Message from ReldensBots Room!', roomMessage.act);
+            reldensBootsRoom?.onMessage('*', async (roomMessage) => {
+                console.log('Message from ReldensBots', roomMessage.act);
                 if(GameConst.GAME_OVER === roomMessage.act){
                     console.log('Player is dead: '+randomGuestName+'.');
                     canMove = false;
@@ -68,7 +68,10 @@ async function main (options)
 
             // join the global chat room:
             let chatRoom = await gameClient.joinOrCreate('chat', userData);
-            chatRoom.onMessage('*', async (chatMessage) => {
+            if(!chatRoom){
+                console.log('Chatroom not found!', chatRoom, userData);
+            }
+            chatRoom?.onMessage('*', async (chatMessage) => {
                 // console.log('Message from Chat Room!', chatMessage.act);
             });
 
@@ -79,17 +82,17 @@ async function main (options)
                     return;
                 }
                 // send a general chat message on the room:
-                reldensBootsRoom.send('*', {
+                reldensBootsRoom?.send('*', {
                     act: ChatConst.CHAT_ACTION,
                     m: 'Hello '+userData.username+'! This is a load test bot message. Date: '+(new Date()).getTime()
                 });
                 // start moving the player:
-                reldensBootsRoom.send('*', {
+                reldensBootsRoom?.send('*', {
                     dir: sc.randomValueFromArray([GameConst.LEFT, GameConst.RIGHT, GameConst.DOWN, GameConst.UP])
                 });
                 // stop moving the player:
                 setTimeout(() => {
-                    reldensBootsRoom.send('*', {act: GameConst.STOP});
+                    reldensBootsRoom?.send('*', {act: GameConst.STOP});
                 }, 1000);
             }, 3000);
         }
