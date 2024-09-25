@@ -99,7 +99,7 @@
         "@parcel/transformer-xml": "2.12.0",
         "@parcel/transformer-yaml": "2.12.0",
         "@reldens/game-data-generator": "^0.9.0",
-        "@reldens/items-system": "^0.30.0",
+        "@reldens/items-system": "^0.31.0",
         "@reldens/modifiers": "^0.24.0",
         "@reldens/skills": "^0.30.0",
         "@reldens/storage": "^0.29.0",
