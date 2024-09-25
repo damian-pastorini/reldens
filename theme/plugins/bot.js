@@ -69,7 +69,7 @@ async function main (options)
             // join the global chat room:
             let chatRoom = await gameClient.joinOrCreate('chat', userData);
             if(!chatRoom){
-                console.log('Chatroom not found!', chatRoom, userData);
+                console.log('Chatroom not found!', chatRoom, userData?.username);
             }
             chatRoom?.onMessage('*', async (chatMessage) => {
                 // console.log('Message from Chat Room!', chatMessage.act);
