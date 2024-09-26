@@ -55,9 +55,9 @@ async function main (options)
             let reldensBootsRoom = await gameClient.joinOrCreate('reldens-bots-forest', userData);
             let canMove = true;
             reldensBootsRoom?.onMessage('*', async (roomMessage) => {
-                console.log('Message from ReldensBots', roomMessage.act);
+                // console.log('Message from ReldensBots', roomMessage.act);
                 if(GameConst.GAME_OVER === roomMessage.act){
-                    console.log('Player is dead: '+randomGuestName+'.');
+                    // console.log('Player is dead: '+randomGuestName+'.');
                     canMove = false;
                 }
                 if(GameConst.REVIVED === roomMessage.act){
@@ -78,7 +78,7 @@ async function main (options)
             // make some random stuff (send chat messages and move randomly):
             setInterval(() => {
                 if(!canMove){
-                    console.log('Player "'+userData.username+'" is dead.');
+                    // console.log('Player "'+userData.username+'" is dead.');
                     return;
                 }
                 // send a general chat message on the room:
