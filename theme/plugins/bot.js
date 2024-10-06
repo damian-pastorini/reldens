@@ -61,7 +61,7 @@ async function main (options)
                     canMove = false;
                 }
                 if(GameConst.REVIVED === roomMessage.act){
-                    console.log('Player was revived: '+randomGuestName+'.');
+                    console.log('Player was revived: '+randomGuestName+' at: '+((new Date()).getTime())+'.');
                     canMove = true;
                 }
             });
