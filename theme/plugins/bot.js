@@ -3,7 +3,7 @@
  * Reldens - Load Test Bot
  *
  * Run with:
- * node bot.js --numClients 10 --room room_game --endpoint http://localhost:8080
+ * node theme/plugins/bot.js --numClients 20 --room reldens-bots --endpoint http://localhost:8080 --output ./logs/bots-console.log
  */
 
 const { cli } = require('@colyseus/loadtest');
@@ -24,7 +24,7 @@ async function main (options)
     };
 
     let gameClient = new GameClient(options.endpoint);
-    let gameRoom = await gameClient.joinOrCreate(options.roomName, userData);
+    let gameRoom = await gameClient.joinOrCreate('room_game', userData);
 
     console.log('Joined GameRoom successfully!', randomGuestName);
 
@@ -49,10 +49,11 @@ async function main (options)
         if(GameConst.CREATE_PLAYER_RESULT === gameMessage.act){
             userData.isNewUser = false;
             userData.selectedPlayer = gameMessage.player.id;
-            userData.selectedScene = 'reldens-bots-forest';
+            userData.selectedScene = options.roomName;
 
             // join the bots room:
-            let reldensBootsRoom = await gameClient.joinOrCreate('reldens-bots-forest', userData);
+            console.log('Joining room: '+options.roomName);
+            let reldensBootsRoom = await gameClient.joinOrCreate(options.roomName, userData);
             let canMove = true;
             reldensBootsRoom?.onMessage('*', async (roomMessage) => {
                 // console.log('Message from ReldensBots', roomMessage.act);
