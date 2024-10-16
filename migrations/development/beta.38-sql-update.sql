@@ -29,6 +29,9 @@ UPDATE `config` SET `value` = '42' WHERE `scope` = 'client' AND `path` = 'ui/min
 UPDATE `config` SET `value` = '330' WHERE `scope` = 'client' AND `path` = 'ui/minimap/x';
 UPDATE `config` SET `value` = '320' WHERE `scope` = 'client' AND `path` = 'ui/minimap/circleX';
 
+-- Audio:
+UPDATE `audio` SET `config` = '{"onlyCurrentPlayer":true}' WHERE `audio_key` = 'footstep';
+
 -- Features:
 INSERT INTO `features` (`code`, `title`, `is_enabled`) VALUES ('scores', 'Scores', 1);
 

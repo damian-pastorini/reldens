@@ -101,7 +101,7 @@ REPLACE INTO `ads_types` (`id`, `key`) VALUES
 	(2, 'eventVideo');
 
 REPLACE INTO `audio` (`id`, `audio_key`, `files_name`, `config`, `room_id`, `category_id`, `enabled`) VALUES
-	(3, 'footstep', 'footstep.mp3', NULL, NULL, 3, 1),
+	(3, 'footstep', 'footstep.mp3', '{"onlyCurrentPlayer":true}', NULL, 3, 1),
 	(4, 'reldens-town', 'reldens-town.mp3', '', 4, 1, 1);
 
 REPLACE INTO `audio_categories` (`id`, `category_key`, `category_label`, `enabled`, `single_audio`) VALUES
