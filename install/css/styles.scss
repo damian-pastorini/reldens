@@ -368,3 +368,15 @@ form {
         color: $cRed;
     }
 }
+
+.install-loading {
+    max-width: 50px;
+
+    &.hidden {
+        display: none;
+    }
+}
+
+#install-submit-button.disabled {
+    background-color: $boxBackground;
+}

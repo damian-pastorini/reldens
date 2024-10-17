@@ -104,6 +104,13 @@ If you like to contribute in any way or donate to support the project please als
 <table>
     <tr>
         <td align="center">
+            <a href="https://github.com/damian-pastorini">
+                <img src="https://avatars.githubusercontent.com/u/1211779?v=4" width="100px;" alt="Damian Pastorini"/><br/>
+                <sub><b>Damian Pastorini</b></sub>
+            </a><br/>
+            <a href="https://github.com/damian-pastorini/reldens/commits?author=damian-pastorini" title="Owner">💻</a>
+        </td>
+        <td align="center">
             <a href="https://github.com/luciovicentini">
                 <img src="https://avatars.githubusercontent.com/u/16654212?v=4" width="100px;" alt="Lucio Vicentini"/><br/>
                 <sub><b>Lucio Vicentini</b></sub>
@@ -111,11 +118,11 @@ If you like to contribute in any way or donate to support the project please als
             <a href="#" title="Answering Questions">💬</a> <a href="https://github.com/damian-pastorini/reldens/commits?author=luciovicentini" title="Code">💻</a>
         </td>
         <td align="center">
-            <a href="https://github.com/damian-pastorini">
-                <img src="https://avatars.githubusercontent.com/u/1211779?v=4" width="100px;" alt="Damian Pastorini"/><br/>
-                <sub><b>Damian Pastorini</b></sub>
+            <a href="https://github.com/TheXerxi">
+                <img src="https://avatars.githubusercontent.com/u/146131154?v=4" width="100px;" alt="Joel P."/><br/>
+                <sub><b>Joel P.</b></sub>
             </a><br/>
-            <a href="https://github.com/damian-pastorini/reldens/commits?author=damian-pastorini" title="Owner">💻</a>
+            <a href="#" title="Artist">🎨</a> <a href="https://github.com/damian-pastorini/reldens/pull/256" title="Code">💻</a>
         </td>
     </tr>
 </table>
