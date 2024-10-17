@@ -36,7 +36,7 @@ async function main (options)
 
         if(GameConst.START_GAME === gameMessage.act){
             userData.password = gameMessage.guestPassword;
-            console.log('Game started successfully!');
+            // console.log('Game started successfully!');
             gameRoom.send('*', {
                 act: GameConst.CREATE_PLAYER,
                 formData: {
@@ -52,7 +52,7 @@ async function main (options)
             userData.selectedScene = options.roomName;
 
             // join the bots room:
-            console.log('Joining room: '+options.roomName);
+            // console.log('Joining room: '+options.roomName);
             let reldensBootsRoom = await gameClient.joinOrCreate(options.roomName, userData);
             let canMove = true;
             reldensBootsRoom?.onMessage('*', async (roomMessage) => {
@@ -62,7 +62,7 @@ async function main (options)
                     canMove = false;
                 }
                 if(GameConst.REVIVED === roomMessage.act){
-                    console.log('Player was revived: '+randomGuestName+' at: '+((new Date()).getTime())+'.');
+                    // console.log('Player was revived: '+randomGuestName+' at: '+((new Date()).getTime())+'.');
                     canMove = true;
                 }
             });
