@@ -3,7 +3,7 @@
  * Reldens - Load Test Bot
  *
  * Run with:
- * node theme/plugins/bot.js --numClients 20 --room reldens-bots --endpoint http://localhost:8080 --output ./logs/bots-console.log
+ * withMovement=3000 withChat=10000 node theme/plugins/bot.js --numClients 50 --room reldens-bots-forest --endpoint http://localhost:8080 --output ./logs/bots-console.log
  */
 
 const { cli } = require('@colyseus/loadtest');
@@ -15,7 +15,12 @@ const { sc } = require('@reldens/utils');
 async function main (options)
 {
 
+    let chatIntervalMs = Number(process.env.withChat || 0);
+    let movementIntervalMs = Number(process.env.withMovement || 0);
     let randomGuestName = 'guest-bot-'+sc.randomChars(12);
+
+    console.log('Running bot "'+randomGuestName+'" with options.', {movementIntervalMs, chatIntervalMs});
+
     let userData = {
         isGuest: true,
         isNewUser: true,
@@ -68,34 +73,41 @@ async function main (options)
             });
 
             // join the global chat room:
-            let chatRoom = await gameClient.joinOrCreate('chat', userData);
-            if(!chatRoom){
-                console.log('Chatroom not found!', chatRoom, userData?.username);
-            }
-            chatRoom?.onMessage('*', async (chatMessage) => {
-                // console.log('Message from Chat Room!', chatMessage.act);
-            });
-
-            // make some random stuff (send chat messages and move randomly):
-            setInterval(() => {
-                if(!canMove){
-                    // console.log('Player "'+userData.username+'" is dead.');
-                    return;
+            if(0 < chatIntervalMs){
+                let chatRoom = await gameClient.joinOrCreate('chat', userData);
+                if(!chatRoom){
+                    console.log('Chatroom not found!', chatRoom, userData?.username);
                 }
-                // send a general chat message on the room:
-                reldensBootsRoom?.send('*', {
-                    act: ChatConst.CHAT_ACTION,
-                    m: 'Hello '+userData.username+'! This is a load test bot message. Date: '+(new Date()).getTime()
+                chatRoom?.onMessage('*', async (chatMessage) => {
+                    // console.log('Message from Chat Room!', chatMessage.act);
                 });
-                // start moving the player:
-                reldensBootsRoom?.send('*', {
-                    dir: sc.randomValueFromArray([GameConst.LEFT, GameConst.RIGHT, GameConst.DOWN, GameConst.UP])
-                });
-                // stop moving the player:
-                setTimeout(() => {
-                    reldensBootsRoom?.send('*', {act: GameConst.STOP});
-                }, 1000);
-            }, 3000);
+
+                setInterval(() => {
+                    // send a general chat message on the room:
+                    reldensBootsRoom?.send('*', {
+                        act: ChatConst.CHAT_ACTION,
+                        m: 'Hello '+userData.username+'! This is a load test bot message. Date: '+(new Date()).getTime()
+                    });
+                }, chatIntervalMs);
+            }
+
+            if(0 < movementIntervalMs){
+                // make some random stuff (send chat messages and move randomly):
+                setInterval(() => {
+                    if(!canMove){
+                        // console.log('Player "'+userData.username+'" is dead.');
+                        return;
+                    }
+                    // start moving the player:
+                    reldensBootsRoom?.send('*', {
+                        dir: sc.randomValueFromArray([GameConst.LEFT, GameConst.RIGHT, GameConst.DOWN, GameConst.UP])
+                    });
+                    // stop moving the player:
+                    setTimeout(() => {
+                        reldensBootsRoom?.send('*', {act: GameConst.STOP});
+                    }, 1000);
+                }, movementIntervalMs);
+            }
         }
     });
 
