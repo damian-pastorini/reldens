@@ -1,0 +1,338 @@
+<h2>Maps Wizard</h2>
+<div class="sub-content maps-wizard">
+    <div class="sub-content-box">
+        <form class="sub-content-form maps-wizard-form confirmation-required"
+            name="maps-wizard-form"
+            id="maps-wizard-form"
+            action="{{&actionPath}}"
+            method="post"
+            enctype="multipart/form-data">
+            <input type="hidden" name="mainAction" id="mainAction" value="generate"/>
+            <div class="main-action-container">
+                <p>What would you like to do?</p>
+                <ul class="wizard-options-container">
+                    <li class="wizard-option-container active">
+                        <div class="checkbox-container">
+                            <input class="map-wizard-option with-state" type="radio" name="mapsWizardAction" id="mapsWizardAction-1" value="elements-object-loader" checked="checked"/>
+                            <label class="main-option" for="mapsWizardAction-1">
+                                Generate a SINGLE random map with Layer Elements Object Loader (LayerElementsObjectLoader)
+                            </label>
+                        </div>
+                        <div class="maps-wizard-option-content mapsWizardAction-1-data">
+                            <p>
+                                Generator Data example:<br/>
+                                <a href="https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-object/map-data.json" target="_blank">
+                                https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-object/map-data.json
+                                </a>
+                            </p>
+                            <button type="button" class="button button-primary set-sample-data" data-option-value="elements-object-loader">
+                                Set Sample Data in "Generator Data"
+                            </button>
+                            <p>
+                                Expected JSON files examples:<br/>
+                                <a href="https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-object/house-001.json" target="_blank">
+                                    https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-object/house-001.json
+                                </a><br/>
+                                <a href="https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-object/house-002.json" target="_blank">
+                                    https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-object/house-002.json
+                                </a><br/>
+                                <a href="https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-object/tree.json" target="_blank">
+                                    https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-object/tree.json
+                                </a>
+                            </p>
+                            <p>
+                                Expected Images files examples:<br/>
+                                <a href="https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-object/tilesheet.png" target="_blank">
+                                    https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-object/tilesheet.png
+                                </a>
+                            </p>
+                            <p>
+                                Note:<br/>
+                                In the examples above, all the tileset JSON files use the same tileset image (this is because we used the already optimized version of the tileset).<br/>
+                                Case disclaimer:
+                                In theory, it should also work if each element has its own image, but this still needs to be tested.<br/>
+                                For now, you can use the composite option to use multiple tileset images and those will be merged by the generator which use the Tile Map Optimizer.
+                            </p>
+                        </div>
+                    </li>
+                    <li class="wizard-option-container">
+                        <div class="checkbox-container">
+                            <input class="map-wizard-option with-state" type="radio" name="mapsWizardAction" id="mapsWizardAction-2" value="elements-composite-loader"/>
+                            <label class="main-option" for="mapsWizardAction-2">
+                                Generate a SINGLE random map with Layer Elements Composite Loader (LayerElementsCompositeLoader)
+                            </label>
+                        </div>
+                        <div class="maps-wizard-option-content mapsWizardAction-2-data">
+                            <p>
+                                Generator Data example:<br/>
+                                <a href="https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/map-composite-data.json" target="_blank">
+                                    https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/map-composite-data.json
+                                </a>
+                            </p>
+                            <button type="button" class="button button-primary set-sample-data" data-option-value="elements-composite-loader">
+                                Set Sample Data in "Generator Data"
+                            </button>
+                            <p>
+                                Expected JSON files examples:<br/>
+                                <a href="https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/reldens-town-composite.json" target="_blank">
+                                    https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/reldens-town-composite.json
+                                </a>
+                            </p>
+                            <p>
+                                Expected Images files examples:<br/>
+                                <a href="https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/outside.png" target="_blank">
+                                    https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/outside.png
+                                </a><br/>
+                                <a href="https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/terrain.png" target="_blank">
+                                    https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/terrain.png
+                                </a><br/>
+                                <a href="https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/house.png" target="_blank">
+                                    https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/house.png
+                                </a><br/>
+                                <a href="https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/doors.png" target="_blank">
+                                    https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/doors.png
+                                </a><br/>
+                                <a href="https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/water.png" target="_blank">
+                                    https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/water.png
+                                </a><br/>
+                                <a href="https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/inside.png" target="_blank">
+                                    https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/inside.png
+                                </a><br/>
+                            </p>
+                            <p>
+                                Note:<br/>
+                                In this case as you can see we have a single tile map JSON file which contains several tilesets with different images.<br/>
+                                All the original contents are 16x16 pixels, so you can see we set "factor: 2" in the sample params to run the optimizer and get 32x32 pixels tiles in the result.
+                            </p>
+                        </div>
+                    </li>
+                    <li class="wizard-option-container">
+                        <div class="checkbox-container">
+                            <input class="map-wizard-option with-state" type="radio" name="mapsWizardAction" id="mapsWizardAction-3" value="multiple-by-loader"/>
+                            <label class="main-option" for="mapsWizardAction-3">
+                                Generate MULTIPLE random maps by Multiple Loader (MultipleByLoaderGenerator)
+                            </label>
+                        </div>
+                        <div class="maps-wizard-option-content mapsWizardAction-3-data">
+                            <p>
+                                Generator Data example:<br/>
+                                <a href="https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/map-composite-data.json" target="_blank">
+                                    https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/map-composite-data-with-names.json
+                                </a>
+                            </p>
+                            <button type="button" class="button button-primary set-sample-data" data-option-value="multiple-by-loader">
+                                Set Sample Data in "Generator Data"
+                            </button>
+                            <p>
+                                Expected JSON files examples:<br/>
+                                <a href="https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/reldens-town-composite.json" target="_blank">
+                                    https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/reldens-town-composite.json
+                                </a>
+                            </p>
+                            <p>
+                                Expected Images files examples:<br/>
+                                <a href="https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/outside.png" target="_blank">
+                                    https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/outside.png
+                                </a><br/>
+                                <a href="https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/terrain.png" target="_blank">
+                                    https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/terrain.png
+                                </a><br/>
+                                <a href="https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/house.png" target="_blank">
+                                    https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/house.png
+                                </a><br/>
+                                <a href="https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/doors.png" target="_blank">
+                                    https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/doors.png
+                                </a><br/>
+                                <a href="https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/water.png" target="_blank">
+                                    https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/water.png
+                                </a><br/>
+                                <a href="https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/inside.png" target="_blank">
+                                    https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/inside.png
+                                </a><br/>
+                            </p>
+                            <p>
+                                Note:<br/>
+                                In this case we have the same structure as in the SINGLE import, but we include multiple map names in the provided data and use a different loader to create multiple maps at once.
+                            </p>
+                        </div>
+                    </li>
+                    <li class="wizard-option-container">
+                        <div class="checkbox-container">
+                            <input class="map-wizard-option with-state" type="radio" name="mapsWizardAction" id="mapsWizardAction-4" value="multiple-with-association-by-loader"/>
+                            <label class="main-option" for="mapsWizardAction-4">
+                                Generate MULTIPLE random maps with Layer Elements Composite Loader (MultipleWithAssociationsByLoaderGenerator)
+                            </label>
+                        </div>
+                        <div class="maps-wizard-option-content mapsWizardAction-4-data">
+                            <p>
+                                Generator Data example:<br/>
+                                <a href="https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/map-composite-data.json" target="_blank">
+                                    https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/map-composite-data-with-associations.json
+                                </a>
+                            </p>
+                            <button type="button" class="button button-primary set-sample-data" data-option-value="multiple-with-association-by-loader">
+                                Set Sample Data in "Generator Data"
+                            </button>
+                            <p>
+                                Expected JSON files examples:<br/>
+                                <a href="https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/reldens-town-composite-with-associations.json" target="_blank">
+                                    https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/reldens-town-composite-with-associations.json
+                                </a>
+                            </p>
+                            <p>
+                                Expected Images files examples:<br/>
+                                <a href="https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/outside.png" target="_blank">
+                                    https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/outside.png
+                                </a><br/>
+                                <a href="https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/terrain.png" target="_blank">
+                                    https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/terrain.png
+                                </a><br/>
+                                <a href="https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/house.png" target="_blank">
+                                    https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/house.png
+                                </a><br/>
+                                <a href="https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/doors.png" target="_blank">
+                                    https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/doors.png
+                                </a><br/>
+                                <a href="https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/water.png" target="_blank">
+                                    https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/water.png
+                                </a><br/>
+                                <a href="https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/inside.png" target="_blank">
+                                    https://github.com/damian-pastorini/tile-map-generator/blob/master/examples/layer-elements-composite/inside.png
+                                </a><br/>
+                            </p>
+                            <p>
+                                Note:<br/>
+                                In this case we have the same structure as in the SINGLE import, but we include multiple maps information and the association options in the provided data, but use a different loader to create multiple associated maps at once.
+                            </p>
+                        </div>
+                    </li>
+                </ul>
+                <hr/>
+                <p>NOTE: if you already uploaded all your files and never manually removed them from the "generate-data" folder, you don't need to upload the same files again.</p>
+                <div class="input-box">
+                    <label for="generatorImages">Images</label>
+                    <input type="file" name="generatorImages" id="generatorImages" multiple="multiple"/>
+                </div>
+                <div class="input-box">
+                    <label for="generatorJsonFiles">JSON Files</label>
+                    <input type="file" name="generatorJsonFiles" id="generatorJsonFiles" multiple="multiple"/>
+                </div>
+                <hr/>
+                <label for="generatorData">Generator data:</label>
+                <textarea name="generatorData" id="generatorData" class="generatorData" cols="30" rows="10" placeholder="JSON data for map generation process" required="required"></textarea>
+            </div>
+            <div class="submit-container">
+                <input type="submit" class="button button-primary button-maps-wizard" value="Generate"/>
+                <img class="hidden loading" src="/assets/web/loading.gif"/>
+            </div>
+        </form>
+    </div>
+</div>
+<script type="text/javascript">
+    let data = {
+        'elements-object-loader': JSON.stringify({
+            tileSize: 32,
+            tileSheetPath: 'tilesheet.png',
+            tileSheetName: 'tilesheet.png',
+            imageHeight: 578,
+            imageWidth: 612,
+            tileCount: 306,
+            columns: 18,
+            margin: 1,
+            spacing: 2,
+            elementsQuantity: {
+                house1: 3,
+                house2: 2,
+                tree: 6
+            },
+            groundTile: 116,
+            mainPathSize: 3,
+            blockMapBorder: true,
+            freeSpaceTilesQuantity: 2,
+            variableTilesPercentage: 15.0,
+            pathTile: 121,
+            collisionLayersForPaths: ['change-points', 'collisions', 'tree-base'],
+            randomGroundTiles: [26, 27, 28, 29, 30, 36, 37, 38, 39, 50, 51, 52, 53],
+            surroundingTiles: {
+                '-1,-1': 127,
+                '-1,0': 124,
+                '-1,1': 130,
+                '0,-1': 126,
+                '0,1': 129,
+                '1,-1': 132,
+                '1,0': 131,
+                '1,1': 133
+            },
+            corners: {
+                '-1,-1': 285,
+                '-1,1': 284,
+                '1,-1': 283,
+                '1,1': 282
+            },
+            layerElementsFiles: {
+                house1: 'house-001.json',
+                house2: 'house-002.json',
+                tree: 'tree.json'
+            }
+        }),
+        'elements-composite-loader': JSON.stringify({
+            factor: 2,
+            mainPathSize: 3,
+            blockMapBorder: true,
+            freeSpaceTilesQuantity: 2,
+            variableTilesPercentage: 15,
+            collisionLayersForPaths: ['change-points', 'collisions', 'tree-base'],
+            compositeElementsFile: 'reldens-town-composite.json',
+            automaticallyExtrudeMaps: '1'
+        }),
+        'multiple-by-loader': JSON.stringify({
+            factor: 2,
+            mainPathSize: 3,
+            blockMapBorder: true,
+            freeSpaceTilesQuantity: 2,
+            variableTilesPercentage: 15,
+            collisionLayersForPaths: ['change-points', 'collisions', 'tree-base'],
+            mapNames: ['map-001', 'map-002', 'map-003'],
+            compositeElementsFile: 'reldens-town-composite.json',
+            automaticallyExtrudeMaps: '1'
+        }),
+        'multiple-with-association-by-loader': JSON.stringify({
+            factor: 2,
+            mainPathSize: 3,
+            blockMapBorder: true,
+            freeSpaceTilesQuantity: 2,
+            variableTilesPercentage: 15,
+            collisionLayersForPaths: ['change-points', 'collisions', 'tree-base'],
+            mapsInformation: [
+                {mapName: 'town-001', mapTitle: 'Town 1'},
+                {mapName: 'town-002', mapTitle: 'Town 2'},
+                {mapName: 'town-003', mapTitle: 'Town 3'},
+                {mapName: 'town-004', mapTitle: 'Town 4'}
+            ],
+            associationsProperties: {
+                generateElementsPath: false,
+                blockMapBorder: true,
+                freeSpaceTilesQuantity: 0,
+                variableTilesPercentage: 0,
+                placeElementsOrder: 'inOrder',
+                orderElementsBySize: false,
+                randomizeQuantities: true,
+                applySurroundingPathTiles: false,
+                automaticallyExtrudeMaps: true
+            },
+            compositeElementsFile: 'reldens-town-composite-with-associations.json',
+            automaticallyExtrudeMaps: '1'
+        })
+    };
+
+    let options = document.querySelectorAll('.set-sample-data');
+    let generatorDataElement = document.querySelector('.generatorData');
+    if(generatorDataElement){
+        for(let option of options){
+            option.addEventListener('click', () => {
+                generatorDataElement.value = data[option.dataset.optionValue] || '';
+            });
+        }
+    }
+
+</script>

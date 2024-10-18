@@ -34,6 +34,7 @@ reldens.events.on('reldens.startGameAfter', () => {
 
 reldens.events.on('reldens.activateRoom', (room) => {
     room.onMessage('*', (message) => {
+        // @TODO - BETA - Replace 'rski.Bc' by the constant ACTION_SKILL_BEFORE_CAST, standardize events names.
         // filter skills before cast message:
         if('rski.Bc' !== message.act){
             return;
@@ -53,7 +54,7 @@ reldens.events.on('reldens.activateRoom', (room) => {
             function updateCooldown() {
                 let currentTime = Date.now();
                 let remainingTime = endTime - currentTime;
-                if (remainingTime <= 0) {
+                if(0 >= remainingTime){
                     skillElement.style.setProperty('--angle', '360deg');
                     skillElement.classList.remove('cooldown');
                     return;

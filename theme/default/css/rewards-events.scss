@@ -1,0 +1,103 @@
+/**
+ *
+ * Reldens - Styles - Rewards
+ *
+ */
+
+
+.rewards-dialog-box {
+    min-width: 160px;
+    top: 260px;
+    right: 360px;
+}
+
+@media (max-height: 400px) {
+
+    .rewards-dialog-box {
+        top: 50px;
+    }
+
+}
+
+.rewards-open {
+    position: relative;
+    top: 450px;
+    right: 60px;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 10px;
+
+    img {
+        max-width: 40px;
+    }
+}
+
+#box-rewards {
+    width: 260px;
+
+    .box-content {
+        min-height: 200px;
+    }
+}
+
+.rewards-table {
+    position: relative;
+    word-wrap: break-word;
+    overflow: auto;
+    font-size: 10px;
+    width: 100%;
+    min-height: 120px;
+
+
+    .reward-container {
+        float: left;
+        display: block;
+        width: 50px;
+        height: 50px;
+        margin-bottom: 6px;
+
+        &.reward-active {
+            cursor: pointer;
+        }
+
+        .reward-image-container, .reward-name {
+            display: block;
+            float: left;
+            width: 100%;
+            text-align: center;
+            font-size: 10px;
+        }
+
+        &.reward-inactive {
+            .reward-image-container, .reward-name {
+                opacity: 0.4;
+            }
+        }
+
+        .reward-description {
+            display: none;
+            position: absolute;
+            top: 54px;
+            left: 16%;
+            z-index: 200;
+            max-width: 120px;
+            background: $cBlack;
+            padding: 4px;
+            color: $cWhite;
+            border: 1px solid $cWhite;
+            font-size: 10px;
+            font-style: italic;
+        }
+
+        &:hover {
+            .reward-description {
+                display: block;
+            }
+        }
+    }
+}
+
+.reward-container:nth-child(4n) .reward-description,
+.reward-container:nth-child(5n) .reward-description {
+    right: 50px;
+    left: auto;
+}
