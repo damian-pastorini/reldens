@@ -753,8 +753,12 @@ REPLACE INTO `respawn` (`id`, `object_id`, `respawn_time`, `instances_limit`, `l
     (6, 15, 10000, 200, 'ground-respawn-area');
 
 REPLACE INTO `rewards` (`id`, `object_id`, `item_id`, `modifier_id`, `experience`, `drop_rate`, `drop_quantity`, `is_unique`, `was_given`, `has_drop_body`) VALUES
-	(1, 7, 2, NULL, 10, 100, 1, 0, 0, 1),
-	(2, 6, 2, NULL, 10, 100, 3, 0, 0, 1);
+	(1, 2, 2, NULL, 10, 100, 3, 0, 0, 1),
+	(2, 3, 2, NULL, 10, 100, 1, 0, 0, 1),
+	(3, 6, 2, NULL, 10, 100, 3, 0, 0, 1),
+	(4, 7, 2, NULL, 10, 100, 1, 0, 0, 1),
+	(5, 14, 2, NULL, 10, 100, 3, 0, 0, 1),
+	(6, 15, 2, NULL, 10, 100, 1, 0, 0, 1);
 
 REPLACE INTO `rewards_events` (`id`, `label`, `description`, `handler_key`, `event_key`, `event_data`, `position`, `enabled`, `active_from`, `active_to`) VALUES
     (1, 'rewards.dailyLogin', 'rewards.dailyDescription', 'login', 'reldens.joinRoomEnd', '{"action":"dailyLogin","items":{"coins":1}}', 0, 1, NULL, NULL),

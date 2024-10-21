@@ -193,6 +193,15 @@ INSERT INTO `respawn` (`id`, `object_id`, `respawn_time`, `instances_limit`, `la
     (5, 14, 20000, 200, 'ground-respawn-area'),
     (6, 15, 10000, 200, 'ground-respawn-area');
 
+-- Rewards per object:
+REPLACE INTO `rewards` (`id`, `object_id`, `item_id`, `modifier_id`, `experience`, `drop_rate`, `drop_quantity`, `is_unique`, `was_given`, `has_drop_body`) VALUES
+	(1, 2, 2, NULL, 10, 100, 3, 0, 0, 1),
+	(2, 3, 2, NULL, 10, 100, 1, 0, 0, 1),
+	(3, 6, 2, NULL, 10, 100, 3, 0, 0, 1),
+	(4, 7, 2, NULL, 10, 100, 1, 0, 0, 1),
+	(5, 14, 2, NULL, 10, 100, 3, 0, 0, 1),
+	(6, 15, 2, NULL, 10, 100, 1, 0, 0, 1);
+
 --
 
 SET FOREIGN_KEY_CHECKS = 1;
