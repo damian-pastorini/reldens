@@ -11,6 +11,7 @@ const { ChatConst } = require('reldens/lib/chat/constants');
 const { GameClient } = require('reldens/lib/game/client/game-client');
 const { GameConst } = require('reldens/lib/game/constants');
 const { sc } = require('@reldens/utils');
+let botsCounter = 1;
 
 async function main (options)
 {
@@ -19,7 +20,8 @@ async function main (options)
     let movementIntervalMs = Number(process.env.withMovement || 0);
     let randomGuestName = 'guest-bot-'+sc.randomChars(12);
 
-    console.log('Running bot "'+randomGuestName+'" with options.', {movementIntervalMs, chatIntervalMs});
+    console.log('Running bot #'+botsCounter+' - User "'+randomGuestName+'".', {movementIntervalMs, chatIntervalMs});
+    botsCounter++;
 
     let userData = {
         isGuest: true,
