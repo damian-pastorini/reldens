@@ -115,7 +115,7 @@ INSERT INTO `rooms_change_points` (`id`, `room_id`, `tile_index`, `next_room_id`
     (NULL, 10, 382, 9);
 
 INSERT INTO `rooms_return_points` (`id`, `room_id`, `direction`, `x`, `y`, `is_default`, `from_room_id`) VALUES
-    (NULL, 9, 'down', 4608, 960, 0, 9),
+    (NULL, 9, 'down', 4500, 985, 1, NULL),
     (NULL, 9, 'down', 1600, 4544, 0, 10),
     (NULL, 10, 'up', 64, 544, 1, 9);
 
