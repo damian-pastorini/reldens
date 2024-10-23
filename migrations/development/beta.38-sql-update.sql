@@ -120,8 +120,10 @@ INSERT INTO `rooms_return_points` (`id`, `room_id`, `direction`, `x`, `y`, `is_d
     (NULL, 10, 'up', 64, 544, 1, 9);
 
 INSERT INTO `objects` (`id`, `room_id`, `layer_name`, `tile_index`, `class_type`, `object_class_key`, `client_key`, `title`, `private_params`, `client_params`, `enabled`) VALUES
-	(14, 9, 'ground-respawn-area', NULL, 7, 'enemy_bot_b1', 'enemy_forest_1', 'Tree', '{"shouldRespawn":true,"childObjectType":4,"isAggressive":true}', '{"autoStart":true}', 0),
-	(15, 9, 'ground-respawn-area', NULL, 7, 'enemy_bot_b2', 'enemy_forest_2', 'Tree Punch', '{"shouldRespawn":true,"childObjectType":4,"isAggressive":true,"interactionRadio":180}', '{"autoStart":true}', 0);
+	(14, 9, 'ground-respawn-area', NULL, 7, 'enemy_bot_b1', 'enemy_forest_1', 'Tree', '{"shouldRespawn":true,"childObjectType":4,"isAggressive":true,"interactionRadio":150}', '{"autoStart":true}', 0),
+	(15, 9, 'ground-respawn-area', NULL, 7, 'enemy_bot_b2', 'enemy_forest_2', 'Tree Punch', '{"shouldRespawn":true,"childObjectType":4,"isAggressive":true,"interactionRadio":50}', '{"autoStart":true}', 0);
+
+UPDATE `objects` SET `private_params` = '{"shouldRespawn":true,"childObjectType":4,"isAggressive":true,"interactionRadio":50}' WHERE `layer_name` = 'respawn-area-monsters-lvl-1-2' AND `object_class_key` = 'enemy_2';
 
 INSERT INTO `objects_assets` (`object_asset_id`, `object_id`, `asset_type`, `asset_key`, `asset_file`, `extra_params`) VALUES
 	(12, 14, 'spritesheet', 'enemy_forest_1', 'monster-treant.png', '{"frameWidth":47,"frameHeight":50}'),
