@@ -106,7 +106,7 @@ REPLACE INTO `rewards_events` (`id`, `label`, `description`, `handler_key`, `eve
 
 -- Bots Test Rooms:
 INSERT INTO `rooms` (`id`,`name`, `title`, `map_filename`, `scene_images`, `room_class_key`, `customData`) VALUES
-    (9, 'reldens-bots-forest', 'Bots Forest', 'reldens-bots-forest.json', 'reldens-bots-forest.png', NULL, '{"allowGuest":true,"joinInRandomPlace":true}'),
+    (9, 'reldens-bots-forest', 'Bots Forest', 'reldens-bots-forest.json', 'reldens-bots-forest.png', NULL, '{"allowGuest":true,"joinInRandomPlace":true,"joinInRandomPlaceGuestAlways":true}'),
     (10, 'reldens-bots-forest-house-01-n0', 'Bots Forest - House 1-0', 'reldens-bots-forest-house-01-n0.json', 'reldens-bots-forest-house-01-n0.png', NULL, '{"allowGuest":true}');
 
 INSERT INTO `rooms_change_points` (`id`, `room_id`, `tile_index`, `next_room_id`) VALUES
@@ -120,10 +120,10 @@ INSERT INTO `rooms_return_points` (`id`, `room_id`, `direction`, `x`, `y`, `is_d
     (NULL, 10, 'up', 64, 544, 1, 9);
 
 INSERT INTO `objects` (`id`, `room_id`, `layer_name`, `tile_index`, `class_type`, `object_class_key`, `client_key`, `title`, `private_params`, `client_params`, `enabled`) VALUES
-	(14, 9, 'ground-respawn-area', NULL, 7, 'enemy_bot_b1', 'enemy_forest_1', 'Tree', '{"shouldRespawn":true,"childObjectType":4,"isAggressive":true,"interactionRadio":150}', '{"autoStart":true}', 0),
-	(15, 9, 'ground-respawn-area', NULL, 7, 'enemy_bot_b2', 'enemy_forest_2', 'Tree Punch', '{"shouldRespawn":true,"childObjectType":4,"isAggressive":true,"interactionRadio":50}', '{"autoStart":true}', 0);
+	(14, 9, 'ground-respawn-area', NULL, 7, 'enemy_bot_b1', 'enemy_forest_1', 'Tree', '{"shouldRespawn":true,"childObjectType":4,"isAggressive":true,"interactionRadio":120}', '{"autoStart":true}', 0),
+	(15, 9, 'ground-respawn-area', NULL, 7, 'enemy_bot_b2', 'enemy_forest_2', 'Tree Punch', '{"shouldRespawn":true,"childObjectType":4,"isAggressive":true,"interactionRadio":70}', '{"autoStart":true}', 0);
 
-UPDATE `objects` SET `private_params` = '{"shouldRespawn":true,"childObjectType":4,"isAggressive":true,"interactionRadio":50}' WHERE `layer_name` = 'respawn-area-monsters-lvl-1-2' AND `object_class_key` = 'enemy_2';
+UPDATE `objects` SET `private_params` = '{"shouldRespawn":true,"childObjectType":4,"isAggressive":true,"interactionRadio":70}' WHERE `layer_name` = 'respawn-area-monsters-lvl-1-2' AND `object_class_key` = 'enemy_2';
 
 INSERT INTO `objects_assets` (`object_asset_id`, `object_id`, `asset_type`, `asset_key`, `asset_file`, `extra_params`) VALUES
 	(12, 14, 'spritesheet', 'enemy_forest_1', 'monster-treant.png', '{"frameWidth":47,"frameHeight":50}'),
