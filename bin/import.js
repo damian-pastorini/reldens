@@ -29,7 +29,7 @@ const { FileHandler } = require('../lib/game/server/file-handler');
 let validCommands = {
     'players-experience-per-level': async (data, projectThemeName) => {
         let serverManager = await initializeServer(data, projectThemeName);
-        if (!serverManager) {
+        if(!serverManager){
             return false;
         }
         let importer = new PlayersExperiencePerLevelImporter(serverManager);
@@ -37,7 +37,7 @@ let validCommands = {
     },
     'attributes-per-level': async (data, projectThemeName) => {
         let serverManager = await initializeServer(data, projectThemeName);
-        if (!serverManager) {
+        if(!serverManager){
             return false;
         }
         let importer = new AttributesPerLevelImporter(serverManager);
@@ -45,7 +45,7 @@ let validCommands = {
     },
     'class-paths': async (data, projectThemeName) => {
         let serverManager = await initializeServer(data, projectThemeName);
-        if (!serverManager) {
+        if(!serverManager){
             return false;
         }
         let importer = new ClassPathsImporter(serverManager);
@@ -53,7 +53,7 @@ let validCommands = {
     },
     'maps': async (data, projectThemeName) => {
         let serverManager = await initializeServer(data, projectThemeName);
-        if (!serverManager) {
+        if(!serverManager){
             return false;
         }
         let importer = new MapsImporter(serverManager);
@@ -61,7 +61,7 @@ let validCommands = {
     },
     'skills': async (data, projectThemeName) => {
         let serverManager = await initializeServer(data, projectThemeName);
-        if (!serverManager) {
+        if(!serverManager){
             return false;
         }
         let importer = new SkillsImporter(serverManager);
