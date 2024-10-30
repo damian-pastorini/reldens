@@ -36,7 +36,7 @@ async function main (options)
     let gameClient = new GameClient(options.endpoint);
     let gameRoom = await gameClient.joinOrCreate('room_game', userData);
 
-    console.log('Joined GameRoom successfully!', randomGuestName);
+    console.log('Joined GameRoom "'+gameRoom.roomId+'" successfully!', randomGuestName);
 
     function createPlayer(gameMessage)
     {
@@ -53,7 +53,7 @@ async function main (options)
     async function joinBootsRoom(canMove)
     {
         let reldensBootsRoom = await gameClient.joinOrCreate(options.roomName, userData);
-        console.log('Joining room "'+options.roomName+'": '+userData.username);
+        console.log('Joining room "'+options.roomName+'" (ID "'+gameRoom.roomId+'"): '+userData.username);
         reldensBootsRoom?.onMessage('*', async (roomMessage) => {
             // console.log('Message from ReldensBots', roomMessage.act);
             if(GameConst.GAME_OVER === roomMessage.act){
