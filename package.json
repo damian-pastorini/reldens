@@ -43,7 +43,7 @@
     },
     "dependencies": {
         "@colyseus/monitor": "0.15.8",
-        "@colyseus/schema": "2.0.35",
+        "@colyseus/schema": "2.0.36",
         "@colyseus/ws-transport": "0.15.2",
         "@parcel/bundler-default": "2.12.0",
         "@parcel/compressor-raw": "2.12.0",
@@ -110,7 +110,7 @@
         "body-parser": "1.20.3",
         "colyseus": "0.15.17",
         "colyseus.js": "0.15.26",
-        "core-js": "3.38.1",
+        "core-js": "3.39.0",
         "cors": "2.8.5",
         "dotenv": "16.4.5",
         "express": "4.21.1",
@@ -124,11 +124,11 @@
         "mime-types": "2.1.35",
         "multer": "^1.4.5-lts.1",
         "mustache": "4.2.0",
-        "nodemailer": "6.9.15",
+        "nodemailer": "6.9.16",
         "p2": "0.7.1",
         "pathfinding": "0.4.18",
         "phaser": "3.86.0",
         "regenerator-runtime": "0.14.1",
-        "tslib": "2.8.0"
+        "tslib": "2.8.1"
     }
 }
