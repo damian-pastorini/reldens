@@ -204,6 +204,10 @@ REPLACE INTO `rewards` (`id`, `object_id`, `item_id`, `modifier_id`, `experience
 	(5, 14, 2, NULL, 10, 100, 3, 0, 0, 1),
 	(6, 15, 2, NULL, 10, 100, 1, 0, 0, 1);
 
+-- Rooms server URL:
+ALTER TABLE `rooms` ADD COLUMN `server_url` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci' AFTER `room_class_key`;
+
+
 --
 
 SET FOREIGN_KEY_CHECKS = 1;

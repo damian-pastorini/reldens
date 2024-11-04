@@ -93,6 +93,7 @@ CREATE TABLE IF NOT EXISTS `rooms` (
     `map_filename` VARCHAR(255) COLLATE utf8mb4_unicode_ci NOT NULL,
     `scene_images` VARCHAR(255) COLLATE utf8mb4_unicode_ci NOT NULL,
     `room_class_key` VARCHAR(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+    `server_url` VARCHAR(255) COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
     `customData` TEXT COLLATE utf8mb4_unicode_ci,
     PRIMARY KEY (`id`),
     UNIQUE KEY `key` (`name`)
