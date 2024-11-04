@@ -28,6 +28,7 @@ reldens.events.on('reldens.afterInitEngineAndStartGame', () => {
     reldens.gameDom.getElement('#current-version').innerHTML = reldens.config.client.gameEngine.version+' -';
 });
 
+// demo message removal:
 reldens.events.on('reldens.startGameAfter', () => {
     reldens.gameDom.getElement('.row-disclaimer')?.remove();
 });
