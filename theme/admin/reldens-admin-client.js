@@ -8,6 +8,10 @@
 window.addEventListener('DOMContentLoaded', () => {
 
     // helpers:
+    let location = window.location;
+    let currentPath = location.pathname;
+    let queryString = location.search;
+    let urlParams = new URLSearchParams(queryString);
 
     function getCookie(name)
     {
@@ -30,6 +34,14 @@ window.addEventListener('DOMContentLoaded', () => {
             .replace(/>/g, "&gt;")
             .replace(/"/g, "&quot;")
             .replace(/'/g, "&#039;");
+    }
+
+    // login errors:
+    if('true' === urlParams.get('login-error')){
+        let loginErrorBox = document.querySelector('form.login-form .response-error');
+        if(loginErrorBox){
+            loginErrorBox.innerHTML = 'Login error, please try again.';
+        }
     }
 
     // forms behavior:
@@ -65,8 +77,6 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     // expand menu on load:
-    let location = window.location;
-    let currentPath = location.pathname;
     let subItemContainers = document.querySelectorAll('.with-sub-items');
     if(subItemContainers){
         let done = false;

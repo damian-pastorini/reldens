@@ -132,6 +132,11 @@ $darkGreen: #27ae60;
         }
     }
 
+    .response-error {
+        color: $red;
+        font-weight: $bold;
+    }
+
     .side-bar {
         min-width: 230px;
         padding: 1.4rem;
