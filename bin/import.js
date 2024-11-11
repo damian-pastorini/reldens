@@ -1,6 +1,7 @@
 #! /usr/bin/env node
 
 const { ServerManager } = require('../server');
+const { ObjectsImporter } = require('../lib/import/server/objects-importer');
 const { PlayersExperiencePerLevelImporter } = require('../lib/import/server/players-experience-per-level-importer');
 const { AttributesPerLevelImporter } = require('../lib/import/server/attributes-per-level-importer');
 const { ClassPathsImporter } = require('../lib/import/server/class-paths-importer');
@@ -11,6 +12,8 @@ const { FileHandler } = require('../lib/game/server/file-handler');
 /**
  *
  * Commands:
+ *
+ * $ npx reldens-import objects custom-game-theme-test generate-data/objects-generate-data.json
  *
  * - Players experience per level import is not required if class-paths importer is going to be used.
  * $ npx reldens-import players-experience-per-level custom-game-theme-test generate-data/players-experience-per-level.json
@@ -27,6 +30,14 @@ const { FileHandler } = require('../lib/game/server/file-handler');
  */
 
 let validCommands = {
+    'objects': async (data, projectThemeName) => {
+        let serverManager = await initializeServer(data, projectThemeName);
+        if(!serverManager){
+            return false;
+        }
+        let importer = new ObjectsImporter(serverManager);
+        await importer.import(data);
+    },
     'players-experience-per-level': async (data, projectThemeName) => {
         let serverManager = await initializeServer(data, projectThemeName);
         if(!serverManager){
