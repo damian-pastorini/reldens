@@ -634,6 +634,12 @@ $darkGreen: #27ae60;
                     flex: 2;
                     color: $darkBlue;
                     background-color: $lightGrey;
+
+                    input[type="checkbox"] {
+                        max-width: max-content;
+                        margin-left: 0.5rem;
+                        margin-top: 0.5rem;
+                    }
                 }
             }
         }
@@ -663,6 +669,12 @@ $darkGreen: #27ae60;
                             margin: 0;
                             border: 1px solid #7f8c8d;
                             background: #fff;
+
+                            &[type="checkbox"] {
+                                max-width: max-content;
+                                margin-left: 0.5rem;
+                                margin-top: 0.5rem;
+                            }
                         }
                     }
                 }
