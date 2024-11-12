@@ -39,26 +39,30 @@ While the current stage of the platform is tailored for developers, ongoing impr
 As for the latest version released the platform will provide you with the following features.
 
 - Installation GUI: Easy to install through the web.
-- Administration Panel: Manage every single aspect of your game through the panel (WIP, temporally disabled).
+- Administration Panel: Manage every single aspect of your game through the panel.
+- Automatic data generators and import commands for attributes, levels, maps, objects, etc.
 - Trade System: Between Players (trade) and NPCs (buy and sell).
 - Full In-game Chat: Global, by room, and private messages between users with chat types and split in tabs.
 - Player Stats: Fully configurable stats! HP? MP? Magic? Stamina, you can set up as much as you need for your game logic.
-- Items System: Based on @reldens/items-system, create all kinds of items (usable and equipment).
-- Attacks, PVP, and PVE: Based on @reldens/skills, you will be able to create all kind of skills, attacks, bullets type (can be dodged), target type (can't be dodged), fight with other players or just with NPCs.
+- Items System: create all kinds of items (usable and equipment).
+- Attacks, PVP, and PVE: create all kind of skills, attacks, bullets type (can be dodged), target type (can't be dodged), fight with other players or just with NPCs.
 - NPC's, Enemies, and Respawn Areas: Setup NPC's with different options to interact and create respawn areas.
 - Teams and Clans System: Create, join, dismantle teams and clans, bonus based on clan level, and more.
-- Drops and Rewards: NPCs can drop rewards, and it can be configured to be split among team members.
+- Drops and Rewards: NPCs can drop any kind of items (rewards), and it can be configured to be split among team members.
+- Game rewards: you can configure rewards based on game events like daily or weekly login, it's events managed.
+- Game scores: configurable games scores, for example keep track on monsters kills and get a global scores table view.
 - Physics Engine and Pathfinder: Authoritative server with a physics engine and pathfinder.
 - Gravity World: Setup your rooms with or without gravity to get totally different kinds of gameplay.
 - Sounds System: Configurable multiple sounds categories for any animation or scene.
 - In-game Ads: Integrated with CrazyGames and GameMonetize to show ads in-game.
 - Minimap: Optional configurable minimap.
-- Configurable Visible Players Name and Life-bars.
+- Configurable Players Name and Life-bars visibility.
 - Terms and Conditions: Ready to be set up as you need.
 - Guest Users.
 - Users Registration: Continue playing later and double login invalidation.
 - Multiple Players Creation.
 - Registration and Login Integrated with Firebase.
+- Multiple servers switch support, from room-A in server-A, to room-B in server-B without notice.  
 - Database Ready: With multiple drivers for different storage or using MySQL by default all you need will be saved.
 
 ---
