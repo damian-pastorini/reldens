@@ -7,6 +7,7 @@
  */
 
 const { cli } = require('@colyseus/loadtest');
+const { ConfigManager } = require('reldens/lib/config/client/config-manager');
 const { ChatConst } = require('reldens/lib/chat/constants');
 const { GameClient } = require('reldens/lib/game/client/game-client');
 const { GameConst } = require('reldens/lib/game/constants');
@@ -33,7 +34,7 @@ async function main (options)
         password: randomGuestName,
     };
 
-    let gameClient = new GameClient(options.endpoint);
+    let gameClient = new GameClient(options.endpoint, new ConfigManager());
     let gameRoom = await gameClient.joinOrCreate('room_game', userData);
 
     console.log('Joined GameRoom "'+gameRoom.roomId+'" successfully!', randomGuestName);
