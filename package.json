@@ -42,6 +42,7 @@
         "reldens-import": "bin/import.js"
     },
     "dependencies": {
+        "@colyseus/core": "0.15.55",
         "@colyseus/monitor": "0.15.8",
         "@colyseus/schema": "2.0.36",
         "@colyseus/ws-transport": "0.15.3",
@@ -108,7 +109,6 @@
         "@sendgrid/mail": "8.1.4",
         "bcrypt": "5.1.1",
         "body-parser": "1.20.3",
-        "colyseus": "0.15.17",
         "colyseus.js": "0.15.26",
         "core-js": "3.39.0",
         "cors": "2.8.5",
