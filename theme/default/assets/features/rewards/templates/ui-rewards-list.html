@@ -1,0 +1,23 @@
+<div class="rewards-content">
+    {{#showRewardsTitle}}
+    <h3>{{&rewardsTitle}}</h3>
+    {{/showRewardsTitle}}
+    {{#acceptedReward}}
+    <div class="accepted-reward">
+        {{&acceptedRewardMessage}}
+    </div>
+    {{/acceptedReward}}
+    <div class="rewards-table">
+        {{#rewards}}
+        <div class="reward-container reward-{{&id}} reward-{{&activeClass}}" data-reward-id="{{&id}}">
+            {{#showRewardImage}}
+            <div class="reward-image-container">
+                <img class="reward-image" src="{{&rewardImagePath}}{{&rewardImage}}" alt="{{&translated.label}}"/>
+            </div>
+            {{/showRewardImage}}
+            <span class="reward-name">{{&translated.label}}</span>
+            <span class="reward-description">{{&translated.description}}</span>
+        </div>
+        {{/rewards}}
+    </div>
+</div>

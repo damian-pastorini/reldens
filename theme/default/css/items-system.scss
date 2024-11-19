@@ -48,7 +48,7 @@
     position: relative;
     min-height: 100px;
     padding: 10px;
-    background: #000000;
+    background: $cBlack;
     opacity: 0.8;
     color: $cWhite;
 }
@@ -83,7 +83,6 @@
 }
 
 .item-box {
-
     .item-data-container {
         display: none;
         position: absolute;
@@ -92,10 +91,10 @@
         z-index: 2;
         width: 64%;
         text-align: center;
-        background: #000;
+        background: $cBlack;
         padding: 4px;
-        color: #fff;
-        border: 1px solid #fff;
+        color: $cWhite;
+        border: 1px solid $cWhite;
         font-style: italic;
     }
 

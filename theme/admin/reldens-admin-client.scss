@@ -35,9 +35,9 @@ $darkGreen: #27ae60;
         display: none;
         position: absolute;
         top: 1.5rem;
-        right: 1.5rem;
-        padding: 1rem 2rem;
-        border-radius: 8px;
+        right: 0;
+        padding: 1rem 5rem 1rem 2rem;
+        border-radius: 8px 0 0 8px;
         font-size: 14px;
 
         &.success, &.error {
@@ -56,8 +56,8 @@ $darkGreen: #27ae60;
 
         .close {
             position: absolute;
-            top: 0.5rem;
-            right: 0.5rem;
+            top: 1rem;
+            right: 1rem;
             cursor: pointer;
             font-weight: $bold;
         }
@@ -126,6 +126,15 @@ $darkGreen: #27ae60;
                 background-color: $red;
             }
         }
+
+        &:disabled {
+            background-color: $grey !important;
+        }
+    }
+
+    .response-error {
+        color: $red;
+        font-weight: $bold;
     }
 
     .side-bar {
@@ -328,6 +337,10 @@ $darkGreen: #27ae60;
 
                 .button {
                     margin-bottom: 1rem;
+
+                    &.list-delete-selection {
+                        margin-bottom: 0;
+                    }
                 }
             }
 
@@ -500,6 +513,103 @@ $darkGreen: #27ae60;
 
             }
         }
+
+        textarea {
+            position: relative;
+            display: block;
+            width: 98%;
+            padding: 1%;
+            margin: 1rem 0;
+        }
+    }
+
+    .maps-wizard {
+        .main-action-container.maps-selection {
+            width: 100%;
+
+            .wizard-options-container {
+                display: flex;
+                justify-content: space-between;
+                flex-wrap: wrap;
+                width: 100%;
+
+                input.map-wizard-option {
+                    top: 2px;
+                    margin-right: 0;
+                }
+            }
+        }
+
+        .checkbox-container {
+            display: flex;
+            flex-direction: row;
+            font-weight: $bold;
+        }
+
+        .wizard-options-container {
+            padding: 0;
+            margin-bottom: 1rem;
+
+            input.map-wizard-option {
+                position: relative;
+                top: -2px;
+                margin-right: 6px;
+            }
+
+            .wizard-map-option-container {
+                display: flex;
+                flex-direction: column;
+                list-style: none;
+
+                label {
+                    cursor: pointer;
+                }
+
+                canvas {
+                    max-width: 400px;
+                    margin-top: 1rem;
+                }
+            }
+
+            .wizard-option-container {
+                list-style: none;
+                margin-bottom: 1rem;
+
+                .main-option {
+                    display: inline-block;
+                    cursor: pointer;
+                }
+
+                .maps-wizard-option-content {
+                    display: none;
+                    padding-left: 1.6rem;
+                }
+
+                &.active {
+                    .maps-wizard-option-content {
+                        display: block;
+                    }
+                }
+            }
+        }
+
+        .maps-wizard-form {
+            align-items: flex-start;
+            flex-direction: column;
+            justify-content: flex-start;
+
+            .submit-container {
+                display: flex;
+            }
+
+            .loading {
+                max-width: 50px;
+
+                &.hidden {
+                    display: none;
+                }
+            }
+        }
     }
 
     .entity-view, .entity-edit {
@@ -529,6 +639,12 @@ $darkGreen: #27ae60;
                     flex: 2;
                     color: $darkBlue;
                     background-color: $lightGrey;
+
+                    input[type="checkbox"] {
+                        max-width: max-content;
+                        margin-left: 0.5rem;
+                        margin-top: 0.5rem;
+                    }
                 }
             }
         }
@@ -558,6 +674,12 @@ $darkGreen: #27ae60;
                             margin: 0;
                             border: 1px solid #7f8c8d;
                             background: #fff;
+
+                            &[type="checkbox"] {
+                                max-width: max-content;
+                                margin-left: 0.5rem;
+                                margin-top: 0.5rem;
+                            }
                         }
                     }
                 }

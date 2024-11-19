@@ -15,6 +15,8 @@ class Commander
     projectRoot = process.cwd();
     reldensModulePath = path.join(this.projectRoot, 'node_modules', 'reldens');
     projectThemeName = 'default';
+    jsSourceMaps = '1' === process.env.RELDENS_JS_SOURCEMAPS;
+    cssSourceMaps = '1' === process.env.RELDENS_CSS_SOURCEMAPS;
 
     command = '';
     ready = false;
@@ -39,7 +41,7 @@ class Commander
                     filename: __filename,
                     process: process.cwd(),
                     modulePath: this.reldensModulePath,
-                    projectRoot: this.projectRoot,
+                    projectRoot: this.projectRoot
                 }
             );
         }
@@ -105,7 +107,6 @@ class Commander
             +"\n"+'copyIndex                        - Copy the index file sample into the project.'
             +"\n"+'copyDefaultAssets                - Copy the reldens module default assets into the "dist/assets" folder.'
             +"\n"+'copyDefaultTheme                 - Copy the reldens module default theme into the project theme.'
-            +"\n"+'copyCustomAssets                 - Copy the project assets into the "dist/assets" folder.'
             +"\n"+'copyPackage                      - Copy the reldens module packages into the project.'
             +"\n"+'buildCss [theme-folder-name]     - Builds the project theme styles.'
             +"\n"+'buildClient [theme-folder-name]  - Builds the project theme index.html.'
