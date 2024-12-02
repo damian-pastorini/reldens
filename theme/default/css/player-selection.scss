@@ -13,6 +13,10 @@
 
     #player-selection {
         display: flex;
+
+        &.hidden {
+            display: none;
+        }
     }
 }
 
@@ -69,11 +73,13 @@
                 margin: 10px auto;
             }
 
-            .center-submit {
-                float: none;
-                margin: 0 auto;
-            }
+            .submit-container {
+                justify-content: end;
 
+                .loading-container {
+                    width: auto;
+                }
+            }
         }
 
     }
