@@ -113,20 +113,8 @@ body.game-engine-started {
 }
 
 .game-started {
-    .loading-container {
-        display: none;
-    }
-
     .header .full-screen-btn {
         display: block;
-    }
-}
-
-.game-error {
-    .wrapper {
-        .loading-container {
-            display: none;
-        }
     }
 }
 
@@ -303,6 +291,12 @@ input[type="submit"] {
 
     &.hidden {
         display: none;
+    }
+}
+
+#guest-form {
+    .loading-container {
+        width: 100%;
     }
 }
 
@@ -579,7 +573,14 @@ span.stat-value {
 .loading-container {
     float: left;
     text-align: center;
-    width: 100%;
+
+    img {
+        max-width: 40px;
+    }
+
+    .hidden {
+        display: none;
+    }
 }
 
 #player-stats-open {

@@ -1,0 +1,143 @@
+<h2>Objects Import</h2>
+<div class="sub-content objects-import">
+    <div class="sub-content-box">
+        <form class="sub-content-form objects-import-form confirmation-required"
+            name="objects-import-form"
+            id="objects-import-form"
+            action="{{&actionPath}}"
+            method="post"
+            enctype="multipart/form-data">
+            <div class="main-action-container">
+                <p>What would you like to do?</p>
+                <hr/>
+                <button type="button" class="button button-primary set-sample-data">
+                    Set Sample Data in "Generator Data"
+                </button>
+                <p>NOTE: if you already uploaded all your files and never manually removed them from the "generate-data" folder, you don't need to upload the same files again.</p>
+                <div class="input-box">
+                    <label for="generatorJsonFiles">JSON Files</label>
+                    <input type="file" name="generatorJsonFiles" id="generatorJsonFiles" multiple="multiple"/>
+                </div>
+                <hr/>
+                <label for="generatorData">Generator data (if not empty this data field will be used instead of the files):</label>
+                <textarea name="generatorData" id="generatorData" class="generatorData" cols="30" rows="10" placeholder="JSON data for objects import process"></textarea>
+            </div>
+            <div class="submit-container">
+                <input type="submit" class="button button-primary button-objects-import" value="Generate"/>
+                <img class="hidden loading" src="/assets/web/loading.gif"/>
+            </div>
+        </form>
+    </div>
+</div>
+<script type="text/javascript">
+    let sampleDataElement = document.querySelector('.set-sample-data');
+    let generatorDataElement = document.querySelector('.generatorData');
+    if(sampleDataElement && generatorDataElement){
+        sampleDataElement.addEventListener('click', () => {
+            generatorDataElement.value = JSON.stringify({
+                "objects": [
+                    {
+                        "clientKey": "enemy_forest_1",
+                        "title": "Tree",
+                        "privateParams": "{\"shouldRespawn\":true,\"childObjectType\":4,\"isAggressive\":true,\"interactionRadio\":120}",
+                        "assets": [
+                            {
+                                "assetType": "spritesheet",
+                                "assetKey": "enemy_forest_1",
+                                "assetFile": "monster-treant.png",
+                                "extraParams": "{\"frameWidth\":47,\"frameHeight\":50}"
+                            }
+                        ]
+                    },
+                    {
+                        "clientKey": "enemy_forest_2",
+                        "title": "Tree Punch",
+                        "privateParams": "{\"shouldRespawn\":true,\"childObjectType\":4,\"isAggressive\":true,\"interactionRadio\":70}",
+                        "assets": [
+                            {
+                                "assetType": "spritesheet",
+                                "assetKey": "enemy_forest_2",
+                                "assetFile": "monster-golem2.png",
+                                "extraParams": "{\"frameWidth\":47,\"frameHeight\":50}"
+                            }
+                        ]
+                    }
+                ],
+                "defaults": {
+                    "classType": 7,
+                    "layer": "ground-respawn-area",
+                    "clientParams": "{\"autoStart\":true}",
+                    "enabled": 1,
+                    "respawn": {
+                        "respawnTime": 2000,
+                        "instancesLimit": 200
+                    },
+                    "stats": {
+                        "hp": 50,
+                        "mp": 50,
+                        "atk": 50,
+                        "def": 50,
+                        "dodge": 50,
+                        "speed": 50,
+                        "aim": 50,
+                        "stamina": 50,
+                        "mgk-atk": 50,
+                        "mgk-def": 50
+                    },
+                    "roomsNames": [
+                        "bots-001",
+                        "bots-002",
+                        "bots-003",
+                        "bots-004",
+                        "bots-005",
+                        "bots-006",
+                        "bots-007",
+                        "bots-008",
+                        "bots-009",
+                        "bots-010",
+                        "bots-011",
+                        "bots-012",
+                        "bots-013",
+                        "bots-014",
+                        "bots-015",
+                        "bots-016",
+                        "bots-017",
+                        "bots-018",
+                        "bots-019",
+                        "bots-020",
+                        "bots-021",
+                        "bots-022",
+                        "bots-023",
+                        "bots-024",
+                        "bots-025",
+                        "bots-026",
+                        "bots-027",
+                        "bots-028",
+                        "bots-029",
+                        "bots-030",
+                        "bots-031",
+                        "bots-032",
+                        "bots-033",
+                        "bots-034",
+                        "bots-035",
+                        "bots-036",
+                        "bots-037",
+                        "bots-038",
+                        "bots-039",
+                        "bots-040",
+                        "bots-041",
+                        "bots-042",
+                        "bots-043",
+                        "bots-044",
+                        "bots-045",
+                        "bots-046",
+                        "bots-047",
+                        "bots-048",
+                        "bots-049",
+                        "bots-050"
+                    ]
+                }
+            });
+        });
+    }
+</script>

@@ -5,8 +5,9 @@
  */
 
 // set logger level and trace, this needs to be specified before the game manager is required:
-window.RELDENS_LOG_LEVEL = 7;
-window.RELDENS_ENABLE_TRACE_FOR = 'emergency,alert,critical';
+const urlParams = new URLSearchParams(window.location.search);
+window.RELDENS_LOG_LEVEL = (urlParams.get('logLevel') || 7);
+window.RELDENS_ENABLE_TRACE_FOR = Number(urlParams.get('traceFor') || 'emergency,alert,critical');
 // debug events (warning! this will output in the console ALL the event listeners and every event fired):
 // reldens.events.debug = 'all';
 

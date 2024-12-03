@@ -81,9 +81,9 @@ CREATE TABLE IF NOT EXISTS `players` (
     `name` VARCHAR(255) COLLATE utf8mb4_unicode_ci NOT NULL,
     `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
-    UNIQUE KEY `name` (`name`),
+    UNIQUE INDEX `user_id_name` (`user_id`, `name`),
     KEY `FK_players_users` (`user_id`),
-    CONSTRAINT `FK_players_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON UPDATE CASCADE
+    CONSTRAINT `FK_players_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON UPDATE CASCADE ON DELETE NO ACTION
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
 
 CREATE TABLE IF NOT EXISTS `rooms` (

@@ -601,14 +601,14 @@ $darkGreen: #27ae60;
             .submit-container {
                 display: flex;
             }
+        }
+    }
 
-            .loading {
-                max-width: 50px;
+    .loading {
+        max-width: 50px;
 
-                &.hidden {
-                    display: none;
-                }
-            }
+        &.hidden {
+            display: none;
         }
     }
 
