@@ -23,7 +23,7 @@ Welcome to Reldens, a platform designed to empower developers in creating multip
 
 With a wide array of features, Reldens enables developers to craft a rich gaming experience without grappling with the complexities usually associated with making a multiplayer game secure and efficient over any network.
 
-Built with popular development tools such as NodeJS, Parcel, Colyseus, Phaser, and Firebase, integrated with various database engines, and following robust development practices, the platform ensures security, ease of use, and high customization for developers.
+Built with popular development tools such as NodeJS, Parcel, Colyseus, Phaser and more, integrated with various database engines, and following robust development practices, the platform ensures security, ease of use, and high customization for developers.
 
 While the current stage of the platform is tailored for developers, ongoing improvements to the administration panel aim to make game creation accessible to non-developers in the future.
 
@@ -96,7 +96,6 @@ Join our Discord channel: [https://discord.gg/HuJMxUY](https://discord.gg/HuJMxU
 
 [![Ko-fi](https://img.shields.io/badge/Reldens-Support%20us%20on%20Ko--Fi-blue?style=for-the-badge)](https://ko-fi.com/I2I81VISA)
 [![Patroen](https://img.shields.io/badge/Reldens-Become%20a%20Patroen-blue?style=for-the-badge)](https://www.patreon.com/bePatron?u=18074832)
-[![Paypal](https://img.shields.io/badge/Reldens-Paypal%20Donation-blue?style=for-the-badge)](https://www.paypal.com/paypalme/damianpastorini)
 
 If you like to contribute in any way or donate to support the project please also feel free to contact me at [info@dwdeveloper.com](mailto:info@dwdeveloper.com).
 
