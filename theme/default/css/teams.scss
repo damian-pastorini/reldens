@@ -4,6 +4,7 @@
  *
  */
 
+@use "variables" as *;
 
 .teams-dialog-box {
     min-width: 160px;
@@ -147,7 +148,7 @@
         img {
             max-width: 24px;
             position: relative;
-            top: 0px;
+            top: 0;
         }
     }
 }

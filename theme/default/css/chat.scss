@@ -4,6 +4,8 @@
  *
  */
 
+@use "variables" as *;
+
 .chat-ui {
     float: left;
     position: relative;
@@ -83,8 +85,9 @@
     padding: 2%;
     word-wrap: break-word;
     overflow: auto;
-    font-size: 12px;
     user-select: auto;
+    font-family: $normalFont;
+    font-size: 12px;
 }
 
 #chat-input {
@@ -93,6 +96,7 @@
     width: 70%;
     outline: none;
     user-select: auto;
+    font-family: $normalFont;
 }
 
 #chat-send {

@@ -88,7 +88,6 @@ let validCommands = {
             generatedFolder,
             FileHandler.joinPaths(process.cwd(), 'generated')
         );
-        // FileHandler.removeFolder(generatedFolder);
     }
 };
 
