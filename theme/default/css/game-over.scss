@@ -4,6 +4,8 @@
  *
  */
 
+@use "variables" as *;
+
 #game-over {
     z-index: 2000;
     position: absolute;

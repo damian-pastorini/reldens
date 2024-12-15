@@ -4,6 +4,8 @@
  *
  */
 
+@use "variables" as *;
+
 body, html {
     height: 100%;
     margin: 0;
@@ -11,7 +13,7 @@ body, html {
 }
 
 body {
-    font-family: $normalFont;
+    font-family: $reldensFont;
     background-color: transparent;
 
     &.game-engine-started {
@@ -27,7 +29,6 @@ body {
         z-index: 10000;
         background-size: cover;
         background-color: $cWhite;
-        background-image: url(../assets/web/reldens-background.png);
         background-position: center;
         background-repeat: no-repeat;
 
@@ -128,7 +129,6 @@ body.game-engine-started {
         display: block;
         margin: 0 0 0 2%;
         padding: 0;
-        font-family: $reldensFont;
         font-size: 1.5em;
 
         strong {
