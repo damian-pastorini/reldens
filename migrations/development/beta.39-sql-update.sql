@@ -29,7 +29,8 @@ VALUES
     ('client', 'ui/maximum/x', '1280', 2),
     ('client', 'ui/maximum/y', '1280', 2),
     ('client', 'ui/screen/responsive', '1', 3)
-ON DUPLICATE KEY UPDATE `value` = VALUES(`value`), `type` = VALUES(`type`);
+AS new_config
+ON DUPLICATE KEY UPDATE `value` = new_config.`value`, `type` = new_config.`type`;
 
 --
 
