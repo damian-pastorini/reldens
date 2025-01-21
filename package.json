@@ -117,7 +117,7 @@
         "express-formidable": "1.2.0",
         "express-rate-limit": "7.4.1",
         "express-session": "1.18.1",
-        "firebase": "10.14.1",
+        "firebase": "11.2.0",
         "firebaseui": "6.1.0",
         "jimp": "1.6.0",
         "mime-types": "2.1.35",
