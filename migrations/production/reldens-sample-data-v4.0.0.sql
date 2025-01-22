@@ -374,7 +374,7 @@ REPLACE INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(198, 'client', 'ui/minimap/camBackgroundColor', 'rgba(0,0,0,0.6)', 1),
 	(199, 'client', 'ui/minimap/camX', '240', 2),
 	(200, 'client', 'ui/minimap/camY', '10', 2),
-	(201, 'client', 'ui/minimap/camZoom', '0.15', 2),
+	(201, 'client', 'ui/minimap/camZoom', '0.08', 2),
 	(202, 'client', 'ui/minimap/circleAlpha', '1', 2),
 	(203, 'client', 'ui/minimap/circleColor', 'rgb(0,0,0)', 1),
 	(204, 'client', 'ui/minimap/circleFillAlpha', '0', 2),

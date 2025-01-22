@@ -28,7 +28,8 @@ VALUES
     ('client', 'general/gameEngine/updateGameSizeTimeOut', '500', 2),
     ('client', 'ui/maximum/x', '800', 2),
     ('client', 'ui/maximum/y', '800', 2),
-    ('client', 'ui/screen/responsive', '1', 3)
+    ('client', 'ui/screen/responsive', '1', 3),
+    ('client', 'ui/minimap/camZoom', '0.08', 2)
 AS new_config
 ON DUPLICATE KEY UPDATE `value` = new_config.`value`, `type` = new_config.`type`;
 
