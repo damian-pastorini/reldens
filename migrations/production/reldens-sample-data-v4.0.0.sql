@@ -1051,8 +1051,8 @@ REPLACE INTO `stats` (`id`, `key`, `label`, `description`, `base_value`, `custom
 	(6, 'speed', 'Speed', 'Player speed point', 100, NULL),
 	(7, 'aim', 'Aim', 'Player aim points', 100, NULL),
 	(8, 'stamina', 'Stamina', 'Player stamina points', 100, '{"showBase":true}'),
-	(9, 'mgk-atk', 'Magic Atk', 'Player magic attack', 100, NULL),
-	(10, 'mgk-def', 'Magic Def', 'Player magic defense', 100, NULL);
+	(9, 'mAtk', 'Magic Atk', 'Player magic attack', 100, NULL),
+	(10, 'mDef', 'Magic Def', 'Player magic defense', 100, NULL);
 
 REPLACE INTO `target_options` (`id`, `target_key`, `target_label`) VALUES
 	(1, 'object', 'Object'),
