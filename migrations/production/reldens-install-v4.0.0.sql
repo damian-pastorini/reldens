@@ -830,7 +830,6 @@ CREATE TABLE IF NOT EXISTS `skills_skill_owner_conditions` (
     `conditional` ENUM('eq','ne','lt','gt','le','ge') NOT NULL COLLATE 'utf8mb4_unicode_ci',
     `value` VARCHAR(255) NOT NULL COLLATE 'utf8mb4_unicode_ci',
     PRIMARY KEY (`id`) USING BTREE,
-    UNIQUE INDEX `key` (`key`) USING BTREE,
     UNIQUE INDEX `skill_id_property_key` (`skill_id`, `property_key`) USING BTREE,
     INDEX `skill_id` (`skill_id`) USING BTREE,
     CONSTRAINT `FK_skills_skill_owner_conditions_skills_skill` FOREIGN KEY (`skill_id`) REFERENCES `skills_skill` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT
