@@ -533,6 +533,22 @@ $darkGreen: #27ae60;
                 flex-wrap: wrap;
                 width: 100%;
 
+                // 3 or more items => 25% each
+                .wizard-map-option-container {
+                    flex: 0 0 24%;
+                }
+
+                // 1 child => 100%
+                .wizard-map-option-container:only-child {
+                    flex: 0 0 100%;
+                }
+
+                // 2 children => 50% each
+                .wizard-map-option-container:first-child:nth-last-child(2),
+                .wizard-map-option-container:last-child:nth-child(2) {
+                    flex: 0 0 49%;
+                }
+
                 input.map-wizard-option {
                     top: 2px;
                     margin-right: 0;
@@ -560,13 +576,16 @@ $darkGreen: #27ae60;
                 display: flex;
                 flex-direction: column;
                 list-style: none;
+                padding-top: 1rem;
+                margin-top: 1.5rem;
+                border-top: 1px solid #ccc;
 
                 label {
                     cursor: pointer;
                 }
 
                 canvas {
-                    max-width: 400px;
+                    width: 100%;
                     margin-top: 1rem;
                 }
             }
