@@ -76,6 +76,10 @@ body {
     display: none;
 }
 
+.hidden-forced {
+    display: none !important;
+}
+
 .game-container {
     height: 100%;
 }
