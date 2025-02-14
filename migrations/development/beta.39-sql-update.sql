@@ -33,6 +33,8 @@ VALUES
 AS new_config
 ON DUPLICATE KEY UPDATE `value` = new_config.`value`, `type` = new_config.`type`;
 
+INSERT INTO `config` VALUES (NULL, 'client', 'gameEngine/scale/autoRound', 0, 3);
+
 UPDATE `stats` SET `key` = 'mAtk' WHERE `key` = 'mgk-atk';
 UPDATE `stats` SET `key` = 'mDef' WHERE `key` = 'mgk-def';
 
