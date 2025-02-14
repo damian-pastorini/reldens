@@ -217,7 +217,7 @@ input[type="submit"] {
         max-width: 98%;
     }
 
-    &.hidden {
+    &.hidden, &.row-0:has(.guest-form.hidden) {
         display: none;
     }
 }
