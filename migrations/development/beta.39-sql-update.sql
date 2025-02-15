@@ -33,7 +33,14 @@ VALUES
 AS new_config
 ON DUPLICATE KEY UPDATE `value` = new_config.`value`, `type` = new_config.`type`;
 
-INSERT INTO `config` VALUES (NULL, 'client', 'gameEngine/scale/autoRound', 0, 3);
+INSERT INTO `config` (`scope`, `path`, `value`, `type`)
+VALUES
+    ('client', 'gameEngine/scale/autoRound', 0, 3)
+    ('client', 'ui/fullScreenButton/enabled', '1', 3),
+    ('client', 'ui/fullScreenButton/responsiveX', '100', 2),
+    ('client', 'ui/fullScreenButton/responsiveY', '0', 2),
+    ('client', 'ui/fullScreenButton/x', '380', 2),
+    ('client', 'ui/fullScreenButton/y', '20', 2);
 
 UPDATE `stats` SET `key` = 'mAtk' WHERE `key` = 'mgk-atk';
 UPDATE `stats` SET `key` = 'mDef' WHERE `key` = 'mgk-def';

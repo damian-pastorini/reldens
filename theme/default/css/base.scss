@@ -117,12 +117,6 @@ body.game-engine-started {
     }
 }
 
-.game-started {
-    .header .full-screen-btn {
-        display: block;
-    }
-}
-
 .header {
     #your-logo {
         margin-left: 2%;
@@ -150,18 +144,6 @@ body.game-engine-started {
         }
 
     }
-
-    .full-screen-btn {
-        display: none;
-        position: absolute;
-        right: 0;
-        background: transparent;
-        border: none;
-        color: #fff;
-        padding: 4px;
-        font-size: 11px;
-    }
-
 }
 
 .footer {
@@ -595,6 +577,16 @@ span.stat-value {
     max-width: 40px;
     top: 20px;
     right: 60px;
+}
+
+#full-screen-btn {
+    cursor: pointer;
+    position: relative;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 10px;
+    max-width: 40px;
+    top: 20px;
+    right: 134px;
 }
 
 .ui-box-button-option {

@@ -9,27 +9,19 @@ TRUNCATE `ads_banner`;
 TRUNCATE `ads_event_video`;
 TRUNCATE `ads_played`;
 TRUNCATE `ads_providers`;
-TRUNCATE `ads_types`;
 TRUNCATE `audio`;
 TRUNCATE `audio_categories`;
 TRUNCATE `audio_markers`;
 TRUNCATE `audio_player_config`;
 TRUNCATE `chat`;
-TRUNCATE `chat_message_types`;
 TRUNCATE `clan`;
-TRUNCATE `clan_levels`;
 TRUNCATE `clan_levels_modifiers`;
 TRUNCATE `clan_members`;
-TRUNCATE `config`;
-TRUNCATE `config_types`;
 TRUNCATE `drops_animations`;
-TRUNCATE `features`;
 TRUNCATE `items_group`;
 TRUNCATE `items_inventory`;
 TRUNCATE `items_item`;
 TRUNCATE `items_item_modifiers`;
-TRUNCATE `items_types`;
-TRUNCATE `locale`;
 TRUNCATE `objects`;
 TRUNCATE `objects_animations`;
 TRUNCATE `objects_assets`;
@@ -38,8 +30,6 @@ TRUNCATE `objects_items_requirements`;
 TRUNCATE `objects_items_rewards`;
 TRUNCATE `objects_skills`;
 TRUNCATE `objects_stats`;
-TRUNCATE `objects_types`;
-TRUNCATE `operation_types`;
 TRUNCATE `players`;
 TRUNCATE `players_state`;
 TRUNCATE `players_stats`;
@@ -71,10 +61,8 @@ TRUNCATE `skills_skill_owner_effects_conditions`;
 TRUNCATE `skills_skill_physical_data`;
 TRUNCATE `skills_skill_target_effects`;
 TRUNCATE `skills_skill_target_effects_conditions`;
-TRUNCATE `skills_skill_type`;
 TRUNCATE `snippets`;
 TRUNCATE `stats`;
-TRUNCATE `target_options`;
 TRUNCATE `users`;
 TRUNCATE `users_locale`;
 
@@ -95,10 +83,6 @@ REPLACE INTO `ads_event_video` (`id`, `ads_id`, `event_key`, `event_data`) VALUE
 REPLACE INTO `ads_providers` (`id`, `key`, `enabled`) VALUES
 	(1, 'crazyGames', 0),
 	(2, 'gameMonetize', 0);
-
-REPLACE INTO `ads_types` (`id`, `key`) VALUES
-	(1, 'banner'),
-	(2, 'eventVideo');
 
 REPLACE INTO `audio` (`id`, `audio_key`, `files_name`, `config`, `room_id`, `category_id`, `enabled`) VALUES
 	(3, 'footstep', 'footstep.mp3', '{"onlyCurrentPlayer":true}', NULL, 3, 1),
@@ -151,405 +135,6 @@ REPLACE INTO `audio_markers` (`id`, `audio_id`, `marker_key`, `start`, `duration
 	(40, 3, 'r_warrior_up', 0, 1, NULL),
 	(41, 3, 'r_warrior_down', 0, 1, NULL);
 
-REPLACE INTO `chat_message_types` (`id`, `key`, `show_tab`, `also_show_in_type`) VALUES
-	(1, 'message', 1, NULL),
-	(2, 'joined', 0, 1),
-	(3, 'system', 0, 1),
-	(4, 'private', 1, 1),
-	(5, 'damage', 0, 1),
-	(6, 'reward', 0, 1),
-	(7, 'skill', 0, 1),
-	(8, 'teams', 1, 1),
-	(9, 'global', 1, 1),
-	(10, 'error', 0, 1);
-
-REPLACE INTO `clan_levels` (`id`, `key`, `label`, `required_experience`) VALUES
-	(1, 1, '1', 0);
-
-REPLACE INTO `config_types` (`id`, `label`) VALUES
-    (1, 'string'),
-    (2, 'float'),
-    (3, 'boolean'),
-    (4, 'json'),
-    (5, 'comma_separated');
-
-REPLACE INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
-	(1, 'client', 'actions/damage/color', '#ff0000', 1),
-	(2, 'client', 'actions/damage/duration', '600', 2),
-	(3, 'client', 'actions/damage/enabled', '1', 3),
-	(4, 'client', 'actions/damage/font', 'Verdana, Geneva, sans-serif', 1),
-	(5, 'client', 'actions/damage/fontSize', '14', 2),
-	(6, 'client', 'actions/damage/shadowColor', 'rgba(0,0,0,0.7)', 1),
-	(7, 'client', 'actions/damage/showAll', '0', 3),
-	(8, 'client', 'actions/damage/stroke', '#000000', 1),
-	(9, 'client', 'actions/damage/strokeThickness', '4', 2),
-	(10, 'client', 'actions/damage/top', '50', 2),
-	(11, 'client', 'actions/skills/affectedProperty', 'hp', 1),
-	(12, 'client', 'ads/general/providers/crazyGames/enabled', '0', 3),
-	(13, 'client', 'ads/general/providers/crazyGames/sdkUrl', 'https://sdk.crazygames.com/crazygames-sdk-v2.js', 1),
-	(14, 'client', 'ads/general/providers/crazyGames/videoMinimumDuration', '3000', 2),
-	(15, 'client', 'ads/general/providers/gameMonetize/enabled', '0', 3),
-	(16, 'client', 'ads/general/providers/gameMonetize/gameId', 'your-game-id-should-be-here', 1),
-	(17, 'client', 'ads/general/providers/gameMonetize/sdkUrl', 'https://api.gamemonetize.com/sdk.js', 1),
-	(18, 'client', 'chat/messages/characterLimit', '100', 2),
-	(19, 'client', 'chat/messages/characterLimitOverhead', '30', 2),
-	(20, 'client', 'clan/general/openInvites', '0', 3),
-	(21, 'client', 'clan/labels/clanTitle', 'Clan: %clanName - Leader: %leaderName', 1),
-	(22, 'client', 'clan/labels/propertyMaxValue', '/ %propertyMaxValue', 1),
-	(23, 'client', 'clan/labels/requestFromTitle', 'Clan request from:', 1),
-	(24, 'client', 'gameEngine/banner', '0', 3),
-	(25, 'client', 'gameEngine/dom/createContainer', '1', 3),
-	(26, 'client', 'gameEngine/height', '1280', 2),
-	(27, 'client', 'gameEngine/parent', 'reldens', 1),
-	(28, 'client', 'gameEngine/physics/arcade/debug', 'false', 3),
-	(29, 'client', 'gameEngine/physics/arcade/gravity/x', '0', 2),
-	(30, 'client', 'gameEngine/physics/arcade/gravity/y', '0', 2),
-	(31, 'client', 'gameEngine/physics/default', 'arcade', 1),
-	(32, 'client', 'gameEngine/scale/autoCenter', '1', 2),
-	(33, 'client', 'gameEngine/scale/autoRound', '0', 3),
-	(34, 'client', 'gameEngine/scale/max/height', '1280', 2),
-	(35, 'client', 'gameEngine/scale/max/width', '1280', 2),
-	(36, 'client', 'gameEngine/scale/min/height', '360', 2),
-	(37, 'client', 'gameEngine/scale/min/width', '360', 2),
-	(38, 'client', 'gameEngine/scale/mode', '5', 2),
-	(39, 'client', 'gameEngine/scale/parent', 'reldens', 1),
-	(40, 'client', 'gameEngine/scale/zoom', '1', 2),
-	(41, 'client', 'gameEngine/type', '0', 2),
-	(42, 'client', 'gameEngine/width', '1280', 2),
-	(43, 'client', 'general/animations/frameRate', '10', 2),
-	(44, 'client', 'general/assets/arrowDownPath', '/assets/sprites/arrow-down.png', 1),
-	(45, 'client', 'general/assets/statsIconPath', '/assets/icons/book.png', 1),
-	(46, 'client', 'general/controls/action_button_hold', '0', 3),
-	(47, 'client', 'general/controls/allowSimultaneousKeys', '1', 3),
-	(48, 'client', 'general/engine/clientInterpolation', '1', 3),
-	(49, 'client', 'general/engine/experimentalClientPrediction', '0', 3),
-	(50, 'client', 'general/engine/interpolationSpeed', '0.4', 2),
-	(51, 'client', 'general/gameEngine/updateGameSizeTimeOut', '500', 2),
-	(52, 'client', 'general/users/allowGuest', '1', 3),
-	(53, 'client', 'general/users/allowRegistration', '1', 3),
-	(54, 'client', 'login/termsAndConditions/body', 'This is our test terms and conditions content.', 1),
-	(55, 'client', 'login/termsAndConditions/checkboxLabel', 'Accept terms and conditions', 1),
-	(56, 'client', 'login/termsAndConditions/es/body', 'Este es el contenido de nuestros términos y condiciones de prueba.', 1),
-	(57, 'client', 'login/termsAndConditions/es/checkboxLabel', 'Aceptar terminos y condiciones', 1),
-	(58, 'client', 'login/termsAndConditions/es/heading', 'Términos y condiciones', 1),
-	(59, 'client', 'login/termsAndConditions/es/link', 'Acepta nuestros Términos y Condiciones (haz clic aquí).', 1),
-	(60, 'client', 'login/termsAndConditions/heading', 'Terms and conditions', 1),
-	(61, 'client', 'login/termsAndConditions/link', 'Accept our Terms and Conditions (click here).', 1),
-	(62, 'client', 'map/layersDepth/belowPlayer', '0', 2),
-	(63, 'client', 'map/layersDepth/changePoints', '0', 2),
-	(64, 'client', 'map/tileData/height', '32', 2),
-	(65, 'client', 'map/tileData/margin', '1', 2),
-	(66, 'client', 'map/tileData/spacing', '2', 2),
-	(67, 'client', 'map/tileData/width', '32', 2),
-	(68, 'client', 'objects/npc/invalidOptionMessage', 'I do not understand.', 1),
-	(69, 'client', 'players/animations/basedOnPress', '1', 3),
-	(70, 'client', 'players/animations/collideWorldBounds', '1', 3),
-	(71, 'client', 'players/animations/defaultFrames/down/end', '2', 2),
-	(72, 'client', 'players/animations/defaultFrames/down/start', '0', 2),
-	(73, 'client', 'players/animations/defaultFrames/left/end', '5', 2),
-	(74, 'client', 'players/animations/defaultFrames/left/start', '3', 2),
-	(75, 'client', 'players/animations/defaultFrames/right/end', '8', 2),
-	(76, 'client', 'players/animations/defaultFrames/right/start', '6', 2),
-	(77, 'client', 'players/animations/defaultFrames/up/end', '11', 2),
-	(78, 'client', 'players/animations/defaultFrames/up/start', '9', 2),
-	(79, 'client', 'players/animations/diagonalHorizontal', '1', 3),
-	(80, 'client', 'players/animations/fadeDuration', '1000', 2),
-	(81, 'client', 'players/animations/fallbackImage', 'player-base.png', 1),
-	(82, 'client', 'players/multiplePlayers/enabled', '1', 3),
-	(83, 'client', 'players/physicalBody/height', '25', 2),
-	(84, 'client', 'players/physicalBody/width', '25', 2),
-	(85, 'client', 'players/playedTime/label', 'Played time %playedTimeInHs hs', 1),
-	(86, 'client', 'players/playedTime/show', '2', 2),
-	(87, 'client', 'players/size/height', '71', 2),
-	(88, 'client', 'players/size/leftOffset', '0', 2),
-	(89, 'client', 'players/size/topOffset', '20', 2),
-	(90, 'client', 'players/size/width', '52', 2),
-	(91, 'client', 'players/tapMovement/enabled', '1', 3),
-	(92, 'client', 'rewards/titles/rewardMessage', 'You obtained %dropQuantity %itemLabel', 1),
-	(93, 'client', 'rooms/selection/allowOnLogin', '1', 3),
-	(94, 'client', 'rooms/selection/allowOnRegistration', '1', 3),
-	(95, 'client', 'rooms/selection/loginAvailableRooms', '*', 1),
-	(96, 'client', 'rooms/selection/loginLastLocation', '1', 3),
-	(97, 'client', 'rooms/selection/loginLastLocationLabel', 'Last Location', 1),
-	(98, 'client', 'rooms/selection/registrationAvailableRooms', '*', 1),
-	(99, 'client', 'skills/animations/default_atk', '{"key":"default_atk","animationData":{"enabled":true,"type":"spritesheet","img":"default_atk","frameWidth":64,"frameHeight":64,"start":0,"end":4,"repeat":0}}', 4),
-	(100, 'client', 'skills/animations/default_bullet', '{"key":"default_bullet","animationData":{"enabled":true,"type":"spritesheet","img":"default_bullet","frameWidth":64,"frameHeight":64,"start":0,"end":2,"repeat":-1,"frameRate":1}}', 4),
-	(101, 'client', 'skills/animations/default_cast', '{"key": "default_cast","animationData":{"enabled":false,"type":"spritesheet","img":"default_cast","frameWidth":64,"frameHeight":64,"start":0,"end":3,"repeat":0}}', 4),
-	(102, 'client', 'skills/animations/default_death', '{"key":"default_death","animationData":{"enabled":true,"type":"spritesheet","img":"default_death","frameWidth":64,"frameHeight":64,"start":0,"end":1,"repeat":0,"frameRate":1}}', 4),
-	(103, 'client', 'skills/animations/default_hit', '{"key":"default_hit","animationData":{"enabled":true,"type":"spritesheet","img":"default_hit","frameWidth":64,"frameHeight":64,"start":0,"end":3,"repeat":0,"depthByPlayer":"above"}}', 4),
-	(104, 'client', 'team/labels/leaderNameTitle', 'Team leader: %leaderName', 1),
-	(105, 'client', 'team/labels/propertyMaxValue', '/ %propertyMaxValue', 1),
-	(106, 'client', 'team/labels/requestFromTitle', 'Team request from:', 1),
-	(107, 'client', 'trade/players/awaitTimeOut', '1', 3),
-	(108, 'client', 'trade/players/timeOut', '8000', 2),
-	(109, 'client', 'ui/chat/damageMessages', '1', 3),
-	(110, 'client', 'ui/chat/defaultOpen', '0', 3),
-	(111, 'client', 'ui/chat/dodgeMessages', '1', 3),
-	(112, 'client', 'ui/chat/effectMessages', '1', 3),
-	(113, 'client', 'ui/chat/enabled', '1', 3),
-	(114, 'client', 'ui/chat/notificationBalloon', '1', 3),
-	(115, 'client', 'ui/chat/overheadChat/closeChatBoxAfterSend', '1', 3),
-	(116, 'client', 'ui/chat/overheadChat/enabled', '0', 3),
-	(117, 'client', 'ui/chat/overheadChat/isTyping', '0', 3),
-	(118, 'client', 'ui/chat/overheadText/align', 'center', 1),
-	(119, 'client', 'ui/chat/overheadText/depth', '200000', 2),
-	(120, 'client', 'ui/chat/overheadText/fill', '#ffffff', 1),
-	(121, 'client', 'ui/chat/overheadText/fontFamily', 'Verdana, Geneva, sans-serif', 1),
-	(122, 'client', 'ui/chat/overheadText/fontSize', '12px', 1),
-	(123, 'client', 'ui/chat/overheadText/height', '15', 2),
-	(124, 'client', 'ui/chat/overheadText/shadowBlur', '5', 2),
-	(125, 'client', 'ui/chat/overheadText/shadowColor', 'rgba(0,0,0,0.7)', 1),
-	(126, 'client', 'ui/chat/overheadText/shadowX', '5', 2),
-	(127, 'client', 'ui/chat/overheadText/shadowY', '5', 2),
-	(128, 'client', 'ui/chat/overheadText/stroke', 'rgba(0,0,0,0.7)', 1),
-	(129, 'client', 'ui/chat/overheadText/strokeThickness', '20', 2),
-	(130, 'client', 'ui/chat/overheadText/textLength', '4', 2),
-	(131, 'client', 'ui/chat/overheadText/timeOut', '5000', 2),
-	(132, 'client', 'ui/chat/overheadText/topOffset', '20', 2),
-	(133, 'client', 'ui/chat/responsiveX', '100', 2),
-	(134, 'client', 'ui/chat/responsiveY', '100', 2),
-	(135, 'client', 'ui/chat/showTabs', '1', 3),
-	(136, 'client', 'ui/chat/totalValidTypes', '2', 2),
-	(137, 'client', 'ui/chat/x', '440', 2),
-	(138, 'client', 'ui/chat/y', '940', 2),
-	(139, 'client', 'ui/clan/enabled', '1', 3),
-	(140, 'client', 'ui/clan/responsiveX', '100', 2),
-	(141, 'client', 'ui/clan/responsiveY', '0', 2),
-	(142, 'client', 'ui/clan/sharedProperties', '{"hp":{"path":"stats/hp","pathMax":"statsBase/hp","label":"HP"},"mp":{"path":"stats/mp","pathMax":"statsBase/mp","label":"MP"}}', 4),
-	(143, 'client', 'ui/clan/x', '430', 2),
-	(144, 'client', 'ui/clan/y', '100', 2),
-	(145, 'client', 'ui/controls/allowPrimaryTouch', '1', 3),
-	(146, 'client', 'ui/controls/defaultActionKey', '', 1),
-	(147, 'client', 'ui/controls/disableContextMenu', '1', 3),
-	(148, 'client', 'ui/controls/enabled', '1', 3),
-	(149, 'client', 'ui/controls/opacityEffect', '1', 3),
-	(150, 'client', 'ui/controls/primaryMove', '0', 3),
-	(151, 'client', 'ui/controls/responsiveX', '0', 2),
-	(152, 'client', 'ui/controls/responsiveY', '100', 2),
-	(153, 'client', 'ui/controls/tabTarget', '1', 3),
-	(154, 'client', 'ui/controls/x', '120', 2),
-	(155, 'client', 'ui/controls/y', '390', 2),
-	(156, 'client', 'ui/default/responsiveX', '10', 2),
-	(157, 'client', 'ui/default/responsiveY', '10', 2),
-	(158, 'client', 'ui/default/x', '120', 2),
-	(159, 'client', 'ui/default/y', '100', 2),
-	(160, 'client', 'ui/equipment/enabled', '1', 3),
-	(161, 'client', 'ui/equipment/responsiveX', '100', 2),
-	(162, 'client', 'ui/equipment/responsiveY', '0', 2),
-	(163, 'client', 'ui/equipment/x', '430', 2),
-	(164, 'client', 'ui/equipment/y', '90', 2),
-	(165, 'client', 'ui/instructions/enabled', '1', 3),
-	(166, 'client', 'ui/instructions/responsiveX', '100', 2),
-	(167, 'client', 'ui/instructions/responsiveY', '100', 2),
-	(168, 'client', 'ui/instructions/x', '380', 2),
-	(169, 'client', 'ui/instructions/y', '940', 2),
-	(170, 'client', 'ui/inventory/enabled', '1', 3),
-	(171, 'client', 'ui/inventory/responsiveX', '100', 2),
-	(172, 'client', 'ui/inventory/responsiveY', '0', 2),
-	(173, 'client', 'ui/inventory/x', '380', 2),
-	(174, 'client', 'ui/inventory/y', '450', 2),
-	(175, 'client', 'ui/lifeBar/enabled', '1', 3),
-	(176, 'client', 'ui/lifeBar/fillStyle', '0xff0000', 1),
-	(177, 'client', 'ui/lifeBar/fixedPosition', '0', 3),
-	(178, 'client', 'ui/lifeBar/height', '5', 2),
-	(179, 'client', 'ui/lifeBar/lineStyle', '0xffffff', 1),
-	(180, 'client', 'ui/lifeBar/responsiveX', '1', 2),
-	(181, 'client', 'ui/lifeBar/responsiveY', '24', 2),
-	(182, 'client', 'ui/lifeBar/showAllPlayers', '0', 3),
-	(183, 'client', 'ui/lifeBar/showEnemies', '1', 3),
-	(184, 'client', 'ui/lifeBar/showOnClick', '1', 3),
-	(185, 'client', 'ui/lifeBar/top', '5', 2),
-	(186, 'client', 'ui/lifeBar/width', '50', 2),
-	(187, 'client', 'ui/lifeBar/x', '5', 2),
-	(188, 'client', 'ui/lifeBar/y', '12', 2),
-	(189, 'client', 'ui/loading/assetsColor', '#ffffff', 1),
-	(190, 'client', 'ui/loading/assetsSize', '18px', 1),
-	(191, 'client', 'ui/loading/font', 'Verdana, Geneva, sans-serif', 1),
-	(192, 'client', 'ui/loading/fontSize', '20px', 1),
-	(193, 'client', 'ui/loading/loadingColor', '#ffffff', 1),
-	(194, 'client', 'ui/loading/percentColor', '#666666', 1),
-	(195, 'client', 'ui/loading/showAssets', '1', 3),
-	(196, 'client', 'ui/maximum/x', '1280', 2),
-	(197, 'client', 'ui/maximum/y', '1280', 2),
-	(198, 'client', 'ui/minimap/addCircle', '1', 3),
-	(199, 'client', 'ui/minimap/camBackgroundColor', 'rgba(0,0,0,0.6)', 1),
-	(200, 'client', 'ui/minimap/camX', '240', 2),
-	(201, 'client', 'ui/minimap/camY', '10', 2),
-	(202, 'client', 'ui/minimap/camZoom', '0.08', 2),
-	(203, 'client', 'ui/minimap/circleAlpha', '1', 2),
-	(204, 'client', 'ui/minimap/circleColor', 'rgb(0,0,0)', 1),
-	(205, 'client', 'ui/minimap/circleFillAlpha', '0', 2),
-	(206, 'client', 'ui/minimap/circleFillColor', '1', 2),
-	(207, 'client', 'ui/minimap/circleRadio', '80.35', 2),
-	(208, 'client', 'ui/minimap/circleStrokeAlpha', '0.6', 2),
-	(209, 'client', 'ui/minimap/circleStrokeColor', '0', 2),
-	(210, 'client', 'ui/minimap/circleStrokeLineWidth', '6', 2),
-	(211, 'client', 'ui/minimap/circleX', '320', 2),
-	(212, 'client', 'ui/minimap/circleY', '88', 2),
-	(213, 'client', 'ui/minimap/enabled', '1', 3),
-	(214, 'client', 'ui/minimap/fixedHeight', '450', 2),
-	(215, 'client', 'ui/minimap/fixedWidth', '450', 2),
-	(216, 'client', 'ui/minimap/mapHeightDivisor', '1', 2),
-	(217, 'client', 'ui/minimap/mapWidthDivisor', '1', 2),
-	(218, 'client', 'ui/minimap/responsiveX', '40', 2),
-	(219, 'client', 'ui/minimap/responsiveY', '2.4', 2),
-	(220, 'client', 'ui/minimap/roundMap', '1', 3),
-	(221, 'client', 'ui/minimap/x', '330', 2),
-	(222, 'client', 'ui/minimap/y', '10', 2),
-	(223, 'client', 'ui/npcDialog/responsiveX', '10', 2),
-	(224, 'client', 'ui/npcDialog/responsiveY', '10', 2),
-	(225, 'client', 'ui/npcDialog/x', '120', 2),
-	(226, 'client', 'ui/npcDialog/y', '100', 2),
-	(227, 'client', 'ui/options/acceptOrDecline', '{"1":{"label":"Accept","value":1},"2":{"label":"Decline","value":2}}', 4),
-	(228, 'client', 'ui/playerBox/enabled', '1', 3),
-	(229, 'client', 'ui/playerBox/responsiveX', '0', 2),
-	(230, 'client', 'ui/playerBox/responsiveY', '0', 2),
-	(231, 'client', 'ui/playerBox/x', '50', 2),
-	(232, 'client', 'ui/playerBox/y', '30', 2),
-	(233, 'client', 'ui/players/nameText/align', 'center', 1),
-	(234, 'client', 'ui/players/nameText/depth', '200000', 2),
-	(235, 'client', 'ui/players/nameText/fill', '#ffffff', 1),
-	(236, 'client', 'ui/players/nameText/fontFamily', 'Verdana, Geneva, sans-serif', 1),
-	(237, 'client', 'ui/players/nameText/fontSize', '12px', 1),
-	(238, 'client', 'ui/players/nameText/height', '-90', 2),
-	(239, 'client', 'ui/players/nameText/shadowBlur', '5', 2),
-	(240, 'client', 'ui/players/nameText/shadowColor', 'rgba(0,0,0,0.7)', 1),
-	(241, 'client', 'ui/players/nameText/shadowX', '5', 2),
-	(242, 'client', 'ui/players/nameText/shadowY', '5', 2),
-	(243, 'client', 'ui/players/nameText/stroke', '#000000', 1),
-	(244, 'client', 'ui/players/nameText/strokeThickness', '4', 2),
-	(245, 'client', 'ui/players/nameText/textLength', '4', 2),
-	(246, 'client', 'ui/players/showNames', '1', 3),
-	(247, 'client', 'ui/playerStats/enabled', '1', 3),
-	(248, 'client', 'ui/playerStats/responsiveX', '100', 2),
-	(249, 'client', 'ui/playerStats/responsiveY', '0', 2),
-	(250, 'client', 'ui/playerStats/x', '430', 2),
-	(251, 'client', 'ui/playerStats/y', '20', 2),
-	(252, 'client', 'ui/pointer/show', '1', 3),
-	(253, 'client', 'ui/pointer/topOffSet', '16', 2),
-	(254, 'client', 'ui/rewards/enabled', '1', 3),
-	(255, 'client', 'ui/rewards/responsiveX', '100', 2),
-	(256, 'client', 'ui/rewards/responsiveY', '0', 2),
-	(257, 'client', 'ui/rewards/x', '430', 2),
-	(258, 'client', 'ui/rewards/y', '200', 2),
-	(259, 'client', 'ui/sceneLabel/enabled', '1', 3),
-	(260, 'client', 'ui/sceneLabel/responsiveX', '50', 2),
-	(261, 'client', 'ui/sceneLabel/responsiveY', '0', 2),
-	(262, 'client', 'ui/sceneLabel/x', '250', 2),
-	(263, 'client', 'ui/sceneLabel/y', '20', 2),
-	(264, 'client', 'ui/scores/enabled', '1', 3),
-	(265, 'client', 'ui/scores/responsiveX', '100', 2),
-	(266, 'client', 'ui/scores/responsiveY', '0', 2),
-	(267, 'client', 'ui/scores/x', '430', 2),
-	(268, 'client', 'ui/scores/y', '150', 2),
-	(269, 'client', 'ui/screen/responsive', '1', 3),
-	(270, 'client', 'ui/settings/enabled', '1', 3),
-	(271, 'client', 'ui/settings/responsiveX', '100', 2),
-	(272, 'client', 'ui/settings/responsiveY', '100', 2),
-	(273, 'client', 'ui/settings/x', '940', 2),
-	(274, 'client', 'ui/settings/y', '280', 2),
-	(275, 'client', 'ui/skills/enabled', '1', 3),
-	(276, 'client', 'ui/skills/responsiveX', '0', 2),
-	(277, 'client', 'ui/skills/responsiveY', '100', 2),
-	(278, 'client', 'ui/skills/x', '230', 2),
-	(279, 'client', 'ui/skills/y', '390', 2),
-	(280, 'client', 'ui/teams/enabled', '1', 3),
-	(281, 'client', 'ui/teams/responsiveX', '100', 2),
-	(282, 'client', 'ui/teams/responsiveY', '0', 2),
-	(283, 'client', 'ui/teams/sharedProperties', '{"hp":{"path":"stats/hp","pathMax":"statsBase/hp","label":"HP"},"mp":{"path":"stats/mp","pathMax":"statsBase/mp","label":"MP"}}', 4),
-	(284, 'client', 'ui/teams/x', '430', 2),
-	(285, 'client', 'ui/teams/y', '100', 2),
-	(286, 'client', 'ui/trade/responsiveX', '5', 2),
-	(287, 'client', 'ui/trade/responsiveY', '5', 2),
-	(288, 'client', 'ui/trade/x', '5', 2),
-	(289, 'client', 'ui/trade/y', '5', 2),
-	(290, 'client', 'ui/uiTarget/enabled', '1', 3),
-	(291, 'client', 'ui/uiTarget/hideOnDialog', '0', 3),
-	(292, 'client', 'ui/uiTarget/responsiveX', '0', 2),
-	(293, 'client', 'ui/uiTarget/responsiveY', '0', 2),
-	(294, 'client', 'ui/uiTarget/x', '10', 2),
-	(295, 'client', 'ui/uiTarget/y', '85', 2),
-	(296, 'client', 'world/debug/enabled', '0', 3),
-	(297, 'server', 'actions/pvp/battleTimeOff', '20000', 2),
-	(298, 'server', 'actions/pvp/timerType', 'bt', 1),
-	(299, 'server', 'admin/companyName', 'Reldens - Administration Panel', 1),
-	(300, 'server', 'admin/faviconPath', '/assets/web/favicon.ico', 1),
-	(301, 'server', 'admin/logoPath', '/assets/web/reldens-your-logo-mage.png', 1),
-	(302, 'server', 'admin/roleId', '99', 2),
-	(303, 'server', 'admin/stylesPath', '/css/reldens-admin-client.css', 1),
-	(304, 'server', 'chat/messages/broadcast_join', '1', 3),
-	(305, 'server', 'chat/messages/broadcast_leave', '1', 3),
-	(306, 'server', 'chat/messages/global_allowed_roles', '1,9000', 1),
-	(307, 'server', 'chat/messages/global_enabled', '1', 3),
-	(308, 'server', 'enemies/default/affectedProperty', 'stats/hp', 1),
-	(309, 'server', 'enemies/default/skillKey', 'attackShort', 1),
-	(310, 'server', 'enemies/initialStats/aim', '50', 2),
-	(311, 'server', 'enemies/initialStats/atk', '50', 2),
-	(312, 'server', 'enemies/initialStats/def', '50', 2),
-	(313, 'server', 'enemies/initialStats/dodge', '50', 2),
-	(314, 'server', 'enemies/initialStats/hp', '50', 2),
-	(315, 'server', 'enemies/initialStats/mp', '50', 2),
-	(316, 'server', 'enemies/initialStats/speed', '50', 2),
-	(317, 'server', 'enemies/initialStats/stamina', '50', 2),
-	(318, 'server', 'objects/actions/closeInteractionOnOutOfReach', '1', 3),
-	(319, 'server', 'objects/actions/interactionsDistance', '140', 2),
-	(320, 'server', 'objects/drops/disappearTime', '1800000', 2),
-	(321, 'server', 'players/actions/initialClassPathId', '1', 2),
-	(322, 'server', 'players/actions/interactionDistance', '40', 2),
-	(323, 'server', 'players/drop/percent', '20', 2),
-	(324, 'server', 'players/drop/quantity', '2', 2),
-	(325, 'server', 'players/gameOver/timeOut', '10000', 2),
-	(326, 'server', 'players/guestUser/allowOnRooms', '0', 3),
-	(327, 'server', 'players/guestUser/roleId', '2', 2),
-	(328, 'server', 'players/initialState/dir', 'down', 1),
-	(329, 'server', 'players/initialState/room_id', '4', 2),
-	(330, 'server', 'players/initialState/x', '400', 2),
-	(331, 'server', 'players/initialState/y', '345', 2),
-	(332, 'server', 'players/initialUser/roleId', '1', 2),
-	(333, 'server', 'players/initialUser/status', '1', 2),
-	(334, 'server', 'players/physicsBody/speed', '180', 2),
-	(335, 'server', 'players/physicsBody/usePlayerSpeedConfig', '0', 3),
-	(336, 'server', 'players/physicsBody/usePlayerSpeedProperty', '0', 3),
-	(337, 'server', 'rewards/actions/disappearTime', '1800000', 2),
-	(338, 'server', 'rewards/actions/interactionsDistance', '40', 2),
-	(339, 'server', 'rewards/loginReward/enabled', '1', 3),
-	(340, 'server', 'rewards/playedTimeReward/enabled', '1', 3),
-	(341, 'server', 'rewards/playedTimeReward/time', '30000', 3),
-	(342, 'server', 'rooms/validation/enabled', '1', 3),
-	(343, 'server', 'rooms/validation/valid', 'room_game,chat_global', 1),
-	(344, 'server', 'rooms/world/bulletsStopOnPlayer', '1', 3),
-	(345, 'server', 'rooms/world/disableObjectsCollisionsOnChase', '0', 3),
-	(346, 'server', 'rooms/world/disableObjectsCollisionsOnReturn', '1', 3),
-	(347, 'server', 'rooms/world/groupWallsHorizontally', '1', 3),
-	(348, 'server', 'rooms/world/groupWallsVertically', '0', 3),
-	(349, 'server', 'rooms/world/movementSpeed', '180', 2),
-	(350, 'server', 'rooms/world/onlyWalkable', '1', 3),
-	(351, 'server', 'rooms/world/timeStep', '0.04', 2),
-	(352, 'server', 'rooms/world/tryClosestPath', '0', 3),
-	(353, 'server', 'scores/fullTableView/enabled', '1', 3),
-	(354, 'server', 'scores/obtainedScorePerNpc', '5', 2),
-	(355, 'server', 'scores/obtainedScorePerPlayer', '10', 2),
-	(356, 'server', 'scores/useNpcCustomScore', '1', 3);
-
-REPLACE INTO `features` (`id`, `code`, `title`, `is_enabled`) VALUES
-	(1, 'chat', 'Chat', 1),
-	(2, 'objects', 'Objects', 1),
-	(3, 'respawn', 'Respawn', 1),
-	(4, 'inventory', 'Inventory', 1),
-	(5, 'firebase', 'Firebase', 1),
-	(6, 'actions', 'Actions', 1),
-	(7, 'users', 'Users', 1),
-	(8, 'audio', 'Audio', 1),
-	(9, 'rooms', 'Rooms', 1),
-	(10, 'admin', 'Admin', 1),
-	(11, 'prediction', 'Prediction', 0),
-	(12, 'teams', 'Teams', 1),
-	(13, 'rewards', 'Rewards', 1),
-	(14, 'snippets', 'Snippets', 1),
-	(16, 'ads', 'Ads', 1),
-	(17, 'world', 'World', 0),
-	(18, 'scores', 'Scores', 1);
-
 REPLACE INTO `items_group` (`id`, `key`, `label`, `description`, `files_name`, `sort`, `items_limit`, `limit_per_item`) VALUES
 	(1, 'weapon', 'Weapon', 'All kinds of weapons.', 'weapon.png', 2, 1, 0),
 	(2, 'shield', 'Shield', 'Protect with these items.', 'shield.png', 3, 1, 0),
@@ -571,17 +156,6 @@ REPLACE INTO `items_item_modifiers` (`id`, `item_id`, `key`, `property_key`, `op
 	(2, 3, 'heal_potion_20', 'stats/hp', 1, '20', 'statsBase/hp'),
 	(3, 5, 'atk', 'stats/atk', 5, '3', NULL),
 	(4, 6, 'magic_potion_20', 'stats/mp', 1, '20', 'statsBase/mp');
-
-REPLACE INTO `items_types` (`id`, `key`) VALUES
-	(10, 'base'),
-	(1, 'equipment'),
-	(3, 'single'),
-	(4, 'single_equipment'),
-	(5, 'single_usable'),
-	(2, 'usable');
-
-REPLACE INTO `locale` (`id`, `locale`, `language_code`, `country_code`, `enabled`) VALUES
-	(1, 'en_US', 'en', 'US', 1);
 
 REPLACE INTO `objects` (`id`, `room_id`, `layer_name`, `tile_index`, `class_type`, `object_class_key`, `client_key`, `title`, `private_params`, `client_params`, `enabled`) VALUES
 	(1, 4, 'ground-collisions', 444, 2, 'door_1', 'door_house_1', '', '{"runOnHit":true,"roomVisible":true,"yFix":6}', '{"positionFix":{"y":-18},"frameStart":0,"frameEnd":3,"repeat":0,"hideOnComplete":false,"autoStart":false,"restartTime":2000}', 1),
@@ -709,26 +283,6 @@ REPLACE INTO `objects_stats` (`id`, `object_id`, `stat_id`, `base_value`, `value
     (58, 15, 8, 50, 50),
     (59, 15, 9, 50, 50),
     (60, 15, 10, 50, 50);
-
-REPLACE INTO `objects_types` (`id`, `key`) VALUES
-	(2, 'animation'),
-	(1, 'base'),
-	(6, 'drop'),
-	(4, 'enemy'),
-	(7, 'multiple'),
-	(3, 'npc'),
-	(5, 'trader');
-
-REPLACE INTO `operation_types` (`id`, `label`, `key`) VALUES
-	(1, 'Increment', 1),
-	(3, 'Decrease', 2),
-	(4, 'Divide', 3),
-	(5, 'Multiply', 4),
-	(6, 'Increment Percentage', 5),
-	(7, 'Decrease Percentage', 6),
-	(8, 'Set', 7),
-	(9, 'Method', 8),
-	(10, 'Set Number', 9);
 
 REPLACE INTO `players` (`id`, `user_id`, `name`, `created_at`) VALUES
 	(1, 1, 'ImRoot', '2022-03-17 19:57:50');
@@ -1005,13 +559,6 @@ REPLACE INTO `skills_levels_set` (`id`, `autoFillRanges`, `autoFillExperienceMul
 REPLACE INTO `skills_owners_class_path` (`id`, `class_path_id`, `owner_id`, `currentLevel`, `currentExp`) VALUES
 	(1, 1, 1, 10, 9080);
 
-REPLACE INTO `skills_skill_type` (`id`, `key`) VALUES
-	(1, 'base'),
-	(2, 'attack'),
-	(3, 'effect'),
-	(4, 'physical_attack'),
-	(5, 'physical_effect');
-
 REPLACE INTO `skills_skill` (`id`, `key`, `type`, `autoValidation`, `skillDelay`, `castTime`, `usesLimit`, `range`, `rangeAutomaticValidation`, `rangePropertyX`, `rangePropertyY`, `rangeTargetPropertyX`, `rangeTargetPropertyY`, `allowSelfTarget`, `criticalChance`, `criticalMultiplier`, `criticalFixedValue`, `customData`) VALUES
 	(1, 'attackBullet', '4', 0, 1000, 0, 0, 250, 1, 'state/x', 'state/y', NULL, NULL, 0, 10, 2, 0, NULL),
 	(2, 'attackShort', '2', 0, 600, 0, 0, 50, 1, 'state/x', 'state/y', NULL, NULL, 0, 10, 2, 0, NULL),
@@ -1054,10 +601,6 @@ REPLACE INTO `stats` (`id`, `key`, `label`, `description`, `base_value`, `custom
 	(8, 'stamina', 'Stamina', 'Player stamina points', 100, '{"showBase":true}'),
 	(9, 'mAtk', 'Magic Atk', 'Player magic attack', 100, NULL),
 	(10, 'mDef', 'Magic Def', 'Player magic defense', 100, NULL);
-
-REPLACE INTO `target_options` (`id`, `target_key`, `target_label`) VALUES
-	(1, 'object', 'Object'),
-	(2, 'player', 'Player');
 
 -- default user/password: root/root
 REPLACE INTO `users` (`id`, `email`, `username`, `password`, `role_id`, `status`, `created_at`, `updated_at`, `played_time`) VALUES
