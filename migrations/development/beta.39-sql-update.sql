@@ -48,6 +48,12 @@ UPDATE `stats` SET `key` = 'mDef' WHERE `key` = 'mgk-def';
 -- Skills owners table fix:
 ALTER TABLE `skills_skill_owner_conditions` DROP INDEX `key`;
 
+-- Level set table fix:
+ALTER TABLE `skills_levels_set`
+    ADD COLUMN `key` VARCHAR(255) NULL DEFAULT NULL AFTER `id`,
+	ADD COLUMN `label` VARCHAR(255) NULL DEFAULT NULL AFTER `key`,
+	ADD UNIQUE INDEX `key` (`key`);
+
 --
 
 SET FOREIGN_KEY_CHECKS = 1;

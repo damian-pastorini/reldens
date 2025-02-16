@@ -594,9 +594,12 @@ CREATE TABLE IF NOT EXISTS `skills_skill_type` (
 
 CREATE TABLE IF NOT EXISTS `skills_levels_set` (
     `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+    `key` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
+    `label` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
     `autoFillRanges` INT(10) UNSIGNED NOT NULL DEFAULT '0',
     `autoFillExperienceMultiplier` INT(10) UNSIGNED DEFAULT NULL,
-    PRIMARY KEY (`id`)
+    PRIMARY KEY (`id`) USING BTREE,
+    UNIQUE INDEX `key` (`key`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE='utf8mb4_unicode_ci';
 
 CREATE TABLE IF NOT EXISTS `skills_groups` (
