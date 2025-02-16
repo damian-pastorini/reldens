@@ -615,6 +615,7 @@ CREATE TABLE IF NOT EXISTS `skills_skill` (
     `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
     `key` VARCHAR(255) NOT NULL COLLATE 'utf8mb4_unicode_ci',
     `type` INT(10) UNSIGNED NOT NULL,
+    `label` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
     `autoValidation` INT(10) NOT NULL,
     `skillDelay` INT(10) NOT NULL,
     `castTime` INT(10) NOT NULL,

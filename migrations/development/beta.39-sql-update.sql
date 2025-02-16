@@ -54,6 +54,10 @@ ALTER TABLE `skills_levels_set`
 	ADD COLUMN `label` VARCHAR(255) NULL DEFAULT NULL AFTER `key`,
 	ADD UNIQUE INDEX `key` (`key`);
 
+-- Skills label fix:
+ALTER TABLE `skills_skill`
+    ADD COLUMN `label` VARCHAR(255) NULL DEFAULT NULL AFTER `type`;
+
 --
 
 SET FOREIGN_KEY_CHECKS = 1;
