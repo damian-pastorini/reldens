@@ -108,6 +108,19 @@ window.addEventListener('DOMContentLoaded', () => {
         let activeFilters = Array.from(allFilters).filter(input => input.value !== '');
         if(0 < activeFilters.length){
             filtersToggleContent.classList.remove('hidden');
+            let paginationLinks = document.querySelectorAll('.pagination a');
+            let filtersForm = document.querySelector('#filter-form');
+            if(paginationLinks && filtersForm){
+                for(let link of paginationLinks){
+                    link.addEventListener('click', (event) => {
+                        event.stopPropagation();
+                        event.preventDefault();
+                        filtersForm.action = link.href;
+                        filtersForm.submit();
+                        return false;
+                    })
+                }
+            }
         }
     }
 
