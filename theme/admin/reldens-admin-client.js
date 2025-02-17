@@ -36,6 +36,24 @@ window.addEventListener('DOMContentLoaded', () => {
             .replace(/'/g, "&#039;");
     }
 
+    // error codes messages map:
+    let errorMessages = {
+        saveBadPatchData: 'Bad patch data on update.',
+        saveEntityStorageError: 'Entity storage error.',
+        saveEntityError: 'Entity could not be saved.',
+        shutdownError: 'Server could not be shutdown, missing "shutdownTime".',
+        mapsWizardImportDataError: 'Map could not be imported, missing generated map data.',
+        mapsWizardImportError: 'Map could not be imported.',
+        objectsImportMissingDataError: 'Object could not be imported, missing JSON files.',
+        objectsImportDataError: 'Object could not be imported, missing data in JSON files.',
+        objectsImportError: 'Object could not be imported.',
+        skillsImportMissingDataError: 'Skills could not be imported, missing JSON files.',
+        skillsImportDataError: 'Skills could not be imported, missing data in JSON files.',
+        skillsImportError: 'Skills could not be imported.',
+        errorView: 'Could not render view page.',
+        errorEdit: 'Could not render edit page.',
+    };
+
     // login errors:
     if('true' === urlParams.get('login-error')){
         let loginErrorBox = document.querySelector('form.login-form .response-error');
@@ -176,7 +194,7 @@ window.addEventListener('DOMContentLoaded', () => {
             notificationElement.classList.add(notificationClass);
             notificationMessageElement.innerHTML = 'success' === result
                 ? 'Success!'
-                : 'There was an error: '+escapeHTML(result);
+                : 'There was an error: '+escapeHTML(errorMessages[result] || result);
             deleteCookie('result');
         }
     }
