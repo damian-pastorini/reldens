@@ -478,10 +478,21 @@ $darkGreen: #27ae60;
             justify-content: space-between;
 
             h4 {
+                display: flex;
+                flex-direction: row;
+                vertical-align: middle;
+                align-items: center;
                 width: 100%;
                 margin: 0 0 1rem 0;
                 font-size: 14px;
                 color: $darkGrey;
+
+                &.filters-toggle {
+                    img {
+                        max-width: 30px;
+                        margin-right: 1rem;
+                    }
+                }
             }
 
             .actions {
