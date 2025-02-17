@@ -7,6 +7,7 @@
     </div>
     {{/fields}}
     <div class="actions">
+        <a class="button button-primary" href="{{&entityNewRoute}}">Create New</a>
         <a class="button button-primary" href="{{&entityEditRoute}}">Edit</a>
         <a class="button button-secondary" href="{{&entityListRoute}}">Back</a>
         <form class="form-delete" name="delete-form-{{&id}}" id="delete-form-{{&id}}" action="{{&entityDeleteRoute}}" method="post">
