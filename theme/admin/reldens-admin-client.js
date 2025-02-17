@@ -51,7 +51,7 @@ window.addEventListener('DOMContentLoaded', () => {
         skillsImportDataError: 'Skills could not be imported, missing data in JSON files.',
         skillsImportError: 'Skills could not be imported.',
         errorView: 'Could not render view page.',
-        errorEdit: 'Could not render edit page.',
+        errorEdit: 'Could not render edit page.'
     };
 
     // login errors:
