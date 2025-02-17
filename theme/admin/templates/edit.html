@@ -3,7 +3,7 @@
     <form name="edit-form" id="edit-form" action="{{&entitySaveRoute}}" method="post"{{&multipartFormData}}>
         <input type="hidden" name="{{&idProperty}}" value="{{&idValue}}"/>
         <div class="edit-field">
-            <span class="field-name">{{&idProperty}}</span>
+            <span class="field-name">{{&idPropertyLabel}}</span>
             <span class="field-value">
                 <input type="text" name="disabled-{{&idProperty}}" value="{{&idValue}}" disabled="disabled"/>
             </span>
