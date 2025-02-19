@@ -648,6 +648,15 @@ $darkGreen: #27ae60;
             }
         }
 
+        .sub-map-option-description {
+            display: flex;
+            align-items: center;
+
+            img.icon-sm {
+                margin-right: 1rem;
+            }
+        }
+
         .sub-maps-container {
             display: block;
 
