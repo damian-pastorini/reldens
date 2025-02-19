@@ -34,6 +34,24 @@
                             data-image-key="{{&mapImage}}"
                             data-map-json="{{&mapJson}}">
                         </canvas>
+                        <div class="sub-maps">
+                            <p>Associated maps generated (this will be automatically imported)</p>
+                            <img class="icon-sm clickable" data-expand-collapse=".sub-maps-container-{{&key}}" src="/assets/admin/filters.png" alt="Show or hide associated maps"/>
+                            <div class="sub-maps-container sub-maps-container-{{&key}} hidden">
+                                {{#subMaps}}
+                                    <p>{{&key}}</p>
+                                    <canvas
+                                        class="mapCanvas"
+                                        width="{{&mapWidth}}"
+                                        height="{{&mapHeight}}"
+                                        data-tile-width="{{&tileWidth}}"
+                                        data-tile-height="{{&tileHeight}}"
+                                        data-image-key="{{&mapImage}}"
+                                        data-map-json="{{&mapJson}}">
+                                    </canvas>
+                                {{/subMaps}}
+                            </div>
+                        </div>
                     </li>
                 {{/maps}}
                 </ul>

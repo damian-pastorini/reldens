@@ -54,6 +54,18 @@ window.addEventListener('DOMContentLoaded', () => {
         errorEdit: 'Could not render edit page.'
     };
 
+    let expandCollapseButtons = document.querySelectorAll('[data-expand-collapse]');
+    if(expandCollapseButtons){
+        for(let expandCollapseButton of expandCollapseButtons){
+            expandCollapseButton.addEventListener('click', (event) => {
+                let expandCollapseElement = document.querySelector(event.currentTarget.dataset.expandCollapse);
+                if(expandCollapseElement){
+                    expandCollapseElement.classList.toggle('hidden');
+                }
+            });
+        }
+    }
+
     // login errors:
     if('true' === urlParams.get('login-error')){
         let loginErrorBox = document.querySelector('form.login-form .response-error');

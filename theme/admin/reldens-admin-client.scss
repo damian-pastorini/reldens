@@ -132,6 +132,16 @@ $darkGreen: #27ae60;
         }
     }
 
+    .icon {
+        &-sm {
+            width: 32px;
+        }
+    }
+
+    .clickable {
+        cursor: pointer;
+    }
+
     .response-error {
         color: $red;
         font-weight: $bold;
@@ -544,20 +554,25 @@ $darkGreen: #27ae60;
                 flex-wrap: wrap;
                 width: 100%;
 
-                // 3 or more items => 25% each
+                // 3 or more items => 4 columns
                 .wizard-map-option-container {
-                    flex: 0 0 24%;
+                    flex: 0 0 22%;
+                    padding: 1rem 1% 0;
+                    margin: 1.5rem 0 0;
+                    border: 1px solid #ccc;
                 }
 
-                // 1 child => 100%
+                // 1 child => 1 columns
                 .wizard-map-option-container:only-child {
                     flex: 0 0 100%;
+                    padding: 1rem 0 0;
+                    border: none;
                 }
 
-                // 2 children => 50% each
+                // 2 children => 2 columns
                 .wizard-map-option-container:first-child:nth-last-child(2),
                 .wizard-map-option-container:last-child:nth-child(2) {
-                    flex: 0 0 49%;
+                    flex: 0 0 47%;
                 }
 
                 input.map-wizard-option {
@@ -630,6 +645,18 @@ $darkGreen: #27ae60;
 
             .submit-container {
                 display: flex;
+            }
+        }
+
+        .sub-maps-container {
+            display: block;
+
+            &.hidden {
+                display: none;
+            }
+
+            p {
+                margin: 1.5rem 0 0;
             }
         }
     }
