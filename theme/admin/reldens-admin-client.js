@@ -36,6 +36,19 @@ window.addEventListener('DOMContentLoaded', () => {
             .replace(/'/g, "&#039;");
     }
 
+    function cloneElement(element)
+    {
+        if(element instanceof HTMLCanvasElement){
+            let clonedCanvas = document.createElement('canvas');
+            clonedCanvas.width = element.width;
+            clonedCanvas.height = element.height;
+            let ctx = clonedCanvas.getContext('2d');
+            ctx.drawImage(element, 0, 0);
+            return clonedCanvas
+        }
+        return element.cloneNode(true);
+    }
+
     // error codes messages map:
     let errorMessages = {
         saveBadPatchData: 'Bad patch data on update.',
@@ -62,6 +75,37 @@ window.addEventListener('DOMContentLoaded', () => {
                 if(expandCollapseElement){
                     expandCollapseElement.classList.toggle('hidden');
                 }
+            });
+        }
+    }
+
+    let modalElements = document.querySelectorAll('[data-toggle="modal"]');
+    if(modalElements){
+        for(let modalElement of modalElements){
+            modalElement.addEventListener('click', () => {
+                let overlay = document.createElement('div');
+                overlay.classList.add('modal-overlay');
+                let modal = document.createElement('div');
+                modal.classList.add('modal');
+                modal.classList.add('clickable');
+                let clonedElement = cloneElement(modalElement);
+                clonedElement.classList.add('clickable');
+                modal.appendChild(clonedElement);
+                overlay.appendChild(modal);
+                document.body.appendChild(overlay);
+                clonedElement.addEventListener('click', () => {
+                    document.body.removeChild(overlay);
+                });
+                modal.addEventListener('click', (e) => {
+                    if(e.target === modal){
+                        document.body.removeChild(modal.parentNode);
+                    }
+                });
+                overlay.addEventListener('click', (e) => {
+                    if(e.target === overlay) {
+                        document.body.removeChild(overlay);
+                    }
+                });
             });
         }
     }

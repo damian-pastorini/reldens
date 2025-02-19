@@ -38,6 +38,7 @@
                         </div>
                         <canvas
                             class="mapCanvas"
+                            data-toggle="modal"
                             width="{{&mapWidth}}"
                             height="{{&mapHeight}}"
                             data-tile-width="{{&tileWidth}}"
@@ -45,31 +46,34 @@
                             data-image-key="{{&mapImage}}"
                             data-map-json="{{&mapJson}}">
                         </canvas>
-                        <div class="sub-maps">
-                            <p class="sub-map-option-description clickable" data-expand-collapse=".sub-maps-container-{{&key}}">
-                                <img class="icon-sm" src="/assets/admin/filters.png" alt="Associated maps"/>
-                                <span>Associated maps generated</span>
-                            </p>
-                            <div class="sub-maps-container sub-maps-container-{{&key}} hidden">
-                                {{#subMaps}}
-                                    <p>{{&key}}</p>
-                                    <p>Downloads:</p>
-                                    <p>
-                                        - <a href="{{&mapJson}}" target="_blank">{{&mapJson}}</a><br/>
-                                        - <a href="{{&mapImage}}" target="_blank">{{&mapImage}}</a>
-                                    </p>
-                                    <canvas
-                                        class="mapCanvas"
-                                        width="{{&mapWidth}}"
-                                        height="{{&mapHeight}}"
-                                        data-tile-width="{{&tileWidth}}"
-                                        data-tile-height="{{&tileHeight}}"
-                                        data-image-key="{{&mapImage}}"
-                                        data-map-json="{{&mapJson}}">
-                                    </canvas>
-                                {{/subMaps}}
+                        {{#hasSubMaps}}
+                            <div class="sub-maps">
+                                <p class="sub-map-option-description clickable" data-expand-collapse=".sub-maps-container-{{&key}}">
+                                    <img class="icon-sm" src="/assets/admin/filters.png" alt="Associated maps"/>
+                                    <span>Associated maps generated</span>
+                                </p>
+                                <div class="sub-maps-container sub-maps-container-{{&key}} hidden">
+                                    {{#subMaps}}
+                                        <p>{{&key}}</p>
+                                        <p>Downloads:</p>
+                                        <p>
+                                            - <a href="{{&mapJson}}" target="_blank">{{&mapJson}}</a><br/>
+                                            - <a href="{{&mapImage}}" target="_blank">{{&mapImage}}</a>
+                                        </p>
+                                        <canvas
+                                            class="mapCanvas"
+                                            data-toggle="modal"
+                                            width="{{&mapWidth}}"
+                                            height="{{&mapHeight}}"
+                                            data-tile-width="{{&tileWidth}}"
+                                            data-tile-height="{{&tileHeight}}"
+                                            data-image-key="{{&mapImage}}"
+                                            data-map-json="{{&mapJson}}">
+                                        </canvas>
+                                    {{/subMaps}}
+                                </div>
                             </div>
-                        </div>
+                        {{/hasSubMaps}}
                     </li>
                 {{/maps}}
                 </ul>

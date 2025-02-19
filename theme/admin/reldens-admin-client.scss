@@ -142,6 +142,33 @@ $darkGreen: #27ae60;
         cursor: pointer;
     }
 
+    .modal-overlay {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 9999;
+        width: 100vw;
+        height: 100vh;
+        background-color: rgba(0, 0, 0, 0.5);
+    }
+
+    .modal {
+        max-width: 92vw;
+        max-height: 92vh;
+        padding: 1rem;
+        overflow: auto;
+        cursor: pointer;
+        background-color: #fff;
+        border-radius: 8px;
+
+        canvas {
+            max-width: 100%;
+        }
+    }
+
     .response-error {
         color: $red;
         font-weight: $bold;
