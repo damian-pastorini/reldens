@@ -719,7 +719,7 @@ $darkGreen: #27ae60;
             padding: 0;
             margin-bottom: 1rem;
 
-            span {
+            span, label, input {
                 padding: 0.5rem;
 
                 &.field-name {
@@ -732,6 +732,16 @@ $darkGreen: #27ae60;
                     flex: 2;
                     color: $darkBlue;
                     background-color: $lightGrey;
+
+                    &.with-button {
+                        margin: auto;
+                        vertical-align: middle;
+
+                        button {
+                            width: max-content;
+                            margin: 0 0.5rem;
+                        }
+                    }
 
                     input[type="checkbox"] {
                         max-width: max-content;
@@ -747,7 +757,7 @@ $darkGreen: #27ae60;
         }
 
         .edit-field {
-            span {
+            span, input {
                 &.field-value {
                     display: flex;
                     flex-direction: column;
@@ -794,11 +804,23 @@ $darkGreen: #27ae60;
         }
     }
 
-    .default-room-container {
+    .extra-content-container, .default-room-container {
         display: flex;
         flex-direction: column;
         padding: 1rem 0;
-        margin-top: 4rem;
+        margin-top: 1rem;
+        text-align: left;
+
+        h3 {
+            text-align: center;
+        }
+    }
+
+    .association-maps-container {
+        display: block;
+        width: 100%;
+        max-height: 500px;
+        overflow: auto;
     }
 
 }
