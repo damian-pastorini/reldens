@@ -16,6 +16,32 @@
     opacity: 0.8;
 }
 
+.ui-box.ui-box-controls.ui-box-joystick {
+    @media (max-width: 725px) {
+        bottom: 38px;
+        left: 130px;
+    }
+}
+
+
+.joystick-small-resolutions-only {
+    #joystick {
+        display: none;
+
+        @media (max-width: 725px) {
+            display: block;
+        }
+    }
+
+    .arrows-container {
+        display: block;
+
+        @media (max-width: 725px) {
+            display: none;
+        }
+    }
+}
+
 #joystick-thumb {
     width: 50px;
     height: 50px;
