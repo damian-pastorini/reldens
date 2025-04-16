@@ -34,16 +34,18 @@
         "script:*.vue": ["@parcel/transformer-vue"],
         "style:*.vue": ["@parcel/transformer-vue"],
         "custom:*.vue": ["@parcel/transformer-vue"],
-        "*.{png,jpg,jpeg,webp,gif,tiff,avif,heic,heif}": ["@parcel/transformer-image"],
+        "*.{png,jpg,jpeg,webp,gif,tiff,avif,heic,heif}": [
+            "@parcel/transformer-image"
+        ],
         "*.svg": ["@parcel/transformer-svg"],
         "*.{xml,rss,atom}": ["@parcel/transformer-xml"],
         "url:*": ["...", "@parcel/transformer-raw"]
     },
     "namers": ["@parcel/namer-default"],
     "runtimes": [
+        "@parcel/runtime-rsc",
         "@parcel/runtime-js",
         "@parcel/runtime-browser-hmr",
-        "@parcel/runtime-react-refresh",
         "@parcel/runtime-service-worker"
     ],
     "optimizers": {
