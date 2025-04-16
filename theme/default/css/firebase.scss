@@ -33,3 +33,51 @@
     margin: 0 auto;
     padding: 0;
 }
+
+.firebase-auth-container {
+    flex-direction: column;
+    gap: 10px;
+    width: fit-content;
+    display: flex;
+    text-align: center;
+    margin: 0 auto;
+}
+
+.firebase-auth-btn {
+    padding: 10px 16px;
+    border-radius: 4px;
+    color: white;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Open Sans', sans-serif;
+    transition: background-color 0.3s;
+    position: relative;
+}
+
+.firebase-google-btn {
+    background-color: #4285F4;
+}
+
+.firebase-google-btn:hover {
+    background-color: #3367D6;
+}
+
+.firebase-facebook-btn {
+    background-color: #3b5998;
+}
+
+.firebase-facebook-btn:hover {
+    background-color: #2d4373;
+}
+
+.firebase-github-btn {
+    background-color: #333;
+}
+
+.firebase-github-btn:hover {
+    background-color: #222;
+}

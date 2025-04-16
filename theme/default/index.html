@@ -69,11 +69,11 @@
                             </div>
                             <div class="input-box reg-password">
                                 <label for="reg-password">Password</label>
-                                <input type="password" name="reg-password" id="reg-password" class="required" required/>
+                                <input type="password" name="reg-password" id="reg-password" class="required" required autocomplete="off"/>
                             </div>
                             <div class="input-box reg-re-password">
                                 <label for="reg-re-password">Re-type password</label>
-                                <input type="password" name="reg-re-password" id="reg-re-password" class="required" required/>
+                                <input type="password" name="reg-re-password" id="reg-re-password" class="required" required autocomplete="off"/>
                             </div>
                             <div class="input-box hidden terms-and-conditions-link-container">
                                 <p class="terms-and-conditions-link">Accept our Terms and Conditions (click here).</p>
@@ -92,7 +92,7 @@
                             <h3 class="form-title">Forgot password</h3>
                             <div class="input-box forgot-email">
                                 <label for="forgot-email">Email</label>
-                                <input type="email" name="forgot-email" id="forgot-email" class="required email" required/>
+                                <input type="email" name="forgot-email" id="forgot-email" class="required email" required autocomplete="off"/>
                             </div>
                             <div class="input-box submit-container forgot-submit">
                                 <div class="loading-container hidden">
@@ -135,7 +135,7 @@
                             <div class="input-box response-error"></div>
                         </form>
                         <div class="firebase-container">
-                            <div id="firebaseui-auth-container"></div>
+                            <div id="firebase-auth-container" class="firebase-auth-container"></div>
                         </div>
                     </div>
                 </div>
