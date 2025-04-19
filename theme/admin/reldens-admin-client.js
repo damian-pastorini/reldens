@@ -464,7 +464,6 @@ window.addEventListener('DOMContentLoaded', () => {
                     nextRoomMapContainer,
                     (event, data) => {
                         let tileData = calculateTileData(event, data);
-                        console.log('Clicked tile', tileData);
                         elementNextRoomPositionX.value = tileData.positionTileX;
                         elementNextRoomPositionY.value = tileData.positionTileY;
                     }
@@ -478,7 +477,6 @@ window.addEventListener('DOMContentLoaded', () => {
                 mapLoadElement,
                 (event, data) => {
                     let tileData = calculateTileData(event, data);
-                    console.log('Clicked tile', tileData);
                     if(elementCurrentRoomChangePointTileIndex){
                         elementCurrentRoomChangePointTileIndex.value = tileData.tileIndex;
                     }
