@@ -430,7 +430,7 @@ $darkGreen: #27ae60;
     .filters-toggle-content {
         display: flex;
         flex-wrap: wrap;
-        justify-content: space-between;
+        justify-content: flex-start;
 
         &.hidden {
             display: none;
@@ -539,9 +539,10 @@ $darkGreen: #27ae60;
             }
 
             .sub-content-box {
-                margin-bottom: 1rem;
                 display: flex;
                 flex-direction: column;
+                margin-bottom: 1rem;
+                margin-right: 1rem;
 
                 label {
                     font-weight: 600;
