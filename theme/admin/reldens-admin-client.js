@@ -414,11 +414,11 @@ window.addEventListener('DOMContentLoaded', () => {
     if(shuttingDownTimeElement){
         let shuttingDownTime = shuttingDownTimeElement.getAttribute('data-shutting-down-time');
         if(shuttingDownTime){
-            shuttingDownTimeElement.innerHTML = escapeHTML(shuttingDownTime)+'s';
+            shuttingDownTimeElement.innerHTML = escapeHTML(String(shuttingDownTime))+'s';
             shuttingDownTime = Number(shuttingDownTime);
             let shuttingDownTimer = setInterval(
                 () => {
-                    shuttingDownTimeElement.innerHTML = escapeHTML(shuttingDownTime)+'s';
+                    shuttingDownTimeElement.innerHTML = escapeHTML(String(shuttingDownTime))+'s';
                     shuttingDownTime--;
                     if(0 === Number(shuttingDownTime)){
                         clearInterval(shuttingDownTimer);
