@@ -46,7 +46,7 @@ window.addEventListener('load', () => {
         document.querySelector('.'+errorCode).style.display = 'block';
     }
 
-    document.getElementById('install-form').addEventListener('submit', (event) => {
+    document.getElementById('install-form').addEventListener('submit', () => {
         let loadingImage = document.querySelector('.install-loading');
         if(loadingImage){
             loadingImage.classList.remove('hidden');
