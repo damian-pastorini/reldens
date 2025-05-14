@@ -468,8 +468,8 @@ REPLACE INTO `target_options` (`id`, `target_key`, `target_label`) VALUES
 	(2, 'player', 'Player');
 
 -- default user/password: root/root
-REPLACE INTO `users` (`id`, `email`, `username`, `password`, `role_id`, `status`, `created_at`, `updated_at`, `played_time`) VALUES
-	(1, 'root@yourgame.com', 'root', 'd35ed1c81c3ff00de15309fe40a90c32:a39a9231a69fefef274c13c1780a7447672a5fee8250ce22a51bb20275039dda63a54faa1e5fd775becb3ac424f571d5b996001305bb7d63e038111dce08d45b', 99, '1', '2022-03-17 18:57:44', '2023-10-21 16:51:55', 0);
+REPLACE INTO `users` (`id`, `email`, `username`, `password`, `role_id`, `status`) VALUES
+	(1, 'root@yourgame.com', 'root', 'd35ed1c81c3ff00de15309fe40a90c32:a39a9231a69fefef274c13c1780a7447672a5fee8250ce22a51bb20275039dda63a54faa1e5fd775becb3ac424f571d5b996001305bb7d63e038111dce08d45b', 99, '1');
 
 REPLACE INTO `users_locale` (`id`, `locale_id`, `user_id`) VALUES
 	(1, 1, 1);
