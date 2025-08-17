@@ -30,12 +30,12 @@ VALUES
     ('client', 'ui/maximum/y', '800', 2),
     ('client', 'ui/screen/responsive', '1', 3),
     ('client', 'ui/minimap/camZoom', '0.08', 2)
-AS new_config
+    AS new_config
 ON DUPLICATE KEY UPDATE `value` = new_config.`value`, `type` = new_config.`type`;
 
 INSERT INTO `config` (`scope`, `path`, `value`, `type`)
 VALUES
-    ('client', 'gameEngine/scale/autoRound', 0, 3)
+    ('client', 'gameEngine/scale/autoRound', 0, 3),
     ('client', 'ui/fullScreenButton/enabled', '1', 3),
     ('client', 'ui/fullScreenButton/responsiveX', '100', 2),
     ('client', 'ui/fullScreenButton/responsiveY', '0', 2),
@@ -121,6 +121,9 @@ ALTER TABLE `snippets`
 ALTER TABLE `stats`
     ADD COLUMN `created_at` TIMESTAMP NOT NULL DEFAULT (CURRENT_TIMESTAMP) AFTER `customData`,
 	ADD COLUMN `updated_at` TIMESTAMP NOT NULL DEFAULT (CURRENT_TIMESTAMP) ON UPDATE CURRENT_TIMESTAMP AFTER `created_at`;
+
+-- Update root user password:
+UPDATE `users` SET `password`='879abc0494b36a09f184fd8308ea18f2643d71263f145b1e40e2ec3546d42202:6a186aff4d69daadcd7940a839856b394b12f0aec64a5df745c83cf9d881dc9dcb121b03d946872571f214228684216df097305b68417a56403299b8b2388db3' WHERE `username` = 'root';
 
 --
 
