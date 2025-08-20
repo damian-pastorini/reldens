@@ -40,6 +40,9 @@
         "reldens-generate": "bin/generate.js",
         "reldens-import": "bin/import.js"
     },
+    "scripts": {
+        "test": "node tests/manager.js"
+    },
     "dependencies": {
         "@colyseus/core": "0.15.57",
         "@colyseus/monitor": "0.15.8",

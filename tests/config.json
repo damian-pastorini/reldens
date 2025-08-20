@@ -1,0 +1,11 @@
+{
+  "baseUrl": "http://localhost:8083",
+  "adminPath": "/reldens-admin",
+  "adminUser": "root@yourgame.com",
+  "adminPassword": "root",
+  "dbHost": "localhost",
+  "dbPort": "3306",
+  "dbUser": "reldens",
+  "dbPassword": "reldens",
+  "dbName": "reldens_test"
+}
