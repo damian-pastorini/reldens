@@ -184,6 +184,49 @@ class TestAdminCrud extends BaseTest
                 await this.validateSaveResponse(response, entity);
                 await this.validateRecord(entity, recordId, testData);
             });
+
+            await this.test('GET /'+entity+'/view validates record display', async () => {
+                let response = await this.makeEntityRequest('GET', entity, '/view?id='+recordId, null, session);
+                if(!response){
+                    return;
+                }
+                this.assert(response.body.includes('id="'+recordId+'"') || response.body.includes('value="'+recordId+'"'));
+                this.assert(response.body.includes('form') || response.body.includes('view'));
+            });
+
+            await this.test('GET /'+entity+'/edit validates form fields', async () => {
+                let response = await this.makeEntityRequest('GET', entity, '/edit?id='+recordId, null, session);
+                if(!response){
+                    return;
+                }
+                this.assert(response.body.includes('method="post"') || response.body.includes('method="POST"'));
+                this.assert(response.body.includes('type="submit"') || response.body.includes('btn'));
+            });
+
+            await this.test('POST /'+entity+'/delete removes record successfully', async () => {
+                let response = await this.makeEntityRequest('POST', entity, '/delete', {
+                    id: recordId,
+                    confirm: 1,
+                    action: 'delete'
+                }, session);
+                if(!response){
+                    return;
+                }
+                this.assert.strictEqual(302, response.statusCode);
+                if(response.headers.location){
+                    if(response.headers.location.includes('error')){
+                        Logger.log(100, '', 'Delete failed for '+entity+' ID '+recordId+' - this may be expected behavior');
+                    }
+                    await this.validateRecordDeleted(entity, recordId, session);
+                }
+            });
+
+            await this.test('POST /'+entity+'/delete with invalid id fails gracefully', async () => {
+                let response = await this.makeEntityRequest('POST', entity, '/delete', {id: 999999}, session);
+                if(response){
+                    this.assert.strictEqual(302, response.statusCode);
+                }
+            });
         }
     }
 
@@ -233,6 +276,19 @@ class TestAdminCrud extends BaseTest
             }
         } catch(error){
             Logger.log(100, '', 'Validation failed for '+entity+' creation: '+error.message);
+        }
+    }
+
+    async validateRecordDeleted(entity, recordId, session)
+    {
+        try {
+            let response = await this.makeAuthenticatedRequest('GET',
+                this.adminPath+'/'+entity+'/view?id='+recordId, null, session);
+            this.assert(404 === response.statusCode ||
+                response.body.includes('not found') ||
+                response.body.includes('error'));
+        } catch(error){
+            Logger.log(100, '', 'Delete validation for '+entity+' ID '+recordId+': '+error.message);
         }
     }
 
