@@ -23,10 +23,7 @@ class TestAdminFeatures extends BaseTest
     {
         Logger.log(100, '', 'Running tests for TestAdminFeatures');
         let session = await this.getAuthenticatedSession();
-        if(!session){
-            Logger.log(100, '', 'Failed to get authenticated session for features');
-            return;
-        }
+        this.assert(session);
         await this.testMapsWizard(session);
         await this.testObjectsImporter(session);
         await this.testSkillsImporter(session);
@@ -42,14 +39,14 @@ class TestAdminFeatures extends BaseTest
     async getAuthenticatedSession()
     {
         try {
-            let response = await this.makeFormRequest('POST', 
-                this.adminPath+'/login', {
-                email: this.adminUser,
-                password: this.adminPassword
-            });
-            if(302 === response.statusCode && response.headers.location && 
-                !response.headers.location.includes('error')){
-                return response.headers['set-cookie'];
+            let response = await this.makeFormRequest(
+                'POST',
+                this.adminPath+'/login',
+                {email: this.adminUser, password: this.adminPassword}
+            );
+            let headers = response.headers;
+            if(302 === response.statusCode && headers.location && !headers.location.includes('error')){
+                return headers['set-cookie'];
             }
             return null;
         } catch(error){
@@ -61,97 +58,73 @@ class TestAdminFeatures extends BaseTest
     async testMapsWizard(session)
     {
         await this.test('Maps wizard page loads', async () => {
-            let response = await this.makeAuthenticatedRequest('GET', 
-                this.adminPath+'/maps-wizard', null, session);
-            if(404 === response.statusCode){
-                Logger.log(100, '', 'Skipped: Maps wizard not available');
-                return;
-            }
+            let response = await this.makeAuthenticatedRequest('GET', this.adminPath+'/maps-wizard', null, session);
             this.assert.strictEqual(200, response.statusCode);
             this.assert(response.body.includes('wizard'));
         });
 
-        await this.test('Maps wizard generates with valid data and validates file creation', 
-            async () => {
+        await this.test('Maps wizard generates with valid data and validates file creation', async () => {
             let wizardData = FeaturesTestData.getMapsWizardValidData();
             Logger.log(100, '', 'Creating minimal map...');
-            let response = await this.makeFormRequestWithTimeout('POST', 
-                this.adminPath+'/maps-wizard', wizardData, session, 30000);
-            if(404 === response.statusCode){
-                Logger.log(100, '', 'Skipped: Maps wizard POST not available');
-                return;
-            }
+            let response = await this.makeFormRequestWithTimeout(
+                'POST',
+                this.adminPath+'/maps-wizard',
+                wizardData,
+                session,
+                30000
+            );
             this.assert.strictEqual(302, response.statusCode);
-            if(response.headers.location && 
-                response.headers.location.includes('error')){
-                Logger.log(100, '', 'Warning: Map generation failed - may be normal');
-                return;
-            }
         });
 
         await this.test('Maps wizard fails with invalid data', async () => {
             let wizardData = FeaturesTestData.getMapsWizardInvalidData();
-            let response = await this.makeFormRequestWithTimeout('POST', 
-                this.adminPath+'/maps-wizard', wizardData, session, 15000);
-            if(404 === response.statusCode){
-                Logger.log(100, '', 'Skipped: Maps wizard POST not available');
-                return;
-            }
+            let response = await this.makeFormRequestWithTimeout(
+                'POST',
+                this.adminPath+'/maps-wizard',
+                wizardData,
+                session,
+                15000
+            );
             this.assert.strictEqual(302, response.statusCode);
-            if(response.headers.location){
-                this.assert(response.headers.location.includes('mapsWizardWrongJsonDataError'));
-            }
+            this.assert(response.headers.location);
+            this.assert(response.headers.location.includes('mapsWizardWrongJsonDataError'));
         });
     }
 
     async testObjectsImporter(session)
     {
         await this.test('Objects import page loads', async () => {
-            let response = await this.makeAuthenticatedRequest('GET', 
-                this.adminPath+'/objects-import', null, session);
-            if(404 === response.statusCode){
-                Logger.log(100, '', 'Skipped: Objects import not available');
-                return;
-            }
+            let response = await this.makeAuthenticatedRequest(
+                'GET',
+                this.adminPath+'/objects-import',
+                null,
+                session
+            );
             this.assert.strictEqual(200, response.statusCode);
             this.assert(response.body.includes('import'));
         });
 
-        await this.test('Objects import with valid JSON validates import count', 
-            async () => {
+        await this.test('Objects import with valid JSON validates import count', async () => {
             let importData = FeaturesTestData.getObjectsImportValidData();
-            let response = await this.makeFormRequest('POST', 
-                this.adminPath+'/objects-import', importData, session);
-            if(404 === response.statusCode){
-                Logger.log(100, '', 'Skipped: Objects import POST not available');
-                return;
-            }
-            this.assert.strictEqual(302, response.statusCode);
-            if(response.headers.location){
-                this.assert(!response.headers.location.includes('error'));
-                await this.validateImportResult(response.headers.location, 2);
-            }
+            let response = await this.makeFormRequest(
+                'POST',
+                this.adminPath+'/objects-import',
+                importData,
+                session
+            );
+            this.validateSuccessfulResponse(response);
+            await this.validateImportResult(response.headers.location, 2);
         });
 
         await this.test('Objects import fails with invalid JSON', async () => {
             let importData = FeaturesTestData.getObjectsImportInvalidData();
-            let response = await this.makeFormRequest('POST', 
-                this.adminPath+'/objects-import', importData, session);
-            if(404 === response.statusCode){
-                Logger.log(100, '', 'Skipped: Objects import POST not available');
-                return;
-            }
+            let response = await this.makeFormRequest('POST', this.adminPath+'/objects-import', importData, session);
             this.assert.strictEqual(302, response.statusCode);
         });
 
         await this.test('Objects import handles missing fields', async () => {
             let importData = FeaturesTestData.getObjectsImportMissingFieldsData();
-            let response = await this.makeFormRequest('POST', 
-                this.adminPath+'/objects-import', importData, session);
-            if(404 === response.statusCode){
-                Logger.log(100, '', 'Skipped: Objects import POST not available');
-                return;
-            }
+            let response = await this.makeFormRequest('POST', this.adminPath+'/objects-import', importData, session);
             this.assert.strictEqual(302, response.statusCode);
         });
     }
@@ -159,70 +132,41 @@ class TestAdminFeatures extends BaseTest
     async testSkillsImporter(session)
     {
         await this.test('Skills import page loads', async () => {
-            let response = await this.makeAuthenticatedRequest('GET', 
-                this.adminPath+'/skills-import', null, session);
-            if(404 === response.statusCode){
-                Logger.log(100, '', 'Skipped: Skills import not available');
-                return;
-            }
+            let response = await this.makeAuthenticatedRequest('GET', this.adminPath+'/skills-import', null, session);
             this.assert.strictEqual(200, response.statusCode);
             this.assert(response.body.includes('import'));
         });
 
-        await this.test('Skills import with valid JSON validates import count', 
+        await this.test('Skills import with valid JSON validates import count',
             async () => {
             let importData = FeaturesTestData.getSkillsImportValidData();
-            let response = await this.makeFormRequest('POST', 
-                this.adminPath+'/skills-import', importData, session);
-            if(404 === response.statusCode){
-                Logger.log(100, '', 'Skipped: Skills import POST not available');
-                return;
-            }
-            this.assert.strictEqual(302, response.statusCode);
-            if(response.headers.location){
-                this.assert(!response.headers.location.includes('error'));
-                await this.validateImportResult(response.headers.location, 2);
-            }
+            let response = await this.makeFormRequest('POST', this.adminPath+'/skills-import', importData, session);
+            this.validateSuccessfulResponse(response);
+            await this.validateImportResult(response.headers.location, 2);
         });
     }
 
     async testServerManagement(session)
     {
         await this.test('Server management page loads', async () => {
-            let response = await this.makeAuthenticatedRequest('GET', 
-                this.adminPath+'/management', null, session);
-            if(404 === response.statusCode){
-                Logger.log(100, '', 'Skipped: Server management not available');
-                return;
-            }
+            let response = await this.makeAuthenticatedRequest('GET', this.adminPath+'/management', null, session);
             this.assert.strictEqual(200, response.statusCode);
             this.assert(response.body.includes('shutdown'));
         });
 
         await this.test('Server shutdown validation works', async () => {
             let invalidData = FeaturesTestData.getServerManagementInvalidData();
-            let response = await this.makeFormRequest('POST', 
-                this.adminPath+'/management', invalidData, session);
-            if(404 === response.statusCode){
-                Logger.log(100, '', 'Skipped: Server management POST not available');
-                return;
-            }
+            let response = await this.makeFormRequest('POST', this.adminPath+'/management', invalidData, session);
             this.assert.strictEqual(302, response.statusCode);
             this.assert(response.headers.location.includes('shutdownError'));
         });
 
         await this.test('Server shutdown with valid time succeeds', async () => {
             let validData = FeaturesTestData.getServerManagementValidData();
-            let response = await this.makeFormRequest('POST', 
-                this.adminPath+'/management', validData, session);
-            if(404 === response.statusCode){
-                Logger.log(100, '', 'Skipped: Server management POST not available');
-                return;
-            }
+            let response = await this.makeFormRequest('POST', this.adminPath+'/management', validData, session);
             this.assert.strictEqual(302, response.statusCode);
             this.assert(response.headers.location.includes('success'));
-            await this.makeFormRequest('POST', this.adminPath+'/management', 
-                {'shutdown-time': 1}, session);
+            await this.makeFormRequest('POST', this.adminPath+'/management', {'shutdown-time': 1}, session);
         });
     }
 
@@ -230,42 +174,21 @@ class TestAdminFeatures extends BaseTest
     {
         await this.test('Audio file upload validates file creation', async () => {
             let formData = FeaturesTestData.getAudioUploadValidData();
-            let response = await this.makeFormRequest('POST', 
-                this.adminPath+'/audio/save', formData, session);
-            if(404 === response.statusCode){
-                Logger.log(100, '', 'Skipped: Audio save not available');
-                return;
-            }
-            this.assert.strictEqual(302, response.statusCode);
-            if(response.headers.location){
-                this.assert(!response.headers.location.includes('error'));
-                await this.validateEntityCreated('audio', formData.audio_key);
-            }
+            let response = await this.makeFormRequest('POST', this.adminPath+'/audio/save', formData, session);
+            this.validateSuccessfulResponse(response);
+            await this.validateEntityExists('audio', formData.audio_key);
         });
 
         await this.test('Items with image upload validates creation', async () => {
             let formData = FeaturesTestData.getItemsUploadValidData();
-            let response = await this.makeFormRequest('POST', 
-                this.adminPath+'/items/save', formData, session);
-            if(404 === response.statusCode){
-                Logger.log(100, '', 'Skipped: Items save not available');
-                return;
-            }
-            this.assert.strictEqual(302, response.statusCode);
-            if(response.headers.location){
-                this.assert(!response.headers.location.includes('error'));
-                await this.validateEntityCreated('items', formData.key);
-            }
+            let response = await this.makeFormRequest('POST', this.adminPath+'/items/save', formData, session);
+            this.validateSuccessfulResponse(response);
+            await this.validateEntityExists('items', formData.key);
         });
 
         await this.test('Invalid file data is rejected properly', async () => {
             let formData = FeaturesTestData.getFileUploadInvalidData();
-            let response = await this.makeFormRequest('POST', 
-                this.adminPath+'/audio/save', formData, session);
-            if(404 === response.statusCode){
-                Logger.log(100, '', 'Skipped: Audio save not available');
-                return;
-            }
+            let response = await this.makeFormRequest('POST', this.adminPath+'/audio/save', formData, session);
             this.assert.strictEqual(302, response.statusCode);
         });
     }
@@ -273,24 +196,43 @@ class TestAdminFeatures extends BaseTest
     async testGenerators(session)
     {
         await this.test('Generate data static route accessible', async () => {
-            let response = await this.makeAuthenticatedRequest('GET', 
-                this.adminPath+'/generate-data', null, session);
-            if(404 === response.statusCode){
-                Logger.log(100, '', 'Skipped: Generate data route not available');
-                return;
-            }
+            let response = await this.makeAuthenticatedRequest(
+                'GET',
+                this.adminPath+'/generate-data',
+                null,
+                session
+            );
             this.assert.strictEqual(200, response.statusCode);
         });
 
         await this.test('Generated static route accessible', async () => {
-            let response = await this.makeAuthenticatedRequest('GET', 
-                this.adminPath+'/generated', null, session);
-            if(404 === response.statusCode){
-                Logger.log(100, '', 'Skipped: Generated route not available');
-                return;
-            }
+            let response = await this.makeAuthenticatedRequest(
+                'GET',
+                this.adminPath+'/generated',
+                null,
+                session
+            );
             this.assert.strictEqual(200, response.statusCode);
         });
+    }
+
+    validateSuccessfulResponse(response)
+    {
+        this.assert.strictEqual(302, response.statusCode);
+        this.assert(response.headers.location);
+        this.assert(!response.headers.location.includes('error'));
+    }
+
+    async validateEntityExists(entity, key)
+    {
+        let response = await this.makeAuthenticatedRequest(
+            'GET',
+            this.adminPath+'/'+entity,
+            null,
+            await this.getAuthenticatedSession()
+        );
+        this.assert.strictEqual(200, response.statusCode);
+        this.assert(response.body.includes(key));
     }
 
     async validateImportResult(location, expectedCount)
@@ -302,21 +244,6 @@ class TestAdminFeatures extends BaseTest
             }
         }
         return location.includes('success');
-    }
-
-    async validateEntityCreated(entity, key)
-    {
-        try {
-            let response = await this.makeAuthenticatedRequest('GET', 
-                this.adminPath+'/'+entity, null, await this.getAuthenticatedSession());
-            if(200 === response.statusCode){
-                this.assert(response.body.includes(key));
-                return true;
-            }
-        } catch(error){
-            Logger.log(100, '', 'Entity validation failed: '+error.message);
-        }
-        return false;
     }
 
 }

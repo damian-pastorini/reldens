@@ -13,11 +13,7 @@ class CrudTestData
         let testData = {
             rooms: {
                 name: testPrefix+'-room-'+timestamp,
-                title: 'Test Room',
-                map_filename: 'sample-map.json',
-                scene_images: 'test.png',
-                change_points: '[]',
-                return_points: '[]'
+                title: 'Test Room'
             },
             objects: {
                 room_id: 4,
