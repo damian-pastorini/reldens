@@ -6,6 +6,7 @@
 
 const { FileHandler } = require('@reldens/server-utils');
 const { Logger, sc } = require('@reldens/utils');
+const { DatabaseResetUtility } = require('./database-reset-utility');
 const readline = require('readline');
 
 Logger.activeLogLevels = [100];
@@ -22,6 +23,14 @@ async function runTests()
         Logger.log(100, '', '='.repeat(60)+'\n');
         Logger.log(100, '', 'Test execution started: '+sc.formatDate(new Date()));
         let config = JSON.parse(process.argv[2] || '{}');
+        Logger.log(100, '', 'Resetting database before tests...');
+        let databaseResetUtility = new DatabaseResetUtility(config);
+        let resetResult = await databaseResetUtility.resetDatabase();
+        if(!resetResult){
+            Logger.log(100, '', 'Database reset failed - aborting test execution');
+            process.exit(1);
+        }
+        Logger.log(100, '', 'Database reset completed successfully\n');
         let testFiles = await getTestFilesFromDirectory(__dirname);
         let filter = null;
         let methodFilter = null;
