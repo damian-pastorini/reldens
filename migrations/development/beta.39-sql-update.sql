@@ -125,6 +125,18 @@ ALTER TABLE `stats`
 -- Update root user password:
 UPDATE `users` SET `password`='879abc0494b36a09f184fd8308ea18f2643d71263f145b1e40e2ec3546d42202:6a186aff4d69daadcd7940a839856b394b12f0aec64a5df745c83cf9d881dc9dcb121b03d946872571f214228684216df097305b68417a56403299b8b2388db3' WHERE `username` = 'root';
 
+-- Fix operation types:
+ALTER TABLE `operation_types` CHANGE COLUMN `label` `label` VARCHAR(50) NULL COLLATE 'utf8mb4_unicode_ci' AFTER `id`;
+ALTER TABLE `skills_levels_modifiers` DROP FOREIGN KEY `FK_skills_levels_modifiers_operation_types`;
+ALTER TABLE `skills_levels_modifiers` ADD CONSTRAINT `FK_skills_levels_modifiers_operation_types` FOREIGN KEY (`operation`) REFERENCES `operation_types` (`key`) ON UPDATE CASCADE ON DELETE NO ACTION;
+ALTER TABLE `skills_skill_target_effects` DROP FOREIGN KEY `FK_skills_skill_target_effects_operation_types`;
+ALTER TABLE `skills_skill_target_effects` ADD CONSTRAINT `FK_skills_skill_target_effects_operation_types` FOREIGN KEY (`operation`) REFERENCES `operation_types` (`key`) ON UPDATE CASCADE ON DELETE NO ACTION;
+ALTER TABLE `clan_levels_modifiers` DROP FOREIGN KEY `FK_clan_levels_modifiers_operation_types`;
+ALTER TABLE `clan_levels_modifiers` ADD CONSTRAINT `FK_clan_levels_modifiers_operation_types` FOREIGN KEY (`operation`) REFERENCES `operation_types` (`key`) ON UPDATE CASCADE ON DELETE NO ACTION;
+
+-- Fix target options:
+ALTER TABLE `target_options` CHANGE COLUMN `target_label` `target_label` VARCHAR(50) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci' AFTER `target_key`;
+
 --
 
 SET FOREIGN_KEY_CHECKS = 1;

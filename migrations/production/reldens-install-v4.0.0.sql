@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS `config_types` (
 
 CREATE TABLE IF NOT EXISTS `operation_types` (
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    `label` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    `label` VARCHAR(50) NULL DEFAULT NULL CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
     `key` INT UNSIGNED NOT NULL,
     PRIMARY KEY (`id`),
     UNIQUE KEY `key` (`key`)
@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS `operation_types` (
 CREATE TABLE IF NOT EXISTS `target_options` (
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
     `target_key` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-    `target_label` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    `target_label` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
     PRIMARY KEY (`id`) USING BTREE,
     UNIQUE KEY `target_key` (`target_key`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -359,7 +359,7 @@ CREATE TABLE IF NOT EXISTS `clan_levels_modifiers` (
     KEY `level_key` (`level_id`) USING BTREE,
     KEY `FK_clan_levels_modifiers_operation_types` (`operation`) USING BTREE,
     CONSTRAINT `FK_clan_levels_modifiers_clan_levels` FOREIGN KEY (`level_id`) REFERENCES `clan_levels` (`id`) ON UPDATE CASCADE,
-    CONSTRAINT `FK_clan_levels_modifiers_operation_types` FOREIGN KEY (`operation`) REFERENCES `operation_types` (`key`)
+    CONSTRAINT `FK_clan_levels_modifiers_operation_types` FOREIGN KEY (`operation`) REFERENCES `operation_types` (`key`) ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `clan_members` (
@@ -783,8 +783,8 @@ CREATE TABLE IF NOT EXISTS `skills_levels_modifiers` (
     PRIMARY KEY (`id`),
     KEY `modifier_id` (`key`) USING BTREE,
     KEY `level_key` (`level_id`) USING BTREE,
-    KEY `FK_skills_levels_modifiers_operation_types` (`operation`),
-    CONSTRAINT `FK_skills_levels_modifiers_operation_types` FOREIGN KEY (`operation`) REFERENCES `operation_types` (`key`),
+    KEY `FK_skills_levels_modifiers_operation_types` (`operation`) USING BTREE,
+    CONSTRAINT `FK_skills_levels_modifiers_operation_types` FOREIGN KEY (`operation`) REFERENCES `operation_types` (`key`) ON UPDATE CASCADE ON DELETE NO ACTION,
     CONSTRAINT `FK_skills_levels_modifiers_skills_levels` FOREIGN KEY (`level_id`) REFERENCES `skills_levels` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -927,7 +927,7 @@ CREATE TABLE IF NOT EXISTS `skills_skill_target_effects` (
     KEY `skill_id` (`skill_id`) USING BTREE,
     KEY `FK_skills_skill_target_effects_operation_types` (`operation`),
     CONSTRAINT `FK_skills_skill_effect_modifiers` FOREIGN KEY (`skill_id`) REFERENCES `skills_skill` (`id`) ON UPDATE CASCADE,
-    CONSTRAINT `FK_skills_skill_target_effects_operation_types` FOREIGN KEY (`operation`) REFERENCES `operation_types` (`key`)
+    CONSTRAINT `FK_skills_skill_target_effects_operation_types` FOREIGN KEY (`operation`) REFERENCES `operation_types` (`key`) ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `skills_skill_target_effects_conditions` (
