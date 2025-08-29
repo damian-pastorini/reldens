@@ -18,6 +18,21 @@ class Manager
         this.testsDir = FileHandler.joinPaths(this.projectRoot, 'tests');
         this.configFile = FileHandler.joinPaths(this.testsDir, 'config.json');
         this.config = {};
+        this.parseArguments();
+    }
+
+    parseArguments()
+    {
+        for(let arg of process.argv){
+            if(arg.startsWith('--filter=')){
+                this.filter = arg.split('=')[1];
+                Logger.log(100, '', 'Filter applied: '+this.filter);
+            }
+            if(arg === '--break-on-error'){
+                this.breakOnError = true;
+                Logger.log(100, '', 'Break on error enabled');
+            }
+        }
     }
 
     async run()
@@ -55,10 +70,12 @@ class Manager
         this.config.adminPath = await question('Admin path (/reldens-admin): ') || '/reldens-admin';
         this.config.adminUser = await question('Admin username (root@yourgame.com): ') || 'root@yourgame.com';
         this.config.adminPassword = await question('Admin password (root): ') || 'root';
+        this.config.serverPath = await question('Server folder path (optional, for upload tests): ') || '';
+        this.config.themeName = await question('Theme name (default): ') || 'default';
         this.config.dbHost = await question('Database host (localhost): ') || 'localhost';
         this.config.dbPort = await question('Database port (3306): ') || '3306';
         this.config.dbUser = await question('Database user (reldens): ') || 'reldens';
-        this.config.dbPassword = await question('Database password: ') || 'reldens';
+        this.config.dbPassword = await question('Database password (reldens): ') || 'reldens';
         this.config.dbName = await question('Database name (reldens_test): ') || 'reldens_test';
         rl.close();
     }
@@ -73,8 +90,18 @@ class Manager
     async executeTests(config)
     {
         Logger.log(100, '', 'Starting tests against: '+config.baseUrl+config.adminPath);
+        if(config.serverPath){
+            Logger.log(100, '', 'Upload tests enabled with server path: '+config.serverPath);
+        }
         let configArg = JSON.stringify(config);
-        let testRunner = spawn('node', [FileHandler.joinPaths(this.testsDir, 'run.js'), configArg], {
+        let args = [FileHandler.joinPaths(this.testsDir, 'run.js'), configArg];
+        if(this.filter){
+            args.push('--filter='+this.filter);
+        }
+        if(this.breakOnError){
+            args.push('--break-on-error');
+        }
+        let testRunner = spawn('node', args, {
             stdio: 'inherit'
         });
         return new Promise((resolve) => {

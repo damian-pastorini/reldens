@@ -5,23 +5,11 @@
  */
 
 const { BaseTest } = require('./base-test');
-const { Logger } = require('@reldens/utils');
 
 class TestAdminAuth extends BaseTest
 {
 
-    async runAllTests()
-    {
-        Logger.log(100, '', 'Running tests for TestAdminAuth');
-        await this.testLoginEndpoint();
-        await this.testLogoutEndpoint();
-        await this.testProtectedRoutes();
-        Logger.log(100, '', 'Tests run: '+this.testCount);
-        Logger.log(100, '', 'Passed: '+this.passedCount);
-        Logger.log(100, '', 'Failed: '+(this.testCount - this.passedCount));
-    }
-
-    async testLoginEndpoint()
+    async testLoginPageLoads()
     {
         await this.test('Login page loads', async () => {
             let response = await this.makeRequest('GET', this.adminPath+'/login');
@@ -30,7 +18,10 @@ class TestAdminAuth extends BaseTest
                 response.body.includes('email') || 
                 response.body.includes('password'));
         });
+    }
 
+    async testValidLoginRedirectsToAdmin()
+    {
         await this.test('Valid login redirects to admin', async () => {
             let response = await this.makeFormRequest('POST', 
                 this.adminPath+'/login', {
@@ -40,7 +31,10 @@ class TestAdminAuth extends BaseTest
             this.assert.strictEqual(302, response.statusCode);
             this.assert(response.headers.location.includes(this.adminPath));
         });
+    }
 
+    async testInvalidLoginShowsError()
+    {
         await this.test('Invalid login shows error', async () => {
             let response = await this.makeFormRequest('POST', 
                 this.adminPath+'/login', {
@@ -52,7 +46,7 @@ class TestAdminAuth extends BaseTest
         });
     }
 
-    async testLogoutEndpoint()
+    async testLogoutDestroysSession()
     {
         await this.test('Logout destroys session', async () => {
             let response = await this.makeRequest('GET', this.adminPath+'/logout');
@@ -61,14 +55,17 @@ class TestAdminAuth extends BaseTest
         });
     }
 
-    async testProtectedRoutes()
+    async testAdminRootRedirectsWhenNotAuthenticated()
     {
         await this.test('Admin root redirects when not authenticated', async () => {
             let response = await this.makeRequest('GET', this.adminPath);
             this.assert.strictEqual(302, response.statusCode);
             this.assert(response.headers.location.includes('/login'));
         });
+    }
 
+    async testEntityRoutesRequireAuthentication()
+    {
         await this.test('Entity routes require authentication', async () => {
             let response = await this.makeRequest('GET', this.adminPath+'/users');
             this.assert.strictEqual(302, response.statusCode);
