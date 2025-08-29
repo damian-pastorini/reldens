@@ -6,6 +6,7 @@
 
 const { FileHandler } = require('@reldens/server-utils');
 const { Logger, sc } = require('@reldens/utils');
+const readline = require('readline');
 
 Logger.activeLogLevels = [100];
 Logger.setLogLevel(100);
@@ -15,6 +16,7 @@ Logger.context().RELDENS_ENABLE_TRACE_FOR = 'none';
 async function runTests()
 {
     try {
+        await confirmTestExecution();
         Logger.log(100, '', '='.repeat(60));
         Logger.log(100, '', 'TESTING RELDENS ADMIN INTEGRATION');
         Logger.log(100, '', '='.repeat(60)+'\n');
@@ -108,6 +110,30 @@ async function runTests()
         Logger.log(100, '', error.stack);
         process.exit(1);
     }
+}
+
+async function confirmTestExecution()
+{
+    let rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout
+    });
+    console.log('\n⚠️  WARNING: Integration Tests');
+    console.log('══════════════════════════════');
+    console.log('Running integration tests may modify or corrupt your test database.');
+    console.log('Make sure you are using a dedicated test environment.');
+    console.log('══════════════════════════════\n');
+    return new Promise((resolve) => {
+        rl.question('Do you want to continue? (y/N): ', (answer) => {
+            rl.close();
+            let shouldContinue = answer.toLowerCase() === 'y' || answer.toLowerCase() === 'yes';
+            if(!shouldContinue){
+                console.log('Tests cancelled by user.');
+                process.exit(0);
+            }
+            resolve();
+        });
+    });
 }
 
 function getTestMethods(testInstance)
