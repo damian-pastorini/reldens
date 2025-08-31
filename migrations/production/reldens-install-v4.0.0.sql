@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS `config_types` (
 
 CREATE TABLE IF NOT EXISTS `operation_types` (
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    `label` VARCHAR(50) NULL DEFAULT NULL CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+    `label` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
     `key` INT UNSIGNED NOT NULL,
     PRIMARY KEY (`id`),
     UNIQUE KEY `key` (`key`)
