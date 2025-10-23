@@ -4,6 +4,13 @@
  *
  */
 
+if(window.trustedTypes?.createPolicy){
+    trustedTypes.createPolicy('default', {
+        createHTML: s => s,
+        createScriptURL: s => s
+    });
+}
+
 // @TODO - BETA - Refactor, split, clean up, bundle.
 window.addEventListener('DOMContentLoaded', () => {
 
