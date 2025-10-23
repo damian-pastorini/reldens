@@ -4,6 +4,13 @@
  *
  */
 
+if(window.trustedTypes?.createPolicy){
+    trustedTypes.createPolicy('default', {
+        createHTML: s => s,
+        createScriptURL: s => s
+    });
+}
+
 // to set logger level and trace, this needs to be specified before the game manager is required:
 const urlParams = new URLSearchParams(window.location.search);
 window.RELDENS_LOG_LEVEL = (urlParams.get('logLevel') || 7);
