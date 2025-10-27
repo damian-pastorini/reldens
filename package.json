@@ -97,7 +97,7 @@
         "@parcel/transformer-worklet": "2.16.0",
         "@parcel/transformer-xml": "2.16.0",
         "@parcel/transformer-yaml": "2.16.0",
-        "@reldens/cms": "^0.40.0",
+        "@reldens/cms": "^0.41.0",
         "@reldens/game-data-generator": "^0.19.0",
         "@reldens/items-system": "^0.44.0",
         "@reldens/modifiers": "^0.31.0",
