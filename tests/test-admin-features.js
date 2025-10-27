@@ -27,6 +27,9 @@ class TestAdminFeatures extends BaseTest
     async testMapsWizardPageLoads()
     {
         let session = await this.getAuthenticatedSession();
+        if(!session){
+            return;
+        }
         await this.test('Maps wizard page loads', async () => {
             let response = await this.makeAuthenticatedRequest('GET', this.adminPath+'/maps-wizard', null, session);
             this.assert.strictEqual(200, response.statusCode);
@@ -37,6 +40,9 @@ class TestAdminFeatures extends BaseTest
     async testMapsWizardGeneratesWithValidData()
     {
         let session = await this.getAuthenticatedSession();
+        if(!session){
+            return;
+        }
         await this.test('Maps wizard generates with valid data and validates file creation', async () => {
             let wizardData = FeaturesTestData.getMapsWizardValidData();
             let response = await this.makeFormRequestWithTimeout(
@@ -53,6 +59,9 @@ class TestAdminFeatures extends BaseTest
     async testMapsWizardFailsWithInvalidData()
     {
         let session = await this.getAuthenticatedSession();
+        if(!session){
+            return;
+        }
         await this.test('Maps wizard fails with invalid data', async () => {
             let wizardData = FeaturesTestData.getMapsWizardInvalidData();
             let response = await this.makeFormRequestWithTimeout(
@@ -71,6 +80,9 @@ class TestAdminFeatures extends BaseTest
     async testObjectsImportPageLoads()
     {
         let session = await this.getAuthenticatedSession();
+        if(!session){
+            return;
+        }
         await this.test('Objects import page loads', async () => {
             let response = await this.makeAuthenticatedRequest(
                 'GET',
@@ -86,6 +98,9 @@ class TestAdminFeatures extends BaseTest
     async testObjectsImportWithValidJson()
     {
         let session = await this.getAuthenticatedSession();
+        if(!session){
+            return;
+        }
         await this.test('Objects import with valid JSON validates import count', async () => {
             let importData = this.getObjectsImportDeterministicData();
             let response = await this.makeFormRequest(
@@ -102,6 +117,9 @@ class TestAdminFeatures extends BaseTest
     async testObjectsImportFailsWithInvalidJson()
     {
         let session = await this.getAuthenticatedSession();
+        if(!session){
+            return;
+        }
         await this.test('Objects import fails with invalid JSON', async () => {
             let importData = FeaturesTestData.getObjectsImportInvalidData();
             let response = await this.makeFormRequest('POST', this.adminPath+'/objects-import', importData, session);
@@ -112,6 +130,9 @@ class TestAdminFeatures extends BaseTest
     async testObjectsImportHandlesMissingFields()
     {
         let session = await this.getAuthenticatedSession();
+        if(!session){
+            return;
+        }
         await this.test('Objects import handles missing fields', async () => {
             let importData = FeaturesTestData.getObjectsImportMissingFieldsData();
             let response = await this.makeFormRequest('POST', this.adminPath+'/objects-import', importData, session);
@@ -122,6 +143,9 @@ class TestAdminFeatures extends BaseTest
     async testSkillsImportPageLoads()
     {
         let session = await this.getAuthenticatedSession();
+        if(!session){
+            return;
+        }
         await this.test('Skills import page loads', async () => {
             let response = await this.makeAuthenticatedRequest('GET', this.adminPath+'/skills-import', null, session);
             this.assert.strictEqual(200, response.statusCode);
@@ -132,6 +156,9 @@ class TestAdminFeatures extends BaseTest
     async testSkillsImportWithValidJson()
     {
         let session = await this.getAuthenticatedSession();
+        if(!session){
+            return;
+        }
         await this.test('Skills import with valid JSON validates import count', async () => {
             let importData = this.getSkillsImportDeterministicData();
             let response = await this.makeFormRequest('POST', this.adminPath+'/skills-import', importData, session);
@@ -143,6 +170,9 @@ class TestAdminFeatures extends BaseTest
     async testServerManagementPageLoads()
     {
         let session = await this.getAuthenticatedSession();
+        if(!session){
+            return;
+        }
         await this.test('Server management page loads', async () => {
             let response = await this.makeAuthenticatedRequest('GET', this.adminPath+'/management', null, session);
             this.assert.strictEqual(200, response.statusCode);
@@ -153,6 +183,9 @@ class TestAdminFeatures extends BaseTest
     async testServerShutdownValidation()
     {
         let session = await this.getAuthenticatedSession();
+        if(!session){
+            return;
+        }
         await this.test('Server shutdown validation works', async () => {
             let invalidData = FeaturesTestData.getServerManagementInvalidData();
             let response = await this.makeFormRequest('POST', this.adminPath+'/management', invalidData, session);
@@ -164,6 +197,9 @@ class TestAdminFeatures extends BaseTest
     async testServerShutdownWithValidTime()
     {
         let session = await this.getAuthenticatedSession();
+        if(!session){
+            return;
+        }
         await this.test('Server shutdown with valid time succeeds', async () => {
             let validData = FeaturesTestData.getServerManagementValidData();
             let response = await this.makeFormRequest('POST', this.adminPath+'/management', validData, session);
@@ -179,6 +215,9 @@ class TestAdminFeatures extends BaseTest
             return;
         }
         let session = await this.getAuthenticatedSession();
+        if(!session){
+            return;
+        }
         await this.test('Audio file upload validates file creation', async () => {
             let testAudioFile = await this.createTestAudioFile();
             let audioData = this.getAudioUploadWithRealFileDeterministicData(testAudioFile);
@@ -207,6 +246,9 @@ class TestAdminFeatures extends BaseTest
     async testInvalidFileDataRejection()
     {
         let session = await this.getAuthenticatedSession();
+        if(!session){
+            return;
+        }
         await this.test('Invalid file data is rejected properly', async () => {
             let formData = FeaturesTestData.getFileUploadInvalidData();
             let response = await this.makeFormRequest('POST', this.adminPath+'/audio/save', formData, session);
@@ -220,6 +262,9 @@ class TestAdminFeatures extends BaseTest
             return;
         }
         let session = await this.getAuthenticatedSession();
+        if(!session){
+            return;
+        }
         await this.test('Generate data static route accessible', async () => {
             let testFileName = 'test-generate-'+Date.now()+'.txt';
             let testFilePath = FileHandler.joinPaths(this.serverPath, 'generate-data', testFileName);
@@ -242,6 +287,9 @@ class TestAdminFeatures extends BaseTest
             return;
         }
         let session = await this.getAuthenticatedSession();
+        if(!session){
+            return;
+        }
         await this.test('Generated static route accessible', async () => {
             let testFileName = 'test-generated-'+Date.now()+'.txt';
             let testFilePath = FileHandler.joinPaths(this.serverPath, 'generate-data', 'generated', testFileName);

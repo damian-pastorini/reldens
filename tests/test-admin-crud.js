@@ -32,7 +32,9 @@ class TestAdminCrud extends BaseTest
     {
         Logger.log(100, '', 'Running CRUD tests for entities without required FK');
         let session = await this.getAuthenticatedSession();
-        this.assert(session);
+        if(!session){
+            return;
+        }
         await this.preCleanup(session);
         for(let entity of this.entitiesWithoutRequiredFK){
             await this.runEntityCrudFlow(entity, session, 'withoutFK');
@@ -44,7 +46,9 @@ class TestAdminCrud extends BaseTest
     {
         Logger.log(100, '', 'Running CRUD tests for entities with required FK');
         let session = await this.getAuthenticatedSession();
-        this.assert(session);
+        if(!session){
+            return;
+        }
         await this.preCleanup(session);
         for(let entity of this.entitiesWithRequiredFK){
             await this.runEntityCrudFlow(entity, session, 'withRequiredFK');
@@ -59,7 +63,9 @@ class TestAdminCrud extends BaseTest
         }
         Logger.log(100, '', 'Running CRUD tests for entities with uploads but no required FK');
         let session = await this.getAuthenticatedSession();
-        this.assert(session);
+        if(!session){
+            return;
+        }
         await this.preCleanup(session);
         for(let entity of this.entitiesWithUploadsButNoRequiredFK){
             await this.runEntityCrudFlowWithUploads(entity, session, 'withUploadsNoFK');
@@ -74,7 +80,9 @@ class TestAdminCrud extends BaseTest
         }
         Logger.log(100, '', 'Running CRUD tests for entities with uploads and required FK');
         let session = await this.getAuthenticatedSession();
-        this.assert(session);
+        if(!session){
+            return;
+        }
         await this.preCleanup(session);
         for(let entity of this.entitiesWithUploadsAndRequiredFK){
             await this.runEntityCrudFlowWithUploads(entity, session, 'withUploadsAndFK');

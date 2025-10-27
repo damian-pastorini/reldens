@@ -51,6 +51,9 @@ class BaseTest
     {
         return new Promise((resolve, reject) => {
             let httpModule = this.isHttps ? https : http;
+            if(this.isHttps){
+                options.rejectUnauthorized = false;
+            }
             let req = httpModule.request(options, (res) => {
                 let body = '';
                 res.on('data', (chunk) => body += chunk);
@@ -245,7 +248,8 @@ class BaseTest
 
     async getAuthenticatedSession()
     {
-        try {
+        let session = null;
+        await this.test('Authentication', async () => {
             let loginResponse = await this.makeRequest('GET', this.adminPath+'/login');
             if(200 !== loginResponse.statusCode){
                 throw new Error('Login page not accessible');
@@ -263,11 +267,9 @@ class BaseTest
             if(response.headers.location.includes('error')){
                 throw new Error('Login failed with error in redirect');
             }
-            return response.headers['set-cookie'];
-        } catch(error){
-            Logger.log(100, '', 'Authentication failed: '+error.message);
-            throw error;
-        }
+            session = response.headers['set-cookie'];
+        });
+        return session;
     }
 
 }
