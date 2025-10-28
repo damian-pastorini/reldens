@@ -8,6 +8,8 @@
 
 const fs = require('fs');
 const path = require('path');
+const dotenv = require('dotenv');
+const { spawn } = require('child_process');
 
 class Commander
 {
@@ -66,7 +68,7 @@ class Commander
         }
         let extractedParams = args.slice(2);
         this.command = extractedParams[0];
-        if('test' === this.command || 'help' === this.command){
+        if('test' === this.command || 'help' === this.command || 'generateEntities' === this.command){
             return true;
         }
         if('execute' === this.command || 'function' !== typeof this.themeManager[this.command]){
@@ -94,6 +96,38 @@ class Commander
         console.info('- Test OK.');
     }
 
+    generateEntities()
+    {
+        let envPath = path.join(this.projectRoot, '.env');
+        if(!fs.existsSync(envPath)){
+            console.error('- .env file not found at: '+envPath);
+            process.exit(1);
+        }
+        dotenv.config({path: envPath});
+        let args = [
+            'reldens-storage',
+            'generateEntities',
+            '--user='+process.env.RELDENS_DB_USERNAME,
+            '--pass='+process.env.RELDENS_DB_PASSWORD,
+            '--host='+process.env.RELDENS_DB_HOST,
+            '--database='+process.env.RELDENS_DB_NAME,
+            '--driver='+(process.env.RELDENS_STORAGE_DRIVER || 'objection-js'),
+            '--client='+process.env.RELDENS_DB_CLIENT
+        ];
+        let overrideArg = process.argv.find(arg => '--override' === arg);
+        if(overrideArg){
+            args.push('--override');
+        }
+        console.info('- Running: npx '+args.join(' '));
+        let child = spawn('npx', args, {
+            stdio: 'inherit',
+            cwd: this.projectRoot
+        });
+        child.on('exit', (code) => {
+            process.exit(code || 0);
+        });
+    }
+
     help()
     {
         console.info(' - Available commands:'
@@ -114,7 +148,8 @@ class Commander
             +"\n"+'copyNew                          - Copy all default files for the fullRebuild.'
             +"\n"+'fullRebuild                      - Rebuild the Skeleton from scratch.'
             +"\n"+'installSkeleton                  - Installs Skeleton.'
-            +"\n"+'copyServerFiles                  - Reset the "dist" folder and runs a fullRebuild.');
+            +"\n"+'copyServerFiles                  - Reset the "dist" folder and runs a fullRebuild.'
+            +"\n"+'generateEntities [--override]    - Generate entities from database using .env credentials.');
     }
 
 }
