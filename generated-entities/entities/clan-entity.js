@@ -15,6 +15,9 @@ class ClanEntity extends EntityProperties
         let titleProperty = 'name';
         let properties = {
             id: {
+                isId: true,
+                type: 'number',
+                isRequired: true,
                 dbType: 'int'
             },
             owner_id: {

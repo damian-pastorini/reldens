@@ -14,6 +14,9 @@ class ClanLevelsModifiersEntity extends EntityProperties
         let titleProperty = 'key';
         let properties = {
             id: {
+                isId: true,
+                type: 'number',
+                isRequired: true,
                 dbType: 'int'
             },
             level_id: {

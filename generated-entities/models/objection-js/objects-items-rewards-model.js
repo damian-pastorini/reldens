@@ -28,7 +28,15 @@ class ObjectsItemsRewardsModel extends ObjectionJsRawModel
                     to: ObjectsModel.tableName+'.id'
                 }
             },
-            related_items_item: {
+            related_items_item_item_key: {
+                relation: this.BelongsToOneRelation,
+                modelClass: ItemsItemModel,
+                join: {
+                    from: this.tableName+'.item_key',
+                    to: ItemsItemModel.tableName+'.key'
+                }
+            },
+            related_items_item_reward_item_key: {
                 relation: this.BelongsToOneRelation,
                 modelClass: ItemsItemModel,
                 join: {

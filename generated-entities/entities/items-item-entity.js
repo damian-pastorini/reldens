@@ -15,6 +15,9 @@ class ItemsItemEntity extends EntityProperties
         let titleProperty = 'label';
         let properties = {
             id: {
+                isId: true,
+                type: 'number',
+                isRequired: true,
                 dbType: 'int'
             },
             key: {

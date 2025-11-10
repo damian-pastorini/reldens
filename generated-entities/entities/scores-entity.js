@@ -14,6 +14,9 @@ class ScoresEntity extends EntityProperties
     {
         let properties = {
             id: {
+                isId: true,
+                type: 'number',
+                isRequired: true,
                 dbType: 'int'
             },
             player_id: {

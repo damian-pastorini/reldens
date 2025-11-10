@@ -40,7 +40,7 @@ class AdsModel extends ObjectionJsRawModel
                 }
             },
             related_ads_banner: {
-                relation: this.HasManyRelation,
+                relation: this.HasOneRelation,
                 modelClass: AdsBannerModel,
                 join: {
                     from: this.tableName+'.id',
@@ -48,7 +48,7 @@ class AdsModel extends ObjectionJsRawModel
                 }
             },
             related_ads_event_video: {
-                relation: this.HasManyRelation,
+                relation: this.HasOneRelation,
                 modelClass: AdsEventVideoModel,
                 join: {
                     from: this.tableName+'.id',

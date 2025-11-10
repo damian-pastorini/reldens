@@ -56,7 +56,15 @@ class RoomsModel extends ObjectionJsRawModel
                     to: PlayersStateModel.tableName+'.room_id'
                 }
             },
-            related_rooms_change_points: {
+            related_rooms_change_points_room: {
+                relation: this.HasManyRelation,
+                modelClass: RoomsChangePointsModel,
+                join: {
+                    from: this.tableName+'.id',
+                    to: RoomsChangePointsModel.tableName+'.room_id'
+                }
+            },
+            related_rooms_change_points_next_room: {
                 relation: this.HasManyRelation,
                 modelClass: RoomsChangePointsModel,
                 join: {
@@ -64,7 +72,15 @@ class RoomsModel extends ObjectionJsRawModel
                     to: RoomsChangePointsModel.tableName+'.next_room_id'
                 }
             },
-            related_rooms_return_points: {
+            related_rooms_return_points_room: {
+                relation: this.HasManyRelation,
+                modelClass: RoomsReturnPointsModel,
+                join: {
+                    from: this.tableName+'.id',
+                    to: RoomsReturnPointsModel.tableName+'.room_id'
+                }
+            },
+            related_rooms_return_points_from_room: {
                 relation: this.HasManyRelation,
                 modelClass: RoomsReturnPointsModel,
                 join: {

@@ -13,6 +13,9 @@ class ConfigEntity extends EntityProperties
     {
         let properties = {
             id: {
+                isId: true,
+                type: 'number',
+                isRequired: true,
                 dbType: 'int'
             },
             scope: {

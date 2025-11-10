@@ -54,7 +54,15 @@ class PlayersModel extends ObjectionJsRawModel
                     to: AudioPlayerConfigModel.tableName+'.player_id'
                 }
             },
-            related_chat: {
+            related_chat_player: {
+                relation: this.HasManyRelation,
+                modelClass: ChatModel,
+                join: {
+                    from: this.tableName+'.id',
+                    to: ChatModel.tableName+'.player_id'
+                }
+            },
+            related_chat_private_player: {
                 relation: this.HasManyRelation,
                 modelClass: ChatModel,
                 join: {
@@ -63,7 +71,7 @@ class PlayersModel extends ObjectionJsRawModel
                 }
             },
             related_clan: {
-                relation: this.HasManyRelation,
+                relation: this.HasOneRelation,
                 modelClass: ClanModel,
                 join: {
                     from: this.tableName+'.id',
@@ -71,7 +79,7 @@ class PlayersModel extends ObjectionJsRawModel
                 }
             },
             related_clan_members: {
-                relation: this.HasManyRelation,
+                relation: this.HasOneRelation,
                 modelClass: ClanMembersModel,
                 join: {
                     from: this.tableName+'.id',
