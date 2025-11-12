@@ -137,6 +137,20 @@ ALTER TABLE `clan_levels_modifiers` ADD CONSTRAINT `FK_clan_levels_modifiers_ope
 -- Fix target options:
 ALTER TABLE `target_options` CHANGE COLUMN `target_label` `target_label` VARCHAR(50) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci' AFTER `target_key`;
 
+-- Fix scores FK:
+ALTER TABLE `scores` ADD CONSTRAINT `FK_scores_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON UPDATE CASCADE ON DELETE CASCADE;
+
+-- Fix drops animations KF:
+ALTER TABLE `drops_animations` DROP FOREIGN KEY `FK_drops_animations_items_item`;
+ALTER TABLE `drops_animations` ADD CONSTRAINT `FK_drops_animations_items_item` FOREIGN KEY (`item_id`) REFERENCES `items_item` (`id`) ON UPDATE CASCADE ON DELETE CASCADE;
+
+-- Apply missing unique constraints:
+ALTER TABLE `players_state` ADD UNIQUE INDEX `player_id` (`player_id`); -- players can describe only in one place
+ALTER TABLE `skills_skill_attack` ADD UNIQUE INDEX `skill_id_unique` (`skill_id`); -- skills attack data is in a single entity
+ALTER TABLE `skills_skill_group_relation` ADD UNIQUE INDEX `skill_id_unique` (`skill_id`); -- skills can only be related to one group
+ALTER TABLE `skills_skill_physical_data` ADD UNIQUE INDEX `skill_id` (`skill_id`); -- skill physical data is in a single entity
+ALTER TABLE `drops_animations` ADD UNIQUE INDEX `item_id_unique` (`item_id`); -- an item can only have one drop animation
+
 --
 
 SET FOREIGN_KEY_CHECKS = 1;
