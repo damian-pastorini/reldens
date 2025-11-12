@@ -20,7 +20,8 @@ class ScoresEntity extends EntityProperties
                 dbType: 'int'
             },
             player_id: {
-                type: 'number',
+                type: 'reference',
+                reference: 'players',
                 isRequired: true,
                 dbType: 'int'
             },
