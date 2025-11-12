@@ -14,7 +14,6 @@ class ItemsInventoryModel extends ObjectionJsRawModel
         return 'items_inventory';
     }
     
-
     static get relationMappings()
     {
         const { PlayersModel } = require('./players-model');

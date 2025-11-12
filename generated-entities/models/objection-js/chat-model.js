@@ -14,7 +14,6 @@ class ChatModel extends ObjectionJsRawModel
         return 'chat';
     }
     
-
     static get relationMappings()
     {
         const { PlayersModel } = require('./players-model');

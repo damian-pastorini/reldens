@@ -14,7 +14,6 @@ class SkillsLevelsModel extends ObjectionJsRawModel
         return 'skills_levels';
     }
     
-
     static get relationMappings()
     {
         const { SkillsLevelsSetModel } = require('./skills-levels-set-model');

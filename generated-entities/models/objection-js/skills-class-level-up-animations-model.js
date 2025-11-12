@@ -14,7 +14,6 @@ class SkillsClassLevelUpAnimationsModel extends ObjectionJsRawModel
         return 'skills_class_level_up_animations';
     }
     
-
     static get relationMappings()
     {
         const { SkillsClassPathModel } = require('./skills-class-path-model');

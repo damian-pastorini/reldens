@@ -14,7 +14,6 @@ class RewardsModel extends ObjectionJsRawModel
         return 'rewards';
     }
     
-
     static get relationMappings()
     {
         const { ObjectsModel } = require('./objects-model');

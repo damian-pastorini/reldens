@@ -14,7 +14,6 @@ class AudioPlayerConfigModel extends ObjectionJsRawModel
         return 'audio_player_config';
     }
     
-
     static get relationMappings()
     {
         const { PlayersModel } = require('./players-model');

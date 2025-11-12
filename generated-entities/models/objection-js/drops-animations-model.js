@@ -14,7 +14,6 @@ class DropsAnimationsModel extends ObjectionJsRawModel
         return 'drops_animations';
     }
     
-
     static get relationMappings()
     {
         const { ItemsItemModel } = require('./items-item-model');

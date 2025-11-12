@@ -14,7 +14,6 @@ class SkillsSkillOwnerEffectsConditionsModel extends ObjectionJsRawModel
         return 'skills_skill_owner_effects_conditions';
     }
     
-
     static get relationMappings()
     {
         const { SkillsSkillOwnerEffectsModel } = require('./skills-skill-owner-effects-model');

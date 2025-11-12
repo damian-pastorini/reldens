@@ -14,7 +14,6 @@ class ClanModel extends ObjectionJsRawModel
         return 'clan';
     }
     
-
     static get relationMappings()
     {
         const { PlayersModel } = require('./players-model');

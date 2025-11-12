@@ -14,7 +14,6 @@ class ItemsItemModel extends ObjectionJsRawModel
         return 'items_item';
     }
     
-
     static get relationMappings()
     {
         const { ItemsTypesModel } = require('./items-types-model');
@@ -44,7 +43,7 @@ class ItemsItemModel extends ObjectionJsRawModel
                 }
             },
             related_drops_animations: {
-                relation: this.HasManyRelation,
+                relation: this.HasOneRelation,
                 modelClass: DropsAnimationsModel,
                 join: {
                     from: this.tableName+'.id',

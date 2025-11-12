@@ -14,7 +14,6 @@ class ClanLevelsModel extends ObjectionJsRawModel
         return 'clan_levels';
     }
     
-
     static get relationMappings()
     {
         const { ClanModel } = require('./clan-model');

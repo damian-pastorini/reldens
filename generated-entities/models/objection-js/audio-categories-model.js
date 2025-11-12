@@ -14,7 +14,6 @@ class AudioCategoriesModel extends ObjectionJsRawModel
         return 'audio_categories';
     }
     
-
     static get relationMappings()
     {
         const { AudioModel } = require('./audio-model');

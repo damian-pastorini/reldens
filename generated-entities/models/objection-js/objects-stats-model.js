@@ -14,7 +14,6 @@ class ObjectsStatsModel extends ObjectionJsRawModel
         return 'objects_stats';
     }
     
-
     static get relationMappings()
     {
         const { ObjectsModel } = require('./objects-model');

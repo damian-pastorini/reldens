@@ -14,7 +14,6 @@ class RoomsReturnPointsModel extends ObjectionJsRawModel
         return 'rooms_return_points';
     }
     
-
     static get relationMappings()
     {
         const { RoomsModel } = require('./rooms-model');

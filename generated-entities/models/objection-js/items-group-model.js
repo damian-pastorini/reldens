@@ -14,7 +14,6 @@ class ItemsGroupModel extends ObjectionJsRawModel
         return 'items_group';
     }
     
-
     static get relationMappings()
     {
         const { ItemsItemModel } = require('./items-item-model');

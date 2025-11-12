@@ -14,7 +14,6 @@ class OperationTypesModel extends ObjectionJsRawModel
         return 'operation_types';
     }
     
-
     static get relationMappings()
     {
         const { ClanLevelsModifiersModel } = require('./clan-levels-modifiers-model');

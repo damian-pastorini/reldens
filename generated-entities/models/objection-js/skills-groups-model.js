@@ -14,7 +14,6 @@ class SkillsGroupsModel extends ObjectionJsRawModel
         return 'skills_groups';
     }
     
-
     static get relationMappings()
     {
         const { SkillsSkillGroupRelationModel } = require('./skills-skill-group-relation-model');

@@ -14,7 +14,6 @@ class ObjectsModel extends ObjectionJsRawModel
         return 'objects';
     }
     
-
     static get relationMappings()
     {
         const { RoomsModel } = require('./rooms-model');

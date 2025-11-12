@@ -13,7 +13,6 @@ class PlayersModel extends ObjectionJsRawModel
     {
         return 'players';
     }
-    
 
     static get relationMappings()
     {
@@ -27,6 +26,7 @@ class PlayersModel extends ObjectionJsRawModel
         const { PlayersStateModel } = require('./players-state-model');
         const { PlayersStatsModel } = require('./players-stats-model');
         const { RewardsEventsStateModel } = require('./rewards-events-state-model');
+        const { ScoresModel } = require('./scores-model');
         const { ScoresDetailModel } = require('./scores-detail-model');
         const { SkillsOwnersClassPathModel } = require('./skills-owners-class-path-model');
         return {
@@ -95,7 +95,7 @@ class PlayersModel extends ObjectionJsRawModel
                 }
             },
             related_players_state: {
-                relation: this.HasManyRelation,
+                relation: this.HasOneRelation,
                 modelClass: PlayersStateModel,
                 join: {
                     from: this.tableName+'.id',
@@ -110,12 +110,36 @@ class PlayersModel extends ObjectionJsRawModel
                     to: PlayersStatsModel.tableName+'.player_id'
                 }
             },
+            state: {
+                relation: this.HasOneRelation,
+                modelClass: PlayersStateModel,
+                join: {
+                    from: this.tableName+'.id',
+                    to: PlayersStateModel.tableName+'.player_id'
+                }
+            },
+            stats: {
+                relation: this.HasManyRelation,
+                modelClass: PlayersStatsModel,
+                join: {
+                    from: this.tableName+'.id',
+                    to: PlayersStatsModel.tableName+'.player_id'
+                }
+            },
             related_rewards_events_state: {
                 relation: this.HasManyRelation,
                 modelClass: RewardsEventsStateModel,
                 join: {
                     from: this.tableName+'.id',
                     to: RewardsEventsStateModel.tableName+'.player_id'
+                }
+            },
+            related_scores: {
+                relation: this.HasManyRelation,
+                modelClass: ScoresModel,
+                join: {
+                    from: this.tableName+'.id',
+                    to: ScoresModel.tableName+'.player_id'
                 }
             },
             related_scores_detail: {

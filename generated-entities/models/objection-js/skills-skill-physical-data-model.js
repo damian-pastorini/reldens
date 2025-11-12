@@ -14,7 +14,6 @@ class SkillsSkillPhysicalDataModel extends ObjectionJsRawModel
         return 'skills_skill_physical_data';
     }
     
-
     static get relationMappings()
     {
         const { SkillsSkillModel } = require('./skills-skill-model');

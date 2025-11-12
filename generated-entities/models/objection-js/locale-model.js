@@ -14,7 +14,6 @@ class LocaleModel extends ObjectionJsRawModel
         return 'locale';
     }
     
-
     static get relationMappings()
     {
         const { SnippetsModel } = require('./snippets-model');

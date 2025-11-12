@@ -14,7 +14,6 @@ class AdsModel extends ObjectionJsRawModel
         return 'ads';
     }
     
-
     static get relationMappings()
     {
         const { AdsProvidersModel } = require('./ads-providers-model');

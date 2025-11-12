@@ -14,7 +14,6 @@ class ObjectsSkillsModel extends ObjectionJsRawModel
         return 'objects_skills';
     }
     
-
     static get relationMappings()
     {
         const { ObjectsModel } = require('./objects-model');

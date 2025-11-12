@@ -14,7 +14,6 @@ class SkillsSkillTargetEffectsModel extends ObjectionJsRawModel
         return 'skills_skill_target_effects';
     }
     
-
     static get relationMappings()
     {
         const { SkillsSkillModel } = require('./skills-skill-model');

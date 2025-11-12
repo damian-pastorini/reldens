@@ -14,7 +14,6 @@ class SkillsOwnersClassPathModel extends ObjectionJsRawModel
         return 'skills_owners_class_path';
     }
     
-
     static get relationMappings()
     {
         const { SkillsClassPathModel } = require('./skills-class-path-model');
