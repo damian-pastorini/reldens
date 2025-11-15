@@ -177,7 +177,7 @@ window.addEventListener('DOMContentLoaded', () => {
                     true,
                     tileClickCallback
                 );
-            }
+            };
             tileset.onerror = () => {
                 console.error('Error loading tileset image');
             };
@@ -353,7 +353,7 @@ window.addEventListener('DOMContentLoaded', () => {
                         filtersForm.action = link.href;
                         filtersForm.submit();
                         return false;
-                    })
+                    });
                 }
             }
         }
@@ -458,7 +458,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 option.value = roomListData.id;
                 option.dataset.mapFile = roomListData.mapFile;
                 option.dataset.mapImages = roomListData.mapImages;
-                roomsSelector.add(option)
+                roomsSelector.add(option);
             }
             roomsSelector.addEventListener('change', (event) => {
                 let selectedOption = event.target.options[event.target.selectedIndex];
@@ -514,7 +514,7 @@ window.addEventListener('DOMContentLoaded', () => {
         tileset.src = mapCanvas.dataset.imageKey;
         tileset.onload = () => {
             fetchMapFileAndDraw(mapCanvas.dataset.mapJson, tileset, mapCanvas);
-        }
+        };
         tileset.onerror = () => {
             console.error('Error loading tileset image');
         };
