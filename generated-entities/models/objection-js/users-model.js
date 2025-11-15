@@ -13,7 +13,7 @@ class UsersModel extends ObjectionJsRawModel
     {
         return 'users';
     }
-    
+
     static get relationMappings()
     {
         const { PlayersModel } = require('./players-model');
@@ -50,14 +50,6 @@ class UsersModel extends ObjectionJsRawModel
                 join: {
                     from: this.tableName+'.id',
                     to: PlayersModel.tableName+'.user_id'
-                }
-            },
-            login: {
-                relation: this.HasManyRelation,
-                modelClass: UsersLoginModel,
-                join: {
-                    from: this.tableName+'.id',
-                    to: UsersLoginModel.tableName+'.user_id'
                 }
             }
         };
