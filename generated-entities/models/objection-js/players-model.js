@@ -110,22 +110,6 @@ class PlayersModel extends ObjectionJsRawModel
                     to: PlayersStatsModel.tableName+'.player_id'
                 }
             },
-            state: {
-                relation: this.HasOneRelation,
-                modelClass: PlayersStateModel,
-                join: {
-                    from: this.tableName+'.id',
-                    to: PlayersStateModel.tableName+'.player_id'
-                }
-            },
-            stats: {
-                relation: this.HasManyRelation,
-                modelClass: PlayersStatsModel,
-                join: {
-                    from: this.tableName+'.id',
-                    to: PlayersStatsModel.tableName+'.player_id'
-                }
-            },
             related_rewards_events_state: {
                 relation: this.HasManyRelation,
                 modelClass: RewardsEventsStateModel,

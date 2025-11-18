@@ -43,14 +43,6 @@ class UsersModel extends ObjectionJsRawModel
                     from: this.tableName+'.id',
                     to: UsersLoginModel.tableName+'.user_id'
                 }
-            },
-            players: {
-                relation: this.HasManyRelation,
-                modelClass: PlayersModel,
-                join: {
-                    from: this.tableName+'.id',
-                    to: PlayersModel.tableName+'.user_id'
-                }
             }
         };
     }
