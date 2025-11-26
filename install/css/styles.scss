@@ -240,7 +240,8 @@ form {
         width: 100%;
         margin-bottom: 10px;
 
-        &.db-basic-config {
+        &.db-basic-config,
+        &.app-allow-packages-installation {
             display: flex;
             flex-direction: column;
             background: $boxBackground;
@@ -254,14 +255,16 @@ form {
                 top: 5px;
             }
 
-            .db-basic-config-checkbox {
+            .db-basic-config-checkbox,
+            .app-allow-packages-installation-checkbox {
                 display: flex;
                 flex-direction: row;
                 justify-content: end;
                 padding: 0 0 6px;
             }
 
-            .db-basic-config-notice {
+            .db-basic-config-notice,
+            .app-allow-packages-installation-notice {
                 margin-bottom: 0;
                 background: none;
             }
@@ -323,7 +326,8 @@ form {
 
     }
 
-    .db-basic-config-notice {
+    .db-basic-config-notice,
+    .app-allow-packages-installation-notice {
         display: flex;
         background: $boxBackground;
         margin-bottom: 10px;
