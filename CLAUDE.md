@@ -2,32 +2,6 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## File Access Permissions
-
-**IMPORTANT: These permissions must be approved by the user at the beginning of each session.**
-
-Once approved, you are granted the following permissions for files under `D:\dap\work\reldens`:
-
-✅ **ALLOWED**:
-- Read ANY file under `D:\dap\work\reldens`
-- Create NEW files under `D:\dap\work\reldens`
-
-❌ **FORBIDDEN**:
-- Edit or modify EXISTING files
-- Delete files
-- Move files
-
-**When modifications to existing files are needed:**
-- Provide complete NEW file artifacts with the full updated content
-- User will manually replace the existing files with the new content
-- Never use the Edit tool on existing files
-
-## Code Rules & Standards
-
-1. Read and follow ALL coding rules from `D:\dap\work\reldens\_source\ai-coding-rules.md`.
-2. Apply the code rules to every single line of code you provide.
-3. Self-audit every response against the rules before sending.
-
 ## Project Overview
 
 Reldens is an MMORPG Platform (v4.0.0-beta.39) built on Node.js, designed for developers to create multiplayer games. The platform integrates:
