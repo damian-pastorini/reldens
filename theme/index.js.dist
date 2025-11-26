@@ -10,7 +10,7 @@
 // required the module:
 const { ServerManager } = require('reldens/server');
 
-// custom plugin (if you like to implement customizations do it there):
+// custom plugin (if you like to implement customizations, do it in the server-plugin):
 const { ServerPlugin } = require('./theme/plugins/server-plugin');
 // you can find an example of the server file in node_modules/reldens/theme/packages/server-plugin.js
 // create a server instance passing the current root:
