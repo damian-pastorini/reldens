@@ -1,11 +1,13 @@
 <tr class="row row-header">
     <th class="field field-actions">
         <div class="field-actions-container">
-            <button class="button button-primary list-select" data-checked="1">Select All/None</button>
             <form name="delete-selection-form" id="delete-selection-form" action="{{&deletePath}}" method="post">
                 <input type="hidden" name="ids" class="hidden-ids-input"/>
-                <button class="button button-danger list-delete-selection">Delete Selection</button>
+                <button class="button button-danger list-delete-selection">Bulk Delete</button>
             </form>
+            <button class="button button-primary list-select" data-checked="1">
+                <input type="checkbox" id="input-check-select-all"/>
+            </button>
         </div>
     </th>
     {{#fieldsHeaders}}

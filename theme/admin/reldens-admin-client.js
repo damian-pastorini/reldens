@@ -11,7 +11,6 @@ if(window.trustedTypes?.createPolicy){
     });
 }
 
-// @TODO - BETA - Refactor, split, clean up, bundle.
 window.addEventListener('DOMContentLoaded', () => {
 
     // helpers:
@@ -434,6 +433,23 @@ window.addEventListener('DOMContentLoaded', () => {
                 1000
             );
         }
+    }
+
+    // cache clear all functionality:
+    let cacheClearAllButton = document.querySelector('.cache-clear-all-button');
+    let cacheClearForm = document.querySelector('.cache-clear-form');
+    if(cacheClearAllButton){
+        cacheClearAllButton.addEventListener('click', () => {
+            showConfirmDialog((confirmed) => {
+                if(confirmed && cacheClearForm){
+                    let submitButton = cacheClearForm.querySelector('button[type="submit"]');
+                    if(submitButton){
+                        submitButton.disabled = true;
+                    }
+                    cacheClearForm.submit();
+                }
+            });
+        });
     }
 
     // create rooms link function:
