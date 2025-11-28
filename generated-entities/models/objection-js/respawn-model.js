@@ -13,7 +13,7 @@ class RespawnModel extends ObjectionJsRawModel
     {
         return 'respawn';
     }
-    
+
     static get relationMappings()
     {
         const { ObjectsModel } = require('./objects-model');

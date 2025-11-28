@@ -13,7 +13,7 @@ class AdsPlayedModel extends ObjectionJsRawModel
     {
         return 'ads_played';
     }
-    
+
     static get relationMappings()
     {
         const { AdsModel } = require('./ads-model');

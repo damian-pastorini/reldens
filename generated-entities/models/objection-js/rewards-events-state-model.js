@@ -13,7 +13,7 @@ class RewardsEventsStateModel extends ObjectionJsRawModel
     {
         return 'rewards_events_state';
     }
-    
+
     static get relationMappings()
     {
         const { RewardsEventsModel } = require('./rewards-events-model');

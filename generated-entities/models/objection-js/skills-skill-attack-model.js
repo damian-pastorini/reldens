@@ -13,7 +13,7 @@ class SkillsSkillAttackModel extends ObjectionJsRawModel
     {
         return 'skills_skill_attack';
     }
-    
+
     static get relationMappings()
     {
         const { SkillsSkillModel } = require('./skills-skill-model');

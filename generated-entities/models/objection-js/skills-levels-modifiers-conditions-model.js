@@ -13,7 +13,7 @@ class SkillsLevelsModifiersConditionsModel extends ObjectionJsRawModel
     {
         return 'skills_levels_modifiers_conditions';
     }
-    
+
 }
 
 module.exports.SkillsLevelsModifiersConditionsModel = SkillsLevelsModifiersConditionsModel;

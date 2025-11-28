@@ -13,7 +13,7 @@ class UsersLocaleModel extends ObjectionJsRawModel
     {
         return 'users_locale';
     }
-    
+
     static get relationMappings()
     {
         const { LocaleModel } = require('./locale-model');

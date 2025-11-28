@@ -13,7 +13,7 @@ class ScoresModel extends ObjectionJsRawModel
     {
         return 'scores';
     }
-    
+
     static get relationMappings()
     {
         const { PlayersModel } = require('./players-model');
