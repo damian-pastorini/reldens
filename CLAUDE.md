@@ -57,6 +57,9 @@ reldens resetDist                       # Delete and recreate dist folder
 reldens generateEntities [--override]   # Generate entities from database schema
 # This reads .env credentials and uses @reldens/storage to generate entities
 # Generated entities are placed in the generated-entities/ directory
+
+# Direct entity generation with connection arguments (bypasses .env):
+npx reldens-storage generateEntities --user=reldens --pass=reldens --database=reldens_clean --driver=objection-js
 ```
 
 ### Installation & Setup
