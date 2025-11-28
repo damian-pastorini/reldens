@@ -107,7 +107,7 @@ class Commander
         let args = [
             'reldens-storage',
             'generateEntities',
-            '--user='+process.env.RELDENS_DB_USERNAME,
+            '--user='+process.env.RELDENS_DB_USER,
             '--pass='+process.env.RELDENS_DB_PASSWORD,
             '--host='+process.env.RELDENS_DB_HOST,
             '--database='+process.env.RELDENS_DB_NAME,
@@ -121,7 +121,8 @@ class Commander
         console.info('- Running: npx '+args.join(' '));
         let child = spawn('npx', args, {
             stdio: 'inherit',
-            cwd: this.projectRoot
+            cwd: this.projectRoot,
+            shell: true
         });
         child.on('exit', (code) => {
             process.exit(code || 0);
