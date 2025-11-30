@@ -13,7 +13,7 @@ Reldens is an MMORPG Platform (v4.0.0-beta.39) built on Node.js, designed for de
 ## Project Structure
 
 ### Main Project
-- `./src` - Main Reldens source code
+- `reldens/lib` - Main Reldens source code
 
 ### Sub-Packages
 All related packages are:
