@@ -13,10 +13,10 @@ Reldens is an MMORPG Platform (v4.0.0-beta.39) built on Node.js, designed for de
 ## Project Structure
 
 ### Main Project
-- `D:\dap\work\reldens\src` - Main Reldens source code
+- `reldens/lib` - Main Reldens source code
 
 ### Sub-Packages
-All related packages are in `D:\dap\work\reldens\npm-packages`:
+All related packages are:
 - **@reldens/utils** - Core utilities, Shortcuts class (imported as `sc`)
 - **@reldens/server-utils** - Server utilities, FileHandler, configuration helpers
 - **@reldens/storage** - Multi-ORM database layer (ObjectionJS, MikroORM, Prisma)
@@ -28,10 +28,6 @@ All related packages are in `D:\dap\work\reldens\npm-packages`:
 - **@reldens/game-data-generator** - Game data generation utilities
 - **@reldens/markdown** - Markdown processing utilities
 - **tile-map-optimizer** - Map optimization tools
-
-### Test Implementations
-- `D:\dap\work\reldens\npm-test` - Based on the project skeleton
-- `D:\dap\work\reldens\my-game` - A clean installation always started with the createApp command
 
 ## Key Commands
 
@@ -57,6 +53,9 @@ reldens resetDist                       # Delete and recreate dist folder
 reldens generateEntities [--override]   # Generate entities from database schema
 # This reads .env credentials and uses @reldens/storage to generate entities
 # Generated entities are placed in the generated-entities/ directory
+
+# Direct entity generation with connection arguments (bypasses .env):
+npx reldens-storage generateEntities --user=reldens --pass=reldens --database=reldens_clean --driver=objection-js
 ```
 
 ### Installation & Setup

@@ -13,7 +13,7 @@ class SkillsSkillOwnerConditionsModel extends ObjectionJsRawModel
     {
         return 'skills_skill_owner_conditions';
     }
-    
+
     static get relationMappings()
     {
         const { SkillsSkillModel } = require('./skills-skill-model');

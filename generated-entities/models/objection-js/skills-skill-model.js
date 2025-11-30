@@ -13,7 +13,7 @@ class SkillsSkillModel extends ObjectionJsRawModel
     {
         return 'skills_skill';
     }
-    
+
     static get relationMappings()
     {
         const { SkillsSkillTypeModel } = require('./skills-skill-type-model');

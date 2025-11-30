@@ -13,7 +13,7 @@ class ObjectsTypesModel extends ObjectionJsRawModel
     {
         return 'objects_types';
     }
-    
+
     static get relationMappings()
     {
         const { ObjectsModel } = require('./objects-model');

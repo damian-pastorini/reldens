@@ -13,7 +13,7 @@ class ConfigModel extends ObjectionJsRawModel
     {
         return 'config';
     }
-    
+
     static get relationMappings()
     {
         const { ConfigTypesModel } = require('./config-types-model');

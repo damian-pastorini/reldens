@@ -13,7 +13,7 @@ class RoomsModel extends ObjectionJsRawModel
     {
         return 'rooms';
     }
-    
+
     static get relationMappings()
     {
         const { AudioModel } = require('./audio-model');

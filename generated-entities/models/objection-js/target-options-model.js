@@ -13,7 +13,7 @@ class TargetOptionsModel extends ObjectionJsRawModel
     {
         return 'target_options';
     }
-    
+
     static get relationMappings()
     {
         const { ObjectsSkillsModel } = require('./objects-skills-model');

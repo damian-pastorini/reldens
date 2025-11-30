@@ -13,7 +13,7 @@ class ObjectsAnimationsModel extends ObjectionJsRawModel
     {
         return 'objects_animations';
     }
-    
+
     static get relationMappings()
     {
         const { ObjectsModel } = require('./objects-model');
