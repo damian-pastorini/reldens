@@ -33,6 +33,7 @@ function sanitizeImageUrl(url)
         return null;
     }
     let trimmedUrl = url.trim();
+    trimmedUrl = trimmedUrl.replace(/[<>"']/g, '');
     if(0 === trimmedUrl.indexOf('/')){
         return trimmedUrl;
     }
@@ -117,8 +118,8 @@ function createModalContent(modalElement)
             console.error('Invalid image URL:', imageUrl);
             return cloneElement(modalElement);
         }
-        modalContent.src = sanitizedUrl;
-        modalContent.alt = modalElement.alt || 'Modal Image';
+        modalContent.setAttribute('src', sanitizedUrl);
+        modalContent.setAttribute('alt', modalElement.alt || 'Modal Image');
         modalContent.classList.add('modal-zoom-image');
         return modalContent;
     }
