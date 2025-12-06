@@ -27,6 +27,27 @@ function escapeHTML(str)
         .replace(/'/g, '&#039;');
 }
 
+function isValidImageUrl(url)
+{
+    if(!url || 'string' !== typeof url){
+        return false;
+    }
+    let trimmedUrl = url.trim();
+    if(0 === trimmedUrl.indexOf('http://') || 0 === trimmedUrl.indexOf('https://')){
+        return true;
+    }
+    if(0 === trimmedUrl.indexOf('/')){
+        return true;
+    }
+    if(0 === trimmedUrl.indexOf('./')){
+        return true;
+    }
+    if(0 === trimmedUrl.indexOf('../')){
+        return true;
+    }
+    return false;
+}
+
 function cloneElement(element)
 {
     if(element instanceof HTMLCanvasElement){
@@ -85,7 +106,12 @@ function createModalContent(modalElement)
 {
     if(modalElement.hasAttribute('data-modal-zoom-image')){
         let modalContent = document.createElement('img');
-        modalContent.src = modalElement.getAttribute('data-modal-zoom-image');
+        let imageUrl = modalElement.getAttribute('data-modal-zoom-image');
+        if(!isValidImageUrl(imageUrl)){
+            console.error('Invalid image URL:', imageUrl);
+            return cloneElement(modalElement);
+        }
+        modalContent.src = imageUrl;
         modalContent.alt = modalElement.alt || 'Modal Image';
         modalContent.classList.add('modal-zoom-image');
         return modalContent;
