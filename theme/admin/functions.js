@@ -27,25 +27,30 @@ function escapeHTML(str)
         .replace(/'/g, '&#039;');
 }
 
-function isValidImageUrl(url)
+function sanitizeImageUrl(url)
 {
     if(!url || 'string' !== typeof url){
-        return false;
+        return null;
     }
     let trimmedUrl = url.trim();
-    if(0 === trimmedUrl.indexOf('http://') || 0 === trimmedUrl.indexOf('https://')){
-        return true;
-    }
     if(0 === trimmedUrl.indexOf('/')){
-        return true;
+        return trimmedUrl;
     }
     if(0 === trimmedUrl.indexOf('./')){
-        return true;
+        return trimmedUrl;
     }
     if(0 === trimmedUrl.indexOf('../')){
-        return true;
+        return trimmedUrl;
     }
-    return false;
+    try{
+        let urlObject = new URL(trimmedUrl);
+        if('http:' === urlObject.protocol || 'https:' === urlObject.protocol){
+            return urlObject.href;
+        }
+        return null;
+    } catch(error){
+        return null;
+    }
 }
 
 function cloneElement(element)
@@ -107,11 +112,12 @@ function createModalContent(modalElement)
     if(modalElement.hasAttribute('data-modal-zoom-image')){
         let modalContent = document.createElement('img');
         let imageUrl = modalElement.getAttribute('data-modal-zoom-image');
-        if(!isValidImageUrl(imageUrl)){
+        let sanitizedUrl = sanitizeImageUrl(imageUrl);
+        if(!sanitizedUrl){
             console.error('Invalid image URL:', imageUrl);
             return cloneElement(modalElement);
         }
-        modalContent.src = imageUrl;
+        modalContent.src = sanitizedUrl;
         modalContent.alt = modalElement.alt || 'Modal Image';
         modalContent.classList.add('modal-zoom-image');
         return modalContent;
