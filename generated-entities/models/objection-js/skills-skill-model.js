@@ -13,7 +13,6 @@ class SkillsSkillModel extends ObjectionJsRawModel
     {
         return 'skills_skill';
     }
-    
 
     static get relationMappings()
     {
@@ -61,7 +60,7 @@ class SkillsSkillModel extends ObjectionJsRawModel
                 }
             },
             related_skills_skill_attack: {
-                relation: this.HasManyRelation,
+                relation: this.HasOneRelation,
                 modelClass: SkillsSkillAttackModel,
                 join: {
                     from: this.tableName+'.id',
@@ -69,7 +68,7 @@ class SkillsSkillModel extends ObjectionJsRawModel
                 }
             },
             related_skills_skill_group_relation: {
-                relation: this.HasManyRelation,
+                relation: this.HasOneRelation,
                 modelClass: SkillsSkillGroupRelationModel,
                 join: {
                     from: this.tableName+'.id',
@@ -93,7 +92,7 @@ class SkillsSkillModel extends ObjectionJsRawModel
                 }
             },
             related_skills_skill_physical_data: {
-                relation: this.HasManyRelation,
+                relation: this.HasOneRelation,
                 modelClass: SkillsSkillPhysicalDataModel,
                 join: {
                     from: this.tableName+'.id',

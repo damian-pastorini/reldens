@@ -13,7 +13,11 @@ class ObjectsAssetsModel extends ObjectionJsRawModel
     {
         return 'objects_assets';
     }
-    
+
+    static get idColumn()
+    {
+        return 'object_asset_id';
+    }
 
     static get relationMappings()
     {

@@ -13,7 +13,6 @@ class AudioModel extends ObjectionJsRawModel
     {
         return 'audio';
     }
-    
 
     static get relationMappings()
     {

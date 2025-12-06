@@ -13,7 +13,6 @@ class SkillsClassPathLevelLabelsModel extends ObjectionJsRawModel
     {
         return 'skills_class_path_level_labels';
     }
-    
 
     static get relationMappings()
     {

@@ -13,7 +13,6 @@ class ObjectsItemsRequirementsModel extends ObjectionJsRawModel
     {
         return 'objects_items_requirements';
     }
-    
 
     static get relationMappings()
     {
@@ -28,7 +27,15 @@ class ObjectsItemsRequirementsModel extends ObjectionJsRawModel
                     to: ObjectsModel.tableName+'.id'
                 }
             },
-            related_items_item: {
+            related_items_item_item_key: {
+                relation: this.BelongsToOneRelation,
+                modelClass: ItemsItemModel,
+                join: {
+                    from: this.tableName+'.item_key',
+                    to: ItemsItemModel.tableName+'.key'
+                }
+            },
+            related_items_item_required_item_key: {
                 relation: this.BelongsToOneRelation,
                 modelClass: ItemsItemModel,
                 join: {

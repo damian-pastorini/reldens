@@ -13,7 +13,6 @@ class ScoresDetailModel extends ObjectionJsRawModel
     {
         return 'scores_detail';
     }
-    
 
     static get relationMappings()
     {

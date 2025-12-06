@@ -13,7 +13,6 @@ class ChatMessageTypesModel extends ObjectionJsRawModel
     {
         return 'chat_message_types';
     }
-    
 
     static get relationMappings()
     {

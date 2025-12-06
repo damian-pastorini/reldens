@@ -13,7 +13,6 @@ class PlayersModel extends ObjectionJsRawModel
     {
         return 'players';
     }
-    
 
     static get relationMappings()
     {
@@ -27,6 +26,7 @@ class PlayersModel extends ObjectionJsRawModel
         const { PlayersStateModel } = require('./players-state-model');
         const { PlayersStatsModel } = require('./players-stats-model');
         const { RewardsEventsStateModel } = require('./rewards-events-state-model');
+        const { ScoresModel } = require('./scores-model');
         const { ScoresDetailModel } = require('./scores-detail-model');
         const { SkillsOwnersClassPathModel } = require('./skills-owners-class-path-model');
         return {
@@ -54,7 +54,15 @@ class PlayersModel extends ObjectionJsRawModel
                     to: AudioPlayerConfigModel.tableName+'.player_id'
                 }
             },
-            related_chat: {
+            related_chat_player: {
+                relation: this.HasManyRelation,
+                modelClass: ChatModel,
+                join: {
+                    from: this.tableName+'.id',
+                    to: ChatModel.tableName+'.player_id'
+                }
+            },
+            related_chat_private_player: {
                 relation: this.HasManyRelation,
                 modelClass: ChatModel,
                 join: {
@@ -63,7 +71,7 @@ class PlayersModel extends ObjectionJsRawModel
                 }
             },
             related_clan: {
-                relation: this.HasManyRelation,
+                relation: this.HasOneRelation,
                 modelClass: ClanModel,
                 join: {
                     from: this.tableName+'.id',
@@ -71,7 +79,7 @@ class PlayersModel extends ObjectionJsRawModel
                 }
             },
             related_clan_members: {
-                relation: this.HasManyRelation,
+                relation: this.HasOneRelation,
                 modelClass: ClanMembersModel,
                 join: {
                     from: this.tableName+'.id',
@@ -87,7 +95,7 @@ class PlayersModel extends ObjectionJsRawModel
                 }
             },
             related_players_state: {
-                relation: this.HasManyRelation,
+                relation: this.HasOneRelation,
                 modelClass: PlayersStateModel,
                 join: {
                     from: this.tableName+'.id',
@@ -108,6 +116,14 @@ class PlayersModel extends ObjectionJsRawModel
                 join: {
                     from: this.tableName+'.id',
                     to: RewardsEventsStateModel.tableName+'.player_id'
+                }
+            },
+            related_scores: {
+                relation: this.HasManyRelation,
+                modelClass: ScoresModel,
+                join: {
+                    from: this.tableName+'.id',
+                    to: ScoresModel.tableName+'.player_id'
                 }
             },
             related_scores_detail: {

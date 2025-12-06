@@ -13,7 +13,6 @@ class AdsEventVideoModel extends ObjectionJsRawModel
     {
         return 'ads_event_video';
     }
-    
 
     static get relationMappings()
     {

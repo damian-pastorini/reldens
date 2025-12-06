@@ -13,7 +13,6 @@ class ClanModel extends ObjectionJsRawModel
     {
         return 'clan';
     }
-    
 
     static get relationMappings()
     {

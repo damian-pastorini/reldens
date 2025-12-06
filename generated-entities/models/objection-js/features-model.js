@@ -13,7 +13,7 @@ class FeaturesModel extends ObjectionJsRawModel
     {
         return 'features';
     }
-    
+
 }
 
 module.exports.FeaturesModel = FeaturesModel;

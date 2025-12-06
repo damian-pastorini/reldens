@@ -144,7 +144,10 @@ REPLACE INTO `items_item` (`id`, `key`, `type`, `group_id`, `label`, `descriptio
 	(6, 'magic_potion_20', 5, NULL, 'Magic Potion', 'A magic potion that will restore 20 MP.', 0, 1, NULL, NULL, '{"canBeDropped":true,"animationData":{"frameWidth":64,"frameHeight":64,"start":6,"end":11,"repeat":0,"usePlayerPosition":true,"followPlayer":true,"startsOnTarget":true},"removeAfterUse":true}'),
 	(1001, 'test-item-list', 1, 1, 'Test Item List', 'Test item for list validation', 0, 1, NULL, NULL, '{"canBeDropped": true}'),
 	(1002, 'test-item-edit', 1, 1, 'Test Item Edit', 'Test item for edit validation', 0, 1, NULL, NULL, '{"canBeDropped": true}'),
-	(1003, 'test-item-delete', 1, 1, 'Test Item Delete', 'Test item for delete validation', 0, 1, NULL, NULL, '{"canBeDropped": true}');
+	(1003, 'test-item-delete', 1, 1, 'Test Item Delete', 'Test item for delete validation', 0, 1, NULL, NULL, '{"canBeDropped": true}'),
+	(1004, 'test-drop-anim-main', 1, 1, 'Test Drop Anim Main', 'Test item for drop animation main', 0, 1, NULL, NULL, '{"canBeDropped": true}'),
+	(1005, 'test-drop-anim-delete', 1, 1, 'Test Drop Anim Delete', 'Test item for drop animation delete', 0, 1, NULL, NULL, '{"canBeDropped": true}'),
+	(1006, 'test-drop-anim-editfail', 1, 1, 'Test Drop Anim EditFail', 'Test item for drop animation edit fail', 0, 1, NULL, NULL, '{"canBeDropped": true}');
 
 REPLACE INTO `items_item_modifiers` (`id`, `item_id`, `key`, `property_key`, `operation`, `value`, `maxProperty`) VALUES
 	(1, 4, 'atk', 'stats/atk', 5, '5', NULL),
@@ -403,7 +406,10 @@ REPLACE INTO `players` (`id`, `user_id`, `name`, `created_at`) VALUES
 	(1, 1, 'ImRoot', '2022-03-17 19:57:50'),
 	(1001, 1001, 'TestPlayerList', '2025-01-01 00:00:00'),
 	(1002, 1002, 'TestPlayerEdit', '2025-01-01 01:00:00'),
-	(1003, 1003, 'TestPlayerDelete', '2025-01-01 02:00:00');
+	(1003, 1003, 'TestPlayerDelete', '2025-01-01 02:00:00'),
+	(1004, 1001, 'TestPlayerStateMain', '2025-01-01 03:00:00'),
+	(1005, 1001, 'TestPlayerStateDelete', '2025-01-01 04:00:00'),
+	(1006, 1001, 'TestPlayerStateEditFail', '2025-01-01 05:00:00');
 
 REPLACE INTO `players_state` (`id`, `player_id`, `room_id`, `x`, `y`, `dir`) VALUES
 	(1, 1, 5, 332, 288, 'down'),
@@ -650,7 +656,10 @@ REPLACE INTO `skills_skill` (`id`, `key`, `type`, `autoValidation`, `skillDelay`
 	(1, 'attackBullet', '4', 0, 1000, 0, 0, 250, 1, 'state/x', 'state/y', NULL, NULL, 0, 10, 2, 0, NULL),
 	(2, 'attackShort', '2', 0, 600, 0, 0, 50, 1, 'state/x', 'state/y', NULL, NULL, 0, 10, 2, 0, NULL),
 	(3, 'fireball', '4', 0, 5000, 2000, 0, 280, 1, 'state/x', 'state/y', NULL, NULL, 0, 10, 2, 0, NULL),
-	(4, 'heal', '3', 0, 5000, 2000, 0, 100, 1, 'state/x', 'state/y', NULL, NULL, 1, 0, 1, 0, NULL);
+	(4, 'heal', '3', 0, 5000, 2000, 0, 100, 1, 'state/x', 'state/y', NULL, NULL, 1, 0, 1, 0, NULL),
+	(1001, 'testSkillAttackMain', '1', 0, 1000, 0, 0, 100, 1, 'state/x', 'state/y', NULL, NULL, 0, 10, 2, 0, NULL),
+	(1002, 'testSkillAttackDelete', '1', 0, 1000, 0, 0, 100, 1, 'state/x', 'state/y', NULL, NULL, 0, 10, 2, 0, NULL),
+	(1003, 'testSkillAttackEditFail', '1', 0, 1000, 0, 0, 100, 1, 'state/x', 'state/y', NULL, NULL, 0, 10, 2, 0, NULL);
 
 REPLACE INTO `skills_skill_animations` (`id`, `skill_id`, `key`, `classKey`, `animationData`) VALUES
 	(1, 3, 'bullet', NULL, '{"enabled":true,"type":"spritesheet","img":"fireball_bullet","frameWidth":64,"frameHeight":64,"start":0,"end":3,"repeat":-1,"frameRate":1,"dir":3}'),

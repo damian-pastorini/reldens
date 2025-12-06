@@ -52,6 +52,22 @@
                         <label for="app-admin-hot-plug">Hot-Plug</label>
                         <input type="checkbox" value="1" name="app-admin-hot-plug" id="app-admin-hot-plug"{{&app-admin-hot-plug-checked}}/>
                     </div>
+                    <div class="input-box app-allow-packages-installation">
+                        <div class="app-allow-packages-installation-notice">
+                            <span class="danger">
+                                DANGER:
+                                <ul>
+                                    <li>The installer will attempt to run npm install for missing packages.</li>
+                                    <li>Uncheck this only if you have manually installed all required packages.</li>
+                                    <li>Required packages: @reldens/storage (always), @prisma/client (Prisma driver only).</li>
+                                </ul>
+                            </span>
+                        </div>
+                        <div class="app-allow-packages-installation-checkbox">
+                            <label for="app-allow-packages-installation">Allow installer to run npm install for missing packages</label>
+                            <input type="checkbox" value="1" name="app-allow-packages-installation" id="app-allow-packages-installation"{{&app-allow-packages-installation-checked}}/>
+                        </div>
+                    </div>
                     <div class="input-box app-error">
                         <p class="installation-process-failed">There was an error during the installation process.</p>
                     </div>
@@ -110,6 +126,7 @@
                     <div class="input-box db-storage-driver">
                         <label for="db-storage-driver">Storage Driver</label>
                         <select name="db-storage-driver" id="db-storage-driver" class="required" required>
+                            <option value="prisma"{{&db-storage-driver-prisma}}>Prisma</option>
                             <option value="objection-js"{{&db-storage-driver-objection-js}}>Objection JS</option>
                             <option value="mikro-orm"{{&db-storage-driver-mikro-orm}}>MikroORM</option>
                         </select>

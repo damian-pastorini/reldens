@@ -13,7 +13,6 @@ class AdsTypesModel extends ObjectionJsRawModel
     {
         return 'ads_types';
     }
-    
 
     static get relationMappings()
     {

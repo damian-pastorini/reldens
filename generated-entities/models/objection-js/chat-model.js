@@ -13,7 +13,6 @@ class ChatModel extends ObjectionJsRawModel
     {
         return 'chat';
     }
-    
 
     static get relationMappings()
     {
@@ -21,11 +20,11 @@ class ChatModel extends ObjectionJsRawModel
         const { RoomsModel } = require('./rooms-model');
         const { ChatMessageTypesModel } = require('./chat-message-types-model');
         return {
-            related_players: {
+            related_players_player: {
                 relation: this.BelongsToOneRelation,
                 modelClass: PlayersModel,
                 join: {
-                    from: this.tableName+'.private_player_id',
+                    from: this.tableName+'.player_id',
                     to: PlayersModel.tableName+'.id'
                 }
             },
@@ -35,6 +34,14 @@ class ChatModel extends ObjectionJsRawModel
                 join: {
                     from: this.tableName+'.room_id',
                     to: RoomsModel.tableName+'.id'
+                }
+            },
+            related_players_private_player: {
+                relation: this.BelongsToOneRelation,
+                modelClass: PlayersModel,
+                join: {
+                    from: this.tableName+'.private_player_id',
+                    to: PlayersModel.tableName+'.id'
                 }
             },
             related_chat_message_types: {

@@ -13,7 +13,6 @@ class ConfigTypesModel extends ObjectionJsRawModel
     {
         return 'config_types';
     }
-    
 
     static get relationMappings()
     {

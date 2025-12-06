@@ -13,7 +13,6 @@ class RewardsModifiersModel extends ObjectionJsRawModel
     {
         return 'rewards_modifiers';
     }
-    
 
     static get relationMappings()
     {

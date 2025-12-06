@@ -13,7 +13,6 @@ class SkillsSkillAnimationsModel extends ObjectionJsRawModel
     {
         return 'skills_skill_animations';
     }
-    
 
     static get relationMappings()
     {

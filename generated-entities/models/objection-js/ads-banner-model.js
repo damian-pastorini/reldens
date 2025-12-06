@@ -13,7 +13,6 @@ class AdsBannerModel extends ObjectionJsRawModel
     {
         return 'ads_banner';
     }
-    
 
     static get relationMappings()
     {

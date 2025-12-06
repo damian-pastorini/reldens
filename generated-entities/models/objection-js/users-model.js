@@ -13,7 +13,6 @@ class UsersModel extends ObjectionJsRawModel
     {
         return 'users';
     }
-    
 
     static get relationMappings()
     {

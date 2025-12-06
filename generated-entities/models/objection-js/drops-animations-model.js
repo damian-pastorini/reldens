@@ -13,7 +13,6 @@ class DropsAnimationsModel extends ObjectionJsRawModel
     {
         return 'drops_animations';
     }
-    
 
     static get relationMappings()
     {

@@ -13,7 +13,6 @@ class SkillsOwnersClassPathModel extends ObjectionJsRawModel
     {
         return 'skills_owners_class_path';
     }
-    
 
     static get relationMappings()
     {

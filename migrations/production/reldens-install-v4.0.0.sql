@@ -139,11 +139,12 @@ CREATE TABLE IF NOT EXISTS `players_state` (
     `x` INT UNSIGNED NOT NULL,
     `y` INT UNSIGNED NOT NULL,
     `dir` VARCHAR(25) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-    PRIMARY KEY (`id`),
-    KEY `FK_player_state_rooms` (`room_id`),
-    KEY `FK_player_state_player_stats` (`player_id`),
-    CONSTRAINT `FK_player_state_player_stats` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON UPDATE CASCADE,
-    CONSTRAINT `FK_player_state_rooms` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON UPDATE CASCADE
+    PRIMARY KEY (`id`) USING BTREE,
+    UNIQUE INDEX `player_id` (`player_id`) USING BTREE,
+    INDEX `FK_player_state_rooms` (`room_id`) USING BTREE,
+    INDEX `FK_player_state_player_stats` (`player_id`) USING BTREE,
+    CONSTRAINT `FK_player_state_player_stats` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON UPDATE CASCADE ON DELETE NO ACTION,
+    CONSTRAINT `FK_player_state_rooms` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON UPDATE CASCADE ON DELETE NO ACTION
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `players_stats` (
@@ -597,13 +598,14 @@ CREATE TABLE IF NOT EXISTS `rewards` (
 CREATE TABLE IF NOT EXISTS `drops_animations` (
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
     `item_id` INT UNSIGNED NOT NULL,
-    `asset_type` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-    `asset_key` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-    `file` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-    `extra_params` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+    `asset_type` VARCHAR(255) NULL DEFAULT NULL COLLATE utf8mb4_unicode_ci,
+    `asset_key` VARCHAR(255) NOT NULL COLLATE utf8mb4_unicode_ci,
+    `file` VARCHAR(255) NOT NULL COLLATE utf8mb4_unicode_ci,
+    `extra_params` TEXT NULL DEFAULT NULL COLLATE utf8mb4_unicode_ci,
     PRIMARY KEY (`id`) USING BTREE,
-    KEY `item_id` (`item_id`) USING BTREE,
-    CONSTRAINT `FK_drops_animations_items_item` FOREIGN KEY (`item_id`) REFERENCES `items_item` (`id`)
+    UNIQUE INDEX `item_id_unique` (`item_id`) USING BTREE,
+    INDEX `item_id` (`item_id`) USING BTREE,
+    CONSTRAINT `FK_drops_animations_items_item` FOREIGN KEY (`item_id`) REFERENCES `items_item` (`id`) ON UPDATE CASCADE ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `skills_skill_type` (
@@ -829,32 +831,34 @@ CREATE TABLE IF NOT EXISTS `skills_skill_animations` (
 CREATE TABLE IF NOT EXISTS `skills_skill_attack` (
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
     `skill_id` INT UNSIGNED NOT NULL,
-    `affectedProperty` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-    `allowEffectBelowZero` TINYINT UNSIGNED DEFAULT NULL,
+    `affectedProperty` VARCHAR(255) NOT NULL COLLATE utf8mb4_unicode_ci,
+    `allowEffectBelowZero` TINYINT UNSIGNED NULL DEFAULT NULL,
     `hitDamage` INT UNSIGNED NOT NULL,
-    `applyDirectDamage` TINYINT UNSIGNED DEFAULT NULL,
-    `attackProperties` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-    `defenseProperties` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-    `aimProperties` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-    `dodgeProperties` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-    `dodgeFullEnabled` TINYINT DEFAULT (1),
-    `dodgeOverAimSuccess` TINYINT DEFAULT (1),
-    `damageAffected` TINYINT DEFAULT NULL,
-    `criticalAffected` TINYINT DEFAULT NULL,
+    `applyDirectDamage` TINYINT UNSIGNED NULL DEFAULT NULL,
+    `attackProperties` TEXT NULL DEFAULT NULL COLLATE utf8mb4_unicode_ci,
+    `defenseProperties` TEXT NULL DEFAULT NULL COLLATE utf8mb4_unicode_ci,
+    `aimProperties` TEXT NULL DEFAULT NULL COLLATE utf8mb4_unicode_ci,
+    `dodgeProperties` TEXT NULL DEFAULT NULL COLLATE utf8mb4_unicode_ci,
+    `dodgeFullEnabled` TINYINT NULL DEFAULT '1',
+    `dodgeOverAimSuccess` TINYINT NULL DEFAULT '1',
+    `damageAffected` TINYINT NULL DEFAULT NULL,
+    `criticalAffected` TINYINT NULL DEFAULT NULL,
     PRIMARY KEY (`id`) USING BTREE,
-    KEY `skill_id` (`skill_id`) USING BTREE,
-    CONSTRAINT `FK__skills_skill_attack` FOREIGN KEY (`skill_id`) REFERENCES `skills_skill` (`id`) ON UPDATE CASCADE
+    UNIQUE INDEX `skill_id_unique` (`skill_id`) USING BTREE,
+    INDEX `skill_id` (`skill_id`) USING BTREE,
+    CONSTRAINT `FK__skills_skill_attack` FOREIGN KEY (`skill_id`) REFERENCES `skills_skill` (`id`) ON UPDATE CASCADE ON DELETE NO ACTION
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `skills_skill_group_relation` (
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
     `skill_id` INT UNSIGNED NOT NULL,
     `group_id` INT UNSIGNED NOT NULL,
-    PRIMARY KEY (`id`),
-    KEY `group_id` (`group_id`),
-    KEY `skill_id` (`skill_id`),
-    CONSTRAINT `FK__skills_groups` FOREIGN KEY (`group_id`) REFERENCES `skills_groups` (`id`) ON UPDATE CASCADE,
-    CONSTRAINT `FK__skills_skill` FOREIGN KEY (`skill_id`) REFERENCES `skills_skill` (`id`) ON UPDATE CASCADE
+    PRIMARY KEY (`id`) USING BTREE,
+    UNIQUE INDEX `skill_id_unique` (`skill_id`) USING BTREE,
+    INDEX `group_id` (`group_id`) USING BTREE,
+    INDEX `skill_id` (`skill_id`) USING BTREE,
+    CONSTRAINT `FK__skills_groups` FOREIGN KEY (`group_id`) REFERENCES `skills_groups` (`id`) ON UPDATE CASCADE ON DELETE NO ACTION,
+    CONSTRAINT `FK__skills_skill` FOREIGN KEY (`skill_id`) REFERENCES `skills_skill` (`id`) ON UPDATE CASCADE ON DELETE NO ACTION
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `skills_skill_owner_conditions` (
@@ -906,10 +910,11 @@ CREATE TABLE IF NOT EXISTS `skills_skill_physical_data` (
     `magnitude` INT UNSIGNED NOT NULL,
     `objectWidth` INT UNSIGNED NOT NULL,
     `objectHeight` INT UNSIGNED NOT NULL,
-    `validateTargetOnHit` TINYINT UNSIGNED DEFAULT NULL,
-    PRIMARY KEY (`id`),
-    KEY `attack_skill_id` (`skill_id`) USING BTREE,
-    CONSTRAINT `FK_skills_skill_physical_data_skills_skill` FOREIGN KEY (`skill_id`) REFERENCES `skills_skill` (`id`) ON UPDATE CASCADE
+    `validateTargetOnHit` TINYINT UNSIGNED NULL DEFAULT NULL,
+    PRIMARY KEY (`id`) USING BTREE,
+    UNIQUE INDEX `skill_id` (`skill_id`) USING BTREE,
+    INDEX `attack_skill_id` (`skill_id`) USING BTREE,
+    CONSTRAINT `FK_skills_skill_physical_data_skills_skill` FOREIGN KEY (`skill_id`) REFERENCES `skills_skill` (`id`) ON UPDATE CASCADE ON DELETE NO ACTION
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `skills_skill_target_effects` (
@@ -987,7 +992,8 @@ CREATE TABLE IF NOT EXISTS `scores` (
     `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`) USING BTREE,
-    KEY `player_id` (`player_id`) USING BTREE
+    INDEX `player_id` (`player_id`) USING BTREE,
+    CONSTRAINT `FK_scores_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON UPDATE CASCADE ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `scores_detail` (
@@ -999,7 +1005,7 @@ CREATE TABLE IF NOT EXISTS `scores_detail` (
     `kill_npc_id` INT UNSIGNED NULL DEFAULT NULL,
     PRIMARY KEY (`id`) USING BTREE,
     INDEX `player_id` (`player_id`) USING BTREE,
-    CONSTRAINT `FK_scores_detail_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
+    CONSTRAINT `FK_scores_detail_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON UPDATE CASCADE ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `rewards_events` (

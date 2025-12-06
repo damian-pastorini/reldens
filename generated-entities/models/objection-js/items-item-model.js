@@ -13,7 +13,6 @@ class ItemsItemModel extends ObjectionJsRawModel
     {
         return 'items_item';
     }
-    
 
     static get relationMappings()
     {
@@ -44,7 +43,7 @@ class ItemsItemModel extends ObjectionJsRawModel
                 }
             },
             related_drops_animations: {
-                relation: this.HasManyRelation,
+                relation: this.HasOneRelation,
                 modelClass: DropsAnimationsModel,
                 join: {
                     from: this.tableName+'.id',
@@ -75,7 +74,15 @@ class ItemsItemModel extends ObjectionJsRawModel
                     to: ObjectsItemsInventoryModel.tableName+'.item_id'
                 }
             },
-            related_objects_items_requirements: {
+            related_objects_items_requirements_item_key: {
+                relation: this.HasManyRelation,
+                modelClass: ObjectsItemsRequirementsModel,
+                join: {
+                    from: this.tableName+'.key',
+                    to: ObjectsItemsRequirementsModel.tableName+'.item_key'
+                }
+            },
+            related_objects_items_requirements_required_item_key: {
                 relation: this.HasManyRelation,
                 modelClass: ObjectsItemsRequirementsModel,
                 join: {
@@ -83,7 +90,15 @@ class ItemsItemModel extends ObjectionJsRawModel
                     to: ObjectsItemsRequirementsModel.tableName+'.required_item_key'
                 }
             },
-            related_objects_items_rewards: {
+            related_objects_items_rewards_item_key: {
+                relation: this.HasManyRelation,
+                modelClass: ObjectsItemsRewardsModel,
+                join: {
+                    from: this.tableName+'.key',
+                    to: ObjectsItemsRewardsModel.tableName+'.item_key'
+                }
+            },
+            related_objects_items_rewards_reward_item_key: {
                 relation: this.HasManyRelation,
                 modelClass: ObjectsItemsRewardsModel,
                 join: {

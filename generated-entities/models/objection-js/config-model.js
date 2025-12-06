@@ -13,7 +13,6 @@ class ConfigModel extends ObjectionJsRawModel
     {
         return 'config';
     }
-    
 
     static get relationMappings()
     {

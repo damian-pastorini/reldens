@@ -45,7 +45,16 @@ class CrudTestData
             'skills-skill-animations': 1,
             clan: 1,
             'users-locale-main': 1004,
-            'users-locale-delete': 1005
+            'users-locale-delete': 1005,
+            'players-state-main': 1004,
+            'players-state-delete': 1005,
+            'players-state-editfail': 1006,
+            'skills-attack-main': 1001,
+            'skills-attack-delete': 1002,
+            'skills-attack-editfail': 1003,
+            'drops-animations-main': 1004,
+            'drops-animations-delete': 1005,
+            'drops-animations-editfail': 1006
         };
     }
 
@@ -146,7 +155,7 @@ class CrudTestData
             'ads-played': {
                 ads_id: baseIds.ads,
                 player_id: baseIds.players,
-                played_at: '2025-01-01 12:00:00'
+                started_at: '2025-01-01 12:00:00'
             },
             audio: {
                 audio_key: uniqueKey+'-audio-test',
@@ -276,7 +285,7 @@ class CrudTestData
                 created_at: '2025-01-01 12:00:00'
             },
             'players-state': {
-                player_id: baseIds.players,
+                player_id: this.getIdForSuffix('players-state', uniqueSuffix, baseIds),
                 room_id: baseIds.rooms,
                 x: 100,
                 y: 100,
@@ -419,7 +428,7 @@ class CrudTestData
                 currentExp: 0
             },
             'skills-skill-attack': {
-                skill_id: baseIds['skills-skill'],
+                skill_id: this.getIdForSuffix('skills-attack', uniqueSuffix, baseIds),
                 affectedProperty: 'stats/hp',
                 allowEffectBelowZero: 0,
                 hitDamage: 10,
@@ -434,7 +443,7 @@ class CrudTestData
                 criticalAffected: 0
             },
             'skills-skill-group-relation': {
-                skill_id: baseIds['skills-skill'],
+                skill_id: this.getIdForSuffix('skills-attack', uniqueSuffix, baseIds),
                 skill_group_id: baseIds['skills-groups'],
                 group_id: baseIds['skills-groups']
             },
@@ -463,7 +472,7 @@ class CrudTestData
                 maxProperty: null
             },
             'skills-skill-physical-data': {
-                skill_id: baseIds['skills-skill'],
+                skill_id: this.getIdForSuffix('skills-attack', uniqueSuffix, baseIds),
                 magnitude: 100,
                 objectWidth: 5,
                 objectHeight: 5,
@@ -493,10 +502,10 @@ class CrudTestData
                 target_label: 'Test Target Option '+uniqueSuffix
             },
             'drops-animations': {
-                item_id: baseIds['items-item'],
+                item_id: this.getIdForSuffix('drops-animations', uniqueSuffix, baseIds),
                 asset_type: 'spritesheet',
                 asset_key: uniqueKey+'-drop-animation',
-                file: 'test-drop.png',
+                file: 'test-file.png',
                 extra_params: '{"frameWidth":32,"frameHeight":32}'
             },
             scores: {
@@ -556,6 +565,13 @@ class CrudTestData
         return testData[entity] || {
             name: uniqueKey+'-'+entity+'-test'
         };
+    }
+
+    static getIdForSuffix(entityKey, suffix, baseIds)
+    {
+        let suffixKey = 'edit-fail' === suffix ? 'editfail' : suffix;
+        let key = entityKey+'-'+(suffixKey || 'main');
+        return baseIds[key] || baseIds[entityKey+'-main'];
     }
 
     static getUploadFieldsForEntity(entity)

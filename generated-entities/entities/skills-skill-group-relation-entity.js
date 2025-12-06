@@ -13,6 +13,9 @@ class SkillsSkillGroupRelationEntity extends EntityProperties
     {
         let properties = {
             id: {
+                isId: true,
+                type: 'number',
+                isRequired: true,
                 dbType: 'int'
             },
             skill_id: {

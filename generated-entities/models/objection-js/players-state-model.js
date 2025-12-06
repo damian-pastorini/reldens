@@ -13,7 +13,6 @@ class PlayersStateModel extends ObjectionJsRawModel
     {
         return 'players_state';
     }
-    
 
     static get relationMappings()
     {

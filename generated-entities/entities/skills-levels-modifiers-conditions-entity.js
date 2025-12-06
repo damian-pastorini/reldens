@@ -14,6 +14,9 @@ class SkillsLevelsModifiersConditionsEntity extends EntityProperties
         let titleProperty = 'key';
         let properties = {
             id: {
+                isId: true,
+                type: 'number',
+                isRequired: true,
                 dbType: 'int'
             },
             levels_modifier_id: {

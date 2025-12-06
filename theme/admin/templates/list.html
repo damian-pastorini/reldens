@@ -8,10 +8,20 @@
     </div>
     <div class="sub-content filters">
         <form class="sub-content-form filter-form" name="filter-form" id="filter-form" action="{{&entityListRoute}}" method="post">
-            <h4 class="filters-toggle">
-                <img src="/assets/admin/filters.png" alt="Filters"/>
-                <span>Filters</span>
-            </h4>
+            <div class="filters-header">
+                <div class="search-controls">
+                    <div class="filters-toggle">
+                        <img src="/assets/admin/filters.png" alt="Filters"/>
+                    </div>
+                    <div class="search-input-group">
+                        <input type="text" id="entityFilterTerm" name="entityFilterTerm" placeholder="Search..." value="{{&entityFilterTermValue}}"/>
+                    </div>
+                    <div class="filter-actions">
+                        <input class="button button-primary button-filter" type="submit" value="Filter"/>
+                        <a class="button button-secondary button-clear-filter" href="{{&entityListRoute}}?clearFilters=true">Clear Filters</a>
+                    </div>
+                </div>
+            </div>
             <div class="filters-toggle-content hidden">
                 {{#filters}}
                 <div class="sub-content-box filter">
@@ -19,10 +29,6 @@
                     <input type="text" id="filter-{{&propertyKey}}" name="filters[{{&propertyKey}}]"{{&value}}/>
                 </div>
                 {{/filters}}
-                <div class="actions">
-                    <input class="button button-primary button-filter" type="submit" value="Filter"/>
-                    <a class="button button-secondary button-clear-filter" href="{{&entityListRoute}}">Clear Filters</a>
-                </div>
             </div>
         </form>
     </div>
@@ -33,3 +39,13 @@
         {{&pagination}}
     </div>
 </div>
+<dialog class="confirm-dialog">
+    <div class="dialog-content">
+        <h5 class="dialog-title">Confirm Delete</h5>
+        <p class="dialog-message">Are you sure you want to delete the selected items? This action cannot be undone.</p>
+        <div class="dialog-actions">
+            <button type="button" class="button button-secondary dialog-cancel">Cancel</button>
+            <button type="button" class="button button-danger dialog-confirm">Delete</button>
+        </div>
+    </div>
+</dialog>

@@ -13,7 +13,6 @@ class SkillsSkillTargetEffectsConditionsModel extends ObjectionJsRawModel
     {
         return 'skills_skill_target_effects_conditions';
     }
-    
 
     static get relationMappings()
     {

@@ -13,7 +13,6 @@ class TargetOptionsModel extends ObjectionJsRawModel
     {
         return 'target_options';
     }
-    
 
     static get relationMappings()
     {

@@ -13,7 +13,6 @@ class ItemsItemModifiersModel extends ObjectionJsRawModel
     {
         return 'items_item_modifiers';
     }
-    
 
     static get relationMappings()
     {

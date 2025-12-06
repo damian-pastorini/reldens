@@ -13,7 +13,6 @@ class ItemsGroupModel extends ObjectionJsRawModel
     {
         return 'items_group';
     }
-    
 
     static get relationMappings()
     {

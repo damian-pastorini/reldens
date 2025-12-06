@@ -13,7 +13,6 @@ class SkillsLevelsModifiersModel extends ObjectionJsRawModel
     {
         return 'skills_levels_modifiers';
     }
-    
 
     static get relationMappings()
     {

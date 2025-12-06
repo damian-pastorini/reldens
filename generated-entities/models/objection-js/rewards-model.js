@@ -13,7 +13,6 @@ class RewardsModel extends ObjectionJsRawModel
     {
         return 'rewards';
     }
-    
 
     static get relationMappings()
     {

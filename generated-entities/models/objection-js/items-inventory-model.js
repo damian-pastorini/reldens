@@ -13,7 +13,6 @@ class ItemsInventoryModel extends ObjectionJsRawModel
     {
         return 'items_inventory';
     }
-    
 
     static get relationMappings()
     {

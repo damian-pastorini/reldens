@@ -15,6 +15,9 @@ class ObjectsEntity extends EntityProperties
         let titleProperty = 'title';
         let properties = {
             id: {
+                isId: true,
+                type: 'number',
+                isRequired: true,
                 dbType: 'int'
             },
             room_id: {

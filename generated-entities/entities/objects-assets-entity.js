@@ -13,6 +13,7 @@ class ObjectsAssetsEntity extends EntityProperties
     {
         let properties = {
             object_asset_id: {
+                isId: true,
                 type: 'number',
                 isRequired: true,
                 dbType: 'int'
@@ -43,7 +44,7 @@ class ObjectsAssetsEntity extends EntityProperties
         let propertiesKeys = Object.keys(properties);
         let showProperties = propertiesKeys;
         let editProperties = [...propertiesKeys];
-        editProperties.splice(editProperties.indexOf('id'), 1);
+        editProperties.splice(editProperties.indexOf('object_asset_id'), 1);
         let listProperties = [...propertiesKeys];
         listProperties.splice(listProperties.indexOf('extra_params'), 1);
         return {
