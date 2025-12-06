@@ -12,3 +12,4 @@
 winpty.exe.stackdump
 /.parcel-cache
 /tests/config.json
+/prisma

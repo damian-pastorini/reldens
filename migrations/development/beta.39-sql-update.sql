@@ -151,6 +151,9 @@ ALTER TABLE `skills_skill_group_relation` ADD UNIQUE INDEX `skill_id_unique` (`s
 ALTER TABLE `skills_skill_physical_data` ADD UNIQUE INDEX `skill_id` (`skill_id`); -- skill physical data is in a single entity
 ALTER TABLE `drops_animations` ADD UNIQUE INDEX `item_id_unique` (`item_id`); -- an item can only have one drop animation
 
+-- Fix kill_time default value:
+ALTER TABLE `scores_detail` MODIFY COLUMN `kill_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
 --
 
 SET FOREIGN_KEY_CHECKS = 1;

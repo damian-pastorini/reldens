@@ -58,6 +58,40 @@ reldens generateEntities [--override]   # Generate entities from database schema
 npx reldens-storage generateEntities --user=reldens --pass=reldens --database=reldens_clean --driver=objection-js
 ```
 
+### Prisma-Specific Commands
+
+**IMPORTANT:** Prisma requires a separate client generation step before entities can be generated.
+
+```bash
+# Step 1: Generate Prisma schema and client from existing database
+# This introspects the database and creates prisma/schema.prisma + prisma/client/
+npx reldens-storage-prisma --host=localhost --port=3306 --user=reldens --password=reldens --database=reldens_clean --clientOutputPath=./client
+
+# Step 2: Generate Reldens entities using Prisma driver
+npx reldens-storage generateEntities --user=reldens --pass=reldens --database=reldens_clean --driver=prisma
+
+# Full parameter list for reldens-storage-prisma:
+# --host          Database host (default: localhost)
+# --port          Database port (default: 3306)
+# --user          Database username (required)
+# --password      Database password (required)
+# --database      Database name (required)
+# --clientOutputPath  Output path for Prisma client (default: ./client)
+# --schemaPath    Path for schema.prisma file (default: ./prisma)
+```
+
+**Prisma Workflow:**
+1. Run `reldens-storage-prisma` to generate schema.prisma and Prisma client
+2. The command introspects your MySQL database and creates the Prisma schema
+3. Run `reldens-storage generateEntities` with `--driver=prisma` to generate Reldens entities
+4. Set `RELDENS_STORAGE_DRIVER=prisma` in your `.env` file to use Prisma at runtime
+
+**Environment Variables for Prisma:**
+```
+RELDENS_STORAGE_DRIVER=prisma
+RELDENS_DB_URL=mysql://user:password@host:port/database
+```
+
 ### Installation & Setup
 ```bash
 reldens createApp                       # Create base project skeleton
@@ -193,10 +227,28 @@ The platform uses **@reldens/utils EventsManagerSingleton** for extensibility:
 4. Models in each feature's `server/models/` extend generated entities
 
 **Storage Drivers**:
-- `objection-js` (default): Uses Knex.js for SQL
-- `mikro-orm`: ORM with decorators
-- `prisma`: Modern ORM with type safety
+- `objection-js` (default): Uses Knex.js for SQL, direct database access, no validation
+- `mikro-orm`: ORM with decorators, supports MongoDB
+- `prisma`: Modern ORM with type safety, custom validation, database default support
 - Configured via `RELDENS_STORAGE_DRIVER` in `.env`
+
+**Driver Differences:**
+
+*ObjectionJS:*
+- Direct SQL via Knex query builder
+- No field validation before database
+- Database handles defaults and constraints
+- Foreign keys as direct field values
+- Less informative error messages
+
+*Prisma:*
+- Type-safe Prisma Client
+- Custom `ensureRequiredFields()` validation before database
+- Skips validation for fields with database defaults
+- Foreign keys use relation connect syntax: `{players: {connect: {id: 1001}}}`
+- VARCHAR foreign key support
+- Better error messages for missing required fields
+- Metadata-driven field type casting
 
 **Entity Access**:
 
@@ -284,6 +336,46 @@ class ServerPlugin
 - Generated entities are read-only; extend in `server/models/`
 - Use migrations for schema changes
 - Regenerate entities after schema changes
+
+### Entity Overrides and Database Defaults
+
+**Auto-Populated Fields:**
+
+Some fields should be auto-populated by the database or application logic, not manually entered through the admin panel.
+
+**Example: scores_detail.kill_time**
+```javascript
+// Database schema (migrations/production/reldens-install-v4.0.0.sql)
+`kill_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+
+// Entity override (lib/scores/server/entities/scores-detail-entity-override.js)
+class ScoresDetailEntityOverride extends ScoresDetailEntity {
+    static propertiesConfig(extraProps) {
+        let config = super.propertiesConfig(extraProps);
+        // Remove kill_time from admin panel edit form
+        config.editProperties.splice(config.editProperties.indexOf('kill_time'), 1);
+        return config;
+    }
+}
+
+// Game logic auto-populates when creating through code
+// (lib/scores/server/scores-updater.js)
+let scoreDetailData = {
+    player_id: attacker.player_id,
+    obtained_score: obtainedScore,
+    kill_time: sc.formatDate(new Date()),  // Auto-populated
+    kill_player_id: props.killPlayerId || null,
+    kill_npc_id: props.killNpcId || null,
+};
+```
+
+**How It Works:**
+1. Field removed from `editProperties` - not shown in admin panel
+2. Database has `DEFAULT CURRENT_TIMESTAMP` - auto-fills when missing
+3. Game logic explicitly sets value when creating programmatically
+4. Prisma driver skips validation for fields with database defaults
+
+**Important:** With Prisma driver, validation automatically skips required fields that have database defaults, allowing admin panel creates to succeed even when these fields are excluded from the form.
 
 ## Important Notes
 

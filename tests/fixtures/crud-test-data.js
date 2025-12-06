@@ -249,8 +249,7 @@ class CrudTestData
             'rewards-events-state': {
                 player_id: baseIds.players,
                 rewards_events_id: uniqueSuffix === 'delete' ? 2 : 1,
-                current_count: 1,
-                last_execution: '2025-01-01 12:00:00'
+                state: '{"current_count":1,"last_execution":"2025-01-01 12:00:00"}'
             },
             snippets: {
                 locale_id: baseIds.locale,
@@ -518,13 +517,10 @@ class CrudTestData
                 created_at: '2025-01-01 12:00:00'
             },
             'scores-detail': {
-                scores_id: baseIds.scores,
                 player_id: baseIds.players,
                 obtained_score: 150,
                 kill_player_id: baseIds.players,
-                kill_npc_id: baseIds.objects,
-                detail_key: uniqueKey+'-detail',
-                detail_value: 'Test detail value'
+                kill_npc_id: baseIds.objects
             },
             clan: {
                 name: 'Test Clan '+uniqueSuffix,
