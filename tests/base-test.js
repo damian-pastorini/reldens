@@ -52,6 +52,8 @@ class BaseTest
         return new Promise((resolve, reject) => {
             let httpModule = this.isHttps ? https : http;
             if(this.isHttps){
+                // required for local HTTPS testing with self-signed certificates:
+                // codeql[js/disabling-certificate-validation] - test code only
                 options.rejectUnauthorized = false;
             }
             let req = httpModule.request(options, (res) => {
