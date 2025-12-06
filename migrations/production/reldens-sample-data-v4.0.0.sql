@@ -41,6 +41,8 @@ TRUNCATE `rewards_events_state`;
 TRUNCATE `rooms`;
 TRUNCATE `rooms_change_points`;
 TRUNCATE `rooms_return_points`;
+TRUNCATE `scores`;
+TRUNCATE `scores_detail`;
 TRUNCATE `skills_class_level_up_animations`;
 TRUNCATE `skills_class_path`;
 TRUNCATE `skills_class_path_level_labels`;
