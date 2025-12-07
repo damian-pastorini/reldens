@@ -31,7 +31,6 @@ class ScoresDetailEntity extends EntityProperties
             },
             kill_time: {
                 type: 'datetime',
-                isRequired: true,
                 dbType: 'datetime'
             },
             kill_player_id: {
