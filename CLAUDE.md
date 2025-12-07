@@ -140,6 +140,36 @@ reldens-generate maps                   # Generate maps with various loaders
 reldens-import [data-type]              # Import game data
 ```
 
+### User Management Commands
+```bash
+# Create admin user
+reldens createAdmin --user=username --pass=password --email=email@example.com
+# Creates an admin user with role_id from config (default: 1)
+# Validates email format and username/email uniqueness
+# Password is automatically encrypted using PBKDF2 SHA-512
+
+# Reset user password
+reldens resetPassword --user=username --pass=newpassword
+# Resets password for existing user
+# Password is automatically encrypted
+# Works for any user (admin or regular)
+
+# Examples:
+reldens createAdmin --user=admin --pass=SecurePass123 --email=admin@yourgame.com
+reldens resetPassword --user=someuser --pass=NewSecurePass456
+```
+
+**Implementation Details:**
+- Service classes: `CreateAdmin` and `ResetPassword` in `lib/users/server/`
+- Both receive `serverManager` in constructor (following importer pattern)
+- Services return boolean result with `error` property for failure details
+- `createAdmin` uses existing `usersRepository.create()` with `role_id` in userData
+- `resetPassword` uses `usersRepository.loadOneBy()` and `updateById()`
+- Admin role ID from config: `server/admin/roleId` (default: 1)
+- Email validation via `sc.validateInput(email, 'email')` from `@reldens/utils`
+- Commands initialize ServerManager automatically from `.env` (pattern from `bin/import.js`)
+- Password encryption uses `Encryptor` from `@reldens/server-utils` (100k iterations, SHA-512)
+
 ## Architecture & Code Structure
 
 ### Client-Server Organization

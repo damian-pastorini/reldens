@@ -15,7 +15,7 @@ const { FileHandler } = require('@reldens/server-utils');
  *
  * $ npx reldens-import objects custom-game-theme-test generate-data/objects-generate-data.json
  *
- * - Players experience per level import is not required if class-paths importer is going to be used.
+ * - Player experience per-level import is not required if class-paths importer is going to be used.
  * $ npx reldens-import players-experience-per-level custom-game-theme-test generate-data/players-experience-per-level.json
  *
  * - Class-paths importer will also import the experience per level.
