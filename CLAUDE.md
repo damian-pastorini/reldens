@@ -470,32 +470,124 @@ The platform uses **@reldens/utils EventsManagerSingleton** for extensibility:
 - Better error messages for missing required fields
 - Metadata-driven field type casting
 
-**Entity Access**:
+**Entity Access and Storage System Architecture**:
 
-Models can be referenced in three ways:
+**CRITICAL: Understanding getEntity() Return Type**
 
-1. **From getEntity method**:
+`dataServer.getEntity()` returns a `BaseDriver` instance from `@reldens/storage`, NOT an Entity or Model class.
+
+**What getEntity() Returns:**
 ```javascript
-let features = await this.dataServer.getEntity('features').loadAll();
-let player = await this.dataServer.getEntity('players').load(playerId);
+// Returns BaseDriver instance (or ObjectionJsDriver, PrismaDriver, MikroOrmDriver subclass)
+let statsRepository = this.dataServer.getEntity('stats');
+
+// BaseDriver provides unified interface across all storage drivers:
+await statsRepository.create({key: 'hp', label: 'Health Points'});
+await statsRepository.loadAll();
+await statsRepository.loadBy('key', 'hp');
+await statsRepository.loadOneBy('key', 'hp');
+await statsRepository.updateById(1, {label: 'HP'});
+await statsRepository.deleteById(1);
 ```
 
-2. **From [method]+WithRelations methods**:
+**Type Annotation for Repository Properties:**
 ```javascript
+/**
+ * @typedef {import('@reldens/storage').BaseDriver} BaseDriver
+ */
+
+// Correct - driver-agnostic type
+/** @type {BaseDriver} */
+this.statsRepository = this.dataServer.getEntity('stats');
+
+// WRONG - Entity classes are for admin panel config only
+/** @type {StatsEntity} */  // ❌ WRONG
+this.statsRepository = this.dataServer.getEntity('stats');
+
+// WRONG - Model classes are driver-specific (objection-js/prisma/mikro-orm)
+/** @type {StatsModel} */  // ❌ WRONG
+this.statsRepository = this.dataServer.getEntity('stats');
+```
+
+**Storage System Component Breakdown:**
+
+1. **Entity Classes** (`generated-entities/entities/[table]-entity.js`):
+   - Purpose: Admin panel configuration ONLY
+   - Define property metadata (types, required fields, display names)
+   - Define edit/show/list properties for admin UI
+   - Example: `StatsEntity.propertiesConfig()` returns admin panel config
+   - Never used for database operations
+
+2. **Model Classes** (`generated-entities/models/{driver}/[table]-model.js`):
+   - Purpose: ORM-specific model definitions
+   - Driver-specific paths:
+     - `models/objection-js/stats-model.js` - ObjectionJS
+     - `models/prisma/stats-model.js` - Prisma
+     - `models/mikro-orm/stats-model.js` - MikroORM
+   - Define table names, relations, schema
+   - Wrapped by BaseDriver before use
+
+3. **BaseDriver** (`@reldens/storage/lib/base-driver.js`):
+   - Purpose: Unified database interface
+   - Wraps raw Model classes
+   - Provides consistent API across all storage drivers
+   - THIS IS WHAT `getEntity()` RETURNS
+   - Methods: create, load, loadBy, loadOneBy, update, delete, count, etc.
+   - Driver implementations:
+     - `ObjectionJsDriver` - uses Knex query builder
+     - `PrismaDriver` - uses Prisma Client
+     - `MikroOrmDriver` - uses MikroORM EntityManager
+
+4. **BaseDataServer** (`@reldens/storage/lib/base-data-server.js`):
+   - Purpose: Manages database connection and entity registry
+   - Has `EntityManager` for storing BaseDriver instances
+   - `getEntity(key)` retrieves BaseDriver from EntityManager
+   - Driver implementations:
+     - `ObjectionJsDataServer`
+     - `PrismaDataServer`
+     - `MikroOrmDataServer`
+
+**Entity Loading Flow:**
+
+1. `EntitiesLoader.loadEntities()` (lib/game/server/entities-loader.js:41)
+   - Checks `RELDENS_STORAGE_DRIVER` env var (default: 'prisma')
+   - Loads from `generated-entities/models/{driver}/registered-models-{driver}.js`
+   - Returns `{entities, entitiesRaw, translations}`
+
+2. `DataServerInitializer.initializeEntitiesAndDriver()` (lib/game/server/data-server-initializer.js:55)
+   - Creates DataServer instance: `new DriversMap[storageDriver](config)`
+   - DataServer generates BaseDriver instances for each entity
+   - Stores in EntityManager registry
+
+3. `dataServer.getEntity(key)` returns BaseDriver from EntityManager
+
+**Usage Examples:**
+
+```javascript
+// 1. Basic CRUD operations
+let statsRepo = this.dataServer.getEntity('stats');
+let newStat = await statsRepo.create({key: 'hp', label: 'Health'});
+let allStats = await statsRepo.loadAll();
+let hpStat = await statsRepo.loadOneBy('key', 'hp');
+await statsRepo.updateById(hpStat.id, {base_value: 100});
+
+// 2. With relations
 let skillData = await this.dataServer
     .getEntity('skillsClassLevelUpAnimations')
     .loadAllWithRelations();
-```
 
-3. **From loaded model instances with relations**:
-```javascript
+// 3. Accessing related data from loaded instances
+let classPathModel = await this.dataServer.getEntity('skillsClassPath').loadById(1);
 let relatedSkills = classPathModel.related_skills_levels_set.related_skills_levels;
 ```
 
 **Important Notes**:
+- ALWAYS use `BaseDriver` type for repository properties
+- Entity classes are NEVER used for database operations
+- Model classes are wrapped by BaseDriver - never accessed directly
+- Storage driver is configurable: objection-js (default was objection-js, now prisma), prisma, mikro-orm
 - Relations can be nested
 - Entity relations keys are defined in `generated-entities/entities-config.js`
-- Generated entities are in `generated-entities/` directory
 - Custom entity overrides are in `lib/[plugin-folder]/server/entities` or `lib/[plugin-folder]/server/models`
 
 **Generated Entities Structure:**
