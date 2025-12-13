@@ -703,7 +703,7 @@ Some fields should be auto-populated by the database or application logic, not m
 **Example: scores_detail.kill_time**
 ```javascript
 // Database schema (migrations/production/reldens-install-v4.0.0.sql)
-`kill_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+// `kill_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 
 // Entity override (lib/scores/server/entities/scores-detail-entity-override.js)
 class ScoresDetailEntityOverride extends ScoresDetailEntity {
