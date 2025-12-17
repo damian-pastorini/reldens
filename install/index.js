@@ -30,6 +30,16 @@ window.addEventListener('load', () => {
         toggleExpander(expanderElement.checked, expander);
     }
 
+    let dangerSpans = document.querySelectorAll('span.danger');
+    for(let dangerSpan of dangerSpans){
+        dangerSpan.addEventListener('click', () => {
+            let ulElement = dangerSpan.querySelector('ul');
+            if(ulElement){
+                ulElement.classList.toggle('expanded');
+            }
+        });
+    }
+
     let urlParams = new URL(window.location.href).searchParams;
     if('1' === urlParams.get('success')){
         document.querySelector('.forms-container').style.display = 'none';

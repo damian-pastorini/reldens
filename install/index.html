@@ -22,242 +22,246 @@
         <div class="forms-container">
             <div class="row">
                 <form name="install-form" id="install-form" class="install-form" action="/install" method="post">
-                    <!-- APP -->
-                    <h3 class="form-title">- App -</h3>
-                    <div class="input-box app-host">
-                        <label for="app-host">Host</label>
-                        <input type="text" name="app-host" id="app-host" value="{{app-host}}" class="required" required/>
-                    </div>
-                    <div class="input-box app-port">
-                        <label for="app-port">Port</label>
-                        <input type="text" name="app-port" id="app-port" value="{{app-port}}" class="required" required/>
-                    </div>
-                    <div class="input-box app-trusted-proxy">
-                        <label for="app-trusted-proxy">Trusted Proxy (or reverse proxy)</label>
-                        <input type="text" name="app-trusted-proxy" id="app-trusted-proxy" value="{{app-trusted-proxy}}"/>
-                    </div>
-                    <div class="input-box app-public-url">
-                        <label for="app-public-url">Public URL (useful if you have a reverse proxy)</label>
-                        <input type="text" name="app-public-url" id="app-public-url" value="{{app-public-url}}" class="required" required/>
-                    </div>
-                    <div class="input-box app-admin-path">
-                        <label for="app-admin-path">Admin Panel Path</label>
-                        <input type="text" name="app-admin-path" id="app-admin-path" value="{{app-admin-path}}"/>
-                    </div>
-                    <div class="input-box app-admin-secret">
-                        <label for="app-admin-secret">Admin Panel Secret Key</label>
-                        <input type="text" name="app-admin-secret" id="app-admin-secret" value="{{app-admin-secret}}" class="required" required/>
-                    </div>
-                    <div class="input-box app-admin-hot-plug">
-                        <label for="app-admin-hot-plug">Hot-Plug</label>
-                        <input type="checkbox" value="1" name="app-admin-hot-plug" id="app-admin-hot-plug"{{&app-admin-hot-plug-checked}}/>
-                    </div>
-                    <div class="input-box app-allow-packages-installation">
-                        <div class="app-allow-packages-installation-notice">
-                            <span class="danger">
-                                DANGER:
-                                <ul>
-                                    <li>The installer will attempt to run npm install for missing packages.</li>
-                                    <li>Uncheck this only if you have manually installed all required packages.</li>
-                                    <li>Required packages: @reldens/storage (always), @prisma/client (Prisma driver only).</li>
-                                </ul>
-                            </span>
+                    <div class="col-2">
+                        <!-- APP -->
+                        <h3 class="form-title">- App -</h3>
+                        <div class="input-box app-host">
+                            <label for="app-host">Host</label>
+                            <input type="text" name="app-host" id="app-host" value="{{app-host}}" class="required" required/>
                         </div>
-                        <div class="app-allow-packages-installation-checkbox">
-                            <label for="app-allow-packages-installation">Allow installer to run npm install for missing packages</label>
-                            <input type="checkbox" value="1" name="app-allow-packages-installation" id="app-allow-packages-installation"{{&app-allow-packages-installation-checked}}/>
+                        <div class="input-box app-port">
+                            <label for="app-port">Port</label>
+                            <input type="text" name="app-port" id="app-port" value="{{app-port}}" class="required" required/>
+                        </div>
+                        <div class="input-box app-trusted-proxy">
+                            <label for="app-trusted-proxy">Trusted Proxy (or reverse proxy)</label>
+                            <input type="text" name="app-trusted-proxy" id="app-trusted-proxy" value="{{app-trusted-proxy}}"/>
+                        </div>
+                        <div class="input-box app-public-url">
+                            <label for="app-public-url">Public URL (useful if you have a reverse proxy)</label>
+                            <input type="text" name="app-public-url" id="app-public-url" value="{{app-public-url}}" class="required" required/>
+                        </div>
+                        <div class="input-box app-admin-path">
+                            <label for="app-admin-path">Admin Panel Path</label>
+                            <input type="text" name="app-admin-path" id="app-admin-path" value="{{app-admin-path}}"/>
+                        </div>
+                        <div class="input-box app-admin-secret">
+                            <label for="app-admin-secret">Admin Panel Secret Key</label>
+                            <input type="text" name="app-admin-secret" id="app-admin-secret" value="{{app-admin-secret}}" class="required" required/>
+                        </div>
+                        <div class="input-box app-admin-hot-plug">
+                            <label for="app-admin-hot-plug">Hot-Plug</label>
+                            <input type="checkbox" value="1" name="app-admin-hot-plug" id="app-admin-hot-plug"{{&app-admin-hot-plug-checked}}/>
+                        </div>
+                        <div class="input-box app-allow-packages-installation">
+                            <div class="app-allow-packages-installation-notice">
+                                <span class="danger">
+                                    DANGER:
+                                    <ul>
+                                        <li>The installer will attempt to run npm install for missing packages.</li>
+                                        <li>Uncheck this only if you have manually installed all required packages.</li>
+                                        <li>Required packages: @reldens/storage (always), @prisma/client (Prisma driver only).</li>
+                                    </ul>
+                                </span>
+                            </div>
+                            <div class="app-allow-packages-installation-checkbox">
+                                <label for="app-allow-packages-installation">Allow installer to run npm install for missing packages</label>
+                                <input type="checkbox" value="1" name="app-allow-packages-installation" id="app-allow-packages-installation"{{&app-allow-packages-installation-checked}}/>
+                            </div>
+                        </div>
+                        <div class="input-box app-error">
+                            <p class="installation-process-failed">There was an error during the installation process.</p>
+                        </div>
+
+                        <!-- HTTPS -->
+                        <div class="input-box app-use-https">
+                            <label for="app-use-https">Use HTTPS</label>
+                            <input type="checkbox" value="1" name="app-use-https" id="app-use-https"{{&app-use-https-checked}}/>
+                        </div>
+                        <div class="input-box app-https-key-pem https-filter">
+                            <label for="app-https-key-pem">HTTPS path to key file</label>
+                            <input type="text" name="app-https-key-pem" id="app-https-key-pem" value="{{app-https-key-pem}}"/>
+                        </div>
+                        <div class="input-box app-https-cert-pem https-filter">
+                            <label for="app-https-cert-pem">HTTPS path to cert file</label>
+                            <input type="text" name="app-https-cert-pem" id="app-https-cert-pem" value="{{app-https-cert-pem}}"/>
+                        </div>
+                        <div class="input-box app-https-chain-pem https-filter">
+                            <label for="app-https-chain-pem">HTTPS path to chain file</label>
+                            <input type="text" name="app-https-chain-pem" id="app-https-chain-pem" value="{{app-https-chain-pem}}"/>
+                        </div>
+                        <div class="input-box app-https-passphrase https-filter">
+                            <label for="app-https-passphrase">HTTPS passphrase</label>
+                            <input type="text" name="app-https-passphrase" id="app-https-passphrase" value="{{app-https-passphrase}}"/>
+                        </div>
+
+                        <!-- MONITOR -->
+                        <div class="input-box app-use-monitor">
+                            <label for="app-use-monitor">Enable Monitor</label>
+                            <input type="checkbox" value="1" name="app-use-monitor" id="app-use-monitor"{{&app-use-monitor-checked}}/>
+                        </div>
+                        <div class="input-box app-secure-monitor monitor-filter">
+                            <label for="app-secure-monitor">Secure Monitor</label>
+                            <input type="checkbox" value="1" name="app-secure-monitor" id="app-secure-monitor"{{&app-secure-monitor-checked}}/>
+                        </div>
+                        <div class="input-box app-monitor-user monitor-filter">
+                            <label for="app-monitor-user">Monitor username</label>
+                            <input type="text" name="app-monitor-user" id="app-monitor-user" value="{{app-monitor-user}}"/>
+                        </div>
+                        <div class="input-box app-monitor-password monitor-filter">
+                            <label for="app-monitor-password">Monitor password</label>
+                            <input type="text" name="app-monitor-password" id="app-monitor-password" value="{{app-monitor-password}}"/>
                         </div>
                     </div>
-                    <div class="input-box app-error">
-                        <p class="installation-process-failed">There was an error during the installation process.</p>
-                    </div>
-
-                    <!-- HTTPS -->
-                    <div class="input-box app-use-https">
-                        <label for="app-use-https">Use HTTPS</label>
-                        <input type="checkbox" value="1" name="app-use-https" id="app-use-https"{{&app-use-https-checked}}/>
-                    </div>
-                    <div class="input-box app-https-key-pem https-filter">
-                        <label for="app-https-key-pem">HTTPS path to key file</label>
-                        <input type="text" name="app-https-key-pem" id="app-https-key-pem" value="{{app-https-key-pem}}"/>
-                    </div>
-                    <div class="input-box app-https-cert-pem https-filter">
-                        <label for="app-https-cert-pem">HTTPS path to cert file</label>
-                        <input type="text" name="app-https-cert-pem" id="app-https-cert-pem" value="{{app-https-cert-pem}}"/>
-                    </div>
-                    <div class="input-box app-https-chain-pem https-filter">
-                        <label for="app-https-chain-pem">HTTPS path to chain file</label>
-                        <input type="text" name="app-https-chain-pem" id="app-https-chain-pem" value="{{app-https-chain-pem}}"/>
-                    </div>
-                    <div class="input-box app-https-passphrase https-filter">
-                        <label for="app-https-passphrase">HTTPS passphrase</label>
-                        <input type="text" name="app-https-passphrase" id="app-https-passphrase" value="{{app-https-passphrase}}"/>
-                    </div>
-
-                    <!-- MONITOR -->
-                    <div class="input-box app-use-monitor">
-                        <label for="app-use-monitor">Enable Monitor</label>
-                        <input type="checkbox" value="1" name="app-use-monitor" id="app-use-monitor"{{&app-use-monitor-checked}}/>
-                    </div>
-                    <div class="input-box app-secure-monitor monitor-filter">
-                        <label for="app-secure-monitor">Secure Monitor</label>
-                        <input type="checkbox" value="1" name="app-secure-monitor" id="app-secure-monitor"{{&app-secure-monitor-checked}}/>
-                    </div>
-                    <div class="input-box app-monitor-user monitor-filter">
-                        <label for="app-monitor-user">Monitor username</label>
-                        <input type="text" name="app-monitor-user" id="app-monitor-user" value="{{app-monitor-user}}"/>
-                    </div>
-                    <div class="input-box app-monitor-password monitor-filter">
-                        <label for="app-monitor-password">Monitor password</label>
-                        <input type="text" name="app-monitor-password" id="app-monitor-password" value="{{app-monitor-password}}"/>
-                    </div>
-
-                    <!-- STORAGE -->
-                    <h3 class="form-title">- Storage -</h3>
-                    <div class="db-basic-config-notice">
-                        <span>
-                            Default samples:
-                            <ul>
-                                <li>Client: mysql (native password) / mysql2 (schema password) - Port: 3306</li>
-                                <li>Client: mongodb - Port: 27017</li>
-                            </ul>
-                        </span>
-                    </div>
-                    <div class="input-box db-storage-driver">
-                        <label for="db-storage-driver">Storage Driver</label>
-                        <select name="db-storage-driver" id="db-storage-driver" class="required" required>
-                            <option value="prisma"{{&db-storage-driver-prisma}}>Prisma</option>
-                            <option value="objection-js"{{&db-storage-driver-objection-js}}>Objection JS</option>
-                            <option value="mikro-orm"{{&db-storage-driver-mikro-orm}}>MikroORM</option>
-                        </select>
-                    </div>
-                    <div class="input-box db-client">
-                        <label for="db-client">Client</label>
-                        <input type="text" name="db-client" id="db-client" value="{{db-client}}" class="required" required/>
-                    </div>
-                    <div class="input-box db-host">
-                        <label for="db-host">Host</label>
-                        <input type="text" name="db-host" id="db-host" value="{{db-host}}" class="required" required/>
-                    </div>
-                    <div class="input-box db-port">
-                        <label for="db-port">Port</label>
-                        <input type="text" name="db-port" id="db-port" value="{{db-port}}" class="required" required/>
-                    </div>
-                    <div class="input-box db-name">
-                        <label for="db-name">Database Name</label>
-                        <input type="text" name="db-name" id="db-name" value="{{db-name}}" class="required" required/>
-                    </div>
-                    <div class="input-box db-username">
-                        <label for="db-username">Username</label>
-                        <input type="text" name="db-username" id="db-username" value="{{db-username}}" class="required" required/>
-                    </div>
-                    <div class="input-box db-password">
-                        <label for="db-password">Password</label>
-                        <input type="password" name="db-password" id="db-password" value="{{db-password}}" class="required" required autocomplete="off"/>
-                    </div>
-                    <div class="input-box db-error">
-                        <p class="connection-failed">Connection failed, please check the storage configuration.</p>
-                        <p class="invalid-driver">Invalid storage driver.</p>
-                        <p class="raw-query-not-found">Method "rawQuery" not found in the specified storage driver.</p>
-                        <p class="db-installation-process-failed">There was an error during the installation process.</p>
-                    </div>
-                    <div class="input-box db-basic-config">
+                    <div class="col-2">
+                        <!-- STORAGE -->
+                        <h3 class="form-title">- Storage -</h3>
                         <div class="db-basic-config-notice">
-                            <span class="danger">
-                                DANGER:
+                            <span>
+                                Default samples:
                                 <ul>
-                                    <li>The automatic installation for the basic configuration and the sample data are only available for the MySQL client.</li>
-                                    <li>Uncheck this is only if you know what you are doing. <br/>Without this you will get all the tables empty, even the ones with default required values.</li>
+                                    <li>Client: mysql (native password) / mysql2 (schema password) - Port: 3306</li>
+                                    <li>Client: mongodb - Port: 27017</li>
                                 </ul>
                             </span>
                         </div>
-                        <div class="db-basic-config-checkbox">
-                            <label for="db-basic-config">Install minimal configuration</label>
-                            <input type="checkbox" value="1" name="db-basic-config" id="db-basic-config"{{&db-basic-config-checked}}/>
+                        <div class="input-box db-storage-driver">
+                            <label for="db-storage-driver">Storage Driver</label>
+                            <select name="db-storage-driver" id="db-storage-driver" class="required" required>
+                                <option value="prisma"{{&db-storage-driver-prisma}}>Prisma</option>
+                                <option value="objection-js"{{&db-storage-driver-objection-js}}>Objection JS</option>
+                                <option value="mikro-orm"{{&db-storage-driver-mikro-orm}}>MikroORM (experimental)</option>
+                            </select>
+                        </div>
+                        <div class="input-box db-client">
+                            <label for="db-client">Client</label>
+                            <input type="text" name="db-client" id="db-client" value="{{db-client}}" class="required" required/>
+                        </div>
+                        <div class="input-box db-host">
+                            <label for="db-host">Host</label>
+                            <input type="text" name="db-host" id="db-host" value="{{db-host}}" class="required" required/>
+                        </div>
+                        <div class="input-box db-port">
+                            <label for="db-port">Port</label>
+                            <input type="text" name="db-port" id="db-port" value="{{db-port}}" class="required" required/>
+                        </div>
+                        <div class="input-box db-name">
+                            <label for="db-name">Database Name</label>
+                            <input type="text" name="db-name" id="db-name" value="{{db-name}}" class="required" required/>
+                        </div>
+                        <div class="input-box db-username">
+                            <label for="db-username">Username</label>
+                            <input type="text" name="db-username" id="db-username" value="{{db-username}}" class="required" required/>
+                        </div>
+                        <div class="input-box db-password">
+                            <label for="db-password">Password</label>
+                            <input type="password" name="db-password" id="db-password" value="{{db-password}}" class="required" required autocomplete="off"/>
+                        </div>
+                        <div class="input-box db-error">
+                            <p class="connection-failed">Connection failed, please check the storage configuration.</p>
+                            <p class="invalid-driver">Invalid storage driver.</p>
+                            <p class="raw-query-not-found">Method "rawQuery" not found in the specified storage driver.</p>
+                            <p class="db-installation-process-failed">There was an error during the installation process.</p>
+                        </div>
+                        <div class="input-box db-basic-config">
+                            <div class="db-basic-config-notice">
+                                <span class="danger">
+                                    DANGER:
+                                    <ul>
+                                        <li>The automatic installation for the basic configuration and the sample data are only available for the MySQL client.</li>
+                                        <li>Uncheck this is only if you know what you are doing. <br/>Without this you will get all the tables empty, even the ones with default required values.</li>
+                                    </ul>
+                                </span>
+                            </div>
+                            <div class="db-basic-config-checkbox">
+                                <label for="db-basic-config">Install minimal configuration</label>
+                                <input type="checkbox" value="1" name="db-basic-config" id="db-basic-config"{{&db-basic-config-checked}}/>
+                            </div>
+                        </div>
+                        <div class="input-box db-sample-data">
+                            <label for="db-sample-data">Install sample data</label>
+                            <input type="checkbox" value="1" name="db-sample-data" id="db-sample-data"{{&db-sample-data-checked}}/>
                         </div>
                     </div>
-                    <div class="input-box db-sample-data">
-                        <label for="db-sample-data">Install sample data</label>
-                        <input type="checkbox" value="1" name="db-sample-data" id="db-sample-data"{{&db-sample-data-checked}}/>
+                    <div class="col-2">
+                        <!-- MAILER -->
+                        <h3 class="form-title">- Mailer -</h3>
+                        <div class="input-box mailer-enable">
+                            <label for="mailer-enable">Enable NodeMailer</label>
+                            <input type="checkbox" value="1" name="mailer-enable" id="mailer-enable"{{&mailer-enable-checked}}/>
+                        </div>
+                        <div class="input-box mailer-service mailer-filter">
+                            <label for="mailer-service">Service</label>
+                            <select name="mailer-service" id="mailer-service">
+                                <option value="sendgrid"{{&mailer-service-sendgrid}}>SendGrid</option>
+                                <option value="nodemailer"{{&mailer-service-nodemailer}}>NodeMailer</option>
+                            </select>
+                        </div>
+                        <div class="input-box mailer-host mailer-filter">
+                            <label for="mailer-host">Host</label>
+                            <input type="text" name="mailer-host" id="mailer-host"/>
+                        </div>
+                        <div class="input-box mailer-secure mailer-filter">
+                            <label for="mailer-secure">Secure (SSL)</label>
+                            <input type="checkbox" value="1" name="mailer-secure" id="mailer-secure"{{&mailer-secure-checked}}/>
+                        </div>
+                        <div class="input-box mailer-port mailer-filter">
+                            <label for="mailer-port">Port</label>
+                            <input type="text" name="mailer-port" id="mailer-port" value="{{mailer-port}}"/>
+                        </div>
+                        <div class="input-box mailer-username mailer-filter">
+                            <label for="mailer-username">Username</label>
+                            <input type="text" name="mailer-username" id="mailer-username" value="{{mailer-username}}"/>
+                        </div>
+                        <div class="input-box mailer-password mailer-filter">
+                            <label for="mailer-password">Password</label>
+                            <input type="password" name="mailer-password" id="mailer-password" value="{{mailer-password}}" autocomplete="off"/>
+                        </div>
+                        <div class="input-box mailer-from mailer-filter">
+                            <label for="mailer-from">From email</label>
+                            <input type="text" name="mailer-from" id="mailer-from" value="{{mailer-from}}"/>
+                        </div>
                     </div>
-
-                    <!-- MAILER -->
-                    <h3 class="form-title">- Mailer -</h3>
-                    <div class="input-box mailer-enable">
-                        <label for="mailer-enable">Enable NodeMailer</label>
-                        <input type="checkbox" value="1" name="mailer-enable" id="mailer-enable"{{&mailer-enable-checked}}/>
+                    <div class="col-2">
+                        <!-- FIREBASE -->
+                        <h3 class="form-title">- Firebase (for login) -</h3>
+                        <div class="input-box firebase-enable">
+                            <label for="firebase-enable">Enable Firebase</label>
+                            <input type="checkbox" value="1" name="firebase-enable" id="firebase-enable"{{&firebase-enable-checked}}/>
+                        </div>
+                        <div class="input-box firebase-api-key firebase-filter">
+                            <label for="firebase-api-key">API key</label>
+                            <input type="text" name="firebase-api-key" id="firebase-api-key" value="{{firebase-api-key}}"/>
+                        </div>
+                        <div class="input-box firebase-api-id firebase-filter">
+                            <label for="firebase-api-id">Api ID</label>
+                            <input type="text" name="firebase-api-id" id="firebase-api-id" value="{{firebase-api-id}}"/>
+                        </div>
+                        <div class="input-box firebase-auth-domain firebase-filter">
+                            <label for="firebase-auth-domain">Auth domain</label>
+                            <input type="text" name="firebase-auth-domain" id="firebase-auth-domain" value="{{firebase-auth-domain}}"/>
+                        </div>
+                        <div class="input-box firebase-database-url firebase-filter">
+                            <label for="firebase-database-url">Database URL</label>
+                            <input type="text" name="firebase-database-url" id="firebase-database-url" value="{{firebase-database-url}}"/>
+                        </div>
+                        <div class="input-box firebase-project-id firebase-filter">
+                            <label for="firebase-project-id">Project ID</label>
+                            <input type="text" name="firebase-project-id" id="firebase-project-id" value="{{firebase-project-id}}"/>
+                        </div>
+                        <div class="input-box firebase-storage-bucket firebase-filter">
+                            <label for="firebase-storage-bucket">Storage bucket</label>
+                            <input type="text" name="firebase-storage-bucket" id="firebase-storage-bucket" value="{{firebase-storage-bucket}}"/>
+                        </div>
+                        <div class="input-box firebase-sender-id firebase-filter">
+                            <label for="firebase-sender-id">Sender ID</label>
+                            <input type="text" name="firebase-sender-id" id="firebase-sender-id" value="{{firebase-sender-id}}"/>
+                        </div>
+                        <div class="input-box firebase-measurement-id firebase-filter">
+                            <label for="firebase-measurement-id">Measurement ID (GA)</label>
+                            <input type="text" name="firebase-measurement-id" id="firebase-measurement-id" value="{{firebase-measurement-id}}"/>
+                        </div>
                     </div>
-                    <div class="input-box mailer-service mailer-filter">
-                        <label for="mailer-service">Service</label>
-                        <select name="mailer-service" id="mailer-service">
-                            <option value="sendgrid"{{&mailer-service-sendgrid}}>SendGrid</option>
-                            <option value="nodemailer"{{&mailer-service-nodemailer}}>NodeMailer</option>
-                        </select>
-                    </div>
-                    <div class="input-box mailer-host mailer-filter">
-                        <label for="mailer-host">Host</label>
-                        <input type="text" name="mailer-host" id="mailer-host"/>
-                    </div>
-                    <div class="input-box mailer-secure mailer-filter">
-                        <label for="mailer-secure">Secure (SSL)</label>
-                        <input type="checkbox" value="1" name="mailer-secure" id="mailer-secure"{{&mailer-secure-checked}}/>
-                    </div>
-                    <div class="input-box mailer-port mailer-filter">
-                        <label for="mailer-port">Port</label>
-                        <input type="text" name="mailer-port" id="mailer-port" value="{{mailer-port}}"/>
-                    </div>
-                    <div class="input-box mailer-username mailer-filter">
-                        <label for="mailer-username">Username</label>
-                        <input type="text" name="mailer-username" id="mailer-username" value="{{mailer-username}}"/>
-                    </div>
-                    <div class="input-box mailer-password mailer-filter">
-                        <label for="mailer-password">Password</label>
-                        <input type="password" name="mailer-password" id="mailer-password" value="{{mailer-password}}" autocomplete="off"/>
-                    </div>
-                    <div class="input-box mailer-from mailer-filter">
-                        <label for="mailer-from">From email</label>
-                        <input type="text" name="mailer-from" id="mailer-from" value="{{mailer-from}}"/>
-                    </div>
-
-                    <!-- FIREBASE -->
-                    <h3 class="form-title">- Firebase (for login) -</h3>
-                    <div class="input-box firebase-enable">
-                        <label for="firebase-enable">Enable Firebase</label>
-                        <input type="checkbox" value="1" name="firebase-enable" id="firebase-enable"{{&firebase-enable-checked}}/>
-                    </div>
-                    <div class="input-box firebase-api-key firebase-filter">
-                        <label for="firebase-api-key">API key</label>
-                        <input type="text" name="firebase-api-key" id="firebase-api-key" value="{{firebase-api-key}}"/>
-                    </div>
-                    <div class="input-box firebase-api-id firebase-filter">
-                        <label for="firebase-api-id">Api ID</label>
-                        <input type="text" name="firebase-api-id" id="firebase-api-id" value="{{firebase-api-id}}"/>
-                    </div>
-                    <div class="input-box firebase-auth-domain firebase-filter">
-                        <label for="firebase-auth-domain">Auth domain</label>
-                        <input type="text" name="firebase-auth-domain" id="firebase-auth-domain" value="{{firebase-auth-domain}}"/>
-                    </div>
-                    <div class="input-box firebase-database-url firebase-filter">
-                        <label for="firebase-database-url">Database URL</label>
-                        <input type="text" name="firebase-database-url" id="firebase-database-url" value="{{firebase-database-url}}"/>
-                    </div>
-                    <div class="input-box firebase-project-id firebase-filter">
-                        <label for="firebase-project-id">Project ID</label>
-                        <input type="text" name="firebase-project-id" id="firebase-project-id" value="{{firebase-project-id}}"/>
-                    </div>
-                    <div class="input-box firebase-storage-bucket firebase-filter">
-                        <label for="firebase-storage-bucket">Storage bucket</label>
-                        <input type="text" name="firebase-storage-bucket" id="firebase-storage-bucket" value="{{firebase-storage-bucket}}"/>
-                    </div>
-                    <div class="input-box firebase-sender-id firebase-filter">
-                        <label for="firebase-sender-id">Sender ID</label>
-                        <input type="text" name="firebase-sender-id" id="firebase-sender-id" value="{{firebase-sender-id}}"/>
-                    </div>
-                    <div class="input-box firebase-measurement-id firebase-filter">
-                        <label for="firebase-measurement-id">Measurement ID (GA)</label>
-                        <input type="text" name="firebase-measurement-id" id="firebase-measurement-id" value="{{firebase-measurement-id}}"/>
-                    </div>
-
                     <!-- SUBMIT -->
                     <div class="input-box submit-container">
                         <img class="install-loading hidden" src="./assets/web/loading.gif"/>

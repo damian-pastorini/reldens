@@ -147,7 +147,12 @@ body {
         justify-content: center;
 
         .install-form {
-            padding: 4% 8%;
+            display:flex;
+            max-width: 1000px;
+            flex-direction: row;
+            flex-wrap: wrap;
+            margin: 0 auto;
+            padding: 2%;
         }
     }
 
@@ -163,12 +168,12 @@ input[type="submit"] {
     display: flex;
     position: relative;
     width: 100%;
-    max-width: 500px;
     margin: 0 auto 10px;
     padding: 0;
     background-color: $boxBackground;
     border: 1px solid #ccc;
     box-shadow: 10px 10px 14px 2px rgba(0, 0, 0, 0.6);
+    box-sizing: border-box;
 
     &.hidden {
         display: none;
@@ -297,8 +302,14 @@ form {
             display: none;
         }
 
-        &.submit-container, &.terms-and-conditions-link-container {
+        &.submit-container,
+        &.terms-and-conditions-link-container {
             justify-content: end;
+        }
+
+        &.submit-container {
+            padding: 0 2%;
+            box-sizing: border-box;
         }
 
         label {
@@ -329,6 +340,7 @@ form {
     .db-basic-config-notice,
     .app-allow-packages-installation-notice {
         display: flex;
+        justify-content: flex-end;
         background: $boxBackground;
         margin-bottom: 10px;
         font-size: 12px;
@@ -344,6 +356,15 @@ form {
             &.danger {
                 font-weight: bold;
                 color: $cRed;
+                cursor: pointer;
+
+                ul {
+                    display: none;
+
+                    &.expanded {
+                        display: block;
+                    }
+                }
             }
         }
     }
