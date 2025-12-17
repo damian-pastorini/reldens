@@ -1,5 +1,4 @@
 /.cache
-/.claude
 /.env
 /.idea
 /knexfile.js
@@ -13,3 +12,6 @@ winpty.exe.stackdump
 /.parcel-cache
 /tests/config.json
 /prisma
+/.claude/settings.json
+/.claude/settings.local.json
+/CLAUDE.local.md
