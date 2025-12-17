@@ -46,7 +46,7 @@
     "dependencies": {
         "@colyseus/core": "0.16.24",
         "@colyseus/monitor": "0.16.7",
-        "@colyseus/schema": "3.0.72",
+        "@colyseus/schema": "3.0.74",
         "@colyseus/ws-transport": "0.16.5",
         "@parcel/bundler-default": "2.16.3",
         "@parcel/compressor-raw": "2.16.3",
