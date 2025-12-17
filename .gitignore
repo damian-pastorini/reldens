@@ -14,3 +14,4 @@ winpty.exe.stackdump
 /prisma
 /.claude/settings.json
 /.claude/settings.local.json
+/CLAUDE.local.md
