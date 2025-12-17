@@ -5,31 +5,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project Overview
 
 Reldens is an MMORPG Platform (v4.0.0-beta.39) built on Node.js, designed for developers to create multiplayer games. The platform integrates:
-- **Server**: Colyseus for multiplayer game server
+- **Server**: Colyseus 0.16 for multiplayer game server
 - **Client**: Phaser 3 for game engine, Parcel for bundling
-- **Database**: Supports multiple storage drivers (objection-js, mikro-orm, prisma) with MySQL/MongoDB
+- **Database**: Supports multiple storage drivers (objection-js, mikro-orm, prisma)
 - **Architecture**: Client-server with authoritative server, real-time synchronization via WebSockets
 
-## Project Metadata
-
-- **Name**: reldens
-- **Version**: 4.0.0-beta.39
-- **Author**: Damian A. Pastorini
-- **License**: MIT
-- **Homepage**: https://www.reldens.com/
-- **Repository**: https://github.com/damian-pastorini/reldens.git
-- **Demo**: https://dev.reldens.com/
-- **Discord Community**: https://discord.gg/HuJMxUY
-- **Support**: Ko-fi, Patreon
-- **Node Version**: >= 20.0.0
-
-## Project Structure
-
-### Main Project
-- `reldens/lib` - Main Reldens source code
+**Node Version**: >= 20.0.0
 
 ### Sub-Packages
-All related packages are:
 - **@reldens/utils** - Core utilities, Shortcuts class (imported as `sc`), EventsManagerSingleton, Logger
 - **@reldens/server-utils** - Server utilities, FileHandler, configuration helpers
 - **@reldens/storage** - Multi-ORM database layer (ObjectionJS, MikroORM, Prisma)
@@ -37,140 +20,29 @@ All related packages are:
 - **@reldens/items-system** - Items and inventory system
 - **@reldens/modifiers** - Stats and modifiers system
 - **@reldens/skills** - Skills and abilities system
-- **@reldens/tile-map-generator** - Procedural map generation
-- **@reldens/game-data-generator** - Game data generation utilities
-- **@reldens/markdown** - Markdown processing utilities
-- **tile-map-optimizer** - Map optimization tools
 
-## Key Commands
+## Essential Commands
 
-### CLI Binaries
-The project provides three main CLI entry points:
-- `reldens` - Main command router (bin/reldens-commands.js)
-- `reldens-generate` - Data generation tool (bin/generate.js)
-- `reldens-import` - Data import tool (bin/import.js)
-
-### Development & Building
 ```bash
-# Run tests
+# Testing
 npm test
-# Or with filters
 node tests/manager.js --filter="test-name" --break-on-error
 
-# Build commands (via reldens CLI)
-reldens buildCss [theme-name]           # Build theme styles
-reldens buildClient [theme-name]        # Build client HTML
+# Building
 reldens buildSkeleton                   # Build both styles and client
 reldens fullRebuild                     # Complete rebuild from scratch
 
-# Theme & asset management
-reldens installDefaultTheme             # Install default theme
-reldens copyAssetsToDist                # Copy assets to dist folder
-reldens copyDefaultAssets               # Copy default assets to dist/assets
-reldens copyDefaultTheme                # Copy default theme to project
-reldens copyPackage                     # Copy reldens module packages to project
-reldens resetDist                       # Delete and recreate dist folder
-reldens removeDist                      # Delete dist folder only
-
-# Database & entities
+# Database
 reldens generateEntities [--override]   # Generate entities from database schema
-# This reads .env credentials and uses @reldens/storage to generate entities
-# Generated entities are placed in the generated-entities/ directory
 
-# Direct entity generation with connection arguments (bypasses .env):
-npx reldens-storage generateEntities --user=reldens --pass=reldens --database=reldens_clean --driver=objection-js
-```
-
-### Prisma-Specific Commands
-
-**IMPORTANT:** Prisma requires a separate client generation step before entities can be generated.
-
-```bash
-# Step 1: Generate Prisma schema and client from existing database
-# This introspects the database and creates prisma/schema.prisma + prisma/client/
-npx reldens-storage-prisma --host=localhost --port=3306 --user=reldens --password=reldens --database=reldens_clean --clientOutputPath=./client
-
-# Step 2: Generate Reldens entities using Prisma driver
-npx reldens-storage generateEntities --user=reldens --pass=reldens --database=reldens_clean --driver=prisma
-
-# Full parameter list for reldens-storage-prisma:
-# --host          Database host (default: localhost)
-# --port          Database port (default: 3306)
-# --user          Database username (required)
-# --password      Database password (required)
-# --database      Database name (required)
-# --clientOutputPath  Output path for Prisma client (default: ./client)
-# --schemaPath    Path for schema.prisma file (default: ./prisma)
-```
-
-**Prisma Workflow:**
-1. Run `reldens-storage-prisma` to generate schema.prisma and Prisma client
-2. The command introspects your MySQL database and creates the Prisma schema
-3. Run `reldens-storage generateEntities` with `--driver=prisma` to generate Reldens entities
-4. Set `RELDENS_STORAGE_DRIVER=prisma` in your `.env` file to use Prisma at runtime
-
-**Environment Variables for Prisma:**
-```
-RELDENS_STORAGE_DRIVER=prisma
-RELDENS_DB_URL=mysql://user:password@host:port/database
-```
-
-### Installation & Setup
-```bash
-reldens createApp                       # Create base project skeleton
-reldens installSkeleton                 # Install skeleton
-reldens copyEnvFile                     # Copy .env.dist template
-reldens copyKnexFile                    # Copy knexfile.js template
-reldens copyIndex                       # Copy index.js template
-reldens copyServerFiles                 # Reset dist and run fullRebuild
-reldens copyNew                         # Copy all default files for fullRebuild
-reldens help                            # Show all available commands
-reldens test                            # Test file system access
-```
-
-### Data Generation Tools
-```bash
-# Generate game data (via reldens-generate)
-reldens-generate players-experience     # Generate player XP per level
-reldens-generate monsters-experience    # Generate monster XP per level
-reldens-generate attributes             # Generate attributes per level
-reldens-generate maps                   # Generate maps with various loaders
-
-# Data import (via reldens-import)
-reldens-import [data-type]              # Import game data
-```
-
-### User Management Commands
-```bash
-# Create admin user
+# User management
 reldens createAdmin --user=username --pass=password --email=email@example.com
-# Creates an admin user with role_id from config (default: 1)
-# Validates email format and username/email uniqueness
-# Password is automatically encrypted using PBKDF2 SHA-512
-
-# Reset user password
 reldens resetPassword --user=username --pass=newpassword
-# Resets password for existing user
-# Password is automatically encrypted
-# Works for any user (admin or regular)
-
-# Examples:
-reldens createAdmin --user=admin --pass=SecurePass123 --email=admin@yourgame.com
-reldens resetPassword --user=someuser --pass=NewSecurePass456
 ```
 
-**Implementation Details:**
-- Service classes: `CreateAdmin` and `ResetPassword` in `lib/users/server/`
-- Both receive `serverManager` in constructor (following importer pattern)
-- Services return boolean result with `error` property for failure details
-- `createAdmin` uses existing `usersRepository.create()` with `role_id` in userData
-- `resetPassword` uses `usersRepository.loadOneBy()` and `updateById()`
-- Admin role ID from config: `server/admin/roleId` (default: 1)
-- Email validation via `sc.validateInput(email, 'email')` from `@reldens/utils`
-- Commands initialize ServerManager automatically from `.env` (pattern from `bin/import.js`)
-- Password encryption uses `Encryptor` from `@reldens/server-utils` (100k iterations, SHA-512)
+**Full command reference**: See `.claude/commands-reference.md`
 
-## Architecture & Code Structure
+## Architecture Overview
 
 ### Client-Server Organization
 The codebase follows a **client/server split architecture** within each feature module:
@@ -189,239 +61,27 @@ lib/
 - **Client**: `client.js` → `lib/game/client/game-manager.js` (GameManager)
 - **Theme**: `theme/index.js` initializes client with custom plugins
 
-### All Feature Modules (23 Total)
+### Feature Modules (23 Total)
+The platform includes 23 feature modules: Game, Rooms, World, Config, Features, Actions, Inventory, Respawn, Rewards, Scores, Teams, Users, Chat, Audio, Prediction, Admin, Firebase, Ads, Import, Objects, Snippets, Bundlers.
 
-The platform includes 23 feature modules under `lib/`:
+**Detailed list**: See `.claude/feature-modules.md`
 
-**Core/Game Management:**
-
-**Game** (`lib/game/`): Core game engine
-- ServerManager - Main server orchestrator (lib/game/server/manager.js)
-- GameManager - Main client orchestrator (lib/game/client/game-manager.js)
-- Data server configuration
-- Entities loader
-- Maps loader
-- Login manager
-- Installation scripts
-- Theme manager
-
-**Rooms** (`lib/rooms/`): Core multiplayer room system
-- `server/scene.js` (RoomScene): Main game room with physics, collisions, objects
-- `server/login.js` (RoomLogin): Authentication and player initialization
-- Client connects via `room-events.js` to handle server state synchronization
-
-**World** (`lib/world/`): Physics engine integration (P2.js), pathfinding, collisions
-- Authoritative physics calculations
-- Collision detection and handling
-- Pathfinding algorithms
-
-**Config** (`lib/config/`): Configuration management
-- Database-driven configuration
-- Environment variable handling
-- Runtime configuration overrides
-
-**Features** (`lib/features/`): Plugin-like modular system
-- Features are loaded from database (`features` table with `is_enabled` flag)
-- `server/manager.js` (FeaturesManager) dynamically loads enabled features
-- Each feature can hook into events via `setup()` method
-
-**Gameplay Systems:**
-
-**Actions** (`lib/actions/`): Combat system (PvP/PvE), skills, battle mechanics
-- Server handles authoritative battle calculations
-- Client receives battle states and renders animations
-- `server/battle.js` - Main battle system
-- `server/pve.js` - PvE combat logic
-- `server/pvp.js` - PvP combat logic
-
-**Inventory** (`lib/inventory/`): Items system with equipment and usable items
-- Integrates with @reldens/items-system
-- Item management, equipment slots, consumables
-
-**Respawn** (`lib/respawn/`): Player and NPC respawn system
-- Death handling
-- Respawn points configuration
-
-**Rewards** (`lib/rewards/`): Loot and rewards system
-- Drop tables
-- Reward distribution
-
-**Scores** (`lib/scores/`): Leaderboards and ranking system
-- Player scores tracking
-- Global leaderboards
-
-**Teams** (`lib/teams/`): Party/guild system
-- Team formation
-- Shared objectives
-- Clan levels and bonuses
-
-**Player Systems:**
-
-**Users** (`lib/users/`): Authentication, registration, player management
-- Supports guest users, Firebase authentication
-- `server/login-manager.js` handles all auth flows
-- Player creation and management
-
-**Chat** (`lib/chat/`): Multi-channel chat (global, room, private messages)
-- Message types and tabs
-- Real-time messaging
-
-**Audio** (`lib/audio/`): Sound and music system
-- Background music management
-- Sound effects for actions and events
-- Audio configuration per scene/room
-
-**Prediction** (`lib/prediction/`): Client-side prediction system
-- Reduces perceived latency
-- Smooths player movement
-
-**Integration/Support:**
-
-**Admin** (`lib/admin/`): Admin panel integration with @reldens/cms
-- Manages game configuration through web interface
-- Handles entity CRUD operations
-- Supports hot-plug configuration updates
-
-**Firebase** (`lib/firebase/`): Firebase integration
-- Firebase authentication
-- Client-side Firebase SDK integration
-
-**Ads** (`lib/ads/`): Advertisement integration system
-- Third-party ad network support (CrazyGames, GameMonetize)
-- Ad placement configuration
-
-**Import** (`lib/import/`): Data import utilities
-- File handlers
-- MIME type detection
-- Bulk data import tools
-
-**Objects** (`lib/objects/`): Game objects (NPCs, interactables, respawn areas)
-- `server/manager.js` loads and manages room objects
-- Objects can listen to messages via `listenMessages` interface
-
-**Snippets** (`lib/snippets/`): Reusable code snippets and utilities
-- Common helper functions
-- Shared utilities across modules
-
-**Bundlers** (`lib/bundlers/`): Asset bundling drivers
-- Parcel integration
-- CSS and JavaScript bundling
-- Theme asset compilation
-
-### Configuration System
+## Configuration System
 
 Reldens uses a **database-driven configuration** with runtime overrides:
 
-1. **Database Config** (`config` table):
-    - Path-based keys (e.g., `server/rooms/disposeTimeout`)
-    - Scoped by `scope` field (server/client)
-    - Loaded by `ConfigManager` and exposed as nested objects
+1. **Database Config** (`config` table): Path-based keys, scoped by `scope` field
+2. **Environment Variables** (`.env`): Prefix `RELDENS_*` for all settings
+3. **Custom Classes**: Passed via `customClasses` to override defaults
 
-2. **Environment Variables** (`.env`):
-    - Prefix: `RELDENS_*`
-    - Database credentials, server settings, feature flags
-    - See `lib/game/server/install-templates/.env.dist` for all options
-
-3. **Custom Classes**: Passed via `customClasses` to override default implementations
-
-### Environment Variables Reference
-
-**Application Server:**
-- `NODE_ENV` - Environment mode (production/development)
-- `RELDENS_DEFAULT_ENCODING` - Default encoding (default: utf8)
-- `RELDENS_APP_HOST` - Application host
-- `RELDENS_APP_PORT` - Application port
-- `RELDENS_PUBLIC_URL` - Public URL for the application
-
-**HTTPS Configuration:**
-- `RELDENS_EXPRESS_USE_HTTPS` - Enable HTTPS
-- `RELDENS_EXPRESS_HTTPS_PRIVATE_KEY` - Private key path
-- `RELDENS_EXPRESS_HTTPS_CERT` - Certificate path
-- `RELDENS_EXPRESS_HTTPS_CHAIN` - Certificate chain path
-- `RELDENS_EXPRESS_HTTPS_PASSPHRASE` - HTTPS passphrase
-
-**Express Server:**
-- `RELDENS_USE_EXPRESS_JSON` - Enable JSON parsing
-- `RELDENS_EXPRESS_JSON_LIMIT` - JSON payload limit
-- `RELDENS_EXPRESS_URLENCODED_LIMIT` - URL encoded limit
-- `RELDENS_GLOBAL_RATE_LIMIT` - Global rate limiting
-- `RELDENS_TOO_MANY_REQUESTS_MESSAGE` - Rate limit message
-- `RELDENS_USE_URLENCODED` - Enable URL encoding
-- `RELDENS_USE_HELMET` - Enable Helmet security
-- `RELDENS_USE_XSS_PROTECTION` - Enable XSS protection
-- `RELDENS_USE_CORS` - Enable CORS
-- `RELDENS_CORS_ORIGIN` - CORS origin
-- `RELDENS_CORS_METHODS` - CORS methods
-- `RELDENS_CORS_HEADERS` - CORS headers
-- `RELDENS_EXPRESS_SERVE_HOME` - Serve dynamic home page
-- `RELDENS_EXPRESS_TRUSTED_PROXY` - Trusted proxy
-- `RELDENS_EXPRESS_RATE_LIMIT_MS` - Rate limit window (default: 60000)
-- `RELDENS_EXPRESS_RATE_LIMIT_MAX_REQUESTS` - Max requests per window (default: 30)
-- `RELDENS_EXPRESS_RATE_LIMIT_APPLY_KEY_GENERATOR` - Apply key generator
-- `RELDENS_EXPRESS_SERVE_STATICS` - Serve static files
-
-**Admin Panel:**
-- `RELDENS_ADMIN_ROUTE_PATH` - Admin panel route path
-- `RELDENS_ADMIN_SECRET` - Admin authentication secret
+**Key Environment Variables:**
+- `RELDENS_STORAGE_DRIVER` - Storage driver (objection-js, mikro-orm, prisma)
+- `RELDENS_DB_HOST`, `RELDENS_DB_PORT`, `RELDENS_DB_NAME`, `RELDENS_DB_USER`, `RELDENS_DB_PASSWORD`
 - `RELDENS_HOT_PLUG` - Enable hot-plug configuration updates (0/1)
 
-**Colyseus Monitor:**
-- `RELDENS_MONITOR` - Enable Colyseus monitor
-- `RELDENS_MONITOR_AUTH` - Enable monitor authentication
-- `RELDENS_MONITOR_USER` - Monitor username
-- `RELDENS_MONITOR_PASS` - Monitor password
+**Full environment variables list**: See `.claude/environment-variables.md`
 
-**Storage & Database:**
-- `RELDENS_STORAGE_DRIVER` - Storage driver (objection-js, mikro-orm, prisma)
-- `RELDENS_DB_CLIENT` - Database client (mysql, mysql2, mongodb)
-- `RELDENS_DB_HOST` - Database host
-- `RELDENS_DB_PORT` - Database port
-- `RELDENS_DB_NAME` - Database name
-- `RELDENS_DB_USER` - Database username
-- `RELDENS_DB_PASSWORD` - Database password
-- `RELDENS_DB_POOL_MIN` - Connection pool minimum (default: 2)
-- `RELDENS_DB_POOL_MAX` - Connection pool maximum (default: 10)
-- `RELDENS_DB_LIMIT` - Query limit (default: 0)
-- `RELDENS_DB_URL` - Full database URL (auto-generated if not specified)
-- `RELDENS_DB_URL_OPTIONS` - Additional URL options
-
-**Logging:**
-- `RELDENS_LOG_LEVEL` - Log level (0-7, default: 7)
-- `RELDENS_ENABLE_TRACE_FOR` - Enable trace for specific levels (emergency,alert,critical)
-
-**Mailer:**
-- `RELDENS_MAILER_ENABLE` - Enable email functionality
-- `RELDENS_MAILER_SERVICE` - Mail service provider
-- `RELDENS_MAILER_HOST` - SMTP host
-- `RELDENS_MAILER_PORT` - SMTP port
-- `RELDENS_MAILER_USER` - SMTP username
-- `RELDENS_MAILER_PASS` - SMTP password
-- `RELDENS_MAILER_FROM` - From email address
-- `RELDENS_MAILER_FORGOT_PASSWORD_LIMIT` - Forgot password attempts limit (default: 4)
-
-**Bundler:**
-- `RELDENS_ALLOW_RUN_BUNDLER` - Allow bundler execution (default: 1)
-- `RELDENS_FORCE_RESET_DIST_ON_BUNDLE` - Force reset dist on bundle
-- `RELDENS_FORCE_COPY_ASSETS_ON_BUNDLE` - Force copy assets on bundle
-- `RELDENS_JS_SOURCEMAPS` - Enable JavaScript source maps
-- `RELDENS_CSS_SOURCEMAPS` - Enable CSS source maps
-
-**Game Server:**
-- `RELDENS_PING_INTERVAL` - Ping interval in ms (default: 5000)
-- `RELDENS_PING_MAX_RETRIES` - Max ping retries (default: 3)
-
-**Firebase:**
-- `RELDENS_FIREBASE_ENABLE` - Enable Firebase authentication
-- `RELDENS_FIREBASE_API_KEY` - Firebase API key
-- `RELDENS_FIREBASE_APP_ID` - Firebase app ID
-- `RELDENS_FIREBASE_AUTH_DOMAIN` - Firebase auth domain
-- `RELDENS_FIREBASE_DATABASE_URL` - Firebase database URL
-- `RELDENS_FIREBASE_PROJECT_ID` - Firebase project ID
-- `RELDENS_FIREBASE_STORAGE_BUCKET` - Firebase storage bucket
-- `RELDENS_FIREBASE_MESSAGING_SENDER_ID` - Firebase sender ID
-- `RELDENS_FIREBASE_MEASUREMENTID` - Firebase measurement ID
-
-### Events System
+## Events System
 
 The platform uses **@reldens/utils EventsManagerSingleton** for extensibility:
 
@@ -436,221 +96,10 @@ The platform uses **@reldens/utils EventsManagerSingleton** for extensibility:
 - `reldens.startGameAfter` - Game initialized
 - `reldens.roomLoginOnAuth` - Custom authentication logic
 
-**Event Usage**: Server plugins and theme plugins hook events in `setup()` method
-
-### Storage & Entity Management
-
-**Entity Generation Workflow**:
-1. Define database schema (SQL migrations in `migrations/`)
-2. Run `reldens generateEntities --override`
-3. Entities are generated in `generated-entities/`
-4. Models in each feature's `server/models/` extend generated entities
-
-**Storage Drivers**:
-- `objection-js` (default): Uses Knex.js for SQL, direct database access, no validation
-- `mikro-orm`: ORM with decorators, supports MongoDB
-- `prisma`: Modern ORM with type safety, custom validation, database default support
-- Configured via `RELDENS_STORAGE_DRIVER` in `.env`
-
-**Driver Differences:**
-
-*ObjectionJS:*
-- Direct SQL via Knex query builder
-- No field validation before database
-- Database handles defaults and constraints
-- Foreign keys as direct field values
-- Less informative error messages
-
-*Prisma:*
-- Type-safe Prisma Client
-- Custom `ensureRequiredFields()` validation before database
-- Skips validation for fields with database defaults
-- Foreign keys use relation connect syntax: `{players: {connect: {id: 1001}}}`
-- VARCHAR foreign key support
-- Better error messages for missing required fields
-- Metadata-driven field type casting
-
-**Entity Access and Storage System Architecture**:
-
-**CRITICAL: Understanding getEntity() Return Type**
-
-`dataServer.getEntity()` returns a `BaseDriver` instance from `@reldens/storage`, NOT an Entity or Model class.
-
-**What getEntity() Returns:**
-```javascript
-// Returns BaseDriver instance (or ObjectionJsDriver, PrismaDriver, MikroOrmDriver subclass)
-let statsRepository = this.dataServer.getEntity('stats');
-
-// BaseDriver provides unified interface across all storage drivers:
-await statsRepository.create({key: 'hp', label: 'Health Points'});
-await statsRepository.loadAll();
-await statsRepository.loadBy('key', 'hp');
-await statsRepository.loadOneBy('key', 'hp');
-await statsRepository.updateById(1, {label: 'HP'});
-await statsRepository.deleteById(1);
-```
-
-**Type Annotation for Repository Properties:**
-```javascript
-/**
- * @typedef {import('@reldens/storage').BaseDriver} BaseDriver
- */
-
-// Correct - driver-agnostic type
-/** @type {BaseDriver} */
-this.statsRepository = this.dataServer.getEntity('stats');
-
-// WRONG - Entity classes are for admin panel config only
-/** @type {StatsEntity} */  // ❌ WRONG
-this.statsRepository = this.dataServer.getEntity('stats');
-
-// WRONG - Model classes are driver-specific (objection-js/prisma/mikro-orm)
-/** @type {StatsModel} */  // ❌ WRONG
-this.statsRepository = this.dataServer.getEntity('stats');
-```
-
-**Storage System Component Breakdown:**
-
-1. **Entity Classes** (`generated-entities/entities/[table]-entity.js`):
-   - Purpose: Admin panel configuration ONLY
-   - Define property metadata (types, required fields, display names)
-   - Define edit/show/list properties for admin UI
-   - Example: `StatsEntity.propertiesConfig()` returns admin panel config
-   - Never used for database operations
-
-2. **Model Classes** (`generated-entities/models/{driver}/[table]-model.js`):
-   - Purpose: ORM-specific model definitions
-   - Driver-specific paths:
-     - `models/objection-js/stats-model.js` - ObjectionJS
-     - `models/prisma/stats-model.js` - Prisma
-     - `models/mikro-orm/stats-model.js` - MikroORM
-   - Define table names, relations, schema
-   - Wrapped by BaseDriver before use
-
-3. **BaseDriver** (`@reldens/storage/lib/base-driver.js`):
-   - Purpose: Unified database interface
-   - Wraps raw Model classes
-   - Provides consistent API across all storage drivers
-   - THIS IS WHAT `getEntity()` RETURNS
-   - Methods: create, load, loadBy, loadOneBy, update, delete, count, etc.
-   - Driver implementations:
-     - `ObjectionJsDriver` - uses Knex query builder
-     - `PrismaDriver` - uses Prisma Client
-     - `MikroOrmDriver` - uses MikroORM EntityManager
-
-4. **BaseDataServer** (`@reldens/storage/lib/base-data-server.js`):
-   - Purpose: Manages database connection and entity registry
-   - Has `EntityManager` for storing BaseDriver instances
-   - `getEntity(key)` retrieves BaseDriver from EntityManager
-   - Driver implementations:
-     - `ObjectionJsDataServer`
-     - `PrismaDataServer`
-     - `MikroOrmDataServer`
-
-**Entity Loading Flow:**
-
-1. `EntitiesLoader.loadEntities()` (lib/game/server/entities-loader.js:41)
-   - Checks `RELDENS_STORAGE_DRIVER` env var (default: 'prisma')
-   - Loads from `generated-entities/models/{driver}/registered-models-{driver}.js`
-   - Returns `{entities, entitiesRaw, translations}`
-
-2. `DataServerInitializer.initializeEntitiesAndDriver()` (lib/game/server/data-server-initializer.js:55)
-   - Creates DataServer instance: `new DriversMap[storageDriver](config)`
-   - DataServer generates BaseDriver instances for each entity
-   - Stores in EntityManager registry
-
-3. `dataServer.getEntity(key)` returns BaseDriver from EntityManager
-
-**Usage Examples:**
-
-```javascript
-// 1. Basic CRUD operations
-let statsRepo = this.dataServer.getEntity('stats');
-let newStat = await statsRepo.create({key: 'hp', label: 'Health'});
-let allStats = await statsRepo.loadAll();
-let hpStat = await statsRepo.loadOneBy('key', 'hp');
-await statsRepo.updateById(hpStat.id, {base_value: 100});
-
-// 2. With relations
-let skillData = await this.dataServer
-    .getEntity('skillsClassLevelUpAnimations')
-    .loadAllWithRelations();
-
-// 3. Accessing related data from loaded instances
-let classPathModel = await this.dataServer.getEntity('skillsClassPath').loadById(1);
-let relatedSkills = classPathModel.related_skills_levels_set.related_skills_levels;
-```
-
-**Important Notes**:
-- ALWAYS use `BaseDriver` type for repository properties
-- Entity classes are NEVER used for database operations
-- Model classes are wrapped by BaseDriver - never accessed directly
-- Storage driver is configurable: objection-js (default was objection-js, now prisma), prisma, mikro-orm
-- Relations can be nested
-- Entity relations keys are defined in `generated-entities/entities-config.js`
-- Custom entity overrides are in `lib/[plugin-folder]/server/entities` or `lib/[plugin-folder]/server/models`
-
-**Generated Entities Structure:**
-The `generated-entities/` directory contains:
-- `entities/` - 60+ auto-generated entity classes for all database tables
-- `models/` - Custom entity overrides (extend generated entities)
-- `entities-config.js` - Entity relationship mappings and configuration
-- `entities-translations.js` - Translation/label mappings for admin panel
-
-**All Entity Types:**
-Ads (ads, ads-banner, ads-event-video, ads-played, ads-providers, ads-types),
-Audio (audio, audio-categories, audio-markers, audio-player-config),
-Chat (chat, chat-message-types),
-Clans (clan, clan-levels, clan-levels-modifiers, clan-members),
-Config (config, config-types),
-Drops (drops-animations),
-Features (features),
-Items (items-group, items-inventory, items-item, items-item-modifiers, items-types),
-Locale (locale, users-locale),
-Objects (objects, objects-animations, objects-assets, objects-items-inventory, objects-items-requirements, objects-items-rewards, objects-skills, objects-stats, objects-types),
-Operations (operation-types),
-Players (players, players-state, players-stats),
-Respawn (respawn),
-Rewards (rewards, rewards-events, rewards-events-state, rewards-modifiers),
-Rooms (rooms, rooms-change-points, rooms-return-points),
-Scores (scores, scores-detail),
-Skills (skills-class-level-up-animations, skills-class-path, skills-class-path-level-labels, skills-class-path-level-skills, skills-groups, skills-levels, skills-levels-modifiers, skills-levels-modifiers-conditions, skills-levels-set, skills-owners-class-path, skills-skill, skills-skill-animations, skills-skill-attack, skills-skill-group-relation, skills-skill-owner-conditions, skills-skill-owner-effects, skills-skill-owner-effects-conditions, skills-skill-physical-data, skills-skill-target-effects, skills-skill-target-effects-conditions, skills-skill-type),
-Snippets (snippets),
-Stats (stats, target-options),
-Users (users, users-login)
-
-### Theme & Customization
-
-**Theme Structure** (`theme/`):
-- `index.js.dist`: Theme initialization template
-- `plugins/`: Custom client/server plugins for game-specific logic
-    - `client-plugin.js`: Hooks client events
-    - `server-plugin.js`: Hooks server events
-    - `bot.js`: Bot/NPC AI implementation
-    - `objects/`: Custom game objects
-- `default/`: Default theme assets
-    - `index.html`: Main game HTML (14KB)
-    - `es-index.html`: ES module variant
-    - `config.js`: Theme-specific configuration
-    - `css/`: Stylesheets
-    - `assets/`: Images, sprites, audio files
-    - `site.webmanifest`: PWA manifest
-- `admin/`: Admin panel customizations
-
-**Theme Management:**
-The ThemeManager (`lib/game/server/theme-manager.js`) handles:
-- Theme path resolution
-- Asset copying and bundling
-- CSS compilation
-- Client HTML generation
-- Integration with Parcel bundler
-
 **Plugin Pattern**:
 ```javascript
-class ServerPlugin
-{
-    setup({events})
-    {
+class ServerPlugin {
+    setup({events}) {
         events.on('reldens.serverConfigFeaturesReady', (props) => {
             // Custom logic here
         });
@@ -658,91 +107,75 @@ class ServerPlugin
 }
 ```
 
-### Colyseus Room Lifecycle
+## Storage & Entity Management
 
-**RoomScene** (main game room) lifecycle:
-1. `onCreate(options)`: Initialize world, physics, objects
-2. Player joins → `onJoin(client, options)`
-3. Message handling → `onMessage(client, message)`
-4. Player leaves → `onLeave(client, consented)`
-5. Room disposal → `onDispose()`
+### CRITICAL: Understanding getEntity()
 
-**State Synchronization (Colyseus 0.16)**:
-- Server uses Colyseus Schema for state (see `lib/rooms/server/state.js`)
-- Client uses `StateCallbacksManager` and `RoomStateEntitiesManager` for Colyseus 0.16 callback handling
-- All schema callbacks require `getStateCallbacks(room)` wrapper in Colyseus 0.16
-- Manager classes located in `lib/game/client/communication/`:
-  - `state-callbacks-manager.js` - Wraps `getStateCallbacks()`, provides `onAdd()`, `onRemove()`, `onChange()`, `listen()` methods
-  - `room-state-entities-manager.js` - Static factory methods for common entity callback patterns
-- **CRITICAL**: Collections from `wrappedState[collectionName]` are already wrapped - don't wrap again
-- **CRITICAL**: Entities received in callbacks must be wrapped before calling `listen()`
-- Players, objects, and world state auto-sync to clients
+`dataServer.getEntity()` returns a `BaseDriver` instance from `@reldens/storage`, NOT an Entity or Model class.
 
-### Colyseus 0.16 Migration - Memory Leaks and State Synchronization Issues
-
-**CRITICAL TIMING ISSUE - Async State Synchronization**
-
-Colyseus 0.16 introduced asynchronous state synchronization that differs from 0.15:
-
-**In Colyseus 0.15:**
-- `room.state` was immediately available when `joinOrCreate()` resolved
-- Synchronous checks like `if(room.state)` always worked after join
-
-**In Colyseus 0.16:**
-- `room.state` synchronization is asynchronous and may not be ready immediately after `joinOrCreate()` resolves
-- Synchronous checks can fail if executed too early
-- Must use reactive patterns or wait for state
-
-**The Problem Pattern (WRONG):**
 ```javascript
-async joinRoom() {
-    let room = await this.client.joinOrCreate('game');
-    this.events.emit('reldens.joinedRoom', room);  // Fires immediately
-    await this.activateRoom(room);  // Fires after
-}
+// Correct - returns BaseDriver
+let statsRepository = this.dataServer.getEntity('stats');
 
+// BaseDriver provides unified interface:
+await statsRepository.create({key: 'hp', label: 'Health Points'});
+await statsRepository.loadAll();
+await statsRepository.loadOneBy('key', 'hp');
+await statsRepository.updateById(1, {label: 'HP'});
+```
+
+**Type Annotation:**
+```javascript
+/** @type {import('@reldens/storage').BaseDriver} */
+this.statsRepository = this.dataServer.getEntity('stats');
+```
+
+**Storage Drivers:**
+- `prisma` (current default): Modern ORM with type safety, custom validation
+- `objection-js`: Uses Knex.js, direct SQL, no validation
+- `mikro-orm`: ORM with decorators, supports MongoDB
+
+**Detailed architecture**: See `.claude/storage-architecture.md`
+**Entity list**: See `.claude/entities-reference.md`
+
+## Theme & Customization
+
+**Theme Structure** (`theme/`):
+- `plugins/` - Custom client/server plugins for game-specific logic
+- `default/` - Default theme assets (HTML, CSS, sprites, audio)
+- `admin/` - Admin panel customizations
+
+**Theme Management:**
+ThemeManager (`lib/game/server/theme-manager.js`) handles asset copying, bundling, and CSS compilation.
+
+## Colyseus 0.16 - CRITICAL State Synchronization
+
+**CRITICAL TIMING ISSUE**: Colyseus 0.16 state synchronization is asynchronous.
+
+### Problem Pattern (WRONG)
+```javascript
 listenMessages(room, gameManager) {
     if(!room.state || !room.state.bodies){
-        return false;  // Returns false, callbacks never set up!
+        return false;  // ❌ WRONG - callbacks never set up!
     }
     this.setAddBodyCallback(room, gameManager);
-    this.setRemoveBodyCallback(room);
 }
 ```
 
-**Why It Breaks:**
-1. `reldens.joinedRoom` event fires before `room.state` is synced from server
-2. Code hooked to this event runs `listenMessages()` immediately
-3. Synchronous check `if(!room.state || !room.state.bodies)` returns false
-4. Function returns early - callbacks never set up
-5. Entities (NPCs, bullets) never receive state updates on client
-
-**The Correct Pattern (RIGHT):**
+### Correct Pattern (RIGHT)
 ```javascript
 listenMessages(room, gameManager) {
-    room.onMessage('*', (message) => {
-        this.startObjectAnimation(message, gameManager);
-        this.objectBattleEndAnimation(message, gameManager);
-    });
     if(!room.state || !room.state.bodies){
         room.onStateChange.once((state) => {
-            this.setAddBodyCallback(room, gameManager);
-            this.setRemoveBodyCallback(room);
+            this.setAddBodyCallback(room, gameManager);  // ✅ Wait for state
         });
         return false;
     }
     this.setAddBodyCallback(room, gameManager);
-    this.setRemoveBodyCallback(room);
 }
 ```
 
-**Why It Works:**
-1. If state not ready, use `room.onStateChange.once()` to wait for state sync
-2. Callbacks set up reactively when state becomes available
-3. If state already ready, callbacks set up immediately
-4. Handles both timing scenarios correctly
-
-**Alternative Pattern - Use Reactive Callbacks:**
+**Alternative - Use Reactive Patterns:**
 ```javascript
 activateRoom(room) {
     this.playersManager = RoomStateEntitiesManager.onEntityAdd(
@@ -750,393 +183,53 @@ activateRoom(room) {
         'players',
         (player, key) => {
             this.handlePlayerAdded(player, key);
-            this.listenPlayerChanges(player, key);
         }
     );
 }
 ```
 
-**Why This Works:**
-- `onEntityAdd()` is reactive - triggers when entities appear in collection
-- Works regardless of when state syncs
-- Automatically handles timing issues
-- Used by `room-events.js` for players (works correctly)
+**CRITICAL**: Colyseus auto-cleans all listeners. Never store manager references or add manual disposal code unless explicitly needed.
 
-**MEMORY LEAK PREVENTION - Auto-Cleanup Behavior**
+**Full migration guide**: See `.claude/colyseus-0.16-migration.md`
 
-**CRITICAL: Colyseus Auto-Cleans Listeners in Both 0.15 and 0.16**
-
-Colyseus automatically cleans up all listeners in these scenarios:
-1. Entity removed from MapSchema collection → entity listeners cleaned
-2. Room disposed → all room and state listeners cleaned
-3. Client disconnects → all room listeners cleaned
-
-**WRONG Pattern - Manual Manager Tracking (Creates Potential Memory Leaks):**
-```javascript
-class ObjectsPlugin {
-    constructor() {
-        this.bodyPropertyManagers = {};  // ❌ WRONG - unnecessary tracking
-    }
-
-    setOnChangeBodyCallback(body, key, room, gameManager) {
-        let bodyManager = RoomStateEntitiesManager.createManager(room);
-        this.bodyPropertyManagers[key] = bodyManager;  // ❌ WRONG - storing reference
-        bodyManager.listen(body, propertyKey, (newValue, previousValue) => {
-            // Handle change
-        });
-    }
-
-    setRemoveBodyCallback(room) {
-        RoomStateEntitiesManager.onEntityRemove(room, 'bodies', (body, key) => {
-            if(this.bodyPropertyManagers[key]){
-                this.bodyPropertyManagers[key].dispose();  // ❌ WRONG - manual disposal
-                delete this.bodyPropertyManagers[key];
-            }
-            this.bullets[key].destroy();
-            delete this.bullets[key];
-        });
-    }
-
-    disposeManagers() {
-        for(let key of Object.keys(this.bodyPropertyManagers)){
-            this.bodyPropertyManagers[key].dispose();  // ❌ WRONG - unnecessary
-            delete this.bodyPropertyManagers[key];
-        }
-    }
-}
-```
-
-**Why This Is Wrong:**
-1. Creates property to track managers (`this.bodyPropertyManagers`)
-2. Stores manager reference for each entity
-3. Manually disposes managers when entities removed
-4. Adds cleanup code that never existed in 0.15
-5. **Colyseus already does this automatically!**
-6. If cleanup code has bugs, creates memory leaks
-7. Increases code complexity unnecessarily
-
-**CORRECT Pattern - Let Colyseus Auto-Clean:**
-```javascript
-class ObjectsPlugin {
-    setOnChangeBodyCallback(body, key, room, gameManager) {
-        let bodyManager = RoomStateEntitiesManager.createManager(room);  // Local variable only
-        let bodyProperties = Object.keys(body);
-        for(let propertyKey of bodyProperties){
-            bodyManager.listen(body, propertyKey, async (newValue, previousValue) => {
-                // Handle property change
-            });
-        }
-    }
-
-    setRemoveBodyCallback(room) {
-        RoomStateEntitiesManager.onEntityRemove(room, 'bodies', (body, key) => {
-            if(-1 === key.indexOf('bullet') || !sc.hasOwn(this.bullets, key)){
-                return false;
-            }
-            this.bullets[key].destroy();
-            delete this.bullets[key];
-        });
-    }
-}
-```
-
-**Why This Is Correct:**
-1. Manager created as local variable - no tracking
-2. No storage of manager references
-3. No manual disposal code
-4. Colyseus auto-cleans when:
-   - Entity removed from `room.state.bodies` collection
-   - Room disposed
-   - Client disconnects
-5. Matches 0.15 behavior exactly
-6. Simpler, less code, fewer bugs
-
-**Event Timing and Execution Order:**
-
-Understanding when events fire helps prevent timing bugs:
-
-```javascript
-async joinGameRoom(roomName, selectedPlayer) {
-    let joinedFirstRoom = await this.client.joinOrCreate(roomName, {
-        selectedPlayer: selectedPlayer.id
-    });
-    await this.emitJoinedRoom(joinedFirstRoom, playerScene);  // Event 1: reldens.joinedRoom
-    await this.activeRoomEvents.activateRoom(joinedFirstRoom);  // Event 2: Activate room
-}
-```
-
-**Execution Order:**
-1. `joinOrCreate()` resolves (state sync may not be complete yet in 0.16)
-2. `reldens.joinedRoom` event fires (line 356 in game-manager.js)
-   - Plugins listen to this via `events.on('reldens.joinedRoom', ...)`
-   - `lib/objects/client/plugin.js:listenMessages()` called here
-   - **State may not be ready at this point!**
-3. `activateRoom()` called (line 359 in game-manager.js)
-   - Uses reactive `onEntityAdd()` patterns
-   - Works regardless of state timing
-   - `lib/game/client/room-events.js` sets up player callbacks here
-
-**Best Practices:**
-
-1. **Use Reactive Patterns When Possible:**
-   - Prefer `onEntityAdd()` over synchronous state checks
-   - Callbacks trigger when entities appear, regardless of timing
-
-2. **Wait for State If Needed:**
-   - If synchronous check required, use `room.onStateChange.once()` as fallback
-   - Ensures callbacks set up even if state not ready
-
-3. **Never Store Manager References Unless Required:**
-   - Managers are lightweight wrappers around cleanup functions
-   - Colyseus auto-cleans when entities removed or room disposed
-   - Only store if you need to explicitly call `dispose()` before entity removal
-
-4. **Don't Add Disposal Code That Didn't Exist in 0.15:**
-   - If it worked in 0.15 without manual cleanup, it works in 0.16
-   - Colyseus auto-cleanup behavior is consistent across versions
-   - Only difference is the callback wrapping syntax
-
-5. **Compare Working vs Broken Code:**
-   - Players work: Use `onEntityAdd()` in `activateRoom()` (reactive)
-   - Bodies broke: Used synchronous check in `listenMessages()` (timing-dependent)
-   - Same pattern → same behavior
-
-**Files Affected in Migration:**
-
-Core client state management:
-- `lib/game/client/communication/state-callbacks-manager.js` - NEW: Wraps `getStateCallbacks()`
-- `lib/game/client/communication/room-state-entities-manager.js` - NEW: Factory methods for entity callbacks
-- `lib/game/client/room-events.js` - Updated: Player callback setup (working example)
-- `lib/objects/client/plugin.js` - Updated: Object/body callback setup (required timing fix)
-
-Server monitoring:
-- `lib/game/server/server.js` - Updated: Monitor API changed in 0.16
-
-Build configuration:
-- `package.json` - Added: `"buffer": "^6.0.3"` dependency for Parcel bundling
-- `theme/default/package.json` - Added: buffer dependency in theme
-
-**Common Migration Mistakes:**
-
-1. ❌ Forgetting to wait for state when using synchronous checks
-2. ❌ Adding unnecessary manager tracking properties
-3. ❌ Creating manual disposal code that Colyseus handles automatically
-4. ❌ Storing manager references when not needed
-5. ❌ Not using reactive patterns (`onEntityAdd`, `onEntityRemove`)
-6. ❌ Assuming 0.16 has same synchronous state behavior as 0.15
-
-**Correct Migration Checklist:**
-
-1. ✅ Wrap all schema callbacks with `StateCallbacksManager` or `RoomStateEntitiesManager`
-2. ✅ Use reactive patterns (`onEntityAdd`) when possible
-3. ✅ Add `room.onStateChange.once()` fallback for synchronous state checks
-4. ✅ Keep managers as local variables unless explicit disposal needed
-5. ✅ Remove manual cleanup code added during migration (Colyseus auto-cleans)
-6. ✅ Test entity addition, removal, and room reconnection
-7. ✅ Verify no memory leaks with Chrome DevTools Memory Profiler
+### Room Lifecycle
+1. `onCreate(options)`: Initialize world, physics, objects
+2. Player joins → `onJoin(client, options)`
+3. Message handling → `onMessage(client, message)`
+4. Player leaves → `onLeave(client, consented)`
+5. Room disposal → `onDispose()`
 
 ## Common Development Patterns
 
 ### Adding a New Feature
 1. Create feature module in `lib/{feature-name}/`
-2. Add database table for feature config in `migrations/`
-3. Create client/server subdirectories with appropriate code
-4. Add feature entry to `features` table in database
-5. Register in `lib/features/server/config-server.js` (ServerCoreFeatures)
-6. Implement `setup()` method to hook into events
+2. Add database table in `migrations/`
+3. Create client/server subdirectories
+4. Add feature entry to `features` table
+5. Register in `lib/features/server/config-server.js`
+6. Implement `setup()` method to hook events
 
 ### Modifying Game Logic
 - **Combat/Skills**: Edit `lib/actions/server/battle.js` or `pve.js`
-- **Player Stats**: Configure via database `stats` table, processed by modifiers system
+- **Player Stats**: Configure via database `stats` table
 - **Room Behavior**: Extend `RoomScene` or hook `reldens.createRoomAfter` event
 - **Client Rendering**: Modify Phaser scenes in `lib/game/client/scene-*.js`
 
 ### Working with Database
-- Always use entity models, never raw SQL queries
+- Always use entity models via `dataServer.getEntity()`, never raw SQL
 - Generated entities are read-only; extend in `server/models/`
 - Use migrations for schema changes
-- Regenerate entities after schema changes
-
-### Entity Overrides and Database Defaults
-
-**Auto-Populated Fields:**
-
-Some fields should be auto-populated by the database or application logic, not manually entered through the admin panel.
-
-**Example: scores_detail.kill_time**
-```javascript
-// Database schema (migrations/production/reldens-install-v4.0.0.sql)
-// `kill_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-
-// Entity override (lib/scores/server/entities/scores-detail-entity-override.js)
-class ScoresDetailEntityOverride extends ScoresDetailEntity {
-    static propertiesConfig(extraProps) {
-        let config = super.propertiesConfig(extraProps);
-        // Remove kill_time from admin panel edit form
-        config.editProperties.splice(config.editProperties.indexOf('kill_time'), 1);
-        return config;
-    }
-}
-
-// Game logic auto-populates when creating through code
-// (lib/scores/server/scores-updater.js)
-let scoreDetailData = {
-    player_id: attacker.player_id,
-    obtained_score: obtainedScore,
-    kill_time: sc.formatDate(new Date()),  // Auto-populated
-    kill_player_id: props.killPlayerId || null,
-    kill_npc_id: props.killNpcId || null,
-};
-```
-
-**How It Works:**
-1. Field removed from `editProperties` - not shown in admin panel
-2. Database has `DEFAULT CURRENT_TIMESTAMP` - auto-fills when missing
-3. Game logic explicitly sets value when creating programmatically
-4. Prisma driver skips validation for fields with database defaults
-
-**Important:** With Prisma driver, validation automatically skips required fields that have database defaults, allowing admin panel creates to succeed even when these fields are excluded from the form.
-
-### Testing
-
-**Test Infrastructure** (`tests/`):
-- `manager.js` - Test orchestrator and runner
-- `run.js` - Test execution script
-- `base-test.js` - Base test class with common utilities
-- `utils.js` - Test helper functions
-- `database-reset-utility.js` - Database reset for tests
-
-**Test Suites:**
-- `test-admin-auth.js` - Admin authentication tests
-- `test-admin-crud.js` - Admin CRUD operation tests
-- `test-admin-features.js` - Feature management tests
-
-**Test Configuration:**
-- `config.json` - Test environment configuration
-
-**Test Fixtures:**
-- `fixtures/crud-test-data.js` - CRUD test data sets
-- `fixtures/entities-list.js` - Entity definitions for testing
-- `fixtures/features-test-data.js` - Feature test scenarios
-- `fixtures/generate-entities-fixtures.js` - Fixture generator
-- Test files: test-file.json, test-file.png, test-audio.mp3
-
-**Running Tests:**
-```bash
-npm test
-# Or with filters
-node tests/manager.js --filter="admin-auth" --break-on-error
-```
-
-### Installation GUI
-
-The `install/` directory contains:
-- Installation web interface (HTML, CSS, assets)
-- Wizard-based installation process
-- Database setup and configuration
-- Initial data seeding
-
-## Key Dependencies
-
-**Game Framework:**
-- `@colyseus/core` (0.16.24) - Multiplayer room management
-- `@colyseus/schema` (3.0.72) - State synchronization
-- `@colyseus/ws-transport` (0.16.24) - WebSocket transport
-- `buffer` (6.0.3) - Buffer polyfill required for Parcel bundling with Colyseus 0.16
-- `colyseus.js` (0.16.22) - Client library
-- `@colyseus/monitor` (0.16.7) - Room monitoring
-
-**Game Engine:**
-- `phaser` (3.90.0) - Client-side rendering and game engine
-- `p2` (0.7.1) - Physics engine
-- `pathfinding` (0.4.18) - Pathfinding algorithms
-
-**Build System:**
-- `@parcel/*` (2.16.1) - 40+ Parcel bundler plugins
-- Asset transformers, optimizers, and packagers
-
-**Database/ORM:**
-- `@reldens/storage` - Multi-driver abstraction layer
-- `knex` - Query builder
-- `objection` - ObjectionJS ORM
-- `mikro-orm` - MikroORM
-- `prisma` - Prisma ORM
-- `mysql2` - MySQL driver
-- `mongodb` - MongoDB driver
-
-**Utilities:**
-- `express` - Web server
-- `express-basic-auth` - Basic authentication
-- `dotenv` (17.2.3) - Environment variables
-- `nodemailer` (7.0.11) - Email sending
-- `@sendgrid/mail` (8.1.6) - SendGrid integration
-- `mustache` (4.2.0) - Template engine
-- `jimp` (1.6.0) - Image manipulation
-- `core-js` (3.47.0) - Polyfills
-- `regenerator-runtime` (0.14.1) - Async runtime
-
-**Firebase:**
-- `firebase` (12.6.0) - Firebase SDK
+- Regenerate entities after schema changes: `reldens generateEntities --override`
 
 ## Important Notes
 
-- **Node Version**: Requires Node.js >= 20.0.0
-- **Colyseus 0.16 Migration**: Project upgraded from Colyseus 0.15 to 0.16
-  - All client-side schema callbacks use `StateCallbacksManager` and `RoomStateEntitiesManager` wrapper classes
-  - Monitor API changed: `const { monitor } = require('@colyseus/monitor'); monitor()`
-  - Buffer polyfill required for browser bundling: `"buffer": "^6.0.3"` in package.json
-  - Schema upgraded to 3.0.x (backward compatible decorators)
-- **Authoritative Server**: All game logic must run on server; client is display-only
-- **Hot Plug**: Admin panel changes can reload without restart if `RELDENS_HOT_PLUG=1`
-- **Entity Relations**: Use keys defined in `generated-entities/entities-config.js`
-- **Logging**: Use `@reldens/utils/Logger` with configurable log levels (RELDENS_LOG_LEVEL)
-- **Parcel Bundling**: Client code is bundled by Parcel; builds go to `dist/`
-- **File Operations**: Always use `@reldens/server-utils FileHandler` instead of core Node.js `fs` module
-- **Shortcuts Class**: The `@reldens/utils` Shortcuts class (imported as `sc`) provides essential helpers like `sc.get`, `sc.hasOwn`, `sc.isArray`, etc.
-- **CLI Commands**: Execute via `reldens` command (uses bin/commander.js and lib/game/server/theme-manager.js)
-- **Theme Customization**: Modify `theme/` directory and rebuild with `reldens buildSkeleton`
-- **Data Generators**: Use `reldens-generate` for automatic data generation (XP tables, maps, etc.)
-
-## Community & Support
-
-- **Discord**: https://discord.gg/HuJMxUY - Join for questions, discussions, and support
-- **Demo**: https://dev.reldens.com/ - Try the live demo
-- **Admin Panel**: https://demo.reldens.com/reldens-admin/ - Demo admin access
-- **Documentation**: https://www.reldens.com/documentation/installation - Installation guide
-- **Feature Requests**: https://www.reldens.com/features-request - Request new features
-- **Issues**: https://github.com/damian-pastorini/reldens/issues - Report bugs
-- **Support**: Ko-fi and Patreon available for project support
-- **Contact**: info@dwdeveloper.com - Direct email support
-
-## Feature Highlights
-
-The platform provides 60+ features including:
-- Installation GUI for easy setup
-- Administration Panel for game management
-- Automatic data generators for XP, levels, maps
-- Trade System (player-to-player and NPC trading)
-- Full In-game Chat (global, room, private messages)
-- Configurable Player Stats (HP, MP, custom stats)
-- Items System (usable items and equipment)
-- Combat System (PVP, PVE, skills, attacks)
-- NPCs, Enemies, and Respawn Areas
-- Teams and Clans System with bonuses
-- Drops and Rewards system
-- Game Rewards (daily/weekly login events)
-- Game Scores and leaderboards
-- Physics Engine and Pathfinder
-- Gravity World configuration
-- Sounds System (configurable categories)
-- In-game Ads (CrazyGames, GameMonetize)
-- Minimap with configuration options
-- Player name and life-bar visibility control
-- Terms and Conditions support
-- Guest Users support
-- User Registration with double login protection
-- Multiple Players per account
-- Firebase Authentication integration
-- Multiple server switch support
-- Database-driven with multiple storage drivers
+- **Authoritative Server**: All game logic runs on server; client is display-only
+- **Hot Plug**: Admin panel changes reload without restart if `RELDENS_HOT_PLUG=1`
+- **Logging**: Use `@reldens/utils/Logger` (configurable via `RELDENS_LOG_LEVEL`)
+- **File Operations**: Always use `@reldens/server-utils FileHandler` (never Node.js `fs`)
+- **Shortcuts Class**: Import as `sc` from `@reldens/utils` - provides `sc.get`, `sc.hasOwn`, `sc.isArray`, etc.
+- **Colyseus 0.16**: All client callbacks use `StateCallbacksManager` and `RoomStateEntitiesManager`
+- **Buffer Polyfill**: Required for Parcel bundling with Colyseus 0.16
 
 ## Analysis Approach
 
@@ -1146,5 +239,21 @@ When working on code issues:
 - Trace execution flows and dependencies
 - Provide proof for issues, never guess or assume
 - Verify file contents before creating patches
-- Never jump to early conclusions
 - A variable with an unexpected value is not an issue, it is the result of a previous issue
+
+## Community & Support
+
+- **Discord**: https://discord.gg/HuJMxUY
+- **Demo**: https://dev.reldens.com/
+- **Documentation**: https://www.reldens.com/documentation/installation
+- **Issues**: https://github.com/damian-pastorini/reldens/issues
+- **Contact**: info@dwdeveloper.com
+
+## Detailed Reference Documentation
+
+- **Commands**: `.claude/commands-reference.md` - All CLI commands
+- **Environment Variables**: `.claude/environment-variables.md` - All RELDENS_* variables
+- **Feature Modules**: `.claude/feature-modules.md` - All 23 feature modules
+- **Storage Architecture**: `.claude/storage-architecture.md` - Entity management deep dive
+- **Colyseus 0.16**: `.claude/colyseus-0.16-migration.md` - Complete migration guide
+- **Entities**: `.claude/entities-reference.md` - All 60+ entity types
