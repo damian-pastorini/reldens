@@ -667,9 +667,15 @@ class ServerPlugin
 4. Player leaves → `onLeave(client, consented)`
 5. Room disposal → `onDispose()`
 
-**State Synchronization**:
+**State Synchronization (Colyseus 0.16)**:
 - Server uses Colyseus Schema for state (see `lib/rooms/server/state.js`)
-- Client listens to state changes in `room-events.js`
+- Client uses `StateCallbacksManager` and `RoomStateEntitiesManager` for Colyseus 0.16 callback handling
+- All schema callbacks require `getStateCallbacks(room)` wrapper in Colyseus 0.16
+- Manager classes located in `lib/game/client/communication/`:
+  - `state-callbacks-manager.js` - Wraps `getStateCallbacks()`, provides `onAdd()`, `onRemove()`, `onChange()`, `listen()` methods
+  - `room-state-entities-manager.js` - Static factory methods for common entity callback patterns
+- **CRITICAL**: Collections from `wrappedState[collectionName]` are already wrapped - don't wrap again
+- **CRITICAL**: Entities received in callbacks must be wrapped before calling `listen()`
 - Players, objects, and world state auto-sync to clients
 
 ## Common Development Patterns
@@ -776,11 +782,12 @@ The `install/` directory contains:
 ## Key Dependencies
 
 **Game Framework:**
-- `@colyseus/core` (0.15.57) - Multiplayer room management
-- `@colyseus/schema` (2.0.37) - State synchronization
-- `@colyseus/ws-transport` (0.15.3) - WebSocket transport
-- `colyseus.js` (0.15.26) - Client library
-- `@colyseus/monitor` (0.15.8) - Room monitoring
+- `@colyseus/core` (0.16.24) - Multiplayer room management
+- `@colyseus/schema` (3.0.72) - State synchronization
+- `@colyseus/ws-transport` (0.16.24) - WebSocket transport
+- `buffer` (6.0.3) - Buffer polyfill required for Parcel bundling with Colyseus 0.16
+- `colyseus.js` (0.16.22) - Client library
+- `@colyseus/monitor` (0.16.7) - Room monitoring
 
 **Game Engine:**
 - `phaser` (3.90.0) - Client-side rendering and game engine
@@ -817,6 +824,11 @@ The `install/` directory contains:
 ## Important Notes
 
 - **Node Version**: Requires Node.js >= 20.0.0
+- **Colyseus 0.16 Migration**: Project upgraded from Colyseus 0.15 to 0.16
+  - All client-side schema callbacks use `StateCallbacksManager` and `RoomStateEntitiesManager` wrapper classes
+  - Monitor API changed: `const { monitor } = require('@colyseus/monitor'); monitor()`
+  - Buffer polyfill required for browser bundling: `"buffer": "^6.0.3"` in package.json
+  - Schema upgraded to 3.0.x (backward compatible decorators)
 - **Authoritative Server**: All game logic must run on server; client is display-only
 - **Hot Plug**: Admin panel changes can reload without restart if `RELDENS_HOT_PLUG=1`
 - **Entity Relations**: Use keys defined in `generated-entities/entities-config.js`
