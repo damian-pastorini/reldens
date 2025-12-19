@@ -447,14 +447,14 @@ REPLACE INTO `objects_types` (`id`, `key`) VALUES
 
 REPLACE INTO `operation_types` (`id`, `label`, `key`) VALUES
 	(1, 'Increment', 1),
-	(3, 'Decrease', 2),
-	(4, 'Divide', 3),
-	(5, 'Multiply', 4),
-	(6, 'Increment Percentage', 5),
-	(7, 'Decrease Percentage', 6),
-	(8, 'Set', 7),
-	(9, 'Method', 8),
-	(10, 'Set Number', 9);
+	(2, 'Decrease', 2),
+	(3, 'Divide', 3),
+	(4, 'Multiply', 4),
+	(5, 'Increment Percentage', 5),
+	(6, 'Decrease Percentage', 6),
+	(7, 'Set', 7),
+	(8, 'Method', 8),
+	(9, 'Set Number', 9);
 
 REPLACE INTO `skills_skill_type` (`id`, `key`) VALUES
 	(2, 'attack'),
