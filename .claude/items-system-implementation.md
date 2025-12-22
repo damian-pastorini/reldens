@@ -182,16 +182,19 @@ this.events.on('reldens.createPlayerStatsAfter', async (client, userModel, curre
    }
    ```
 
-6. **Property Manager Sets Value** (`npm-packages/reldens-modifiers/lib/property-manager.js` lines 22-32)
+6. **Property Manager Sets Value** (`npm-packages/reldens-modifiers/lib/property-manager.js` lines 22-34)
    ```javascript
    manageOwnerProperty(propertyOwner, propertyString, value){
        let propertyPathParts = propertyString.split('/');  // ['stats', 'atk']
-       let property = this.extractDeepProperty(propertyOwner, propertyPathParts);  // Get stats object
-       let propertyKey = propertyPathParts.pop();  // 'atk'
-       if('undefined' !== typeof value){
-           property[propertyKey] = value;  // Sets stats.atk = newValue
+       let childPropertyOwner = this.extractChildPropertyOwner(propertyOwner, propertyPathParts);  // Get stats object
+       let propertyKey = propertyPathParts[propertyPathParts.length-1];  // 'atk'
+       if('undefined' === typeof value && !sc.hasOwn(childPropertyOwner, propertyKey)){
+           ErrorManager.error('Invalid property "'+propertyKey+'" from path: "'+propertyPathParts.join('/')+'"].');
        }
-       return property[propertyKey];
+       if('undefined' !== typeof value){
+           childPropertyOwner[propertyKey] = value;  // Sets stats.atk = newValue
+       }
+       return childPropertyOwner[propertyKey];
    }
    ```
 
