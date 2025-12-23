@@ -34,10 +34,7 @@ body {
         overflow: auto;
         z-index: 10000;
         background-size: cover;
-        background-color: $cWhite;
-        background-image: url(../assets/web/reldens-background.png);
-        background-position: center;
-        background-repeat: no-repeat;
+        background-color: $cLightGrey;
 
         .header,
         .footer,
@@ -234,6 +231,7 @@ h3.form-title {
     text-align: center;
     background: $titleBackground;
     padding: 10px 0;
+    border: 1px solid #ccc;
 }
 
 form {
@@ -268,6 +266,7 @@ form {
                 padding: 0 0 6px;
             }
 
+            .notice-box,
             .db-basic-config-notice,
             .app-allow-packages-installation-notice {
                 margin-bottom: 0;
@@ -310,6 +309,9 @@ form {
         &.submit-container {
             padding: 0 2%;
             box-sizing: border-box;
+            justify-content: end;
+            align-items: start;
+            gap: 1rem;
         }
 
         label {
@@ -335,8 +337,15 @@ form {
             max-width: 268px;
         }
 
+        select {
+            height: 2rem;
+            width: 100%;
+            max-width: 250px;
+        }
+
     }
 
+    .notice-box,
     .db-basic-config-notice,
     .app-allow-packages-installation-notice {
         display: flex;
@@ -357,9 +366,12 @@ form {
                 font-weight: bold;
                 color: $cRed;
                 cursor: pointer;
+                width: 100%;
+                text-align: center;
 
                 ul {
                     display: none;
+                    text-align: left;
 
                     &.expanded {
                         display: block;
@@ -367,6 +379,11 @@ form {
                 }
             }
         }
+    }
+
+    .notice-box {
+        justify-content: flex-start;
+        padding: 0 0 1rem;
     }
 
 }
@@ -393,12 +410,30 @@ form {
     }
 }
 
-.install-loading {
-    max-width: 50px;
+.loading-status-wrapper {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
 
     &.hidden {
         display: none;
     }
+}
+
+.install-loading {
+    max-width: 50px;
+}
+
+.install-status-message {
+    padding: 8px 12px;
+    font-size: 11px;
+    font-weight: bold;
+    color: $cDarkBlue;
+    background: $boxBackground;
+    border-radius: 3px;
+    text-align: center;
+    white-space: nowrap;
 }
 
 #install-submit-button.disabled {

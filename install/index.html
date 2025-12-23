@@ -56,10 +56,10 @@
                         <div class="input-box app-allow-packages-installation">
                             <div class="app-allow-packages-installation-notice">
                                 <span class="danger">
-                                    DANGER:
+                                    DANGER
                                     <ul>
                                         <li>The installer will attempt to run npm install for missing packages.</li>
-                                        <li>Uncheck this only if you have manually installed all required packages.</li>
+                                        <li>Uncheck this only if you have manually installed all required packages or if you are not using NPM.</li>
                                         <li>Required packages: @reldens/storage (always), @prisma/client (Prisma driver only).</li>
                                     </ul>
                                 </span>
@@ -78,21 +78,28 @@
                             <label for="app-use-https">Use HTTPS</label>
                             <input type="checkbox" value="1" name="app-use-https" id="app-use-https"{{&app-use-https-checked}}/>
                         </div>
+                        <div class="notice-box https-filter">
+                            <ul>
+                                <li>Key: Accept .key or .pem</li>
+                                <li>Cert: Accept .crt, .cer, or .pem</li>
+                                <li>Chain: Accept .ca-bundle, .chain.pem, .pem, or .ca.pem</li>
+                            </ul>
+                        </div>
                         <div class="input-box app-https-key-pem https-filter">
-                            <label for="app-https-key-pem">HTTPS path to key file</label>
+                            <label for="app-https-key-pem">Path to the key file</label>
                             <input type="text" name="app-https-key-pem" id="app-https-key-pem" value="{{app-https-key-pem}}"/>
                         </div>
                         <div class="input-box app-https-cert-pem https-filter">
-                            <label for="app-https-cert-pem">HTTPS path to cert file</label>
+                            <label for="app-https-cert-pem">Path to the certificate file</label>
                             <input type="text" name="app-https-cert-pem" id="app-https-cert-pem" value="{{app-https-cert-pem}}"/>
                         </div>
                         <div class="input-box app-https-chain-pem https-filter">
-                            <label for="app-https-chain-pem">HTTPS path to chain file</label>
+                            <label for="app-https-chain-pem">Path to the chain file</label>
                             <input type="text" name="app-https-chain-pem" id="app-https-chain-pem" value="{{app-https-chain-pem}}"/>
                         </div>
                         <div class="input-box app-https-passphrase https-filter">
-                            <label for="app-https-passphrase">HTTPS passphrase</label>
-                            <input type="text" name="app-https-passphrase" id="app-https-passphrase" value="{{app-https-passphrase}}"/>
+                            <label for="app-https-passphrase">Passphrase</label>
+                            <input type="password" name="app-https-passphrase" id="app-https-passphrase" value="{{app-https-passphrase}}"/>
                         </div>
 
                         <!-- MONITOR -->
@@ -104,38 +111,31 @@
                             <label for="app-secure-monitor">Secure Monitor</label>
                             <input type="checkbox" value="1" name="app-secure-monitor" id="app-secure-monitor"{{&app-secure-monitor-checked}}/>
                         </div>
-                        <div class="input-box app-monitor-user monitor-filter">
+                        <div class="input-box app-monitor-user monitor-filter secure-monitor-filter">
                             <label for="app-monitor-user">Monitor username</label>
                             <input type="text" name="app-monitor-user" id="app-monitor-user" value="{{app-monitor-user}}"/>
                         </div>
-                        <div class="input-box app-monitor-password monitor-filter">
+                        <div class="input-box app-monitor-password monitor-filter secure-monitor-filter">
                             <label for="app-monitor-password">Monitor password</label>
-                            <input type="text" name="app-monitor-password" id="app-monitor-password" value="{{app-monitor-password}}"/>
+                            <input type="password" name="app-monitor-password" id="app-monitor-password" value="{{app-monitor-password}}"/>
                         </div>
                     </div>
                     <div class="col-2">
                         <!-- STORAGE -->
                         <h3 class="form-title">- Storage -</h3>
-                        <div class="db-basic-config-notice">
-                            <span>
-                                Default samples:
-                                <ul>
-                                    <li>Client: mysql (native password) / mysql2 (schema password) - Port: 3306</li>
-                                    <li>Client: mongodb - Port: 27017</li>
-                                </ul>
-                            </span>
-                        </div>
                         <div class="input-box db-storage-driver">
                             <label for="db-storage-driver">Storage Driver</label>
                             <select name="db-storage-driver" id="db-storage-driver" class="required" required>
                                 <option value="prisma"{{&db-storage-driver-prisma}}>Prisma</option>
                                 <option value="objection-js"{{&db-storage-driver-objection-js}}>Objection JS</option>
-                                <option value="mikro-orm"{{&db-storage-driver-mikro-orm}}>MikroORM (experimental)</option>
+                                <option value="mikro-orm"{{&db-storage-driver-mikro-orm}}>MikroORM (untested)</option>
                             </select>
                         </div>
                         <div class="input-box db-client">
                             <label for="db-client">Client</label>
-                            <input type="text" name="db-client" id="db-client" value="{{db-client}}" class="required" required/>
+                            <select name="db-client" id="db-client" class="required" required>
+                                <option value="{{db-client}}">{{db-client}}</option>
+                            </select>
                         </div>
                         <div class="input-box db-host">
                             <label for="db-host">Host</label>
@@ -166,7 +166,7 @@
                         <div class="input-box db-basic-config">
                             <div class="db-basic-config-notice">
                                 <span class="danger">
-                                    DANGER:
+                                    DANGER
                                     <ul>
                                         <li>The automatic installation for the basic configuration and the sample data are only available for the MySQL client.</li>
                                         <li>Uncheck this is only if you know what you are doing. <br/>Without this you will get all the tables empty, even the ones with default required values.</li>
@@ -264,7 +264,10 @@
                     </div>
                     <!-- SUBMIT -->
                     <div class="input-box submit-container">
-                        <img class="install-loading hidden" src="./assets/web/loading.gif"/>
+                        <div class="loading-status-wrapper hidden">
+                            <div class="install-status-message">This may take a few minutes...</div>
+                            <img class="install-loading" src="./assets/web/loading.gif" alt="loading"/>
+                        </div>
                         <input id="install-submit-button" type="submit" value="Install"/>
                     </div>
                     <div class="input-box response-error"></div>

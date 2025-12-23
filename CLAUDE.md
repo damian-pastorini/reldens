@@ -257,3 +257,4 @@ When working on code issues:
 - **Storage Architecture**: `.claude/storage-architecture.md` - Entity management deep dive
 - **Colyseus 0.16**: `.claude/colyseus-0.16-migration.md` - Complete migration guide
 - **Entities**: `.claude/entities-reference.md` - All 60+ entity types
+- **Installer**: `.claude/installer-guide.md` - Web-based installation wizard guide
