@@ -170,14 +170,6 @@ window.addEventListener('load', () => {
         }, 2000);
     }
 
-    function stopStatusPolling()
-    {
-        if(statusIntervalId){
-            clearInterval(statusIntervalId);
-            statusIntervalId = null;
-        }
-    }
-
     document.getElementById('install-form').addEventListener('submit', () => {
         let loadingWrapper = document.querySelector('.loading-status-wrapper');
         if(loadingWrapper){
