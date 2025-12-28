@@ -36,11 +36,18 @@ ON DUPLICATE KEY UPDATE `value` = new_config.`value`, `type` = new_config.`type`
 INSERT INTO `config` (`scope`, `path`, `value`, `type`)
 VALUES
     ('client', 'gameEngine/scale/autoRound', 0, 3),
+    ('client', 'general/users/allowGuest', '1', 3),
+    ('client', 'general/users/allowRegistration', '1', 3),
     ('client', 'ui/fullScreenButton/enabled', '1', 3),
     ('client', 'ui/fullScreenButton/responsiveX', '100', 2),
     ('client', 'ui/fullScreenButton/responsiveY', '0', 2),
     ('client', 'ui/fullScreenButton/x', '380', 2),
-    ('client', 'ui/fullScreenButton/y', '20', 2);
+    ('client', 'ui/fullScreenButton/y', '20', 2)
+ON DUPLICATE KEY UPDATE `value` = VALUES(`value`), `type` = VALUES(`type`);
+
+-- Fix incorrect config values:
+UPDATE `config` SET `value` = '0' WHERE `scope` = 'client' AND `path` = 'ui/chat/overheadChat/enabled';
+UPDATE `config` SET `value` = '0' WHERE `scope` = 'client' AND `path` = 'ui/chat/overheadChat/isTyping';
 
 UPDATE `stats` SET `key` = 'mAtk' WHERE `key` = 'mgk-atk';
 UPDATE `stats` SET `key` = 'mDef' WHERE `key` = 'mgk-def';
@@ -153,6 +160,56 @@ ALTER TABLE `drops_animations` ADD UNIQUE INDEX `item_id_unique` (`item_id`); --
 
 -- Fix kill_time default value:
 ALTER TABLE `scores_detail` MODIFY COLUMN `kill_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+-- Fix data types: INT to TINYINT
+ALTER TABLE `locale` MODIFY COLUMN `enabled` TINYINT UNSIGNED DEFAULT NULL;
+
+ALTER TABLE `ads_providers` MODIFY COLUMN `enabled` TINYINT UNSIGNED NOT NULL DEFAULT (1);
+
+ALTER TABLE `ads` MODIFY COLUMN `enabled` TINYINT UNSIGNED NOT NULL DEFAULT '0';
+
+ALTER TABLE `audio_categories`
+    MODIFY COLUMN `enabled` TINYINT DEFAULT NULL,
+    MODIFY COLUMN `single_audio` TINYINT DEFAULT NULL;
+
+ALTER TABLE `audio` MODIFY COLUMN `enabled` TINYINT UNSIGNED DEFAULT NULL;
+
+ALTER TABLE `chat_message_types` MODIFY COLUMN `show_tab` TINYINT UNSIGNED DEFAULT NULL;
+
+ALTER TABLE `features` MODIFY COLUMN `is_enabled` TINYINT UNSIGNED DEFAULT NULL;
+
+ALTER TABLE `items_inventory` MODIFY COLUMN `is_active` TINYINT NULL DEFAULT NULL;
+
+ALTER TABLE `objects` MODIFY COLUMN `enabled` TINYINT DEFAULT NULL;
+
+ALTER TABLE `objects_items_inventory` MODIFY COLUMN `is_active` TINYINT DEFAULT NULL;
+
+ALTER TABLE `objects_items_requirements` MODIFY COLUMN `auto_remove_requirement` TINYINT UNSIGNED DEFAULT NULL;
+
+ALTER TABLE `objects_items_rewards` MODIFY COLUMN `reward_item_is_required` TINYINT UNSIGNED DEFAULT NULL;
+
+ALTER TABLE `rooms_return_points` MODIFY COLUMN `is_default` TINYINT UNSIGNED DEFAULT NULL;
+
+ALTER TABLE `skills_levels_set` MODIFY COLUMN `autoFillRanges` TINYINT UNSIGNED DEFAULT NULL;
+
+ALTER TABLE `skills_skill`
+    MODIFY COLUMN `autoValidation` TINYINT DEFAULT NULL,
+    MODIFY COLUMN `rangeAutomaticValidation` TINYINT DEFAULT NULL,
+    MODIFY COLUMN `allowSelfTarget` TINYINT DEFAULT NULL;
+
+ALTER TABLE `skills_class_path` MODIFY COLUMN `enabled` TINYINT UNSIGNED DEFAULT NULL;
+
+ALTER TABLE `skills_skill_attack`
+    MODIFY COLUMN `allowEffectBelowZero` TINYINT UNSIGNED NULL DEFAULT NULL,
+    MODIFY COLUMN `applyDirectDamage` TINYINT UNSIGNED NULL DEFAULT NULL,
+    MODIFY COLUMN `dodgeFullEnabled` TINYINT NULL DEFAULT '1',
+    MODIFY COLUMN `dodgeOverAimSuccess` TINYINT NULL DEFAULT '1',
+    MODIFY COLUMN `damageAffected` TINYINT NULL DEFAULT NULL,
+    MODIFY COLUMN `criticalAffected` TINYINT NULL DEFAULT NULL;
+
+ALTER TABLE `skills_skill_physical_data` MODIFY COLUMN `validateTargetOnHit` TINYINT UNSIGNED NULL DEFAULT NULL;
+
+ALTER TABLE `rewards_events` MODIFY COLUMN `enabled` TINYINT DEFAULT NULL;
 
 --
 
