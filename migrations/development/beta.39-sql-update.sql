@@ -9,25 +9,25 @@ INSERT INTO `config` (`scope`, `path`, `value`, `type`)
 VALUES
     ('client', 'gameEngine/banner', '0', 3),
     ('client', 'gameEngine/dom/createContainer', '1', 3),
-    ('client', 'gameEngine/height', '800', 2),
+    ('client', 'gameEngine/height', '1280', 2),
     ('client', 'gameEngine/parent', 'reldens', 1),
     ('client', 'gameEngine/physics/arcade/debug', 'false', 3),
     ('client', 'gameEngine/physics/arcade/gravity/x', '0', 2),
     ('client', 'gameEngine/physics/arcade/gravity/y', '0', 2),
     ('client', 'gameEngine/physics/default', 'arcade', 1),
     ('client', 'gameEngine/scale/autoCenter', '1', 2),
-    ('client', 'gameEngine/scale/max/height', '800', 2),
-    ('client', 'gameEngine/scale/max/width', '800', 2),
+    ('client', 'gameEngine/scale/max/height', '1280', 2),
+    ('client', 'gameEngine/scale/max/width', '1280', 2),
     ('client', 'gameEngine/scale/min/height', '360', 2),
     ('client', 'gameEngine/scale/min/width', '360', 2),
     ('client', 'gameEngine/scale/mode', '5', 2),
     ('client', 'gameEngine/scale/parent', 'reldens', 1),
     ('client', 'gameEngine/scale/zoom', '1', 2),
     ('client', 'gameEngine/type', '0', 2),
-    ('client', 'gameEngine/width', '800', 2),
+    ('client', 'gameEngine/width', '1280', 2),
     ('client', 'general/gameEngine/updateGameSizeTimeOut', '500', 2),
-    ('client', 'ui/maximum/x', '800', 2),
-    ('client', 'ui/maximum/y', '800', 2),
+    ('client', 'ui/maximum/x', '1280', 2),
+    ('client', 'ui/maximum/y', '1280', 2),
     ('client', 'ui/screen/responsive', '1', 3),
     ('client', 'ui/minimap/camZoom', '0.08', 2)
     AS new_config
@@ -45,9 +45,15 @@ VALUES
     ('client', 'ui/fullScreenButton/y', '20', 2)
 ON DUPLICATE KEY UPDATE `value` = VALUES(`value`), `type` = VALUES(`type`);
 
+-- Delete incorrect config records that should not exist:
+DELETE FROM `config` WHERE `scope` = 'client' AND `path` = 'gameEngine/scale/height';
+DELETE FROM `config` WHERE `scope` = 'client' AND `path` = 'gameEngine/scale/width';
+
 -- Fix incorrect config values:
-UPDATE `config` SET `value` = '0' WHERE `scope` = 'client' AND `path` = 'ui/chat/overheadChat/enabled';
-UPDATE `config` SET `value` = '0' WHERE `scope` = 'client' AND `path` = 'ui/chat/overheadChat/isTyping';
+UPDATE `config` SET `value` = '32' WHERE `scope` = 'client' AND `path` = 'map/tileData/height';
+UPDATE `config` SET `value` = '32' WHERE `scope` = 'client' AND `path` = 'map/tileData/width';
+UPDATE `config` SET `value` = '40' WHERE `scope` = 'client' AND `path` = 'ui/minimap/responsiveX';
+UPDATE `config` SET `value` = '0' WHERE `scope` = 'server' AND `path` = 'rooms/world/tryClosestPath';
 
 UPDATE `stats` SET `key` = 'mAtk' WHERE `key` = 'mgk-atk';
 UPDATE `stats` SET `key` = 'mDef' WHERE `key` = 'mgk-def';
