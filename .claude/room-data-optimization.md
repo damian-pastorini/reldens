@@ -107,11 +107,14 @@ config.set('server/customClasses/sceneDataProcessor', new CustomSceneDataProcess
 ### objectsAnimationsData Optimization
 
 **Process**:
-1. Groups objects by `asset_key`
-2. Detects identical properties across each group dynamically
-3. Extracts identical properties to `animationsDefaults[asset_key]`
-4. Removes duplicate `key` property (restored from map key on client)
-5. Keeps only unique properties (x, y) plus `asset_key` reference in each object
+1. Objects without `asset_key` get it added by copying from their `key` property (required for client merger)
+2. Groups objects by `asset_key`
+3. Single-object groups are kept as-is (no optimization needed)
+4. Multi-object groups (2+ objects):
+   - Detects identical properties across all objects in the group
+   - Extracts identical properties to `animationsDefaults[asset_key]`
+   - Keeps `asset_key` in each object (required for client merger to work)
+   - Keeps only unique properties (x, y, content, options, id, etc.) in each object
 
 **Optimized Object Structure**:
 ```javascript
@@ -138,7 +141,12 @@ config.set('server/customClasses/sceneDataProcessor', new CustomSceneDataProcess
 ```
 
 **Client-Side Merge**:
-`AnimationsDefaultsMerger.mergeDefaults()` restores the `key` property from the map key, then merges defaults with unique properties before processing.
+`AnimationsDefaultsMerger.mergeDefaults()` (lib/game/client/animations-defaults-merger.js):
+1. Sets `objectData.key = objectIndex` (overwrites server-sent key with map key)
+2. Checks if object has `asset_key` property (required)
+3. Looks up defaults using `animationsDefaults[asset_key]`
+4. Merges: `Object.assign({}, defaults, objectData)` - object properties override defaults
+5. Result contains all properties needed for rendering
 
 ---
 
