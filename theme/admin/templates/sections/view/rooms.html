@@ -1,0 +1,82 @@
+<div class="extra-content-container" data-entity-serialized-data="{{&entitySerializedData}}">
+    <h3>Extra options</h3>
+    <div class="default-room-container">
+        <form name="defaultRoom" action="#" method="post">
+            <input type="hidden" name="setAsDefault" value="1">
+            <div class="edit-field">
+            <label class="field-name">
+                Set this room as default when the game starts<br/>
+                (new users registration or first login)
+            </label>
+            <span class="field-value with-button">
+                <button class="button button-primary" type="submit">Save as default</button>
+            </span>
+            </div>
+        </form>
+    </div>
+    <div class="rooms-association-container">
+        <h3>Link rooms</h3>
+        <p>Notes:</p>
+        <p>
+            - The room link does not exist as "entity" itself, this feature will create change points and return points in both directions (if specified).<br/>
+            - The "bidirectional" option will create a change point in the current room and another in the next, this will allow the player to go back and move between rooms.<br/>
+            - When selecting a return position, it can't be the same as the change point in that same room, otherwise the player will keep hitting the change points after each scene change entering an infinite loop.<br/>
+            - Once the association is created, it can only be removed by deleting the related records in the change-points and return points sections.<br/>
+        </p>
+        <form id="createRoomsLink" name="createRoomsLink" action="#" method="post">
+            <input type="hidden" name="createRoomsLink" value="1"/>
+            <!-- current room map -->
+            <div class="edit-field">
+                <label class="field-name" for="currentRoomChangePointTileIndex">
+                    Current room change point (tile index)
+                    <br/>When you hit this tile you will be moved to the next room.
+                </label>
+                <input class="field-value" type="text" id="currentRoomChangePointTileIndex" name="currentRoomChangePointTileIndex" required/>
+            </div>
+            <div class="association-maps-container current-room-change-point-container" data-map-loader="{{&id}}"></div>
+            <!-- next room selector -->
+            <div class="edit-field">
+                <label class="field-name" for="nextRoomSelector">
+                    Select the destination room
+                </label>
+                <span  class="field-value">
+                    <select id="nextRoomSelector" class="nextRoomSelector" name="nextRoomSelector" required>
+                        <option value="">Select a room</option>
+                    </select>
+                </span>
+            </div>
+            <!-- next room return point -->
+            <div class="edit-field">
+                <label class="field-name" for="nextRoomDirection">The direction in which the player will be displayed</label>
+                <span  class="field-value">
+                    <select id="nextRoomDirection" class="nextRoomDirection" name="nextRoomDirection" required>
+                        <option value="down">Down</option>
+                        <option value="up">Up</option>
+                        <option value="left">Left</option>
+                        <option value="right">Right</option>
+                    </select>
+                </span>
+            </div>
+            <div class="edit-field">
+                <label class="field-name" for="nextRoomIsDefault">Is the default position for when the player enters the room?</label>
+                <span  class="field-value">
+                    <input id="nextRoomIsDefault" class="nextRoomIsDefault" type="checkbox" name="nextRoomIsDefault" value="1"/>
+                </span>
+            </div>
+            <div class="edit-field">
+                <label class="field-name" for="nextRoomPositionX">Next room position X</label>
+                <input class="field-value" type="text" id="nextRoomPositionX" name="nextRoomPositionX" required/>
+            </div>
+            <div class="edit-field">
+                <label class="field-name" for="nextRoomPositionY">Next room position Y</label>
+                <input class="field-value" type="text" id="nextRoomPositionY" name="nextRoomPositionY" required/>
+            </div>
+            <div class="association-maps-container next-room-return-position-container"></div>
+            <div class="actions-container">
+                <span>
+                    <button class="button button-primary" type="submit">Create Link</button>
+                </span>
+            </div>
+        </form>
+    </div>
+</div>

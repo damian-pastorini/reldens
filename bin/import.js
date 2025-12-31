@@ -7,7 +7,7 @@ const { AttributesPerLevelImporter } = require('../lib/import/server/attributes-
 const { ClassPathsImporter } = require('../lib/import/server/class-paths-importer');
 const { MapsImporter } = require('../lib/import/server/maps-importer');
 const { SkillsImporter } = require('../lib/import/server/skills-importer');
-const { FileHandler } = require('../lib/game/server/file-handler');
+const { FileHandler } = require('@reldens/server-utils');
 
 /**
  *
@@ -15,7 +15,7 @@ const { FileHandler } = require('../lib/game/server/file-handler');
  *
  * $ npx reldens-import objects custom-game-theme-test generate-data/objects-generate-data.json
  *
- * - Players experience per level import is not required if class-paths importer is going to be used.
+ * - Player experience per-level import is not required if class-paths importer is going to be used.
  * $ npx reldens-import players-experience-per-level custom-game-theme-test generate-data/players-experience-per-level.json
  *
  * - Class-paths importer will also import the experience per level.

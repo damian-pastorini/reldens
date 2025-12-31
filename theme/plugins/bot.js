@@ -6,7 +6,6 @@
  * withMovement=3000 withChat=10000 node theme/plugins/bot.js --numClients 50 --room reldens-bots-forest --endpoint http://localhost:8080 --output ./logs/bots-console.log
  */
 
-const { cli } = require('@colyseus/loadtest');
 const { ConfigManager } = require('reldens/lib/config/client/config-manager');
 const { ChatConst } = require('reldens/lib/chat/constants');
 const { GameClient } = require('reldens/lib/game/client/game-client');
@@ -46,7 +45,8 @@ async function main (options)
             act: GameConst.CREATE_PLAYER,
             formData: {
                 'new-player-name': randomGuestName + '-player',
-                'class_path_select': '1'
+                'class_path_select': '1',
+                'selectedScene': options.roomName
             }
         });
     }
@@ -55,18 +55,28 @@ async function main (options)
     {
         let reldensBootsRoom = await gameClient.joinOrCreate(options.roomName, userData);
         console.log('Joining room "'+options.roomName+'" (ID "'+gameRoom.roomId+'"): '+userData.username);
-        reldensBootsRoom?.onMessage('*', async (roomMessage) => {
-            // console.log('Message from ReldensBots', roomMessage.act);
-            if(GameConst.GAME_OVER === roomMessage.act){
-                // console.log('Player is dead: '+randomGuestName+'.');
-                canMove = false;
-            }
-            if(GameConst.REVIVED === roomMessage.act){
-                // console.log('Player was revived: '+randomGuestName+' at: '+((new Date()).getTime())+'.');
-                canMove = true;
-            }
+        return new Promise((resolve) => {
+            reldensBootsRoom.onStateChange.once((state) => {
+                if(!state.players || !state.players.has){
+                    console.log('State synced but players collection not ready:', randomGuestName);
+                    resolve({reldensBootsRoom, canMove});
+                    return;
+                }
+                console.log('State synced, player ready:', randomGuestName);
+                reldensBootsRoom.onMessage('*', async (roomMessage) => {
+                    // console.log('Message from ReldensBots', roomMessage.act);
+                    if(GameConst.GAME_OVER === roomMessage.act){
+                        // console.log('Player is dead: '+randomGuestName+'.');
+                        canMove = false;
+                    }
+                    if(GameConst.REVIVED === roomMessage.act){
+                        // console.log('Player was revived: '+randomGuestName+' at: '+((new Date()).getTime())+'.');
+                        canMove = true;
+                    }
+                });
+                resolve({reldensBootsRoom, canMove});
+            });
         });
-        return {reldensBootsRoom, canMove};
     }
 
     async function initializeChatMessages(reldensBootsRoom)
@@ -130,4 +140,7 @@ async function main (options)
 
 }
 
-cli(main);
+(async () => {
+    let loadtest = await import('@colyseus/loadtest');
+    loadtest.cli(main);
+})();

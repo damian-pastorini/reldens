@@ -20,10 +20,10 @@
         "process": false
     },
     "dependencies": {
-        "reldens": "^4.0.0-beta.37"
+        "reldens": "^4.0.0-beta.39"
     },
     "devDependencies": {
-        "@reldens/utils": "^0.32.0",
+        "@reldens/utils": "^0.53.0",
         "@colyseus/loadtest": "^0.15.3"
     }
 }

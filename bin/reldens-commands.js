@@ -9,7 +9,7 @@
 const commander = require('./commander');
 
 if(commander.ready){
-    'test' === commander.command || 'help' === commander.command
+    -1 !== commander.availableCommands.indexOf(commander.command)
         ? commander[commander.command]()
         : commander.execute().then(() => { console.info('- End'); });
 }

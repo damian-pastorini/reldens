@@ -4,7 +4,6 @@
     <title>Reldens | MMORPG Platform | By DwDeveloper</title>
     <meta name="description" content="Reldens, plataforma open source para crear MMORPG games"/>
     <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i|Play:300,300i,400,400i,500,500i,600,600i,700,700i" rel="stylesheet"/>
-    <link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/4.6.0/firebase-ui-auth.css"/>
     <link rel="apple-touch-icon" sizes="180x180" href="assets/favicons/apple-touch-icon.png"/>
     <link rel="icon" type="image/png" sizes="32x32" href="assets/favicons/favicon-32x32.png"/>
     <link rel="icon" type="image/png" sizes="16x16" href="assets/favicons/favicon-16x16.png"/>
@@ -15,20 +14,18 @@
     <meta name="msapplication-TileColor" content="#37517e"/>
     <meta name="theme-color" content="#37517e"/>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"/>
-    <!-- @NOTE: remove the comment below to avoid attaching the client configuration automatically: -->
-    <script type="text/javascript" id="reldens-initial-config"></script>
+    <script type="text/javascript" id="reldens-initial-config" src="./config.js"></script>
     <script type="module" src="./index.js"></script>
     <link rel="stylesheet" type="text/css" href="./css/styles.scss"/>
 </head>
 <body>
-    <div class="wrapper">
+    <div class="wrapper" style="background-image: url(./assets/web/reldens-background.png);">
         <div class="header">
             <img id="your-logo" src="./assets/web/reldens-your-logo-mage.png" alt="reldens"/>
             <h1 class="title">
                 - <strong>reldens</strong> - <span id="current-version">demo -</span>
                 <br/>- tu logo aqui -
             </h1>
-            <button class="full-screen-btn">pantalla completa</button>
         </div>
         <div class="content">
             <div class="row row-disclaimer">
@@ -68,11 +65,11 @@
                             </div>
                             <div class="input-box reg-password">
                                 <label for="reg-password">Contrase&ntilde;a</label>
-                                <input type="password" name="reg-password" id="reg-password" class="required" required/>
+                                <input type="password" name="reg-password" id="reg-password" class="required" required autocomplete="off"/>
                             </div>
                             <div class="input-box reg-re-password">
                                 <label for="reg-re-password">Reescribe contrase&ntilde;a</label>
-                                <input type="password" name="reg-re-password" id="reg-re-password" class="required" required/>
+                                <input type="password" name="reg-re-password" id="reg-re-password" class="required" required autocomplete="off"/>
                             </div>
                             <div class="input-box hidden terms-and-conditions-link-container">
                                 <a class="terms-and-conditions-link">Acepta nuestros T&eacute;rminos y Condiciones (haz clic aqu&iacute;).</a>
@@ -113,7 +110,7 @@
                             </div>
                             <div class="input-box login-password">
                                 <label for="password">Password</label>
-                                <input type="password" name="password" id="password" class="required" required/>
+                                <input type="password" name="password" id="password" class="required" required autocomplete="off"/>
                             </div>
                             <div class="input-box submit-container login-submit">
                                 <input type="submit" value="Entrar"/>
@@ -134,7 +131,7 @@
                             <div class="input-box response-error"></div>
                         </form>
                         <div class="firebase-container">
-                            <div id="firebaseui-auth-container"></div>
+                            <div id="firebase-auth-container" class="firebase-auth-container"></div>
                         </div>
                     </div>
                 </div>
@@ -225,7 +222,7 @@
         </div>
         <div class="footer">
             <div class="copyright">
-                <a href="https://www.dwdeveloper.com/">
+                <a href="https://www.dwdeveloper.com/" target="_blank">
                     by D<span class="text-black text-lowercase">w</span><span class="text-capitalize">Developer</span>
                 </a>
             </div>

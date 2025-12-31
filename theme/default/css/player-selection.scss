@@ -4,6 +4,8 @@
  *
  */
 
+@use "variables" as *;
+
 .game-started {
     &.game-engine-started {
         #player-selection {

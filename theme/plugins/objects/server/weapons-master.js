@@ -30,7 +30,7 @@ class WeaponsMaster extends NpcObject
         }
         let itemObj = playerSchema.inventory.manager.createItemInstance(selectedOption.key);
         if(false === await playerSchema.inventory.manager.addItem(itemObj)){
-            console.log([`Error while adding item "${selectedOption.key}" on "${this.key}".`]);
+            console.log(`Error while adding item "${selectedOption.key}" on "${this.key}".`);
             let contentMessage = 'Sorry, I was not able to give you the item, contact the admin.';
             client.send('*', {act: GameConst.UI, id: this.id, content: contentMessage});
             return false;

@@ -1,0 +1,7 @@
+/.cache
+/.idea
+/node_modules
+/logs
+/.parcel-cache
+.env
+knexfile.js

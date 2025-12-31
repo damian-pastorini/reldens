@@ -12,7 +12,7 @@ const {
     MultipleByLoaderGenerator,
     MultipleWithAssociationsByLoaderGenerator
 } = require('@reldens/tile-map-generator');
-const { FileHandler } = require('../lib/game/server/file-handler');
+const { FileHandler } = require('@reldens/server-utils');
 const { Logger } = require('@reldens/utils');
 
 /**
@@ -88,7 +88,6 @@ let validCommands = {
             generatedFolder,
             FileHandler.joinPaths(process.cwd(), 'generated')
         );
-        // FileHandler.removeFolder(generatedFolder);
     }
 };
 

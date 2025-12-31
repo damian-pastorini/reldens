@@ -9,12 +9,19 @@
             enctype="multipart/form-data">
             <input type="hidden" name="mainAction" id="mainAction" value="import"/>
             <input type="hidden" name="generatedMapsHandler" id="generatedMapsHandler" value="{{&generatedMapsHandler}}"/>
-            <input type="hidden" name="importAssociationsForChangePoints" id="importAssociationsForChangePoints" value="{{&importAssociationsForChangePoints}}">
-            <input type="hidden" name="importAssociationsRecursively" id="importAssociationsRecursively" value="{{&importAssociationsRecursively}}">
-            <input type="hidden" name="automaticallyExtrudeMaps" id="automaticallyExtrudeMaps" value="{{&automaticallyExtrudeMaps}}">
-            <input type="hidden" name="verifyTilesetImage" id="verifyTilesetImage" value="{{&verifyTilesetImage}}">
+            <input type="hidden" name="importAssociationsForChangePoints" id="importAssociationsForChangePoints" value="{{&importAssociationsForChangePoints}}"/>
+            <input type="hidden" name="importAssociationsRecursively" id="importAssociationsRecursively" value="{{&importAssociationsRecursively}}"/>
+            <input type="hidden" name="automaticallyExtrudeMaps" id="automaticallyExtrudeMaps" value="{{&automaticallyExtrudeMaps}}"/>
+            <input type="hidden" name="verifyTilesetImage" id="verifyTilesetImage" value="{{&verifyTilesetImage}}"/>
+            <input type="hidden" name="handlerParams" id="handlerParams" value="{{handlerParams}}"/>
             <div class="main-action-container maps-selection">
-                <p>Select the maps to be imported (if you refresh the page you will get a new set of random maps generated):</p>
+                <h3>Select the maps to be imported</h3>
+                <p>Notes:<p>
+                <p>
+                    - The Game Server requires a reboot in order to make the maps available on the game.<br/>
+                    - If you refresh the page you will get a new set of random maps generated.<br/>
+                    - Generated sub-maps will be automatically imported, if you don't want to import those you can download all the related maps (the main map and the sub-map) and edit change them to your needs.<br/>
+                </p>
                 <ul class="wizard-options-container">
                 {{#maps}}
                     <li class="wizard-map-option-container">
@@ -24,9 +31,15 @@
                             <label class="main-option" for="maps-wizard-map-option-{{&key}}">
                                 {{&key}}
                             </label>
+                            <p>Downloads:</p>
+                            <p>
+                                - <a href="{{&mapJson}}" target="_blank">{{&mapJson}}</a><br/>
+                                - <a href="{{&mapImage}}" target="_blank">{{&mapImage}}</a>
+                            </p>
                         </div>
                         <canvas
                             class="mapCanvas"
+                            data-toggle="modal"
                             width="{{&mapWidth}}"
                             height="{{&mapHeight}}"
                             data-tile-width="{{&tileWidth}}"
@@ -34,11 +47,38 @@
                             data-image-key="{{&mapImage}}"
                             data-map-json="{{&mapJson}}">
                         </canvas>
+                        {{#hasSubMaps}}
+                            <div class="sub-maps">
+                                <p class="sub-map-option-description clickable" data-expand-collapse=".sub-maps-container-{{&key}}">
+                                    <img class="icon-sm" src="/assets/admin/filters.png" alt="Associated maps"/>
+                                    <span>Associated maps generated</span>
+                                </p>
+                                <div class="sub-maps-container sub-maps-container-{{&key}} hidden">
+                                    {{#subMaps}}
+                                        <p>{{&key}}</p>
+                                        <p>Downloads:</p>
+                                        <p>
+                                            - <a href="{{&mapJson}}" target="_blank">{{&mapJson}}</a><br/>
+                                            - <a href="{{&mapImage}}" target="_blank">{{&mapImage}}</a>
+                                        </p>
+                                        <canvas
+                                            class="mapCanvas"
+                                            data-toggle="modal"
+                                            width="{{&mapWidth}}"
+                                            height="{{&mapHeight}}"
+                                            data-tile-width="{{&tileWidth}}"
+                                            data-tile-height="{{&tileHeight}}"
+                                            data-image-key="{{&mapImage}}"
+                                            data-map-json="{{&mapJson}}">
+                                        </canvas>
+                                    {{/subMaps}}
+                                </div>
+                            </div>
+                        {{/hasSubMaps}}
                     </li>
                 {{/maps}}
                 </ul>
             </div>
-            <p>NOTE: the Game Server requires a reboot in order to make the maps available on the game.</p>
             <input type="submit" class="button button-primary button-maps-wizard" value="Import Selected Maps"/>
         </form>
     </div>

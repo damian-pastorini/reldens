@@ -4,7 +4,14 @@
  *
  */
 
-// set logger level and trace, this needs to be specified before the game manager is required:
+if(window.trustedTypes?.createPolicy){
+    trustedTypes.createPolicy('default', {
+        createHTML: s => s,
+        createScriptURL: s => s
+    });
+}
+
+// to set logger level and trace, this needs to be specified before the game manager is required:
 const urlParams = new URLSearchParams(window.location.search);
 window.RELDENS_LOG_LEVEL = (urlParams.get('logLevel') || 7);
 window.RELDENS_ENABLE_TRACE_FOR = Number(urlParams.get('traceFor') || 'emergency,alert,critical');
@@ -37,7 +44,7 @@ reldens.events.on('reldens.startGameAfter', () => {
 reldens.events.on('reldens.activateRoom', (room) => {
     room.onMessage('*', (message) => {
         // @TODO - BETA - Replace 'rski.Bc' by the constant ACTION_SKILL_BEFORE_CAST, standardize events names.
-        // filter skills before cast message:
+        // filter skills before the cast message:
         if('rski.Bc' !== message.act){
             return;
         }

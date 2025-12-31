@@ -1,0 +1,50 @@
+/**
+ *
+ * Reldens - ObjectsItemsRewardsModel
+ *
+ */
+
+const { ObjectionJsRawModel } = require('@reldens/storage');
+
+class ObjectsItemsRewardsModel extends ObjectionJsRawModel
+{
+
+    static get tableName()
+    {
+        return 'objects_items_rewards';
+    }
+
+    static get relationMappings()
+    {
+        const { ObjectsModel } = require('./objects-model');
+        const { ItemsItemModel } = require('./items-item-model');
+        return {
+            related_objects: {
+                relation: this.BelongsToOneRelation,
+                modelClass: ObjectsModel,
+                join: {
+                    from: this.tableName+'.object_id',
+                    to: ObjectsModel.tableName+'.id'
+                }
+            },
+            related_items_item_item_key: {
+                relation: this.BelongsToOneRelation,
+                modelClass: ItemsItemModel,
+                join: {
+                    from: this.tableName+'.item_key',
+                    to: ItemsItemModel.tableName+'.key'
+                }
+            },
+            related_items_item_reward_item_key: {
+                relation: this.BelongsToOneRelation,
+                modelClass: ItemsItemModel,
+                join: {
+                    from: this.tableName+'.reward_item_key',
+                    to: ItemsItemModel.tableName+'.key'
+                }
+            }
+        };
+    }
+}
+
+module.exports.ObjectsItemsRewardsModel = ObjectsItemsRewardsModel;

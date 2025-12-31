@@ -72,7 +72,7 @@ class Healer extends NpcObject
         let magicPotion = playerSchema.inventory.manager.createItemInstance('magic_potion_20');
         let result = await playerSchema.inventory.manager.addItems([healPotion, magicPotion]);
         if(!result){
-            console.log(['Error while adding items.', result, playerSchema]);
+            console.log('Error while adding items.', {result, playerSchema});
             let contentMessage = 'Sorry, I was not able to give you any items, contact the administrator.';
             client.send('*', {act: GameConst.UI, id: this.id, content: contentMessage});
             return false;

@@ -1,12 +1,25 @@
 <div class="entity-view {{&entityName}}-view">
     <h2>{{&templateTitle}}</h2>
+    <div class="actions">
+        <a class="button button-primary" href="{{&entityNewRoute}}">Create New</a>
+        <a class="button button-primary" href="{{&entityEditRoute}}">Edit</a>
+        <a class="button button-secondary" href="{{&entityListRoute}}">Back</a>
+        <form class="form-delete" name="delete-form-top-{{&id}}" id="delete-form-top-{{&id}}" action="{{&entityDeleteRoute}}" method="post">
+            <span>
+                <input type="hidden" name="ids[]" value="{{&id}}"/>
+                <button class="button button-danger" type="submit">Delete</button>
+            </span>
+        </form>
+    </div>
     {{#fields}}
     <div class="view-field">
         <span class="field-name">{{&name}}</span>
         <span class="field-value">{{&value}}</span>
     </div>
     {{/fields}}
+    {{&extraFormContent}}
     <div class="actions">
+        <a class="button button-primary" href="{{&entityNewRoute}}">Create New</a>
         <a class="button button-primary" href="{{&entityEditRoute}}">Edit</a>
         <a class="button button-secondary" href="{{&entityListRoute}}">Back</a>
         <form class="form-delete" name="delete-form-{{&id}}" id="delete-form-{{&id}}" action="{{&entityDeleteRoute}}" method="post">
@@ -15,5 +28,18 @@
                 <button class="button button-danger" type="submit">Delete</button>
             </span>
         </form>
+        <div class="extra-actions">
+            {{&extraContent}}
+        </div>
     </div>
 </div>
+<dialog class="confirm-dialog">
+    <div class="dialog-content">
+        <h5 class="dialog-title">Confirm Delete</h5>
+        <p class="dialog-message">Are you sure you want to delete this item? This action cannot be undone.</p>
+        <div class="dialog-actions">
+            <button type="button" class="button button-secondary dialog-cancel">Cancel</button>
+            <button type="button" class="button button-danger dialog-confirm">Delete</button>
+        </div>
+    </div>
+</dialog>

@@ -132,6 +132,43 @@ $darkGreen: #27ae60;
         }
     }
 
+    .icon {
+        &-sm {
+            width: 32px;
+        }
+    }
+
+    .clickable {
+        cursor: pointer;
+    }
+
+    .modal-overlay {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 9999;
+        width: 100vw;
+        height: 100vh;
+        background-color: rgba(0, 0, 0, 0.5);
+    }
+
+    .modal {
+        max-width: 92vw;
+        max-height: 92vh;
+        padding: 1rem;
+        overflow: auto;
+        cursor: pointer;
+        background-color: #fff;
+        border-radius: 8px;
+
+        canvas {
+            max-width: 100%;
+        }
+    }
+
     .response-error {
         color: $red;
         font-weight: $bold;
@@ -393,7 +430,7 @@ $darkGreen: #27ae60;
     .filters-toggle-content {
         display: flex;
         flex-wrap: wrap;
-        justify-content: space-between;
+        justify-content: flex-start;
 
         &.hidden {
             display: none;
@@ -478,10 +515,21 @@ $darkGreen: #27ae60;
             justify-content: space-between;
 
             h4 {
+                display: flex;
+                flex-direction: row;
+                vertical-align: middle;
+                align-items: center;
                 width: 100%;
                 margin: 0 0 1rem 0;
                 font-size: 14px;
                 color: $darkGrey;
+
+                &.filters-toggle {
+                    img {
+                        max-width: 30px;
+                        margin-right: 1rem;
+                    }
+                }
             }
 
             .actions {
@@ -491,9 +539,10 @@ $darkGreen: #27ae60;
             }
 
             .sub-content-box {
-                margin-bottom: 1rem;
                 display: flex;
                 flex-direction: column;
+                margin-bottom: 1rem;
+                margin-right: 1rem;
 
                 label {
                     font-weight: 600;
@@ -533,6 +582,27 @@ $darkGreen: #27ae60;
                 flex-wrap: wrap;
                 width: 100%;
 
+                // 3 or more items => 4 columns
+                .wizard-map-option-container {
+                    flex: 0 0 22%;
+                    padding: 1rem 1% 0;
+                    margin: 1.5rem 0 0;
+                    border: 1px solid #ccc;
+                }
+
+                // 1 child => 1 columns
+                .wizard-map-option-container:only-child {
+                    flex: 0 0 100%;
+                    padding: 1rem 0 0;
+                    border: none;
+                }
+
+                // 2 children => 2 columns
+                .wizard-map-option-container:first-child:nth-last-child(2),
+                .wizard-map-option-container:last-child:nth-child(2) {
+                    flex: 0 0 47%;
+                }
+
                 input.map-wizard-option {
                     top: 2px;
                     margin-right: 0;
@@ -560,13 +630,16 @@ $darkGreen: #27ae60;
                 display: flex;
                 flex-direction: column;
                 list-style: none;
+                padding-top: 1rem;
+                margin-top: 1.5rem;
+                border-top: 1px solid #ccc;
 
                 label {
                     cursor: pointer;
                 }
 
                 canvas {
-                    max-width: 400px;
+                    width: 100%;
                     margin-top: 1rem;
                 }
             }
@@ -602,6 +675,27 @@ $darkGreen: #27ae60;
                 display: flex;
             }
         }
+
+        .sub-map-option-description {
+            display: flex;
+            align-items: center;
+
+            img.icon-sm {
+                margin-right: 1rem;
+            }
+        }
+
+        .sub-maps-container {
+            display: block;
+
+            &.hidden {
+                display: none;
+            }
+
+            p {
+                margin: 1.5rem 0 0;
+            }
+        }
     }
 
     .loading {
@@ -626,7 +720,7 @@ $darkGreen: #27ae60;
             padding: 0;
             margin-bottom: 1rem;
 
-            span {
+            span, label, input {
                 padding: 0.5rem;
 
                 &.field-name {
@@ -639,6 +733,16 @@ $darkGreen: #27ae60;
                     flex: 2;
                     color: $darkBlue;
                     background-color: $lightGrey;
+
+                    &.with-button {
+                        margin: auto;
+                        vertical-align: middle;
+
+                        button {
+                            width: max-content;
+                            margin: 0 0.5rem;
+                        }
+                    }
 
                     input[type="checkbox"] {
                         max-width: max-content;
@@ -654,7 +758,7 @@ $darkGreen: #27ae60;
         }
 
         .edit-field {
-            span {
+            span, input {
                 &.field-value {
                     display: flex;
                     flex-direction: column;
@@ -699,6 +803,25 @@ $darkGreen: #27ae60;
                 margin: 0 0.5rem;
             }
         }
+    }
+
+    .extra-content-container, .default-room-container {
+        display: flex;
+        flex-direction: column;
+        padding: 1rem 0;
+        margin-top: 1rem;
+        text-align: left;
+
+        h3 {
+            text-align: center;
+        }
+    }
+
+    .association-maps-container {
+        display: block;
+        width: 100%;
+        max-height: 500px;
+        overflow: auto;
     }
 
 }
