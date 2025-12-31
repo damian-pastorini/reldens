@@ -1,6 +1,6 @@
 {
     "name": "reldens",
-    "version": "4.0.0-beta.39",
+    "version": "4.0.0-beta.39.1",
     "description": "Reldens - MMORPG Platform",
     "author": "Damian A. Pastorini",
     "license": "MIT",
@@ -8,7 +8,7 @@
     "source": false,
     "repository": {
         "type": "git",
-        "url": "https://github.com/damian-pastorini/reldens.git"
+        "url": "git+https://github.com/damian-pastorini/reldens.git"
     },
     "keywords": [
         "reldens",
