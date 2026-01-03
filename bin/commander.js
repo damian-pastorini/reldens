@@ -193,6 +193,7 @@ class Commander
             projectThemeName: this.projectThemeName
         });
         await serverManager.initializeStorage(serverManager.rawConfig, serverManager.dataServerDriver);
+        await serverManager.initializeConfigManager();
         return serverManager;
     }
 
