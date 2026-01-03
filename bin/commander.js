@@ -11,8 +11,10 @@ const { spawn } = require('child_process');
 const { CreateAdmin } = require('../lib/users/server/create-admin');
 const { ResetPassword } = require('../lib/users/server/reset-password');
 const { ThemeManager } = require('../lib/game/server/theme-manager');
+const { PackagesInstallation } = require('../lib/game/server/installer/packages-installation');
 const { ServerManager } = require('../server');
 const { FileHandler } = require('@reldens/server-utils');
+const { Logger, sc } = require('@reldens/utils');
 
 class Commander
 {
@@ -24,44 +26,54 @@ class Commander
     cssSourceMaps = '1' === process.env.RELDENS_CSS_SOURCEMAPS;
     availableCommands = ['test', 'help', 'generateEntities', 'createAdmin', 'resetPassword'];
     command = '';
-    ready = false;
 
-    constructor()
+    prepareCommand()
     {
-        console.info('- Reldens - ');
-        console.info('- Use "help" as argument to see all the available commands:');
-        console.info('$ node scripts/reldens-commands.js help');
-        if(!FileHandler.exists(this.projectRoot)){
-            console.error('- Can not access parent folder, check permissions.');
+        if(!sc.hasOwn(process.env, 'RELDENS_LOG_LEVEL')){
+            process.env.RELDENS_LOG_LEVEL = 7;
         }
-        if(!FileHandler.exists(this.reldensModulePath)){
-            console.error(
-                '- Reldens node module folder not found, try `npm install`.',
-                {
-                    dirname: __dirname,
-                    filename: __filename,
-                    process: process.cwd(),
-                    modulePath: this.reldensModulePath,
-                    projectRoot: this.projectRoot
-                }
-            );
+        Logger.info('- Reldens - ');
+        Logger.info('- Use "help" as argument to see all the available commands:');
+        Logger.info('$ node scripts/reldens-commands.js help');
+        if(!FileHandler.exists(this.projectRoot)){
+            Logger.error('- Can not access parent folder, check permissions.');
+            return false;
+        }
+        this.packagesInstallation = new PackagesInstallation({projectRoot: this.projectRoot});
+        if(!this.ensureReldensPackage()){
+            return false;
         }
         this.themeManager = new ThemeManager(this);
         let parseResult = this.parseArgs();
         if(!parseResult){
             return false;
         }
-        this.ready = true;
         this.themeManager.setupPaths(this);
-        console.info('- Command "'+this.command+'" ready to be executed.');
-        console.info('- Theme: '+this.projectThemeName);
+        Logger.info('- Command "'+this.command+'" ready to be executed.');
+        Logger.info('- Theme: '+this.projectThemeName);
+        return true;
+    }
+
+    ensureReldensPackage()
+    {
+        if(this.packagesInstallation.isPackageInstalled('reldens')){
+            return true;
+        }
+        Logger.info('- Reldens package not found in node_modules.');
+        Logger.info('- Installing reldens package...');
+        if(!this.packagesInstallation.executeInstall(['reldens'])){
+            Logger.error('- Failed to install reldens package.');
+            return false;
+        }
+        Logger.info('- Reldens package installed successfully.');
+        return true;
     }
 
     parseArgs()
     {
         let args = process.argv;
         if(2 === args.length){
-            console.error('- Missing arguments.');
+            Logger.error('- Missing arguments.');
             return false;
         }
         let extractedParams = args.slice(2);
@@ -70,7 +82,7 @@ class Commander
             return true;
         }
         if('execute' === this.command || 'function' !== typeof this.themeManager[this.command]){
-            console.error('- Invalid command:', this.command);
+            Logger.error('- Invalid command:', this.command);
             return false;
         }
         if(2 === extractedParams.length && '' !== extractedParams[1]){
@@ -82,7 +94,7 @@ class Commander
     async execute()
     {
         await this.themeManager[this.command]();
-        console.info('- Command executed!');
+        Logger.info('- Command executed!');
         process.exit();
     }
 
@@ -91,7 +103,7 @@ class Commander
         let crudTestPath = FileHandler.joinPaths(this.projectRoot, 'crud-test');
         FileHandler.createFolder(crudTestPath);
         FileHandler.remove(crudTestPath);
-        console.info('- Test OK.');
+        Logger.info('- Test OK.');
     }
 
     generateEntities()
@@ -111,7 +123,7 @@ class Commander
         if(overrideArg){
             args.push('--override');
         }
-        console.info('- Running: npx '+args.join(' '));
+        Logger.info('- Running: npx '+args.join(' '));
         let child = spawn('npx', args, {
             stdio: 'inherit',
             cwd: this.projectRoot,
@@ -124,7 +136,7 @@ class Commander
 
     async createAdmin()
     {
-        console.info('- Creating admin user...');
+        Logger.info('- Creating admin user...');
         let args = this.getCommandArgs(['user', 'pass', 'email']);
         let serverManager = await this.initializeServerManager();
         let service = new CreateAdmin(serverManager);
@@ -134,7 +146,7 @@ class Commander
 
     async resetPassword()
     {
-        console.info('- Resetting user password...');
+        Logger.info('- Resetting user password...');
         let args = this.getCommandArgs(['user', 'pass']);
         let serverManager = await this.initializeServerManager();
         let service = new ResetPassword(serverManager);
@@ -156,7 +168,7 @@ class Commander
         }
         for(let requiredArg of requiredArgs){
             if(!parsedArgs[requiredArg]){
-                console.error('- Missing required argument: --'+requiredArg);
+                Logger.error('- Missing required argument: --'+requiredArg);
                 process.exit(1);
             }
         }
@@ -167,7 +179,7 @@ class Commander
     {
         let envPath = FileHandler.joinPaths(this.projectRoot, '.env');
         if(!FileHandler.exists(envPath)){
-            console.error('- .env file not found at: '+envPath);
+            Logger.error('- .env file not found at: '+envPath);
             process.exit(1);
         }
         dotenv.config({path: envPath});
@@ -186,7 +198,7 @@ class Commander
 
     help()
     {
-        console.info(' - Available commands:'
+        Logger.info(' - Available commands:'
             +"\n"+'createApp                        - Create base project, copy all default files like in the skeleton.'
             +"\n"+'resetDist                        - Delete and create the "dist" folder.'
             +"\n"+'removeDist                       - Delete the "dist" folder.'
