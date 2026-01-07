@@ -17,20 +17,18 @@ The Reldens Items System manages player inventory, equipment, and item modifiers
 
 ### Directory Structure
 
-```
-lib/inventory/
-├── client/           # Client-side inventory UI and rendering
-├── server/           # Server-side inventory logic
-│   ├── items-factory.js           # Creates item instances from database models
-│   ├── message-actions.js         # Handles equip/unequip/trade messages
-│   ├── models-manager.js          # Database operations
-│   ├── storage-observer.js        # Event listeners for persistence
-│   ├── plugin.js                  # Inventory feature plugin
-│   └── subscribers/               # Event subscribers
-│       ├── player-subscriber.js   # Creates player inventory on login
-│       └── player-death-subscriber.js
-└── constants.js
-```
+**lib/inventory/**
+- **client/** - Client-side inventory UI and rendering
+- **server/** - Server-side inventory logic
+  - items-factory.js - Creates item instances from database models
+  - message-actions.js - Handles equip/unequip/trade messages
+  - models-manager.js - Database operations
+  - storage-observer.js - Event listeners for persistence
+  - plugin.js - Inventory feature plugin
+  - **subscribers/** - Event subscribers
+    - player-subscriber.js - Creates player inventory on login
+    - player-death-subscriber.js
+- constants.js
 
 ## Item Creation Flow
 

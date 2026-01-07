@@ -260,62 +260,37 @@ async savePlayerState(sessionId) {
 
 ## Data Flow Diagram
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│ 1. DATABASE (players_state table)                              │
-│    room_id: 4, x: 400, y: 345, dir: 'down'                     │
-│    (NO scene property)                                          │
-└────────────────────────┬────────────────────────────────────────┘
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ 2. LOAD: UsersManager.loadUserByUsername()                     │
-│    related_players[].related_players_state = database snapshot │
-└────────────────────────┬────────────────────────────────────────┘
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ 3. MAP: LoginManager.mapPlayerStateRelation()                  │
-│    player.state = player.related_players_state                 │
-│    (Assignment creates runtime state)                           │
-└────────────────────────┬────────────────────────────────────────┘
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ 4. ENHANCE: LoginManager.setSceneOnPlayers()                   │
-│    player.state.scene = getRoomNameById(player.state.room_id)  │
-│    (Adds scene property to runtime state)                       │
-└────────────────────────┬────────────────────────────────────────┘
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ 5. SELECT: RoomLogin.onAuth()                                  │
-│    userModel.player = getPlayerByIdFromArray(...)              │
-│    (Assigns selected player to userModel.player)               │
-└────────────────────────┬────────────────────────────────────────┘
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ 6. VALIDATE: RoomScene.onJoin()                                │
-│    Check: userModel.player.state exists                        │
-│    Validate: userModel.player.state.scene matches room         │
-└────────────────────────┬────────────────────────────────────────┘
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ 7. GAMEPLAY: Player moves, changes scenes                      │
-│    Updates: playerSchema.state (runtime)                       │
-│    Unchanged: player.related_players_state (stale)             │
-└────────────────────────┬────────────────────────────────────────┘
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ 8. SAVE: RoomScene.savePlayerState()                           │
-│    Read FROM: playerSchema.state (current position)            │
-│    Write TO: database players_state table                      │
-│    (Becomes related_players_state on next login)               │
-└─────────────────────────────────────────────────────────────────┘
-```
+**Step 1: DATABASE (players_state table)**
+- room_id: 4, x: 400, y: 345, dir: 'down'
+- (NO scene property)
+
+**Step 2: LOAD - UsersManager.loadUserByUsername()**
+- related_players[].related_players_state = database snapshot
+
+**Step 3: MAP - LoginManager.mapPlayerStateRelation()**
+- player.state = player.related_players_state
+- (Assignment creates runtime state)
+
+**Step 4: ENHANCE - LoginManager.setSceneOnPlayers()**
+- player.state.scene = getRoomNameById(player.state.room_id)
+- (Adds scene property to runtime state)
+
+**Step 5: SELECT - RoomLogin.onAuth()**
+- userModel.player = getPlayerByIdFromArray(...)
+- (Assigns selected player to userModel.player)
+
+**Step 6: VALIDATE - RoomScene.onJoin()**
+- Check: userModel.player.state exists
+- Validate: userModel.player.state.scene matches room
+
+**Step 7: GAMEPLAY - Player moves, changes scenes**
+- Updates: playerSchema.state (runtime)
+- Unchanged: player.related_players_state (stale)
+
+**Step 8: SAVE - RoomScene.savePlayerState()**
+- Read FROM: playerSchema.state (current position)
+- Write TO: database players_state table
+- (Becomes related_players_state on next login)
 
 ---
 

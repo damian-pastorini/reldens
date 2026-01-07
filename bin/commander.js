@@ -39,13 +39,21 @@ class Commander
             Logger.error('- Can not access parent folder, check permissions.');
             return false;
         }
-        this.packagesInstallation = new PackagesInstallation({projectRoot: this.projectRoot});
-        if(!this.ensureReldensPackage()){
-            return false;
-        }
-        this.themeManager = new ThemeManager(this);
         let parseResult = this.parseArgs();
         if(!parseResult){
+            return false;
+        }
+        if(-1 !== this.availableCommands.indexOf(this.command)){
+            return true;
+        }
+        this.packagesInstallation = new PackagesInstallation({projectRoot: this.projectRoot});
+        if('createApp' === this.command){
+            if(!this.ensureReldensPackage()){
+                return false;
+            }
+        }
+        this.themeManager = new ThemeManager(this);
+        if(!this.validateThemeManagerCommand()){
             return false;
         }
         this.themeManager.setupPaths(this);
@@ -81,12 +89,20 @@ class Commander
         if(-1 !== this.availableCommands.indexOf(this.command)){
             return true;
         }
+        if(2 === extractedParams.length && '' !== extractedParams[1]){
+            this.projectThemeName = extractedParams[1];
+        }
+        return true;
+    }
+
+    validateThemeManagerCommand()
+    {
+        if(-1 !== this.availableCommands.indexOf(this.command)){
+            return true;
+        }
         if('execute' === this.command || 'function' !== typeof this.themeManager[this.command]){
             Logger.error('- Invalid command:', this.command);
             return false;
-        }
-        if(2 === extractedParams.length && '' !== extractedParams[1]){
-            this.projectThemeName = extractedParams[1];
         }
         return true;
     }

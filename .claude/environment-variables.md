@@ -87,11 +87,15 @@ See `lib/game/server/install-templates/.env.dist` for the template file.
 
 ## Bundler
 
-- `RELDENS_ALLOW_RUN_BUNDLER` - Allow bundler execution (default: 1)
+- `RELDENS_ALLOW_RUN_BUNDLER` - Allow automatic bundler execution via createClientBundle() (default: 0)
+- `RELDENS_ALLOW_BUILD_CLIENT` - Allow client build execution via buildClient() (default: 1)
+- `RELDENS_ALLOW_BUILD_CSS` - Allow CSS build execution via buildCss() (default: 1)
 - `RELDENS_FORCE_RESET_DIST_ON_BUNDLE` - Force reset dist on bundle
 - `RELDENS_FORCE_COPY_ASSETS_ON_BUNDLE` - Force copy assets on bundle
 - `RELDENS_JS_SOURCEMAPS` - Enable JavaScript source maps
 - `RELDENS_CSS_SOURCEMAPS` - Enable CSS source maps
+
+**Important**: Always use `createClientBundle()` instead of calling `buildClient()` directly when building during server startup. The `createClientBundle()` method respects `RELDENS_ALLOW_RUN_BUNDLER` and provides additional configuration options.
 
 ## Game Server
 

@@ -20,15 +20,13 @@ The SceneDataFilter system prevents Colyseus buffer overflow by analyzing room d
 
 ### Architecture
 
-```javascript
-SceneDataFilter
-├── filterRoomData()                 // Main entry (called by State.mapRoomData)
-├── buildCompleteData()              // Returns unfiltered data (sendAll: true)
-├── buildFilteredData()              // Returns optimized data (sendAll: false)
-├── optimizeData()                   // Generic optimization method
-├── detectIdenticalProperties()      // Finds shared properties across objects
-└── valuesAreDifferent()             // Compares values for optimization
-```
+**SceneDataFilter Methods:**
+- filterRoomData() - Main entry (called by State.mapRoomData)
+- buildCompleteData() - Returns unfiltered data (sendAll: true)
+- buildFilteredData() - Returns optimized data (sendAll: false)
+- optimizeData() - Generic optimization method
+- detectIdenticalProperties() - Finds shared properties across objects
+- valuesAreDifferent() - Compares values for optimization
 
 ### How It Works
 
