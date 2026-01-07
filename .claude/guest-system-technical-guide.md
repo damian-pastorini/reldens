@@ -278,70 +278,44 @@ activateGuest(){
 
 ## 5. Complete Flow Diagram
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│ 1. DATABASE (rooms table)                                       │
-│    customData: {"allowGuest": true}                             │
-└────────────────────────┬────────────────────────────────────────┘
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ 2. SERVER: RoomsManager.loadRooms()                             │
-│    - Loads all rooms from database                              │
-│    - Calls filterGuestRooms() to identify guest-allowed rooms   │
-│    - Creates registrationAvailableRoomsGuest list               │
-└────────────────────────┬────────────────────────────────────────┘
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ 3. SERVER: RoomsManager.defineRoomsInGameServer()               │
-│    - Assigns guest rooms to config:                             │
-│      config.client.rooms.selection.availableRooms = {           │
-│        registrationGuest: [...],                                │
-│        loginGuest: [...]                                        │
-│      }                                                           │
-└────────────────────────┬────────────────────────────────────────┘
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ 4. SERVER: ServerManager.startGameServerInstance()              │
-│    - After initializeManagers() completes                       │
-│    - Calls HomepageLoader.createConfigFile()                    │
-│    - Writes theme/config.js with guest rooms data               │
-│    - Calls themeManager.buildClient()                           │
-│    - Bundles config.js into dist/                               │
-└────────────────────────┬────────────────────────────────────────┘
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ 5. CLIENT: Browser loads theme/default/index.html               │
-│    - Includes <script src="config.js">                          │
-│    - Sets window.reldensInitialConfig                           │
-└────────────────────────┬────────────────────────────────────────┘
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ 6. CLIENT: GameManager constructor                              │
-│    - Reads window.reldensInitialConfig                          │
-│    - Merges into this.config                                    │
-└────────────────────────┬────────────────────────────────────────┘
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ 7. CLIENT: ClientStartHandler.clientStart()                     │
-│    - Creates GuestFormHandler                                   │
-│    - Calls activateGuest()                                      │
-└────────────────────────┬────────────────────────────────────────┘
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ 8. CLIENT: GuestFormHandler.activateGuest()                     │
-│    - Reads config.get('client/rooms/selection/availableRooms/   │
-│      registrationGuest')                                        │
-│    - If empty → HIDE form                                       │
-│    - If not empty → SHOW form and attach submit handler         │
-└─────────────────────────────────────────────────────────────────┘
-```
+**Step 1: DATABASE (rooms table)**
+- customData: {"allowGuest": true}
+
+**Step 2: SERVER - RoomsManager.loadRooms()**
+- Loads all rooms from database
+- Calls filterGuestRooms() to identify guest-allowed rooms
+- Creates registrationAvailableRoomsGuest list
+
+**Step 3: SERVER - RoomsManager.defineRoomsInGameServer()**
+- Assigns guest rooms to config:
+- config.client.rooms.selection.availableRooms = {
+  - registrationGuest: [...],
+  - loginGuest: [...]
+- }
+
+**Step 4: SERVER - ServerManager.startGameServerInstance()**
+- After initializeManagers() completes
+- Calls HomepageLoader.createConfigFile()
+- Writes theme/config.js with guest rooms data
+- Calls themeManager.buildClient()
+- Bundles config.js into dist/
+
+**Step 5: CLIENT - Browser loads theme/default/index.html**
+- Includes script src="config.js"
+- Sets window.reldensInitialConfig
+
+**Step 6: CLIENT - GameManager constructor**
+- Reads window.reldensInitialConfig
+- Merges into this.config
+
+**Step 7: CLIENT - ClientStartHandler.clientStart()**
+- Creates GuestFormHandler
+- Calls activateGuest()
+
+**Step 8: CLIENT - GuestFormHandler.activateGuest()**
+- Reads config.get('client/rooms/selection/availableRooms/registrationGuest')
+- If empty → HIDE form
+- If not empty → SHOW form and attach submit handler
 
 ---
 

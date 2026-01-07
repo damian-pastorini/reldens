@@ -148,6 +148,21 @@ this.statsRepository = this.dataServer.getEntity('stats');
 **Theme Management:**
 ThemeManager (`lib/game/server/theme-manager.js`) handles asset copying, bundling, and CSS compilation.
 
+### Client Bundling Best Practices
+
+**CRITICAL**: Always use `themeManager.createClientBundle()` instead of calling `buildClient()` or `buildCss()` directly:
+
+- **createClientBundle()** - Wrapper that checks `RELDENS_ALLOW_RUN_BUNDLER` environment variable (used during server startup)
+- **buildClient()** - Direct method that checks `RELDENS_ALLOW_BUILD_CLIENT` environment variable
+- **buildCss()** - Direct method that checks `RELDENS_ALLOW_BUILD_CSS` environment variable
+
+**Environment Variables:**
+- `RELDENS_ALLOW_RUN_BUNDLER` - Controls `createClientBundle()` execution (default: 0)
+- `RELDENS_ALLOW_BUILD_CLIENT` - Controls `buildClient()` execution (default: 1)
+- `RELDENS_ALLOW_BUILD_CSS` - Controls `buildCss()` execution (default: 1)
+
+**Why this matters:** Production servers can regenerate clients and run Parcel builds for hot-reloading. These environment variables allow you to control when bundling happens, preventing unexpected builds during startup or deployment.
+
 ## Colyseus 0.16 - CRITICAL State Synchronization
 
 **CRITICAL TIMING ISSUE**: Colyseus 0.16 state synchronization is asynchronous.
