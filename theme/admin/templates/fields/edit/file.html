@@ -1,2 +1,2 @@
-<p>{{&fieldValue}}</p>
+{{#fieldValue}}<p class="upload-current-file" data-field="{{&fieldName}}"><button type="button" class="remove-upload-btn" data-field="{{&fieldName}}" title="REMOVE">X</button> - {{&fieldValue}}</p>{{/fieldValue}}
 <input type="file" name="{{&fieldName}}" id="{{&fieldName}}"{{&required}}{{&fieldDisabled}}{{&multiple}}/>
