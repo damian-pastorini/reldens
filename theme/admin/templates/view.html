@@ -4,12 +4,15 @@
         <a class="button button-primary" href="{{&entityNewRoute}}">Create New</a>
         <a class="button button-primary" href="{{&entityEditRoute}}">Edit</a>
         <a class="button button-secondary" href="{{&entityListRoute}}">Back</a>
-        <form class="form-delete" name="delete-form-top-{{&id}}" id="delete-form-top-{{&id}}" action="{{&entityDeleteRoute}}" method="post">
+        <form class="form-delete" name="delete-form-top-{{&id}}" action="{{&entityDeleteRoute}}" method="post">
             <span>
                 <input type="hidden" name="ids[]" value="{{&id}}"/>
                 <button class="button button-danger" type="submit">Delete</button>
             </span>
         </form>
+    </div>
+    <div class="extra-actions">
+        {{&extraContent}}
     </div>
     {{#fields}}
     <div class="view-field">
@@ -22,7 +25,7 @@
         <a class="button button-primary" href="{{&entityNewRoute}}">Create New</a>
         <a class="button button-primary" href="{{&entityEditRoute}}">Edit</a>
         <a class="button button-secondary" href="{{&entityListRoute}}">Back</a>
-        <form class="form-delete" name="delete-form-{{&id}}" id="delete-form-{{&id}}" action="{{&entityDeleteRoute}}" method="post">
+        <form class="form-delete" name="delete-form-{{&id}}" action="{{&entityDeleteRoute}}" method="post">
             <span>
                 <input type="hidden" name="ids[]" value="{{&id}}"/>
                 <button class="button button-danger" type="submit">Delete</button>

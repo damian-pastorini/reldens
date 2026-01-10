@@ -6,6 +6,9 @@
         <button class="button button-primary button-submit" type="submit" form="edit-form" name="saveAction" value="saveAndGoBack">Save and go back</button>
         <a class="button button-secondary button-back" href="{{&entityViewRoute}}">Cancel</a>
     </div>
+    <div class="extra-actions">
+        {{&extraContent}}
+    </div>
     <form name="edit-form" id="edit-form" action="{{&entitySaveRoute}}" method="post"{{&multipartFormData}}>
         <input type="hidden" name="{{&idProperty}}" value="{{&idValue}}"/>
         <div class="edit-field">
