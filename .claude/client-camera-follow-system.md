@@ -106,11 +106,11 @@ this.events.on('reldens.afterSceneDynamicCreate', async () => {
 
 **Timing Sequence**:
 1. Scene created
-2. PlayerEngine.create() called → camera follow initialized
+2. PlayerEngine.create() called - camera follow initialized
 3. Camera fade starts (1000ms)
 4. `reldens.afterSceneDynamicCreate` event fires
-5. `updateGameSize()` called → adjusts camera lerp
-6. Camera fade completes → lerp values set in event handler
+5. `updateGameSize()` called - adjusts camera lerp
+6. Camera fade completes - lerp values set in event handler
 
 ### 6. Configuration Values
 
@@ -159,25 +159,15 @@ this.gameDom.getWindow().addEventListener('resize', () => {
 
 ## Data Flow Summary
 
-```
-Database Config
-    ↓
-Server loads config
-    ↓
-Client receives config in START_GAME message
-    ↓
-PlayerEngine constructor reads config values
-    ↓
-PlayerEngine.create() initializes camera
-    ↓
-startFollow() begins tracking player
-    ↓
-Fade animation starts
-    ↓
-Camera fade completes → lerp values applied
-    ↓
-Window resize events → updateGameSize() maintains lerp
-```
+1. Database Config
+2. Server loads config
+3. Client receives config in START_GAME message
+4. PlayerEngine constructor reads config values
+5. PlayerEngine.create() initializes camera
+6. startFollow() begins tracking player
+7. Fade animation starts
+8. Camera fade completes - lerp values applied
+9. Window resize events - updateGameSize() maintains lerp
 
 ## Key Technical Points
 

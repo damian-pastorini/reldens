@@ -18,7 +18,7 @@ Each room can be marked as guest-accessible via the `customData` JSON field:
 }
 ```
 
-**Location:** `rooms` table → `customData` column
+**Location:** `rooms` table in `customData` column
 
 **Example SQL:**
 ```sql
@@ -122,7 +122,7 @@ if(this.config.client?.rooms?.selection){
 }
 ```
 
-**Called by:** `ServerManager.defineServerRooms()` → `RoomsManager.defineRoomsInGameServer()`
+**Called by:** `ServerManager.defineServerRooms()` calls `RoomsManager.defineRoomsInGameServer()`
 
 ---
 
@@ -270,9 +270,9 @@ activateGuest(){
 **Form element:** `#guest-form` in `theme/default/index.html`
 
 **Key logic:**
-- If `availableGuestRooms` is empty → form hidden
-- If `client/general/users/allowGuest` is false → form hidden
-- Otherwise → form visible and functional
+- If `availableGuestRooms` is empty: form hidden
+- If `client/general/users/allowGuest` is false: form hidden
+- Otherwise: form visible and functional
 
 ---
 
@@ -314,8 +314,8 @@ activateGuest(){
 
 **Step 8: CLIENT - GuestFormHandler.activateGuest()**
 - Reads config.get('client/rooms/selection/availableRooms/registrationGuest')
-- If empty → HIDE form
-- If not empty → SHOW form and attach submit handler
+- If empty: HIDE form
+- If not empty: SHOW form and attach submit handler
 
 ---
 
@@ -359,108 +359,7 @@ activateGuest(){
 
 ---
 
-## 7. Common Issues & Solutions
-
-### Issue 1: Guest form is hidden even though rooms have allowGuest
-
-**Cause:** Config file was created BEFORE rooms were configured
-
-**Solution:**
-1. Applied in `manager-claude.js`
-2. Config file creation moved to AFTER `initializeManagers()`
-3. Restart server to regenerate config.js with correct data
-
-### Issue 2: Guest rooms not updating after database changes
-
-**Cause:** Config file is static, created on server start
-
-**Solution:**
-1. Restart server (config.js regenerated automatically)
-2. No client rebuild needed
-
-### Issue 3: All rooms show as guest-allowed when they shouldn't
-
-**Cause:** `server/players/guestUser/allowOnRooms` is set to `true`
-
-**Solution:**
-1. Set config to `false` in database
-2. Restart server
-3. Only rooms with `customData.allowGuest = true` will allow guests
-
-### Issue 4: "Invalid room for guest: undefined" Error
-
-**Cause:** Player state validation using wrong object after entity refactor
-
-**The Bug:**
-After the entity refactor introduced "related_" prefix for database relations, the codebase has:
-- `userModel.player.related_players_state` - Database snapshot (NO scene property)
-- `userModel.player.state` - Runtime state (HAS scene property)
-
-The validation code was checking `related_players_state.scene` which doesn't exist.
-
-**Error in scene.js (BEFORE FIX):**
-```javascript
-// Line 140: Checking database state
-if(!userModel.player.related_players_state){
-    Logger.warning('Missing user player state.', userModel);
-    return false;
-}
-// Line 144: Accessing scene from database state (doesn't exist!)
-if(!this.validateRoom(userModel.player.related_players_state.scene, isGuest)){
-    // related_players_state has NO scene property → undefined
-    return false;
-}
-```
-
-**Fix Applied (scene.js:140-144):**
-```javascript
-// Line 140: Check runtime state instead
-if(!userModel.player.state){
-    Logger.warning('Missing user player state.', userModel);
-    return false;
-}
-// Line 144: Use scene from runtime state (exists!)
-if(!this.validateRoom(userModel.player.state.scene, isGuest)){
-    // state.scene contains the room name
-    return false;
-}
-```
-
-**Root Cause Analysis:**
-
-1. **Database Model** (`related_players_state`):
-   - Loaded from `players_state` table
-   - Contains: `room_id`, `x`, `y`, `dir`
-   - Does NOT contain `scene` property
-   - Snapshot from database, never updated during session
-
-2. **Runtime State** (`state`):
-   - Created during login from `related_players_state`
-   - Enhanced with `scene` property via `setSceneOnPlayers()`
-   - Updated during gameplay (scene changes, movement)
-   - Source of truth for validation and saving
-
-3. **The Flow:**
-   ```
-   Database → related_players_state (no scene)
-           ↓
-   mapPlayerStateRelation() → creates state
-           ↓
-   setSceneOnPlayers() → adds state.scene
-           ↓
-   Validation MUST use state.scene ✓
-   ```
-
-**Why This Affected Guests:**
-- New guests: First time creating player, fresh data load exposes the bug immediately
-- Existing players: May have workarounds or different code paths masking the issue
-
-**Related Documentation:**
-See `.claude/player-state-flow.md` for complete player state architecture.
-
----
-
-## 8. Testing Guest System
+## 7. Testing Guest System
 
 ### Database Setup
 
@@ -476,32 +375,9 @@ SET customData = '{"allowGuest": false}'
 WHERE name = 'forest';
 ```
 
-### Verification Points
-
-1. **Server logs:** Check for `Initialize Managers` → should see rooms loaded
-2. **Config file:** Check `theme/config.js` for `registrationGuest` data
-3. **Browser console:** Check `window.reldensInitialConfig.client.rooms.selection.availableRooms.registrationGuest`
-4. **UI:** Guest form should be visible if guest rooms exist
-
-### Debug Commands
-
-```javascript
-// In browser console
-console.log(reldens.config.get('client/rooms/selection/availableRooms/registrationGuest'));
-// Should show object with guest-allowed rooms
-
-// Check if guest login is enabled
-console.log(reldens.config.get('client/general/users/allowGuest'));
-// Should be true
-
-// Check guest form element
-console.log(document.querySelector('#guest-form'));
-// Should exist and not have 'hidden' class if guest rooms exist
-```
-
 ---
 
-## 9. Code References
+## 8. Code References
 
 **Key Files:**
 - `lib/rooms/server/manager.js` - Room loading and guest filtering

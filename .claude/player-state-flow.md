@@ -340,46 +340,6 @@ userModel.player.state = {
 
 ---
 
-## The Bug and Fix
-
-### Original Bug (scene.js:140-144)
-
-```javascript
-if(this.validateRoomData){
-    if(!userModel.player.related_players_state){  // ❌ Checking database state
-        Logger.warning('Missing user player state.', userModel);
-        return false;
-    }
-    if(!this.validateRoom(userModel.player.related_players_state.scene, isGuest)){
-        //                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-        //                            ❌ related_players_state has NO scene property!
-        return false;
-    }
-}
-```
-
-**Result:** `related_players_state.scene` is `undefined`, validation fails with "Invalid room for guest: undefined"
-
-### The Fix (scene.js:140-144)
-
-```javascript
-if(this.validateRoomData){
-    if(!userModel.player.state){  // ✅ Check runtime state
-        Logger.warning('Missing user player state.', userModel);
-        return false;
-    }
-    if(!this.validateRoom(userModel.player.state.scene, isGuest)){
-        //                            ^^^^^^^^^^^
-        //                            ✅ Runtime state HAS scene property!
-        return false;
-    }
-}
-```
-
-**Result:** Validation uses `state.scene` which exists and contains the correct room name.
-
----
-
 ## Key Takeaways
 
 1. **"related_" prefix is the NEW database relation naming** (not legacy)
@@ -399,7 +359,7 @@ if(this.validateRoomData){
 - `lib/game/server/login-manager.js:351-361` - Map player state relation
 - `lib/game/server/login-manager.js:423-441` - Set scene on players
 - `lib/rooms/server/login.js:70-107` - Authentication and player selection
-- `lib/rooms/server/scene.js:126-156` - Scene validation (FIX LOCATION)
+- `lib/rooms/server/scene.js:126-156` - Scene validation
 - `lib/rooms/server/scene.js:708-737` - Save player state
 
 **Database Tables:**
@@ -408,5 +368,5 @@ if(this.validateRoomData){
 - `players_state` - Player positions (becomes `related_players_state` when loaded)
 
 **Entity Relations:**
-- `UsersModel.related_players` → `PlayersModel[]`
-- `PlayersModel.related_players_state` → `PlayersStateModel`
+- `UsersModel.related_players` relates to `PlayersModel[]`
+- `PlayersModel.related_players_state` relates to `PlayersStateModel`
