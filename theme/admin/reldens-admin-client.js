@@ -19,9 +19,8 @@ window.addEventListener('DOMContentLoaded', () => {
     let queryString = location.search;
     let urlParams = new URLSearchParams(queryString);
 
-    // error codes messages map (CMS base + Reldens extensions):
+    // error codes messages map:
     let errorMessages = {
-        // CMS base messages:
         saveBadPatchData: 'Bad patch data on update.',
         saveEntityStorageError: 'Entity storage error.',
         saveEntityError: 'Entity could not be saved.',
@@ -29,7 +28,7 @@ window.addEventListener('DOMContentLoaded', () => {
         errorView: 'Could not render view page.',
         errorEdit: 'Could not render edit page.',
         errorId: 'Missing entity ID on POST.',
-        // Reldens-specific messages:
+        // Reldens custom messages:
         mapsWizardImportDataError: 'Map could not be imported, missing generated map data.',
         mapsWizardImportError: 'Map could not be imported.',
         objectsImportMissingDataError: 'Object could not be imported, missing JSON files.',
@@ -46,7 +45,6 @@ window.addEventListener('DOMContentLoaded', () => {
         errorSaveReturnPoint: 'Error saving return point.',
     };
 
-    // activate expand/collapse elements and modals (from functions.js):
     activateExpandCollapse();
 
     activateModalElements();
@@ -259,6 +257,9 @@ window.addEventListener('DOMContentLoaded', () => {
                 ? 'Success!'
                 : 'There was an error: '+escapeHTML(errorMessages[result] || result);
             deleteCookie('result');
+            queryParams.delete('result');
+            let newUrl = location.pathname + (queryParams.toString() ? '?' + queryParams.toString() : '');
+            window.history.replaceState({}, '', newUrl);
         }
     }
 
@@ -298,6 +299,39 @@ window.addEventListener('DOMContentLoaded', () => {
             });
         });
     }
+
+    // remove upload button functionality:
+    let removeUploadButtons = document.querySelectorAll('.remove-upload-btn');
+    if(removeUploadButtons){
+        for(let button of removeUploadButtons){
+            button.addEventListener('click', (event) => {
+                event.preventDefault();
+                let fieldName = button.getAttribute('data-field');
+                let fileInput = document.getElementById(fieldName);
+                let currentFileDisplay = document.querySelector('.upload-current-file[data-field="'+fieldName+'"]');
+                if(currentFileDisplay){
+                    currentFileDisplay.style.display = 'none';
+                }
+                if(fileInput){
+                    fileInput.value = '';
+                    let form = fileInput.closest('form');
+                    if(form){
+                        let clearFieldName = 'clear_'+fieldName;
+                        let existingClearInput = form.querySelector('input[name="'+clearFieldName+'"]');
+                        if(!existingClearInput){
+                            let clearInput = document.createElement('input');
+                            clearInput.type = 'hidden';
+                            clearInput.name = clearFieldName;
+                            clearInput.value = '1';
+                            form.appendChild(clearInput);
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    // Reldens custom functions:
 
     // create rooms link function:
     let entityDataElement = document.querySelector('[data-entity-serialized-data]');

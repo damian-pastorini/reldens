@@ -1,5 +1,5 @@
 /*
- * Reldens - Administration Panel
+ * Reldens - CMS - Administration Panel
  */
 
 :root {
@@ -25,7 +25,7 @@
     background-color: var(--lightGrey);
     margin: 0;
     padding: 0;
-    font-size: 12px;
+    font-size: 0.75rem;
 
     .wrapper {
         display: flex;
@@ -40,7 +40,7 @@
         right: 0;
         padding: 1rem 5rem 1rem 2rem;
         border-radius: 8px 0 0 8px;
-        font-size: 14px;
+        font-size: 0.875rem;
 
         &.success, &.error {
             display: block;
@@ -91,7 +91,7 @@
         padding: 0.5rem 1rem;
         border: none;
         border-radius: 4px;
-        font-size: 14px;
+        font-size: 0.875rem;
         cursor: pointer;
         text-decoration: none;
 
@@ -211,7 +211,7 @@
                 color: var(--lightGrey);
                 text-decoration: none;
                 border-left: 3px solid transparent;
-                font-size: 12px;
+                font-size: 0.75rem;
                 border-left: 3px solid #0000;
                 padding: 0.1rem 0.1rem 0.1rem 1rem;
                 margin-top: 0.3rem;
@@ -242,7 +242,7 @@
             color: var(--lightGrey);
             text-decoration: none;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 0.875rem;
             font-weight: var(--font-semi-bold);
             border-bottom: 1px solid var(--darkBlue);
 
@@ -274,6 +274,10 @@
             justify-content: end;
             margin-bottom: 1rem;
         }
+
+        .extra-actions {
+            justify-content: end;
+        }
     }
 
     .forms-container {
@@ -283,7 +287,7 @@
     }
 
     .form-title {
-        font-size: 22px;
+        font-size: 1.375rem;
         margin-bottom: 2%;
         color: var(--darkGrey);
         text-align: center;
@@ -329,7 +333,7 @@
     }
 
     & h2 {
-        font-size: 22px;
+        font-size: 1.375rem;
         margin: 0 0 2rem;
         color: var(--darkGrey);
         text-align: center;
@@ -533,7 +537,7 @@
                 vertical-align: middle;
                 align-items: center;
                 margin: 0 1rem 1rem 0;
-                font-size: 14px;
+                font-size: 0.875rem;
                 color: var(--darkGrey);
 
                 &.filters-toggle {
@@ -650,7 +654,7 @@
 
     .entity-view, .entity-edit {
         & h2 {
-            font-size: 22px;
+            font-size: 1.375rem;
             margin-bottom: 2rem;
             color: var(--darkGrey);
             text-align: center;
@@ -690,6 +694,10 @@
                         max-width: max-content;
                         margin-left: 0.5rem;
                         margin-top: 0.5rem;
+                    }
+
+                    .remove-upload-btn {
+                        cursor: pointer;
                     }
                 }
             }
@@ -757,7 +765,7 @@
     .extra-actions {
         display: flex;
         width: 100%;
-        justify-content: end;
+        justify-content: center;
         margin: 1rem 0;
     }
 
@@ -804,7 +812,7 @@
 
     .dialog-content h5 {
         margin: 0 0 1rem 0;
-        font-size: 18px;
+        font-size: 1.125rem;
         color: var(--darkGrey);
     }
 

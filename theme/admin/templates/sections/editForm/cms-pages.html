@@ -1,5 +1,8 @@
 <fieldset class="cms-page-route">
     <legend>Route data</legend>
+    {{#originalRouteId}}
+    <input type="hidden" name="originalRouteId" value="{{originalRouteId}}"/>
+    {{/originalRouteId}}
     <div class="edit-field">
         <span class="field-name">Path</span>
         <span class="field-value">
