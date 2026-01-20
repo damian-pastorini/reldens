@@ -117,7 +117,7 @@ this.events.on('reldens.createPlayerStatsAfter', async (client, userModel, curre
 
 ### Manual Equip (User Action)
 
-**Entry Point**: User clicks equip button → Client sends message → Server receives
+**Entry Point**: User clicks equip button, client sends message, server receives
 
 1. **Message Reception** (`lib/inventory/server/message-actions.js` lines 71-73)
    ```javascript
@@ -238,17 +238,41 @@ this.events.on('reldens.createPlayerStatsAfter', async (client, userModel, curre
 
 From `@reldens/modifiers/lib/constants.js`:
 
-| ID | Operation | Description | Apply Formula | Revert Formula |
-|----|-----------|-------------|---------------|----------------|
-| 1  | INC       | Increase (flat) | `value + operand` | `value - operand` |
-| 2  | DEC       | Decrease | `value - operand` | `value + operand` |
-| 3  | DIV       | Divide | `value / operand` | `value * operand` |
-| 4  | MUL       | Multiply | `value * operand` | `value / operand` |
-| 5  | INC_P     | Increase by % | `value + (value * operand / 100)` | Complex percentage revert |
-| 6  | DEC_P     | Decrease by % | `value - (value * operand / 100)` | Complex percentage revert |
-| 7  | SET       | Set value | `operand` | `false` |
-| 8  | METHOD    | Custom method | Calls custom method on modifier | Calls custom method |
-| 9  | SET_N     | Set (alt) | `operand` | `false` |
+**1. INC - Increase (flat)**
+- Apply: `value + operand`
+- Revert: `value - operand`
+
+**2. DEC - Decrease**
+- Apply: `value - operand`
+- Revert: `value + operand`
+
+**3. DIV - Divide**
+- Apply: `value / operand`
+- Revert: `value * operand`
+
+**4. MUL - Multiply**
+- Apply: `value * operand`
+- Revert: `value / operand`
+
+**5. INC_P - Increase by %**
+- Apply: `value + (value * operand / 100)`
+- Revert: Complex percentage revert
+
+**6. DEC_P - Decrease by %**
+- Apply: `value - (value * operand / 100)`
+- Revert: Complex percentage revert
+
+**7. SET - Set value**
+- Apply: `operand`
+- Revert: `false`
+
+**8. METHOD - Custom method**
+- Apply: Calls custom method on modifier
+- Revert: Calls custom method
+
+**9. SET_N - Set (alt)**
+- Apply: `operand`
+- Revert: `false`
 
 ### INC_P (Increase Percentage) Calculation
 
@@ -258,14 +282,14 @@ From `@reldens/modifiers/lib/calculator.js` lines 30-37:
 ```javascript
 return originalValue + Math.round(originalValue * operationValue / 100);
 ```
-Example: atk=100, value=5 → 100 + Math.round(100 * 5 / 100) = 100 + 5 = 105
+Example: atk=100, value=5 results in 100 + Math.round(100 * 5 / 100) = 100 + 5 = 105
 
 **Revert**:
 ```javascript
 let revertValue = Math.ceil(originalValue - (originalValue / (100 - operationValue)) * 100);
 return originalValue + revertValue;
 ```
-Example: atk=105, value=5 → Math.ceil(105 - (105/95)*100) = Math.ceil(-5.26) = -5 → 105 + (-5) = 100
+Example: atk=105, value=5 results in Math.ceil(105 - (105/95)*100) = Math.ceil(-5.26) = -5 then 105 + (-5) = 100
 
 ## Database Schema
 
@@ -334,57 +358,47 @@ CREATE TABLE `items_inventory` (
 
 ### Equipment Events Sequence
 
-1. `ItemsEvents.EQUIP_ITEM` → Fired when equip() starts
-   - **Listener**: `StorageObserver.saveEquippedItemAsActive()` → Updates `is_active=1` in database
+1. `ItemsEvents.EQUIP_ITEM` - Fired when equip() starts
+   - **Listener**: `StorageObserver.saveEquippedItemAsActive()` - Updates `is_active=1` in database
 
-2. `ItemsEvents.EQUIP_BEFORE+'Apply'+'Modifiers'` → Before modifiers are applied
+2. `ItemsEvents.EQUIP_BEFORE+'Apply'+'Modifiers'` - Before modifiers are applied
    - No default listeners
 
-3. `ItemsEvents.EQUIP+'Applied'+'Modifiers'` → After modifiers are applied
-   - **Listener**: `StorageObserver.updateAppliedModifiers()` → Calls `persistData()` to save stats
+3. `ItemsEvents.EQUIP+'Applied'+'Modifiers'` - After modifiers are applied
+   - **Listener**: `StorageObserver.updateAppliedModifiers()` - Calls `persistData()` to save stats
 
-4. `reldens.playerPersistDataBefore` → Before data persistence
+4. `reldens.playerPersistDataBefore` - Before data persistence
    - Custom hooks can intercept here
 
-5. `reldens.savePlayerStatsUpdateClient` → After stats saved, before client update
-   - **Listener**: `UsersPlugin.updateClientsWithPlayerStats()` → Updates life bar UI
+5. `reldens.savePlayerStatsUpdateClient` - After stats saved, before client update
+   - **Listener**: `UsersPlugin.updateClientsWithPlayerStats()` - Updates life bar UI
 
 6. Client receives `GameConst.PLAYER_STATS` message with updated stats
 
 ### Unequip Events Sequence
 
-1. `ItemsEvents.UNEQUIP_ITEM` → Fired when unequip() starts
-   - **Listener**: `StorageObserver.saveUnequippedItemAsInactive()` → Updates `is_active=0` in database
+1. `ItemsEvents.UNEQUIP_ITEM` - Fired when unequip() starts
+   - **Listener**: `StorageObserver.saveUnequippedItemAsInactive()` - Updates `is_active=0` in database
 
-2. `ItemsEvents.EQUIP_BEFORE+'Revert'+'Modifiers'` → Before modifiers are reverted
+2. `ItemsEvents.EQUIP_BEFORE+'Revert'+'Modifiers'` - Before modifiers are reverted
    - No default listeners
 
-3. `ItemsEvents.EQUIP+'Reverted'+'Modifiers'` → After modifiers are reverted
-   - **Listener**: `StorageObserver.updateRevertedModifiers()` → Calls `persistData()` to save stats
+3. `ItemsEvents.EQUIP+'Reverted'+'Modifiers'` - After modifiers are reverted
+   - **Listener**: `StorageObserver.updateRevertedModifiers()` - Calls `persistData()` to save stats
 
 4-6. Same persistence and client update flow as equip
 
-## Known Issues
-
-### Issue: Item Modifiers Not Applied on Manual Equip
-
-**Problem**: When a player manually equips an item, the modifiers should be applied to their stats immediately and saved to the database. However, the stats are not being modified.
-
-**Status**: Under investigation
-
-**Location**: TBD - analyzing modifier application flow
-
 ## Testing Checklist
 
-- [ ] Equip item → Stats increase correctly
-- [ ] Unequip item → Stats revert to base value
-- [ ] Logout with equipped item → Stats saved correctly
-- [ ] Login with equipped item → Stats loaded with modifiers applied
-- [ ] Unequip after login → Stats revert to base value correctly
-- [ ] Multiple items in same group → Only one equipped at a time
-- [ ] Percentage modifiers → Calculate correctly for different base values
-- [ ] Flat modifiers → Add/subtract exact values
-- [ ] Max/min property limits → Respect statsBase maximums
+- Equip item - Stats increase correctly
+- Unequip item - Stats revert to base value
+- Logout with equipped item - Stats saved correctly
+- Login with equipped item - Stats loaded with modifiers applied
+- Unequip after login - Stats revert to base value correctly
+- Multiple items in same group - Only one equipped at a time
+- Percentage modifiers - Calculate correctly for different base values
+- Flat modifiers - Add/subtract exact values
+- Max/min property limits - Respect statsBase maximums
 
 ## Performance Considerations
 

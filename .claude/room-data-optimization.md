@@ -212,7 +212,7 @@ objectsAnimationsData: {
 
 // SceneDataFilter analysis:
 // - Group by 'key' field (no asset_key present)
-// - Each object has unique 'key' value → single-object groups
+// - Each object has unique 'key' value = single-object groups
 // - No optimization performed
 
 // Server output
@@ -241,8 +241,8 @@ objectsAnimationsData: {
 }
 
 // AnimationEngine uses props.key fallback
-// object['ground-collisions444'].key = 'door_house_1' → loads asset 'door_house_1' ✓
-// object['house-collisions-over-player535'].key = 'people_town_1' → NPC dialog works ✓
+// object['ground-collisions444'].key = 'door_house_1' loads asset 'door_house_1'
+// object['house-collisions-over-player535'].key = 'people_town_1' NPC dialog works
 ```
 
 ### Forest Room (With Optimization)
@@ -331,8 +331,8 @@ for(let key of ['enemy_1', 'enemy_2', ...]){
     // }
 }
 
-// AnimationEngine uses props.asset_key (exists) → loads asset 'enemy_forest_1' ✓
-// All properties restored from defaults + unique props ✓
+// AnimationEngine uses props.asset_key (exists) loads asset 'enemy_forest_1'
+// All properties restored from defaults + unique props
 ```
 
 ---

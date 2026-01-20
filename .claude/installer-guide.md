@@ -79,7 +79,7 @@ Clients marked with **(manual)** require manual database setup:
 3. Manually execute SQL scripts or create schema in your database:
    - Copy SQL files from `migrations/production/` directory
    - Adapt SQL syntax for your database (if needed)
-   - Execute scripts in order: install → basic-config → sample-data
+   - Execute scripts in order: install, basic-config, sample-data
 4. Run entity generation: `reldens generateEntities --override`
 5. Restart the application
 

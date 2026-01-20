@@ -34,7 +34,7 @@ body {
         overflow: auto;
         z-index: 10000;
         background-size: cover;
-        background-color: $cLightGrey;
+        background-color: $cDarkBlue;
 
         .header,
         .footer,
@@ -64,7 +64,7 @@ body {
         .footer {
             display: flex;
             height: 6%;
-            background-color: $cDarkBlue;
+            background-color: $cBlack;
             padding: min(10px, 1%) 0;
         }
 
@@ -79,8 +79,6 @@ body {
 .hidden {
     display: none;
 }
-
-
 
 .header {
     #your-logo {
@@ -151,6 +149,8 @@ body {
             margin: 0 auto;
             padding: 2%;
             background-color: $boxBackground;
+            border: 2px solid $cWhite;
+            box-shadow: 10px 10px 14px 2px rgba(0, 0, 0, 0.6);
         }
     }
 
@@ -168,9 +168,8 @@ input[type="submit"] {
     width: 100%;
     margin: 0 auto 10px;
     padding: 0;
-    border: 1px solid #ccc;
-    box-shadow: 10px 10px 14px 2px rgba(0, 0, 0, 0.6);
     box-sizing: border-box;
+    border: none;
 
     &.hidden {
         display: none;
