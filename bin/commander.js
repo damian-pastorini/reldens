@@ -69,7 +69,7 @@ class Commander
         }
         Logger.info('- Reldens package not found in node_modules.');
         Logger.info('- Installing reldens package...');
-        if(!this.packagesInstallation.executeInstall(['reldens'])){
+        if(!this.packagesInstallation.processPackages(['reldens'], 'install')){
             Logger.error('- Failed to install reldens package.');
             return false;
         }
