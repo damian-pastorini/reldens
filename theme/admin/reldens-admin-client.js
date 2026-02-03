@@ -4,12 +4,14 @@
  *
  */
 
-if(window.trustedTypes?.createPolicy){
-    trustedTypes.createPolicy('default', {
-        createHTML: s => s,
-        createScriptURL: s => s
+let trustedTypesPolicy = null;
+if(window.trustedTypes && window.trustedTypes.createPolicy){
+    trustedTypesPolicy = window.trustedTypes.createPolicy('default', {
+        createHTML: (s) => s,
+        createScriptURL: (s) => s
     });
 }
+window.trustedTypesPolicy = trustedTypesPolicy;
 
 window.addEventListener('DOMContentLoaded', () => {
 
@@ -183,11 +185,56 @@ window.addEventListener('DOMContentLoaded', () => {
                             params.set(filterName, filterInput.value);
                         }
                     }
-                    let newUrl = url.pathname + '?' + params;
-                    window.location.href = newUrl;
+                    let sortedHeader = document.querySelector('th.sorted');
+                    if(sortedHeader){
+                        let columnName = sortedHeader.getAttribute('data-column');
+                        let sortDirection = sortedHeader.classList.contains('sorted-asc') ? 'asc' : 'desc';
+                        params.set('sortBy', columnName);
+                        params.set('sortDirection', sortDirection);
+                    }
+                    window.location.href = url.pathname+'?'+params;
                     return false;
                 });
             }
+        }
+    }
+
+    // column sorting functionality:
+    let sortableHeaders = document.querySelectorAll('th.sortable');
+    if(sortableHeaders){
+        for(let header of sortableHeaders){
+            header.addEventListener('click', () => {
+                let sortForm = header.querySelector('.sort-form');
+                if(!sortForm){
+                    return;
+                }
+                let columnName = header.getAttribute('data-column');
+                let currentSortDirection = header.classList.contains('sorted-asc')
+                    ? 'asc'
+                    : header.classList.contains('sorted-desc') ? 'desc' : '';
+                let newSortDirection = 'asc';
+                if('asc' === currentSortDirection){
+                    newSortDirection = 'desc';
+                }
+                let sortByInput = sortForm.querySelector('input[name="sortBy"]');
+                let sortDirectionInput = sortForm.querySelector('input[name="sortDirection"]');
+                sortByInput.value = columnName;
+                sortDirectionInput.value = newSortDirection;
+                let entitySearchInput = document.querySelector('#entityFilterTerm');
+                let entityFilterTermInput = sortForm.querySelector('input[name="entityFilterTerm"]');
+                if(entityFilterTermInput){
+                    entityFilterTermInput.value = entitySearchInput?.value || '';
+                }
+                let allFilters = document.querySelectorAll('.filters-toggle-content .filter input');
+                for(let filterInput of allFilters){
+                    let filterName = filterInput.name.replace('filters[', '').replace(']', '');
+                    let sortFormFilterInput = sortForm.querySelector('input[data-filter-key="'+filterName+'"]');
+                    if(sortFormFilterInput){
+                        sortFormFilterInput.value = filterInput.value;
+                    }
+                }
+                sortForm.submit();
+            });
         }
     }
 

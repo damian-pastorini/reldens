@@ -134,6 +134,11 @@
         &:hover {
             background-color: var(--red);
         }
+
+        svg, path {
+            width: 22px;
+            fill: var(--white);
+        }
     }
 
     .icon {
@@ -267,8 +272,6 @@
     }
 
     .entity-list {
-        overflow: auto;
-
         .actions {
             display: flex;
             justify-content: end;
@@ -278,6 +281,10 @@
         .extra-actions {
             justify-content: end;
         }
+    }
+
+    .table-wrapper {
+        overflow-x: auto;
     }
 
     .forms-container {
@@ -360,7 +367,7 @@
         }
 
         & th.field {
-            padding: 1.5rem 0;
+            padding: 1rem 0;
 
             & span {
                 color: var(--white);
@@ -383,17 +390,22 @@
 
             .field-actions-container {
                 display: flex;
-                flex-direction: column;
-                justify-content: center;
+                flex-direction: row;
+                justify-content: space-around;
                 align-items: center;
                 margin: 0 1rem;
 
                 .button {
-                    margin-bottom: 1rem;
+                    border: 1px solid var(--white);
 
                     &.list-select {
                         margin-bottom: 0;
                     }
+                }
+
+                .list-delete-selection {
+                    padding: 0.34rem 1rem;
+                    margin: 0 0.2rem;
                 }
             }
 
@@ -422,7 +434,7 @@
 
         .field-edit {
             & span {
-                & svg, path {
+                & svg, & path {
                     width: 24px;
                     color: var(--lightBlue);
                 }
@@ -431,12 +443,56 @@
 
         .field-delete {
             & span {
-                & svg, path {
+                & svg, & path {
                     width: 24px;
-                    fill: var(--lightBlue);
+                    fill: var(--red);
                 }
             }
         }
+    }
+
+    .sortable {
+        cursor: pointer;
+        user-select: none;
+        transition: background-color 0.2s;
+
+        &:hover {
+            background-color: var(--lightBlue);
+
+            .sort-icon {
+                opacity: 0.7;
+            }
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+    }
+
+    .sort-indicators {
+        display: flex;
+        flex-direction: column;
+        margin-left: 0.5rem;
+        gap: 2px;
+    }
+
+    .sort-icon {
+        width: 12px;
+        height: 12px;
+        fill: var(--grey);
+        opacity: 0.4;
+        transition: opacity 0.2s;
+
+        &.active {
+            fill: var(--white);
+            opacity: 1;
+        }
+    }
+
+    .sorted {
+        background-color: var(--darkBlue);
     }
 
     .filters-toggle {
@@ -595,7 +651,6 @@
         justify-content: space-between;
         align-items: center;
         width: 100%;
-        margin-bottom: 1rem;
         flex-wrap: wrap;
         gap: 1rem;
     }
