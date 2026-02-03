@@ -24,48 +24,42 @@
 
 #player-selection {
     display: none;
-    max-width: 500px;
-    margin: 40px auto;
+    max-width: $containerMaxWidth;
+    margin: 0 auto;
+    padding: 0;
 
     .selection-forms-container {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: space-evenly;
+        gap: 2rem;
+        width: 100%;
+        padding: 0;
         margin: 0 auto;
-        display: block;
-        width: 88%;
-        background: rgba(255, 255, 255, 0.6);
-        float: left;
-        padding: 6%;
 
         form {
-            float: left;
+            flex-wrap: wrap;
             width: 100%;
-            display: block;
+            margin: 0;
+            display: flex;
+            max-width: 500px;
 
             &.hidden {
                 display: none;
             }
 
             .select-element {
-                display: block;
                 position: relative;
-                float: none;
+                max-width: fit-content;
+                min-width: 250px;
+                padding: 8px;
                 margin: 0 auto;
                 border: 1px solid $cLightGrey;
-                padding: 8px;
                 text-align: center;
             }
 
-            .scene-select {
-                width: 54%;
-                max-width: 268px;
-                float: right;
-                padding: 8px 1%;
-                margin: 0;
-                text-align: left;
-            }
-
             .player-creation-additional-info {
-                display: block;
-                float: left;
                 width: 100%;
             }
 
@@ -75,8 +69,20 @@
                 margin: 10px auto;
             }
 
+            .input-box {
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                flex-wrap: wrap;
+
+                label {
+                    width: 100%;
+                    text-align: center;
+                }
+            }
+
             .submit-container {
-                justify-content: end;
+                justify-content: center;
 
                 .loading-container {
                     width: auto;
@@ -86,13 +92,4 @@
 
     }
 
-}
-
-#class-path-selector-box {
-    display: block;
-    float: left;
-
-    label {
-        float: left;
-    }
 }

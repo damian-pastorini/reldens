@@ -6,6 +6,10 @@
 
 @use "variables" as *;
 
+* {
+    box-sizing: border-box;
+}
+
 body, html {
     height: 100%;
     margin: 0;
@@ -28,7 +32,7 @@ body {
         overflow: auto;
         z-index: 10000;
         background-size: cover;
-        background-color: $cWhite;
+        background-color: $cDarkBlue;
         background-position: center;
         background-repeat: no-repeat;
 
@@ -46,24 +50,52 @@ body {
         .header {
             display: flex;
             flex-wrap: wrap;
-            flex-direction: row;
+            flex-direction: column;
             align-items: center;
-            background-color: $cBlack;
-            height: 14%;
-            max-height: 100px;
+            justify-content: center;
+            background: linear-gradient(
+                180deg,
+                rgba(0,0,0,0) 0%,
+                rgba(0,0,0,0.7) 50%,
+                rgba(0,0,0,0.7) 50%,
+                rgba(0,0,0,0) 100%
+            );
+            box-sizing: border-box;
+            height: fit-content;
+            flex-grow: 1;
+
+            .header-content {
+                display: flex;
+                flex-direction: row;
+                width: 100%;
+                max-width: 430px;
+                justify-content: center;
+                vertical-align: middle;
+                flex-wrap: wrap;
+                align-items: center;
+                flex-grow: 1;
+            }
         }
 
         .content {
             height: 80%;
+            flex-grow: 1;
         }
 
         .footer {
             display: flex;
             height: 6%;
-            background-color: $cDarkBlue;
+            background-color: transparent;
             padding: min(10px, 1%) 0;
+            flex-grow: 0;
         }
+    }
 
+    input:focus,
+    input:active,
+    select:focus,
+    select:active {
+        outline: none;
     }
 
 }
@@ -119,7 +151,7 @@ body.game-engine-started {
 
 .header {
     #your-logo {
-        margin-left: 2%;
+        margin: 1rem 0;
     }
 
     h1 {
@@ -128,6 +160,7 @@ body.game-engine-started {
         margin: 0 0 0 2%;
         padding: 0;
         font-size: 1.5em;
+        box-sizing: border-box;
 
         strong {
             color: $cReldens;
@@ -147,6 +180,8 @@ body.game-engine-started {
 }
 
 .footer {
+    background: linear-gradient(90deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.7) 20%, rgba(0,0,0,0.7) 80%, rgba(0,0,0,0) 100%);
+
     .copyright {
         position: relative;
         display: block;
@@ -174,6 +209,9 @@ body.game-engine-started {
         flex-direction: row;
         height: 100%;
         width: 100%;
+        max-width: $containerMaxWidth;
+        margin: 0 auto;
+        gap: 1rem;
     }
 
 }
@@ -213,7 +251,7 @@ input[type="submit"] {
     max-width: 80%;
     margin: 0 auto;
     padding: 10px 2%;
-    background-color: rgba(255,255,255,0.1);
+    background-color: transparent;
 }
 
 .col-2 {
@@ -221,17 +259,8 @@ input[type="submit"] {
     position: relative;
     flex-direction: column;
     flex-wrap: wrap;
-    width: 46%;
-    margin: 0;
-    padding: 2%;
-}
-
-.col-left {
-    align-content: end;
-}
-
-.col-right {
-    align-content: start;
+    width: 100%;
+    align-items: center;
 }
 
 @media (max-width: 725px) {
@@ -270,9 +299,9 @@ input[type="submit"] {
 #guest-form,
 #register-form,
 #forgot-form {
-    width: 80%;
+    width: 100%;
     display: block;
-    margin: 0 auto;
+    margin: 0;
     padding: 0;
 
     &.hidden {
@@ -300,9 +329,12 @@ input[type="submit"] {
 }
 
 h3.form-title {
+    width: 100%;
     text-align: center;
     background: #f2f2f2;
     padding: 10px 0;
+    margin-top: 0;
+    border-bottom: 1px solid #666;
 }
 
 #reldens div:first-child {
@@ -318,7 +350,7 @@ form {
         display: flex;
         position: relative;
         flex-direction: row;
-        justify-content: space-between;
+        justify-content: center;
         width: 100%;
         margin-bottom: 10px;
 
@@ -327,7 +359,7 @@ form {
         }
 
         &.submit-container, &.terms-and-conditions-link-container {
-            justify-content: end;
+            justify-content: center;
 
             &.guest-submit {
                 justify-content: center;
@@ -348,6 +380,7 @@ form {
             position: relative;
             border: 1px solid $cLightGrey;
             padding: 8px;
+            box-shadow: 4px 4px 8px 0 #0009;
         }
 
         input[type="text"],

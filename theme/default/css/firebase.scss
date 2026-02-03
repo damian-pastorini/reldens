@@ -29,8 +29,8 @@
 
 #firebase-login {
     display: block;
-    width: 74%;
-    margin: 0 auto;
+    width: 100%;
+    margin: 0;
     padding: 0;
 }
 
@@ -45,7 +45,6 @@
 
 .firebase-auth-btn {
     padding: 10px 16px;
-    border-radius: 4px;
     color: white;
     font-weight: 500;
     cursor: pointer;
@@ -56,6 +55,7 @@
     font-family: 'Open Sans', sans-serif;
     transition: background-color 0.3s;
     position: relative;
+    box-shadow: 6px 4px 10px 2px #0009;
 }
 
 .firebase-google-btn {

@@ -1,0 +1,41 @@
+@use "variables" as *;
+
+.wooden-box {
+    position: relative;
+    padding: 0;
+    border: 10px solid transparent;
+    margin: 1rem 0;
+    background:
+        url('../assets/game-ui/background-pattern.png') repeat center,
+        url('../assets/game-ui/wood-left-right.png') repeat-y left,
+        url('../assets/game-ui/wood-left-right.png') repeat-y right,
+        url('../assets/game-ui/wood-top-bottom.png') repeat-x top,
+        url('../assets/game-ui/wood-top-bottom.png') repeat-x bottom;
+    background-origin: padding-box, border-box, border-box, border-box, border-box;
+    background-clip: padding-box, border-box, border-box, border-box, border-box;
+    box-shadow: 6px 4px 10px 2px #0009;
+
+    &::before {
+        content: "";
+        position: absolute;
+        inset: -11px;
+        pointer-events: none;
+        background:
+            url('../assets/game-ui/corner.png') top left no-repeat,
+            url('../assets/game-ui/corner.png') top right no-repeat,
+            url('../assets/game-ui/corner.png') bottom left no-repeat,
+            url('../assets/game-ui/corner.png') bottom right no-repeat;
+        background-size: 24px;
+        z-index: 10;
+    }
+
+    .box-close {
+        z-index: 20;
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+        color: #555;
+        opacity: 1;
+    }
+}
