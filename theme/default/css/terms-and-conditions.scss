@@ -73,6 +73,15 @@
         }
     }
 
+    .input-box button {
+        display: block;
+        position: relative;
+        margin-top: 1rem;
+        border: 1px solid $cLightGrey;
+        padding: 8px;
+        box-shadow: 4px 4px 8px 0 #0009;
+    }
+
     .box-close {
         width: 30px;
         box-shadow: -2px 2px 4px #000;

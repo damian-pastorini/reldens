@@ -27,16 +27,14 @@
 .joystick-small-resolutions-only {
     #joystick {
         display: none;
-
-        @media (max-width: 725px) {
-            display: block;
-        }
     }
 
-    .arrows-container {
-        display: block;
+    @media (max-width: 725px) {
+        #joystick {
+            display: block;
+        }
 
-        @media (max-width: 725px) {
+        .arrows-container {
             display: none;
         }
     }

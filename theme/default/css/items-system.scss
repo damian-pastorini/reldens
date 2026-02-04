@@ -6,15 +6,6 @@
 
 @use "variables" as *;
 
-#inventory-open,
-#equipment-open {
-    cursor: pointer;
-    position: relative;
-    background: rgba(0, 0, 0, 0.5);
-    padding: 10px;
-    max-width: 40px;
-}
-
 #inventory-open {
     top: 90px;
     right: 60px;

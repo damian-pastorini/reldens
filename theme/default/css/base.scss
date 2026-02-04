@@ -223,7 +223,60 @@ input[type="submit"] {
 }
 
 .game-container {
-    background-color: $cBlack;
+    background-color: $cDarkBlue;
+
+    .open-ui-button {
+        position: relative;
+        box-sizing: content-box;
+        max-width: 40px;
+        padding: 6px;
+        border: 2px solid $cWhite;
+        border-radius: 10px;
+        background-color: $cBlack70;
+        cursor: pointer;
+
+        img {
+            max-width: 40px;
+        }
+
+        &:hover {
+            padding: 4px;
+            border: 4px solid $cReldens;
+            background-color: $cGreyBlue50;
+        }
+    }
+
+    .ui-box-controls {
+        .arrows-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            vertical-align: middle;
+            img {
+                border-radius: 50%;
+            }
+        }
+
+        .skill-icon-container img {
+            border-radius: 10px;
+        }
+
+        .arrows-container,
+        .skill-icon-container {
+            img {
+                box-sizing: content-box;
+                max-width: 40px;
+                padding: 6px;
+                border: 2px solid $cWhite;
+                background-color: $cBlack70;
+                cursor: pointer;
+
+                &:hover {
+                    background-color: $cGreyBlue50;
+                }
+            }
+        }
+    }
 }
 
 .row {
@@ -446,15 +499,8 @@ form {
 
 .ui-box.ui-box-controls {
     position: relative;
-    bottom: 48px;
-    left: 120px;
-
-    img {
-        float: left;
-        width: 54px;
-        opacity: 0.8;
-        cursor: pointer;
-    }
+    bottom: 66px;
+    left: 66px;
 
     img:active {
         opacity: 1;
@@ -464,26 +510,15 @@ form {
 
 .ui-box-controls {
     .action-buttons, .vertical-buttons {
-        float: left;
-        width: 54px;
-        text-align: center;
-        top: 0;
-        position: relative;
-
-        img {
-            float: none;
-        }
-
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
     }
 
     .action-buttons {
         width: auto;
 
         .skill-icon-container {
-            margin-left: 10px;
-            float: left;
-            position: relative;
-
             &.cooldown::after {
                 content: '';
                 position: absolute;
@@ -494,20 +529,8 @@ form {
                 border-radius: 50%;
                 background: conic-gradient(rgba(0, 0, 0, 0.7) var(--angle), rgba(0, 0, 0, 0.1) var(--angle));
             }
-
-            img {
-                width: 54px;
-                height: 54px;
-                position: relative;
-            }
         }
     }
-
-    #left, #right {
-        position: relative;
-        top: 30px;
-    }
-
 }
 
 .button-opacity-off {
@@ -599,21 +622,11 @@ span.stat-value {
 }
 
 #player-stats-open {
-    cursor: pointer;
-    position: relative;
-    background: rgba(0, 0, 0, 0.5);
-    padding: 10px;
-    max-width: 40px;
     top: 20px;
     right: 60px;
 }
 
 #full-screen-btn {
-    cursor: pointer;
-    position: relative;
-    background: rgba(0, 0, 0, 0.5);
-    padding: 10px;
-    max-width: 40px;
     top: 20px;
     right: 134px;
 }
@@ -661,6 +674,7 @@ span.stat-value {
     position: absolute;
     top: -10px;
     left: -10px;
+    box-sizing: content-box;
     padding: 5px;
     line-height: 15px;
     height: 15px;
