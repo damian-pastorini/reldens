@@ -463,24 +463,30 @@ form {
     display: block;
     margin: 0;
     padding: 0;
+
+    button {
+        display: block;
+        position: relative;
+        padding: 4px 10px;
+        margin: 0;
+        border: 1px solid #ccc;
+        box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.9);
+    }
 }
 
 .box-target {
     display: none;
     position: relative;
-    top: 170px;
+    top: 204px;
     left: 10px;
+    background-color: rgba(0, 0, 0, 0.5);
+    padding: 10px;
+    border: 2px solid #ffff;
+    border-radius: 10px;
 
     #target-container {
         width: 100%;
     }
-
-}
-
-.ui-box-scene-data,
-.box-target {
-    background-color: rgba(0, 0, 0, 0.5);
-    padding: 10px;
 }
 
 .scene-label,
@@ -489,7 +495,8 @@ form {
 }
 
 .ui-box-scene-data {
-    top: 20px;
+    top: 30px;
+    padding: 15px;
 }
 
 .box-player-stats {
@@ -538,12 +545,11 @@ form {
 }
 
 .ui-box-player {
-    float: left;
     width: 100%;
-    top: 34px;
-    left: 48px;
+    top: 54px;
+    left: 66px;
     max-width: 260px;
-    padding: 10px;
+    padding: 20px;
     background-color: rgba(0, 0, 0, 0.5);
     text-align: left;
     word-break: break-all;
@@ -552,11 +558,10 @@ form {
 .ui-dialog-box {
     display: none;
     float: left;
-    width: 240px;
+    width: 280px;
     min-height: 150px;
-    padding: 10px 14px;
+    padding: 20px;
     background: #000000;
-    opacity: 0.85;
     color: $cWhite;
     word-wrap: break-word;
     font-size: 12px;
@@ -583,7 +588,10 @@ form {
 }
 
 .box-options-container {
-    display: block;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 1rem;
 }
 
 .player-name {
@@ -631,12 +639,6 @@ span.stat-value {
     right: 134px;
 }
 
-.ui-box-button-option {
-    display: inline-block;
-    margin: 10px;
-    cursor: pointer;
-}
-
 .player-stats-ui {
     min-width: 100px;
     top: 64px;
@@ -646,9 +648,8 @@ span.stat-value {
     float: left;
     position: relative;
     min-height: 100px;
-    padding: 10px;
+    padding: 20px;
     background: #000000;
-    opacity: 0.8;
     color: $cWhite;
 }
 

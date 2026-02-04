@@ -39,3 +39,58 @@
         opacity: 1;
     }
 }
+
+.ui-box-player,
+.ui-box-scene-data,
+.ui-dialog-box,
+.inventory-ui,
+.equipment-ui,
+.chat-ui,
+.player-stats-ui,
+.settings-ui,
+#instructions,
+#game-over {
+    border: 10px solid transparent;
+    background:
+        url('../assets/game-ui/wood-left-right.png') repeat-y left,
+        url('../assets/game-ui/wood-left-right.png') repeat-y right,
+        url('../assets/game-ui/wood-top-bottom.png') repeat-x top,
+        url('../assets/game-ui/wood-top-bottom.png') repeat-x bottom,
+        $cGreyBlue60;
+    background-origin: border-box, border-box, border-box, border-box, border-box;
+    background-clip: border-box, border-box, border-box, border-box, padding-box;
+    box-shadow: 6px 4px 10px 2px #0009;
+
+    &::before {
+        content: "";
+        position: absolute;
+        inset: -11px;
+        pointer-events: none;
+        background:
+            url('../assets/game-ui/corner.png') top left no-repeat,
+            url('../assets/game-ui/corner.png') top right no-repeat,
+            url('../assets/game-ui/corner.png') bottom left no-repeat,
+            url('../assets/game-ui/corner.png') bottom right no-repeat;
+        background-size: 24px;
+        z-index: 10;
+    }
+
+    .box-close {
+        z-index: 20;
+    }
+}
+
+.inventory-ui,
+.equipment-ui,
+.chat-ui,
+.player-stats-ui,
+.ui-box-player,
+.ui-box-scene-data {
+    border-width: 8px;
+    box-shadow: 5px 3px 8px 2px #0009;
+
+    &::before {
+        inset: -9px;
+        background-size: 20px;
+    }
+}

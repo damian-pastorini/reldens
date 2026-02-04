@@ -11,12 +11,11 @@
     position: relative;
     top: -270px;
     left: -426px;
-    padding: 15px;
+    padding: 20px;
     min-width: 300px;
     max-width: 300px;
     min-height: 200px;
     background: #000000;
-    opacity: 0.8;
     color: $cWhite;
     /* help for chrome issue with scale on phaser dom elements
     will-change: transform;
