@@ -24,6 +24,10 @@
     transform: scale(1.009);
     */
 
+    .box-title {
+        font-size: 1rem;
+    }
+
     .clan-row {
         display: block;
         float: left;
@@ -33,6 +37,12 @@
 
     .clan-name-input {
         outline: none;
+        border: 1px solid #ccc;
+        padding: 8px;
+        display: block;
+        position: relative;
+        box-shadow: 4px 4px 8px #0009;
+        margin-bottom: 1rem;
     }
 
     .default-loading-container img{

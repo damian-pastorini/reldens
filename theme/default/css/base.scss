@@ -474,6 +474,10 @@ form {
     }
 }
 
+.box-title {
+    font-size: 1rem;
+}
+
 .box-target {
     display: none;
     position: relative;
@@ -600,20 +604,13 @@ form {
     color: $cWhite;
 }
 
-span.stat-label {
-    float: left;
-    width: 48%;
-    margin-right: 2%;
-    display: block;
-    text-align: right;
-    color: #00ffff;
+.stat-container {
+    display: flex;
+    justify-content: space-between;
 }
 
-span.stat-value {
-    float: left;
-    width: 50%;
-    display: block;
-    text-align: left;
+span.stat-label {
+    color: #00ffff;
 }
 
 .loading-container {
@@ -655,7 +652,8 @@ span.stat-value {
 
 #player-stats-container {
     position: relative;
-    width: 150px;
+    min-width: 150px;
+    max-width: 260px;
     word-wrap: break-word;
     overflow: auto;
     font-size: 12px;
