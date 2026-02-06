@@ -231,7 +231,7 @@ input[type="submit"] {
         max-width: 40px;
         padding: 6px;
         border: 2px solid $cWhite;
-        border-radius: 10px;
+        border-radius: 50%;
         background-color: $cBlack70;
         cursor: pointer;
 
@@ -258,7 +258,7 @@ input[type="submit"] {
         }
 
         .skill-icon-container img {
-            border-radius: 10px;
+            border-radius: 50%;
         }
 
         .arrows-container,
@@ -354,7 +354,7 @@ input[type="submit"] {
 #forgot-form {
     width: 100%;
     display: block;
-    margin: 0;
+    margin: 0 0 10px;
     padding: 0;
 
     &.hidden {
@@ -378,7 +378,15 @@ input[type="submit"] {
 }
 
 .response-error {
+    padding: 1rem;
+    margin-bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
     color: #ff0000;
+    font-weight: 600;
+
+    &:empty {
+        padding: 0;
+    }
 }
 
 h3.form-title {
@@ -411,11 +419,22 @@ form {
             display: none;
         }
 
-        &.submit-container, &.terms-and-conditions-link-container {
+        &.submit-container,
+        &.terms-and-conditions-link-container {
+            display: flex;
+            flex-direction: column;
+            flex-wrap: wrap;
+            align-items: center;
             justify-content: center;
+            margin-bottom: 0;
 
             &.guest-submit {
                 justify-content: center;
+            }
+
+            .loading-container {
+                width: auto;
+                margin-top: 1rem;
             }
         }
 
@@ -481,7 +500,7 @@ form {
 .box-target {
     display: none;
     position: relative;
-    top: 204px;
+    top: 276px;
     left: 10px;
     background-color: rgba(0, 0, 0, 0.5);
     padding: 10px;
@@ -550,13 +569,17 @@ form {
 
 .ui-box-player {
     width: 100%;
-    top: 54px;
+    top: 66px;
     left: 66px;
-    max-width: 260px;
-    padding: 20px;
+    max-width: 240px;
+    padding: 14px;
     background-color: rgba(0, 0, 0, 0.5);
     text-align: left;
     word-break: break-all;
+
+    @media (max-width: 600px) {
+        max-width: 170px;
+    }
 }
 
 .ui-dialog-box {
@@ -665,8 +688,11 @@ span.stat-label {
 }
 
 #ui-player-extras {
-    color: #fff;
+    display: flex;
+    flex-direction: column;
+    padding: 10px 0 0 0;
     margin: 10px 0;
+    color: #fff;
 }
 
 .notification-balloon {

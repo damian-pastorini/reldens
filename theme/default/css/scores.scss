@@ -10,6 +10,10 @@
     min-width: 160px;
     top: 260px;
     right: 360px;
+
+    .box-content {
+        min-height: 160px;
+    }
 }
 
 @media (max-height: 400px) {

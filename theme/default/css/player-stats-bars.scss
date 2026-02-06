@@ -1,0 +1,49 @@
+/**
+ *
+ * Reldens - Styles - Player Stats Bars
+ *
+ */
+
+@use "variables" as *;
+
+.stat-bar-container {
+    margin: 5px 0;
+}
+
+.stat-bar-wrapper {
+    position: relative;
+    width: 100%;
+    height: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    overflow: hidden;
+}
+
+.stat-bar-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+.stat-bar-label,
+.stat-bar-text {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    font-size: 11px;
+    color: $cWhite;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+    pointer-events: none;
+    z-index: 200;
+}
+
+.stat-bar-label {
+    left: 5px;
+}
+
+.stat-bar-text {
+    right: 5px;
+}

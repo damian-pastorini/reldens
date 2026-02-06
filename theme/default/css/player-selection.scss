@@ -44,6 +44,7 @@
             margin: 0;
             display: flex;
             max-width: 500px;
+            align-items: flex-start;
 
             &.hidden {
                 display: none;
@@ -80,16 +81,6 @@
                     text-align: center;
                 }
             }
-
-            .submit-container {
-                justify-content: center;
-
-                .loading-container {
-                    width: auto;
-                }
-            }
         }
-
     }
-
 }
