@@ -254,32 +254,46 @@
     }
 
 }
-.ui-dialog-box.type-trader {
-    min-height: 200px;
 
-    .box-content {
-        min-height: 164px;
-    }
+.start-trade {
+    margin-bottom: 10px;
 }
 
 .trade-container {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    flex-direction: column;
 
     .player-confirmed {
-        float: right;
-        font-weight: bold;
-        color: $cReldens;
+        display: block;
+        width: 100%;
+        margin-top: 10px;
+        padding: 4px;
+        background: rgba(0, 0, 0, 0.4);
+        border: 1px solid $cReldens;
+        border-radius: 6px;
+        font-weight: 700;
+        color: $cWhite;
+        text-align: center;
+
+        &:empty {
+            border: none;
+            background: transparent;
+        }
     }
 
     .trade-row {
         position: relative;
         float: left;
         display: block;
-        width: 100%;
+        min-width: 300px;
 
         &.trade-items-boxes {
+            min-height: 280px;
 
             .trade-col, .trade-player-col {
-                min-height: 138px;
+                min-height: 280px;
             }
 
         }
@@ -287,14 +301,17 @@
     }
 
     .trade-confirm-actions {
-        border-top: 1px solid $cWhite;
         padding-top: 10px;
+        display: flex;
+        flex-direction: row;
+        flex-grow: 0;
+        flex-wrap: wrap;
+        justify-content: center;
     }
 
     .confirm-action,
     .disconfirm-action,
     .cancel-action {
-        float: right;
         min-height: 25px;
         margin-left: 15px;
     }
@@ -309,24 +326,16 @@
         margin: 0;
         padding: 0 1%;
     }
-
-    .trade-items-boxes {
-
-        .trade-col-1 {
-            border-right: 1px solid #fff;
-        }
-    }
-
 }
 
-.ui-dialog-box.type-trade {
-    width: 88%;
-    min-width: 210px;
-    min-height: 200px;
+.ui-dialog-box.type-trade.trade-in-progress {
+    min-width: 380px;
+    max-width: 450px;
 
     .box-content {
-        min-height: 164px;
+        height: 400px;
         max-height: 100%;
+        width: 342px;
     }
 
     .trade-player-col {
@@ -346,25 +355,56 @@
         display: none;
     }
 
-    .trade-action-remove img {
-        max-width: 24px;
+    .trade-action-remove {
+        position: absolute;
+        right: -10px;
+
+        img {
+            max-width: 20px;
+            cursor: pointer;
+        }
+    }
+
+    .image-container {
         cursor: pointer;
     }
+}
 
-    input, button {
-        border: 0;
-        margin: 6px auto 2px;
-        width: 100%;
-        float: none;
-        position: relative;
-        display: block;
-        max-width: 100%;
-        text-align: center;
-        padding: 4px 0;
+.my-items .trade-item {
+    .actions-container.trade-actions {
+        display: none;
+
+        &.trade-actions-expanded {
+            display: block;
+            position: absolute;
+            top: 54px;
+            left: 0;
+            z-index: 3;
+            background: $cBlack;
+            border: 1px solid $cWhite;
+            border-radius: 6px;
+            padding: 4px;
+
+            input, button {
+                border: 0;
+                margin: 6px auto 2px;
+                width: 100%;
+                float: none;
+                position: relative;
+                display: block;
+                max-width: 100%;
+                text-align: center;
+                padding: 4px 0;
+            }
+
+            .requirement-key img, .reward-key img {
+                max-width: 16px;
+            }
+        }
     }
+}
 
-    .requirement-key img, .reward-key img {
-        max-width: 16px;
-    }
-
+.pushed-to-trade .trade-item .actions-container.trade-actions,
+.got-from-trade .trade-item .actions-container.trade-actions {
+    display: block;
 }
