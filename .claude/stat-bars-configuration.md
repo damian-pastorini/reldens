@@ -62,12 +62,6 @@ Add to `migrations/production/reldens-basic-config-v4.0.0.sql`:
 (92, 'client', 'players/barsProperties', '{"hp":{"enabled":true,"label":"HP","activeColor":"#ff0000","inactiveColor":"#330000"},"mp":{"enabled":true,"label":"MP","activeColor":"#0000ff","inactiveColor":"#000033"}}', 4),
 ```
 
-## Environment Variable
-
-```bash
-RELDENS_CLIENT_PLAYERS_BARSPROPERTIES={"hp":{"enabled":true,"label":"HP","activeColor":"#ff0000","inactiveColor":"#330000"},"mp":{"enabled":true,"label":"MP","activeColor":"#0000ff","inactiveColor":"#000033"}}
-```
-
 ## Examples
 
 ### HP and MP Bars
@@ -163,6 +157,203 @@ To disable the entire bars system, remove the config or set it to an empty objec
 
 ---
 
+# Player Names Configuration
+
+## Overview
+
+The player names system displays character names above sprites. Names can be configured separately for the current player and other players.
+
+## Configuration Path
+
+**Scope**: `client`
+**Path**: `ui/players`
+**Type**: Multiple (boolean, object)
+
+## Configuration Properties
+
+### Visibility Controls
+
+- **showCurrentPlayerName** (type 3 - boolean): Show name for the current player
+  - Default: `0` (hidden)
+  - Database: `client/ui/players/showCurrentPlayerName`
+  - When disabled, current player's name will not be displayed
+  - Useful when using alternative UI systems or cleaner visual experience
+
+- **showNames** (type 3 - boolean): Show names for all other players
+  - Default: `1` (enabled)
+  - Database: `client/ui/players/showNames`
+  - Controls name visibility for other players (not current player)
+
+- **showNamesLimit** (type 2 - number): Maximum name length before truncation
+  - Default: `10`
+  - Database: `client/ui/players/showNamesLimit`
+  - Names longer than this value will be truncated with '...'
+
+### Visual Appearance
+
+Names are styled using the `nameText` configuration object with the following properties:
+
+- **align** (type 1 - string): Text alignment
+  - Default: `center`
+  - Database: `client/ui/players/nameText/align`
+
+- **depth** (type 2 - number): Rendering depth/z-index
+  - Default: `200000`
+  - Database: `client/ui/players/nameText/depth`
+
+- **fill** (type 1 - string): Text color
+  - Default: `#ffffff`
+  - Database: `client/ui/players/nameText/fill`
+
+- **fontFamily** (type 1 - string): Font family
+  - Default: `Verdana, Geneva, sans-serif`
+  - Database: `client/ui/players/nameText/fontFamily`
+
+- **fontSize** (type 1 - string): Font size
+  - Default: `12px`
+  - Database: `client/ui/players/nameText/fontSize`
+
+- **height** (type 2 - number): Vertical offset from sprite
+  - Default: `-90`
+  - Database: `client/ui/players/nameText/height`
+
+- **shadowBlur** (type 2 - number): Shadow blur radius
+  - Default: `5`
+  - Database: `client/ui/players/nameText/shadowBlur`
+
+- **shadowColor** (type 1 - string): Shadow color
+  - Default: `rgba(0,0,0,0.7)`
+  - Database: `client/ui/players/nameText/shadowColor`
+
+- **shadowX** (type 2 - number): Shadow X offset
+  - Default: `5`
+  - Database: `client/ui/players/nameText/shadowX`
+
+- **shadowY** (type 2 - number): Shadow Y offset
+  - Default: `5`
+  - Database: `client/ui/players/nameText/shadowY`
+
+- **stroke** (type 1 - string): Text stroke color
+  - Default: `#000000`
+  - Database: `client/ui/players/nameText/stroke`
+
+- **strokeThickness** (type 2 - number): Stroke thickness
+  - Default: `4`
+  - Database: `client/ui/players/nameText/strokeThickness`
+
+## Database Configuration
+
+### Development Migration
+
+Add to `migrations/development/[version]-sql-update.sql`:
+
+```sql
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES
+('client', 'ui/players/showCurrentPlayerName', '0', 3);
+```
+
+### Production Migration
+
+From `migrations/production/reldens-basic-config-v4.0.0.sql`:
+
+Existing configurations (IDs 239-252):
+```sql
+(239, 'client', 'ui/players/nameText/align', 'center', 1),
+(240, 'client', 'ui/players/nameText/depth', '200000', 2),
+(241, 'client', 'ui/players/nameText/fill', '#ffffff', 1),
+(242, 'client', 'ui/players/nameText/fontFamily', 'Verdana, Geneva, sans-serif', 1),
+(243, 'client', 'ui/players/nameText/fontSize', '12px', 1),
+(244, 'client', 'ui/players/nameText/height', '-90', 2),
+(245, 'client', 'ui/players/nameText/shadowBlur', '5', 2),
+(246, 'client', 'ui/players/nameText/shadowColor', 'rgba(0,0,0,0.7)', 1),
+(247, 'client', 'ui/players/nameText/shadowX', '5', 2),
+(248, 'client', 'ui/players/nameText/shadowY', '5', 2),
+(249, 'client', 'ui/players/nameText/stroke', '#000000', 1),
+(250, 'client', 'ui/players/nameText/strokeThickness', '4', 2),
+(251, 'client', 'ui/players/nameText/textLength', '4', 2),
+(252, 'client', 'ui/players/showNames', '1', 3),
+```
+
+New configuration to add:
+```sql
+(253, 'client', 'ui/players/showCurrentPlayerName', '0', 3),
+```
+
+## Configuration Examples
+
+### Example 1: Hide Current Player Name
+
+```sql
+UPDATE `config` SET `value` = '0' WHERE `scope` = 'client' AND `path` = 'ui/players/showCurrentPlayerName';
+```
+
+Current player's name will not be displayed. Useful when using alternative UI systems.
+
+### Example 2: Hide All Other Players' Names
+
+```sql
+UPDATE `config` SET `value` = '0' WHERE `scope` = 'client' AND `path` = 'ui/players/showNames';
+```
+
+Other players' names will not be displayed. Current player's name visibility depends on `showCurrentPlayerName`.
+
+### Example 3: Show Both Current Player and Other Players' Names
+
+```sql
+UPDATE `config` SET `value` = '1' WHERE `scope` = 'client' AND `path` = 'ui/players/showCurrentPlayerName';
+UPDATE `config` SET `value` = '1' WHERE `scope` = 'client' AND `path` = 'ui/players/showNames';
+```
+
+All players' names will be displayed.
+
+### Example 4: Customize Name Text Style
+
+```sql
+UPDATE `config` SET `value` = '#00ff00' WHERE `scope` = 'client' AND `path` = 'ui/players/nameText/fill';
+UPDATE `config` SET `value` = '16px' WHERE `scope` = 'client' AND `path` = 'ui/players/nameText/fontSize';
+UPDATE `config` SET `value` = '6' WHERE `scope` = 'client' AND `path` = 'ui/players/nameText/strokeThickness';
+```
+
+Creates green player names with 16px font size and thicker stroke.
+
+## Visibility Behavior
+
+**Configuration: showCurrentPlayerName=0, showNames=0**
+- Current Player: Name hidden
+- Other Players: Names hidden
+
+**Configuration: showCurrentPlayerName=0, showNames=1**
+- Current Player: Name hidden
+- Other Players: Names shown
+
+**Configuration: showCurrentPlayerName=1, showNames=0**
+- Current Player: Name shown
+- Other Players: Names hidden
+
+**Configuration: showCurrentPlayerName=1, showNames=1**
+- Current Player: Name shown
+- Other Players: Names shown
+
+## Implementation Details
+
+### Files
+
+- **PlayerEngine**: `lib/users/client/player-engine.js` - Main player management class
+- **SpriteTextFactory**: `lib/game/client/engine/sprite-text-factory.js` - Text rendering utility
+
+### Key Methods
+
+- `showPlayerName(id)`: Displays name above player sprite, checks configuration
+- `updateNamePosition(playerSprite)`: Updates name position during movement
+- `applyNameLengthLimit(showName)`: Truncates long names
+
+### Events
+
+- `reldens.playerEngineAddPlayer`: Called when player is added, triggers name display
+- `reldens.runPlayerAnimation`: Updates name position during animation
+
+---
+
 # Life Bar Configuration
 
 ## Overview
@@ -244,6 +435,12 @@ The lifebar system supports two positioning modes: fixed and floating.
 
 ### Visibility Controls
 
+- **showCurrentPlayer** (type 3 - boolean): Show lifebar for the current player
+  - Default: `0` (hidden)
+  - Database: `client/ui/lifeBar/showCurrentPlayer`
+  - When disabled, current player's lifebar will not be displayed
+  - Useful when using alternative UI systems like player stats bars
+
 - **showAllPlayers** (type 3 - boolean): Show lifebars for all other players
   - Default: `0` (hidden)
   - Database: `client/ui/lifeBar/showAllPlayers`
@@ -275,6 +472,7 @@ INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES
 ('client', 'ui/lifeBar/responsiveX', '1', 2),
 ('client', 'ui/lifeBar/responsiveY', '24', 2),
 ('client', 'ui/lifeBar/showAllPlayers', '0', 3),
+('client', 'ui/lifeBar/showCurrentPlayer', '0', 3),
 ('client', 'ui/lifeBar/showEnemies', '1', 3),
 ('client', 'ui/lifeBar/showOnClick', '1', 3),
 ('client', 'ui/lifeBar/top', '5', 2),
@@ -285,42 +483,24 @@ INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES
 
 ### Production Migration
 
-From `migrations/production/reldens-basic-config-v4.0.0.sql` (IDs 180-193):
+From `migrations/production/reldens-basic-config-v4.0.0.sql` (IDs 181-194):
 
 ```sql
-(180, 'client', 'ui/lifeBar/enabled', '1', 3),
-(181, 'client', 'ui/lifeBar/fillStyle', '0xff0000', 1),
-(182, 'client', 'ui/lifeBar/fixedPosition', '0', 3),
-(183, 'client', 'ui/lifeBar/height', '5', 2),
-(184, 'client', 'ui/lifeBar/lineStyle', '0xffffff', 1),
-(185, 'client', 'ui/lifeBar/responsiveX', '1', 2),
-(186, 'client', 'ui/lifeBar/responsiveY', '24', 2),
-(187, 'client', 'ui/lifeBar/showAllPlayers', '0', 3),
-(188, 'client', 'ui/lifeBar/showEnemies', '1', 3),
-(189, 'client', 'ui/lifeBar/showOnClick', '1', 3),
-(190, 'client', 'ui/lifeBar/top', '5', 2),
-(191, 'client', 'ui/lifeBar/width', '50', 2),
-(192, 'client', 'ui/lifeBar/x', '5', 2),
-(193, 'client', 'ui/lifeBar/y', '12', 2),
-```
-
-## Environment Variables
-
-```bash
-RELDENS_CLIENT_UI_LIFEBAR_ENABLED=1
-RELDENS_CLIENT_UI_LIFEBAR_FILLSTYLE=0xff0000
-RELDENS_CLIENT_UI_LIFEBAR_FIXEDPOSITION=0
-RELDENS_CLIENT_UI_LIFEBAR_HEIGHT=5
-RELDENS_CLIENT_UI_LIFEBAR_LINESTYLE=0xffffff
-RELDENS_CLIENT_UI_LIFEBAR_RESPONSIVEX=1
-RELDENS_CLIENT_UI_LIFEBAR_RESPONSIVEY=24
-RELDENS_CLIENT_UI_LIFEBAR_SHOWALLPLAYERS=0
-RELDENS_CLIENT_UI_LIFEBAR_SHOWENEMIES=1
-RELDENS_CLIENT_UI_LIFEBAR_SHOWONCLICK=1
-RELDENS_CLIENT_UI_LIFEBAR_TOP=5
-RELDENS_CLIENT_UI_LIFEBAR_WIDTH=50
-RELDENS_CLIENT_UI_LIFEBAR_X=5
-RELDENS_CLIENT_UI_LIFEBAR_Y=12
+(181, 'client', 'ui/lifeBar/enabled', '1', 3),
+(182, 'client', 'ui/lifeBar/fillStyle', '0xff0000', 1),
+(183, 'client', 'ui/lifeBar/fixedPosition', '0', 3),
+(184, 'client', 'ui/lifeBar/height', '5', 2),
+(185, 'client', 'ui/lifeBar/lineStyle', '0xffffff', 1),
+(186, 'client', 'ui/lifeBar/responsiveX', '1', 2),
+(187, 'client', 'ui/lifeBar/responsiveY', '24', 2),
+(188, 'client', 'ui/lifeBar/showAllPlayers', '0', 3),
+(189, 'client', 'ui/lifeBar/showCurrentPlayer', '0', 3),
+(190, 'client', 'ui/lifeBar/showEnemies', '1', 3),
+(191, 'client', 'ui/lifeBar/showOnClick', '1', 3),
+(192, 'client', 'ui/lifeBar/top', '5', 2),
+(193, 'client', 'ui/lifeBar/width', '50', 2),
+(194, 'client', 'ui/lifeBar/x', '5', 2),
+(195, 'client', 'ui/lifeBar/y', '12', 2),
 ```
 
 ## Configuration Examples
@@ -361,7 +541,15 @@ UPDATE `config` SET `value` = '0' WHERE `scope` = 'client' AND `path` = 'ui/life
 
 NPCs and enemies will not show lifebars at all.
 
-### Example 5: Always Show Bars (No Click Required)
+### Example 5: Hide Current Player Lifebar
+
+```sql
+UPDATE `config` SET `value` = '0' WHERE `scope` = 'client' AND `path` = 'ui/lifeBar/showCurrentPlayer';
+```
+
+Current player's lifebar will not be displayed. Useful when using alternative UI systems like player stats bars.
+
+### Example 6: Always Show Bars (No Click Required)
 
 ```sql
 UPDATE `config` SET `value` = '0' WHERE `scope` = 'client' AND `path` = 'ui/lifeBar/showOnClick';
@@ -371,7 +559,7 @@ UPDATE `config` SET `value` = '1' WHERE `scope` = 'client' AND `path` = 'ui/life
 
 All players and enemies will always show their lifebars without requiring click interaction.
 
-### Example 6: Custom Colors and Dimensions
+### Example 7: Custom Colors and Dimensions
 
 ```sql
 UPDATE `config` SET `value` = '0x00ff00' WHERE `scope` = 'client' AND `path` = 'ui/lifeBar/fillStyle';
@@ -384,44 +572,39 @@ Creates a green lifebar with black border, 80 pixels wide and 8 pixels tall.
 
 ## Visibility Behavior
 
-The current player's lifebar is always visible when enabled, regardless of other settings.
+The current player's lifebar visibility is controlled by `showCurrentPlayer` configuration.
 
-**Configuration: showAllPlayers=0, showEnemies=0, showOnClick=0**
-- Current Player: Always
+**Configuration: showCurrentPlayer=0, showAllPlayers=0, showEnemies=0, showOnClick=0**
+- Current Player: Never
 - Other Players: Never
 - NPCs/Enemies: Never
 
-**Configuration: showAllPlayers=0, showEnemies=0, showOnClick=1**
-- Current Player: Always
+**Configuration: showCurrentPlayer=0, showAllPlayers=0, showEnemies=0, showOnClick=1**
+- Current Player: Never
 - Other Players: On Click
 - NPCs/Enemies: Never
 
-**Configuration: showAllPlayers=0, showEnemies=1, showOnClick=0**
+**Configuration: showCurrentPlayer=0, showAllPlayers=0, showEnemies=1, showOnClick=1**
+- Current Player: Never
+- Other Players: On Click
+- NPCs/Enemies: On Click
+
+**Configuration: showCurrentPlayer=1, showAllPlayers=0, showEnemies=0, showOnClick=0**
 - Current Player: Always
 - Other Players: Never
-- NPCs/Enemies: Always
+- NPCs/Enemies: Never
 
-**Configuration: showAllPlayers=0, showEnemies=1, showOnClick=1**
+**Configuration: showCurrentPlayer=1, showAllPlayers=0, showEnemies=1, showOnClick=1**
 - Current Player: Always
 - Other Players: On Click
 - NPCs/Enemies: On Click
 
-**Configuration: showAllPlayers=1, showEnemies=0, showOnClick=0**
+**Configuration: showCurrentPlayer=1, showAllPlayers=1, showEnemies=0, showOnClick=0**
 - Current Player: Always
 - Other Players: Always
 - NPCs/Enemies: Never
 
-**Configuration: showAllPlayers=1, showEnemies=0, showOnClick=1**
-- Current Player: Always
-- Other Players: Always
-- NPCs/Enemies: Never
-
-**Configuration: showAllPlayers=1, showEnemies=1, showOnClick=0**
-- Current Player: Always
-- Other Players: Always
-- NPCs/Enemies: Always
-
-**Configuration: showAllPlayers=1, showEnemies=1, showOnClick=1**
+**Configuration: showCurrentPlayer=1, showAllPlayers=1, showEnemies=1, showOnClick=0**
 - Current Player: Always
 - Other Players: Always
 - NPCs/Enemies: Always
