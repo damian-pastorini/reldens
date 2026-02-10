@@ -10,6 +10,10 @@
     min-width: 160px;
     top: 260px;
     right: 360px;
+
+    .box-content {
+        min-height: 160px;
+    }
 }
 
 @media (max-height: 400px) {
@@ -21,12 +25,8 @@
 }
 
 .scores-open {
-    position: relative;
     top: 370px;
     right: 60px;
-    background: rgba(0, 0, 0, 0.5);
-    padding: 10px;
-    max-width: 40px;
 }
 
 .scores-content {

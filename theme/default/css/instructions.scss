@@ -7,34 +7,35 @@
 @use "variables" as *;
 
 #instructions-open {
-    cursor: pointer;
     position: absolute;
-    top: -120px;
-    left: -60px;
-    max-width: 48px;
-    max-height: 48px;
+    top: -132px;
+    left: -66px;
 }
 
 #instructions {
     z-index: 2000;
-    position: absolute;
-    top: 20%;
     overflow: visible;
-    max-height: 280px;
-    width: 46%;
-    padding: 2% 4%;
+    padding: 0;
     margin: 0;
-    left: 25%;
     right: auto;
-    background-color: rgba(0,0,0,0.7);
     color: $cWhite;
     cursor: default;
+    width: 100%;
+    max-width: min(90vw, 500px);
+    height: 100%;
+    max-height: min(80vh, 500px);
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 
     .instructions-content {
         display: block;
         float: left;
         width: 100%;
         height: 280px;
+        box-sizing: border-box;
+        padding: 1rem;
         overflow-x: hidden;
         overflow-y: auto;
 

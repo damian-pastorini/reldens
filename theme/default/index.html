@@ -31,13 +31,15 @@
     <link rel="stylesheet" type="text/css" href="./css/styles.scss"/>
 </head>
 <body>
-    <div class="wrapper" style="background-image: url(./assets/web/reldens-background.png);">
+    <div class="wrapper">
         <div class="header">
-            <img id="your-logo" src="./assets/web/reldens-your-logo-mage.png" alt="reldens"/>
-            <h1 class="title">
-                - <strong>reldens</strong> - <span id="current-version">demo -</span>
-                <br/>- your logo here -
-            </h1>
+            <div class="header-content">
+                <img id="your-logo" src="./assets/web/reldens-your-logo-mage.png" alt="reldens"/>
+                <h1 class="title">
+                    - <strong>reldens</strong> <span id="current-version">demo -</span>
+                    <br/>- your logo here -
+                </h1>
+            </div>
         </div>
         <div class="content">
             <div class="row row-disclaimer">
@@ -48,99 +50,63 @@
             </div>
             <div class="forms-container">
                 <div class="col-2 col-left">
-                    <div class="row row-0">
+                    <div class="row wooden-box">
+                        <form name="login-form" id="login-form" class="login-form" action="#" method="post">
+                            <h3 class="form-title">Login</h3>
+                            <div class="input-box login-username">
+                                <input type="text" name="username" id="username" class="required" required autocomplete="on" placeholder="Username"/>
+                            </div>
+                            <div class="input-box login-password">
+                                <input type="password" name="password" id="password" class="required" required autocomplete="off" placeholder="Password"/>
+                            </div>
+                            <div class="input-box submit-container login-submit">
+                                <input type="submit" value="Submit"/>
+                                <div class="loading-container hidden">
+                                    <img src="./assets/web/loading.gif" alt="Loading..."/>
+                                </div>
+                            </div>
+                            <div class="input-box response-error"></div>
+                        </form>
+                    </div>
+                    <div class="row wooden-box">
                         <form name="guest-form" id="guest-form" class="guest-form" action="#" method="post">
                             <h3 class="form-title">Play as a Guest</h3>
                             <!-- enable the config general/users/allowGuestUserName and uncomment the following to allow guest usernames:
                             <div class="input-box guest-username">
-                                <label for="guest-username">Username</label>
-                                <input type="text" name="guest-username" id="guest-username" class="required" required/>
+                                <input type="text" name="guest-username" id="guest-username" class="required" required placeholder="Username"/>
                             </div>
                             -->
                             <div class="input-box submit-container guest-submit">
                                 <input type="submit" value="Play"/>
-                            </div>
-                            <div class="loading-container hidden">
-                                <img src="./assets/web/loading.gif" alt="Loading..."/>
-                            </div>
-                            <div class="input-box response-error"></div>
-                        </form>
-                    </div>
-                    <div class="row row-1">
-                        <form name="register-form" id="register-form" class="register-form" action="#" method="post">
-                            <h3 class="form-title">Create Account</h3>
-                            <div class="input-box reg-email">
-                                <label for="reg-email">Email</label>
-                                <input type="email" name="reg-email" id="reg-email" class="required email" required/>
-                            </div>
-                            <div class="input-box reg-username">
-                                <label for="reg-username">Username</label>
-                                <input type="text" name="reg-username" id="reg-username" class="required" required/>
-                            </div>
-                            <div class="input-box reg-password">
-                                <label for="reg-password">Password</label>
-                                <input type="password" name="reg-password" id="reg-password" class="required" required autocomplete="off"/>
-                            </div>
-                            <div class="input-box reg-re-password">
-                                <label for="reg-re-password">Re-type password</label>
-                                <input type="password" name="reg-re-password" id="reg-re-password" class="required" required autocomplete="off"/>
-                            </div>
-                            <div class="input-box hidden terms-and-conditions-link-container">
-                                <p class="terms-and-conditions-link">Accept our Terms and Conditions (click here).</p>
-                            </div>
-                            <div class="input-box submit-container reg-submit">
                                 <div class="loading-container hidden">
                                     <img src="./assets/web/loading.gif" alt="Loading..."/>
                                 </div>
-                                <input type="submit" value="Register"/>
                             </div>
                             <div class="input-box response-error"></div>
                         </form>
                     </div>
-                    <div class="row row-2 forgot-password-container hidden">
+                    <div class="row wooden-box forgot-password-container hidden">
                         <form name="forgot-form" id="forgot-form" class="forgot-form" action="#" method="post">
                             <h3 class="form-title">Forgot password</h3>
                             <div class="input-box forgot-email">
-                                <label for="forgot-email">Email</label>
-                                <input type="email" name="forgot-email" id="forgot-email" class="required email" required autocomplete="off"/>
+                                <input type="email" name="forgot-email" id="forgot-email" class="required email" required autocomplete="off" placeholder="Email"/>
                             </div>
                             <div class="input-box submit-container forgot-submit">
+                                <input type="submit" value="Request"/>
                                 <div class="loading-container hidden">
                                     <img src="./assets/web/loading.gif" alt="Loading..."/>
                                 </div>
-                                <input type="submit" value="Request"/>
                             </div>
                             <div class="input-box response-error"></div>
                         </form>
                     </div>
                 </div>
                 <div class="col-2 col-right">
-                    <div class="row row-1">
-                        <form name="login-form" id="login-form" class="login-form" action="#" method="post">
-                            <h3 class="form-title">Login</h3>
-                            <div class="input-box login-username">
-                                <label for="username">Username</label>
-                                <input type="text" name="username" id="username" class="required" required autocomplete="on"/>
-                            </div>
-                            <div class="input-box login-password">
-                                <label for="password">Password</label>
-                                <input type="password" name="password" id="password" class="required" required autocomplete="off"/>
-                            </div>
-                            <div class="input-box submit-container login-submit">
-                                <div class="loading-container hidden">
-                                    <img src="./assets/web/loading.gif" alt="Loading..."/>
-                                </div>
-                                <input type="submit" value="Submit"/>
-                            </div>
-                            <div class="input-box response-error"></div>
-                        </form>
-                    </div>
-                    <div class="row row-2 firebase-row-container hidden">
+                    <div class="row wooden-box firebase-row-container hidden">
                         <form name="firebase-login" id="firebase-login" class="firebase-login" action="#" method="post">
                             <h3 class="form-title">Firebase Registration</h3>
                             <div class="input-box firebase-username">
-                                <label for="firebase-username">Username</label>
-                                <input type="text" name="firebase-username" id="firebase-username" class="required" required/>
+                                <input type="text" name="firebase-username" id="firebase-username" class="required" required placeholder="Username"/>
                             </div>
                             <div class="input-box response-error"></div>
                         </form>
@@ -148,9 +114,36 @@
                             <div id="firebase-auth-container" class="firebase-auth-container"></div>
                         </div>
                     </div>
+                    <div class="row wooden-box">
+                        <form name="register-form" id="register-form" class="register-form" action="#" method="post">
+                            <h3 class="form-title">Create Account</h3>
+                            <div class="input-box reg-email">
+                                <input type="email" name="reg-email" id="reg-email" class="required email" required placeholder="Email"/>
+                            </div>
+                            <div class="input-box reg-username">
+                                <input type="text" name="reg-username" id="reg-username" class="required" required placeholder="Username"/>
+                            </div>
+                            <div class="input-box reg-password">
+                                <input type="password" name="reg-password" id="reg-password" class="required" required autocomplete="off" placeholder="Password"/>
+                            </div>
+                            <div class="input-box reg-re-password">
+                                <input type="password" name="reg-re-password" id="reg-re-password" class="required" required autocomplete="off" placeholder="Re-type password"/>
+                            </div>
+                            <div class="input-box hidden terms-and-conditions-link-container">
+                                <p class="terms-and-conditions-link">Accept our Terms and Conditions (click here).</p>
+                            </div>
+                            <div class="input-box submit-container reg-submit">
+                                <input type="submit" value="Register"/>
+                                <div class="loading-container hidden">
+                                    <img src="./assets/web/loading.gif" alt="Loading..."/>
+                                </div>
+                            </div>
+                            <div class="input-box response-error"></div>
+                        </form>
+                    </div>
                 </div>
             </div>
-            <div id="terms-and-conditions" class="hidden">
+            <div id="terms-and-conditions" class="hidden wooden-box">
                 <div class="terms-and-conditions-text">
                     <h3 class="terms-heading">Terms and conditions</h3>
                     <div class="terms-body"></div>
@@ -160,8 +153,11 @@
                     <label class="accept-terms-and-conditions-label" for="accept-terms-and-conditions">
                         I agree to these Terms and Conditions
                     </label>
+                    <div class="input-box">
+                        <button class="terms-and-conditions-accept-close">Close</button>
+                    </div>
                 </div>
-                <img id="terms-and-conditions-close" class="box-close" src="./assets/controls/bx.png" alt="close"/>
+                <img id="terms-and-conditions-close" class="box-close" src="./assets/game-ui/corner-x.png" alt="close"/>
             </div>
             <div id="instructions" class="hidden">
                 <div class="instructions-content">
@@ -176,7 +172,7 @@
                         <li>You must have a target to execute a skill/action.</li>
                         <li>Use the screen-buttons to activate the different player skills/actions.</li>
                     </ul>
-                    <img id="instructions-close" class="box-close" src="./assets/controls/bx.png" alt="close"/>
+                    <img id="instructions-close" class="box-close" src="./assets/game-ui/corner-x.png" alt="close"/>
                 </div>
             </div>
             <div id="game-over" class="hidden">
@@ -190,11 +186,10 @@
             </div>
             <div id="player-selection" class="hidden">
                 <div class="selection-forms-container">
-                    <div class="player-selection-form-errors"></div>
                     <form
                         name="player-selector-form"
                         id="player-selector-form"
-                        class="player-selector-form hidden"
+                        class="player-selector-form wooden-box hidden"
                         action="#"
                         method="post">
                         <h3 class="form-title">
@@ -209,28 +204,28 @@
                         </div>
                         <div class="player-selection-additional-info"></div>
                         <div class="input-box submit-container player-select-submit">
+                            <input type="submit" value="Start"/>
                             <div class="loading-container hidden">
                                 <img src="./assets/web/loading.gif" alt="Loading..."/>
                             </div>
-                            <input type="submit" value="Start"/>
                         </div>
+                        <div class="player-selection-form-errors"></div>
                     </form>
                     <form name="player-create-form"
                         id="player-create-form"
-                        class="player-create-form hidden"
+                        class="player-create-form wooden-box hidden"
                         action="#"
                         method="post">
                         <h3 class="form-title">Create Player</h3>
                         <div class="input-box player-create-name">
-                            <label for="new-player-name">Player Name</label>
-                            <input type="text" name="new-player-name" id="new-player-name" class="required" required/>
+                            <input type="text" name="new-player-name" id="new-player-name" class="required" required placeholder="Player Name"/>
                         </div>
                         <div class="player-creation-additional-info"></div>
                         <div class="input-box submit-container player-create-submit">
+                            <input type="submit" value="Create & Start"/>
                             <div class="loading-container hidden">
                                 <img src="./assets/web/loading.gif" alt="Loading..."/>
                             </div>
-                            <input type="submit" value="Create & Start"/>
                         </div>
                         <div class="input-box response-error"></div>
                     </form>
@@ -246,9 +241,7 @@
         </div>
         <div class="footer">
             <div class="copyright">
-                <a href="https://www.dwdeveloper.com/" target="_blank">
-                    by D<span class="text-black text-lowercase">w</span><span class="text-capitalize">Developer</span>
-                </a>
+                <a href="https://www.dwdeveloper.com/" alt="DwDeveloper" target="_blank">by DwDeveloper</a>
             </div>
         </div>
     </div>
