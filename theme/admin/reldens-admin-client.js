@@ -227,7 +227,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 }
                 let allFilters = document.querySelectorAll('.filters-toggle-content .filter input');
                 for(let filterInput of allFilters){
-                    let filterName = filterInput.name.replace('filters[', '').replace(']', '');
+                    let filterName = filterInput.name.replace(/^filters\[/, '').replace(/\]$/, '');
                     let sortFormFilterInput = sortForm.querySelector('input[data-filter-key="'+filterName+'"]');
                     if(sortFormFilterInput){
                         sortFormFilterInput.value = filterInput.value;
