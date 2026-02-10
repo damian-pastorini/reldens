@@ -59,7 +59,7 @@ lib/
 ### Core Entry Points
 - **Server**: `server.js` → `lib/game/server/manager.js` (ServerManager)
 - **Client**: `client.js` → `lib/game/client/game-manager.js` (GameManager)
-- **Theme**: `theme/index.js` initializes client with custom plugins
+- **Theme**: `theme/default/index.js` initializes client with custom plugins
 
 ### Feature Modules (23 Total)
 The platform includes 23 feature modules: Game, Rooms, World, Config, Features, Actions, Inventory, Respawn, Rewards, Scores, Teams, Users, Chat, Audio, Prediction, Admin, Firebase, Ads, Import, Objects, Snippets, Bundlers.
@@ -204,8 +204,6 @@ activateRoom(room) {
 ```
 
 **CRITICAL**: Colyseus auto-cleans all listeners. Never store manager references or add manual disposal code unless explicitly needed.
-
-**Full migration guide**: See `.claude/colyseus-0.16-migration.md`
 
 ### Room Lifecycle
 1. `onCreate(options)`: Initialize world, physics, objects
