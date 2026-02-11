@@ -44,10 +44,10 @@
         "test": "node tests/manager.js"
     },
     "dependencies": {
-        "@colyseus/core": "0.16.24",
+        "@colyseus/core": "0.17.35",
         "@colyseus/monitor": "0.16.7",
         "@colyseus/schema": "3.0.76",
-        "@colyseus/ws-transport": "0.16.5",
+        "@colyseus/ws-transport": "0.17.9",
         "@parcel/bundler-default": "2.16.4",
         "@parcel/compressor-raw": "2.16.4",
         "@parcel/core": "2.16.4",
