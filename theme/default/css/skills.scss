@@ -38,7 +38,6 @@
 }
 
 .experience-container {
-
     div {
         float: left;
         margin: 0 8px 0 0;
@@ -52,6 +51,10 @@
 }
 
 .ui-skills-controls.ui-box-controls {
-    bottom: 60px;
+    bottom: 66px;
     left: 202px;
+}
+
+.skills-container.action-buttons {
+    flex-direction: row;
 }

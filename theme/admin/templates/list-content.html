@@ -3,7 +3,11 @@
         <div class="field-actions-container">
             <form name="delete-selection-form" id="delete-selection-form" action="{{&deletePath}}" method="post">
                 <input type="hidden" name="ids" class="hidden-ids-input"/>
-                <button class="button button-danger list-delete-selection">Bulk Delete</button>
+                <button class="button button-danger list-delete-selection">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M10,18a1,1,0,0,0,1-1V11a1,1,0,0,0-2,0v6A1,1,0,0,0,10,18ZM20,6H16V5a3,3,0,0,0-3-3H11A3,3,0,0,0,8,5V6H4A1,1,0,0,0,4,8H5V19a3,3,0,0,0,3,3h8a3,3,0,0,0,3-3V8h1a1,1,0,0,0,0-2ZM10,5a1,1,0,0,1,1-1h2a1,1,0,0,1,1,1V6H10Zm7,14a1,1,0,0,1-1,1H8a1,1,0,0,1-1-1V8H17Zm-3-1a1,1,0,0,0,1-1V11a1,1,0,0,0-2,0v6A1,1,0,0,0,14,18Z" fill="#6563ff"/>
+                    </svg>
+                </button>
             </form>
             <button class="button button-primary list-select" data-checked="1">
                 <input type="checkbox" id="input-check-select-all"/>
@@ -11,16 +15,30 @@
         </div>
     </th>
     {{#fieldsHeaders}}
-    <th class="field field-{{&name}}">
-        <span>{{&value}}</span>
+    <th class="field field-{{&name}} sortable{{#isSorted}} sorted sorted-{{&sortDirection}}{{/isSorted}}" data-column="{{&name}}">
+        <div class="header-content">
+            <span class="header-label">{{&value}}</span>
+            <span class="sort-indicators">
+                <svg class="sort-icon sort-asc{{#isSortedAsc}} active{{/isSortedAsc}}" viewBox="0 0 10 6" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M0 6L5 0L10 6Z"/>
+                </svg>
+                <svg class="sort-icon sort-desc{{#isSortedDesc}} active{{/isSortedDesc}}" viewBox="0 0 10 6" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M0 0L5 6L10 0Z"/>
+                </svg>
+            </span>
+        </div>
+        <form class="sort-form hidden" method="POST" action="{{&listRoute}}">
+            <input type="hidden" name="sortBy" value=""/>
+            <input type="hidden" name="sortDirection" value=""/>
+            <input type="hidden" name="entityFilterTerm" value=""/>
+            {{#filters}}
+            <input type="hidden" name="filters[{{&propertyKey}}]" value="" data-filter-key="{{&propertyKey}}"/>
+            {{/filters}}
+        </form>
     </th>
     {{/fieldsHeaders}}
-    <th class="field field-edit">
-        <span>Edit</span>
-    </th>
-    <th class="field field-delete">
-        <span>Delete</span>
-    </th>
+    <th class="field field-edit"></th>
+    <th class="field field-delete"></th>
 </tr>
 {{#rows}}
 <tr class="row">
