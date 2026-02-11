@@ -549,6 +549,8 @@ form {
         width: auto;
 
         .skill-icon-container {
+            position: relative;
+
             &.cooldown::after {
                 content: '';
                 position: absolute;
