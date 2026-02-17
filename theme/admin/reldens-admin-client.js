@@ -45,6 +45,9 @@ window.addEventListener('DOMContentLoaded', () => {
         errorMissingRoomY: 'Missing return point Y.',
         errorSaveChangePoint: 'Error saving change point.',
         errorSaveReturnPoint: 'Error saving return point.',
+        themeManagerMissingTheme: 'Please select a theme.',
+        themeManagerMissingCommand: 'Please select a command.',
+        themeManagerExecutionError: 'Theme command execution failed.',
     };
 
     activateExpandCollapse();
@@ -100,23 +103,24 @@ window.addEventListener('DOMContentLoaded', () => {
             form.addEventListener('submit', (event) => {
                 let submitButton = form.querySelector('input[type="submit"], button[type="submit"]');
                 submitButton.disabled = true;
-                let loadingImage = document.querySelector('.submit-container .loading');
-                if(loadingImage){
-                    loadingImage.classList.remove('hidden');
-                }
+                let loadingImage = form.querySelector('.loading');
                 if(form.classList.contains('form-delete') || form.classList.contains('confirmation-required')){
                     event.preventDefault();
                     showConfirmDialog((confirmed) => {
                         if(confirmed){
+                            if(loadingImage){
+                                loadingImage.classList.remove('hidden');
+                            }
                             form.submit();
                         }
                         if(!confirmed){
                             submitButton.disabled = false;
-                            if(loadingImage){
-                                loadingImage.classList.add('hidden');
-                            }
                         }
                     });
+                    return;
+                }
+                if(loadingImage){
+                    loadingImage.classList.remove('hidden');
                 }
             });
         }
@@ -509,6 +513,101 @@ window.addEventListener('DOMContentLoaded', () => {
         tileset.onerror = () => {
             console.error('Error loading tileset image');
         };
+    }
+
+    // theme manager functionality:
+    let themeSelector = document.querySelector('#selected-theme');
+    let executeCommandButtons = document.querySelectorAll('.execute-command');
+    let showCommandInfoButtons = document.querySelectorAll('.show-command-info');
+    let commandDescriptionsData = document.querySelector('#command-descriptions-data');
+    let commandDescriptions = {};
+
+    if(commandDescriptionsData){
+        try {
+            commandDescriptions = JSON.parse(commandDescriptionsData.textContent);
+        } catch(error){
+            console.error('Failed to parse command descriptions', error);
+        }
+    }
+
+    if(executeCommandButtons){
+        for(let button of executeCommandButtons){
+            button.addEventListener('click', (event) => {
+                event.preventDefault();
+                if(!themeSelector || !themeSelector.value){
+                    return;
+                }
+                let commandName = button.dataset.command;
+                if(!commandName){
+                    return;
+                }
+                let form = button.closest('form');
+                if(!form){
+                    return;
+                }
+                let formThemeInput = form.querySelector('input[name="selected-theme"]');
+                let formCommandInput = form.querySelector('input[name="command"]');
+                if(!formThemeInput || !formCommandInput){
+                    return;
+                }
+                formThemeInput.value = themeSelector.value;
+                formCommandInput.value = commandName;
+                let commandItem = button.closest('.command-item');
+                let loadingImage = commandItem ? commandItem.querySelector('.command-loading') : null;
+                showConfirmDialog((confirmed) => {
+                    if(confirmed){
+                        if(loadingImage){
+                            loadingImage.classList.remove('hidden');
+                        }
+                        form.submit();
+                    }
+                });
+            });
+        }
+    }
+
+    if(showCommandInfoButtons){
+        let allTooltips = document.querySelectorAll('.command-info-tooltip');
+        for(let button of showCommandInfoButtons){
+            let commandName = button.dataset.command;
+            if(!commandName){
+                continue;
+            }
+            let commandItem = button.closest('.command-item');
+            if(!commandItem){
+                continue;
+            }
+            let tooltip = commandItem.querySelector('.command-info-tooltip[data-command="'+commandName+'"]');
+            if(!tooltip){
+                continue;
+            }
+            let commandInfo = commandDescriptions[commandName];
+            if(commandInfo){
+                let descriptionElement = tooltip.querySelector('.tooltip-description');
+                let detailsElement = tooltip.querySelector('.tooltip-details');
+                if(descriptionElement){
+                    descriptionElement.textContent = commandInfo.description || '';
+                }
+                if(detailsElement){
+                    detailsElement.textContent = commandInfo.details || '';
+                }
+            }
+            button.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                for(let otherTooltip of allTooltips){
+                    if(otherTooltip !== tooltip){
+                        otherTooltip.classList.remove('visible');
+                    }
+                }
+                tooltip.classList.toggle('visible');
+            });
+        }
+        document.addEventListener('click', () => {
+            for(let tooltip of allTooltips){
+                tooltip.classList.remove('visible');
+            }
+        });
     }
 
 });

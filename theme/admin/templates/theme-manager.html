@@ -1,0 +1,120 @@
+<h2 class="theme-manager-heading">Theme Management</h2>
+<script id="command-descriptions-data" type="application/json">{{&commandDescriptionsJson}}</script>
+<p class="reboot-notice">All of these commands require a server reboot to take effect.</p>
+<div class="sub-content">
+    <div class="sub-content-box">
+        <h3>Theme Selector</h3>
+        <div class="input-box">
+            <label for="selected-theme">
+                <span>Select Theme:</span>
+                <select id="selected-theme" name="selected-theme">
+                    {{#themes}}
+                    <option value="{{&name}}" {{#selected}}selected{{/selected}}>{{&name}}</option>
+                    {{/themes}}
+                </select>
+            </label>
+            <p class="info-text">Commands will execute on the selected theme above.</p>
+        </div>
+    </div>
+
+    <div class="sub-content-box">
+        <h3>Client Build Commands</h3>
+        <form class="sub-content-form theme-manager-form" name="theme-manager-form" id="theme-manager-form" action="{{&actionPath}}" method="post">
+            <input type="hidden" name="selected-theme" id="form-selected-theme" value=""/>
+            <input type="hidden" name="command" id="form-command" value=""/>
+            <div class="command-grid">
+                {{#buildCommands}}
+                <div class="command-item">
+                    <button type="button" class="button button-primary execute-command" data-command="{{&name}}" data-async="{{&async}}">{{&label}}</button>
+                    <button type="button" class="button button-info show-command-info" data-command="{{&name}}" title="Show command information">ℹ</button>
+                    <img class="hidden loading command-loading" src="/assets/web/loading.gif"/>
+                    <div class="command-info-tooltip" data-command="{{&name}}">
+                        <div class="tooltip-title">{{&label}}</div>
+                        <div class="tooltip-description"></div>
+                        <div class="tooltip-details"></div>
+                    </div>
+                </div>
+                {{/buildCommands}}
+            </div>
+        </form>
+    </div>
+
+    <div class="sub-content-box">
+        <h3>Client Dist Commands</h3>
+        <form class="sub-content-form theme-manager-form" name="theme-manager-dist-form" id="theme-manager-dist-form" action="{{&actionPath}}" method="post">
+            <input type="hidden" name="selected-theme" id="form-selected-theme-dist" value=""/>
+            <input type="hidden" name="command" id="form-command-dist" value=""/>
+            <div class="command-grid">
+                {{#clientDistCommands}}
+                <div class="command-item">
+                    <button type="button" class="button button-primary execute-command" data-command="{{&name}}">{{&label}}</button>
+                    <button type="button" class="button button-info show-command-info" data-command="{{&name}}" title="Show command information">ℹ</button>
+                    <img class="hidden loading command-loading" src="/assets/web/loading.gif"/>
+                    <div class="command-info-tooltip" data-command="{{&name}}">
+                        <div class="tooltip-title">{{&label}}</div>
+                        <div class="tooltip-description"></div>
+                        <div class="tooltip-details"></div>
+                    </div>
+                </div>
+                {{/clientDistCommands}}
+            </div>
+        </form>
+    </div>
+
+    <p class="section-description warning">These commands perform complex operations (use with caution):</p>
+
+    <div class="sub-content-box">
+        <h3>Copy Commands</h3>
+        <form class="sub-content-form theme-manager-form" name="theme-manager-copy-form" id="theme-manager-copy-form" action="{{&actionPath}}" method="post">
+            <input type="hidden" name="selected-theme" id="form-selected-theme-copy" value=""/>
+            <input type="hidden" name="command" id="form-command-copy" value=""/>
+            <div class="command-grid">
+                {{#copyCommands}}
+                <div class="command-item">
+                    <button type="button" class="button button-warning execute-command" data-command="{{&name}}">{{&label}}</button>
+                    <button type="button" class="button button-info show-command-info" data-command="{{&name}}" title="Show command information">ℹ</button>
+                    <img class="hidden loading command-loading" src="/assets/web/loading.gif"/>
+                    <div class="command-info-tooltip" data-command="{{&name}}">
+                        <div class="tooltip-title">{{&label}}</div>
+                        <div class="tooltip-description"></div>
+                        <div class="tooltip-details"></div>
+                    </div>
+                </div>
+                {{/copyCommands}}
+            </div>
+        </form>
+    </div>
+
+    <div class="sub-content-box">
+        <h3>Installation Commands</h3>
+        <form class="sub-content-form theme-manager-form" name="theme-manager-install-form" id="theme-manager-install-form" action="{{&actionPath}}" method="post">
+            <input type="hidden" name="selected-theme" id="form-selected-theme-install" value=""/>
+            <input type="hidden" name="command" id="form-command-install" value=""/>
+            <div class="command-grid">
+                {{#installCommands}}
+                <div class="command-item">
+                    <button type="button" class="button button-danger execute-command" data-command="{{&name}}" data-async="{{&async}}">{{&label}}</button>
+                    <button type="button" class="button button-info show-command-info" data-command="{{&name}}" title="Show command information">ℹ</button>
+                    <img class="hidden loading command-loading" src="/assets/web/loading.gif"/>
+                    <div class="command-info-tooltip" data-command="{{&name}}">
+                        <div class="tooltip-title">{{&label}}</div>
+                        <div class="tooltip-description"></div>
+                        <div class="tooltip-details"></div>
+                    </div>
+                </div>
+                {{/installCommands}}
+            </div>
+        </form>
+    </div>
+</div>
+
+<dialog class="confirm-dialog">
+    <div class="dialog-content">
+        <h5 class="dialog-title">Execute Theme Command</h5>
+        <p class="dialog-message">Are you sure you want to execute this command?</p>
+        <div class="dialog-actions">
+            <button type="button" class="button button-secondary dialog-cancel">Cancel</button>
+            <button type="button" class="button button-primary dialog-confirm">Execute</button>
+        </div>
+    </div>
+</dialog>
