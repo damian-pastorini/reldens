@@ -16,3 +16,4 @@ winpty.exe.stackdump
 /.claude/settings.local.json
 /.claude/instructions.md
 /CLAUDE.local.md
+/.claude/skills/

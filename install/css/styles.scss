@@ -407,6 +407,10 @@ form {
         font-weight: bold;
         color: $cRed;
     }
+
+    p.active {
+        display: block;
+    }
 }
 
 .loading-status-wrapper {

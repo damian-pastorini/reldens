@@ -1,2 +1,17 @@
-{{#fieldValue}}<p class="upload-current-file" data-field="{{&fieldName}}"><button type="button" class="remove-upload-btn" data-field="{{&fieldName}}" title="REMOVE">X</button> - {{&fieldValue}}</p>{{/fieldValue}}
+{{{renderedAlert}}}
+{{{renderedFiles}}}
+{{#fieldValue}}
+    {{^renderedFiles}}
+        <div class="upload-files-container" data-field="{{&fieldName}}" data-required="{{isRequired}}">
+            {{#filesArray}}
+                <p class="upload-current-file" data-field="{{&fieldName}}" data-filename="{{&filename}}">
+                    {{#isRemovable}}
+                        <button type="button" class="remove-upload-btn" data-field="{{&fieldName}}" data-filename="{{&filename}}" title="REMOVE">X</button> -
+                    {{/isRemovable}}
+                    {{&filename}}
+                </p>
+            {{/filesArray}}
+        </div>
+    {{/renderedFiles}}
+{{/fieldValue}}
 <input type="file" name="{{&fieldName}}" id="{{&fieldName}}"{{&required}}{{&fieldDisabled}}{{&multiple}}/>
