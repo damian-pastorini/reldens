@@ -272,6 +272,7 @@ input[type="submit"] {
                 cursor: pointer;
 
                 &:hover {
+                    border-color: $cReldens;
                     background-color: $cGreyBlue50;
                 }
             }
