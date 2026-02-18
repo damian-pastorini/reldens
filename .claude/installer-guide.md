@@ -205,8 +205,24 @@ The installer provides real-time status updates during installation:
 - Copies theme files and assets
 
 **PackagesInstallation** (`lib/game/server/installer/packages-installation.js`)
-- Installs required npm packages
-- Handles driver-specific dependencies
+- Manages npm package installation and linking based on `RELDENS_INSTALLATION_TYPE`
+- Reads the lock file at construction time (while the main package link is still active)
+- Runs installs before links so the main package link is always restored last
+- Handles driver-specific dependencies (e.g. `@prisma/client` for Prisma)
+
+**Installation Types** (set via `RELDENS_INSTALLATION_TYPE` environment variable):
+
+- `normal` — installs `reldens` from npm registry; no linking
+- `link` — npm links `reldens` and all `@reldens/*` packages; no npm installs
+- `link-main` — npm installs all `@reldens/*` packages from registry (no version pinning), then npm links `reldens` last to restore the local source junction
+
+**Package installation sequence** (`link-main`):
+1. Lock file is read from `node_modules/reldens/package-lock.json` at construction (while link is active)
+2. `unlinkAllPackages()` removes all existing links for `reldens` and all `@reldens/*` packages
+3. `checkAndInstallPackages()` runs installs first, then the link:
+   - `npm install @reldens/cms`, `npm install @reldens/storage`, etc. (no version pinning)
+   - `npm link reldens` — restores the junction to the local source last
+4. With the junction restored, `migrations/production/` resolves correctly through the link to the local source SQL files
 
 ### Frontend Files
 
