@@ -94,9 +94,22 @@ window.addEventListener('load', () => {
         document.querySelector('.content').append(newLink);
     }
 
+    function showInstallError(code)
+    {
+        let errorElement = document.querySelector('.'+code);
+        if(!errorElement){
+            let responseError = document.querySelector('.response-error');
+            if(responseError){
+                responseError.textContent = 'Installation failed with error: '+code;
+            }
+            return;
+        }
+        errorElement.classList.add('active');
+    }
+
     let errorCode = (urlParams.get('error') || '').toString();
     if('' !== errorCode){
-        document.querySelector('.'+errorCode).style.display = 'block';
+        showInstallError(errorCode);
     }
 
     function updateClientOptions(driverValue, currentClient)
