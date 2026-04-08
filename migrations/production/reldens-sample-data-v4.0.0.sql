@@ -149,7 +149,7 @@ REPLACE INTO `items_item` (`id`, `key`, `type`, `group_id`, `label`, `descriptio
 	(1, 'coins', 3, NULL, 'Coins', NULL, 0, 1, NULL, NULL, '{"canBeDropped": true}'),
 	(2, 'branch', 10, NULL, 'Tree branch', 'An useless tree branch (for now)', 0, 1, NULL, NULL, '{"canBeDropped": true}'),
 	(3, 'heal_potion_20', 5, NULL, 'Heal Potion', 'A heal potion that will restore 20 HP.', 0, 1, NULL, NULL, '{"canBeDropped":true,"animationData":{"frameWidth":64,"frameHeight":64,"start":6,"end":11,"repeat":0,"usePlayerPosition":true,"followPlayer":true,"startsOnTarget":true},"removeAfterUse":true}'),
-	(4, 'axe', 1, 1, 'Axe', 'A short distance but powerful weapon.', 0, 0, NULL, NULL, '{"canBeDropped":true,"animationData":{"frameWidth":64,"frameHeight":64,"start":6,"end":11,"repeat":0,"destroyOnComplete":true,"usePlayerPosition":true,"followPlayer":true,"startsOnTarget":true}}'),
+	(4, 'axe', 4, 1, 'Axe', 'A short distance but powerful weapon.', 0, 0, NULL, NULL, '{"canBeDropped":true,"animationData":{"frameWidth":64,"frameHeight":64,"start":6,"end":11,"repeat":0,"destroyOnComplete":true,"usePlayerPosition":true,"followPlayer":true,"startsOnTarget":true}}'),
 	(5, 'spear', 1, 1, 'Spear', 'A short distance but powerful weapon.', 0, 0, NULL, NULL, '{"canBeDropped":true,"animationData":{"frameWidth":64,"frameHeight":64,"start":6,"end":11,"repeat":0,"destroyOnComplete":true,"usePlayerPosition":true,"followPlayer":true,"startsOnTarget":true}}'),
 	(6, 'magic_potion_20', 5, NULL, 'Magic Potion', 'A magic potion that will restore 20 MP.', 0, 1, NULL, NULL, '{"canBeDropped":true,"animationData":{"frameWidth":64,"frameHeight":64,"start":6,"end":11,"repeat":0,"usePlayerPosition":true,"followPlayer":true,"startsOnTarget":true},"removeAfterUse":true}');
 
@@ -287,10 +287,14 @@ REPLACE INTO `objects_stats` (`id`, `object_id`, `stat_id`, `base_value`, `value
     (60, 15, 10, 50, 50);
 
 REPLACE INTO `players` (`id`, `user_id`, `name`, `created_at`) VALUES
-	(1, 1, 'ImRoot', '2022-03-17 19:57:50');
+	(1, 1, 'ImRoot', '2022-03-17 19:57:50'),
+	(2, 2, 'ImRoot2', '2022-03-17 19:57:50'),
+	(3, 3, 'ImRoot3', '2022-03-17 19:57:50');
 
 REPLACE INTO `players_state` (`id`, `player_id`, `room_id`, `x`, `y`, `dir`) VALUES
-	(1, 1, 5, 332, 288, 'down');
+	(1, 1, 5, 332, 288, 'down'),
+	(2, 2, 4, 400, 345, 'down'),
+	(3, 3, 4, 400, 345, 'down');
 
 REPLACE INTO `players_stats` (`id`, `player_id`, `stat_id`, `base_value`, `value`) VALUES
 	(1, 1, 1, 280, 81),
@@ -302,7 +306,35 @@ REPLACE INTO `players_stats` (`id`, `player_id`, `stat_id`, `base_value`, `value
 	(7, 1, 7, 100, 100),
 	(8, 1, 8, 100, 100),
 	(9, 1, 9, 100, 100),
-	(10, 1, 10, 100, 100);
+	(10, 1, 10, 100, 100),
+	(11, 2, 1, 280, 280),
+	(12, 2, 2, 280, 280),
+	(13, 2, 3, 280, 280),
+	(14, 2, 4, 280, 280),
+	(15, 2, 5, 100, 100),
+	(16, 2, 6, 100, 100),
+	(17, 2, 7, 100, 100),
+	(18, 2, 8, 100, 100),
+	(19, 2, 9, 100, 100),
+	(20, 2, 10, 100, 100),
+	(21, 3, 1, 280, 280),
+	(22, 3, 2, 280, 280),
+	(23, 3, 3, 280, 280),
+	(24, 3, 4, 280, 280),
+	(25, 3, 5, 100, 100),
+	(26, 3, 6, 100, 100),
+	(27, 3, 7, 100, 100),
+	(28, 3, 8, 100, 100),
+	(29, 3, 9, 100, 100),
+	(30, 3, 10, 100, 100);
+
+REPLACE INTO `items_inventory` (`id`, `owner_id`, `item_id`, `qty`, `remaining_uses`, `is_active`) VALUES
+	(1, 1, 4, 1, NULL, 0),
+	(2, 1, 3, 5, NULL, NULL),
+	(3, 2, 4, 1, NULL, 0),
+	(4, 2, 3, 5, NULL, NULL),
+	(5, 3, 4, 1, NULL, 0),
+	(6, 3, 3, 5, NULL, NULL);
 
 REPLACE INTO `respawn` (`id`, `object_id`, `respawn_time`, `instances_limit`, `layer`) VALUES
     (1, 2, 20000, 10, 'respawn-area-monsters-lvl-1-2'),
@@ -559,7 +591,9 @@ REPLACE INTO `skills_levels_set` (`id`, `autoFillRanges`, `autoFillExperienceMul
 	(5, 1, NULL);
 
 REPLACE INTO `skills_owners_class_path` (`id`, `class_path_id`, `owner_id`, `currentLevel`, `currentExp`) VALUES
-	(1, 1, 1, 10, 9080);
+	(1, 1, 1, 10, 9080),
+	(2, 1, 2, 1, 0),
+	(3, 1, 3, 1, 0);
 
 REPLACE INTO `skills_skill` (`id`, `key`, `type`, `autoValidation`, `skillDelay`, `castTime`, `usesLimit`, `range`, `rangeAutomaticValidation`, `rangePropertyX`, `rangePropertyY`, `rangeTargetPropertyX`, `rangeTargetPropertyY`, `allowSelfTarget`, `criticalChance`, `criticalMultiplier`, `criticalFixedValue`, `customData`) VALUES
 	(1, 'attackBullet', '4', 0, 1000, 0, 0, 250, 1, 'state/x', 'state/y', NULL, NULL, 0, 10, 2, 0, NULL),
@@ -606,10 +640,14 @@ REPLACE INTO `stats` (`id`, `key`, `label`, `description`, `base_value`, `custom
 
 -- default user/password: root/root
 REPLACE INTO `users` (`id`, `email`, `username`, `password`, `role_id`, `status`, `created_at`, `updated_at`, `played_time`) VALUES
-	(1, 'root@yourgame.com', 'root', '879abc0494b36a09f184fd8308ea18f2643d71263f145b1e40e2ec3546d42202:6a186aff4d69daadcd7940a839856b394b12f0aec64a5df745c83cf9d881dc9dcb121b03d946872571f214228684216df097305b68417a56403299b8b2388db3', 99, '1', '2022-03-17 18:57:44', '2023-10-21 16:51:55', 0);
+	(1, 'root@yourgame.com', 'root', '879abc0494b36a09f184fd8308ea18f2643d71263f145b1e40e2ec3546d42202:6a186aff4d69daadcd7940a839856b394b12f0aec64a5df745c83cf9d881dc9dcb121b03d946872571f214228684216df097305b68417a56403299b8b2388db3', 99, '1', '2022-03-17 18:57:44', '2023-10-21 16:51:55', 0),
+	(2, 'root2@yourgame.com', 'root2', '879abc0494b36a09f184fd8308ea18f2643d71263f145b1e40e2ec3546d42202:6a186aff4d69daadcd7940a839856b394b12f0aec64a5df745c83cf9d881dc9dcb121b03d946872571f214228684216df097305b68417a56403299b8b2388db3', 1, '1', '2022-03-17 18:57:44', '2023-10-21 16:51:55', 0),
+	(3, 'root3@yourgame.com', 'root3', '879abc0494b36a09f184fd8308ea18f2643d71263f145b1e40e2ec3546d42202:6a186aff4d69daadcd7940a839856b394b12f0aec64a5df745c83cf9d881dc9dcb121b03d946872571f214228684216df097305b68417a56403299b8b2388db3', 1, '1', '2022-03-17 18:57:44', '2023-10-21 16:51:55', 0);
 
 REPLACE INTO `users_locale` (`id`, `locale_id`, `user_id`) VALUES
-	(1, 1, 1);
+	(1, 1, 1),
+	(2, 1, 2),
+	(3, 1, 3);
 
 --
 

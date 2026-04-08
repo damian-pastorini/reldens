@@ -276,7 +276,7 @@ REPLACE INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(230, 'client', 'ui/npcDialog/responsiveY', '10', 2),
 	(231, 'client', 'ui/npcDialog/x', '120', 2),
 	(232, 'client', 'ui/npcDialog/y', '100', 2),
-	(233, 'client', 'ui/options/acceptOrDecline', '{"1":{"label":"Accept","value":1},"2":{"label":"Decline","value":2}}', 4),
+	(233, 'client', 'ui/options/acceptOrDecline', '{"decline":{"label":"Decline","value":2},"accept":{"label":"Accept","value":1}}', 4),
 	(234, 'client', 'ui/playerBox/enabled', '1', 3),
 	(235, 'client', 'ui/playerBox/responsiveX', '0', 2),
 	(236, 'client', 'ui/playerBox/responsiveY', '0', 2),
