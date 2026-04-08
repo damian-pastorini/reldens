@@ -41,7 +41,14 @@
         "reldens-import": "bin/import.js"
     },
     "scripts": {
-        "test": "node tests/manager.js"
+        "test": "node tests/manager.js",
+        "test:e2e": "node tests/e2e/run.js",
+        "test:e2e:reset": "node tests/e2e/run.js --reset-db",
+        "test:e2e:long": "node tests/e2e/run-long.js",
+        "test:e2e:long:reset": "node tests/e2e/run-long.js --reset-db"
+    },
+    "devDependencies": {
+        "@playwright/test": "1.58.2"
     },
     "dependencies": {
         "@colyseus/core": "0.16.24",
@@ -100,21 +107,21 @@
         "@reldens/game-data-generator": "^0.26.0",
         "@reldens/items-system": "^0.50.0",
         "@reldens/modifiers": "^0.35.0",
-        "@reldens/server-utils": "^0.47.0",
+        "@reldens/server-utils": "^0.48.0",
         "@reldens/skills": "^0.49.0",
         "@reldens/storage": "^0.92.0",
-        "@reldens/tile-map-generator": "^0.32.0",
-        "@reldens/utils": "^0.55.0",
+        "@reldens/tile-map-generator": "^0.33.0",
+        "@reldens/tileset-to-tilemap": "^0.5.0",
+        "@reldens/utils": "^0.56.0",
         "@sendgrid/mail": "8.1.6",
         "buffer": "6.0.3",
         "colyseus.js": "0.16.22",
-        "core-js": "3.48.0",
-        "dotenv": "17.3.1",
+        "core-js": "3.49.0",
+        "dotenv": "17.4.1",
         "express-basic-auth": "1.2.1",
-        "firebase": "12.10.0",
-        "jimp": "1.6.0",
+        "firebase": "12.11.0",
         "mustache": "4.2.0",
-        "nodemailer": "8.0.2",
+        "nodemailer": "8.0.5",
         "p2": "0.7.1",
         "pathfinding": "0.4.18",
         "phaser": "3.90.0",
