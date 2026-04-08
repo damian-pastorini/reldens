@@ -1,3 +1,4 @@
+/.mcp.json
 /.cache
 /.env
 /.idea
@@ -17,3 +18,10 @@
 /.claude/instructions.md
 /CLAUDE.local.md
 /.claude/skills/
+/.playwright-mcp
+/test-results
+/tests/e2e/reports
+/.claude/hook-state.json
+/.claude/tests-guide/
+/.claude/claude-sessions.md
+.hooks-ignore
