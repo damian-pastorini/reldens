@@ -24,4 +24,5 @@
 /.claude/hook-state.json
 /.claude/tests-guide/
 /.claude/claude-sessions.md
+/.claude/session-summary-state.json
 .hooks-ignore
