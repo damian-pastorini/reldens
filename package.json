@@ -42,13 +42,13 @@
     },
     "scripts": {
         "test": "node tests/manager.js",
-        "test:e2e": "node tests/e2e/run.js",
-        "test:e2e:reset": "node tests/e2e/run.js --reset-db",
-        "test:e2e:long": "node tests/e2e/run-long.js",
-        "test:e2e:long:reset": "node tests/e2e/run-long.js --reset-db"
+        "test:e2e": "node tests/e2e/run-tests.js",
+        "test:e2e:clean": "node tests/e2e/run-tests.js --clean-output",
+        "test:e2e:long": "node tests/e2e/run-tests.js --long",
+        "test:e2e:long:clean": "node tests/e2e/run-tests.js --long --clean-output"
     },
     "devDependencies": {
-        "@playwright/test": "1.58.2"
+        "@playwright/test": "1.59.1"
     },
     "dependencies": {
         "@colyseus/core": "0.16.24",
@@ -117,9 +117,9 @@
         "buffer": "6.0.3",
         "colyseus.js": "0.16.22",
         "core-js": "3.49.0",
-        "dotenv": "17.4.1",
+        "dotenv": "17.4.2",
         "express-basic-auth": "1.2.1",
-        "firebase": "12.11.0",
+        "firebase": "12.12.0",
         "mustache": "4.2.0",
         "nodemailer": "8.0.5",
         "p2": "0.7.1",
