@@ -7,7 +7,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover"/>
     <!-- favicons -->
     <meta name="msapplication-config" content="/browserconfig.xml"/>
-    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon"/>
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicons/apple-touch-icon.png"/>
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicons/favicon-32x32.png"/>
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicons/favicon-16x16.png"/>
+    <link rel="mask-icon" href="assets/favicons/safari-pinned-tab.svg" color="#000000"/>
     <link rel="manifest" href="/site.webmanifest"/>
     <!-- CSS and JS -->
     <link crossorigin rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -15,7 +18,7 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i|Play:300,300i,400,400i,500,500i,600,600i,700,700i"/>
     <link rel="stylesheet" href="{{stylesFilePath}}"/>
     <script type="text/javascript" src="/js/functions.js"></script>
-    <script type="text/javascript" src="/reldens-functions.js"></script>
+    <script type="text/javascript" src="/js/reldens-functions.js"></script>
     <script type="module" src="{{scriptsFilePath}}"></script>
 </head>
 <body class="reldens-admin-panel">
@@ -37,6 +40,22 @@
     </div>
     <div class="footer">
         {{&copyRight}}
+    </div>
+</div>
+<div class="modal confirm-dialog hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-dialog confirm-modal-dialog">
+        <div class="modal-header">
+            <h4 class="dialog-title">Confirm</h4>
+            <button type="button" class="button button-close button-circle button-dark">×</button>
+        </div>
+        <div class="modal-body">
+            <p class="dialog-message">Are you sure?</p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="button button-secondary dialog-cancel">Cancel</button>
+            <button type="button" class="button button-danger dialog-confirm">Confirm</button>
+        </div>
     </div>
 </div>
 </body>

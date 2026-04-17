@@ -6,11 +6,13 @@
  *
  */
 
-function fetchMapFileAndDraw(mapJson, tileset, mapCanvas, withTileHighlight, tileClickCallback)
+function fetchMapFileAndDraw(mapJson, tileset, mapCanvas, withTileHighlight, tileClickCallback, withTileSelect)
 {
     if(!mapJson){
         return false;
     }
+    let selectedTileX = null;
+    let selectedTileY = null;
     fetch(mapJson)
         .then(response => response.json())
         .then(data => {
@@ -25,11 +27,38 @@ function fetchMapFileAndDraw(mapJson, tileset, mapCanvas, withTileHighlight, til
                     let mouseY = event.offsetY;
                     // @TODO - BETA - Refactor to only re-draw the highlight area not the entire grid.
                     // highlightTile(mouseX, mouseY, data.tilewidth, data.tileheight, mapCanvasContext);
-                    redrawWithHighlight(mapCanvasContext, mapCanvas.width, mapCanvas.height, data, mouseX, mouseY);
+                    redrawWithHighlight(
+                        mapCanvasContext,
+                        mapCanvas.width,
+                        mapCanvas.height,
+                        data,
+                        mouseX,
+                        mouseY,
+                        selectedTileX,
+                        selectedTileY
+                    );
                 });
             }
             if(tileClickCallback){
                 mapCanvas.addEventListener('click', (event) => {
+                    let mouseX = event.offsetX;
+                    let mouseY = event.offsetY;
+                    let newTileX = Math.floor(mouseX / data.tilewidth) * data.tilewidth;
+                    let newTileY = Math.floor(mouseY / data.tileheight) * data.tileheight;
+                    if(withTileSelect){
+                        if(newTileX === selectedTileX && newTileY === selectedTileY){
+                            selectedTileX = null;
+                            selectedTileY = null;
+                            drawMap(mapCanvasContext, tileset, data);
+                            drawTiles(mapCanvasContext, mapCanvas.width, mapCanvas.height, data.tilewidth, data.tileheight);
+                            return;
+                        }
+                        selectedTileX = newTileX;
+                        selectedTileY = newTileY;
+                        drawMap(mapCanvasContext, tileset, data);
+                        drawTiles(mapCanvasContext, mapCanvas.width, mapCanvas.height, data.tilewidth, data.tileheight);
+                        drawSelectedTile(mapCanvasContext, selectedTileX, selectedTileY, data.tilewidth, data.tileheight);
+                    }
                     tileClickCallback(event, data);
                 });
             }
@@ -91,6 +120,19 @@ function drawTiles(canvasContext, canvasWidth, canvasHeight, tileWidth, tileHeig
     canvasContext.restore();
 }
 
+function drawSelectedTile(canvasContext, tileX, tileY, tileWidth, tileHeight)
+{
+    canvasContext.save();
+    canvasContext.globalAlpha = 0.35;
+    canvasContext.fillStyle = '#e05454';
+    canvasContext.fillRect(tileX, tileY, tileWidth, tileHeight);
+    canvasContext.globalAlpha = 1;
+    canvasContext.strokeStyle = '#e05454';
+    canvasContext.lineWidth = 2;
+    canvasContext.strokeRect(tileX, tileY, tileWidth, tileHeight);
+    canvasContext.restore();
+}
+
 function highlightTile(mouseX, mouseY, tileWidth, tileHeight, canvasContext)
 {
     let tileCol = Math.floor(mouseX / tileWidth);
@@ -104,13 +146,16 @@ function highlightTile(mouseX, mouseY, tileWidth, tileHeight, canvasContext)
     canvasContext.restore();
 }
 
-function redrawWithHighlight(mapCanvasContext, mapCanvasWidth, mapCanvasHeight, mapData, mouseX, mouseY)
+function redrawWithHighlight(mapCanvasContext, mapCanvasWidth, mapCanvasHeight, mapData, mouseX, mouseY, selectedTileX, selectedTileY)
 {
     drawTiles(mapCanvasContext, mapCanvasWidth, mapCanvasHeight, mapData.tilewidth, mapData.tileheight);
+    if(null !== selectedTileX && null !== selectedTileY){
+        drawSelectedTile(mapCanvasContext, selectedTileX, selectedTileY, mapData.tilewidth, mapData.tileheight);
+    }
     highlightTile(mouseX, mouseY, mapData.tilewidth, mapData.tileheight, mapCanvasContext);
 }
 
-function loadAndCreateMap(mapJsonFileName, mapSceneImages, appendOnElement, tileClickCallback) {
+function loadAndCreateMap(mapJsonFileName, mapSceneImages, appendOnElement, tileClickCallback, withTileSelect) {
     let mapCanvas = document.createElement('canvas');
     mapCanvas.classList.add('mapCanvas');
     appendOnElement.appendChild(mapCanvas);
@@ -125,7 +170,8 @@ function loadAndCreateMap(mapJsonFileName, mapSceneImages, appendOnElement, tile
                 tileset,
                 mapCanvas,
                 true,
-                tileClickCallback
+                tileClickCallback,
+                withTileSelect
             );
         };
         tileset.onerror = () => {

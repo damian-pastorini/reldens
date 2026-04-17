@@ -1,15 +1,17 @@
 <div class="entity-edit {{&entityName}}-edit">
-    <h2>{{&templateTitle}}</h2>
-    <div class="actions">
+    <h2 class="section-title">{{&templateTitle}}</h2>
+    <div class="actions sub-content actions-sticky">
         <button class="button button-primary button-submit" type="submit" form="edit-form" name="saveAction" value="save">Save</button>
         <button class="button button-primary button-submit" type="submit" form="edit-form" name="saveAction" value="saveAndContinue">Save and continue...</button>
         <button class="button button-primary button-submit" type="submit" form="edit-form" name="saveAction" value="saveAndGoBack">Save and go back</button>
         <a class="button button-secondary button-back" href="{{&entityViewRoute}}">Cancel</a>
     </div>
-    <div class="extra-actions">
+    {{#extraContent}}
+    <div class="extra-actions sub-content">
         {{&extraContent}}
     </div>
-    <form name="edit-form" id="edit-form" action="{{&entitySaveRoute}}" method="post"{{&multipartFormData}}>
+    {{/extraContent}}
+    <form name="edit-form" id="edit-form" class="sub-content" action="{{&entitySaveRoute}}" method="post"{{&multipartFormData}}>
         <input type="hidden" name="{{&idProperty}}" value="{{&idValue}}"/>
         <div class="edit-field">
             <span class="field-name">{{&idPropertyLabel}}</span>
@@ -24,14 +26,10 @@
         </div>
         {{/editFields}}
         {{&extraFormContent}}
-        <div class="actions">
-            <button class="button button-primary button-submit" type="submit" name="saveAction" value="save">Save</button>
-            <button class="button button-primary button-submit" type="submit" name="saveAction" value="saveAndContinue">Save and continue...</button>
-            <button class="button button-primary button-submit" type="submit" name="saveAction" value="saveAndGoBack">Save and go back</button>
-            <a class="button button-secondary button-back" href="{{&entityViewRoute}}">Cancel</a>
-        </div>
     </form>
-    <div class="extra-actions">
+    {{#extraContent}}
+    <div class="extra-actions sub-content">
         {{&extraContent}}
     </div>
+    {{/extraContent}}
 </div>

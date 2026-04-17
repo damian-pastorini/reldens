@@ -1,0 +1,29 @@
+.canvas-panel {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    min-width: 0;
+
+    & .canvas-actions {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        flex-wrap: wrap;
+        flex-shrink: 0;
+        margin-bottom: var(--space-sm);
+    }
+
+    & .canvas-scroll-area {
+        overflow: auto;
+        flex: 1;
+    }
+
+    & .tileset-canvas {
+        display: block;
+        background: var(--color-grey-90);
+        border: 1px solid var(--color-grey-30);
+        cursor: crosshair;
+    }
+
+}
