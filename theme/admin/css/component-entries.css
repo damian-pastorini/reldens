@@ -1,0 +1,148 @@
+.entity-view,
+.entity-edit {
+    & h2 {
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+
+    .view-field,
+    .edit-field {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0;
+        margin-bottom: var(--space-lg);
+
+        & span, label, input {
+            padding: 0.5rem;
+
+            &.field-name {
+                font-weight: var(--bold);
+                color: var(--color-grey);
+                flex: 1;
+            }
+
+            &.field-value {
+                flex: 2;
+                min-height: 2rem;
+                color: var(--color-blue);
+                background-color: var(--color-grey-70);
+
+                &:has(> input[type="checkbox"]) {
+                    background-color: transparent;
+                }
+
+                &.with-button {
+                    flex: 0 0 auto;
+                    background-color: transparent;
+                    padding: 0;
+                    margin: auto 0;
+                    vertical-align: middle;
+
+                    & button {
+                        width: max-content;
+                        margin: 0;
+                    }
+                }
+
+                & input[type="checkbox"] {
+                    max-width: max-content;
+                    margin-left: 0.5rem;
+                    margin-top: 0.5rem;
+                }
+
+                .remove-upload-btn {
+                    cursor: pointer;
+                }
+            }
+        }
+    }
+
+    .view-field {
+        .field-value img {
+            max-width: 12.5rem;
+        }
+
+        .admin-audio-player {
+            width: 100%;
+            max-width: 25rem;
+        }
+    }
+
+    .edit-field {
+        & span, input {
+            &.field-value {
+                display: flex;
+                flex-direction: column;
+                padding: 0;
+
+                & p {
+                    margin-left: 0.5rem;
+                    color: var(--color-grey);
+                }
+
+                & input:not([type="checkbox"]), select {
+                    margin: 0;
+                    padding: 0.5rem;
+                    border: 1px solid var(--color-grey-40);
+                    background-color: var(--color-grey-50);
+                    color: var(--color-grey);
+
+                    &:not([disabled]) {
+                        margin: 0;
+                        border: none;
+                        background-color: transparent;
+                        color: var(--color-grey);
+                    }
+                }
+
+                & textarea {
+                    width: 100%;
+                }
+            }
+        }
+    }
+
+    .actions {
+        margin: 2rem 0;
+        text-align: center;
+
+        & form {
+            display: inline;
+        }
+
+        .button {
+            display: inline-block;
+            margin: 0 0.5rem;
+        }
+    }
+
+    .actions-sticky {
+        position: sticky;
+        top: 0;
+        z-index: var(--z-sticky);
+        background-color: var(--color-grey-50);
+        margin-top: 0;
+    }
+
+    .tileset-alert-wrapper {
+        display: flex;
+        align-items: flex-start;
+        gap: var(--space-md);
+        width: 100%;
+    }
+
+    .upload-files-with-alert {
+        flex: 1;
+    }
+
+    .field-image-modal {
+        cursor: pointer;
+    }
+
+    .sub-content {
+        textarea {
+            width: 100%;
+        }
+    }
+}

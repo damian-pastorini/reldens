@@ -1,0 +1,103 @@
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+:root {
+    /* === Typography === */
+    --font-family: system-ui, sans-serif;
+    --font-weight-light: 300;
+    --font-weight-regular: 400;
+    --font-weight-bold: 700;
+
+    --font-size-xs: 0.75rem;
+    --font-size-sm: 0.85rem;
+    --font-size-base: 0.9rem;
+    --font-size-md: 1rem;
+    --font-size-lg: 1.1rem;
+    --font-size-xl: 1.5rem;
+    --font-size-2xl: 2rem;
+
+    /* === Spacing === */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 0.75rem;
+    --space-lg: 1rem;
+    --space-xl: 1.25rem;
+    --space-2xl: 1.5rem;
+    --space-3xl: 1.75rem;
+
+    /* === Border radius === */
+    --radius-sm: 0.25rem;
+    --radius-md: 0.375rem;
+    --radius-lg: 0.5rem;
+    --radius-full: 50%;
+
+    /* === Z-index === */
+    --z-sticky: 20;
+    --z-fixed: 100;
+    --z-help: 150;
+    --z-modal: 200;
+
+    /* === Breakpoints === */
+    --bp-sm: 480px;
+    --bp-md: 768px;
+    --bp-lg: 1024px;
+    --bp-xl: 1280px;
+
+    /* === Layout === */
+    --layout-max-width: 87.5rem;
+    --layout-legend-width: 29.5rem;
+    --tileset-row-height-offset: 16rem;
+    --tileset-row-min-height: 32rem;
+    --tooltip-max-width: 15rem;
+
+    /* === Colors: White / Grey (light → dark, higher = darker) === */
+    --color-white: #ffffff;
+    --color-black: #000000;
+    --color-grey: #e0e0e0;
+    --color-grey-20: #909090;
+    --color-grey-30: #666666;
+    --color-grey-40: #484848;
+    --color-grey-50: #282828;
+    --color-grey-60: #1e1e1e;
+    --color-grey-70: #1a1a1a;
+    --color-grey-80: #141414;
+    --color-grey-90: #0c0c0c;
+
+    /* === Colors: Red (base = bright, higher = darker) === */
+    --color-red: #ff7675;
+    --color-red-10: #ff5b5b;
+    --color-red-20: #c87e7e;
+    --color-red-70: #641515;
+    --color-red-80: #481010;
+    --color-red-90: #2e0c0c;
+
+    /* === Colors: Pink / Gold / Purple (misc layer colors) === */
+    --color-pink: #ff5bff;
+    --color-gold: #d4a017;
+    --color-purple: #8888aa;
+
+    /* === Colors: Orange / Yellow (base = bright, higher = darker) === */
+    --color-orange: #f0a040;
+    --color-orange-50: #825520;
+    --color-orange-70: #5a4000;
+    --color-orange-90: #2a2000;
+    --color-yellow: #e0e040;
+
+    /* === Colors: Green (base = bright, higher = darker) === */
+    --color-green: #5bff8c;
+    --color-green-20: #7ec87e;
+    --color-green-70: #1a5e35;
+    --color-green-80: #133d21;
+    --color-green-90: #0d1f0d;
+
+    /* === Colors: Blue (base = bright, higher = darker) === */
+    --color-blue: #2f7dde;
+    --color-blue-70: #1e5eb0;
+    --color-blue-90: #1a3a6a;
+
+    /* === Legacy font/weight vars (admin) === */
+    --normalFont: Verdana, Geneva, sans-serif;
+    --reldensFont: "Play", sans-serif;
+    --bold: 600;
+}

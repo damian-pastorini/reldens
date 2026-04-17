@@ -1,0 +1,426 @@
+.review-section {
+    display: flex;
+    flex-direction: column;
+
+    &.ai-single-busy {
+        .tileset-detect-elements-btn,
+        .tileset-detect-layers-btn,
+        .tileset-name-all-btn,
+        .element-lock-btn,
+        .element-delete-btn,
+        .cluster-split-btn,
+        .cluster-convert-btn,
+        .element-name-input,
+        .element-quantity,
+        .element-free-space,
+        .element-allow-paths,
+        .layer-type-radio,
+        .add-element-btn,
+        .generate-btn,
+        .generate-selected-btn,
+        .zoom-reset-btn,
+        .map-config-toggle {
+            pointer-events: none;
+            opacity: 0.5;
+        }
+    }
+
+    & .review-top-bar {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        position: sticky;
+        top: 0;
+        z-index: var(--z-sticky);
+        background: var(--color-grey-60);
+        padding-bottom: var(--space-md);
+        margin-bottom: var(--space-md);
+
+        &.is-scrolled {
+            padding: var(--space-2xl);
+            border: 1px solid var(--color-grey-30);
+            box-shadow: 0.625rem 0.625rem 0.625rem #000;
+        }
+    }
+
+    & .review-top-bar-main-row {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    & .review-top-row {
+        display: flex;
+        align-items: center;
+
+        & h2 {
+            margin-bottom: 0;
+        }
+    }
+
+    & .session-name-label,
+    & .show-filter-label {
+        font-size: var(--font-size-sm);
+        color: var(--color-white);
+        white-space: nowrap;
+    }
+
+    & .show-check-label {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-xs);
+        color: var(--color-white);
+        cursor: pointer;
+        white-space: nowrap;
+        font-size: var(--font-size-sm);
+
+        & input[type="checkbox"] {
+            accent-color: var(--color-blue);
+        }
+    }
+
+    & .session-name-input {
+        width: 12rem;
+    }
+
+    & .override-files-label {
+        font-size: var(--font-size-sm);
+        color: var(--color-white);
+        white-space: nowrap;
+        cursor: pointer;
+    }
+
+    & .tilesets-container {
+        overflow: visible;
+    }
+
+    & .tileset-row {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: var(--space-3xl);
+        border: 1px solid var(--color-grey-30);
+        border-radius: var(--radius-md);
+        padding: var(--space-lg);
+        height: calc(100vh - var(--tileset-row-height-offset));
+        min-height: var(--tileset-row-min-height);
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+
+        &.collapsed {
+            height: auto;
+            min-height: 0;
+
+            & .tileset-header {
+                margin-bottom: 0;
+            }
+
+            & .tileset-body {
+                display: none;
+            }
+        }
+    }
+
+    & .tileset-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 0.625rem;
+        flex-shrink: 0;
+        cursor: pointer;
+        user-select: none;
+    }
+
+    & .tileset-collapse-btn {
+        background: transparent;
+        padding: var(--space-xs);
+        border-color: transparent;
+        flex-shrink: 0;
+
+        & img {
+            display: block;
+            width: var(--space-2xl);
+            height: var(--space-2xl);
+            filter: brightness(0) invert(0.5);
+        }
+
+        &:hover {
+            background: transparent;
+        }
+
+        &:hover img {
+            filter: brightness(0) invert(0.8);
+        }
+    }
+
+    & .tileset-body {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-height: 0;
+    }
+
+    & .tileset-panels {
+        display: flex;
+        flex-direction: row;
+        flex: 1;
+        min-height: 0;
+        gap: var(--space-xl);
+        overflow: visible;
+    }
+
+    & .tileset-remove-btn {
+        padding: var(--space-sm);
+        height: auto;
+        flex-shrink: 0;
+
+        & img {
+            display: block;
+            width: var(--space-xl);
+            height: var(--space-xl);
+            filter: brightness(0) invert(0.8);
+        }
+    }
+
+    & .tileset-generate-config-row {
+        display: flex;
+        flex-direction: row-reverse;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: var(--space-lg);
+        margin-bottom: var(--space-md);
+        border-bottom: 1px solid var(--color-grey-30);
+        padding-bottom: var(--space-sm);
+    }
+
+    & .tileset-generate-row,
+    & .controls-legend-col {
+        min-width: var(--layout-legend-width);
+        flex-shrink: 0;
+        justify-content: space-between;
+    }
+
+    & .controls-legend-col {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+
+        & .legend-search {
+            width: 8rem;
+            height: var(--space-3xl);
+            padding: 0 var(--space-sm);
+            font-size: var(--font-size-sm);
+        }
+    }
+
+    & .tileset-generate-row {
+        display: flex;
+        align-items: center;
+    }
+
+    & .tileset-controls-row {
+        display: flex;
+        align-items: center;
+        flex-shrink: 0;
+        margin-bottom: 0.375rem;
+        gap: var(--space-xl);
+    }
+
+    & .controls-ai-col {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        flex: 1;
+        min-width: 0;
+        flex-wrap: wrap;
+
+        & select {
+            background: var(--color-grey-90);
+            border: 1px solid var(--color-grey-20);
+            border-radius: var(--radius-sm);
+            color: var(--color-grey);
+            font-size: var(--font-size-sm);
+            padding: 0 0.375rem;
+            height: var(--space-3xl);
+        }
+    }
+
+    & .review-actions-row,
+    & .review-actions-session-row,
+    & .review-actions-buttons-row {
+        display: flex;
+        align-items: center;
+        gap: var(--space-md);
+    }
+
+    & .review-actions-row {
+        flex-direction: column;
+        align-items: flex-end;
+    }
+
+    & .tileset-map-config-row {
+        text-align: left;
+    }
+
+    & .tileset-map-config-toggles-row {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        margin-bottom: 0.375rem;
+    }
+
+    & .tileset-associations-editor {
+        margin-top: var(--space-sm);
+        padding-top: var(--space-sm);
+        border-top: 1px solid var(--color-grey-60);
+
+        &.hidden {
+            display: none;
+        }
+    }
+
+    & .tileset-associations-label {
+        font-size: var(--font-size-sm);
+        color: var(--color-grey-20);
+        margin-bottom: var(--space-xs);
+    }
+
+    & .tileset-associations-fields {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-sm) var(--space-xl);
+
+        & label {
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+            font-size: var(--font-size-sm);
+            color: var(--color-white);
+        }
+
+        & input[type="number"] {
+            width: 4rem;
+        }
+    }
+
+    & .tileset-map-config-fieldset {
+        & .tileset-map-config-fields-row {
+            display: flex;
+            gap: var(--space-2xl);
+            flex-wrap: wrap;
+
+            & label {
+                display: flex;
+                align-items: center;
+                gap: var(--space-sm);
+                font-size: var(--font-size-sm);
+                color: var(--color-white);
+            }
+
+            & input[type="text"] {
+                width: 14rem;
+            }
+        }
+    }
+
+    & .tileset-merge-label {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-xs);
+        font-size: var(--font-size-sm);
+        color: var(--color-white);
+        cursor: pointer;
+        white-space: nowrap;
+        background: var(--color-grey-80);
+        border: 1px solid var(--color-grey-30);
+        border-radius: var(--radius-md);
+        height: var(--space-3xl);
+        padding: 0 var(--space-lg) 0 var(--space-sm);
+        margin-bottom: 0;
+
+        &:hover {
+            background: var(--color-grey-60);
+        }
+    }
+
+    & .tileset-merge-config {
+        margin-bottom: var(--space-md);
+
+        & label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-xs);
+            font-size: var(--font-size-sm);
+            color: var(--color-white);
+            cursor: pointer;
+            margin-right: var(--space-lg);
+        }
+    }
+
+    & .tileset-merge-resize-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--space-md);
+        margin-top: var(--space-sm);
+    }
+
+    & .tileset-merge-resize-options {
+        display: flex;
+        gap: var(--space-lg);
+        align-items: center;
+    }
+
+    & .merge-btn,
+    & .generate-btn,
+    & .tileset-generate-btn,
+    & .generate-selected-btn,
+    & .tileset-generate-selected-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+    }
+
+    & .merge-btn {
+        background: var(--color-orange-90);
+        border-color: var(--color-orange);
+        color: var(--color-orange);
+
+        &:hover {
+            background: var(--color-orange-70);
+        }
+    }
+
+    & .controls-ai-col .button-dark,
+    & .canvas-actions .button-dark,
+    & .tileset-map-config-toggle,
+    & .tileset-merge-config-toggle {
+        background-color: var(--color-grey-50);
+        border-color: var(--color-purple);
+
+        &:hover {
+            background-color: var(--color-grey-40);
+        }
+    }
+
+    & .legend-panel {
+        flex-shrink: 0;
+        width: var(--layout-legend-width);
+        max-width: var(--layout-legend-width);
+    }
+
+    & .tileset-generate-config-row .button:not(.button-info):not(.button-circle),
+    & .tileset-controls-row .button:not(.button-info):not(.button-circle),
+    & .tileset-panels .canvas-actions .button:not(.button-info):not(.button-circle),
+    & .tileset-panels .legend-bulk-actions .button:not(.button-info):not(.button-circle) {
+        height: var(--space-3xl);
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-xs);
+        padding-top: 0;
+        padding-bottom: 0;
+    }
+
+}

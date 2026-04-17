@@ -13,6 +13,33 @@ if(window.trustedTypes && window.trustedTypes.createPolicy){
 }
 window.trustedTypesPolicy = trustedTypesPolicy;
 
+function buildFormConfirmOptions(form)
+{
+    let options = {};
+    if(form.classList.contains('form-delete')){
+        options.title = 'Confirm Delete';
+        options.message = 'Are you sure you want to delete?';
+        options.confirmText = 'Delete';
+        options.confirmClass = 'button-danger';
+    }
+    let submitButton = form.querySelector('input[type="submit"], button[type="submit"]');
+    if(submitButton){
+        if(submitButton.dataset.modalConfirmLabel){
+            options.confirmText = submitButton.dataset.modalConfirmLabel;
+        }
+        if(submitButton.dataset.modalConfirmClass){
+            options.confirmClass = 'button-' + submitButton.dataset.modalConfirmClass;
+        }
+        if(submitButton.dataset.modalCancelLabel){
+            options.cancelText = submitButton.dataset.modalCancelLabel;
+        }
+        if(submitButton.dataset.modalCancelClass){
+            options.cancelClass = 'button-' + submitButton.dataset.modalCancelClass;
+        }
+    }
+    return options;
+}
+
 window.addEventListener('DOMContentLoaded', () => {
 
     // helpers:
@@ -20,6 +47,14 @@ window.addEventListener('DOMContentLoaded', () => {
     let currentPath = location.pathname;
     let queryString = location.search;
     let urlParams = new URLSearchParams(queryString);
+
+    // remove clearFilters param from URL after page load so sort buttons work correctly:
+    if(urlParams.has('clearFilters')){
+        urlParams.delete('clearFilters');
+        let newSearch = urlParams.toString();
+        let newUrl = location.pathname + (newSearch ? '?'+newSearch : '');
+        history.replaceState(null, '', newUrl);
+    }
 
     // error codes messages map:
     let errorMessages = {
@@ -56,7 +91,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // login errors:
     if('true' === urlParams.get('login-error')){
-        let loginErrorBox = document.querySelector('form.login-form .response-error');
+        let loginErrorBox = document.querySelector('.login-form .response-error');
         if(loginErrorBox){
             loginErrorBox.innerHTML = 'Login error, please try again.';
         }
@@ -100,6 +135,9 @@ window.addEventListener('DOMContentLoaded', () => {
     let forms = document.querySelectorAll('form');
     if(forms){
         for(let form of forms){
+            if(form.classList.contains('no-auto-disable')){
+                continue;
+            }
             form.addEventListener('submit', (event) => {
                 let submitButton = form.querySelector('input[type="submit"], button[type="submit"]');
                 submitButton.disabled = true;
@@ -108,6 +146,32 @@ window.addEventListener('DOMContentLoaded', () => {
                     event.preventDefault();
                     showConfirmDialog((confirmed) => {
                         if(confirmed){
+                            if(form.classList.contains('maps-import-form')){
+                                let importDialog = document.querySelector('.confirm-dialog');
+                                if(importDialog){
+                                    let titleEl = importDialog.querySelector('.dialog-title');
+                                    let messageEl = importDialog.querySelector('.dialog-message');
+                                    let confirmBtn = importDialog.querySelector('.dialog-confirm');
+                                    let cancelBtn = importDialog.querySelector('.dialog-cancel');
+                                    let closeBtn = importDialog.querySelector('.dialog-close');
+                                    if(titleEl){
+                                        titleEl.textContent = 'Importing...';
+                                    }
+                                    if(messageEl){
+                                        messageEl.textContent = 'Importing maps, please wait...';
+                                    }
+                                    if(confirmBtn){
+                                        confirmBtn.classList.add('hidden');
+                                    }
+                                    if(cancelBtn){
+                                        cancelBtn.classList.add('hidden');
+                                    }
+                                    if(closeBtn){
+                                        closeBtn.classList.add('hidden');
+                                    }
+                                    importDialog.classList.remove('hidden');
+                                }
+                            }
                             if(loadingImage){
                                 loadingImage.classList.remove('hidden');
                             }
@@ -116,7 +180,7 @@ window.addEventListener('DOMContentLoaded', () => {
                         if(!confirmed){
                             submitButton.disabled = false;
                         }
-                    });
+                    }, buildFormConfirmOptions(form));
                     return;
                 }
                 if(loadingImage){
@@ -127,13 +191,26 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     // sidebar headers click behavior:
-    let sideBarHeaders = document.querySelectorAll('.with-sub-items h3');
+    let sideBarHeaders = document.querySelectorAll('.with-sub-items .side-bar-item-header');
     if(sideBarHeaders){
         for(let header of sideBarHeaders){
             header.addEventListener('click', (event) => {
                 event.currentTarget.parentNode.classList.toggle('active');
             });
         }
+    }
+
+    let logoutLink = document.querySelector('a[href*="/logout"]');
+    if(logoutLink){
+        logoutLink.addEventListener('click', (event) => {
+            event.preventDefault();
+            let logoutHref = logoutLink.href;
+            showConfirmDialog((confirmed) => {
+                if(confirmed){
+                    window.location.href = logoutHref;
+                }
+            }, 'Are you sure you want to log out?');
+        });
     }
 
     // expand menu on load:
@@ -189,7 +266,7 @@ window.addEventListener('DOMContentLoaded', () => {
                             params.set(filterName, filterInput.value);
                         }
                     }
-                    let sortedHeader = document.querySelector('th.sorted');
+                    let sortedHeader = document.querySelector('.sorted');
                     if(sortedHeader){
                         let columnName = sortedHeader.getAttribute('data-column');
                         let sortDirection = sortedHeader.classList.contains('sorted-asc') ? 'asc' : 'desc';
@@ -204,7 +281,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     // column sorting functionality:
-    let sortableHeaders = document.querySelectorAll('th.sortable');
+    let sortableHeaders = document.querySelectorAll('.sortable');
     if(sortableHeaders){
         for(let header of sortableHeaders){
             header.addEventListener('click', () => {
@@ -246,11 +323,16 @@ window.addEventListener('DOMContentLoaded', () => {
     let listSelect = document.querySelector('.list-select');
     if(listSelect){
         listSelect.addEventListener('click', (event) => {
+            let isChecked = 1 === Number(event.currentTarget.dataset.checked);
             let checkboxes = document.querySelectorAll('.ids-checkbox');
             for(let checkbox of checkboxes){
-                checkbox.checked = 1 === Number(event.currentTarget.dataset.checked);
+                checkbox.checked = isChecked;
             }
-            event.currentTarget.dataset.checked = 1 === Number(event.currentTarget.dataset.checked) ? 0 : 1;
+            let selectAllCheckbox = event.currentTarget.querySelector('input[type="checkbox"]');
+            if(selectAllCheckbox){
+                selectAllCheckbox.checked = isChecked;
+            }
+            event.currentTarget.dataset.checked = isChecked ? 0 : 1;
         });
     }
 
@@ -261,6 +343,9 @@ window.addEventListener('DOMContentLoaded', () => {
     if(listDeleteSelection && deleteSelectionForm && hiddenInput){
         listDeleteSelection.addEventListener('click', (event) => {
             event.preventDefault();
+            if(!document.querySelectorAll('.ids-checkbox:checked').length){
+                return;
+            }
             showConfirmDialog((confirmed) => {
                 if(confirmed){
                     let checkboxes = document.querySelectorAll('.ids-checkbox');
@@ -283,7 +368,7 @@ window.addEventListener('DOMContentLoaded', () => {
                     }
                     deleteSelectionForm.submit();
                 }
-            });
+            }, { title: 'Confirm Delete', message: 'Are you sure you want to delete the selected items?', confirmText: 'Delete', confirmClass: 'button-danger' });
         });
     }
 
@@ -417,7 +502,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     // tileset alert icon toggle:
-    let tilesetAlertIcons = document.querySelectorAll('.tileset-alert-icon');
+    let tilesetAlertIcons = document.querySelectorAll('.alert-icon');
     if(tilesetAlertIcons){
         for(let icon of tilesetAlertIcons){
             icon.addEventListener('click', () => {
@@ -468,7 +553,8 @@ window.addEventListener('DOMContentLoaded', () => {
                         let tileData = calculateTileData(event, data);
                         elementNextRoomPositionX.value = tileData.positionTileX;
                         elementNextRoomPositionY.value = tileData.positionTileY;
-                    }
+                    },
+                    false
                 );
             });
         }
@@ -482,7 +568,8 @@ window.addEventListener('DOMContentLoaded', () => {
                     if(elementCurrentRoomChangePointTileIndex){
                         elementCurrentRoomChangePointTileIndex.value = tileData.tileIndex;
                     }
-                }
+                },
+                true
             );
         }
     }
@@ -511,14 +598,22 @@ window.addEventListener('DOMContentLoaded', () => {
             fetchMapFileAndDraw(mapCanvas.dataset.mapJson, tileset, mapCanvas);
         };
         tileset.onerror = () => {
-            console.error('Error loading tileset image');
+            tileset.dataset.loadError = '1';
         };
+    }
+
+    // maps import sticky submit container:
+    let mapsImportSubmitContainer = document.querySelector('.maps-import-form .submit-container');
+    if(mapsImportSubmitContainer){
+        let naturalTop = mapsImportSubmitContainer.getBoundingClientRect().top + window.scrollY;
+        window.addEventListener('scroll', function(){
+            mapsImportSubmitContainer.classList.toggle('is-sticky', window.scrollY > naturalTop);
+        }, {passive: true});
     }
 
     // theme manager functionality:
     let themeSelector = document.querySelector('#selected-theme');
     let executeCommandButtons = document.querySelectorAll('.execute-command');
-    let showCommandInfoButtons = document.querySelectorAll('.show-command-info');
     let commandDescriptionsData = document.querySelector('#command-descriptions-data');
     let commandDescriptions = {};
 
@@ -526,7 +621,7 @@ window.addEventListener('DOMContentLoaded', () => {
         try {
             commandDescriptions = JSON.parse(commandDescriptionsData.textContent);
         } catch(error){
-            console.error('Failed to parse command descriptions', error);
+            commandDescriptions = {};
         }
     }
 
@@ -561,53 +656,37 @@ window.addEventListener('DOMContentLoaded', () => {
                         }
                         form.submit();
                     }
-                });
+                }, { title: 'Execute Theme Command', message: 'Are you sure you want to execute this command?', confirmText: 'Execute', confirmClass: 'button-primary' });
             });
         }
     }
 
-    if(showCommandInfoButtons){
-        let allTooltips = document.querySelectorAll('.command-info-tooltip');
-        for(let button of showCommandInfoButtons){
-            let commandName = button.dataset.command;
-            if(!commandName){
-                continue;
-            }
-            let commandItem = button.closest('.command-item');
-            if(!commandItem){
-                continue;
-            }
-            let tooltip = commandItem.querySelector('.command-info-tooltip[data-command="'+commandName+'"]');
-            if(!tooltip){
-                continue;
-            }
-            let commandInfo = commandDescriptions[commandName];
-            if(commandInfo){
-                let descriptionElement = tooltip.querySelector('.tooltip-description');
-                let detailsElement = tooltip.querySelector('.tooltip-details');
-                if(descriptionElement){
-                    descriptionElement.textContent = commandInfo.description || '';
-                }
-                if(detailsElement){
-                    detailsElement.textContent = commandInfo.details || '';
-                }
-            }
-            button.addEventListener('click', (event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                for(let otherTooltip of allTooltips){
-                    if(otherTooltip !== tooltip){
-                        otherTooltip.classList.remove('visible');
-                    }
-                }
-                tooltip.classList.toggle('visible');
-            });
+    let commandTooltips = document.querySelectorAll('.command-item .tooltip-text[data-command]');
+    for(let tooltip of commandTooltips){
+        let commandName = tooltip.dataset.command;
+        let commandInfo = commandDescriptions[commandName];
+        if(!commandInfo){
+            continue;
         }
-        document.addEventListener('click', () => {
-            for(let tooltip of allTooltips){
-                tooltip.classList.remove('visible');
-            }
-        });
+        let descriptionElement = tooltip.querySelector('.tooltip-description');
+        let detailsElement = tooltip.querySelector('.tooltip-details');
+        if(descriptionElement){
+            descriptionElement.textContent = commandInfo.description || '';
+        }
+        if(detailsElement){
+            detailsElement.textContent = commandInfo.details || '';
+        }
     }
+
+    document.addEventListener('click', function(event) {
+        let closeBtn = event.target.closest('.button-close');
+        if(!closeBtn){
+            return;
+        }
+        let modal = closeBtn.closest('.modal');
+        if(modal) {
+            modal.classList.add('hidden');
+        }
+    });
 
 });

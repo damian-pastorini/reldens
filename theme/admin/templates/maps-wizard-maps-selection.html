@@ -1,7 +1,7 @@
-<h2>Maps Wizard</h2>
+<h2 class="section-title">Maps Wizard</h2>
 <div class="sub-content maps-wizard">
     <div class="sub-content-box">
-        <form class="sub-content-form maps-wizard-form confirmation-required"
+        <form class="sub-content-form maps-wizard-form maps-import-form confirmation-required"
             name="maps-wizard-form"
             id="maps-wizard-form"
             action="{{&actionPath}}"
@@ -14,6 +14,11 @@
             <input type="hidden" name="automaticallyExtrudeMaps" id="automaticallyExtrudeMaps" value="{{&automaticallyExtrudeMaps}}"/>
             <input type="hidden" name="verifyTilesetImage" id="verifyTilesetImage" value="{{&verifyTilesetImage}}"/>
             <input type="hidden" name="handlerParams" id="handlerParams" value="{{handlerParams}}"/>
+            <div class="submit-container" id="maps-import-submit-container">
+                <button type="button" class="button button-secondary" onclick="showConfirmDialog(function(c){if(c)history.back();}, {title:'Go Back', message:'If you go back, the generated maps will be lost. Are you sure?', confirmText:'Leave', confirmClass:'button-secondary', cancelText:'Stay', cancelClass:'button-primary'})">Go back</button>
+                <input type="submit" class="button button-primary button-maps-wizard" value="Import Selected Maps" data-modal-confirm-label="Import" data-modal-confirm-class="primary" data-modal-cancel-label="Cancel" data-modal-cancel-class="secondary"/>
+                <img class="hidden loading" src="/assets/web/loading.gif" alt="loading"/>
+            </div>
             <div class="main-action-container maps-selection">
                 <h3>Select the maps to be imported</h3>
                 <p>Notes:<p>
@@ -79,7 +84,13 @@
                 {{/maps}}
                 </ul>
             </div>
-            <input type="submit" class="button button-primary button-maps-wizard" value="Import Selected Maps"/>
         </form>
+        <div class="maps-wizard-generating-overlay hidden">
+            <div class="maps-wizard-generating-content">
+                <img src="/assets/web/loading.gif" alt="Importing..."/>
+                <p>Importing maps, please wait...</p>
+            </div>
+        </div>
     </div>
 </div>
+<script src="/js/maps-wizard/maps-wizard-import-bindings.js"></script>
