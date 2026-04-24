@@ -1,3 +1,4 @@
+/.mcp.json
 /.cache
 /.env
 /.idea
@@ -8,7 +9,7 @@
 /ts-node*
 /v8-compile-cache*
 /dev
-winpty.exe.stackdump
+/winpty.exe.stackdump
 /.parcel-cache
 /tests/config.json
 /prisma
@@ -17,3 +18,13 @@ winpty.exe.stackdump
 /.claude/instructions.md
 /CLAUDE.local.md
 /.claude/skills/
+/.playwright-mcp
+/test-results
+/tests/e2e/reports
+/.claude/hook-state.json
+/.claude/tests-guide/
+/.claude/claude-sessions.md
+/.claude/session-summary-state.json
+/.claude/hook-bypass.flag
+.hooks-ignore
+/.claude/hook-approvals.json

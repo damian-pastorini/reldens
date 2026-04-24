@@ -131,8 +131,9 @@ class Commander
             '--user='+process.env.RELDENS_DB_USER,
             '--pass='+process.env.RELDENS_DB_PASSWORD,
             '--host='+process.env.RELDENS_DB_HOST,
+            '--port='+process.env.RELDENS_DB_PORT,			
             '--database='+process.env.RELDENS_DB_NAME,
-            '--driver='+(process.env.RELDENS_STORAGE_DRIVER || 'objection-js'),
+            '--driver='+(process.env.RELDENS_STORAGE_DRIVER || 'prisma'),
             '--client='+process.env.RELDENS_DB_CLIENT
         ];
         let overrideArg = process.argv.find(arg => '--override' === arg);

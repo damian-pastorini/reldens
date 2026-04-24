@@ -1,0 +1,182 @@
+{
+    "players": {
+        "root": {
+            "name": "ImRoot",
+            "roomId": 5,
+            "classPathId": 1,
+            "currentLevel": 10,
+            "currentExp": 9090,
+            "skills": [
+                {
+                    "key": "attackShort",
+                    "label": "attackShort",
+                    "type": 2,
+                    "range": 50,
+                    "hasAttackData": true
+                },
+                {
+                    "key": "attackBullet",
+                    "label": "attackBullet",
+                    "type": 4,
+                    "range": 250,
+                    "hasAttackData": true
+                },
+                {
+                    "key": "fireball",
+                    "label": "fireball",
+                    "type": 4,
+                    "range": 280,
+                    "hasAttackData": true
+                },
+                {
+                    "key": "heal",
+                    "label": "heal",
+                    "type": 3,
+                    "range": 100,
+                    "hasAttackData": false
+                }
+            ],
+            "skillsByType": {
+                "attack": [
+                    {
+                        "key": "attackShort",
+                        "label": "attackShort",
+                        "type": 2,
+                        "range": 50,
+                        "hasAttackData": true
+                    }
+                ],
+                "effect": [
+                    {
+                        "key": "heal",
+                        "label": "heal",
+                        "type": 3,
+                        "range": 100,
+                        "hasAttackData": false
+                    }
+                ],
+                "physicalAttack": [
+                    {
+                        "key": "attackBullet",
+                        "label": "attackBullet",
+                        "type": 4,
+                        "range": 250,
+                        "hasAttackData": true
+                    },
+                    {
+                        "key": "fireball",
+                        "label": "fireball",
+                        "type": 4,
+                        "range": 280,
+                        "hasAttackData": true
+                    }
+                ],
+                "physicalEffect": []
+            }
+        },
+        "root2": {
+            "name": "ImRoot2",
+            "roomId": 4,
+            "classPathId": 1,
+            "currentLevel": 1,
+            "currentExp": 0,
+            "skills": [
+                {
+                    "key": "attackShort",
+                    "label": "attackShort",
+                    "type": 2,
+                    "range": 50,
+                    "hasAttackData": true
+                }
+            ],
+            "skillsByType": {
+                "attack": [
+                    {
+                        "key": "attackShort",
+                        "label": "attackShort",
+                        "type": 2,
+                        "range": 50,
+                        "hasAttackData": true
+                    }
+                ],
+                "effect": [],
+                "physicalAttack": [],
+                "physicalEffect": []
+            }
+        },
+        "root3": {
+            "name": "ImRoot3",
+            "roomId": 4,
+            "classPathId": 1,
+            "currentLevel": 1,
+            "currentExp": 0,
+            "skills": [
+                {
+                    "key": "attackShort",
+                    "label": "attackShort",
+                    "type": 2,
+                    "range": 50,
+                    "hasAttackData": true
+                }
+            ],
+            "skillsByType": {
+                "attack": [
+                    {
+                        "key": "attackShort",
+                        "label": "attackShort",
+                        "type": 2,
+                        "range": 50,
+                        "hasAttackData": true
+                    }
+                ],
+                "effect": [],
+                "physicalAttack": [],
+                "physicalEffect": []
+            }
+        }
+    },
+    "rooms": {
+        "4": {
+            "enemies": [],
+            "npcs": [
+                {
+                    "assetKey": "people_town_1",
+                    "objectId": 5,
+                    "objectClassKey": "npc_1"
+                },
+                {
+                    "assetKey": null,
+                    "objectId": 8,
+                    "objectClassKey": "npc_2"
+                },
+                {
+                    "assetKey": "weapons_master_1",
+                    "objectId": 12,
+                    "objectClassKey": "npc_4"
+                }
+            ],
+            "traders": [
+                {
+                    "assetKey": "merchant_1",
+                    "objectId": 10,
+                    "objectClassKey": "npc_3"
+                }
+            ]
+        },
+        "5": {
+            "enemies": [],
+            "npcs": [
+                {
+                    "assetKey": "quest_npc_1",
+                    "objectId": 13,
+                    "objectClassKey": "npc_5"
+                }
+            ],
+            "traders": []
+        }
+    },
+    "items": {
+        "firstEquippable": "axe",
+        "firstConsumable": "heal_potion_20"
+    }
+}

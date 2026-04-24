@@ -75,13 +75,15 @@
 }
 
 .item-box {
+    position: relative;
+
     .item-data-container {
         display: none;
         position: absolute;
-        top: 54px;
-        left: 16%;
+        top: 0;
+        left: 100%;
         z-index: 2;
-        width: 64%;
+        min-width: 120px;
         text-align: center;
         background: $cBlack60;
         padding: 4px;
@@ -102,6 +104,7 @@
         img {
             border-radius: 6px;
         }
+
     }
 
     .actions-container {
@@ -138,12 +141,6 @@
 
     }
 
-}
-
-.item-box:nth-child(4n) .item-data-container,
-.item-box:nth-child(5n) .item-data-container {
-    right: 50px;
-    left: auto;
 }
 
 .item-label,
@@ -259,6 +256,22 @@
     margin-bottom: 10px;
 }
 
+.accept-trade {
+
+    .accept-trade-yes {
+        background: #27ae60;
+        color: #ffffff;
+        border: 1px solid #1e8449;
+    }
+
+    .accept-trade-no {
+        background: #4a4a4a;
+        color: #cccccc;
+        border: 1px solid #333333;
+    }
+
+}
+
 .trade-container {
     display: flex;
     width: 100%;
@@ -292,8 +305,19 @@
         &.trade-items-boxes {
             min-height: 280px;
 
-            .trade-col, .trade-player-col {
+            .trade-col,
+            .trade-player-col {
                 min-height: 280px;
+            }
+
+            .my-items,
+            .pushed-to-trade,
+            .got-from-trade {
+
+                .trade-item .actions-container.trade-actions {
+                    display: block;
+                }
+
             }
 
         }
@@ -328,21 +352,299 @@
     }
 }
 
-.ui-dialog-box.type-trade.trade-in-progress {
-    min-width: 380px;
-    max-width: 450px;
+.ui-dialog-box {
 
-    .box-content {
-        height: 400px;
-        max-height: 100%;
-        width: 342px;
+    &.type-trade.trade-request {
+
+        .opt-decline {
+            background: $cRed;
+            color: $cWhite;
+            border: 1px solid $cDarkRed;
+        }
+
+        .opt-accept {
+            background: $cGreen;
+            color: $cWhite;
+            border: 1px solid $cDarkGreen;
+        }
+
     }
 
-    .trade-player-col {
-        width: 32%;
-        display: block;
-        float: left;
-        position: relative;
+    &.type-trade.trade-in-progress,
+    &.type-trader.trade-in-progress {
+        float: none;
+        width: 100%;
+        max-width: 500px;
+        max-height: 600px;
+
+        .box-content {
+            max-height: none;
+            overflow: visible;
+        }
+
+        .trade-row.trade-items-boxes {
+            min-height: 50px;
+            width: 100%;
+
+            .trade-col,
+            .trade-player-col {
+                min-height: 50px;
+            }
+
+        }
+
+        .trade-col-1 {
+            border-right: 1px solid $cGreyBlue;
+        }
+
+        .item-box.trade-item {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            width: 100%;
+            height: auto;
+            float: none;
+            margin-bottom: 0;
+            padding: 4px 2px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            gap: 6px;
+            position: relative;
+            z-index: 1;
+
+            .image-container,
+            .item-qty {
+                float: none;
+                width: auto;
+                text-align: left;
+                cursor: default;
+            }
+
+            .image-container {
+                flex-shrink: 0;
+                width: 32px;
+                cursor: pointer;
+
+                img {
+                    max-width: 32px;
+                    max-height: 32px;
+                    display: block;
+                }
+
+            }
+
+            .item-data-container {
+                display: none;
+            }
+
+            &.item-info-visible {
+                z-index: 100;
+
+                .image-container img {
+                    border: 1px solid $cReldens;
+                }
+
+                .item-data-container {
+                    display: block;
+                    position: absolute;
+                    top: 100%;
+                    left: 0;
+                    z-index: 10;
+                    min-width: 180px;
+                    max-width: 260px;
+                    background: $cBlack;
+                    border: 1px solid $cGreyBlue;
+                    border-radius: 6px;
+                    padding: 8px;
+                    color: $cWhite;
+                    text-align: left;
+                    font-style: normal;
+
+                    .item-label {
+                        display: block;
+                        font-size: 12px;
+                        font-weight: bold;
+                        margin-bottom: 4px;
+                    }
+
+                    .item-description {
+                        display: block;
+                        font-size: 11px;
+                        color: $cLightGrey;
+                        font-style: italic;
+                        margin-bottom: 4px;
+                    }
+
+                    .item-modifiers {
+                        margin-top: 4px;
+                    }
+
+                    .item-modifier {
+                        display: block;
+                        font-size: 11px;
+                        color: $cReldens;
+                    }
+
+                }
+
+            }
+
+            .trade-requirements,
+            .trade-rewards {
+                flex-shrink: 0;
+
+                .item-requirements,
+                .item-rewards {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 2px;
+                }
+
+                .requirement-key img,
+                .reward-key img {
+                    max-width: 14px;
+                    vertical-align: middle;
+                }
+
+                .requirement-qty,
+                .reward-qty {
+                    color: $cReldens;
+                    font-weight: bold;
+                    font-size: 12px;
+                }
+
+            }
+
+            .actions-container.trade-actions {
+                flex-shrink: 0;
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                gap: 4px;
+                width: auto;
+                position: static;
+
+                .item-qty {
+                    float: none;
+                    width: auto;
+                    font-size: 12px;
+                    color: $cLightGrey;
+
+                    input[type="number"] {
+                        width: 36px;
+                        background: $cBlack70;
+                        color: $cLightGrey;
+                        border: 1px solid $cGreyBlue;
+                        padding: 2px;
+                        font-size: 12px;
+                        text-align: center;
+                    }
+
+                }
+
+                .trade-action-buy button,
+                .trade-action-sell button,
+                .trade-action-trade button {
+                    width: 22px;
+                    height: 22px;
+                    padding: 0;
+                    background: $cDarkBlue;
+                    border: 1px solid $cReldens;
+                    box-shadow: none;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    margin: 0;
+
+                    img {
+                        max-width: 14px;
+                        max-height: 14px;
+                        display: block;
+                    }
+
+                }
+
+                .trade-action-remove {
+                    position: static;
+
+                    img {
+                        max-width: 16px;
+                        cursor: pointer;
+                        display: block;
+                    }
+
+                }
+
+            }
+
+        }
+
+        .trade-confirm-actions {
+            border-top: 1px solid $cGreyBlue;
+            margin-top: 6px;
+
+            .confirm-action {
+                background: $cGreen;
+                color: $cWhite;
+                border: 1px solid $cDarkGreen;
+                padding: 4px 16px;
+                font-size: 12px;
+            }
+
+            .disconfirm-action {
+                background: $cRed;
+                color: $cWhite;
+                border: 1px solid $cDarkRed;
+                padding: 4px 16px;
+                font-size: 12px;
+
+                &[disabled] {
+                    opacity: 0.35;
+                    cursor: default;
+                }
+
+            }
+
+            .cancel-action {
+                background: $cDarkGrey;
+                color: $cLightGrey;
+                border: 1px solid $cGrey;
+                padding: 4px 16px;
+                font-size: 12px;
+            }
+
+        }
+
+    }
+
+    &.type-trade.trade-in-progress {
+        max-width: 640px;
+
+        .trade-row.trade-items-boxes,
+        .trade-row.trade-items-boxes-headers {
+            display: flex;
+            flex-direction: row;
+            float: none;
+            width: 100%;
+            min-width: 0;
+            box-sizing: border-box;
+            gap: 6px;
+        }
+
+        .trade-player-col {
+            flex: 1 1 0;
+            min-width: 128px;
+            float: none;
+            display: block;
+            position: relative;
+            overflow: visible;
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid $cGreyBlue;
+            border-radius: 6px;
+            padding: 4px;
+            box-sizing: border-box;
+        }
+
     }
 }
 
@@ -368,43 +670,4 @@
     .image-container {
         cursor: pointer;
     }
-}
-
-.my-items .trade-item {
-    .actions-container.trade-actions {
-        display: none;
-
-        &.trade-actions-expanded {
-            display: block;
-            position: absolute;
-            top: 54px;
-            left: 0;
-            z-index: 3;
-            background: $cBlack;
-            border: 1px solid $cWhite;
-            border-radius: 6px;
-            padding: 4px;
-
-            input, button {
-                border: 0;
-                margin: 6px auto 2px;
-                width: 100%;
-                float: none;
-                position: relative;
-                display: block;
-                max-width: 100%;
-                text-align: center;
-                padding: 4px 0;
-            }
-
-            .requirement-key img, .reward-key img {
-                max-width: 16px;
-            }
-        }
-    }
-}
-
-.pushed-to-trade .trade-item .actions-container.trade-actions,
-.got-from-trade .trade-item .actions-container.trade-actions {
-    display: block;
 }
