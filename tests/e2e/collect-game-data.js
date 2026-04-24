@@ -74,9 +74,13 @@ class CollectGameData
             Logger.warning('[collect-game-data] No players for user: '+userConfig.username);
             return null;
         }
-        let player = players.find(p => p.name === userConfig.playerName) || players[0];
-        let playerState = await dataServer.getEntity('playersState').loadOneBy('player_id', player.id);
-        return { player, playerState };
+        return {
+            player: players.find(p => p.name === userConfig.playerName) || players[0],
+            playerState: await dataServer.getEntity('playersState').loadOneBy(
+                'player_id',
+                (players.find(p => p.name === userConfig.playerName) || players[0]).id
+            )
+        };
     }
 
     static async collectPlayerInfo(dataServer, configManager, userConfig)
@@ -89,18 +93,18 @@ class CollectGameData
         let classPathId = classPath ? classPath.class_path_id : null;
         let currentLevel = classPath ? classPath.currentLevel : 0;
         let currentExp = classPath ? classPath.currentExp : 0;
-        let playerSkills = classPathId
-            ? GameDataSkills.resolvePlayerSkillsForClassPath(configManager, classPathId, currentLevel)
-            : [];
-        let skillsByType = GameDataSkills.classifySkillEntries(playerSkills);
         return {
             name: playerData.player.name,
             roomId: playerData.playerState ? playerData.playerState.room_id : null,
             classPathId: classPathId,
             currentLevel: currentLevel,
             currentExp: currentExp,
-            skills: playerSkills,
-            skillsByType: skillsByType
+            skills: classPathId
+                ? GameDataSkills.resolvePlayerSkillsForClassPath(configManager, classPathId, currentLevel)
+                : [],
+            skillsByType: GameDataSkills.classifySkillEntries(classPathId
+                ? GameDataSkills.resolvePlayerSkillsForClassPath(configManager, classPathId, currentLevel)
+                : [])
         };
     }
 
@@ -237,9 +241,27 @@ class CollectGameData
             serverConfig.customPlugin = modules.ServerPlugin;
         }
         let serverManager = new modules.ServerManager(serverConfig);
+        process.stdout.write('Server: creating HTTP server...\n');
         await serverManager.createServers();
+        process.stdout.write('Server: starting game server (this may take a moment)...\n');
         await serverManager.start();
+        process.stdout.write('Server: collecting game data...\n');
         await CollectGameData.runDataCollection(serverManager, modules.ObjectsManager, config);
+        process.stdout.write('Server: ready\n\n');
+    }
+
+    static setupLogCapture()
+    {
+        let logPath = FileHandler.joinPaths(process.cwd(), 'test-results', 'server.log');
+        FileHandler.createFolder(FileHandler.joinPaths(process.cwd(), 'test-results'));
+        FileHandler.writeFile(logPath, '');
+        Logger.callback = (...args) => {
+            FileHandler.appendToFile(logPath, args.map(a => 'object' === typeof a ? JSON.stringify(a) : ''+a).join(' ')+'\n');
+        };
+        console.log = () => {
+        };
+        console.error = () => {
+        };
     }
 
     static async run()
@@ -249,6 +271,8 @@ class CollectGameData
             Logger.warning('[collect-game-data] serverPath not configured, skipping server startup.');
             return;
         }
+        process.stdout.write('Server: setting up log capture...\n');
+        CollectGameData.setupLogCapture();
         await CollectGameData.startServerAndCollect(config.serverPath);
     }
 }

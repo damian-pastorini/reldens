@@ -43,13 +43,11 @@ class PhaserRange
             if(!room || !room.state || !room.state.players) {
                 return false;
             }
-            let playerState = room.state.players[room.sessionId];
+            let playerState = window.reldens.activeRoomEvents.playerBySessionIdFromState(room, room.sessionId);
             if(!playerState) {
                 return false;
             }
-            let dx = playerState.x - args.targetX;
-            let dy = playerState.y - args.targetY;
-            return Math.sqrt(dx * dx + dy * dy) <= args.range;
+            return Math.hypot(playerState.state.x - args.targetX, playerState.state.y - args.targetY) <= args.range;
         }, { targetX: targetWorldPos.x, targetY: targetWorldPos.y, range: range }, { timeout: timeout || 30000 });
     }
 }

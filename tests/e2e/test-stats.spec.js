@@ -10,6 +10,7 @@ const { BaseE2eTest } = require('./base-e2e-test');
 const { Login } = require('./helpers/login');
 const { Phaser } = require('./helpers/phaser');
 const { Navigation } = require('./helpers/navigation');
+const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
@@ -31,22 +32,26 @@ class TestStats
             if(!room || !room.state || !room.state.players) {
                 return null;
             }
-            let player = room.state.players[room.sessionId];
-            return player ? player.exp : null;
+            let player = window.reldens.activeRoomEvents.playerBySessionIdFromState(room, room.sessionId);
+            if(!player){
+                return null;
+            }
+            return player.exp;
         });
     }
 
     static async runXpTest(page, screenshots, gameConfig, longRun)
     {
         await TestStats.loginRootPlayer(page, gameConfig, longRun);
-        let pauseMs = longRun ? 800 : 0;
+        let pauseMs = TimeConstants.pauseMs(longRun);
         let enemyKey = gameConfig.e2eEnemyKey || '';
-        let waitObjectTimeout = longRun ? 30000 : 15000;
-        let inForest = await Navigation.ensureInRoom(page, 'reldens-forest', 608, 16, waitObjectTimeout);
+        let sceneTimeout = TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun);
+        let navTimeout = TimeConstants.forLongRun(TimeConstants.NAVIGATION, longRun);
+        let inForest = await Navigation.ensureInRoom(page, 'reldens-forest', 608, 16, navTimeout);
         expect(inForest, 'Player must reach reldens-forest for XP test').toBeTruthy();
         await (enemyKey
-            ? Phaser.waitForObjectByAssetKey(page, enemyKey, waitObjectTimeout)
-            : Phaser.waitForObjectByType(page, 'enemy', waitObjectTimeout));
+            ? Phaser.waitForObjectByAssetKey(page, enemyKey, sceneTimeout)
+            : Phaser.waitForObjectByType(page, 'enemy', sceneTimeout));
         let enemyCoords = await (enemyKey
             ? Phaser.getObjectScreenCoordsByAssetKey(page, enemyKey)
             : Phaser.getObjectScreenCoordsByType(page, 'enemy'));
@@ -65,10 +70,9 @@ class TestStats
     static run()
     {
         test.describe('Stats and Progression', () => {
-
             test('stats panel opens and shows stat values', async ({ page, screenshots, gameConfig, longRun }) => {
                 await TestStats.loginRootPlayer(page, gameConfig, longRun);
-                let pauseMs = longRun ? 800 : 0;
+                let pauseMs = TimeConstants.pauseMs(longRun);
                 await page.click(Selectors.hud.playerStatsOpen);
                 await page.waitForTimeout(pauseMs);
                 await expect(page.locator(Selectors.hud.playerStatsUi)).toBeVisible();
@@ -76,10 +80,9 @@ class TestStats
                 expect(statValues.length).toBeGreaterThan(0);
                 await screenshots.capture(page, 'stats-panel-open');
             });
-
             test('level and experience are displayed in stats', async ({ page, screenshots, gameConfig, longRun }) => {
                 await TestStats.loginRootPlayer(page, gameConfig, longRun);
-                let pauseMs = longRun ? 800 : 0;
+                let pauseMs = TimeConstants.pauseMs(longRun);
                 await page.click(Selectors.hud.playerStatsOpen);
                 await page.waitForTimeout(pauseMs);
                 await expect(page.locator(Selectors.stats.levelContainer)).toBeVisible();
@@ -88,22 +91,21 @@ class TestStats
                 expect(levelText).toBeTruthy();
                 await screenshots.capture(page, 'level-and-experience-visible');
             });
-
             test('XP increases after defeating an enemy', async ({ page, screenshots, gameConfig, longRun }) => {
                 await TestStats.runXpTest(page, screenshots, gameConfig, longRun);
             });
-
             test('scores panel opens and displays leaderboard data', async ({ page, screenshots, gameConfig, longRun }) => {
                 await TestStats.loginRootPlayer(page, gameConfig, longRun);
-                let pauseMs = longRun ? 800 : 0;
+                let pauseMs = TimeConstants.pauseMs(longRun);
                 await page.click(Selectors.hud.scoresOpen);
                 await page.waitForTimeout(pauseMs);
-                await expect(page.locator(Selectors.scores.dialog)).toBeVisible({ timeout: 10000 });
+                await expect(page.locator(Selectors.scores.dialog)).toBeVisible(
+                    { timeout: TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun) }
+                );
                 await expect(page.locator(Selectors.scores.dialogTitle)).toBeVisible();
                 await expect(page.locator(Selectors.scores.dialogContent)).not.toBeEmpty();
                 await screenshots.capture(page, 'scores-panel-open');
             });
-
         });
     }
 }

@@ -8,6 +8,8 @@
 
 const { defineConfig } = require('@playwright/test');
 const { FileHandler } = require('@reldens/server-utils');
+const { TimeConstants } = require('./helpers/time-constants');
+const { TestProgressReporter } = require('./reporters/test-progress-reporter');
 
 let configPath = FileHandler.joinPaths(process.cwd(), 'tests', 'config.json');
 let testConfig = FileHandler.exists(configPath) ? FileHandler.fetchFileJson(configPath) : {};
@@ -21,14 +23,15 @@ module.exports = defineConfig({
     globalTeardown: './server-teardown.js',
     testDir: '.',
     outputDir: testResultsDir,
-    globalTimeout: longRun ? 3600000 : 300000,
-    timeout: longRun ? 300000 : 60000,
     workers: 1,
     maxFailures: 1,
     retries: 0,
-    reporter: [['line']],
+    reporter: [[TestProgressReporter]],
+    expect: { timeout: TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun) },
     use: {
         baseURL: baseUrl,
+        actionTimeout: TimeConstants.forLongRun(TimeConstants.ACTION, longRun),
+        navigationTimeout: TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun),
         viewport: { width: 1920, height: 1080 },
         video: { mode: 'on', size: { width: 1920, height: 1080 } },
         screenshot: 'only-on-failure',

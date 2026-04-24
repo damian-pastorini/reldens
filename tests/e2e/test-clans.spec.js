@@ -8,6 +8,7 @@
 
 const { BaseE2eTest } = require('./base-e2e-test');
 const { Login } = require('./helpers/login');
+const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
@@ -25,23 +26,23 @@ class TestClans
     static async loginAndOpenClanPanel(page, gameConfig, longRun)
     {
         await TestClans.loginRoot2Player(page, gameConfig, longRun);
-        let pauseMs = longRun ? 800 : 0;
+        let pauseMs = TimeConstants.pauseMs(longRun);
         await page.click(Selectors.hud.clanOpen);
         await page.waitForTimeout(pauseMs);
-        await expect(page.locator(Selectors.clans.dialog)).toBeVisible({ timeout: 10000 });
+        await expect(page.locator(Selectors.clans.dialog)).toBeVisible(
+            { timeout: TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun) }
+        );
         return { pauseMs };
     }
 
     static run()
     {
         test.describe('Clans', () => {
-
             test('clan panel opens and shows content', async ({ page, screenshots, gameConfig, longRun }) => {
                 await TestClans.loginAndOpenClanPanel(page, gameConfig, longRun);
                 await expect(page.locator(Selectors.clans.dialogContent)).toBeVisible();
                 await screenshots.capture(page, 'clan-panel-open');
             });
-
             test('player can create a new clan', async ({ page, screenshots, gameConfig, longRun }) => {
                 let setup = await TestClans.loginAndOpenClanPanel(page, gameConfig, longRun);
                 let nameInput = page.locator(Selectors.clans.nameInput);
@@ -53,10 +54,11 @@ class TestClans
                 await page.waitForTimeout(setup.pauseMs);
                 await screenshots.capture(page, 'clan-name-typed');
                 await page.click(Selectors.clans.submitCreate);
-                await expect(page.locator(Selectors.clans.disbandAction)).toBeVisible({ timeout: 10000 });
+                await expect(page.locator(Selectors.clans.disbandAction)).toBeVisible(
+                    { timeout: TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun) }
+                );
                 await screenshots.capture(page, 'clan-container-visible');
             });
-
         });
     }
 }

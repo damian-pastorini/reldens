@@ -10,7 +10,10 @@ const { BaseE2eTest } = require('./base-e2e-test');
 const { Login } = require('./helpers/login');
 const { Phaser } = require('./helpers/phaser');
 const { Navigation } = require('./helpers/navigation');
+const { TimeConstants } = require('./helpers/time-constants');
 const { FileHandler } = require('@reldens/server-utils');
+const { Logger } = require('@reldens/utils');
+const { TestCombatDeath } = require('./helpers/test-combat-death');
 const { Selectors } = require('./selectors');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
@@ -40,20 +43,48 @@ class TestCombat
         let playerName = gameConfig.e2ePlayerName || 'ImRoot';
         let enemyKey = gameConfig.e2eEnemyKey || '';
         await Login.loginAndStartGame(page, username, password, playerName, longRun, false, 'reldens-forest');
-        let pauseMs = longRun ? 800 : 0;
-        let waitObjectTimeout = longRun ? 30000 : 15000;
+        let pauseMs = TimeConstants.pauseMs(longRun);
+        let sceneLoadTimeout = TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun);
+        let navigationTimeout = TimeConstants.forLongRun(TimeConstants.NAVIGATION, longRun);
         let inForest = await Navigation.ensureInRoom(
             page,
             'reldens-forest',
             TestCombat.FOREST_TRANSITION_X,
             TestCombat.FOREST_TRANSITION_Y,
-            waitObjectTimeout
+            navigationTimeout
         );
         expect(inForest, 'Player must reach reldens-forest before continuing').toBeTruthy();
         await (enemyKey
-            ? Phaser.waitForObjectByAssetKey(page, enemyKey, waitObjectTimeout)
-            : Phaser.waitForObjectByType(page, 'enemy', waitObjectTimeout));
-        return { enemyKey, pauseMs, waitObjectTimeout };
+            ? Phaser.waitForObjectByAssetKey(page, enemyKey, sceneLoadTimeout)
+            : Phaser.waitForObjectByType(page, 'enemy', sceneLoadTimeout));
+        await page.waitForFunction(() => {
+            let room = window.reldens && window.reldens.activeRoomEvents && window.reldens.activeRoomEvents.room;
+            if(!room || !room.state || !room.state.players){
+                return false;
+            }
+            return !!(window.reldens.activeRoomEvents.playerBySessionIdFromState(room, room.sessionId));
+        }, null, { timeout: sceneLoadTimeout }).catch(async (error) => {
+            let stateInfo = await page.evaluate(() => {
+                let r = window.reldens && window.reldens.activeRoomEvents && window.reldens.activeRoomEvents.room;
+                if(!r){
+                    return 'no-room';
+                }
+                if(!r.state){
+                    return 'no-state';
+                }
+                if(!r.state.players){
+                    return 'no-players';
+                }
+                let player = window.reldens.activeRoomEvents.playerBySessionIdFromState(r, r.sessionId);
+                if(!player){
+                    return 'no-player for sessionId:'+r.sessionId;
+                }
+                return 'player found, state:'+JSON.stringify({x: player.state && player.state.x, y: player.state && player.state.y});
+            });
+            Logger.error('[loginAndGetEnemyWithWorldPos] waitForFunction timeout - '+stateInfo);
+            throw error;
+        });
+        return { enemyKey, pauseMs, sceneLoadTimeout, navigationTimeout };
     }
 
     static async clickEnemy(page, enemyKey)
@@ -76,7 +107,7 @@ class TestCombat
             if(!room){
                 return 'no-room';
             }
-            let player = room.state && room.state.players && room.state.players[room.sessionId];
+            let player = room.state && room.state.players && window.reldens.activeRoomEvents.playerBySessionIdFromState(room, room.sessionId);
             let found = null;
             let minDist = Infinity;
             for(let anim of Object.values(scene.objectsAnimations)){
@@ -89,20 +120,21 @@ class TestCombat
                 if(!eKey && anim.key === anim.asset_key){
                     continue;
                 }
-                let dist = player ? Math.hypot(player.x - anim.sceneSprite.x, player.y - anim.sceneSprite.y) : 0;
+                let dist = player
+                    ? Math.hypot(player.state.x - anim.sceneSprite.x, player.state.y - anim.sceneSprite.y)
+                    : 0;
                 if(dist < minDist){
                     minDist = dist;
                     found = anim;
                 }
             }
             if(!found){
-                let allAnims = Object.values(scene.objectsAnimations).map(
+                return 'no-enemy-found eKey:'+eKey+'|anims:'+Object.values(scene.objectsAnimations).map(
                     a => 'key:'+a.key+'|asset:'+a.asset_key+'|type:'+a.type+'|vis:'+(a.sceneSprite ? a.sceneSprite.visible : 'no-sprite')+'|name:'+a.targetName
-                );
-                return 'no-enemy-found eKey:'+eKey+'|anims:'+allAnims.join(',');
+                ).join(',');
             }
             let tempId = (found.key === found.asset_key) ? found.id : found.key;
-            scene.player.currentTarget = {id: tempId, type: 'object'};
+            scene.player.currentTarget = {id: tempId, type: 'obj'};
             window.reldens.gameEngine.showTarget(found.targetName || found.key, scene.player.currentTarget, false);
             return true;
         }, enemyKey || null);
@@ -111,9 +143,17 @@ class TestCombat
     static async walkToEnemyWithinRange(page, enemyKey, range, timeout)
     {
         if(enemyKey){
-            return Phaser.moveToObjectWithinRange(page, 'asset_key', enemyKey, 'active', range, timeout);
+            let reached = await Phaser.moveToObjectWithinRange(page, 'asset_key', enemyKey, 'active', range, timeout);
+            if(!reached){
+                Logger.error('walkToEnemyWithinRange: did not reach range '+range+' enemyKey='+enemyKey);
+            }
+            return reached;
         }
-        return Phaser.moveToObjectWithinRange(page, null, null, null, range, timeout, true);
+        let reached = await Phaser.moveToObjectWithinRange(page, null, null, null, range, timeout, true);
+        if(!reached){
+            Logger.error('walkToEnemyWithinRange: did not reach range '+range+' (no enemyKey)');
+        }
+        return reached;
     }
 
     static async prepareEnemyTargetAndChat(page, data)
@@ -127,10 +167,10 @@ class TestCombat
     static async prepareSkillCastContext(page, screenshots, gameConfig, longRun, skill, prefix)
     {
         let data = await TestCombat.loginAndGetEnemyWithWorldPos(page, gameConfig, longRun);
-        await TestCombat.walkToEnemyWithinRange(page, data.enemyKey, skill.range, data.waitObjectTimeout);
+        await TestCombat.walkToEnemyWithinRange(page, data.enemyKey, skill.range, data.navigationTimeout);
         await screenshots.capture(page, prefix+'-'+skill.key+'-within-range');
         await TestCombat.prepareEnemyTargetAndChat(page, data);
-        await TestCombat.walkToEnemyWithinRange(page, data.enemyKey, Math.floor(skill.range / 2), data.waitObjectTimeout);
+        await TestCombat.walkToEnemyWithinRange(page, data.enemyKey, Math.floor(skill.range / 2), data.navigationTimeout);
         await TestCombat.targetEnemy(page, data.enemyKey);
         return data;
     }
@@ -139,7 +179,10 @@ class TestCombat
     {
         await TestCombat.prepareSkillCastContext(page, screenshots, gameConfig, longRun, skill, prefix);
         await page.click(Selectors.combat.skillButton(skill.key));
-        await expect(page.locator(Selectors.chat.tabContentGeneral)).toContainText('damage', { timeout: 10000 });
+        await expect(page.locator(Selectors.chat.tabContentGeneral)).toContainText(
+            'damage',
+            { timeout: TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun) }
+        );
         await screenshots.capture(page, prefix+'-'+skill.key+'-damage-in-chat');
     }
 
@@ -147,63 +190,52 @@ class TestCombat
     {
         let data = await TestCombat.prepareSkillCastContext(page, screenshots, gameConfig, longRun, skill, prefix);
         let skillButton = page.locator(Selectors.combat.skillButton(skill.key));
-        await expect(skillButton, buttonLabel+' skill button must be present in HUD').toBeVisible({ timeout: 10000 });
+        await expect(skillButton, buttonLabel+' skill button must be present in HUD').toBeVisible(
+            { timeout: TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun) }
+        );
         await skillButton.click();
         await page.waitForTimeout(2000 + data.pauseMs);
         await screenshots.capture(page, prefix+'-'+skill.key+'-cast-completed');
     }
 
-    static async waitForPlayerHpCondition(page, condition, timeout)
+    static async waitForPlayerDeathLoop(page, enemyKey, timeout)
     {
-        return page.waitForFunction(
-            (cond) => {
-                let room = window.reldens && window.reldens.activeRoomEvents && window.reldens.activeRoomEvents.room;
-                if(!room || !room.state || !room.state.players) {
-                    return false;
-                }
-                let player = room.state.players[room.sessionId];
-                if(!player || !player.stats) {
-                    return false;
-                }
-                return 'dead' === cond ? Number(player.stats.hp) <= 0 : Number(player.stats.hp) > 0;
-            },
-            condition,
-            { timeout }
-        );
-    }
-
-    static getPlayerHpFromState(page)
-    {
-        return page.evaluate(() => {
-            let room = window.reldens.activeRoomEvents && window.reldens.activeRoomEvents.room;
-            if(!room || !room.state || !room.state.players) {
-                return null;
+        let deadline = Date.now() + timeout;
+        let maxSteps = Math.ceil(timeout / 500) + 1;
+        for(let i = 0; i < maxSteps; i++) {
+            let isDead = await page.evaluate(() => {
+                return null !== document.querySelector('#game-over:not(.hidden)');
+            });
+            if(isDead) {
+                return true;
             }
-            let player = room.state.players[room.sessionId];
-            return player && player.stats ? player.stats.hp : null;
-        });
+            let remaining = deadline - Date.now();
+            if(0 >= remaining) {
+                break;
+            }
+            await TestCombat.walkToEnemyWithinRange(page, enemyKey, 0, Math.min(6000, remaining));
+        }
+        return false;
     }
 
     static run()
     {
         test.describe('Combat System', () => {
-
             test('player can target and attack an enemy', async ({ page, screenshots, gameConfig, longRun }) => {
                 let data = await TestCombat.loginAndGetEnemyWithWorldPos(page, gameConfig, longRun);
                 await screenshots.capture(page, 'enemy-found-in-scene');
                 await page.waitForTimeout(data.pauseMs);
-                await TestCombat.walkToEnemyWithinRange(page, data.enemyKey, TestCombat.TAB_TARGET_RANGE, data.waitObjectTimeout);
+                await TestCombat.walkToEnemyWithinRange(page, data.enemyKey, TestCombat.TAB_TARGET_RANGE, data.navigationTimeout);
                 let targeted = await TestCombat.targetEnemy(page, data.enemyKey);
                 expect(targeted === true, 'Enemy must be targetable: '+targeted).toBeTruthy();
                 await expect(page.locator(Selectors.combat.targetBox)).toBeVisible();
                 await screenshots.capture(page, 'enemy-targeted');
             });
-
             test('combat damage message appears in chat', async ({ page, screenshots, gameConfig, longRun }) => {
                 let data = await TestCombat.loginAndGetEnemyWithWorldPos(page, gameConfig, longRun);
                 let firstAttackSkill = TestCombat.attackSkills[0];
                 let skillRange = firstAttackSkill ? firstAttackSkill.range : 100;
-                await TestCombat.walkToEnemyWithinRange(page, data.enemyKey, skillRange, data.waitObjectTimeout);
+                await TestCombat.walkToEnemyWithinRange(page, data.enemyKey, skillRange, data.navigationTimeout);
                 await screenshots.capture(page, 'within-attack-range');
                 await TestCombat.prepareEnemyTargetAndChat(page, data);
                 let availableActionKeys = await Phaser.getPlayerAvailableActionKeys(page);
@@ -213,13 +245,15 @@ class TestCombat
                     resolvedAttackKey,
                     'No attack action available - ensure player has attack skills. Available: '+availableActionKeys.join(', ')
                 ).toBeTruthy();
-                await TestCombat.walkToEnemyWithinRange(page, data.enemyKey, Math.floor(skillRange / 2), data.waitObjectTimeout);
+                await TestCombat.walkToEnemyWithinRange(page, data.enemyKey, Math.floor(skillRange / 2), data.navigationTimeout);
                 await TestCombat.targetEnemy(page, data.enemyKey);
                 await page.click(Selectors.combat.skillButton(resolvedAttackKey));
-                await expect(page.locator(Selectors.chat.tabContentGeneral)).toContainText('damage', { timeout: 10000 });
+                await expect(page.locator(Selectors.chat.tabContentGeneral)).toContainText(
+                    'damage',
+                    { timeout: TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun) }
+                );
                 await screenshots.capture(page, 'damage-message-in-chat');
             });
-
             test('canvas changes visually after attacking enemy', async ({ page, screenshots, gameConfig, longRun }) => {
                 let data = await TestCombat.loginAndGetEnemyWithWorldPos(page, gameConfig, longRun);
                 let canvasBox = await page.locator(Selectors.canvas).boundingBox();
@@ -231,44 +265,42 @@ class TestCombat
                 expect(hashBefore).not.toBe(hashAfter);
                 await screenshots.capture(page, 'canvas-after-attack');
             });
-
             test('player dies from enemy and revives after timeout', async ({ page, screenshots, gameConfig, longRun }) => {
+                test.setTimeout(
+                    TimeConstants.forLongRun(TimeConstants.GAME_START + TimeConstants.NAVIGATION, longRun)
+                    + TimeConstants.ENEMY_KILL
+                    + TimeConstants.PLAYER_REVIVE
+                );
                 let data = await TestCombat.loginAndGetEnemyWithWorldPos(page, gameConfig, longRun);
-                await TestCombat.walkToEnemyWithinRange(page, data.enemyKey, 30, data.waitObjectTimeout);
-                let deathTimeout = longRun ? 120000 : 60000;
-                await TestCombat.waitForPlayerHpCondition(page, 'dead', deathTimeout);
+                await TestCombat.walkToEnemyWithinRange(page, data.enemyKey, 30, data.navigationTimeout);
+                let died = await TestCombat.waitForPlayerDeathLoop(page, data.enemyKey, TimeConstants.ENEMY_KILL);
+                expect(died, 'Player must die from enemy attacks within timeout').toBeTruthy();
                 await screenshots.capture(page, 'player-dead');
-                let reviveTimeout = longRun ? 120000 : 60000;
-                await TestCombat.waitForPlayerHpCondition(page, 'alive', reviveTimeout);
-                let playerHpAfter = await TestCombat.getPlayerHpFromState(page);
+                await TestCombatDeath.waitForPlayerHpCondition(page, 'alive', TimeConstants.PLAYER_REVIVE);
+                let playerHpAfter = await TestCombatDeath.getPlayerHpFromState(page);
                 expect(playerHpAfter, 'Player HP must be restored after revive').toBeGreaterThan(0);
                 await screenshots.capture(page, 'player-revived');
             });
-
             for(let skill of TestCombat.skillsByType.attack) {
                 test('combat skill (attack) - '+skill.key+' deals damage in chat', async ({ page, screenshots, gameConfig, longRun }) => {
                     await TestCombat.runDamageSkillTest(page, screenshots, gameConfig, longRun, skill, 'attack');
                 });
             }
-
             for(let skill of TestCombat.skillsByType.physicalAttack) {
                 test('combat skill (physical attack) - '+skill.key+' deals damage in chat', async ({ page, screenshots, gameConfig, longRun }) => {
                     await TestCombat.runDamageSkillTest(page, screenshots, gameConfig, longRun, skill, 'physical-attack');
                 });
             }
-
             for(let skill of TestCombat.skillsByType.effect) {
                 test('combat skill (effect) - '+skill.key+' applies effect on cast', async ({ page, screenshots, gameConfig, longRun }) => {
                     await TestCombat.runEffectSkillTest(page, screenshots, gameConfig, longRun, skill, 'effect', 'Effect');
                 });
             }
-
             for(let skill of TestCombat.skillsByType.physicalEffect) {
                 test('combat skill (physical effect) - '+skill.key+' applies effect on cast', async ({ page, screenshots, gameConfig, longRun }) => {
                     await TestCombat.runEffectSkillTest(page, screenshots, gameConfig, longRun, skill, 'physical-effect', 'Physical effect');
                 });
             }
-
         });
     }
 }

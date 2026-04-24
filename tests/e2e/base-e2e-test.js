@@ -23,11 +23,21 @@ class BaseE2eTest
     static screenshotsDir = FileHandler.joinPaths(process.cwd(), 'test-results', 'screenshots');
     static expect = baseExpect;
     static test = baseTest.extend({
-        gameConfig: async ({}, use) => { await use(BaseE2eTest.gameConfig); },
-        longRun: async ({}, use) => { await use(BaseE2eTest.longRun); },
-        selectors: async ({}, use) => { await use(Selectors); },
-        screenshots: async ({}, use, testInfo) => { await use(BaseE2eTest.makeScreenshotter(testInfo)); },
-        page: async ({ browser }, use, testInfo) => { await BaseE2eTest.runPageFixture(browser, use, testInfo, null); },
+        gameConfig: async ({}, use) => {
+            await use(BaseE2eTest.gameConfig);
+        },
+        longRun: async ({}, use) => {
+            await use(BaseE2eTest.longRun);
+        },
+        selectors: async ({}, use) => {
+            await use(Selectors);
+        },
+        screenshots: async ({}, use, testInfo) => {
+            await use(BaseE2eTest.makeScreenshotter(testInfo));
+        },
+        page: async ({ browser }, use, testInfo) => {
+            await BaseE2eTest.runPageFixture(browser, use, testInfo, null);
+        },
         secondPage: async ({ browser }, use, testInfo) => {
             await BaseE2eTest.runPageFixture(browser, use, testInfo, 'player2');
         }
@@ -40,22 +50,19 @@ class BaseE2eTest
 
     static makeScreenshotter(testInfo)
     {
-        let slug = BaseE2eTest.slugify(testInfo.title);
-        let folder = FileHandler.joinPaths(BaseE2eTest.screenshotsDir, slug);
-        let counter = 0;
         return {
+            count: 0,
+            folder: FileHandler.joinPaths(BaseE2eTest.screenshotsDir, BaseE2eTest.slugify(testInfo.title)),
             async capture(page, name)
             {
                 if(!page || page.isClosed()) {
                     return;
                 }
-                counter++;
-                FileHandler.createFolder(folder);
-                let stepNumber = String(counter).padStart(2, '0');
-                let safeName = BaseE2eTest.slugify(name);
-                let filename = stepNumber+'-'+safeName+'.png';
+                this.count++;
+                FileHandler.createFolder(this.folder);
+                let filename = String(this.count).padStart(2, '0')+'-'+BaseE2eTest.slugify(name)+'.png';
                 try {
-                    await page.screenshot({ path: FileHandler.joinPaths(folder, filename), fullPage: false });
+                    await page.screenshot({ path: FileHandler.joinPaths(this.folder, filename), fullPage: false });
                 } catch(captureError) {
                     Logger.error('[screenshot] Could not save "'+filename+'": '+captureError.message);
                 }
@@ -81,13 +88,19 @@ class BaseE2eTest
             'transform:translate(-50%,-50%)',
             'transition:background 0.1s'
         ].join(';');
-        document.addEventListener('DOMContentLoaded', () => { document.body.appendChild(el); });
+        document.addEventListener('DOMContentLoaded', () => {
+            document.body.appendChild(el);
+        });
         document.addEventListener('mousemove', (e) => {
             el.style.left = e.clientX+'px';
             el.style.top = e.clientY+'px';
         });
-        document.addEventListener('mousedown', () => { el.style.background = 'rgba(255,220,50,0.95)'; });
-        document.addEventListener('mouseup', () => { el.style.background = 'rgba(255,80,80,0.85)'; });
+        document.addEventListener('mousedown', () => {
+            el.style.background = 'rgba(255,220,50,0.95)';
+        });
+        document.addEventListener('mouseup', () => {
+            el.style.background = 'rgba(255,80,80,0.85)';
+        });
     }
 
     static async makeContext(browser)
@@ -128,6 +141,20 @@ class BaseE2eTest
         await context.close();
         await BaseE2eTest.saveVideo(video, BaseE2eTest.slugify(testInfo.title), suffix);
     }
+
+    static setupWorkerLogCapture()
+    {
+        let logPath = FileHandler.joinPaths(process.cwd(), 'test-results', 'tests.log');
+        FileHandler.createFolder(FileHandler.joinPaths(process.cwd(), 'test-results'));
+        Logger.callback = (...args) => {
+            FileHandler.appendToFile(logPath, args.map(a => 'object' === typeof a ? JSON.stringify(a) : ''+a).join(' ')+'\n');
+        };
+        console.log = () => {
+        };
+        console.error = () => {
+        };
+    }
 }
 
+BaseE2eTest.setupWorkerLogCapture();
 module.exports.BaseE2eTest = BaseE2eTest;

@@ -71,7 +71,7 @@ class Selectors
             settingsOpen: '#settings-open',
             settingsClose: '#settings-close',
             settingsUi: '#settings-ui',
-            settingsDynamic: '#settings-dynamic',
+            settingsDynamic: '#settings-dynamic .settings-container',
             instructionsOpen: '#instructions-open',
             instructionsClose: '#instructions-close',
             instructions: '#instructions',

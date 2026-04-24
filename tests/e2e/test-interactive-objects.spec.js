@@ -10,6 +10,7 @@ const { BaseE2eTest } = require('./base-e2e-test');
 const { Login } = require('./helpers/login');
 const { Phaser } = require('./helpers/phaser');
 const { Navigation } = require('./helpers/navigation');
+const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
@@ -25,17 +26,18 @@ class TestInteractiveObjects
         let password = gameConfig.e2ePassword || 'root';
         let playerName = gameConfig.e2ePlayerName || 'ImRoot';
         await Login.loginAndStartGame(page, username, password, playerName, longRun);
-        let pauseMs = longRun ? 800 : 0;
-        let waitObjectTimeout = longRun ? 30000 : 15000;
+        let pauseMs = TimeConstants.pauseMs(longRun);
+        let sceneTimeout = TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun);
+        let navTimeout = TimeConstants.forLongRun(TimeConstants.NAVIGATION, longRun);
         let inForest = await Navigation.ensureInRoom(
             page,
             'reldens-forest',
             TestInteractiveObjects.FOREST_TRANSITION_X,
             TestInteractiveObjects.FOREST_TRANSITION_Y,
-            waitObjectTimeout
+            navTimeout
         );
         expect(inForest, 'Player must reach reldens-forest').toBeTruthy();
-        return { pauseMs, waitObjectTimeout };
+        return { pauseMs, sceneTimeout };
     }
 
     static async openInventoryAndCountItems(page, pauseMs)
@@ -88,7 +90,7 @@ class TestInteractiveObjects
         test.skip(!objectKey, objectKeyProp+' not configured');
         let ctx = await TestInteractiveObjects.loginAndEnterForest(page, gameConfig, longRun);
         await screenshots.capture(page, capturePrefix+'-forest-entered');
-        await TestInteractiveObjects.waitForObjectFlexible(page, objectKey, ctx.waitObjectTimeout);
+        await TestInteractiveObjects.waitForObjectFlexible(page, objectKey, ctx.sceneTimeout);
         let matchMode = await TestInteractiveObjects.resolveObjectMatchMode(page, objectKey);
         await screenshots.capture(page, capturePrefix+'-found-in-scene');
         let itemsBefore = await TestInteractiveObjects.openInventoryAndCountItems(page, ctx.pauseMs);
@@ -105,25 +107,21 @@ class TestInteractiveObjects
     static run()
     {
         test.describe('Interactive Objects', () => {
-
             test('player opens chest and receives items', async ({ page, screenshots, gameConfig, longRun }) => {
                 await TestInteractiveObjects.runObjectInteractionTest(
                     page, screenshots, gameConfig, longRun, 'e2eChestKey', 'chest', 2000
                 );
             });
-
             test('player interacts with fish spawn and receives fish items', async ({ page, screenshots, gameConfig, longRun }) => {
                 await TestInteractiveObjects.runObjectInteractionTest(
                     page, screenshots, gameConfig, longRun, 'e2eFishSpawnKey', 'fish-spawn', 7000
                 );
             });
-
             test('player mines rock and receives stone or ore items', async ({ page, screenshots, gameConfig, longRun }) => {
                 await TestInteractiveObjects.runObjectInteractionTest(
                     page, screenshots, gameConfig, longRun, 'e2eMiningRockKey', 'mining-rock', 7000
                 );
             });
-
         });
     }
 }

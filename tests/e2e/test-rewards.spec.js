@@ -8,6 +8,7 @@
 
 const { BaseE2eTest } = require('./base-e2e-test');
 const { Login } = require('./helpers/login');
+const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
@@ -25,23 +26,25 @@ class TestRewards
     static async loginAndOpenRewardsPanel(page, gameConfig, longRun)
     {
         await TestRewards.loginRootPlayer(page, gameConfig, longRun);
-        let pauseMs = longRun ? 800 : 0;
+        let pauseMs = TimeConstants.pauseMs(longRun);
         await page.click(Selectors.hud.rewardsOpen);
         await page.waitForTimeout(pauseMs);
-        await expect(page.locator(Selectors.rewards.dialog)).toBeVisible({ timeout: 10000 });
+        await expect(page.locator(Selectors.rewards.dialog)).toBeVisible(
+            { timeout: TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun) }
+        );
         return { pauseMs };
     }
 
     static run()
     {
         test.describe('Rewards', () => {
-
             test('rewards panel opens and shows rewards list', async ({ page, screenshots, gameConfig, longRun }) => {
                 await TestRewards.loginAndOpenRewardsPanel(page, gameConfig, longRun);
-                await expect(page.locator(Selectors.rewards.content)).toBeVisible({ timeout: 10000 });
+                await expect(page.locator(Selectors.rewards.content)).toBeVisible(
+                    { timeout: TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun) }
+                );
                 await screenshots.capture(page, 'rewards-panel-open');
             });
-
             test('player can claim an active daily login reward', async ({ page, screenshots, gameConfig, longRun }) => {
                 await TestRewards.loginAndOpenRewardsPanel(page, gameConfig, longRun);
                 let activeReward = page.locator(Selectors.rewards.active).first();
@@ -49,10 +52,11 @@ class TestRewards
                 test.skip(!hasActive, 'No active reward available to claim');
                 await screenshots.capture(page, 'active-reward-visible');
                 await activeReward.click();
-                await expect(page.locator(Selectors.rewards.accepted)).toBeVisible({ timeout: 10000 });
+                await expect(page.locator(Selectors.rewards.accepted)).toBeVisible(
+                    { timeout: TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun) }
+                );
                 await screenshots.capture(page, 'reward-accepted');
             });
-
         });
     }
 }

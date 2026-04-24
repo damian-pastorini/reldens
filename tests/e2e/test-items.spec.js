@@ -8,6 +8,7 @@
 
 const { BaseE2eTest } = require('./base-e2e-test');
 const { Login } = require('./helpers/login');
+const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
@@ -27,12 +28,12 @@ class TestItems
         let itemId = gameConfig.e2eEquipableItemId || '';
         expect(itemId, 'e2eEquipableItemId must be configured').toBeTruthy();
         await TestItems.loginRootPlayer(page, gameConfig, longRun);
-        let pauseMs = longRun ? 800 : 0;
+        let pauseMs = TimeConstants.pauseMs(longRun);
         await page.click(Selectors.hud.playerStatsOpen);
-        await page.waitForTimeout(pauseMs);
+        await expect(page.locator(Selectors.hud.playerStatsUi)).toBeVisible();
         let statBefore = await page.locator(Selectors.stats.firstValue).first().textContent();
         await page.click(Selectors.hud.inventoryOpen);
-        await page.waitForTimeout(pauseMs);
+        await expect(page.locator(Selectors.inventory.ui)).toBeVisible();
         await page.click(Selectors.inventory.itemImage(itemId));
         await page.waitForTimeout(pauseMs);
         let equipButton = page.locator(Selectors.inventory.itemEquip(itemId));
@@ -72,7 +73,9 @@ class TestItems
         await screenshots.capture(page, 'equipment-panel-with-equipped-slot');
         await slotImages.first().click();
         await page.waitForTimeout(1000 + setup.pauseMs);
-        await expect(page.locator(Selectors.equipment.itemBoxVisible).first()).toBeVisible({ timeout: 10000 });
+        await expect(page.locator(Selectors.equipment.itemBoxVisible).first()).toBeVisible(
+            { timeout: TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun) }
+        );
         await screenshots.capture(page, 'equipped-slot-item-box-visible');
     }
 
@@ -81,9 +84,9 @@ class TestItems
         let itemId = gameConfig.e2eConsumableItemId || '';
         expect(itemId, 'e2eConsumableItemId must be configured').toBeTruthy();
         await TestItems.loginRootPlayer(page, gameConfig, longRun);
-        let pauseMs = longRun ? 800 : 0;
+        let pauseMs = TimeConstants.pauseMs(longRun);
         await page.click(Selectors.hud.inventoryOpen);
-        await page.waitForTimeout(pauseMs);
+        await expect(page.locator(Selectors.inventory.ui)).toBeVisible();
         let qtyBefore = await page.locator(Selectors.inventory.itemQty(itemId)).textContent();
         await screenshots.capture(page, 'consumable-quantity-before');
         await page.click(Selectors.inventory.itemImage(itemId));
@@ -101,17 +104,15 @@ class TestItems
     static run()
     {
         test.describe('Items System', () => {
-
             test('inventory panel opens and shows items', async ({ page, screenshots, gameConfig, longRun }) => {
                 await TestItems.loginRootPlayer(page, gameConfig, longRun);
-                let pauseMs = longRun ? 800 : 0;
+                let pauseMs = TimeConstants.pauseMs(longRun);
                 await page.click(Selectors.hud.inventoryOpen);
                 await page.waitForTimeout(pauseMs);
                 await expect(page.locator(Selectors.inventory.ui)).toBeVisible();
                 await expect(page.locator(Selectors.inventory.items)).toBeVisible();
                 await screenshots.capture(page, 'inventory-panel-open');
             });
-
             test('equip item changes stat value', async ({ page, screenshots, gameConfig, longRun }) => {
                 let setup = await TestItems.loginAndOpenEquipButton(page, gameConfig, longRun);
                 await screenshots.capture(page, 'equip-button-visible');
@@ -122,29 +123,24 @@ class TestItems
                 expect(statAfter).not.toBe(setup.statBefore);
                 await screenshots.capture(page, 'stat-changed-after-equip');
             });
-
             test('equipment panel opens and shows equipment slots', async ({ page, screenshots, gameConfig, longRun }) => {
                 await TestItems.loginRootPlayer(page, gameConfig, longRun);
-                let pauseMs = longRun ? 800 : 0;
+                let pauseMs = TimeConstants.pauseMs(longRun);
                 await page.click(Selectors.hud.equipmentOpen);
                 await page.waitForTimeout(pauseMs);
                 await expect(page.locator(Selectors.equipment.ui)).toBeVisible();
                 await expect(page.locator(Selectors.equipment.items)).toBeVisible();
                 await screenshots.capture(page, 'equipment-panel-open');
             });
-
             test('unequip item reverts stat value to original', async ({ page, screenshots, gameConfig, longRun }) => {
                 await TestItems.runUnequipTest(page, screenshots, gameConfig, longRun);
             });
-
             test('clicking equipped slot in equipment panel shows item details', async ({ page, screenshots, gameConfig, longRun }) => {
                 await TestItems.runEquippedSlotTest(page, screenshots, gameConfig, longRun);
             });
-
             test('use consumable item decreases quantity', async ({ page, screenshots, gameConfig, longRun }) => {
                 await TestItems.runConsumableTest(page, screenshots, gameConfig, longRun);
             });
-
         });
     }
 }

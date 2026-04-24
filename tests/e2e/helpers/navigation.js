@@ -33,10 +33,9 @@ class Navigation
             if(!scene || !scene.cameras || !scene.cameras.main) {
                 return null;
             }
-            let camera = scene.cameras.main;
             return {
-                x: (args.wx - camera.scrollX) * camera.zoom,
-                y: (args.wy - camera.scrollY) * camera.zoom
+                x: (args.wx - scene.cameras.main.scrollX) * scene.cameras.main.zoom,
+                y: (args.wy - scene.cameras.main.scrollY) * scene.cameras.main.zoom
             };
         }, { wx: worldX, wy: worldY });
         if(!coords) {
@@ -62,7 +61,7 @@ class Navigation
                 return false;
             }
             return window.reldens.activeRoomEvents.roomName === rn;
-        }, roomName, { timeout: timeout || 30000 });
+        }, roomName, { timeout });
     }
 
     static async getCurrentRoomName(page)
@@ -82,11 +81,11 @@ class Navigation
             if(!room || !room.state || !room.state.players) {
                 return null;
             }
-            let playerState = room.state.players[room.sessionId];
+            let playerState = window.reldens.activeRoomEvents.playerBySessionIdFromState(room, room.sessionId);
             if(!playerState) {
                 return null;
             }
-            return { x: playerState.x, y: playerState.y };
+            return { x: playerState.state.x, y: playerState.state.y };
         });
         if(!pos) {
             return false;
@@ -118,9 +117,8 @@ class Navigation
 
     static async walkUntilWithinRange(page, worldX, worldY, range, timeout)
     {
-        let effectiveTimeout = timeout || 30000;
         let stepMs = 400;
-        let maxSteps = Math.ceil(effectiveTimeout / stepMs);
+        let maxSteps = Math.ceil(timeout / stepMs);
         await Navigation.focusGame(page);
         return Navigation._walkSteps(
             page,
@@ -133,26 +131,23 @@ class Navigation
                 if(!room || !room.state || !room.state.players) {
                     return false;
                 }
-                let playerState = room.state.players[room.sessionId];
+                let playerState = window.reldens.activeRoomEvents.playerBySessionIdFromState(room, room.sessionId);
                 if(!playerState) {
                     return false;
                 }
-                let dx = playerState.x - args.wx;
-                let dy = playerState.y - args.wy;
-                return Math.sqrt(dx * dx + dy * dy) <= args.range;
+                return Math.hypot(playerState.state.x - args.wx, playerState.state.y - args.wy) <= args.range;
             }, { wx: worldX, wy: worldY, range })
         );
     }
 
     static async ensureInRoom(page, roomName, transitionX, transitionY, timeout)
     {
-        let effectiveTimeout = timeout || 30000;
         let currentRoom = await Navigation.getCurrentRoomName(page);
         if(currentRoom === roomName) {
             return true;
         }
         let stepMs = 400;
-        let maxSteps = Math.ceil(effectiveTimeout / stepMs);
+        let maxSteps = Math.ceil(timeout / stepMs);
         await Navigation.focusGame(page);
         let reached = await Navigation._walkSteps(
             page,
@@ -161,14 +156,13 @@ class Navigation
             stepMs,
             maxSteps,
             async () => {
-                let nextRoom = await Navigation.getCurrentRoomName(page);
-                return nextRoom === roomName;
+                return (await Navigation.getCurrentRoomName(page)) === roomName;
             }
         );
         if(!reached) {
             Logger.critical(
                 'ensureInRoom: failed to reach "'+roomName+'" within '
-                +effectiveTimeout+'ms (last room: '+(await Navigation.getCurrentRoomName(page))+').'
+                +timeout+'ms (last room: '+(await Navigation.getCurrentRoomName(page))+').'
             );
         }
         return reached;

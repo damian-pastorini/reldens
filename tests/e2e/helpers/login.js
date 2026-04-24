@@ -8,6 +8,7 @@
 
 const { expect } = require('@playwright/test');
 const { Selectors } = require('../selectors');
+const { TimeConstants } = require('./time-constants');
 
 class Login
 {
@@ -30,10 +31,10 @@ class Login
 
     static async loginToSelection(page, username, password, longRun)
     {
-        let typeDelay = longRun ? 150 : 0;
-        let pauseMs = longRun ? 800 : 0;
+        let typeDelay = TimeConstants.typeDelay(longRun);
+        let pauseMs = TimeConstants.pauseMs(longRun);
         await page.goto('/');
-        await page.waitForSelector(Selectors.login.form, { state: 'visible' });
+        await page.waitForSelector(Selectors.login.form, { state: 'visible', timeout: TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun) });
         await page.locator(Selectors.login.username).click();
         await page.locator(Selectors.login.username).pressSequentially(username, { delay: typeDelay });
         await page.waitForTimeout(pauseMs);
@@ -43,7 +44,10 @@ class Login
         await page.hover(Selectors.login.submit);
         await page.waitForTimeout(pauseMs);
         await page.click(Selectors.login.submit);
-        await page.waitForSelector(Selectors.characterSelect.container+':not(.hidden)', { timeout: longRun ? 120000 : 20000 });
+        await page.waitForSelector(
+            Selectors.characterSelect.container+':not(.hidden)',
+            { timeout: TimeConstants.forLongRun(TimeConstants.CHARACTER_SCREEN, longRun) }
+        );
         await page.waitForTimeout(pauseMs);
     }
 
@@ -60,7 +64,7 @@ class Login
 
     static async loginAndStartGame(page, username, password, playerName, longRun, skipUiSelectors = false, scene = null)
     {
-        let pauseMs = longRun ? 800 : 0;
+        let pauseMs = TimeConstants.pauseMs(longRun);
         await Login.loginToSelection(page, username, password, longRun);
         if(playerName) {
             let selected = await Login.selectPlayer(page, playerName);
@@ -75,10 +79,12 @@ class Login
         await page.waitForTimeout(pauseMs);
         await page.hover(Selectors.characterSelect.selectorSubmit);
         await page.waitForTimeout(pauseMs);
-        let gameTimeout = longRun ? 120000 : 60000;
-        let uiTimeout = longRun ? 10000 : 5000;
+        let gameTimeout = TimeConstants.forLongRun(TimeConstants.GAME_START, longRun);
+        let uiTimeout = TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun);
         let gameStartedPromise = page.waitForSelector(Selectors.body.gameEngineStarted, { timeout: gameTimeout });
-        let dialogHandler = async (dialog) => { await dialog.dismiss(); };
+        let dialogHandler = async (dialog) => {
+            await dialog.dismiss();
+        };
         page.on('dialog', dialogHandler);
         await page.click(Selectors.characterSelect.selectorSubmit);
         await gameStartedPromise;
@@ -99,7 +105,9 @@ class Login
         ];
         for(let selector of uiSelectors) {
             await page.waitForSelector(selector, { state: 'visible', timeout: uiTimeout })
-                .catch((e) => { expect(false, 'UI selector failed ['+selector+']: '+e.message).toBeTruthy(); });
+                .catch((e) => {
+                    expect(false, 'UI selector failed ['+selector+']: '+e.message).toBeTruthy();
+                });
         }
     }
 }

@@ -6,6 +6,7 @@
  *
  */
 
+const { Logger } = require('@reldens/utils');
 const { Selectors } = require('../selectors');
 
 class Phaser
@@ -39,13 +40,12 @@ class Phaser
                 return false;
             }
             if('__direct__' === args.prop) {
-                let anim = scene.objectsAnimations[args.value];
-                return !!(anim && anim.sceneSprite);
+                return !!(scene.objectsAnimations[args.value] && scene.objectsAnimations[args.value].sceneSprite);
             }
             return Object.values(scene.objectsAnimations).some((anim) => {
                 return anim[args.prop] === args.value && anim.sceneSprite && anim.sceneSprite[args.statusKey];
             });
-        }, { prop: matchProp, value: matchValue, statusKey }, { timeout: timeout || 30000 });
+        }, { prop: matchProp, value: matchValue, statusKey }, { timeout });
     }
 
     static async getObjectScreenCoords(page, objKey)
@@ -56,11 +56,9 @@ class Phaser
             if(!anim || !anim.sceneSprite) {
                 return null;
             }
-            let sprite = anim.sceneSprite;
-            let camera = scene.cameras.main;
             return {
-                x: (sprite.x - camera.scrollX) * camera.zoom,
-                y: (sprite.y - camera.scrollY) * camera.zoom
+                x: (anim.sceneSprite.x - scene.cameras.main.scrollX) * scene.cameras.main.zoom,
+                y: (anim.sceneSprite.y - scene.cameras.main.scrollY) * scene.cameras.main.zoom
             };
         }, objKey);
     }
@@ -118,9 +116,8 @@ class Phaser
             if(!scene || !scene.player || !scene.player.players) {
                 return false;
             }
-            let p = scene.player.players[sid];
-            return !!(p && p.active && p.visible);
-        }, sessionId, { timeout: timeout || 30000 });
+            return !!(scene.player.players[sid] && scene.player.players[sid].active && scene.player.players[sid].visible);
+        }, sessionId, { timeout });
     }
 
     static async getOtherPlayerScreenCoords(page, sessionId)
@@ -153,11 +150,11 @@ class Phaser
             if(!room || !room.state || !room.state.players) {
                 return null;
             }
-            let playerState = room.state.players[room.sessionId];
+            let playerState = window.reldens.activeRoomEvents.playerBySessionIdFromState(room, room.sessionId);
             if(!playerState) {
                 return null;
             }
-            return { x: playerState.x, y: playerState.y };
+            return { x: playerState.state.x, y: playerState.state.y };
         });
     }
 
@@ -199,7 +196,7 @@ class Phaser
             if(!scene || !room || !room.state || !room.state.players){
                 return false;
             }
-            let player = room.state.players[room.sessionId];
+            let player = window.reldens.activeRoomEvents.playerBySessionIdFromState(room, room.sessionId);
             if(!player){
                 return false;
             }
@@ -210,8 +207,8 @@ class Phaser
             if(!target || !target.sceneSprite){
                 return false;
             }
-            return Math.hypot(player.x - target.sceneSprite.x, player.y - target.sceneSprite.y) <= skillRange;
-        }, range, { timeout: timeout || 10000 });
+            return Math.hypot(player.state.x - target.sceneSprite.x, player.state.y - target.sceneSprite.y) <= skillRange;
+        }, range, { timeout });
     }
 
     static async waitForPlayerInRoomState(page, timeout)
@@ -221,8 +218,8 @@ class Phaser
             if(!room || !room.state || !room.state.players) {
                 return false;
             }
-            return !!(room.state.players[room.sessionId]);
-        }, { timeout: timeout || 10000 });
+            return !!(window.reldens.activeRoomEvents.playerBySessionIdFromState(room, room.sessionId));
+        }, { timeout });
     }
 
     static async getPlayerAvailableActionKeys(page)
@@ -239,15 +236,26 @@ class Phaser
         });
     }
 
+    static async pressKeys(page, keys)
+    {
+        for(let key of keys){
+            await page.keyboard.down(key);
+        }
+    }
+
+    static async releaseKeys(page, keys)
+    {
+        for(let key of keys){
+            await page.keyboard.up(key);
+        }
+    }
+
     static async moveToObjectWithinRange(page, matchProp, matchValue, statusKey, range, timeout, useRespawnFind = false)
     {
-        let effectiveTimeout = timeout || 30000;
-        let stepWaitMs = 1200;
-        let maxSteps = Math.ceil(effectiveTimeout / stepWaitMs);
-        let margin = 40;
-        let canvasBox = await page.locator(Selectors.canvas).boundingBox();
-        let clampMaxX = canvasBox.width - margin;
-        let clampMaxY = canvasBox.height - margin;
+        let effectiveTimeout = timeout;
+        let stepMs = 1200;
+        let maxSteps = Math.ceil(effectiveTimeout / stepMs);
+        await page.locator(Selectors.canvas).click({ position: { x: 10, y: 10 }, force: true });
         for(let i = 0; i < maxSteps; i++){
             let state = await page.evaluate((args) => {
                 let scene = window.reldens.getActiveScene();
@@ -268,35 +276,45 @@ class Phaser
                 if(!room || !room.state || !room.state.players){
                     return null;
                 }
-                let player = room.state.players[room.sessionId];
+                let player = window.reldens.activeRoomEvents.playerBySessionIdFromState(room, room.sessionId);
                 if(!player){
                     return null;
                 }
-                let camera = scene.cameras.main;
-                let dist = Math.hypot(player.x - found.sceneSprite.x, player.y - found.sceneSprite.y);
+                let body = room.state.bodies ? room.state.bodies.get(found.key) : null;
+                let targetX = body ? body.x : found.sceneSprite.x;
+                let targetY = body ? body.y : found.sceneSprite.y;
+                let dist = Math.hypot(player.state.x - targetX, player.state.y - targetY);
                 if(dist <= args.range){
-                    return { inRange: true };
+                    return { inRange: true, playerX: player.state.x, playerY: player.state.y, targetX, targetY, dist };
                 }
-                let ratio = (dist - args.range * 0.5) / dist;
-                let targetWorldX = player.x + (found.sceneSprite.x - player.x) * ratio;
-                let targetWorldY = player.y + (found.sceneSprite.y - player.y) * ratio;
-                return {
-                    inRange: false,
-                    screenX: (targetWorldX - camera.scrollX) * camera.zoom,
-                    screenY: (targetWorldY - camera.scrollY) * camera.zoom
-                };
+                return { inRange: false, playerX: player.state.x, playerY: player.state.y, targetX, targetY, dist };
             }, { prop: matchProp, value: matchValue, statusKey, range, useRespawnFind });
             if(!state){
+                Logger.error('moveToObjectWithinRange step '+i+': no enemy or player found in scene');
                 return false;
             }
             if(state.inRange){
+                Logger.debug('moveToObjectWithinRange: in range at step '+i+' player=('+state.playerX+','+state.playerY+') enemy=('+state.targetX+','+state.targetY+') dist='+state.dist);
                 return true;
             }
-            let clickX = Math.max(margin, Math.min(clampMaxX, state.screenX));
-            let clickY = Math.max(margin, Math.min(clampMaxY, state.screenY));
-            await page.locator(Selectors.canvas).click({ position: { x: clickX, y: clickY }, force: true });
-            await page.waitForTimeout(stepWaitMs);
+            Logger.debug('moveToObjectWithinRange step '+i+': player=('+state.playerX+','+state.playerY+') enemy=('+state.targetX+','+state.targetY+') dist='+state.dist);
+            let dx = state.targetX - state.playerX;
+            let dy = state.targetY - state.playerY;
+            let pressedKeys = [];
+            if(0 !== dx){
+                pressedKeys.push(dx > 0 ? 'ArrowRight' : 'ArrowLeft');
+            }
+            if(0 !== dy){
+                pressedKeys.push(dy > 0 ? 'ArrowDown' : 'ArrowUp');
+            }
+            if(0 === pressedKeys.length){
+                pressedKeys.push('ArrowRight');
+            }
+            await Phaser.pressKeys(page, pressedKeys);
+            await page.waitForTimeout(stepMs);
+            await Phaser.releaseKeys(page, pressedKeys);
         }
+        Logger.error('moveToObjectWithinRange: failed to reach range '+range+' within '+maxSteps+' steps');
         return false;
     }
 

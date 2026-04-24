@@ -8,6 +8,7 @@
 
 const { BaseE2eTest } = require('./base-e2e-test');
 const { Login } = require('./helpers/login');
+const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
@@ -36,13 +37,22 @@ class TestChat
         await Login.loginAndStartGame(secondPage, p2.username, p2.password, p2.playerName, longRun);
         await screenshots.capture(page, 'p1-in-game');
         await screenshots.capture(secondPage, 'p2-in-game');
-        return longRun ? 800 : 0;
+        return TimeConstants.pauseMs(longRun);
+    }
+
+    static async openChatOnBothPages(page, secondPage, pauseMs)
+    {
+        await page.click(Selectors.hud.chatOpen);
+        await secondPage.click(Selectors.hud.chatOpen);
+        await page.waitForTimeout(pauseMs);
+        await expect(page.locator(Selectors.chat.input)).toBeVisible();
+        await expect(secondPage.locator(Selectors.chat.input)).toBeVisible();
     }
 
     static async runSendMessageTest(page, screenshots, gameConfig, longRun)
     {
         await TestChat.loginRootPlayer(page, gameConfig, longRun);
-        let pauseMs = longRun ? 800 : 0;
+        let pauseMs = TimeConstants.pauseMs(longRun);
         let testMessage = 'e2e-global-test';
         await page.click(Selectors.hud.chatOpen);
         await page.waitForTimeout(pauseMs);
@@ -53,7 +63,10 @@ class TestChat
         await screenshots.capture(page, 'chat-message-typed');
         await page.click(Selectors.chat.send);
         await page.waitForTimeout(2000 + pauseMs);
-        await expect(page.locator(Selectors.chat.tabContentGeneral)).toContainText(testMessage, { timeout: 10000 });
+        await expect(page.locator(Selectors.chat.tabContentGeneral)).toContainText(
+            testMessage,
+            { timeout: TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun) }
+        );
         await screenshots.capture(page, 'general-tab-shows-message');
     }
 
@@ -63,14 +76,18 @@ class TestChat
         let password = gameConfig.e2ePassword2 || 'root';
         let playerName = gameConfig.e2ePlayerName2 || 'ImRoot2';
         await Login.loginAndStartGame(page, username, password, playerName, longRun);
-        let pauseMs = longRun ? 800 : 0;
+        let pauseMs = TimeConstants.pauseMs(longRun);
         let testMessage = 'e2e-global-tab-test';
         await page.click(Selectors.hud.chatOpen);
         await page.waitForTimeout(pauseMs);
+        await expect(page.locator(Selectors.chat.input)).toBeVisible();
         await TestChat.typeChatMessage(page, longRun, '#'+testMessage);
         await screenshots.capture(page, 'global-message-typed');
         await page.locator(Selectors.chat.input).press('Enter');
-        await expect(page.locator(Selectors.chat.tabContentGlobal)).toContainText(testMessage, { timeout: 10000 });
+        await expect(page.locator(Selectors.chat.tabContentGlobal)).toContainText(
+            testMessage,
+            { timeout: TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun) }
+        );
         await screenshots.capture(page, 'global-tab-shows-message');
     }
 
@@ -88,23 +105,21 @@ class TestChat
         };
         let pauseMs = await TestChat.loginBothPlayers(page, secondPage, screenshots, longRun, p1, p2);
         let testMessage = 'e2e-private-msg-test';
-        await page.click(Selectors.hud.chatOpen);
-        await secondPage.click(Selectors.hud.chatOpen);
-        await page.waitForTimeout(pauseMs);
+        await TestChat.openChatOnBothPages(page, secondPage, pauseMs);
         await TestChat.typeChatMessage(page, longRun, '@'+p2.playerName+' '+testMessage);
         await page.waitForTimeout(pauseMs);
         await screenshots.capture(page, 'p1-private-message-typed');
         await page.click(Selectors.chat.send);
         await page.waitForTimeout(2000 + pauseMs);
-        await expect(secondPage.locator(Selectors.chat.tabContentGeneral)).toContainText(testMessage);
-        await expect(secondPage.locator(Selectors.chat.tabContentPrivate)).toContainText(testMessage);
+        await expect(secondPage.locator(Selectors.chat.tabContentGeneral)).toContainText(testMessage, { timeout: TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun) });
+        await expect(secondPage.locator(Selectors.chat.tabContentPrivate)).toContainText(testMessage, { timeout: TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun) });
         await screenshots.capture(secondPage, 'p2-private-message-received');
     }
 
     static async runTabSwitchingTest(page, screenshots, gameConfig, longRun)
     {
         await TestChat.loginRootPlayer(page, gameConfig, longRun);
-        let pauseMs = longRun ? 800 : 0;
+        let pauseMs = TimeConstants.pauseMs(longRun);
         await page.click(Selectors.hud.chatOpen);
         await page.waitForTimeout(pauseMs);
         await expect(page.locator(Selectors.chat.input)).toBeVisible();
@@ -142,14 +157,12 @@ class TestChat
         };
         let pauseMs = await TestChat.loginBothPlayers(page, secondPage, screenshots, longRun, p1, p2);
         let testMessage = 'e2e-cross-player-test';
-        await page.click(Selectors.hud.chatOpen);
-        await secondPage.click(Selectors.hud.chatOpen);
-        await page.waitForTimeout(pauseMs);
+        await TestChat.openChatOnBothPages(page, secondPage, pauseMs);
         await TestChat.typeChatMessage(page, longRun, testMessage);
         await screenshots.capture(page, 'p1-message-typed');
         await page.locator(Selectors.chat.input).press('Enter');
         await page.waitForTimeout(2000 + pauseMs);
-        await expect(secondPage.locator(Selectors.chat.tabContentGeneral)).toContainText(testMessage);
+        await expect(secondPage.locator(Selectors.chat.tabContentGeneral)).toContainText(testMessage, { timeout: TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun) });
         await screenshots.capture(secondPage, 'p2-message-received');
     }
 
@@ -171,7 +184,6 @@ class TestChat
             test('message from player A is visible to player B', async ({ page, secondPage, screenshots, gameConfig, longRun }) => {
                 await TestChat.runCrossPlayerMessageTest(page, secondPage, screenshots, gameConfig, longRun);
             });
-
         });
     }
 }
