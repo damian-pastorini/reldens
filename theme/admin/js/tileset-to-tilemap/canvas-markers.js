@@ -39,10 +39,7 @@ class TilesetCanvasMarkers
     collect(tileset, tilesetIndex)
     {
         let app = this.renderer.app;
-        if(null !== app.selectedElement){
-            return [];
-        }
-        if(app.tileOptionsBinder && null !== app.tileOptionsBinder.activeOptionKey){
+        if(null !== app.selectedElement && !this.isMapTilesTabActive(tilesetIndex)){
             return [];
         }
         let markers = [];
@@ -67,20 +64,28 @@ class TilesetCanvasMarkers
         return markers;
     }
 
-    isMapTilesTabActive(tilesetIndex)
+    isTabActive(tilesetIndex, tabName)
     {
         let row = document.querySelector('[data-tileset-index="'+tilesetIndex+'"]');
         if(!row){
             return false;
         }
-        let pane = row.querySelector('.legend-tab-pane[data-tab="map-tiles"]');
-        return pane && !pane.classList.contains('hidden');
+        return null !== row.querySelector('.legend-tab-pane[data-tab="'+tabName+'"]:not(.hidden)');
+    }
+
+    isMapObjectsTabActive(tilesetIndex)
+    {
+        return this.isTabActive(tilesetIndex, 'map-objects');
+    }
+
+    isMapTilesTabActive(tilesetIndex)
+    {
+        return this.isTabActive(tilesetIndex, 'map-tiles');
     }
 
     isGlobalPanelOpen()
     {
-        let panel = document.querySelector('.global-tile-options');
-        return panel && !panel.classList.contains('hidden');
+        return null !== document.querySelector('.global-tile-options:not(.hidden)');
     }
 
     addOptions(markers, tileset, opts)
@@ -140,7 +145,6 @@ class TilesetCanvasMarkers
         }
         this.pushFlat(markers, tileset, entry.flatIndex, label, color);
     }
-
 
     addGlobalPositional(markers, tileset, posObj, currentTilesetIndex, label, color)
     {

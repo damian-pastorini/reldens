@@ -75,7 +75,21 @@ class TilesetElementEditor
         if(!targetRow){
             return;
         }
-        targetRow.scrollIntoView({ block: 'nearest', behavior: 'instant' });
+        list.scrollTop = targetRow.getBoundingClientRect().top - list.getBoundingClientRect().top + list.scrollTop;
+    }
+
+    scrollLegendToSpot(tilesetIndex, spotIndex)
+    {
+        let list = this.app.refs[tilesetIndex].list;
+        let spots = this.app.state[tilesetIndex].spots;
+        if(!spots || !spots[spotIndex]){
+            return;
+        }
+        let row = list.querySelector('.spot-row[data-spot-name="'+spots[spotIndex].name+'"]');
+        if(!row){
+            return;
+        }
+        list.scrollTop = row.getBoundingClientRect().top - list.getBoundingClientRect().top + list.scrollTop;
     }
 
     scrollCanvasToElement(tilesetIndex, elementIndex)

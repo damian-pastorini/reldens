@@ -5,21 +5,57 @@ class TilesetTileOptionsClearer
         this.binder = binder;
     }
 
+    applyAndRenderTileset(tilesetIndex)
+    {
+        this.binder.applyToTilesetRow(tilesetIndex);
+        this.binder.app.renderer.renderCanvas(tilesetIndex);
+    }
+
+    applyAndRenderGlobal()
+    {
+        this.binder.apply.applyToRow(-1, null);
+        this.binder.app.renderAllCanvases();
+    }
+
+    clearSpotGroup(tilesetIndex, spotName, spotFn)
+    {
+        let spot = this.binder.findSpot(tilesetIndex, spotName);
+        if(spot){
+            spotFn(spot);
+        }
+        this.applyAndRenderTileset(tilesetIndex);
+    }
+
     clearGroundGroup(tilesetIndex, spotName)
     {
         if(spotName){
-            let spot = this.binder.findSpot(tilesetIndex, spotName);
-            if(spot){
+            this.clearSpotGroup(tilesetIndex, spotName, (spot) => {
                 spot.spotTile = null;
                 spot.spotTileVariations = [];
-            }
-            return this.binder.applyToTilesetRow(tilesetIndex);
+            });
+            return;
         }
         let fn = (opts) => {
             opts.groundTile = null;
             opts.pathTile = null;
             opts.borderTile = null;
             opts.randomGroundTiles = [];
+        };
+        this.dispatchTileOpts(tilesetIndex, fn, fn);
+    }
+
+    clearBordersGroup(tilesetIndex, spotName)
+    {
+        if(spotName){
+            this.clearSpotGroup(tilesetIndex, spotName, (spot) => {
+                spot.bordersTiles = {};
+                spot.borderCornersTiles = {};
+            });
+            return;
+        }
+        let fn = (opts) => {
+            opts.bordersTiles = {};
+            opts.borderCornersTiles = {};
         };
         this.dispatchTileOpts(tilesetIndex, fn, fn);
     }
@@ -31,20 +67,24 @@ class TilesetTileOptionsClearer
             if(opts){
                 globalFn(opts);
             }
-            this.binder.apply.applyToRow(-1, null);
+            this.applyAndRenderGlobal();
             return;
         }
         let tileset = this.binder.app.state[tilesetIndex];
         if(tileset.tileOptions){
             tilesetFn(tileset.tileOptions);
         }
-        this.binder.applyToTilesetRow(tilesetIndex);
+        this.applyAndRenderTileset(tilesetIndex);
     }
 
     clearOption(tilesetIndex, optionKey, positionKey, spotName)
     {
         if('ground' === optionKey){
             this.clearGroundGroup(tilesetIndex, spotName);
+            return;
+        }
+        if('borders' === optionKey){
+            this.clearBordersGroup(tilesetIndex, spotName);
             return;
         }
         if(spotName){
@@ -60,11 +100,12 @@ class TilesetTileOptionsClearer
             if(!positionKey){
                 spot[optionKey] = 'spotTileVariations' === optionKey ? [] : null;
             }
-            return this.binder.applyToTilesetRow(tilesetIndex);
+            this.applyAndRenderTileset(tilesetIndex);
+            return;
         }
         if(-1 === tilesetIndex){
             this.clearGlobalOption(optionKey, positionKey);
-            this.binder.apply.applyToRow(-1, null);
+            this.applyAndRenderGlobal();
             return;
         }
         let tileset = this.binder.app.state[tilesetIndex];
@@ -72,7 +113,7 @@ class TilesetTileOptionsClearer
             return;
         }
         this.clearTilesetOption(tileset.tileOptions, optionKey, positionKey);
-        this.binder.applyToTilesetRow(tilesetIndex);
+        this.applyAndRenderTileset(tilesetIndex);
     }
 
     clearTilesetOption(tileOpts, optionKey, positionKey)
@@ -110,7 +151,8 @@ class TilesetTileOptionsClearer
             if(spot && Array.isArray(spot[optionKey])){
                 spot[optionKey] = spot[optionKey].filter((v) => v !== value);
             }
-            return this.binder.applyToTilesetRow(tilesetIndex);
+            this.applyAndRenderTileset(tilesetIndex);
+            return;
         }
         let globalFn = (opts) => {
             if(Array.isArray(opts[optionKey])){

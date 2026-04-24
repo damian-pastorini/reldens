@@ -116,7 +116,7 @@ class TilesetCanvasRenderer
 
     layerTypeColor(type)
     {
-        let colors = {'over-player':'#5b8cff','collisions':'#ff5b5b','collisions-over-player':'#ff5bff','base':'#d4a017','below-player':'#5bff8c'};
+        let colors = {'over-player':'#5b8cff','collisions':'#ff5b5b','collisions-over-player':'#ff5bff','base':'#d4a017','below-player':'#5bff8c','path':'#f0a040'};
         if(colors[type]){
             return colors[type];
         }
@@ -191,7 +191,7 @@ class TilesetCanvasRenderer
         let color = SharedUtils.colorForIndex(element.colorIndex);
         let isCluster = 'cluster' === element.type;
         let drawnKeys = new Set();
-        let dimmed = tilePickActive || hasSelection;
+        let dimmed = hasSelection;
         for(let layer of element.layers){
             this.drawElementLayerTiles(ctx, tileset, layer, color, isCluster, dimmed, drawnKeys);
         }
@@ -199,6 +199,9 @@ class TilesetCanvasRenderer
 
     drawElementTiles(ctx, tileset, tilesetIndex)
     {
+        if(!this.markers.isMapObjectsTabActive(tilesetIndex)){
+            return;
+        }
         let hasSelection = this.app.selectedTileset === tilesetIndex
             && null !== this.app.selectedElement;
         let selectedEl = null;
@@ -225,17 +228,29 @@ class TilesetCanvasRenderer
 
     drawSpotTiles(ctx, tileset, tilesetIndex)
     {
-        if(!this.app.selectedSpot || this.app.selectedSpot.tilesetIndex !== tilesetIndex){
+        if(!this.markers.isMapObjectsTabActive(tilesetIndex)){
             return;
         }
         let spots = tileset.spots;
-        if(!spots){
+        if(!spots || !spots.length){
             return;
         }
-        let spot = spots[this.app.selectedSpot.spotIndex];
-        if(!spot){
-            return;
+        let hasSelection = this.app.selectedSpot && this.app.selectedSpot.tilesetIndex === tilesetIndex;
+        let selectedSpot = null;
+        for(let si = 0; si < spots.length; si++){
+            if(hasSelection && this.app.selectedSpot.spotIndex === si){
+                selectedSpot = spots[si];
+                continue;
+            }
+            this.drawSingleSpot(ctx, tileset, spots[si], hasSelection);
         }
+        if(selectedSpot){
+            this.drawSingleSpot(ctx, tileset, selectedSpot, false);
+        }
+    }
+
+    drawSingleSpot(ctx, tileset, spot, dimmed)
+    {
         let cols = tileset.tilesetColumns;
         let flatIndices = this.collectSpotFlatIndices(spot);
         ctx.save();
@@ -244,10 +259,10 @@ class TilesetCanvasRenderer
         for(let fi of flatIndices){
             let tile = [Math.floor(fi / cols), fi % cols];
             let pos = this.app.tileGeometry.getTilePosition(tileset, tile);
-            ctx.globalAlpha = 0.4;
+            ctx.globalAlpha = dimmed ? 0.1 : 0.4;
             ctx.fillStyle = '#ff8c5b';
             ctx.fillRect(pos.x, pos.y, tileset.tileWidth, tileset.tileHeight);
-            ctx.globalAlpha = 1;
+            ctx.globalAlpha = dimmed ? 0.25 : 1;
             ctx.strokeRect(pos.x + 1, pos.y + 1, tileset.tileWidth - 2, tileset.tileHeight - 2);
         }
         ctx.restore();

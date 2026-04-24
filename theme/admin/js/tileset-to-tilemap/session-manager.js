@@ -60,9 +60,7 @@ class TilesetSessionManager
             if(!name){
                 return this.app.sessionId;
             }
-            let baseMatch = this.app.sessionId.match(/^(\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2})/);
-            let baseId = baseMatch ? baseMatch[1] : this.app.sessionId;
-            return baseId+'-'+name;
+            return (this.app.sessionId.match(/^(\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2})/) || [null, this.app.sessionId])[1]+'-'+name;
         }
         let timestamp = SharedUtils.buildSessionTimestamp();
         if(!name){
@@ -81,22 +79,20 @@ class TilesetSessionManager
         if(this.app.globalTileOptions){
             body.globalTileOptions = this.app.globalTileOptions;
         }
-        let response = await fetch('sessions/'+saveId+'/save', {
+        return (await fetch('sessions/'+saveId+'/save', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)
-        });
-        return response.json();
+        })).json();
     }
 
     async doSaveTileset(tileset)
     {
-        let response = await fetch('sessions/'+this.app.sessionId+'/save', {
+        return (await fetch('sessions/'+this.app.sessionId+'/save', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ sessionId: this.app.sessionId, tileset })
-        });
-        return response.json();
+        })).json();
     }
 
     async autoSave()
@@ -158,10 +154,6 @@ class TilesetSessionManager
                 let overrideCheckbox = document.querySelector('.override-files-checkbox');
                 let isOverride = overrideCheckbox && overrideCheckbox.checked;
                 let idChanged = saveId !== oldSessionId;
-                if(idChanged){
-                    this.updateStateReferences(oldSessionId, saveId);
-                    this.app.sessionId = saveId;
-                }
                 let data = await this.doSave(
                     this.app.generator.getSerializableState(false),
                     saveId,
@@ -171,12 +163,13 @@ class TilesetSessionManager
                     this.showStatus('Error saving session: '+(data.error || 'Unknown error'), true);
                     return;
                 }
-                if(idChanged && isOverride){
-                    this.removeOldSessionItem(oldSessionId);
+                if(idChanged){
+                    this.updateStateReferences(oldSessionId, saveId);
+                    if(isOverride){
+                        this.removeOldSessionItem(oldSessionId);
+                    }
                 }
-                if(!idChanged){
-                    this.app.sessionId = saveId;
-                }
+                this.app.sessionId = saveId;
                 let nameMatch = saveId.match(/^\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}-?(.*)$/);
                 let nameInputEl = document.querySelector('.session-name-input');
                 if(nameInputEl && nameMatch){
@@ -194,7 +187,10 @@ class TilesetSessionManager
             'Are you sure you want to save this tileset?',
             async () => {
                 let tileset = this.app.generator.serializeTileset(
-                    this.app.state[tilesetIndex], false, tilesetIndex
+                    this.app.state[tilesetIndex],
+                    false,
+                    tilesetIndex,
+                    document.querySelector('[data-tileset-index="'+tilesetIndex+'"]')
                 );
                 let data = await this.doSaveTileset(tileset);
                 if(!data.success){
@@ -207,30 +203,56 @@ class TilesetSessionManager
         );
     }
 
+    async withSessionData(sessionId, onSuccess)
+    {
+        let response = await fetch('sessions/'+sessionId+'/load');
+        let data = await response.json();
+        if(!data.tilesets){
+            this.showStatus('Error: '+(data.error || 'Unknown error'), true);
+            return;
+        }
+        await onSuccess(data);
+    }
+
     loadSession(sessionId)
     {
-        let replaceMsg = this.app.state.length > 0 ? ' This will replace elements in matching tilesets.' : '';
+        let replaceMsg = this.app.state.length > 0 ? ' This will replace the current session.' : '';
         this.app.modals.show(
             'Load session "'+sessionId+'"?'+replaceMsg,
             async () => {
-                let response = await fetch('sessions/'+sessionId+'/load');
-                let data = await response.json();
-                if(!data.tilesets){
-                    this.showStatus('Error: '+(data.error || 'Unknown error'), true);
-                    return;
-                }
-                this.app.stateBuilder.loadFromSession(data);
-                this.app.sessionId = sessionId;
-                this.app.generator.lastGeneratedSessionId = sessionId;
-                let nameInput = document.querySelector('.session-name-input');
-                if(nameInput){
-                    let nameMatch = sessionId.match(/^\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}-?(.*)$/);
-                    nameInput.value = nameMatch ? nameMatch[1] : '';
-                }
-                this.showStatus('Session loaded successfully', false);
+                await this.withSessionData(sessionId, async (data) => {
+                    this.app.stateBuilder.loadFromSession(data);
+                    this.app.sessionId = sessionId;
+                    this.app.generator.lastGeneratedSessionId = sessionId;
+                    let nameInput = document.querySelector('.session-name-input');
+                    if(nameInput){
+                        let nameMatch = sessionId.match(/^\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}-?(.*)$/);
+                        nameInput.value = nameMatch ? nameMatch[1] : '';
+                    }
+                    let sessionItem = this.app.getElement('[data-session-id="'+sessionId+'"]');
+                    if(sessionItem && sessionItem.querySelector('.generated-file-wizard-btn')){
+                        this.app.showMapsWizardBtn();
+                    }
+                    this.showStatus('Session loaded successfully', false);
+                });
             },
             null,
             'button-success'
+        );
+    }
+
+    appendSession(sessionId)
+    {
+        this.app.modals.show(
+            'Append session "'+sessionId+'"? Only tilesets not already present will be added.',
+            async () => {
+                await this.withSessionData(sessionId, async (data) => {
+                    this.app.stateBuilder.appendFromSession(data);
+                    this.showStatus('Session appended successfully', false);
+                });
+            },
+            null,
+            'button-primary'
         );
     }
 

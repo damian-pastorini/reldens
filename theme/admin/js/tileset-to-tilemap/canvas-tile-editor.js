@@ -135,6 +135,47 @@ class TilesetCanvasTileEditor
                 return;
             }
         }
+        let tileset = this.app.state[tilesetIndex];
+        let spots = tileset.spots || [];
+        let flatIndex = tileRow * tileset.tilesetColumns + tileCol;
+        for(let si = 0; si < spots.length; si++){
+            if(this.spotHasTile(spots[si], flatIndex)){
+                this.app.selectedSpot = { tilesetIndex, spotIndex: si };
+                this.app.refresh(tilesetIndex);
+                this.app.editor.scrollLegendToSpot(tilesetIndex, si);
+                return;
+            }
+        }
+    }
+
+    posMapHasTile(posMap, flatIndex)
+    {
+        let found = false;
+        let keys = Object.keys(posMap);
+        for(let key of keys){
+            if(posMap[key] === flatIndex){
+                found = true;
+            }
+        }
+        return found;
+    }
+
+    spotHasTile(spot, flatIndex)
+    {
+        if(spot.spotTile === flatIndex){
+            return true;
+        }
+        if(spot.spotTileVariations && spot.spotTileVariations.includes(flatIndex)){
+            return true;
+        }
+        let hasPosMapTile = false;
+        let posMaps = [spot.surroundingTiles, spot.corners, spot.bordersTiles, spot.borderCornersTiles];
+        for(let posMap of posMaps){
+            if(posMap && this.posMapHasTile(posMap, flatIndex)){
+                hasPosMapTile = true;
+            }
+        }
+        return hasPosMapTile;
     }
 
     removeTilesInRectFromElement(element, inRect)

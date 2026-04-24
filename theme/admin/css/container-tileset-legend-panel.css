@@ -131,7 +131,16 @@
         flex-wrap: wrap;
         flex-shrink: 0;
         margin-bottom: var(--space-sm);
-        padding-left: 0.625rem;
+        padding: var(--space-sm) 0.625rem;
+        border: 1px solid var(--color-grey-30);
+        border-radius: var(--radius-sm);
+
+        & .bulk-delete-spots-btn img {
+            display: block;
+            width: var(--space-lg);
+            height: var(--space-lg);
+            filter: brightness(0) invert(1);
+        }
     }
 
     & .elements-list {
@@ -366,6 +375,10 @@
 
     & .layer-color-custom {
         background: var(--color-purple);
+    }
+
+    & .layer-color-path {
+        background: var(--color-orange);
     }
 
     & .bulk-lock-btn {

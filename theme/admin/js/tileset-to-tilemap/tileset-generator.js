@@ -22,6 +22,27 @@ class TilesetGenerator
         this.app.getElement('.save-session-btn').addEventListener(
             'click', () => this.app.sessions.saveAll()
         );
+        let wizardBtn = this.app.getElement('.maps-wizard-btn');
+        if(wizardBtn){
+            wizardBtn.addEventListener('click', () => this.mapsWizard());
+        }
+    }
+
+    mapsWizard()
+    {
+        let analyzer = document.querySelector('.tileset-analyzer');
+        let wizardPath = analyzer ? analyzer.dataset.mapsWizardPath : '/maps-wizard';
+        this.app.modals.show(
+            'Save and generate before opening Maps Wizard? Unsaved changes will be included.',
+            async () => {
+                await this.app.sessions.autoSave();
+                await this.runGenerate(this.getSerializableState(false), false);
+                let sid = this.lastGeneratedSessionId || this.app.sessionId;
+                window.location.href = wizardPath + '?tilesetSessionId=' + sid;
+            },
+            null,
+            'button-success'
+        );
     }
 
     bindTileset(row, tilesetIndex)
@@ -64,7 +85,12 @@ class TilesetGenerator
     async generateSingle(tilesetIndex, selectedOnly)
     {
         await this.runGenerate(
-            [this.serializeTileset(this.app.state[tilesetIndex], selectedOnly, tilesetIndex)],
+            [this.serializeTileset(
+                this.app.state[tilesetIndex],
+                selectedOnly,
+                tilesetIndex,
+                document.querySelector('[data-tileset-index="'+tilesetIndex+'"]')
+            )],
             true
         );
     }
@@ -90,6 +116,7 @@ class TilesetGenerator
         this.lastGeneratedSessionId = sessionId;
         this.app.sessions.addSession(sessionId, data.files);
         this.app.sessions.showStatus('Files successfully generated', false);
+        this.app.showMapsWizardBtn();
         this.showResults(sessionId, data.files);
     }
 
@@ -119,7 +146,7 @@ class TilesetGenerator
         resultsSection.classList.remove('hidden');
     }
 
-    serializeTileset(tileset, selectedOnly, tilesetIndex)
+    serializeTileset(tileset, selectedOnly, tilesetIndex, row)
     {
         let elements = [];
         for(let element of tileset.elements){
@@ -134,17 +161,10 @@ class TilesetGenerator
                 quantity: element.quantity,
                 freeSpaceAround: element.freeSpaceAround,
                 allowPathsInFreeSpace: element.allowPathsInFreeSpace,
+                bulkSelected: element.bulkSelected || false,
                 layers: element.layers
             });
         }
-        let row = document.querySelector('[data-tileset-index="'+tilesetIndex+'"]');
-        let mapName = row ? row.querySelector('.tileset-map-name').value || 'tileset-elements' : 'tileset-elements';
-        let mapTitle = row ? row.querySelector('.tileset-map-title').value || 'Tileset Elements' : 'Tileset Elements';
-        let generatorTypeEl = row ? row.querySelector('.tileset-generator-type') : null;
-        let generatorType = generatorTypeEl ? generatorTypeEl.value : 'elements-composite-loader';
-        let associationsProperties = row
-            ? this.app.strategyEditor.readAssociationsProperties(row)
-            : null;
         return {
             imageId: tileset.imageId,
             imageUrl: tileset.imageUrl,
@@ -163,10 +183,12 @@ class TilesetGenerator
             originalTileWidth: tileset.originalTileWidth,
             originalTileHeight: tileset.originalTileHeight,
             resizeOption: tileset.resizeOption || 0,
-            mapName,
-            mapTitle,
-            generatorType,
-            associationsProperties,
+            mapName: row ? row.querySelector('.tileset-map-name').value || 'tileset-elements' : 'tileset-elements',
+            mapTitle: row ? row.querySelector('.tileset-map-title').value || 'Tileset Elements' : 'Tileset Elements',
+            generatorType: row && row.querySelector('.tileset-generator-type')
+                ? row.querySelector('.tileset-generator-type').value
+                : 'elements-composite-loader',
+            associationsProperties: row ? this.app.strategyEditor.readAssociationsProperties(row) : null,
             tileOptions: tileset.tileOptions || null,
             spots: tileset.spots || [],
             elements
@@ -177,9 +199,25 @@ class TilesetGenerator
     {
         let result = [];
         for(let i = 0; i < this.app.state.length; i++){
-            result.push(this.serializeTileset(this.app.state[i], selectedOnly, i));
+            result.push(this.serializeTileset(
+                this.app.state[i],
+                selectedOnly,
+                i,
+                document.querySelector('[data-tileset-index="'+i+'"]')
+            ));
         }
         return result;
+    }
+
+    forEachTilesetRow(callback)
+    {
+        for(let i = 0; i < this.app.state.length; i++){
+            let row = document.querySelector('[data-tileset-index="'+i+'"]');
+            if(!row){
+                continue;
+            }
+            callback(row, i);
+        }
     }
 
     updateTilesetGenerateVisibility()
@@ -194,16 +232,12 @@ class TilesetGenerator
     updateMergeButtonState()
     {
         let checkedCount = 0;
-        for(let i = 0; i < this.app.state.length; i++){
-            let row = document.querySelector('[data-tileset-index="'+i+'"]');
-            if(!row){
-                continue;
-            }
+        this.forEachTilesetRow((row) => {
             let checkbox = row.querySelector('.tileset-merge-checkbox');
             if(checkbox && checkbox.checked){
                 checkedCount++;
             }
-        }
+        });
         let mergeBtn = this.app.getElement('.merge-btn');
         if(mergeBtn){
             mergeBtn.disabled = 2 > checkedCount;
@@ -218,15 +252,11 @@ class TilesetGenerator
         this.app.getElement('.generate-selected-btn').disabled = hasErrors || !hasSelected;
         this.updateTilesetGenerateVisibility();
         this.updateMergeButtonState();
-        for(let i = 0; i < this.app.state.length; i++){
-            let row = document.querySelector('[data-tileset-index="'+i+'"]');
-            if(!row){
-                continue;
-            }
+        this.forEachTilesetRow((row) => {
             let rowErrors = row.querySelectorAll('.element-name-invalid').length > 0;
             let rowSelected = 0 < row.querySelectorAll('.element-bulk-select:checked').length;
             row.querySelector('.tileset-generate-btn').disabled = rowErrors;
             row.querySelector('.tileset-generate-selected-btn').disabled = rowErrors || !rowSelected;
-        }
+        });
     }
 }

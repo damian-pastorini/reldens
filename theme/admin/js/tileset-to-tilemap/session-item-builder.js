@@ -41,6 +41,18 @@ class SessionItemBuilder
             }
             outputFiles.push(file);
         }
+        if(hasMapsConfig){
+            let wizardBtn = document.createElement('a');
+            wizardBtn.className = 'button button-sm button-secondary generated-file-wizard-btn';
+            let analyzer = document.querySelector('.tileset-analyzer');
+            let mapsWizardPath = analyzer ? analyzer.dataset.mapsWizardPath : '/maps-wizard';
+            wizardBtn.href = mapsWizardPath+'?tilesetSessionId='+sessionId;
+            wizardBtn.textContent = 'Maps Wizard';
+            wizardBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
+            header.appendChild(wizardBtn);
+        }
         if(hasConfig){
             let loadBtn = document.createElement('button');
             loadBtn.className = 'button button-sm button-primary generated-file-load-btn';
@@ -50,18 +62,14 @@ class SessionItemBuilder
                 this.manager.loadSession(sessionId);
             });
             header.appendChild(loadBtn);
-        }
-        if(hasMapsConfig){
-            let wizardBtn = document.createElement('a');
-            wizardBtn.className = 'button button-sm button-success generated-file-wizard-btn';
-            let analyzer = document.querySelector('.tileset-analyzer');
-            let mapsWizardPath = analyzer ? analyzer.dataset.mapsWizardPath : '/maps-wizard';
-            wizardBtn.href = mapsWizardPath+'?tilesetSessionId='+sessionId;
-            wizardBtn.textContent = 'Maps Wizard';
-            wizardBtn.addEventListener('click', (e) => {
+            let appendBtn = document.createElement('button');
+            appendBtn.className = 'button button-sm button-success generated-file-append-btn';
+            appendBtn.textContent = 'Append';
+            appendBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
+                this.manager.appendSession(sessionId);
             });
-            header.appendChild(wizardBtn);
+            header.appendChild(appendBtn);
         }
         let deleteBtn = document.createElement('button');
         deleteBtn.className = 'button button-sm button-danger generated-file-delete-btn';

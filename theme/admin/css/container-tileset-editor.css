@@ -255,6 +255,12 @@
         gap: var(--space-md);
     }
 
+    & .global-tile-options-toggle-btn.active {
+        background: var(--color-grey-50);
+        border-color: var(--color-yellow);
+        color: var(--color-yellow);
+    }
+
     & .review-actions-row {
         flex-direction: column;
         align-items: flex-end;

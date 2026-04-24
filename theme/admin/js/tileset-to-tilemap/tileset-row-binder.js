@@ -70,7 +70,8 @@ class TilesetRowBinder
             legendSearch: row.querySelector('.legend-search'),
             showElementsCheck: row.querySelector('.show-elements-check'),
             showClustersCheck: row.querySelector('.show-clusters-check'),
-            showSpotsCheck: row.querySelector('.show-spots-check')
+            showSpotsCheck: row.querySelector('.show-spots-check'),
+            bulkDeleteSpotsBtn: row.querySelector('.bulk-delete-spots-btn')
         };
     }
 
@@ -123,21 +124,38 @@ class TilesetRowBinder
         if(refs.showSpotsCheck){
             refs.showSpotsCheck.addEventListener('change', () => this.app.editor.renderLegend(capturedI));
         }
+        if(refs.bulkDeleteSpotsBtn){
+            refs.bulkDeleteSpotsBtn.addEventListener('click', () => this.bulkDeleteSelectedSpots(capturedI));
+        }
         this.bindViewControls(capturedI, refs);
         this.bindSessionControls(row, capturedI);
-        this.bindLegendTabs(row);
+        this.bindLegendTabs(row, capturedI);
         if(this.app.tileOptionsBinder){
             this.app.tileOptionsBinder.bind(capturedI, row);
         }
     }
 
-    bindLegendTabs(row)
+    bulkDeleteSelectedSpots(tilesetIndex)
+    {
+        let spots = this.app.state[tilesetIndex].spots || [];
+        let remaining = [];
+        for(let spot of spots){
+            if(!spot.bulkSelected){
+                remaining.push(spot);
+            }
+        }
+        this.app.state[tilesetIndex].spots = remaining;
+        this.app.editor.renderLegend(tilesetIndex);
+    }
+
+    bindLegendTabs(row, tilesetIndex)
     {
         let tabs = row.querySelectorAll('.legend-tab');
         let panes = row.querySelectorAll('.legend-tab-pane');
         for(let tab of tabs){
             tab.addEventListener('click', () => {
                 this.activateLegendTab(tab, tabs, panes);
+                this.app.renderer.renderCanvas(tilesetIndex);
             });
         }
     }

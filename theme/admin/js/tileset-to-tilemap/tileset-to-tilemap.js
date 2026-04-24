@@ -84,7 +84,13 @@ class TilesetAnalyzerApp
         }
         this.globalPanelBound = true;
         btn.addEventListener('click', () => {
+            let isClosing = !panel.classList.contains('hidden');
             panel.classList.toggle('hidden');
+            btn.classList.toggle('active', !panel.classList.contains('hidden'));
+            if(isClosing && this.tileOptionsBinder && -1 === this.tileOptionsBinder.activeTilesetIndex){
+                this.tileOptionsBinder.deactivate();
+            }
+            this.renderAllCanvases();
         });
         let tileOptionsPanel = panel.querySelector('.tileset-tile-options');
         if(tileOptionsPanel){
@@ -102,6 +108,18 @@ class TilesetAnalyzerApp
     {
         this.getElement('.review-section').classList.add('hidden');
         this.getElement('.new-session-btn').classList.add('hidden');
+        let wizardBtn = this.getElement('.maps-wizard-btn');
+        if(wizardBtn){
+            wizardBtn.classList.add('hidden');
+        }
+    }
+
+    showMapsWizardBtn()
+    {
+        let wizardBtn = this.getElement('.maps-wizard-btn');
+        if(wizardBtn){
+            wizardBtn.classList.remove('hidden');
+        }
     }
 
     clearSelection(tilesetIndex)

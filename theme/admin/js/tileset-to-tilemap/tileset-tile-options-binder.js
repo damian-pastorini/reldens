@@ -208,17 +208,14 @@ class TilesetTileOptionsBinder
         }
         let spotNum = SharedUtils.padNum(tileset.spots.length + 1);
         tileset.spots.push(this.buildDefaultSpot('spot-'+spotNum));
+        this.app.selectedSpot = { tilesetIndex, spotIndex: tileset.spots.length - 1 };
         this.app.editor.renderLegend(tilesetIndex);
         let refs = this.app.refs[tilesetIndex];
         if(refs && refs.list){
             let spotRows = refs.list.querySelectorAll('.spot-row');
             let lastRow = spotRows[spotRows.length - 1];
             if(lastRow){
-                let detail = lastRow.querySelector('.spot-detail');
-                if(detail){
-                    detail.classList.remove('hidden');
-                }
-                lastRow.scrollIntoView({ block: 'start', behavior: 'instant' });
+                refs.list.scrollTop = lastRow.getBoundingClientRect().top - refs.list.getBoundingClientRect().top + refs.list.scrollTop;
             }
         }
     }
