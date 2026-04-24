@@ -6,15 +6,17 @@ class TilesetStateBuilder
         this.rowBinder = new TilesetRowBinder(app);
     }
 
-    normalizeImageUrl(imageUrl)
+    remapImageUrl(imageUrl, sessionId)
     {
         if(!imageUrl){
             return imageUrl;
         }
-        if(imageUrl.startsWith('/tileset-image/')){
-            return imageUrl.slice(1);
+        let normalized = imageUrl.startsWith('/') ? imageUrl.slice(1) : imageUrl;
+        let match = normalized.match(/^tileset-image\/[^/]+\/(.+)$/);
+        if(!match){
+            return normalized;
         }
-        return imageUrl;
+        return 'tileset-image/'+sessionId+'/'+match[1];
     }
 
     buildElementsList(elementsData, startIndex)
@@ -32,6 +34,7 @@ class TilesetStateBuilder
             item.quantity = elementData.quantity || 1;
             item.freeSpaceAround = elementData.freeSpaceAround !== undefined ? elementData.freeSpaceAround : 1;
             item.allowPathsInFreeSpace = elementData.allowPathsInFreeSpace || false;
+            item.bulkSelected = elementData.bulkSelected || false;
             elements.push(item);
         }
         return elements;
@@ -72,7 +75,7 @@ class TilesetStateBuilder
         this.globalElementIndex += elements.length;
         this.app.state.push({
             sessionId,
-            imageUrl: this.normalizeImageUrl(tilesetData.imageUrl),
+            imageUrl: this.remapImageUrl(tilesetData.imageUrl, sessionId),
             imageId: tilesetData.imageId,
             filename: tilesetData.filename,
             filePath: tilesetData.filePath,
@@ -106,37 +109,44 @@ class TilesetStateBuilder
         this.appendFragmentAndBindRow(i, tilesetFragment, container, genType, tilesetData.associationsProperties);
     }
 
-    loadFromSession(data)
+    prepareSessionData(data)
     {
         let container = this.app.getElement('.tileset-analyzer');
         data.showAiControls = '1' === container.dataset.showAiControls;
         let providers = container.dataset.activeProviders;
         data.activeProviders = providers ? providers.split(',') : [];
+    }
+
+    loadFromSession(data)
+    {
+        this.prepareSessionData(data);
         if(data.globalTileOptions){
             this.app.globalTileOptions = data.globalTileOptions;
             if(this.app.tileOptionsBinder){
                 this.app.tileOptionsBinder.apply.applyToRow(-1, null);
             }
         }
+        this.build(data);
+        this.app.showReviewSection();
+    }
+
+    appendFromSession(data)
+    {
+        this.prepareSessionData(data);
+        let existingFilenames = new Set(this.app.state.map(ts => ts.filename));
+        let newTilesets = data.tilesets.filter(ts => !existingFilenames.has(ts.filename));
+        if(!newTilesets.length){
+            return;
+        }
+        let savedSessionId = this.app.sessionId;
+        data.tilesets = newTilesets;
         if(!this.app.state.length){
             this.build(data);
             this.app.showReviewSection();
             return;
         }
-        for(let tilesetData of data.tilesets){
-            this.syncSessionTileset(tilesetData);
-        }
-        this.app.updatePaletteStyles();
-        this.app.generator.updateGenerateButtonState();
-    }
-
-    replaceSessionElements(tilesetIndex, elementsData)
-    {
-        let elements = this.buildElementsList(elementsData, this.globalElementIndex);
-        this.globalElementIndex += elements.length;
-        this.app.state[tilesetIndex].elements = elements;
-        this.app.editor.renderLegend(tilesetIndex);
-        this.app.renderer.renderCanvas(tilesetIndex);
+        this.append(data);
+        this.app.sessionId = savedSessionId;
     }
 
     findTilesetIndex(filename)
@@ -147,20 +157,6 @@ class TilesetStateBuilder
             }
         }
         return -1;
-    }
-
-    syncSessionTileset(tilesetData)
-    {
-        let j = this.findTilesetIndex(tilesetData.filename);
-        if(-1 === j){
-            return;
-        }
-        this.app.state[j].tileOptions = tilesetData.tileOptions;
-        this.app.state[j].spots = tilesetData.spots;
-        this.replaceSessionElements(j, tilesetData.elements);
-        if(this.app.tileOptionsBinder){
-            this.app.tileOptionsBinder.applyToTilesetRow(j);
-        }
     }
 
     appendOrReplace(response, overrideFilenames)
@@ -190,7 +186,7 @@ class TilesetStateBuilder
         let elements = this.buildElementsList(tilesetData.elements, globalOffset);
         let existing = this.app.state[existingIndex];
         existing.sessionId = sessionId;
-        existing.imageUrl = this.normalizeImageUrl(tilesetData.imageUrl);
+        existing.imageUrl = this.remapImageUrl(tilesetData.imageUrl, sessionId);
         existing.imageId = tilesetData.imageId;
         existing.filePath = tilesetData.filePath;
         existing.imageWidth = tilesetData.imageWidth;

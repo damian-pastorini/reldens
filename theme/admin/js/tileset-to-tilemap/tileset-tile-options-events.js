@@ -3,6 +3,7 @@ class TilesetTileOptionsEvents
     constructor(binder)
     {
         this.binder = binder;
+        this.spotPropsBinder = new TilesetSpotPropsBinder(this);
     }
 
     iterateBtnsWithOptionKey(btns, callback)
@@ -199,99 +200,11 @@ class TilesetTileOptionsEvents
         this.bindOptionBtns(tilesetIndex, spotRow, spotName);
         this.bindClearBtns(tilesetIndex, spotRow, spotName);
         this.bindPositionCells(tilesetIndex, spotRow, spotName);
-        this.bindSpotProperties(spotRow, tilesetIndex, spotName);
-    }
-
-    bindSpotProperties(spotRow, tilesetIndex, spotName)
-    {
-        let props = spotRow.querySelectorAll('.spot-prop');
-        for(let prop of props){
-            let key = this.resolveSpotPropKey(prop);
-            if(!key){
-                continue;
-            }
-            prop.addEventListener('change', () => {
-                let spot = this.binder.findSpot(tilesetIndex, spotName);
-                if(!spot){
-                    return;
-                }
-                if('checkbox' === prop.type){
-                    this.applyCheckboxProp(spot, key, prop, spotRow);
-                    return;
-                }
-                if('number' === prop.type){
-                    spot[key] = prop.value === '' ? null : +prop.value;
-                    return;
-                }
-                spot[key] = prop.value;
-            });
+        this.spotPropsBinder.bind(spotRow, tilesetIndex, spotName);
+        let spot = this.binder.findSpot(tilesetIndex, spotName);
+        if(spot){
+            this.binder.apply.applySpotToRow(spotRow, spot);
         }
     }
 
-    applyCheckboxProp(spot, key, prop, spotRow)
-    {
-        spot[key] = prop.checked;
-        if('isElement' === key){
-            this.binder.toggleIsElementFields(spotRow, prop.checked);
-        }
-    }
-
-    resolveSpotPropKey(prop)
-    {
-        if(prop.classList.contains('spot-width')){
-            return 'width';
-        }
-        if(prop.classList.contains('spot-height')){
-            return 'height';
-        }
-        if(prop.classList.contains('spot-quantity')){
-            return 'quantity';
-        }
-        if(prop.classList.contains('spot-layer-name')){
-            return 'layerName';
-        }
-        if(prop.classList.contains('spot-walkable')){
-            return 'walkable';
-        }
-        if(prop.classList.contains('spot-mark-percentage')){
-            return 'markPercentage';
-        }
-        if(prop.classList.contains('spot-variable-tiles-pct')){
-            return 'variableTilesPercentage';
-        }
-        if(prop.classList.contains('spot-is-element')){
-            return 'isElement';
-        }
-        if(prop.classList.contains('spot-free-space')){
-            return 'freeSpaceAround';
-        }
-        if(prop.classList.contains('spot-allow-paths')){
-            return 'allowPathsInFreeSpace';
-        }
-        if(prop.classList.contains('spot-map-centered')){
-            return 'mapCentered';
-        }
-        if(prop.classList.contains('spot-place-random-path')){
-            return 'placeRandomPath';
-        }
-        if(prop.classList.contains('spot-depth')){
-            return 'depth';
-        }
-        if(prop.classList.contains('spot-split-borders')){
-            return 'splitBordersInLayers';
-        }
-        if(prop.classList.contains('spot-border-layer-suffix')){
-            return 'borderLayerSuffix';
-        }
-        if(prop.classList.contains('spot-walls-layer-suffix')){
-            return 'wallsLayerSuffix';
-        }
-        if(prop.classList.contains('spot-outer-walls-suffix')){
-            return 'outerWallsLayerSuffix';
-        }
-        if(prop.classList.contains('spot-border-outer-walls-size')){
-            return 'borderOuterWallsIncreaseLayerSize';
-        }
-        return null;
-    }
 }

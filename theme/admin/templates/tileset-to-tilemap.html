@@ -52,6 +52,7 @@
                         <button type="button" class="button button-success generate-btn">Generate All</button>
                         <span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">Generates files ONLY for SELECTED elements IN EVERY TILESET.</span></span>
                         <button type="button" class="button button-primary generate-selected-btn">Generate Selected</button>
+                        <button type="button" class="button button-secondary maps-wizard-btn hidden">Maps Wizard</button>
                         <span class="generate-loading spinner hidden"></span>
                     </div>
                 </div>
@@ -143,8 +144,7 @@
                         </div>
                         <div class="tile-pick-status hidden" data-pick-for="bordersTiles"><span class="tile-pick-label"></span><button type="button" class="button button-sm tile-pick-cancel">Cancel</button></div>
                         <div class="tile-pick-status hidden" data-pick-for="borderCornersTiles"><span class="tile-pick-label"></span><button type="button" class="button button-sm tile-pick-cancel">Cancel</button></div>
-                        <button type="button" class="button button-sm tile-options-group-clear-all" data-option="bordersTiles">Clear borders</button>
-                        <button type="button" class="button button-sm tile-options-group-clear-all" data-option="borderCornersTiles">Clear corners</button>
+                        <button type="button" class="button button-sm tile-options-group-clear-all" data-option="borders">Clear</button>
                     </div>
                 </div>
             </div>
@@ -306,6 +306,7 @@
                         <button class="button button-sm button-dark bulk-name-btn tileset-ai-only hidden" type="button">Name AI</button>
                         <span class="spinner hidden"></span>
                         <span class="element-ai-progress-msg hidden"></span>
+                        <button class="button button-sm button-danger bulk-delete-spots-btn" type="button"><img src="/assets/admin/trash-can-solid-full.svg" alt="Delete checked spots"></button>
                     </div>
                     <div class="elements-list"></div>
                 </div>
@@ -350,8 +351,8 @@
                         </div>
                         <div class="tile-options-group">
                             <div class="tile-options-group-header">
-                                <span class="tile-options-group-label">Path Surrounding Tiles</span>
-                                <button type="button" class="button button-sm button-secondary tile-reference-btn" data-reference-img="/assets/admin/tile-references/path-surrounding-tiles.png" data-reference-title="Path Surrounding Tiles">Check Reference</button>
+                                <span class="tile-options-group-label">Surrounding Tiles</span>
+                                <button type="button" class="button button-sm button-secondary tile-reference-btn" data-reference-img="/assets/admin/tile-references/path-surrounding-tiles.png" data-reference-title="Surrounding Tiles">Check Reference</button>
                             </div>
                             <div class="tile-position-grid tile-position-grid-3x3" data-option="surroundingTiles">
                                 <div class="tile-position-cell" data-pos="-1,-1"><span class="pos-dir">NW</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
@@ -369,8 +370,8 @@
                         </div>
                         <div class="tile-options-group">
                             <div class="tile-options-group-header">
-                                <span class="tile-options-group-label">Path Corner Tiles</span>
-                                <button type="button" class="button button-sm button-secondary tile-reference-btn" data-reference-img="/assets/admin/tile-references/path-corner-tiles.png" data-reference-title="Path Corner Tiles">Check Reference</button>
+                                <span class="tile-options-group-label">Corner Tiles</span>
+                                <button type="button" class="button button-sm button-secondary tile-reference-btn" data-reference-img="/assets/admin/tile-references/path-corner-tiles.png" data-reference-title="Corner Tiles">Check Reference</button>
                             </div>
                             <div class="tile-position-grid tile-position-grid-2x2" data-option="corners">
                                 <div class="tile-position-cell" data-pos="-1,-1"><span class="pos-dir">NW</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
@@ -383,8 +384,8 @@
                         </div>
                         <div class="tile-options-group">
                             <div class="tile-options-group-header">
-                                <span class="tile-options-group-label">Path Border Tiles</span>
-                                <button type="button" class="button button-sm button-secondary tile-reference-btn" data-reference-img="/assets/admin/tile-references/path-border-tiles.png" data-reference-title="Path Border Tiles">Check Reference</button>
+                                <span class="tile-options-group-label">Border Tiles</span>
+                                <button type="button" class="button button-sm button-secondary tile-reference-btn" data-reference-img="/assets/admin/tile-references/path-border-tiles.png" data-reference-title="Border Tiles">Check Reference</button>
                             </div>
                             <div class="tile-position-grid tile-position-grid-3x3">
                                 <div class="tile-position-cell" data-option="borderCornersTiles" data-pos="top-left"><span class="pos-dir">NW</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
@@ -399,8 +400,7 @@
                             </div>
                             <div class="tile-pick-status hidden" data-pick-for="bordersTiles"><span class="tile-pick-label"></span><button type="button" class="button button-sm button-danger tile-pick-cancel">Cancel</button></div>
                             <div class="tile-pick-status hidden" data-pick-for="borderCornersTiles"><span class="tile-pick-label"></span><button type="button" class="button button-sm button-danger tile-pick-cancel">Cancel</button></div>
-                            <button type="button" class="button button-sm button-danger tile-options-group-clear-all" data-option="bordersTiles">Clear borders</button>
-                            <button type="button" class="button button-sm button-danger tile-options-group-clear-all" data-option="borderCornersTiles">Clear corners</button>
+                            <button type="button" class="button button-sm button-danger tile-options-group-clear-all" data-option="borders">Clear</button>
                         </div>
                     </div>
                 </div>
@@ -452,6 +452,7 @@
                 <label><input type="radio" class="layer-type-radio" value="over-player"><span class="layer-color-swatch layer-color-over-player"></span> Over player</label>
                 <label><input type="radio" class="layer-type-radio" value="collisions-over-player"><span class="layer-color-swatch layer-color-collisions-over-player"></span> Collisions + over player</label>
                 <label><input type="radio" class="layer-type-radio" value="base"><span class="layer-color-swatch layer-color-base"></span> Base</label>
+                <label><input type="radio" class="layer-type-radio" value="path"><span class="layer-color-swatch layer-color-path"></span> Path</label>
                 <label><input type="radio" class="layer-type-radio layer-type-custom-radio" value="custom"><span class="layer-color-swatch layer-color-custom"></span> Custom: <input type="text" class="layer-type-custom-input" placeholder="suffix"></label>
             </fieldset>
         </div>
@@ -639,8 +640,8 @@
                 <div class="tile-pick-status hidden" data-pick-for="spotTileVariations"><span class="tile-pick-label"></span><button type="button" class="button button-sm button-danger tile-pick-cancel">Cancel</button></div>
                 <div class="tile-options-group">
                     <div class="tile-options-group-header">
-                        <span class="tile-options-group-label">Path Surrounding Tiles</span>
-                        <button type="button" class="button button-sm button-secondary tile-reference-btn" data-reference-img="/assets/admin/tile-references/path-surrounding-tiles.png" data-reference-title="Path Surrounding Tiles">Check Reference</button>
+                        <span class="tile-options-group-label">Surrounding Tiles</span>
+                        <button type="button" class="button button-sm button-secondary tile-reference-btn" data-reference-img="/assets/admin/tile-references/path-surrounding-tiles.png" data-reference-title="Surrounding Tiles">Check Reference</button>
                     </div>
                     <div class="tile-position-grid tile-position-grid-3x3" data-option="surroundingTiles">
                         <div class="tile-position-cell" data-pos="-1,-1"><span class="pos-dir">NW</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
@@ -658,8 +659,8 @@
                 </div>
                 <div class="tile-options-group">
                     <div class="tile-options-group-header">
-                        <span class="tile-options-group-label">Path Corner Tiles</span>
-                        <button type="button" class="button button-sm button-secondary tile-reference-btn" data-reference-img="/assets/admin/tile-references/path-corner-tiles.png" data-reference-title="Path Corner Tiles">Check Reference</button>
+                        <span class="tile-options-group-label">Corner Tiles</span>
+                        <button type="button" class="button button-sm button-secondary tile-reference-btn" data-reference-img="/assets/admin/tile-references/path-corner-tiles.png" data-reference-title="Corner Tiles">Check Reference</button>
                     </div>
                     <div class="tile-position-grid tile-position-grid-2x2" data-option="corners">
                         <div class="tile-position-cell" data-pos="-1,-1"><span class="pos-dir">NW</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
@@ -672,8 +673,8 @@
                 </div>
                 <div class="tile-options-group">
                     <div class="tile-options-group-header">
-                        <span class="tile-options-group-label">Path Border Tiles</span>
-                        <button type="button" class="button button-sm button-secondary tile-reference-btn" data-reference-img="/assets/admin/tile-references/path-border-tiles.png" data-reference-title="Path Border Tiles">Check Reference</button>
+                        <span class="tile-options-group-label">Border Tiles</span>
+                        <button type="button" class="button button-sm button-secondary tile-reference-btn" data-reference-img="/assets/admin/tile-references/path-border-tiles.png" data-reference-title="Border Tiles">Check Reference</button>
                     </div>
                     <div class="tile-position-grid tile-position-grid-3x3">
                         <div class="tile-position-cell" data-option="borderCornersTiles" data-pos="top-left"><span class="pos-dir">NW</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
@@ -688,8 +689,7 @@
                     </div>
                     <div class="tile-pick-status hidden" data-pick-for="bordersTiles"><span class="tile-pick-label"></span><button type="button" class="button button-sm button-danger tile-pick-cancel">Cancel</button></div>
                     <div class="tile-pick-status hidden" data-pick-for="borderCornersTiles"><span class="tile-pick-label"></span><button type="button" class="button button-sm button-danger tile-pick-cancel">Cancel</button></div>
-                    <button type="button" class="button button-sm button-danger tile-options-group-clear-all" data-option="bordersTiles">Clear borders</button>
-                    <button type="button" class="button button-sm button-danger tile-options-group-clear-all" data-option="borderCornersTiles">Clear corners</button>
+                    <button type="button" class="button button-sm button-danger tile-options-group-clear-all" data-option="borders">Clear</button>
                 </div>
             </div>
             <div class="spot-properties">
@@ -697,24 +697,24 @@
                     <span class="tile-options-group-label">Properties</span>
                 </div>
                 <div class="spot-properties-grid">
-                    <label class="spot-prop-label">Width (tiles): <input type="number" class="spot-prop spot-width" min="1"></label>
-                    <label class="spot-prop-label">Height (tiles): <input type="number" class="spot-prop spot-height" min="1"></label>
-                    <label class="spot-prop-label">Quantity: <input type="number" class="spot-prop spot-quantity" min="1" value="1"></label>
-                    <label class="spot-prop-label">Layer Name: <input type="text" class="spot-prop spot-layer-name"></label>
-                    <label class="spot-prop-label"><input type="checkbox" class="spot-prop spot-walkable" checked> Walkable</label>
-                    <label class="spot-prop-label">Mark %: <input type="number" class="spot-prop spot-mark-percentage" min="0" max="100" value="100"></label>
-                    <label class="spot-prop-label">Variable Tiles %: <input type="number" class="spot-prop spot-variable-tiles-pct" min="0" max="100" value="0"></label>
-                    <label class="spot-prop-label"><input type="checkbox" class="spot-prop spot-is-element"> Is Element</label>
-                    <label class="spot-prop-label spot-free-space-row hidden">Free Space: <input type="number" class="spot-prop spot-free-space" min="0"></label>
-                    <label class="spot-prop-label spot-allow-paths-row hidden"><input type="checkbox" class="spot-prop spot-allow-paths"> Allow Paths in Free Space</label>
-                    <label class="spot-prop-label">Map Centered: <input type="number" class="spot-prop spot-map-centered" value="0"></label>
-                    <label class="spot-prop-label"><input type="checkbox" class="spot-prop spot-place-random-path"> Place Random Path</label>
-                    <label class="spot-prop-label"><input type="checkbox" class="spot-prop spot-depth"> Depth</label>
-                    <label class="spot-prop-label"><input type="checkbox" class="spot-prop spot-split-borders"> Split Borders in Layers</label>
-                    <label class="spot-prop-label">Border Layer Suffix: <input type="text" class="spot-prop spot-border-layer-suffix"></label>
-                    <label class="spot-prop-label">Walls Layer Suffix: <input type="text" class="spot-prop spot-walls-layer-suffix"></label>
-                    <label class="spot-prop-label">Outer Walls Suffix: <input type="text" class="spot-prop spot-outer-walls-suffix"></label>
-                    <label class="spot-prop-label">Border Outer Walls Size: <input type="number" class="spot-prop spot-border-outer-walls-size" value="4"></label>
+                    <label class="spot-prop-label">Width (tiles): <input type="number" class="spot-prop spot-width" data-prop="width" min="1"></label>
+                    <label class="spot-prop-label">Height (tiles): <input type="number" class="spot-prop spot-height" data-prop="height" min="1"></label>
+                    <label class="spot-prop-label">Quantity: <input type="number" class="spot-prop spot-quantity" data-prop="quantity" min="1" value="1"></label>
+                    <label class="spot-prop-label">Layer Name: <input type="text" class="spot-prop spot-layer-name" data-prop="layerName"></label>
+                    <label class="spot-prop-label"><input type="checkbox" class="spot-prop spot-walkable" data-prop="walkable" checked> Walkable</label>
+                    <label class="spot-prop-label">Mark %: <input type="number" class="spot-prop spot-mark-percentage" data-prop="markPercentage" min="0" max="100" value="100"></label>
+                    <label class="spot-prop-label">Variable Tiles %: <input type="number" class="spot-prop spot-variable-tiles-pct" data-prop="variableTilesPercentage" min="0" max="100" value="0"></label>
+                    <label class="spot-prop-label"><input type="checkbox" class="spot-prop spot-is-element" data-prop="isElement"> Is Element</label>
+                    <label class="spot-prop-label spot-free-space-row hidden">Free Space: <input type="number" class="spot-prop spot-free-space" data-prop="freeSpaceAround" min="0"></label>
+                    <label class="spot-prop-label spot-allow-paths-row hidden"><input type="checkbox" class="spot-prop spot-allow-paths" data-prop="allowPathsInFreeSpace"> Allow Paths in Free Space</label>
+                    <label class="spot-prop-label">Map Centered: <input type="number" class="spot-prop spot-map-centered" data-prop="mapCentered" value="0"></label>
+                    <label class="spot-prop-label"><input type="checkbox" class="spot-prop spot-place-random-path" data-prop="placeRandomPath"> Place Random Path</label>
+                    <label class="spot-prop-label"><input type="checkbox" class="spot-prop spot-depth" data-prop="depth"> Depth</label>
+                    <label class="spot-prop-label"><input type="checkbox" class="spot-prop spot-split-borders" data-prop="splitBordersInLayers"> Split Borders in Layers</label>
+                    <label class="spot-prop-label">Border Layer Suffix: <input type="text" class="spot-prop spot-border-layer-suffix" data-prop="borderLayerSuffix"></label>
+                    <label class="spot-prop-label">Walls Layer Suffix: <input type="text" class="spot-prop spot-walls-layer-suffix" data-prop="wallsLayerSuffix"></label>
+                    <label class="spot-prop-label">Outer Walls Suffix: <input type="text" class="spot-prop spot-outer-walls-suffix" data-prop="outerWallsLayerSuffix"></label>
+                    <label class="spot-prop-label">Border Outer Walls Size: <input type="number" class="spot-prop spot-border-outer-walls-size" data-prop="borderOuterWallsIncreaseLayerSize" value="4"></label>
                 </div>
             </div>
         </div>
@@ -755,6 +755,7 @@
 <script src="/js/tileset-to-tilemap/tileset-keyboard-shortcuts.js"></script>
 <script src="/js/tileset-to-tilemap/tileset-event-bindings.js"></script>
 <script src="/js/tileset-to-tilemap/tileset-tile-options.js"></script>
+<script src="/js/tileset-to-tilemap/tileset-spot-props-binder.js"></script>
 <script src="/js/tileset-to-tilemap/tileset-tile-options-events.js"></script>
 <script src="/js/tileset-to-tilemap/tileset-tile-options-pick-handler.js"></script>
 <script src="/js/tileset-to-tilemap/tileset-tile-options-clearer.js"></script>

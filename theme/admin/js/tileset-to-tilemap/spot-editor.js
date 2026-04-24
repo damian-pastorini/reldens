@@ -5,56 +5,6 @@ class TilesetSpotEditor
         this.editor = editor;
     }
 
-    getSpotNumberProps()
-    {
-        return [
-            ['spot-width', 'width'],
-            ['spot-height', 'height'],
-            ['spot-quantity', 'quantity'],
-            ['spot-map-centered', 'mapCentered'],
-            ['spot-mark-percentage', 'markPercentage'],
-            ['spot-variable-tiles-pct', 'variableTilesPercentage'],
-            ['spot-free-space', 'freeSpaceAround'],
-            ['spot-border-outer-walls-size', 'borderOuterWallsIncreaseLayerSize']
-        ];
-    }
-
-    getSpotStringProps()
-    {
-        return [
-            ['spot-layer-name', 'layerName'],
-            ['spot-border-layer-suffix', 'borderLayerSuffix'],
-            ['spot-walls-layer-suffix', 'wallsLayerSuffix'],
-            ['spot-outer-walls-suffix', 'outerWallsLayerSuffix']
-        ];
-    }
-
-    getSpotBindCheckboxProps()
-    {
-        return [
-            ['spot-walkable', 'walkable'],
-            ['spot-allow-paths', 'allowPathsInFreeSpace'],
-            ['spot-place-random-path', 'placeRandomPath'],
-            ['spot-depth', 'depth'],
-            ['spot-split-borders', 'splitBordersInLayers']
-        ];
-    }
-
-    getSpotCheckboxProps()
-    {
-        return [['spot-is-element', 'isElement'], ...this.getSpotBindCheckboxProps()];
-    }
-
-    populatePropValues(frag, spot, props)
-    {
-        for(let pair of props){
-            let el = frag.querySelector('.'+pair[0]);
-            if(el && spot[pair[1]] !== undefined){
-                el.value = spot[pair[1]];
-            }
-        }
-    }
-
     appendSpotRow(list, spot, si, tileset, tilesetIndex, spotTemplate)
     {
         let capturedSi = si;
@@ -64,6 +14,11 @@ class TilesetSpotEditor
         let nameInput = frag.querySelector('.spot-name-input');
         nameInput.value = spot.name || '';
         let detail = frag.querySelector('.spot-detail');
+        if(this.editor.app.selectedSpot
+            && this.editor.app.selectedSpot.tilesetIndex === tilesetIndex
+            && this.editor.app.selectedSpot.spotIndex === si){
+            detail.classList.remove('hidden');
+        }
         let spotHeader = frag.querySelector('.spot-row-header');
         let deleteBtn = frag.querySelector('.spot-delete-btn');
         let lockBtn = frag.querySelector('.spot-lock-btn');
@@ -80,7 +35,6 @@ class TilesetSpotEditor
             if(e.target === deleteBtn || deleteBtn.contains(e.target)){
                 return;
             }
-            detail.classList.toggle('hidden');
             let app = this.editor.app;
             let wasSelected = app.selectedSpot
                 && app.selectedSpot.tilesetIndex === tilesetIndex
@@ -88,8 +42,7 @@ class TilesetSpotEditor
             app.selectedSpot = wasSelected ? null : { tilesetIndex, spotIndex: capturedSi };
             app.refresh(tilesetIndex);
         });
-        this.populateSpotProps(frag, spot);
-        this.bindSpotPropInputs(frag, spot);
+        this.initSpotProps(frag, spot);
         nameInput.addEventListener('blur', () => {
             tileset.spots[capturedSi].name = nameInput.value;
             this.editor.renderLegend(tilesetIndex);
@@ -140,68 +93,51 @@ class TilesetSpotEditor
         });
     }
 
-    populateSpotProps(frag, spot)
+    toggleIsElementRows(freeSpaceRow, allowPathsRow, checked)
     {
-        this.populatePropValues(frag, spot, this.getSpotNumberProps());
-        this.populatePropValues(frag, spot, this.getSpotStringProps());
-        for(let pair of this.getSpotCheckboxProps()){
-            let el = frag.querySelector('.'+pair[0]);
-            if(el){
-                el.checked = spot[pair[1]] || false;
-            }
-        }
-        let freeSpaceRow = frag.querySelector('.spot-free-space-row');
-        let allowPathsRow = frag.querySelector('.spot-allow-paths-row');
         if(freeSpaceRow){
-            freeSpaceRow.classList.toggle('hidden', !spot.isElement);
+            freeSpaceRow.classList.toggle('hidden', !checked);
         }
         if(allowPathsRow){
-            allowPathsRow.classList.toggle('hidden', !spot.isElement);
+            allowPathsRow.classList.toggle('hidden', !checked);
         }
     }
 
-    bindSpotPropInputs(frag, spot)
+    bindCheckboxProp(el, key, spot, freeSpaceRow, allowPathsRow)
     {
-        let isElementInput = frag.querySelector('.spot-is-element');
+        el.addEventListener('change', () => {
+            spot[key] = el.checked;
+            if('isElement' === key){
+                this.toggleIsElementRows(freeSpaceRow, allowPathsRow, el.checked);
+            }
+        });
+    }
+
+    initSpotProps(frag, spot)
+    {
         let freeSpaceRow = frag.querySelector('.spot-free-space-row');
         let allowPathsRow = frag.querySelector('.spot-allow-paths-row');
-        if(isElementInput){
-            isElementInput.addEventListener('change', () => {
-                spot.isElement = isElementInput.checked;
-                if(freeSpaceRow){
-                    freeSpaceRow.classList.toggle('hidden', !isElementInput.checked);
-                }
-                if(allowPathsRow){
-                    allowPathsRow.classList.toggle('hidden', !isElementInput.checked);
-                }
+        let props = frag.querySelectorAll('[data-prop]');
+        for(let el of props){
+            let key = el.dataset.prop;
+            if('checkbox' === el.type){
+                el.checked = spot[key] || false;
+                this.bindCheckboxProp(el, key, spot, freeSpaceRow, allowPathsRow);
+                continue;
+            }
+            if(spot[key] !== undefined){
+                el.value = spot[key];
+            }
+            if('number' === el.type){
+                el.addEventListener('input', () => {
+                    spot[key] = el.value === '' ? null : +el.value;
+                });
+                continue;
+            }
+            el.addEventListener('input', () => {
+                spot[key] = el.value;
             });
         }
-        for(let pair of this.getSpotNumberProps()){
-            let el = frag.querySelector('.'+pair[0]);
-            if(el){
-                let key = pair[1];
-                el.addEventListener('input', () => {
-                    spot[key] = Number(el.value);
-                });
-            }
-        }
-        for(let pair of this.getSpotStringProps()){
-            let el = frag.querySelector('.'+pair[0]);
-            if(el){
-                let key = pair[1];
-                el.addEventListener('input', () => {
-                    spot[key] = el.value;
-                });
-            }
-        }
-        for(let pair of this.getSpotBindCheckboxProps()){
-            let el = frag.querySelector('.'+pair[0]);
-            if(el){
-                let key = pair[1];
-                el.addEventListener('change', () => {
-                    spot[key] = el.checked;
-                });
-            }
-        }
+        this.toggleIsElementRows(freeSpaceRow, allowPathsRow, spot.isElement);
     }
 }

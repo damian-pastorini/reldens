@@ -74,7 +74,6 @@ class TilesetTileOptionsPickHandler
             return;
         }
         opts[optionKey] = entry;
-        this.binder.deactivate();
     }
 
     toggleGlobalArrayOption(target, key, entry)
@@ -107,7 +106,6 @@ class TilesetTileOptionsPickHandler
         }
         if('spotTile' === optionKey){
             spot.spotTile = flatIndex;
-            this.binder.deactivate();
             return;
         }
         if('spotTileVariations' === optionKey){
@@ -135,7 +133,6 @@ class TilesetTileOptionsPickHandler
             return;
         }
         tileOpts[optionKey] = flatIndex;
-        this.binder.deactivate();
     }
 
     applyPositionalPick(target, optionKey, posKey, flatIndex, tilesetIndex)

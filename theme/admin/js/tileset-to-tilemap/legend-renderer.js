@@ -77,7 +77,7 @@ class TilesetLegendRenderer
         freeSpaceInput.value = element.freeSpaceAround;
         let allowPathsInput = frag.querySelector('.element-allow-paths');
         allowPathsInput.checked = element.allowPathsInFreeSpace;
-        let knownLayerTypes = ['below-player', 'collisions', 'over-player', 'collisions-over-player', 'base'];
+        let knownLayerTypes = ['below-player', 'collisions', 'over-player', 'collisions-over-player', 'base', 'path'];
         let isCustomActive = isSelected && !knownLayerTypes.includes(app.activeLayerType);
         let radioName = 'layer-type-t'+tilesetIndex+'-e'+i;
         let radios = frag.querySelectorAll('.layer-type-radio');
