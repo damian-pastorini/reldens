@@ -1,0 +1,456 @@
+.maps-wizard {
+    .sub-content-box {
+        position: relative;
+    }
+
+    .maps-wizard-generating-overlay {
+        position: absolute;
+        inset: 0;
+        background-color: rgba(0, 0, 0, 0.65);
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: var(--radius-sm);
+
+        &.hidden {
+            display: none;
+        }
+
+        .maps-wizard-generating-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--space-lg);
+            color: var(--color-white);
+
+            img {
+                width: 3rem;
+            }
+
+            p {
+                margin: 0;
+                font-size: var(--font-size-lg);
+                font-weight: var(--bold);
+            }
+        }
+    }
+
+    .main-action-container.maps-selection {
+        width: 100%;
+
+        .wizard-options-container {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            width: 100%;
+
+            .wizard-map-option-container {
+                flex: 0 0 22%;
+                padding: var(--space-lg) var(--space-sm) 0;
+                margin: var(--space-2xl) 0 0;
+                border: 1px solid var(--color-grey-40);
+
+                &:only-child {
+                    flex: 0 0 100%;
+                    padding: var(--space-lg) 0 0;
+                    border: none;
+                }
+
+                &:first-child:nth-last-child(2),
+                &:last-child:nth-child(2) {
+                    flex: 0 0 47%;
+                }
+            }
+
+            input.map-wizard-option {
+                top: 0.125rem;
+                margin-right: 0;
+            }
+
+            .selector-box {
+                display: flex;
+                align-items: center;
+                flex-wrap: wrap;
+                gap: var(--space-sm);
+
+                input.map-wizard-option {
+                    top: 0;
+                }
+
+                & p {
+                    flex: 0 0 100%;
+                    margin: 0;
+                }
+            }
+        }
+    }
+
+    .checkbox-container {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: var(--space-sm);
+        font-weight: var(--bold);
+        color: var(--color-grey);
+    }
+
+    .wizard-options-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-lg);
+        padding: 0;
+        margin-bottom: var(--space-lg);
+        list-style: none;
+        width: 100%;
+
+        input.map-wizard-option {
+            position: relative;
+            top: -0.125rem;
+            margin-right: 0.375rem;
+        }
+
+        .wizard-map-option-container {
+            display: flex;
+            flex-direction: column;
+            list-style: none;
+            padding-top: var(--space-lg);
+            margin-top: var(--space-2xl);
+            border-top: 1px solid var(--color-grey-40);
+
+            label {
+                cursor: pointer;
+                color: var(--color-grey);
+            }
+
+            canvas {
+                align-self: flex-start;
+                margin-top: var(--space-lg);
+                max-width: 100%;
+            }
+        }
+
+        .wizard-option-container {
+            list-style: none;
+            flex: 0 0 calc(50% - var(--space-sm));
+            max-width: calc(50% - var(--space-sm));
+            padding: var(--space-lg);
+            margin-bottom: 0;
+            background-color: var(--color-grey-60);
+            border: 1px solid var(--color-grey-40);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+
+            &.active {
+                background-color: var(--color-grey-50);
+                border-color: var(--color-blue);
+
+                .maps-wizard-option-content {
+                    display: block;
+                }
+            }
+
+            .main-option {
+                display: inline-block;
+                cursor: pointer;
+                color: var(--color-grey);
+                font-size: var(--font-size-sm);
+                font-weight: var(--font-weight-regular);
+            }
+
+            .maps-wizard-option-content {
+                display: none;
+                padding-top: var(--space-sm);
+            }
+        }
+    }
+
+    .maps-wizard-form input.button-maps-wizard {
+        margin-right: 0;
+    }
+
+    .maps-wizard-form {
+        align-items: flex-start;
+        flex-direction: column;
+        justify-content: flex-start;
+
+        .main-action-container {
+            width: 100%;
+        }
+
+        textarea.generatorData {
+            width: 100%;
+            margin-top: var(--space-sm);
+        }
+
+        &:not(.maps-import-form) .submit-container {
+            display: flex;
+            gap: var(--space-md);
+            margin-top: var(--space-lg);
+        }
+    }
+
+    .maps-import-form .submit-container {
+        display: flex;
+        gap: var(--space-md);
+        position: sticky;
+        top: 0;
+        margin-bottom: var(--space-lg);
+        z-index: 10;
+    }
+
+    .maps-import-form .submit-container.is-sticky {
+        background-color: var(--color-grey-60);
+        padding: var(--space-xl);
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--color-grey-40);
+        margin-bottom: 0;
+    }
+
+    .sub-map-option-description {
+        display: flex;
+        align-items: center;
+        color: var(--color-grey);
+
+        img.icon-sm {
+            margin-right: var(--space-lg);
+        }
+    }
+
+    .sub-maps-container {
+        display: block;
+
+        &.hidden {
+            display: none;
+        }
+
+        p {
+            margin: var(--space-2xl) 0 0;
+            color: var(--color-grey);
+        }
+    }
+
+    .config-container,
+    .common-config-container {
+        margin-top: var(--space-lg);
+        padding: var(--space-lg);
+        background-color: var(--color-grey-60);
+        border: 1px solid var(--color-grey-40);
+        border-radius: var(--radius-sm);
+
+        h3.clickable {
+            cursor: pointer;
+            position: relative;
+            padding-left: 1.125rem;
+            margin: 0;
+            line-height: 2rem;
+            color: var(--color-grey);
+            user-select: none;
+
+            &::before {
+                content: '+';
+                position: absolute;
+                left: 0;
+                top: 0;
+            }
+
+            &:hover {
+                color: var(--color-white);
+            }
+        }
+
+        .config-grid {
+            display: none;
+            flex-wrap: wrap;
+            gap: var(--space-sm);
+            margin-top: var(--space-lg);
+        }
+
+        &.active {
+            h3.clickable::before {
+                content: '-';
+                left: 0.125rem;
+            }
+
+            .config-grid {
+                display: flex;
+            }
+        }
+    }
+
+    .common-config-container {
+        width: 100%;
+        border-color: var(--color-blue-90);
+    }
+
+    .common-config-container .config-grid {
+        gap: var(--space-sm) var(--space-2xl);
+
+        .config-item {
+            flex: 0 0 calc((100% - 2 * var(--space-2xl)) / 3);
+            max-width: calc((100% - 2 * var(--space-2xl)) / 3);
+            min-width: 17.5rem;
+
+            &:first-child {
+                margin-top: 0;
+            }
+        }
+    }
+
+    .maps-wizard-select-title {
+        text-align: center;
+        color: var(--color-grey);
+        margin-bottom: var(--space-lg);
+    }
+
+    .option-actions {
+        display: flex;
+        justify-content: start;
+        gap: 1rem;
+        margin-top: var(--space-md);
+        padding-top: var(--space-md);
+        border-top: 1px solid var(--color-grey-40);
+        flex-wrap: wrap;
+    }
+
+    .wizard-uploads-row {
+        display: flex;
+        gap: var(--space-lg);
+        flex-wrap: wrap;
+        margin-bottom: var(--space-lg);
+
+        .input-box {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: var(--space-md);
+            flex: 1;
+            min-width: 12.5rem;
+            margin: 0;
+            padding: var(--space-sm) var(--space-md);
+            border: 1px solid var(--color-grey-40);
+            border-radius: var(--radius-sm);
+            background-color: var(--color-grey-60);
+
+            label {
+                display: inline;
+                flex-shrink: 0;
+                margin-bottom: 0;
+                font-weight: 600;
+                color: var(--color-grey);
+                white-space: nowrap;
+                cursor: pointer;
+            }
+
+            input[type="file"] {
+                flex: 1;
+                min-width: 0;
+                color: var(--color-grey);
+            }
+        }
+    }
+
+    .config-options-modal {
+        .modal-header {
+            background: var(--color-grey-60);
+            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+        }
+
+        .modal-body {
+            padding: 0;
+            overflow: visible;
+        }
+
+        .config-grid {
+            padding: var(--space-lg) var(--space-2xl);
+            flex: none;
+            align-content: flex-start;
+            gap: var(--space-sm) var(--space-2xl);
+
+            .config-item {
+                flex: 0 0 calc(50% - var(--space-md));
+                max-width: calc(50% - var(--space-md));
+                min-width: 17.5rem;
+            }
+
+            label {
+                position: relative;
+
+                .tooltip {
+                    position: static;
+                }
+            }
+        }
+    }
+
+    .config-options-modal .config-grid .config-item,
+    .common-config-container .config-grid .config-item {
+        margin-bottom: 0;
+        display: flex;
+        flex-direction: row;
+        align-items: flex-start;
+        gap: var(--space-sm);
+
+        &:has(textarea) {
+            flex-direction: column;
+            align-items: stretch;
+            gap: var(--space-xs);
+
+            label {
+                flex: none;
+            }
+        }
+
+        label {
+            flex: 2;
+            margin-bottom: 0;
+            white-space: normal;
+            font-size: var(--font-size-xs);
+            font-weight: var(--font-weight-regular);
+
+            .tooltip {
+                margin-right: 0.5rem;
+            }
+        }
+
+        input,
+        select {
+            flex: 1;
+            min-width: 0;
+            font-size: var(--font-size-xs);
+            padding: var(--space-xs) var(--space-sm);
+        }
+
+        textarea {
+            width: 100%;
+            font-size: var(--font-size-xs);
+            padding: var(--space-xs) var(--space-sm);
+            resize: vertical;
+        }
+    }
+
+    hr.config-divider {
+        flex: 0 0 100%;
+        border: none;
+        border-top: 1px solid var(--color-grey-40);
+        margin: var(--space-sm) 0;
+    }
+
+    .option-info-dialog {
+        .modal-body {
+            p, img {
+                display: block;
+            }
+
+            .sample-image {
+                max-width: 100%;
+                margin: var(--space-sm) 0;
+                border-radius: var(--radius-sm);
+                border: 1px solid var(--color-grey-40);
+            }
+        }
+    }
+}

@@ -1,18 +1,24 @@
 <button type="button" class="button button-warning cache-clear-all-button">
     {{buttonText}}
 </button>
-<dialog class="confirm-dialog">
-    <div class="dialog-content">
-        <h5 class="dialog-title">{{confirmTitle}}</h5>
-        <p class="dialog-message">{{confirmMessage}}</p>
-        <div class="alert cache-warning">
-            <strong>{{warningText}}</strong> {{warningMessage}}
+<div class="modal confirm-dialog hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-dialog confirm-modal-dialog">
+        <div class="modal-header">
+            <h4 class="dialog-title">{{confirmTitle}}</h4>
+            <button type="button" class="button button-close button-circle button-dark">×</button>
         </div>
-        <div class="dialog-actions">
+        <div class="modal-body">
+            <p class="dialog-message">{{confirmMessage}}</p>
+            <div class="alert cache-warning">
+                <strong>{{warningText}}</strong> {{warningMessage}}
+            </div>
+        </div>
+        <div class="modal-footer">
             <button type="button" class="button button-secondary dialog-cancel">{{cancelText}}</button>
             <form method="post" action="{{clearAllCacheRoute}}" class="cache-clear-form">
                 <button type="submit" class="button button-danger dialog-confirm">{{confirmText}}</button>
             </form>
         </div>
     </div>
-</dialog>
+</div>

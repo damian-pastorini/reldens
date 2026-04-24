@@ -1,0 +1,763 @@
+<style class="dynamic-palette"></style>
+<div class="tileset-analyzer-wrapper">
+<div class="tileset-analyzer" data-show-ai-controls="{{showAiControls}}" data-active-providers="{{activeProviders}}" data-maps-wizard-path="{{mapsWizardPath}}">
+<button class="button button-close button-circle button-dark help-button" type="button">?</button>
+    <div class="site-header">
+        <h2>Tileset Component Analyzer</h2>
+    </div>
+
+    <section class="upload-section">
+        <form class="upload-form no-auto-disable" enctype="multipart/form-data">
+            <div class="upload-top-row">
+                <h2>Tileset Setup</h2>
+                <div class="form-group">
+                    <input type="file" id="file-input" name="files" accept=".png" multiple>
+                    <label for="file-input">Select tileset PNG files</label>
+                </div>
+                <div class="form-actions">
+                    <span class="upload-loading spinner hidden"></span>
+                    <span class="upload-message hidden">This may take a while until the AI fully analyzes the image.</span>
+                    <button type="submit" class="button button-success analyze-btn">Analyze</button>
+                </div>
+                <button type="button" class="button button-secondary new-session-btn hidden">Start New Session</button>
+            </div>
+            <div class="resize-all-section hidden">
+                <span class="resize-label">Resize all tilesets:</span>
+            </div>
+            <div class="tileset-params"></div>
+        </form>
+
+    </section>
+
+    <section class="review-section hidden">
+        <div class="review-top-bar">
+            <div class="review-top-bar-main-row">
+                <div class="review-top-row">
+                    <h2>Tilesets Editor</h2>
+                </div>
+                <div class="review-actions-row">
+                    <div class="review-actions-session-row">
+                        <label class="session-name-label" for="session-name-input">Session Name:</label>
+                        <input type="text" class="session-name-input" id="session-name-input" placeholder="my-session">
+                        <input type="checkbox" class="override-files-checkbox" id="override-files-checkbox" checked>
+                        <label class="override-files-label" for="override-files-checkbox">Override session</label>
+                        <span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">If unchecked, every save creates a new session with a new date. Check this to overwrite the current session instead.</span></span>
+                        <button type="button" class="button button-warning save-session-btn">Save Session</button>
+                    </div>
+                    <div class="review-actions-buttons-row">
+                        <button type="button" class="button button-dark global-tile-options-toggle-btn hidden">Global Map Tiles</button>
+                        <span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">Merges all tilesets with the Merge checkbox checked into one new combined tileset.</span></span>
+                        <button type="button" class="button merge-btn" disabled>Merge</button>
+                        <span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">Generates files for ALL elements IN EVERY TILESET.</span></span>
+                        <button type="button" class="button button-success generate-btn">Generate All</button>
+                        <span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">Generates files ONLY for SELECTED elements IN EVERY TILESET.</span></span>
+                        <button type="button" class="button button-primary generate-selected-btn">Generate Selected</button>
+                        <button type="button" class="button button-secondary maps-wizard-btn hidden">Maps Wizard</button>
+                        <span class="generate-loading spinner hidden"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="global-tile-options hidden">
+                <div class="tileset-tile-options">
+                    <div class="tile-options-group">
+                        <div class="tile-options-group-header">
+                            <span class="tile-options-group-label">Ground and Path</span>
+                        </div>
+                        <div class="tile-option-cells-row">
+                            <div class="tile-option-cell tile-option-btn" data-option="groundTile" data-multi="false">
+                                <span class="tile-option-cell-label">Ground</span>
+                                <span class="tile-option-display tile-option-cell-val" data-option="groundTile"></span>
+                                <button type="button" class="tile-option-cell-clear tile-option-clear" data-option="groundTile">x</button>
+                            </div>
+                            <div class="tile-option-cell tile-option-btn" data-option="pathTile" data-multi="false">
+                                <span class="tile-option-cell-label">Path</span>
+                                <span class="tile-option-display tile-option-cell-val" data-option="pathTile"></span>
+                                <button type="button" class="tile-option-cell-clear tile-option-clear" data-option="pathTile">x</button>
+                            </div>
+                        </div>
+                        <div class="tile-option-cells-row">
+                            <div class="tile-option-cell tile-option-btn" data-option="borderTile" data-multi="false">
+                                <span class="tile-option-cell-label">Border</span>
+                                <span class="tile-option-display tile-option-cell-val" data-option="borderTile"></span>
+                                <button type="button" class="tile-option-cell-clear tile-option-clear" data-option="borderTile">x</button>
+                            </div>
+                        </div>
+                        <div class="tile-option-cells-row">
+                            <div class="tile-option-cell tile-option-btn" data-option="randomGroundTiles" data-multi="true">
+                                <span class="tile-option-cell-label">Variations</span>
+                                <span class="tile-option-display tile-option-cell-val" data-option="randomGroundTiles"></span>
+                                <div class="tile-option-multi-values" data-multi-option="randomGroundTiles"></div>
+                                <button type="button" class="tile-option-cell-clear tile-option-clear" data-option="randomGroundTiles">x</button>
+                            </div>
+                        </div>
+                        <div class="tile-pick-status hidden" data-pick-for="groundTile"><span class="tile-pick-label"></span><button type="button" class="button button-sm tile-pick-cancel">Cancel</button></div>
+                        <div class="tile-pick-status hidden" data-pick-for="pathTile"><span class="tile-pick-label"></span><button type="button" class="button button-sm tile-pick-cancel">Cancel</button></div>
+                        <div class="tile-pick-status hidden" data-pick-for="borderTile"><span class="tile-pick-label"></span><button type="button" class="button button-sm tile-pick-cancel">Cancel</button></div>
+                        <div class="tile-pick-status hidden" data-pick-for="randomGroundTiles"><span class="tile-pick-label"></span><button type="button" class="button button-sm tile-pick-cancel">Cancel</button></div>
+                        <button type="button" class="button button-sm tile-options-group-clear-all" data-option="ground">Clear all</button>
+                    </div>
+                    <div class="tile-options-group">
+                        <div class="tile-options-group-header">
+                            <span class="tile-options-group-label">Surrounding Tiles</span>
+                        </div>
+                        <div class="tile-position-grid tile-position-grid-3x3" data-option="surroundingTiles">
+                            <div class="tile-position-cell" data-pos="-1,-1"><span class="pos-dir">NW</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                            <div class="tile-position-cell" data-pos="-1,0"><span class="pos-dir">N</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                            <div class="tile-position-cell" data-pos="-1,1"><span class="pos-dir">NE</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                            <div class="tile-position-cell" data-pos="0,-1"><span class="pos-dir">W</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                            <div class="tile-position-self"></div>
+                            <div class="tile-position-cell" data-pos="0,1"><span class="pos-dir">E</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                            <div class="tile-position-cell" data-pos="1,-1"><span class="pos-dir">SW</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                            <div class="tile-position-cell" data-pos="1,0"><span class="pos-dir">S</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                            <div class="tile-position-cell" data-pos="1,1"><span class="pos-dir">SE</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                        </div>
+                        <div class="tile-pick-status hidden" data-pick-for="surroundingTiles"><span class="tile-pick-label"></span><button type="button" class="button button-sm tile-pick-cancel">Cancel</button></div>
+                        <button type="button" class="button button-sm tile-options-group-clear-all" data-option="surroundingTiles">Clear all</button>
+                    </div>
+                    <div class="tile-options-group">
+                        <div class="tile-options-group-header">
+                            <span class="tile-options-group-label">Corner Tiles</span>
+                        </div>
+                        <div class="tile-position-grid tile-position-grid-2x2" data-option="corners">
+                            <div class="tile-position-cell" data-pos="-1,-1"><span class="pos-dir">NW</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                            <div class="tile-position-cell" data-pos="-1,1"><span class="pos-dir">NE</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                            <div class="tile-position-cell" data-pos="1,-1"><span class="pos-dir">SW</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                            <div class="tile-position-cell" data-pos="1,1"><span class="pos-dir">SE</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                        </div>
+                        <div class="tile-pick-status hidden" data-pick-for="corners"><span class="tile-pick-label"></span><button type="button" class="button button-sm tile-pick-cancel">Cancel</button></div>
+                        <button type="button" class="button button-sm tile-options-group-clear-all" data-option="corners">Clear all</button>
+                    </div>
+                    <div class="tile-options-group">
+                        <div class="tile-options-group-header">
+                            <span class="tile-options-group-label">Border Tiles</span>
+                        </div>
+                        <div class="tile-position-grid tile-position-grid-3x3">
+                            <div class="tile-position-cell" data-option="borderCornersTiles" data-pos="top-left"><span class="pos-dir">NW</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                            <div class="tile-position-cell" data-option="bordersTiles" data-pos="top"><span class="pos-dir">T</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                            <div class="tile-position-cell" data-option="borderCornersTiles" data-pos="top-right"><span class="pos-dir">NE</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                            <div class="tile-position-cell" data-option="bordersTiles" data-pos="left"><span class="pos-dir">L</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                            <div class="tile-position-self"></div>
+                            <div class="tile-position-cell" data-option="bordersTiles" data-pos="right"><span class="pos-dir">R</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                            <div class="tile-position-cell" data-option="borderCornersTiles" data-pos="bottom-left"><span class="pos-dir">SW</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                            <div class="tile-position-cell" data-option="bordersTiles" data-pos="bottom"><span class="pos-dir">B</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                            <div class="tile-position-cell" data-option="borderCornersTiles" data-pos="bottom-right"><span class="pos-dir">SE</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                        </div>
+                        <div class="tile-pick-status hidden" data-pick-for="bordersTiles"><span class="tile-pick-label"></span><button type="button" class="button button-sm tile-pick-cancel">Cancel</button></div>
+                        <div class="tile-pick-status hidden" data-pick-for="borderCornersTiles"><span class="tile-pick-label"></span><button type="button" class="button button-sm tile-pick-cancel">Cancel</button></div>
+                        <button type="button" class="button button-sm tile-options-group-clear-all" data-option="borders">Clear</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="tilesets-container"></div>
+    </section>
+
+    <div class="generate-status hidden"></div>
+    <div class="generated-files hidden">
+        <button type="button" class="button button-secondary generated-files-toggle-btn">Generated Files</button>
+        <input type="text" class="generated-files-search hidden" placeholder="Search sessions...">
+        <ul class="generated-files-list hidden"></ul>
+    </div>
+
+    <section class="results-section hidden">
+        <p class="results-success">Files generated successfully.</p>
+        <div class="results-actions">
+            <button type="button" class="button button-secondary results-files-toggle-btn">Generated files</button>
+            <a class="button button-success download-zip-link" href="#" download>Download all as ZIP</a>
+            <button type="button" class="button button-danger back-btn">Start over</button>
+        </div>
+        <ul class="results-list hidden"></ul>
+    </section>
+
+<template class="tileset-container-template">
+    <div class="tileset-row">
+        <div class="tileset-header">
+            <h3 class="tileset-title"></h3>
+            <button class="button tileset-collapse-btn" type="button">
+                <img class="tileset-collapse-icon" src="/assets/admin/circle-chevron-up-solid-full.svg" alt="Collapse">
+            </button>
+        </div>
+        <div class="tileset-body">
+        <div class="tileset-generate-config-row">
+            <div class="tileset-generate-row">
+                <button class="button button-sm button-danger tileset-remove-btn" type="button"><img src="/assets/admin/trash-can-solid-full.svg" alt="Remove"></button>
+                <button type="button" class="button button-warning tileset-save-btn">Save</button>
+                <span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">Generates files for ALL elements IN THIS TILESET.</span></span>
+                <button type="button" class="button button-success tileset-generate-btn">Generate</button>
+                <span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">Generates files ONLY for SELECTED elements IN THIS TILESET.</span></span>
+                <button type="button" class="button button-primary tileset-generate-selected-btn">Generate Selected</button>
+                <span class="spinner tileset-generate-loading hidden"></span>
+            </div>
+            <div class="tileset-map-config-row">
+                <div class="tileset-map-config-toggles-row">
+                    <button type="button" class="button button-sm button-dark tileset-map-config-toggle">Map Generator Configuration</button>
+                    <label class="tileset-merge-label"><input type="checkbox" class="tileset-merge-checkbox"> Merge</label>
+                    <button class="button button-sm button-dark tileset-merge-config-toggle" type="button">Merge Configuration</button>
+                </div>
+                <fieldset class="tileset-map-config-fieldset hidden">
+                    <div class="tileset-map-config-fields-row">
+                        <label>Map File Name: <input type="text" class="tileset-map-name" placeholder="tileset-elements"></label>
+                        <label>Map Title: <input type="text" class="tileset-map-title" placeholder="Tileset Elements"></label>
+                        <label>Maps Wizard Strategy:
+                            <select class="tileset-generator-type">
+                                <option value="elements-composite-loader">Single Map (Composite)</option>
+                                <option value="multiple-by-loader">Multiple Maps</option>
+                                <option value="multiple-with-association-by-loader">Multiple Maps with Associations</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div class="tileset-associations-editor hidden">
+                        <p class="tileset-associations-label">Association properties (sub-map generation):</p>
+                        <div class="tileset-associations-fields">
+                            <label><input type="checkbox" class="assoc-generate-elements-path"> Generate elements path</label>
+                            <label><input type="checkbox" class="assoc-block-map-border" checked> Block map border</label>
+                            <label>Free space tiles: <input type="number" class="assoc-free-space-tiles" value="1" min="0"></label>
+                            <label>Variable tiles %: <input type="number" class="assoc-variable-tiles-pct" value="0" min="0"></label>
+                            <label>Place elements order:
+                                <select class="assoc-place-elements-order">
+                                    <option value="inOrder">In order</option>
+                                    <option value="random">Random</option>
+                                </select>
+                            </label>
+                            <label><input type="checkbox" class="assoc-order-by-size"> Order elements by size</label>
+                            <label><input type="checkbox" class="assoc-randomize-quantities" checked> Randomize quantities</label>
+                            <label><input type="checkbox" class="assoc-apply-surrounding-path-tiles"> Apply surrounding path tiles</label>
+                            <label><input type="checkbox" class="assoc-automatically-extrude-maps" checked> Automatically extrude maps</label>
+                        </div>
+                    </div>
+                </fieldset>
+                <fieldset class="tileset-merge-config hidden">
+                    <legend>Merge options</legend>
+                    <label><input type="checkbox" class="tileset-merge-elements"> Merge selected elements</label>
+                    <label><input type="checkbox" class="tileset-merge-clusters"> Merge selected clusters</label>
+                    <div class="tileset-merge-resize-row">
+                        <label class="tileset-merge-auto-resize-label">
+                            <input type="checkbox" class="tileset-merge-auto-resize">
+                            Automatically resize for merge
+                        </label>
+                        <div class="tileset-merge-resize-options hidden">
+                            <label>
+                                <input type="radio" class="tileset-merge-resize-radio" value="bigger" checked>
+                                Using bigger tile size
+                                <span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">Resize all tilesets to match the largest tile size in the selection.</span></span>
+                            </label>
+                            <label>
+                                <input type="radio" class="tileset-merge-resize-radio" value="smaller">
+                                Using smaller tile size
+                                <span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">Resize all tilesets to match the smallest tile size in the selection.</span></span>
+                            </label>
+                        </div>
+                    </div>
+                </fieldset>
+            </div>
+        </div>
+        <div class="tileset-controls-row">
+            <div class="controls-ai-col">
+                <select class="tileset-ai-select tileset-ai-only hidden"></select>
+                <span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">Runs AI element detection on every unlocked cluster one by one. Each cluster is replaced by its detected sub-elements. Locked clusters are skipped.</span></span>
+                <button class="button button-sm button-dark tileset-detect-elements-btn tileset-ai-only hidden" type="button">Detect Elements</button>
+                <span class="spinner hidden"></span>
+                <span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">Runs AI layer assignment on every unlocked non-cluster element one by one. Each element's tiles are split into the correct layer types. Locked elements are skipped.</span></span>
+                <button class="button button-sm button-dark tileset-detect-layers-btn tileset-ai-only hidden" type="button">Detect Layers</button>
+                <span class="spinner hidden"></span>
+                <span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">Runs AI naming on every unlocked non-cluster element. Locked elements are skipped. After completion, a summary shows how many were renamed and how many were skipped.</span></span>
+                <button class="button button-sm button-dark tileset-name-all-btn tileset-ai-only hidden" type="button">Name All</button>
+                <span class="spinner hidden"></span>
+                <span class="tileset-ai-progress-msg hidden"></span>
+            </div>
+        </div>
+        <div class="tileset-panels">
+            <div class="canvas-panel">
+                <div class="canvas-actions">
+                    <button class="button button-sm button-dark view-all-btn" type="button">View Selected</button>
+                    <button class="button button-sm button-dark toggle-all-btn" type="button">Highlight All</button>
+                    <button class="button button-sm button-dark zoom-reset-btn" type="button">Reset Zoom</button>
+                </div>
+                <div class="canvas-scroll-area">
+                    <canvas class="tileset-canvas"></canvas>
+                </div>
+            </div>
+            <div class="legend-panel">
+                <div class="legend-tabs">
+                    <button type="button" class="button button-sm legend-tab legend-tab-active" data-tab="map-objects">Map Objects</button>
+                    <button type="button" class="button button-sm legend-tab" data-tab="map-tiles">Map Tiles</button>
+                </div>
+                <div class="legend-tab-pane" data-tab="map-objects">
+                    <div class="controls-legend-col">
+                        <input type="text" class="legend-search" placeholder="Search...">
+                        <span class="show-filter-label">Show:</span>
+                        <label class="show-check-label"><input type="checkbox" class="show-elements-check" checked> Elements</label>
+                        <label class="show-check-label"><input type="checkbox" class="show-clusters-check" checked> Clusters</label>
+                        <label class="show-check-label"><input type="checkbox" class="show-spots-check" checked> Spots</label>
+                        <span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">Creates a blank element you can populate by clicking tiles on the canvas.</span></span>
+                        <button class="button button-sm button-success add-element-btn" type="button">Add Element</button>
+                        <button class="button button-sm button-secondary add-spot-btn" type="button">Add Spot</button>
+                    </div>
+                    <div class="legend-bulk-actions">
+                        <input type="checkbox" class="bulk-select-all">
+                        <span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">Toggles the locked state of all checked elements. Locked elements are skipped by AI bulk operations.</span></span>
+                        <button class="button bulk-lock-btn" type="button">Toggle Lock</button>
+                        <span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">Converts all checked clusters to elements.</span></span>
+                        <button class="button bulk-convert-btn" type="button">Convert All</button>
+                        <span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">Runs AI detection on all checked items. Clusters get element detection; elements get layer assignment.</span></span>
+                        <button class="button button-sm button-dark bulk-detect-btn tileset-ai-only hidden" type="button">Detect AI</button>
+                        <span class="spinner hidden"></span>
+                        <span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">Runs AI naming on all checked non-cluster elements.</span></span>
+                        <button class="button button-sm button-dark bulk-name-btn tileset-ai-only hidden" type="button">Name AI</button>
+                        <span class="spinner hidden"></span>
+                        <span class="element-ai-progress-msg hidden"></span>
+                        <button class="button button-sm button-danger bulk-delete-spots-btn" type="button"><img src="/assets/admin/trash-can-solid-full.svg" alt="Delete checked spots"></button>
+                    </div>
+                    <div class="elements-list"></div>
+                </div>
+                <div class="legend-tab-pane hidden" data-tab="map-tiles">
+                    <div class="tileset-tile-options">
+                        <div class="tile-options-group">
+                            <div class="tile-options-group-header">
+                                <span class="tile-options-group-label">Ground and Path</span>
+                            </div>
+                            <div class="tile-option-cells-row">
+                                <div class="tile-option-cell tile-option-btn" data-option="groundTile" data-multi="false">
+                                    <span class="tile-option-cell-label">Ground</span>
+                                    <span class="tile-option-display tile-option-cell-val" data-option="groundTile"></span>
+                                    <button type="button" class="tile-option-cell-clear tile-option-clear" data-option="groundTile">x</button>
+                                </div>
+                                <div class="tile-option-cell tile-option-btn" data-option="pathTile" data-multi="false">
+                                    <span class="tile-option-cell-label">Path</span>
+                                    <span class="tile-option-display tile-option-cell-val" data-option="pathTile"></span>
+                                    <button type="button" class="tile-option-cell-clear tile-option-clear" data-option="pathTile">x</button>
+                                </div>
+                            </div>
+                            <div class="tile-option-cells-row">
+                                <div class="tile-option-cell tile-option-btn" data-option="borderTile" data-multi="false">
+                                    <span class="tile-option-cell-label">Border</span>
+                                    <span class="tile-option-display tile-option-cell-val" data-option="borderTile"></span>
+                                    <button type="button" class="tile-option-cell-clear tile-option-clear" data-option="borderTile">x</button>
+                                </div>
+                            </div>
+                            <div class="tile-option-cells-row">
+                                <div class="tile-option-cell tile-option-btn" data-option="randomGroundTiles" data-multi="true">
+                                    <span class="tile-option-cell-label">Variations</span>
+                                    <span class="tile-option-display tile-option-cell-val" data-option="randomGroundTiles"></span>
+                                    <div class="tile-option-multi-values" data-multi-option="randomGroundTiles"></div>
+                                    <button type="button" class="tile-option-cell-clear tile-option-clear" data-option="randomGroundTiles">x</button>
+                                </div>
+                            </div>
+                            <div class="tile-pick-status hidden" data-pick-for="groundTile"><span class="tile-pick-label"></span><button type="button" class="button button-sm button-danger tile-pick-cancel">Cancel</button></div>
+                            <div class="tile-pick-status hidden" data-pick-for="pathTile"><span class="tile-pick-label"></span><button type="button" class="button button-sm button-danger tile-pick-cancel">Cancel</button></div>
+                            <div class="tile-pick-status hidden" data-pick-for="borderTile"><span class="tile-pick-label"></span><button type="button" class="button button-sm button-danger tile-pick-cancel">Cancel</button></div>
+                            <div class="tile-pick-status hidden" data-pick-for="randomGroundTiles"><span class="tile-pick-label"></span><button type="button" class="button button-sm button-danger tile-pick-cancel">Cancel</button></div>
+                            <button type="button" class="button button-sm button-danger tile-options-group-clear-all" data-option="ground">Clear all</button>
+                        </div>
+                        <div class="tile-options-group">
+                            <div class="tile-options-group-header">
+                                <span class="tile-options-group-label">Surrounding Tiles</span>
+                                <button type="button" class="button button-sm button-secondary tile-reference-btn" data-reference-img="/assets/admin/tile-references/path-surrounding-tiles.png" data-reference-title="Surrounding Tiles">Check Reference</button>
+                            </div>
+                            <div class="tile-position-grid tile-position-grid-3x3" data-option="surroundingTiles">
+                                <div class="tile-position-cell" data-pos="-1,-1"><span class="pos-dir">NW</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                                <div class="tile-position-cell" data-pos="-1,0"><span class="pos-dir">N</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                                <div class="tile-position-cell" data-pos="-1,1"><span class="pos-dir">NE</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                                <div class="tile-position-cell" data-pos="0,-1"><span class="pos-dir">W</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                                <div class="tile-position-self"></div>
+                                <div class="tile-position-cell" data-pos="0,1"><span class="pos-dir">E</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                                <div class="tile-position-cell" data-pos="1,-1"><span class="pos-dir">SW</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                                <div class="tile-position-cell" data-pos="1,0"><span class="pos-dir">S</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                                <div class="tile-position-cell" data-pos="1,1"><span class="pos-dir">SE</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                            </div>
+                            <div class="tile-pick-status hidden" data-pick-for="surroundingTiles"><span class="tile-pick-label"></span><button type="button" class="button button-sm button-danger tile-pick-cancel">Cancel</button></div>
+                            <button type="button" class="button button-sm button-danger tile-options-group-clear-all" data-option="surroundingTiles">Clear all</button>
+                        </div>
+                        <div class="tile-options-group">
+                            <div class="tile-options-group-header">
+                                <span class="tile-options-group-label">Corner Tiles</span>
+                                <button type="button" class="button button-sm button-secondary tile-reference-btn" data-reference-img="/assets/admin/tile-references/path-corner-tiles.png" data-reference-title="Corner Tiles">Check Reference</button>
+                            </div>
+                            <div class="tile-position-grid tile-position-grid-2x2" data-option="corners">
+                                <div class="tile-position-cell" data-pos="-1,-1"><span class="pos-dir">NW</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                                <div class="tile-position-cell" data-pos="-1,1"><span class="pos-dir">NE</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                                <div class="tile-position-cell" data-pos="1,-1"><span class="pos-dir">SW</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                                <div class="tile-position-cell" data-pos="1,1"><span class="pos-dir">SE</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                            </div>
+                            <div class="tile-pick-status hidden" data-pick-for="corners"><span class="tile-pick-label"></span><button type="button" class="button button-sm button-danger tile-pick-cancel">Cancel</button></div>
+                            <button type="button" class="button button-sm button-danger tile-options-group-clear-all" data-option="corners">Clear all</button>
+                        </div>
+                        <div class="tile-options-group">
+                            <div class="tile-options-group-header">
+                                <span class="tile-options-group-label">Border Tiles</span>
+                                <button type="button" class="button button-sm button-secondary tile-reference-btn" data-reference-img="/assets/admin/tile-references/path-border-tiles.png" data-reference-title="Border Tiles">Check Reference</button>
+                            </div>
+                            <div class="tile-position-grid tile-position-grid-3x3">
+                                <div class="tile-position-cell" data-option="borderCornersTiles" data-pos="top-left"><span class="pos-dir">NW</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                                <div class="tile-position-cell" data-option="bordersTiles" data-pos="top"><span class="pos-dir">T</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                                <div class="tile-position-cell" data-option="borderCornersTiles" data-pos="top-right"><span class="pos-dir">NE</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                                <div class="tile-position-cell" data-option="bordersTiles" data-pos="left"><span class="pos-dir">L</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                                <div class="tile-position-self"></div>
+                                <div class="tile-position-cell" data-option="bordersTiles" data-pos="right"><span class="pos-dir">R</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                                <div class="tile-position-cell" data-option="borderCornersTiles" data-pos="bottom-left"><span class="pos-dir">SW</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                                <div class="tile-position-cell" data-option="bordersTiles" data-pos="bottom"><span class="pos-dir">B</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                                <div class="tile-position-cell" data-option="borderCornersTiles" data-pos="bottom-right"><span class="pos-dir">SE</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                            </div>
+                            <div class="tile-pick-status hidden" data-pick-for="bordersTiles"><span class="tile-pick-label"></span><button type="button" class="button button-sm button-danger tile-pick-cancel">Cancel</button></div>
+                            <div class="tile-pick-status hidden" data-pick-for="borderCornersTiles"><span class="tile-pick-label"></span><button type="button" class="button button-sm button-danger tile-pick-cancel">Cancel</button></div>
+                            <button type="button" class="button button-sm button-danger tile-options-group-clear-all" data-option="borders">Clear</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </div>
+    </div>
+</template>
+<template class="element-row-template">
+    <div class="element-row">
+        <div class="element-row-header">
+            <input type="checkbox" class="element-bulk-select">
+            <img class="element-type-icon" src="" alt="">
+            <input type="text" class="element-name-input" placeholder="element-001">
+            <button class="button element-lock-btn" type="button"><img class="lock-icon" src="/assets/admin/unlock-solid.svg" alt="Lock"></button>
+            <button class="button button-sm button-danger element-delete-btn" type="button"><img src="/assets/admin/trash-can-solid-full.svg" alt="Delete"></button>
+        </div>
+        <div class="element-expanded hidden">
+            <div class="cluster-btn-row">
+                <button class="button cluster-split-btn hidden" type="button">Split into tiles</button>
+                <button class="button cluster-convert-btn hidden" type="button">Convert to element</button>
+            </div>
+            <div class="element-ai-controls hidden">
+                <select class="element-ai-select"></select>
+                <button class="button button-sm button-dark element-ai-detect-btn" type="button">Detect</button>
+                <span class="spinner hidden"></span>
+                <button class="button button-sm button-dark element-ai-name-btn" type="button">Name</button>
+                <span class="spinner hidden"></span>
+                <span class="element-ai-progress-msg hidden"></span>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Quantity: <input type="number" class="element-quantity" min="1" value="1"></label>
+                </div>
+                <div class="form-group">
+                    <label>Free space around: <input type="number" class="element-free-space" min="0" value="1"></label>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" class="element-allow-paths">
+                    Allow paths in free space
+                </label>
+            </div>
+            <fieldset class="layer-type-fieldset">
+                <legend>Layer type for new tiles</legend>
+                <label><input type="radio" class="layer-type-radio" value="below-player" checked><span class="layer-color-swatch layer-color-below-player"></span> Below player</label>
+                <label><input type="radio" class="layer-type-radio" value="collisions"><span class="layer-color-swatch layer-color-collisions"></span> Collisions</label>
+                <label><input type="radio" class="layer-type-radio" value="over-player"><span class="layer-color-swatch layer-color-over-player"></span> Over player</label>
+                <label><input type="radio" class="layer-type-radio" value="collisions-over-player"><span class="layer-color-swatch layer-color-collisions-over-player"></span> Collisions + over player</label>
+                <label><input type="radio" class="layer-type-radio" value="base"><span class="layer-color-swatch layer-color-base"></span> Base</label>
+                <label><input type="radio" class="layer-type-radio" value="path"><span class="layer-color-swatch layer-color-path"></span> Path</label>
+                <label><input type="radio" class="layer-type-radio layer-type-custom-radio" value="custom"><span class="layer-color-swatch layer-color-custom"></span> Custom: <input type="text" class="layer-type-custom-input" placeholder="suffix"></label>
+            </fieldset>
+        </div>
+    </div>
+</template>
+
+<template class="tileset-param-template">
+    <fieldset class="tileset-param-fieldset">
+        <legend class="param-filename"></legend>
+        <div class="tileset-param-cols">
+            <div class="tileset-param-col">
+                <div class="param-row">
+                    <label>Tile Width: <input type="number" class="param-tile-width" value="32" min="1"></label>
+                    <button class="button param-size-lock locked" type="button"><img class="lock-icon" src="/assets/admin/lock-solid.svg" alt="Lock"></button>
+                    <label>Tile Height: <input type="number" class="param-tile-height" value="32" min="1"></label>
+                    <div class="tile-presets">
+                        <button class="button button-sm button-secondary tile-preset-btn" data-size="16" type="button">16x16</button>
+                        <button class="button button-sm button-secondary tile-preset-btn" data-size="32" type="button">32x32</button>
+                        <button class="button button-sm button-secondary tile-preset-btn" data-size="48" type="button">48x48</button>
+                        <button class="button button-sm button-secondary tile-preset-btn" data-size="64" type="button">64x64</button>
+                    </div>
+                </div>
+                <div class="resize-specific-section">
+                    <span class="resize-label">Resize this tileset:</span>
+                </div>
+            </div>
+            <div class="tileset-param-col">
+                <div class="param-row">
+                    <label>Spacing: <input type="number" class="param-spacing" value="0" min="0"></label>
+                    <label>Margin: <input type="number" class="param-margin" value="0" min="0"></label>
+                </div>
+                <div class="param-row">
+                    <label class="param-bg-color-label">Background color: <input type="color" class="param-bg-color" value="#000000"></label>
+                    <span class="param-bg-color-hint">Auto-detected from image edges. Adjust if wrong.</span>
+                </div>
+                <label class="param-override-label"><input type="checkbox" class="param-override"> Override existent tileset in editor</label>
+            </div>
+        </div>
+    </fieldset>
+</template>
+<div class="modal help-modal hidden">
+    <div class="modal-backdrop help-modal-backdrop"></div>
+    <div class="modal-dialog help-modal-dialog">
+        <div class="modal-header">
+            <h2>How to Use - Step by Step</h2>
+            <button class="button button-close button-circle button-dark modal-close-btn" type="button">×</button>
+        </div>
+        <div class="modal-body">
+            <h3>Step 1 - Upload your tileset</h3>
+            <p>Select one or more PNG tileset files. Set the tile width and height (use the preset buttons for common sizes). Adjust spacing and margin if your tileset has gaps between tiles. The background color is auto-detected from the image edges - correct it if needed. Click <strong>Analyze</strong> to start.</p>
+            <h3>Step 2 - Wait for detection</h3>
+            <p>The server scans every tile for non-background pixels and groups connected tiles into clusters. If AI providers are active, each cluster is sent to AI for sub-element detection and naming. Progress is shown in real time. This may take a minute for large tilesets.</p>
+            <h3>Step 3 - Review detected elements</h3>
+            <p>The canvas shows your tileset with colored overlays for each element. The legend on the right lists every detected item.</p>
+            <ul>
+                <li><strong>Elements</strong> (solid border, locked by default): individual objects identified by pixel analysis or AI.</li>
+                <li><strong>Clusters</strong> (dashed amber border, unlocked): groups that may contain multiple objects and need further processing.</li>
+                <li><strong>Faint gray tiles</strong>: tiles that passed the fill check but had too little variance to be grouped (shown for reference only).</li>
+            </ul>
+            <h3>Step 4 - Canvas view modes</h3>
+            <p>By default the canvas is in <strong>View all</strong> mode: all elements are visible and you can right-click any tile to remove it from its owner element.</p>
+            <ul>
+                <li><strong>View selected</strong> button: switches to view-selected mode. All elements except the selected one are dimmed. Click again (<strong>View all</strong>) to return to view-all mode.</li>
+                <li><strong>Highlight all</strong> button: toggles colored overlays for all elements while one is selected. Click again (<strong>Hide others</strong>) to restore the dimmed view.</li>
+            </ul>
+            <h3>Step 5 - Canvas shortcuts</h3>
+            <ul>
+                <li><strong>Left-click a tile</strong>: add the tile to the selected element (or remove it if it is already in the active layer). Requires an element to be selected.</li>
+                <li><strong>Left-click drag</strong>: bulk-add or remove tiles based on the first tile action.</li>
+                <li><strong>Right-click a tile</strong>: remove the tile from its owner element. Works in view-all mode (removes from any element) and when an element is selected (removes from that element).</li>
+                <li><strong>Right-click drag</strong>: keep removing tiles continuously while holding the mouse button.</li>
+                <li><strong>Shift+right-click drag</strong>: draw a rectangular area selection - all tiles inside the rectangle are removed when you release the mouse button. A red overlay shows the selection while dragging.</li>
+                <li><strong>Shift+left-click</strong>: select the element that owns the clicked tile.</li>
+                <li><strong>Ctrl+scroll</strong>: zoom canvas in or out (0.25× to 4×). Use the <strong>Reset zoom</strong> button to return to 100%.</li>
+                <li><strong>Delete key</strong>: remove the currently selected element entirely.</li>
+            </ul>
+            <h3>Step 6 - Edit element properties</h3>
+            <p>Click an element row to expand its controls:</p>
+            <ul>
+                <li><strong>Name</strong>: rename using kebab-case format, e.g. <code>tree-001</code>.</li>
+                <li><strong>Lock (padlock)</strong>: locked elements are skipped by Detect All and Name All. Lock elements you are satisfied with.</li>
+                <li><strong>Delete (trash)</strong>: remove the element entirely. Same as pressing the <strong>Delete key</strong> on the keyboard.</li>
+                <li><strong>Layer type</strong>: choose what layer new tiles will be added to (below-player, collisions, over-player, collisions+over).</li>
+                <li><strong>Quantity</strong>: how many copies to place in the generated map.</li>
+                <li><strong>Free space</strong>: tile padding around the element in the generated map.</li>
+            </ul>
+            <h3>Step 7 - Cluster actions</h3>
+            <ul>
+                <li><strong>Detect</strong> (per element): send this cluster to AI for sub-element detection. Replaces the cluster with its sub-elements.</li>
+                <li><strong>Split into tiles</strong>: convert each tile in the cluster into a separate single-tile element.</li>
+                <li><strong>Convert to element</strong>: treat the entire cluster as one approved element.</li>
+            </ul>
+            <h3>Step 8 - Bulk actions</h3>
+            <p>Check the checkbox on any element row to include it in bulk operations. Buttons appear in the tileset header:</p>
+            <ul>
+                <li><strong>Convert all</strong>: converts all checked clusters to elements.</li>
+                <li><strong>Toggle lock</strong>: toggles the locked state of all checked elements.</li>
+                <li><strong>Detect AI</strong>: runs AI sub-detection on all checked clusters (requires AI provider).</li>
+                <li><strong>Name AI</strong>: runs AI naming on all checked non-cluster elements (requires AI provider).</li>
+            </ul>
+            <h3>Step 9 - AI bulk actions</h3>
+            <ul>
+                <li><strong>Detect All</strong>: runs AI sub-detection on every unlocked cluster across all tilesets.</li>
+                <li><strong>Name All</strong>: runs AI naming on every unlocked non-cluster element. Locked elements are skipped.</li>
+                <li>Progress is shown next to the buttons. After Name All completes, a summary shows how many were renamed and how many were skipped.</li>
+            </ul>
+            <h3>Step 10 - Generate files</h3>
+            <p>When all elements are named and configured, click <strong>Generate files</strong>. The server creates Tiled-compatible JSON files for each element, an annotated tileset PNG, a composite map, and a Reldens map-generator config. Download links appear in the Results section.</p>
+            <h3>Tips</h3>
+            <ul>
+                <li>Lock an element after you are happy with it - this protects it from AI bulk operations.</li>
+                <li>Add element creates a blank element you can populate by clicking tiles on the canvas.</li>
+                <li>Previous sessions are listed at the bottom of the upload form - click to expand and download files again.</li>
+                <li>All element names must match the pattern <code>word-001</code> (lowercase letters, optional hyphens, numeric suffix) before Generate is enabled.</li>
+            </ul>
+        </div>
+    </div>
+</div>
+<div class="modal confirm-modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-dialog confirm-modal-dialog">
+        <div class="modal-header">
+            <h4>Confirm</h4>
+            <button type="button" class="button button-close button-circle button-dark confirm-modal-close">×</button>
+        </div>
+        <div class="modal-body">
+            <p class="confirm-modal-message"></p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="button button-secondary confirm-modal-cancel">Cancel</button>
+            <button type="button" class="button confirm-modal-extra hidden"></button>
+            <button type="button" class="button button-primary confirm-modal-ok">Confirm</button>
+        </div>
+    </div>
+</div>
+<div class="modal generate-modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-dialog generate-modal-dialog">
+        <span class="spinner generate-modal-spinner"></span>
+        <p class="generate-modal-message">Generating files...</p>
+    </div>
+</div>
+<div class="modal tile-reference-modal hidden">
+    <div class="modal-backdrop tile-reference-modal-backdrop"></div>
+    <div class="modal-dialog tile-reference-modal-dialog">
+        <div class="modal-header">
+            <h3 class="tile-reference-modal-title"></h3>
+            <button type="button" class="button button-sm button-secondary tile-reference-modal-close">Close</button>
+        </div>
+        <div class="modal-body">
+            <img class="tile-reference-modal-img" src="" alt="">
+        </div>
+    </div>
+</div>
+<template class="spot-row-template">
+    <div class="spot-row">
+        <div class="spot-row-header">
+            <input type="checkbox" class="element-bulk-select spot-bulk-select">
+            <img class="element-type-icon" src="/assets/admin/cube-solid-full.svg" alt="spot" title="Spot">
+            <input type="text" class="spot-name-input" placeholder="spot-001">
+            <button class="button element-lock-btn spot-lock-btn" type="button"><img class="lock-icon" src="/assets/admin/unlock-solid.svg" alt="Lock"></button>
+            <button class="button button-sm button-danger element-delete-btn spot-delete-btn" type="button"><img src="/assets/admin/trash-can-solid-full.svg" alt="Delete"></button>
+        </div>
+        <div class="spot-detail hidden">
+            <div class="spot-tile-config">
+                <div class="tile-options-group-header">
+                    <span class="tile-options-group-label">Tile Configuration</span>
+                </div>
+                <div class="tile-option-cells-row">
+                    <div class="tile-option-cell tile-option-btn" data-option="spotTile" data-multi="false">
+                        <span class="tile-option-cell-label">Spot Tile</span>
+                        <span class="tile-option-display tile-option-cell-val" data-option="spotTile"></span>
+                        <button type="button" class="tile-option-cell-clear tile-option-clear" data-option="spotTile">x</button>
+                    </div>
+                </div>
+                <div class="tile-option-cells-row">
+                    <div class="tile-option-cell tile-option-btn" data-option="spotTileVariations" data-multi="true">
+                        <span class="tile-option-cell-label">Variations</span>
+                        <span class="tile-option-display tile-option-cell-val" data-option="spotTileVariations"></span>
+                        <div class="tile-option-multi-values" data-multi-option="spotTileVariations"></div>
+                        <button type="button" class="tile-option-cell-clear tile-option-clear" data-option="spotTileVariations">x</button>
+                    </div>
+                </div>
+                <div class="tile-pick-status hidden" data-pick-for="spotTile"><span class="tile-pick-label"></span><button type="button" class="button button-sm button-danger tile-pick-cancel">Cancel</button></div>
+                <div class="tile-pick-status hidden" data-pick-for="spotTileVariations"><span class="tile-pick-label"></span><button type="button" class="button button-sm button-danger tile-pick-cancel">Cancel</button></div>
+                <div class="tile-options-group">
+                    <div class="tile-options-group-header">
+                        <span class="tile-options-group-label">Surrounding Tiles</span>
+                        <button type="button" class="button button-sm button-secondary tile-reference-btn" data-reference-img="/assets/admin/tile-references/path-surrounding-tiles.png" data-reference-title="Surrounding Tiles">Check Reference</button>
+                    </div>
+                    <div class="tile-position-grid tile-position-grid-3x3" data-option="surroundingTiles">
+                        <div class="tile-position-cell" data-pos="-1,-1"><span class="pos-dir">NW</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                        <div class="tile-position-cell" data-pos="-1,0"><span class="pos-dir">N</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                        <div class="tile-position-cell" data-pos="-1,1"><span class="pos-dir">NE</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                        <div class="tile-position-cell" data-pos="0,-1"><span class="pos-dir">W</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                        <div class="tile-position-self"></div>
+                        <div class="tile-position-cell" data-pos="0,1"><span class="pos-dir">E</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                        <div class="tile-position-cell" data-pos="1,-1"><span class="pos-dir">SW</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                        <div class="tile-position-cell" data-pos="1,0"><span class="pos-dir">S</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                        <div class="tile-position-cell" data-pos="1,1"><span class="pos-dir">SE</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                    </div>
+                    <div class="tile-pick-status hidden" data-pick-for="surroundingTiles"><span class="tile-pick-label"></span><button type="button" class="button button-sm button-danger tile-pick-cancel">Cancel</button></div>
+                    <button type="button" class="button button-sm button-danger tile-options-group-clear-all" data-option="surroundingTiles">Clear all</button>
+                </div>
+                <div class="tile-options-group">
+                    <div class="tile-options-group-header">
+                        <span class="tile-options-group-label">Corner Tiles</span>
+                        <button type="button" class="button button-sm button-secondary tile-reference-btn" data-reference-img="/assets/admin/tile-references/path-corner-tiles.png" data-reference-title="Corner Tiles">Check Reference</button>
+                    </div>
+                    <div class="tile-position-grid tile-position-grid-2x2" data-option="corners">
+                        <div class="tile-position-cell" data-pos="-1,-1"><span class="pos-dir">NW</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                        <div class="tile-position-cell" data-pos="-1,1"><span class="pos-dir">NE</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                        <div class="tile-position-cell" data-pos="1,-1"><span class="pos-dir">SW</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                        <div class="tile-position-cell" data-pos="1,1"><span class="pos-dir">SE</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                    </div>
+                    <div class="tile-pick-status hidden" data-pick-for="corners"><span class="tile-pick-label"></span><button type="button" class="button button-sm button-danger tile-pick-cancel">Cancel</button></div>
+                    <button type="button" class="button button-sm button-danger tile-options-group-clear-all" data-option="corners">Clear all</button>
+                </div>
+                <div class="tile-options-group">
+                    <div class="tile-options-group-header">
+                        <span class="tile-options-group-label">Border Tiles</span>
+                        <button type="button" class="button button-sm button-secondary tile-reference-btn" data-reference-img="/assets/admin/tile-references/path-border-tiles.png" data-reference-title="Border Tiles">Check Reference</button>
+                    </div>
+                    <div class="tile-position-grid tile-position-grid-3x3">
+                        <div class="tile-position-cell" data-option="borderCornersTiles" data-pos="top-left"><span class="pos-dir">NW</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                        <div class="tile-position-cell" data-option="bordersTiles" data-pos="top"><span class="pos-dir">T</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                        <div class="tile-position-cell" data-option="borderCornersTiles" data-pos="top-right"><span class="pos-dir">NE</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                        <div class="tile-position-cell" data-option="bordersTiles" data-pos="left"><span class="pos-dir">L</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                        <div class="tile-position-self"></div>
+                        <div class="tile-position-cell" data-option="bordersTiles" data-pos="right"><span class="pos-dir">R</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                        <div class="tile-position-cell" data-option="borderCornersTiles" data-pos="bottom-left"><span class="pos-dir">SW</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                        <div class="tile-position-cell" data-option="bordersTiles" data-pos="bottom"><span class="pos-dir">B</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                        <div class="tile-position-cell" data-option="borderCornersTiles" data-pos="bottom-right"><span class="pos-dir">SE</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                    </div>
+                    <div class="tile-pick-status hidden" data-pick-for="bordersTiles"><span class="tile-pick-label"></span><button type="button" class="button button-sm button-danger tile-pick-cancel">Cancel</button></div>
+                    <div class="tile-pick-status hidden" data-pick-for="borderCornersTiles"><span class="tile-pick-label"></span><button type="button" class="button button-sm button-danger tile-pick-cancel">Cancel</button></div>
+                    <button type="button" class="button button-sm button-danger tile-options-group-clear-all" data-option="borders">Clear</button>
+                </div>
+            </div>
+            <div class="spot-properties">
+                <div class="tile-options-group-header">
+                    <span class="tile-options-group-label">Properties</span>
+                </div>
+                <div class="spot-properties-grid">
+                    <label class="spot-prop-label">Width (tiles): <input type="number" class="spot-prop spot-width" data-prop="width" min="1"></label>
+                    <label class="spot-prop-label">Height (tiles): <input type="number" class="spot-prop spot-height" data-prop="height" min="1"></label>
+                    <label class="spot-prop-label">Quantity: <input type="number" class="spot-prop spot-quantity" data-prop="quantity" min="1" value="1"></label>
+                    <label class="spot-prop-label">Layer Name: <input type="text" class="spot-prop spot-layer-name" data-prop="layerName"></label>
+                    <label class="spot-prop-label"><input type="checkbox" class="spot-prop spot-walkable" data-prop="walkable" checked> Walkable</label>
+                    <label class="spot-prop-label">Mark %: <input type="number" class="spot-prop spot-mark-percentage" data-prop="markPercentage" min="0" max="100" value="100"></label>
+                    <label class="spot-prop-label">Variable Tiles %: <input type="number" class="spot-prop spot-variable-tiles-pct" data-prop="variableTilesPercentage" min="0" max="100" value="0"></label>
+                    <label class="spot-prop-label"><input type="checkbox" class="spot-prop spot-is-element" data-prop="isElement"> Is Element</label>
+                    <label class="spot-prop-label spot-free-space-row hidden">Free Space: <input type="number" class="spot-prop spot-free-space" data-prop="freeSpaceAround" min="0"></label>
+                    <label class="spot-prop-label spot-allow-paths-row hidden"><input type="checkbox" class="spot-prop spot-allow-paths" data-prop="allowPathsInFreeSpace"> Allow Paths in Free Space</label>
+                    <label class="spot-prop-label">Map Centered: <input type="number" class="spot-prop spot-map-centered" data-prop="mapCentered" value="0"></label>
+                    <label class="spot-prop-label"><input type="checkbox" class="spot-prop spot-place-random-path" data-prop="placeRandomPath"> Place Random Path</label>
+                    <label class="spot-prop-label"><input type="checkbox" class="spot-prop spot-depth" data-prop="depth"> Depth</label>
+                    <label class="spot-prop-label"><input type="checkbox" class="spot-prop spot-split-borders" data-prop="splitBordersInLayers"> Split Borders in Layers</label>
+                    <label class="spot-prop-label">Border Layer Suffix: <input type="text" class="spot-prop spot-border-layer-suffix" data-prop="borderLayerSuffix"></label>
+                    <label class="spot-prop-label">Walls Layer Suffix: <input type="text" class="spot-prop spot-walls-layer-suffix" data-prop="wallsLayerSuffix"></label>
+                    <label class="spot-prop-label">Outer Walls Suffix: <input type="text" class="spot-prop spot-outer-walls-suffix" data-prop="outerWallsLayerSuffix"></label>
+                    <label class="spot-prop-label">Border Outer Walls Size: <input type="number" class="spot-prop spot-border-outer-walls-size" data-prop="borderOuterWallsIncreaseLayerSize" value="4"></label>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+<template class="resize-options-template">
+    <label class="resize-option-label"><input type="radio" value="0" checked> None</label>
+    <label class="resize-option-label"><input type="radio" value="16"> 16</label>
+    <label class="resize-option-label"><input type="radio" value="32"> 32</label>
+    <label class="resize-option-label"><input type="radio" value="48"> 48</label>
+    <label class="resize-option-label"><input type="radio" value="64"> 64</label>
+    <label class="resize-option-label"><input type="radio" value="custom"> <input type="number" min="1" value="32"></label>
+</template>
+</div>
+</div>
+<script src="/js/tileset-to-tilemap/shared-utils.js"></script>
+<script src="/js/tileset-to-tilemap/tile-geometry.js"></script>
+<script src="/js/tileset-to-tilemap/canvas-markers.js"></script>
+<script src="/js/tileset-to-tilemap/canvas-renderer.js"></script>
+<script src="/js/tileset-to-tilemap/canvas-tile-editor.js"></script>
+<script src="/js/tileset-to-tilemap/canvas-interaction.js"></script>
+<script src="/js/tileset-to-tilemap/spot-editor.js"></script>
+<script src="/js/tileset-to-tilemap/legend-renderer.js"></script>
+<script src="/js/tileset-to-tilemap/element-editor.js"></script>
+<script src="/js/tileset-to-tilemap/ai-element-operations.js"></script>
+<script src="/js/tileset-to-tilemap/ai-operations.js"></script>
+<script src="/js/tileset-to-tilemap/tileset-ai-request-builder.js"></script>
+<script src="/js/tileset-to-tilemap/session-item-builder.js"></script>
+<script src="/js/tileset-to-tilemap/session-manager.js"></script>
+<script src="/js/tileset-to-tilemap/tileset-param-binder.js"></script>
+<script src="/js/tileset-to-tilemap/tileset-uploader.js"></script>
+<script src="/js/tileset-to-tilemap/tileset-row-binder.js"></script>
+<script src="/js/tileset-to-tilemap/state-builder.js"></script>
+<script src="/js/tileset-to-tilemap/tileset-strategy-editor.js"></script>
+<script src="/js/tileset-to-tilemap/tileset-generator.js"></script>
+<script src="/js/tileset-to-tilemap/tileset-merger.js"></script>
+<script src="/js/tileset-to-tilemap/tileset-modal-manager.js"></script>
+<script src="/js/tileset-to-tilemap/tileset-keyboard-shortcuts.js"></script>
+<script src="/js/tileset-to-tilemap/tileset-event-bindings.js"></script>
+<script src="/js/tileset-to-tilemap/tileset-tile-options.js"></script>
+<script src="/js/tileset-to-tilemap/tileset-spot-props-binder.js"></script>
+<script src="/js/tileset-to-tilemap/tileset-tile-options-events.js"></script>
+<script src="/js/tileset-to-tilemap/tileset-tile-options-pick-handler.js"></script>
+<script src="/js/tileset-to-tilemap/tileset-tile-options-clearer.js"></script>
+<script src="/js/tileset-to-tilemap/tileset-tile-options-binder.js"></script>
+<script src="/js/tileset-to-tilemap/tileset-to-tilemap.js"></script>
