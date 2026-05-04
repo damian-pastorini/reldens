@@ -9,8 +9,6 @@
 const { defineConfig } = require('@playwright/test');
 const { FileHandler } = require('@reldens/server-utils');
 const { TimeConstants } = require('./helpers/time-constants');
-const { TestProgressReporter } = require('./reporters/test-progress-reporter');
-
 let configPath = FileHandler.joinPaths(process.cwd(), 'tests', 'config.json');
 let testConfig = FileHandler.exists(configPath) ? FileHandler.fetchFileJson(configPath) : {};
 
@@ -26,7 +24,7 @@ module.exports = defineConfig({
     workers: 1,
     maxFailures: 1,
     retries: 0,
-    reporter: [[TestProgressReporter]],
+    reporter: [['./reporters/test-progress-reporter.js']],
     expect: { timeout: TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun) },
     use: {
         baseURL: baseUrl,

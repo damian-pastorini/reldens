@@ -156,13 +156,13 @@ class TestCombat
     static async walkToEnemyWithinRange(page, enemyKey, range, timeout)
     {
         if(enemyKey){
-            let reached = await Phaser.moveToObjectWithinRange(page, 'asset_key', enemyKey, 'active', range, timeout);
+            let reached = await Navigation.moveToObjectWithinRange(page, 'asset_key', enemyKey, 'active', range, timeout);
             if(!reached){
                 Logger.error('walkToEnemyWithinRange: did not reach range '+range+' enemyKey='+enemyKey);
             }
             return reached;
         }
-        let reached = await Phaser.moveToObjectWithinRange(page, null, null, null, range, timeout, true);
+        let reached = await Navigation.moveToObjectWithinRange(page, null, null, null, range, timeout, true);
         if(!reached){
             Logger.error('walkToEnemyWithinRange: did not reach range '+range+' (no enemyKey)');
         }
@@ -182,8 +182,8 @@ class TestCombat
         let data = await TestCombat.loginAndGetEnemyWithWorldPos(page, gameConfig, longRun);
         await TestCombat.walkToEnemyWithinRange(page, data.enemyKey, skill.range, data.navigationTimeout);
         await screenshots.capture(page, prefix+'-'+skill.key+'-within-range');
-        await TestCombat.prepareEnemyTargetAndChat(page, data);
         await TestCombat.walkToEnemyWithinRange(page, data.enemyKey, Math.floor(skill.range / 2), data.navigationTimeout);
+        await TestCombat.prepareEnemyTargetAndChat(page, data);
         await TestCombat.targetEnemy(page, data.enemyKey);
         return data;
     }
@@ -250,7 +250,6 @@ class TestCombat
                 let skillRange = firstAttackSkill ? firstAttackSkill.range : 100;
                 await TestCombat.walkToEnemyWithinRange(page, data.enemyKey, skillRange, data.navigationTimeout);
                 await screenshots.capture(page, 'within-attack-range');
-                await TestCombat.prepareEnemyTargetAndChat(page, data);
                 let availableActionKeys = await Phaser.getPlayerAvailableActionKeys(page);
                 let firstAttackKey = firstAttackSkill ? firstAttackSkill.key : null;
                 let resolvedAttackKey = firstAttackKey || availableActionKeys[0];
@@ -259,6 +258,7 @@ class TestCombat
                     'No attack action available - ensure player has attack skills. Available: '+availableActionKeys.join(', ')
                 ).toBeTruthy();
                 await TestCombat.walkToEnemyWithinRange(page, data.enemyKey, Math.floor(skillRange / 2), data.navigationTimeout);
+                await TestCombat.prepareEnemyTargetAndChat(page, data);
                 await TestCombat.targetEnemy(page, data.enemyKey);
                 await page.click(Selectors.combat.skillButton(resolvedAttackKey));
                 await expect(page.locator(Selectors.chat.tabContentGeneral)).toContainText(

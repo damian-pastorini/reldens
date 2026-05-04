@@ -86,4 +86,5 @@ class TestProgressReporter
     }
 }
 
+module.exports = TestProgressReporter;
 module.exports.TestProgressReporter = TestProgressReporter;

@@ -6,7 +6,6 @@
  *
  */
 
-const { Logger } = require('@reldens/utils');
 const { Selectors } = require('../selectors');
 
 class Phaser
@@ -234,88 +233,6 @@ class Phaser
             }
             return ids;
         });
-    }
-
-    static async pressKeys(page, keys)
-    {
-        for(let key of keys){
-            await page.keyboard.down(key);
-        }
-    }
-
-    static async releaseKeys(page, keys)
-    {
-        for(let key of keys){
-            await page.keyboard.up(key);
-        }
-    }
-
-    static async moveToObjectWithinRange(page, matchProp, matchValue, statusKey, range, timeout, useRespawnFind = false)
-    {
-        let effectiveTimeout = timeout;
-        let stepMs = 1200;
-        let maxSteps = Math.ceil(effectiveTimeout / stepMs);
-        await page.locator(Selectors.canvas).click({ position: { x: 10, y: 10 }, force: true });
-        for(let i = 0; i < maxSteps; i++){
-            let state = await page.evaluate((args) => {
-                let scene = window.reldens.getActiveScene();
-                if(!scene || !scene.objectsAnimations){
-                    return null;
-                }
-                let found = args.useRespawnFind
-                    ? Object.values(scene.objectsAnimations).find(
-                        anim => anim.key !== anim.asset_key && anim.sceneSprite && anim.sceneSprite.visible
-                    )
-                    : Object.values(scene.objectsAnimations).find(
-                        anim => anim[args.prop] === args.value && anim.sceneSprite && anim.sceneSprite[args.statusKey]
-                    );
-                if(!found || !found.sceneSprite){
-                    return null;
-                }
-                let room = window.reldens && window.reldens.activeRoomEvents && window.reldens.activeRoomEvents.room;
-                if(!room || !room.state || !room.state.players){
-                    return null;
-                }
-                let player = window.reldens.activeRoomEvents.playerBySessionIdFromState(room, room.sessionId);
-                if(!player){
-                    return null;
-                }
-                let body = room.state.bodies ? room.state.bodies.get(found.key) : null;
-                let targetX = body ? body.x : found.sceneSprite.x;
-                let targetY = body ? body.y : found.sceneSprite.y;
-                let dist = Math.hypot(player.state.x - targetX, player.state.y - targetY);
-                if(dist <= args.range){
-                    return { inRange: true, playerX: player.state.x, playerY: player.state.y, targetX, targetY, dist };
-                }
-                return { inRange: false, playerX: player.state.x, playerY: player.state.y, targetX, targetY, dist };
-            }, { prop: matchProp, value: matchValue, statusKey, range, useRespawnFind });
-            if(!state){
-                Logger.error('moveToObjectWithinRange step '+i+': no enemy or player found in scene');
-                return false;
-            }
-            if(state.inRange){
-                Logger.debug('moveToObjectWithinRange: in range at step '+i+' player=('+state.playerX+','+state.playerY+') enemy=('+state.targetX+','+state.targetY+') dist='+state.dist);
-                return true;
-            }
-            Logger.debug('moveToObjectWithinRange step '+i+': player=('+state.playerX+','+state.playerY+') enemy=('+state.targetX+','+state.targetY+') dist='+state.dist);
-            let dx = state.targetX - state.playerX;
-            let dy = state.targetY - state.playerY;
-            let pressedKeys = [];
-            if(0 !== dx){
-                pressedKeys.push(dx > 0 ? 'ArrowRight' : 'ArrowLeft');
-            }
-            if(0 !== dy){
-                pressedKeys.push(dy > 0 ? 'ArrowDown' : 'ArrowUp');
-            }
-            if(0 === pressedKeys.length){
-                pressedKeys.push('ArrowRight');
-            }
-            await Phaser.pressKeys(page, pressedKeys);
-            await page.waitForTimeout(stepMs);
-            await Phaser.releaseKeys(page, pressedKeys);
-        }
-        Logger.error('moveToObjectWithinRange: failed to reach range '+range+' within '+maxSteps+' steps');
-        return false;
     }
 
 }
