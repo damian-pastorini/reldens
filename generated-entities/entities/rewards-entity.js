@@ -22,17 +22,20 @@ class RewardsEntity extends EntityProperties
             object_id: {
                 type: 'reference',
                 reference: 'objects',
+                alias: 'related_objects',
                 isRequired: true,
                 dbType: 'int'
             },
             item_id: {
                 type: 'reference',
                 reference: 'items_item',
+                alias: 'related_items_item',
                 dbType: 'int'
             },
             modifier_id: {
                 type: 'reference',
                 reference: 'rewards_modifiers',
+                alias: 'related_rewards_modifiers',
                 dbType: 'int'
             },
             experience: {

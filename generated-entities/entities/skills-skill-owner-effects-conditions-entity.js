@@ -22,6 +22,7 @@ class SkillsSkillOwnerEffectsConditionsEntity extends EntityProperties
             skill_owner_effect_id: {
                 type: 'reference',
                 reference: 'skills_skill_owner_effects',
+                alias: 'related_skills_skill_owner_effects',
                 isRequired: true,
                 dbType: 'int'
             },

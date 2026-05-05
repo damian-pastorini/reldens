@@ -30,6 +30,7 @@ class ChatMessageTypesEntity extends EntityProperties
             also_show_in_type: {
                 type: 'reference',
                 reference: 'chat_message_types',
+                alias: 'related_chat_message_types',
                 dbType: 'int'
             }
         };

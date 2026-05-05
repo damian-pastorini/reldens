@@ -22,12 +22,14 @@ class SkillsClassPathLevelLabelsEntity extends EntityProperties
             class_path_id: {
                 type: 'reference',
                 reference: 'skills_class_path',
+                alias: 'related_skills_class_path',
                 isRequired: true,
                 dbType: 'int'
             },
             level_id: {
                 type: 'reference',
                 reference: 'skills_levels',
+                alias: 'related_skills_levels',
                 isRequired: true,
                 dbType: 'int'
             },

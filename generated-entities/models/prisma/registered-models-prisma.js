@@ -43,6 +43,7 @@ const { OperationTypesModel } = require('./operation-types-model');
 const { PlayersModel } = require('./players-model');
 const { PlayersStateModel } = require('./players-state-model');
 const { PlayersStatsModel } = require('./players-stats-model');
+const { QuestsProgressModel } = require('./quests-progress-model');
 const { RespawnModel } = require('./respawn-model');
 const { RewardsModel } = require('./rewards-model');
 const { RewardsEventsModel } = require('./rewards-events-model');
@@ -123,6 +124,7 @@ let rawRegisteredEntities = {
     players: PlayersModel,
     playersState: PlayersStateModel,
     playersStats: PlayersStatsModel,
+    questsProgress: QuestsProgressModel,
     respawn: RespawnModel,
     rewards: RewardsModel,
     rewardsEvents: RewardsEventsModel,

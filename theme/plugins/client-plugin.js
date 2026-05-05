@@ -6,6 +6,7 @@
 
 const { PluginInterface } = require('reldens/lib/features/plugin-interface');
 const { Npc1 } = require('./objects/client/npc1');
+const { TreasureChestClient } = require('./objects/client/treasure-chest');
 
 class ClientPlugin extends PluginInterface
 {
@@ -26,6 +27,7 @@ class ClientPlugin extends PluginInterface
             customClasses.objects = {};
         }
         customClasses.objects['people_town_1'] = Npc1;
+        customClasses.objects['chest_forest_1'] = TreasureChestClient;
     }
 
 }

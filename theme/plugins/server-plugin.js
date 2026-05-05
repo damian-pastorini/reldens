@@ -7,6 +7,8 @@
 const { Healer } = require('./objects/server/healer');
 const { QuestNpc } = require('./objects/server/quest-npc');
 const { WeaponsMaster } = require('./objects/server/weapons-master');
+const { RockObject } = require('./objects/server/rock-object');
+const { TreasureChest } = require('./objects/server/treasure-chest');
 const { PluginInterface } = require('reldens/lib/features/plugin-interface');
 
 class ServerPlugin extends PluginInterface
@@ -34,6 +36,8 @@ class ServerPlugin extends PluginInterface
         customClasses.objects['npc_2'] = Healer;
         customClasses.objects['npc_4'] = WeaponsMaster;
         customClasses.objects['npc_5'] = QuestNpc;
+        customClasses.objects['rock_forest_1'] = RockObject;
+        customClasses.objects['chest_forest_1'] = TreasureChest;
     }
 
 }

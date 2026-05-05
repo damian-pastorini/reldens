@@ -22,6 +22,7 @@ class SkillsSkillOwnerEffectsEntity extends EntityProperties
             skill_id: {
                 type: 'reference',
                 reference: 'skills_skill',
+                alias: 'related_skills_skill',
                 isRequired: true,
                 dbType: 'int'
             },
@@ -36,6 +37,7 @@ class SkillsSkillOwnerEffectsEntity extends EntityProperties
             operation: {
                 type: 'reference',
                 reference: 'operation_types',
+                alias: 'related_operation_types',
                 isRequired: true,
                 dbType: 'int'
             },

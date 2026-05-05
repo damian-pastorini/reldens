@@ -50,6 +50,46 @@ REPLACE INTO `players_stats` (`id`, `player_id`, `stat_id`, `base_value`, `value
 	(29, 3, 9, 100, 100),
 	(30, 3, 10, 100, 100);
 
+CREATE TABLE IF NOT EXISTS `quests_progress` (
+    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `player_id` INT UNSIGNED NULL DEFAULT NULL,
+    `quest_key` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    `customData` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+    PRIMARY KEY (`id`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+REPLACE INTO `items_item` (`id`, `key`, `type`, `group_id`, `label`, `description`, `qty_limit`, `uses_limit`, `useTimeOut`, `execTimeOut`, `customData`) VALUES
+	(7, 'ore', 3, NULL, 'Ore', 'A chunk of raw ore.', 0, 0, NULL, NULL, '{}'),
+	(8, 'fish', 2, NULL, 'Fish', 'A fish.', 0, 0, NULL, NULL, '{"removeAfterUse":true}');
+
+REPLACE INTO `items_item_modifiers` (`id`, `item_id`, `key`, `property_key`, `operation`, `value`, `maxProperty`) VALUES
+	(5, 8, 'fish', 'stats/hp', 1, '10', 'statsBase/hp');
+
+REPLACE INTO `objects_items_rewards` (`id`, `object_id`, `item_key`, `reward_item_key`, `reward_quantity`, `reward_item_is_required`) VALUES
+	(6, 10, 'ore', 'coins', 1, 0);
+
+UPDATE `objects` SET
+	`layer_name` = 'respawn-area-mining-rocks',
+	`tile_index` = NULL,
+	`class_type` = 7,
+	`object_class_key` = 'rock_forest_1_area',
+	`private_params` = '{"shouldRespawn":true,"childObjectClassKey":"rock_forest_1","itemKey":"ore","cancelOnMove":true,"cancelOnOutOfRange":false,"runOnAction":true,"collisionType":2,"hasState":true}',
+	`client_params` = '{"timingDuration":5000,"isInteractive":true,"frameStart":0,"frameEnd":0,"classKey":"rock_forest_1","ui":false}',
+	`enabled` = 1
+WHERE `id` = 16;
+
+REPLACE INTO `objects_assets` (`object_asset_id`, `object_id`, `asset_type`, `asset_key`, `asset_file`, `extra_params`) VALUES
+	(14, 16, 'spritesheet', 'rock_forest_1', 'rock.png', '{"frameWidth":32,"frameHeight":32}'),
+	(15, 17, 'spritesheet', 'fish_spawn_forest_1', 'fish-spawn.png', '{"frameWidth":32,"frameHeight":32}'),
+	(16, 18, 'spritesheet', 'chest_forest_1', 'chest.png', '{"frameWidth":32,"frameHeight":32}');
+
+REPLACE INTO `respawn` (`id`, `object_id`, `respawn_time`, `instances_limit`, `layer`) VALUES
+	(7, 16, 30000, 1, 'respawn-area-mining-rocks');
+
+-- Add collisionType to all NPC objects so players cannot walk through them
+UPDATE `objects` SET `private_params` = '{"runOnAction":true,"playerVisible":true,"collisionType":2}' WHERE `id` = 5;
+UPDATE `objects` SET `private_params` = '{"runOnAction":true,"playerVisible":true,"sendInvalidOptionMessage":true,"collisionType":2}' WHERE `id` IN (8, 10, 12, 13);
+
 --
 
 SET FOREIGN_KEY_CHECKS = 1;

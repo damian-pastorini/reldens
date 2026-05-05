@@ -21,12 +21,14 @@ class AudioPlayerConfigEntity extends EntityProperties
             player_id: {
                 type: 'reference',
                 reference: 'players',
+                alias: 'related_players',
                 isRequired: true,
                 dbType: 'int'
             },
             category_id: {
                 type: 'reference',
                 reference: 'audio_categories',
+                alias: 'related_audio_categories',
                 dbType: 'int'
             },
             enabled: {

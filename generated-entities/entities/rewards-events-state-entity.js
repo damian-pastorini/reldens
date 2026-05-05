@@ -21,12 +21,14 @@ class RewardsEventsStateEntity extends EntityProperties
             rewards_events_id: {
                 type: 'reference',
                 reference: 'rewards_events',
+                alias: 'related_rewards_events',
                 isRequired: true,
                 dbType: 'int'
             },
             player_id: {
                 type: 'reference',
                 reference: 'players',
+                alias: 'related_players',
                 isRequired: true,
                 dbType: 'int'
             },

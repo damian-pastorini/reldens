@@ -34,11 +34,13 @@ class AudioEntity extends EntityProperties
             room_id: {
                 type: 'reference',
                 reference: 'rooms',
+                alias: 'related_rooms',
                 dbType: 'int'
             },
             category_id: {
                 type: 'reference',
                 reference: 'audio_categories',
+                alias: 'related_audio_categories',
                 dbType: 'int'
             },
             enabled: {

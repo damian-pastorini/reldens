@@ -20,7 +20,7 @@
 #equipment-items {
     position: relative;
     word-wrap: break-word;
-    overflow: auto;
+    overflow: visible;
     font-size: 12px;
 }
 
@@ -85,7 +85,7 @@
         z-index: 2;
         min-width: 120px;
         text-align: center;
-        background: $cBlack60;
+        background: $cBlack80;
         padding: 4px;
         color: $cWhite;
         border: 1px solid $cWhite;
@@ -139,6 +139,23 @@
             display: inline-block;
         }
 
+    }
+
+    .item-data-container.item-data-visible {
+        display: block;
+    }
+
+    .item-data-container.popup-left {
+        left: auto;
+        right: 100%;
+    }
+
+    .image-container img.item-selected {
+        border: 1px solid $cWhite;
+    }
+
+    .trash-confirm.trash-confirm-visible {
+        display: block;
     }
 
 }

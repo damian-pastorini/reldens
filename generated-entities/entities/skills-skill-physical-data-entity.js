@@ -21,6 +21,7 @@ class SkillsSkillPhysicalDataEntity extends EntityProperties
             skill_id: {
                 type: 'reference',
                 reference: 'skills_skill',
+                alias: 'related_skills_skill',
                 isRequired: true,
                 dbType: 'int'
             },

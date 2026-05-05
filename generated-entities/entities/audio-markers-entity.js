@@ -21,6 +21,7 @@ class AudioMarkersEntity extends EntityProperties
             audio_id: {
                 type: 'reference',
                 reference: 'audio',
+                alias: 'related_audio',
                 isRequired: true,
                 dbType: 'int'
             },
