@@ -113,6 +113,19 @@ class TilesetSpotEditor
         });
     }
 
+    initNumberSpotProp(el, key, spot)
+    {
+        if(null !== spot[key] && undefined !== spot[key]){
+            el.value = spot[key];
+            return;
+        }
+        let minVal = el.min !== '' ? +el.min : 0;
+        if(0 < minVal){
+            spot[key] = minVal;
+            el.value = minVal;
+        }
+    }
+
     initSpotProps(frag, spot)
     {
         let freeSpaceRow = frag.querySelector('.spot-free-space-row');
@@ -125,14 +138,15 @@ class TilesetSpotEditor
                 this.bindCheckboxProp(el, key, spot, freeSpaceRow, allowPathsRow);
                 continue;
             }
-            if(spot[key] !== undefined){
-                el.value = spot[key];
-            }
             if('number' === el.type){
+                this.initNumberSpotProp(el, key, spot);
                 el.addEventListener('input', () => {
                     spot[key] = el.value === '' ? null : +el.value;
                 });
                 continue;
+            }
+            if(spot[key] !== undefined){
+                el.value = spot[key];
             }
             el.addEventListener('input', () => {
                 spot[key] = el.value;

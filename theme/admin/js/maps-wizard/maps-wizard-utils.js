@@ -61,9 +61,28 @@ function setInputValue(input, propertyName, propertyValue)
     input.value = propertyValue;
 }
 
+let extraProperties = {};
+
+function setExtraProperties(data, optionType)
+{
+    extraProperties = {};
+    let keys = Object.keys(data);
+    for(let propertyName of keys){
+        let commonInput = document.querySelector('.config-input[data-option="common"][data-property="' + propertyName + '"]');
+        if(commonInput){
+            continue;
+        }
+        let optionInput = document.querySelector('.config-input[data-option="' + optionType + '"][data-property="' + propertyName + '"]');
+        if(optionInput){
+            continue;
+        }
+        extraProperties[propertyName] = data[propertyName];
+    }
+}
+
 function buildGeneratorData(optionType)
 {
-    let generatorData = {};
+    let generatorData = Object.assign({}, extraProperties);
     let commonInputs = document.querySelectorAll('.config-input[data-option="common"]');
     for(let input of commonInputs){
         generatorData[input.dataset.property] = processInputValue(input, input.dataset.property, input.value);
@@ -118,6 +137,7 @@ function updateInputsFromGeneratorData()
     } catch(e){
         return;
     }
+    setExtraProperties(jsonData, optionType);
     fillInputsFromData(jsonData, optionType);
 }
 

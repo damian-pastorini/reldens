@@ -11,7 +11,11 @@ class TilesetTileOptionsBinder
             surroundingTiles: ['-1,-1','-1,0','-1,1','0,-1','0,1','1,-1','1,0','1,1'],
             corners: ['-1,-1','-1,1','1,-1','1,1'],
             bordersTiles: ['top','right','bottom','left'],
-            borderCornersTiles: ['top-left','top-right','bottom-left','bottom-right']
+            borderCornersTiles: ['top-left','top-right','bottom-left','bottom-right'],
+            innerWallsTiles: ['-1,-1','-1,0','-1,1','0,-1','0,0','0,1','1,-1','1,0','1,1'],
+            innerWallsCornerTiles: ['top-left','top-right','bottom-left','bottom-right'],
+            outerWallsTiles: ['-1,-1','-1,0','-1,1','0,-1','0,0','0,1','1,-1','1,0','1,1'],
+            outerWallsCornerTiles: ['top-left','top-right','bottom-left','bottom-right']
         };
         this.resetPickState();
     }
@@ -52,10 +56,13 @@ class TilesetTileOptionsBinder
             corners: {},
             bordersTiles: {},
             borderCornersTiles: {},
+            innerWallsTiles: {},
+            innerWallsCornerTiles: {},
+            outerWallsTiles: {},
+            outerWallsCornerTiles: {},
             width: 5,
             height: 5,
             quantity: 1,
-            layerName: '',
             walkable: true,
             markPercentage: 100,
             variableTilesPercentage: 0,
@@ -66,9 +73,8 @@ class TilesetTileOptionsBinder
             placeRandomPath: false,
             depth: false,
             splitBordersInLayers: false,
-            borderLayerSuffix: '',
-            wallsLayerSuffix: '',
-            outerWallsLayerSuffix: '',
+            borderInnerWalls: false,
+            borderOuterWalls: false,
             borderOuterWallsIncreaseLayerSize: 4
         };
     }

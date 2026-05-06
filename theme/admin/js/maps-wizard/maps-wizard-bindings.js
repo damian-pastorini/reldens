@@ -164,7 +164,9 @@ if(prefillSessionId){
     let mapsWizardActionPath = document.querySelector('#maps-wizard-form').getAttribute('action');
     let apiBase = mapsWizardActionPath.replace('/maps-wizard', '');
     fetch(apiBase + '/tileset-analyzer/api/session-wizard-config?sessionId=' + encodeURIComponent(prefillSessionId))
-        .then(function(r){ return r.json(); })
+        .then(function(r){
+            return r.json();
+        })
         .then(function(wizardConfig){
             if(!wizardConfig || !wizardConfig.strategy){
                 return;
@@ -174,6 +176,7 @@ if(prefillSessionId){
                 strategyRadio.click();
             }
             if(wizardConfig.partialData){
+                setExtraProperties(wizardConfig.partialData, wizardConfig.strategy);
                 fillInputsFromData(wizardConfig.partialData, wizardConfig.strategy);
                 updateGeneratorDataFromInputs();
             }
