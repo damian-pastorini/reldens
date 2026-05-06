@@ -283,6 +283,10 @@ class TilesetCanvasRenderer
         this.addPositionalIndices(indices, spot.corners);
         this.addPositionalIndices(indices, spot.bordersTiles);
         this.addPositionalIndices(indices, spot.borderCornersTiles);
+        this.addPositionalIndices(indices, spot.innerWallsTiles);
+        this.addPositionalIndices(indices, spot.innerWallsCornerTiles);
+        this.addPositionalIndices(indices, spot.outerWallsTiles);
+        this.addPositionalIndices(indices, spot.outerWallsCornerTiles);
         return indices;
     }
 

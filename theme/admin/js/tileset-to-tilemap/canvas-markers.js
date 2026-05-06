@@ -51,7 +51,11 @@ class TilesetCanvasMarkers
                     surroundingTiles: spot.surroundingTiles,
                     corners: spot.corners,
                     bordersTiles: spot.bordersTiles,
-                    borderCornersTiles: spot.borderCornersTiles
+                    borderCornersTiles: spot.borderCornersTiles,
+                    innerWallsTiles: spot.innerWallsTiles,
+                    innerWallsCornerTiles: spot.innerWallsCornerTiles,
+                    outerWallsTiles: spot.outerWallsTiles,
+                    outerWallsCornerTiles: spot.outerWallsCornerTiles
                 });
                 if(null !== spot.spotTile && undefined !== spot.spotTile){
                     this.pushFlat(markers, tileset, spot.spotTile, 'ST', '#ff8c5b');
@@ -108,6 +112,10 @@ class TilesetCanvasMarkers
         this.addPositional(markers, tileset, opts.corners ? opts.corners : {}, 'C', '#5bbbff');
         this.addPositional(markers, tileset, opts.bordersTiles ? opts.bordersTiles : {}, 'T', '#c05bff');
         this.addPositional(markers, tileset, opts.borderCornersTiles ? opts.borderCornersTiles : {}, 'K', '#ff5bc0');
+        this.addPositional(markers, tileset, opts.innerWallsTiles ? opts.innerWallsTiles : {}, 'IW', '#ff5b5b');
+        this.addPositional(markers, tileset, opts.innerWallsCornerTiles ? opts.innerWallsCornerTiles : {}, 'IC', '#ff9090');
+        this.addPositional(markers, tileset, opts.outerWallsTiles ? opts.outerWallsTiles : {}, 'OW', '#5bffff');
+        this.addPositional(markers, tileset, opts.outerWallsCornerTiles ? opts.outerWallsCornerTiles : {}, 'OC', '#90ffff');
     }
 
     addPositional(markers, tileset, posObj, label, color)

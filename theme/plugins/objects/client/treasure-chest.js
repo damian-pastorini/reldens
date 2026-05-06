@@ -32,9 +32,17 @@ class TreasureChestClient extends AnimationEngine
             this.isOpen = true;
             this.playOpenAnimation();
         }, chestListenerKey);
+        this.gameManager.activeRoomEvents.room.onMessage('*', (message) => {
+            if(!message || Number(message.id) !== Number(this.id)){
+                return;
+            }
+            if(GameConst.CLOSE_UI_ACTION === message.act){
+                this.pendingOpen = false;
+            }
+        });
     }
 
-    enableInteraction(currentScene)
+    enableInteraction()
     {
         if(!this.isInteractive){
             return;
