@@ -170,6 +170,16 @@
                     "assetKey": "quest_npc_1",
                     "objectId": 13,
                     "objectClassKey": "npc_5"
+                },
+                {
+                    "assetKey": "chest_forest_1",
+                    "objectId": 18,
+                    "objectClassKey": "chest_forest_1"
+                },
+                {
+                    "assetKey": "fish_spawn_forest_1",
+                    "objectId": 17,
+                    "objectClassKey": "fish_spawn_forest_1"
                 }
             ],
             "traders": []

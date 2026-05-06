@@ -132,7 +132,7 @@ class Phaser
                 x: (p.x - camera.scrollX) * camera.zoom,
                 y: (p.y - camera.scrollY) * camera.zoom
             };
-        }, sid);
+        }, sessionId);
     }
 
     static async clickPlayerBySessionId(page, sessionId)
@@ -177,12 +177,12 @@ class Phaser
         });
     }
 
-    static async getCanvasPixelHash(page, x, y, w, h)
+    static async getCanvasPixelHash(page)
     {
-        let screenshot = await page.locator(Selectors.canvas).screenshot();
+        let buffer = await page.screenshot();
         let hash = 0;
-        for(let i = 0; i < screenshot.length; i++) {
-            hash = (hash * 31 + screenshot[i]) & 0xffffffff;
+        for(let i = 0; i < buffer.length; i++){
+            hash = (hash * 31 + buffer[i]) & 0xffffffff;
         }
         return hash;
     }

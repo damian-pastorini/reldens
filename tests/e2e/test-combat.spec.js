@@ -182,8 +182,8 @@ class TestCombat
         let data = await TestCombat.loginAndGetEnemyWithWorldPos(page, gameConfig, longRun);
         await TestCombat.walkToEnemyWithinRange(page, data.enemyKey, skill.range, data.navigationTimeout);
         await screenshots.capture(page, prefix+'-'+skill.key+'-within-range');
-        await TestCombat.walkToEnemyWithinRange(page, data.enemyKey, Math.floor(skill.range / 2), data.navigationTimeout);
         await TestCombat.prepareEnemyTargetAndChat(page, data);
+        await TestCombat.walkToEnemyWithinRange(page, data.enemyKey, Math.floor(skill.range / 2), data.navigationTimeout);
         await TestCombat.targetEnemy(page, data.enemyKey);
         return data;
     }
@@ -231,6 +231,14 @@ class TestCombat
         return false;
     }
 
+    static async resolveAttackKey(page, firstAttackSkill, context)
+    {
+        let availableActionKeys = await Phaser.getPlayerAvailableActionKeys(page);
+        let resolved = (firstAttackSkill ? firstAttackSkill.key : null) || availableActionKeys[0];
+        expect(resolved, 'No attack action available '+context+'. Available: '+availableActionKeys.join(', ')).toBeTruthy();
+        return resolved;
+    }
+
     static run()
     {
         test.describe('Combat System', () => {
@@ -250,16 +258,9 @@ class TestCombat
                 let skillRange = firstAttackSkill ? firstAttackSkill.range : 100;
                 await TestCombat.walkToEnemyWithinRange(page, data.enemyKey, skillRange, data.navigationTimeout);
                 await screenshots.capture(page, 'within-attack-range');
-                let availableActionKeys = await Phaser.getPlayerAvailableActionKeys(page);
-                let firstAttackKey = firstAttackSkill ? firstAttackSkill.key : null;
-                let resolvedAttackKey = firstAttackKey || availableActionKeys[0];
-                expect(
-                    resolvedAttackKey,
-                    'No attack action available - ensure player has attack skills. Available: '+availableActionKeys.join(', ')
-                ).toBeTruthy();
-                await TestCombat.walkToEnemyWithinRange(page, data.enemyKey, Math.floor(skillRange / 2), data.navigationTimeout);
                 await TestCombat.prepareEnemyTargetAndChat(page, data);
-                await TestCombat.targetEnemy(page, data.enemyKey);
+                let resolvedAttackKey = await TestCombat.resolveAttackKey(page, firstAttackSkill, '- ensure player has attack skills');
+                await TestCombat.walkToEnemyWithinRange(page, data.enemyKey, Math.floor(skillRange / 2), data.navigationTimeout);
                 await page.click(Selectors.combat.skillButton(resolvedAttackKey));
                 await expect(page.locator(Selectors.chat.tabContentGeneral)).toContainText(
                     'damage',
@@ -273,12 +274,16 @@ class TestCombat
                 let skillRange = firstAttackSkill ? firstAttackSkill.range : 100;
                 await TestCombat.walkToEnemyWithinRange(page, data.enemyKey, Math.floor(skillRange / 2), data.navigationTimeout);
                 await TestCombat.targetEnemy(page, data.enemyKey);
-                let canvasBox = await page.locator(Selectors.canvas).boundingBox();
-                let hashBefore = await Phaser.getCanvasPixelHash(page, 0, 0, canvasBox.width, canvasBox.height);
+                let resolvedAttackKey = await TestCombat.resolveAttackKey(page, firstAttackSkill, 'for canvas test');
+                await page.waitForSelector(
+                    Selectors.combat.skillButton(resolvedAttackKey),
+                    { state: 'visible', timeout: TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun) }
+                );
+                let hashBefore = await Phaser.getCanvasPixelHash(page);
                 await screenshots.capture(page, 'canvas-before-attack');
-                await page.click(Selectors.combat.skillButton(firstAttackSkill ? firstAttackSkill.key : 'attackShort'));
+                await page.click(Selectors.combat.skillButton(resolvedAttackKey));
                 await page.waitForTimeout(TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun));
-                let hashAfter = await Phaser.getCanvasPixelHash(page, 0, 0, canvasBox.width, canvasBox.height);
+                let hashAfter = await Phaser.getCanvasPixelHash(page);
                 expect(hashBefore).not.toBe(hashAfter);
                 await screenshots.capture(page, 'canvas-after-attack');
             });

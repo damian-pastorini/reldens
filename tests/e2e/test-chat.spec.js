@@ -132,12 +132,12 @@ class TestChat
         let secondTabClass = await tabLabels.nth(1).getAttribute('class');
         expect(firstTabClass, 'First chat tab class must be available').toBeTruthy();
         expect(secondTabClass, 'Second chat tab class must be available').toBeTruthy();
-        await tabLabels.nth(1).click();
+        await tabLabels.nth(1).click({ force: true });
         await page.waitForTimeout(pauseMs);
         await screenshots.capture(page, 'chat-second-tab-active');
         let activeAfterClick = await page.locator(Selectors.chat.tabLabelActive).first().getAttribute('class');
         expect(activeAfterClick).toBeTruthy();
-        await tabLabels.nth(0).click();
+        await tabLabels.nth(0).click({ force: true });
         await page.waitForTimeout(pauseMs);
         let activeAfterSwitchBack = await page.locator(Selectors.chat.tabLabelActive).first().getAttribute('class');
         expect(activeAfterSwitchBack).toBeTruthy();

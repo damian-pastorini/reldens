@@ -156,12 +156,14 @@ class TestAuthentication
                     page.on('dialog', async (dialog) => {
                         await dialog.accept();
                     });
+                    let loginFormPromise = page.waitForSelector(
+                        Selectors.login.form,
+                        { state: 'visible', timeout: TimeConstants.forLongRun(TimeConstants.GAME_START, longRun) }
+                    );
                     await Login.loginAndStartGame(secondPage, username, password, playerName, longRun, true);
                     await expect(secondPage.locator(Selectors.canvas)).toBeVisible();
                     await screenshots.capture(secondPage, 'p2-second-session-in-game');
-                    await expect(page.locator(Selectors.login.form)).toBeVisible(
-                        { timeout: TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun) }
-                    );
+                    await loginFormPromise;
                     await screenshots.capture(page, 'p1-disconnected-back-to-login');
                 }
             );

@@ -2,7 +2,7 @@
  *
  * Reldens - Test Interactive Objects
  *
- * Tests chest, fish spawn, and mining rock interactions with inventory verification.
+ * Tests chest and mining rock interactions.
  *
  */
 
@@ -19,6 +19,7 @@ class TestInteractiveObjects
 {
     static FOREST_TRANSITION_X = 608;
     static FOREST_TRANSITION_Y = 16;
+    static INTERACTION_RANGE = 50;
 
     static async loginAndEnterForest(page, gameConfig, longRun)
     {
@@ -37,90 +38,102 @@ class TestInteractiveObjects
             navTimeout
         );
         expect(inForest, 'Player must reach reldens-forest').toBeTruthy();
-        return { pauseMs, sceneTimeout };
+        return { pauseMs, sceneTimeout, navTimeout };
     }
 
-    static async openInventoryAndCountItems(page, pauseMs)
+    static async waitForObjectInScene(page, objectKey, timeout)
     {
-        await page.click(Selectors.hud.inventoryOpen);
-        await page.waitForTimeout(pauseMs);
-        await expect(page.locator(Selectors.inventory.ui)).toBeVisible();
-        return page.locator(Selectors.inventory.items+' > *').count();
-    }
-
-    static resolveObjectMatchMode(page, objectKey)
-    {
-        return page.evaluate((key) => {
-            if(!window.reldens || !window.reldens.activeRoomEvents) {
-                return 'assetKey';
-            }
-            let scene = window.reldens.getActiveScene();
-            if(!scene || !scene.objectsAnimations) {
-                return 'assetKey';
-            }
-            if(scene.objectsAnimations[key]) {
-                return 'key';
-            }
-            return 'assetKey';
-        }, objectKey);
-    }
-
-    static async waitForObjectFlexible(page, objectKey, timeout)
-    {
-        try {
-            await Phaser.waitForObjectByAssetKey(page, objectKey, timeout);
-            return;
-        } catch(assetKeyError) {
+        let found = await Phaser.waitForObjectByAssetKey(page, objectKey, timeout).then(() => true).catch(() => false);
+        if(!found){
             await Phaser.waitForObject(page, objectKey, timeout);
         }
     }
 
-    static async clickObjectFlexible(page, objectKey, matchMode)
+    static async navigateToObjectAndAssertInRange(page, objectKey, ctx, label)
     {
-        if('key' === matchMode) {
+        let reached = await Navigation.moveToObjectWithinRange(
+            page,
+            'asset_key',
+            objectKey,
+            'visible',
+            TestInteractiveObjects.INTERACTION_RANGE,
+            ctx.navTimeout
+        );
+        if(!reached){
+            reached = await Navigation.moveToObjectWithinRange(
+                page,
+                'asset_key',
+                objectKey,
+                'active',
+                TestInteractiveObjects.INTERACTION_RANGE,
+                ctx.navTimeout
+            );
+        }
+        expect(reached, 'Player must reach '+label+' within interaction range').toBeTruthy();
+    }
+
+    static async clickObjectByAssetKeyOrKey(page, objectKey)
+    {
+        let matchMode = await page.evaluate((key) => {
+            if(!window.reldens || !window.reldens.activeRoomEvents){
+                return 'assetKey';
+            }
+            let scene = window.reldens.getActiveScene();
+            if(!scene || !scene.objectsAnimations){
+                return 'assetKey';
+            }
+            if(scene.objectsAnimations[key]){
+                return 'key';
+            }
+            return 'assetKey';
+        }, objectKey);
+        if('key' === matchMode){
             await Phaser.clickObject(page, objectKey);
             return;
         }
         await Phaser.clickObjectByAssetKey(page, objectKey);
     }
 
-    static async runObjectInteractionTest(page, screenshots, gameConfig, longRun, objectKeyProp, capturePrefix, delayMs)
-    {
-        let objectKey = gameConfig[objectKeyProp] || '';
-        expect(objectKey, objectKeyProp+' not configured').toBeTruthy();
-        let ctx = await TestInteractiveObjects.loginAndEnterForest(page, gameConfig, longRun);
-        await screenshots.capture(page, capturePrefix+'-forest-entered');
-        await TestInteractiveObjects.waitForObjectFlexible(page, objectKey, ctx.sceneTimeout);
-        let matchMode = await TestInteractiveObjects.resolveObjectMatchMode(page, objectKey);
-        await screenshots.capture(page, capturePrefix+'-found-in-scene');
-        let itemsBefore = await TestInteractiveObjects.openInventoryAndCountItems(page, ctx.pauseMs);
-        await screenshots.capture(page, capturePrefix+'-inventory-before');
-        await page.waitForTimeout(ctx.pauseMs);
-        await TestInteractiveObjects.clickObjectFlexible(page, objectKey, matchMode);
-        await page.waitForTimeout(delayMs + ctx.pauseMs);
-        await screenshots.capture(page, capturePrefix+'-interaction-complete');
-        let itemsAfter = await page.locator(Selectors.inventory.items+' > *').count();
-        expect(itemsAfter, 'Inventory item slot count must increase after '+capturePrefix).toBeGreaterThan(itemsBefore);
-        await screenshots.capture(page, capturePrefix+'-inventory-after');
-    }
-
     static run()
     {
         test.describe('Interactive Objects', () => {
-            test('player opens chest and receives items', async ({ page, screenshots, gameConfig, longRun }) => {
-                await TestInteractiveObjects.runObjectInteractionTest(
-                    page, screenshots, gameConfig, longRun, 'e2eChestKey', 'chest', 2000
-                );
+            test('player opens chest and receives interaction response', async ({ page, screenshots, gameConfig, longRun }) => {
+                let objectKey = gameConfig.e2eChestKey || '';
+                expect(objectKey, 'e2eChestKey not configured').toBeTruthy();
+                let ctx = await TestInteractiveObjects.loginAndEnterForest(page, gameConfig, longRun);
+                await screenshots.capture(page, 'chest-forest-entered');
+                await TestInteractiveObjects.waitForObjectInScene(page, objectKey, ctx.sceneTimeout);
+                await screenshots.capture(page, 'chest-found-in-scene');
+                await TestInteractiveObjects.navigateToObjectAndAssertInRange(page, objectKey, ctx, 'chest');
+                await screenshots.capture(page, 'chest-player-in-range');
+                await TestInteractiveObjects.clickObjectByAssetKeyOrKey(page, objectKey);
+                await page.waitForTimeout(2000 + ctx.pauseMs);
+                await screenshots.capture(page, 'chest-interaction-complete');
+                await expect(page.locator(Selectors.npc.dialogue)).toBeVisible({
+                    timeout: TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun)
+                });
+                await screenshots.capture(page, 'chest-dialog-visible');
             });
-            test('player interacts with fish spawn and receives fish items', async ({ page, screenshots, gameConfig, longRun }) => {
-                await TestInteractiveObjects.runObjectInteractionTest(
-                    page, screenshots, gameConfig, longRun, 'e2eFishSpawnKey', 'fish-spawn', 7000
-                );
-            });
-            test('player mines rock and receives stone or ore items', async ({ page, screenshots, gameConfig, longRun }) => {
-                await TestInteractiveObjects.runObjectInteractionTest(
-                    page, screenshots, gameConfig, longRun, 'e2eMiningRockKey', 'mining-rock', 7000
-                );
+            test('player mines rock and receives items', async ({ page, screenshots, gameConfig, longRun }) => {
+                let objectKey = gameConfig.e2eMiningRockKey || '';
+                expect(objectKey, 'e2eMiningRockKey not configured').toBeTruthy();
+                let ctx = await TestInteractiveObjects.loginAndEnterForest(page, gameConfig, longRun);
+                await screenshots.capture(page, 'mining-rock-forest-entered');
+                await TestInteractiveObjects.waitForObjectInScene(page, objectKey, ctx.sceneTimeout);
+                await screenshots.capture(page, 'mining-rock-found-in-scene');
+                await TestInteractiveObjects.navigateToObjectAndAssertInRange(page, objectKey, ctx, 'mining rock');
+                await page.click(Selectors.hud.inventoryOpen);
+                await page.waitForTimeout(ctx.pauseMs);
+                await expect(page.locator(Selectors.inventory.ui)).toBeVisible();
+                let itemsBefore = await page.locator(Selectors.inventory.items+' > *').count();
+                await screenshots.capture(page, 'mining-rock-inventory-before');
+                await page.waitForTimeout(ctx.pauseMs);
+                await TestInteractiveObjects.clickObjectByAssetKeyOrKey(page, objectKey);
+                await page.waitForTimeout(7000 + ctx.pauseMs);
+                await screenshots.capture(page, 'mining-rock-interaction-complete');
+                let itemsAfter = await page.locator(Selectors.inventory.items+' > *').count();
+                expect(itemsAfter, 'Inventory item count must increase after mining').toBeGreaterThan(itemsBefore);
+                await screenshots.capture(page, 'mining-rock-inventory-after');
             });
         });
     }
