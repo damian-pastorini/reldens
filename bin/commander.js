@@ -134,11 +134,15 @@ class Commander
             '--port='+process.env.RELDENS_DB_PORT,			
             '--database='+process.env.RELDENS_DB_NAME,
             '--driver='+(process.env.RELDENS_STORAGE_DRIVER || 'prisma'),
-            '--client='+process.env.RELDENS_DB_CLIENT
+            '--client='+(('prisma' === (process.env.RELDENS_STORAGE_DRIVER || 'prisma') && 'mysql2' === process.env.RELDENS_DB_CLIENT) ? 'mysql' : process.env.RELDENS_DB_CLIENT)
         ];
         let overrideArg = process.argv.find(arg => '--override' === arg);
         if(overrideArg){
             args.push('--override');
+        }
+        let prismaClientPathArg = process.argv.find(arg => arg.startsWith('--prismaClientPath='));
+        if(prismaClientPathArg){
+            args.push(prismaClientPathArg);
         }
         Logger.info('Running: npx '+args.join(' '));
         let child = spawn('npx', args, {

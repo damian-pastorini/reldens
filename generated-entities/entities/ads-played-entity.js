@@ -21,12 +21,14 @@ class AdsPlayedEntity extends EntityProperties
             ads_id: {
                 type: 'reference',
                 reference: 'ads',
+                alias: 'related_ads',
                 isRequired: true,
                 dbType: 'int'
             },
             player_id: {
                 type: 'reference',
                 reference: 'players',
+                alias: 'related_players',
                 isRequired: true,
                 dbType: 'int'
             },

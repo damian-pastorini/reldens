@@ -45,6 +45,7 @@ module.exports.entitiesTranslations = {
         'players': 'Players',
         'players_state': 'Players State',
         'players_stats': 'Players Stats',
+        'quests_progress': 'Quests Progress',
         'respawn': 'Respawn',
         'rewards': 'Rewards',
         'rewards_events': 'Rewards Events',
@@ -383,6 +384,12 @@ module.exports.entitiesTranslations = {
             'stat_id': 'Stat ID',
             'base_value': 'Base Value',
             'value': 'Value'
+        },
+        'quests_progress': {
+            'id': 'ID',
+            'player_id': 'Player ID',
+            'quest_key': 'Quest Key',
+            'customData': 'CustomData'
         },
         'respawn': {
             'id': 'ID',

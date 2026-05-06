@@ -30,6 +30,7 @@ class RewardsModifiersEntity extends EntityProperties
             operation: {
                 type: 'reference',
                 reference: 'operation_types',
+                alias: 'related_operation_types',
                 isRequired: true,
                 dbType: 'int'
             },

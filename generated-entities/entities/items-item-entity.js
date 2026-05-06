@@ -27,11 +27,13 @@ class ItemsItemEntity extends EntityProperties
             type: {
                 type: 'reference',
                 reference: 'items_types',
+                alias: 'related_items_types',
                 dbType: 'int'
             },
             group_id: {
                 type: 'reference',
                 reference: 'items_group',
+                alias: 'related_items_group',
                 dbType: 'int'
             },
             [titleProperty]: {
