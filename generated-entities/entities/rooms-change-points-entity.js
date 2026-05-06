@@ -21,6 +21,7 @@ class RoomsChangePointsEntity extends EntityProperties
             room_id: {
                 type: 'reference',
                 reference: 'rooms',
+                alias: 'related_rooms_room',
                 isRequired: true,
                 dbType: 'int'
             },
@@ -32,6 +33,7 @@ class RoomsChangePointsEntity extends EntityProperties
             next_room_id: {
                 type: 'reference',
                 reference: 'rooms',
+                alias: 'related_rooms_next_room',
                 isRequired: true,
                 dbType: 'int'
             }

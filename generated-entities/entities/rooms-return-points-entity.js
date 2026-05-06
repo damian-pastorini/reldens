@@ -21,6 +21,7 @@ class RoomsReturnPointsEntity extends EntityProperties
             room_id: {
                 type: 'reference',
                 reference: 'rooms',
+                alias: 'related_rooms_room',
                 isRequired: true,
                 dbType: 'int'
             },
@@ -45,6 +46,7 @@ class RoomsReturnPointsEntity extends EntityProperties
             from_room_id: {
                 type: 'reference',
                 reference: 'rooms',
+                alias: 'related_rooms_from_room',
                 dbType: 'int'
             }
         };

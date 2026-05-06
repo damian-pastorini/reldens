@@ -22,6 +22,7 @@ class ClanLevelsModifiersEntity extends EntityProperties
             level_id: {
                 type: 'reference',
                 reference: 'clan_levels',
+                alias: 'related_clan_levels',
                 isRequired: true,
                 dbType: 'int'
             },
@@ -36,6 +37,7 @@ class ClanLevelsModifiersEntity extends EntityProperties
             operation: {
                 type: 'reference',
                 reference: 'operation_types',
+                alias: 'related_operation_types',
                 isRequired: true,
                 dbType: 'int'
             },

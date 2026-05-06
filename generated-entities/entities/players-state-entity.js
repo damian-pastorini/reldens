@@ -21,12 +21,14 @@ class PlayersStateEntity extends EntityProperties
             player_id: {
                 type: 'reference',
                 reference: 'players',
+                alias: 'related_players',
                 isRequired: true,
                 dbType: 'int'
             },
             room_id: {
                 type: 'reference',
                 reference: 'rooms',
+                alias: 'related_rooms',
                 isRequired: true,
                 dbType: 'int'
             },

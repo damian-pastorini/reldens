@@ -27,12 +27,14 @@ class AdsEntity extends EntityProperties
             provider_id: {
                 type: 'reference',
                 reference: 'ads_providers',
+                alias: 'related_ads_providers',
                 isRequired: true,
                 dbType: 'int'
             },
             type_id: {
                 type: 'reference',
                 reference: 'ads_types',
+                alias: 'related_ads_types',
                 isRequired: true,
                 dbType: 'int'
             },

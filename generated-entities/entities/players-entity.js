@@ -23,6 +23,7 @@ class PlayersEntity extends EntityProperties
             user_id: {
                 type: 'reference',
                 reference: 'users',
+                alias: 'related_users',
                 isRequired: true,
                 dbType: 'int'
             },

@@ -21,12 +21,14 @@ class SkillsSkillGroupRelationEntity extends EntityProperties
             skill_id: {
                 type: 'reference',
                 reference: 'skills_skill',
+                alias: 'related_skills_skill',
                 isRequired: true,
                 dbType: 'int'
             },
             group_id: {
                 type: 'reference',
                 reference: 'skills_groups',
+                alias: 'related_skills_groups',
                 isRequired: true,
                 dbType: 'int'
             }

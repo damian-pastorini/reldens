@@ -21,12 +21,14 @@ class ClanMembersEntity extends EntityProperties
             clan_id: {
                 type: 'reference',
                 reference: 'clan',
+                alias: 'related_clan',
                 isRequired: true,
                 dbType: 'int'
             },
             player_id: {
                 type: 'reference',
                 reference: 'players',
+                alias: 'related_players',
                 isRequired: true,
                 dbType: 'int'
             }

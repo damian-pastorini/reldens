@@ -68,7 +68,7 @@ Each feature lives under `lib/{feature}/` and contains:
 - `constants.js` - shared constants between client and server
 - `schemas/` - Colyseus state schemas (where applicable)
 
-The 23 modules: Game, Rooms, World, Config, Features, Actions, Inventory, Respawn, Rewards, Scores, Teams, Users, Chat, Audio, Prediction, Admin, Firebase, Ads, Import, Objects, Snippets, Bundlers.
+The 24 modules: Game, Rooms, World, Config, Features, Actions, Inventory, Respawn, Rewards, Scores, Teams, Users, Chat, Audio, Prediction, Admin, Firebase, Ads, Import, Objects, Snippets, Bundlers, Quests.
 
 See `.claude/feature-modules.md` for details on each module.
 
