@@ -32,7 +32,7 @@ class TestMovement
     {
         let returnRoom = gameConfig.e2eReturnRoom || '';
         let enemyKey = gameConfig.e2eEnemyKey || '';
-        test.skip(!returnRoom, 'e2eReturnRoom not configured for return point test');
+        expect(returnRoom, 'e2eReturnRoom not configured for return point test').toBeTruthy();
         await TestMovement.loginAndPrepare(page, gameConfig, longRun);
         let pauseMs = TimeConstants.pauseMs(longRun);
         let sceneTimeout = TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun);
@@ -62,7 +62,7 @@ class TestMovement
                 return false;
             }
             return Number(player.stats.hp) <= 0;
-        }, { timeout: TimeConstants.ENEMY_KILL });
+        }, null, { timeout: TimeConstants.ENEMY_KILL });
         await screenshots.capture(page, 'player-died-in-forest');
         await Navigation.waitForRoom(page, returnRoom, TimeConstants.PLAYER_REVIVE);
         let currentRoom = await Navigation.getCurrentRoomName(page);

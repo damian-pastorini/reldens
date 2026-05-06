@@ -219,7 +219,7 @@ class Phaser
                 return false;
             }
             return !!(window.reldens.activeRoomEvents.playerBySessionIdFromState(room, room.sessionId));
-        }, { timeout });
+        }, null, { timeout });
     }
 
     static async getPlayerAvailableActionKeys(page)

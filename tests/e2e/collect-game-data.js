@@ -240,6 +240,16 @@ class CollectGameData
         if(modules.ServerPlugin) {
             serverConfig.customPlugin = modules.ServerPlugin;
         }
+        process.env.RELDENS_ALLOW_RUN_BUNDLER = '0';
+        process.env.RELDENS_ALLOW_BUILD_CLIENT = '0';
+        process.env.RELDENS_ALLOW_BUILD_CSS = '0';
+        if(config.port) {
+            let portStr = String(config.port);
+            let publicUrl = config.baseUrl || 'http://localhost:'+portStr;
+            process.env.PORT = portStr;
+            process.env.RELDENS_APP_PORT = portStr;
+            process.env.RELDENS_PUBLIC_URL = publicUrl;
+        }
         let serverManager = new modules.ServerManager(serverConfig);
         process.stdout.write('Server: creating HTTP server...\n');
         await serverManager.createServers();

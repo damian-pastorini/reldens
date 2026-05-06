@@ -87,7 +87,7 @@ class TestInteractiveObjects
     static async runObjectInteractionTest(page, screenshots, gameConfig, longRun, objectKeyProp, capturePrefix, delayMs)
     {
         let objectKey = gameConfig[objectKeyProp] || '';
-        test.skip(!objectKey, objectKeyProp+' not configured');
+        expect(objectKey, objectKeyProp+' not configured').toBeTruthy();
         let ctx = await TestInteractiveObjects.loginAndEnterForest(page, gameConfig, longRun);
         await screenshots.capture(page, capturePrefix+'-forest-entered');
         await TestInteractiveObjects.waitForObjectFlexible(page, objectKey, ctx.sceneTimeout);

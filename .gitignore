@@ -28,3 +28,4 @@
 /.claude/hook-bypass.flag
 .hooks-ignore
 /.claude/hook-approvals.json
+/opencode.json

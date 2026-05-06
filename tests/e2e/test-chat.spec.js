@@ -123,9 +123,10 @@ class TestChat
         await page.click(Selectors.hud.chatOpen);
         await page.waitForTimeout(pauseMs);
         await expect(page.locator(Selectors.chat.input)).toBeVisible();
+        await page.waitForSelector(Selectors.chat.tabLabel, { state: 'visible', timeout: TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun) });
         let tabLabels = page.locator(Selectors.chat.tabLabel);
         let tabCount = await tabLabels.count();
-        test.skip(tabCount < 2, 'Less than 2 chat tabs available - cannot test tab switching');
+        expect(tabCount, 'Less than 2 chat tabs available - cannot test tab switching').toBeGreaterThanOrEqual(2);
         await screenshots.capture(page, 'chat-tabs-visible');
         let firstTabClass = await tabLabels.nth(0).getAttribute('class');
         let secondTabClass = await tabLabels.nth(1).getAttribute('class');

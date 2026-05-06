@@ -74,7 +74,7 @@ class TestTeams
                 await secondPage.waitForFunction(() => {
                     let room = window.reldens.activeRoomEvents && window.reldens.activeRoomEvents.room;
                     return !!(room && room.sessionId);
-                }, { timeout: sceneTimeout });
+                }, null, { timeout: sceneTimeout });
                 let playerBSessionId = await secondPage.evaluate(() => {
                     let room = window.reldens.activeRoomEvents && window.reldens.activeRoomEvents.room;
                     return room ? room.sessionId : null;

@@ -49,7 +49,7 @@ class TestRewards
                 await TestRewards.loginAndOpenRewardsPanel(page, gameConfig, longRun);
                 let activeReward = page.locator(Selectors.rewards.active).first();
                 let hasActive = await activeReward.isVisible().catch(() => false);
-                test.skip(!hasActive, 'No active reward available to claim');
+                expect(hasActive, 'No active reward available to claim').toBeTruthy();
                 await screenshots.capture(page, 'active-reward-visible');
                 await activeReward.click();
                 await expect(page.locator(Selectors.rewards.accepted)).toBeVisible(

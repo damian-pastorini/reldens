@@ -21,6 +21,9 @@ class TestAuthentication
         let typeDelay = TimeConstants.typeDelay(longRun);
         let pauseMs = TimeConstants.pauseMs(longRun);
         await page.goto('/');
+        await page.waitForFunction(() => {
+            return !!(window.reldens && window.reldens.startHandler);
+        }, null, { timeout: TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun) });
         await page.waitForSelector(Selectors.login.form, { state: 'visible' });
         await screenshots.capture(page, 'login-form-visible');
         await page.locator(Selectors.login.username).click();
@@ -91,7 +94,7 @@ class TestAuthentication
         await page.waitForLoadState('networkidle');
         await page.waitForFunction(() => {
             return !!(window.reldens && window.reldens.startHandler && window.reldens.config);
-        }, { timeout: TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun) });
+        }, null, { timeout: TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun) });
         let guestEnabled = await page.evaluate(() => {
             let allowGuest = window.reldens.config.getWithoutLogs('client/general/users/allowGuest', false);
             return !!allowGuest && Object.keys(
@@ -101,7 +104,7 @@ class TestAuthentication
                 )
             ).length > 0;
         });
-        test.skip(!guestEnabled, 'guest login disabled - allowGuest=false or no registrationGuest rooms configured');
+        expect(guestEnabled, 'guest login disabled - allowGuest=false or no registrationGuest rooms configured').toBeTruthy();
         await expect(page.locator(Selectors.login.guestForm)).toBeVisible();
         await screenshots.capture(page, 'guest-form-visible');
         await page.waitForTimeout(pauseMs);
@@ -156,11 +159,9 @@ class TestAuthentication
                     await Login.loginAndStartGame(secondPage, username, password, playerName, longRun, true);
                     await expect(secondPage.locator(Selectors.canvas)).toBeVisible();
                     await screenshots.capture(secondPage, 'p2-second-session-in-game');
-                    await page.waitForFunction(
-                        () => !document.body.classList.contains('game-started'),
-                        { timeout: TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun) }
+                    await expect(page.locator(Selectors.login.form)).toBeVisible(
+                        { timeout: TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun) }
                     );
-                    await expect(page.locator(Selectors.login.form)).toBeVisible();
                     await screenshots.capture(page, 'p1-disconnected-back-to-login');
                 }
             );

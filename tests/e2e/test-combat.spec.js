@@ -84,6 +84,19 @@ class TestCombat
             Logger.error('[loginAndGetEnemyWithWorldPos] waitForFunction timeout - '+stateInfo);
             throw error;
         });
+        let gameOverVisible = await page.evaluate(() => {
+            return null !== document.querySelector('#game-over:not(.hidden)');
+        });
+        if(gameOverVisible){
+            await TestCombatDeath.waitForPlayerHpCondition(page, 'alive', sceneLoadTimeout);
+        }
+        let healSkillEntry = TestCombat.skillsByType.effect.find(s => 'heal' === s.key);
+        if(healSkillEntry){
+            for(let i = 0; i < 3; i++){
+                await page.click(Selectors.combat.skillButton(healSkillEntry.key));
+                await page.waitForTimeout(pauseMs * 3);
+            }
+        }
         return { enemyKey, pauseMs, sceneLoadTimeout, navigationTimeout };
     }
 
@@ -227,7 +240,7 @@ class TestCombat
                 await page.waitForTimeout(data.pauseMs);
                 await TestCombat.walkToEnemyWithinRange(page, data.enemyKey, TestCombat.TAB_TARGET_RANGE, data.navigationTimeout);
                 let targeted = await TestCombat.targetEnemy(page, data.enemyKey);
-                expect(targeted === true, 'Enemy must be targetable: '+targeted).toBeTruthy();
+                expect(true === targeted, 'Enemy must be targetable: '+targeted).toBeTruthy();
                 await expect(page.locator(Selectors.combat.targetBox)).toBeVisible();
                 await screenshots.capture(page, 'enemy-targeted');
             });
@@ -256,11 +269,15 @@ class TestCombat
             });
             test('canvas changes visually after attacking enemy', async ({ page, screenshots, gameConfig, longRun }) => {
                 let data = await TestCombat.loginAndGetEnemyWithWorldPos(page, gameConfig, longRun);
+                let firstAttackSkill = TestCombat.attackSkills[0];
+                let skillRange = firstAttackSkill ? firstAttackSkill.range : 100;
+                await TestCombat.walkToEnemyWithinRange(page, data.enemyKey, Math.floor(skillRange / 2), data.navigationTimeout);
+                await TestCombat.targetEnemy(page, data.enemyKey);
                 let canvasBox = await page.locator(Selectors.canvas).boundingBox();
                 let hashBefore = await Phaser.getCanvasPixelHash(page, 0, 0, canvasBox.width, canvasBox.height);
                 await screenshots.capture(page, 'canvas-before-attack');
-                await TestCombat.clickEnemy(page, data.enemyKey);
-                await page.waitForTimeout(2000);
+                await page.click(Selectors.combat.skillButton(firstAttackSkill ? firstAttackSkill.key : 'attackShort'));
+                await page.waitForTimeout(TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun));
                 let hashAfter = await Phaser.getCanvasPixelHash(page, 0, 0, canvasBox.width, canvasBox.height);
                 expect(hashBefore).not.toBe(hashAfter);
                 await screenshots.capture(page, 'canvas-after-attack');

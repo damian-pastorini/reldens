@@ -33,8 +33,20 @@ class Login
     {
         let typeDelay = TimeConstants.typeDelay(longRun);
         let pauseMs = TimeConstants.pauseMs(longRun);
-        await page.goto('/');
-        await page.waitForSelector(Selectors.login.form, { state: 'visible', timeout: TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun) });
+        let loadTimeout = TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun);
+        let loaded = false;
+        for(let attempt = 1; 3 >= attempt; attempt++) {
+            await page.goto('/');
+            loaded = await page.waitForSelector(
+                Selectors.login.form,
+                { state: 'visible', timeout: loadTimeout }
+            ).then(() => true).catch(() => false);
+            if(loaded) {
+                break;
+            }
+            await page.waitForTimeout(3000);
+        }
+        expect(loaded, 'Login form not visible after 3 page loads').toBeTruthy();
         await page.locator(Selectors.login.username).click();
         await page.locator(Selectors.login.username).pressSequentially(username, { delay: typeDelay });
         await page.waitForTimeout(pauseMs);

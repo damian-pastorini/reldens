@@ -45,9 +45,20 @@ class TestClans
             });
             test('player can create a new clan', async ({ page, screenshots, gameConfig, longRun }) => {
                 let setup = await TestClans.loginAndOpenClanPanel(page, gameConfig, longRun);
+                let disbandButton = page.locator(Selectors.clans.disbandAction);
+                let alreadyInClan = await disbandButton.isVisible().catch(() => false);
+                if(alreadyInClan) {
+                    await disbandButton.click();
+                    await page.waitForTimeout(TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun));
+                    await page.click(Selectors.hud.clanOpen);
+                    await page.waitForTimeout(setup.pauseMs);
+                    await expect(page.locator(Selectors.clans.dialog)).toBeVisible(
+                        { timeout: TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun) }
+                    );
+                }
                 let nameInput = page.locator(Selectors.clans.nameInput);
                 let formVisible = await nameInput.isVisible().catch(() => false);
-                test.skip(!formVisible, 'Player already belongs to a clan; create form not available');
+                expect(formVisible, 'Clan create form not available after disband').toBeTruthy();
                 await screenshots.capture(page, 'clan-create-form-visible');
                 let clanName = 'TestClan'+Date.now();
                 await nameInput.fill(clanName);

@@ -97,9 +97,9 @@ class Selectors
             tabContentPrivate: '.tab-content-4',
             tabContentTeams: '.tab-content-8',
             tabContentGlobal: '.tab-content-9',
-            tabLabel: '.chat-tab-label',
-            tabLabelById: (tabId) => '.chat-tab-label-'+tabId,
-            tabLabelActive: '.chat-tab-label-active',
+            tabLabel: '.tab-label',
+            tabLabelById: (tabId) => '.tab-label-'+tabId,
+            tabLabelActive: '.tab-label.active',
             tabContentActive: '.chat-tab-content-active'
         };
     }
