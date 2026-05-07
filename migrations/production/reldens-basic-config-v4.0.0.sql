@@ -444,6 +444,7 @@ REPLACE INTO `objects_types` (`id`, `key`) VALUES
 	(4, 'enemy'),
 	(7, 'multiple'),
 	(3, 'npc'),
+	(8, 'timing'),
 	(5, 'trader');
 
 REPLACE INTO `operation_types` (`id`, `label`, `key`) VALUES
