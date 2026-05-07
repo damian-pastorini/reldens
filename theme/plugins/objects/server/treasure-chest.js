@@ -10,12 +10,6 @@ const { GameConst } = require('reldens/lib/game/constants');
 class TreasureChest extends NpcObject
 {
 
-    constructor(props)
-    {
-        super(props);
-        this.isLooted = false;
-    }
-
     async executeMessageActions(client, data, room, playerSchema)
     {
         if(false === this.isValidId(data)){
@@ -28,16 +22,10 @@ class TreasureChest extends NpcObject
             this.outOfReachClose(client);
             return false;
         }
-        if(this.isLooted){
-            client.send(
-                '*',
-                {act: GameConst.UI, id: this.id, title: this.title, content: 'The chest is empty.', opened: true}
-            );
-            return false;
-        }
-        let questsModels = await this.dataServer.getEntity('questsProgress').loadBy('quest_key', this.key);
-        if(questsModels && questsModels.length > 0){
-            this.isLooted = true;
+        let questModel = await this.dataServer.getEntity('questsProgress').loadOne(
+            {quest_key: this.key, player_id: playerSchema.player_id}
+        );
+        if(questModel){
             client.send(
                 '*',
                 {act: GameConst.UI, id: this.id, title: this.title, content: 'The chest is empty.', opened: true}
@@ -49,8 +37,7 @@ class TreasureChest extends NpcObject
             client.send('*', {act: GameConst.UI, id: this.id, title: this.title, content: 'The chest seems stuck...'});
             return false;
         }
-        await this.dataServer.getEntity('questsProgress').create({quest_key: this.key});
-        this.isLooted = true;
+        await this.dataServer.getEntity('questsProgress').create({quest_key: this.key, player_id: playerSchema.player_id});
         client.send(
             '*',
             {act: GameConst.UI, id: this.id, title: this.title, content: 'You found a coin!', opened: true}
