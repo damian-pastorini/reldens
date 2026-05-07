@@ -221,55 +221,18 @@ Key fields the map generator reads from `mapData`:
 
 ---
 
-## What CompositeBuilder Currently Generates (Missing Data)
+## What CompositeBuilder Currently Generates
 
-`CompositeBuilder.createTilesetEntry()` produces a tileset entry with no `tiles` array. As a result:
+`CompositeBuilder.createTilesetEntry()` produces a full tileset entry including a `tiles` array built by `CompositeTileAnnotationBuilder.buildTileAnnotations()`. All assigned tile roles are encoded into Tiled property format and written into composite.json.
 
-- `ElementsProvider.fetchPathTiles()` finds no tile properties - `groundTile = 0`, `pathTile = 0`, `surroundingTiles = {}`, `corners = {}`, `bordersTiles = {}`, `groundSpots = {}`
-- The map generator has no ground tile, no path tile, and no surrounding/corner data
-- Spots in `mapData.groundSpots` are structurally incomplete: `TilesetCompositeConfigBuilder.buildTilesetData()` merges spot names but does not output `tilesKey`, `layerName`, `walkable`, or any generation parameters
-
-The `tileOptions` data and `spots` array exist in the session state and are partially forwarded to `map-generator-config.json`, but neither the tile property annotations in composite.json nor the special ground/variation layers are generated.
-
-Everything required to generate a functional map is present in the session state - it is just never written into composite.json in the format the map generator can read.
-
----
-
-## Fix Scope: CompositeBuilder and TilesetCompositeConfigBuilder
-
-To make the Maps Wizard functional, two classes in `npm-packages/tileset-to-tilemap/lib/` need changes:
-
-### CompositeBuilder
-
-`createTilesetEntry(tileset, firstgid)` must receive `tileOptions` and `spots` and produce:
-- A `tiles[]` array encoding each assigned tile's role via Tiled property format (see key values above)
-- Spot tile - `groundSpots` property + `key: "groundTile"`
-- Spot surrounding and corner tiles - spot-prefixed key values
-
-`buildCompositeJSON(tilesets)` must also emit:
-- A `"ground-variations"` layer if any tileset has `randomGroundTiles`
+`buildVariationLayers()` additionally emits:
+- A `"ground-variations"` layer when any tileset has `randomGroundTiles`
+- A `"tileset-ref"` layer listing all annotated tile IDs (used for optimization)
 - A `"spot-layer-ground-variations-{spotName}"` layer per spot that has `spotTileVariations`
 
-### TilesetCompositeConfigBuilder
+Wangsets for inner and outer spot walls are built by `CompositeWangsetBuilder.buildSpotWangsets()` and attached to the tileset entry as `entry.wangsets`.
 
-`buildTilesetData(sizeTilesets, ...)` currently merges spots by name only. It must output well-formed `groundSpots` entries:
-
-```json
-{
-  "mySpot": {
-    "layerName": "spot.layerName or 'ground-spot-{spotName}'",
-    "tilesKey": "spot.name",
-    "width": "spot.width",
-    "height": "spot.height",
-    "quantity": "spot.quantity",
-    "freeSpaceAround": "spot.freeSpaceAround",
-    "walkable": "spot.walkable",
-    "isElement": "spot.isElement",
-    "allowPathsInFreeSpace": "spot.allowPathsInFreeSpace",
-    "variableTilesPercentage": "spot.variableTilesPercentage or 0"
-  }
-}
-```
+`TilesetCompositeConfigBuilder.buildGroundSpotConfig()` outputs well-formed groundSpots entries including `layerName`, `tilesKey`, `width`, `height`, `quantity`, `freeSpaceAround`, `walkable`, `isElement`, `allowPathsInFreeSpace`, `splitBordersInLayers`, `borderInnerWalls`, `borderOuterWalls`, and `borderOuterWallsIncreaseLayerSize`. When `borderOuterWalls` or `borderInnerWalls` is true, `splitBordersInLayers` is forced true automatically (required for wall layers to be included in generator output).
 
 ---
 

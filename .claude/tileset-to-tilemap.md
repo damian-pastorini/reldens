@@ -96,10 +96,45 @@ The canvas renders a colored marker badge (G, P, B, R, S, C, T, K) in the corner
 - **Name**: identifier for the spot
 - **Is Element** checkbox: treat spot as a placed element
 - **Width / Height**: dimensions in tiles (default 5x5)
+- **Quantity**: how many instances to place on the map
+- **Mark %**: percentage of spot tiles to mark (0-100)
+- **Variable Tiles %**: percentage of tiles replaced with random variations
+- **Walkable**: whether players can walk on this spot
 - **Spot Tile**: the single tile placed at the spot center (its own row)
 - **Spot Tile Variations**: random tiles placed as ground within the spot (its own row, multi-value)
-- **Surrounding / Corner / Border / Border Corner tiles**: same positional sets as global options but scoped to this spot
+- **Surrounding / Corner tiles**: same positional sets as global options but scoped to this spot
+- **Inner Walls / Inner Walls Corner tiles**: wall tiles placed at the inside border of the spot
+- **Outer Walls / Outer Walls Corner tiles**: wall tiles placed 1 tile outside the spot boundary
+- **Split Borders in Layers**: must be checked for inner/outer wall layers to appear in output; forced on automatically when either wall option is enabled
+- **Border Inner Walls**: enables the inner wall ring
+- **Border Outer Walls**: enables the outer wall ring (also forces Border Inner Walls on)
+- **Border Outer Walls Size**: extra tile padding added around the outer wall layer (default 4; does not change wall thickness)
+
 Click a spot header to expand/collapse its detail section. When a spot is expanded its assigned tiles are highlighted on the canvas with an orange fill so you can see which tiles belong to it.
+
+**Wall tile position keys** use `row,col` notation (`-1`=north, `0`=same, `1`=south / `-1`=west, `1`=east):
+
+Inner Walls — placed AT the spot perimeter (5×5 example):
+```
+         col0       col1       col2       col3       col4
+row0:  [-1,-1]    [-1, 0]    [-1, 0]    [-1, 0]    [-1, 1]
+row1:  [ 0,-1]      S          S          S         [ 0, 1]
+row2:  [ 0,-1]      S          S          S         [ 0, 1]
+row3:  [ 0,-1]      S          S          S         [ 0, 1]
+row4:  [ 1,-1]    [ 1, 0]    [ 1, 0]    [ 1, 0]    [ 1, 1]
+```
+`[ 0, 0]` = solid fill tile (used when surrounded by wall on all 4 sides).
+
+Outer Walls — placed 1 tile OUTSIDE the spot boundary:
+```
+          col-1      col0      col1      col2      col3      col4      col5
+row -1: [-1,-1]   [-1, 0]   [-1, 0]   [-1, 0]   [-1, 0]   [-1, 0]   [-1, 1]
+row  0: [ 0,-1]      S         S         S         S         S        [ 0, 1]
+...
+row  5: [ 1,-1]   [ 1, 0]   [ 1, 0]   [ 1, 0]   [ 1, 0]   [ 1, 0]   [ 1, 1]
+```
+
+Corner tiles (`top-left`, `top-right`, `bottom-left`, `bottom-right`) are concave corners — only used when the wall bends inward (L-shaped or irregular spots). A plain rectangle never uses them.
 
 ## Step 6 - Per-Tileset Generate Controls
 
