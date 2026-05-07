@@ -37,7 +37,9 @@ class TreasureChest extends NpcObject
             client.send('*', {act: GameConst.UI, id: this.id, title: this.title, content: 'The chest seems stuck...'});
             return false;
         }
-        await this.dataServer.getEntity('questsProgress').create({quest_key: this.key, player_id: playerSchema.player_id});
+        await this.dataServer.getEntity('questsProgress').create(
+            {quest_key: this.key, player_id: playerSchema.player_id}
+        );
         client.send(
             '*',
             {act: GameConst.UI, id: this.id, title: this.title, content: 'You found a coin!', opened: true}
