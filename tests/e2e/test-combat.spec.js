@@ -89,12 +89,12 @@ class TestCombat
         });
         if(gameOverVisible){
             await TestCombatDeath.waitForPlayerHpCondition(page, 'alive', sceneLoadTimeout);
-        }
-        let healSkillEntry = TestCombat.skillsByType.effect.find(s => 'heal' === s.key);
-        if(healSkillEntry){
-            for(let i = 0; i < 3; i++){
-                await page.click(Selectors.combat.skillButton(healSkillEntry.key));
-                await page.waitForTimeout(pauseMs * 3);
+            let healSkillEntry = TestCombat.skillsByType.effect.find(s => 'heal' === s.key);
+            if(healSkillEntry){
+                for(let i = 0; i < 3; i++){
+                    await page.click(Selectors.combat.skillButton(healSkillEntry.key));
+                    await page.waitForTimeout(pauseMs * 3);
+                }
             }
         }
         return { enemyKey, pauseMs, sceneLoadTimeout, navigationTimeout };
@@ -162,7 +162,7 @@ class TestCombat
         await expect(skillButton, buttonLabel+' skill button must be present in HUD').toBeVisible(
             { timeout: TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun) }
         );
-        await skillButton.click();
+        await page.click(Selectors.combat.skillButton(skill.key), { force: true });
         await page.waitForTimeout(2000 + data.pauseMs);
         await screenshots.capture(page, prefix+'-'+skill.key+'-cast-completed');
     }
