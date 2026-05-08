@@ -6,7 +6,6 @@
 
 const { TimingObject } = require('reldens/lib/objects/server/object/type/timing-object');
 const { GameConst } = require('reldens/lib/game/constants');
-const { sc } = require('@reldens/utils');
 
 class RockObject extends TimingObject
 {
@@ -37,8 +36,7 @@ class RockObject extends TimingObject
 
     isValidId(data)
     {
-        return this.key === sc.get(data, 'id', false)
-            || Number(this.id) === Number(sc.get(data, 'id', false));
+        return this.key === data?.id || false || Number(this.id) === Number(data?.id || false);
     }
 
     async completeTiming(client, room, playerSchema)
