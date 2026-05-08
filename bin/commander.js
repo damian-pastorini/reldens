@@ -131,7 +131,7 @@ class Commander
             '--user='+process.env.RELDENS_DB_USER,
             '--pass='+process.env.RELDENS_DB_PASSWORD,
             '--host='+process.env.RELDENS_DB_HOST,
-            '--port='+process.env.RELDENS_DB_PORT,			
+            '--port='+process.env.RELDENS_DB_PORT,
             '--database='+process.env.RELDENS_DB_NAME,
             '--driver='+(process.env.RELDENS_STORAGE_DRIVER || 'prisma'),
             '--client='+(('prisma' === (process.env.RELDENS_STORAGE_DRIVER || 'prisma') && 'mysql2' === process.env.RELDENS_DB_CLIENT) ? 'mysql' : process.env.RELDENS_DB_CLIENT)
