@@ -2,7 +2,6 @@
     display: flex;
     flex-direction: column;
     flex: none;
-    min-height: 0;
     width: var(--layout-legend-width);
     min-width: var(--layout-legend-width);
     max-width: var(--layout-legend-width);
@@ -17,6 +16,7 @@
 
     & .legend-tab {
         flex: 1;
+        min-width: auto;
         padding: 1.2rem 1.5rem;
         font-size: var(--font-size-sm);
         background: var(--color-grey-80);
@@ -44,7 +44,6 @@
         display: flex;
         flex-direction: column;
         flex: 1;
-        min-height: 0;
         overflow-y: auto;
         border: 1px solid var(--color-grey-20);
         background: var(--color-grey-90);
@@ -52,7 +51,6 @@
     }
 
     & .controls-legend-col {
-        min-width: 0;
         width: 100%;
         flex-wrap: wrap;
         justify-content: flex-start;
@@ -86,6 +84,7 @@
     & .spot-name-input,
     & .element-name-input {
         flex: 1;
+        min-width: auto;
         background: transparent;
         border: 1px solid transparent;
         color: var(--color-grey);
@@ -141,6 +140,7 @@
         & .bulk-actions-buttons {
             display: flex;
             flex: 1;
+            min-width: auto;
             flex-wrap: wrap;
             justify-content: flex-end;
             align-items: center;
@@ -166,7 +166,6 @@
         display: flex;
         flex-direction: column;
         flex: 1;
-        min-height: 0;
         overflow-y: auto;
     }
 

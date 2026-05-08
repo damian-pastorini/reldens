@@ -111,7 +111,7 @@
 
         &.collapsed {
             height: auto;
-            min-height: 0;
+            min-height: auto;
 
             & .tileset-header {
                 margin-bottom: 0;
@@ -159,16 +159,15 @@
         display: flex;
         flex-direction: column;
         flex: 1;
-        min-height: 0;
+        overflow: hidden;
     }
 
     & .tileset-panels {
         display: flex;
         flex-direction: row;
         flex: 1;
-        min-height: 0;
         gap: var(--space-xl);
-        overflow: visible;
+        overflow: hidden;
     }
 
     & .tileset-remove-btn {
@@ -233,8 +232,8 @@
         align-items: center;
         gap: var(--space-sm);
         flex: 1;
-        min-width: 0;
         flex-wrap: wrap;
+        min-width: auto;
 
         & select {
             background: var(--color-grey-90);

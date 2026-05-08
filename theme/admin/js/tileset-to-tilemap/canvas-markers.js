@@ -1,5 +1,16 @@
 class TilesetCanvasMarkers
 {
+    static POSITIONAL_CONFIG = [
+        { key: 'surroundingTiles',       label: 'S',  color: '#ff9c5b' },
+        { key: 'corners',                label: 'C',  color: '#5bbbff' },
+        { key: 'bordersTiles',           label: 'T',  color: '#c05bff' },
+        { key: 'borderCornersTiles',     label: 'K',  color: '#ff5bc0' },
+        { key: 'innerWallsTiles',        label: 'IW', color: '#ff5b5b' },
+        { key: 'innerWallsCornerTiles',  label: 'IC', color: '#ff9090' },
+        { key: 'outerWallsTiles',        label: 'OW', color: '#5bffff' },
+        { key: 'outerWallsCornerTiles',  label: 'OC', color: '#90ffff' },
+    ];
+
     constructor(renderer)
     {
         this.renderer = renderer;
@@ -46,17 +57,7 @@ class TilesetCanvasMarkers
         if(this.isMapTilesTabActive(tilesetIndex)){
             this.addOptions(markers, tileset, tileset.tileOptions ? tileset.tileOptions : {});
             for(let spot of (tileset.spots ? tileset.spots : [])){
-                this.addOptions(markers, tileset, {
-                    randomGroundTiles: spot.spotTileVariations,
-                    surroundingTiles: spot.surroundingTiles,
-                    corners: spot.corners,
-                    bordersTiles: spot.bordersTiles,
-                    borderCornersTiles: spot.borderCornersTiles,
-                    innerWallsTiles: spot.innerWallsTiles,
-                    innerWallsCornerTiles: spot.innerWallsCornerTiles,
-                    outerWallsTiles: spot.outerWallsTiles,
-                    outerWallsCornerTiles: spot.outerWallsCornerTiles
-                });
+                this.addOptions(markers, tileset, this.buildSpotOpts(spot));
                 if(null !== spot.spotTile && undefined !== spot.spotTile){
                     this.pushFlat(markers, tileset, spot.spotTile, 'ST', '#ff8c5b');
                 }
@@ -108,14 +109,18 @@ class TilesetCanvasMarkers
                 this.pushFlat(markers, tileset, fi, 'R', '#a5ff8c');
             }
         }
-        this.addPositional(markers, tileset, opts.surroundingTiles ? opts.surroundingTiles : {}, 'S', '#ff9c5b');
-        this.addPositional(markers, tileset, opts.corners ? opts.corners : {}, 'C', '#5bbbff');
-        this.addPositional(markers, tileset, opts.bordersTiles ? opts.bordersTiles : {}, 'T', '#c05bff');
-        this.addPositional(markers, tileset, opts.borderCornersTiles ? opts.borderCornersTiles : {}, 'K', '#ff5bc0');
-        this.addPositional(markers, tileset, opts.innerWallsTiles ? opts.innerWallsTiles : {}, 'IW', '#ff5b5b');
-        this.addPositional(markers, tileset, opts.innerWallsCornerTiles ? opts.innerWallsCornerTiles : {}, 'IC', '#ff9090');
-        this.addPositional(markers, tileset, opts.outerWallsTiles ? opts.outerWallsTiles : {}, 'OW', '#5bffff');
-        this.addPositional(markers, tileset, opts.outerWallsCornerTiles ? opts.outerWallsCornerTiles : {}, 'OC', '#90ffff');
+        for(let { key, label, color } of TilesetCanvasMarkers.POSITIONAL_CONFIG){
+            this.addPositional(markers, tileset, opts[key] ? opts[key] : {}, label, color);
+        }
+    }
+
+    buildSpotOpts(spot)
+    {
+        let spotOpts = { randomGroundTiles: spot.spotTileVariations };
+        for(let key of SharedUtils.SPOT_POSITIONAL_KEYS){
+            spotOpts[key] = spot[key];
+        }
+        return spotOpts;
     }
 
     addPositional(markers, tileset, posObj, label, color)
@@ -140,10 +145,9 @@ class TilesetCanvasMarkers
                 this.addGlobalSimple(markers, tileset, entry, currentTilesetIndex, 'R', '#a5ff8c');
             }
         }
-        this.addGlobalPositional(markers, tileset, opts.surroundingTiles ? opts.surroundingTiles : {}, currentTilesetIndex, 'S', '#ff9c5b');
-        this.addGlobalPositional(markers, tileset, opts.corners ? opts.corners : {}, currentTilesetIndex, 'C', '#5bbbff');
-        this.addGlobalPositional(markers, tileset, opts.bordersTiles ? opts.bordersTiles : {}, currentTilesetIndex, 'T', '#c05bff');
-        this.addGlobalPositional(markers, tileset, opts.borderCornersTiles ? opts.borderCornersTiles : {}, currentTilesetIndex, 'K', '#ff5bc0');
+        for(let { key, label, color } of TilesetCanvasMarkers.POSITIONAL_CONFIG){
+            this.addGlobalPositional(markers, tileset, opts[key] ? opts[key] : {}, currentTilesetIndex, label, color);
+        }
     }
 
     addGlobalSimple(markers, tileset, entry, currentTilesetIndex, label, color)
@@ -172,6 +176,7 @@ class TilesetCanvasMarkers
     }
 
     render(ctx, tileset, markers)
+
     {
         let cellSize = Math.min(tileset.tileWidth, tileset.tileHeight);
         let size = Math.min(Math.round(cellSize * 0.35), 14);
@@ -198,3 +203,4 @@ class TilesetCanvasMarkers
         ctx.restore();
     }
 }
+window.TilesetCanvasMarkers = TilesetCanvasMarkers;

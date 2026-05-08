@@ -347,7 +347,6 @@
 
             input[type="file"] {
                 flex: 1;
-                min-width: 0;
                 color: var(--color-grey);
             }
         }
@@ -419,7 +418,6 @@
         input,
         select {
             flex: 1;
-            min-width: 0;
             font-size: var(--font-size-xs);
             padding: var(--space-xs) var(--space-sm);
         }

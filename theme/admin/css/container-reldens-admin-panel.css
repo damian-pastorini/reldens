@@ -46,6 +46,7 @@
     .content {
         display: flex;
         flex-grow: 1;
+        min-height: auto;
         position: relative;
     }
 
@@ -53,6 +54,7 @@
         padding: 2rem;
         background-color: var(--color-grey-60);
         flex: 1;
+        min-width: auto;
         color: var(--color-grey);
 
         & > h2 {
@@ -106,7 +108,6 @@
 
     &:has(.tileset-analyzer) .main-content {
         overflow: visible;
-        min-width: 0;
     }
 
     &:has(.maps-wizard) .main-content {

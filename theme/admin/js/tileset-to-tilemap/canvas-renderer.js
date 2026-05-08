@@ -279,14 +279,9 @@ class TilesetCanvasRenderer
                 indices.add(fi);
             }
         }
-        this.addPositionalIndices(indices, spot.surroundingTiles);
-        this.addPositionalIndices(indices, spot.corners);
-        this.addPositionalIndices(indices, spot.bordersTiles);
-        this.addPositionalIndices(indices, spot.borderCornersTiles);
-        this.addPositionalIndices(indices, spot.innerWallsTiles);
-        this.addPositionalIndices(indices, spot.innerWallsCornerTiles);
-        this.addPositionalIndices(indices, spot.outerWallsTiles);
-        this.addPositionalIndices(indices, spot.outerWallsCornerTiles);
+        for(let key of SharedUtils.SPOT_POSITIONAL_KEYS){
+            this.addPositionalIndices(indices, spot[key]);
+        }
         return indices;
     }
 
@@ -303,3 +298,4 @@ class TilesetCanvasRenderer
         }
     }
 }
+window.TilesetCanvasRenderer = TilesetCanvasRenderer;

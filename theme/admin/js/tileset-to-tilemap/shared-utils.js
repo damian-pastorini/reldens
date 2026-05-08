@@ -3,6 +3,10 @@ class SharedUtils
     static ELEMENT_TYPE = 'element';
     static CLUSTER_TYPE = 'cluster';
     static SPOT_TYPE = 'spot';
+    static SPOT_POSITIONAL_KEYS = [
+        'surroundingTiles', 'corners', 'bordersTiles', 'borderCornersTiles',
+        'innerWallsTiles', 'innerWallsCornerTiles', 'outerWallsTiles', 'outerWallsCornerTiles'
+    ];
 
     static colorForIndex(index)
     {
@@ -60,10 +64,12 @@ class SharedUtils
 
     static buildSessionTimestamp()
     {
-        let now = new Date();
-        let pad = (n) => String(n).padStart(2, '0');
-        return now.getFullYear()+'-'+pad(now.getMonth()+1)+'-'+pad(now.getDate())
-            +'-'+pad(now.getHours())+'-'+pad(now.getMinutes())+'-'+pad(now.getSeconds());
+        return new Date().getFullYear()
+            +'-'+String(new Date().getMonth()+1).padStart(2, '0')
+            +'-'+String(new Date().getDate()).padStart(2, '0')
+            +'-'+String(new Date().getHours()).padStart(2, '0')
+            +'-'+String(new Date().getMinutes()).padStart(2, '0')
+            +'-'+String(new Date().getSeconds()).padStart(2, '0');
     }
 
     static parseSSEEvent(eventText)
@@ -84,9 +90,10 @@ class SharedUtils
         let data = null;
         try {
             data = JSON.parse(dataStr);
-        } catch(parseError) {
+        } catch {
             return null;
         }
         return {eventType, data};
     }
 }
+window.SharedUtils = SharedUtils;
