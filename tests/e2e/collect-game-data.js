@@ -10,6 +10,7 @@ const { createRequire } = require('module');
 const { FileHandler } = require('@reldens/server-utils');
 const { Logger } = require('@reldens/utils');
 const { GameDataSkills } = require('./helpers/game-data-skills');
+const { PlayerStateReset } = require('./helpers/player-state-reset');
 
 class CollectGameData
 {
@@ -221,6 +222,8 @@ class CollectGameData
         FileHandler.writeFile(outputPath, JSON.stringify(gameData, null, 4));
         Logger.info('[collect-game-data] Written: '+outputPath);
         CollectGameData.attachEventListeners(serverManager);
+        let snapshots = await PlayerStateReset.captureSnapshots(serverManager.dataServer, config);
+        PlayerStateReset.registerResetEndpoint(serverManager, snapshots);
         CollectGameData.serverManager = serverManager;
     }
 
