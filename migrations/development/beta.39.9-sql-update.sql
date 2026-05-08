@@ -78,6 +78,10 @@ UPDATE `objects` SET
 	`enabled` = 1
 WHERE `id` = 16;
 
+REPLACE INTO `objects_types` (`id`, `key`) VALUES (8, 'timing');
+
+UPDATE `objects` SET `class_type` = 8, `client_params` = '{"timingDuration":10000,"isInteractive":true,"frameStart":0,"frameEnd":2,"autoStart":true,"repeat":-1,"classKey":"fish_spawn_forest_1","ui":false}', `private_params` = '{"cancelOnMove":true,"cancelOnOutOfRange":false,"rewards":[{"key":"fish","rate":100}],"runOnAction":true,"fishCooldown":3000,"collisionType":2}' WHERE `id` = 17;
+
 REPLACE INTO `objects_assets` (`object_asset_id`, `object_id`, `asset_type`, `asset_key`, `asset_file`, `extra_params`) VALUES
 	(14, 16, 'spritesheet', 'rock_forest_1', 'rock.png', '{"frameWidth":32,"frameHeight":32}'),
 	(15, 17, 'spritesheet', 'fish_spawn_forest_1', 'fish-spawn.png', '{"frameWidth":32,"frameHeight":32}'),

@@ -89,12 +89,12 @@ class TestCombat
         });
         if(gameOverVisible){
             await TestCombatDeath.waitForPlayerHpCondition(page, 'alive', sceneLoadTimeout);
-        }
-        let healSkillEntry = TestCombat.skillsByType.effect.find(s => 'heal' === s.key);
-        if(healSkillEntry){
-            for(let i = 0; i < 3; i++){
-                await page.click(Selectors.combat.skillButton(healSkillEntry.key));
-                await page.waitForTimeout(pauseMs * 3);
+            let healSkillEntry = TestCombat.skillsByType.effect.find(s => 'heal' === s.key);
+            if(healSkillEntry){
+                for(let i = 0; i < 3; i++){
+                    await page.click(Selectors.combat.skillButton(healSkillEntry.key));
+                    await page.waitForTimeout(pauseMs * 3);
+                }
             }
         }
         return { enemyKey, pauseMs, sceneLoadTimeout, navigationTimeout };
@@ -107,50 +107,6 @@ class TestCombat
             return;
         }
         await Phaser.clickObjectByType(page, 'enemy');
-    }
-
-    static async targetEnemy(page, enemyKey)
-    {
-        return page.evaluate((eKey) => {
-            let scene = window.reldens.getActiveScene();
-            let room = window.reldens && window.reldens.activeRoomEvents && window.reldens.activeRoomEvents.room;
-            if(!scene){
-                return 'no-scene';
-            }
-            if(!room){
-                return 'no-room';
-            }
-            let player = room.state && room.state.players && window.reldens.activeRoomEvents.playerBySessionIdFromState(room, room.sessionId);
-            let found = null;
-            let minDist = Infinity;
-            for(let anim of Object.values(scene.objectsAnimations)){
-                if(!anim.sceneSprite || !anim.sceneSprite.visible){
-                    continue;
-                }
-                if(eKey && anim.asset_key !== eKey){
-                    continue;
-                }
-                if(!eKey && anim.key === anim.asset_key){
-                    continue;
-                }
-                let dist = player
-                    ? Math.hypot(player.state.x - anim.sceneSprite.x, player.state.y - anim.sceneSprite.y)
-                    : 0;
-                if(dist < minDist){
-                    minDist = dist;
-                    found = anim;
-                }
-            }
-            if(!found){
-                return 'no-enemy-found eKey:'+eKey+'|anims:'+Object.values(scene.objectsAnimations).map(
-                    a => 'key:'+a.key+'|asset:'+a.asset_key+'|type:'+a.type+'|vis:'+(a.sceneSprite ? a.sceneSprite.visible : 'no-sprite')+'|name:'+a.targetName
-                ).join(',');
-            }
-            let tempId = (found.key === found.asset_key) ? found.id : found.key;
-            scene.player.currentTarget = {id: tempId, type: 'obj'};
-            window.reldens.gameEngine.showTarget(found.targetName || found.key, scene.player.currentTarget, false);
-            return true;
-        }, enemyKey || null);
     }
 
     static async walkToEnemyWithinRange(page, enemyKey, range, timeout)
@@ -171,7 +127,7 @@ class TestCombat
 
     static async prepareEnemyTargetAndChat(page, data)
     {
-        await TestCombat.targetEnemy(page, data.enemyKey);
+        await Phaser.targetEnemy(page, data.enemyKey);
         await page.waitForTimeout(data.pauseMs);
         await page.click(Selectors.hud.chatOpen);
         await page.waitForTimeout(data.pauseMs);
@@ -184,7 +140,7 @@ class TestCombat
         await screenshots.capture(page, prefix+'-'+skill.key+'-within-range');
         await TestCombat.prepareEnemyTargetAndChat(page, data);
         await TestCombat.walkToEnemyWithinRange(page, data.enemyKey, Math.floor(skill.range / 2), data.navigationTimeout);
-        await TestCombat.targetEnemy(page, data.enemyKey);
+        await Phaser.targetEnemy(page, data.enemyKey);
         return data;
     }
 
@@ -206,7 +162,7 @@ class TestCombat
         await expect(skillButton, buttonLabel+' skill button must be present in HUD').toBeVisible(
             { timeout: TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun) }
         );
-        await skillButton.click();
+        await page.click(Selectors.combat.skillButton(skill.key), { force: true });
         await page.waitForTimeout(2000 + data.pauseMs);
         await screenshots.capture(page, prefix+'-'+skill.key+'-cast-completed');
     }
@@ -247,7 +203,7 @@ class TestCombat
                 await screenshots.capture(page, 'enemy-found-in-scene');
                 await page.waitForTimeout(data.pauseMs);
                 await TestCombat.walkToEnemyWithinRange(page, data.enemyKey, TestCombat.TAB_TARGET_RANGE, data.navigationTimeout);
-                let targeted = await TestCombat.targetEnemy(page, data.enemyKey);
+                let targeted = await Phaser.targetEnemy(page, data.enemyKey);
                 expect(true === targeted, 'Enemy must be targetable: '+targeted).toBeTruthy();
                 await expect(page.locator(Selectors.combat.targetBox)).toBeVisible();
                 await screenshots.capture(page, 'enemy-targeted');
@@ -273,7 +229,7 @@ class TestCombat
                 let firstAttackSkill = TestCombat.attackSkills[0];
                 let skillRange = firstAttackSkill ? firstAttackSkill.range : 100;
                 await TestCombat.walkToEnemyWithinRange(page, data.enemyKey, Math.floor(skillRange / 2), data.navigationTimeout);
-                await TestCombat.targetEnemy(page, data.enemyKey);
+                await Phaser.targetEnemy(page, data.enemyKey);
                 let resolvedAttackKey = await TestCombat.resolveAttackKey(page, firstAttackSkill, 'for canvas test');
                 await page.waitForSelector(
                     Selectors.combat.skillButton(resolvedAttackKey),
@@ -281,7 +237,18 @@ class TestCombat
                 );
                 let hashBefore = await Phaser.getCanvasPixelHash(page);
                 await screenshots.capture(page, 'canvas-before-attack');
-                await page.click(Selectors.combat.skillButton(resolvedAttackKey));
+                let isGameOver = await page.evaluate(() => null !== document.querySelector('#game-over:not(.hidden)'));
+                if(isGameOver){
+                    await TestCombatDeath.waitForPlayerHpCondition(page, 'alive', data.sceneLoadTimeout);
+                    await page.waitForSelector(
+                        Selectors.combat.skillButton(resolvedAttackKey),
+                        { state: 'visible', timeout: TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun) }
+                    );
+                    await TestCombat.walkToEnemyWithinRange(page, data.enemyKey, Math.floor(skillRange / 2), data.navigationTimeout);
+                    await Phaser.targetEnemy(page, data.enemyKey);
+                    hashBefore = await Phaser.getCanvasPixelHash(page);
+                }
+                await page.click(Selectors.combat.skillButton(resolvedAttackKey), { force: true });
                 await page.waitForTimeout(TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun));
                 let hashAfter = await Phaser.getCanvasPixelHash(page);
                 expect(hashBefore).not.toBe(hashAfter);

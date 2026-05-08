@@ -1,16 +1,20 @@
 <div class="extra-content-container" data-entity-serialized-data="{{&entitySerializedData}}">
     <h3>Extra options</h3>
     <div class="default-room-container">
-        <form name="defaultRoom" action="#" method="post">
+        <form name="defaultRoom" action="#" method="post" class="confirmation-required">
             <input type="hidden" name="setAsDefault" value="1">
             <div class="edit-field">
+            <span class="field-value with-button">
+                <button class="button button-primary"
+                    type="submit"
+                    data-modal-confirm-label="Yes"
+                    data-modal-confirm-class="success"
+                    data-modal-cancel-label="No">Save as default</button>
+            </span>
             <label class="field-name">
                 Set this room as default when the game starts<br/>
                 (new users registration or first login)
             </label>
-            <span class="field-value with-button">
-                <button class="button button-primary" type="submit">Save as default</button>
-            </span>
             </div>
         </form>
     </div>
@@ -31,7 +35,9 @@
                     Current room change point (tile index)
                     <br/>When you hit this tile you will be moved to the next room.
                 </label>
-                <input class="field-value" type="text" id="currentRoomChangePointTileIndex" name="currentRoomChangePointTileIndex" required/>
+                <span class="field-value">
+                    <input type="number" id="currentRoomChangePointTileIndex" name="currentRoomChangePointTileIndex" required/>
+                </span>
             </div>
             <div class="association-maps-container current-room-change-point-container" data-map-loader="{{&id}}"></div>
             <!-- next room selector -->
@@ -65,11 +71,15 @@
             </div>
             <div class="edit-field">
                 <label class="field-name" for="nextRoomPositionX">Next room position X</label>
-                <input class="field-value" type="text" id="nextRoomPositionX" name="nextRoomPositionX" required/>
+                <span class="field-value">
+                    <input type="number" id="nextRoomPositionX" name="nextRoomPositionX" required/>
+                </span>
             </div>
             <div class="edit-field">
                 <label class="field-name" for="nextRoomPositionY">Next room position Y</label>
-                <input class="field-value" type="text" id="nextRoomPositionY" name="nextRoomPositionY" required/>
+                <span class="field-value">
+                    <input type="number" id="nextRoomPositionY" name="nextRoomPositionY" required/>
+                </span>
             </div>
             <div class="association-maps-container next-room-return-position-container"></div>
             <div class="actions-container">

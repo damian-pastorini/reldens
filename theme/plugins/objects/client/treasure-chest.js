@@ -34,7 +34,7 @@ class TreasureChestClient extends AnimationEngine
         }, chestListenerKey);
     }
 
-    enableInteraction(currentScene)
+    enableInteraction()
     {
         if(!this.isInteractive){
             return;

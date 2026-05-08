@@ -10,6 +10,7 @@ const { test: baseTest, expect: baseExpect } = require('@playwright/test');
 const { FileHandler } = require('@reldens/server-utils');
 const { Logger } = require('@reldens/utils');
 const { Selectors } = require('./selectors');
+const { PlayerReset } = require('./helpers/player-reset');
 
 class BaseE2eTest
 {
@@ -18,7 +19,7 @@ class BaseE2eTest
     static gameConfig = FileHandler.exists(BaseE2eTest.configPath)
         ? FileHandler.fetchFileJson(BaseE2eTest.configPath)
         : {};
-    static longRun = process.env.LONG_RUN === '1';
+    static longRun = '1' === process.env.LONG_RUN;
     static videosDir = FileHandler.joinPaths(process.cwd(), 'test-results', 'videos');
     static screenshotsDir = FileHandler.joinPaths(process.cwd(), 'test-results', 'screenshots');
     static expect = baseExpect;
@@ -63,8 +64,8 @@ class BaseE2eTest
                 let filename = String(this.count).padStart(2, '0')+'-'+BaseE2eTest.slugify(name)+'.png';
                 try {
                     await page.screenshot({ path: FileHandler.joinPaths(this.folder, filename), fullPage: false });
-                } catch(captureError) {
-                    Logger.error('[screenshot] Could not save "'+filename+'": '+captureError.message);
+                } catch(error) {
+                    Logger.error('[screenshot] Could not save "'+filename+'": '+error.message);
                 }
             }
         };
@@ -124,13 +125,16 @@ class BaseE2eTest
         let filename = suffix ? slug+'-'+suffix+'.webm' : slug+'.webm';
         try {
             await video.saveAs(FileHandler.joinPaths(BaseE2eTest.videosDir, filename));
-        } catch(saveError) {
-            Logger.error('[video] Could not save "'+filename+'": '+saveError.message);
+        } catch(error) {
+            Logger.error('[video] Could not save "'+filename+'": '+error.message);
         }
     }
 
     static async runPageFixture(browser, use, testInfo, suffix)
     {
+        if(!suffix){
+            await PlayerReset.resetAll(BaseE2eTest.gameConfig.baseUrl || 'http://localhost:8080');
+        }
         let context = await BaseE2eTest.makeContext(browser);
         let page = await context.newPage();
         await use(page);

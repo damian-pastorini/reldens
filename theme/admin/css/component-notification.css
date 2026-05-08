@@ -1,0 +1,34 @@
+.notification {
+    display: none;
+    position: absolute;
+    top: 1.5rem;
+    right: 0;
+    padding: 1rem 5rem 1rem 2rem;
+    border-radius: 0.5rem 0 0 0.5rem;
+    font-size: 0.875rem;
+    z-index: var(--z-fixed);
+
+    &.success,
+    &.error {
+        display: block;
+    }
+
+    &.error {
+        background-color: var(--color-red-70);
+        color: var(--color-white);
+    }
+
+    &.success {
+        background-color: var(--color-green-70);
+        color: var(--color-white);
+    }
+
+    .close {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        cursor: pointer;
+        font-weight: var(--bold);
+        color: var(--color-white);
+    }
+}

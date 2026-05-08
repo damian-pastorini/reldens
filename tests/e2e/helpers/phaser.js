@@ -235,6 +235,52 @@ class Phaser
         });
     }
 
+    static async targetEnemy(page, enemyKey)
+    {
+        return page.evaluate((eKey) => {
+            let scene = window.reldens.getActiveScene();
+            let room = window.reldens && window.reldens.activeRoomEvents && window.reldens.activeRoomEvents.room;
+            if(!scene){
+                return 'no-scene';
+            }
+            if(!room){
+                return 'no-room';
+            }
+            let player = room.state && room.state.players
+                && window.reldens.activeRoomEvents.playerBySessionIdFromState(room, room.sessionId);
+            let found = null;
+            let minDist = Infinity;
+            let animDiag = '';
+            for(let anim of Object.values(scene.objectsAnimations)){
+                animDiag += 'key:'+anim.key+'|asset:'+anim.asset_key+'|type:'+anim.type
+                    +'|vis:'+(anim.sceneSprite ? anim.sceneSprite.visible : 'no-sprite')+'|name:'+anim.targetName+',';
+                if(!anim.sceneSprite || !anim.sceneSprite.visible){
+                    continue;
+                }
+                if(eKey && anim.asset_key !== eKey){
+                    continue;
+                }
+                if(!eKey && anim.key === anim.asset_key){
+                    continue;
+                }
+                let dist = player
+                    ? Math.hypot(player.state.x - anim.sceneSprite.x, player.state.y - anim.sceneSprite.y)
+                    : 0;
+                if(dist < minDist){
+                    minDist = dist;
+                    found = anim;
+                }
+            }
+            if(!found){
+                return 'no-enemy-found eKey:'+eKey+'|anims:'+animDiag;
+            }
+            let tempId = (found.key === found.asset_key) ? found.id : found.key;
+            scene.player.currentTarget = {id: tempId, type: 'obj'};
+            window.reldens.gameEngine.showTarget(found.targetName || found.key, scene.player.currentTarget, false);
+            return true;
+        }, enemyKey || null);
+    }
+
 }
 
 module.exports.Phaser = Phaser;
