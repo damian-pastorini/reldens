@@ -23,6 +23,7 @@
 /.parcel-cache
 /.playwright-mcp
 /prisma
+/prisma.config.js
 /test
 /test-results
 /tests/config.json
