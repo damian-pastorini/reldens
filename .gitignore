@@ -9,7 +9,6 @@
 /.claude/settings.json
 /.claude/settings.local.json
 /.claude/skills/
-/.claude/tests-guide/
 /CLAUDE.local.md
 /dev
 /.env

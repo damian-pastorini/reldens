@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Create New Character Starts The Game</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Create New Character Starts The Game</h1>
+<p>Test: <code>tests/e2e/test-character-system.spec.js</code> - <em>create new character starts the game</em> (line 16)</p>
+<p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/create-new-character-starts-the-game.webm" data-title="create new character starts the game">&#9654; Watch video</a></p>
+
+<table>
+    <thead>
+        <tr>
+            <th>Action</th>
+            <th>Test Code</th>
+            <th>Test File</th>
+            <th>File Proof</th>
+            <th>Code Proof</th>
+            <th>Comments</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Assert new character name config is set</td>
+            <td><code>expect(newCharName, 'e2eNewCharacterName must be configured').toBeTruthy()</code></td>
+            <td>test-character-system.spec.js:20</td>
+            <td>-</td>
+            <td>-</td>
+            <td>Test fails immediately if <code>e2eNewCharacterName</code> is not set in <code>tests/config.json</code></td>
+        </tr>
+        <tr>
+            <td>Login and reach player selection</td>
+            <td><code>LoginHelper.loginToSelection(page, username, password, longRun)</code></td>
+            <td>test-character-system.spec.js:23</td>
+            <td>tests/e2e/helpers/login.js:22-39</td>
+            <td><code>static async loginToSelection(page, username, password, longRun)</code></td>
+            <td>Waits for <code>#player-selection:not(.hidden)</code> - see character-system-player-selection.html for full flow</td>
+        </tr>
+        <tr>
+            <td>Read all existing player option texts</td>
+            <td><code>page.locator('#player-select-element option').allTextContents()</code></td>
+            <td>test-character-system.spec.js:24</td>
+            <td>theme/default/index.html:199-203</td>
+            <td><code>&lt;select class="input-box select-element" id="player-select-element" name="player-select-element"&gt;&lt;/select&gt;</code></td>
+            <td>Options are dynamically injected by client JS after login</td>
+        </tr>
+        <tr>
+            <td>Compute a unique character name for this run</td>
+            <td><code>let charName = alreadyExists ? newCharName + '-' + Date.now() : newCharName;</code></td>
+            <td>test-character-system.spec.js:29</td>
+            <td>-</td>
+            <td>-</td>
+            <td>If <code>e2eNewCharacterName</code> already exists (previous run), a timestamp suffix is appended to guarantee a fresh creation every time - the creation path is always exercised</td>
+        </tr>
+        <tr>
+            <td>Click the new-player-name field and type the character name</td>
+            <td><code>page.locator('#new-player-name').click()</code><br><code>page.locator('#new-player-name').pressSequentially(charName, { delay: typeDelay })</code></td>
+            <td>test-character-system.spec.js:30-31</td>
+            <td>theme/default/index.html:221</td>
+            <td><code>&lt;input type="text" name="new-player-name" id="new-player-name" class="required" required placeholder="Player Name"/&gt;</code></td>
+            <td>Inside <code>#player-create-form</code> (line 215); form has <code>hidden</code> class by default, revealed by client JS when no existing player is selected</td>
+        </tr>
+        <tr>
+            <td>Hover and click the Create &amp; Start submit button</td>
+            <td><code>page.hover('.player-create-submit [type="submit"]')</code><br><code>page.click('.player-create-submit [type="submit"]')</code></td>
+            <td>test-character-system.spec.js:33-35</td>
+            <td>theme/default/index.html:224-225</td>
+            <td><code>&lt;div class="input-box submit-container player-create-submit"&gt;</code><br><code>&lt;input type="submit" value="Create &amp; Start"/&gt;</code></td>
+            <td>Hover before click ensures button is in viewport; server creates the player record and starts the game session</td>
+        </tr>
+        <tr>
+            <td>Wait for game-started body class</td>
+            <td><code>page.waitForSelector('body.game-started', { timeout: longRun ? 120000 : 60000 })</code></td>
+            <td>test-character-system.spec.js:36</td>
+            <td>lib/game/client/game-manager.js:151<br>lib/game/constants.js:134</td>
+            <td><code>body.classList.add(GameConst.CLASSES.GAME_STARTED)</code><br><code>GAME_STARTED: 'game-started'</code></td>
+            <td>Server creates player record, responds with success; client starts game and adds class to body</td>
+        </tr>
+        <tr>
+            <td>Assert canvas is visible</td>
+            <td><code>expect(page.locator('canvas')).toBeVisible()</code></td>
+            <td>test-character-system.spec.js:37</td>
+            <td>theme/default/index.html:234</td>
+            <td><code>&lt;div class="game-container hidden"&gt;</code></td>
+            <td>Phaser creates the <code>&lt;canvas&gt;</code> element dynamically inside the game container; no static canvas in HTML</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>

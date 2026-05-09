@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Selected Character Loads With Correct Name In Game</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Selected Character Loads With Correct Name In Game</h1>
+<p>Test: <code>tests/e2e/test-character-system.spec.js</code> - <em>selected character loads with correct name in game</em> (line 46)</p>
+<p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/selected-character-loads-with-correct-name-in-game.webm" data-title="selected character loads with correct name in game">&#9654; Watch video</a></p>
+
+<table>
+    <thead>
+        <tr>
+            <th>Action</th>
+            <th>Test Code</th>
+            <th>Test File</th>
+            <th>File Proof</th>
+            <th>Code Proof</th>
+            <th>Comments</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Login and start game with selected player</td>
+            <td><code>LoginHelper.loginAndStartGame(page, username, password, playerName, longRun)</code></td>
+            <td>test-character-system.spec.js:50</td>
+            <td>tests/e2e/helpers/login.js:41-74</td>
+            <td><code>static async loginAndStartGame(page, username, password, playerName, longRun)</code></td>
+            <td>Selects <code>e2ePlayerName</code> (default <code>ImRoot</code>) from dropdown, submits, waits for <code>body.game-engine-started</code> and <code>#chat-open</code> - see authentication-double-login.html for the full game start flow</td>
+        </tr>
+        <tr>
+            <td>Wait for window.reldens global to exist</td>
+            <td><code>if(!window.reldens) { return false; }</code></td>
+            <td>test-character-system.spec.js:53-55</td>
+            <td>theme/default/index.js:86</td>
+            <td><code>window.reldens = reldens;</code></td>
+            <td><code>window.reldens</code> is the <code>GameManager</code> instance assigned globally at the end of the client entry point; the comment on line 85 notes this is optional and not strictly required</td>
+        </tr>
+        <tr>
+            <td>Get the active game scene via window.reldens</td>
+            <td><code>let scene = window.reldens.getActiveScene();</code></td>
+            <td>test-character-system.spec.js:56</td>
+            <td>lib/game/client/game-manager.js:498-500</td>
+            <td><code>getActiveScene() { return this.activeRoomEvents.getActiveScene(); }</code></td>
+            <td>Delegates to <code>RoomEvents.getActiveScene()</code> which returns <code>this.gameEngine.scene.getScene(this.roomName)</code> (room-events.js:979-981) - the live Phaser scene for the current room</td>
+        </tr>
+        <tr>
+            <td>Guard: scene, scene.player and scene.player.players must exist</td>
+            <td><code>if(!scene || !scene.player || !scene.player.players) { return false; }</code></td>
+            <td>test-character-system.spec.js:57-59</td>
+            <td>lib/game/client/room-events.js:868<br>lib/users/client/player-engine.js:64</td>
+            <td><code>currentScene.player = this.createPlayerEngineInstance(...);</code><br><code>this.players = {};</code></td>
+            <td><code>scene.player</code> is a <code>PlayerEngine</code> instance set on the scene when the player joins; <code>players</code> is a map keyed by Colyseus session ID populated as clients join</td>
+        </tr>
+        <tr>
+            <td>Assert at least one player entry has the expected playerName</td>
+            <td><code>Object.values(scene.player.players).some(p => p.playerName &amp;&amp; p.playerName.includes(name))</code></td>
+            <td>test-character-system.spec.js:60</td>
+            <td>lib/users/client/player-engine.js:48</td>
+            <td><code>this.playerName = playerData.playerName;</code></td>
+            <td>Uses <code>.includes(name)</code> not strict equality to tolerate display suffixes; <code>playerName</code> is set from server-provided <code>playerData</code> on <code>PlayerEngine</code> construction</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Message From Player A Is Visible To Player B</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Message From Player A Is Visible To Player B</h1>
+<p>Test: <code>tests/e2e/test-chat.spec.js</code> - <em>message from player A is visible to player B</em> (line 77)</p>
+<p>
+    Video P1: <a href="#" class="video-link" data-src="../../test-results/videos/message-from-player-a-is-visible-to-player-b.webm" data-title="message from player A is visible to player B (P1)">&#9654; P1</a>
+    &nbsp;
+    Video P2: <a href="#" class="video-link" data-src="../../test-results/videos/message-from-player-a-is-visible-to-player-b-player2.webm" data-title="message from player A is visible to player B (P2)">&#9654; P2</a>
+</p>
+
+<table>
+    <thead>
+        <tr>
+            <th>Action</th>
+            <th>Test Code</th>
+            <th>Test File</th>
+            <th>File Proof</th>
+            <th>Code Proof</th>
+            <th>Comments</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Login Player A and start game</td>
+            <td><code>LoginHelper.loginAndStartGame(page, username, password, playerName, longRun)</code></td>
+            <td>test-chat.spec.js:84</td>
+            <td>tests/e2e/helpers/login.js:41-88</td>
+            <td><code>static async loginAndStartGame(page, username, password, playerName, longRun)</code></td>
+            <td>Uses <code>e2eUsername2</code>/<code>e2ePassword2</code>/<code>e2ePlayerName2</code> (defaults: root2/root/ImRoot2); video saved as <code>{slug}.webm</code> (P1)</td>
+        </tr>
+        <tr>
+            <td>Login Player B and start game</td>
+            <td><code>LoginHelper.loginAndStartGame(secondPage, username2, password2, playerName2, longRun)</code></td>
+            <td>test-chat.spec.js:85</td>
+            <td>tests/e2e/helpers/login.js:41-88</td>
+            <td><code>static async loginAndStartGame(page, username, password, playerName, longRun)</code></td>
+            <td>Uses <code>e2eUsername3</code>/<code>e2ePassword3</code>/<code>e2ePlayerName3</code> (defaults: root3/root/ImRoot3); <code>secondPage</code> fixture saves video as <code>{slug}-player2.webm</code> (P2)</td>
+        </tr>
+        <tr>
+            <td>Open chat panel on both pages</td>
+            <td><code>page.click('#chat-open')</code><br><code>secondPage.click('#chat-open')</code></td>
+            <td>test-chat.spec.js:88-89</td>
+            <td>theme/default/assets/features/chat/templates/ui-chat.html:8</td>
+            <td><code>&lt;div class="open-ui-button" id="chat-open"&gt;</code></td>
+            <td>Both players must have chat open; Player B needs it open to receive and display the incoming message</td>
+        </tr>
+        <tr>
+            <td>Player A types message in chat input</td>
+            <td><code>page.locator('#chat-input').click()</code><br><code>page.locator('#chat-input').pressSequentially(testMessage, { delay: longRun ? 80 : 0 })</code></td>
+            <td>test-chat.spec.js:91-92</td>
+            <td>theme/default/assets/features/chat/templates/ui-chat.html:5</td>
+            <td><code>&lt;input id="chat-input" type="text" placeholder="Enter message"/&gt;</code></td>
+            <td><code>testMessage = 'e2e-cross-player-test'</code>; no <code>#</code> or <code>@</code> prefix - sent to the active room (General tab)</td>
+        </tr>
+        <tr>
+            <td>Player A presses Enter to send</td>
+            <td><code>page.keyboard.press('Enter')</code></td>
+            <td>test-chat.spec.js:93</td>
+            <td>lib/chat/client/chat-ui.js:208-211</td>
+            <td><code>this.chatInput.addEventListener('keyup', (event) =&gt; { if(event.keyCode === Input.Keyboard.KeyCodes.ENTER){ this.sendChatMessage(); } })</code></td>
+            <td>Enter keyup triggers <code>sendChatMessage()</code>; no prefix so message is sent to the active room via <code>activeRoomEvents.send()</code></td>
+        </tr>
+        <tr>
+            <td>Wait for server roundtrip</td>
+            <td><code>page.waitForTimeout(2000 + pauseMs)</code></td>
+            <td>test-chat.spec.js:94</td>
+            <td>-</td>
+            <td>-</td>
+            <td>Explicit 2-second pause to allow the message to route: Player A client &rarr; server &rarr; Player B client</td>
+        </tr>
+        <tr>
+            <td>Assert Player B sees the message in General tab</td>
+            <td><code>expect(secondPage.locator('.tab-content-1')).toContainText(testMessage)</code></td>
+            <td>test-chat.spec.js:95</td>
+            <td>theme/default/assets/features/chat/templates/tab-content.html:1<br>lib/chat/constants.js:13</td>
+            <td><code>&lt;div class="tab-content tab-content-{{&amp;tabId}}..."&gt;&lt;/div&gt;</code><br><code>MESSAGE: 1</code></td>
+            <td>Asserted on <code>secondPage</code> (Player B) - <code>.tab-content-1</code> is the General tab (<code>TYPES.MESSAGE = 1</code>); Playwright retries automatically</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>
