@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Double Login Disconnects First Session</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Double Login Disconnects First Session</h1>
+<p>Test: <code>tests/e2e/test-authentication.spec.js</code> - <em>double login disconnects first session</em> (line 64)</p>
+<p>Videos (2 players):
+&nbsp;&nbsp;P1: <a href="#" class="video-link" data-src="../../test-results/videos/double-login-disconnects-first-session.webm" data-title="double login disconnects first session (P1)">&#9654; Watch P1</a>
+&nbsp;&nbsp;P2: <a href="#" class="video-link" data-src="../../test-results/videos/double-login-disconnects-first-session-player2.webm" data-title="double login disconnects first session (P2)">&#9654; Watch P2</a></p>
+
+<table>
+    <thead>
+        <tr>
+            <th>Action</th>
+            <th>Test Code</th>
+            <th>Test File</th>
+            <th>File Proof</th>
+            <th>Code Proof</th>
+            <th>Comments</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Login page A with username/password/playerName</td>
+            <td><code>LoginHelper.loginAndStartGame(page, username, password, playerName, longRun)</code></td>
+            <td>test-authentication.spec.js:68</td>
+            <td>tests/e2e/helpers/login.js:42-74</td>
+            <td><code>static async loginAndStartGame(page, username, password, playerName, longRun)</code></td>
+            <td>Waits for <code>body.game-engine-started</code> at login.js:57 - <code>page.waitForSelector('body.game-engine-started', ...)</code></td>
+        </tr>
+        <tr>
+            <td>Assert page A canvas is visible (game running)</td>
+            <td><code>expect(page.locator('canvas')).toBeVisible()</code></td>
+            <td>test-authentication.spec.js:69</td>
+            <td>theme/default/index.html:239</td>
+            <td><code>&lt;div id="reldens"&gt;&lt;/div&gt;</code></td>
+            <td>Phaser creates the <code>&lt;canvas&gt;</code> dynamically inside <code>#reldens</code> div at runtime - no static canvas in HTML</td>
+        </tr>
+        <tr>
+            <td>Login page B (secondPage) with same credentials</td>
+            <td><code>LoginHelper.loginAndStartGame(secondPage, username, password, playerName, longRun)</code></td>
+            <td>test-authentication.spec.js:70</td>
+            <td>tests/e2e/base-e2e-test.js:15</td>
+            <td><code>secondPage: async ({ browser }, use) => { ... }</code></td>
+            <td>Separate browser context; same user/player as page A - triggers server-side disconnect of first session</td>
+        </tr>
+        <tr>
+            <td>Assert page B canvas is visible (game running)</td>
+            <td><code>expect(secondPage.locator('canvas')).toBeVisible()</code></td>
+            <td>test-authentication.spec.js:71</td>
+            <td>theme/default/index.html:239</td>
+            <td><code>&lt;div id="reldens"&gt;&lt;/div&gt;</code></td>
+            <td>Confirms page B successfully entered the game</td>
+        </tr>
+        <tr>
+            <td>Wait for page A to be kicked (game-started class removed)</td>
+            <td><code>page.waitForFunction(() => !document.body.classList.contains('game-started'), { timeout: 30000 })</code></td>
+            <td>test-authentication.spec.js:72</td>
+            <td>lib/game/client/game-manager.js:163 &amp; lib/game/constants.js:134</td>
+            <td><code>body.classList.remove(GameConst.CLASSES.GAME_STARTED)</code> - <code>GAME_STARTED: 'game-started'</code></td>
+            <td><code>game-started</code> added at game-manager.js:151, removed at game-manager.js:163 on disconnect</td>
+        </tr>
+        <tr>
+            <td>Assert page A shows login form again</td>
+            <td><code>expect(page.locator('#login-form')).toBeVisible()</code></td>
+            <td>test-authentication.spec.js:73</td>
+            <td>theme/default/index.html:54</td>
+            <td><code>&lt;form name="login-form" id="login-form" class="login-form" action="#" method="post"&gt;</code></td>
+            <td>Login form reappears after server disconnects the first session</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>

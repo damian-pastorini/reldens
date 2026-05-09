@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Private Message Reaches The Target Player</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Private Message Reaches The Target Player</h1>
+<p>Test: <code>tests/e2e/test-chat.spec.js</code> - <em>private message reaches the target player</em> (line 38)</p>
+<p>
+    Video P1: <a href="#" class="video-link" data-src="../../test-results/videos/private-message-reaches-the-target-player.webm" data-title="private message reaches the target player (P1)">&#9654; P1</a>
+    &nbsp;
+    Video P2: <a href="#" class="video-link" data-src="../../test-results/videos/private-message-reaches-the-target-player-player2.webm" data-title="private message reaches the target player (P2)">&#9654; P2</a>
+</p>
+
+<table>
+    <thead>
+        <tr>
+            <th>Action</th>
+            <th>Test Code</th>
+            <th>Test File</th>
+            <th>File Proof</th>
+            <th>Code Proof</th>
+            <th>Comments</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Login Player A (sender) and start game</td>
+            <td><code>LoginHelper.loginAndStartGame(page, username, password, playerName, longRun)</code></td>
+            <td>test-chat.spec.js:45</td>
+            <td>tests/e2e/helpers/login.js:41-88</td>
+            <td><code>static async loginAndStartGame(page, username, password, playerName, longRun)</code></td>
+            <td>Uses <code>e2eUsername</code>/<code>e2ePassword</code>/<code>e2ePlayerName</code> (defaults: root/root/ImRoot); video saved as <code>{slug}.webm</code> (P1)</td>
+        </tr>
+        <tr>
+            <td>Login Player B (recipient) and start game</td>
+            <td><code>LoginHelper.loginAndStartGame(secondPage, username2, password2, playerName2, longRun)</code></td>
+            <td>test-chat.spec.js:46</td>
+            <td>tests/e2e/helpers/login.js:41-88</td>
+            <td><code>static async loginAndStartGame(page, username, password, playerName, longRun)</code></td>
+            <td>Uses <code>e2eUsername2</code>/<code>e2ePassword2</code>/<code>e2ePlayerName2</code> (defaults: root2/root/ImRoot2); video saved as <code>{slug}-player2.webm</code> (P2)</td>
+        </tr>
+        <tr>
+            <td>Open chat panel on both pages</td>
+            <td><code>page.click('#chat-open')</code><br><code>secondPage.click('#chat-open')</code></td>
+            <td>test-chat.spec.js:49-50</td>
+            <td>theme/default/assets/features/chat/templates/ui-chat.html:8</td>
+            <td><code>&lt;div class="open-ui-button" id="chat-open"&gt;</code></td>
+            <td>Both players open chat; Player B must have chat open to display the incoming private message</td>
+        </tr>
+        <tr>
+            <td>Player A types private message with <code>@playerName</code> prefix</td>
+            <td><code>page.locator('#chat-input').click()</code><br><code>page.locator('#chat-input').pressSequentially('@' + playerName2 + ' ' + testMessage, ...)</code></td>
+            <td>test-chat.spec.js:52-53</td>
+            <td>theme/default/assets/features/chat/templates/ui-chat.html:5<br>lib/chat/client/chat-ui.js:639-641</td>
+            <td><code>&lt;input id="chat-input" type="text" placeholder="Enter message"/&gt;</code><br><code>return 0 === this.chatInput.value.indexOf('#') || 0 === this.chatInput.value.indexOf('@');</code></td>
+            <td><code>testMessage = 'e2e-private-msg-test'</code>; input is <code>@ImRoot2 e2e-private-msg-test</code>; the <code>@</code> prefix triggers <code>useGlobalRoom()</code> &rarr; <code>sendPrivateMessage()</code></td>
+        </tr>
+        <tr>
+            <td>Click Send to dispatch private message</td>
+            <td><code>page.click('#chat-send')</code></td>
+            <td>test-chat.spec.js:55</td>
+            <td>lib/chat/client/chat-ui.js:665-667<br>lib/chat/client/chat-ui.js:679-684</td>
+            <td><code>if(0 === this.chatInput.value.indexOf('@')){ this.sendPrivateMessage(message, globalChat); }</code><br><code>let playerName = this.chatInput.value.substring(1, this.chatInput.value.indexOf(' ')); message.t = playerName;</code></td>
+            <td>The <code>@</code> prefix causes <code>useGlobalRoomForMessage()</code> to extract <code>playerName2</code> and set <code>message.t</code>; the server routes to that player only</td>
+        </tr>
+        <tr>
+            <td>Wait for server roundtrip</td>
+            <td><code>page.waitForTimeout(2000 + pauseMs)</code></td>
+            <td>test-chat.spec.js:56</td>
+            <td>-</td>
+            <td>-</td>
+            <td>Explicit 2-second pause to allow the private message to route: Player A client &rarr; server &rarr; Player B client</td>
+        </tr>
+        <tr>
+            <td>Assert Player B sees the message in General tab</td>
+            <td><code>expect(secondPage.locator('.tab-content-1')).toContainText(testMessage)</code></td>
+            <td>test-chat.spec.js:57</td>
+            <td>migrations/production/reldens-basic-config-v4.0.0.sql:28<br>lib/chat/client/chat-ui.js:412-416</td>
+            <td><code>(4, 'private', 1, 1)</code><br><code>let alsoShowInTab = chatType.also_show_in_type ? getElement(TAB_CONTENT_PREFIX + chatType.also_show_in_type) : false;</code></td>
+            <td>Private type (id=4) has <code>also_show_in_type=1</code> &mdash; message is echoed into the General tab (<code>.tab-content-1</code>) in addition to its own tab; Playwright retries automatically</td>
+        </tr>
+        <tr>
+            <td>Assert Player B sees the message in Private tab</td>
+            <td><code>expect(secondPage.locator('.tab-content-4')).toContainText(testMessage)</code></td>
+            <td>test-chat.spec.js:58</td>
+            <td>migrations/production/reldens-basic-config-v4.0.0.sql:28<br>lib/chat/client/chat-ui.js:406-410</td>
+            <td><code>(4, 'private', 1, 1)</code><br><code>let appendToTab = chatType.show_tab ? getElement(TAB_CONTENT_PREFIX + messageType) : false;</code></td>
+            <td>Private type (id=4) has <code>show_tab=1</code> &mdash; message appears in its own Private tab (<code>.tab-content-4</code>, <code>TYPES.PRIVATE = 4</code>); Playwright retries automatically</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>

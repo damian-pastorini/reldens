@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Register New Account Reaches Player Selection</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Register New Account Reaches Player Selection</h1>
+<p>Test: <code>tests/e2e/test-authentication.spec.js</code> - <em>register new account reaches player selection</em></p>
+<p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/register-new-account-reaches-player-selection.webm" data-title="register new account reaches player selection">&#9654; Watch video</a></p>
+
+<table>
+    <thead>
+        <tr>
+            <th>Action</th>
+            <th>Test Code</th>
+            <th>Test File</th>
+            <th>File Proof</th>
+            <th>Code Proof</th>
+            <th>Comments</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Assert registration config values are set</td>
+            <td><code>expect(regUsername).toBeTruthy()</code><br><code>expect(regEmail).toBeTruthy()</code><br><code>expect(regPassword).toBeTruthy()</code></td>
+            <td>test-authentication.spec.js:27-29</td>
+            <td>-</td>
+            <td>-</td>
+            <td>Test fails immediately if <code>e2eRegUsername</code>, <code>e2eRegEmail</code>, <code>e2eRegPassword</code> are not set in config</td>
+        </tr>
+        <tr>
+            <td>Navigate to home page</td>
+            <td><code>page.goto('/')</code><br><code>page.waitForLoadState('networkidle')</code></td>
+            <td>test-authentication.spec.js:32-33</td>
+            <td>theme/default/index.html:118</td>
+            <td><code>&lt;form name="register-form" id="register-form" class="register-form" action="#" method="post"&gt;</code></td>
+            <td>Register form is in the right column of the page, visible by default</td>
+        </tr>
+        <tr>
+            <td>Fill username field</td>
+            <td><code>page.locator('#reg-username').click()</code><br><code>page.locator('#reg-username').pressSequentially(regUsername, { delay: typeDelay })</code></td>
+            <td>test-authentication.spec.js:34-35</td>
+            <td>theme/default/index.html:124</td>
+            <td><code>&lt;input type="text" name="reg-username" id="reg-username" class="required" required placeholder="Username"/&gt;</code></td>
+            <td>Note: in HTML the email field (line 121) comes before username (line 124); test fills username first</td>
+        </tr>
+        <tr>
+            <td>Fill email field</td>
+            <td><code>page.locator('#reg-email').click()</code><br><code>page.locator('#reg-email').pressSequentially(regEmail, { delay: typeDelay })</code></td>
+            <td>test-authentication.spec.js:37-38</td>
+            <td>theme/default/index.html:121</td>
+            <td><code>&lt;input type="email" name="reg-email" id="reg-email" class="required email" required placeholder="Email"/&gt;</code></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>Fill password field</td>
+            <td><code>page.locator('#reg-password').click()</code><br><code>page.locator('#reg-password').pressSequentially(regPassword, { delay: typeDelay })</code></td>
+            <td>test-authentication.spec.js:40-41</td>
+            <td>theme/default/index.html:127</td>
+            <td><code>&lt;input type="password" name="reg-password" id="reg-password" class="required" required autocomplete="off" placeholder="Password"/&gt;</code></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>Fill re-type password field</td>
+            <td><code>page.locator('#reg-re-password').click()</code><br><code>page.locator('#reg-re-password').pressSequentially(regPassword, { delay: typeDelay })</code></td>
+            <td>test-authentication.spec.js:43-44</td>
+            <td>theme/default/index.html:130</td>
+            <td><code>&lt;input type="password" name="reg-re-password" id="reg-re-password" class="required" required autocomplete="off" placeholder="Re-type password"/&gt;</code></td>
+            <td>Same value as password field</td>
+        </tr>
+        <tr>
+            <td>Check for optional terms &amp; conditions link (conditional)</td>
+            <td><code>termsLinkContainer.isVisible({ timeout: ... })</code></td>
+            <td>test-authentication.spec.js:46-47</td>
+            <td>theme/default/index.html:132</td>
+            <td><code>&lt;div class="input-box hidden terms-and-conditions-link-container"&gt;</code></td>
+            <td>Container has <code>hidden</code> class by default - only visible if terms are enabled via config</td>
+        </tr>
+        <tr>
+            <td>If visible: click terms link to open terms panel</td>
+            <td><code>page.locator('.terms-and-conditions-link').click()</code></td>
+            <td>test-authentication.spec.js:49</td>
+            <td>theme/default/index.html:133</td>
+            <td><code>&lt;p class="terms-and-conditions-link"&gt;Accept our Terms and Conditions (click here).&lt;/p&gt;</code></td>
+            <td>Only executed when terms container is visible</td>
+        </tr>
+        <tr>
+            <td>If visible: assert terms panel is visible</td>
+            <td><code>expect(page.locator('#terms-and-conditions')).toBeVisible({ timeout: 5000 })</code></td>
+            <td>test-authentication.spec.js:51</td>
+            <td>theme/default/index.html:146</td>
+            <td><code>&lt;div id="terms-and-conditions" class="hidden wooden-box"&gt;</code></td>
+            <td>JS removes <code>hidden</code> class when terms link is clicked</td>
+        </tr>
+        <tr>
+            <td>If visible: check the accept terms checkbox</td>
+            <td><code>page.locator('#accept-terms-and-conditions').check()</code></td>
+            <td>test-authentication.spec.js:52</td>
+            <td>theme/default/index.html:152</td>
+            <td><code>&lt;input type="checkbox" id="accept-terms-and-conditions"&gt;</code></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>If visible: close terms panel</td>
+            <td><code>page.locator('.terms-and-conditions-accept-close').first().click()</code></td>
+            <td>test-authentication.spec.js:54</td>
+            <td>theme/default/index.html:157</td>
+            <td><code>&lt;button class="terms-and-conditions-accept-close"&gt;Close&lt;/button&gt;</code></td>
+            <td><code>.first()</code> used because there are two elements with this class (button + close img on line 160)</td>
+        </tr>
+        <tr>
+            <td>Submit register form</td>
+            <td><code>page.hover('#register-form [type="submit"]')</code><br><code>page.click('#register-form [type="submit"]')</code></td>
+            <td>test-authentication.spec.js:57-59</td>
+            <td>theme/default/index.html:136</td>
+            <td><code>&lt;input type="submit" value="Register"/&gt;</code></td>
+            <td>Hover before click to ensure the button is in viewport and interactable</td>
+        </tr>
+        <tr>
+            <td>Wait for player selection panel to become visible</td>
+            <td><code>page.waitForSelector('#player-selection:not(.hidden)', { timeout: longRun ? 60000 : 20000 })</code></td>
+            <td>test-authentication.spec.js:60</td>
+            <td>theme/default/index.html:187</td>
+            <td><code>&lt;div id="player-selection" class="hidden"&gt;</code></td>
+            <td>Server registers user, responds with success, JS removes <code>hidden</code> from <code>#player-selection</code></td>
+        </tr>
+        <tr>
+            <td>Assert player selection panel is visible</td>
+            <td><code>expect(page.locator('#player-selection')).toBeVisible()</code></td>
+            <td>test-authentication.spec.js:61</td>
+            <td>theme/default/index.html:187</td>
+            <td><code>&lt;div id="player-selection" class="hidden"&gt;</code></td>
+            <td>Confirms registration succeeded and user reached player selection step</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>

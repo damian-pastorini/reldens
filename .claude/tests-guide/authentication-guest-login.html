@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Guest Login</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Guest Login</h1>
+<p>Test: <code>tests/e2e/test-authentication.spec.js</code> - <em>guest login enters game when guest mode is enabled</em> (PENDING)</p>
+<p>Video: <em>not yet recorded</em></p>
+<p>Test is automatically skipped if the guest login form is not visible (feature disabled in build).</p>
+
+<table>
+    <thead>
+        <tr>
+            <th>Step</th>
+            <th>Action</th>
+            <th>Test Code</th>
+            <th>Test File</th>
+            <th>File Proof</th>
+            <th>Code Proof</th>
+            <th>Comments</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>1</td>
+            <td>Navigate to game homepage</td>
+            <td><code>await page.goto('/')</code></td>
+            <td>test-authentication.spec.js:73</td>
+            <td>theme/default/index.html</td>
+            <td><code>&lt;html&gt;...&lt;/html&gt;</code></td>
+            <td>Loads the login page with all auth forms (login, register, guest).</td>
+        </tr>
+        <tr>
+            <td>2</td>
+            <td>Wait for network idle</td>
+            <td><code>await page.waitForLoadState('networkidle')</code></td>
+            <td>test-authentication.spec.js:74</td>
+            <td>-</td>
+            <td>-</td>
+            <td>Ensures all assets and feature templates have loaded before checking the guest form.</td>
+        </tr>
+        <tr>
+            <td>3</td>
+            <td>Check if guest form is visible</td>
+            <td><code>let guestVisible = await guestForm.isVisible(...)</code><br><code>test.skip(!guestVisible, 'guest login form not visible - feature disabled in this build')</code></td>
+            <td>test-authentication.spec.js:75-77</td>
+            <td>theme/default/assets/features/users/templates/ui-guest-login.html</td>
+            <td><code>&lt;form id="guest-form"&gt;</code></td>
+            <td>Guest mode is feature-flagged via <code>features</code> table; if disabled the form template never renders so the test gracefully skips.</td>
+        </tr>
+        <tr>
+            <td>4</td>
+            <td>Click guest submit button</td>
+            <td><code>await page.click(Selectors.login.guestSubmit)</code></td>
+            <td>test-authentication.spec.js:80</td>
+            <td>theme/default/assets/features/users/templates/ui-guest-login.html</td>
+            <td><code>&lt;button type="submit"&gt;Play as guest&lt;/button&gt;</code></td>
+            <td>Triggers the guest auth flow, which creates an ephemeral user and player on the server.</td>
+        </tr>
+        <tr>
+            <td>5</td>
+            <td>Wait for game-engine-started body class</td>
+            <td><code>await page.waitForSelector(Selectors.body.gameEngineStarted, { timeout: longRun ? 60000 : 30000 })</code></td>
+            <td>test-authentication.spec.js:81</td>
+            <td>lib/game/client/game-manager.js</td>
+            <td><code>document.body.classList.add('game-engine-started')</code></td>
+            <td>Body class is set after the Phaser engine boots, proving the game session was established.</td>
+        </tr>
+        <tr>
+            <td>6</td>
+            <td>Assert canvas is visible</td>
+            <td><code>await expect(page.locator(Selectors.canvas)).toBeVisible()</code></td>
+            <td>test-authentication.spec.js:82</td>
+            <td>theme/default/index.html</td>
+            <td><code>&lt;canvas&gt;</code></td>
+            <td>Confirms the guest entered the game world and Phaser is rendering.</td>
+        </tr>
+        <tr>
+            <td>7</td>
+            <td>Capture verification screenshot</td>
+            <td><code>screenshots.capture(page, 'guest-in-game')</code></td>
+            <td>test-authentication.spec.js:83</td>
+            <td>tests/e2e/base-e2e-test.js</td>
+            <td><code>screenshots.capture(page, name)</code></td>
+            <td>Stored under <code>tests/screenshots/</code>.</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>

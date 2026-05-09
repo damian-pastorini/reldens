@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Missing Test: Create a New Clan</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Missing Test: Create a New Clan</h1>
+<p>Test: <code>tests/e2e/test-clans.spec.js</code> - <em>player can create a new clan</em> (PENDING)</p>
+<p>Video: <em>not yet recorded</em></p>
+<p><strong>Note:</strong> Requires player (root2/ImRoot2) to not already be in a clan. If ImRoot2 already has a clan, this test will fail - the clan panel shows clan info instead of the create form.</p>
+
+<table>
+    <thead>
+        <tr>
+            <th>Action</th>
+            <th>Test Code</th>
+            <th>Test File</th>
+            <th>File Proof</th>
+            <th>Code Proof</th>
+            <th>Comments</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Login, open clan panel, assert create form is visible</td>
+            <td><code>await loginAndOpenClanPanel(page, gameConfig, longRun); await expect(page.locator('.clan-name-input')).toBeVisible()</code></td>
+            <td>test-clans.spec.js:N/A (PENDING)</td>
+            <td>lib/teams/client/clan-message-handler.js:245</td>
+            <td><code>activateRewardsAction()</code></td>
+            <td>When player has no clan, server sends cln.ini; client shows create form with clan-name-input field</td>
+        </tr>
+        <tr>
+            <td>Fill clan name input with a unique name</td>
+            <td><code>await page.locator('.clan-name-input').fill('TestClan' + Date.now())</code></td>
+            <td>test-clans.spec.js:N/A (PENDING)</td>
+            <td>theme/default/assets/features/teams/templates/clan-create.html:1</td>
+            <td><code>class="clan-name-input"</code></td>
+            <td>Timestamp appended to ensure unique clan name across test runs</td>
+        </tr>
+        <tr>
+            <td>Click submit to create the clan</td>
+            <td><code>await page.click('.submit-clan-create')</code></td>
+            <td>test-clans.spec.js:N/A (PENDING)</td>
+            <td>lib/teams/client/clan-message-handler.js:265</td>
+            <td><code>let submitButton = this.gameDom.getElement('.submit-clan-create')</code></td>
+            <td>Submit button sends cln.new action with clan name to server</td>
+        </tr>
+        <tr>
+            <td>Assert clan container appears showing the new clan</td>
+            <td><code>await expect(page.locator('.clan-container')).toBeVisible({ timeout: 10000 })</code></td>
+            <td>test-clans.spec.js:N/A (PENDING)</td>
+            <td>lib/teams/client/clan-message-handler.js:100</td>
+            <td><code>showNewClan()</code></td>
+            <td>Server responds with cln.new result; if successful (result === 1) clan is displayed</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>
