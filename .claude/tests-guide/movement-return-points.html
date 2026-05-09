@@ -22,28 +22,28 @@
             <td>Fails fast if game-data config is missing the return room key</td>
         </tr>
         <tr>
-            <td>Login as root/ImRoot and prepare game state</td>
-            <td><code>TestMovement.loginAndPrepare(page, gameConfig, longRun)</code></td>
+            <td>Login as root/ImRoot with scene selection and prepare game state</td>
+            <td><code>TestMovement.loginAndPrepare(page, gameConfig, longRun, 'reldens-forest')</code></td>
             <td>test-movement.spec.js:36</td>
-            <td>tests/e2e/test-movement.spec.js:20</td>
-            <td><code>static async loginAndPrepare(page, gameConfig, longRun)</code></td>
-            <td>Logs in, waits for player in room state, focuses game canvas</td>
+            <td>tests/e2e/test-movement.spec.js:21</td>
+            <td><code>static async loginAndPrepare(page, gameConfig, longRun, scene = null)</code></td>
+            <td>Passes 'reldens-forest' as scene; player starts directly in forest after each test resets player to town (SAFE_ROOM_ID=4)</td>
         </tr>
         <tr>
-            <td>Login and start game via form</td>
-            <td><code>Login.loginAndStartGame(page, username, password, playerName, longRun)</code></td>
+            <td>Login and start game with forest scene selection</td>
+            <td><code>Login.loginAndStartGame(page, username, password, playerName, longRun, false, 'reldens-forest')</code></td>
             <td>test-movement.spec.js:26</td>
             <td>tests/e2e/helpers/login.js:77</td>
             <td><code>static async loginAndStartGame(page, username, password, playerName, longRun, skipUiSelectors = false, scene = null)</code></td>
-            <td>Fills login form, selects player, clicks submit, waits for body.game-engine-started</td>
+            <td>Selects 'reldens-forest' scene at character select before submit; player spawns in forest rather than the reset-to town room</td>
         </tr>
         <tr>
-            <td>Navigate to reldens-forest via transition tile</td>
+            <td>Verify player is in reldens-forest (immediate - scene selection already placed them there)</td>
             <td><code>Navigation.ensureInRoom(page, 'reldens-forest', 608, 16, navTimeout)</code></td>
             <td>test-movement.spec.js:40</td>
             <td>tests/e2e/helpers/navigation.js:149</td>
             <td><code>static async ensureInRoom(page, roomName, transitionX, transitionY, timeout)</code></td>
-            <td>Walks toward coords (608, 16) in steps until activeRoomEvents.roomName === 'reldens-forest'</td>
+            <td>Checks activeRoomEvents.roomName first; returns true immediately since scene selection started player in forest; no navigation required</td>
         </tr>
         <tr>
             <td>Assert player reached reldens-forest</td>
