@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Combat Skill (Attack) - attackShort Deals Damage In Chat</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Combat Skill (Attack) - attackShort Deals Damage In Chat</h1>
+<p>Test: <code>tests/e2e/test-combat.spec.js</code> - <em>combat skill (attack) - attackShort deals damage in chat</em></p>
+<p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/combat-skill-attack---attackshort-deals-damage-in-chat.webm" data-title="Combat Skill (Attack) - attackShort Deals Damage In Chat">&#9654; Watch video</a></p>
+<table>
+    <thead>
+        <tr>
+            <th>Action</th>
+            <th>Test Code</th>
+            <th>Test File</th>
+            <th>File Proof</th>
+            <th>Code Proof</th>
+            <th>Comments</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Prepare skill cast context</td>
+            <td><code>TestCombat.prepareSkillCastContext(page, screenshots, gameConfig, longRun, skill, 'attack')</code></td>
+            <td>test-combat.spec.js:149</td>
+            <td>test-combat.spec.js:136</td>
+            <td><code>static async prepareSkillCastContext(page, screenshots, gameConfig, longRun, skill, context)</code></td>
+            <td>Logs in to forest, walks within range (50 for attackShort), targets enemy, opens chat; called via <code>runDamageSkillTest</code></td>
+        </tr>
+        <tr>
+            <td>Click attack skill button</td>
+            <td><code>page.click(Selectors.combat.skillButton(skill.key))</code></td>
+            <td>test-combat.spec.js:150</td>
+            <td>tests/e2e/game-data.json:41</td>
+            <td><code>"key": "attackShort"</code></td>
+            <td>Clicks <code>#attackShort</code> in HUD skill bar; <code>Selectors.combat.skillButton = (skillKey) =&gt; '#'+skillKey</code></td>
+        </tr>
+        <tr>
+            <td>Assert damage message in General chat</td>
+            <td><code>expect(page.locator(Selectors.chat.tabContentGeneral)).toContainText('damage', { timeout: ... })</code></td>
+            <td>test-combat.spec.js:151-154</td>
+            <td>lib/chat/constants.js:13</td>
+            <td><code>MESSAGE: 1</code></td>
+            <td>Server broadcasts damage message to room; <code>.tab-content-1</code> is the General tab; Playwright retries until text appears</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>

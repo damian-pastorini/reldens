@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Player Opens Chest And Receives Interaction Response</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Player Opens Chest And Receives Interaction Response</h1>
+<p>Test: <code>tests/e2e/test-interactive-objects.spec.js</code> - <em>player opens chest and receives interaction response</em></p>
+<p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/player-opens-chest-and-receives-interaction-response.webm" data-title="Player Opens Chest And Receives Interaction Response">&#9654; Watch video</a></p>
+<table>
+    <thead>
+        <tr>
+            <th>Action</th>
+            <th>Test Code</th>
+            <th>Test File</th>
+            <th>File Proof</th>
+            <th>Code Proof</th>
+            <th>Comments</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Assert chest key is configured</td>
+            <td><code>let objectKey = gameConfig.e2eChestKey || ''</code><br><code>expect(objectKey, 'e2eChestKey not configured').toBeTruthy()</code></td>
+            <td>test-interactive-objects.spec.js:101-102</td>
+            <td>-</td>
+            <td>-</td>
+            <td>Test fails immediately if <code>e2eChestKey</code> is not present in <code>tests/config.json</code></td>
+        </tr>
+        <tr>
+            <td>Login and enter reldens-forest scene</td>
+            <td><code>TestInteractiveObjects.loginAndEnterForest(page, gameConfig, longRun)</code></td>
+            <td>test-interactive-objects.spec.js:103</td>
+            <td>tests/e2e/helpers/login.js:77</td>
+            <td><code>static async loginAndStartGame(page, username, password, playerName, longRun, false, 'reldens-forest')</code></td>
+            <td>Logs in as root/ImRoot, selects reldens-forest at login; <code>ensureInRoom</code> returns immediately since player starts in forest</td>
+        </tr>
+        <tr>
+            <td>Wait for chest object to appear in scene</td>
+            <td><code>TestInteractiveObjects.waitForObjectInScene(page, objectKey, ctx.sceneTimeout)</code></td>
+            <td>test-interactive-objects.spec.js:105</td>
+            <td>tests/e2e/helpers/phaser.js:98</td>
+            <td><code>static async waitForObjectByAssetKey(page, assetKey, timeout)</code></td>
+            <td>Polls <code>scene.objectsAnimations</code> for an object matching <code>objectKey</code> (e.g. <code>chest_forest_1</code>)</td>
+        </tr>
+        <tr>
+            <td>Navigate player within interaction range of chest</td>
+            <td><code>TestInteractiveObjects.navigateToObjectAndAssertInRange(page, objectKey, ctx, 'chest')</code></td>
+            <td>test-interactive-objects.spec.js:107</td>
+            <td>tests/e2e/helpers/navigation.js:177</td>
+            <td><code>static async moveToObjectWithinRange(...)</code></td>
+            <td>Walks player within 50px of the chest; tries <code>visible</code> then <code>active</code> status key for object lookup</td>
+        </tr>
+        <tr>
+            <td>Click the chest object</td>
+            <td><code>TestInteractiveObjects.clickObjectByAssetKeyOrKey(page, objectKey)</code></td>
+            <td>test-interactive-objects.spec.js:109</td>
+            <td>tests/e2e/helpers/phaser.js:87</td>
+            <td><code>static async clickObjectByAssetKey(page, assetKey)</code></td>
+            <td>Checks if <code>objectKey</code> exists directly in <code>objectsAnimations</code>; clicks by key or asset_key accordingly</td>
+        </tr>
+        <tr>
+            <td>Wait for server to process interaction</td>
+            <td><code>page.waitForTimeout(2000 + ctx.pauseMs)</code></td>
+            <td>test-interactive-objects.spec.js:110</td>
+            <td>-</td>
+            <td>-</td>
+            <td>2-second wait for: click &rarr; server processes interaction &rarr; server sends dialogue response &rarr; client renders element</td>
+        </tr>
+        <tr>
+            <td>Assert NPC dialogue appears</td>
+            <td><code>expect(page.locator(Selectors.npc.dialogue)).toBeVisible({ timeout: ... })</code></td>
+            <td>test-interactive-objects.spec.js:112-114</td>
+            <td>lib/game/client (NPC dialogue renderer)</td>
+            <td><code>Selectors.npc.dialogue = '.type-npc'</code></td>
+            <td>Server responds with a dialogue message; client creates a <code>.type-npc</code> element in HUD confirming the interaction</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>

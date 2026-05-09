@@ -26,7 +26,7 @@ class TestInteractiveObjects
         let username = gameConfig.e2eUsername || 'root';
         let password = gameConfig.e2ePassword || 'root';
         let playerName = gameConfig.e2ePlayerName || 'ImRoot';
-        await Login.loginAndStartGame(page, username, password, playerName, longRun);
+        await Login.loginAndStartGame(page, username, password, playerName, longRun, false, 'reldens-forest');
         let pauseMs = TimeConstants.pauseMs(longRun);
         let sceneTimeout = TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun);
         let navTimeout = TimeConstants.forLongRun(TimeConstants.NAVIGATION, longRun);
