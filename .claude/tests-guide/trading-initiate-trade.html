@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Player Can Initiate Trade With Another Player</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Player Can Initiate Trade With Another Player</h1>
+<p>Test: <code>tests/e2e/test-trading.spec.js</code> - <em>player can initiate trade with another player</em></p>
+<p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/player-can-initiate-trade-with-another-player.webm" data-title="player can initiate trade with another player">&#9654; Watch video</a></p>
+<table>
+    <thead><tr><th>Action</th><th>Test Code</th><th>Test File</th><th>File Proof</th><th>Code Proof</th><th>Comments</th></tr></thead>
+    <tbody>
+        <tr>
+            <td>Log in both players (root2/ImRoot2 and root3/ImRoot3)</td>
+            <td><code>await TestTrading.loginBothPlayers(page, secondPage, gameConfig, longRun)</code></td>
+            <td>test-trading.spec.js:33</td>
+            <td>tests/e2e/helpers/login.js:77</td>
+            <td><code>static async loginAndStartGame(page, username, password, playerName, longRun, skipUiSelectors = false, scene = null)</code></td>
+            <td>Both players are logged in and in the game scene before trade flow begins</td>
+        </tr>
+        <tr>
+            <td>Wait for player B session ID to be available in the Colyseus room</td>
+            <td><code>await secondPage.waitForFunction(() => {<br>  let room = window.reldens.activeRoomEvents && window.reldens.activeRoomEvents.room;<br>  return !!(room && room.sessionId);<br>}, null, { timeout: sceneTimeout })</code></td>
+            <td>test-trading.spec.js:37</td>
+            <td>tests/e2e/test-trading.spec.js:37</td>
+            <td><code>await secondPage.waitForFunction(() => { let room = window.reldens.activeRoomEvents && window.reldens.activeRoomEvents.room; return !!(room && room.sessionId); }, null, { timeout: sceneTimeout })</code></td>
+            <td>Ensures player B has a valid Colyseus session before proceeding</td>
+        </tr>
+        <tr>
+            <td>Wait for player B sprite to appear in player A scene</td>
+            <td><code>await Phaser.waitForPlayerBySessionId(page, playerBSessionId, sceneTimeout)</code></td>
+            <td>test-trading.spec.js:46</td>
+            <td>tests/e2e/helpers/phaser.js:108</td>
+            <td><code>static async waitForPlayerBySessionId(page, sessionId, timeout)</code></td>
+            <td>Polls scene.player.players[sid] until the sprite is active and visible</td>
+        </tr>
+        <tr>
+            <td>Click on player B sprite in player A scene to open context menu</td>
+            <td><code>await Phaser.clickPlayerBySessionId(page, playerBSessionId)</code></td>
+            <td>test-trading.spec.js:49</td>
+            <td>tests/e2e/helpers/phaser.js:138</td>
+            <td><code>static async clickPlayerBySessionId(page, sessionId)</code></td>
+            <td>Gets player B screen coords then uses page.mouse.click to trigger the player context menu</td>
+        </tr>
+        <tr>
+            <td>Assert and click the start trade button for player B session</td>
+            <td><code>let startTradeButton = page.locator(Selectors.playerTrade.startTrade(playerBSessionId));<br>await expect(startTradeButton).toBeVisible({ timeout: uiTimeout });<br>await startTradeButton.click()</code></td>
+            <td>test-trading.spec.js:51</td>
+            <td>tests/e2e/selectors.js:177</td>
+            <td><code>startTrade: (sessionId) => '.start-trade-'+sessionId+' button'</code></td>
+            <td>Sends the trade request to player B - button uses session ID as CSS class suffix</td>
+        </tr>
+        <tr>
+            <td>Player B accepts trade invitation and trade container becomes visible for both players</td>
+            <td><code>await expect(secondPage.locator(Selectors.playerTrade.acceptYes)).toBeVisible({ timeout: uiTimeout });<br>await secondPage.locator(Selectors.playerTrade.acceptYes).click();<br>await expect(page.locator(Selectors.playerTrade.container)).toBeVisible({ timeout: uiTimeout })</code></td>
+            <td>test-trading.spec.js:55</td>
+            <td>tests/e2e/selectors.js:178</td>
+            <td><code>acceptYes: '.accept-trade-yes',<br>container: '.trade-container'</code></td>
+            <td>Player B clicks accept-trade-yes; both players should see the trade container (.trade-container)</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>

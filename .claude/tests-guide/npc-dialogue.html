@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Interact With NPC Shows Dialogue Panel</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Interact With NPC Shows Dialogue Panel</h1>
+<p>Test: <code>tests/e2e/test-npc.spec.js</code> - <em>interact with NPC shows dialogue panel</em></p>
+<p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/interact-with-npc-shows-dialogue-panel.webm" data-title="interact with NPC shows dialogue panel">&#9654; Watch video</a></p>
+<table>
+    <thead><tr><th>Action</th><th>Test Code</th><th>Test File</th><th>File Proof</th><th>Code Proof</th><th>Comments</th></tr></thead>
+    <tbody>
+        <tr>
+            <td>Log in as root2 player and start the game</td>
+            <td><code>await Login.loginAndStartGame(page, 'root2', 'root', 'ImRoot2', longRun)</code></td>
+            <td>test-npc.spec.js:24</td>
+            <td>tests/e2e/helpers/login.js:77</td>
+            <td><code>static async loginAndStartGame(page, username, password, playerName, longRun, skipUiSelectors = false, scene = null)</code></td>
+            <td>Uses credentials from gameConfig (e2eUsername2 / e2ePassword2 / e2ePlayerName2) with defaults root2 / root / ImRoot2</td>
+        </tr>
+        <tr>
+            <td>Wait for NPC to appear in scene</td>
+            <td><code>await Phaser.waitForObject(page, npcKey, sceneTimeout)<br>// or<br>await Phaser.waitForObjectByType(page, 'npc', sceneTimeout)</code></td>
+            <td>test-npc.spec.js:51-53</td>
+            <td>tests/e2e/helpers/phaser.js:93</td>
+            <td><code>static async waitForObject(page, objKey, timeout)</code></td>
+            <td>Uses key-based lookup if e2eNpcKey is set, otherwise finds first object of type 'npc'. Timeout is SCENE_LOAD (10000ms).</td>
+        </tr>
+        <tr>
+            <td>Get NPC screen coordinates</td>
+            <td><code>let npcCoords = await Phaser.getObjectScreenCoords(page, npcKey)<br>// or<br>Phaser.getObjectScreenCoordsByType(page, 'npc')</code></td>
+            <td>test-npc.spec.js:54-56</td>
+            <td>tests/e2e/helpers/phaser.js:50</td>
+            <td><code>static async getObjectScreenCoords(page, objKey)</code></td>
+            <td>Reads Phaser scene objectsAnimations to compute screen position accounting for camera scroll and zoom</td>
+        </tr>
+        <tr>
+            <td>Assert NPC coordinates are not null</td>
+            <td><code>expect(npcCoords, 'NPC must be found in the scene').not.toBeNull()</code></td>
+            <td>test-npc.spec.js:57</td>
+            <td>tests/e2e/helpers/phaser.js:50</td>
+            <td><code>static async getObjectScreenCoords(page, objKey)</code></td>
+            <td>Confirms the NPC sprite is present and visible in the active Phaser scene</td>
+        </tr>
+        <tr>
+            <td>Click NPC to initiate interaction</td>
+            <td><code>await Phaser.clickObject(page, npcKey)<br>// or<br>await Phaser.clickObjectByType(page, 'npc')</code></td>
+            <td>test-npc.spec.js:60</td>
+            <td>tests/e2e/helpers/phaser.js:75</td>
+            <td><code>static async clickObject(page, objKey)</code></td>
+            <td>Resolves screen coords and dispatches a canvas click at the NPC position using force:true</td>
+        </tr>
+        <tr>
+            <td>Wait for dialogue panel to become visible</td>
+            <td><code>await expect(page.locator(Selectors.npc.dialogue)).toBeVisible(<br>    { timeout: TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun) }<br>)</code></td>
+            <td>test-npc.spec.js:62-64</td>
+            <td>tests/e2e/selectors.js:165</td>
+            <td><code>dialogue: '.type-npc'</code></td>
+            <td>Asserts that the NPC dialogue panel element is visible. Timeout is UI_OPEN (3000ms, scaled for longRun).</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>

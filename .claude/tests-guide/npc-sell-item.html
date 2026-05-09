@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Sell Item To NPC Trader Removes Item From Inventory</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Sell Item To NPC Trader Removes Item From Inventory</h1>
+<p>Test: <code>tests/e2e/test-npc.spec.js</code> - <em>sell item to NPC trader removes item from inventory</em></p>
+<p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/sell-item-to-npc-trader-removes-item-from-inventory.webm" data-title="sell item to NPC trader removes item from inventory">&#9654; Watch video</a></p>
+<table>
+    <thead><tr><th>Action</th><th>Test Code</th><th>Test File</th><th>File Proof</th><th>Code Proof</th><th>Comments</th></tr></thead>
+    <tbody>
+        <tr>
+            <td>Assert sell item ID is configured</td>
+            <td><code>let sellItemId = gameConfig.e2eSellItemId || gameConfig.e2eConsumableItemId || '';<br>expect(sellItemId, 'e2eSellItemId or e2eConsumableItemId must be configured').toBeTruthy()</code></td>
+            <td>test-npc.spec.js:70-71</td>
+            <td>tests/e2e/test-npc.spec.js:70</td>
+            <td><code>let sellItemId = gameConfig.e2eSellItemId || gameConfig.e2eConsumableItemId || ''</code></td>
+            <td>Guards against misconfiguration - either e2eSellItemId or e2eConsumableItemId must be set in game-data.json</td>
+        </tr>
+        <tr>
+            <td>Log in and open trader shop</td>
+            <td><code>let setup = await TestNpc.loginAndOpenTraderShop(page, gameConfig, longRun)</code></td>
+            <td>test-npc.spec.js:72</td>
+            <td>tests/e2e/helpers/login.js:77</td>
+            <td><code>static async loginAndStartGame(page, username, password, playerName, longRun, skipUiSelectors = false, scene = null)</code></td>
+            <td>Logs in as root2/root/ImRoot2, waits for trader in scene, clicks to open shop, returns setup object with pauseMs and sceneTimeout</td>
+        </tr>
+        <tr>
+            <td>Assert shop buy tab is visible</td>
+            <td><code>await expect(page.locator(Selectors.trader.buyTab)).toBeVisible(<br>    { timeout: TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun) }<br>)</code></td>
+            <td>test-npc.spec.js:73-75</td>
+            <td>tests/e2e/selectors.js:168</td>
+            <td><code>buyTab: '.trade-container-buy'</code></td>
+            <td>Confirms the trader shop opened before switching to the sell tab</td>
+        </tr>
+        <tr>
+            <td>Click the sell option to switch to sell tab</td>
+            <td><code>await page.click(Selectors.trader.sellOption)</code></td>
+            <td>test-npc.spec.js:76</td>
+            <td>tests/e2e/selectors.js:170</td>
+            <td><code>sellOption: '.trade-option-sell'</code></td>
+            <td>Clicks the sell tab/option toggle in the trader UI to show the sell interface</td>
+        </tr>
+        <tr>
+            <td>Assert sell tab is visible</td>
+            <td><code>await expect(page.locator(Selectors.trader.sellTab)).toBeVisible(<br>    { timeout: TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun) }<br>)</code></td>
+            <td>test-npc.spec.js:78-80</td>
+            <td>tests/e2e/selectors.js:169</td>
+            <td><code>sellTab: '.trade-container-sell'</code></td>
+            <td>Confirms the sell tab is now displayed. Timeout is UI_OPEN (3000ms, scaled for longRun).</td>
+        </tr>
+        <tr>
+            <td>Read item quantity before selling</td>
+            <td><code>let qtyBefore = await page.locator(Selectors.inventory.itemQty(sellItemId)).textContent()</code></td>
+            <td>test-npc.spec.js:82</td>
+            <td>tests/e2e/selectors.js:114</td>
+            <td><code>itemQty: (itemId) =&gt; '#item-qty-'+itemId</code></td>
+            <td>Captures the current quantity of the item to be sold so it can be compared after the sale</td>
+        </tr>
+        <tr>
+            <td>Locate and assert sell button is visible</td>
+            <td><code>let sellButton = page.locator(Selectors.trader.sellButton).first();<br>await expect(sellButton).toBeVisible()</code></td>
+            <td>test-npc.spec.js:83-84</td>
+            <td>tests/e2e/selectors.js:172</td>
+            <td><code>sellButton: '.trade-container-sell .trade-action-sell button'</code></td>
+            <td>Selects the first available sell button in the sell tab and confirms it is rendered</td>
+        </tr>
+        <tr>
+            <td>Click sell button</td>
+            <td><code>await sellButton.click()</code></td>
+            <td>test-npc.spec.js:85</td>
+            <td>tests/e2e/selectors.js:172</td>
+            <td><code>sellButton: '.trade-container-sell .trade-action-sell button'</code></td>
+            <td>Triggers the sell action for the first item in the sell list</td>
+        </tr>
+        <tr>
+            <td>Confirm sell dialog</td>
+            <td><code>await page.locator(Selectors.trader.confirmSell).click()</code></td>
+            <td>test-npc.spec.js:87</td>
+            <td>tests/e2e/selectors.js:174</td>
+            <td><code>confirmSell: '.confirm-sell'</code></td>
+            <td>Clicks the confirmation button in the sell dialog to complete the transaction</td>
+        </tr>
+        <tr>
+            <td>Open inventory panel</td>
+            <td><code>await page.click(Selectors.hud.inventoryOpen)</code></td>
+            <td>test-npc.spec.js:89</td>
+            <td>tests/e2e/selectors.js:82</td>
+            <td><code>inventoryOpen: '#inventory-open'</code></td>
+            <td>Opens the inventory HUD panel to verify the item quantity changed after selling</td>
+        </tr>
+        <tr>
+            <td>Assert inventory UI is visible</td>
+            <td><code>await expect(page.locator(Selectors.inventory.ui)).toBeVisible()</code></td>
+            <td>test-npc.spec.js:90</td>
+            <td>tests/e2e/selectors.js:110</td>
+            <td><code>ui: '#inventory-ui'</code></td>
+            <td>Confirms the inventory panel opened successfully before reading the post-sell quantity</td>
+        </tr>
+        <tr>
+            <td>Read item quantity after selling and assert it changed</td>
+            <td><code>let qtyAfter = await page.locator(Selectors.inventory.itemQty(sellItemId)).textContent();<br>expect(qtyAfter).not.toBe(qtyBefore)</code></td>
+            <td>test-npc.spec.js:91-92</td>
+            <td>tests/e2e/selectors.js:114</td>
+            <td><code>itemQty: (itemId) =&gt; '#item-qty-'+itemId</code></td>
+            <td>Verifies the item quantity decreased (or item was removed) after the sale, proving the sell transaction was processed by the server</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Minimap Panel Opens When Button Is Clicked</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Minimap Panel Opens When Button Is Clicked</h1>
+<p>Test: <code>tests/e2e/test-movement.spec.js</code> - <em>minimap panel opens when button is clicked</em></p>
+<p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/minimap-panel-opens-when-button-is-clicked.webm" data-title="minimap panel opens when button is clicked">&#9654; Watch video</a></p>
+<table>
+    <thead><tr><th>Action</th><th>Test Code</th><th>Test File</th><th>File Proof</th><th>Code Proof</th><th>Comments</th></tr></thead>
+    <tbody>
+        <tr>
+            <td>Login as root/ImRoot and start game</td>
+            <td><code>Login.loginAndStartGame(page, username, password, playerName, longRun)</code></td>
+            <td>test-movement.spec.js:144</td>
+            <td>tests/e2e/helpers/login.js:77</td>
+            <td><code>static async loginAndStartGame(page, username, password, playerName, longRun, skipUiSelectors = false, scene = null)</code></td>
+            <td>Fills login form, selects player, clicks submit, waits for body.game-engine-started and all HUD selectors</td>
+        </tr>
+        <tr>
+            <td>Click the minimap open button in the HUD</td>
+            <td><code>page.click(Selectors.hud.minimapOpen)</code></td>
+            <td>test-movement.spec.js:146</td>
+            <td>tests/e2e/selectors.js:84</td>
+            <td><code>minimapOpen: '#minimap-open'</code></td>
+            <td>Clicks #minimap-open in the HUD to toggle the minimap panel</td>
+        </tr>
+        <tr>
+            <td>Wait pauseMs for panel to render</td>
+            <td><code>page.waitForTimeout(pauseMs)</code></td>
+            <td>test-movement.spec.js:147</td>
+            <td>tests/e2e/test-movement.spec.js:147</td>
+            <td><code>await page.waitForTimeout(pauseMs);</code></td>
+            <td>Short pause after click to allow DOM update before asserting visibility</td>
+        </tr>
+        <tr>
+            <td>Assert minimap UI panel is visible</td>
+            <td><code>expect(page.locator(Selectors.hud.minimapUi)).toBeVisible()</code></td>
+            <td>test-movement.spec.js:148</td>
+            <td>tests/e2e/selectors.js:85</td>
+            <td><code>minimapUi: '#minimap-ui'</code></td>
+            <td>Confirms #minimap-ui is rendered and visible after clicking the open button</td>
+        </tr>
+        <tr>
+            <td>Assert minimap close button is visible</td>
+            <td><code>expect(page.locator(Selectors.hud.minimapClose)).toBeVisible()</code></td>
+            <td>test-movement.spec.js:149</td>
+            <td>tests/e2e/selectors.js:86</td>
+            <td><code>minimapClose: '#minimap-close'</code></td>
+            <td>Confirms #minimap-close is visible inside the open minimap panel</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>

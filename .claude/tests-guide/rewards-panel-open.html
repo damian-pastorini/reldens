@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Rewards Panel Opens And Shows Rewards List</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Rewards Panel Opens And Shows Rewards List</h1>
+<p>Test: <code>tests/e2e/test-rewards.spec.js</code> - <em>rewards panel opens and shows rewards list</em></p>
+<p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/rewards-panel-opens-and-shows-rewards-list.webm" data-title="rewards panel opens and shows rewards list">&#9654; Watch video</a></p>
+<table>
+    <thead><tr><th>Action</th><th>Test Code</th><th>Test File</th><th>File Proof</th><th>Code Proof</th><th>Comments</th></tr></thead>
+    <tbody>
+        <tr>
+            <td>Log in as root player and wait for game to fully load</td>
+            <td><code>await TestRewards.loginRootPlayer(page, gameConfig, longRun)</code></td>
+            <td>test-rewards.spec.js:28</td>
+            <td>tests/e2e/helpers/login.js:77</td>
+            <td><code>static async loginAndStartGame(page, username, password, playerName, longRun, skipUiSelectors = false, scene = null)</code></td>
+            <td>Calls Login.loginAndStartGame with credentials from gameConfig (defaults: root/root/ImRoot). All HUD selectors must be visible before proceeding.</td>
+        </tr>
+        <tr>
+            <td>Read pause duration from TimeConstants</td>
+            <td><code>let pauseMs = TimeConstants.pauseMs(longRun)</code></td>
+            <td>test-rewards.spec.js:29</td>
+            <td>tests/e2e/helpers/time-constants.js:1</td>
+            <td><code>static pauseMs(longRun)</code></td>
+            <td>Returns a longer pause duration when longRun mode is active.</td>
+        </tr>
+        <tr>
+            <td>Click the rewards open button in the HUD</td>
+            <td><code>await page.click(Selectors.hud.rewardsOpen)</code></td>
+            <td>test-rewards.spec.js:30</td>
+            <td>tests/e2e/selectors.js:87</td>
+            <td><code>rewardsOpen: '#rewards-open'</code></td>
+            <td>Triggers the rewards panel to open via the button with id rewards-open.</td>
+        </tr>
+        <tr>
+            <td>Wait for the configured pause duration</td>
+            <td><code>await page.waitForTimeout(pauseMs)</code></td>
+            <td>test-rewards.spec.js:31</td>
+            <td>tests/e2e/helpers/time-constants.js:1</td>
+            <td><code>static pauseMs(longRun)</code></td>
+            <td>Gives the server time to load the player's rewards and the UI time to render the dialog.</td>
+        </tr>
+        <tr>
+            <td>Assert the rewards dialog box is visible with timeout</td>
+            <td><code>await expect(page.locator(Selectors.rewards.dialog)).toBeVisible(<br>{ timeout: TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun) }<br>)</code></td>
+            <td>test-rewards.spec.js:32-34</td>
+            <td>tests/e2e/selectors.js:144</td>
+            <td><code>dialog: '.rewards-dialog-box'</code></td>
+            <td>Confirms the .rewards-dialog-box element is visible. Uses UI_OPEN timeout (3000ms, scaled for longRun). This check is shared via loginAndOpenRewardsPanel helper.</td>
+        </tr>
+        <tr>
+            <td>Assert the rewards content area is visible with timeout</td>
+            <td><code>await expect(page.locator(Selectors.rewards.content)).toBeVisible(<br>{ timeout: TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun) }<br>)</code></td>
+            <td>test-rewards.spec.js:43-45</td>
+            <td>tests/e2e/selectors.js:145</td>
+            <td><code>content: '.rewards-content'</code></td>
+            <td>Confirms the .rewards-content area is visible - this verifies the rewards list container is rendered inside the dialog.</td>
+        </tr>
+        <tr>
+            <td>Capture screenshot of the open rewards panel</td>
+            <td><code>await screenshots.capture(page, 'rewards-panel-open')</code></td>
+            <td>test-rewards.spec.js:46</td>
+            <td>tests/e2e/test-rewards.spec.js:46</td>
+            <td><code>await screenshots.capture(page, 'rewards-panel-open')</code></td>
+            <td>Saves a screenshot named rewards-panel-open for visual evidence of the rewards list being displayed.</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>

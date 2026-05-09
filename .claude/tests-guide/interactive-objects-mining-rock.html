@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Player Mines Rock And Receives Items</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Player Mines Rock And Receives Items</h1>
+<p>Test: <code>tests/e2e/test-interactive-objects.spec.js</code> - <em>player mines rock and receives items</em></p>
+<p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/player-mines-rock-and-receives-items.webm" data-title="player mines rock and receives items">&#9654; Watch video</a></p>
+<table>
+    <thead><tr><th>Action</th><th>Test Code</th><th>Test File</th><th>File Proof</th><th>Code Proof</th><th>Comments</th></tr></thead>
+    <tbody>
+        <tr>
+            <td>Assert e2eMiningRockKey is configured</td>
+            <td><code>expect(objectKey, 'e2eMiningRockKey not configured').toBeTruthy()</code></td>
+            <td>test-interactive-objects.spec.js:119</td>
+            <td>tests/e2e/test-interactive-objects.spec.js:119</td>
+            <td><code>expect(objectKey, 'e2eMiningRockKey not configured').toBeTruthy();</code></td>
+            <td>Fails fast if the game-data config is missing the mining rock key</td>
+        </tr>
+        <tr>
+            <td>Login as root/ImRoot and navigate to reldens-forest</td>
+            <td><code>TestInteractiveObjects.loginAndEnterForest(page, gameConfig, longRun)</code></td>
+            <td>test-interactive-objects.spec.js:120</td>
+            <td>tests/e2e/test-interactive-objects.spec.js:24</td>
+            <td><code>static async loginAndEnterForest(page, gameConfig, longRun)</code></td>
+            <td>Calls Login.loginAndStartGame with scene 'reldens-forest', then ensureInRoom at FOREST_TRANSITION_X=608, Y=16</td>
+        </tr>
+        <tr>
+            <td>Login and start game via form</td>
+            <td><code>Login.loginAndStartGame(page, username, password, playerName, longRun, false, 'reldens-forest')</code></td>
+            <td>test-interactive-objects.spec.js:29</td>
+            <td>tests/e2e/helpers/login.js:77</td>
+            <td><code>static async loginAndStartGame(page, username, password, playerName, longRun, skipUiSelectors = false, scene = null)</code></td>
+            <td>Fills login form, selects player, optionally selects scene, clicks submit, waits for game-engine-started body class</td>
+        </tr>
+        <tr>
+            <td>Ensure player is in reldens-forest room</td>
+            <td><code>Navigation.ensureInRoom(page, 'reldens-forest', 608, 16, navTimeout)</code></td>
+            <td>test-interactive-objects.spec.js:33</td>
+            <td>tests/e2e/helpers/navigation.js:149</td>
+            <td><code>static async ensureInRoom(page, roomName, transitionX, transitionY, timeout)</code></td>
+            <td>Checks current room; if not matching, walks toward transition coords until the room name matches</td>
+        </tr>
+        <tr>
+            <td>Wait for mining rock object to appear in scene</td>
+            <td><code>TestInteractiveObjects.waitForObjectInScene(page, objectKey, ctx.sceneTimeout)</code></td>
+            <td>test-interactive-objects.spec.js:122</td>
+            <td>tests/e2e/test-interactive-objects.spec.js:44</td>
+            <td><code>static async waitForObjectInScene(page, objectKey, timeout)</code></td>
+            <td>Tries waitForObjectByAssetKey first; falls back to waitForObject by direct key</td>
+        </tr>
+        <tr>
+            <td>Wait for object by asset_key in scene.objectsAnimations</td>
+            <td><code>Phaser.waitForObjectByAssetKey(page, objectKey, timeout)</code></td>
+            <td>test-interactive-objects.spec.js:46</td>
+            <td>tests/e2e/helpers/phaser.js:98</td>
+            <td><code>static async waitForObjectByAssetKey(page, assetKey, timeout)</code></td>
+            <td>Polls scene.objectsAnimations for an entry with matching asset_key and visible sceneSprite</td>
+        </tr>
+        <tr>
+            <td>Navigate player to within interaction range of rock</td>
+            <td><code>TestInteractiveObjects.navigateToObjectAndAssertInRange(page, objectKey, ctx, 'mining rock')</code></td>
+            <td>test-interactive-objects.spec.js:124</td>
+            <td>tests/e2e/test-interactive-objects.spec.js:52</td>
+            <td><code>static async navigateToObjectAndAssertInRange(page, objectKey, ctx, label)</code></td>
+            <td>Calls Navigation.moveToObjectWithinRange with INTERACTION_RANGE=50; retries with 'active' status if 'visible' fails</td>
+        </tr>
+        <tr>
+            <td>Move player toward object until within range</td>
+            <td><code>Navigation.moveToObjectWithinRange(page, 'asset_key', objectKey, 'visible', 50, ctx.navTimeout)</code></td>
+            <td>test-interactive-objects.spec.js:54</td>
+            <td>tests/e2e/helpers/navigation.js:177</td>
+            <td><code>static async moveToObjectWithinRange(page, matchProp, matchValue, statusKey, range, timeout, useRespawnFind = false)</code></td>
+            <td>Steps player toward object coords in a loop; returns true when Math.hypot(player, target) &lt;= range</td>
+        </tr>
+        <tr>
+            <td>Open inventory panel</td>
+            <td><code>page.click(Selectors.hud.inventoryOpen)</code></td>
+            <td>test-interactive-objects.spec.js:125</td>
+            <td>tests/e2e/selectors.js:82</td>
+            <td><code>inventoryOpen: '#inventory-open'</code></td>
+            <td>Clicks the HUD inventory button to open the panel before interaction</td>
+        </tr>
+        <tr>
+            <td>Assert inventory UI is visible</td>
+            <td><code>expect(page.locator(Selectors.inventory.ui)).toBeVisible()</code></td>
+            <td>test-interactive-objects.spec.js:127</td>
+            <td>tests/e2e/selectors.js:110</td>
+            <td><code>ui: '#inventory-ui'</code></td>
+            <td>Confirms the inventory panel rendered after clicking the open button</td>
+        </tr>
+        <tr>
+            <td>Count inventory items before interaction</td>
+            <td><code>page.locator(Selectors.inventory.items+' > *').count()</code></td>
+            <td>test-interactive-objects.spec.js:128</td>
+            <td>tests/e2e/selectors.js:111</td>
+            <td><code>items: '#inventory-items'</code></td>
+            <td>Counts direct children of #inventory-items to establish a baseline before mining</td>
+        </tr>
+        <tr>
+            <td>Click the mining rock object in scene</td>
+            <td><code>TestInteractiveObjects.clickObjectByAssetKeyOrKey(page, objectKey)</code></td>
+            <td>test-interactive-objects.spec.js:131</td>
+            <td>tests/e2e/test-interactive-objects.spec.js:75</td>
+            <td><code>static async clickObjectByAssetKeyOrKey(page, objectKey)</code></td>
+            <td>Checks if key exists directly in scene.objectsAnimations; uses Phaser.clickObject or Phaser.clickObjectByAssetKey accordingly</td>
+        </tr>
+        <tr>
+            <td>Click object using its direct key</td>
+            <td><code>Phaser.clickObject(page, objectKey)</code></td>
+            <td>test-interactive-objects.spec.js:91</td>
+            <td>tests/e2e/helpers/phaser.js:75</td>
+            <td><code>static async clickObject(page, objKey)</code></td>
+            <td>Resolves screen coords from scene.objectsAnimations[key].sceneSprite and clicks canvas at that position</td>
+        </tr>
+        <tr>
+            <td>Click object by asset_key</td>
+            <td><code>Phaser.clickObjectByAssetKey(page, objectKey)</code></td>
+            <td>test-interactive-objects.spec.js:94</td>
+            <td>tests/e2e/helpers/phaser.js:87</td>
+            <td><code>static async clickObjectByAssetKey(page, assetKey)</code></td>
+            <td>Finds object by asset_key in objectsAnimations, resolves screen coords, clicks canvas</td>
+        </tr>
+        <tr>
+            <td>Wait 7 seconds for mining animation to complete</td>
+            <td><code>page.waitForTimeout(7000 + ctx.pauseMs)</code></td>
+            <td>test-interactive-objects.spec.js:132</td>
+            <td>tests/e2e/test-interactive-objects.spec.js:132</td>
+            <td><code>await page.waitForTimeout(7000 + ctx.pauseMs);</code></td>
+            <td>Mining interactions take several seconds server-side; waits for items to be granted</td>
+        </tr>
+        <tr>
+            <td>Count inventory items after interaction</td>
+            <td><code>page.locator(Selectors.inventory.items+' > *').count()</code></td>
+            <td>test-interactive-objects.spec.js:134</td>
+            <td>tests/e2e/selectors.js:111</td>
+            <td><code>items: '#inventory-items'</code></td>
+            <td>Re-counts #inventory-items children after mining completes</td>
+        </tr>
+        <tr>
+            <td>Assert item count increased after mining</td>
+            <td><code>expect(itemsAfter, 'Inventory item count must increase after mining').toBeGreaterThan(itemsBefore)</code></td>
+            <td>test-interactive-objects.spec.js:135</td>
+            <td>tests/e2e/test-interactive-objects.spec.js:135</td>
+            <td><code>expect(itemsAfter, 'Inventory item count must increase after mining').toBeGreaterThan(itemsBefore);</code></td>
+            <td>Core assertion - proves the server granted items and the UI updated</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>

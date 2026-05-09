@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Clicking Equipped Slot In Equipment Panel Shows Item Details</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Clicking Equipped Slot In Equipment Panel Shows Item Details</h1>
+<p>Test: <code>tests/e2e/test-items.spec.js</code> - <em>clicking equipped slot in equipment panel shows item details</em></p>
+<p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/clicking-equipped-slot-in-equipment-panel-shows-item-details.webm" data-title="clicking equipped slot in equipment panel shows item details">&#9654; Watch video</a></p>
+<table>
+    <thead><tr><th>Action</th><th>Test Code</th><th>Test File</th><th>File Proof</th><th>Code Proof</th><th>Comments</th></tr></thead>
+    <tbody>
+        <tr>
+            <td>Log in, open stats and inventory, click item image, assert equip button visible - return setup object</td>
+            <td><code>let setup = await TestItems.loginAndOpenEquipButton(page, gameConfig, longRun)</code></td>
+            <td>test-items.spec.js:63</td>
+            <td>tests/e2e/helpers/login.js:77</td>
+            <td><code>static async loginAndStartGame(page, username, password, playerName, longRun, skipUiSelectors = false, scene = null)</code></td>
+            <td>loginAndOpenEquipButton logs in as root player, opens stats panel, records statBefore, opens inventory, clicks item image, and asserts equip button is visible. Returns itemId, pauseMs, statBefore, and equipButton.</td>
+        </tr>
+        <tr>
+            <td>Click equip button and wait for server to apply the modifier</td>
+            <td><code>await setup.equipButton.click()<br>await page.waitForTimeout(1000 + setup.pauseMs)</code></td>
+            <td>test-items.spec.js:64<br>test-items.spec.js:65</td>
+            <td>tests/e2e/selectors.js:115</td>
+            <td><code>itemEquip: (itemId) => '#item-equip-'+itemId</code></td>
+            <td>Clicks #item-equip-{id} to equip the item. Waits 1000ms plus pauseMs for the server to process the equip before opening the equipment panel.</td>
+        </tr>
+        <tr>
+            <td>Capture screenshot after equipping, before opening equipment panel</td>
+            <td><code>await screenshots.capture(page, 'item-equipped-before-slot-click')</code></td>
+            <td>test-items.spec.js:66</td>
+            <td>tests/e2e/helpers/screenshots.js:1</td>
+            <td><code>screenshots.capture(page, label)</code></td>
+            <td>Saves a screenshot labelled item-equipped-before-slot-click to document the state after equipping and before navigating to the equipment panel.</td>
+        </tr>
+        <tr>
+            <td>Click equipment open button and wait for panel to render</td>
+            <td><code>await page.click(Selectors.hud.equipmentOpen)<br>await page.waitForTimeout(setup.pauseMs)</code></td>
+            <td>test-items.spec.js:67<br>test-items.spec.js:68</td>
+            <td>tests/e2e/selectors.js:83</td>
+            <td><code>equipmentOpen: '#equipment-open'</code></td>
+            <td>Clicks the #equipment-open HUD button to open the equipment panel, then waits pauseMs for it to render.</td>
+        </tr>
+        <tr>
+            <td>Assert equipment UI is visible and count equipped slot images</td>
+            <td><code>await expect(page.locator(Selectors.equipment.ui)).toBeVisible()<br>let slotImages = page.locator(Selectors.equipment.slotImage)<br>let slotCount = await slotImages.count()<br>expect(slotCount, 'Equipment panel must contain at least one equipped slot image after equipping').toBeGreaterThan(0)</code></td>
+            <td>test-items.spec.js:69<br>test-items.spec.js:70<br>test-items.spec.js:71<br>test-items.spec.js:72</td>
+            <td>tests/e2e/selectors.js:119<br>tests/e2e/selectors.js:123</td>
+            <td><code>ui: '#equipment-ui'<br>slotImage: '.equipment-group-key img'</code></td>
+            <td>Verifies #equipment-ui is visible. Locates .equipment-group-key img elements and asserts there is at least one, confirming the recently equipped item appears in a slot.</td>
+        </tr>
+        <tr>
+            <td>Capture screenshot of equipment panel with filled slot</td>
+            <td><code>await screenshots.capture(page, 'equipment-panel-with-equipped-slot')</code></td>
+            <td>test-items.spec.js:73</td>
+            <td>tests/e2e/helpers/screenshots.js:1</td>
+            <td><code>screenshots.capture(page, label)</code></td>
+            <td>Saves a screenshot labelled equipment-panel-with-equipped-slot to document the slot image in the equipment panel.</td>
+        </tr>
+        <tr>
+            <td>Click the first equipped slot image and assert item detail box becomes visible</td>
+            <td><code>await slotImages.first().click()<br>await page.waitForTimeout(1000 + setup.pauseMs)<br>await expect(page.locator(Selectors.equipment.itemBoxVisible).first()).toBeVisible(<br>  { timeout: TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun) }<br>)</code></td>
+            <td>test-items.spec.js:74<br>test-items.spec.js:75<br>test-items.spec.js:76<br>test-items.spec.js:77<br>test-items.spec.js:78</td>
+            <td>tests/e2e/selectors.js:124</td>
+            <td><code>itemBoxVisible: '.item-box'</code></td>
+            <td>Clicks the first .equipment-group-key img slot image. After waiting, asserts the first .item-box is visible within a timeout scaled by longRun, confirming the item detail box opened.</td>
+        </tr>
+        <tr>
+            <td>Capture screenshot with equipped slot item box visible</td>
+            <td><code>await screenshots.capture(page, 'equipped-slot-item-box-visible')</code></td>
+            <td>test-items.spec.js:79</td>
+            <td>tests/e2e/helpers/screenshots.js:1</td>
+            <td><code>screenshots.capture(page, label)</code></td>
+            <td>Saves a screenshot labelled equipped-slot-item-box-visible to visually confirm the item detail box is showing after clicking the equipped slot.</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>
