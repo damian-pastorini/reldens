@@ -2,8 +2,9 @@
  *
  * Reldens - Player State Reset
  *
- * Captures and restores player stats and room state between e2e tests to ensure isolation.
- * All test players are reset to full HP and placed in the safe town room.
+ * Captures and restores player stats, room state, and inventory equipped status between
+ * e2e tests to ensure isolation. All test players are reset to full HP, placed in the safe
+ * town room, and have all equipped items unequipped.
  *
  */
 
@@ -36,7 +37,8 @@ class PlayerStateReset
             let playerId = players[0].id;
             let stats = await dataServer.getEntity('playersStats').loadBy('player_id', playerId);
             let state = await dataServer.getEntity('playersState').loadOneBy('player_id', playerId);
-            snapshots[String(playerId)] = { stats, state };
+            let inventoryItems = await dataServer.getEntity('itemsInventory').loadBy('owner_id', playerId);
+            snapshots[String(playerId)] = { stats, state, inventoryItems: inventoryItems || [] };
         }
         Logger.info('[player-state-reset] Snapshots captured for '+Object.keys(snapshots).length+' players.');
         return snapshots;
@@ -49,11 +51,19 @@ class PlayerStateReset
         }
     }
 
+    static async restorePlayerInventory(dataServer, inventoryItems)
+    {
+        for(let invItem of inventoryItems){
+            await dataServer.getEntity('itemsInventory').updateById(invItem.id, { 'is_active': invItem.is_active ? 1 : 0 });
+        }
+    }
+
     static async restoreSnapshots(dataServer, snapshots)
     {
         for(let playerId of Object.keys(snapshots)){
             let snap = snapshots[playerId];
             await PlayerStateReset.restorePlayerStats(dataServer, snap.stats);
+            await PlayerStateReset.restorePlayerInventory(dataServer, snap.inventoryItems || []);
             if(!snap.state){
                 continue;
             }
@@ -61,7 +71,7 @@ class PlayerStateReset
                 room_id: PlayerStateReset.SAFE_ROOM_ID,
                 x: PlayerStateReset.SAFE_X,
                 y: PlayerStateReset.SAFE_Y,
-                dir: PlayerStateReset.SAFE_DIR
+                'dir': PlayerStateReset.SAFE_DIR
             });
         }
         Logger.info('[player-state-reset] Players restored: '+Object.keys(snapshots).length);
@@ -69,13 +79,13 @@ class PlayerStateReset
 
     static registerResetEndpoint(serverManager, snapshots)
     {
-        serverManager.app.post('/api/e2e/reset-players', async (req, res) => {
+        serverManager.app.post('/api/e2e/reset-players', async (request, response) => {
             try {
                 await PlayerStateReset.restoreSnapshots(serverManager.dataServer, snapshots);
-                res.json({ ok: true });
+                response.json({ ok: true });
             } catch(error){
                 Logger.error('[player-state-reset] Reset failed: '+error.message);
-                res.status(500).json({ ok: false, error: error.message });
+                response.status(500).json({ ok: false, error: error.message });
             }
         });
         Logger.info('[player-state-reset] Reset endpoint registered.');
