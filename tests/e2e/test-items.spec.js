@@ -34,7 +34,7 @@ class TestItems
         let statBefore = await page.locator(Selectors.stats.firstValue).first().textContent();
         await page.click(Selectors.hud.inventoryOpen);
         await expect(page.locator(Selectors.inventory.ui)).toBeVisible();
-        await page.locator(Selectors.inventory.itemImage(itemId)).click({ timeout: TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun) });
+        await page.locator(Selectors.inventory.itemImage(itemId)).click({ timeout: TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun) });
         await page.waitForTimeout(pauseMs);
         let equipButton = page.locator(Selectors.inventory.itemEquip(itemId));
         await expect(equipButton).toBeVisible();
