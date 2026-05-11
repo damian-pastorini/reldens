@@ -203,6 +203,19 @@
             font-size: var(--font-size-sm);
         }
 
+        & .tile-options-group-columns {
+            display: flex;
+            flex-direction: row;
+            gap: var(--space-md);
+            align-items: flex-start;
+        }
+
+        & .tile-options-group-column {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
         & .tile-position-grid {
             display: flex;
             flex-wrap: wrap;

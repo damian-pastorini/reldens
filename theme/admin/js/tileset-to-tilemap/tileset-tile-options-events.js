@@ -6,42 +6,45 @@ class TilesetTileOptionsEvents
         this.spotPropsBinder = new TilesetSpotPropsBinder(this);
     }
 
-    iterateBtnsWithOptionKey(btns, callback)
+    iterateBtnsWithOptionKey(optionBtns, callback)
     {
-        for(let btn of btns){
-            let optionKey = btn.dataset.option;
+        for(let optionBtn of optionBtns){
+            let optionKey = optionBtn.dataset.option;
             if(!optionKey){
                 continue;
             }
-            callback(btn, optionKey);
+            callback(optionBtn, optionKey);
         }
+    }
+
+    isSameActiveState(tilesetIndex, optionKey, spotName)
+    {
+        return this.binder.activeTilesetIndex === tilesetIndex
+            && this.binder.activeOptionKey === optionKey
+            && this.binder.activeSpotName === (spotName ? spotName : null);
     }
 
     bindOptionBtns(tilesetIndex, container, spotName)
     {
-        let btns = container.querySelectorAll('.tile-option-btn');
-        this.iterateBtnsWithOptionKey(btns, (btn, optionKey) => {
-            let isMulti = 'true' === btn.dataset.multi;
-            btn.addEventListener('click', () => {
+        let tileBtns = container.querySelectorAll('.tile-option-btn');
+        this.iterateBtnsWithOptionKey(tileBtns, (optionBtn, optionKey) => {
+            let isMulti = 'true' === optionBtn.dataset.multi;
+            optionBtn.addEventListener('click', () => {
                 let b = this.binder;
-                if(
-                    b.activeTilesetIndex === tilesetIndex
-                    && b.activeOptionKey === optionKey
-                    && b.activeSpotName === (spotName ? spotName : null)
-                    && null === b.activePositionKey
-                ){
-                    b.deactivate();
+                let isSameState = this.isSameActiveState(tilesetIndex, optionKey, spotName)
+                    && null === b.activePositionKey;
+                b.deactivate();
+                if(isSameState){
                     return;
                 }
-                b.deactivate();
                 b.activateOption(tilesetIndex, optionKey, isMulti, spotName ? spotName : null);
-                btn.classList.add('active');
+                optionBtn.classList.add('active');
                 if(-1 === tilesetIndex){
                     this.updateGlobalBanner(b);
                     b.app.renderAllCanvases();
                     return;
                 }
-                let rowEl = document.querySelector('[data-tileset-index="'+tilesetIndex+'"]');
+                let rowEl = b.getTilesetRowEl(tilesetIndex);
                 if(rowEl){
                     b.apply.updateBanner(tilesetIndex, rowEl);
                 }
@@ -63,11 +66,11 @@ class TilesetTileOptionsEvents
         let clearBtns = container.querySelectorAll('.tile-option-clear');
         this.bindClearBtnGroup(clearBtns, tilesetIndex, spotName);
         let cellClearBtns = container.querySelectorAll('.tile-position-cell-clear');
-        for(let btn of cellClearBtns){
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                let cell = btn.closest('.tile-position-cell');
-                let grid = btn.closest('.tile-position-grid');
+        for(let cellClearBtn of cellClearBtns){
+            cellClearBtn.addEventListener('click', (cellClickEvent) => {
+                cellClickEvent.stopPropagation();
+                let cell = cellClearBtn.closest('.tile-position-cell');
+                let grid = cellClearBtn.closest('.tile-position-grid');
                 if(!cell || !grid){
                     return;
                 }
@@ -77,12 +80,12 @@ class TilesetTileOptionsEvents
         }
         let multiContainers = container.querySelectorAll('.tile-option-multi-values');
         for(let mc of multiContainers){
-            mc.addEventListener('click', (e) => {
-                let clearBtn = e.target.closest('.tile-multi-cell-clear');
+            mc.addEventListener('click', (multiClickEvent) => {
+                let clearBtn = multiClickEvent.target.closest('.tile-multi-cell-clear');
                 if(!clearBtn){
                     return;
                 }
-                e.stopPropagation();
+                multiClickEvent.stopPropagation();
                 let valueStr = clearBtn.dataset.multiValue;
                 let key = mc.dataset.multiOption;
                 this.binder.clearer.clearArrayItem(tilesetIndex, key, valueStr, spotName ? spotName : null);
@@ -94,9 +97,9 @@ class TilesetTileOptionsEvents
 
     bindReferenceButtons(containerEl)
     {
-        let btns = containerEl.querySelectorAll('.tile-reference-btn');
-        for(let btn of btns){
-            btn.addEventListener('click', () => this.openReferenceModal(btn));
+        let referenceBtns = containerEl.querySelectorAll('.tile-reference-btn');
+        for(let refBtn of referenceBtns){
+            refBtn.addEventListener('click', () => this.openReferenceModal(refBtn));
         }
     }
 
@@ -108,17 +111,17 @@ class TilesetTileOptionsEvents
         }
     }
 
-    openReferenceModal(btn)
+    openReferenceModal(refBtn)
     {
         this.withReferenceModal((modal) => {
-            let img = modal.querySelector('.tile-reference-modal-img');
+            let refImg = modal.querySelector('.tile-reference-modal-img');
             let title = modal.querySelector('.tile-reference-modal-title');
-            if(img){
-                img.src = btn.dataset.referenceImg;
-                img.alt = btn.dataset.referenceTitle;
+            if(refImg){
+                refImg.src = refBtn.dataset.referenceImg;
+                refImg.alt = refBtn.dataset.referenceTitle;
             }
             if(title){
-                title.textContent = btn.dataset.referenceTitle;
+                title.textContent = refBtn.dataset.referenceTitle;
             }
             modal.classList.remove('hidden');
         });
@@ -138,17 +141,17 @@ class TilesetTileOptionsEvents
         });
     }
 
-    bindClearBtnGroup(btns, tilesetIndex, spotName)
+    bindClearBtnGroup(clearBtnsList, tilesetIndex, spotName)
     {
-        this.iterateBtnsWithOptionKey(btns, (btn, optionKey) => {
-            this.bindSingleClearBtn(btn, optionKey, tilesetIndex, spotName);
+        this.iterateBtnsWithOptionKey(clearBtnsList, (groupClearBtn, optionKey) => {
+            this.bindSingleClearBtn(groupClearBtn, optionKey, tilesetIndex, spotName);
         });
     }
 
-    bindSingleClearBtn(btn, optionKey, tilesetIndex, spotName)
+    bindSingleClearBtn(clearBtnEl, optionKey, tilesetIndex, spotName)
     {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
+        clearBtnEl.addEventListener('click', (clickEvent) => {
+            clickEvent.stopPropagation();
             if('ground' === optionKey){
                 this.binder.clearGroundGroup(tilesetIndex, spotName ? spotName : null);
                 return;
@@ -167,13 +170,20 @@ class TilesetTileOptionsEvents
             }
             let optionKey = cell.dataset.option ? cell.dataset.option : grid.dataset.option;
             let posKey = cell.dataset.pos;
-            cell.addEventListener('click', (e) => {
-                let clearBtn = cell.querySelector('.tile-position-cell-clear');
-                if(clearBtn && (e.target === clearBtn || clearBtn.contains(e.target))){
+            cell.addEventListener('click', (cellClickEvent) => {
+                let cellClearBtn = cell.querySelector('.tile-position-cell-clear');
+                if(cellClearBtn && (cellClickEvent.target === cellClearBtn || cellClearBtn.contains(cellClickEvent.target))){
                     return;
                 }
-                this.binder.activateOption(tilesetIndex, optionKey, false, spotName ? spotName : null);
-                this.binder.activatePosition(posKey);
+                let b = this.binder;
+                let isSameState = this.isSameActiveState(tilesetIndex, optionKey, spotName)
+                    && b.activePositionKey === posKey;
+                b.deactivate();
+                if(isSameState){
+                    return;
+                }
+                b.activateOption(tilesetIndex, optionKey, false, spotName ? spotName : null);
+                b.activatePosition(posKey);
             });
         }
     }
@@ -208,3 +218,4 @@ class TilesetTileOptionsEvents
     }
 
 }
+window.TilesetTileOptionsEvents = TilesetTileOptionsEvents;

@@ -47,20 +47,23 @@ The canvas shows the tileset image with overlays:
 - **Reset Zoom**: resets canvas zoom to 1x
 
 ### Legend
-The legend lists every detected element and cluster. Controls:
+The legend lists every detected element, cluster, and spot in a single unified list. Controls:
 - **Search box**: filters by name as you type
-- **Show Elements / Show Clusters** checkboxes: toggle visibility of each group
+- **Show Elements / Show Clusters / Show Spots** checkboxes: toggle visibility of each group
 - **Add Element**: creates a blank element you can populate by clicking tiles on canvas
-- **Bulk select-all** checkbox: checks or unchecks all elements at once
-- **Toggle Lock**: toggles the `approved` flag on all bulk-selected elements
+- **Bulk select-all** checkbox: checks or unchecks all items (elements, clusters, and spots) at once
+- **Toggle Lock**: toggles the `approved` flag on all bulk-selected elements/clusters
 - **Convert All**: converts all bulk-selected clusters to elements
 - **Detect AI / Name AI** (bulk, AI-dependent): runs AI detection or naming on all bulk-selected items
+- **Delete Selected**: removes all bulk-selected unlocked items (elements, clusters, and spots); locked items are kept and shown in the confirmation count
 
-Each element row shows:
+> **Note**: The elements list is a single unified list containing all three map object types — elements, clusters, and spots. Bulk operations (select-all, delete, lock) apply across all three types together.
+
+Each element/cluster row shows:
 - **Header (click)**: selects/deselects the element; expands the detail section; scrolls canvas to its tiles
 - **Name input**: kebab-case name validated as `[a-z]+-(\d+)+`; invalid names block Generate
 - **Lock button**: green closed padlock = locked (protected from bulk AI ops); open padlock = unlockable
-- **Delete button**: removes the element immediately
+- **Delete button**: removes the element after confirmation
 - **Split into tiles** (clusters only): splits the cluster into individual single-tile elements
 - **Convert to element** (clusters only): converts cluster to an approved element in-place
 - **Detect Elements** (per cluster, AI): sends cluster tiles to AI, replaces with sub-elements
@@ -70,6 +73,12 @@ Each element row shows:
 - **Free space around**: tile padding around the element in the generated map
 - **Allow paths in free space**: whether path tiles can be placed in the element's padding
 - **Layer type radios**: sets the layer type for NEW tiles added by clicking the canvas (below-player, collisions, over-player, collisions-over-player)
+
+Each spot row shows:
+- **Header (click)**: expands/collapses the spot's detail section
+- **Name input**: identifier for the spot
+- **Lock button**: locks the spot against bulk-delete
+- **Delete button**: removes the spot after confirmation
 
 ## Step 4 - Element Types
 

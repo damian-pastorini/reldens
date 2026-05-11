@@ -1,3 +1,4 @@
+/* exported TilesetGenerator */
 class TilesetGenerator
 {
     constructor(app)
@@ -5,19 +6,19 @@ class TilesetGenerator
         this.app = app;
     }
 
-    bindGenerateConfirm(btn, message, callback)
+    bindGenerateConfirm(button, message, callback)
     {
-        btn.addEventListener('click', () => this.app.modals.show(message, callback));
+        button.addEventListener('click', () => this.app.modals.show(message, callback));
     }
 
     bind()
     {
-        let msg = 'Are you sure? This will save all tilesets and generate the files.';
+        let message = 'Are you sure? This will save all tilesets and generate the files.';
         this.bindGenerateConfirm(
-            this.app.getElement('.generate-btn'), msg, () => this.generate(false)
+            this.app.getElement('.generate-btn'), message, () => this.generate(false)
         );
         this.bindGenerateConfirm(
-            this.app.getElement('.generate-selected-btn'), msg, () => this.generate(true)
+            this.app.getElement('.generate-selected-btn'), message, () => this.generate(true)
         );
         this.app.getElement('.save-session-btn').addEventListener(
             'click', () => this.app.sessions.saveAll()
@@ -38,7 +39,9 @@ class TilesetGenerator
                 await this.app.sessions.autoSave();
                 await this.runGenerate(this.getSerializableState(false), false);
                 let sid = this.lastGeneratedSessionId || this.app.sessionId;
-                window.location.href = wizardPath + '?tilesetSessionId=' + sid;
+                let wizardUrl = new URL(wizardPath, window.location.origin);
+                wizardUrl.searchParams.set('tilesetSessionId', sid);
+                window.location.href = wizardUrl.toString();
             },
             null,
             'button-success'
@@ -47,12 +50,12 @@ class TilesetGenerator
 
     bindTileset(row, tilesetIndex)
     {
-        let msg = 'Are you sure? This will save this tileset and generate the files.';
+        let message = 'Are you sure? This will save this tileset and generate the files.';
         this.bindGenerateConfirm(
-            row.querySelector('.tileset-generate-btn'), msg, () => this.generateSingle(tilesetIndex, false)
+            row.querySelector('.tileset-generate-btn'), message, () => this.generateSingle(tilesetIndex, false)
         );
         this.bindGenerateConfirm(
-            row.querySelector('.tileset-generate-selected-btn'), msg, () => this.generateSingle(tilesetIndex, true)
+            row.querySelector('.tileset-generate-selected-btn'), message, () => this.generateSingle(tilesetIndex, true)
         );
         this.app.strategyEditor.bind(row);
     }
@@ -128,7 +131,7 @@ class TilesetGenerator
         }
         let zipLink = this.app.getElement('.download-zip-link');
         if(zipLink){
-            zipLink.href = 'download-zip/'+sessionId;
+            zipLink.href = 'download-zip/'+encodeURIComponent(sessionId);
         }
         let resultsList = this.app.getElement('.results-list');
         if(resultsList){

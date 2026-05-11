@@ -1,3 +1,4 @@
+/* exported TilesetTileOptionsBinder */
 class TilesetTileOptionsBinder
 {
     constructor(app)
@@ -8,7 +9,7 @@ class TilesetTileOptionsBinder
         this.picker = new TilesetTileOptionsPickHandler(this);
         this.clearer = new TilesetTileOptionsClearer(this);
         this.positionOrders = {
-            surroundingTiles: ['-1,-1','-1,0','-1,1','0,-1','0,1','1,-1','1,0','1,1'],
+            surroundingTiles: ['-1,-1','-1,0','-1,1','0,-1','0,0','0,1','1,-1','1,0','1,1'],
             corners: ['-1,-1','-1,1','1,-1','1,1'],
             bordersTiles: ['top','right','bottom','left'],
             borderCornersTiles: ['top-left','top-right','bottom-left','bottom-right'],
@@ -95,7 +96,11 @@ class TilesetTileOptionsBinder
 
     getTilesetRowEl(tilesetIndex)
     {
-        return document.querySelector('[data-tileset-index="'+tilesetIndex+'"]');
+        let canvas = document.querySelector('.tileset-canvas[data-tileset-index="'+tilesetIndex+'"]');
+        if(!canvas){
+            return null;
+        }
+        return canvas.closest('.tileset-row');
     }
 
     withGlobalPanel(callback)
@@ -178,8 +183,8 @@ class TilesetTileOptionsBinder
     clearActiveBtns(containerEl)
     {
         let optionBtns = containerEl.querySelectorAll('.tile-option-btn.active');
-        for(let btn of optionBtns){
-            btn.classList.remove('active');
+        for(let optionBtn of optionBtns){
+            optionBtn.classList.remove('active');
         }
     }
 
@@ -270,7 +275,7 @@ class TilesetTileOptionsBinder
         if(addSpotBtn){
             addSpotBtn.addEventListener('click', () => this.addSpot(tilesetIndex));
         }
-        let panel = rowEl.querySelector('.tileset-tile-options');
+        let panel = rowEl.querySelector('.tileset-tile-options:not(.spot-tile-config)');
         if(panel){
             this.events.bindOptionBtns(tilesetIndex, panel, null);
             this.events.bindClearBtns(tilesetIndex, panel, null);
@@ -296,3 +301,4 @@ class TilesetTileOptionsBinder
         this.events.bindSpotRows(tilesetIndex);
     }
 }
+window.TilesetTileOptionsBinder = TilesetTileOptionsBinder;

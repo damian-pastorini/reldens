@@ -16,35 +16,35 @@ class TilesetCanvasMarkers
         this.renderer = renderer;
     }
 
-    draw(ctx, tileset, tilesetIndex)
+    draw(canvasCtx, tileset, tilesetIndex)
     {
         let markers = this.collect(tileset, tilesetIndex);
         if(markers.length){
-            this.renderHighlights(ctx, tileset, markers);
-            this.render(ctx, tileset, markers);
+            this.renderHighlights(canvasCtx, tileset, markers);
+            this.render(canvasCtx, tileset, markers);
         }
     }
 
-    renderHighlights(ctx, tileset, markers)
+    renderHighlights(canvasCtx, tileset, markers)
     {
         let drawn = new Set();
-        ctx.save();
-        ctx.lineWidth = 1.5;
+        canvasCtx.save();
+        canvasCtx.lineWidth = 1.5;
         for(let marker of markers){
             let key = marker.tile[0]+','+marker.tile[1];
             if(drawn.has(key)){
                 continue;
             }
             drawn.add(key);
-            let pos = this.renderer.app.tileGeometry.getTilePosition(tileset, marker.tile);
-            ctx.globalAlpha = 0.25;
-            ctx.fillStyle = marker.color;
-            ctx.fillRect(pos.x, pos.y, tileset.tileWidth, tileset.tileHeight);
-            ctx.globalAlpha = 0.7;
-            ctx.strokeStyle = marker.color;
-            ctx.strokeRect(pos.x + 1, pos.y + 1, tileset.tileWidth - 2, tileset.tileHeight - 2);
+            let tilePos = this.renderer.app.tileGeometry.getTilePosition(tileset, marker.tile);
+            canvasCtx.globalAlpha = 0.25;
+            canvasCtx.fillStyle = marker.color;
+            canvasCtx.fillRect(tilePos.x, tilePos.y, tileset.tileWidth, tileset.tileHeight);
+            canvasCtx.globalAlpha = 0.7;
+            canvasCtx.strokeStyle = marker.color;
+            canvasCtx.strokeRect(tilePos.x + 1, tilePos.y + 1, tileset.tileWidth - 2, tileset.tileHeight - 2);
         }
-        ctx.restore();
+        canvasCtx.restore();
     }
 
     collect(tileset, tilesetIndex)
@@ -71,7 +71,11 @@ class TilesetCanvasMarkers
 
     isTabActive(tilesetIndex, tabName)
     {
-        let row = document.querySelector('[data-tileset-index="'+tilesetIndex+'"]');
+        let canvas = document.querySelector('.tileset-canvas[data-tileset-index="'+tilesetIndex+'"]');
+        if(!canvas){
+            return false;
+        }
+        let row = canvas.closest('.tileset-row');
         if(!row){
             return false;
         }
@@ -93,24 +97,24 @@ class TilesetCanvasMarkers
         return null !== document.querySelector('.global-tile-options:not(.hidden)');
     }
 
-    addOptions(markers, tileset, opts)
+    addOptions(markers, tileset, tileOptions)
     {
-        if(null !== opts.groundTile && undefined !== opts.groundTile){
-            this.pushFlat(markers, tileset, opts.groundTile, 'G', '#5bff8c');
+        if(null !== tileOptions.groundTile && undefined !== tileOptions.groundTile){
+            this.pushFlat(markers, tileset, tileOptions.groundTile, 'G', '#5bff8c');
         }
-        if(null !== opts.pathTile && undefined !== opts.pathTile){
-            this.pushFlat(markers, tileset, opts.pathTile, 'P', '#5b8cff');
+        if(null !== tileOptions.pathTile && undefined !== tileOptions.pathTile){
+            this.pushFlat(markers, tileset, tileOptions.pathTile, 'P', '#5b8cff');
         }
-        if(null !== opts.borderTile && undefined !== opts.borderTile){
-            this.pushFlat(markers, tileset, opts.borderTile, 'B', '#aaaacc');
+        if(null !== tileOptions.borderTile && undefined !== tileOptions.borderTile){
+            this.pushFlat(markers, tileset, tileOptions.borderTile, 'B', '#aaaacc');
         }
-        if(opts.randomGroundTiles && opts.randomGroundTiles.length){
-            for(let fi of opts.randomGroundTiles){
+        if(tileOptions.randomGroundTiles && tileOptions.randomGroundTiles.length){
+            for(let fi of tileOptions.randomGroundTiles){
                 this.pushFlat(markers, tileset, fi, 'R', '#a5ff8c');
             }
         }
         for(let { key, label, color } of TilesetCanvasMarkers.POSITIONAL_CONFIG){
-            this.addPositional(markers, tileset, opts[key] ? opts[key] : {}, label, color);
+            this.addPositional(markers, tileset, tileOptions[key] ? tileOptions[key] : {}, label, color);
         }
     }
 
@@ -126,8 +130,8 @@ class TilesetCanvasMarkers
     addPositional(markers, tileset, posObj, label, color)
     {
         let positions = Object.keys(posObj);
-        for(let pos of positions){
-            let fi = posObj[pos];
+        for(let posKey of positions){
+            let fi = posObj[posKey];
             if(null === fi || undefined === fi){
                 continue;
             }
@@ -135,18 +139,18 @@ class TilesetCanvasMarkers
         }
     }
 
-    addGlobalOptions(markers, tileset, opts, currentTilesetIndex)
+    addGlobalOptions(markers, tileset, globalOptions, currentTilesetIndex)
     {
-        this.addGlobalSimple(markers, tileset, opts.groundTile, currentTilesetIndex, 'G', '#5bff8c');
-        this.addGlobalSimple(markers, tileset, opts.pathTile, currentTilesetIndex, 'P', '#5b8cff');
-        this.addGlobalSimple(markers, tileset, opts.borderTile, currentTilesetIndex, 'B', '#aaaacc');
-        if(opts.randomGroundTiles && opts.randomGroundTiles.length){
-            for(let entry of opts.randomGroundTiles){
+        this.addGlobalSimple(markers, tileset, globalOptions.groundTile, currentTilesetIndex, 'G', '#5bff8c');
+        this.addGlobalSimple(markers, tileset, globalOptions.pathTile, currentTilesetIndex, 'P', '#5b8cff');
+        this.addGlobalSimple(markers, tileset, globalOptions.borderTile, currentTilesetIndex, 'B', '#aaaacc');
+        if(globalOptions.randomGroundTiles && globalOptions.randomGroundTiles.length){
+            for(let entry of globalOptions.randomGroundTiles){
                 this.addGlobalSimple(markers, tileset, entry, currentTilesetIndex, 'R', '#a5ff8c');
             }
         }
         for(let { key, label, color } of TilesetCanvasMarkers.POSITIONAL_CONFIG){
-            this.addGlobalPositional(markers, tileset, opts[key] ? opts[key] : {}, currentTilesetIndex, label, color);
+            this.addGlobalPositional(markers, tileset, globalOptions[key] ? globalOptions[key] : {}, currentTilesetIndex, label, color);
         }
     }
 
@@ -161,8 +165,8 @@ class TilesetCanvasMarkers
     addGlobalPositional(markers, tileset, posObj, currentTilesetIndex, label, color)
     {
         let positions = Object.keys(posObj);
-        for(let pos of positions){
-            let entry = posObj[pos];
+        for(let posKey of positions){
+            let entry = posObj[posKey];
             if(!entry || entry.tilesetIndex !== currentTilesetIndex){
                 continue;
             }
@@ -175,32 +179,31 @@ class TilesetCanvasMarkers
         markers.push({ tile: [Math.floor(flatIndex / tileset.tilesetColumns), flatIndex % tileset.tilesetColumns], label, color });
     }
 
-    render(ctx, tileset, markers)
-
+    render(canvasCtx, tileset, markers)
     {
         let cellSize = Math.min(tileset.tileWidth, tileset.tileHeight);
         let size = Math.min(Math.round(cellSize * 0.35), 14);
         let fontSize = Math.max(size - 3, 6);
-        ctx.save();
-        ctx.font = 'bold '+fontSize+'px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
+        canvasCtx.save();
+        canvasCtx.font = 'bold '+fontSize+'px sans-serif';
+        canvasCtx.textAlign = 'center';
+        canvasCtx.textBaseline = 'middle';
         let tileOffsets = new Map();
         for(let marker of markers){
             let key = marker.tile[0]+','+marker.tile[1];
             let offset = tileOffsets.has(key) ? tileOffsets.get(key) : 0;
             tileOffsets.set(key, offset + 1);
-            let pos = this.renderer.app.tileGeometry.getTilePosition(tileset, marker.tile);
-            let x = pos.x + tileset.tileWidth - size - 1 - (offset * (size + 1));
-            let y = pos.y + 1;
-            ctx.globalAlpha = 0.9;
-            ctx.fillStyle = marker.color;
-            ctx.fillRect(x, y, size, size);
-            ctx.globalAlpha = 1;
-            ctx.fillStyle = '#000000';
-            ctx.fillText(marker.label, x + size / 2, y + size / 2);
+            let tilePos = this.renderer.app.tileGeometry.getTilePosition(tileset, marker.tile);
+            let x = tilePos.x + tileset.tileWidth - size - 1 - (offset * (size + 1));
+            let y = tilePos.y + 1;
+            canvasCtx.globalAlpha = 0.9;
+            canvasCtx.fillStyle = marker.color;
+            canvasCtx.fillRect(x, y, size, size);
+            canvasCtx.globalAlpha = 1;
+            canvasCtx.fillStyle = '#000000';
+            canvasCtx.fillText(marker.label, x + size / 2, y + size / 2);
         }
-        ctx.restore();
+        canvasCtx.restore();
     }
 }
 window.TilesetCanvasMarkers = TilesetCanvasMarkers;

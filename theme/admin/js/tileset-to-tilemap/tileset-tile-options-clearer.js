@@ -35,13 +35,13 @@ class TilesetTileOptionsClearer
             });
             return;
         }
-        let fn = (opts) => {
-            opts.groundTile = null;
-            opts.pathTile = null;
-            opts.borderTile = null;
-            opts.randomGroundTiles = [];
+        let groundGroupClearer = (tileOptions) => {
+            tileOptions.groundTile = null;
+            tileOptions.pathTile = null;
+            tileOptions.borderTile = null;
+            tileOptions.randomGroundTiles = [];
         };
-        this.dispatchTileOpts(tilesetIndex, fn, fn);
+        this.dispatchTileOpts(tilesetIndex, groundGroupClearer, groundGroupClearer);
     }
 
     clearBordersGroup(tilesetIndex, spotName)
@@ -53,19 +53,19 @@ class TilesetTileOptionsClearer
             });
             return;
         }
-        let fn = (opts) => {
-            opts.bordersTiles = {};
-            opts.borderCornersTiles = {};
+        let bordersGroupClearer = (tileOptions) => {
+            tileOptions.bordersTiles = {};
+            tileOptions.borderCornersTiles = {};
         };
-        this.dispatchTileOpts(tilesetIndex, fn, fn);
+        this.dispatchTileOpts(tilesetIndex, bordersGroupClearer, bordersGroupClearer);
     }
 
     dispatchTileOpts(tilesetIndex, globalFn, tilesetFn)
     {
         if(-1 === tilesetIndex){
-            let opts = this.binder.app.globalTileOptions;
-            if(opts){
-                globalFn(opts);
+            let globalTileOptions = this.binder.app.globalTileOptions;
+            if(globalTileOptions){
+                globalFn(globalTileOptions);
             }
             this.applyAndRenderGlobal();
             return;
@@ -96,10 +96,23 @@ class TilesetTileOptionsClearer
                 if(spot[optionKey]){
                     delete spot[optionKey][positionKey];
                 }
+                this.applyAndRenderTileset(tilesetIndex);
+                return;
             }
-            if(!positionKey){
-                spot[optionKey] = 'spotTileVariations' === optionKey ? [] : null;
+            if('surroundingTiles' === optionKey){
+                spot.spotTile = null;
             }
+            if('spotTileVariations' === optionKey){
+                spot[optionKey] = [];
+                this.applyAndRenderTileset(tilesetIndex);
+                return;
+            }
+            if(this.binder.positionOrders[optionKey] !== undefined){
+                spot[optionKey] = {};
+                this.applyAndRenderTileset(tilesetIndex);
+                return;
+            }
+            spot[optionKey] = null;
             this.applyAndRenderTileset(tilesetIndex);
             return;
         }
@@ -154,16 +167,17 @@ class TilesetTileOptionsClearer
             this.applyAndRenderTileset(tilesetIndex);
             return;
         }
-        let globalFn = (opts) => {
-            if(Array.isArray(opts[optionKey])){
-                opts[optionKey] = opts[optionKey].filter((v) => v.flatIndex !== value);
+        let globalArrayClearer = (tileOptions) => {
+            if(Array.isArray(tileOptions[optionKey])){
+                tileOptions[optionKey] = tileOptions[optionKey].filter((v) => v.flatIndex !== value);
             }
         };
-        let tilesetFn = (opts) => {
-            if(Array.isArray(opts[optionKey])){
-                opts[optionKey] = opts[optionKey].filter((v) => v !== value);
+        let tilesetArrayClearer = (tileOptions) => {
+            if(Array.isArray(tileOptions[optionKey])){
+                tileOptions[optionKey] = tileOptions[optionKey].filter((v) => v !== value);
             }
         };
-        this.dispatchTileOpts(tilesetIndex, globalFn, tilesetFn);
+        this.dispatchTileOpts(tilesetIndex, globalArrayClearer, tilesetArrayClearer);
     }
 }
+window.TilesetTileOptionsClearer = TilesetTileOptionsClearer;
