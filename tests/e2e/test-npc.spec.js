@@ -59,9 +59,11 @@ class TestNpc
         await page.waitForTimeout(pauseMs);
         await (npcKey ? Phaser.clickObject(page, npcKey) : Phaser.clickObjectByType(page, 'npc'));
         await page.waitForTimeout(1000 + pauseMs);
-        await expect(page.locator(Selectors.npc.dialogue)).toBeVisible(
-            { timeout: TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun) }
-        );
+        let npcDialogueVisible = await page.waitForSelector(
+            Selectors.npc.dialogue,
+            { state: 'visible', timeout: TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun) }
+        ).then(() => true).catch(() => false);
+        expect(npcDialogueVisible, 'NPC dialogue box must be visible after interacting with NPC').toBeTruthy();
         await screenshots.capture(page, 'npc-dialogue-visible');
     }
 

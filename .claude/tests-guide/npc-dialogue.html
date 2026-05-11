@@ -54,12 +54,12 @@
             <td>Resolves screen coords and dispatches a canvas click at the NPC position using force:true</td>
         </tr>
         <tr>
-            <td>Wait for dialogue panel to become visible</td>
-            <td><code>await expect(page.locator(Selectors.npc.dialogue)).toBeVisible(<br>    { timeout: TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun) }<br>)</code></td>
-            <td>test-npc.spec.js:62-64</td>
+            <td>Wait for any NPC dialogue box to become visible</td>
+            <td><code>let npcDialogueVisible = await page.waitForSelector(Selectors.npc.dialogue, { state: 'visible', timeout: ... }).then(() =&gt; true).catch(() =&gt; false)</code><br><code>expect(npcDialogueVisible, 'NPC dialogue box must be visible after interacting with NPC').toBeTruthy()</code></td>
+            <td>test-npc.spec.js:62-66</td>
             <td>tests/e2e/selectors.js:165</td>
             <td><code>dialogue: '.type-npc'</code></td>
-            <td>Asserts that the NPC dialogue panel element is visible. Timeout is UI_OPEN (3000ms, scaled for longRun).</td>
+            <td>Uses <code>waitForSelector</code> instead of a strict <code>locator</code> because the town room pre-renders multiple <code>.type-npc</code> boxes; <code>waitForSelector</code> resolves as soon as any one becomes visible. Timeout is UI_OPEN (3000ms, scaled for longRun).</td>
         </tr>
     </tbody>
 </table>

@@ -17,12 +17,12 @@ let expect = BaseE2eTest.expect;
 
 class TestStats
 {
-    static async loginRootPlayer(page, gameConfig, longRun)
+    static async loginRootPlayer(page, gameConfig, longRun, scene = null)
     {
         let username = gameConfig.e2eUsername || 'root';
         let password = gameConfig.e2ePassword || 'root';
         let playerName = gameConfig.e2ePlayerName || 'ImRoot';
-        await Login.loginAndStartGame(page, username, password, playerName, longRun);
+        await Login.loginAndStartGame(page, username, password, playerName, longRun, false, scene);
     }
 
     static getPlayerExpFromState(page)
@@ -42,7 +42,7 @@ class TestStats
 
     static async runXpTest(page, screenshots, gameConfig, longRun)
     {
-        await TestStats.loginRootPlayer(page, gameConfig, longRun);
+        await TestStats.loginRootPlayer(page, gameConfig, longRun, 'reldens-forest');
         let pauseMs = TimeConstants.pauseMs(longRun);
         let enemyKey = gameConfig.e2eEnemyKey || '';
         let sceneTimeout = TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun);

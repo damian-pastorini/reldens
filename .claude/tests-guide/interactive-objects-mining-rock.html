@@ -63,19 +63,19 @@
         </tr>
         <tr>
             <td>Navigate player to within interaction range of rock</td>
-            <td><code>TestInteractiveObjects.navigateToObjectAndAssertInRange(page, objectKey, ctx, 'mining rock')</code></td>
-            <td>test-interactive-objects.spec.js:124</td>
-            <td>tests/e2e/test-interactive-objects.spec.js:52</td>
-            <td><code>static async navigateToObjectAndAssertInRange(page, objectKey, ctx, label)</code></td>
-            <td>Calls Navigation.moveToObjectWithinRange with INTERACTION_RANGE=50; retries with 'active' status if 'visible' fails</td>
+            <td><code>TestInteractiveObjects.navigateToObjectAndAssertInRange(page, objectKey, ctx, 'mining rock', TestInteractiveObjects.MINING_ROCK_INTERACTION_RANGE)</code></td>
+            <td>test-interactive-objects.spec.js:151</td>
+            <td>tests/e2e/test-interactive-objects.spec.js:53</td>
+            <td><code>static async navigateToObjectAndAssertInRange(page, objectKey, ctx, label, range = null)</code></td>
+            <td>Passes MINING_ROCK_INTERACTION_RANGE=120 instead of the default INTERACTION_RANGE=50. The rock is a dynamic respawn body without a physical collision stop, so the 1200ms step size (~152px/axis diagonal) causes oscillation that never lands within 50px; 120 is safely within the server&apos;s &plusmn;140px box check per axis. Retries with 'active' status key if 'visible' fails.</td>
         </tr>
         <tr>
             <td>Move player toward object until within range</td>
-            <td><code>Navigation.moveToObjectWithinRange(page, 'asset_key', objectKey, 'visible', 50, ctx.navTimeout)</code></td>
-            <td>test-interactive-objects.spec.js:54</td>
+            <td><code>Navigation.moveToObjectWithinRange(page, 'asset_key', objectKey, 'visible', 120, ctx.navTimeout)</code></td>
+            <td>test-interactive-objects.spec.js:56</td>
             <td>tests/e2e/helpers/navigation.js:177</td>
             <td><code>static async moveToObjectWithinRange(page, matchProp, matchValue, statusKey, range, timeout, useRespawnFind = false)</code></td>
-            <td>Steps player toward object coords in a loop; returns true when Math.hypot(player, target) &lt;= range</td>
+            <td>Steps player toward object coords in a loop; returns true when Math.hypot(player, target) &lt;= range. Range 120 resolves in 2&ndash;3 steps for any rock spawn position.</td>
         </tr>
         <tr>
             <td>Open inventory panel</td>

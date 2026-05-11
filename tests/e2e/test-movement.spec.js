@@ -17,13 +17,13 @@ let expect = BaseE2eTest.expect;
 
 class TestMovement
 {
-    static async loginAndPrepare(page, gameConfig, longRun)
+    static async loginAndPrepare(page, gameConfig, longRun, scene = null)
     {
         let username = gameConfig.e2eUsername || 'root';
         let password = gameConfig.e2ePassword || 'root';
         let playerName = gameConfig.e2ePlayerName || 'ImRoot';
         page.on('dialog', dialog => dialog.dismiss());
-        await Login.loginAndStartGame(page, username, password, playerName, longRun);
+        await Login.loginAndStartGame(page, username, password, playerName, longRun, false, scene);
         await Phaser.waitForPlayerInRoomState(page, TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun));
         await Navigation.focusGame(page);
     }
@@ -33,7 +33,7 @@ class TestMovement
         let returnRoom = gameConfig.e2eReturnRoom || '';
         let enemyKey = gameConfig.e2eEnemyKey || '';
         expect(returnRoom, 'e2eReturnRoom not configured for return point test').toBeTruthy();
-        await TestMovement.loginAndPrepare(page, gameConfig, longRun);
+        await TestMovement.loginAndPrepare(page, gameConfig, longRun, 'reldens-forest');
         let pauseMs = TimeConstants.pauseMs(longRun);
         let sceneTimeout = TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun);
         let navTimeout = TimeConstants.forLongRun(TimeConstants.NAVIGATION, longRun);
