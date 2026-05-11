@@ -103,7 +103,7 @@
         "@parcel/transformer-worklet": "2.16.4",
         "@parcel/transformer-xml": "2.16.4",
         "@parcel/transformer-yaml": "2.16.4",
-        "@reldens/cms": "^0.65.0",
+        "@reldens/cms": "^0.66.0",
         "@reldens/game-data-generator": "^0.28.0",
         "@reldens/items-system": "^0.51.0",
         "@reldens/modifiers": "^0.36.0",
