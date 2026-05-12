@@ -1,3 +1,4 @@
+/* exported TilesetRowBinder */
 class TilesetRowBinder
 {
     constructor(app)
@@ -17,7 +18,7 @@ class TilesetRowBinder
         this.app.refresh(i);
     }
 
-    bindHeader(row, i)
+    bindHeader(row)
     {
         let collapseBtn = row.querySelector('.tileset-collapse-btn');
         let tilesetHeader = row.querySelector('.tileset-header');
@@ -32,17 +33,17 @@ class TilesetRowBinder
 
     bindCanvas(canvas, i)
     {
-        canvas.addEventListener('mousedown', (e) => this.app.interaction.handleCanvasMouseDown(e, i));
-        canvas.addEventListener('mousemove', (e) => this.app.interaction.handleCanvasMouseMove(e, i));
+        canvas.addEventListener('mousedown', (mouseEvent) => this.app.interaction.handleCanvasMouseDown(mouseEvent, i));
+        canvas.addEventListener('mousemove', (mouseEvent) => this.app.interaction.handleCanvasMouseMove(mouseEvent, i));
         canvas.addEventListener('mouseup', () => this.app.interaction.handleCanvasMouseUp());
         canvas.addEventListener('mouseleave', () => this.app.interaction.handleCanvasMouseUp());
-        canvas.addEventListener('contextmenu', (e) => e.preventDefault());
-        canvas.addEventListener('wheel', (e) => {
-            if(!e.ctrlKey){
+        canvas.addEventListener('contextmenu', (event) => event.preventDefault());
+        canvas.addEventListener('wheel', (wheelEvent) => {
+            if(!wheelEvent.ctrlKey){
                 return;
             }
-            e.preventDefault();
-            let delta = e.deltaY < 0 ? 1.25 : 0.8;
+            wheelEvent.preventDefault();
+            let delta = wheelEvent.deltaY < 0 ? 1.25 : 0.8;
             this.app.zoomLevels[i] = Math.min(4, Math.max(0.25, this.app.zoomLevels[i] * delta));
             this.app.renderer.applyZoom(i);
         }, { passive: false });
@@ -113,8 +114,11 @@ class TilesetRowBinder
             for(let checkbox of checkboxes){
                 checkbox.checked = isChecked;
             }
-            for(let el of this.app.state[capturedI].elements){
-                el.bulkSelected = isChecked;
+            for(let element of this.app.state[capturedI].elements){
+                element.bulkSelected = isChecked;
+            }
+            for(let spot of this.app.state[capturedI].spots || []){
+                spot.bulkSelected = isChecked;
             }
             this.app.generator.updateGenerateButtonState();
         });
@@ -125,7 +129,7 @@ class TilesetRowBinder
             refs.showSpotsCheck.addEventListener('change', () => this.app.editor.renderLegend(capturedI));
         }
         if(refs.bulkDeleteSpotsBtn){
-            refs.bulkDeleteSpotsBtn.addEventListener('click', () => this.bulkDeleteSelectedSpots(capturedI));
+            refs.bulkDeleteSpotsBtn.addEventListener('click', () => this.bulkDeleteSelectedMapObjects(capturedI));
         }
         this.bindViewControls(capturedI, refs);
         this.bindSessionControls(row, capturedI);
@@ -135,17 +139,40 @@ class TilesetRowBinder
         }
     }
 
-    bulkDeleteSelectedSpots(tilesetIndex)
+    countSelected(items, remaining)
     {
-        let spots = this.app.state[tilesetIndex].spots || [];
-        let remaining = [];
-        for(let spot of spots){
-            if(!spot.bulkSelected){
-                remaining.push(spot);
+        let count = 0;
+        for(let item of items){
+            if(item.bulkSelected){
+                count++;
+                continue;
             }
+            remaining.push(item);
         }
-        this.app.state[tilesetIndex].spots = remaining;
-        this.app.editor.renderLegend(tilesetIndex);
+        return count;
+    }
+
+    bulkDeleteSelectedMapObjects(tilesetIndex)
+    {
+        let tileset = this.app.state[tilesetIndex];
+        let remainingElements = [];
+        let remainingSpots = [];
+        let totalCount = this.countSelected(tileset.elements, remainingElements);
+        totalCount += this.countSelected(tileset.spots || [], remainingSpots);
+        if(!totalCount){
+            return;
+        }
+        this.app.modals.show(
+            'Delete '+totalCount+' selected item(s)?',
+            () => {
+                tileset.elements = remainingElements;
+                tileset.spots = remainingSpots;
+                this.app.selectedTileset = null;
+                this.app.selectedElement = null;
+                this.app.updatePaletteStyles();
+                this.app.refresh(tilesetIndex);
+            }
+        );
     }
 
     bindLegendTabs(row, tilesetIndex)

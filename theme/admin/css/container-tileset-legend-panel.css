@@ -45,6 +45,7 @@
         flex-direction: column;
         flex: 1;
         overflow-y: auto;
+        overflow-x: hidden;
         border: 1px solid var(--color-grey-20);
         background: var(--color-grey-90);
         padding: var(--space-sm);
@@ -125,6 +126,10 @@
 
     & .spot-prop[type="number"] {
         width: 3.5rem;
+    }
+
+    & .spot-prop[type="text"] {
+        max-width: 9rem;
     }
 
     & .legend-bulk-actions {

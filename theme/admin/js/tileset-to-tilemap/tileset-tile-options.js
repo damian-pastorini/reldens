@@ -23,7 +23,7 @@ class TilesetTileOptions
         if(!tileOpts){
             tileOpts = {};
         }
-        let tileOptsPanel = rowEl.querySelector('.tileset-tile-options');
+        let tileOptsPanel = rowEl.querySelector('.tileset-tile-options:not(.spot-tile-config)');
         if(tileOptsPanel){
             this.applyOptionsToPanel(tileOptsPanel, tileOpts);
         }
@@ -40,12 +40,12 @@ class TilesetTileOptions
         }
     }
 
-    getFlatIndex(val)
+    getFlatIndex(flatValue)
     {
-        if(val && 'object' === typeof val && !Array.isArray(val)){
-            return val.flatIndex;
+        if(flatValue && 'object' === typeof flatValue && !Array.isArray(flatValue)){
+            return flatValue.flatIndex;
         }
-        return val;
+        return flatValue;
     }
 
     applyOptionsToPanel(panel, data)
@@ -56,19 +56,19 @@ class TilesetTileOptions
             if(!key){
                 continue;
             }
-            let val = data[key];
+            let optionValue = data[key];
             let cell = display.closest('.tile-option-cell');
-            if(Array.isArray(val)){
+            if(Array.isArray(optionValue)){
                 if(cell){
-                    cell.classList.toggle('has-value', val.length > 0);
+                    cell.classList.toggle('has-value', optionValue.length > 0);
                 }
                 continue;
             }
-            let hasVal = null !== val && undefined !== val;
+            let hasValue = null !== optionValue && undefined !== optionValue;
             if(cell){
-                cell.classList.toggle('has-value', hasVal);
+                cell.classList.toggle('has-value', hasValue);
             }
-            display.textContent = hasVal ? '#'+this.getFlatIndex(val) : '';
+            display.textContent = hasValue ? '#'+this.getFlatIndex(optionValue) : '';
         }
         let grids = panel.querySelectorAll('.tile-position-grid');
         for(let grid of grids){
@@ -77,15 +77,15 @@ class TilesetTileOptions
         let multiContainers = panel.querySelectorAll('.tile-option-multi-values');
         for(let container of multiContainers){
             let key = container.dataset.multiOption;
-            let val = data[key];
-            this.renderMultiValues(container, Array.isArray(val) ? val : []);
+            let multiValue = data[key];
+            this.renderMultiValues(container, Array.isArray(multiValue) ? multiValue : []);
         }
     }
 
-    renderMultiValues(container, arr)
+    renderMultiValues(container, valuesArray)
     {
         container.innerHTML = '';
-        for(let value of arr){
+        for(let value of valuesArray){
             let fi = this.getFlatIndex(value);
             let cell = document.createElement('div');
             cell.className = 'tile-option-multi-cell';
@@ -109,17 +109,17 @@ class TilesetTileOptions
         let cells = grid.querySelectorAll('.tile-position-cell');
         for(let cell of cells){
             let optKey = cell.dataset.option ? cell.dataset.option : defaultOptKey;
-            let vals = data[optKey];
-            if(!vals){
-                vals = {};
+            let positionValues = data[optKey];
+            if(!positionValues){
+                positionValues = {};
             }
-            let pos = cell.dataset.pos;
-            let val = vals[pos];
+            let posKey = cell.dataset.pos;
+            let cellValue = positionValues[posKey];
             let posVal = cell.querySelector('.pos-val');
             if(posVal){
-                posVal.textContent = (null !== val && undefined !== val) ? '#'+this.getFlatIndex(val) : '';
+                posVal.textContent = (null !== cellValue && undefined !== cellValue) ? '#'+this.getFlatIndex(cellValue) : '';
             }
-            cell.classList.toggle('is-set', null !== val && undefined !== val);
+            cell.classList.toggle('is-set', null !== cellValue && undefined !== cellValue);
         }
     }
 
@@ -162,8 +162,8 @@ class TilesetTileOptions
             return;
         }
         let statusEls = containerEl.querySelectorAll('.tile-pick-status');
-        for(let el of statusEls){
-            el.classList.add('hidden');
+        for(let statusEl of statusEls){
+            statusEl.classList.add('hidden');
         }
     }
 
@@ -189,7 +189,7 @@ class TilesetTileOptions
             }
             return;
         }
-        let globalPanel = rowEl.querySelector('.tileset-tile-options');
+        let globalPanel = rowEl.querySelector('.tileset-tile-options:not(.spot-tile-config)');
         if(!globalPanel){
             return;
         }
@@ -207,3 +207,4 @@ class TilesetTileOptions
         }
     }
 }
+window.TilesetTileOptions = TilesetTileOptions;

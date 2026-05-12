@@ -1,3 +1,4 @@
+/* exported TilesetLegendRenderer */
 class TilesetLegendRenderer
 {
     constructor(editor)
@@ -60,7 +61,7 @@ class TilesetLegendRenderer
         row.classList.toggle('hidden', !matchesType || !matchesSearch);
         let bulkCheckbox = frag.querySelector('.element-bulk-select');
         bulkCheckbox.checked = element.bulkSelected || false;
-        bulkCheckbox.addEventListener('click', (e) => e.stopPropagation());
+        bulkCheckbox.addEventListener('click', (event) => event.stopPropagation());
         bulkCheckbox.addEventListener('change', () => {
             app.state[tilesetIndex].elements[i].bulkSelected = bulkCheckbox.checked;
             app.generator.updateGenerateButtonState();
@@ -94,28 +95,28 @@ class TilesetLegendRenderer
         this.bindElementInputEvents(tilesetIndex, i, { nameInput, quantityInput, freeSpaceInput, allowPathsInput, radios, customRadio, customInput, row });
     }
 
-    setupElementRowHeader(element, tilesetIndex, capturedI, els)
+    setupElementRowHeader(element, tilesetIndex, capturedI, controls)
     {
         let app = this.editor.app;
         if(element.approved){
-            els.lockBtn.classList.add('locked');
-            els.lockIcon.src = '/assets/admin/lock-solid.svg';
+            controls.lockBtn.classList.add('locked');
+            controls.lockIcon.src = '/assets/admin/lock-solid.svg';
         }
-        els.lockBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            let el = app.state[tilesetIndex].elements[capturedI];
-            el.approved = !el.approved;
-            els.lockBtn.classList.toggle('locked', el.approved);
-            els.lockIcon.src = '/assets/admin/'+(el.approved ? 'lock-solid' : 'unlock-solid')+'.svg';
+        controls.lockBtn.addEventListener('click', (mouseEvent) => {
+            mouseEvent.stopPropagation();
+            let elementState = app.state[tilesetIndex].elements[capturedI];
+            elementState.approved = !elementState.approved;
+            controls.lockBtn.classList.toggle('locked', elementState.approved);
+            controls.lockIcon.src = '/assets/admin/'+(elementState.approved ? 'lock-solid' : 'unlock-solid')+'.svg';
         });
-        els.header.addEventListener('click', (e) => {
-            if(e.target === els.nameInput){
+        controls.header.addEventListener('click', (mouseEvent) => {
+            if(mouseEvent.target === controls.nameInput){
                 return;
             }
-            if(e.target === els.lockBtn || els.lockBtn.contains(e.target)){
+            if(mouseEvent.target === controls.lockBtn || controls.lockBtn.contains(mouseEvent.target)){
                 return;
             }
-            if(e.target === els.deleteBtn || els.deleteBtn.contains(e.target)){
+            if(mouseEvent.target === controls.deleteBtn || controls.deleteBtn.contains(mouseEvent.target)){
                 return;
             }
             let wasSelected = app.selectedTileset === tilesetIndex && app.selectedElement === capturedI;
@@ -124,8 +125,12 @@ class TilesetLegendRenderer
                 this.editor.scrollCanvasToElement(tilesetIndex, capturedI);
             }
         });
-        els.deleteBtn.addEventListener('click', () => {
-            this.editor.removeElement(tilesetIndex, capturedI);
+        controls.deleteBtn.addEventListener('click', () => {
+            let elementName = app.state[tilesetIndex].elements[capturedI].name;
+            app.modals.show(
+                'Delete "'+elementName+'"?',
+                () => this.editor.removeElement(tilesetIndex, capturedI)
+            );
         });
     }
 
@@ -140,18 +145,18 @@ class TilesetLegendRenderer
         let aiNameBtn = frag.querySelector('.element-ai-name-btn');
         if('cluster' === element.type){
             splitBtn.classList.remove('hidden');
-            splitBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
+            splitBtn.addEventListener('click', (mouseEvent) => {
+                mouseEvent.stopPropagation();
                 this.editor.splitCluster(tilesetIndex, capturedI);
             });
             convertBtn.classList.remove('hidden');
-            convertBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                let el = app.state[tilesetIndex].elements[capturedI];
-                let newName = this.editor.resolveConvertName(tilesetIndex, capturedI, el.name);
-                el.type = 'element';
-                el.approved = true;
-                el.name = newName;
+            convertBtn.addEventListener('click', (mouseEvent) => {
+                mouseEvent.stopPropagation();
+                let elementState = app.state[tilesetIndex].elements[capturedI];
+                let newName = this.editor.resolveConvertName(tilesetIndex, capturedI, elementState.name);
+                elementState.type = 'element';
+                elementState.approved = true;
+                elementState.name = newName;
                 app.refresh(tilesetIndex);
             });
         }
@@ -161,12 +166,12 @@ class TilesetLegendRenderer
         SharedUtils.populateProviderSelect(aiSelect, app.activeProviders);
         aiDetectBtn.textContent = 'cluster' === element.type ? 'Detect Elements' : 'Detect Layers';
         aiControls.classList.remove('hidden');
-        aiDetectBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
+        aiDetectBtn.addEventListener('click', (mouseEvent) => {
+            mouseEvent.stopPropagation();
             app.aiElement.runAiDetectSingle(tilesetIndex, capturedI, aiSelect.value, aiDetectBtn);
         });
-        aiNameBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
+        aiNameBtn.addEventListener('click', (mouseEvent) => {
+            mouseEvent.stopPropagation();
             app.aiElement.runAiNameSingle(tilesetIndex, capturedI, aiSelect.value, aiNameBtn);
         });
     }
@@ -183,7 +188,7 @@ class TilesetLegendRenderer
         }
     }
 
-    handleRadioChange(radio, customRadio)
+    handleRadioChange(radio)
     {
         if(!radio.checked){
             return;
@@ -199,7 +204,7 @@ class TilesetLegendRenderer
     {
         for(let radio of radios){
             radio.addEventListener('change', () => {
-                this.handleRadioChange(radio, customRadio);
+                this.handleRadioChange(radio);
             });
         }
         customInput.addEventListener('input', () => {
@@ -208,27 +213,27 @@ class TilesetLegendRenderer
                 this.editor.app.activeLayerType = customInput.value;
             }
         });
-        customInput.addEventListener('click', (e) => e.stopPropagation());
+        customInput.addEventListener('click', (event) => event.stopPropagation());
     }
 
-    bindElementInputEvents(tilesetIndex, capturedI, els)
+    bindElementInputEvents(tilesetIndex, capturedI, controls)
     {
         let app = this.editor.app;
-        els.nameInput.addEventListener('blur', () => {
-            let valid = /^[a-z]+(?:-[a-z]+)*-\d+(?:-\d+)*$/.test(els.nameInput.value);
-            app.state[tilesetIndex].elements[capturedI].name = els.nameInput.value;
-            els.row.classList.toggle('element-name-invalid', !valid);
+        controls.nameInput.addEventListener('blur', () => {
+            let valid = /^[a-z]+(?:-[a-z]+)*-\d+(?:-\d+)*$/.test(controls.nameInput.value);
+            app.state[tilesetIndex].elements[capturedI].name = controls.nameInput.value;
+            controls.row.classList.toggle('element-name-invalid', !valid);
             app.generator.updateGenerateButtonState();
         });
-        els.quantityInput.addEventListener('input', () => {
-            app.state[tilesetIndex].elements[capturedI].quantity = Number(els.quantityInput.value) || 1;
+        controls.quantityInput.addEventListener('input', () => {
+            app.state[tilesetIndex].elements[capturedI].quantity = Number(controls.quantityInput.value) || 1;
         });
-        els.freeSpaceInput.addEventListener('input', () => {
-            app.state[tilesetIndex].elements[capturedI].freeSpaceAround = Number(els.freeSpaceInput.value) || 0;
+        controls.freeSpaceInput.addEventListener('input', () => {
+            app.state[tilesetIndex].elements[capturedI].freeSpaceAround = Number(controls.freeSpaceInput.value) || 0;
         });
-        els.allowPathsInput.addEventListener('change', () => {
-            app.state[tilesetIndex].elements[capturedI].allowPathsInFreeSpace = els.allowPathsInput.checked;
+        controls.allowPathsInput.addEventListener('change', () => {
+            app.state[tilesetIndex].elements[capturedI].allowPathsInFreeSpace = controls.allowPathsInput.checked;
         });
-        this.bindRadioChangeEvents(els.radios, els.customRadio, els.customInput);
+        this.bindRadioChangeEvents(controls.radios, controls.customRadio, controls.customInput);
     }
 }

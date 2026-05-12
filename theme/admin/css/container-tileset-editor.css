@@ -244,6 +244,11 @@
             padding: 0 0.375rem;
             height: var(--space-3xl);
         }
+
+        & .tooltip .tooltip-text {
+            top: calc(100% + 0.25rem);
+            bottom: auto;
+        }
     }
 
     & .review-actions-row,

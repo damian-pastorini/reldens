@@ -1,3 +1,4 @@
+/* exported TilesetSpotEditor */
 class TilesetSpotEditor
 {
     constructor(editor)
@@ -25,14 +26,14 @@ class TilesetSpotEditor
         let lockIcon = lockBtn ? lockBtn.querySelector('.lock-icon') : null;
         this.bindSpotBulkCheckbox(frag, spot, tileset, capturedSi);
         this.bindSpotLockBtn(lockBtn, lockIcon, spot, tileset, capturedSi);
-        spotHeader.addEventListener('click', (e) => {
-            if(e.target === nameInput){
+        spotHeader.addEventListener('click', (mouseEvent) => {
+            if(mouseEvent.target === nameInput){
                 return;
             }
-            if(lockBtn && (e.target === lockBtn || lockBtn.contains(e.target))){
+            if(lockBtn && (mouseEvent.target === lockBtn || lockBtn.contains(mouseEvent.target))){
                 return;
             }
-            if(e.target === deleteBtn || deleteBtn.contains(e.target)){
+            if(mouseEvent.target === deleteBtn || deleteBtn.contains(mouseEvent.target)){
                 return;
             }
             let app = this.editor.app;
@@ -49,12 +50,17 @@ class TilesetSpotEditor
         });
         deleteBtn.addEventListener('click', () => {
             let spotName = tileset.spots[capturedSi].name;
-            if(this.editor.app.tileOptionsBinder
-                && this.editor.app.tileOptionsBinder.activeSpotName === spotName){
-                this.editor.app.tileOptionsBinder.deactivate();
-            }
-            tileset.spots.splice(capturedSi, 1);
-            this.editor.renderLegend(tilesetIndex);
+            this.editor.app.modals.show(
+                'Delete "'+spotName+'"?',
+                () => {
+                    if(this.editor.app.tileOptionsBinder
+                        && this.editor.app.tileOptionsBinder.activeSpotName === spotName){
+                        this.editor.app.tileOptionsBinder.deactivate();
+                    }
+                    tileset.spots.splice(capturedSi, 1);
+                    this.editor.renderLegend(tilesetIndex);
+                }
+            );
         });
         list.appendChild(frag);
     }
@@ -66,7 +72,7 @@ class TilesetSpotEditor
             return;
         }
         bulkCheckbox.checked = spot.bulkSelected || false;
-        bulkCheckbox.addEventListener('click', (e) => e.stopPropagation());
+        bulkCheckbox.addEventListener('click', (event) => event.stopPropagation());
         bulkCheckbox.addEventListener('change', () => {
             tileset.spots[capturedSi].bulkSelected = bulkCheckbox.checked;
         });
@@ -83,8 +89,8 @@ class TilesetSpotEditor
                 lockIcon.src = '/assets/admin/lock-solid.svg';
             }
         }
-        lockBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
+        lockBtn.addEventListener('click', (mouseEvent) => {
+            mouseEvent.stopPropagation();
             tileset.spots[capturedSi].approved = !tileset.spots[capturedSi].approved;
             lockBtn.classList.toggle('locked', tileset.spots[capturedSi].approved);
             if(lockIcon){
@@ -103,26 +109,26 @@ class TilesetSpotEditor
         }
     }
 
-    bindCheckboxProp(el, key, spot, freeSpaceRow, allowPathsRow)
+    bindCheckboxProp(domElement, key, spot, freeSpaceRow, allowPathsRow)
     {
-        el.addEventListener('change', () => {
-            spot[key] = el.checked;
+        domElement.addEventListener('change', () => {
+            spot[key] = domElement.checked;
             if('isElement' === key){
-                this.toggleIsElementRows(freeSpaceRow, allowPathsRow, el.checked);
+                this.toggleIsElementRows(freeSpaceRow, allowPathsRow, domElement.checked);
             }
         });
     }
 
-    initNumberSpotProp(el, key, spot)
+    initNumberSpotProp(domElement, key, spot)
     {
         if(null !== spot[key] && undefined !== spot[key]){
-            el.value = spot[key];
+            domElement.value = spot[key];
             return;
         }
-        let minVal = el.min !== '' ? +el.min : 0;
+        let minVal = '' !== domElement.min ? +domElement.min : 0;
         if(0 < minVal){
             spot[key] = minVal;
-            el.value = minVal;
+            domElement.value = minVal;
         }
     }
 
@@ -131,25 +137,34 @@ class TilesetSpotEditor
         let freeSpaceRow = frag.querySelector('.spot-free-space-row');
         let allowPathsRow = frag.querySelector('.spot-allow-paths-row');
         let props = frag.querySelectorAll('[data-prop]');
-        for(let el of props){
-            let key = el.dataset.prop;
-            if('checkbox' === el.type){
-                el.checked = spot[key] || false;
-                this.bindCheckboxProp(el, key, spot, freeSpaceRow, allowPathsRow);
+        for(let propInput of props){
+            let key = propInput.dataset.prop;
+            if('checkbox' === propInput.type){
+                propInput.checked = spot[key] || false;
+                this.bindCheckboxProp(propInput, key, spot, freeSpaceRow, allowPathsRow);
                 continue;
             }
-            if('number' === el.type){
-                this.initNumberSpotProp(el, key, spot);
-                el.addEventListener('input', () => {
-                    spot[key] = el.value === '' ? null : +el.value;
+            if('number' === propInput.type){
+                this.initNumberSpotProp(propInput, key, spot);
+                propInput.addEventListener('input', () => {
+                    spot[key] = '' === propInput.value ? null : +propInput.value;
                 });
                 continue;
             }
-            if(spot[key] !== undefined){
-                el.value = spot[key];
+            if(undefined !== spot[key]){
+                propInput.value = spot[key];
             }
-            el.addEventListener('input', () => {
-                spot[key] = el.value;
+            if('depth' === key && undefined === spot[key]){
+                propInput.value = 'false';
+                spot[key] = false;
+            }
+            propInput.addEventListener('input', () => {
+                if('depth' === key){
+                    let v = propInput.value;
+                    spot[key] = ('' === v || 'false' === v) ? false : ('true' === v ? true : v);
+                    return;
+                }
+                spot[key] = propInput.value;
             });
         }
         this.toggleIsElementRows(freeSpaceRow, allowPathsRow, spot.isElement);

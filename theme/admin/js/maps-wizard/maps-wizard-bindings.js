@@ -20,6 +20,12 @@ class MapsWizardBindings
         this.bindFormSubmit();
         this.prefillFromUrlParams();
         window.mapsWizardUtils.updateGeneratorDataFromInputs();
+        window.addEventListener('pageshow', () => {
+            let overlay = document.querySelector('.maps-wizard-generating-overlay');
+            if(overlay){
+                overlay.classList.add('hidden');
+            }
+        });
     }
 
     bindInputChangeListeners()
@@ -75,15 +81,15 @@ class MapsWizardBindings
     bindConfigModals()
     {
         let configOpenBtns = document.querySelectorAll('.config-options-open-btn');
-        for(let btn of configOpenBtns){
-            btn.addEventListener('click', () => {
-                window.mapsWizardUtils.openModal(btn.dataset.configModal);
+        for(let openBtn of configOpenBtns){
+            openBtn.addEventListener('click', () => {
+                window.mapsWizardUtils.openModal(openBtn.dataset.configModal);
                 window.mapsWizardUtils.updateGeneratorDataFromInputs();
             });
         }
         let configCloseBtns = document.querySelectorAll('.config-options-modal .button-close');
-        for(let btn of configCloseBtns){
-            btn.addEventListener('click', () => {
+        for(let closeBtn of configCloseBtns){
+            closeBtn.addEventListener('click', () => {
                 window.mapsWizardUtils.updateGeneratorDataFromInputs();
             });
         }
@@ -100,9 +106,9 @@ class MapsWizardBindings
     bindInfoModals()
     {
         let infoOpenBtns = document.querySelectorAll('.option-info-btn');
-        for(let btn of infoOpenBtns){
-            btn.addEventListener('click', () => {
-                window.mapsWizardUtils.openModal(btn.dataset.infoModal);
+        for(let infoBtn of infoOpenBtns){
+            infoBtn.addEventListener('click', () => {
+                window.mapsWizardUtils.openModal(infoBtn.dataset.infoModal);
             });
         }
         let infoModalBackdrops = document.querySelectorAll('.option-info-modal .modal-backdrop');
@@ -118,9 +124,9 @@ class MapsWizardBindings
     {
         let sampleDataBtns = document.querySelectorAll('.use-sample-data-btn');
         let confirmModal = document.querySelector('.confirm-modal');
-        for(let btn of sampleDataBtns){
-            btn.addEventListener('click', () => {
-                this.pendingSampleDataOption = btn.dataset.optionValue;
+        for(let sampleBtn of sampleDataBtns){
+            sampleBtn.addEventListener('click', () => {
+                this.pendingSampleDataOption = sampleBtn.dataset.optionValue;
                 if(confirmModal){
                     confirmModal.classList.remove('hidden');
                 }
