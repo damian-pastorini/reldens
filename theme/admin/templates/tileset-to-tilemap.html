@@ -494,12 +494,13 @@
             <h3>Step 1 - Upload your tileset</h3>
             <p>Select one or more PNG tileset files. Set the tile width and height (use the preset buttons for common sizes). Adjust spacing and margin if your tileset has gaps between tiles. The background color is auto-detected from the image edges - correct it if needed. Click <strong>Analyze</strong> to start.</p>
             <h3>Step 2 - Wait for detection</h3>
-            <p>The server scans every tile for non-background pixels and groups connected tiles into clusters. If AI providers are active, each cluster is sent to AI for sub-element detection and naming. Progress is shown in real time. This may take a minute for large tilesets.</p>
+            <p>The server scans every tile for non-background pixels and groups connected tiles into clusters. If AI providers are configured, each cluster is sent to AI for sub-element detection and naming. Progress is shown in real time. This may take a minute for large tilesets.</p>
             <h3>Step 3 - Review detected elements</h3>
             <p>The canvas shows your tileset with colored overlays for each element. The legend on the right lists every detected item.</p>
             <ul>
-                <li><strong>Elements</strong> (solid border, locked by default): individual objects identified by pixel analysis or AI.</li>
-                <li><strong>Clusters</strong> (dashed amber border, unlocked): groups that may contain multiple objects and need further processing.</li>
+                <li><strong>Elements</strong> (solid border): individual objects identified by pixel analysis or AI.</li>
+                <li><strong>Clusters</strong> (dashed amber border): groups that may contain multiple objects and need further processing.</li>
+                <li><strong>Spots</strong>: named map locations with configurable size, placement, and collision rules. Added manually via <strong>Add Spot</strong>.</li>
                 <li><strong>Faint gray tiles</strong>: tiles that passed the fill check but had too little variance to be grouped (shown for reference only).</li>
             </ul>
             <h3>Step 4 - Canvas view modes</h3>
@@ -523,40 +524,80 @@
             <p>Click an element row to expand its controls:</p>
             <ul>
                 <li><strong>Name</strong>: rename using kebab-case format, e.g. <code>tree-001</code>.</li>
-                <li><strong>Lock (padlock)</strong>: locked elements are skipped by Detect All and Name All. Lock elements you are satisfied with.</li>
+                <li><strong>Lock (padlock)</strong>: locked elements are skipped by AI bulk operations. Lock elements you are satisfied with.</li>
                 <li><strong>Delete (trash)</strong>: remove the element entirely. Same as pressing the <strong>Delete key</strong> on the keyboard.</li>
-                <li><strong>Layer type</strong>: choose what layer new tiles will be added to (below-player, collisions, over-player, collisions+over).</li>
+                <li><strong>Layer type</strong>: choose what layer new tiles will be added to - below-player, collisions, over-player, collisions-over-player, base, path, or custom (enter a suffix in the text field).</li>
                 <li><strong>Quantity</strong>: how many copies to place in the generated map.</li>
                 <li><strong>Free space</strong>: tile padding around the element in the generated map.</li>
+                <li><strong>Allow paths in free space</strong>: whether path tiles can be placed inside the element's padding area.</li>
             </ul>
             <h3>Step 7 - Cluster actions</h3>
             <ul>
-                <li><strong>Detect</strong> (per element): send this cluster to AI for sub-element detection. Replaces the cluster with its sub-elements.</li>
+                <li><strong>Detect</strong> (per cluster, AI): send this cluster to AI for sub-element detection. Replaces the cluster with its sub-elements.</li>
                 <li><strong>Split into tiles</strong>: convert each tile in the cluster into a separate single-tile element.</li>
                 <li><strong>Convert to element</strong>: treat the entire cluster as one approved element.</li>
             </ul>
             <h3>Step 8 - Bulk actions</h3>
-            <p>Check the checkbox on any element row to include it in bulk operations. Buttons appear in the tileset header:</p>
+            <p>Check the checkbox on any element, cluster, or spot row to include it in bulk operations. The bulk action buttons are in the legend panel above the element list:</p>
             <ul>
+                <li><strong>Toggle lock</strong>: toggles the locked state of all checked elements and clusters.</li>
                 <li><strong>Convert all</strong>: converts all checked clusters to elements.</li>
-                <li><strong>Toggle lock</strong>: toggles the locked state of all checked elements.</li>
-                <li><strong>Detect AI</strong>: runs AI sub-detection on all checked clusters (requires AI provider).</li>
+                <li><strong>Detect AI</strong>: runs AI detection on all checked items - clusters get sub-element detection, elements get layer assignment (requires AI provider).</li>
                 <li><strong>Name AI</strong>: runs AI naming on all checked non-cluster elements (requires AI provider).</li>
+                <li><strong>Delete (trash icon)</strong>: removes all checked unlocked items. Locked items are kept and shown in the confirmation count.</li>
             </ul>
-            <h3>Step 9 - AI bulk actions</h3>
+            <h3>Step 9 - AI bulk actions (per tileset)</h3>
+            <p>When AI providers are configured, additional buttons appear above the canvas:</p>
             <ul>
-                <li><strong>Detect All</strong>: runs AI sub-detection on every unlocked cluster across all tilesets.</li>
+                <li><strong>Detect Elements</strong>: runs AI sub-element detection on every unlocked cluster in this tileset one by one.</li>
+                <li><strong>Detect Layers</strong>: runs AI layer assignment on every unlocked non-cluster element in this tileset, splitting tiles into the correct layer types.</li>
                 <li><strong>Name All</strong>: runs AI naming on every unlocked non-cluster element. Locked elements are skipped.</li>
                 <li>Progress is shown next to the buttons. After Name All completes, a summary shows how many were renamed and how many were skipped.</li>
             </ul>
-            <h3>Step 10 - Generate files</h3>
-            <p>When all elements are named and configured, click <strong>Generate files</strong>. The server creates Tiled-compatible JSON files for each element, an annotated tileset PNG, a composite map, and a Reldens map-generator config. Download links appear in the Results section.</p>
+            <h3>Step 10 - Map Tiles tab</h3>
+            <p>Switch to the <strong>Map Tiles</strong> tab in the legend panel to assign tile roles for map generation:</p>
+            <ul>
+                <li><strong>Ground</strong>: the base ground tile filling the map background.</li>
+                <li><strong>Variations</strong>: additional ground variants placed randomly across the map.</li>
+                <li><strong>Path</strong>: the walkable path tile; surrounding tiles (N/NE/E/SE/S/SW/W/NW) define the transitions around paths.</li>
+                <li><strong>Path Corner Tiles</strong>: concave corner transitions for path bends.</li>
+                <li><strong>Border Tiles</strong>: directional tiles (T/R/B/L) and corner tiles (NW/NE/SW/SE) placed at the map edge; center cell is the fallback border tile.</li>
+            </ul>
+            <p>Click a tile option cell to activate pick mode, then click the desired tile on the canvas to assign it. A colored marker (G, P, B, R, S, C, T, K) appears on the canvas corner of each assigned tile. If more than one tileset is loaded, a <strong>Global Map Tiles</strong> panel appears above the tilesets to apply shared tile roles across all of them.</p>
+            <h3>Step 11 - Spots</h3>
+            <p>Spots are named areas placed on the generated map. Click <strong>Add Spot</strong> in the Map Objects tab to create one, then expand it to configure:</p>
+            <ul>
+                <li><strong>Depth</strong>: controls layer placement. <code>false</code> = no reorder; <code>true</code> = place below ground; enter a layer name (e.g. <code>ground-variations</code>) to place the spot above that layer. <em>Must be used together with Is Element checked, otherwise the spot is silently dropped from the map.</em></li>
+                <li><strong>Is Element</strong>: must be checked for the spot to appear on the map when Depth is set.</li>
+                <li><strong>Walkable</strong>: when unchecked, the generator adds a <code>-collisions</code> layer suffix that the game engine reads as an impassable collision zone.</li>
+                <li><strong>Width / Height</strong>: spot dimensions in tiles.</li>
+                <li><strong>Quantity</strong>: how many instances to place.</li>
+                <li><strong>Mark %</strong>: percentage of the spot area to fill (100 = solid rectangle).</li>
+                <li><strong>Variable Tiles %</strong>: percentage of tiles replaced with random variations.</li>
+                <li><strong>Spot Tile / Variations</strong>: assign the center tile and random fill tiles by clicking the canvas after activating the option cell.</li>
+                <li><strong>Surrounding / Corner tiles</strong>: directional border tiles for this spot's edges.</li>
+                <li><strong>Inner / Outer Walls</strong>: wall tile rings placed at or outside the spot boundary. Enable <strong>Border Inner Walls</strong> or <strong>Border Outer Walls</strong> (Split Borders in Layers is forced on automatically).</li>
+            </ul>
+            <p>To make a spot visible on the map with collision: check <strong>Is Element</strong>, set <strong>Depth</strong> to a layer name (e.g. <code>ground-variations</code>), uncheck <strong>Walkable</strong>, and assign <strong>Variations</strong> tiles.</p>
+            <h3>Step 12 - Session and per-tileset controls</h3>
+            <ul>
+                <li><strong>Session Name</strong>: optional label appended to the auto-generated session ID timestamp.</li>
+                <li><strong>Override session</strong> checkbox: when checked, saving rewrites the current session; when unchecked every save creates a new timestamped session.</li>
+                <li><strong>Save Session</strong>: saves the full current state to disk.</li>
+                <li><strong>Save</strong> (per tileset): saves only that tileset's data into the current session.</li>
+                <li><strong>Remove</strong> (per tileset): removes the tileset from the session.</li>
+                <li><strong>Map Generator Configuration</strong> toggle: expands inputs for <strong>Map File Name</strong>, <strong>Map Title</strong>, and the <strong>Maps Wizard Strategy</strong> (single composite map, multiple maps, or multiple maps with associations).</li>
+            </ul>
+            <h3>Step 13 - Generate and Maps Wizard</h3>
+            <p>When all elements and spots are configured, click <strong>Generate All</strong> (or per-tileset <strong>Generate</strong>) to produce output files: Tiled-compatible JSON per element, an annotated tileset PNG, <code>composite.json</code>, and <code>map-generator-config.json</code>. Generated sessions appear in the <strong>Generated Files</strong> list below the editor.</p>
+            <p>After generating, click <strong>Maps Wizard</strong> to open the map generation wizard. It pre-fills from the session's <code>map-generator-config.json</code> and runs the Reldens map generator to produce the final playable Tiled map files.</p>
             <h3>Tips</h3>
             <ul>
                 <li>Lock an element after you are happy with it - this protects it from AI bulk operations.</li>
-                <li>Add element creates a blank element you can populate by clicking tiles on the canvas.</li>
-                <li>Previous sessions are listed at the bottom of the upload form - click to expand and download files again.</li>
+                <li><strong>Add Element</strong> creates a blank element you can populate by clicking tiles on the canvas.</li>
+                <li>Previous sessions are listed in the <strong>Generated Files</strong> section below the editor - click a row to expand and download files.</li>
                 <li>All element names must match the pattern <code>word-001</code> (lowercase letters, optional hyphens, numeric suffix) before Generate is enabled.</li>
+                <li>If a spot is configured but never appears on the generated map, check that <strong>Is Element</strong> is checked and <strong>Depth</strong> is not <code>false</code>.</li>
             </ul>
         </div>
     </div>
