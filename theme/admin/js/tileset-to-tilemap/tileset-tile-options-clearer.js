@@ -44,6 +44,15 @@ class TilesetTileOptionsClearer
         this.dispatchTileOpts(tilesetIndex, groundGroupClearer, groundGroupClearer);
     }
 
+    clearPathTilesGroup(tilesetIndex)
+    {
+        let pathGroupClearer = (tileOptions) => {
+            tileOptions.pathTile = null;
+            tileOptions.surroundingTiles = {};
+        };
+        this.dispatchTileOpts(tilesetIndex, pathGroupClearer, pathGroupClearer);
+    }
+
     clearBordersGroup(tilesetIndex, spotName)
     {
         if(spotName){

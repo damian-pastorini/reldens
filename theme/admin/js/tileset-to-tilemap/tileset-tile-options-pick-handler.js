@@ -75,6 +75,9 @@ class TilesetTileOptionsPickHandler
             return;
         }
         globalOptions[optionKey] = entry;
+        if('pathTile' === optionKey){
+            this.advanceFromPathTile(-1);
+        }
     }
 
     toggleGlobalArrayOption(target, key, entry)
@@ -135,6 +138,9 @@ class TilesetTileOptionsPickHandler
             return;
         }
         tileOpts[optionKey] = flatIndex;
+        if('pathTile' === optionKey){
+            this.advanceFromPathTile(tilesetIndex);
+        }
     }
 
     applyPositionalPick(target, optionKey, posKey, flatIndex, tilesetIndex)
@@ -188,7 +194,16 @@ class TilesetTileOptionsPickHandler
                 this.activateAndShowOption(resolveIndex, 'spotTile', spotName);
                 return;
             }
-            nextPos = this.findNextEmptyPosition(order, target, '0,0');
+            if(spot){
+                nextPos = this.findNextEmptyPosition(order, target, '0,0');
+            }
+            if(!spot && !this.isPathTileSet(resolveIndex)){
+                this.activateAndShowOption(resolveIndex, 'pathTile', null);
+                return;
+            }
+            if(!spot){
+                nextPos = this.findNextEmptyPosition(order, target, '0,0');
+            }
         }
         if(!nextPos){
             this.binder.deactivate();
@@ -197,21 +212,64 @@ class TilesetTileOptionsPickHandler
         this.binder.activatePosition(nextPos);
     }
 
-    activateAndShowOption(tilesetIndex, optionKey, spotName)
+    showOptionActiveInContainer(rootEl, tilesetIndex, optionKey, spotName)
     {
-        this.binder.activateOption(tilesetIndex, optionKey, false, spotName);
-        let rowEl = this.binder.getTilesetRowEl(tilesetIndex);
-        if(!rowEl){
-            return;
-        }
-        let container = spotName ? rowEl.querySelector('.spot-row[data-spot-name="'+spotName+'"]') : rowEl;
+        let container = spotName ? rootEl.querySelector('.spot-row[data-spot-name="'+spotName+'"]') : rootEl;
         if(container){
             let optionBtn = container.querySelector('.tile-option-btn[data-option="'+optionKey+'"]');
             if(optionBtn){
                 optionBtn.classList.add('active');
             }
         }
-        this.binder.apply.updateBanner(tilesetIndex, rowEl);
+        this.binder.apply.updateBanner(tilesetIndex, rootEl);
+    }
+
+    activateAndShowOption(tilesetIndex, optionKey, spotName)
+    {
+        this.binder.activateOption(tilesetIndex, optionKey, false, spotName);
+        if(-1 === tilesetIndex){
+            this.binder.withGlobalPanel((panel) => {
+                this.showOptionActiveInContainer(panel, -1, optionKey, spotName);
+            });
+            return;
+        }
+        let rowEl = this.binder.getTilesetRowEl(tilesetIndex);
+        if(!rowEl){
+            return;
+        }
+        this.showOptionActiveInContainer(rowEl, tilesetIndex, optionKey, spotName);
+    }
+
+    isPathTileSet(tilesetIndex)
+    {
+        if(-1 === tilesetIndex){
+            return this.binder.app.globalTileOptions
+                && null !== this.binder.app.globalTileOptions.pathTile
+                && undefined !== this.binder.app.globalTileOptions.pathTile;
+        }
+        return this.binder.app.state[tilesetIndex]
+            && this.binder.app.state[tilesetIndex].tileOptions
+            && null !== this.binder.app.state[tilesetIndex].tileOptions.pathTile
+            && undefined !== this.binder.app.state[tilesetIndex].tileOptions.pathTile;
+    }
+
+    advanceFromPathTile(tilesetIndex)
+    {
+        this.binder.deactivate();
+        let tileOpts = null;
+        if(-1 === tilesetIndex){
+            tileOpts = this.binder.app.globalTileOptions;
+        }
+        if(-1 !== tilesetIndex && this.binder.app.state[tilesetIndex]){
+            tileOpts = this.binder.app.state[tilesetIndex].tileOptions;
+        }
+        let target = (tileOpts && tileOpts.surroundingTiles) ? tileOpts.surroundingTiles : {};
+        let nextPos = this.findNextEmptyPosition(this.binder.positionOrders.surroundingTiles, target, '0,0');
+        if(!nextPos){
+            return;
+        }
+        this.activateAndShowOption(tilesetIndex, 'surroundingTiles', null);
+        this.binder.activatePosition(nextPos);
     }
 
     advanceFromSpotTile(tilesetIndex, spot)

@@ -156,6 +156,10 @@ class TilesetTileOptionsEvents
                 this.binder.clearGroundGroup(tilesetIndex, spotName ? spotName : null);
                 return;
             }
+            if('pathTilesGroup' === optionKey){
+                this.binder.clearPathTilesGroup(tilesetIndex);
+                return;
+            }
             this.binder.clearOption(tilesetIndex, optionKey, null, spotName ? spotName : null);
         });
     }
@@ -211,11 +215,40 @@ class TilesetTileOptionsEvents
         this.bindClearBtns(tilesetIndex, spotRow, spotName);
         this.bindPositionCells(tilesetIndex, spotRow, spotName);
         this.spotPropsBinder.bind(spotRow, tilesetIndex, spotName);
+        this.bindTooltipPositioning(spotRow);
         let spot = this.binder.findSpot(tilesetIndex, spotName);
         if(spot){
             this.binder.apply.applySpotToRow(spotRow, spot);
         }
     }
+
+    bindTooltipPositioning(spotRow)
+    {
+        let legendPane = spotRow.closest('.legend-tab-pane');
+        if(!legendPane){
+            return;
+        }
+        let tooltips = spotRow.querySelectorAll('.tooltip');
+        for(let tooltip of tooltips){
+            tooltip.addEventListener('mouseenter', () => {
+                let tooltipText = tooltip.querySelector('.tooltip-text');
+                if(!tooltipText){
+                    return;
+                }
+                let rem = parseFloat(getComputedStyle(document.documentElement).fontSize);
+                if(legendPane.getBoundingClientRect().right - tooltip.getBoundingClientRect().left < 15 * rem){
+                    tooltipText.classList.add('tooltip-right');
+                }
+            });
+            tooltip.addEventListener('mouseleave', () => {
+                let tooltipText = tooltip.querySelector('.tooltip-text');
+                if(tooltipText){
+                    tooltipText.classList.remove('tooltip-right');
+                }
+            });
+        }
+    }
+
 
 }
 window.TilesetTileOptionsEvents = TilesetTileOptionsEvents;

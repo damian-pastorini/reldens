@@ -154,7 +154,16 @@ class TilesetSpotEditor
             if(undefined !== spot[key]){
                 propInput.value = spot[key];
             }
+            if('depth' === key && undefined === spot[key]){
+                propInput.value = 'false';
+                spot[key] = false;
+            }
             propInput.addEventListener('input', () => {
+                if('depth' === key){
+                    let v = propInput.value;
+                    spot[key] = ('' === v || 'false' === v) ? false : ('true' === v ? true : v);
+                    return;
+                }
                 spot[key] = propInput.value;
             });
         }

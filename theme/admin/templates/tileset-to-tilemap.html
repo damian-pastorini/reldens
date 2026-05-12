@@ -99,7 +99,7 @@
                         </div>
                         <div class="tile-pick-status hidden" data-pick-for="surroundingTiles"><span class="tile-pick-label"></span><button type="button" class="button button-sm tile-pick-cancel">Cancel</button></div>
                         <div class="tile-pick-status hidden" data-pick-for="pathTile"><span class="tile-pick-label"></span><button type="button" class="button button-sm tile-pick-cancel">Cancel</button></div>
-                        <button type="button" class="button button-sm tile-options-group-clear-all" data-option="surroundingTiles">Clear all</button>
+                        <button type="button" class="button button-sm tile-options-group-clear-all" data-option="pathTilesGroup">Clear all</button>
                     </div>
                     <div class="tile-options-group">
                         <div class="tile-options-group-header">
@@ -355,7 +355,7 @@
                             </div>
                             <div class="tile-pick-status hidden" data-pick-for="surroundingTiles"><span class="tile-pick-label"></span><button type="button" class="button button-sm button-danger tile-pick-cancel">Cancel</button></div>
                             <div class="tile-pick-status hidden" data-pick-for="pathTile"><span class="tile-pick-label"></span><button type="button" class="button button-sm button-danger tile-pick-cancel">Cancel</button></div>
-                            <button type="button" class="button button-sm button-danger tile-options-group-clear-all" data-option="surroundingTiles">Clear all</button>
+                            <button type="button" class="button button-sm button-danger tile-options-group-clear-all" data-option="pathTilesGroup">Clear all</button>
                         </div>
                         <div class="tile-options-group">
                             <div class="tile-options-group-header">
@@ -725,10 +725,11 @@
                     <span class="tile-options-group-label">Properties</span>
                 </div>
                 <div class="spot-properties-grid">
+                    <label class="spot-prop-label"><span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">Layer placement: false = no reorder, true = place below ground layer, or enter a layer name to place this spot above it (e.g. ground-variations)</span></span>Depth: <input type="text" class="spot-prop spot-depth" data-prop="depth" list="spot-depth-options" placeholder="false"></label>
                     <label class="spot-prop-label"><span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">Width of the spot in tiles</span></span>Width (tiles): <input type="number" class="spot-prop spot-width" data-prop="width" min="1"></label>
                     <label class="spot-prop-label"><span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">Height of the spot in tiles</span></span>Height (tiles): <input type="number" class="spot-prop spot-height" data-prop="height" min="1"></label>
                     <label class="spot-prop-label"><span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">Number of instances to place on the map</span></span>Quantity: <input type="number" class="spot-prop spot-quantity" data-prop="quantity" min="1" value="1"></label>
-                    <label class="spot-prop-label"><span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">Percentage of spot tiles to mark (0-100)</span></span>Mark %: <input type="number" class="spot-prop spot-mark-percentage" data-prop="markPercentage" min="0" max="100" value="100"></label>
+                    <label class="spot-prop-label"><span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">Percentage of spot tiles to mark (0-100). At 100% the spot is a complete filled square; lower values place randomly connected tiles inside the spot.</span></span>Mark %: <input type="number" class="spot-prop spot-mark-percentage" data-prop="markPercentage" min="0" max="100" value="100"></label>
                     <label class="spot-prop-label"><span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">Percentage of tiles replaced with random variations (0-100)</span></span>Variable Tiles %: <input type="number" class="spot-prop spot-variable-tiles-pct" data-prop="variableTilesPercentage" min="0" max="100" value="0"></label>
                     <label class="spot-prop-label"><span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">Number of extra tiles added around outer walls</span></span>Border Outer Walls Size: <input type="number" class="spot-prop spot-border-outer-walls-size" data-prop="borderOuterWallsIncreaseLayerSize" value="4"></label>
                     <label class="spot-prop-label spot-free-space-row hidden"><span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">Number of tiles to keep clear around the spot</span></span>Free Space: <input type="number" class="spot-prop spot-free-space" data-prop="freeSpaceAround" min="0"></label>
@@ -737,7 +738,6 @@
                     <label class="spot-prop-label spot-allow-paths-row hidden"><input type="checkbox" class="spot-prop spot-allow-paths" data-prop="allowPathsInFreeSpace"> <span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">Allow paths to enter the spot's free space area</span></span>Allow Paths in Free Space</label>
                     <label class="spot-prop-label"><input type="checkbox" class="spot-prop spot-map-centered" data-prop="mapCentered"> <span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">Whether to center this spot on the map</span></span>Map Centered</label>
                     <label class="spot-prop-label"><input type="checkbox" class="spot-prop spot-place-random-path" data-prop="placeRandomPath"> <span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">Place a random path through this spot</span></span>Place Random Path</label>
-                    <label class="spot-prop-label"><input type="checkbox" class="spot-prop spot-depth" data-prop="depth" checked> <span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">Render spot tile layers with depth sorting</span></span>Depth</label>
                     <label class="spot-prop-label"><input type="checkbox" class="spot-prop spot-split-borders" data-prop="splitBordersInLayers"> <span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">Place border tiles in a separate layer</span></span>Split Borders in Layers</label>
                     <label class="spot-prop-label"><input type="checkbox" class="spot-prop spot-border-inner-walls" data-prop="borderInnerWalls"> <span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">Add inner wall borders around the spot</span></span>Border Inner Walls</label>
                     <label class="spot-prop-label"><input type="checkbox" class="spot-prop spot-border-outer-walls" data-prop="borderOuterWalls"> <span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">Add outer wall borders around the spot</span></span>Border Outer Walls</label>
@@ -756,6 +756,14 @@
 </template>
 </div>
 </div>
+<datalist id="spot-depth-options">
+    <option value="false"></option>
+    <option value="true"></option>
+    <option value="ground"></option>
+    <option value="ground-variations"></option>
+    <option value="path"></option>
+    <option value="collisions-map-border"></option>
+</datalist>
 <script src="/js/tileset-to-tilemap/shared-utils.js"></script>
 <script src="/js/tileset-to-tilemap/tile-geometry.js"></script>
 <script src="/js/tileset-to-tilemap/canvas-markers.js"></script>

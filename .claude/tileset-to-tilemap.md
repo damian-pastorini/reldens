@@ -102,13 +102,18 @@ To assign a tile click the option cell then click the desired tile on the canvas
 The canvas renders a colored marker badge (G, P, B, R, S, C, T, K) in the corner of each assigned tile alongside the highlight fill.
 
 **Spots** are named locations on the map. Each spot has:
+- **Depth** (text input): controls where this spot's layer is inserted in the final layer stack. Valid values:
+  - `false` (or empty) — no reorder; for non-element spots this means the spot is placed in the invisible-spots group (under the ground layer, invisible to the player)
+  - `true` — insert below the ground layer (integer depth = 1)
+  - any layer name string (e.g. `ground-variations`, `path`) — insert this spot's layer immediately after the named layer; the spot tiles will be visible above that layer
+  - **Dead state**: if **Is Element** is unchecked and **Depth** is anything other than `false`, the spot is generated internally but **never placed on the map** (silently ignored by the generator). Only use a non-false depth when **Is Element** is checked.
 - **Name**: identifier for the spot
-- **Is Element** checkbox: treat spot as a placed element
+- **Is Element** checkbox: treat spot as a placed element (must be checked for the spot to appear on the map when Depth is set)
 - **Width / Height**: dimensions in tiles (default 5x5)
 - **Quantity**: how many instances to place on the map
 - **Mark %**: percentage of spot tiles to mark (0-100)
 - **Variable Tiles %**: percentage of tiles replaced with random variations
-- **Walkable**: whether players can walk on this spot
+- **Walkable**: whether players can walk on this spot. When **unchecked** (walkable = false), the generator appends `-collisions` to the spot's layer name, which the Reldens game engine reads as a non-walkable collision zone. To make a spot act as an obstacle (e.g. a lake or wall), uncheck Walkable.
 - **Spot Tile**: the single tile placed at the spot center (its own row)
 - **Spot Tile Variations**: random tiles placed as ground within the spot (its own row, multi-value)
 - **Surrounding / Corner tiles**: same positional sets as global options but scoped to this spot
@@ -118,6 +123,16 @@ The canvas renders a colored marker badge (G, P, B, R, S, C, T, K) in the corner
 - **Border Inner Walls**: enables the inner wall ring
 - **Border Outer Walls**: enables the outer wall ring (also forces Border Inner Walls on)
 - **Border Outer Walls Size**: extra tile padding added around the outer wall layer (default 4; does not change wall thickness)
+
+### Required configuration to make a spot visible with collisions
+
+To have a spot appear visually on the map AND block player movement:
+1. Check **Is Element**
+2. Set **Depth** to a layer name the spot should appear above (e.g. `ground-variations`)
+3. Uncheck **Walkable**
+4. Assign **Spot Tile Variations** (tiles to fill the spot area)
+
+Without step 1+2 the spot is either invisible (depth false + isElement false) or silently dropped (depth set but isElement false). Without step 3 no collision layer is emitted and players walk through the spot freely.
 
 Click a spot header to expand/collapse its detail section. When a spot is expanded its assigned tiles are highlighted on the canvas with an orange fill so you can see which tiles belong to it.
 

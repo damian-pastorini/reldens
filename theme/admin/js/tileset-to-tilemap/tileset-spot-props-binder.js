@@ -23,7 +23,12 @@ class TilesetSpotPropsBinder
                     return;
                 }
                 if('number' === prop.type){
-                    spot[key] = prop.value === '' ? null : +prop.value;
+                    spot[key] = '' === prop.value ? null : +prop.value;
+                    return;
+                }
+                if('depth' === key){
+                    let v = prop.value;
+                    spot[key] = ('' === v || 'false' === v) ? false : ('true' === v ? true : v);
                     return;
                 }
                 spot[key] = prop.value;
@@ -39,3 +44,4 @@ class TilesetSpotPropsBinder
         }
     }
 }
+window.TilesetSpotPropsBinder = TilesetSpotPropsBinder;

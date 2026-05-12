@@ -206,6 +206,11 @@ class TilesetTileOptionsBinder
         this.clearer.clearGroundGroup(tilesetIndex, spotName);
     }
 
+    clearPathTilesGroup(tilesetIndex)
+    {
+        this.clearer.clearPathTilesGroup(tilesetIndex);
+    }
+
     clearOption(tilesetIndex, optionKey, positionKey, spotName)
     {
         this.clearer.clearOption(tilesetIndex, optionKey, positionKey, spotName);

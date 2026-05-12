@@ -29,6 +29,11 @@
             display: block;
         }
 
+        &.tooltip-right {
+            left: auto;
+            right: 0;
+        }
+
         & .tooltip-title {
             font-weight: var(--bold);
             margin-bottom: 0.5rem;
