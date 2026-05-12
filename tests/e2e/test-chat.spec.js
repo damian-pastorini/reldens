@@ -109,7 +109,7 @@ class TestChat
         await TestChat.typeChatMessage(page, longRun, '@'+p2.playerName+' '+testMessage);
         await page.waitForTimeout(pauseMs);
         await screenshots.capture(page, 'p1-private-message-typed');
-        await page.click(Selectors.chat.send);
+        await page.locator(Selectors.chat.input).press('Enter');
         await page.waitForTimeout(2000 + pauseMs);
         await expect(secondPage.locator(Selectors.chat.tabContentGeneral)).toContainText(testMessage, { timeout: TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun) });
         await expect(secondPage.locator(Selectors.chat.tabContentPrivate)).toContainText(testMessage, { timeout: TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun) });

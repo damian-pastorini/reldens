@@ -11,6 +11,7 @@ const { FileHandler } = require('@reldens/server-utils');
 const { Logger } = require('@reldens/utils');
 const { GameDataSkills } = require('./helpers/game-data-skills');
 const { PlayerStateReset } = require('./helpers/player-state-reset');
+const { TestDataSetup } = require('./helpers/test-data-setup');
 
 class CollectGameData
 {
@@ -125,17 +126,17 @@ class CollectGameData
         let enemies = [];
         let npcs = [];
         let traders = [];
-        for(let obj of objManager.roomObjectsData) {
-            let assets = obj.related_objects_assets;
+        for(let roomObject of objManager.roomObjectsData) {
+            let assets = roomObject.related_objects_assets;
             let assetKey = assets && assets[0] ? assets[0].asset_key : null;
-            let entry = { assetKey, objectId: obj.id, objectClassKey: obj.object_class_key };
-            if(CollectGameData.OBJECT_TYPE_ENEMY === obj.class_type) {
+            let entry = { assetKey, objectId: roomObject.id, objectClassKey: roomObject.object_class_key };
+            if(CollectGameData.OBJECT_TYPE_ENEMY === roomObject.class_type) {
                 enemies.push(entry);
             }
-            if(CollectGameData.OBJECT_TYPE_NPC === obj.class_type) {
+            if(CollectGameData.OBJECT_TYPE_NPC === roomObject.class_type) {
                 npcs.push(entry);
             }
-            if(CollectGameData.OBJECT_TYPE_TRADER === obj.class_type) {
+            if(CollectGameData.OBJECT_TYPE_TRADER === roomObject.class_type) {
                 traders.push(entry);
             }
         }
@@ -222,6 +223,7 @@ class CollectGameData
         FileHandler.writeFile(outputPath, JSON.stringify(gameData, null, 4));
         Logger.info('[collect-game-data] Written: '+outputPath);
         CollectGameData.attachEventListeners(serverManager);
+        await TestDataSetup.ensureRequiredItems(serverManager.dataServer, config);
         let snapshots = await PlayerStateReset.captureSnapshots(serverManager.dataServer, config);
         PlayerStateReset.registerResetEndpoint(serverManager, snapshots);
         CollectGameData.serverManager = serverManager;

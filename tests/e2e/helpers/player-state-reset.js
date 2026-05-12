@@ -20,9 +20,9 @@ class PlayerStateReset
     static async captureSnapshots(dataServer, config)
     {
         let testUsers = [
-            { username: config.e2eUsername || 'root' },
-            { username: config.e2eUsername2 || 'root2' },
-            { username: config.e2eUsername3 || 'root3' }
+            { username: config.e2eUsername || 'root', playerName: config.e2ePlayerName || 'ImRoot' },
+            { username: config.e2eUsername2 || 'root2', playerName: config.e2ePlayerName2 || 'ImRoot2' },
+            { username: config.e2eUsername3 || 'root3', playerName: config.e2ePlayerName3 || 'ImRoot3' }
         ];
         let snapshots = {};
         for(let u of testUsers){
@@ -34,7 +34,9 @@ class PlayerStateReset
             if(!players || !players.length){
                 continue;
             }
-            let playerId = players[0].id;
+            let matched = players.find(p => p.name === u.playerName) || players[0];
+            let playerId = matched.id;
+            Logger.info('[player-state-reset] Snapshot for: '+matched.name+' (id: '+playerId+')');
             let stats = await dataServer.getEntity('playersStats').loadBy('player_id', playerId);
             let state = await dataServer.getEntity('playersState').loadOneBy('player_id', playerId);
             let inventoryItems = await dataServer.getEntity('itemsInventory').loadBy('owner_id', playerId);
@@ -54,7 +56,11 @@ class PlayerStateReset
     static async restorePlayerInventory(dataServer, inventoryItems)
     {
         for(let invItem of inventoryItems){
-            await dataServer.getEntity('itemsInventory').updateById(invItem.id, { 'is_active': invItem.is_active ? 1 : 0 });
+            await dataServer.getEntity('itemsInventory').updateById(invItem.id, {
+                'is_active': 0,
+                qty: invItem.qty,
+                remaining_uses: invItem.remaining_uses
+            });
         }
     }
 

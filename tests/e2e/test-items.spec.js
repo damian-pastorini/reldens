@@ -10,6 +10,7 @@ const { BaseE2eTest } = require('./base-e2e-test');
 const { Login } = require('./helpers/login');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
+const { Logger } = require('@reldens/utils');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
 
@@ -31,9 +32,23 @@ class TestItems
         let pauseMs = TimeConstants.pauseMs(longRun);
         await page.click(Selectors.hud.playerStatsOpen);
         await expect(page.locator(Selectors.hud.playerStatsUi)).toBeVisible();
-        let statBefore = await page.locator(Selectors.stats.firstValue).first().textContent();
+        let statBefore = JSON.stringify(await page.locator(Selectors.stats.firstValue).allTextContents());
+        await page.click(Selectors.hud.playerStatsClose);
         await page.click(Selectors.hud.inventoryOpen);
         await expect(page.locator(Selectors.inventory.ui)).toBeVisible();
+        let invDiag = await page.evaluate(() => {
+            let panel = document.getElementById('inventory-items');
+            if(!panel) {
+                return { exists: false };
+            }
+            return {
+                exists: true,
+                itemBoxCount: Array.from(panel.querySelectorAll('.item-box')).length,
+                boxIds: Array.from(panel.querySelectorAll('.item-box')).map(b => b.id),
+                imgSrcs: Array.from(panel.querySelectorAll('img')).map(i => i.src)
+            };
+        });
+        Logger.info('[test-items] inv diag: ' + JSON.stringify(invDiag));
         await page.locator(Selectors.inventory.itemImage(itemId)).click({ timeout: TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun) });
         await page.waitForTimeout(pauseMs);
         let equipButton = page.locator(Selectors.inventory.itemEquip(itemId));
@@ -46,16 +61,26 @@ class TestItems
         let setup = await TestItems.loginAndOpenEquipButton(page, gameConfig, longRun);
         await setup.equipButton.click();
         await page.waitForTimeout(1000 + setup.pauseMs);
-        let statEquipped = await page.locator(Selectors.stats.firstValue).first().textContent();
+        await page.click(Selectors.hud.playerStatsOpen);
+        await expect(page.locator(Selectors.hud.playerStatsUi)).toBeVisible();
+        let statEquipped = JSON.stringify(await page.locator(Selectors.stats.firstValue).allTextContents());
         expect(statEquipped, 'Stat must change after equipping item').not.toBe(setup.statBefore);
         await screenshots.capture(page, 'item-equipped');
+        await page.click(Selectors.hud.playerStatsClose);
         await page.click(Selectors.inventory.itemImage(setup.itemId));
+        let statAfter = await TestItems.clickEquipAndReadStat(page, setup);
+        expect(statAfter, 'Stat must revert after unequipping item').toBe(setup.statBefore);
+        await screenshots.capture(page, 'stat-reverted-after-unequip');
+    }
+
+    static async clickEquipAndReadStat(page, setup)
+    {
         await page.waitForTimeout(setup.pauseMs);
         await setup.equipButton.click();
         await page.waitForTimeout(1000 + setup.pauseMs);
-        let statAfter = await page.locator(Selectors.stats.firstValue).first().textContent();
-        expect(statAfter, 'Stat must revert after unequipping item').toBe(setup.statBefore);
-        await screenshots.capture(page, 'stat-reverted-after-unequip');
+        await page.click(Selectors.hud.playerStatsOpen);
+        await expect(page.locator(Selectors.hud.playerStatsUi)).toBeVisible();
+        return JSON.stringify(await page.locator(Selectors.stats.firstValue).allTextContents());
     }
 
     static async runEquippedSlotTest(page, screenshots, gameConfig, longRun)
@@ -116,10 +141,7 @@ class TestItems
             test('equip item changes stat value', async ({ page, screenshots, gameConfig, longRun }) => {
                 let setup = await TestItems.loginAndOpenEquipButton(page, gameConfig, longRun);
                 await screenshots.capture(page, 'equip-button-visible');
-                await page.waitForTimeout(setup.pauseMs);
-                await setup.equipButton.click();
-                await page.waitForTimeout(1000 + setup.pauseMs);
-                let statAfter = await page.locator(Selectors.stats.firstValue).first().textContent();
+                let statAfter = await TestItems.clickEquipAndReadStat(page, setup);
                 expect(statAfter).not.toBe(setup.statBefore);
                 await screenshots.capture(page, 'stat-changed-after-equip');
             });

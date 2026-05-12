@@ -77,6 +77,7 @@ class Selectors
             instructions: '#instructions',
             instructionsContent: '.instructions-content',
             playerStatsOpen: '#player-stats-open',
+            playerStatsClose: '#player-stats-close',
             playerStatsUi: '#player-stats-ui',
             fullScreen: '#full-screen-btn',
             inventoryOpen: '#inventory-open',
@@ -109,11 +110,11 @@ class Selectors
         this.inventory = {
             ui: '#inventory-ui',
             items: '#inventory-items',
-            item: (itemId) => '#item-'+itemId,
-            itemImage: (itemId) => '#item-'+itemId+' .image-container img',
-            itemQty: (itemId) => '#item-qty-'+itemId,
-            itemEquip: (itemId) => '#item-equip-'+itemId,
-            itemUse: (itemId) => '#item-use-'+itemId
+            item: (itemKey) => '.item-box:has(img[src$="/' + itemKey + '.png"])',
+            itemImage: (itemKey) => '#inventory-items img[src$="/' + itemKey + '.png"]',
+            itemQty: (itemKey) => '.item-box:has(img[src$="/' + itemKey + '.png"]) [id^="item-qty-"]',
+            itemEquip: (itemKey) => '.item-box:has(img[src$="/' + itemKey + '.png"]) [id^="item-equip-"]',
+            itemUse: (itemKey) => '.item-box:has(img[src$="/' + itemKey + '.png"]) [id^="item-use-"]'
         };
         this.equipment = {
             ui: '#equipment-ui',
