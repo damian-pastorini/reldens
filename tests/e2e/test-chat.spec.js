@@ -42,7 +42,9 @@ class TestChat
 
     static async openChatOnBothPages(page, secondPage, pauseMs)
     {
+        await page.locator(Selectors.hud.chatOpen).waitFor({ state: 'visible', timeout: TimeConstants.UI_OPEN });
         await page.click(Selectors.hud.chatOpen);
+        await secondPage.locator(Selectors.hud.chatOpen).waitFor({ state: 'visible', timeout: TimeConstants.UI_OPEN });
         await secondPage.click(Selectors.hud.chatOpen);
         await page.waitForTimeout(pauseMs);
         await expect(page.locator(Selectors.chat.input)).toBeVisible();
@@ -109,7 +111,7 @@ class TestChat
         await TestChat.typeChatMessage(page, longRun, '@'+p2.playerName+' '+testMessage);
         await page.waitForTimeout(pauseMs);
         await screenshots.capture(page, 'p1-private-message-typed');
-        await page.click(Selectors.chat.send);
+        await page.locator(Selectors.chat.input).press('Enter');
         await page.waitForTimeout(2000 + pauseMs);
         await expect(secondPage.locator(Selectors.chat.tabContentGeneral)).toContainText(testMessage, { timeout: TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun) });
         await expect(secondPage.locator(Selectors.chat.tabContentPrivate)).toContainText(testMessage, { timeout: TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun) });

@@ -10,7 +10,7 @@ const { Selectors } = require('../selectors');
 
 class Phaser
 {
-    static async _getObjectCoordsByMatch(page, matchProp, matchValue, statusKey)
+    static async getObjectScreenCoordsByProp(page, matchProp, matchValue, statusKey)
     {
         return page.evaluate((args) => {
             let scene = window.reldens.getActiveScene();
@@ -28,7 +28,7 @@ class Phaser
         }, { prop: matchProp, value: matchValue, statusKey });
     }
 
-    static async _waitForObjectMatching(page, matchProp, matchValue, statusKey, timeout)
+    static async waitForObjectWithProp(page, matchProp, matchValue, statusKey, timeout)
     {
         await page.waitForFunction((args) => {
             if(!window.reldens || !window.reldens.activeRoomEvents) {
@@ -64,12 +64,12 @@ class Phaser
 
     static async getObjectScreenCoordsByType(page, type)
     {
-        return Phaser._getObjectCoordsByMatch(page, 'type', type, 'visible');
+        return Phaser.getObjectScreenCoordsByProp(page, 'type', type, 'visible');
     }
 
     static async getObjectScreenCoordsByAssetKey(page, assetKey)
     {
-        return Phaser._getObjectCoordsByMatch(page, 'asset_key', assetKey, 'active');
+        return Phaser.getObjectScreenCoordsByProp(page, 'asset_key', assetKey, 'active');
     }
 
     static async clickObject(page, objKey)
@@ -92,17 +92,17 @@ class Phaser
 
     static async waitForObject(page, objKey, timeout)
     {
-        await Phaser._waitForObjectMatching(page, '__direct__', objKey, null, timeout);
+        await Phaser.waitForObjectWithProp(page, '__direct__', objKey, null, timeout);
     }
 
     static async waitForObjectByAssetKey(page, assetKey, timeout)
     {
-        await Phaser._waitForObjectMatching(page, 'asset_key', assetKey, 'visible', timeout);
+        await Phaser.waitForObjectWithProp(page, 'asset_key', assetKey, 'visible', timeout);
     }
 
     static async waitForObjectByType(page, type, timeout)
     {
-        await Phaser._waitForObjectMatching(page, 'type', type, 'visible', timeout);
+        await Phaser.waitForObjectWithProp(page, 'type', type, 'visible', timeout);
     }
 
     static async waitForPlayerBySessionId(page, sessionId, timeout)
@@ -210,6 +210,27 @@ class Phaser
         }, range, { timeout });
     }
 
+    static async triggerObjectInteraction(page, objectKey)
+    {
+        return page.evaluate((key) => {
+            let scene = window.reldens && window.reldens.getActiveScene && window.reldens.getActiveScene();
+            if(!scene || !scene.objectsAnimations) {
+                return false;
+            }
+            let anim = scene.objectsAnimations[key]
+                || Object.values(scene.objectsAnimations).find(a => a.asset_key === key);
+            if(!anim) {
+                return false;
+            }
+            if(!window.reldens.activeRoomEvents) {
+                return false;
+            }
+            let tempId = (anim.key === anim.asset_key) ? anim.id : anim.key;
+            window.reldens.activeRoomEvents.send({act: 'oi', id: tempId, type: anim.type});
+            return true;
+        }, objectKey);
+    }
+
     static async waitForPlayerInRoomState(page, timeout)
     {
         await page.waitForFunction(() => {
@@ -226,9 +247,9 @@ class Phaser
         return page.evaluate(() => {
             let buttons = document.querySelectorAll('.action-buttons img, .skills-container img');
             let ids = [];
-            for(let btn of buttons) {
-                if(btn.id) {
-                    ids.push(btn.id);
+            for(let button of buttons) {
+                if(button.id) {
+                    ids.push(button.id);
                 }
             }
             return ids;

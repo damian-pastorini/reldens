@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Instructions Panel Opens And Shows Content</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Instructions Panel Opens And Shows Content</h1>
+<p>Test: <code>tests/e2e/test-game-login.spec.js</code> - <em>instructions panel opens and shows content</em></p>
+<p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/instructions-panel-opens-and-shows-content.webm" data-title="Instructions Panel Opens And Shows Content">&#9654; Watch video</a></p>
+<table>
+    <thead>
+        <tr>
+            <th>Action</th>
+            <th>Test Code</th>
+            <th>Test File</th>
+            <th>File Proof</th>
+            <th>Code Proof</th>
+            <th>Comments</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Login as root player</td>
+            <td><code>Login.loginAndStartGame(page, username, password, playerName, longRun)</code></td>
+            <td>test-game-login.spec.js:48</td>
+            <td>tests/e2e/helpers/login.js:77</td>
+            <td><code>static async loginAndStartGame(page, username, password, playerName, longRun, skipUiSelectors = false, scene = null)</code></td>
+            <td>Called via <code>loginRootPlayer</code> using defaults root/root/ImRoot</td>
+        </tr>
+        <tr>
+            <td>Click instructions open button</td>
+            <td><code>page.click(Selectors.hud.instructionsOpen)</code></td>
+            <td>test-game-login.spec.js:50</td>
+            <td>theme/default/assets/html/ui-instructions.html:1</td>
+            <td><code>&lt;img class="open-ui-button" id="instructions-open" src="/assets/icons/instructions.png" alt="open"/&gt;</code></td>
+            <td><code>Selectors.hud.instructionsOpen = '#instructions-open'</code></td>
+        </tr>
+        <tr>
+            <td>Wait for pause</td>
+            <td><code>page.waitForTimeout(pauseMs)</code></td>
+            <td>test-game-login.spec.js:51</td>
+            <td>-</td>
+            <td>-</td>
+            <td>0ms in normal run, 800ms in longRun</td>
+        </tr>
+        <tr>
+            <td>Assert instructions panel is visible</td>
+            <td><code>expect(page.locator(Selectors.hud.instructions)).toBeVisible()</code></td>
+            <td>test-game-login.spec.js:52</td>
+            <td>theme/default/index.html:162</td>
+            <td><code>&lt;div id="instructions" class="hidden"&gt;</code></td>
+            <td><code>Selectors.hud.instructions = '#instructions'</code>; JS removes <code>hidden</code> class on button click</td>
+        </tr>
+        <tr>
+            <td>Assert instructions content is visible</td>
+            <td><code>expect(page.locator(Selectors.hud.instructionsContent)).toBeVisible()</code></td>
+            <td>test-game-login.spec.js:53</td>
+            <td>theme/default/index.html:163</td>
+            <td><code>&lt;div class="instructions-content"&gt;</code></td>
+            <td><code>Selectors.hud.instructionsContent = '.instructions-content'</code>; contains instruction text/list</td>
+        </tr>
+        <tr>
+            <td>Click instructions close button</td>
+            <td><code>page.click(Selectors.hud.instructionsClose)</code></td>
+            <td>test-game-login.spec.js:55</td>
+            <td>theme/default/index.html:175</td>
+            <td><code>&lt;img id="instructions-close" class="box-close" src="./assets/game-ui/corner-x.png" alt="close"/&gt;</code></td>
+            <td><code>Selectors.hud.instructionsClose = '#instructions-close'</code></td>
+        </tr>
+        <tr>
+            <td>Assert instructions panel is hidden</td>
+            <td><code>expect(page.locator(Selectors.hud.instructions)).toBeHidden()</code></td>
+            <td>test-game-login.spec.js:56</td>
+            <td>theme/default/index.html:162</td>
+            <td><code>&lt;div id="instructions" class="hidden"&gt;</code></td>
+            <td>JS adds <code>hidden</code> class back when close is clicked</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>

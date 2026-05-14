@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Player Can Walk In All 4 Directions</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Player Can Walk In All 4 Directions</h1>
+<p>Test: <code>tests/e2e/test-movement.spec.js</code> - <em>player can walk in all 4 directions</em></p>
+<p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/player-can-walk-in-all-4-directions.webm" data-title="player can walk in all 4 directions">&#9654; Watch video</a></p>
+<table>
+    <thead><tr><th>Action</th><th>Test Code</th><th>Test File</th><th>File Proof</th><th>Code Proof</th><th>Comments</th></tr></thead>
+    <tbody>
+        <tr>
+            <td>Login as root/ImRoot and prepare game state</td>
+            <td><code>TestMovement.loginAndPrepare(page, gameConfig, longRun)</code></td>
+            <td>test-movement.spec.js:108</td>
+            <td>tests/e2e/test-movement.spec.js:20</td>
+            <td><code>static async loginAndPrepare(page, gameConfig, longRun)</code></td>
+            <td>Logs in, waits for player in room state, then focuses the game canvas</td>
+        </tr>
+        <tr>
+            <td>Login and start game via form</td>
+            <td><code>Login.loginAndStartGame(page, username, password, playerName, longRun)</code></td>
+            <td>test-movement.spec.js:26</td>
+            <td>tests/e2e/helpers/login.js:77</td>
+            <td><code>static async loginAndStartGame(page, username, password, playerName, longRun, skipUiSelectors = false, scene = null)</code></td>
+            <td>Fills login form, selects player, clicks submit, waits for body.game-engine-started</td>
+        </tr>
+        <tr>
+            <td>Walk right for 800ms</td>
+            <td><code>Navigation.walkInDirection(page, 'ArrowRight', 800)</code></td>
+            <td>test-movement.spec.js:110</td>
+            <td>tests/e2e/helpers/navigation.js:14</td>
+            <td><code>static async walkInDirection(page, arrowKey, durationMs)</code></td>
+            <td>Calls scene.player.right() via evaluate, waits 800ms, then calls scene.player.stop()</td>
+        </tr>
+        <tr>
+            <td>Pause between direction changes</td>
+            <td><code>page.waitForTimeout(pauseMs)</code></td>
+            <td>test-movement.spec.js:111</td>
+            <td>tests/e2e/test-movement.spec.js:111</td>
+            <td><code>await page.waitForTimeout(pauseMs);</code></td>
+            <td>pauseMs is 300 (longRun) or 200 (normal); applied after each direction change</td>
+        </tr>
+        <tr>
+            <td>Walk left for 800ms</td>
+            <td><code>Navigation.walkInDirection(page, 'ArrowLeft', 800)</code></td>
+            <td>test-movement.spec.js:113</td>
+            <td>tests/e2e/helpers/navigation.js:14</td>
+            <td><code>static async walkInDirection(page, arrowKey, durationMs)</code></td>
+            <td>Calls scene.player.left() via evaluate, waits 800ms, then stops</td>
+        </tr>
+        <tr>
+            <td>Walk down for 800ms</td>
+            <td><code>Navigation.walkInDirection(page, 'ArrowDown', 800)</code></td>
+            <td>test-movement.spec.js:116</td>
+            <td>tests/e2e/helpers/navigation.js:14</td>
+            <td><code>static async walkInDirection(page, arrowKey, durationMs)</code></td>
+            <td>Calls scene.player.down() via evaluate, waits 800ms, then stops</td>
+        </tr>
+        <tr>
+            <td>Walk up for 800ms</td>
+            <td><code>Navigation.walkInDirection(page, 'ArrowUp', 800)</code></td>
+            <td>test-movement.spec.js:119</td>
+            <td>tests/e2e/helpers/navigation.js:14</td>
+            <td><code>static async walkInDirection(page, arrowKey, durationMs)</code></td>
+            <td>Calls scene.player.up() via evaluate, waits 800ms, then stops</td>
+        </tr>
+        <tr>
+            <td>Read final server position after all directions</td>
+            <td><code>Phaser.getPlayerServerPosition(page)</code></td>
+            <td>test-movement.spec.js:122</td>
+            <td>tests/e2e/helpers/phaser.js:145</td>
+            <td><code>static async getPlayerServerPosition(page)</code></td>
+            <td>Returns {x, y} from server room state after all 4 direction walks complete</td>
+        </tr>
+        <tr>
+            <td>Assert final position is not null</td>
+            <td><code>expect(position).not.toBeNull()</code></td>
+            <td>test-movement.spec.js:123</td>
+            <td>tests/e2e/test-movement.spec.js:123</td>
+            <td><code>expect(position).not.toBeNull();</code></td>
+            <td>Confirms the player is still in a valid room state after walking all 4 directions</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>

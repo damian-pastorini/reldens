@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Arrow Key Movement Changes Player Position</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Arrow Key Movement Changes Player Position</h1>
+<p>Test: <code>tests/e2e/test-movement.spec.js</code> - <em>arrow key movement changes player position</em></p>
+<p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/arrow-key-movement-changes-player-position.webm" data-title="arrow key movement changes player position">&#9654; Watch video</a></p>
+<table>
+    <thead><tr><th>Action</th><th>Test Code</th><th>Test File</th><th>File Proof</th><th>Code Proof</th><th>Comments</th></tr></thead>
+    <tbody>
+        <tr>
+            <td>Login as root/ImRoot and prepare game state</td>
+            <td><code>TestMovement.loginAndPrepare(page, gameConfig, longRun)</code></td>
+            <td>test-movement.spec.js:94</td>
+            <td>tests/e2e/test-movement.spec.js:20</td>
+            <td><code>static async loginAndPrepare(page, gameConfig, longRun)</code></td>
+            <td>Logs in, waits for player in room state, then focuses the game canvas</td>
+        </tr>
+        <tr>
+            <td>Login and start game via form</td>
+            <td><code>Login.loginAndStartGame(page, username, password, playerName, longRun)</code></td>
+            <td>test-movement.spec.js:26</td>
+            <td>tests/e2e/helpers/login.js:77</td>
+            <td><code>static async loginAndStartGame(page, username, password, playerName, longRun, skipUiSelectors = false, scene = null)</code></td>
+            <td>Fills login form, selects player, clicks submit, waits for body.game-engine-started</td>
+        </tr>
+        <tr>
+            <td>Wait for player to appear in room state</td>
+            <td><code>Phaser.waitForPlayerInRoomState(page, TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun))</code></td>
+            <td>test-movement.spec.js:27</td>
+            <td>tests/e2e/helpers/phaser.js:213</td>
+            <td><code>static async waitForPlayerInRoomState(page, timeout)</code></td>
+            <td>Polls window.reldens.activeRoomEvents.room.state.players until the current session ID is present</td>
+        </tr>
+        <tr>
+            <td>Focus the game canvas</td>
+            <td><code>Navigation.focusGame(page)</code></td>
+            <td>test-movement.spec.js:28</td>
+            <td>tests/e2e/helpers/navigation.js:27</td>
+            <td><code>static async focusGame(page)</code></td>
+            <td>Clicks canvas at position {10,10} with force:true to ensure keyboard events are received</td>
+        </tr>
+        <tr>
+            <td>Read player server position before movement</td>
+            <td><code>Phaser.getPlayerServerPosition(page)</code></td>
+            <td>test-movement.spec.js:95</td>
+            <td>tests/e2e/helpers/phaser.js:145</td>
+            <td><code>static async getPlayerServerPosition(page)</code></td>
+            <td>Returns {x, y} from room.state.players via playerBySessionIdFromState; used as baseline before movement</td>
+        </tr>
+        <tr>
+            <td>Walk right for 1500ms using ArrowRight</td>
+            <td><code>Navigation.walkInDirection(page, 'ArrowRight', 1500)</code></td>
+            <td>test-movement.spec.js:97</td>
+            <td>tests/e2e/helpers/navigation.js:14</td>
+            <td><code>static async walkInDirection(page, arrowKey, durationMs)</code></td>
+            <td>Calls scene.player.right() via evaluate, waits durationMs, then calls scene.player.stop()</td>
+        </tr>
+        <tr>
+            <td>Wait 500ms for server to register movement</td>
+            <td><code>page.waitForTimeout(500)</code></td>
+            <td>test-movement.spec.js:98</td>
+            <td>tests/e2e/test-movement.spec.js:98</td>
+            <td><code>await page.waitForTimeout(500);</code></td>
+            <td>Allows server state to propagate back to the client after movement stops</td>
+        </tr>
+        <tr>
+            <td>Read player server position after movement</td>
+            <td><code>Phaser.getPlayerServerPosition(page)</code></td>
+            <td>test-movement.spec.js:99</td>
+            <td>tests/e2e/helpers/phaser.js:145</td>
+            <td><code>static async getPlayerServerPosition(page)</code></td>
+            <td>Reads the updated server-authoritative position after ArrowRight walk</td>
+        </tr>
+        <tr>
+            <td>Assert before position is not null</td>
+            <td><code>expect(before).not.toBeNull()</code></td>
+            <td>test-movement.spec.js:100</td>
+            <td>tests/e2e/test-movement.spec.js:100</td>
+            <td><code>expect(before).not.toBeNull();</code></td>
+            <td>Confirms position was readable before movement - guards against state not being initialized</td>
+        </tr>
+        <tr>
+            <td>Assert after position is not null</td>
+            <td><code>expect(after).not.toBeNull()</code></td>
+            <td>test-movement.spec.js:101</td>
+            <td>tests/e2e/test-movement.spec.js:101</td>
+            <td><code>expect(after).not.toBeNull();</code></td>
+            <td>Confirms position was readable after movement</td>
+        </tr>
+        <tr>
+            <td>Assert player position changed after arrow key movement</td>
+            <td><code>expect(moved, 'Player position did not change after arrow key movement').toBeTruthy()</code></td>
+            <td>test-movement.spec.js:103</td>
+            <td>tests/e2e/test-movement.spec.js:103</td>
+            <td><code>expect(moved, 'Player position did not change after arrow key movement').toBeTruthy();</code></td>
+            <td>Core assertion - after.x !== before.x OR after.y !== before.y must be true</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>

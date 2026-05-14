@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Player Opens Chest And Receives Interaction Response</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Player Opens Chest And Receives Interaction Response</h1>
+<p>Test: <code>tests/e2e/test-interactive-objects.spec.js</code> - <em>player opens chest and receives interaction response</em></p>
+<p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/player-opens-chest-and-receives-interaction-response.webm" data-title="Player Opens Chest And Receives Interaction Response">&#9654; Watch video</a></p>
+<table>
+    <thead>
+        <tr>
+            <th>Action</th>
+            <th>Test Code</th>
+            <th>Test File</th>
+            <th>File Proof</th>
+            <th>Code Proof</th>
+            <th>Comments</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Set extended test timeout</td>
+            <td><code>test.setTimeout(TimeConstants.forLongRun(60000, longRun))</code></td>
+            <td>test-interactive-objects.spec.js:120</td>
+            <td>tests/e2e/helpers/time-constants.js:40</td>
+            <td><code>static forLongRun(value, longRun)</code></td>
+            <td>Extends timeout to 60s (240s in longRun) because login + forest navigation + navigation to chest + dialogue wait can exceed the default 30s</td>
+        </tr>
+        <tr>
+            <td>Assert chest key is configured</td>
+            <td><code>let objectKey = gameConfig.e2eChestKey || ''</code><br><code>expect(objectKey, 'e2eChestKey not configured').toBeTruthy()</code></td>
+            <td>test-interactive-objects.spec.js:121-122</td>
+            <td>-</td>
+            <td>-</td>
+            <td>Test fails immediately if <code>e2eChestKey</code> is not present in <code>tests/config.json</code></td>
+        </tr>
+        <tr>
+            <td>Login and enter reldens-forest scene</td>
+            <td><code>TestInteractiveObjects.loginAndEnterForest(page, gameConfig, longRun)</code></td>
+            <td>test-interactive-objects.spec.js:123</td>
+            <td>tests/e2e/helpers/login.js:77</td>
+            <td><code>static async loginAndStartGame(page, username, password, playerName, longRun, false, 'reldens-forest')</code></td>
+            <td>Logs in as root/ImRoot, selects reldens-forest at login; <code>ensureInRoom</code> returns immediately since player starts in forest</td>
+        </tr>
+        <tr>
+            <td>Wait for chest object to appear in scene</td>
+            <td><code>TestInteractiveObjects.waitForObjectInScene(page, objectKey, forestData.sceneTimeout)</code></td>
+            <td>test-interactive-objects.spec.js:125</td>
+            <td>tests/e2e/helpers/phaser.js:98</td>
+            <td><code>static async waitForObjectByAssetKey(page, assetKey, timeout)</code></td>
+            <td>Polls <code>scene.objectsAnimations</code> for an object matching <code>objectKey</code> (e.g. <code>chest_forest_1</code>); falls back to direct key lookup if asset key not found</td>
+        </tr>
+        <tr>
+            <td>Navigate player within interaction range of chest</td>
+            <td><code>TestInteractiveObjects.navigateToObjectAndAssertInRange(page, objectKey, forestData, 'chest')</code></td>
+            <td>test-interactive-objects.spec.js:127</td>
+            <td>tests/e2e/helpers/navigation.js:177</td>
+            <td><code>static async moveToObjectWithinRange(...)</code></td>
+            <td>Walks player within 50px of the chest; tries <code>visible</code> then <code>active</code> status key for object lookup</td>
+        </tr>
+        <tr>
+            <td>Trigger chest interaction</td>
+            <td><code>TestInteractiveObjects.clickObjectByAssetKeyOrKey(page, objectKey)</code></td>
+            <td>test-interactive-objects.spec.js:129</td>
+            <td>tests/e2e/helpers/phaser.js:213</td>
+            <td><code>static async triggerObjectInteraction(page, objectKey)</code></td>
+            <td>Sends <code>{act: 'oi', id: tempId, type: anim.type}</code> directly via <code>activeRoomEvents.send()</code>; bypasses canvas click coordinate issues while exercising the full server interaction flow. Falls back to canvas click if trigger returns false.</td>
+        </tr>
+        <tr>
+            <td>Wait for server to process interaction</td>
+            <td><code>page.waitForTimeout(2000 + forestData.pauseMs)</code></td>
+            <td>test-interactive-objects.spec.js:130</td>
+            <td>-</td>
+            <td>-</td>
+            <td>2-second wait (+ longRun pause) for: send &rarr; server processes interaction &rarr; server sends UI response &rarr; client calls <code>initUi</code> &rarr; <code>dialogContainer.style.display = 'block'</code></td>
+        </tr>
+        <tr>
+            <td>Wait for NPC dialogue box to show and assert visible</td>
+            <td><code>TestInteractiveObjects.waitForNpcDialogue(page, Selectors.npc.dialogue, npcTimeout)</code><br><code>expect(dialogVisible, 'NPC dialogue box must be visible after chest interaction').toBeTruthy()</code></td>
+            <td>test-interactive-objects.spec.js:133-138</td>
+            <td>lib/game/client/room-events.js:661</td>
+            <td><code>dialogContainer.style.display = shouldSetDisplayNone ? 'none' : 'block'</code></td>
+            <td>Uses <code>waitForFunction</code> to poll <code>document.querySelectorAll('.type-npc')</code> checking <code>element.style.display === 'block'</code>; reads the inline style set by <code>initUi</code> directly, bypassing Playwright's geometry-based visibility check which fails for elements inside Phaser's <code>overflow:hidden</code> DOM container positioned via CSS transforms</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>

@@ -2,10 +2,10 @@
     "players": {
         "root": {
             "name": "ImRoot",
-            "roomId": 5,
+            "roomId": 4,
             "classPathId": 1,
             "currentLevel": 10,
-            "currentExp": 9090,
+            "currentExp": 9330,
             "skills": [
                 {
                     "key": "attackShort",
@@ -162,22 +162,6 @@
                     "objectClassKey": "npc_3"
                 }
             ]
-        },
-        "5": {
-            "enemies": [],
-            "npcs": [
-                {
-                    "assetKey": "quest_npc_1",
-                    "objectId": 13,
-                    "objectClassKey": "npc_5"
-                },
-                {
-                    "assetKey": "chest_forest_1",
-                    "objectId": 18,
-                    "objectClassKey": "chest_forest_1"
-                }
-            ],
-            "traders": []
         }
     },
     "items": {

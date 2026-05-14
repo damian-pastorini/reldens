@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Player Can Claim An Active Daily Login Reward</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Player Can Claim An Active Daily Login Reward</h1>
+<p>Test: <code>tests/e2e/test-rewards.spec.js</code> - <em>player can claim an active daily login reward</em></p>
+<p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/player-can-claim-an-active-daily-login-reward.webm" data-title="player can claim an active daily login reward">&#9654; Watch video</a></p>
+<table>
+    <thead><tr><th>Action</th><th>Test Code</th><th>Test File</th><th>File Proof</th><th>Code Proof</th><th>Comments</th></tr></thead>
+    <tbody>
+        <tr>
+            <td>Log in as root player, open rewards panel and assert dialog is visible</td>
+            <td><code>await TestRewards.loginAndOpenRewardsPanel(page, gameConfig, longRun)</code></td>
+            <td>test-rewards.spec.js:49</td>
+            <td>tests/e2e/helpers/login.js:77</td>
+            <td><code>static async loginAndStartGame(page, username, password, playerName, longRun, skipUiSelectors = false, scene = null)</code></td>
+            <td>Calls loginRootPlayer then clicks the rewards button and waits for the .rewards-dialog-box to be visible. Returns the pauseMs value for use in the test.</td>
+        </tr>
+        <tr>
+            <td>Locate the first active reward element</td>
+            <td><code>let activeReward = page.locator(Selectors.rewards.active).first()</code></td>
+            <td>test-rewards.spec.js:50</td>
+            <td>tests/e2e/selectors.js:146</td>
+            <td><code>active: '.reward-active'</code></td>
+            <td>Creates a locator for the first element matching .reward-active - represents a reward that is currently available to claim.</td>
+        </tr>
+        <tr>
+            <td>Check whether an active reward is currently visible</td>
+            <td><code>let hasActive = await activeReward.isVisible().catch(() => false)</code></td>
+            <td>test-rewards.spec.js:51</td>
+            <td>tests/e2e/selectors.js:146</td>
+            <td><code>active: '.reward-active'</code></td>
+            <td>Uses isVisible() with a catch fallback to false - gracefully handles the case where no .reward-active element exists in the DOM.</td>
+        </tr>
+        <tr>
+            <td>Assert an active reward is available to claim</td>
+            <td><code>expect(hasActive, 'No active reward available to claim').toBeTruthy()</code></td>
+            <td>test-rewards.spec.js:52</td>
+            <td>tests/e2e/selectors.js:146</td>
+            <td><code>active: '.reward-active'</code></td>
+            <td>Fails with a descriptive message if no claimable reward is found. This test requires the game data to have an active daily login reward configured for the player.</td>
+        </tr>
+        <tr>
+            <td>Capture screenshot showing the active reward before claiming</td>
+            <td><code>await screenshots.capture(page, 'active-reward-visible')</code></td>
+            <td>test-rewards.spec.js:53</td>
+            <td>tests/e2e/test-rewards.spec.js:53</td>
+            <td><code>await screenshots.capture(page, 'active-reward-visible')</code></td>
+            <td>Saves a screenshot named active-reward-visible documenting the state of the rewards panel before the claim action.</td>
+        </tr>
+        <tr>
+            <td>Click the active reward to claim it</td>
+            <td><code>await activeReward.click()</code></td>
+            <td>test-rewards.spec.js:54</td>
+            <td>tests/e2e/selectors.js:146</td>
+            <td><code>active: '.reward-active'</code></td>
+            <td>Clicks the .reward-active element to submit the claim to the server. The server processes the claim and updates the reward state.</td>
+        </tr>
+        <tr>
+            <td>Assert the accepted reward confirmation element is visible</td>
+            <td><code>await expect(page.locator(Selectors.rewards.accepted)).toBeVisible(<br>{ timeout: TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun) }<br>)</code></td>
+            <td>test-rewards.spec.js:55-57</td>
+            <td>tests/e2e/selectors.js:147</td>
+            <td><code>accepted: '.accepted-reward'</code></td>
+            <td>Confirms the .accepted-reward element becomes visible after clicking - verifies the server confirmed the claim and the UI updated to show accepted state. Uses UI_OPEN timeout (3000ms scaled for longRun).</td>
+        </tr>
+        <tr>
+            <td>Capture screenshot showing the accepted reward confirmation</td>
+            <td><code>await screenshots.capture(page, 'reward-accepted')</code></td>
+            <td>test-rewards.spec.js:58</td>
+            <td>tests/e2e/test-rewards.spec.js:58</td>
+            <td><code>await screenshots.capture(page, 'reward-accepted')</code></td>
+            <td>Saves a screenshot named reward-accepted documenting the final state after the reward was successfully claimed.</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Combat Skill (Effect) - heal Applies Effect On Cast</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Combat Skill (Effect) - heal Applies Effect On Cast</h1>
+<p>Test: <code>tests/e2e/test-combat.spec.js</code> - <em>combat skill (effect) - heal applies effect on cast</em></p>
+<p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/combat-skill-effect---heal-applies-effect-on-cast.webm" data-title="Combat Skill (Effect) - heal Applies Effect On Cast">&#9654; Watch video</a></p>
+<table>
+    <thead>
+        <tr>
+            <th>Action</th>
+            <th>Test Code</th>
+            <th>Test File</th>
+            <th>File Proof</th>
+            <th>Code Proof</th>
+            <th>Comments</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Prepare skill cast context</td>
+            <td><code>TestCombat.prepareSkillCastContext(page, screenshots, gameConfig, longRun, skill, 'effect')</code></td>
+            <td>test-combat.spec.js:160 (via <code>runEffectSkillTest</code>)</td>
+            <td>test-combat.spec.js:136</td>
+            <td><code>static async prepareSkillCastContext(page, screenshots, gameConfig, longRun, skill, context)</code></td>
+            <td>Logs in to forest, walks within heal range (100), targets enemy, opens chat; heal skill type = 3 (effect)</td>
+        </tr>
+        <tr>
+            <td>Assert heal skill button is present in HUD</td>
+            <td><code>expect(page.locator(Selectors.combat.skillButton(skill.key)), 'Effect skill button must be present in HUD').toBeVisible({ timeout: ... })</code></td>
+            <td>test-combat.spec.js:161-163</td>
+            <td>tests/e2e/game-data.json:49-57</td>
+            <td><code>"key": "heal", "type": 3, "range": 100</code></td>
+            <td><code>Selectors.combat.skillButton('heal') = '#heal'</code>; button must be visible before clicking to confirm HUD rendered the skill</td>
+        </tr>
+        <tr>
+            <td>Click heal skill button (force)</td>
+            <td><code>page.click(Selectors.combat.skillButton(skill.key), { force: true })</code></td>
+            <td>test-combat.spec.js:165</td>
+            <td>tests/e2e/game-data.json:51</td>
+            <td><code>"key": "heal"</code></td>
+            <td><code>force: true</code> bypasses pointer-events check; effect skills apply to player or friendly target</td>
+        </tr>
+        <tr>
+            <td>Wait for cast to complete</td>
+            <td><code>page.waitForTimeout(2000 + data.pauseMs)</code></td>
+            <td>test-combat.spec.js:166</td>
+            <td>-</td>
+            <td>-</td>
+            <td>2-second wait (plus configured pause) for server to process and apply the heal effect; no chat message assertion for effect skills</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>

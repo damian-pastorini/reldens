@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: PlayerQuestsData Is Accessible After Room Transition</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: PlayerQuestsData Is Accessible After Room Transition</h1>
+<p>Test: <code>tests/e2e/test-quests-tracking.spec.js</code> - <em>playerQuestsData is accessible after room transition</em></p>
+<p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/playerquestsdata-is-accessible-after-room-transition.webm" data-title="playerQuestsData is accessible after room transition">&#9654; Watch video</a></p>
+<table>
+    <thead><tr><th>Action</th><th>Test Code</th><th>Test File</th><th>File Proof</th><th>Code Proof</th><th>Comments</th></tr></thead>
+    <tbody>
+        <tr>
+            <td>Read credentials and player name from game config with fallbacks</td>
+            <td><code>let username = gameConfig.e2eUsername || 'root';<br>let password = gameConfig.e2ePassword || 'root';<br>let playerName = gameConfig.e2ePlayerName || 'ImRoot';</code></td>
+            <td>test-quests-tracking.spec.js:51-53</td>
+            <td>tests/e2e/test-quests-tracking.spec.js:51</td>
+            <td><code>let username = gameConfig.e2eUsername || 'root';</code></td>
+            <td>Fixture values override defaults; defaults allow running the test without extra config</td>
+        </tr>
+        <tr>
+            <td>Log in and start the game with the configured player</td>
+            <td><code>await Login.loginAndStartGame(page, username, password, playerName, longRun);</code></td>
+            <td>test-quests-tracking.spec.js:54</td>
+            <td>tests/e2e/helpers/login.js:77</td>
+            <td><code>static async loginAndStartGame(page, username, password, playerName, longRun, skipUiSelectors = false, scene = null)</code></td>
+            <td>Handles full login flow - form fill, player selection, game start, and HUD selector validation</td>
+        </tr>
+        <tr>
+            <td>Set timeout based on longRun flag</td>
+            <td><code>let waitTimeout = longRun ? 30000 : 15000;</code></td>
+            <td>test-quests-tracking.spec.js:55</td>
+            <td>tests/e2e/test-quests-tracking.spec.js:55</td>
+            <td><code>let waitTimeout = longRun ? 30000 : 15000;</code></td>
+            <td>Allows slower environments to wait longer for the quests message to arrive</td>
+        </tr>
+        <tr>
+            <td>Wait until window.reldens.playerQuestsData is an array in the initial room</td>
+            <td><code>await TestQuestsTracking.waitForPlayerQuestsData(page, waitTimeout);</code></td>
+            <td>test-quests-tracking.spec.js:56</td>
+            <td>tests/e2e/test-quests-tracking.spec.js:20-22</td>
+            <td><code>await page.waitForFunction(() => {<br>    return window.reldens && Array.isArray(window.reldens.playerQuestsData);<br>}, { timeout: timeout || 15000 });</code></td>
+            <td>Confirms quests data is present before the room transition occurs</td>
+        </tr>
+        <tr>
+            <td>Read playerQuestsData value from the initial room</td>
+            <td><code>let questsDataInitial = await TestQuestsTracking.getPlayerQuestsData(page);</code></td>
+            <td>test-quests-tracking.spec.js:57</td>
+            <td>tests/e2e/test-quests-tracking.spec.js:27-32</td>
+            <td><code>return page.evaluate(() => {<br>    if(!window.reldens){ return null; }<br>    return window.reldens.playerQuestsData;<br>});</code></td>
+            <td>Captures the quests data state in the initial room before any transition</td>
+        </tr>
+        <tr>
+            <td>Capture screenshot of the initial room state</td>
+            <td><code>await screenshots.capture(page, 'quests-initial-room');</code></td>
+            <td>test-quests-tracking.spec.js:58</td>
+            <td>tests/e2e/test-quests-tracking.spec.js:58</td>
+            <td><code>await screenshots.capture(page, 'quests-initial-room');</code></td>
+            <td>Visual evidence of the game state when playerQuestsData was read from the initial room</td>
+        </tr>
+        <tr>
+            <td>Assert playerQuestsData is an array in the initial room</td>
+            <td><code>expect(Array.isArray(questsDataInitial), 'playerQuestsData must be array in initial room').toBeTruthy();</code></td>
+            <td>test-quests-tracking.spec.js:59</td>
+            <td>lib/quests/client/plugin.js:31</td>
+            <td><code>gameManager.playerQuestsData = message.quests || [];</code></td>
+            <td>The client plugin sets playerQuestsData to the quests array from the server message; verifies it persists and is accessible after the room join event</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Teams Panel Opens And Shows Content</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Teams Panel Opens And Shows Content</h1>
+<p>Test: <code>tests/e2e/test-teams.spec.js</code> - <em>teams panel opens and shows content</em></p>
+<p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/teams-panel-opens-and-shows-content.webm" data-title="teams panel opens and shows content">&#9654; Watch video</a></p>
+<table>
+    <thead><tr><th>Action</th><th>Test Code</th><th>Test File</th><th>File Proof</th><th>Code Proof</th><th>Comments</th></tr></thead>
+    <tbody>
+        <tr>
+            <td>Log in as root2/ImRoot2 via loginRoot2Player helper</td>
+            <td><code>await TestTeams.loginRoot2Player(page, gameConfig, longRun)</code></td>
+            <td>test-teams.spec.js:58</td>
+            <td>tests/e2e/helpers/login.js:77</td>
+            <td><code>static async loginAndStartGame(page, username, password, playerName, longRun, skipUiSelectors = false, scene = null)</code></td>
+            <td>Single player login using root2/ImRoot2 credentials - no second page needed for this test</td>
+        </tr>
+        <tr>
+            <td>Click the teams HUD button to open the teams dialog</td>
+            <td><code>await page.click(Selectors.hud.teamsOpen)</code></td>
+            <td>test-teams.spec.js:60</td>
+            <td>tests/e2e/selectors.js:89</td>
+            <td><code>teamsOpen: '.teams-open'</code></td>
+            <td>Clicks the .teams-open HUD button to trigger the teams panel</td>
+        </tr>
+        <tr>
+            <td>Wait for pause and assert teams dialog box is visible</td>
+            <td><code>await page.waitForTimeout(pauseMs);<br>await expect(page.locator(Selectors.teams.dialog)).toBeVisible(<br>  { timeout: TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun) }<br>)</code></td>
+            <td>test-teams.spec.js:61</td>
+            <td>tests/e2e/selectors.js:150</td>
+            <td><code>dialog: '.teams-dialog-box'</code></td>
+            <td>Waits up to UI_OPEN (3000ms) for .teams-dialog-box to become visible</td>
+        </tr>
+        <tr>
+            <td>Assert teams dialog content is visible</td>
+            <td><code>await expect(page.locator(Selectors.teams.dialogContent)).toBeVisible()</code></td>
+            <td>test-teams.spec.js:65</td>
+            <td>tests/e2e/selectors.js:151</td>
+            <td><code>dialogContent: '.teams-dialog-box .box-content'</code></td>
+            <td>Confirms the inner content area of the dialog is rendered - not just the box shell</td>
+        </tr>
+        <tr>
+            <td>Capture screenshot of teams panel open state</td>
+            <td><code>await screenshots.capture(page, 'teams-panel-open')</code></td>
+            <td>test-teams.spec.js:66</td>
+            <td>tests/e2e/test-teams.spec.js:66</td>
+            <td><code>await screenshots.capture(page, 'teams-panel-open')</code></td>
+            <td>Visual proof that the teams dialog is open and displaying content</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>

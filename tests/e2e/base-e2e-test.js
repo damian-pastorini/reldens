@@ -73,8 +73,8 @@ class BaseE2eTest
 
     static browserCursorScript()
     {
-        let el = document.createElement('div');
-        el.style.cssText = [
+        let cursorEl = document.createElement('div');
+        cursorEl.style.cssText = [
             'position:fixed',
             'top:0',
             'left:0',
@@ -90,27 +90,34 @@ class BaseE2eTest
             'transition:background 0.1s'
         ].join(';');
         document.addEventListener('DOMContentLoaded', () => {
-            document.body.appendChild(el);
+            document.body.appendChild(cursorEl);
         });
-        document.addEventListener('mousemove', (e) => {
-            el.style.left = e.clientX+'px';
-            el.style.top = e.clientY+'px';
+        document.addEventListener('mousemove', (event) => {
+            cursorEl.style.left = event.clientX+'px';
+            cursorEl.style.top = event.clientY+'px';
         });
         document.addEventListener('mousedown', () => {
-            el.style.background = 'rgba(255,220,50,0.95)';
+            cursorEl.style.background = 'rgba(255,220,50,0.95)';
         });
         document.addEventListener('mouseup', () => {
-            el.style.background = 'rgba(255,80,80,0.85)';
+            cursorEl.style.background = 'rgba(255,80,80,0.85)';
         });
     }
 
     static async makeContext(browser)
     {
         let outputDir = FileHandler.joinPaths(process.cwd(), 'test-results');
+        let envPort = process.env.RELDENS_E2E_PORT || null;
+        let effectiveBaseUrl = envPort
+            ? 'http://localhost:'+envPort
+            : (BaseE2eTest.gameConfig.baseUrl || 'http://localhost:8080');
+        let recordVideoConfig = {};
+        recordVideoConfig['dir'] = outputDir;
+        recordVideoConfig['size'] = { width: 1280, height: 1080 };
         let context = await browser.newContext({
-            baseURL: BaseE2eTest.gameConfig.baseUrl || 'http://localhost:8080',
+            baseURL: effectiveBaseUrl,
             viewport: { width: 1280, height: 1080 },
-            recordVideo: { dir: outputDir, size: { width: 1280, height: 1080 } }
+            recordVideo: recordVideoConfig
         });
         await context.addInitScript(BaseE2eTest.browserCursorScript);
         return context;

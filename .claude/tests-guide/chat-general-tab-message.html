@@ -8,68 +8,66 @@
 <body>
 <p><a href="index.html">&larr; Back to index</a></p>
 <h1>Verification: Send Message And Verify It Appears In Chat</h1>
-<p>Test: <code>tests/e2e/test-chat.spec.js</code> - <em>send message and verify it appears in chat</em> (line 6)</p>
+<p>Test: <code>tests/e2e/test-chat.spec.js</code> - <em>send message and verify it appears in chat</em></p>
 <p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/send-message-and-verify-it-appears-in-chat.webm" data-title="send message and verify it appears in chat">&#9654; Watch video</a></p>
-
 <table>
-    <thead>
-        <tr>
-            <th>Action</th>
-            <th>Test Code</th>
-            <th>Test File</th>
-            <th>File Proof</th>
-            <th>Code Proof</th>
-            <th>Comments</th>
-        </tr>
-    </thead>
+    <thead><tr><th>Action</th><th>Test Code</th><th>Test File</th><th>File Proof</th><th>Code Proof</th><th>Comments</th></tr></thead>
     <tbody>
         <tr>
-            <td>Login and start game</td>
-            <td><code>LoginHelper.loginAndStartGame(page, username, password, playerName, longRun)</code></td>
-            <td>test-chat.spec.js:10</td>
-            <td>tests/e2e/helpers/login.js:41-88</td>
-            <td><code>static async loginAndStartGame(page, username, password, playerName, longRun)</code></td>
+            <td>Login and start game (root player)</td>
+            <td><code>Login.loginAndStartGame(page, username, password, playerName, longRun)</code></td>
+            <td>test-chat.spec.js:54</td>
+            <td>tests/e2e/helpers/login.js:77</td>
+            <td><code>static async loginAndStartGame(...)</code></td>
             <td>Uses <code>e2eUsername</code>/<code>e2ePassword</code>/<code>e2ePlayerName</code> (defaults: root/root/ImRoot)</td>
         </tr>
         <tr>
-            <td>Click the chat open button</td>
-            <td><code>page.click('#chat-open')</code></td>
-            <td>test-chat.spec.js:13</td>
+            <td>Click chat open button</td>
+            <td><code>page.click(Selectors.hud.chatOpen)</code></td>
+            <td>test-chat.spec.js:57</td>
             <td>theme/default/assets/features/chat/templates/ui-chat.html:8</td>
             <td><code>&lt;div class="open-ui-button" id="chat-open"&gt;</code></td>
-            <td>Button is always visible in-game; clicking it toggles the chat panel via <code>ChatConst.CHAT_OPEN_BUTTON</code> (chat/constants.js:36)</td>
+            <td>Toggles the chat panel; removes <code>hidden</code> class from <code>#chat-ui</code></td>
         </tr>
         <tr>
-            <td>Assert chat input field is visible</td>
-            <td><code>expect(page.locator('#chat-input')).toBeVisible()</code></td>
-            <td>test-chat.spec.js:15</td>
+            <td>Assert chat input is visible</td>
+            <td><code>expect(page.locator(Selectors.chat.input)).toBeVisible()</code></td>
+            <td>test-chat.spec.js:59</td>
             <td>theme/default/assets/features/chat/templates/ui-chat.html:5</td>
             <td><code>&lt;input id="chat-input" type="text" placeholder="Enter message"/&gt;</code></td>
-            <td>The <code>#chat-ui</code> container has class <code>hidden</code> by default; clicking <code>#chat-open</code> removes it - confirms chat panel opened</td>
+            <td>Confirms chat panel opened</td>
         </tr>
         <tr>
-            <td>Click chat input and type test message</td>
-            <td><code>page.locator('#chat-input').click()</code><br><code>page.locator('#chat-input').pressSequentially(testMessage, ...)</code></td>
-            <td>test-chat.spec.js:16-17</td>
+            <td>Click input and type test message</td>
+            <td><code>page.locator(Selectors.chat.input).click()</code><br><code>page.locator(Selectors.chat.input).pressSequentially(testMessage, { delay: 80 })</code> (longRun) or <code>.fill(testMessage)</code></td>
+            <td>test-chat.spec.js:61 (via typeChatMessage at lines 18-24)</td>
             <td>theme/default/assets/features/chat/templates/ui-chat.html:5</td>
             <td><code>&lt;input id="chat-input" type="text" placeholder="Enter message"/&gt;</code></td>
-            <td><code>testMessage = 'e2e-global-test'</code>; no prefix - sent to the active room (General tab)</td>
+            <td><code>testMessage = 'e2e-global-test'</code>; no prefix so sent to active room (General tab)</td>
         </tr>
         <tr>
-            <td>Click the send button</td>
-            <td><code>page.click('#chat-send')</code></td>
-            <td>test-chat.spec.js:19</td>
+            <td>Click send button</td>
+            <td><code>page.click(Selectors.chat.send)</code></td>
+            <td>test-chat.spec.js:64</td>
             <td>theme/default/assets/features/chat/templates/ui-chat.html:6</td>
             <td><code>&lt;input id="chat-send" type="button" value="Send"/&gt;</code></td>
-            <td>Submits the message to the server via WebSocket; identified by <code>ChatConst.CHAT_SEND_BUTTON</code> (chat/constants.js:34)</td>
+            <td>Submits message to server via WebSocket</td>
         </tr>
         <tr>
-            <td>Assert message appears in the General chat tab</td>
-            <td><code>expect(page.locator('.tab-content-1')).toContainText(testMessage)</code></td>
-            <td>test-chat.spec.js:20</td>
-            <td>theme/default/assets/features/chat/templates/tab-content.html:1<br>lib/chat/constants.js:13</td>
-            <td><code>&lt;div class="tab-content tab-content-{{&amp;tabId}}..."&gt;&lt;/div&gt;</code><br><code>MESSAGE: 1</code></td>
-            <td><code>.tab-content-1</code> is the General tab (<code>TYPES.MESSAGE = 1</code>); Playwright retries automatically until the text appears</td>
+            <td>Wait for server round-trip</td>
+            <td><code>page.waitForTimeout(2000 + pauseMs)</code></td>
+            <td>test-chat.spec.js:65</td>
+            <td>-</td>
+            <td>-</td>
+            <td>2-second pause to allow: client &rarr; server &rarr; broadcast &rarr; client render</td>
+        </tr>
+        <tr>
+            <td>Assert message appears in General tab</td>
+            <td><code>expect(page.locator(Selectors.chat.tabContentGeneral)).toContainText(testMessage, { timeout: ... })</code></td>
+            <td>test-chat.spec.js:66-69</td>
+            <td>lib/chat/constants.js:13</td>
+            <td><code>MESSAGE: 1</code></td>
+            <td><code>.tab-content-1</code> is the General tab (TYPES.MESSAGE = 1); Playwright retries until text appears</td>
         </tr>
     </tbody>
 </table>
