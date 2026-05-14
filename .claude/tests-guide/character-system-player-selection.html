@@ -10,81 +10,71 @@
 <h1>Verification: Player Selection Shows Characters</h1>
 <p>Test: <code>tests/e2e/test-character-system.spec.js</code> - <em>player selection shows characters</em></p>
 <p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/player-selection-shows-characters.webm" data-title="player selection shows characters">&#9654; Watch video</a></p>
-
 <table>
-    <thead>
-        <tr>
-            <th>Action</th>
-            <th>Test Code</th>
-            <th>Test File</th>
-            <th>File Proof</th>
-            <th>Code Proof</th>
-            <th>Comments</th>
-        </tr>
-    </thead>
+    <thead><tr><th>Action</th><th>Test Code</th><th>Test File</th><th>File Proof</th><th>Code Proof</th><th>Comments</th></tr></thead>
     <tbody>
         <tr>
-            <td>Navigate to home page</td>
-            <td><code>page.goto('/')</code><br><code>page.waitForLoadState('networkidle')</code></td>
-            <td>helpers/login.js:26-27<br>(called from test-character-system.spec.js:9)</td>
-            <td>theme/default/index.html:33</td>
-            <td><code>&lt;body&gt;</code> - base page loaded</td>
-            <td>Via <code>LoginHelper.loginToSelection()</code></td>
-        </tr>
-        <tr>
-            <td>Assert login form is visible</td>
-            <td><code>expect(page.locator('#login-form')).toBeVisible()</code></td>
-            <td>helpers/login.js:28</td>
+            <td>Navigate to home page and start login</td>
+            <td><code>page.goto('/')</code></td>
+            <td>helpers/login.js:39</td>
             <td>theme/default/index.html:54</td>
             <td><code>&lt;form name="login-form" id="login-form" class="login-form" action="#" method="post"&gt;</code></td>
-            <td></td>
+            <td>Via <code>Login.loginToSelection()</code> helper</td>
         </tr>
         <tr>
-            <td>Fill username field</td>
-            <td><code>page.locator('#username').click()</code><br><code>page.locator('#username').pressSequentially(username, { delay: typeDelay })</code></td>
-            <td>helpers/login.js:29-30</td>
+            <td>Wait for login form visible</td>
+            <td><code>page.waitForSelector(Selectors.login.form, { state: 'visible', timeout: ... })</code></td>
+            <td>helpers/login.js:40-43</td>
+            <td>theme/default/index.html:54</td>
+            <td><code>&lt;form name="login-form" id="login-form"...&gt;</code></td>
+            <td>Up to 3 page reload retries before failing</td>
+        </tr>
+        <tr>
+            <td>Type username</td>
+            <td><code>page.locator(Selectors.login.username).click()</code><br><code>page.locator(Selectors.login.username).pressSequentially(username, { delay: typeDelay })</code></td>
+            <td>helpers/login.js:50-51</td>
             <td>theme/default/index.html:57</td>
             <td><code>&lt;input type="text" name="username" id="username" class="required" required autocomplete="on" placeholder="Username"/&gt;</code></td>
             <td>username defaults to <code>root</code></td>
         </tr>
         <tr>
-            <td>Fill password field</td>
-            <td><code>page.locator('#password').click()</code><br><code>page.locator('#password').pressSequentially(password, { delay: typeDelay })</code></td>
-            <td>helpers/login.js:32-33</td>
+            <td>Type password</td>
+            <td><code>page.locator(Selectors.login.password).click()</code><br><code>page.locator(Selectors.login.password).pressSequentially(password, { delay: typeDelay })</code></td>
+            <td>helpers/login.js:53-54</td>
             <td>theme/default/index.html:60</td>
             <td><code>&lt;input type="password" name="password" id="password" class="required" required autocomplete="off" placeholder="Password"/&gt;</code></td>
             <td>password defaults to <code>root</code></td>
         </tr>
         <tr>
-            <td>Submit login form</td>
-            <td><code>page.hover('#login-form [type="submit"]')</code><br><code>page.click('#login-form [type="submit"]')</code></td>
-            <td>helpers/login.js:35-37</td>
+            <td>Hover and submit login form</td>
+            <td><code>page.hover(Selectors.login.submit)</code><br><code>page.click(Selectors.login.submit)</code></td>
+            <td>helpers/login.js:56-58</td>
             <td>theme/default/index.html:63</td>
             <td><code>&lt;input type="submit" value="Submit"/&gt;</code></td>
-            <td></td>
+            <td>Hover ensures button is visible</td>
         </tr>
         <tr>
-            <td>Wait for player selection panel to appear</td>
-            <td><code>page.waitForSelector('#player-selection:not(.hidden)', { timeout: longRun ? 120000 : 20000 })</code></td>
-            <td>helpers/login.js:38</td>
+            <td>Wait for player selection panel</td>
+            <td><code>page.waitForSelector(Selectors.characterSelect.container+':not(.hidden)', { timeout: ... })</code></td>
+            <td>helpers/login.js:59-62</td>
             <td>theme/default/index.html:187</td>
             <td><code>&lt;div id="player-selection" class="hidden"&gt;</code></td>
-            <td>Server authenticates user; JS removes <code>hidden</code> class and populates player list</td>
+            <td>Server authenticates; JS removes <code>hidden</code> class</td>
         </tr>
         <tr>
             <td>Assert player select dropdown is visible</td>
-            <td><code>expect(page.locator('#player-select-element')).toBeVisible()</code></td>
-            <td>test-character-system.spec.js:11</td>
-            <td>theme/default/index.html:199-203</td>
-            <td><code>&lt;select class="input-box select-element" id="player-select-element" name="player-select-element"&gt;&lt;/select&gt;</code></td>
-            <td>Select is populated by JS after login; options are injected dynamically</td>
+            <td><code>expect(page.locator(Selectors.characterSelect.select)).toBeVisible()</code></td>
+            <td>test-character-system.spec.js:72</td>
+            <td>theme/default/index.html:200-203</td>
+            <td><code>&lt;select class="input-box select-element" id="player-select-element" name="player-select-element"&gt;</code></td>
+            <td><code>Selectors.characterSelect.select = '#player-select-element'</code></td>
         </tr>
         <tr>
             <td>Assert at least one player option exists</td>
-            <td><code>select.locator('option').count()</code><br><code>expect(optionCount).toBeGreaterThan(0)</code></td>
-            <td>test-character-system.spec.js:12-13</td>
-            <td>theme/default/index.html:199-203</td>
-            <td><code>&lt;select ... id="player-select-element"&gt;&lt;/select&gt;</code></td>
+            <td><code>let optionCount = await select.locator('option').count()</code><br><code>expect(optionCount).toBeGreaterThan(0)</code></td>
+            <td>test-character-system.spec.js:74-75</td>
+            <td>theme/default/index.html:200-203</td>
+            <td><code>&lt;select class="input-box select-element" id="player-select-element"...&gt;</code></td>
             <td>Options injected by client JS from server response; <code>root</code> user has player <code>ImRoot</code> in sample data</td>
         </tr>
     </tbody>

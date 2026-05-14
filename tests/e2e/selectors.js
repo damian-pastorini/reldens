@@ -77,6 +77,7 @@ class Selectors
             instructions: '#instructions',
             instructionsContent: '.instructions-content',
             playerStatsOpen: '#player-stats-open',
+            playerStatsClose: '#player-stats-close',
             playerStatsUi: '#player-stats-ui',
             fullScreen: '#full-screen-btn',
             inventoryOpen: '#inventory-open',
@@ -84,7 +85,7 @@ class Selectors
             minimapOpen: '#minimap-open',
             minimapUi: '#minimap-ui',
             minimapClose: '#minimap-close',
-            rewardsOpen: '#rewards-open',
+            rewardsOpen: '.rewards-open',
             scoresOpen: '.scores-open',
             teamsOpen: '.teams-open',
             clanOpen: '.clan-open'
@@ -109,19 +110,19 @@ class Selectors
         this.inventory = {
             ui: '#inventory-ui',
             items: '#inventory-items',
-            item: (itemId) => '#item-'+itemId,
-            itemImage: (itemId) => '#item-'+itemId+' .image-container img',
-            itemQty: (itemId) => '#item-qty-'+itemId,
-            itemEquip: (itemId) => '#item-equip-'+itemId,
-            itemUse: (itemId) => '#item-use-'+itemId
+            item: (itemKey) => '.item-box:has(img[src$="/' + itemKey + '.png"])',
+            itemImage: (itemKey) => '#inventory-items img[src$="/' + itemKey + '.png"]',
+            itemQty: (itemKey) => '.item-box:has(img[src$="/' + itemKey + '.png"]) [id^="item-qty-"]',
+            itemEquip: (itemKey) => '.item-box:has(img[src$="/' + itemKey + '.png"]) [id^="item-equip-"]',
+            itemUse: (itemKey) => '.item-box:has(img[src$="/' + itemKey + '.png"]) [id^="item-use-"]'
         };
         this.equipment = {
             ui: '#equipment-ui',
             items: '#equipment-items',
-            groupSlot: '.equipment-group-key',
-            slotById: (groupKey) => '.equipment-group-key-'+groupKey,
-            slotImage: '.equipment-group-key img',
-            itemBoxVisible: '.item-box'
+            groupSlot: '.group-item-block',
+            slotById: (groupKey) => '#group-item-'+groupKey,
+            slotImage: '.group-item-block .equipped-item .item-box .image-container img',
+            itemBoxVisible: '#equipment-items .item-box'
         };
         this.stats = {
             container: '.stat-container',
@@ -151,7 +152,7 @@ class Selectors
             dialogContent: '.teams-dialog-box .box-content',
             container: '.team-container',
             invite: (playerId) => '.team-invite-'+playerId+' button',
-            acceptOption: '[id^="opt-1-teams"]'
+            acceptOption: '[id^="opt-accept-teams"]'
         };
         this.clans = {
             dialog: '.clan-dialog-box',
@@ -175,11 +176,11 @@ class Selectors
         };
         this.playerTrade = {
             startTrade: (sessionId) => '.start-trade-'+sessionId+' button',
-            acceptYes: '.accept-trade-yes',
+            acceptYes: '[id^="opt-accept-trade"]',
             container: '.trade-container',
-            offerButton: '.trade-action-offer',
+            offerButton: '.trade-action-trade button',
             confirmAttr: '[class*="confirm-"]',
-            cancelButton: '.trade-action-cancel'
+            cancelButton: '.cancel-action'
         };
         this.combat = {
             targetBox: '#box-target',

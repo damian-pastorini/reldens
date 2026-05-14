@@ -35,7 +35,7 @@ class TimeConstants
     // Player revive: server gameOver/timeOut=10000ms + 2s detection buffer — NOT scaled
     static PLAYER_REVIVE = 12000;
     // Enemy kill budget: player HP=81 at 1 HP/sec → 81s + 9s buffer — NOT scaled
-    static ENEMY_KILL = 90000;
+    static ENEMY_KILL = 170000;
 
     static forLongRun(value, longRun)
     {

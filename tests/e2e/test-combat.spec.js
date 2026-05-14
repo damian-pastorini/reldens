@@ -23,6 +23,7 @@ class TestCombat
     static FOREST_TRANSITION_X = 608;
     static FOREST_TRANSITION_Y = 16;
     static TAB_TARGET_RANGE = 200;
+    static DEATH_CHASE_RANGE = 30;
     static gameDataPath = FileHandler.joinPaths(process.cwd(), 'tests', 'e2e', 'game-data.json');
     static gameData = FileHandler.exists(TestCombat.gameDataPath) ? FileHandler.fetchFileJson(TestCombat.gameDataPath) : null;
     static rootPlayerData = TestCombat.gameData && TestCombat.gameData.players && TestCombat.gameData.players.root
@@ -171,18 +172,22 @@ class TestCombat
     {
         let deadline = Date.now() + timeout;
         let maxSteps = Math.ceil(timeout / 500) + 1;
-        for(let i = 0; i < maxSteps; i++) {
+        for(let i = 0; i < maxSteps; i++){
             let isDead = await page.evaluate(() => {
                 return null !== document.querySelector('#game-over:not(.hidden)');
             });
-            if(isDead) {
+            if(isDead){
                 return true;
             }
             let remaining = deadline - Date.now();
-            if(0 >= remaining) {
+            if(0 >= remaining){
                 break;
             }
-            await TestCombat.walkToEnemyWithinRange(page, enemyKey, 0, Math.min(6000, remaining));
+            await TestCombat.walkToEnemyWithinRange(page, enemyKey, TestCombat.DEATH_CHASE_RANGE, Math.min(6000, remaining));
+            let waitMs = Math.min(1000, deadline - Date.now());
+            if(0 < waitMs){
+                await page.waitForTimeout(waitMs);
+            }
         }
         return false;
     }

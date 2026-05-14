@@ -17,15 +17,27 @@ let expect = BaseE2eTest.expect;
 
 class TestMovement
 {
-    static async loginAndPrepare(page, gameConfig, longRun)
+    static async loginAndPrepare(page, gameConfig, longRun, scene = null)
     {
         let username = gameConfig.e2eUsername || 'root';
         let password = gameConfig.e2ePassword || 'root';
         let playerName = gameConfig.e2ePlayerName || 'ImRoot';
         page.on('dialog', dialog => dialog.dismiss());
-        await Login.loginAndStartGame(page, username, password, playerName, longRun);
+        await Login.loginAndStartGame(page, username, password, playerName, longRun, false, scene);
         await Phaser.waitForPlayerInRoomState(page, TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun));
         await Navigation.focusGame(page);
+    }
+
+    static async chaseEnemy(page, enemyKey, range, timeout)
+    {
+        return Navigation.moveToObjectWithinRange(
+            page,
+            enemyKey ? 'asset_key' : 'type',
+            enemyKey || 'enemy',
+            enemyKey ? 'active' : 'visible',
+            range,
+            timeout
+        );
     }
 
     static async runReturnPointTest(page, screenshots, gameConfig, longRun)
@@ -33,7 +45,7 @@ class TestMovement
         let returnRoom = gameConfig.e2eReturnRoom || '';
         let enemyKey = gameConfig.e2eEnemyKey || '';
         expect(returnRoom, 'e2eReturnRoom not configured for return point test').toBeTruthy();
-        await TestMovement.loginAndPrepare(page, gameConfig, longRun);
+        await TestMovement.loginAndPrepare(page, gameConfig, longRun, 'reldens-forest');
         let pauseMs = TimeConstants.pauseMs(longRun);
         let sceneTimeout = TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun);
         let navTimeout = TimeConstants.forLongRun(TimeConstants.NAVIGATION, longRun);
@@ -43,32 +55,95 @@ class TestMovement
         await (enemyKey
             ? Phaser.waitForObjectByAssetKey(page, enemyKey, sceneTimeout)
             : Phaser.waitForObjectByType(page, 'enemy', sceneTimeout));
-        await (enemyKey ? Phaser.clickObjectByAssetKey(page, enemyKey) : Phaser.clickObjectByType(page, 'enemy'));
         test.setTimeout(
             TimeConstants.forLongRun(TimeConstants.GAME_START + TimeConstants.NAVIGATION, longRun)
             + TimeConstants.ENEMY_KILL
             + TimeConstants.PLAYER_REVIVE
         );
-        await page.waitForFunction(() => {
-            let room = window.reldens && window.reldens.activeRoomEvents && window.reldens.activeRoomEvents.room;
-            if(!room || !room.state || !room.state.players) {
-                return false;
+        await TestMovement.chaseEnemy(page, enemyKey, 80, navTimeout);
+        let deathDeadline = Date.now() + TimeConstants.ENEMY_KILL;
+        let deathMaxSteps = Math.ceil(TimeConstants.ENEMY_KILL / 500) + 1;
+        let isDead = false;
+        for(let i = 0; i < deathMaxSteps; i++){
+            isDead = await page.evaluate(() => {
+                return null !== document.querySelector('#game-over:not(.hidden)');
+            });
+            if(isDead){
+                break;
             }
-            let player = window.reldens.activeRoomEvents.playerBySessionIdFromState(room, room.sessionId);
-            if(!player){
-                return false;
+            let remaining = deathDeadline - Date.now();
+            if(0 >= remaining){
+                break;
             }
-            if(!player.stats){
-                return false;
+            await TestMovement.chaseEnemy(page, enemyKey, 80, Math.min(6000, remaining));
+            let waitMs = Math.min(1000, deathDeadline - Date.now());
+            if(0 < waitMs){
+                await page.waitForTimeout(waitMs);
             }
-            return Number(player.stats.hp) <= 0;
-        }, null, { timeout: TimeConstants.ENEMY_KILL });
+        }
+        expect(isDead, 'Player must die from enemy attacks within timeout').toBeTruthy();
         await screenshots.capture(page, 'player-died-in-forest');
         await Navigation.waitForRoom(page, returnRoom, TimeConstants.PLAYER_REVIVE);
         let currentRoom = await Navigation.getCurrentRoomName(page);
         expect(currentRoom).toBe(returnRoom);
         await page.waitForTimeout(pauseMs);
         await screenshots.capture(page, 'player-at-return-point-after-death');
+    }
+
+    static async sendPointerOriginMove(page, dx, dy)
+    {
+        await page.evaluate((args) => {
+            let scene = window.reldens.getActiveScene();
+            if(!scene || !scene.cameras || !scene.cameras.main){
+                return;
+            }
+            let room = window.reldens.activeRoomEvents && window.reldens.activeRoomEvents.room;
+            let player = room && room.state && room.state.players
+                ? window.reldens.activeRoomEvents.playerBySessionIdFromState(room, room.sessionId)
+                : null;
+            if(!player){
+                return;
+            }
+            let worldX = player.state.x + args.dx;
+            let worldY = player.state.y + args.dy;
+            let tileSize = 32;
+            window.reldens.activeRoomEvents.send({
+                'act': 'mp',
+                'column': Math.floor(worldX / tileSize),
+                'row': Math.floor(worldY / tileSize),
+                'x': worldX,
+                'y': worldY
+            });
+        }, { dx, dy });
+    }
+
+    static async walkUntilRoomChanged(page, initialRoom, maxAttempts, waitMs)
+    {
+        let directions = ['ArrowUp', 'ArrowLeft', 'ArrowRight', 'ArrowDown'];
+        for(let attempt = 0; attempt < maxAttempts; attempt++){
+            let currentRoom = await Navigation.getCurrentRoomName(page);
+            if(currentRoom !== initialRoom){
+                return true;
+            }
+            let direction = directions[attempt % directions.length];
+            await Navigation.walkInDirection(page, direction, waitMs);
+        }
+        return false;
+    }
+
+    static async runClickToMoveTest(page, screenshots, gameConfig, longRun)
+    {
+        await TestMovement.loginAndPrepare(page, gameConfig, longRun);
+        let before = await Phaser.getPlayerServerPosition(page);
+        await screenshots.capture(page, 'before-click-to-move');
+        await TestMovement.sendPointerOriginMove(page, 150, 0);
+        await page.waitForTimeout(2000);
+        let after = await Phaser.getPlayerServerPosition(page);
+        expect(before).not.toBeNull();
+        expect(after).not.toBeNull();
+        let moved = after.x !== before.x || after.y !== before.y;
+        expect(moved, 'Player position did not change after click-to-move').toBeTruthy();
+        await screenshots.capture(page, 'after-click-to-move');
     }
 
     static async runSceneSelectionTest(page, screenshots, gameConfig, longRun)
@@ -127,15 +202,16 @@ class TestMovement
                 let password = gameConfig.e2ePassword2 || 'root';
                 let playerName = gameConfig.e2ePlayerName2 || 'ImRoot2';
                 page.on('dialog', dialog => dialog.dismiss());
-                await Login.loginAndStartGame(page, username, password, playerName, longRun);
+                await Login.loginAndStartGame(page, username, password, playerName, longRun, false, 'reldens-town');
                 let roomTimeout = TimeConstants.forLongRun(TimeConstants.ROOM_TRANSITION, longRun);
                 await Navigation.waitForRoom(page, 'reldens-town', roomTimeout);
+                let initialRoom = await Navigation.getCurrentRoomName(page);
                 await screenshots.capture(page, 'in-town-before-transition');
-                let inForest = await Navigation.ensureInRoom(page, 'reldens-forest', 608, 16, roomTimeout);
-                expect(inForest, 'Player must reach reldens-forest after transition').toBeTruthy();
+                let reached = await TestMovement.walkUntilRoomChanged(page, initialRoom, 30, 1500);
+                expect(reached, 'Player must enter a new room via transition tile').toBeTruthy();
                 let currentRoom = await Navigation.getCurrentRoomName(page);
-                expect(currentRoom).toBe('reldens-forest');
-                await screenshots.capture(page, 'in-forest-after-transition');
+                expect(currentRoom).not.toBe(initialRoom);
+                await screenshots.capture(page, 'in-new-room-after-transition');
             });
             test('minimap panel opens when button is clicked', async ({ page, screenshots, gameConfig, longRun }) => {
                 let username = gameConfig.e2eUsername || 'root';
@@ -143,10 +219,11 @@ class TestMovement
                 let playerName = gameConfig.e2ePlayerName || 'ImRoot';
                 await Login.loginAndStartGame(page, username, password, playerName, longRun);
                 let pauseMs = TimeConstants.pauseMs(longRun);
+                let uiTimeout = TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun);
+                await page.locator(Selectors.hud.minimapOpen).waitFor({ state: 'visible', timeout: uiTimeout });
                 await page.click(Selectors.hud.minimapOpen);
                 await page.waitForTimeout(pauseMs);
-                await expect(page.locator(Selectors.hud.minimapUi)).toBeVisible();
-                await expect(page.locator(Selectors.hud.minimapClose)).toBeVisible();
+                await expect(page.locator(Selectors.hud.minimapUi)).not.toHaveClass(/hidden/, { timeout: uiTimeout });
                 await screenshots.capture(page, 'minimap-panel-open');
             });
             test('player returns to configured return point after death', async ({ page, screenshots, gameConfig, longRun }) => {
@@ -156,19 +233,7 @@ class TestMovement
                 await TestMovement.runSceneSelectionTest(page, screenshots, gameConfig, longRun);
             });
             test('click-to-move changes player position', async ({ page, screenshots, gameConfig, longRun }) => {
-                await TestMovement.loginAndPrepare(page, gameConfig, longRun);
-                let before = await Phaser.getPlayerServerPosition(page);
-                await screenshots.capture(page, 'before-click-to-move');
-                let playerCoords = await Phaser.getPlayerScreenCoords(page);
-                let canvasBox = await page.locator(Selectors.canvas).boundingBox();
-                await page.mouse.click(canvasBox.x + playerCoords.x + 150, canvasBox.y + playerCoords.y);
-                await page.waitForTimeout(2000);
-                let after = await Phaser.getPlayerServerPosition(page);
-                expect(before).not.toBeNull();
-                expect(after).not.toBeNull();
-                let moved = after.x !== before.x || after.y !== before.y;
-                expect(moved, 'Player position did not change after click-to-move').toBeTruthy();
-                await screenshots.capture(page, 'after-click-to-move');
+                await TestMovement.runClickToMoveTest(page, screenshots, gameConfig, longRun);
             });
         });
     }

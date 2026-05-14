@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Inventory Panel Opens And Shows Items</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Inventory Panel Opens And Shows Items</h1>
+<p>Test: <code>tests/e2e/test-items.spec.js</code> - <em>inventory panel opens and shows items</em></p>
+<p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/inventory-panel-opens-and-shows-items.webm" data-title="inventory panel opens and shows items">&#9654; Watch video</a></p>
+<table>
+    <thead><tr><th>Action</th><th>Test Code</th><th>Test File</th><th>File Proof</th><th>Code Proof</th><th>Comments</th></tr></thead>
+    <tbody>
+        <tr>
+            <td>Log in as root player and wait for game to start</td>
+            <td><code>await TestItems.loginRootPlayer(page, gameConfig, longRun)</code></td>
+            <td>test-items.spec.js:108</td>
+            <td>tests/e2e/helpers/login.js:77</td>
+            <td><code>static async loginAndStartGame(page, username, password, playerName, longRun, skipUiSelectors = false, scene = null)</code></td>
+            <td>Calls Login.loginAndStartGame with credentials root/root/ImRoot (or gameConfig overrides). Waits for game-engine-started body class and all HUD selectors to be visible.</td>
+        </tr>
+        <tr>
+            <td>Compute pause duration based on longRun flag</td>
+            <td><code>let pauseMs = TimeConstants.pauseMs(longRun)</code></td>
+            <td>test-items.spec.js:109</td>
+            <td>tests/e2e/helpers/time-constants.js:45</td>
+            <td><code>static pauseMs(longRun) { return longRun ? TimeConstants.PAUSE : 0; }</code></td>
+            <td>Returns 800ms when longRun is true, 0 otherwise. Used as a buffer after UI interactions.</td>
+        </tr>
+        <tr>
+            <td>Click the inventory open button in the HUD</td>
+            <td><code>await page.click(Selectors.hud.inventoryOpen)</code></td>
+            <td>test-items.spec.js:110</td>
+            <td>tests/e2e/selectors.js:82</td>
+            <td><code>inventoryOpen: '#inventory-open'</code></td>
+            <td>Clicks the #inventory-open HUD button to open the inventory panel.</td>
+        </tr>
+        <tr>
+            <td>Wait for pauseMs before asserting UI visibility</td>
+            <td><code>await page.waitForTimeout(pauseMs)</code></td>
+            <td>test-items.spec.js:111</td>
+            <td>tests/e2e/helpers/time-constants.js:45</td>
+            <td><code>static pauseMs(longRun) { return longRun ? TimeConstants.PAUSE : 0; }</code></td>
+            <td>Allows time for the inventory panel animation or render to complete before asserting visibility.</td>
+        </tr>
+        <tr>
+            <td>Assert inventory UI container is visible</td>
+            <td><code>await expect(page.locator(Selectors.inventory.ui)).toBeVisible()</code></td>
+            <td>test-items.spec.js:112</td>
+            <td>tests/e2e/selectors.js:110</td>
+            <td><code>ui: '#inventory-ui'</code></td>
+            <td>Verifies the #inventory-ui element is visible, confirming the panel opened successfully.</td>
+        </tr>
+        <tr>
+            <td>Assert inventory items container is visible</td>
+            <td><code>await expect(page.locator(Selectors.inventory.items)).toBeVisible()</code></td>
+            <td>test-items.spec.js:113</td>
+            <td>tests/e2e/selectors.js:111</td>
+            <td><code>items: '#inventory-items'</code></td>
+            <td>Verifies the #inventory-items container is visible, confirming items are rendered inside the panel.</td>
+        </tr>
+        <tr>
+            <td>Capture screenshot of open inventory panel</td>
+            <td><code>await screenshots.capture(page, 'inventory-panel-open')</code></td>
+            <td>test-items.spec.js:114</td>
+            <td>tests/e2e/helpers/screenshots.js:1</td>
+            <td><code>screenshots.capture(page, label)</code></td>
+            <td>Saves a screenshot labelled inventory-panel-open for visual verification of the inventory state.</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>

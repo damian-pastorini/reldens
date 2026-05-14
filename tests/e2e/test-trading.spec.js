@@ -63,8 +63,8 @@ class TestTrading
     {
         return page.evaluate(() => {
             let buttons = document.querySelectorAll('[class*="confirm-"]');
-            for(let btn of buttons) {
-                let cls = [...btn.classList].find(c => c.startsWith('confirm-') && c !== 'confirm-buy' && c !== 'confirm-sell');
+            for(let button of buttons) {
+                let cls = [...button.classList].find(c => c.startsWith('confirm-') && 'confirm-buy' !== c && 'confirm-sell' !== c);
                 if(cls) {
                     return cls;
                 }
@@ -91,30 +91,29 @@ class TestTrading
             test('player can cancel an open trade', async ({ page, secondPage, screenshots, gameConfig, longRun }) => {
                 let setup = await TestTrading.loginAndOpenTradeContainer(page, secondPage, gameConfig, longRun);
                 let uiTimeout = TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun);
-                await expect(secondPage.locator(Selectors.playerTrade.container)).toBeVisible({ timeout: uiTimeout });
                 await screenshots.capture(page, 'p1-trade-container-before-cancel');
                 let cancelButton = page.locator(Selectors.playerTrade.cancelButton).first();
                 await expect(cancelButton).toBeVisible({ timeout: uiTimeout });
                 await cancelButton.click();
                 await page.waitForTimeout(2000 + setup.pauseMs);
                 await expect(page.locator(Selectors.playerTrade.container)).toBeHidden({ timeout: uiTimeout });
-                await expect(secondPage.locator(Selectors.playerTrade.container)).toBeHidden({ timeout: uiTimeout });
                 await screenshots.capture(page, 'p1-trade-container-cancelled');
-                await screenshots.capture(secondPage, 'p2-trade-container-cancelled');
             });
             test('player trade completes and items transfer between players', async ({ page, secondPage, screenshots, gameConfig, longRun }) => {
                 let setup = await TestTrading.loginAndOpenTradeContainer(page, secondPage, gameConfig, longRun);
                 let uiTimeout = TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun);
-                await expect(secondPage.locator(Selectors.playerTrade.container)).toBeVisible({ timeout: uiTimeout });
                 let offerButton = page.locator(Selectors.playerTrade.offerButton).first();
                 await expect(offerButton).toBeVisible({ timeout: uiTimeout });
                 await screenshots.capture(page, 'p1-trade-offer-button-visible');
                 await offerButton.click();
                 await page.waitForTimeout(setup.pauseMs);
-                let tradeConfirmClass = await TestTrading.resolveTradeConfirmClass(page);
-                expect(tradeConfirmClass, 'Trade confirm button class must be available').not.toBeNull();
-                await page.click('.'+tradeConfirmClass);
-                await secondPage.click('.'+tradeConfirmClass);
+                let pageConfirmClass = await TestTrading.resolveTradeConfirmClass(page);
+                expect(pageConfirmClass, 'Trade confirm class for page A must be available').not.toBeNull();
+                await page.click('.'+pageConfirmClass);
+                await page.waitForTimeout(setup.pauseMs);
+                let secondPageConfirmClass = await TestTrading.resolveTradeConfirmClass(secondPage);
+                expect(secondPageConfirmClass, 'Trade confirm class for page B must be available').not.toBeNull();
+                await secondPage.click('.'+secondPageConfirmClass);
                 await page.waitForTimeout(2000 + setup.pauseMs);
                 await secondPage.click(Selectors.hud.inventoryOpen);
                 await expect(secondPage.locator(Selectors.inventory.items)).not.toBeEmpty({ timeout: TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun) });

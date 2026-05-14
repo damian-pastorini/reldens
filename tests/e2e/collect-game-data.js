@@ -11,6 +11,7 @@ const { FileHandler } = require('@reldens/server-utils');
 const { Logger } = require('@reldens/utils');
 const { GameDataSkills } = require('./helpers/game-data-skills');
 const { PlayerStateReset } = require('./helpers/player-state-reset');
+const { TestDataSetup } = require('./helpers/test-data-setup');
 
 class CollectGameData
 {
@@ -125,17 +126,17 @@ class CollectGameData
         let enemies = [];
         let npcs = [];
         let traders = [];
-        for(let obj of objManager.roomObjectsData) {
-            let assets = obj.related_objects_assets;
+        for(let roomObject of objManager.roomObjectsData) {
+            let assets = roomObject.related_objects_assets;
             let assetKey = assets && assets[0] ? assets[0].asset_key : null;
-            let entry = { assetKey, objectId: obj.id, objectClassKey: obj.object_class_key };
-            if(CollectGameData.OBJECT_TYPE_ENEMY === obj.class_type) {
+            let entry = { assetKey, objectId: roomObject.id, objectClassKey: roomObject.object_class_key };
+            if(CollectGameData.OBJECT_TYPE_ENEMY === roomObject.class_type) {
                 enemies.push(entry);
             }
-            if(CollectGameData.OBJECT_TYPE_NPC === obj.class_type) {
+            if(CollectGameData.OBJECT_TYPE_NPC === roomObject.class_type) {
                 npcs.push(entry);
             }
-            if(CollectGameData.OBJECT_TYPE_TRADER === obj.class_type) {
+            if(CollectGameData.OBJECT_TYPE_TRADER === roomObject.class_type) {
                 traders.push(entry);
             }
         }
@@ -222,9 +223,35 @@ class CollectGameData
         FileHandler.writeFile(outputPath, JSON.stringify(gameData, null, 4));
         Logger.info('[collect-game-data] Written: '+outputPath);
         CollectGameData.attachEventListeners(serverManager);
+        await TestDataSetup.ensureRequiredItems(serverManager.dataServer, config);
         let snapshots = await PlayerStateReset.captureSnapshots(serverManager.dataServer, config);
-        PlayerStateReset.registerResetEndpoint(serverManager, snapshots);
+        PlayerStateReset.registerResetEndpoint(serverManager, snapshots, config);
         CollectGameData.serverManager = serverManager;
+    }
+
+    static async ensureRequiredFeatures(serverManager)
+    {
+        let required = [
+            { id: 19, code: 'quests', title: 'Quests' }
+        ];
+        let featuresRepo = serverManager.dataServer.getEntity('features');
+        for(let entry of required){
+            let existing = await featuresRepo.loadOneBy('code', entry.code);
+            if(existing){
+                if(1 !== existing.is_enabled){
+                    await featuresRepo.updateById(existing.id, { 'is_enabled': 1 });
+                    Logger.info('[collect-game-data] Enabled feature: '+entry.code);
+                }
+                continue;
+            }
+            await featuresRepo.create({
+                id: entry.id,
+                code: entry.code,
+                title: entry.title,
+                'is_enabled': 1
+            });
+            Logger.info('[collect-game-data] Created feature row: '+entry.code);
+        }
     }
 
     static async startServerAndCollect(serverPath)
@@ -246,14 +273,18 @@ class CollectGameData
         process.env.RELDENS_ALLOW_RUN_BUNDLER = '0';
         process.env.RELDENS_ALLOW_BUILD_CLIENT = '0';
         process.env.RELDENS_ALLOW_BUILD_CSS = '0';
-        if(config.port) {
-            let portStr = String(config.port);
-            let publicUrl = config.baseUrl || 'http://localhost:'+portStr;
+        let effectivePort = process.env.RELDENS_E2E_PORT || config.port;
+        if(effectivePort) {
+            let portStr = String(effectivePort);
+            let publicUrl = process.env.RELDENS_E2E_PORT ? 'http://localhost:'+portStr : (config.baseUrl || 'http://localhost:'+portStr);
             process.env.PORT = portStr;
             process.env.RELDENS_APP_PORT = portStr;
             process.env.RELDENS_PUBLIC_URL = publicUrl;
         }
         let serverManager = new modules.ServerManager(serverConfig);
+        serverManager.events.on('reldens.beforeInitializeManagers', async (event) => {
+            await CollectGameData.ensureRequiredFeatures(event.serverManager);
+        });
         process.stdout.write('Server: creating HTTP server...\n');
         await serverManager.createServers();
         process.stdout.write('Server: starting game server (this may take a moment)...\n');

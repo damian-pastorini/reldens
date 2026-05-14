@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Player Can Invite Another Player To A Team</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Player Can Invite Another Player To A Team</h1>
+<p>Test: <code>tests/e2e/test-teams.spec.js</code> - <em>player can invite another player to a team</em></p>
+<p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/player-can-invite-another-player-to-a-team.webm" data-title="player can invite another player to a team">&#9654; Watch video</a></p>
+<table>
+    <thead><tr><th>Action</th><th>Test Code</th><th>Test File</th><th>File Proof</th><th>Code Proof</th><th>Comments</th></tr></thead>
+    <tbody>
+        <tr>
+            <td>Log in both players (root2/ImRoot2 and root3/ImRoot3)</td>
+            <td><code>await TestTeams.loginBothPlayers(page, secondPage, gameConfig, longRun)</code></td>
+            <td>test-teams.spec.js:69</td>
+            <td>tests/e2e/helpers/login.js:77</td>
+            <td><code>static async loginAndStartGame(page, username, password, playerName, longRun, skipUiSelectors = false, scene = null)</code></td>
+            <td>Both players logged in sequentially - page as root2/ImRoot2, secondPage as root3/ImRoot3</td>
+        </tr>
+        <tr>
+            <td>Get player B session ID and player_id from Colyseus room state</td>
+            <td><code>let playerBSessionId = await secondPage.evaluate(() => {<br>  let room = window.reldens.activeRoomEvents && window.reldens.activeRoomEvents.room;<br>  return room ? room.sessionId : null;<br>});<br>let playerBId = await TestTeams.getPlayerIdFromState(secondPage)</code></td>
+            <td>test-teams.spec.js:78</td>
+            <td>tests/e2e/test-teams.spec.js:19</td>
+            <td><code>static getPlayerIdFromState(page)</code></td>
+            <td>playerBSessionId identifies the sprite; playerBId is needed for the invite button CSS selector</td>
+        </tr>
+        <tr>
+            <td>Wait for player B sprite to appear visible in player A scene</td>
+            <td><code>await Phaser.waitForPlayerBySessionId(page, playerBSessionId, sceneTimeout)</code></td>
+            <td>test-teams.spec.js:85</td>
+            <td>tests/e2e/helpers/phaser.js:108</td>
+            <td><code>static async waitForPlayerBySessionId(page, sessionId, timeout)</code></td>
+            <td>Polls scene.player.players[sid] until active and visible - timeout is SCENE_LOAD (10000ms)</td>
+        </tr>
+        <tr>
+            <td>Click player B sprite in player A scene to open context menu</td>
+            <td><code>await Phaser.clickPlayerBySessionId(page, playerBSessionId)</code></td>
+            <td>test-teams.spec.js:88</td>
+            <td>tests/e2e/helpers/phaser.js:138</td>
+            <td><code>static async clickPlayerBySessionId(page, sessionId)</code></td>
+            <td>Gets player B screen coordinates then uses page.mouse.click on the canvas at those coords</td>
+        </tr>
+        <tr>
+            <td>Assert team invite button visible for player B ID and click it</td>
+            <td><code>let teamInviteButton = page.locator(Selectors.teams.invite(playerBId));<br>await expect(teamInviteButton).toBeVisible(<br>  { timeout: TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun) }<br>);<br>await teamInviteButton.click()</code></td>
+            <td>test-teams.spec.js:90</td>
+            <td>tests/e2e/selectors.js:153</td>
+            <td><code>invite: (playerId) => '.team-invite-'+playerId+' button'</code></td>
+            <td>Invite button selector uses the player database ID as CSS class suffix - not session ID</td>
+        </tr>
+        <tr>
+            <td>Player B accepts invite and both team containers become visible</td>
+            <td><code>let acceptButton = secondPage.locator(Selectors.teams.acceptOption).first();<br>await expect(acceptButton).toBeVisible(...);<br>await acceptButton.click();<br>await expect(page.locator(Selectors.teams.container)).toBeVisible(...);<br>await expect(secondPage.locator(Selectors.teams.container)).toBeVisible(...)</code></td>
+            <td>test-teams.spec.js:97</td>
+            <td>tests/e2e/selectors.js:154</td>
+            <td><code>acceptOption: '[id^="opt-1-teams"]',<br>container: '.team-container'</code></td>
+            <td>Player B accepts via [id^="opt-1-teams"]; both players should see .team-container confirming team creation</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>

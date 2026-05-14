@@ -17,32 +17,44 @@ let expect = BaseE2eTest.expect;
 
 class TestStats
 {
-    static async loginRootPlayer(page, gameConfig, longRun)
+    static async loginRootPlayer(page, gameConfig, longRun, scene = null)
     {
         let username = gameConfig.e2eUsername || 'root';
         let password = gameConfig.e2ePassword || 'root';
         let playerName = gameConfig.e2ePlayerName || 'ImRoot';
-        await Login.loginAndStartGame(page, username, password, playerName, longRun);
+        await Login.loginAndStartGame(page, username, password, playerName, longRun, false, scene);
     }
 
     static getPlayerExpFromState(page)
     {
         return page.evaluate(() => {
-            let room = window.reldens.activeRoomEvents && window.reldens.activeRoomEvents.room;
-            if(!room || !room.state || !room.state.players) {
+            let element = document.querySelector('.experience-container .current-experience');
+            if(!element){
                 return null;
             }
-            let player = window.reldens.activeRoomEvents.playerBySessionIdFromState(room, room.sessionId);
-            if(!player){
-                return null;
-            }
-            return player.exp;
+            return (element.textContent || '').trim();
         });
+    }
+
+    static async chaseEnemyForRange(page, enemyKey, range, timeout)
+    {
+        return Navigation.moveToObjectWithinRange(
+            page,
+            enemyKey ? 'asset_key' : 'type',
+            enemyKey || 'enemy',
+            enemyKey ? 'active' : 'visible',
+            range,
+            timeout
+        );
     }
 
     static async runXpTest(page, screenshots, gameConfig, longRun)
     {
-        await TestStats.loginRootPlayer(page, gameConfig, longRun);
+        test.setTimeout(
+            TimeConstants.forLongRun(TimeConstants.GAME_START + TimeConstants.NAVIGATION, longRun)
+            + TimeConstants.ENEMY_KILL
+        );
+        await TestStats.loginRootPlayer(page, gameConfig, longRun, 'reldens-forest');
         let pauseMs = TimeConstants.pauseMs(longRun);
         let enemyKey = gameConfig.e2eEnemyKey || '';
         let sceneTimeout = TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun);
@@ -52,18 +64,41 @@ class TestStats
         await (enemyKey
             ? Phaser.waitForObjectByAssetKey(page, enemyKey, sceneTimeout)
             : Phaser.waitForObjectByType(page, 'enemy', sceneTimeout));
-        let enemyCoords = await (enemyKey
-            ? Phaser.getObjectScreenCoordsByAssetKey(page, enemyKey)
-            : Phaser.getObjectScreenCoordsByType(page, 'enemy'));
-        expect(enemyCoords, 'Enemy must be found in the scene for XP test').not.toBeNull();
         let xpBefore = await TestStats.getPlayerExpFromState(page);
         expect(xpBefore, 'Player XP must be readable from room state before attack').not.toBeNull();
         await screenshots.capture(page, 'xp-before-attack');
-        await (enemyKey ? Phaser.clickObjectByAssetKey(page, enemyKey) : Phaser.clickObjectByType(page, 'enemy'));
-        await page.waitForTimeout(5000 + pauseMs);
+        await TestStats.chaseEnemyForRange(page, enemyKey, 100, navTimeout);
+        let killDeadline = Date.now() + TimeConstants.ENEMY_KILL;
+        let killMaxSteps = Math.ceil(TimeConstants.ENEMY_KILL / 1500) + 1;
+        let xpIncreased = false;
+        for(let i = 0; i < killMaxSteps; i++){
+            if(Date.now() >= killDeadline){
+                break;
+            }
+            let xpNow = await TestStats.getPlayerExpFromState(page);
+            if(null !== xpNow && xpNow !== xpBefore && '' !== xpNow){
+                xpIncreased = true;
+                break;
+            }
+            await Phaser.targetEnemy(page, enemyKey || null);
+            await page.click('#fireball', { force: true }).catch(() => {
+                return null;
+            });
+            await page.waitForTimeout(500);
+            await page.click('#attackBullet', { force: true }).catch(() => {
+                return null;
+            });
+            await page.waitForTimeout(500);
+            await page.click('#attackShort', { force: true }).catch(() => {
+                return null;
+            });
+            await page.waitForTimeout(Math.min(500, Math.max(0, killDeadline - Date.now())));
+            await TestStats.chaseEnemyForRange(page, enemyKey, 100, Math.min(3000, killDeadline - Date.now()));
+        }
+        await page.waitForTimeout(1000 + pauseMs);
         let xpAfter = await TestStats.getPlayerExpFromState(page);
         expect(xpAfter, 'Player XP must be readable from room state after attack').not.toBeNull();
-        expect(xpAfter).toBeGreaterThanOrEqual(xpBefore);
+        expect(xpIncreased || (xpAfter !== xpBefore && '' !== xpAfter), 'Player XP must increase after defeating an enemy').toBeTruthy();
         await screenshots.capture(page, 'xp-after-attack');
     }
 

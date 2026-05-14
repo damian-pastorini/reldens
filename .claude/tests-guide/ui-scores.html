@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Scores Panel Opens And Displays Leaderboard Data</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Scores Panel Opens And Displays Leaderboard Data</h1>
+<p>Test: <code>tests/e2e/test-stats.spec.js</code> - <em>scores panel opens and displays leaderboard data</em></p>
+<p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/scores-panel-opens-and-displays-leaderboard-data.webm" data-title="scores panel opens and displays leaderboard data">&#9654; Watch video</a></p>
+<table>
+    <thead><tr><th>Action</th><th>Test Code</th><th>Test File</th><th>File Proof</th><th>Code Proof</th><th>Comments</th></tr></thead>
+    <tbody>
+        <tr>
+            <td>Log in as root player and wait for game to fully load</td>
+            <td><code>await TestStats.loginRootPlayer(page, gameConfig, longRun)</code></td>
+            <td>test-stats.spec.js:98</td>
+            <td>tests/e2e/helpers/login.js:77</td>
+            <td><code>static async loginAndStartGame(page, username, password, playerName, longRun, skipUiSelectors = false, scene = null)</code></td>
+            <td>Calls Login.loginAndStartGame with credentials from gameConfig (defaults: root/root/ImRoot). All HUD selectors must be visible before proceeding.</td>
+        </tr>
+        <tr>
+            <td>Read pause duration from TimeConstants</td>
+            <td><code>let pauseMs = TimeConstants.pauseMs(longRun)</code></td>
+            <td>test-stats.spec.js:99</td>
+            <td>tests/e2e/helpers/time-constants.js:1</td>
+            <td><code>static pauseMs(longRun)</code></td>
+            <td>Returns a longer pause duration when longRun mode is active to accommodate slower environments.</td>
+        </tr>
+        <tr>
+            <td>Click the scores open button in the HUD</td>
+            <td><code>await page.click(Selectors.hud.scoresOpen)</code></td>
+            <td>test-stats.spec.js:100</td>
+            <td>tests/e2e/selectors.js:88</td>
+            <td><code>scoresOpen: '.scores-open'</code></td>
+            <td>Triggers the scores/leaderboard panel to open via the element matching .scores-open. Note: this uses a class selector unlike other HUD buttons.</td>
+        </tr>
+        <tr>
+            <td>Wait for the configured pause duration</td>
+            <td><code>await page.waitForTimeout(pauseMs)</code></td>
+            <td>test-stats.spec.js:101</td>
+            <td>tests/e2e/helpers/time-constants.js:1</td>
+            <td><code>static pauseMs(longRun)</code></td>
+            <td>Gives the server time to respond with leaderboard data and the UI time to render it.</td>
+        </tr>
+        <tr>
+            <td>Assert the scores dialog box is visible with timeout</td>
+            <td><code>await expect(page.locator(Selectors.scores.dialog)).toBeVisible(<br>{ timeout: TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun) }<br>)</code></td>
+            <td>test-stats.spec.js:102-104</td>
+            <td>tests/e2e/selectors.js:135</td>
+            <td><code>dialog: '.scores-dialog-box'</code></td>
+            <td>Confirms the .scores-dialog-box element is visible. Uses UI_OPEN timeout (3000ms, scaled for longRun) to allow for server response latency.</td>
+        </tr>
+        <tr>
+            <td>Assert the scores dialog title is visible</td>
+            <td><code>await expect(page.locator(Selectors.scores.dialogTitle)).toBeVisible()</code></td>
+            <td>test-stats.spec.js:105</td>
+            <td>tests/e2e/selectors.js:136</td>
+            <td><code>dialogTitle: '.scores-dialog-box .box-title'</code></td>
+            <td>Confirms the title element within the scores dialog is rendered - verifies the panel structure is correct.</td>
+        </tr>
+        <tr>
+            <td>Assert the scores dialog content is not empty</td>
+            <td><code>await expect(page.locator(Selectors.scores.dialogContent)).not.toBeEmpty()</code></td>
+            <td>test-stats.spec.js:106</td>
+            <td>tests/e2e/selectors.js:137</td>
+            <td><code>dialogContent: '.scores-dialog-box .box-content'</code></td>
+            <td>Verifies the .box-content area inside the dialog contains leaderboard data - the scores list is populated and not blank.</td>
+        </tr>
+        <tr>
+            <td>Capture screenshot of the open scores panel</td>
+            <td><code>await screenshots.capture(page, 'scores-panel-open')</code></td>
+            <td>test-stats.spec.js:107</td>
+            <td>tests/e2e/test-stats.spec.js:107</td>
+            <td><code>await screenshots.capture(page, 'scores-panel-open')</code></td>
+            <td>Saves a screenshot named scores-panel-open for visual evidence of the leaderboard data being displayed.</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>

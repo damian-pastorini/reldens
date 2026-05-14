@@ -2,100 +2,88 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Verification: Chat Tab Switching</title>
+    <title>Verification: Clicking A Chat Tab Label Switches The Active Tab Content</title>
     <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
 <p><a href="index.html">&larr; Back to index</a></p>
-<h1>Verification: Chat Tab Switching</h1>
-<p>Test: <code>tests/e2e/test-chat.spec.js</code> - <em>clicking a chat tab label switches the active tab content</em> (PENDING)</p>
-<p>Video: <em>not yet recorded</em></p>
-<p>Test is automatically skipped if fewer than 2 chat tabs are available in the build.</p>
-
+<h1>Verification: Clicking A Chat Tab Label Switches The Active Tab Content</h1>
+<p>Test: <code>tests/e2e/test-chat.spec.js</code> - <em>clicking a chat tab label switches the active tab content</em></p>
+<p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/clicking-a-chat-tab-label-switches-the-active-tab-content.webm" data-title="clicking a chat tab label switches the active tab content">&#9654; Watch video</a></p>
 <table>
-    <thead>
-        <tr>
-            <th>Step</th>
-            <th>Action</th>
-            <th>Test Code</th>
-            <th>Test File</th>
-            <th>File Proof</th>
-            <th>Code Proof</th>
-            <th>Comments</th>
-        </tr>
-    </thead>
+    <thead><tr><th>Action</th><th>Test Code</th><th>Test File</th><th>File Proof</th><th>Code Proof</th><th>Comments</th></tr></thead>
     <tbody>
         <tr>
-            <td>1</td>
-            <td>Login and start game</td>
-            <td><code>await LoginHelper.loginAndStartGame(page, ...)</code></td>
-            <td>test-chat.spec.js (tab switching test)</td>
-            <td>tests/e2e/helpers/login.js</td>
-            <td><code>LoginHelper.loginAndStartGame(page, ...)</code></td>
-            <td>Player must be in-game for the chat HUD to render.</td>
+            <td>Login as root player</td>
+            <td><code>Login.loginAndStartGame(page, username, password, playerName, longRun)</code></td>
+            <td>test-chat.spec.js:121</td>
+            <td>tests/e2e/helpers/login.js:77</td>
+            <td><code>static async loginAndStartGame(...)</code></td>
+            <td>Uses <code>e2eUsername</code>/<code>e2ePassword</code>/<code>e2ePlayerName</code> (defaults: root/root/ImRoot)</td>
         </tr>
         <tr>
-            <td>2</td>
-            <td>Open chat panel</td>
-            <td><code>await page.click(Selectors.hud.chatOpen)</code></td>
-            <td>test-chat.spec.js (tab switching test)</td>
-            <td>theme/default/assets/features/chat/templates/ui-chat.html</td>
+            <td>Click chat open button</td>
+            <td><code>page.click(Selectors.hud.chatOpen)</code></td>
+            <td>test-chat.spec.js:123</td>
+            <td>theme/default/assets/features/chat/templates/ui-chat.html:8</td>
             <td><code>&lt;div class="open-ui-button" id="chat-open"&gt;</code></td>
-            <td>Opens the chat dialog with all tab labels and content panels.</td>
+            <td>Opens chat panel with tabs visible</td>
         </tr>
         <tr>
-            <td>3</td>
-            <td>Count visible tab labels</td>
-            <td><code>let tabLabels = page.locator(Selectors.chat.tabLabel)</code><br><code>let tabCount = await tabLabels.count()</code></td>
-            <td>test-chat.spec.js (tab switching test)</td>
+            <td>Assert chat input is visible</td>
+            <td><code>expect(page.locator(Selectors.chat.input)).toBeVisible()</code></td>
+            <td>test-chat.spec.js:125</td>
+            <td>theme/default/assets/features/chat/templates/ui-chat.html:5</td>
+            <td><code>&lt;input id="chat-input" type="text" placeholder="Enter message"/&gt;</code></td>
+            <td>Confirms chat panel is open</td>
+        </tr>
+        <tr>
+            <td>Wait for tab labels and assert at least 2 exist</td>
+            <td><code>page.waitForSelector(Selectors.chat.tabLabel, { state: 'visible', timeout: ... })</code><br><code>let tabCount = await tabLabels.count()</code><br><code>expect(tabCount).toBeGreaterThanOrEqual(2)</code></td>
+            <td>test-chat.spec.js:126-129</td>
             <td>theme/default/assets/features/chat/templates/ui-chat.html</td>
-            <td><code>&lt;div class="chat-tab-label chat-tab-label-{{id}}"&gt;</code></td>
-            <td>Tab labels are rendered per chat tab type (general, private, teams, global). Required to confirm at least 2 are present.</td>
+            <td><code>.tab-label</code></td>
+            <td>Need at least 2 tabs to test switching; test fails with message if only 1 tab</td>
         </tr>
         <tr>
-            <td>4</td>
-            <td>Skip if fewer than 2 tabs</td>
-            <td><code>test.skip(tabCount &lt; 2, 'Less than 2 chat tabs available - cannot test tab switching')</code></td>
-            <td>test-chat.spec.js (tab switching test)</td>
-            <td>-</td>
-            <td>-</td>
-            <td>Some builds disable certain chat tabs; the test gracefully skips when not enough tabs exist.</td>
+            <td>Get current active tab class</td>
+            <td><code>let firstTabClass = await tabLabels.nth(0).getAttribute('class')</code></td>
+            <td>test-chat.spec.js:131</td>
+            <td>theme/default/assets/features/chat/templates/ui-chat.html</td>
+            <td><code>.tab-label</code></td>
+            <td>Records class for comparison after switching</td>
         </tr>
         <tr>
-            <td>5</td>
             <td>Click second tab label</td>
-            <td><code>await tabLabels.nth(1).click()</code></td>
-            <td>test-chat.spec.js (tab switching test)</td>
-            <td>lib/chat/client/chat-ui.js</td>
-            <td><code>tabLabel.addEventListener('click', ...)</code></td>
-            <td>Click handler removes <code>chat-tab-label-active</code> from previous tab and adds it to the clicked tab.</td>
+            <td><code>await tabLabels.nth(1).click({ force: true })</code></td>
+            <td>test-chat.spec.js:135</td>
+            <td>theme/default/assets/features/chat/templates/ui-chat.html</td>
+            <td><code>.tab-label</code></td>
+            <td><code>force: true</code> used because tab labels may overlap with chat content</td>
         </tr>
         <tr>
-            <td>6</td>
-            <td>Assert active tab class is present</td>
+            <td>Assert new active tab has class</td>
             <td><code>let activeAfterClick = await page.locator(Selectors.chat.tabLabelActive).first().getAttribute('class')</code><br><code>expect(activeAfterClick).toBeTruthy()</code></td>
-            <td>test-chat.spec.js (tab switching test)</td>
-            <td>theme/default/assets/css/chat.css</td>
-            <td><code>.chat-tab-label-active</code></td>
-            <td>Active class is the visual marker that the tab is selected and its content is shown.</td>
+            <td>test-chat.spec.js:138-139</td>
+            <td>theme/default/assets/features/chat/templates/ui-chat.html</td>
+            <td><code>.tab-label.active</code></td>
+            <td><code>Selectors.chat.tabLabelActive = '.tab-label.active'</code>; active class changes to second tab</td>
         </tr>
         <tr>
-            <td>7</td>
-            <td>Click first tab label to switch back</td>
-            <td><code>await tabLabels.nth(0).click()</code></td>
-            <td>test-chat.spec.js (tab switching test)</td>
-            <td>lib/chat/client/chat-ui.js</td>
-            <td><code>tabLabel.addEventListener('click', ...)</code></td>
-            <td>Reverses the tab switch to verify both directions work.</td>
+            <td>Click first tab label (switch back)</td>
+            <td><code>await tabLabels.nth(0).click({ force: true })</code></td>
+            <td>test-chat.spec.js:140</td>
+            <td>theme/default/assets/features/chat/templates/ui-chat.html</td>
+            <td><code>.tab-label</code></td>
+            <td>Verifies switching works in both directions</td>
         </tr>
         <tr>
-            <td>8</td>
-            <td>Capture verification screenshot</td>
-            <td><code>screenshots.capture(page, 'chat-first-tab-active-again')</code></td>
-            <td>test-chat.spec.js (tab switching test)</td>
-            <td>tests/e2e/base-e2e-test.js</td>
-            <td><code>screenshots.capture(page, name)</code></td>
-            <td>Stored under <code>tests/screenshots/</code>.</td>
+            <td>Assert first tab is active again</td>
+            <td><code>let activeAfterSwitchBack = await page.locator(Selectors.chat.tabLabelActive).first().getAttribute('class')</code><br><code>expect(activeAfterSwitchBack).toBeTruthy()</code></td>
+            <td>test-chat.spec.js:142-143</td>
+            <td>theme/default/assets/features/chat/templates/ui-chat.html</td>
+            <td><code>.tab-label.active</code></td>
+            <td>Confirms tab switching is bidirectional</td>
         </tr>
     </tbody>
 </table>

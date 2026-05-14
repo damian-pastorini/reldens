@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Buy Item From NPC Shop Adds To Inventory</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Buy Item From NPC Shop Adds To Inventory</h1>
+<p>Test: <code>tests/e2e/test-npc.spec.js</code> - <em>buy item from NPC shop adds to inventory</em></p>
+<p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/buy-item-from-npc-shop-adds-to-inventory.webm" data-title="buy item from NPC shop adds to inventory">&#9654; Watch video</a></p>
+<table>
+    <thead><tr><th>Action</th><th>Test Code</th><th>Test File</th><th>File Proof</th><th>Code Proof</th><th>Comments</th></tr></thead>
+    <tbody>
+        <tr>
+            <td>Log in and open trader shop</td>
+            <td><code>let setup = await TestNpc.loginAndOpenTraderShop(page, gameConfig, longRun)</code></td>
+            <td>test-npc.spec.js:110</td>
+            <td>tests/e2e/helpers/login.js:77</td>
+            <td><code>static async loginAndStartGame(page, username, password, playerName, longRun, skipUiSelectors = false, scene = null)</code></td>
+            <td>Logs in as root2/root/ImRoot2, waits for trader in scene, clicks to open shop, returns setup object with pauseMs and sceneTimeout</td>
+        </tr>
+        <tr>
+            <td>Assert shop buy tab is visible</td>
+            <td><code>await expect(page.locator(Selectors.trader.buyTab)).toBeVisible(<br>    { timeout: TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun) }<br>)</code></td>
+            <td>test-npc.spec.js:111-113</td>
+            <td>tests/e2e/selectors.js:168</td>
+            <td><code>buyTab: '.trade-container-buy'</code></td>
+            <td>Confirms the trader shop opened and the buy tab is displayed. Timeout is UI_OPEN (3000ms).</td>
+        </tr>
+        <tr>
+            <td>Locate the buy button for the first item</td>
+            <td><code>let buyButton = page.locator(Selectors.trader.buyButton).first()</code></td>
+            <td>test-npc.spec.js:114</td>
+            <td>tests/e2e/selectors.js:171</td>
+            <td><code>buyButton: '.trade-container-buy .trade-action-buy button'</code></td>
+            <td>Selects the first available buy button in the shop's buy tab</td>
+        </tr>
+        <tr>
+            <td>Assert buy button is visible</td>
+            <td><code>await expect(buyButton).toBeVisible()</code></td>
+            <td>test-npc.spec.js:115</td>
+            <td>tests/e2e/selectors.js:171</td>
+            <td><code>buyButton: '.trade-container-buy .trade-action-buy button'</code></td>
+            <td>Confirms the buy button is rendered and interactive before clicking</td>
+        </tr>
+        <tr>
+            <td>Click buy button</td>
+            <td><code>await buyButton.click()</code></td>
+            <td>test-npc.spec.js:118</td>
+            <td>tests/e2e/selectors.js:171</td>
+            <td><code>buyButton: '.trade-container-buy .trade-action-buy button'</code></td>
+            <td>Triggers the purchase action for the first listed item in the shop</td>
+        </tr>
+        <tr>
+            <td>Confirm purchase dialog</td>
+            <td><code>await page.locator(Selectors.trader.confirmBuy).click()</code></td>
+            <td>test-npc.spec.js:120</td>
+            <td>tests/e2e/selectors.js:173</td>
+            <td><code>confirmBuy: '.confirm-buy'</code></td>
+            <td>Clicks the confirmation button in the purchase dialog to complete the transaction</td>
+        </tr>
+        <tr>
+            <td>Open inventory panel</td>
+            <td><code>await page.click(Selectors.hud.inventoryOpen)</code></td>
+            <td>test-npc.spec.js:122</td>
+            <td>tests/e2e/selectors.js:82</td>
+            <td><code>inventoryOpen: '#inventory-open'</code></td>
+            <td>Opens the inventory HUD panel to verify the purchased item was added</td>
+        </tr>
+        <tr>
+            <td>Assert inventory contains items</td>
+            <td><code>await expect(page.locator(Selectors.inventory.items)).not.toBeEmpty(<br>    { timeout: TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun) }<br>)</code></td>
+            <td>test-npc.spec.js:123</td>
+            <td>tests/e2e/selectors.js:111</td>
+            <td><code>items: '#inventory-items'</code></td>
+            <td>Confirms the inventory items container is not empty after buying. Timeout is SERVER_RESPONSE (5000ms, scaled for longRun).</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>

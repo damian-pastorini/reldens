@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Equip Item Changes Stat Value</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Equip Item Changes Stat Value</h1>
+<p>Test: <code>tests/e2e/test-items.spec.js</code> - <em>equip item changes stat value</em></p>
+<p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/equip-item-changes-stat-value.webm" data-title="equip item changes stat value">&#9654; Watch video</a></p>
+<table>
+    <thead><tr><th>Action</th><th>Test Code</th><th>Test File</th><th>File Proof</th><th>Code Proof</th><th>Comments</th></tr></thead>
+    <tbody>
+        <tr>
+            <td>Log in, open stats and inventory, click item image, assert equip button visible - return setup object</td>
+            <td><code>let setup = await TestItems.loginAndOpenEquipButton(page, gameConfig, longRun)</code></td>
+            <td>test-items.spec.js:117</td>
+            <td>tests/e2e/helpers/login.js:77</td>
+            <td><code>static async loginAndStartGame(page, username, password, playerName, longRun, skipUiSelectors = false, scene = null)</code></td>
+            <td>loginAndOpenEquipButton logs in as root player, opens stats panel, records statBefore, opens inventory, clicks item image, and asserts equip button is visible. Returns itemId, pauseMs, statBefore, and equipButton.</td>
+        </tr>
+        <tr>
+            <td>Verify e2eEquipableItemId is configured and assert equip button is visible</td>
+            <td><code>expect(itemId, 'e2eEquipableItemId must be configured').toBeTruthy()<br>await expect(equipButton).toBeVisible()</code></td>
+            <td>test-items.spec.js:29<br>test-items.spec.js:40</td>
+            <td>tests/e2e/selectors.js:115</td>
+            <td><code>itemEquip: (itemId) => '#item-equip-'+itemId</code></td>
+            <td>Guards that gameConfig.e2eEquipableItemId is set. Confirms the equip button (#item-equip-{id}) is rendered before proceeding.</td>
+        </tr>
+        <tr>
+            <td>Capture screenshot with equip button visible</td>
+            <td><code>await screenshots.capture(page, 'equip-button-visible')</code></td>
+            <td>test-items.spec.js:118</td>
+            <td>tests/e2e/helpers/screenshots.js:1</td>
+            <td><code>screenshots.capture(page, label)</code></td>
+            <td>Saves a screenshot labelled equip-button-visible to document the state before clicking equip.</td>
+        </tr>
+        <tr>
+            <td>Wait pauseMs then click equip button</td>
+            <td><code>await page.waitForTimeout(setup.pauseMs)<br>await setup.equipButton.click()</code></td>
+            <td>test-items.spec.js:119<br>test-items.spec.js:120</td>
+            <td>tests/e2e/selectors.js:115</td>
+            <td><code>itemEquip: (itemId) => '#item-equip-'+itemId</code></td>
+            <td>Waits for the pause buffer before clicking the equip button (#item-equip-{id}) to trigger the equip action.</td>
+        </tr>
+        <tr>
+            <td>Wait for server to process equip and reflect stat change</td>
+            <td><code>await page.waitForTimeout(1000 + setup.pauseMs)</code></td>
+            <td>test-items.spec.js:121</td>
+            <td>tests/e2e/helpers/time-constants.js:24</td>
+            <td><code>static SERVER_RESPONSE = 5000;</code></td>
+            <td>Waits 1000ms plus pauseMs buffer for the server to process the equip message and broadcast the updated stat to the client.</td>
+        </tr>
+        <tr>
+            <td>Read updated stat value and assert it changed after equipping</td>
+            <td><code>let statAfter = await page.locator(Selectors.stats.firstValue).first().textContent()<br>expect(statAfter).not.toBe(setup.statBefore)</code></td>
+            <td>test-items.spec.js:122<br>test-items.spec.js:123</td>
+            <td>tests/e2e/selectors.js:129</td>
+            <td><code>firstValue: '.stat-container .stat-value'</code></td>
+            <td>Reads the first .stat-container .stat-value text and asserts it is different from the value captured before equipping, confirming the stat modifier was applied.</td>
+        </tr>
+        <tr>
+            <td>Capture screenshot of changed stat after equipping</td>
+            <td><code>await screenshots.capture(page, 'stat-changed-after-equip')</code></td>
+            <td>test-items.spec.js:124</td>
+            <td>tests/e2e/helpers/screenshots.js:1</td>
+            <td><code>screenshots.capture(page, label)</code></td>
+            <td>Saves a screenshot labelled stat-changed-after-equip to document the stat value after the equip.</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>
