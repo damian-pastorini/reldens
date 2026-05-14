@@ -34,8 +34,8 @@
             <td><code>await page.click(Selectors.hud.rewardsOpen)</code></td>
             <td>test-rewards.spec.js:30</td>
             <td>tests/e2e/selectors.js:87</td>
-            <td><code>rewardsOpen: '#rewards-open'</code></td>
-            <td>Triggers the rewards panel to open via the button with id rewards-open.</td>
+            <td><code>rewardsOpen: '.rewards-open'</code></td>
+            <td>Triggers the rewards panel to open via the button with class .rewards-open (the template id is overwritten at runtime by UserInterface.activateOpenButton so the class is used instead).</td>
         </tr>
         <tr>
             <td>Wait for the configured pause duration</td>

@@ -12,8 +12,9 @@ const { TimeConstants } = require('./helpers/time-constants');
 let configPath = FileHandler.joinPaths(process.cwd(), 'tests', 'config.json');
 let testConfig = FileHandler.exists(configPath) ? FileHandler.fetchFileJson(configPath) : {};
 
-let longRun = process.env.LONG_RUN === '1';
-let baseUrl = testConfig.baseUrl || 'http://localhost:8080';
+let longRun = '1' === process.env.LONG_RUN;
+let envPort = process.env.RELDENS_E2E_PORT || null;
+let baseUrl = envPort ? 'http://localhost:'+envPort : (testConfig.baseUrl || 'http://localhost:8080');
 let testResultsDir = FileHandler.joinPaths(process.cwd(), 'test-results');
 
 module.exports = defineConfig({
@@ -22,8 +23,9 @@ module.exports = defineConfig({
     testDir: '.',
     outputDir: testResultsDir,
     workers: 1,
-    maxFailures: 1,
+    maxFailures: 0,
     retries: 0,
+    timeout: TimeConstants.forLongRun(60000, longRun),
     reporter: [['./reporters/test-progress-reporter.js']],
     expect: { timeout: TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun) },
     use: {

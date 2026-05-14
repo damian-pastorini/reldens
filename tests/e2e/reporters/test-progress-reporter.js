@@ -46,7 +46,9 @@ class TestProgressReporter
 
     onTestEnd(test, result)
     {
-        let icon = 'passed' === result.status ? 'ok' : ('skipped' === result.status ? '-' : '✗');
+        let icon = 'passed' === result.status
+            ? 'ok'
+            : ('skipped' === result.status ? 'skip' : 'fail');
         let time = (result.duration / 1000).toFixed(1)+'s';
         if(process.stdout.isTTY) {
             let clearLines = this.hasActiveLine ? '\r\x1b[2K\x1b[1A\x1b[2K' : '\x1b[1A\x1b[2K';
@@ -63,8 +65,8 @@ class TestProgressReporter
             this.failed++;
             let error = result.errors && [...result.errors].shift();
             if(error && error.message) {
-                let msg = [...error.message.split('\n')].shift();
-                process.stdout.write('     Error: '+this.truncate(msg, 120)+'\n');
+                let errorMessage = [...error.message.split('\n')].shift();
+                process.stdout.write('     Error: '+this.truncate(errorMessage, 120)+'\n');
             }
         }
         this.hasActiveLine = false;

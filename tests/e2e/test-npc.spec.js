@@ -9,6 +9,7 @@
 const { BaseE2eTest } = require('./base-e2e-test');
 const { Login } = require('./helpers/login');
 const { Phaser } = require('./helpers/phaser');
+const { Navigation } = require('./helpers/navigation');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
 let test = BaseE2eTest.test;
@@ -24,12 +25,30 @@ class TestNpc
         await Login.loginAndStartGame(page, username, password, playerName, longRun);
     }
 
+    static async sendTraderAction(page, traderKey, value)
+    {
+        await page.evaluate((args) => {
+            let scene = window.reldens.getActiveScene();
+            if(!scene || !scene.objectsAnimations){
+                return;
+            }
+            let anim = scene.objectsAnimations[args.key]
+                || Object.values(scene.objectsAnimations).find(a => a.asset_key === args.key);
+            if(!anim){
+                return;
+            }
+            let tempId = (anim.key === anim.asset_key) ? anim.id : anim.key;
+            window.reldens.activeRoomEvents.send({ 'act': 'oi', 'id': tempId, 'value': args.value });
+        }, { key: traderKey, value });
+    }
+
     static async loginAndOpenTraderShop(page, gameConfig, longRun)
     {
         let traderKey = gameConfig.e2eTraderKey || '';
         await TestNpc.loginRoot2Player(page, gameConfig, longRun);
         let pauseMs = TimeConstants.pauseMs(longRun);
         let sceneTimeout = TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun);
+        let navTimeout = TimeConstants.forLongRun(TimeConstants.NAVIGATION, longRun);
         await (traderKey
             ? Phaser.waitForObject(page, traderKey, sceneTimeout)
             : Phaser.waitForObjectByType(page, 'trader', sceneTimeout));
@@ -37,7 +56,18 @@ class TestNpc
             ? Phaser.getObjectScreenCoords(page, traderKey)
             : Phaser.getObjectScreenCoordsByType(page, 'trader'));
         expect(traderCoords, 'Trader NPC must be found in the scene').not.toBeNull();
-        await (traderKey ? Phaser.clickObject(page, traderKey) : Phaser.clickObjectByType(page, 'trader'));
+        await Navigation.focusGame(page);
+        await Navigation.moveToObjectWithinRange(
+            page,
+            traderKey ? 'asset_key' : 'type',
+            traderKey || 'trader',
+            traderKey ? 'active' : 'visible',
+            50,
+            navTimeout
+        );
+        await Phaser.triggerObjectInteraction(page, traderKey || 'trader');
+        await page.waitForTimeout(1000 + pauseMs);
+        await TestNpc.sendTraderAction(page, traderKey || 'trader', 'buy');
         await page.waitForTimeout(1000 + pauseMs);
         return { traderKey, pauseMs, sceneTimeout };
     }
@@ -48,6 +78,7 @@ class TestNpc
         await TestNpc.loginRoot2Player(page, gameConfig, longRun);
         let pauseMs = TimeConstants.pauseMs(longRun);
         let sceneTimeout = TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun);
+        let navTimeout = TimeConstants.forLongRun(TimeConstants.NAVIGATION, longRun);
         await (npcKey
             ? Phaser.waitForObject(page, npcKey, sceneTimeout)
             : Phaser.waitForObjectByType(page, 'npc', sceneTimeout));
@@ -56,8 +87,17 @@ class TestNpc
             : Phaser.getObjectScreenCoordsByType(page, 'npc'));
         expect(npcCoords, 'NPC must be found in the scene').not.toBeNull();
         await screenshots.capture(page, 'npc-found-in-scene');
+        await Navigation.focusGame(page);
+        await Navigation.moveToObjectWithinRange(
+            page,
+            npcKey ? 'asset_key' : 'type',
+            npcKey || 'npc',
+            npcKey ? 'active' : 'visible',
+            50,
+            navTimeout
+        );
         await page.waitForTimeout(pauseMs);
-        await (npcKey ? Phaser.clickObject(page, npcKey) : Phaser.clickObjectByType(page, 'npc'));
+        await Phaser.triggerObjectInteraction(page, npcKey || 'npc');
         await page.waitForTimeout(1000 + pauseMs);
         let npcDialogueVisible = await page.waitForSelector(
             Selectors.npc.dialogue,
@@ -75,15 +115,17 @@ class TestNpc
         await expect(page.locator(Selectors.trader.buyTab)).toBeVisible(
             { timeout: TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun) }
         );
-        await page.click(Selectors.trader.sellOption);
-        await page.waitForTimeout(setup.pauseMs);
+        await TestNpc.sendTraderAction(page, setup.traderKey || 'trader', 'sell');
+        await page.waitForTimeout(1000 + setup.pauseMs);
         await expect(page.locator(Selectors.trader.sellTab)).toBeVisible(
             { timeout: TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun) }
         );
         await screenshots.capture(page, 'shop-sell-tab-visible');
         let qtyBefore = await page.locator(Selectors.inventory.itemQty(sellItemId)).textContent();
-        let sellButton = page.locator(Selectors.trader.sellButton).first();
-        await expect(sellButton).toBeVisible();
+        let sellButton = page.locator('.trade-container-sell .item-box:has(img[src$="/'+sellItemId+'.png"]) .trade-action-sell button').first();
+        await expect(sellButton).toBeVisible({
+            timeout: TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun)
+        });
         await sellButton.click();
         await page.waitForTimeout(setup.pauseMs);
         await page.locator(Selectors.trader.confirmSell).click();

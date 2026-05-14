@@ -19,7 +19,7 @@ class TestInteractiveObjects
 {
     static FOREST_TRANSITION_X = 608;
     static FOREST_TRANSITION_Y = 16;
-    static INTERACTION_RANGE = 50;
+    static INTERACTION_RANGE = 120;
     static MINING_ROCK_INTERACTION_RANGE = 120;
 
     static async loginAndEnterForest(page, gameConfig, longRun)

@@ -27,11 +27,11 @@ class TestRewards
     {
         await TestRewards.loginRootPlayer(page, gameConfig, longRun);
         let pauseMs = TimeConstants.pauseMs(longRun);
+        let uiTimeout = TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun);
+        await page.locator(Selectors.hud.rewardsOpen).waitFor({ state: 'visible', timeout: uiTimeout });
         await page.click(Selectors.hud.rewardsOpen);
         await page.waitForTimeout(pauseMs);
-        await expect(page.locator(Selectors.rewards.dialog)).toBeVisible(
-            { timeout: TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun) }
-        );
+        await expect(page.locator(Selectors.rewards.dialog)).toBeVisible({ timeout: uiTimeout });
         return { pauseMs };
     }
 

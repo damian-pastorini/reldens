@@ -42,7 +42,9 @@ class TestChat
 
     static async openChatOnBothPages(page, secondPage, pauseMs)
     {
+        await page.locator(Selectors.hud.chatOpen).waitFor({ state: 'visible', timeout: TimeConstants.UI_OPEN });
         await page.click(Selectors.hud.chatOpen);
+        await secondPage.locator(Selectors.hud.chatOpen).waitFor({ state: 'visible', timeout: TimeConstants.UI_OPEN });
         await secondPage.click(Selectors.hud.chatOpen);
         await page.waitForTimeout(pauseMs);
         await expect(page.locator(Selectors.chat.input)).toBeVisible();

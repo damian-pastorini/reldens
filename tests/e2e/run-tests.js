@@ -14,8 +14,8 @@ class RunTests
 {
     static run()
     {
-        let longRun = process.argv.includes('--long') || process.env.LONG_RUN === '1';
-        let cleanOutput = process.argv.includes('--clean-output') || process.env.npm_config_clean_output === 'true';
+        let longRun = process.argv.includes('--long') || '1' === process.env.LONG_RUN;
+        let cleanOutput = process.argv.includes('--clean-output') || 'true' === process.env.npm_config_clean_output;
         if(cleanOutput) {
             let testResultsDir = FileHandler.joinPaths(process.cwd(), 'test-results');
             if(FileHandler.exists(testResultsDir)) {
@@ -25,6 +25,11 @@ class RunTests
         }
         if(longRun) {
             process.env.LONG_RUN = '1';
+        }
+        let portArg = process.argv.find(a => a.startsWith('--port='));
+        let portValue = portArg ? portArg.slice('--port='.length) : (process.env.npm_config_port || null);
+        if(portValue) {
+            process.env.RELDENS_E2E_PORT = portValue;
         }
         let filterArg = process.argv.find(a => a.startsWith('--filter='));
         let filterValue = filterArg ? filterArg.slice('--filter='.length) : (process.env.npm_config_filter || null);

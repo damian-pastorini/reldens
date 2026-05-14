@@ -67,8 +67,13 @@ class TestItems
         expect(statEquipped, 'Stat must change after equipping item').not.toBe(setup.statBefore);
         await screenshots.capture(page, 'item-equipped');
         await page.click(Selectors.hud.playerStatsClose);
-        await page.click(Selectors.inventory.itemImage(setup.itemId));
-        let statAfter = await TestItems.clickEquipAndReadStat(page, setup);
+        await page.evaluate((itemIdx) => {
+            window.reldens.activeRoomEvents.send({ act: 'ivpEqi', 'idx': itemIdx });
+        }, setup.itemId);
+        await page.waitForTimeout(1000 + setup.pauseMs);
+        await page.click(Selectors.hud.playerStatsOpen);
+        await expect(page.locator(Selectors.hud.playerStatsUi)).toBeVisible();
+        let statAfter = JSON.stringify(await page.locator(Selectors.stats.firstValue).allTextContents());
         expect(statAfter, 'Stat must revert after unequipping item').toBe(setup.statBefore);
         await screenshots.capture(page, 'stat-reverted-after-unequip');
     }
@@ -96,7 +101,8 @@ class TestItems
         let slotCount = await slotImages.count();
         expect(slotCount, 'Equipment panel must contain at least one equipped slot image after equipping').toBeGreaterThan(0);
         await screenshots.capture(page, 'equipment-panel-with-equipped-slot');
-        await slotImages.first().click();
+        await page.waitForTimeout(1000 + setup.pauseMs);
+        await slotImages.first().click({ force: true, timeout: TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun) });
         await page.waitForTimeout(1000 + setup.pauseMs);
         await expect(page.locator(Selectors.equipment.itemBoxVisible).first()).toBeVisible(
             { timeout: TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun) }

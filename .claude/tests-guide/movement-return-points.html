@@ -62,28 +62,36 @@
             <td>If e2eEnemyKey is set, waits for specific enemy asset; falls back to waitForObjectByType('enemy')</td>
         </tr>
         <tr>
-            <td>Click enemy to initiate combat</td>
-            <td><code>Phaser.clickObjectByAssetKey(page, enemyKey)</code></td>
-            <td>test-movement.spec.js:46</td>
-            <td>tests/e2e/helpers/phaser.js:87</td>
-            <td><code>static async clickObjectByAssetKey(page, assetKey)</code></td>
-            <td>Finds enemy sprite by asset_key, resolves screen coords, clicks canvas; falls back to clickObjectByType('enemy')</td>
-        </tr>
-        <tr>
             <td>Extend test timeout to allow for full death cycle</td>
             <td><code>test.setTimeout(TimeConstants.forLongRun(...) + ENEMY_KILL + PLAYER_REVIVE)</code></td>
-            <td>test-movement.spec.js:47</td>
-            <td>tests/e2e/test-movement.spec.js:47</td>
+            <td>test-movement.spec.js:58</td>
+            <td>tests/e2e/test-movement.spec.js:58</td>
             <td><code>test.setTimeout(TimeConstants.forLongRun(TimeConstants.GAME_START + TimeConstants.NAVIGATION, longRun) + TimeConstants.ENEMY_KILL + TimeConstants.PLAYER_REVIVE);</code></td>
-            <td>ENEMY_KILL=90000ms, PLAYER_REVIVE=12000ms; total timeout extends well beyond default</td>
+            <td>ENEMY_KILL=170000ms (sized for player HP=280 at ~2 HP/sec), PLAYER_REVIVE=12000ms; total timeout extends well beyond default</td>
         </tr>
         <tr>
-            <td>Wait for player HP to reach 0 (death)</td>
-            <td><code>page.waitForFunction(() => Number(player.stats.hp) &lt;= 0, null, { timeout: ENEMY_KILL })</code></td>
-            <td>test-movement.spec.js:52</td>
-            <td>tests/e2e/test-movement.spec.js:52</td>
-            <td><code>await page.waitForFunction(() => {<br>  let room = window.reldens && ...;<br>  let player = window.reldens.activeRoomEvents.playerBySessionIdFromState(...);<br>  return Number(player.stats.hp) &lt;= 0;<br>}, null, { timeout: TimeConstants.ENEMY_KILL });</code></td>
-            <td>Polls server-side player.stats.hp until it reaches 0; confirms combat killed the player</td>
+            <td>Chase enemy until within combat range</td>
+            <td><code>TestMovement.chaseEnemy(page, enemyKey, 80, navTimeout)</code></td>
+            <td>test-movement.spec.js:63</td>
+            <td>tests/e2e/helpers/navigation.js:192</td>
+            <td><code>static async moveToObjectWithinRange(page, matchProp, matchValue, statusKey, range, timeout, useRespawnFind = false)</code></td>
+            <td>Walks player toward the enemy sprite each step until within 80px; includes stuck-detection that switches to perpendicular movement when collision blocks the direct path.</td>
+        </tr>
+        <tr>
+            <td>Poll for #game-over visibility until player dies</td>
+            <td><code>document.querySelector('#game-over:not(.hidden)')</code> inside a chase-and-wait loop</td>
+            <td>test-movement.spec.js:64-83</td>
+            <td>tests/e2e/test-movement.spec.js:64-83</td>
+            <td><code>for(let i = 0; i &lt; deathMaxSteps; i++){ isDead = await page.evaluate(() =&gt; null !== document.querySelector('#game-over:not(.hidden)')); if(isDead) break; await TestMovement.chaseEnemy(page, enemyKey, 80, ...); await page.waitForTimeout(...); }</code></td>
+            <td>Each iteration re-checks the game-over overlay, then re-chases the enemy (in case it died/respawned) and waits up to 1s while the player is being attacked. Deadline = ENEMY_KILL ms.</td>
+        </tr>
+        <tr>
+            <td>Assert player died within the budget</td>
+            <td><code>expect(isDead, 'Player must die from enemy attacks within timeout').toBeTruthy()</code></td>
+            <td>test-movement.spec.js:84</td>
+            <td>tests/e2e/test-movement.spec.js:84</td>
+            <td><code>expect(isDead, 'Player must die from enemy attacks within timeout').toBeTruthy();</code></td>
+            <td>If #game-over never appeared within ENEMY_KILL ms the test fails here; otherwise proceeds to the return-room check.</td>
         </tr>
         <tr>
             <td>Wait for room to change to the configured return room</td>

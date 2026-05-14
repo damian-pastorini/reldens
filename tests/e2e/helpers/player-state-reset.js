@@ -9,6 +9,7 @@
  */
 
 const { Logger } = require('@reldens/utils');
+const { TestDataSetup } = require('./test-data-setup');
 
 class PlayerStateReset
 {
@@ -40,7 +41,7 @@ class PlayerStateReset
             let stats = await dataServer.getEntity('playersStats').loadBy('player_id', playerId);
             let state = await dataServer.getEntity('playersState').loadOneBy('player_id', playerId);
             let inventoryItems = await dataServer.getEntity('itemsInventory').loadBy('owner_id', playerId);
-            snapshots[String(playerId)] = { stats, state, inventoryItems: inventoryItems || [] };
+            snapshots[String(playerId)] = { stats, state, inventoryItems: inventoryItems || [], userId: user.id };
         }
         Logger.info('[player-state-reset] Snapshots captured for '+Object.keys(snapshots).length+' players.');
         return snapshots;
@@ -64,12 +65,49 @@ class PlayerStateReset
         }
     }
 
+    static async clearRewardsState(dataServer, playerId)
+    {
+        try {
+            let rewardsStateRepo = dataServer.getEntity('rewardsEventsState');
+            let existing = await rewardsStateRepo.loadBy('player_id', playerId);
+            if(!existing || !existing.length){
+                return;
+            }
+            let now = new Date();
+            let todayString = now.getFullYear()
+                +'-'+String(now.getMonth() + 1).padStart(2, '0')
+                +'-'+String(now.getDate()).padStart(2, '0');
+            for(let stateRow of existing){
+                let readyState = { 'ready': true, 'date': todayString, 'complete': false };
+                await rewardsStateRepo.updateById(stateRow.id, { 'state': JSON.stringify(readyState) });
+            }
+            Logger.info('[player-state-reset] Reset '+existing.length+' rewards states to ready for player '+playerId);
+        } catch(error){
+            Logger.warning('[player-state-reset] Could not reset rewards state for player '+playerId+': '+error.message);
+        }
+    }
+
+    static async ensureTodayLogin(dataServer, userId)
+    {
+        try {
+            let usersLoginRepo = dataServer.getEntity('usersLogin');
+            await usersLoginRepo.create({ 'user_id': userId, 'login_date': new Date() });
+            Logger.info('[player-state-reset] Added users_login row for user '+userId);
+        } catch(error){
+            Logger.warning('[player-state-reset] Could not add users_login for user '+userId+': '+error.message);
+        }
+    }
+
     static async restoreSnapshots(dataServer, snapshots)
     {
         for(let playerId of Object.keys(snapshots)){
             let snap = snapshots[playerId];
             await PlayerStateReset.restorePlayerStats(dataServer, snap.stats);
             await PlayerStateReset.restorePlayerInventory(dataServer, snap.inventoryItems || []);
+            await PlayerStateReset.clearRewardsState(dataServer, playerId);
+            if(snap.userId){
+                await PlayerStateReset.ensureTodayLogin(dataServer, snap.userId);
+            }
             if(!snap.state){
                 continue;
             }
@@ -83,11 +121,14 @@ class PlayerStateReset
         Logger.info('[player-state-reset] Players restored: '+Object.keys(snapshots).length);
     }
 
-    static registerResetEndpoint(serverManager, snapshots)
+    static registerResetEndpoint(serverManager, snapshots, config)
     {
         serverManager.app.post('/api/e2e/reset-players', async (request, response) => {
             try {
                 await PlayerStateReset.restoreSnapshots(serverManager.dataServer, snapshots);
+                if(config){
+                    await TestDataSetup.ensureRequiredItems(serverManager.dataServer, config);
+                }
                 response.json({ ok: true });
             } catch(error){
                 Logger.error('[player-state-reset] Reset failed: '+error.message);

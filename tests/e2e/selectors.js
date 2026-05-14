@@ -85,7 +85,7 @@ class Selectors
             minimapOpen: '#minimap-open',
             minimapUi: '#minimap-ui',
             minimapClose: '#minimap-close',
-            rewardsOpen: '#rewards-open',
+            rewardsOpen: '.rewards-open',
             scoresOpen: '.scores-open',
             teamsOpen: '.teams-open',
             clanOpen: '.clan-open'
@@ -119,10 +119,10 @@ class Selectors
         this.equipment = {
             ui: '#equipment-ui',
             items: '#equipment-items',
-            groupSlot: '.equipment-group-key',
-            slotById: (groupKey) => '.equipment-group-key-'+groupKey,
-            slotImage: '.equipment-group-key img',
-            itemBoxVisible: '.item-box'
+            groupSlot: '.group-item-block',
+            slotById: (groupKey) => '#group-item-'+groupKey,
+            slotImage: '.group-item-block .equipped-item .item-box .image-container img',
+            itemBoxVisible: '#equipment-items .item-box'
         };
         this.stats = {
             container: '.stat-container',
@@ -152,7 +152,7 @@ class Selectors
             dialogContent: '.teams-dialog-box .box-content',
             container: '.team-container',
             invite: (playerId) => '.team-invite-'+playerId+' button',
-            acceptOption: '[id^="opt-1-teams"]'
+            acceptOption: '[id^="opt-accept-teams"]'
         };
         this.clans = {
             dialog: '.clan-dialog-box',
@@ -176,11 +176,11 @@ class Selectors
         };
         this.playerTrade = {
             startTrade: (sessionId) => '.start-trade-'+sessionId+' button',
-            acceptYes: '.accept-trade-yes',
+            acceptYes: '[id^="opt-accept-trade"]',
             container: '.trade-container',
-            offerButton: '.trade-action-offer',
+            offerButton: '.trade-action-trade button',
             confirmAttr: '[class*="confirm-"]',
-            cancelButton: '.trade-action-cancel'
+            cancelButton: '.cancel-action'
         };
         this.combat = {
             targetBox: '#box-target',

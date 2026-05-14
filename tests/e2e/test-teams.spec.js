@@ -51,62 +51,63 @@ class TestTeams
         await Login.loginAndStartGame(secondPage, username2, password2, playerName2, longRun);
     }
 
+    static async inviteAndAcceptTeam(page, secondPage, gameConfig, longRun)
+    {
+        await TestTeams.loginBothPlayers(page, secondPage, gameConfig, longRun);
+        let pauseMs = TimeConstants.pauseMs(longRun);
+        let sceneTimeout = TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun);
+        let uiTimeout = TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun);
+        let serverResponseTimeout = TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun);
+        await secondPage.waitForFunction(() => {
+            let room = window.reldens.activeRoomEvents && window.reldens.activeRoomEvents.room;
+            return !!(room && room.sessionId);
+        }, null, { timeout: sceneTimeout });
+        let playerBSessionId = await secondPage.evaluate(() => {
+            let room = window.reldens.activeRoomEvents && window.reldens.activeRoomEvents.room;
+            return room ? room.sessionId : null;
+        });
+        expect(playerBSessionId, 'Player B session ID must be available').not.toBeNull();
+        let playerBId = await TestTeams.getPlayerIdFromState(secondPage);
+        expect(playerBId, 'Player B player_id must be available').not.toBeNull();
+        await Phaser.waitForPlayerBySessionId(page, playerBSessionId, sceneTimeout);
+        let playerBCoords = await Phaser.getOtherPlayerScreenCoords(page, playerBSessionId);
+        expect(playerBCoords, 'Player B must be visible in player A scene').not.toBeNull();
+        await Phaser.clickPlayerBySessionId(page, playerBSessionId);
+        await page.waitForTimeout(pauseMs);
+        let teamInviteButton = page.locator(Selectors.teams.invite(playerBId));
+        await expect(teamInviteButton).toBeVisible({ timeout: uiTimeout });
+        await teamInviteButton.click();
+        await page.waitForTimeout(1000 + pauseMs);
+        let acceptButton = secondPage.locator(Selectors.teams.acceptOption).first();
+        await expect(acceptButton).toBeVisible({ timeout: uiTimeout });
+        await acceptButton.click();
+        await page.waitForTimeout(2000 + pauseMs);
+        await expect(async () => {
+            expect(await page.locator(Selectors.teams.container).count()).toBeGreaterThan(0);
+        }).toPass({ timeout: serverResponseTimeout });
+        await expect(async () => {
+            expect(await secondPage.locator(Selectors.teams.container).count()).toBeGreaterThan(0);
+        }).toPass({ timeout: serverResponseTimeout });
+        return { pauseMs, playerBId, playerBSessionId };
+    }
+
     static run()
     {
         test.describe('Teams', () => {
-            test('teams panel opens and shows content', async ({ page, screenshots, gameConfig, longRun }) => {
-                await TestTeams.loginRoot2Player(page, gameConfig, longRun);
-                let pauseMs = TimeConstants.pauseMs(longRun);
+            test('teams panel opens and shows content', async ({ page, secondPage, screenshots, gameConfig, longRun }) => {
+                let setup = await TestTeams.inviteAndAcceptTeam(page, secondPage, gameConfig, longRun);
+                let uiTimeout = TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun);
+                await page.locator(Selectors.hud.teamsOpen).waitFor({ state: 'visible', timeout: uiTimeout });
                 await page.click(Selectors.hud.teamsOpen);
-                await page.waitForTimeout(pauseMs);
-                await expect(page.locator(Selectors.teams.dialog)).toBeVisible(
-                    { timeout: TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun) }
-                );
+                await page.waitForTimeout(setup.pauseMs);
+                await expect(page.locator(Selectors.teams.dialog)).toBeVisible({ timeout: uiTimeout });
                 await expect(page.locator(Selectors.teams.dialogContent)).toBeVisible();
                 await screenshots.capture(page, 'teams-panel-open');
             });
             test('player can invite another player to a team', async ({ page, secondPage, screenshots, gameConfig, longRun }) => {
-                await TestTeams.loginBothPlayers(page, secondPage, gameConfig, longRun);
-                await screenshots.capture(page, 'p1-in-game');
-                await screenshots.capture(secondPage, 'p2-in-game');
-                let pauseMs = TimeConstants.pauseMs(longRun);
-                let sceneTimeout = TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun);
-                await secondPage.waitForFunction(() => {
-                    let room = window.reldens.activeRoomEvents && window.reldens.activeRoomEvents.room;
-                    return !!(room && room.sessionId);
-                }, null, { timeout: sceneTimeout });
-                let playerBSessionId = await secondPage.evaluate(() => {
-                    let room = window.reldens.activeRoomEvents && window.reldens.activeRoomEvents.room;
-                    return room ? room.sessionId : null;
-                });
-                expect(playerBSessionId, 'Player B session ID must be available').not.toBeNull();
-                let playerBId = await TestTeams.getPlayerIdFromState(secondPage);
-                expect(playerBId, 'Player B player_id must be available').not.toBeNull();
-                await Phaser.waitForPlayerBySessionId(page, playerBSessionId, sceneTimeout);
-                let playerBCoords = await Phaser.getOtherPlayerScreenCoords(page, playerBSessionId);
-                expect(playerBCoords, 'Player B must be visible in player A scene').not.toBeNull();
-                await Phaser.clickPlayerBySessionId(page, playerBSessionId);
-                await page.waitForTimeout(pauseMs);
-                let teamInviteButton = page.locator(Selectors.teams.invite(playerBId));
-                await expect(teamInviteButton).toBeVisible(
-                    { timeout: TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun) }
-                );
-                await screenshots.capture(page, 'p1-team-invite-button-visible');
-                await teamInviteButton.click();
-                await page.waitForTimeout(1000 + pauseMs);
-                let acceptButton = secondPage.locator(Selectors.teams.acceptOption).first();
-                await expect(acceptButton).toBeVisible(
-                    { timeout: TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun) }
-                );
-                await screenshots.capture(secondPage, 'p2-team-invite-modal-visible');
-                await acceptButton.click();
-                await page.waitForTimeout(1000 + pauseMs);
-                await expect(page.locator(Selectors.teams.container)).toBeVisible(
-                    { timeout: TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun) }
-                );
-                await expect(secondPage.locator(Selectors.teams.container)).toBeVisible(
-                    { timeout: TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun) }
-                );
+                await screenshots.capture(page, 'p1-before-invite');
+                await screenshots.capture(secondPage, 'p2-before-invite');
+                await TestTeams.inviteAndAcceptTeam(page, secondPage, gameConfig, longRun);
                 await screenshots.capture(page, 'p1-team-container-visible');
                 await screenshots.capture(secondPage, 'p2-team-container-visible');
             });
