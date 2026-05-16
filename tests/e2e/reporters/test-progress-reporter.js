@@ -7,6 +7,9 @@
  *
  */
 
+const util = require('util');
+let flushTick = util.promisify(setImmediate);
+
 class TestProgressReporter
 {
     printsToStdio()
@@ -77,7 +80,7 @@ class TestProgressReporter
         this.hasActiveLine = false;
     }
 
-    onEnd(result)
+    async onEnd(result)
     {
         try {
             let duration = result && result.duration ? result.duration : 0;
@@ -86,6 +89,7 @@ class TestProgressReporter
             let totalExecuted = this.passed + this.failed + this.skipped;
             process.stdout.write('\n '+this.passed+' passed  '+this.failed+' failed  '+this.skipped+' skipped  ('+durText+')\n');
             process.stdout.write(' Total tests executed: '+totalExecuted+' of '+this.total+'\n');
+            await flushTick();
         } catch(error) {
             process.stderr.write('TestProgressReporter.onEnd error: '+(error && error.message ? error.message : error)+'\n');
         }

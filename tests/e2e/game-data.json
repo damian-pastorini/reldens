@@ -2,7 +2,7 @@
     "players": {
         "root": {
             "name": "ImRoot",
-            "roomId": 4,
+            "roomId": 5,
             "classPathId": 1,
             "currentLevel": 10,
             "currentExp": 9100,
@@ -162,6 +162,22 @@
                     "objectClassKey": "npc_3"
                 }
             ]
+        },
+        "5": {
+            "enemies": [],
+            "npcs": [
+                {
+                    "assetKey": "quest_npc_1",
+                    "objectId": 13,
+                    "objectClassKey": "npc_5"
+                },
+                {
+                    "assetKey": "chest_forest_1",
+                    "objectId": 18,
+                    "objectClassKey": "chest_forest_1"
+                }
+            ],
+            "traders": []
         }
     },
     "items": {
