@@ -2,7 +2,7 @@
 
 Reldens is an MMORPG Platform (v4.0.0-beta.39) built on Node.js for developers to create multiplayer games.
 
-- **Server**: Colyseus 0.16 (authoritative game server, WebSockets via `@colyseus/ws-transport`)
+- **Server**: Colyseus 0.17 (authoritative game server, WebSockets via `@colyseus/ws-transport`)
 - **Client**: Phaser 3 (game engine), Parcel 2 (bundler)
 - **Database**: Multi-driver via `@reldens/storage` (Prisma, ObjectionJS, MikroORM)
 - **Node Version**: >= 20.0.0

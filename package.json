@@ -51,10 +51,11 @@
         "@playwright/test": "1.59.1"
     },
     "dependencies": {
-        "@colyseus/core": "0.16.24",
-        "@colyseus/monitor": "0.16.7",
-        "@colyseus/schema": "3.0.76",
-        "@colyseus/ws-transport": "0.16.5",
+        "@colyseus/core": "^0.17.32",
+        "@colyseus/monitor": "^0.17.0",
+        "@colyseus/schema": "^4.0.8",
+        "@colyseus/sdk": "^0.17.26",
+        "@colyseus/ws-transport": "^0.17.9",
         "@parcel/bundler-default": "2.16.4",
         "@parcel/compressor-raw": "2.16.4",
         "@parcel/core": "2.16.4",
@@ -115,7 +116,6 @@
         "@reldens/utils": "^0.56.0",
         "@sendgrid/mail": "8.1.6",
         "buffer": "6.0.3",
-        "colyseus.js": "0.16.22",
         "core-js": "3.49.0",
         "dotenv": "17.4.2",
         "express-basic-auth": "1.2.1",
