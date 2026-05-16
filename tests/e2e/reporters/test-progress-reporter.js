@@ -9,6 +9,11 @@
 
 class TestProgressReporter
 {
+    printsToStdio()
+    {
+        return true;
+    }
+
     onBegin(config, suite)
     {
         this.total = suite.allTests().length;
@@ -74,11 +79,16 @@ class TestProgressReporter
 
     onEnd(result)
     {
-        let seconds = Math.round(result.duration / 1000);
-        let durText = seconds < 60 ? seconds+'s' : Math.floor(seconds / 60)+'m '+seconds % 60+'s';
-        let totalExecuted = this.passed + this.failed + this.skipped;
-        process.stdout.write('\n '+this.passed+' passed  '+this.failed+' failed  '+this.skipped+' skipped  ('+durText+')\n');
-        process.stdout.write(' Total tests executed: '+totalExecuted+' of '+this.total+'\n');
+        try {
+            let duration = result && result.duration ? result.duration : 0;
+            let seconds = Math.round(duration / 1000);
+            let durText = seconds < 60 ? seconds+'s' : Math.floor(seconds / 60)+'m '+seconds % 60+'s';
+            let totalExecuted = this.passed + this.failed + this.skipped;
+            process.stdout.write('\n '+this.passed+' passed  '+this.failed+' failed  '+this.skipped+' skipped  ('+durText+')\n');
+            process.stdout.write(' Total tests executed: '+totalExecuted+' of '+this.total+'\n');
+        } catch(error) {
+            process.stderr.write('TestProgressReporter.onEnd error: '+(error && error.message ? error.message : error)+'\n');
+        }
     }
 
     truncate(text, maxLen)
