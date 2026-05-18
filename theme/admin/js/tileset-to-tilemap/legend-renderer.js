@@ -14,21 +14,16 @@ class TilesetLegendRenderer
         let template = app.getElement('.element-row-template');
         let tileset = app.state[tilesetIndex];
         let elements = tileset.elements;
-        let refs = app.refs[tilesetIndex];
-        let searchTerm = refs.legendSearch ? refs.legendSearch.value.toLowerCase() : '';
-        let showElements = refs.showElementsCheck ? refs.showElementsCheck.checked : true;
-        let showClusters = refs.showClustersCheck ? refs.showClustersCheck.checked : true;
-        let showSpots = refs.showSpotsCheck ? refs.showSpotsCheck.checked : true;
-        let filters = { searchTerm, showElements, showClusters, showSpots };
         for(let i = 0; i < elements.length; i++){
             let element = elements[i];
             let frag = template.content.cloneNode(true);
-            this.buildElementRow(frag, element, tilesetIndex, i, filters);
+            this.buildElementRow(frag, element, tilesetIndex, i);
             list.appendChild(frag);
         }
         let spots = tileset.spots || [];
         let spotTemplate = app.getElement('.spot-row-template');
-        if(showSpots && spots.length && spotTemplate){
+        let showSpotsAtBuild = this.readShowSpots(tilesetIndex);
+        if(showSpotsAtBuild && spots.length && spotTemplate){
             for(let si = 0; si < spots.length; si++){
                 this.editor.spotEditor.appendSpotRow(
                     list, spots[si], si, tileset, tilesetIndex, spotTemplate
@@ -38,9 +33,54 @@ class TilesetLegendRenderer
         if(app.tileOptionsBinder){
             app.tileOptionsBinder.bindSpotRows(tilesetIndex);
         }
+        this.applyLegendVisibility(tilesetIndex);
     }
 
-    buildElementRow(frag, element, tilesetIndex, i, filters)
+    readShowSpots(tilesetIndex)
+    {
+        let refs = this.editor.app.refs[tilesetIndex];
+        if(!refs || !refs.showSpotsCheck){
+            return true;
+        }
+        return refs.showSpotsCheck.checked;
+    }
+
+    applyLegendVisibility(tilesetIndex)
+    {
+        let app = this.editor.app;
+        let refs = app.refs[tilesetIndex];
+        if(!refs || !refs.list){
+            return;
+        }
+        let showSpots = this.readShowSpots(tilesetIndex);
+        let spots = app.state[tilesetIndex].spots || [];
+        let hasSpotRows = null !== refs.list.querySelector('.spot-row');
+        if(showSpots && spots.length && !hasSpotRows){
+            this.renderLegend(tilesetIndex);
+            return;
+        }
+        let showElements = refs.showElementsCheck ? refs.showElementsCheck.checked : true;
+        let showClusters = refs.showClustersCheck ? refs.showClustersCheck.checked : true;
+        let searchTerm = refs.legendSearch ? refs.legendSearch.value.toLowerCase() : '';
+        let elements = app.state[tilesetIndex].elements;
+        let elementRows = refs.list.querySelectorAll('.element-row');
+        let limit = Math.min(elementRows.length, elements.length);
+        for(let i = 0; i < limit; i++){
+            let element = elements[i];
+            let isCluster = 'cluster' === element.type;
+            let isSpot = 'spot' === element.type;
+            let matchesType = (isCluster && showClusters)
+                || (isSpot && showSpots)
+                || (!isCluster && !isSpot && showElements);
+            let matchesSearch = !searchTerm || element.name.toLowerCase().includes(searchTerm);
+            elementRows[i].classList.toggle('hidden', !matchesType || !matchesSearch);
+        }
+        for(let spotRow of refs.list.querySelectorAll('.spot-row')){
+            spotRow.classList.toggle('hidden', !showSpots);
+        }
+    }
+
+    buildElementRow(frag, element, tilesetIndex, i)
     {
         let app = this.editor.app;
         let isSelected = app.selectedTileset === tilesetIndex && app.selectedElement === i;
@@ -52,13 +92,6 @@ class TilesetLegendRenderer
         typeIcon.src = '/assets/admin/'+('cluster' === element.type ? 'cubes-solid-full' : 'cube-solid-full')+'.svg';
         typeIcon.alt = element.type;
         typeIcon.title = element.type;
-        let isClusterType = 'cluster' === element.type;
-        let isSpotType = 'spot' === element.type;
-        let matchesType = (isClusterType && filters.showClusters)
-            || (isSpotType && filters.showSpots)
-            || (!isClusterType && !isSpotType && filters.showElements);
-        let matchesSearch = !filters.searchTerm || element.name.toLowerCase().includes(filters.searchTerm);
-        row.classList.toggle('hidden', !matchesType || !matchesSearch);
         let bulkCheckbox = frag.querySelector('.element-bulk-select');
         bulkCheckbox.checked = element.bulkSelected || false;
         bulkCheckbox.addEventListener('click', (event) => event.stopPropagation());

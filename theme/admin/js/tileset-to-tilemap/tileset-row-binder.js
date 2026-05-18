@@ -14,7 +14,7 @@ class TilesetRowBinder
         this.bindHeader(row, i);
         this.bindCanvas(canvas, i);
         this.bindRefs(row, i, canvas, list);
-        this.bindControls(row, i, list);
+        this.bindControls(row, i);
         this.app.refresh(i);
     }
 
@@ -76,7 +76,7 @@ class TilesetRowBinder
         };
     }
 
-    bindControls(row, i, list)
+    bindControls(row, i)
     {
         let refs = this.app.refs[i];
         let capturedI = i;
@@ -109,24 +109,13 @@ class TilesetRowBinder
             refs.nameAllBtn.addEventListener('click', () => this.app.ai.runAiName(capturedI, refs.nameAllBtn));
         }
         refs.bulkSelectAll.addEventListener('change', () => {
-            let checkboxes = list.querySelectorAll('.element-bulk-select');
-            let isChecked = refs.bulkSelectAll.checked;
-            for(let checkbox of checkboxes){
-                checkbox.checked = isChecked;
-            }
-            for(let element of this.app.state[capturedI].elements){
-                element.bulkSelected = isChecked;
-            }
-            for(let spot of this.app.state[capturedI].spots || []){
-                spot.bulkSelected = isChecked;
-            }
-            this.app.generator.updateGenerateButtonState();
+            this.applyBulkSelection(capturedI, refs);
         });
-        refs.legendSearch.addEventListener('input', () => this.app.editor.renderLegend(capturedI));
-        refs.showElementsCheck.addEventListener('change', () => this.app.editor.renderLegend(capturedI));
-        refs.showClustersCheck.addEventListener('change', () => this.app.editor.renderLegend(capturedI));
+        refs.legendSearch.addEventListener('input', () => this.app.editor.legendRenderer.applyLegendVisibility(capturedI));
+        refs.showElementsCheck.addEventListener('change', () => this.applyFilterChange(capturedI));
+        refs.showClustersCheck.addEventListener('change', () => this.applyFilterChange(capturedI));
         if(refs.showSpotsCheck){
-            refs.showSpotsCheck.addEventListener('change', () => this.app.editor.renderLegend(capturedI));
+            refs.showSpotsCheck.addEventListener('change', () => this.applyFilterChange(capturedI));
         }
         if(refs.bulkDeleteSpotsBtn){
             refs.bulkDeleteSpotsBtn.addEventListener('click', () => this.bulkDeleteSelectedMapObjects(capturedI));
@@ -137,6 +126,46 @@ class TilesetRowBinder
         if(this.app.tileOptionsBinder){
             this.app.tileOptionsBinder.bind(capturedI, row);
         }
+    }
+
+    applyFilterChange(tilesetIndex)
+    {
+        this.app.editor.legendRenderer.applyLegendVisibility(tilesetIndex);
+        this.app.renderer.renderCanvas(tilesetIndex);
+    }
+
+    applyBulkSelection(tilesetIndex, refs)
+    {
+        let isChecked = refs.bulkSelectAll.checked;
+        let showElements = refs.showElementsCheck ? refs.showElementsCheck.checked : true;
+        let showClusters = refs.showClustersCheck ? refs.showClustersCheck.checked : true;
+        let showSpots = refs.showSpotsCheck ? refs.showSpotsCheck.checked : true;
+        let searchTerm = refs.legendSearch ? refs.legendSearch.value.toLowerCase() : '';
+        for(let element of this.app.state[tilesetIndex].elements){
+            let isCluster = 'cluster' === element.type;
+            let isSpot = 'spot' === element.type;
+            let matchesType = (isCluster && showClusters)
+                || (isSpot && showSpots)
+                || (!isCluster && !isSpot && showElements);
+            let matchesSearch = !searchTerm || element.name.toLowerCase().includes(searchTerm);
+            if(!matchesType || !matchesSearch){
+                continue;
+            }
+            element.bulkSelected = isChecked;
+        }
+        if(showSpots){
+            for(let spot of this.app.state[tilesetIndex].spots || []){
+                spot.bulkSelected = isChecked;
+            }
+        }
+        for(let checkbox of refs.list.querySelectorAll('.element-bulk-select')){
+            let row = checkbox.closest('.element-row, .spot-row');
+            if(row && row.classList.contains('hidden')){
+                continue;
+            }
+            checkbox.checked = isChecked;
+        }
+        this.app.generator.updateGenerateButtonState();
     }
 
     countSelected(items, remaining)

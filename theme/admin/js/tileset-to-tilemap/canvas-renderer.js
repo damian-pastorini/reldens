@@ -15,23 +15,23 @@ class TilesetCanvasRenderer
             this.drawCanvas(canvas, cached, tileset, tilesetIndex);
             return;
         }
-        let img = new Image();
-        img.onload = () => {
-            this.app.imageCache[tilesetIndex] = img;
-            this.drawCanvas(canvas, img, tileset, tilesetIndex);
+        let image = new Image();
+        image.onload = () => {
+            this.app.imageCache[tilesetIndex] = image;
+            this.drawCanvas(canvas, image, tileset, tilesetIndex);
         };
-        img.src = tileset.imageUrl;
+        image.src = tileset.imageUrl;
     }
 
-    drawCanvas(canvas, img, tileset, tilesetIndex)
+    drawCanvas(canvas, image, tileset, tilesetIndex)
     {
-        if(canvas.width !== img.naturalWidth || canvas.height !== img.naturalHeight){
-            canvas.width = img.naturalWidth;
-            canvas.height = img.naturalHeight;
+        if(canvas.width !== image.naturalWidth || canvas.height !== image.naturalHeight){
+            canvas.width = image.naturalWidth;
+            canvas.height = image.naturalHeight;
         }
         let ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0);
+        ctx.drawImage(image, 0, 0);
         this.drawTileGrid(ctx, tileset);
         this.drawFilteredTiles(ctx, tileset);
         this.drawElementTiles(ctx, tileset, tilesetIndex);
@@ -82,11 +82,11 @@ class TilesetCanvasRenderer
         ctx.lineWidth = 0.5;
         ctx.setLineDash([2, 3]);
         for(let tile of tileset.filteredTiles){
-            let pos = this.app.tileGeometry.getTilePosition(tileset, tile);
+            let tilePos = this.app.tileGeometry.getTilePosition(tileset, tile);
             ctx.globalAlpha = 0.06;
-            ctx.fillRect(pos.x, pos.y, tileset.tileWidth, tileset.tileHeight);
+            ctx.fillRect(tilePos.x, tilePos.y, tileset.tileWidth, tileset.tileHeight);
             ctx.globalAlpha = 0.2;
-            ctx.strokeRect(pos.x, pos.y, tileset.tileWidth, tileset.tileHeight);
+            ctx.strokeRect(tilePos.x, tilePos.y, tileset.tileWidth, tileset.tileHeight);
         }
         ctx.restore();
     }
@@ -125,11 +125,11 @@ class TilesetCanvasRenderer
 
     drawTile(ctx, tileset, tile, color, lineWidth, dashed, dimmed)
     {
-        let pos = this.app.tileGeometry.getTilePosition(tileset, tile);
+        let tilePos = this.app.tileGeometry.getTilePosition(tileset, tile);
         ctx.save();
         ctx.globalAlpha = dimmed ? 0.1 : 0.35;
         ctx.fillStyle = color;
-        ctx.fillRect(pos.x, pos.y, tileset.tileWidth, tileset.tileHeight);
+        ctx.fillRect(tilePos.x, tilePos.y, tileset.tileWidth, tileset.tileHeight);
         ctx.restore();
         ctx.save();
         ctx.globalAlpha = dimmed ? 0.25 : 1;
@@ -139,7 +139,7 @@ class TilesetCanvasRenderer
             ctx.setLineDash([4, 3]);
         }
         ctx.strokeRect(
-            pos.x + lineWidth/2, pos.y + lineWidth/2,
+            tilePos.x + lineWidth/2, tilePos.y + lineWidth/2,
             tileset.tileWidth - lineWidth, tileset.tileHeight - lineWidth
         );
         ctx.restore();
@@ -197,16 +197,34 @@ class TilesetCanvasRenderer
         }
     }
 
-    drawElementTiles(ctx, tileset, tilesetIndex)
+    readVisibilityFilters(tilesetIndex)
     {
         if(!this.markers.isMapObjectsTabActive(tilesetIndex)){
+            return null;
+        }
+        let refs = this.app.refs[tilesetIndex];
+        return {
+            showElements: !refs || !refs.showElementsCheck || refs.showElementsCheck.checked,
+            showClusters: !refs || !refs.showClustersCheck || refs.showClustersCheck.checked,
+            showSpots: !refs || !refs.showSpotsCheck || refs.showSpotsCheck.checked
+        };
+    }
+
+    drawElementTiles(ctx, tileset, tilesetIndex)
+    {
+        let filters = this.readVisibilityFilters(tilesetIndex);
+        if(!filters){
             return;
         }
-        let hasSelection = this.app.selectedTileset === tilesetIndex
-            && null !== this.app.selectedElement;
+        let hasSelection = this.app.selectedTileset === tilesetIndex && null !== this.app.selectedElement;
         let selectedEl = null;
         for(let ei = 0; ei < tileset.elements.length; ei++){
             let element = tileset.elements[ei];
+            let isCluster = 'cluster' === element.type;
+            let isSpotEl = 'spot' === element.type;
+            if(!((isCluster && filters.showClusters) || (isSpotEl && filters.showSpots) || (!isCluster && !isSpotEl && filters.showElements))){
+                continue;
+            }
             if(hasSelection && this.app.selectedElement === ei){
                 selectedEl = element;
                 continue;
@@ -228,7 +246,8 @@ class TilesetCanvasRenderer
 
     drawSpotTiles(ctx, tileset, tilesetIndex)
     {
-        if(!this.markers.isMapObjectsTabActive(tilesetIndex)){
+        let filters = this.readVisibilityFilters(tilesetIndex);
+        if(!filters || !filters.showSpots){
             return;
         }
         let spots = tileset.spots;
@@ -258,12 +277,12 @@ class TilesetCanvasRenderer
         ctx.lineWidth = 2;
         for(let fi of flatIndices){
             let tile = [Math.floor(fi / cols), fi % cols];
-            let pos = this.app.tileGeometry.getTilePosition(tileset, tile);
+            let tilePos = this.app.tileGeometry.getTilePosition(tileset, tile);
             ctx.globalAlpha = dimmed ? 0.1 : 0.4;
             ctx.fillStyle = '#ff8c5b';
-            ctx.fillRect(pos.x, pos.y, tileset.tileWidth, tileset.tileHeight);
+            ctx.fillRect(tilePos.x, tilePos.y, tileset.tileWidth, tileset.tileHeight);
             ctx.globalAlpha = dimmed ? 0.25 : 1;
-            ctx.strokeRect(pos.x + 1, pos.y + 1, tileset.tileWidth - 2, tileset.tileHeight - 2);
+            ctx.strokeRect(tilePos.x + 1, tilePos.y + 1, tileset.tileWidth - 2, tileset.tileHeight - 2);
         }
         ctx.restore();
     }
