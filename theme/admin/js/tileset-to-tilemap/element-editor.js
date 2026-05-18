@@ -6,6 +6,7 @@ class TilesetElementEditor
         this.spotEditor = new TilesetSpotEditor(this);
         this.legendRenderer = new TilesetLegendRenderer(this);
         this.legendInteractions = new TilesetLegendInteractions(this);
+        this.spotInteractions = new TilesetSpotInteractions(this);
     }
 
     renderLegend(tilesetIndex)

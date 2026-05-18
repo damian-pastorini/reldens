@@ -21,6 +21,11 @@ class TilesetLegendInteractions
 
     dispatch(tilesetIndex, event, eventType)
     {
+        let spotRow = event.target.closest('.spot-row');
+        if(spotRow){
+            this.editor.spotInteractions.dispatchSpot(tilesetIndex, event, eventType, spotRow);
+            return;
+        }
         let elementRow = event.target.closest('.element-row');
         if(!elementRow){
             return;
