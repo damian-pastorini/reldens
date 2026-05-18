@@ -123,6 +123,7 @@ class TilesetRowBinder
         this.bindViewControls(capturedI, refs);
         this.bindSessionControls(row, capturedI);
         this.bindLegendTabs(row, capturedI);
+        this.app.editor.legendInteractions.bindListContainer(capturedI);
         if(this.app.tileOptionsBinder){
             this.app.tileOptionsBinder.bind(capturedI, row);
         }

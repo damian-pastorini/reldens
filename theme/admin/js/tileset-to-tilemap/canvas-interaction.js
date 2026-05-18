@@ -189,8 +189,10 @@ class TilesetCanvasInteraction
         this.app.isRightDrag = false;
         this.app.dragToggleMode = null;
         this.app.lastDragTile = null;
-        if(wasDragging && null !== draggedTileset){
+        if(wasDragging && null !== draggedTileset && this.app.legendStructureDirty){
+            this.app.legendStructureDirty = false;
             this.app.editor.renderLegend(draggedTileset);
         }
     }
 }
+window.TilesetCanvasInteraction = TilesetCanvasInteraction;

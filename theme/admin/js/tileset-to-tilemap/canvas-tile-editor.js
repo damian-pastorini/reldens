@@ -201,6 +201,9 @@ class TilesetCanvasTileEditor
             for(let i = toRemove.length - 1; i >= 0; i--){
                 tileset.elements.splice(toRemove[i], 1);
             }
+            if(toRemove.length){
+                this.app.legendStructureDirty = true;
+            }
             this.app.updatePaletteStyles();
             this.app.refresh(tilesetIndex);
             return;
@@ -216,3 +219,4 @@ class TilesetCanvasTileEditor
         this.app.refresh(tilesetIndex);
     }
 }
+window.TilesetCanvasTileEditor = TilesetCanvasTileEditor;

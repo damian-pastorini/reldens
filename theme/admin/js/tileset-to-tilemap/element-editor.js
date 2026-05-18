@@ -5,6 +5,7 @@ class TilesetElementEditor
         this.app = app;
         this.spotEditor = new TilesetSpotEditor(this);
         this.legendRenderer = new TilesetLegendRenderer(this);
+        this.legendInteractions = new TilesetLegendInteractions(this);
     }
 
     renderLegend(tilesetIndex)
@@ -14,6 +15,7 @@ class TilesetElementEditor
 
     selectElement(tilesetIndex, elementIndex)
     {
+        let previousIndex = this.app.selectedTileset === tilesetIndex ? this.app.selectedElement : null;
         let sameElement = this.app.selectedTileset === tilesetIndex
             && this.app.selectedElement === elementIndex;
         this.app.selectedTileset = sameElement ? null : tilesetIndex;
@@ -24,7 +26,70 @@ class TilesetElementEditor
             this.app.viewAllMode = false;
             this.app.resetViewAllButtons();
         }
-        this.app.refresh(tilesetIndex);
+        this.applySelectionToLegend(tilesetIndex, previousIndex);
+        this.app.renderer.renderCanvas(tilesetIndex);
+    }
+
+    withElementRows(tilesetIndex, callback)
+    {
+        let refs = this.app.refs[tilesetIndex];
+        if(!refs || !refs.list){
+            return;
+        }
+        callback(refs.list.querySelectorAll('.element-row'));
+    }
+
+    applyElementTypeUpdate(tilesetIndex, elementIndex)
+    {
+        this.withElementRows(tilesetIndex, (rows) => {
+            let row = rows[elementIndex];
+            if(!row){
+                return;
+            }
+            let element = this.app.state[tilesetIndex].elements[elementIndex];
+            row.classList.toggle('element-type-cluster', 'cluster' === element.type);
+            let typeIcon = row.querySelector('.element-type-icon');
+            typeIcon.src = '/assets/admin/'+('cluster' === element.type ? 'cubes-solid-full' : 'cube-solid-full')+'.svg';
+            typeIcon.alt = element.type;
+            typeIcon.title = element.type;
+            let nameInput = row.querySelector('.element-name-input');
+            nameInput.value = element.name;
+            let splitBtn = row.querySelector('.cluster-split-btn');
+            let convertBtn = row.querySelector('.cluster-convert-btn');
+            splitBtn.classList.toggle('hidden', 'cluster' !== element.type);
+            convertBtn.classList.toggle('hidden', 'cluster' !== element.type);
+            if(!element.approved){
+                return;
+            }
+            let lockBtn = row.querySelector('.element-lock-btn');
+            let lockIcon = lockBtn.querySelector('.lock-icon');
+            lockBtn.classList.add('locked');
+            lockIcon.src = '/assets/admin/lock-solid.svg';
+        });
+    }
+
+    applySelectionToLegend(tilesetIndex, previousIndex)
+    {
+        this.withElementRows(tilesetIndex, (rows) => this.applySelectionRows(tilesetIndex, previousIndex, rows));
+    }
+
+    applySelectionRows(tilesetIndex, previousIndex, rows)
+    {
+        if(null !== previousIndex && rows[previousIndex]){
+            let prevExpanded = rows[previousIndex].querySelector('.element-expanded');
+            if(prevExpanded){
+                prevExpanded.classList.add('hidden');
+            }
+        }
+        if(this.app.selectedTileset === tilesetIndex && null !== this.app.selectedElement){
+            let currentRow = rows[this.app.selectedElement];
+            if(currentRow){
+                let currentExpanded = currentRow.querySelector('.element-expanded');
+                if(currentExpanded){
+                    currentExpanded.classList.remove('hidden');
+                }
+            }
+        }
     }
 
     removeElement(tilesetIndex, elementIndex)
@@ -49,9 +114,9 @@ class TilesetElementEditor
         for(let ts of this.app.state){
             totalElements += ts.elements.length;
         }
-        let num = totalElements + 1;
+        let nextNumber = totalElements + 1;
         this.app.state[tilesetIndex].elements.push(
-            SharedUtils.makeElement('element-'+SharedUtils.padNum(num), totalElements, [], true)
+            SharedUtils.makeElement('element-'+SharedUtils.padNum(nextNumber), totalElements, [], true)
         );
         this.app.selectedTileset = tilesetIndex;
         this.app.selectedElement = this.app.state[tilesetIndex].elements.length - 1;
@@ -126,14 +191,15 @@ class TilesetElementEditor
         let tileset = this.app.state[tilesetIndex];
         let cluster = tileset.elements[elementIndex];
         let allTiles = this.app.collectElementTiles(cluster);
-        let clusterNum = SharedUtils.padNum(elementIndex + 1);
+        let baseName = cluster.name;
         let newElements = [];
         for(let ti = 0; ti < allTiles.length; ti++){
             newElements.push(SharedUtils.makeElement(
-                'element-cluster-'+clusterNum+'-'+SharedUtils.padNum(ti + 1),
+                baseName+'-'+SharedUtils.padNum(ti + 1),
                 0,
                 [{ type: 'collisions', tiles: [allTiles[ti]] }],
-                true
+                false,
+                SharedUtils.CLUSTER_TYPE
             ));
         }
         tileset.elements.splice(elementIndex, 1, ...newElements);
@@ -144,8 +210,8 @@ class TilesetElementEditor
     countElementsInTileset(ts)
     {
         let count = 0;
-        for(let el of ts.elements){
-            if('element' === el.type){
+        for(let element of ts.elements){
+            if('element' === element.type){
                 count++;
             }
         }
@@ -170,18 +236,18 @@ class TilesetElementEditor
     {
         let elements = this.app.state[tilesetIndex].elements;
         for(let i = 0; i < elements.length; i++){
-            let el = elements[i];
-            if(!el.bulkSelected){
+            let element = elements[i];
+            if(!element.bulkSelected){
                 continue;
             }
-            if('cluster' !== el.type){
+            if('cluster' !== element.type){
                 continue;
             }
-            let newName = this.resolveConvertName(tilesetIndex, i, el.name);
-            el.type = 'element';
-            el.approved = true;
-            el.name = newName;
-            el.bulkSelected = false;
+            let newName = this.resolveConvertName(tilesetIndex, i, element.name);
+            element.type = 'element';
+            element.approved = true;
+            element.name = newName;
+            element.bulkSelected = false;
         }
         this.app.generator.updateGenerateButtonState();
         this.app.refresh(tilesetIndex);
@@ -216,12 +282,13 @@ class TilesetElementEditor
     bulkToggleLock(tilesetIndex)
     {
         let elements = this.app.state[tilesetIndex].elements;
-        for(let el of elements){
-            if(!el.bulkSelected){
+        for(let element of elements){
+            if(!element.bulkSelected){
                 continue;
             }
-            el.approved = !el.approved;
+            element.approved = !element.approved;
         }
         this.renderLegend(tilesetIndex);
     }
 }
+window.TilesetElementEditor = TilesetElementEditor;

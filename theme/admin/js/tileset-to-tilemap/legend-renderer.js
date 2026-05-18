@@ -85,6 +85,7 @@ class TilesetLegendRenderer
         let app = this.editor.app;
         let isSelected = app.selectedTileset === tilesetIndex && app.selectedElement === i;
         let row = frag.querySelector('.element-row');
+        row.dataset.elementIndex = i;
         if('cluster' === element.type){
             row.classList.add('element-type-cluster');
         }
@@ -94,11 +95,6 @@ class TilesetLegendRenderer
         typeIcon.title = element.type;
         let bulkCheckbox = frag.querySelector('.element-bulk-select');
         bulkCheckbox.checked = element.bulkSelected || false;
-        bulkCheckbox.addEventListener('click', (event) => event.stopPropagation());
-        bulkCheckbox.addEventListener('change', () => {
-            app.state[tilesetIndex].elements[i].bulkSelected = bulkCheckbox.checked;
-            app.generator.updateGenerateButtonState();
-        });
         let nameInput = frag.querySelector('.element-name-input');
         nameInput.value = element.name;
         let expanded = frag.querySelector('.element-expanded');
@@ -115,59 +111,25 @@ class TilesetLegendRenderer
         let isCustomActive = isSelected && !knownLayerTypes.includes(app.activeLayerType);
         let radioName = 'layer-type-t'+tilesetIndex+'-e'+i;
         let radios = frag.querySelectorAll('.layer-type-radio');
-        let customRadio = frag.querySelector('.layer-type-custom-radio');
         let customInput = frag.querySelector('.layer-type-custom-input');
         customInput.value = app.customLayerSuffix;
         this.assignRadioNames(radios, radioName, isCustomActive, isSelected);
+        this.applyApprovedState(frag, element);
+        this.applyElementTypeVisuals(frag, element);
+    }
+
+    applyApprovedState(frag, element)
+    {
+        if(!element.approved){
+            return;
+        }
         let lockBtn = frag.querySelector('.element-lock-btn');
         let lockIcon = lockBtn.querySelector('.lock-icon');
-        let deleteBtn = frag.querySelector('.element-delete-btn');
-        let header = frag.querySelector('.element-row-header');
-        this.setupElementRowHeader(element, tilesetIndex, i, { nameInput, lockBtn, lockIcon, deleteBtn, header });
-        this.setupElementTypeControls(frag, element, tilesetIndex, i);
-        this.bindElementInputEvents(tilesetIndex, i, { nameInput, quantityInput, freeSpaceInput, allowPathsInput, radios, customRadio, customInput, row });
+        lockBtn.classList.add('locked');
+        lockIcon.src = '/assets/admin/lock-solid.svg';
     }
 
-    setupElementRowHeader(element, tilesetIndex, capturedI, controls)
-    {
-        let app = this.editor.app;
-        if(element.approved){
-            controls.lockBtn.classList.add('locked');
-            controls.lockIcon.src = '/assets/admin/lock-solid.svg';
-        }
-        controls.lockBtn.addEventListener('click', (mouseEvent) => {
-            mouseEvent.stopPropagation();
-            let elementState = app.state[tilesetIndex].elements[capturedI];
-            elementState.approved = !elementState.approved;
-            controls.lockBtn.classList.toggle('locked', elementState.approved);
-            controls.lockIcon.src = '/assets/admin/'+(elementState.approved ? 'lock-solid' : 'unlock-solid')+'.svg';
-        });
-        controls.header.addEventListener('click', (mouseEvent) => {
-            if(mouseEvent.target === controls.nameInput){
-                return;
-            }
-            if(mouseEvent.target === controls.lockBtn || controls.lockBtn.contains(mouseEvent.target)){
-                return;
-            }
-            if(mouseEvent.target === controls.deleteBtn || controls.deleteBtn.contains(mouseEvent.target)){
-                return;
-            }
-            let wasSelected = app.selectedTileset === tilesetIndex && app.selectedElement === capturedI;
-            this.editor.selectElement(tilesetIndex, capturedI);
-            if(!wasSelected){
-                this.editor.scrollCanvasToElement(tilesetIndex, capturedI);
-            }
-        });
-        controls.deleteBtn.addEventListener('click', () => {
-            let elementName = app.state[tilesetIndex].elements[capturedI].name;
-            app.modals.show(
-                'Delete "'+elementName+'"?',
-                () => this.editor.removeElement(tilesetIndex, capturedI)
-            );
-        });
-    }
-
-    setupElementTypeControls(frag, element, tilesetIndex, capturedI)
+    applyElementTypeVisuals(frag, element)
     {
         let app = this.editor.app;
         let splitBtn = frag.querySelector('.cluster-split-btn');
@@ -175,23 +137,9 @@ class TilesetLegendRenderer
         let aiControls = frag.querySelector('.element-ai-controls');
         let aiSelect = frag.querySelector('.element-ai-select');
         let aiDetectBtn = frag.querySelector('.element-ai-detect-btn');
-        let aiNameBtn = frag.querySelector('.element-ai-name-btn');
         if('cluster' === element.type){
             splitBtn.classList.remove('hidden');
-            splitBtn.addEventListener('click', (mouseEvent) => {
-                mouseEvent.stopPropagation();
-                this.editor.splitCluster(tilesetIndex, capturedI);
-            });
             convertBtn.classList.remove('hidden');
-            convertBtn.addEventListener('click', (mouseEvent) => {
-                mouseEvent.stopPropagation();
-                let elementState = app.state[tilesetIndex].elements[capturedI];
-                let newName = this.editor.resolveConvertName(tilesetIndex, capturedI, elementState.name);
-                elementState.type = 'element';
-                elementState.approved = true;
-                elementState.name = newName;
-                app.refresh(tilesetIndex);
-            });
         }
         if(!app.showAiControls || !app.activeProviders.length){
             return;
@@ -199,14 +147,6 @@ class TilesetLegendRenderer
         SharedUtils.populateProviderSelect(aiSelect, app.activeProviders);
         aiDetectBtn.textContent = 'cluster' === element.type ? 'Detect Elements' : 'Detect Layers';
         aiControls.classList.remove('hidden');
-        aiDetectBtn.addEventListener('click', (mouseEvent) => {
-            mouseEvent.stopPropagation();
-            app.aiElement.runAiDetectSingle(tilesetIndex, capturedI, aiSelect.value, aiDetectBtn);
-        });
-        aiNameBtn.addEventListener('click', (mouseEvent) => {
-            mouseEvent.stopPropagation();
-            app.aiElement.runAiNameSingle(tilesetIndex, capturedI, aiSelect.value, aiNameBtn);
-        });
     }
 
     assignRadioNames(radios, radioName, isCustomActive, isSelected)
@@ -233,40 +173,4 @@ class TilesetLegendRenderer
         this.editor.app.activeLayerType = radio.value;
     }
 
-    bindRadioChangeEvents(radios, customRadio, customInput)
-    {
-        for(let radio of radios){
-            radio.addEventListener('change', () => {
-                this.handleRadioChange(radio);
-            });
-        }
-        customInput.addEventListener('input', () => {
-            this.editor.app.customLayerSuffix = customInput.value;
-            if(customRadio.checked){
-                this.editor.app.activeLayerType = customInput.value;
-            }
-        });
-        customInput.addEventListener('click', (event) => event.stopPropagation());
-    }
-
-    bindElementInputEvents(tilesetIndex, capturedI, controls)
-    {
-        let app = this.editor.app;
-        controls.nameInput.addEventListener('blur', () => {
-            let valid = /^[a-z]+(?:-[a-z]+)*-\d+(?:-\d+)*$/.test(controls.nameInput.value);
-            app.state[tilesetIndex].elements[capturedI].name = controls.nameInput.value;
-            controls.row.classList.toggle('element-name-invalid', !valid);
-            app.generator.updateGenerateButtonState();
-        });
-        controls.quantityInput.addEventListener('input', () => {
-            app.state[tilesetIndex].elements[capturedI].quantity = Number(controls.quantityInput.value) || 1;
-        });
-        controls.freeSpaceInput.addEventListener('input', () => {
-            app.state[tilesetIndex].elements[capturedI].freeSpaceAround = Number(controls.freeSpaceInput.value) || 0;
-        });
-        controls.allowPathsInput.addEventListener('change', () => {
-            app.state[tilesetIndex].elements[capturedI].allowPathsInFreeSpace = controls.allowPathsInput.checked;
-        });
-        this.bindRadioChangeEvents(controls.radios, controls.customRadio, controls.customInput);
-    }
 }

@@ -23,6 +23,7 @@ class TilesetAnalyzerApp
         this.showAllElements = true;
         this.viewAllMode = true;
         this.isAreaSelect = false;
+        this.legendStructureDirty = false;
         this.areaSelectTileset = null;
         this.areaSelectStart = null;
         this.areaSelectEnd = null;
@@ -69,12 +70,12 @@ class TilesetAnalyzerApp
     updateGlobalTileOptionsPanel()
     {
         let panel = this.getElement('.global-tile-options');
-        let btn = this.getElement('.global-tile-options-toggle-btn');
-        if(!panel || !btn){
+        let toggleButton = this.getElement('.global-tile-options-toggle-btn');
+        if(!panel || !toggleButton){
             return;
         }
         let shouldShow = this.state.length > 1;
-        btn.classList.toggle('hidden', !shouldShow);
+        toggleButton.classList.toggle('hidden', !shouldShow);
         if(!shouldShow){
             panel.classList.add('hidden');
             return;
@@ -83,10 +84,10 @@ class TilesetAnalyzerApp
             return;
         }
         this.globalPanelBound = true;
-        btn.addEventListener('click', () => {
+        toggleButton.addEventListener('click', () => {
             let isClosing = !panel.classList.contains('hidden');
             panel.classList.toggle('hidden');
-            btn.classList.toggle('active', !panel.classList.contains('hidden'));
+            toggleButton.classList.toggle('active', !panel.classList.contains('hidden'));
             if(isClosing && this.tileOptionsBinder && -1 === this.tileOptionsBinder.activeTilesetIndex){
                 this.tileOptionsBinder.deactivate();
             }
