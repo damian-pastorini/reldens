@@ -40,13 +40,20 @@ class TilesetElementEditor
         callback(refs.list.querySelectorAll('.element-row'));
     }
 
-    applyElementTypeUpdate(tilesetIndex, elementIndex)
+    withElementRow(tilesetIndex, elementIndex, callback)
     {
         this.withElementRows(tilesetIndex, (rows) => {
             let row = rows[elementIndex];
             if(!row){
                 return;
             }
+            callback(row);
+        });
+    }
+
+    applyElementTypeUpdate(tilesetIndex, elementIndex)
+    {
+        this.withElementRow(tilesetIndex, elementIndex, (row) => {
             let element = this.app.state[tilesetIndex].elements[elementIndex];
             row.classList.toggle('element-type-cluster', 'cluster' === element.type);
             let typeIcon = row.querySelector('.element-type-icon');
@@ -106,7 +113,19 @@ class TilesetElementEditor
             this.app.selectedElement--;
         }
         this.app.updatePaletteStyles();
-        this.app.refresh(tilesetIndex);
+        this.surgicallyRemoveElementRow(tilesetIndex, elementIndex);
+        this.app.renderer.renderCanvas(tilesetIndex);
+    }
+
+    surgicallyRemoveElementRow(tilesetIndex, elementIndex)
+    {
+        this.withElementRow(tilesetIndex, elementIndex, (row) => {
+            row.remove();
+            let remaining = this.app.refs[tilesetIndex].list.querySelectorAll('.element-row');
+            for(let i = elementIndex; i < remaining.length; i++){
+                remaining[i].dataset.elementIndex = i;
+            }
+        });
     }
 
     addElement(tilesetIndex)
