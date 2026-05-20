@@ -23,21 +23,28 @@ class TilesetGenerator
         this.app.getElement('.save-session-btn').addEventListener(
             'click', () => this.app.sessions.saveAll()
         );
-        let wizardBtn = this.app.getElement('.maps-wizard-btn');
-        if(wizardBtn){
-            wizardBtn.addEventListener('click', () => this.mapsWizard());
+        let allWizardBtn = this.app.getElement('.all-to-maps-wizard-btn');
+        if(allWizardBtn){
+            allWizardBtn.addEventListener('click', () => this.mapsWizard(false));
+        }
+        let selectedWizardBtn = this.app.getElement('.selected-to-maps-wizard-btn');
+        if(selectedWizardBtn){
+            selectedWizardBtn.addEventListener('click', () => this.mapsWizard(true));
         }
     }
 
-    mapsWizard()
+    mapsWizard(selectedOnly)
     {
         let analyzer = document.querySelector('.tileset-analyzer');
         let wizardPath = analyzer ? analyzer.dataset.mapsWizardPath : '/maps-wizard';
+        let confirmMessage = selectedOnly
+            ? 'Save and generate the SELECTED elements before opening Maps Wizard?'
+            : 'Save and generate ALL elements before opening Maps Wizard? Unsaved changes will be included.';
         this.app.modals.show(
-            'Save and generate before opening Maps Wizard? Unsaved changes will be included.',
+            confirmMessage,
             async () => {
                 await this.app.sessions.autoSave();
-                await this.runGenerate(this.getSerializableState(false), false);
+                await this.runGenerate(this.getSerializableState(selectedOnly), false);
                 let sid = this.lastGeneratedSessionId || this.app.sessionId;
                 let wizardUrl = new URL(wizardPath, window.location.origin);
                 wizardUrl.searchParams.set('tilesetSessionId', sid);
@@ -102,10 +109,26 @@ class TilesetGenerator
         );
     }
 
+    extractErrorMessage(bodyText, fallback)
+    {
+        if(!bodyText || !bodyText.length){
+            return fallback;
+        }
+        try {
+            let parsed = JSON.parse(bodyText);
+            if(parsed && parsed.error){
+                return parsed.error;
+            }
+        } catch(error) {
+            return bodyText.slice(0, 300)+' ('+error.message+')';
+        }
+        return bodyText.slice(0, 300);
+    }
+
     async runGenerate(tilesets, forceNewSession)
     {
         if(!this.app.sessionId){
-            return;
+            return false;
         }
         let sessionId = forceNewSession ? this.buildNewSessionId() : this.buildSessionId();
         this.app.modals.showGenerate('Generating files...');
@@ -121,27 +144,28 @@ class TilesetGenerator
                 let body = await response.text();
                 this.app.modals.hideGenerate();
                 this.app.sessions.showStatus(
-                    'Error: HTTP '+response.status+' '+response.statusText+' - '+body.slice(0, 300),
+                    'Generate failed (HTTP '+response.status+'): '+this.extractErrorMessage(body, response.statusText),
                     true
                 );
-                return;
+                return false;
             }
             data = await response.json();
         } catch(error) {
             this.app.modals.hideGenerate();
             this.app.sessions.showStatus('Network error: '+error.message, true);
-            return;
+            return false;
         }
         this.app.modals.hideGenerate();
         if(!data || !data.files){
             this.app.sessions.showStatus('Error: '+((data && data.error) || 'Unknown error'), true);
-            return;
+            return false;
         }
         this.lastGeneratedSessionId = sessionId;
         this.app.sessions.addSession(sessionId, data.files);
         this.app.sessions.showStatus('Files successfully generated', false);
         this.app.showMapsWizardBtn();
         this.showResults(sessionId, data.files);
+        return true;
     }
 
     showResults(sessionId, files)
@@ -215,6 +239,7 @@ class TilesetGenerator
         serialized.associationsProperties = row ? this.app.strategyEditor.readAssociationsProperties(row) : null;
         serialized.tileOptions = tileset.tileOptions || null;
         serialized.spots = tileset.spots || [];
+        serialized.collapsed = Boolean(tileset.collapsed);
         serialized.elements = elements;
         return serialized;
     }

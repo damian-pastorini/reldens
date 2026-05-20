@@ -87,6 +87,7 @@ class TilesetStateBuilder
             associationsProperties: tilesetData.associationsProperties || null,
             tileOptions: tilesetData.tileOptions || this.app.tileOptionsBinder.buildDefaultTileOptions(),
             spots: tilesetData.spots || [],
+            collapsed: Boolean(tilesetData.collapsed),
             elements
         };
     }

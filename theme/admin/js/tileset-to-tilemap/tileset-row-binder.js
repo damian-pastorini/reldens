@@ -15,14 +15,25 @@ class TilesetRowBinder
         this.bindCanvas(canvas, i);
         this.bindRefs(row, i, canvas, list);
         this.bindControls(row, i);
+        this.applyCollapsedState(row, i);
         this.app.refresh(i);
     }
 
-    bindHeader(row)
+    applyCollapsedState(row, i)
+    {
+        if(this.app.state[i] && this.app.state[i].collapsed){
+            row.classList.add('collapsed');
+        }
+    }
+
+    bindHeader(row, i)
     {
         let tilesetHeader = row.querySelector('.tileset-header');
         tilesetHeader.addEventListener('click', () => {
             row.classList.toggle('collapsed');
+            if(this.app.state[i]){
+                this.app.state[i].collapsed = row.classList.contains('collapsed');
+            }
         });
     }
 

@@ -127,22 +127,26 @@ class TilesetAnalyzerApp
         this.getElement('.new-session-btn').classList.remove('hidden');
     }
 
+    toggleMapsWizardButtons(hidden)
+    {
+        for(let selector of ['.all-to-maps-wizard-btn', '.selected-to-maps-wizard-btn']){
+            let wizardBtn = this.getElement(selector);
+            if(wizardBtn){
+                wizardBtn.classList.toggle('hidden', hidden);
+            }
+        }
+    }
+
     hideReviewSection()
     {
         this.getElement('.review-section').classList.add('hidden');
         this.getElement('.new-session-btn').classList.add('hidden');
-        let wizardBtn = this.getElement('.maps-wizard-btn');
-        if(wizardBtn){
-            wizardBtn.classList.add('hidden');
-        }
+        this.toggleMapsWizardButtons(true);
     }
 
     showMapsWizardBtn()
     {
-        let wizardBtn = this.getElement('.maps-wizard-btn');
-        if(wizardBtn){
-            wizardBtn.classList.remove('hidden');
-        }
+        this.toggleMapsWizardButtons(false);
     }
 
     clearSelection(tilesetIndex)
