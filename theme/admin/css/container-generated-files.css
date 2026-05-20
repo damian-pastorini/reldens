@@ -50,6 +50,10 @@
         filter: brightness(0) invert(1);
     }
 
+    & li.expanded .generated-file-collapse-icon {
+        transform: rotate(180deg);
+    }
+
     & .generated-file-id {
         flex: 1;
         color: var(--color-white);
@@ -83,11 +87,12 @@
     }
 
     & .generated-file-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
+        display: flex;
+        flex-wrap: wrap;
         gap: var(--space-xs) var(--space-lg);
 
         & a {
+            flex: 0 0 calc((100% - 3 * var(--space-lg)) / 4);
             color: var(--color-white);
             text-decoration: none;
             font-size: var(--font-size-sm);
@@ -101,7 +106,9 @@
         }
 
         @media (max-width: 768px) {
-            grid-template-columns: 1fr;
+            & a {
+                flex: 0 0 100%;
+            }
         }
     }
 

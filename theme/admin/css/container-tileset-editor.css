@@ -117,6 +117,10 @@
                 margin-bottom: 0;
             }
 
+            & .tileset-collapse-icon {
+                transform: rotate(180deg);
+            }
+
             & .tileset-body {
                 display: none;
             }

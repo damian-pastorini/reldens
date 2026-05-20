@@ -142,7 +142,7 @@ class TilesetCanvasTileEditor
             if(this.spotHasTile(spots[si], flatIndex)){
                 this.app.selectedSpot = { tilesetIndex, spotIndex: si };
                 this.app.refresh(tilesetIndex);
-                this.app.editor.scrollLegendToSpot(tilesetIndex, si);
+                this.app.editor.scroller.scrollLegendToSpot(tilesetIndex, si);
                 return;
             }
         }

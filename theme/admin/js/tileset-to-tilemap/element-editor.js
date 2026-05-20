@@ -7,7 +7,10 @@ class TilesetElementEditor
         this.legendRenderer = new TilesetLegendRenderer(this);
         this.legendInteractions = new TilesetLegendInteractions(this);
         this.spotInteractions = new TilesetSpotInteractions(this);
+        this.namer = new TilesetElementNamer(app);
+        this.scroller = new TilesetLegendScroller(app);
     }
+
 
     renderLegend(tilesetIndex)
     {
@@ -31,13 +34,18 @@ class TilesetElementEditor
         this.app.renderer.renderCanvas(tilesetIndex);
     }
 
-    withElementRows(tilesetIndex, callback)
+    withList(tilesetIndex, callback)
     {
         let refs = this.app.refs[tilesetIndex];
         if(!refs || !refs.list){
             return;
         }
-        callback(refs.list.querySelectorAll('.element-row'));
+        callback(refs.list);
+    }
+
+    withElementRows(tilesetIndex, callback)
+    {
+        this.withList(tilesetIndex, (list) => callback(list.querySelectorAll('.element-row')));
     }
 
     withElementRow(tilesetIndex, elementIndex, callback)
@@ -62,18 +70,37 @@ class TilesetElementEditor
             typeIcon.title = element.type;
             let nameInput = row.querySelector('.element-name-input');
             nameInput.value = element.name;
+            let bulkCheckbox = row.querySelector('.element-bulk-select');
+            if(bulkCheckbox){
+                bulkCheckbox.checked = element.bulkSelected || false;
+            }
             let splitBtn = row.querySelector('.cluster-split-btn');
             let convertBtn = row.querySelector('.cluster-convert-btn');
             splitBtn.classList.toggle('hidden', 'cluster' !== element.type);
             convertBtn.classList.toggle('hidden', 'cluster' !== element.type);
-            if(!element.approved){
-                return;
-            }
-            let lockBtn = row.querySelector('.element-lock-btn');
-            let lockIcon = lockBtn.querySelector('.lock-icon');
-            lockBtn.classList.add('locked');
-            lockIcon.src = '/assets/admin/lock-solid.svg';
+            this.applyLockVisuals(row, element);
         });
+    }
+
+    applyLockUpdate(tilesetIndex, elementIndex)
+    {
+        this.withElementRow(tilesetIndex, elementIndex, (row) => {
+            let element = this.app.state[tilesetIndex].elements[elementIndex];
+            this.applyLockVisuals(row, element);
+        });
+    }
+
+    applyLockVisuals(row, element)
+    {
+        let lockBtn = row.querySelector('.element-lock-btn');
+        if(!lockBtn){
+            return;
+        }
+        lockBtn.classList.toggle('locked', element.approved);
+        let lockIcon = lockBtn.querySelector('.lock-icon');
+        if(lockIcon){
+            lockIcon.src = '/assets/admin/'+(element.approved ? 'lock-solid' : 'unlock-solid')+'.svg';
+        }
     }
 
     applySelectionToLegend(tilesetIndex, previousIndex)
@@ -130,6 +157,7 @@ class TilesetElementEditor
 
     addElement(tilesetIndex)
     {
+        let previousIndex = this.app.selectedTileset === tilesetIndex ? this.app.selectedElement : null;
         let totalElements = 0;
         for(let ts of this.app.state){
             totalElements += ts.elements.length;
@@ -138,72 +166,30 @@ class TilesetElementEditor
         this.app.state[tilesetIndex].elements.push(
             SharedUtils.makeElement('element-'+SharedUtils.padNum(nextNumber), totalElements, [], true)
         );
+        let elementIndex = this.app.state[tilesetIndex].elements.length - 1;
         this.app.selectedTileset = tilesetIndex;
-        this.app.selectedElement = this.app.state[tilesetIndex].elements.length - 1;
+        this.app.selectedElement = elementIndex;
         this.app.activeLayerType = 'below-player';
         this.app.updatePaletteStyles();
-        this.app.refresh(tilesetIndex);
-        this.scrollLegendToSelected(tilesetIndex);
+        this.appendNewElementRow(tilesetIndex, elementIndex);
+        this.applySelectionToLegend(tilesetIndex, previousIndex);
+        this.app.renderer.renderCanvas(tilesetIndex);
+        this.scroller.scrollLegendToSelected(tilesetIndex);
     }
 
-    scrollLegendToSelected(tilesetIndex)
+    appendNewElementRow(tilesetIndex, elementIndex)
     {
-        if(this.app.selectedTileset !== tilesetIndex){
+        let template = this.app.getElement('.element-row-template');
+        if(!template){
             return;
         }
-        if(null === this.app.selectedElement){
-            return;
-        }
-        let list = this.app.refs[tilesetIndex].list;
-        let rows = list.querySelectorAll('.element-row');
-        let targetRow = rows[this.app.selectedElement];
-        if(!targetRow){
-            return;
-        }
-        list.scrollTop = targetRow.getBoundingClientRect().top - list.getBoundingClientRect().top + list.scrollTop;
-    }
-
-    scrollLegendToSpot(tilesetIndex, spotIndex)
-    {
-        let list = this.app.refs[tilesetIndex].list;
-        let spots = this.app.state[tilesetIndex].spots;
-        if(!spots || !spots[spotIndex]){
-            return;
-        }
-        let row = list.querySelector('.spot-row[data-spot-name="'+spots[spotIndex].name+'"]');
-        if(!row){
-            return;
-        }
-        list.scrollTop = row.getBoundingClientRect().top - list.getBoundingClientRect().top + list.scrollTop;
-    }
-
-    scrollCanvasToElement(tilesetIndex, elementIndex)
-    {
-        let tileset = this.app.state[tilesetIndex];
-        let element = tileset.elements[elementIndex];
-        if(!element){
-            return;
-        }
-        let allTiles = this.app.collectElementTiles(element);
-        if(!allTiles.length){
-            return;
-        }
-        let firstTile = [...allTiles].shift();
-        let minRow = firstTile[0];
-        let minCol = firstTile[1];
-        for(let tile of allTiles){
-            if(tile[0] < minRow){
-                minRow = tile[0];
-            }
-            if(tile[1] < minCol){
-                minCol = tile[1];
-            }
-        }
-        let tilePos = this.app.tileGeometry.getTilePosition(tileset, [minRow, minCol]);
-        let zoom = this.app.zoomLevels[tilesetIndex] || 1;
-        let panel = this.app.refs[tilesetIndex].canvas.parentElement;
-        panel.scrollLeft = Math.max(0, tilePos.x * zoom - panel.clientWidth / 2);
-        panel.scrollTop = Math.max(0, tilePos.y * zoom - panel.clientHeight / 2);
+        this.withList(tilesetIndex, (list) => {
+            let element = this.app.state[tilesetIndex].elements[elementIndex];
+            let frag = template.content.cloneNode(true);
+            this.legendRenderer.buildElementRow(frag, element, tilesetIndex, elementIndex);
+            list.insertBefore(frag, list.querySelector('.spot-row'));
+            this.legendRenderer.applyLegendVisibility(tilesetIndex);
+        });
     }
 
     splitCluster(tilesetIndex, elementIndex)
@@ -227,32 +213,29 @@ class TilesetElementEditor
         this.app.clearSelection(tilesetIndex);
     }
 
-    countElementsInTileset(ts)
-    {
-        let count = 0;
-        for(let element of ts.elements){
-            if('element' === element.type){
-                count++;
-            }
-        }
-        return count;
-    }
-
-    resolveConvertName(tilesetIndex, index, name)
-    {
-        if(!name.startsWith('cluster-')){
-            return this.resolveUniqueName(tilesetIndex, index, name);
-        }
-        let elementCount = 0;
-        for(let ts of this.app.state){
-            elementCount += this.countElementsInTileset(ts);
-        }
-        return this.resolveUniqueName(
-            tilesetIndex, index, 'element-'+SharedUtils.padNum(elementCount + 1)
-        );
-    }
-
     bulkConvert(tilesetIndex)
+    {
+        let elements = this.app.state[tilesetIndex].elements;
+        let affected = [];
+        for(let i = 0; i < elements.length; i++){
+            let element = elements[i];
+            if(!element.bulkSelected || 'cluster' !== element.type){
+                continue;
+            }
+            element.name = this.namer.resolveConvertName(tilesetIndex, i, element.name);
+            element.type = 'element';
+            element.approved = true;
+            element.bulkSelected = false;
+            affected.push(i);
+        }
+        this.app.generator.updateGenerateButtonState();
+        for(let i of affected){
+            this.applyElementTypeUpdate(tilesetIndex, i);
+        }
+        this.app.renderer.renderCanvas(tilesetIndex);
+    }
+
+    bulkToggleLock(tilesetIndex)
     {
         let elements = this.app.state[tilesetIndex].elements;
         for(let i = 0; i < elements.length; i++){
@@ -260,55 +243,9 @@ class TilesetElementEditor
             if(!element.bulkSelected){
                 continue;
             }
-            if('cluster' !== element.type){
-                continue;
-            }
-            let newName = this.resolveConvertName(tilesetIndex, i, element.name);
-            element.type = 'element';
-            element.approved = true;
-            element.name = newName;
-            element.bulkSelected = false;
-        }
-        this.app.generator.updateGenerateButtonState();
-        this.app.refresh(tilesetIndex);
-    }
-
-    resolveUniqueName(tilesetIndex, excludeIndex, name)
-    {
-        let elements = this.app.state[tilesetIndex].elements;
-        let nameTaken = false;
-        let maxSuffix = 1;
-        let prefix = name+'-';
-        for(let i = 0; i < elements.length; i++){
-            if(i === excludeIndex){
-                continue;
-            }
-            if(elements[i].name === name){
-                nameTaken = true;
-            }
-            if(elements[i].name.startsWith(prefix)){
-                let suffix = Number(elements[i].name.slice(prefix.length));
-                if(suffix > maxSuffix){
-                    maxSuffix = suffix;
-                }
-            }
-        }
-        if(!nameTaken){
-            return name;
-        }
-        return name+'-'+SharedUtils.padNum(maxSuffix + 1);
-    }
-
-    bulkToggleLock(tilesetIndex)
-    {
-        let elements = this.app.state[tilesetIndex].elements;
-        for(let element of elements){
-            if(!element.bulkSelected){
-                continue;
-            }
             element.approved = !element.approved;
+            this.applyLockUpdate(tilesetIndex, i);
         }
-        this.renderLegend(tilesetIndex);
     }
 }
 window.TilesetElementEditor = TilesetElementEditor;

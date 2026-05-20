@@ -48,8 +48,8 @@ class SessionItemBuilder
             let mapsWizardPath = analyzer ? analyzer.dataset.mapsWizardPath : '/maps-wizard';
             wizardBtn.href = mapsWizardPath+'?tilesetSessionId='+sessionId;
             wizardBtn.textContent = 'Maps Wizard';
-            wizardBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
+            wizardBtn.addEventListener('click', (event) => {
+                event.stopPropagation();
             });
             header.appendChild(wizardBtn);
         }
@@ -57,16 +57,16 @@ class SessionItemBuilder
             let loadBtn = document.createElement('button');
             loadBtn.className = 'button button-sm button-primary generated-file-load-btn';
             loadBtn.textContent = 'Load';
-            loadBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
+            loadBtn.addEventListener('click', (event) => {
+                event.stopPropagation();
                 this.manager.loadSession(sessionId);
             });
             header.appendChild(loadBtn);
             let appendBtn = document.createElement('button');
             appendBtn.className = 'button button-sm button-success generated-file-append-btn';
             appendBtn.textContent = 'Append';
-            appendBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
+            appendBtn.addEventListener('click', (event) => {
+                event.stopPropagation();
                 this.manager.appendSession(sessionId);
             });
             header.appendChild(appendBtn);
@@ -77,8 +77,8 @@ class SessionItemBuilder
         deleteImg.src = '/assets/admin/trash-can-solid-full.svg';
         deleteImg.alt = 'Delete';
         deleteBtn.appendChild(deleteImg);
-        deleteBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
+        deleteBtn.addEventListener('click', (event) => {
+            event.stopPropagation();
             this.manager.delete(sessionId, li);
         });
         header.appendChild(deleteBtn);
@@ -93,11 +93,8 @@ class SessionItemBuilder
         }
         li.appendChild(filesDiv);
         li.addEventListener('click', () => {
-            let isExpanded = li.classList.toggle('expanded');
+            li.classList.toggle('expanded');
             filesDiv.classList.toggle('hidden');
-            collapseIcon.src = '/assets/admin/'+(isExpanded
-                ? 'circle-chevron-down-solid-full'
-                : 'circle-chevron-up-solid-full')+'.svg';
         });
         return li;
     }
@@ -123,3 +120,4 @@ class SessionItemBuilder
         return group;
     }
 }
+window.SessionItemBuilder = SessionItemBuilder;

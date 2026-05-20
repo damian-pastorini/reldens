@@ -105,7 +105,7 @@ class TilesetLegendInteractions
         let wasSelected = app.selectedTileset === tilesetIndex && app.selectedElement === elementIndex;
         this.editor.selectElement(tilesetIndex, elementIndex);
         if(!wasSelected){
-            this.editor.scrollCanvasToElement(tilesetIndex, elementIndex);
+            this.editor.scroller.scrollCanvasToElement(tilesetIndex, elementIndex);
         }
     }
 
@@ -182,7 +182,7 @@ class TilesetLegendInteractions
     {
         let app = this.editor.app;
         let elementState = app.state[tilesetIndex].elements[elementIndex];
-        let newName = this.editor.resolveConvertName(tilesetIndex, elementIndex, elementState.name);
+        let newName = this.editor.namer.resolveConvertName(tilesetIndex, elementIndex, elementState.name);
         elementState.type = 'element';
         elementState.approved = true;
         elementState.name = newName;

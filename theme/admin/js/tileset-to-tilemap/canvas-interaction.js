@@ -23,7 +23,7 @@ class TilesetCanvasInteraction
     selectAndScroll(tilesetIndex, tile)
     {
         this.tileEditor.handleTileSelectClick(tilesetIndex, tile.row, tile.col);
-        this.app.editor.scrollLegendToSelected(tilesetIndex);
+        this.app.editor.scroller.scrollLegendToSelected(tilesetIndex);
     }
 
     getNextDragTile(event, tilesetIndex)

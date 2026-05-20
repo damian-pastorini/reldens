@@ -20,14 +20,9 @@ class TilesetRowBinder
 
     bindHeader(row)
     {
-        let collapseBtn = row.querySelector('.tileset-collapse-btn');
         let tilesetHeader = row.querySelector('.tileset-header');
         tilesetHeader.addEventListener('click', () => {
-            let isCollapsed = row.classList.toggle('collapsed');
-            let icon = collapseBtn.querySelector('.tileset-collapse-icon');
-            icon.src = '/assets/admin/'+(isCollapsed
-                ? 'circle-chevron-down-solid-full'
-                : 'circle-chevron-up-solid-full')+'.svg';
+            row.classList.toggle('collapsed');
         });
     }
 
