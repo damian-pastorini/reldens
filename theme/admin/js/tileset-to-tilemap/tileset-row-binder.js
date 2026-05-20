@@ -31,7 +31,7 @@ class TilesetRowBinder
         canvas.addEventListener('mousedown', (mouseEvent) => this.app.interaction.handleCanvasMouseDown(mouseEvent, i));
         canvas.addEventListener('mousemove', (mouseEvent) => this.app.interaction.handleCanvasMouseMove(mouseEvent, i));
         canvas.addEventListener('mouseup', () => this.app.interaction.handleCanvasMouseUp());
-        canvas.addEventListener('mouseleave', () => this.app.interaction.handleCanvasMouseUp());
+        canvas.addEventListener('mouseleave', () => this.app.interaction.handleCanvasMouseLeave());
         canvas.addEventListener('contextmenu', (event) => event.preventDefault());
         canvas.addEventListener('wheel', (wheelEvent) => {
             if(!wheelEvent.ctrlKey){
@@ -48,8 +48,10 @@ class TilesetRowBinder
     {
         this.app.zoomLevels[i] = 1;
         this.app.refs[i] = {
+            row,
             canvas,
             list,
+            canvasScroll: canvas.parentElement,
             addBtn: row.querySelector('.add-element-btn'),
             toggleAllBtn: row.querySelector('.toggle-all-btn'),
             viewAllBtn: row.querySelector('.view-all-btn'),
@@ -106,7 +108,7 @@ class TilesetRowBinder
         refs.bulkSelectAll.addEventListener('change', () => {
             this.applyBulkSelection(capturedI, refs);
         });
-        refs.legendSearch.addEventListener('input', () => this.app.editor.legendRenderer.applyLegendVisibility(capturedI));
+        refs.legendSearch.addEventListener('input', () => this.scheduleLegendSearch(capturedI));
         refs.showElementsCheck.addEventListener('change', () => this.applyFilterChange(capturedI));
         refs.showClustersCheck.addEventListener('change', () => this.applyFilterChange(capturedI));
         if(refs.showSpotsCheck){
@@ -131,26 +133,31 @@ class TilesetRowBinder
         this.app.renderer.renderCanvas(tilesetIndex);
     }
 
+    scheduleLegendSearch(tilesetIndex)
+    {
+        if(this.searchDebounceTimers && this.searchDebounceTimers[tilesetIndex]){
+            clearTimeout(this.searchDebounceTimers[tilesetIndex]);
+        }
+        if(!this.searchDebounceTimers){
+            this.searchDebounceTimers = {};
+        }
+        this.searchDebounceTimers[tilesetIndex] = setTimeout(() => {
+            this.searchDebounceTimers[tilesetIndex] = null;
+            this.app.editor.legendRenderer.applyLegendVisibility(tilesetIndex);
+        }, 100);
+    }
+
     applyBulkSelection(tilesetIndex, refs)
     {
         let isChecked = refs.bulkSelectAll.checked;
-        let showElements = refs.showElementsCheck ? refs.showElementsCheck.checked : true;
-        let showClusters = refs.showClustersCheck ? refs.showClustersCheck.checked : true;
-        let showSpots = refs.showSpotsCheck ? refs.showSpotsCheck.checked : true;
-        let searchTerm = refs.legendSearch ? refs.legendSearch.value.toLowerCase() : '';
+        let filter = this.app.editor.elementVisibilityFilter(refs);
         for(let element of this.app.state[tilesetIndex].elements){
-            let isCluster = 'cluster' === element.type;
-            let isSpot = 'spot' === element.type;
-            let matchesType = (isCluster && showClusters)
-                || (isSpot && showSpots)
-                || (!isCluster && !isSpot && showElements);
-            let matchesSearch = !searchTerm || element.name.toLowerCase().includes(searchTerm);
-            if(!matchesType || !matchesSearch){
+            if(!this.app.editor.matchesVisibilityFilter(element, filter)){
                 continue;
             }
             element.bulkSelected = isChecked;
         }
-        if(showSpots){
+        if(filter.showSpots){
             for(let spot of this.app.state[tilesetIndex].spots || []){
                 spot.bulkSelected = isChecked;
             }
@@ -207,17 +214,20 @@ class TilesetRowBinder
         let panes = row.querySelectorAll('.legend-tab-pane');
         for(let tab of tabs){
             tab.addEventListener('click', () => {
-                this.activateLegendTab(tab, tabs, panes);
+                this.activateLegendTab(tab, tabs, panes, tilesetIndex);
                 this.app.renderer.renderCanvas(tilesetIndex);
             });
         }
     }
 
-    activateLegendTab(activeTab, tabs, panes)
+    activateLegendTab(activeTab, tabs, panes, tilesetIndex)
     {
         let targetTab = activeTab.dataset.tab;
         this.setLegendTabActive(activeTab, tabs);
         this.setLegendPaneVisible(targetTab, panes);
+        if(undefined !== tilesetIndex && this.app.refs[tilesetIndex]){
+            this.app.refs[tilesetIndex].activeTab = targetTab;
+        }
     }
 
     setLegendTabActive(activeTab, tabs)
@@ -236,7 +246,8 @@ class TilesetRowBinder
 
     bindViewControls(capturedI, refs)
     {
-        refs.toggleAllBtn.textContent = 'Hide Others';
+        refs.toggleAllBtn.textContent = this.app.showAllElements ? 'Hide Others' : 'Highlight All';
+        refs.viewAllBtn.textContent = this.app.viewAllMode ? 'View Selected' : 'View All';
         refs.toggleAllBtn.addEventListener('click', () => {
             this.app.showAllElements = !this.app.showAllElements;
             refs.toggleAllBtn.textContent = this.app.showAllElements ? 'Hide Others' : 'Highlight All';

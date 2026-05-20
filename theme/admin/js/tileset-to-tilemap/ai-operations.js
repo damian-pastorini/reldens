@@ -10,7 +10,7 @@ class TilesetAiOperations
         let result = [];
         for(let index = 0; index < tileset.elements.length; index++){
             let element = tileset.elements[index];
-            if('cluster' === element.type){
+            if(SharedUtils.CLUSTER_TYPE === element.type){
                 continue;
             }
             if(element.approved){
@@ -38,25 +38,25 @@ class TilesetAiOperations
         let section = this.app.getElement('.review-section');
         section.classList.toggle('review-blocked', blocked);
         let controls = section.querySelectorAll('button, input, select');
-        for(let el of controls){
-            el.disabled = blocked;
+        for(let control of controls){
+            control.disabled = blocked;
         }
         if(!blocked){
             this.app.generator.updateGenerateButtonState();
         }
     }
 
-    showAiProgress(msg, tilesetIndex)
+    showAiProgress(message, tilesetIndex)
     {
         if(!this.app.refs[tilesetIndex]){
             return;
         }
-        let el = this.app.refs[tilesetIndex].aiProgressMsg;
-        if(!el){
+        let progressMessageElement = this.app.refs[tilesetIndex].aiProgressMsg;
+        if(!progressMessageElement){
             return;
         }
-        el.textContent = msg;
-        el.classList.remove('hidden');
+        progressMessageElement.textContent = message;
+        progressMessageElement.classList.remove('hidden');
     }
 
     hideAiProgress()
@@ -65,41 +65,47 @@ class TilesetAiOperations
             if(!this.app.refs[i]){
                 continue;
             }
-            let el = this.app.refs[i].aiProgressMsg;
-            if(!el){
+            let progressMessageElement = this.app.refs[i].aiProgressMsg;
+            if(!progressMessageElement){
                 continue;
             }
-            el.classList.add('hidden');
-            el.textContent = '';
+            progressMessageElement.classList.add('hidden');
+            progressMessageElement.textContent = '';
         }
+    }
+
+    collectUsedNumbersForBase(tileset, base, excludeIndex)
+    {
+        let usedNumbers = new Set();
+        for(let elementIdx = 0; elementIdx < tileset.elements.length; elementIdx++){
+            if(elementIdx === excludeIndex){
+                continue;
+            }
+            let element = tileset.elements[elementIdx];
+            if(!element.name){
+                continue;
+            }
+            let parsed = element.name.match(SharedUtils.NAME_PARSE_REGEX);
+            if(!parsed){
+                continue;
+            }
+            if(parsed[1] !== base){
+                continue;
+            }
+            usedNumbers.add(Number(parsed[2]));
+        }
+        return usedNumbers;
     }
 
     resolveUniqueName(name, tilesetIndex, excludeIndex)
     {
-        let match = name.match(/^([a-z]+(?:-[a-z]+)*)-(\d+)$/);
+        let match = name.match(SharedUtils.NAME_PARSE_REGEX);
         if(!match){
             return name;
         }
         let base = match[1];
-        let usedNumbers = new Set();
         let tileset = this.app.state[tilesetIndex];
-        for(let idx = 0; idx < tileset.elements.length; idx++){
-            if(idx === excludeIndex){
-                continue;
-            }
-            let el = tileset.elements[idx];
-            if(!el.name){
-                continue;
-            }
-            let m = el.name.match(/^([a-z]+(?:-[a-z]+)*)-(\d+)$/);
-            if(!m){
-                continue;
-            }
-            if(m[1] !== base){
-                continue;
-            }
-            usedNumbers.add(Number(m[2]));
-        }
+        let usedNumbers = this.collectUsedNumbersForBase(tileset, base, excludeIndex);
         let n = 1;
         for(let i = 1; usedNumbers.has(i); i++){
             n++;
@@ -111,124 +117,165 @@ class TilesetAiOperations
     {
         let tileset = this.app.state[tilesetIndex];
         for(let i = 0; i < namedElements.length; i++){
-            let idx = sentIndices[i];
-            if(!tileset.elements[idx]){
+            let elementIdx = sentIndices[i];
+            if(!tileset.elements[elementIdx]){
                 continue;
             }
-            tileset.elements[idx].name = namedElements[i].name;
+            tileset.elements[elementIdx].name = namedElements[i].name;
         }
         this.app.clearSelection(tilesetIndex);
+    }
+
+    async detectLayersForOne(item, tileset, provider, tilesetIndex)
+    {
+        this.showAiProgress(
+            'Detecting layers for element '+(item.index+1)+' in '+tileset.filename+'...',
+            tilesetIndex
+        );
+        let tiles = this.app.collectElementTiles(item.element);
+        let response = await fetch('ai-assign-layers', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(this.app.aiRequestBuilder.build(tileset, provider, { elementTiles: tiles }))
+        });
+        let data = await response.json();
+        if(!data.layers || !data.layers.length){
+            return;
+        }
+        item.element.layers = data.layers;
+        this.app.refresh(tilesetIndex);
+    }
+
+    startAiRun(triggerBtn)
+    {
+        this.setReviewBlocked(true);
+        this.setAiControlsLoading(true, triggerBtn);
+    }
+
+    finishAiRun(triggerBtn)
+    {
+        this.setAiControlsLoading(false, triggerBtn);
+        this.setReviewBlocked(false);
+        this.hideAiProgress();
     }
 
     async runAiDetectLayers(tilesetIndex, triggerBtn)
     {
         let provider = this.app.refs[tilesetIndex].aiSelect.value;
-        this.setReviewBlocked(true);
-        this.setAiControlsLoading(true, triggerBtn);
+        this.startAiRun(triggerBtn);
         let tileset = this.app.state[tilesetIndex];
         for(let item of this.pendingElements(tileset)){
-            this.showAiProgress(
-                'Detecting layers for element '+(item.index+1)+' in '+tileset.filename+'...',
-                tilesetIndex
-            );
-            let tiles = this.app.collectElementTiles(item.element);
-            let response = await fetch('ai-assign-layers', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(this.app.aiRequestBuilder.build(tileset, provider, { elementTiles: tiles }))
-            });
-            let data = await response.json();
-            if(!data.layers || !data.layers.length){
-                continue;
-            }
-            item.element.layers = data.layers;
-            this.app.refresh(tilesetIndex);
+            await this.detectLayersForOne(item, tileset, provider, tilesetIndex);
         }
-        this.setAiControlsLoading(false, triggerBtn);
-        this.setReviewBlocked(false);
-        this.hideAiProgress();
+        this.finishAiRun(triggerBtn);
+    }
+
+    buildDetectedElements(detected, baseColorIndex)
+    {
+        let result = [];
+        for(let i = 0; i < detected.length; i++){
+            result.push(SharedUtils.makeElement(
+                detected[i].name, baseColorIndex + i, detected[i].layers
+            ));
+        }
+        return result;
+    }
+
+    async detectElementsForCluster(j, tileset, provider, tilesetIndex)
+    {
+        this.showAiProgress(
+            'Detecting elements in cluster '+(j+1)+' of '+tileset.filename+'...',
+            tilesetIndex
+        );
+        let tiles = this.app.collectElementTiles(tileset.elements[j]);
+        let response = await fetch('ai-detect', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(this.app.aiRequestBuilder.build(tileset, provider, { clusterTiles: tiles }))
+        });
+        let data = await response.json();
+        if(!data.elements || !data.elements.length){
+            return;
+        }
+        let globalOffset = this.app.getGlobalOffset(tilesetIndex);
+        let newElements = this.buildDetectedElements(data.elements, globalOffset + j);
+        tileset.elements.splice(j, 1, ...newElements);
+        this.app.reindexColors(tilesetIndex);
+        this.app.clearSelection(tilesetIndex);
+    }
+
+    shouldSkipForDetectElements(element)
+    {
+        if(SharedUtils.CLUSTER_TYPE !== element.type){
+            return true;
+        }
+        return Boolean(element.approved);
     }
 
     async runAiDetectElements(tilesetIndex, triggerBtn)
     {
         let provider = this.app.refs[tilesetIndex].aiSelect.value;
-        this.setReviewBlocked(true);
-        this.setAiControlsLoading(true, triggerBtn);
+        this.startAiRun(triggerBtn);
         let tileset = this.app.state[tilesetIndex];
         for(let j = tileset.elements.length - 1; j >= 0; j--){
-            let el = tileset.elements[j];
-            if('cluster' !== el.type){
+            if(this.shouldSkipForDetectElements(tileset.elements[j])){
                 continue;
             }
-            if(el.approved){
-                continue;
-            }
-            this.showAiProgress(
-                'Detecting elements in cluster '+(j+1)+' of '+tileset.filename+'...',
-                tilesetIndex
-            );
-            let tiles = this.app.collectElementTiles(el);
-            let response = await fetch('ai-detect', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(this.app.aiRequestBuilder.build(tileset, provider, { clusterTiles: tiles }))
-            });
-            let data = await response.json();
-            if(!data.elements || !data.elements.length){
-                continue;
-            }
-            let globalOffset = this.app.getGlobalOffset(tilesetIndex);
-            let newElements = data.elements.map((elem, idx) => SharedUtils.makeElement(
-                elem.name, globalOffset + j + idx, elem.layers
-            ));
-            tileset.elements.splice(j, 1, ...newElements);
-            this.app.reindexColors(tilesetIndex);
-            this.app.clearSelection(tilesetIndex);
+            await this.detectElementsForCluster(j, tileset, provider, tilesetIndex);
         }
-        this.setAiControlsLoading(false, triggerBtn);
-        this.setReviewBlocked(false);
-        this.hideAiProgress();
+        this.finishAiRun(triggerBtn);
+    }
+
+    countLockedElements(tileset)
+    {
+        let totalLocked = 0;
+        for(let element of tileset.elements){
+            if(SharedUtils.CLUSTER_TYPE !== element.type && element.approved){
+                totalLocked++;
+            }
+        }
+        return totalLocked;
+    }
+
+    async nameOneElement(toName, k, tileset, provider, tilesetIndex)
+    {
+        this.showAiProgress(
+            'Naming element '+(k+1)+'/'+toName.length+' in '+tileset.filename+'...',
+            tilesetIndex
+        );
+        let response = await fetch('ai-name', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(this.app.aiRequestBuilder.build(
+                tileset, provider, { elements: [{ absoluteTiles: toName[k].absoluteTiles }] }
+            ))
+        });
+        let data = await response.json();
+        if(!data.elements || !data.elements.length){
+            return false;
+        }
+        data.elements[0].name = this.resolveUniqueName(
+            data.elements[0].name, tilesetIndex, toName[k].index
+        );
+        this.applyNameUpdate(tilesetIndex, data.elements, [toName[k].index]);
+        return true;
     }
 
     async runAiName(tilesetIndex, triggerBtn)
     {
         let provider = this.app.refs[tilesetIndex].aiSelect.value;
-        this.setReviewBlocked(true);
-        this.setAiControlsLoading(true, triggerBtn);
+        this.startAiRun(triggerBtn);
         let totalRenamed = 0;
-        let totalLocked = 0;
         let tileset = this.app.state[tilesetIndex];
         let pending = this.pendingElements(tileset);
         let toName = [];
         for(let item of pending){
             toName.push({ index: item.index, absoluteTiles: this.app.collectElementTiles(item.element) });
         }
-        for(let element of tileset.elements){
-            if('cluster' !== element.type && element.approved){
-                totalLocked++;
-            }
-        }
-        if(toName.length){
-            for(let k = 0; k < toName.length; k++){
-                this.showAiProgress(
-                    'Naming element '+(k+1)+'/'+toName.length+' in '+tileset.filename+'...',
-                    tilesetIndex
-                );
-                let response = await fetch('ai-name', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(this.app.aiRequestBuilder.build(
-                        tileset, provider, { elements: [{ absoluteTiles: toName[k].absoluteTiles }] }
-                    ))
-                });
-                let data = await response.json();
-                if(data.elements && data.elements.length){
-                    data.elements[0].name = this.resolveUniqueName(
-                        data.elements[0].name, tilesetIndex, toName[k].index
-                    );
-                    this.applyNameUpdate(tilesetIndex, data.elements, [toName[k].index]);
-                    totalRenamed++;
-                }
+        let totalLocked = this.countLockedElements(tileset);
+        for(let k = 0; k < toName.length; k++){
+            if(await this.nameOneElement(toName, k, tileset, provider, tilesetIndex)){
+                totalRenamed++;
             }
         }
         this.setAiControlsLoading(false, triggerBtn);
@@ -239,49 +286,14 @@ class TilesetAiOperations
         );
     }
 
-    async bulkDetectAi(tilesetIndex)
+    bulkDetectAi(tilesetIndex)
     {
-        let provider = this.app.refs[tilesetIndex].aiSelect.value;
-        let btn = this.app.refs[tilesetIndex].bulkDetectBtn;
-        let elements = this.app.state[tilesetIndex].elements;
-        let selectedClusters = [];
-        for(let i = 0; i < elements.length; i++){
-            if(!elements[i].bulkSelected){
-                continue;
-            }
-            if('cluster' !== elements[i].type){
-                continue;
-            }
-            selectedClusters.push(i);
-        }
-        for(let i = selectedClusters.length - 1; i >= 0; i--){
-            await this.app.aiElement.runAiDetectSingle(tilesetIndex, selectedClusters[i], provider, btn);
-        }
-        let updated = this.app.state[tilesetIndex].elements;
-        for(let i = 0; i < updated.length; i++){
-            if(!updated[i].bulkSelected){
-                continue;
-            }
-            if('cluster' === updated[i].type){
-                continue;
-            }
-            await this.app.aiElement.runAiDetectSingle(tilesetIndex, i, provider, btn);
-        }
+        return this.app.aiBulk.bulkDetectAi(tilesetIndex);
     }
 
-    async bulkNameAi(tilesetIndex)
+    bulkNameAi(tilesetIndex)
     {
-        let provider = this.app.refs[tilesetIndex].aiSelect.value;
-        let btn = this.app.refs[tilesetIndex].bulkNameBtn;
-        let elements = this.app.state[tilesetIndex].elements;
-        for(let i = 0; i < elements.length; i++){
-            if(!elements[i].bulkSelected){
-                continue;
-            }
-            if('cluster' === elements[i].type){
-                continue;
-            }
-            await this.app.aiElement.runAiNameSingle(tilesetIndex, i, provider, btn);
-        }
+        return this.app.aiBulk.bulkNameAi(tilesetIndex);
     }
 }
+window.TilesetAiOperations = TilesetAiOperations;

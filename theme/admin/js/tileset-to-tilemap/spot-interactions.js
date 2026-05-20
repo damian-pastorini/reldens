@@ -72,13 +72,13 @@ class TilesetSpotInteractions
     handleSpotInput(tilesetIndex, context)
     {
         let app = this.editor.app;
-        let spot = app.state[tilesetIndex].spots[context.spotIndex];
         if(!context.target.matches('[data-prop]')){
             return;
         }
+        let spot = app.state[tilesetIndex].spots[context.spotIndex];
         let key = context.target.dataset.prop;
         if('number' === context.target.type){
-            spot[key] = '' === context.target.value ? null : +context.target.value;
+            spot[key] = '' === context.target.value ? null : SharedUtils.toNumber(context.target.value, 0);
             return;
         }
         if('depth' === key){
@@ -112,12 +112,7 @@ class TilesetSpotInteractions
         let app = this.editor.app;
         let spot = app.state[tilesetIndex].spots[spotIndex];
         spot.approved = !spot.approved;
-        let lockBtn = spotRow.querySelector('.spot-lock-btn');
-        lockBtn.classList.toggle('locked', spot.approved);
-        let lockIcon = lockBtn.querySelector('.lock-icon');
-        if(lockIcon){
-            lockIcon.src = '/assets/admin/'+(spot.approved ? 'lock-solid' : 'unlock-solid')+'.svg';
-        }
+        SharedUtils.applyLockVisual(spotRow.querySelector('.spot-lock-btn'), spot.approved);
     }
 
     requestDeleteSpot(tilesetIndex, spotIndex)

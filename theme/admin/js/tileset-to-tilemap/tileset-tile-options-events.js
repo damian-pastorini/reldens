@@ -19,9 +19,7 @@ class TilesetTileOptionsEvents
 
     isSameActiveState(tilesetIndex, optionKey, spotName)
     {
-        return this.binder.activeTilesetIndex === tilesetIndex
-            && this.binder.activeOptionKey === optionKey
-            && this.binder.activeSpotName === (spotName ? spotName : null);
+        return this.binder.isSameActiveState(tilesetIndex, optionKey, spotName);
     }
 
     bindOptionBtns(tilesetIndex, container, spotName)

@@ -22,8 +22,7 @@ class TilesetLegendRenderer
         }
         let spots = tileset.spots || [];
         let spotTemplate = app.getElement('.spot-row-template');
-        let showSpotsAtBuild = this.readShowSpots(tilesetIndex);
-        if(showSpotsAtBuild && spots.length && spotTemplate){
+        if(spots.length && spotTemplate){
             for(let si = 0; si < spots.length; si++){
                 this.editor.spotEditor.appendSpotRow(
                     list, spots[si], si, tileset, tilesetIndex, spotTemplate
@@ -52,31 +51,15 @@ class TilesetLegendRenderer
         if(!refs || !refs.list){
             return;
         }
-        let showSpots = this.readShowSpots(tilesetIndex);
-        let spots = app.state[tilesetIndex].spots || [];
-        let hasSpotRows = null !== refs.list.querySelector('.spot-row');
-        if(showSpots && spots.length && !hasSpotRows){
-            this.renderLegend(tilesetIndex);
-            return;
-        }
-        let showElements = refs.showElementsCheck ? refs.showElementsCheck.checked : true;
-        let showClusters = refs.showClustersCheck ? refs.showClustersCheck.checked : true;
-        let searchTerm = refs.legendSearch ? refs.legendSearch.value.toLowerCase() : '';
+        let filter = this.editor.elementVisibilityFilter(refs);
         let elements = app.state[tilesetIndex].elements;
         let elementRows = refs.list.querySelectorAll('.element-row');
         let limit = Math.min(elementRows.length, elements.length);
         for(let i = 0; i < limit; i++){
-            let element = elements[i];
-            let isCluster = 'cluster' === element.type;
-            let isSpot = 'spot' === element.type;
-            let matchesType = (isCluster && showClusters)
-                || (isSpot && showSpots)
-                || (!isCluster && !isSpot && showElements);
-            let matchesSearch = !searchTerm || element.name.toLowerCase().includes(searchTerm);
-            elementRows[i].classList.toggle('hidden', !matchesType || !matchesSearch);
+            elementRows[i].classList.toggle('hidden', !this.editor.matchesVisibilityFilter(elements[i], filter));
         }
         for(let spotRow of refs.list.querySelectorAll('.spot-row')){
-            spotRow.classList.toggle('hidden', !showSpots);
+            spotRow.classList.toggle('hidden', !filter.showSpots);
         }
     }
 
@@ -86,11 +69,12 @@ class TilesetLegendRenderer
         let isSelected = app.selectedTileset === tilesetIndex && app.selectedElement === i;
         let row = frag.querySelector('.element-row');
         row.dataset.elementIndex = i;
-        if('cluster' === element.type){
+        if(SharedUtils.CLUSTER_TYPE === element.type){
             row.classList.add('element-type-cluster');
         }
         let typeIcon = frag.querySelector('.element-type-icon');
-        typeIcon.src = '/assets/admin/'+('cluster' === element.type ? 'cubes-solid-full' : 'cube-solid-full')+'.svg';
+        let isCluster = SharedUtils.CLUSTER_TYPE === element.type;
+        typeIcon.src = isCluster ? SharedUtils.ICON_PATHS.cubes : SharedUtils.ICON_PATHS.cube;
         typeIcon.alt = element.type;
         typeIcon.title = element.type;
         let bulkCheckbox = frag.querySelector('.element-bulk-select');
@@ -107,8 +91,7 @@ class TilesetLegendRenderer
         freeSpaceInput.value = element.freeSpaceAround;
         let allowPathsInput = frag.querySelector('.element-allow-paths');
         allowPathsInput.checked = element.allowPathsInFreeSpace;
-        let knownLayerTypes = ['below-player', 'collisions', 'over-player', 'collisions-over-player', 'base', 'path'];
-        let isCustomActive = isSelected && !knownLayerTypes.includes(app.activeLayerType);
+        let isCustomActive = isSelected && !SharedUtils.KNOWN_LAYER_TYPES.includes(app.activeLayerType);
         let radioName = 'layer-type-t'+tilesetIndex+'-e'+i;
         let radios = frag.querySelectorAll('.layer-type-radio');
         let customInput = frag.querySelector('.layer-type-custom-input');
@@ -120,13 +103,7 @@ class TilesetLegendRenderer
 
     applyApprovedState(frag, element)
     {
-        if(!element.approved){
-            return;
-        }
-        let lockBtn = frag.querySelector('.element-lock-btn');
-        let lockIcon = lockBtn.querySelector('.lock-icon');
-        lockBtn.classList.add('locked');
-        lockIcon.src = '/assets/admin/lock-solid.svg';
+        SharedUtils.applyLockVisual(frag.querySelector('.element-lock-btn'), element.approved);
     }
 
     applyElementTypeVisuals(frag, element)
@@ -137,7 +114,8 @@ class TilesetLegendRenderer
         let aiControls = frag.querySelector('.element-ai-controls');
         let aiSelect = frag.querySelector('.element-ai-select');
         let aiDetectBtn = frag.querySelector('.element-ai-detect-btn');
-        if('cluster' === element.type){
+        let isCluster = SharedUtils.CLUSTER_TYPE === element.type;
+        if(isCluster){
             splitBtn.classList.remove('hidden');
             convertBtn.classList.remove('hidden');
         }
@@ -145,7 +123,7 @@ class TilesetLegendRenderer
             return;
         }
         SharedUtils.populateProviderSelect(aiSelect, app.activeProviders);
-        aiDetectBtn.textContent = 'cluster' === element.type ? 'Detect Elements' : 'Detect Layers';
+        aiDetectBtn.textContent = isCluster ? 'Detect Elements' : 'Detect Layers';
         aiControls.classList.remove('hidden');
     }
 

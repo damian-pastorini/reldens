@@ -7,7 +7,7 @@ class TilesetAnalyzerApp
         this.selectedTileset = null;
         this.selectedElement = null;
         this.selectedSpot = null;
-        this.activeLayerType = 'below-player';
+        this.activeLayerType = SharedUtils.DEFAULT_LAYER_TYPE;
         this.refs = {};
         this.imageCache = {};
         this.zoomLevels = {};
@@ -16,7 +16,10 @@ class TilesetAnalyzerApp
         this.isRightDrag = false;
         this.dragToggleMode = null;
         this.lastDragTile = null;
-        this.mouseButtonRight = 2;
+        this.canvasRedrawScheduled = false;
+        this.pendingRedrawIndex = null;
+        this.activeAbortControllers = new Set();
+        this.mouseButtonRight = SharedUtils.MOUSE_BUTTON_RIGHT;
         this.showAiControls = false;
         this.activeProviders = [];
         this.runningDetections = 0;
@@ -33,6 +36,7 @@ class TilesetAnalyzerApp
         this.editor = new TilesetElementEditor(this);
         this.ai = new TilesetAiOperations(this);
         this.aiElement = new TilesetAiElementOperations(this);
+        this.aiBulk = new TilesetAiBulkOperations(this);
         this.aiRequestBuilder = new TilesetAiRequestBuilder(this);
         this.sessions = new TilesetSessionManager(this);
         this.uploader = new TilesetUploader(this);
@@ -54,17 +58,34 @@ class TilesetAnalyzerApp
         return document.querySelector(selector);
     }
 
-    updatePaletteStyles()
+    countTotalElements()
     {
         let totalElements = 0;
         for(let tilesetState of this.state){
             totalElements += tilesetState.elements.length;
         }
+        return totalElements;
+    }
+
+    rebuildPaletteCss(totalElements)
+    {
+        if(!this.dynamicPaletteEl){
+            this.dynamicPaletteEl = this.getElement('.dynamic-palette');
+        }
         let css = '';
         for(let i = 0; i < totalElements; i++){
-            css += '.element-color-'+i+' { background-color: '+SharedUtils.colorForIndex(i)+'; }\n';
+            css = css+'.element-color-'+i+' { background-color: '+SharedUtils.colorForIndex(i)+'; }\n';
         }
-        this.getElement('.dynamic-palette').textContent = css;
+        this.dynamicPaletteEl.textContent = css;
+    }
+
+    updatePaletteStyles()
+    {
+        let totalElements = this.countTotalElements();
+        if(this.cachedTotalElements !== totalElements){
+            this.cachedTotalElements = totalElements;
+            this.rebuildPaletteCss(totalElements);
+        }
         this.updateGlobalTileOptionsPanel();
     }
 
@@ -141,12 +162,61 @@ class TilesetAnalyzerApp
         return offset;
     }
 
+    findTilesetIndexByFilename(filename)
+    {
+        for(let j = 0; j < this.state.length; j++){
+            if(this.state[j].filename === filename){
+                return j;
+            }
+        }
+        return -1;
+    }
+
+    createAbortController()
+    {
+        let controller = new AbortController();
+        this.activeAbortControllers.add(controller);
+        return controller;
+    }
+
+    releaseAbortController(controller)
+    {
+        this.activeAbortControllers.delete(controller);
+    }
+
+    abortAllRequests()
+    {
+        for(let controller of this.activeAbortControllers){
+            controller.abort();
+        }
+        this.activeAbortControllers.clear();
+    }
+
     refresh(tilesetIndex)
     {
-        this.renderer.renderCanvas(tilesetIndex);
-        if(!this.isDragging){
-            this.editor.renderLegend(tilesetIndex);
+        if(this.isDragging){
+            this.scheduleCanvasRedraw(tilesetIndex);
+            return;
         }
+        this.renderer.renderCanvas(tilesetIndex);
+        this.editor.renderLegend(tilesetIndex);
+    }
+
+    scheduleCanvasRedraw(tilesetIndex)
+    {
+        this.pendingRedrawIndex = tilesetIndex;
+        if(this.canvasRedrawScheduled){
+            return;
+        }
+        this.canvasRedrawScheduled = true;
+        requestAnimationFrame(() => {
+            this.canvasRedrawScheduled = false;
+            let pendingIndex = this.pendingRedrawIndex;
+            this.pendingRedrawIndex = null;
+            if(null !== pendingIndex){
+                this.renderer.renderCanvas(pendingIndex);
+            }
+        });
     }
 
     resetViewAllButtons()

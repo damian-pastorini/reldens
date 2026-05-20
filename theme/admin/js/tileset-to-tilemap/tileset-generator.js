@@ -60,29 +60,33 @@ class TilesetGenerator
         this.app.strategyEditor.bind(row);
     }
 
+    readSessionNameValue()
+    {
+        return this.app.getElement('.session-name-input')?.value || '';
+    }
+
+    isOverrideChecked()
+    {
+        return Boolean(this.app.getElement('.override-files-checkbox')?.checked);
+    }
+
     buildNewSessionId()
     {
-        let timestamp = SharedUtils.buildSessionTimestamp();
-        let nameInput = document.querySelector('.session-name-input');
-        let name = nameInput ? nameInput.value.trim() : '';
-        if(!name){
-            return timestamp;
-        }
-        return timestamp+'-'+name;
+        return SharedUtils.buildSessionId(this.app.sessionId, false, this.readSessionNameValue());
     }
 
     buildSessionId()
     {
-        let overrideCheckbox = document.querySelector('.override-files-checkbox');
-        if(overrideCheckbox && overrideCheckbox.checked){
-            return this.app.sessionId;
-        }
-        return this.buildNewSessionId();
+        return SharedUtils.buildSessionId(
+            this.app.sessionId, this.isOverrideChecked(), this.readSessionNameValue()
+        );
     }
 
     async generate(selectedOnly)
     {
-        await this.runGenerate(this.getSerializableState(selectedOnly), false);
+        let fullState = this.getSerializableState(selectedOnly);
+        this.lastFullSerialized = selectedOnly ? null : fullState;
+        await this.runGenerate(fullState, false);
     }
 
     async generateSingle(tilesetIndex, selectedOnly)
@@ -92,7 +96,7 @@ class TilesetGenerator
                 this.app.state[tilesetIndex],
                 selectedOnly,
                 tilesetIndex,
-                document.querySelector('[data-tileset-index="'+tilesetIndex+'"]')
+                this.app.refs[tilesetIndex] ? this.app.refs[tilesetIndex].row : null
             )],
             true
         );
@@ -105,15 +109,32 @@ class TilesetGenerator
         }
         let sessionId = forceNewSession ? this.buildNewSessionId() : this.buildSessionId();
         this.app.modals.showGenerate('Generating files...');
-        let response = await fetch('generate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ sessionId, tilesets, fullTilesets: this.getSerializableState(false), globalTileOptions: this.app.globalTileOptions || null })
-        });
-        let data = await response.json();
+        let fullTilesets = tilesets === this.lastFullSerialized ? tilesets : this.getSerializableState(false);
+        let data = null;
+        try {
+            let response = await fetch('generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sessionId, tilesets, fullTilesets, globalTileOptions: this.app.globalTileOptions || null })
+            });
+            if(!response.ok){
+                let body = await response.text();
+                this.app.modals.hideGenerate();
+                this.app.sessions.showStatus(
+                    'Error: HTTP '+response.status+' '+response.statusText+' - '+body.slice(0, 300),
+                    true
+                );
+                return;
+            }
+            data = await response.json();
+        } catch(error) {
+            this.app.modals.hideGenerate();
+            this.app.sessions.showStatus('Network error: '+error.message, true);
+            return;
+        }
         this.app.modals.hideGenerate();
-        if(!data.files){
-            this.app.sessions.showStatus('Error: '+(data.error || 'Unknown error'), true);
+        if(!data || !data.files){
+            this.app.sessions.showStatus('Error: '+((data && data.error) || 'Unknown error'), true);
             return;
         }
         this.lastGeneratedSessionId = sessionId;
@@ -149,6 +170,31 @@ class TilesetGenerator
         resultsSection.classList.remove('hidden');
     }
 
+    serializeElement(element)
+    {
+        return {
+            name: element.name,
+            type: element.type,
+            approved: element.approved,
+            colorIndex: element.colorIndex,
+            quantity: element.quantity,
+            freeSpaceAround: element.freeSpaceAround,
+            allowPathsInFreeSpace: element.allowPathsInFreeSpace,
+            bulkSelected: element.bulkSelected || false,
+            layers: element.layers
+        };
+    }
+
+    resolveGeneratorTypeFromRow(row)
+    {
+        return row?.querySelector('.tileset-generator-type')?.value || SharedUtils.DEFAULT_GENERATOR_TYPE;
+    }
+
+    resolveMapFieldFromRow(row, selector, fallback)
+    {
+        return row ? (row.querySelector(selector).value || fallback) : fallback;
+    }
+
     serializeTileset(tileset, selectedOnly, tilesetIndex, row)
     {
         let elements = [];
@@ -156,57 +202,33 @@ class TilesetGenerator
             if(selectedOnly && !element.bulkSelected){
                 continue;
             }
-            elements.push({
-                name: element.name,
-                type: element.type,
-                approved: element.approved,
-                colorIndex: element.colorIndex,
-                quantity: element.quantity,
-                freeSpaceAround: element.freeSpaceAround,
-                allowPathsInFreeSpace: element.allowPathsInFreeSpace,
-                bulkSelected: element.bulkSelected || false,
-                layers: element.layers
-            });
+            elements.push(this.serializeElement(element));
         }
-        return {
-            imageId: tileset.imageId,
-            imageUrl: tileset.imageUrl,
-            filename: tileset.filename,
-            filePath: tileset.filePath,
-            imageWidth: tileset.imageWidth,
-            imageHeight: tileset.imageHeight,
-            tileWidth: tileset.tileWidth,
-            tileHeight: tileset.tileHeight,
-            spacing: tileset.spacing,
-            margin: tileset.margin,
-            tilesetColumns: tileset.tilesetColumns,
-            tileRows: tileset.tileRows,
-            tileCount: tileset.tileCount,
-            filteredTiles: tileset.filteredTiles || [],
-            originalTileWidth: tileset.originalTileWidth,
-            originalTileHeight: tileset.originalTileHeight,
-            resizeOption: tileset.resizeOption || 0,
-            mapName: row ? row.querySelector('.tileset-map-name').value || 'tileset-elements' : 'tileset-elements',
-            mapTitle: row ? row.querySelector('.tileset-map-title').value || 'Tileset Elements' : 'Tileset Elements',
-            generatorType: row && row.querySelector('.tileset-generator-type')
-                ? row.querySelector('.tileset-generator-type').value
-                : 'elements-composite-loader',
-            associationsProperties: row ? this.app.strategyEditor.readAssociationsProperties(row) : null,
-            tileOptions: tileset.tileOptions || null,
-            spots: tileset.spots || [],
-            elements
-        };
+        let serialized = SharedUtils.copyTilesetFields({}, tileset);
+        serialized.filteredTiles = tileset.filteredTiles || [];
+        serialized.originalTileWidth = tileset.originalTileWidth;
+        serialized.originalTileHeight = tileset.originalTileHeight;
+        serialized.resizeOption = tileset.resizeOption || 0;
+        serialized.mapName = this.resolveMapFieldFromRow(row, '.tileset-map-name', 'tileset-elements');
+        serialized.mapTitle = this.resolveMapFieldFromRow(row, '.tileset-map-title', 'Tileset Elements');
+        serialized.generatorType = this.resolveGeneratorTypeFromRow(row);
+        serialized.associationsProperties = row ? this.app.strategyEditor.readAssociationsProperties(row) : null;
+        serialized.tileOptions = tileset.tileOptions || null;
+        serialized.spots = tileset.spots || [];
+        serialized.elements = elements;
+        return serialized;
     }
 
     getSerializableState(selectedOnly)
     {
         let result = [];
         for(let i = 0; i < this.app.state.length; i++){
+            let refs = this.app.refs[i];
             result.push(this.serializeTileset(
                 this.app.state[i],
                 selectedOnly,
                 i,
-                document.querySelector('[data-tileset-index="'+i+'"]')
+                refs ? refs.row : null
             ));
         }
         return result;
@@ -215,11 +237,11 @@ class TilesetGenerator
     forEachTilesetRow(callback)
     {
         for(let i = 0; i < this.app.state.length; i++){
-            let row = document.querySelector('[data-tileset-index="'+i+'"]');
-            if(!row){
+            let refs = this.app.refs[i];
+            if(!refs || !refs.row){
                 continue;
             }
-            callback(row, i);
+            callback(refs.row, i);
         }
     }
 
@@ -263,3 +285,4 @@ class TilesetGenerator
         });
     }
 }
+window.TilesetGenerator = TilesetGenerator;

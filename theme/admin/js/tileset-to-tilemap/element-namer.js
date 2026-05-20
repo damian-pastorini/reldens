@@ -9,7 +9,7 @@ class TilesetElementNamer
     {
         let count = 0;
         for(let element of ts.elements){
-            if('element' === element.type){
+            if(SharedUtils.ELEMENT_TYPE === element.type){
                 count++;
             }
         }

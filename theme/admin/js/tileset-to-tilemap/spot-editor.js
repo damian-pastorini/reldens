@@ -28,15 +28,7 @@ class TilesetSpotEditor
 
     applySpotLockState(frag, spot)
     {
-        let lockBtn = frag.querySelector('.spot-lock-btn');
-        if(!lockBtn || !spot.approved){
-            return;
-        }
-        lockBtn.classList.add('locked');
-        let lockIcon = lockBtn.querySelector('.lock-icon');
-        if(lockIcon){
-            lockIcon.src = '/assets/admin/lock-solid.svg';
-        }
+        SharedUtils.applyLockVisual(frag.querySelector('.spot-lock-btn'), spot.approved);
     }
 
     applySpotBulkState(frag, spot)

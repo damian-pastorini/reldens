@@ -5,24 +5,28 @@ class TilesetCanvasTileEditor
         this.app = app;
     }
 
-    findTileInLayer(layer, tileRow, tileCol)
+    findIndexBy(items, predicate)
     {
-        for(let tile of layer.tiles){
-            if(tile[0] === tileRow && tile[1] === tileCol){
-                return true;
+        for(let i = 0; i < items.length; i++){
+            if(predicate(items[i], i)){
+                return i;
             }
         }
-        return false;
+        return -1;
+    }
+
+    findTileInLayer(layer, tileRow, tileCol)
+    {
+        return -1 !== this.findIndexBy(
+            layer.tiles, (tile) => tile[0] === tileRow && tile[1] === tileCol
+        );
     }
 
     findTileLayerIndex(element, tileRow, tileCol)
     {
-        for(let li = 0; li < element.layers.length; li++){
-            if(this.findTileInLayer(element.layers[li], tileRow, tileCol)){
-                return li;
-            }
-        }
-        return -1;
+        return this.findIndexBy(
+            element.layers, (layer) => this.findTileInLayer(layer, tileRow, tileCol)
+        );
     }
 
     removeTileFromLayer(layer, row, col)
@@ -39,11 +43,25 @@ class TilesetCanvasTileEditor
         return total;
     }
 
-    getTileFromEvent(event, canvas, tileset)
+    resolveCanvasScale(canvas)
     {
+        let refs = this.app.refs[Number(canvas.dataset.tilesetIndex)];
+        let cached = refs ? refs.cachedScale : null;
         let rect = canvas.getBoundingClientRect();
+        if(cached && cached.width === canvas.width){
+            return { rect, scaleX: cached.scaleX, scaleY: cached.scaleY };
+        }
         let scaleX = canvas.width / rect.width;
         let scaleY = canvas.height / rect.height;
+        if(refs){
+            refs.cachedScale = { width: canvas.width, scaleX, scaleY };
+        }
+        return { rect, scaleX, scaleY };
+    }
+
+    getTileFromEvent(event, canvas, tileset)
+    {
+        let { rect, scaleX, scaleY } = this.resolveCanvasScale(canvas);
         let clickX = (event.clientX - rect.left) * scaleX;
         let clickY = (event.clientY - rect.top) * scaleY;
         let tileCol = Math.floor(
@@ -148,16 +166,16 @@ class TilesetCanvasTileEditor
         }
     }
 
-    posMapHasTile(posMap, flatIndex)
+    posMapContainsValue(posMap, flatIndex)
     {
-        let found = false;
-        let keys = Object.keys(posMap);
-        for(let key of keys){
-            if(posMap[key] === flatIndex){
-                found = true;
-            }
-        }
-        return found;
+        return -1 !== this.findIndexBy(
+            Object.keys(posMap), (key) => posMap[key] === flatIndex
+        );
+    }
+
+    spotPositionalKeyMatches(spot, flatIndex, key)
+    {
+        return Boolean(spot[key]) && this.posMapContainsValue(spot[key], flatIndex);
     }
 
     spotHasTile(spot, flatIndex)
@@ -168,14 +186,10 @@ class TilesetCanvasTileEditor
         if(spot.spotTileVariations && spot.spotTileVariations.includes(flatIndex)){
             return true;
         }
-        let hasPosMapTile = false;
-        let posMaps = [spot.surroundingTiles, spot.corners, spot.bordersTiles, spot.borderCornersTiles];
-        for(let posMap of posMaps){
-            if(posMap && this.posMapHasTile(posMap, flatIndex)){
-                hasPosMapTile = true;
-            }
-        }
-        return hasPosMapTile;
+        return -1 !== this.findIndexBy(
+            SharedUtils.SPOT_POSITIONAL_KEYS,
+            (key) => this.spotPositionalKeyMatches(spot, flatIndex, key)
+        );
     }
 
     removeTilesInRectFromElement(element, inRect)

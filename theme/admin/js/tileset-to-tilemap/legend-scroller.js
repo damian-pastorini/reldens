@@ -5,6 +5,14 @@ class TilesetLegendScroller
         this.app = app;
     }
 
+    scrollIntoView(list, row)
+    {
+        if(!list || !row){
+            return;
+        }
+        list.scrollTop = row.getBoundingClientRect().top - list.getBoundingClientRect().top + list.scrollTop;
+    }
+
     scrollLegendToSelected(tilesetIndex)
     {
         if(this.app.selectedTileset !== tilesetIndex){
@@ -15,11 +23,7 @@ class TilesetLegendScroller
         }
         let list = this.app.refs[tilesetIndex].list;
         let rows = list.querySelectorAll('.element-row');
-        let targetRow = rows[this.app.selectedElement];
-        if(!targetRow){
-            return;
-        }
-        list.scrollTop = targetRow.getBoundingClientRect().top - list.getBoundingClientRect().top + list.scrollTop;
+        this.scrollIntoView(list, rows[this.app.selectedElement]);
     }
 
     scrollLegendToSpot(tilesetIndex, spotIndex)
@@ -29,11 +33,7 @@ class TilesetLegendScroller
         if(!spots || !spots[spotIndex]){
             return;
         }
-        let row = list.querySelector('.spot-row[data-spot-name="'+spots[spotIndex].name+'"]');
-        if(!row){
-            return;
-        }
-        list.scrollTop = row.getBoundingClientRect().top - list.getBoundingClientRect().top + list.scrollTop;
+        this.scrollIntoView(list, list.querySelector('.spot-row[data-spot-name="'+spots[spotIndex].name+'"]'));
     }
 
     scrollCanvasToElement(tilesetIndex, elementIndex)
@@ -47,9 +47,8 @@ class TilesetLegendScroller
         if(!allTiles.length){
             return;
         }
-        let firstTile = [...allTiles].shift();
-        let minRow = firstTile[0];
-        let minCol = firstTile[1];
+        let minRow = allTiles[0][0];
+        let minCol = allTiles[0][1];
         for(let tile of allTiles){
             if(tile[0] < minRow){
                 minRow = tile[0];

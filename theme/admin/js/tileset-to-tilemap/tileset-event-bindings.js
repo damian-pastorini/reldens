@@ -7,21 +7,28 @@ class TilesetEventBindings
 
     bind()
     {
-        this.app.getElement('.session-name-input').addEventListener('input', (e) => {
-            let filtered = e.target.value.replace(/[^a-zA-Z0-9-]/g, '');
-            if(filtered !== e.target.value){
-                e.target.value = filtered;
+        this.app.getElement('.session-name-input').addEventListener('input', (event) => {
+            let filtered = event.target.value.replace(/[^a-zA-Z0-9-]/g, '');
+            if(filtered !== event.target.value){
+                event.target.value = filtered;
             }
         });
-        this.app.getElement('.back-btn').addEventListener('click', () => location.reload());
+        this.app.getElement('.back-btn').addEventListener('click', () => {
+            this.app.abortAllRequests();
+            location.reload();
+        });
         this.app.getElement('.new-session-btn').addEventListener('click', () => {
             if(!this.app.state.length){
+                this.app.abortAllRequests();
                 location.reload();
                 return;
             }
             this.app.modals.show(
                 'Are you sure you want to leave the current session?',
-                () => location.reload()
+                () => {
+                    this.app.abortAllRequests();
+                    location.reload();
+                }
             );
         });
         this.app.getElement('.results-files-toggle-btn').addEventListener('click', () => {
@@ -31,8 +38,8 @@ class TilesetEventBindings
             this.app.getElement('.generated-files-list').classList.toggle('hidden');
             this.app.getElement('.generated-files-search').classList.toggle('hidden');
         });
-        this.app.getElement('.generated-files-search').addEventListener('input', (e) => {
-            let term = e.target.value.toLowerCase();
+        this.app.getElement('.generated-files-search').addEventListener('input', (event) => {
+            let term = event.target.value.toLowerCase();
             let list = this.app.getElement('.generated-files-list');
             for(let li of list.querySelectorAll('li[data-session-id]')){
                 li.classList.toggle('hidden', !li.dataset.sessionId.toLowerCase().includes(term));
@@ -46,6 +53,7 @@ class TilesetEventBindings
                 return;
             }
             reviewTopBar.classList.toggle('is-scrolled', window.scrollY > 0);
-        });
+        }, { passive: true });
     }
 }
+window.TilesetEventBindings = TilesetEventBindings;

@@ -16,7 +16,7 @@ class SessionItemBuilder
         header.className = 'generated-file-header';
         let collapseIcon = document.createElement('img');
         collapseIcon.className = 'generated-file-collapse-icon';
-        collapseIcon.src = '/assets/admin/circle-chevron-up-solid-full.svg';
+        collapseIcon.src = SharedUtils.ICON_PATHS.chevronUp;
         collapseIcon.alt = '';
         header.appendChild(collapseIcon);
         let span = document.createElement('span');
@@ -32,7 +32,7 @@ class SessionItemBuilder
                 hasConfig = true;
                 continue;
             }
-            if('map-generator-config.json' === file.name){
+            if('map-generator-config.json' === file.name || file.name.startsWith('map-generator-config-')){
                 hasMapsConfig = true;
             }
             if('input' === file.type){
@@ -46,7 +46,9 @@ class SessionItemBuilder
             wizardBtn.className = 'button button-sm button-secondary generated-file-wizard-btn';
             let analyzer = document.querySelector('.tileset-analyzer');
             let mapsWizardPath = analyzer ? analyzer.dataset.mapsWizardPath : '/maps-wizard';
-            wizardBtn.href = mapsWizardPath+'?tilesetSessionId='+sessionId;
+            let wizardUrl = new URL(mapsWizardPath, window.location.origin);
+            wizardUrl.searchParams.set('tilesetSessionId', sessionId);
+            wizardBtn.href = wizardUrl.toString();
             wizardBtn.textContent = 'Maps Wizard';
             wizardBtn.addEventListener('click', (event) => {
                 event.stopPropagation();
@@ -74,7 +76,7 @@ class SessionItemBuilder
         let deleteBtn = document.createElement('button');
         deleteBtn.className = 'button button-sm button-danger generated-file-delete-btn';
         let deleteImg = document.createElement('img');
-        deleteImg.src = '/assets/admin/trash-can-solid-full.svg';
+        deleteImg.src = SharedUtils.ICON_PATHS.trash;
         deleteImg.alt = 'Delete';
         deleteBtn.appendChild(deleteImg);
         deleteBtn.addEventListener('click', (event) => {

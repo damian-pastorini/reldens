@@ -48,7 +48,7 @@ class TilesetTileOptionsBinder
     {
         return {
             name: name,
-            type: 'spot',
+            type: SharedUtils.SPOT_TYPE,
             approved: false,
             bulkSelected: false,
             spotTile: null,
@@ -61,12 +61,12 @@ class TilesetTileOptionsBinder
             innerWallsCornerTiles: {},
             outerWallsTiles: {},
             outerWallsCornerTiles: {},
-            width: 5,
-            height: 5,
+            width: SharedUtils.SPOT_DEFAULTS.width,
+            height: SharedUtils.SPOT_DEFAULTS.height,
             quantity: 1,
             walkable: true,
-            markPercentage: 100,
-            variableTilesPercentage: 0,
+            markPercentage: SharedUtils.SPOT_DEFAULTS.markPercentage,
+            variableTilesPercentage: SharedUtils.SPOT_DEFAULTS.variableTilesPercentage,
             isElement: false,
             freeSpaceAround: null,
             allowPathsInFreeSpace: false,
@@ -76,17 +76,13 @@ class TilesetTileOptionsBinder
             splitBordersInLayers: false,
             borderInnerWalls: false,
             borderOuterWalls: false,
-            borderOuterWallsIncreaseLayerSize: 4
+            borderOuterWallsIncreaseLayerSize: SharedUtils.SPOT_DEFAULTS.borderOuterWallsIncreaseLayerSize
         };
     }
 
     findSpot(tilesetIndex, spotName)
     {
-        let spots = this.app.state[tilesetIndex].spots;
-        if(!spots){
-            return null;
-        }
-        for(let spot of spots){
+        for(let spot of this.app.state[tilesetIndex].spots){
             if(spot.name === spotName){
                 return spot;
             }
@@ -96,6 +92,10 @@ class TilesetTileOptionsBinder
 
     getTilesetRowEl(tilesetIndex)
     {
+        let refs = this.app.refs[tilesetIndex];
+        if(refs && refs.row){
+            return refs.row;
+        }
         let canvas = document.querySelector('.tileset-canvas[data-tileset-index="'+tilesetIndex+'"]');
         if(!canvas){
             return null;
@@ -109,6 +109,13 @@ class TilesetTileOptionsBinder
         if(globalPanel){
             callback(globalPanel);
         }
+    }
+
+    isSameActiveState(tilesetIndex, optionKey, spotName)
+    {
+        return this.activeTilesetIndex === tilesetIndex
+            && this.activeOptionKey === optionKey
+            && this.activeSpotName === (spotName ? spotName : null);
     }
 
     activateOption(tilesetIndex, optionKey, multiSelect, spotName)
@@ -171,6 +178,15 @@ class TilesetTileOptionsBinder
         this.app.renderer.renderCanvas(tilesetIndex);
     }
 
+    renderForActiveScope(tilesetIndex)
+    {
+        if(-1 === tilesetIndex){
+            this.app.renderAllCanvases();
+            return;
+        }
+        this.app.renderer.renderCanvas(tilesetIndex);
+    }
+
     deactivateForRow(tilesetIndex)
     {
         this.withTilesetRow(tilesetIndex, (row) => {
@@ -219,9 +235,6 @@ class TilesetTileOptionsBinder
     addSpot(tilesetIndex)
     {
         let tileset = this.app.state[tilesetIndex];
-        if(!tileset.spots){
-            tileset.spots = [];
-        }
         let spotNum = SharedUtils.padNum(tileset.spots.length + 1);
         tileset.spots.push(this.buildDefaultSpot('spot-'+spotNum));
         this.app.selectedSpot = { tilesetIndex, spotIndex: tileset.spots.length - 1 };
@@ -229,19 +242,13 @@ class TilesetTileOptionsBinder
         let refs = this.app.refs[tilesetIndex];
         if(refs && refs.list){
             let spotRows = refs.list.querySelectorAll('.spot-row');
-            let lastRow = spotRows[spotRows.length - 1];
-            if(lastRow){
-                refs.list.scrollTop = lastRow.getBoundingClientRect().top - refs.list.getBoundingClientRect().top + refs.list.scrollTop;
-            }
+            this.app.editor.scroller.scrollIntoView(refs.list, spotRows[spotRows.length - 1]);
         }
     }
 
     removeSpot(tilesetIndex, spotName)
     {
         let tileset = this.app.state[tilesetIndex];
-        if(!tileset.spots){
-            return;
-        }
         let spot = this.findSpot(tilesetIndex, spotName);
         if(!spot){
             return;

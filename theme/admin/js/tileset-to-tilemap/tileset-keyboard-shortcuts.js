@@ -7,8 +7,8 @@ class TilesetKeyboardShortcuts
 
     bind()
     {
-        document.addEventListener('keydown', (e) => {
-            if('Delete' !== e.key){
+        document.addEventListener('keydown', (event) => {
+            if('Delete' !== event.key){
                 return;
             }
             let tag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
@@ -25,3 +25,4 @@ class TilesetKeyboardShortcuts
         });
     }
 }
+window.TilesetKeyboardShortcuts = TilesetKeyboardShortcuts;

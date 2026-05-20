@@ -17,6 +17,59 @@ class TilesetElementEditor
         this.legendRenderer.renderLegend(tilesetIndex);
     }
 
+    elementVisibilityFilter(refs)
+    {
+        return {
+            showElements: refs && refs.showElementsCheck ? refs.showElementsCheck.checked : true,
+            showClusters: refs && refs.showClustersCheck ? refs.showClustersCheck.checked : true,
+            showSpots: refs && refs.showSpotsCheck ? refs.showSpotsCheck.checked : true,
+            searchTerm: refs && refs.legendSearch ? refs.legendSearch.value.toLowerCase() : ''
+        };
+    }
+
+    matchesVisibilityFilter(element, filter)
+    {
+        let isCluster = SharedUtils.CLUSTER_TYPE === element.type;
+        let isSpot = SharedUtils.SPOT_TYPE === element.type;
+        let matchesType = (isCluster && filter.showClusters)
+            || (isSpot && filter.showSpots)
+            || (!isCluster && !isSpot && filter.showElements);
+        if(!matchesType){
+            return false;
+        }
+        if(!filter.searchTerm){
+            return true;
+        }
+        return Boolean(element.name) && element.name.toLowerCase().includes(filter.searchTerm);
+    }
+
+    computeElementVisibility(tilesetIndex)
+    {
+        return this.elementVisibilityFilter(this.app.refs[tilesetIndex]);
+    }
+
+    getBulkSelected(tilesetIndex)
+    {
+        let tileset = this.app.state[tilesetIndex];
+        let result = { clusters: [], elements: [], spots: [] };
+        for(let i = 0; i < tileset.elements.length; i++){
+            let element = tileset.elements[i];
+            if(!element.bulkSelected){
+                continue;
+            }
+            if(SharedUtils.CLUSTER_TYPE === element.type){
+                result.clusters.push(i);
+                continue;
+            }
+            if(SharedUtils.SPOT_TYPE === element.type){
+                result.spots.push(i);
+                continue;
+            }
+            result.elements.push(i);
+        }
+        return result;
+    }
+
     selectElement(tilesetIndex, elementIndex)
     {
         let previousIndex = this.app.selectedTileset === tilesetIndex ? this.app.selectedElement : null;
@@ -24,7 +77,6 @@ class TilesetElementEditor
             && this.app.selectedElement === elementIndex;
         this.app.selectedTileset = sameElement ? null : tilesetIndex;
         this.app.selectedElement = sameElement ? null : elementIndex;
-        this.app.activeLayerType = sameElement ? this.app.activeLayerType : 'below-player';
         if(!sameElement){
             this.app.showAllElements = true;
             this.app.viewAllMode = false;
@@ -63,9 +115,10 @@ class TilesetElementEditor
     {
         this.withElementRow(tilesetIndex, elementIndex, (row) => {
             let element = this.app.state[tilesetIndex].elements[elementIndex];
-            row.classList.toggle('element-type-cluster', 'cluster' === element.type);
+            let isCluster = SharedUtils.CLUSTER_TYPE === element.type;
+            row.classList.toggle('element-type-cluster', isCluster);
             let typeIcon = row.querySelector('.element-type-icon');
-            typeIcon.src = '/assets/admin/'+('cluster' === element.type ? 'cubes-solid-full' : 'cube-solid-full')+'.svg';
+            typeIcon.src = isCluster ? SharedUtils.ICON_PATHS.cubes : SharedUtils.ICON_PATHS.cube;
             typeIcon.alt = element.type;
             typeIcon.title = element.type;
             let nameInput = row.querySelector('.element-name-input');
@@ -76,8 +129,8 @@ class TilesetElementEditor
             }
             let splitBtn = row.querySelector('.cluster-split-btn');
             let convertBtn = row.querySelector('.cluster-convert-btn');
-            splitBtn.classList.toggle('hidden', 'cluster' !== element.type);
-            convertBtn.classList.toggle('hidden', 'cluster' !== element.type);
+            splitBtn.classList.toggle('hidden', !isCluster);
+            convertBtn.classList.toggle('hidden', !isCluster);
             this.applyLockVisuals(row, element);
         });
     }
@@ -92,15 +145,7 @@ class TilesetElementEditor
 
     applyLockVisuals(row, element)
     {
-        let lockBtn = row.querySelector('.element-lock-btn');
-        if(!lockBtn){
-            return;
-        }
-        lockBtn.classList.toggle('locked', element.approved);
-        let lockIcon = lockBtn.querySelector('.lock-icon');
-        if(lockIcon){
-            lockIcon.src = '/assets/admin/'+(element.approved ? 'lock-solid' : 'unlock-solid')+'.svg';
-        }
+        SharedUtils.applyLockVisual(row.querySelector('.element-lock-btn'), element.approved);
     }
 
     applySelectionToLegend(tilesetIndex, previousIndex)
@@ -169,7 +214,7 @@ class TilesetElementEditor
         let elementIndex = this.app.state[tilesetIndex].elements.length - 1;
         this.app.selectedTileset = tilesetIndex;
         this.app.selectedElement = elementIndex;
-        this.app.activeLayerType = 'below-player';
+        this.app.activeLayerType = SharedUtils.DEFAULT_LAYER_TYPE;
         this.app.updatePaletteStyles();
         this.appendNewElementRow(tilesetIndex, elementIndex);
         this.applySelectionToLegend(tilesetIndex, previousIndex);
@@ -198,11 +243,12 @@ class TilesetElementEditor
         let cluster = tileset.elements[elementIndex];
         let allTiles = this.app.collectElementTiles(cluster);
         let baseName = cluster.name;
+        let globalOffset = this.app.getGlobalOffset(tilesetIndex);
         let newElements = [];
         for(let ti = 0; ti < allTiles.length; ti++){
             newElements.push(SharedUtils.makeElement(
                 baseName+'-'+SharedUtils.padNum(ti + 1),
-                0,
+                globalOffset + elementIndex + ti,
                 [{ type: 'collisions', tiles: [allTiles[ti]] }],
                 false,
                 SharedUtils.CLUSTER_TYPE
@@ -219,11 +265,11 @@ class TilesetElementEditor
         let affected = [];
         for(let i = 0; i < elements.length; i++){
             let element = elements[i];
-            if(!element.bulkSelected || 'cluster' !== element.type){
+            if(!element.bulkSelected || SharedUtils.CLUSTER_TYPE !== element.type){
                 continue;
             }
             element.name = this.namer.resolveConvertName(tilesetIndex, i, element.name);
-            element.type = 'element';
+            element.type = SharedUtils.ELEMENT_TYPE;
             element.approved = true;
             element.bulkSelected = false;
             affected.push(i);

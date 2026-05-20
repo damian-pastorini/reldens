@@ -13,9 +13,9 @@ class TilesetUploader
         this.app.getElement('.resize-all-section').classList.add('hidden');
     }
 
-    async onFormSubmit(e, fileInput, paramsContainer)
+    async onFormSubmit(event, fileInput, paramsContainer)
     {
-        e.preventDefault();
+        event.preventDefault();
         if(!fileInput.files.length){
             this.app.getElement('.analyze-btn').disabled = false;
             return;
@@ -52,22 +52,12 @@ class TilesetUploader
             }
         }
         formData.append('tilesetParams', JSON.stringify(params));
-        let response = await fetch('upload', { method: 'POST', body: formData });
-        let reader = response.body.getReader();
-        let decoder = new TextDecoder();
-        let buffer = '';
-        for(let chunk = await reader.read(); !chunk.done; chunk = await reader.read()){
-            buffer += decoder.decode(chunk.value, { stream: true });
-            let parts = buffer.split('\n\n');
-            buffer = parts.pop();
-            await this.processChunkParts(parts, messageEl);
-        }
-    }
-
-    async processChunkParts(parts, messageEl)
-    {
-        for(let part of parts){
-            await this.handleStreamEvent(part, messageEl);
+        let controller = this.app.createAbortController();
+        try {
+            let response = await fetch('upload', { method: 'POST', body: formData, signal: controller.signal });
+            await SharedUtils.readSseStream(response, (part) => this.handleStreamEvent(part, messageEl));
+        } finally {
+            this.app.releaseAbortController(controller);
         }
     }
 
@@ -82,8 +72,8 @@ class TilesetUploader
         this.fileInput.addEventListener('change', () =>
             this.paramBinder.onFileChange(this.fileInput, this.paramsContainer)
         );
-        form.addEventListener('submit', (e) =>
-            this.onFormSubmit(e, this.fileInput, this.paramsContainer)
+        form.addEventListener('submit', (event) =>
+            this.onFormSubmit(event, this.fileInput, this.paramsContainer)
         );
     }
 
@@ -97,7 +87,7 @@ class TilesetUploader
         if('progress' === eventType){
             if('analyzing' === data.status){
                 let current = data.cluster || data.element;
-                let label = data.phase === 2 ? 'element' : 'cluster';
+                let label = 2 === data.phase ? 'element' : 'cluster';
                 messageEl.textContent =
                     'Naming '+label+' '+current+'/'+data.total+' in '+data.file+'...';
                 return;
@@ -140,3 +130,4 @@ class TilesetUploader
         }
     }
 }
+window.TilesetUploader = TilesetUploader;

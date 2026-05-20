@@ -42,11 +42,26 @@ class TilesetTooltipPlacement
         this.clearPlacement(tooltipText);
     }
 
+    measureTooltipSize(tooltipText)
+    {
+        if(!this.sizeCache){
+            this.sizeCache = new WeakMap();
+        }
+        let cached = this.sizeCache.get(tooltipText);
+        if(cached){
+            return cached;
+        }
+        let size = { width: tooltipText.offsetWidth, height: tooltipText.offsetHeight };
+        this.sizeCache.set(tooltipText, size);
+        return size;
+    }
+
     applyPlacement(tooltip, tooltipText)
     {
         let triggerRect = tooltip.getBoundingClientRect();
-        let textWidth = tooltipText.offsetWidth;
-        let textHeight = tooltipText.offsetHeight;
+        let size = this.measureTooltipSize(tooltipText);
+        let textWidth = size.width;
+        let textHeight = size.height;
         let top = triggerRect.top - textHeight - this.gap;
         if(top < 0){
             top = triggerRect.bottom + this.gap;

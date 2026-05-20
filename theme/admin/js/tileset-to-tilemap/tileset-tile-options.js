@@ -27,11 +27,7 @@ class TilesetTileOptions
         if(tileOptsPanel){
             this.applyOptionsToPanel(tileOptsPanel, tileOpts);
         }
-        let spots = tileset.spots;
-        if(!spots){
-            spots = [];
-        }
-        for(let spot of spots){
+        for(let spot of tileset.spots){
             let spotRow = rowEl.querySelector('.spot-row[data-spot-name="'+spot.name+'"]');
             if(!spotRow){
                 continue;
@@ -84,7 +80,7 @@ class TilesetTileOptions
 
     renderMultiValues(container, valuesArray)
     {
-        container.innerHTML = '';
+        container.textContent = '';
         for(let value of valuesArray){
             let fi = this.getFlatIndex(value);
             let cell = document.createElement('div');

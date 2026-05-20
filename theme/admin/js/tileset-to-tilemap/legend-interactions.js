@@ -130,11 +130,11 @@ class TilesetLegendInteractions
     {
         let app = this.editor.app;
         if(context.target.matches('.element-quantity')){
-            app.state[tilesetIndex].elements[context.elementIndex].quantity = Number(context.target.value) || 1;
+            app.state[tilesetIndex].elements[context.elementIndex].quantity = SharedUtils.toNumber(context.target.value, 1);
             return;
         }
         if(context.target.matches('.element-free-space')){
-            app.state[tilesetIndex].elements[context.elementIndex].freeSpaceAround = Number(context.target.value) || 0;
+            app.state[tilesetIndex].elements[context.elementIndex].freeSpaceAround = SharedUtils.toNumber(context.target.value, 0);
             return;
         }
         if(context.target.matches('.layer-type-custom-input')){
@@ -150,7 +150,7 @@ class TilesetLegendInteractions
     {
         if(context.target.matches('.element-name-input')){
             let app = this.editor.app;
-            let valid = /^[a-z]+(?:-[a-z]+)*-\d+(?:-\d+)*$/.test(context.target.value);
+            let valid = SharedUtils.NAME_VALID_REGEX.test(context.target.value);
             app.state[tilesetIndex].elements[context.elementIndex].name = context.target.value;
             context.elementRow.classList.toggle('element-name-invalid', !valid);
             app.generator.updateGenerateButtonState();
@@ -162,10 +162,7 @@ class TilesetLegendInteractions
         let app = this.editor.app;
         let elementState = app.state[tilesetIndex].elements[elementIndex];
         elementState.approved = !elementState.approved;
-        let lockBtn = elementRow.querySelector('.element-lock-btn');
-        let lockIcon = lockBtn.querySelector('.lock-icon');
-        lockBtn.classList.toggle('locked', elementState.approved);
-        lockIcon.src = '/assets/admin/'+(elementState.approved ? 'lock-solid' : 'unlock-solid')+'.svg';
+        SharedUtils.applyLockVisual(elementRow.querySelector('.element-lock-btn'), elementState.approved);
     }
 
     requestDeleteElement(tilesetIndex, elementIndex)
@@ -183,7 +180,7 @@ class TilesetLegendInteractions
         let app = this.editor.app;
         let elementState = app.state[tilesetIndex].elements[elementIndex];
         let newName = this.editor.namer.resolveConvertName(tilesetIndex, elementIndex, elementState.name);
-        elementState.type = 'element';
+        elementState.type = SharedUtils.ELEMENT_TYPE;
         elementState.approved = true;
         elementState.name = newName;
         this.editor.applyElementTypeUpdate(tilesetIndex, elementIndex);

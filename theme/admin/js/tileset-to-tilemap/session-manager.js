@@ -13,7 +13,9 @@ class TilesetSessionManager
         if(!data.sessions || !data.sessions.length){
             return;
         }
-        data.sessions.map(session => this.addSession(session.sessionId, session.files, false));
+        for(let session of data.sessions){
+            this.addSession(session.sessionId, session.files, false);
+        }
         this.app.getElement('.generated-files').classList.remove('hidden');
         if(!this.app.state.length){
             this.app.getElement('.generated-files-list').classList.remove('hidden');
@@ -44,29 +46,39 @@ class TilesetSessionManager
         return this.itemBuilder.build(sessionId, files, expanded);
     }
 
-    showStatus(msg, isError)
+    showStatus(message, isError)
     {
-        let el = this.app.getElement('.generate-status');
-        el.textContent = msg;
-        el.className = 'generate-status'+(isError ? ' generate-status-error' : ' generate-status-success');
+        let statusElement = this.app.getElement('.generate-status');
+        statusElement.textContent = message;
+        statusElement.className = 'generate-status'+(isError ? ' generate-status-error' : ' generate-status-success');
+    }
+
+    readSessionNameValue()
+    {
+        return this.app.getElement('.session-name-input')?.value || '';
+    }
+
+    isOverrideChecked()
+    {
+        return Boolean(this.app.getElement('.override-files-checkbox')?.checked);
     }
 
     buildSaveSessionId()
     {
-        let overrideCheckbox = document.querySelector('.override-files-checkbox');
-        let nameInput = document.querySelector('.session-name-input');
-        let name = nameInput ? nameInput.value.trim() : '';
-        if(overrideCheckbox && overrideCheckbox.checked){
-            if(!name){
-                return this.app.sessionId;
-            }
-            return (this.app.sessionId.match(/^(\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2})/) || [null, this.app.sessionId])[1]+'-'+name;
-        }
-        let timestamp = SharedUtils.buildSessionTimestamp();
-        if(!name){
-            return timestamp;
-        }
-        return timestamp+'-'+name;
+        return SharedUtils.buildSessionId(
+            this.app.sessionId,
+            this.isOverrideChecked(),
+            this.readSessionNameValue()
+        );
+    }
+
+    async postSessionSave(saveId, body)
+    {
+        return (await fetch('sessions/'+saveId+'/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        })).json();
     }
 
     async doSave(tilesets, sessionId, oldSessionId)
@@ -79,20 +91,12 @@ class TilesetSessionManager
         if(this.app.globalTileOptions){
             body.globalTileOptions = this.app.globalTileOptions;
         }
-        return (await fetch('sessions/'+saveId+'/save', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body)
-        })).json();
+        return this.postSessionSave(saveId, body);
     }
 
     async doSaveTileset(tileset)
     {
-        return (await fetch('sessions/'+this.app.sessionId+'/save', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ sessionId: this.app.sessionId, tileset })
-        })).json();
+        return this.postSessionSave(this.app.sessionId, { sessionId: this.app.sessionId, tileset });
     }
 
     async autoSave()
@@ -186,11 +190,12 @@ class TilesetSessionManager
         this.app.modals.show(
             'Are you sure you want to save this tileset?',
             async () => {
+                let refs = this.app.refs[tilesetIndex];
                 let tileset = this.app.generator.serializeTileset(
                     this.app.state[tilesetIndex],
                     false,
                     tilesetIndex,
-                    document.querySelector('[data-tileset-index="'+tilesetIndex+'"]')
+                    refs ? refs.row : null
                 );
                 let data = await this.doSaveTileset(tileset);
                 if(!data.success){
@@ -277,3 +282,4 @@ class TilesetSessionManager
         );
     }
 }
+window.TilesetSessionManager = TilesetSessionManager;

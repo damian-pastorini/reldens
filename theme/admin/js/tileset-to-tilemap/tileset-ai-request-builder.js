@@ -26,3 +26,4 @@ class TilesetAiRequestBuilder
         return body;
     }
 }
+window.TilesetAiRequestBuilder = TilesetAiRequestBuilder;
