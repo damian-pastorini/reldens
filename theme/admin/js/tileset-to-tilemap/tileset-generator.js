@@ -13,12 +13,15 @@ class TilesetGenerator
 
     bind()
     {
-        let message = 'Are you sure? This will save all tilesets and generate the files.';
+        let generateAllMessage = 'Are you sure? This will save all tilesets and generate the files.'
+            +' Warning: this may fail for very large sessions due to a JSON size limit (~512MB)'
+            +' in Node.js. If generation fails, use "Generate Selected" instead.';
+        let generateSelectedMessage = 'Are you sure? This will save all tilesets and generate the files.';
         this.bindGenerateConfirm(
-            this.app.getElement('.generate-btn'), message, () => this.generate(false)
+            this.app.getElement('.generate-btn'), generateAllMessage, () => this.generate(false)
         );
         this.bindGenerateConfirm(
-            this.app.getElement('.generate-selected-btn'), message, () => this.generate(true)
+            this.app.getElement('.generate-selected-btn'), generateSelectedMessage, () => this.generate(true)
         );
         this.app.getElement('.save-session-btn').addEventListener(
             'click', () => this.app.sessions.saveAll()
@@ -39,12 +42,17 @@ class TilesetGenerator
         let wizardPath = analyzer ? analyzer.dataset.mapsWizardPath : '/maps-wizard';
         let confirmMessage = selectedOnly
             ? 'Save and generate the SELECTED elements before opening Maps Wizard?'
-            : 'Save and generate ALL elements before opening Maps Wizard? Unsaved changes will be included.';
+            : 'Save and generate ALL elements before opening Maps Wizard? Unsaved changes will be included.'
+                +' Warning: this may fail for very large sessions due to a JSON size limit (~512MB)'
+                +' in Node.js. If generation fails, use "Selected to Maps Wizard" instead.';
         this.app.modals.show(
             confirmMessage,
             async () => {
                 await this.app.sessions.autoSave();
-                await this.runGenerate(this.getSerializableState(selectedOnly), false);
+                let succeeded = await this.runGenerate(this.getSerializableState(selectedOnly), false);
+                if(!succeeded){
+                    return;
+                }
                 let sid = this.lastGeneratedSessionId || this.app.sessionId;
                 let wizardUrl = new URL(wizardPath, window.location.origin);
                 wizardUrl.searchParams.set('tilesetSessionId', sid);
