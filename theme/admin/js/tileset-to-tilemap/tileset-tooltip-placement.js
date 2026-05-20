@@ -5,7 +5,6 @@ class TilesetTooltipPlacement
         this.app = app;
         this.bound = false;
         this.gap = 4;
-        this.pendingFrame = 0;
     }
 
     bindOnce()
@@ -18,11 +17,11 @@ class TilesetTooltipPlacement
             return;
         }
         this.bound = true;
-        analyzer.addEventListener('mouseover', (event) => this.handle(event, true));
-        analyzer.addEventListener('mouseout', (event) => this.handle(event, false));
+        analyzer.addEventListener('mouseover', (event) => this.dispatch(event, true));
+        analyzer.addEventListener('mouseout', (event) => this.dispatch(event, false));
     }
 
-    handle(event, isEntering)
+    dispatch(event, isEntering)
     {
         let tooltip = event.target.closest('.tooltip');
         if(!tooltip){
@@ -40,26 +39,11 @@ class TilesetTooltipPlacement
         if(related && tooltip.contains(related)){
             return;
         }
-        tooltipText.classList.remove('visible');
+        this.clearPlacement(tooltipText);
     }
 
     applyPlacement(tooltip, tooltipText)
     {
-        tooltipText.classList.add('visible');
-        if(this.pendingFrame){
-            cancelAnimationFrame(this.pendingFrame);
-        }
-        this.pendingFrame = requestAnimationFrame(() => {
-            this.pendingFrame = 0;
-            this.measureAndPosition(tooltip, tooltipText);
-        });
-    }
-
-    measureAndPosition(tooltip, tooltipText)
-    {
-        if(!tooltipText.classList.contains('visible')){
-            return;
-        }
         let triggerRect = tooltip.getBoundingClientRect();
         let textWidth = tooltipText.offsetWidth;
         let textHeight = tooltipText.offsetHeight;
@@ -80,8 +64,20 @@ class TilesetTooltipPlacement
         if(left < 0){
             left = 0;
         }
+        tooltipText.style.position = 'fixed';
         tooltipText.style.top = top+'px';
         tooltipText.style.left = left+'px';
+        tooltipText.style.right = 'auto';
+        tooltipText.style.bottom = 'auto';
+    }
+
+    clearPlacement(tooltipText)
+    {
+        tooltipText.style.position = '';
+        tooltipText.style.top = '';
+        tooltipText.style.left = '';
+        tooltipText.style.right = '';
+        tooltipText.style.bottom = '';
     }
 }
 window.TilesetTooltipPlacement = TilesetTooltipPlacement;

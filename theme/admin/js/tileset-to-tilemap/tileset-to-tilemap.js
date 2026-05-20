@@ -44,6 +44,7 @@ class TilesetAnalyzerApp
         this.keyboard = new TilesetKeyboardShortcuts(this);
         this.events = new TilesetEventBindings(this);
         this.tileOptionsBinder = new TilesetTileOptionsBinder(this);
+        this.tooltipPlacement = new TilesetTooltipPlacement(this);
         this.globalTileOptions = null;
         this.globalPanelBound = false;
     }

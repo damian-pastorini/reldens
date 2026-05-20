@@ -124,6 +124,7 @@ class TilesetRowBinder
         this.bindSessionControls(row, capturedI);
         this.bindLegendTabs(row, capturedI);
         this.app.editor.legendInteractions.bindListContainer(capturedI);
+        this.app.tooltipPlacement.bindOnce();
         if(this.app.tileOptionsBinder){
             this.app.tileOptionsBinder.bind(capturedI, row);
         }
