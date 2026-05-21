@@ -15,7 +15,7 @@
             <input type="hidden" name="verifyTilesetImage" id="verifyTilesetImage" value="{{&verifyTilesetImage}}"/>
             <input type="hidden" name="handlerParams" id="handlerParams" value="{{handlerParams}}"/>
             <div class="submit-container" id="maps-import-submit-container">
-                <button type="button" class="button button-secondary" onclick="adminFunctions.showConfirmDialog(function(c){if(c)history.back();}, {title:'Go Back', message:'If you go back, the generated maps will be lost. Are you sure?', confirmText:'Leave', confirmClass:'button-secondary', cancelText:'Stay', cancelClass:'button-primary'})">Go back</button>
+                <button type="button" class="button button-secondary" onclick="adminFunctions.showConfirmDialog(function(c){if(c)window.location.href='{{&goBackUrl}}';}, {title:'Go Back', message:'If you go back, the generated maps will be lost. Are you sure?', confirmText:'Leave', confirmClass:'button-secondary', cancelText:'Stay', cancelClass:'button-primary'})">Go back</button>
                 <input type="submit" class="button button-primary button-maps-wizard" value="Import Selected Maps" data-modal-confirm-label="Import" data-modal-confirm-class="primary" data-modal-cancel-label="Cancel" data-modal-cancel-class="secondary"/>
                 <img class="hidden loading" src="/assets/web/loading.gif" alt="loading"/>
             </div>

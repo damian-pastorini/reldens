@@ -203,19 +203,14 @@ class MapsWizardBindings
     bindFormSubmit()
     {
         let mapsWizardForm = document.querySelector('#maps-wizard-form');
-        if(mapsWizardForm){
-            mapsWizardForm.addEventListener('submit', () => {
-                this.showGeneratingOverlay();
-            });
+        if(!mapsWizardForm){
+            return;
         }
-        let mapsImportForm = document.querySelector('.maps-import-form');
-        if(mapsImportForm){
-            let originalSubmit = mapsImportForm.submit.bind(mapsImportForm);
-            mapsImportForm.submit = () => {
-                this.showGeneratingOverlay();
-                originalSubmit();
-            };
-        }
+        let originalSubmit = mapsWizardForm.submit.bind(mapsWizardForm);
+        mapsWizardForm.submit = () => {
+            this.showGeneratingOverlay();
+            originalSubmit();
+        };
     }
 
     prefillFromUrlParams()
