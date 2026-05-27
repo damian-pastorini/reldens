@@ -9,6 +9,31 @@
         flex-wrap: wrap;
     }
 
+    & .tile-reference-btn {
+        display: none;
+    }
+
+    & .tileset-tile-options .tile-options-group-header {
+        cursor: pointer;
+    }
+
+    & .tileset-tile-options .tile-options-group-collapse-icon {
+        width: var(--space-md);
+        height: var(--space-md);
+        margin-left: auto;
+        filter: brightness(0) invert(0.6);
+        transform: rotate(180deg);
+        transition: transform 0.15s;
+    }
+
+    & .tileset-tile-options .tile-options-group.collapsed .tile-options-group-collapse-icon {
+        transform: rotate(0deg);
+    }
+
+    & .tileset-tile-options .tile-options-group.collapsed > *:not(.tile-options-group-header) {
+        display: none;
+    }
+
     & .tile-options-group-label {
         font-size: var(--font-size-sm);
         font-weight: 600;

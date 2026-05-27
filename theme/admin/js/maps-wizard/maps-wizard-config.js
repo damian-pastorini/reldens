@@ -11,7 +11,7 @@ let commonGeneratorConfig = {
     automaticallyExtrudeMaps: '1'
 };
 
-let configurationsState = {
+window.configurationsState = {
     'elements-object-loader': JSON.stringify(Object.assign({
         tileSize: 32,
         tileSheetPath: 'tilesheet.png',
@@ -58,8 +58,8 @@ let configurationsState = {
             freeSpaceTilesQuantity: 0,
             variableTilesPercentage: 0,
             placeElementsOrder: 'inOrder',
-            orderElementsBySize: false,
-            randomizeQuantities: true,
+            orderElementsBySize: true,
+            randomizeQuantities: false,
             applySurroundingPathTiles: false,
             automaticallyExtrudeMaps: true
         }

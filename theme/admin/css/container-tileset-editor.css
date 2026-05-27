@@ -117,6 +117,10 @@
                 margin-bottom: 0;
             }
 
+            & .tileset-collapse-icon {
+                transform: rotate(180deg);
+            }
+
             & .tileset-body {
                 display: none;
             }
@@ -130,7 +134,6 @@
         margin-bottom: 0.625rem;
         flex-shrink: 0;
         cursor: pointer;
-        user-select: none;
     }
 
     & .tileset-collapse-btn {

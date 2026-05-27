@@ -6,37 +6,61 @@ class TilesetStrategyEditor
         this.MULTIPLE_ASSOC = 'multiple-with-association-by-loader';
     }
 
+    getSelect(row)
+    {
+        return row.querySelector('.tileset-generator-type');
+    }
+
+    getEditor(row)
+    {
+        return row.querySelector('.tileset-associations-editor');
+    }
+
+    withSelect(row, callback)
+    {
+        let select = this.getSelect(row);
+        if(!select){
+            return false;
+        }
+        callback(select);
+        return true;
+    }
+
     bind(row)
     {
-        let select = row.querySelector('.tileset-generator-type');
-        if(!select){
-            return;
+        this.withSelect(row, (select) => {
+            select.addEventListener('change', () => this.onStrategyChange(row));
+        });
+    }
+
+    syncEditorVisibility(row)
+    {
+        let select = this.getSelect(row);
+        let editor = this.getEditor(row);
+        if(!select || !editor){
+            return false;
         }
-        select.addEventListener('change', () => this.onStrategyChange(row));
+        let isAssoc = this.MULTIPLE_ASSOC === select.value;
+        editor.classList.toggle('hidden', !isAssoc);
+        return isAssoc;
     }
 
     onStrategyChange(row)
     {
-        let select = row.querySelector('.tileset-generator-type');
-        let editor = row.querySelector('.tileset-associations-editor');
-        if(!select || !editor){
-            return;
-        }
-        let isAssoc = this.MULTIPLE_ASSOC === select.value;
-        editor.classList.toggle('hidden', !isAssoc);
+        this.syncEditorVisibility(row);
     }
 
     readAssociationsProperties(row)
     {
-        let select = row.querySelector('.tileset-generator-type');
+        let select = this.getSelect(row);
         if(!select || this.MULTIPLE_ASSOC !== select.value){
             return null;
         }
         return {
             generateElementsPath: row.querySelector('.assoc-generate-elements-path').checked,
             blockMapBorder: row.querySelector('.assoc-block-map-border').checked,
-            freeSpaceTilesQuantity: Number(row.querySelector('.assoc-free-space-tiles').value),
-            variableTilesPercentage: Number(row.querySelector('.assoc-variable-tiles-pct').value),
+            freeSpaceTilesQuantity: SharedUtils.toNumber(row.querySelector('.assoc-free-space-tiles').value, 0),
+            variableTilesPercentage: SharedUtils.toNumber(row.querySelector('.assoc-variable-tiles-pct').value, 0),
             placeElementsOrder: row.querySelector('.assoc-place-elements-order').value,
             orderElementsBySize: row.querySelector('.assoc-order-by-size').checked,
             randomizeQuantities: row.querySelector('.assoc-randomize-quantities').checked,
@@ -47,19 +71,15 @@ class TilesetStrategyEditor
 
     applyToRow(row, generatorType, associationsProperties)
     {
-        let select = row.querySelector('.tileset-generator-type');
-        if(!select){
+        let applied = this.withSelect(row, (select) => {
+            if(generatorType){
+                select.value = generatorType;
+            }
+        });
+        if(!applied){
             return;
         }
-        if(generatorType){
-            select.value = generatorType;
-        }
-        let editor = row.querySelector('.tileset-associations-editor');
-        if(!editor){
-            return;
-        }
-        let isAssoc = this.MULTIPLE_ASSOC === select.value;
-        editor.classList.toggle('hidden', !isAssoc);
+        let isAssoc = this.syncEditorVisibility(row);
         if(!isAssoc || !associationsProperties){
             return;
         }
@@ -75,3 +95,4 @@ class TilesetStrategyEditor
         q('.assoc-automatically-extrude-maps').checked = !!associationsProperties.automaticallyExtrudeMaps;
     }
 }
+window.TilesetStrategyEditor = TilesetStrategyEditor;

@@ -4,6 +4,7 @@ class TilesetCanvasRenderer
     {
         this.app = app;
         this.markers = new TilesetCanvasMarkers(this);
+        this.spotDrawer = new TilesetSpotCanvasDrawer(this);
     }
 
     renderCanvas(tilesetIndex)
@@ -15,32 +16,42 @@ class TilesetCanvasRenderer
             this.drawCanvas(canvas, cached, tileset, tilesetIndex);
             return;
         }
-        let img = new Image();
-        img.onload = () => {
-            this.app.imageCache[tilesetIndex] = img;
-            this.drawCanvas(canvas, img, tileset, tilesetIndex);
+        let image = new Image();
+        image.crossOrigin = 'anonymous';
+        image.onload = () => {
+            if(!this.app.state[tilesetIndex] || this.app.state[tilesetIndex] !== tileset){
+                return;
+            }
+            this.app.imageCache[tilesetIndex] = image;
+            this.drawCanvas(canvas, image, tileset, tilesetIndex);
         };
-        img.src = tileset.imageUrl;
+        image.onerror = () => {
+            canvas.title = 'Failed to load tileset image: '+tileset.imageUrl;
+        };
+        image.src = tileset.imageUrl;
     }
 
-    drawCanvas(canvas, img, tileset, tilesetIndex)
+    drawCanvas(canvas, image, tileset, tilesetIndex)
     {
-        if(canvas.width !== img.naturalWidth || canvas.height !== img.naturalHeight){
-            canvas.width = img.naturalWidth;
-            canvas.height = img.naturalHeight;
+        let sizeChanged = canvas.width !== image.naturalWidth || canvas.height !== image.naturalHeight;
+        if(sizeChanged){
+            canvas.width = image.naturalWidth;
+            canvas.height = image.naturalHeight;
         }
         let ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0);
+        ctx.drawImage(image, 0, 0);
         this.drawTileGrid(ctx, tileset);
         this.drawFilteredTiles(ctx, tileset);
         this.drawElementTiles(ctx, tileset, tilesetIndex);
-        this.drawSpotTiles(ctx, tileset, tilesetIndex);
+        this.spotDrawer.drawSpotTiles(ctx, tileset, tilesetIndex);
         this.markers.draw(ctx, tileset, tilesetIndex);
         if(this.app.isAreaSelect && this.app.areaSelectTileset === tilesetIndex){
             this.drawAreaSelectRect(ctx, tileset);
         }
-        this.applyZoom(tilesetIndex);
+        if(sizeChanged){
+            this.applyZoom(tilesetIndex);
+        }
     }
 
     drawAreaSelectRect(ctx, tileset)
@@ -82,11 +93,11 @@ class TilesetCanvasRenderer
         ctx.lineWidth = 0.5;
         ctx.setLineDash([2, 3]);
         for(let tile of tileset.filteredTiles){
-            let pos = this.app.tileGeometry.getTilePosition(tileset, tile);
+            let tilePos = this.app.tileGeometry.getTilePosition(tileset, tile);
             ctx.globalAlpha = 0.06;
-            ctx.fillRect(pos.x, pos.y, tileset.tileWidth, tileset.tileHeight);
+            ctx.fillRect(tilePos.x, tilePos.y, tileset.tileWidth, tileset.tileHeight);
             ctx.globalAlpha = 0.2;
-            ctx.strokeRect(pos.x, pos.y, tileset.tileWidth, tileset.tileHeight);
+            ctx.strokeRect(tilePos.x, tilePos.y, tileset.tileWidth, tileset.tileHeight);
         }
         ctx.restore();
     }
@@ -116,30 +127,45 @@ class TilesetCanvasRenderer
 
     layerTypeColor(type)
     {
-        let colors = {'over-player':'#5b8cff','collisions':'#ff5b5b','collisions-over-player':'#ff5bff','base':'#d4a017','below-player':'#5bff8c','path':'#f0a040'};
-        if(colors[type]){
-            return colors[type];
+        return SharedUtils.LAYER_TYPE_COLORS[type] || '#8888aa';
+    }
+
+    fillStrokeTile(ctx, tileset, tile, options)
+    {
+        let tilePos = this.app.tileGeometry.getTilePosition(tileset, tile);
+        ctx.save();
+        ctx.fillStyle = options.color;
+        ctx.strokeStyle = options.color;
+        ctx.lineWidth = options.lineWidth || 1;
+        if(options.dashed){
+            ctx.setLineDash([4, 3]);
         }
-        return '#8888aa';
+        ctx.globalAlpha = options.alphaFill || 0.35;
+        ctx.fillRect(tilePos.x, tilePos.y, tileset.tileWidth, tileset.tileHeight);
+        ctx.globalAlpha = options.alphaStroke || 1;
+        let lw = options.lineWidth || 1;
+        ctx.strokeRect(
+            tilePos.x + lw/2, tilePos.y + lw/2,
+            tileset.tileWidth - lw, tileset.tileHeight - lw
+        );
+        ctx.restore();
     }
 
     drawTile(ctx, tileset, tile, color, lineWidth, dashed, dimmed)
     {
-        let pos = this.app.tileGeometry.getTilePosition(tileset, tile);
+        let tilePos = this.app.tileGeometry.getTilePosition(tileset, tile);
         ctx.save();
-        ctx.globalAlpha = dimmed ? 0.1 : 0.35;
         ctx.fillStyle = color;
-        ctx.fillRect(pos.x, pos.y, tileset.tileWidth, tileset.tileHeight);
-        ctx.restore();
-        ctx.save();
-        ctx.globalAlpha = dimmed ? 0.25 : 1;
         ctx.strokeStyle = color;
         ctx.lineWidth = lineWidth;
         if(dashed){
             ctx.setLineDash([4, 3]);
         }
+        ctx.globalAlpha = dimmed ? 0.1 : 0.35;
+        ctx.fillRect(tilePos.x, tilePos.y, tileset.tileWidth, tileset.tileHeight);
+        ctx.globalAlpha = dimmed ? 0.25 : 1;
         ctx.strokeRect(
-            pos.x + lineWidth/2, pos.y + lineWidth/2,
+            tilePos.x + lineWidth/2, tilePos.y + lineWidth/2,
             tileset.tileWidth - lineWidth, tileset.tileHeight - lineWidth
         );
         ctx.restore();
@@ -181,7 +207,7 @@ class TilesetCanvasRenderer
 
     drawNonSelectedElement(ctx, tileset, element, hasSelection)
     {
-        if('spot' === element.type){
+        if(SharedUtils.SPOT_TYPE === element.type){
             return;
         }
         let tilePickActive = this.isTilePickActive();
@@ -189,7 +215,7 @@ class TilesetCanvasRenderer
             return;
         }
         let color = SharedUtils.colorForIndex(element.colorIndex);
-        let isCluster = 'cluster' === element.type;
+        let isCluster = SharedUtils.CLUSTER_TYPE === element.type;
         let drawnKeys = new Set();
         let dimmed = hasSelection;
         for(let layer of element.layers){
@@ -197,16 +223,34 @@ class TilesetCanvasRenderer
         }
     }
 
-    drawElementTiles(ctx, tileset, tilesetIndex)
+    readVisibilityFilters(tilesetIndex)
     {
         if(!this.markers.isMapObjectsTabActive(tilesetIndex)){
+            return null;
+        }
+        let refs = this.app.refs[tilesetIndex];
+        return {
+            showElements: !refs || !refs.showElementsCheck || refs.showElementsCheck.checked,
+            showClusters: !refs || !refs.showClustersCheck || refs.showClustersCheck.checked,
+            showSpots: !refs || !refs.showSpotsCheck || refs.showSpotsCheck.checked
+        };
+    }
+
+    drawElementTiles(ctx, tileset, tilesetIndex)
+    {
+        let filters = this.readVisibilityFilters(tilesetIndex);
+        if(!filters){
             return;
         }
-        let hasSelection = this.app.selectedTileset === tilesetIndex
-            && null !== this.app.selectedElement;
+        let hasSelection = this.app.selectedTileset === tilesetIndex && null !== this.app.selectedElement;
         let selectedEl = null;
         for(let ei = 0; ei < tileset.elements.length; ei++){
             let element = tileset.elements[ei];
+            let isCluster = SharedUtils.CLUSTER_TYPE === element.type;
+            let isSpotEl = SharedUtils.SPOT_TYPE === element.type;
+            if(!((isCluster && filters.showClusters) || (isSpotEl && filters.showSpots) || (!isCluster && !isSpotEl && filters.showElements))){
+                continue;
+            }
             if(hasSelection && this.app.selectedElement === ei){
                 selectedEl = element;
                 continue;
@@ -222,80 +266,12 @@ class TilesetCanvasRenderer
     {
         let zoom = this.app.zoomLevels[tilesetIndex] ? this.app.zoomLevels[tilesetIndex] : 1;
         let canvas = this.app.refs[tilesetIndex].canvas;
-        canvas.style.width = Math.round(canvas.width * zoom)+'px';
-        canvas.style.height = Math.round(canvas.height * zoom)+'px';
-    }
-
-    drawSpotTiles(ctx, tileset, tilesetIndex)
-    {
-        if(!this.markers.isMapObjectsTabActive(tilesetIndex)){
-            return;
-        }
-        let spots = tileset.spots;
-        if(!spots || !spots.length){
-            return;
-        }
-        let hasSelection = this.app.selectedSpot && this.app.selectedSpot.tilesetIndex === tilesetIndex;
-        let selectedSpot = null;
-        for(let si = 0; si < spots.length; si++){
-            if(hasSelection && this.app.selectedSpot.spotIndex === si){
-                selectedSpot = spots[si];
-                continue;
-            }
-            this.drawSingleSpot(ctx, tileset, spots[si], hasSelection);
-        }
-        if(selectedSpot){
-            this.drawSingleSpot(ctx, tileset, selectedSpot, false);
+        canvas.style.width = (canvas.width * zoom)+'px';
+        canvas.style.height = (canvas.height * zoom)+'px';
+        if(this.app.refs[tilesetIndex]){
+            this.app.refs[tilesetIndex].cachedScale = null;
         }
     }
 
-    drawSingleSpot(ctx, tileset, spot, dimmed)
-    {
-        let cols = tileset.tilesetColumns;
-        let flatIndices = this.collectSpotFlatIndices(spot);
-        ctx.save();
-        ctx.strokeStyle = '#ff8c5b';
-        ctx.lineWidth = 2;
-        for(let fi of flatIndices){
-            let tile = [Math.floor(fi / cols), fi % cols];
-            let pos = this.app.tileGeometry.getTilePosition(tileset, tile);
-            ctx.globalAlpha = dimmed ? 0.1 : 0.4;
-            ctx.fillStyle = '#ff8c5b';
-            ctx.fillRect(pos.x, pos.y, tileset.tileWidth, tileset.tileHeight);
-            ctx.globalAlpha = dimmed ? 0.25 : 1;
-            ctx.strokeRect(pos.x + 1, pos.y + 1, tileset.tileWidth - 2, tileset.tileHeight - 2);
-        }
-        ctx.restore();
-    }
-
-    collectSpotFlatIndices(spot)
-    {
-        let indices = new Set();
-        if(null !== spot.spotTile && undefined !== spot.spotTile){
-            indices.add(spot.spotTile);
-        }
-        if(spot.spotTileVariations){
-            for(let fi of spot.spotTileVariations){
-                indices.add(fi);
-            }
-        }
-        for(let key of SharedUtils.SPOT_POSITIONAL_KEYS){
-            this.addPositionalIndices(indices, spot[key]);
-        }
-        return indices;
-    }
-
-    addPositionalIndices(indices, posObj)
-    {
-        if(!posObj){
-            return;
-        }
-        for(let key of Object.keys(posObj)){
-            let fi = posObj[key];
-            if(null !== fi && undefined !== fi){
-                indices.add(fi);
-            }
-        }
-    }
 }
 window.TilesetCanvasRenderer = TilesetCanvasRenderer;

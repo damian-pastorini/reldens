@@ -1,40 +1,22 @@
+.maps-wizard-generating-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-lg);
+    color: var(--color-white);
+
+    img {
+        width: 3rem;
+    }
+
+    p {
+        margin: 0;
+        font-size: var(--font-size-lg);
+        font-weight: var(--bold);
+    }
+}
+
 .maps-wizard {
-    .sub-content-box {
-        position: relative;
-    }
-
-    .maps-wizard-generating-overlay {
-        position: absolute;
-        inset: 0;
-        background-color: rgba(0, 0, 0, 0.65);
-        z-index: 100;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: var(--radius-sm);
-
-        &.hidden {
-            display: none;
-        }
-
-        .maps-wizard-generating-content {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: var(--space-lg);
-            color: var(--color-white);
-
-            img {
-                width: 3rem;
-            }
-
-            p {
-                margin: 0;
-                font-size: var(--font-size-lg);
-                font-weight: var(--bold);
-            }
-        }
-    }
 
     .main-action-container.maps-selection {
         width: 100%;
@@ -284,6 +266,34 @@
     .common-config-container {
         width: 100%;
         border-color: var(--color-blue-90);
+    }
+
+    .common-config-container h3.clickable {
+        padding-left: 0;
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+    }
+
+    .common-config-container h3.clickable::before {
+        content: none;
+    }
+
+    .common-config-container.active h3.clickable::before {
+        content: none;
+    }
+
+    .common-config-container-collapse-icon {
+        width: var(--space-2xl);
+        height: var(--space-2xl);
+        margin-left: auto;
+        filter: brightness(0) invert(0.5);
+        transform: rotate(180deg);
+        transition: transform 0.15s;
+    }
+
+    .common-config-container.active .common-config-container-collapse-icon {
+        transform: rotate(0deg);
     }
 
     .common-config-container .config-grid {

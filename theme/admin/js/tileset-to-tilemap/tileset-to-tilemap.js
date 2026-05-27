@@ -7,7 +7,7 @@ class TilesetAnalyzerApp
         this.selectedTileset = null;
         this.selectedElement = null;
         this.selectedSpot = null;
-        this.activeLayerType = 'below-player';
+        this.activeLayerType = SharedUtils.DEFAULT_LAYER_TYPE;
         this.refs = {};
         this.imageCache = {};
         this.zoomLevels = {};
@@ -16,13 +16,17 @@ class TilesetAnalyzerApp
         this.isRightDrag = false;
         this.dragToggleMode = null;
         this.lastDragTile = null;
-        this.mouseButtonRight = 2;
+        this.canvasRedrawScheduled = false;
+        this.pendingRedrawIndex = null;
+        this.activeAbortControllers = new Set();
+        this.mouseButtonRight = SharedUtils.MOUSE_BUTTON_RIGHT;
         this.showAiControls = false;
         this.activeProviders = [];
         this.runningDetections = 0;
         this.showAllElements = true;
         this.viewAllMode = true;
         this.isAreaSelect = false;
+        this.legendStructureDirty = false;
         this.areaSelectTileset = null;
         this.areaSelectStart = null;
         this.areaSelectEnd = null;
@@ -32,6 +36,7 @@ class TilesetAnalyzerApp
         this.editor = new TilesetElementEditor(this);
         this.ai = new TilesetAiOperations(this);
         this.aiElement = new TilesetAiElementOperations(this);
+        this.aiBulk = new TilesetAiBulkOperations(this);
         this.aiRequestBuilder = new TilesetAiRequestBuilder(this);
         this.sessions = new TilesetSessionManager(this);
         this.uploader = new TilesetUploader(this);
@@ -43,6 +48,7 @@ class TilesetAnalyzerApp
         this.keyboard = new TilesetKeyboardShortcuts(this);
         this.events = new TilesetEventBindings(this);
         this.tileOptionsBinder = new TilesetTileOptionsBinder(this);
+        this.tooltipPlacement = new TilesetTooltipPlacement(this);
         this.globalTileOptions = null;
         this.globalPanelBound = false;
     }
@@ -52,29 +58,46 @@ class TilesetAnalyzerApp
         return document.querySelector(selector);
     }
 
-    updatePaletteStyles()
+    countTotalElements()
     {
         let totalElements = 0;
         for(let tilesetState of this.state){
             totalElements += tilesetState.elements.length;
         }
+        return totalElements;
+    }
+
+    rebuildPaletteCss(totalElements)
+    {
+        if(!this.dynamicPaletteEl){
+            this.dynamicPaletteEl = this.getElement('.dynamic-palette');
+        }
         let css = '';
         for(let i = 0; i < totalElements; i++){
-            css += '.element-color-'+i+' { background-color: '+SharedUtils.colorForIndex(i)+'; }\n';
+            css = css+'.element-color-'+i+' { background-color: '+SharedUtils.colorForIndex(i)+'; }\n';
         }
-        this.getElement('.dynamic-palette').textContent = css;
+        this.dynamicPaletteEl.textContent = css;
+    }
+
+    updatePaletteStyles()
+    {
+        let totalElements = this.countTotalElements();
+        if(this.cachedTotalElements !== totalElements){
+            this.cachedTotalElements = totalElements;
+            this.rebuildPaletteCss(totalElements);
+        }
         this.updateGlobalTileOptionsPanel();
     }
 
     updateGlobalTileOptionsPanel()
     {
         let panel = this.getElement('.global-tile-options');
-        let btn = this.getElement('.global-tile-options-toggle-btn');
-        if(!panel || !btn){
+        let toggleButton = this.getElement('.global-tile-options-toggle-btn');
+        if(!panel || !toggleButton){
             return;
         }
         let shouldShow = this.state.length > 1;
-        btn.classList.toggle('hidden', !shouldShow);
+        toggleButton.classList.toggle('hidden', !shouldShow);
         if(!shouldShow){
             panel.classList.add('hidden');
             return;
@@ -83,10 +106,10 @@ class TilesetAnalyzerApp
             return;
         }
         this.globalPanelBound = true;
-        btn.addEventListener('click', () => {
+        toggleButton.addEventListener('click', () => {
             let isClosing = !panel.classList.contains('hidden');
             panel.classList.toggle('hidden');
-            btn.classList.toggle('active', !panel.classList.contains('hidden'));
+            toggleButton.classList.toggle('active', !panel.classList.contains('hidden'));
             if(isClosing && this.tileOptionsBinder && -1 === this.tileOptionsBinder.activeTilesetIndex){
                 this.tileOptionsBinder.deactivate();
             }
@@ -104,22 +127,26 @@ class TilesetAnalyzerApp
         this.getElement('.new-session-btn').classList.remove('hidden');
     }
 
+    toggleMapsWizardButtons(hidden)
+    {
+        for(let selector of ['.all-to-maps-wizard-btn', '.selected-to-maps-wizard-btn']){
+            let wizardBtn = this.getElement(selector);
+            if(wizardBtn){
+                wizardBtn.classList.toggle('hidden', hidden);
+            }
+        }
+    }
+
     hideReviewSection()
     {
         this.getElement('.review-section').classList.add('hidden');
         this.getElement('.new-session-btn').classList.add('hidden');
-        let wizardBtn = this.getElement('.maps-wizard-btn');
-        if(wizardBtn){
-            wizardBtn.classList.add('hidden');
-        }
+        this.toggleMapsWizardButtons(true);
     }
 
     showMapsWizardBtn()
     {
-        let wizardBtn = this.getElement('.maps-wizard-btn');
-        if(wizardBtn){
-            wizardBtn.classList.remove('hidden');
-        }
+        this.toggleMapsWizardButtons(false);
     }
 
     clearSelection(tilesetIndex)
@@ -139,12 +166,61 @@ class TilesetAnalyzerApp
         return offset;
     }
 
+    findTilesetIndexByFilename(filename)
+    {
+        for(let j = 0; j < this.state.length; j++){
+            if(this.state[j].filename === filename){
+                return j;
+            }
+        }
+        return -1;
+    }
+
+    createAbortController()
+    {
+        let controller = new AbortController();
+        this.activeAbortControllers.add(controller);
+        return controller;
+    }
+
+    releaseAbortController(controller)
+    {
+        this.activeAbortControllers.delete(controller);
+    }
+
+    abortAllRequests()
+    {
+        for(let controller of this.activeAbortControllers){
+            controller.abort();
+        }
+        this.activeAbortControllers.clear();
+    }
+
     refresh(tilesetIndex)
     {
-        this.renderer.renderCanvas(tilesetIndex);
-        if(!this.isDragging){
-            this.editor.renderLegend(tilesetIndex);
+        if(this.isDragging){
+            this.scheduleCanvasRedraw(tilesetIndex);
+            return;
         }
+        this.renderer.renderCanvas(tilesetIndex);
+        this.editor.renderLegend(tilesetIndex);
+    }
+
+    scheduleCanvasRedraw(tilesetIndex)
+    {
+        this.pendingRedrawIndex = tilesetIndex;
+        if(this.canvasRedrawScheduled){
+            return;
+        }
+        this.canvasRedrawScheduled = true;
+        requestAnimationFrame(() => {
+            this.canvasRedrawScheduled = false;
+            let pendingIndex = this.pendingRedrawIndex;
+            this.pendingRedrawIndex = null;
+            if(null !== pendingIndex){
+                this.renderer.renderCanvas(pendingIndex);
+            }
+        });
     }
 
     resetViewAllButtons()

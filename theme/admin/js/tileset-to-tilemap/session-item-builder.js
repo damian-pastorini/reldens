@@ -16,7 +16,7 @@ class SessionItemBuilder
         header.className = 'generated-file-header';
         let collapseIcon = document.createElement('img');
         collapseIcon.className = 'generated-file-collapse-icon';
-        collapseIcon.src = '/assets/admin/circle-chevron-up-solid-full.svg';
+        collapseIcon.src = SharedUtils.ICON_PATHS.chevronUp;
         collapseIcon.alt = '';
         header.appendChild(collapseIcon);
         let span = document.createElement('span');
@@ -32,7 +32,7 @@ class SessionItemBuilder
                 hasConfig = true;
                 continue;
             }
-            if('map-generator-config.json' === file.name){
+            if('map-generator-config.json' === file.name || file.name.startsWith('map-generator-config-')){
                 hasMapsConfig = true;
             }
             if('input' === file.type){
@@ -46,10 +46,12 @@ class SessionItemBuilder
             wizardBtn.className = 'button button-sm button-secondary generated-file-wizard-btn';
             let analyzer = document.querySelector('.tileset-analyzer');
             let mapsWizardPath = analyzer ? analyzer.dataset.mapsWizardPath : '/maps-wizard';
-            wizardBtn.href = mapsWizardPath+'?tilesetSessionId='+sessionId;
+            let wizardUrl = new URL(mapsWizardPath, window.location.origin);
+            wizardUrl.searchParams.set('tilesetSessionId', sessionId);
+            wizardBtn.href = wizardUrl.toString();
             wizardBtn.textContent = 'Maps Wizard';
-            wizardBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
+            wizardBtn.addEventListener('click', (event) => {
+                event.stopPropagation();
             });
             header.appendChild(wizardBtn);
         }
@@ -57,16 +59,16 @@ class SessionItemBuilder
             let loadBtn = document.createElement('button');
             loadBtn.className = 'button button-sm button-primary generated-file-load-btn';
             loadBtn.textContent = 'Load';
-            loadBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
+            loadBtn.addEventListener('click', (event) => {
+                event.stopPropagation();
                 this.manager.loadSession(sessionId);
             });
             header.appendChild(loadBtn);
             let appendBtn = document.createElement('button');
             appendBtn.className = 'button button-sm button-success generated-file-append-btn';
             appendBtn.textContent = 'Append';
-            appendBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
+            appendBtn.addEventListener('click', (event) => {
+                event.stopPropagation();
                 this.manager.appendSession(sessionId);
             });
             header.appendChild(appendBtn);
@@ -74,11 +76,11 @@ class SessionItemBuilder
         let deleteBtn = document.createElement('button');
         deleteBtn.className = 'button button-sm button-danger generated-file-delete-btn';
         let deleteImg = document.createElement('img');
-        deleteImg.src = '/assets/admin/trash-can-solid-full.svg';
+        deleteImg.src = SharedUtils.ICON_PATHS.trash;
         deleteImg.alt = 'Delete';
         deleteBtn.appendChild(deleteImg);
-        deleteBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
+        deleteBtn.addEventListener('click', (event) => {
+            event.stopPropagation();
             this.manager.delete(sessionId, li);
         });
         header.appendChild(deleteBtn);
@@ -93,11 +95,8 @@ class SessionItemBuilder
         }
         li.appendChild(filesDiv);
         li.addEventListener('click', () => {
-            let isExpanded = li.classList.toggle('expanded');
+            li.classList.toggle('expanded');
             filesDiv.classList.toggle('hidden');
-            collapseIcon.src = '/assets/admin/'+(isExpanded
-                ? 'circle-chevron-down-solid-full'
-                : 'circle-chevron-up-solid-full')+'.svg';
         });
         return li;
     }
@@ -123,3 +122,4 @@ class SessionItemBuilder
         return group;
     }
 }
+window.SessionItemBuilder = SessionItemBuilder;

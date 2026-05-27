@@ -123,8 +123,8 @@ class AdminClientMaps
                 selectedOption.dataset.mapFile,
                 selectedOption.dataset.mapImages,
                 nextRoomMapContainer,
-                (ev, data) => {
-                    let tileData = adminMapRenderer.calculateTileData(ev, data);
+                (event, data) => {
+                    let tileData = adminMapRenderer.calculateTileData(event, data);
                     elementNextRoomPositionX.value = tileData.positionTileX;
                     elementNextRoomPositionY.value = tileData.positionTileY;
                 },
@@ -218,6 +218,29 @@ class AdminClientMaps
         }, {passive: true});
     }
 
+    bindGoBackButton()
+    {
+        let goBackButton = document.querySelector('.maps-wizard-go-back');
+        if(!goBackButton){
+            return;
+        }
+        goBackButton.addEventListener('click', () => {
+            let goBackUrl = goBackButton.dataset.goBackUrl;
+            adminFunctions.showConfirmDialog((confirmed) => {
+                if(confirmed){
+                    window.location.href = goBackUrl;
+                }
+            }, {
+                title: 'Go Back',
+                message: 'If you go back, the generated maps will be lost. Are you sure?',
+                confirmText: 'Leave',
+                confirmClass: 'button-secondary',
+                cancelText: 'Stay',
+                cancelClass: 'button-primary'
+            });
+        });
+    }
+
     bind()
     {
         this.bindTilesetAlertIcons();
@@ -226,6 +249,7 @@ class AdminClientMaps
         this.bindMapsWizardOptions();
         this.bindMapCanvas();
         this.bindMapsImportSticky();
+        this.bindGoBackButton();
     }
 }
 window.AdminClientMaps = AdminClientMaps;

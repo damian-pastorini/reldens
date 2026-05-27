@@ -5,11 +5,13 @@ class TilesetModalManager
         this.app = app;
         this.onConfirmAction = null;
         this.onAlternativeAction = null;
+        this.confirmQueue = [];
+        this.confirmOpen = false;
     }
 
-    showGenerate(msg)
+    showGenerate(message)
     {
-        this.app.getElement('.generate-modal-message').textContent = msg;
+        this.app.getElement('.generate-modal-message').textContent = message;
         this.app.getElement('.generate-modal').classList.remove('hidden');
     }
 
@@ -18,33 +20,86 @@ class TilesetModalManager
         this.app.getElement('.generate-modal').classList.add('hidden');
     }
 
-    show(message, onConfirmAction, alternativeAction, okClass)
+    show(message, onConfirmAction, alternativeAction, okClass, selectorOptions)
     {
-        this.app.getElement('.confirm-modal-message').textContent = message;
-        this.onConfirmAction = onConfirmAction;
+        let request = { message, onConfirmAction, alternativeAction, okClass, selectorOptions };
+        if(this.confirmOpen){
+            this.confirmQueue.push(request);
+            return;
+        }
+        this.openConfirmRequest(request);
+    }
+
+    openConfirmRequest(request)
+    {
+        this.confirmOpen = true;
+        this.app.getElement('.confirm-modal-message').textContent = request.message;
+        this.onConfirmAction = request.onConfirmAction;
         let extraBtn = this.app.getElement('.confirm-modal-extra');
-        extraBtn.classList.toggle('hidden', !alternativeAction);
+        extraBtn.classList.toggle('hidden', !request.alternativeAction);
         this.onAlternativeAction = null;
-        if(alternativeAction){
-            extraBtn.textContent = alternativeAction.label;
-            this.onAlternativeAction = alternativeAction.callback;
+        if(request.alternativeAction){
+            extraBtn.textContent = request.alternativeAction.label;
+            this.onAlternativeAction = request.alternativeAction.callback;
         }
         let okBtn = this.app.getElement('.confirm-modal-ok');
-        okBtn.className = 'button confirm-modal-ok ' + (okClass || 'button-primary');
+        okBtn.className = 'button confirm-modal-ok ' + (request.okClass || 'button-primary');
+        this.applySelector(request.selectorOptions);
         this.app.getElement('.confirm-modal').classList.remove('hidden');
+    }
+
+    applySelector(selectorOptions)
+    {
+        let container = document.querySelector('.confirm-modal-selector');
+        let select = document.querySelector('.confirm-modal-select');
+        if(!container || !select){
+            return;
+        }
+        if(!selectorOptions){
+            container.classList.add('hidden');
+            select.innerHTML = '';
+            return;
+        }
+        let label = document.querySelector('.confirm-modal-selector-label');
+        if(label){
+            label.textContent = selectorOptions.label || '';
+        }
+        select.innerHTML = '';
+        for(let option of selectorOptions.options){
+            let optEl = document.createElement('option');
+            optEl.value = option.value;
+            optEl.textContent = option.label;
+            select.appendChild(optEl);
+        }
+        container.classList.remove('hidden');
+    }
+
+    readSelectorValue()
+    {
+        let container = document.querySelector('.confirm-modal-selector');
+        if(!container || container.classList.contains('hidden')){
+            return null;
+        }
+        let select = document.querySelector('.confirm-modal-select');
+        return select ? select.value : null;
     }
 
     hide()
     {
         this.app.getElement('.confirm-modal').classList.add('hidden');
+        this.confirmOpen = false;
+        if(this.confirmQueue.length){
+            this.openConfirmRequest(this.confirmQueue.shift());
+        }
     }
 
     bind()
     {
         this.app.getElement('.confirm-modal-ok').addEventListener('click', () => {
+            let selectorValue = this.readSelectorValue();
             this.hide();
             if(this.onConfirmAction){
-                this.onConfirmAction();
+                this.onConfirmAction(selectorValue);
             }
         });
         this.app.getElement('.confirm-modal-extra').addEventListener('click', () => {
@@ -53,12 +108,9 @@ class TilesetModalManager
                 this.onAlternativeAction();
             }
         });
-        this.app.getElement('.confirm-modal-cancel').addEventListener('click', () => {
-            this.hide();
-        });
-        this.app.getElement('.confirm-modal-close').addEventListener('click', () => {
-            this.hide();
-        });
+        for(let dismissBtn of document.querySelectorAll('.confirm-modal-cancel, .confirm-modal-close')){
+            dismissBtn.addEventListener('click', () => this.hide());
+        }
         let confirmBackdrop = document.querySelector('.confirm-modal .modal-backdrop');
         if(confirmBackdrop){
             confirmBackdrop.addEventListener('click', () => {
@@ -78,3 +130,4 @@ class TilesetModalManager
         });
     }
 }
+window.TilesetModalManager = TilesetModalManager;

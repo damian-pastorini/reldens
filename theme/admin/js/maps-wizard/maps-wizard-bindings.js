@@ -18,6 +18,7 @@ class MapsWizardBindings
         this.bindSampleData();
         this.bindConfirmModal();
         this.bindFormSubmit();
+        window.mapsWizardUtils.currentStrategy = window.mapsWizardUtils.getSelectedOption();
         this.prefillFromUrlParams();
         window.mapsWizardUtils.updateGeneratorDataFromInputs();
         window.addEventListener('pageshow', () => {
@@ -32,10 +33,24 @@ class MapsWizardBindings
     {
         let inputs = document.querySelectorAll('input[name="mapsWizardAction"], .config-input');
         for(let input of inputs){
-            input.addEventListener('change', () => {
-                window.mapsWizardUtils.updateGeneratorDataFromInputs();
+            input.addEventListener('change', (event) => {
+                this.handleInputChange(event.currentTarget);
             });
         }
+    }
+
+    handleInputChange(input)
+    {
+        let utils = window.mapsWizardUtils;
+        if('mapsWizardAction' === input.name){
+            utils.persistCurrentStrategyState();
+            if(!utils.applyStrategyState(input.value)){
+                utils.currentStrategy = input.value;
+                utils.updateGeneratorDataFromInputs();
+            }
+            return;
+        }
+        utils.updateGeneratorDataFromInputs();
     }
 
     bindGeneratorData()
@@ -46,6 +61,10 @@ class MapsWizardBindings
         }
         generatorDataEl.addEventListener('input', () => {
             window.mapsWizardUtils.updateInputsFromGeneratorData();
+            let strategy = window.mapsWizardUtils.currentStrategy;
+            if(strategy){
+                window.mapsWizardUtils.strategyStates[strategy] = generatorDataEl.value;
+            }
         });
     }
 
@@ -203,19 +222,14 @@ class MapsWizardBindings
     bindFormSubmit()
     {
         let mapsWizardForm = document.querySelector('#maps-wizard-form');
-        if(mapsWizardForm){
-            mapsWizardForm.addEventListener('submit', () => {
-                this.showGeneratingOverlay();
-            });
+        if(!mapsWizardForm){
+            return;
         }
-        let mapsImportForm = document.querySelector('.maps-import-form');
-        if(mapsImportForm){
-            let originalSubmit = mapsImportForm.submit.bind(mapsImportForm);
-            mapsImportForm.submit = () => {
-                this.showGeneratingOverlay();
-                originalSubmit();
-            };
-        }
+        let originalSubmit = mapsWizardForm.submit.bind(mapsWizardForm);
+        mapsWizardForm.submit = () => {
+            this.showGeneratingOverlay();
+            originalSubmit();
+        };
     }
 
     prefillFromUrlParams()
@@ -229,6 +243,9 @@ class MapsWizardBindings
         if(tilesetSessionIdInput){
             tilesetSessionIdInput.value = prefillSessionId;
         }
+        if(window.mapsWizardSaveConfig){
+            window.mapsWizardSaveConfig.showButton();
+        }
         let mapsWizardForm = document.querySelector('#maps-wizard-form');
         if(!mapsWizardForm){
             return;
@@ -239,19 +256,31 @@ class MapsWizardBindings
                 return r.json();
             })
             .then((wizardConfig) => {
-                if(!wizardConfig || !wizardConfig.strategy){
-                    return;
-                }
-                let strategyRadio = document.querySelector('[name="mapsWizardAction"][value="'+wizardConfig.strategy+'"]');
-                if(strategyRadio){
-                    strategyRadio.click();
-                }
-                if(wizardConfig.partialData){
-                    window.mapsWizardUtils.setExtraProperties(wizardConfig.partialData, wizardConfig.strategy);
-                    window.mapsWizardUtils.fillInputsFromData(wizardConfig.partialData, wizardConfig.strategy);
-                    window.mapsWizardUtils.updateGeneratorDataFromInputs();
-                }
+                this.applyWizardConfig(wizardConfig);
             });
+    }
+
+    applyWizardConfig(wizardConfig)
+    {
+        if(!wizardConfig || !wizardConfig.strategy){
+            return;
+        }
+        let utils = window.mapsWizardUtils;
+        if(wizardConfig.savedStrategies){
+            utils.strategyStates = Object.assign({}, wizardConfig.savedStrategies);
+        }
+        let strategyRadio = document.querySelector('[name="mapsWizardAction"][value="'+wizardConfig.strategy+'"]');
+        if(strategyRadio){
+            strategyRadio.click();
+        }
+        if(wizardConfig.savedStrategies && utils.applyStrategyState(wizardConfig.strategy)){
+            return;
+        }
+        if(wizardConfig.partialData){
+            utils.setExtraProperties(wizardConfig.partialData, wizardConfig.strategy);
+            utils.fillInputsFromData(wizardConfig.partialData, wizardConfig.strategy);
+            utils.updateGeneratorDataFromInputs();
+        }
     }
 }
 new MapsWizardBindings();

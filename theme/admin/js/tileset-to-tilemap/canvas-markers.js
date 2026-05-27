@@ -31,7 +31,7 @@ class TilesetCanvasMarkers
         canvasCtx.save();
         canvasCtx.lineWidth = 1.5;
         for(let marker of markers){
-            let key = marker.tile[0]+','+marker.tile[1];
+            let key = SharedUtils.tileKey(marker.tile);
             if(drawn.has(key)){
                 continue;
             }
@@ -50,15 +50,14 @@ class TilesetCanvasMarkers
     collect(tileset, tilesetIndex)
     {
         let app = this.renderer.app;
-        if(null !== app.selectedElement && !this.isMapTilesTabActive(tilesetIndex)){
-            return [];
-        }
         let markers = [];
-        if(this.isMapTilesTabActive(tilesetIndex)){
+        let isMapTilesTab = this.isMapTilesTabActive(tilesetIndex);
+        let suppressPerTileset = null !== app.selectedElement && !isMapTilesTab;
+        if(isMapTilesTab && !suppressPerTileset){
             this.addOptions(markers, tileset, tileset.tileOptions ? tileset.tileOptions : {});
             for(let spot of (tileset.spots ? tileset.spots : [])){
                 this.addOptions(markers, tileset, this.buildSpotOpts(spot));
-                if(null !== spot.spotTile && undefined !== spot.spotTile){
+                if(SharedUtils.isSet(spot.spotTile)){
                     this.pushFlat(markers, tileset, spot.spotTile, 'ST', '#ff8c5b');
                 }
             }
@@ -71,15 +70,14 @@ class TilesetCanvasMarkers
 
     isTabActive(tilesetIndex, tabName)
     {
-        let canvas = document.querySelector('.tileset-canvas[data-tileset-index="'+tilesetIndex+'"]');
-        if(!canvas){
+        let refs = this.renderer.app.refs[tilesetIndex];
+        if(refs && refs.activeTab){
+            return tabName === refs.activeTab;
+        }
+        if(!refs || !refs.row){
             return false;
         }
-        let row = canvas.closest('.tileset-row');
-        if(!row){
-            return false;
-        }
-        return null !== row.querySelector('.legend-tab-pane[data-tab="'+tabName+'"]:not(.hidden)');
+        return null !== refs.row.querySelector('.legend-tab-pane[data-tab="'+tabName+'"]:not(.hidden)');
     }
 
     isMapObjectsTabActive(tilesetIndex)
@@ -154,9 +152,20 @@ class TilesetCanvasMarkers
         }
     }
 
+    entryMatchesTileset(entry, tileset, currentTilesetIndex)
+    {
+        if(!entry){
+            return false;
+        }
+        if(undefined !== entry.tilesetKey){
+            return entry.tilesetKey === tileset.filename;
+        }
+        return entry.tilesetIndex === currentTilesetIndex;
+    }
+
     addGlobalSimple(markers, tileset, entry, currentTilesetIndex, label, color)
     {
-        if(!entry || entry.tilesetIndex !== currentTilesetIndex){
+        if(!this.entryMatchesTileset(entry, tileset, currentTilesetIndex)){
             return;
         }
         this.pushFlat(markers, tileset, entry.flatIndex, label, color);
@@ -167,7 +176,7 @@ class TilesetCanvasMarkers
         let positions = Object.keys(posObj);
         for(let posKey of positions){
             let entry = posObj[posKey];
-            if(!entry || entry.tilesetIndex !== currentTilesetIndex){
+            if(!this.entryMatchesTileset(entry, tileset, currentTilesetIndex)){
                 continue;
             }
             this.pushFlat(markers, tileset, entry.flatIndex, label, color);
@@ -190,7 +199,7 @@ class TilesetCanvasMarkers
         canvasCtx.textBaseline = 'middle';
         let tileOffsets = new Map();
         for(let marker of markers){
-            let key = marker.tile[0]+','+marker.tile[1];
+            let key = SharedUtils.tileKey(marker.tile);
             let offset = tileOffsets.has(key) ? tileOffsets.get(key) : 0;
             tileOffsets.set(key, offset + 1);
             let tilePos = this.renderer.app.tileGeometry.getTilePosition(tileset, marker.tile);

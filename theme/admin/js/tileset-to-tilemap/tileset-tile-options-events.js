@@ -3,7 +3,7 @@ class TilesetTileOptionsEvents
     constructor(binder)
     {
         this.binder = binder;
-        this.spotPropsBinder = new TilesetSpotPropsBinder(this);
+        this.spotPanelEvents = new TilesetSpotPanelEvents(binder);
     }
 
     iterateBtnsWithOptionKey(optionBtns, callback)
@@ -19,9 +19,7 @@ class TilesetTileOptionsEvents
 
     isSameActiveState(tilesetIndex, optionKey, spotName)
     {
-        return this.binder.activeTilesetIndex === tilesetIndex
-            && this.binder.activeOptionKey === optionKey
-            && this.binder.activeSpotName === (spotName ? spotName : null);
+        return this.binder.isSameActiveState(tilesetIndex, optionKey, spotName);
     }
 
     bindOptionBtns(tilesetIndex, container, spotName)
@@ -194,61 +192,7 @@ class TilesetTileOptionsEvents
 
     bindSpotRows(tilesetIndex)
     {
-        let refs = this.binder.app.refs[tilesetIndex];
-        if(!refs){
-            return;
-        }
-        let spotRows = refs.list.querySelectorAll('.spot-row');
-        for(let spotRow of spotRows){
-            let spotName = spotRow.dataset.spotName;
-            if(!spotName){
-                continue;
-            }
-            this.bindSingleSpotRow(tilesetIndex, spotRow, spotName);
-        }
+        this.spotPanelEvents.bindSpotRows(tilesetIndex);
     }
-
-    bindSingleSpotRow(tilesetIndex, spotRow, spotName)
-    {
-        this.binder.bindCancelBtns(spotRow);
-        this.bindOptionBtns(tilesetIndex, spotRow, spotName);
-        this.bindClearBtns(tilesetIndex, spotRow, spotName);
-        this.bindPositionCells(tilesetIndex, spotRow, spotName);
-        this.spotPropsBinder.bind(spotRow, tilesetIndex, spotName);
-        this.bindTooltipPositioning(spotRow);
-        let spot = this.binder.findSpot(tilesetIndex, spotName);
-        if(spot){
-            this.binder.apply.applySpotToRow(spotRow, spot);
-        }
-    }
-
-    bindTooltipPositioning(spotRow)
-    {
-        let legendPane = spotRow.closest('.legend-tab-pane');
-        if(!legendPane){
-            return;
-        }
-        let tooltips = spotRow.querySelectorAll('.tooltip');
-        for(let tooltip of tooltips){
-            tooltip.addEventListener('mouseenter', () => {
-                let tooltipText = tooltip.querySelector('.tooltip-text');
-                if(!tooltipText){
-                    return;
-                }
-                let rem = parseFloat(getComputedStyle(document.documentElement).fontSize);
-                if(legendPane.getBoundingClientRect().right - tooltip.getBoundingClientRect().left < 15 * rem){
-                    tooltipText.classList.add('tooltip-right');
-                }
-            });
-            tooltip.addEventListener('mouseleave', () => {
-                let tooltipText = tooltip.querySelector('.tooltip-text');
-                if(tooltipText){
-                    tooltipText.classList.remove('tooltip-right');
-                }
-            });
-        }
-    }
-
-
 }
 window.TilesetTileOptionsEvents = TilesetTileOptionsEvents;

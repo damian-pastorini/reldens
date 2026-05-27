@@ -7,64 +7,83 @@ class TilesetParamBinder
 
     isFilenameDuplicate(filename)
     {
-        for(let tileset of this.app.state){
-            if(tileset.filename === filename){
-                return true;
-            }
-        }
-        return false;
+        return -1 !== this.app.findTilesetIndexByFilename(filename);
     }
 
-    detectBgColor(file, callback)
+    sampleEdgePixels(ctx, w, h, step)
     {
-        let url = URL.createObjectURL(file);
-        let img = new Image();
-        img.onload = () => {
+        let topRow = ctx.getImageData(0, 0, w, 1).data;
+        let bottomRow = ctx.getImageData(0, h - 1, w, 1).data;
+        let leftCol = ctx.getImageData(0, 0, 1, h).data;
+        let rightCol = ctx.getImageData(w - 1, 0, 1, h).data;
+        let samples = [];
+        for(let x = 0; x < w; x += step){
+            let i = x * 4;
+            samples.push([topRow[i], topRow[i + 1], topRow[i + 2]]);
+            samples.push([bottomRow[i], bottomRow[i + 1], bottomRow[i + 2]]);
+        }
+        for(let y = 0; y < h; y += step){
+            let i = y * 4;
+            samples.push([leftCol[i], leftCol[i + 1], leftCol[i + 2]]);
+            samples.push([rightCol[i], rightCol[i + 1], rightCol[i + 2]]);
+        }
+        return samples;
+    }
+
+    pickDominantColor(samples)
+    {
+        let counts = {};
+        let best = null;
+        let bestCount = 0;
+        for(let s of samples){
+            let r = Math.round(s[0] / 8) * 8;
+            let g = Math.round(s[1] / 8) * 8;
+            let b = Math.round(s[2] / 8) * 8;
+            let key = r+','+g+','+b;
+            counts[key] = (counts[key] || 0) + 1;
+            if(counts[key] > bestCount){
+                bestCount = counts[key];
+                best = [r, g, b];
+            }
+        }
+        return best;
+    }
+
+    detectBgColorOnLoad(image, url, callback)
+    {
+        try {
             let canvas = document.createElement('canvas');
-            canvas.width = img.naturalWidth;
-            canvas.height = img.naturalHeight;
+            canvas.width = image.naturalWidth;
+            canvas.height = image.naturalHeight;
             let ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0);
-            URL.revokeObjectURL(url);
-            let w = img.naturalWidth;
-            let h = img.naturalHeight;
-            let samples = [];
+            ctx.drawImage(image, 0, 0);
+            let w = image.naturalWidth;
+            let h = image.naturalHeight;
             let step = Math.max(1, Math.floor(Math.min(w, h) / 16));
-            for(let x = 0; x < w; x += step){
-                let top = ctx.getImageData(x, 0, 1, 1).data;
-                let bot = ctx.getImageData(x, h - 1, 1, 1).data;
-                samples.push([top[0], top[1], top[2]]);
-                samples.push([bot[0], bot[1], bot[2]]);
-            }
-            for(let y = 0; y < h; y += step){
-                let left = ctx.getImageData(0, y, 1, 1).data;
-                let right = ctx.getImageData(w - 1, y, 1, 1).data;
-                samples.push([left[0], left[1], left[2]]);
-                samples.push([right[0], right[1], right[2]]);
-            }
-            let counts = {};
-            let best = null;
-            let bestCount = 0;
-            for(let s of samples){
-                let r = Math.round(s[0] / 8) * 8;
-                let g = Math.round(s[1] / 8) * 8;
-                let b = Math.round(s[2] / 8) * 8;
-                let key = r+','+g+','+b;
-                counts[key] = (counts[key] || 0) + 1;
-                if(counts[key] > bestCount){
-                    bestCount = counts[key];
-                    best = [r, g, b];
-                }
-            }
+            let samples = this.sampleEdgePixels(ctx, w, h, step);
+            let best = this.pickDominantColor(samples);
             if(!best){
                 callback('#000000');
                 return;
             }
             let toHex = (v) => v.toString(16).padStart(2, '0');
             callback('#'+toHex(best[0])+toHex(best[1])+toHex(best[2]));
+        } finally {
+            URL.revokeObjectURL(url);
+        }
+    }
+
+    detectBgColor(file, callback)
+    {
+        let url = URL.createObjectURL(file);
+        let image = new Image();
+        image.crossOrigin = 'anonymous';
+        image.onload = () => this.detectBgColorOnLoad(image, url, callback);
+        image.onerror = () => {
+            URL.revokeObjectURL(url);
+            callback('#000000');
         };
-        img.onerror = () => callback('#000000');
-        img.src = url;
+        image.src = url;
     }
 
     clearResizeAll()
@@ -90,9 +109,9 @@ class TilesetParamBinder
             return 0;
         }
         if('custom' === checked.value){
-            return Number(document.querySelector('.resize-all-custom').value) || 0;
+            return SharedUtils.toNumber(document.querySelector('.resize-all-custom').value, 0);
         }
-        return Number(checked.value);
+        return SharedUtils.toNumber(checked.value, 0);
     }
 
     getResizeSpecificValue(fieldset)
@@ -102,9 +121,9 @@ class TilesetParamBinder
             return 0;
         }
         if('custom' === checked.value){
-            return Number(fieldset.querySelector('.resize-specific-custom').value) || 0;
+            return SharedUtils.toNumber(fieldset.querySelector('.resize-specific-custom').value, 0);
         }
-        return Number(checked.value);
+        return SharedUtils.toNumber(checked.value, 0);
     }
 
     buildResizeOptions(container, radioClass, radioName, customClass)
@@ -120,56 +139,56 @@ class TilesetParamBinder
         container.appendChild(clone);
     }
 
+    bindResizeRadioGroup(radios, onPickValue)
+    {
+        for(let radio of radios){
+            radio.addEventListener('change', () => {
+                if('0' === radio.value){
+                    return;
+                }
+                onPickValue();
+            });
+        }
+    }
+
+    bindResizeCustomFocus(customInput, customRadioSelector, container, onPickValue)
+    {
+        customInput.addEventListener('focus', () => {
+            let customRadio = container.querySelector(customRadioSelector);
+            if(!customRadio.checked){
+                customRadio.checked = true;
+                onPickValue();
+            }
+        });
+    }
+
     bindResizeAll()
     {
         let section = this.app.getElement('.resize-all-section');
         this.buildResizeOptions(section, 'resize-all-radio', 'resize-all', 'resize-all-custom');
         let radios = section.querySelectorAll('.resize-all-radio');
         let customInput = section.querySelector('.resize-all-custom');
-        for(let radio of radios){
-            radio.addEventListener('change', () => {
-                if('0' === radio.value){
-                    return;
-                }
-                this.clearAllSpecificResizes();
-            });
-        }
-        customInput.addEventListener('focus', () => {
-            let customRadio = section.querySelector('.resize-all-radio[value="custom"]');
-            if(!customRadio.checked){
-                customRadio.checked = true;
-                this.clearAllSpecificResizes();
-            }
-        });
+        this.bindResizeRadioGroup(radios, () => this.clearAllSpecificResizes());
+        this.bindResizeCustomFocus(
+            customInput, '.resize-all-radio[value="custom"]', section, () => this.clearAllSpecificResizes()
+        );
     }
 
     bindResizeSpecific(fieldset)
     {
         let radios = fieldset.querySelectorAll('.resize-specific-radio');
         let customInput = fieldset.querySelector('.resize-specific-custom');
-        for(let radio of radios){
-            radio.addEventListener('change', () => {
-                if('0' === radio.value){
-                    return;
-                }
-                this.clearResizeAll();
-            });
-        }
-        customInput.addEventListener('focus', () => {
-            let customRadio = fieldset.querySelector('.resize-specific-radio[value="custom"]');
-            if(!customRadio.checked){
-                customRadio.checked = true;
-                this.clearResizeAll();
-            }
-        });
+        this.bindResizeRadioGroup(radios, () => this.clearResizeAll());
+        this.bindResizeCustomFocus(
+            customInput, '.resize-specific-radio[value="custom"]', fieldset, () => this.clearResizeAll()
+        );
     }
 
-    bindParamItemLock(lockBtn, widthInput, heightInput, lockIcon)
+    bindParamItemLock(lockBtn, widthInput, heightInput)
     {
         lockBtn.addEventListener('click', () => {
-            lockBtn.classList.toggle('locked');
-            let isLocked = lockBtn.classList.contains('locked');
-            lockIcon.src = '/assets/admin/'+(isLocked ? 'lock-solid' : 'unlock-solid')+'.svg';
+            let isLocked = !lockBtn.classList.contains('locked');
+            SharedUtils.applyLockVisual(lockBtn, isLocked);
             if(!isLocked){
                 return;
             }
@@ -191,9 +210,9 @@ class TilesetParamBinder
 
     bindParamItemPresets(presetBtns, widthInput, heightInput)
     {
-        for(let btn of presetBtns){
-            btn.addEventListener('click', () => {
-                let size = Number(btn.dataset.size);
+        for(let presetButton of presetBtns){
+            presetButton.addEventListener('click', () => {
+                let size = SharedUtils.toNumber(presetButton.dataset.size, 0);
                 widthInput.value = size;
                 heightInput.value = size;
             });
@@ -208,9 +227,8 @@ class TilesetParamBinder
         let lockBtn = clone.querySelector('.param-size-lock');
         let widthInput = clone.querySelector('.param-tile-width');
         let heightInput = clone.querySelector('.param-tile-height');
-        let lockIcon = lockBtn.querySelector('.lock-icon');
         let bgColorInput = clone.querySelector('.param-bg-color');
-        this.bindParamItemLock(lockBtn, widthInput, heightInput, lockIcon);
+        this.bindParamItemLock(lockBtn, widthInput, heightInput);
         this.bindParamItemPresets(clone.querySelectorAll('.tile-preset-btn'), widthInput, heightInput);
         this.buildResizeOptions(
             clone.querySelector('.resize-specific-section'),
@@ -219,7 +237,9 @@ class TilesetParamBinder
             'resize-specific-custom'
         );
         this.bindResizeSpecific(clone.querySelector('.tileset-param-fieldset'));
-        this.detectBgColor(file, (hex) => { bgColorInput.value = hex; });
+        this.detectBgColor(file, (hex) => {
+            bgColorInput.value = hex;
+        });
         clone.querySelector('.param-override-label').classList.toggle('hidden', !this.isFilenameDuplicate(file.name));
         paramsContainer.appendChild(clone);
     }
@@ -237,14 +257,13 @@ class TilesetParamBinder
 
     buildFileParams(item, resizeAllValue)
     {
-        let resizeSpecific = this.getResizeSpecificValue(item.fieldset);
         return {
-            tileWidth: Number(item.fieldset.querySelector('.param-tile-width').value),
-            tileHeight: Number(item.fieldset.querySelector('.param-tile-height').value),
-            spacing: Number(item.fieldset.querySelector('.param-spacing').value),
-            margin: Number(item.fieldset.querySelector('.param-margin').value),
+            tileWidth: SharedUtils.toNumber(item.fieldset.querySelector('.param-tile-width').value, 0),
+            tileHeight: SharedUtils.toNumber(item.fieldset.querySelector('.param-tile-height').value, 0),
+            spacing: SharedUtils.toNumber(item.fieldset.querySelector('.param-spacing').value, 0),
+            margin: SharedUtils.toNumber(item.fieldset.querySelector('.param-margin').value, 0),
             bgColor: item.fieldset.querySelector('.param-bg-color').value || '#000000',
-            resizeValue: resizeSpecific || resizeAllValue
+            resizeValue: this.getResizeSpecificValue(item.fieldset) || resizeAllValue
         };
     }
 
@@ -264,5 +283,5 @@ class TilesetParamBinder
         }
         return toUpload;
     }
-
 }
+window.TilesetParamBinder = TilesetParamBinder;

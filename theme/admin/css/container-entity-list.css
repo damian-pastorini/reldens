@@ -235,8 +235,7 @@
 
     .extra-content-container,
     .default-room-container {
-        display: flex;
-        flex-direction: column;
+        display: block;
         width: 100%;
         padding: var(--space-lg) 0;
         margin-top: var(--space-lg);
@@ -251,6 +250,7 @@
     .association-maps-container {
         display: block;
         width: 100%;
+        max-width: 100%;
         max-height: 31.25rem;
         overflow: auto;
     }

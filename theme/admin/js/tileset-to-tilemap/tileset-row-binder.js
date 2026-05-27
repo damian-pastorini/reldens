@@ -14,20 +14,26 @@ class TilesetRowBinder
         this.bindHeader(row, i);
         this.bindCanvas(canvas, i);
         this.bindRefs(row, i, canvas, list);
-        this.bindControls(row, i, list);
+        this.bindControls(row, i);
+        this.applyCollapsedState(row, i);
         this.app.refresh(i);
     }
 
-    bindHeader(row)
+    applyCollapsedState(row, i)
     {
-        let collapseBtn = row.querySelector('.tileset-collapse-btn');
+        if(this.app.state[i] && this.app.state[i].collapsed){
+            row.classList.add('collapsed');
+        }
+    }
+
+    bindHeader(row, i)
+    {
         let tilesetHeader = row.querySelector('.tileset-header');
         tilesetHeader.addEventListener('click', () => {
-            let isCollapsed = row.classList.toggle('collapsed');
-            let icon = collapseBtn.querySelector('.tileset-collapse-icon');
-            icon.src = '/assets/admin/'+(isCollapsed
-                ? 'circle-chevron-down-solid-full'
-                : 'circle-chevron-up-solid-full')+'.svg';
+            row.classList.toggle('collapsed');
+            if(this.app.state[i]){
+                this.app.state[i].collapsed = row.classList.contains('collapsed');
+            }
         });
     }
 
@@ -36,7 +42,7 @@ class TilesetRowBinder
         canvas.addEventListener('mousedown', (mouseEvent) => this.app.interaction.handleCanvasMouseDown(mouseEvent, i));
         canvas.addEventListener('mousemove', (mouseEvent) => this.app.interaction.handleCanvasMouseMove(mouseEvent, i));
         canvas.addEventListener('mouseup', () => this.app.interaction.handleCanvasMouseUp());
-        canvas.addEventListener('mouseleave', () => this.app.interaction.handleCanvasMouseUp());
+        canvas.addEventListener('mouseleave', () => this.app.interaction.handleCanvasMouseLeave());
         canvas.addEventListener('contextmenu', (event) => event.preventDefault());
         canvas.addEventListener('wheel', (wheelEvent) => {
             if(!wheelEvent.ctrlKey){
@@ -53,8 +59,10 @@ class TilesetRowBinder
     {
         this.app.zoomLevels[i] = 1;
         this.app.refs[i] = {
+            row,
             canvas,
             list,
+            canvasScroll: canvas.parentElement,
             addBtn: row.querySelector('.add-element-btn'),
             toggleAllBtn: row.querySelector('.toggle-all-btn'),
             viewAllBtn: row.querySelector('.view-all-btn'),
@@ -76,7 +84,7 @@ class TilesetRowBinder
         };
     }
 
-    bindControls(row, i, list)
+    bindControls(row, i)
     {
         let refs = this.app.refs[i];
         let capturedI = i;
@@ -109,24 +117,13 @@ class TilesetRowBinder
             refs.nameAllBtn.addEventListener('click', () => this.app.ai.runAiName(capturedI, refs.nameAllBtn));
         }
         refs.bulkSelectAll.addEventListener('change', () => {
-            let checkboxes = list.querySelectorAll('.element-bulk-select');
-            let isChecked = refs.bulkSelectAll.checked;
-            for(let checkbox of checkboxes){
-                checkbox.checked = isChecked;
-            }
-            for(let element of this.app.state[capturedI].elements){
-                element.bulkSelected = isChecked;
-            }
-            for(let spot of this.app.state[capturedI].spots || []){
-                spot.bulkSelected = isChecked;
-            }
-            this.app.generator.updateGenerateButtonState();
+            this.applyBulkSelection(capturedI, refs);
         });
-        refs.legendSearch.addEventListener('input', () => this.app.editor.renderLegend(capturedI));
-        refs.showElementsCheck.addEventListener('change', () => this.app.editor.renderLegend(capturedI));
-        refs.showClustersCheck.addEventListener('change', () => this.app.editor.renderLegend(capturedI));
+        refs.legendSearch.addEventListener('input', () => this.scheduleLegendSearch(capturedI));
+        refs.showElementsCheck.addEventListener('change', () => this.applyFilterChange(capturedI));
+        refs.showClustersCheck.addEventListener('change', () => this.applyFilterChange(capturedI));
         if(refs.showSpotsCheck){
-            refs.showSpotsCheck.addEventListener('change', () => this.app.editor.renderLegend(capturedI));
+            refs.showSpotsCheck.addEventListener('change', () => this.applyFilterChange(capturedI));
         }
         if(refs.bulkDeleteSpotsBtn){
             refs.bulkDeleteSpotsBtn.addEventListener('click', () => this.bulkDeleteSelectedMapObjects(capturedI));
@@ -134,9 +131,56 @@ class TilesetRowBinder
         this.bindViewControls(capturedI, refs);
         this.bindSessionControls(row, capturedI);
         this.bindLegendTabs(row, capturedI);
+        this.app.editor.legendInteractions.bindListContainer(capturedI);
+        this.app.tooltipPlacement.bindOnce();
         if(this.app.tileOptionsBinder){
             this.app.tileOptionsBinder.bind(capturedI, row);
         }
+    }
+
+    applyFilterChange(tilesetIndex)
+    {
+        this.app.editor.legendRenderer.applyLegendVisibility(tilesetIndex);
+        this.app.renderer.renderCanvas(tilesetIndex);
+    }
+
+    scheduleLegendSearch(tilesetIndex)
+    {
+        if(this.searchDebounceTimers && this.searchDebounceTimers[tilesetIndex]){
+            clearTimeout(this.searchDebounceTimers[tilesetIndex]);
+        }
+        if(!this.searchDebounceTimers){
+            this.searchDebounceTimers = {};
+        }
+        this.searchDebounceTimers[tilesetIndex] = setTimeout(() => {
+            this.searchDebounceTimers[tilesetIndex] = null;
+            this.app.editor.legendRenderer.applyLegendVisibility(tilesetIndex);
+        }, 100);
+    }
+
+    applyBulkSelection(tilesetIndex, refs)
+    {
+        let isChecked = refs.bulkSelectAll.checked;
+        let filter = this.app.editor.elementVisibilityFilter(refs);
+        for(let element of this.app.state[tilesetIndex].elements){
+            if(!this.app.editor.matchesVisibilityFilter(element, filter)){
+                continue;
+            }
+            element.bulkSelected = isChecked;
+        }
+        if(filter.showSpots){
+            for(let spot of this.app.state[tilesetIndex].spots || []){
+                spot.bulkSelected = isChecked;
+            }
+        }
+        for(let checkbox of refs.list.querySelectorAll('.element-bulk-select')){
+            let row = checkbox.closest('.element-row, .spot-row');
+            if(row && row.classList.contains('hidden')){
+                continue;
+            }
+            checkbox.checked = isChecked;
+        }
+        this.app.generator.updateGenerateButtonState();
     }
 
     countSelected(items, remaining)
@@ -181,17 +225,20 @@ class TilesetRowBinder
         let panes = row.querySelectorAll('.legend-tab-pane');
         for(let tab of tabs){
             tab.addEventListener('click', () => {
-                this.activateLegendTab(tab, tabs, panes);
+                this.activateLegendTab(tab, tabs, panes, tilesetIndex);
                 this.app.renderer.renderCanvas(tilesetIndex);
             });
         }
     }
 
-    activateLegendTab(activeTab, tabs, panes)
+    activateLegendTab(activeTab, tabs, panes, tilesetIndex)
     {
         let targetTab = activeTab.dataset.tab;
         this.setLegendTabActive(activeTab, tabs);
         this.setLegendPaneVisible(targetTab, panes);
+        if(undefined !== tilesetIndex && this.app.refs[tilesetIndex]){
+            this.app.refs[tilesetIndex].activeTab = targetTab;
+        }
     }
 
     setLegendTabActive(activeTab, tabs)
@@ -210,7 +257,8 @@ class TilesetRowBinder
 
     bindViewControls(capturedI, refs)
     {
-        refs.toggleAllBtn.textContent = 'Hide Others';
+        refs.toggleAllBtn.textContent = this.app.showAllElements ? 'Hide Others' : 'Highlight All';
+        refs.viewAllBtn.textContent = this.app.viewAllMode ? 'View Selected' : 'View All';
         refs.toggleAllBtn.addEventListener('click', () => {
             this.app.showAllElements = !this.app.showAllElements;
             refs.toggleAllBtn.textContent = this.app.showAllElements ? 'Hide Others' : 'Highlight All';

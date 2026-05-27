@@ -35,20 +35,27 @@ class TilesetStateBuilder
             item.freeSpaceAround = elementData.freeSpaceAround !== undefined ? elementData.freeSpaceAround : 1;
             item.allowPathsInFreeSpace = elementData.allowPathsInFreeSpace || false;
             item.bulkSelected = elementData.bulkSelected || false;
+            item.mapCentered = SharedUtils.toNumber(elementData.mapCentered, 0);
             elements.push(item);
         }
         return elements;
     }
 
-    build(response)
+    resetState()
     {
-        this.app.state = [];
         this.app.selectedTileset = null;
         this.app.selectedElement = null;
         this.app.selectedSpot = null;
         this.app.refs = {};
+        this.app.zoomLevels = {};
         this.app.imageCache = {};
         this.globalElementIndex = 0;
+    }
+
+    build(response)
+    {
+        this.app.state = [];
+        this.resetState();
         let container = this.app.getElement('.tilesets-container');
         container.textContent = '';
         this.append(response);
@@ -69,36 +76,31 @@ class TilesetStateBuilder
         this.app.generator.updateGenerateButtonState();
     }
 
-    buildTileset(tilesetData, i, template, container, sessionId)
+    buildTilesetExtras(tilesetData, elements)
     {
-        let elements = this.buildElementsList(tilesetData.elements, this.globalElementIndex);
-        this.globalElementIndex += elements.length;
-        this.app.state.push({
-            sessionId,
-            imageUrl: this.remapImageUrl(tilesetData.imageUrl, sessionId),
-            imageId: tilesetData.imageId,
-            filename: tilesetData.filename,
-            filePath: tilesetData.filePath,
-            imageWidth: tilesetData.imageWidth,
-            imageHeight: tilesetData.imageHeight,
-            tileWidth: tilesetData.tileWidth,
-            tileHeight: tilesetData.tileHeight,
-            spacing: tilesetData.spacing,
-            margin: tilesetData.margin,
-            tilesetColumns: tilesetData.tilesetColumns,
-            tileRows: tilesetData.tileRows,
-            tileCount: tilesetData.tileCount,
+        return {
             bgColor: tilesetData.bgColor || null,
             filteredTiles: tilesetData.filteredTiles || [],
             originalTileWidth: tilesetData.originalTileWidth || tilesetData.tileWidth,
             originalTileHeight: tilesetData.originalTileHeight || tilesetData.tileHeight,
             resizeOption: tilesetData.resizeOption || 0,
-            generatorType: tilesetData.generatorType || 'elements-composite-loader',
+            generatorType: tilesetData.generatorType || SharedUtils.DEFAULT_GENERATOR_TYPE,
             associationsProperties: tilesetData.associationsProperties || null,
-            tileOptions: tilesetData.tileOptions || null,
+            tileOptions: tilesetData.tileOptions || this.app.tileOptionsBinder.buildDefaultTileOptions(),
             spots: tilesetData.spots || [],
+            collapsed: Boolean(tilesetData.collapsed),
             elements
-        });
+        };
+    }
+
+    buildTileset(tilesetData, i, template, container, sessionId)
+    {
+        let elements = this.buildElementsList(tilesetData.elements, this.globalElementIndex);
+        this.globalElementIndex += elements.length;
+        let entry = Object.assign({ sessionId }, this.buildTilesetExtras(tilesetData, elements));
+        SharedUtils.copyTilesetFields(entry, tilesetData);
+        entry.imageUrl = this.remapImageUrl(tilesetData.imageUrl, sessionId);
+        this.app.state.push(entry);
         let tilesetFragment = template.content.cloneNode(true);
         let rowEl = tilesetFragment.querySelector('.tileset-row');
         rowEl.dataset.tilesetIndex = i;
@@ -111,10 +113,14 @@ class TilesetStateBuilder
 
     prepareSessionData(data)
     {
-        let container = this.app.getElement('.tileset-analyzer');
-        data.showAiControls = '1' === container.dataset.showAiControls;
-        let providers = container.dataset.activeProviders;
-        data.activeProviders = providers ? providers.split(',') : [];
+        if(undefined === this.app.cachedShowAiControls){
+            let container = this.app.getElement('.tileset-analyzer');
+            this.app.cachedShowAiControls = '1' === container.dataset.showAiControls;
+            let providers = container.dataset.activeProviders;
+            this.app.cachedActiveProviders = providers ? providers.split(',') : [];
+        }
+        data.showAiControls = this.app.cachedShowAiControls;
+        data.activeProviders = this.app.cachedActiveProviders;
     }
 
     loadFromSession(data)
@@ -151,12 +157,7 @@ class TilesetStateBuilder
 
     findTilesetIndex(filename)
     {
-        for(let j = 0; j < this.app.state.length; j++){
-            if(this.app.state[j].filename === filename){
-                return j;
-            }
-        }
-        return -1;
+        return this.app.findTilesetIndexByFilename(filename);
     }
 
     appendOrReplace(response, overrideFilenames)
@@ -186,30 +187,12 @@ class TilesetStateBuilder
         let elements = this.buildElementsList(tilesetData.elements, globalOffset);
         let existing = this.app.state[existingIndex];
         existing.sessionId = sessionId;
+        SharedUtils.copyTilesetFields(existing, tilesetData);
         existing.imageUrl = this.remapImageUrl(tilesetData.imageUrl, sessionId);
-        existing.imageId = tilesetData.imageId;
-        existing.filePath = tilesetData.filePath;
-        existing.imageWidth = tilesetData.imageWidth;
-        existing.imageHeight = tilesetData.imageHeight;
-        existing.tileWidth = tilesetData.tileWidth;
-        existing.tileHeight = tilesetData.tileHeight;
-        existing.spacing = tilesetData.spacing;
-        existing.margin = tilesetData.margin;
-        existing.tilesetColumns = tilesetData.tilesetColumns;
-        existing.tileRows = tilesetData.tileRows;
-        existing.tileCount = tilesetData.tileCount;
-        existing.bgColor = tilesetData.bgColor || null;
-        existing.filteredTiles = tilesetData.filteredTiles || [];
-        existing.originalTileWidth = tilesetData.originalTileWidth || tilesetData.tileWidth;
-        existing.originalTileHeight = tilesetData.originalTileHeight || tilesetData.tileHeight;
-        existing.resizeOption = tilesetData.resizeOption || 0;
-        existing.generatorType = tilesetData.generatorType || 'elements-composite-loader';
-        existing.associationsProperties = tilesetData.associationsProperties || null;
-        existing.tileOptions = tilesetData.tileOptions || null;
-        existing.spots = tilesetData.spots || [];
-        existing.elements = elements;
+        Object.assign(existing, this.buildTilesetExtras(tilesetData, elements));
         delete this.app.imageCache[existingIndex];
-        let existingRow = document.querySelector('[data-tileset-index="'+existingIndex+'"]');
+        let existingRefs = this.app.refs[existingIndex];
+        let existingRow = existingRefs ? existingRefs.row : null;
         if(existingRow){
             this.app.strategyEditor.applyToRow(
                 existingRow,
@@ -224,7 +207,8 @@ class TilesetStateBuilder
     {
         let mapMeta = [];
         for(let j = 0; j < this.app.state.length; j++){
-            let row = document.querySelector('[data-tileset-index="'+j+'"]');
+            let refs = this.app.refs[j];
+            let row = refs ? refs.row : null;
             mapMeta.push({
                 mapName: row ? row.querySelector('.tileset-map-name').value : '',
                 mapTitle: row ? row.querySelector('.tileset-map-title').value : ''
@@ -254,13 +238,7 @@ class TilesetStateBuilder
         let mapMeta = this.collectMapMeta();
         mapMeta.splice(i, 1);
         this.app.state.splice(i, 1);
-        this.app.selectedTileset = null;
-        this.app.selectedElement = null;
-        this.app.selectedSpot = null;
-        this.app.refs = {};
-        this.app.zoomLevels = {};
-        this.app.imageCache = {};
-        this.globalElementIndex = 0;
+        this.resetState();
         this.rebuildAllRows(mapMeta);
         this.app.updatePaletteStyles();
         this.app.generator.updateGenerateButtonState();
@@ -290,7 +268,8 @@ class TilesetStateBuilder
         let tilesetFragment = template.content.cloneNode(true);
         tilesetFragment.querySelector('.tileset-row').dataset.tilesetIndex = i;
         tilesetFragment.querySelector('.tileset-title').textContent = tilesetData.filename;
-        let genType = tilesetData.generatorType ? tilesetData.generatorType : 'elements-composite-loader';
+        let genType = tilesetData.generatorType ? tilesetData.generatorType : SharedUtils.DEFAULT_GENERATOR_TYPE;
         this.appendFragmentAndBindRow(i, tilesetFragment, container, genType, tilesetData.associationsProperties);
     }
 }
+window.TilesetStateBuilder = TilesetStateBuilder;

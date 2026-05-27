@@ -1,5 +1,9 @@
 class TilesetCanvasInteraction
 {
+    static DRAG_MODE_ADD = 'add';
+    static DRAG_MODE_REMOVE = 'remove';
+    static DRAG_MODE_MOVE = 'move';
+
     constructor(app)
     {
         this.app = app;
@@ -13,17 +17,22 @@ class TilesetCanvasInteraction
         return this.tileEditor.getTileFromEvent(event, canvas, tileset);
     }
 
+    flatIndexFor(tilesetIndex, tile)
+    {
+        return tile.row * this.app.state[tilesetIndex].tilesetColumns + tile.col;
+    }
+
     beginRightDrag(tilesetIndex, tile)
     {
         this.app.isDragging = true;
         this.app.isRightDrag = true;
-        this.app.lastDragTile = tile.row+','+tile.col;
+        this.app.lastDragTile = this.flatIndexFor(tilesetIndex, tile);
     }
 
     selectAndScroll(tilesetIndex, tile)
     {
         this.tileEditor.handleTileSelectClick(tilesetIndex, tile.row, tile.col);
-        this.app.editor.scrollLegendToSelected(tilesetIndex);
+        this.app.editor.scroller.scrollLegendToSelected(tilesetIndex);
     }
 
     getNextDragTile(event, tilesetIndex)
@@ -32,7 +41,7 @@ class TilesetCanvasInteraction
         if(!tile){
             return null;
         }
-        let tileKey = tile.row+','+tile.col;
+        let tileKey = this.flatIndexFor(tilesetIndex, tile);
         if(tileKey === this.app.lastDragTile){
             return null;
         }
@@ -95,14 +104,15 @@ class TilesetCanvasInteraction
         }
         let element = this.app.state[tilesetIndex].elements[this.app.selectedElement];
         let ownerLayerIndex = this.tileEditor.findTileLayerIndex(element, tile.row, tile.col);
-        this.app.dragToggleMode = 'add';
+        this.app.dragToggleMode = TilesetCanvasInteraction.DRAG_MODE_ADD;
         if(-1 !== ownerLayerIndex){
             let ownerLayer = element.layers[ownerLayerIndex];
-            this.app.dragToggleMode =
-                ownerLayer.type === this.app.activeLayerType ? 'remove' : 'move';
+            this.app.dragToggleMode = ownerLayer.type === this.app.activeLayerType
+                ? TilesetCanvasInteraction.DRAG_MODE_REMOVE
+                : TilesetCanvasInteraction.DRAG_MODE_MOVE;
         }
         this.app.isDragging = true;
-        this.app.lastDragTile = tile.row+','+tile.col;
+        this.app.lastDragTile = this.flatIndexFor(tilesetIndex, tile);
         this.tileEditor.handleTileEditClick(tilesetIndex, tile.row, tile.col);
     }
 
@@ -146,14 +156,14 @@ class TilesetCanvasInteraction
         let ownerLayerIndex = this.tileEditor.findTileLayerIndex(element, tile.row, tile.col);
         let tileExists = -1 !== ownerLayerIndex;
         let shouldProcess = false;
-        if('add' === this.app.dragToggleMode){
+        if(TilesetCanvasInteraction.DRAG_MODE_ADD === this.app.dragToggleMode){
             shouldProcess = !tileExists;
         }
-        if('remove' === this.app.dragToggleMode){
+        if(TilesetCanvasInteraction.DRAG_MODE_REMOVE === this.app.dragToggleMode){
             shouldProcess = tileExists
                 && element.layers[ownerLayerIndex].type === this.app.activeLayerType;
         }
-        if('move' === this.app.dragToggleMode){
+        if(TilesetCanvasInteraction.DRAG_MODE_MOVE === this.app.dragToggleMode){
             shouldProcess = !tileExists
                 || element.layers[ownerLayerIndex].type !== this.app.activeLayerType;
         }
@@ -161,6 +171,26 @@ class TilesetCanvasInteraction
             return;
         }
         this.tileEditor.handleTileEditClick(tilesetIndex, tile.row, tile.col);
+    }
+
+    resetDragState()
+    {
+        this.app.isDragging = false;
+        this.app.isRightDrag = false;
+        this.app.dragToggleMode = null;
+        this.app.lastDragTile = null;
+    }
+
+    handleCanvasMouseLeave()
+    {
+        if(!this.app.isDragging){
+            return;
+        }
+        if(this.app.isAreaSelect){
+            this.app.areaSelectEnd = this.app.areaSelectStart;
+            return;
+        }
+        this.resetDragState();
     }
 
     handleCanvasMouseUp()
@@ -185,12 +215,11 @@ class TilesetCanvasInteraction
                 this.tileEditor.applyAreaRemoval(tilesetIndex, minRow, maxRow, minCol, maxCol);
             }
         }
-        this.app.isDragging = false;
-        this.app.isRightDrag = false;
-        this.app.dragToggleMode = null;
-        this.app.lastDragTile = null;
-        if(wasDragging && null !== draggedTileset){
+        this.resetDragState();
+        if(wasDragging && null !== draggedTileset && this.app.legendStructureDirty){
+            this.app.legendStructureDirty = false;
             this.app.editor.renderLegend(draggedTileset);
         }
     }
 }
+window.TilesetCanvasInteraction = TilesetCanvasInteraction;

@@ -50,18 +50,20 @@
                         <button type="button" class="button merge-btn" disabled>Merge</button>
                         <span class="tooltip button button-circle button-sm button-dark tileset-ai-only hidden">?<span class="tooltip-text">Generates files for ALL elements IN EVERY TILESET.</span></span>
                         <button type="button" class="button button-success generate-btn">Generate All</button>
+                        <button type="button" class="button button-secondary all-to-maps-wizard-btn hidden">All to Maps Wizard</button>
                         <span class="tooltip button button-circle button-sm button-dark tileset-ai-only hidden">?<span class="tooltip-text">Generates files ONLY for SELECTED elements IN EVERY TILESET.</span></span>
                         <button type="button" class="button button-primary generate-selected-btn">Generate Selected</button>
-                        <button type="button" class="button button-secondary maps-wizard-btn hidden">Maps Wizard</button>
+                        <button type="button" class="button button-secondary selected-to-maps-wizard-btn hidden">Selected to Maps Wizard</button>
                         <span class="generate-loading spinner hidden"></span>
                     </div>
                 </div>
             </div>
             <div class="global-tile-options hidden">
                 <div class="tileset-tile-options">
-                    <div class="tile-options-group">
+                    <div class="tile-options-group collapsed">
                         <div class="tile-options-group-header">
                             <span class="tile-options-group-label">Ground Tiles</span>
+                            <img class="tile-options-group-collapse-icon" src="/assets/admin/circle-chevron-up-solid-full.svg" alt="Toggle">
                         </div>
                         <div class="tile-option-cells-row">
                             <div class="tile-option-cell tile-option-btn" data-option="groundTile" data-multi="false">
@@ -82,9 +84,10 @@
                         <div class="tile-pick-status hidden" data-pick-for="randomGroundTiles"><span class="tile-pick-label"></span><button type="button" class="button button-sm tile-pick-cancel">Cancel</button></div>
                         <button type="button" class="button button-sm tile-options-group-clear-all" data-option="ground">Clear all</button>
                     </div>
-                    <div class="tile-options-group">
+                    <div class="tile-options-group collapsed">
                         <div class="tile-options-group-header">
                             <span class="tile-options-group-label">Path Tiles</span>
+                            <img class="tile-options-group-collapse-icon" src="/assets/admin/circle-chevron-up-solid-full.svg" alt="Toggle">
                         </div>
                         <div class="tile-position-grid tile-position-grid-3x3" data-option="surroundingTiles">
                             <div class="tile-position-cell" data-pos="-1,-1"><span class="pos-dir">NW</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
@@ -101,9 +104,10 @@
                         <div class="tile-pick-status hidden" data-pick-for="pathTile"><span class="tile-pick-label"></span><button type="button" class="button button-sm tile-pick-cancel">Cancel</button></div>
                         <button type="button" class="button button-sm tile-options-group-clear-all" data-option="pathTilesGroup">Clear all</button>
                     </div>
-                    <div class="tile-options-group">
+                    <div class="tile-options-group collapsed">
                         <div class="tile-options-group-header">
                             <span class="tile-options-group-label">Path Corner Tiles</span>
+                            <img class="tile-options-group-collapse-icon" src="/assets/admin/circle-chevron-up-solid-full.svg" alt="Toggle">
                         </div>
                         <div class="tile-position-grid tile-position-grid-2x2" data-option="corners">
                             <div class="tile-position-cell" data-pos="-1,-1"><span class="pos-dir">NW</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
@@ -114,9 +118,10 @@
                         <div class="tile-pick-status hidden" data-pick-for="corners"><span class="tile-pick-label"></span><button type="button" class="button button-sm tile-pick-cancel">Cancel</button></div>
                         <button type="button" class="button button-sm tile-options-group-clear-all" data-option="corners">Clear all</button>
                     </div>
-                    <div class="tile-options-group">
+                    <div class="tile-options-group collapsed">
                         <div class="tile-options-group-header">
                             <span class="tile-options-group-label">Border Tiles</span>
+                            <img class="tile-options-group-collapse-icon" src="/assets/admin/circle-chevron-up-solid-full.svg" alt="Toggle">
                         </div>
                         <div class="tile-position-grid tile-position-grid-3x3">
                             <div class="tile-position-cell" data-option="borderCornersTiles" data-pos="top-left"><span class="pos-dir">NW</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
@@ -207,8 +212,8 @@
                                     <option value="random">Random</option>
                                 </select>
                             </label>
-                            <label><input type="checkbox" class="assoc-order-by-size"> Order elements by size</label>
-                            <label><input type="checkbox" class="assoc-randomize-quantities" checked> Randomize quantities</label>
+                            <label><input type="checkbox" class="assoc-order-by-size" checked> Order elements by size</label>
+                            <label><input type="checkbox" class="assoc-randomize-quantities"> Randomize quantities</label>
                             <label><input type="checkbox" class="assoc-apply-surrounding-path-tiles"> Apply surrounding path tiles</label>
                             <label><input type="checkbox" class="assoc-automatically-extrude-maps" checked> Automatically extrude maps</label>
                         </div>
@@ -314,9 +319,10 @@
                 </div>
                 <div class="legend-tab-pane hidden" data-tab="map-tiles">
                     <div class="tileset-tile-options">
-                        <div class="tile-options-group">
+                        <div class="tile-options-group collapsed">
                             <div class="tile-options-group-header">
                                 <span class="tile-options-group-label">Ground Tiles</span>
+                                <img class="tile-options-group-collapse-icon" src="/assets/admin/circle-chevron-up-solid-full.svg" alt="Toggle">
                             </div>
                             <div class="tile-option-cells-row">
                                 <div class="tile-option-cell tile-option-btn" data-option="groundTile" data-multi="false">
@@ -337,10 +343,11 @@
                             <div class="tile-pick-status hidden" data-pick-for="randomGroundTiles"><span class="tile-pick-label"></span><button type="button" class="button button-sm button-danger tile-pick-cancel">Cancel</button></div>
                             <button type="button" class="button button-sm button-danger tile-options-group-clear-all" data-option="ground">Clear all</button>
                         </div>
-                        <div class="tile-options-group">
+                        <div class="tile-options-group collapsed">
                             <div class="tile-options-group-header">
                                 <span class="tile-options-group-label">Path Tiles</span>
                                 <button type="button" class="button button-sm button-secondary tile-reference-btn" data-reference-img="/assets/admin/tile-references/path-surrounding-tiles.png" data-reference-title="Path Tiles">Check Reference</button>
+                                <img class="tile-options-group-collapse-icon" src="/assets/admin/circle-chevron-up-solid-full.svg" alt="Toggle">
                             </div>
                             <div class="tile-position-grid tile-position-grid-3x3" data-option="surroundingTiles">
                                 <div class="tile-position-cell" data-pos="-1,-1"><span class="pos-dir">NW</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
@@ -357,10 +364,11 @@
                             <div class="tile-pick-status hidden" data-pick-for="pathTile"><span class="tile-pick-label"></span><button type="button" class="button button-sm button-danger tile-pick-cancel">Cancel</button></div>
                             <button type="button" class="button button-sm button-danger tile-options-group-clear-all" data-option="pathTilesGroup">Clear all</button>
                         </div>
-                        <div class="tile-options-group">
+                        <div class="tile-options-group collapsed">
                             <div class="tile-options-group-header">
                                 <span class="tile-options-group-label">Path Corner Tiles</span>
                                 <button type="button" class="button button-sm button-secondary tile-reference-btn" data-reference-img="/assets/admin/tile-references/path-corner-tiles.png" data-reference-title="Path Corner Tiles">Check Reference</button>
+                                <img class="tile-options-group-collapse-icon" src="/assets/admin/circle-chevron-up-solid-full.svg" alt="Toggle">
                             </div>
                             <div class="tile-position-grid tile-position-grid-2x2" data-option="corners">
                                 <div class="tile-position-cell" data-pos="-1,-1"><span class="pos-dir">NW</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
@@ -371,10 +379,11 @@
                             <div class="tile-pick-status hidden" data-pick-for="corners"><span class="tile-pick-label"></span><button type="button" class="button button-sm button-danger tile-pick-cancel">Cancel</button></div>
                             <button type="button" class="button button-sm button-danger tile-options-group-clear-all" data-option="corners">Clear all</button>
                         </div>
-                        <div class="tile-options-group">
+                        <div class="tile-options-group collapsed">
                             <div class="tile-options-group-header">
                                 <span class="tile-options-group-label">Border Tiles</span>
                                 <button type="button" class="button button-sm button-secondary tile-reference-btn" data-reference-img="/assets/admin/tile-references/path-border-tiles.png" data-reference-title="Border Tiles">Check Reference</button>
+                                <img class="tile-options-group-collapse-icon" src="/assets/admin/circle-chevron-up-solid-full.svg" alt="Toggle">
                             </div>
                             <div class="tile-position-grid tile-position-grid-3x3">
                                 <div class="tile-position-cell" data-option="borderCornersTiles" data-pos="top-left"><span class="pos-dir">NW</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
@@ -427,6 +436,9 @@
                 </div>
                 <div class="form-group">
                     <label>Free space around: <input type="number" class="element-free-space" min="0" value="1"></label>
+                </div>
+                <div class="form-group">
+                    <label><span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">Center-out placement order. 0 means off. Lower values place closer to the center; equal values share placement rings.</span></span>Map centered order: <input type="number" class="element-map-centered" min="0" value="0"></label>
                 </div>
             </div>
             <div class="form-group">
@@ -611,6 +623,10 @@
         </div>
         <div class="modal-body">
             <p class="confirm-modal-message"></p>
+            <div class="confirm-modal-selector hidden">
+                <label class="confirm-modal-selector-label" for="confirm-modal-select"></label>
+                <select id="confirm-modal-select" class="confirm-modal-select"></select>
+            </div>
         </div>
         <div class="modal-footer">
             <button type="button" class="button button-secondary confirm-modal-cancel">Cancel</button>
@@ -649,10 +665,11 @@
         </div>
         <div class="spot-detail hidden">
             <div class="spot-tile-config tileset-tile-options">
-                <div class="tile-options-group">
+                <div class="tile-options-group collapsed">
                     <div class="tile-options-group-header">
                         <span class="tile-options-group-label">Tile Configuration</span>
                         <button type="button" class="button button-sm button-secondary tile-reference-btn" data-reference-img="/assets/admin/tile-references/path-surrounding-tiles.png" data-reference-title="Tile Configuration">Check Reference</button>
+                        <img class="tile-options-group-collapse-icon" src="/assets/admin/circle-chevron-up-solid-full.svg" alt="Toggle">
                     </div>
                     <div class="tile-position-grid tile-position-grid-3x3" data-option="surroundingTiles">
                         <div class="tile-position-cell" data-pos="-1,-1"><span class="pos-dir">NW</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
@@ -682,10 +699,11 @@
                     <div class="tile-pick-status hidden" data-pick-for="surroundingTiles"><span class="tile-pick-label"></span><button type="button" class="button button-sm button-danger tile-pick-cancel">Cancel</button></div>
                     <button type="button" class="button button-sm button-danger tile-options-group-clear-all" data-option="surroundingTiles">Clear all</button>
                 </div>
-                <div class="tile-options-group">
+                <div class="tile-options-group collapsed">
                     <div class="tile-options-group-header">
                         <span class="tile-options-group-label">Corner Tiles</span>
                         <button type="button" class="button button-sm button-secondary tile-reference-btn" data-reference-img="/assets/admin/tile-references/path-corner-tiles.png" data-reference-title="Corner Tiles">Check Reference</button>
+                        <img class="tile-options-group-collapse-icon" src="/assets/admin/circle-chevron-up-solid-full.svg" alt="Toggle">
                     </div>
                     <div class="tile-position-grid tile-position-grid-2x2" data-option="corners">
                         <div class="tile-position-cell" data-pos="-1,-1"><span class="pos-dir">NW</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
@@ -696,9 +714,10 @@
                     <div class="tile-pick-status hidden" data-pick-for="corners"><span class="tile-pick-label"></span><button type="button" class="button button-sm button-danger tile-pick-cancel">Cancel</button></div>
                     <button type="button" class="button button-sm button-danger tile-options-group-clear-all" data-option="corners">Clear all</button>
                 </div>
-                <div class="tile-options-group">
+                <div class="tile-options-group collapsed">
                     <div class="tile-options-group-header">
                         <span class="tile-options-group-label">Inner Walls</span>
+                        <img class="tile-options-group-collapse-icon" src="/assets/admin/circle-chevron-up-solid-full.svg" alt="Toggle">
                     </div>
                     <div class="tile-options-group-columns">
                         <div class="tile-options-group-column">
@@ -728,9 +747,10 @@
                         </div>
                     </div>
                 </div>
-                <div class="tile-options-group">
+                <div class="tile-options-group collapsed">
                     <div class="tile-options-group-header">
                         <span class="tile-options-group-label">Outer Walls</span>
+                        <img class="tile-options-group-collapse-icon" src="/assets/admin/circle-chevron-up-solid-full.svg" alt="Toggle">
                     </div>
                     <div class="tile-options-group-columns">
                         <div class="tile-options-group-column">
@@ -766,7 +786,7 @@
                     <span class="tile-options-group-label">Properties</span>
                 </div>
                 <div class="spot-properties-grid">
-                    <label class="spot-prop-label"><span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">Layer placement: false = no reorder, true = place below ground layer, or enter a layer name to place this spot above it (e.g. ground-variations)</span></span>Depth: <input type="text" class="spot-prop spot-depth" data-prop="depth" list="spot-depth-options" placeholder="false"></label>
+                    <label class="spot-prop-label"><span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">Layer placement: empty = no reorder, or enter a layer name to place this spot above it (e.g. ground-variations)</span></span>Depth: <input type="text" class="spot-prop spot-depth" data-prop="depth" list="spot-depth-options" placeholder="(layer name)"></label>
                     <label class="spot-prop-label"><span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">Width of the spot in tiles</span></span>Width (tiles): <input type="number" class="spot-prop spot-width" data-prop="width" min="1"></label>
                     <label class="spot-prop-label"><span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">Height of the spot in tiles</span></span>Height (tiles): <input type="number" class="spot-prop spot-height" data-prop="height" min="1"></label>
                     <label class="spot-prop-label"><span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">Number of instances to place on the map</span></span>Quantity: <input type="number" class="spot-prop spot-quantity" data-prop="quantity" min="1" value="1"></label>
@@ -777,7 +797,7 @@
                     <label class="spot-prop-label"><input type="checkbox" class="spot-prop spot-walkable" data-prop="walkable" checked> <span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">Whether players can walk on this spot</span></span>Walkable</label>
                     <label class="spot-prop-label"><input type="checkbox" class="spot-prop spot-is-element" data-prop="isElement" checked> <span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">Treat spot as an element with free space and paths support</span></span>Is Element</label>
                     <label class="spot-prop-label spot-allow-paths-row hidden"><input type="checkbox" class="spot-prop spot-allow-paths" data-prop="allowPathsInFreeSpace"> <span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">Allow paths to enter the spot's free space area</span></span>Allow Paths in Free Space</label>
-                    <label class="spot-prop-label"><input type="checkbox" class="spot-prop spot-map-centered" data-prop="mapCentered"> <span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">Whether to center this spot on the map</span></span>Map Centered</label>
+                    <label class="spot-prop-label"><span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">Center-out placement order. 0 means off. Lower values place closer to the center; equal values share placement rings.</span></span>Map centered order: <input type="number" class="spot-prop spot-map-centered" data-prop="mapCentered" min="0" value="0"></label>
                     <label class="spot-prop-label"><input type="checkbox" class="spot-prop spot-place-random-path" data-prop="placeRandomPath"> <span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">Place a random path through this spot</span></span>Place Random Path</label>
                     <label class="spot-prop-label"><input type="checkbox" class="spot-prop spot-split-borders" data-prop="splitBordersInLayers"> <span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">Place border tiles in a separate layer</span></span>Split Borders in Layers</label>
                     <label class="spot-prop-label"><input type="checkbox" class="spot-prop spot-border-inner-walls" data-prop="borderInnerWalls"> <span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">Add inner wall borders around the spot</span></span>Border Inner Walls</label>
@@ -798,8 +818,6 @@
 </div>
 </div>
 <datalist id="spot-depth-options">
-    <option value="false"></option>
-    <option value="true"></option>
     <option value="ground"></option>
     <option value="ground-variations"></option>
     <option value="path"></option>
@@ -808,14 +826,20 @@
 <script src="/js/tileset-to-tilemap/shared-utils.js"></script>
 <script src="/js/tileset-to-tilemap/tile-geometry.js"></script>
 <script src="/js/tileset-to-tilemap/canvas-markers.js"></script>
+<script src="/js/tileset-to-tilemap/spot-canvas-drawer.js"></script>
 <script src="/js/tileset-to-tilemap/canvas-renderer.js"></script>
 <script src="/js/tileset-to-tilemap/canvas-tile-editor.js"></script>
 <script src="/js/tileset-to-tilemap/canvas-interaction.js"></script>
 <script src="/js/tileset-to-tilemap/spot-editor.js"></script>
 <script src="/js/tileset-to-tilemap/legend-renderer.js"></script>
+<script src="/js/tileset-to-tilemap/element-namer.js"></script>
+<script src="/js/tileset-to-tilemap/legend-scroller.js"></script>
+<script src="/js/tileset-to-tilemap/legend-interactions.js"></script>
+<script src="/js/tileset-to-tilemap/spot-interactions.js"></script>
 <script src="/js/tileset-to-tilemap/element-editor.js"></script>
 <script src="/js/tileset-to-tilemap/ai-element-operations.js"></script>
 <script src="/js/tileset-to-tilemap/ai-operations.js"></script>
+<script src="/js/tileset-to-tilemap/ai-bulk-operations.js"></script>
 <script src="/js/tileset-to-tilemap/tileset-ai-request-builder.js"></script>
 <script src="/js/tileset-to-tilemap/session-item-builder.js"></script>
 <script src="/js/tileset-to-tilemap/session-manager.js"></script>
@@ -824,15 +848,19 @@
 <script src="/js/tileset-to-tilemap/tileset-row-binder.js"></script>
 <script src="/js/tileset-to-tilemap/state-builder.js"></script>
 <script src="/js/tileset-to-tilemap/tileset-strategy-editor.js"></script>
+<script src="/js/tileset-to-tilemap/tileset-serializer.js"></script>
+<script src="/js/tileset-to-tilemap/tileset-ground-selector.js"></script>
 <script src="/js/tileset-to-tilemap/tileset-generator.js"></script>
+<script src="/js/tileset-to-tilemap/tileset-merge-ui-binder.js"></script>
 <script src="/js/tileset-to-tilemap/tileset-merger.js"></script>
 <script src="/js/tileset-to-tilemap/tileset-modal-manager.js"></script>
 <script src="/js/tileset-to-tilemap/tileset-keyboard-shortcuts.js"></script>
 <script src="/js/tileset-to-tilemap/tileset-event-bindings.js"></script>
 <script src="/js/tileset-to-tilemap/tileset-tile-options.js"></script>
-<script src="/js/tileset-to-tilemap/tileset-spot-props-binder.js"></script>
+<script src="/js/tileset-to-tilemap/spot-panel-events.js"></script>
 <script src="/js/tileset-to-tilemap/tileset-tile-options-events.js"></script>
 <script src="/js/tileset-to-tilemap/tileset-tile-options-pick-handler.js"></script>
 <script src="/js/tileset-to-tilemap/tileset-tile-options-clearer.js"></script>
 <script src="/js/tileset-to-tilemap/tileset-tile-options-binder.js"></script>
+<script src="/js/tileset-to-tilemap/tileset-tooltip-placement.js"></script>
 <script src="/js/tileset-to-tilemap/tileset-to-tilemap.js"></script>
