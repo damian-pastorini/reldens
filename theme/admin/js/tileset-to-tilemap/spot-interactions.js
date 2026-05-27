@@ -82,8 +82,16 @@ class TilesetSpotInteractions
             return;
         }
         if('depth' === key){
-            let value = context.target.value;
-            spot[key] = ('' === value || 'false' === value) ? false : ('true' === value ? true : value);
+            let value = context.target.value.trim();
+            if('' === value || 'false' === value){
+                spot[key] = null;
+                return;
+            }
+            if('true' === value){
+                spot[key] = true;
+                return;
+            }
+            spot[key] = value;
             return;
         }
         spot[key] = context.target.value;

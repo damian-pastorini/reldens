@@ -4,11 +4,41 @@ class TilesetGenerator
     constructor(app)
     {
         this.app = app;
+        this.serializer = new TilesetSerializer(app);
     }
 
     bindGenerateConfirm(button, message, callback)
     {
         button.addEventListener('click', () => this.app.modals.show(message, callback));
+    }
+
+    bindGenerateSelectedTopBar(message)
+    {
+        let button = this.app.getElement('.generate-selected-btn');
+        if(!button){
+            return;
+        }
+        button.addEventListener('click', () => this.openGenerateSelectedConfirm(message));
+    }
+
+    openGenerateSelectedConfirm(message)
+    {
+        let selector = new TilesetGroundSelector();
+        let eligible = selector.collectEligibleGroundTilesets(this.app.state);
+        if(eligible.length < 2){
+            this.app.modals.show(message, () => this.generate(true));
+            return;
+        }
+        this.app.modals.show(
+            message,
+            (preferredKey) => this.generate(true, preferredKey),
+            null,
+            'button-primary',
+            {
+                label: 'Use ground / variations from:',
+                options: eligible
+            }
+        );
     }
 
     bind()
@@ -20,9 +50,7 @@ class TilesetGenerator
         this.bindGenerateConfirm(
             this.app.getElement('.generate-btn'), generateAllMessage, () => this.generate(false)
         );
-        this.bindGenerateConfirm(
-            this.app.getElement('.generate-selected-btn'), generateSelectedMessage, () => this.generate(true)
-        );
+        this.bindGenerateSelectedTopBar(generateSelectedMessage);
         this.app.getElement('.save-session-btn').addEventListener(
             'click', () => this.app.sessions.saveAll()
         );
@@ -45,22 +73,40 @@ class TilesetGenerator
             : 'Save and generate ALL elements before opening Maps Wizard? Unsaved changes will be included.'
                 +' Warning: this may fail for very large sessions due to a JSON size limit (~512MB)'
                 +' in Node.js. If generation fails, use "Selected to Maps Wizard" instead.';
+        let selectorOptions = null;
+        if(selectedOnly){
+            let eligible = new TilesetGroundSelector().collectEligibleGroundTilesets(this.app.state);
+            if(eligible.length > 1){
+                selectorOptions = {
+                    label: 'Use ground / variations from:',
+                    options: eligible
+                };
+            }
+        }
         this.app.modals.show(
             confirmMessage,
-            async () => {
-                await this.app.sessions.autoSave();
-                let succeeded = await this.runGenerate(this.getSerializableState(selectedOnly), false);
-                if(!succeeded){
-                    return;
-                }
-                let sid = this.lastGeneratedSessionId || this.app.sessionId;
-                let wizardUrl = new URL(wizardPath, window.location.origin);
-                wizardUrl.searchParams.set('tilesetSessionId', sid);
-                window.location.href = wizardUrl.toString();
-            },
+            (preferredKey) => this.runMapsWizardFlow(selectedOnly, preferredKey, wizardPath),
             null,
-            'button-success'
+            'button-success',
+            selectorOptions
         );
+    }
+
+    async runMapsWizardFlow(selectedOnly, preferredKey, wizardPath)
+    {
+        await this.app.sessions.autoSave();
+        let state = this.getSerializableState(selectedOnly);
+        if(preferredKey){
+            new TilesetGroundSelector().applyPreferredGround(state, preferredKey);
+        }
+        let succeeded = await this.runGenerate(state, false);
+        if(!succeeded){
+            return;
+        }
+        let sid = this.lastGeneratedSessionId || this.app.sessionId;
+        let wizardUrl = new URL(wizardPath, window.location.origin);
+        wizardUrl.searchParams.set('tilesetSessionId', sid);
+        window.location.href = wizardUrl.toString();
     }
 
     bindTileset(row, tilesetIndex)
@@ -97,9 +143,12 @@ class TilesetGenerator
         );
     }
 
-    async generate(selectedOnly)
+    async generate(selectedOnly, preferredGroundKey)
     {
         let fullState = this.getSerializableState(selectedOnly);
+        if(preferredGroundKey){
+            new TilesetGroundSelector().applyPreferredGround(fullState, preferredGroundKey);
+        }
         this.lastFullSerialized = selectedOnly ? null : fullState;
         await this.runGenerate(fullState, false);
     }
@@ -202,69 +251,14 @@ class TilesetGenerator
         resultsSection.classList.remove('hidden');
     }
 
-    serializeElement(element)
-    {
-        return {
-            name: element.name,
-            type: element.type,
-            approved: element.approved,
-            colorIndex: element.colorIndex,
-            quantity: element.quantity,
-            freeSpaceAround: element.freeSpaceAround,
-            allowPathsInFreeSpace: element.allowPathsInFreeSpace,
-            bulkSelected: element.bulkSelected || false,
-            layers: element.layers
-        };
-    }
-
-    resolveGeneratorTypeFromRow(row)
-    {
-        return row?.querySelector('.tileset-generator-type')?.value || SharedUtils.DEFAULT_GENERATOR_TYPE;
-    }
-
-    resolveMapFieldFromRow(row, selector, fallback)
-    {
-        return row ? (row.querySelector(selector).value || fallback) : fallback;
-    }
-
     serializeTileset(tileset, selectedOnly, tilesetIndex, row)
     {
-        let elements = [];
-        for(let element of tileset.elements){
-            if(selectedOnly && !element.bulkSelected){
-                continue;
-            }
-            elements.push(this.serializeElement(element));
-        }
-        let serialized = SharedUtils.copyTilesetFields({}, tileset);
-        serialized.filteredTiles = tileset.filteredTiles || [];
-        serialized.originalTileWidth = tileset.originalTileWidth;
-        serialized.originalTileHeight = tileset.originalTileHeight;
-        serialized.resizeOption = tileset.resizeOption || 0;
-        serialized.mapName = this.resolveMapFieldFromRow(row, '.tileset-map-name', 'tileset-elements');
-        serialized.mapTitle = this.resolveMapFieldFromRow(row, '.tileset-map-title', 'Tileset Elements');
-        serialized.generatorType = this.resolveGeneratorTypeFromRow(row);
-        serialized.associationsProperties = row ? this.app.strategyEditor.readAssociationsProperties(row) : null;
-        serialized.tileOptions = tileset.tileOptions || null;
-        serialized.spots = tileset.spots || [];
-        serialized.collapsed = Boolean(tileset.collapsed);
-        serialized.elements = elements;
-        return serialized;
+        return this.serializer.serializeTileset(tileset, selectedOnly, tilesetIndex, row);
     }
 
     getSerializableState(selectedOnly)
     {
-        let result = [];
-        for(let i = 0; i < this.app.state.length; i++){
-            let refs = this.app.refs[i];
-            result.push(this.serializeTileset(
-                this.app.state[i],
-                selectedOnly,
-                i,
-                refs ? refs.row : null
-            ));
-        }
-        return result;
+        return this.serializer.getSerializableState(selectedOnly);
     }
 
     forEachTilesetRow(callback)

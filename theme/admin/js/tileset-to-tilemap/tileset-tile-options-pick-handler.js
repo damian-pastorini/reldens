@@ -36,6 +36,9 @@ class TilesetTileOptionsPickHandler
     handleTileClick(tilesetIndex, row, col)
     {
         let activeTI = this.binder.activeTilesetIndex;
+        if(-1 !== activeTI && activeTI !== tilesetIndex){
+            return;
+        }
         let sourceTI = (-1 === activeTI) ? tilesetIndex : activeTI;
         let tileset = this.binder.app.state[sourceTI];
         let flatIndex = row * tileset.tilesetColumns + col;
@@ -49,7 +52,7 @@ class TilesetTileOptionsPickHandler
             return;
         }
         if(-1 === activeTI){
-            this.handleGlobalOptionPick(optionKey, posKey, flatIndex, tilesetIndex);
+            this.handleGlobalOptionPick(optionKey, posKey, flatIndex, tileset.filename);
             this.binder.apply.applyToRow(-1, null);
             this.binder.app.renderAllCanvases();
             return;
@@ -59,19 +62,19 @@ class TilesetTileOptionsPickHandler
         this.binder.app.renderer.renderCanvas(activeTI);
     }
 
-    handleGlobalOptionPick(optionKey, posKey, flatIndex, tilesetIndex)
+    handleGlobalOptionPick(optionKey, posKey, flatIndex, tilesetKey)
     {
         if(!this.binder.app.globalTileOptions){
             this.binder.app.globalTileOptions = this.binder.buildDefaultTileOptions();
         }
         let globalOptions = this.binder.app.globalTileOptions;
-        let entry = {tilesetIndex, flatIndex};
+        let entry = {tilesetKey, flatIndex};
         if('randomGroundTiles' === optionKey){
             this.toggleGlobalArrayOption(globalOptions, 'randomGroundTiles', entry);
             return;
         }
         if(null !== posKey){
-            this.applyGlobalPositionalPick(globalOptions, optionKey, posKey, flatIndex, tilesetIndex);
+            this.applyGlobalPositionalPick(globalOptions, optionKey, posKey, flatIndex, tilesetKey);
             return;
         }
         globalOptions[optionKey] = entry;
@@ -85,7 +88,7 @@ class TilesetTileOptionsPickHandler
         let itemsArray = this.ensureArray(target, key);
         let foundIndex = -1;
         for(let i = 0; i < itemsArray.length; i++){
-            if(itemsArray[i].flatIndex === entry.flatIndex && itemsArray[i].tilesetIndex === entry.tilesetIndex){
+            if(itemsArray[i].flatIndex === entry.flatIndex && itemsArray[i].tilesetKey === entry.tilesetKey){
                 foundIndex = i;
                 break;
             }
@@ -93,12 +96,12 @@ class TilesetTileOptionsPickHandler
         this.applyToggleResult(target, key, itemsArray, foundIndex, entry);
     }
 
-    applyGlobalPositionalPick(target, optionKey, posKey, flatIndex, tilesetIndex)
+    applyGlobalPositionalPick(target, optionKey, posKey, flatIndex, tilesetKey)
     {
         if(!target[optionKey]){
             target[optionKey] = {};
         }
-        target[optionKey][posKey] = {tilesetIndex, flatIndex};
+        target[optionKey][posKey] = {tilesetKey, flatIndex};
         this.advanceToNextPosition(-1);
     }
 

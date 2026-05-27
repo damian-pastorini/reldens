@@ -35,6 +35,7 @@ class TilesetStateBuilder
             item.freeSpaceAround = elementData.freeSpaceAround !== undefined ? elementData.freeSpaceAround : 1;
             item.allowPathsInFreeSpace = elementData.allowPathsInFreeSpace || false;
             item.bulkSelected = elementData.bulkSelected || false;
+            item.mapCentered = SharedUtils.toNumber(elementData.mapCentered, 0);
             elements.push(item);
         }
         return elements;

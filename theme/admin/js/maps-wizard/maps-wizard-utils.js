@@ -3,6 +3,49 @@ class MapsWizardUtils
     constructor()
     {
         this.extraProperties = {};
+        this.strategyStates = {};
+        this.currentStrategy = '';
+    }
+
+    readGeneratorDataValue()
+    {
+        return document.querySelector('#generatorData')?.value ?? null;
+    }
+
+    writeGeneratorDataValue(value)
+    {
+        let element = document.querySelector('#generatorData');
+        if(!element){
+            return false;
+        }
+        element.value = value;
+        return true;
+    }
+
+    persistCurrentStrategyState()
+    {
+        if(!this.currentStrategy){
+            return;
+        }
+        let value = this.readGeneratorDataValue();
+        if(null === value){
+            return;
+        }
+        this.strategyStates[this.currentStrategy] = value;
+    }
+
+    applyStrategyState(strategy)
+    {
+        let savedJson = this.strategyStates[strategy];
+        if(!savedJson){
+            return false;
+        }
+        if(!this.writeGeneratorDataValue(savedJson)){
+            return false;
+        }
+        this.updateInputsFromGeneratorData();
+        this.currentStrategy = strategy;
+        return true;
     }
 
     getSelectedOption()
@@ -104,11 +147,13 @@ class MapsWizardUtils
         if(!optionType){
             return;
         }
-        let generatorDataElement = document.querySelector('#generatorData');
-        if(!generatorDataElement){
+        let value = JSON.stringify(this.buildGeneratorData(optionType), null, 2);
+        if(!this.writeGeneratorDataValue(value)){
             return;
         }
-        generatorDataElement.value = JSON.stringify(this.buildGeneratorData(optionType), null, 2);
+        if(this.currentStrategy === optionType){
+            this.strategyStates[optionType] = value;
+        }
     }
 
     fillInputsFromData(data, optionType)

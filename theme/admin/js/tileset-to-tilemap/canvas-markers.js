@@ -152,9 +152,20 @@ class TilesetCanvasMarkers
         }
     }
 
+    entryMatchesTileset(entry, tileset, currentTilesetIndex)
+    {
+        if(!entry){
+            return false;
+        }
+        if(undefined !== entry.tilesetKey){
+            return entry.tilesetKey === tileset.filename;
+        }
+        return entry.tilesetIndex === currentTilesetIndex;
+    }
+
     addGlobalSimple(markers, tileset, entry, currentTilesetIndex, label, color)
     {
-        if(!entry || entry.tilesetIndex !== currentTilesetIndex){
+        if(!this.entryMatchesTileset(entry, tileset, currentTilesetIndex)){
             return;
         }
         this.pushFlat(markers, tileset, entry.flatIndex, label, color);
@@ -165,7 +176,7 @@ class TilesetCanvasMarkers
         let positions = Object.keys(posObj);
         for(let posKey of positions){
             let entry = posObj[posKey];
-            if(!entry || entry.tilesetIndex !== currentTilesetIndex){
+            if(!this.entryMatchesTileset(entry, tileset, currentTilesetIndex)){
                 continue;
             }
             this.pushFlat(markers, tileset, entry.flatIndex, label, color);

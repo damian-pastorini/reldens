@@ -137,6 +137,10 @@ class TilesetLegendInteractions
             app.state[tilesetIndex].elements[context.elementIndex].freeSpaceAround = SharedUtils.toNumber(context.target.value, 0);
             return;
         }
+        if(context.target.matches('.element-map-centered')){
+            app.state[tilesetIndex].elements[context.elementIndex].mapCentered = SharedUtils.toNumber(context.target.value, 0);
+            return;
+        }
         if(context.target.matches('.layer-type-custom-input')){
             app.customLayerSuffix = context.target.value;
             let customRadio = context.elementRow.querySelector('.layer-type-custom-radio');

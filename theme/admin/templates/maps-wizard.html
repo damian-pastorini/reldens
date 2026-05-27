@@ -66,11 +66,11 @@
                     </li>
                 </ul>
                 <div class="common-config-container">
-                    <h3 class="clickable"><span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">These options apply to all generator types.</span></span>Common Configuration Options</h3>
+                    <h3 class="clickable"><span class="common-config-container-title">Common Configuration Options</span><span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">These options apply to all generator types.</span></span><img class="common-config-container-collapse-icon" src="/assets/admin/circle-chevron-up-solid-full.svg" alt="Toggle"></h3>
                     <div class="config-grid">
                         <div class="config-item">
                             <label for="factor-common"><span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">Multiplier used to scale the map and elements (2 means elements will be 2x larger)</span></span>Factor</label>
-                            <input type="number" id="factor-common" class="config-input" data-option="common" data-property="factor" value="2"/>
+                            <input type="number" id="factor-common" class="config-input" data-option="common" data-property="factor" value="1"/>
                         </div>
                         <div class="config-item">
                             <label for="mainPathSize-common"><span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">Size of the main path in tiles</span></span>Main Path Size</label>
@@ -164,15 +164,15 @@
                         <div class="config-item">
                             <label for="orderElementsBySize-common"><span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">Whether to sort elements by size before placing them</span></span>Order Elements By Size</label>
                             <select id="orderElementsBySize-common" class="config-input" data-option="common" data-property="orderElementsBySize">
-                                <option value="false" selected="">No</option>
-                                <option value="true">Yes</option>
+                                <option value="false">No</option>
+                                <option value="true" selected="">Yes</option>
                             </select>
                         </div>
                         <div class="config-item">
                             <label for="randomizeQuantities-common"><span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">Whether to randomize the quantity of each element placed</span></span>Randomize Quantities</label>
                             <select id="randomizeQuantities-common" class="config-input" data-option="common" data-property="randomizeQuantities">
-                                <option value="true" selected="">Yes</option>
-                                <option value="false">No</option>
+                                <option value="true">Yes</option>
+                                <option value="false" selected="">No</option>
                             </select>
                         </div>
                         <div class="config-item">
@@ -314,9 +314,19 @@
             </div>
             <div class="submit-container">
                 <input type="submit" class="button button-primary button-maps-wizard" value="Generate" data-modal-confirm-label="Generate" data-modal-confirm-class="primary" data-modal-cancel-label="Cancel" data-modal-cancel-class="secondary"/>
+                <button type="button" class="button button-success button-save-wizard-config hidden" id="saveWizardConfigBtn">Save configuration</button>
                 <img class="hidden loading" src="/assets/web/loading.gif"/>
             </div>
         </form>
+        <div class="modal maps-wizard-generating-overlay hidden">
+            <div class="modal-backdrop"></div>
+            <div class="modal-dialog">
+                <div class="modal-body maps-wizard-generating-content">
+                    <img src="/assets/web/loading.gif" alt="Generating..."/>
+                    <p>Generating maps, please wait...</p>
+                </div>
+            </div>
+        </div>
     </div>
 
 <!-- Config options modals -->
@@ -484,7 +494,7 @@
             </div>
             <div class="config-item">
                 <label for="associationsProperties-4"><span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">Properties for sub-map generation when using associations</span></span>Associations Properties (JSON)</label>
-                <textarea id="associationsProperties-4" class="config-input" data-option="multiple-with-association-by-loader" data-property="associationsProperties" rows="6">{"generateElementsPath": false, "blockMapBorder": true, "freeSpaceTilesQuantity": 0, "variableTilesPercentage": 0, "placeElementsOrder": "inOrder", "orderElementsBySize": false, "randomizeQuantities": true, "applySurroundingPathTiles": false, "automaticallyExtrudeMaps": true}</textarea>
+                <textarea id="associationsProperties-4" class="config-input" data-option="multiple-with-association-by-loader" data-property="associationsProperties" rows="6">{"generateElementsPath": false, "blockMapBorder": true, "freeSpaceTilesQuantity": 0, "variableTilesPercentage": 0, "placeElementsOrder": "inOrder", "orderElementsBySize": true, "randomizeQuantities": false, "applySurroundingPathTiles": false, "automaticallyExtrudeMaps": true}</textarea>
             </div>
             <hr class="config-divider"/>
             <div class="config-item">
@@ -601,12 +611,6 @@
     </div>
 </div>
 
-<div class="maps-wizard-generating-overlay hidden">
-    <div class="maps-wizard-generating-content">
-        <img src="/assets/web/loading.gif" alt="Generating..."/>
-        <p>Generating maps, please wait...</p>
-    </div>
-</div>
 
 <!-- Confirm modal - reuses .modal, .confirm-modal CSS from the admin theme -->
 <div class="modal confirm-modal hidden">
@@ -628,5 +632,6 @@
 
 <script src="/js/maps-wizard/maps-wizard-config.js"></script>
 <script src="/js/maps-wizard/maps-wizard-utils.js"></script>
+<script src="/js/maps-wizard/maps-wizard-save-config.js"></script>
 <script src="/js/maps-wizard/maps-wizard-bindings.js"></script>
 </div>

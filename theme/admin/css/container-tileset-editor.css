@@ -134,7 +134,6 @@
         margin-bottom: 0.625rem;
         flex-shrink: 0;
         cursor: pointer;
-        user-select: none;
     }
 
     & .tileset-collapse-btn {

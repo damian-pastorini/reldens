@@ -91,6 +91,10 @@ class TilesetLegendRenderer
         freeSpaceInput.value = element.freeSpaceAround;
         let allowPathsInput = frag.querySelector('.element-allow-paths');
         allowPathsInput.checked = element.allowPathsInFreeSpace;
+        let mapCenteredInput = frag.querySelector('.element-map-centered');
+        if(mapCenteredInput){
+            mapCenteredInput.value = element.mapCentered || 0;
+        }
         let isCustomActive = isSelected && !SharedUtils.KNOWN_LAYER_TYPES.includes(app.activeLayerType);
         let radioName = 'layer-type-t'+tilesetIndex+'-e'+i;
         let radios = frag.querySelectorAll('.layer-type-radio');

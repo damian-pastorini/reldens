@@ -65,6 +65,20 @@ class TilesetSpotEditor
         }
     }
 
+    initDepthSpotProp(propInput, spot)
+    {
+        if(undefined === spot.depth || null === spot.depth || false === spot.depth || 'false' === spot.depth){
+            spot.depth = null;
+            propInput.value = '';
+            return;
+        }
+        if(true === spot.depth){
+            propInput.value = 'true';
+            return;
+        }
+        propInput.value = spot.depth;
+    }
+
     initSpotProps(frag, spot)
     {
         let props = frag.querySelectorAll('[data-prop]');
@@ -78,12 +92,12 @@ class TilesetSpotEditor
                 this.initNumberSpotProp(propInput, key, spot);
                 continue;
             }
+            if('depth' === key){
+                this.initDepthSpotProp(propInput, spot);
+                continue;
+            }
             if(undefined !== spot[key]){
                 propInput.value = spot[key];
-            }
-            if('depth' === key && undefined === spot[key]){
-                propInput.value = 'false';
-                spot[key] = false;
             }
         }
         let spotRow = frag.querySelector('.spot-row');

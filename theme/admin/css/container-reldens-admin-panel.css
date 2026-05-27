@@ -54,7 +54,7 @@
         padding: 2rem;
         background-color: var(--color-grey-60);
         flex: 1;
-        min-width: auto;
+        min-width: 20rem;
         color: var(--color-grey);
 
         & > h2 {

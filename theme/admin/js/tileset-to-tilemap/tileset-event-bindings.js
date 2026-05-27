@@ -54,6 +54,19 @@ class TilesetEventBindings
             }
             reviewTopBar.classList.toggle('is-scrolled', window.scrollY > 0);
         }, { passive: true });
+        document.addEventListener('click', (event) => {
+            if(event.target.closest('.tile-reference-btn')){
+                return;
+            }
+            let header = event.target.closest('.tileset-tile-options .tile-options-group-header');
+            if(!header){
+                return;
+            }
+            let group = header.closest('.tile-options-group');
+            if(group){
+                group.classList.toggle('collapsed');
+            }
+        });
     }
 }
 window.TilesetEventBindings = TilesetEventBindings;
