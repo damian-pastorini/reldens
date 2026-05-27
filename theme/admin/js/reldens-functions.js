@@ -1,38 +1,27 @@
 class AdminMapRenderer
 {
-    fetchMapFileAndDraw(mapJson, tileset, mapCanvas, withTileHighlight, tileClickCallback, withTileSelect)
+    fetchMapFileAndDraw(mapJson, tileset, mapCanvas, withTileHighlight, tileClickCallback, withTileSelect, initialTileIndex)
     {
         if(!mapJson){
             return false;
         }
-        let selectedTile = { x: null, y: null };
         fetch(mapJson)
             .then(response => response.json())
             .then(data => {
                 mapCanvas.width = data.width * data.tilewidth;
                 mapCanvas.height = data.height * data.tileheight;
                 let mapCanvasContext = mapCanvas.getContext('2d');
-                this.drawMap(mapCanvasContext, tileset, data);
-                this.drawTiles(mapCanvasContext, mapCanvas.width, mapCanvas.height, data.tilewidth, data.tileheight);
+                let baseCanvas = this.createBaseCanvas(tileset, data);
+                let selectedTile = this.tileIndexToPosition(initialTileIndex, data);
+                this.renderMap(mapCanvasContext, baseCanvas, selectedTile, data, null, null);
                 if(withTileHighlight){
                     mapCanvas.addEventListener('mousemove', (event) => {
-                        let mouseX = event.offsetX;
-                        let mouseY = event.offsetY;
-                        this.redrawWithHighlight(
-                            mapCanvasContext,
-                            mapCanvas.width,
-                            mapCanvas.height,
-                            data,
-                            mouseX,
-                            mouseY,
-                            selectedTile.x,
-                            selectedTile.y
-                        );
+                        this.renderMap(mapCanvasContext, baseCanvas, selectedTile, data, event.offsetX, event.offsetY);
                     });
                 }
                 if(tileClickCallback){
                     mapCanvas.addEventListener('click', (event) => {
-                        this.handleTileClick(event, data, mapCanvasContext, mapCanvas, tileset, withTileSelect, tileClickCallback, selectedTile);
+                        this.handleTileClick(event, data, mapCanvasContext, baseCanvas, withTileSelect, tileClickCallback, selectedTile);
                     });
                 }
             })
@@ -42,25 +31,60 @@ class AdminMapRenderer
             });
     }
 
-    handleTileClick(event, data, mapCanvasContext, mapCanvas, tileset, withTileSelect, tileClickCallback, selectedTile)
+    createBaseCanvas(tileset, data)
+    {
+        let baseCanvas = document.createElement('canvas');
+        baseCanvas.width = data.width * data.tilewidth;
+        baseCanvas.height = data.height * data.tileheight;
+        let baseCanvasContext = baseCanvas.getContext('2d');
+        this.drawMap(baseCanvasContext, tileset, data);
+        this.drawTiles(baseCanvasContext, baseCanvas.width, baseCanvas.height, data.tilewidth, data.tileheight);
+        return baseCanvas;
+    }
+
+    tileIndexToPosition(tileIndex, data)
+    {
+        let position = {x: null, y: null};
+        if(null === tileIndex || '' === tileIndex){
+            return position;
+        }
+        let numericIndex = Number(tileIndex);
+        if(isNaN(numericIndex)){
+            return position;
+        }
+        position.x = (numericIndex % data.width) * data.tilewidth;
+        position.y = Math.floor(numericIndex / data.width) * data.tileheight;
+        return position;
+    }
+
+    renderMap(mapCanvasContext, baseCanvas, selectedTile, data, hoverX, hoverY)
+    {
+        mapCanvasContext.clearRect(0, 0, baseCanvas.width, baseCanvas.height);
+        mapCanvasContext.drawImage(baseCanvas, 0, 0);
+        if(null !== selectedTile.x && null !== selectedTile.y){
+            this.drawSelectedTile(mapCanvasContext, selectedTile.x, selectedTile.y, data.tilewidth, data.tileheight);
+        }
+        if(null !== hoverX && null !== hoverY){
+            this.highlightTile(hoverX, hoverY, data.tilewidth, data.tileheight, mapCanvasContext);
+        }
+    }
+
+    handleTileClick(event, data, mapCanvasContext, baseCanvas, withTileSelect, tileClickCallback, selectedTile)
     {
         let mouseX = event.offsetX;
         let mouseY = event.offsetY;
-        let newTileX = Math.floor(mouseX / data.tilewidth) * data.tilewidth;
-        let newTileY = Math.floor(mouseY / data.tileheight) * data.tileheight;
         if(withTileSelect){
+            let newTileX = Math.floor(mouseX / data.tilewidth) * data.tilewidth;
+            let newTileY = Math.floor(mouseY / data.tileheight) * data.tileheight;
             if(newTileX === selectedTile.x && newTileY === selectedTile.y){
                 selectedTile.x = null;
                 selectedTile.y = null;
-                this.drawMap(mapCanvasContext, tileset, data);
-                this.drawTiles(mapCanvasContext, mapCanvas.width, mapCanvas.height, data.tilewidth, data.tileheight);
+                this.renderMap(mapCanvasContext, baseCanvas, selectedTile, data, mouseX, mouseY);
                 return;
             }
             selectedTile.x = newTileX;
             selectedTile.y = newTileY;
-            this.drawMap(mapCanvasContext, tileset, data);
-            this.drawTiles(mapCanvasContext, mapCanvas.width, mapCanvas.height, data.tilewidth, data.tileheight);
-            this.drawSelectedTile(mapCanvasContext, selectedTile.x, selectedTile.y, data.tilewidth, data.tileheight);
+            this.renderMap(mapCanvasContext, baseCanvas, selectedTile, data, mouseX, mouseY);
         }
         tileClickCallback(event, data);
     }
@@ -154,16 +178,7 @@ class AdminMapRenderer
         canvasContext.restore();
     }
 
-    redrawWithHighlight(mapCanvasContext, mapCanvasWidth, mapCanvasHeight, mapData, mouseX, mouseY, selectedTileX, selectedTileY)
-    {
-        this.drawTiles(mapCanvasContext, mapCanvasWidth, mapCanvasHeight, mapData.tilewidth, mapData.tileheight);
-        if(null !== selectedTileX && null !== selectedTileY){
-            this.drawSelectedTile(mapCanvasContext, selectedTileX, selectedTileY, mapData.tilewidth, mapData.tileheight);
-        }
-        this.highlightTile(mouseX, mouseY, mapData.tilewidth, mapData.tileheight, mapCanvasContext);
-    }
-
-    loadAndCreateMap(mapJsonFileName, mapSceneImages, appendOnElement, tileClickCallback, withTileSelect)
+    loadAndCreateMap(mapJsonFileName, mapSceneImages, appendOnElement, tileClickCallback, withTileSelect, initialTileIndex)
     {
         let mapCanvas = document.createElement('canvas');
         mapCanvas.classList.add('mapCanvas');
@@ -183,7 +198,8 @@ class AdminMapRenderer
                 mapCanvas,
                 true,
                 tileClickCallback,
-                withTileSelect
+                withTileSelect,
+                initialTileIndex
             );
         };
         tileset.onerror = () => {

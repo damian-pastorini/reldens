@@ -168,6 +168,49 @@ class AdminClientMaps
         }
     }
 
+    loadObjectRoomMap(mapContainer, roomsList, roomSelector, tileIndexInput)
+    {
+        mapContainer.innerHTML = '';
+        let selectedRoom = roomsList.find((room) => String(room.id) === String(roomSelector.value));
+        if(!selectedRoom){
+            return;
+        }
+        adminMapRenderer.loadAndCreateMap(
+            selectedRoom.mapFile,
+            selectedRoom.mapImages,
+            mapContainer,
+            (event, data) => {
+                tileIndexInput.value = adminMapRenderer.calculateTileData(event, data).tileIndex;
+            },
+            true,
+            tileIndexInput.value
+        );
+    }
+
+    bindObjectTileSelector()
+    {
+        let mapContainer = document.querySelector('.object-tile-selector-container');
+        if(!mapContainer){
+            return;
+        }
+        let roomsList = mapContainer.dataset.roomsList ? JSON.parse(mapContainer.dataset.roomsList) : false;
+        if(!roomsList){
+            return;
+        }
+        let roomSelector = document.querySelector('[name="room_id"]');
+        if(!roomSelector){
+            return;
+        }
+        let tileIndexInput = document.querySelector('[name="tile_index"]');
+        if(!tileIndexInput){
+            return;
+        }
+        this.loadObjectRoomMap(mapContainer, roomsList, roomSelector, tileIndexInput);
+        roomSelector.addEventListener('change', () => {
+            this.loadObjectRoomMap(mapContainer, roomsList, roomSelector, tileIndexInput);
+        });
+    }
+
     deactivateAllWizardContainers(wizardOptionsContainer)
     {
         for(let container of wizardOptionsContainer){
@@ -246,6 +289,7 @@ class AdminClientMaps
         this.bindTilesetAlertIcons();
         this.bindRemoveUpload();
         this.bindEntityMapLoader();
+        this.bindObjectTileSelector();
         this.bindMapsWizardOptions();
         this.bindMapCanvas();
         this.bindMapsImportSticky();
