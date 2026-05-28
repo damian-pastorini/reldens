@@ -117,8 +117,6 @@ class AdminClientMaps
         roomsSelector.addEventListener('change', (event) => {
             let selectedOption = event.target.options[event.target.selectedIndex];
             nextRoomMapContainer.innerHTML = '';
-            elementNextRoomPositionX.value = '';
-            elementNextRoomPositionY.value = '';
             adminMapRenderer.loadAndCreateMap(
                 selectedOption.dataset.mapFile,
                 selectedOption.dataset.mapImages,
@@ -128,7 +126,9 @@ class AdminClientMaps
                     elementNextRoomPositionX.value = tileData.positionTileX;
                     elementNextRoomPositionY.value = tileData.positionTileY;
                 },
-                false
+                true,
+                null,
+                {x: elementNextRoomPositionX.value, y: elementNextRoomPositionY.value}
             );
         });
     }
@@ -141,7 +141,7 @@ class AdminClientMaps
             return;
         }
         let entityData = entityDataElement?.dataset.entitySerializedData
-            ? JSON.parse(entityDataElement.dataset.entitySerializedData)
+            ? JSON.parse(entityDataElement.dataset.entitySerializedData) // HOFF
             : false;
         let elementCurrentRoomChangePointTileIndex = document.querySelector('#currentRoomChangePointTileIndex');
         let roomsSelector = document.querySelector('.nextRoomSelector');

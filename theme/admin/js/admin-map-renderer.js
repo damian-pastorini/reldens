@@ -1,6 +1,6 @@
 class AdminMapRenderer
 {
-    fetchMapFileAndDraw(mapJson, tileset, mapCanvas, withTileHighlight, tileClickCallback, withTileSelect, initialTileIndex)
+    fetchMapFileAndDraw(mapJson, tileset, mapCanvas, withTileHighlight, tileClickCallback, withTileSelect, initialTileIndex, initialPosition)
     {
         if(!mapJson){
             return false;
@@ -12,7 +12,7 @@ class AdminMapRenderer
                 mapCanvas.height = data.height * data.tileheight;
                 let mapCanvasContext = mapCanvas.getContext('2d');
                 let baseCanvas = this.createBaseCanvas(tileset, data);
-                let selectedTile = this.tileIndexToPosition(initialTileIndex, data);
+                let selectedTile = this.resolveInitialSelectedTile(initialTileIndex, initialPosition, data);
                 this.renderMap(mapCanvasContext, baseCanvas, selectedTile, data, null, null);
                 if(withTileHighlight){
                     mapCanvas.addEventListener('mousemove', (event) => {
@@ -37,8 +37,8 @@ class AdminMapRenderer
         baseCanvas.width = data.width * data.tilewidth;
         baseCanvas.height = data.height * data.tileheight;
         let baseCanvasContext = baseCanvas.getContext('2d');
-        this.drawMap(baseCanvasContext, tileset, data);
-        this.drawTiles(baseCanvasContext, baseCanvas.width, baseCanvas.height, data.tilewidth, data.tileheight);
+        adminMapCanvasDrawer.drawMap(baseCanvasContext, tileset, data);
+        adminMapCanvasDrawer.drawTiles(baseCanvasContext, baseCanvas.width, baseCanvas.height, data.tilewidth, data.tileheight);
         return baseCanvas;
     }
 
@@ -57,15 +57,52 @@ class AdminMapRenderer
         return position;
     }
 
+    positionToTileIndex(positionX, positionY, data)
+    {
+        if(null === positionX){
+            return null;
+        }
+        if('' === positionX){
+            return null;
+        }
+        if(null === positionY){
+            return null;
+        }
+        if('' === positionY){
+            return null;
+        }
+        let numericX = Number(positionX);
+        if(isNaN(numericX)){
+            return null;
+        }
+        let numericY = Number(positionY);
+        if(isNaN(numericY)){
+            return null;
+        }
+        return (Math.floor(numericY / data.tileheight) * data.width) + Math.floor(numericX / data.tilewidth);
+    }
+
+    resolveInitialSelectedTile(initialTileIndex, initialPosition, data)
+    {
+        let positionFromIndex = this.tileIndexToPosition(initialTileIndex, data);
+        if(null !== positionFromIndex.x){
+            return positionFromIndex;
+        }
+        if(!initialPosition){
+            return {x: null, y: null};
+        }
+        return this.tileIndexToPosition(this.positionToTileIndex(initialPosition.x, initialPosition.y, data), data);
+    }
+
     renderMap(mapCanvasContext, baseCanvas, selectedTile, data, hoverX, hoverY)
     {
         mapCanvasContext.clearRect(0, 0, baseCanvas.width, baseCanvas.height);
         mapCanvasContext.drawImage(baseCanvas, 0, 0);
         if(null !== selectedTile.x && null !== selectedTile.y){
-            this.drawSelectedTile(mapCanvasContext, selectedTile.x, selectedTile.y, data.tilewidth, data.tileheight);
+            adminMapCanvasDrawer.drawSelectedTile(mapCanvasContext, selectedTile.x, selectedTile.y, data.tilewidth, data.tileheight);
         }
         if(null !== hoverX && null !== hoverY){
-            this.highlightTile(hoverX, hoverY, data.tilewidth, data.tileheight, mapCanvasContext);
+            adminMapCanvasDrawer.highlightTile(hoverX, hoverY, data.tilewidth, data.tileheight, mapCanvasContext);
         }
     }
 
@@ -89,96 +126,7 @@ class AdminMapRenderer
         tileClickCallback(event, data);
     }
 
-    drawMap(mapCanvasContext, tileset, mapData)
-    {
-        let tilesetInfo = mapData.tilesets[0];
-        for(let layer of mapData.layers){
-            if('tilelayer' !== layer.type){
-                continue;
-            }
-            this.drawLayerTiles(mapCanvasContext, tileset, tilesetInfo, layer);
-        }
-    }
-
-    drawLayerTiles(mapCanvasContext, tileset, tilesetInfo, layer)
-    {
-        let tileWidth = tilesetInfo.tilewidth;
-        let tileHeight = tilesetInfo.tileheight;
-        let margin = tilesetInfo.margin;
-        let spacing = tilesetInfo.spacing;
-        let columns = tilesetInfo.imagewidth / (tilesetInfo.tilewidth + tilesetInfo.spacing);
-        let width = layer.width;
-        for(let index = 0; index < layer.data.length; index++){
-            let tileIndex = Number(layer.data[index]);
-            if(0 === tileIndex){
-                continue;
-            }
-            let colIndex = index % width;
-            let rowIndex = Math.floor(index / width);
-            // adjusting for 0-based index:
-            let tileId = tileIndex - 1;
-            let sx = margin + (tileId % columns) * (tileWidth + spacing);
-            let sy = margin + Math.floor(tileId / columns) * (tileHeight + spacing);
-            mapCanvasContext.drawImage(
-                tileset,
-                sx,
-                sy,
-                tileWidth,
-                tileHeight,
-                colIndex * tileWidth,
-                rowIndex * tileHeight,
-                tileWidth,
-                tileHeight
-            );
-        }
-    }
-
-    drawTiles(canvasContext, canvasWidth, canvasHeight, tileWidth, tileHeight)
-    {
-        canvasContext.save();
-        canvasContext.globalAlpha = 0.4;
-        canvasContext.strokeStyle = '#ccc';
-        canvasContext.lineWidth = 2;
-        for(let x = 0; x < canvasWidth; x += tileWidth){
-            this.drawTileColumn(canvasContext, x, canvasHeight, tileWidth, tileHeight);
-        }
-        canvasContext.restore();
-    }
-
-    drawTileColumn(canvasContext, x, canvasHeight, tileWidth, tileHeight)
-    {
-        for(let y = 0; y < canvasHeight; y += tileHeight){
-            canvasContext.strokeRect(x, y, tileWidth, tileHeight);
-        }
-    }
-
-    drawSelectedTile(canvasContext, tileX, tileY, tileWidth, tileHeight)
-    {
-        canvasContext.save();
-        canvasContext.globalAlpha = 0.35;
-        canvasContext.fillStyle = '#e05454';
-        canvasContext.fillRect(tileX, tileY, tileWidth, tileHeight);
-        canvasContext.globalAlpha = 1;
-        canvasContext.strokeStyle = '#e05454';
-        canvasContext.lineWidth = 2;
-        canvasContext.strokeRect(tileX, tileY, tileWidth, tileHeight);
-        canvasContext.restore();
-    }
-
-    highlightTile(mouseX, mouseY, tileWidth, tileHeight, canvasContext)
-    {
-        let tileCol = Math.floor(mouseX / tileWidth);
-        let tileRow = Math.floor(mouseY / tileHeight);
-        let highlightX = tileCol * tileWidth;
-        let highlightY = tileRow * tileHeight;
-        canvasContext.save();
-        canvasContext.strokeStyle = 'red';
-        canvasContext.lineWidth = 2;
-        canvasContext.strokeRect(highlightX, highlightY, tileWidth, tileHeight);
-        canvasContext.restore();
-    }
-
-    loadAndCreateMap(mapJsonFileName, mapSceneImages, appendOnElement, tileClickCallback, withTileSelect, initialTileIndex)
+    loadAndCreateMap(mapJsonFileName, mapSceneImages, appendOnElement, tileClickCallback, withTileSelect, initialTileIndex, initialPosition)
     {
         let mapCanvas = document.createElement('canvas');
         mapCanvas.classList.add('mapCanvas');
@@ -199,7 +147,8 @@ class AdminMapRenderer
                 true,
                 tileClickCallback,
                 withTileSelect,
-                initialTileIndex
+                initialTileIndex,
+                initialPosition
             );
         };
         tileset.onerror = () => {
