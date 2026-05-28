@@ -101,6 +101,16 @@
                 }
             }
         }
+
+        .field-value.with-inline-button {
+            flex-direction: row;
+            align-items: center;
+            gap: var(--space-md);
+
+            & input {
+                flex: 1;
+            }
+        }
     }
 
     .actions {
