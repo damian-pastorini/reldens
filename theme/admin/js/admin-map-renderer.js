@@ -219,5 +219,51 @@ class AdminMapRenderer
         result.tileIndex = (tileRow * data.width) + tileCol;
         return result;
     }
+
+    loadObjectRoomMap(mapContainer, roomsList, roomSelector, tileIndexInput)
+    {
+        mapContainer.innerHTML = '';
+        let selectedRoom = roomsList.find((room) => String(room.id) === String(roomSelector.value));
+        if(!selectedRoom){
+            return;
+        }
+        this.loadAndCreateMap(
+            selectedRoom.mapFile,
+            selectedRoom.mapImages,
+            mapContainer,
+            (event, data) => {
+                tileIndexInput.value = this.calculateTileData(event, data).tileIndex;
+            },
+            true,
+            tileIndexInput.value
+        );
+    }
+
+    bindObjectTileSelector()
+    {
+        let mapContainer = document.querySelector('.object-tile-selector-container');
+        if(!mapContainer){
+            return;
+        }
+        let entityData = mapContainer.dataset.entitySerializedData
+            ? JSON.parse(mapContainer.dataset.entitySerializedData) // HOFF
+            : false;
+        let roomsList = entityData?.extraData?.roomsList;
+        if(!roomsList){
+            return;
+        }
+        let roomSelector = document.querySelector('[name="room_id"]');
+        if(!roomSelector){
+            return;
+        }
+        let tileIndexInput = document.querySelector('[name="tile_index"]');
+        if(!tileIndexInput){
+            return;
+        }
+        this.loadObjectRoomMap(mapContainer, roomsList, roomSelector, tileIndexInput);
+        roomSelector.addEventListener('change', () => {
+            this.loadObjectRoomMap(mapContainer, roomsList, roomSelector, tileIndexInput);
+        });
+    }
 }
 window.adminMapRenderer = new AdminMapRenderer();
