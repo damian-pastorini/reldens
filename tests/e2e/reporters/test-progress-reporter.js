@@ -85,7 +85,7 @@ class TestProgressReporter
         try {
             let duration = result && result.duration ? result.duration : 0;
             let seconds = Math.round(duration / 1000);
-            let durText = seconds < 60 ? seconds+'s' : Math.floor(seconds / 60)+'m '+seconds % 60+'s';
+            let durText = seconds < 60 ? seconds+'s' : Math.floor(seconds / 60)+'m '+(seconds % 60)+'s';
             let totalExecuted = this.passed + this.failed + this.skipped;
             process.stdout.write('\n '+this.passed+' passed  '+this.failed+' failed  '+this.skipped+' skipped  ('+durText+')\n');
             process.stdout.write(' Total tests executed: '+totalExecuted+' of '+this.total+'\n');
