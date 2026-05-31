@@ -70,7 +70,9 @@ class TilesetAnalyzerApp
     rebuildPaletteCss(totalElements)
     {
         if(!this.dynamicPaletteEl){
-            this.dynamicPaletteEl = this.getElement('.dynamic-palette');
+            this.dynamicPaletteEl = document.createElement('style');
+            this.dynamicPaletteEl.className = 'dynamic-palette';
+            document.head.appendChild(this.dynamicPaletteEl);
         }
         let css = '';
         for(let i = 0; i < totalElements; i++){
