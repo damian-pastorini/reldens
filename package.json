@@ -111,7 +111,7 @@
         "@reldens/server-utils": "^0.52.0",
         "@reldens/skills": "^0.50.0",
         "@reldens/storage": "^0.99.0",
-        "@reldens/tile-map-generator": "^0.37.0",
+        "@reldens/tile-map-generator": "^0.39.0",
         "@reldens/tileset-to-tilemap": "^0.13.0",
         "@reldens/utils": "^0.56.0",
         "@sendgrid/mail": "8.1.6",
