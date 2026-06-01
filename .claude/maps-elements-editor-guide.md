@@ -20,13 +20,13 @@ End-user flow and implementer reference for the post-generation map element edit
 
 ### Saving and rolling back
 
-- Save: writes the current state to `generate-data/generated/{mapName}.json` (and the elements sidecar). A timestamped backup pair (`{mapName}-{YYYY-MM-DD-HH-mm-ss}-back.json` plus the matching elements sidecar) is written to `generate-data/generated/backups/` before the live file is overwritten. From the room entry point, the runtime copies in `theme/default/assets/maps/` and `dist/assets/maps/` are also overwritten (without backups - they are always reproducible from the source-of-truth).
+- Save: writes the current state to `generate-data/generated/{mapName}.json` (and the elements elements record). A timestamped backup pair (`{mapName}-{YYYY-MM-DD-HH-mm-ss}-back.json` plus the matching elements elements record) is written to `generate-data/generated/backups/` before the live file is overwritten. From the room entry point, the runtime copies in `theme/default/assets/maps/` and `dist/assets/maps/` are also overwritten (without backups - they are always reproducible from the source-of-truth).
 - Game server reboot: required for in-game pickup after saving from the room entry point (same constraint as map regeneration).
 - Backups panel: collapsed by default. Lists existing backups newest-first. Each row has Reload (restores the chosen backup; a pre-restore backup is written first so the restore is itself reversible) and Delete (removes the backup pair).
 
 ### Legacy maps
 
-If a room has no elements sidecar and no `tilesetSessionId` in its `customData`, the editor falls back to parsing element groupings from layer names (`{elementName}-{index}-{layerType}` convention). A warning banner is shown. Only elements the detector recognises are interactive; anything else renders but cannot be moved / duplicated / deleted.
+If a room has no elements elements record and no `tilesetSessionId` in its `customData`, the editor falls back to parsing element groupings from layer names (`{elementName}-{index}-{layerType}` convention). A warning banner is shown. Only elements the detector recognises are interactive; anything else renders but cannot be moved / duplicated / deleted.
 
 ## Implementer reference
 
@@ -34,11 +34,12 @@ If a room has no elements sidecar and no `tilesetSessionId` in its `customData`,
 
 Server:
 
-- `lib/admin/server/room-map-elements-builder.js`: builds the sidecar from the in-memory generator output; exposes `buildFromLayers(mapJson)` used both at generation time and via the section 5.6 endpoint.
-- `lib/admin/server/map-elements-backup-manager.js`: owns the backups folder; writes/lists/restores/deletes backup pairs.
+- `lib/admin/server/map-elements-builder.js`: thin Reldens wrapper around `@reldens/tile-map-generator`'s `ElementsFromLayersLoader`; adds Reldens metadata (schemaVersion, mapName, mapFileName, tilesetSessionId, compositeFile, generatedBy, generatedAt, tile/map dims) and owns the persistence filename convention. Exposes `build(props)`, `buildFromLayers(mapJson)`, `elementsFileName(mapName)`.
+- `lib/admin/server/map-elements-backup-archive.js`: owns the backups folder; writes/lists/restores/deletes backup pairs.
 - `lib/admin/server/map-elements-custom-data-writer.js`: post-import writer that stamps `tilesetSessionId` and `mapElementsFile` into `rooms.customData`.
+- `lib/admin/server/map-elements-records-emitter.js`: emits the elements record file at generation time by walking the wizard runner output (per main map, per multi-map, per sub-map).
 - `lib/admin/server/subscribers/maps-elements-editor-subscriber.js`: hosts the 5 admin routes.
-- `lib/admin/server/subscribers/maps-wizard-runner.js`: emits the sidecar at generation time (per main map, per multi-map, per sub-map).
+- `lib/admin/server/subscribers/maps-wizard-subscriber.js`: instantiates `MapElementsCustomDataWriter` and `MapElementsRecordsEmitter`; invokes the emitter after `MapsWizardRunner.run()` succeeds.
 
 Client:
 
@@ -91,7 +92,7 @@ Client:
 
 1. Try `{mapName}-room-map-elements.json` next to the map JSON.
 2. Else, if `room.customData.tilesetSessionId` is set, derive from the session.
-3. Else, call `GET /reldens-admin/maps-elements-editor/api/build-elements-from-layers?mapName=X` (uses `RoomMapElementsBuilder.buildFromLayers()` server-side) and show the "Detected by layer names" warning banner.
+3. Else, call `GET /reldens-admin/maps-elements-editor/api/build-elements-from-layers?mapName=X` (uses `MapElementsBuilder.buildFromLayers()` server-side, which delegates to `@reldens/tile-map-generator`'s `ElementsFromLayersLoader`) and show the "Detected by layer names" warning banner.
 4. If none works, the editor refuses to load.
 
 ### Admin routes
