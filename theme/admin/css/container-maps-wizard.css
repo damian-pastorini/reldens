@@ -230,7 +230,6 @@
             margin: 0;
             line-height: 2rem;
             color: var(--color-grey);
-            user-select: none;
 
             &::before {
                 content: '+';
