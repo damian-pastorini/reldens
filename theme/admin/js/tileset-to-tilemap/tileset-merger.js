@@ -10,10 +10,11 @@ class TilesetMerger
     {
         let mergeBtn = this.app.getElement('.merge-btn');
         mergeBtn.addEventListener('click', () => {
-            this.app.modals.show(
-                'Merge selected tilesets? This will combine them into one new tileset.',
-                () => this.runMerge()
-            );
+            let isOverride = this.app.sessions.isOverrideChecked();
+            let message = isOverride
+                ? 'Merge selected tilesets? This will overwrite the current session.'
+                : 'Merge selected tilesets into a new session?';
+            this.app.modals.show(message, () => this.runMerge());
         });
     }
 
@@ -168,6 +169,10 @@ class TilesetMerger
             this.app.sessions.showStatus('Select at least 2 tilesets to merge', true);
             return;
         }
+        let isOverride = this.app.sessions.isOverrideChecked();
+        let sessionName = this.app.sessions.readSessionNameValue();
+        let targetSessionId = SharedUtils.buildSessionId(this.app.sessionId, isOverride, sessionName);
+        this.pendingMergeTargetSessionId = targetSessionId;
         this.app.modals.showGenerate('Merging tilesets...');
         let completedRef = { completed: false };
         let controller = this.app.createAbortController();
@@ -175,7 +180,7 @@ class TilesetMerger
             let response = await fetch('merge', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({sessionId: this.app.sessionId, tilesets}),
+                body: JSON.stringify({sessionId: targetSessionId, tilesets}), // HOFF
                 signal: controller.signal
             });
             await this.readMergeStream(response, completedRef);
@@ -207,6 +212,10 @@ class TilesetMerger
         }
         if('done' === eventType){
             this.app.modals.hideGenerate();
+            if(this.pendingMergeTargetSessionId && this.pendingMergeTargetSessionId !== this.app.sessionId){
+                this.app.sessionId = this.pendingMergeTargetSessionId;
+            }
+            this.pendingMergeTargetSessionId = null;
             this.applyMergeResult(data.mergedTileset, data.stateIndices);
             this.app.sessions.showStatus('Tilesets merged successfully', false);
             await this.app.sessions.refreshSessionInList(this.app.sessionId);

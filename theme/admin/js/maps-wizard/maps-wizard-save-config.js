@@ -22,11 +22,12 @@ class MapsWizardSaveConfig
     {
         let utils = window.mapsWizardUtils;
         utils.persistCurrentStrategyState();
+        let currentStrategy = utils.currentStrategy;
         let strategies = {};
         let radios = document.querySelectorAll('input[name="mapsWizardAction"]');
         for(let radio of radios){
             let key = radio.value;
-            if(utils.strategyStates[key]){
+            if(key === currentStrategy && utils.strategyStates[key]){
                 strategies[key] = utils.strategyStates[key];
                 continue;
             }
