@@ -21,12 +21,14 @@ class ObjectsItemsInventoryEntity extends EntityProperties
             owner_id: {
                 type: 'reference',
                 reference: 'objects',
+                alias: 'related_objects',
                 isRequired: true,
                 dbType: 'int'
             },
             item_id: {
                 type: 'reference',
                 reference: 'items_item',
+                alias: 'related_items_item',
                 isRequired: true,
                 dbType: 'int'
             },

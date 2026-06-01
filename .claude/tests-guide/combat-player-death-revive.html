@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Player Dies From Enemy And Revives After Timeout</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Player Dies From Enemy And Revives After Timeout</h1>
+<p>Test: <code>tests/e2e/test-combat.spec.js</code> - <em>player dies from enemy and revives after timeout</em></p>
+<p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/player-dies-from-enemy-and-revives-after-timeout.webm" data-title="Player Dies From Enemy And Revives After Timeout">&#9654; Watch video</a></p>
+<table>
+    <thead>
+        <tr>
+            <th>Action</th>
+            <th>Test Code</th>
+            <th>Test File</th>
+            <th>File Proof</th>
+            <th>Code Proof</th>
+            <th>Comments</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Login and navigate to reldens-forest</td>
+            <td><code>TestCombat.loginAndGetEnemyWithWorldPos(page, gameConfig, longRun)</code></td>
+            <td>test-combat.spec.js:263</td>
+            <td>tests/e2e/helpers/login.js:77<br>tests/e2e/helpers/navigation.js:149</td>
+            <td><code>static async loginAndStartGame(page, username, password, playerName, longRun, false, 'reldens-forest')</code></td>
+            <td>Logs in as root/ImRoot with forest scene selected; waits for enemy to appear in scene</td>
+        </tr>
+        <tr>
+            <td>Walk very close to enemy (range 30)</td>
+            <td><code>TestCombat.walkToEnemyWithinRange(page, data.enemyKey, 30, data.navigationTimeout)</code></td>
+            <td>test-combat.spec.js:264</td>
+            <td>tests/e2e/helpers/navigation.js:177</td>
+            <td><code>static async moveToObjectWithinRange(...)</code></td>
+            <td>Gets player into enemy attack range (30px); enemy will begin attacking the player automatically</td>
+        </tr>
+        <tr>
+            <td>Wait for player to die from enemy attacks</td>
+            <td><code>TestCombat.waitForPlayerDeathLoop(page, data.enemyKey, TimeConstants.ENEMY_KILL)</code></td>
+            <td>test-combat.spec.js:265</td>
+            <td>test-combat.spec.js:170-188</td>
+            <td><code>static async waitForPlayerDeathLoop(page, enemyKey, timeout)</code></td>
+            <td>Polls <code>#game-over:not(.hidden)</code> for up to 90 seconds; keeps walking toward enemy during wait</td>
+        </tr>
+        <tr>
+            <td>Assert player died</td>
+            <td><code>expect(died, 'Player must die from enemy attacks within timeout').toBeTruthy()</code></td>
+            <td>test-combat.spec.js:266</td>
+            <td>theme/default/index.html:178</td>
+            <td><code>&lt;div id="game-over" class="hidden"&gt;</code></td>
+            <td>Confirms game-over screen appeared; test fails if enemy did not kill the player within the timeout</td>
+        </tr>
+        <tr>
+            <td>Wait for player to revive</td>
+            <td><code>TestCombatDeath.waitForPlayerHpCondition(page, 'alive', TimeConstants.PLAYER_REVIVE)</code></td>
+            <td>test-combat.spec.js:268</td>
+            <td>tests/e2e/helpers/test-combat-death.js</td>
+            <td><code>static async waitForPlayerHpCondition(page, condition, timeout)</code></td>
+            <td>Waits up to 12 seconds for HP to be restored; server revives player after <code>gameOver.timeOut = 10000ms</code></td>
+        </tr>
+        <tr>
+            <td>Assert player HP is restored</td>
+            <td><code>let playerHpAfter = await TestCombatDeath.getPlayerHpFromState(page)</code><br><code>expect(playerHpAfter, 'Player HP must be restored after revive').toBeGreaterThan(0)</code></td>
+            <td>test-combat.spec.js:269-270</td>
+            <td>tests/e2e/helpers/test-combat-death.js</td>
+            <td><code>static async getPlayerHpFromState(page)</code></td>
+            <td>Reads player HP from Colyseus room state; value &gt; 0 confirms the server successfully revived the player</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>

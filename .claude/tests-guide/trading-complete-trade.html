@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Player Trade Completes And Items Transfer Between Players</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Player Trade Completes And Items Transfer Between Players</h1>
+<p>Test: <code>tests/e2e/test-trading.spec.js</code> - <em>player trade completes and items transfer between players</em></p>
+<p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/player-trade-completes-and-items-transfer-between-players.webm" data-title="player trade completes and items transfer between players">&#9654; Watch video</a></p>
+<table>
+    <thead><tr><th>Action</th><th>Test Code</th><th>Test File</th><th>File Proof</th><th>Code Proof</th><th>Comments</th></tr></thead>
+    <tbody>
+        <tr>
+            <td>Log in both players and open trade container via shared helper</td>
+            <td><code>let setup = await TestTrading.loginAndOpenTradeContainer(page, secondPage, gameConfig, longRun)</code></td>
+            <td>test-trading.spec.js:106</td>
+            <td>tests/e2e/helpers/login.js:77</td>
+            <td><code>static async loginAndStartGame(page, username, password, playerName, longRun, skipUiSelectors = false, scene = null)</code></td>
+            <td>Both players are logged in and the trade container is open before the offer flow begins</td>
+        </tr>
+        <tr>
+            <td>Assert trade container visible on player B side and locate offer button</td>
+            <td><code>await expect(secondPage.locator(Selectors.playerTrade.container)).toBeVisible({ timeout: uiTimeout });<br>let offerButton = page.locator(Selectors.playerTrade.offerButton).first()</code></td>
+            <td>test-trading.spec.js:108</td>
+            <td>tests/e2e/selectors.js:180</td>
+            <td><code>offerButton: '.trade-action-offer'</code></td>
+            <td>Confirms both sides are in active trade state; offer button is .trade-action-offer</td>
+        </tr>
+        <tr>
+            <td>Assert offer button visible and click it</td>
+            <td><code>await expect(offerButton).toBeVisible({ timeout: uiTimeout });<br>await offerButton.click()</code></td>
+            <td>test-trading.spec.js:110</td>
+            <td>tests/e2e/selectors.js:180</td>
+            <td><code>offerButton: '.trade-action-offer'</code></td>
+            <td>Player A submits their trade offer - triggers server-side offer state update</td>
+        </tr>
+        <tr>
+            <td>Resolve the dynamic confirm button class from the DOM</td>
+            <td><code>let tradeConfirmClass = await TestTrading.resolveTradeConfirmClass(page);<br>expect(tradeConfirmClass, 'Trade confirm button class must be available').not.toBeNull()</code></td>
+            <td>test-trading.spec.js:114</td>
+            <td>tests/e2e/test-trading.spec.js:62</td>
+            <td><code>static async resolveTradeConfirmClass(page)</code></td>
+            <td>Queries DOM for a confirm-* class button (not confirm-buy/confirm-sell) - class name is dynamic per trade session</td>
+        </tr>
+        <tr>
+            <td>Both players click their confirm trade button</td>
+            <td><code>await page.click('.'+tradeConfirmClass);<br>await secondPage.click('.'+tradeConfirmClass)</code></td>
+            <td>test-trading.spec.js:116</td>
+            <td>tests/e2e/test-trading.spec.js:116</td>
+            <td><code>await page.click('.'+tradeConfirmClass);<br>await secondPage.click('.'+tradeConfirmClass)</code></td>
+            <td>Both players must confirm for the trade to complete - server validates both confirmations</td>
+        </tr>
+        <tr>
+            <td>Player B opens inventory and asserts items transferred</td>
+            <td><code>await secondPage.click(Selectors.hud.inventoryOpen);<br>await expect(secondPage.locator(Selectors.inventory.items)).not.toBeEmpty({ timeout: TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun) })</code></td>
+            <td>test-trading.spec.js:119</td>
+            <td>tests/e2e/selectors.js:82</td>
+            <td><code>inventoryOpen: '#inventory-open',<br>items: '#inventory-items'</code></td>
+            <td>Confirms items were transferred to player B - #inventory-items must be non-empty after trade completes</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>

@@ -21,18 +21,21 @@ class ObjectsSkillsEntity extends EntityProperties
             object_id: {
                 type: 'reference',
                 reference: 'objects',
+                alias: 'related_objects',
                 isRequired: true,
                 dbType: 'int'
             },
             skill_id: {
                 type: 'reference',
                 reference: 'skills_skill',
+                alias: 'related_skills_skill',
                 isRequired: true,
                 dbType: 'int'
             },
             target_id: {
                 type: 'reference',
                 reference: 'target_options',
+                alias: 'related_target_options',
                 isRequired: true,
                 dbType: 'int'
             }

@@ -256,7 +256,7 @@ REPLACE INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(210, 'client', 'ui/minimap/circleColor', 'rgb(0,0,0)', 1),
 	(211, 'client', 'ui/minimap/circleFillAlpha', '0', 2),
 	(212, 'client', 'ui/minimap/circleFillColor', '1', 2),
-	(213, 'client', 'ui/minimap/circleRadio', '80.35', 2),
+	(213, 'client', 'ui/minimap/circleRadio', '60', 2),
 	(214, 'client', 'ui/minimap/circleStrokeAlpha', '0.6', 2),
 	(215, 'client', 'ui/minimap/circleStrokeColor', '0', 2),
 	(216, 'client', 'ui/minimap/circleStrokeLineWidth', '6', 2),
@@ -276,7 +276,7 @@ REPLACE INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(230, 'client', 'ui/npcDialog/responsiveY', '10', 2),
 	(231, 'client', 'ui/npcDialog/x', '120', 2),
 	(232, 'client', 'ui/npcDialog/y', '100', 2),
-	(233, 'client', 'ui/options/acceptOrDecline', '{"1":{"label":"Accept","value":1},"2":{"label":"Decline","value":2}}', 4),
+	(233, 'client', 'ui/options/acceptOrDecline', '{"decline":{"label":"Decline","value":2},"accept":{"label":"Accept","value":1}}', 4),
 	(234, 'client', 'ui/playerBox/enabled', '1', 3),
 	(235, 'client', 'ui/playerBox/responsiveX', '0', 2),
 	(236, 'client', 'ui/playerBox/responsiveY', '0', 2),
@@ -424,7 +424,8 @@ REPLACE INTO `features` (`id`, `code`, `title`, `is_enabled`) VALUES
 	(14, 'snippets', 'Snippets', 1),
 	(16, 'ads', 'Ads', 1),
 	(17, 'world', 'World', 0),
-	(18, 'scores', 'Scores', 1);
+	(18, 'scores', 'Scores', 1),
+	(19, 'quests', 'Quests', 1);
 
 REPLACE INTO `items_types` (`id`, `key`) VALUES
 	(10, 'base'),
@@ -444,6 +445,7 @@ REPLACE INTO `objects_types` (`id`, `key`) VALUES
 	(4, 'enemy'),
 	(7, 'multiple'),
 	(3, 'npc'),
+	(8, 'timing'),
 	(5, 'trader');
 
 REPLACE INTO `operation_types` (`id`, `label`, `key`) VALUES

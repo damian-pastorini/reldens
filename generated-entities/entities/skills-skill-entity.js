@@ -27,6 +27,7 @@ class SkillsSkillEntity extends EntityProperties
             type: {
                 type: 'reference',
                 reference: 'skills_skill_type',
+                alias: 'related_skills_skill_type',
                 isRequired: true,
                 dbType: 'int'
             },

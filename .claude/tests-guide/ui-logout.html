@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Logout Button Returns User To Login Form</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Logout Button Returns User To Login Form</h1>
+<p>Test: <code>tests/e2e/test-game-login.spec.js</code> - <em>logout button returns user to login form</em></p>
+<p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/logout-button-returns-user-to-login-form.webm" data-title="Logout Button Returns User To Login Form">&#9654; Watch video</a></p>
+<table>
+    <thead>
+        <tr>
+            <th>Action</th>
+            <th>Test Code</th>
+            <th>Test File</th>
+            <th>File Proof</th>
+            <th>Code Proof</th>
+            <th>Comments</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Login as root player</td>
+            <td><code>Login.loginAndStartGame(page, username, password, playerName, longRun)</code></td>
+            <td>test-game-login.spec.js:60</td>
+            <td>tests/e2e/helpers/login.js:77</td>
+            <td><code>static async loginAndStartGame(page, username, password, playerName, longRun, skipUiSelectors = false, scene = null)</code></td>
+            <td>Called via <code>loginRootPlayer</code> using defaults root/root/ImRoot</td>
+        </tr>
+        <tr>
+            <td>Assert canvas is visible (game running)</td>
+            <td><code>expect(page.locator(Selectors.canvas)).toBeVisible()</code></td>
+            <td>test-game-login.spec.js:62</td>
+            <td>theme/default/index.html:239</td>
+            <td><code>&lt;div id="reldens"&gt;&lt;/div&gt;</code></td>
+            <td>Confirms game session is active before logging out; <code>Selectors.canvas = 'canvas'</code></td>
+        </tr>
+        <tr>
+            <td>Click logout button</td>
+            <td><code>page.click(Selectors.hud.logout)</code></td>
+            <td>test-game-login.spec.js:64</td>
+            <td>theme/default/assets/html/ui-player-box.html:3</td>
+            <td><code>&lt;button type="button" id="logout"&gt;Logout&lt;/button&gt;</code></td>
+            <td><code>Selectors.hud.logout = '#logout'</code>; triggers client-side logout flow</td>
+        </tr>
+        <tr>
+            <td>Wait for page to process logout</td>
+            <td><code>page.waitForTimeout(2000 + pauseMs)</code></td>
+            <td>test-game-login.spec.js:65</td>
+            <td>-</td>
+            <td>-</td>
+            <td>2-second pause to allow: client disconnect &rarr; server cleanup &rarr; UI reset</td>
+        </tr>
+        <tr>
+            <td>Assert login form is visible</td>
+            <td><code>expect(page.locator(Selectors.login.form)).toBeVisible({ timeout: TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun) })</code></td>
+            <td>test-game-login.spec.js:66-68</td>
+            <td>theme/default/index.html:54</td>
+            <td><code>&lt;form name="login-form" id="login-form" class="login-form" action="#" method="post"&gt;</code></td>
+            <td>Login form reappears after successful logout; <code>Selectors.login.form = '#login-form'</code>; timeout = 3000ms (12000ms in longRun)</td>
+        </tr>
+        <tr>
+            <td>Assert username field is visible</td>
+            <td><code>expect(page.locator(Selectors.login.username)).toBeVisible()</code></td>
+            <td>test-game-login.spec.js:69</td>
+            <td>theme/default/index.html:57</td>
+            <td><code>&lt;input type="text" name="username" id="username" class="required" required autocomplete="on" placeholder="Username"/&gt;</code></td>
+            <td>Additional confirmation that login form is fully rendered; <code>Selectors.login.username = '#username'</code></td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>

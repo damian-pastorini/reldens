@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Guest Login Enters Game When Guest Mode Is Enabled</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Guest Login Enters Game When Guest Mode Is Enabled</h1>
+<p>Test: <code>tests/e2e/test-authentication.spec.js</code> - <em>guest login enters game when guest mode is enabled</em></p>
+<p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/guest-login-enters-game-when-guest-mode-is-enabled.webm" data-title="Guest Login Enters Game When Guest Mode Is Enabled">&#9654; Watch video</a></p>
+<table>
+    <thead>
+        <tr>
+            <th>Action</th>
+            <th>Test Code</th>
+            <th>Test File</th>
+            <th>File Proof</th>
+            <th>Code Proof</th>
+            <th>Comments</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Navigate to home page</td>
+            <td><code>page.goto('/')</code><br><code>page.waitForLoadState('networkidle')</code></td>
+            <td>test-authentication.spec.js:93-94</td>
+            <td>theme/default/index.html:54</td>
+            <td><code>&lt;form name="login-form" id="login-form"...&gt;</code></td>
+            <td>Loads the login page</td>
+        </tr>
+        <tr>
+            <td>Wait for window.reldens config to be ready</td>
+            <td><code>page.waitForFunction(() =&gt; !!(window.reldens &amp;&amp; window.reldens.startHandler &amp;&amp; window.reldens.config), null, { timeout: ... })</code></td>
+            <td>test-authentication.spec.js:95-97</td>
+            <td>lib/game/client/game-manager.js:127</td>
+            <td><code>this.startHandler = new ClientStartHandler(this);</code></td>
+            <td>Both startHandler and config must be initialized before checking guest config</td>
+        </tr>
+        <tr>
+            <td>Evaluate if guest mode is enabled</td>
+            <td><code>page.evaluate(() =&gt; { let allowGuest = window.reldens.config.getWithoutLogs('client/general/users/allowGuest', false); return !!allowGuest &amp;&amp; Object.keys(window.reldens.config.getWithoutLogs('client/rooms/selection/availableRooms/registrationGuest', {})).length &gt; 0; })</code></td>
+            <td>test-authentication.spec.js:98-106</td>
+            <td>lib/game/client/game-manager.js:58</td>
+            <td><code>this.config = new ConfigManager();</code></td>
+            <td>Checks both allowGuest flag and available registrationGuest rooms in client config</td>
+        </tr>
+        <tr>
+            <td>Assert guest mode is enabled</td>
+            <td><code>expect(guestEnabled, 'guest login disabled - ...').toBeTruthy()</code></td>
+            <td>test-authentication.spec.js:107</td>
+            <td>-</td>
+            <td>-</td>
+            <td>Test fails if guest feature is disabled - not a bug</td>
+        </tr>
+        <tr>
+            <td>Assert guest form is visible</td>
+            <td><code>expect(page.locator(Selectors.login.guestForm)).toBeVisible()</code></td>
+            <td>test-authentication.spec.js:108</td>
+            <td>theme/default/index.html:72</td>
+            <td><code>&lt;form name="guest-form" id="guest-form" class="guest-form" action="#" method="post"&gt;</code></td>
+            <td><code>Selectors.login.guestForm = '#guest-form'</code></td>
+        </tr>
+        <tr>
+            <td>Click guest submit button</td>
+            <td><code>page.click(Selectors.login.guestSubmit)</code></td>
+            <td>test-authentication.spec.js:111</td>
+            <td>theme/default/index.html:80</td>
+            <td><code>&lt;input type="submit" value="Play"/&gt;</code></td>
+            <td><code>Selectors.login.guestSubmit = '#guest-form [type="submit"]'</code></td>
+        </tr>
+        <tr>
+            <td>Wait for new player name input (character creation)</td>
+            <td><code>page.waitForSelector(Selectors.characterSelect.newPlayerName, { state: 'visible', timeout: ... })</code></td>
+            <td>test-authentication.spec.js:112-115</td>
+            <td>theme/default/index.html:221</td>
+            <td><code>&lt;input type="text" name="new-player-name" id="new-player-name"...&gt;</code></td>
+            <td>Guest login skips account selection and goes directly to player creation</td>
+        </tr>
+        <tr>
+            <td>Type a unique guest player name</td>
+            <td><code>page.locator(Selectors.characterSelect.newPlayerName).pressSequentially(guestPlayerName, { delay: typeDelay })</code></td>
+            <td>test-authentication.spec.js:118-119</td>
+            <td>theme/default/index.html:221</td>
+            <td><code>&lt;input type="text" name="new-player-name" id="new-player-name"...&gt;</code></td>
+            <td><code>guestPlayerName = 'Guest' + Date.now()</code> - unique per run</td>
+        </tr>
+        <tr>
+            <td>Hover and click create character button</td>
+            <td><code>page.hover(Selectors.characterSelect.createSubmit)</code><br><code>page.click(Selectors.characterSelect.createSubmit)</code></td>
+            <td>test-authentication.spec.js:121-123</td>
+            <td>theme/default/index.html:224-225</td>
+            <td><code>&lt;div class="input-box submit-container player-create-submit"&gt;</code><br><code>&lt;input type="submit" value="Create &amp;amp; Start"/&gt;</code></td>
+            <td><code>Selectors.characterSelect.createSubmit = '.player-create-submit [type="submit"]'</code></td>
+        </tr>
+        <tr>
+            <td>Wait for game engine to start</td>
+            <td><code>page.waitForSelector(Selectors.body.gameEngineStarted, { timeout: ... })</code></td>
+            <td>test-authentication.spec.js:124-126</td>
+            <td>lib/game/client/game-manager.js:127</td>
+            <td><code>this.startHandler = new ClientStartHandler(this);</code></td>
+            <td><code>Selectors.body.gameEngineStarted = 'body.game-engine-started'</code>; set after Phaser boots</td>
+        </tr>
+        <tr>
+            <td>Assert canvas is visible</td>
+            <td><code>expect(page.locator(Selectors.canvas)).toBeVisible()</code></td>
+            <td>test-authentication.spec.js:128</td>
+            <td>theme/default/index.html:239</td>
+            <td><code>&lt;div id="reldens"&gt;&lt;/div&gt;</code></td>
+            <td>Phaser creates the <code>&lt;canvas&gt;</code> dynamically inside <code>#reldens</code>; confirms game session started</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>

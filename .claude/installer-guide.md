@@ -100,9 +100,13 @@ Clients marked with **(manual)** require manual database setup:
    - Executes SQL migration scripts
    - Creates tables, basic config, sample data
 
-4. **Entity Generation**
+4. **Entity Generation** (Prisma driver only: runs in forked subprocess)
    - Status: "Generating entities from database schema..."
-   - Introspects database and generates entity classes
+   - Generates `prisma/schema.prisma` (no `url` in datasource block — Prisma 7+ requirement)
+   - Calls `setDatabaseEnvironmentVariables()` to build `DATABASE_URL` from installer config
+   - Writes `prisma.config.js` at project root: `{ datasource: { url: process.env.DATABASE_URL } }`
+   - Runs `npx prisma db pull` to introspect the database (reads URL from `prisma.config.js`)
+   - Runs `npx prisma generate` to produce the typed Prisma client
 
 5. **Project Files**
    - Status: "Creating project files..."
@@ -193,6 +197,7 @@ The installer provides real-time status updates during installation:
 - Forked child process for Prisma installation
 - Isolates Prisma client to avoid module caching
 - Checks client type and skips non-MySQL scripts
+- Calls `PrismaSchemaGenerator.generateConfigFile()` to write `prisma.config.js` at the project root (required by Prisma 7+ CLI — see below)
 
 **EntitiesInstallation** (`lib/game/server/installer/entities-installation.js`)
 - Generates entity classes from database schema

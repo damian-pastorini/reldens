@@ -11,7 +11,7 @@
     position: relative;
     top: -270px;
     left: -426px;
-    padding: 20px;
+    padding: 20px 20px 50px 20px;
     min-width: 300px;
     max-width: 300px;
     min-height: 200px;
@@ -103,6 +103,8 @@
     bottom: 15px;
     right: 15px;
     width: 16%;
+    border: 1px solid #ccc;
+    box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.9);
 }
 
 #chat-open {

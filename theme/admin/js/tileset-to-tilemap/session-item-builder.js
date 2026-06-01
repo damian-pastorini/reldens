@@ -1,0 +1,125 @@
+class SessionItemBuilder
+{
+    constructor(manager)
+    {
+        this.manager = manager;
+    }
+
+    build(sessionId, files, expanded)
+    {
+        let li = document.createElement('li');
+        li.dataset.sessionId = sessionId;
+        if(expanded){
+            li.classList.add('expanded');
+        }
+        let header = document.createElement('div');
+        header.className = 'generated-file-header';
+        let collapseIcon = document.createElement('img');
+        collapseIcon.className = 'generated-file-collapse-icon';
+        collapseIcon.src = SharedUtils.ICON_PATHS.chevronUp;
+        collapseIcon.alt = '';
+        header.appendChild(collapseIcon);
+        let span = document.createElement('span');
+        span.className = 'generated-file-id';
+        span.textContent = sessionId;
+        header.appendChild(span);
+        let hasConfig = false;
+        let hasMapsConfig = false;
+        let outputFiles = [];
+        let inputFiles = [];
+        for(let file of files){
+            if('session-editor-state.json' === file.name){
+                hasConfig = true;
+                continue;
+            }
+            if('map-generator-config.json' === file.name || file.name.startsWith('map-generator-config-')){
+                hasMapsConfig = true;
+            }
+            if('input' === file.type){
+                inputFiles.push(file);
+                continue;
+            }
+            outputFiles.push(file);
+        }
+        if(hasMapsConfig){
+            let wizardBtn = document.createElement('a');
+            wizardBtn.className = 'button button-sm button-secondary generated-file-wizard-btn';
+            let analyzer = document.querySelector('.tileset-analyzer');
+            let mapsWizardPath = analyzer ? analyzer.dataset.mapsWizardPath : '/maps-wizard';
+            let wizardUrl = new URL(mapsWizardPath, window.location.origin);
+            wizardUrl.searchParams.set('tilesetSessionId', sessionId);
+            wizardBtn.href = wizardUrl.toString();
+            wizardBtn.textContent = 'Maps Wizard';
+            wizardBtn.addEventListener('click', (event) => {
+                event.stopPropagation();
+            });
+            header.appendChild(wizardBtn);
+        }
+        if(hasConfig){
+            let loadBtn = document.createElement('button');
+            loadBtn.className = 'button button-sm button-primary generated-file-load-btn';
+            loadBtn.textContent = 'Load';
+            loadBtn.addEventListener('click', (event) => {
+                event.stopPropagation();
+                this.manager.loadSession(sessionId);
+            });
+            header.appendChild(loadBtn);
+            let appendBtn = document.createElement('button');
+            appendBtn.className = 'button button-sm button-success generated-file-append-btn';
+            appendBtn.textContent = 'Append';
+            appendBtn.addEventListener('click', (event) => {
+                event.stopPropagation();
+                this.manager.appendSession(sessionId);
+            });
+            header.appendChild(appendBtn);
+        }
+        let deleteBtn = document.createElement('button');
+        deleteBtn.className = 'button button-sm button-danger generated-file-delete-btn';
+        let deleteImg = document.createElement('img');
+        deleteImg.src = SharedUtils.ICON_PATHS.trash;
+        deleteImg.alt = 'Delete';
+        deleteBtn.appendChild(deleteImg);
+        deleteBtn.addEventListener('click', (event) => {
+            event.stopPropagation();
+            this.manager.delete(sessionId, li);
+        });
+        header.appendChild(deleteBtn);
+        li.appendChild(header);
+        let filesDiv = document.createElement('div');
+        filesDiv.className = expanded ? 'generated-file-content' : 'generated-file-content hidden';
+        if(outputFiles.length){
+            filesDiv.appendChild(this.buildFilesGroup('Output', outputFiles));
+        }
+        if(inputFiles.length){
+            filesDiv.appendChild(this.buildFilesGroup('Input', inputFiles));
+        }
+        li.appendChild(filesDiv);
+        li.addEventListener('click', () => {
+            li.classList.toggle('expanded');
+            filesDiv.classList.toggle('hidden');
+        });
+        return li;
+    }
+
+    buildFilesGroup(label, files)
+    {
+        let group = document.createElement('div');
+        group.className = 'generated-file-group';
+        let labelEl = document.createElement('span');
+        labelEl.className = 'generated-file-group-label';
+        labelEl.textContent = label;
+        group.appendChild(labelEl);
+        let grid = document.createElement('div');
+        grid.className = 'generated-file-grid';
+        for(let file of files){
+            let a = document.createElement('a');
+            a.href = file.downloadUrl;
+            a.textContent = file.name;
+            a.download = file.name;
+            grid.appendChild(a);
+        }
+        group.appendChild(grid);
+        return group;
+    }
+}
+window.SessionItemBuilder = SessionItemBuilder;

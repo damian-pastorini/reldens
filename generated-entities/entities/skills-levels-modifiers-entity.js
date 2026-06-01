@@ -22,6 +22,7 @@ class SkillsLevelsModifiersEntity extends EntityProperties
             level_id: {
                 type: 'reference',
                 reference: 'skills_levels',
+                alias: 'related_skills_levels',
                 isRequired: true,
                 dbType: 'int'
             },
@@ -36,6 +37,7 @@ class SkillsLevelsModifiersEntity extends EntityProperties
             operation: {
                 type: 'reference',
                 reference: 'operation_types',
+                alias: 'related_operation_types',
                 isRequired: true,
                 dbType: 'int'
             },

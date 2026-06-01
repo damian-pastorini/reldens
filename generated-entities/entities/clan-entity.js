@@ -23,6 +23,7 @@ class ClanEntity extends EntityProperties
             owner_id: {
                 type: 'reference',
                 reference: 'players',
+                alias: 'related_players',
                 isRequired: true,
                 dbType: 'int'
             },
@@ -37,6 +38,7 @@ class ClanEntity extends EntityProperties
             level: {
                 type: 'reference',
                 reference: 'clan_levels',
+                alias: 'related_clan_levels',
                 isRequired: true,
                 dbType: 'int'
             },

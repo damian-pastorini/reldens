@@ -1035,6 +1035,14 @@ CREATE TABLE IF NOT EXISTS `rewards_events_state` (
     CONSTRAINT `FK_rewards_events_state_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS `quests_progress` (
+    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `player_id` INT UNSIGNED NULL DEFAULT NULL,
+    `quest_key` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    `customData` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+    PRIMARY KEY (`id`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 --
 
 SET FOREIGN_KEY_CHECKS = 1;

@@ -1,0 +1,37 @@
+.config-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+
+    .config-item {
+        margin-bottom: var(--space-sm);
+        font-size: var(--font-size-sm);
+
+        label {
+            display: flex;
+            align-items: center;
+            line-height: 1.4;
+        }
+
+        input,
+        textarea,
+        select {
+            font-size: var(--font-size-base);
+        }
+
+        input,
+        textarea {
+            width: 100%;
+        }
+
+        select {
+            width: 100%;
+        }
+
+        textarea {
+            min-height: 5rem;
+            resize: vertical;
+            font-family: monospace;
+        }
+    }
+}

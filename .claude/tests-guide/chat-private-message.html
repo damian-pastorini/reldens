@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Private Message Reaches The Target Player</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Private Message Reaches The Target Player</h1>
+<p>Test: <code>tests/e2e/test-chat.spec.js</code> - <em>private message reaches the target player</em></p>
+<p>Videos (2 players):
+&nbsp;&nbsp;P1: <a href="#" class="video-link" data-src="../../test-results/videos/private-message-reaches-the-target-player.webm" data-title="private message reaches the target player (P1)">&#9654; Watch P1</a>
+&nbsp;&nbsp;P2: <a href="#" class="video-link" data-src="../../test-results/videos/private-message-reaches-the-target-player-player2.webm" data-title="private message reaches the target player (P2)">&#9654; Watch P2</a></p>
+<table>
+    <thead><tr><th>Action</th><th>Test Code</th><th>Test File</th><th>File Proof</th><th>Code Proof</th><th>Comments</th></tr></thead>
+    <tbody>
+        <tr>
+            <td>Login Player A (sender) and start game</td>
+            <td><code>Login.loginAndStartGame(page, p1.username, p1.password, p1.playerName, longRun)</code></td>
+            <td>test-chat.spec.js:36</td>
+            <td>tests/e2e/helpers/login.js:77</td>
+            <td><code>static async loginAndStartGame(...)</code></td>
+            <td>Uses <code>e2eUsername</code>/<code>e2ePassword</code>/<code>e2ePlayerName</code> (defaults: root/root/ImRoot)</td>
+        </tr>
+        <tr>
+            <td>Login Player B (recipient) and start game</td>
+            <td><code>Login.loginAndStartGame(secondPage, p2.username, p2.password, p2.playerName, longRun)</code></td>
+            <td>test-chat.spec.js:37</td>
+            <td>tests/e2e/helpers/login.js:77</td>
+            <td><code>static async loginAndStartGame(...)</code></td>
+            <td>Uses <code>e2eUsername2</code>/<code>e2ePassword2</code>/<code>e2ePlayerName2</code> (defaults: root2/root/ImRoot2)</td>
+        </tr>
+        <tr>
+            <td>Open chat panel on both pages</td>
+            <td><code>page.click(Selectors.hud.chatOpen)</code><br><code>secondPage.click(Selectors.hud.chatOpen)</code></td>
+            <td>test-chat.spec.js:45-46 (via openChatOnBothPages at line 108)</td>
+            <td>theme/default/assets/features/chat/templates/ui-chat.html:8</td>
+            <td><code>&lt;div class="open-ui-button" id="chat-open"&gt;</code></td>
+            <td>Both players need chat open; Player B needs it to receive/display incoming private message</td>
+        </tr>
+        <tr>
+            <td>Player A types private message with @player prefix</td>
+            <td><code>page.locator(Selectors.chat.input).click()</code> + typeChatMessage <code>'@'+p2.playerName+' '+testMessage</code></td>
+            <td>test-chat.spec.js:109</td>
+            <td>theme/default/assets/features/chat/templates/ui-chat.html:5</td>
+            <td><code>&lt;input id="chat-input" type="text" placeholder="Enter message"/&gt;</code></td>
+            <td><code>testMessage = 'e2e-private-msg-test'</code>; <code>@</code> prefix triggers private message routing on the server</td>
+        </tr>
+        <tr>
+            <td>Click send button</td>
+            <td><code>page.click(Selectors.chat.send)</code></td>
+            <td>test-chat.spec.js:112</td>
+            <td>theme/default/assets/features/chat/templates/ui-chat.html:6</td>
+            <td><code>&lt;input id="chat-send" type="button" value="Send"/&gt;</code></td>
+            <td>Sends private message to server; server routes to Player B only</td>
+        </tr>
+        <tr>
+            <td>Wait for server round-trip</td>
+            <td><code>page.waitForTimeout(2000 + pauseMs)</code></td>
+            <td>test-chat.spec.js:113</td>
+            <td>-</td>
+            <td>-</td>
+            <td>2-second pause for: P1 client &rarr; server &rarr; P2 client</td>
+        </tr>
+        <tr>
+            <td>Assert Player B sees message in General tab</td>
+            <td><code>expect(secondPage.locator(Selectors.chat.tabContentGeneral)).toContainText(testMessage, { timeout: ... })</code></td>
+            <td>test-chat.spec.js:114</td>
+            <td>lib/chat/constants.js:13</td>
+            <td><code>MESSAGE: 1</code></td>
+            <td>Private type has <code>also_show_in_type=1</code> - message echoed into General tab in addition to Private tab</td>
+        </tr>
+        <tr>
+            <td>Assert Player B sees message in Private tab</td>
+            <td><code>expect(secondPage.locator(Selectors.chat.tabContentPrivate)).toContainText(testMessage, { timeout: ... })</code></td>
+            <td>test-chat.spec.js:115</td>
+            <td>lib/chat/constants.js</td>
+            <td><code>PRIVATE: 4</code></td>
+            <td><code>.tab-content-4</code> is the Private tab (TYPES.PRIVATE = 4)</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>

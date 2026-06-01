@@ -21,6 +21,7 @@ class AdsEventVideoEntity extends EntityProperties
             ads_id: {
                 type: 'reference',
                 reference: 'ads',
+                alias: 'related_ads',
                 isRequired: true,
                 dbType: 'int'
             },

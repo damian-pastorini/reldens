@@ -21,12 +21,14 @@ class ChatEntity extends EntityProperties
             player_id: {
                 type: 'reference',
                 reference: 'players',
+                alias: 'related_players_player',
                 isRequired: true,
                 dbType: 'int'
             },
             room_id: {
                 type: 'reference',
                 reference: 'rooms',
+                alias: 'related_rooms',
                 dbType: 'int'
             },
             message: {
@@ -36,11 +38,13 @@ class ChatEntity extends EntityProperties
             private_player_id: {
                 type: 'reference',
                 reference: 'players',
+                alias: 'related_players_private_player',
                 dbType: 'int'
             },
             message_type: {
                 type: 'reference',
                 reference: 'chat_message_types',
+                alias: 'related_chat_message_types',
                 dbType: 'int'
             },
             message_time: {

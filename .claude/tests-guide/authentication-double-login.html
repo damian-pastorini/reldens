@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Double Login Disconnects First Session</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Double Login Disconnects First Session</h1>
+<p>Test: <code>tests/e2e/test-authentication.spec.js</code> - <em>double login disconnects first session</em></p>
+<p>Videos (2 players):
+&nbsp;&nbsp;P1: <a href="#" class="video-link" data-src="../../test-results/videos/double-login-disconnects-first-session.webm" data-title="Double Login Disconnects First Session (P1)">&#9654; Watch P1</a>
+&nbsp;&nbsp;P2: <a href="#" class="video-link" data-src="../../test-results/videos/double-login-disconnects-first-session-player2.webm" data-title="Double Login Disconnects First Session (P2)">&#9654; Watch P2</a></p>
+<table>
+    <thead>
+        <tr>
+            <th>Action</th>
+            <th>Test Code</th>
+            <th>Test File</th>
+            <th>File Proof</th>
+            <th>Code Proof</th>
+            <th>Comments</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Login page A (first session) with skipUiSelectors=true</td>
+            <td><code>Login.loginAndStartGame(page, username, password, playerName, longRun, true)</code></td>
+            <td>test-authentication.spec.js:153</td>
+            <td>tests/e2e/helpers/login.js:77</td>
+            <td><code>static async loginAndStartGame(page, username, password, playerName, longRun, skipUiSelectors = false, scene = null)</code></td>
+            <td><code>skipUiSelectors=true</code> skips HUD readiness checks to speed up the double-login scenario</td>
+        </tr>
+        <tr>
+            <td>Assert page A canvas is visible</td>
+            <td><code>expect(page.locator(Selectors.canvas)).toBeVisible()</code></td>
+            <td>test-authentication.spec.js:154</td>
+            <td>theme/default/index.html:239</td>
+            <td><code>&lt;div id="reldens"&gt;&lt;/div&gt;</code></td>
+            <td>Confirms first session entered the game</td>
+        </tr>
+        <tr>
+            <td>Register dialog accept handler on page A</td>
+            <td><code>page.on('dialog', async (dialog) =&gt; { await dialog.accept(); })</code></td>
+            <td>test-authentication.spec.js:156-158</td>
+            <td>-</td>
+            <td>-</td>
+            <td>Handles any browser alert triggered during disconnect without blocking test execution</td>
+        </tr>
+        <tr>
+            <td>Create promise waiting for login form to reappear on page A</td>
+            <td><code>page.waitForSelector(Selectors.login.form, { state: 'visible', timeout: ... })</code></td>
+            <td>test-authentication.spec.js:159-162</td>
+            <td>theme/default/index.html:54</td>
+            <td><code>&lt;form name="login-form" id="login-form" class="login-form" action="#" method="post"&gt;</code></td>
+            <td>Promise is created before P2 login; resolves when server kicks P1 and login form reappears</td>
+        </tr>
+        <tr>
+            <td>Login page B (second session) with same credentials</td>
+            <td><code>Login.loginAndStartGame(secondPage, username, password, playerName, longRun, true)</code></td>
+            <td>test-authentication.spec.js:163</td>
+            <td>tests/e2e/base-e2e-test.js:42-44</td>
+            <td><code>secondPage: async ({ browser }, use, testInfo) =&gt; { await BaseE2eTest.runPageFixture(browser, use, testInfo, 'player2'); }</code></td>
+            <td>Uses separate browser context; same user/player as page A - triggers server-side disconnect of first session</td>
+        </tr>
+        <tr>
+            <td>Assert page B canvas is visible</td>
+            <td><code>expect(secondPage.locator(Selectors.canvas)).toBeVisible()</code></td>
+            <td>test-authentication.spec.js:164</td>
+            <td>theme/default/index.html:239</td>
+            <td><code>&lt;div id="reldens"&gt;&lt;/div&gt;</code></td>
+            <td>Confirms page B successfully entered the game</td>
+        </tr>
+        <tr>
+            <td>Await page A disconnect (login form visible)</td>
+            <td><code>await loginFormPromise</code></td>
+            <td>test-authentication.spec.js:166</td>
+            <td>theme/default/index.html:54</td>
+            <td><code>&lt;form name="login-form" id="login-form" ...&gt;</code></td>
+            <td>Resolves when server disconnects the first session and login form is visible again on page A</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>

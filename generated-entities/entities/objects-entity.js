@@ -23,6 +23,7 @@ class ObjectsEntity extends EntityProperties
             room_id: {
                 type: 'reference',
                 reference: 'rooms',
+                alias: 'related_rooms',
                 isRequired: true,
                 dbType: 'int'
             },
@@ -37,6 +38,7 @@ class ObjectsEntity extends EntityProperties
             class_type: {
                 type: 'reference',
                 reference: 'objects_types',
+                alias: 'related_objects_types',
                 dbType: 'int'
             },
             object_class_key: {

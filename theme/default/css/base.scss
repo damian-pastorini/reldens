@@ -109,6 +109,7 @@ body {
 }
 
 .hidden-forced {
+    /* @HOFF */
     display: none !important;
 }
 
@@ -272,6 +273,7 @@ input[type="submit"] {
                 cursor: pointer;
 
                 &:hover {
+                    border-color: $cReldens;
                     background-color: $cGreyBlue50;
                 }
             }
@@ -398,7 +400,7 @@ h3.form-title {
     border-bottom: 1px solid #666;
 }
 
-#reldens div:first-child {
+#reldens > div:first-child {
     z-index: 200;
 }
 
@@ -566,6 +568,7 @@ form {
 }
 
 .button-opacity-off {
+    /* @HOFF */
     opacity: 1 !important;
 }
 

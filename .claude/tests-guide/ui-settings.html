@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Settings Panel Opens And Shows Configuration Options</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Settings Panel Opens And Shows Configuration Options</h1>
+<p>Test: <code>tests/e2e/test-game-login.spec.js</code> - <em>settings panel opens and shows configuration options</em></p>
+<p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/settings-panel-opens-and-shows-configuration-options.webm" data-title="Settings Panel Opens And Shows Configuration Options">&#9654; Watch video</a></p>
+<table>
+    <thead>
+        <tr>
+            <th>Action</th>
+            <th>Test Code</th>
+            <th>Test File</th>
+            <th>File Proof</th>
+            <th>Code Proof</th>
+            <th>Comments</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Login as root player</td>
+            <td><code>Login.loginAndStartGame(page, username, password, playerName, longRun)</code></td>
+            <td>test-game-login.spec.js:36</td>
+            <td>tests/e2e/helpers/login.js:77</td>
+            <td><code>static async loginAndStartGame(page, username, password, playerName, longRun, skipUiSelectors = false, scene = null)</code></td>
+            <td>Called via <code>loginRootPlayer</code> using defaults root/root/ImRoot</td>
+        </tr>
+        <tr>
+            <td>Click settings open button</td>
+            <td><code>page.click(Selectors.hud.settingsOpen)</code></td>
+            <td>test-game-login.spec.js:38</td>
+            <td>theme/default/assets/html/ui-settings.html:1</td>
+            <td><code>&lt;img class="open-ui-button" id="settings-open" src="/assets/icons/settings.png" alt="open"/&gt;</code></td>
+            <td><code>Selectors.hud.settingsOpen = '#settings-open'</code></td>
+        </tr>
+        <tr>
+            <td>Wait for pause</td>
+            <td><code>page.waitForTimeout(pauseMs)</code></td>
+            <td>test-game-login.spec.js:39</td>
+            <td>-</td>
+            <td>-</td>
+            <td>0ms in normal run, 800ms in longRun</td>
+        </tr>
+        <tr>
+            <td>Assert settings UI is visible</td>
+            <td><code>expect(page.locator(Selectors.hud.settingsUi)).toBeVisible()</code></td>
+            <td>test-game-login.spec.js:40</td>
+            <td>theme/default/assets/html/ui-settings-content.html:1</td>
+            <td><code>&lt;div class="settings-ui hidden" id="settings-ui"&gt;</code></td>
+            <td><code>Selectors.hud.settingsUi = '#settings-ui'</code>; JS removes <code>hidden</code> class on button click</td>
+        </tr>
+        <tr>
+            <td>Assert settings dynamic container is visible</td>
+            <td><code>expect(page.locator(Selectors.hud.settingsDynamic)).toBeVisible()</code></td>
+            <td>test-game-login.spec.js:41</td>
+            <td>theme/default/assets/html/ui-settings-content.html:1</td>
+            <td><code>&lt;div class="settings-ui hidden" id="settings-ui"&gt;</code></td>
+            <td><code>Selectors.hud.settingsDynamic = '#settings-dynamic .settings-container'</code>; dynamically populated with settings options</td>
+        </tr>
+        <tr>
+            <td>Click settings close button</td>
+            <td><code>page.click(Selectors.hud.settingsClose)</code></td>
+            <td>test-game-login.spec.js:43</td>
+            <td>theme/default/assets/html/ui-settings-content.html:1</td>
+            <td><code>&lt;div class="settings-ui hidden" id="settings-ui"&gt;</code></td>
+            <td><code>Selectors.hud.settingsClose = '#settings-close'</code></td>
+        </tr>
+        <tr>
+            <td>Assert settings UI is no longer visible</td>
+            <td><code>expect(page.locator(Selectors.hud.settingsUi)).not.toBeVisible()</code></td>
+            <td>test-game-login.spec.js:44</td>
+            <td>theme/default/assets/html/ui-settings-content.html:1</td>
+            <td><code>&lt;div class="settings-ui hidden" id="settings-ui"&gt;</code></td>
+            <td>JS adds <code>hidden</code> class back when close button is clicked</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>

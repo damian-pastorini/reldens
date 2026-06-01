@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Canvas Changes Visually After Attacking Enemy</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Canvas Changes Visually After Attacking Enemy</h1>
+<p>Test: <code>tests/e2e/test-combat.spec.js</code> - <em>canvas changes visually after attacking enemy</em></p>
+<p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/canvas-changes-visually-after-attacking-enemy.webm" data-title="Canvas Changes Visually After Attacking Enemy">&#9654; Watch video</a></p>
+<table>
+    <thead>
+        <tr>
+            <th>Action</th>
+            <th>Test Code</th>
+            <th>Test File</th>
+            <th>File Proof</th>
+            <th>Code Proof</th>
+            <th>Comments</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Login and navigate to reldens-forest</td>
+            <td><code>TestCombat.loginAndGetEnemyWithWorldPos(page, gameConfig, longRun)</code></td>
+            <td>test-combat.spec.js:228</td>
+            <td>tests/e2e/helpers/login.js:77<br>tests/e2e/helpers/navigation.js:149</td>
+            <td><code>static async loginAndStartGame(page, username, password, playerName, longRun, false, 'reldens-forest')</code></td>
+            <td>Logs in as root/ImRoot with forest scene selected; waits for enemy to appear in scene</td>
+        </tr>
+        <tr>
+            <td>Walk to half attack range</td>
+            <td><code>TestCombat.walkToEnemyWithinRange(page, data.enemyKey, Math.floor(skillRange / 2), data.navigationTimeout)</code></td>
+            <td>test-combat.spec.js:231</td>
+            <td>tests/e2e/helpers/navigation.js:177</td>
+            <td><code>static async moveToObjectWithinRange(...)</code></td>
+            <td>Gets close to enemy before taking baseline screenshot; ensures reliable canvas change after attack</td>
+        </tr>
+        <tr>
+            <td>Target enemy</td>
+            <td><code>Phaser.targetEnemy(page, data.enemyKey)</code></td>
+            <td>test-combat.spec.js:232</td>
+            <td>tests/e2e/helpers/phaser.js:238</td>
+            <td><code>static async targetEnemy(page, enemyKey)</code></td>
+            <td>Sets <code>scene.player.currentTarget</code>; needed before skill button becomes usable in HUD</td>
+        </tr>
+        <tr>
+            <td>Resolve attack key and wait for skill button</td>
+            <td><code>TestCombat.resolveAttackKey(page, firstAttackSkill, ...)</code><br><code>page.waitForSelector(Selectors.combat.skillButton(resolvedAttackKey), { state: 'visible', timeout: ... })</code></td>
+            <td>test-combat.spec.js:233-236</td>
+            <td>tests/e2e/helpers/phaser.js:224</td>
+            <td><code>static async getPlayerAvailableActionKeys(page)</code></td>
+            <td>Ensures skill button is rendered and visible before hashing the canvas baseline</td>
+        </tr>
+        <tr>
+            <td>Hash canvas pixels before attack</td>
+            <td><code>let hashBefore = await Phaser.getCanvasPixelHash(page)</code></td>
+            <td>test-combat.spec.js:238</td>
+            <td>tests/e2e/helpers/phaser.js:180</td>
+            <td><code>static async getCanvasPixelHash(page)</code></td>
+            <td>Takes screenshot and computes rolling hash over all pixels; baseline for visual diff</td>
+        </tr>
+        <tr>
+            <td>Handle game-over state if already dead</td>
+            <td><code>let isGameOver = await page.evaluate(() =&gt; null !== document.querySelector('#game-over:not(.hidden)'))</code></td>
+            <td>test-combat.spec.js:240-250</td>
+            <td>theme/default/index.html:178</td>
+            <td><code>&lt;div id="game-over" class="hidden"&gt;</code></td>
+            <td>If player died in a prior test, waits for revive then re-hashes the canvas baseline</td>
+        </tr>
+        <tr>
+            <td>Click attack skill button</td>
+            <td><code>page.click(Selectors.combat.skillButton(resolvedAttackKey), { force: true })</code></td>
+            <td>test-combat.spec.js:251</td>
+            <td>theme/default/assets/html/ui-target.html:1</td>
+            <td><code>Selectors.combat.skillButton = (skillKey) =&gt; '#'+skillKey</code></td>
+            <td><code>force: true</code> bypasses pointer-events check; clicks <code>#attackShort</code> (or resolved key) in HUD</td>
+        </tr>
+        <tr>
+            <td>Wait for server response</td>
+            <td><code>page.waitForTimeout(TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun))</code></td>
+            <td>test-combat.spec.js:252</td>
+            <td>-</td>
+            <td>-</td>
+            <td>5000ms (20000ms in longRun mode); allows attack animation and server broadcast to complete</td>
+        </tr>
+        <tr>
+            <td>Hash canvas pixels after attack</td>
+            <td><code>let hashAfter = await Phaser.getCanvasPixelHash(page)</code></td>
+            <td>test-combat.spec.js:253</td>
+            <td>tests/e2e/helpers/phaser.js:180</td>
+            <td><code>static async getCanvasPixelHash(page)</code></td>
+            <td>Canvas must have changed due to attack animation and/or damage indicator rendered by Phaser</td>
+        </tr>
+        <tr>
+            <td>Assert canvas changed</td>
+            <td><code>expect(hashBefore).not.toBe(hashAfter)</code></td>
+            <td>test-combat.spec.js:254</td>
+            <td>-</td>
+            <td>-</td>
+            <td>Hash difference between before and after proves a visual change occurred after the attack was cast</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>

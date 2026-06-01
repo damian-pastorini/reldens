@@ -1,12 +1,9 @@
 <div class="entity-list {{&entityName}}-list">
-    <h2 class="list-title">{{&templateTitle}}</h2>
-    <div class="actions">
-        <a class="button button-primary" href="{{&entityEditRoute}}">Create New</a>
-    </div>
+    <h2 class="list-title section-title">{{&templateTitle}}</h2>
     <div class="extra-actions">
         {{&extraContent}}
     </div>
-    <div class="sub-content filters">
+    <div class="sub-content">
         <form class="sub-content-form filter-form" name="filter-form" id="filter-form" action="{{&entityListRoute}}" method="post">
             <div class="filters-header">
                 <div class="search-controls">
@@ -21,6 +18,7 @@
                         <a class="button button-secondary button-clear-filter" href="{{&entityListRoute}}?clearFilters=true">Clear Filters</a>
                     </div>
                 </div>
+                <a class="button button-success create-new-btn" href="{{&entityEditRoute}}">Create New</a>
             </div>
             <div class="filters-toggle-content hidden">
                 {{#filters}}
@@ -41,13 +39,3 @@
         {{&pagination}}
     </div>
 </div>
-<dialog class="confirm-dialog">
-    <div class="dialog-content">
-        <h5 class="dialog-title">Confirm Delete</h5>
-        <p class="dialog-message">Are you sure you want to delete the selected items? This action cannot be undone.</p>
-        <div class="dialog-actions">
-            <button type="button" class="button button-secondary dialog-cancel">Cancel</button>
-            <button type="button" class="button button-danger dialog-confirm">Delete</button>
-        </div>
-    </div>
-</dialog>

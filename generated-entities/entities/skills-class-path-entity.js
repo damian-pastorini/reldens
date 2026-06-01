@@ -30,6 +30,7 @@ class SkillsClassPathEntity extends EntityProperties
             levels_set_id: {
                 type: 'reference',
                 reference: 'skills_levels_set',
+                alias: 'related_skills_levels_set',
                 isRequired: true,
                 dbType: 'int'
             },
