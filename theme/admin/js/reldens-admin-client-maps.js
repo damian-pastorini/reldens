@@ -241,6 +241,65 @@ class AdminClientMaps
         });
     }
 
+    bindMapElementsEditor()
+    {
+        let buttons = document.querySelectorAll('.edit-elements-btn');
+        for(let button of buttons){
+            button.addEventListener('click', (event) => this.launchMapElementsEditor(event));
+        }
+        this.bindMapElementsEditorEntityButton();
+    }
+
+    bindMapElementsEditorEntityButton()
+    {
+        let entityButton = document.querySelector('.edit-map-elements-entity-btn');
+        if(!entityButton){
+            return;
+        }
+        let mapFilenameInput = document.querySelector('[name="map_filename"]');
+        if(!mapFilenameInput || !mapFilenameInput.value){
+            return;
+        }
+        let fieldValueSpan = mapFilenameInput.parentElement;
+        fieldValueSpan.classList.add('with-inline-button');
+        fieldValueSpan.appendChild(entityButton);
+        entityButton.classList.remove('hidden');
+        entityButton.addEventListener('click', (event) => this.launchMapElementsEditor(event));
+    }
+
+    launchMapElementsEditor(event)
+    {
+        let button = event.currentTarget;
+        let mapName = button.dataset.mapName;
+        let canvas = this.findEditorCanvas(button);
+        if(!canvas){
+            return;
+        }
+        let tileset = new Image();
+        tileset.src = button.dataset.imageKey || canvas.dataset.imageKey || '';
+        tileset.onload = async () => {
+            let editor = new MapsElementsEditor(canvas, {
+                mapName,
+                sessionId: button.dataset.sessionId || '',
+                mapElementsFile: button.dataset.mapElementsFile || (mapName+'-room-map-elements.json'),
+                context: button.dataset.context || 'wizard',
+                tileset
+            });
+            await editor.load();
+        };
+    }
+
+    findEditorCanvas(button)
+    {
+        for(let prev = button.previousElementSibling; prev; prev = prev.previousElementSibling){
+            if(prev.classList && prev.classList.contains('mapCanvas')){
+                return prev;
+            }
+        }
+        let mapName = button.dataset.mapName;
+        return document.querySelector('.mapCanvas[data-map-name="'+mapName+'"]');
+    }
+
     bind()
     {
         this.bindTilesetAlertIcons();
@@ -251,6 +310,7 @@ class AdminClientMaps
         this.bindMapCanvas();
         this.bindMapsImportSticky();
         this.bindGoBackButton();
+        this.bindMapElementsEditor();
     }
 }
 window.AdminClientMaps = AdminClientMaps;

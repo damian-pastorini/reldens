@@ -269,6 +269,7 @@ class MapsWizardBindings
         if(wizardConfig.savedStrategies){
             utils.strategyStates = Object.assign({}, wizardConfig.savedStrategies);
         }
+        utils.currentStrategy = '';
         let strategyRadio = document.querySelector('[name="mapsWizardAction"][value="'+wizardConfig.strategy+'"]');
         if(strategyRadio){
             strategyRadio.click();

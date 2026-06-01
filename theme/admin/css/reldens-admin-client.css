@@ -13,6 +13,7 @@
 @import './container-forms.css';
 @import './container-entity-list.css';
 @import './container-maps-wizard.css';
+@import './container-maps-elements-editor.css';
 @import './container-tileset-analyzer.css';
 @import './container-tileset-uploader.css';
 @import './container-tileset-editor.css';

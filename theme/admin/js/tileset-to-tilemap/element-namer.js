@@ -33,27 +33,14 @@ class TilesetElementNamer
     resolveUniqueName(tilesetIndex, excludeIndex, name)
     {
         let elements = this.app.state[tilesetIndex].elements;
-        let nameTaken = false;
-        let maxSuffix = 1;
-        let prefix = name+'-';
+        let existingNames = [];
         for(let i = 0; i < elements.length; i++){
             if(i === excludeIndex){
                 continue;
             }
-            if(elements[i].name === name){
-                nameTaken = true;
-            }
-            if(elements[i].name.startsWith(prefix)){
-                let suffix = Number(elements[i].name.slice(prefix.length));
-                if(suffix > maxSuffix){
-                    maxSuffix = suffix;
-                }
-            }
+            existingNames.push(elements[i].name);
         }
-        if(!nameTaken){
-            return name;
-        }
-        return name+'-'+SharedUtils.padNum(maxSuffix + 1);
+        return ElementNameSuffix.resolveUnique(existingNames, name);
     }
 }
 window.TilesetElementNamer = TilesetElementNamer;

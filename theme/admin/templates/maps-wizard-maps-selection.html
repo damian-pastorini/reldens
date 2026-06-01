@@ -8,6 +8,7 @@
             method="post"
             enctype="multipart/form-data">
             <input type="hidden" name="mainAction" id="mainAction" value="import"/>
+            <input type="hidden" name="tilesetSessionId" id="tilesetSessionId" value="{{&tilesetSessionId}}"/>
             <input type="hidden" name="generatedMapsHandler" id="generatedMapsHandler" value="{{&generatedMapsHandler}}"/>
             <input type="hidden" name="importAssociationsForChangePoints" id="importAssociationsForChangePoints" value="{{&importAssociationsForChangePoints}}"/>
             <input type="hidden" name="importAssociationsRecursively" id="importAssociationsRecursively" value="{{&importAssociationsRecursively}}"/>
@@ -52,6 +53,10 @@
                             data-image-key="{{&mapImage}}"
                             data-map-json="{{&mapJson}}">
                         </canvas>
+                        <button type="button" class="button button-secondary edit-elements-btn"
+                            data-map-name="{{&key}}"
+                            data-session-id="{{&tilesetSessionId}}"
+                            data-context="wizard">Edit Map Elements</button>
                         {{#hasSubMaps}}
                             <div class="sub-maps">
                                 <p class="sub-map-option-description clickable" data-expand-collapse=".sub-maps-container-{{&key}}">
@@ -76,6 +81,10 @@
                                             data-image-key="{{&mapImage}}"
                                             data-map-json="{{&mapJson}}">
                                         </canvas>
+                                        <button type="button" class="button button-secondary edit-elements-btn"
+                                            data-map-name="{{&key}}"
+                                            data-session-id="{{../../tilesetSessionId}}"
+                                            data-context="wizard">Edit Map Elements</button>
                                     {{/subMaps}}
                                 </div>
                             </div>
@@ -96,3 +105,15 @@
         </div>
     </div>
 </div>
+<script src="/js/shared/element-name-suffix.js"></script>
+<script src="/js/maps-elements-editor/elements-loader.js"></script>
+<script src="/js/maps-elements-editor/element-mover.js"></script>
+<script src="/js/maps-elements-editor/element-duplicator.js"></script>
+<script src="/js/maps-elements-editor/element-deleter.js"></script>
+<script src="/js/maps-elements-editor/map-resizer-borders.js"></script>
+<script src="/js/maps-elements-editor/map-resizer.js"></script>
+<script src="/js/maps-elements-editor/editor-context-menu.js"></script>
+<script src="/js/maps-elements-editor/editor-save.js"></script>
+<script src="/js/maps-elements-editor/editor-backups-panel.js"></script>
+<script src="/js/maps-elements-editor/map-elements-canvas-painter.js"></script>
+<script src="/js/maps-elements-editor/maps-elements-editor.js"></script>
