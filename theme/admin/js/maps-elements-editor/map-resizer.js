@@ -1,17 +1,114 @@
-class MapsElementsMapResizer
+class MapResizer
 {
-    static ANCHOR_KEYS = [
-        'top-left', 'top-center', 'top-right',
-        'left', 'center', 'right',
-        'bottom-left', 'bottom-center', 'bottom-right'
-    ];
-
     constructor(editor)
     {
         this.editor = editor;
-        this.anchor = '';
+        this.anchorKeys = [
+            'top-left', 'top-center', 'top-right',
+            'left', 'center', 'right',
+            'bottom-left', 'bottom-center', 'bottom-right'
+        ];
+        this.anchor = 'center';
         this.removeHorizontal = 0;
         this.removeVertical = 0;
+        this.anchorButtons = {};
+        this.horizontalInput = null;
+        this.verticalInput = null;
+        this.errorEl = null;
+    }
+
+    buildPanelInto(panel)
+    {
+        let picker = document.createElement('div');
+        picker.className = 'resize-anchor-picker';
+        for(let key of this.anchorKeys){
+            picker.appendChild(this.buildAnchorButton(key));
+        }
+        panel.appendChild(picker);
+        this.horizontalInput = this.buildNumberInput('Remove horizontal', 0);
+        panel.appendChild(this.horizontalInput.wrapper);
+        this.verticalInput = this.buildNumberInput('Remove vertical', 0);
+        panel.appendChild(this.verticalInput.wrapper);
+        this.errorEl = document.createElement('p');
+        this.errorEl.className = 'resize-error hidden';
+        panel.appendChild(this.errorEl);
+        panel.appendChild(EditorButtonFactory.create(
+            'Apply resize',
+            'button-primary',
+            () => this.handleApplyClick()
+        ));
+        this.highlightAnchor(this.anchor);
+    }
+
+    handleApplyClick()
+    {
+        let result = this.applyFromPanel();
+        this.showResult(result);
+    }
+
+    showResult(result)
+    {
+        if(!this.errorEl){
+            return;
+        }
+        if(result.success){
+            this.errorEl.classList.add('hidden');
+            this.errorEl.textContent = '';
+            return;
+        }
+        this.errorEl.classList.remove('hidden');
+        if(result.offending && 0 < result.offending.length){
+            this.errorEl.textContent = 'Cannot resize: these elements would fall outside the new bounds: '
+                +result.offending.join(', ');
+            return;
+        }
+        this.errorEl.textContent = 'Resize failed.';
+    }
+
+    buildAnchorButton(key)
+    {
+        let button = document.createElement('button');
+        button.type = 'button';
+        button.dataset.anchorKey = key;
+        button.title = key;
+        button.addEventListener('click', () => this.highlightAnchor(key));
+        this.anchorButtons[key] = button;
+        return button;
+    }
+
+    buildNumberInput(label, initial)
+    {
+        let wrapper = document.createElement('label');
+        wrapper.textContent = label+': ';
+        let input = document.createElement('input');
+        input.type = 'number';
+        input.min = '0';
+        input.value = String(initial);
+        wrapper.appendChild(input);
+        return {wrapper, input};
+    }
+
+    highlightAnchor(key)
+    {
+        this.anchor = key;
+        for(let anchorKey of this.anchorKeys){
+            let button = this.anchorButtons[anchorKey];
+            if(!button){
+                continue;
+            }
+            button.classList.toggle('selected', anchorKey === key);
+        }
+    }
+
+    applyFromPanel()
+    {
+        this.setInput(this.anchor, this.horizontalInput.input.value, this.verticalInput.input.value);
+        let result = this.apply();
+        if(result.success){
+            this.horizontalInput.input.value = '0';
+            this.verticalInput.input.value = '0';
+        }
+        return result;
     }
 
     setInput(anchor, removeHorizontal, removeVertical)
@@ -24,12 +121,12 @@ class MapsElementsMapResizer
     computeRemovals()
     {
         return {
-            left: MapsElementsMapResizer.leftRemoved(this.anchor, this.removeHorizontal),
-            top: MapsElementsMapResizer.topRemoved(this.anchor, this.removeVertical)
+            left: this.leftRemoved(this.anchor, this.removeHorizontal),
+            top: this.topRemoved(this.anchor, this.removeVertical)
         };
     }
 
-    static leftRemoved(anchor, total)
+    leftRemoved(anchor, total)
     {
         if(-1 !== anchor.indexOf('right')){
             return total;
@@ -40,12 +137,12 @@ class MapsElementsMapResizer
         return 0;
     }
 
-    static topRemoved(anchor, total)
+    topRemoved(anchor, total)
     {
         if(-1 !== anchor.indexOf('bottom')){
             return total;
         }
-        if('center' === anchor || -1 !== anchor.indexOf('left') || -1 !== anchor.indexOf('right')){
+        if('center' === anchor || 'left' === anchor || 'right' === anchor){
             return Math.floor(total / 2);
         }
         return 0;
@@ -67,21 +164,14 @@ class MapsElementsMapResizer
 
     elementWouldEscape(element, removals, newWidth, newHeight)
     {
-        return null !== MapsElementsElementMover.findMatch(
-            element.layers,
-            (layer) => MapsElementsMapResizer.layerWouldEscape(layer.tiles, removals, newWidth, newHeight)
+        return element.layers.some(
+            (layer) => layer.tiles.some(
+                (tile) => this.tileEscapes(tile, removals, newWidth, newHeight)
+            )
         );
     }
 
-    static layerWouldEscape(tiles, removals, newWidth, newHeight)
-    {
-        return null !== MapsElementsElementMover.findMatch(
-            tiles,
-            (tile) => MapsElementsMapResizer.tileEscapes(tile, removals, newWidth, newHeight)
-        );
-    }
-
-    static tileEscapes(tile, removals, newWidth, newHeight)
+    tileEscapes(tile, removals, newWidth, newHeight)
     {
         let newCol = tile.col - removals.left;
         if(0 > newCol || newCol >= newWidth){
@@ -103,9 +193,9 @@ class MapsElementsMapResizer
         this.rebuildLayerData(newWidth, newHeight, removals);
         this.editor.mapJson.width = newWidth;
         this.editor.mapJson.height = newHeight;
-        MapsElementsMapResizerBorders.restamp(this.editor, newWidth, newHeight);
+        MapResizerBorders.restamp(this.editor, newWidth, newHeight);
         this.editor.markDirty();
-        this.editor.requestRender();
+        this.editor.afterMutation();
         return {success: true};
     }
 
@@ -121,11 +211,11 @@ class MapsElementsMapResizer
     translateElementTiles(element, removals)
     {
         for(let elementLayer of element.layers){
-            MapsElementsMapResizer.shiftTiles(elementLayer.tiles, removals);
+            this.shiftTiles(elementLayer.tiles, removals);
         }
     }
 
-    static shiftTiles(tiles, removals)
+    shiftTiles(tiles, removals)
     {
         for(let tile of tiles){
             tile.col -= removals.left;
@@ -136,27 +226,26 @@ class MapsElementsMapResizer
     rebuildLayerData(newWidth, newHeight, removals)
     {
         let oldWidth = this.editor.mapJson.width;
-        let oldHeight = this.editor.mapJson.height;
         for(let mapLayer of this.editor.mapJson.layers){
             if('tilelayer' !== mapLayer.type){
                 continue;
             }
-            mapLayer.data = MapsElementsMapResizer.cropLayerData(mapLayer.data, oldWidth, oldHeight, newWidth, newHeight, removals);
+            mapLayer.data = this.cropLayerData(mapLayer.data, oldWidth, newWidth, newHeight, removals);
             mapLayer.width = newWidth;
             mapLayer.height = newHeight;
         }
     }
 
-    static cropLayerData(oldData, oldWidth, oldHeight, newWidth, newHeight, removals)
+    cropLayerData(oldData, oldWidth, newWidth, newHeight, removals)
     {
         let newData = new Array(newWidth * newHeight).fill(0);
         for(let row = 0; row < newHeight; row++){
-            MapsElementsMapResizer.copyRow(oldData, newData, row, oldWidth, newWidth, removals);
+            this.copyRow(oldData, newData, row, oldWidth, newWidth, removals);
         }
         return newData;
     }
 
-    static copyRow(oldData, newData, row, oldWidth, newWidth, removals)
+    copyRow(oldData, newData, row, oldWidth, newWidth, removals)
     {
         let oldRow = row + removals.top;
         for(let col = 0; col < newWidth; col++){
@@ -164,4 +253,4 @@ class MapsElementsMapResizer
         }
     }
 }
-window.MapsElementsMapResizer = MapsElementsMapResizer;
+window.MapResizer = MapResizer;

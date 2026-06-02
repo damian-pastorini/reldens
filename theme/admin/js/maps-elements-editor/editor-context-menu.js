@@ -1,10 +1,11 @@
-class MapsElementsEditorContextMenu
+class EditorContextMenu
 {
     constructor(editor)
     {
         this.editor = editor;
         this.element = null;
         this.targetInstanceId = null;
+        this.outsideClickHandler = null;
     }
 
     show(instanceId, x, y)
@@ -13,10 +14,28 @@ class MapsElementsEditorContextMenu
         if(!this.element){
             this.element = this.buildMenu();
             document.body.appendChild(this.element);
+            this.outsideClickHandler = (event) => {
+                if(!this.element.contains(event.target)){
+                    this.hide();
+                }
+            };
         }
         this.element.style.left = x+'px';
         this.element.style.top = y+'px';
         this.element.classList.remove('hidden');
+        this.clampToViewport();
+        document.addEventListener('mousedown', this.outsideClickHandler);
+    }
+
+    clampToViewport()
+    {
+        let rect = this.element.getBoundingClientRect();
+        if(rect.right > window.innerWidth){
+            this.element.style.left = Math.max(0, window.innerWidth - rect.width - 5)+'px';
+        }
+        if(rect.bottom > window.innerHeight){
+            this.element.style.top = Math.max(0, window.innerHeight - rect.height - 5)+'px';
+        }
     }
 
     hide()
@@ -26,6 +45,9 @@ class MapsElementsEditorContextMenu
         }
         this.element.classList.add('hidden');
         this.targetInstanceId = null;
+        if(this.outsideClickHandler){
+            document.removeEventListener('mousedown', this.outsideClickHandler);
+        }
     }
 
     isOpen()
@@ -37,19 +59,13 @@ class MapsElementsEditorContextMenu
     {
         let menu = document.createElement('div');
         menu.className = 'element-context-menu hidden';
-        menu.appendChild(this.buildButton('Duplicate', 'button-primary', () => this.onDuplicate()));
-        menu.appendChild(this.buildButton('Delete', 'button-danger', () => this.onDelete()));
+        menu.appendChild(
+            EditorButtonFactory.create('Duplicate', 'button-primary', () => this.onDuplicate())
+        );
+        menu.appendChild(
+            EditorButtonFactory.create('Delete', 'button-danger', () => this.onDelete())
+        );
         return menu;
-    }
-
-    buildButton(label, extraClass, handler)
-    {
-        let button = document.createElement('button');
-        button.type = 'button';
-        button.className = 'button button-sm '+extraClass;
-        button.textContent = label;
-        button.addEventListener('click', handler);
-        return button;
     }
 
     onDuplicate()
@@ -66,4 +82,4 @@ class MapsElementsEditorContextMenu
         this.editor.confirmDeleteElement(target);
     }
 }
-window.MapsElementsEditorContextMenu = MapsElementsEditorContextMenu;
+window.EditorContextMenu = EditorContextMenu;

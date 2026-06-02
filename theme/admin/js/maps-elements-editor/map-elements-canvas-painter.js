@@ -1,13 +1,11 @@
-class MapsElementsCanvasPainter
+class MapElementsCanvasPainter
 {
-    static HOVER_ALPHA = 0.35;
-    static GHOST_ALPHA = 0.6;
-    static FADED_ALPHA = 0.3;
-    static OUT_OF_BOUNDS_COLOR = 'rgba(224,84,84,0.55)';
-
     constructor(editor)
     {
         this.editor = editor;
+        this.outOfBoundsColor = 'rgba(224,84,84,0.55)';
+        this.hoverColor = 'rgba(91,140,255,0.35)';
+        this.dragColor = 'rgba(91,255,140,0.5)';
     }
 
     render()
@@ -15,47 +13,35 @@ class MapsElementsCanvasPainter
         let mapJson = this.editor.mapJson;
         this.editor.canvas.width = mapJson.width * mapJson.tilewidth;
         this.editor.canvas.height = mapJson.height * mapJson.tileheight;
-        this.editor.ctx.clearRect(0, 0, this.editor.canvas.width, this.editor.canvas.height);
         this.drawBase();
         this.drawHover();
         this.drawDragGhost();
+        this.drawDuplicateGhost();
+    }
+
+    drawDuplicateGhost()
+    {
+        let placingState = this.editor.duplicator.placingState;
+        if(!placingState){
+            return;
+        }
+        let color = placingState.outOfBounds ? this.outOfBoundsColor : this.dragColor;
+        this.fillElementTiles(
+            placingState.source,
+            placingState.ghostCol - placingState.source.bounds.col,
+            placingState.ghostRow - placingState.source.bounds.row,
+            color
+        );
     }
 
     drawBase()
     {
-        let mapJson = this.editor.mapJson;
-        let draggedId = this.editor.mover.dragState ? this.editor.mover.dragState.instanceId : null;
-        let draggedLayerNames = draggedId ? this.collectLayerNames(draggedId) : null;
-        for(let mapLayer of mapJson.layers){
+        for(let mapLayer of this.editor.mapJson.layers){
             if('tilelayer' !== mapLayer.type){
                 continue;
             }
-            this.drawLayer(mapLayer, draggedLayerNames);
+            this.paintLayerData(mapLayer);
         }
-    }
-
-    collectLayerNames(instanceId)
-    {
-        let element = this.editor.mover.findByInstance(instanceId);
-        if(!element){
-            return null;
-        }
-        let names = new Set();
-        for(let elementLayer of element.layers){
-            names.add(elementLayer.name);
-        }
-        return names;
-    }
-
-    drawLayer(mapLayer, draggedLayerNames)
-    {
-        let ctx = this.editor.ctx;
-        ctx.save();
-        if(draggedLayerNames && draggedLayerNames.has(mapLayer.name)){
-            ctx.globalAlpha = MapsElementsCanvasPainter.FADED_ALPHA;
-        }
-        this.paintLayerData(mapLayer);
-        ctx.restore();
     }
 
     paintLayerData(mapLayer)
@@ -65,6 +51,9 @@ class MapsElementsCanvasPainter
             return;
         }
         let mapJson = this.editor.mapJson;
+        if(!mapJson.tilesets || 0 === mapJson.tilesets.length){
+            return;
+        }
         let tilesetInfo = mapJson.tilesets[0];
         for(let i = 0; i < mapLayer.data.length; i++){
             this.paintCell(mapLayer.data[i], i, tileset, tilesetInfo, mapJson);
@@ -77,9 +66,9 @@ class MapsElementsCanvasPainter
             return;
         }
         let tileId = gid - 1;
-        let columns = tilesetInfo.imagewidth / (mapJson.tilewidth + (tilesetInfo.spacing || 0));
-        let margin = tilesetInfo.margin || 0;
-        let spacing = tilesetInfo.spacing || 0;
+        let spacing = tilesetInfo.spacing ? tilesetInfo.spacing : 0;
+        let margin = tilesetInfo.margin ? tilesetInfo.margin : 0;
+        let columns = Math.floor((tilesetInfo.imagewidth - 2 * margin + spacing) / (mapJson.tilewidth + spacing));
         let sx = margin + (tileId % columns) * (mapJson.tilewidth + spacing);
         let sy = margin + Math.floor(tileId / columns) * (mapJson.tileheight + spacing);
         this.editor.ctx.drawImage(
@@ -108,7 +97,7 @@ class MapsElementsCanvasPainter
         if(!element){
             return;
         }
-        this.fillElementTiles(element, 0, 0, 'rgba(91,140,255,0.35)');
+        this.fillElementTiles(element, 0, 0, this.hoverColor);
     }
 
     drawDragGhost()
@@ -121,7 +110,9 @@ class MapsElementsCanvasPainter
         if(!element){
             return;
         }
-        let color = dragState.outOfBounds ? MapsElementsCanvasPainter.OUT_OF_BOUNDS_COLOR : 'rgba(91,255,140,0.5)';
+        let color = dragState.outOfBounds
+            ? this.outOfBoundsColor
+            : this.dragColor;
         this.fillElementTiles(
             element,
             dragState.currentCol - dragState.anchorCol,
@@ -149,4 +140,4 @@ class MapsElementsCanvasPainter
         }
     }
 }
-window.MapsElementsCanvasPainter = MapsElementsCanvasPainter;
+window.MapElementsCanvasPainter = MapElementsCanvasPainter;

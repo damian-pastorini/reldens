@@ -1,10 +1,8 @@
 class MapsElementsEditor
 {
-    static MOUSE_BUTTON_LEFT = 0;
-    static MOUSE_BUTTON_RIGHT = 2;
-
     constructor(canvas, options)
     {
+        this.mouseButtonLeft = 0;
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
         this.mapName = options.mapName;
@@ -16,49 +14,93 @@ class MapsElementsEditor
         this.mapElements = null;
         this.dirty = false;
         this.hoveredInstanceId = null;
-        this.loader = new MapsElementsLoader(this);
-        this.mover = new MapsElementsElementMover(this);
-        this.duplicator = new MapsElementsElementDuplicator(this);
-        this.deleter = new MapsElementsElementDeleter(this);
-        this.resizer = new MapsElementsMapResizer(this);
-        this.contextMenu = new MapsElementsEditorContextMenu(this);
-        this.saver = new MapsElementsEditorSave(this);
-        this.backupsPanel = new MapsElementsEditorBackupsPanel(this);
+        this.listenersAttached = false;
+        this.onMouseDownHandler = null;
+        this.onMouseMoveHandler = null;
+        this.onMouseUpHandler = null;
+        this.onContextMenuHandler = null;
+        this.escapeListener = null;
+        this.renderScheduled = false;
+        this.loader = new ElementsLoader(this);
+        this.mover = new ElementMover(this);
+        this.duplicator = new ElementDuplicator(this);
+        this.deleter = new ElementDeleter(this);
+        this.resizer = new MapResizer(this);
+        this.contextMenu = new EditorContextMenu(this);
+        this.saver = new EditorSave(this);
+        this.backupsPanel = new EditorBackupsPanel(this);
+        this.painter = new MapElementsCanvasPainter(this);
+        this.ui = new EditorUi(this);
+        this.resetController = new EditorResetController(this);
     }
 
     async load()
     {
-        let mapJsonResponse = await fetch('/generated/'+this.mapName+'.json');
+        let mapJsonResponse = await fetch('/reldens-admin/generated/'+this.mapName+'.json');
         this.mapJson = await mapJsonResponse.json();
         this.mapElements = await this.loader.load(this.mapName, this.mapElementsFile);
         if(!this.mapElements){
             return false;
         }
+        this.resetController.captureSnapshot();
+        await this.resetController.ensureInitialBackup();
+        this.mover.buildTileIndex();
+        this.ui.build();
         this.attachEventListeners();
         this.requestRender();
         return true;
     }
 
+    afterMutation()
+    {
+        this.mover.buildTileIndex();
+        this.requestRender();
+    }
+
     attachEventListeners()
     {
-        this.canvas.addEventListener('mousedown', (event) => this.onMouseDown(event));
-        this.canvas.addEventListener('mousemove', (event) => this.onMouseMove(event));
-        this.canvas.addEventListener('mouseup', () => this.onMouseUp());
-        this.canvas.addEventListener('mouseleave', () => this.onMouseUp());
-        this.canvas.addEventListener('contextmenu', (event) => this.onContextMenu(event));
+        if(this.listenersAttached){
+            return;
+        }
+        this.listenersAttached = true;
+        this.onMouseDownHandler = (event) => this.onMouseDown(event);
+        this.onMouseMoveHandler = (event) => this.onMouseMove(event);
+        this.onMouseUpHandler = () => this.onMouseUp();
+        this.onContextMenuHandler = (event) => this.onContextMenu(event);
+        this.escapeListener = (event) => {
+            if('Escape' === event.key){
+                this.cancelDuplicate();
+            }
+        };
+        this.canvas.addEventListener('mousedown', this.onMouseDownHandler);
+        this.canvas.addEventListener('mousemove', this.onMouseMoveHandler);
+        this.canvas.addEventListener('mouseup', this.onMouseUpHandler);
+        this.canvas.addEventListener('mouseleave', this.onMouseUpHandler);
+        this.canvas.addEventListener('contextmenu', this.onContextMenuHandler);
+        document.addEventListener('keydown', this.escapeListener);
+    }
+
+    dispose()
+    {
+        if(!this.listenersAttached){
+            return;
+        }
+        this.listenersAttached = false;
+        this.canvas.removeEventListener('mousedown', this.onMouseDownHandler);
+        this.canvas.removeEventListener('mousemove', this.onMouseMoveHandler);
+        this.canvas.removeEventListener('mouseup', this.onMouseUpHandler);
+        this.canvas.removeEventListener('mouseleave', this.onMouseUpHandler);
+        this.canvas.removeEventListener('contextmenu', this.onContextMenuHandler);
+        document.removeEventListener('keydown', this.escapeListener);
     }
 
     canvasToTile(event)
     {
-        return MapsElementsEditor.eventToTile(event, this.canvas, this.canvas.getBoundingClientRect(), this.mapJson);
-    }
-
-    static eventToTile(event, canvas, rect, mapJson)
-    {
-        return {
-            col: Math.floor((event.clientX - rect.left) * (canvas.width / rect.width) / mapJson.tilewidth),
-            row: Math.floor((event.clientY - rect.top) * (canvas.height / rect.height) / mapJson.tileheight)
-        };
+        let rect = this.canvas.getBoundingClientRect();
+        let result = {col: 0, row: 0};
+        result.col = Math.floor((event.clientX - rect.left) * (this.canvas.width / rect.width) / this.mapJson.tilewidth);
+        result.row = Math.floor((event.clientY - rect.top) * (this.canvas.height / rect.height) / this.mapJson.tileheight);
+        return result;
     }
 
     pickElementAt(event)
@@ -73,11 +115,16 @@ class MapsElementsEditor
 
     onMouseDown(event)
     {
-        if(MapsElementsEditor.MOUSE_BUTTON_LEFT !== event.button){
+        if(this.mouseButtonLeft !== event.button){
             return;
         }
         if(this.contextMenu.isOpen()){
             this.contextMenu.hide();
+        }
+        if(this.duplicator.isPlacing()){
+            this.duplicator.confirmPlacing();
+            this.ui.refreshCancelDuplicate(this.duplicator.isPlacing());
+            return;
         }
         let picked = this.pickElementAt(event);
         if(!picked){
@@ -90,6 +137,11 @@ class MapsElementsEditor
     onMouseMove(event)
     {
         let tile = this.canvasToTile(event);
+        if(this.duplicator.isPlacing()){
+            this.duplicator.updatePlacing(tile.col, tile.row);
+            this.requestRender();
+            return;
+        }
         if(this.mover.dragState){
             this.mover.updateDrag(tile.col, tile.row);
             this.requestRender();
@@ -129,17 +181,36 @@ class MapsElementsEditor
         if(!this.mapJson){
             return;
         }
-        new MapsElementsCanvasPainter(this).render();
+        if(this.renderScheduled){
+            return;
+        }
+        this.renderScheduled = true;
+        requestAnimationFrame(() => {
+            this.renderScheduled = false;
+            this.painter.render();
+        });
     }
 
     markDirty()
     {
         this.dirty = true;
+        this.ui.refreshDirty(true);
     }
 
     requestDuplicate(instanceId)
     {
-        this.duplicator.duplicate(instanceId);
+        if(!this.duplicator.startPlacing(instanceId)){
+            return;
+        }
+        this.ui.refreshCancelDuplicate(true);
+        this.requestRender();
+    }
+
+    cancelDuplicate()
+    {
+        if(this.duplicator.cancelPlacing()){
+            this.ui.refreshCancelDuplicate(false);
+        }
     }
 
     confirmDeleteElement(instanceId)
@@ -156,41 +227,44 @@ class MapsElementsEditor
         });
     }
 
-    showAsyncConfirm(dialogOptions, action)
-    {
-        adminFunctions.showConfirmDialog(async (confirmed) => {
-            if(confirmed){
-                await action();
-            }
-        }, dialogOptions);
-    }
-
     confirmReload(backupTimestamp)
     {
-        this.showAsyncConfirm({
-            title: 'Reload Backup',
-            message: 'Reload backup from '+backupTimestamp+'? A pre-restore backup will be written first.',
-            confirmText: 'Reload',
-            confirmClass: 'button-primary'
-        }, async () => {
+        adminFunctions.showConfirmDialog(async (confirmed) => {
+            if(!confirmed){
+                return;
+            }
             let result = await this.backupsPanel.restore(backupTimestamp);
             if(result.success){
                 await this.load();
             }
+        }, {
+            title: 'Reload Backup',
+            message: 'Reload backup from '+backupTimestamp+'? A pre-restore backup will be written first.',
+            confirmText: 'Reload',
+            confirmClass: 'button-primary'
         });
     }
 
     confirmDeleteBackup(backupTimestamp)
     {
-        this.showAsyncConfirm({
+        adminFunctions.showConfirmDialog(async (confirmed) => {
+            if(!confirmed){
+                return;
+            }
+            await this.backupsPanel.delete(backupTimestamp);
+            await this.refreshBackupsList();
+        }, {
             title: 'Delete Backup',
             message: 'Delete backup '+backupTimestamp+'? This cannot be undone.',
             confirmText: 'Delete',
             confirmClass: 'button-danger'
-        }, async () => {
-            await this.backupsPanel.delete(backupTimestamp);
-            await this.backupsPanel.list();
         });
+    }
+
+    async handleSaveClick()
+    {
+        let result = await this.save();
+        this.ui.flashSaveButton(result.success);
     }
 
     async save()
@@ -198,8 +272,15 @@ class MapsElementsEditor
         let result = await this.saver.save();
         if(result.success){
             this.dirty = false;
+            this.ui.refreshDirty(false);
         }
         return result;
+    }
+
+    async refreshBackupsList()
+    {
+        await this.backupsPanel.list();
+        this.backupsPanel.renderInto(this.ui.backupsListEl);
     }
 }
 window.MapsElementsEditor = MapsElementsEditor;

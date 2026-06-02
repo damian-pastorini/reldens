@@ -99,13 +99,14 @@
             padding-top: var(--space-lg);
             margin-top: var(--space-2xl);
             border-top: 1px solid var(--color-grey-40);
+            overflow: auto;
 
             label {
                 cursor: pointer;
                 color: var(--color-grey);
             }
 
-            canvas {
+            > canvas {
                 align-self: flex-start;
                 margin-top: var(--space-lg);
                 max-width: 100%;

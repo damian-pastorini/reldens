@@ -1,25 +1,76 @@
-class MapsElementsElementDuplicator
+class ElementDuplicator
 {
-    static OFFSET_COL = 2;
-    static OFFSET_ROW = 2;
-
     constructor(editor)
     {
         this.editor = editor;
+        this.offsetCol = 2;
+        this.offsetRow = 2;
+        this.placingState = null;
     }
 
-    duplicate(instanceId)
+    isPlacing()
+    {
+        return null !== this.placingState;
+    }
+
+    startPlacing(instanceId)
     {
         let collected = this.collectIdsAndFindSource(instanceId);
         if(!collected.source){
-            return null;
+            return false;
         }
-        let newName = ElementNameSuffix.nextSuffix(collected.ids, collected.source.elementKey);
-        let copy = this.makeCopy(collected.source, newName);
+        let initialCol = collected.source.bounds.col + this.offsetCol;
+        let initialRow = collected.source.bounds.row + this.offsetRow;
+        this.placingState = {
+            source: collected.source,
+            existingIds: collected.ids,
+            ghostCol: initialCol,
+            ghostRow: initialRow,
+            outOfBounds: this.anyTileOutOfBounds(collected.source, initialCol, initialRow)
+        };
+        return true;
+    }
+
+    updatePlacing(col, row)
+    {
+        if(!this.placingState){
+            return;
+        }
+        this.placingState.ghostCol = col;
+        this.placingState.ghostRow = row;
+        this.placingState.outOfBounds = this.anyTileOutOfBounds(this.placingState.source, col, row);
+    }
+
+    confirmPlacing()
+    {
+        if(!this.placingState || this.placingState.outOfBounds){
+            return false;
+        }
+        let newName = ElementNameSuffix.nextSuffix(
+            this.placingState.existingIds,
+            this.placingState.source.elementKey
+        );
+        let copy = this.makeCopy(
+            this.placingState.source,
+            newName,
+            this.placingState.ghostCol,
+            this.placingState.ghostRow
+        );
         this.editor.mapElements.elements.push(copy);
+        this.placingState = null;
         this.editor.markDirty();
+        this.editor.afterMutation();
+        return true;
+    }
+
+    cancelPlacing()
+    {
+        if(!this.placingState){
+            return false;
+        }
+        this.placingState = null;
         this.editor.requestRender();
-        return copy;
+        return true;
     }
 
     collectIdsAndFindSource(instanceId)
@@ -35,22 +86,38 @@ class MapsElementsElementDuplicator
         return {ids, source};
     }
 
-    makeCopy(source, newName)
+    anyTileOutOfBounds(source, ghostCol, ghostRow)
+    {
+        return source.layers.some(
+            (layer) => layer.tiles.some(
+                (tile) => this.tileEndsOutOfBounds(tile, source.bounds, ghostCol, ghostRow)
+            )
+        );
+    }
+
+    tileEndsOutOfBounds(tile, sourceBounds, ghostCol, ghostRow)
+    {
+        return this.editor.mover.outOfBoundsAt(
+            tile.col + ghostCol - sourceBounds.col,
+            tile.row + ghostRow - sourceBounds.row
+        );
+    }
+
+    makeCopy(source, newName, targetCol, targetRow)
     {
         let copy = JSON.parse(JSON.stringify(source)); // HOFF
         copy.instanceId = newName;
-        copy.index = ElementNameSuffix.parseSuffix(newName);
         copy.elementKey = source.elementKey;
-        let deltaCol = MapsElementsElementDuplicator.OFFSET_COL;
-        let deltaRow = MapsElementsElementDuplicator.OFFSET_ROW;
+        let deltaCol = targetCol - source.bounds.col;
+        let deltaRow = targetRow - source.bounds.row;
         let mapWidth = this.editor.mapJson.width;
         let totalCells = mapWidth * this.editor.mapJson.height;
         for(let elementLayer of copy.layers){
             elementLayer.name = newName+'-'+elementLayer.type;
             this.shiftAndStamp(elementLayer, deltaCol, deltaRow, mapWidth, totalCells);
         }
-        copy.bounds.col += deltaCol;
-        copy.bounds.row += deltaRow;
+        copy.bounds.col = targetCol;
+        copy.bounds.row = targetRow;
         return copy;
     }
 
@@ -75,4 +142,4 @@ class MapsElementsElementDuplicator
         });
     }
 }
-window.MapsElementsElementDuplicator = MapsElementsElementDuplicator;
+window.ElementDuplicator = ElementDuplicator;

@@ -1,6 +1,6 @@
-class MapsElementsMapResizerBorders
+class MapResizerBorders
 {
-    static BORDER_PROPERTY_KEYS = {
+    static borderKeys = {
         top: 'border-top',
         bottom: 'border-bottom',
         left: 'border-left',
@@ -13,27 +13,29 @@ class MapsElementsMapResizerBorders
 
     static restamp(editor, newWidth, newHeight)
     {
-        let bordersLayer = MapsElementsMapResizerBorders.findBordersLayer(editor);
+        let bordersLayer = MapResizerBorders.findBordersLayer(editor);
         if(!bordersLayer){
             return false;
         }
-        let gids = MapsElementsMapResizerBorders.collectBorderGids(editor);
+        let gids = MapResizerBorders.collectBorderGids(editor);
         if(!gids){
             return false;
         }
-        bordersLayer.data = MapsElementsMapResizerBorders.buildBordersData(newWidth, newHeight, gids);
+        bordersLayer.data = MapResizerBorders.buildBordersData(newWidth, newHeight, gids);
         return true;
     }
 
     static findBordersLayer(editor)
     {
-        let name = editor.mapElements.bordersLayer || 'borders';
-        for(let mapLayer of editor.mapJson.layers){
-            if('tilelayer' === mapLayer.type && mapLayer.name === name){
-                return mapLayer;
-            }
-        }
-        return null;
+        return MapResizerBorders.matchTilelayerByName(
+            editor.mapJson.layers,
+            editor.mapElements.bordersLayer ? editor.mapElements.bordersLayer : 'borders'
+        );
+    }
+
+    static matchTilelayerByName(layers, name)
+    {
+        return layers.find((mapLayer) => 'tilelayer' === mapLayer.type && mapLayer.name === name);
     }
 
     static collectBorderGids(editor)
@@ -43,19 +45,24 @@ class MapsElementsMapResizerBorders
             return null;
         }
         let lookup = {};
-        for(let tileDef of tilesets[0].tiles || []){
-            MapsElementsMapResizerBorders.collectFromTile(lookup, tileDef);
+        let tiles = tilesets[0].tiles ? tilesets[0].tiles : [];
+        for(let tileDef of tiles){
+            MapResizerBorders.collectFromTile(lookup, tileDef);
         }
-        return 0 < Object.keys(lookup).length ? lookup : null;
+        if(0 === Object.keys(lookup).length){
+            return null;
+        }
+        return lookup;
     }
 
     static collectFromTile(lookup, tileDef)
     {
-        for(let prop of tileDef.properties || []){
+        let properties = tileDef.properties ? tileDef.properties : [];
+        for(let prop of properties){
             if('key' !== prop.name){
                 continue;
             }
-            let kind = MapsElementsMapResizerBorders.borderKindFor(prop.value);
+            let kind = MapResizerBorders.borderKindFor(prop.value);
             if(kind){
                 lookup[kind] = tileDef.id + 1;
             }
@@ -64,8 +71,8 @@ class MapsElementsMapResizerBorders
 
     static borderKindFor(value)
     {
-        for(let kind of Object.keys(MapsElementsMapResizerBorders.BORDER_PROPERTY_KEYS)){
-            if(MapsElementsMapResizerBorders.BORDER_PROPERTY_KEYS[kind] === value){
+        for(let kind of Object.keys(MapResizerBorders.borderKeys)){
+            if(MapResizerBorders.borderKeys[kind] === value){
                 return kind;
             }
         }
@@ -75,29 +82,33 @@ class MapsElementsMapResizerBorders
     static buildBordersData(newWidth, newHeight, gids)
     {
         let data = new Array(newWidth * newHeight).fill(0);
-        MapsElementsMapResizerBorders.stampEdges(data, newWidth, newHeight, gids);
-        MapsElementsMapResizerBorders.stampCorners(data, newWidth, newHeight, gids);
+        MapResizerBorders.stampEdges(data, newWidth, newHeight, gids);
+        MapResizerBorders.stampCorners(data, newWidth, newHeight, gids);
         return data;
     }
 
     static stampEdges(data, newWidth, newHeight, gids)
     {
+        let topGid = gids.top ? gids.top : 0;
+        let bottomGid = gids.bottom ? gids.bottom : 0;
         for(let col = 1; col < newWidth - 1; col++){
-            data[col] = gids.top || 0;
-            data[(newHeight - 1) * newWidth + col] = gids.bottom || 0;
+            data[col] = topGid;
+            data[(newHeight - 1) * newWidth + col] = bottomGid;
         }
+        let leftGid = gids.left ? gids.left : 0;
+        let rightGid = gids.right ? gids.right : 0;
         for(let row = 1; row < newHeight - 1; row++){
-            data[row * newWidth] = gids.left || 0;
-            data[row * newWidth + (newWidth - 1)] = gids.right || 0;
+            data[row * newWidth] = leftGid;
+            data[row * newWidth + (newWidth - 1)] = rightGid;
         }
     }
 
     static stampCorners(data, newWidth, newHeight, gids)
     {
-        data[0] = gids.topLeft || 0;
-        data[newWidth - 1] = gids.topRight || 0;
-        data[(newHeight - 1) * newWidth] = gids.bottomLeft || 0;
-        data[(newHeight - 1) * newWidth + (newWidth - 1)] = gids.bottomRight || 0;
+        data[0] = gids.topLeft ? gids.topLeft : 0;
+        data[newWidth - 1] = gids.topRight ? gids.topRight : 0;
+        data[(newHeight - 1) * newWidth] = gids.bottomLeft ? gids.bottomLeft : 0;
+        data[(newHeight - 1) * newWidth + (newWidth - 1)] = gids.bottomRight ? gids.bottomRight : 0;
     }
 }
-window.MapsElementsMapResizerBorders = MapsElementsMapResizerBorders;
+window.MapResizerBorders = MapResizerBorders;

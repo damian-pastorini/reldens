@@ -1,33 +1,28 @@
-class MapsElementsEditorBackupsPanel
+class EditorBackupsPanel
 {
-    static BASE_PATH = '/reldens-admin/maps-elements-editor/api';
-
     constructor(editor)
     {
         this.editor = editor;
+        this.basePath = '/reldens-admin/maps-elements-editor/api';
         this.backups = [];
+        this.jsonFetcher = new EditorJsonFetcher();
     }
 
     async list()
     {
-        let url = MapsElementsEditorBackupsPanel.BASE_PATH
-            +'/list-backups?mapName='+encodeURIComponent(this.editor.mapName);
-        let data = await (await fetch(url)).json();
-        this.backups = data.backups || [];
+        let url = this.basePath+'/list-backups?mapName='+encodeURIComponent(this.editor.mapName);
+        let data = await this.jsonFetcher.fetch(url);
+        this.backups = data && data.backups ? data.backups : [];
         return this.backups;
     }
 
     async postWithTimestamp(endpoint, backupTimestamp)
     {
-        return (await fetch(MapsElementsEditorBackupsPanel.BASE_PATH+endpoint, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ // HOFF
-                mapName: this.editor.mapName,
-                backupTimestamp,
-                context: this.editor.context
-            })
-        })).json();
+        return this.jsonFetcher.post(this.basePath+endpoint, JSON.stringify({ // HOFF
+            mapName: this.editor.mapName,
+            backupTimestamp,
+            context: this.editor.context
+        }));
     }
 
     async restore(backupTimestamp)
@@ -67,20 +62,14 @@ class MapsElementsEditorBackupsPanel
         row.className = 'backups-panel-row';
         let label = document.createElement('span');
         label.textContent = this.formatTimestamp(backup.timestamp);
-        let reloadBtn = document.createElement('button');
-        reloadBtn.type = 'button';
-        reloadBtn.className = 'button button-sm button-primary';
-        reloadBtn.textContent = 'Reload';
-        reloadBtn.addEventListener('click', () => this.editor.confirmReload(backup.timestamp));
-        let deleteBtn = document.createElement('button');
-        deleteBtn.type = 'button';
-        deleteBtn.className = 'button button-sm button-danger';
-        deleteBtn.textContent = 'Delete';
-        deleteBtn.addEventListener('click', () => this.editor.confirmDeleteBackup(backup.timestamp));
         row.appendChild(label);
-        row.appendChild(reloadBtn);
-        row.appendChild(deleteBtn);
+        row.appendChild(EditorButtonFactory.create(
+            'Reload', 'button-primary', () => this.editor.confirmReload(backup.timestamp)
+        ));
+        row.appendChild(EditorButtonFactory.create(
+            'Delete', 'button-danger', () => this.editor.confirmDeleteBackup(backup.timestamp)
+        ));
         return row;
     }
 }
-window.MapsElementsEditorBackupsPanel = MapsElementsEditorBackupsPanel;
+window.EditorBackupsPanel = EditorBackupsPanel;

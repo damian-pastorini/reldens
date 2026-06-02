@@ -36,26 +36,12 @@ class ElementNameSuffix
         return match ? Number(match[1]) : 0;
     }
 
-    static splitInstanceId(instanceId)
-    {
-        let match = instanceId.match(/^(.+)-(\d+)$/);
-        if(!match){
-            return {base: instanceId, index: 0};
-        }
-        return {base: match[1], index: Number(match[2])};
-    }
-
     static resolveUnique(existingNames, name)
     {
-        let nameTaken = -1 !== existingNames.indexOf(name);
-        if(!nameTaken){
+        if(-1 === existingNames.indexOf(name)){
             return name;
         }
-        let max = ElementNameSuffix.maxSuffix(existingNames, name);
-        if(0 === max){
-            max = 1;
-        }
-        return name+'-'+ElementNameSuffix.padNum(max + 1);
+        return name+'-'+ElementNameSuffix.padNum(ElementNameSuffix.maxSuffix(existingNames, name) + 1);
     }
 }
 window.ElementNameSuffix = ElementNameSuffix;

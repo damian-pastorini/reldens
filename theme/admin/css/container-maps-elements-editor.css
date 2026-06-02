@@ -16,22 +16,18 @@
                 display: none;
             }
         }
-    }
 
-    .element-context-menu {
-        position: absolute;
-        z-index: var(--z-fixed);
-        display: flex;
-        flex-direction: column;
-        gap: var(--space-xs);
-        padding: var(--space-sm);
-        background-color: var(--color-grey-60);
-        border: 1px solid var(--color-grey-40);
-        border-radius: var(--radius-sm);
-        min-width: 6.25rem;
+        .editor-zoom-controls {
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+            margin-left: auto;
 
-        &.hidden {
-            display: none;
+            .editor-zoom-level {
+                min-width: 3rem;
+                text-align: center;
+                color: var(--color-grey);
+            }
         }
     }
 
@@ -57,15 +53,23 @@
         }
     }
 
-    .backups-panel {
+    .backups-panel,
+    .resize-panel {
         margin-top: var(--space-sm);
         padding: var(--space-sm);
         background-color: var(--color-grey-70);
         border: 1px solid var(--color-grey-40);
         border-radius: var(--radius-sm);
+    }
 
-        &.collapsed .backups-panel-list {
-            display: none;
+    .backups-panel {
+        width: fit-content;
+        max-height: 11rem;
+        overflow-y: auto;
+
+        .backups-panel-list {
+            display: flex;
+            flex-direction: column;
         }
     }
 
@@ -79,4 +83,45 @@
             flex: 1;
         }
     }
+
+    .editor-canvas-scroll {
+        margin-top: var(--space-sm);
+        overflow: auto;
+        max-height: 80vh;
+        max-width: 100%;
+        border: 1px solid var(--color-grey-40);
+        background-color: var(--color-grey-80);
+
+        canvas {
+            display: block;
+            margin: 0;
+        }
+    }
+
+    .resize-error {
+        color: var(--color-orange);
+        margin: var(--space-sm) 0;
+
+        &.hidden {
+            display: none;
+        }
+    }
 }
+
+.element-context-menu {
+    position: fixed;
+    z-index: var(--z-fixed);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    padding: var(--space-sm);
+    background-color: var(--color-grey-60);
+    border: 1px solid var(--color-grey-40);
+    border-radius: var(--radius-sm);
+    min-width: 6.25rem;
+
+    &.hidden {
+        display: none;
+    }
+}
+

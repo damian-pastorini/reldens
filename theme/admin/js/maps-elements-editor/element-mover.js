@@ -1,47 +1,51 @@
-class MapsElementsElementMover
+class ElementMover
 {
     constructor(editor)
     {
         this.editor = editor;
         this.dragState = null;
+        this.tileIndex = new Map();
     }
 
-    static findMatch(items, predicate)
+    buildTileIndex()
     {
-        for(let item of items){
-            if(predicate(item)){
-                return item;
-            }
+        this.tileIndex.clear();
+        for(let element of this.editor.mapElements.elements){
+            this.indexElementTiles(element);
         }
-        return null;
     }
 
-    findElement(predicate)
+    indexElementTiles(element)
     {
-        return MapsElementsElementMover.findMatch(this.editor.mapElements.elements, predicate);
+        for(let layer of element.layers){
+            this.indexLayerTiles(layer.tiles, element.instanceId);
+        }
+    }
+
+    indexLayerTiles(tiles, instanceId)
+    {
+        for(let tile of tiles){
+            this.tileIndex.set(this.tileKey(tile.col, tile.row), instanceId);
+        }
+    }
+
+    tileKey(col, row)
+    {
+        return col+','+row;
     }
 
     findElementAt(col, row)
     {
-        return this.findElement((element) => this.elementHasTileAt(element, col, row));
+        let id = this.tileIndex.get(this.tileKey(col, row));
+        if(!id){
+            return null;
+        }
+        return this.findByInstance(id);
     }
 
     findByInstance(instanceId)
     {
-        return this.findElement((element) => element.instanceId === instanceId);
-    }
-
-    anyTileMatch(element, tilePredicate)
-    {
-        return null !== MapsElementsElementMover.findMatch(
-            element.layers,
-            (layer) => null !== MapsElementsElementMover.findMatch(layer.tiles, tilePredicate)
-        );
-    }
-
-    elementHasTileAt(element, col, row)
-    {
-        return this.anyTileMatch(element, (tile) => tile.col === col && tile.row === row);
+        return this.editor.mapElements.elements.find((element) => element.instanceId === instanceId);
     }
 
     beginDrag(element, anchorCol, anchorRow)
@@ -81,7 +85,9 @@ class MapsElementsElementMover
 
     anyTileOutOfBounds(element, deltaCol, deltaRow)
     {
-        return this.anyTileMatch(element, (tile) => this.outOfBoundsAt(tile.col + deltaCol, tile.row + deltaRow));
+        return element.layers.some(
+            (layer) => layer.tiles.some((tile) => this.outOfBoundsAt(tile.col + deltaCol, tile.row + deltaRow))
+        );
     }
 
     outOfBoundsAt(newCol, newRow)
@@ -112,17 +118,8 @@ class MapsElementsElementMover
         this.translateElement(element, deltaCol, deltaRow);
         this.dragState = null;
         this.editor.markDirty();
+        this.editor.afterMutation();
         return true;
-    }
-
-    cancelDrag()
-    {
-        this.dragState = null;
-    }
-
-    findMapLayer(name)
-    {
-        return MapsElementsElementMover.findMatch(this.editor.mapJson.layers, (mapLayer) => mapLayer.name === name);
     }
 
     translateElement(element, deltaCol, deltaRow)
@@ -137,17 +134,48 @@ class MapsElementsElementMover
 
     translateLayer(elementLayer, deltaCol, deltaRow, mapWidth)
     {
-        let mapLayer = this.findMapLayer(elementLayer.name);
+        let mapLayer = this.findContainingMapLayer(elementLayer, mapWidth);
         if(!mapLayer){
             return;
         }
-        let newData = new Array(mapLayer.data.length).fill(0);
-        for(let tile of elementLayer.tiles){
+        this.clearTilesFromMapLayer(elementLayer.tiles, mapLayer.data, mapWidth);
+        this.stampTilesIntoMapLayer(elementLayer.tiles, mapLayer.data, mapWidth, deltaCol, deltaRow);
+    }
+
+    findContainingMapLayer(elementLayer, mapWidth)
+    {
+        let byName = this.editor.mapJson.layers.find((layer) => layer.name === elementLayer.name);
+        if(byName){
+            return byName;
+        }
+        if(0 === elementLayer.tiles.length){
+            return null;
+        }
+        return this.findMapLayerContainingTile(elementLayer.tiles[0], mapWidth);
+    }
+
+    findMapLayerContainingTile(tile, mapWidth)
+    {
+        return this.editor.mapJson.layers.find(
+            (layer) => 'tilelayer' === layer.type
+                && layer.data[tile.row * mapWidth + tile.col] === tile.gid
+        );
+    }
+
+    clearTilesFromMapLayer(tiles, layerData, mapWidth)
+    {
+        for(let tile of tiles){
+            layerData[tile.row * mapWidth + tile.col] = 0;
+        }
+    }
+
+    stampTilesIntoMapLayer(tiles, layerData, mapWidth, deltaCol, deltaRow)
+    {
+        for(let tile of tiles){
             tile.col += deltaCol;
             tile.row += deltaRow;
-            newData[tile.row * mapWidth + tile.col] = tile.gid;
+            layerData[tile.row * mapWidth + tile.col] = tile.gid;
         }
-        mapLayer.data = newData;
     }
 }
-window.MapsElementsElementMover = MapsElementsElementMover;
+window.ElementMover = ElementMover;

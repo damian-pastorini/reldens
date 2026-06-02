@@ -5,10 +5,10 @@ class TilesetElementNamer
         this.app = app;
     }
 
-    countElementsInTileset(ts)
+    countElementsInTileset(tileset)
     {
         let count = 0;
-        for(let element of ts.elements){
+        for(let element of tileset.elements){
             if(SharedUtils.ELEMENT_TYPE === element.type){
                 count++;
             }
@@ -16,31 +16,46 @@ class TilesetElementNamer
         return count;
     }
 
+    countAllElements()
+    {
+        let total = 0;
+        for(let tileset of this.app.state){
+            total += this.countElementsInTileset(tileset);
+        }
+        return total;
+    }
+
     resolveConvertName(tilesetIndex, index, name)
     {
         if(!name.startsWith('cluster-')){
             return this.resolveUniqueName(tilesetIndex, index, name);
         }
-        let elementCount = 0;
-        for(let ts of this.app.state){
-            elementCount += this.countElementsInTileset(ts);
-        }
         return this.resolveUniqueName(
-            tilesetIndex, index, 'element-'+SharedUtils.padNum(elementCount + 1)
+            tilesetIndex,
+            index,
+            'element-'+SharedUtils.padNum(this.countAllElements() + 1)
         );
     }
 
     resolveUniqueName(tilesetIndex, excludeIndex, name)
     {
-        let elements = this.app.state[tilesetIndex].elements;
+        return ElementNameSuffix.resolveUnique(
+            this.collectExistingNames(tilesetIndex, excludeIndex),
+            name
+        );
+    }
+
+    collectExistingNames(tilesetIndex, excludeIndex)
+    {
         let existingNames = [];
+        let elements = this.app.state[tilesetIndex].elements;
         for(let i = 0; i < elements.length; i++){
             if(i === excludeIndex){
                 continue;
             }
             existingNames.push(elements[i].name);
         }
-        return ElementNameSuffix.resolveUnique(existingNames, name);
+        return existingNames;
     }
 }
 window.TilesetElementNamer = TilesetElementNamer;

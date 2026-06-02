@@ -1,52 +1,28 @@
-class MapsElementsLoader
+class ElementsLoader
 {
-    static BASE_PATH = '/reldens-admin/maps-elements-editor/api';
-
     constructor(editor)
     {
         this.editor = editor;
-        this.source = '';
-        this.warnings = [];
+        this.basePath = '/reldens-admin/maps-elements-editor/api';
+        this.generatedPath = '/reldens-admin/generated/';
+        this.jsonFetcher = new EditorJsonFetcher();
     }
 
     async load(mapName, mapElementsFile)
     {
         if(mapElementsFile){
-            let sidecar = await this.tryFetchJson('/generated/'+mapElementsFile);
-            if(sidecar){
-                this.source = 'sidecar';
-                return sidecar;
+            let record = await this.jsonFetcher.fetch(this.generatedPath+mapElementsFile);
+            if(record){
+                return record;
             }
         }
-        let fromLayers = await this.fetchFromLayers(mapName);
+        let fromLayers = await this.jsonFetcher.fetch(
+            this.basePath+'/build-elements-from-layers?mapName='+encodeURIComponent(mapName)
+        );
         if(fromLayers){
-            this.source = 'layers';
-            this.warnings = fromLayers.warnings || [];
             return fromLayers.mapElements;
         }
-        this.source = 'none';
         return null;
     }
-
-    async tryFetchJson(url)
-    {
-        try {
-            let response = await fetch(url);
-            if(!response.ok){
-                return null;
-            }
-            return await response.json();
-        } catch(error){
-            this.lastError = error;
-            return null;
-        }
-    }
-
-    async fetchFromLayers(mapName)
-    {
-        return this.tryFetchJson(
-            MapsElementsLoader.BASE_PATH+'/build-elements-from-layers?mapName='+encodeURIComponent(mapName)
-        );
-    }
 }
-window.MapsElementsLoader = MapsElementsLoader;
+window.ElementsLoader = ElementsLoader;

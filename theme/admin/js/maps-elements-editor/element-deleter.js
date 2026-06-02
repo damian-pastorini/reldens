@@ -1,4 +1,4 @@
-class MapsElementsElementDeleter
+class ElementDeleter
 {
     constructor(editor)
     {
@@ -7,57 +7,61 @@ class MapsElementsElementDeleter
 
     delete(instanceId)
     {
-        let index = this.findElementIndex(instanceId);
+        let elements = this.editor.mapElements.elements;
+        let index = elements.findIndex((element) => element.instanceId === instanceId);
         if(-1 === index){
             return false;
         }
-        let element = this.editor.mapElements.elements[index];
-        this.clearTilesFromMap(element);
-        this.editor.mapElements.elements.splice(index, 1);
+        this.clearTilesFromMap(elements[index]);
+        elements.splice(index, 1);
         this.editor.markDirty();
-        this.editor.requestRender();
+        this.editor.afterMutation();
         return true;
-    }
-
-    findElementIndex(instanceId)
-    {
-        let elements = this.editor.mapElements.elements;
-        for(let i = 0; i < elements.length; i++){
-            if(elements[i].instanceId === instanceId){
-                return i;
-            }
-        }
-        return -1;
     }
 
     clearTilesFromMap(element)
     {
         for(let elementLayer of element.layers){
-            this.clearLayerTiles(elementLayer);
+            this.clearLayerTilesAndPruneIfEmpty(elementLayer);
         }
     }
 
-    clearLayerTiles(elementLayer)
+    clearLayerTilesAndPruneIfEmpty(elementLayer)
     {
-        let mapLayer = this.findMapLayer(elementLayer.name);
-        if(!mapLayer){
+        let mapWidth = this.editor.mapJson.width;
+        let layerIndex = this.findContainingMapLayerIndex(elementLayer, mapWidth);
+        if(-1 === layerIndex){
             return;
         }
-        let mapWidth = this.editor.mapJson.width;
+        let layers = this.editor.mapJson.layers;
         for(let tile of elementLayer.tiles){
-            mapLayer.data[tile.row * mapWidth + tile.col] = 0;
+            layers[layerIndex].data[tile.row * mapWidth + tile.col] = 0;
         }
+        if(layers[layerIndex].data.some((value) => 0 !== value)){
+            return;
+        }
+        layers.splice(layerIndex, 1);
     }
 
-    findMapLayer(name)
+    findContainingMapLayerIndex(elementLayer, mapWidth)
     {
         let layers = this.editor.mapJson.layers;
-        for(let i = 0; i < layers.length; i++){
-            if(layers[i].name === name){
-                return layers[i];
-            }
+        let byName = layers.findIndex((layer) => layer.name === elementLayer.name);
+        if(-1 !== byName){
+            return byName;
         }
-        return null;
+        if(0 === elementLayer.tiles.length){
+            return -1;
+        }
+        return this.findMapLayerIndexContainingTile(elementLayer.tiles[0], mapWidth);
+    }
+
+    findMapLayerIndexContainingTile(tile, mapWidth)
+    {
+        return this.editor.mapJson.layers.findIndex(
+            (layer) => 'tilelayer' === layer.type
+                && layer.data[tile.row * mapWidth + tile.col] === tile.gid
+        );
     }
 }
-window.MapsElementsElementDeleter = MapsElementsElementDeleter;
+window.ElementDeleter = ElementDeleter;
