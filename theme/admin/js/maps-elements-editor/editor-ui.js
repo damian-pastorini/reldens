@@ -3,6 +3,16 @@ class EditorUi
     constructor(editor)
     {
         this.editor = editor;
+        this.saveBtnResetTimer = null;
+        this.resetDomReferences();
+        this.zoomLevel = 1;
+        this.zoomMin = 0.25;
+        this.zoomMax = 4;
+        this.zoomStep = 0.25;
+    }
+
+    resetDomReferences()
+    {
         this.container = null;
         this.toolbar = null;
         this.saveBtn = null;
@@ -11,11 +21,19 @@ class EditorUi
         this.backupsPanelEl = null;
         this.backupsListEl = null;
         this.resizePanelEl = null;
-        this.saveBtnResetTimer = null;
-        this.zoomLevel = 1;
-        this.zoomMin = 0.25;
-        this.zoomMax = 4;
-        this.zoomStep = 0.25;
+        this.canvasScrollContainer = null;
+        this.zoomLabel = null;
+        this.originalCanvasParent = null;
+    }
+
+    buildButton(label, extraClass, handler)
+    {
+        let button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'button button-sm '+extraClass;
+        button.textContent = label;
+        button.addEventListener('click', handler);
+        return button;
     }
 
     build()
@@ -23,9 +41,10 @@ class EditorUi
         if(this.container){
             return;
         }
+        this.originalCanvasParent = this.editor.canvas.parentNode;
         this.container = document.createElement('div');
         this.container.className = 'maps-elements-editor';
-        this.editor.canvas.parentNode.insertBefore(this.container, this.editor.canvas);
+        this.originalCanvasParent.insertBefore(this.container, this.editor.canvas);
         this.toolbar = this.buildToolbar();
         this.container.appendChild(this.toolbar);
         this.backupsPanelEl = this.buildBackupsPanel();
@@ -39,26 +58,48 @@ class EditorUi
         this.applyZoom();
     }
 
+    dispose()
+    {
+        if(!this.container){
+            return;
+        }
+        if(this.originalCanvasParent && this.editor.canvas){
+            this.originalCanvasParent.appendChild(this.editor.canvas);
+        }
+        this.container.remove();
+        this.clearSaveBtnResetTimer();
+        this.resetDomReferences();
+    }
+
+    clearSaveBtnResetTimer()
+    {
+        if(!this.saveBtnResetTimer){
+            return;
+        }
+        clearTimeout(this.saveBtnResetTimer);
+        this.saveBtnResetTimer = null;
+    }
+
     buildToolbar()
     {
         let toolbar = document.createElement('div');
         toolbar.className = 'elements-editor-toolbar';
-        this.saveBtn = EditorButtonFactory.create('Save', 'button-primary', () => this.editor.handleSaveClick());
+        this.saveBtn = this.buildButton('Save', 'button-primary', () => this.editor.handleSaveClick());
         toolbar.appendChild(this.saveBtn);
         toolbar.appendChild(
-            EditorButtonFactory.create('Backups', 'button-secondary', () => this.toggleBackupsPanel())
+            this.buildButton('Backups', 'button-secondary', () => this.toggleBackupsPanel())
         );
         toolbar.appendChild(
-            EditorButtonFactory.create('Resize', 'button-secondary', () => this.toggleResizePanel())
+            this.buildButton('Resize', 'button-secondary', () => this.toggleResizePanel())
         );
         toolbar.appendChild(
-            EditorButtonFactory.create('Reset', 'button-secondary', () => this.editor.resetController.confirmRestore())
+            this.buildButton('Reset', 'button-secondary', () => this.editor.resetController.confirmRestore())
         );
         this.dirtyIndicator = document.createElement('span');
         this.dirtyIndicator.className = 'dirty-indicator hidden';
         this.dirtyIndicator.textContent = 'Unsaved changes';
         toolbar.appendChild(this.dirtyIndicator);
-        this.cancelDuplicateBtn = EditorButtonFactory.create(
+        this.cancelDuplicateBtn = this.buildButton(
             'Cancel duplication',
             'button-danger hidden',
             () => this.editor.cancelDuplicate()
@@ -73,14 +114,14 @@ class EditorUi
         let wrapper = document.createElement('div');
         wrapper.className = 'editor-zoom-controls';
         wrapper.appendChild(
-            EditorButtonFactory.create('-', 'button-secondary', () => this.zoomBy(-this.zoomStep))
+            this.buildButton('-', 'button-secondary', () => this.zoomBy(-this.zoomStep))
         );
         this.zoomLabel = document.createElement('span');
         this.zoomLabel.className = 'editor-zoom-level';
         this.zoomLabel.textContent = this.formatZoom();
         wrapper.appendChild(this.zoomLabel);
         wrapper.appendChild(
-            EditorButtonFactory.create('+', 'button-secondary', () => this.zoomBy(this.zoomStep))
+            this.buildButton('+', 'button-secondary', () => this.zoomBy(this.zoomStep))
         );
         return wrapper;
     }
@@ -152,9 +193,7 @@ class EditorUi
         if(!this.saveBtn){
             return;
         }
-        if(this.saveBtnResetTimer){
-            clearTimeout(this.saveBtnResetTimer);
-        }
+        this.clearSaveBtnResetTimer();
         this.saveBtn.textContent = success ? 'Saved' : 'Save failed';
         this.saveBtnResetTimer = setTimeout(() => {
             this.saveBtn.textContent = 'Save';

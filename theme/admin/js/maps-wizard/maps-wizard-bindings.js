@@ -4,6 +4,7 @@ class MapsWizardBindings
     {
         this.pendingSampleDataOption = '';
         this.pendingParseError = '';
+        this.generateGuard = new window.MapsWizardGenerateGuard();
         this.bind();
     }
 
@@ -196,7 +197,7 @@ class MapsWizardBindings
         }
         let sampleData;
         try{
-            sampleData = JSON.parse(sampleJson);
+            sampleData = JSON.parse(sampleJson); // HOFF
         } catch(error){
             this.pendingSampleDataOption = '';
             this.pendingParseError = error.message;

@@ -46,7 +46,7 @@ class ElementDuplicator
         if(!this.placingState || this.placingState.outOfBounds){
             return false;
         }
-        let newName = ElementNameSuffix.nextSuffix(
+        let newName = ElementNameSuffix.nextFusedSuffix(
             this.placingState.existingIds,
             this.placingState.source.elementKey
         );
@@ -88,19 +88,18 @@ class ElementDuplicator
 
     anyTileOutOfBounds(source, ghostCol, ghostRow)
     {
-        return source.layers.some(
-            (layer) => layer.tiles.some(
-                (tile) => this.tileEndsOutOfBounds(tile, source.bounds, ghostCol, ghostRow)
-            )
-        );
-    }
-
-    tileEndsOutOfBounds(tile, sourceBounds, ghostCol, ghostRow)
-    {
-        return this.editor.mover.outOfBoundsAt(
-            tile.col + ghostCol - sourceBounds.col,
-            tile.row + ghostRow - sourceBounds.row
-        );
+        let bounds = source.bounds;
+        let mapJson = this.editor.mapJson;
+        if(0 > ghostCol){
+            return true;
+        }
+        if(0 > ghostRow){
+            return true;
+        }
+        if(ghostCol + bounds.width > mapJson.width){
+            return true;
+        }
+        return ghostRow + bounds.height > mapJson.height;
     }
 
     makeCopy(source, newName, targetCol, targetRow)

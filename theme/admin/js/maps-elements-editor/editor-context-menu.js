@@ -13,7 +13,7 @@ class EditorContextMenu
         this.targetInstanceId = instanceId;
         if(!this.element){
             this.element = this.buildMenu();
-            document.body.appendChild(this.element);
+            this.editor.ui.container.appendChild(this.element);
             this.outsideClickHandler = (event) => {
                 if(!this.element.contains(event.target)){
                     this.hide();
@@ -60,12 +60,30 @@ class EditorContextMenu
         let menu = document.createElement('div');
         menu.className = 'element-context-menu hidden';
         menu.appendChild(
-            EditorButtonFactory.create('Duplicate', 'button-primary', () => this.onDuplicate())
+            this.editor.ui.buildButton('Move up', 'button-secondary', () => this.onMove(-1))
         );
         menu.appendChild(
-            EditorButtonFactory.create('Delete', 'button-danger', () => this.onDelete())
+            this.editor.ui.buildButton('Move down', 'button-secondary', () => this.onMove(1))
+        );
+        menu.appendChild(
+            this.editor.ui.buildButton('Duplicate', 'button-primary', () => this.onDuplicate())
+        );
+        menu.appendChild(
+            this.editor.ui.buildButton('Delete', 'button-danger', () => this.onDelete())
         );
         return menu;
+    }
+
+    onMove(direction)
+    {
+        let target = this.targetInstanceId;
+        this.hide();
+        if(!this.editor.zOrderSorter.moveElement(target, direction)){
+            return;
+        }
+        this.editor.markDirty();
+        this.editor.painter.markBaseDirty();
+        this.editor.requestRender();
     }
 
     onDuplicate()

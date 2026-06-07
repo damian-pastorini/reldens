@@ -6,82 +6,135 @@ class MapElementsCanvasPainter
         this.outOfBoundsColor = 'rgba(224,84,84,0.55)';
         this.hoverColor = 'rgba(91,140,255,0.35)';
         this.dragColor = 'rgba(91,255,140,0.5)';
+        this.baseCanvas = null;
+        this.baseCtx = null;
+        this.baseDirty = true;
+        this.tilesetLut = null;
+        this.lastCanvasWidth = 0;
+        this.lastCanvasHeight = 0;
+    }
+
+    markBaseDirty()
+    {
+        this.baseDirty = true;
     }
 
     render()
     {
         let mapJson = this.editor.mapJson;
-        this.editor.canvas.width = mapJson.width * mapJson.tilewidth;
-        this.editor.canvas.height = mapJson.height * mapJson.tileheight;
-        this.drawBase();
+        this.ensureCanvasSize(mapJson);
+        this.ensureBaseCache(mapJson);
+        let ctx = this.editor.ctx;
+        ctx.clearRect(0, 0, this.editor.canvas.width, this.editor.canvas.height);
+        if(this.baseCanvas){
+            ctx.drawImage(this.baseCanvas, 0, 0);
+        }
         this.drawHover();
         this.drawDragGhost();
         this.drawDuplicateGhost();
     }
 
-    drawDuplicateGhost()
+    ensureCanvasSize(mapJson)
     {
-        let placingState = this.editor.duplicator.placingState;
-        if(!placingState){
+        let width = mapJson.width * mapJson.tilewidth;
+        let height = mapJson.height * mapJson.tileheight;
+        if(width === this.lastCanvasWidth && height === this.lastCanvasHeight){
             return;
         }
-        let color = placingState.outOfBounds ? this.outOfBoundsColor : this.dragColor;
-        this.fillElementTiles(
-            placingState.source,
-            placingState.ghostCol - placingState.source.bounds.col,
-            placingState.ghostRow - placingState.source.bounds.row,
-            color
-        );
+        this.editor.canvas.width = width;
+        this.editor.canvas.height = height;
+        this.lastCanvasWidth = width;
+        this.lastCanvasHeight = height;
+        this.baseDirty = true;
+        this.tilesetLut = null;
     }
 
-    drawBase()
+    ensureBaseCache(mapJson)
     {
-        for(let mapLayer of this.editor.mapJson.layers){
-            if('tilelayer' !== mapLayer.type){
-                continue;
-            }
-            this.paintLayerData(mapLayer);
+        if(!this.baseDirty && this.baseCanvas){
+            return;
         }
+        if(!this.baseCanvas){
+            this.baseCanvas = document.createElement('canvas');
+        }
+        if(this.baseCanvas.width !== this.editor.canvas.width){
+            this.baseCanvas.width = this.editor.canvas.width;
+        }
+        if(this.baseCanvas.height !== this.editor.canvas.height){
+            this.baseCanvas.height = this.editor.canvas.height;
+        }
+        this.baseCtx = this.baseCanvas.getContext('2d');
+        this.baseCtx.clearRect(0, 0, this.baseCanvas.width, this.baseCanvas.height);
+        this.paintAllLayersInto(this.baseCtx, mapJson);
+        this.baseDirty = false;
     }
 
-    paintLayerData(mapLayer)
+    ensureTilesetLut(mapJson)
+    {
+        if(this.tilesetLut){
+            return this.tilesetLut;
+        }
+        if(!mapJson.tilesets || 0 === mapJson.tilesets.length){
+            this.tilesetLut = {
+                columns: 0,
+                spacing: 0,
+                margin: 0,
+                tileWidth: mapJson.tilewidth,
+                tileHeight: mapJson.tileheight
+            };
+            return this.tilesetLut;
+        }
+        let tilesetInfo = mapJson.tilesets[0];
+        let spacing = tilesetInfo.spacing ? tilesetInfo.spacing : 0;
+        let margin = tilesetInfo.margin ? tilesetInfo.margin : 0;
+        this.tilesetLut = {
+            columns: Math.floor((tilesetInfo.imagewidth - 2 * margin + spacing) / (mapJson.tilewidth + spacing)),
+            spacing,
+            margin,
+            tileWidth: mapJson.tilewidth,
+            tileHeight: mapJson.tileheight,
+            mapWidth: mapJson.width
+        };
+        return this.tilesetLut;
+    }
+
+    paintAllLayersInto(ctx, mapJson)
     {
         let tileset = this.editor.tileset;
         if(!tileset){
             return;
         }
-        let mapJson = this.editor.mapJson;
-        if(!mapJson.tilesets || 0 === mapJson.tilesets.length){
+        let lut = this.ensureTilesetLut(mapJson);
+        if(0 === lut.columns){
             return;
         }
-        let tilesetInfo = mapJson.tilesets[0];
-        for(let i = 0; i < mapLayer.data.length; i++){
-            this.paintCell(mapLayer.data[i], i, tileset, tilesetInfo, mapJson);
+        for(let mapLayer of mapJson.layers){
+            if('tilelayer' !== mapLayer.type){
+                continue;
+            }
+            this.paintLayerInto(ctx, mapLayer, lut, tileset);
         }
     }
 
-    paintCell(gid, index, tileset, tilesetInfo, mapJson)
+    paintLayerInto(ctx, mapLayer, lut, tileset)
     {
-        if(0 === gid){
-            return;
+        for(let i = 0; i < mapLayer.data.length; i++){
+            if(0 === mapLayer.data[i]){
+                continue;
+            }
+            let tileId = mapLayer.data[i] - 1;
+            ctx.drawImage(
+                tileset,
+                lut.margin + (tileId % lut.columns) * (lut.tileWidth + lut.spacing),
+                lut.margin + Math.floor(tileId / lut.columns) * (lut.tileHeight + lut.spacing),
+                lut.tileWidth,
+                lut.tileHeight,
+                (i % lut.mapWidth) * lut.tileWidth,
+                Math.floor(i / lut.mapWidth) * lut.tileHeight,
+                lut.tileWidth,
+                lut.tileHeight
+            );
         }
-        let tileId = gid - 1;
-        let spacing = tilesetInfo.spacing ? tilesetInfo.spacing : 0;
-        let margin = tilesetInfo.margin ? tilesetInfo.margin : 0;
-        let columns = Math.floor((tilesetInfo.imagewidth - 2 * margin + spacing) / (mapJson.tilewidth + spacing));
-        let sx = margin + (tileId % columns) * (mapJson.tilewidth + spacing);
-        let sy = margin + Math.floor(tileId / columns) * (mapJson.tileheight + spacing);
-        this.editor.ctx.drawImage(
-            tileset,
-            sx,
-            sy,
-            mapJson.tilewidth,
-            mapJson.tileheight,
-            (index % mapJson.width) * mapJson.tilewidth,
-            Math.floor(index / mapJson.width) * mapJson.tileheight,
-            mapJson.tilewidth,
-            mapJson.tileheight
-        );
     }
 
     drawHover()
@@ -110,13 +163,25 @@ class MapElementsCanvasPainter
         if(!element){
             return;
         }
-        let color = dragState.outOfBounds
-            ? this.outOfBoundsColor
-            : this.dragColor;
         this.fillElementTiles(
             element,
             dragState.currentCol - dragState.anchorCol,
             dragState.currentRow - dragState.anchorRow,
+            dragState.outOfBounds ? this.outOfBoundsColor : this.dragColor
+        );
+    }
+
+    drawDuplicateGhost()
+    {
+        let placingState = this.editor.duplicator.placingState;
+        if(!placingState){
+            return;
+        }
+        let color = placingState.outOfBounds ? this.outOfBoundsColor : this.dragColor;
+        this.fillElementTiles(
+            placingState.source,
+            placingState.ghostCol - placingState.source.bounds.col,
+            placingState.ghostRow - placingState.source.bounds.row,
             color
         );
     }

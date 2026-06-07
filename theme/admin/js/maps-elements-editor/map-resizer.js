@@ -32,7 +32,7 @@ class MapResizer
         this.errorEl = document.createElement('p');
         this.errorEl.className = 'resize-error hidden';
         panel.appendChild(this.errorEl);
-        panel.appendChild(EditorButtonFactory.create(
+        panel.appendChild(this.editor.ui.buildButton(
             'Apply resize',
             'button-primary',
             () => this.handleApplyClick()
@@ -69,6 +69,7 @@ class MapResizer
     {
         let button = document.createElement('button');
         button.type = 'button';
+        button.className = 'resize-anchor-picker-cell';
         button.dataset.anchorKey = key;
         button.title = key;
         button.addEventListener('click', () => this.highlightAnchor(key));

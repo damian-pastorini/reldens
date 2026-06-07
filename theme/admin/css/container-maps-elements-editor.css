@@ -1,60 +1,56 @@
 .maps-elements-editor {
 
-    .elements-editor-toolbar {
+    & .elements-editor-toolbar {
         display: flex;
         align-items: center;
         gap: var(--space-md);
         padding: var(--space-sm) var(--space-md);
         background-color: var(--color-grey-60);
         border-bottom: 1px solid var(--color-grey-40);
-
-        .dirty-indicator {
-            color: var(--color-orange);
-            font-weight: var(--bold);
-
-            &.hidden {
-                display: none;
-            }
-        }
-
-        .editor-zoom-controls {
-            display: flex;
-            align-items: center;
-            gap: var(--space-xs);
-            margin-left: auto;
-
-            .editor-zoom-level {
-                min-width: 3rem;
-                text-align: center;
-                color: var(--color-grey);
-            }
-        }
     }
 
-    .resize-anchor-picker {
+    & .elements-editor-toolbar .dirty-indicator {
+        color: var(--color-orange);
+        font-weight: var(--bold);
+    }
+
+    & .elements-editor-toolbar .editor-zoom-controls {
+        display: flex;
+        align-items: center;
+        gap: var(--space-xs);
+        margin-left: auto;
+    }
+
+    & .elements-editor-toolbar .editor-zoom-controls .editor-zoom-level {
+        min-width: 3rem;
+        text-align: center;
+        color: var(--color-grey);
+    }
+
+    & .resize-anchor-picker {
         display: flex;
         flex-wrap: wrap;
         gap: var(--space-xs);
         max-width: 7.25rem;
         margin: var(--space-sm) 0;
-
-        button {
-            width: 2.25rem;
-            height: 2.25rem;
-            border: 1px solid var(--color-grey-40);
-            background-color: var(--color-grey-70);
-            color: var(--color-grey);
-            cursor: pointer;
-
-            &.selected {
-                background-color: var(--color-blue);
-                color: var(--color-white);
-            }
-        }
     }
 
-    .backups-panel,
-    .resize-panel {
+    & .resize-anchor-picker .resize-anchor-picker-cell {
+        width: 2.25rem;
+        height: 2.25rem;
+        border: 1px solid var(--color-grey-40);
+        background-color: var(--color-grey-70);
+        color: var(--color-grey);
+        cursor: pointer;
+    }
+
+    & .resize-anchor-picker .resize-anchor-picker-cell.selected {
+        background-color: var(--color-blue);
+        color: var(--color-white);
+    }
+
+    & .backups-panel,
+    & .resize-panel {
         margin-top: var(--space-sm);
         padding: var(--space-sm);
         background-color: var(--color-grey-70);
@@ -62,66 +58,57 @@
         border-radius: var(--radius-sm);
     }
 
-    .backups-panel {
+    & .backups-panel {
         width: fit-content;
         max-height: 11rem;
         overflow-y: auto;
-
-        .backups-panel-list {
-            display: flex;
-            flex-direction: column;
-        }
     }
 
-    .backups-panel-row {
+    & .backups-panel .backups-panel-list {
+        display: flex;
+        flex-direction: column;
+    }
+
+    & .backups-panel-row {
         display: flex;
         align-items: center;
         gap: var(--space-sm);
         padding: var(--space-xs) 0;
-
-        span {
-            flex: 1;
-        }
     }
 
-    .editor-canvas-scroll {
+    & .backups-panel-row .backups-panel-row-label {
+        flex: 1;
+    }
+
+    & .editor-canvas-scroll {
         margin-top: var(--space-sm);
         overflow: auto;
         max-height: 80vh;
         max-width: 100%;
         border: 1px solid var(--color-grey-40);
         background-color: var(--color-grey-80);
-
-        canvas {
-            display: block;
-            margin: 0;
-        }
     }
 
-    .resize-error {
+    & .editor-canvas-scroll > canvas {
+        display: block;
+        margin: 0;
+    }
+
+    & .resize-error {
         color: var(--color-orange);
         margin: var(--space-sm) 0;
+    }
 
-        &.hidden {
-            display: none;
-        }
+    & .element-context-menu {
+        position: fixed;
+        z-index: var(--z-fixed);
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-xs);
+        padding: var(--space-sm);
+        background-color: var(--color-grey-60);
+        border: 1px solid var(--color-grey-40);
+        border-radius: var(--radius-sm);
+        min-width: 6.25rem;
     }
 }
-
-.element-context-menu {
-    position: fixed;
-    z-index: var(--z-fixed);
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-xs);
-    padding: var(--space-sm);
-    background-color: var(--color-grey-60);
-    border: 1px solid var(--color-grey-40);
-    border-radius: var(--radius-sm);
-    min-width: 6.25rem;
-
-    &.hidden {
-        display: none;
-    }
-}
-

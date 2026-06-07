@@ -25,7 +25,8 @@
         </form>
     </div>
     <div class="rooms-association-container">
-        <h3>Link rooms</h3>
+        <h3 class="clickable" data-expand-collapse=".rooms-association-content">Link rooms</h3>
+        <div class="rooms-association-content hidden">
         <p>Notes:</p>
         <p>
             - The room link does not exist as "entity" itself, this feature will create change points and return points in both directions (if specified).<br/>
@@ -94,6 +95,7 @@
                 </span>
             </div>
         </form>
+        </div>
     </div>
 </div>
-{{> maps-elements-editor-scripts}}
+{{&mapsElementsEditorScripts}}

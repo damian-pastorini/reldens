@@ -59,6 +59,12 @@
     }
 
     .view-field {
+        .field-value.with-view-button {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
         .field-value img {
             max-width: 12.5rem;
         }
@@ -148,6 +154,16 @@
 
     .field-image-modal {
         cursor: pointer;
+    }
+
+    .field-value {
+        .field-image-modal {
+            padding: 0;
+
+            p:first-child {
+                margin-top: 0;
+            }
+        }
     }
 
     .sub-content {

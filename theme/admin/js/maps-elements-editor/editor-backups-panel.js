@@ -61,12 +61,13 @@ class EditorBackupsPanel
         let row = document.createElement('div');
         row.className = 'backups-panel-row';
         let label = document.createElement('span');
+        label.className = 'backups-panel-row-label';
         label.textContent = this.formatTimestamp(backup.timestamp);
         row.appendChild(label);
-        row.appendChild(EditorButtonFactory.create(
+        row.appendChild(this.editor.ui.buildButton(
             'Reload', 'button-primary', () => this.editor.confirmReload(backup.timestamp)
         ));
-        row.appendChild(EditorButtonFactory.create(
+        row.appendChild(this.editor.ui.buildButton(
             'Delete', 'button-danger', () => this.editor.confirmDeleteBackup(backup.timestamp)
         ));
         return row;

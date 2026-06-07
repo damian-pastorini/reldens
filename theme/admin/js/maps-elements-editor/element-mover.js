@@ -85,9 +85,21 @@ class ElementMover
 
     anyTileOutOfBounds(element, deltaCol, deltaRow)
     {
-        return element.layers.some(
-            (layer) => layer.tiles.some((tile) => this.outOfBoundsAt(tile.col + deltaCol, tile.row + deltaRow))
-        );
+        let bounds = element.bounds;
+        let mapJson = this.editor.mapJson;
+        let newCol = bounds.col + deltaCol;
+        let newRow = bounds.row + deltaRow;
+        if(0 > newCol){
+            return true;
+        }
+        if(0 > newRow){
+            return true;
+        }
+        if(newCol + bounds.width > mapJson.width){
+            return true;
+        }
+        return newRow + bounds.height > mapJson.height;
+
     }
 
     outOfBoundsAt(newCol, newRow)

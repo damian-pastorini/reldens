@@ -21,30 +21,37 @@ class MapsElementsEditor
         this.onContextMenuHandler = null;
         this.escapeListener = null;
         this.renderScheduled = false;
-        this.loader = new ElementsLoader(this);
+        this.apiBasePath = '/reldens-admin/maps-elements-editor/api';
+        this.generatedBasePath = '/reldens-admin/generated/';
+        this.runtimeBasePath = '/assets/maps/';
+        this.sourceBasePath = 'room' === this.context ? this.runtimeBasePath : this.generatedBasePath;
+        this.jsonFetcher = new EditorJsonFetcher();
         this.mover = new ElementMover(this);
         this.duplicator = new ElementDuplicator(this);
         this.deleter = new ElementDeleter(this);
         this.resizer = new MapResizer(this);
         this.contextMenu = new EditorContextMenu(this);
-        this.saver = new EditorSave(this);
         this.backupsPanel = new EditorBackupsPanel(this);
         this.painter = new MapElementsCanvasPainter(this);
         this.ui = new EditorUi(this);
         this.resetController = new EditorResetController(this);
+        this.zOrderSorter = new ElementZOrderSorter(this);
+        this.layersNormalizer = new MapLayersNormalizer();
     }
 
     async load()
     {
-        let mapJsonResponse = await fetch('/reldens-admin/generated/'+this.mapName+'.json');
+        let mapJsonResponse = await fetch(this.sourceBasePath+this.mapName+'.json', {cache: 'no-store'});
         this.mapJson = await mapJsonResponse.json();
-        this.mapElements = await this.loader.load(this.mapName, this.mapElementsFile);
+        this.mapElements = await this.loadElements(this.mapName, this.mapElementsFile);
         if(!this.mapElements){
             return false;
         }
+        this.layersNormalizer.explode(this.mapJson, this.mapElements);
         this.resetController.captureSnapshot();
         await this.resetController.ensureInitialBackup();
         this.mover.buildTileIndex();
+        this.painter.markBaseDirty();
         this.ui.build();
         this.attachEventListeners();
         this.requestRender();
@@ -53,7 +60,9 @@ class MapsElementsEditor
 
     afterMutation()
     {
+        this.zOrderSorter.sort();
         this.mover.buildTileIndex();
+        this.painter.markBaseDirty();
         this.requestRender();
     }
 
@@ -82,25 +91,33 @@ class MapsElementsEditor
 
     dispose()
     {
-        if(!this.listenersAttached){
-            return;
+        if(this.listenersAttached){
+            this.listenersAttached = false;
+            this.canvas.removeEventListener('mousedown', this.onMouseDownHandler);
+            this.canvas.removeEventListener('mousemove', this.onMouseMoveHandler);
+            this.canvas.removeEventListener('mouseup', this.onMouseUpHandler);
+            this.canvas.removeEventListener('mouseleave', this.onMouseUpHandler);
+            this.canvas.removeEventListener('contextmenu', this.onContextMenuHandler);
+            document.removeEventListener('keydown', this.escapeListener);
         }
-        this.listenersAttached = false;
-        this.canvas.removeEventListener('mousedown', this.onMouseDownHandler);
-        this.canvas.removeEventListener('mousemove', this.onMouseMoveHandler);
-        this.canvas.removeEventListener('mouseup', this.onMouseUpHandler);
-        this.canvas.removeEventListener('mouseleave', this.onMouseUpHandler);
-        this.canvas.removeEventListener('contextmenu', this.onContextMenuHandler);
-        document.removeEventListener('keydown', this.escapeListener);
+        if(this.contextMenu){
+            this.contextMenu.hide();
+        }
+        this.ui.dispose();
+        delete this.canvas.mapsElementsEditor;
     }
 
     canvasToTile(event)
     {
-        let rect = this.canvas.getBoundingClientRect();
-        let result = {col: 0, row: 0};
-        result.col = Math.floor((event.clientX - rect.left) * (this.canvas.width / rect.width) / this.mapJson.tilewidth);
-        result.row = Math.floor((event.clientY - rect.top) * (this.canvas.height / rect.height) / this.mapJson.tileheight);
-        return result;
+        return this.canvasEventToTile(event, this.canvas.getBoundingClientRect());
+    }
+
+    canvasEventToTile(event, rect)
+    {
+        return {
+            col: Math.floor((event.clientX - rect.left) * (this.canvas.width / rect.width) / this.mapJson.tilewidth),
+            row: Math.floor((event.clientY - rect.top) * (this.canvas.height / rect.height) / this.mapJson.tileheight)
+        };
     }
 
     pickElementAt(event)
@@ -269,12 +286,32 @@ class MapsElementsEditor
 
     async save()
     {
-        let result = await this.saver.save();
+        let result = await this.jsonFetcher.post(this.apiBasePath+'/save-map-edit', JSON.stringify({ // HOFF
+            mapName: this.mapName,
+            sessionId: this.sessionId,
+            context: this.context,
+            mapJson: this.layersNormalizer.mergeForSave(this.mapJson, this.mapElements),
+            mapElements: this.mapElements
+        }));
         if(result.success){
             this.dirty = false;
             this.ui.refreshDirty(false);
+            await this.refreshBackupsList();
         }
         return result;
+    }
+
+    async loadElements(mapName, mapElementsFile)
+    {
+        if(mapElementsFile){
+            let record = await this.jsonFetcher.fetch(this.sourceBasePath+mapElementsFile, {cache: 'no-store'});
+            if(record){
+                return record;
+            }
+        }
+        return (await this.jsonFetcher.fetch(
+            this.apiBasePath+'/build-elements-from-layers?mapName='+encodeURIComponent(mapName)
+        ))?.mapElements ?? null;
     }
 
     async refreshBackupsList()

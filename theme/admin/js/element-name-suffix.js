@@ -5,9 +5,8 @@ class ElementNameSuffix
         return (''+n).padStart(3, '0');
     }
 
-    static maxSuffix(existingNames, base)
+    static maxSuffix(existingNames, prefix)
     {
-        let prefix = base+'-';
         let max = 0;
         for(let name of existingNames){
             if(!name.startsWith(prefix)){
@@ -27,13 +26,12 @@ class ElementNameSuffix
 
     static nextSuffix(existingNames, base)
     {
-        return base+'-'+ElementNameSuffix.padNum(ElementNameSuffix.maxSuffix(existingNames, base) + 1);
+        return base+'-'+ElementNameSuffix.padNum(ElementNameSuffix.maxSuffix(existingNames, base+'-') + 1);
     }
 
-    static parseSuffix(name)
+    static nextFusedSuffix(existingNames, base)
     {
-        let match = name.match(/-(\d+)$/);
-        return match ? Number(match[1]) : 0;
+        return base+(ElementNameSuffix.maxSuffix(existingNames, base) + 1);
     }
 
     static resolveUnique(existingNames, name)
@@ -41,7 +39,7 @@ class ElementNameSuffix
         if(-1 === existingNames.indexOf(name)){
             return name;
         }
-        return name+'-'+ElementNameSuffix.padNum(ElementNameSuffix.maxSuffix(existingNames, name) + 1);
+        return name+'-'+ElementNameSuffix.padNum(ElementNameSuffix.maxSuffix(existingNames, name+'-') + 1);
     }
 }
 window.ElementNameSuffix = ElementNameSuffix;
