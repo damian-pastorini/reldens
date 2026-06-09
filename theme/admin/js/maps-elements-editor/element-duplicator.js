@@ -46,16 +46,14 @@ class ElementDuplicator
         if(!this.placingState || this.placingState.outOfBounds){
             return false;
         }
-        let newName = ElementNameSuffix.nextFusedSuffix(
+        let source = this.placingState.source;
+        let sourceSuffix = source.instanceId.slice(source.elementKey.length + 1);
+        let newName = ElementNameSuffix.nextDuplicateName(
             this.placingState.existingIds,
-            this.placingState.source.elementKey
+            source.elementKey,
+            sourceSuffix
         );
-        let copy = this.makeCopy(
-            this.placingState.source,
-            newName,
-            this.placingState.ghostCol,
-            this.placingState.ghostRow
-        );
+        let copy = this.makeCopy(source, newName, this.placingState.ghostCol, this.placingState.ghostRow);
         this.editor.mapElements.elements.push(copy);
         this.placingState = null;
         this.editor.markDirty();

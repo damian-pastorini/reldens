@@ -48,6 +48,7 @@ class MapsElementsEditor
             return false;
         }
         this.layersNormalizer.explode(this.mapJson, this.mapElements);
+        this.zOrderSorter.sort();
         this.resetController.captureSnapshot();
         await this.resetController.ensureInitialBackup();
         this.mover.buildTileIndex();
@@ -304,7 +305,7 @@ class MapsElementsEditor
     async loadElements(mapName, mapElementsFile)
     {
         if(mapElementsFile){
-            let record = await this.jsonFetcher.fetch(this.sourceBasePath+mapElementsFile, {cache: 'no-store'});
+            let record = await this.jsonFetcher.fetch(this.generatedBasePath+mapElementsFile, {cache: 'no-store'});
             if(record){
                 return record;
             }

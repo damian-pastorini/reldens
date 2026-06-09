@@ -16,6 +16,12 @@ class ElementZOrderSorter
         }
         let elementLayersSorted = this.collectAndSortElementLayers(maps.names, maps.layerToBottomRow);
         this.applyOrder(maps.names, elementLayersSorted);
+        this.editor.mapElements.elements.sort((a, b) => this.elementBottomRow(a) - this.elementBottomRow(b));
+    }
+
+    elementBottomRow(element)
+    {
+        return element.bounds.row + element.bounds.height;
     }
 
     buildElementMaps()
@@ -31,7 +37,7 @@ class ElementZOrderSorter
 
     indexOneElementLayers(element, names, layerToBottomRow, layerToInstance)
     {
-        let bottomRow = element.bounds.row + element.bounds.height;
+        let bottomRow = this.elementBottomRow(element);
         for(let layer of element.layers){
             names.add(layer.name);
             layerToBottomRow.set(layer.name, bottomRow);

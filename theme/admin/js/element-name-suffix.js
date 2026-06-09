@@ -34,6 +34,34 @@ class ElementNameSuffix
         return base+(ElementNameSuffix.maxSuffix(existingNames, base) + 1);
     }
 
+    static nextDuplicateName(existingNames, elementKey, sourceSuffix)
+    {
+        let suffix = '-'+sourceSuffix;
+        let max = 0;
+        for(let name of existingNames){
+            let version = ElementNameSuffix.duplicateVersion(name, elementKey, suffix);
+            if(version > max){
+                max = version;
+            }
+        }
+        return elementKey+(max + 1)+suffix;
+    }
+
+    static duplicateVersion(name, elementKey, suffix)
+    {
+        if(!name.startsWith(elementKey)){
+            return 0;
+        }
+        if(!name.endsWith(suffix)){
+            return 0;
+        }
+        let versionStr = name.slice(elementKey.length, name.length - suffix.length);
+        if(!/^\d+$/.test(versionStr)){
+            return 0;
+        }
+        return Number(versionStr);
+    }
+
     static resolveUnique(existingNames, name)
     {
         if(-1 === existingNames.indexOf(name)){
