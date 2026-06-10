@@ -176,6 +176,21 @@ npm exec -- reldens createAdmin --user=u --pass=p --email=e
 npm exec -- reldens resetPassword --user=u --pass=p
 ```
 
+### Refresh Entities After Database Changes
+
+Required when Prisma is the storage driver (`RELDENS_STORAGE_DRIVER=prisma`) and tables were created or modified in the database. Run all 3 steps from the project root, in this order:
+
+```bash
+# 1 - Update prisma/schema.prisma from the live database
+npx prisma db pull
+# 2 - Rebuild the Prisma client (output: prisma/client)
+npx prisma generate
+# 3 - Regenerate the reldens entities (output: generated-entities/)
+npm exec -- reldens generateEntities --override
+```
+
+If any of these are stale, `dataServer.getEntity()` returns undefined for the missing entities at runtime, which crashes server flows that use them (e.g. a TypeError on every scene join).
+
 See `.claude/commands-reference.md` for the full command reference.
 
 ## Reference Documentation
