@@ -95,6 +95,14 @@ class TestProgressReporter
         }
     }
 
+    onError(error)
+    {
+        process.stdout.write(
+            '\nGlobal error: '
+            +(error && error.stack ? error.stack : (error && error.message ? error.message : String(error)))+'\n'
+        );
+    }
+
     truncate(text, maxLen)
     {
         if(text.length <= maxLen) {
