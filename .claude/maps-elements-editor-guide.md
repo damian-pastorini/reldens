@@ -156,7 +156,7 @@ Practical effect: records files contain one element record per spatially distinc
 
 ### Folder layout
 
-- Source-of-truth: `generate-data/generated/{mapName}.json` and `generate-data/generated/{mapName}-room-map-elements.json`.
+- Source-of-truth: `generate-data/generated/{mapName}.json` and `generate-data/generated/{mapName}-room-map-elements.json`. The elements record lives ONLY in the generated folder and is always read from there (`/reldens-admin/generated/`); it is NEVER copied to the theme/dist runtime folders - those hold game-ready assets only.
 - Backups: `generate-data/generated/backups/{mapName}-{YYYY-MM-DD-HH-mm-ss}-back.json` and `{mapName}-{YYYY-MM-DD-HH-mm-ss}-back-room-map-elements.json`.
 - Runtime: `theme/default/assets/maps/{mapName}.json` and `dist/assets/maps/{mapName}.json`. Not backed up; always reproducible.
 - Pre-extrusion tileset image backups (import flow): `generate-data/generated/original-map-images/{image}-original.png`. Written by `MapImageExtruder.copyExtrudedFiles`, read back as the extruder input, removed by `MapsImporter.removeImportedMapFromGenerated` when `keepGeneratedForEditing` is off.
