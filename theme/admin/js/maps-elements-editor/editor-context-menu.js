@@ -82,7 +82,7 @@ class EditorContextMenu
             return;
         }
         this.editor.markDirty();
-        this.editor.painter.markBaseDirty();
+        this.editor.painter.baseDirty = true;
         this.editor.requestRender();
     }
 

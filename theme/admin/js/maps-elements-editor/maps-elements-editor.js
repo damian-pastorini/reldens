@@ -53,7 +53,7 @@ class MapsElementsEditor
         this.resetController.captureSnapshot();
         await this.resetController.ensureInitialBackup();
         this.mover.buildTileIndex();
-        this.painter.markBaseDirty();
+        this.painter.baseDirty = true;
         this.ui.build();
         this.attachEventListeners();
         this.requestRender();
@@ -65,7 +65,7 @@ class MapsElementsEditor
     {
         this.zOrderSorter.sort();
         this.mover.buildTileIndex();
-        this.painter.markBaseDirty();
+        this.painter.baseDirty = true;
         this.requestRender();
     }
 

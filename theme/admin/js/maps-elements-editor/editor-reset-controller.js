@@ -25,7 +25,7 @@ class EditorResetController
         this.editor.dirty = false;
         this.editor.ui.refreshDirty(false);
         this.editor.mover.buildTileIndex();
-        this.editor.painter.markBaseDirty();
+        this.editor.painter.baseDirty = true;
         this.editor.requestRender();
         return true;
     }

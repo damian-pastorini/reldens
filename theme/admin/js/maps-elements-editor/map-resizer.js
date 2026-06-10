@@ -36,7 +36,7 @@ class MapResizer
         panel.appendChild(this.editor.ui.buildButton(
             'Apply resize',
             'button-primary',
-            () => this.handleApplyClick()
+            () => this.showResult(this.applyFromPanel())
         ));
         this.forceButton = this.editor.ui.buildButton(
             'Force resize',
@@ -45,12 +45,6 @@ class MapResizer
         );
         panel.appendChild(this.forceButton);
         this.highlightAnchor(this.anchor);
-    }
-
-    handleApplyClick()
-    {
-        let result = this.applyFromPanel();
-        this.showResult(result);
     }
 
     showResult(result)

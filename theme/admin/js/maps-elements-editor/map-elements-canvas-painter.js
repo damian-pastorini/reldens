@@ -14,11 +14,6 @@ class MapElementsCanvasPainter
         this.lastCanvasHeight = 0;
     }
 
-    markBaseDirty()
-    {
-        this.baseDirty = true;
-    }
-
     render()
     {
         let mapJson = this.editor.mapJson;

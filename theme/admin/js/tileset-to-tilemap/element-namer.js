@@ -25,23 +25,11 @@ class TilesetElementNamer
         return total;
     }
 
-    resolveConvertName(tilesetIndex, index, name)
-    {
-        if(!name.startsWith('cluster-')){
-            return this.resolveUniqueName(tilesetIndex, index, name);
-        }
-        return this.resolveUniqueName(
-            tilesetIndex,
-            index,
-            'element-'+SharedUtils.padNum(this.countAllElements() + 1)
-        );
-    }
-
-    resolveUniqueName(tilesetIndex, excludeIndex, name)
+    resolveConvertName(tilesetIndex, index, name) // HOFF
     {
         return ElementNameSuffix.resolveUnique(
-            this.collectExistingNames(tilesetIndex, excludeIndex),
-            name
+            this.collectExistingNames(tilesetIndex, index),
+            name.startsWith('cluster-') ? 'element-'+SharedUtils.padNum(this.countAllElements() + 1) : name
         );
     }
 
