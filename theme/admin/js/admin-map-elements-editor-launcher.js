@@ -35,6 +35,7 @@ class AdminMapElementsEditorLauncher
         }
         entityButton.classList.remove('hidden');
         entityButton.addEventListener('click', (event) => this.launch(event));
+        this.createPublishedBadge(entityButton);
     }
 
     placeButtonBesideMapField(entityButton, entityData)
@@ -58,7 +59,7 @@ class AdminMapElementsEditorLauncher
         return false;
     }
 
-    parseEntityData(container)
+    parseEntityData(container) // HOFF
     {
         let raw = container.dataset.entitySerializedData;
         if(!raw){
@@ -88,7 +89,7 @@ class AdminMapElementsEditorLauncher
     {
         let button = event.currentTarget;
         if(button.editorInstance){
-            this.toggleEditorVisibility(button);
+            this.closeEditor(button);
             return;
         }
         this.openEditor(button);
@@ -120,18 +121,10 @@ class AdminMapElementsEditorLauncher
         };
     }
 
-    toggleEditorVisibility(button)
+    closeEditor(button)
     {
-        let editor = button.editorInstance;
-        if(!editor.ui || !editor.ui.container){
-            return;
-        }
-        let isHidden = editor.ui.container.classList.contains('hidden');
-        editor.ui.container.classList.toggle('hidden', !isHidden);
-        if(isHidden){
-            button.textContent = 'Close Map Editor';
-            return;
-        }
+        button.editorInstance.dispose();
+        button.editorInstance = null;
         button.textContent = button.dataset.openLabel ? button.dataset.openLabel : 'Edit Map Elements';
     }
 
@@ -170,7 +163,7 @@ class AdminMapElementsEditorLauncher
         host.className = 'edit-map-elements-host';
         let fieldRow = button.closest('.view-field');
         if(fieldRow){
-            fieldRow.insertAdjacentElement('afterend', host);
+            fieldRow.after(host);
             return host;
         }
         let container = button.closest('.extra-content-container');
@@ -184,15 +177,61 @@ class AdminMapElementsEditorLauncher
         return host;
     }
 
-    buildOptions(button, mapName, tileset)
+    buildOptions(button, mapName, tileset) // HOFF
     {
         return {
             mapName,
             sessionId: button.dataset.sessionId || '',
             mapElementsFile: button.dataset.mapElementsFile || (mapName+'-room-map-elements.json'),
             context: button.dataset.context || 'wizard',
-            tileset
+            tileset,
+            onPublishedState: (unpublished) => this.setPublishedBadge(button, unpublished)
         };
+    }
+
+    createPublishedBadge(entityButton)
+    {
+        let badge = document.createElement('span');
+        badge.className = 'map-unpublished-badge hidden';
+        badge.textContent = 'Unpublished - restart required to publish';
+        entityButton.before(badge);
+        entityButton.publishedBadge = badge;
+        this.refreshPublishedBadge(entityButton).catch((error) => {
+            entityButton.dataset.publishedBadgeError = error.message;
+        });
+    }
+
+    async refreshPublishedBadge(entityButton)
+    {
+        let mapName = entityButton.dataset.mapName;
+        if(!mapName){
+            return;
+        }
+        let url = '/reldens-admin/maps-elements-editor/api/list-backups?mapName='+encodeURIComponent(mapName);
+        let response = await fetch(url, {cache: 'no-store'});
+        if(!response.ok){
+            return;
+        }
+        let data = await response.json();
+        this.setPublishedBadge(entityButton, this.computeUnpublished(data));
+    }
+
+    computeUnpublished(data)
+    {
+        let backups = data && data.backups ? data.backups : [];
+        if(0 === backups.length){
+            return false;
+        }
+        let publishedTimestamp = data && data.publishedTimestamp ? data.publishedTimestamp : '';
+        return backups[0].timestamp !== publishedTimestamp;
+    }
+
+    setPublishedBadge(entityButton, unpublished) // HOFF
+    {
+        if(!entityButton.publishedBadge){
+            return;
+        }
+        entityButton.publishedBadge.classList.toggle('hidden', !unpublished);
     }
 
     detachExternalListeners(canvas)
@@ -204,7 +243,7 @@ class AdminMapElementsEditorLauncher
         return clone;
     }
 
-    findCanvas(button, mapName)
+    findCanvas(button, mapName) // HOFF
     {
         if(mapName){
             let byName = document.querySelector('.mapCanvas[data-map-name="'+mapName+'"]');

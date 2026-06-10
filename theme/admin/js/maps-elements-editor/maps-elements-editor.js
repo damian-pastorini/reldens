@@ -10,6 +10,7 @@ class MapsElementsEditor
         this.mapElementsFile = options.mapElementsFile || '';
         this.context = options.context || 'wizard';
         this.tileset = options.tileset || null;
+        this.onPublishedState = options.onPublishedState || null;
         this.mapJson = null;
         this.mapElements = null;
         this.dirty = false;
@@ -56,6 +57,7 @@ class MapsElementsEditor
         this.ui.build();
         this.attachEventListeners();
         this.requestRender();
+        await this.refreshBackupsList();
         return true;
     }
 
@@ -281,6 +283,26 @@ class MapsElementsEditor
 
     async handleSaveClick()
     {
+        if('room' !== this.context){
+            await this.performSave();
+            return;
+        }
+        adminFunctions.showConfirmDialog(async (confirmed) => {
+            if(!confirmed){
+                return;
+            }
+            await this.performSave();
+        }, {
+            title: 'Save Map',
+            message: 'Are you sure you want to save this map?'
+                +' IMPORTANT: the map will be overwritten, and a server restart is required to publish the updates.',
+            confirmText: 'Save',
+            confirmClass: 'button-primary'
+        });
+    }
+
+    async performSave()
+    {
         let result = await this.save();
         this.ui.flashSaveButton(result.success);
     }
@@ -291,7 +313,6 @@ class MapsElementsEditor
             mapName: this.mapName,
             sessionId: this.sessionId,
             context: this.context,
-            mapJson: this.layersNormalizer.mergeForSave(this.mapJson, this.mapElements),
             mapElements: this.mapElements
         }));
         if(result.success){
@@ -319,6 +340,9 @@ class MapsElementsEditor
     {
         await this.backupsPanel.list();
         this.backupsPanel.renderInto(this.ui.backupsListEl);
+        if(this.onPublishedState){
+            this.onPublishedState(this.backupsPanel.isUnpublished());
+        }
     }
 }
 window.MapsElementsEditor = MapsElementsEditor;

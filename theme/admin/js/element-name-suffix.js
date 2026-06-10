@@ -36,7 +36,7 @@ class ElementNameSuffix
 
     static nextDuplicateName(existingNames, elementKey, sourceSuffix)
     {
-        let suffix = '-'+sourceSuffix;
+        let suffix = sourceSuffix ? '-'+sourceSuffix : '';
         let max = 0;
         for(let name of existingNames){
             let version = ElementNameSuffix.duplicateVersion(name, elementKey, suffix);

@@ -15,6 +15,7 @@ class MapResizer
         this.horizontalInput = null;
         this.verticalInput = null;
         this.errorEl = null;
+        this.forceButton = null;
     }
 
     buildPanelInto(panel)
@@ -37,6 +38,12 @@ class MapResizer
             'button-primary',
             () => this.handleApplyClick()
         ));
+        this.forceButton = this.editor.ui.buildButton(
+            'Force resize',
+            'button-danger hidden',
+            () => this.handleForceClick()
+        );
+        panel.appendChild(this.forceButton);
         this.highlightAnchor(this.anchor);
     }
 
@@ -54,15 +61,38 @@ class MapResizer
         if(result.success){
             this.errorEl.classList.add('hidden');
             this.errorEl.textContent = '';
+            this.toggleForceButton(false);
             return;
         }
         this.errorEl.classList.remove('hidden');
         if(result.offending && 0 < result.offending.length){
             this.errorEl.textContent = 'Cannot resize: these elements would fall outside the new bounds: '
-                +result.offending.join(', ');
+                +result.offending.join(', ')
+                +'. Use "Force resize" to crop the map anyway (their outside tiles will be removed).';
+            this.toggleForceButton(true);
             return;
         }
         this.errorEl.textContent = 'Resize failed.';
+        this.toggleForceButton(false);
+    }
+
+    toggleForceButton(show)
+    {
+        if(!this.forceButton){
+            return;
+        }
+        this.forceButton.classList.toggle('hidden', !show);
+    }
+
+    handleForceClick()
+    {
+        this.setInput(this.anchor, this.horizontalInput.input.value, this.verticalInput.input.value);
+        let result = this.applyForce();
+        if(result.success){
+            this.horizontalInput.input.value = '0';
+            this.verticalInput.input.value = '0';
+        }
+        this.showResult(result);
     }
 
     buildAnchorButton(key)
@@ -167,18 +197,9 @@ class MapResizer
     {
         return element.layers.some(
             (layer) => layer.tiles.some(
-                (tile) => this.tileEscapes(tile, removals, newWidth, newHeight)
+                (tile) => MapResizerCrop.tileEscapes(tile, removals, newWidth, newHeight)
             )
         );
-    }
-
-    tileEscapes(tile, removals, newWidth, newHeight)
-    {
-        let newCol = tile.col - removals.left;
-        if(0 > newCol || newCol >= newWidth){
-            return true;
-        }
-        return 0 > tile.row - removals.top || tile.row - removals.top >= newHeight;
     }
 
     apply()
@@ -194,6 +215,25 @@ class MapResizer
         this.rebuildLayerData(newWidth, newHeight, removals);
         this.editor.mapJson.width = newWidth;
         this.editor.mapJson.height = newHeight;
+        MapResizerBorders.restamp(this.editor, newWidth, newHeight);
+        this.editor.markDirty();
+        this.editor.afterMutation();
+        return {success: true};
+    }
+
+    applyForce()
+    {
+        let removals = this.computeRemovals();
+        let newWidth = this.editor.mapJson.width - this.removeHorizontal;
+        let newHeight = this.editor.mapJson.height - this.removeVertical;
+        if(0 >= newWidth || 0 >= newHeight){
+            return {success: false, offending: []};
+        }
+        let removedLayerNames = MapResizerCrop.cropRecord(this.editor, removals, newWidth, newHeight);
+        this.rebuildLayerData(newWidth, newHeight, removals);
+        this.editor.mapJson.width = newWidth;
+        this.editor.mapJson.height = newHeight;
+        MapResizerCrop.pruneRemovedElementLayers(this.editor, removedLayerNames);
         MapResizerBorders.restamp(this.editor, newWidth, newHeight);
         this.editor.markDirty();
         this.editor.afterMutation();

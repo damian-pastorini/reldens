@@ -80,6 +80,15 @@
         flex: 1;
     }
 
+    & .backups-panel-row .backups-panel-row-published {
+        padding: var(--space-xs) var(--space-sm);
+        border-radius: var(--radius-sm);
+        background-color: var(--color-blue);
+        color: var(--color-white);
+        font-size: var(--font-size-xs);
+        font-weight: var(--bold);
+    }
+
     & .editor-canvas-scroll {
         margin-top: var(--space-sm);
         overflow: auto;
@@ -97,6 +106,10 @@
     & .resize-error {
         color: var(--color-orange);
         margin: var(--space-sm) 0;
+    }
+
+    & .resize-panel .button + .button {
+        margin-left: var(--space-sm);
     }
 
     & .element-context-menu {

@@ -25,7 +25,7 @@ NOT elements (always part of a component or container):
 
 Single global file. Not scoped under any class.
 
-The goal is a strong enough baseline that most component and container files have NO element overrides — only layout and structural differences.
+The goal is a strong enough baseline that most component and container files have NO element overrides - only layout and structural differences.
 
 ### Heading styles
 - `h1` - white, `--font-size-2xl`, `margin-top: 0`
@@ -50,17 +50,17 @@ Input types: `input[type="text"]`, `input[type="number"]`, `input[type="password
 
 Each component file has ONE main class that wraps all child styles.
 
-- `component-button.css` → `.button`
-- `component-input-box.css` → `.input-box`
-- `component-modal.css` → `.modal`
-- `component-tooltip.css` → `.tooltip`
-- `component-tooltip-click.css` → `.tooltip-click`
-- `component-tooltip-inline.css` → `.tooltip-inline`
-- `component-notification.css` → `.notification`
-- `component-entries.css` → `.entity-view, .entity-edit`
-- `component-canvas-panel.css` → `.canvas-panel`
-- `component-config-item.css` → `.config-item`
-- `component-image-viewer.css` → `.image-viewer`
+- `component-button.css` -> `.button`
+- `component-input-box.css` -> `.input-box`
+- `component-modal.css` -> `.modal`
+- `component-tooltip.css` -> `.tooltip`
+- `component-tooltip-click.css` -> `.tooltip-click`
+- `component-tooltip-inline.css` -> `.tooltip-inline`
+- `component-notification.css` -> `.notification`
+- `component-entries.css` -> `.entity-view, .entity-edit`
+- `component-canvas-panel.css` -> `.canvas-panel`
+- `component-config-item.css` -> `.config-item`
+- `component-image-viewer.css` -> `.image-viewer`
 
 ### `component-modal.css` standard structure
 - `.modal`, `.modal-backdrop`, `.modal-dialog`, `.modal-header`, `.modal-body`, `.modal-footer`
@@ -74,16 +74,16 @@ Each component file has ONE main class that wraps all child styles.
 
 Each container file has ONE root selector. All children are nested inside it using `& .child`.
 
-- `container-reldens-admin-panel.css` → `.reldens-admin-panel`
-- `container-maps-wizard.css` → `.maps-wizard`
-- `container-tileset-editor.css` → `.review-section`
-- `container-tileset-legend-panel.css` → `.legend-panel`
-- `container-tileset-tile-options.css` → `.tileset-analyzer`
-- `container-theme-manager.css` → `.theme-manager`
+- `container-reldens-admin-panel.css` -> `.reldens-admin-panel`
+- `container-maps-wizard.css` -> `.maps-wizard`
+- `container-tileset-editor.css` -> `.review-section`
+- `container-tileset-legend-panel.css` -> `.legend-panel`
+- `container-tileset-tile-options.css` -> `.tileset-analyzer`
+- `container-theme-manager.css` -> `.theme-manager`
 
 ### Container nesting rules
-- Context overrides (e.g. "when `.tileset-tile-options` is inside `.global-tile-options`") are expressed as `& .global-tile-options .tileset-tile-options { }` — NOT using parent-context `&` at the end
-- `min-width: 0` and `min-height: 0` are FORBIDDEN — they are a code smell; fix the layout instead
+- Context overrides (e.g. "when `.tileset-tile-options` is inside `.global-tile-options`") are expressed as `& .global-tile-options .tileset-tile-options { }` - NOT using parent-context `&` at the end
+- `min-width: 0` and `min-height: 0` are FORBIDDEN - they are a code smell; fix the layout instead
 
 ---
 
@@ -121,8 +121,8 @@ Each container file has ONE root selector. All children are nested inside it usi
 
 ## Key Rules Summary
 
-1. **One root selector per file** — containers scope everything under a single class
-2. **No `min-width: 0` / `min-height: 0`** — fix the flex layout properly instead
-3. **No cross-tier references** — components don't reference other components; containers don't reference other containers
-4. **Push styles up the cascade** — if a style applies everywhere, it belongs in elements or a component, not repeated in every container
+1. **One root selector per file** - containers scope everything under a single class
+2. **No `min-width: 0` / `min-height: 0`** - fix the flex layout properly instead
+3. **No cross-tier references** - components don't reference other components; containers don't reference other containers
+4. **Push styles up the cascade** - if a style applies everywhere, it belongs in elements or a component, not repeated in every container
 5. **Parent-context selectors** (`some-parent &`) inside nested blocks should be rewritten as `& .some-parent .child` at the container root level for clarity

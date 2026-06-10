@@ -135,7 +135,7 @@ CREATE TABLE IF NOT EXISTS `rooms_return_points` (
 CREATE TABLE IF NOT EXISTS `players_state` (
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
     `player_id` INT UNSIGNED NOT NULL,
-    `room_id` INT UNSIGNED NOT NULL,
+    `room_id` INT UNSIGNED NULL DEFAULT NULL,
     `x` INT UNSIGNED NOT NULL,
     `y` INT UNSIGNED NOT NULL,
     `dir` VARCHAR(25) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -144,7 +144,7 @@ CREATE TABLE IF NOT EXISTS `players_state` (
     INDEX `FK_player_state_rooms` (`room_id`) USING BTREE,
     INDEX `FK_player_state_player_stats` (`player_id`) USING BTREE,
     CONSTRAINT `FK_player_state_player_stats` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON UPDATE CASCADE ON DELETE NO ACTION,
-    CONSTRAINT `FK_player_state_rooms` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON UPDATE CASCADE ON DELETE NO ACTION
+    CONSTRAINT `FK_player_state_rooms` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON UPDATE CASCADE ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `players_stats` (
@@ -315,7 +315,7 @@ CREATE TABLE IF NOT EXISTS `chat` (
     KEY `FK_chat_chat_message_types` (`message_type`),
     CONSTRAINT `FK__players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`),
     CONSTRAINT `FK__players_2` FOREIGN KEY (`private_player_id`) REFERENCES `players` (`id`),
-    CONSTRAINT `FK__scenes` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`),
+    CONSTRAINT `FK__scenes` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT `FK_chat_chat_message_types` FOREIGN KEY (`message_type`) REFERENCES `chat_message_types` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

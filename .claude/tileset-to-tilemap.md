@@ -57,7 +57,7 @@ The legend lists every detected element, cluster, and spot in a single unified l
 - **Detect AI / Name AI** (bulk, AI-dependent): runs AI detection or naming on all bulk-selected items
 - **Delete Selected**: removes all bulk-selected unlocked items (elements, clusters, and spots); locked items are kept and shown in the confirmation count
 
-> **Note**: The elements list is a single unified list containing all three map object types — elements, clusters, and spots. Bulk operations (select-all, delete, lock) apply across all three types together.
+> **Note**: The elements list is a single unified list containing all three map object types - elements, clusters, and spots. Bulk operations (select-all, delete, lock) apply across all three types together.
 
 Each element/cluster row shows:
 - **Header (click)**: selects/deselects the element; expands the detail section; scrolls canvas to its tiles
@@ -103,9 +103,9 @@ The canvas renders a colored marker badge (G, P, B, R, S, C, T, K) in the corner
 
 **Spots** are named locations on the map. Each spot has:
 - **Depth** (text input): controls where this spot's layer is inserted in the final layer stack. Valid values:
-  - `false` (or empty) — no reorder; for non-element spots this means the spot is placed in the invisible-spots group (under the ground layer, invisible to the player)
-  - `true` — insert below the ground layer (integer depth = 1)
-  - any layer name string (e.g. `ground-variations`, `path`) — insert this spot's layer immediately after the named layer; the spot tiles will be visible above that layer
+  - `false` (or empty) - no reorder; for non-element spots this means the spot is placed in the invisible-spots group (under the ground layer, invisible to the player)
+  - `true` - insert below the ground layer (integer depth = 1)
+  - any layer name string (e.g. `ground-variations`, `path`) - insert this spot's layer immediately after the named layer; the spot tiles will be visible above that layer
   - **Dead state**: if **Is Element** is unchecked and **Depth** is anything other than `false`, the spot is generated internally but **never placed on the map** (silently ignored by the generator). Only use a non-false depth when **Is Element** is checked.
 - **Name**: identifier for the spot
 - **Is Element** checkbox: treat spot as a placed element (must be checked for the spot to appear on the map when Depth is set)
@@ -138,7 +138,7 @@ Click a spot header to expand/collapse its detail section. When a spot is expand
 
 **Wall tile position keys** use `row,col` notation (`-1`=north, `0`=same, `1`=south / `-1`=west, `1`=east):
 
-Inner Walls — placed AT the spot perimeter (5×5 example):
+Inner Walls - placed AT the spot perimeter (5×5 example):
 ```
          col0       col1       col2       col3       col4
 row0:  [-1,-1]    [-1, 0]    [-1, 0]    [-1, 0]    [-1, 1]
@@ -149,7 +149,7 @@ row4:  [ 1,-1]    [ 1, 0]    [ 1, 0]    [ 1, 0]    [ 1, 1]
 ```
 `[ 0, 0]` = solid fill tile (used when surrounded by wall on all 4 sides).
 
-Outer Walls — placed 1 tile OUTSIDE the spot boundary:
+Outer Walls - placed 1 tile OUTSIDE the spot boundary:
 ```
           col-1      col0      col1      col2      col3      col4      col5
 row -1: [-1,-1]   [-1, 0]   [-1, 0]   [-1, 0]   [-1, 0]   [-1, 0]   [-1, 1]
@@ -158,7 +158,7 @@ row  0: [ 0,-1]      S         S         S         S         S        [ 0, 1]
 row  5: [ 1,-1]   [ 1, 0]   [ 1, 0]   [ 1, 0]   [ 1, 0]   [ 1, 0]   [ 1, 1]
 ```
 
-Corner tiles (`top-left`, `top-right`, `bottom-left`, `bottom-right`) are concave corners — only used when the wall bends inward (L-shaped or irregular spots). A plain rectangle never uses them.
+Corner tiles (`top-left`, `top-right`, `bottom-left`, `bottom-right`) are concave corners - only used when the wall bends inward (L-shaped or irregular spots). A plain rectangle never uses them.
 
 ## Step 6 - Per-Tileset Generate Controls
 
@@ -182,9 +182,10 @@ At the top of each tileset's controls row:
 Click **Generate All** (or per-tileset **Generate**) to produce all output files. Files are written to `generated-tile-map-elements/output/{sessionId}/`:
 - `session-editor-state.json`: full state snapshot used by the Load button
 - `elements-config.json`: human-readable element configuration
-- `{tileset-name}.png`: copy of the original tileset PNG
+- `{tileset-name}.png`: copy of the tileset PNG, named after the kebab-case map name when one is set (single copy; this is the file `composite.json` references)
+- `ai-buffer/{imageId}`: per-session source copies named by upload id (the imageId is `{epoch}-{original-name}` and already includes the file extension); used as the AI routes' fallback image source, not part of the map output
 - `{tileset-name}-{element-name}.json`: per-element Tiled-format JSON map
-- `{tileset-name}-annotated.png`: tileset image with colored overlays showing detected elements
+- `{tileset-name}-annotated.png`: tileset image with colored overlays showing detected elements and the tile grid (dimensions are read from the image itself via sharp metadata)
 - `composite.json`: all elements combined on one map
 - `map-generator-config.json`: Reldens map generator configuration including tile options and spots
 

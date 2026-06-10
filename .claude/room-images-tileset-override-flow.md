@@ -45,7 +45,7 @@ Both fields are configured as upload fields:
 ### 1. Initial Room Creation
 
 **User Actions:**
-1. Navigate to Admin → Rooms → Create New
+1. Navigate to Admin -> Rooms -> Create New
 2. Upload map JSON file to `map_filename` field
 3. Upload tileset images to `scene_images` field
 4. Click Save
@@ -82,7 +82,7 @@ if (tilesetImages !== currentSceneImages) {
 ### 2. Room Editing
 
 **User Actions:**
-1. Navigate to Admin → Rooms → Edit Room
+1. Navigate to Admin -> Rooms -> Edit Room
 2. View existing files in both fields
 3. Modify files or click Save without changes
 
@@ -94,9 +94,11 @@ if (tilesetImages !== currentSceneImages) {
 ```javascript
 // 1. Event emitted with room data
 event = {
-    driverResource,     // Entity configuration
+    // Entity configuration
+    driverResource,
     renderedEditProperties, // Form properties
-    loadedEntity,       // Room from database
+    // Room from database
+    loadedEntity,
     entityId: 'rooms',
     entityData: loadedEntity
 }
@@ -144,8 +146,8 @@ if (propertyKey === 'scene_images' && tilesetImages.length > 0) {
 2. Validation passes (existing files satisfy requirement)
 3. Entity updated with form data
 4. Post-save validator runs
-5. If scene_images matches tilesets → No action
-6. If mismatch → Override with tileset images
+5. If scene_images matches tilesets -> No action
+6. If mismatch -> Override with tileset images
 
 **Scenario B: Add New Image**
 1. User uploads additional image to `scene_images`
@@ -280,14 +282,14 @@ validateImagesExist(tilesetImages, sceneImagesBucket, roomId, mapFilename) {
 
 **JavaScript Toggle (reldens-admin-client.js):**
 ```javascript
-document.querySelectorAll('.tileset-alert-icon').forEach(icon => {
+for (let icon of document.querySelectorAll('.tileset-alert-icon')) {
     icon.addEventListener('click', () => {
         let message = icon.nextElementSibling
         if (message?.classList.contains('tileset-info-message')) {
             message.classList.toggle('hidden')
         }
     })
-})
+}
 ```
 
 ## Benefits
@@ -299,7 +301,7 @@ document.querySelectorAll('.tileset-alert-icon').forEach(icon => {
 
 ## Limitations
 
-1. **One-Way Sync:** Map → Database only (not bidirectional)
+1. **One-Way Sync:** Map -> Database only (not bidirectional)
 2. **Cleanup Required:** Removing tileset from map doesn't delete old image files
 3. **Override Always Wins:** Manual changes to scene_images get overwritten on next save
 4. **Requires Config:** Must enable `overrideSceneImagesWithMapFile` to activate

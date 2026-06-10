@@ -2,7 +2,7 @@
 
 ## Overview
 
-The **admin panel is the primary way to configure Reldens**. Most game data (stats, objects, rooms, skills, items, etc.) should be set up and modified through the admin panel interface. SQL queries are a secondary option — useful for bulk operations, migrations, or scripted setup, but NOT the preferred approach for day-to-day configuration.
+The **admin panel is the primary way to configure Reldens**. Most game data (stats, objects, rooms, skills, items, etc.) should be set up and modified through the admin panel interface. SQL queries are a secondary option - useful for bulk operations, migrations, or scripted setup, but NOT the preferred approach for day-to-day configuration.
 
 The admin panel is accessible at `/reldens-admin` and is powered by the `@reldens/cms` package.
 
@@ -15,124 +15,124 @@ The admin panel groups entities into 14 navigation sections. The section structu
 
 ### Settings
 Configuration keys and operation types used throughout the platform.
-- `config` — Key/value configuration entries (`config` table)
-- `configTypes` — Types for configuration entries
-- `operationTypes` — Operation type definitions
+- `config` - Key/value configuration entries (`config` table)
+- `configTypes` - Types for configuration entries
+- `operationTypes` - Operation type definitions
 
 ### Rooms
 Room definitions and player transition points.
-- `rooms` — Room definitions (name, type, map file, etc.)
-- `roomsChangePoints` — Points that move a player to another room
-- `roomsReturnPoints` — Points where a player returns after death/warp
+- `rooms` - Room definitions (name, type, map file, etc.)
+- `roomsChangePoints` - Points that move a player to another room
+- `roomsReturnPoints` - Points where a player returns after death/warp
 
 ### Game Objects
 NPC and interactive object definitions, their visuals, stats, and skills.
-- `objects` — Object definitions (key, class path, type, room assignment)
-- `objectsTypes` — Object type definitions
-- `objectsAnimations` — Sprite animations per object
-- `objectsAssets` — Asset references per object
-- `objectsStats` — Stat values assigned to objects
-- `objectsSkills` — Skills assigned to objects
-- `objectsItemsInventory` — Items in object inventories
-- `objectsItemsRequirements` — Item requirements for objects
-- `objectsItemsRewards` — Items objects drop as rewards
-- `targetOptions` — Options for targeting behavior
+- `objects` - Object definitions (key, class path, type, room assignment)
+- `objectsTypes` - Object type definitions
+- `objectsAnimations` - Sprite animations per object
+- `objectsAssets` - Asset references per object
+- `objectsStats` - Stat values assigned to objects
+- `objectsSkills` - Skills assigned to objects
+- `objectsItemsInventory` - Items in object inventories
+- `objectsItemsRequirements` - Item requirements for objects
+- `objectsItemsRewards` - Items objects drop as rewards
+- `targetOptions` - Options for targeting behavior
 
 ### Skills
 Skill definitions, attack data, animations, and effect conditions.
-- `skillsSkill` — Core skill definitions
-- `skillsSkillType` — Skill type classifications
-- `skillsSkillAttack` — Attack data (damage, range, etc.)
-- `skillsSkillAnimations` — Animations associated with skills
-- `skillsSkillPhysicalData` — Physical properties (hitbox, etc.)
-- `skillsGroups` — Skill groups/categories
-- `skillsSkillGroupRelation` — Skill-to-group assignments
-- `skillsSkillOwnerConditions` — Conditions checked on the skill owner
-- `skillsSkillOwnerEffects` — Effects applied to skill owner
-- `skillsSkillOwnerEffectsConditions` — Conditions on owner effects
-- `skillsSkillTargetEffects` — Effects applied to skill target
-- `skillsSkillTargetEffectsConditions` — Conditions on target effects
-- `skillsLevelsModifiersConditions` — Conditions on level modifier application
+- `skillsSkill` - Core skill definitions
+- `skillsSkillType` - Skill type classifications
+- `skillsSkillAttack` - Attack data (damage, range, etc.)
+- `skillsSkillAnimations` - Animations associated with skills
+- `skillsSkillPhysicalData` - Physical properties (hitbox, etc.)
+- `skillsGroups` - Skill groups/categories
+- `skillsSkillGroupRelation` - Skill-to-group assignments
+- `skillsSkillOwnerConditions` - Conditions checked on the skill owner
+- `skillsSkillOwnerEffects` - Effects applied to skill owner
+- `skillsSkillOwnerEffectsConditions` - Conditions on owner effects
+- `skillsSkillTargetEffects` - Effects applied to skill target
+- `skillsSkillTargetEffectsConditions` - Conditions on target effects
+- `skillsLevelsModifiersConditions` - Conditions on level modifier application
 
 ### Classes & Levels
 Class paths, level sets, and level-based stat modifiers.
-- `skillsClassPath` — Class path definitions
-- `skillsClassPathLevelLabels` — Display labels for levels per class path
-- `skillsClassPathLevelSkills` — Skills unlocked at specific levels
-- `skillsClassLevelUpAnimations` — Level-up animation assignments
-- `skillsLevelsSet` — Groups of level definitions
-- `skillsLevels` — Individual level entries
-- `skillsLevelsModifiers` — Stat modifiers applied at each level
+- `skillsClassPath` - Class path definitions
+- `skillsClassPathLevelLabels` - Display labels for levels per class path
+- `skillsClassPathLevelSkills` - Skills unlocked at specific levels
+- `skillsClassLevelUpAnimations` - Level-up animation assignments
+- `skillsLevelsSet` - Groups of level definitions
+- `skillsLevels` - Individual level entries
+- `skillsLevelsModifiers` - Stat modifiers applied at each level
 
 ### Users
 Player accounts, stats, scores, and class assignments.
-- `users` — User accounts
-- `usersLogin` — Login records/sessions
-- `usersLocale` — Per-user locale settings
-- `players` — Player entities linked to users
-- `playersState` — Player runtime state data
-- `playersStats` — Player stat values (hp, mp, atk, etc.)
-- `stats` — Stat type definitions (the list of available stats)
-- `scores` — Player score records
-- `scoresDetail` — Detailed score breakdowns
-- `skillsOwnersClassPath` — Class path assignments per player
+- `users` - User accounts
+- `usersLogin` - Login records/sessions
+- `usersLocale` - Per-user locale settings
+- `players` - Player entities linked to users
+- `playersState` - Player runtime state data
+- `playersStats` - Player stat values (hp, mp, atk, etc.)
+- `stats` - Stat type definitions (the list of available stats)
+- `scores` - Player score records
+- `scoresDetail` - Detailed score breakdowns
+- `skillsOwnersClassPath` - Class path assignments per player
 
 ### Items & Inventory
 Item types, groups, and inventory data.
-- `itemsItem` — Item definitions
-- `itemsTypes` — Item type classifications
-- `itemsGroup` — Item group definitions
-- `itemsItemModifiers` — Stat modifiers applied by items
-- `itemsInventory` — Inventory records (who holds what items)
+- `itemsItem` - Item definitions
+- `itemsTypes` - Item type classifications
+- `itemsGroup` - Item group definitions
+- `itemsItemModifiers` - Stat modifiers applied by items
+- `itemsInventory` - Inventory records (who holds what items)
 
 ### Rewards
 Drop tables, reward events, and modifiers.
-- `rewards` — Reward definitions
-- `rewardsModifiers` — Stat modifiers granted by rewards
-- `rewardsEvents` — Events that trigger reward distribution
-- `rewardsEventsState` — State tracking for reward events
-- `dropsAnimations` — Visual animations for item drops
+- `rewards` - Reward definitions
+- `rewardsModifiers` - Stat modifiers granted by rewards
+- `rewardsEvents` - Events that trigger reward distribution
+- `rewardsEventsState` - State tracking for reward events
+- `dropsAnimations` - Visual animations for item drops
 
 ### Respawn
 Respawn point and behavior configuration.
-- `respawn` — Respawn configuration entries
+- `respawn` - Respawn configuration entries
 
 ### Audio
 Sound effects, music, and per-player audio config.
-- `audio` — Audio file references
-- `audioCategories` — Audio category groupings
-- `audioMarkers` — Markers within audio tracks
-- `audioPlayerConfig` — Per-player audio preferences
+- `audio` - Audio file references
+- `audioCategories` - Audio category groupings
+- `audioMarkers` - Markers within audio tracks
+- `audioPlayerConfig` - Per-player audio preferences
 
 ### Chat
 Chat messages and message type configuration.
-- `chat` — Chat message log
-- `chatMessageTypes` — Chat message type definitions
+- `chat` - Chat message log
+- `chatMessageTypes` - Chat message type definitions
 
 ### Translations
 Localization strings and text snippets.
-- `snippets` — Text snippets used in UI and messages
-- `locale` — Locale string entries
+- `snippets` - Text snippets used in UI and messages
+- `locale` - Locale string entries
 
 ### Ads
 Ad banners, providers, and playback tracking.
-- `ads` — Ad definitions
-- `adsBanner` — Banner ad data
-- `adsProviders` — Ad provider configurations
-- `adsTypes` — Ad type classifications
-- `adsEventVideo` — Video ad event data
-- `adsPlayed` — Ad playback tracking records
+- `ads` - Ad definitions
+- `adsBanner` - Banner ad data
+- `adsProviders` - Ad provider configurations
+- `adsTypes` - Ad type classifications
+- `adsEventVideo` - Video ad event data
+- `adsPlayed` - Ad playback tracking records
 
 ### Clan
 Clan definitions, levels, modifiers, and membership.
-- `clan` — Clan definitions
-- `clanLevels` — Clan level definitions
-- `clanLevelsModifiers` — Stat modifiers applied at clan levels
-- `clanMembers` — Clan membership records
+- `clan` - Clan definitions
+- `clanLevels` - Clan level definitions
+- `clanLevelsModifiers` - Stat modifiers applied at clan levels
+- `clanMembers` - Clan membership records
 
 ### Features
 Feature flags and plugin enablement.
-- `features` — Feature definitions and enabled/disabled state
+- `features` - Feature definitions and enabled/disabled state
 
 ---
 
@@ -140,14 +140,14 @@ Feature flags and plugin enablement.
 
 ### What Are Entity Overrides?
 
-Generated entities in `generated-entities/entities/` are auto-created from the database schema by running `reldens generateEntities`. They are **read-only** — regenerated whenever the schema changes.
+Generated entities in `generated-entities/entities/` are auto-created from the database schema by running `reldens generateEntities`. They are **read-only** - regenerated whenever the schema changes.
 
 Entity overrides are manually created files that **extend** generated entities to customize admin panel behavior. They live in:
 ```
 lib/{plugin}/server/entities/{entity-name}-entity-override.js
 ```
 
-**Important**: Entity overrides only affect the admin panel UI — they do NOT change the database schema, server logic, or data layer. The override system controls:
+**Important**: Entity overrides only affect the admin panel UI - they do NOT change the database schema, server logic, or data layer. The override system controls:
 - Which columns appear in the admin list view
 - Which fields appear in the edit form
 - The sort order within admin navigation menus
@@ -214,7 +214,7 @@ Some features use custom model files that extend the generated database models:
 lib/{plugin}/server/models/{entity-name}-model.js
 ```
 
-Model overrides add business logic methods, relationships, or hooks at the ORM layer — beyond what the admin panel configuration layer provides. See `storage-architecture.md` for details on the storage driver and entity access patterns.
+Model overrides add business logic methods, relationships, or hooks at the ORM layer - beyond what the admin panel configuration layer provides. See `storage-architecture.md` for details on the storage driver and entity access patterns.
 
 ---
 

@@ -5,6 +5,7 @@ class EditorBackupsPanel
         this.editor = editor;
         this.basePath = '/reldens-admin/maps-elements-editor/api';
         this.backups = [];
+        this.publishedTimestamp = '';
         this.jsonFetcher = new EditorJsonFetcher();
     }
 
@@ -13,7 +14,16 @@ class EditorBackupsPanel
         let url = this.basePath+'/list-backups?mapName='+encodeURIComponent(this.editor.mapName);
         let data = await this.jsonFetcher.fetch(url);
         this.backups = data && data.backups ? data.backups : [];
+        this.publishedTimestamp = data && data.publishedTimestamp ? data.publishedTimestamp : '';
         return this.backups;
+    }
+
+    isUnpublished()
+    {
+        if(0 === this.backups.length){
+            return false;
+        }
+        return this.backups[0].timestamp !== this.publishedTimestamp;
     }
 
     async postWithTimestamp(endpoint, backupTimestamp)
@@ -64,6 +74,12 @@ class EditorBackupsPanel
         label.className = 'backups-panel-row-label';
         label.textContent = this.formatTimestamp(backup.timestamp);
         row.appendChild(label);
+        if(backup.timestamp === this.publishedTimestamp){
+            let publishedTag = document.createElement('span');
+            publishedTag.className = 'backups-panel-row-published';
+            publishedTag.textContent = 'Published';
+            row.appendChild(publishedTag);
+        }
         row.appendChild(this.editor.ui.buildButton(
             'Reload', 'button-primary', () => this.editor.confirmReload(backup.timestamp)
         ));

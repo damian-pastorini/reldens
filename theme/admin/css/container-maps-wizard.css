@@ -11,7 +11,7 @@
 
     p {
         margin: 0;
-        font-size: var(--font-size-lg);
+        font-size: var(--font-size-base);
         font-weight: var(--bold);
     }
 }
@@ -110,6 +110,10 @@
                 align-self: flex-start;
                 margin-top: var(--space-lg);
                 max-width: 100%;
+            }
+
+            &:only-child > canvas {
+                max-width: none;
             }
         }
 
