@@ -99,7 +99,7 @@ class TilesetGenerator
         if(preferredKey){
             new TilesetGroundSelector().applyPreferredGround(state, preferredKey);
         }
-        let succeeded = await this.runGenerate(state, false);
+        let succeeded = await this.runGenerate(state, false, Boolean(preferredKey));
         if(!succeeded){
             return;
         }
@@ -150,7 +150,7 @@ class TilesetGenerator
             new TilesetGroundSelector().applyPreferredGround(fullState, preferredGroundKey);
         }
         this.lastFullSerialized = selectedOnly ? null : fullState;
-        await this.runGenerate(fullState, false);
+        await this.runGenerate(fullState, false, Boolean(preferredGroundKey));
     }
 
     async generateSingle(tilesetIndex, selectedOnly)
@@ -182,7 +182,7 @@ class TilesetGenerator
         return bodyText.slice(0, 300);
     }
 
-    async runGenerate(tilesets, forceNewSession)
+    async runGenerate(tilesets, forceNewSession, suppressGlobalTileOptions)
     {
         if(!this.app.sessionId){
             return false;
@@ -195,7 +195,12 @@ class TilesetGenerator
             let response = await fetch('generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ sessionId, tilesets, fullTilesets, globalTileOptions: this.app.globalTileOptions || null })
+                body: JSON.stringify({
+                    sessionId,
+                    tilesets,
+                    fullTilesets,
+                    globalTileOptions: suppressGlobalTileOptions ? null : (this.app.globalTileOptions || null)
+                })
             });
             if(!response.ok){
                 let body = await response.text();

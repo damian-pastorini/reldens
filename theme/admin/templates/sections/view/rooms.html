@@ -1,4 +1,10 @@
 <div class="extra-content-container" data-entity-serialized-data="{{&entitySerializedData}}">
+    <button type="button"
+        class="button button-secondary edit-elements-btn edit-map-elements-entity-btn hidden"
+        data-map-name="{{&mapName}}"
+        data-map-elements-file="{{&mapElementsFile}}"
+        data-image-key="{{&firstSceneImage}}"
+        data-context="room">Edit Map Elements</button>
     <h3>Extra options</h3>
     <div class="default-room-container">
         <form name="defaultRoom" action="#" method="post" class="confirmation-required">
@@ -19,7 +25,11 @@
         </form>
     </div>
     <div class="rooms-association-container">
-        <h3>Link rooms</h3>
+        <h3 class="clickable rooms-association-toggle" data-expand-collapse=".rooms-association-content">
+            <span>Link rooms</span>
+            <img class="rooms-association-collapse-icon" src="/assets/admin/circle-chevron-up-solid-full.svg" alt="Toggle link rooms">
+        </h3>
+        <div class="rooms-association-content hidden">
         <p>Notes:</p>
         <p>
             - The room link does not exist as "entity" itself, this feature will create change points and return points in both directions (if specified).<br/>
@@ -88,5 +98,7 @@
                 </span>
             </div>
         </form>
+        </div>
     </div>
 </div>
+{{&mapsElementsEditorScripts}}

@@ -181,14 +181,14 @@ Key fields the map generator reads from `mapData`:
 - Map dimension and generation options: `mainPathSize`, `blockMapBorder`, `freeSpaceTilesQuantity`, `freeTilesMultiplier`, `variableTilesPercentage`, `collisionLayersForPaths`, `minimumDistanceFromBorders`, `splitBordersInLayers`, etc.
 
 Key fields in each `groundSpots` entry:
-- `walkable` — when `false`, the generator appends `-collisions` to the spot layer name (e.g. `lake_001-s0-collisions`). The Reldens game engine reads any layer ending in `-collisions` as a non-walkable collision zone. Set to `false` for any spot the player should not be able to walk through.
-- `depth` — controls where the spot layer is inserted in the final layer stack:
-  - `false` (boolean) and `isElement: false` → spot goes into the invisible-spots group, placed before the ground layer and hidden under it
-  - `false` (boolean) and `isElement: true` → spot is placed as an element at default order (after static layers, before path)
-  - `true` (boolean) → insert at position 1 (just below the ground layer)
-  - string (layer name, e.g. `"ground-variations"`) → insert immediately after the named layer; the spot tiles appear above it; combined with `isElement: true` this makes the spot visually prominent on top of the named layer
-  - **Dead state**: `isElement: false` + any truthy `depth` → `generateSpotsWithDepth` is called but `layerMap.get(depth)` returns `undefined`, reorder is skipped, and the spot is **never inserted into the map**. Always set `isElement: true` when using a non-false depth.
-- `isElement` — when `true`, the spot participates in the element placement pipeline and respects the `depth` reordering. When `false`, the spot can only be placed as an invisible underlay (requires `depth: false`).
+- `walkable` - when `false`, the generator appends `-collisions` to the spot layer name (e.g. `lake_001-s0-collisions`). The Reldens game engine reads any layer ending in `-collisions` as a non-walkable collision zone. Set to `false` for any spot the player should not be able to walk through.
+- `depth` - controls where the spot layer is inserted in the final layer stack:
+  - `false` (boolean) and `isElement: false` -> spot goes into the invisible-spots group, placed before the ground layer and hidden under it
+  - `false` (boolean) and `isElement: true` -> spot is placed as an element at default order (after static layers, before path)
+  - `true` (boolean) -> insert at position 1 (just below the ground layer)
+  - string (layer name, e.g. `"ground-variations"`) -> insert immediately after the named layer; the spot tiles appear above it; combined with `isElement: true` this makes the spot visually prominent on top of the named layer
+  - **Dead state**: `isElement: false` + any truthy `depth` -> `generateSpotsWithDepth` is called but `layerMap.get(depth)` returns `undefined`, reorder is skipped, and the spot is **never inserted into the map**. Always set `isElement: true` when using a non-false depth.
+- `isElement` - when `true`, the spot participates in the element placement pipeline and respects the `depth` reordering. When `false`, the spot can only be placed as an invisible underlay (requires `depth: false`).
 
 **Note**: `tileOptions` in this config is NOT read by the map generator. The tile role assignments (ground, path, surrounding, etc.) must be encoded in the composite.json `tiles` array as described above. `tileOptions` in `map-generator-config.json` is currently unused by the generator.
 
@@ -210,6 +210,7 @@ Key fields in each `groundSpots` entry:
 - `createThumbsFromLayersData()` calls `findImageFile(tileSet)` which looks for `rootFolder/tmp_image`. The tileset PNG must exist at `output/{sessionId}/{tileset.filename}`
 - writes optimized tileset PNG to `rootFolder/generated/`
 - returns `{ newJSON, newJSONResized }`
+- NOTE: the intermediate `optimized-*` files are deleted right after generation (`removeOptimizedMapFilesAfterGeneration` defaults to `true` in `RandomMapGenerator`), so the `generated/optimized/` folder ends up empty by design
 
 **Step 4 - `ElementsProvider.fetchPathTiles()`**
 - reads `optimizedMap.tilesets[0].tiles[]` properties
@@ -244,7 +245,7 @@ Key fields in each `groundSpots` entry:
 
 Wangsets for inner and outer spot walls are built by `CompositeWangsetBuilder.buildSpotWangsets()` and attached to the tileset entry as `entry.wangsets`.
 
-`TilesetCompositeConfigBuilder.buildGroundSpotConfig()` outputs well-formed groundSpots entries including `layerName`, `tilesKey`, `width`, `height`, `quantity`, `freeSpaceAround`, `walkable`, `isElement`, `allowPathsInFreeSpace`, `splitBordersInLayers`, `borderInnerWalls`, `borderOuterWalls`, `borderOuterWallsIncreaseLayerSize`, and `depth`. When `borderOuterWalls` or `borderInnerWalls` is true, `splitBordersInLayers` is forced true automatically (required for wall layers to be included in generator output). `depth` defaults to `true` when absent from the session data; the UI allows any of the values `false`, `true`, or a layer name string — coercion from the text input converts `""` and `"false"` to boolean `false`, `"true"` to boolean `true`, and any other string is kept as-is.
+`TilesetCompositeConfigBuilder.buildGroundSpotConfig()` outputs well-formed groundSpots entries including `layerName`, `tilesKey`, `width`, `height`, `quantity`, `freeSpaceAround`, `walkable`, `isElement`, `allowPathsInFreeSpace`, `splitBordersInLayers`, `borderInnerWalls`, `borderOuterWalls`, `borderOuterWallsIncreaseLayerSize`, and `depth`. When `borderOuterWalls` or `borderInnerWalls` is true, `splitBordersInLayers` is forced true automatically (required for wall layers to be included in generator output). `depth` defaults to `true` when absent from the session data; the UI allows any of the values `false`, `true`, or a layer name string - coercion from the text input converts `""` and `"false"` to boolean `false`, `"true"` to boolean `true`, and any other string is kept as-is.
 
 ---
 

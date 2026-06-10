@@ -8,6 +8,7 @@
             method="post"
             enctype="multipart/form-data">
             <input type="hidden" name="mainAction" id="mainAction" value="import"/>
+            <input type="hidden" name="tilesetSessionId" id="tilesetSessionId" value="{{&tilesetSessionId}}"/>
             <input type="hidden" name="generatedMapsHandler" id="generatedMapsHandler" value="{{&generatedMapsHandler}}"/>
             <input type="hidden" name="importAssociationsForChangePoints" id="importAssociationsForChangePoints" value="{{&importAssociationsForChangePoints}}"/>
             <input type="hidden" name="importAssociationsRecursively" id="importAssociationsRecursively" value="{{&importAssociationsRecursively}}"/>
@@ -36,6 +37,10 @@
                             <label class="main-option" for="maps-wizard-map-option-{{&key}}">
                                 {{&key}}
                             </label>
+                            <button type="button" class="button button-sm button-secondary edit-elements-btn"
+                                data-map-name="{{&key}}"
+                                data-session-id="{{&tilesetSessionId}}"
+                                data-context="wizard">Edit Map Elements</button>
                             <p>Downloads:</p>
                             <p>
                                 - <a href="{{&mapJson}}" target="_blank">{{&mapJson}}</a><br/>
@@ -50,7 +55,8 @@
                             data-tile-width="{{&tileWidth}}"
                             data-tile-height="{{&tileHeight}}"
                             data-image-key="{{&mapImage}}"
-                            data-map-json="{{&mapJson}}">
+                            data-map-json="{{&mapJson}}"
+                            data-map-name="{{&key}}">
                         </canvas>
                         {{#hasSubMaps}}
                             <div class="sub-maps">
@@ -60,7 +66,13 @@
                                 </p>
                                 <div class="sub-maps-container sub-maps-container-{{&key}} hidden">
                                     {{#subMaps}}
-                                        <p>{{&key}}</p>
+                                        <p>
+                                            {{&key}}
+                                            <button type="button" class="button button-sm button-secondary edit-elements-btn"
+                                                data-map-name="{{&key}}"
+                                                data-session-id="{{../../tilesetSessionId}}"
+                                                data-context="wizard">Edit Map Elements</button>
+                                        </p>
                                         <p>Downloads:</p>
                                         <p>
                                             - <a href="{{&mapJson}}" target="_blank">{{&mapJson}}</a><br/>
@@ -74,7 +86,8 @@
                                             data-tile-width="{{&tileWidth}}"
                                             data-tile-height="{{&tileHeight}}"
                                             data-image-key="{{&mapImage}}"
-                                            data-map-json="{{&mapJson}}">
+                                            data-map-json="{{&mapJson}}"
+                                            data-map-name="{{&key}}">
                                         </canvas>
                                     {{/subMaps}}
                                 </div>
@@ -96,3 +109,4 @@
         </div>
     </div>
 </div>
+{{&mapsElementsEditorScripts}}

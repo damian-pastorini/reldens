@@ -73,10 +73,6 @@
             margin: 0 0 var(--space-lg) 0;
             color: var(--color-grey);
         }
-
-        canvas {
-            max-width: 100%;
-        }
     }
 
     .modal-footer {

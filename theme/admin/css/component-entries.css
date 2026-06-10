@@ -59,6 +59,12 @@
     }
 
     .view-field {
+        .field-value.with-view-button {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
         .field-value img {
             max-width: 12.5rem;
         }
@@ -150,9 +156,55 @@
         cursor: pointer;
     }
 
+    .field-value {
+        .field-image-modal {
+            padding: 0;
+
+            p:first-child {
+                margin-top: 0;
+            }
+        }
+    }
+
     .sub-content {
         textarea {
             width: 100%;
         }
+    }
+
+    .rooms-association-container {
+        .rooms-association-toggle {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            cursor: pointer;
+        }
+
+        .rooms-association-collapse-icon {
+            width: var(--space-2xl);
+            height: var(--space-2xl);
+            margin-left: auto;
+            filter: brightness(0) invert(0.5);
+            transition: transform 0.15s;
+        }
+
+        &:has(.rooms-association-content.hidden) .rooms-association-collapse-icon {
+            transform: rotate(180deg);
+        }
+
+        .rooms-association-content {
+            padding-top: var(--space-md);
+        }
+    }
+
+    .map-unpublished-badge {
+        display: inline-block;
+        margin-left: var(--space-sm);
+        padding: var(--space-xs) var(--space-sm);
+        border-radius: var(--radius-sm);
+        background-color: var(--color-orange);
+        color: var(--color-orange-90);
+        font-size: var(--font-size-xs);
+        font-weight: var(--bold);
     }
 }

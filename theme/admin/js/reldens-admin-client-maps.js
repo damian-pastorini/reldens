@@ -251,6 +251,7 @@ class AdminClientMaps
         this.bindMapCanvas();
         this.bindMapsImportSticky();
         this.bindGoBackButton();
+        new AdminMapElementsEditorLauncher().bind();
     }
 }
 window.AdminClientMaps = AdminClientMaps;

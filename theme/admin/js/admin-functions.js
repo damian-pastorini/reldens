@@ -19,9 +19,9 @@ class AdminFunctions
         document.cookie = name+'=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
     }
 
-    escapeHTML(str)
+    escapeHTML(value)
     {
-        return str.replace(/&/g, '&amp;')
+        return value.replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;')
@@ -101,6 +101,7 @@ class AdminFunctions
         let cancelButton = dialog.querySelector('.dialog-cancel');
         let savedTitle = titleEl ? titleEl.textContent : '';
         let savedMessage = messageEl ? messageEl.textContent : '';
+        let savedMessageClass = messageEl ? messageEl.className : '';
         let savedConfirmText = confirmButton ? confirmButton.textContent : '';
         let savedConfirmClass = confirmButton ? confirmButton.className : '';
         let savedCancelText = cancelButton ? cancelButton.textContent : '';
@@ -116,6 +117,9 @@ class AdminFunctions
             }
             if(options.message && messageEl){
                 messageEl.textContent = options.message;
+            }
+            if(options.messageClass && messageEl){
+                messageEl.classList.add(options.messageClass);
             }
             if(options.confirmText && confirmButton){
                 confirmButton.textContent = options.confirmText;
@@ -141,6 +145,7 @@ class AdminFunctions
             }
             if(messageEl){
                 messageEl.textContent = savedMessage;
+                messageEl.className = savedMessageClass;
             }
             if(confirmButton){
                 confirmButton.textContent = savedConfirmText;

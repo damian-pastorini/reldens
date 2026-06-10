@@ -5,10 +5,10 @@ class TilesetElementNamer
         this.app = app;
     }
 
-    countElementsInTileset(ts)
+    countElementsInTileset(tileset)
     {
         let count = 0;
-        for(let element of ts.elements){
+        for(let element of tileset.elements){
             if(SharedUtils.ELEMENT_TYPE === element.type){
                 count++;
             }
@@ -16,44 +16,34 @@ class TilesetElementNamer
         return count;
     }
 
-    resolveConvertName(tilesetIndex, index, name)
+    countAllElements()
     {
-        if(!name.startsWith('cluster-')){
-            return this.resolveUniqueName(tilesetIndex, index, name);
+        let total = 0;
+        for(let tileset of this.app.state){
+            total += this.countElementsInTileset(tileset);
         }
-        let elementCount = 0;
-        for(let ts of this.app.state){
-            elementCount += this.countElementsInTileset(ts);
-        }
-        return this.resolveUniqueName(
-            tilesetIndex, index, 'element-'+SharedUtils.padNum(elementCount + 1)
+        return total;
+    }
+
+    resolveConvertName(tilesetIndex, index, name) // HOFF
+    {
+        return ElementNameSuffix.resolveUnique(
+            this.collectExistingNames(tilesetIndex, index),
+            name.startsWith('cluster-') ? 'element-'+SharedUtils.padNum(this.countAllElements() + 1) : name
         );
     }
 
-    resolveUniqueName(tilesetIndex, excludeIndex, name)
+    collectExistingNames(tilesetIndex, excludeIndex)
     {
+        let existingNames = [];
         let elements = this.app.state[tilesetIndex].elements;
-        let nameTaken = false;
-        let maxSuffix = 1;
-        let prefix = name+'-';
         for(let i = 0; i < elements.length; i++){
             if(i === excludeIndex){
                 continue;
             }
-            if(elements[i].name === name){
-                nameTaken = true;
-            }
-            if(elements[i].name.startsWith(prefix)){
-                let suffix = Number(elements[i].name.slice(prefix.length));
-                if(suffix > maxSuffix){
-                    maxSuffix = suffix;
-                }
-            }
+            existingNames.push(elements[i].name);
         }
-        if(!nameTaken){
-            return name;
-        }
-        return name+'-'+SharedUtils.padNum(maxSuffix + 1);
+        return existingNames;
     }
 }
 window.TilesetElementNamer = TilesetElementNamer;

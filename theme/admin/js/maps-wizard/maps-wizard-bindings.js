@@ -4,6 +4,7 @@ class MapsWizardBindings
     {
         this.pendingSampleDataOption = '';
         this.pendingParseError = '';
+        this.generateGuard = new window.MapsWizardGenerateGuard();
         this.bind();
     }
 
@@ -196,7 +197,7 @@ class MapsWizardBindings
         }
         let sampleData;
         try{
-            sampleData = JSON.parse(sampleJson);
+            sampleData = JSON.parse(sampleJson); // HOFF
         } catch(error){
             this.pendingSampleDataOption = '';
             this.pendingParseError = error.message;
@@ -269,6 +270,7 @@ class MapsWizardBindings
         if(wizardConfig.savedStrategies){
             utils.strategyStates = Object.assign({}, wizardConfig.savedStrategies);
         }
+        utils.currentStrategy = '';
         let strategyRadio = document.querySelector('[name="mapsWizardAction"][value="'+wizardConfig.strategy+'"]');
         if(strategyRadio){
             strategyRadio.click();
