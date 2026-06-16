@@ -143,7 +143,7 @@ CREATE TABLE IF NOT EXISTS `players_state` (
     UNIQUE INDEX `player_id` (`player_id`) USING BTREE,
     INDEX `FK_player_state_rooms` (`room_id`) USING BTREE,
     INDEX `FK_player_state_player_stats` (`player_id`) USING BTREE,
-    CONSTRAINT `FK_player_state_player_stats` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON UPDATE CASCADE ON DELETE NO ACTION,
+    CONSTRAINT `FK_player_state_player_stats` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON UPDATE CASCADE ON DELETE CASCADE,
     CONSTRAINT `FK_player_state_rooms` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON UPDATE CASCADE ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -157,7 +157,7 @@ CREATE TABLE IF NOT EXISTS `players_stats` (
     UNIQUE KEY `player_id_stat_id` (`player_id`,`stat_id`) USING BTREE,
     KEY `stat_id` (`stat_id`) USING BTREE,
     KEY `user_id` (`player_id`) USING BTREE,
-    CONSTRAINT `FK_player_current_stats_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT `FK_player_current_stats_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT `FK_players_current_stats_players_stats` FOREIGN KEY (`stat_id`) REFERENCES `stats` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -231,7 +231,7 @@ CREATE TABLE IF NOT EXISTS `ads_played` (
     KEY `ads_id` (`ads_id`),
     KEY `player_id` (`player_id`),
     CONSTRAINT `FK_ads_played_ads` FOREIGN KEY (`ads_id`) REFERENCES `ads` (`id`),
-    CONSTRAINT `FK_ads_played_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`)
+    CONSTRAINT `FK_ads_played_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `audio_categories` (
@@ -287,7 +287,7 @@ CREATE TABLE IF NOT EXISTS `audio_player_config` (
     UNIQUE KEY `player_id_category_id` (`player_id`,`category_id`),
     KEY `FK_audio_player_config_audio_categories` (`category_id`),
     CONSTRAINT `FK_audio_player_config_audio_categories` FOREIGN KEY (`category_id`) REFERENCES `audio_categories` (`id`) ON UPDATE CASCADE,
-    CONSTRAINT `FK_audio_player_config_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
+    CONSTRAINT `FK_audio_player_config_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `chat_message_types` (
@@ -302,7 +302,7 @@ CREATE TABLE IF NOT EXISTS `chat_message_types` (
 
 CREATE TABLE IF NOT EXISTS `chat` (
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    `player_id` INT UNSIGNED NOT NULL,
+    `player_id` INT UNSIGNED NULL DEFAULT NULL,
     `room_id` INT UNSIGNED DEFAULT NULL,
     `message` VARCHAR(140) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
     `private_player_id` INT UNSIGNED DEFAULT NULL,
@@ -313,8 +313,8 @@ CREATE TABLE IF NOT EXISTS `chat` (
     KEY `scene_id` (`room_id`),
     KEY `private_user_id` (`private_player_id`),
     KEY `FK_chat_chat_message_types` (`message_type`),
-    CONSTRAINT `FK__players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`),
-    CONSTRAINT `FK__players_2` FOREIGN KEY (`private_player_id`) REFERENCES `players` (`id`),
+    CONSTRAINT `FK__players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT `FK__players_2` FOREIGN KEY (`private_player_id`) REFERENCES `players` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
     CONSTRAINT `FK__scenes` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT `FK_chat_chat_message_types` FOREIGN KEY (`message_type`) REFERENCES `chat_message_types` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -371,7 +371,7 @@ CREATE TABLE IF NOT EXISTS `clan_members` (
     UNIQUE KEY `clan_id_player_id` (`clan_id`,`player_id`) USING BTREE,
     UNIQUE KEY `player_id` (`player_id`) USING BTREE,
     CONSTRAINT `FK_clan_members_clan` FOREIGN KEY (`clan_id`) REFERENCES `clan` (`id`),
-    CONSTRAINT `FK_clan_members_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`)
+    CONSTRAINT `FK_clan_members_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `config` (
@@ -439,7 +439,7 @@ CREATE TABLE IF NOT EXISTS `items_inventory` (
     INDEX `FK_items_inventory_items_item` (`item_id`) USING BTREE,
     INDEX `FK_items_inventory_players` (`owner_id`) USING BTREE,
     CONSTRAINT `FK_items_inventory_items_item` FOREIGN KEY (`item_id`) REFERENCES `items_item` (`id`) ON UPDATE CASCADE ON DELETE NO ACTION,
-    CONSTRAINT `FK_items_inventory_players` FOREIGN KEY (`owner_id`) REFERENCES `players` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
+    CONSTRAINT `FK_items_inventory_players` FOREIGN KEY (`owner_id`) REFERENCES `players` (`id`) ON UPDATE NO ACTION ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `items_item_modifiers` (
@@ -810,7 +810,7 @@ CREATE TABLE IF NOT EXISTS `skills_owners_class_path` (
     PRIMARY KEY (`id`) USING BTREE,
     INDEX `level_set_id` (`class_path_id`) USING BTREE,
     INDEX `FK_skills_owners_class_path_players` (`owner_id`) USING BTREE,
-    CONSTRAINT `FK_skills_owners_class_path_players` FOREIGN KEY (`owner_id`) REFERENCES `players` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION,
+    CONSTRAINT `FK_skills_owners_class_path_players` FOREIGN KEY (`owner_id`) REFERENCES `players` (`id`) ON UPDATE NO ACTION ON DELETE CASCADE,
     CONSTRAINT `FK_skills_owners_class_path_skills_class_path` FOREIGN KEY (`class_path_id`) REFERENCES `skills_class_path` (`id`) ON UPDATE CASCADE ON DELETE NO ACTION
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -1032,7 +1032,7 @@ CREATE TABLE IF NOT EXISTS `rewards_events_state` (
     KEY `rewards_events_id` (`rewards_events_id`) USING BTREE,
     KEY `user_id` (`player_id`) USING BTREE,
     CONSTRAINT `FK__rewards_events` FOREIGN KEY (`rewards_events_id`) REFERENCES `rewards_events` (`id`),
-    CONSTRAINT `FK_rewards_events_state_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`)
+    CONSTRAINT `FK_rewards_events_state_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `quests_progress` (

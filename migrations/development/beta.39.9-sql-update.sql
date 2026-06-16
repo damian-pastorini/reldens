@@ -102,6 +102,39 @@ ALTER TABLE `players_state` DROP FOREIGN KEY `FK_player_state_rooms`;
 ALTER TABLE `players_state` MODIFY `room_id` INT UNSIGNED NULL DEFAULT NULL;
 ALTER TABLE `players_state` ADD CONSTRAINT `FK_player_state_rooms` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON UPDATE CASCADE ON DELETE SET NULL;
 
+-- Cascade player deletes to player-owned runtime data (these FKs were blocking player deletion)
+ALTER TABLE `players_state` DROP FOREIGN KEY `FK_player_state_player_stats`;
+ALTER TABLE `players_state` ADD CONSTRAINT `FK_player_state_player_stats` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON UPDATE CASCADE ON DELETE CASCADE;
+
+ALTER TABLE `players_stats` DROP FOREIGN KEY `FK_player_current_stats_players`;
+ALTER TABLE `players_stats` ADD CONSTRAINT `FK_player_current_stats_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE `ads_played` DROP FOREIGN KEY `FK_ads_played_players`;
+ALTER TABLE `ads_played` ADD CONSTRAINT `FK_ads_played_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE `audio_player_config` DROP FOREIGN KEY `FK_audio_player_config_players`;
+ALTER TABLE `audio_player_config` ADD CONSTRAINT `FK_audio_player_config_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE `clan_members` DROP FOREIGN KEY `FK_clan_members_players`;
+ALTER TABLE `clan_members` ADD CONSTRAINT `FK_clan_members_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE `items_inventory` DROP FOREIGN KEY `FK_items_inventory_players`;
+ALTER TABLE `items_inventory` ADD CONSTRAINT `FK_items_inventory_players` FOREIGN KEY (`owner_id`) REFERENCES `players` (`id`) ON UPDATE NO ACTION ON DELETE CASCADE;
+
+ALTER TABLE `skills_owners_class_path` DROP FOREIGN KEY `FK_skills_owners_class_path_players`;
+ALTER TABLE `skills_owners_class_path` ADD CONSTRAINT `FK_skills_owners_class_path_players` FOREIGN KEY (`owner_id`) REFERENCES `players` (`id`) ON UPDATE NO ACTION ON DELETE CASCADE;
+
+ALTER TABLE `rewards_events_state` DROP FOREIGN KEY `FK_rewards_events_state_players`;
+ALTER TABLE `rewards_events_state` ADD CONSTRAINT `FK_rewards_events_state_players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- Keep chat history when a player is deleted: nullable author/recipient with SET NULL
+ALTER TABLE `chat` MODIFY `player_id` INT UNSIGNED NULL DEFAULT NULL;
+ALTER TABLE `chat` DROP FOREIGN KEY `FK__players`;
+ALTER TABLE `chat` ADD CONSTRAINT `FK__players` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+ALTER TABLE `chat` DROP FOREIGN KEY `FK__players_2`;
+ALTER TABLE `chat` ADD CONSTRAINT `FK__players_2` FOREIGN KEY (`private_player_id`) REFERENCES `players` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
 --
 
 SET FOREIGN_KEY_CHECKS = 1;
