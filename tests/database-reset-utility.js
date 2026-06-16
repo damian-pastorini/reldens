@@ -11,9 +11,15 @@ const { ObjectionJsDataServer } = require('@reldens/storage');
 class DatabaseResetUtility
 {
 
-    constructor(config)
+    constructor(config, seedFiles = false)
     {
         this.config = config;
+        this.productionPath = FileHandler.joinPaths(process.cwd(), 'migrations', 'production');
+        this.developmentPath = FileHandler.joinPaths(process.cwd(), 'migrations', 'development');
+        this.seedFiles = seedFiles || [
+            {path: this.productionPath, file: 'reldens-basic-config-v4.0.0.sql', label: 'Basic config'},
+            {path: this.developmentPath, file: 'reldens-test-sample-data-v4.0.0.sql', label: 'Test sample data'}
+        ];
     }
 
     async resetDatabase()
@@ -34,29 +40,22 @@ class DatabaseResetUtility
             Logger.log(100, '', 'Database connection failed');
             return false;
         }
-        let migrationsPath = FileHandler.joinPaths(__dirname, '..', 'migrations', 'production');
-        let testDataPath = FileHandler.joinPaths(__dirname, '..', 'migrations', 'development');
-        try {
-            await this.executeQueryFile(migrationsPath, dbDriver, 'reldens-basic-config-v4.0.0.sql');
-            Logger.log(100, '', 'Basic config executed');
-            await this.executeQueryFile(testDataPath, dbDriver, 'reldens-test-sample-data-v4.0.0.sql');
-            Logger.log(100, '', 'Test sample data executed');
-            Logger.log(100, '', 'Database reset completed successfully');
-            return true;
-        } catch(error){
-            Logger.log(100, '', 'Database reset failed: '+error.message);
-            return false;
+        for(let seed of this.seedFiles){
+            let queryContent = FileHandler.readFile(FileHandler.joinPaths(seed.path, seed.file), {encoding: 'utf8'});
+            if(!queryContent){
+                Logger.log(100, '', 'Database reset failed: cannot read '+seed.file);
+                return false;
+            }
+            try {
+                await dbDriver.rawQuery(queryContent.toString());
+            } catch(error){
+                Logger.log(100, '', 'Database reset failed: '+error.message);
+                return false;
+            }
+            Logger.log(100, '', seed.label+' executed');
         }
-    }
-
-    async executeQueryFile(migrationsPath, dbDriver, fileName)
-    {
-        await dbDriver.rawQuery(
-            FileHandler.readFile(
-                FileHandler.joinPaths(migrationsPath, fileName),
-                {encoding: 'utf8'}
-            ).toString()
-        );
+        Logger.log(100, '', 'Database reset completed successfully');
+        return true;
     }
 
 }

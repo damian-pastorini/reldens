@@ -22,7 +22,7 @@ class ServerTeardown
             Logger.info('[server-teardown] No game server to shut down.');
             return;
         }
-        await serverManager.gameServer.gracefullyShutdown();
+        await serverManager.gameServer.gracefullyShutdown(false);
         Logger.info('[server-teardown] Server shutdown complete.');
     }
 }
