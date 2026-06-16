@@ -1,11 +1,20 @@
 class AdminClientForms
 {
+    fetchDeleteRelationsWarning(element)
+    {
+        let container = element.closest('[data-delete-relations-warning]');
+        if(!container){
+            return '';
+        }
+        return container.dataset.deleteRelationsWarning;
+    }
+
     buildFormConfirmOptions(form)
     {
         let options = {};
         if(form.classList.contains('form-delete')){
             options.title = 'Confirm Delete';
-            options.message = 'Are you sure you want to delete?';
+            options.message = 'Are you sure you want to delete?'+this.fetchDeleteRelationsWarning(form);
             options.confirmText = 'Delete';
             options.confirmClass = 'button-danger';
         }
@@ -193,7 +202,7 @@ class AdminClientForms
                         this.buildDeleteSelectionForm(deleteSelectionForm);
                     }
                 },
-                { title: 'Confirm Delete', message: 'Are you sure you want to delete the selected items?', confirmText: 'Delete', confirmClass: 'button-danger' }
+                { title: 'Confirm Delete', message: 'Are you sure you want to delete the selected items?'+this.fetchDeleteRelationsWarning(listDeleteSelection), confirmText: 'Delete', confirmClass: 'button-danger' }
             );
         });
     }
