@@ -47,7 +47,8 @@ class ElementDuplicator
             return false;
         }
         let source = this.placingState.source;
-        let sourceSuffix = source.instanceId.slice(source.elementKey.length + 1);
+        let dashIndex = source.instanceId.lastIndexOf('-');
+        let sourceSuffix = -1 === dashIndex ? '' : source.instanceId.slice(dashIndex + 1);
         let newName = ElementNameSuffix.nextDuplicateName(
             this.placingState.existingIds,
             source.elementKey,

@@ -114,11 +114,34 @@ class AdminMapElementsEditorLauncher
             button.editorInstance = editor;
             button.dataset.openLabel = button.textContent;
             await editor.load();
-            if(editor.ui && editor.ui.container){
-                editor.ui.container.scrollIntoView({behavior: 'smooth', block: 'start'});
-            }
+            this.keepEditorInView(button, editor);
             button.textContent = 'Close Map Editor';
         };
+    }
+
+    keepEditorInView(button, editor)
+    {
+        if(editor.ui && editor.ui.canvasScrollContainer){
+            editor.ui.canvasScrollContainer.scrollTop = 0;
+            editor.ui.canvasScrollContainer.scrollLeft = 0;
+        }
+        let target = this.resolveScrollTarget(button, editor);
+        if(!target){
+            return;
+        }
+        let rect = target.getBoundingClientRect();
+        if(0 <= rect.top && rect.top < window.innerHeight){
+            return;
+        }
+        window.scrollTo({top: rect.top + window.scrollY, behavior: 'smooth'});
+    }
+
+    resolveScrollTarget(button, editor)
+    {
+        if('room' === button.dataset.context){
+            return document.querySelector('.edit-map-elements-host');
+        }
+        return editor.ui ? editor.ui.container : null;
     }
 
     closeEditor(button)
@@ -126,6 +149,19 @@ class AdminMapElementsEditorLauncher
         button.editorInstance.dispose();
         button.editorInstance = null;
         button.textContent = button.dataset.openLabel ? button.dataset.openLabel : 'Edit Map Elements';
+        this.removeRoomHost(button);
+    }
+
+    removeRoomHost(button)
+    {
+        if('room' !== button.dataset.context){
+            return;
+        }
+        let host = document.querySelector('.edit-map-elements-host');
+        if(!host){
+            return;
+        }
+        host.remove();
     }
 
     resolveCanvas(button, mapName)
@@ -193,7 +229,7 @@ class AdminMapElementsEditorLauncher
     {
         let badge = document.createElement('span');
         badge.className = 'map-unpublished-badge hidden';
-        badge.textContent = 'Unpublished - restart required to publish';
+        badge.textContent = 'Unpublished - server restart required to publish';
         entityButton.before(badge);
         entityButton.publishedBadge = badge;
         this.refreshPublishedBadge(entityButton).catch((error) => {
