@@ -24,8 +24,6 @@ class MapsElementsEditor
         this.renderScheduled = false;
         this.apiBasePath = '/reldens-admin/maps-elements-editor/api';
         this.generatedBasePath = '/reldens-admin/generated/';
-        this.runtimeBasePath = '/assets/maps/';
-        this.sourceBasePath = 'room' === this.context ? this.runtimeBasePath : this.generatedBasePath;
         this.jsonFetcher = new EditorJsonFetcher();
         this.mover = new ElementMover(this);
         this.duplicator = new ElementDuplicator(this);
@@ -42,8 +40,10 @@ class MapsElementsEditor
 
     async load()
     {
-        let mapJsonResponse = await fetch(this.sourceBasePath+this.mapName+'.json', {cache: 'no-store'});
-        this.mapJson = await mapJsonResponse.json();
+        this.mapJson = await this.jsonFetcher.fetch(this.generatedBasePath+this.mapName+'.json', {cache: 'no-store'});
+        if(!this.mapJson){
+            return false;
+        }
         this.mapElements = await this.loadElements(this.mapName, this.mapElementsFile);
         if(!this.mapElements){
             return false;
