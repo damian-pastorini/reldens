@@ -113,7 +113,7 @@
         "@reldens/skills": "^0.51.0",
         "@reldens/storage": "^0.102.0",
         "@reldens/tile-map-generator": "^0.46.0",
-        "@reldens/tileset-to-tilemap": "^0.15.0",
+        "@reldens/tileset-to-tilemap": "^0.16.0",
         "@reldens/utils": "^0.57.0",
         "@sendgrid/mail": "8.1.6",
         "buffer": "6.0.3",
