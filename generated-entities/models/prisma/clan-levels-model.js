@@ -19,13 +19,13 @@ class ClanLevelsModel
     {
         return 'clan_levels';
     }
-    
+
 
     static get relationTypes()
     {
         return {
-            clan: 'many',
-            clan_levels_modifiers: 'many'
+            clan: 'one',
+            clan_levels_modifiers: 'one'
         };
     }
 

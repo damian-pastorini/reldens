@@ -18,12 +18,12 @@ class TargetOptionsModel
     {
         return 'target_options';
     }
-    
+
 
     static get relationTypes()
     {
         return {
-            objects_skills: 'many'
+            objects_skills: 'one'
         };
     }
 

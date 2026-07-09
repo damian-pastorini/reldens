@@ -36,21 +36,21 @@ class SkillsSkillModel
     {
         return 'skills_skill';
     }
-    
+
 
     static get relationTypes()
     {
         return {
-            objects_skills: 'many',
-            skills_class_path_level_skills: 'many',
+            objects_skills: 'one',
+            skills_class_path_level_skills: 'one',
             skills_skill_type: 'one',
-            skills_skill_animations: 'many',
+            skills_skill_animations: 'one',
             skills_skill_attack: 'one',
             skills_skill_group_relation: 'one',
-            skills_skill_owner_conditions: 'many',
-            skills_skill_owner_effects: 'many',
+            skills_skill_owner_conditions: 'one',
+            skills_skill_owner_effects: 'one',
             skills_skill_physical_data: 'one',
-            skills_skill_target_effects: 'many'
+            skills_skill_target_effects: 'one'
         };
     }
 

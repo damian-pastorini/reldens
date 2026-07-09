@@ -25,19 +25,19 @@ class RoomsModel
     {
         return 'rooms';
     }
-    
+
 
     static get relationTypes()
     {
         return {
-            audio: 'many',
-            chat: 'many',
-            objects: 'many',
-            players_state: 'many',
-            rooms_change_points_rooms_change_points_room_idTorooms: 'many',
-            rooms_change_points_rooms_change_points_next_room_idTorooms: 'many',
-            rooms_return_points_rooms_return_points_from_room_idTorooms: 'many',
-            rooms_return_points_rooms_return_points_room_idTorooms: 'many'
+            audio: 'one',
+            chat: 'one',
+            objects: 'one',
+            players_state: 'one',
+            rooms_change_points_rooms_change_points_room_idTorooms: 'one',
+            rooms_change_points_rooms_change_points_next_room_idTorooms: 'one',
+            rooms_return_points_rooms_return_points_from_room_idTorooms: 'one',
+            rooms_return_points_rooms_return_points_room_idTorooms: 'one'
         };
     }
 

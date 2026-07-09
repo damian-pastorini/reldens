@@ -17,12 +17,12 @@ class ObjectsTypesModel
     {
         return 'objects_types';
     }
-    
+
 
     static get relationTypes()
     {
         return {
-            objects: 'many'
+            objects: 'one'
         };
     }
 

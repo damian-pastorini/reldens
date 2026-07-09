@@ -21,7 +21,7 @@ class SnippetsModel
     {
         return 'snippets';
     }
-    
+
 
     static get relationTypes()
     {

@@ -19,14 +19,14 @@ class ChatMessageTypesModel
     {
         return 'chat_message_types';
     }
-    
+
 
     static get relationTypes()
     {
         return {
-            chat: 'many',
+            chat: 'one',
             chat_message_types: 'one',
-            other_chat_message_types: 'many'
+            other_chat_message_types: 'one'
         };
     }
 

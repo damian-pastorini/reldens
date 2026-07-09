@@ -29,7 +29,7 @@ class SkillsSkillAttackModel
     {
         return 'skills_skill_attack';
     }
-    
+
 
     static get relationTypes()
     {

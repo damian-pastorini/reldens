@@ -25,14 +25,14 @@ class UsersModel
     {
         return 'users';
     }
-    
+
 
     static get relationTypes()
     {
         return {
-            players: 'many',
-            users_locale: 'many',
-            users_login: 'many'
+            players: 'one',
+            users_locale: 'one',
+            users_login: 'one'
         };
     }
 

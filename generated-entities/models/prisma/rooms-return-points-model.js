@@ -22,7 +22,7 @@ class RoomsReturnPointsModel
     {
         return 'rooms_return_points';
     }
-    
+
 
     static get relationTypes()
     {

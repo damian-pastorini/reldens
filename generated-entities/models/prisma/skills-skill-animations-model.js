@@ -20,7 +20,7 @@ class SkillsSkillAnimationsModel
     {
         return 'skills_skill_animations';
     }
-    
+
 
     static get relationTypes()
     {

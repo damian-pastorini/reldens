@@ -20,25 +20,25 @@ class PlayersModel
     {
         return 'players';
     }
-    
+
 
     static get relationTypes()
     {
         return {
-            ads_played: 'many',
-            audio_player_config: 'many',
-            chat_chat_player_idToplayers: 'many',
-            chat_chat_private_player_idToplayers: 'many',
+            ads_played: 'one',
+            audio_player_config: 'one',
+            chat_chat_player_idToplayers: 'one',
+            chat_chat_private_player_idToplayers: 'one',
             clan: 'one',
             clan_members: 'one',
-            items_inventory: 'many',
+            items_inventory: 'one',
             users: 'one',
             players_state: 'one',
-            players_stats: 'many',
-            rewards_events_state: 'many',
-            scores: 'many',
-            scores_detail: 'many',
-            skills_owners_class_path: 'many'
+            players_stats: 'one',
+            rewards_events_state: 'one',
+            scores: 'one',
+            scores_detail: 'one',
+            skills_owners_class_path: 'one'
         };
     }
 

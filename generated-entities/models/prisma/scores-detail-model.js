@@ -21,7 +21,7 @@ class ScoresDetailModel
     {
         return 'scores_detail';
     }
-    
+
 
     static get relationTypes()
     {

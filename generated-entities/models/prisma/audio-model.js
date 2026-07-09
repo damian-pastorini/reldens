@@ -24,14 +24,14 @@ class AudioModel
     {
         return 'audio';
     }
-    
+
 
     static get relationTypes()
     {
         return {
             audio_categories: 'one',
             rooms: 'one',
-            audio_markers: 'many'
+            audio_markers: 'one'
         };
     }
 

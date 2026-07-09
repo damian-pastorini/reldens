@@ -23,12 +23,12 @@ class ItemsGroupModel
     {
         return 'items_group';
     }
-    
+
 
     static get relationTypes()
     {
         return {
-            items_item: 'many'
+            items_item: 'one'
         };
     }
 

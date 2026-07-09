@@ -22,13 +22,13 @@ class AudioCategoriesModel
     {
         return 'audio_categories';
     }
-    
+
 
     static get relationTypes()
     {
         return {
-            audio: 'many',
-            audio_player_config: 'many'
+            audio: 'one',
+            audio_player_config: 'one'
         };
     }
 

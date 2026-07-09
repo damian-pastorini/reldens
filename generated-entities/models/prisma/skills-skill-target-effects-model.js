@@ -25,14 +25,14 @@ class SkillsSkillTargetEffectsModel
     {
         return 'skills_skill_target_effects';
     }
-    
+
 
     static get relationTypes()
     {
         return {
             skills_skill: 'one',
             operation_types: 'one',
-            skills_skill_target_effects_conditions: 'many'
+            skills_skill_target_effects_conditions: 'one'
         };
     }
 

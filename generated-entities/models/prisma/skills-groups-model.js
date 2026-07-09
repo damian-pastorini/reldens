@@ -20,12 +20,12 @@ class SkillsGroupsModel
     {
         return 'skills_groups';
     }
-    
+
 
     static get relationTypes()
     {
         return {
-            skills_skill_group_relation: 'many'
+            skills_skill_group_relation: 'one'
         };
     }
 

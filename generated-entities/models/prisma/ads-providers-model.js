@@ -18,12 +18,12 @@ class AdsProvidersModel
     {
         return 'ads_providers';
     }
-    
+
 
     static get relationTypes()
     {
         return {
-            ads: 'many'
+            ads: 'one'
         };
     }
 

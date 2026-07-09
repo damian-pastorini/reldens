@@ -22,7 +22,7 @@ class RespawnModel
     {
         return 'respawn';
     }
-    
+
 
     static get relationTypes()
     {

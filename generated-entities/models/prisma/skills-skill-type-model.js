@@ -17,12 +17,12 @@ class SkillsSkillTypeModel
     {
         return 'skills_skill_type';
     }
-    
+
 
     static get relationTypes()
     {
         return {
-            skills_skill: 'many'
+            skills_skill: 'one'
         };
     }
 

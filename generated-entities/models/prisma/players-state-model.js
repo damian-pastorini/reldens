@@ -21,7 +21,7 @@ class PlayersStateModel
     {
         return 'players_state';
     }
-    
+
 
     static get relationTypes()
     {

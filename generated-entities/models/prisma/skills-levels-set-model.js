@@ -22,13 +22,13 @@ class SkillsLevelsSetModel
     {
         return 'skills_levels_set';
     }
-    
+
 
     static get relationTypes()
     {
         return {
-            skills_class_path: 'many',
-            skills_levels: 'many'
+            skills_class_path: 'one',
+            skills_levels: 'one'
         };
     }
 

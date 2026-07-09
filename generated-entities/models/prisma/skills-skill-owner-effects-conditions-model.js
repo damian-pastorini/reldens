@@ -21,7 +21,7 @@ class SkillsSkillOwnerEffectsConditionsModel
     {
         return 'skills_skill_owner_effects_conditions';
     }
-    
+
 
     static get relationTypes()
     {

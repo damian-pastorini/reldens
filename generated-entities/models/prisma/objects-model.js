@@ -28,22 +28,22 @@ class ObjectsModel
     {
         return 'objects';
     }
-    
+
 
     static get relationTypes()
     {
         return {
             objects_types: 'one',
             rooms: 'one',
-            objects_animations: 'many',
-            objects_assets: 'many',
-            objects_items_inventory: 'many',
-            objects_items_requirements: 'many',
-            objects_items_rewards: 'many',
-            objects_skills: 'many',
-            objects_stats: 'many',
-            respawn: 'many',
-            rewards: 'many'
+            objects_animations: 'one',
+            objects_assets: 'one',
+            objects_items_inventory: 'one',
+            objects_items_requirements: 'one',
+            objects_items_rewards: 'one',
+            objects_skills: 'one',
+            objects_stats: 'one',
+            respawn: 'one',
+            rewards: 'one'
         };
     }
 

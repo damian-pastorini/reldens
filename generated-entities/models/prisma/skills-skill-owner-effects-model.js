@@ -25,14 +25,14 @@ class SkillsSkillOwnerEffectsModel
     {
         return 'skills_skill_owner_effects';
     }
-    
+
 
     static get relationTypes()
     {
         return {
             operation_types: 'one',
             skills_skill: 'one',
-            skills_skill_owner_effects_conditions: 'many'
+            skills_skill_owner_effects_conditions: 'one'
         };
     }
 

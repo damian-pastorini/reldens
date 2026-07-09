@@ -17,12 +17,12 @@ class ItemsTypesModel
     {
         return 'items_types';
     }
-    
+
 
     static get relationTypes()
     {
         return {
-            items_item: 'many'
+            items_item: 'one'
         };
     }
 

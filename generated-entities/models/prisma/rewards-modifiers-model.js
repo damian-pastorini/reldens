@@ -24,12 +24,12 @@ class RewardsModifiersModel
     {
         return 'rewards_modifiers';
     }
-    
+
 
     static get relationTypes()
     {
         return {
-            rewards: 'many',
+            rewards: 'one',
             operation_types: 'one'
         };
     }

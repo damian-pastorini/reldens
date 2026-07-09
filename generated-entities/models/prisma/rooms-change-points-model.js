@@ -19,7 +19,7 @@ class RoomsChangePointsModel
     {
         return 'rooms_change_points';
     }
-    
+
 
     static get relationTypes()
     {

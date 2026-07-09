@@ -19,7 +19,7 @@ class AdsEventVideoModel
     {
         return 'ads_event_video';
     }
-    
+
 
     static get relationTypes()
     {

@@ -21,7 +21,7 @@ class ObjectsItemsRequirementsModel
     {
         return 'objects_items_requirements';
     }
-    
+
 
     static get relationTypes()
     {

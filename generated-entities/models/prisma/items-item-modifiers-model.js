@@ -22,7 +22,7 @@ class ItemsItemModifiersModel
     {
         return 'items_item_modifiers';
     }
-    
+
 
     static get relationTypes()
     {

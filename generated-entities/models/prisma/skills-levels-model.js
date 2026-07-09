@@ -20,16 +20,16 @@ class SkillsLevelsModel
     {
         return 'skills_levels';
     }
-    
+
 
     static get relationTypes()
     {
         return {
-            skills_class_level_up_animations: 'many',
-            skills_class_path_level_labels: 'many',
-            skills_class_path_level_skills: 'many',
+            skills_class_level_up_animations: 'one',
+            skills_class_path_level_labels: 'one',
+            skills_class_path_level_skills: 'one',
             skills_levels_set: 'one',
-            skills_levels_modifiers: 'many'
+            skills_levels_modifiers: 'one'
         };
     }
 

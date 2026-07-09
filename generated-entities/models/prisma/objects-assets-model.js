@@ -21,7 +21,12 @@ class ObjectsAssetsModel
     {
         return 'objects_assets';
     }
-    
+
+    static get idColumn()
+    {
+        return 'object_asset_id';
+    }
+
 
     static get relationTypes()
     {

@@ -25,12 +25,12 @@ class RewardsEventsModel
     {
         return 'rewards_events';
     }
-    
+
 
     static get relationTypes()
     {
         return {
-            rewards_events_state: 'many'
+            rewards_events_state: 'one'
         };
     }
 

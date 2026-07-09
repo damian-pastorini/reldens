@@ -19,7 +19,7 @@ class AudioPlayerConfigModel
     {
         return 'audio_player_config';
     }
-    
+
 
     static get relationTypes()
     {

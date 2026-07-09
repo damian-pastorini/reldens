@@ -22,14 +22,14 @@ class ClanModel
     {
         return 'clan';
     }
-    
+
 
     static get relationTypes()
     {
         return {
             clan_levels: 'one',
             players: 'one',
-            clan_members: 'many'
+            clan_members: 'one'
         };
     }
 
