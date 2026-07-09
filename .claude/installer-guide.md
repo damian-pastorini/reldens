@@ -103,8 +103,8 @@ Clients marked with **(manual)** require manual database setup:
 4. **Entity Generation** (Prisma driver only: runs in forked subprocess)
    - Status: "Generating entities from database schema..."
    - Generates `prisma/schema.prisma` (no `url` in datasource block — Prisma 7+ requirement)
-   - Calls `setDatabaseEnvironmentVariables()` to build `DATABASE_URL` from installer config
-   - Writes `prisma.config.js` at project root: `{ datasource: { url: process.env.DATABASE_URL } }`
+   - Calls `setDatabaseEnvironmentVariables()` to build `RELDENS_DB_URL` from installer config
+   - Writes `prisma.config.js` at project root: `process.loadEnvFile('.env')` + `{ datasource: { url: process.env.RELDENS_DB_URL } }`
    - Runs `npx prisma db pull` to introspect the database (reads URL from `prisma.config.js`)
    - Runs `npx prisma generate` to produce the typed Prisma client
 
