@@ -22,7 +22,7 @@ class ItemsTypesModel
     static get relationTypes()
     {
         return {
-            items_item: 'one'
+            items_item: 'many'
         };
     }
 

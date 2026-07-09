@@ -32,7 +32,7 @@ class SkillsSkillOwnerEffectsModel
         return {
             operation_types: 'one',
             skills_skill: 'one',
-            skills_skill_owner_effects_conditions: 'one'
+            skills_skill_owner_effects_conditions: 'many'
         };
     }
 

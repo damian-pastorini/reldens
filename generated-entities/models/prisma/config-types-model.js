@@ -22,7 +22,7 @@ class ConfigTypesModel
     static get relationTypes()
     {
         return {
-            config: 'one'
+            config: 'many'
         };
     }
 

@@ -30,9 +30,9 @@ class UsersModel
     static get relationTypes()
     {
         return {
-            players: 'one',
-            users_locale: 'one',
-            users_login: 'one'
+            players: 'many',
+            users_locale: 'many',
+            users_login: 'many'
         };
     }
 

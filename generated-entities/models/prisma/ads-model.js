@@ -39,7 +39,7 @@ class AdsModel
             ads_types: 'one',
             ads_banner: 'one',
             ads_event_video: 'one',
-            ads_played: 'one'
+            ads_played: 'many'
         };
     }
 

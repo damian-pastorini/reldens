@@ -22,7 +22,7 @@ class SkillsSkillTypeModel
     static get relationTypes()
     {
         return {
-            skills_skill: 'one'
+            skills_skill: 'many'
         };
     }
 

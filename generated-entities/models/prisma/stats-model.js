@@ -28,8 +28,8 @@ class StatsModel
     static get relationTypes()
     {
         return {
-            objects_stats: 'one',
-            players_stats: 'one'
+            objects_stats: 'many',
+            players_stats: 'many'
         };
     }
 

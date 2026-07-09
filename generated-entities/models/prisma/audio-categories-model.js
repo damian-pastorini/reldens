@@ -27,8 +27,8 @@ class AudioCategoriesModel
     static get relationTypes()
     {
         return {
-            audio: 'one',
-            audio_player_config: 'one'
+            audio: 'many',
+            audio_player_config: 'many'
         };
     }
 

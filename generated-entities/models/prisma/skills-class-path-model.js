@@ -27,11 +27,11 @@ class SkillsClassPathModel
     static get relationTypes()
     {
         return {
-            skills_class_level_up_animations: 'one',
+            skills_class_level_up_animations: 'many',
             skills_levels_set: 'one',
-            skills_class_path_level_labels: 'one',
-            skills_class_path_level_skills: 'one',
-            skills_owners_class_path: 'one'
+            skills_class_path_level_labels: 'many',
+            skills_class_path_level_skills: 'many',
+            skills_owners_class_path: 'many'
         };
     }
 

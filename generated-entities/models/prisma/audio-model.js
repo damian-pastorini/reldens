@@ -31,7 +31,7 @@ class AudioModel
         return {
             audio_categories: 'one',
             rooms: 'one',
-            audio_markers: 'one'
+            audio_markers: 'many'
         };
     }
 

@@ -25,8 +25,8 @@ class LocaleModel
     static get relationTypes()
     {
         return {
-            snippets: 'one',
-            users_locale: 'one'
+            snippets: 'many',
+            users_locale: 'many'
         };
     }
 

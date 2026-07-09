@@ -22,7 +22,7 @@ class AdsTypesModel
     static get relationTypes()
     {
         return {
-            ads: 'one'
+            ads: 'many'
         };
     }
 

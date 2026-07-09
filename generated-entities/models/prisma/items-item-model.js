@@ -34,16 +34,16 @@ class ItemsItemModel
     {
         return {
             drops_animations: 'one',
-            items_inventory: 'one',
+            items_inventory: 'many',
             items_group: 'one',
             items_types: 'one',
-            items_item_modifiers: 'one',
-            objects_items_inventory: 'one',
-            objects_items_requirements_objects_items_requirements_item_keyToitems_item: 'one',
-            objects_items_requirements_objects_items_requirements_required_item_keyToitems_item: 'one',
-            objects_items_rewards_objects_items_rewards_item_keyToitems_item: 'one',
-            objects_items_rewards_objects_items_rewards_reward_item_keyToitems_item: 'one',
-            rewards: 'one'
+            items_item_modifiers: 'many',
+            objects_items_inventory: 'many',
+            objects_items_requirements_objects_items_requirements_item_keyToitems_item: 'many',
+            objects_items_requirements_objects_items_requirements_required_item_keyToitems_item: 'many',
+            objects_items_rewards_objects_items_rewards_item_keyToitems_item: 'many',
+            objects_items_rewards_objects_items_rewards_reward_item_keyToitems_item: 'many',
+            rewards: 'many'
         };
     }
 

@@ -22,7 +22,7 @@ class ObjectsTypesModel
     static get relationTypes()
     {
         return {
-            objects: 'one'
+            objects: 'many'
         };
     }
 

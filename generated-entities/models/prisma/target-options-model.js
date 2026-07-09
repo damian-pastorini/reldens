@@ -23,7 +23,7 @@ class TargetOptionsModel
     static get relationTypes()
     {
         return {
-            objects_skills: 'one'
+            objects_skills: 'many'
         };
     }
 

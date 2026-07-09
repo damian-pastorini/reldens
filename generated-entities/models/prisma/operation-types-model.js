@@ -23,12 +23,12 @@ class OperationTypesModel
     static get relationTypes()
     {
         return {
-            clan_levels_modifiers: 'one',
-            items_item_modifiers: 'one',
-            rewards_modifiers: 'one',
-            skills_levels_modifiers: 'one',
-            skills_skill_owner_effects: 'one',
-            skills_skill_target_effects: 'one'
+            clan_levels_modifiers: 'many',
+            items_item_modifiers: 'many',
+            rewards_modifiers: 'many',
+            skills_levels_modifiers: 'many',
+            skills_skill_owner_effects: 'many',
+            skills_skill_target_effects: 'many'
         };
     }
 

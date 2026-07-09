@@ -24,9 +24,9 @@ class ChatMessageTypesModel
     static get relationTypes()
     {
         return {
-            chat: 'one',
+            chat: 'many',
             chat_message_types: 'one',
-            other_chat_message_types: 'one'
+            other_chat_message_types: 'many'
         };
     }
 

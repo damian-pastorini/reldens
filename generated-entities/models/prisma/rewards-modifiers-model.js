@@ -29,7 +29,7 @@ class RewardsModifiersModel
     static get relationTypes()
     {
         return {
-            rewards: 'one',
+            rewards: 'many',
             operation_types: 'one'
         };
     }

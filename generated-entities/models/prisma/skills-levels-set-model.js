@@ -27,8 +27,8 @@ class SkillsLevelsSetModel
     static get relationTypes()
     {
         return {
-            skills_class_path: 'one',
-            skills_levels: 'one'
+            skills_class_path: 'many',
+            skills_levels: 'many'
         };
     }
 

@@ -32,7 +32,7 @@ class SkillsSkillTargetEffectsModel
         return {
             skills_skill: 'one',
             operation_types: 'one',
-            skills_skill_target_effects_conditions: 'one'
+            skills_skill_target_effects_conditions: 'many'
         };
     }
 

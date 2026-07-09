@@ -29,7 +29,7 @@ class ClanModel
         return {
             clan_levels: 'one',
             players: 'one',
-            clan_members: 'one'
+            clan_members: 'many'
         };
     }
 
