@@ -40,6 +40,8 @@ class AdminClient
             errorMissingRoomY: 'Missing return point Y.',
             errorSaveChangePoint: 'Error saving change point.',
             errorSaveReturnPoint: 'Error saving return point.',
+            errorRoomDeleteHasPlayersNoDefault: 'This room has players in it and no default room is set. Set another room as default (Extra options > Save as default), then delete.',
+            errorDeletePrevented: 'This record could not be deleted because of related data.',
             themeManagerMissingTheme: 'Please select a theme.',
             themeManagerMissingCommand: 'Please select a command.',
             themeManagerExecutionError: 'Theme command execution failed.',
