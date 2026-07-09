@@ -172,15 +172,15 @@
         }
     }
 
-    .rooms-association-container {
-        .rooms-association-toggle {
+    .entry-collapsible {
+        .entry-collapsible-toggle {
             display: flex;
             align-items: center;
             gap: var(--space-sm);
             cursor: pointer;
         }
 
-        .rooms-association-collapse-icon {
+        .entry-collapsible-icon {
             width: var(--space-2xl);
             height: var(--space-2xl);
             margin-left: auto;
@@ -188,11 +188,11 @@
             transition: transform 0.15s;
         }
 
-        &:has(.rooms-association-content.hidden) .rooms-association-collapse-icon {
+        &:has(.entry-collapsible-content.hidden) .entry-collapsible-icon {
             transform: rotate(180deg);
         }
 
-        .rooms-association-content {
+        .entry-collapsible-content {
             padding-top: var(--space-md);
         }
     }
