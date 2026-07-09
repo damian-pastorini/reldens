@@ -100,5 +100,50 @@
         </form>
         </div>
     </div>
+    <div class="room-starting-point-wrapper">
+        <h3 class="clickable room-starting-point-toggle" data-expand-collapse=".room-starting-point-content">
+            <span>Room starting point</span>
+            <img class="room-starting-point-collapse-icon" src="/assets/admin/circle-chevron-up-solid-full.svg" alt="Toggle room starting point">
+        </h3>
+        <div class="room-starting-point-content hidden">
+        <p>Notes:</p>
+        <p>
+            - The room starting point is the default return point for this room: where the player is placed when entering the room without a specific origin (for example the game starting room).<br/>
+            - Click a tile on the map below to set the starting position.<br/>
+        </p>
+        <form name="createDefaultReturnPoint" action="#" method="post">
+            <input type="hidden" name="createDefaultReturnPoint" value="1"/>
+            <div class="edit-field">
+                <label class="field-name" for="roomStartingPointDirection">The direction in which the player will be displayed</label>
+                <span class="field-value">
+                    <select id="roomStartingPointDirection" name="roomStartingPointDirection" required>
+                        <option value="down">Down</option>
+                        <option value="up">Up</option>
+                        <option value="left">Left</option>
+                        <option value="right">Right</option>
+                    </select>
+                </span>
+            </div>
+            <div class="edit-field">
+                <label class="field-name" for="roomStartingPointX">Starting point X</label>
+                <span class="field-value">
+                    <input type="number" id="roomStartingPointX" name="roomStartingPointX" required/>
+                </span>
+            </div>
+            <div class="edit-field">
+                <label class="field-name" for="roomStartingPointY">Starting point Y</label>
+                <span class="field-value">
+                    <input type="number" id="roomStartingPointY" name="roomStartingPointY" required/>
+                </span>
+            </div>
+            <div class="association-maps-container room-starting-point-container" data-map-loader="{{&id}}"></div>
+            <div class="actions-container">
+                <span>
+                    <button class="button button-primary" type="submit">Set starting point</button>
+                </span>
+            </div>
+        </form>
+        </div>
+    </div>
 </div>
 {{&mapsElementsEditorScripts}}

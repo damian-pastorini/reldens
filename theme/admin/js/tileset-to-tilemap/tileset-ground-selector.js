@@ -17,12 +17,12 @@ class TilesetGroundSelector
     tilesetHasSelectedItems(tileset)
     {
         for(let element of (tileset.elements || [])){
-            if(element.bulkSelected){
+            if(element.generateSelected){
                 return true;
             }
         }
         for(let spot of (tileset.spots || [])){
-            if(spot.bulkSelected){
+            if(spot.generateSelected){
                 return true;
             }
         }
@@ -35,7 +35,7 @@ class TilesetGroundSelector
         if(!tileOptions){
             return false;
         }
-        if(null !== tileOptions.groundTile && undefined !== tileOptions.groundTile){
+        if(null !== tileOptions.groundTile && 'undefined' !== typeof tileOptions.groundTile){
             return true;
         }
         if(tileOptions.randomGroundTiles && tileOptions.randomGroundTiles.length){

@@ -81,57 +81,19 @@ class TilesetSpotPanelEvents
         let cellClear = target.closest('.tile-position-cell-clear');
         if(cellClear){
             event.stopPropagation();
-            this.handleCellClearClick(tilesetIndex, cellClear, spotName);
+            this.binder.clearPositionCell(tilesetIndex, cellClear, spotName);
             return true;
         }
-        let groupClear = target.closest('.tile-options-group-clear-all');
+        let groupClear = target.closest('.tile-options-group-clear-all, .tile-option-clear');
         if(groupClear){
             event.stopPropagation();
             let optionKey = groupClear.dataset.option;
             if(optionKey){
-                this.dispatchClearGroup(tilesetIndex, optionKey, spotName);
-            }
-            return true;
-        }
-        let optionClear = target.closest('.tile-option-clear');
-        if(optionClear){
-            event.stopPropagation();
-            let optionKey = optionClear.dataset.option;
-            if(optionKey){
-                this.binder.clearOption(tilesetIndex, optionKey, null, spotName);
+                this.binder.dispatchGroupClear(tilesetIndex, optionKey, spotName);
             }
             return true;
         }
         return false;
-    }
-
-    handleCellClearClick(tilesetIndex, cellClearBtn, spotName)
-    {
-        let cell = cellClearBtn.closest('.tile-position-cell');
-        let grid = cellClearBtn.closest('.tile-position-grid');
-        if(!cell || !grid){
-            return;
-        }
-        let optKey = cell.dataset.option ? cell.dataset.option : grid.dataset.option;
-        this.binder.clearOption(tilesetIndex, optKey, cell.dataset.pos, spotName);
-    }
-
-    dispatchClearGroup(tilesetIndex, optionKey, spotName)
-    {
-        if('ground' === optionKey){
-            this.binder.clearGroundGroup(tilesetIndex, spotName);
-            return;
-        }
-        if('pathTilesGroup' === optionKey){
-            this.binder.clearPathTilesGroup(tilesetIndex);
-            return;
-        }
-        this.binder.clearOption(tilesetIndex, optionKey, null, spotName);
-    }
-
-    isSameActiveState(tilesetIndex, optionKey, spotName)
-    {
-        return this.binder.isSameActiveState(tilesetIndex, optionKey, spotName);
     }
 
     handleOptionBtnClick(tilesetIndex, optionBtn, spotName)
@@ -141,20 +103,10 @@ class TilesetSpotPanelEvents
             return;
         }
         let isMulti = 'true' === optionBtn.dataset.multi;
-        let b = this.binder;
-        let isSameState = this.isSameActiveState(tilesetIndex, optionKey, spotName)
-            && null === b.activePositionKey;
-        b.deactivate();
-        if(isSameState){
+        if(!this.binder.toggleActivation(tilesetIndex, optionKey, null, isMulti, spotName)){
             return;
         }
-        b.activateOption(tilesetIndex, optionKey, isMulti, spotName ? spotName : null);
-        optionBtn.classList.add('active');
-        let rowEl = b.getTilesetRowEl(tilesetIndex);
-        if(rowEl){
-            b.apply.updateBanner(tilesetIndex, rowEl);
-        }
-        b.app.renderer.renderCanvas(tilesetIndex);
+        this.binder.showActiveOptionAndRender(tilesetIndex, optionBtn);
     }
 
     handlePositionCellClick(tilesetIndex, cell, spotName)
@@ -164,16 +116,7 @@ class TilesetSpotPanelEvents
             return;
         }
         let optionKey = cell.dataset.option ? cell.dataset.option : grid.dataset.option;
-        let posKey = cell.dataset.pos;
-        let b = this.binder;
-        let isSameState = this.isSameActiveState(tilesetIndex, optionKey, spotName)
-            && b.activePositionKey === posKey;
-        b.deactivate();
-        if(isSameState){
-            return;
-        }
-        b.activateOption(tilesetIndex, optionKey, false, spotName ? spotName : null);
-        b.activatePosition(posKey);
+        this.binder.toggleActivation(tilesetIndex, optionKey, cell.dataset.pos, false, spotName);
     }
 
 }

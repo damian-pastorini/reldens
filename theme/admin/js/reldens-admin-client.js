@@ -126,6 +126,29 @@ class AdminClient
         let timerId = setInterval(() => this.tickShutdownTimer(shuttingDownTimeElement, timerId), 1000);
     }
 
+    bindDuplicateButton()
+    {
+        let duplicateButton = document.querySelector('.button-duplicate');
+        if(!duplicateButton){
+            return;
+        }
+        duplicateButton.addEventListener('click', () => {
+            let editForm = document.querySelector('#edit-form');
+            if(!editForm){
+                return;
+            }
+            let idValueInput = editForm.querySelector('.entity-id-value');
+            if(idValueInput){
+                idValueInput.value = '';
+            }
+            let titleElement = document.querySelector('.entity-edit h2');
+            if(titleElement){
+                titleElement.textContent = 'Duplicate';
+            }
+            duplicateButton.classList.add('hidden');
+        });
+    }
+
     bind()
     {
         this.location = window.location;
@@ -141,6 +164,7 @@ class AdminClient
         new AdminClientTheme(forms).bind();
         this.bindNotifications();
         this.bindShutdownTimer();
+        this.bindDuplicateButton();
     }
 }
 new AdminClient();

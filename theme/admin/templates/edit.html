@@ -4,6 +4,7 @@
         <button class="button button-primary button-submit" type="submit" form="edit-form" name="saveAction" value="save">Save</button>
         <button class="button button-primary button-submit" type="submit" form="edit-form" name="saveAction" value="saveAndContinue">Save and continue...</button>
         <button class="button button-primary button-submit" type="submit" form="edit-form" name="saveAction" value="saveAndGoBack">Save and go back</button>
+        {{#idValue}}<button class="button button-secondary button-duplicate" type="button">Duplicate</button>{{/idValue}}
         <a class="button button-secondary button-back" href="{{&entityViewRoute}}">Cancel</a>
     </div>
     {{#extraContent}}
@@ -12,7 +13,7 @@
     </div>
     {{/extraContent}}
     <form name="edit-form" id="edit-form" class="sub-content" action="{{&entitySaveRoute}}" method="post"{{&multipartFormData}}>
-        <input type="hidden" name="{{&idProperty}}" value="{{&idValue}}"/>
+        <input type="hidden" class="entity-id-value" name="{{&idProperty}}" value="{{&idValue}}"/>
         <div class="edit-field">
             <span class="field-name">{{&idPropertyLabel}}</span>
             <span class="field-value">

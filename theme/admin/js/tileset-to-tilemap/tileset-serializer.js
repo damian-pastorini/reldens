@@ -17,43 +17,30 @@ class TilesetSerializer
             freeSpaceAround: element.freeSpaceAround,
             allowPathsInFreeSpace: element.allowPathsInFreeSpace,
             bulkSelected: element.bulkSelected || false,
+            generateSelected: element.generateSelected || false,
             mapCentered: element.mapCentered || 0,
             layers: element.layers
         };
     }
 
-    resolveGeneratorTypeFromRow(row)
-    {
-        return row?.querySelector('.tileset-generator-type')?.value || SharedUtils.DEFAULT_GENERATOR_TYPE;
-    }
-
     resolveMapFieldFromRow(row, selector, fallback)
     {
-        return row ? (row.querySelector(selector).value || fallback) : fallback;
+        if(!row){
+            return fallback;
+        }
+        return row.querySelector(selector).value || fallback;
     }
 
-    collectSelectedElements(tileset, selectedOnly)
+    collectSelected(items, selectedOnly, serialize)
     {
-        let elements = [];
-        for(let element of tileset.elements){
-            if(selectedOnly && !element.bulkSelected){
+        let result = [];
+        for(let item of (items || [])){
+            if(selectedOnly && !item.generateSelected){
                 continue;
             }
-            elements.push(this.serializeElement(element));
+            result.push(serialize ? serialize(item) : item);
         }
-        return elements;
-    }
-
-    collectSelectedSpots(tileset, selectedOnly)
-    {
-        let spots = [];
-        for(let spot of (tileset.spots || [])){
-            if(selectedOnly && !spot.bulkSelected){
-                continue;
-            }
-            spots.push(spot);
-        }
-        return spots;
+        return result;
     }
 
     serializeTileset(tileset, selectedOnly, tilesetIndex, row)
@@ -65,12 +52,14 @@ class TilesetSerializer
         serialized.resizeOption = tileset.resizeOption || 0;
         serialized.mapName = this.resolveMapFieldFromRow(row, '.tileset-map-name', 'tileset-elements');
         serialized.mapTitle = this.resolveMapFieldFromRow(row, '.tileset-map-title', 'Tileset Elements');
-        serialized.generatorType = this.resolveGeneratorTypeFromRow(row);
+        let generatorTypeValue = row?.querySelector('.tileset-generator-type')?.value;
+        serialized.generatorType = generatorTypeValue || SharedUtils.DEFAULT_GENERATOR_TYPE;
         serialized.associationsProperties = row ? this.app.strategyEditor.readAssociationsProperties(row) : null;
         serialized.tileOptions = tileset.tileOptions || null;
-        serialized.spots = this.collectSelectedSpots(tileset, selectedOnly);
+        serialized.spots = this.collectSelected(tileset.spots, selectedOnly, null);
         serialized.collapsed = Boolean(tileset.collapsed);
-        serialized.elements = this.collectSelectedElements(tileset, selectedOnly);
+        serialized.legendSort = tileset.legendSort || {by: 'name', ascending: true};
+        serialized.elements = this.collectSelected(tileset.elements, selectedOnly, (element) => this.serializeElement(element));
         return serialized;
     }
 

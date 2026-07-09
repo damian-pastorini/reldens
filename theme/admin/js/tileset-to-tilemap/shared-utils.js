@@ -124,6 +124,57 @@ class SharedUtils
         };
     }
 
+    static buildDefaultTileOptions()
+    {
+        return {
+            groundTile: null,
+            pathTile: null,
+            borderTile: null,
+            randomGroundTiles: [],
+            surroundingTiles: {},
+            corners: {},
+            bordersTiles: {},
+            borderCornersTiles: {}
+        };
+    }
+
+    static buildDefaultSpot(name)
+    {
+        return {
+            name: name,
+            type: SharedUtils.SPOT_TYPE,
+            approved: false,
+            bulkSelected: false,
+            generateSelected: false,
+            spotTile: null,
+            spotTileVariations: [],
+            surroundingTiles: {},
+            corners: {},
+            bordersTiles: {},
+            borderCornersTiles: {},
+            innerWallsTiles: {},
+            innerWallsCornerTiles: {},
+            outerWallsTiles: {},
+            outerWallsCornerTiles: {},
+            width: SharedUtils.SPOT_DEFAULTS.width,
+            height: SharedUtils.SPOT_DEFAULTS.height,
+            quantity: 1,
+            walkable: true,
+            markPercentage: SharedUtils.SPOT_DEFAULTS.markPercentage,
+            variableTilesPercentage: SharedUtils.SPOT_DEFAULTS.variableTilesPercentage,
+            isElement: false,
+            freeSpaceAround: null,
+            allowPathsInFreeSpace: false,
+            mapCentered: 0,
+            placeRandomPath: false,
+            depth: false,
+            splitBordersInLayers: false,
+            borderInnerWalls: false,
+            borderOuterWalls: false,
+            borderOuterWallsIncreaseLayerSize: SharedUtils.SPOT_DEFAULTS.borderOuterWallsIncreaseLayerSize
+        };
+    }
+
     static populateProviderSelect(selectEl, providers)
     {
         for(let provider of providers){

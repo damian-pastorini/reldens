@@ -6,9 +6,9 @@ class TilesetTileOptionsEvents
         this.spotPanelEvents = new TilesetSpotPanelEvents(binder);
     }
 
-    iterateBtnsWithOptionKey(optionBtns, callback)
+    iterateButtonsWithOptionKey(optionButtons, callback)
     {
-        for(let optionBtn of optionBtns){
+        for(let optionBtn of optionButtons){
             let optionKey = optionBtn.dataset.option;
             if(!optionKey){
                 continue;
@@ -17,63 +17,29 @@ class TilesetTileOptionsEvents
         }
     }
 
-    isSameActiveState(tilesetIndex, optionKey, spotName)
+    bindOptionButtons(tilesetIndex, container, spotName)
     {
-        return this.binder.isSameActiveState(tilesetIndex, optionKey, spotName);
-    }
-
-    bindOptionBtns(tilesetIndex, container, spotName)
-    {
-        let tileBtns = container.querySelectorAll('.tile-option-btn');
-        this.iterateBtnsWithOptionKey(tileBtns, (optionBtn, optionKey) => {
+        let tileButtons = container.querySelectorAll('.tile-option-btn');
+        this.iterateButtonsWithOptionKey(tileButtons, (optionBtn, optionKey) => {
             let isMulti = 'true' === optionBtn.dataset.multi;
             optionBtn.addEventListener('click', () => {
-                let b = this.binder;
-                let isSameState = this.isSameActiveState(tilesetIndex, optionKey, spotName)
-                    && null === b.activePositionKey;
-                b.deactivate();
-                if(isSameState){
+                if(!this.binder.toggleActivation(tilesetIndex, optionKey, null, isMulti, spotName)){
                     return;
                 }
-                b.activateOption(tilesetIndex, optionKey, isMulti, spotName ? spotName : null);
-                optionBtn.classList.add('active');
-                if(-1 === tilesetIndex){
-                    this.updateGlobalBanner(b);
-                    b.app.renderAllCanvases();
-                    return;
-                }
-                let rowEl = b.getTilesetRowEl(tilesetIndex);
-                if(rowEl){
-                    b.apply.updateBanner(tilesetIndex, rowEl);
-                }
-                b.app.renderer.renderCanvas(tilesetIndex);
+                this.binder.showActiveOptionAndRender(tilesetIndex, optionBtn);
             });
         });
     }
 
-    updateGlobalBanner(b)
+    bindClearButtons(tilesetIndex, container, spotName)
     {
-        let globalPanel = document.querySelector('.global-tile-options');
-        if(globalPanel){
-            b.apply.updateBanner(-1, globalPanel);
-        }
-    }
-
-    bindClearBtns(tilesetIndex, container, spotName)
-    {
-        let clearBtns = container.querySelectorAll('.tile-option-clear');
-        this.bindClearBtnGroup(clearBtns, tilesetIndex, spotName);
-        let cellClearBtns = container.querySelectorAll('.tile-position-cell-clear');
-        for(let cellClearBtn of cellClearBtns){
+        let clearButtons = container.querySelectorAll('.tile-option-clear');
+        this.bindClearButtonGroup(clearButtons, tilesetIndex, spotName);
+        let cellClearButtons = container.querySelectorAll('.tile-position-cell-clear');
+        for(let cellClearBtn of cellClearButtons){
             cellClearBtn.addEventListener('click', (cellClickEvent) => {
                 cellClickEvent.stopPropagation();
-                let cell = cellClearBtn.closest('.tile-position-cell');
-                let grid = cellClearBtn.closest('.tile-position-grid');
-                if(!cell || !grid){
-                    return;
-                }
-                let optKey = cell.dataset.option ? cell.dataset.option : grid.dataset.option;
-                this.binder.clearOption(tilesetIndex, optKey, cell.dataset.pos, spotName ? spotName : null);
+                this.binder.clearPositionCell(tilesetIndex, cellClearBtn, spotName ? spotName : null);
             });
         }
         let multiContainers = container.querySelectorAll('.tile-option-multi-values');
@@ -89,14 +55,14 @@ class TilesetTileOptionsEvents
                 this.binder.clearer.clearArrayItem(tilesetIndex, key, valueStr, spotName ? spotName : null);
             });
         }
-        let groupClearBtns = container.querySelectorAll('.tile-options-group-clear-all');
-        this.bindClearBtnGroup(groupClearBtns, tilesetIndex, spotName);
+        let groupClearButtons = container.querySelectorAll('.tile-options-group-clear-all');
+        this.bindClearButtonGroup(groupClearButtons, tilesetIndex, spotName);
     }
 
     bindReferenceButtons(containerEl)
     {
-        let referenceBtns = containerEl.querySelectorAll('.tile-reference-btn');
-        for(let refBtn of referenceBtns){
+        let referenceButtons = containerEl.querySelectorAll('.tile-reference-btn');
+        for(let refBtn of referenceButtons){
             refBtn.addEventListener('click', () => this.openReferenceModal(refBtn));
         }
     }
@@ -139,26 +105,18 @@ class TilesetTileOptionsEvents
         });
     }
 
-    bindClearBtnGroup(clearBtnsList, tilesetIndex, spotName)
+    bindClearButtonGroup(clearButtonsList, tilesetIndex, spotName)
     {
-        this.iterateBtnsWithOptionKey(clearBtnsList, (groupClearBtn, optionKey) => {
-            this.bindSingleClearBtn(groupClearBtn, optionKey, tilesetIndex, spotName);
+        this.iterateButtonsWithOptionKey(clearButtonsList, (groupClearButton, optionKey) => {
+            this.bindSingleClearButton(groupClearButton, optionKey, tilesetIndex, spotName);
         });
     }
 
-    bindSingleClearBtn(clearBtnEl, optionKey, tilesetIndex, spotName)
+    bindSingleClearButton(clearButtonEl, optionKey, tilesetIndex, spotName)
     {
-        clearBtnEl.addEventListener('click', (clickEvent) => {
+        clearButtonEl.addEventListener('click', (clickEvent) => {
             clickEvent.stopPropagation();
-            if('ground' === optionKey){
-                this.binder.clearGroundGroup(tilesetIndex, spotName ? spotName : null);
-                return;
-            }
-            if('pathTilesGroup' === optionKey){
-                this.binder.clearPathTilesGroup(tilesetIndex);
-                return;
-            }
-            this.binder.clearOption(tilesetIndex, optionKey, null, spotName ? spotName : null);
+            this.binder.dispatchGroupClear(tilesetIndex, optionKey, spotName ? spotName : null);
         });
     }
 
@@ -177,22 +135,16 @@ class TilesetTileOptionsEvents
                 if(cellClearBtn && (cellClickEvent.target === cellClearBtn || cellClearBtn.contains(cellClickEvent.target))){
                     return;
                 }
-                let b = this.binder;
-                let isSameState = this.isSameActiveState(tilesetIndex, optionKey, spotName)
-                    && b.activePositionKey === posKey;
-                b.deactivate();
-                if(isSameState){
-                    return;
-                }
-                b.activateOption(tilesetIndex, optionKey, false, spotName ? spotName : null);
-                b.activatePosition(posKey);
+                this.binder.toggleActivation(tilesetIndex, optionKey, posKey, false, spotName);
             });
         }
     }
 
     bindSpotRows(tilesetIndex)
     {
-        this.spotPanelEvents.bindSpotRows(tilesetIndex);
+        if(this.spotPanelEvents){
+            this.spotPanelEvents.bindSpotRows(tilesetIndex);
+        }
     }
 }
 window.TilesetTileOptionsEvents = TilesetTileOptionsEvents;

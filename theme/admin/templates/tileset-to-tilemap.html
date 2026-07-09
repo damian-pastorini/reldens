@@ -284,6 +284,16 @@
                         <span class="tooltip button button-circle button-sm button-dark tileset-ai-only hidden">?<span class="tooltip-text">Creates a blank element you can populate by clicking tiles on the canvas.</span></span>
                         <button class="button button-sm button-success add-element-btn" type="button">Add Element</button>
                         <button class="button button-sm button-secondary add-spot-btn" type="button">Add Spot</button>
+                        <span class="legend-sort-label">Sort by</span>
+                        <select class="legend-sort-select">
+                            <option value="name">Name</option>
+                            <option value="selected">Selected</option>
+                            <option value="position">Position</option>
+                        </select>
+                        <div class="legend-sort-direction">
+                            <button class="button legend-sort-asc active" type="button"><img src="/assets/admin/circle-chevron-up-solid-full.svg" alt="Ascending"></button>
+                            <button class="button legend-sort-desc" type="button"><img src="/assets/admin/circle-chevron-up-solid-full.svg" alt="Descending"></button>
+                        </div>
                     </div>
                     <div class="legend-bulk-actions">
                         <div class="bulk-actions-checkbox">
@@ -312,6 +322,10 @@
                             <span class="bulk-action-pair">
                                 <button class="button button-sm button-danger bulk-delete-spots-btn" type="button"><img src="/assets/admin/trash-can-solid-full.svg" alt="Delete checked spots"></button>
                             </span>
+                        </div>
+                        <div class="generate-select-checkbox">
+                            <span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">Checks or unchecks all visible items for "Generate Selected" and "Selected to Maps Wizard".</span></span>
+                            <input type="checkbox" class="generate-select-all">
                         </div>
                     </div>
                     <div class="elements-list"></div>
@@ -415,6 +429,7 @@
             <input type="text" class="element-name-input" placeholder="element-001">
             <button class="button element-lock-btn" type="button"><img class="lock-icon" src="/assets/admin/unlock-solid.svg" alt="Lock"></button>
             <button class="button button-sm button-danger element-delete-btn" type="button"><img src="/assets/admin/trash-can-solid-full.svg" alt="Delete"></button>
+            <input type="checkbox" class="element-generate-select">
         </div>
         <div class="element-expanded hidden">
             <div class="cluster-btn-row">
@@ -661,6 +676,7 @@
             <input type="text" class="spot-name-input" placeholder="spot-001">
             <button class="button element-lock-btn spot-lock-btn" type="button"><img class="lock-icon" src="/assets/admin/unlock-solid.svg" alt="Lock"></button>
             <button class="button button-sm button-danger element-delete-btn spot-delete-btn" type="button"><img src="/assets/admin/trash-can-solid-full.svg" alt="Delete"></button>
+            <input type="checkbox" class="element-generate-select spot-generate-select">
         </div>
         <div class="spot-detail hidden">
             <div class="spot-tile-config tileset-tile-options">
@@ -845,6 +861,7 @@
 <script src="/js/tileset-to-tilemap/session-manager.js"></script>
 <script src="/js/tileset-to-tilemap/tileset-param-binder.js"></script>
 <script src="/js/tileset-to-tilemap/tileset-uploader.js"></script>
+<script src="/js/tileset-to-tilemap/tileset-legend-controls-binder.js"></script>
 <script src="/js/tileset-to-tilemap/tileset-row-binder.js"></script>
 <script src="/js/tileset-to-tilemap/state-builder.js"></script>
 <script src="/js/tileset-to-tilemap/tileset-strategy-editor.js"></script>

@@ -205,7 +205,7 @@ class TilesetAnalyzerApp
             return;
         }
         this.renderer.renderCanvas(tilesetIndex);
-        this.editor.renderLegend(tilesetIndex);
+        this.editor.legendRenderer.renderLegend(tilesetIndex);
     }
 
     scheduleCanvasRedraw(tilesetIndex)
@@ -227,15 +227,15 @@ class TilesetAnalyzerApp
 
     resetViewAllButtons()
     {
-        for(let j = 0; j < this.state.length; j++){
-            if(!this.refs[j]){
+        for(let i = 0; i < this.state.length; i++){
+            if(!this.refs[i]){
                 continue;
             }
-            if(this.refs[j].toggleAllBtn){
-                this.refs[j].toggleAllBtn.textContent = 'Highlight All';
+            if(this.refs[i].toggleAllBtn){
+                this.refs[i].toggleAllBtn.textContent = 'Highlight All';
             }
-            if(this.refs[j].viewAllBtn){
-                this.refs[j].viewAllBtn.textContent = 'View All';
+            if(this.refs[i].viewAllBtn){
+                this.refs[i].viewAllBtn.textContent = 'View All';
             }
         }
     }
@@ -251,9 +251,9 @@ class TilesetAnalyzerApp
 
     renderAll()
     {
-        for(let j = 0; j < this.state.length; j++){
-            this.renderer.renderCanvas(j);
-            this.editor.renderLegend(j);
+        for(let i = 0; i < this.state.length; i++){
+            this.renderer.renderCanvas(i);
+            this.editor.legendRenderer.renderLegend(i);
         }
     }
 

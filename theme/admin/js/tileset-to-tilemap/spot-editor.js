@@ -20,24 +20,22 @@ class TilesetSpotEditor
             && this.editor.app.selectedSpot.spotIndex === si){
             detail.classList.remove('hidden');
         }
-        this.applySpotLockState(frag, spot);
-        this.applySpotBulkState(frag, spot);
+        SharedUtils.applyLockVisual(frag.querySelector('.spot-lock-btn'), spot.approved);
+        this.applySpotSelectionStates(frag, spot);
         this.initSpotProps(frag, spot);
         list.appendChild(frag);
     }
 
-    applySpotLockState(frag, spot)
-    {
-        SharedUtils.applyLockVisual(frag.querySelector('.spot-lock-btn'), spot.approved);
-    }
-
-    applySpotBulkState(frag, spot)
+    applySpotSelectionStates(frag, spot)
     {
         let bulkCheckbox = frag.querySelector('.spot-bulk-select');
-        if(!bulkCheckbox){
-            return;
+        if(bulkCheckbox){
+            bulkCheckbox.checked = spot.bulkSelected || false;
         }
-        bulkCheckbox.checked = spot.bulkSelected || false;
+        let generateCheckbox = frag.querySelector('.spot-generate-select');
+        if(generateCheckbox){
+            generateCheckbox.checked = spot.generateSelected || false;
+        }
     }
 
     toggleIsElementRows(spotRow, checked)
@@ -54,7 +52,7 @@ class TilesetSpotEditor
 
     initNumberSpotProp(domElement, key, spot)
     {
-        if(null !== spot[key] && undefined !== spot[key]){
+        if(null !== spot[key] && 'undefined' !== typeof spot[key]){
             domElement.value = spot[key];
             return;
         }
@@ -67,7 +65,7 @@ class TilesetSpotEditor
 
     initDepthSpotProp(propInput, spot)
     {
-        if(undefined === spot.depth || null === spot.depth || false === spot.depth || 'false' === spot.depth){
+        if('undefined' === typeof spot.depth || null === spot.depth || false === spot.depth || 'false' === spot.depth){
             spot.depth = null;
             propInput.value = '';
             return;
@@ -96,7 +94,7 @@ class TilesetSpotEditor
                 this.initDepthSpotProp(propInput, spot);
                 continue;
             }
-            if(undefined !== spot[key]){
+            if('undefined' !== typeof spot[key]){
                 propInput.value = spot[key];
             }
         }
