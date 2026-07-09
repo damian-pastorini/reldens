@@ -466,7 +466,7 @@ CREATE TABLE IF NOT EXISTS `objects_types` (
 
 CREATE TABLE IF NOT EXISTS `objects` (
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    `room_id` INT UNSIGNED NOT NULL,
+    `room_id` INT UNSIGNED NULL DEFAULT NULL,
     `layer_name` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
     `tile_index` INT UNSIGNED DEFAULT NULL,
     `class_type` INT UNSIGNED DEFAULT NULL,
@@ -484,7 +484,7 @@ CREATE TABLE IF NOT EXISTS `objects` (
     KEY `room_id` (`room_id`) USING BTREE,
     KEY `class_type` (`class_type`) USING BTREE,
     CONSTRAINT `FK_objects_objects_types` FOREIGN KEY (`class_type`) REFERENCES `objects_types` (`id`) ON UPDATE CASCADE,
-    CONSTRAINT `FK_objects_rooms` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON UPDATE CASCADE
+    CONSTRAINT `FK_objects_rooms` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON UPDATE CASCADE ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `objects_animations` (
