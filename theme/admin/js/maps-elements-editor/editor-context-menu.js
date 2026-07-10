@@ -69,9 +69,19 @@ class EditorContextMenu
             this.editor.ui.buildButton('Duplicate', 'button-primary', () => this.onDuplicate())
         );
         menu.appendChild(
+            this.editor.ui.buildButton('Edit tiles layers', 'button-secondary', () => this.onEditTiles())
+        );
+        menu.appendChild(
             this.editor.ui.buildButton('Delete', 'button-danger', () => this.onDelete())
         );
         return menu;
+    }
+
+    onEditTiles()
+    {
+        let target = this.targetInstanceId;
+        this.hide();
+        this.editor.tilesLayerEditor.open(target);
     }
 
     onMove(direction)

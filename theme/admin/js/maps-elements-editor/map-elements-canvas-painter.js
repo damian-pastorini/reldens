@@ -117,19 +117,31 @@ class MapElementsCanvasPainter
             if(0 === mapLayer.data[i]){
                 continue;
             }
-            let tileId = mapLayer.data[i] - 1;
-            ctx.drawImage(
+            this.drawTile(
+                ctx,
                 tileset,
-                lut.margin + (tileId % lut.columns) * (lut.tileWidth + lut.spacing),
-                lut.margin + Math.floor(tileId / lut.columns) * (lut.tileHeight + lut.spacing),
-                lut.tileWidth,
-                lut.tileHeight,
+                lut,
+                mapLayer.data[i],
                 (i % lut.mapWidth) * lut.tileWidth,
-                Math.floor(i / lut.mapWidth) * lut.tileHeight,
-                lut.tileWidth,
-                lut.tileHeight
+                Math.floor(i / lut.mapWidth) * lut.tileHeight
             );
         }
+    }
+
+    drawTile(ctx, tileset, lut, gid, destX, destY)
+    {
+        let tileId = gid - 1;
+        ctx.drawImage(
+            tileset,
+            lut.margin + (tileId % lut.columns) * (lut.tileWidth + lut.spacing),
+            lut.margin + Math.floor(tileId / lut.columns) * (lut.tileHeight + lut.spacing),
+            lut.tileWidth,
+            lut.tileHeight,
+            destX,
+            destY,
+            lut.tileWidth,
+            lut.tileHeight
+        );
     }
 
     drawHover()

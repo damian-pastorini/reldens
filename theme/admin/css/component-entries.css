@@ -95,10 +95,8 @@
                     color: var(--color-grey);
 
                     &:not([disabled]) {
-                        margin: 0;
                         border: none;
                         background-color: transparent;
-                        color: var(--color-grey);
                     }
                 }
 

@@ -102,21 +102,21 @@ class TilesetCanvasRenderer
         ctx.restore();
     }
 
-    drawTileGrid(ctx, tileset)
+    drawTileGrid(ctx, tileset, strokeColor = '#96a0b4')
     {
         ctx.save();
         ctx.globalAlpha = 0.3;
-        ctx.strokeStyle = '#96a0b4';
+        ctx.strokeStyle = strokeColor;
         ctx.lineWidth = 0.5;
-        for(let c = 0; c <= tileset.tilesetColumns; c++){
-            let x = tileset.margin + c * (tileset.tileWidth + tileset.spacing);
+        for(let column = 0; column <= tileset.tilesetColumns; column++){
+            let x = tileset.margin + column * (tileset.tileWidth + tileset.spacing);
             ctx.beginPath();
             ctx.moveTo(x, 0);
             ctx.lineTo(x, ctx.canvas.height);
             ctx.stroke();
         }
-        for(let r = 0; r <= tileset.tileRows; r++){
-            let y = tileset.margin + r * (tileset.tileHeight + tileset.spacing);
+        for(let rowLine = 0; rowLine <= tileset.tileRows; rowLine++){
+            let y = tileset.margin + rowLine * (tileset.tileHeight + tileset.spacing);
             ctx.beginPath();
             ctx.moveTo(0, y);
             ctx.lineTo(ctx.canvas.width, y);
@@ -128,27 +128,6 @@ class TilesetCanvasRenderer
     layerTypeColor(type)
     {
         return SharedUtils.LAYER_TYPE_COLORS[type] || '#8888aa';
-    }
-
-    fillStrokeTile(ctx, tileset, tile, options)
-    {
-        let tilePos = this.app.tileGeometry.getTilePosition(tileset, tile);
-        ctx.save();
-        ctx.fillStyle = options.color;
-        ctx.strokeStyle = options.color;
-        ctx.lineWidth = options.lineWidth || 1;
-        if(options.dashed){
-            ctx.setLineDash([4, 3]);
-        }
-        ctx.globalAlpha = options.alphaFill || 0.35;
-        ctx.fillRect(tilePos.x, tilePos.y, tileset.tileWidth, tileset.tileHeight);
-        ctx.globalAlpha = options.alphaStroke || 1;
-        let lw = options.lineWidth || 1;
-        ctx.strokeRect(
-            tilePos.x + lw/2, tilePos.y + lw/2,
-            tileset.tileWidth - lw, tileset.tileHeight - lw
-        );
-        ctx.restore();
     }
 
     drawTile(ctx, tileset, tile, color, lineWidth, dashed, dimmed)
@@ -201,8 +180,7 @@ class TilesetCanvasRenderer
 
     isTilePickActive()
     {
-        return this.app.tileOptionsBinder
-            && null !== this.app.tileOptionsBinder.activeOptionKey;
+        return this.app.tileOptionsBinder && null !== this.app.tileOptionsBinder.activeOptionKey;
     }
 
     drawNonSelectedElement(ctx, tileset, element, hasSelection)
@@ -217,9 +195,8 @@ class TilesetCanvasRenderer
         let color = SharedUtils.colorForIndex(element.colorIndex);
         let isCluster = SharedUtils.CLUSTER_TYPE === element.type;
         let drawnKeys = new Set();
-        let dimmed = hasSelection;
         for(let layer of element.layers){
-            this.drawElementLayerTiles(ctx, tileset, layer, color, isCluster, dimmed, drawnKeys);
+            this.drawElementLayerTiles(ctx, tileset, layer, color, isCluster, hasSelection, drawnKeys);
         }
     }
 
@@ -268,9 +245,7 @@ class TilesetCanvasRenderer
         let canvas = this.app.refs[tilesetIndex].canvas;
         canvas.style.width = (canvas.width * zoom)+'px';
         canvas.style.height = (canvas.height * zoom)+'px';
-        if(this.app.refs[tilesetIndex]){
-            this.app.refs[tilesetIndex].cachedScale = null;
-        }
+        this.app.refs[tilesetIndex].cachedScale = null;
     }
 
 }

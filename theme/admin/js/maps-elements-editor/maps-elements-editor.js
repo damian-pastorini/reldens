@@ -30,6 +30,7 @@ class MapsElementsEditor
         this.deleter = new ElementDeleter(this);
         this.resizer = new MapResizer(this);
         this.contextMenu = new EditorContextMenu(this);
+        this.tilesLayerEditor = new ElementTilesLayerEditor(this);
         this.backupsPanel = new EditorBackupsPanel(this);
         this.painter = new MapElementsCanvasPainter(this);
         this.ui = new EditorUi(this);

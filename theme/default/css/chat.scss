@@ -89,6 +89,10 @@
     font-size: 12px;
 }
 
+.chat-ui:has(.tabs-container) #chat-messages {
+    display: none;
+}
+
 #chat-input {
     position: absolute;
     bottom: 15px;
