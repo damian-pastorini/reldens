@@ -185,13 +185,32 @@ class AdminFunctions
             return;
         }
         for(let expandCollapseButton of expandCollapseButtons){
-            expandCollapseButton.addEventListener('click', (event) => {
-                let expandCollapseElement = document.querySelector(event.currentTarget.dataset.expandCollapse);
-                if(expandCollapseElement){
-                    expandCollapseElement.classList.toggle('hidden');
-                }
-            });
+            expandCollapseButton.addEventListener('click', (event) => this.toggleExpandCollapse(event));
         }
+    }
+
+    toggleExpandCollapse(event)
+    {
+        let expandCollapseElement = document.querySelector(event.currentTarget.dataset.expandCollapse);
+        if(!expandCollapseElement){
+            return;
+        }
+        expandCollapseElement.classList.toggle('hidden');
+        if(!expandCollapseElement.classList.contains('hidden')){
+            this.scrollSectionToTop(event.currentTarget);
+        }
+    }
+
+    scrollSectionToTop(toggle)
+    {
+        let section = toggle.closest('.entry-collapsible');
+        if(!section){
+            return;
+        }
+        let stickyBar = document.querySelector('.actions.sub-content.actions-sticky');
+        let stickyHeight = stickyBar ? stickyBar.getBoundingClientRect().height : 0;
+        let scrollTarget = section.getBoundingClientRect().top + window.scrollY - stickyHeight;
+        window.scrollTo({top: scrollTarget, behavior: 'smooth'});
     }
 
     createModalContent(modalElement)
