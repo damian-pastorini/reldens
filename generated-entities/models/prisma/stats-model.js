@@ -23,7 +23,7 @@ class StatsModel
     {
         return 'stats';
     }
-    
+
 
     static get relationTypes()
     {

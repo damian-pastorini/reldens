@@ -24,7 +24,6 @@ class ObjectsEntity extends EntityProperties
                 type: 'reference',
                 reference: 'rooms',
                 alias: 'related_rooms',
-                isRequired: true,
                 dbType: 'int'
             },
             layer_name: {

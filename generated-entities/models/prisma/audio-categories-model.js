@@ -22,7 +22,7 @@ class AudioCategoriesModel
     {
         return 'audio_categories';
     }
-    
+
 
     static get relationTypes()
     {

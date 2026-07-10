@@ -166,6 +166,37 @@ class AdminClientMaps
                 true
             );
         }
+        this.bindRoomStartingPoint(entityData);
+    }
+
+    bindRoomStartingPoint(entityData)
+    {
+        let container = document.querySelector('.room-starting-point-container');
+        if(!container || !entityData || !entityData.map_filename){
+            return;
+        }
+        let elementStartX = document.querySelector('#roomStartingPointX');
+        let elementStartY = document.querySelector('#roomStartingPointY');
+        adminMapRenderer.loadAndCreateMap(
+            entityData.map_filename,
+            entityData.scene_images,
+            container,
+            (event, data) => this.applyStartingPointTile(event, data, elementStartX, elementStartY),
+            true,
+            null,
+            {x: elementStartX ? elementStartX.value : null, y: elementStartY ? elementStartY.value : null}
+        );
+    }
+
+    applyStartingPointTile(event, data, elementStartX, elementStartY)
+    {
+        let tileData = adminMapRenderer.calculateTileData(event, data);
+        if(elementStartX){
+            elementStartX.value = tileData.positionTileX;
+        }
+        if(elementStartY){
+            elementStartY.value = tileData.positionTileY;
+        }
     }
 
     deactivateAllWizardContainers(wizardOptionsContainer)

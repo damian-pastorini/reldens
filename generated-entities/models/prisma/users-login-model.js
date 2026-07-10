@@ -19,7 +19,7 @@ class UsersLoginModel
     {
         return 'users_login';
     }
-    
+
 
     static get relationTypes()
     {

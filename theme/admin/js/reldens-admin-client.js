@@ -40,6 +40,8 @@ class AdminClient
             errorMissingRoomY: 'Missing return point Y.',
             errorSaveChangePoint: 'Error saving change point.',
             errorSaveReturnPoint: 'Error saving return point.',
+            errorRoomDeleteHasPlayersNoDefault: 'This room has players in it and no default room is set. Set another room as default (Extra options > Save as default), then delete.',
+            errorDeletePrevented: 'This record could not be deleted because of related data.',
             themeManagerMissingTheme: 'Please select a theme.',
             themeManagerMissingCommand: 'Please select a command.',
             themeManagerExecutionError: 'Theme command execution failed.',
@@ -126,6 +128,29 @@ class AdminClient
         let timerId = setInterval(() => this.tickShutdownTimer(shuttingDownTimeElement, timerId), 1000);
     }
 
+    bindDuplicateButton()
+    {
+        let duplicateButton = document.querySelector('.button-duplicate');
+        if(!duplicateButton){
+            return;
+        }
+        duplicateButton.addEventListener('click', () => {
+            let editForm = document.querySelector('#edit-form');
+            if(!editForm){
+                return;
+            }
+            let idValueInput = editForm.querySelector('.entity-id-value');
+            if(idValueInput){
+                idValueInput.value = '';
+            }
+            let titleElement = document.querySelector('.entity-edit h2');
+            if(titleElement){
+                titleElement.textContent = 'Duplicate';
+            }
+            duplicateButton.classList.add('hidden');
+        });
+    }
+
     bind()
     {
         this.location = window.location;
@@ -141,6 +166,7 @@ class AdminClient
         new AdminClientTheme(forms).bind();
         this.bindNotifications();
         this.bindShutdownTimer();
+        this.bindDuplicateButton();
     }
 }
 new AdminClient();

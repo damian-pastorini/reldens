@@ -9,7 +9,9 @@ class TilesetGenerator
 
     bindGenerateConfirm(button, message, callback)
     {
-        button.addEventListener('click', () => this.app.modals.show(message, callback));
+        if(button){
+            button.addEventListener('click', () => this.app.modals.show(message, callback));
+        }
     }
 
     bindGenerateSelectedTopBar(message)
@@ -34,10 +36,7 @@ class TilesetGenerator
             (preferredKey) => this.generate(true, preferredKey),
             null,
             'button-primary',
-            {
-                label: 'Use ground / variations from:',
-                options: eligible
-            }
+            {label: 'Use ground / variations from:', options: eligible}
         );
     }
 
@@ -77,10 +76,7 @@ class TilesetGenerator
         if(selectedOnly){
             let eligible = new TilesetGroundSelector().collectEligibleGroundTilesets(this.app.state);
             if(eligible.length > 1){
-                selectorOptions = {
-                    label: 'Use ground / variations from:',
-                    options: eligible
-                };
+                selectorOptions = {label: 'Use ground / variations from:', options: eligible};
             }
         }
         this.app.modals.show(
@@ -121,25 +117,12 @@ class TilesetGenerator
         this.app.strategyEditor.bind(row);
     }
 
-    readSessionNameValue()
-    {
-        return this.app.getElement('.session-name-input')?.value || '';
-    }
-
-    isOverrideChecked()
-    {
-        return Boolean(this.app.getElement('.override-files-checkbox')?.checked);
-    }
-
-    buildNewSessionId()
-    {
-        return SharedUtils.buildSessionId(this.app.sessionId, false, this.readSessionNameValue());
-    }
-
     buildSessionId()
     {
         return SharedUtils.buildSessionId(
-            this.app.sessionId, this.isOverrideChecked(), this.readSessionNameValue()
+            this.app.sessionId,
+            Boolean(this.app.getElement('.override-files-checkbox')?.checked),
+            this.app.getElement('.session-name-input')?.value || ''
         );
     }
 
@@ -187,7 +170,13 @@ class TilesetGenerator
         if(!this.app.sessionId){
             return false;
         }
-        let sessionId = forceNewSession ? this.buildNewSessionId() : this.buildSessionId();
+        let sessionId = forceNewSession
+            ? SharedUtils.buildSessionId(
+                this.app.sessionId,
+                false,
+                this.app.getElement('.session-name-input')?.value || ''
+            )
+            : this.buildSessionId();
         this.app.modals.showGenerate('Generating files...');
         let fullTilesets = tilesets === this.lastFullSerialized ? tilesets : this.getSerializableState(false);
         let data = null;
@@ -258,11 +247,17 @@ class TilesetGenerator
 
     serializeTileset(tileset, selectedOnly, tilesetIndex, row)
     {
+        if(!this.serializer){
+            return null;
+        }
         return this.serializer.serializeTileset(tileset, selectedOnly, tilesetIndex, row);
     }
 
     getSerializableState(selectedOnly)
     {
+        if(!this.serializer){
+            return [];
+        }
         return this.serializer.getSerializableState(selectedOnly);
     }
 
@@ -304,14 +299,14 @@ class TilesetGenerator
     updateGenerateButtonState()
     {
         let hasErrors = document.querySelectorAll('.element-name-invalid').length > 0;
-        let hasSelected = 0 < document.querySelectorAll('.element-bulk-select:checked').length;
+        let hasSelected = 0 < document.querySelectorAll('.element-generate-select:checked').length;
         this.app.getElement('.generate-btn').disabled = hasErrors;
         this.app.getElement('.generate-selected-btn').disabled = hasErrors || !hasSelected;
         this.updateTilesetGenerateVisibility();
         this.updateMergeButtonState();
         this.forEachTilesetRow((row) => {
             let rowErrors = row.querySelectorAll('.element-name-invalid').length > 0;
-            let rowSelected = 0 < row.querySelectorAll('.element-bulk-select:checked').length;
+            let rowSelected = 0 < row.querySelectorAll('.element-generate-select:checked').length;
             row.querySelector('.tileset-generate-btn').disabled = rowErrors;
             row.querySelector('.tileset-generate-selected-btn').disabled = rowErrors || !rowSelected;
         });

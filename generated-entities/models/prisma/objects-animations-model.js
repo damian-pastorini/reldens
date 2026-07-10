@@ -19,7 +19,7 @@ class ObjectsAnimationsModel
     {
         return 'objects_animations';
     }
-    
+
 
     static get relationTypes()
     {

@@ -22,7 +22,7 @@ class ClanModel
     {
         return 'clan';
     }
-    
+
 
     static get relationTypes()
     {

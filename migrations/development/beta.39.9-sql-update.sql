@@ -102,6 +102,11 @@ ALTER TABLE `players_state` DROP FOREIGN KEY `FK_player_state_rooms`;
 ALTER TABLE `players_state` MODIFY `room_id` INT UNSIGNED NULL DEFAULT NULL;
 ALTER TABLE `players_state` ADD CONSTRAINT `FK_player_state_rooms` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON UPDATE CASCADE ON DELETE SET NULL;
 
+-- Allow objects to survive room deletion: nullable room_id with SET NULL (this FK was blocking room deletion)
+ALTER TABLE `objects` DROP FOREIGN KEY `FK_objects_rooms`;
+ALTER TABLE `objects` MODIFY `room_id` INT UNSIGNED NULL DEFAULT NULL;
+ALTER TABLE `objects` ADD CONSTRAINT `FK_objects_rooms` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON UPDATE CASCADE ON DELETE SET NULL;
+
 -- Cascade player deletes to player-owned runtime data (these FKs were blocking player deletion)
 ALTER TABLE `players_state` DROP FOREIGN KEY `FK_player_state_player_stats`;
 ALTER TABLE `players_state` ADD CONSTRAINT `FK_player_state_player_stats` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON UPDATE CASCADE ON DELETE CASCADE;

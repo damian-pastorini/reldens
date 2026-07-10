@@ -47,17 +47,19 @@
                                 - <a href="{{&mapImage}}" target="_blank">{{&mapImage}}</a>
                             </p>
                         </div>
-                        <canvas
-                            class="mapCanvas"
-                            data-toggle="modal"
-                            width="{{&mapWidth}}"
-                            height="{{&mapHeight}}"
-                            data-tile-width="{{&tileWidth}}"
-                            data-tile-height="{{&tileHeight}}"
-                            data-image-key="{{&mapImage}}"
-                            data-map-json="{{&mapJson}}"
-                            data-map-name="{{&key}}">
-                        </canvas>
+                        <div class="map-canvas-container">
+                            <canvas
+                                class="mapCanvas"
+                                data-toggle="modal"
+                                width="{{&mapWidth}}"
+                                height="{{&mapHeight}}"
+                                data-tile-width="{{&tileWidth}}"
+                                data-tile-height="{{&tileHeight}}"
+                                data-image-key="{{&mapImage}}"
+                                data-map-json="{{&mapJson}}"
+                                data-map-name="{{&key}}">
+                            </canvas>
+                        </div>
                         {{#hasSubMaps}}
                             <div class="sub-maps">
                                 <p class="sub-map-option-description clickable" data-expand-collapse=".sub-maps-container-{{&key}}">
@@ -78,17 +80,19 @@
                                             - <a href="{{&mapJson}}" target="_blank">{{&mapJson}}</a><br/>
                                             - <a href="{{&mapImage}}" target="_blank">{{&mapImage}}</a>
                                         </p>
-                                        <canvas
-                                            class="mapCanvas"
-                                            data-toggle="modal"
-                                            width="{{&mapWidth}}"
-                                            height="{{&mapHeight}}"
-                                            data-tile-width="{{&tileWidth}}"
-                                            data-tile-height="{{&tileHeight}}"
-                                            data-image-key="{{&mapImage}}"
-                                            data-map-json="{{&mapJson}}"
-                                            data-map-name="{{&key}}">
-                                        </canvas>
+                                        <div class="map-canvas-container">
+                                            <canvas
+                                                class="mapCanvas"
+                                                data-toggle="modal"
+                                                width="{{&mapWidth}}"
+                                                height="{{&mapHeight}}"
+                                                data-tile-width="{{&tileWidth}}"
+                                                data-tile-height="{{&tileHeight}}"
+                                                data-image-key="{{&mapImage}}"
+                                                data-map-json="{{&mapJson}}"
+                                                data-map-name="{{&key}}">
+                                            </canvas>
+                                        </div>
                                     {{/subMaps}}
                                 </div>
                             </div>

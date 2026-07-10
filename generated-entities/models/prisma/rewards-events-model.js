@@ -25,7 +25,7 @@ class RewardsEventsModel
     {
         return 'rewards_events';
     }
-    
+
 
     static get relationTypes()
     {

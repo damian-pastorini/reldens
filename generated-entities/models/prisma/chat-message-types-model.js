@@ -19,7 +19,7 @@ class ChatMessageTypesModel
     {
         return 'chat_message_types';
     }
-    
+
 
     static get relationTypes()
     {

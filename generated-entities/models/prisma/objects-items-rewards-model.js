@@ -21,7 +21,7 @@ class ObjectsItemsRewardsModel
     {
         return 'objects_items_rewards';
     }
-    
+
 
     static get relationTypes()
     {

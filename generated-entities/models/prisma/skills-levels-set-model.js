@@ -22,7 +22,7 @@ class SkillsLevelsSetModel
     {
         return 'skills_levels_set';
     }
-    
+
 
     static get relationTypes()
     {

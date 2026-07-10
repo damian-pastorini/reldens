@@ -28,7 +28,7 @@ class ObjectsModel
     {
         return 'objects';
     }
-    
+
 
     static get relationTypes()
     {

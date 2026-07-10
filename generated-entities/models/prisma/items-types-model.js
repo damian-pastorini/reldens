@@ -17,7 +17,7 @@ class ItemsTypesModel
     {
         return 'items_types';
     }
-    
+
 
     static get relationTypes()
     {

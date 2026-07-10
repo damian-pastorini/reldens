@@ -218,7 +218,7 @@ class TilesetCanvasInteraction
         this.resetDragState();
         if(wasDragging && null !== draggedTileset && this.app.legendStructureDirty){
             this.app.legendStructureDirty = false;
-            this.app.editor.renderLegend(draggedTileset);
+            this.app.editor.legendRenderer.renderLegend(draggedTileset);
         }
     }
 }

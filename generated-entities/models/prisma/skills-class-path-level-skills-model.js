@@ -19,7 +19,7 @@ class SkillsClassPathLevelSkillsModel
     {
         return 'skills_class_path_level_skills';
     }
-    
+
 
     static get relationTypes()
     {

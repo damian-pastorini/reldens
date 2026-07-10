@@ -18,7 +18,7 @@ class UsersLocaleModel
     {
         return 'users_locale';
     }
-    
+
 
     static get relationTypes()
     {

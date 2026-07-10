@@ -19,7 +19,7 @@ class QuestsProgressModel
     {
         return 'quests_progress';
     }
-    
+
 }
 
 module.exports.QuestsProgressModel = QuestsProgressModel;

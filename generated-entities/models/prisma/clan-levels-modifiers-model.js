@@ -25,7 +25,7 @@ class ClanLevelsModifiersModel
     {
         return 'clan_levels_modifiers';
     }
-    
+
 
     static get relationTypes()
     {

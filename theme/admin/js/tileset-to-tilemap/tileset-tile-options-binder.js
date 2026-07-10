@@ -1,4 +1,3 @@
-/* exported TilesetTileOptionsBinder */
 class TilesetTileOptionsBinder
 {
     constructor(app)
@@ -28,56 +27,6 @@ class TilesetTileOptionsBinder
         this.activePositionKey = null;
         this.activeSpotName = null;
         this.multiSelect = false;
-    }
-
-    buildDefaultTileOptions()
-    {
-        return {
-            groundTile: null,
-            pathTile: null,
-            borderTile: null,
-            randomGroundTiles: [],
-            surroundingTiles: {},
-            corners: {},
-            bordersTiles: {},
-            borderCornersTiles: {}
-        };
-    }
-
-    buildDefaultSpot(name)
-    {
-        return {
-            name: name,
-            type: SharedUtils.SPOT_TYPE,
-            approved: false,
-            bulkSelected: false,
-            spotTile: null,
-            spotTileVariations: [],
-            surroundingTiles: {},
-            corners: {},
-            bordersTiles: {},
-            borderCornersTiles: {},
-            innerWallsTiles: {},
-            innerWallsCornerTiles: {},
-            outerWallsTiles: {},
-            outerWallsCornerTiles: {},
-            width: SharedUtils.SPOT_DEFAULTS.width,
-            height: SharedUtils.SPOT_DEFAULTS.height,
-            quantity: 1,
-            walkable: true,
-            markPercentage: SharedUtils.SPOT_DEFAULTS.markPercentage,
-            variableTilesPercentage: SharedUtils.SPOT_DEFAULTS.variableTilesPercentage,
-            isElement: false,
-            freeSpaceAround: null,
-            allowPathsInFreeSpace: false,
-            mapCentered: 0,
-            placeRandomPath: false,
-            depth: false,
-            splitBordersInLayers: false,
-            borderInnerWalls: false,
-            borderOuterWalls: false,
-            borderOuterWallsIncreaseLayerSize: SharedUtils.SPOT_DEFAULTS.borderOuterWallsIncreaseLayerSize
-        };
     }
 
     findSpot(tilesetIndex, spotName)
@@ -162,20 +111,20 @@ class TilesetTileOptionsBinder
     {
         let tilesetIndex = this.activeTilesetIndex;
         this.resetPickState();
-        if(-1 === tilesetIndex){
-            this.withGlobalPanel((p) => {
-                this.apply.clearAllActiveCellClasses(p);
-                this.apply.hideBanner(p);
-                this.clearActiveBtns(p);
-            });
-            this.app.renderAllCanvases();
-            return;
-        }
         if(null === tilesetIndex){
             return;
         }
+        if(-1 === tilesetIndex){
+            this.withGlobalPanel((panel) => {
+                this.apply.clearAllActiveCellClasses(panel);
+                this.apply.hideBanner(panel);
+                this.deactivateOptionButtons(panel);
+            });
+            this.renderForActiveScope(tilesetIndex);
+            return;
+        }
         this.deactivateForRow(tilesetIndex);
-        this.app.renderer.renderCanvas(tilesetIndex);
+        this.renderForActiveScope(tilesetIndex);
     }
 
     renderForActiveScope(tilesetIndex)
@@ -192,57 +141,104 @@ class TilesetTileOptionsBinder
         this.withTilesetRow(tilesetIndex, (row) => {
             this.apply.clearAllActiveCellClasses(row);
             this.apply.hideBanner(row);
-            this.clearActiveBtns(row);
+            this.deactivateOptionButtons(row);
         });
     }
 
-    clearActiveBtns(containerEl)
+    deactivateOptionButtons(containerEl)
     {
-        let optionBtns = containerEl.querySelectorAll('.tile-option-btn.active');
-        for(let optionBtn of optionBtns){
+        let optionButtons = containerEl.querySelectorAll('.tile-option-btn.active');
+        for(let optionBtn of optionButtons){
             optionBtn.classList.remove('active');
         }
     }
 
-    applyToTilesetRow(tilesetIndex)
+    applyAndRenderTilesetRow(tilesetIndex)
     {
-        let rowEl = this.getTilesetRowEl(tilesetIndex);
-        if(rowEl){
-            this.apply.applyToRow(tilesetIndex, rowEl);
-        }
+        this.withTilesetRow(tilesetIndex, (row) => this.apply.applyToRow(tilesetIndex, row));
+        this.app.renderer.renderCanvas(tilesetIndex);
     }
 
     handleTileClick(tilesetIndex, row, col)
     {
-        this.picker.handleTileClick(tilesetIndex, row, col);
+        if(this.picker){
+            this.picker.handleTileClick(tilesetIndex, row, col);
+        }
     }
 
-    clearGroundGroup(tilesetIndex, spotName)
+    clearTilesGroup(tilesetIndex, groupType, spotName)
     {
-        this.clearer.clearGroundGroup(tilesetIndex, spotName);
-    }
-
-    clearPathTilesGroup(tilesetIndex)
-    {
+        if(!this.clearer){
+            return;
+        }
+        if('ground' === groupType){
+            this.clearer.clearGroundGroup(tilesetIndex, spotName);
+            return;
+        }
         this.clearer.clearPathTilesGroup(tilesetIndex);
     }
 
-    clearOption(tilesetIndex, optionKey, positionKey, spotName)
+    toggleActivation(tilesetIndex, optionKey, posKey, isMulti, spotName)
     {
-        this.clearer.clearOption(tilesetIndex, optionKey, positionKey, spotName);
+        let samePosition = null === posKey ? null === this.activePositionKey : this.activePositionKey === posKey;
+        let isSameState = this.isSameActiveState(tilesetIndex, optionKey, spotName) && samePosition;
+        this.deactivate();
+        if(isSameState){
+            return false;
+        }
+        this.activateOption(tilesetIndex, optionKey, isMulti, spotName ? spotName : null);
+        if(null !== posKey){
+            this.activatePosition(posKey);
+        }
+        return true;
+    }
+
+    showActiveOptionAndRender(tilesetIndex, optionBtn)
+    {
+        optionBtn.classList.add('active');
+        if(-1 === tilesetIndex){
+            this.withGlobalPanel((panel) => this.apply.updateBanner(-1, panel));
+            this.app.renderAllCanvases();
+            return;
+        }
+        this.withTilesetRow(tilesetIndex, (row) => this.apply.updateBanner(tilesetIndex, row));
+        this.app.renderer.renderCanvas(tilesetIndex);
+    }
+
+    dispatchGroupClear(tilesetIndex, optionKey, spotName)
+    {
+        if('ground' === optionKey || 'pathTilesGroup' === optionKey){
+            this.clearTilesGroup(tilesetIndex, optionKey, spotName);
+            return;
+        }
+        if(this.clearer){
+            this.clearer.clearOption(tilesetIndex, optionKey, null, spotName);
+        }
+    }
+
+    clearPositionCell(tilesetIndex, cellClearBtn, spotName)
+    {
+        let cell = cellClearBtn.closest('.tile-position-cell');
+        let grid = cellClearBtn.closest('.tile-position-grid');
+        if(!cell || !grid || !this.clearer){
+            return;
+        }
+        let optionKey = cell.dataset.option ? cell.dataset.option : grid.dataset.option;
+        this.clearer.clearOption(tilesetIndex, optionKey, cell.dataset.pos, spotName);
     }
 
     addSpot(tilesetIndex)
     {
         let tileset = this.app.state[tilesetIndex];
         let spotNum = SharedUtils.padNum(tileset.spots.length + 1);
-        tileset.spots.push(this.buildDefaultSpot('spot-'+spotNum));
+        tileset.spots.push(SharedUtils.buildDefaultSpot('spot-'+spotNum));
         this.app.selectedSpot = { tilesetIndex, spotIndex: tileset.spots.length - 1 };
-        this.app.editor.renderLegend(tilesetIndex);
+        this.app.editor.legendRenderer.renderLegend(tilesetIndex);
         let refs = this.app.refs[tilesetIndex];
         if(refs && refs.list){
-            let spotRows = refs.list.querySelectorAll('.spot-row');
-            this.app.editor.scroller.scrollIntoView(refs.list, spotRows[spotRows.length - 1]);
+            let newSpotIndex = tileset.spots.length - 1;
+            let newSpotRow = refs.list.querySelector('.spot-row[data-spot-index="'+newSpotIndex+'"]');
+            this.app.editor.scroller.scrollIntoView(refs.list, newSpotRow);
         }
     }
 
@@ -257,7 +253,7 @@ class TilesetTileOptionsBinder
         if(this.activeSpotName === spotName && this.activeTilesetIndex === tilesetIndex){
             this.deactivate();
         }
-        this.app.editor.renderLegend(tilesetIndex);
+        this.app.editor.legendRenderer.renderLegend(tilesetIndex);
     }
 
     toggleIsElementFields(spotRow, isChecked)
@@ -272,25 +268,25 @@ class TilesetTileOptionsBinder
         }
     }
 
-    bindCancelBtns(containerEl)
+    bindCancelButtons(containerEl)
     {
-        let cancelBtns = containerEl.querySelectorAll('.tile-pick-cancel');
-        for(let cancelBtn of cancelBtns){
+        let cancelButtons = containerEl.querySelectorAll('.tile-pick-cancel');
+        for(let cancelBtn of cancelButtons){
             cancelBtn.addEventListener('click', () => this.deactivate());
         }
     }
 
     bind(tilesetIndex, rowEl)
     {
-        this.bindCancelBtns(rowEl);
+        this.bindCancelButtons(rowEl);
         let addSpotBtn = rowEl.querySelector('.add-spot-btn');
         if(addSpotBtn){
             addSpotBtn.addEventListener('click', () => this.addSpot(tilesetIndex));
         }
         let panel = rowEl.querySelector('.tileset-tile-options:not(.spot-tile-config)');
         if(panel){
-            this.events.bindOptionBtns(tilesetIndex, panel, null);
-            this.events.bindClearBtns(tilesetIndex, panel, null);
+            this.events.bindOptionButtons(tilesetIndex, panel, null);
+            this.events.bindClearButtons(tilesetIndex, panel, null);
             this.events.bindPositionCells(tilesetIndex, panel, null);
         }
         this.events.bindReferenceButtons(rowEl);
@@ -299,18 +295,14 @@ class TilesetTileOptionsBinder
 
     bindGlobal(panelEl)
     {
-        this.bindCancelBtns(panelEl);
+        this.bindCancelButtons(panelEl);
         this.events.initReferenceModal();
         this.events.bindReferenceButtons(panelEl);
-        this.events.bindOptionBtns(-1, panelEl, null);
-        this.events.bindClearBtns(-1, panelEl, null);
+        this.events.bindOptionButtons(-1, panelEl, null);
+        this.events.bindClearButtons(-1, panelEl, null);
         this.events.bindPositionCells(-1, panelEl, null);
         this.apply.applyToRow(-1, null);
     }
 
-    bindSpotRows(tilesetIndex)
-    {
-        this.events.bindSpotRows(tilesetIndex);
-    }
 }
 window.TilesetTileOptionsBinder = TilesetTileOptionsBinder;

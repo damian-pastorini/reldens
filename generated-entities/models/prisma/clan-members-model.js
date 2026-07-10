@@ -18,7 +18,7 @@ class ClanMembersModel
     {
         return 'clan_members';
     }
-    
+
 
     static get relationTypes()
     {

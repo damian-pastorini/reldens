@@ -24,12 +24,12 @@
             </div>
         </form>
     </div>
-    <div class="rooms-association-container">
-        <h3 class="clickable rooms-association-toggle" data-expand-collapse=".rooms-association-content">
+    <div class="rooms-association-container entry-collapsible">
+        <h3 class="clickable rooms-association-toggle entry-collapsible-toggle" data-expand-collapse=".rooms-association-content">
             <span>Link rooms</span>
-            <img class="rooms-association-collapse-icon" src="/assets/admin/circle-chevron-up-solid-full.svg" alt="Toggle link rooms">
+            <img class="rooms-association-collapse-icon entry-collapsible-icon" src="/assets/admin/circle-chevron-up-solid-full.svg" alt="Toggle link rooms">
         </h3>
-        <div class="rooms-association-content hidden">
+        <div class="rooms-association-content entry-collapsible-content hidden">
         <p>Notes:</p>
         <p>
             - The room link does not exist as "entity" itself, this feature will create change points and return points in both directions (if specified).<br/>
@@ -95,6 +95,51 @@
             <div class="actions-container">
                 <span>
                     <button class="button button-primary" type="submit">Create Link</button>
+                </span>
+            </div>
+        </form>
+        </div>
+    </div>
+    <div class="room-starting-point-wrapper entry-collapsible">
+        <h3 class="clickable room-starting-point-toggle entry-collapsible-toggle" data-expand-collapse=".room-starting-point-content">
+            <span>Room starting point</span>
+            <img class="room-starting-point-collapse-icon entry-collapsible-icon" src="/assets/admin/circle-chevron-up-solid-full.svg" alt="Toggle room starting point">
+        </h3>
+        <div class="room-starting-point-content entry-collapsible-content hidden">
+        <p>Notes:</p>
+        <p>
+            - The room starting point is the default return point for this room: where the player is placed when entering the room without a specific origin (for example the game starting room).<br/>
+            - Click a tile on the map below to set the starting position.<br/>
+        </p>
+        <form name="createDefaultReturnPoint" action="#" method="post">
+            <input type="hidden" name="createDefaultReturnPoint" value="1"/>
+            <div class="edit-field">
+                <label class="field-name" for="roomStartingPointDirection">The direction in which the player will be displayed</label>
+                <span class="field-value">
+                    <select id="roomStartingPointDirection" name="roomStartingPointDirection" required>
+                        <option value="down">Down</option>
+                        <option value="up">Up</option>
+                        <option value="left">Left</option>
+                        <option value="right">Right</option>
+                    </select>
+                </span>
+            </div>
+            <div class="edit-field">
+                <label class="field-name" for="roomStartingPointX">Starting point X</label>
+                <span class="field-value">
+                    <input type="number" id="roomStartingPointX" name="roomStartingPointX" required/>
+                </span>
+            </div>
+            <div class="edit-field">
+                <label class="field-name" for="roomStartingPointY">Starting point Y</label>
+                <span class="field-value">
+                    <input type="number" id="roomStartingPointY" name="roomStartingPointY" required/>
+                </span>
+            </div>
+            <div class="association-maps-container room-starting-point-container" data-map-loader="{{&id}}"></div>
+            <div class="actions-container">
+                <span>
+                    <button class="button button-primary" type="submit">Set starting point</button>
                 </span>
             </div>
         </form>

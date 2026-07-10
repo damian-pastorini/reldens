@@ -20,7 +20,7 @@ class PlayersStatsModel
     {
         return 'players_stats';
     }
-    
+
 
     static get relationTypes()
     {

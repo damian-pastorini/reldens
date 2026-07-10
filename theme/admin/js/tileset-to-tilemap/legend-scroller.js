@@ -13,6 +13,15 @@ class TilesetLegendScroller
         list.scrollTop = row.getBoundingClientRect().top - list.getBoundingClientRect().top + list.scrollTop;
     }
 
+    scrollLegendRowIntoView(tilesetIndex, selector)
+    {
+        let refs = this.app.refs[tilesetIndex];
+        if(!refs || !refs.list){
+            return;
+        }
+        this.scrollIntoView(refs.list, refs.list.querySelector(selector));
+    }
+
     scrollLegendToSelected(tilesetIndex)
     {
         if(this.app.selectedTileset !== tilesetIndex){
@@ -22,8 +31,8 @@ class TilesetLegendScroller
             return;
         }
         let list = this.app.refs[tilesetIndex].list;
-        let rows = list.querySelectorAll('.element-row');
-        this.scrollIntoView(list, rows[this.app.selectedElement]);
+        let selectedRow = list.querySelector('.element-row[data-element-index="'+this.app.selectedElement+'"]');
+        this.scrollIntoView(list, selectedRow);
     }
 
     scrollLegendToSpot(tilesetIndex, spotIndex)

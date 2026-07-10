@@ -12,11 +12,6 @@ class TilesetElementEditor
     }
 
 
-    renderLegend(tilesetIndex)
-    {
-        this.legendRenderer.renderLegend(tilesetIndex);
-    }
-
     elementVisibilityFilter(refs)
     {
         return {
@@ -41,11 +36,6 @@ class TilesetElementEditor
             return true;
         }
         return Boolean(element.name) && element.name.toLowerCase().includes(filter.searchTerm);
-    }
-
-    computeElementVisibility(tilesetIndex)
-    {
-        return this.elementVisibilityFilter(this.app.refs[tilesetIndex]);
     }
 
     getBulkSelected(tilesetIndex)
@@ -82,7 +72,7 @@ class TilesetElementEditor
             this.app.viewAllMode = false;
             this.app.resetViewAllButtons();
         }
-        this.applySelectionToLegend(tilesetIndex, previousIndex);
+        this.applySelectionRows(tilesetIndex, previousIndex);
         this.app.renderer.renderCanvas(tilesetIndex);
     }
 
@@ -95,15 +85,10 @@ class TilesetElementEditor
         callback(refs.list);
     }
 
-    withElementRows(tilesetIndex, callback)
-    {
-        this.withList(tilesetIndex, (list) => callback(list.querySelectorAll('.element-row')));
-    }
-
     withElementRow(tilesetIndex, elementIndex, callback)
     {
-        this.withElementRows(tilesetIndex, (rows) => {
-            let row = rows[elementIndex];
+        this.withList(tilesetIndex, (list) => {
+            let row = list.querySelector('.element-row[data-element-index="'+elementIndex+'"]');
             if(!row){
                 return;
             }
@@ -127,11 +112,15 @@ class TilesetElementEditor
             if(bulkCheckbox){
                 bulkCheckbox.checked = element.bulkSelected || false;
             }
+            let generateCheckbox = row.querySelector('.element-generate-select');
+            if(generateCheckbox){
+                generateCheckbox.checked = element.generateSelected || false;
+            }
             let splitBtn = row.querySelector('.cluster-split-btn');
             let convertBtn = row.querySelector('.cluster-convert-btn');
             splitBtn.classList.toggle('hidden', !isCluster);
             convertBtn.classList.toggle('hidden', !isCluster);
-            this.applyLockVisuals(row, element);
+            SharedUtils.applyLockVisual(row.querySelector('.element-lock-btn'), element.approved);
         });
     }
 
@@ -139,37 +128,28 @@ class TilesetElementEditor
     {
         this.withElementRow(tilesetIndex, elementIndex, (row) => {
             let element = this.app.state[tilesetIndex].elements[elementIndex];
-            this.applyLockVisuals(row, element);
+            SharedUtils.applyLockVisual(row.querySelector('.element-lock-btn'), element.approved);
         });
     }
 
-    applyLockVisuals(row, element)
+    applySelectionRows(tilesetIndex, previousIndex)
     {
-        SharedUtils.applyLockVisual(row.querySelector('.element-lock-btn'), element.approved);
-    }
-
-    applySelectionToLegend(tilesetIndex, previousIndex)
-    {
-        this.withElementRows(tilesetIndex, (rows) => this.applySelectionRows(tilesetIndex, previousIndex, rows));
-    }
-
-    applySelectionRows(tilesetIndex, previousIndex, rows)
-    {
-        if(null !== previousIndex && rows[previousIndex]){
-            let prevExpanded = rows[previousIndex].querySelector('.element-expanded');
-            if(prevExpanded){
-                prevExpanded.classList.add('hidden');
-            }
+        if(null !== previousIndex){
+            this.toggleElementExpanded(tilesetIndex, previousIndex, true);
         }
         if(this.app.selectedTileset === tilesetIndex && null !== this.app.selectedElement){
-            let currentRow = rows[this.app.selectedElement];
-            if(currentRow){
-                let currentExpanded = currentRow.querySelector('.element-expanded');
-                if(currentExpanded){
-                    currentExpanded.classList.remove('hidden');
-                }
-            }
+            this.toggleElementExpanded(tilesetIndex, this.app.selectedElement, false);
         }
+    }
+
+    toggleElementExpanded(tilesetIndex, elementIndex, hidden)
+    {
+        this.withElementRow(tilesetIndex, elementIndex, (row) => {
+            let expanded = row.querySelector('.element-expanded');
+            if(expanded){
+                expanded.classList.toggle('hidden', hidden);
+            }
+        });
     }
 
     removeElement(tilesetIndex, elementIndex)
@@ -191,11 +171,16 @@ class TilesetElementEditor
 
     surgicallyRemoveElementRow(tilesetIndex, elementIndex)
     {
-        this.withElementRow(tilesetIndex, elementIndex, (row) => {
-            row.remove();
-            let remaining = this.app.refs[tilesetIndex].list.querySelectorAll('.element-row');
-            for(let i = elementIndex; i < remaining.length; i++){
-                remaining[i].dataset.elementIndex = i;
+        this.withList(tilesetIndex, (list) => {
+            let row = list.querySelector('.element-row[data-element-index="'+elementIndex+'"]');
+            if(row){
+                row.remove();
+            }
+            for(let remainingRow of list.querySelectorAll('.element-row')){
+                let rowIndex = Number(remainingRow.dataset.elementIndex);
+                if(rowIndex > elementIndex){
+                    remainingRow.dataset.elementIndex = rowIndex - 1;
+                }
             }
         });
     }
@@ -217,7 +202,7 @@ class TilesetElementEditor
         this.app.activeLayerType = SharedUtils.DEFAULT_LAYER_TYPE;
         this.app.updatePaletteStyles();
         this.appendNewElementRow(tilesetIndex, elementIndex);
-        this.applySelectionToLegend(tilesetIndex, previousIndex);
+        this.applySelectionRows(tilesetIndex, previousIndex);
         this.app.renderer.renderCanvas(tilesetIndex);
         this.scroller.scrollLegendToSelected(tilesetIndex);
     }
@@ -232,8 +217,9 @@ class TilesetElementEditor
             let element = this.app.state[tilesetIndex].elements[elementIndex];
             let frag = template.content.cloneNode(true);
             this.legendRenderer.buildElementRow(frag, element, tilesetIndex, elementIndex);
-            list.insertBefore(frag, list.querySelector('.spot-row'));
+            list.appendChild(frag);
             this.legendRenderer.applyLegendVisibility(tilesetIndex);
+            this.legendRenderer.applyLegendSort(tilesetIndex);
         });
     }
 

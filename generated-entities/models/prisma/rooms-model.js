@@ -25,7 +25,7 @@ class RoomsModel
     {
         return 'rooms';
     }
-    
+
 
     static get relationTypes()
     {

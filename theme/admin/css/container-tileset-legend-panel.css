@@ -165,6 +165,51 @@
             height: var(--space-lg);
             filter: brightness(0) invert(1);
         }
+
+        & .generate-select-checkbox {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-xs);
+            flex-shrink: 0;
+        }
+    }
+
+    & .legend-sort-label {
+        color: var(--color-grey);
+        font-size: var(--font-size-sm);
+        white-space: nowrap;
+    }
+
+    & .legend-sort-select {
+        padding: var(--space-xs) var(--space-sm);
+        font-size: var(--font-size-sm);
+    }
+
+    & .legend-sort-direction {
+        display: flex;
+        flex-direction: column;
+        gap: 0.125rem;
+
+        & .button {
+            padding: 0 var(--space-xs);
+            background: transparent;
+            border-color: transparent;
+
+            & img {
+                display: block;
+                width: var(--space-lg);
+                height: var(--space-lg);
+                filter: brightness(0) invert(0.4);
+            }
+
+            &.active img {
+                filter: brightness(0) invert(1);
+            }
+        }
+
+        & .legend-sort-desc img {
+            transform: rotate(180deg);
+        }
     }
 
     & .elements-list {
@@ -196,7 +241,9 @@
     }
 
     & .element-bulk-select,
-    & .bulk-select-all {
+    & .bulk-select-all,
+    & .element-generate-select,
+    & .generate-select-all {
         flex-shrink: 0;
         width: var(--space-lg);
         height: var(--space-lg);

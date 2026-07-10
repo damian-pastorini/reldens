@@ -21,7 +21,7 @@ class AudioMarkersModel
     {
         return 'audio_markers';
     }
-    
+
 
     static get relationTypes()
     {

@@ -1,9 +1,9 @@
-/* exported TilesetRowBinder */
 class TilesetRowBinder
 {
     constructor(app)
     {
         this.app = app;
+        this.legendControls = new TilesetLegendControlsBinder(app);
     }
 
     bind(row, i)
@@ -76,6 +76,10 @@ class TilesetRowBinder
             nameAllBtn: row.querySelector('.tileset-name-all-btn'),
             aiProgressMsg: row.querySelector('.tileset-ai-progress-msg'),
             bulkSelectAll: row.querySelector('.bulk-select-all'),
+            generateSelectAll: row.querySelector('.generate-select-all'),
+            legendSortSelect: row.querySelector('.legend-sort-select'),
+            legendSortAscBtn: row.querySelector('.legend-sort-asc'),
+            legendSortDescBtn: row.querySelector('.legend-sort-desc'),
             legendSearch: row.querySelector('.legend-search'),
             showElementsCheck: row.querySelector('.show-elements-check'),
             showClustersCheck: row.querySelector('.show-clusters-check'),
@@ -117,8 +121,12 @@ class TilesetRowBinder
             refs.nameAllBtn.addEventListener('click', () => this.app.ai.runAiName(capturedI, refs.nameAllBtn));
         }
         refs.bulkSelectAll.addEventListener('change', () => {
-            this.applyBulkSelection(capturedI, refs);
+            this.legendControls.applyBulkSelection(capturedI, refs);
         });
+        refs.generateSelectAll.addEventListener('change', () => {
+            this.legendControls.applyGenerateSelection(capturedI, refs);
+        });
+        this.legendControls.bindLegendSortControls(capturedI, refs);
         refs.legendSearch.addEventListener('input', () => this.scheduleLegendSearch(capturedI));
         refs.showElementsCheck.addEventListener('change', () => this.applyFilterChange(capturedI));
         refs.showClustersCheck.addEventListener('change', () => this.applyFilterChange(capturedI));
@@ -156,31 +164,6 @@ class TilesetRowBinder
             this.searchDebounceTimers[tilesetIndex] = null;
             this.app.editor.legendRenderer.applyLegendVisibility(tilesetIndex);
         }, 100);
-    }
-
-    applyBulkSelection(tilesetIndex, refs)
-    {
-        let isChecked = refs.bulkSelectAll.checked;
-        let filter = this.app.editor.elementVisibilityFilter(refs);
-        for(let element of this.app.state[tilesetIndex].elements){
-            if(!this.app.editor.matchesVisibilityFilter(element, filter)){
-                continue;
-            }
-            element.bulkSelected = isChecked;
-        }
-        if(filter.showSpots){
-            for(let spot of this.app.state[tilesetIndex].spots || []){
-                spot.bulkSelected = isChecked;
-            }
-        }
-        for(let checkbox of refs.list.querySelectorAll('.element-bulk-select')){
-            let row = checkbox.closest('.element-row, .spot-row');
-            if(row && row.classList.contains('hidden')){
-                continue;
-            }
-            checkbox.checked = isChecked;
-        }
-        this.app.generator.updateGenerateButtonState();
     }
 
     countSelected(items, remaining)
@@ -234,24 +217,18 @@ class TilesetRowBinder
     activateLegendTab(activeTab, tabs, panes, tilesetIndex)
     {
         let targetTab = activeTab.dataset.tab;
-        this.setLegendTabActive(activeTab, tabs);
-        this.setLegendPaneVisible(targetTab, panes);
-        if(undefined !== tilesetIndex && this.app.refs[tilesetIndex]){
+        this.setLegendTabClass(tabs, targetTab, 'legend-tab-active', false);
+        this.setLegendTabClass(panes, targetTab, 'hidden', true);
+        if('undefined' !== typeof tilesetIndex && this.app.refs[tilesetIndex]){
             this.app.refs[tilesetIndex].activeTab = targetTab;
         }
     }
 
-    setLegendTabActive(activeTab, tabs)
+    setLegendTabClass(nodes, targetTab, className, applyOnMismatch)
     {
-        for(let t of tabs){
-            t.classList.toggle('legend-tab-active', t === activeTab);
-        }
-    }
-
-    setLegendPaneVisible(targetTab, panes)
-    {
-        for(let p of panes){
-            p.classList.toggle('hidden', p.dataset.tab !== targetTab);
+        for(let node of nodes){
+            let matchesTab = node.dataset.tab === targetTab;
+            node.classList.toggle(className, applyOnMismatch ? !matchesTab : matchesTab);
         }
     }
 

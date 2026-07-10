@@ -21,7 +21,7 @@ class DropsAnimationsModel
     {
         return 'drops_animations';
     }
-    
+
 
     static get relationTypes()
     {

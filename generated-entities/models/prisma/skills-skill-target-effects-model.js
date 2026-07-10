@@ -25,7 +25,7 @@ class SkillsSkillTargetEffectsModel
     {
         return 'skills_skill_target_effects';
     }
-    
+
 
     static get relationTypes()
     {

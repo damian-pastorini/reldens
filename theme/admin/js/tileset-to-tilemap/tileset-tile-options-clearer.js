@@ -5,12 +5,6 @@ class TilesetTileOptionsClearer
         this.binder = binder;
     }
 
-    applyAndRenderTileset(tilesetIndex)
-    {
-        this.binder.applyToTilesetRow(tilesetIndex);
-        this.binder.app.renderer.renderCanvas(tilesetIndex);
-    }
-
     applyAndRenderGlobal()
     {
         this.binder.apply.applyToRow(-1, null);
@@ -23,7 +17,7 @@ class TilesetTileOptionsClearer
         if(spot){
             spotFn(spot);
         }
-        this.applyAndRenderTileset(tilesetIndex);
+        this.binder.applyAndRenderTilesetRow(tilesetIndex);
     }
 
     clearGroundGroup(tilesetIndex, spotName)
@@ -83,7 +77,7 @@ class TilesetTileOptionsClearer
         if(tileset.tileOptions){
             tilesetFn(tileset.tileOptions);
         }
-        this.applyAndRenderTileset(tilesetIndex);
+        this.binder.applyAndRenderTilesetRow(tilesetIndex);
     }
 
     clearOption(tilesetIndex, optionKey, positionKey, spotName)
@@ -105,7 +99,7 @@ class TilesetTileOptionsClearer
                 if(spot[optionKey]){
                     delete spot[optionKey][positionKey];
                 }
-                this.applyAndRenderTileset(tilesetIndex);
+                this.binder.applyAndRenderTilesetRow(tilesetIndex);
                 return;
             }
             if('surroundingTiles' === optionKey){
@@ -113,16 +107,16 @@ class TilesetTileOptionsClearer
             }
             if('spotTileVariations' === optionKey){
                 spot[optionKey] = [];
-                this.applyAndRenderTileset(tilesetIndex);
+                this.binder.applyAndRenderTilesetRow(tilesetIndex);
                 return;
             }
-            if(this.binder.positionOrders[optionKey] !== undefined){
+            if('undefined' !== typeof this.binder.positionOrders[optionKey]){
                 spot[optionKey] = {};
-                this.applyAndRenderTileset(tilesetIndex);
+                this.binder.applyAndRenderTilesetRow(tilesetIndex);
                 return;
             }
             spot[optionKey] = null;
-            this.applyAndRenderTileset(tilesetIndex);
+            this.binder.applyAndRenderTilesetRow(tilesetIndex);
             return;
         }
         if(-1 === tilesetIndex){
@@ -135,7 +129,7 @@ class TilesetTileOptionsClearer
             return;
         }
         this.clearTilesetOption(tileset.tileOptions, optionKey, positionKey);
-        this.applyAndRenderTileset(tilesetIndex);
+        this.binder.applyAndRenderTilesetRow(tilesetIndex);
     }
 
     clearTilesetOption(tileOpts, optionKey, positionKey)
@@ -150,7 +144,7 @@ class TilesetTileOptionsClearer
             tileOpts[optionKey] = [];
             return;
         }
-        if(this.binder.positionOrders[optionKey] !== undefined){
+        if('undefined' !== typeof this.binder.positionOrders[optionKey]){
             tileOpts[optionKey] = {};
             return;
         }
@@ -173,7 +167,7 @@ class TilesetTileOptionsClearer
             if(spot && Array.isArray(spot[optionKey])){
                 spot[optionKey] = spot[optionKey].filter((v) => v !== value);
             }
-            this.applyAndRenderTileset(tilesetIndex);
+            this.binder.applyAndRenderTilesetRow(tilesetIndex);
             return;
         }
         let globalArrayClearer = (tileOptions) => {

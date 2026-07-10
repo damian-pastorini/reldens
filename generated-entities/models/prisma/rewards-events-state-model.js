@@ -19,7 +19,7 @@ class RewardsEventsStateModel
     {
         return 'rewards_events_state';
     }
-    
+
 
     static get relationTypes()
     {

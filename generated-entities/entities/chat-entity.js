@@ -22,7 +22,6 @@ class ChatEntity extends EntityProperties
                 type: 'reference',
                 reference: 'players',
                 alias: 'related_players_player',
-                isRequired: true,
                 dbType: 'int'
             },
             room_id: {

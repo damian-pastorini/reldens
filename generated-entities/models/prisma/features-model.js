@@ -19,7 +19,7 @@ class FeaturesModel
     {
         return 'features';
     }
-    
+
 }
 
 module.exports.FeaturesModel = FeaturesModel;

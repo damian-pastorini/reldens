@@ -31,23 +31,21 @@ class TilesetSpotInteractions
 
     handleSpotClick(tilesetIndex, event, context)
     {
-        if(context.target.closest('.spot-bulk-select')){
+        if(context.target.closest('.spot-name-input')){
+            return;
+        }
+        if(context.target.closest('.spot-bulk-select, .spot-generate-select')){
             event.stopPropagation();
             return;
         }
         if(context.target.closest('.spot-lock-btn')){
             event.stopPropagation();
-            this.toggleSpotLock(tilesetIndex, context.spotIndex, context.spotRow);
-            return;
+            return this.toggleSpotLock(tilesetIndex, context.spotIndex, context.spotRow);
         }
         if(context.target.closest('.spot-delete-btn')){
-            this.requestDeleteSpot(tilesetIndex, context.spotIndex);
-            return;
+            return this.requestDeleteSpot(tilesetIndex, context.spotIndex);
         }
         if(context.target.closest('.spot-row-header')){
-            if(context.target.closest('.spot-name-input')){
-                return;
-            }
             this.toggleSpotSelection(tilesetIndex, context.spotIndex);
         }
     }
@@ -56,8 +54,10 @@ class TilesetSpotInteractions
     {
         let app = this.editor.app;
         let spot = app.state[tilesetIndex].spots[context.spotIndex];
-        if(context.target.matches('.spot-bulk-select')){
-            spot.bulkSelected = context.target.checked;
+        if(context.target.matches('.spot-bulk-select, .spot-generate-select')){
+            let flagName = context.target.matches('.spot-bulk-select') ? 'bulkSelected' : 'generateSelected';
+            spot[flagName] = context.target.checked;
+            app.generator.updateGenerateButtonState();
             return;
         }
         if(context.target.matches('[data-prop]') && 'checkbox' === context.target.type){
@@ -113,6 +113,11 @@ class TilesetSpotInteractions
         if(app.tileOptionsBinder && app.tileOptionsBinder.activeSpotName === oldName){
             app.tileOptionsBinder.activeSpotName = newName;
         }
+        this.editor.legendRenderer.applyLegendSort(tilesetIndex);
+        this.editor.scroller.scrollLegendRowIntoView(
+            tilesetIndex,
+            '.spot-row[data-spot-index="'+context.spotIndex+'"]'
+        );
     }
 
     toggleSpotLock(tilesetIndex, spotIndex, spotRow)
@@ -135,7 +140,7 @@ class TilesetSpotInteractions
                     app.tileOptionsBinder.deactivate();
                 }
                 app.state[tilesetIndex].spots.splice(spotIndex, 1);
-                this.editor.renderLegend(tilesetIndex);
+                this.editor.legendRenderer.renderLegend(tilesetIndex);
             }
         );
     }
@@ -158,24 +163,21 @@ class TilesetSpotInteractions
         if(!refs || !refs.list){
             return;
         }
-        let spotRows = refs.list.querySelectorAll('.spot-row');
-        if(previousSpot
-            && previousSpot.tilesetIndex === tilesetIndex
-            && spotRows[previousSpot.spotIndex]){
-            let prevDetail = spotRows[previousSpot.spotIndex].querySelector('.spot-detail');
-            if(prevDetail){
-                prevDetail.classList.add('hidden');
-            }
+        if(previousSpot && previousSpot.tilesetIndex === tilesetIndex){
+            this.toggleSpotDetail(refs.list, previousSpot.spotIndex, true);
         }
         let app = this.editor.app;
         if(app.selectedSpot && app.selectedSpot.tilesetIndex === tilesetIndex){
-            let currentRow = spotRows[app.selectedSpot.spotIndex];
-            if(currentRow){
-                let currentDetail = currentRow.querySelector('.spot-detail');
-                if(currentDetail){
-                    currentDetail.classList.remove('hidden');
-                }
-            }
+            this.toggleSpotDetail(refs.list, app.selectedSpot.spotIndex, false);
+        }
+    }
+
+    toggleSpotDetail(list, spotIndex, hidden)
+    {
+        let spotRow = list.querySelector('.spot-row[data-spot-index="'+spotIndex+'"]');
+        let detail = spotRow ? spotRow.querySelector('.spot-detail') : null;
+        if(detail){
+            detail.classList.toggle('hidden', hidden);
         }
     }
 }

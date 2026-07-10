@@ -30,7 +30,7 @@ class AdsModel
     {
         return 'ads';
     }
-    
+
 
     static get relationTypes()
     {

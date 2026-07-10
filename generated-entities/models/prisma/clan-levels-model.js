@@ -19,7 +19,7 @@ class ClanLevelsModel
     {
         return 'clan_levels';
     }
-    
+
 
     static get relationTypes()
     {

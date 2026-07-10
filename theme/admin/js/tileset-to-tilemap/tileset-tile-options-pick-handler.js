@@ -1,4 +1,3 @@
-/* exported TilesetTileOptionsPickHandler */
 class TilesetTileOptionsPickHandler
 {
     constructor(binder)
@@ -47,8 +46,7 @@ class TilesetTileOptionsPickHandler
         let spotName = this.binder.activeSpotName;
         if(spotName){
             this.handleSpotTilePick(sourceTI, spotName, optionKey, posKey, flatIndex);
-            this.binder.applyToTilesetRow(sourceTI);
-            this.binder.app.renderer.renderCanvas(sourceTI);
+            this.binder.applyAndRenderTilesetRow(sourceTI);
             return;
         }
         if(-1 === activeTI){
@@ -58,14 +56,13 @@ class TilesetTileOptionsPickHandler
             return;
         }
         this.handleGlobalTilePick(activeTI, optionKey, posKey, flatIndex);
-        this.binder.applyToTilesetRow(activeTI);
-        this.binder.app.renderer.renderCanvas(activeTI);
+        this.binder.applyAndRenderTilesetRow(activeTI);
     }
 
     handleGlobalOptionPick(optionKey, posKey, flatIndex, tilesetKey)
     {
         if(!this.binder.app.globalTileOptions){
-            this.binder.app.globalTileOptions = this.binder.buildDefaultTileOptions();
+            this.binder.app.globalTileOptions = SharedUtils.buildDefaultTileOptions();
         }
         let globalOptions = this.binder.app.globalTileOptions;
         let entry = {tilesetKey, flatIndex};
@@ -129,7 +126,7 @@ class TilesetTileOptionsPickHandler
     {
         let tileset = this.binder.app.state[tilesetIndex];
         if(!tileset.tileOptions){
-            tileset.tileOptions = this.binder.buildDefaultTileOptions();
+            tileset.tileOptions = SharedUtils.buildDefaultTileOptions();
         }
         let tileOpts = tileset.tileOptions;
         if('randomGroundTiles' === optionKey){
@@ -193,7 +190,7 @@ class TilesetTileOptionsPickHandler
         let nextPos = this.findNextEmptyPosition(order, target, null);
         if(null !== nextPos && '0,0' === nextPos && 'surroundingTiles' === optionKey){
             let spot = spotName ? this.binder.findSpot(resolveIndex, spotName) : null;
-            if(spot && (null === spot.spotTile || undefined === spot.spotTile)){
+            if(spot && (null === spot.spotTile || 'undefined' === typeof spot.spotTile)){
                 this.activateAndShowOption(resolveIndex, 'spotTile', spotName);
                 return;
             }
@@ -248,12 +245,12 @@ class TilesetTileOptionsPickHandler
         if(-1 === tilesetIndex){
             return this.binder.app.globalTileOptions
                 && null !== this.binder.app.globalTileOptions.pathTile
-                && undefined !== this.binder.app.globalTileOptions.pathTile;
+                && 'undefined' !== typeof this.binder.app.globalTileOptions.pathTile;
         }
         return this.binder.app.state[tilesetIndex]
             && this.binder.app.state[tilesetIndex].tileOptions
             && null !== this.binder.app.state[tilesetIndex].tileOptions.pathTile
-            && undefined !== this.binder.app.state[tilesetIndex].tileOptions.pathTile;
+            && 'undefined' !== typeof this.binder.app.state[tilesetIndex].tileOptions.pathTile;
     }
 
     advanceFromPathTile(tilesetIndex)
@@ -294,7 +291,7 @@ class TilesetTileOptionsPickHandler
             if(posKey === skipKey){
                 continue;
             }
-            if(null === target[posKey] || undefined === target[posKey]){
+            if(null === target[posKey] || 'undefined' === typeof target[posKey]){
                 return posKey;
             }
         }

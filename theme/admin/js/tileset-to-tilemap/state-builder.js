@@ -25,16 +25,21 @@ class TilesetStateBuilder
         for(let elementData of elementsData){
             let colorIndex = startIndex + elements.length;
             let itemType = elementData.type || SharedUtils.ELEMENT_TYPE;
-            let approved = elementData.approved !== undefined
+            let approved = 'undefined' !== typeof elementData.approved
                 ? elementData.approved
                 : SharedUtils.CLUSTER_TYPE !== itemType && SharedUtils.SPOT_TYPE !== itemType;
             let item = SharedUtils.makeElement(
                 elementData.name, colorIndex, elementData.layers, approved, itemType
             );
             item.quantity = elementData.quantity || 1;
-            item.freeSpaceAround = elementData.freeSpaceAround !== undefined ? elementData.freeSpaceAround : 1;
+            item.freeSpaceAround = 'undefined' !== typeof elementData.freeSpaceAround
+                ? elementData.freeSpaceAround
+                : 1;
             item.allowPathsInFreeSpace = elementData.allowPathsInFreeSpace || false;
             item.bulkSelected = elementData.bulkSelected || false;
+            item.generateSelected = 'boolean' === typeof elementData.generateSelected
+                ? elementData.generateSelected
+                : item.bulkSelected;
             item.mapCentered = SharedUtils.toNumber(elementData.mapCentered, 0);
             elements.push(item);
         }
@@ -86,11 +91,30 @@ class TilesetStateBuilder
             resizeOption: tilesetData.resizeOption || 0,
             generatorType: tilesetData.generatorType || SharedUtils.DEFAULT_GENERATOR_TYPE,
             associationsProperties: tilesetData.associationsProperties || null,
-            tileOptions: tilesetData.tileOptions || this.app.tileOptionsBinder.buildDefaultTileOptions(),
-            spots: tilesetData.spots || [],
+            tileOptions: tilesetData.tileOptions || SharedUtils.buildDefaultTileOptions(),
+            spots: this.applyGenerateSelectedDefaults(tilesetData.spots || []),
+            legendSort: this.normalizeLegendSort(tilesetData.legendSort),
             collapsed: Boolean(tilesetData.collapsed),
             elements
         };
+    }
+
+    normalizeLegendSort(legendSort)
+    {
+        if(!legendSort || !legendSort.by){
+            return {by: 'name', ascending: true};
+        }
+        return {by: legendSort.by, ascending: false !== legendSort.ascending};
+    }
+
+    applyGenerateSelectedDefaults(spots)
+    {
+        for(let spot of spots){
+            if('boolean' !== typeof spot.generateSelected){
+                spot.generateSelected = spot.bulkSelected || false;
+            }
+        }
+        return spots;
     }
 
     buildTileset(tilesetData, i, template, container, sessionId)
@@ -113,7 +137,7 @@ class TilesetStateBuilder
 
     prepareSessionData(data)
     {
-        if(undefined === this.app.cachedShowAiControls){
+        if('undefined' === typeof this.app.cachedShowAiControls){
             let container = this.app.getElement('.tileset-analyzer');
             this.app.cachedShowAiControls = '1' === container.dataset.showAiControls;
             let providers = container.dataset.activeProviders;
@@ -155,11 +179,6 @@ class TilesetStateBuilder
         this.app.sessionId = savedSessionId;
     }
 
-    findTilesetIndex(filename)
-    {
-        return this.app.findTilesetIndexByFilename(filename);
-    }
-
     appendOrReplace(response, overrideFilenames)
     {
         this.app.sessionId = response.sessionId;
@@ -169,7 +188,7 @@ class TilesetStateBuilder
         let template = this.app.getElement('.tileset-container-template');
         for(let tilesetData of response.tilesets){
             let existingIndex = overrideFilenames.has(tilesetData.filename)
-                ? this.findTilesetIndex(tilesetData.filename)
+                ? this.app.findTilesetIndexByFilename(tilesetData.filename)
                 : -1;
             if(-1 === existingIndex){
                 this.buildTileset(tilesetData, this.app.state.length, template, container, response.sessionId);
@@ -206,8 +225,8 @@ class TilesetStateBuilder
     collectMapMeta()
     {
         let mapMeta = [];
-        for(let j = 0; j < this.app.state.length; j++){
-            let refs = this.app.refs[j];
+        for(let i = 0; i < this.app.state.length; i++){
+            let refs = this.app.refs[i];
             let row = refs ? refs.row : null;
             mapMeta.push({
                 mapName: row ? row.querySelector('.tileset-map-name').value : '',
@@ -222,14 +241,14 @@ class TilesetStateBuilder
         let container = this.app.getElement('.tilesets-container');
         container.textContent = '';
         let template = this.app.getElement('.tileset-container-template');
-        for(let j = 0; j < this.app.state.length; j++){
-            this.rebuildTilesetRow(j, template, container);
-            let row = container.querySelector('[data-tileset-index="'+j+'"]');
-            if(!row || !mapMeta[j]){
+        for(let i = 0; i < this.app.state.length; i++){
+            this.rebuildTilesetRow(i, template, container);
+            let row = container.querySelector('[data-tileset-index="'+i+'"]');
+            if(!row || !mapMeta[i]){
                 continue;
             }
-            row.querySelector('.tileset-map-name').value = mapMeta[j].mapName;
-            row.querySelector('.tileset-map-title').value = mapMeta[j].mapTitle;
+            row.querySelector('.tileset-map-name').value = mapMeta[i].mapName;
+            row.querySelector('.tileset-map-title').value = mapMeta[i].mapTitle;
         }
     }
 
@@ -261,8 +280,8 @@ class TilesetStateBuilder
     {
         let tilesetData = this.app.state[i];
         let globalOffset = this.app.getGlobalOffset(i);
-        for(let j = 0; j < tilesetData.elements.length; j++){
-            tilesetData.elements[j].colorIndex = globalOffset + j;
+        for(let elementIndex = 0; elementIndex < tilesetData.elements.length; elementIndex++){
+            tilesetData.elements[elementIndex].colorIndex = globalOffset + elementIndex;
             this.globalElementIndex++;
         }
         let tilesetFragment = template.content.cloneNode(true);

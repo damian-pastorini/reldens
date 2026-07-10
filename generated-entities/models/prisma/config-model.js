@@ -20,7 +20,7 @@ class ConfigModel
     {
         return 'config';
     }
-    
+
 
     static get relationTypes()
     {

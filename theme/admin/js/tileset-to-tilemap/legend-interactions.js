@@ -54,47 +54,37 @@ class TilesetLegendInteractions
 
     handleListClick(tilesetIndex, event, context)
     {
-        if(context.target.closest('.element-bulk-select')){
-            event.stopPropagation();
+        if(context.target.closest('.element-name-input')){
             return;
         }
-        if(context.target.closest('.layer-type-custom-input')){
+        if(context.target.closest('.element-bulk-select, .element-generate-select, .layer-type-custom-input')){
             event.stopPropagation();
             return;
         }
         if(context.target.closest('.element-lock-btn')){
             event.stopPropagation();
-            this.toggleElementLock(tilesetIndex, context.elementIndex, context.elementRow);
-            return;
+            return this.toggleElementLock(tilesetIndex, context.elementIndex, context.elementRow);
         }
         if(context.target.closest('.element-delete-btn')){
-            this.requestDeleteElement(tilesetIndex, context.elementIndex);
-            return;
+            return this.requestDeleteElement(tilesetIndex, context.elementIndex);
         }
         if(context.target.closest('.cluster-split-btn')){
             event.stopPropagation();
-            this.editor.splitCluster(tilesetIndex, context.elementIndex);
-            return;
+            return this.editor.splitCluster(tilesetIndex, context.elementIndex);
         }
         if(context.target.closest('.cluster-convert-btn')){
             event.stopPropagation();
-            this.convertCluster(tilesetIndex, context.elementIndex);
-            return;
+            return this.convertCluster(tilesetIndex, context.elementIndex);
         }
         if(context.target.closest('.element-ai-detect-btn')){
             event.stopPropagation();
-            this.runAiDetectForElement(tilesetIndex, context.elementIndex, context.elementRow);
-            return;
+            return this.runAiDetectForElement(tilesetIndex, context.elementIndex, context.elementRow);
         }
         if(context.target.closest('.element-ai-name-btn')){
             event.stopPropagation();
-            this.runAiNameForElement(tilesetIndex, context.elementIndex, context.elementRow);
-            return;
+            return this.runAiNameForElement(tilesetIndex, context.elementIndex, context.elementRow);
         }
         if(context.target.closest('.element-row-header')){
-            if(context.target.closest('.element-name-input')){
-                return;
-            }
             this.selectElementFromHeader(tilesetIndex, context.elementIndex);
         }
     }
@@ -112,8 +102,9 @@ class TilesetLegendInteractions
     handleListChange(tilesetIndex, context)
     {
         let app = this.editor.app;
-        if(context.target.matches('.element-bulk-select')){
-            app.state[tilesetIndex].elements[context.elementIndex].bulkSelected = context.target.checked;
+        if(context.target.matches('.element-bulk-select, .element-generate-select')){
+            let flagName = context.target.matches('.element-bulk-select') ? 'bulkSelected' : 'generateSelected';
+            app.state[tilesetIndex].elements[context.elementIndex][flagName] = context.target.checked;
             app.generator.updateGenerateButtonState();
             return;
         }
@@ -152,13 +143,19 @@ class TilesetLegendInteractions
 
     handleListFocusOut(tilesetIndex, context)
     {
-        if(context.target.matches('.element-name-input')){
-            let app = this.editor.app;
-            let valid = SharedUtils.NAME_VALID_REGEX.test(context.target.value);
-            app.state[tilesetIndex].elements[context.elementIndex].name = context.target.value;
-            context.elementRow.classList.toggle('element-name-invalid', !valid);
-            app.generator.updateGenerateButtonState();
+        if(!context.target.matches('.element-name-input')){
+            return;
         }
+        let app = this.editor.app;
+        let valid = SharedUtils.NAME_VALID_REGEX.test(context.target.value);
+        app.state[tilesetIndex].elements[context.elementIndex].name = context.target.value;
+        context.elementRow.classList.toggle('element-name-invalid', !valid);
+        app.generator.updateGenerateButtonState();
+        this.editor.legendRenderer.applyLegendSort(tilesetIndex);
+        this.editor.scroller.scrollLegendRowIntoView(
+            tilesetIndex,
+            '.element-row[data-element-index="'+context.elementIndex+'"]'
+        );
     }
 
     toggleElementLock(tilesetIndex, elementIndex, elementRow)

@@ -96,23 +96,28 @@
             display: flex;
             flex-direction: column;
             list-style: none;
+            max-width: 100%;
             padding-top: var(--space-lg);
             margin-top: var(--space-2xl);
             border-top: 1px solid var(--color-grey-40);
-            overflow: auto;
 
             label {
                 cursor: pointer;
                 color: var(--color-grey);
             }
 
-            > canvas {
-                align-self: flex-start;
+            .map-canvas-container {
+                width: 100%;
                 margin-top: var(--space-lg);
-                max-width: 100%;
+                overflow: auto;
+
+                canvas {
+                    display: block;
+                    max-width: 100%;
+                }
             }
 
-            &:only-child > canvas {
+            &:only-child .map-canvas-container canvas {
                 max-width: none;
             }
         }
