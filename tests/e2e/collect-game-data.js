@@ -12,6 +12,7 @@ const { Logger } = require('@reldens/utils');
 const { GameDataSkills } = require('./helpers/game-data-skills');
 const { PlayerStateReset } = require('./helpers/player-state-reset');
 const { TestDataSetup } = require('./helpers/test-data-setup');
+const { StartupGuard } = require('./helpers/startup-guard');
 
 class CollectGameData
 {
@@ -286,9 +287,9 @@ class CollectGameData
             await CollectGameData.ensureRequiredFeatures(event.serverManager);
         });
         process.stdout.write('Server: creating HTTP server...\n');
-        await serverManager.createServers();
+        await StartupGuard.runStep(serverManager.createServers(), 'HTTP server creation');
         process.stdout.write('Server: starting game server (this may take a moment)...\n');
-        await serverManager.start();
+        await StartupGuard.runStep(serverManager.start(), 'Game server start');
         process.stdout.write('Server: collecting game data...\n');
         await CollectGameData.runDataCollection(serverManager, modules.ObjectsManager, config);
         process.stdout.write('Server: ready\n\n');
