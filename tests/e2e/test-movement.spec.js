@@ -17,6 +17,8 @@ let expect = BaseE2eTest.expect;
 
 class TestMovement
 {
+    static DEATH_CHASE_RANGE = 30;
+
     static async loginAndPrepare(page, gameConfig, longRun, scene = null)
     {
         let username = gameConfig.e2eUsername || 'root';
@@ -60,7 +62,7 @@ class TestMovement
             + TimeConstants.ENEMY_KILL
             + TimeConstants.PLAYER_REVIVE
         );
-        await TestMovement.chaseEnemy(page, enemyKey, 80, navTimeout);
+        await TestMovement.chaseEnemy(page, enemyKey, TestMovement.DEATH_CHASE_RANGE, navTimeout);
         let deathDeadline = Date.now() + TimeConstants.ENEMY_KILL;
         let deathMaxSteps = Math.ceil(TimeConstants.ENEMY_KILL / 500) + 1;
         let isDead = false;
@@ -75,7 +77,7 @@ class TestMovement
             if(0 >= remaining){
                 break;
             }
-            await TestMovement.chaseEnemy(page, enemyKey, 80, Math.min(6000, remaining));
+            await TestMovement.chaseEnemy(page, enemyKey, TestMovement.DEATH_CHASE_RANGE, Math.min(6000, remaining));
             let waitMs = Math.min(1000, deathDeadline - Date.now());
             if(0 < waitMs){
                 await page.waitForTimeout(waitMs);
