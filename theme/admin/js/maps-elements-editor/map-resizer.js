@@ -36,12 +36,12 @@ class MapResizer
         panel.appendChild(this.editor.ui.buildButton(
             'Apply resize',
             'button-primary',
-            () => this.showResult(this.applyFromPanel())
+            () => this.requestResize(false)
         ));
         this.forceButton = this.editor.ui.buildButton(
             'Force resize',
             'button-danger hidden',
-            () => this.handleForceClick()
+            () => this.requestResize(true)
         );
         panel.appendChild(this.forceButton);
         this.highlightAnchor(this.anchor);
@@ -76,17 +76,6 @@ class MapResizer
             return;
         }
         this.forceButton.classList.toggle('hidden', !show);
-    }
-
-    handleForceClick()
-    {
-        this.setInput(this.anchor, this.horizontalInput.input.value, this.verticalInput.input.value);
-        let result = this.applyForce();
-        if(result.success){
-            this.horizontalInput.input.value = '0';
-            this.verticalInput.input.value = '0';
-        }
-        this.showResult(result);
     }
 
     buildAnchorButton(key)
@@ -125,167 +114,35 @@ class MapResizer
         }
     }
 
-    applyFromPanel()
+    readInputs()
     {
-        this.setInput(this.anchor, this.horizontalInput.input.value, this.verticalInput.input.value);
-        let result = this.apply();
-        if(result.success){
+        this.removeHorizontal = Math.max(0, Number(this.horizontalInput.input.value));
+        this.removeVertical = Math.max(0, Number(this.verticalInput.input.value));
+    }
+
+    async requestResize(force)
+    {
+        this.readInputs();
+        let response = await this.editor.jsonFetcher.post(this.editor.apiBasePath+'/resize-map', this.buildBody(force));
+        if(response && response.success){
             this.horizontalInput.input.value = '0';
             this.verticalInput.input.value = '0';
+            await this.editor.load();
         }
-        return result;
+        this.showResult(response);
     }
 
-    setInput(anchor, removeHorizontal, removeVertical)
+    buildBody(force)
     {
-        this.anchor = anchor;
-        this.removeHorizontal = Math.max(0, Number(removeHorizontal) || 0);
-        this.removeVertical = Math.max(0, Number(removeVertical) || 0);
-    }
-
-    computeRemovals()
-    {
-        return {
-            left: this.leftRemoved(this.anchor, this.removeHorizontal),
-            top: this.topRemoved(this.anchor, this.removeVertical)
-        };
-    }
-
-    leftRemoved(anchor, total)
-    {
-        if(-1 !== anchor.indexOf('right')){
-            return total;
-        }
-        if('center' === anchor || -1 !== anchor.indexOf('top-center') || -1 !== anchor.indexOf('bottom-center')){
-            return Math.floor(total / 2);
-        }
-        return 0;
-    }
-
-    topRemoved(anchor, total)
-    {
-        if(-1 !== anchor.indexOf('bottom')){
-            return total;
-        }
-        if('center' === anchor || 'left' === anchor || 'right' === anchor){
-            return Math.floor(total / 2);
-        }
-        return 0;
-    }
-
-    findOutOfBoundsElements()
-    {
-        let removals = this.computeRemovals();
-        let newWidth = this.editor.mapJson.width - this.removeHorizontal;
-        let newHeight = this.editor.mapJson.height - this.removeVertical;
-        let offending = [];
-        for(let element of this.editor.mapElements.elements){
-            if(this.elementWouldEscape(element, removals, newWidth, newHeight)){
-                offending.push(element.instanceId);
-            }
-        }
-        return offending;
-    }
-
-    elementWouldEscape(element, removals, newWidth, newHeight)
-    {
-        return element.layers.some(
-            (layer) => layer.tiles.some(
-                (tile) => MapResizerCrop.tileEscapes(tile, removals, newWidth, newHeight)
-            )
-        );
-    }
-
-    apply()
-    {
-        let offending = this.findOutOfBoundsElements();
-        if(0 < offending.length){
-            return {success: false, offending};
-        }
-        let removals = this.computeRemovals();
-        let newWidth = this.editor.mapJson.width - this.removeHorizontal;
-        let newHeight = this.editor.mapJson.height - this.removeVertical;
-        this.translateAllElements(removals);
-        this.rebuildLayerData(newWidth, newHeight, removals);
-        this.editor.mapJson.width = newWidth;
-        this.editor.mapJson.height = newHeight;
-        MapResizerBorders.restamp(this.editor, newWidth, newHeight);
-        this.editor.markDirty();
-        this.editor.afterMutation();
-        return {success: true};
-    }
-
-    applyForce()
-    {
-        let removals = this.computeRemovals();
-        let newWidth = this.editor.mapJson.width - this.removeHorizontal;
-        let newHeight = this.editor.mapJson.height - this.removeVertical;
-        if(0 >= newWidth || 0 >= newHeight){
-            return {success: false, offending: []};
-        }
-        let removedLayerNames = MapResizerCrop.cropRecord(this.editor, removals, newWidth, newHeight);
-        this.rebuildLayerData(newWidth, newHeight, removals);
-        this.editor.mapJson.width = newWidth;
-        this.editor.mapJson.height = newHeight;
-        MapResizerCrop.pruneRemovedElementLayers(this.editor, removedLayerNames);
-        MapResizerBorders.restamp(this.editor, newWidth, newHeight);
-        this.editor.markDirty();
-        this.editor.afterMutation();
-        return {success: true};
-    }
-
-    translateAllElements(removals)
-    {
-        for(let element of this.editor.mapElements.elements){
-            this.translateElementTiles(element, removals);
-            element.bounds.col -= removals.left;
-            element.bounds.row -= removals.top;
-        }
-    }
-
-    translateElementTiles(element, removals)
-    {
-        for(let elementLayer of element.layers){
-            this.shiftTiles(elementLayer.tiles, removals);
-        }
-    }
-
-    shiftTiles(tiles, removals)
-    {
-        for(let tile of tiles){
-            tile.col -= removals.left;
-            tile.row -= removals.top;
-        }
-    }
-
-    rebuildLayerData(newWidth, newHeight, removals)
-    {
-        let oldWidth = this.editor.mapJson.width;
-        for(let mapLayer of this.editor.mapJson.layers){
-            if('tilelayer' !== mapLayer.type){
-                continue;
-            }
-            mapLayer.data = this.cropLayerData(mapLayer.data, oldWidth, newWidth, newHeight, removals);
-            mapLayer.width = newWidth;
-            mapLayer.height = newHeight;
-        }
-    }
-
-    cropLayerData(oldData, oldWidth, newWidth, newHeight, removals)
-    {
-        let newData = new Array(newWidth * newHeight).fill(0);
-        for(let row = 0; row < newHeight; row++){
-            this.copyRow(oldData, newData, row, oldWidth, newWidth, removals);
-        }
-        return newData;
-    }
-
-    copyRow(oldData, newData, row, oldWidth, newWidth, removals)
-    {
-        let oldRow = row + removals.top;
-        for(let col = 0; col < newWidth; col++){
-            newData[row * newWidth + col] = oldData[oldRow * oldWidth + (col + removals.left)] || 0;
-        }
+        return JSON.stringify({
+            mapName: this.editor.mapName,
+            sessionId: this.editor.sessionId,
+            context: this.editor.context,
+            anchor: this.anchor,
+            removeHorizontal: this.removeHorizontal,
+            removeVertical: this.removeVertical,
+            force: force
+        });
     }
 }
 window.MapResizer = MapResizer;
