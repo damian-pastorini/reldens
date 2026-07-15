@@ -7,18 +7,57 @@ class ElementMover
         this.tileIndex = new Map();
     }
 
+    entries()
+    {
+        let entries = [];
+        let mapSpots = this.editor.mapSpots;
+        if(mapSpots && mapSpots.spots){
+            for(let spot of mapSpots.spots){
+                entries.push(spot);
+            }
+        }
+        for(let element of this.editor.mapElements.elements){
+            entries.push(element);
+        }
+        return entries;
+    }
+
+    isSpot(entry)
+    {
+        let mapSpots = this.editor.mapSpots;
+        if(!mapSpots || !mapSpots.spots){
+            return false;
+        }
+        return -1 !== mapSpots.spots.indexOf(entry);
+    }
+
+    collectMovedSpots()
+    {
+        let movedSpots = [];
+        let mapSpots = this.editor.mapSpots;
+        if(!mapSpots || !mapSpots.spots){
+            return movedSpots;
+        }
+        for(let spot of mapSpots.spots){
+            if(spot.moved){
+                movedSpots.push(spot);
+            }
+        }
+        return movedSpots;
+    }
+
     buildTileIndex()
     {
         this.tileIndex.clear();
-        for(let element of this.editor.mapElements.elements){
-            this.indexElementTiles(element);
+        for(let entry of this.entries()){
+            this.indexEntryTiles(entry);
         }
     }
 
-    indexElementTiles(element)
+    indexEntryTiles(entry)
     {
-        for(let layer of element.layers){
-            this.indexLayerTiles(layer.tiles, element.instanceId);
+        for(let layer of entry.layers){
+            this.indexLayerTiles(layer.tiles, entry.instanceId);
         }
     }
 
@@ -34,7 +73,7 @@ class ElementMover
         return col+','+row;
     }
 
-    findElementAt(col, row)
+    findEntryAt(col, row)
     {
         let id = this.tileIndex.get(this.tileKey(col, row));
         if(!id){
@@ -45,13 +84,13 @@ class ElementMover
 
     findByInstance(instanceId)
     {
-        return this.editor.mapElements.elements.find((element) => element.instanceId === instanceId);
+        return this.entries().find((entry) => entry.instanceId === instanceId);
     }
 
-    beginDrag(element, anchorCol, anchorRow)
+    beginDrag(entry, anchorCol, anchorRow)
     {
         this.dragState = {
-            instanceId: element.instanceId,
+            instanceId: entry.instanceId,
             anchorCol,
             anchorRow,
             currentCol: anchorCol,
@@ -72,20 +111,20 @@ class ElementMover
 
     checkOutOfBounds()
     {
-        let element = this.findByInstance(this.dragState.instanceId);
-        if(!element){
+        let entry = this.findByInstance(this.dragState.instanceId);
+        if(!entry){
             return true;
         }
         return this.anyTileOutOfBounds(
-            element,
+            entry,
             this.dragState.currentCol - this.dragState.anchorCol,
             this.dragState.currentRow - this.dragState.anchorRow
         );
     }
 
-    anyTileOutOfBounds(element, deltaCol, deltaRow)
+    anyTileOutOfBounds(entry, deltaCol, deltaRow)
     {
-        let bounds = element.bounds;
+        let bounds = entry.bounds;
         let mapJson = this.editor.mapJson;
         let newCol = bounds.col + deltaCol;
         let newRow = bounds.row + deltaRow;
@@ -99,15 +138,6 @@ class ElementMover
             return true;
         }
         return newRow + bounds.height > mapJson.height;
-
-    }
-
-    outOfBoundsAt(newCol, newRow)
-    {
-        return 0 > newCol
-            || 0 > newRow
-            || newCol >= this.editor.mapJson.width
-            || newRow >= this.editor.mapJson.height;
     }
 
     commitDrag()
@@ -116,8 +146,8 @@ class ElementMover
             this.dragState = null;
             return false;
         }
-        let element = this.findByInstance(this.dragState.instanceId);
-        if(!element){
+        let entry = this.findByInstance(this.dragState.instanceId);
+        if(!entry){
             this.dragState = null;
             return false;
         }
@@ -127,21 +157,25 @@ class ElementMover
             this.dragState = null;
             return false;
         }
-        this.translateElement(element, deltaCol, deltaRow);
+        this.translateEntry(entry, deltaCol, deltaRow);
+        delete entry.zOrderOffset;
+        if(this.isSpot(entry)){
+            entry.moved = true;
+        }
         this.dragState = null;
         this.editor.markDirty();
         this.editor.afterMutation();
         return true;
     }
 
-    translateElement(element, deltaCol, deltaRow)
+    translateEntry(entry, deltaCol, deltaRow)
     {
         let mapWidth = this.editor.mapJson.width;
-        for(let elementLayer of element.layers){
-            this.translateLayer(elementLayer, deltaCol, deltaRow, mapWidth);
+        for(let entryLayer of entry.layers){
+            this.translateLayer(entryLayer, deltaCol, deltaRow, mapWidth);
         }
-        element.bounds.col += deltaCol;
-        element.bounds.row += deltaRow;
+        entry.bounds.col += deltaCol;
+        entry.bounds.row += deltaRow;
     }
 
     translateLayer(elementLayer, deltaCol, deltaRow, mapWidth)

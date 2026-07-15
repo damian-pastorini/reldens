@@ -128,6 +128,7 @@ class TilesetRowBinder
         });
         this.legendControls.bindLegendSortControls(capturedI, refs);
         refs.legendSearch.addEventListener('input', () => this.scheduleLegendSearch(capturedI));
+        this.legendControls.applyLegendVisibilityControlsState(capturedI, refs);
         refs.showElementsCheck.addEventListener('change', () => this.applyFilterChange(capturedI));
         refs.showClustersCheck.addEventListener('change', () => this.applyFilterChange(capturedI));
         if(refs.showSpotsCheck){
@@ -148,6 +149,11 @@ class TilesetRowBinder
 
     applyFilterChange(tilesetIndex)
     {
+        let refs = this.app.refs[tilesetIndex];
+        let legendVisibility = this.legendControls.provideLegendVisibility(tilesetIndex);
+        legendVisibility.showElements = refs.showElementsCheck.checked;
+        legendVisibility.showClusters = refs.showClustersCheck.checked;
+        legendVisibility.showSpots = refs.showSpotsCheck ? refs.showSpotsCheck.checked : true;
         this.app.editor.legendRenderer.applyLegendVisibility(tilesetIndex);
         this.app.renderer.renderCanvas(tilesetIndex);
     }

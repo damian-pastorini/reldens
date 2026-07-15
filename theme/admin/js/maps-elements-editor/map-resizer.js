@@ -11,6 +11,7 @@ class MapResizer
         this.anchor = 'center';
         this.removeHorizontal = 0;
         this.removeVertical = 0;
+        this.previewActive = false;
         this.anchorButtons = {};
         this.horizontalInput = null;
         this.verticalInput = null;
@@ -98,6 +99,7 @@ class MapResizer
         input.type = 'number';
         input.min = '0';
         input.value = String(initial);
+        input.addEventListener('input', () => this.refreshPreview());
         wrapper.appendChild(input);
         return {wrapper, input};
     }
@@ -112,12 +114,74 @@ class MapResizer
             }
             button.classList.toggle('selected', anchorKey === key);
         }
+        this.editor.requestRender();
     }
 
     readInputs()
     {
-        this.removeHorizontal = Math.max(0, Number(this.horizontalInput.input.value));
-        this.removeVertical = Math.max(0, Number(this.verticalInput.input.value));
+        this.removeHorizontal = this.clampAmount(this.horizontalInput.input.value);
+        this.removeVertical = this.clampAmount(this.verticalInput.input.value);
+    }
+
+    clampAmount(value)
+    {
+        let amount = Number(value);
+        if(!Number.isFinite(amount) || 0 > amount){
+            return 0;
+        }
+        return Math.floor(amount);
+    }
+
+    refreshPreview()
+    {
+        this.readInputs();
+        this.editor.requestRender();
+    }
+
+    computeRemovals(anchor, removeHorizontal, removeVertical)
+    {
+        return {
+            left: this.anchoredRemoval(
+                removeHorizontal,
+                -1 !== anchor.indexOf('right'),
+                -1 !== anchor.indexOf('center')
+            ),
+            top: this.anchoredRemoval(
+                removeVertical,
+                -1 !== anchor.indexOf('bottom'),
+                -1 === anchor.indexOf('top') && -1 === anchor.indexOf('bottom')
+            )
+        };
+    }
+
+    anchoredRemoval(total, removeFromFarSide, removeCentered)
+    {
+        if(removeFromFarSide){
+            return total;
+        }
+        if(removeCentered){
+            return Math.floor(total / 2);
+        }
+        return 0;
+    }
+
+    previewBands()
+    {
+        if(!this.previewActive || !this.editor.mapJson){
+            return false;
+        }
+        if(0 === this.removeHorizontal && 0 === this.removeVertical){
+            return false;
+        }
+        let newWidth = this.editor.mapJson.width - this.removeHorizontal;
+        let newHeight = this.editor.mapJson.height - this.removeVertical;
+        if(0 >= newWidth || 0 >= newHeight){
+            return false;
+        }
+        let bands = this.computeRemovals(this.anchor, this.removeHorizontal, this.removeVertical);
+        bands.newWidth = newWidth;
+        bands.newHeight = newHeight;
+        return bands;
     }
 
     async requestResize(force)
@@ -127,6 +191,7 @@ class MapResizer
         if(response && response.success){
             this.horizontalInput.input.value = '0';
             this.verticalInput.input.value = '0';
+            this.readInputs();
             await this.editor.load();
         }
         this.showResult(response);

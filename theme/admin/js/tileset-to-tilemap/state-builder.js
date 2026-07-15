@@ -94,6 +94,7 @@ class TilesetStateBuilder
             tileOptions: tilesetData.tileOptions || SharedUtils.buildDefaultTileOptions(),
             spots: this.applyGenerateSelectedDefaults(tilesetData.spots || []),
             legendSort: this.normalizeLegendSort(tilesetData.legendSort),
+            legendVisibility: this.normalizeLegendVisibility(tilesetData.legendVisibility),
             collapsed: Boolean(tilesetData.collapsed),
             elements
         };
@@ -105,6 +106,18 @@ class TilesetStateBuilder
             return {by: 'name', ascending: true};
         }
         return {by: legendSort.by, ascending: false !== legendSort.ascending};
+    }
+
+    normalizeLegendVisibility(legendVisibility)
+    {
+        if(!legendVisibility){
+            return {showElements: true, showClusters: true, showSpots: true};
+        }
+        return {
+            showElements: false !== legendVisibility.showElements,
+            showClusters: false !== legendVisibility.showClusters,
+            showSpots: false !== legendVisibility.showSpots
+        };
     }
 
     applyGenerateSelectedDefaults(spots)

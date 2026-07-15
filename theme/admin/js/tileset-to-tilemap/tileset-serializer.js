@@ -59,6 +59,8 @@ class TilesetSerializer
         serialized.spots = this.collectSelected(tileset.spots, selectedOnly, null);
         serialized.collapsed = Boolean(tileset.collapsed);
         serialized.legendSort = tileset.legendSort || {by: 'name', ascending: true};
+        serialized.legendVisibility = tileset.legendVisibility
+            || {showElements: true, showClusters: true, showSpots: true};
         serialized.elements = this.collectSelected(tileset.elements, selectedOnly, (element) => this.serializeElement(element));
         return serialized;
     }

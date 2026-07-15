@@ -13,6 +13,7 @@ class MapsElementsEditor
         this.onPublishedState = options.onPublishedState || null;
         this.mapJson = null;
         this.mapElements = null;
+        this.mapSpots = null;
         this.dirty = false;
         this.hoveredInstanceId = null;
         this.listenersAttached = false;
@@ -49,6 +50,7 @@ class MapsElementsEditor
         if(!this.mapElements){
             return false;
         }
+        this.mapSpots = await this.loadSpots(this.mapName);
         this.layersNormalizer.explode(this.mapJson, this.mapElements);
         this.zOrderSorter.sort();
         this.resetController.captureSnapshot();
@@ -124,14 +126,14 @@ class MapsElementsEditor
         };
     }
 
-    pickElementAt(event)
+    pickEntryAt(event)
     {
         let tile = this.canvasToTile(event);
-        let picked = this.mover.findElementAt(tile.col, tile.row);
+        let picked = this.mover.findEntryAt(tile.col, tile.row);
         if(!picked){
             return null;
         }
-        return {element: picked, tile};
+        return {entry: picked, tile};
     }
 
     onMouseDown(event)
@@ -147,11 +149,11 @@ class MapsElementsEditor
             this.ui.refreshCancelDuplicate(this.duplicator.isPlacing());
             return;
         }
-        let picked = this.pickElementAt(event);
+        let picked = this.pickEntryAt(event);
         if(!picked){
             return;
         }
-        this.mover.beginDrag(picked.element, picked.tile.col, picked.tile.row);
+        this.mover.beginDrag(picked.entry, picked.tile.col, picked.tile.row);
         this.requestRender();
     }
 
@@ -168,8 +170,8 @@ class MapsElementsEditor
             this.requestRender();
             return;
         }
-        let element = this.mover.findElementAt(tile.col, tile.row);
-        let nextId = element ? element.instanceId : null;
+        let entry = this.mover.findEntryAt(tile.col, tile.row);
+        let nextId = entry ? entry.instanceId : null;
         if(nextId === this.hoveredInstanceId){
             return;
         }
@@ -190,11 +192,14 @@ class MapsElementsEditor
     {
         event.preventDefault();
         let tile = this.canvasToTile(event);
-        let element = this.mover.findElementAt(tile.col, tile.row);
-        if(!element){
+        let entry = this.mover.findEntryAt(tile.col, tile.row);
+        if(!entry){
             return;
         }
-        this.contextMenu.show(element.instanceId, event.clientX, event.clientY);
+        if(this.mover.isSpot(entry)){
+            return;
+        }
+        this.contextMenu.show(entry.instanceId, event.clientX, event.clientY);
     }
 
     requestRender()
@@ -314,7 +319,8 @@ class MapsElementsEditor
             mapName: this.mapName,
             sessionId: this.sessionId,
             context: this.context,
-            mapElements: this.mapElements
+            mapElements: this.mapElements,
+            mapSpots: {spots: this.mover.collectMovedSpots()}
         }));
         if(result.success){
             this.dirty = false;
@@ -335,6 +341,13 @@ class MapsElementsEditor
         return (await this.jsonFetcher.fetch(
             this.apiBasePath+'/build-elements-from-layers?mapName='+encodeURIComponent(mapName)
         ))?.mapElements ?? null;
+    }
+
+    async loadSpots(mapName)
+    {
+        return (await this.jsonFetcher.fetch(
+            this.apiBasePath+'/build-spots-from-layers?mapName='+encodeURIComponent(mapName)
+        ))?.mapSpots ?? {spots: [], warnings: []};
     }
 
     async refreshBackupsList()

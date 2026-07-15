@@ -87,5 +87,24 @@ class TilesetLegendControlsBinder
         refs.legendSortAscBtn.classList.toggle('active', legendSort.ascending);
         refs.legendSortDescBtn.classList.toggle('active', !legendSort.ascending);
     }
+
+    provideLegendVisibility(tilesetIndex)
+    {
+        let tilesetState = this.app.state[tilesetIndex];
+        if(!tilesetState.legendVisibility){
+            tilesetState.legendVisibility = {showElements: true, showClusters: true, showSpots: true};
+        }
+        return tilesetState.legendVisibility;
+    }
+
+    applyLegendVisibilityControlsState(tilesetIndex, refs)
+    {
+        let legendVisibility = this.provideLegendVisibility(tilesetIndex);
+        refs.showElementsCheck.checked = legendVisibility.showElements;
+        refs.showClustersCheck.checked = legendVisibility.showClusters;
+        if(refs.showSpotsCheck){
+            refs.showSpotsCheck.checked = legendVisibility.showSpots;
+        }
+    }
 }
 window.TilesetLegendControlsBinder = TilesetLegendControlsBinder;

@@ -6,6 +6,7 @@ class EditorResetController
         this.basePath = '/reldens-admin/maps-elements-editor/api';
         this.lastLoadedMapJsonSnapshot = null;
         this.lastLoadedMapElementsSnapshot = null;
+        this.lastLoadedMapSpotsSnapshot = null;
         this.lastError = null;
     }
 
@@ -13,6 +14,7 @@ class EditorResetController
     {
         this.lastLoadedMapJsonSnapshot = JSON.stringify(this.editor.mapJson); // HOFF
         this.lastLoadedMapElementsSnapshot = JSON.stringify(this.editor.mapElements); // HOFF
+        this.lastLoadedMapSpotsSnapshot = JSON.stringify(this.editor.mapSpots);
     }
 
     restore()
@@ -22,6 +24,7 @@ class EditorResetController
         }
         this.editor.mapJson = JSON.parse(this.lastLoadedMapJsonSnapshot); // HOFF
         this.editor.mapElements = JSON.parse(this.lastLoadedMapElementsSnapshot); // HOFF
+        this.editor.mapSpots = JSON.parse(this.lastLoadedMapSpotsSnapshot);
         this.editor.dirty = false;
         this.editor.ui.refreshDirty(false);
         this.editor.mover.buildTileIndex();

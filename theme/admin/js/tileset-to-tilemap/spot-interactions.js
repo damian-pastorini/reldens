@@ -155,6 +155,9 @@ class TilesetSpotInteractions
         app.selectedSpot = wasSelected ? null : { tilesetIndex, spotIndex };
         this.applySpotSelectionVisual(tilesetIndex, previousSpot);
         app.renderer.renderCanvas(tilesetIndex);
+        if(!wasSelected){
+            this.editor.scroller.scrollCanvasToSpot(tilesetIndex, spotIndex);
+        }
     }
 
     applySpotSelectionVisual(tilesetIndex, previousSpot)
