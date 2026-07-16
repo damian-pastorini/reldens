@@ -86,7 +86,7 @@ class EditorUi
         toolbar.className = 'elements-editor-toolbar';
         this.saveBtn = this.buildButton('Save', 'button-primary', () => {
             this.closeOtherPanels(null);
-            this.editor.handleSaveClick();
+            this.editor.confirmations.handleSaveClick();
         });
         toolbar.appendChild(this.saveBtn);
         toolbar.appendChild(

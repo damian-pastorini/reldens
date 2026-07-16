@@ -67,7 +67,16 @@ class MapResizer
             this.toggleForceButton(true);
             return;
         }
-        this.errorEl.textContent = 'Resize failed.';
+        this.showError('Resize failed.');
+    }
+
+    showError(message)
+    {
+        if(!this.errorEl){
+            return;
+        }
+        this.errorEl.classList.remove('hidden');
+        this.errorEl.textContent = message;
         this.toggleForceButton(false);
     }
 
@@ -187,6 +196,34 @@ class MapResizer
     async requestResize(force)
     {
         this.readInputs();
+        if(!this.editor.dirty){
+            await this.applyResize(force);
+            return;
+        }
+        if('room' !== this.editor.context){
+            await this.saveAndApplyResize(force);
+            return;
+        }
+        adminFunctions.showConfirmDialog(async (confirmed) => {
+            if(!confirmed){
+                return;
+            }
+            await this.saveAndApplyResize(force);
+        }, this.editor.confirmations.saveConfirmOptions());
+    }
+
+    async saveAndApplyResize(force)
+    {
+        let result = await this.editor.save();
+        if(!result.success){
+            this.showError('Cannot resize: the pending map changes could not be saved.');
+            return;
+        }
+        await this.applyResize(force);
+    }
+
+    async applyResize(force)
+    {
         let response = await this.editor.jsonFetcher.post(this.editor.apiBasePath+'/resize-map', this.buildBody(force));
         if(response && response.success){
             this.horizontalInput.input.value = '0';

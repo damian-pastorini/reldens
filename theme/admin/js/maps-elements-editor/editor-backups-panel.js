@@ -81,10 +81,10 @@ class EditorBackupsPanel
             row.appendChild(publishedTag);
         }
         row.appendChild(this.editor.ui.buildButton(
-            'Reload', 'button-primary', () => this.editor.confirmReload(backup.timestamp)
+            'Reload', 'button-primary', () => this.editor.confirmations.confirmReload(backup.timestamp)
         ));
         row.appendChild(this.editor.ui.buildButton(
-            'Delete', 'button-danger', () => this.editor.confirmDeleteBackup(backup.timestamp)
+            'Delete', 'button-danger', () => this.editor.confirmations.confirmDeleteBackup(backup.timestamp)
         ));
         return row;
     }

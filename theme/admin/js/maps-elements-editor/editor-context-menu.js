@@ -106,7 +106,7 @@ class EditorContextMenu
     {
         let target = this.targetInstanceId;
         this.hide();
-        this.editor.confirmDeleteElement(target);
+        this.editor.confirmations.confirmDeleteElement(target);
     }
 }
 window.EditorContextMenu = EditorContextMenu;

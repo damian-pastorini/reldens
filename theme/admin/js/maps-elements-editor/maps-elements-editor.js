@@ -35,6 +35,7 @@ class MapsElementsEditor
         this.backupsPanel = new EditorBackupsPanel(this);
         this.painter = new MapElementsCanvasPainter(this);
         this.ui = new EditorUi(this);
+        this.confirmations = new EditorConfirmations(this);
         this.resetController = new EditorResetController(this);
         this.zOrderSorter = new ElementZOrderSorter(this);
         this.layersNormalizer = new MapLayersNormalizer();
@@ -237,74 +238,6 @@ class MapsElementsEditor
         if(this.duplicator.cancelPlacing()){
             this.ui.refreshCancelDuplicate(false);
         }
-    }
-
-    confirmDeleteElement(instanceId)
-    {
-        adminFunctions.showConfirmDialog((confirmed) => {
-            if(confirmed){
-                this.deleter.delete(instanceId);
-            }
-        }, {
-            title: 'Delete Element',
-            message: 'Delete element "'+instanceId+'"? This removes every tile of every layer it owns.',
-            confirmText: 'Delete',
-            confirmClass: 'button-danger'
-        });
-    }
-
-    confirmReload(backupTimestamp)
-    {
-        adminFunctions.showConfirmDialog(async (confirmed) => {
-            if(!confirmed){
-                return;
-            }
-            let result = await this.backupsPanel.restore(backupTimestamp);
-            if(result.success){
-                await this.load();
-            }
-        }, {
-            title: 'Reload Backup',
-            message: 'Reload backup from '+backupTimestamp+'? A pre-restore backup will be written first.',
-            confirmText: 'Reload',
-            confirmClass: 'button-primary'
-        });
-    }
-
-    confirmDeleteBackup(backupTimestamp)
-    {
-        adminFunctions.showConfirmDialog(async (confirmed) => {
-            if(!confirmed){
-                return;
-            }
-            await this.backupsPanel.delete(backupTimestamp);
-            await this.refreshBackupsList();
-        }, {
-            title: 'Delete Backup',
-            message: 'Delete backup '+backupTimestamp+'? This cannot be undone.',
-            confirmText: 'Delete',
-            confirmClass: 'button-danger'
-        });
-    }
-
-    async handleSaveClick()
-    {
-        if('room' !== this.context){
-            await this.performSave();
-            return;
-        }
-        adminFunctions.showConfirmDialog(async (confirmed) => {
-            if(!confirmed){
-                return;
-            }
-            await this.performSave();
-        }, {
-            title: 'Save Map',
-            message: 'Are you sure you want to save this map?'
-                +' IMPORTANT: the map will be overwritten, and a server restart is required to publish the updates.',
-            confirmText: 'Save',
-            confirmClass: 'button-primary'
-        });
     }
 
     async performSave()
