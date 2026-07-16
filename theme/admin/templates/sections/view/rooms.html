@@ -111,7 +111,7 @@
             - The room starting point is the default return point for this room: where the player is placed when entering the room without a specific origin (for example the game starting room).<br/>
             - Click a tile on the map below to set the starting position.<br/>
         </p>
-        <form name="createDefaultReturnPoint" action="#" method="post">
+        <form name="createDefaultReturnPoint" action="#" method="post" class="confirmation-required">
             <input type="hidden" name="createDefaultReturnPoint" value="1"/>
             <div class="edit-field">
                 <label class="field-name" for="roomStartingPointDirection">The direction in which the player will be displayed</label>
@@ -139,7 +139,11 @@
             <div class="association-maps-container room-starting-point-container" data-map-loader="{{&id}}"></div>
             <div class="actions-container">
                 <span>
-                    <button class="button button-primary" type="submit">Set starting point</button>
+                    <button class="button button-primary"
+                        type="submit"
+                        data-modal-confirm-title="Confirm Starting Point"
+                        data-modal-confirm-message="Are you sure you want to set this as the starting point?"
+                    >Set starting point</button>
                 </span>
             </div>
         </form>

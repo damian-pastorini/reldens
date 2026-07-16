@@ -22,6 +22,7 @@ class SkillsSkillEntity extends EntityProperties
             },
             key: {
                 isRequired: true,
+                isUnique: true,
                 dbType: 'varchar'
             },
             type: {

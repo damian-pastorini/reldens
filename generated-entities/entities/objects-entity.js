@@ -42,6 +42,7 @@ class ObjectsEntity extends EntityProperties
             },
             object_class_key: {
                 isRequired: true,
+                isUnique: true,
                 dbType: 'varchar'
             },
             client_key: {

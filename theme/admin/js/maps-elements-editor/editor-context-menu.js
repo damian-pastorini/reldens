@@ -60,10 +60,10 @@ class EditorContextMenu
         let menu = document.createElement('div');
         menu.className = 'element-context-menu hidden';
         menu.appendChild(
-            this.editor.ui.buildButton('Move up', 'button-secondary', () => this.onMove(-1))
+            this.editor.ui.buildButton('Move back', 'button-secondary', () => this.onMove(-1))
         );
         menu.appendChild(
-            this.editor.ui.buildButton('Move down', 'button-secondary', () => this.onMove(1))
+            this.editor.ui.buildButton('Move front', 'button-secondary', () => this.onMove(1))
         );
         menu.appendChild(
             this.editor.ui.buildButton('Duplicate', 'button-primary', () => this.onDuplicate())
@@ -92,8 +92,7 @@ class EditorContextMenu
             return;
         }
         this.editor.markDirty();
-        this.editor.painter.baseDirty = true;
-        this.editor.requestRender();
+        this.editor.afterMutation();
     }
 
     onDuplicate()
@@ -107,7 +106,7 @@ class EditorContextMenu
     {
         let target = this.targetInstanceId;
         this.hide();
-        this.editor.confirmDeleteElement(target);
+        this.editor.confirmations.confirmDeleteElement(target);
     }
 }
 window.EditorContextMenu = EditorContextMenu;

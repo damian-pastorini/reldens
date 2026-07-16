@@ -20,6 +20,20 @@
                 font-weight: var(--bold);
                 color: var(--color-grey);
                 flex: 1;
+
+                & sup {
+                    cursor: help;
+                    color: var(--color-red);
+                    font-size: var(--font-size-xs);
+                    font-weight: var(--font-weight-light);
+                    background-color: var(--color-grey-80);
+                    border-radius: var(--radius-full);
+                    padding: var(--space-xs) var(--space-sm);
+
+                    &:first-of-type {
+                        margin-left: var(--space-sm);
+                    }
+                }
             }
 
             &.field-value {

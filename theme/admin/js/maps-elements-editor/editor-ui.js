@@ -84,16 +84,28 @@ class EditorUi
     {
         let toolbar = document.createElement('div');
         toolbar.className = 'elements-editor-toolbar';
-        this.saveBtn = this.buildButton('Save', 'button-primary', () => this.editor.handleSaveClick());
+        this.saveBtn = this.buildButton('Save', 'button-primary', () => {
+            this.closeOtherPanels(null);
+            this.editor.confirmations.handleSaveClick();
+        });
         toolbar.appendChild(this.saveBtn);
         toolbar.appendChild(
-            this.buildButton('Backups', 'button-secondary', () => this.toggleBackupsPanel())
+            this.buildButton('Backups', 'button-secondary', () => {
+                this.closeOtherPanels(this.backupsPanelEl);
+                this.toggleBackupsPanel();
+            })
         );
         toolbar.appendChild(
-            this.buildButton('Resize', 'button-secondary', () => this.toggleResizePanel())
+            this.buildButton('Resize', 'button-secondary', () => {
+                this.closeOtherPanels(this.resizePanelEl);
+                this.toggleResizePanel();
+            })
         );
         toolbar.appendChild(
-            this.buildButton('Reset', 'button-secondary', () => this.editor.resetController.confirmRestore())
+            this.buildButton('Reset', 'button-secondary', () => {
+                this.closeOtherPanels(null);
+                this.editor.resetController.confirmRestore();
+            })
         );
         this.dirtyIndicator = document.createElement('span');
         this.dirtyIndicator.className = 'dirty-indicator hidden';
@@ -201,6 +213,27 @@ class EditorUi
         }, 1500);
     }
 
+    closeOtherPanels(keepPanelEl)
+    {
+        if(this.isPanelOpen(this.backupsPanelEl, keepPanelEl)){
+            this.toggleBackupsPanel();
+        }
+        if(this.isPanelOpen(this.resizePanelEl, keepPanelEl)){
+            this.toggleResizePanel();
+        }
+    }
+
+    isPanelOpen(panelEl, keepPanelEl)
+    {
+        if(!panelEl){
+            return false;
+        }
+        if(panelEl === keepPanelEl){
+            return false;
+        }
+        return !panelEl.classList.contains('hidden');
+    }
+
     toggleBackupsPanel()
     {
         if(!this.backupsPanelEl){
@@ -222,6 +255,8 @@ class EditorUi
             return;
         }
         this.resizePanelEl.classList.toggle('hidden');
+        this.editor.resizer.previewActive = !this.resizePanelEl.classList.contains('hidden');
+        this.editor.requestRender();
     }
 }
 window.EditorUi = EditorUi;

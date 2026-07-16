@@ -25,10 +25,12 @@ class ClanEntity extends EntityProperties
                 reference: 'players',
                 alias: 'related_players',
                 isRequired: true,
+                isUnique: true,
                 dbType: 'int'
             },
             [titleProperty]: {
                 isRequired: true,
+                isUnique: true,
                 dbType: 'varchar'
             },
             points: {

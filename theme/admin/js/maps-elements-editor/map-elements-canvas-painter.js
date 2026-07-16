@@ -27,6 +27,29 @@ class MapElementsCanvasPainter
         this.drawHover();
         this.drawDragGhost();
         this.drawDuplicateGhost();
+        this.drawResizePreview();
+    }
+
+    drawResizePreview()
+    {
+        let bands = this.editor.resizer.previewBands();
+        if(!bands){
+            return;
+        }
+        let mapJson = this.editor.mapJson;
+        let canvas = this.editor.canvas;
+        let keptX = bands.left * mapJson.tilewidth;
+        let keptWidth = bands.newWidth * mapJson.tilewidth;
+        let keptY = bands.top * mapJson.tileheight;
+        let keptHeight = bands.newHeight * mapJson.tileheight;
+        let ctx = this.editor.ctx;
+        ctx.save();
+        ctx.fillStyle = this.outOfBoundsColor;
+        ctx.fillRect(0, 0, keptX, canvas.height);
+        ctx.fillRect(keptX + keptWidth, 0, canvas.width - keptX - keptWidth, canvas.height);
+        ctx.fillRect(keptX, 0, keptWidth, keptY);
+        ctx.fillRect(keptX, keptY + keptHeight, keptWidth, canvas.height - keptY - keptHeight);
+        ctx.restore();
     }
 
     ensureCanvasSize(mapJson)
@@ -42,6 +65,7 @@ class MapElementsCanvasPainter
         this.lastCanvasHeight = height;
         this.baseDirty = true;
         this.tilesetLut = null;
+        this.editor.ui.applyZoom();
     }
 
     ensureBaseCache(mapJson)

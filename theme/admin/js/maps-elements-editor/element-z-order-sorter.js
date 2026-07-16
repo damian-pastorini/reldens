@@ -16,7 +16,7 @@ class ElementZOrderSorter
         }
         let elementLayersSorted = this.collectAndSortElementLayers(maps.names, maps.layerToBottomRow);
         this.applyOrder(maps.names, elementLayersSorted);
-        this.editor.mapElements.elements.sort((a, b) => this.elementBottomRow(a) - this.elementBottomRow(b));
+        this.editor.mapElements.elements.sort((a, b) => this.elementSortKey(a) - this.elementSortKey(b));
     }
 
     elementBottomRow(element)
@@ -24,24 +24,30 @@ class ElementZOrderSorter
         return element.bounds.row + element.bounds.height;
     }
 
+    elementSortKey(element)
+    {
+        if(!element.zOrderOffset){
+            return this.elementBottomRow(element);
+        }
+        return this.elementBottomRow(element) + element.zOrderOffset;
+    }
+
     buildElementMaps()
     {
         let names = new Set();
         let layerToBottomRow = new Map();
-        let layerToInstance = new Map();
         for(let element of this.editor.mapElements.elements){
-            this.indexOneElementLayers(element, names, layerToBottomRow, layerToInstance);
+            this.indexOneElementLayers(element, names, layerToBottomRow);
         }
-        return {names, layerToBottomRow, layerToInstance};
+        return {names, layerToBottomRow};
     }
 
-    indexOneElementLayers(element, names, layerToBottomRow, layerToInstance)
+    indexOneElementLayers(element, names, layerToBottomRow)
     {
-        let bottomRow = this.elementBottomRow(element);
+        let sortKey = this.elementSortKey(element);
         for(let layer of element.layers){
             names.add(layer.name);
-            layerToBottomRow.set(layer.name, bottomRow);
-            layerToInstance.set(layer.name, element.instanceId);
+            layerToBottomRow.set(layer.name, sortKey);
         }
     }
 
@@ -73,88 +79,28 @@ class ElementZOrderSorter
 
     moveElement(instanceId, direction)
     {
+        let elements = this.editor.mapElements.elements;
         let element = this.editor.mover.findByInstance(instanceId);
-        if(!element){
+        let myIndex = element ? elements.indexOf(element) : -1;
+        if(0 > myIndex){
             return false;
         }
-        let blocks = this.partitionLayersByOwner();
-        let myBlockIdx = this.findMyBlockIndex(blocks, instanceId);
-        if(0 > myBlockIdx){
+        let neighborIndex = myIndex + (0 < direction ? 1 : -1);
+        if(0 > neighborIndex || neighborIndex >= elements.length){
             return false;
         }
-        let neighborIdx = this.findNeighborElementBlockIndex(blocks, myBlockIdx, direction);
-        if(0 > neighborIdx || neighborIdx >= blocks.length){
-            return false;
-        }
-        this.swapBlocksPosition(blocks, myBlockIdx, neighborIdx, direction);
-        this.editor.mapJson.layers = this.flattenBlocks(blocks);
+        this.swapSortKeys(element, elements[neighborIndex]);
+        elements.splice(neighborIndex, 0, elements.splice(myIndex, 1)[0]);
+        this.sort();
         return true;
     }
 
-    findMyBlockIndex(blocks, instanceId)
+    swapSortKeys(elementA, elementB)
     {
-        for(let i = 0; i < blocks.length; i++){
-            if(blocks[i].instanceId === instanceId){
-                return i;
-            }
-        }
-        return -1;
-    }
-
-    findNeighborElementBlockIndex(blocks, myBlockIdx, direction)
-    {
-        let step = 0 < direction ? 1 : -1;
-        let probe = myBlockIdx + step;
-        for(let safety = 0; safety < blocks.length; safety++){
-            if(0 > probe || probe >= blocks.length){
-                return -1;
-            }
-            if(blocks[probe].instanceId){
-                return probe;
-            }
-            probe = probe + step;
-        }
-        return -1;
-    }
-
-    swapBlocksPosition(blocks, myBlockIdx, neighborIdx, direction)
-    {
-        let myBlock = blocks.splice(myBlockIdx, 1)[0];
-        let adjustedNeighborIdx = neighborIdx > myBlockIdx ? neighborIdx - 1 : neighborIdx;
-        let insertIdx = 0 < direction ? adjustedNeighborIdx + 1 : adjustedNeighborIdx;
-        blocks.splice(insertIdx, 0, myBlock);
-    }
-
-    partitionLayersByOwner()
-    {
-        let layerToInstance = this.buildElementMaps().layerToInstance;
-        let blocks = [];
-        let currentBlock = null;
-        for(let layer of this.editor.mapJson.layers){
-            let inst = layerToInstance.get(layer.name) ?? null;
-            if(!currentBlock || currentBlock.instanceId !== inst){
-                currentBlock = {instanceId: inst, layers: []};
-                blocks.push(currentBlock);
-            }
-            currentBlock.layers.push(layer);
-        }
-        return blocks;
-    }
-
-    flattenBlocks(blocks)
-    {
-        let result = [];
-        for(let block of blocks){
-            this.appendBlockLayers(block, result);
-        }
-        return result;
-    }
-
-    appendBlockLayers(block, result)
-    {
-        for(let layer of block.layers){
-            result.push(layer);
-        }
+        let keyA = this.elementSortKey(elementA);
+        let keyB = this.elementSortKey(elementB);
+        elementA.zOrderOffset = keyB - this.elementBottomRow(elementA);
+        elementB.zOrderOffset = keyA - this.elementBottomRow(elementB);
     }
 }
 window.ElementZOrderSorter = ElementZOrderSorter;

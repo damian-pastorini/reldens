@@ -22,6 +22,12 @@ class AdminClientForms
         if(!submitButton){
             return options;
         }
+        if(submitButton.dataset.modalConfirmTitle){
+            options.title = submitButton.dataset.modalConfirmTitle;
+        }
+        if(submitButton.dataset.modalConfirmMessage){
+            options.message = submitButton.dataset.modalConfirmMessage;
+        }
         if(submitButton.dataset.modalConfirmLabel){
             options.confirmText = submitButton.dataset.modalConfirmLabel;
         }

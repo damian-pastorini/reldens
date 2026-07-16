@@ -13,6 +13,7 @@ class MapsElementsEditor
         this.onPublishedState = options.onPublishedState || null;
         this.mapJson = null;
         this.mapElements = null;
+        this.mapSpots = null;
         this.dirty = false;
         this.hoveredInstanceId = null;
         this.listenersAttached = false;
@@ -34,6 +35,7 @@ class MapsElementsEditor
         this.backupsPanel = new EditorBackupsPanel(this);
         this.painter = new MapElementsCanvasPainter(this);
         this.ui = new EditorUi(this);
+        this.confirmations = new EditorConfirmations(this);
         this.resetController = new EditorResetController(this);
         this.zOrderSorter = new ElementZOrderSorter(this);
         this.layersNormalizer = new MapLayersNormalizer();
@@ -49,6 +51,7 @@ class MapsElementsEditor
         if(!this.mapElements){
             return false;
         }
+        this.mapSpots = await this.loadSpots(this.mapName);
         this.layersNormalizer.explode(this.mapJson, this.mapElements);
         this.zOrderSorter.sort();
         this.resetController.captureSnapshot();
@@ -124,14 +127,14 @@ class MapsElementsEditor
         };
     }
 
-    pickElementAt(event)
+    pickEntryAt(event)
     {
         let tile = this.canvasToTile(event);
-        let picked = this.mover.findElementAt(tile.col, tile.row);
+        let picked = this.mover.findEntryAt(tile.col, tile.row);
         if(!picked){
             return null;
         }
-        return {element: picked, tile};
+        return {entry: picked, tile};
     }
 
     onMouseDown(event)
@@ -147,11 +150,11 @@ class MapsElementsEditor
             this.ui.refreshCancelDuplicate(this.duplicator.isPlacing());
             return;
         }
-        let picked = this.pickElementAt(event);
+        let picked = this.pickEntryAt(event);
         if(!picked){
             return;
         }
-        this.mover.beginDrag(picked.element, picked.tile.col, picked.tile.row);
+        this.mover.beginDrag(picked.entry, picked.tile.col, picked.tile.row);
         this.requestRender();
     }
 
@@ -168,8 +171,8 @@ class MapsElementsEditor
             this.requestRender();
             return;
         }
-        let element = this.mover.findElementAt(tile.col, tile.row);
-        let nextId = element ? element.instanceId : null;
+        let entry = this.mover.findEntryAt(tile.col, tile.row);
+        let nextId = entry ? entry.instanceId : null;
         if(nextId === this.hoveredInstanceId){
             return;
         }
@@ -190,11 +193,14 @@ class MapsElementsEditor
     {
         event.preventDefault();
         let tile = this.canvasToTile(event);
-        let element = this.mover.findElementAt(tile.col, tile.row);
-        if(!element){
+        let entry = this.mover.findEntryAt(tile.col, tile.row);
+        if(!entry){
             return;
         }
-        this.contextMenu.show(element.instanceId, event.clientX, event.clientY);
+        if(this.mover.isSpot(entry)){
+            return;
+        }
+        this.contextMenu.show(entry.instanceId, event.clientX, event.clientY);
     }
 
     requestRender()
@@ -234,74 +240,6 @@ class MapsElementsEditor
         }
     }
 
-    confirmDeleteElement(instanceId)
-    {
-        adminFunctions.showConfirmDialog((confirmed) => {
-            if(confirmed){
-                this.deleter.delete(instanceId);
-            }
-        }, {
-            title: 'Delete Element',
-            message: 'Delete element "'+instanceId+'"? This removes every tile of every layer it owns.',
-            confirmText: 'Delete',
-            confirmClass: 'button-danger'
-        });
-    }
-
-    confirmReload(backupTimestamp)
-    {
-        adminFunctions.showConfirmDialog(async (confirmed) => {
-            if(!confirmed){
-                return;
-            }
-            let result = await this.backupsPanel.restore(backupTimestamp);
-            if(result.success){
-                await this.load();
-            }
-        }, {
-            title: 'Reload Backup',
-            message: 'Reload backup from '+backupTimestamp+'? A pre-restore backup will be written first.',
-            confirmText: 'Reload',
-            confirmClass: 'button-primary'
-        });
-    }
-
-    confirmDeleteBackup(backupTimestamp)
-    {
-        adminFunctions.showConfirmDialog(async (confirmed) => {
-            if(!confirmed){
-                return;
-            }
-            await this.backupsPanel.delete(backupTimestamp);
-            await this.refreshBackupsList();
-        }, {
-            title: 'Delete Backup',
-            message: 'Delete backup '+backupTimestamp+'? This cannot be undone.',
-            confirmText: 'Delete',
-            confirmClass: 'button-danger'
-        });
-    }
-
-    async handleSaveClick()
-    {
-        if('room' !== this.context){
-            await this.performSave();
-            return;
-        }
-        adminFunctions.showConfirmDialog(async (confirmed) => {
-            if(!confirmed){
-                return;
-            }
-            await this.performSave();
-        }, {
-            title: 'Save Map',
-            message: 'Are you sure you want to save this map?'
-                +' IMPORTANT: the map will be overwritten, and a server restart is required to publish the updates.',
-            confirmText: 'Save',
-            confirmClass: 'button-primary'
-        });
-    }
-
     async performSave()
     {
         let result = await this.save();
@@ -314,7 +252,8 @@ class MapsElementsEditor
             mapName: this.mapName,
             sessionId: this.sessionId,
             context: this.context,
-            mapElements: this.mapElements
+            mapElements: this.mapElements,
+            mapSpots: {spots: this.mover.collectMovedSpots()}
         }));
         if(result.success){
             this.dirty = false;
@@ -335,6 +274,13 @@ class MapsElementsEditor
         return (await this.jsonFetcher.fetch(
             this.apiBasePath+'/build-elements-from-layers?mapName='+encodeURIComponent(mapName)
         ))?.mapElements ?? null;
+    }
+
+    async loadSpots(mapName)
+    {
+        return (await this.jsonFetcher.fetch(
+            this.apiBasePath+'/build-spots-from-layers?mapName='+encodeURIComponent(mapName)
+        ))?.mapSpots ?? {spots: [], warnings: []};
     }
 
     async refreshBackupsList()

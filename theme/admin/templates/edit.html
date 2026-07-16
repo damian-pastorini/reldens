@@ -22,7 +22,7 @@
         </div>
         {{#editFields}}
         <div class="edit-field">
-            <span class="field-name">{{&name}}</span>
+            <span class="field-name">{{&name}}{{#isRequired}}<sup title="required">r</sup>{{/isRequired}}{{#isUnique}}<sup title="unique">u</sup>{{/isUnique}}</span>
             <span class="field-value">{{&value}}</span>
         </div>
         {{/editFields}}
