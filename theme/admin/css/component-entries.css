@@ -20,6 +20,10 @@
                 font-weight: var(--bold);
                 color: var(--color-grey);
                 flex: 1;
+
+                & sup {
+                    cursor: help;
+                }
             }
 
             &.field-value {
