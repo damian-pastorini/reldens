@@ -23,6 +23,7 @@ class AdsBannerEntity extends EntityProperties
                 reference: 'ads',
                 alias: 'related_ads',
                 isRequired: true,
+                isUnique: true,
                 dbType: 'int'
             },
             banner_data: {

@@ -22,6 +22,7 @@ class AdsEntity extends EntityProperties
             },
             [titleProperty]: {
                 isRequired: true,
+                isUnique: true,
                 dbType: 'varchar'
             },
             provider_id: {

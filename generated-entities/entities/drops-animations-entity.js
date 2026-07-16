@@ -23,6 +23,7 @@ class DropsAnimationsEntity extends EntityProperties
                 reference: 'items_item',
                 alias: 'related_items_item',
                 isRequired: true,
+                isUnique: true,
                 dbType: 'int'
             },
             asset_type: {

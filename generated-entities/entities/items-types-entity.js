@@ -21,6 +21,7 @@ class ItemsTypesEntity extends EntityProperties
             },
             [titleProperty]: {
                 isRequired: true,
+                isUnique: true,
                 dbType: 'varchar'
             }
         };

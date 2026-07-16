@@ -30,6 +30,7 @@ class ClanMembersEntity extends EntityProperties
                 reference: 'players',
                 alias: 'related_players',
                 isRequired: true,
+                isUnique: true,
                 dbType: 'int'
             }
         };

@@ -21,6 +21,7 @@ class AudioEntity extends EntityProperties
             },
             audio_key: {
                 isRequired: true,
+                isUnique: true,
                 dbType: 'varchar'
             },
             files_name: {

@@ -24,6 +24,7 @@ class SkillsSkillAttackEntity extends EntityProperties
                 reference: 'skills_skill',
                 alias: 'related_skills_skill',
                 isRequired: true,
+                isUnique: true,
                 dbType: 'int'
             },
             affectedProperty: {

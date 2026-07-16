@@ -22,6 +22,7 @@ class SkillsClassPathEntity extends EntityProperties
             },
             key: {
                 isRequired: true,
+                isUnique: true,
                 dbType: 'varchar'
             },
             [titleProperty]: {

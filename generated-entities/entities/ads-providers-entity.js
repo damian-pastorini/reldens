@@ -21,6 +21,7 @@ class AdsProvidersEntity extends EntityProperties
             },
             [titleProperty]: {
                 isRequired: true,
+                isUnique: true,
                 dbType: 'varchar'
             },
             enabled: {
