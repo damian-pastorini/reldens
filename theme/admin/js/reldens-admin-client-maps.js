@@ -279,10 +279,11 @@ class AdminClientMaps
         this.bindEntityMapLoader();
         adminMapRenderer.bindObjectTileSelector();
         this.bindMapsWizardOptions();
+        new AdminMapElementsEditorLauncher().bind();
+        new AdminMapPreviewModal().bind();
         this.bindMapCanvas();
         this.bindMapsImportSticky();
         this.bindGoBackButton();
-        new AdminMapElementsEditorLauncher().bind();
     }
 }
 window.AdminClientMaps = AdminClientMaps;
