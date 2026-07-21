@@ -54,7 +54,7 @@
     "dependencies": {
         "@colyseus/core": "0.17.44",
         "@colyseus/monitor": "0.17.8",
-        "@colyseus/schema": "4.0.27",
+        "@colyseus/schema": "4.0.28",
         "@colyseus/sdk": "0.17.43",
         "@colyseus/ws-transport": "0.17.13",
         "@parcel/bundler-default": "2.16.4",
@@ -113,7 +113,7 @@
         "@reldens/skills": "^0.51.0",
         "@reldens/storage": "^0.106.0",
         "@reldens/tile-map-generator": "^0.50.0",
-        "@reldens/tileset-to-tilemap": "^0.17.0",
+        "@reldens/tileset-to-tilemap": "^0.18.0",
         "@reldens/utils": "^0.57.0",
         "@sendgrid/mail": "8.1.6",
         "buffer": "6.0.3",
