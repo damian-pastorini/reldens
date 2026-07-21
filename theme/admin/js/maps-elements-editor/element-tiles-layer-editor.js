@@ -15,8 +15,7 @@ class ElementTilesLayerEditor
             {value: 'collisions', label: 'Collisions'},
             {value: 'over-player', label: 'Over player'},
             {value: 'collisions-over-player', label: 'Collisions + over player'},
-            {value: 'base', label: 'Base'},
-            {value: 'path', label: 'Path'}
+            {value: 'base', label: 'Base'}
         ];
     }
 

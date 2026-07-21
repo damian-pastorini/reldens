@@ -124,7 +124,12 @@ class TilesetRowBinder
             this.legendControls.applyBulkSelection(capturedI, refs);
         });
         refs.generateSelectAll.addEventListener('change', () => {
-            this.legendControls.applyGenerateSelection(capturedI, refs);
+            let targetChecked = refs.generateSelectAll.checked;
+            refs.generateSelectAll.checked = !targetChecked;
+            this.app.modals.show('Are you sure you want to change the generation selection for ALL elements?', () => {
+                refs.generateSelectAll.checked = targetChecked;
+                this.legendControls.applyGenerateSelection(capturedI, refs);
+            });
         });
         this.legendControls.bindLegendSortControls(capturedI, refs);
         refs.legendSearch.addEventListener('input', () => this.scheduleLegendSearch(capturedI));
@@ -277,3 +282,4 @@ class TilesetRowBinder
         });
     }
 }
+window.TilesetRowBinder = TilesetRowBinder;

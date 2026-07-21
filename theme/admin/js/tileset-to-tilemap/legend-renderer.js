@@ -270,9 +270,19 @@ class TilesetLegendRenderer
         }
         if(radio.classList.contains('layer-type-custom-radio')){
             this.editor.app.activeLayerType = this.editor.app.customLayerSuffix;
+            this.refreshSelectedTileset();
             return;
         }
         this.editor.app.activeLayerType = radio.value;
+        this.refreshSelectedTileset();
+    }
+
+    refreshSelectedTileset()
+    {
+        if(null === this.editor.app.selectedTileset){
+            return;
+        }
+        this.editor.app.refresh(this.editor.app.selectedTileset);
     }
 
 }

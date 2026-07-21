@@ -29,6 +29,15 @@ class TilesetCanvasTileEditor
         );
     }
 
+    findActiveBandTileLayerIndex(element, tileRow, tileCol)
+    {
+        return this.findIndexBy(
+            element.layers,
+            (layer) => SharedUtils.isLayerInActiveBand(layer.type, this.app.activeLayerType)
+                && this.findTileInLayer(layer, tileRow, tileCol)
+        );
+    }
+
     removeTileFromLayer(layer, row, col)
     {
         layer.tiles = layer.tiles.filter(t => !(t[0] === row && t[1] === col));
@@ -119,7 +128,7 @@ class TilesetCanvasTileEditor
     handleTileEditClick(tilesetIndex, tileRow, tileCol)
     {
         let element = this.app.state[tilesetIndex].elements[this.app.selectedElement];
-        let ownerLayerIndex = this.findTileLayerIndex(element, tileRow, tileCol);
+        let ownerLayerIndex = this.findActiveBandTileLayerIndex(element, tileRow, tileCol);
         if(-1 !== ownerLayerIndex){
             let ownerLayer = element.layers[ownerLayerIndex];
             this.removeTileFromLayer(ownerLayer, tileRow, tileCol);
