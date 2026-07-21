@@ -105,7 +105,7 @@ The `id` field is a 0-based tile ID within the tileset - it equals the flat inde
 ### Key Property Values
 
 - `"groundTile"` - Base ground tile - source: `tileOptions.groundTile`
-- `"pathTile"` - Walkable path tile - source: `tileOptions.pathTile`
+- `"pathTile"` - Walkable path tile - source: `tileOptions.pathTile`. IMPORTANT: a tile marked as a `path` layer type keeps only its POSITION; its own gid is discarded and replaced by this single configured `pathTile` gid when the map is populated. Composite build: `tileset-to-tilemap/lib/composite-builder.js` `replacePathLayerTiles` overwrites every non-zero cell of any `path` layer with `pathTileCompositeId`. Random generation: `tile-map-generator/lib/generator/main-path-generator.js` writes `pathTile` into each path cell. Consequence: to keep a tile's actual image in an element, add that tile to a non-path layer type as well; each layer type is emitted as its own map layer, so the same tile index can exist on both a `path` layer (replaced by pathTile) and another layer (keeps its gid).
 - `"top-left"` through `"bottom-right"` (9 positions) - Surrounding tiles - source: `tileOptions.surroundingTiles[pos]`
 - `"corner-top-left"` through `"corner-bottom-right"` - Corner transition tiles - source: `tileOptions.corners[pos]`, prepend `"corner-"`
 - `"border-top"` through `"border-left"` - Border/edge tiles - source: `tileOptions.bordersTiles[pos]`, prepend `"border-"`
