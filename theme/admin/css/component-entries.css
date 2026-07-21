@@ -76,7 +76,11 @@
         .field-value.with-view-button {
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            gap: var(--space-sm);
+
+            & > a {
+                margin-right: auto;
+            }
         }
 
         .field-value img {
