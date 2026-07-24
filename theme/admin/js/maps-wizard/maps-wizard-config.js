@@ -8,6 +8,7 @@ let commonGeneratorConfig = {
     freeTilesMultiplier: 2,
     variableTilesPercentage: 15,
     collisionLayersForPaths: ['change-points', 'collisions', 'tree-base'],
+    placeRejectResolver: 'autoGrow',
     automaticallyExtrudeMaps: '1'
 };
 
