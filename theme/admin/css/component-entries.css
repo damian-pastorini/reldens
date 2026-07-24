@@ -116,6 +116,10 @@
                         border: none;
                         background-color: transparent;
                     }
+
+                    &.room-selector-required:not([disabled]) {
+                        border: 1px solid var(--color-red-10);
+                    }
                 }
 
                 & textarea {
