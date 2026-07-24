@@ -133,7 +133,13 @@ How `ElementsProvider.fetchPathTiles()` detects the role:
 
 Recommended layer name format for spot variations: `"spot-layer-ground-variations-{spotName}"`. After removing `"spot-layer-"` and `"ground-variations-"` the result is `"{spotName}"`, which must match the `tilesKey` in the groundSpots config.
 
-Any other layer name is treated as an element layer. The name must have at least 3 dash-separated parts: `"{elementName}-{index}-{layerType}"`. The element group key is the first two parts joined, e.g. `"tree-001"`. The group's `quantity`, `freeSpaceAround`, `allowPathsInFreeSpace`, and `mapCentered` are read from `layer.properties` on the first layer of each group.
+Any other layer name is treated as an element layer. The name must have at least 3 dash-separated parts: `"{elementName}-{index}-{layerType}"`. The element group key is resolved by `fetchElementLayerGroup` (`elements-provider.js:175`):
+
+1. Names starting with `stairs-up-` or `stairs-down-` are pinned to the keys `stairs-up` / `stairs-down` (hardcoded stair keys used by `prePlaceStairs` and the associated maps floor logic).
+2. Otherwise the key is `ElementLayerName.parse(layerName).instanceId`: the known layer-type suffix (`collisions-over-player`, `collisions`, `over-player`, `below-player`, `path`, `base`) is stripped and the remainder is `{elementName}-{index}`, so multi-segment names keep per-instance groups (`house-clean-005-collisions` -> `house-clean-005`).
+3. Names not ending in a known layer type fall back to the first two parts joined (`tree-001-below-player` -> `tree-001`).
+
+Every group becomes exactly ONE placeable element: its layers are cropped together to the union bounding box of their tiles, and that cropped stamp is placed as one unit. The group's `quantity`, `freeSpaceAround`, `allowPathsInFreeSpace`, and `mapCentered` are read from `layer.properties` of the group's property-carrying layer.
 
 ---
 
@@ -179,6 +185,7 @@ Key fields the map generator reads from `mapData`:
 - `groundSpots` - object keyed by spot name; each entry configures a generated spot area. `tilesKey` must match the spot name used in the composite's tile property annotations and the variation layer name
 - `factor` - image resize factor for the optimized tileset (1 = no resize)
 - Map dimension and generation options: `mainPathSize`, `blockMapBorder`, `freeSpaceTilesQuantity`, `freeTilesMultiplier`, `variableTilesPercentage`, `collisionLayersForPaths`, `minimumDistanceFromBorders`, `splitBordersInLayers`, etc.
+- `placeRejectResolver` - how a rejected element placement is resolved: `"moveElements"` relocates already placed movable elements to open space, `"autoGrow"` (default) grows the map bottom to fit the element. Exposed in the Maps Wizard as the "Elements place rejection resolve method" select (`placeRejectResolver-common`). Placement candidates are validated by a strict feasibility safeguard so every still-pending element keeps a free window; elements are never silently dropped (see the package `.claude/generator-flow.md` Stage 3c2)
 
 Key fields in each `groundSpots` entry:
 - `walkable` - when `false`, the generator appends `-collisions` to the spot layer name (e.g. `lake_001-s0-collisions`). The Reldens game engine reads any layer ending in `-collisions` as a non-walkable collision zone. Set to `false` for any spot the player should not be able to walk through.
