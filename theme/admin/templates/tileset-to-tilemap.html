@@ -537,7 +537,7 @@
             </ul>
             <h3>Step 5 - Canvas shortcuts</h3>
             <ul>
-                <li><strong>Left-click a tile</strong>: add the tile to the selected element (or remove it if it is already in the active layer). Requires an element to be selected.</li>
+                <li><strong>Left-click a tile</strong>: add the tile to the selected element (or remove it if it is already in the active layer). Requires an element to be selected. Path tiles and the other layer types are handled separately, so clicking a tile while <code>path</code> is selected never touches its non-path layers and the other way around.</li>
                 <li><strong>Left-click drag</strong>: bulk-add or remove tiles based on the first tile action.</li>
                 <li><strong>Right-click a tile</strong>: remove the tile from its owner element. Works in view-all mode (removes from any element) and when an element is selected (removes from that element).</li>
                 <li><strong>Right-click drag</strong>: keep removing tiles continuously while holding the mouse button.</li>
@@ -553,6 +553,7 @@
                 <li><strong>Lock (padlock)</strong>: locked elements are skipped by AI bulk operations. Lock elements you are satisfied with.</li>
                 <li><strong>Delete (trash)</strong>: remove the element entirely. Same as pressing the <strong>Delete key</strong> on the keyboard.</li>
                 <li><strong>Layer type</strong>: choose what layer new tiles will be added to - below-player, collisions, over-player, collisions-over-player, base, path, or custom (enter a suffix in the text field).</li>
+                <li><strong>Path layer type</strong>: while <code>path</code> is selected the canvas shows only this element's path tiles; selecting any other layer type shows all the other tiles and hides the path ones. Path tiles are kept apart from the rest, so the same tile can be used as a path tile and also as a normal tile of another layer type. On generation every path layer tile is replaced by the <strong>Path</strong> tile assigned in the Map Tiles tab, so add the tile to a non-path layer too when you need its own image on the map.</li>
                 <li><strong>Quantity</strong>: how many copies to place in the generated map.</li>
                 <li><strong>Free space</strong>: tile padding around the element in the generated map.</li>
                 <li><strong>Allow paths in free space</strong>: whether path tiles can be placed inside the element's padding area.</li>
@@ -585,7 +586,7 @@
             <ul>
                 <li><strong>Ground</strong>: the base ground tile filling the map background.</li>
                 <li><strong>Variations</strong>: additional ground variants placed randomly across the map.</li>
-                <li><strong>Path</strong>: the walkable path tile; surrounding tiles (N/NE/E/SE/S/SW/W/NW) define the transitions around paths.</li>
+                <li><strong>Path</strong>: the walkable path tile; surrounding tiles (N/NE/E/SE/S/SW/W/NW) define the transitions around paths. This tile also replaces every tile placed on an element path layer when the map is generated.</li>
                 <li><strong>Path Corner Tiles</strong>: concave corner transitions for path bends.</li>
                 <li><strong>Border Tiles</strong>: directional tiles (T/R/B/L) and corner tiles (NW/NE/SW/SE) placed at the map edge; center cell is the fallback border tile.</li>
             </ul>
@@ -622,7 +623,8 @@
                 <li>Lock an element after you are happy with it - this protects it from AI bulk operations.</li>
                 <li><strong>Add Element</strong> creates a blank element you can populate by clicking tiles on the canvas.</li>
                 <li>Previous sessions are listed in the <strong>Generated Files</strong> section below the editor - click a row to expand and download files.</li>
-                <li>All element names must match the pattern <code>word-001</code> (lowercase letters, optional hyphens, numeric suffix) before Generate is enabled.</li>
+                <li>All element names must match the pattern <code>word-001</code> (lowercase letters, optional hyphens, numeric suffix) and must be unique within the tileset before Generate is enabled; a repeated name is marked in red like an invalid one.</li>
+                <li>The <strong>Generate Selected</strong> checkbox in the legend header asks for confirmation before it marks or unmarks every element at once.</li>
                 <li>If a spot is configured but never appears on the generated map, check that <strong>Is Element</strong> is checked and <strong>Depth</strong> is not <code>false</code>.</li>
             </ul>
         </div>
