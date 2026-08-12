@@ -201,6 +201,42 @@ Key fields in each `groundSpots` entry:
 
 ---
 
+## roomData: Setting Room Fields on Import
+
+`roomData` is an optional object read by the maps importer (`MapsImporter.import`, `maps-importer.js:113`) and applied to every room row it creates, right after the importer defaults and before the insert (`maps-importer.js:264-274`). It is handled by `RoomImportData` (`lib/import/server/room-import-data.js`).
+
+Shape:
+
+```json
+{
+  "roomData": {
+    "allRooms": {
+      "customData": {"enabled": true}
+    },
+    "rooms": {
+      "reldens-new-age-town": {
+        "server_url": "https://some-server-url",
+        "room_class_key": "custom-room",
+        "customData": {"allowGuest": true}
+      }
+    }
+  }
+}
+```
+
+- `allRooms` properties are applied to every imported room.
+- `rooms` properties are applied per map, matched by map name first and by map title as fallback, and they override `allRooms`.
+- Keys must be the REAL rooms fields: `name`, `title`, `map_filename`, `scene_images`, `room_class_key`, `server_url` (assigned directly, primitives only: string, number, boolean or date) and `customData`.
+- `customData` keys are set one by one through `RoomCustomData`, so the column stays a valid JSON string and only the provided keys change. This is how `{"customData": {"enabled": true}}` overrides the importer default of `enabled: false` for imported rooms, making the room usable on the next restart.
+- Any other key, or a non-primitive value for a direct field, is ignored with a warning; it is NOT folded into `customData`.
+
+Where to put it:
+
+- Maps Wizard: add `roomData` to the `generatorData` JSON in the wizard textarea. The raw JSON is carried to the maps selection step as `handlerParams` (`maps-wizard-subscriber.js:245`, hidden input in `maps-wizard-maps-selection.html:17`), parsed back by `SelectedMapsImportRunner` (`selected-maps-import-runner.js:105`) and read from `handlerParams.roomData` by the importer.
+- Outside the wizard (CLI `bin/import.js` maps import): add `roomData` at the top level of the import JSON, which is passed straight to `MapsImporter.import(data)`. A top level `roomData` wins over `handlerParams.roomData`.
+
+---
+
 ## Processing Pipeline: composite.json to Generated Map
 
 **Step 1 - `LayerElementsCompositeLoader.load()`**
