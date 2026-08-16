@@ -23,6 +23,7 @@ class RewardsEntity extends EntityProperties
                 type: 'reference',
                 reference: 'objects',
                 alias: 'related_objects',
+                onDelete: 'noAction',
                 isRequired: true,
                 dbType: 'int'
             },
@@ -30,12 +31,14 @@ class RewardsEntity extends EntityProperties
                 type: 'reference',
                 reference: 'items_item',
                 alias: 'related_items_item',
+                onDelete: 'noAction',
                 dbType: 'int'
             },
             modifier_id: {
                 type: 'reference',
                 reference: 'rewards_modifiers',
                 alias: 'related_rewards_modifiers',
+                onDelete: 'noAction',
                 dbType: 'int'
             },
             experience: {

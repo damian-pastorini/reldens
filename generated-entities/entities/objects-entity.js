@@ -24,6 +24,7 @@ class ObjectsEntity extends EntityProperties
                 type: 'reference',
                 reference: 'rooms',
                 alias: 'related_rooms',
+                onDelete: 'setNull',
                 dbType: 'int'
             },
             layer_name: {
@@ -38,6 +39,7 @@ class ObjectsEntity extends EntityProperties
                 type: 'reference',
                 reference: 'objects_types',
                 alias: 'related_objects_types',
+                onDelete: 'noAction',
                 dbType: 'int'
             },
             object_class_key: {

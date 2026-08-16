@@ -23,6 +23,7 @@ class ItemsItemModifiersEntity extends EntityProperties
                 type: 'reference',
                 reference: 'items_item',
                 alias: 'related_items_item',
+                onDelete: 'noAction',
                 isRequired: true,
                 dbType: 'int'
             },
@@ -38,6 +39,7 @@ class ItemsItemModifiersEntity extends EntityProperties
                 type: 'reference',
                 reference: 'operation_types',
                 alias: 'related_operation_types',
+                onDelete: 'noAction',
                 isRequired: true,
                 dbType: 'int'
             },

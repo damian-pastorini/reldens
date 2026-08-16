@@ -29,12 +29,14 @@ class ItemsItemEntity extends EntityProperties
                 type: 'reference',
                 reference: 'items_types',
                 alias: 'related_items_types',
+                onDelete: 'noAction',
                 dbType: 'int'
             },
             group_id: {
                 type: 'reference',
                 reference: 'items_group',
                 alias: 'related_items_group',
+                onDelete: 'noAction',
                 dbType: 'int'
             },
             [titleProperty]: {

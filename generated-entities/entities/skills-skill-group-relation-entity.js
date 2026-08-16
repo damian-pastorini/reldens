@@ -22,6 +22,7 @@ class SkillsSkillGroupRelationEntity extends EntityProperties
                 type: 'reference',
                 reference: 'skills_skill',
                 alias: 'related_skills_skill',
+                onDelete: 'noAction',
                 isRequired: true,
                 isUnique: true,
                 dbType: 'int'
@@ -30,6 +31,7 @@ class SkillsSkillGroupRelationEntity extends EntityProperties
                 type: 'reference',
                 reference: 'skills_groups',
                 alias: 'related_skills_groups',
+                onDelete: 'noAction',
                 isRequired: true,
                 dbType: 'int'
             }

@@ -24,6 +24,7 @@ class ClanEntity extends EntityProperties
                 type: 'reference',
                 reference: 'players',
                 alias: 'related_players',
+                onDelete: 'noAction',
                 isRequired: true,
                 isUnique: true,
                 dbType: 'int'
@@ -41,6 +42,7 @@ class ClanEntity extends EntityProperties
                 type: 'reference',
                 reference: 'clan_levels',
                 alias: 'related_clan_levels',
+                onDelete: 'noAction',
                 isRequired: true,
                 dbType: 'int'
             },

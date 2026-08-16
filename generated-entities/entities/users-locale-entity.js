@@ -22,12 +22,14 @@ class UsersLocaleEntity extends EntityProperties
                 type: 'reference',
                 reference: 'locale',
                 alias: 'related_locale',
+                onDelete: 'noAction',
                 dbType: 'int'
             },
             user_id: {
                 type: 'reference',
                 reference: 'users',
                 alias: 'related_users',
+                onDelete: 'noAction',
                 dbType: 'int'
             }
         };

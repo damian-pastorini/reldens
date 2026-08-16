@@ -22,6 +22,7 @@ class PlayersStatsEntity extends EntityProperties
                 type: 'reference',
                 reference: 'players',
                 alias: 'related_players',
+                onDelete: 'cascade',
                 isRequired: true,
                 dbType: 'int'
             },
@@ -29,6 +30,7 @@ class PlayersStatsEntity extends EntityProperties
                 type: 'reference',
                 reference: 'stats',
                 alias: 'related_stats',
+                onDelete: 'restrict',
                 isRequired: true,
                 dbType: 'int'
             },

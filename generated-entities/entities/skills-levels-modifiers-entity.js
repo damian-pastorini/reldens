@@ -23,6 +23,7 @@ class SkillsLevelsModifiersEntity extends EntityProperties
                 type: 'reference',
                 reference: 'skills_levels',
                 alias: 'related_skills_levels',
+                onDelete: 'noAction',
                 isRequired: true,
                 dbType: 'int'
             },
@@ -38,6 +39,7 @@ class SkillsLevelsModifiersEntity extends EntityProperties
                 type: 'reference',
                 reference: 'operation_types',
                 alias: 'related_operation_types',
+                onDelete: 'noAction',
                 isRequired: true,
                 dbType: 'int'
             },

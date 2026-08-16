@@ -22,12 +22,14 @@ class SkillsClassLevelUpAnimationsEntity extends EntityProperties
                 type: 'reference',
                 reference: 'skills_class_path',
                 alias: 'related_skills_class_path',
+                onDelete: 'restrict',
                 dbType: 'int'
             },
             level_id: {
                 type: 'reference',
                 reference: 'skills_levels',
                 alias: 'related_skills_levels',
+                onDelete: 'restrict',
                 dbType: 'int'
             },
             animationData: {
