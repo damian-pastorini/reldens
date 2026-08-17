@@ -714,4 +714,30 @@ span.stat-label {
     border-radius: 50%;
     text-align: center;
     font-size: 14px;
+
+    &.critical {
+        animation: reldens-critical-alert 0.7s steps(1, end) infinite;
+    }
+}
+
+@keyframes reldens-critical-alert {
+    0%, 100% {
+        background-color: red;
+        color: #ffffff;
+        box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.7);
+    }
+    50% {
+        background-color: #ffffff;
+        color: red;
+        box-shadow: 0 0 0 6px rgba(255, 0, 0, 0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .notification-balloon.critical {
+        animation: none;
+        background-color: #ffffff;
+        color: red;
+        box-shadow: 0 0 0 3px red;
+    }
 }
