@@ -393,6 +393,8 @@ REPLACE INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(347, 'server', 'rewards/playedTimeReward/time', '30000', 3),
 	(363, 'server', 'rooms/deletion/closeActiveRoomsEnabled', '1', 3),
 	(364, 'server', 'rooms/deletion/closeActiveRoomsTime', '10000', 2),
+	(365, 'server', 'rooms/deletion/closeActiveRoomsWarningInterval', '5000', 2),
+	(366, 'server', 'rooms/deletion/setDefault', '1', 3),
 	(348, 'server', 'rooms/validation/enabled', '1', 3),
 	(349, 'server', 'rooms/validation/valid', 'room_game,chat_global', 1),
 	(350, 'server', 'rooms/world/bulletsStopOnPlayer', '1', 3),
