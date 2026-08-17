@@ -61,6 +61,7 @@ class TilesetMerger
         mergeConfigToggle.addEventListener('click', () => {
             mergeConfig.classList.toggle('hidden');
             row.querySelector('.tileset-map-config-fieldset').classList.add('hidden');
+            row.querySelector('.tileset-animations-panel').classList.add('hidden');
         });
     }
 

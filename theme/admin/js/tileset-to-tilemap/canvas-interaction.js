@@ -65,7 +65,12 @@ class TilesetCanvasInteraction
             && (this.app.tileOptionsBinder.activeTilesetIndex === tilesetIndex
                 || -1 === this.app.tileOptionsBinder.activeTilesetIndex)
         ){
-            this.app.tileOptionsBinder.handleTileClick(tilesetIndex, tile.row, tile.col);
+            this.app.tileOptionsBinder.handleTileClick(
+                tilesetIndex,
+                tile.row,
+                tile.col,
+                this.app.mouseButtonRight === event.button
+            );
             return;
         }
         if(this.app.mouseButtonRight === event.button){

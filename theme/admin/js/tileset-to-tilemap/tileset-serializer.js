@@ -56,6 +56,9 @@ class TilesetSerializer
         serialized.generatorType = generatorTypeValue || SharedUtils.DEFAULT_GENERATOR_TYPE;
         serialized.associationsProperties = row ? this.app.strategyEditor.readAssociationsProperties(row) : null;
         serialized.tileOptions = tileset.tileOptions || null;
+        serialized.tileAnimations = TilesetAnimationsNormalizer.normalizeAnimations(tileset.tileAnimations);
+        serialized.animationsDefaultDuration = TilesetAnimationsNormalizer.resolveDefaultDuration(tileset);
+        serialized.skipTileAnimations = Boolean(tileset.skipTileAnimations);
         serialized.spots = this.collectSelected(tileset.spots, selectedOnly, null);
         serialized.collapsed = Boolean(tileset.collapsed);
         serialized.legendSort = tileset.legendSort || {by: 'name', ascending: true};

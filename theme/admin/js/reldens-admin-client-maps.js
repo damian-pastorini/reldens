@@ -222,6 +222,11 @@ class AdminClientMaps
     {
         let mapCanvasElements = document.querySelectorAll('.mapCanvas');
         for(let mapCanvas of mapCanvasElements){
+            mapCanvas.addEventListener(
+                'wheel',
+                (wheelEvent) => adminFunctions.blockCtrlWheelZoom(wheelEvent),
+                {passive: false}
+            );
             if(!mapCanvas.dataset?.mapJson){
                 continue;
             }

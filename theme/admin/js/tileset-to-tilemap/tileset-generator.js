@@ -186,7 +186,7 @@ class TilesetGenerator
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     sessionId,
-                    tilesets,
+                    tilesets: TilesetAnimationsNormalizer.stripSkippedAnimations(tilesets),
                     fullTilesets,
                     globalTileOptions: suppressGlobalTileOptions ? null : (this.app.globalTileOptions || null)
                 })

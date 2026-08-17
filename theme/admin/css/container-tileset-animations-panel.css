@@ -1,0 +1,143 @@
+.tileset-animations-panel {
+    margin-bottom: var(--space-md);
+
+    & .tileset-animations-controls,
+    & .tileset-animation-row-header {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: var(--space-sm);
+    }
+
+    & .tileset-animations-controls label,
+    & .tileset-animation-base,
+    & .tileset-animation-duration-label {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-xs);
+        font-size: var(--font-size-sm);
+        color: var(--color-white);
+        margin-bottom: 0;
+    }
+
+    & .tileset-animations-default-duration,
+    & .tileset-animation-duration,
+    & .tileset-animation-frame-duration {
+        width: 5rem;
+        font-size: var(--font-size-sm);
+        padding: var(--space-xs);
+    }
+
+    & .tileset-animations-empty {
+        font-size: var(--font-size-sm);
+        color: var(--color-grey-20);
+        margin: var(--space-sm) 0 0 0;
+    }
+
+    & .tileset-animations-list {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-sm);
+        margin-top: var(--space-sm);
+        max-height: 18rem;
+        overflow-y: auto;
+    }
+
+    & .tileset-animation-row {
+        border: 1px solid var(--color-grey-30);
+        border-radius: var(--radius-sm);
+        background: var(--color-grey-80);
+        padding: var(--space-sm);
+    }
+
+    & .tileset-animation-name {
+        width: 10rem;
+        font-size: var(--font-size-sm);
+        padding: var(--space-xs);
+    }
+
+    & .tileset-animation-base-tile {
+        font-weight: var(--font-weight-bold);
+        color: var(--color-grey);
+    }
+
+    & .tileset-animation-pick-btn.active {
+        background: var(--color-orange-90);
+        border-color: var(--color-yellow);
+        color: var(--color-yellow);
+    }
+
+    & .tileset-animation-delete img {
+        display: block;
+        width: var(--space-lg);
+        height: var(--space-lg);
+        filter: brightness(0) invert(0.8);
+    }
+
+    & .tileset-animation-frames {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-xs);
+        margin-top: var(--space-sm);
+    }
+
+    & .tileset-animation-frame {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: var(--space-xs);
+        border: 1px solid var(--color-green-20);
+        border-radius: var(--radius-sm);
+        background: var(--color-green-90);
+        padding: var(--space-sm) var(--space-xs) var(--space-xs);
+        cursor: grab;
+    }
+
+    & .tileset-animation-frame.dragging {
+        opacity: 0.5;
+        cursor: grabbing;
+    }
+
+    & .tileset-animation-frame-tile {
+        font-weight: var(--font-weight-bold);
+        font-size: var(--font-size-sm);
+        color: var(--color-grey);
+    }
+
+    & .tileset-animation-frame-remove {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 1.125rem;
+        height: 1.125rem;
+        padding: 0;
+        line-height: 1;
+        font-size: var(--font-size-xs);
+        background: var(--color-red-70);
+        color: var(--color-white);
+        border: none;
+        cursor: pointer;
+
+        &:hover {
+            background: var(--color-red-80);
+        }
+    }
+
+    & .tileset-animation-pick-status {
+        display: flex;
+        align-items: center;
+        gap: var(--space-xs);
+        margin-top: var(--space-sm);
+        padding: var(--space-xs) var(--space-sm);
+        border: 1px solid var(--color-orange-70);
+        border-radius: var(--radius-sm);
+        background: var(--color-orange-90);
+        font-size: var(--font-size-sm);
+        color: var(--color-yellow);
+
+        & .tile-pick-label {
+            flex: 1;
+        }
+    }
+}

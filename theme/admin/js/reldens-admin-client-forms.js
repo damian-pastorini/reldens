@@ -9,12 +9,23 @@ class AdminClientForms
         return container.dataset.deleteRelationsWarning;
     }
 
+    fetchDeleteExtraWarning()
+    {
+        let activeWarning = document.querySelector('.room-active-players-warning:not(.hidden)');
+        if(!activeWarning){
+            return '';
+        }
+        return ' '+activeWarning.textContent.trim();
+    }
+
     buildFormConfirmOptions(form)
     {
         let options = {};
         if(form.classList.contains('form-delete')){
             options.title = 'Confirm Delete';
-            options.message = 'Are you sure you want to delete?'+this.fetchDeleteRelationsWarning(form);
+            options.message = 'Are you sure you want to delete?'
+                +this.fetchDeleteRelationsWarning(form)
+                +this.fetchDeleteExtraWarning();
             options.confirmText = 'Delete';
             options.confirmClass = 'button-danger';
         }

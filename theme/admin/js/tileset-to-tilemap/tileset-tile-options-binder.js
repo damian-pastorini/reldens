@@ -26,6 +26,7 @@ class TilesetTileOptionsBinder
         this.activeOptionKey = null;
         this.activePositionKey = null;
         this.activeSpotName = null;
+        this.activeAnimationIndex = null;
         this.multiSelect = false;
     }
 
@@ -74,6 +75,7 @@ class TilesetTileOptionsBinder
         this.multiSelect = multiSelect;
         this.activeSpotName = spotName ? spotName : null;
         this.activePositionKey = null;
+        this.activeAnimationIndex = null;
     }
 
     activatePosition(positionKey)
@@ -159,8 +161,12 @@ class TilesetTileOptionsBinder
         this.app.renderer.renderCanvas(tilesetIndex);
     }
 
-    handleTileClick(tilesetIndex, row, col)
+    handleTileClick(tilesetIndex, row, col, isRightClick)
     {
+        if(null !== this.activeAnimationIndex){
+            this.app.animationsBinder.handleTilePick(tilesetIndex, row, col, isRightClick);
+            return;
+        }
         if(this.picker){
             this.picker.handleTileClick(tilesetIndex, row, col);
         }

@@ -5,8 +5,12 @@
         data-map-elements-file="{{&mapElementsFile}}"
         data-image-key="{{&firstSceneImage}}"
         data-context="room">Edit Map Elements</button>
-    <h3>Extra options</h3>
-    <div class="default-room-container">
+    <div class="default-room-container entry-collapsible">
+        <h3 class="clickable default-room-toggle entry-collapsible-toggle" data-expand-collapse=".default-room-content">
+            <span>Set default</span>
+            <img class="default-room-collapse-icon entry-collapsible-icon" src="/assets/admin/circle-chevron-up-solid-full.svg" alt="Toggle set default">
+        </h3>
+        <div class="default-room-content entry-collapsible-content hidden">
         <form name="defaultRoom" action="#" method="post" class="confirmation-required">
             <input type="hidden" name="setAsDefault" value="1">
             <div class="edit-field">
@@ -25,6 +29,7 @@
             </label>
             </div>
         </form>
+        </div>
     </div>
     <div class="rooms-association-container entry-collapsible">
         <h3 class="clickable rooms-association-toggle entry-collapsible-toggle" data-expand-collapse=".rooms-association-content">
@@ -138,8 +143,7 @@
                     <input type="number" id="roomStartingPointY" name="roomStartingPointY" required/>
                 </span>
             </div>
-            <div class="association-maps-container room-starting-point-container" data-map-loader="{{&id}}"></div>
-            <div class="actions-container">
+            <div class="actions-container room-starting-point-actions">
                 <span>
                     <button class="button button-primary"
                         type="submit"
@@ -148,6 +152,7 @@
                     >Set starting point</button>
                 </span>
             </div>
+            <div class="association-maps-container room-starting-point-container" data-map-loader="{{&id}}"></div>
         </form>
         </div>
     </div>

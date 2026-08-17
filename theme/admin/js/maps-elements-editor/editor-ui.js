@@ -55,7 +55,23 @@ class EditorUi
         this.canvasScrollContainer.className = 'editor-canvas-scroll';
         this.canvasScrollContainer.appendChild(this.editor.canvas);
         this.container.appendChild(this.canvasScrollContainer);
+        this.canvasScrollContainer.addEventListener(
+            'wheel',
+            (wheelEvent) => this.handleZoomWheel(wheelEvent),
+            {passive: false}
+        );
         this.applyZoom();
+    }
+
+    /**
+     * @param {WheelEvent} wheelEvent
+     */
+    handleZoomWheel(wheelEvent)
+    {
+        if(!adminFunctions.blockCtrlWheelZoom(wheelEvent)){
+            return;
+        }
+        this.zoomBy(0 > wheelEvent.deltaY ? this.zoomStep : -this.zoomStep);
     }
 
     dispose()

@@ -183,6 +183,7 @@
             <div class="tileset-map-config-row">
                 <div class="tileset-map-config-toggles-row">
                     <button type="button" class="button button-sm button-dark tileset-map-config-toggle">Map Generator Configuration</button>
+                    <button type="button" class="button button-sm button-dark tileset-animations-toggle">Animations</button>
                     <label class="tileset-merge-label"><input type="checkbox" class="tileset-merge-checkbox"> Merge</label>
                     <button class="button button-sm button-dark tileset-merge-config-toggle" type="button">Merge Configuration</button>
                 </div>
@@ -240,6 +241,21 @@
                             </label>
                         </div>
                     </div>
+                </fieldset>
+                <fieldset class="tileset-animations-panel hidden">
+                    <legend>Tile animations</legend>
+                    <div class="tileset-animations-controls">
+                        <label>Tileset frame duration (ms): <input type="number" class="tileset-animations-default-duration" min="1"></label>
+                        <span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">Default duration used by every animation frame without its own duration. Click Add, then click the base tile on the canvas, then keep clicking tiles to append frames. Drag a frame onto another one to change the play order.</span></span>
+                        <button type="button" class="button button-sm button-success tileset-animation-add">Add</button>
+                        <label class="tileset-animations-skip-label">
+                            <input type="checkbox" class="tileset-animations-skip">Skip tile animations
+                        </label>
+                        <span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">If checked, this tileset animations are kept in the session but left out of the generated composite and maps, so no animated tile is included in the generation.</span></span>
+                    </div>
+                    <div class="tile-pick-status tileset-animation-pick-status hidden"><span class="tile-pick-label"></span><button type="button" class="button button-sm button-danger tile-pick-cancel">Done picking</button></div>
+                    <p class="tileset-animations-empty">No animations defined for this tileset.</p>
+                    <div class="tileset-animations-list"></div>
                 </fieldset>
             </div>
         </div>
@@ -475,6 +491,27 @@
     </div>
 </template>
 
+<template class="tileset-animation-row-template">
+    <div class="tileset-animation-row">
+        <div class="tileset-animation-row-header">
+            <input type="text" class="tileset-animation-name" placeholder="animation-001">
+            <span class="tileset-animation-base">Base tile: <span class="tileset-animation-base-tile"></span></span>
+            <label class="tileset-animation-duration-label">Frames duration (ms): <input type="number" class="tileset-animation-duration" min="1" placeholder="default"></label>
+            <button type="button" class="button button-sm button-secondary tileset-animation-apply-duration">Apply to all frames</button>
+            <button type="button" class="button button-sm button-dark tile-option-btn tileset-animation-pick-btn">Pick base tile</button>
+            <button type="button" class="button button-sm button-danger tileset-animation-delete"><img src="/assets/admin/trash-can-solid-full.svg" alt="Delete"></button>
+        </div>
+        <div class="tileset-animation-frames"></div>
+    </div>
+</template>
+<template class="tileset-animation-frame-template">
+    <div class="tileset-animation-frame" draggable="true">
+        <span class="tileset-animation-frame-tile"></span>
+        <input type="number" class="tileset-animation-frame-duration" min="1" placeholder="default" draggable="false">
+        <button type="button" class="tileset-animation-frame-remove">x</button>
+    </div>
+</template>
+
 <template class="tileset-param-template">
     <fieldset class="tileset-param-fieldset">
         <legend class="param-filename"></legend>
@@ -606,7 +643,19 @@
                 <li><strong>Inner / Outer Walls</strong>: wall tile rings placed at or outside the spot boundary. Enable <strong>Border Inner Walls</strong> or <strong>Border Outer Walls</strong> (Split Borders in Layers is forced on automatically).</li>
             </ul>
             <p>To make a spot visible on the map with collision: check <strong>Is Element</strong>, set <strong>Depth</strong> to a layer name (e.g. <code>ground-variations</code>), uncheck <strong>Walkable</strong>, and assign <strong>Variations</strong> tiles.</p>
-            <h3>Step 12 - Session and per-tileset controls</h3>
+            <h3>Step 12 - Animations</h3>
+            <p>Animated tiles are configured per tileset in the <strong>Animations</strong> panel. Click <strong>Add</strong> to create an animation, then expand it to configure:</p>
+            <ul>
+                <li><strong>Name</strong>: label used in the editor only, e.g. <code>water-flow</code>.</li>
+                <li><strong>Base tile</strong>: the tile the animation is attached to. Click the base tile cell to activate pick mode, then click the desired tile on the canvas. Every map cell using this tile plays the animation.</li>
+                <li><strong>Frames</strong>: add the frames one by one, each one picked from the canvas the same way. The frames play in the order listed; the base tile is used as the first frame automatically when the first frame you add is a different tile.</li>
+                <li><strong>Reorder frames</strong>: drag a frame and drop it on another frame of the same animation to move it to that position. Its own duration travels with it, and frames can only be reordered inside their own animation. Whichever frame ends up first becomes the <strong>base tile</strong> of the animation, so dropping a frame into the first position changes which tile the animation is attached to and therefore which map cells play it.</li>
+                <li><strong>Duration</strong> (per frame): how long that frame stays on screen, in milliseconds. Leave it empty to inherit.</li>
+                <li><strong>Apply duration to all frames</strong>: the animation default duration, used by every frame with no duration of its own.</li>
+                <li><strong>Default duration</strong> (per tileset): fallback for every animation of this tileset that has no default of its own. When nothing is set anywhere, 200 milliseconds are used.</li>
+            </ul>
+            <p>An animation is only exported when its <strong>base tile</strong> is actually used: assigned as a tile option in the <strong>Map Tiles</strong> tab, used by a spot, or part of an element layer. Animations on unused base tiles are dropped on generation so unused tiles are not forced into the optimized tileset image. The frames themselves do not need to be used anywhere, a used base tile carries all of its frames into the generated map.</p>
+            <h3>Step 13 - Session and per-tileset controls</h3>
             <ul>
                 <li><strong>Session Name</strong>: optional label appended to the auto-generated session ID timestamp.</li>
                 <li><strong>Override session</strong> checkbox: when checked, saving rewrites the current session; when unchecked every save creates a new timestamped session.</li>
@@ -615,7 +664,7 @@
                 <li><strong>Remove</strong> (per tileset): removes the tileset from the session.</li>
                 <li><strong>Map Generator Configuration</strong> toggle: expands inputs for <strong>Map File Name</strong>, <strong>Map Title</strong>, and the <strong>Maps Wizard Strategy</strong> (single composite map, multiple maps, or multiple maps with associations).</li>
             </ul>
-            <h3>Step 13 - Generate and Maps Wizard</h3>
+            <h3>Step 14 - Generate and Maps Wizard</h3>
             <p>When all elements and spots are configured, click <strong>Generate All</strong> (or per-tileset <strong>Generate</strong>) to produce output files: Tiled-compatible JSON per element, an annotated tileset PNG, <code>composite.json</code>, and <code>map-generator-config.json</code>. Generated sessions appear in the <strong>Generated Files</strong> list below the editor.</p>
             <p>After generating, click <strong>Maps Wizard</strong> to open the map generation wizard. It pre-fills from the session's <code>map-generator-config.json</code> and runs the Reldens map generator to produce the final playable Tiled map files.</p>
             <h3>Tips</h3>
@@ -881,5 +930,9 @@
 <script src="/js/tileset-to-tilemap/tileset-tile-options-pick-handler.js"></script>
 <script src="/js/tileset-to-tilemap/tileset-tile-options-clearer.js"></script>
 <script src="/js/tileset-to-tilemap/tileset-tile-options-binder.js"></script>
+<script src="/js/tileset-to-tilemap/tileset-animations-normalizer.js"></script>
+<script src="/js/tileset-to-tilemap/tileset-animations.js"></script>
+<script src="/js/tileset-to-tilemap/tileset-animation-frames-reorder.js"></script>
+<script src="/js/tileset-to-tilemap/tileset-animations-binder.js"></script>
 <script src="/js/tileset-to-tilemap/tileset-tooltip-placement.js"></script>
 <script src="/js/tileset-to-tilemap/tileset-to-tilemap.js"></script>

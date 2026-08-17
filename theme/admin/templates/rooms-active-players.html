@@ -1,0 +1,5 @@
+<div class="room-active-players-banner" data-room-id="{{roomId}}" data-refresh-ms="{{refreshMs}}" data-default-room="{{defaultRoomFlag}}">
+    <p class="room-default-room-notice{{^isDefaultRoom}} hidden{{/isDefaultRoom}}">This room is the default room, it can not be deleted. Set another room as default (Set default > Save as default), then delete this one.</p>
+    <p class="room-active-players-count">Players currently logged in this room: <span class="count-value">{{activePlayersCount}}</span></p>
+    <p class="room-active-players-warning{{^hasActivePlayers}} hidden{{/hasActivePlayers}}">This room has players in it right now.{{#closeEnabled}} Deleting it will notify them and force-close the room after {{closeSeconds}} seconds.{{/closeEnabled}} Those players can experience unexpected behaviors and their pending data will be saved without the deleted room reference.</p>
+</div>

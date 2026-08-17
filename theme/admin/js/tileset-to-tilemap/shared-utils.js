@@ -30,6 +30,7 @@ class SharedUtils
         trash: '/assets/admin/trash-can-solid-full.svg',
         chevronUp: '/assets/admin/circle-chevron-up-solid-full.svg'
     };
+    static ANIMATIONS_DEFAULT_DURATION = 200;
     static SPOT_DEFAULTS = {
         width: 5,
         height: 5,
