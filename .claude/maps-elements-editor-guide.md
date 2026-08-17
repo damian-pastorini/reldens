@@ -43,6 +43,13 @@ The required behaviour for elements, duplicates and layer order. This is the spe
 - Resize Map: opens a panel with `Tiles to remove horizontally`, `Tiles to remove vertically`, and a 3x3 anchor picker. No default anchor; the Confirm button stays disabled until you pick one. Confirm shrinks the map and re-stamps the borders layer if border tile properties exist on the tileset. If any element would fall outside the new bounds, the resize is blocked and the offending instance IDs are surfaced in a `.resize-error` paragraph.
 - Reset: toolbar button. Restores the LAST LOADED state - the in-memory snapshot is refreshed on every `editor.load()` (initial load AND after a backup restore via the Backups panel). Shows a confirmation dialog before discarding changes.
 - Zoom controls: at the right edge of the toolbar (`-` button, `<percent>%` label, `+` button). Range 25%-400% in 25% steps. Implemented by setting `canvas.style.width`/`canvas.style.height` (NOT a CSS transform). The canvas sits inside a `.editor-canvas-scroll` wrapper with `overflow: auto`, and the parent `.wizard-map-option-container` also has `overflow: auto` so the LI shows scrollbars when the scaled canvas exceeds it. `canvasToTile()` uses `getBoundingClientRect().width` so click-to-tile coords stay correct at every zoom level.
+- Ctrl + mouse wheel over the canvas: `EditorUi.handleZoomWheel()` (bound on `.editor-canvas-scroll` with
+`{passive: false}`) intercepts the browser zoom gesture, calls `preventDefault()` and routes it to `zoomBy()` with
+`+/- zoomStep`, so the wheel drives the MAP zoom and stays clamped to the same 25%-400% range as the toolbar
+buttons. The browser page zoom never fires over the editor. Every other admin map canvas (`.mapCanvas`, used by the
+map selection, the object tile picker and the room starting point picker) has no zoom of its own, so
+`ReldensAdminClientMaps.blockBrowserZoom()` (bound per canvas in `bindMapCanvas()`, also `{passive: false}`) only
+calls `preventDefault()` on Ctrl + wheel to stop the page zooming while the pointer is over a map.
 - Save button flash: shows "Saved" or "Save failed" briefly (1.5s) after click; timer cancels and resets if the user clicks again.
 - Dirty indicator: orange "Unsaved changes" text shown whenever any mutation happens; cleared after a successful save or after Reset.
 - Cancel duplication button: hidden by default, shown only while the duplicator is in placing mode.

@@ -292,6 +292,99 @@ Wangsets for inner and outer spot walls are built by `CompositeWangsetBuilder.bu
 
 ---
 
+## Tile Animations: Editor to Generated Map
+
+Animated tiles are configured per tileset in the editor Animations panel and stored in the session state next to
+`tileOptions` and `spots`:
+
+```json
+{
+  "animationsDefaultDuration": 200,
+  "skipTileAnimations": false,
+  "tileAnimations": [
+    {
+      "name": "water-flow",
+      "baseTile": 242,
+      "defaultDuration": null,
+      "frames": [
+        { "tile": 242, "duration": null },
+        { "tile": 244, "duration": 300 }
+      ]
+    }
+  ]
+}
+```
+
+`baseTile` and `frames[].tile` are **flat indices** (`flatIndex = row * tilesetColumns + col`, 0-based, tileset
+local), the same values used by every other tile option, and they must be stored as numbers (they are validated
+with `sc.isInt`, anything else is dropped).
+
+Duration precedence per emitted frame: frame `duration`, then the animation `defaultDuration`, then the tileset
+`animationsDefaultDuration`, then the package constant `TilesetConst.ANIMATIONS_DEFAULT_DURATION` (200). The
+resolution is falsy driven, so `null`, `0` and empty values fall through to the next level, and every emitted frame
+ends with an explicit numeric duration.
+
+Frame order is user controlled by drag and drop, implemented in `theme/admin/js/tileset-to-tilemap/tileset-animation-frames-reorder.js`
+(`TilesetAnimationFramesReorder`, instantiated in the `TilesetAnimationsBinder` constructor and wired in
+`bindTileset()` through `bindList()`). It delegates `dragstart`, `dragover`, `drop` and `dragend` on
+`.tileset-animations-list`, the same delegation the click and input handlers use, and the frame cells carry
+`draggable="true"` from the `.tileset-animation-frame-template` while the duration input carries `draggable="false"`
+so dragging inside the number field does not start a frame drag. A drop is only accepted when the target frame
+belongs to the same animation (it compares `data-animation-index`), so frames cannot be moved across animations.
+The move splices the frame object out and back in at the target index, which carries its per frame `duration` along,
+then `refreshPanel()` re-renders the list so every `data-frame-index` is re-derived and the remove buttons and
+duration inputs stay aligned. Nothing else was needed for persistence: the order lives in `animation.frames`, which
+`tileset-serializer.js` already writes.
+
+After every move the reorder sets `animation.baseTile = animation.frames[0].tile`, so the first frame is always the
+main frame. Dropping a frame into the first position makes it the base tile, and dragging the current base out of
+the first position promotes whatever lands there, which matches what `resolveBaseTile()` already does when the base
+tile frame is removed with right click. This also means `buildFrames()` never has to prepend the base tile after a
+reorder, so the emitted frame count stays the same as the list shown in the editor. Changing the base tile changes
+which map cells play the animation, since the base tile is the tile actually painted on the map.
+
+`skipTileAnimations` is the "Skip tile animations" checkbox of the Animations panel (`.tileset-animations-skip`,
+bound in `tileset-animations-binder.js`, rendered by `tileset-animations.js`, persisted by `tileset-serializer.js`
+and loaded by `state-builder.js`). Checked, `TileAnimationsBuilder.build()` returns nothing for that tileset, so the
+composite carries no `animation` key and the optimizer does not force the frame tiles into the packed sheet. The
+animations data survives in the session, so the switch is reversible and works as an A/B for anything suspected to
+come from the animated tiles. It does not change the merge: merging preserves the animations and the resulting
+merged tileset starts unchecked.
+
+`TileAnimationsBuilder.build()` (`tileset-to-tilemap/lib/tile-animations-builder.js`) emits an animation ONLY when
+its `baseTile` belongs to the tiles the tileset actually uses: the annotated flat ids (tile options plus every spot
+tile, surrounding, corner and wall) union every tile of every element layer. An animation on an unused base tile is
+dropped so the optimizer is not forced to pack tiles nothing references. Frames are not filtered: a used base tile
+pulls its frames into the optimized sheet even when they are not painted anywhere.
+
+The output goes into the composite tileset entry `tiles` array, merged by tile id with the role annotations by
+`CompositeTileAnnotationBuilder.mergeDuplicateTileAnnotations()`. A tile can therefore carry `properties` and
+`animation` at once, and an animated tile with no role is emitted with only the `animation` key (empty
+`properties` arrays are removed):
+
+```json
+{ "id": 242, "animation": [{ "duration": 200, "tileid": 242 }, { "duration": 300, "tileid": 244 }] }
+```
+
+When the first configured frame is not the base tile, the base tile is prepended as frame 1, because Tiled expects
+the animated tile to be the first frame of its own animation.
+
+Merged tilesets: `TilesetsMerge.run()` remaps the animations through `TileAnimationsBuilder.remapForMerge()` using
+each placement `rowOffset` and `colOffset` against the merged column count. The result is session shaped (not
+Tiled shaped) with every frame duration baked to an explicit number and `defaultDuration` reset to `null`, and it
+is stored in the merged tileset state as `tileAnimations` plus `animationsDefaultDuration`, so a merged tileset
+behaves like an uploaded one.
+
+Downstream both packages already carry animations without any change:
+- `TileMapOptimizer.parseJSON()` force-adds the animated base tile gid and every frame gid to the used tiles, so
+  frame-only tiles are never stripped from the packed image; `createNewJSON()` remaps the entry `id` and each
+  `frame.tileid` to their new packed positions and copies the durations verbatim.
+- `MapDataMapper` assigns `result.tiles = optimizedTileset.tiles` and `RandomMapGenerator` emits that array in the
+  tileset entry of the final map JSON, so the animations arrive in the generated map with optimized tileset local
+  ids.
+
+---
+
 ## Maps Wizard Server-Side Flow
 
 **`POST /admin/maps-wizard`**
