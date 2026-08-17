@@ -56,6 +56,15 @@ class AdminFunctions
         }
     }
 
+    blockCtrlWheelZoom(wheelEvent)
+    {
+        if(!wheelEvent.ctrlKey){
+            return false;
+        }
+        wheelEvent.preventDefault();
+        return true;
+    }
+
     cloneElement(element)
     {
         if(element instanceof HTMLCanvasElement){
