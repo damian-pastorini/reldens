@@ -13,8 +13,8 @@ The admin panel is accessible at `/reldens-admin` and is powered by the `@relden
 The dashboard page shows the users currently logged in and the distinct logged users per day over the last 30 days.
 
 The page itself stays static because `@reldens/cms` renders and caches the dashboard content once at startup, so the
-numbers are fetched at runtime: `theme/admin/js/admin-dashboard-stats-renderer.js` reads the API path from the
-`data-stats-api-path` attribute in `theme/admin/templates/dashboard.html` and requests it relative to the current admin
+numbers are fetched at runtime: `theme/admin/js/admin-dashboard-stats-renderer.js` reads the route from the
+`data-stats-path` attribute in `theme/admin/templates/dashboard.html` and requests it relative to the current admin
 path, which keeps a custom `RELDENS_ADMIN_ROUTE_PATH` working. `DashboardStatsSubscriber`
 (`lib/admin/server/subscribers/dashboard-stats-subscriber.js`) serves that route authenticated.
 
@@ -22,8 +22,10 @@ The data comes from `UsersActivityDataProvider` (`lib/admin/server/users-activit
 
 - The active users count is derived from the `ActivePlayers` singleton, counting user ids with at least one open
   session. Sessions are per room, so the raw session count would report the same user more than once.
-- The per-day series is a single grouped query executed through `dataServer.rawQuery`, which every storage driver
-  implements. The dates are handled in UTC because `sc.getCurrentDate()` writes `users_login.login_date` in UTC; using
+- The per-day series loads the login rows through the repository (`loadBy('login_date', <Date>, 'GTE')`) and groups
+  them in `groupDistinctUsersPerDay`, counting each user once per day. There is no raw SQL: the storage drivers expose
+  filters, sorting and paging but no group-by, and raw queries would bypass the entity layer and break driver
+  portability. The dates are handled in UTC because `sc.getCurrentDate()` writes `users_login.login_date` in UTC; using
   local dates shifts every bucket on a server that is not on UTC.
 - Only the days that actually had logins are returned, together with `fromDate` and `daysRange`. The chart places each
   row on its own slot by date difference, so the missing days stay empty instead of collapsing the axis.
@@ -114,21 +116,23 @@ The behavior is controlled by these config rows, all created with those defaults
 
 - `server/rooms/deletion/closeActiveRoomsEnabled` (boolean, default `1`) - when disabled the players are not notified
   and the live instance is left running until it disposes on its own.
-- `server/rooms/deletion/closeActiveRoomsTime` (float, default `10000`) - milliseconds between the notification and the
+- `server/rooms/deletion/closeActiveRoomsSeconds` (float, default `10`) - seconds between the notification and the
   forced close, also shown in the admin warning banner.
-- `server/rooms/deletion/closeActiveRoomsWarningInterval` (float, default `5000`) - milliseconds between the repeated
-  warnings during the countdown.
+- `server/rooms/deletion/closeActiveRoomsWarningSeconds` (float, default `5`) - seconds between the repeated warnings
+  during the countdown.
 - `server/rooms/deletion/setDefault` (boolean, default `1`) - the player states of a deleted room are moved to the
   default room; turn it off to leave them unlinked by the foreign key instead.
 
-The countdown runs on a one second interval and repeats the `chat.roomClosing` message on every multiple of the warning
-interval, then on every remaining second once the remaining time is under that interval, so a 10 second close with a 5
-second interval warns at 10, 5, 4, 3, 2 and 1. This mirrors the server shutdown countdown in `ShutdownSubscriber`.
+Everything in this flow is expressed in seconds, the unit the countdown and the messages actually use, so there is no
+milliseconds conversion anywhere: the `RoomsConst.ROOM_CLOSING` broadcast carries `seconds` and only the client
+multiplies it for its `setTimeout`. The countdown runs on a one second interval and repeats the `chat.roomClosing`
+message on every multiple of the warning interval, then on every remaining second once the remaining time is under that
+interval, so a 10 second close with a 5 second interval warns at 10, 5, 4, 3, 2 and 1. This mirrors the server shutdown countdown in `ShutdownSubscriber`.
 Broadcasts are skipped when the room has no clients left, and the room is disconnected when the counter reaches zero.
 
 The room view banner refreshes itself: `RoomsActivePlayersSubscriber`
 (`lib/admin/server/subscribers/rooms-active-players-subscriber.js`) renders the banner and serves
-`/rooms/api/active-players?id=N`, which `theme/admin/js/rooms-active-players-refresher.js` polls on the interval given
+`/rooms/active-players?id=N`, which `theme/admin/js/rooms-active-players-refresher.js` polls on the interval given
 by the banner `data-refresh-ms` attribute. The warning paragraph is always rendered and only hidden with a class, so it
 appears and disappears as players join or leave, and the delete confirmation dialog reads its text from that visible
 paragraph instead of a duplicated attribute.
