@@ -23,15 +23,4 @@
     .room-active-players-warning.hidden {
         display: none;
     }
-
-    .room-default-room-notice {
-        margin: 0 0 var(--space-sm) 0;
-        color: var(--color-orange);
-        font-size: var(--font-size-sm);
-        font-weight: var(--font-weight-bold);
-    }
-
-    .room-default-room-notice.hidden {
-        display: none;
-    }
 }

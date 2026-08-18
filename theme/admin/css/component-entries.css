@@ -192,28 +192,13 @@
         }
     }
 
-    .entry-collapsible {
-        .entry-collapsible-toggle {
-            display: flex;
-            align-items: center;
-            gap: var(--space-sm);
-            cursor: pointer;
-        }
+    .extra-content-container {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-lg);
 
-        .entry-collapsible-icon {
-            width: var(--space-2xl);
-            height: var(--space-2xl);
-            margin-left: auto;
-            filter: brightness(0) invert(0.5);
-            transition: transform 0.15s;
-        }
-
-        &:has(.entry-collapsible-content.hidden) .entry-collapsible-icon {
-            transform: rotate(180deg);
-        }
-
-        .entry-collapsible-content {
-            padding-top: var(--space-md);
+        & > .edit-map-elements-entity-btn {
+            align-self: flex-start;
         }
     }
 
