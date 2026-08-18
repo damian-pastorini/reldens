@@ -90,10 +90,16 @@ room on the next login (`LoginManager.getRoomNameById` returns `GameConst.ROOM_N
 nothing).
 
 That prevention is the authority and covers any direct call to the delete route. So the administrator is not sent
-through a failing delete, the room view also blocks the buttons: `RoomsActivePlayersWarning` compares the rendered room
-id against the configured default room and marks the banner with `data-default-room`, then
-`theme/admin/js/rooms-default-room-delete-blocker.js` disables the delete buttons and the banner shows the notice
-explaining a new default has to be set first.
+through a failing delete, `RoomsActivePlayersWarning` (`lib/admin/server/rooms-active-players-warning.js`) exposes the
+configured default room id on the rooms pages: on the view page it is a `data-default-room-id` attribute on the active
+players banner (`reldens.adminViewPropertiesPopulation`) and on the list page an empty element with the same attribute
+appended to `extraContentForList` (`reldens.adminListPropertiesPopulation`).
+
+With that id, `theme/admin/js/rooms-default-room-delete-blocker.js` captures the delete attempts before the admin
+client handles them: any `form-delete` submit (room view buttons and the list row button) and the list mass delete
+click. When the submitted ids or the checked ids include the default room the event is stopped, nothing is sent to the
+server and the existing confirm dialog is reused (`adminFunctions.showConfirmDialog`) to warn that another room has to
+be set as default first. Nothing is displayed until a delete is actually attempted.
 
 Once the row is deleted, `reldens.adminAfterEntityDelete` triggers `DeletedRoomCloser`
 (`lib/rooms/server/deleted-room-closer.js`), which runs the runtime teardown. It is wired to the after event on purpose:
