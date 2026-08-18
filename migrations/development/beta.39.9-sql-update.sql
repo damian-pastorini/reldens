@@ -148,8 +148,8 @@ ALTER TABLE `chat` ADD CONSTRAINT `FK__players_2` FOREIGN KEY (`private_player_i
 -- Rooms deletion behavior: notify and close the live room after the configured time when its record is deleted
 INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES
 	('server', 'rooms/deletion/closeActiveRoomsEnabled', '1', 3),
-	('server', 'rooms/deletion/closeActiveRoomsTime', '10000', 2),
-	('server', 'rooms/deletion/closeActiveRoomsWarningInterval', '5000', 2),
+	('server', 'rooms/deletion/closeActiveRoomsSeconds', '10', 2),
+	('server', 'rooms/deletion/closeActiveRoomsWarningSeconds', '5', 2),
 	('server', 'rooms/deletion/setDefault', '1', 3);
 
 --
