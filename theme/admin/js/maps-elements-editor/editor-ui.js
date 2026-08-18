@@ -9,6 +9,8 @@ class EditorUi
         this.zoomMin = 0.25;
         this.zoomMax = 4;
         this.zoomStep = 0.25;
+        this.zoomKeys = ['+', '=', '-', '0'];
+        this.zoomKeysListener = null;
     }
 
     resetDomReferences()
@@ -60,7 +62,25 @@ class EditorUi
             (wheelEvent) => this.handleZoomWheel(wheelEvent),
             {passive: false}
         );
+        this.zoomKeysListener = (keyEvent) => this.handleZoomKeys(keyEvent);
+        window.addEventListener('keydown', this.zoomKeysListener);
         this.applyZoom();
+    }
+
+    /**
+     * @param {KeyboardEvent} keyEvent
+     */
+    handleZoomKeys(keyEvent)
+    {
+        if(!keyEvent.ctrlKey || -1 === this.zoomKeys.indexOf(keyEvent.key)){
+            return;
+        }
+        keyEvent.preventDefault();
+        if('0' === keyEvent.key){
+            this.zoomBy(1 - this.zoomLevel);
+            return;
+        }
+        this.zoomBy('-' === keyEvent.key ? -this.zoomStep : this.zoomStep);
     }
 
     /**
@@ -76,6 +96,10 @@ class EditorUi
 
     dispose()
     {
+        if(this.zoomKeysListener){
+            window.removeEventListener('keydown', this.zoomKeysListener);
+            this.zoomKeysListener = null;
+        }
         if(!this.container){
             return;
         }

@@ -53,7 +53,7 @@ class AdminDashboardStatsRenderer
 
     fetchStats()
     {
-        fetch(window.location.pathname.replace(/\/$/, '')+'/'+this.container.dataset.statsApiPath)
+        fetch(window.location.pathname.replace(/\/$/, '')+'/'+this.container.dataset.statsPath)
             .then((response) => response.json())
             .then((stats) => this.renderStats(stats))
             .catch(() => this.showFetchError());

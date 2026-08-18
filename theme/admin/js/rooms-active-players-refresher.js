@@ -14,7 +14,7 @@ class RoomsActivePlayersRefresher
         this.roomId = '';
         this.refreshTimer = null;
         this.defaultRefreshMs = 5000;
-        this.apiPath = '/rooms/api/active-players';
+        this.activePlayersPath = '/rooms/active-players';
         window.addEventListener('DOMContentLoaded', () => this.bind());
         if('loading' !== document.readyState){
             this.bind();
@@ -51,7 +51,7 @@ class RoomsActivePlayersRefresher
     fetchCount()
     {
         let basePath = window.location.pathname.replace(/\/rooms\/view.*$/, '');
-        fetch(basePath+this.apiPath+'?id='+encodeURIComponent(this.roomId))
+        fetch(basePath+this.activePlayersPath+'?id='+encodeURIComponent(this.roomId))
             .then((response) => response.json())
             .then((data) => this.applyCount(data))
             .catch(() => clearInterval(this.refreshTimer));
