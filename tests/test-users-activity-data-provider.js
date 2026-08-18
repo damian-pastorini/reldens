@@ -10,18 +10,21 @@ const { UsersActivityDataProvider } = require('../lib/admin/server/users-activit
 class TestUsersActivityDataProvider extends BaseTest
 {
 
-    createProvider(queryResult, playersSessionsByUserId, capturedQueries = [])
+    createUsersLoginRepository(loginRows, capturedFilters)
+    {
+        return {
+            tableName: () => 'users_login',
+            loadBy: async (field, fieldValue, operator) => {
+                capturedFilters.push({field, fieldValue, operator});
+                return loginRows;
+            }
+        };
+    }
+
+    createProvider(loginRows, playersSessionsByUserId, capturedFilters = [])
     {
         return new UsersActivityDataProvider(
-            {
-                rawQuery: async (query) => {
-                    capturedQueries.push(query);
-                    return queryResult;
-                },
-                getEntity: () => {
-                    return {tableName: () => 'users_login'};
-                }
-            },
+            {getEntity: () => this.createUsersLoginRepository(loginRows, capturedFilters)},
             {playersSessionsByUserId},
             30
         );
@@ -39,38 +42,42 @@ class TestUsersActivityDataProvider extends BaseTest
         });
     }
 
-    async testDailyLoggedUsersMapsTheGroupedRows()
+    async testDailyLoggedUsersGroupsDistinctUsersPerDay()
     {
-        await this.test('loadDailyLoggedUsers maps the grouped rows and casts the totals to numbers', async () => {
+        await this.test('loadDailyLoggedUsers counts each user once per day', async () => {
             let usersActivityDataProvider = this.createProvider(
-                [{day: '2026-08-14', total: '3'}, {day: '2026-08-16', total: 7}],
+                [
+                    {user_id: 1, login_date: new Date('2026-08-14T10:00:00.000Z')},
+                    {user_id: 1, login_date: new Date('2026-08-14T22:00:00.000Z')},
+                    {user_id: 2, login_date: new Date('2026-08-14T11:00:00.000Z')},
+                    {user_id: 3, login_date: '2026-08-16 09:00:00'}
+                ],
                 {}
             );
             let dailyLoggedUsers = await usersActivityDataProvider.loadDailyLoggedUsers('2026-07-18');
             this.assert.strictEqual(dailyLoggedUsers.length, 2);
-            this.assert.deepStrictEqual([...dailyLoggedUsers].shift(), {date: '2026-08-14', count: 3});
-            this.assert.deepStrictEqual([...dailyLoggedUsers].pop(), {date: '2026-08-16', count: 7});
+            this.assert.deepStrictEqual([...dailyLoggedUsers].shift(), {date: '2026-08-14', count: 2});
+            this.assert.deepStrictEqual([...dailyLoggedUsers].pop(), {date: '2026-08-16', count: 1});
         });
     }
 
-    async testDailyLoggedUsersQueryGroupsByDayFromTheRangeStart()
+    async testDailyLoggedUsersFiltersFromTheRangeStart()
     {
-        await this.test('loadDailyLoggedUsers queries the login table grouped by day from the range start', async () => {
-            let capturedQueries = [];
-            let usersActivityDataProvider = this.createProvider([], {}, capturedQueries);
+        await this.test('loadDailyLoggedUsers filters the login date from the range start', async () => {
+            let capturedFilters = [];
+            let usersActivityDataProvider = this.createProvider([], {}, capturedFilters);
             await usersActivityDataProvider.loadDailyLoggedUsers('2026-07-18');
-            this.assert.strictEqual(capturedQueries.length, 1);
-            let executedQuery = [...capturedQueries].shift();
-            this.assert.strictEqual(-1 !== executedQuery.indexOf('FROM users_login'), true);
-            this.assert.strictEqual(-1 !== executedQuery.indexOf('COUNT(DISTINCT user_id)'), true);
-            this.assert.strictEqual(-1 !== executedQuery.indexOf('GROUP BY day'), true);
-            this.assert.strictEqual(-1 !== executedQuery.indexOf('2026-07-18 00:00:00'), true);
+            this.assert.strictEqual(capturedFilters.length, 1);
+            let executedFilter = [...capturedFilters].shift();
+            this.assert.strictEqual(executedFilter.field, 'login_date');
+            this.assert.strictEqual(executedFilter.operator, 'GTE');
+            this.assert.strictEqual(executedFilter.fieldValue.toISOString(), '2026-07-18T00:00:00.000Z');
         });
     }
 
-    async testDailyLoggedUsersReturnsEmptyOnQueryFailure()
+    async testDailyLoggedUsersReturnsEmptyOnLoadFailure()
     {
-        await this.test('loadDailyLoggedUsers returns an empty list when the query fails', async () => {
+        await this.test('loadDailyLoggedUsers returns an empty list when the rows could not be loaded', async () => {
             let usersActivityDataProvider = this.createProvider(false, {});
             let dailyLoggedUsers = await usersActivityDataProvider.loadDailyLoggedUsers('2026-07-18');
             this.assert.deepStrictEqual(dailyLoggedUsers, []);
@@ -81,7 +88,7 @@ class TestUsersActivityDataProvider extends BaseTest
     {
         await this.test('fetchStats returns the active count, the range start date and the grouped rows', async () => {
             let usersActivityDataProvider = this.createProvider(
-                [{day: '2026-08-16', total: 2}],
+                [{user_id: 1, login_date: new Date('2026-08-16T09:00:00.000Z')}],
                 {1: {sessionA: 'roomIdA'}}
             );
             let stats = await usersActivityDataProvider.fetchStats();

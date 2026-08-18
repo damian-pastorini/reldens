@@ -13,13 +13,13 @@ const { ChatConst } = require('../lib/chat/constants');
 class TestDeletedRoomCloser extends BaseTest
 {
 
-    createFakeConfig(closeTime, closeEnabled)
+    createFakeConfig(closeSeconds, closeEnabled)
     {
         return {
             get: (path, defaultValue) => defaultValue,
             getWithoutLogs: (path, defaultValue) => {
-                if('server/rooms/deletion/closeActiveRoomsTime' === path){
-                    return closeTime;
+                if('server/rooms/deletion/closeActiveRoomsSeconds' === path){
+                    return closeSeconds;
                 }
                 if('server/rooms/deletion/closeActiveRoomsEnabled' === path){
                     return closeEnabled;
@@ -29,10 +29,10 @@ class TestDeletedRoomCloser extends BaseTest
         };
     }
 
-    createCloserSetup(closeTime, closeEnabled)
+    createCloserSetup(closeSeconds, closeEnabled)
     {
         let closerSetup = {sceneBroadcasts: [], gameBroadcasts: [], closeState: {disconnected: false}};
-        closerSetup.fakeConfig = this.createFakeConfig(closeTime, closeEnabled);
+        closerSetup.fakeConfig = this.createFakeConfig(closeSeconds, closeEnabled);
         closerSetup.roomsManager = new RoomsManager({
             events: {emit: async () => true, on: () => true, emitSync: () => true},
             dataServer: {getEntity: () => ({})},
@@ -84,7 +84,7 @@ class TestDeletedRoomCloser extends BaseTest
     async testCloseRoomPurgesManagerListsAndSchedulesClose()
     {
         await this.test('closeRoom purges the manager lists, notifies and schedules the close', async () => {
-            let closerSetup = this.createCloserSetup(10000, true);
+            let closerSetup = this.createCloserSetup(10, true);
             await closerSetup.deletedRoomCloser.closeRooms(['5']);
             this.assert.strictEqual(closerSetup.roomsManager.isRoomLoaded(5), false);
             this.assert.strictEqual(closerSetup.roomsManager.loadedRooms.length, 0);
@@ -109,7 +109,7 @@ class TestDeletedRoomCloser extends BaseTest
     async testDisconnectRoomInstanceClosesAndCleansTheRegistry()
     {
         await this.test('disconnectRoomInstance closes the live instance and cleans the registry', async () => {
-            let closerSetup = this.createCloserSetup(10000, true);
+            let closerSetup = this.createCloserSetup(10, true);
             let roomInstance = closerSetup.roomsManager.createdInstances.colyseusId2;
             let disconnectResult = await closerSetup.deletedRoomCloser.disconnectRoomInstance(
                 roomInstance,
@@ -125,7 +125,7 @@ class TestDeletedRoomCloser extends BaseTest
     async testCloseRoomKeepsInstanceWhenBehaviorIsDisabled()
     {
         await this.test('closeRoom keeps the live instance when the close behavior is disabled', async () => {
-            let closerSetup = this.createCloserSetup(10000, false);
+            let closerSetup = this.createCloserSetup(10, false);
             await closerSetup.deletedRoomCloser.closeRooms([5]);
             this.assert.strictEqual(closerSetup.roomsManager.isRoomLoaded(5), false);
             this.assert.strictEqual(closerSetup.roomsManager.loadedRooms.length, 0);
@@ -138,7 +138,7 @@ class TestDeletedRoomCloser extends BaseTest
     async testClosingCountdownBroadcastsTheRemainingSeconds()
     {
         await this.test('the closing countdown broadcasts the remaining seconds to the players', async () => {
-            let closerSetup = this.createCloserSetup(10000, true);
+            let closerSetup = this.createCloserSetup(10, true);
             let roomInstance = closerSetup.roomsManager.createdInstances.colyseusId2;
             let broadcastResult = closerSetup.deletedRoomCloser.broadcastClosingCountdown(roomInstance, 3);
             this.assert.strictEqual(broadcastResult, true);
@@ -152,7 +152,7 @@ class TestDeletedRoomCloser extends BaseTest
     async testClosingCountdownIsSkippedOnAnEmptyRoom()
     {
         await this.test('the closing countdown does not broadcast when the room has no clients left', async () => {
-            let closerSetup = this.createCloserSetup(10000, true);
+            let closerSetup = this.createCloserSetup(10, true);
             let roomInstance = closerSetup.roomsManager.createdInstances.colyseusId2;
             roomInstance.clients = [];
             let broadcastResult = closerSetup.deletedRoomCloser.broadcastClosingCountdown(roomInstance, 3);
@@ -164,7 +164,7 @@ class TestDeletedRoomCloser extends BaseTest
     async testCloseRoomsIgnoresAnEmptyIdsList()
     {
         await this.test('closeRooms does nothing when the deleted ids list is empty', async () => {
-            let closerSetup = this.createCloserSetup(10000, true);
+            let closerSetup = this.createCloserSetup(10, true);
             let closeResult = await closerSetup.deletedRoomCloser.closeRooms([]);
             this.assert.strictEqual(closeResult, false);
             this.assert.strictEqual(closerSetup.roomsManager.isRoomLoaded(5), true);
@@ -175,7 +175,7 @@ class TestDeletedRoomCloser extends BaseTest
     async testFindCreatedInstanceByRoomId()
     {
         await this.test('RoomsManager.findRoomInstanceById matches the database room ID', async () => {
-            let closerSetup = this.createCloserSetup(10000, true);
+            let closerSetup = this.createCloserSetup(10, true);
             let foundInstance = closerSetup.roomsManager.findRoomInstanceById(5);
             this.assert.strictEqual(foundInstance.roomName, 'test-deleted-room');
             this.assert.strictEqual(closerSetup.roomsManager.findRoomInstanceById(99), false);
