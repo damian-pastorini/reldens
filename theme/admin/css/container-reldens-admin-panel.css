@@ -228,6 +228,10 @@
         margin-bottom: var(--space-lg);
     }
 
+    .room-starting-point-actions {
+        margin-bottom: var(--space-lg);
+    }
+
     .theme-manager-heading.section-title {
         margin-top: 3rem;
     }

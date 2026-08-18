@@ -162,6 +162,13 @@
                             </select>
                         </div>
                         <div class="config-item">
+                            <label for="placeRejectResolver-common"><span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">How to resolve an element placement rejection: move already placed elements to make space, or auto-grow the map</span></span>Elements place rejection resolve method</label>
+                            <select id="placeRejectResolver-common" class="config-input" data-option="common" data-property="placeRejectResolver">
+                                <option value="moveElements">Move elements</option>
+                                <option value="autoGrow" selected="">Auto grow map</option>
+                            </select>
+                        </div>
+                        <div class="config-item">
                             <label for="orderElementsBySize-common"><span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">Whether to sort elements by size before placing them</span></span>Order Elements By Size</label>
                             <select id="orderElementsBySize-common" class="config-input" data-option="common" data-property="orderElementsBySize">
                                 <option value="false">No</option>

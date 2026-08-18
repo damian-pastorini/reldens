@@ -409,6 +409,7 @@
     & .controls-ai-col .button-dark,
     & .canvas-actions .button-dark,
     & .tileset-map-config-toggle,
+    & .tileset-animations-toggle,
     & .tileset-merge-config-toggle {
         background-color: var(--color-grey-50);
         border-color: var(--color-purple);

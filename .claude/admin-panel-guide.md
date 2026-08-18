@@ -8,6 +8,33 @@ The admin panel is accessible at `/reldens-admin` and is powered by the `@relden
 
 ---
 
+## Dashboard
+
+The dashboard page shows the users currently logged in and the distinct logged users per day over the last 30 days.
+
+The page itself stays static because `@reldens/cms` renders and caches the dashboard content once at startup, so the
+numbers are fetched at runtime: `theme/admin/js/admin-dashboard-stats-renderer.js` reads the route from the
+`data-stats-path` attribute in `theme/admin/templates/dashboard.html` and requests it relative to the current admin
+path, which keeps a custom `RELDENS_ADMIN_ROUTE_PATH` working. `DashboardStatsSubscriber`
+(`lib/admin/server/subscribers/dashboard-stats-subscriber.js`) serves that route authenticated.
+
+The data comes from `UsersActivityDataProvider` (`lib/admin/server/users-activity-data-provider.js`):
+
+- The active users count is derived from the `ActivePlayers` singleton, counting user ids with at least one open
+  session. Sessions are per room, so the raw session count would report the same user more than once.
+- The per-day series loads the login rows through the repository (`loadBy('login_date', <Date>, 'GTE')`) and groups
+  them in `groupDistinctUsersPerDay`, counting each user once per day. There is no raw SQL: the storage drivers expose
+  filters, sorting and paging but no group-by, and raw queries would bypass the entity layer and break driver
+  portability. The dates are handled in UTC because `sc.getCurrentDate()` writes `users_login.login_date` in UTC; using
+  local dates shifts every bucket on a server that is not on UTC.
+- Only the days that actually had logins are returned, together with `fromDate` and `daysRange`. The chart places each
+  row on its own slot by date difference, so the missing days stay empty instead of collapsing the axis.
+
+The page re-fetches on the interval given by the `data-refresh-ms` attribute on the dashboard wrapper, so the count and
+the chart stay current without a reload. The hover listeners are bound once, not on every refresh.
+
+---
+
 ## Admin Panel Sections and Controlled Tables
 
 The admin panel groups entities into 14 navigation sections. The section structure is defined in:
@@ -24,6 +51,101 @@ Room definitions and player transition points.
 - `rooms` - Room definitions (name, type, map file, etc.)
 - `roomsChangePoints` - Points that move a player to another room
 - `roomsReturnPoints` - Points where a player returns after death/warp
+
+#### Deleting a room
+
+The admin deletes the room row only. Everything else is decided by the foreign keys, so the delete confirmation
+dialog lists the affected entities in separate groups according to what the database will actually do:
+
+- Deleted with the room (`ON DELETE CASCADE`): `roomsChangePoints` on both `room_id` and `next_room_id`, and
+  `roomsReturnPoints` on both `room_id` and `from_room_id`. These are pure topology and are meaningless without
+  the room, and cascading the inbound side is what stops other rooms pointing at a room that no longer exists.
+- Kept but unlinked (`ON DELETE SET NULL`): `chat`, `audio`, `objects` and `playersState`. Their `room_id` becomes
+  null and the records survive, so chat history is preserved and reusable configuration is not destroyed. A player
+  whose saved room was deleted ends with a null `room_id` and falls back to the default room, which is what the
+  "Set default" option in the room view is for.
+
+Those groups come from the `onDelete` value that `@reldens/storage` writes onto every generated reference
+property, read live from `information_schema`. After changing any referential action, regenerate the entities
+(`npm exec -- reldens generateEntities --override`) or the admin will report the old grouping. A reference
+property with no `onDelete` at all is reported as possibly blocking the delete rather than assuming an outcome.
+
+Not handled by the delete: the room map files on disk (`dist/assets/maps`, the theme assets copy and
+`generate-data/generated`) are left behind and have to be removed manually.
+
+#### Deleting a room while the server is running
+
+The default room can never be deleted. `DeletedRoomPlayersRelocator` (`lib/rooms/server/deleted-room-players-relocator.js`)
+subscribes to `reldens.adminBeforeEntityDelete` and prevents the delete with the `errorRoomDeleteIsDefault` result when
+any selected id matches the `players/initialState/room_id` config value. The administrator has to assign another room as
+default first (room view, "Set default").
+
+For any other room the player states pointing at it are moved to the default room before the delete, and the pending
+saves of the disconnected players use the default room id too. That is `server/rooms/deletion/setDefault`
+(boolean, default `1`).
+
+Turning it off leaves the player states alone: the `players_state.room_id` foreign key is `ON DELETE SET NULL`, so the
+database unlinks them, the pending saves write null, and a player whose saved room is null is placed in the fallback
+room on the next login (`LoginManager.getRoomNameById` returns `GameConst.ROOM_NAME_MAP` when the id resolves to
+nothing).
+
+That prevention is the authority and covers any direct call to the delete route. So the administrator is not sent
+through a failing delete, the room view also blocks the buttons: `RoomsActivePlayersWarning` compares the rendered room
+id against the configured default room and marks the banner with `data-default-room`, then
+`theme/admin/js/rooms-default-room-delete-blocker.js` disables the delete buttons and the banner shows the notice
+explaining a new default has to be set first.
+
+Once the row is deleted, `reldens.adminAfterEntityDelete` triggers `DeletedRoomCloser`
+(`lib/rooms/server/deleted-room-closer.js`), which runs the runtime teardown. It is wired to the after event on purpose:
+a failed delete must not tear down a room that still exists. The teardown purges the room from the `RoomsManager`
+caches and selector lists, broadcasts `RoomsConst.ROOM_REMOVED` to the lobby room so connected clients drop it from
+their scene selector, sends the players in the room the `chat.roomClosing` message plus a `RoomsConst.ROOM_CLOSING`
+message, and disconnects the live room instance after the configured time.
+
+That purge is also what marks the room as gone for the rest of the server: there is no deleted-rooms registry, an id
+that no longer resolves is simply an invalid reference. `RoomsManager.isRoomLoaded()` answers it from
+`loadedRoomsById`, which the teardown emptied.
+
+The room type is never unregistered from the Colyseus matchmaker. Its `handlers[roomName]` entry is dereferenced without
+a guard by the matchmaker on every client leave and on dispose, so removing it while an instance is alive crashes the
+process. Nothing rejects the room in `RoomLogin.onCreate` either: the room is already out of the manager lists and out
+of the room selectors sent to the clients, so it cannot be picked, and erroring inside `onCreate` would break the room
+creation for a room that is merely missing from the cache.
+
+The behavior is controlled by these config rows, all created with those defaults:
+
+- `server/rooms/deletion/closeActiveRoomsEnabled` (boolean, default `1`) - when disabled the players are not notified
+  and the live instance is left running until it disposes on its own.
+- `server/rooms/deletion/closeActiveRoomsSeconds` (float, default `10`) - seconds between the notification and the
+  forced close, also shown in the admin warning banner.
+- `server/rooms/deletion/closeActiveRoomsWarningSeconds` (float, default `5`) - seconds between the repeated warnings
+  during the countdown.
+- `server/rooms/deletion/setDefault` (boolean, default `1`) - the player states of a deleted room are moved to the
+  default room; turn it off to leave them unlinked by the foreign key instead.
+
+Everything in this flow is expressed in seconds, the unit the countdown and the messages actually use, so there is no
+milliseconds conversion anywhere: the `RoomsConst.ROOM_CLOSING` broadcast carries `seconds` and only the client
+multiplies it for its `setTimeout`. The countdown runs on a one second interval and repeats the `chat.roomClosing`
+message on every multiple of the warning interval, then on every remaining second once the remaining time is under that
+interval, so a 10 second close with a 5 second interval warns at 10, 5, 4, 3, 2 and 1. This mirrors the server shutdown countdown in `ShutdownSubscriber`.
+Broadcasts are skipped when the room has no clients left, and the room is disconnected when the counter reaches zero.
+
+The room view banner refreshes itself: `RoomsActivePlayersSubscriber`
+(`lib/admin/server/subscribers/rooms-active-players-subscriber.js`) renders the banner and serves
+`/rooms/active-players?id=N`, which `theme/admin/js/rooms-active-players-refresher.js` polls on the interval given
+by the banner `data-refresh-ms` attribute. The warning paragraph is always rendered and only hidden with a class, so it
+appears and disappears as players join or leave, and the delete confirmation dialog reads its text from that visible
+paragraph instead of a duplicated attribute.
+
+Anything that persists a room id while a room is being deleted has to survive the row being gone, or the pending saves
+of the disconnected players fail with foreign key constraint errors:
+
+- The rooms plugin sanitizes the player state patch on `reldens.onSavePlayerStateBefore`. The handler is called from
+  `emitSync`, so it cannot query the database: it asks `RoomsManager.isRoomLoaded()` and writes null when the id no
+  longer resolves, or the default room id when `setDefault` is enabled.
+- `ChatManager.saveMessage` keeps the room id and lets the foreign key decide. When the insert fails and a room id was
+  set, it drops the room reference and inserts again, so the message is kept without a room instead of being lost. The
+  happy path stays at one query, which matters because combat messages go through it.
 
 ### Game Objects
 NPC and interactive object definitions, their visuals, stats, and skills.

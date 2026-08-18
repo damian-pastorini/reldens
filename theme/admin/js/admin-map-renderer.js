@@ -225,6 +225,7 @@ class AdminMapRenderer
             this.toggleObjectTilePicker(mapContainer, tileIndexField, roomsList, roomSelector, tileIndexInput);
         });
         roomSelector.addEventListener('change', () => {
+            roomSelector.classList.remove('room-selector-required');
             if(mapContainer.classList.contains('hidden')){
                 return;
             }
@@ -238,7 +239,13 @@ class AdminMapRenderer
             mapContainer.classList.add('hidden');
             return;
         }
-        tileIndexField.insertAdjacentElement('afterend', mapContainer);
+        let selectedRoom = roomsList.find((room) => String(room.id) === String(roomSelector.value));
+        if(!selectedRoom){
+            roomSelector.classList.add('room-selector-required');
+            return;
+        }
+        roomSelector.classList.remove('room-selector-required');
+        tileIndexField.after(mapContainer);
         mapContainer.classList.remove('hidden');
         this.loadObjectRoomMap(mapContainer, roomsList, roomSelector, tileIndexInput);
     }

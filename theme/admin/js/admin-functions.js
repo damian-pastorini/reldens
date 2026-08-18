@@ -56,6 +56,15 @@ class AdminFunctions
         }
     }
 
+    blockCtrlWheelZoom(wheelEvent)
+    {
+        if(!wheelEvent.ctrlKey){
+            return false;
+        }
+        wheelEvent.preventDefault();
+        return true;
+    }
+
     cloneElement(element)
     {
         if(element instanceof HTMLCanvasElement){
@@ -257,50 +266,50 @@ class AdminFunctions
             return;
         }
         for(let modalElement of modalElements){
-            if(!modalElement.id){
-                modalElement.id = 'modal-'+Math.random().toString(36).substr(2, 9);
-            }
-            modalElement.addEventListener('click', () => {
-                let overlayId = 'overlay-'+modalElement.id;
-                let existingOverlay = document.querySelector('#'+overlayId);
-                if(existingOverlay){
-                    existingOverlay.style.display = 'block';
-                    document.body.style.overflow = 'hidden';
-                    return;
-                }
-                let overlay = document.createElement('div');
-                overlay.id = overlayId;
-                overlay.classList.add('modal');
-                let backdrop = document.createElement('div');
-                backdrop.classList.add('modal-backdrop');
-                let dialog = document.createElement('div');
-                dialog.classList.add('modal-dialog');
-                dialog.classList.add('modal-width-auto');
-                let isZoomImage = modalElement.hasAttribute('data-modal-zoom-image');
-                if(isZoomImage){
-                    let imageUrl = modalElement.getAttribute('data-modal-zoom-image');
-                    dialog.appendChild(this.createZoomImageHeader(imageUrl, overlay));
-                }
-                let body = document.createElement('div');
-                body.classList.add('modal-body');
-                let modalContent = this.createModalContent(modalElement);
-                modalContent.classList.add('clickable');
-                body.appendChild(modalContent);
-                dialog.appendChild(body);
-                overlay.appendChild(backdrop);
-                overlay.appendChild(dialog);
-                document.body.appendChild(overlay);
-                document.body.style.overflow = 'hidden';
-                modalContent.addEventListener('click', () => {
-                    document.body.style.overflow = '';
-                    document.body.removeChild(overlay);
-                });
-                backdrop.addEventListener('click', () => {
-                    document.body.style.overflow = '';
-                    document.body.removeChild(overlay);
-                });
-            });
+            modalElement.addEventListener('click', () => this.openElementModal(modalElement));
         }
+    }
+
+    openElementModal(modalElement)
+    {
+        if(!modalElement.id){
+            modalElement.id = 'modal-'+Math.random().toString(36).substr(2, 9);
+        }
+        let overlayId = 'overlay-'+modalElement.id;
+        let existingOverlay = document.querySelector('#'+overlayId);
+        if(existingOverlay){
+            existingOverlay.style.display = 'block';
+            document.body.style.overflow = 'hidden';
+            return;
+        }
+        let overlay = document.createElement('div');
+        overlay.id = overlayId;
+        overlay.classList.add('modal');
+        let backdrop = document.createElement('div');
+        backdrop.classList.add('modal-backdrop');
+        let dialog = document.createElement('div');
+        dialog.classList.add('modal-dialog');
+        dialog.classList.add('modal-width-auto');
+        if(modalElement.hasAttribute('data-modal-zoom-image')){
+            let imageUrl = modalElement.getAttribute('data-modal-zoom-image');
+            dialog.appendChild(this.createZoomImageHeader(imageUrl, overlay));
+        }
+        let body = document.createElement('div');
+        body.classList.add('modal-body');
+        let modalContent = this.createModalContent(modalElement);
+        modalContent.classList.add('clickable');
+        body.appendChild(modalContent);
+        dialog.appendChild(body);
+        overlay.appendChild(backdrop);
+        overlay.appendChild(dialog);
+        document.body.appendChild(overlay);
+        document.body.style.overflow = 'hidden';
+        let closeOverlay = () => {
+            document.body.style.overflow = '';
+            overlay.remove();
+        };
+        modalContent.addEventListener('click', closeOverlay);
+        backdrop.addEventListener('click', closeOverlay);
     }
 }
 window.adminFunctions = new AdminFunctions();

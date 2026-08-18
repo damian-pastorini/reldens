@@ -94,13 +94,18 @@ REPLACE INTO `respawn` (`id`, `object_id`, `respawn_time`, `instances_limit`, `l
 UPDATE `objects` SET `private_params` = '{"runOnAction":true,"playerVisible":true,"collisionType":2}' WHERE `id` = 5;
 UPDATE `objects` SET `private_params` = '{"runOnAction":true,"playerVisible":true,"sendInvalidOptionMessage":true,"collisionType":2}' WHERE `id` IN (8, 10, 12, 13);
 
--- Cascade room deletes to chat and players_state (these FKs were not cascading on room delete)
+-- Keep the chat history when a room is deleted: unlink it instead of cascading.
+-- The chat player_id and private_player_id FKs already use SET NULL, room_id was the only one destroying rows.
 ALTER TABLE `chat` DROP FOREIGN KEY `FK__scenes`;
-ALTER TABLE `chat` ADD CONSTRAINT `FK__scenes` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `chat` ADD CONSTRAINT `FK__scenes` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 ALTER TABLE `players_state` DROP FOREIGN KEY `FK_player_state_rooms`;
 ALTER TABLE `players_state` MODIFY `room_id` INT UNSIGNED NULL DEFAULT NULL;
 ALTER TABLE `players_state` ADD CONSTRAINT `FK_player_state_rooms` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON UPDATE CASCADE ON DELETE SET NULL;
+
+-- The audio room FK was unlinking on room id updates too, only the delete should unlink.
+ALTER TABLE `audio` DROP FOREIGN KEY `FK_audio_rooms`;
+ALTER TABLE `audio` ADD CONSTRAINT `FK_audio_rooms` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- Allow objects to survive room deletion: nullable room_id with SET NULL (this FK was blocking room deletion)
 ALTER TABLE `objects` DROP FOREIGN KEY `FK_objects_rooms`;
@@ -139,6 +144,13 @@ ALTER TABLE `chat` ADD CONSTRAINT `FK__players` FOREIGN KEY (`player_id`) REFERE
 
 ALTER TABLE `chat` DROP FOREIGN KEY `FK__players_2`;
 ALTER TABLE `chat` ADD CONSTRAINT `FK__players_2` FOREIGN KEY (`private_player_id`) REFERENCES `players` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- Rooms deletion behavior: notify and close the live room after the configured time when its record is deleted
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES
+	('server', 'rooms/deletion/closeActiveRoomsEnabled', '1', 3),
+	('server', 'rooms/deletion/closeActiveRoomsSeconds', '10', 2),
+	('server', 'rooms/deletion/closeActiveRoomsWarningSeconds', '5', 2),
+	('server', 'rooms/deletion/setDefault', '1', 3);
 
 --
 

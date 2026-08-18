@@ -22,6 +22,7 @@ class ObjectsItemsInventoryEntity extends EntityProperties
                 type: 'reference',
                 reference: 'objects',
                 alias: 'related_objects',
+                onDelete: 'noAction',
                 isRequired: true,
                 dbType: 'int'
             },
@@ -29,6 +30,7 @@ class ObjectsItemsInventoryEntity extends EntityProperties
                 type: 'reference',
                 reference: 'items_item',
                 alias: 'related_items_item',
+                onDelete: 'noAction',
                 isRequired: true,
                 dbType: 'int'
             },

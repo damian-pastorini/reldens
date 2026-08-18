@@ -23,6 +23,7 @@ class SkillsSkillOwnerEffectsEntity extends EntityProperties
                 type: 'reference',
                 reference: 'skills_skill',
                 alias: 'related_skills_skill',
+                onDelete: 'noAction',
                 isRequired: true,
                 dbType: 'int'
             },
@@ -38,6 +39,7 @@ class SkillsSkillOwnerEffectsEntity extends EntityProperties
                 type: 'reference',
                 reference: 'operation_types',
                 alias: 'related_operation_types',
+                onDelete: 'noAction',
                 isRequired: true,
                 dbType: 'int'
             },

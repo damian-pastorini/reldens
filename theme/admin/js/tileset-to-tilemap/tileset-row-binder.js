@@ -45,10 +45,9 @@ class TilesetRowBinder
         canvas.addEventListener('mouseleave', () => this.app.interaction.handleCanvasMouseLeave());
         canvas.addEventListener('contextmenu', (event) => event.preventDefault());
         canvas.addEventListener('wheel', (wheelEvent) => {
-            if(!wheelEvent.ctrlKey){
+            if(!adminFunctions.blockCtrlWheelZoom(wheelEvent)){
                 return;
             }
-            wheelEvent.preventDefault();
             let delta = wheelEvent.deltaY < 0 ? 1.25 : 0.8;
             this.app.zoomLevels[i] = Math.min(4, Math.max(0.25, this.app.zoomLevels[i] * delta));
             this.app.renderer.applyZoom(i);
@@ -124,7 +123,12 @@ class TilesetRowBinder
             this.legendControls.applyBulkSelection(capturedI, refs);
         });
         refs.generateSelectAll.addEventListener('change', () => {
-            this.legendControls.applyGenerateSelection(capturedI, refs);
+            let targetChecked = refs.generateSelectAll.checked;
+            refs.generateSelectAll.checked = !targetChecked;
+            this.app.modals.show('Are you sure you want to change the generation selection for ALL elements?', () => {
+                refs.generateSelectAll.checked = targetChecked;
+                this.legendControls.applyGenerateSelection(capturedI, refs);
+            });
         });
         this.legendControls.bindLegendSortControls(capturedI, refs);
         refs.legendSearch.addEventListener('input', () => this.scheduleLegendSearch(capturedI));
@@ -145,6 +149,7 @@ class TilesetRowBinder
         if(this.app.tileOptionsBinder){
             this.app.tileOptionsBinder.bind(capturedI, row);
         }
+        this.app.animationsBinder.bindTileset(capturedI, row);
     }
 
     applyFilterChange(tilesetIndex)
@@ -274,6 +279,8 @@ class TilesetRowBinder
         mapConfigToggle.addEventListener('click', () => {
             mapConfigFieldset.classList.toggle('hidden');
             row.querySelector('.tileset-merge-config').classList.add('hidden');
+            row.querySelector('.tileset-animations-panel').classList.add('hidden');
         });
     }
 }
+window.TilesetRowBinder = TilesetRowBinder;

@@ -222,6 +222,11 @@ class AdminClientMaps
     {
         let mapCanvasElements = document.querySelectorAll('.mapCanvas');
         for(let mapCanvas of mapCanvasElements){
+            mapCanvas.addEventListener(
+                'wheel',
+                (wheelEvent) => adminFunctions.blockCtrlWheelZoom(wheelEvent),
+                {passive: false}
+            );
             if(!mapCanvas.dataset?.mapJson){
                 continue;
             }
@@ -279,10 +284,11 @@ class AdminClientMaps
         this.bindEntityMapLoader();
         adminMapRenderer.bindObjectTileSelector();
         this.bindMapsWizardOptions();
+        new AdminMapElementsEditorLauncher().bind();
+        new AdminMapPreviewModal().bind();
         this.bindMapCanvas();
         this.bindMapsImportSticky();
         this.bindGoBackButton();
-        new AdminMapElementsEditorLauncher().bind();
     }
 }
 window.AdminClientMaps = AdminClientMaps;

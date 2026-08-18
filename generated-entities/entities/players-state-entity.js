@@ -22,6 +22,7 @@ class PlayersStateEntity extends EntityProperties
                 type: 'reference',
                 reference: 'players',
                 alias: 'related_players',
+                onDelete: 'cascade',
                 isRequired: true,
                 isUnique: true,
                 dbType: 'int'
@@ -30,6 +31,7 @@ class PlayersStateEntity extends EntityProperties
                 type: 'reference',
                 reference: 'rooms',
                 alias: 'related_rooms',
+                onDelete: 'setNull',
                 dbType: 'int'
             },
             x: {

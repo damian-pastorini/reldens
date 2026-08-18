@@ -13,6 +13,7 @@ class SharedUtils
     static KNOWN_LAYER_TYPES = [
         'below-player', 'collisions', 'over-player', 'collisions-over-player', 'base', 'path'
     ];
+    static PATH_LAYER_TYPE = 'path';
     static LAYER_TYPE_COLORS = {
         'over-player': '#5b8cff',
         'collisions': '#ff5b5b',
@@ -29,6 +30,7 @@ class SharedUtils
         trash: '/assets/admin/trash-can-solid-full.svg',
         chevronUp: '/assets/admin/circle-chevron-up-solid-full.svg'
     };
+    static ANIMATIONS_DEFAULT_DURATION = 200;
     static SPOT_DEFAULTS = {
         width: 5,
         height: 5,
@@ -77,6 +79,14 @@ class SharedUtils
     static isSet(value)
     {
         return null !== value && undefined !== value;
+    }
+
+    static isLayerInActiveBand(layerType, activeLayerType)
+    {
+        if(SharedUtils.PATH_LAYER_TYPE === activeLayerType){
+            return SharedUtils.PATH_LAYER_TYPE === layerType;
+        }
+        return SharedUtils.PATH_LAYER_TYPE !== layerType;
     }
 
     static applyLockVisual(button, locked)

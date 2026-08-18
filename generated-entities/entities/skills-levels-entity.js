@@ -36,6 +36,7 @@ class SkillsLevelsEntity extends EntityProperties
                 type: 'reference',
                 reference: 'skills_levels_set',
                 alias: 'related_skills_levels_set',
+                onDelete: 'noAction',
                 isRequired: true,
                 dbType: 'int'
             }

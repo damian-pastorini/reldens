@@ -160,6 +160,9 @@ class TilesetCanvasRenderer
     drawSelectedElementTiles(ctx, tileset, element)
     {
         for(let layer of element.layers){
+            if(!SharedUtils.isLayerInActiveBand(layer.type, this.app.activeLayerType)){
+                continue;
+            }
             let color = this.layerTypeColor(layer.type);
             let lineWidth = layer.type === this.app.activeLayerType ? 3 : 1.5;
             this.drawSelectedLayerTiles(ctx, tileset, layer, color, lineWidth);

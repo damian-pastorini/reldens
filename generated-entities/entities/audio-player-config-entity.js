@@ -22,6 +22,7 @@ class AudioPlayerConfigEntity extends EntityProperties
                 type: 'reference',
                 reference: 'players',
                 alias: 'related_players',
+                onDelete: 'cascade',
                 isRequired: true,
                 dbType: 'int'
             },
@@ -29,6 +30,7 @@ class AudioPlayerConfigEntity extends EntityProperties
                 type: 'reference',
                 reference: 'audio_categories',
                 alias: 'related_audio_categories',
+                onDelete: 'noAction',
                 dbType: 'int'
             },
             enabled: {

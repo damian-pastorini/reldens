@@ -14,6 +14,8 @@ class TilesetCanvasMarkers
     constructor(renderer)
     {
         this.renderer = renderer;
+        this.animationColor = '#ffd75b';
+        this.animationActiveColor = '#ff8cff';
     }
 
     draw(canvasCtx, tileset, tilesetIndex)
@@ -65,7 +67,46 @@ class TilesetCanvasMarkers
         if(this.isGlobalPanelOpen() && app.globalTileOptions){
             this.addGlobalOptions(markers, tileset, app.globalTileOptions, tilesetIndex);
         }
+        if(this.isAnimationsPanelOpen(tilesetIndex)){
+            this.addAnimations(markers, tileset, tilesetIndex);
+        }
         return markers;
+    }
+
+    isAnimationsPanelOpen(tilesetIndex)
+    {
+        let refs = this.renderer.app.refs[tilesetIndex];
+        if(!refs || !refs.row){
+            return false;
+        }
+        return null !== refs.row.querySelector('.tileset-animations-panel:not(.hidden)');
+    }
+
+    addAnimations(markers, tileset, tilesetIndex)
+    {
+        let animations = tileset.tileAnimations ? tileset.tileAnimations : [];
+        for(let i = 0; i < animations.length; i++){
+            this.addAnimationTiles(
+                markers,
+                tileset,
+                animations[i],
+                this.renderer.app.animationsBinder.isPickActive(tilesetIndex, i)
+            );
+        }
+    }
+
+    addAnimationTiles(markers, tileset, animation, isActive)
+    {
+        let color = isActive ? this.animationActiveColor : this.animationColor;
+        if(SharedUtils.isSet(animation.baseTile)){
+            this.pushFlat(markers, tileset, animation.baseTile, 'A', color);
+        }
+        for(let frame of (animation.frames ? animation.frames : [])){
+            if(!SharedUtils.isSet(frame.tile) || frame.tile === animation.baseTile){
+                continue;
+            }
+            this.pushFlat(markers, tileset, frame.tile, 'AF', color);
+        }
     }
 
     isTabActive(tilesetIndex, tabName)

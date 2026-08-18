@@ -36,6 +36,7 @@ module.exports.TemplatesList = {
     mapsWizard: 'maps-wizard.html',
     mapsWizardMapsSelection: 'maps-wizard-maps-selection.html',
     mapsElementsEditorScripts: 'maps-elements-editor-scripts.html',
+    roomsActivePlayers: 'rooms-active-players.html',
     fields: {
         view: { text: 'text.html', boolean: 'boolean.html' },
         edit: { text: 'text.html', select: 'select.html' }
@@ -49,7 +50,7 @@ module.exports.TemplatesList = {
 
 Three kinds of leaves:
 
-- **Top-level page/fragment keys** (`login`, `dashboard`, `mapsWizardMapsSelection`, `mapsElementsEditorScripts`): standalone HTML files. A fragment whose content is reused inside another template (for example `mapsElementsEditorScripts`) is passed into that template as a Mustache variable - the loaded content string is handed to the consumer render as `{{&key}}` (see "Shared fragment variables" below). No Mustache `{{> }}` partials are used anywhere in the admin.
+- **Top-level page/fragment keys** (`login`, `dashboard`, `mapsWizardMapsSelection`, `mapsElementsEditorScripts`, `roomsActivePlayers`): standalone HTML files. `roomsActivePlayers` is rendered per request by `RoomsActivePlayersWarning` (`lib/admin/server/rooms-active-players-warning.js`) and assigned to `renderedViewProperties.extraContentForViewTop` on `reldens.adminViewPropertiesPopulation`, which is how a fragment gets live data into a page whose entity templates were precompiled at startup. A fragment whose content is reused inside another template (for example `mapsElementsEditorScripts`) is passed into that template as a Mustache variable - the loaded content string is handed to the consumer render as `{{&key}}` (see "Shared fragment variables" below). No Mustache `{{> }}` partials are used anywhere in the admin.
 - **`fields.{view|edit}.{type}`**: per-property-type cell templates that `RouterContents` (`@reldens/cms`) selects when rendering list / view / edit field cells based on each property's resolved type.
 - **`sections.{view|editForm|viewForm|list|edit}.{entityPath}`**: per-entity extension content. `ContentsBuilder.buildEntitiesContents` looks these up by `driverResource.entityPath` (e.g. `rooms`) and injects the rendered fragment into the generic view/list/edit templates via `{{&extraContentForViewBottom}}`-style placeholders.
 

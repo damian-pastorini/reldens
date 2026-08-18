@@ -92,6 +92,9 @@ class TilesetStateBuilder
             generatorType: tilesetData.generatorType || SharedUtils.DEFAULT_GENERATOR_TYPE,
             associationsProperties: tilesetData.associationsProperties || null,
             tileOptions: tilesetData.tileOptions || SharedUtils.buildDefaultTileOptions(),
+            tileAnimations: TilesetAnimationsNormalizer.normalizeAnimations(tilesetData.tileAnimations),
+            animationsDefaultDuration: TilesetAnimationsNormalizer.resolveDefaultDuration(tilesetData),
+            skipTileAnimations: Boolean(tilesetData.skipTileAnimations),
             spots: this.applyGenerateSelectedDefaults(tilesetData.spots || []),
             legendSort: this.normalizeLegendSort(tilesetData.legendSort),
             legendVisibility: this.normalizeLegendVisibility(tilesetData.legendVisibility),
@@ -231,6 +234,7 @@ class TilesetStateBuilder
                 existing.generatorType,
                 existing.associationsProperties
             );
+            this.app.animationsBinder.apply.applyToRow(existingIndex, existingRow);
         }
         this.app.refresh(existingIndex);
     }

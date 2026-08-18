@@ -22,6 +22,7 @@ class ObjectsStatsEntity extends EntityProperties
                 type: 'reference',
                 reference: 'objects',
                 alias: 'related_objects',
+                onDelete: 'restrict',
                 isRequired: true,
                 dbType: 'int'
             },
@@ -29,6 +30,7 @@ class ObjectsStatsEntity extends EntityProperties
                 type: 'reference',
                 reference: 'stats',
                 alias: 'related_stats',
+                onDelete: 'restrict',
                 isRequired: true,
                 dbType: 'int'
             },

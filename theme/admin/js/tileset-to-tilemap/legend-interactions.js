@@ -147,7 +147,9 @@ class TilesetLegendInteractions
             return;
         }
         let app = this.editor.app;
-        let valid = SharedUtils.NAME_VALID_REGEX.test(context.target.value);
+        let existingNames = this.editor.namer.collectExistingNames(tilesetIndex, context.elementIndex);
+        let valid = SharedUtils.NAME_VALID_REGEX.test(context.target.value)
+            && -1 === existingNames.indexOf(context.target.value);
         app.state[tilesetIndex].elements[context.elementIndex].name = context.target.value;
         context.elementRow.classList.toggle('element-name-invalid', !valid);
         app.generator.updateGenerateButtonState();

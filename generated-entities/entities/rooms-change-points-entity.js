@@ -22,6 +22,7 @@ class RoomsChangePointsEntity extends EntityProperties
                 type: 'reference',
                 reference: 'rooms',
                 alias: 'related_rooms_room',
+                onDelete: 'cascade',
                 isRequired: true,
                 dbType: 'int'
             },
@@ -34,6 +35,7 @@ class RoomsChangePointsEntity extends EntityProperties
                 type: 'reference',
                 reference: 'rooms',
                 alias: 'related_rooms_next_room',
+                onDelete: 'cascade',
                 isRequired: true,
                 dbType: 'int'
             }

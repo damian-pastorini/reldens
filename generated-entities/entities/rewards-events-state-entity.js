@@ -22,6 +22,7 @@ class RewardsEventsStateEntity extends EntityProperties
                 type: 'reference',
                 reference: 'rewards_events',
                 alias: 'related_rewards_events',
+                onDelete: 'noAction',
                 isRequired: true,
                 dbType: 'int'
             },
@@ -29,6 +30,7 @@ class RewardsEventsStateEntity extends EntityProperties
                 type: 'reference',
                 reference: 'players',
                 alias: 'related_players',
+                onDelete: 'cascade',
                 isRequired: true,
                 dbType: 'int'
             },
