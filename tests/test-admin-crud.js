@@ -145,7 +145,9 @@ class TestAdminCrud extends BaseTest
             let response = await this.makeAuthenticatedRequest('GET', this.adminPath+'/'+entity, null, session);
             this.assert.strictEqual(200, response.statusCode);
             this.assert(response.body.includes('<table class="list">'));
-            this.assert(response.body.includes('<div class="entity-list '+entity+'-list">'));
+            this.assert(
+                response.body.includes('<div class="entity-list '+entity+'-list" data-delete-relations-warning="')
+            );
         });
     }
 
