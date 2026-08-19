@@ -76,6 +76,15 @@ Doors (class_type=2, `runOnHit:true`) fire the hit event when the player overlap
 
 The fish spawn point (id=17, `fish_spawn_forest_1`) sits in the river. The river's physical boundary comes from the map tile collision layer. The object body itself is DYNAMIC and serves only as an interaction target.
 
+## Room `customData` and the world options
+
+A room `customData` key does NOT reach the physics world by itself. Two separate paths exist and both are explicit:
+
+- `WorldConfig.mapWorldConfigValues(room, config)` (`lib/rooms/server/world-config.js`) reads a fixed list of keys from `room.customData` into `room.worldConfig` (`applyGravity`, `gravity`, `globalStiffness`, `globalRelaxation`, `useFixedWorldStep`, `timeStep`, `maxSubSteps`, `movementSpeed`, `allowPassWallsFromBelow`, `jumpSpeed`, `jumpTimeMs`, `tryClosestPath`, `onlyWalkable`, `wallsMassValue`, `playerMassValue`, `bulletsStopOnPlayer`, `bulletsStopOnObject`, `disableObjectsCollisionsOnChase`, `disableObjectsCollisionsOnReturn`, `collisionsGroupsByType`, `groupWallsVertically`, `groupWallsHorizontally`). It runs before the world is created and `worldConfig` is what `P2world` reads for those values.
+- Anything `P2world` reads from the options root (`allowChangePoints`, `usePathFinder`, `type`) has to be passed in the object built by `RoomScene.createWorld` (`lib/rooms/server/scene.js`). `usePathFinder` is passed there from `customData`; `allowChangePoints` and `type` are not passed by anything, so `allowChangePoints` is always true and `type` is always the default (nothing reads `world.type`).
+
+Adding a new per room physics key means adding it to one of those two places, otherwise it is silently ignored.
+
 ## Collision Groups and Masks
 
 These are set in `collisions-manager.js` and are NOT per-object configurable. They control WHICH objects detect collision with each other:

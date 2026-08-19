@@ -175,9 +175,13 @@ The change point record is what makes the room change work: at runtime `StorageC
 layer was parsed, so change points also work on maps with no `change-points` layer (the generated maps have none,
 which is why they did nothing before). The body is placed by `P2world.createChangePoint`, which receives the tile
 column and row and resolves the tile center itself, next to the half tile size that makes the player walk into the
-tile to hit it. Conditions that still apply: the tile must be walkable, meaning no collision layer tile marks it,
-and both the rooms and the maps are cached at startup, so a change point created while the server runs needs a
-restart to be live (the map file write refreshes the cached map, the room change points list is not refreshed).
+tile to hit it. Conditions that still apply to that storage path: the tile must be walkable in the pathfinder grid, which excludes
+any tile marked by a layer whose name contains `collisions` (the `*-collisions-over-player` variants included) and,
+on maps with a `pathfinder` layer, every tile outside the painted region; the refusal is logged as an error when the
+room world is created, not when the record is saved. The map layer path has no such check, so a change point that
+also exists in a `change-points` layer is created regardless. Both the rooms and the maps are cached at startup, so
+a change point created while the server runs needs a restart to be live (the map file write refreshes the cached
+map, the room change points list is not refreshed).
 
 The map layer is still worth having, so the link form offers to write it. When the current room map has no layer
 whose name contains `change-points`, saving the link asks "This room does not have the required change points layer
