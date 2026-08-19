@@ -46,17 +46,20 @@
         </p>
         <form id="createRoomsLink" name="createRoomsLink" action="#" method="post">
             <input type="hidden" name="createRoomsLink" value="1"/>
+            <input type="hidden" id="createChangePointsLayer" name="createChangePointsLayer" value=""/>
             <!-- current room map -->
             <div class="edit-field">
                 <label class="field-name" for="currentRoomChangePointTileIndex">
                     Current room change point (tile index)
+                    <span class="tooltip button button-circle button-sm button-dark">?<span class="tooltip-text">The change point is saved in the database and the room change works from it, the map file is not required. The map "change-points" layer marks the same tile inside the map: the client draws that layer with the configured change points depth, the map carries its change points when it is imported into another installation, and the maps generator reads that layer to build the linked interiors and to keep the generated paths away from the door tiles. When this room map has no change points layer you are asked to create it while the link is saved, and the tile is marked reusing the tile already visible in that position so the map keeps looking the same.</span></span>
                     <br/>When you hit this tile you will be moved to the next room.
                 </label>
-                <span class="field-value">
+                <span class="field-value with-inline-button">
                     <input type="number" id="currentRoomChangePointTileIndex" name="currentRoomChangePointTileIndex" required/>
+                    <button type="button" class="button button-secondary change-point-tile-picker-button">Pick in map</button>
                 </span>
             </div>
-            <div class="association-maps-container current-room-change-point-container" data-map-loader="{{&id}}"></div>
+            <div class="association-maps-container current-room-change-point-container hidden" data-map-loader="{{&id}}"></div>
             <!-- next room selector -->
             <div class="edit-field">
                 <label class="field-name" for="nextRoomSelector">
@@ -87,18 +90,18 @@
                 </span>
             </div>
             <div class="edit-field">
-                <label class="field-name" for="nextRoomPositionX">Next room position X</label>
-                <span class="field-value">
-                    <input type="number" id="nextRoomPositionX" name="nextRoomPositionX" required/>
+                <label class="field-name" for="nextRoomPositionTileIndex">
+                    Next room return position (tile index)
+                    <br/>The tile where the player will be placed when entering the next room.
+                </label>
+                <span class="field-value with-inline-button">
+                    <input type="number" id="nextRoomPositionTileIndex" name="nextRoomPositionTileIndex" required/>
+                    <button type="button" class="button button-secondary next-room-position-tile-picker-button">Pick in map</button>
                 </span>
             </div>
-            <div class="edit-field">
-                <label class="field-name" for="nextRoomPositionY">Next room position Y</label>
-                <span class="field-value">
-                    <input type="number" id="nextRoomPositionY" name="nextRoomPositionY" required/>
-                </span>
-            </div>
-            <div class="association-maps-container next-room-return-position-container"></div>
+            <input type="hidden" id="nextRoomPositionX" name="nextRoomPositionX"/>
+            <input type="hidden" id="nextRoomPositionY" name="nextRoomPositionY"/>
+            <div class="association-maps-container next-room-return-position-container hidden"></div>
             <div class="actions-container">
                 <span>
                     <button class="button button-primary" type="submit">Create Link</button>

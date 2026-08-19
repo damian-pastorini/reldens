@@ -102,70 +102,18 @@ class AdminClientMaps
         }
     }
 
-    bindNextRoomSelector(roomsList, roomsSelector, nextRoomMapContainer, elementNextRoomPositionX, elementNextRoomPositionY)
-    {
-        let roomListKey = Object.keys(roomsList);
-        for(let key of roomListKey){
-            let roomListData = roomsList[key];
-            let option = document.createElement('option');
-            option.text = roomListData.name;
-            option.value = roomListData.id;
-            option.dataset.mapFile = roomListData.mapFile;
-            option.dataset.mapImages = roomListData.mapImages;
-            roomsSelector.add(option);
-        }
-        roomsSelector.addEventListener('change', (event) => {
-            let selectedOption = event.target.options[event.target.selectedIndex];
-            nextRoomMapContainer.innerHTML = '';
-            adminMapRenderer.loadAndCreateMap(
-                selectedOption.dataset.mapFile,
-                selectedOption.dataset.mapImages,
-                nextRoomMapContainer,
-                (event, data) => {
-                    let tileData = adminMapRenderer.calculateTileData(event, data);
-                    elementNextRoomPositionX.value = tileData.positionTileX;
-                    elementNextRoomPositionY.value = tileData.positionTileY;
-                },
-                true,
-                null,
-                {x: elementNextRoomPositionX.value, y: elementNextRoomPositionY.value}
-            );
-        });
-    }
-
     bindEntityMapLoader()
     {
         let entityDataElement = document.querySelector('[data-entity-serialized-data]');
-        let mapLoadElement = document.querySelector('[data-map-loader]');
         if(!entityDataElement){
             return;
         }
         let entityData = entityDataElement?.dataset.entitySerializedData
             ? JSON.parse(entityDataElement.dataset.entitySerializedData) // HOFF
             : false;
-        let elementCurrentRoomChangePointTileIndex = document.querySelector('#currentRoomChangePointTileIndex');
-        let roomsSelector = document.querySelector('.nextRoomSelector');
-        let elementNextRoomPositionX = document.querySelector('#nextRoomPositionX');
-        let elementNextRoomPositionY = document.querySelector('#nextRoomPositionY');
-        let nextRoomMapContainer = document.querySelector('.next-room-return-position-container');
-        let roomsList = entityData?.extraData?.roomsList;
-        if(roomsList && nextRoomMapContainer && roomsSelector instanceof HTMLSelectElement){
-            this.bindNextRoomSelector(roomsList, roomsSelector, nextRoomMapContainer, elementNextRoomPositionX, elementNextRoomPositionY);
-        }
-        if(mapLoadElement){
-            adminMapRenderer.loadAndCreateMap(
-                entityData.map_filename,
-                entityData.scene_images,
-                mapLoadElement,
-                (event, data) => {
-                    let tileData = adminMapRenderer.calculateTileData(event, data);
-                    if(elementCurrentRoomChangePointTileIndex){
-                        elementCurrentRoomChangePointTileIndex.value = tileData.tileIndex;
-                    }
-                },
-                true
-            );
-        }
+        new AdminRoomsLinkPicker().bind(entityData);
+        new AdminObjectTilePicker().bind(entityData);
+        new AdminObjectLayerSelector().bind(entityData);
         this.bindRoomStartingPoint(entityData);
     }
 
@@ -282,7 +230,6 @@ class AdminClientMaps
         this.bindTilesetAlertIcons();
         this.bindRemoveUpload();
         this.bindEntityMapLoader();
-        adminMapRenderer.bindObjectTileSelector();
         this.bindMapsWizardOptions();
         new AdminMapElementsEditorLauncher().bind();
         new AdminMapPreviewModal().bind();

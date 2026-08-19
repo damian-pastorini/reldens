@@ -70,11 +70,20 @@ Enemy objects (class_type=4, childObjectType=4) use DYNAMIC bodies — they need
 
 ### Doors and transition triggers: no body blocking
 
-Doors (class_type=2, `runOnHit:true`) fire the hit event to change rooms when the player overlaps the tile. The body type remains DYNAMIC so the player passes through and the event fires.
+Doors (class_type=2, `runOnHit:true`) fire the hit event when the player overlaps the tile, which runs the door animation only. The body type remains DYNAMIC so the player passes through and the event fires. The room change is NOT done by the door: it comes from the change point body on that tile, created either from a map layer whose name contains `change-points` or from the `rooms_change_points` records by `StorageChangePointsCreator` (`lib/world/server/storage-change-points-creator.js`). A door without a change point on its tile opens and does nothing else.
 
 ### Fish spawn: tile layer boundary
 
 The fish spawn point (id=17, `fish_spawn_forest_1`) sits in the river. The river's physical boundary comes from the map tile collision layer. The object body itself is DYNAMIC and serves only as an interaction target.
+
+## Room `customData` and the world options
+
+A room `customData` key does NOT reach the physics world by itself. Two separate paths exist and both are explicit:
+
+- `WorldConfig.mapWorldConfigValues(room, config)` (`lib/rooms/server/world-config.js`) reads a fixed list of keys from `room.customData` into `room.worldConfig` (`applyGravity`, `gravity`, `globalStiffness`, `globalRelaxation`, `useFixedWorldStep`, `timeStep`, `maxSubSteps`, `movementSpeed`, `allowPassWallsFromBelow`, `jumpSpeed`, `jumpTimeMs`, `tryClosestPath`, `onlyWalkable`, `wallsMassValue`, `playerMassValue`, `bulletsStopOnPlayer`, `bulletsStopOnObject`, `disableObjectsCollisionsOnChase`, `disableObjectsCollisionsOnReturn`, `collisionsGroupsByType`, `groupWallsVertically`, `groupWallsHorizontally`). It runs before the world is created and `worldConfig` is what `P2world` reads for those values.
+- Anything `P2world` reads from the options root (`allowChangePoints`, `usePathFinder`, `type`) has to be passed in the object built by `RoomScene.createWorld` (`lib/rooms/server/scene.js`). `usePathFinder` is passed there from `customData`; `allowChangePoints` and `type` are not passed by anything, so `allowChangePoints` is always true and `type` is always the default (nothing reads `world.type`).
+
+Adding a new per room physics key means adding it to one of those two places, otherwise it is silently ignored.
 
 ## Collision Groups and Masks
 
