@@ -70,7 +70,7 @@ Enemy objects (class_type=4, childObjectType=4) use DYNAMIC bodies — they need
 
 ### Doors and transition triggers: no body blocking
 
-Doors (class_type=2, `runOnHit:true`) fire the hit event to change rooms when the player overlaps the tile. The body type remains DYNAMIC so the player passes through and the event fires.
+Doors (class_type=2, `runOnHit:true`) fire the hit event when the player overlaps the tile, which runs the door animation only. The body type remains DYNAMIC so the player passes through and the event fires. The room change is NOT done by the door: it comes from the change point body on that tile, created either from a map layer whose name contains `change-points` or from the `rooms_change_points` records by `StorageChangePointsCreator` (`lib/world/server/storage-change-points-creator.js`). A door without a change point on its tile opens and does nothing else.
 
 ### Fish spawn: tile layer boundary
 

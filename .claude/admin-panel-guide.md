@@ -153,6 +153,56 @@ of the disconnected players fail with foreign key constraint errors:
   set, it drops the room reference and inserts again, so the message is kept without a room instead of being lost. The
   happy path stays at one query, which matters because combat messages go through it.
 
+#### Linking rooms and picking tiles in the map
+
+The room view "Link rooms" form creates one `roomsChangePoints` row on the current room plus one `roomsReturnPoints`
+row on the destination room (`lib/admin/server/subscribers/rooms-entity-subscriber.js:186-238`). Both values are
+picked on the map canvas, never typed as coordinates:
+
+- The change point field is a tile index and the "Pick in map" button next to it toggles the current room map
+  (`.current-room-change-point-container`), the same way the objects edit form works.
+- The destination position is also a tile index. The "Pick in map" button next to it toggles the selected next room
+  map and the picked tile is translated to the `nextRoomPositionX` and `nextRoomPositionY` hidden inputs using the
+  tile center, which is what the server saves as `rooms_return_points.x` and `y`. Changing the next room clears the
+  picked tile and the hidden position, because a tile index only means something on one map.
+- `AdminRoomsLinkPicker` (`theme/admin/js/admin-rooms-link-picker.js`) owns that form,
+  `AdminObjectTilePicker` (`theme/admin/js/admin-object-tile-picker.js`) owns the objects and change points edit
+  forms, and both use the shared `AdminMapRenderer.toggleMapPicker` plus `calculateTileData`
+  (`theme/admin/js/admin-map-renderer.js`) so the tile math exists once.
+
+The change point record is what makes the room change work: at runtime `StorageChangePointsCreator`
+(`lib/world/server/storage-change-points-creator.js`) creates the missing bodies from the records after every map
+layer was parsed, so change points also work on maps with no `change-points` layer (the generated maps have none,
+which is why they did nothing before). The body is placed by `P2world.createChangePoint`, which receives the tile
+column and row and resolves the tile center itself, next to the half tile size that makes the player walk into the
+tile to hit it. Conditions that still apply: the tile must be walkable, meaning no collision layer tile marks it,
+and both the rooms and the maps are cached at startup, so a change point created while the server runs needs a
+restart to be live (the map file write refreshes the cached map, the room change points list is not refreshed).
+
+The map layer is still worth having, so the link form offers to write it. When the current room map has no layer
+whose name contains `change-points`, saving the link asks "This room does not have the required change points layer
+in the map file, should I create it?" with Yes and No, and the field help marker explains what the layer is used
+for: the client draws it with the `client/map/layersDepth/changePoints` depth, the map carries its change points
+into another installation through the layer properties that `lib/import/server/rooms-associations-creator.js` reads
+back, and the maps generator uses those layers for the linked interiors and to keep the generated paths off the door
+tiles. Answering No keeps the record only.
+
+`RoomMapChangePointsLayerWriter` (`lib/admin/server/room-map-change-points-layer-writer.js`) does that write:
+
+- The tile marked in the layer is the one already visible in that position, taken from the topmost layer that has a
+  tile there (change points layers excluded), so the map keeps looking exactly the same and the gid is always valid
+  for the map tilesets. A position that is empty in every layer is refused.
+- The layer is reused when the map already has one whose name contains `change-points`, otherwise a layer named
+  `change-points` is appended. That exact name is in the elements editor skip list, so an editor save keeps it.
+- The change point is also saved as a `change-point-for-<nextRoomName>` layer property, which is the format the
+  importer reads.
+- The write follows the same path as the rest of the map tooling: the live copy under `generate-data/generated` is
+  seeded from the theme assets, a backup pair is written before touching it, then the live file is saved, published
+  to the theme assets and the dist copies (merging the elements record when there is one) and the cached runtime map
+  is refreshed. A failed write redirects with `result=errorWriteMapLayer`, the link records are already saved.
+- Not covered: deleting a change point record does not remove the tile from the layer, and resizing or regenerating
+  the map invalidates the stored tile indexes the same way it always did.
+
 ### Game Objects
 NPC and interactive object definitions, their visuals, stats, and skills.
 - `objects` - Object definitions (key, class path, type, room assignment)
@@ -165,6 +215,19 @@ NPC and interactive object definitions, their visuals, stats, and skills.
 - `objectsItemsRequirements` - Item requirements for objects
 - `objectsItemsRewards` - Items objects drop as rewards
 - `targetOptions` - Options for targeting behavior
+
+#### Objects edit form: room, layer name and tile index
+
+The three fields are filled from the selected room map. `RoomsMapDataProvider.loadRoomsMapList()`
+(`lib/admin/server/rooms-map-data-provider.js`) ships `{id, name, mapFile, mapImages, layers}` per room into
+`entitySerializedData.extraData.roomsList`, where `layers` are the map layers names taken from the maps the server
+already keeps in the configuration manager (`server/maps`, loaded by `MapsLoader`), so no map file is read per request.
+
+- Selecting a room turns the "Layer Name" field into a select of that map layers names
+  (`theme/admin/js/admin-object-layer-selector.js`). The text input is kept as a hidden input carrying the value, so
+  `layer_name` is still what gets saved. A room whose map is not loaded in the configuration falls back to the plain
+  text input, and a saved layer name that does not exist in the map is kept as an option instead of being replaced.
+- "Pick in map" for the tile index renders that same room map and writes the clicked tile index.
 
 ### Skills
 Skill definitions, attack data, animations, and effect conditions.
