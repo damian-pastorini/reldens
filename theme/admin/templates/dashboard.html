@@ -1,1 +1,17 @@
-Welcome to the Reldens Administration Panel!
+<div class="admin-dashboard" data-stats-path="dashboard/stats" data-refresh-ms="15000">
+    <h2 class="section-title">Welcome to the Reldens Administration Panel!</h2>
+    <div class="dashboard-stats sub-content">
+        <div class="stat-tile active-users-tile">
+            <span class="stat-label">Users currently logged</span>
+            <span class="stat-value active-users-count">-</span>
+        </div>
+        <div class="dashboard-chart">
+            <h3 class="chart-title">Logged users per day - last 30 days</h3>
+            <div class="chart-canvas-wrapper">
+                <canvas class="daily-logins-chart" width="920" height="260"></canvas>
+                <div class="chart-tooltip hidden"></div>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript" src="/js/admin-dashboard-stats-renderer.js"></script>

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Selected Character Loads With Correct Name In Game</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Selected Character Loads With Correct Name In Game</h1>
+<p>Test: <code>tests/e2e/test-character-system.spec.js</code> - <em>selected character loads with correct name in game</em></p>
+<p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/selected-character-loads-with-correct-name-in-game.webm" data-title="selected character loads with correct name in game">&#9654; Watch video</a></p>
+<table>
+    <thead><tr><th>Action</th><th>Test Code</th><th>Test File</th><th>File Proof</th><th>Code Proof</th><th>Comments</th></tr></thead>
+    <tbody>
+        <tr>
+            <td>Login and start game</td>
+            <td><code>Login.loginAndStartGame(page, username, password, playerName, longRun)</code></td>
+            <td>test-character-system.spec.js:84</td>
+            <td>tests/e2e/helpers/login.js:77</td>
+            <td><code>static async loginAndStartGame(page, username, password, playerName, longRun, skipUiSelectors = false, scene = null)</code></td>
+            <td>Full login + char select + wait for all HUD elements; playerName defaults to <code>ImRoot</code></td>
+        </tr>
+        <tr>
+            <td>Wait for window.reldens to be ready</td>
+            <td><code>if(!window.reldens || !window.reldens.activeRoomEvents) { return false; }</code></td>
+            <td>test-character-system.spec.js:22-23</td>
+            <td>theme/default/index.js:86</td>
+            <td><code>window.reldens = reldens;</code></td>
+            <td><code>window.reldens</code> is the GameManager instance assigned globally at the client entry point</td>
+        </tr>
+        <tr>
+            <td>Get the active game scene</td>
+            <td><code>let scene = window.reldens.getActiveScene();</code></td>
+            <td>test-character-system.spec.js:24</td>
+            <td>lib/game/client/game-manager.js:127</td>
+            <td><code>this.startHandler = new ClientStartHandler(this);</code></td>
+            <td><code>getActiveScene()</code> returns the live Phaser scene for the current room</td>
+        </tr>
+        <tr>
+            <td>Guard: scene.player.players must exist</td>
+            <td><code>if(!scene || !scene.player || !scene.player.players) { return false; }</code></td>
+            <td>test-character-system.spec.js:25-27</td>
+            <td>lib/game/client/room-events.js</td>
+            <td><code>currentScene.player = this.createPlayerEngineInstance(...)</code></td>
+            <td>Guards against scene not yet fully initialized</td>
+        </tr>
+        <tr>
+            <td>Assert player entry has expected playerName</td>
+            <td><code>Object.values(scene.player.players).some(p =&gt; p.playerName &amp;&amp; p.playerName.includes(name))</code></td>
+            <td>test-character-system.spec.js:28</td>
+            <td>lib/users/client/player-engine.js</td>
+            <td><code>this.playerName = playerData.playerName;</code></td>
+            <td>Uses <code>.includes()</code> not strict equality to tolerate display suffixes; playerName set from server response</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>

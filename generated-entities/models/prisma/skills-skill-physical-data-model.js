@@ -21,7 +21,7 @@ class SkillsSkillPhysicalDataModel
     {
         return 'skills_skill_physical_data';
     }
-    
+
 
     static get relationTypes()
     {

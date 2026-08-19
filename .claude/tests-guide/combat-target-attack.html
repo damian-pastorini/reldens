@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Player Can Target And Attack An Enemy</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Player Can Target And Attack An Enemy</h1>
+<p>Test: <code>tests/e2e/test-combat.spec.js</code> - <em>player can target and attack an enemy</em></p>
+<p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/player-can-target-and-attack-an-enemy.webm" data-title="Player Can Target And Attack An Enemy">&#9654; Watch video</a></p>
+<table>
+    <thead>
+        <tr>
+            <th>Action</th>
+            <th>Test Code</th>
+            <th>Test File</th>
+            <th>File Proof</th>
+            <th>Code Proof</th>
+            <th>Comments</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Login and navigate to reldens-forest</td>
+            <td><code>TestCombat.loginAndGetEnemyWithWorldPos(page, gameConfig, longRun)</code></td>
+            <td>test-combat.spec.js:202</td>
+            <td>tests/e2e/helpers/login.js:77<br>tests/e2e/helpers/navigation.js:149</td>
+            <td><code>static async loginAndStartGame(page, username, password, playerName, longRun, skipUiSelectors = false, scene = null)</code><br><code>static async ensureInRoom(...)</code></td>
+            <td>Logs in as root/ImRoot, selects reldens-forest scene, waits for enemy to appear in scene</td>
+        </tr>
+        <tr>
+            <td>Walk player within tab-target range of enemy</td>
+            <td><code>TestCombat.walkToEnemyWithinRange(page, data.enemyKey, TestCombat.TAB_TARGET_RANGE, data.navigationTimeout)</code></td>
+            <td>test-combat.spec.js:205</td>
+            <td>tests/e2e/helpers/navigation.js:177</td>
+            <td><code>static async moveToObjectWithinRange(...)</code></td>
+            <td>Walks player within 200px of enemy (<code>TAB_TARGET_RANGE = 200</code>); uses game server state positions</td>
+        </tr>
+        <tr>
+            <td>Target the enemy via browser evaluate</td>
+            <td><code>Phaser.targetEnemy(page, data.enemyKey)</code></td>
+            <td>test-combat.spec.js:206</td>
+            <td>tests/e2e/helpers/phaser.js:238</td>
+            <td><code>static async targetEnemy(page, enemyKey)</code></td>
+            <td>Sets <code>scene.player.currentTarget</code> and calls <code>gameEngine.showTarget()</code>; returns <code>true</code> on success</td>
+        </tr>
+        <tr>
+            <td>Assert enemy was successfully targeted</td>
+            <td><code>expect(true === targeted, 'Enemy must be targetable: '+targeted).toBeTruthy()</code></td>
+            <td>test-combat.spec.js:207</td>
+            <td>tests/e2e/helpers/phaser.js:238</td>
+            <td><code>static async targetEnemy(page, enemyKey)</code></td>
+            <td>Returns string describing error if targeting fails; truthy check ensures enemy was found and targeted</td>
+        </tr>
+        <tr>
+            <td>Assert target box UI is visible</td>
+            <td><code>expect(page.locator(Selectors.combat.targetBox)).toBeVisible()</code></td>
+            <td>test-combat.spec.js:208</td>
+            <td>theme/default/assets/html/ui-target.html:1</td>
+            <td><code>&lt;div class="ui-box box-target" id="box-target"&gt;</code></td>
+            <td><code>Selectors.combat.targetBox = '#box-target'</code>; element appears in HUD when an enemy is targeted</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>

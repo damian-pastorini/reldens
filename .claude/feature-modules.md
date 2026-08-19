@@ -1,6 +1,6 @@
 # Feature Modules Reference
 
-Complete reference for all 23 feature modules under `lib/`.
+Complete reference for all 24 feature modules under `lib/`.
 
 ## Core/Game Management
 
@@ -127,6 +127,11 @@ Data import utilities
 Game objects (NPCs, interactables, respawn areas)
 - `server/manager.js` loads and manages room objects
 - Objects can listen to messages via `listenMessages` interface
+- Physical collision behavior is configured via `private_params` in the `objects` DB table:
+  - `"collisionType":2` — makes the object body STATIC (p2.js Body.STATIC), blocking the player from walking through it
+  - `"collisionType":1` — DYNAMIC body (default), enemies and moving objects use this
+  - `"hasState":true` — required alongside `collisionType:2` for respawnable objects that need Colyseus state sync
+  - See `.claude/collision-configuration-guide.md` for full details
 
 ### Snippets (`lib/snippets/`)
 Reusable code snippets and utilities
@@ -138,3 +143,11 @@ Asset bundling drivers
 - Parcel integration
 - CSS and JavaScript bundling
 - Theme asset compilation
+
+### Quests (`lib/quests/`)
+Quest progress tracking system (persistence layer only, not a full quest definition system)
+- `quests_progress` DB table: per-player and global quest flag storage (`player_id` nullable for global flags)
+- `server/plugin.js` (QuestsPlugin): listens `reldens.createPlayerAfter`, queries `questsProgress` entity for player and global rows, sends merged keys to client via `{act: 'playerQuestsData', quests: [...]}` message
+- `client/plugin.js` (QuestsClientPlugin): listens `reldens.activateRoom`, stores received quest keys on `gameManager.playerQuestsData`, emits `reldens.playerQuestsLoaded`
+- Objects and features consume `gameManager.playerQuestsData` to restore state on room join
+- Entity key: `questsProgress` (maps to `quests_progress` table in all storage drivers)

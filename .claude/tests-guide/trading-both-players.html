@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Both Players Can Be In Game Simultaneously</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Both Players Can Be In Game Simultaneously</h1>
+<p>Test: <code>tests/e2e/test-trading.spec.js</code> - <em>both players can be in game simultaneously</em></p>
+<p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/both-players-can-be-in-game-simultaneously.webm" data-title="both players can be in game simultaneously">&#9654; Watch video</a></p>
+<table>
+    <thead><tr><th>Action</th><th>Test Code</th><th>Test File</th><th>File Proof</th><th>Code Proof</th><th>Comments</th></tr></thead>
+    <tbody>
+        <tr>
+            <td>Log in player A (root2/ImRoot2) and player B (root3/ImRoot3) via Login.loginAndStartGame</td>
+            <td><code>await TestTrading.loginBothPlayers(page, secondPage, gameConfig, longRun)</code></td>
+            <td>test-trading.spec.js:80</td>
+            <td>tests/e2e/helpers/login.js:77</td>
+            <td><code>static async loginAndStartGame(page, username, password, playerName, longRun, skipUiSelectors = false, scene = null)</code></td>
+            <td>Logs in both players sequentially - page as root2/ImRoot2, secondPage as root3/ImRoot3</td>
+        </tr>
+        <tr>
+            <td>Assert player A canvas is visible</td>
+            <td><code>await expect(page.locator(Selectors.canvas)).toBeVisible()</code></td>
+            <td>test-trading.spec.js:81</td>
+            <td>tests/e2e/selectors.js:26</td>
+            <td><code>this.canvas = 'canvas'</code></td>
+            <td>Confirms player A is in the game scene - Phaser canvas rendered</td>
+        </tr>
+        <tr>
+            <td>Assert player B canvas is visible</td>
+            <td><code>await expect(secondPage.locator(Selectors.canvas)).toBeVisible()</code></td>
+            <td>test-trading.spec.js:82</td>
+            <td>tests/e2e/selectors.js:26</td>
+            <td><code>this.canvas = 'canvas'</code></td>
+            <td>Confirms player B is also in the game scene simultaneously</td>
+        </tr>
+        <tr>
+            <td>Capture screenshot of player A in game</td>
+            <td><code>await screenshots.capture(page, 'p1-in-game')</code></td>
+            <td>test-trading.spec.js:83</td>
+            <td>tests/e2e/test-trading.spec.js:83</td>
+            <td><code>await screenshots.capture(page, 'p1-in-game')</code></td>
+            <td>Visual proof that player A is in the game world</td>
+        </tr>
+        <tr>
+            <td>Capture screenshot of player B in game</td>
+            <td><code>await screenshots.capture(secondPage, 'p2-in-game')</code></td>
+            <td>test-trading.spec.js:84</td>
+            <td>tests/e2e/test-trading.spec.js:84</td>
+            <td><code>await screenshots.capture(secondPage, 'p2-in-game')</code></td>
+            <td>Visual proof that player B is in the game world at the same time as player A</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>

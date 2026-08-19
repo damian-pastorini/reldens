@@ -18,7 +18,7 @@ class SkillsSkillGroupRelationModel
     {
         return 'skills_skill_group_relation';
     }
-    
+
 
     static get relationTypes()
     {

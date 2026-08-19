@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Player Can Select A Scene At Login And Starts In That Room</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Player Can Select A Scene At Login And Starts In That Room</h1>
+<p>Test: <code>tests/e2e/test-movement.spec.js</code> - <em>player can select a scene at login and starts in that room</em></p>
+<p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/player-can-select-a-scene-at-login-and-starts-in-that-room.webm" data-title="player can select a scene at login and starts in that room">&#9654; Watch video</a></p>
+<table>
+    <thead><tr><th>Action</th><th>Test Code</th><th>Test File</th><th>File Proof</th><th>Code Proof</th><th>Comments</th></tr></thead>
+    <tbody>
+        <tr>
+            <td>Login and start game with explicit scene selection</td>
+            <td><code>Login.loginAndStartGame(page, username, password, playerName, longRun, false, 'reldens-forest')</code></td>
+            <td>test-movement.spec.js:79</td>
+            <td>tests/e2e/helpers/login.js:77</td>
+            <td><code>static async loginAndStartGame(page, username, password, playerName, longRun, skipUiSelectors = false, scene = null)</code></td>
+            <td>The 7th argument 'reldens-forest' triggers Login.selectScene before clicking submit</td>
+        </tr>
+        <tr>
+            <td>Select the reldens-forest scene in the character select form</td>
+            <td><code>Login.selectScene(page, 'reldens-forest')</code></td>
+            <td>test-movement.spec.js:89</td>
+            <td>tests/e2e/helpers/login.js:66</td>
+            <td><code>static async selectScene(page, sceneName)</code></td>
+            <td>Calls sceneSelect.selectOption('reldens-forest') on #player-selector-form .scene-select</td>
+        </tr>
+        <tr>
+            <td>Scene select dropdown selector</td>
+            <td><code>Selectors.characterSelect.sceneSelect</code></td>
+            <td>test-movement.spec.js:89</td>
+            <td>tests/e2e/selectors.js:61</td>
+            <td><code>sceneSelect: '#player-selector-form .scene-select'</code></td>
+            <td>The dropdown inside the character selector form that lists available starting scenes</td>
+        </tr>
+        <tr>
+            <td>Wait for room to become reldens-forest after game start</td>
+            <td><code>Navigation.waitForRoom(page, 'reldens-forest', TimeConstants.forLongRun(TimeConstants.ROOM_TRANSITION, longRun))</code></td>
+            <td>test-movement.spec.js:80</td>
+            <td>tests/e2e/helpers/navigation.js:63</td>
+            <td><code>static async waitForRoom(page, roomName, timeout)</code></td>
+            <td>Polls activeRoomEvents.roomName until it equals 'reldens-forest' within ROOM_TRANSITION timeout</td>
+        </tr>
+        <tr>
+            <td>Read current room name from client state</td>
+            <td><code>Navigation.getCurrentRoomName(page)</code></td>
+            <td>test-movement.spec.js:85</td>
+            <td>tests/e2e/helpers/navigation.js:73</td>
+            <td><code>static async getCurrentRoomName(page)</code></td>
+            <td>Returns window.reldens.activeRoomEvents.roomName</td>
+        </tr>
+        <tr>
+            <td>Assert player started in the selected scene</td>
+            <td><code>expect(currentRoom, 'Player must start in the selected scene reldens-forest').toBe('reldens-forest')</code></td>
+            <td>test-movement.spec.js:86</td>
+            <td>tests/e2e/test-movement.spec.js:86</td>
+            <td><code>expect(currentRoom, 'Player must start in the selected scene reldens-forest').toBe('reldens-forest');</code></td>
+            <td>Core assertion - proves the scene selection on login is honored by the server</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>

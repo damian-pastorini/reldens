@@ -19,7 +19,7 @@ class SkillsClassLevelUpAnimationsModel
     {
         return 'skills_class_level_up_animations';
     }
-    
+
 
     static get relationTypes()
     {

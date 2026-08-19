@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Click-To-Move Changes Player Position</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Click-To-Move Changes Player Position</h1>
+<p>Test: <code>tests/e2e/test-movement.spec.js</code> - <em>click-to-move changes player position</em></p>
+<p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/click-to-move-changes-player-position.webm" data-title="click-to-move changes player position">&#9654; Watch video</a></p>
+<table>
+    <thead><tr><th>Action</th><th>Test Code</th><th>Test File</th><th>File Proof</th><th>Code Proof</th><th>Comments</th></tr></thead>
+    <tbody>
+        <tr>
+            <td>Login as root/ImRoot and prepare game state</td>
+            <td><code>TestMovement.loginAndPrepare(page, gameConfig, longRun)</code></td>
+            <td>test-movement.spec.js:159</td>
+            <td>tests/e2e/test-movement.spec.js:20</td>
+            <td><code>static async loginAndPrepare(page, gameConfig, longRun)</code></td>
+            <td>Logs in, waits for player in room state, then focuses the game canvas</td>
+        </tr>
+        <tr>
+            <td>Login and start game via form</td>
+            <td><code>Login.loginAndStartGame(page, username, password, playerName, longRun)</code></td>
+            <td>test-movement.spec.js:26</td>
+            <td>tests/e2e/helpers/login.js:77</td>
+            <td><code>static async loginAndStartGame(page, username, password, playerName, longRun, skipUiSelectors = false, scene = null)</code></td>
+            <td>Fills login form, selects player, clicks submit, waits for body.game-engine-started</td>
+        </tr>
+        <tr>
+            <td>Read player server position before click</td>
+            <td><code>Phaser.getPlayerServerPosition(page)</code></td>
+            <td>test-movement.spec.js:160</td>
+            <td>tests/e2e/helpers/phaser.js:145</td>
+            <td><code>static async getPlayerServerPosition(page)</code></td>
+            <td>Returns {x, y} from room.state.players as baseline before click-to-move</td>
+        </tr>
+        <tr>
+            <td>Get player screen coordinates</td>
+            <td><code>Phaser.getPlayerScreenCoords(page)</code></td>
+            <td>test-movement.spec.js:162</td>
+            <td>tests/e2e/helpers/phaser.js:160</td>
+            <td><code>static async getPlayerScreenCoords(page)</code></td>
+            <td>Returns {x, y} in screen pixels using camera scroll and zoom offsets for the player sprite</td>
+        </tr>
+        <tr>
+            <td>Get canvas bounding box for absolute click position</td>
+            <td><code>page.locator(Selectors.canvas).boundingBox()</code></td>
+            <td>test-movement.spec.js:163</td>
+            <td>tests/e2e/selectors.js:26</td>
+            <td><code>this.canvas = 'canvas'</code></td>
+            <td>Retrieves the canvas element's page-relative position; needed to translate screen coords to page coords</td>
+        </tr>
+        <tr>
+            <td>Click 150px to the right of the player on the canvas</td>
+            <td><code>page.mouse.click(canvasBox.x + playerCoords.x + 150, canvasBox.y + playerCoords.y)</code></td>
+            <td>test-movement.spec.js:164</td>
+            <td>tests/e2e/test-movement.spec.js:164</td>
+            <td><code>await page.mouse.click(canvasBox.x + playerCoords.x + 150, canvasBox.y + playerCoords.y);</code></td>
+            <td>Clicks 150px right of the player sprite to trigger Phaser click-to-move pathfinding</td>
+        </tr>
+        <tr>
+            <td>Wait 2000ms for movement to complete</td>
+            <td><code>page.waitForTimeout(2000)</code></td>
+            <td>test-movement.spec.js:165</td>
+            <td>tests/e2e/test-movement.spec.js:165</td>
+            <td><code>await page.waitForTimeout(2000);</code></td>
+            <td>Allows server to receive movement, process pathfinding, and broadcast updated state</td>
+        </tr>
+        <tr>
+            <td>Read player server position after click</td>
+            <td><code>Phaser.getPlayerServerPosition(page)</code></td>
+            <td>test-movement.spec.js:166</td>
+            <td>tests/e2e/helpers/phaser.js:145</td>
+            <td><code>static async getPlayerServerPosition(page)</code></td>
+            <td>Reads updated server-authoritative position after click-to-move completes</td>
+        </tr>
+        <tr>
+            <td>Assert before position is not null</td>
+            <td><code>expect(before).not.toBeNull()</code></td>
+            <td>test-movement.spec.js:167</td>
+            <td>tests/e2e/test-movement.spec.js:167</td>
+            <td><code>expect(before).not.toBeNull();</code></td>
+            <td>Guards against room state not being initialized when position was captured</td>
+        </tr>
+        <tr>
+            <td>Assert after position is not null</td>
+            <td><code>expect(after).not.toBeNull()</code></td>
+            <td>test-movement.spec.js:168</td>
+            <td>tests/e2e/test-movement.spec.js:168</td>
+            <td><code>expect(after).not.toBeNull();</code></td>
+            <td>Guards against room state being lost after movement</td>
+        </tr>
+        <tr>
+            <td>Assert player position changed after click-to-move</td>
+            <td><code>expect(moved, 'Player position did not change after click-to-move').toBeTruthy()</code></td>
+            <td>test-movement.spec.js:170</td>
+            <td>tests/e2e/test-movement.spec.js:170</td>
+            <td><code>expect(moved, 'Player position did not change after click-to-move').toBeTruthy();</code></td>
+            <td>Core assertion - after.x !== before.x OR after.y !== before.y must be true</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>

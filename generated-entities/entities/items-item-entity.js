@@ -22,16 +22,21 @@ class ItemsItemEntity extends EntityProperties
             },
             key: {
                 isRequired: true,
+                isUnique: true,
                 dbType: 'varchar'
             },
             type: {
                 type: 'reference',
                 reference: 'items_types',
+                alias: 'related_items_types',
+                onDelete: 'noAction',
                 dbType: 'int'
             },
             group_id: {
                 type: 'reference',
                 reference: 'items_group',
+                alias: 'related_items_group',
+                onDelete: 'noAction',
                 dbType: 'int'
             },
             [titleProperty]: {

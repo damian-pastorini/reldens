@@ -18,7 +18,7 @@ class AdsProvidersModel
     {
         return 'ads_providers';
     }
-    
+
 
     static get relationTypes()
     {

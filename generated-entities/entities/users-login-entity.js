@@ -21,6 +21,8 @@ class UsersLoginEntity extends EntityProperties
             user_id: {
                 type: 'reference',
                 reference: 'users',
+                alias: 'related_users',
+                onDelete: 'noAction',
                 isRequired: true,
                 dbType: 'int'
             },

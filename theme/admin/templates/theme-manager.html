@@ -1,4 +1,4 @@
-<h2 class="theme-manager-heading">Theme Management</h2>
+<h2 class="theme-manager-heading section-title">Theme Management</h2>
 <script id="command-descriptions-data" type="application/json">{{&commandDescriptionsJson}}</script>
 <p class="reboot-notice">All of these commands require a server reboot to take effect.</p>
 <div class="sub-content">
@@ -26,13 +26,12 @@
                 {{#buildCommands}}
                 <div class="command-item">
                     <button type="button" class="button button-primary execute-command" data-command="{{&name}}" data-async="{{&async}}">{{&label}}</button>
-                    <button type="button" class="button button-info show-command-info" data-command="{{&name}}" title="Show command information">ℹ</button>
                     <img class="hidden loading command-loading" src="/assets/web/loading.gif"/>
-                    <div class="command-info-tooltip" data-command="{{&name}}">
+                    <div class="tooltip button button-circle button-sm button-dark">?<div class="tooltip-text" data-command="{{&name}}">
                         <div class="tooltip-title">{{&label}}</div>
                         <div class="tooltip-description"></div>
                         <div class="tooltip-details"></div>
-                    </div>
+                    </div></div>
                 </div>
                 {{/buildCommands}}
             </div>
@@ -48,13 +47,12 @@
                 {{#clientDistCommands}}
                 <div class="command-item">
                     <button type="button" class="button button-primary execute-command" data-command="{{&name}}">{{&label}}</button>
-                    <button type="button" class="button button-info show-command-info" data-command="{{&name}}" title="Show command information">ℹ</button>
                     <img class="hidden loading command-loading" src="/assets/web/loading.gif"/>
-                    <div class="command-info-tooltip" data-command="{{&name}}">
+                    <div class="tooltip button button-circle button-sm button-dark">?<div class="tooltip-text" data-command="{{&name}}">
                         <div class="tooltip-title">{{&label}}</div>
                         <div class="tooltip-description"></div>
                         <div class="tooltip-details"></div>
-                    </div>
+                    </div></div>
                 </div>
                 {{/clientDistCommands}}
             </div>
@@ -72,13 +70,12 @@
                 {{#copyCommands}}
                 <div class="command-item">
                     <button type="button" class="button button-warning execute-command" data-command="{{&name}}">{{&label}}</button>
-                    <button type="button" class="button button-info show-command-info" data-command="{{&name}}" title="Show command information">ℹ</button>
                     <img class="hidden loading command-loading" src="/assets/web/loading.gif"/>
-                    <div class="command-info-tooltip" data-command="{{&name}}">
+                    <div class="tooltip button button-circle button-sm button-dark">?<div class="tooltip-text" data-command="{{&name}}">
                         <div class="tooltip-title">{{&label}}</div>
                         <div class="tooltip-description"></div>
                         <div class="tooltip-details"></div>
-                    </div>
+                    </div></div>
                 </div>
                 {{/copyCommands}}
             </div>
@@ -94,27 +91,15 @@
                 {{#installCommands}}
                 <div class="command-item">
                     <button type="button" class="button button-danger execute-command" data-command="{{&name}}" data-async="{{&async}}">{{&label}}</button>
-                    <button type="button" class="button button-info show-command-info" data-command="{{&name}}" title="Show command information">ℹ</button>
                     <img class="hidden loading command-loading" src="/assets/web/loading.gif"/>
-                    <div class="command-info-tooltip" data-command="{{&name}}">
+                    <div class="tooltip button button-circle button-sm button-dark">?<div class="tooltip-text" data-command="{{&name}}">
                         <div class="tooltip-title">{{&label}}</div>
                         <div class="tooltip-description"></div>
                         <div class="tooltip-details"></div>
-                    </div>
+                    </div></div>
                 </div>
                 {{/installCommands}}
             </div>
         </form>
     </div>
 </div>
-
-<dialog class="confirm-dialog">
-    <div class="dialog-content">
-        <h5 class="dialog-title">Execute Theme Command</h5>
-        <p class="dialog-message">Are you sure you want to execute this command?</p>
-        <div class="dialog-actions">
-            <button type="button" class="button button-secondary dialog-cancel">Cancel</button>
-            <button type="button" class="button button-primary dialog-confirm">Execute</button>
-        </div>
-    </div>
-</dialog>

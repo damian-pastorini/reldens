@@ -18,7 +18,7 @@ class AdsBannerModel
     {
         return 'ads_banner';
     }
-    
+
 
     static get relationTypes()
     {

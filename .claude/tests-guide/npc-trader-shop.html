@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Trader NPC Opens Shop Panel</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Trader NPC Opens Shop Panel</h1>
+<p>Test: <code>tests/e2e/test-npc.spec.js</code> - <em>trader NPC opens shop panel</em></p>
+<p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/trader-npc-opens-shop-panel.webm" data-title="trader NPC opens shop panel">&#9654; Watch video</a></p>
+<table>
+    <thead><tr><th>Action</th><th>Test Code</th><th>Test File</th><th>File Proof</th><th>Code Proof</th><th>Comments</th></tr></thead>
+    <tbody>
+        <tr>
+            <td>Log in as root2 player and start the game</td>
+            <td><code>await Login.loginAndStartGame(page, 'root2', 'root', 'ImRoot2', longRun)</code></td>
+            <td>test-npc.spec.js:24</td>
+            <td>tests/e2e/helpers/login.js:77</td>
+            <td><code>static async loginAndStartGame(page, username, password, playerName, longRun, skipUiSelectors = false, scene = null)</code></td>
+            <td>Uses credentials from gameConfig (e2eUsername2 / e2ePassword2 / e2ePlayerName2) with defaults root2 / root / ImRoot2</td>
+        </tr>
+        <tr>
+            <td>Wait for trader NPC to appear in scene</td>
+            <td><code>await Phaser.waitForObject(page, traderKey, sceneTimeout)<br>// or<br>await Phaser.waitForObjectByType(page, 'trader', sceneTimeout)</code></td>
+            <td>test-npc.spec.js:33-35</td>
+            <td>tests/e2e/helpers/phaser.js:93</td>
+            <td><code>static async waitForObject(page, objKey, timeout)</code></td>
+            <td>Uses key-based lookup if e2eTraderKey is set, otherwise finds first object of type 'trader'. Timeout is SCENE_LOAD (10000ms).</td>
+        </tr>
+        <tr>
+            <td>Get trader NPC screen coordinates</td>
+            <td><code>let traderCoords = await Phaser.getObjectScreenCoords(page, traderKey)<br>// or<br>Phaser.getObjectScreenCoordsByType(page, 'trader')</code></td>
+            <td>test-npc.spec.js:36-38</td>
+            <td>tests/e2e/helpers/phaser.js:50</td>
+            <td><code>static async getObjectScreenCoords(page, objKey)</code></td>
+            <td>Reads Phaser scene objectsAnimations to compute screen position accounting for camera scroll and zoom</td>
+        </tr>
+        <tr>
+            <td>Assert trader coordinates are not null</td>
+            <td><code>expect(traderCoords, 'Trader NPC must be found in the scene').not.toBeNull()</code></td>
+            <td>test-npc.spec.js:39</td>
+            <td>tests/e2e/helpers/phaser.js:65</td>
+            <td><code>static async getObjectScreenCoordsByType(page, type)</code></td>
+            <td>Confirms the trader NPC sprite is present and visible in the active Phaser scene</td>
+        </tr>
+        <tr>
+            <td>Click trader NPC to open shop</td>
+            <td><code>await Phaser.clickObject(page, traderKey)<br>// or<br>await Phaser.clickObjectByType(page, 'trader')</code></td>
+            <td>test-npc.spec.js:40</td>
+            <td>tests/e2e/helpers/phaser.js:75</td>
+            <td><code>static async clickObject(page, objKey)</code></td>
+            <td>Resolves screen coords and dispatches a canvas click at the trader NPC position using force:true</td>
+        </tr>
+        <tr>
+            <td>Wait for shop buy tab to become visible</td>
+            <td><code>await expect(page.locator(Selectors.trader.buyTab)).toBeVisible(<br>    { timeout: TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun) }<br>)</code></td>
+            <td>test-npc.spec.js:104-106</td>
+            <td>tests/e2e/selectors.js:168</td>
+            <td><code>buyTab: '.trade-container-buy'</code></td>
+            <td>Asserts that the shop buy tab panel is visible, confirming the trader shop opened. Timeout is UI_OPEN (3000ms, scaled for longRun).</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>

@@ -657,9 +657,9 @@ REPLACE INTO `skills_skill` (`id`, `key`, `type`, `autoValidation`, `skillDelay`
 	(2, 'attackShort', '2', 0, 600, 0, 0, 50, 1, 'state/x', 'state/y', NULL, NULL, 0, 10, 2, 0, NULL),
 	(3, 'fireball', '4', 0, 5000, 2000, 0, 280, 1, 'state/x', 'state/y', NULL, NULL, 0, 10, 2, 0, NULL),
 	(4, 'heal', '3', 0, 5000, 2000, 0, 100, 1, 'state/x', 'state/y', NULL, NULL, 1, 0, 1, 0, NULL),
-	(1001, 'testSkillAttackMain', '1', 0, 1000, 0, 0, 100, 1, 'state/x', 'state/y', NULL, NULL, 0, 10, 2, 0, NULL),
-	(1002, 'testSkillAttackDelete', '1', 0, 1000, 0, 0, 100, 1, 'state/x', 'state/y', NULL, NULL, 0, 10, 2, 0, NULL),
-	(1003, 'testSkillAttackEditFail', '1', 0, 1000, 0, 0, 100, 1, 'state/x', 'state/y', NULL, NULL, 0, 10, 2, 0, NULL);
+	(1001, 'testSkillAttackMain', '2', 0, 1000, 0, 0, 100, 1, 'state/x', 'state/y', NULL, NULL, 0, 10, 2, 0, NULL),
+	(1002, 'testSkillAttackDelete', '2', 0, 1000, 0, 0, 100, 1, 'state/x', 'state/y', NULL, NULL, 0, 10, 2, 0, NULL),
+	(1003, 'testSkillAttackEditFail', '2', 0, 1000, 0, 0, 100, 1, 'state/x', 'state/y', NULL, NULL, 0, 10, 2, 0, NULL);
 
 REPLACE INTO `skills_skill_animations` (`id`, `skill_id`, `key`, `classKey`, `animationData`) VALUES
 	(1, 3, 'bullet', NULL, '{"enabled":true,"type":"spritesheet","img":"fireball_bullet","frameWidth":64,"frameHeight":64,"start":0,"end":3,"repeat":-1,"frameRate":1,"dir":3}'),

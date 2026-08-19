@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Combat Damage Message Appears In Chat</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Combat Damage Message Appears In Chat</h1>
+<p>Test: <code>tests/e2e/test-combat.spec.js</code> - <em>combat damage message appears in chat</em></p>
+<p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/combat-damage-message-appears-in-chat.webm" data-title="Combat Damage Message Appears In Chat">&#9654; Watch video</a></p>
+<table>
+    <thead>
+        <tr>
+            <th>Action</th>
+            <th>Test Code</th>
+            <th>Test File</th>
+            <th>File Proof</th>
+            <th>Code Proof</th>
+            <th>Comments</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Login and navigate to reldens-forest</td>
+            <td><code>TestCombat.loginAndGetEnemyWithWorldPos(page, gameConfig, longRun)</code></td>
+            <td>test-combat.spec.js:212</td>
+            <td>tests/e2e/helpers/login.js:77<br>tests/e2e/helpers/navigation.js:149</td>
+            <td><code>static async loginAndStartGame(page, username, password, playerName, longRun, false, 'reldens-forest')</code></td>
+            <td>Logs in as root/ImRoot with forest scene selected; waits for enemy to appear in scene</td>
+        </tr>
+        <tr>
+            <td>Get first attack skill and its range</td>
+            <td><code>let firstAttackSkill = TestCombat.attackSkills[0]</code><br><code>let skillRange = firstAttackSkill ? firstAttackSkill.range : 100</code></td>
+            <td>test-combat.spec.js:213-214</td>
+            <td>tests/e2e/game-data.json:40-48</td>
+            <td><code>"key": "attackShort", "range": 50</code></td>
+            <td><code>attackSkills</code> is filtered from game-data.json; attackShort has range 50</td>
+        </tr>
+        <tr>
+            <td>Walk within attack range</td>
+            <td><code>TestCombat.walkToEnemyWithinRange(page, data.enemyKey, skillRange, data.navigationTimeout)</code></td>
+            <td>test-combat.spec.js:215</td>
+            <td>tests/e2e/helpers/navigation.js:177</td>
+            <td><code>static async moveToObjectWithinRange(...)</code></td>
+            <td>Walks player within attack range of enemy; uses game server state positions</td>
+        </tr>
+        <tr>
+            <td>Open chat panel and target enemy</td>
+            <td><code>TestCombat.prepareEnemyTargetAndChat(page, data)</code></td>
+            <td>test-combat.spec.js:217</td>
+            <td>test-combat.spec.js:128-134</td>
+            <td><code>static async prepareEnemyTargetAndChat(page, data)</code></td>
+            <td>Targets enemy via <code>Phaser.targetEnemy</code> then clicks <code>#chat-open</code> button to open chat panel</td>
+        </tr>
+        <tr>
+            <td>Resolve attack key</td>
+            <td><code>TestCombat.resolveAttackKey(page, firstAttackSkill, '...')</code></td>
+            <td>test-combat.spec.js:218</td>
+            <td>test-combat.spec.js:190-196</td>
+            <td><code>static async resolveAttackKey(page, firstAttackSkill, context)</code></td>
+            <td>Gets available action keys from DOM, resolves <code>attackShort</code> or first available skill key</td>
+        </tr>
+        <tr>
+            <td>Walk to half skill range</td>
+            <td><code>TestCombat.walkToEnemyWithinRange(page, data.enemyKey, Math.floor(skillRange / 2), data.navigationTimeout)</code></td>
+            <td>test-combat.spec.js:219</td>
+            <td>tests/e2e/helpers/navigation.js:177</td>
+            <td><code>static async moveToObjectWithinRange(...)</code></td>
+            <td>Gets closer (within 25px for attackShort) for reliable hit; halves skill range</td>
+        </tr>
+        <tr>
+            <td>Click attack skill button</td>
+            <td><code>page.click(Selectors.combat.skillButton(resolvedAttackKey))</code></td>
+            <td>test-combat.spec.js:220</td>
+            <td>theme/default/assets/html/ui-target.html:1</td>
+            <td><code>Selectors.combat.skillButton = (skillKey) =&gt; '#'+skillKey</code></td>
+            <td>Clicks <code>#attackShort</code> button in HUD skill bar</td>
+        </tr>
+        <tr>
+            <td>Assert damage message in General chat</td>
+            <td><code>expect(page.locator(Selectors.chat.tabContentGeneral)).toContainText('damage', { timeout: ... })</code></td>
+            <td>test-combat.spec.js:221-224</td>
+            <td>lib/chat/constants.js:13</td>
+            <td><code>MESSAGE: 1</code></td>
+            <td>Server broadcasts damage message to room; <code>.tab-content-1</code> is the General tab; Playwright retries until text appears</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>

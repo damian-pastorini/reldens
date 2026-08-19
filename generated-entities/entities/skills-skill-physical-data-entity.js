@@ -21,7 +21,10 @@ class SkillsSkillPhysicalDataEntity extends EntityProperties
             skill_id: {
                 type: 'reference',
                 reference: 'skills_skill',
+                alias: 'related_skills_skill',
+                onDelete: 'noAction',
                 isRequired: true,
+                isUnique: true,
                 dbType: 'int'
             },
             magnitude: {

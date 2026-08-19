@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: PlayerQuestsData Is Initialized As Array After Room Join</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: PlayerQuestsData Is Initialized As Array After Room Join</h1>
+<p>Test: <code>tests/e2e/test-quests-tracking.spec.js</code> - <em>playerQuestsData is initialized as array after room join</em></p>
+<p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/playerquestsdata-is-initialized-as-array-after-room-join.webm" data-title="playerQuestsData is initialized as array after room join">&#9654; Watch video</a></p>
+<table>
+    <thead><tr><th>Action</th><th>Test Code</th><th>Test File</th><th>File Proof</th><th>Code Proof</th><th>Comments</th></tr></thead>
+    <tbody>
+        <tr>
+            <td>Read credentials and player name from game config with fallbacks</td>
+            <td><code>let username = gameConfig.e2eUsername || 'root';<br>let password = gameConfig.e2ePassword || 'root';<br>let playerName = gameConfig.e2ePlayerName || 'ImRoot';</code></td>
+            <td>test-quests-tracking.spec.js:39-41</td>
+            <td>tests/e2e/test-quests-tracking.spec.js:39</td>
+            <td><code>let username = gameConfig.e2eUsername || 'root';</code></td>
+            <td>Fixture values override defaults; defaults allow running the test without extra config</td>
+        </tr>
+        <tr>
+            <td>Log in and start the game with the configured player</td>
+            <td><code>await Login.loginAndStartGame(page, username, password, playerName, longRun);</code></td>
+            <td>test-quests-tracking.spec.js:42</td>
+            <td>tests/e2e/helpers/login.js:77</td>
+            <td><code>static async loginAndStartGame(page, username, password, playerName, longRun, skipUiSelectors = false, scene = null)</code></td>
+            <td>Handles full login flow - form fill, player selection, game start, and HUD selector validation</td>
+        </tr>
+        <tr>
+            <td>Capture screenshot after game has started</td>
+            <td><code>await screenshots.capture(page, 'quests-game-started');</code></td>
+            <td>test-quests-tracking.spec.js:43</td>
+            <td>tests/e2e/test-quests-tracking.spec.js:43</td>
+            <td><code>await screenshots.capture(page, 'quests-game-started');</code></td>
+            <td>Visual evidence that the game is running before waiting for quests data</td>
+        </tr>
+        <tr>
+            <td>Set timeout based on longRun flag</td>
+            <td><code>let waitTimeout = longRun ? 30000 : 15000;</code></td>
+            <td>test-quests-tracking.spec.js:44</td>
+            <td>tests/e2e/test-quests-tracking.spec.js:44</td>
+            <td><code>let waitTimeout = longRun ? 30000 : 15000;</code></td>
+            <td>Allows slower environments to wait longer for the quests message to arrive</td>
+        </tr>
+        <tr>
+            <td>Wait until window.reldens.playerQuestsData is an array</td>
+            <td><code>await TestQuestsTracking.waitForPlayerQuestsData(page, waitTimeout);</code></td>
+            <td>test-quests-tracking.spec.js:45</td>
+            <td>tests/e2e/test-quests-tracking.spec.js:20-22</td>
+            <td><code>await page.waitForFunction(() => {<br>    return window.reldens && Array.isArray(window.reldens.playerQuestsData);<br>}, { timeout: timeout || 15000 });</code></td>
+            <td>Polls the browser context until the quests message has been received and stored</td>
+        </tr>
+        <tr>
+            <td>Read playerQuestsData value from the browser context</td>
+            <td><code>let questsData = await TestQuestsTracking.getPlayerQuestsData(page);</code></td>
+            <td>test-quests-tracking.spec.js:46</td>
+            <td>tests/e2e/test-quests-tracking.spec.js:27-32</td>
+            <td><code>return page.evaluate(() => {<br>    if(!window.reldens){ return null; }<br>    return window.reldens.playerQuestsData;<br>});</code></td>
+            <td>Extracts the value from the browser page for assertion</td>
+        </tr>
+        <tr>
+            <td>Capture screenshot after quests data has been received</td>
+            <td><code>await screenshots.capture(page, 'quests-data-received');</code></td>
+            <td>test-quests-tracking.spec.js:47</td>
+            <td>tests/e2e/test-quests-tracking.spec.js:47</td>
+            <td><code>await screenshots.capture(page, 'quests-data-received');</code></td>
+            <td>Visual evidence captured at the moment the assertion is about to run</td>
+        </tr>
+        <tr>
+            <td>Assert playerQuestsData is an array</td>
+            <td><code>expect(Array.isArray(questsData), 'playerQuestsData must be an array after room join').toBeTruthy();</code></td>
+            <td>test-quests-tracking.spec.js:48</td>
+            <td>lib/quests/client/plugin.js:31</td>
+            <td><code>gameManager.playerQuestsData = message.quests || [];</code></td>
+            <td>The client plugin sets playerQuestsData to the quests array from the server message, or an empty array if absent</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>

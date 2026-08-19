@@ -25,7 +25,7 @@ class SkillsLevelsModifiersModel
     {
         return 'skills_levels_modifiers';
     }
-    
+
 
     static get relationTypes()
     {

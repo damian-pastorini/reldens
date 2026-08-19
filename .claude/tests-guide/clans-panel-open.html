@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Clan Panel Opens And Shows Content</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Clan Panel Opens And Shows Content</h1>
+<p>Test: <code>tests/e2e/test-clans.spec.js</code> - <em>clan panel opens and shows content</em></p>
+<p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/clan-panel-opens-and-shows-content.webm" data-title="clan panel opens and shows content">&#9654; Watch video</a></p>
+<table>
+    <thead><tr><th>Action</th><th>Test Code</th><th>Test File</th><th>File Proof</th><th>Code Proof</th><th>Comments</th></tr></thead>
+    <tbody>
+        <tr>
+            <td>Login as root2 player</td>
+            <td><code>Login.loginAndStartGame(page, username, password, playerName, longRun)</code></td>
+            <td>test-clans.spec.js:23</td>
+            <td>tests/e2e/helpers/login.js:77</td>
+            <td><code>static async loginAndStartGame(page, username, password, playerName, longRun, skipUiSelectors = false, scene = null)</code></td>
+            <td>Uses e2eUsername2/e2ePassword2/e2ePlayerName2 (defaults: root2/root/ImRoot2)</td>
+        </tr>
+        <tr>
+            <td>Click clan open button</td>
+            <td><code>page.click(Selectors.hud.clanOpen)</code></td>
+            <td>test-clans.spec.js:30</td>
+            <td>theme/default/assets/features/teams/templates/ui-clan.html:6</td>
+            <td><code>&lt;img class="open-ui-button box-open clan-open" src="/assets/features/teams/assets/clan.png" alt="open"/&gt;</code></td>
+            <td><code>Selectors.hud.clanOpen = '.clan-open'</code></td>
+        </tr>
+        <tr>
+            <td>Assert clan dialog is visible</td>
+            <td><code>expect(page.locator(Selectors.clans.dialog)).toBeVisible({ timeout: ... })</code></td>
+            <td>test-clans.spec.js:32-34</td>
+            <td>theme/default/assets/features/teams/templates/ui-clan.html:1</td>
+            <td><code>&lt;div class="ui-box ui-dialog-box clan-dialog-box"&gt;</code></td>
+            <td><code>Selectors.clans.dialog = '.clan-dialog-box'</code></td>
+        </tr>
+        <tr>
+            <td>Assert clan dialog content is visible</td>
+            <td><code>expect(page.locator(Selectors.clans.dialogContent)).toBeVisible()</code></td>
+            <td>test-clans.spec.js:43</td>
+            <td>theme/default/assets/features/teams/templates/ui-clan.html:4</td>
+            <td><code>&lt;div class="box-content"&gt;{{content}}&lt;/div&gt;</code></td>
+            <td><code>Selectors.clans.dialogContent = '.clan-dialog-box .box-content'</code></td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>

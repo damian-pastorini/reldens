@@ -20,7 +20,7 @@ class AdsPlayedModel
     {
         return 'ads_played';
     }
-    
+
 
     static get relationTypes()
     {

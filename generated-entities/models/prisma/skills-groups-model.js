@@ -20,7 +20,7 @@ class SkillsGroupsModel
     {
         return 'skills_groups';
     }
-    
+
 
     static get relationTypes()
     {

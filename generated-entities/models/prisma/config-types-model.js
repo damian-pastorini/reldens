@@ -17,7 +17,7 @@ class ConfigTypesModel
     {
         return 'config_types';
     }
-    
+
 
     static get relationTypes()
     {

@@ -24,7 +24,7 @@ class AudioModel
     {
         return 'audio';
     }
-    
+
 
     static get relationTypes()
     {

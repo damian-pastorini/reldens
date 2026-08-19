@@ -24,7 +24,7 @@ class RewardsModifiersModel
     {
         return 'rewards_modifiers';
     }
-    
+
 
     static get relationTypes()
     {

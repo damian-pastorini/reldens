@@ -202,3 +202,34 @@ let scoreDetailData = {
 4. Prisma driver skips validation for fields with database defaults
 
 **Important:** With Prisma driver, validation automatically skips required fields that have database defaults, allowing admin panel creates to succeed even when these fields are excluded from the form.
+
+## Prisma 7+ Connection File (`prisma.config.js`)
+
+Prisma 7 removed support for the `url` property inside the `datasource` block of `schema.prisma`. The connection URL must now be provided via a `prisma.config.js` file at the project root.
+
+### How it is created during installation
+
+`PrismaSubprocessWorker` (`lib/game/server/installer/prisma-subprocess-worker.js`) runs these steps in order:
+
+1. `generator.generateSchemaFile()` — writes `prisma/schema.prisma` with an empty datasource block (no `url`)
+2. `generator.setDatabaseEnvironmentVariables()` — sets `process.env.RELDENS_DB_URL` from the installer config
+3. `generator.generateConfigFile()` — writes `prisma.config.js` at the project root:
+   ```js
+   process.loadEnvFile('.env');
+   module.exports = { datasource: { url: process.env.RELDENS_DB_URL } };
+   ```
+4. `npx prisma db pull` / `npx prisma generate` — both read the URL from `prisma.config.js`
+
+This means `prisma.config.js` is created automatically during installation and must remain at the project root for any `npx prisma` CLI commands to work.
+
+### Connection URL: `RELDENS_DB_URL` only
+
+Reldens uses the single env var `RELDENS_DB_URL` everywhere - the generated `prisma.config.js`, the generation subprocess, the installer, and the runtime adapter. `DATABASE_URL` is not used or required (Prisma itself never reads a hardcoded `DATABASE_URL`; it only reads whatever `prisma.config.js` assigns to `datasource.url`). The generated `prisma.config.js` loads `.env` explicitly via `process.loadEnvFile()` (Node 20.12+ native) because the Prisma CLI does not auto-load `.env` for config files in Prisma 7:
+  ```js
+  process.loadEnvFile('.env');
+  module.exports = { datasource: { url: process.env.RELDENS_DB_URL } };
+  ```
+
+### `generateEntities` command
+
+`reldens generateEntities` also calls `PrismaSchemaGenerator.generate()` which runs `generateConfigFile()` before `npx prisma db pull`. If `prisma.config.js` is absent (e.g. after a fresh clone), the command recreates it automatically.

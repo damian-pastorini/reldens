@@ -22,6 +22,7 @@ class ClanLevelsEntity extends EntityProperties
             key: {
                 type: 'number',
                 isRequired: true,
+                isUnique: true,
                 dbType: 'int'
             },
             [titleProperty]: {

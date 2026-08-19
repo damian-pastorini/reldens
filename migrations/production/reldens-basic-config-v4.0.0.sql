@@ -256,7 +256,7 @@ REPLACE INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(210, 'client', 'ui/minimap/circleColor', 'rgb(0,0,0)', 1),
 	(211, 'client', 'ui/minimap/circleFillAlpha', '0', 2),
 	(212, 'client', 'ui/minimap/circleFillColor', '1', 2),
-	(213, 'client', 'ui/minimap/circleRadio', '80.35', 2),
+	(213, 'client', 'ui/minimap/circleRadio', '60', 2),
 	(214, 'client', 'ui/minimap/circleStrokeAlpha', '0.6', 2),
 	(215, 'client', 'ui/minimap/circleStrokeColor', '0', 2),
 	(216, 'client', 'ui/minimap/circleStrokeLineWidth', '6', 2),
@@ -276,7 +276,7 @@ REPLACE INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(230, 'client', 'ui/npcDialog/responsiveY', '10', 2),
 	(231, 'client', 'ui/npcDialog/x', '120', 2),
 	(232, 'client', 'ui/npcDialog/y', '100', 2),
-	(233, 'client', 'ui/options/acceptOrDecline', '{"1":{"label":"Accept","value":1},"2":{"label":"Decline","value":2}}', 4),
+	(233, 'client', 'ui/options/acceptOrDecline', '{"decline":{"label":"Decline","value":2},"accept":{"label":"Accept","value":1}}', 4),
 	(234, 'client', 'ui/playerBox/enabled', '1', 3),
 	(235, 'client', 'ui/playerBox/responsiveX', '0', 2),
 	(236, 'client', 'ui/playerBox/responsiveY', '0', 2),
@@ -391,21 +391,25 @@ REPLACE INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(345, 'server', 'rewards/loginReward/enabled', '1', 3),
 	(346, 'server', 'rewards/playedTimeReward/enabled', '1', 3),
 	(347, 'server', 'rewards/playedTimeReward/time', '30000', 3),
-	(348, 'server', 'rooms/validation/enabled', '1', 3),
-	(349, 'server', 'rooms/validation/valid', 'room_game,chat_global', 1),
-	(350, 'server', 'rooms/world/bulletsStopOnPlayer', '1', 3),
-	(351, 'server', 'rooms/world/disableObjectsCollisionsOnChase', '0', 3),
-	(352, 'server', 'rooms/world/disableObjectsCollisionsOnReturn', '1', 3),
-	(353, 'server', 'rooms/world/groupWallsHorizontally', '1', 3),
-	(354, 'server', 'rooms/world/groupWallsVertically', '0', 3),
-	(355, 'server', 'rooms/world/movementSpeed', '180', 2),
-	(356, 'server', 'rooms/world/onlyWalkable', '1', 3),
-	(357, 'server', 'rooms/world/timeStep', '0.04', 2),
-	(358, 'server', 'rooms/world/tryClosestPath', '0', 3),
-	(359, 'server', 'scores/fullTableView/enabled', '1', 3),
-	(360, 'server', 'scores/obtainedScorePerNpc', '5', 2),
-	(361, 'server', 'scores/obtainedScorePerPlayer', '10', 2),
-	(362, 'server', 'scores/useNpcCustomScore', '1', 3);
+	(348, 'server', 'rooms/deletion/closeActiveRoomsEnabled', '1', 3),
+	(349, 'server', 'rooms/deletion/closeActiveRoomsSeconds', '10', 2),
+	(350, 'server', 'rooms/deletion/closeActiveRoomsWarningSeconds', '5', 2),
+	(351, 'server', 'rooms/deletion/setDefault', '1', 3),
+	(352, 'server', 'rooms/validation/enabled', '1', 3),
+	(353, 'server', 'rooms/validation/valid', 'room_game,chat_global', 1),
+	(354, 'server', 'rooms/world/bulletsStopOnPlayer', '1', 3),
+	(355, 'server', 'rooms/world/disableObjectsCollisionsOnChase', '0', 3),
+	(356, 'server', 'rooms/world/disableObjectsCollisionsOnReturn', '1', 3),
+	(357, 'server', 'rooms/world/groupWallsHorizontally', '1', 3),
+	(358, 'server', 'rooms/world/groupWallsVertically', '0', 3),
+	(359, 'server', 'rooms/world/movementSpeed', '180', 2),
+	(360, 'server', 'rooms/world/onlyWalkable', '1', 3),
+	(361, 'server', 'rooms/world/timeStep', '0.04', 2),
+	(362, 'server', 'rooms/world/tryClosestPath', '0', 3),
+	(363, 'server', 'scores/fullTableView/enabled', '1', 3),
+	(364, 'server', 'scores/obtainedScorePerNpc', '5', 2),
+	(365, 'server', 'scores/obtainedScorePerPlayer', '10', 2),
+	(366, 'server', 'scores/useNpcCustomScore', '1', 3);
 
 REPLACE INTO `features` (`id`, `code`, `title`, `is_enabled`) VALUES
 	(1, 'chat', 'Chat', 1),
@@ -424,7 +428,8 @@ REPLACE INTO `features` (`id`, `code`, `title`, `is_enabled`) VALUES
 	(14, 'snippets', 'Snippets', 1),
 	(16, 'ads', 'Ads', 1),
 	(17, 'world', 'World', 0),
-	(18, 'scores', 'Scores', 1);
+	(18, 'scores', 'Scores', 1),
+	(19, 'quests', 'Quests', 1);
 
 REPLACE INTO `items_types` (`id`, `key`) VALUES
 	(10, 'base'),
@@ -444,6 +449,7 @@ REPLACE INTO `objects_types` (`id`, `key`) VALUES
 	(4, 'enemy'),
 	(7, 'multiple'),
 	(3, 'npc'),
+	(8, 'timing'),
 	(5, 'trader');
 
 REPLACE INTO `operation_types` (`id`, `label`, `key`) VALUES

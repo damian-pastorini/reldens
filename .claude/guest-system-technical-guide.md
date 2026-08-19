@@ -45,8 +45,8 @@ async loadRooms(){
         roomsByName[room.name] = roomModel;
     }
 
-    // Filter guest rooms
-    this.availableRoomsGuest = this.filterGuestRooms(roomsByName);
+    // Guest rooms: same rule as the selector lists (the join gate and the list can never disagree)
+    this.availableRoomsGuest = this.fetchGuestRooms(roomsByName);
 
     // Create room lists for registration and login
     let registrationRooms = this.filterRooms(true);
@@ -102,9 +102,11 @@ fetchGuestRooms(availableRooms){
 
 **Global Setting:**
 - Config path: `server/players/guestUser/allowOnRooms`
-- Default: `true`
+- Default: `false`
 - If `true`, all rooms allow guests
 - If `false`, only rooms with `customData.allowGuest = true` allow guests
+
+The same `fetchGuestRooms()` result feeds BOTH the client room selector lists and the server join gate (`availableRoomsGuest`, checked by `RoomScene.validateRoom()`). The server gate is the source of truth: the client list is always a subset of what the gate accepts, so a guest is never shown a room the server would reject.
 
 ### 2.3 Config Assignment (`lib/rooms/server/manager.js`)
 
@@ -115,9 +117,11 @@ fetchGuestRooms(availableRooms){
 if(this.config.client?.rooms?.selection){
     this.config.client.rooms.selection.availableRooms = {
         registration: this.registrationAvailableRooms,
-        registrationGuest: this.registrationAvailableRoomsGuest,  // ← Guest rooms here
+        // Guest rooms here
+        registrationGuest: this.registrationAvailableRoomsGuest,
         login: this.loginAvailableRooms,
-        loginGuest: this.loginAvailableRoomsGuest                 // ← Guest rooms here
+        // Guest rooms here
+        loginGuest: this.loginAvailableRoomsGuest
     };
 }
 ```
@@ -170,9 +174,11 @@ window.reldensInitialConfig = {
             selection: {
                 availableRooms: {
                     registration: { /* normal rooms */ },
-                    registrationGuest: { /* guest-allowed rooms */ },  // ← KEY DATA
+                    // KEY DATA
+                    registrationGuest: { /* guest-allowed rooms */ },
                     login: { /* normal rooms */ },
-                    loginGuest: { /* guest-allowed rooms */ }          // ← KEY DATA
+                    // KEY DATA
+                    loginGuest: { /* guest-allowed rooms */ }
                 }
             }
         }
@@ -192,7 +198,8 @@ window.reldensInitialConfig = {
 constructor(){
     this.config = new ConfigManager();
     let initialConfig = this.gameDom.getWindow()?.reldensInitialConfig || {};
-    sc.deepMergeProperties(this.config, initialConfig);  // ← Loads from window.reldensInitialConfig
+    // Loads from window.reldensInitialConfig
+    sc.deepMergeProperties(this.config, initialConfig);
     // ...
 }
 ```
@@ -208,8 +215,10 @@ clientStart(){
     let registrationForm = new RegistrationFormHandler(this.gameManager);
     registrationForm.activateRegistration();
 
-    let guestForm = new GuestFormHandler(this.gameManager);  // ← Guest handler
-    guestForm.activateGuest();                               // ← Activates guest form
+    // Guest handler
+    let guestForm = new GuestFormHandler(this.gameManager);
+    // Activates guest form
+    guestForm.activateGuest();
 
     // ... other handlers
 }
@@ -229,16 +238,19 @@ activateGuest(){
 
     // Get guest rooms from config
     let availableGuestRooms = this.gameManager.config.getWithoutLogs(
-        'client/rooms/selection/availableRooms/registrationGuest',  // ← Config path
+        // Config path
+        'client/rooms/selection/availableRooms/registrationGuest',
         {}
     );
 
     // Check if guest login is allowed AND guest rooms exist
     if(
         !this.gameManager.config.get('client/general/users/allowGuest')
-        || 0 === Object.keys(availableGuestRooms).length  // ← CRITICAL CHECK
+        // CRITICAL CHECK
+        || 0 === Object.keys(availableGuestRooms).length
     ){
-        this.form.classList.add('hidden');  // ← HIDE FORM
+        // HIDE FORM
+        this.form.classList.add('hidden');
         return true;
     }
 
@@ -325,7 +337,7 @@ activateGuest(){
 
 **Path:** `server/players/guestUser/allowOnRooms`
 - **Type:** Boolean
-- **Default:** `true`
+- **Default:** `false`
 - **Effect:** If `true`, all rooms allow guests (ignores `customData.allowGuest`)
 
 **Path:** `server/players/guestsUser/emailDomain`

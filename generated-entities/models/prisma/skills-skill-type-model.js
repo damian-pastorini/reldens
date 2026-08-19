@@ -17,7 +17,7 @@ class SkillsSkillTypeModel
     {
         return 'skills_skill_type';
     }
-    
+
 
     static get relationTypes()
     {

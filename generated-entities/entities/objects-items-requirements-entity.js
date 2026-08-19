@@ -21,18 +21,24 @@ class ObjectsItemsRequirementsEntity extends EntityProperties
             object_id: {
                 type: 'reference',
                 reference: 'objects',
+                alias: 'related_objects',
+                onDelete: 'restrict',
                 isRequired: true,
                 dbType: 'int'
             },
             item_key: {
                 type: 'reference',
                 reference: 'items_item',
+                alias: 'related_items_item_item_key',
+                onDelete: 'noAction',
                 isRequired: true,
                 dbType: 'varchar'
             },
             required_item_key: {
                 type: 'reference',
                 reference: 'items_item',
+                alias: 'related_items_item_required_item_key',
+                onDelete: 'noAction',
                 isRequired: true,
                 dbType: 'varchar'
             },

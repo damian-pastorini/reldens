@@ -21,6 +21,8 @@ class ObjectsAnimationsEntity extends EntityProperties
             object_id: {
                 type: 'reference',
                 reference: 'objects',
+                alias: 'related_objects',
+                onDelete: 'noAction',
                 isRequired: true,
                 dbType: 'int'
             },

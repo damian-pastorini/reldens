@@ -19,7 +19,7 @@ class ObjectsSkillsModel
     {
         return 'objects_skills';
     }
-    
+
 
     static get relationTypes()
     {

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Player Can Cancel An Open Trade</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Player Can Cancel An Open Trade</h1>
+<p>Test: <code>tests/e2e/test-trading.spec.js</code> - <em>player can cancel an open trade</em></p>
+<p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/player-can-cancel-an-open-trade.webm" data-title="player can cancel an open trade">&#9654; Watch video</a></p>
+<table>
+    <thead><tr><th>Action</th><th>Test Code</th><th>Test File</th><th>File Proof</th><th>Code Proof</th><th>Comments</th></tr></thead>
+    <tbody>
+        <tr>
+            <td>Log in both players and open trade container via shared helper</td>
+            <td><code>let setup = await TestTrading.loginAndOpenTradeContainer(page, secondPage, gameConfig, longRun)</code></td>
+            <td>test-trading.spec.js:92</td>
+            <td>tests/e2e/helpers/login.js:77</td>
+            <td><code>static async loginAndStartGame(page, username, password, playerName, longRun, skipUiSelectors = false, scene = null)</code></td>
+            <td>Reuses loginAndOpenTradeContainer - both players are logged in and the trade container is open</td>
+        </tr>
+        <tr>
+            <td>Assert trade container is also visible on player B side</td>
+            <td><code>await expect(secondPage.locator(Selectors.playerTrade.container)).toBeVisible({ timeout: uiTimeout })</code></td>
+            <td>test-trading.spec.js:94</td>
+            <td>tests/e2e/selectors.js:179</td>
+            <td><code>container: '.trade-container'</code></td>
+            <td>Confirms that both sides of the trade are active before attempting cancellation</td>
+        </tr>
+        <tr>
+            <td>Locate the cancel button in player A trade UI</td>
+            <td><code>let cancelButton = page.locator(Selectors.playerTrade.cancelButton).first()</code></td>
+            <td>test-trading.spec.js:96</td>
+            <td>tests/e2e/selectors.js:182</td>
+            <td><code>cancelButton: '.trade-action-cancel'</code></td>
+            <td>Selects the first .trade-action-cancel button from player A page</td>
+        </tr>
+        <tr>
+            <td>Assert cancel button is visible and click it</td>
+            <td><code>await expect(cancelButton).toBeVisible({ timeout: uiTimeout });<br>await cancelButton.click()</code></td>
+            <td>test-trading.spec.js:97</td>
+            <td>tests/e2e/selectors.js:182</td>
+            <td><code>cancelButton: '.trade-action-cancel'</code></td>
+            <td>Player A triggers trade cancellation - server should notify both clients</td>
+        </tr>
+        <tr>
+            <td>Assert trade container is hidden for player A after cancellation</td>
+            <td><code>await expect(page.locator(Selectors.playerTrade.container)).toBeHidden({ timeout: uiTimeout })</code></td>
+            <td>test-trading.spec.js:100</td>
+            <td>tests/e2e/selectors.js:179</td>
+            <td><code>container: '.trade-container'</code></td>
+            <td>Trade cancelled - player A trade container must be hidden</td>
+        </tr>
+        <tr>
+            <td>Assert trade container is also hidden for player B after cancellation</td>
+            <td><code>await expect(secondPage.locator(Selectors.playerTrade.container)).toBeHidden({ timeout: uiTimeout })</code></td>
+            <td>test-trading.spec.js:101</td>
+            <td>tests/e2e/selectors.js:179</td>
+            <td><code>container: '.trade-container'</code></td>
+            <td>Both players see the trade container close - confirms server broadcast of cancellation</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>

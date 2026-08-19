@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Level And Experience Are Displayed In Stats</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Level And Experience Are Displayed In Stats</h1>
+<p>Test: <code>tests/e2e/test-stats.spec.js</code> - <em>level and experience are displayed in stats</em></p>
+<p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/level-and-experience-are-displayed-in-stats.webm" data-title="level and experience are displayed in stats">&#9654; Watch video</a></p>
+<table>
+    <thead><tr><th>Action</th><th>Test Code</th><th>Test File</th><th>File Proof</th><th>Code Proof</th><th>Comments</th></tr></thead>
+    <tbody>
+        <tr>
+            <td>Log in as root player and wait for game to fully load</td>
+            <td><code>await TestStats.loginRootPlayer(page, gameConfig, longRun)</code></td>
+            <td>test-stats.spec.js:84</td>
+            <td>tests/e2e/helpers/login.js:77</td>
+            <td><code>static async loginAndStartGame(page, username, password, playerName, longRun, skipUiSelectors = false, scene = null)</code></td>
+            <td>Calls Login.loginAndStartGame with credentials from gameConfig (defaults: root/root/ImRoot). All HUD selectors must be visible before proceeding.</td>
+        </tr>
+        <tr>
+            <td>Read pause duration from TimeConstants</td>
+            <td><code>let pauseMs = TimeConstants.pauseMs(longRun)</code></td>
+            <td>test-stats.spec.js:85</td>
+            <td>tests/e2e/helpers/time-constants.js:1</td>
+            <td><code>static pauseMs(longRun)</code></td>
+            <td>Returns a longer pause duration when longRun mode is active.</td>
+        </tr>
+        <tr>
+            <td>Click the stats open button in the HUD</td>
+            <td><code>await page.click(Selectors.hud.playerStatsOpen)</code></td>
+            <td>test-stats.spec.js:86</td>
+            <td>tests/e2e/selectors.js:79</td>
+            <td><code>playerStatsOpen: '#player-stats-open'</code></td>
+            <td>Triggers the stats panel to open via the button with id player-stats-open.</td>
+        </tr>
+        <tr>
+            <td>Wait for the configured pause duration</td>
+            <td><code>await page.waitForTimeout(pauseMs)</code></td>
+            <td>test-stats.spec.js:87</td>
+            <td>tests/e2e/helpers/time-constants.js:1</td>
+            <td><code>static pauseMs(longRun)</code></td>
+            <td>Gives the panel time to render level and experience containers before assertions.</td>
+        </tr>
+        <tr>
+            <td>Assert the level container is visible in the stats panel</td>
+            <td><code>await expect(page.locator(Selectors.stats.levelContainer)).toBeVisible()</code></td>
+            <td>test-stats.spec.js:88</td>
+            <td>tests/e2e/selectors.js:130</td>
+            <td><code>levelContainer: '.level-container'</code></td>
+            <td>Verifies the .level-container element is present and visible - confirms the level section is rendered.</td>
+        </tr>
+        <tr>
+            <td>Assert the experience container is visible in the stats panel</td>
+            <td><code>await expect(page.locator(Selectors.stats.experienceContainer)).toBeVisible()</code></td>
+            <td>test-stats.spec.js:89</td>
+            <td>tests/e2e/selectors.js:131</td>
+            <td><code>experienceContainer: '.experience-container'</code></td>
+            <td>Verifies the .experience-container element is present and visible - confirms the XP section is rendered.</td>
+        </tr>
+        <tr>
+            <td>Read the level label text content</td>
+            <td><code>let levelText = await page.locator(Selectors.stats.levelLabel).textContent()</code></td>
+            <td>test-stats.spec.js:90</td>
+            <td>tests/e2e/selectors.js:132</td>
+            <td><code>levelLabel: '.level-label'</code></td>
+            <td>Reads the text from the .level-label element to confirm it has a non-empty value displayed.</td>
+        </tr>
+        <tr>
+            <td>Assert the level label text is not empty</td>
+            <td><code>expect(levelText).toBeTruthy()</code></td>
+            <td>test-stats.spec.js:91</td>
+            <td>tests/e2e/selectors.js:132</td>
+            <td><code>levelLabel: '.level-label'</code></td>
+            <td>Confirms the level label contains a non-empty string - the player level is actually displayed.</td>
+        </tr>
+        <tr>
+            <td>Capture screenshot of the stats panel showing level and XP</td>
+            <td><code>await screenshots.capture(page, 'level-and-experience-visible')</code></td>
+            <td>test-stats.spec.js:92</td>
+            <td>tests/e2e/test-stats.spec.js:92</td>
+            <td><code>await screenshots.capture(page, 'level-and-experience-visible')</code></td>
+            <td>Saves a screenshot named level-and-experience-visible for visual evidence.</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>

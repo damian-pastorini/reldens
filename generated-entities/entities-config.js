@@ -43,6 +43,7 @@ const { OperationTypesEntity } = require('./entities/operation-types-entity');
 const { PlayersEntity } = require('./entities/players-entity');
 const { PlayersStateEntity } = require('./entities/players-state-entity');
 const { PlayersStatsEntity } = require('./entities/players-stats-entity');
+const { QuestsProgressEntity } = require('./entities/quests-progress-entity');
 const { RespawnEntity } = require('./entities/respawn-entity');
 const { RewardsEntity } = require('./entities/rewards-entity');
 const { RewardsEventsEntity } = require('./entities/rewards-events-entity');
@@ -121,6 +122,7 @@ let entitiesConfig = {
     players: PlayersEntity.propertiesConfig(),
     playersState: PlayersStateEntity.propertiesConfig(),
     playersStats: PlayersStatsEntity.propertiesConfig(),
+    questsProgress: QuestsProgressEntity.propertiesConfig(),
     respawn: RespawnEntity.propertiesConfig(),
     rewards: RewardsEntity.propertiesConfig(),
     rewardsEvents: RewardsEventsEntity.propertiesConfig(),

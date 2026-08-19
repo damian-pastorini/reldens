@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Player Returns To Configured Return Point After Death</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Player Returns To Configured Return Point After Death</h1>
+<p>Test: <code>tests/e2e/test-movement.spec.js</code> - <em>player returns to configured return point after death</em></p>
+<p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/player-returns-to-configured-return-point-after-death.webm" data-title="player returns to configured return point after death">&#9654; Watch video</a></p>
+<table>
+    <thead><tr><th>Action</th><th>Test Code</th><th>Test File</th><th>File Proof</th><th>Code Proof</th><th>Comments</th></tr></thead>
+    <tbody>
+        <tr>
+            <td>Assert e2eReturnRoom is configured</td>
+            <td><code>expect(returnRoom, 'e2eReturnRoom not configured for return point test').toBeTruthy()</code></td>
+            <td>test-movement.spec.js:35</td>
+            <td>tests/e2e/test-movement.spec.js:35</td>
+            <td><code>expect(returnRoom, 'e2eReturnRoom not configured for return point test').toBeTruthy();</code></td>
+            <td>Fails fast if game-data config is missing the return room key</td>
+        </tr>
+        <tr>
+            <td>Login as root/ImRoot with scene selection and prepare game state</td>
+            <td><code>TestMovement.loginAndPrepare(page, gameConfig, longRun, 'reldens-forest')</code></td>
+            <td>test-movement.spec.js:36</td>
+            <td>tests/e2e/test-movement.spec.js:21</td>
+            <td><code>static async loginAndPrepare(page, gameConfig, longRun, scene = null)</code></td>
+            <td>Passes 'reldens-forest' as scene; player starts directly in forest after each test resets player to town (SAFE_ROOM_ID=4)</td>
+        </tr>
+        <tr>
+            <td>Login and start game with forest scene selection</td>
+            <td><code>Login.loginAndStartGame(page, username, password, playerName, longRun, false, 'reldens-forest')</code></td>
+            <td>test-movement.spec.js:26</td>
+            <td>tests/e2e/helpers/login.js:77</td>
+            <td><code>static async loginAndStartGame(page, username, password, playerName, longRun, skipUiSelectors = false, scene = null)</code></td>
+            <td>Selects 'reldens-forest' scene at character select before submit; player spawns in forest rather than the reset-to town room</td>
+        </tr>
+        <tr>
+            <td>Verify player is in reldens-forest (immediate - scene selection already placed them there)</td>
+            <td><code>Navigation.ensureInRoom(page, 'reldens-forest', 608, 16, navTimeout)</code></td>
+            <td>test-movement.spec.js:40</td>
+            <td>tests/e2e/helpers/navigation.js:149</td>
+            <td><code>static async ensureInRoom(page, roomName, transitionX, transitionY, timeout)</code></td>
+            <td>Checks activeRoomEvents.roomName first; returns true immediately since scene selection started player in forest; no navigation required</td>
+        </tr>
+        <tr>
+            <td>Assert player reached reldens-forest</td>
+            <td><code>expect(inForest, 'Player must reach reldens-forest before continuing').toBeTruthy()</code></td>
+            <td>test-movement.spec.js:41</td>
+            <td>tests/e2e/test-movement.spec.js:41</td>
+            <td><code>expect(inForest, 'Player must reach reldens-forest before continuing').toBeTruthy();</code></td>
+            <td>Confirms the player is in the right room before attempting to find an enemy</td>
+        </tr>
+        <tr>
+            <td>Wait for enemy to appear in scene</td>
+            <td><code>Phaser.waitForObjectByAssetKey(page, enemyKey, sceneTimeout)</code></td>
+            <td>test-movement.spec.js:44</td>
+            <td>tests/e2e/helpers/phaser.js:98</td>
+            <td><code>static async waitForObjectByAssetKey(page, assetKey, timeout)</code></td>
+            <td>If e2eEnemyKey is set, waits for specific enemy asset; falls back to waitForObjectByType('enemy')</td>
+        </tr>
+        <tr>
+            <td>Extend test timeout to allow for full death cycle</td>
+            <td><code>test.setTimeout(TimeConstants.forLongRun(...) + ENEMY_KILL + PLAYER_REVIVE)</code></td>
+            <td>test-movement.spec.js:58</td>
+            <td>tests/e2e/test-movement.spec.js:58</td>
+            <td><code>test.setTimeout(TimeConstants.forLongRun(TimeConstants.GAME_START + TimeConstants.NAVIGATION, longRun) + TimeConstants.ENEMY_KILL + TimeConstants.PLAYER_REVIVE);</code></td>
+            <td>ENEMY_KILL=170000ms (sized for player HP=280 at ~2 HP/sec), PLAYER_REVIVE=12000ms; total timeout extends well beyond default</td>
+        </tr>
+        <tr>
+            <td>Chase enemy until within combat range</td>
+            <td><code>TestMovement.chaseEnemy(page, enemyKey, 80, navTimeout)</code></td>
+            <td>test-movement.spec.js:63</td>
+            <td>tests/e2e/helpers/navigation.js:192</td>
+            <td><code>static async moveToObjectWithinRange(page, matchProp, matchValue, statusKey, range, timeout, useRespawnFind = false)</code></td>
+            <td>Walks player toward the enemy sprite each step until within 80px; includes stuck-detection that switches to perpendicular movement when collision blocks the direct path.</td>
+        </tr>
+        <tr>
+            <td>Poll for #game-over visibility until player dies</td>
+            <td><code>document.querySelector('#game-over:not(.hidden)')</code> inside a chase-and-wait loop</td>
+            <td>test-movement.spec.js:64-83</td>
+            <td>tests/e2e/test-movement.spec.js:64-83</td>
+            <td><code>for(let i = 0; i &lt; deathMaxSteps; i++){ isDead = await page.evaluate(() =&gt; null !== document.querySelector('#game-over:not(.hidden)')); if(isDead) break; await TestMovement.chaseEnemy(page, enemyKey, 80, ...); await page.waitForTimeout(...); }</code></td>
+            <td>Each iteration re-checks the game-over overlay, then re-chases the enemy (in case it died/respawned) and waits up to 1s while the player is being attacked. Deadline = ENEMY_KILL ms.</td>
+        </tr>
+        <tr>
+            <td>Assert player died within the budget</td>
+            <td><code>expect(isDead, 'Player must die from enemy attacks within timeout').toBeTruthy()</code></td>
+            <td>test-movement.spec.js:84</td>
+            <td>tests/e2e/test-movement.spec.js:84</td>
+            <td><code>expect(isDead, 'Player must die from enemy attacks within timeout').toBeTruthy();</code></td>
+            <td>If #game-over never appeared within ENEMY_KILL ms the test fails here; otherwise proceeds to the return-room check.</td>
+        </tr>
+        <tr>
+            <td>Wait for room to change to the configured return room</td>
+            <td><code>Navigation.waitForRoom(page, returnRoom, TimeConstants.PLAYER_REVIVE)</code></td>
+            <td>test-movement.spec.js:67</td>
+            <td>tests/e2e/helpers/navigation.js:63</td>
+            <td><code>static async waitForRoom(page, roomName, timeout)</code></td>
+            <td>Polls activeRoomEvents.roomName until it equals returnRoom within PLAYER_REVIVE=12000ms</td>
+        </tr>
+        <tr>
+            <td>Read current room name</td>
+            <td><code>Navigation.getCurrentRoomName(page)</code></td>
+            <td>test-movement.spec.js:68</td>
+            <td>tests/e2e/helpers/navigation.js:73</td>
+            <td><code>static async getCurrentRoomName(page)</code></td>
+            <td>Returns window.reldens.activeRoomEvents.roomName from the browser context</td>
+        </tr>
+        <tr>
+            <td>Assert player is in the configured return room</td>
+            <td><code>expect(currentRoom).toBe(returnRoom)</code></td>
+            <td>test-movement.spec.js:69</td>
+            <td>tests/e2e/test-movement.spec.js:69</td>
+            <td><code>expect(currentRoom).toBe(returnRoom);</code></td>
+            <td>Core assertion - player must respawn in the room defined by e2eReturnRoom config</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>

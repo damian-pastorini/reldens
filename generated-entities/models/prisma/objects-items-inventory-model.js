@@ -21,7 +21,7 @@ class ObjectsItemsInventoryModel
     {
         return 'objects_items_inventory';
     }
-    
+
 
     static get relationTypes()
     {

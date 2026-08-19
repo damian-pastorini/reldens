@@ -20,7 +20,7 @@ class SkillsLevelsModel
     {
         return 'skills_levels';
     }
-    
+
 
     static get relationTypes()
     {

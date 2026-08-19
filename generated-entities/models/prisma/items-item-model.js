@@ -28,7 +28,7 @@ class ItemsItemModel
     {
         return 'items_item';
     }
-    
+
 
     static get relationTypes()
     {

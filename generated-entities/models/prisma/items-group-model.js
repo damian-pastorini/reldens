@@ -23,7 +23,7 @@ class ItemsGroupModel
     {
         return 'items_group';
     }
-    
+
 
     static get relationTypes()
     {

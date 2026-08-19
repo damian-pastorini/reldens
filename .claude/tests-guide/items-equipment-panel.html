@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Equipment Panel Opens And Shows Equipment Slots</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Equipment Panel Opens And Shows Equipment Slots</h1>
+<p>Test: <code>tests/e2e/test-items.spec.js</code> - <em>equipment panel opens and shows equipment slots</em></p>
+<p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/equipment-panel-opens-and-shows-equipment-slots.webm" data-title="equipment panel opens and shows equipment slots">&#9654; Watch video</a></p>
+<table>
+    <thead><tr><th>Action</th><th>Test Code</th><th>Test File</th><th>File Proof</th><th>Code Proof</th><th>Comments</th></tr></thead>
+    <tbody>
+        <tr>
+            <td>Log in as root player and wait for game to start</td>
+            <td><code>await TestItems.loginRootPlayer(page, gameConfig, longRun)</code></td>
+            <td>test-items.spec.js:127</td>
+            <td>tests/e2e/helpers/login.js:77</td>
+            <td><code>static async loginAndStartGame(page, username, password, playerName, longRun, skipUiSelectors = false, scene = null)</code></td>
+            <td>Calls Login.loginAndStartGame with credentials root/root/ImRoot (or gameConfig overrides). Waits for game-engine-started body class and all HUD selectors to be visible.</td>
+        </tr>
+        <tr>
+            <td>Compute pause duration based on longRun flag</td>
+            <td><code>let pauseMs = TimeConstants.pauseMs(longRun)</code></td>
+            <td>test-items.spec.js:128</td>
+            <td>tests/e2e/helpers/time-constants.js:45</td>
+            <td><code>static pauseMs(longRun) { return longRun ? TimeConstants.PAUSE : 0; }</code></td>
+            <td>Returns 800ms when longRun is true, 0 otherwise. Used as a buffer after UI interactions.</td>
+        </tr>
+        <tr>
+            <td>Click the equipment open button in the HUD</td>
+            <td><code>await page.click(Selectors.hud.equipmentOpen)</code></td>
+            <td>test-items.spec.js:129</td>
+            <td>tests/e2e/selectors.js:83</td>
+            <td><code>equipmentOpen: '#equipment-open'</code></td>
+            <td>Clicks the #equipment-open HUD button to open the equipment panel.</td>
+        </tr>
+        <tr>
+            <td>Wait for pauseMs before asserting UI visibility</td>
+            <td><code>await page.waitForTimeout(pauseMs)</code></td>
+            <td>test-items.spec.js:130</td>
+            <td>tests/e2e/helpers/time-constants.js:45</td>
+            <td><code>static pauseMs(longRun) { return longRun ? TimeConstants.PAUSE : 0; }</code></td>
+            <td>Allows time for the equipment panel animation or render to complete before asserting visibility.</td>
+        </tr>
+        <tr>
+            <td>Assert equipment UI container is visible</td>
+            <td><code>await expect(page.locator(Selectors.equipment.ui)).toBeVisible()</code></td>
+            <td>test-items.spec.js:131</td>
+            <td>tests/e2e/selectors.js:119</td>
+            <td><code>ui: '#equipment-ui'</code></td>
+            <td>Verifies the #equipment-ui element is visible, confirming the equipment panel opened successfully.</td>
+        </tr>
+        <tr>
+            <td>Assert equipment items container is visible</td>
+            <td><code>await expect(page.locator(Selectors.equipment.items)).toBeVisible()</code></td>
+            <td>test-items.spec.js:132</td>
+            <td>tests/e2e/selectors.js:120</td>
+            <td><code>items: '#equipment-items'</code></td>
+            <td>Verifies the #equipment-items container is visible, confirming equipment slots are rendered inside the panel.</td>
+        </tr>
+        <tr>
+            <td>Capture screenshot of open equipment panel</td>
+            <td><code>await screenshots.capture(page, 'equipment-panel-open')</code></td>
+            <td>test-items.spec.js:133</td>
+            <td>tests/e2e/helpers/screenshots.js:1</td>
+            <td><code>screenshots.capture(page, label)</code></td>
+            <td>Saves a screenshot labelled equipment-panel-open for visual verification of the equipment panel state.</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>

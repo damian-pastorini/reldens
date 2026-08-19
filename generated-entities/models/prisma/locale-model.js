@@ -20,7 +20,7 @@ class LocaleModel
     {
         return 'locale';
     }
-    
+
 
     static get relationTypes()
     {

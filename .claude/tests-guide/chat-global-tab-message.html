@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Global Message Appears In Global Chat Tab</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Global Message Appears In Global Chat Tab</h1>
+<p>Test: <code>tests/e2e/test-chat.spec.js</code> - <em>global message appears in global chat tab</em></p>
+<p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/global-message-appears-in-global-chat-tab.webm" data-title="global message appears in global chat tab">&#9654; Watch video</a></p>
+<table>
+    <thead><tr><th>Action</th><th>Test Code</th><th>Test File</th><th>File Proof</th><th>Code Proof</th><th>Comments</th></tr></thead>
+    <tbody>
+        <tr>
+            <td>Login as root2 player</td>
+            <td><code>Login.loginAndStartGame(page, username, password, playerName, longRun)</code></td>
+            <td>test-chat.spec.js:75-78</td>
+            <td>tests/e2e/helpers/login.js:77</td>
+            <td><code>static async loginAndStartGame(...)</code></td>
+            <td>Uses <code>e2eUsername2</code>/<code>e2ePassword2</code>/<code>e2ePlayerName2</code> (defaults: root2/root/ImRoot2)</td>
+        </tr>
+        <tr>
+            <td>Click chat open button</td>
+            <td><code>page.click(Selectors.hud.chatOpen)</code></td>
+            <td>test-chat.spec.js:81</td>
+            <td>theme/default/assets/features/chat/templates/ui-chat.html:8</td>
+            <td><code>&lt;div class="open-ui-button" id="chat-open"&gt;</code></td>
+            <td>Opens chat panel</td>
+        </tr>
+        <tr>
+            <td>Assert chat input is visible</td>
+            <td><code>expect(page.locator(Selectors.chat.input)).toBeVisible()</code></td>
+            <td>test-chat.spec.js:83</td>
+            <td>theme/default/assets/features/chat/templates/ui-chat.html:5</td>
+            <td><code>&lt;input id="chat-input" type="text" placeholder="Enter message"/&gt;</code></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>Type global message with # prefix</td>
+            <td><code>page.locator(Selectors.chat.input).click()</code><br>(via typeChatMessage) fill or pressSequentially <code>'#'+testMessage</code></td>
+            <td>test-chat.spec.js:84</td>
+            <td>theme/default/assets/features/chat/templates/ui-chat.html:5</td>
+            <td><code>&lt;input id="chat-input" type="text" placeholder="Enter message"/&gt;</code></td>
+            <td><code>testMessage = 'e2e-global-tab-test'</code>; the <code>#</code> prefix routes the message to the global chat room</td>
+        </tr>
+        <tr>
+            <td>Press Enter to send</td>
+            <td><code>page.locator(Selectors.chat.input).press('Enter')</code></td>
+            <td>test-chat.spec.js:86</td>
+            <td>theme/default/assets/features/chat/templates/ui-chat.html:5</td>
+            <td><code>&lt;input id="chat-input" type="text" placeholder="Enter message"/&gt;</code></td>
+            <td>Enter key triggers sendChatMessage(); <code>#</code> prefix detected, message sent via global room</td>
+        </tr>
+        <tr>
+            <td>Assert message appears in Global tab</td>
+            <td><code>expect(page.locator(Selectors.chat.tabContentGlobal)).toContainText(testMessage, { timeout: ... })</code></td>
+            <td>test-chat.spec.js:87-89</td>
+            <td>lib/chat/constants.js:21</td>
+            <td><code>GLOBAL: 9</code></td>
+            <td><code>.tab-content-9</code> is the Global tab (TYPES.GLOBAL = 9); Playwright retries until text appears</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>

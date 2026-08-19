@@ -18,7 +18,7 @@ class OperationTypesModel
     {
         return 'operation_types';
     }
-    
+
 
     static get relationTypes()
     {

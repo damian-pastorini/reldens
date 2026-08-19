@@ -22,7 +22,7 @@ class ChatModel
     {
         return 'chat';
     }
-    
+
 
     static get relationTypes()
     {

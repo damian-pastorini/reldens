@@ -18,7 +18,7 @@ class TargetOptionsModel
     {
         return 'target_options';
     }
-    
+
 
     static get relationTypes()
     {

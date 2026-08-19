@@ -25,7 +25,7 @@ class UsersModel
     {
         return 'users';
     }
-    
+
 
     static get relationTypes()
     {

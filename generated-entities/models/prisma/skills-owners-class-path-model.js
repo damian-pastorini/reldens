@@ -20,7 +20,7 @@ class SkillsOwnersClassPathModel
     {
         return 'skills_owners_class_path';
     }
-    
+
 
     static get relationTypes()
     {
