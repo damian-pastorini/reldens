@@ -1,12 +1,30 @@
 class AdminMapRenderer
 {
+    constructor()
+    {
+        this.mapsBucket = '/assets/maps/';
+        this.loadedMapsData = {};
+    }
+
+    fetchMapData(mapJsonPath)
+    {
+        if(this.loadedMapsData[mapJsonPath]){
+            return Promise.resolve(this.loadedMapsData[mapJsonPath]);
+        }
+        return fetch(mapJsonPath)
+            .then((response) => response.json())
+            .then((data) => {
+                this.loadedMapsData[mapJsonPath] = data;
+                return data;
+            });
+    }
+
     fetchMapFileAndDraw(mapJson, tileset, mapCanvas, withTileHighlight, tileClickCallback, withTileSelect, initialTileIndex, initialPosition)
     {
         if(!mapJson){
             return false;
         }
-        fetch(mapJson)
-            .then(response => response.json())
+        this.fetchMapData(mapJson)
             .then(data => {
                 mapCanvas.width = data.width * data.tilewidth;
                 mapCanvas.height = data.height * data.tileheight;
@@ -54,6 +72,17 @@ class AdminMapRenderer
         }
         position.x = (numericIndex % data.width) * data.tilewidth;
         position.y = Math.floor(numericIndex / data.width) * data.tileheight;
+        return position;
+    }
+
+    positionFromTileIndex(tileIndex, data)
+    {
+        let position = this.tileIndexToPosition(tileIndex, data);
+        if(null === position.x){
+            return position;
+        }
+        position.x += (data.tilewidth / 2);
+        position.y += (data.tileheight / 2);
         return position;
     }
 
@@ -138,10 +167,10 @@ class AdminMapRenderer
         }
         let tileset = new Image();
         // for now, we will only handle 1 image cases:
-        tileset.src = '/assets/maps/'+sceneImages[0];
+        tileset.src = this.mapsBucket+sceneImages[0];
         tileset.onload = () => {
             this.fetchMapFileAndDraw(
-                '/assets/maps/'+mapJsonFileName,
+                this.mapsBucket+mapJsonFileName,
                 tileset,
                 mapCanvas,
                 true,
@@ -169,85 +198,49 @@ class AdminMapRenderer
         return result;
     }
 
-    loadObjectRoomMap(mapContainer, roomsList, roomSelector, tileIndexInput)
+    findRoomById(roomsList, roomId)
     {
-        mapContainer.innerHTML = '';
-        let selectedRoom = roomsList.find((room) => String(room.id) === String(roomSelector.value));
-        if(!selectedRoom){
-            return;
-        }
-        this.loadAndCreateMap(
-            selectedRoom.mapFile,
-            selectedRoom.mapImages,
-            mapContainer,
-            (event, data) => {
-                tileIndexInput.value = this.calculateTileData(event, data).tileIndex;
-            },
-            true,
-            tileIndexInput.value
-        );
-    }
-
-    bindObjectTileSelector()
-    {
-        let mapContainer = document.querySelector('.object-tile-selector-container');
-        if(!mapContainer){
-            return;
-        }
-        let entityData = mapContainer.dataset.entitySerializedData
-            ? JSON.parse(mapContainer.dataset.entitySerializedData) // HOFF
-            : false;
-        let roomsList = entityData?.extraData?.roomsList;
         if(!roomsList){
-            return;
+            return false;
         }
-        let roomSelector = document.querySelector('[name="room_id"]');
-        if(!roomSelector){
-            return;
-        }
-        let tileIndexInput = document.querySelector('[name="tile_index"]');
-        if(!tileIndexInput){
-            return;
-        }
-        let pickerButton = document.querySelector('.object-tile-picker-button');
-        if(!pickerButton){
-            return;
-        }
-        let tileIndexField = tileIndexInput.closest('.edit-field');
-        if(!tileIndexField){
-            return;
-        }
-        let fieldValueSpan = tileIndexInput.parentElement;
-        fieldValueSpan.classList.add('with-inline-button');
-        fieldValueSpan.appendChild(pickerButton);
-        pickerButton.classList.remove('hidden');
-        pickerButton.addEventListener('click', () => {
-            this.toggleObjectTilePicker(mapContainer, tileIndexField, roomsList, roomSelector, tileIndexInput);
-        });
-        roomSelector.addEventListener('change', () => {
-            roomSelector.classList.remove('room-selector-required');
-            if(mapContainer.classList.contains('hidden')){
-                return;
-            }
-            this.loadObjectRoomMap(mapContainer, roomsList, roomSelector, tileIndexInput);
-        });
+        return roomsList.find((room) => String(room.id) === String(roomId));
     }
 
-    toggleObjectTilePicker(mapContainer, tileIndexField, roomsList, roomSelector, tileIndexInput)
+    toggleMapPicker(mapContainer, appendAfterElement, mapSource, tileClickCallback, initialTileIndex, initialPosition)
     {
         if(!mapContainer.classList.contains('hidden')){
             mapContainer.classList.add('hidden');
-            return;
+            return false;
         }
-        let selectedRoom = roomsList.find((room) => String(room.id) === String(roomSelector.value));
-        if(!selectedRoom){
-            roomSelector.classList.add('room-selector-required');
-            return;
+        if(!mapSource || !mapSource.mapFile){
+            return false;
         }
-        roomSelector.classList.remove('room-selector-required');
-        tileIndexField.after(mapContainer);
+        appendAfterElement.after(mapContainer);
         mapContainer.classList.remove('hidden');
-        this.loadObjectRoomMap(mapContainer, roomsList, roomSelector, tileIndexInput);
+        this.loadMapPickerContent(mapContainer, mapSource, tileClickCallback, initialTileIndex, initialPosition);
+        return true;
+    }
+
+    loadMapPickerContent(mapContainer, mapSource, tileClickCallback, initialTileIndex, initialPosition)
+    {
+        mapContainer.innerHTML = '';
+        this.loadAndCreateMap(
+            mapSource.mapFile,
+            mapSource.mapImages,
+            mapContainer,
+            tileClickCallback,
+            true,
+            initialTileIndex,
+            initialPosition
+        );
+    }
+
+    attachInlinePickerButton(pickerButton, fieldInput)
+    {
+        let fieldValueSpan = fieldInput.parentElement;
+        fieldValueSpan.classList.add('with-inline-button');
+        fieldValueSpan.appendChild(pickerButton);
+        pickerButton.classList.remove('hidden');
     }
 }
 window.adminMapRenderer = new AdminMapRenderer();
