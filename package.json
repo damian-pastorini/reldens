@@ -49,12 +49,12 @@
         "test:e2e:long:clean": "node tests/e2e/run-tests.js --long --clean-output"
     },
     "devDependencies": {
-        "@playwright/test": "1.61.0"
+        "@playwright/test": "1.62.1"
     },
     "dependencies": {
-        "@colyseus/core": "0.17.49",
+        "@colyseus/core": "0.17.50",
         "@colyseus/monitor": "0.17.8",
-        "@colyseus/schema": "4.0.30",
+        "@colyseus/schema": "4.0.31",
         "@colyseus/sdk": "0.17.43",
         "@colyseus/ws-transport": "0.17.13",
         "@parcel/bundler-default": "2.16.4",
@@ -112,15 +112,15 @@
         "@reldens/server-utils": "^0.56.0",
         "@reldens/skills": "^0.51.0",
         "@reldens/storage": "^0.112.0",
-        "@reldens/tile-map-generator": "^0.53.0",
-        "@reldens/tileset-to-tilemap": "^0.22.0",
+        "@reldens/tile-map-generator": "^0.54.0",
+        "@reldens/tileset-to-tilemap": "^0.23.0",
         "@reldens/utils": "^0.57.0",
         "@sendgrid/mail": "8.1.6",
         "buffer": "6.0.3",
         "core-js": "3.50.0",
         "dotenv": "17.4.2",
         "express-basic-auth": "1.2.1",
-        "firebase": "12.17.1",
+        "firebase": "12.18.0",
         "mustache": "4.2.0",
         "nodemailer": "9.0.5",
         "p2": "0.7.1",
