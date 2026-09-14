@@ -23,7 +23,9 @@
 
         .wizard-options-container {
             display: flex;
-            justify-content: space-between;
+            justify-content: flex-start;
+            align-items: flex-start;
+            gap: var(--space-lg);
             flex-wrap: wrap;
             width: 100%;
 
@@ -37,6 +39,11 @@
                     flex: 0 0 100%;
                     padding: var(--space-lg) 0 0;
                     border: none;
+                }
+
+                &.is-editing {
+                    flex: 0 0 100%;
+                    order: -1;
                 }
 
                 &:first-child:nth-last-child(2),
@@ -120,6 +127,10 @@
             &:only-child .map-canvas-container canvas {
                 max-width: none;
             }
+
+            &.is-editing .map-canvas-container canvas {
+                max-width: none;
+            }
         }
 
         .wizard-option-container {
@@ -176,6 +187,7 @@
         textarea.generatorData {
             width: 100%;
             margin-top: var(--space-sm);
+            resize: vertical;
         }
 
         &:not(.maps-import-form) .submit-container {

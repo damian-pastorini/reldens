@@ -111,12 +111,23 @@ class AdminMapElementsEditorLauncher
         tileset.onload = async () => {
             let editor = new MapsElementsEditor(canvas, this.buildOptions(button, mapName, tileset));
             canvas.mapsElementsEditor = editor;
+            button.editorCanvas = canvas;
             button.editorInstance = editor;
             button.dataset.openLabel = button.textContent;
             await editor.load();
+            this.toggleEditingCard(button, true);
             this.keepEditorInView(button, editor);
             button.textContent = 'Close Map Editor';
         };
+    }
+
+    toggleEditingCard(button, isEditing)
+    {
+        let card = button.closest('.wizard-map-option-container');
+        if(!card){
+            return;
+        }
+        card.classList.toggle('is-editing', isEditing);
     }
 
     keepEditorInView(button, editor)
@@ -148,7 +159,10 @@ class AdminMapElementsEditorLauncher
     {
         button.editorInstance.dispose();
         button.editorInstance = null;
+        this.reattachExternalListeners(button.editorCanvas);
+        button.editorCanvas = null;
         button.textContent = button.dataset.openLabel ? button.dataset.openLabel : 'Edit Map Elements';
+        this.toggleEditingCard(button, false);
         this.removeRoomHost(button);
     }
 
@@ -277,6 +291,17 @@ class AdminMapElementsEditorLauncher
         clone.removeAttribute('data-toggle');
         canvas.parentNode.replaceChild(clone, canvas);
         return clone;
+    }
+
+    reattachExternalListeners(canvas)
+    {
+        if(!canvas){
+            return;
+        }
+        canvas.setAttribute('data-toggle', 'modal');
+        canvas.addEventListener('click', () => {
+            adminFunctions.openElementModal(canvas);
+        });
     }
 
     findCanvas(button, mapName) // HOFF

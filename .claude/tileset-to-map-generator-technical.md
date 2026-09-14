@@ -2,6 +2,8 @@
 
 This document covers the internal data contract between the `@reldens/tileset-to-tilemap` package and the `@reldens/tile-map-generator` package. It describes what data the tileset analyzer produces, what format the map generator expects, and how the two are connected through the Maps Wizard.
 
+For the tile id spaces those values live in (source local id, composite gid, optimized gid), the `tileset-ref` parking invariant that keeps annotated tiles alive through the optimizer, and the checklist for adding a new tile option, see `tile-ids-and-annotations-pipeline.md`.
+
 ---
 
 ## Packages and Responsibilities
@@ -23,13 +25,16 @@ After the user assigns tile roles in the Map Tiles tab, the session state (`sess
 {
   "tileOptions": {
     "groundTile":        42,
+    "groundTiles":       [42, 44, 46],
     "pathTile":          85,
     "borderTile":        100,
     "randomGroundTiles": [43, 44, 45],
     "surroundingTiles":  { "top-left": 10, "top-center": 11, "top-right": 12 },
     "corners":           { "top-left": 20, "top-right": 21, "bottom-left": 22, "bottom-right": 23 },
     "bordersTiles":      { "top": 30, "right": 31, "bottom": 32, "left": 33 },
-    "borderCornersTiles":{ "top-left": 40, "top-right": 41, "bottom-left": 42, "bottom-right": 43 }
+    "borderCornersTiles":{ "top-left": 40, "top-right": 41, "bottom-left": 42, "bottom-right": 43 },
+    "borderInnerCornersTiles": { "top-left": 44, "top-right": 45, "bottom-left": 46, "bottom-right": 47 },
+    "mapBorderWallsTiles": { "-1,-1": 69, "-1,0": 70, "0,0": 118, "1,1": 167 }
   },
   "spots": [
     {
@@ -286,7 +291,13 @@ Where to put it:
 - A `"tileset-ref"` layer listing all annotated tile IDs (used for optimization)
 - A `"spot-layer-ground-variations-{spotName}"` layer per spot that has `spotTileVariations`
 
-Wangsets for inner and outer spot walls are built by `CompositeWangsetBuilder.buildSpotWangsets()` and attached to the tileset entry as `entry.wangsets`.
+Wangsets for inner and outer spot walls are built by `CompositeWangsetBuilder.buildSpotWangsets()` and attached to the tileset entry as `entry.wangsets`. Every wangset carries one color named after the terrain and uses `type: 'mixed'`, because its wangids fill both edge and corner slots, which is what makes it usable as a terrain in the tiled map editor app.
+
+The map border inner walls travel through this same wangset mechanism: `CompositeWangsetBuilder.buildMapBorderWallsWangset()` emits the wangset named `map-border-inner-walls` (`TilesetConst.MAP_BORDER_WALLS_WANGSET_NAME`) out of the `mapBorderWallsTiles` grid, and `TilesShortcuts.fromPropertiesMappersList` picks it up by name, so the generator needs no border specific mapper. The same grid is passed as both the surrounding tiles and the corner tiles, because `TilesetConst.SPOT_CORNER_WANGIDS` is keyed by grid key as well as by corner name: the four diagonal keys therefore also produce the corner wangids the wall run ends need.
+
+The wall slot names belong to the generator, not to the tileset. `WallsGenerator.determineWallTiles()` writes `sMC` on the row directly below the top border and `sTC` on the row under it, and `InnerWalls.sequences()` caps each horizontal run with `sMR` on its left end and `sML` on its right end, plus `cTR` and `cTL` on the second row. So the wall block's own top row must reach the generator as the `middle-*` slots, its second row as the `top-center` slot and the `top-left` and `top-right` corners, and the columns are mirrored. That whole shift is expressed once, in the `data-pos` values of the `mapBorderWallsTiles` grid in `theme/admin/templates/tileset-to-tilemap.html`, so the tiles are picked in their natural reading order in the admin and no mapping table exists in the javascript. `tests/test-data/reldens-dungeon-composite.json` shows the same convention on the working `cave-inner-walls` wangset, and `tests/test-data/house-composite.json` with `tests/test-data/map-border-walls-expected.json` prove it end to end for the border.
+
+The generated map also carries terrain sets, controlled by the maps wizard common option `Include Spots As Terrains` (`includeSpotsAsTerrains`, default Yes). Only the spots actually placed in that map become terrains, so a spot with `quantity: 0` or one that failed placement is never written, and tiles outside the map tileset are dropped. The generator collects the tile positions per spot in `SpotGenerator.appendSpotTerrains()` and writes them into `tilesets[0].wangsets` through `SpotTerrainsBuilder`, using the same position and wangid table its `WangsetMapper` reads, so a generated map can be fed back as a composite and its spots are recognized again. The optimizer already remaps terrain set tile ids, so optimized maps keep them.
 
 `TilesetCompositeConfigBuilder.buildGroundSpotConfig()` outputs well-formed groundSpots entries including `layerName`, `tilesKey`, `width`, `height`, `quantity`, `freeSpaceAround`, `walkable`, `isElement`, `allowPathsInFreeSpace`, `splitBordersInLayers`, `borderInnerWalls`, `borderOuterWalls`, `borderOuterWallsIncreaseLayerSize`, and `depth`. When `borderOuterWalls` or `borderInnerWalls` is true, `splitBordersInLayers` is forced true automatically (required for wall layers to be included in generator output). `depth` defaults to `true` when absent from the session data; the UI allows any of the values `false`, `true`, or a layer name string - coercion from the text input converts `""` and `"false"` to boolean `false`, `"true"` to boolean `true`, and any other string is kept as-is.
 
@@ -405,3 +416,57 @@ Downstream both packages already carry animations without any change:
 3. returns `{ strategy, partialData: { compositeElementsFile, ... } }` to pre-fill the Maps Wizard form
 
 `mapData` passed to the loader comes from the form's `generatorData` textarea (pre-filled from the API above, then edited by the user). It does not contain tileset image paths - only the `compositeElementsFile` filename and generation parameters. The tileset image is resolved at runtime from `rootFolder`.
+
+## Missing Composite Resolution at Generation Time
+
+`MapsWizardSubscriber.generateMaps()` checks the composite before handing anything to the runner (`lib/admin/server/subscribers/maps-wizard-subscriber.js:230-235`):
+
+```javascript
+let compositeElementsFile = sc.get(mapData, 'compositeElementsFile', '');
+if(compositeElementsFile
+    && !this.compositeSampleFilesProvider.ensureCompositeFile(rootFolder, compositeElementsFile)
+){
+    return this.mapsWizardRedirect(res, 'mapsWizardMissingCompositeFileError', safeSessionId);
+}
+```
+
+`CompositeSampleFilesProvider.ensureCompositeFile()` (`lib/admin/server/composite-sample-files-provider.js`) does nothing when the file already exists in the session folder. When it is missing it resolves the sample from the installed package at `projectRoot/node_modules/@reldens/tile-map-generator/examples/layer-elements-composite/`, then copies BOTH the composite JSON and every tileset image that JSON references into the session folder, so the next run reuses the copied files instead of resolving again.
+
+This is why each wizard strategy keeps its own sample payload. Pointing every strategy at the same `composite.json` destroys the per strategy data. The four strategies and the loader each one routes to:
+
+- `elements-object-loader` uses `LayerElementsObjectLoader`
+- `elements-composite-loader` uses `LayerElementsCompositeLoader` and needs `compositeElementsFile`
+- `multiple-by-loader` needs `mapNames`
+- `multiple-with-association-by-loader` needs `mapsInformation` plus `associationsProperties`
+
+### The result code is a client side message key
+
+`mapsWizardRedirect` puts the code in the `result` query parameter. `AdminClient` renders it at `theme/admin/js/reldens-admin-client.js:101` with `this.errorMessages[result] || result`, so any code with no entry in the `errorMessages` map is shown to the user as the raw identifier. `mapsWizardMissingCompositeFileError` now has an entry. These sibling codes still fall back to the raw string and have no message: `mapsWizardMissingActionError`, `mapsWizardMissingDataError`, `mapsWizardWrongJsonDataError`, `mapsWizardMissingHandlerError`, `mapsWizardGeneratorError`, `mapsWizardSelectedHandlerError`, `mapsWizardMapsNotGeneratedError`.
+
+## Maps Wizard Cards and the Elements Editor
+
+### Card layout and the aspect ratio
+
+The wizard options list is a flex row defined by `.wizard-options-container` in `theme/admin/css/container-maps-wizard.css`. Each generated map is one `.wizard-map-option-container` card, and the card clamps its preview canvas so several maps fit side by side.
+
+That clamp is the reason the elements editor used to distort the map: the editor mounts a much larger canvas into a card sized for a thumbnail. The fix is the `.is-editing` state on the card, which sets `flex: 0 0 100%` and `order: -1` so the editing card takes the full row and jumps to the front, and lifts the clamp with `max-width: none` on the canvas.
+
+Important detail for anyone changing this: the clamp selector is nested six classes deep, so its specificity is 0,6,1. An override written in `container-maps-elements-editor.css` at 0,2,1 is inert no matter the source order. The override has to live inside the same nested block in `container-maps-wizard.css`.
+
+`EditorUi.dispose()` (`theme/admin/js/maps-elements-editor/editor-ui.js:97`) also clears the inline `width` and `height` it set in `applyZoom()` (line 193) before returning the canvas to its original parent. Without that the zoomed inline sizes stay on the element and the thumbnail stays broken after the editor closes.
+
+### Why the preview modal died after closing the editor
+
+Opening the editor replaces the card canvas, and the replacement is a clone. Cloning a node copies attributes but NOT event listeners, so the cloned canvas lost both its `click` listener and its `data-toggle="modal"` attribute, and clicking the preview after closing the editor did nothing.
+
+`AdminMapElementsEditorLauncher` handles this explicitly:
+
+- `openEditor()` stores the canvas on the button as `button.editorCanvas` and calls `toggleEditingCard(button, true)`
+- `closeEditor()` calls `reattachExternalListeners(button.editorCanvas)`, which re-sets `data-toggle` and re-binds the click handler that calls `adminFunctions.openElementModal(canvas)`, then nulls the reference and calls `toggleEditingCard(button, false)`
+
+### Tileset editor hover readout
+
+`TilesetCanvasTileReadout` (`theme/admin/js/tileset-to-tilemap/canvas-tile-readout.js`) shows the tile under the cursor as column, row and flat index while hovering the tileset canvas, which is what makes picking spot tile indexes possible without counting tiles by hand.
+
+It does not compute the tile itself. It reuses `app.interaction.tileEditor.getTileFromEvent(event, canvas, tileset)`, the same resolution the click handler uses, so the readout can never disagree with what a click would select. It is wired from `tileset-row-binder.js` on `mousemove` and `mouseleave`, and its container sits above `.canvas-scroll-area` with a fixed height in `component-canvas-panel.css` so showing and clearing the text never shifts the layout.
+

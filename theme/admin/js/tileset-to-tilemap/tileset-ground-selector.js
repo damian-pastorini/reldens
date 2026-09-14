@@ -38,6 +38,9 @@ class TilesetGroundSelector
         if(null !== tileOptions.groundTile && 'undefined' !== typeof tileOptions.groundTile){
             return true;
         }
+        if(tileOptions.groundTiles && tileOptions.groundTiles.length){
+            return true;
+        }
         if(tileOptions.randomGroundTiles && tileOptions.randomGroundTiles.length){
             return true;
         }
@@ -54,6 +57,7 @@ class TilesetGroundSelector
     {
         let cleaned = Object.assign({}, tileOptions);
         cleaned.groundTile = null;
+        cleaned.groundTiles = [];
         cleaned.pathTile = null;
         cleaned.borderTile = null;
         cleaned.randomGroundTiles = [];

@@ -31,6 +31,7 @@ class TilesetTileOptionsClearer
         }
         let groundGroupClearer = (tileOptions) => {
             tileOptions.groundTile = null;
+            tileOptions.groundTiles = [];
             tileOptions.pathTile = null;
             tileOptions.borderTile = null;
             tileOptions.randomGroundTiles = [];
@@ -59,6 +60,7 @@ class TilesetTileOptionsClearer
         let bordersGroupClearer = (tileOptions) => {
             tileOptions.bordersTiles = {};
             tileOptions.borderCornersTiles = {};
+            tileOptions.borderInnerCornersTiles = {};
         };
         this.dispatchTileOpts(tilesetIndex, bordersGroupClearer, bordersGroupClearer);
     }
@@ -140,7 +142,7 @@ class TilesetTileOptionsClearer
             }
             return;
         }
-        if('randomGroundTiles' === optionKey){
+        if(-1 !== this.binder.arrayOptionKeys.indexOf(optionKey)){
             tileOpts[optionKey] = [];
             return;
         }

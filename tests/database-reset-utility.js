@@ -6,7 +6,7 @@
 
 const { FileHandler } = require('@reldens/server-utils');
 const { Logger } = require('@reldens/utils');
-const { ObjectionJsDataServer } = require('@reldens/storage');
+const { KnexDataServer } = require('@reldens/storage');
 
 class DatabaseResetUtility
 {
@@ -35,7 +35,7 @@ class DatabaseResetUtility
                 multipleStatements: true
             }
         };
-        let dbDriver = new ObjectionJsDataServer(dbConfig);
+        let dbDriver = new KnexDataServer(dbConfig);
         if(!await dbDriver.connect()){
             Logger.log(100, '', 'Database connection failed');
             return false;

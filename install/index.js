@@ -4,23 +4,32 @@
  *
  */
 
-const DB_CLIENTS_MAP = {
+let MYSQL_CLIENTS = [
+    {value: 'mysql', label: 'MySQL (native)'},
+    {value: 'mysql2', label: 'MySQL2 (recommended)'}
+];
+
+let KNEX_CLIENTS = [
+    ...MYSQL_CLIENTS,
+    {value: 'pg', label: 'PostgreSQL (manual)'},
+    {value: 'sqlite3', label: 'SQLite3 (manual)'},
+    {value: 'better-sqlite3', label: 'Better-SQLite3 (manual)'},
+    {value: 'mssql', label: 'SQL Server (manual)'},
+    {value: 'oracledb', label: 'Oracle DB (manual)'},
+    {value: 'cockroachdb', label: 'CockroachDB (manual)'}
+];
+
+let DB_CLIENTS_MAP = {
+    'knex': KNEX_CLIENTS,
+    'kysely': MYSQL_CLIENTS,
+    'drizzle': MYSQL_CLIENTS,
+    'objection-js': KNEX_CLIENTS,
     'prisma': [
         {value: 'mysql', label: 'MySQL'},
         {value: 'postgresql', label: 'PostgreSQL (manual)'},
         {value: 'sqlite', label: 'SQLite (manual)'},
         {value: 'sqlserver', label: 'SQL Server (manual)'},
         {value: 'mongodb', label: 'MongoDB (manual)'},
-        {value: 'cockroachdb', label: 'CockroachDB (manual)'}
-    ],
-    'objection-js': [
-        {value: 'mysql', label: 'MySQL (native)'},
-        {value: 'mysql2', label: 'MySQL2 (recommended)'},
-        {value: 'pg', label: 'PostgreSQL (manual)'},
-        {value: 'sqlite3', label: 'SQLite3 (manual)'},
-        {value: 'better-sqlite3', label: 'Better-SQLite3 (manual)'},
-        {value: 'mssql', label: 'SQL Server (manual)'},
-        {value: 'oracledb', label: 'Oracle DB (manual)'},
         {value: 'cockroachdb', label: 'CockroachDB (manual)'}
     ],
     'mikro-orm': [
@@ -34,9 +43,11 @@ const DB_CLIENTS_MAP = {
     ]
 };
 
+let MYSQL_NATIVE_CLIENT_DRIVERS = ['prisma', 'mikro-orm'];
+
 window.addEventListener('load', () => {
 
-    const expanders = [
+    let expanders = [
         {key: 'app-use-https', filterClass: 'https-filter'},
         {key: 'app-use-monitor', filterClass: 'monitor-filter'},
         {key: 'app-secure-monitor', filterClass: 'secure-monitor-filter'},
@@ -46,8 +57,8 @@ window.addEventListener('load', () => {
 
     function toggleExpander(isChecked, expander)
     {
-        const display = isChecked ? 'flex' : 'none';
-        const elements = document.getElementsByClassName(expander.filterClass);
+        let display = isChecked ? 'flex' : 'none';
+        let elements = document.getElementsByClassName(expander.filterClass);
         for (let element of elements) {
             element.style.display = display;
         }
@@ -119,7 +130,7 @@ window.addEventListener('load', () => {
             return;
         }
         clientSelect.innerHTML = '';
-        let clients = DB_CLIENTS_MAP[driverValue] || DB_CLIENTS_MAP['prisma'];
+        let clients = DB_CLIENTS_MAP[driverValue] || DB_CLIENTS_MAP['knex'];
         for(let client of clients){
             let option = document.createElement('option');
             option.value = client.value;
@@ -130,7 +141,7 @@ window.addEventListener('load', () => {
             clientSelect.appendChild(option);
         }
         if(!currentClient){
-            let defaultClient = 'objection-js' === driverValue ? 'mysql2' : 'mysql';
+            let defaultClient = MYSQL_NATIVE_CLIENT_DRIVERS.includes(driverValue) ? 'mysql' : 'mysql2';
             for(let i = 0; i < clientSelect.options.length; i++){
                 if(clientSelect.options[i].value === defaultClient){
                     clientSelect.selectedIndex = i;
