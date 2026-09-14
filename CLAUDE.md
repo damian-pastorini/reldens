@@ -2,9 +2,9 @@
 
 Reldens is an MMORPG Platform (v4.0.0-beta.39) built on Node.js for developers to create multiplayer games.
 
-- **Server**: Colyseus 0.17 (authoritative game server, WebSockets via `@colyseus/ws-transport`)
+- **Server**: Colyseus 0.18 (authoritative game server, WebSockets via `@colyseus/ws-transport`)
 - **Client**: Phaser 3 (game engine), Parcel 2 (bundler)
-- **Database**: Multi-driver via `@reldens/storage` (Prisma, ObjectionJS, MikroORM)
+- **Database**: `@reldens/storage` with Knex as the default driver (bundled), plus the optional Kysely, Drizzle, ObjectionJS, MikroORM and Prisma drivers when their packages are installed in the project
 - **Node Version**: >= 20.0.0
 
 ## @reldens Packages
@@ -27,7 +27,7 @@ Server-only utilities:
 
 ### `@reldens/storage`
 
-Abstracts the database across three ORM drivers (Prisma, ObjectionJS, MikroORM). The key interface is `BaseDriver`, returned by `dataServer.getEntity('entityName')`:
+Abstracts the database behind one driver interface. Knex (MySQL/MariaDB through mysql2) is the default driver and the only one bundled with the package; Kysely, Drizzle, ObjectionJS, MikroORM and Prisma are optional and can be used only when their npm packages are installed in the project. The key interface is `BaseDriver`, returned by `dataServer.getEntity('entityName')`:
 
 ```javascript
 /** @type {import('@reldens/storage').BaseDriver} */
@@ -137,7 +137,9 @@ npm start
 # Navigate to http://localhost:8080 to run the installer
 ```
 
-See `.claude/installer-guide.md` for supported storage drivers and manual setup options.
+The storage driver selector offers Knex by default. The optional drivers (Kysely, Drizzle, ObjectionJS, MikroORM, Prisma) are listed only when their packages resolve from the project `node_modules`, so install the one you need before running the installer.
+
+See `.claude/installer-guide.md` for the storage drivers packages and manual setup options.
 
 ## Configuration
 
@@ -178,18 +180,18 @@ npm exec -- reldens resetPassword --user=u --pass=p
 
 ### Refresh Entities After Database Changes
 
-Required when Prisma is the storage driver (`RELDENS_STORAGE_DRIVER=prisma`) and tables were created or modified in the database. Run all 3 steps from the project root, in this order:
+Required when tables were created or modified in the database. Run from the project root:
 
 ```bash
-# 1 - Update prisma/schema.prisma from the live database
-npx prisma db pull
-# 2 - Rebuild the Prisma client (output: prisma/client)
-npx prisma generate
-# 3 - Regenerate the reldens entities (output: generated-entities/)
+# Regenerate the reldens entities (output: generated-entities/)
 npm exec -- reldens generateEntities --override
 ```
 
-If any of these are stale, `dataServer.getEntity()` returns undefined for the missing entities at runtime, which crashes server flows that use them (e.g. a TypeError on every scene join).
+The command reads the `.env` credentials and regenerates `generated-entities/` for the driver set in `RELDENS_STORAGE_DRIVER` (Knex by default). Only the models of the active driver are refreshed, the entities, config and translations files are shared by every driver.
+
+With the optional Prisma driver, refresh the Prisma client first (`npx prisma db pull` then `npx prisma generate`, both reading the URL from `prisma.config.js`) and run the same command afterwards.
+
+If the generated entities are stale, `dataServer.getEntity()` returns undefined for the missing entities at runtime, which crashes server flows that use them (e.g. a TypeError on every scene join).
 
 See `.claude/commands-reference.md` for the full command reference.
 

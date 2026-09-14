@@ -47,6 +47,11 @@ See `lib/game/server/install-templates/.env.dist` for the template file.
 - `RELDENS_ADMIN_SECRET` - Admin authentication secret
 - `RELDENS_HOT_PLUG` - Enable hot-plug configuration updates (0/1)
 
+## Installer
+
+- `RELDENS_INSTALLATION_TYPE` - Packages installation mode used by the installer: `normal` (default, installs `reldens` from npm), `link` (links `reldens` and every `@reldens/*` package), `link-main` (installs the `@reldens/*` packages and links `reldens`)
+- `RELDENS_DEBUG_QUERIES` - Enable the storage driver queries debug during the installation (0/1)
+
 ## Colyseus Monitor
 
 - `RELDENS_MONITOR` - Enable Colyseus monitor
@@ -56,8 +61,10 @@ See `lib/game/server/install-templates/.env.dist` for the template file.
 
 ## Storage & Database
 
-- `RELDENS_STORAGE_DRIVER` - Storage driver (objection-js, mikro-orm, prisma)
-- `RELDENS_DB_CLIENT` - Database client (mysql, mysql2, mongodb)
+- `RELDENS_STORAGE_DRIVER` - Storage driver: `knex` (default, bundled with `@reldens/storage`), or one of the optional drivers when its packages are installed in the project: `kysely`, `drizzle`, `objection-js`, `mikro-orm`, `prisma`
+- `RELDENS_DB_CLIENT` - Database client (`mysql2` by default, `mysql`, `mongodb` for MikroORM)
+- `RELDENS_PRISMA_ADAPTER` - Prisma driver adapter package (default: `@prisma/adapter-mariadb`, Prisma driver only)
+- `RELDENS_PRISMA_ADAPTER_CLASS` - Class exported by the Prisma adapter package (default: `PrismaMariaDb`, Prisma driver only)
 - `RELDENS_DB_HOST` - Database host
 - `RELDENS_DB_PORT` - Database port
 - `RELDENS_DB_NAME` - Database name

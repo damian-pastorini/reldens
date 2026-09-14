@@ -16,7 +16,7 @@ class GenerateEntitiesFixtures
         let projectRoot = FileHandler.joinPaths(__dirname, '..', '..', '..');
         let bucketFullPath = FileHandler.joinPaths(projectRoot, 'theme', 'default');
         let distPath = FileHandler.joinPaths(projectRoot, 'dist');
-        let storageDriver = process.env.RELDENS_STORAGE_DRIVER || 'objection-js';
+        let storageDriver = process.env.RELDENS_STORAGE_DRIVER || 'knex';
         let result = EntitiesLoader.loadEntities({
             reldensModuleLibPath: reldensModuleLibPath,
             bucketFullPath: bucketFullPath,

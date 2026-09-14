@@ -14,7 +14,7 @@ const { ThemeManager } = require('../lib/game/server/theme-manager');
 const { PackagesInstallation } = require('../lib/game/server/installer/packages-installation');
 const { ServerManager } = require('../server');
 const { FileHandler } = require('@reldens/server-utils');
-const { Logger, sc } = require('@reldens/utils');
+const { EnvVar, Logger, sc } = require('@reldens/utils');
 
 class Commander
 {
@@ -125,6 +125,11 @@ class Commander
     generateEntities()
     {
         this.loadEnvironmentConfig();
+        let storageDriver = EnvVar.nonEmptyString(process.env, 'RELDENS_STORAGE_DRIVER', 'knex');
+        let client = EnvVar.nonEmptyString(process.env, 'RELDENS_DB_CLIENT', 'mysql2');
+        if('prisma' === storageDriver && 'mysql2' === client){
+            client = 'mysql';
+        }
         let args = [
             'reldens-storage',
             'generateEntities',
@@ -133,8 +138,8 @@ class Commander
             '--host='+process.env.RELDENS_DB_HOST,
             '--port='+process.env.RELDENS_DB_PORT,
             '--database='+process.env.RELDENS_DB_NAME,
-            '--driver='+(process.env.RELDENS_STORAGE_DRIVER || 'prisma'),
-            '--client='+(('prisma' === (process.env.RELDENS_STORAGE_DRIVER || 'prisma') && 'mysql2' === process.env.RELDENS_DB_CLIENT) ? 'mysql' : process.env.RELDENS_DB_CLIENT)
+            '--driver='+storageDriver,
+            '--client='+client
         ];
         let overrideArg = process.argv.find(arg => '--override' === arg);
         if(overrideArg){

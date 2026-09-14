@@ -23,7 +23,7 @@
         "reldens": "^4.0.0-beta.39"
     },
     "devDependencies": {
-        "@reldens/utils": "^0.53.0",
-        "@colyseus/loadtest": "^0.15.3"
+        "@reldens/utils": "^0.58.0",
+        "@colyseus/loadtest": "^0.18.2"
     }
 }

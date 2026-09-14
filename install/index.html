@@ -60,7 +60,7 @@
                                     <ul>
                                         <li>The installer will attempt to run npm install for missing packages.</li>
                                         <li>Uncheck this only if you have manually installed all required packages or if you are not using NPM.</li>
-                                        <li>Required packages: @reldens/storage (always), @prisma/client (Prisma driver only).</li>
+                                        <li>Required packages: reldens (always); prisma, @prisma/client and the Prisma adapter (Prisma driver only).</li>
                                     </ul>
                                 </span>
                             </div>
@@ -126,10 +126,15 @@
                         <div class="input-box db-storage-driver">
                             <label for="db-storage-driver">Storage Driver</label>
                             <select name="db-storage-driver" id="db-storage-driver" class="required" required>
-                                <option value="prisma"{{&db-storage-driver-prisma}}>Prisma</option>
-                                <option value="objection-js"{{&db-storage-driver-objection-js}}>Objection JS</option>
-                                <option value="mikro-orm"{{&db-storage-driver-mikro-orm}}>MikroORM (untested)</option>
+                                {{#storageDrivers}}
+                                <option value="{{key}}"{{&selected}}>{{label}}</option>
+                                {{/storageDrivers}}
                             </select>
+                        </div>
+                        <div class="notice-box">
+                            <ul>
+                                <li>Knex is always available, the other storage drivers are listed only when their packages are installed in the project.</li>
+                            </ul>
                         </div>
                         <div class="input-box db-client">
                             <label for="db-client">Client</label>
@@ -160,6 +165,7 @@
                         <div class="input-box db-error">
                             <p class="connection-failed">Connection failed, please check the storage configuration.</p>
                             <p class="invalid-driver">Invalid storage driver.</p>
+                            <p class="driver-packages-missing">The selected storage driver packages were not found in the project.</p>
                             <p class="raw-query-not-found">Method "rawQuery" not found in the specified storage driver.</p>
                             <p class="db-installation-process-failed">There was an error during the installation process.</p>
                         </div>

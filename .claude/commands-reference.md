@@ -46,12 +46,26 @@ reldens removeDist
 # Database & entities
 # Generate entities from database schema
 reldens generateEntities [--override]
-# This reads .env credentials and uses @reldens/storage to generate entities
-# Generated entities are placed in the generated-entities/ directory
+# This reads the .env credentials (RELDENS_DB_*, RELDENS_STORAGE_DRIVER, knex by default) and uses @reldens/storage
+# Generated entities are placed in the generated-entities/ directory, models under generated-entities/models/[driver]/
 
 # Direct entity generation with connection arguments (bypasses .env):
-npx reldens-storage generateEntities --user=reldens --pass=reldens --database=reldens_clean --driver=objection-js
+npx reldens-storage generateEntities --user=reldens --pass=reldens --database=reldens_clean --driver=knex
 ```
+
+## Optional Storage Drivers
+
+Knex is bundled with `@reldens/storage`. The other drivers are only available when their packages are installed in the project:
+
+```bash
+npm install kysely
+npm install drizzle-orm
+npm install objection@3.1.5
+npm install @mikro-orm/core @mikro-orm/mysql
+npm install prisma @prisma/client @prisma/adapter-mariadb
+```
+
+Set `RELDENS_STORAGE_DRIVER` to the driver key (`kysely`, `drizzle`, `objection-js`, `mikro-orm`, `prisma`) and run `reldens generateEntities --override` to generate the models for it.
 
 ## Prisma-Specific Commands
 
@@ -77,8 +91,8 @@ npx reldens-storage generateEntities --user=reldens --pass=reldens --database=re
 
 **Prisma Workflow (running from the reldens project root):**
 1. Copy `.env` from the app folder into the project root if not already present
-2. Run `npx reldens-storage-prisma` to generate `prisma/schema.prisma` and `prisma/client/` — introspects the MySQL database and creates the Prisma schema
-3. Run `npx reldens-storage generateEntities --driver=prisma` to generate Reldens entities — or use `npx reldens generateEntities --override` to read credentials from `.env` automatically
+2. Run `npx reldens-storage-prisma` to generate `prisma/schema.prisma` and `prisma/client/` - introspects the MySQL database and creates the Prisma schema
+3. Run `npx reldens-storage generateEntities --driver=prisma` to generate Reldens entities - or use `npx reldens generateEntities --override` to read credentials from `.env` automatically
 4. Set `RELDENS_STORAGE_DRIVER=prisma` in your `.env` file to use Prisma at runtime
 
 **Note:** `RELDENS_DB_CLIENT=mysql2` is automatically normalized to `mysql` when `RELDENS_STORAGE_DRIVER=prisma` because Prisma does not support the `mysql2://` URL scheme.
@@ -87,6 +101,8 @@ npx reldens-storage generateEntities --user=reldens --pass=reldens --database=re
 ```
 RELDENS_STORAGE_DRIVER=prisma
 RELDENS_DB_URL=mysql://user:password@host:port/database
+RELDENS_PRISMA_ADAPTER=@prisma/adapter-mariadb
+RELDENS_PRISMA_ADAPTER_CLASS=PrismaMariaDb
 ```
 
 ## Installation & Setup
