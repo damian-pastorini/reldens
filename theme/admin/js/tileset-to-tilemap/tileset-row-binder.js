@@ -4,6 +4,7 @@ class TilesetRowBinder
     {
         this.app = app;
         this.legendControls = new TilesetLegendControlsBinder(app);
+        this.tileReadout = new TilesetCanvasTileReadout(app);
     }
 
     bind(row, i)
@@ -40,9 +41,15 @@ class TilesetRowBinder
     bindCanvas(canvas, i)
     {
         canvas.addEventListener('mousedown', (mouseEvent) => this.app.interaction.handleCanvasMouseDown(mouseEvent, i));
-        canvas.addEventListener('mousemove', (mouseEvent) => this.app.interaction.handleCanvasMouseMove(mouseEvent, i));
+        canvas.addEventListener('mousemove', (mouseEvent) => {
+            this.tileReadout.update(mouseEvent, canvas, i);
+            this.app.interaction.handleCanvasMouseMove(mouseEvent, i);
+        });
         canvas.addEventListener('mouseup', () => this.app.interaction.handleCanvasMouseUp());
-        canvas.addEventListener('mouseleave', () => this.app.interaction.handleCanvasMouseLeave());
+        canvas.addEventListener('mouseleave', () => {
+            this.tileReadout.clear(i);
+            this.app.interaction.handleCanvasMouseLeave();
+        });
         canvas.addEventListener('contextmenu', (event) => event.preventDefault());
         canvas.addEventListener('wheel', (wheelEvent) => {
             if(!adminFunctions.blockCtrlWheelZoom(wheelEvent)){
@@ -62,6 +69,7 @@ class TilesetRowBinder
             canvas,
             list,
             canvasScroll: canvas.parentElement,
+            tileReadout: row.querySelector('.canvas-tile-readout'),
             addBtn: row.querySelector('.add-element-btn'),
             toggleAllBtn: row.querySelector('.toggle-all-btn'),
             viewAllBtn: row.querySelector('.view-all-btn'),

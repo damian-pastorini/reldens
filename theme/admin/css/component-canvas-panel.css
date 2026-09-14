@@ -25,4 +25,16 @@
         cursor: crosshair;
     }
 
+    & .canvas-tile-readout {
+        flex-shrink: 0;
+        height: 1.25rem;
+        line-height: 1.25rem;
+        margin-bottom: var(--space-sm);
+        padding: 0 var(--space-sm);
+        font-family: monospace;
+        white-space: nowrap;
+        overflow: hidden;
+        color: var(--color-grey-30);
+    }
+
 }
