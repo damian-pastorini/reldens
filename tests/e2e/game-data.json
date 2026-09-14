@@ -5,20 +5,20 @@
             "roomId": 4,
             "classPathId": 1,
             "currentLevel": 10,
-            "currentExp": 9100,
+            "currentExp": 9090,
             "skills": [
-                {
-                    "key": "attackShort",
-                    "label": "attackShort",
-                    "type": 2,
-                    "range": 50,
-                    "hasAttackData": true
-                },
                 {
                     "key": "attackBullet",
                     "label": "attackBullet",
                     "type": 4,
                     "range": 250,
+                    "hasAttackData": true
+                },
+                {
+                    "key": "attackShort",
+                    "label": "attackShort",
+                    "type": 2,
+                    "range": 50,
                     "hasAttackData": true
                 },
                 {
@@ -82,10 +82,24 @@
             "currentExp": 0,
             "skills": [
                 {
+                    "key": "attackBullet",
+                    "label": "attackBullet",
+                    "type": 4,
+                    "range": 250,
+                    "hasAttackData": true
+                },
+                {
                     "key": "attackShort",
                     "label": "attackShort",
                     "type": 2,
                     "range": 50,
+                    "hasAttackData": true
+                },
+                {
+                    "key": "fireball",
+                    "label": "fireball",
+                    "type": 4,
+                    "range": 280,
                     "hasAttackData": true
                 }
             ],
@@ -100,7 +114,22 @@
                     }
                 ],
                 "effect": [],
-                "physicalAttack": [],
+                "physicalAttack": [
+                    {
+                        "key": "attackBullet",
+                        "label": "attackBullet",
+                        "type": 4,
+                        "range": 250,
+                        "hasAttackData": true
+                    },
+                    {
+                        "key": "fireball",
+                        "label": "fireball",
+                        "type": 4,
+                        "range": 280,
+                        "hasAttackData": true
+                    }
+                ],
                 "physicalEffect": []
             }
         },
@@ -112,10 +141,24 @@
             "currentExp": 0,
             "skills": [
                 {
+                    "key": "attackBullet",
+                    "label": "attackBullet",
+                    "type": 4,
+                    "range": 250,
+                    "hasAttackData": true
+                },
+                {
                     "key": "attackShort",
                     "label": "attackShort",
                     "type": 2,
                     "range": 50,
+                    "hasAttackData": true
+                },
+                {
+                    "key": "fireball",
+                    "label": "fireball",
+                    "type": 4,
+                    "range": 280,
                     "hasAttackData": true
                 }
             ],
@@ -130,7 +173,22 @@
                     }
                 ],
                 "effect": [],
-                "physicalAttack": [],
+                "physicalAttack": [
+                    {
+                        "key": "attackBullet",
+                        "label": "attackBullet",
+                        "type": 4,
+                        "range": 250,
+                        "hasAttackData": true
+                    },
+                    {
+                        "key": "fireball",
+                        "label": "fireball",
+                        "type": 4,
+                        "range": 280,
+                        "hasAttackData": true
+                    }
+                ],
                 "physicalEffect": []
             }
         }
