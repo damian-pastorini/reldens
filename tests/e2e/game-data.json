@@ -2,23 +2,23 @@
     "players": {
         "root": {
             "name": "ImRoot",
-            "roomId": 4,
+            "roomId": 5,
             "classPathId": 1,
             "currentLevel": 10,
-            "currentExp": 9090,
+            "currentExp": 9080,
             "skills": [
-                {
-                    "key": "attackBullet",
-                    "label": "attackBullet",
-                    "type": 4,
-                    "range": 250,
-                    "hasAttackData": true
-                },
                 {
                     "key": "attackShort",
                     "label": "attackShort",
                     "type": 2,
                     "range": 50,
+                    "hasAttackData": true
+                },
+                {
+                    "key": "attackBullet",
+                    "label": "attackBullet",
+                    "type": 4,
+                    "range": 250,
                     "hasAttackData": true
                 },
                 {
@@ -82,24 +82,10 @@
             "currentExp": 0,
             "skills": [
                 {
-                    "key": "attackBullet",
-                    "label": "attackBullet",
-                    "type": 4,
-                    "range": 250,
-                    "hasAttackData": true
-                },
-                {
                     "key": "attackShort",
                     "label": "attackShort",
                     "type": 2,
                     "range": 50,
-                    "hasAttackData": true
-                },
-                {
-                    "key": "fireball",
-                    "label": "fireball",
-                    "type": 4,
-                    "range": 280,
                     "hasAttackData": true
                 }
             ],
@@ -114,22 +100,7 @@
                     }
                 ],
                 "effect": [],
-                "physicalAttack": [
-                    {
-                        "key": "attackBullet",
-                        "label": "attackBullet",
-                        "type": 4,
-                        "range": 250,
-                        "hasAttackData": true
-                    },
-                    {
-                        "key": "fireball",
-                        "label": "fireball",
-                        "type": 4,
-                        "range": 280,
-                        "hasAttackData": true
-                    }
-                ],
+                "physicalAttack": [],
                 "physicalEffect": []
             }
         },
@@ -141,24 +112,10 @@
             "currentExp": 0,
             "skills": [
                 {
-                    "key": "attackBullet",
-                    "label": "attackBullet",
-                    "type": 4,
-                    "range": 250,
-                    "hasAttackData": true
-                },
-                {
                     "key": "attackShort",
                     "label": "attackShort",
                     "type": 2,
                     "range": 50,
-                    "hasAttackData": true
-                },
-                {
-                    "key": "fireball",
-                    "label": "fireball",
-                    "type": 4,
-                    "range": 280,
                     "hasAttackData": true
                 }
             ],
@@ -173,22 +130,7 @@
                     }
                 ],
                 "effect": [],
-                "physicalAttack": [
-                    {
-                        "key": "attackBullet",
-                        "label": "attackBullet",
-                        "type": 4,
-                        "range": 250,
-                        "hasAttackData": true
-                    },
-                    {
-                        "key": "fireball",
-                        "label": "fireball",
-                        "type": 4,
-                        "range": 280,
-                        "hasAttackData": true
-                    }
-                ],
+                "physicalAttack": [],
                 "physicalEffect": []
             }
         }
@@ -220,6 +162,22 @@
                     "objectClassKey": "npc_3"
                 }
             ]
+        },
+        "5": {
+            "enemies": [],
+            "npcs": [
+                {
+                    "assetKey": "quest_npc_1",
+                    "objectId": 13,
+                    "objectClassKey": "npc_5"
+                },
+                {
+                    "assetKey": "chest_forest_1",
+                    "objectId": 18,
+                    "objectClassKey": "chest_forest_1"
+                }
+            ],
+            "traders": []
         }
     },
     "items": {
