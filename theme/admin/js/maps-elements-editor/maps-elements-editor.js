@@ -111,7 +111,23 @@ class MapsElementsEditor
             this.contextMenu.hide();
         }
         this.ui.dispose();
+        this.restorePreviewGrid();
         delete this.canvas.mapsElementsEditor;
+    }
+
+    restorePreviewGrid()
+    {
+        if(!this.canvas || !this.mapJson){
+            return false;
+        }
+        adminMapCanvasDrawer.drawTiles(
+            this.canvas.getContext('2d'),
+            this.canvas.width,
+            this.canvas.height,
+            this.mapJson.tilewidth,
+            this.mapJson.tileheight
+        );
+        return true;
     }
 
     canvasToTile(event)

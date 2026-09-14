@@ -29,7 +29,7 @@ class AdminMapRenderer
                 mapCanvas.width = data.width * data.tilewidth;
                 mapCanvas.height = data.height * data.tileheight;
                 let mapCanvasContext = mapCanvas.getContext('2d');
-                let baseCanvas = this.createBaseCanvas(tileset, data);
+                let baseCanvas = this.createBaseCanvas(tileset, data, withTileSelect);
                 let selectedTile = this.resolveInitialSelectedTile(initialTileIndex, initialPosition, data);
                 this.renderMap(mapCanvasContext, baseCanvas, selectedTile, data, null, null);
                 if(withTileHighlight){
@@ -49,14 +49,22 @@ class AdminMapRenderer
             });
     }
 
-    createBaseCanvas(tileset, data)
+    createBaseCanvas(tileset, data, withGrid)
     {
         let baseCanvas = document.createElement('canvas');
         baseCanvas.width = data.width * data.tilewidth;
         baseCanvas.height = data.height * data.tileheight;
         let baseCanvasContext = baseCanvas.getContext('2d');
         adminMapCanvasDrawer.drawMap(baseCanvasContext, tileset, data);
-        adminMapCanvasDrawer.drawTiles(baseCanvasContext, baseCanvas.width, baseCanvas.height, data.tilewidth, data.tileheight);
+        if(withGrid){
+            adminMapCanvasDrawer.drawTiles(
+                baseCanvasContext,
+                baseCanvas.width,
+                baseCanvas.height,
+                data.tilewidth,
+                data.tileheight
+            );
+        }
         return baseCanvas;
     }
 

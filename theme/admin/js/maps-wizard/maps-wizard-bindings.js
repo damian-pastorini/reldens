@@ -4,6 +4,7 @@ class MapsWizardBindings
     {
         this.pendingSampleDataOption = '';
         this.pendingParseError = '';
+        this.sessionCompositeElementsFile = '';
         this.generateGuard = new window.MapsWizardGenerateGuard();
         this.bind();
     }
@@ -21,7 +22,9 @@ class MapsWizardBindings
         this.bindFormSubmit();
         window.mapsWizardUtils.currentStrategy = window.mapsWizardUtils.getSelectedOption();
         this.prefillFromUrlParams();
-        window.mapsWizardUtils.updateGeneratorDataFromInputs();
+        if(!this.applyConfigurationState(window.mapsWizardUtils.currentStrategy)){
+            window.mapsWizardUtils.updateGeneratorDataFromInputs();
+        }
         window.addEventListener('pageshow', () => {
             let overlay = document.querySelector('.maps-wizard-generating-overlay');
             if(overlay){
@@ -100,16 +103,16 @@ class MapsWizardBindings
 
     bindConfigModals()
     {
-        let configOpenBtns = document.querySelectorAll('.config-options-open-btn');
-        for(let openBtn of configOpenBtns){
-            openBtn.addEventListener('click', () => {
-                window.mapsWizardUtils.openModal(openBtn.dataset.configModal);
+        let configOpenButtons = document.querySelectorAll('.config-options-open-btn');
+        for(let openButton of configOpenButtons){
+            openButton.addEventListener('click', () => {
+                window.mapsWizardUtils.openModal(openButton.dataset.configModal);
                 window.mapsWizardUtils.updateGeneratorDataFromInputs();
             });
         }
-        let configCloseBtns = document.querySelectorAll('.config-options-modal .button-close');
-        for(let closeBtn of configCloseBtns){
-            closeBtn.addEventListener('click', () => {
+        let configCloseButtons = document.querySelectorAll('.config-options-modal .button-close');
+        for(let closeButton of configCloseButtons){
+            closeButton.addEventListener('click', () => {
                 window.mapsWizardUtils.updateGeneratorDataFromInputs();
             });
         }
@@ -125,10 +128,10 @@ class MapsWizardBindings
 
     bindInfoModals()
     {
-        let infoOpenBtns = document.querySelectorAll('.option-info-btn');
-        for(let infoBtn of infoOpenBtns){
-            infoBtn.addEventListener('click', () => {
-                window.mapsWizardUtils.openModal(infoBtn.dataset.infoModal);
+        let infoOpenButtons = document.querySelectorAll('.option-info-btn');
+        for(let infoButton of infoOpenButtons){
+            infoButton.addEventListener('click', () => {
+                window.mapsWizardUtils.openModal(infoButton.dataset.infoModal);
             });
         }
         let infoModalBackdrops = document.querySelectorAll('.option-info-modal .modal-backdrop');
@@ -142,11 +145,11 @@ class MapsWizardBindings
 
     bindSampleData()
     {
-        let sampleDataBtns = document.querySelectorAll('.use-sample-data-btn');
+        let sampleDataButtons = document.querySelectorAll('.use-sample-data-btn');
         let confirmModal = document.querySelector('.confirm-modal');
-        for(let sampleBtn of sampleDataBtns){
-            sampleBtn.addEventListener('click', () => {
-                this.pendingSampleDataOption = sampleBtn.dataset.optionValue;
+        for(let sampleButton of sampleDataButtons){
+            sampleButton.addEventListener('click', () => {
+                this.pendingSampleDataOption = sampleButton.dataset.optionValue;
                 if(confirmModal){
                     confirmModal.classList.remove('hidden');
                 }
@@ -207,6 +210,13 @@ class MapsWizardBindings
         if(strategyRadio){
             strategyRadio.click();
         }
+        let sessionId = document.getElementById('tilesetSessionId')?.value;
+        if(this.sessionCompositeElementsFile){
+            sampleData.compositeElementsFile = this.sessionCompositeElementsFile;
+        }
+        if(!this.sessionCompositeElementsFile && sessionId){
+            sampleData.compositeElementsFile = 'composite.json';
+        }
         window.mapsWizardUtils.fillInputsFromData(sampleData, this.pendingSampleDataOption);
         window.mapsWizardUtils.updateGeneratorDataFromInputs();
         this.pendingSampleDataOption = '';
@@ -261,10 +271,30 @@ class MapsWizardBindings
             });
     }
 
+    applyConfigurationState(strategy)
+    {
+        if(!strategy || !window.configurationsState){
+            return false;
+        }
+        let configurationJson = window.configurationsState[strategy];
+        if(!configurationJson){
+            return false;
+        }
+        if(!window.mapsWizardUtils.writeGeneratorDataValue(configurationJson)){
+            return false;
+        }
+        window.mapsWizardUtils.updateInputsFromGeneratorData();
+        window.mapsWizardUtils.updateGeneratorDataFromInputs();
+        return true;
+    }
+
     applyWizardConfig(wizardConfig)
     {
         if(!wizardConfig || !wizardConfig.strategy){
             return;
+        }
+        if(wizardConfig.partialData && wizardConfig.partialData.compositeElementsFile){
+            this.sessionCompositeElementsFile = wizardConfig.partialData.compositeElementsFile;
         }
         let utils = window.mapsWizardUtils;
         if(wizardConfig.savedStrategies){

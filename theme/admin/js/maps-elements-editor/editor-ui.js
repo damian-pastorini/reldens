@@ -104,6 +104,8 @@ class EditorUi
             return;
         }
         if(this.originalCanvasParent && this.editor.canvas){
+            this.editor.canvas.style.width = '';
+            this.editor.canvas.style.height = '';
             this.originalCanvasParent.appendChild(this.editor.canvas);
         }
         this.container.remove();
