@@ -13,6 +13,7 @@ const { GameDataSkills } = require('./helpers/game-data-skills');
 const { PlayerStateReset } = require('./helpers/player-state-reset');
 const { TestDataSetup } = require('./helpers/test-data-setup');
 const { StartupGuard } = require('./helpers/startup-guard');
+const { DatabaseEnvVarsExporter } = require('../database-env-vars-exporter');
 
 class CollectGameData
 {
@@ -268,12 +269,16 @@ class CollectGameData
         }
         let modules = CollectGameData.loadServerModules(serverPath);
         let serverConfig = { projectRoot: serverPath };
+        if(config.themeName) {
+            serverConfig.projectThemeName = config.themeName;
+        }
         if(modules.ServerPlugin) {
             serverConfig.customPlugin = modules.ServerPlugin;
         }
         process.env.RELDENS_ALLOW_RUN_BUNDLER = '0';
         process.env.RELDENS_ALLOW_BUILD_CLIENT = '0';
         process.env.RELDENS_ALLOW_BUILD_CSS = '0';
+        DatabaseEnvVarsExporter.apply(config);
         let effectivePort = process.env.RELDENS_E2E_PORT || config.port;
         if(effectivePort) {
             let portStr = String(effectivePort);
