@@ -13,6 +13,7 @@ const { GameDataSkills } = require('./helpers/game-data-skills');
 const { PlayerStateReset } = require('./helpers/player-state-reset');
 const { TestDataSetup } = require('./helpers/test-data-setup');
 const { StartupGuard } = require('./helpers/startup-guard');
+const { ClientBundleCheck } = require('./helpers/client-bundle-check');
 const { DatabaseEnvVarsExporter } = require('../database-env-vars-exporter');
 
 class CollectGameData
@@ -275,9 +276,13 @@ class CollectGameData
         if(modules.ServerPlugin) {
             serverConfig.customPlugin = modules.ServerPlugin;
         }
-        process.env.RELDENS_ALLOW_RUN_BUNDLER = '0';
-        process.env.RELDENS_ALLOW_BUILD_CLIENT = '0';
-        process.env.RELDENS_ALLOW_BUILD_CSS = '0';
+        let bundleRequired = ClientBundleCheck.isMissing(serverPath);
+        if(bundleRequired){
+            Logger.warning('[collect-game-data] Client bundle not found in dist, running the bundler before the tests.');
+        }
+        process.env.RELDENS_ALLOW_RUN_BUNDLER = bundleRequired ? '1' : '0';
+        process.env.RELDENS_ALLOW_BUILD_CLIENT = bundleRequired ? '1' : '0';
+        process.env.RELDENS_ALLOW_BUILD_CSS = bundleRequired ? '1' : '0';
         DatabaseEnvVarsExporter.apply(config);
         let effectivePort = process.env.RELDENS_E2E_PORT || config.port;
         if(effectivePort) {
