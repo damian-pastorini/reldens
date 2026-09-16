@@ -49,6 +49,7 @@
         "test:e2e:long:clean": "node tests/e2e/run-tests.js --long --clean-output"
     },
     "devDependencies": {
+        "@colyseus/loadtest": "0.18.2",
         "@playwright/test": "1.62.1"
     },
     "dependencies": {
