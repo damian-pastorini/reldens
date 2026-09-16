@@ -16,7 +16,7 @@
         <tr>
             <td>Log in as root player with forest scene selection and wait for game to fully load</td>
             <td><code>await TestStats.loginRootPlayer(page, gameConfig, longRun, 'reldens-forest')</code></td>
-            <td>test-stats.spec.js:45</td>
+            <td>test-stats.spec.js:57</td>
             <td>tests/e2e/helpers/login.js:77</td>
             <td><code>static async loginAndStartGame(page, username, password, playerName, longRun, skipUiSelectors = false, scene = null)</code></td>
             <td>Calls Login.loginAndStartGame with scene='reldens-forest'; player starts directly in forest since each test resets player to town (SAFE_ROOM_ID=4)</td>
@@ -24,112 +24,104 @@
         <tr>
             <td>Verify player is in reldens-forest (immediate - scene selection already placed them there)</td>
             <td><code>let inForest = await Navigation.ensureInRoom(page, 'reldens-forest', 608, 16, navTimeout)</code></td>
-            <td>test-stats.spec.js:50</td>
-            <td>tests/e2e/helpers/navigation.js:149</td>
+            <td>test-stats.spec.js:62</td>
+            <td>tests/e2e/helpers/navigation.js:164</td>
             <td><code>static async ensureInRoom(page, roomName, transitionX, transitionY, timeout)</code></td>
             <td>Checks activeRoomEvents.roomName first; returns true immediately since scene selection started player in forest; no walking required</td>
         </tr>
         <tr>
             <td>Assert the player successfully reached reldens-forest</td>
             <td><code>expect(inForest, 'Player must reach reldens-forest for XP test').toBeTruthy()</code></td>
-            <td>test-stats.spec.js:51</td>
-            <td>tests/e2e/helpers/navigation.js:149</td>
+            <td>test-stats.spec.js:63</td>
+            <td>tests/e2e/helpers/navigation.js:164</td>
             <td><code>static async ensureInRoom(page, roomName, transitionX, transitionY, timeout)</code></td>
             <td>Fails with a descriptive message if the room transition was not completed within the timeout.</td>
         </tr>
         <tr>
             <td>Wait for an enemy sprite to become visible in the scene</td>
             <td><code>await Phaser.waitForObjectByAssetKey(page, enemyKey, sceneTimeout)<br>// or:<br>await Phaser.waitForObjectByType(page, 'enemy', sceneTimeout)</code></td>
-            <td>test-stats.spec.js:52-54</td>
+            <td>test-stats.spec.js:64-66</td>
             <td>tests/e2e/helpers/phaser.js:98<br>tests/e2e/helpers/phaser.js:103</td>
             <td><code>static async waitForObjectByAssetKey(page, assetKey, timeout)<br>static async waitForObjectByType(page, type, timeout)</code></td>
             <td>Uses asset_key match when e2eEnemyKey is configured, otherwise matches on type='enemy'. Polls scene.objectsAnimations via page.waitForFunction.</td>
         </tr>
         <tr>
-            <td>Get the screen coordinates of the enemy sprite</td>
-            <td><code>let enemyCoords = await Phaser.getObjectScreenCoordsByAssetKey(page, enemyKey)<br>// or:<br>let enemyCoords = await Phaser.getObjectScreenCoordsByType(page, 'enemy')</code></td>
-            <td>test-stats.spec.js:55-57</td>
-            <td>tests/e2e/helpers/phaser.js:70<br>tests/e2e/helpers/phaser.js:65</td>
-            <td><code>static async getObjectScreenCoordsByAssetKey(page, assetKey)<br>static async getObjectScreenCoordsByType(page, type)</code></td>
-            <td>Calculates screen-space x/y from the sprite's world position adjusted by camera scroll and zoom. Returns null if no matching sprite is found.</td>
-        </tr>
-        <tr>
-            <td>Assert enemy coordinates were found</td>
-            <td><code>expect(enemyCoords, 'Enemy must be found in the scene for XP test').not.toBeNull()</code></td>
-            <td>test-stats.spec.js:58</td>
-            <td>tests/e2e/helpers/phaser.js:65</td>
-            <td><code>static async getObjectScreenCoordsByType(page, type)</code></td>
-            <td>Confirms a matching enemy sprite exists in the scene before attempting to read XP or click.</td>
-        </tr>
-        <tr>
-            <td>Read player XP from Colyseus room state before attack</td>
+            <td>Read player XP from the experience UI before the attack</td>
             <td><code>let xpBefore = await TestStats.getPlayerExpFromState(page)</code></td>
-            <td>test-stats.spec.js:59</td>
-            <td>tests/e2e/test-stats.spec.js:28</td>
-            <td><code>static getPlayerExpFromState(page)</code></td>
-            <td>Reads player.exp from window.reldens.activeRoomEvents via page.evaluate. Uses playerBySessionIdFromState to find the player entry in room.state.players.</td>
+            <td>test-stats.spec.js:67</td>
+            <td>tests/e2e/test-stats.spec.js:28-37</td>
+            <td><code>let element = document.querySelector('.experience-container .current-experience');</code></td>
+            <td>Reads the current experience text rendered in the stats UI via page.evaluate; returns null when the element is not present.</td>
         </tr>
         <tr>
             <td>Assert XP is readable before the attack</td>
             <td><code>expect(xpBefore, 'Player XP must be readable from room state before attack').not.toBeNull()</code></td>
-            <td>test-stats.spec.js:60</td>
-            <td>tests/e2e/test-stats.spec.js:28</td>
+            <td>test-stats.spec.js:68</td>
+            <td>tests/e2e/test-stats.spec.js:28-37</td>
             <td><code>static getPlayerExpFromState(page)</code></td>
-            <td>Ensures the room state is accessible and the player entry exists before the XP comparison is attempted.</td>
+            <td>Ensures the experience UI is rendered before the XP comparison is attempted.</td>
         </tr>
         <tr>
             <td>Capture screenshot of XP value before attacking</td>
             <td><code>await screenshots.capture(page, 'xp-before-attack')</code></td>
-            <td>test-stats.spec.js:61</td>
-            <td>tests/e2e/test-stats.spec.js:61</td>
+            <td>test-stats.spec.js:69</td>
+            <td>tests/e2e/test-stats.spec.js:69</td>
             <td><code>await screenshots.capture(page, 'xp-before-attack')</code></td>
             <td>Saves a screenshot named xp-before-attack to document the baseline XP state.</td>
         </tr>
         <tr>
-            <td>Click the enemy sprite to initiate combat</td>
-            <td><code>await Phaser.clickObjectByAssetKey(page, enemyKey)<br>// or:<br>await Phaser.clickObjectByType(page, 'enemy')</code></td>
-            <td>test-stats.spec.js:62</td>
-            <td>tests/e2e/helpers/phaser.js:87<br>tests/e2e/helpers/phaser.js:81</td>
-            <td><code>static async clickObjectByAssetKey(page, assetKey)<br>static async clickObjectByType(page, type)</code></td>
-            <td>Retrieves screen coordinates for the enemy and performs a canvas click at that position. This triggers the attack/combat sequence on the server.</td>
+            <td>Chase the enemy until it is within 100px</td>
+            <td><code>await TestStats.chaseEnemyForRange(page, enemyKey, 100, navTimeout)</code></td>
+            <td>test-stats.spec.js:70</td>
+            <td>tests/e2e/helpers/navigation.js:192</td>
+            <td><code>static async moveToObjectWithinRange(page, matchProp, matchValue, statusKey, range, timeout, useRespawnFind = false)</code></td>
+            <td>Walks the player toward the enemy until it is in skill range before casting.</td>
         </tr>
         <tr>
-            <td>Wait 5 seconds plus pause for combat resolution</td>
-            <td><code>await page.waitForTimeout(5000 + pauseMs)</code></td>
-            <td>test-stats.spec.js:63</td>
-            <td>tests/e2e/test-stats.spec.js:63</td>
-            <td><code>await page.waitForTimeout(5000 + pauseMs)</code></td>
-            <td>Allows time for the server to process the attack, award XP, and sync the updated state back to the client.</td>
+            <td>Target the enemy and cast the attack skills in a loop until XP changes</td>
+            <td><code>await Phaser.targetEnemy(page, enemyKey || null);<br>await page.click('#fireball', { force: true });<br>await page.click('#attackBullet', { force: true });<br>await page.click('#attackShort', { force: true });</code></td>
+            <td>test-stats.spec.js:71-97</td>
+            <td>theme/default/assets/features/skills/templates/ui-skill-box.html:2</td>
+            <td><code>&lt;img id="{{key}}" src="/assets/custom/actions/controls/{{key}}.png" alt="{{skillName}}"/&gt;</code></td>
+            <td>Loops for up to ENEMY_KILL (170000ms), re-targeting and re-chasing the enemy, until the experience value changes.</td>
         </tr>
         <tr>
-            <td>Read player XP from Colyseus room state after attack</td>
+            <td>Wait for the last XP update to render</td>
+            <td><code>await page.waitForTimeout(1000 + pauseMs)</code></td>
+            <td>test-stats.spec.js:98</td>
+            <td>tests/e2e/test-stats.spec.js:98</td>
+            <td><code>await page.waitForTimeout(1000 + pauseMs);</code></td>
+            <td>Allows time for the server to award XP and sync the updated state back to the client.</td>
+        </tr>
+        <tr>
+            <td>Read player XP from the experience UI after the attack</td>
             <td><code>let xpAfter = await TestStats.getPlayerExpFromState(page)</code></td>
-            <td>test-stats.spec.js:64</td>
-            <td>tests/e2e/test-stats.spec.js:28</td>
+            <td>test-stats.spec.js:99</td>
+            <td>tests/e2e/test-stats.spec.js:28-37</td>
             <td><code>static getPlayerExpFromState(page)</code></td>
-            <td>Re-reads player.exp from room state after the combat wait period to compare with the pre-attack value.</td>
+            <td>Re-reads the experience value after the combat loop to compare with the pre-attack value.</td>
         </tr>
         <tr>
             <td>Assert XP is readable after the attack</td>
             <td><code>expect(xpAfter, 'Player XP must be readable from room state after attack').not.toBeNull()</code></td>
-            <td>test-stats.spec.js:65</td>
-            <td>tests/e2e/test-stats.spec.js:28</td>
+            <td>test-stats.spec.js:100</td>
+            <td>tests/e2e/test-stats.spec.js:28-37</td>
             <td><code>static getPlayerExpFromState(page)</code></td>
-            <td>Confirms room state is still accessible after combat and the player entry is present.</td>
+            <td>Confirms the experience UI is still readable after combat.</td>
         </tr>
         <tr>
-            <td>Assert XP after attack is greater than or equal to XP before</td>
-            <td><code>expect(xpAfter).toBeGreaterThanOrEqual(xpBefore)</code></td>
-            <td>test-stats.spec.js:66</td>
-            <td>tests/e2e/test-stats.spec.js:28</td>
-            <td><code>static getPlayerExpFromState(page)</code></td>
-            <td>Core assertion - confirms that combat awards XP. Uses greaterThanOrEqual to handle cases where the enemy survives but the player still gains partial XP.</td>
+            <td>Assert XP increased after defeating the enemy</td>
+            <td><code>expect(xpIncreased || (xpAfter !== xpBefore &amp;&amp; '' !== xpAfter), 'Player XP must increase after defeating an enemy').toBeTruthy()</code></td>
+            <td>test-stats.spec.js:101</td>
+            <td>tests/e2e/test-stats.spec.js:101</td>
+            <td><code>expect(xpIncreased || (xpAfter !== xpBefore &amp;&amp; '' !== xpAfter), 'Player XP must increase after defeating an enemy').toBeTruthy();</code></td>
+            <td>Core assertion - the experience value must have changed either during the loop or by the end of it.</td>
         </tr>
         <tr>
             <td>Capture screenshot of XP value after attacking</td>
             <td><code>await screenshots.capture(page, 'xp-after-attack')</code></td>
-            <td>test-stats.spec.js:67</td>
-            <td>tests/e2e/test-stats.spec.js:67</td>
+            <td>test-stats.spec.js:102</td>
+            <td>tests/e2e/test-stats.spec.js:102</td>
             <td><code>await screenshots.capture(page, 'xp-after-attack')</code></td>
             <td>Saves a screenshot named xp-after-attack to document the post-combat XP state for comparison.</td>
         </tr>

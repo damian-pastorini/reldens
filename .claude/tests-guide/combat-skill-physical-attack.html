@@ -25,15 +25,15 @@
         <tr>
             <td>Prepare skill cast context</td>
             <td><code>TestCombat.prepareSkillCastContext(page, screenshots, gameConfig, longRun, skill, 'physical-attack')</code></td>
-            <td>test-combat.spec.js:149 (via <code>runDamageSkillTest</code>)</td>
-            <td>test-combat.spec.js:136</td>
-            <td><code>static async prepareSkillCastContext(page, screenshots, gameConfig, longRun, skill, context)</code></td>
+            <td>test-combat.spec.js:150 (via <code>runDamageSkillTest</code>)</td>
+            <td>test-combat.spec.js:137</td>
+            <td><code>static async prepareSkillCastContext(page, screenshots, gameConfig, longRun, skill, prefix)</code></td>
             <td>Logs in to forest, walks within skill range (250 for attackBullet, 280 for fireball), targets enemy, opens chat</td>
         </tr>
         <tr>
             <td>Click physical attack skill button</td>
             <td><code>page.click(Selectors.combat.skillButton(skill.key))</code></td>
-            <td>test-combat.spec.js:150</td>
+            <td>test-combat.spec.js:151</td>
             <td>tests/e2e/game-data.json:58-73</td>
             <td><code>"key": "attackBullet", "range": 250</code> / <code>"key": "fireball", "range": 280</code></td>
             <td>Clicks <code>#attackBullet</code> or <code>#fireball</code> in HUD; both are skill type 4 (physicalAttack); test iterates over all physicalAttack skills</td>
@@ -41,7 +41,7 @@
         <tr>
             <td>Assert damage message in General chat</td>
             <td><code>expect(page.locator(Selectors.chat.tabContentGeneral)).toContainText('damage', { timeout: ... })</code></td>
-            <td>test-combat.spec.js:151-154</td>
+            <td>test-combat.spec.js:152-155</td>
             <td>lib/chat/constants.js:13</td>
             <td><code>MESSAGE: 1</code></td>
             <td>Server broadcasts damage message to room; <code>.tab-content-1</code> is the General tab; both skills deal damage and generate a chat message</td>

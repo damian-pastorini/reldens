@@ -10,6 +10,7 @@ const { BaseE2eTest } = require('./base-e2e-test');
 const { Login } = require('./helpers/login');
 const { Phaser } = require('./helpers/phaser');
 const { Navigation } = require('./helpers/navigation');
+const { PhaserRange } = require('./helpers/phaser-range');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
 let test = BaseE2eTest.test;
@@ -21,6 +22,7 @@ class TestInteractiveObjects
     static FOREST_TRANSITION_Y = 16;
     static INTERACTION_RANGE = 120;
     static MINING_ROCK_INTERACTION_RANGE = 120;
+    static FISH_SPAWN_CYCLES = ['first', 'second'];
 
     static async loginAndEnterForest(page, gameConfig, longRun)
     {
@@ -100,13 +102,51 @@ class TestInteractiveObjects
         await Phaser.clickObjectByAssetKey(page, objectKey);
     }
 
+    static async fetchInventoryItemQty(page, itemKey)
+    {
+        let quantities = await page.locator(Selectors.inventory.itemQty(itemKey)).allTextContents();
+        let totalQty = 0;
+        for(let quantity of quantities){
+            totalQty += Number(quantity) || 1;
+        }
+        return totalQty;
+    }
+
+    static async openInventory(page, pauseMs)
+    {
+        await page.click(Selectors.hud.inventoryOpen);
+        await page.waitForTimeout(pauseMs);
+        await expect(page.locator(Selectors.inventory.ui)).toBeVisible();
+    }
+
+    static async runTimingCycle(page, screenshots, objectKey, rewardItemId, forestData, label)
+    {
+        await page.waitForTimeout(TimeConstants.ACTION + forestData.pauseMs);
+        let qtyBefore = await TestInteractiveObjects.fetchInventoryItemQty(page, rewardItemId);
+        await TestInteractiveObjects.clickObjectByAssetKeyOrKey(page, objectKey);
+        await screenshots.capture(page, 'fish-spawn-'+label+'-cycle-started');
+        await expect
+            .poll(
+                async () => TestInteractiveObjects.fetchInventoryItemQty(page, rewardItemId),
+                {
+                    timeout: TimeConstants.TIMING_OBJECT_COMPLETE,
+                    message: 'Reward item quantity must increase after the '+label+' timing cycle completes'
+                }
+            )
+            .toBeGreaterThan(qtyBefore);
+        await screenshots.capture(page, 'fish-spawn-'+label+'-cycle-rewarded');
+        return TestInteractiveObjects.fetchInventoryItemQty(page, rewardItemId);
+    }
+
     static async waitForNpcDialogue(page, selector, timeout)
     {
         return page.waitForFunction(
             (sel) => {
                 let elements = document.querySelectorAll(sel);
                 for(let i = 0; i < elements.length; i++){
-                    if('block' === elements[i].style.display) return true;
+                    if('block' === elements[i].style.display) {
+                        return true;
+                    }
                 }
                 return false;
             },
@@ -151,28 +191,48 @@ class TestInteractiveObjects
                 await TestInteractiveObjects.waitForObjectInScene(page, objectKey, forestData.sceneTimeout);
                 await screenshots.capture(page, 'mining-rock-found-in-scene');
                 await TestInteractiveObjects.navigateToObjectAndAssertInRange(page, objectKey, forestData, 'mining rock', TestInteractiveObjects.MINING_ROCK_INTERACTION_RANGE);
-                await page.click(Selectors.hud.inventoryOpen);
-                await page.waitForTimeout(forestData.pauseMs);
-                await expect(page.locator(Selectors.inventory.ui)).toBeVisible();
-                let rewardQtyBefore = 0;
-                let rewardExistsBefore = await page.locator(Selectors.inventory.item(rewardItemId)).count();
-                if(rewardExistsBefore){
-                    let qtyText = await page.locator(Selectors.inventory.itemQty(rewardItemId)).textContent();
-                    rewardQtyBefore = Number(qtyText) || 1;
-                }
+                await TestInteractiveObjects.openInventory(page, forestData.pauseMs);
+                let rewardQtyBefore = await TestInteractiveObjects.fetchInventoryItemQty(page, rewardItemId);
                 await screenshots.capture(page, 'mining-rock-inventory-before');
                 await page.waitForTimeout(forestData.pauseMs);
                 await TestInteractiveObjects.clickObjectByAssetKeyOrKey(page, objectKey);
                 await page.waitForTimeout(7000 + forestData.pauseMs);
                 await screenshots.capture(page, 'mining-rock-interaction-complete');
-                let rewardQtyAfter = 0;
-                let rewardExistsAfter = await page.locator(Selectors.inventory.item(rewardItemId)).count();
-                if(rewardExistsAfter){
-                    let qtyText = await page.locator(Selectors.inventory.itemQty(rewardItemId)).textContent();
-                    rewardQtyAfter = Number(qtyText) || 1;
-                }
+                let rewardQtyAfter = await TestInteractiveObjects.fetchInventoryItemQty(page, rewardItemId);
                 expect(rewardQtyAfter, 'Reward item quantity must increase after mining').toBeGreaterThan(rewardQtyBefore);
                 await screenshots.capture(page, 'mining-rock-inventory-after');
+            });
+            test('player fishes repeatedly at the same spawn without it moving or respawning', async ({ page, screenshots, gameConfig, longRun }) => {
+                test.setTimeout(TimeConstants.forLongRun(120000, longRun));
+                let objectKey = gameConfig.e2eFishSpawnKey || '';
+                expect(objectKey, 'e2eFishSpawnKey not configured').toBeTruthy();
+                let rewardItemId = gameConfig.e2eFishSpawnRewardItemId || '';
+                expect(rewardItemId, 'e2eFishSpawnRewardItemId must be configured').toBeTruthy();
+                let forestData = await TestInteractiveObjects.loginAndEnterForest(page, gameConfig, longRun);
+                await screenshots.capture(page, 'fish-spawn-forest-entered');
+                await TestInteractiveObjects.waitForObjectInScene(page, objectKey, forestData.sceneTimeout);
+                await screenshots.capture(page, 'fish-spawn-found-in-scene');
+                await TestInteractiveObjects.navigateToObjectAndAssertInRange(page, objectKey, forestData, 'fish spawn');
+                let positionBefore = await PhaserRange.getObjectWorldPosByAssetKey(page, objectKey);
+                expect(positionBefore, 'Fish spawn must expose a world position').toBeTruthy();
+                await TestInteractiveObjects.openInventory(page, forestData.pauseMs);
+                await screenshots.capture(page, 'fish-spawn-inventory-before');
+                let startingQty = await TestInteractiveObjects.fetchInventoryItemQty(page, rewardItemId);
+                let latestQty = startingQty;
+                for(let cycleLabel of TestInteractiveObjects.FISH_SPAWN_CYCLES){
+                    latestQty = await TestInteractiveObjects
+                        .runTimingCycle(page, screenshots, objectKey, rewardItemId, forestData, cycleLabel);
+                    let currentPosition = await PhaserRange.getObjectWorldPosByAssetKey(page, objectKey);
+                    expect(
+                        currentPosition,
+                        'Fish spawn must stay in place after the '+cycleLabel+' use'
+                    ).toEqual(positionBefore);
+                }
+                expect(
+                    latestQty,
+                    'Every completed fishing cycle must add one reward item at the same spawn'
+                ).toBe(startingQty + TestInteractiveObjects.FISH_SPAWN_CYCLES.length);
+                await screenshots.capture(page, 'fish-spawn-repeated-use-complete');
             });
         });
     }

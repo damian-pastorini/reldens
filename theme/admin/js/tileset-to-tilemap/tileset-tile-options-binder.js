@@ -7,11 +7,14 @@ class TilesetTileOptionsBinder
         this.events = new TilesetTileOptionsEvents(this);
         this.picker = new TilesetTileOptionsPickHandler(this);
         this.clearer = new TilesetTileOptionsClearer(this);
+        this.arrayOptionKeys = ['groundTiles', 'randomGroundTiles'];
         this.positionOrders = {
             surroundingTiles: ['-1,-1','-1,0','-1,1','0,-1','0,0','0,1','1,-1','1,0','1,1'],
             corners: ['-1,-1','-1,1','1,-1','1,1'],
             bordersTiles: ['top','right','bottom','left'],
             borderCornersTiles: ['top-left','top-right','bottom-left','bottom-right'],
+            borderInnerCornersTiles: ['top-left','top-right','bottom-left','bottom-right'],
+            mapBorderWallsTiles: ['-1,-1','-1,0','-1,1','0,-1','0,0','0,1','1,-1','1,0','1,1'],
             innerWallsTiles: ['-1,-1','-1,0','-1,1','0,-1','0,0','0,1','1,-1','1,0','1,1'],
             innerWallsCornerTiles: ['top-left','top-right','bottom-left','bottom-right'],
             outerWallsTiles: ['-1,-1','-1,0','-1,1','0,-1','0,0','0,1','1,-1','1,0','1,1'],

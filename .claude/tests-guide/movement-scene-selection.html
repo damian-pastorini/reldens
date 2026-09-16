@@ -16,7 +16,7 @@
         <tr>
             <td>Login and start game with explicit scene selection</td>
             <td><code>Login.loginAndStartGame(page, username, password, playerName, longRun, false, 'reldens-forest')</code></td>
-            <td>test-movement.spec.js:79</td>
+            <td>test-movement.spec.js:156</td>
             <td>tests/e2e/helpers/login.js:77</td>
             <td><code>static async loginAndStartGame(page, username, password, playerName, longRun, skipUiSelectors = false, scene = null)</code></td>
             <td>The 7th argument 'reldens-forest' triggers Login.selectScene before clicking submit</td>
@@ -24,7 +24,7 @@
         <tr>
             <td>Select the reldens-forest scene in the character select form</td>
             <td><code>Login.selectScene(page, 'reldens-forest')</code></td>
-            <td>test-movement.spec.js:89</td>
+            <td>helpers/login.js:89</td>
             <td>tests/e2e/helpers/login.js:66</td>
             <td><code>static async selectScene(page, sceneName)</code></td>
             <td>Calls sceneSelect.selectOption('reldens-forest') on #player-selector-form .scene-select</td>
@@ -32,7 +32,7 @@
         <tr>
             <td>Scene select dropdown selector</td>
             <td><code>Selectors.characterSelect.sceneSelect</code></td>
-            <td>test-movement.spec.js:89</td>
+            <td>helpers/login.js:68</td>
             <td>tests/e2e/selectors.js:61</td>
             <td><code>sceneSelect: '#player-selector-form .scene-select'</code></td>
             <td>The dropdown inside the character selector form that lists available starting scenes</td>
@@ -40,7 +40,7 @@
         <tr>
             <td>Wait for room to become reldens-forest after game start</td>
             <td><code>Navigation.waitForRoom(page, 'reldens-forest', TimeConstants.forLongRun(TimeConstants.ROOM_TRANSITION, longRun))</code></td>
-            <td>test-movement.spec.js:80</td>
+            <td>test-movement.spec.js:157-161</td>
             <td>tests/e2e/helpers/navigation.js:63</td>
             <td><code>static async waitForRoom(page, roomName, timeout)</code></td>
             <td>Polls activeRoomEvents.roomName until it equals 'reldens-forest' within ROOM_TRANSITION timeout</td>
@@ -48,7 +48,7 @@
         <tr>
             <td>Read current room name from client state</td>
             <td><code>Navigation.getCurrentRoomName(page)</code></td>
-            <td>test-movement.spec.js:85</td>
+            <td>test-movement.spec.js:162</td>
             <td>tests/e2e/helpers/navigation.js:73</td>
             <td><code>static async getCurrentRoomName(page)</code></td>
             <td>Returns window.reldens.activeRoomEvents.roomName</td>
@@ -56,8 +56,8 @@
         <tr>
             <td>Assert player started in the selected scene</td>
             <td><code>expect(currentRoom, 'Player must start in the selected scene reldens-forest').toBe('reldens-forest')</code></td>
-            <td>test-movement.spec.js:86</td>
-            <td>tests/e2e/test-movement.spec.js:86</td>
+            <td>test-movement.spec.js:163</td>
+            <td>tests/e2e/test-movement.spec.js:163</td>
             <td><code>expect(currentRoom, 'Player must start in the selected scene reldens-forest').toBe('reldens-forest');</code></td>
             <td>Core assertion - proves the scene selection on login is honored by the server</td>
         </tr>

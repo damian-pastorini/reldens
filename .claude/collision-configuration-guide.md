@@ -4,13 +4,13 @@
 
 Reldens uses the p2.js physics engine (server-authoritative). Every object that should physically exist in the world needs a physics body. Bodies fall into three types driven by the p2.js `Body.type` constant:
 
-- `1` — `DYNAMIC`: affected by forces, pushed by other DYNAMIC bodies. Default for all objects.
-- `2` — `STATIC`: immovable (`invMass = 0`). Cannot be pushed. Player stops at it.
-- `4` — `KINEMATIC`: scripted movement (not used by game objects).
+- `1` - `DYNAMIC`: affected by forces, pushed by other DYNAMIC bodies. Default for all objects.
+- `2` - `STATIC`: immovable (`invMass = 0`). Cannot be pushed. Player stops at it.
+- `4` - `KINEMATIC`: scripted movement (not used by game objects).
 
 ## Default Object Body Type
 
-`p2world.js` line 135:
+`p2world.js` line 137:
 ```javascript
 this.worldObjectBodyType = sc.get(options.worldConfig, 'worldObjectBodyType', Body.DYNAMIC)
 ```
@@ -19,12 +19,12 @@ All object bodies default to `DYNAMIC`. The player movement system reapplies vel
 
 ## How Objects Are Created With the Right Body Type
 
-`p2world.js` in `createWorldObject`:
+`p2world.js` in `createWorldObject` (line 634):
 ```javascript
 let collisionType = sc.get(roomObject, 'collisionType', this.worldObjectBodyType);
 ```
 
-The method reads `collisionType` directly off the `roomObject` instance. Because `BaseObject.mapPrivateParams` runs `Object.assign(this, privateParamsObject)`, any property in the `private_params` JSON column becomes an instance property — so the value set in the database is picked up here automatically.
+The method reads `collisionType` directly off the `roomObject` instance. Because `BaseObject.mapPrivateParams` runs `Object.assign(this, privateParamsObject)`, any property in the `private_params` JSON column becomes an instance property - so the value set in the database is picked up here automatically.
 
 ## Configuring Collision Per Object (Database)
 
@@ -36,9 +36,9 @@ UPDATE `objects` SET `private_params` = JSON_SET(`private_params`, '$.collisionT
 
 ### `collisionType` Values
 
-- `2` (STATIC) — NPC cannot be pushed or moved. Player stops when walking into it. Use for all interactive NPCs, rocks, chests, and any stationary interactable.
-- `1` (DYNAMIC) — default. NPC body is pushed by the player. Use for enemies that chase (they must move) and any object that should not block.
-- `4` (KINEMATIC) — scripted movement, not currently used for game objects.
+- `2` (STATIC) - NPC cannot be pushed or moved. Player stops when walking into it. Use for all interactive NPCs, rocks, chests, and any stationary interactable.
+- `1` (DYNAMIC) - default. NPC body is pushed by the player. Use for enemies that chase (they must move) and any object that should not block.
+- `4` (KINEMATIC) - scripted movement, not currently used for game objects.
 
 ### `hasState` Requirement for Respawnable STATIC Objects
 
@@ -48,25 +48,26 @@ When `collisionType:2` is used on a respawnable object (e.g. the mining rock) th
 {"collisionType":2,"hasState":true}
 ```
 
-Without `hasState`, the body is a plain `p2.Body` with no `bodyState`, and the Respawn plugin skips adding it to the room state entirely.
+Without `hasState`, the body is a plain `p2.Body` with no `bodyState`, and the Respawn plugin skips adding it to the room state entirely (`lib/respawn/server/plugin.js:119`).
 
 ## Which Objects Should Have collisionType:2
 
 ### Static NPCs and interactables
 
-All NPCs and interactables that are physically present in the world and should block the player:
+All NPCs and interactables that are physically present in the world and should block the player (ids from `migrations/production/reldens-sample-data-v4.0.0.sql`):
 
-- `npc_1` (Alfred, id=5) — town NPC
-- `npc_2` (Mamon/healer, id=8) — town NPC
-- `npc_3` (Gimly/merchant, id=10) — town NPC
-- `npc_4` (Barrik/weapons master, id=12) — town NPC
-- `npc_5` (Miles/quest NPC, id=13) — forest NPC
-- `rock_forest_1` (id=16) — mining rock, also needs `hasState:true`
-- `chest_forest_1` (id=18) — treasure chest
+- `npc_1` (Alfred, id=5) - town NPC
+- `npc_2` (Mamon/healer, id=8) - town NPC
+- `npc_3` (Gimly/merchant, id=10) - town NPC
+- `npc_4` (Barrik/weapons master, id=12) - town NPC
+- `npc_5` (Miles/quest NPC, id=13) - forest NPC
+- `rock_forest_1_area` (id=16) - mining rock respawn parent, also needs `hasState:true`
+- `fish_spawn_forest_1` (id=17) - fishing spot in the river
+- `chest_forest_1` (id=18) - treasure chest
 
 ### Enemies: DYNAMIC
 
-Enemy objects (class_type=4, childObjectType=4) use DYNAMIC bodies — they need to move and chase the player. Movement stopping on enemy contact comes from game logic: `collisions-manager.js playerHitObjectBegin` calls `roomObject.onHit()` on the enemy, which triggers the battle system and deactivates the player.
+Enemy objects (class_type=4, childObjectType=4) use DYNAMIC bodies - they need to move and chase the player. Movement stopping on enemy contact comes from game logic: `collisions-manager.js playerHitObjectBegin` calls `roomObject.onHit()` on the enemy, which triggers the battle system and deactivates the player.
 
 ### Doors and transition triggers: no body blocking
 
@@ -74,37 +75,39 @@ Doors (class_type=2, `runOnHit:true`) fire the hit event when the player overlap
 
 ### Fish spawn: tile layer boundary
 
-The fish spawn point (id=17, `fish_spawn_forest_1`) sits in the river. The river's physical boundary comes from the map tile collision layer. The object body itself is DYNAMIC and serves only as an interaction target.
+The fish spawn point (id=17, `fish_spawn_forest_1`) sits in the river. The river's physical boundary comes from the map tile collision layer. The object itself carries `collisionType:2`, so its body is STATIC and also acts as an interaction target the player cannot push.
 
 ## Room `customData` and the world options
 
 A room `customData` key does NOT reach the physics world by itself. Two separate paths exist and both are explicit:
 
 - `WorldConfig.mapWorldConfigValues(room, config)` (`lib/rooms/server/world-config.js`) reads a fixed list of keys from `room.customData` into `room.worldConfig` (`applyGravity`, `gravity`, `globalStiffness`, `globalRelaxation`, `useFixedWorldStep`, `timeStep`, `maxSubSteps`, `movementSpeed`, `allowPassWallsFromBelow`, `jumpSpeed`, `jumpTimeMs`, `tryClosestPath`, `onlyWalkable`, `wallsMassValue`, `playerMassValue`, `bulletsStopOnPlayer`, `bulletsStopOnObject`, `disableObjectsCollisionsOnChase`, `disableObjectsCollisionsOnReturn`, `collisionsGroupsByType`, `groupWallsVertically`, `groupWallsHorizontally`). It runs before the world is created and `worldConfig` is what `P2world` reads for those values.
-- Anything `P2world` reads from the options root (`allowChangePoints`, `usePathFinder`, `type`) has to be passed in the object built by `RoomScene.createWorld` (`lib/rooms/server/scene.js`). `usePathFinder` is passed there from `customData`; `allowChangePoints` and `type` are not passed by anything, so `allowChangePoints` is always true and `type` is always the default (nothing reads `world.type`).
+- Anything `P2world` reads from the options root (`allowChangePoints`, `usePathFinder`, `allowBodiesWithState`, `type`) has to be passed in the object built by `RoomScene.createWorld` (`lib/rooms/server/scene.js`). `usePathFinder` is passed there from `customData`; `allowChangePoints`, `allowBodiesWithState` and `type` are not passed by anything, so the first two are always true and `type` is always the default (nothing reads `world.type`).
 
 Adding a new per room physics key means adding it to one of those two places, otherwise it is silently ignored.
 
 ## Collision Groups and Masks
 
-These are set in `collisions-manager.js` and are NOT per-object configurable. They control WHICH objects detect collision with each other:
+The group bits are defined in `WorldConst.COLLISIONS` (`lib/world/constants.js`) and the masks are built in `WorldConfig.mapWorldConfigValues` (`lib/rooms/server/world-config.js`) as `collisionsGroupsByType`, which `P2world.createCollisionShape` reads. They control WHICH bodies detect collision with each other:
 
-- `PLAYER` (group=1, mask=127) — detects collision with everything
-- `OBJECT` (group=2, mask=31) — detects collision with players and other objects
-- `WALL` (group=4) — used for map tile boundaries only
-- `ENEMY` (group=8)
-- `NPC` (group=16)
+- `PLAYER` (group=1, mask=127) - detects collision with everything
+- `OBJECT` (group=2, mask=15) - detects players, objects, walls and player bullets
+- `WALL` (group=4, mask=127) - detects everything; used for map tile boundaries
+- `BULLET_PLAYER` (group=8, mask=63) - everything except drops
+- `BULLET_OBJECT` (group=16, mask=13) - players, walls and player bullets
+- `BULLET_OTHER` (group=32, mask=15) - players, objects, walls and player bullets
+- `DROP` (group=64, mask=5) - players and walls only
 
-All game objects use group=2 (OBJECT) by default. The `collisionGroup` property on the object instance can override this. OBJECT (2) is the correct group for NPCs — it includes players and other objects in its collision mask. WALL (4) has a different mask designed for map tile boundaries and excludes other NPC groups.
+The whole `collisionsGroupsByType` map can be overridden per room through `customData` or globally through the `server/rooms/world` config. All game objects use group=2 (OBJECT) by default. The `collisionGroup` property on the object instance can override this. OBJECT (2) is the correct group for NPCs, it includes players and other objects in its collision mask.
 
 ## `collisionType` Propagation for Respawnable Objects
 
-For respawn parent objects (class_type=7), the `private_params` JSON is inherited by child instances via `room-respawn.js`:
+For respawn parent objects (class_type=7), the `private_params` JSON is inherited by child instances via `room-respawn.js:128`:
 ```javascript
 let clonedObjProps = Object.assign({}, multipleObj.objProps);
 ```
 
-So setting `"collisionType":2` on the respawn parent row is sufficient — all spawned children will also have `collisionType=2` on their instances.
+So setting `"collisionType":2` on the respawn parent row is sufficient, all spawned children will also have `collisionType=2` on their instances.
 
 ## Constructor and DB Load Order
 

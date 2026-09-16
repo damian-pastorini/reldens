@@ -15,44 +15,41 @@ The camera follow system manages how the Phaser camera tracks the player charact
 **Camera Configuration Properties** (lines 88-98):
 ```javascript
 this.cameraRoundPixels = Boolean(
-    this.config.getWithoutLogs('client/general/engine/cameraRoundPixels', true)
+    this.config.getWithoutLogs('client/general/engine/cameraRoundPixels', false)
 );
 this.cameraInterpolationX = Number(
-    this.config.getWithoutLogs('client/general/engine/cameraInterpolationX', 0.04)
+    this.config.getWithoutLogs('client/general/engine/cameraInterpolationX', 0.02)
 );
 this.cameraInterpolationY = Number(
-    this.config.getWithoutLogs('client/general/engine/cameraInterpolationY', 0.04)
+    this.config.getWithoutLogs('client/general/engine/cameraInterpolationY', 0.02)
 );
 ```
 
-**Configuration Source**: These values come from the database `config` table with scope `client` and are loaded during game initialization.
+**Configuration Source**: These paths are not seeded by the migrations, so unless the rows are created manually the hardcoded fallbacks above are used. When the rows exist they are read from the `config` table with scope `client` and loaded during game initialization.
 
 ### 2. Camera Initialization Flow (PlayerEngine.create())
 
-**Execution Order** (lines 115-139):
+**Execution Order** (lines 117-141):
 
-1. **Player Sprite Creation** (line 126):
+1. **Player Sprite Creation** (line 128):
    - `this.addPlayer(this.playerId, addPlayerData)` creates the player sprite in the physics world
 
-2. **Initial Camera Follow** (line 127):
-   - `this.scene.cameras.main.startFollow(this.players[this.playerId])`
-   - Camera begins tracking the player sprite
-
-3. **Scene Visibility** (line 128):
+2. **Scene Visibility** (line 129):
    - `this.scene.scene.setVisible(true, this.roomName)` makes the scene visible
 
-4. **Camera Fade-In Effect** (line 129):
+3. **Camera Fade-In Effect** (line 130):
    - `this.scene.cameras.main.fadeFrom(this.fadeDuration)`
    - Starts fade-in animation (default 1000ms duration)
 
-5. **Physics World Configuration** (lines 130-132):
+4. **Physics World Configuration** (lines 131-133):
    - `fixedStep = false` enables variable physics timestep
    - Sets physics and camera bounds to match map dimensions
 
-6. **Camera Fade Complete Handler** (lines 134-138):
-   - Event listener triggered when fade animation completes
-   - Re-initializes camera follow with interpolation settings
-   - Sets lerp and roundPixels values
+5. **Scene Camera Flag** (line 134):
+   - `this.scene.cameras.main.setIsSceneCamera(true)`
+
+6. **Camera Follow** (lines 135-140):
+   - `this.scene.cameras.main.startFollow(...)` receives the player sprite plus the roundPixels and both interpolation values in a single call
 
 ### 3. Phaser Camera Follow API
 
@@ -79,7 +76,7 @@ camera.startFollow(target, roundPixels, lerpX, lerpY, offsetX, offsetY)
 
 **Purpose** (lib/game/client/game-engine.js:79-106): Handles responsive behavior when window resizes or fullscreen toggles.
 
-**Camera Lerp Adjustment** (lines 84-86, 101-104):
+**Camera Lerp Adjustment** (lines 83-86, 101-104):
 ```javascript
 if(player){
     activeScene.cameras.main.setLerp(player.cameraInterpolationX, player.cameraInterpolationY);
@@ -88,7 +85,7 @@ if(player){
 
 **Execution Flow**:
 1. **Before resize operations** (line 85): Sets lerp values
-2. **Timeout delay** (line 87): Waits for configured duration (default 500ms)
+2. **Timeout delay** (lines 87, 105): Waits for `client/general/gameEngine/updateGameSizeTimeOut` (code fallback `0`, seeded value `500`)
 3. **After resize operations** (line 103): Restores lerp values
 
 **Why Twice?**:
@@ -97,35 +94,39 @@ if(player){
 
 ### 5. Event-Driven Architecture
 
-**Scene Creation Event** (game-manager.js:248):
+**Scene Creation Event** (game-manager.js:249-257, inside `activateResponsiveBehavior()`):
 ```javascript
 this.events.on('reldens.afterSceneDynamicCreate', async () => {
+    if(!this.config.getWithoutLogs('client/ui/screen/responsive', true)){
+        return;
+    }
     this.gameEngine.updateGameSize(this);
+    this.gameDom.getWindow().addEventListener('resize', () => {
+        this.gameEngine.updateGameSize(this);
+    });
 });
 ```
 
 **Timing Sequence**:
 1. Scene created
-2. PlayerEngine.create() called - camera follow initialized
-3. Camera fade starts (1000ms)
-4. `reldens.afterSceneDynamicCreate` event fires
-5. `updateGameSize()` called - adjusts camera lerp
-6. Camera fade completes - lerp values set in event handler
+2. PlayerEngine.create() called - camera fade starts (1000ms), then camera follow initialized with lerp and roundPixels
+3. `reldens.afterSceneDynamicCreate` event fires
+4. `updateGameSize()` called - adjusts camera lerp
 
 ### 6. Configuration Values
 
 **Database Config Paths**:
-- `client/general/engine/cameraRoundPixels`: Boolean (default: true)
-- `client/general/engine/cameraInterpolationX`: Float (default: 0.04)
-- `client/general/engine/cameraInterpolationY`: Float (default: 0.04)
-- `client/players/animations/fadeDuration`: Integer milliseconds (default: 1000)
-- `client/general/gameEngine/updateGameSizeTimeOut`: Integer milliseconds (default: 500)
+- `client/general/engine/cameraRoundPixels`: Boolean (not seeded, code fallback: false)
+- `client/general/engine/cameraInterpolationX`: Float (not seeded, code fallback: 0.02)
+- `client/general/engine/cameraInterpolationY`: Float (not seeded, code fallback: 0.02)
+- `client/players/animations/fadeDuration`: Integer milliseconds (seeded: 1000)
+- `client/general/gameEngine/updateGameSizeTimeOut`: Integer milliseconds (seeded: 500, code fallback: 0)
 
 **Config Loading**: Values are loaded from database during server initialization and sent to client in the `START_GAME` message as part of `gameConfig`.
 
 ### 7. Physics World Integration
 
-**Fixed Step Setting** (player-engine.js:130):
+**Fixed Step Setting** (player-engine.js:131):
 ```javascript
 this.scene.physics.world.fixedStep = false;
 ```
@@ -134,7 +135,7 @@ this.scene.physics.world.fixedStep = false;
 - `false`: Variable timestep - physics updates based on actual frame time
 - `true`: Fixed timestep - physics updates at consistent intervals regardless of frame rate
 
-**Camera Bounds** (lines 131-132):
+**Camera Bounds** (lines 132-133):
 ```javascript
 this.scene.physics.world.setBounds(0, 0, this.scene.map.widthInPixels, this.scene.map.heightInPixels);
 this.scene.cameras.main.setBounds(0, 0, this.scene.map.widthInPixels, this.scene.map.heightInPixels);
@@ -144,7 +145,7 @@ Both physics world and camera are constrained to the map dimensions to prevent t
 
 ### 8. Responsive Behavior
 
-**Window Resize Listener** (game-manager.js:253-255):
+**Window Resize Listener** (game-manager.js:254-256):
 ```javascript
 this.gameDom.getWindow().addEventListener('resize', () => {
     this.gameEngine.updateGameSize(this);
@@ -164,14 +165,13 @@ this.gameDom.getWindow().addEventListener('resize', () => {
 3. Client receives config in START_GAME message
 4. PlayerEngine constructor reads config values
 5. PlayerEngine.create() initializes camera
-6. startFollow() begins tracking player
-7. Fade animation starts
-8. Camera fade completes - lerp values applied
-9. Window resize events - updateGameSize() maintains lerp
+6. Fade animation starts
+7. startFollow() begins tracking player with the roundPixels and lerp values
+8. Window resize events - updateGameSize() maintains lerp
 
 ## Key Technical Points
 
-1. **Camera initialization happens in two phases**: Initial `startFollow()` and post-fade configuration
+1. **Camera follow is configured in a single `startFollow()` call**, after the fade is started
 2. **Lerp values must be passed to `startFollow()` or set via `setLerp()`** for interpolation to work
 3. **Round pixels and lerp work together**: Round pixels prevents sub-pixel jitter, lerp provides smooth motion
 4. **Physics timestep affects camera smoothness**: Variable timestep can cause frame-to-frame variations

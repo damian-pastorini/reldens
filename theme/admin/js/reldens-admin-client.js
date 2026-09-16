@@ -28,6 +28,33 @@ class AdminClient
             // Reldens custom messages:
             mapsWizardImportDataError: 'Map could not be imported, missing generated map data.',
             mapsWizardImportError: 'Map could not be imported.',
+            mapsWizardMapsNotGeneratedError: 'Maps could not be generated, the generator returned no maps.',
+            mapsWizardGeneratorError: 'Maps could not be generated, the generator failed. Check the server logs.',
+            mapsWizardSelectedHandlerError: 'Maps could not be generated, the selected generation option is not '
+                +'compatible with the submitted data.',
+            mapsWizardMissingActionError: 'Please select a maps generation option.',
+            mapsWizardMissingDataError: 'Maps could not be generated, the generator configuration is missing.',
+            mapsWizardWrongJsonDataError: 'Maps could not be generated, the generator configuration is not valid '
+                +'JSON.',
+            mapsWizardMissingHandlerError: 'Maps could not be generated, the selected generation option is unknown.',
+            mapExists: 'Map could not be imported, a room with that map name already exists.',
+            mapJsonMissingTileset: 'Map could not be imported, the map JSON declares no tileset.',
+            mapJsonMissingTilesetImage: 'Map could not be imported, the map JSON tileset declares no image.',
+            mapTilesetImageNotFound: 'Map could not be imported, the tileset image file was not found.',
+            copyMapFilesError: 'Map could not be imported, the map files could not be copied.',
+            mergeMapFilesError: 'Map could not be imported, the merged map file could not be written.',
+            mapSaveError: 'Map could not be imported, the room record could not be saved.',
+            createRoomError: 'Map could not be imported, the room record was not created.',
+            mapsWizardMissingCompositeFileError: 'Maps could not be generated, the composite elements file was not '
+                +'found in the session folder and no sample composite could be resolved from the installed packages.',
+            mapsWizardMissingElementsFilesError: 'Maps could not be generated, the layer elements files or the '
+                +'tile sheet image were not found in the session folder and no sample could be resolved from '
+                +'the installed packages.',
+            mapJsonNotFound: 'Map could not be imported, the generated map JSON file was not found.',
+            mapJsonEmpty: 'Map could not be imported, the generated map JSON file is empty.',
+            mapJsonNotLoaded: 'Map could not be imported, the generated map JSON could not be loaded.',
+            changePointRoomMissing: 'Map could not be imported, one of the associated maps a change point points to '
+                +'was not generated, so the change points could not be created.',
             objectsImportMissingDataError: 'Object could not be imported, missing JSON files.',
             objectsImportDataError: 'Object could not be imported, missing data in JSON files.',
             objectsImportError: 'Object could not be imported.',

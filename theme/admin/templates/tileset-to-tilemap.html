@@ -65,10 +65,11 @@
                             <img class="tile-options-group-collapse-icon" src="/assets/admin/circle-chevron-up-solid-full.svg" alt="Toggle">
                         </div>
                         <div class="tile-option-cells-row">
-                            <div class="tile-option-cell tile-option-btn" data-option="groundTile" data-multi="false">
+                            <div class="tile-option-cell tile-option-btn" data-option="groundTiles" data-multi="true">
                                 <span class="tile-option-cell-label">Ground</span>
-                                <span class="tile-option-display tile-option-cell-val" data-option="groundTile"></span>
-                                <button type="button" class="tile-option-cell-clear tile-option-clear" data-option="groundTile">x</button>
+                                <span class="tile-option-display tile-option-cell-val" data-option="groundTiles"></span>
+                                <div class="tile-option-multi-values" data-multi-option="groundTiles"></div>
+                                <button type="button" class="tile-option-cell-clear tile-option-clear" data-option="groundTiles">x</button>
                             </div>
                         </div>
                         <div class="tile-option-cells-row">
@@ -79,7 +80,7 @@
                                 <button type="button" class="tile-option-cell-clear tile-option-clear" data-option="randomGroundTiles">x</button>
                             </div>
                         </div>
-                        <div class="tile-pick-status hidden" data-pick-for="groundTile"><span class="tile-pick-label"></span><button type="button" class="button button-sm tile-pick-cancel">Cancel</button></div>
+                        <div class="tile-pick-status hidden" data-pick-for="groundTiles"><span class="tile-pick-label"></span><button type="button" class="button button-sm tile-pick-cancel">Cancel</button></div>
                         <div class="tile-pick-status hidden" data-pick-for="randomGroundTiles"><span class="tile-pick-label"></span><button type="button" class="button button-sm tile-pick-cancel">Cancel</button></div>
                         <button type="button" class="button button-sm tile-options-group-clear-all" data-option="ground">Clear all</button>
                     </div>
@@ -137,6 +138,39 @@
                         <div class="tile-pick-status hidden" data-pick-for="borderCornersTiles"><span class="tile-pick-label"></span><button type="button" class="button button-sm tile-pick-cancel">Cancel</button></div>
                         <div class="tile-pick-status hidden" data-pick-for="borderTile"><span class="tile-pick-label"></span><button type="button" class="button button-sm tile-pick-cancel">Cancel</button></div>
                         <button type="button" class="button button-sm tile-options-group-clear-all" data-option="borders">Clear</button>
+                    </div>
+                    <div class="tile-options-group collapsed">
+                        <div class="tile-options-group-header">
+                            <span class="tile-options-group-label">Border opening end tiles</span>
+                            <img class="tile-options-group-collapse-icon" src="/assets/admin/circle-chevron-up-solid-full.svg" alt="Toggle">
+                        </div>
+                        <div class="tile-position-grid tile-position-grid-2x2" data-option="borderInnerCornersTiles">
+                            <div class="tile-position-cell" data-pos="top-left"><span class="pos-dir">T-L</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                            <div class="tile-position-cell" data-pos="top-right"><span class="pos-dir">T-R</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                            <div class="tile-position-cell" data-pos="bottom-left"><span class="pos-dir">B-L</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                            <div class="tile-position-cell" data-pos="bottom-right"><span class="pos-dir">B-R</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                        </div>
+                        <div class="tile-pick-status hidden" data-pick-for="borderInnerCornersTiles"><span class="tile-pick-label"></span><button type="button" class="button button-sm tile-pick-cancel">Cancel</button></div>
+                        <button type="button" class="button button-sm tile-options-group-clear-all" data-option="borderInnerCornersTiles">Clear all</button>
+                    </div>
+                    <div class="tile-options-group collapsed">
+                        <div class="tile-options-group-header">
+                            <span class="tile-options-group-label">Map Border Walls Tiles</span>
+                            <img class="tile-options-group-collapse-icon" src="/assets/admin/circle-chevron-up-solid-full.svg" alt="Toggle">
+                        </div>
+                        <div class="tile-position-grid tile-position-grid-3x3" data-option="mapBorderWallsTiles">
+                            <div class="tile-position-cell" data-pos="-1,-1"><span class="pos-dir">NW</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                            <div class="tile-position-cell" data-pos="-1,0"><span class="pos-dir">N</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                            <div class="tile-position-cell" data-pos="-1,1"><span class="pos-dir">NE</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                            <div class="tile-position-cell" data-pos="0,-1"><span class="pos-dir">W</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                            <div class="tile-position-cell" data-pos="0,0"><span class="pos-dir">C</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                            <div class="tile-position-cell" data-pos="0,1"><span class="pos-dir">E</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                            <div class="tile-position-cell" data-pos="1,-1"><span class="pos-dir">SW</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                            <div class="tile-position-cell" data-pos="1,0"><span class="pos-dir">S</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                            <div class="tile-position-cell" data-pos="1,1"><span class="pos-dir">SE</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                        </div>
+                        <div class="tile-pick-status hidden" data-pick-for="mapBorderWallsTiles"><span class="tile-pick-label"></span><button type="button" class="button button-sm tile-pick-cancel">Cancel</button></div>
+                        <button type="button" class="button button-sm tile-options-group-clear-all" data-option="mapBorderWallsTiles">Clear all</button>
                     </div>
                 </div>
             </div>
@@ -281,6 +315,7 @@
                     <button class="button button-sm button-dark toggle-all-btn" type="button">Highlight All</button>
                     <button class="button button-sm button-dark zoom-reset-btn" type="button">Reset Zoom</button>
                 </div>
+                <div class="canvas-tile-readout"></div>
                 <div class="canvas-scroll-area">
                     <canvas class="tileset-canvas"></canvas>
                 </div>
@@ -354,10 +389,11 @@
                                 <img class="tile-options-group-collapse-icon" src="/assets/admin/circle-chevron-up-solid-full.svg" alt="Toggle">
                             </div>
                             <div class="tile-option-cells-row">
-                                <div class="tile-option-cell tile-option-btn" data-option="groundTile" data-multi="false">
+                                <div class="tile-option-cell tile-option-btn" data-option="groundTiles" data-multi="true">
                                     <span class="tile-option-cell-label">Ground</span>
-                                    <span class="tile-option-display tile-option-cell-val" data-option="groundTile"></span>
-                                    <button type="button" class="tile-option-cell-clear tile-option-clear" data-option="groundTile">x</button>
+                                    <span class="tile-option-display tile-option-cell-val" data-option="groundTiles"></span>
+                                    <div class="tile-option-multi-values" data-multi-option="groundTiles"></div>
+                                    <button type="button" class="tile-option-cell-clear tile-option-clear" data-option="groundTiles">x</button>
                                 </div>
                             </div>
                             <div class="tile-option-cells-row">
@@ -368,7 +404,7 @@
                                     <button type="button" class="tile-option-cell-clear tile-option-clear" data-option="randomGroundTiles">x</button>
                                 </div>
                             </div>
-                            <div class="tile-pick-status hidden" data-pick-for="groundTile"><span class="tile-pick-label"></span><button type="button" class="button button-sm button-danger tile-pick-cancel">Cancel</button></div>
+                            <div class="tile-pick-status hidden" data-pick-for="groundTiles"><span class="tile-pick-label"></span><button type="button" class="button button-sm button-danger tile-pick-cancel">Cancel</button></div>
                             <div class="tile-pick-status hidden" data-pick-for="randomGroundTiles"><span class="tile-pick-label"></span><button type="button" class="button button-sm button-danger tile-pick-cancel">Cancel</button></div>
                             <button type="button" class="button button-sm button-danger tile-options-group-clear-all" data-option="ground">Clear all</button>
                         </div>
@@ -429,6 +465,39 @@
                             <div class="tile-pick-status hidden" data-pick-for="borderCornersTiles"><span class="tile-pick-label"></span><button type="button" class="button button-sm button-danger tile-pick-cancel">Cancel</button></div>
                             <div class="tile-pick-status hidden" data-pick-for="borderTile"><span class="tile-pick-label"></span><button type="button" class="button button-sm button-danger tile-pick-cancel">Cancel</button></div>
                             <button type="button" class="button button-sm button-danger tile-options-group-clear-all" data-option="borders">Clear</button>
+                        </div>
+                        <div class="tile-options-group collapsed">
+                            <div class="tile-options-group-header">
+                                <span class="tile-options-group-label">Border opening end tiles</span>
+                                <img class="tile-options-group-collapse-icon" src="/assets/admin/circle-chevron-up-solid-full.svg" alt="Toggle">
+                            </div>
+                            <div class="tile-position-grid tile-position-grid-2x2" data-option="borderInnerCornersTiles">
+                                <div class="tile-position-cell" data-pos="top-left"><span class="pos-dir">T-L</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                                <div class="tile-position-cell" data-pos="top-right"><span class="pos-dir">T-R</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                                <div class="tile-position-cell" data-pos="bottom-left"><span class="pos-dir">B-L</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                                <div class="tile-position-cell" data-pos="bottom-right"><span class="pos-dir">B-R</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                            </div>
+                            <div class="tile-pick-status hidden" data-pick-for="borderInnerCornersTiles"><span class="tile-pick-label"></span><button type="button" class="button button-sm button-danger tile-pick-cancel">Cancel</button></div>
+                            <button type="button" class="button button-sm button-danger tile-options-group-clear-all" data-option="borderInnerCornersTiles">Clear all</button>
+                        </div>
+                        <div class="tile-options-group collapsed">
+                            <div class="tile-options-group-header">
+                                <span class="tile-options-group-label">Map Border Walls Tiles</span>
+                                <img class="tile-options-group-collapse-icon" src="/assets/admin/circle-chevron-up-solid-full.svg" alt="Toggle">
+                            </div>
+                            <div class="tile-position-grid tile-position-grid-3x3" data-option="mapBorderWallsTiles">
+                                <div class="tile-position-cell" data-pos="-1,-1"><span class="pos-dir">NW</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                                <div class="tile-position-cell" data-pos="-1,0"><span class="pos-dir">N</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                                <div class="tile-position-cell" data-pos="-1,1"><span class="pos-dir">NE</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                                <div class="tile-position-cell" data-pos="0,-1"><span class="pos-dir">W</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                                <div class="tile-position-cell" data-pos="0,0"><span class="pos-dir">C</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                                <div class="tile-position-cell" data-pos="0,1"><span class="pos-dir">E</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                                <div class="tile-position-cell" data-pos="1,-1"><span class="pos-dir">SW</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                                <div class="tile-position-cell" data-pos="1,0"><span class="pos-dir">S</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                                <div class="tile-position-cell" data-pos="1,1"><span class="pos-dir">SE</span><span class="pos-val"></span><button class="tile-position-cell-clear">x</button></div>
+                            </div>
+                            <div class="tile-pick-status hidden" data-pick-for="mapBorderWallsTiles"><span class="tile-pick-label"></span><button type="button" class="button button-sm button-danger tile-pick-cancel">Cancel</button></div>
+                            <button type="button" class="button button-sm button-danger tile-options-group-clear-all" data-option="mapBorderWallsTiles">Clear all</button>
                         </div>
                     </div>
                 </div>
@@ -897,6 +966,7 @@
 <script src="/js/tileset-to-tilemap/canvas-renderer.js"></script>
 <script src="/js/tileset-to-tilemap/canvas-tile-editor.js"></script>
 <script src="/js/tileset-to-tilemap/canvas-interaction.js"></script>
+<script src="/js/tileset-to-tilemap/canvas-tile-readout.js"></script>
 <script src="/js/tileset-to-tilemap/spot-editor.js"></script>
 <script src="/js/tileset-to-tilemap/legend-renderer.js"></script>
 <script src="/js/tileset-to-tilemap/element-namer.js"></script>

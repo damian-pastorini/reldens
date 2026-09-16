@@ -36,6 +36,8 @@ class TimeConstants
     static PLAYER_REVIVE = 12000;
     // Enemy kill budget: player HP=81 at 1 HP/sec → 81s + 9s buffer — NOT scaled
     static ENEMY_KILL = 170000;
+    static TIMING_OBJECT_COMPLETE = 15000;
+
 
     static forLongRun(value, longRun)
     {

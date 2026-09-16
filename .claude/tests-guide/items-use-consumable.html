@@ -16,15 +16,15 @@
         <tr>
             <td>Verify e2eConsumableItemId is configured</td>
             <td><code>let itemId = gameConfig.e2eConsumableItemId || ''<br>expect(itemId, 'e2eConsumableItemId must be configured').toBeTruthy()</code></td>
-            <td>test-items.spec.js:84<br>test-items.spec.js:85</td>
-            <td>tests/e2e/test-items.spec.js:84</td>
+            <td>test-items.spec.js:115<br>test-items.spec.js:116</td>
+            <td>tests/e2e/test-items.spec.js:115</td>
             <td><code>let itemId = gameConfig.e2eConsumableItemId || ''</code></td>
             <td>Guards that gameConfig.e2eConsumableItemId is set before proceeding. Fails the test immediately if not configured.</td>
         </tr>
         <tr>
             <td>Log in as root player and wait for game to start</td>
             <td><code>await TestItems.loginRootPlayer(page, gameConfig, longRun)</code></td>
-            <td>test-items.spec.js:86</td>
+            <td>test-items.spec.js:117</td>
             <td>tests/e2e/helpers/login.js:77</td>
             <td><code>static async loginAndStartGame(page, username, password, playerName, longRun, skipUiSelectors = false, scene = null)</code></td>
             <td>Calls Login.loginAndStartGame with credentials root/root/ImRoot (or gameConfig overrides). Waits for game-engine-started body class and all HUD selectors to be visible.</td>
@@ -32,57 +32,57 @@
         <tr>
             <td>Click inventory open button and assert inventory UI is visible</td>
             <td><code>await page.click(Selectors.hud.inventoryOpen)<br>await expect(page.locator(Selectors.inventory.ui)).toBeVisible()</code></td>
-            <td>test-items.spec.js:88<br>test-items.spec.js:89</td>
-            <td>tests/e2e/selectors.js:82<br>tests/e2e/selectors.js:110</td>
+            <td>test-items.spec.js:119<br>test-items.spec.js:120</td>
+            <td>tests/e2e/selectors.js:83<br>tests/e2e/selectors.js:111</td>
             <td><code>inventoryOpen: '#inventory-open'<br>ui: '#inventory-ui'</code></td>
             <td>Clicks #inventory-open to open the inventory panel, then asserts #inventory-ui is visible before reading item quantity.</td>
         </tr>
         <tr>
             <td>Read consumable item quantity before use</td>
             <td><code>let qtyBefore = await page.locator(Selectors.inventory.itemQty(itemId)).textContent()</code></td>
-            <td>test-items.spec.js:90</td>
-            <td>tests/e2e/selectors.js:114</td>
-            <td><code>itemQty: (itemId) => '#item-qty-'+itemId</code></td>
-            <td>Reads the text content of #item-qty-{id} to capture the quantity before using the consumable item.</td>
+            <td>test-items.spec.js:121</td>
+            <td>tests/e2e/selectors.js:115</td>
+            <td><code>itemQty: (itemKey) =&gt; '.item-box:has(img[src$="/' + itemKey + '.png"]) [id^="item-qty-"]'</code></td>
+            <td>Reads the text content of the item quantity element inside the item box to capture the quantity before using the consumable item.</td>
         </tr>
         <tr>
             <td>Capture screenshot of consumable quantity before use</td>
             <td><code>await screenshots.capture(page, 'consumable-quantity-before')</code></td>
-            <td>test-items.spec.js:91</td>
-            <td>tests/e2e/helpers/screenshots.js:1</td>
-            <td><code>screenshots.capture(page, label)</code></td>
+            <td>test-items.spec.js:122</td>
+            <td>tests/e2e/base-e2e-test.js:57</td>
+            <td><code>async capture(page, name)</code></td>
             <td>Saves a screenshot labelled consumable-quantity-before to document the quantity before the use action.</td>
         </tr>
         <tr>
             <td>Click item image to open item detail box and wait for use button to appear</td>
             <td><code>await page.click(Selectors.inventory.itemImage(itemId))<br>await page.waitForTimeout(pauseMs)<br>let useButton = page.locator(Selectors.inventory.itemUse(itemId))<br>await expect(useButton).toBeVisible()</code></td>
-            <td>test-items.spec.js:92<br>test-items.spec.js:93<br>test-items.spec.js:94<br>test-items.spec.js:95</td>
-            <td>tests/e2e/selectors.js:113<br>tests/e2e/selectors.js:116</td>
-            <td><code>itemImage: (itemId) => '#item-'+itemId+' .image-container img'<br>itemUse: (itemId) => '#item-use-'+itemId</code></td>
-            <td>Clicks #item-{id} .image-container img to open the item detail. Waits pauseMs, then asserts the use button (#item-use-{id}) is visible.</td>
+            <td>test-items.spec.js:123<br>test-items.spec.js:124<br>test-items.spec.js:125<br>test-items.spec.js:126</td>
+            <td>tests/e2e/selectors.js:114<br>tests/e2e/selectors.js:117</td>
+            <td><code>itemImage: (itemKey) =&gt; '#inventory-items img[src$="/' + itemKey + '.png"]'<br>itemUse: (itemKey) =&gt; '.item-box:has(img[src$="/' + itemKey + '.png"]) [id^="item-use-"]'</code></td>
+            <td>Clicks the item image inside #inventory-items to open the item detail. Waits pauseMs, then asserts the use button inside the item box is visible.</td>
         </tr>
         <tr>
             <td>Wait an additional pause then click the use button</td>
             <td><code>await page.waitForTimeout(pauseMs)<br>await useButton.click()</code></td>
-            <td>test-items.spec.js:96<br>test-items.spec.js:97</td>
-            <td>tests/e2e/selectors.js:116</td>
-            <td><code>itemUse: (itemId) => '#item-use-'+itemId</code></td>
-            <td>Waits an extra pauseMs buffer before clicking #item-use-{id} to trigger the use/consume action on the server.</td>
+            <td>test-items.spec.js:127<br>test-items.spec.js:128</td>
+            <td>tests/e2e/selectors.js:117</td>
+            <td><code>itemUse: (itemKey) =&gt; '.item-box:has(img[src$="/' + itemKey + '.png"]) [id^="item-use-"]'</code></td>
+            <td>Waits an extra pauseMs buffer before clicking the use button to trigger the use/consume action on the server.</td>
         </tr>
         <tr>
             <td>Wait for server response and assert quantity decreased</td>
             <td><code>await page.waitForTimeout(1000 + pauseMs)<br>let qtyAfter = await page.locator(Selectors.inventory.itemQty(itemId)).textContent()<br>expect(qtyAfter).not.toBe(qtyBefore)</code></td>
-            <td>test-items.spec.js:98<br>test-items.spec.js:99<br>test-items.spec.js:100</td>
-            <td>tests/e2e/selectors.js:114</td>
-            <td><code>itemQty: (itemId) => '#item-qty-'+itemId</code></td>
-            <td>Waits 1000ms plus pauseMs for the server to process the use action and update the inventory. Reads #item-qty-{id} and asserts it differs from qtyBefore, confirming the quantity decreased.</td>
+            <td>test-items.spec.js:129<br>test-items.spec.js:130<br>test-items.spec.js:131</td>
+            <td>tests/e2e/selectors.js:115</td>
+            <td><code>itemQty: (itemKey) =&gt; '.item-box:has(img[src$="/' + itemKey + '.png"]) [id^="item-qty-"]'</code></td>
+            <td>Waits 1000ms plus pauseMs for the server to process the use action and update the inventory. Reads the item quantity element and asserts it differs from qtyBefore, confirming the quantity decreased.</td>
         </tr>
         <tr>
             <td>Capture screenshot of consumable quantity after use</td>
             <td><code>await screenshots.capture(page, 'consumable-quantity-after')</code></td>
-            <td>test-items.spec.js:101</td>
-            <td>tests/e2e/helpers/screenshots.js:1</td>
-            <td><code>screenshots.capture(page, label)</code></td>
+            <td>test-items.spec.js:132</td>
+            <td>tests/e2e/base-e2e-test.js:57</td>
+            <td><code>async capture(page, name)</code></td>
             <td>Saves a screenshot labelled consumable-quantity-after to visually confirm the reduced quantity in the inventory.</td>
         </tr>
     </tbody>

@@ -64,7 +64,7 @@ Values shown are from the door example above.
 
 - `asset_key`: texture to draw, shared across objects; falls back to `client_key`. Door: `door_house_3`.
 - `frameStart` / `frameEnd`: first/last spritesheet frame; `0..3` = 4 frames. Door: `0` / `3`.
-- `repeat`: loop count; `0` = play once, `-1` = loop forever (the default when unset). Door: `0`.
+- `repeat`: loop count; `0` = play once, `-1` = loop forever. `AnimationEngine` falls back to `-1` when the value is not a number, but `AnimationObject` already defaults it to `0` server side, so a DB animation object plays once unless you set it. Door: `0`.
 - `autoStart`: play immediately on creation (needs more than 1 frame). Door: `false`.
 - `hideOnComplete`: Phaser hides the sprite when the animation finishes. Door: `false`.
 - `restartTime`: milliseconds after finishing to reset to the first frame and pause. Door: `2000`.
@@ -123,12 +123,13 @@ Examples on a 32px tile:
 ## Code map (for maintainers)
 
 - Key resolution: `animation-engine.js:80` `this.asset_key = sc.get(props, 'asset_key', props.key)`.
-- Instance registry (keyed by `client_key`): `animation-engine.js:222`
+- Instance registry (keyed by `client_key`): `animation-engine.js:233`
   `currentScene.objectsAnimations[this.key] = this`.
 - Hit routing (by `client_key`): `lib/objects/client/plugin.js:290-293`.
 - Texture load (by `asset_key`, one per assets row): `lib/game/client/scene-preloader.js:198`.
-- Position math: server `lib/world/server/p2world.js:640-643`; client `calculateAnimPosition`
-  in `animation-engine.js` and sprite placement around `:211-214`.
+- Position math: server `lib/world/server/p2world.js:617-618` (`xFix`/`yFix` applied in
+  `createWorldObject`); client `calculateAnimPosition` in `animation-engine.js:143` and sprite
+  placement around `:222-225`.
 - Server params: defaults in `lib/objects/server/object/type/animation-object.js:33-43`;
   `client_key`/param mapping in `lib/objects/server/object/type/base-object.js`.
 - `client_key` is also the lookup key for life bars, battle and targeting

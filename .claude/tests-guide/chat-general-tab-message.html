@@ -16,7 +16,7 @@
         <tr>
             <td>Login and start game (root player)</td>
             <td><code>Login.loginAndStartGame(page, username, password, playerName, longRun)</code></td>
-            <td>test-chat.spec.js:54</td>
+            <td>test-chat.spec.js:56</td>
             <td>tests/e2e/helpers/login.js:77</td>
             <td><code>static async loginAndStartGame(...)</code></td>
             <td>Uses <code>e2eUsername</code>/<code>e2ePassword</code>/<code>e2ePlayerName</code> (defaults: root/root/ImRoot)</td>
@@ -24,7 +24,7 @@
         <tr>
             <td>Click chat open button</td>
             <td><code>page.click(Selectors.hud.chatOpen)</code></td>
-            <td>test-chat.spec.js:57</td>
+            <td>test-chat.spec.js:59</td>
             <td>theme/default/assets/features/chat/templates/ui-chat.html:8</td>
             <td><code>&lt;div class="open-ui-button" id="chat-open"&gt;</code></td>
             <td>Toggles the chat panel; removes <code>hidden</code> class from <code>#chat-ui</code></td>
@@ -32,7 +32,7 @@
         <tr>
             <td>Assert chat input is visible</td>
             <td><code>expect(page.locator(Selectors.chat.input)).toBeVisible()</code></td>
-            <td>test-chat.spec.js:59</td>
+            <td>test-chat.spec.js:61</td>
             <td>theme/default/assets/features/chat/templates/ui-chat.html:5</td>
             <td><code>&lt;input id="chat-input" type="text" placeholder="Enter message"/&gt;</code></td>
             <td>Confirms chat panel opened</td>
@@ -40,7 +40,7 @@
         <tr>
             <td>Click input and type test message</td>
             <td><code>page.locator(Selectors.chat.input).click()</code><br><code>page.locator(Selectors.chat.input).pressSequentially(testMessage, { delay: 80 })</code> (longRun) or <code>.fill(testMessage)</code></td>
-            <td>test-chat.spec.js:61 (via typeChatMessage at lines 18-24)</td>
+            <td>test-chat.spec.js:63 (via typeChatMessage at lines 18-24)</td>
             <td>theme/default/assets/features/chat/templates/ui-chat.html:5</td>
             <td><code>&lt;input id="chat-input" type="text" placeholder="Enter message"/&gt;</code></td>
             <td><code>testMessage = 'e2e-global-test'</code>; no prefix so sent to active room (General tab)</td>
@@ -48,7 +48,7 @@
         <tr>
             <td>Click send button</td>
             <td><code>page.click(Selectors.chat.send)</code></td>
-            <td>test-chat.spec.js:64</td>
+            <td>test-chat.spec.js:66</td>
             <td>theme/default/assets/features/chat/templates/ui-chat.html:6</td>
             <td><code>&lt;input id="chat-send" type="button" value="Send"/&gt;</code></td>
             <td>Submits message to server via WebSocket</td>
@@ -56,7 +56,7 @@
         <tr>
             <td>Wait for server round-trip</td>
             <td><code>page.waitForTimeout(2000 + pauseMs)</code></td>
-            <td>test-chat.spec.js:65</td>
+            <td>test-chat.spec.js:67</td>
             <td>-</td>
             <td>-</td>
             <td>2-second pause to allow: client &rarr; server &rarr; broadcast &rarr; client render</td>
@@ -64,7 +64,7 @@
         <tr>
             <td>Assert message appears in General tab</td>
             <td><code>expect(page.locator(Selectors.chat.tabContentGeneral)).toContainText(testMessage, { timeout: ... })</code></td>
-            <td>test-chat.spec.js:66-69</td>
+            <td>test-chat.spec.js:68-71</td>
             <td>lib/chat/constants.js:13</td>
             <td><code>MESSAGE: 1</code></td>
             <td><code>.tab-content-1</code> is the General tab (TYPES.MESSAGE = 1); Playwright retries until text appears</td>

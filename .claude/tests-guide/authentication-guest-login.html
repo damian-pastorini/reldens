@@ -98,8 +98,8 @@
             <td>Wait for game engine to start</td>
             <td><code>page.waitForSelector(Selectors.body.gameEngineStarted, { timeout: ... })</code></td>
             <td>test-authentication.spec.js:124-126</td>
-            <td>lib/game/client/game-manager.js:127</td>
-            <td><code>this.startHandler = new ClientStartHandler(this);</code></td>
+            <td>lib/game/client/game-manager.js:347</td>
+            <td><code>this.gameDom.getElement(GameConst.SELECTORS.BODY).classList.add(GameConst.CLASSES.GAME_ENGINE_STARTED);</code></td>
             <td><code>Selectors.body.gameEngineStarted = 'body.game-engine-started'</code>; set after Phaser boots</td>
         </tr>
         <tr>

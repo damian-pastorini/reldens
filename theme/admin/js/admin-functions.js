@@ -294,10 +294,11 @@ class AdminFunctions
             let imageUrl = modalElement.getAttribute('data-modal-zoom-image');
             dialog.appendChild(this.createZoomImageHeader(imageUrl, overlay));
         }
-        let body = document.createElement('div');
-        body.classList.add('modal-body');
         let modalContent = this.createModalContent(modalElement);
         modalContent.classList.add('clickable');
+        window.adminMapGridToggle.appendHeaderTo(dialog, modalElement, modalContent);
+        let body = document.createElement('div');
+        body.classList.add('modal-body');
         body.appendChild(modalContent);
         dialog.appendChild(body);
         overlay.appendChild(backdrop);

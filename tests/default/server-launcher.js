@@ -10,6 +10,7 @@
 const { createRequire } = require('module');
 const { FileHandler } = require('@reldens/server-utils');
 const { Logger, sc } = require('@reldens/utils');
+const { DatabaseEnvVarsExporter } = require('../database-env-vars-exporter');
 
 class ServerLauncher
 {
@@ -29,6 +30,7 @@ class ServerLauncher
         }
         let port = Number(sc.get(config, 'port', 8080)) + 100;
         this.applyEnvironment(port);
+        DatabaseEnvVarsExporter.apply(config);
         let serverRequire = createRequire(serverPath+'/package.json');
         let serverConfig = {projectRoot: serverPath};
         if(config.themeName){

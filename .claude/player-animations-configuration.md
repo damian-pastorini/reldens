@@ -3,7 +3,7 @@
 ## Overview
 
 Player sprite animations and size are configured via the `config` table (database-driven).
-There is no dedicated entity for animations — all values are stored as config rows.
+There is no dedicated entity for animations - all values are stored as config rows.
 
 ## Player Size
 
@@ -11,8 +11,8 @@ Controls the spritesheet frame dimensions used when loading the player sprite.
 
 **Scope**: `client`
 
-- `client/players/size/width` — frame width in pixels (default: `52`)
-- `client/players/size/height` — frame height in pixels (default: `71`)
+- `client/players/size/width` - frame width in pixels (default: `52`)
+- `client/players/size/height` - frame height in pixels (default: `71`)
 
 These are read in `lib/game/client/scene-preloader.js` at preload time and used for:
 - Spritesheet loading via Phaser `load.spritesheet()`
@@ -27,7 +27,7 @@ Frame ranges define which spritesheet frames correspond to each movement directi
 ### Default frames (fallback for all class paths)
 
 **Config key**: `client/players/animations/defaultFrames`
-**Type**: JSON
+**Type**: stored as one number row (type 2) per leaf, e.g. `client/players/animations/defaultFrames/left/start`; ConfigManager rebuilds them into the nested object below
 
 ```json
 {
@@ -41,7 +41,7 @@ Frame ranges define which spritesheet frames correspond to each movement directi
 ### Per-class-path frame overrides
 
 **Config key**: `client/players/animations/{avatarKey}Frames`
-**Type**: JSON
+**Type**: same shape as `defaultFrames`, one number row per leaf
 
 Where `avatarKey` is the `key` field of the `skills_class_path` record for that class path.
 
@@ -75,11 +75,11 @@ player state data.
 
 ## Other animation config keys
 
-- `client/players/animations/fallbackImage` — sprite filename to use when no class-path sprite is found (default: `GameConst.IMAGE_PLAYER_BASE`)
-- `client/players/animations/basedOnPress` — if `true`, animation plays on key press; if `false`, plays based on position delta
-- `client/players/animations/collideWorldBounds` — whether player physics body collides with world bounds
-- `client/players/animations/fadeDuration` — fade duration in ms for player death/respawn transitions
-- `client/players/animations/diagonalHorizontal` — if `true`, horizontal animation plays during diagonal movement
+- `client/players/animations/fallbackImage` - sprite filename to use when no class-path sprite is found (default: `GameConst.IMAGE_PLAYER_BASE`)
+- `client/players/animations/basedOnPress` - if `true`, animation plays on key press; if `false`, plays based on position delta
+- `client/players/animations/collideWorldBounds` - whether player physics body collides with world bounds
+- `client/players/animations/fadeDuration` - duration in ms of the camera `fadeFrom()` played when the player scene is created (default: `1000`)
+- `client/players/animations/diagonalHorizontal` - if `true`, horizontal animation plays during diagonal movement
 
 ## Sprite loading flow
 

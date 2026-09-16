@@ -1,21 +1,51 @@
 class TilesetCanvasMarkers
 {
-    static POSITIONAL_CONFIG = [
-        { key: 'surroundingTiles',       label: 'S',  color: '#ff9c5b' },
-        { key: 'corners',                label: 'C',  color: '#5bbbff' },
-        { key: 'bordersTiles',           label: 'T',  color: '#c05bff' },
-        { key: 'borderCornersTiles',     label: 'K',  color: '#ff5bc0' },
-        { key: 'innerWallsTiles',        label: 'IW', color: '#ff5b5b' },
-        { key: 'innerWallsCornerTiles',  label: 'IC', color: '#ff9090' },
-        { key: 'outerWallsTiles',        label: 'OW', color: '#5bffff' },
-        { key: 'outerWallsCornerTiles',  label: 'OC', color: '#90ffff' },
-    ];
-
     constructor(renderer)
     {
         this.renderer = renderer;
         this.animationColor = '#ffd75b';
         this.animationActiveColor = '#ff8cff';
+        this.positionalConfig = [
+            { key: 'surroundingTiles',       label: 'S',  color: '#ff9c5b' },
+            { key: 'corners',                label: 'C',  color: '#5bbbff' },
+            { key: 'bordersTiles',           label: 'T',  color: '#c05bff' },
+            { key: 'borderCornersTiles',     label: 'K',  color: '#ff5bc0' },
+            { key: 'borderInnerCornersTiles', label: 'KI', color: '#ff8cd8' },
+            { key: 'mapBorderWallsTiles',    label: 'MW', color: '#ffcc5b' },
+            { key: 'innerWallsTiles',        label: 'IW', color: '#ff5b5b' },
+            { key: 'innerWallsCornerTiles',  label: 'IC', color: '#ff9090' },
+            { key: 'outerWallsTiles',        label: 'OW', color: '#5bffff' },
+            { key: 'outerWallsCornerTiles',  label: 'OC', color: '#90ffff' }
+        ];
+        this.positionLabels = {
+            '-1,-1': 'NW', '-1,0': 'N', '-1,1': 'NE',
+            '0,-1': 'W', '0,0': 'C', '0,1': 'E',
+            '1,-1': 'SW', '1,0': 'S', '1,1': 'SE',
+            'top-left': 'TL', 'top-right': 'TR',
+            'bottom-left': 'BL', 'bottom-right': 'BR',
+            'top': 'T', 'right': 'R', 'bottom': 'B', 'left': 'L'
+        };
+    }
+
+    isOptionGroupOpen(optionKey)
+    {
+        let grids = document.querySelectorAll('.tile-position-grid[data-option="'+optionKey+'"]');
+        for(let grid of grids){
+            let group = grid.closest('.tile-options-group');
+            if(group && !group.classList.contains('collapsed')){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    resolvePositionLabel(groupLabel, posKey)
+    {
+        let positionLabel = this.positionLabels[posKey];
+        if(!positionLabel){
+            return groupLabel;
+        }
+        return positionLabel;
     }
 
     draw(canvasCtx, tileset, tilesetIndex)
@@ -138,22 +168,48 @@ class TilesetCanvasMarkers
 
     addOptions(markers, tileset, tileOptions)
     {
-        if(null !== tileOptions.groundTile && undefined !== tileOptions.groundTile){
+        if(SharedUtils.isSet(tileOptions.groundTile)){
             this.pushFlat(markers, tileset, tileOptions.groundTile, 'G', '#5bff8c');
         }
-        if(null !== tileOptions.pathTile && undefined !== tileOptions.pathTile){
+        this.addFlatList(markers, tileset, tileOptions.groundTiles, 'G', '#5bff8c');
+        if(SharedUtils.isSet(tileOptions.pathTile)){
             this.pushFlat(markers, tileset, tileOptions.pathTile, 'P', '#5b8cff');
         }
-        if(null !== tileOptions.borderTile && undefined !== tileOptions.borderTile){
+        if(SharedUtils.isSet(tileOptions.borderTile)){
             this.pushFlat(markers, tileset, tileOptions.borderTile, 'B', '#aaaacc');
         }
-        if(tileOptions.randomGroundTiles && tileOptions.randomGroundTiles.length){
-            for(let fi of tileOptions.randomGroundTiles){
-                this.pushFlat(markers, tileset, fi, 'R', '#a5ff8c');
+        this.addFlatList(markers, tileset, tileOptions.randomGroundTiles, 'R', '#a5ff8c');
+        for(let positionalEntry of this.positionalConfig){
+            if(!this.isOptionGroupOpen(positionalEntry.key)){
+                continue;
             }
+            this.addPositional(
+                markers,
+                tileset,
+                tileOptions[positionalEntry.key] ? tileOptions[positionalEntry.key] : {},
+                positionalEntry.label,
+                positionalEntry.color
+            );
         }
-        for(let { key, label, color } of TilesetCanvasMarkers.POSITIONAL_CONFIG){
-            this.addPositional(markers, tileset, tileOptions[key] ? tileOptions[key] : {}, label, color);
+    }
+
+    addFlatList(markers, tileset, flatList, label, color)
+    {
+        if(!flatList || !flatList.length){
+            return;
+        }
+        for(let flatIndex of flatList){
+            this.pushFlat(markers, tileset, flatIndex, label, color);
+        }
+    }
+
+    addGlobalList(markers, tileset, entriesList, currentTilesetIndex, label, color)
+    {
+        if(!entriesList || !entriesList.length){
+            return;
+        }
+        for(let entry of entriesList){
+            this.addGlobalSimple(markers, tileset, entry, currentTilesetIndex, label, color);
         }
     }
 
@@ -171,25 +227,32 @@ class TilesetCanvasMarkers
         let positions = Object.keys(posObj);
         for(let posKey of positions){
             let fi = posObj[posKey];
-            if(null === fi || undefined === fi){
+            if(!SharedUtils.isSet(fi)){
                 continue;
             }
-            this.pushFlat(markers, tileset, fi, label, color);
+            this.pushFlat(markers, tileset, fi, this.resolvePositionLabel(label, posKey), color);
         }
     }
 
     addGlobalOptions(markers, tileset, globalOptions, currentTilesetIndex)
     {
         this.addGlobalSimple(markers, tileset, globalOptions.groundTile, currentTilesetIndex, 'G', '#5bff8c');
+        this.addGlobalList(markers, tileset, globalOptions.groundTiles, currentTilesetIndex, 'G', '#5bff8c');
         this.addGlobalSimple(markers, tileset, globalOptions.pathTile, currentTilesetIndex, 'P', '#5b8cff');
         this.addGlobalSimple(markers, tileset, globalOptions.borderTile, currentTilesetIndex, 'B', '#aaaacc');
-        if(globalOptions.randomGroundTiles && globalOptions.randomGroundTiles.length){
-            for(let entry of globalOptions.randomGroundTiles){
-                this.addGlobalSimple(markers, tileset, entry, currentTilesetIndex, 'R', '#a5ff8c');
+        this.addGlobalList(markers, tileset, globalOptions.randomGroundTiles, currentTilesetIndex, 'R', '#a5ff8c');
+        for(let positionalEntry of this.positionalConfig){
+            if(!this.isOptionGroupOpen(positionalEntry.key)){
+                continue;
             }
-        }
-        for(let { key, label, color } of TilesetCanvasMarkers.POSITIONAL_CONFIG){
-            this.addGlobalPositional(markers, tileset, globalOptions[key] ? globalOptions[key] : {}, currentTilesetIndex, label, color);
+            this.addGlobalPositional(
+                markers,
+                tileset,
+                globalOptions[positionalEntry.key] ? globalOptions[positionalEntry.key] : {},
+                currentTilesetIndex,
+                positionalEntry.label,
+                positionalEntry.color
+            );
         }
     }
 
@@ -198,7 +261,7 @@ class TilesetCanvasMarkers
         if(!entry){
             return false;
         }
-        if(undefined !== entry.tilesetKey){
+        if('undefined' !== typeof entry.tilesetKey){
             return entry.tilesetKey === tileset.filename;
         }
         return entry.tilesetIndex === currentTilesetIndex;

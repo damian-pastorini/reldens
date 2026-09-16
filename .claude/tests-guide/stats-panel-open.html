@@ -16,7 +16,7 @@
         <tr>
             <td>Log in as root player and wait for game to fully load</td>
             <td><code>await TestStats.loginRootPlayer(page, gameConfig, longRun)</code></td>
-            <td>test-stats.spec.js:74</td>
+            <td>test-stats.spec.js:109</td>
             <td>tests/e2e/helpers/login.js:77</td>
             <td><code>static async loginAndStartGame(page, username, password, playerName, longRun, skipUiSelectors = false, scene = null)</code></td>
             <td>Calls Login.loginAndStartGame with credentials from gameConfig (defaults: root/root/ImRoot). Waits for all HUD selectors to be visible before returning.</td>
@@ -24,15 +24,15 @@
         <tr>
             <td>Read pause duration from TimeConstants</td>
             <td><code>let pauseMs = TimeConstants.pauseMs(longRun)</code></td>
-            <td>test-stats.spec.js:75</td>
-            <td>tests/e2e/helpers/time-constants.js:1</td>
+            <td>test-stats.spec.js:110</td>
+            <td>tests/e2e/helpers/time-constants.js:45</td>
             <td><code>static pauseMs(longRun)</code></td>
             <td>Returns a longer pause duration when longRun mode is active to accommodate slower environments.</td>
         </tr>
         <tr>
             <td>Click the stats open button in the HUD</td>
             <td><code>await page.click(Selectors.hud.playerStatsOpen)</code></td>
-            <td>test-stats.spec.js:76</td>
+            <td>test-stats.spec.js:111</td>
             <td>tests/e2e/selectors.js:79</td>
             <td><code>playerStatsOpen: '#player-stats-open'</code></td>
             <td>Triggers the stats panel to open. The selector targets the button element with id player-stats-open.</td>
@@ -40,40 +40,40 @@
         <tr>
             <td>Wait for the configured pause duration</td>
             <td><code>await page.waitForTimeout(pauseMs)</code></td>
-            <td>test-stats.spec.js:77</td>
-            <td>tests/e2e/helpers/time-constants.js:1</td>
+            <td>test-stats.spec.js:112</td>
+            <td>tests/e2e/helpers/time-constants.js:45</td>
             <td><code>static pauseMs(longRun)</code></td>
             <td>Gives the UI time to animate and render stat values before asserting visibility.</td>
         </tr>
         <tr>
             <td>Assert the stats UI container is visible</td>
             <td><code>await expect(page.locator(Selectors.hud.playerStatsUi)).toBeVisible()</code></td>
-            <td>test-stats.spec.js:78</td>
-            <td>tests/e2e/selectors.js:80</td>
+            <td>test-stats.spec.js:113</td>
+            <td>tests/e2e/selectors.js:81</td>
             <td><code>playerStatsUi: '#player-stats-ui'</code></td>
             <td>Confirms the stats panel element with id player-stats-ui is visible in the DOM after the button click.</td>
         </tr>
         <tr>
             <td>Collect all stat value text contents from the panel</td>
             <td><code>let statValues = await page.locator(Selectors.stats.value).allTextContents()</code></td>
-            <td>test-stats.spec.js:79</td>
-            <td>tests/e2e/selectors.js:128</td>
+            <td>test-stats.spec.js:114</td>
+            <td>tests/e2e/selectors.js:129</td>
             <td><code>value: '.stat-value'</code></td>
             <td>Queries all elements matching .stat-value and returns their text. At least one stat must be present.</td>
         </tr>
         <tr>
             <td>Assert at least one stat value is rendered</td>
             <td><code>expect(statValues.length).toBeGreaterThan(0)</code></td>
-            <td>test-stats.spec.js:80</td>
-            <td>tests/e2e/selectors.js:128</td>
+            <td>test-stats.spec.js:115</td>
+            <td>tests/e2e/selectors.js:129</td>
             <td><code>value: '.stat-value'</code></td>
             <td>Verifies the stats panel is populated - the array of .stat-value text contents must not be empty.</td>
         </tr>
         <tr>
             <td>Capture screenshot of the open stats panel</td>
             <td><code>await screenshots.capture(page, 'stats-panel-open')</code></td>
-            <td>test-stats.spec.js:81</td>
-            <td>tests/e2e/test-stats.spec.js:81</td>
+            <td>test-stats.spec.js:116</td>
+            <td>tests/e2e/test-stats.spec.js:116</td>
             <td><code>await screenshots.capture(page, 'stats-panel-open')</code></td>
             <td>Saves a screenshot named stats-panel-open for visual evidence of the panel state.</td>
         </tr>

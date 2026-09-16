@@ -66,8 +66,8 @@ class TilesetTileOptionsPickHandler
         }
         let globalOptions = this.binder.app.globalTileOptions;
         let entry = {tilesetKey, flatIndex};
-        if('randomGroundTiles' === optionKey){
-            this.toggleGlobalArrayOption(globalOptions, 'randomGroundTiles', entry);
+        if(-1 !== this.binder.arrayOptionKeys.indexOf(optionKey)){
+            this.toggleGlobalArrayOption(globalOptions, optionKey, entry);
             return;
         }
         if(null !== posKey){
@@ -129,8 +129,8 @@ class TilesetTileOptionsPickHandler
             tileset.tileOptions = SharedUtils.buildDefaultTileOptions();
         }
         let tileOpts = tileset.tileOptions;
-        if('randomGroundTiles' === optionKey){
-            this.toggleArrayOption(tileOpts, 'randomGroundTiles', flatIndex);
+        if(-1 !== this.binder.arrayOptionKeys.indexOf(optionKey)){
+            this.toggleArrayOption(tileOpts, optionKey, flatIndex);
             return;
         }
         if(null !== posKey){
