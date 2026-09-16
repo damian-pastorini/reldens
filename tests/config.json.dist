@@ -30,6 +30,8 @@
     "e2eChestKey": "chest_forest_1",
     "e2eMiningRockKey": "rock_forest_1",
     "e2eMiningRockRewardItemId": "ore",
+    "e2eFishSpawnKey": "fish_spawn_forest_1",
+    "e2eFishSpawnRewardItemId": "fish",
     "e2eReturnRoom": "reldens-forest",
     "e2eNpcKey": "people_town_1",
     "e2eTraderKey": "merchant_1",
