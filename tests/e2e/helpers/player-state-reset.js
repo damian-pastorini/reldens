@@ -10,6 +10,7 @@
 
 const { Logger } = require('@reldens/utils');
 const { TestDataSetup } = require('./test-data-setup');
+const { RoomEnemiesReset } = require('./room-enemies-reset');
 
 class PlayerStateReset
 {
@@ -129,6 +130,7 @@ class PlayerStateReset
                 if(config){
                     await TestDataSetup.ensureRequiredItems(serverManager.dataServer, config);
                 }
+                await RoomEnemiesReset.restoreAll(serverManager.roomsManager);
                 response.json({ ok: true });
             } catch(error){
                 Logger.error('[player-state-reset] Reset failed: '+error.message);
