@@ -5,7 +5,7 @@ Reldens is an MMORPG Platform (v4.0.0-beta.39.9) built on Node.js for developers
 - **Server**: Colyseus 0.18 (authoritative game server, WebSockets via `@colyseus/ws-transport`)
 - **Client**: Phaser 4 (game engine), Parcel 2 (bundler)
 - **Database**: `@reldens/storage` with Knex as the default driver (bundled), plus the optional Kysely, Drizzle, ObjectionJS, MikroORM and Prisma drivers when their packages are installed in the project
-- **Node Version**: >= 20.0.0
+- **Node Version**: >= 22.12.0
 
 ## @reldens Packages
 
