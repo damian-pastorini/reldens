@@ -34,7 +34,7 @@
         <tr>
             <td>Open chat on both pages</td>
             <td><code>page.click(Selectors.hud.chatOpen)</code><br><code>secondPage.click(Selectors.hud.chatOpen)</code></td>
-            <td>test-chat.spec.js:45-46 (via openChatOnBothPages at line 161)</td>
+            <td>test-chat.spec.js:46-48 (via openChatOnBothPages at line 163)</td>
             <td>theme/default/assets/features/chat/templates/ui-chat.html:8</td>
             <td><code>&lt;div class="open-ui-button" id="chat-open"&gt;</code></td>
             <td>Both players must have chat open; Player B needs it to display incoming message</td>
@@ -42,7 +42,7 @@
         <tr>
             <td>Player A types message in chat input</td>
             <td>(via typeChatMessage) <code>page.locator(Selectors.chat.input).click()</code> + fill/pressSequentially <code>testMessage</code></td>
-            <td>test-chat.spec.js:162</td>
+            <td>test-chat.spec.js:164</td>
             <td>theme/default/assets/features/chat/templates/ui-chat.html:5</td>
             <td><code>&lt;input id="chat-input" type="text" placeholder="Enter message"/&gt;</code></td>
             <td><code>testMessage = 'e2e-cross-player-test'</code>; no prefix, sent to active room (General tab)</td>
@@ -50,7 +50,7 @@
         <tr>
             <td>Player A presses Enter to send</td>
             <td><code>page.locator(Selectors.chat.input).press('Enter')</code></td>
-            <td>test-chat.spec.js:164</td>
+            <td>test-chat.spec.js:166</td>
             <td>theme/default/assets/features/chat/templates/ui-chat.html:5</td>
             <td><code>&lt;input id="chat-input" type="text" placeholder="Enter message"/&gt;</code></td>
             <td>No prefix so message sent to active room via <code>activeRoomEvents.send()</code></td>
@@ -58,7 +58,7 @@
         <tr>
             <td>Wait for server round-trip</td>
             <td><code>page.waitForTimeout(2000 + pauseMs)</code></td>
-            <td>test-chat.spec.js:165</td>
+            <td>test-chat.spec.js:167</td>
             <td>-</td>
             <td>-</td>
             <td>2-second pause for: P1 client &rarr; server &rarr; broadcast &rarr; P2 client</td>
@@ -66,7 +66,7 @@
         <tr>
             <td>Assert Player B sees message in General tab</td>
             <td><code>expect(secondPage.locator(Selectors.chat.tabContentGeneral)).toContainText(testMessage, { timeout: ... })</code></td>
-            <td>test-chat.spec.js:166</td>
+            <td>test-chat.spec.js:168</td>
             <td>lib/chat/constants.js:13</td>
             <td><code>MESSAGE: 1</code></td>
             <td>Asserted on <code>secondPage</code> (Player B); <code>.tab-content-1</code> is the General tab; Playwright retries until text appears</td>

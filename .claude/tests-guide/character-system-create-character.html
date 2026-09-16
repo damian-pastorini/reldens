@@ -65,8 +65,8 @@
             <td>Wait for game-started body class</td>
             <td><code>page.waitForSelector(Selectors.body.gameStarted, { timeout: ... })</code></td>
             <td>test-character-system.spec.js:56-59</td>
-            <td>lib/game/client/game-manager.js:127</td>
-            <td><code>this.startHandler = new ClientStartHandler(this);</code></td>
+            <td>lib/game/client/game-manager.js:151</td>
+            <td><code>body.classList.add(GameConst.CLASSES.GAME_STARTED);</code></td>
             <td><code>Selectors.body.gameStarted = 'body.game-started'</code>; set by client after joining scene</td>
         </tr>
         <tr>
