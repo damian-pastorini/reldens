@@ -43,6 +43,13 @@ class RunTests
             process.env.LONG_RUN = '1';
         }
         process.env.RELDENS_E2E_PORT = String(port);
+        let maxFailuresArg = process.argv.find(a => a.startsWith('--max-failures='));
+        if(maxFailuresArg){
+            process.env.RELDENS_E2E_MAX_FAILURES = maxFailuresArg.slice('--max-failures='.length);
+        }
+        if(process.argv.includes('--all') || 'true' === process.env.npm_config_all){
+            process.env.RELDENS_E2E_MAX_FAILURES = '0';
+        }
         let filterArg = process.argv.find(a => a.startsWith('--filter='));
         let filterValue = filterArg ? filterArg.slice('--filter='.length) : (process.env.npm_config_filter || null);
         let playwrightArgs = ['playwright', 'test', '--config=tests/e2e/playwright.config.js'];

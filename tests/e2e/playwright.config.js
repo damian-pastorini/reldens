@@ -16,6 +16,12 @@ let longRun = '1' === process.env.LONG_RUN;
 let envPort = process.env.RELDENS_E2E_PORT || null;
 let baseUrl = envPort ? 'http://localhost:'+envPort : (testConfig.baseUrl || 'http://localhost:8080');
 let testResultsDir = FileHandler.joinPaths(process.cwd(), 'test-results');
+let launchOptions = { slowMo: longRun ? 400 : 0, headless: true };
+let maxFailures = Number(process.env.RELDENS_E2E_MAX_FAILURES || '1');
+let browserExecutablePath = process.env.PLAYWRIGHT_BROWSER_EXECUTABLE || '';
+if(browserExecutablePath){
+    launchOptions.executablePath = browserExecutablePath;
+}
 
 module.exports = defineConfig({
     globalSetup: './collect-game-data.js',
@@ -23,7 +29,7 @@ module.exports = defineConfig({
     testDir: '.',
     outputDir: testResultsDir,
     workers: 1,
-    maxFailures: 0,
+    maxFailures: maxFailures,
     retries: 0,
     timeout: TimeConstants.forLongRun(60000, longRun),
     reporter: [['./reporters/test-progress-reporter.js']],
@@ -35,6 +41,6 @@ module.exports = defineConfig({
         viewport: { width: 1920, height: 1080 },
         video: { mode: 'on', size: { width: 1920, height: 1080 } },
         screenshot: 'only-on-failure',
-        launchOptions: { slowMo: longRun ? 400 : 0, headless: true },
+        launchOptions: launchOptions,
     },
 });
