@@ -1,9 +1,9 @@
 ## Project Overview
 
-Reldens is an MMORPG Platform (v4.0.0-beta.39) built on Node.js for developers to create multiplayer games.
+Reldens is an MMORPG Platform (v4.0.0-beta.39.9) built on Node.js for developers to create multiplayer games.
 
 - **Server**: Colyseus 0.18 (authoritative game server, WebSockets via `@colyseus/ws-transport`)
-- **Client**: Phaser 3 (game engine), Parcel 2 (bundler)
+- **Client**: Phaser 4 (game engine), Parcel 2 (bundler)
 - **Database**: `@reldens/storage` with Knex as the default driver (bundled), plus the optional Kysely, Drizzle, ObjectionJS, MikroORM and Prisma drivers when their packages are installed in the project
 - **Node Version**: >= 20.0.0
 
@@ -51,11 +51,11 @@ Manages items, equipment slots, and consumables. Integrated via `lib/inventory/s
 
 ### `@reldens/modifiers`
 
-Applies stat modifiers to players and NPCs. Used in `lib/actions/server/plugin.js` and `lib/actions/server/battle.js` to calculate changes to HP, attack, defense, and other stats during combat or skill activation.
+Applies stat modifiers to players and NPCs. Used in `lib/actions/server/storage/modifiers-generator.js` and `lib/inventory/server/items-factory.js` to calculate changes to HP, attack, defense, and other stats during combat or skill activation.
 
 ### `@reldens/skills`
 
-Manages class paths, skill trees, and skill casting. Integrated in `lib/actions/server/plugin.js` - when a player joins a scene, their skills are loaded via `lib/actions/server/skills-class-path-loader.js` and attached to the player object. Skills fire events before and after casting that other modules can hook into.
+Manages class paths, skill trees, and skill casting. Integrated in `lib/actions/server/plugin.js` - when a player joins a scene, their skills are loaded via `lib/actions/server/models-manager.js` (which uses `lib/actions/server/skills-class-path-loader.js`) and attached to the player object. Skills fire events before and after casting that other modules can hook into.
 
 ## Architecture
 
@@ -68,7 +68,7 @@ Each feature lives under `lib/{feature}/` and contains:
 - `constants.js` - shared constants between client and server
 - `schemas/` - Colyseus state schemas (where applicable)
 
-The 24 modules: Game, Rooms, World, Config, Features, Actions, Inventory, Respawn, Rewards, Scores, Teams, Users, Chat, Audio, Prediction, Admin, Firebase, Ads, Import, Objects, Snippets, Bundlers, Quests.
+The 24 modules: Game, Rooms, World, Config, Features, Actions, Inventory, Respawn, Rewards, Scores, Teams, Users, Chat, Audio, Prediction, Admin, Firebase, Ads, Import, Objects, Snippets, Bundlers, Quests, Sync.
 
 See `.claude/feature-modules.md` for details on each module.
 
@@ -80,7 +80,7 @@ See `.claude/feature-modules.md` for details on each module.
 
 ## Server Startup Flow
 
-1. `theme/plugins/server-plugin.js` instantiates `ServerManager` with a config object.
+1. `theme/index.js.dist` (copied into the project as `index.js`) instantiates `ServerManager` with a config object, passing `theme/plugins/server-plugin.js` as `customPlugin`.
 2. `ServerManager` constructor loads `.env` via `dotenv`, creates `ThemeManager` and `AppServerFactory`, sets up the `Installer`.
 3. `createServers()` creates the Express/HTTP app server. If not yet installed, it launches the web installer and halts.
 4. Once installed, `start()` runs in sequence:
@@ -111,7 +111,7 @@ Each scene room extends `RoomScene extends RoomLogin` (`lib/rooms/server/scene.j
 - `onCreate` - initializes physics world (`lib/world/server/p2world.js`), collision handlers (`lib/world/server/collisions-manager.js`), loads objects via `lib/objects/server/manager.js`
 - `onAuth` - validates the joining player (inherited from `RoomLogin`)
 - `onJoin` - creates the server-side player object, loads stats/skills/inventory, adds body to physics world
-- `onMessage` - routes incoming messages to registered action handlers
+- `handleReceivedMessage` - routes incoming messages to registered action handlers (bound to `onMessage('*')` in `RoomLogin.onCreate`)
 - `onLeave` - removes player body from world, persists state
 - `onDispose` - cleans up the physics world and all object instances
 
@@ -198,8 +198,9 @@ See `.claude/commands-reference.md` for the full command reference.
 ## Reference Documentation
 
 - `.claude/commands-reference.md` - All CLI commands
+- `.claude/e2e-testing-guide.md` - E2E suite: commands, its own database, app bundle and browser requirements
 - `.claude/environment-variables.md` - All `RELDENS_*` variables
-- `.claude/feature-modules.md` - All 23 feature modules
+- `.claude/feature-modules.md` - All feature modules
 - `.claude/storage-architecture.md` - Entity management deep dive
 - `.claude/entities-reference.md` - All 60+ entity types
 - `.claude/admin-panel-guide.md` - Admin panel sections and entity overrides

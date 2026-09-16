@@ -73,18 +73,6 @@ Please follow the Installation Guide: https://www.reldens.com/documentation/inst
 
 Quick start: create the project skeleton with `npx reldens createApp`, run `npm start` and open the web installer at `http://localhost:8080`.
 
-### Storage drivers
-
-Reldens stores everything through `@reldens/storage`. Knex (MySQL/MariaDB through mysql2) is the default driver and works out of the box. The optional drivers are listed in the installer only when their packages are installed in your project:
-
-```bash
-npm install kysely
-npm install drizzle-orm
-npm install objection@3.1.5
-npm install @mikro-orm/core @mikro-orm/mysql
-npm install prisma @prisma/client @prisma/adapter-mariadb
-```
-
 ---
 
 ## [Demo](https://dev.reldens.com/)

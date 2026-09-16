@@ -31,12 +31,12 @@ The SceneDataFilter system prevents Colyseus buffer overflow by analyzing room d
 ### How It Works
 
 1. **No Hardcoded Fields**: Filter dynamically detects which fields are identical across objects
-2. **Grouping**: Objects are grouped by a shared field for comparison
+2. **Grouping**: Objects are grouped by a shared field for comparison (the value is resolved by `GroupValueResolver`, `lib/game/group-value-resolver.js`, shared by the server filter and the client merger)
    - `preloadAssets`: Groups by `asset_type` (filters `asset_type === 'spritesheet'`)
    - `objectsAnimationsData`: Groups by `asset_key` field, falls back to `key` field if `asset_key` not present
 3. **Detection**: For each group with 2+ objects, detects properties with identical values across ALL objects
 4. **Extraction**: Identical properties extracted to defaults object, keyed by grouping field value
-5. **Grouping Field Preservation**: The grouping field (e.g., `asset_key`) is removed from defaults and kept in each object so client can look up defaults
+5. **Grouping Field Preservation**: The grouping field (e.g., `asset_key`) and the `key` field are removed from the detected identical properties and kept in each object so client can look up defaults
 
 ### Optimization Logic
 
@@ -80,7 +80,7 @@ The SceneDataFilter system prevents Colyseus buffer overflow by analyzing room d
 - 200 enemies of type A, 200 enemies of type B
 - Each group has identical shared properties
 - Result: `animationsDefaults: {'enemy_forest_1': {...}, 'enemy_forest_2': {...}}`
-- Optimized objects have `asset_key` field added by filter for grouping
+- The `asset_key` field comes from the object data built by the server, the filter only groups by it and never adds properties
 - Optimized objects contain only unique properties (x, y) + `asset_key` reference
 
 ### preloadAssets Filtering
@@ -127,59 +127,49 @@ Merges extracted defaults back into objects after receiving optimized data from 
 
 ### When It Runs
 
+`RoomEvents.checkAndCreateScene()` (`lib/game/client/room-events.js` line 150) runs it over the parsed scene data:
+
 ```javascript
-// Only runs if roomData has animationsDefaults property
-if(sc.hasOwn(roomData, 'animationsDefaults')){
-    AnimationsDefaultsMerger.mergeDefaults(roomData);
-}
+this.roomData = AnimationsDefaultsMerger.mergeDefaults(sc.toJson(this.room.state.sceneData));
 ```
 
-**Important**: Server adds `animationsDefaults: {}` (even if empty) when filter is active. This triggers the merger to run.
+**Important**: `mergeDefaults` returns the room data unchanged when `animationsDefaults` or `objectsAnimationsData` are not present. Server adds `animationsDefaults: {}` (even if empty) when filter is active.
 
 ### Merge Logic
 
 ```javascript
 for(let key of objectKeys){
     let objectData = objectsAnimationsData[key];
-
-    // Only process objects with asset_key from server (optimized objects)
-    if(!sc.hasOwn(objectData, 'asset_key')){
-        continue;  // Keep non-optimized objects untouched
+    let groupValue = GroupValueResolver.resolve(objectData, 'asset_key');
+    if('' === groupValue || !sc.hasOwn(animationsDefaults, groupValue)){
+        continue;
     }
-
-    // Set key to map index for optimized objects
-    objectData.key = key;
-
-    // Lookup and merge defaults
-    let assetKey = objectData.asset_key;
-    if(sc.hasOwn(animationsDefaults, assetKey)){
-        let defaults = animationsDefaults[assetKey];
-        objectsAnimationsData[key] = Object.assign({}, defaults, objectData);
-    }
+    objectsAnimationsData[key] = Object.assign({}, animationsDefaults[groupValue], objectData);
 }
+delete roomData.animationsDefaults;
 ```
 
 ### Key Behavior
 
-**Optimized Objects** (have `asset_key` from server):
-1. `objectData.key` set to map index (e.g., 'enemy_1')
-2. Defaults looked up using `asset_key` value
-3. Merged: `Object.assign({}, defaults, objectData)` - object properties override defaults
-4. Result has all properties needed for rendering
+**Optimized Objects** (their group value has a defaults entry):
+1. Group value resolved with `GroupValueResolver.resolve(objectData, 'asset_key')`: the `asset_key` value, or the `key` value when there is no `asset_key`
+2. Merged: `Object.assign({}, defaults, objectData)` - object properties override defaults
+3. Result has all properties needed for rendering
 
-**Non-Optimized Objects** (no `asset_key` from server):
+**Non-Optimized Objects** (no defaults entry for their group value):
 1. Skipped entirely - no modifications
-2. `objectData.key` keeps original value (asset reference like 'people_town_1')
-3. All original properties preserved as-is
-4. Ready for rendering without merge
+2. All original properties preserved as-is
+3. Ready for rendering without merge
+
+After the loop the merger deletes `animationsDefaults` from the room data.
 
 ### Why This Matters
 
-The merger MUST check for `asset_key` presence before modifying objects because:
-- **Objects without `asset_key`**: Were NOT optimized by server, have complete data, use `key` field as asset reference
-- **Objects with `asset_key`**: Were optimized by server, have partial data, need defaults merged, use `asset_key` as asset reference
+The merger resolves the group value the same way the server filter does, so both sides group and restore by the exact same value:
+- **Objects without a defaults entry**: Were NOT optimized by server, have complete data, use `asset_key` or `key` field as asset reference
+- **Objects with a defaults entry**: Were optimized by server, have partial data, need defaults merged
 
-If merger modifies non-optimized objects (changes their `key` field), it breaks asset loading and dialog functionality.
+The merger never rewrites the `key` field: the filter never extracts `key` to the defaults, so every object keeps its own value.
 
 ---
 
@@ -227,9 +217,10 @@ objectsAnimationsData: {
 // AnimationsDefaultsMerger.mergeDefaults() runs
 for(let key of ['ground-collisions444', 'house-collisions-over-player535']){
     let objectData = objectsAnimationsData[key];
-
-    // Check for asset_key
-    if(!sc.hasOwn(objectData, 'asset_key')){
+    // resolved group value: 'door_house_1' / 'people_town_1' (from the key field)
+    let groupValue = GroupValueResolver.resolve(objectData, 'asset_key');
+    // animationsDefaults is empty, so there is no entry for the group value:
+    if('' === groupValue || !sc.hasOwn(animationsDefaults, groupValue)){
         continue;  // SKIP - no modifications, keep original data
     }
 }
@@ -305,27 +296,20 @@ for(let key of ['enemy_1', 'enemy_2', ...]){
     let objectData = objectsAnimationsData[key];
     // {asset_key: 'enemy_forest_1', x: 100, y: 200}
 
-    // Check for asset_key
-    if(!sc.hasOwn(objectData, 'asset_key')){
-        continue;  // NOT executed - asset_key exists
+    // Resolve the group value
+    let groupValue = GroupValueResolver.resolve(objectData, 'asset_key');  // 'enemy_forest_1'
+    if('' === groupValue || !sc.hasOwn(animationsDefaults, groupValue)){
+        continue;  // NOT executed - the defaults entry exists
     }
 
-    // Set key to map index
-    objectData.key = key;  // 'enemy_1'
-
-    // Lookup defaults
-    let assetKey = objectData.asset_key;  // 'enemy_forest_1'
-    let defaults = animationsDefaults['enemy_forest_1'];
-
     // Merge
-    objectsAnimationsData[key] = Object.assign({}, defaults, objectData);
+    objectsAnimationsData[key] = Object.assign({}, animationsDefaults[groupValue], objectData);
     // Result: {
     //   type: 'npc',
     //   enabled: true,
     //   targetName: 'enemy-pve',
     //   layerName: 'enemies-layer',
     //   asset_key: 'enemy_forest_1',
-    //   key: 'enemy_1',
     //   x: 100,
     //   y: 200
     // }
@@ -367,15 +351,15 @@ for(let key of ['enemy_1', 'enemy_2', ...]){
 
 ### sendAll Flag
 
-**Path**: `server/rooms/data/sendAll`
-**Default**: `false` (filtering enabled)
+**Path**: `server/rooms/data/sendAll` (config table: scope `server`, path `rooms/data/sendAll`)
+**Default**: `false` (filtering enabled), the path is not seeded, the filter falls back to the default
 
 ```sql
-INSERT INTO config (path, value, scope) VALUES
-('server/rooms/data/sendAll', 'false', 'server');
+REPLACE INTO `config` (`scope`, `path`, `value`, `type`) VALUES
+('server', 'rooms/data/sendAll', '0', 3);
 ```
 
-**Values**:
+**Values** (boolean config type, stored as `0` / `1`):
 - `false`: Enables optimization (recommended for production)
 - `true`: Sends all data unfiltered (debugging only)
 
@@ -399,7 +383,10 @@ class CustomSceneDataProcessor {
     }
 }
 
-config.set('server/customClasses/sceneDataProcessor', new CustomSceneDataProcessor());
+// on the ServerManager config object (theme/plugins/server-plugin.js):
+customClasses: {
+    sceneDataProcessor: new CustomSceneDataProcessor()
+}
 ```
 
 ---
@@ -411,28 +398,25 @@ config.set('server/customClasses/sceneDataProcessor', new CustomSceneDataProcess
 **Purpose**: Reference to shared defaults, used for grouping and lookup
 
 **When Present**:
-- Server added it during optimization (object was grouped with others)
-- Indicates object has partial data, needs defaults merged
+- Set on the object data built by the server (the filter never adds it)
+- Used as the grouping value, so the object may have partial data and need defaults merged
 - Client uses it to lookup defaults and as asset reference
 
 **When NOT Present**:
-- Object was not optimized (unique properties, single-object group)
-- Object has complete data, no merge needed
-- Client uses `key` field as asset reference
+- Client uses `key` field as asset reference, and the merger falls back to `key` as grouping value
 
 ### key Field
 
 **Two Different Roles**:
 
-1. **Non-Optimized Objects**: Asset reference (e.g., 'people_town_1')
+1. **Objects without `asset_key`**: Asset reference (e.g., 'people_town_1')
    - Original value from server
    - AnimationEngine fallback: `sc.get(props, 'asset_key', props.key)`
-   - Used to load sprite asset
+   - Used to load sprite asset and as grouping value fallback
 
-2. **Optimized Objects**: Map index (e.g., 'enemy_1')
-   - Set by client merger to map key
+2. **Objects with `asset_key`**: Object identifier
+   - Original value from server, never rewritten by the client merger
    - Not used for asset loading (asset_key used instead)
-   - Identifies object instance
 
 ### Grouping Fields
 
@@ -475,42 +459,42 @@ let defaults = animationsDefaults[assetKey];  // Found!
 
 ### Server Integration
 
-**RoomScene** (`lib/rooms/server/scene.js`):
+**RoomScene** (`lib/rooms/server/scene.js` lines 109-111):
 ```javascript
-this.sceneDataFilter = new SceneDataFilter({configManager: this.configManager});
+this.sceneDataFilter = new SceneDataFilter({config: this.config});
+// room data is saved on the state:
+let roomState = new State(this.roomData, this.sceneDataFilter);
 ```
 
-**State** (`lib/rooms/server/state.js`):
+**State** (`lib/rooms/server/state.js` lines 25-55):
 ```javascript
-constructor(data){
-    this.sceneDataFilter = sc.get(data, 'sceneDataFilter', false);
+constructor(roomData, sceneDataFilter){
+    this.roomData = roomData || {};
+    this.sceneDataFilter = sceneDataFilter || false;
+    this.mapRoomData();
 }
 
 mapRoomData(roomData){
-    if(false === this.sceneDataFilter){
-        return roomData;
+    if(!roomData){
+        roomData = this.roomData;
     }
-    return this.sceneDataFilter.filterRoomData(roomData);
+    if(this.sceneDataFilter && this.sceneDataFilter.filterRoomData){
+        roomData = this.sceneDataFilter.filterRoomData(roomData, false);
+    }
+    this.sceneData = sc.toJsonString(roomData);
 }
 ```
 
 ### Client Integration
 
-**RoomEvents** (`lib/game/client/room-events.js`):
+**RoomEvents** (`lib/game/client/room-events.js` lines 149-151, in `checkAndCreateScene()`):
 ```javascript
-this.room.onMessage('*', (message) => {
-    if('sceneData' === message.act){
-        let roomData = message.scene;
-        // Merge defaults if present
-        if(sc.hasOwn(roomData, 'animationsDefaults')){
-            AnimationsDefaultsMerger.mergeDefaults(roomData);
-        }
-        // Process room data...
-    }
-});
+if(0 === Object.keys(this.roomData).length){
+    this.roomData = AnimationsDefaultsMerger.mergeDefaults(sc.toJson(this.room.state.sceneData));
+}
 ```
 
-**AnimationEngine** (`lib/game/client/animation-engine.js`):
+**AnimationEngine** (`lib/objects/client/animation-engine.js` line 80):
 ```javascript
 constructor(props){
     // Uses asset_key if present, falls back to key
@@ -540,14 +524,14 @@ constructor(props){
 
 Add logging in `State.mapRoomData()`:
 ```javascript
-this.sceneData = JSON.stringify(roomData);
+this.sceneData = sc.toJsonString(roomData);
 Logger.info('sceneData size: ' + this.sceneData.length + ' bytes');
 ```
 
 ### Verify Buffer Overflow Resolved
 
 ```bash
-npm run bots -- --room=reldens-bots-forest --bots=50
+node theme/plugins/bot.js --numClients 50 --room reldens-bots-forest --endpoint http://localhost:8080
 ```
 
 Expected: No buffer overflow warnings in server console.
@@ -566,9 +550,10 @@ Expected: No buffer overflow warnings in server console.
 
 ### Disable Filtering
 
-Set in database or config:
-```javascript
-config.set('server/rooms/data/sendAll', true);
+Set in the database (the value is read once, when the room creates the filter):
+```sql
+REPLACE INTO `config` (`scope`, `path`, `value`, `type`) VALUES
+('server', 'rooms/data/sendAll', '1', 3);
 ```
 
 Sends all database fields to client for debugging. Compare filtered vs unfiltered data to identify issues.
@@ -583,7 +568,7 @@ class DebugSceneDataProcessor {
         Logger.info('animationsDefaults entries:', Object.keys(filtered.animationsDefaults || {}).length);
 
         // Log which objects were optimized
-        for(let key in filtered.objectsAnimationsData){
+        for(let key of Object.keys(filtered.objectsAnimationsData || {})){
             let obj = filtered.objectsAnimationsData[key];
             if(sc.hasOwn(obj, 'asset_key')){
                 Logger.info('Optimized object:', key, 'asset_key:', obj.asset_key);
@@ -605,7 +590,7 @@ class DebugSceneDataProcessor {
 
 **NPC Dialogs Not Working**:
 - Verify non-optimized objects keep original `key` field value
-- Check AnimationsDefaultsMerger is NOT modifying objects without `asset_key`
+- Check AnimationsDefaultsMerger is NOT modifying objects without a defaults entry for their group value
 - Verify dialog system uses correct object reference
 
 **Buffer Overflow Still Occurring**:
@@ -620,8 +605,9 @@ class DebugSceneDataProcessor {
 
 - **Server Filter**: `lib/rooms/server/scene-data-filter.js`
 - **Client Merger**: `lib/game/client/animations-defaults-merger.js`
+- **Group Value Resolver**: `lib/game/group-value-resolver.js`
 - **State Integration**: `lib/rooms/server/state.js`
 - **Scene Integration**: `lib/rooms/server/scene.js`
 - **Room Events**: `lib/game/client/room-events.js`
-- **Animation Engine**: `lib/game/client/animation-engine.js`
+- **Animation Engine**: `lib/objects/client/animation-engine.js`
 - **Colyseus Schema**: https://docs.colyseus.io/state/schema/

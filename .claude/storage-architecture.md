@@ -15,7 +15,7 @@ Complete reference for the storage system and entity management.
 - `kysely` (optional, requires `kysely`): type safe query builder, same query builder base as Knex
 - `drizzle` (optional, requires `drizzle-orm`): same query builder base as Knex, models emit the Drizzle column builders
 - `objection-js` (optional, requires `objection@3.1.5`): Knex based ORM with `withGraphFetched` relations, kept for existing projects
-- `mikro-orm` (optional, requires `@mikro-orm/core` plus `@mikro-orm/mysql` or `@mikro-orm/mongodb`): entity schemas, the only driver with MongoDB support
+- `mikro-orm` (optional, requires `@mikro-orm/core` and `@mikro-orm/mysql`, plus `@mikro-orm/mongodb` when the client is MongoDB): entity schemas, the only driver with MongoDB support
 - `prisma` (optional, requires `prisma`, `@prisma/client` and a driver adapter, `@prisma/adapter-mariadb` by default): schema first, requires the Prisma client generation before the entities generation
 - Configured via `RELDENS_STORAGE_DRIVER` in `.env`; the optional drivers are only usable when their packages resolve from the project `node_modules`
 

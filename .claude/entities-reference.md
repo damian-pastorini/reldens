@@ -68,6 +68,9 @@ Entities are located in `generated-entities/entities/` and are auto-generated fr
 - players-state
 - players-stats
 
+## Quests
+- quests-progress
+
 ## Respawn System
 - respawn
 

@@ -28,10 +28,11 @@ Single global file. Not scoped under any class.
 The goal is a strong enough baseline that most component and container files have NO element overrides - only layout and structural differences.
 
 ### Heading styles
-- `h1` - white, `--font-size-2xl`, `margin-top: 0`
+- `h1` - white, `--font-size-2xl`, `margin: 0`
 - `h2` - white, `--font-size-xl`, `margin-top: 0`
 - `h3` - white, `--font-size-lg`, `margin-top: 0`
-- `h4` - `--color-grey`, `--font-size-base` (labels/toggles, not page headings)
+- `h4` - `--color-grey`, `--font-size-md` (labels/toggles, not page headings)
+- `h5` - `--color-grey`, `--font-size-base`
 
 ### Link styles
 `color: var(--color-blue); text-decoration: none` / `:hover { color: var(--color-white) }`
@@ -42,7 +43,7 @@ The goal is a strong enough baseline that most component and container files hav
 Input types: `input[type="text"]`, `input[type="number"]`, `input[type="password"]`, `input[type="file"]`, `input[type="color"]`
 
 ### Label styles
-`color: var(--color-grey); font-weight: 600; margin-bottom: 0.3rem`
+`color: var(--color-grey); font-weight: 600`
 
 ---
 
@@ -54,13 +55,12 @@ Each component file has ONE main class that wraps all child styles.
 - `component-input-box.css` -> `.input-box`
 - `component-modal.css` -> `.modal`
 - `component-tooltip.css` -> `.tooltip`
-- `component-tooltip-click.css` -> `.tooltip-click`
-- `component-tooltip-inline.css` -> `.tooltip-inline`
 - `component-notification.css` -> `.notification`
 - `component-entries.css` -> `.entity-view, .entity-edit`
+- `component-entry-collapsible.css` -> `.entry-collapsible`
 - `component-canvas-panel.css` -> `.canvas-panel`
-- `component-config-item.css` -> `.config-item`
-- `component-image-viewer.css` -> `.image-viewer`
+- `component-config-grid.css` -> `.config-grid`
+- `component-side-bar.css` -> `.side-bar`
 
 ### `component-modal.css` standard structure
 - `.modal`, `.modal-backdrop`, `.modal-dialog`, `.modal-header`, `.modal-body`, `.modal-footer`
@@ -79,7 +79,10 @@ Each container file has ONE root selector. All children are nested inside it usi
 - `container-tileset-editor.css` -> `.review-section`
 - `container-tileset-legend-panel.css` -> `.legend-panel`
 - `container-tileset-tile-options.css` -> `.tileset-analyzer`
-- `container-theme-manager.css` -> `.theme-manager`
+- `container-maps-elements-editor.css` -> `.maps-elements-editor`
+- `container-element-tiles-layer-modal.css` -> `.element-tiles-layer-modal`
+- `container-admin-dashboard.css` -> `.admin-dashboard`
+- `container-room-active-players.css` -> `.room-active-players-banner`
 
 ### Container nesting rules
 - Context overrides (e.g. "when `.tileset-tile-options` is inside `.global-tile-options`") are expressed as `& .global-tile-options .tileset-tile-options { }` - NOT using parent-context `&` at the end
@@ -96,26 +99,31 @@ Each container file has ONE root selector. All children are nested inside it usi
 @import './component-modal.css';
 @import './component-notification.css';
 @import './component-input-box.css';
-@import './component-config-item.css';
+@import './component-config-grid.css';
 @import './component-tooltip.css';
-@import './component-tooltip-click.css';
-@import './component-tooltip-inline.css';
 @import './component-entries.css';
+@import './component-entry-collapsible.css';
 @import './component-canvas-panel.css';
-@import './component-image-viewer.css';
+@import './component-side-bar.css';
 @import './container-reldens-admin-panel.css';
 @import './container-forms.css';
 @import './container-entity-list.css';
 @import './container-maps-wizard.css';
-@import './container-theme-manager.css';
+@import './container-maps-elements-editor.css';
+@import './container-element-tiles-layer-modal.css';
 @import './container-tileset-analyzer.css';
 @import './container-tileset-uploader.css';
 @import './container-tileset-editor.css';
 @import './container-tileset-legend-panel.css';
-@import './container-tileset-tile-options.css';
+@import './container-tileset-animations-panel.css';
 @import './container-generated-files.css';
 @import './container-tileset-results.css';
+@import './container-tileset-tile-options.css';
+@import './container-admin-dashboard.css';
+@import './container-room-active-players.css';
 ```
+
+Every CSS file under `theme/admin/css/` must be `@import`-ed here - there is no glob, so a file that is not listed is silently never loaded.
 
 ---
 

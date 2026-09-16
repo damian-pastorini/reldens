@@ -73,7 +73,7 @@ Annotations are Tiled tile properties named `key` whose value is:
 
 The border is drawn by `MapBorderGenerator.drawBorderLayer` from `bordersTiles`, which after the provider merge holds all eight keys, the four sides and the four outer corners.
 
-Inner walls hang below the top border. `WallsGenerator.createLayerInnerWalls` places two tiles per matching column: the middle wall row directly below the border, then the top row below it, since `determineWallTiles` returns the pair middle first and `placeWallTiles` writes index 0 at `y + 1`. `InnerWalls.sequences` then caps each horizontal run.
+Inner walls hang below the top border. `WallsGenerator.createLayerInnerWalls` places two tiles per matching column: the middle wall row directly below the border, then the top row below it, since `determineWallTiles` returns the pair middle first and `placeWallTiles` writes index 0 at `y + 1`. A third tile is appended when a bottom row slot (`sBC`/`sBL`/`sBR`) is configured. `InnerWalls.sequences` then caps each horizontal run.
 
 This ordering looks inverted when read on its own, but it is the committed behaviour and it is what the real dungeon maps require. `WallsGenerator`, `InnerWalls` and the pattern classes are SHARED between the spot walls (used by the dungeon cave rooms) and the map border walls. Do not change the row order or the run caps to fix an appearance problem seen on a single map. `tests/test-data/dungeon-walls-expected.json` is the guard: if it fails after a walls change, the change is wrong. Never regenerate that expected file to make such a failure go away, because the spot wall validators only check pair membership and will not catch the inversion.
 
@@ -90,7 +90,7 @@ Entry openings are cut by `createEntryPosition`, and the two tiles flanking the 
 - `borderInnerCornersTiles` is rotated 180 degrees, the same as the wall band: a bottom opening takes the `top-*` pair, a top opening takes the `bottom-*` pair, and both flip left with right.
 - the fallback outer corners flip only the side, because those are the map real corners: the left end of a bottom opening takes the tile the map already draws at its own bottom right corner.
 
-When the map is auto grown, `redrawBorderForGrownMap` rebuilds the border ring and would reseal the gap, so `reapplyEntryPositionOpening` re-cuts it, re-stamps the ends and re-opens the walls. `PlacementRejectResolver.growMapBottom` still logs a critical telling you to set an explicit `mapSize` when using entry positions, because the change points recorded by the first pass stay on the pre grow row.
+When the map is auto grown, `redrawBorderForGrownMap` rebuilds the border ring and reseals the gap; it only calls `reapplyEntryPositionWalkability`, which re-marks the opening cells walkable in the map grid - it does NOT re-cut the border tiles, re-stamp the ends or re-open the walls. `PlacementRejectResolver.growMapBottom` logs a critical telling you to set an explicit `mapSize` when using entry positions, because the change points recorded by the first pass stay on the pre grow row.
 
 ## Checklist for adding a new tile option
 

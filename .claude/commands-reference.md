@@ -80,13 +80,13 @@ npx reldens-storage-prisma --host=localhost --port=3306 --user=reldens --passwor
 npx reldens-storage generateEntities --user=reldens --pass=reldens --database=reldens_clean --driver=prisma
 
 # Full parameter list for reldens-storage-prisma:
-# --host          Database host (default: localhost)
-# --port          Database port (default: 3306)
+# --host          Database host (required)
+# --port          Database port (required)
 # --user          Database username (required)
 # --password      Database password (required)
 # --database      Database name (required)
-# --clientOutputPath  Output path for Prisma client (default: ./client)
-# --schemaPath    Path for schema.prisma file (default: ./prisma)
+# --clientOutputPath  Output path for Prisma client, relative to the schema path (default: ./client)
+# --prismaSchemaPath  Path for the schema.prisma file (default: ./prisma)
 ```
 
 **Prisma Workflow (running from the reldens project root):**
@@ -118,7 +118,7 @@ reldens copyEnvFile
 reldens copyKnexFile
 # Copy index.js template
 reldens copyIndex
-# Reset dist and run fullRebuild
+# Copy the .env, knexfile.js, .gitignore and index.js templates into the project
 reldens copyServerFiles
 # Copy all default files for fullRebuild
 reldens copyNew
@@ -133,17 +133,20 @@ reldens test
 ```bash
 # Generate game data (via reldens-generate)
 # Generate player XP per level
-reldens-generate players-experience
+reldens-generate players-experience-per-level [data-file.json]
 # Generate monster XP per level
-reldens-generate monsters-experience
+reldens-generate monsters-experience-per-level [data-file.json] [players-levels-file.json]
 # Generate attributes per level
-reldens-generate attributes
+reldens-generate attributes-per-level [data-file.json]
 # Generate maps with various loaders
-reldens-generate maps
+# Loaders: LayerElementsObjectLoader, LayerElementsCompositeLoader, MultipleByLoaderGenerator,
+# MultipleWithAssociationsByLoaderGenerator
+reldens-generate maps [map-data-file.json] [loader-name]
 
 # Data import (via reldens-import)
-# Import game data
-reldens-import [data-type]
+# Import game data, valid types: objects, players-experience-per-level, attributes-per-level, class-paths,
+# maps, skills
+reldens-import [data-type] [theme-name] [data-file.json]
 ```
 
 ## User Management Commands
@@ -152,7 +155,7 @@ reldens-import [data-type]
 # Create admin user
 reldens createAdmin --user=username --pass=password --email=email@example.com
 # Creates an admin user with role_id from config (default: 1)
-# Validates email format and username/email uniqueness
+# Validates the email format
 # Password is automatically encrypted using PBKDF2 SHA-512
 
 # Reset user password

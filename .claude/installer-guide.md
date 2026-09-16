@@ -24,7 +24,7 @@ Knex is the default storage driver and the only one bundled with `@reldens/stora
 - `kysely` - `npm install kysely` - MySQL / MySQL2 (automated installation)
 - `drizzle` - `npm install drizzle-orm` - MySQL / MySQL2 (automated installation)
 - `objection-js` - `npm install objection@3.1.5` - same clients as Knex
-- `mikro-orm` - `npm install @mikro-orm/core @mikro-orm/mysql` (or `@mikro-orm/mongodb`) - MySQL (automated installation), plus the manual clients mariadb, postgresql, sqlite, mongodb, mssql, better-sqlite3
+- `mikro-orm` - `npm install @mikro-orm/core @mikro-orm/mysql` (plus `@mikro-orm/mongodb` when the client is MongoDB) - MySQL (automated installation), plus the manual clients mariadb, postgresql, sqlite, mongodb, mssql, better-sqlite3
 - `prisma` - `npm install prisma @prisma/client @prisma/adapter-mariadb` - MySQL (automated installation), plus the manual clients postgresql, sqlite, sqlserver, mongodb, cockroachdb
 
 The client list per driver lives in `install/index.js` (`DB_CLIENTS_MAP`). The default client is `mysql2` for the Knex based drivers and `mysql` for MikroORM and Prisma.

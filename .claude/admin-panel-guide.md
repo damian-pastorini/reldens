@@ -37,7 +37,7 @@ the chart stay current without a reload. The hover listeners are bound once, not
 
 ## Admin Panel Sections and Controlled Tables
 
-The admin panel groups entities into 14 navigation sections. The section structure is defined in:
+The admin panel groups entities into 16 navigation sections. The section structure is defined in:
 `lib/admin/server/entities-config-override.js`
 
 ### Settings
@@ -76,7 +76,7 @@ Not handled by the delete: the room map files on disk (`dist/assets/maps`, the t
 #### Deleting a room while the server is running
 
 The default room can never be deleted. `DeletedRoomPlayersRelocator` (`lib/rooms/server/deleted-room-players-relocator.js`)
-subscribes to `reldens.adminBeforeEntityDelete` and prevents the delete with the `errorRoomDeleteIsDefault` result when
+runs from the `reldens.adminBeforeEntityDelete` handler and prevents the delete with the `errorRoomDeleteIsDefault` result when
 any selected id matches the `players/initialState/room_id` config value. The administrator has to assign another room as
 default first (room view, "Set default").
 
@@ -156,7 +156,7 @@ of the disconnected players fail with foreign key constraint errors:
 #### Linking rooms and picking tiles in the map
 
 The room view "Link rooms" form creates one `roomsChangePoints` row on the current room plus one `roomsReturnPoints`
-row on the destination room (`lib/admin/server/subscribers/rooms-entity-subscriber.js:186-238`). Both values are
+row on the destination room (`lib/admin/server/subscribers/rooms-entity-subscriber.js:209-258`). Both values are
 picked on the map canvas, never typed as coordinates:
 
 - The change point field is a tile index and the "Pick in map" button next to it toggles the current room map
@@ -325,6 +325,10 @@ Clan definitions, levels, modifiers, and membership.
 - `clanLevelsModifiers` - Stat modifiers applied at clan levels
 - `clanMembers` - Clan membership records
 
+### Quests
+Quest progress tracking records.
+- `questsProgress` - Per-player and global quest flags
+
 ### Features
 Feature flags and plugin enablement.
 - `features` - Feature definitions and enabled/disabled state
@@ -404,10 +408,12 @@ The `EntitiesLoader` (`lib/game/server/entities-loader.js`) discovers all `entit
 
 ### Model Overrides
 
-Some features use custom model files that extend the generated database models:
+`EntitiesLoader` also supports replacing a generated database model per plugin and per driver:
 ```
-lib/{plugin}/server/models/{entity-name}-model.js
+lib/{plugin}/server/models/{driver}/overridden-models-{driver}.js
 ```
+The file must export `overriddenModels` (an entity key to model class map). No plugin in this repository ships one, so
+every model currently comes from `generated-entities/models/{driver}/`.
 
 Model overrides add business logic methods, relationships, or hooks at the ORM layer - beyond what the admin panel configuration layer provides. See `storage-architecture.md` for details on the storage driver and entity access patterns.
 

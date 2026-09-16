@@ -36,8 +36,10 @@ PlayersModel {
   related_players_state: PlayersStateModel {
     id: number,
     player_id: number,
-    room_id: number,    // ← Last SAVED room
-    x: number,          // ← Last SAVED position
+    // ← Last SAVED room
+    room_id: number,
+    // ← Last SAVED position
+    x: number,
     y: number,
     dir: string
     // NOTE: NO scene property in database model!
@@ -63,17 +65,22 @@ userModel {
   related_players: PlayersModel[],  // From database
 
   // ADDED AT RUNTIME: Selected player reference
-  player: PlayersModel {             // ← Selected from related_players[]
+  // ← Selected from related_players[]
+  player: PlayersModel {
     ...database fields,
-    related_players_state: { ... },  // Database snapshot
+    // Database snapshot
+    related_players_state: { ... },
 
-    // ADDED AT RUNTIME: Enhanced runtime state
+    // ADDED AT RUNTIME: login state used to build the room player schema
     state: {
-      room_id: number,    // ← CURRENT room (updated during gameplay)
-      x: number,          // ← CURRENT position
+      // ← Room loaded from the database (or from the scene selected on login)
+      room_id: number,
+      // ← Position loaded from the database
+      x: number,
       y: number,
       dir: string,
-      scene: string       // ← ADDED: Room name (not in database!)
+      // ← ADDED: Room name (not in database!)
+      scene: string
     }
   }
 }
@@ -81,9 +88,9 @@ userModel {
 
 **Key Points:**
 - `userModel.player` is **assigned at runtime** from `related_players[]`
-- `player.state` is **created during login** and updated during gameplay
+- `player.state` is **created during login** and is not updated during gameplay (the room updates `playerSchema.state` instead)
 - `player.state.scene` is **added by server**, not from database
-- `related_players_state` remains **unchanged** after initial load (becomes stale)
+- `player.state` is the **same object** as `player.related_players_state` unless `applySelectedLocation()` replaces it
 
 ---
 
@@ -91,7 +98,7 @@ userModel {
 
 ### Step 1: User Authentication
 
-**File:** `lib/rooms/server/login.js:70-107` (onAuth)
+**File:** `lib/rooms/server/login.js:71-108` (onAuth)
 
 ```javascript
 async onAuth(client, options, request) {
@@ -100,13 +107,15 @@ async onAuth(client, options, request) {
 
     // Select player if specified
     if(sc.hasOwn(options, 'selectedPlayer')){
+        loginResult.selectedPlayer = options.selectedPlayer;
         loginResult.user.player = this.getPlayerByIdFromArray(
             loginResult.user.related_players,  // ← From database array
             options.selectedPlayer
         );
     }
 
-    return loginResult.user;  // ← Becomes userModel in onJoin
+    // ← The returned user becomes userModel in onJoin
+    return await this.disconnectFromOtherServers(loginResult.user, options);
 }
 ```
 
@@ -151,8 +160,8 @@ mapPlayerStateRelation(user) {
 
 **Question:** Is this assignment by reference or copy?
 - In JavaScript, object assignment is **by reference**
-- BUT: Database ORM models might be immutable/frozen
-- **Result:** They can diverge during gameplay
+- The Knex driver returns plain row objects, so `player.state` and `player.related_players_state` are the **same mutable object**
+- **Result:** the `scene` added in Step 4 is visible on both; they only become different objects when `applySelectedLocation()` replaces `player.state`
 
 ### Step 4: Set Scene On Players
 
@@ -183,7 +192,7 @@ async setSceneOnPlayers(user, userData) {
 
 ### Step 5: Select Player (Runtime Assignment)
 
-**File:** `lib/rooms/server/login.js:89-91`
+**File:** `lib/rooms/server/login.js:90-93`
 
 ```javascript
 if(sc.hasOwn(options, 'selectedPlayer')){
@@ -204,7 +213,7 @@ if(sc.hasOwn(options, 'selectedPlayer')){
 
 ### Joining Scene Room
 
-**File:** `lib/rooms/server/scene.js:126-156`
+**File:** `lib/rooms/server/scene.js:128-159`
 
 ```javascript
 async onJoin(client, options, userModel) {
@@ -254,7 +263,7 @@ async savePlayerState(sessionId) {
 **Key Points:**
 - Database updated FROM `playerSchema.state` (runtime)
 - Database updated TO `players_state` table (will become `related_players_state` on next login)
-- `related_players_state` in current session is NEVER updated (remains stale)
+- `related_players_state` in current session is NEVER updated after login (remains stale)
 
 ---
 
@@ -296,59 +305,57 @@ async savePlayerState(sessionId) {
 
 ## State Divergence
 
-After login, you have **TWO sources of state** that can diverge:
+After login, you have **TWO sources of state** that diverge:
 
 ### Example Session:
 
-**Initial Login:**
+**Initial Login:** `userModel.player.state` is the same object as `userModel.player.related_players_state`, with `scene` added on top of it:
 ```javascript
-userModel.player.related_players_state = {
-  room_id: 4,  // Town (from database)
-  x: 400,
-  y: 345,
-  dir: 'down'
-}
-
 userModel.player.state = {
-  room_id: 4,  // Same as database
+  // Town (from database)
+  room_id: 4,
   x: 400,
   y: 345,
   dir: 'down',
-  scene: 'reldens-town'  // Added by server
+  // Added by server
+  scene: 'reldens-town'
 }
 ```
 
-**After Scene Change (player moves to house):**
+**After Scene Change (player moves to house):** the room updates the Colyseus schema built from that state in `Player` (`lib/users/server/player.js:38`, `new BodyState(player.state)`), not `player.state` itself:
 ```javascript
-userModel.player.related_players_state = {
-  room_id: 4,  // UNCHANGED (stale)
+// UNCHANGED for the whole session:
+userModel.player.state = {
+  room_id: 4,
   x: 400,
   y: 345,
-  dir: 'down'
+  dir: 'down',
+  scene: 'reldens-town'
 }
 
-userModel.player.state = {
-  room_id: 2,  // UPDATED to house
+// UPDATED during gameplay:
+playerSchema.state = {
+  room_id: 2,
   x: 548,
   y: 615,
   dir: 'up',
-  scene: 'reldens-house-1'  // UPDATED
+  scene: 'reldens-house-1'
 }
 ```
 
-**On Logout:** `state` is saved to database, becomes `related_players_state` on next login.
+**On Logout:** `playerSchema.state` is saved to database, becomes `related_players_state` on next login.
 
 ---
 
 ## Key Takeaways
 
 1. **"related_" prefix is the NEW database relation naming** (not legacy)
-2. **`related_players_state`** = Database snapshot (stale after load, no scene property)
-3. **`state`** = Runtime state (active, has scene property, source of truth for gameplay)
-4. **`scene` property** = Only exists in runtime `state`, NOT in database model
+2. **`related_players_state`** = Database snapshot loaded on login (the `players_state` table has no scene column)
+3. **`player.state`** = Login state (has scene property, used to build the room player schema)
+4. **`scene` property** = Only added at runtime, NOT in the database model
 5. **Validation must use** `player.state.scene`, NOT `player.related_players_state.scene`
-6. **Database updates** read from `state` and write to `players_state` table
-7. **`related_players_state` is never updated** during a session (snapshot only)
+6. **Database updates** read from `playerSchema.state` and write to `players_state` table
+7. **`player.state` is never updated** during gameplay (the room updates `playerSchema.state`)
 
 ---
 
@@ -358,8 +365,8 @@ userModel.player.state = {
 - `lib/users/server/manager.js:67-83` - Load user with relations
 - `lib/game/server/login-manager.js:351-361` - Map player state relation
 - `lib/game/server/login-manager.js:423-441` - Set scene on players
-- `lib/rooms/server/login.js:70-107` - Authentication and player selection
-- `lib/rooms/server/scene.js:126-156` - Scene validation
+- `lib/rooms/server/login.js:71-108` - Authentication and player selection
+- `lib/rooms/server/scene.js:128-159` - Scene validation
 - `lib/rooms/server/scene.js:708-737` - Save player state
 
 **Database Tables:**

@@ -52,16 +52,17 @@ After the user assigns tile roles in the Map Tiles tab, the session state (`sess
       "isElement": false,
       "allowPathsInFreeSpace": false,
       "walkable": true,
-      "depth": false,
-      "layerName": "my-spot-layer"
+      "depth": null
     }
   ]
 }
 ```
 
+The session spot has no `layerName`: the generator config `layerName` is derived server side from the spot name by `TilesetCompositeConfigBuilder.buildGroundSpotConfig()`.
+
 All tile values are **flat indices**: `flatIndex = row * tilesetColumns + col` (0-based).
 
-`globalTileOptions` (stored at session root level, not per-tileset) uses the same structure but each entry is `{ tilesetIndex, flatIndex }` to identify tiles across multiple tilesets.
+`globalTileOptions` (stored at session root level, not per-tileset) uses the same structure but each entry is `{ tilesetKey, flatIndex }` to identify tiles across multiple tilesets, where `tilesetKey` is the source tileset `filename`. Legacy entries using the positional `{ tilesetIndex, flatIndex }` are still resolved as a fallback (`Helpers.resolveEntryTilesetIndex`).
 
 ---
 
@@ -122,10 +123,11 @@ The `groundSpots` property name (not `key`) marks a tile as the ground tile for 
 How `ElementsProvider.fetchPathTiles()` detects the role:
 - `property.name === "key"` and `value === "groundTile"` - sets `this.groundTile = tileId`
 - `property.name === "key"` and `value === "pathTile"` - sets `this.pathTile = tileId`
-- `property.name === "key"` and value starts with `"border-"` - sets `this.bordersTiles[value.replace("border-", "")] = tileId`
-- `property.name === "key"` and value starts with `"corner-"` in isolation (2-part split) - calls `this.propertiesMapper.mapCornersByKey(cleanKey, tileId)`
-- `property.name === "key"` and value splits to 3 parts and is not a corner - spot surrounding: calls `this.groundSpotsPropertiesMappers[spotKey].mapSurroundingByKey(value, tileId)`
-- `property.name === "key"` and value splits to 4 parts and is a corner - spot corner: calls `this.groundSpotsPropertiesMappers[spotKey].mapCornersByKey(cleanKey, tileId)`
+- `property.name === "key"` and value starts with `"border-inner-corner-"` - sets `this.borderInnerCornersTiles[...]`; this branch is tested BEFORE the generic `border-` one
+- `property.name === "key"` and value contains `"border-"` - sets `this.bordersTiles[value.replace("border-", "")] = tileId`
+- the spot key is resolved by `GroundSpotsMapper.matchGroundSpotKey(value)`, which strips the trailing position name (and a trailing `-corner`) instead of counting dash-separated parts, so spot names containing hyphens still match. An empty result means the value belongs to the map itself
+- value that does NOT contain `"corner-"` - surrounding tile: `groundSpotsPropertiesMappers[spotKey].mapSurroundingByKey(value, tileId)` when a spot key was resolved, otherwise `this.propertiesMapper.mapSurroundingByKey(value, tileId)`
+- value that contains `"corner-"` - corner tile: `groundSpotsPropertiesMappers[spotKey].mapCornersByKey(cleanKey, tileId)` when a spot key was resolved, and `this.propertiesMapper.mapCornersByKey(cleanKey, tileId)` in every case
 - `property.name === "groundSpots"` - sets `this.groundSpots[spotName] = tileId` (comma-separated spot names supported)
 
 ### Special Layer Names
@@ -138,11 +140,11 @@ How `ElementsProvider.fetchPathTiles()` detects the role:
 
 Recommended layer name format for spot variations: `"spot-layer-ground-variations-{spotName}"`. After removing `"spot-layer-"` and `"ground-variations-"` the result is `"{spotName}"`, which must match the `tilesKey` in the groundSpots config.
 
-Any other layer name is treated as an element layer. The name must have at least 3 dash-separated parts: `"{elementName}-{index}-{layerType}"`. The element group key is resolved by `fetchElementLayerGroup` (`elements-provider.js:175`):
+Any other layer name is treated as an element layer. The name must have at least 3 dash-separated parts: `"{elementName}-{index}-{layerType}"`. The element group key is resolved by `fetchElementLayerGroup` (`elements-provider.js:178`):
 
 1. Names starting with `stairs-up-` or `stairs-down-` are pinned to the keys `stairs-up` / `stairs-down` (hardcoded stair keys used by `prePlaceStairs` and the associated maps floor logic).
 2. Otherwise the key is `ElementLayerName.parse(layerName).instanceId`: the known layer-type suffix (`collisions-over-player`, `collisions`, `over-player`, `below-player`, `path`, `base`) is stripped and the remainder is `{elementName}-{index}`, so multi-segment names keep per-instance groups (`house-clean-005-collisions` -> `house-clean-005`).
-3. Names not ending in a known layer type fall back to the first two parts joined (`tree-001-below-player` -> `tree-001`).
+3. Names not ending in a known layer type fall back to `MapNaming.fuseGroupName`, the first two dash-separated parts joined (`tree-001-custom-suffix` -> `tree-001`).
 
 Every group becomes exactly ONE placeable element: its layers are cropped together to the union bounding box of their tiles, and that cropped stamp is placed as one unit. The group's `quantity`, `freeSpaceAround`, `allowPathsInFreeSpace`, and `mapCentered` are read from `layer.properties` of the group's property-carrying layer.
 
@@ -155,14 +157,14 @@ Every group becomes exactly ONE placeable element: its layers are cropped togeth
 ```json
 {
   "compositeElementsFile": "composite.json",
-  "generatorType": "composite",
+  "generatorType": "elements-composite-loader",
   "mapsInformation": [
     { "mapName": "my-map", "mapTitle": "My Map" }
   ],
   "tileOptions": { },
   "groundSpots": {
     "mySpot": {
-      "layerName": "my-spot-layer",
+      "layerName": "mySpot",
       "tilesKey": "mySpot",
       "width": 5,
       "height": 5,
@@ -193,14 +195,13 @@ Key fields the map generator reads from `mapData`:
 - `placeRejectResolver` - how a rejected element placement is resolved: `"moveElements"` relocates already placed movable elements to open space, `"autoGrow"` (default) grows the map bottom to fit the element. Exposed in the Maps Wizard as the "Elements place rejection resolve method" select (`placeRejectResolver-common`). Placement candidates are validated by a strict feasibility safeguard so every still-pending element keeps a free window; elements are never silently dropped (see the package `.claude/generator-flow.md` Stage 3c2)
 
 Key fields in each `groundSpots` entry:
-- `walkable` - when `false`, the generator appends `-collisions` to the spot layer name (e.g. `lake_001-s0-collisions`). The Reldens game engine reads any layer ending in `-collisions` as a non-walkable collision zone. Set to `false` for any spot the player should not be able to walk through.
+- `walkable` - when `false`, the generator appends `-collisions` to the spot layer name before the per instance suffix (e.g. `lake_001-collisions-s0`). The Reldens game engine reads any layer containing `collisions` as a non-walkable collision zone. Set to `false` for any spot the player should not be able to walk through.
 - `depth` - controls where the spot layer is inserted in the final layer stack:
   - `false` (boolean) and `isElement: false` -> spot goes into the invisible-spots group, placed before the ground layer and hidden under it
   - `false` (boolean) and `isElement: true` -> spot is placed as an element at default order (after static layers, before path)
   - `true` (boolean) -> insert at position 1 (just below the ground layer)
-  - string (layer name, e.g. `"ground-variations"`) -> insert immediately after the named layer; the spot tiles appear above it; combined with `isElement: true` this makes the spot visually prominent on top of the named layer
-  - **Dead state**: `isElement: false` + any truthy `depth` -> `generateSpotsWithDepth` is called but `layerMap.get(depth)` returns `undefined`, reorder is skipped, and the spot is **never inserted into the map**. Always set `isElement: true` when using a non-false depth.
-- `isElement` - when `true`, the spot participates in the element placement pipeline and respects the `depth` reordering. When `false`, the spot can only be placed as an invisible underlay (requires `depth: false`).
+  - string (layer name, e.g. `"ground-variations"`) -> insert immediately after the named layer; the spot tiles appear above it; combined with `isElement: true` this makes the spot visually prominent on top of the named layer. A name matching no layer falls back to position 1 (`MapLayersComposer.calculateTargetIndex`)
+- `isElement` - when `true`, the spot participates in the element placement pipeline and respects the `depth` reordering. When `false`, the spot is stamped by `SpotLayersBuilder.generateInvisibleSpots()` at a random free position before the ground layer; `generateInvisibleSpots` does NOT filter by `depth`, so a non-element spot with a truthy `depth` is still placed and then reordered by `reorderLayersBasedOnSpots`.
 
 **Note**: `tileOptions` in this config is NOT read by the map generator. The tile role assignments (ground, path, surrounding, etc.) must be encoded in the composite.json `tiles` array as described above. `tileOptions` in `map-generator-config.json` is currently unused by the generator.
 
@@ -208,7 +209,7 @@ Key fields in each `groundSpots` entry:
 
 ## roomData: Setting Room Fields on Import
 
-`roomData` is an optional object read by the maps importer (`MapsImporter.import`, `maps-importer.js:113`) and applied to every room row it creates, right after the importer defaults and before the insert (`maps-importer.js:264-274`). It is handled by `RoomImportData` (`lib/import/server/room-import-data.js`).
+`roomData` is an optional object read by the maps importer (`MapsImporter.import`, `maps-importer.js:113`) and applied to every room row it creates, right after the importer defaults and before the insert (`maps-importer.js:281`). It is handled by `RoomImportData` (`lib/import/server/room-import-data.js`).
 
 Shape:
 
@@ -237,7 +238,7 @@ Shape:
 
 Where to put it:
 
-- Maps Wizard: add `roomData` to the `generatorData` JSON in the wizard textarea. The raw JSON is carried to the maps selection step as `handlerParams` (`maps-wizard-subscriber.js:245`, hidden input in `maps-wizard-maps-selection.html:17`), parsed back by `SelectedMapsImportRunner` (`selected-maps-import-runner.js:105`) and read from `handlerParams.roomData` by the importer.
+- Maps Wizard: add `roomData` to the `generatorData` JSON in the wizard textarea. The raw JSON is carried to the maps selection step as `handlerParams` (`maps-wizard-subscriber.js:260`, hidden input in `maps-wizard-maps-selection.html:17`), parsed back by `SelectedMapsImportRunner` (`selected-maps-import-runner.js:108`) and read from `handlerParams.roomData` by the importer.
 - Outside the wizard (CLI `bin/import.js` maps import): add `roomData` at the top level of the import JSON, which is passed straight to `MapsImporter.import(data)`. A top level `roomData` wins over `handlerParams.roomData`.
 
 ---
@@ -256,9 +257,9 @@ Where to put it:
 - creates `TileMapOptimizer({ originalJSON: tileMapJSON, rootFolder })`
 - `parseJSON()` scans composite layers for used tile IDs; reads `tileset.image` filename into `tileSet.tmp_image`
 - `createThumbsFromLayersData()` calls `findImageFile(tileSet)` which looks for `rootFolder/tmp_image`. The tileset PNG must exist at `output/{sessionId}/{tileset.filename}`
-- writes optimized tileset PNG to `rootFolder/generated/`
-- returns `{ newJSON, newJSONResized }`
-- NOTE: the intermediate `optimized-*` files are deleted right after generation (`removeOptimizedMapFilesAfterGeneration` defaults to `true` in `RandomMapGenerator`), so the `generated/optimized/` folder ends up empty by design
+- writes optimized tileset PNG and JSON to `generatedFolder/optimized/` (`ElementsProvider.optimizedFolder`, `GeneratedFoldersConstants.OPTIMIZED_SUB_FOLDER`)
+- returns `{ newImage, newMap, newJSON, newJSONResized }`
+- NOTE: the intermediate `optimized-*` files are deleted right after generation (`removeOptimizedMapFilesAfterGeneration` defaults to `true` in `RandomMapGenerator`), and `FileOperations.cleanAutoGeneratedProcessMapFiles` also removes the `generated/optimized/` folder itself once it is empty
 
 **Step 4 - `ElementsProvider.fetchPathTiles()`**
 - reads `optimizedMap.tilesets[0].tiles[]` properties
@@ -293,13 +294,13 @@ Where to put it:
 
 Wangsets for inner and outer spot walls are built by `CompositeWangsetBuilder.buildSpotWangsets()` and attached to the tileset entry as `entry.wangsets`. Every wangset carries one color named after the terrain and uses `type: 'mixed'`, because its wangids fill both edge and corner slots, which is what makes it usable as a terrain in the tiled map editor app.
 
-The map border inner walls travel through this same wangset mechanism: `CompositeWangsetBuilder.buildMapBorderWallsWangset()` emits the wangset named `map-border-inner-walls` (`TilesetConst.MAP_BORDER_WALLS_WANGSET_NAME`) out of the `mapBorderWallsTiles` grid, and `TilesShortcuts.fromPropertiesMappersList` picks it up by name, so the generator needs no border specific mapper. The same grid is passed as both the surrounding tiles and the corner tiles, because `TilesetConst.SPOT_CORNER_WANGIDS` is keyed by grid key as well as by corner name: the four diagonal keys therefore also produce the corner wangids the wall run ends need.
+The map border inner walls travel through this same wangset mechanism: `CompositeWangsetBuilder.buildMapBorderWallsWangset()` emits the wangset named `map-border-inner-walls` (`TilesetConst.MAP_BORDER_WALLS_WANGSET_NAME`) out of the `mapBorderWallsTiles` grid, and `TilesShortcuts.fromPropertiesMappersList` picks it up by name, so the generator needs no border specific mapper. The grid is fed twice through `remapWallsPositions()`: once against `TilesetConst.MAP_BORDER_WALLS_SURROUNDING_POSITIONS` for the surrounding wangids, and once against `TilesetConst.MAP_BORDER_WALLS_CORNER_POSITIONS`, which turns the `0,-1` and `0,1` cells into the `top-right` and `top-left` corner names the wall run ends need (`TilesetConst.SPOT_CORNER_WANGIDS` is keyed by grid key as well as by corner name, so both spellings resolve).
 
-The wall slot names belong to the generator, not to the tileset. `WallsGenerator.determineWallTiles()` writes `sMC` on the row directly below the top border and `sTC` on the row under it, and `InnerWalls.sequences()` caps each horizontal run with `sMR` on its left end and `sML` on its right end, plus `cTR` and `cTL` on the second row. So the wall block's own top row must reach the generator as the `middle-*` slots, its second row as the `top-center` slot and the `top-left` and `top-right` corners, and the columns are mirrored. That whole shift is expressed once, in the `data-pos` values of the `mapBorderWallsTiles` grid in `theme/admin/templates/tileset-to-tilemap.html`, so the tiles are picked in their natural reading order in the admin and no mapping table exists in the javascript. `tests/test-data/reldens-dungeon-composite.json` shows the same convention on the working `cave-inner-walls` wangset, and `tests/test-data/house-composite.json` with `tests/test-data/map-border-walls-expected.json` prove it end to end for the border.
+The wall slot names belong to the generator, not to the tileset. `WallsGenerator.determineWallTiles()` writes `sMC` on the row directly below the top border and `sTC` on the row under it, and `InnerWalls.sequences()` caps each horizontal run with `sMR` on its left end and `sML` on its right end, plus `cTR` and `cTL` on the second row. So the wall block's own top row must reach the generator as the `middle-*` slots, its second row as the `top-center` slot and the `top-left` and `top-right` corners, and the columns are mirrored. That whole shift is expressed once, in `CompositeWangsetBuilder.remapWallsPositions()` against the two `MAP_BORDER_WALLS_*_POSITIONS` tables; the `mapBorderWallsTiles` grid in `theme/admin/templates/tileset-to-tilemap.html` keeps plain `data-pos` values (`-1,-1` NW through `1,1` SE) so the tiles are picked in their natural reading order in the admin. `tests/test-data/reldens-dungeon-composite.json` shows the same convention on the working `cave-inner-walls` wangset, and `tests/test-data/house-composite.json` with `tests/test-data/map-border-walls-expected.json` prove it end to end for the border.
 
 The generated map also carries terrain sets, controlled by the maps wizard common option `Include Spots As Terrains` (`includeSpotsAsTerrains`, default Yes). Only the spots actually placed in that map become terrains, so a spot with `quantity: 0` or one that failed placement is never written, and tiles outside the map tileset are dropped. The generator collects the tile positions per spot in `SpotGenerator.appendSpotTerrains()` and writes them into `tilesets[0].wangsets` through `SpotTerrainsBuilder`, using the same position and wangid table its `WangsetMapper` reads, so a generated map can be fed back as a composite and its spots are recognized again. The optimizer already remaps terrain set tile ids, so optimized maps keep them.
 
-`TilesetCompositeConfigBuilder.buildGroundSpotConfig()` outputs well-formed groundSpots entries including `layerName`, `tilesKey`, `width`, `height`, `quantity`, `freeSpaceAround`, `walkable`, `isElement`, `allowPathsInFreeSpace`, `splitBordersInLayers`, `borderInnerWalls`, `borderOuterWalls`, `borderOuterWallsIncreaseLayerSize`, and `depth`. When `borderOuterWalls` or `borderInnerWalls` is true, `splitBordersInLayers` is forced true automatically (required for wall layers to be included in generator output). `depth` defaults to `true` when absent from the session data; the UI allows any of the values `false`, `true`, or a layer name string - coercion from the text input converts `""` and `"false"` to boolean `false`, `"true"` to boolean `true`, and any other string is kept as-is.
+`TilesetCompositeConfigBuilder.buildGroundSpotConfig()` outputs well-formed groundSpots entries including `layerName`, `tilesKey`, `width`, `height`, `quantity`, `freeSpaceAround`, `walkable`, `isElement`, `allowPathsInFreeSpace`, `splitBordersInLayers`, `borderInnerWalls`, `borderOuterWalls`, `borderOuterWallsIncreaseLayerSize`, and `depth`. When `borderOuterWalls` or `borderInnerWalls` is true, `splitBordersInLayers` is forced true automatically (required for wall layers to be included in generator output). `depth` defaults to `true` when the key is absent from the session data; the UI allows an empty value, `true`, or a layer name string - coercion from the text input converts `""` and `"false"` to `null`, `"true"` to boolean `true`, and any other string is kept as-is.
 
 ---
 
@@ -403,12 +404,12 @@ Downstream both packages already carry animations without any change:
 
 **`MapsWizardSubscriber.generateMaps()`**
 1. parses `generatorData` JSON into `mapData`
-2. builds `rootFolder = tilesetSessionsDir/output/{safeSessionId}`
-3. creates `LayerElementsCompositeLoader({ mapData, rootFolder })`
-4. calls `loader.load()` - reads `rootFolder/composite.json`, validates schema
+2. builds `rootFolder = tilesetSessionsDir/output/{safeSessionId}` when a session id was posted (otherwise `themeManager.projectGenerateDataPath`) and puts it, plus `generatedFolder = themeManager.projectGeneratedDataPath`, into `handlerParams`
+3. hands `selectedHandler` + `handlerParams` to `MapsWizardRunner.run()` (`lib/admin/server/subscribers/maps-wizard-runner.js`), which for the `elements-composite-loader` strategy:
+4. creates `LayerElementsCompositeLoader(handlerParams)` and calls `loader.load()` - reads `rootFolder/composite.json`, validates schema
 5. creates `new RandomMapGenerator()`
 6. calls `generator.fromElementsProvider(loader.mapData)`
-7. calls `generator.generate()` - writes output to `rootFolder/generated/`
+7. calls `generator.generate()` - writes output to `generate-data/generated/`
 
 **`GET /tileset-analyzer/api/session-wizard-config?sessionId=X`**
 1. reads `output/{sessionId}/map-generator-config.json`
@@ -419,7 +420,7 @@ Downstream both packages already carry animations without any change:
 
 ## Missing Composite Resolution at Generation Time
 
-`MapsWizardSubscriber.generateMaps()` checks the composite before handing anything to the runner (`lib/admin/server/subscribers/maps-wizard-subscriber.js:230-235`):
+`MapsWizardSubscriber.generateMaps()` checks the composite before handing anything to the runner (`lib/admin/server/subscribers/maps-wizard-subscriber.js:233-238`):
 
 ```javascript
 let compositeElementsFile = sc.get(mapData, 'compositeElementsFile', '');
@@ -430,7 +431,7 @@ if(compositeElementsFile
 }
 ```
 
-`CompositeSampleFilesProvider.ensureCompositeFile()` (`lib/admin/server/composite-sample-files-provider.js`) does nothing when the file already exists in the session folder. When it is missing it resolves the sample from the installed package at `projectRoot/node_modules/@reldens/tile-map-generator/examples/layer-elements-composite/`, then copies BOTH the composite JSON and every tileset image that JSON references into the session folder, so the next run reuses the copied files instead of resolving again.
+`CompositeSampleFilesProvider.ensureCompositeFile()` (`lib/admin/server/composite-sample-files-provider.js`) reads the composite from the session folder when it is already there, and only copies the tileset images it references that are still missing. When the composite itself is missing it resolves the sample from the installed package at `projectRoot/node_modules/@reldens/tile-map-generator/examples/layer-elements-composite/`, then copies BOTH the composite JSON and every tileset image that JSON references into the session folder, so the next run reuses the copied files instead of resolving again. In both cases it then recurses over the composites named by the `compositeFileNames`, `downFloorCompositeFileNames` and `upperFloorCompositeFileNames` layer properties, so the associated maps composites are provided too.
 
 This is why each wizard strategy keeps its own sample payload. Pointing every strategy at the same `composite.json` destroys the per strategy data. The four strategies and the loader each one routes to:
 
@@ -441,7 +442,7 @@ This is why each wizard strategy keeps its own sample payload. Pointing every st
 
 ### The result code is a client side message key
 
-`mapsWizardRedirect` puts the code in the `result` query parameter. `AdminClient` renders it at `theme/admin/js/reldens-admin-client.js:101` with `this.errorMessages[result] || result`, so any code with no entry in the `errorMessages` map is shown to the user as the raw identifier. `mapsWizardMissingCompositeFileError` now has an entry. These sibling codes still fall back to the raw string and have no message: `mapsWizardMissingActionError`, `mapsWizardMissingDataError`, `mapsWizardWrongJsonDataError`, `mapsWizardMissingHandlerError`, `mapsWizardGeneratorError`, `mapsWizardSelectedHandlerError`, `mapsWizardMapsNotGeneratedError`.
+`mapsWizardRedirect` puts the code in the `result` query parameter. `AdminClient` renders it at `theme/admin/js/reldens-admin-client.js:128` with `this.errorMessages[result] || result`, so any code with no entry in the `errorMessages` map is shown to the user as the raw identifier. `mapsWizardMissingCompositeFileError` and its sibling codes (`mapsWizardMissingActionError`, `mapsWizardMissingDataError`, `mapsWizardWrongJsonDataError`, `mapsWizardMissingHandlerError`, `mapsWizardGeneratorError`, `mapsWizardSelectedHandlerError`, `mapsWizardMapsNotGeneratedError`, `mapsWizardMissingElementsFilesError`) all have entries now.
 
 ## Maps Wizard Cards and the Elements Editor
 
@@ -451,7 +452,7 @@ The wizard options list is a flex row defined by `.wizard-options-container` in 
 
 That clamp is the reason the elements editor used to distort the map: the editor mounts a much larger canvas into a card sized for a thumbnail. The fix is the `.is-editing` state on the card, which sets `flex: 0 0 100%` and `order: -1` so the editing card takes the full row and jumps to the front, and lifts the clamp with `max-width: none` on the canvas.
 
-Important detail for anyone changing this: the clamp selector is nested six classes deep, so its specificity is 0,6,1. An override written in `container-maps-elements-editor.css` at 0,2,1 is inert no matter the source order. The override has to live inside the same nested block in `container-maps-wizard.css`.
+Important detail for anyone changing this: the clamp selector is nested four classes deep (`.maps-wizard .wizard-options-container .wizard-map-option-container .map-canvas-container canvas`), so its specificity is 0,4,1. An override written in `container-maps-elements-editor.css` at 0,2,1 is inert no matter the source order. The override has to live inside the same nested block in `container-maps-wizard.css`.
 
 `EditorUi.dispose()` (`theme/admin/js/maps-elements-editor/editor-ui.js:97`) also clears the inline `width` and `height` it set in `applyZoom()` (line 193) before returning the canvas to its original parent. Without that the zoomed inline sizes stay on the element and the thumbnail stays broken after the editor closes.
 

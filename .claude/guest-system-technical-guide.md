@@ -31,7 +31,7 @@ UPDATE rooms SET customData = '{"allowGuest": true}' WHERE name = 'town';
 
 ### 2.1 Rooms Loading (`lib/rooms/server/manager.js`)
 
-**Method:** `loadRooms()` (lines 204-241)
+**Method:** `loadRooms()` (lines 205-245)
 
 ```javascript
 async loadRooms(){
@@ -39,7 +39,7 @@ async loadRooms(){
 
     // Process each room
     for(let room of roomsModels){
-        let roomModel = this.generateRoomModel(room);
+        let roomModel = this.roomModelBuilder.build(room);
         rooms.push(roomModel);
         roomsById[room.id] = roomModel;
         roomsByName[room.name] = roomModel;
@@ -67,27 +67,30 @@ async loadRooms(){
 
 ### 2.2 Guest Room Filtering (`lib/rooms/server/manager.js`)
 
-**Method:** `filterGuestRooms()` (line 415+)
+**Method:** `filterGuestRooms()` (line 399+)
 
 ```javascript
 filterGuestRooms(availableRooms){
-    let guestRooms = {};
-    for(let roomName of Object.keys(availableRooms)){
-        let room = availableRooms[roomName];
-        let customData = sc.get(room, 'customData', {});
-        if(sc.isString(customData)){
-            customData = JSON.parse(customData);
-        }
+    if(!sc.isObject(availableRooms)){
+        Logger.debug('The provided "availableRooms" is not an object.', availableRooms);
+        return {};
+    }
+    let validRooms = {};
+    for(let i of Object.keys(availableRooms)){
+        let room = availableRooms[i];
+        let customData = room.customData || {};
         // Check if allowGuest is true
         if(sc.get(customData, 'allowGuest')){
-            guestRooms[roomName] = room;
+            validRooms[room.roomName] = room;
         }
     }
-    return guestRooms;
+    return validRooms;
 }
 ```
 
-**Method:** `fetchGuestRooms()` (line 403+)
+`room.customData` is already a parsed object: `RoomModelBuilder.build()` runs `sc.toJson(room.customData, {})` when the room model is created.
+
+**Method:** `fetchGuestRooms()` (line 387+)
 
 ```javascript
 fetchGuestRooms(availableRooms){
@@ -110,7 +113,7 @@ The same `fetchGuestRooms()` result feeds BOTH the client room selector lists an
 
 ### 2.3 Config Assignment (`lib/rooms/server/manager.js`)
 
-**Method:** `defineRoomsInGameServer()` (lines 109-116)
+**Method:** `defineRoomsInGameServer()` (lines 110-117)
 
 ```javascript
 // After all rooms are loaded and defined
@@ -126,7 +129,7 @@ if(this.config.client?.rooms?.selection){
 }
 ```
 
-**Called by:** `ServerManager.defineServerRooms()` calls `RoomsManager.defineRoomsInGameServer()`
+**Called by:** `ServerManagersInitializer.defineServerRooms()` calls `RoomsManager.defineRoomsInGameServer()`
 
 ---
 
@@ -136,14 +139,14 @@ if(this.config.client?.rooms?.selection){
 
 **File:** `lib/game/server/manager.js`
 
-**Execution order:**
-1. `initializeManagers()` (line 261-263)
+**Execution order (inside `startGameServerInstance()`):**
+1. `ServerManagersInitializer.initializeManagers(this)` (lines 256-258)
    - Calls `defineServerRooms()`
    - Guest rooms configured in `this.configManager.client.rooms.selection.availableRooms`
-2. **Config file created** (line 264-272)
+2. **Config file created** (lines 259-266, only when `RELDENS_CREATE_CONFIG_FILE` is 1)
    - `HomepageLoader.createConfigFile()` with guest rooms data
-3. **Client built** (line 272)
-   - Bundles config.js into dist folder
+3. **Client bundled** (line 267)
+   - `themeManager.createClientBundle()` bundles config.js into dist folder
 
 ### 3.2 Config File Creation (`lib/game/server/homepage-loader.js`)
 
@@ -152,7 +155,7 @@ if(this.config.client?.rooms?.selection){
 ```javascript
 static createConfigFile(projectThemePath, initialConfiguration){
     let configFilePath = FileHandler.joinPaths(projectThemePath, 'config.js');
-    let configFileContents = 'window.reldensInitialConfig = '+JSON.stringify(initialConfiguration)+';';
+    let configFileContents = 'window.reldensInitialConfig = '+sc.toJsonString(initialConfiguration)+';';
     let writeResult = FileHandler.writeFile(configFilePath, configFileContents);
     if(!writeResult){
         Logger.error('Failed to write config file: '+configFilePath);
@@ -168,7 +171,7 @@ static createConfigFile(projectThemePath, initialConfiguration){
 **Content structure:**
 ```javascript
 window.reldensInitialConfig = {
-    gameEngine: { /* ... */ },
+    /* ...configManager.gameEngine properties, spread at the top level... */
     client: {
         rooms: {
             selection: {
@@ -192,7 +195,7 @@ window.reldensInitialConfig = {
 
 ### 4.1 Config Loading (`lib/game/client/game-manager.js`)
 
-**Constructor** (line 48-94)
+**Constructor** (lines 47-94)
 
 ```javascript
 constructor(){
@@ -309,7 +312,7 @@ activateGuest(){
 - After initializeManagers() completes
 - Calls HomepageLoader.createConfigFile()
 - Writes theme/config.js with guest rooms data
-- Calls themeManager.buildClient()
+- Calls themeManager.createClientBundle()
 - Bundles config.js into dist/
 
 **Step 5: CLIENT - Browser loads theme/default/index.html**

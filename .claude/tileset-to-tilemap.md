@@ -1,6 +1,6 @@
 # Tileset to Tiled Map - Usage Guide
 
-The tileset-to-tilemap tool converts game tileset PNG images into Tiled-compatible JSON map files for use with the Reldens platform. Access it from the admin panel at `/tileset-to-tilemap`.
+The tileset-to-tilemap tool converts game tileset PNG images into Tiled-compatible JSON map files for use with the Reldens platform. Access it from the admin panel at `/tileset-analyzer/` (under the admin root path, linked from the "Wizards" sidebar group).
 
 ## Step 1 - Upload and Analyze
 
@@ -32,7 +32,7 @@ The canvas shows the tileset image with overlays:
 - **Tile grid**: faint lines showing tile boundaries
 - **Filtered tiles**: gray dashed overlay on tiles excluded by variance threshold (mostly empty or near-solid tiles)
 - **Element overlays**: each detected element gets a unique color; clusters use a dashed border
-- **Tile option markers**: small labeled squares in the corner of tiles assigned as Ground (G), Path (P), Border (B), Random (R), Surrounding (S), Corner (C), Border Tiles (T), Border Corner (K), or Spot Tile (ST)
+- **Tile option markers**: small labeled squares in the corner of assigned tiles - Ground (G), Path (P), Border (B), Random (R), Spot Tile (ST), animation base (A) and animation frame (AF). Tiles of a positional group (surrounding, corners, borders, border inner corners, map border walls, inner/outer walls) are labeled with their position (NW, N, NE, W, C, E, SW, S, SE, TL, TR, BL, BR, T, R, B, L) and are only drawn while that group is expanded
 
 **Canvas interactions:**
 - Left-click a tile: adds it to the active element under the active layer type; removes it if already there; moves it if it belongs to a different layer
@@ -55,13 +55,13 @@ The legend lists every detected element, cluster, and spot in a single unified l
 - **Toggle Lock**: toggles the `approved` flag on all bulk-selected elements/clusters
 - **Convert All**: converts all bulk-selected clusters to elements
 - **Detect AI / Name AI** (bulk, AI-dependent): runs AI detection or naming on all bulk-selected items
-- **Delete Selected**: removes all bulk-selected unlocked items (elements, clusters, and spots); locked items are kept and shown in the confirmation count
+- **Delete** (trash icon): removes all bulk-selected unlocked items (elements, clusters, and spots); locked items are kept and shown in the confirmation count
 
 > **Note**: The elements list is a single unified list containing all three map object types - elements, clusters, and spots. Bulk operations (select-all, delete, lock) apply across all three types together.
 
 Each element/cluster row shows:
 - **Header (click)**: selects/deselects the element; expands the detail section; scrolls canvas to its tiles
-- **Name input**: kebab-case name validated as `[a-z]+-(\d+)+`; invalid names block Generate
+- **Name input**: kebab-case name validated as `^[a-z]+(?:-[a-z]+)*-\d+(?:-\d+)*$` (`SharedUtils.NAME_VALID_REGEX`); invalid or duplicated names block Generate
 - **Lock button**: green closed padlock = locked (protected from bulk AI ops); open padlock = unlockable
 - **Delete button**: removes the element after confirmation
 - **Split into tiles** (clusters only): splits the cluster into individual single-tile elements
@@ -72,7 +72,7 @@ Each element/cluster row shows:
 - **Quantity**: how many times the element appears in the generated composite map
 - **Free space around**: tile padding around the element in the generated map
 - **Allow paths in free space**: whether path tiles can be placed in the element's padding
-- **Layer type radios**: sets the layer type for NEW tiles added by clicking the canvas (below-player, collisions, over-player, collisions-over-player)
+- **Layer type radios**: sets the layer type for NEW tiles added by clicking the canvas (below-player, collisions, over-player, collisions-over-player, base, path, or custom with a free-text suffix)
 
 Each spot row shows:
 - **Header (click)**: expands/collapses the spot's detail section
@@ -89,26 +89,23 @@ Each spot row shows:
 ## Step 5 - Tile Options and Spot Config
 
 Each tileset has a **Tile Options** section (accessible from the Map Tiles tab in the legend panel) for assigning specific tiles to map-generator roles. Assigned tiles are highlighted on the canvas with a semi-transparent colored fill so you can see at a glance what is already assigned. A **Global Map Tiles** panel (shown above the tilesets when more than one tileset is loaded) applies the same options across all tilesets; those assignments are also highlighted on every canvas.
-**Ground and Path group** (three separate rows):
-- Row 1 - **Ground** / **Path**: the base ground tile and the walkable path tile
-- Row 2 - **Border**: a single fallback tile used on the outer edge of the generated map (not directional, just a last-resort fill)
-- Row 3 - **Variations**: additional ground variants placed randomly (multi-value, expands as tiles are added)
-**Positional groups** (each in its own card):
-- **Path Surrounding Tiles**: 3x3 directional grid placed around path elements (N/NE/E/SE/S/SW/W/NW)
-- **Path Corner Tiles**: 2x2 corner transitions
-- **Path Border Tiles**: 4-direction cross grid (Top/Right/Bottom/Left)
-- **Path Border Corner Tiles**: 2x2 map-edge corner set
+The options are split in collapsible groups:
+- **Ground Tiles**: Row 1 - **Ground** (`groundTiles`, multi-value, expands as tiles are added); Row 2 - **Variations** (`randomGroundTiles`, multi-value) additional ground variants placed randomly
+- **Path Tiles**: 3x3 grid with the eight surrounding positions (`surroundingTiles`, NW/N/NE/W/E/SW/S/SE) and the walkable **Path** tile (`pathTile`) in the center cell
+- **Path Corner Tiles**: 2x2 corner transitions (`corners`)
+- **Border Tiles**: 3x3 grid combining the four sides (`bordersTiles`, T/R/B/L), the four map-edge corners (`borderCornersTiles`, NW/NE/SW/SE) and, in the center cell, the single **Border** fallback tile (`borderTile`), a non-directional last-resort fill used for the map edge when no directional side tile is assigned
+- **Border opening end tiles**: 2x2 set (`borderInnerCornersTiles`) used on the two tiles flanking a border entry opening
+- **Map Border Walls Tiles**: 3x3 grid (`mapBorderWallsTiles`) for the inner wall band hanging below the map border
 To assign a tile click the option cell then click the desired tile on the canvas. Single-value options stay in picking mode after assignment so you can immediately see the result; multi-value options add one tile per click. Click the active option cell again to deactivate, or click **Cancel** in the status bar. Only one option can be active at a time - activating a new one deactivates the previous automatically.
-The canvas renders a colored marker badge (G, P, B, R, S, C, T, K) in the corner of each assigned tile alongside the highlight fill.
+The canvas renders a colored marker badge in the corner of each assigned tile alongside the highlight fill (G, P, B, R for the scalar and list options; the position name for the positional grids).
 
 **Spots** are named locations on the map. Each spot has:
 - **Depth** (text input): controls where this spot's layer is inserted in the final layer stack. Valid values:
-  - `false` (or empty) - no reorder; for non-element spots this means the spot is placed in the invisible-spots group (under the ground layer, invisible to the player)
+  - empty or the literal text `false` (stored as `null`) - no reorder; for non-element spots this means the spot is placed in the invisible-spots group (under the ground layer, invisible to the player)
   - `true` - insert below the ground layer (integer depth = 1)
-  - any layer name string (e.g. `ground-variations`, `path`) - insert this spot's layer immediately after the named layer; the spot tiles will be visible above that layer
-  - **Dead state**: if **Is Element** is unchecked and **Depth** is anything other than `false`, the spot is generated internally but **never placed on the map** (silently ignored by the generator). Only use a non-false depth when **Is Element** is checked.
+  - any layer name string (e.g. `ground-variations`, `path`) - insert this spot's layer immediately after the named layer; the spot tiles will be visible above that layer. A name that matches no layer in the generated map falls back to position 1
 - **Name**: identifier for the spot
-- **Is Element** checkbox: treat spot as a placed element (must be checked for the spot to appear on the map when Depth is set)
+- **Is Element** checkbox: treat spot as a placed element, with free space and paths support, instead of an invisible-spot underlay
 - **Width / Height**: dimensions in tiles (default 5x5)
 - **Quantity**: how many instances to place on the map
 - **Mark %**: percentage of spot tiles to mark (0-100)
@@ -132,7 +129,7 @@ To have a spot appear visually on the map AND block player movement:
 3. Uncheck **Walkable**
 4. Assign **Spot Tile Variations** (tiles to fill the spot area)
 
-Without step 1+2 the spot is either invisible (depth false + isElement false) or silently dropped (depth set but isElement false). Without step 3 no collision layer is emitted and players walk through the spot freely.
+Without step 2 the spot layer stays below the ground layer and the player never sees it. Without step 3 no collision layer is emitted and players walk through the spot freely.
 
 Click a spot header to expand/collapse its detail section. When a spot is expanded its assigned tiles are highlighted on the canvas with an orange fill so you can see which tiles belong to it.
 
@@ -163,11 +160,13 @@ Corner tiles (`top-left`, `top-right`, `bottom-left`, `bottom-right`) are concav
 ## Step 6 - Per-Tileset Generate Controls
 
 Each tileset row has its own generate controls:
-- **Remove**: removes this tileset from the session
+- **Remove** (trash icon): removes this tileset from the session
 - **Save** (per tileset): saves only this tileset's state into the session config
 - **Generate** (per tileset): generates output files for all elements in this tileset
 - **Generate Selected** (per tileset): generates output for only bulk-selected elements
-- **Map Generator Configuration toggle**: shows/hides the Map File Name and Map Title inputs
+- **Map Generator Configuration toggle**: shows/hides the Map File Name, Map Title and Maps Wizard Strategy inputs (plus the association properties editor when a multi-map strategy is selected)
+- **Animations toggle**: shows/hides the Tile animations panel
+- **Merge** checkbox and **Merge Configuration toggle**: include this tileset in a merge and configure the merge options
 
 ## Step 7 - AI Controls (visible when AI is enabled)
 
@@ -179,24 +178,28 @@ At the top of each tileset's controls row:
 
 ## Step 8 - Generate Output
 
-Click **Generate All** (or per-tileset **Generate**) to produce all output files. Files are written to `generated-tile-map-elements/output/{sessionId}/`:
+Click **Generate All** (or per-tileset **Generate**) to produce all output files. In Reldens the session storage folder is `generate-data/tileset-sessions/`, so the files are written to `generate-data/tileset-sessions/output/{sessionId}/`:
 - `session-editor-state.json`: full state snapshot used by the Load button
 - `elements-config.json`: human-readable element configuration
 - `{tileset-name}.png`: copy of the tileset PNG, named after the kebab-case map name when one is set (single copy; this is the file `composite.json` references)
 - `ai-buffer/{imageId}`: per-session source copies named by upload id (the imageId is `{epoch}-{original-name}` and already includes the file extension); used as the AI routes' fallback image source, not part of the map output
-- `{tileset-name}-{element-name}.json`: per-element Tiled-format JSON map
-- `{tileset-name}-annotated.png`: tileset image with colored overlays showing detected elements and the tile grid (dimensions are read from the image itself via sharp metadata)
-- `composite.json`: all elements combined on one map
-- `map-generator-config.json`: Reldens map generator configuration including tile options and spots
+- `elements/{tileset-name}-{element-name}.json`: per-element Tiled-format JSON map
+- `cropped-elements/{timestamp}/{tileset-name}-{element-name}.png`: per-element crops (only the newest timestamp folder is kept)
+- `composite.json`: all elements combined on one map (`composite-{W}x{H}.json` per tile size when the session mixes tile sizes)
+- `map-generator-config.json`: Reldens map generator configuration including tile options and spots (suffixed the same way per tile size)
+
+The annotated tileset image is optional (it is only produced when `generateAnnotatedImages` is set in the global tile options) and it is written outside the session folder, to `generate-data/generated/annotated-map-images/{tileset-name}-annotated.png`.
 
 ## Step 9 - Sessions
 
 The **Generated Files** section below the editor lists all saved sessions, newest first. For each session:
 - Click the session row to expand and see all output and input files
+- **Maps Wizard**: opens the Maps Wizard for this session (shown when the session has a `map-generator-config*.json`)
 - **Load**: loads the session state into the editor, replacing matching tilesets
-- **Delete**: removes the session folder and all its files
+- **Append**: loads the session tilesets on top of the current ones instead of replacing them
+- **Delete** (trash icon): removes the session folder and all its files
 - **Download** links: individual file downloads from output and input folders
-- **Download all as ZIP**: downloads the entire output folder as a single ZIP file
+- A **Download all as ZIP** link (in the results section shown after a generate) downloads the entire output folder as a single ZIP file
 Sessions are auto-saved after upload completes. Use **Save Session** to explicitly save with a name. The **Override session** checkbox controls whether saving rewrites the existing session or creates a new one.
 
 ## Step 10 - Start New Session
