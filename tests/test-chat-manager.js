@@ -60,6 +60,16 @@ class TestChatManager extends BaseTest
         });
     }
 
+    async testTheCooldownRejectsMessagesFromTheSamePlayer()
+    {
+        await this.test('the cooldown rejects a second message from the same player inside the cooldown', async () => {
+            let chatManager = this.createChatManager([]);
+            this.assert.strictEqual(chatManager.isAllowedByCooldown(1, 60000), true);
+            this.assert.strictEqual(chatManager.isAllowedByCooldown(1, 60000), false);
+            this.assert.strictEqual(chatManager.isAllowedByCooldown(2, 60000), true);
+        });
+    }
+
     async testTheMessageWithoutARoomIsSavedOnce()
     {
         await this.test('a message without a room is inserted a single time', async () => {
