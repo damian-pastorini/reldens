@@ -47,6 +47,7 @@ The following variables are listed (commented out) in `.env.dist` but are not re
 
 - `RELDENS_ADMIN_ROUTE_PATH` - Admin panel route path
 - `RELDENS_ADMIN_SECRET` - Admin authentication secret
+- `RELDENS_SIGNED_TOKENS_SECRET` - Secret used to sign the expiring reset password links and the multi-server disconnect user requests (default: `RELDENS_ADMIN_SECRET`). Every server in a multi-server setup must use the same value
 - `RELDENS_HOT_PLUG` - Enable hot-plug configuration updates (0/1)
 
 ## Installer
