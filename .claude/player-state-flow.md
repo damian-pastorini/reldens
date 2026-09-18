@@ -98,7 +98,7 @@ userModel {
 
 ### Step 1: User Authentication
 
-**File:** `lib/rooms/server/login.js:71-108` (onAuth)
+**File:** `lib/rooms/server/login.js:76-109` (onAuth)
 
 ```javascript
 async onAuth(client, options, request) {
@@ -115,7 +115,7 @@ async onAuth(client, options, request) {
     }
 
     // ← The returned user becomes userModel in onJoin
-    return await this.disconnectFromOtherServers(loginResult.user, options);
+    return await this.disconnectFromOtherServers(loginResult.user);
 }
 ```
 
@@ -140,7 +140,7 @@ async loadUserByUsername(username) {
 
 ### Step 3: Map Player State Relation
 
-**File:** `lib/game/server/login-manager.js:351-361`
+**File:** `lib/game/server/login-manager.js:373-383`
 
 ```javascript
 mapPlayerStateRelation(user) {
@@ -165,7 +165,7 @@ mapPlayerStateRelation(user) {
 
 ### Step 4: Set Scene On Players
 
-**File:** `lib/game/server/login-manager.js:423-441`
+**File:** `lib/game/server/login-manager.js:445-464`
 
 ```javascript
 async setSceneOnPlayers(user, userData) {
@@ -177,7 +177,8 @@ async setSceneOnPlayers(user, userData) {
         // Check if user selected a different scene on login
         let config = this.config.get('client/rooms/selection');
         if(config.allowOnLogin && userData['selectedScene'] &&
-           userData['selectedScene'] !== RoomsConst.ROOM_LAST_LOCATION_KEY){
+           userData['selectedScene'] !== RoomsConst.ROOM_LAST_LOCATION_KEY &&
+           this.roomsManager.loginAvailableRooms.some(room => room.name === userData['selectedScene'])){
             await this.applySelectedLocation(player, userData['selectedScene']);
         }
 
@@ -192,7 +193,7 @@ async setSceneOnPlayers(user, userData) {
 
 ### Step 5: Select Player (Runtime Assignment)
 
-**File:** `lib/rooms/server/login.js:90-93`
+**File:** `lib/rooms/server/login.js:91-94`
 
 ```javascript
 if(sc.hasOwn(options, 'selectedPlayer')){
@@ -213,7 +214,7 @@ if(sc.hasOwn(options, 'selectedPlayer')){
 
 ### Joining Scene Room
 
-**File:** `lib/rooms/server/scene.js:128-159`
+**File:** `lib/rooms/server/scene.js:128-166`
 
 ```javascript
 async onJoin(client, options, userModel) {
@@ -229,6 +230,10 @@ async onJoin(client, options, userModel) {
             //                            ^^^^^ Use runtime state with scene!
             return false;
         }
+        if(userModel.player.state.scene !== this.roomName){  // ← Reject a player scene that is not this room
+            await this.events.emit('reldens.joinRoomInvalid', this, client, options, userModel, isGuest);
+            return false;
+        }
     }
 
     // Create player schema in room...
@@ -239,7 +244,7 @@ async onJoin(client, options, userModel) {
 
 ### Saving Player State During Gameplay
 
-**File:** `lib/rooms/server/scene.js:708-737`
+**File:** `lib/rooms/server/scene.js:724-753`
 
 ```javascript
 async savePlayerState(sessionId) {
@@ -363,11 +368,11 @@ playerSchema.state = {
 
 **Key Files:**
 - `lib/users/server/manager.js:67-83` - Load user with relations
-- `lib/game/server/login-manager.js:351-361` - Map player state relation
-- `lib/game/server/login-manager.js:423-441` - Set scene on players
-- `lib/rooms/server/login.js:71-108` - Authentication and player selection
-- `lib/rooms/server/scene.js:128-159` - Scene validation
-- `lib/rooms/server/scene.js:708-737` - Save player state
+- `lib/game/server/login-manager.js:373-383` - Map player state relation
+- `lib/game/server/login-manager.js:445-464` - Set scene on players
+- `lib/rooms/server/login.js:76-109` - Authentication and player selection
+- `lib/rooms/server/scene.js:128-166` - Scene validation
+- `lib/rooms/server/scene.js:724-753` - Save player state
 
 **Database Tables:**
 - `users` - User accounts

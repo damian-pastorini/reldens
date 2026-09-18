@@ -14,7 +14,7 @@
 
 **Server determines playerToExchangeKey:**
 
-Line 305 in `lib/inventory/server/message-actions.js`:
+Line 314 in `lib/inventory/server/message-actions.js`:
 ```javascript
 let playerToExchangeKey = ownerSessionId === playerTo.sessionId ? 'A' : 'B';
 ```

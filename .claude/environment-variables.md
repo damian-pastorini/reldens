@@ -22,7 +22,7 @@ See `lib/game/server/install-templates/.env.dist` for the template file.
 
 ## Express Server
 
-The following variables are listed (commented out) in `.env.dist` but are not read by `ServerManager.fetchConfigServerFromEnvironmentVariables()`, they map to `AppServerFactory` config options that must be passed programmatically: `RELDENS_USE_EXPRESS_JSON`, `RELDENS_EXPRESS_JSON_LIMIT`, `RELDENS_EXPRESS_URLENCODED_LIMIT`, `RELDENS_GLOBAL_RATE_LIMIT`, `RELDENS_TOO_MANY_REQUESTS_MESSAGE`, `RELDENS_USE_URLENCODED`, `RELDENS_USE_HELMET`, `RELDENS_USE_XSS_PROTECTION`, `RELDENS_USE_CORS`, `RELDENS_CORS_ORIGIN`, `RELDENS_CORS_METHODS`, `RELDENS_CORS_HEADERS`.
+The following variables are listed (commented out) in `.env.dist` but are not read by `ServerManager.fetchConfigServerFromEnvironmentVariables()`, they map to `AppServerFactory` config options that must be passed programmatically: `RELDENS_USE_EXPRESS_JSON`, `RELDENS_EXPRESS_JSON_LIMIT`, `RELDENS_EXPRESS_URLENCODED_LIMIT`, `RELDENS_GLOBAL_RATE_LIMIT`, `RELDENS_TOO_MANY_REQUESTS_MESSAGE`, `RELDENS_USE_URLENCODED`, `RELDENS_USE_XSS_PROTECTION`, `RELDENS_USE_CORS`, `RELDENS_CORS_METHODS`, `RELDENS_CORS_HEADERS`.
 
 - `RELDENS_USE_EXPRESS_JSON` - Enable JSON parsing
 - `RELDENS_EXPRESS_JSON_LIMIT` - JSON payload limit
@@ -33,7 +33,7 @@ The following variables are listed (commented out) in `.env.dist` but are not re
 - `RELDENS_USE_HELMET` - Enable Helmet security
 - `RELDENS_USE_XSS_PROTECTION` - Enable XSS protection
 - `RELDENS_USE_CORS` - Enable CORS
-- `RELDENS_CORS_ORIGIN` - CORS origin
+- `RELDENS_CORS_ORIGIN` - CORS origin (default: `RELDENS_PUBLIC_URL`)
 - `RELDENS_CORS_METHODS` - CORS methods
 - `RELDENS_CORS_HEADERS` - CORS headers
 - `RELDENS_EXPRESS_SERVE_HOME` - Serve dynamic home page
@@ -47,6 +47,7 @@ The following variables are listed (commented out) in `.env.dist` but are not re
 
 - `RELDENS_ADMIN_ROUTE_PATH` - Admin panel route path
 - `RELDENS_ADMIN_SECRET` - Admin authentication secret
+- `RELDENS_SIGNED_TOKENS_SECRET` - Secret used to sign the expiring reset password links and the multi-server disconnect user requests (default: `RELDENS_ADMIN_SECRET`). Every server in a multi-server setup must use the same value
 - `RELDENS_HOT_PLUG` - Enable hot-plug configuration updates (0/1)
 
 ## Installer
