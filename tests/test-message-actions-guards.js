@@ -240,18 +240,49 @@ class TestMessageActionsGuards extends BaseTest
         });
     }
 
+    createDataServerCapture(deletedMembers)
+    {
+        return {
+            getEntity: () => ({
+                delete: async (conditions) => deletedMembers.push(conditions),
+                deleteById: async () => true
+            })
+        };
+    }
+
+    createClanWithOfflineMember(sentMessages, clanOwner)
+    {
+        return new Clan({
+            id: 10,
+            owner: {player_id: 1, playerName: 'player1'},
+            players: {1: clanOwner},
+            clients: {1: this.createClient(sentMessages)},
+            members: {1: {related_players: {name: 'player1'}}, 2: {related_players: {name: 'player2'}}}
+        });
+    }
+
+    async testClanRemoveOfAnOfflineMember()
+    {
+        await this.test('the clan owner can remove a member that is offline', async () => {
+            let sentMessages = [];
+            let deletedMembers = [];
+            let clanOwner = this.createClanOwner(10);
+            let clan = this.createClanWithOfflineMember(sentMessages, clanOwner);
+            let teamsPlugin = this.createTeamsPlugin({}, {10: clan});
+            teamsPlugin.dataServer = this.createDataServerCapture(deletedMembers);
+            let removeData = {act: TeamsConst.ACTIONS.CLAN_REMOVE, id: 10, remove: '2'};
+            await ClanLeave.fromMessage(removeData, clanOwner, teamsPlugin);
+            this.assert.deepStrictEqual(Object.keys(clan.members), ['1']);
+            this.assert.deepStrictEqual(deletedMembers, [{player_id: 2, clan_id: 10}]);
+        });
+    }
+
     async testClanRemoveOfNonMember()
     {
         await this.test('the clan owner removal skips non-members', async () => {
             let sentMessages = [];
             let clanOwner = this.createClanOwner(10);
-            let clan = new Clan({
-                id: 10,
-                owner: {player_id: 1, playerName: 'player1'},
-                players: {1: clanOwner},
-                clients: {1: this.createClient(sentMessages)},
-                members: {1: {related_players: {name: 'player1'}}, 2: {related_players: {name: 'player2'}}}
-            });
+            let clan = this.createClanWithOfflineMember(sentMessages, clanOwner);
             let teamsPlugin = this.createTeamsPlugin({}, {10: clan});
             let nonMemberData = {act: TeamsConst.ACTIONS.CLAN_REMOVE, id: 10, remove: '99'};
             await ClanLeave.fromMessage(nonMemberData, clanOwner, teamsPlugin);
