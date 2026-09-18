@@ -73,6 +73,21 @@ class TestFirebaseIdTokenVerifier extends BaseTest
         });
     }
 
+    async testTheExpiredVerifiedTokenIsRejected()
+    {
+        await this.test('a verified ID token is rejected after the verification expiration', async () => {
+            let capturedRequests = [];
+            let responseData = {users: [{localId: 'firebase-uid', email: 'player@test.com'}]};
+            let verifier = this.createVerifier(responseData, capturedRequests);
+            await verifier.verify('valid-token', 'firebase-uid');
+            verifier.verifiedUsers.get('firebase-uid').expiresAt = sc.getTime()-1;
+            let userData = this.createFirebaseLoginData('valid-token');
+            this.assert.strictEqual(verifier.applyVerifiedLogin(userData), false);
+            this.assert.strictEqual(userData.username, '');
+            this.assert.strictEqual(verifier.verifiedUsers.has('firebase-uid'), false);
+        });
+    }
+
     async testTheUidMismatchIsRejected()
     {
         await this.test('an ID token for another Firebase user is rejected', async () => {
