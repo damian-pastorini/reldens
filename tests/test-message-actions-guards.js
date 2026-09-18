@@ -172,6 +172,53 @@ class TestMessageActionsGuards extends BaseTest
         });
     }
 
+    createTradePlayer(sessionId, tradeInProgress)
+    {
+        return {
+            sessionId,
+            playerName: 'player-'+sessionId,
+            tradeInProgress,
+            inventory: {
+                manager: {findItemsByPropertyValue: () => []},
+                client: {extractItemsDataForSend: () => ({})}
+            }
+        };
+    }
+
+    createTradeInProgress(initializedExchanges)
+    {
+        let tradeInProgress = {
+            confirmations: {A: false, B: false},
+            exchangeBetween: {A: {}, B: {}},
+            inventories: {}
+        };
+        tradeInProgress.initializeExchangeBetween = (props) => {
+            initializedExchanges.push(props);
+            tradeInProgress.inventories = {A: {owner: {sessionId: 'session1'}}, B: {owner: {sessionId: 'session2'}}};
+        };
+        return tradeInProgress;
+    }
+
+    async testTheTradeInviteIsNotReusableAfterTheAccept()
+    {
+        await this.test('a trade invite cannot be accepted a second time', async () => {
+            let sentMessages = [];
+            let initializedExchanges = [];
+            let tradeInProgress = this.createTradeInProgress(initializedExchanges);
+            let starterPlayer = this.createTradePlayer('session1', tradeInProgress);
+            starterPlayer.tradeInvitedSessionId = 'session2';
+            let invitedPlayer = this.createTradePlayer('session2', false);
+            let room = this.createTradeRoom(starterPlayer, sentMessages);
+            let data = {act: InventoryConst.ACTIONS.TRADE_ACCEPTED, value: '1', id: 'session1'};
+            let messageActions = new InventoryMessageActions();
+            let client = this.createClient(sentMessages);
+            this.assert.strictEqual(messageActions.startExchange(client, data, room, invitedPlayer), true);
+            this.assert.strictEqual(messageActions.startExchange(client, data, room, invitedPlayer), false);
+            // @possible-hallucinated-undefined-method
+            this.assert.strictEqual(initializedExchanges.length, 1);
+        });
+    }
+
     async testTradeActionWithoutTradeInProgressIsRejected()
     {
         await this.test('a trade action without a trade in progress is rejected', async () => {
