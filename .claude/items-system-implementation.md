@@ -140,7 +140,7 @@ this.events.on('reldens.createPlayerStatsAfter', async (client, userModel, curre
    }
    ```
 
-2. **Execute Equip Action** (`lib/inventory/server/message-actions.js` lines 362-375)
+2. **Execute Equip Action** (`lib/inventory/server/message-actions.js` lines 371-384)
    ```javascript
    async executeEquipAction(playerSchema, data){
        let item = playerSchema.inventory.manager.items[data.idx];
@@ -248,7 +248,7 @@ this.events.on('reldens.createPlayerStatsAfter', async (client, userModel, curre
    }
    ```
 
-9. **Save Player Stats** (`lib/rooms/server/scene.js` lines 231-237)
+9. **Save Player Stats** (`lib/rooms/server/scene.js` lines 238-244)
    ```javascript
    currentPlayer.persistData = async (params) => {
        await this.events.emit('reldens.playerPersistDataBefore', client, userModel, currentPlayer, params, this);
@@ -260,7 +260,7 @@ this.events.on('reldens.createPlayerStatsAfter', async (client, userModel, curre
    };
    ```
 
-10. **Client Update** (`lib/rooms/server/scene.js` lines 759-763)
+10. **Client Update** (`lib/rooms/server/scene.js` lines 775-779)
     ```javascript
     client.send('*', {
         act: GameConst.PLAYER_STATS,
