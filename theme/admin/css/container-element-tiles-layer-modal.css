@@ -1,0 +1,78 @@
+.element-tiles-layer-modal {
+
+    & .modal-body p {
+        text-align: center;
+    }
+
+    & .element-tiles-layer-canvas {
+        display: block;
+        margin: var(--space-md) auto;
+        border: 1px solid var(--color-grey-20);
+        image-rendering: pixelated;
+        cursor: pointer;
+        background-color: var(--color-grey-70);
+    }
+
+    & .layer-type-fieldset {
+        margin-top: var(--space-md);
+        border: 1px solid var(--color-grey-40);
+        border-radius: var(--radius-sm);
+        padding: var(--space-sm) var(--space-md);
+    }
+
+    & .layer-type-fieldset legend {
+        color: var(--color-white);
+        font-size: var(--font-size-sm);
+        padding: 0 var(--space-xs);
+    }
+
+    & .layer-type-fieldset label {
+        display: block;
+        padding: var(--space-xs) 0;
+        color: var(--color-white);
+        font-size: var(--font-size-sm);
+        cursor: pointer;
+    }
+
+    & .layer-type-custom-input {
+        width: 6rem;
+        margin-left: var(--space-xs);
+    }
+
+    & .layer-color-swatch {
+        display: inline-block;
+        width: 0.75rem;
+        height: 0.75rem;
+        border-radius: var(--radius-sm);
+        margin: 0 var(--space-xs);
+        vertical-align: middle;
+    }
+
+    & .layer-color-over-player {
+        background-color: var(--color-blue);
+    }
+
+    & .layer-color-collisions {
+        background-color: var(--color-red-10);
+    }
+
+    & .layer-color-below-player {
+        background-color: var(--color-green);
+    }
+
+    & .layer-color-collisions-over-player {
+        background-color: var(--color-pink);
+    }
+
+    & .layer-color-base {
+        background-color: var(--color-gold);
+    }
+
+    & .layer-color-custom {
+        background-color: var(--color-purple);
+    }
+
+    & .layer-color-path {
+        background-color: var(--color-orange);
+    }
+}

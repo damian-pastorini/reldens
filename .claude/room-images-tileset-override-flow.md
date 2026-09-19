@@ -9,7 +9,7 @@ This document explains how the room scene images upload system works and how the
 **Config Path:** `server/rooms/maps/overrideSceneImagesWithMapFile`
 **Type:** Boolean
 **Default:** `true`
-**Location:** Database `config` table or environment variable
+**Location:** Database `config` table (read through `ConfigManager.getWithoutLogs`; there is no environment-variable override for config paths)
 
 When enabled, the system uses the Tiled map file as the source of truth for scene images, automatically overriding the `scene_images` field with images listed in the map's tilesets.
 
@@ -24,9 +24,9 @@ When enabled, the system uses the Tiled map file as the source of truth for scen
 ### Admin Interface
 - **Tileset File Item Template:** `theme/admin/templates/fields/edit/tileset-file-item.html`
 - **Tileset Alert Wrapper Template:** `theme/admin/templates/fields/edit/tileset-alert-wrapper.html`
-- **Client JS:** `theme/admin/reldens-admin-client.js`
-- **Client CSS:** `theme/admin/reldens-admin-client.css`
-- **Router:** `npm-packages/reldens-cms/lib/admin-manager/router-contents.js`
+- **Client JS:** `theme/admin/js/reldens-admin-client-maps.js` (`AdminClientMaps.bindTilesetAlertIcons()`)
+- **Client CSS:** `theme/admin/css/component-entries.css` (`.tileset-alert-wrapper`, `.upload-files-with-alert`), imported from `theme/admin/css/reldens-admin-client.css`
+- **Router:** `@reldens/cms` -> `lib/admin-manager/router-contents.js`
 
 ## Database Schema
 
@@ -36,16 +36,16 @@ When enabled, the system uses the Tiled map file as the source of truth for scen
 - `scene_images` - Comma-separated list of tileset images (e.g., `reldens-forest.png,reldens-town.png`)
 
 ### Upload Configuration
-Both fields are configured as upload fields:
-- `map_filename` - Single file upload, bucket: `theme/assets/maps`
-- `scene_images` - Multiple file upload, bucket: `theme/assets/images`
+Both fields are configured as upload fields in `lib/rooms/server/entities/rooms-entity-override.js`, and BOTH use the SAME bucket, `<projectThemePath>/assets/maps` (e.g. `theme/default/assets/maps`), with `bucketPath` `/assets/maps/`:
+- `map_filename` - Single file upload, `allowedTypes: TEXT`
+- `scene_images` - Multiple file upload (`isArray: ','`), `allowedTypes: IMAGE`
 
 ## System Flow
 
 ### 1. Initial Room Creation
 
 **User Actions:**
-1. Navigate to Admin → Rooms → Create New
+1. Navigate to Admin -> Rooms -> Create New
 2. Upload map JSON file to `map_filename` field
 3. Upload tileset images to `scene_images` field
 4. Click Save
@@ -66,7 +66,7 @@ overrideEnabled = config.getWithoutLogs('server/rooms/maps/overrideSceneImagesWi
 mapData = readMapFile(bucket, mapFilename, roomId)
 
 // Extract tileset images from map JSON
-tilesetImages = extractTilesetImages(mapData.tilesets)
+tilesetImages = extractTilesetImages(mapData)
 // Example: ['reldens-forest.png']
 
 // Compare with current scene_images
@@ -82,7 +82,7 @@ if (tilesetImages !== currentSceneImages) {
 ### 2. Room Editing
 
 **User Actions:**
-1. Navigate to Admin → Rooms → Edit Room
+1. Navigate to Admin -> Rooms -> Edit Room
 2. View existing files in both fields
 3. Modify files or click Save without changes
 
@@ -94,9 +94,11 @@ if (tilesetImages !== currentSceneImages) {
 ```javascript
 // 1. Event emitted with room data
 event = {
-    driverResource,     // Entity configuration
+    // Entity configuration
+    driverResource,
     renderedEditProperties, // Form properties
-    loadedEntity,       // Room from database
+    // Room from database
+    loadedEntity,
     entityId: 'rooms',
     entityData: loadedEntity
 }
@@ -144,8 +146,8 @@ if (propertyKey === 'scene_images' && tilesetImages.length > 0) {
 2. Validation passes (existing files satisfy requirement)
 3. Entity updated with form data
 4. Post-save validator runs
-5. If scene_images matches tilesets → No action
-6. If mismatch → Override with tileset images
+5. If scene_images matches tilesets -> No action
+6. If mismatch -> Override with tileset images
 
 **Scenario B: Add New Image**
 1. User uploads additional image to `scene_images`
@@ -271,23 +273,23 @@ validateImagesExist(tilesetImages, sceneImagesBucket, roomId, mapFilename) {
     <div class="upload-files-with-alert">
         {{{renderedFileItems}}}
     </div>
-    <div class="tileset-alert-icon-container">
-        <img src="/assets/admin/alert.png" class="tileset-alert-icon" alt="Info" title="Images specified in the tileset can't be removed since the option overrideSceneImagesWithMapFile is active.">
+    <div class="alert-icon-container">
+        <img src="/assets/admin/alert.png" class="alert-icon" alt="Info" title="Images specified in the tileset can't be removed since the option overrideSceneImagesWithMapFile is active.">
         <span class="tileset-info-message hidden">Images specified in the tileset can't be removed since the option overrideSceneImagesWithMapFile is active.</span>
     </div>
 </div>
 ```
 
-**JavaScript Toggle (reldens-admin-client.js):**
+**JavaScript Toggle (`AdminClientMaps.bindTilesetAlertIcons()` in `theme/admin/js/reldens-admin-client-maps.js`):**
 ```javascript
-document.querySelectorAll('.tileset-alert-icon').forEach(icon => {
+for (let icon of document.querySelectorAll('.alert-icon')) {
     icon.addEventListener('click', () => {
         let message = icon.nextElementSibling
         if (message?.classList.contains('tileset-info-message')) {
             message.classList.toggle('hidden')
         }
     })
-})
+}
 ```
 
 ## Benefits
@@ -299,25 +301,19 @@ document.querySelectorAll('.tileset-alert-icon').forEach(icon => {
 
 ## Limitations
 
-1. **One-Way Sync:** Map → Database only (not bidirectional)
+1. **One-Way Sync:** Map -> Database only (not bidirectional)
 2. **Cleanup Required:** Removing tileset from map doesn't delete old image files
 3. **Override Always Wins:** Manual changes to scene_images get overwritten on next save
 4. **Requires Config:** Must enable `overrideSceneImagesWithMapFile` to activate
 
 ## Disabling the Feature
 
-To disable tileset override and manage images manually:
+To disable tileset override and manage images manually, set the config value in the database (the key is read only from the `config` table):
 
-**Option 1: Database Config**
 ```sql
 UPDATE config
 SET value = '0'
 WHERE path = 'server/rooms/maps/overrideSceneImagesWithMapFile';
-```
-
-**Option 2: Environment Variable**
-```bash
-RELDENS_SERVER_ROOMS_MAPS_OVERRIDESCENEIMAGESWITHMAPFILE=0
 ```
 
 **Result:**

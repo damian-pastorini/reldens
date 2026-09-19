@@ -94,7 +94,7 @@ class CrudTestData
             },
             'skills-skill': {
                 key: uniqueKey+'-skill-test',
-                type: 1,
+                type: 2,
                 label: 'Test Skill '+uniqueSuffix+' '+timestamp,
                 autoValidation: 1,
                 skillDelay: 1000,

@@ -5,6 +5,11 @@
     <div class="item-data-container">
         <span class="item-label">{{label}}</span>
         <span class="item-description">{{description}}</span>
+        <div class="item-modifiers">
+            {{#modifiers}}
+                <span class="item-modifier">{{display}}</span>
+            {{/modifiers}}
+        </div>
     </div>
     <div class="trade-requirements">
         {{&tradeRequirements}}
@@ -13,9 +18,9 @@
         {{&tradeRewards}}
     </div>
     <div class="actions-container trade-actions">
-        {{&tradeAction}}
         <div class="item-qty item-qty-{{id}}">
             {{&tradeQuantityContent}}
         </div>
+        {{&tradeAction}}
     </div>
 </div>

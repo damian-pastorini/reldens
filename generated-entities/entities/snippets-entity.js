@@ -23,6 +23,8 @@ class SnippetsEntity extends EntityProperties
             locale_id: {
                 type: 'reference',
                 reference: 'locale',
+                alias: 'related_locale',
+                onDelete: 'noAction',
                 isRequired: true,
                 dbType: 'int'
             },

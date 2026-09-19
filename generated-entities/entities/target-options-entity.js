@@ -20,6 +20,7 @@ class TargetOptionsEntity extends EntityProperties
             },
             target_key: {
                 isRequired: true,
+                isUnique: true,
                 dbType: 'varchar'
             },
             target_label: {

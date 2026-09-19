@@ -21,6 +21,7 @@ class SkillsLevelsSetEntity extends EntityProperties
                 dbType: 'int'
             },
             key: {
+                isUnique: true,
                 dbType: 'varchar'
             },
             [titleProperty]: {

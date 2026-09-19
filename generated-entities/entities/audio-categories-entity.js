@@ -21,10 +21,12 @@ class AudioCategoriesEntity extends EntityProperties
             },
             category_key: {
                 isRequired: true,
+                isUnique: true,
                 dbType: 'varchar'
             },
             category_label: {
                 isRequired: true,
+                isUnique: true,
                 dbType: 'varchar'
             },
             enabled: {

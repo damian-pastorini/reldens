@@ -5,34 +5,31 @@ Complete reference for the storage system and entity management.
 ## Entity Generation Workflow
 
 1. Define database schema (SQL migrations in `migrations/`)
-2. Run `reldens generateEntities --override`
-3. Entities are generated in `generated-entities/`
-4. Models in each feature's `server/models/` extend generated entities
+2. Run `reldens generateEntities --override` (reads the `.env` credentials and `RELDENS_STORAGE_DRIVER`)
+3. Entities are generated in `generated-entities/` (entities, config, translations and the models of the active driver)
+4. Admin panel overrides in each feature `server/entities/` extend the generated entities
 
 ## Storage Drivers
 
-- `objection-js` (default was objection-js): Uses Knex.js for SQL, direct database access, no validation
-- `mikro-orm`: ORM with decorators, supports MongoDB
-- `prisma` (current default): Modern ORM with type safety, custom validation, database default support
-- Configured via `RELDENS_STORAGE_DRIVER` in `.env`
+- `knex` (default): the only driver bundled with `@reldens/storage`, MySQL/MariaDB through `mysql2`, plain query builder with relations loaded through the `relationMappings` data emitted into the generated models
+- `kysely` (optional, requires `kysely`): type safe query builder, same query builder base as Knex
+- `drizzle` (optional, requires `drizzle-orm`): same query builder base as Knex, models emit the Drizzle column builders
+- `objection-js` (optional, requires `objection@3.1.5`): Knex based ORM with `withGraphFetched` relations, kept for existing projects
+- `mikro-orm` (optional, requires `@mikro-orm/core` and `@mikro-orm/mysql`, plus `@mikro-orm/mongodb` when the client is MongoDB): entity schemas, the only driver with MongoDB support
+- `prisma` (optional, requires `prisma`, `@prisma/client` and a driver adapter, `@prisma/adapter-mariadb` by default): schema first, requires the Prisma client generation before the entities generation
+- Configured via `RELDENS_STORAGE_DRIVER` in `.env`; the optional drivers are only usable when their packages resolve from the project `node_modules`
 
-## Driver Differences
+## Driver Modules Resolution
 
-### ObjectionJS
-- Direct SQL via Knex query builder
-- No field validation before database
-- Database handles defaults and constraints
-- Foreign keys as direct field values
-- Less informative error messages
+`@reldens/storage` does not depend on the optional packages. Every data server receives its driver classes through a `[driver]Modules` prop (`knexModules`, `kyselyModules`, `drizzleModules`, `objectionModules`, `mikroOrmModules`, `prismaModules`), validated on `connect()`.
 
-### Prisma
-- Type-safe Prisma Client
-- Custom `ensureRequiredFields()` validation before database
-- Skips validation for fields with database defaults
-- Foreign keys use relation connect syntax: `{players: {connect: {id: 1001}}}`
-- VARCHAR foreign key support
-- Better error messages for missing required fields
-- Metadata-driven field type casting
+Reldens resolves those props from the project root through the `@reldens/cms` `StorageDriversResolver` (`lib/storage-drivers-resolver.js`):
+
+- `StorageDriversResolver.available(projectRoot, prismaAdapter)` lists the drivers whose packages resolve (Knex always)
+- `StorageDriversResolver.modulesProp(driverKey)` gives the data server prop name
+- `StorageDriversResolver.loadModules(driverKey, projectRoot, client)` loads the modules through the `@reldens/storage` loaders (`KnexModulesLoader`, `KyselyModulesLoader`, `DrizzleModulesLoader`, `ObjectionModulesLoader`, `MikroOrmModulesLoader`)
+
+The Prisma modules are built by `DataServerInitializer.loadProjectPrismaModules()` from the project `prisma/client` and the adapter package (`RELDENS_PRISMA_ADAPTER` / `RELDENS_PRISMA_ADAPTER_CLASS`), or reused from the installer data server right after the installation. `PrismaDataServer` creates the client with the connection string from `DataServerConfig`.
 
 ## Entity Access and Storage System Architecture
 
@@ -42,7 +39,7 @@ Complete reference for the storage system and entity management.
 
 **What getEntity() Returns:**
 ```javascript
-// Returns BaseDriver instance (or ObjectionJsDriver, PrismaDriver, MikroOrmDriver subclass)
+// Returns BaseDriver instance (KnexDriver by default, or the optional driver subclass)
 let statsRepository = this.dataServer.getEntity('stats');
 
 // BaseDriver provides unified interface across all storage drivers:
@@ -65,11 +62,11 @@ await statsRepository.deleteById(1);
 this.statsRepository = this.dataServer.getEntity('stats');
 
 // WRONG - Entity classes are for admin panel config only
-/** @type {StatsEntity} */  // ❌ WRONG
+/** @type {StatsEntity} */
 this.statsRepository = this.dataServer.getEntity('stats');
 
-// WRONG - Model classes are driver-specific (objection-js/prisma/mikro-orm)
-/** @type {StatsModel} */  // ❌ WRONG
+// WRONG - Model classes are driver-specific
+/** @type {StatsModel} */
 this.statsRepository = this.dataServer.getEntity('stats');
 ```
 
@@ -82,13 +79,10 @@ this.statsRepository = this.dataServer.getEntity('stats');
 - Example: `StatsEntity.propertiesConfig()` returns admin panel config
 - Never used for database operations
 
-### 2. Model Classes (`generated-entities/models/{driver}/[table]-model.js`)
-- Purpose: ORM-specific model definitions
-- Driver-specific paths:
-  - `models/objection-js/stats-model.js` - ObjectionJS
-  - `models/prisma/stats-model.js` - Prisma
-  - `models/mikro-orm/stats-model.js` - MikroORM
-- Define table names, relations, schema
+### 2. Model Classes (`generated-entities/models/[driver]/[table]-model.js`)
+- Purpose: driver-specific model definitions
+- The repository keeps only `generated-entities/models/knex/`, the optional drivers models are generated on demand with `RELDENS_STORAGE_DRIVER` set to the driver key
+- Knex models are plain classes with `tableName`, `idColumn` (when it is not `id`) and `relationMappings` data (`{relation, tableName, from, to}`)
 - Wrapped by BaseDriver before use
 
 ### 3. BaseDriver (`@reldens/storage/lib/base-driver.js`)
@@ -97,33 +91,31 @@ this.statsRepository = this.dataServer.getEntity('stats');
 - Provides consistent API across all storage drivers
 - THIS IS WHAT `getEntity()` RETURNS
 - Methods: create, load, loadBy, loadOneBy, update, delete, count, etc.
-- Driver implementations:
-  - `ObjectionJsDriver` - uses Knex query builder
-  - `PrismaDriver` - uses Prisma Client
-  - `MikroOrmDriver` - uses MikroORM EntityManager
+- Driver implementations: `KnexDriver`, `KyselyDriver` and `DrizzleDriver` (all extending `QueryBuilderDriver`), `ObjectionJsDriver`, `MikroOrmDriver`, `PrismaDriver`
 
 ### 4. BaseDataServer (`@reldens/storage/lib/base-data-server.js`)
 - Purpose: Manages database connection and entity registry
 - Has `EntityManager` for storing BaseDriver instances
 - `getEntity(key)` retrieves BaseDriver from EntityManager
-- Driver implementations:
-  - `ObjectionJsDataServer`
-  - `PrismaDataServer`
-  - `MikroOrmDataServer`
+- Driver implementations: `KnexDataServer`, `KyselyDataServer`, `DrizzleDataServer`, `ObjectionJsDataServer` (extends `KnexDataServer`), `MikroOrmDataServer`, `PrismaDataServer`
+- Every key is mapped in the `@reldens/storage` `DriversMap` export
 
 ## Entity Loading Flow
 
-1. `EntitiesLoader.loadEntities()` (lib/game/server/entities-loader.js:41)
-   - Checks `RELDENS_STORAGE_DRIVER` env var (default: 'prisma')
-   - Loads from `generated-entities/models/{driver}/registered-models-{driver}.js`
+1. `DataServerConfig.prepareDbConfig()` (lib/game/server/data-server-config.js)
+   - Reads `RELDENS_STORAGE_DRIVER` (default: `knex`), `RELDENS_DB_CLIENT` (default: `mysql2`) and the `RELDENS_DB_*` connection values
+
+2. `EntitiesLoader.loadEntities()` (lib/game/server/entities-loader.js)
+   - Loads `generated-entities/models/{driver}/registered-models-{driver}.js`
+   - Merges the plugins `server/entities-config.js`, `server/entities-translations.js` and the implementation overrides
    - Returns `{entities, entitiesRaw, translations}`
 
-2. `DataServerInitializer.initializeEntitiesAndDriver()` (lib/game/server/data-server-initializer.js:55)
-   - Creates DataServer instance: `new DriversMap[storageDriver](config)`
-   - DataServer generates BaseDriver instances for each entity
-   - Stores in EntityManager registry
+3. `DataServerInitializer.initializeEntitiesAndDriver()` (lib/game/server/data-server-initializer.js)
+   - Resolves the driver modules for the configured driver (`StorageDriversResolver` for every driver but Prisma, `loadProjectPrismaModules()` for Prisma)
+   - Creates the DataServer instance: `new DriversMap[storageDriver](dataServerConfig)`
+   - `ServerManager.initializeStorage()` then connects it and calls `generateEntities()` so the BaseDriver instances are stored in the EntityManager registry
 
-3. `dataServer.getEntity(key)` returns BaseDriver from EntityManager
+4. `dataServer.getEntity(key)` returns BaseDriver from EntityManager
 
 ## Usage Examples
 
@@ -150,18 +142,20 @@ let relatedSkills = classPathModel.related_skills_levels_set.related_skills_leve
 - ALWAYS use `BaseDriver` type for repository properties
 - Entity classes are NEVER used for database operations
 - Model classes are wrapped by BaseDriver - never accessed directly
-- Storage driver is configurable: objection-js, prisma (default), mikro-orm
+- Storage driver is configurable: `knex` (default), `kysely`, `drizzle`, `objection-js`, `mikro-orm`, `prisma`
 - Relations can be nested
 - Entity relations keys are defined in `generated-entities/entities-config.js`
-- Custom entity overrides are in `lib/[plugin-folder]/server/entities` or `lib/[plugin-folder]/server/models`
+- Custom entity overrides are in `lib/[plugin-folder]/server/entities`
 
 ## Generated Entities Structure
 
 The `generated-entities/` directory contains:
-- `entities/` - 60+ auto-generated entity classes for all database tables
-- `models/` - Custom entity overrides (extend generated entities)
+- `entities/` - 77 auto-generated entity classes for all database tables
+- `models/knex/` - the Knex models plus `registered-models-knex.js`
 - `entities-config.js` - Entity relationship mappings and configuration
 - `entities-translations.js` - Translation/label mappings for admin panel
+
+Generating the entities for an optional driver creates `models/[driver]/` next to the Knex one; only the active driver models are refreshed on every run, the other folders drift and must be regenerated when switching back.
 
 ## Entity Overrides and Database Defaults
 
@@ -189,7 +183,7 @@ class ScoresDetailEntityOverride extends ScoresDetailEntity {
 let scoreDetailData = {
     player_id: attacker.player_id,
     obtained_score: obtainedScore,
-    kill_time: sc.formatDate(new Date()),  // Auto-populated
+    kill_time: sc.formatDate(new Date()),
     kill_player_id: props.killPlayerId || null,
     kill_npc_id: props.killNpcId || null,
 };
@@ -199,6 +193,36 @@ let scoreDetailData = {
 1. Field removed from `editProperties` - not shown in admin panel
 2. Database has `DEFAULT CURRENT_TIMESTAMP` - auto-fills when missing
 3. Game logic explicitly sets value when creating programmatically
-4. Prisma driver skips validation for fields with database defaults
+4. The Knex driver passes the data as is, so the database applies the default; the Prisma driver skips its required fields validation for the fields with database defaults
 
-**Important:** With Prisma driver, validation automatically skips required fields that have database defaults, allowing admin panel creates to succeed even when these fields are excluded from the form.
+## Optional Prisma Driver (Prisma 7+)
+
+Prisma 7 removed support for the `url` property inside the `datasource` block of `schema.prisma`. The connection URL must be provided via a `prisma.config.js` file at the project root.
+
+### How it is created during installation
+
+`PrismaSubprocessWorker` (`lib/game/server/installer/prisma-subprocess-worker.js`) runs these steps in order:
+
+1. `generator.generateSchemaFile()` - writes `prisma/schema.prisma` with an empty datasource block (no `url`)
+2. `generator.setDatabaseEnvironmentVariables()` - sets `process.env.RELDENS_DB_URL` from the installer config
+3. `generator.generateConfigFile()` - writes `prisma.config.js` at the project root:
+   ```js
+   process.loadEnvFile('.env');
+   module.exports = { datasource: { url: process.env.RELDENS_DB_URL } };
+   ```
+4. `npx prisma generate` - reads the URL from `prisma.config.js`
+5. `MySQLInstaller.createPrismaClient()` (from `@reldens/cms`) builds the `prismaModules` object (`PrismaClient`, `Prisma`, the adapter and the client) used to run the SQL scripts
+
+Then `EntitiesInstallation` regenerates the full schema (`npx prisma db pull` plus `npx prisma generate`) in the main process and attaches the `prismaModules` to the installer data server, which is reused by the runtime right after the installation.
+
+### Connection URL: `RELDENS_DB_URL` only
+
+Reldens uses the single env var `RELDENS_DB_URL` everywhere - the generated `prisma.config.js`, the generation subprocess, the installer, and the runtime adapter. `DATABASE_URL` is not used or required. The generated `prisma.config.js` loads `.env` explicitly via `process.loadEnvFile()` (Node 20.12+ native) because the Prisma CLI does not auto-load `.env` for config files in Prisma 7.
+
+### Adapter
+
+The adapter package and class come from `RELDENS_PRISMA_ADAPTER` (default `@prisma/adapter-mariadb`) and `RELDENS_PRISMA_ADAPTER_CLASS` (default `PrismaMariaDb`); the installer installs `prisma`, `@prisma/client` and the adapter when the packages installation is allowed.
+
+### `generateEntities` command
+
+`reldens generateEntities` spawns `npx reldens-storage generateEntities --driver=prisma`, which loads the existing `prisma/client` and the adapter from the project `node_modules`. Run `npx prisma db pull` and `npx prisma generate` first after a schema change.

@@ -21,10 +21,12 @@ class UsersEntity extends EntityProperties
             },
             email: {
                 isRequired: true,
+                isUnique: true,
                 dbType: 'varchar'
             },
             username: {
                 isRequired: true,
+                isUnique: true,
                 dbType: 'varchar'
             },
             password: {

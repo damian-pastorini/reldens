@@ -71,6 +71,8 @@ As for the latest version released, the platform will provide you with the follo
 
 Please follow the Installation Guide: https://www.reldens.com/documentation/installation.
 
+Quick start: create the project skeleton with `npx reldens createApp`, run `npm start` and open the web installer at `http://localhost:8080`.
+
 ---
 
 ## [Demo](https://dev.reldens.com/)

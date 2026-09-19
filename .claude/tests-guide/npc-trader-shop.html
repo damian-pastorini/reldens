@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Trader NPC Opens Shop Panel</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Trader NPC Opens Shop Panel</h1>
+<p>Test: <code>tests/e2e/test-npc.spec.js</code> - <em>trader NPC opens shop panel</em></p>
+<p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/trader-npc-opens-shop-panel.webm" data-title="trader NPC opens shop panel">&#9654; Watch video</a></p>
+<table>
+    <thead><tr><th>Action</th><th>Test Code</th><th>Test File</th><th>File Proof</th><th>Code Proof</th><th>Comments</th></tr></thead>
+    <tbody>
+        <tr>
+            <td>Log in as root2 player and start the game</td>
+            <td><code>await Login.loginAndStartGame(page, 'root2', 'root', 'ImRoot2', longRun)</code></td>
+            <td>test-npc.spec.js:25</td>
+            <td>tests/e2e/helpers/login.js:77</td>
+            <td><code>static async loginAndStartGame(page, username, password, playerName, longRun, skipUiSelectors = false, scene = null)</code></td>
+            <td>Uses credentials from gameConfig (e2eUsername2 / e2ePassword2 / e2ePlayerName2) with defaults root2 / root / ImRoot2</td>
+        </tr>
+        <tr>
+            <td>Wait for trader NPC to appear in scene</td>
+            <td><code>await Phaser.waitForObject(page, traderKey, sceneTimeout)<br>// or<br>await Phaser.waitForObjectByType(page, 'trader', sceneTimeout)</code></td>
+            <td>test-npc.spec.js:52-54</td>
+            <td>tests/e2e/helpers/phaser.js:93</td>
+            <td><code>static async waitForObject(page, objKey, timeout)</code></td>
+            <td>Uses key-based lookup if e2eTraderKey is set, otherwise finds first object of type 'trader'. Timeout is SCENE_LOAD (10000ms).</td>
+        </tr>
+        <tr>
+            <td>Get trader NPC screen coordinates</td>
+            <td><code>let traderCoords = await Phaser.getObjectScreenCoords(page, traderKey)<br>// or<br>Phaser.getObjectScreenCoordsByType(page, 'trader')</code></td>
+            <td>test-npc.spec.js:55-57</td>
+            <td>tests/e2e/helpers/phaser.js:50</td>
+            <td><code>static async getObjectScreenCoords(page, objKey)</code></td>
+            <td>Reads Phaser scene objectsAnimations to compute screen position accounting for camera scroll and zoom</td>
+        </tr>
+        <tr>
+            <td>Assert trader coordinates are not null</td>
+            <td><code>expect(traderCoords, 'Trader NPC must be found in the scene').not.toBeNull()</code></td>
+            <td>test-npc.spec.js:58</td>
+            <td>tests/e2e/helpers/phaser.js:65</td>
+            <td><code>static async getObjectScreenCoordsByType(page, type)</code></td>
+            <td>Confirms the trader NPC sprite is present and visible in the active Phaser scene</td>
+        </tr>
+        <tr>
+            <td>Walk within 50px of the trader, trigger the interaction and send the buy action</td>
+            <td><code>await Navigation.moveToObjectWithinRange(page, traderKey ? 'asset_key' : 'type', traderKey || 'trader', traderKey ? 'active' : 'visible', 50, navTimeout)</code><br><code>await Phaser.triggerObjectInteraction(page, traderKey || 'trader')</code><br><code>await TestNpc.sendTraderAction(page, traderKey || 'trader', 'buy')</code></td>
+            <td>test-npc.spec.js:60-67<br>test-npc.spec.js:68<br>test-npc.spec.js:70</td>
+            <td>tests/e2e/helpers/phaser.js:213<br>tests/e2e/test-npc.spec.js:41</td>
+            <td><code>static async triggerObjectInteraction(page, objectKey)</code><br><code>window.reldens.activeRoomEvents.send({ 'act': 'oi', 'id': tempId, 'value': args.value });</code></td>
+            <td>Walks the player next to the trader, opens the interaction and selects the shop buy option</td>
+        </tr>
+        <tr>
+            <td>Wait for shop buy tab to become visible</td>
+            <td><code>await expect(page.locator(Selectors.trader.buyTab)).toBeVisible(<br>    { timeout: TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun) }<br>)</code></td>
+            <td>test-npc.spec.js:148-150</td>
+            <td>tests/e2e/selectors.js:169</td>
+            <td><code>buyTab: '.trade-container-buy'</code></td>
+            <td>Asserts that the shop buy tab panel is visible, confirming the trader shop opened. Timeout is UI_OPEN (3000ms, scaled for longRun).</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Player Fishes Repeatedly At The Same Spawn Without It Moving Or Respawning</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Player Fishes Repeatedly At The Same Spawn Without It Moving Or Respawning</h1>
+<p>Test: <code>tests/e2e/test-interactive-objects.spec.js</code> - <em>player fishes repeatedly at the same spawn without it moving or respawning</em></p>
+<p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/player-fishes-repeatedly-at-the-same-spawn-without-it-moving-or-respawning.webm" data-title="player fishes repeatedly at the same spawn without it moving or respawning">&#9654; Watch video</a></p>
+<p>What makes this different from the mining rock: the rock is a respawn object, it disappears on use and comes back at a server-picked random area, so that test has to follow it. The fish spawn is a plain timing object with <code>collisionType: 2</code> (static) and no respawn behaviour, so it stays at one place and can be used again and again from the same spot. This test asserts exactly that: the world position never changes and every completed cycle rewards one more item.</p>
+<table>
+    <thead><tr><th>Action</th><th>Test Code</th><th>Test File</th><th>File Proof</th><th>Code Proof</th><th>Comments</th></tr></thead>
+    <tbody>
+        <tr>
+            <td>Assert e2eFishSpawnKey is configured</td>
+            <td><code>expect(objectKey, 'e2eFishSpawnKey not configured').toBeTruthy()</code></td>
+            <td>test-interactive-objects.spec.js:207</td>
+            <td>tests/config.json.dist:33</td>
+            <td><code>"e2eFishSpawnKey": "fish_spawn_forest_1"</code></td>
+            <td>Object id 17 in the sample data uses <code>object_class_key</code> and <code>client_key</code> <code>fish_spawn_forest_1</code></td>
+        </tr>
+        <tr>
+            <td>Assert e2eFishSpawnRewardItemId is configured</td>
+            <td><code>expect(rewardItemId, 'e2eFishSpawnRewardItemId must be configured').toBeTruthy()</code></td>
+            <td>test-interactive-objects.spec.js:209</td>
+            <td>migrations/production/reldens-sample-data-v4.0.0.sql:180</td>
+            <td><code>"rewards":[{"key":"fish","rate":100}]</code></td>
+            <td>Reward rate is 100, so a completed cycle always grants exactly one fish</td>
+        </tr>
+        <tr>
+            <td>Login as root/ImRoot and navigate to reldens-forest</td>
+            <td><code>TestInteractiveObjects.loginAndEnterForest(page, gameConfig, longRun)</code></td>
+            <td>test-interactive-objects.spec.js:210</td>
+            <td>tests/e2e/test-interactive-objects.spec.js:27</td>
+            <td><code>static async loginAndEnterForest(page, gameConfig, longRun)</code></td>
+            <td>Same entry helper the chest and rock tests use; the fish spawn lives in room 5 (reldens-forest)</td>
+        </tr>
+        <tr>
+            <td>Wait for the fish spawn sprite to exist in the scene</td>
+            <td><code>TestInteractiveObjects.waitForObjectInScene(page, objectKey, forestData.sceneTimeout)</code></td>
+            <td>test-interactive-objects.spec.js:212</td>
+            <td>tests/e2e/test-interactive-objects.spec.js:47</td>
+            <td><code>Phaser.waitForObjectByAssetKey(page, objectKey, timeout)</code></td>
+            <td>Falls back to the direct key lookup when the asset_key match finds nothing</td>
+        </tr>
+        <tr>
+            <td>Walk until the player is within interaction range</td>
+            <td><code>TestInteractiveObjects.navigateToObjectAndAssertInRange(page, objectKey, forestData, 'fish spawn')</code></td>
+            <td>test-interactive-objects.spec.js:214</td>
+            <td>tests/e2e/test-interactive-objects.spec.js:23</td>
+            <td><code>static INTERACTION_RANGE = 120;</code></td>
+            <td>The server rejects the interaction through <code>isValidInteraction</code> when the player is out of range</td>
+        </tr>
+        <tr>
+            <td>Record the spawn world position before any use</td>
+            <td><code>PhaserRange.getObjectWorldPosByAssetKey(page, objectKey)</code></td>
+            <td>test-interactive-objects.spec.js:215</td>
+            <td>tests/e2e/helpers/phaser-range.js:29</td>
+            <td><code>static async getObjectWorldPosByAssetKey(page, assetKey)</code></td>
+            <td>Returns the sprite world x/y, the baseline every later cycle is compared against</td>
+        </tr>
+        <tr>
+            <td>Open the inventory and read the starting fish quantity</td>
+            <td><code>TestInteractiveObjects.openInventory(page, forestData.pauseMs)</code></td>
+            <td>test-interactive-objects.spec.js:217</td>
+            <td>tests/e2e/test-interactive-objects.spec.js:114</td>
+            <td><code>static async openInventory(page, pauseMs)</code></td>
+            <td>The panel stays open for the whole test so each cycle can read the quantity</td>
+        </tr>
+        <tr>
+            <td>Run the first fishing cycle and wait for the reward</td>
+            <td><code>TestInteractiveObjects.runTimingCycle(page, screenshots, objectKey, rewardItemId, forestData, cycleLabel)</code></td>
+            <td>test-interactive-objects.spec.js:223</td>
+            <td>tests/e2e/test-interactive-objects.spec.js:127</td>
+            <td><code>expect.poll(...).toBeGreaterThan(qtyBefore)</code></td>
+            <td>Settles first because <code>cancelOnMove</code> is true, then polls the inventory until the quantity rises</td>
+        </tr>
+        <tr>
+            <td>Assert the spawn did not move after the first use</td>
+            <td><code>expect(currentPosition, 'Fish spawn must stay in place after the '+cycleLabel+' use').toEqual(positionBefore)</code></td>
+            <td>test-interactive-objects.spec.js:228</td>
+            <td>migrations/production/reldens-sample-data-v4.0.0.sql:180</td>
+            <td><code>"collisionType":2</code></td>
+            <td>This is the behaviour the mining rock does NOT have; the rock relocates, the fish spawn must not</td>
+        </tr>
+        <tr>
+            <td>Run the second fishing cycle at the very same spot</td>
+            <td><code>for(let cycleLabel of TestInteractiveObjects.FISH_SPAWN_CYCLES)</code></td>
+            <td>test-interactive-objects.spec.js:221</td>
+            <td>tests/e2e/test-interactive-objects.spec.js:25</td>
+            <td><code>static FISH_SPAWN_CYCLES = ['first', 'second'];</code></td>
+            <td>No re-navigation between cycles, proving the object remains usable in place</td>
+        </tr>
+        <tr>
+            <td>Assert the spawn still did not move after the second use</td>
+            <td><code>expect(currentPosition, ...).toEqual(positionBefore)</code></td>
+            <td>test-interactive-objects.spec.js:228</td>
+            <td>lib/objects/server/object/type/timing-object.js:96</td>
+            <td><code>async completeTiming(client, room, playerSchema)</code></td>
+            <td>The server only resets <code>isActive</code> and grants the reward, it never repositions the object</td>
+        </tr>
+        <tr>
+            <td>Assert one reward item per completed cycle</td>
+            <td><code>expect(latestQty, ...).toBe(startingQty + TestInteractiveObjects.FISH_SPAWN_CYCLES.length)</code></td>
+            <td>test-interactive-objects.spec.js:233</td>
+            <td>lib/objects/server/object/type/timing-object.js:113</td>
+            <td><code>rollReward()</code></td>
+            <td>With a single reward at rate 100 the roll always matches, so two cycles must add exactly two fish</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>

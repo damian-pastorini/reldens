@@ -22,6 +22,8 @@ class SkillsSkillOwnerConditionsEntity extends EntityProperties
             skill_id: {
                 type: 'reference',
                 reference: 'skills_skill',
+                alias: 'related_skills_skill',
+                onDelete: 'restrict',
                 isRequired: true,
                 dbType: 'int'
             },

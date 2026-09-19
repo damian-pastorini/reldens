@@ -31,7 +31,7 @@ UPDATE rooms SET customData = '{"allowGuest": true}' WHERE name = 'town';
 
 ### 2.1 Rooms Loading (`lib/rooms/server/manager.js`)
 
-**Method:** `loadRooms()` (lines 204-241)
+**Method:** `loadRooms()` (lines 205-245)
 
 ```javascript
 async loadRooms(){
@@ -39,14 +39,14 @@ async loadRooms(){
 
     // Process each room
     for(let room of roomsModels){
-        let roomModel = this.generateRoomModel(room);
+        let roomModel = this.roomModelBuilder.build(room);
         rooms.push(roomModel);
         roomsById[room.id] = roomModel;
         roomsByName[room.name] = roomModel;
     }
 
-    // Filter guest rooms
-    this.availableRoomsGuest = this.filterGuestRooms(roomsByName);
+    // Guest rooms: same rule as the selector lists (the join gate and the list can never disagree)
+    this.availableRoomsGuest = this.fetchGuestRooms(roomsByName);
 
     // Create room lists for registration and login
     let registrationRooms = this.filterRooms(true);
@@ -67,27 +67,30 @@ async loadRooms(){
 
 ### 2.2 Guest Room Filtering (`lib/rooms/server/manager.js`)
 
-**Method:** `filterGuestRooms()` (line 415+)
+**Method:** `filterGuestRooms()` (line 399+)
 
 ```javascript
 filterGuestRooms(availableRooms){
-    let guestRooms = {};
-    for(let roomName of Object.keys(availableRooms)){
-        let room = availableRooms[roomName];
-        let customData = sc.get(room, 'customData', {});
-        if(sc.isString(customData)){
-            customData = JSON.parse(customData);
-        }
+    if(!sc.isObject(availableRooms)){
+        Logger.debug('The provided "availableRooms" is not an object.', availableRooms);
+        return {};
+    }
+    let validRooms = {};
+    for(let i of Object.keys(availableRooms)){
+        let room = availableRooms[i];
+        let customData = room.customData || {};
         // Check if allowGuest is true
         if(sc.get(customData, 'allowGuest')){
-            guestRooms[roomName] = room;
+            validRooms[room.roomName] = room;
         }
     }
-    return guestRooms;
+    return validRooms;
 }
 ```
 
-**Method:** `fetchGuestRooms()` (line 403+)
+`room.customData` is already a parsed object: `RoomModelBuilder.build()` runs `sc.toJson(room.customData, {})` when the room model is created.
+
+**Method:** `fetchGuestRooms()` (line 387+)
 
 ```javascript
 fetchGuestRooms(availableRooms){
@@ -102,27 +105,31 @@ fetchGuestRooms(availableRooms){
 
 **Global Setting:**
 - Config path: `server/players/guestUser/allowOnRooms`
-- Default: `true`
+- Default: `false`
 - If `true`, all rooms allow guests
 - If `false`, only rooms with `customData.allowGuest = true` allow guests
 
+The same `fetchGuestRooms()` result feeds BOTH the client room selector lists and the server join gate (`availableRoomsGuest`, checked by `RoomScene.validateRoom()`). The server gate is the source of truth: the client list is always a subset of what the gate accepts, so a guest is never shown a room the server would reject.
+
 ### 2.3 Config Assignment (`lib/rooms/server/manager.js`)
 
-**Method:** `defineRoomsInGameServer()` (lines 109-116)
+**Method:** `defineRoomsInGameServer()` (lines 110-117)
 
 ```javascript
 // After all rooms are loaded and defined
 if(this.config.client?.rooms?.selection){
     this.config.client.rooms.selection.availableRooms = {
         registration: this.registrationAvailableRooms,
-        registrationGuest: this.registrationAvailableRoomsGuest,  // ← Guest rooms here
+        // Guest rooms here
+        registrationGuest: this.registrationAvailableRoomsGuest,
         login: this.loginAvailableRooms,
-        loginGuest: this.loginAvailableRoomsGuest                 // ← Guest rooms here
+        // Guest rooms here
+        loginGuest: this.loginAvailableRoomsGuest
     };
 }
 ```
 
-**Called by:** `ServerManager.defineServerRooms()` calls `RoomsManager.defineRoomsInGameServer()`
+**Called by:** `ServerManagersInitializer.defineServerRooms()` calls `RoomsManager.defineRoomsInGameServer()`
 
 ---
 
@@ -132,14 +139,14 @@ if(this.config.client?.rooms?.selection){
 
 **File:** `lib/game/server/manager.js`
 
-**Execution order:**
-1. `initializeManagers()` (line 261-263)
+**Execution order (inside `startGameServerInstance()`):**
+1. `ServerManagersInitializer.initializeManagers(this)` (lines 263-265)
    - Calls `defineServerRooms()`
    - Guest rooms configured in `this.configManager.client.rooms.selection.availableRooms`
-2. **Config file created** (line 264-272)
+2. **Config file created** (lines 266-273, only when `RELDENS_CREATE_CONFIG_FILE` is 1)
    - `HomepageLoader.createConfigFile()` with guest rooms data
-3. **Client built** (line 272)
-   - Bundles config.js into dist folder
+3. **Client bundled** (line 274)
+   - `themeManager.createClientBundle()` bundles config.js into dist folder
 
 ### 3.2 Config File Creation (`lib/game/server/homepage-loader.js`)
 
@@ -148,7 +155,7 @@ if(this.config.client?.rooms?.selection){
 ```javascript
 static createConfigFile(projectThemePath, initialConfiguration){
     let configFilePath = FileHandler.joinPaths(projectThemePath, 'config.js');
-    let configFileContents = 'window.reldensInitialConfig = '+JSON.stringify(initialConfiguration)+';';
+    let configFileContents = 'window.reldensInitialConfig = '+sc.toJsonString(initialConfiguration)+';';
     let writeResult = FileHandler.writeFile(configFilePath, configFileContents);
     if(!writeResult){
         Logger.error('Failed to write config file: '+configFilePath);
@@ -164,15 +171,17 @@ static createConfigFile(projectThemePath, initialConfiguration){
 **Content structure:**
 ```javascript
 window.reldensInitialConfig = {
-    gameEngine: { /* ... */ },
+    /* ...configManager.gameEngine properties, spread at the top level... */
     client: {
         rooms: {
             selection: {
                 availableRooms: {
                     registration: { /* normal rooms */ },
-                    registrationGuest: { /* guest-allowed rooms */ },  // ← KEY DATA
+                    // KEY DATA
+                    registrationGuest: { /* guest-allowed rooms */ },
                     login: { /* normal rooms */ },
-                    loginGuest: { /* guest-allowed rooms */ }          // ← KEY DATA
+                    // KEY DATA
+                    loginGuest: { /* guest-allowed rooms */ }
                 }
             }
         }
@@ -186,13 +195,14 @@ window.reldensInitialConfig = {
 
 ### 4.1 Config Loading (`lib/game/client/game-manager.js`)
 
-**Constructor** (line 48-94)
+**Constructor** (lines 47-94)
 
 ```javascript
 constructor(){
     this.config = new ConfigManager();
     let initialConfig = this.gameDom.getWindow()?.reldensInitialConfig || {};
-    sc.deepMergeProperties(this.config, initialConfig);  // ← Loads from window.reldensInitialConfig
+    // Loads from window.reldensInitialConfig
+    sc.deepMergeProperties(this.config, initialConfig);
     // ...
 }
 ```
@@ -208,8 +218,10 @@ clientStart(){
     let registrationForm = new RegistrationFormHandler(this.gameManager);
     registrationForm.activateRegistration();
 
-    let guestForm = new GuestFormHandler(this.gameManager);  // ← Guest handler
-    guestForm.activateGuest();                               // ← Activates guest form
+    // Guest handler
+    let guestForm = new GuestFormHandler(this.gameManager);
+    // Activates guest form
+    guestForm.activateGuest();
 
     // ... other handlers
 }
@@ -229,16 +241,19 @@ activateGuest(){
 
     // Get guest rooms from config
     let availableGuestRooms = this.gameManager.config.getWithoutLogs(
-        'client/rooms/selection/availableRooms/registrationGuest',  // ← Config path
+        // Config path
+        'client/rooms/selection/availableRooms/registrationGuest',
         {}
     );
 
     // Check if guest login is allowed AND guest rooms exist
     if(
         !this.gameManager.config.get('client/general/users/allowGuest')
-        || 0 === Object.keys(availableGuestRooms).length  // ← CRITICAL CHECK
+        // CRITICAL CHECK
+        || 0 === Object.keys(availableGuestRooms).length
     ){
-        this.form.classList.add('hidden');  // ← HIDE FORM
+        // HIDE FORM
+        this.form.classList.add('hidden');
         return true;
     }
 
@@ -297,7 +312,7 @@ activateGuest(){
 - After initializeManagers() completes
 - Calls HomepageLoader.createConfigFile()
 - Writes theme/config.js with guest rooms data
-- Calls themeManager.buildClient()
+- Calls themeManager.createClientBundle()
 - Bundles config.js into dist/
 
 **Step 5: CLIENT - Browser loads theme/default/index.html**
@@ -325,7 +340,7 @@ activateGuest(){
 
 **Path:** `server/players/guestUser/allowOnRooms`
 - **Type:** Boolean
-- **Default:** `true`
+- **Default:** `false`
 - **Effect:** If `true`, all rooms allow guests (ignores `customData.allowGuest`)
 
 **Path:** `server/players/guestsUser/emailDomain`

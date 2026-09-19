@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Player Can Login And Select Character To Start The Game</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Player Can Login And Select Character To Start The Game</h1>
+<p>Test: <code>tests/e2e/test-game-login.spec.js</code> - <em>player can login and select character to start the game</em></p>
+<p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/player-can-login-and-select-character-to-start-the-game.webm" data-title="Player Can Login And Select Character To Start The Game">&#9654; Watch video</a></p>
+<table>
+    <thead>
+        <tr>
+            <th>Action</th>
+            <th>Test Code</th>
+            <th>Test File</th>
+            <th>File Proof</th>
+            <th>Code Proof</th>
+            <th>Comments</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Login as root player with full game start</td>
+            <td><code>Login.loginAndStartGame(page, username, password, playerName, longRun)</code></td>
+            <td>test-game-login.spec.js:30</td>
+            <td>tests/e2e/helpers/login.js:77</td>
+            <td><code>static async loginAndStartGame(page, username, password, playerName, longRun, skipUiSelectors = false, scene = null)</code></td>
+            <td>Called via <code>loginRootPlayer</code> at line 30 using defaults root/root/ImRoot; full login flow: login &rarr; char select &rarr; game start &rarr; wait for all HUD selectors to be visible</td>
+        </tr>
+        <tr>
+            <td>Wait for pause</td>
+            <td><code>page.waitForTimeout(TimeConstants.pauseMs(longRun))</code></td>
+            <td>test-game-login.spec.js:31</td>
+            <td>-</td>
+            <td>-</td>
+            <td>0ms in normal run, 800ms in longRun</td>
+        </tr>
+        <tr>
+            <td>Assert canvas is visible</td>
+            <td><code>expect(page.locator(Selectors.canvas)).toBeVisible()</code></td>
+            <td>test-game-login.spec.js:33</td>
+            <td>theme/default/index.html:239</td>
+            <td><code>&lt;div id="reldens"&gt;&lt;/div&gt;</code></td>
+            <td>Phaser creates <code>&lt;canvas&gt;</code> dynamically inside <code>#reldens</code>; confirms game session started; <code>Selectors.canvas = 'canvas'</code></td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>

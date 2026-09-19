@@ -21,13 +21,18 @@ class ClanMembersEntity extends EntityProperties
             clan_id: {
                 type: 'reference',
                 reference: 'clan',
+                alias: 'related_clan',
+                onDelete: 'noAction',
                 isRequired: true,
                 dbType: 'int'
             },
             player_id: {
                 type: 'reference',
                 reference: 'players',
+                alias: 'related_players',
+                onDelete: 'cascade',
                 isRequired: true,
+                isUnique: true,
                 dbType: 'int'
             }
         };

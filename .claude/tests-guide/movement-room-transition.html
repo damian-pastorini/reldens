@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Player Walks Through Transition Tile And Enters New Room</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Player Walks Through Transition Tile And Enters New Room</h1>
+<p>Test: <code>tests/e2e/test-movement.spec.js</code> - <em>player walks through transition tile and enters new room</em></p>
+<p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/player-walks-through-transition-tile-and-enters-new-room.webm" data-title="player walks through transition tile and enters new room">&#9654; Watch video</a></p>
+<table>
+    <thead><tr><th>Action</th><th>Test Code</th><th>Test File</th><th>File Proof</th><th>Code Proof</th><th>Comments</th></tr></thead>
+    <tbody>
+        <tr>
+            <td>Use root2/ImRoot2 credentials (starts in reldens-town)</td>
+            <td><code>let username = gameConfig.e2eUsername2 || 'root2'</code></td>
+            <td>test-movement.spec.js:203</td>
+            <td>tests/e2e/test-movement.spec.js:203</td>
+            <td><code>let username = gameConfig.e2eUsername2 || 'root2';</code></td>
+            <td>root2/ImRoot2 is a player configured to start in reldens-town (room 4), not forest</td>
+        </tr>
+        <tr>
+            <td>Dismiss any dialogs automatically</td>
+            <td><code>page.on('dialog', dialog => dialog.dismiss())</code></td>
+            <td>test-movement.spec.js:206</td>
+            <td>tests/e2e/test-movement.spec.js:206</td>
+            <td><code>page.on('dialog', dialog => dialog.dismiss());</code></td>
+            <td>Handles unexpected browser dialogs that would otherwise block the test</td>
+        </tr>
+        <tr>
+            <td>Login as root2/ImRoot2 and start game</td>
+            <td><code>Login.loginAndStartGame(page, username, password, playerName, longRun, false, 'reldens-town')</code></td>
+            <td>test-movement.spec.js:207</td>
+            <td>tests/e2e/helpers/login.js:77</td>
+            <td><code>static async loginAndStartGame(page, username, password, playerName, longRun, skipUiSelectors = false, scene = null)</code></td>
+            <td>Fills login form, selects ImRoot2 player, clicks submit, waits for body.game-engine-started</td>
+        </tr>
+        <tr>
+            <td>Wait for player to be in reldens-town</td>
+            <td><code>Navigation.waitForRoom(page, 'reldens-town', roomTimeout)</code></td>
+            <td>test-movement.spec.js:209</td>
+            <td>tests/e2e/helpers/navigation.js:63</td>
+            <td><code>static async waitForRoom(page, roomName, timeout)</code></td>
+            <td>Polls window.reldens.activeRoomEvents.roomName until it equals 'reldens-town'; uses ROOM_TRANSITION=5000ms timeout</td>
+        </tr>
+        <tr>
+            <td>Read the initial room name from client state</td>
+            <td><code>let initialRoom = await Navigation.getCurrentRoomName(page)</code></td>
+            <td>test-movement.spec.js:210</td>
+            <td>tests/e2e/helpers/navigation.js:73</td>
+            <td><code>static async getCurrentRoomName(page)</code></td>
+            <td>Returns window.reldens.activeRoomEvents.roomName from the browser</td>
+        </tr>
+        <tr>
+            <td>Walk in rotating directions until the room changes</td>
+            <td><code>TestMovement.walkUntilRoomChanged(page, initialRoom, 30, 1500)</code></td>
+            <td>test-movement.spec.js:212</td>
+            <td>tests/e2e/test-movement.spec.js:122</td>
+            <td><code>static async walkUntilRoomChanged(page, initialRoom, maxAttempts, waitMs)</code></td>
+            <td>Walks ArrowUp/ArrowLeft/ArrowRight/ArrowDown in turns, up to 30 attempts of 1500ms, until the room name changes</td>
+        </tr>
+        <tr>
+            <td>Assert a new room was reached</td>
+            <td><code>expect(reached, 'Player must enter a new room via transition tile').toBeTruthy()</code></td>
+            <td>test-movement.spec.js:213</td>
+            <td>tests/e2e/test-movement.spec.js:213</td>
+            <td><code>expect(reached, 'Player must enter a new room via transition tile').toBeTruthy();</code></td>
+            <td>Fails if the room transition was not triggered within the attempts budget</td>
+        </tr>
+        <tr>
+            <td>Read current room name from client state</td>
+            <td><code>Navigation.getCurrentRoomName(page)</code></td>
+            <td>test-movement.spec.js:214</td>
+            <td>tests/e2e/helpers/navigation.js:73</td>
+            <td><code>static async getCurrentRoomName(page)</code></td>
+            <td>Returns window.reldens.activeRoomEvents.roomName from the browser</td>
+        </tr>
+        <tr>
+            <td>Assert current room is not the initial room</td>
+            <td><code>expect(currentRoom).not.toBe(initialRoom)</code></td>
+            <td>test-movement.spec.js:215</td>
+            <td>tests/e2e/test-movement.spec.js:215</td>
+            <td><code>expect(currentRoom).not.toBe(initialRoom);</code></td>
+            <td>Core assertion - confirms the room transition completed and a new scene is active</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>

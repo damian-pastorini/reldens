@@ -21,12 +21,16 @@ class ObjectsStatsEntity extends EntityProperties
             object_id: {
                 type: 'reference',
                 reference: 'objects',
+                alias: 'related_objects',
+                onDelete: 'restrict',
                 isRequired: true,
                 dbType: 'int'
             },
             stat_id: {
                 type: 'reference',
                 reference: 'stats',
+                alias: 'related_stats',
+                onDelete: 'restrict',
                 isRequired: true,
                 dbType: 'int'
             },

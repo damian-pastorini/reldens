@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Unequip Item Reverts Stat Value To Original</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Unequip Item Reverts Stat Value To Original</h1>
+<p>Test: <code>tests/e2e/test-items.spec.js</code> - <em>unequip item reverts stat value to original</em></p>
+<p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/unequip-item-reverts-stat-value-to-original.webm" data-title="unequip item reverts stat value to original">&#9654; Watch video</a></p>
+<table>
+    <thead><tr><th>Action</th><th>Test Code</th><th>Test File</th><th>File Proof</th><th>Code Proof</th><th>Comments</th></tr></thead>
+    <tbody>
+        <tr>
+            <td>Log in, open stats and inventory, click item image, assert equip button visible - return setup object</td>
+            <td><code>let setup = await TestItems.loginAndOpenEquipButton(page, gameConfig, longRun)</code></td>
+            <td>test-items.spec.js:61</td>
+            <td>tests/e2e/helpers/login.js:77</td>
+            <td><code>static async loginAndStartGame(page, username, password, playerName, longRun, skipUiSelectors = false, scene = null)</code></td>
+            <td>loginAndOpenEquipButton logs in as root player, opens stats panel, records statBefore, opens inventory, clicks item image, and asserts equip button is visible. Returns itemId, pauseMs, statBefore, and equipButton.</td>
+        </tr>
+        <tr>
+            <td>Click equip button and wait for server to apply the modifier</td>
+            <td><code>await setup.equipButton.click()<br>await page.waitForTimeout(1000 + setup.pauseMs)</code></td>
+            <td>test-items.spec.js:62<br>test-items.spec.js:63</td>
+            <td>tests/e2e/selectors.js:116</td>
+            <td><code>itemEquip: (itemKey) =&gt; '.item-box:has(img[src$="/' + itemKey + '.png"]) [id^="item-equip-"]'</code></td>
+            <td>Clicks the equip button inside the item box. Waits 1000ms plus pauseMs for the server to process the equip and broadcast the stat change.</td>
+        </tr>
+        <tr>
+            <td>Read stat value and assert it changed after equipping</td>
+            <td><code>let statEquipped = JSON.stringify(await page.locator(Selectors.stats.firstValue).allTextContents())<br>expect(statEquipped, 'Stat must change after equipping item').not.toBe(setup.statBefore)</code></td>
+            <td>test-items.spec.js:66<br>test-items.spec.js:67</td>
+            <td>tests/e2e/selectors.js:130</td>
+            <td><code>firstValue: '.stat-container .stat-value'</code></td>
+            <td>Reads all .stat-container .stat-value texts and asserts the result differs from statBefore, confirming the equip modifier was applied.</td>
+        </tr>
+        <tr>
+            <td>Capture screenshot with item equipped</td>
+            <td><code>await screenshots.capture(page, 'item-equipped')</code></td>
+            <td>test-items.spec.js:68</td>
+            <td>tests/e2e/base-e2e-test.js:57</td>
+            <td><code>async capture(page, name)</code></td>
+            <td>Saves a screenshot labelled item-equipped to document the stat value after equipping, before unequip.</td>
+        </tr>
+        <tr>
+            <td>Close the stats panel and send the unequip message to the server</td>
+            <td><code>await page.click(Selectors.hud.playerStatsClose)<br>await page.evaluate((itemIdx) =&gt; { window.reldens.activeRoomEvents.send({ act: 'ivpEqi', 'idx': itemIdx }); }, setup.itemId)</code></td>
+            <td>test-items.spec.js:69<br>test-items.spec.js:70-72</td>
+            <td>tests/e2e/test-items.spec.js:70-72</td>
+            <td><code>window.reldens.activeRoomEvents.send({ act: 'ivpEqi', 'idx': itemIdx });</code></td>
+            <td>Sends the equip/unequip action directly through the room connection, which toggles off the already equipped item.</td>
+        </tr>
+        <tr>
+            <td>Wait for server to process unequip and revert the stat</td>
+            <td><code>await page.waitForTimeout(1000 + setup.pauseMs)</code></td>
+            <td>test-items.spec.js:73</td>
+            <td>tests/e2e/test-items.spec.js:73</td>
+            <td><code>await page.waitForTimeout(1000 + setup.pauseMs);</code></td>
+            <td>Waits 1000ms plus pauseMs for the server to process the unequip message and broadcast the reverted stat to the client.</td>
+        </tr>
+        <tr>
+            <td>Read stat value and assert it reverted to original</td>
+            <td><code>let statAfter = JSON.stringify(await page.locator(Selectors.stats.firstValue).allTextContents())<br>expect(statAfter, 'Stat must revert after unequipping item').toBe(setup.statBefore)</code></td>
+            <td>test-items.spec.js:76<br>test-items.spec.js:77</td>
+            <td>tests/e2e/selectors.js:130</td>
+            <td><code>firstValue: '.stat-container .stat-value'</code></td>
+            <td>Reads all .stat-container .stat-value texts and asserts the result equals statBefore, confirming the modifier was removed when unequipping.</td>
+        </tr>
+        <tr>
+            <td>Capture screenshot confirming stat reverted after unequip</td>
+            <td><code>await screenshots.capture(page, 'stat-reverted-after-unequip')</code></td>
+            <td>test-items.spec.js:78</td>
+            <td>tests/e2e/base-e2e-test.js:57</td>
+            <td><code>async capture(page, name)</code></td>
+            <td>Saves a screenshot labelled stat-reverted-after-unequip for visual proof that the stat returned to its original value.</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>

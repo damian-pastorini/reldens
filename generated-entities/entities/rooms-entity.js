@@ -22,6 +22,7 @@ class RoomsEntity extends EntityProperties
             },
             name: {
                 isRequired: true,
+                isUnique: true,
                 dbType: 'varchar'
             },
             [titleProperty]: {

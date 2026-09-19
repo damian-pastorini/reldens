@@ -18,28 +18,54 @@ npm test
 node tests/manager.js --filter="test-name" --break-on-error
 
 # Build commands (via reldens CLI)
-reldens buildCss [theme-name]           # Build theme styles
-reldens buildClient [theme-name]        # Build client HTML
-reldens buildSkeleton                   # Build both styles and client
-reldens fullRebuild                     # Complete rebuild from scratch
+# Build theme styles
+reldens buildCss [theme-name]
+# Build client HTML
+reldens buildClient [theme-name]
+# Build both styles and client
+reldens buildSkeleton
+# Complete rebuild from scratch
+reldens fullRebuild
 
 # Theme & asset management
-reldens installDefaultTheme             # Install default theme
-reldens copyAssetsToDist                # Copy assets to dist folder
-reldens copyDefaultAssets               # Copy default assets to dist/assets
-reldens copyDefaultTheme                # Copy default theme to project
-reldens copyPackage                     # Copy reldens module packages to project
-reldens resetDist                       # Delete and recreate dist folder
-reldens removeDist                      # Delete dist folder only
+# Install default theme
+reldens installDefaultTheme
+# Copy assets to dist folder
+reldens copyAssetsToDist
+# Copy default assets to dist/assets
+reldens copyDefaultAssets
+# Copy default theme to project
+reldens copyDefaultTheme
+# Copy reldens module packages to project
+reldens copyPackage
+# Delete and recreate dist folder
+reldens resetDist
+# Delete dist folder only
+reldens removeDist
 
 # Database & entities
-reldens generateEntities [--override]   # Generate entities from database schema
-# This reads .env credentials and uses @reldens/storage to generate entities
-# Generated entities are placed in the generated-entities/ directory
+# Generate entities from database schema
+reldens generateEntities [--override]
+# This reads the .env credentials (RELDENS_DB_*, RELDENS_STORAGE_DRIVER, knex by default) and uses @reldens/storage
+# Generated entities are placed in the generated-entities/ directory, models under generated-entities/models/[driver]/
 
 # Direct entity generation with connection arguments (bypasses .env):
-npx reldens-storage generateEntities --user=reldens --pass=reldens --database=reldens_clean --driver=objection-js
+npx reldens-storage generateEntities --user=reldens --pass=reldens --database=reldens_clean --driver=knex
 ```
+
+## Optional Storage Drivers
+
+Knex is bundled with `@reldens/storage`. The other drivers are only available when their packages are installed in the project:
+
+```bash
+npm install kysely
+npm install drizzle-orm
+npm install objection@3.1.5
+npm install @mikro-orm/core @mikro-orm/mysql
+npm install prisma @prisma/client @prisma/adapter-mariadb
+```
+
+Set `RELDENS_STORAGE_DRIVER` to the driver key (`kysely`, `drizzle`, `objection-js`, `mikro-orm`, `prisma`) and run `reldens generateEntities --override` to generate the models for it.
 
 ## Prisma-Specific Commands
 
@@ -54,52 +80,73 @@ npx reldens-storage-prisma --host=localhost --port=3306 --user=reldens --passwor
 npx reldens-storage generateEntities --user=reldens --pass=reldens --database=reldens_clean --driver=prisma
 
 # Full parameter list for reldens-storage-prisma:
-# --host          Database host (default: localhost)
-# --port          Database port (default: 3306)
+# --host          Database host (required)
+# --port          Database port (required)
 # --user          Database username (required)
 # --password      Database password (required)
 # --database      Database name (required)
-# --clientOutputPath  Output path for Prisma client (default: ./client)
-# --schemaPath    Path for schema.prisma file (default: ./prisma)
+# --clientOutputPath  Output path for Prisma client, relative to the schema path (default: ./client)
+# --prismaSchemaPath  Path for the schema.prisma file (default: ./prisma)
 ```
 
-**Prisma Workflow:**
-1. Run `reldens-storage-prisma` to generate schema.prisma and Prisma client
-2. The command introspects your MySQL database and creates the Prisma schema
-3. Run `reldens-storage generateEntities` with `--driver=prisma` to generate Reldens entities
+**Prisma Workflow (running from the reldens project root):**
+1. Copy `.env` from the app folder into the project root if not already present
+2. Run `npx reldens-storage-prisma` to generate `prisma/schema.prisma` and `prisma/client/` - introspects the MySQL database and creates the Prisma schema
+3. Run `npx reldens-storage generateEntities --driver=prisma` to generate Reldens entities - or use `npx reldens generateEntities --override` to read credentials from `.env` automatically
 4. Set `RELDENS_STORAGE_DRIVER=prisma` in your `.env` file to use Prisma at runtime
+
+**Note:** `RELDENS_DB_CLIENT=mysql2` is automatically normalized to `mysql` when `RELDENS_STORAGE_DRIVER=prisma` because Prisma does not support the `mysql2://` URL scheme.
 
 **Environment Variables for Prisma:**
 ```
 RELDENS_STORAGE_DRIVER=prisma
 RELDENS_DB_URL=mysql://user:password@host:port/database
+RELDENS_PRISMA_ADAPTER=@prisma/adapter-mariadb
+RELDENS_PRISMA_ADAPTER_CLASS=PrismaMariaDb
 ```
 
 ## Installation & Setup
 
 ```bash
-reldens createApp                       # Create base project skeleton
-reldens installSkeleton                 # Install skeleton
-reldens copyEnvFile                     # Copy .env.dist template
-reldens copyKnexFile                    # Copy knexfile.js template
-reldens copyIndex                       # Copy index.js template
-reldens copyServerFiles                 # Reset dist and run fullRebuild
-reldens copyNew                         # Copy all default files for fullRebuild
-reldens help                            # Show all available commands
-reldens test                            # Test file system access
+# Create base project skeleton
+reldens createApp
+# Install skeleton
+reldens installSkeleton
+# Copy .env.dist template
+reldens copyEnvFile
+# Copy knexfile.js template
+reldens copyKnexFile
+# Copy index.js template
+reldens copyIndex
+# Copy the .env, knexfile.js, .gitignore and index.js templates into the project
+reldens copyServerFiles
+# Copy all default files for fullRebuild
+reldens copyNew
+# Show all available commands
+reldens help
+# Test file system access
+reldens test
 ```
 
 ## Data Generation Tools
 
 ```bash
 # Generate game data (via reldens-generate)
-reldens-generate players-experience     # Generate player XP per level
-reldens-generate monsters-experience    # Generate monster XP per level
-reldens-generate attributes             # Generate attributes per level
-reldens-generate maps                   # Generate maps with various loaders
+# Generate player XP per level
+reldens-generate players-experience-per-level [data-file.json]
+# Generate monster XP per level
+reldens-generate monsters-experience-per-level [data-file.json] [players-levels-file.json]
+# Generate attributes per level
+reldens-generate attributes-per-level [data-file.json]
+# Generate maps with various loaders
+# Loaders: LayerElementsObjectLoader, LayerElementsCompositeLoader, MultipleByLoaderGenerator,
+# MultipleWithAssociationsByLoaderGenerator
+reldens-generate maps [map-data-file.json] [loader-name]
 
 # Data import (via reldens-import)
-reldens-import [data-type]              # Import game data
+# Import game data, valid types: objects, players-experience-per-level, attributes-per-level, class-paths,
+# maps, skills
+reldens-import [data-type] [theme-name] [data-file.json]
 ```
 
 ## User Management Commands
@@ -108,7 +155,7 @@ reldens-import [data-type]              # Import game data
 # Create admin user
 reldens createAdmin --user=username --pass=password --email=email@example.com
 # Creates an admin user with role_id from config (default: 1)
-# Validates email format and username/email uniqueness
+# Validates the email format
 # Password is automatically encrypted using PBKDF2 SHA-512
 
 # Reset user password

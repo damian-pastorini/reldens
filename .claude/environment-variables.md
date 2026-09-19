@@ -22,6 +22,8 @@ See `lib/game/server/install-templates/.env.dist` for the template file.
 
 ## Express Server
 
+The following variables are listed (commented out) in `.env.dist` but are not read by `ServerManager.fetchConfigServerFromEnvironmentVariables()`, they map to `AppServerFactory` config options that must be passed programmatically: `RELDENS_USE_EXPRESS_JSON`, `RELDENS_EXPRESS_JSON_LIMIT`, `RELDENS_EXPRESS_URLENCODED_LIMIT`, `RELDENS_GLOBAL_RATE_LIMIT`, `RELDENS_TOO_MANY_REQUESTS_MESSAGE`, `RELDENS_USE_URLENCODED`, `RELDENS_USE_XSS_PROTECTION`, `RELDENS_USE_CORS`, `RELDENS_CORS_METHODS`, `RELDENS_CORS_HEADERS`.
+
 - `RELDENS_USE_EXPRESS_JSON` - Enable JSON parsing
 - `RELDENS_EXPRESS_JSON_LIMIT` - JSON payload limit
 - `RELDENS_EXPRESS_URLENCODED_LIMIT` - URL encoded limit
@@ -31,7 +33,7 @@ See `lib/game/server/install-templates/.env.dist` for the template file.
 - `RELDENS_USE_HELMET` - Enable Helmet security
 - `RELDENS_USE_XSS_PROTECTION` - Enable XSS protection
 - `RELDENS_USE_CORS` - Enable CORS
-- `RELDENS_CORS_ORIGIN` - CORS origin
+- `RELDENS_CORS_ORIGIN` - CORS origin (default: `RELDENS_PUBLIC_URL`)
 - `RELDENS_CORS_METHODS` - CORS methods
 - `RELDENS_CORS_HEADERS` - CORS headers
 - `RELDENS_EXPRESS_SERVE_HOME` - Serve dynamic home page
@@ -45,7 +47,13 @@ See `lib/game/server/install-templates/.env.dist` for the template file.
 
 - `RELDENS_ADMIN_ROUTE_PATH` - Admin panel route path
 - `RELDENS_ADMIN_SECRET` - Admin authentication secret
+- `RELDENS_SIGNED_TOKENS_SECRET` - Secret used to sign the expiring reset password links and the multi-server disconnect user requests (default: `RELDENS_ADMIN_SECRET`). Every server in a multi-server setup must use the same value
 - `RELDENS_HOT_PLUG` - Enable hot-plug configuration updates (0/1)
+
+## Installer
+
+- `RELDENS_INSTALLATION_TYPE` - Packages installation mode used by the installer: `normal` (default, installs `reldens` from npm), `link` (links `reldens` and every `@reldens/*` package), `link-main` (installs the `@reldens/*` packages and links `reldens`)
+- `RELDENS_DEBUG_QUERIES` - Enable the storage driver queries debug during the installation (0/1)
 
 ## Colyseus Monitor
 
@@ -56,8 +64,10 @@ See `lib/game/server/install-templates/.env.dist` for the template file.
 
 ## Storage & Database
 
-- `RELDENS_STORAGE_DRIVER` - Storage driver (objection-js, mikro-orm, prisma)
-- `RELDENS_DB_CLIENT` - Database client (mysql, mysql2, mongodb)
+- `RELDENS_STORAGE_DRIVER` - Storage driver: `knex` (default, bundled with `@reldens/storage`), or one of the optional drivers when its packages are installed in the project: `kysely`, `drizzle`, `objection-js`, `mikro-orm`, `prisma`
+- `RELDENS_DB_CLIENT` - Database client (`mysql2` by default, `mysql`, `mongodb` for MikroORM)
+- `RELDENS_PRISMA_ADAPTER` - Prisma driver adapter package (default: `@prisma/adapter-mariadb`, Prisma driver only)
+- `RELDENS_PRISMA_ADAPTER_CLASS` - Class exported by the Prisma adapter package (default: `PrismaMariaDb`, Prisma driver only)
 - `RELDENS_DB_HOST` - Database host
 - `RELDENS_DB_PORT` - Database port
 - `RELDENS_DB_NAME` - Database name
@@ -71,7 +81,7 @@ See `lib/game/server/install-templates/.env.dist` for the template file.
 
 ## Logging
 
-- `RELDENS_LOG_LEVEL` - Log level (0-7, default: 7)
+- `RELDENS_LOG_LEVEL` - Log level (0 = none, 1 = emergency, 2 = alert, 3 = critical, 4 = error, 5 = warning, 6 = notice, 7 = info, 8 = debug; default: 7)
 - `RELDENS_ENABLE_TRACE_FOR` - Enable trace for specific levels (emergency,alert,critical)
 
 ## Mailer

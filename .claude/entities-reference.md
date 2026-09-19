@@ -68,6 +68,9 @@ Entities are located in `generated-entities/entities/` and are auto-generated fr
 - players-state
 - players-stats
 
+## Quests
+- quests-progress
+
 ## Respawn System
 - respawn
 
@@ -124,4 +127,4 @@ Entities are located in `generated-entities/entities/` and are auto-generated fr
 
 Entity relations keys are defined in `generated-entities/entities-config.js`.
 
-Custom entity overrides are located in `lib/[plugin-folder]/server/entities` or `lib/[plugin-folder]/server/models`.
+Custom entity overrides are located in `lib/[plugin-folder]/server/entities` (admin panel UI customization) and are registered through each plugin `server/entities-config.js`. Model overrides per driver are supported by `EntitiesLoader` from `lib/[plugin-folder]/server/models/[driver]/overridden-models-[driver].js`, but no plugin ships one. See `.claude/admin-panel-guide.md` for full details on what overrides do and how they are registered.

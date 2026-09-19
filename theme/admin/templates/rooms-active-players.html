@@ -1,0 +1,4 @@
+<div class="room-active-players-banner" data-room-id="{{roomId}}" data-refresh-ms="{{refreshMs}}" data-default-room-id="{{defaultRoomId}}">
+    <p class="room-active-players-count">Players currently logged in this room: <span class="count-value">{{activePlayersCount}}</span></p>
+    <p class="room-active-players-warning{{^hasActivePlayers}} hidden{{/hasActivePlayers}}">This room has players in it right now.{{#closeEnabled}} Deleting it will notify them and force-close the room after {{closeSeconds}} seconds.{{/closeEnabled}} Those players can experience unexpected behaviors and their pending data will be saved without the deleted room reference.</p>
+</div>

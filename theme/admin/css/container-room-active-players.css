@@ -1,0 +1,26 @@
+.room-active-players-banner {
+    padding: var(--space-md) var(--space-lg);
+    border: 1px solid var(--color-grey-40);
+    border-radius: var(--radius-md);
+    background-color: var(--color-grey-60);
+
+    .room-active-players-count {
+        margin: 0;
+        color: var(--color-grey);
+    }
+
+    .count-value {
+        font-weight: var(--font-weight-bold);
+        color: var(--color-blue);
+    }
+
+    .room-active-players-warning {
+        margin: var(--space-sm) 0 0 0;
+        color: var(--color-orange);
+        font-size: var(--font-size-sm);
+    }
+
+    .room-active-players-warning.hidden {
+        display: none;
+    }
+}
