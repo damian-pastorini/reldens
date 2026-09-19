@@ -61,7 +61,7 @@
         padding: var(--space-lg);
         overflow-y: auto;
         flex: 1;
-        min-height: 0;
+        max-height: calc(100vh - 14rem);
 
         h5 {
             margin: 0 0 var(--space-lg) 0;

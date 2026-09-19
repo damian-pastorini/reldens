@@ -140,8 +140,6 @@
         overflow-y: hidden;
         display: flex;
         flex-direction: column;
-        flex: 1;
-        min-height: 0;
     }
 
     .modal-body {
@@ -151,7 +149,6 @@
         line-height: 1.6;
         color: var(--color-grey);
         flex: 1;
-        min-height: 0;
 
         & p {
             margin: var(--space-sm) 0;
