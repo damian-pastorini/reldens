@@ -146,11 +146,53 @@ ALTER TABLE `chat` DROP FOREIGN KEY `FK__players_2`;
 ALTER TABLE `chat` ADD CONSTRAINT `FK__players_2` FOREIGN KEY (`private_player_id`) REFERENCES `players` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- Rooms deletion behavior: notify and close the live room after the configured time when its record is deleted
-INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES
+INSERT IGNORE INTO `config` (`scope`, `path`, `value`, `type`) VALUES
 	('server', 'rooms/deletion/closeActiveRoomsEnabled', '1', 3),
 	('server', 'rooms/deletion/closeActiveRoomsSeconds', '10', 2),
 	('server', 'rooms/deletion/closeActiveRoomsWarningSeconds', '5', 2),
 	('server', 'rooms/deletion/setDefault', '1', 3);
+
+-- Security: persisted address allow and deny lists, the temporary blocks of the login attempts lockout are stored
+-- here with an expiration so they survive a server restart
+CREATE TABLE IF NOT EXISTS `ip_lists` (
+    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `address` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    `list_type` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'deny',
+    `reason` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+    `expires_at` TIMESTAMP NULL DEFAULT NULL,
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`) USING BTREE,
+    UNIQUE KEY `address_list_type` (`address`, `list_type`) USING BTREE,
+    KEY `list_type` (`list_type`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Security: login attempts lockout, administration panel login limiter and session, CSRF, address lists, game
+-- login throttle, registration and guests limits, origin validation, guests cleanup and the password policy
+INSERT IGNORE INTO `config` (`scope`, `path`, `value`, `type`) VALUES
+	('client', 'players/password/minimumLength', '3', 2),
+	('server', 'players/guestUser/cleanupAfterMs', '604800000', 2),
+	('server', 'players/guestUser/cleanupEnabled', '0', 3),
+	('server', 'players/guestUser/cleanupIntervalMs', '3600000', 2),
+	('server', 'rooms/allowRequestsWithoutOrigin', '1', 3),
+	('server', 'rooms/maxMessagesPerSecond', '60', 2),
+	('server', 'rooms/validateRoomOnServer', '1', 3),
+	('server', 'rooms/validateRoomsOriginRequest', '0', 3),
+	('server', 'security/adminCsrf/enabled', '0', 3),
+	('server', 'security/adminLogin/maxAttempts', '5', 2),
+	('server', 'security/adminLogin/windowMs', '900000', 2),
+	('server', 'security/adminSession/maxAgeMs', '0', 2),
+	('server', 'security/adminSession/sameSite', 'lax', 1),
+	('server', 'security/gameLogin/maxJoins', '20', 2),
+	('server', 'security/gameLogin/windowMs', '60000', 2),
+	('server', 'security/guests/maxPerIp', '20', 2),
+	('server', 'security/ipLists/allow', '', 5),
+	('server', 'security/ipLists/deny', '', 5),
+	('server', 'security/ipLists/enabled', '0', 3),
+	('server', 'security/loginAttempts/blockTimeMs', '900000', 2),
+	('server', 'security/loginAttempts/enabled', '1', 3),
+	('server', 'security/loginAttempts/maxAttempts', '10', 2),
+	('server', 'security/registration/maxPerIp', '10', 2);
 
 --
 
