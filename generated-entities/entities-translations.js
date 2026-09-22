@@ -82,7 +82,8 @@ module.exports.entitiesTranslations = {
         'target_options': 'Target Options',
         'users': 'Users',
         'users_locale': 'Users Locale',
-        'users_login': 'Users Login'
+        'users_login': 'Users Login',
+        'ip_lists': 'Ip Lists'
     },
     fields: {
         'ads_banner': {
@@ -722,6 +723,15 @@ module.exports.entitiesTranslations = {
             'user_id': 'User ID',
             'login_date': 'Login Date',
             'logout_date': 'Logout Date'
+        },
+        'ip_lists': {
+            'id': 'ID',
+            'address': 'Address',
+            'list_type': 'List Type',
+            'reason': 'Reason',
+            'expires_at': 'Expires At',
+            'created_at': 'Created At',
+            'updated_at': 'Updated At'
         }
     }
 };

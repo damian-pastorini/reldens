@@ -81,6 +81,7 @@ const { TargetOptionsEntity } = require('./entities/target-options-entity');
 const { UsersEntity } = require('./entities/users-entity');
 const { UsersLocaleEntity } = require('./entities/users-locale-entity');
 const { UsersLoginEntity } = require('./entities/users-login-entity');
+const { IpListsEntity } = require('./entities/ip-lists-entity');
 
 let entitiesConfig = {
     adsBanner: AdsBannerEntity.propertiesConfig(),
@@ -159,7 +160,8 @@ let entitiesConfig = {
     targetOptions: TargetOptionsEntity.propertiesConfig(),
     users: UsersEntity.propertiesConfig(),
     usersLocale: UsersLocaleEntity.propertiesConfig(),
-    usersLogin: UsersLoginEntity.propertiesConfig()
+    usersLogin: UsersLoginEntity.propertiesConfig(),
+    ipLists: IpListsEntity.propertiesConfig()
 };
 
 module.exports.entitiesConfig = entitiesConfig;

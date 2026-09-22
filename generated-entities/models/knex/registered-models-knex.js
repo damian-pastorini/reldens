@@ -81,6 +81,7 @@ const { TargetOptionsModel } = require('./target-options-model');
 const { UsersModel } = require('./users-model');
 const { UsersLocaleModel } = require('./users-locale-model');
 const { UsersLoginModel } = require('./users-login-model');
+const { IpListsModel } = require('./ip-lists-model');
 const { entitiesConfig } = require('../../entities-config');
 const { entitiesTranslations } = require('../../entities-translations');
 
@@ -161,7 +162,8 @@ let rawRegisteredEntities = {
     targetOptions: TargetOptionsModel,
     users: UsersModel,
     usersLocale: UsersLocaleModel,
-    usersLogin: UsersLoginModel
+    usersLogin: UsersLoginModel,
+    ipLists: IpListsModel
 };
 
 module.exports.rawRegisteredEntities = rawRegisteredEntities;
