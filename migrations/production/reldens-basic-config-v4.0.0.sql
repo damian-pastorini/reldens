@@ -418,7 +418,7 @@ REPLACE INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(372, 'server', 'scores/obtainedScorePerNpc', '5', 2),
 	(373, 'server', 'scores/obtainedScorePerPlayer', '10', 2),
 	(374, 'server', 'scores/useNpcCustomScore', '1', 3),
-	(375, 'server', 'security/adminCsrf/enabled', '0', 3),
+	(375, 'server', 'security/adminCsrf/enabled', '1', 3),
 	(376, 'server', 'security/adminLogin/maxAttempts', '5', 2),
 	(377, 'server', 'security/adminLogin/windowMs', '900000', 2),
 	(378, 'server', 'security/adminSession/maxAgeMs', '0', 2),

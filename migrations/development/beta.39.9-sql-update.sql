@@ -189,7 +189,7 @@ INSERT IGNORE INTO `config` (`scope`, `path`, `value`, `type`) VALUES
 	('server', 'rooms/maxMessagesPerSecond', '60', 2),
 	('server', 'rooms/validateRoomOnServer', '1', 3),
 	('server', 'rooms/validateRoomsOriginRequest', '0', 3),
-	('server', 'security/adminCsrf/enabled', '0', 3),
+	('server', 'security/adminCsrf/enabled', '1', 3),
 	('server', 'security/adminLogin/maxAttempts', '5', 2),
 	('server', 'security/adminLogin/windowMs', '900000', 2),
 	('server', 'security/adminSession/maxAgeMs', '0', 2),
@@ -204,6 +204,9 @@ INSERT IGNORE INTO `config` (`scope`, `path`, `value`, `type`) VALUES
 	('server', 'security/loginAttempts/enabled', '1', 3),
 	('server', 'security/loginAttempts/maxAttempts', '10', 2),
 	('server', 'security/registration/maxPerIp', '10', 2);
+
+-- Security: the administration panel CSRF protection is enabled now that every admin form and request sends the token
+UPDATE `config` SET `value` = '1' WHERE `scope` = 'server' AND `path` = 'security/adminCsrf/enabled';
 
 --
 

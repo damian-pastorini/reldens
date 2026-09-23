@@ -5,6 +5,7 @@
  */
 
 const { BaseTest } = require('./base-test');
+const { GameConst } = require('../lib/game/constants');
 
 class TestAdminAuth extends BaseTest
 {
@@ -23,11 +24,12 @@ class TestAdminAuth extends BaseTest
     async testValidLoginRedirectsToAdmin()
     {
         await this.test('Valid login redirects to admin', async () => {
-            let response = await this.makeFormRequest('POST', 
+            let loginPageCookies = await this.fetchLoginPageCookies();
+            let response = await this.makeFormRequest('POST',
                 this.adminPath+'/login', {
                 email: this.adminUser,
                 password: this.adminPassword
-            });
+            }, loginPageCookies);
             this.assert.strictEqual(302, response.statusCode);
             this.assert(response.headers.location.includes(this.adminPath));
         });
@@ -36,13 +38,38 @@ class TestAdminAuth extends BaseTest
     async testInvalidLoginShowsError()
     {
         await this.test('Invalid login shows error', async () => {
-            let response = await this.makeFormRequest('POST', 
+            let loginPageCookies = await this.fetchLoginPageCookies();
+            let response = await this.makeFormRequest('POST',
                 this.adminPath+'/login', {
                 email: 'invalid@test.com',
                 password: 'wrongpassword'
-            });
+            }, loginPageCookies);
             this.assert.strictEqual(302, response.statusCode);
             this.assert(response.headers.location.includes('login'));
+        });
+    }
+
+    async testLoginWithoutRequestTokenIsRejected()
+    {
+        await this.test('Login without the request token is rejected', async () => {
+            let response = await this.makeFormRequest('POST', this.adminPath+'/login', {
+                email: this.adminUser,
+                password: this.adminPassword
+            });
+            this.assert.strictEqual(403, response.statusCode);
+        });
+    }
+
+    async testEntitySaveWithAnotherSessionTokenIsRejected()
+    {
+        await this.test('Entity save with the request token of another session is rejected', async () => {
+            let session = await this.getAuthenticatedSession();
+            let anotherSessionToken = this.fetchCsrfToken(await this.fetchLoginPageCookies());
+            let sessionCookies = session.filter((cookie) => 0 !== cookie.indexOf(GameConst.ADMIN_CSRF_TOKEN_COOKIE));
+            let response = await this.makeFormRequest('POST', this.adminPath+'/config/save', {
+                _csrf: anotherSessionToken
+            }, sessionCookies);
+            this.assert.strictEqual(403, response.statusCode);
         });
     }
 
