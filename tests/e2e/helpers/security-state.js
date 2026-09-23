@@ -18,6 +18,7 @@ class SecurityState
 
     static defaultSettings = {};
     static bannedUsersStatus = {};
+    static resetSentUsernames = [];
     static denyListTimer = null;
 
     static captureDefaults(serverManager)
@@ -119,12 +120,33 @@ class SecurityState
         return storedBlocks;
     }
 
-    static async deletePasswordResets(serverManager)
+    static async markResetSent(serverManager, username)
     {
-        let passwordResetsRepository = serverManager.dataServer.getEntity('usersPasswordResets');
-        for(let passwordReset of await passwordResetsRepository.loadAll()){
-            await passwordResetsRepository.deleteById(passwordReset.id);
+        await serverManager.dataServer.getEntity('users').updateBy(
+            'username',
+            username,
+            {password_reset_sent_at: sc.formatDate(new Date())}
+        );
+        SecurityState.resetSentUsernames.push(username);
+        return await SecurityState.fetchResetSentTime(serverManager, username);
+    }
+
+    static async fetchResetSentTime(serverManager, username)
+    {
+        let user = await serverManager.dataServer.getEntity('users').loadOneBy('username', username);
+        if(!user){
+            return 0;
         }
+        return new Date(sc.get(user, 'password_reset_sent_at', 0)).getTime();
+    }
+
+    static async clearResetSentTimes(serverManager)
+    {
+        let usersRepository = serverManager.dataServer.getEntity('users');
+        for(let username of SecurityState.resetSentUsernames){
+            await usersRepository.updateBy('username', username, {password_reset_sent_at: null});
+        }
+        SecurityState.resetSentUsernames = [];
     }
 
     static async resetAll(serverManager)
@@ -133,14 +155,8 @@ class SecurityState
         serverManager.loginManager.loginAttempts.reset();
         await SecurityState.restoreBannedUsers(serverManager);
         await SecurityState.liftDenyList(serverManager);
-        await SecurityState.deletePasswordResets(serverManager);
+        await SecurityState.clearResetSentTimes(serverManager);
         Logger.info('[security-state] Login attempts, bans, address lists and reset emails cleared.');
-    }
-
-    static async fetchUserId(serverManager, username)
-    {
-        let user = await serverManager.dataServer.getEntity('users').loadOneBy('username', username);
-        return user ? user.id : 0;
     }
 
     static registerEndpoints(serverManager)
@@ -170,13 +186,12 @@ class SecurityState
             response.json({restored: await serverManager.loginManager.loginAttempts.restoreAddressBlocks(Date.now())});
         });
         app.post('/api/e2e/security/mark-reset-sent', async (request, response) => {
-            let userId = await SecurityState.fetchUserId(serverManager, sc.get(request.body, 'username', ''));
-            await serverManager.usersManager.savePasswordResetSentTime(userId, Date.now());
-            response.json({sentTime: await serverManager.usersManager.fetchPasswordResetSentTime(userId)});
+            let username = sc.get(request.body, 'username', '');
+            response.json({sentTime: await SecurityState.markResetSent(serverManager, username)});
         });
         app.get('/api/e2e/security/reset-sent-time', async (request, response) => {
-            let userId = await SecurityState.fetchUserId(serverManager, sc.get(request.query, 'username', ''));
-            response.json({sentTime: await serverManager.usersManager.fetchPasswordResetSentTime(userId)});
+            let username = sc.get(request.query, 'username', '');
+            response.json({sentTime: await SecurityState.fetchResetSentTime(serverManager, username)});
         });
         Logger.info('[security-state] Security endpoints registered.');
     }
