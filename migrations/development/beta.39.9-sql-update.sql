@@ -169,7 +169,18 @@ CREATE TABLE IF NOT EXISTS `ip_lists` (
 
 -- Security: last reset password email sent per user, so the forgot password interval is shared by every server and
 -- survives a restart
-ALTER TABLE `users` ADD COLUMN `password_reset_sent_at` TIMESTAMP NULL DEFAULT NULL AFTER `login_count`;
+SET @addPasswordResetSentAt = (
+    SELECT IF(
+        0 = COUNT(*),
+        'ALTER TABLE `users` ADD COLUMN `password_reset_sent_at` TIMESTAMP NULL DEFAULT NULL AFTER `login_count`',
+        'SELECT 1'
+    )
+    FROM `information_schema`.`COLUMNS`
+    WHERE `TABLE_SCHEMA` = DATABASE() AND `TABLE_NAME` = 'users' AND `COLUMN_NAME` = 'password_reset_sent_at'
+);
+PREPARE addPasswordResetSentAtStatement FROM @addPasswordResetSentAt;
+EXECUTE addPasswordResetSentAtStatement;
+DEALLOCATE PREPARE addPasswordResetSentAtStatement;
 
 -- Security: login attempts lockout, administration panel login limiter and session, CSRF, address lists, game
 -- login throttle, registration and guests limits, origin validation, guests cleanup and the password policy
