@@ -22,7 +22,7 @@ See `lib/game/server/install-templates/.env.dist` for the template file.
 
 ## Express Server
 
-The following variables are listed (commented out) in `.env.dist` but are not read by `ServerManager.fetchConfigServerFromEnvironmentVariables()`, they map to `AppServerFactory` config options that must be passed programmatically: `RELDENS_USE_EXPRESS_JSON`, `RELDENS_EXPRESS_JSON_LIMIT`, `RELDENS_EXPRESS_URLENCODED_LIMIT`, `RELDENS_TOO_MANY_REQUESTS_MESSAGE`, `RELDENS_USE_URLENCODED`, `RELDENS_USE_XSS_PROTECTION`, `RELDENS_USE_CORS`, `RELDENS_CORS_METHODS`, `RELDENS_CORS_HEADERS`.
+The following variables are listed (commented out) in `.env.dist` but are not read by `EnvironmentVariablesReader.fetchConfigServerFromEnvironmentVariables()`, they map to `AppServerFactory` config options that must be passed programmatically: `RELDENS_USE_EXPRESS_JSON`, `RELDENS_EXPRESS_JSON_LIMIT`, `RELDENS_EXPRESS_URLENCODED_LIMIT`, `RELDENS_TOO_MANY_REQUESTS_MESSAGE`, `RELDENS_USE_URLENCODED`, `RELDENS_USE_XSS_PROTECTION`, `RELDENS_USE_CORS`, `RELDENS_CORS_METHODS`, `RELDENS_CORS_HEADERS`.
 
 - `RELDENS_USE_EXPRESS_JSON` - Enable JSON parsing
 - `RELDENS_EXPRESS_JSON_LIMIT` - JSON payload limit
@@ -46,7 +46,7 @@ The following variables are listed (commented out) in `.env.dist` but are not re
 ## Security
 
 - `RELDENS_SIGNED_TOKENS_SECRET` - Secret used to sign the reset password links and the multi-server disconnection requests, shared by every server of a multi-server setup (default: `RELDENS_ADMIN_SECRET`)
-- `RELDENS_ADMIN_CSRF_ENABLED` - Session based CSRF tokens on the administration router, 0 or 1 (default: 0). The login form already carries the token; the entity forms need the placeholder filled per request before this is turned on, and the `/tileset-analyzer` routes are exempt because their client code lives in `@reldens/tileset-to-tilemap`
+- `RELDENS_ADMIN_CSRF_ENABLED` - Session based CSRF tokens on the administration router, 0 or 1 (default: 1). The token is sent to the admin client JS in the `reldens-admin-csrf-token` cookie, added to every POST form as `_csrf` and to the fetch requests as the `X-CSRF-Token` header; the upload routes of the maps wizard and the objects and skills importers check it after their uploader, and the `/tileset-analyzer` routes are exempt. Projects created before this change must refresh their `theme/admin` templates and JS (`reldens fullRebuild`)
 - `RELDENS_ADMIN_LOGIN_WINDOW_MS` - Administration panel login limiter window (default: 900000)
 - `RELDENS_ADMIN_LOGIN_MAX_ATTEMPTS` - Failed administration panel logins allowed per IP and email in the window (default: 5)
 - `RELDENS_ADMIN_SESSION_MAX_AGE_MS` - Administration panel session cookie max age, 0 keeps it a browser session cookie (default: 0)
@@ -69,10 +69,12 @@ The following variables are listed (commented out) in `.env.dist` but are not re
 - `RELDENS_IP_ALLOW_LIST` - Comma separated addresses or CIDR ranges; with entries here only those addresses are accepted and the deny list is ignored
 - `RELDENS_IP_DENY_LIST` - Comma separated addresses or CIDR ranges rejected on the Express routes and on the WebSocket upgrade
 
+The basic configuration installs a `server/security/*` row for the admin CSRF, admin login, admin session (max age and same site), game login, guests, registration, login attempts and address lists settings. `LoginManager.securityConfig` deep merges those rows over the environment values, so when a row exists its value wins over the environment variable; the address lists rows are joined with the environment lists in `ServerManagersInitializer.refreshIpLists()`. See `.claude/ip-lists-and-login-blocks.md` for the lists and the login blocks flow.
+
 ## Admin Panel
 
 - `RELDENS_ADMIN_ROUTE_PATH` - Admin panel route path
-- `RELDENS_ADMIN_SECRET` - Admin authentication secret
+- `RELDENS_ADMIN_SECRET` - Admin authentication secret, the administration panel is not activated when it is empty
 - `RELDENS_SIGNED_TOKENS_SECRET` - Secret used to sign the expiring reset password links and the multi-server disconnect user requests (default: `RELDENS_ADMIN_SECRET`). Every server in a multi-server setup must use the same value
 - `RELDENS_HOT_PLUG` - Enable hot-plug configuration updates (0/1)
 
