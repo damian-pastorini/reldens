@@ -47,6 +47,7 @@ class TestInstallationProcess extends BaseTest
                 'app-trusted-proxy': '',
                 'app-admin-path': '/reldens-admin',
                 'app-admin-secret': 'installer-test-secret',
+                'app-signed-tokens-secret': 'installer-test-signed-tokens-secret',
                 'db-storage-driver': storageDriver,
                 'db-client': 'mysql2',
                 'db-host': this.config.dbHost,
