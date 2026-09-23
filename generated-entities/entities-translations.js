@@ -721,7 +721,8 @@ module.exports.entitiesTranslations = {
             'created_at': 'Created At',
             'updated_at': 'Updated At',
             'played_time': 'Played Time',
-            'login_count': 'Login Count'
+            'login_count': 'Login Count',
+            'password_reset_sent_at': 'Password Reset Sent At'
         },
         'users_locale': {
             'id': 'ID',
@@ -733,11 +734,6 @@ module.exports.entitiesTranslations = {
             'user_id': 'User ID',
             'login_date': 'Login Date',
             'logout_date': 'Logout Date'
-        },
-        'users_password_resets': {
-            'id': 'ID',
-            'user_id': 'User ID',
-            'sent_at': 'Sent At'
         }
     }
 };

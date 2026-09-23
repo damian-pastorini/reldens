@@ -32,12 +32,6 @@ class UsersModel
                 tableName: 'users_login',
                 from: 'id',
                 to: 'user_id'
-            },
-            related_users_password_resets: {
-                relation: 'HasOneRelation',
-                tableName: 'users_password_resets',
-                from: 'id',
-                to: 'user_id'
             }
         };
     }
