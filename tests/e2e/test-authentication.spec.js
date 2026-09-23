@@ -8,6 +8,7 @@
 
 const { BaseE2eTest } = require('./base-e2e-test');
 const { Login } = require('./helpers/login');
+const { Registration } = require('./helpers/registration');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
 let test = BaseE2eTest.test;
@@ -48,36 +49,12 @@ class TestAuthentication
         expect(regUsername, 'e2eRegUsername must be configured for registration test').toBeTruthy();
         expect(regEmail, 'e2eRegEmail must be configured for registration test').toBeTruthy();
         expect(regPassword, 'e2eRegPassword must be configured for registration test').toBeTruthy();
-        let typeDelay = TimeConstants.typeDelay(longRun);
-        let pauseMs = TimeConstants.pauseMs(longRun);
-        let uiTimeout = TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun);
-        await page.goto('/');
-        await page.waitForLoadState('networkidle');
-        await screenshots.capture(page, 'register-form-visible');
-        await page.locator(Selectors.register.username).pressSequentially(regUsername, { delay: typeDelay });
-        await page.waitForTimeout(pauseMs);
-        await page.locator(Selectors.register.email).pressSequentially(regEmail, { delay: typeDelay });
-        await page.waitForTimeout(pauseMs);
-        await page.locator(Selectors.register.password).pressSequentially(regPassword, { delay: typeDelay });
-        await page.waitForTimeout(pauseMs);
-        await page.locator(Selectors.register.rePassword).pressSequentially(regPassword, { delay: typeDelay });
-        await page.waitForTimeout(pauseMs);
-        await screenshots.capture(page, 'register-form-filled');
-        let termsVisible = await page.locator(Selectors.register.termsLinkContainer)
-            .isVisible({ timeout: uiTimeout }).catch(() => false);
-        if(termsVisible) {
-            await page.locator(Selectors.register.termsLink).click();
-            await page.waitForTimeout(pauseMs);
-            await expect(page.locator(Selectors.register.termsBox)).toBeVisible({ timeout: uiTimeout });
-            await screenshots.capture(page, 'terms-and-conditions-visible');
-            await page.locator(Selectors.register.termsCheckbox).check();
-            await page.waitForTimeout(pauseMs);
-            await page.locator(Selectors.register.termsAcceptClose).first().click();
-            await page.waitForTimeout(pauseMs);
-        }
-        await page.hover(Selectors.register.submit);
-        await page.waitForTimeout(pauseMs);
-        await page.click(Selectors.register.submit);
+        await Registration.submitRegistration(
+            page,
+            {username: regUsername, email: regEmail, password: regPassword},
+            longRun,
+            screenshots
+        );
         await page.waitForSelector(
             Selectors.characterSelect.container+':not(.hidden)',
             { timeout: TimeConstants.forLongRun(TimeConstants.CHARACTER_SCREEN, longRun) }
