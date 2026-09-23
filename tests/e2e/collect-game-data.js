@@ -11,6 +11,7 @@ const { FileHandler } = require('@reldens/server-utils');
 const { Logger } = require('@reldens/utils');
 const { GameDataSkills } = require('./helpers/game-data-skills');
 const { PlayerStateReset } = require('./helpers/player-state-reset');
+const { SecurityState } = require('./helpers/security-state');
 const { TestDataSetup } = require('./helpers/test-data-setup');
 const { StartupGuard } = require('./helpers/startup-guard');
 const { ClientBundleCheck } = require('./helpers/client-bundle-check');
@@ -228,6 +229,7 @@ class CollectGameData
         CollectGameData.attachEventListeners(serverManager);
         await TestDataSetup.ensureRequiredItems(serverManager.dataServer, config);
         let snapshots = await PlayerStateReset.captureSnapshots(serverManager.dataServer, config);
+        SecurityState.registerEndpoints(serverManager);
         PlayerStateReset.registerResetEndpoint(serverManager, snapshots, config);
         CollectGameData.serverManager = serverManager;
     }
