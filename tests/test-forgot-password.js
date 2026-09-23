@@ -11,6 +11,7 @@ const { LoginAttempts } = require('../lib/game/server/memory/login-attempts');
 const { ExpiringHmacToken } = require('../lib/game/server/expiring-hmac-token');
 const { GameConst } = require('../lib/game/constants');
 const { Encryptor } = require('@reldens/server-utils');
+const { sc } = require('@reldens/utils');
 
 class TestForgotPassword extends BaseTest
 {
@@ -59,7 +60,7 @@ class TestForgotPassword extends BaseTest
         return resetSetup;
     }
 
-    createForgotPasswordLoginManager(lastSentTime, sentEmails, savedResetTimes)
+    createForgotPasswordLoginManager(lastSentTime, sentEmails, userUpdates)
     {
         let loginManager = Object.create(LoginManager.prototype);
         loginManager.mailerForgotPasswordLimit = 4;
@@ -68,9 +69,13 @@ class TestForgotPassword extends BaseTest
         loginManager.events = {emitSync: () => true};
         loginManager.mailer = {isEnabled: () => true};
         loginManager.usersManager = {
-            loadUserByEmail: async (email) => ({id: 1, email, password: 'stored-password-hash'}),
-            fetchPasswordResetSentTime: async () => lastSentTime,
-            savePasswordResetSentTime: async (userId, sentTime) => savedResetTimes.push({userId, sentTime})
+            loadUserByEmail: async (email) => ({
+                id: 1,
+                email,
+                password: 'stored-password-hash',
+                password_reset_sent_at: sc.formatDate(new Date(lastSentTime))
+            }),
+            updateUserByEmail: async (email, updatePatch) => userUpdates.push({email, updatePatch})
         };
         loginManager.sendForgotPasswordEmail = async (userData) => sentEmails.push(userData.email);
         return loginManager;
@@ -184,11 +189,11 @@ class TestForgotPassword extends BaseTest
     {
         await this.test('the reset email is not sent again inside the stored per user interval', async () => {
             let sentEmails = [];
-            let savedResetTimes = [];
-            let loginManager = this.createForgotPasswordLoginManager(Date.now()-60000, sentEmails, savedResetTimes);
+            let userUpdates = [];
+            let loginManager = this.createForgotPasswordLoginManager(Date.now()-60000, sentEmails, userUpdates);
             await loginManager.processForgotPassword({forgot: true, email: this.userEmail}, '10.0.0.1');
             this.assert.strictEqual(sentEmails.length, 0);
-            this.assert.strictEqual(savedResetTimes.length, 0);
+            this.assert.strictEqual(userUpdates.length, 0);
         });
     }
 
@@ -196,15 +201,16 @@ class TestForgotPassword extends BaseTest
     {
         await this.test('the reset email is sent and the sent time is stored once the interval passed', async () => {
             let sentEmails = [];
-            let savedResetTimes = [];
+            let userUpdates = [];
             let intervalMs = 4 * 60 * 60 * 1000;
-            let loginManager = this.createForgotPasswordLoginManager(Date.now()-intervalMs-1000, sentEmails, savedResetTimes);
-            let requestTime = Date.now();
+            let loginManager = this.createForgotPasswordLoginManager(Date.now()-intervalMs-1000, sentEmails, userUpdates);
+            let requestSecond = Date.now() - Date.now() % 1000;
             await loginManager.processForgotPassword({forgot: true, email: this.userEmail}, '10.0.0.1');
             this.assert.deepStrictEqual(sentEmails, [this.userEmail]);
-            this.assert.strictEqual(savedResetTimes.length, 1);
-            this.assert.strictEqual([...savedResetTimes].shift().userId, 1);
-            this.assert.strictEqual(requestTime <= [...savedResetTimes].shift().sentTime, true);
+            this.assert.strictEqual(userUpdates.length, 1);
+            let userUpdate = [...userUpdates].shift();
+            this.assert.strictEqual(userUpdate.email, this.userEmail);
+            this.assert.strictEqual(requestSecond <= new Date(userUpdate.updatePatch.password_reset_sent_at).getTime(), true);
         });
     }
 
