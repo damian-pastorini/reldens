@@ -83,8 +83,8 @@ Authentication, registration, player management
 - `lib/game/server/login-manager.js` handles all auth flows
 - Login protections: failed login lockout with stored address blocks, account bans, registration and guests limits per
   address, see `.claude/ip-lists-and-login-blocks.md`
-- The forgot password interval is kept per user in `users_password_resets`
-  (`UsersManager.fetchPasswordResetSentTime()` and `savePasswordResetSentTime()`), shared by every server
+- The forgot password interval is kept per user in the `users.password_reset_sent_at` column, shared by every server
+  and kept after a restart
 - Player creation and management
 
 ### Chat (`lib/chat/`)

@@ -71,7 +71,7 @@ lockouts and the blocks left by one spec never reach the next one:
 - clears the in memory login attempts, joins and creation counters
 - restores the status of the accounts banned by a spec
 - lifts the deny list: restores the address lists switch, deletes every `ip_lists` row and rebuilds the lists
-- deletes the `users_password_resets` rows
+- clears the `password_reset_sent_at` of the accounts marked by a spec
 
 The security specs (`test-login-security.spec.js`, `test-admin-security.spec.js`) drive the server state through the
 `/api/e2e/security/*` endpoints, wrapped by `tests/e2e/helpers/security-api.js`:
