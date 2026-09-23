@@ -123,7 +123,10 @@ The installer provides real-time status updates during installation:
 - **Public URL** - Public-facing URL (for reverse proxies)
 - **Trusted Proxy** - Reverse proxy address
 - **Admin Panel Path** - Admin interface route (default: /reldens-admin)
-- **Admin Panel Secret Key** - Secret key for admin access
+- **Admin Panel Secret Key** - Signs the administration panel session (`RELDENS_ADMIN_SECRET`), required and not
+  prefilled, the administration panel is not activated with an empty secret
+- **Signed Tokens Secret Key** - Signs the reset password links and the multi-server disconnection requests
+  (`RELDENS_SIGNED_TOKENS_SECRET`), required and not prefilled
 - **Hot-Plug** - Enable runtime configuration reload
 
 ### Storage Settings
