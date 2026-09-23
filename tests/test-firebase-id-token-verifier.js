@@ -7,10 +7,17 @@
 const { BaseTest } = require('./base-test');
 const { FirebaseIdTokenVerifier } = require('../lib/firebase/server/firebase-id-token-verifier');
 const { FirebaseConst } = require('../lib/firebase/constants');
+const { Encryptor } = require('@reldens/server-utils');
 const { sc } = require('@reldens/utils');
 
 class TestFirebaseIdTokenVerifier extends BaseTest
 {
+
+    constructor(config)
+    {
+        super(config);
+        this.passwordSecret = 'test-password-secret';
+    }
 
     captureRequest(capturedRequests, responseData, url, options)
     {
@@ -22,8 +29,31 @@ class TestFirebaseIdTokenVerifier extends BaseTest
     {
         return new FirebaseIdTokenVerifier({
             apiKey: 'test-api-key',
+            passwordSecret: this.passwordSecret,
             fetchFunction: async (url, options) => this.captureRequest(capturedRequests, responseData, url, options)
         });
+    }
+
+    async createVerifiedLoginData(verifier)
+    {
+        await verifier.verify('valid-token', 'firebase-uid');
+        let userData = this.createFirebaseLoginData('valid-token');
+        verifier.applyVerifiedLogin(userData);
+        return userData;
+    }
+
+    createPasswordValidation(userData, storedPassword, updates)
+    {
+        return {
+            loginManager: {
+                usersManager: {
+                    updateUserByEmail: async (email, updatePatch) => updates.push({email, updatePatch})
+                }
+            },
+            user: {username: 'firebase-player', email: 'player@test.com', password: storedPassword},
+            userData,
+            isValid: false
+        };
     }
 
     createFirebaseLoginData(firebaseIdToken)
@@ -38,9 +68,9 @@ class TestFirebaseIdTokenVerifier extends BaseTest
         };
     }
 
-    async testTheVerifiedTokenSetsTheUidAsPassword()
+    async testTheVerifiedTokenSetsTheSignedUidAsPassword()
     {
-        await this.test('a verified ID token sets the Firebase uid as the login password', async () => {
+        await this.test('a verified ID token sets the Firebase uid signed with the server secret as the password', async () => {
             let capturedRequests = [];
             let responseData = {users: [{localId: 'firebase-uid', email: 'player@test.com'}]};
             let verifier = this.createVerifier(responseData, capturedRequests);
@@ -52,7 +82,7 @@ class TestFirebaseIdTokenVerifier extends BaseTest
             this.assert.strictEqual(request.options.body, sc.toJsonString({idToken: 'valid-token'}));
             let userData = this.createFirebaseLoginData('valid-token');
             this.assert.strictEqual(verifier.applyVerifiedLogin(userData), true);
-            this.assert.strictEqual(userData.password, 'firebase-uid');
+            this.assert.strictEqual(userData.password, Encryptor.generateHMAC('firebase-uid', this.passwordSecret));
             this.assert.strictEqual(userData.email, 'player@test.com');
             this.assert.strictEqual(userData.username, 'firebase-player');
         });
@@ -68,7 +98,7 @@ class TestFirebaseIdTokenVerifier extends BaseTest
             verifier.applyVerifiedLogin(this.createFirebaseLoginData('valid-token'));
             let sceneUserData = this.createFirebaseLoginData('valid-token');
             this.assert.strictEqual(verifier.applyVerifiedLogin(sceneUserData), true);
-            this.assert.strictEqual(sceneUserData.password, 'firebase-uid');
+            this.assert.strictEqual(sceneUserData.password, Encryptor.generateHMAC('firebase-uid', this.passwordSecret));
             this.assert.strictEqual(capturedRequests.length, 1);
         });
     }
@@ -148,6 +178,54 @@ class TestFirebaseIdTokenVerifier extends BaseTest
             this.assert.strictEqual(verifier.applyVerifiedLogin(userData), false);
             this.assert.strictEqual(userData.username, 'player');
             this.assert.strictEqual(userData.password, 'secret');
+        });
+    }
+
+    async testTheLegacyUidPasswordIsMigratedOnAVerifiedLogin()
+    {
+        await this.test('the legacy password made from the Firebase uid is migrated on a verified login', async () => {
+            let verifier = this.createVerifier({users: [{localId: 'firebase-uid', email: 'player@test.com'}]}, []);
+            let userData = await this.createVerifiedLoginData(verifier);
+            let updates = [];
+            let legacyPassword = Encryptor.encryptPassword('firebase-uid');
+            let passwordValidation = this.createPasswordValidation(userData, legacyPassword, updates);
+            this.assert.strictEqual(await verifier.migrateLegacyPassword(passwordValidation), true);
+            this.assert.strictEqual(passwordValidation.isValid, true);
+            this.assert.strictEqual(updates.length, 1);
+            this.assert.strictEqual([...updates].shift().email, 'player@test.com');
+            this.assert.strictEqual([...updates].shift().updatePatch.password, passwordValidation.user.password);
+            this.assert.strictEqual(Encryptor.validatePassword(userData.password, passwordValidation.user.password), true);
+            this.assert.strictEqual(Encryptor.validatePassword('firebase-uid', passwordValidation.user.password), false);
+        });
+    }
+
+    async testTheLegacyPasswordIsNotMigratedWithoutAVerifiedLogin()
+    {
+        await this.test('the legacy password is not migrated for a login data that was not verified', async () => {
+            let verifier = this.createVerifier({}, []);
+            let userData = this.createFirebaseLoginData('forged-token');
+            let updates = [];
+            let legacyPassword = Encryptor.encryptPassword('firebase-uid');
+            let passwordValidation = this.createPasswordValidation(userData, legacyPassword, updates);
+            this.assert.strictEqual(await verifier.migrateLegacyPassword(passwordValidation), false);
+            this.assert.strictEqual(passwordValidation.isValid, false);
+            this.assert.strictEqual(updates.length, 0);
+            this.assert.strictEqual(passwordValidation.user.password, legacyPassword);
+        });
+    }
+
+    async testTheLegacyPasswordIsNotMigratedWhenTheStoredHashDoesNotMatch()
+    {
+        await this.test('the password is not migrated when the stored hash was not made from the Firebase uid', async () => {
+            let verifier = this.createVerifier({users: [{localId: 'firebase-uid', email: 'player@test.com'}]}, []);
+            let userData = await this.createVerifiedLoginData(verifier);
+            let updates = [];
+            let storedPassword = Encryptor.encryptPassword('another-account-password');
+            let passwordValidation = this.createPasswordValidation(userData, storedPassword, updates);
+            this.assert.strictEqual(await verifier.migrateLegacyPassword(passwordValidation), false);
+            this.assert.strictEqual(passwordValidation.isValid, false);
+            this.assert.strictEqual(updates.length, 0);
+            this.assert.strictEqual(passwordValidation.user.password, storedPassword);
         });
     }
 
