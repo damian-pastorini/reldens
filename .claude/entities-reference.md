@@ -89,6 +89,9 @@ Entities are located in `generated-entities/entities/` and are auto-generated fr
 - scores
 - scores-detail
 
+## Security
+- ip-lists
+
 ## Skills System
 - skills-class-level-up-animations
 - skills-class-path
@@ -122,6 +125,7 @@ Entities are located in `generated-entities/entities/` and are auto-generated fr
 ## Users/Authentication
 - users
 - users-login
+- users-password-resets
 
 ## Entity Relations
 
