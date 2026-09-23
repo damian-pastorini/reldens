@@ -35,6 +35,31 @@ the chart stay current without a reload. The hover listeners are bound once, not
 
 ---
 
+## Request Token (CSRF)
+
+Enabled by `RELDENS_ADMIN_CSRF_ENABLED` or the `security/adminCsrf/enabled` config row (default 1) and passed by
+`CreateAdminSubscriber` as `csrfEnabled` to the `@reldens/cms` `AdminManager`.
+
+- The `@reldens/cms` `CsrfProtection` middleware on the administration router creates a token per session and rejects
+  every POST, PUT, PATCH or DELETE request whose `_csrf` body field or `X-CSRF-Token` header does not match it, with
+  `403` and `Invalid request token.`. The `/tileset-analyzer` routes are exempt.
+- `CreateAdminSubscriber.applyCsrfTokenCookie()` sends the session token to the admin client JS in the
+  `reldens-admin-csrf-token` cookie (`GameConst.ADMIN_CSRF_TOKEN_COOKIE`, path is the admin root path, `SameSite=Strict`).
+- `theme/admin/js/admin-functions.js` reads the cookie: `appendCsrfTokenInput(form)` adds the `_csrf` hidden input to the
+  POST forms and `csrfHeaders(headers)` adds the header to the fetch requests (maps elements editor, maps wizard save
+  configuration).
+- `theme/admin/js/reldens-admin-client-forms.js` adds the input to every form on load and to the delete selection form,
+  and submits the multipart entity edit form (`#edit-form`) with `fetch` and the header, because the router check runs
+  before the uploader parses the multipart body. The form attributes are read with `getAttribute()`, since the entity
+  field named `id` shadows the `form.id` property.
+- The upload routes of the objects importer, the skills importer and the maps wizard use
+  `UploadCsrfProtection.createMiddleware()` (`lib/admin/server/upload-csrf-protection.js`), which excludes the route
+  from the router check and runs the same check after the uploader, where the `_csrf` field is parsed.
+- Projects created before the token was added must refresh their `theme/admin` templates and JS
+  (`npm exec -- reldens fullRebuild`).
+
+---
+
 ## Admin Panel Sections and Controlled Tables
 
 The admin panel groups entities into 16 navigation sections. The section structure is defined in:
@@ -45,6 +70,8 @@ Configuration keys and operation types used throughout the platform.
 - `config` - Key/value configuration entries (`config` table)
 - `configTypes` - Types for configuration entries
 - `operationTypes` - Operation type definitions
+- `ipLists` - Permanent allow and deny addresses and the temporary login blocks (`ip_lists` table), see
+  `.claude/ip-lists-and-login-blocks.md`
 
 ### Rooms
 Room definitions and player transition points.
@@ -264,6 +291,7 @@ Player accounts, stats, scores, and class assignments.
 - `users` - User accounts
 - `usersLogin` - Login records/sessions
 - `usersLocale` - Per-user locale settings
+- `usersPasswordResets` - Last reset password email sent time per user, used for the forgot password interval
 - `players` - Player entities linked to users
 - `playersState` - Player runtime state data
 - `playersStats` - Player stat values (hp, mp, atk, etc.)
