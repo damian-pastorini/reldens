@@ -81,6 +81,10 @@ Party/guild system
 Authentication, registration, player management
 - Supports guest users, Firebase authentication
 - `lib/game/server/login-manager.js` handles all auth flows
+- Login protections: failed login lockout with stored address blocks, account bans, registration and guests limits per
+  address, see `.claude/ip-lists-and-login-blocks.md`
+- The forgot password interval is kept per user in `users_password_resets`
+  (`UsersManager.fetchPasswordResetSentTime()` and `savePasswordResetSentTime()`), shared by every server
 - Player creation and management
 
 ### Chat (`lib/chat/`)
@@ -111,6 +115,9 @@ Admin panel integration with @reldens/cms
 Firebase integration
 - Firebase authentication
 - Client-side Firebase SDK integration
+- `FirebaseIdTokenVerifier` verifies the ID token on the server and uses the Firebase uid signed with the password
+  secret as the account password; an account whose stored password was made from the plain uid is migrated to the
+  signed password on its next verified login (`reldens.loginPasswordValidationFallback` event)
 
 ### Ads (`lib/ads/`)
 Advertisement integration system
