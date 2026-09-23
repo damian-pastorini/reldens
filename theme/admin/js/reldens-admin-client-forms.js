@@ -100,11 +100,58 @@ class AdminClientForms
             this.showMapsImportDialog();
         }
         this.showLoadingImage(loadingImage);
+        adminFunctions.appendCsrfTokenInput(form);
         form.submit();
+    }
+
+    isTokenHeaderForm(form)
+    {
+        return 'edit-form' === form.getAttribute('id') && 'multipart/form-data' === form.getAttribute('enctype');
+    }
+
+    async submitWithTokenHeader(form, submitter)
+    {
+        let formData = new FormData(form, submitter);
+        if(submitter){
+            submitter.disabled = true;
+        }
+        let response = await fetch(form.getAttribute('action'), {
+            method: 'POST',
+            headers: adminFunctions.csrfHeaders({}),
+            body: formData
+        }).catch(() => false);
+        if(response?.redirected){
+            window.location.assign(response.url);
+            return true;
+        }
+        if(submitter){
+            submitter.disabled = false;
+        }
+        this.showSubmitError();
+        return false;
+    }
+
+    showSubmitError()
+    {
+        let notificationElement = document.querySelector('.notification');
+        if(!notificationElement){
+            return false;
+        }
+        let messageElement = notificationElement.querySelector('.message');
+        if(!messageElement){
+            return false;
+        }
+        notificationElement.classList.add('error');
+        messageElement.textContent = 'The form could not be submitted, please reload the page and try again.';
+        return true;
     }
 
     handleFormSubmit(event, form)
     {
+        if(this.isTokenHeaderForm(form)){
+            event.preventDefault();
+            return this.submitWithTokenHeader(form, event.submitter);
+        }
         let submitButton = form.querySelector('input[type="submit"], button[type="submit"]');
         submitButton.disabled = true;
         let loadingImage = form.querySelector('.loading');
@@ -126,6 +173,7 @@ class AdminClientForms
             return;
         }
         for(let form of forms){
+            adminFunctions.appendCsrfTokenInput(form);
             if(form.classList.contains('no-auto-disable')){
                 continue;
             }
@@ -197,6 +245,7 @@ class AdminClientForms
             input.value = checkbox.value;
             deleteSelectionForm.appendChild(input);
         }
+        adminFunctions.appendCsrfTokenInput(deleteSelectionForm);
         deleteSelectionForm.submit();
     }
 
