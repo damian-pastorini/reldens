@@ -125,7 +125,6 @@ Entities are located in `generated-entities/entities/` and are auto-generated fr
 ## Users/Authentication
 - users
 - users-login
-- users-password-resets
 
 ## Entity Relations
 

@@ -291,7 +291,6 @@ Player accounts, stats, scores, and class assignments.
 - `users` - User accounts
 - `usersLogin` - Login records/sessions
 - `usersLocale` - Per-user locale settings
-- `usersPasswordResets` - Last reset password email sent time per user, used for the forgot password interval
 - `players` - Player entities linked to users
 - `playersState` - Player runtime state data
 - `playersStats` - Player stat values (hp, mp, atk, etc.)
