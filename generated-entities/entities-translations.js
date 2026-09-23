@@ -26,6 +26,7 @@ module.exports.entitiesTranslations = {
         'config_types': 'Config Types',
         'drops_animations': 'Drops Animations',
         'features': 'Features',
+        'ip_lists': 'Ip Lists',
         'items_group': 'Items Group',
         'items_inventory': 'Items Inventory',
         'items_item': 'Items Item',
@@ -83,7 +84,7 @@ module.exports.entitiesTranslations = {
         'users': 'Users',
         'users_locale': 'Users Locale',
         'users_login': 'Users Login',
-        'ip_lists': 'Ip Lists'
+        'users_password_resets': 'Users Password Resets'
     },
     fields: {
         'ads_banner': {
@@ -235,6 +236,15 @@ module.exports.entitiesTranslations = {
             'code': 'Code',
             'title': 'Title',
             'is_enabled': 'Is Enabled'
+        },
+        'ip_lists': {
+            'id': 'ID',
+            'address': 'Address',
+            'list_type': 'List Type',
+            'reason': 'Reason',
+            'expires_at': 'Expires At',
+            'created_at': 'Created At',
+            'updated_at': 'Updated At'
         },
         'items_group': {
             'id': 'ID',
@@ -724,14 +734,10 @@ module.exports.entitiesTranslations = {
             'login_date': 'Login Date',
             'logout_date': 'Logout Date'
         },
-        'ip_lists': {
+        'users_password_resets': {
             'id': 'ID',
-            'address': 'Address',
-            'list_type': 'List Type',
-            'reason': 'Reason',
-            'expires_at': 'Expires At',
-            'created_at': 'Created At',
-            'updated_at': 'Updated At'
+            'user_id': 'User ID',
+            'sent_at': 'Sent At'
         }
     }
 };

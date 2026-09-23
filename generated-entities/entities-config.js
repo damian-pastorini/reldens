@@ -24,6 +24,7 @@ const { ConfigEntity } = require('./entities/config-entity');
 const { ConfigTypesEntity } = require('./entities/config-types-entity');
 const { DropsAnimationsEntity } = require('./entities/drops-animations-entity');
 const { FeaturesEntity } = require('./entities/features-entity');
+const { IpListsEntity } = require('./entities/ip-lists-entity');
 const { ItemsGroupEntity } = require('./entities/items-group-entity');
 const { ItemsInventoryEntity } = require('./entities/items-inventory-entity');
 const { ItemsItemEntity } = require('./entities/items-item-entity');
@@ -81,7 +82,7 @@ const { TargetOptionsEntity } = require('./entities/target-options-entity');
 const { UsersEntity } = require('./entities/users-entity');
 const { UsersLocaleEntity } = require('./entities/users-locale-entity');
 const { UsersLoginEntity } = require('./entities/users-login-entity');
-const { IpListsEntity } = require('./entities/ip-lists-entity');
+const { UsersPasswordResetsEntity } = require('./entities/users-password-resets-entity');
 
 let entitiesConfig = {
     adsBanner: AdsBannerEntity.propertiesConfig(),
@@ -104,6 +105,7 @@ let entitiesConfig = {
     configTypes: ConfigTypesEntity.propertiesConfig(),
     dropsAnimations: DropsAnimationsEntity.propertiesConfig(),
     features: FeaturesEntity.propertiesConfig(),
+    ipLists: IpListsEntity.propertiesConfig(),
     itemsGroup: ItemsGroupEntity.propertiesConfig(),
     itemsInventory: ItemsInventoryEntity.propertiesConfig(),
     itemsItem: ItemsItemEntity.propertiesConfig(),
@@ -161,7 +163,7 @@ let entitiesConfig = {
     users: UsersEntity.propertiesConfig(),
     usersLocale: UsersLocaleEntity.propertiesConfig(),
     usersLogin: UsersLoginEntity.propertiesConfig(),
-    ipLists: IpListsEntity.propertiesConfig()
+    usersPasswordResets: UsersPasswordResetsEntity.propertiesConfig()
 };
 
 module.exports.entitiesConfig = entitiesConfig;
