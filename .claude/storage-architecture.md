@@ -29,7 +29,7 @@ Reldens resolves those props from the project root through the `@reldens/cms` `S
 - `StorageDriversResolver.modulesProp(driverKey)` gives the data server prop name
 - `StorageDriversResolver.loadModules(driverKey, projectRoot, client)` loads the modules through the `@reldens/storage` loaders (`KnexModulesLoader`, `KyselyModulesLoader`, `DrizzleModulesLoader`, `ObjectionModulesLoader`, `MikroOrmModulesLoader`)
 
-The Prisma modules are built by `DataServerInitializer.loadProjectPrismaModules()` from the project `prisma/client` and the adapter package (`RELDENS_PRISMA_ADAPTER` / `RELDENS_PRISMA_ADAPTER_CLASS`), or reused from the installer data server right after the installation. `PrismaDataServer` creates the client with the connection string from `DataServerConfig`.
+The Prisma modules are built by `DataServerInitializer.loadProjectPrismaModules()` from the project `prisma/client` and the adapter package (`RELDENS_PRISMA_ADAPTER` / `RELDENS_PRISMA_ADAPTER_CLASS`, read by `EnvironmentVariablesReader.fetchPrismaAdapterFromEnvironmentVariables()` and passed as `configServer.prismaAdapter`), or reused from the installer data server right after the installation. `PrismaDataServer` creates the client with the connection string from `DataServerConfig`.
 
 ## Entity Access and Storage System Architecture
 
