@@ -19,6 +19,36 @@ class Selectors
         this.initHudAndChatSelectors();
         this.initInventoryAndStatsSelectors();
         this.initInteractionSelectors();
+        this.initSecuritySelectors();
+    }
+
+    initSecuritySelectors()
+    {
+        this.guest = {
+            error: '#guest-form .response-error'
+        };
+        this.registerResponse = {
+            error: '#register-form .response-error'
+        };
+        this.forgot = {
+            form: '#forgot-form',
+            email: '#forgot-email',
+            submit: '#forgot-form [type="submit"]',
+            error: '#forgot-form .response-error'
+        };
+        this.admin = {
+            loginForm: '.login-form',
+            loginEmail: '.login-form #email',
+            loginPassword: '.login-form #password',
+            loginSubmit: '.login-form .button-login',
+            loginError: '.login-form .response-error',
+            dashboard: '.admin-dashboard',
+            notificationSuccess: '.notification.success',
+            editForm: '#edit-form',
+            saveButton: 'button[form="edit-form"][value="save"]',
+            deleteTopButton: '.actions .form-delete [type="submit"]',
+            dialogConfirm: '.confirm-dialog .dialog-confirm'
+        };
     }
 
     initBaseSelectors()
