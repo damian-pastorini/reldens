@@ -55,39 +55,46 @@ class TestRoomLoginAuth extends BaseTest
         });
     }
 
-    createOriginValidationRoomLogin(allowRequestsWithoutOrigin)
+    isValidOrigin(allowRequestsWithoutOrigin, requestHeaders)
     {
         let roomLogin = Object.create(RoomLogin.prototype);
         roomLogin.validateRoomsOriginRequest = true;
         roomLogin.allowRequestsWithoutOrigin = allowRequestsWithoutOrigin;
         roomLogin.allowedOrigins = ['http://localhost:8080'];
-        return roomLogin;
+        return roomLogin.isValidOriginRequest({headers: requestHeaders});
     }
 
     async testTheAllowedOriginWithATrailingSlashIsAccepted()
     {
         await this.test('an allowed origin sent with a trailing slash passes the rooms origin validation', async () => {
-            let roomLogin = this.createOriginValidationRoomLogin(false);
-            let request = {headers: new Headers({origin: 'http://localhost:8080/'})};
-            this.assert.strictEqual(roomLogin.isValidOriginRequest(request), true);
+            let requestHeaders = {get: (headerName) => 'origin' === headerName ? 'http://localhost:8080/' : null};
+            this.assert.strictEqual(this.isValidOrigin(false, requestHeaders), true);
         });
     }
 
     async testTheForeignOriginIsRejected()
     {
         await this.test('an origin that is not in the allowed origins is rejected', async () => {
-            let roomLogin = this.createOriginValidationRoomLogin(true);
-            let request = {headers: new Headers({origin: 'http://attacker.test'})};
-            this.assert.strictEqual(roomLogin.isValidOriginRequest(request), false);
+            let requestHeaders = {get: (headerName) => 'origin' === headerName ? 'http://attacker.test' : null};
+            this.assert.strictEqual(this.isValidOrigin(true, requestHeaders), false);
         });
     }
 
     async testTheRequestWithoutOriginFollowsTheConfiguration()
     {
         await this.test('a request without origin follows the requests without origin configuration', async () => {
-            let request = {headers: new Headers()};
-            this.assert.strictEqual(this.createOriginValidationRoomLogin(true).isValidOriginRequest(request), true);
-            this.assert.strictEqual(this.createOriginValidationRoomLogin(false).isValidOriginRequest(request), false);
+            let requestHeaders = {get: () => null};
+            this.assert.strictEqual(this.isValidOrigin(true, requestHeaders), true);
+            this.assert.strictEqual(this.isValidOrigin(false, requestHeaders), false);
+        });
+    }
+
+    async testTheHeadersWithoutTheGetMethodAreHandledWithoutOrigin()
+    {
+        await this.test('headers without the get method are handled as a request without origin', async () => {
+            let requestHeaders = {origin: 'http://localhost:8080'};
+            this.assert.strictEqual(this.isValidOrigin(true, requestHeaders), true);
+            this.assert.strictEqual(this.isValidOrigin(false, requestHeaders), false);
         });
     }
 
