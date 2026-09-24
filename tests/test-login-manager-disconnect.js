@@ -64,6 +64,50 @@ class TestLoginManagerDisconnect extends BaseTest
         });
     }
 
+    createBroadcastDisconnection(requestedServers, isDisconnectConfirmed)
+    {
+        let userDisconnection = this.createUserDisconnection([]);
+        userDisconnection.serverSelfUrl = 'http://self:8080';
+        userDisconnection.roomsPerServer = userDisconnection.mapRoomsServers({
+            town: 'http://server-a:8080',
+            forest: 'http://self:8080'
+        });
+        userDisconnection.disconnectFromServer = async (serverUrl, username) => {
+            requestedServers.push(serverUrl+'/'+username);
+            return isDisconnectConfirmed;
+        };
+        return userDisconnection;
+    }
+
+    async testTheDisconnectionIsBroadcastToTheOtherServersOnly()
+    {
+        await this.test('the disconnection is broadcast only to the servers of the other rooms', async () => {
+            let requestedServers = [];
+            let userDisconnection = this.createBroadcastDisconnection(requestedServers, true);
+            this.assert.strictEqual(await userDisconnection.broadcastDisconnectionMessage(this.victimUserModel), true);
+            this.assert.deepStrictEqual(requestedServers, ['http://server-a:8080/victim']);
+        });
+    }
+
+    async testTheLoginIsRejectedWhenAnotherServerDoesNotDisconnect()
+    {
+        await this.test('the broadcast fails when another server does not confirm the disconnection', async () => {
+            let userDisconnection = this.createBroadcastDisconnection([], false);
+            this.assert.strictEqual(await userDisconnection.broadcastDisconnectionMessage(this.victimUserModel), false);
+        });
+    }
+
+    async testNothingIsBroadcastWhenTheServersDisconnectionIsDisabled()
+    {
+        await this.test('nothing is broadcast when the disconnection on server change is disabled', async () => {
+            let requestedServers = [];
+            let userDisconnection = this.createBroadcastDisconnection(requestedServers, false);
+            userDisconnection.disconnectUsersOnServerChange = false;
+            this.assert.strictEqual(await userDisconnection.broadcastDisconnectionMessage(this.victimUserModel), true);
+            this.assert.strictEqual(requestedServers.length, 0);
+        });
+    }
+
     async testTheUserIsDisconnectedWithAValidToken()
     {
         await this.test('the user is disconnected with a valid token signed by the shared secret', async () => {
