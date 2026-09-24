@@ -28,7 +28,7 @@ class SecurityState
             maxAttempts: loginManager.loginAttempts.maxAttempts,
             registrationMaxPerIp: loginManager.registrationMaxPerIp,
             guestsMaxPerIp: loginManager.guestsMaxPerIp,
-            gameLoginMaxJoins: loginManager.securityConfig.gameLogin.maxJoins,
+            gameLoginMaxJoins: serverManager.configManager.getWithoutLogs('server/security/gameLogin/maxJoins', 20),
             ipListsEnabled: serverManager.configManager.getWithoutLogs('server/security/ipLists/enabled', false)
         };
     }
@@ -36,12 +36,13 @@ class SecurityState
     static applySettings(serverManager, settings)
     {
         let loginManager = serverManager.loginManager;
+        let gameLoginMaxJoins = Number(settings.gameLoginMaxJoins);
         loginManager.loginAttempts.maxAttempts = Number(settings.maxAttempts);
         loginManager.registrationMaxPerIp = Number(settings.registrationMaxPerIp);
         loginManager.guestsMaxPerIp = Number(settings.guestsMaxPerIp);
-        loginManager.securityConfig.gameLogin.maxJoins = Number(settings.gameLoginMaxJoins);
+        serverManager.configManager.server.security.gameLogin.maxJoins = gameLoginMaxJoins;
         for(let instanceId of Object.keys(serverManager.roomsManager.createdInstances)){
-            serverManager.roomsManager.createdInstances[instanceId].gameLoginMaxJoins = Number(settings.gameLoginMaxJoins);
+            serverManager.roomsManager.createdInstances[instanceId].gameLoginMaxJoins = gameLoginMaxJoins;
         }
     }
 
@@ -115,7 +116,10 @@ class SecurityState
             if(!storedAddress.expires_at){
                 continue;
             }
-            storedBlocks.push({address: storedAddress.address, expiresAt: new Date(storedAddress.expires_at).getTime()});
+            storedBlocks.push({
+                address: storedAddress.address,
+                expiresAt: new Date(storedAddress.expires_at).getTime()
+            });
         }
         return storedBlocks;
     }
