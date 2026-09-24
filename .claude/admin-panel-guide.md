@@ -52,9 +52,9 @@ Enabled by `RELDENS_ADMIN_CSRF_ENABLED` or the `security/adminCsrf/enabled` conf
   and submits the multipart entity edit form (`#edit-form`) with `fetch` and the header, because the router check runs
   before the uploader parses the multipart body. The form attributes are read with `getAttribute()`, since the entity
   field named `id` shadows the `form.id` property.
-- The upload routes of the objects importer, the skills importer and the maps wizard use
-  `UploadCsrfProtection.createMiddleware()` (`lib/admin/server/upload-csrf-protection.js`), which excludes the route
-  from the router check and runs the same check after the uploader, where the `_csrf` field is parsed.
+- The upload routes of the objects importer, the skills importer and the maps wizard add their path to the router
+  `csrfProtection.ignoredPaths` and register a `@reldens/cms` `CsrfProtection` middleware right after their uploader,
+  where the `_csrf` field of the multipart body is parsed.
 - Projects created before the token was added must refresh their `theme/admin` templates and JS
   (`npm exec -- reldens fullRebuild`).
 
