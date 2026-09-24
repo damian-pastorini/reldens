@@ -35,21 +35,18 @@ class Registration
 
     static async submitRegistration(page, registrationData, longRun, screenshots)
     {
-        let typeDelay = TimeConstants.typeDelay(longRun);
+        let typeOptions = {delay: TimeConstants.typeDelay(longRun)};
         let pauseMs = TimeConstants.pauseMs(longRun);
         await page.goto('/');
         await page.waitForLoadState('networkidle');
         await screenshots.capture(page, 'register-form-visible');
-        await page.locator(Selectors.register.username).pressSequentially(registrationData.username, { delay: typeDelay });
+        await page.locator(Selectors.register.username).pressSequentially(registrationData.username, typeOptions);
         await page.waitForTimeout(pauseMs);
-        await page.locator(Selectors.register.email).pressSequentially(registrationData.email, { delay: typeDelay });
+        await page.locator(Selectors.register.email).pressSequentially(registrationData.email, typeOptions);
         await page.waitForTimeout(pauseMs);
-        await page.locator(Selectors.register.password).pressSequentially(registrationData.password, { delay: typeDelay });
+        await page.locator(Selectors.register.password).pressSequentially(registrationData.password, typeOptions);
         await page.waitForTimeout(pauseMs);
-        await page.locator(Selectors.register.rePassword).pressSequentially(
-            registrationData.password,
-            { delay: typeDelay }
-        );
+        await page.locator(Selectors.register.rePassword).pressSequentially(registrationData.password, typeOptions);
         await page.waitForTimeout(pauseMs);
         await screenshots.capture(page, 'register-form-filled');
         await Registration.acceptTerms(page, longRun, screenshots);

@@ -38,7 +38,12 @@ class SecurityApi
 
     static async denyAddresses(gameConfig, addresses, durationMs)
     {
-        return await SecurityApi.request(gameConfig, 'POST', '/api/e2e/security/deny-addresses', {addresses, durationMs});
+        return await SecurityApi.request(
+            gameConfig,
+            'POST',
+            '/api/e2e/security/deny-addresses',
+            {addresses, durationMs}
+        );
     }
 
     static async fetchStoredBlocks(gameConfig)
@@ -53,7 +58,12 @@ class SecurityApi
 
     static async markResetSent(gameConfig, username)
     {
-        return (await SecurityApi.request(gameConfig, 'POST', '/api/e2e/security/mark-reset-sent', {username})).sentTime;
+        return (await SecurityApi.request(
+            gameConfig,
+            'POST',
+            '/api/e2e/security/mark-reset-sent',
+            {username}
+        )).sentTime;
     }
 
     static async fetchResetSentTime(gameConfig, username)

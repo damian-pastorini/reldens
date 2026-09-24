@@ -206,7 +206,8 @@ class TestLoginSecurity
         );
         await screenshots.capture(page, 'forgot-unknown-email');
         expect(knownEmailMessage).toBe(unknownEmailMessage);
-        expect(await SecurityApi.fetchResetSentTime(gameConfig, username), 'No email sent in the interval').toBe(sentTime);
+        let lastSentTime = await SecurityApi.fetchResetSentTime(gameConfig, username);
+        expect(lastSentTime, 'No email sent in the interval').toBe(sentTime);
     }
 
     static run()

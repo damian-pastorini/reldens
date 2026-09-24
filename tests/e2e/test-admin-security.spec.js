@@ -209,9 +209,12 @@ class TestAdminSecurity
                     await TestAdminSecurity.runUploadEntitySaveTest(page, screenshots, gameConfig, longRun);
                 }
             );
-            test('admin upload routes check the CSRF token after the uploader', async ({ page, gameConfig, longRun }) => {
-                await TestAdminSecurity.runUploadRoutesTest(page, gameConfig, longRun);
-            });
+            test(
+                'admin upload routes check the CSRF token after the uploader',
+                async ({ page, gameConfig, longRun }) => {
+                    await TestAdminSecurity.runUploadRoutesTest(page, gameConfig, longRun);
+                }
+            );
             test('admin login limiter blocks after the allowed failures', async ({ page, gameConfig, longRun }) => {
                 await TestAdminSecurity.runLoginLimiterTest(page, gameConfig, longRun);
             });
