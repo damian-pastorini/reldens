@@ -55,6 +55,42 @@ class TestRoomLoginAuth extends BaseTest
         });
     }
 
+    createOriginValidationRoomLogin(allowRequestsWithoutOrigin)
+    {
+        let roomLogin = Object.create(RoomLogin.prototype);
+        roomLogin.validateRoomsOriginRequest = true;
+        roomLogin.allowRequestsWithoutOrigin = allowRequestsWithoutOrigin;
+        roomLogin.allowedOrigins = ['http://localhost:8080'];
+        return roomLogin;
+    }
+
+    async testTheAllowedOriginWithATrailingSlashIsAccepted()
+    {
+        await this.test('an allowed origin sent with a trailing slash passes the rooms origin validation', async () => {
+            let roomLogin = this.createOriginValidationRoomLogin(false);
+            let request = {headers: new Headers({origin: 'http://localhost:8080/'})};
+            this.assert.strictEqual(roomLogin.isValidOriginRequest(request), true);
+        });
+    }
+
+    async testTheForeignOriginIsRejected()
+    {
+        await this.test('an origin that is not in the allowed origins is rejected', async () => {
+            let roomLogin = this.createOriginValidationRoomLogin(true);
+            let request = {headers: new Headers({origin: 'http://attacker.test'})};
+            this.assert.strictEqual(roomLogin.isValidOriginRequest(request), false);
+        });
+    }
+
+    async testTheRequestWithoutOriginFollowsTheConfiguration()
+    {
+        await this.test('a request without origin follows the requests without origin configuration', async () => {
+            let request = {headers: new Headers()};
+            this.assert.strictEqual(this.createOriginValidationRoomLogin(true).isValidOriginRequest(request), true);
+            this.assert.strictEqual(this.createOriginValidationRoomLogin(false).isValidOriginRequest(request), false);
+        });
+    }
+
     async testTheUncaughtExceptionIsNotRethrown()
     {
         await this.test('an uncaught room exception is logged and not rethrown', async () => {
