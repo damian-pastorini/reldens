@@ -80,7 +80,10 @@ Party/guild system
 ### Users (`lib/users/`)
 Authentication, registration, player management
 - Supports guest users, Firebase authentication
-- `lib/game/server/login-manager.js` handles all auth flows
+- `lib/game/server/login-manager.js` handles the game, guest and administration panel logins, and creates the classes
+  of the other flows in `lib/game/server/`: `UserRegistration` (accounts and guests), `PlayerCreation` (new players,
+  with `PlayerRoomState` for the states placed in a room), `ForgotPassword` (forgot password requests, reset emails
+  and the reset page routes) and `UserDisconnection` (disconnection from every room and from the other servers)
 - Login protections: failed login lockout with stored address blocks, account bans, registration and guests limits per
   address, see `.claude/ip-lists-and-login-blocks.md`
 - The forgot password interval is kept per user in the `users.password_reset_sent_at` column, shared by every server
