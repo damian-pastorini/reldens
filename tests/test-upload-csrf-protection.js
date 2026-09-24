@@ -5,16 +5,37 @@
  */
 
 const { BaseTest } = require('./base-test');
-const { UploadCsrfProtection } = require('../lib/admin/server/upload-csrf-protection');
+const { ObjectsImporterSubscriber } = require('../lib/admin/server/subscribers/objects-importer-subscriber');
 
 class TestUploadCsrfProtection extends BaseTest
 {
 
+    setupObjectsImportRoute(enabled)
+    {
+        let routeSetup = {postHandlers: [], uploader: () => true};
+        routeSetup.adminManager = {
+            rootPath: '/reldens-admin',
+            router: {
+                csrfProtection: {enabled, ignoredPaths: ['/tileset-analyzer']},
+                adminRouter: {
+                    get: () => true,
+                    post: (path, ...handlers) => routeSetup.postHandlers.push(...handlers)
+                }
+            }
+        };
+        let subscriber = Object.create(ObjectsImporterSubscriber.prototype);
+        subscriber.objectsImportPath = '/objects-import';
+        subscriber.rootPath = '';
+        subscriber.isAuthenticated = () => true;
+        subscriber.uploader = routeSetup.uploader;
+        subscriber.setupRoutes(routeSetup.adminManager);
+        return routeSetup;
+    }
+
     runUploadCsrfCheck(enabled, uploadBody)
     {
+        let routeSetup = this.setupObjectsImportRoute(enabled);
         let checkResult = {nextCalls: 0, statusCode: 0};
-        let adminManager = {router: {csrfProtection: {enabled, ignoredPaths: ['/tileset-analyzer']}}};
-        let middleware = UploadCsrfProtection.createMiddleware(adminManager, '/objects-import');
         let request = {
             method: 'POST',
             path: '/objects-import',
@@ -29,16 +50,20 @@ class TestUploadCsrfProtection extends BaseTest
             },
             send: () => response
         };
-        middleware(request, response, () => checkResult.nextCalls++);
-        checkResult.ignoredPaths = adminManager.router.csrfProtection.ignoredPaths;
+        routeSetup.postHandlers[2](request, response, () => checkResult.nextCalls++);
         return checkResult;
     }
 
-    async testTheUploadRouteIsExcludedFromTheRouterCheck()
+    async testTheUploadRouteChecksTheTokenAfterTheUploader()
     {
-        await this.test('the upload route path is excluded from the administration router check', async () => {
-            let checkResult = this.runUploadCsrfCheck(true, {_csrf: 'session-token-a'});
-            this.assert.deepStrictEqual(checkResult.ignoredPaths, ['/tileset-analyzer', '/objects-import']);
+        await this.test('the upload route skips the router check and is checked after the uploader', async () => {
+            let routeSetup = this.setupObjectsImportRoute(true);
+            this.assert.deepStrictEqual(
+                routeSetup.adminManager.router.csrfProtection.ignoredPaths,
+                ['/tileset-analyzer', '/objects-import']
+            );
+            this.assert.strictEqual(routeSetup.postHandlers[1], routeSetup.uploader);
+            this.assert.strictEqual(routeSetup.postHandlers.length, 4);
         });
     }
 
