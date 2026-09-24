@@ -98,20 +98,20 @@ userModel {
 
 ### Step 1: User Authentication
 
-**File:** `lib/rooms/server/login.js:76-109` (onAuth)
+**File:** `lib/rooms/server/login.js:85-131` (onAuth)
 
 ```javascript
 async onAuth(client, options, request) {
     // Load user from database
-    let loginResult = await this.loginManager.processUserRequest(options);
+    let requestAddress = String(sc.get(request, 'ip', ''));
+    let loginResult = await this.loginManager.processUserRequest(options, requestAddress);
 
     // Select player if specified
     if(sc.hasOwn(options, 'selectedPlayer')){
+        // ← From database array, an id that is not in the array rejects the login
+        let playerModel = sc.fetchByProperty(loginResult.user.related_players, 'id', options.selectedPlayer);
         loginResult.selectedPlayer = options.selectedPlayer;
-        loginResult.user.player = this.getPlayerByIdFromArray(
-            loginResult.user.related_players,  // ← From database array
-            options.selectedPlayer
-        );
+        loginResult.user.player = playerModel;
     }
 
     // ← The returned user becomes userModel in onJoin
@@ -193,14 +193,17 @@ async setSceneOnPlayers(user, userData) {
 
 ### Step 5: Select Player (Runtime Assignment)
 
-**File:** `lib/rooms/server/login.js:91-94`
+**File:** `lib/rooms/server/login.js:105-113`
 
 ```javascript
 if(sc.hasOwn(options, 'selectedPlayer')){
-    loginResult.user.player = this.getPlayerByIdFromArray(
-        loginResult.user.related_players,
-        options.selectedPlayer
-    );
+    let playerModel = sc.fetchByProperty(loginResult.user.related_players, 'id', options.selectedPlayer);
+    if(!playerModel){
+        Logger.warning('Auth invalid selected player.', {username: loginResult.user.username});
+        ErrorManager.error(GameConst.INVALID_LOGIN_MESSAGE);
+    }
+    loginResult.selectedPlayer = options.selectedPlayer;
+    loginResult.user.player = playerModel;
 }
 ```
 
@@ -290,7 +293,7 @@ async savePlayerState(sessionId) {
 - (Adds scene property to runtime state)
 
 **Step 5: SELECT - RoomLogin.onAuth()**
-- userModel.player = getPlayerByIdFromArray(...)
+- userModel.player = sc.fetchByProperty(related_players, 'id', selectedPlayer)
 - (Assigns selected player to userModel.player)
 
 **Step 6: VALIDATE - RoomScene.onJoin()**
