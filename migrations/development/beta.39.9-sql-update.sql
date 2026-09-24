@@ -212,6 +212,30 @@ INSERT IGNORE INTO `config` (`scope`, `path`, `value`, `type`) VALUES
 -- Security: the administration panel CSRF protection is enabled now that every admin form and request sends the token
 UPDATE `config` SET `value` = '1' WHERE `scope` = 'server' AND `path` = 'security/adminCsrf/enabled';
 
+-- Security: shared administration panel sessions, so they survive a restart, expire and are shared by every server
+CREATE TABLE IF NOT EXISTS `admin_sessions` (
+    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `sid` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    `data` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    `expires` BIGINT UNSIGNED NOT NULL,
+    PRIMARY KEY (`id`) USING BTREE,
+    UNIQUE KEY `sid` (`sid`) USING BTREE,
+    KEY `expires` (`expires`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Security: administration sessions expire after one day by default, the scene and feature rooms joins limit, the
+-- concurrent password validations limit and the registration username, email and password length policy
+UPDATE `config` SET `value` = '86400000'
+    WHERE `scope` = 'server' AND `path` = 'security/adminSession/maxAgeMs' AND `value` = '0';
+INSERT IGNORE INTO `config` (`scope`, `path`, `value`, `type`) VALUES
+	('server', 'security/maxConcurrentPasswordValidations', '8', 2),
+	('server', 'security/passwordMaximumLength', '128', 2),
+	('server', 'security/registration/emailMaximumLength', '255', 2),
+	('server', 'security/registration/usernameMaximumLength', '50', 2),
+	('server', 'security/registration/usernameMinimumLength', '3', 2),
+	('server', 'security/roomsLogin/maxJoins', '60', 2),
+	('server', 'security/roomsLogin/windowMs', '60000', 2);
+
 --
 
 SET FOREIGN_KEY_CHECKS = 1;

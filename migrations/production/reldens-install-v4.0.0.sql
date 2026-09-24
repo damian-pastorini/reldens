@@ -1057,6 +1057,16 @@ CREATE TABLE IF NOT EXISTS `ip_lists` (
     KEY `list_type` (`list_type`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS `admin_sessions` (
+    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `sid` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    `data` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    `expires` BIGINT UNSIGNED NOT NULL,
+    PRIMARY KEY (`id`) USING BTREE,
+    UNIQUE KEY `sid` (`sid`) USING BTREE,
+    KEY `expires` (`expires`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 --
 
 SET FOREIGN_KEY_CHECKS = 1;

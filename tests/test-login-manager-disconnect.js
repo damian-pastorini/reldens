@@ -108,6 +108,24 @@ class TestLoginManagerDisconnect extends BaseTest
         });
     }
 
+    async testTheDisconnectRequestErrorAnswersAFailedResult()
+    {
+        await this.test('an error on the disconnect request answers a failed result instead of rejecting', async () => {
+            let userDisconnection = this.createUserDisconnection([]);
+            let loginManager = Object.create(LoginManager.prototype);
+            loginManager.userDisconnection = userDisconnection;
+            userDisconnection.disconnectUserByLoginData = async () => Promise.reject({message: 'Storage.'});
+            let responses = [];
+            let response = {json: (responseData) => responses.push(responseData)};
+            response.status = (statusCode) => {
+                responses.push(statusCode);
+                return response;
+            };
+            await loginManager.handleDisconnectUserRequest({body: {}}, response);
+            this.assert.deepStrictEqual(responses, [500, {isSuccess: false}]);
+        });
+    }
+
     async testTheUserIsDisconnectedWithAValidToken()
     {
         await this.test('the user is disconnected with a valid token signed by the shared secret', async () => {

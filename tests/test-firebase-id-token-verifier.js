@@ -48,7 +48,8 @@ class TestFirebaseIdTokenVerifier extends BaseTest
             loginManager: {
                 usersManager: {
                     updateUserByEmail: async (email, updatePatch) => updates.push({email, updatePatch})
-                }
+                },
+                validatePassword: async (password, stored) => await Encryptor.validatePassword(password, stored)
             },
             user: {username: 'firebase-player', email: 'player@test.com', password: storedPassword},
             userData,
@@ -198,8 +199,26 @@ class TestFirebaseIdTokenVerifier extends BaseTest
             this.assert.strictEqual([...updates].shift().email, 'player@test.com');
             let migratedPassword = passwordValidation.user.password;
             this.assert.strictEqual([...updates].shift().updatePatch.password, migratedPassword);
-            this.assert.strictEqual(Encryptor.validatePassword(userData.password, migratedPassword), true);
-            this.assert.strictEqual(Encryptor.validatePassword('firebase-uid', migratedPassword), false);
+            this.assert.strictEqual(await Encryptor.validatePassword(userData.password, migratedPassword), true);
+            this.assert.strictEqual(await Encryptor.validatePassword('firebase-uid', migratedPassword), false);
+        });
+    }
+
+    async testTheVerifiedUsersCacheKeepsTheConfiguredMaximum()
+    {
+        await this.test('the verified users cache keeps the maximum entries and drops the oldest uid', async () => {
+            let verifier = new FirebaseIdTokenVerifier({
+                apiKey: 'test-api-key',
+                verifiedUsersMax: 2,
+                fetchFunction: async (url, options) => ({
+                    json: async () => ({users: [{localId: sc.toJson(options.body).idToken, email: 'player@test.com'}]})
+                })
+            });
+            for(let uid of ['first-uid', 'second-uid', 'third-uid']){
+                this.assert.strictEqual(await verifier.verify(uid, uid), true);
+            }
+            this.assert.strictEqual(verifier.verifiedUsers.size, 2);
+            this.assert.deepStrictEqual([...verifier.verifiedUsers.keys()], ['second-uid', 'third-uid']);
         });
     }
 

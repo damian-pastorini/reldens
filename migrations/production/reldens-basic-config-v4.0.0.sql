@@ -421,7 +421,7 @@ REPLACE INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(375, 'server', 'security/adminCsrf/enabled', '1', 3),
 	(376, 'server', 'security/adminLogin/maxAttempts', '5', 2),
 	(377, 'server', 'security/adminLogin/windowMs', '900000', 2),
-	(378, 'server', 'security/adminSession/maxAgeMs', '0', 2),
+	(378, 'server', 'security/adminSession/maxAgeMs', '86400000', 2),
 	(379, 'server', 'security/adminSession/sameSite', 'lax', 1),
 	(380, 'server', 'security/gameLogin/maxJoins', '20', 2),
 	(381, 'server', 'security/gameLogin/windowMs', '60000', 2),
@@ -432,7 +432,14 @@ REPLACE INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(386, 'server', 'security/loginAttempts/blockTimeMs', '900000', 2),
 	(387, 'server', 'security/loginAttempts/enabled', '1', 3),
 	(388, 'server', 'security/loginAttempts/maxAttempts', '10', 2),
-	(389, 'server', 'security/registration/maxPerIp', '10', 2);
+	(389, 'server', 'security/registration/maxPerIp', '10', 2),
+	(390, 'server', 'security/maxConcurrentPasswordValidations', '8', 2),
+	(391, 'server', 'security/passwordMaximumLength', '128', 2),
+	(392, 'server', 'security/registration/emailMaximumLength', '255', 2),
+	(393, 'server', 'security/registration/usernameMaximumLength', '50', 2),
+	(394, 'server', 'security/registration/usernameMinimumLength', '3', 2),
+	(395, 'server', 'security/roomsLogin/maxJoins', '60', 2),
+	(396, 'server', 'security/roomsLogin/windowMs', '60000', 2);
 
 REPLACE INTO `features` (`id`, `code`, `title`, `is_enabled`) VALUES
 	(1, 'chat', 'Chat', 1),

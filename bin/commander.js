@@ -10,6 +10,8 @@ const dotenv = require('dotenv');
 const { spawn } = require('child_process');
 const { CreateAdmin } = require('../lib/users/server/create-admin');
 const { ResetPassword } = require('../lib/users/server/reset-password');
+const { FirebaseIdTokenVerifier } = require('../lib/firebase/server/firebase-id-token-verifier');
+const { FirebaseLegacyPasswordsMigration } = require('../lib/firebase/server/firebase-legacy-passwords-migration');
 const { ThemeManager } = require('../lib/game/server/theme-manager');
 const { EnvironmentVariablesReader } = require('../lib/game/server/environment-variables-reader');
 const { PackagesInstallation } = require('../lib/game/server/installer/packages-installation');
@@ -25,7 +27,14 @@ class Commander
     projectThemeName = 'default';
     jsSourceMaps = '1' === process.env.RELDENS_JS_SOURCEMAPS;
     cssSourceMaps = '1' === process.env.RELDENS_CSS_SOURCEMAPS;
-    availableCommands = ['test', 'help', 'generateEntities', 'createAdmin', 'resetPassword'];
+    availableCommands = [
+        'test',
+        'help',
+        'generateEntities',
+        'createAdmin',
+        'resetPassword',
+        'migrateFirebasePasswords'
+    ];
     command = '';
 
     prepareCommand()
@@ -183,6 +192,21 @@ class Commander
         process.exit(result ? 0 : 1);
     }
 
+    async migrateFirebasePasswords()
+    {
+        Logger.info('Migrating the legacy Firebase account passwords...');
+        let args = this.getCommandArgs(['file']);
+        let serverManager = await this.initializeServerManager();
+        let migration = new FirebaseLegacyPasswordsMigration({
+            usersRepository: serverManager.dataServer.getEntity('users'),
+            idTokenVerifier: new FirebaseIdTokenVerifier({
+                passwordSecret: serverManager.configManager.getWithoutLogs('server/security/signedTokensSecret', '')
+            })
+        });
+        let result = await migration.migrate(args.file);
+        process.exit(false === result ? 1 : 0);
+    }
+
     getCommandArgs(requiredArgs)
     {
         let args = process.argv.slice(2);
@@ -249,7 +273,8 @@ class Commander
             +"\n"+'copyServerFiles                  - Reset the "dist" folder and runs a fullRebuild.'
             +"\n"+'generateEntities [--override]    - Generate entities from database using .env credentials.'
             +"\n"+'createAdmin --user=X --pass=Y --email=Z  - Create admin user with specified credentials.'
-            +"\n"+'resetPassword --user=X --pass=Y  - Reset password for specified user.');
+            +"\n"+'resetPassword --user=X --pass=Y  - Reset password for specified user.'
+            +"\n"+'migrateFirebasePasswords --file=X - Migrate the legacy Firebase passwords from an export.');
     }
 
 }

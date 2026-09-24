@@ -6,6 +6,8 @@
 
 const { BaseTest } = require('./base-test');
 const { RoomLogin } = require('../lib/rooms/server/login');
+const { RoomsConst } = require('../lib/rooms/constants');
+const { LoginAttempts } = require('../lib/game/server/memory/login-attempts');
 
 class TestRoomLoginAuth extends BaseTest
 {
@@ -23,16 +25,55 @@ class TestRoomLoginAuth extends BaseTest
             roomName: {value: 'test-room'},
             roomId: {value: 'test-room-id'}
         });
+        roomLogin.roomType = RoomsConst.ROOM_TYPE_SCENE;
+        roomLogin.roomsLoginWindowMs = 60000;
+        roomLogin.roomsLoginMaxJoins = 2;
         roomLogin.events = {emitSync: async () => true};
         roomLogin.loginManager = {
             processUserRequest: async (options) => {
                 processedRequests.push(options);
                 return loginResult;
             },
+            loginAttempts: new LoginAttempts({}),
             activePlayers: {fetchByRoomAndUserName: () => ({userModel: this.activeUserModel})},
             userDisconnection: {broadcastDisconnectionMessage: async () => true}
         };
         return roomLogin;
+    }
+
+    async joinSceneRepeatedly(roomLogin, joinsData)
+    {
+        let joinResults = [];
+        for(let joinData of joinsData){
+            joinResults.push(await roomLogin.onAuth(
+                {},
+                {username: joinData.username, password: 'valid'},
+                {ip: joinData.address, headers: {}}
+            ).then(() => true).catch(() => false));
+        }
+        return joinResults;
+    }
+
+    async testTheThirdSceneJoinWithTheSameUsernameIsLimited()
+    {
+        await this.test('the scene joins above the limit are rejected for fixed and rotating addresses', async () => {
+            let loadedUser = {id: 1, username: 'victim', email: 'victim@reldens.com', related_players: []};
+            let fixedAddressJoins = await this.joinSceneRepeatedly(this.createRoomLogin({user: loadedUser}, []), [
+                {username: 'user-1', address: '10.0.0.1'},
+                {username: 'user-2', address: '10.0.0.1'},
+                {username: 'user-3', address: '10.0.0.1'}
+            ]);
+            let processedRequests = [];
+            let rotatingAddressRoom = this.createRoomLogin({user: loadedUser}, processedRequests);
+            let rotatingAddressJoins = await this.joinSceneRepeatedly(rotatingAddressRoom, [
+                {username: 'victim', address: '10.0.1.1'},
+                {username: 'victim', address: '10.0.1.2'},
+                {username: 'victim', address: '10.0.1.3'}
+            ]);
+            this.assert.deepStrictEqual(fixedAddressJoins, [true, true, false]);
+            this.assert.deepStrictEqual(rotatingAddressJoins, [true, true, false]);
+            this.assert.strictEqual(processedRequests.length, 2);
+        });
     }
 
     async testTheActiveUserIsRejectedWithoutValidPassword()

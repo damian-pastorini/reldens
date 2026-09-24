@@ -164,6 +164,12 @@ reldens resetPassword --user=username --pass=newpassword
 # Password is automatically encrypted
 # Works for any user (admin or regular)
 
+# Migrate the legacy Firebase account passwords
+reldens migrateFirebasePasswords --file=firebase-users.json
+# Reads a "firebase auth:export firebase-users.json --format=json" file
+# Every user whose stored password is the hash of its Firebase uid gets the hash of the password derived from the uid
+# and the signed tokens secret, so the uid no longer works on the regular login form
+
 # Examples:
 reldens createAdmin --user=admin --pass=SecurePass123 --email=admin@yourgame.com
 reldens resetPassword --user=someuser --pass=NewSecurePass456
@@ -179,3 +185,5 @@ reldens resetPassword --user=someuser --pass=NewSecurePass456
 - Email validation via `sc.validateInput(email, 'email')` from `@reldens/utils`
 - Commands initialize ServerManager automatically from `.env` (pattern from `bin/import.js`)
 - Password encryption uses `Encryptor` from `@reldens/server-utils` (100k iterations, SHA-512)
+- `migrateFirebasePasswords` uses `FirebaseLegacyPasswordsMigration` in `lib/firebase/server/` with the users repository
+  and a `FirebaseIdTokenVerifier` built with `server/security/signedTokensSecret`

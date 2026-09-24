@@ -146,6 +146,54 @@ class TestLoginAttempts extends BaseTest
         });
     }
 
+    async testTheExpiredKeysOfOtherIdentitiesAreSwept()
+    {
+        await this.test('a hit after a full window sweeps the expired hits and blocks of the other keys', async () => {
+            let loginAttempts = new LoginAttempts({maxAttempts: 1, blockTimeMs: 1000, windowMs: 1000});
+            let now = Date.now();
+            loginAttempts.registerHit(GameConst.LOGIN_ATTEMPTS_KEYS.JOINS+'10.0.0.1', now);
+            loginAttempts.registerLoginFailure('blocked-player', '', now);
+            this.assert.strictEqual(loginAttempts.hitsByKey.size, 1);
+            this.assert.strictEqual(loginAttempts.blockedUntilByKey.size, 1);
+            loginAttempts.registerHit(GameConst.LOGIN_ATTEMPTS_KEYS.JOINS+'10.0.0.2', now+2000);
+            this.assert.deepStrictEqual(
+                [...loginAttempts.hitsByKey.keys()],
+                [GameConst.LOGIN_ATTEMPTS_KEYS.JOINS+'10.0.0.2']
+            );
+            this.assert.strictEqual(loginAttempts.blockedUntilByKey.size, 0);
+        });
+    }
+
+    async testTheOldestKeyIsEvictedAtTheTrackedKeysCap()
+    {
+        await this.test('the oldest tracked key is evicted when the tracked keys cap is reached', async () => {
+            let loginAttempts = new LoginAttempts({maxTrackedKeys: 2});
+            let now = Date.now();
+            let joinsKeyPrefix = GameConst.LOGIN_ATTEMPTS_KEYS.JOINS;
+            loginAttempts.registerHit(joinsKeyPrefix+'10.0.0.1', now);
+            loginAttempts.registerHit(joinsKeyPrefix+'10.0.0.2', now);
+            loginAttempts.registerHit(joinsKeyPrefix+'10.0.0.3', now);
+            this.assert.deepStrictEqual(
+                [...loginAttempts.hitsByKey.keys()],
+                [joinsKeyPrefix+'10.0.0.2', joinsKeyPrefix+'10.0.0.3']
+            );
+        });
+    }
+
+    async testTheLongIdentitiesAreTruncatedInTheKeys()
+    {
+        await this.test('an identity longer than the maximum length is truncated in the attempts key', async () => {
+            let loginAttempts = new LoginAttempts({maxAttempts: 1, maxIdentityLength: 10});
+            let now = Date.now();
+            loginAttempts.registerLoginFailure('x'.repeat(5000), '', now);
+            this.assert.deepStrictEqual(
+                [...loginAttempts.blockedUntilByKey.keys()],
+                [GameConst.LOGIN_ATTEMPTS_KEYS.IDENTITY+'x'.repeat(10)]
+            );
+            this.assert.strictEqual(loginAttempts.isLoginBlocked('x'.repeat(20), '', now), true);
+        });
+    }
+
 }
 
 module.exports.TestLoginAttempts = TestLoginAttempts;

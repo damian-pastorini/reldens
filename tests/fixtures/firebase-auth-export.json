@@ -1,0 +1,7 @@
+{
+    "users": [
+        {"localId": "legacy-uid", "email": "legacy@test.com"},
+        {"localId": "changed-uid", "email": "changed@test.com"},
+        {"localId": "unknown-uid", "email": "unknown@test.com"}
+    ]
+}
