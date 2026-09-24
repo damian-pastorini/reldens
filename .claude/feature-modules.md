@@ -84,7 +84,9 @@ Authentication, registration, player management
 - Login protections: failed login lockout with stored address blocks, account bans, registration and guests limits per
   address, see `.claude/ip-lists-and-login-blocks.md`
 - The forgot password interval is kept per user in the `users.password_reset_sent_at` column, shared by every server
-  and kept after a restart
+  and kept after a restart. `UsersManager.reservePasswordResetSentTime()` sets the column with a conditional update
+  (empty or older than the interval) before the email is sent, so concurrent requests send a single email, and a
+  failed send restores the previous value
 - Player creation and management
 
 ### Chat (`lib/chat/`)
