@@ -107,6 +107,33 @@ class TestLoginAttempts extends BaseTest
         });
     }
 
+    async testTheIdentityAndTheAddressAreBlockedAfterTheMaximumFailures()
+    {
+        await this.test('the identity and the address are blocked after the maximum login failures', async () => {
+            let loginAttempts = new LoginAttempts({maxAttempts: 2});
+            let now = Date.now();
+            loginAttempts.registerLoginFailure('player', '10.0.0.1', now);
+            this.assert.strictEqual(loginAttempts.isLoginBlocked('player', '', now), false);
+            loginAttempts.registerLoginFailure('player', '10.0.0.1', now);
+            this.assert.strictEqual(loginAttempts.isLoginBlocked('player', '', now), true);
+            this.assert.strictEqual(loginAttempts.isLoginBlocked('another-player', '10.0.0.1', now), true);
+            this.assert.strictEqual(loginAttempts.isLoginBlocked('another-player', '10.0.0.2', now), false);
+        });
+    }
+
+    async testTheAddressLimitIsReachedAboveTheMaximum()
+    {
+        await this.test('the address limit is reached above the maximum and ignored without an address', async () => {
+            let loginAttempts = new LoginAttempts({});
+            let now = Date.now();
+            let registrationKey = GameConst.LOGIN_ATTEMPTS_KEYS.REGISTRATION;
+            this.assert.strictEqual(loginAttempts.isAddressLimitReached(registrationKey, '10.0.0.1', 1, now), false);
+            this.assert.strictEqual(loginAttempts.isAddressLimitReached(registrationKey, '10.0.0.1', 1, now), true);
+            this.assert.strictEqual(loginAttempts.isAddressLimitReached(registrationKey, '', 1, now), false);
+            this.assert.strictEqual(loginAttempts.isAddressLimitReached(registrationKey, '10.0.0.2', 0, now), false);
+        });
+    }
+
     async testTheIdentityBlockIsNotStored()
     {
         await this.test('a block for a user identity is kept in memory and not stored in the IP lists', async () => {
