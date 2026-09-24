@@ -113,7 +113,7 @@ saves of the disconnected players use the default room id too. That is `server/r
 
 Turning it off leaves the player states alone: the `players_state.room_id` foreign key is `ON DELETE SET NULL`, so the
 database unlinks them, the pending saves write null, and a player whose saved room is null is placed in the fallback
-room on the next login (`LoginManager.getRoomNameById` returns `GameConst.ROOM_NAME_MAP` when the id resolves to
+room on the next login (`PlayerRoomState.getRoomNameById` returns `GameConst.ROOM_NAME_MAP` when the id resolves to
 nothing).
 
 That prevention is the authority and covers any direct call to the delete route. So the administrator is not sent

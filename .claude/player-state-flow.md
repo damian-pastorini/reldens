@@ -140,7 +140,7 @@ async loadUserByUsername(username) {
 
 ### Step 3: Map Player State Relation
 
-**File:** `lib/game/server/login-manager.js:373-383`
+**File:** `lib/game/server/login-manager.js:228-238`
 
 ```javascript
 mapPlayerStateRelation(user) {
@@ -165,7 +165,7 @@ mapPlayerStateRelation(user) {
 
 ### Step 4: Set Scene On Players
 
-**File:** `lib/game/server/login-manager.js:445-464`
+**File:** `lib/game/server/login-manager.js:328-347`
 
 ```javascript
 async setSceneOnPlayers(user, userData) {
@@ -183,7 +183,7 @@ async setSceneOnPlayers(user, userData) {
         }
 
         // CRITICAL: Add scene property to state
-        player.state.scene = await this.getRoomNameById(player.state.room_id);
+        player.state.scene = await this.playerRoomState.getRoomNameById(player.state.room_id);
         //           ^^^^^ ADDED HERE - not in database!
     }
 }
@@ -289,7 +289,7 @@ async savePlayerState(sessionId) {
 - (Assignment creates runtime state)
 
 **Step 4: ENHANCE - LoginManager.setSceneOnPlayers()**
-- player.state.scene = getRoomNameById(player.state.room_id)
+- player.state.scene = PlayerRoomState.getRoomNameById(player.state.room_id)
 - (Adds scene property to runtime state)
 
 **Step 5: SELECT - RoomLogin.onAuth()**
@@ -371,8 +371,8 @@ playerSchema.state = {
 
 **Key Files:**
 - `lib/users/server/manager.js:67-83` - Load user with relations
-- `lib/game/server/login-manager.js:373-383` - Map player state relation
-- `lib/game/server/login-manager.js:445-464` - Set scene on players
+- `lib/game/server/login-manager.js:228-238` - Map player state relation
+- `lib/game/server/login-manager.js:328-347` - Set scene on players
 - `lib/rooms/server/login.js:76-109` - Authentication and player selection
 - `lib/rooms/server/scene.js:128-166` - Scene validation
 - `lib/rooms/server/scene.js:724-753` - Save player state
