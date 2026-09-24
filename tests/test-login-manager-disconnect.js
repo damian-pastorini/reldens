@@ -17,6 +17,7 @@ class TestLoginManagerDisconnect extends BaseTest
         this.secret = 'test-secret';
         this.expirationMs = 60000;
         this.victimUserModel = {username: 'victim'};
+        this.publicUrl = 'http://localhost:8080';
     }
 
     createLoginManager(disconnectedUsers)
@@ -24,9 +25,8 @@ class TestLoginManagerDisconnect extends BaseTest
         let loginManager = new LoginManager({
             config: {
                 get: (path, defaultValue) => defaultValue,
-                getWithoutLogs: (path, defaultValue) => defaultValue
+                getWithoutLogs: (path, defaultValue) => 'server/publicUrl' === path ? this.publicUrl : defaultValue
             },
-            configServer: {publicUrl: 'http://localhost:8080'},
             events: {on: () => true}
         });
         loginManager.expiringHmacToken = new ExpiringHmacToken({secret: this.secret});
