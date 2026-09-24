@@ -69,7 +69,7 @@ The following variables are listed (commented out) in `.env.dist` but are not re
 - `RELDENS_IP_ALLOW_LIST` - Comma separated addresses or CIDR ranges; with entries here only those addresses are accepted and the deny list is ignored
 - `RELDENS_IP_DENY_LIST` - Comma separated addresses or CIDR ranges rejected on the Express routes and on the WebSocket upgrade
 
-The basic configuration installs a `server/security/*` row for the admin CSRF, admin login, admin session (max age and same site), game login, guests, registration, login attempts and address lists settings. `LoginManager.securityConfig` deep merges those rows over the environment values, so when a row exists its value wins over the environment variable; the address lists rows are joined with the environment lists in `ServerManagersInitializer.refreshIpLists()`. See `.claude/ip-lists-and-login-blocks.md` for the lists and the login blocks flow.
+The basic configuration installs a `server/security/*` row for the admin CSRF, admin login, admin session (max age and same site), game login, guests, registration, login attempts and address lists settings. `ServerManager` places the values read by `EnvironmentVariablesReader.fetchConfigServerFromEnvironmentVariables()` in the `server` configuration (`ConfigManager.applyEnvironmentConfig()`, for example `server/security/*`, `server/rooms/validateRoomsOriginRequest`, `server/rooms/allowRequestsWithoutOrigin`, `server/mailer/forgotPasswordLimit`, `server/firebase/*`, `server/admin/secret` and `server/appServerConfig/*`) before the configuration rows are loaded, and every row overrides the same path, so when a row exists its value wins over the environment variable; the address lists rows are joined with the environment lists in `ServerManagersInitializer.refreshIpLists()`. See `.claude/ip-lists-and-login-blocks.md` for the lists and the login blocks flow.
 
 ## Admin Panel
 
@@ -121,7 +121,7 @@ The basic configuration installs a `server/security/*` row for the admin CSRF, a
 - `RELDENS_MAILER_USER` - SMTP username
 - `RELDENS_MAILER_PASS` - SMTP password
 - `RELDENS_MAILER_FROM` - From email address
-- `RELDENS_MAILER_FORGOT_PASSWORD_LIMIT` - Forgot password attempts limit (default: 4)
+- `RELDENS_MAILER_FORGOT_PASSWORD_LIMIT` - Hours between two reset password emails for the same user (default: 4), read into `server/mailer/forgotPasswordLimit`
 
 ## Bundler
 
