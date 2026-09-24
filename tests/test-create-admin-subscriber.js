@@ -54,7 +54,7 @@ class TestCreateAdminSubscriber extends BaseTest
 
     async testTheCsrfTokenCookieIsNotRegisteredWhenDisabled()
     {
-        await this.test('the CSRF token cookie middleware is not registered when the protection is disabled', async () => {
+        await this.test('the CSRF token cookie middleware is not registered with the protection disabled', async () => {
             let cookieResult = this.runCsrfTokenCookie(false, {session: {csrfToken: 'session-token-a'}, secure: false});
             this.assert.strictEqual(cookieResult.applied, false);
             this.assert.strictEqual(cookieResult.registeredMiddlewares, 0);

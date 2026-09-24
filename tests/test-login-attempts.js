@@ -26,7 +26,7 @@ class TestLoginAttempts extends BaseTest
 
     async testOnlyTheActiveTemporaryBlocksAreRestored()
     {
-        await this.test('only the stored temporary deny rows that did not expire are restored as login blocks', async () => {
+        await this.test('only the stored temporary deny rows not expired are restored as login blocks', async () => {
             let now = Date.now();
             let loginAttempts = new LoginAttempts({ipListsRepository: this.createIpListsRepository([
                 {id: 1, address: '10.0.0.1', list_type: 'deny', expires_at: new Date(now+60000)},
@@ -35,16 +35,17 @@ class TestLoginAttempts extends BaseTest
                 {id: 4, address: '10.0.0.4', list_type: 'allow', expires_at: new Date(now+60000)}
             ])});
             this.assert.strictEqual(await loginAttempts.restoreAddressBlocks(now), 1);
-            this.assert.strictEqual(loginAttempts.isBlocked(GameConst.LOGIN_ATTEMPTS_KEYS.ADDRESS+'10.0.0.1', now), true);
-            this.assert.strictEqual(loginAttempts.isBlocked(GameConst.LOGIN_ATTEMPTS_KEYS.ADDRESS+'10.0.0.2', now), false);
-            this.assert.strictEqual(loginAttempts.isBlocked(GameConst.LOGIN_ATTEMPTS_KEYS.ADDRESS+'10.0.0.3', now), false);
-            this.assert.strictEqual(loginAttempts.isBlocked(GameConst.LOGIN_ATTEMPTS_KEYS.ADDRESS+'10.0.0.4', now), false);
+            let addressKeyPrefix = GameConst.LOGIN_ATTEMPTS_KEYS.ADDRESS;
+            this.assert.strictEqual(loginAttempts.isBlocked(addressKeyPrefix+'10.0.0.1', now), true);
+            this.assert.strictEqual(loginAttempts.isBlocked(addressKeyPrefix+'10.0.0.2', now), false);
+            this.assert.strictEqual(loginAttempts.isBlocked(addressKeyPrefix+'10.0.0.3', now), false);
+            this.assert.strictEqual(loginAttempts.isBlocked(addressKeyPrefix+'10.0.0.4', now), false);
         });
     }
 
     async testTheRestoredBlockEndsAtTheStoredExpiration()
     {
-        await this.test('a restored login block ends at the stored expiration instead of becoming permanent', async () => {
+        await this.test('a restored login block ends at the stored expiration instead of being permanent', async () => {
             let now = Date.now();
             let expiresAt = new Date(now+60000);
             let loginAttempts = new LoginAttempts({ipListsRepository: this.createIpListsRepository([
@@ -76,7 +77,7 @@ class TestLoginAttempts extends BaseTest
 
     async testTheRepeatedAddressBlockUpdatesTheStoredRow()
     {
-        await this.test('a repeated block for a stored temporary address updates the row instead of a duplicate', async () => {
+        await this.test('a repeated temporary address block updates the stored row, not a duplicate', async () => {
             let ipListsRepository = this.createIpListsRepository([
                 {id: 7, address: '10.0.0.1', list_type: 'deny', expires_at: new Date(Date.now()-60000)}
             ]);

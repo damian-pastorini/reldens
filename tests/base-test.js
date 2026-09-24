@@ -306,7 +306,12 @@ class BaseTest
                 throw new Error('Login failed with error in redirect');
             }
             let authenticatedCookies = response.headers['set-cookie'];
-            let dashboardResponse = await this.makeAuthenticatedRequest('GET', this.adminPath, null, authenticatedCookies);
+            let dashboardResponse = await this.makeAuthenticatedRequest(
+                'GET',
+                this.adminPath,
+                null,
+                authenticatedCookies
+            );
             session = authenticatedCookies.concat(dashboardResponse.headers['set-cookie'] || []);
         });
         return session;

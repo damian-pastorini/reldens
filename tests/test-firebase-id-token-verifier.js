@@ -70,7 +70,7 @@ class TestFirebaseIdTokenVerifier extends BaseTest
 
     async testTheVerifiedTokenSetsTheSignedUidAsPassword()
     {
-        await this.test('a verified ID token sets the Firebase uid signed with the server secret as the password', async () => {
+        await this.test('a verified ID token sets the uid signed with the server secret as the password', async () => {
             let capturedRequests = [];
             let responseData = {users: [{localId: 'firebase-uid', email: 'player@test.com'}]};
             let verifier = this.createVerifier(responseData, capturedRequests);
@@ -98,7 +98,10 @@ class TestFirebaseIdTokenVerifier extends BaseTest
             verifier.applyVerifiedLogin(this.createFirebaseLoginData('valid-token'));
             let sceneUserData = this.createFirebaseLoginData('valid-token');
             this.assert.strictEqual(verifier.applyVerifiedLogin(sceneUserData), true);
-            this.assert.strictEqual(sceneUserData.password, Encryptor.generateHMAC('firebase-uid', this.passwordSecret));
+            this.assert.strictEqual(
+                sceneUserData.password,
+                Encryptor.generateHMAC('firebase-uid', this.passwordSecret)
+            );
             this.assert.strictEqual(capturedRequests.length, 1);
         });
     }
@@ -193,9 +196,10 @@ class TestFirebaseIdTokenVerifier extends BaseTest
             this.assert.strictEqual(passwordValidation.isValid, true);
             this.assert.strictEqual(updates.length, 1);
             this.assert.strictEqual([...updates].shift().email, 'player@test.com');
-            this.assert.strictEqual([...updates].shift().updatePatch.password, passwordValidation.user.password);
-            this.assert.strictEqual(Encryptor.validatePassword(userData.password, passwordValidation.user.password), true);
-            this.assert.strictEqual(Encryptor.validatePassword('firebase-uid', passwordValidation.user.password), false);
+            let migratedPassword = passwordValidation.user.password;
+            this.assert.strictEqual([...updates].shift().updatePatch.password, migratedPassword);
+            this.assert.strictEqual(Encryptor.validatePassword(userData.password, migratedPassword), true);
+            this.assert.strictEqual(Encryptor.validatePassword('firebase-uid', migratedPassword), false);
         });
     }
 
@@ -216,7 +220,7 @@ class TestFirebaseIdTokenVerifier extends BaseTest
 
     async testTheLegacyPasswordIsNotMigratedWhenTheStoredHashDoesNotMatch()
     {
-        await this.test('the password is not migrated when the stored hash was not made from the Firebase uid', async () => {
+        await this.test('the password is not migrated when the stored hash is not from the Firebase uid', async () => {
             let verifier = this.createVerifier({users: [{localId: 'firebase-uid', email: 'player@test.com'}]}, []);
             let userData = await this.createVerifiedLoginData(verifier);
             let updates = [];
