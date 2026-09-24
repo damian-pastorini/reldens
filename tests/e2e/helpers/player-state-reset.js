@@ -11,6 +11,7 @@
 const { Logger } = require('@reldens/utils');
 const { TestDataSetup } = require('./test-data-setup');
 const { RoomEnemiesReset } = require('./room-enemies-reset');
+const { SecurityState } = require('./security-state');
 
 class PlayerStateReset
 {
@@ -126,6 +127,7 @@ class PlayerStateReset
     {
         serverManager.app.post('/api/e2e/reset-players', async (request, response) => {
             try {
+                await SecurityState.resetAll(serverManager);
                 await PlayerStateReset.restoreSnapshots(serverManager.dataServer, snapshots);
                 if(config){
                     await TestDataSetup.ensureRequiredItems(serverManager.dataServer, config);

@@ -22,12 +22,12 @@ See `lib/game/server/install-templates/.env.dist` for the template file.
 
 ## Express Server
 
-The following variables are listed (commented out) in `.env.dist` but are not read by `ServerManager.fetchConfigServerFromEnvironmentVariables()`, they map to `AppServerFactory` config options that must be passed programmatically: `RELDENS_USE_EXPRESS_JSON`, `RELDENS_EXPRESS_JSON_LIMIT`, `RELDENS_EXPRESS_URLENCODED_LIMIT`, `RELDENS_GLOBAL_RATE_LIMIT`, `RELDENS_TOO_MANY_REQUESTS_MESSAGE`, `RELDENS_USE_URLENCODED`, `RELDENS_USE_XSS_PROTECTION`, `RELDENS_USE_CORS`, `RELDENS_CORS_METHODS`, `RELDENS_CORS_HEADERS`.
+The following variables are listed (commented out) in `.env.dist` but are not read by `EnvironmentVariablesReader.fetchConfigServerFromEnvironmentVariables()`, they map to `AppServerFactory` config options that must be passed programmatically: `RELDENS_USE_EXPRESS_JSON`, `RELDENS_EXPRESS_JSON_LIMIT`, `RELDENS_EXPRESS_URLENCODED_LIMIT`, `RELDENS_TOO_MANY_REQUESTS_MESSAGE`, `RELDENS_USE_URLENCODED`, `RELDENS_USE_XSS_PROTECTION`, `RELDENS_USE_CORS`, `RELDENS_CORS_METHODS`, `RELDENS_CORS_HEADERS`.
 
 - `RELDENS_USE_EXPRESS_JSON` - Enable JSON parsing
 - `RELDENS_EXPRESS_JSON_LIMIT` - JSON payload limit
 - `RELDENS_EXPRESS_URLENCODED_LIMIT` - URL encoded limit
-- `RELDENS_GLOBAL_RATE_LIMIT` - Global rate limiting
+- `RELDENS_GLOBAL_RATE_LIMIT` - Global rate limiting switch, 0 or 1 (default: 0). With 1 every Express request is counted per IP using `RELDENS_EXPRESS_RATE_LIMIT_MS` and `RELDENS_EXPRESS_RATE_LIMIT_MAX_REQUESTS`, so raise the maximum when this server also serves the statics.
 - `RELDENS_TOO_MANY_REQUESTS_MESSAGE` - Rate limit message
 - `RELDENS_USE_URLENCODED` - Enable URL encoding
 - `RELDENS_USE_HELMET` - Enable Helmet security
@@ -43,10 +43,45 @@ The following variables are listed (commented out) in `.env.dist` but are not re
 - `RELDENS_EXPRESS_RATE_LIMIT_APPLY_KEY_GENERATOR` - Apply key generator
 - `RELDENS_EXPRESS_SERVE_STATICS` - Serve static files
 
+## Security
+
+- `RELDENS_SIGNED_TOKENS_SECRET` - Secret used to sign the reset password links and the multi-server disconnection requests, shared by every server of a multi-server setup (default: `RELDENS_ADMIN_SECRET`)
+- `RELDENS_ADMIN_CSRF_ENABLED` - Session based CSRF tokens on the administration router, 0 or 1 (default: 1). The token is sent to the admin client JS in the `reldens-admin-csrf-token` cookie, added to every POST form as `_csrf` and to the fetch requests as the `X-CSRF-Token` header; the upload routes of the maps wizard and the objects and skills importers check it after their uploader, and the `/tileset-analyzer` routes are exempt. Projects created before this change must refresh their `theme/admin` templates and JS (`reldens fullRebuild`)
+- `RELDENS_ADMIN_LOGIN_WINDOW_MS` - Administration panel login limiter window (default: 900000)
+- `RELDENS_ADMIN_LOGIN_MAX_ATTEMPTS` - Failed administration panel logins allowed per IP and email in the window (default: 5)
+- `RELDENS_ADMIN_SESSION_MAX_AGE_MS` - Administration panel session cookie and stored session max age, 0 keeps it a browser session cookie and stores it for one day (default: 86400000)
+- `RELDENS_ADMIN_SESSION_SAME_SITE` - Administration panel session cookie `SameSite` (default: lax)
+- `RELDENS_ADMIN_SESSION_ROLLING` - Slide the administration panel session expiry on every request, 0 or 1 (default: 0)
+- `RELDENS_LOGIN_ATTEMPTS_ENABLED` - Failed login attempts lockout on both logins, 0 or 1 (default: 1)
+- `RELDENS_LOGIN_ATTEMPTS_MAX` - Failed attempts per identity or address before the block (default: 10)
+- `RELDENS_LOGIN_ATTEMPTS_BLOCK_MS` - Block time applied when the attempts limit is reached (default: 900000)
+- `RELDENS_GAME_LOGIN_WINDOW_MS` - Game login room joins window (default: 60000)
+- `RELDENS_GAME_LOGIN_MAX_JOINS` - Game login room joins allowed per address and per username in the window (default: 20)
+- `RELDENS_ROOMS_LOGIN_WINDOW_MS` - Scene and feature rooms joins window (default: 60000)
+- `RELDENS_ROOMS_LOGIN_MAX_JOINS` - Scene and feature rooms joins allowed per room type, per address and per username in the window (default: 60)
+- `RELDENS_MAX_CONCURRENT_PASSWORD_VALIDATIONS` - Password validations running at the same time, the logins above it are rejected without loading the user (default: 8)
+- `RELDENS_REGISTRATION_MAX_PER_IP` - Registrations allowed per address in the attempts window (default: 10)
+- `RELDENS_USERNAME_MINIMUM_LENGTH` - Minimum registration username length (default: 3)
+- `RELDENS_USERNAME_MAXIMUM_LENGTH` - Maximum registration username length, the username only accepts letters, numbers, `_`, `.` and `-` (default: 50)
+- `RELDENS_EMAIL_MAXIMUM_LENGTH` - Maximum registration email length (default: 255)
+- `RELDENS_GUESTS_MAX_PER_IP` - Guest accounts allowed per address in the attempts window (default: 20)
+- `RELDENS_PASSWORD_MINIMUM_LENGTH` - Minimum password length for the registration, the password reset, `createAdmin` and `resetPassword` (default: 3)
+- `RELDENS_PASSWORD_MAXIMUM_LENGTH` - Maximum password length for the registration and the password reset (default: 128)
+- `RELDENS_VALIDATE_ROOMS_ORIGIN` - Validate the `Origin` header on every room join, 0 or 1 (default: 0)
+- `RELDENS_ALLOW_REQUESTS_WITHOUT_ORIGIN` - Accept joins without an `Origin` header, needed by the Node clients, 0 or 1 (default: 1)
+- `RELDENS_GUESTS_CLEANUP_ENABLED` - Remove the stale guest accounts on an interval, 0 or 1 (default: 0)
+- `RELDENS_GUESTS_CLEANUP_AFTER_MS` - Time without activity before a guest account is removed (default: 604800000)
+- `RELDENS_GUESTS_CLEANUP_INTERVAL_MS` - Interval between the guests cleanup runs (default: 3600000)
+- `RELDENS_IP_LISTS_ENABLED` - Address allow and deny lists, 0 or 1 (default: 0)
+- `RELDENS_IP_ALLOW_LIST` - Comma separated addresses or CIDR ranges; with entries here only those addresses are accepted and the deny list is ignored
+- `RELDENS_IP_DENY_LIST` - Comma separated addresses or CIDR ranges rejected on the Express routes and on the WebSocket upgrade
+
+The basic configuration installs a `server/security/*` row for the admin CSRF, admin login, admin session (max age and same site), game login, guests, registration, login attempts and address lists settings. `ServerManager` passes the values read by `EnvironmentVariablesReader.fetchConfigServerFromEnvironmentVariables()` to the `ConfigManager` constructor as the initial `server` configuration (`environmentConfig`, created again when the installer writes the `.env`, for example `server/security/*`, `server/rooms/validateRoomsOriginRequest`, `server/rooms/allowRequestsWithoutOrigin`, `server/mailer/forgotPasswordLimit`, `server/firebase/*`, `server/admin/secret` and `server/appServerConfig/*`) before the configuration rows are loaded, and every row overrides the same path, so when a row exists its value wins over the environment variable; the address lists rows are joined with the environment lists in `IpListsUpgradeGuard.refresh()` (`lib/game/server/ip-lists-upgrade-guard.js`, called from `ServerManager.initializeConfigManager()`). See `.claude/ip-lists-and-login-blocks.md` for the lists and the login blocks flow.
+
 ## Admin Panel
 
 - `RELDENS_ADMIN_ROUTE_PATH` - Admin panel route path
-- `RELDENS_ADMIN_SECRET` - Admin authentication secret
+- `RELDENS_ADMIN_SECRET` - Admin authentication secret, the administration panel is not activated when it is empty
 - `RELDENS_SIGNED_TOKENS_SECRET` - Secret used to sign the expiring reset password links and the multi-server disconnect user requests (default: `RELDENS_ADMIN_SECRET`). Every server in a multi-server setup must use the same value
 - `RELDENS_HOT_PLUG` - Enable hot-plug configuration updates (0/1)
 
@@ -93,7 +128,7 @@ The following variables are listed (commented out) in `.env.dist` but are not re
 - `RELDENS_MAILER_USER` - SMTP username
 - `RELDENS_MAILER_PASS` - SMTP password
 - `RELDENS_MAILER_FROM` - From email address
-- `RELDENS_MAILER_FORGOT_PASSWORD_LIMIT` - Forgot password attempts limit (default: 4)
+- `RELDENS_MAILER_FORGOT_PASSWORD_LIMIT` - Hours between two reset password emails for the same user (default: 4), read into `server/mailer/forgotPasswordLimit`
 
 ## Bundler
 

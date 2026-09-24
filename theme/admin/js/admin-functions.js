@@ -3,6 +3,9 @@ class AdminFunctions
     constructor()
     {
         this.lastSanitizeError = '';
+        this.csrfTokenCookieName = 'reldens-admin-csrf-token';
+        this.csrfTokenFieldName = '_csrf';
+        this.csrfTokenHeaderName = 'X-CSRF-Token';
     }
 
     getCookie(name)
@@ -17,6 +20,36 @@ class AdminFunctions
     deleteCookie(name)
     {
         document.cookie = name+'=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+    }
+
+    fetchCsrfToken()
+    {
+        return this.getCookie(this.csrfTokenCookieName) || '';
+    }
+
+    csrfHeaders(headers)
+    {
+        return Object.assign({}, headers, {[this.csrfTokenHeaderName]: this.fetchCsrfToken()});
+    }
+
+    appendCsrfTokenInput(form)
+    {
+        let csrfToken = this.fetchCsrfToken();
+        if('' === csrfToken){
+            return false;
+        }
+        if('post' !== String(form.getAttribute('method')).toLowerCase()){
+            return false;
+        }
+        let tokenInput = form.querySelector('input[name="'+this.csrfTokenFieldName+'"]');
+        if(!tokenInput){
+            tokenInput = document.createElement('input');
+            tokenInput.type = 'hidden';
+            tokenInput.name = this.csrfTokenFieldName;
+            form.appendChild(tokenInput);
+        }
+        tokenInput.value = csrfToken;
+        return true;
     }
 
     escapeHTML(value)

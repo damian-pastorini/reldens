@@ -8,6 +8,7 @@ const assert = require('assert');
 const http = require('http');
 const https = require('https');
 const querystring = require('querystring');
+const { GameConst } = require('../lib/game/constants');
 const { FileHandler } = require('@reldens/server-utils');
 const { Logger } = require('@reldens/utils');
 
@@ -115,7 +116,7 @@ class BaseTest
 
     async makeFormRequest(method, path, data, session)
     {
-        let postData = querystring.stringify(data);
+        let postData = querystring.stringify(this.appendCsrfToken(data, session));
         let headers = {
             'Content-Type': 'application/x-www-form-urlencoded',
             'Content-Length': postData.length
@@ -145,6 +146,10 @@ class BaseTest
         if(session){
             headers['Cookie'] = this.formatCookies(session);
         }
+        let csrfToken = this.fetchCsrfToken(session);
+        if('' !== csrfToken){
+            headers['X-CSRF-Token'] = csrfToken;
+        }
         let options = {
             hostname: this.hostname,
             port: this.port,
@@ -159,7 +164,7 @@ class BaseTest
     async makeFormRequestWithTimeout(method, path, data, session, timeoutMs)
     {
         let cookieHeader = this.formatCookies(session);
-        let postData = this.formatFormData(data);
+        let postData = this.formatFormData(this.appendCsrfToken(data, session));
         let options = {
             hostname: this.hostname,
             port: this.port,
@@ -173,6 +178,40 @@ class BaseTest
             timeout: timeoutMs || 15000
         };
         return await this._makeHttpRequest(options, postData);
+    }
+
+    fetchCsrfToken(sessionCookies)
+    {
+        let csrfToken = '';
+        if(!Array.isArray(sessionCookies)){
+            return csrfToken;
+        }
+        let cookiePrefix = GameConst.ADMIN_CSRF_TOKEN_COOKIE+'=';
+        for(let cookie of sessionCookies){
+            let cookiePair = String(cookie).split(';').shift();
+            if(0 === cookiePair.indexOf(cookiePrefix)){
+                csrfToken = cookiePair.substring(cookiePrefix.length);
+            }
+        }
+        return csrfToken;
+    }
+
+    appendCsrfToken(data, sessionCookies)
+    {
+        let csrfToken = this.fetchCsrfToken(sessionCookies);
+        if('' === csrfToken){
+            return data;
+        }
+        return Object.assign({}, data, {_csrf: csrfToken});
+    }
+
+    async fetchLoginPageCookies()
+    {
+        let loginResponse = await this.makeRequest('GET', this.adminPath+'/login');
+        if(200 !== loginResponse.statusCode){
+            throw new Error('Login page not accessible');
+        }
+        return loginResponse.headers['set-cookie'] || [];
     }
 
     formatCookies(sessionCookies)
@@ -252,14 +291,11 @@ class BaseTest
     {
         let session = null;
         await this.test('Authentication', async () => {
-            let loginResponse = await this.makeRequest('GET', this.adminPath+'/login');
-            if(200 !== loginResponse.statusCode){
-                throw new Error('Login page not accessible');
-            }
+            let loginPageCookies = await this.fetchLoginPageCookies();
             let response = await this.makeFormRequest('POST', this.adminPath+'/login', {
                 email: this.adminUser,
                 password: this.adminPassword
-            });
+            }, loginPageCookies);
             if(302 !== response.statusCode){
                 throw new Error('Login failed with status: '+response.statusCode);
             }
@@ -269,7 +305,14 @@ class BaseTest
             if(response.headers.location.includes('error')){
                 throw new Error('Login failed with error in redirect');
             }
-            session = response.headers['set-cookie'];
+            let authenticatedCookies = response.headers['set-cookie'];
+            let dashboardResponse = await this.makeAuthenticatedRequest(
+                'GET',
+                this.adminPath,
+                null,
+                authenticatedCookies
+            );
+            session = authenticatedCookies.concat(dashboardResponse.headers['set-cookie'] || []);
         });
         return session;
     }

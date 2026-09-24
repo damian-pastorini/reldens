@@ -19,34 +19,34 @@ class TestLoginManagerDisconnect extends BaseTest
         this.victimUserModel = {username: 'victim'};
     }
 
-    createLoginManager(disconnectedUsers)
+    createUserDisconnection(disconnectedUsers)
     {
         let loginManager = new LoginManager({
             config: {
                 get: (path, defaultValue) => defaultValue,
                 getWithoutLogs: (path, defaultValue) => defaultValue
             },
-            configServer: {publicUrl: 'http://localhost:8080'},
             events: {on: () => true}
         });
-        loginManager.expiringHmacToken = new ExpiringHmacToken({secret: this.secret});
-        loginManager.activePlayers = {
+        let userDisconnection = loginManager.userDisconnection;
+        userDisconnection.expiringHmacToken = new ExpiringHmacToken({secret: this.secret});
+        userDisconnection.activePlayers = {
             gameRoomInstanceId: 'game-room',
             fetchByRoomAndUserName: () => ({userModel: this.victimUserModel})
         };
-        loginManager.disconnectUserFromEveryRoom = async (userModel) => {
+        userDisconnection.disconnectUserFromEveryRoom = async (userModel) => {
             disconnectedUsers.push(userModel.username);
             return true;
         };
-        return loginManager;
+        return userDisconnection;
     }
 
     async testTheUserIsNotDisconnectedWithoutToken()
     {
         await this.test('the user is not disconnected when the request has no token', async () => {
             let disconnectedUsers = [];
-            let loginManager = this.createLoginManager(disconnectedUsers);
-            let result = await loginManager.disconnectUserByLoginData({body: {username: 'victim'}});
+            let userDisconnection = this.createUserDisconnection(disconnectedUsers);
+            let result = await userDisconnection.disconnectUserByLoginData({body: {username: 'victim'}});
             this.assert.strictEqual(result, false);
             this.assert.strictEqual(disconnectedUsers.length, 0);
         });
@@ -56,11 +56,73 @@ class TestLoginManagerDisconnect extends BaseTest
     {
         await this.test('the user is not disconnected with a token generated for another username', async () => {
             let disconnectedUsers = [];
-            let loginManager = this.createLoginManager(disconnectedUsers);
-            let token = loginManager.expiringHmacToken.generate(['attacker'], Date.now()+this.expirationMs);
-            let result = await loginManager.disconnectUserByLoginData({body: {username: 'victim', token}});
+            let userDisconnection = this.createUserDisconnection(disconnectedUsers);
+            let token = userDisconnection.expiringHmacToken.generate(['attacker'], Date.now()+this.expirationMs);
+            let result = await userDisconnection.disconnectUserByLoginData({body: {username: 'victim', token}});
             this.assert.strictEqual(result, false);
             this.assert.strictEqual(disconnectedUsers.length, 0);
+        });
+    }
+
+    createBroadcastDisconnection(requestedServers, isDisconnectConfirmed)
+    {
+        let userDisconnection = this.createUserDisconnection([]);
+        userDisconnection.serverSelfUrl = 'http://self:8080';
+        userDisconnection.roomsPerServer = userDisconnection.mapRoomsServers({
+            town: 'http://server-a:8080',
+            forest: 'http://self:8080'
+        });
+        userDisconnection.disconnectFromServer = async (serverUrl, username) => {
+            requestedServers.push(serverUrl+'/'+username);
+            return isDisconnectConfirmed;
+        };
+        return userDisconnection;
+    }
+
+    async testTheDisconnectionIsBroadcastToTheOtherServersOnly()
+    {
+        await this.test('the disconnection is broadcast only to the servers of the other rooms', async () => {
+            let requestedServers = [];
+            let userDisconnection = this.createBroadcastDisconnection(requestedServers, true);
+            this.assert.strictEqual(await userDisconnection.broadcastDisconnectionMessage(this.victimUserModel), true);
+            this.assert.deepStrictEqual(requestedServers, ['http://server-a:8080/victim']);
+        });
+    }
+
+    async testTheLoginIsRejectedWhenAnotherServerDoesNotDisconnect()
+    {
+        await this.test('the broadcast fails when another server does not confirm the disconnection', async () => {
+            let userDisconnection = this.createBroadcastDisconnection([], false);
+            this.assert.strictEqual(await userDisconnection.broadcastDisconnectionMessage(this.victimUserModel), false);
+        });
+    }
+
+    async testNothingIsBroadcastWhenTheServersDisconnectionIsDisabled()
+    {
+        await this.test('nothing is broadcast when the disconnection on server change is disabled', async () => {
+            let requestedServers = [];
+            let userDisconnection = this.createBroadcastDisconnection(requestedServers, false);
+            userDisconnection.disconnectUsersOnServerChange = false;
+            this.assert.strictEqual(await userDisconnection.broadcastDisconnectionMessage(this.victimUserModel), true);
+            this.assert.strictEqual(requestedServers.length, 0);
+        });
+    }
+
+    async testTheDisconnectRequestErrorAnswersAFailedResult()
+    {
+        await this.test('an error on the disconnect request answers a failed result instead of rejecting', async () => {
+            let userDisconnection = this.createUserDisconnection([]);
+            let loginManager = Object.create(LoginManager.prototype);
+            loginManager.userDisconnection = userDisconnection;
+            userDisconnection.disconnectUserByLoginData = async () => Promise.reject({message: 'Storage.'});
+            let responses = [];
+            let response = {json: (responseData) => responses.push(responseData)};
+            response.status = (statusCode) => {
+                responses.push(statusCode);
+                return response;
+            };
+            await loginManager.handleDisconnectUserRequest({body: {}}, response);
+            this.assert.deepStrictEqual(responses, [500, {isSuccess: false}]);
         });
     }
 
@@ -68,9 +130,9 @@ class TestLoginManagerDisconnect extends BaseTest
     {
         await this.test('the user is disconnected with a valid token signed by the shared secret', async () => {
             let disconnectedUsers = [];
-            let loginManager = this.createLoginManager(disconnectedUsers);
-            let token = loginManager.expiringHmacToken.generate(['victim'], Date.now()+this.expirationMs);
-            let result = await loginManager.disconnectUserByLoginData({body: {username: 'victim', token}});
+            let userDisconnection = this.createUserDisconnection(disconnectedUsers);
+            let token = userDisconnection.expiringHmacToken.generate(['victim'], Date.now()+this.expirationMs);
+            let result = await userDisconnection.disconnectUserByLoginData({body: {username: 'victim', token}});
             this.assert.strictEqual(result, true);
             this.assert.deepStrictEqual(disconnectedUsers, ['victim']);
         });

@@ -26,6 +26,7 @@ module.exports.entitiesTranslations = {
         'config_types': 'Config Types',
         'drops_animations': 'Drops Animations',
         'features': 'Features',
+        'ip_lists': 'Ip Lists',
         'items_group': 'Items Group',
         'items_inventory': 'Items Inventory',
         'items_item': 'Items Item',
@@ -82,7 +83,8 @@ module.exports.entitiesTranslations = {
         'target_options': 'Target Options',
         'users': 'Users',
         'users_locale': 'Users Locale',
-        'users_login': 'Users Login'
+        'users_login': 'Users Login',
+        'users_password_resets': 'Users Password Resets'
     },
     fields: {
         'ads_banner': {
@@ -234,6 +236,15 @@ module.exports.entitiesTranslations = {
             'code': 'Code',
             'title': 'Title',
             'is_enabled': 'Is Enabled'
+        },
+        'ip_lists': {
+            'id': 'ID',
+            'address': 'Address',
+            'list_type': 'List Type',
+            'reason': 'Reason',
+            'expires_at': 'Expires At',
+            'created_at': 'Created At',
+            'updated_at': 'Updated At'
         },
         'items_group': {
             'id': 'ID',
@@ -710,7 +721,8 @@ module.exports.entitiesTranslations = {
             'created_at': 'Created At',
             'updated_at': 'Updated At',
             'played_time': 'Played Time',
-            'login_count': 'Login Count'
+            'login_count': 'Login Count',
+            'password_reset_sent_at': 'Password Reset Sent At'
         },
         'users_locale': {
             'id': 'ID',

@@ -123,7 +123,13 @@ The installer provides real-time status updates during installation:
 - **Public URL** - Public-facing URL (for reverse proxies)
 - **Trusted Proxy** - Reverse proxy address
 - **Admin Panel Path** - Admin interface route (default: /reldens-admin)
-- **Admin Panel Secret Key** - Secret key for admin access
+- **Admin Panel Secret Key** - Signs the administration panel session (`RELDENS_ADMIN_SECRET`), required and not
+  prefilled, the administration panel is not activated with an empty secret
+- **Signed Tokens Secret Key** - Signs the reset password links and the multi-server disconnection requests
+  (`RELDENS_SIGNED_TOKENS_SECRET`), required and not prefilled
+- An empty secret redirects back to the form (`db-installation-process-failed-missing-admin-secret` or
+  `db-installation-process-failed-missing-signed-tokens-secret`) before the driver validation and any database work,
+  so a missing secret never leaves a partial installation
 - **Hot-Plug** - Enable runtime configuration reload
 
 ### Storage Settings
@@ -153,7 +159,8 @@ The form defaults are read from the environment when present: `RELDENS_APP_HOST`
 - Main orchestration class
 - Handles Express routes and form processing
 - Renders the storage drivers list with `storageDriversOptions()` (only the available drivers)
-- Validates the driver availability (`isStorageDriverAvailable()`) and attaches the driver modules (`appendDriverModules()`)
+- Checks the admin and signed tokens secrets first, then validates the driver availability
+  (`isStorageDriverAvailable()`) and attaches the driver modules (`appendDriverModules()`)
 - Coordinates sub-installers
 - Manages status tracking
 

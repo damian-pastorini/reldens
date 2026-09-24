@@ -183,7 +183,7 @@ class TilesetGenerator
         try {
             let response = await fetch('generate', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: adminFunctions.csrfHeaders({'Content-Type': 'application/json'}),
                 body: JSON.stringify({
                     sessionId,
                     tilesets: TilesetAnimationsNormalizer.stripSkippedAnimations(tilesets),

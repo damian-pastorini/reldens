@@ -47,6 +47,7 @@ class TestInstallationProcess extends BaseTest
                 'app-trusted-proxy': '',
                 'app-admin-path': '/reldens-admin',
                 'app-admin-secret': 'installer-test-secret',
+                'app-signed-tokens-secret': 'installer-test-signed-tokens-secret',
                 'db-storage-driver': storageDriver,
                 'db-client': 'mysql2',
                 'db-host': this.config.dbHost,
@@ -139,6 +140,27 @@ class TestInstallationProcess extends BaseTest
             FileHandler.remove(this.installProjectRoot);
             this.assert.strictEqual(response.redirectUrl, '/?error=invalid-driver');
             this.assert.strictEqual(lockExists, false);
+        });
+    }
+
+    async testInstallerRejectsAMissingSecretBeforeTheDatabaseWork()
+    {
+        await this.test('the installer rejects a missing secret before the driver and database checks', async () => {
+            let expectedRedirects = {
+                'app-admin-secret': '/?error=db-installation-process-failed-missing-admin-secret',
+                'app-signed-tokens-secret': '/?error=db-installation-process-failed-missing-signed-tokens-secret'
+            };
+            for(let secretField of Object.keys(expectedRedirects)){
+                let installer = this.createInstaller();
+                let response = this.createInstallResponse();
+                let installRequest = this.createInstallRequest('not-a-driver');
+                installRequest.body[secretField] = '';
+                await installer.executeInstallProcess(installRequest, response);
+                let lockExists = FileHandler.exists(FileHandler.joinPaths(this.installProjectRoot, 'install.lock'));
+                FileHandler.remove(this.installProjectRoot);
+                this.assert.strictEqual(response.redirectUrl, expectedRedirects[secretField]);
+                this.assert.strictEqual(lockExists, false);
+            }
         });
     }
 

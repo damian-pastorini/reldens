@@ -2,6 +2,12 @@
     <h3 class="form-title">Reset password</h3>
     <input type="hidden" name="email" value="{{email}}"/>
     <input type="hidden" name="token" value="{{token}}"/>
+    <div class="input-box reset-password">
+        <input type="password" name="password" class="required" required autocomplete="new-password" placeholder="New password"/>
+    </div>
+    <div class="input-box reset-re-password">
+        <input type="password" name="re-password" class="required" required autocomplete="new-password" placeholder="Re-type new password"/>
+    </div>
     <div class="input-box submit-container">
         <input type="submit" value="Reset password"/>
     </div>

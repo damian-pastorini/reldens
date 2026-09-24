@@ -24,6 +24,7 @@ const { ConfigModel } = require('./config-model');
 const { ConfigTypesModel } = require('./config-types-model');
 const { DropsAnimationsModel } = require('./drops-animations-model');
 const { FeaturesModel } = require('./features-model');
+const { IpListsModel } = require('./ip-lists-model');
 const { ItemsGroupModel } = require('./items-group-model');
 const { ItemsInventoryModel } = require('./items-inventory-model');
 const { ItemsItemModel } = require('./items-item-model');
@@ -81,6 +82,7 @@ const { TargetOptionsModel } = require('./target-options-model');
 const { UsersModel } = require('./users-model');
 const { UsersLocaleModel } = require('./users-locale-model');
 const { UsersLoginModel } = require('./users-login-model');
+const { UsersPasswordResetsModel } = require('./users-password-resets-model');
 const { entitiesConfig } = require('../../entities-config');
 const { entitiesTranslations } = require('../../entities-translations');
 
@@ -105,6 +107,7 @@ let rawRegisteredEntities = {
     configTypes: ConfigTypesModel,
     dropsAnimations: DropsAnimationsModel,
     features: FeaturesModel,
+    ipLists: IpListsModel,
     itemsGroup: ItemsGroupModel,
     itemsInventory: ItemsInventoryModel,
     itemsItem: ItemsItemModel,
@@ -161,7 +164,8 @@ let rawRegisteredEntities = {
     targetOptions: TargetOptionsModel,
     users: UsersModel,
     usersLocale: UsersLocaleModel,
-    usersLogin: UsersLoginModel
+    usersLogin: UsersLoginModel,
+    usersPasswordResets: UsersPasswordResetsModel
 };
 
 module.exports.rawRegisteredEntities = rawRegisteredEntities;

@@ -59,6 +59,7 @@ CREATE TABLE IF NOT EXISTS `users` (
     `updated_at` TIMESTAMP NOT NULL DEFAULT (NOW()) ON UPDATE CURRENT_TIMESTAMP,
     `played_time` INT NOT NULL DEFAULT '0',
     `login_count` INT NOT NULL DEFAULT '0',
+    `password_reset_sent_at` TIMESTAMP NULL DEFAULT NULL,
     PRIMARY KEY (`id`) USING BTREE,
     UNIQUE KEY `email` (`email`) USING BTREE,
     UNIQUE KEY `username` (`username`) USING BTREE
@@ -1041,6 +1042,29 @@ CREATE TABLE IF NOT EXISTS `quests_progress` (
     `quest_key` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
     `customData` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
     PRIMARY KEY (`id`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `ip_lists` (
+    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `address` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    `list_type` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'deny',
+    `reason` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+    `expires_at` TIMESTAMP NULL DEFAULT NULL,
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`) USING BTREE,
+    UNIQUE KEY `address_list_type` (`address`, `list_type`) USING BTREE,
+    KEY `list_type` (`list_type`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `admin_sessions` (
+    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `sid` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    `data` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    `expires` BIGINT UNSIGNED NOT NULL,
+    PRIMARY KEY (`id`) USING BTREE,
+    UNIQUE KEY `sid` (`sid`) USING BTREE,
+    KEY `expires` (`expires`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --

@@ -205,6 +205,7 @@ See `.claude/commands-reference.md` for the full command reference.
 - `.claude/entities-reference.md` - All 60+ entity types
 - `.claude/admin-panel-guide.md` - Admin panel sections and entity overrides
 - `.claude/installer-guide.md` - Web-based installation wizard
+- `.claude/ip-lists-and-login-blocks.md` - Address allow and deny lists, the stored login blocks and the login limiters
 - `.claude/player-animations-configuration.md` - Sprite size, frame ranges, class-path overrides
 - `.claude/tileset-to-map-generator-technical.md` - Data contract between the tileset and map generator packages
 - `.claude/tile-ids-and-annotations-pipeline.md` - Tile id spaces, the tileset-ref parking invariant, adding a tile option

@@ -80,7 +80,16 @@ Party/guild system
 ### Users (`lib/users/`)
 Authentication, registration, player management
 - Supports guest users, Firebase authentication
-- `lib/game/server/login-manager.js` handles all auth flows
+- `lib/game/server/login-manager.js` handles the game, guest and administration panel logins, and creates the classes
+  of the other flows in `lib/game/server/`: `UserRegistration` (accounts and guests), `PlayerCreation` (new players,
+  with `PlayerRoomState` for the states placed in a room), `ForgotPassword` (forgot password requests, reset emails
+  and the reset page routes) and `UserDisconnection` (disconnection from every room and from the other servers)
+- Login protections: failed login lockout with stored address blocks, account bans, registration and guests limits per
+  address, see `.claude/ip-lists-and-login-blocks.md`
+- The forgot password interval is kept per user in the `users.password_reset_sent_at` column, shared by every server
+  and kept after a restart. `UsersManager.reservePasswordResetSentTime()` sets the column with a conditional update
+  (empty or older than the interval) before the email is sent, so concurrent requests send a single email, and a
+  failed send restores the previous value
 - Player creation and management
 
 ### Chat (`lib/chat/`)
@@ -111,6 +120,9 @@ Admin panel integration with @reldens/cms
 Firebase integration
 - Firebase authentication
 - Client-side Firebase SDK integration
+- `FirebaseIdTokenVerifier` verifies the ID token on the server and uses the Firebase uid signed with the password
+  secret as the account password; an account whose stored password was made from the plain uid is migrated to the
+  signed password on its next verified login (`reldens.loginPasswordValidationFallback` event)
 
 ### Ads (`lib/ads/`)
 Advertisement integration system

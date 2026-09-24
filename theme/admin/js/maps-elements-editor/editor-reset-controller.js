@@ -52,7 +52,7 @@ class EditorResetController
         try {
             await fetch(this.basePath+'/ensure-initial-backup', {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
+                headers: adminFunctions.csrfHeaders({'Content-Type': 'application/json'}),
                 body: JSON.stringify({ // HOFF
                     mapName: this.editor.mapName,
                     context: this.editor.context
