@@ -11,7 +11,6 @@
 
 const { Logger, sc } = require('@reldens/utils');
 const { GameConst } = require('../../../lib/game/constants');
-const { ServerManagersInitializer } = require('../../../lib/game/server/server-managers-initializer');
 
 class SecurityState
 {
@@ -79,7 +78,7 @@ class SecurityState
             await ipListsRepository.create({address, list_type: 'deny', reason: 'e2e deny list test'});
         }
         SecurityState.setIpListsEnabled(serverManager, true);
-        await ServerManagersInitializer.refreshIpLists(serverManager);
+        await serverManager.ipListsUpgradeGuard.refresh();
         SecurityState.denyListTimer = setTimeout(() => {
             SecurityState.liftDenyList(serverManager).catch((error) => {
                 Logger.error('[security-state] Deny list could not be lifted: '+error.message);
@@ -93,7 +92,7 @@ class SecurityState
         SecurityState.denyListTimer = null;
         SecurityState.setIpListsEnabled(serverManager, SecurityState.defaultSettings.ipListsEnabled);
         await SecurityState.deleteStoredAddresses(serverManager);
-        await ServerManagersInitializer.refreshIpLists(serverManager);
+        await serverManager.ipListsUpgradeGuard.refresh();
     }
 
     static setIpListsEnabled(serverManager, enabled)
