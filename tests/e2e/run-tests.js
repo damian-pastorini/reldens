@@ -4,8 +4,8 @@
  *
  * Invokes the Playwright CLI with the project config. Before launching it: verifies the e2e port is
  * free (exits with a clear message instead of freezing if it is busy) and, when --db-reset is passed,
- * reseeds the database with the production data (migrations/production) so the e2e runs against a
- * clean production DB. Supports --long, --filter, --port, --clean-output and --db-reset flags.
+ * drops every table and rebuilds the database with the production scripts (migrations/production) so the
+ * e2e runs against a clean production DB. Supports --long, --filter, --port, --clean-output and --db-reset flags.
  *
  */
 
