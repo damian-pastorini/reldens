@@ -26,8 +26,8 @@ class SecurityState
         let loginManager = serverManager.loginManager;
         SecurityState.defaultSettings = {
             maxAttempts: loginManager.loginAttempts.maxAttempts,
-            registrationMaxPerIp: loginManager.registrationMaxPerIp,
-            guestsMaxPerIp: loginManager.guestsMaxPerIp,
+            registrationMaxPerIp: loginManager.userRegistration.registrationMaxPerIp,
+            guestsMaxPerIp: loginManager.userRegistration.guestsMaxPerIp,
             gameLoginMaxJoins: serverManager.configManager.getWithoutLogs('server/security/gameLogin/maxJoins', 20),
             ipListsEnabled: serverManager.configManager.getWithoutLogs('server/security/ipLists/enabled', false)
         };
@@ -38,8 +38,8 @@ class SecurityState
         let loginManager = serverManager.loginManager;
         let gameLoginMaxJoins = Number(settings.gameLoginMaxJoins);
         loginManager.loginAttempts.maxAttempts = Number(settings.maxAttempts);
-        loginManager.registrationMaxPerIp = Number(settings.registrationMaxPerIp);
-        loginManager.guestsMaxPerIp = Number(settings.guestsMaxPerIp);
+        loginManager.userRegistration.registrationMaxPerIp = Number(settings.registrationMaxPerIp);
+        loginManager.userRegistration.guestsMaxPerIp = Number(settings.guestsMaxPerIp);
         serverManager.configManager.server.security.gameLogin.maxJoins = gameLoginMaxJoins;
         for(let instanceId of Object.keys(serverManager.roomsManager.createdInstances)){
             serverManager.roomsManager.createdInstances[instanceId].gameLoginMaxJoins = gameLoginMaxJoins;

@@ -30,7 +30,7 @@ class TestRoomLoginAuth extends BaseTest
                 return loginResult;
             },
             activePlayers: {fetchByRoomAndUserName: () => ({userModel: this.activeUserModel})},
-            broadcastDisconnectionMessage: async () => true
+            userDisconnection: {broadcastDisconnectionMessage: async () => true}
         };
         return roomLogin;
     }

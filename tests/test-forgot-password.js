@@ -6,7 +6,6 @@
 
 const { BaseTest } = require('./base-test');
 const { ForgotPassword } = require('../lib/game/server/forgot-password');
-const { LoginManager } = require('../lib/game/server/login-manager');
 const { LoginAttempts } = require('../lib/game/server/memory/login-attempts');
 const { UsersManager } = require('../lib/users/server/manager');
 const { ExpiringHmacToken } = require('../lib/game/server/expiring-hmac-token');
@@ -27,7 +26,7 @@ class TestForgotPassword extends BaseTest
         this.forgotIntervalMs = this.forgotLimitHours * 60 * 60 * 1000;
     }
 
-    async createResetSetup()
+    createResetSetup()
     {
         let resetSetup = {
             storedUser: {email: this.userEmail, username: 'user', password: Encryptor.encryptPassword(this.userPassword)},
@@ -36,11 +35,8 @@ class TestForgotPassword extends BaseTest
             renderedTemplates: [],
             expiringHmacToken: new ExpiringHmacToken({secret: this.secret})
         };
-        resetSetup.serverManager = {
-            app: {
-                get: (path, handler) => resetSetup.routes['GET'+path] = handler,
-                post: (path, handler) => resetSetup.routes['POST'+path] = handler
-            },
+        let forgotPassword = new ForgotPassword({
+            config: {getWithoutLogs: (path, defaultValue) => defaultValue},
             usersManager: {
                 loadUserByEmail: async (email) => email === resetSetup.storedUser.email ? resetSetup.storedUser : false,
                 updateUserByEmail: async (email, userData) => {
@@ -48,7 +44,6 @@ class TestForgotPassword extends BaseTest
                     return Object.assign(resetSetup.storedUser, userData);
                 }
             },
-            loginManager: {expiringHmacToken: resetSetup.expiringHmacToken, passwordManager: Encryptor},
             themeManager: {
                 projectAssetsPath: 'theme/default/assets',
                 assetPath: (folder, fileName) => fileName,
@@ -57,22 +52,27 @@ class TestForgotPassword extends BaseTest
                     return fileName;
                 },
                 templateEngine: {render: async (layoutContent, params) => params.content}
-            }
-        };
-        await ForgotPassword.defineRequestOnServerManagerApp(resetSetup.serverManager);
+            },
+            expiringHmacToken: resetSetup.expiringHmacToken,
+            passwordManager: Encryptor
+        });
+        forgotPassword.defineResetPasswordRoutes({
+            get: (path, handler) => resetSetup.routes['GET'+path] = handler,
+            post: (path, handler) => resetSetup.routes['POST'+path] = handler
+        });
         return resetSetup;
     }
 
     createForgotPasswordSetup(lastSentTime, emailSendResult)
     {
         let forgotSetup = {storedSentTime: lastSentTime, sentEmails: [], reservations: [], userUpdates: []};
-        let loginManager = Object.create(LoginManager.prototype);
-        loginManager.mailerForgotPasswordLimit = this.forgotLimitHours;
-        loginManager.registrationMaxPerIp = 10;
-        loginManager.loginAttempts = new LoginAttempts({});
-        loginManager.events = {emitSync: () => true};
-        loginManager.mailer = {isEnabled: () => true};
-        loginManager.usersManager = {
+        let forgotPassword = Object.create(ForgotPassword.prototype);
+        forgotPassword.forgotPasswordLimit = this.forgotLimitHours;
+        forgotPassword.requestsMaxPerIp = 10;
+        forgotPassword.loginAttempts = new LoginAttempts({});
+        forgotPassword.events = {emitSync: () => true};
+        forgotPassword.mailer = {isEnabled: () => true};
+        forgotPassword.usersManager = {
             loadUserByEmail: async (email) => ({
                 id: 1,
                 email,
@@ -89,11 +89,11 @@ class TestForgotPassword extends BaseTest
             },
             updateUserByEmail: async (email, updatePatch) => forgotSetup.userUpdates.push({email, updatePatch})
         };
-        loginManager.sendForgotPasswordEmail = async (userData) => {
+        forgotPassword.sendForgotPasswordEmail = async (userData) => {
             forgotSetup.sentEmails.push(userData.email);
             return emailSendResult;
         };
-        forgotSetup.loginManager = loginManager;
+        forgotSetup.forgotPassword = forgotPassword;
         return forgotSetup;
     }
 
@@ -122,24 +122,22 @@ class TestForgotPassword extends BaseTest
     async testTheResetLinkOpensTheFormWithoutChangingThePassword()
     {
         await this.test('the reset link sent by email opens the reset form and does not change the password', async () => {
-            let resetSetup = await this.createResetSetup();
+            let resetSetup = this.createResetSetup();
             let emailTemplates = [];
-            let loginManager = new LoginManager({
+            let forgotPassword = new ForgotPassword({
                 config: {
-                    get: (path, defaultValue) => defaultValue,
                     getWithoutLogs: (path, defaultValue) => defaultValue,
                     server: {publicUrl: 'http://localhost:8080'}
                 },
-                events: {on: () => true},
                 themeManager: {
                     assetPath: (folder, fileName) => fileName,
                     loadAndRenderTemplate: async (fileName, params) => emailTemplates.push(params)
                 },
-                mailer: {sendEmail: async () => true}
+                mailer: {sendEmail: async () => true},
+                expiringHmacToken: resetSetup.expiringHmacToken
             });
-            loginManager.expiringHmacToken = resetSetup.expiringHmacToken;
             let passwordBeforeReset = resetSetup.storedUser.password;
-            let sendResult = await loginManager.sendForgotPasswordEmail(
+            let sendResult = await forgotPassword.sendForgotPasswordEmail(
                 {email: this.userEmail},
                 resetSetup.storedUser.password
             );
@@ -159,7 +157,7 @@ class TestForgotPassword extends BaseTest
     async testTheResetFormIsNotShownWithAnInvalidToken()
     {
         await this.test('the reset form is not shown when the link token is invalid', async () => {
-            let resetSetup = await this.createResetSetup();
+            let resetSetup = this.createResetSetup();
             let sentContent = await this.sendRequest(resetSetup, 'GET', {email: this.userEmail, token: 'invalid'});
             this.assert.strictEqual(sentContent, 'reset-error.html');
             this.assert.strictEqual(resetSetup.updates.length, 0);
@@ -169,7 +167,7 @@ class TestForgotPassword extends BaseTest
     async testThePasswordIsResetWithAValidToken()
     {
         await this.test('the password is reset and the new password is valid when the form is posted with a valid token', async () => {
-            let resetSetup = await this.createResetSetup();
+            let resetSetup = this.createResetSetup();
             let expiresAt = Date.now()+GameConst.SIGNED_TOKENS.RESET_PASSWORD_EXPIRATION;
             let token = resetSetup.expiringHmacToken.generate([this.userEmail, resetSetup.storedUser.password], expiresAt);
             let sentContent = await this.sendRequest(resetSetup, 'POST', {email: this.userEmail, token});
@@ -187,7 +185,7 @@ class TestForgotPassword extends BaseTest
     async testThePasswordIsNotResetWithAnExpiredToken()
     {
         await this.test('the password is not reset when the form is posted with an expired token', async () => {
-            let resetSetup = await this.createResetSetup();
+            let resetSetup = this.createResetSetup();
             let passwordBeforeReset = resetSetup.storedUser.password;
             let token = resetSetup.expiringHmacToken.generate([this.userEmail, passwordBeforeReset], Date.now()-1);
             let sentContent = await this.sendRequest(resetSetup, 'POST', {email: this.userEmail, token});
@@ -200,7 +198,7 @@ class TestForgotPassword extends BaseTest
     async testTheSameResetLinkCanNotBeUsedTwice()
     {
         await this.test('the same reset link can not reset the password a second time', async () => {
-            let resetSetup = await this.createResetSetup();
+            let resetSetup = this.createResetSetup();
             let expiresAt = Date.now()+GameConst.SIGNED_TOKENS.RESET_PASSWORD_EXPIRATION;
             let token = resetSetup.expiringHmacToken.generate([this.userEmail, resetSetup.storedUser.password], expiresAt);
             await this.sendRequest(resetSetup, 'POST', {email: this.userEmail, token});
@@ -216,7 +214,7 @@ class TestForgotPassword extends BaseTest
     {
         await this.test('the reset email is not sent again inside the stored per user interval', async () => {
             let forgotSetup = this.createForgotPasswordSetup(Date.now()-60000, true);
-            await forgotSetup.loginManager.processForgotPassword({forgot: true, email: this.userEmail}, '10.0.0.1');
+            await forgotSetup.forgotPassword.processForgotPassword({forgot: true, email: this.userEmail}, '10.0.0.1');
             this.assert.strictEqual(forgotSetup.sentEmails.length, 0);
             this.assert.strictEqual(forgotSetup.reservations.length, 0);
             this.assert.strictEqual(forgotSetup.userUpdates.length, 0);
@@ -228,7 +226,7 @@ class TestForgotPassword extends BaseTest
         await this.test('the reset email is sent after reserving the sent time once the interval passed', async () => {
             let forgotSetup = this.createForgotPasswordSetup(Date.now()-this.forgotIntervalMs-1000, true);
             let requestTime = Date.now();
-            await forgotSetup.loginManager.processForgotPassword({forgot: true, email: this.userEmail}, '10.0.0.1');
+            await forgotSetup.forgotPassword.processForgotPassword({forgot: true, email: this.userEmail}, '10.0.0.1');
             this.assert.deepStrictEqual(forgotSetup.sentEmails, [this.userEmail]);
             this.assert.strictEqual(forgotSetup.reservations.length, 1);
             this.assert.strictEqual([...forgotSetup.reservations].shift().email, this.userEmail);
@@ -243,8 +241,8 @@ class TestForgotPassword extends BaseTest
             let forgotSetup = this.createForgotPasswordSetup(Date.now()-this.forgotIntervalMs-1000, true);
             let forgotRequest = {forgot: true, email: this.userEmail};
             await Promise.all([
-                forgotSetup.loginManager.processForgotPassword(forgotRequest, '10.0.0.1'),
-                forgotSetup.loginManager.processForgotPassword(forgotRequest, '10.0.0.2')
+                forgotSetup.forgotPassword.processForgotPassword(forgotRequest, '10.0.0.1'),
+                forgotSetup.forgotPassword.processForgotPassword(forgotRequest, '10.0.0.2')
             ]);
             this.assert.deepStrictEqual(forgotSetup.sentEmails, [this.userEmail]);
             this.assert.strictEqual(forgotSetup.reservations.length, 1);
@@ -256,7 +254,7 @@ class TestForgotPassword extends BaseTest
         await this.test('a reset email that could not be sent restores the previous sent time', async () => {
             let lastSentTime = Date.now()-this.forgotIntervalMs-1000;
             let forgotSetup = this.createForgotPasswordSetup(lastSentTime, false);
-            await forgotSetup.loginManager.processForgotPassword({forgot: true, email: this.userEmail}, '10.0.0.1');
+            await forgotSetup.forgotPassword.processForgotPassword({forgot: true, email: this.userEmail}, '10.0.0.1');
             this.assert.strictEqual(forgotSetup.reservations.length, 1);
             this.assert.deepStrictEqual(forgotSetup.userUpdates, [{
                 email: this.userEmail,
