@@ -4,16 +4,16 @@ How the address allow and deny lists are built and checked, and how the failed l
 
 ## Lists Sources
 
-- Environment: `RELDENS_IP_LISTS_ENABLED` (0 or 1), `RELDENS_IP_ALLOW_LIST` and `RELDENS_IP_DENY_LIST` (comma separated addresses or CIDR ranges), read by `EnvironmentVariablesReader.fetchIpListsFromEnvironmentVariables()` into the `server/appServerConfig/ipLists` configuration (`ConfigManager.applyEnvironmentConfig()`).
+- Environment: `RELDENS_IP_LISTS_ENABLED` (0 or 1), `RELDENS_IP_ALLOW_LIST` and `RELDENS_IP_DENY_LIST` (comma separated addresses or CIDR ranges), read by `EnvironmentVariablesReader.fetchIpListsFromEnvironmentVariables()` into the `server/appServerConfig/ipLists` configuration (the `environmentConfig` passed to the `ConfigManager` constructor).
 - `config` rows (scope `server`): `security/ipLists/enabled` (boolean, overrides the environment switch), `security/ipLists/allow` and `security/ipLists/deny` (comma separated, appended to the environment entries).
 - `ip_lists` table rows without `expires_at`: permanent entries, `list_type` is `allow` or `deny`, the `address` and `list_type` pair is unique. They are managed in the administration panel settings menu as "IP Allow And Deny Lists" (entity `ipLists`).
 
 ## Startup Flow
 
 1. `ServerManager.createAppServer()` calls `AppServerFactory.createAppServer(appServerConfig)`, `setupIpLists()` pushes the environment lists into the `IpListsConfigurer` and registers its Express middleware before the security, CORS, rate limit and body parsing middlewares.
-2. `ServerManager.initializeConfigManager()` loads the `config` rows and calls `ServerManagersInitializer.refreshIpLists()`, which rebuilds the lists: the enabled flag comes from the `config` row with the environment value as default, and each list joins the environment entries, the `config` row entries and the permanent `ip_lists` rows (`loadStoredIpLists()` skips the rows with `expires_at`).
-3. The Colyseus transport receives `beforeUpgrade: ServerManagersInitializer.createBeforeUpgradeHandler(serverManager)`.
-4. `ServerManagersInitializer.initializeManagers()` calls `loginManager.loginAttempts.restoreAddressBlocks(Date.now())` right after the `LoginManager` is created, see the login blocks section.
+2. `ServerManager.initializeConfigManager()` loads the `config` rows, creates the `IpListsUpgradeGuard` (`lib/game/server/ip-lists-upgrade-guard.js`, kept as `serverManager.ipListsUpgradeGuard`) and calls its `refresh()`, which rebuilds the lists: the enabled flag comes from the `config` row with the environment value as default, and each list joins the environment entries, the `config` row entries and the permanent `ip_lists` rows (`loadStoredEntries()` skips the rows with `expires_at`).
+3. The Colyseus transport receives `beforeUpgrade: serverManager.ipListsUpgradeGuard.createBeforeUpgradeHandler()`.
+4. `ServerManagersInitializer.initializeLoginManager()` calls `loginManager.loginAttempts.restoreAddressBlocks(Date.now())` right after the `LoginManager` is created, see the login blocks section.
 
 The lists are only built on the startup, a change in the `ip_lists` rows or in the `security/ipLists/*` rows is applied after a restart.
 
@@ -37,10 +37,10 @@ The lists are only built on the startup, a change in the `ip_lists` rows or in t
 
 `LoginAttempts` (`lib/game/server/memory/login-attempts.js`) is created by the `LoginManager` with the `server/security/loginAttempts` configuration (environment values overridden by the configuration rows) and the `ipLists` repository, and it is shared by the game login and the administration panel login.
 
-1. Every failed login calls `LoginManager.registerLoginFailure()`, which registers a hit for `identity:<username or email>` and for `address:<request address>` (`GameConst.LOGIN_ATTEMPTS_KEYS`).
+1. Every failed login calls `LoginAttempts.registerLoginFailure()`, which registers a hit for `identity:<username or email>` and for `address:<request address>` (`GameConst.LOGIN_ATTEMPTS_KEYS`).
 2. When a key reaches `maxAttempts` inside the window (`RELDENS_LOGIN_ATTEMPTS_MAX` or `security/loginAttempts/maxAttempts`, the window defaults to the block time) the key is blocked for `blockTimeMs` (`RELDENS_LOGIN_ATTEMPTS_BLOCK_MS` or `security/loginAttempts/blockTimeMs`).
 3. An address block is stored as a `deny` row with the reason `Login attempts limit reached.` and the `expires_at` of the block. A repeated block for the same address updates that row, and a permanent `deny` row (without `expires_at`) is never replaced. The identity blocks are kept in memory only.
-4. `LoginManager.isLoginBlocked()` rejects the login while the identity or the address is blocked, in `processUserRequest()` for the game login and in `roleAuthenticationCallback()` for the administration panel login, with the same invalid login message as a wrong password.
+4. `LoginAttempts.isLoginBlocked()` rejects the login while the identity or the address is blocked, in `LoginManager.processUserRequest()` for the game login and in `LoginManager.roleAuthenticationCallback()` for the administration panel login, with the same invalid login message as a wrong password.
 5. On the startup `restoreAddressBlocks()` loads the `deny` rows whose `expires_at` is still in the future back into memory, so a restart does not lift the block. The expired rows stay in the table and are ignored.
 
 The temporary rows never enter the Express or WebSocket lists, they only block the logins.
