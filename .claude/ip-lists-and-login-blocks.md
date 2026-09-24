@@ -4,7 +4,7 @@ How the address allow and deny lists are built and checked, and how the failed l
 
 ## Lists Sources
 
-- Environment: `RELDENS_IP_LISTS_ENABLED` (0 or 1), `RELDENS_IP_ALLOW_LIST` and `RELDENS_IP_DENY_LIST` (comma separated addresses or CIDR ranges), read by `EnvironmentVariablesReader.fetchIpListsFromEnvironmentVariables()` into `configServer.appServerConfig.ipLists`.
+- Environment: `RELDENS_IP_LISTS_ENABLED` (0 or 1), `RELDENS_IP_ALLOW_LIST` and `RELDENS_IP_DENY_LIST` (comma separated addresses or CIDR ranges), read by `EnvironmentVariablesReader.fetchIpListsFromEnvironmentVariables()` into the `server/appServerConfig/ipLists` configuration (`ConfigManager.applyEnvironmentConfig()`).
 - `config` rows (scope `server`): `security/ipLists/enabled` (boolean, overrides the environment switch), `security/ipLists/allow` and `security/ipLists/deny` (comma separated, appended to the environment entries).
 - `ip_lists` table rows without `expires_at`: permanent entries, `list_type` is `allow` or `deny`, the `address` and `list_type` pair is unique. They are managed in the administration panel settings menu as "IP Allow And Deny Lists" (entity `ipLists`).
 
@@ -35,7 +35,7 @@ The lists are only built on the startup, a change in the `ip_lists` rows or in t
 
 ## Login Blocks
 
-`LoginAttempts` (`lib/game/server/memory/login-attempts.js`) is created by the `LoginManager` with the merged `securityConfig.loginAttempts` settings and the `ipLists` repository, and it is shared by the game login and the administration panel login.
+`LoginAttempts` (`lib/game/server/memory/login-attempts.js`) is created by the `LoginManager` with the `server/security/loginAttempts` configuration (environment values overridden by the configuration rows) and the `ipLists` repository, and it is shared by the game login and the administration panel login.
 
 1. Every failed login calls `LoginManager.registerLoginFailure()`, which registers a hit for `identity:<username or email>` and for `address:<request address>` (`GameConst.LOGIN_ATTEMPTS_KEYS`).
 2. When a key reaches `maxAttempts` inside the window (`RELDENS_LOGIN_ATTEMPTS_MAX` or `security/loginAttempts/maxAttempts`, the window defaults to the block time) the key is blocked for `blockTimeMs` (`RELDENS_LOGIN_ATTEMPTS_BLOCK_MS` or `security/loginAttempts/blockTimeMs`).
