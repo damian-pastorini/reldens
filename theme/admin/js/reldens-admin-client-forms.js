@@ -196,16 +196,20 @@ class AdminClientForms
 
     bindLogout()
     {
-        let logoutLink = document.querySelector('a[href*="/logout"]');
+        let logoutLink = document.querySelector('.logout-link');
         if(!logoutLink){
+            return;
+        }
+        let logoutForm = document.querySelector('.logout-form');
+        if(!logoutForm){
             return;
         }
         logoutLink.addEventListener('click', (event) => {
             event.preventDefault();
-            let logoutHref = logoutLink.href;
             adminFunctions.showConfirmDialog((confirmed) => {
                 if(confirmed){
-                    window.location.href = logoutHref;
+                    adminFunctions.appendCsrfTokenInput(logoutForm);
+                    logoutForm.submit();
                 }
             }, 'Are you sure you want to log out?');
         });

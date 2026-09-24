@@ -90,6 +90,7 @@ Entities are located in `generated-entities/entities/` and are auto-generated fr
 - scores-detail
 
 ## Security
+- admin-sessions
 - ip-lists
 
 ## Skills System

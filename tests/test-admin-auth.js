@@ -76,9 +76,24 @@ class TestAdminAuth extends BaseTest
     async testLogoutDestroysSession()
     {
         await this.test('Logout destroys session', async () => {
-            let response = await this.makeRequest('GET', this.adminPath+'/logout');
+            let session = await this.getAuthenticatedSession();
+            let response = await this.makeFormRequest('POST', this.adminPath+'/logout', {}, session);
             this.assert.strictEqual(302, response.statusCode);
             this.assert(response.headers.location.includes('/login'));
+            let adminResponse = await this.makeAuthenticatedRequest('GET', this.adminPath, null, session);
+            this.assert.strictEqual(302, adminResponse.statusCode);
+            this.assert(adminResponse.headers.location.includes('/login'));
+        });
+    }
+
+    async testLogoutIsNotAcceptedOverGet()
+    {
+        await this.test('Logout over GET does not destroy the session', async () => {
+            let session = await this.getAuthenticatedSession();
+            let response = await this.makeAuthenticatedRequest('GET', this.adminPath+'/logout', null, session);
+            this.assert.notStrictEqual(302, response.statusCode);
+            let adminResponse = await this.makeAuthenticatedRequest('GET', this.adminPath, null, session);
+            this.assert.strictEqual(200, adminResponse.statusCode);
         });
     }
 

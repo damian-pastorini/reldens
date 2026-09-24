@@ -85,6 +85,15 @@ class TestUploadCsrfProtection extends BaseTest
         });
     }
 
+    async testTheMultiByteTokenOfTheSameLengthIsRejectedWithoutThrowing()
+    {
+        await this.test('a multi-byte token with the session token length is rejected without throwing', async () => {
+            let checkResult = this.runUploadCsrfCheck(true, {_csrf: 'session-token-é'});
+            this.assert.strictEqual(checkResult.nextCalls, 0);
+            this.assert.strictEqual(checkResult.statusCode, 403);
+        });
+    }
+
     async testTheUploadWithoutTokenIsRejected()
     {
         await this.test('an upload without the token field is rejected', async () => {

@@ -42,7 +42,9 @@ Enabled by `RELDENS_ADMIN_CSRF_ENABLED` or the `security/adminCsrf/enabled` conf
 
 - The `@reldens/cms` `CsrfProtection` middleware on the administration router creates a token per session and rejects
   every POST, PUT, PATCH or DELETE request whose `_csrf` body field or `X-CSRF-Token` header does not match it, with
-  `403` and `Invalid request token.`. The `/tileset-analyzer` routes are exempt.
+  `403` and `Invalid request token.`. The tileset analyzer fetch requests send the header too, no route is exempt.
+- The logout is a POST route: the sidebar logout link opens the confirmation and submits the hidden `.logout-form` with
+  the token (`bindLogout()` in `theme/admin/js/reldens-admin-client-forms.js`).
 - `CreateAdminSubscriber.applyCsrfTokenCookie()` sends the session token to the admin client JS in the
   `reldens-admin-csrf-token` cookie (`GameConst.ADMIN_CSRF_TOKEN_COOKIE`, path is the admin root path, `SameSite=Strict`).
 - `theme/admin/js/admin-functions.js` reads the cookie: `appendCsrfTokenInput(form)` adds the `_csrf` hidden input to the
@@ -57,6 +59,19 @@ Enabled by `RELDENS_ADMIN_CSRF_ENABLED` or the `security/adminCsrf/enabled` conf
   where the `_csrf` field of the multipart body is parsed.
 - Projects created before the token was added must refresh their `theme/admin` templates and JS
   (`npm exec -- reldens fullRebuild`).
+
+---
+
+## Sessions
+
+- `AdminSessionStore` (`lib/admin/server/admin-session-store.js`) stores the sessions in the `admin_sessions` table
+  (entity `adminSessions`), so they are shared by every server, survive a restart and expire after
+  `RELDENS_ADMIN_SESSION_MAX_AGE_MS` (default one day); the expired rows are pruned every hour. Without the generated
+  entity the default memory store is used and a warning is logged.
+- `AdminSessionValidator` (`lib/admin/server/admin-session-validator.js`) hooks the `reldens.adminIsAuthenticated`
+  event: on every authenticated request it reloads the session user and destroys the session when the user was deleted,
+  banned, moved to another role or changed its password (the login stores the `sessionRevision` hash of the password
+  hash), then it applies the role black list.
 
 ---
 

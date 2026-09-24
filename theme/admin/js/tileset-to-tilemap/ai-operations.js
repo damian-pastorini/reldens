@@ -135,7 +135,7 @@ class TilesetAiOperations
         let tiles = this.app.collectElementTiles(item.element);
         let response = await fetch('ai-assign-layers', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: adminFunctions.csrfHeaders({'Content-Type': 'application/json'}),
             body: JSON.stringify(this.app.aiRequestBuilder.build(tileset, provider, { elementTiles: tiles }))
         });
         let data = await response.json();
@@ -190,7 +190,7 @@ class TilesetAiOperations
         let tiles = this.app.collectElementTiles(tileset.elements[j]);
         let response = await fetch('ai-detect', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: adminFunctions.csrfHeaders({'Content-Type': 'application/json'}),
             body: JSON.stringify(this.app.aiRequestBuilder.build(tileset, provider, { clusterTiles: tiles }))
         });
         let data = await response.json();
@@ -245,7 +245,7 @@ class TilesetAiOperations
         );
         let response = await fetch('ai-name', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: adminFunctions.csrfHeaders({'Content-Type': 'application/json'}),
             body: JSON.stringify(this.app.aiRequestBuilder.build(
                 tileset, provider, { elements: [{ absoluteTiles: toName[k].absoluteTiles }] }
             ))
