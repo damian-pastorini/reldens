@@ -140,12 +140,12 @@ if(this.config.client?.rooms?.selection){
 **File:** `lib/game/server/manager.js`
 
 **Execution order (inside `startGameServerInstance()`):**
-1. `ServerManagersInitializer.initializeManagers(this)` (lines 263-265)
+1. `new ServerManagersInitializer(this).initializeManagers()` (lines 233-235)
    - Calls `defineServerRooms()`
    - Guest rooms configured in `this.configManager.client.rooms.selection.availableRooms`
-2. **Config file created** (lines 266-273, only when `RELDENS_CREATE_CONFIG_FILE` is 1)
+2. **Config file created** (lines 241-248, only when `RELDENS_CREATE_CONFIG_FILE` is 1)
    - `HomepageLoader.createConfigFile()` with guest rooms data
-3. **Client bundled** (line 274)
+3. **Client bundled** (line 249)
    - `themeManager.createClientBundle()` bundles config.js into dist folder
 
 ### 3.2 Config File Creation (`lib/game/server/homepage-loader.js`)
