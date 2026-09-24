@@ -20,7 +20,7 @@ Flags accepted by `tests/e2e/run-tests.js`:
 - `--filter=<text>` - passed to Playwright as `--grep`
 - `--port=<port>` - overrides the port from `tests/config.json`
 - `--clean-output` - removes `test-results/` before the run
-- `--db-reset` - reseeds the database from `migrations/production` before the run
+- `--db-reset` - drops every table and rebuilds the database from `migrations/production` before the run
 - `--max-failures=<n>` - overrides the stop-on-failure limit
 - `--all` - runs every test regardless of failures
 
@@ -38,9 +38,13 @@ whole run.
 
 Do NOT point `tests/config.json` at the branch database.
 
-To rebuild the e2e database, drop it and run the production scripts from `migrations/production`:
-`reldens-install-v4.0.0.sql`, `reldens-basic-config-v4.0.0.sql`, `reldens-sample-data-v4.0.0.sql`. The same
-basic-config and sample-data pair is what `--db-reset` applies.
+`--db-reset` rebuilds the e2e database from scratch on every run, so each run starts from the same content:
+`DatabaseResetUtility` (`tests/database-reset-utility.js`) drops every table of the configured database with
+`tests/fixtures/database-drop-tables.sql`, then runs the production scripts from `migrations/production`:
+`reldens-install-v4.0.0.sql`, `reldens-basic-config-v4.0.0.sql` and `reldens-sample-data-v4.0.0.sql`. The unit
+tests (`npm run test:default`) run the same drop and install before the basic config and
+`migrations/development/reldens-test-sample-data-v4.0.0.sql`. Tables or columns left by an older schema never
+survive a reset.
 
 ### Required accounts
 
