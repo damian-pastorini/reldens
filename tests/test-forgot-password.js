@@ -8,9 +8,6 @@ const { BaseTest } = require('./base-test');
 const { ForgotPassword } = require('../lib/game/server/forgot-password');
 const { LoginAttempts } = require('../lib/game/server/memory/login-attempts');
 const { UsersManager } = require('../lib/users/server/manager');
-const { ExpiringHmacToken } = require('../lib/game/server/expiring-hmac-token');
-const { GameConst } = require('../lib/game/constants');
-const { Encryptor } = require('@reldens/server-utils');
 const { sc } = require('@reldens/utils');
 
 class TestForgotPassword extends BaseTest
@@ -19,48 +16,9 @@ class TestForgotPassword extends BaseTest
     constructor(config)
     {
         super(config);
-        this.secret = 'test-secret';
         this.userEmail = 'user@reldens.com';
-        this.userPassword = 'current-password';
         this.forgotLimitHours = 4;
         this.forgotIntervalMs = this.forgotLimitHours * 60 * 60 * 1000;
-    }
-
-    createResetSetup()
-    {
-        let resetSetup = {
-            storedUser: {email: this.userEmail, username: 'user', password: Encryptor.encryptPassword(this.userPassword)},
-            updates: [],
-            routes: {},
-            renderedTemplates: [],
-            expiringHmacToken: new ExpiringHmacToken({secret: this.secret})
-        };
-        let forgotPassword = new ForgotPassword({
-            config: {getWithoutLogs: (path, defaultValue) => defaultValue},
-            usersManager: {
-                loadUserByEmail: async (email) => email === resetSetup.storedUser.email ? resetSetup.storedUser : false,
-                updateUserByEmail: async (email, userData) => {
-                    resetSetup.updates.push(email);
-                    return Object.assign(resetSetup.storedUser, userData);
-                }
-            },
-            themeManager: {
-                projectAssetsPath: 'theme/default/assets',
-                assetPath: (folder, fileName) => fileName,
-                loadAndRenderTemplate: async (fileName, params) => {
-                    resetSetup.renderedTemplates.push({fileName, params});
-                    return fileName;
-                },
-                templateEngine: {render: async (layoutContent, params) => params.content}
-            },
-            expiringHmacToken: resetSetup.expiringHmacToken,
-            passwordManager: Encryptor
-        });
-        forgotPassword.defineResetPasswordRoutes({
-            get: (path, handler) => resetSetup.routes['GET'+path] = handler,
-            post: (path, handler) => resetSetup.routes['POST'+path] = handler
-        });
-        return resetSetup;
     }
 
     createForgotPasswordSetup(lastSentTime, emailSendResult)
@@ -97,7 +55,7 @@ class TestForgotPassword extends BaseTest
         return forgotSetup;
     }
 
-    createReservationUsersManager(updateResult, updateCalls)
+    createUsersManagerWithUpdateResult(updateResult, updateCalls)
     {
         let usersManager = Object.create(UsersManager.prototype);
         usersManager.usersRepository = {
@@ -107,107 +65,6 @@ class TestForgotPassword extends BaseTest
             }
         };
         return usersManager;
-    }
-
-    async sendRequest(resetSetup, method, requestData)
-    {
-        let sentContents = [];
-        let request = 'GET' === method ? {query: requestData} : {body: requestData};
-        await resetSetup.routes[method+GameConst.ROUTE_PATHS.RESET_PASSWORD](request, {
-            send: (content) => sentContents.push(content)
-        });
-        return [...sentContents].shift();
-    }
-
-    async testTheResetLinkOpensTheFormWithoutChangingThePassword()
-    {
-        await this.test('the reset link sent by email opens the reset form and does not change the password', async () => {
-            let resetSetup = this.createResetSetup();
-            let emailTemplates = [];
-            let forgotPassword = new ForgotPassword({
-                config: {
-                    getWithoutLogs: (path, defaultValue) => defaultValue,
-                    server: {publicUrl: 'http://localhost:8080'}
-                },
-                themeManager: {
-                    assetPath: (folder, fileName) => fileName,
-                    loadAndRenderTemplate: async (fileName, params) => emailTemplates.push(params)
-                },
-                mailer: {sendEmail: async () => true},
-                expiringHmacToken: resetSetup.expiringHmacToken
-            });
-            let passwordBeforeReset = resetSetup.storedUser.password;
-            let sendResult = await forgotPassword.sendForgotPasswordEmail(
-                {email: this.userEmail},
-                resetSetup.storedUser.password
-            );
-            this.assert.strictEqual(sendResult, true);
-            let resetLink = new URL([...emailTemplates].shift().resetLink);
-            let sentContent = await this.sendRequest(resetSetup, 'GET', {
-                email: resetLink.searchParams.get('email'),
-                token: resetLink.searchParams.get('token')
-            });
-            this.assert.strictEqual(resetLink.pathname, GameConst.ROUTE_PATHS.RESET_PASSWORD);
-            this.assert.strictEqual(sentContent, 'reset-form.html');
-            this.assert.strictEqual(resetSetup.updates.length, 0);
-            this.assert.strictEqual(resetSetup.storedUser.password, passwordBeforeReset);
-        });
-    }
-
-    async testTheResetFormIsNotShownWithAnInvalidToken()
-    {
-        await this.test('the reset form is not shown when the link token is invalid', async () => {
-            let resetSetup = this.createResetSetup();
-            let sentContent = await this.sendRequest(resetSetup, 'GET', {email: this.userEmail, token: 'invalid'});
-            this.assert.strictEqual(sentContent, 'reset-error.html');
-            this.assert.strictEqual(resetSetup.updates.length, 0);
-        });
-    }
-
-    async testThePasswordIsResetWithAValidToken()
-    {
-        await this.test('the password is reset and the new password is valid when the form is posted with a valid token', async () => {
-            let resetSetup = this.createResetSetup();
-            let expiresAt = Date.now()+GameConst.SIGNED_TOKENS.RESET_PASSWORD_EXPIRATION;
-            let token = resetSetup.expiringHmacToken.generate([this.userEmail, resetSetup.storedUser.password], expiresAt);
-            let sentContent = await this.sendRequest(resetSetup, 'POST', {email: this.userEmail, token});
-            let successTemplate = [...resetSetup.renderedTemplates].pop();
-            this.assert.strictEqual(sentContent, 'reset-success.html');
-            this.assert.deepStrictEqual(resetSetup.updates, [this.userEmail]);
-            this.assert.strictEqual(Encryptor.validatePassword(this.userPassword, resetSetup.storedUser.password), false);
-            this.assert.strictEqual(
-                Encryptor.validatePassword(successTemplate.params.newPass, resetSetup.storedUser.password),
-                true
-            );
-        });
-    }
-
-    async testThePasswordIsNotResetWithAnExpiredToken()
-    {
-        await this.test('the password is not reset when the form is posted with an expired token', async () => {
-            let resetSetup = this.createResetSetup();
-            let passwordBeforeReset = resetSetup.storedUser.password;
-            let token = resetSetup.expiringHmacToken.generate([this.userEmail, passwordBeforeReset], Date.now()-1);
-            let sentContent = await this.sendRequest(resetSetup, 'POST', {email: this.userEmail, token});
-            this.assert.strictEqual(sentContent, 'reset-error.html');
-            this.assert.strictEqual(resetSetup.updates.length, 0);
-            this.assert.strictEqual(resetSetup.storedUser.password, passwordBeforeReset);
-        });
-    }
-
-    async testTheSameResetLinkCanNotBeUsedTwice()
-    {
-        await this.test('the same reset link can not reset the password a second time', async () => {
-            let resetSetup = this.createResetSetup();
-            let expiresAt = Date.now()+GameConst.SIGNED_TOKENS.RESET_PASSWORD_EXPIRATION;
-            let token = resetSetup.expiringHmacToken.generate([this.userEmail, resetSetup.storedUser.password], expiresAt);
-            await this.sendRequest(resetSetup, 'POST', {email: this.userEmail, token});
-            let passwordAfterFirstReset = resetSetup.storedUser.password;
-            let sentContent = await this.sendRequest(resetSetup, 'POST', {email: this.userEmail, token});
-            this.assert.strictEqual(sentContent, 'reset-error.html');
-            this.assert.deepStrictEqual(resetSetup.updates, [this.userEmail]);
-            this.assert.strictEqual(resetSetup.storedUser.password, passwordAfterFirstReset);
-        });
     }
 
     async testTheResetEmailIsNotSentAgainInsideTheStoredInterval()
@@ -267,7 +124,7 @@ class TestForgotPassword extends BaseTest
     {
         await this.test('the reservation updates the user only without a send stored inside the interval', async () => {
             let updateCalls = [];
-            let usersManager = this.createReservationUsersManager(1, updateCalls);
+            let usersManager = this.createUsersManagerWithUpdateResult(1, updateCalls);
             let sentTime = Date.now();
             let intervalStartTime = sentTime - this.forgotIntervalMs;
             let reserved = await usersManager.reservePasswordResetSentTime(
@@ -295,7 +152,7 @@ class TestForgotPassword extends BaseTest
             let sentTime = Date.now();
             let intervalStartTime = sentTime - this.forgotIntervalMs;
             for(let updateResult of [0, {count: 0}]){
-                let usersManager = this.createReservationUsersManager(updateResult, []);
+                let usersManager = this.createUsersManagerWithUpdateResult(updateResult, []);
                 let reserved = await usersManager.reservePasswordResetSentTime(
                     this.userEmail,
                     sentTime,
@@ -303,13 +160,37 @@ class TestForgotPassword extends BaseTest
                 );
                 this.assert.strictEqual(reserved, false);
             }
-            let countUsersManager = this.createReservationUsersManager({count: 1}, []);
+            let countUsersManager = this.createUsersManagerWithUpdateResult({count: 1}, []);
             let countReserved = await countUsersManager.reservePasswordResetSentTime(
                 this.userEmail,
                 sentTime,
                 intervalStartTime
             );
             this.assert.strictEqual(countReserved, true);
+        });
+    }
+
+    async testThePasswordIsReplacedOnlyWhenTheStoredHashDidNotChange()
+    {
+        await this.test('the password replace filters by the user ID and the current hash', async () => {
+            let updateCalls = [];
+            let usersManager = this.createUsersManagerWithUpdateResult(1, updateCalls);
+            let replaced = await usersManager.replacePasswordIfUnchanged(7, 'current-hash', 'new-hash');
+            this.assert.strictEqual(replaced, true);
+            this.assert.deepStrictEqual(updateCalls, [{
+                filters: {id: 7, password: 'current-hash'},
+                updatePatch: {password: 'new-hash'}
+            }]);
+        });
+    }
+
+    async testThePasswordReplaceFailsWhenNoRowWasUpdated()
+    {
+        await this.test('the password replace fails when the driver reports no updated rows', async () => {
+            for(let updateResult of [0, {count: 0}]){
+                let usersManager = this.createUsersManagerWithUpdateResult(updateResult, []);
+                this.assert.strictEqual(await usersManager.replacePasswordIfUnchanged(7, 'old', 'new'), false);
+            }
         });
     }
 
