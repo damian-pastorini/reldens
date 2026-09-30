@@ -196,10 +196,16 @@ class TestInteractiveObjects
                 await screenshots.capture(page, 'mining-rock-inventory-before');
                 await page.waitForTimeout(forestData.pauseMs);
                 await TestInteractiveObjects.clickObjectByAssetKeyOrKey(page, objectKey);
-                await page.waitForTimeout(7000 + forestData.pauseMs);
+                await expect
+                    .poll(
+                        async () => TestInteractiveObjects.fetchInventoryItemQty(page, rewardItemId),
+                        {
+                            timeout: TimeConstants.forLongRun(TimeConstants.TIMING_OBJECT_COMPLETE, longRun),
+                            message: 'Reward item quantity must increase after mining'
+                        }
+                    )
+                    .toBeGreaterThan(rewardQtyBefore);
                 await screenshots.capture(page, 'mining-rock-interaction-complete');
-                let rewardQtyAfter = await TestInteractiveObjects.fetchInventoryItemQty(page, rewardItemId);
-                expect(rewardQtyAfter, 'Reward item quantity must increase after mining').toBeGreaterThan(rewardQtyBefore);
                 await screenshots.capture(page, 'mining-rock-inventory-after');
             });
             test('player fishes repeatedly at the same spawn without it moving or respawning', async ({ page, screenshots, gameConfig, longRun }) => {
