@@ -182,6 +182,24 @@ PREPARE addPasswordResetSentAtStatement FROM @addPasswordResetSentAt;
 EXECUTE addPasswordResetSentAtStatement;
 DEALLOCATE PREPARE addPasswordResetSentAtStatement;
 
+-- Users: the registration origin of each account (registration, guest, firebase or admin), the existing guests get the
+-- guest origin and every other existing account keeps the registration default
+SET @addUsersOrigin = (
+    SELECT IF(
+        0 = COUNT(*),
+        'ALTER TABLE `users` ADD COLUMN `origin` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT ''registration'' AFTER `password_reset_sent_at`',
+        'SELECT 1'
+    )
+    FROM `information_schema`.`COLUMNS`
+    WHERE `TABLE_SCHEMA` = DATABASE() AND `TABLE_NAME` = 'users' AND `COLUMN_NAME` = 'origin'
+);
+PREPARE addUsersOriginStatement FROM @addUsersOrigin;
+EXECUTE addUsersOriginStatement;
+DEALLOCATE PREPARE addUsersOriginStatement;
+UPDATE `users` SET `origin` = 'guest' WHERE `origin` = 'registration' AND `role_id` = (
+    SELECT `value` FROM `config` WHERE `scope` = 'server' AND `path` = 'players/guestUser/roleId'
+);
+
 -- Security: login attempts lockout, administration panel login limiter and session, CSRF, address lists, game
 -- login throttle, registration and guests limits, origin validation, guests cleanup and the password policy
 INSERT IGNORE INTO `config` (`scope`, `path`, `value`, `type`) VALUES

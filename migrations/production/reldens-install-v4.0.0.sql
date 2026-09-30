@@ -60,6 +60,7 @@ CREATE TABLE IF NOT EXISTS `users` (
     `played_time` INT NOT NULL DEFAULT '0',
     `login_count` INT NOT NULL DEFAULT '0',
     `password_reset_sent_at` TIMESTAMP NULL DEFAULT NULL,
+    `origin` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'registration',
     PRIMARY KEY (`id`) USING BTREE,
     UNIQUE KEY `email` (`email`) USING BTREE,
     UNIQUE KEY `username` (`username`) USING BTREE
