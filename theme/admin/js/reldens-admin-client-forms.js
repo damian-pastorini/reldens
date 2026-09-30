@@ -111,8 +111,11 @@ class AdminClientForms
 
     async submitWithTokenHeader(form, submitter)
     {
-        let formData = new FormData(form, submitter);
+        let formData = new FormData(form);
         if(submitter){
+            if(submitter.name){
+                formData.append(submitter.name, submitter.value);
+            }
             submitter.disabled = true;
         }
         let response = await fetch(form.getAttribute('action'), {
