@@ -104,12 +104,16 @@ class TestGuestsCleanup extends BaseTest
 
     async testTheStatusIsRestoredAfterAFailedDeletion()
     {
-        await this.test('the claimed guest status is restored when a deletion step fails', async () => {
+        await this.test('the claimed guest status and update time are restored when a deletion step fails', async () => {
             let managerSetup = this.createClaimUsersManager(1, true);
-            let guestUser = {id: 7, role_id: this.guestRoleId, status: '1', related_players: []};
+            let updatedAt = '2026-01-10 08:30:00';
+            let guestUser = {id: 7, role_id: this.guestRoleId, status: '1', updated_at: updatedAt, related_players: []};
             this.assert.strictEqual(await managerSetup.usersManager.deleteGuestUser(guestUser, Date.now()), false);
             this.assert.strictEqual(managerSetup.deletedUserIds.length, 0);
-            this.assert.deepStrictEqual([...managerSetup.updates].pop(), {userId: 7, patch: {status: '1'}});
+            this.assert.deepStrictEqual(
+                [...managerSetup.updates].pop(),
+                {userId: 7, patch: {status: '1', updated_at: updatedAt}}
+            );
         });
     }
 

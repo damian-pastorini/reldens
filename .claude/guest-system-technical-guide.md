@@ -392,7 +392,66 @@ WHERE name = 'forest';
 
 ---
 
-## 8. Code References
+## 8. Guest Login Flow
+
+1. The guest form sends `isGuest: true` (the client sets `isNewUser: true` for every guest request).
+2. `LoginManager.processUserRequest()` sends new guests to `UserRegistration.processGuestRequest()`
+   (`lib/game/server/user-registration.js`): it rejects the request when guests are disabled or the address reached
+   `RELDENS_GUESTS_MAX_PER_IP`, then `overrideWithGuestData()` generates the username, the email (with the guest email
+   domain) and a random password, and `register()` creates the user with the guest role.
+3. `RoomGame.onJoin()` (`lib/rooms/server/game.js`) sends the generated password back as `guestPassword` in the
+   `START_GAME` message. The client keeps it only in memory (`GameManager.initEngine()`) and uses it to join the scene
+   and feature rooms.
+4. Every later login of an existing guest goes through `LoginManager.isValidGuestLogin()`: it is only accepted while the
+   guest is active in the game room. Once the guest leaves the game (tab closed, disconnection) nobody can log into that
+   account again, the password is never stored on the client.
+
+A guest account is therefore disposable: its data is only reachable during the session that created it.
+
+---
+
+## 9. Guests Cleanup
+
+`GuestsCleanup` (`lib/users/server/guests-cleanup.js`) removes the guest accounts that were not used for a while. It is
+created and started by the users plugin on `reldens.serverReady` (`lib/users/server/plugin.js`).
+
+### Configuration
+
+- `server/players/guestUser/cleanupEnabled` - the basic configuration installs it as `0`; as every configuration row it
+  wins over `RELDENS_GUESTS_CLEANUP_ENABLED`, so set the row to `1` to enable the cleanup
+- `server/players/guestUser/cleanupAfterMs` / `RELDENS_GUESTS_CLEANUP_AFTER_MS` - time without activity before a guest is
+  removed (default 7 days)
+- `server/players/guestUser/cleanupIntervalMs` / `RELDENS_GUESTS_CLEANUP_INTERVAL_MS` - time between runs (default 1
+  hour); the cleanup does not start when the interval is not lower than the cleanup time, nor without a guest role ID
+
+### Run
+
+1. Runs never overlap: a run started while another one is running is skipped.
+2. `UsersManager.touchGuests()` refreshes `updated_at` of the guests with an active session on this server, so the
+   other servers sharing the database do not remove them.
+3. `UsersManager.loadGuestsOlderThan()` loads the guests whose `updated_at` is older than the cleanup time, with their
+   players.
+4. Guests with an active session on this server are skipped.
+5. `UsersManager.deleteGuestUser()` removes each remaining guest.
+
+### Guest deletion (`UsersManager.deleteGuestUser()`)
+
+1. Skipped when one of the guest players owns a clan (the clan owner foreign key has no delete cascade).
+2. Claim: a conditional update bans the guest only while it is still a guest and its `updated_at` is still older than
+   the cleanup time. When no row is updated the guest was used again (on any server) and it is kept. The ban makes any
+   login during the deletion fail.
+3. Deletes, in order: the quests progress of each player (no foreign key), each player (the player stats, state,
+   inventory, skills, scores and the other player tables cascade), the user logins, the user locale and the user.
+4. When a step fails, the error is logged and the guest status and `updated_at` are restored to the loaded values.
+   Restoring `updated_at` matters: the claim and the restore change the row, and the column updates itself on every
+   change (`ON UPDATE CURRENT_TIMESTAMP`), which would hide the guest from the next runs for another full cleanup time.
+   With the original value the next run loads the guest again and deletes whatever is left, so no orphan rows remain.
+
+A failed guest never stops the run, the next guest is processed.
+
+---
+
+## 10. Code References
 
 **Key Files:**
 - `lib/rooms/server/manager.js` - Room loading and guest filtering
@@ -401,6 +460,11 @@ WHERE name = 'forest';
 - `lib/game/client/game-manager.js` - Config loading
 - `lib/game/client/handlers/client-start-handler.js` - Form initialization
 - `lib/game/client/handlers/guest-form-handler.js` - Guest form logic
+- `lib/game/server/login-manager.js` - Guest requests routing and `isValidGuestLogin()`
+- `lib/game/server/user-registration.js` - Guest account creation
+- `lib/rooms/server/game.js` - `guestPassword` in the `START_GAME` message
+- `lib/users/server/guests-cleanup.js` - Guests cleanup runs
+- `lib/users/server/manager.js` - Guests claim and deletion
 
 **Database:**
 - Table: `rooms`
@@ -410,6 +474,7 @@ WHERE name = 'forest';
 **Config Paths:**
 - Server: `server/players/guestUser/allowOnRooms`
 - Server: `server/players/guestsUser/emailDomain`
+- Server: `server/players/guestUser/cleanupEnabled`, `cleanupAfterMs`, `cleanupIntervalMs`
 - Client: `client/general/users/allowGuest`
 - Client: `client/general/users/allowGuestUserName`
 - Client: `client/rooms/selection/availableRooms/registrationGuest`
