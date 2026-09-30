@@ -56,8 +56,16 @@ class PlayerStateReset
         }
     }
 
-    static async restorePlayerInventory(dataServer, inventoryItems)
+    static async restorePlayerInventory(dataServer, playerId, inventoryItems)
     {
+        let inventoryRepository = dataServer.getEntity('itemsInventory');
+        let snapshotItemsIds = inventoryItems.map((invItem) => String(invItem.id));
+        let currentItems = await inventoryRepository.loadBy('owner_id', playerId) || [];
+        let removedItems = currentItems.filter((currentItem) => -1 === snapshotItemsIds.indexOf(String(currentItem.id)));
+        for(let removedItem of removedItems){
+            await inventoryRepository.deleteById(removedItem.id);
+        }
+        Logger.info('[player-state-reset] Removed '+removedItems.length+' items added by the tests to player '+playerId);
         for(let invItem of inventoryItems){
             await dataServer.getEntity('itemsInventory').updateById(invItem.id, {
                 'is_active': 0,
@@ -105,7 +113,7 @@ class PlayerStateReset
         for(let playerId of Object.keys(snapshots)){
             let snap = snapshots[playerId];
             await PlayerStateReset.restorePlayerStats(dataServer, snap.stats);
-            await PlayerStateReset.restorePlayerInventory(dataServer, snap.inventoryItems || []);
+            await PlayerStateReset.restorePlayerInventory(dataServer, playerId, snap.inventoryItems || []);
             await PlayerStateReset.clearRewardsState(dataServer, playerId);
             if(snap.userId){
                 await PlayerStateReset.ensureTodayLogin(dataServer, snap.userId);

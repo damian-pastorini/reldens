@@ -3,8 +3,9 @@
  * Reldens - Room Enemies Reset
  *
  * Restores every respawn-managed object in the live scene rooms back to active, immediately, without
- * waiting for the seeded respawn_time. Enemies killed by one test would otherwise still be missing when
- * the next test starts, which makes combat specs fail for lack of a target instead of for a real defect.
+ * waiting for the seeded respawn_time, and every alive one back to its initial stats. Enemies killed or hurt by one
+ * test would otherwise still be missing or start the next test without their full life, which makes combat specs fail
+ * for lack of a target or of time instead of for a real defect.
  *
  */
 
@@ -23,7 +24,7 @@ class RoomEnemiesReset
         for(let instanceId of Object.keys(roomsManager.createdInstances)){
             restoredCount += await RoomEnemiesReset.restoreRoom(roomsManager.createdInstances[instanceId]);
         }
-        Logger.info('[room-enemies-reset] Restored '+restoredCount+' respawn objects.');
+        Logger.info('[room-enemies-reset] Restored '+restoredCount+' respawn objects to active with their full stats.');
         return restoredCount;
     }
 
@@ -67,6 +68,15 @@ class RoomEnemiesReset
         return restoredCount;
     }
 
+    static restoreFullLife(objInstance)
+    {
+        if(!objInstance.initialStats){
+            return false;
+        }
+        objInstance.stats = Object.assign({}, objInstance.initialStats);
+        return true;
+    }
+
     static isDownState(objInstance)
     {
         let bodyState = objInstance.objectBody ? objInstance.objectBody.bodyState : false;
@@ -85,7 +95,7 @@ class RoomEnemiesReset
             return false;
         }
         if(!RoomEnemiesReset.isDownState(objInstance)){
-            return false;
+            return RoomEnemiesReset.restoreFullLife(objInstance);
         }
         clearTimeout(objInstance.respawnTimer);
         clearTimeout(objInstance.respawnStateTimer);
