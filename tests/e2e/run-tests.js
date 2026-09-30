@@ -3,9 +3,10 @@
  * Reldens - Run Tests
  *
  * Invokes the Playwright CLI with the project config. Before launching it: looks for a free e2e port from the
- * configured one through the next 4 (warns on each busy port, exits when all 5 are busy) and, when --db-reset is passed,
- * drops every table and rebuilds the database with the production scripts (migrations/production) so the
- * e2e runs against a clean production DB. Supports --long, --filter, --port, --clean-output and --db-reset flags.
+ * configured one through the next 4 (warns on each busy port, exits when all 5 are busy) and, when
+ * --db-reset=<dbName> names the tests/config.json database, drops every table and rebuilds the database with the
+ * production scripts (migrations/production) so the e2e runs against a clean production DB. Supports --long,
+ * --filter, --port, --clean-output and --db-reset flags.
  *
  */
 
@@ -33,8 +34,10 @@ class RunTests
         if(!port){
             process.exit(1);
         }
-        if(process.argv.includes('--db-reset') || 'true' === process.env.npm_config_db_reset){
-            if(!await RunTests.resetDatabase(config)){
+        let dbResetArg = process.argv.find(a => a.startsWith('--db-reset'));
+        let dbResetName = dbResetArg ? dbResetArg.slice('--db-reset='.length) : (process.env.npm_config_db_reset || '');
+        if(dbResetArg || '' !== dbResetName){
+            if(!await RunTests.resetDatabase(config, dbResetName)){
                 process.exit(1);
             }
         }
@@ -107,8 +110,15 @@ class RunTests
         return true;
     }
 
-    static async resetDatabase(config)
+    static async resetDatabase(config, dbResetName)
     {
+        if(!config.dbName || config.dbName !== dbResetName){
+            Logger.error(
+                'Database reset refused: pass --db-reset='+config.dbName+' to confirm the tests/config.json database'
+                +' can be dropped.'
+            );
+            return false;
+        }
         let productionPath = FileHandler.joinPaths(process.cwd(), 'migrations', 'production');
         Logger.info('Resetting database with production data before e2e run...');
         if(!await new DatabaseResetUtility(config, [

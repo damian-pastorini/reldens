@@ -21,7 +21,9 @@ Flags accepted by `tests/e2e/run-tests.js`:
 - `--port=<port>` - overrides the port from `tests/config.json`; when the port is busy the runner logs a warning and
   tries the next one, up to 5 ports, and stops with a critical log when all of them are busy
 - `--clean-output` - removes `test-results/` before the run
-- `--db-reset` - drops every table and rebuilds the database from `migrations/production` before the run
+- `--db-reset=<dbName>` - drops every table and rebuilds the database from `migrations/production` before the run;
+  the value must match `dbName` in `tests/config.json` (`--db-reset=reldens_local`), otherwise the run stops without
+  touching the database, so a wrong `dbName` can never drop another database
 - `--max-failures=<n>` - overrides the stop-on-failure limit
 - `--all` - runs every test regardless of failures
 
