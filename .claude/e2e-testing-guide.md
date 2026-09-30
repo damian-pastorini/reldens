@@ -78,7 +78,9 @@ lockouts and the blocks left by one spec never reach the next one:
 - clears the in memory login attempts, joins and creation counters
 - restores the status of the accounts banned by a spec
 - lifts the deny list: restores the address lists switch, deletes every `ip_lists` row and rebuilds the lists
-- clears the `password_reset_sent_at` of the accounts marked by a spec
+- clears the `password_reset_sent_at` of the accounts marked by a spec and of the accounts that received an email from
+  the test mailer; the three e2e accounts are queued on the startup, so the first reset also clears the times left by
+  a previous run on the same database
 - restores the real mailer state captured on the startup and clears the emails recorded by the test sender
 
 The security specs (`test-login-security.spec.js`, `test-admin-security.spec.js`) drive the server state through the

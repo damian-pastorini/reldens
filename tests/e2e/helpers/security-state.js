@@ -183,6 +183,9 @@ class SecurityState
         for(let username of SecurityState.resetSentUsernames){
             await usersRepository.updateBy('username', username, {password_reset_sent_at: null});
         }
+        for(let sentEmail of SecurityState.sentEmails){
+            await usersRepository.updateBy('email', sentEmail.to, {password_reset_sent_at: null});
+        }
         SecurityState.resetSentUsernames = [];
     }
 
@@ -197,9 +200,14 @@ class SecurityState
         Logger.info('[security-state] Login attempts, bans, address lists, reset emails and mailer cleared.');
     }
 
-    static registerEndpoints(serverManager)
+    static registerEndpoints(serverManager, config)
     {
         SecurityState.captureDefaults(serverManager);
+        SecurityState.resetSentUsernames = [
+            sc.get(config, 'e2eUsername', 'root'),
+            sc.get(config, 'e2eUsername2', 'root2'),
+            sc.get(config, 'e2eUsername3', 'root3')
+        ];
         let app = serverManager.app;
         app.post('/api/e2e/security/settings', (request, response) => {
             SecurityState.applySettings(serverManager, {...SecurityState.defaultSettings, ...request.body});

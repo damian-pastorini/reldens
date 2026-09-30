@@ -229,7 +229,7 @@ class CollectGameData
         CollectGameData.attachEventListeners(serverManager);
         await TestDataSetup.ensureRequiredItems(serverManager.dataServer, config);
         let snapshots = await PlayerStateReset.captureSnapshots(serverManager.dataServer, config);
-        SecurityState.registerEndpoints(serverManager);
+        SecurityState.registerEndpoints(serverManager, config);
         PlayerStateReset.registerResetEndpoint(serverManager, snapshots, config);
         CollectGameData.serverManager = serverManager;
     }
