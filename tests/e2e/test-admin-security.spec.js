@@ -3,8 +3,8 @@
  * Reldens - Test Admin Security
  *
  * Tests the administration panel protections through the browser: the CSRF token sent by the login, the entity forms,
- * the upload forms and the upload routes, the session and token cookies, the login limiter and the banned
- * administrator.
+ * the upload forms, the upload routes and the tileset tool requests, the session and token cookies, the logout over
+ * POST, the login limiter and the banned administrator before and after the login.
  *
  */
 
@@ -185,6 +185,60 @@ class TestAdminSecurity
         await screenshots.capture(page, 'banned-administrator-rejected');
     }
 
+    static async runTilesetRoutesTokenTest(page, gameConfig, longRun)
+    {
+        let tilesetPath = TestAdminSecurity.adminPath(gameConfig)+'/tileset-analyzer';
+        await TestAdminSecurity.loginAsAdmin(page, gameConfig, longRun);
+        let uploadResponse = await page.request.post(tilesetPath+'/upload', {
+            multipart: {tileSize: '32'},
+            maxRedirects: 0
+        });
+        expect(uploadResponse.status(), 'Tileset upload without the token').toBe(403);
+        let deleteResponse = await page.request.delete(tilesetPath+'/sessions/e2e-missing-session', {maxRedirects: 0});
+        expect(deleteResponse.status(), 'Tileset session delete without the token').toBe(403);
+        let tokenDeleteResponse = await page.request.delete(tilesetPath+'/sessions/e2e-missing-session', {
+            headers: {'X-CSRF-Token': await TestAdminSecurity.fetchCsrfToken(page)},
+            maxRedirects: 0
+        });
+        expect(tokenDeleteResponse.status(), 'Tileset session delete with the token').not.toBe(403);
+    }
+
+    static async runLogoutTest(page, screenshots, gameConfig, longRun)
+    {
+        let adminPath = TestAdminSecurity.adminPath(gameConfig);
+        await TestAdminSecurity.loginAsAdmin(page, gameConfig, longRun);
+        let getLogoutResponse = await page.request.get(adminPath+'/logout', {maxRedirects: 0});
+        expect(getLogoutResponse.status(), 'Logout over GET').not.toBe(302);
+        await page.goto(adminPath);
+        await expect(page.locator(Selectors.admin.dashboard)).toBeVisible(
+            { timeout: TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun) }
+        );
+        await page.click(Selectors.admin.accountMenu);
+        await page.click(Selectors.admin.logoutLink);
+        await page.locator(Selectors.admin.dialogConfirm).filter({visible: true}).click();
+        await expect(page.locator(Selectors.admin.loginForm)).toBeVisible(
+            { timeout: TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun) }
+        );
+        await page.goto(adminPath);
+        await expect(page.locator(Selectors.admin.loginForm)).toBeVisible(
+            { timeout: TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun) }
+        );
+        await screenshots.capture(page, 'admin-logged-out');
+    }
+
+    static async runBannedLoggedAdministratorTest(page, screenshots, gameConfig, longRun)
+    {
+        await TestAdminSecurity.loginAsAdmin(page, gameConfig, longRun);
+        let banResult = await SecurityApi.banUser(gameConfig, gameConfig.e2eUsername || 'root');
+        expect(banResult.ok, 'The administrator account must exist to be banned').toBeTruthy();
+        await page.reload();
+        await expect(page.locator(Selectors.admin.loginForm)).toBeVisible(
+            { timeout: TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun) }
+        );
+        await expect(page.locator(Selectors.admin.dashboard)).toHaveCount(0);
+        await screenshots.capture(page, 'banned-logged-administrator-session-ended');
+    }
+
     static run()
     {
         test.describe('Admin Security', () => {
@@ -222,6 +276,21 @@ class TestAdminSecurity
                 'banned administrator can not log in',
                 async ({ page, screenshots, gameConfig, longRun }) => {
                     await TestAdminSecurity.runBannedAdministratorTest(page, screenshots, gameConfig, longRun);
+                }
+            );
+            test('tileset tool requests without the CSRF token are rejected', async ({ page, gameConfig, longRun }) => {
+                await TestAdminSecurity.runTilesetRoutesTokenTest(page, gameConfig, longRun);
+            });
+            test(
+                'logout over GET keeps the session and the sidebar logout ends it',
+                async ({ page, screenshots, gameConfig, longRun }) => {
+                    await TestAdminSecurity.runLogoutTest(page, screenshots, gameConfig, longRun);
+                }
+            );
+            test(
+                'banned logged administrator loses the session on reload',
+                async ({ page, screenshots, gameConfig, longRun }) => {
+                    await TestAdminSecurity.runBannedLoggedAdministratorTest(page, screenshots, gameConfig, longRun);
                 }
             );
         });

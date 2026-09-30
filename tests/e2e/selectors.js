@@ -47,7 +47,9 @@ class Selectors
             editForm: '#edit-form',
             saveButton: 'button[form="edit-form"][value="save"]',
             deleteTopButton: '.actions .form-delete [type="submit"]',
-            dialogConfirm: '.confirm-dialog .dialog-confirm'
+            dialogConfirm: '.confirm-dialog .dialog-confirm',
+            accountMenu: '.user-area .side-bar-item-header',
+            logoutLink: '.logout-link'
         };
     }
 
