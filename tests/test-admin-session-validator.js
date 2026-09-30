@@ -19,7 +19,7 @@ class TestAdminSessionValidator extends BaseTest
         this.loginPath = '/reldens-admin/login';
     }
 
-    async validateSession(loadUserById, sessionRevision)
+    async validateSession(loadUserById, sessionRevision, requestHeaders = {}, blackList = {})
     {
         let validation = {redirects: [], destroyedSessions: 0, nextCalls: 0};
         let adminSessionValidator = new AdminSessionValidator({
@@ -28,7 +28,7 @@ class TestAdminSessionValidator extends BaseTest
         });
         let request = {
             path: '/users',
-            headers: {},
+            headers: requestHeaders,
             session: {
                 user: {id: 5, sessionRevision},
                 destroy: (callback) => {
@@ -43,7 +43,7 @@ class TestAdminSessionValidator extends BaseTest
                 res: {redirect: (path) => validation.redirects.push(path)},
                 next: () => validation.nextCalls++
             },
-            {router: {rootPath: '/reldens-admin', loginPath: '/login', blackList: {}}}
+            {router: {rootPath: '/reldens-admin', loginPath: '/login', blackList}}
         );
         return validation;
     }
@@ -97,6 +97,36 @@ class TestAdminSessionValidator extends BaseTest
             this.assert.strictEqual(validation.nextCalls, 0);
             this.assert.strictEqual(validation.destroyedSessions, 0);
             this.assert.deepStrictEqual(validation.redirects, [this.loginPath]);
+        });
+    }
+
+    async validateBlacklistedPath(referer)
+    {
+        return await this.validateSession(
+            this.createAdminUserLoader({}),
+            Encryptor.hashData(this.passwordHash),
+            {host: 'game.test', referer},
+            {[this.adminRoleId]: ['/users']}
+        );
+    }
+
+    async testTheBlacklistedPathReturnsToTheLocalReferer()
+    {
+        await this.test('a blacklisted path redirects back to a same host referer inside the panel', async () => {
+            let validation = await this.validateBlacklistedPath('http://game.test/reldens-admin/rooms?page=2');
+            this.assert.strictEqual(validation.nextCalls, 0);
+            this.assert.deepStrictEqual(validation.redirects, ['/reldens-admin/rooms?page=2']);
+        });
+    }
+
+    async testTheBlacklistedPathNeverRedirectsOutsideThePanel()
+    {
+        await this.test('a blacklisted path ignores external, outside the panel and invalid referers', async () => {
+            let referers = ['https://attacker.test/reldens-admin', 'http://game.test/other-page', 'not a url', ''];
+            for(let referer of referers){
+                let validation = await this.validateBlacklistedPath(referer);
+                this.assert.deepStrictEqual(validation.redirects, [this.loginPath], referer);
+            }
         });
     }
 
