@@ -92,13 +92,35 @@ class TestLoginManagerUserRequest extends BaseTest
         });
     }
 
-    async testThePendingValidationsCounterIsReleased()
+    async testThePendingValidationsCounterIsReleasedAfterEachLogin()
     {
-        await this.test('the pending password validations counter is released after each validation', async () => {
-            let loginManager = this.createLoginManager({}).loginManager;
+        await this.test('the reserved password validation is released after each game and admin login', async () => {
             let storedPassword = Encryptor.encryptPassword('secret');
-            this.assert.strictEqual(await loginManager.validatePassword('secret', storedPassword), true);
-            this.assert.strictEqual(await loginManager.validatePassword('wrong', storedPassword), false);
+            let storedUsers = {
+                player: {id: 1, username: 'player', role_id: this.playerRoleId, status: '1', password: storedPassword}
+            };
+            let loginManager = this.createLoginManager(storedUsers).loginManager;
+            let validLogin = await loginManager.processUserRequest({username: 'player', password: 'secret'});
+            await loginManager.processUserRequest({username: 'player', password: 'wrong'});
+            await loginManager.roleAuthenticationCallback('admin@test.com', 'x', this.adminRoleId);
+            this.assert.strictEqual(validLogin.user.id, 1);
+            this.assert.strictEqual(loginManager.pendingPasswordValidations, 0);
+        });
+    }
+
+    async testTheConcurrentLoginsCannotExceedTheLimit()
+    {
+        await this.test('concurrent logins reserve the validation before the user lookup and respect the limit', async () => {
+            let loginSetup = this.createLoginManager({player: {id: 1, username: 'player'}});
+            let loginManager = loginSetup.loginManager;
+            loginManager.maxPendingPasswordValidations = 1;
+            await Promise.all([
+                loginManager.processUserRequest({username: 'player', password: 'secret'}),
+                loginManager.processUserRequest({username: 'player', password: 'secret'}),
+                loginManager.roleAuthenticationCallback('admin@test.com', 'x', this.adminRoleId)
+            ]);
+            this.assert.deepStrictEqual(loginSetup.loadedUsernames, ['player']);
+            this.assert.strictEqual(loginSetup.loadedEmails.length, 0);
             this.assert.strictEqual(loginManager.pendingPasswordValidations, 0);
         });
     }

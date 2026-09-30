@@ -62,7 +62,7 @@ The same `LoginAttempts` registry counts, in memory only:
 
 The registry keys are `Map` entries: the expired hits and blocks are swept once per window, the identities are truncated to 255 characters in the keys, and at 50000 tracked keys the oldest key is evicted.
 
-The `LoginManager` also caps the password validations running at the same time (`RELDENS_MAX_CONCURRENT_PASSWORD_VALIDATIONS`), the validation uses the asynchronous pbkdf2 of `Encryptor.validatePassword()` so it does not block the event loop.
+The `LoginManager` also caps the password validations running at the same time (`RELDENS_MAX_CONCURRENT_PASSWORD_VALIDATIONS`): each game or administration login reserves its slot before the user lookup and releases it when the login ends, so concurrent requests can not pass the check together. The validation uses the asynchronous pbkdf2 of `Encryptor.validatePassword()` so it does not block the event loop.
 
 ## Administration Panel Login Limiter
 
