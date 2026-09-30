@@ -2,15 +2,15 @@
  *
  * Reldens - Room Enemies Reset
  *
- * Restores every respawn-managed object in the live scene rooms back to active, immediately, without
- * waiting for the seeded respawn_time, and every alive one back to its initial stats. Enemies killed or hurt by one
- * test would otherwise still be missing or start the next test without their full life, which makes combat specs fail
- * for lack of a target or of time instead of for a real defect.
+ * Runs the respawn restore on every respawn-managed object in the live scene rooms, dead or alive, immediately, without
+ * waiting for the seeded respawn_time: each one is stopped, gets its initial stats, a respawn tile and the active state.
+ * Enemies killed, hurt or moved by one test would otherwise be missing, start the next test without their full life or
+ * stuck where the last fight left them, which makes combat specs fail for lack of a target or of time instead of for a
+ * real defect.
  *
  */
 
 const { Logger } = require('@reldens/utils');
-const { GameConst } = require('../../../lib/game/constants');
 
 class RoomEnemiesReset
 {
@@ -68,37 +68,15 @@ class RoomEnemiesReset
         return restoredCount;
     }
 
-    static restoreFullLife(objInstance)
-    {
-        if(!objInstance.initialStats){
-            return false;
-        }
-        objInstance.stats = Object.assign({}, objInstance.initialStats);
-        return true;
-    }
-
-    static isDownState(objInstance)
-    {
-        let bodyState = objInstance.objectBody ? objInstance.objectBody.bodyState : false;
-        if(!bodyState){
-            return false;
-        }
-        if(GameConst.STATUS.DEATH === bodyState.inState){
-            return true;
-        }
-        return GameConst.STATUS.DISABLED === bodyState.inState;
-    }
-
     static async restoreInstance(objInstance, room)
     {
         if(!objInstance || !objInstance.respawnBehavior){
             return false;
         }
-        if(!RoomEnemiesReset.isDownState(objInstance)){
-            return RoomEnemiesReset.restoreFullLife(objInstance);
-        }
         clearTimeout(objInstance.respawnTimer);
         clearTimeout(objInstance.respawnStateTimer);
+        clearTimeout(objInstance.objectBody?.moveToOriginalPointTimer);
+        objInstance.objectBody?.stopFull();
         try {
             await objInstance.respawnBehavior.restore(room);
             objInstance.respawnBehavior.setActive(room);
