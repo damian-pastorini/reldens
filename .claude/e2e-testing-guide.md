@@ -17,8 +17,9 @@ npm run test:e2e:long:clean
 Flags accepted by `tests/e2e/run-tests.js`:
 
 - `--long` - slow motion plus scaled timeouts (also via `LONG_RUN=1`)
-- `--filter=<text>` - passed to Playwright as `--grep`
-- `--port=<port>` - overrides the port from `tests/config.json`
+- `--filter=<text>` - passed to Playwright as a quoted `--grep`, so a filter with spaces works (`"--filter=Combat System"`)
+- `--port=<port>` - overrides the port from `tests/config.json`; when the port is busy the runner logs a warning and
+  tries the next one, up to 5 ports, and stops with a critical log when all of them are busy
 - `--clean-output` - removes `test-results/` before the run
 - `--db-reset` - drops every table and rebuilds the database from `migrations/production` before the run
 - `--max-failures=<n>` - overrides the stop-on-failure limit
@@ -41,8 +42,8 @@ Do NOT point `tests/config.json` at the branch database.
 `--db-reset` rebuilds the e2e database from scratch on every run, so each run starts from the same content:
 `DatabaseResetUtility` (`tests/database-reset-utility.js`) drops every table of the configured database with
 `tests/fixtures/database-drop-tables.sql`, then runs the production scripts from `migrations/production`:
-`reldens-install-v4.0.0.sql`, `reldens-basic-config-v4.0.0.sql` and `reldens-sample-data-v4.0.0.sql`. The unit
-tests (`npm run test:default`) run the same drop and install before the basic config and
+`reldens-install-v4.0.0.sql`, `reldens-basic-config-v4.0.0.sql` and `reldens-sample-data-v4.0.0.sql`. The
+self-hosted integration tests (`npm run test:default`) run the same drop and install before the basic config and
 `migrations/development/reldens-test-sample-data-v4.0.0.sql`. Tables or columns left by an older schema never
 survive a reset.
 
@@ -97,7 +98,11 @@ panel login limiter allows 10 times `RELDENS_ADMIN_LOGIN_MAX_ATTEMPTS`; the limi
 The Playwright version in `package.json` pins a chromium revision (`node_modules/playwright-core/browsers.json`).
 When the matching build is not installed every test fails instantly with
 `browserType.launch: Executable doesn't exist`. Install it with `npx playwright install chromium`, or point
-`PLAYWRIGHT_BROWSER_EXECUTABLE` at an installed chromium or chrome-headless-shell executable.
+`PLAYWRIGHT_BROWSER_EXECUTABLE` at an installed chromium executable.
+
+The config launches the `chromium` channel (the full Chromium build in the new headless mode) instead of the
+`chrome-headless-shell` build: with the headless shell the administration login button never passed the Playwright
+stable check within the 1 second action timeout.
 
 ## Outputs
 
@@ -105,18 +110,26 @@ Written under `test-results/` (gitignored):
 
 - `videos/<test-title-slug>.webm` - one per test, plus `-player2` for two-page specs
 - `screenshots/<test-title-slug>/` - numbered captures taken by the specs
-- `server.log` - the game server startup log, it ends with the `[player-state-reset] Reset endpoint registered.` line
-- `tests.log` - the test worker log, which also receives the game server log lines written while the specs run
-  (`BaseE2eTest` replaces the `Logger.callback` once the specs load)
-- `test-<spec>-<hash>-<title>/` - only created for failures, holds `error-context.md` and `test-failed-1.png`
+- `console-<Y-m-d-H-i-s>.log` - the whole output of a run when it is started with
+  `> "<branch>/reldens/test-results/console-$(date +%Y-%m-%d-%H-%M-%S).log" 2>&1`, follow it with `tail -f`
+- `server.log` - the console output of the Playwright main process, where the game server runs: the server log lines,
+  the framework output (Colyseus included) and any uncaught exception
+- `tests.log` - the console output of the test worker, which also receives the game server log lines written while
+  the specs run
+- `playwright/test-<spec>-<hash>-<title>/` - only created for failures, holds `error-context.md` and
+  `test-failed-1.png`; Playwright empties its `test-results/playwright/` output folder when a run starts, so the logs
+  above are kept
+
+An uncaught exception in the game server makes Colyseus shut it down and exit the run: the stack is written to
+`server.log` and to the run output, and the reporter prints the `Run aborted` line with the test it stopped at.
 
 The manual verification pages in `.claude/tests-guide/` link these videos with a relative path, so they only
 resolve when the guide is opened from the same working copy that produced the run.
 
 ## Reading a failure
 
-Start with `test-results/test-*/error-context.md`: it names the spec, the failing call and the page snapshot at
-that moment. Then check `test-results/tests.log` for the server side of the same timestamp (`server.log` only covers
-the startup). A timeout on
+Start with `test-results/playwright/test-*/error-context.md`: it names the spec, the failing call and the page snapshot
+at that moment. Then check `test-results/tests.log` and `test-results/server.log` for the server side of the same
+timestamp. A timeout on
 `#player-selection:not(.hidden)` means login never completed; a timeout on `window.reldens` means the client
 bundle never initialized.

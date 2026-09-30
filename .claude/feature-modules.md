@@ -120,9 +120,10 @@ Admin panel integration with @reldens/cms
 Firebase integration
 - Firebase authentication
 - Client-side Firebase SDK integration
-- `FirebaseIdTokenVerifier` verifies the ID token on the server and uses the Firebase uid signed with the password
-  secret as the account password; an account whose stored password was made from the plain uid is migrated to the
-  signed password on its next verified login (`reldens.loginPasswordValidationFallback` event)
+- `FirebaseIdTokenVerifier` verifies the ID token on the server and only accepts Firebase accounts with a verified
+  email; the login is validated by the username and that verified email (`reldens.loginPasswordValidationFallback`
+  event), the password sent to the login flow is random, so no Firebase value works on the regular password form
+- The accounts created through the Firebase login are stored with the `firebase` origin in the `users.origin` column
 
 ### Ads (`lib/ads/`)
 Advertisement integration system

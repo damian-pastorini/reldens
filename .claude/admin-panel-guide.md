@@ -71,7 +71,8 @@ Enabled by `RELDENS_ADMIN_CSRF_ENABLED` or the `security/adminCsrf/enabled` conf
 - `AdminSessionValidator` (`lib/admin/server/admin-session-validator.js`) hooks the `reldens.adminIsAuthenticated`
   event: on every authenticated request it reloads the session user and destroys the session when the user was deleted,
   banned, moved to another role or changed its password (the login stores the `sessionRevision` hash of the password
-  hash), then it applies the role black list.
+  hash), then it applies the role black list: a blacklisted path redirects back to the referer only when it is on the
+  same host and inside the panel root path, any other referer redirects to the login.
 
 ---
 
@@ -303,7 +304,9 @@ Class paths, level sets, and level-based stat modifiers.
 
 ### Users
 Player accounts, stats, scores, and class assignments.
-- `users` - User accounts
+- `users` - User accounts; the `origin` column (`registration`, `guest`, `firebase` or `admin`) is set by the system,
+  so `UsersEntityOverride` removes it from the edit properties and the rows created from the panel get the
+  `registration` default
 - `usersLogin` - Login records/sessions
 - `usersLocale` - Per-user locale settings
 - `players` - Player entities linked to users
