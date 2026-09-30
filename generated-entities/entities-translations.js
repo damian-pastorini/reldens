@@ -84,7 +84,8 @@ module.exports.entitiesTranslations = {
         'users': 'Users',
         'users_locale': 'Users Locale',
         'users_login': 'Users Login',
-        'users_password_resets': 'Users Password Resets'
+        'users_password_resets': 'Users Password Resets',
+        'admin_sessions': 'Admin Sessions'
     },
     fields: {
         'ads_banner': {
@@ -722,7 +723,8 @@ module.exports.entitiesTranslations = {
             'updated_at': 'Updated At',
             'played_time': 'Played Time',
             'login_count': 'Login Count',
-            'password_reset_sent_at': 'Password Reset Sent At'
+            'password_reset_sent_at': 'Password Reset Sent At',
+            'origin': 'Origin'
         },
         'users_locale': {
             'id': 'ID',
@@ -734,6 +736,12 @@ module.exports.entitiesTranslations = {
             'user_id': 'User ID',
             'login_date': 'Login Date',
             'logout_date': 'Logout Date'
+        },
+        'admin_sessions': {
+            'id': 'ID',
+            'sid': 'Sid',
+            'data': 'Data',
+            'expires': 'Expires'
         }
     }
 };

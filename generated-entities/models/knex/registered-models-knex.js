@@ -83,6 +83,7 @@ const { UsersModel } = require('./users-model');
 const { UsersLocaleModel } = require('./users-locale-model');
 const { UsersLoginModel } = require('./users-login-model');
 const { UsersPasswordResetsModel } = require('./users-password-resets-model');
+const { AdminSessionsModel } = require('./admin-sessions-model');
 const { entitiesConfig } = require('../../entities-config');
 const { entitiesTranslations } = require('../../entities-translations');
 
@@ -165,7 +166,8 @@ let rawRegisteredEntities = {
     users: UsersModel,
     usersLocale: UsersLocaleModel,
     usersLogin: UsersLoginModel,
-    usersPasswordResets: UsersPasswordResetsModel
+    usersPasswordResets: UsersPasswordResetsModel,
+    adminSessions: AdminSessionsModel
 };
 
 module.exports.rawRegisteredEntities = rawRegisteredEntities;

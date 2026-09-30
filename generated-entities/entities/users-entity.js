@@ -61,6 +61,9 @@ class UsersEntity extends EntityProperties
             password_reset_sent_at: {
                 type: 'datetime',
                 dbType: 'timestamp'
+            },
+            origin: {
+                dbType: 'varchar'
             }
         };
         let propertiesKeys = Object.keys(properties);

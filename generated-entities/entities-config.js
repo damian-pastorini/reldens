@@ -83,6 +83,7 @@ const { UsersEntity } = require('./entities/users-entity');
 const { UsersLocaleEntity } = require('./entities/users-locale-entity');
 const { UsersLoginEntity } = require('./entities/users-login-entity');
 const { UsersPasswordResetsEntity } = require('./entities/users-password-resets-entity');
+const { AdminSessionsEntity } = require('./entities/admin-sessions-entity');
 
 let entitiesConfig = {
     adsBanner: AdsBannerEntity.propertiesConfig(),
@@ -163,7 +164,8 @@ let entitiesConfig = {
     users: UsersEntity.propertiesConfig(),
     usersLocale: UsersLocaleEntity.propertiesConfig(),
     usersLogin: UsersLoginEntity.propertiesConfig(),
-    usersPasswordResets: UsersPasswordResetsEntity.propertiesConfig()
+    usersPasswordResets: UsersPasswordResetsEntity.propertiesConfig(),
+    adminSessions: AdminSessionsEntity.propertiesConfig()
 };
 
 module.exports.entitiesConfig = entitiesConfig;
