@@ -7,6 +7,7 @@
 const { BaseTest } = require('./base-test');
 const { UserRegistration } = require('../lib/game/server/user-registration');
 const { LoginAttempts } = require('../lib/game/server/memory/login-attempts');
+const { UsersConst } = require('../lib/users/constants');
 const { Encryptor } = require('@reldens/server-utils');
 const { sc } = require('@reldens/utils');
 
@@ -186,6 +187,22 @@ class TestUserRegistration extends BaseTest
             ]);
             this.assert.strictEqual(registrationResult, registrationSetup.invalidResult);
             this.assert.strictEqual(registrationSetup.createdUsers.length, 0);
+        });
+    }
+
+    async testTheCreatedUsersStoreTheirRegistrationOrigin()
+    {
+        await this.test('the registration, Firebase and guest accounts store their registration origin', async () => {
+            let registrationSetup = this.createRegistrationSetup([], 10);
+            await this.processRegistrations(registrationSetup, [
+                {username: 'player', email: 'player@test.com', password: 'secret'},
+                {username: 'firebase', email: 'firebase@test.com', password: 'secret', isFirebaseLogin: true}
+            ]);
+            await this.processGuests(registrationSetup, [{isGuest: true, isNewUser: true}]);
+            this.assert.deepStrictEqual(
+                registrationSetup.createdUsers.map((createdUser) => createdUser.origin),
+                [UsersConst.ORIGINS.REGISTRATION, UsersConst.ORIGINS.FIREBASE, UsersConst.ORIGINS.GUEST]
+            );
         });
     }
 
