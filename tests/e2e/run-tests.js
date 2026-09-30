@@ -2,10 +2,10 @@
  *
  * Reldens - Run Tests
  *
- * Invokes the Playwright CLI with the project config. Before launching it: verifies the e2e port is
- * free (exits with a clear message instead of freezing if it is busy) and, when --db-reset is passed,
- * reseeds the database with the production data (migrations/production) so the e2e runs against a
- * clean production DB. Supports --long, --filter, --port, --clean-output and --db-reset flags.
+ * Invokes the Playwright CLI with the project config. Before launching it: looks for a free e2e port from the
+ * configured one through the next 4 (warns on each busy port, exits when all 5 are busy) and, when --db-reset is passed,
+ * drops every table and rebuilds the database with the production scripts (migrations/production) so the
+ * e2e runs against a clean production DB. Supports --long, --filter, --port, --clean-output and --db-reset flags.
  *
  */
 
@@ -18,6 +18,8 @@ const { DatabaseResetUtility } = require('../database-reset-utility');
 
 class RunTests
 {
+    static portAttempts = 5;
+
     static async run()
     {
         let config = FileHandler.fetchFileJson(FileHandler.joinPaths(process.cwd(), 'tests', 'config.json'));
@@ -26,8 +28,9 @@ class RunTests
             process.exit(1);
         }
         let portArg = process.argv.find(a => a.startsWith('--port='));
-        let port = portArg ? portArg.slice('--port='.length) : (process.env.npm_config_port || config.port || 8080);
-        if(!await RunTests.ensurePortAvailable(port)){
+        let requestedPort = portArg ? portArg.slice('--port='.length) : (process.env.npm_config_port || config.port || 8080);
+        let port = await RunTests.findAvailablePort(Number(requestedPort));
+        if(!port){
             process.exit(1);
         }
         if(process.argv.includes('--db-reset') || 'true' === process.env.npm_config_db_reset){
@@ -54,24 +57,49 @@ class RunTests
         let filterValue = filterArg ? filterArg.slice('--filter='.length) : (process.env.npm_config_filter || null);
         let playwrightArgs = ['playwright', 'test', '--config=tests/e2e/playwright.config.js'];
         if(filterValue){
-            playwrightArgs.push('--grep', filterValue);
+            playwrightArgs.push('--grep', '"'+filterValue+'"');
         }
         let result = spawnSync(
             'npx',
             playwrightArgs,
             {stdio: ['ignore', 'inherit', 'inherit'], env: process.env, shell: true}
         );
-        process.exit(result.status || 0);
+        if(result.error){
+            Logger.critical('Playwright could not be launched: '+result.error.message);
+            process.exit(1);
+        }
+        if(result.signal){
+            Logger.critical('Playwright was ended by the signal '+result.signal+'.');
+            process.exit(1);
+        }
+        if(0 !== result.status){
+            Logger.error('Playwright ended with the exit code '+result.status+'.');
+            process.exit(result.status);
+        }
+        Logger.info('Playwright ended with the exit code 0.');
+        process.exit(0);
     }
 
-    static async ensurePortAvailable(port)
+    static async findAvailablePort(firstPort)
+    {
+        let lastPort = firstPort+RunTests.portAttempts-1;
+        for(let port = firstPort; port <= lastPort; port++){
+            if(await RunTests.isPortAvailable(port)){
+                return port;
+            }
+        }
+        Logger.critical('No free port between '+firstPort+' and '+lastPort+', free one of them and run again.');
+        return false;
+    }
+
+    static async isPortAvailable(port)
     {
         let tester = net.createServer();
-        tester.listen(Number(port), 'localhost');
+        tester.listen(port, 'localhost');
         try {
             await once(tester, 'listening');
         } catch(error){
-            Logger.error('Server initialization failed: port '+port+' is already in use ('+error.message+'), free it and run again.');
+            Logger.warning('Port '+port+' is not available ('+error.message+'), checking the next port.');
             return false;
         }
         tester.close();

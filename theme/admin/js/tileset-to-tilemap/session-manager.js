@@ -76,7 +76,7 @@ class TilesetSessionManager
     {
         return (await fetch('sessions/'+saveId+'/save', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: adminFunctions.csrfHeaders({'Content-Type': 'application/json'}),
             body: JSON.stringify(body)
         })).json();
     }
@@ -266,7 +266,10 @@ class TilesetSessionManager
         this.app.modals.show(
             'Delete session '+sessionId+'? This will remove all generated files.',
             async () => {
-                let response = await fetch('sessions/'+sessionId, { method: 'DELETE' });
+                let response = await fetch('sessions/'+sessionId, {
+                    method: 'DELETE',
+                    headers: adminFunctions.csrfHeaders({})
+                });
                 let data = await response.json();
                 if(!data.success){
                     return;

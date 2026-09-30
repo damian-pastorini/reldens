@@ -15,8 +15,8 @@ let testConfig = FileHandler.exists(configPath) ? FileHandler.fetchFileJson(conf
 let longRun = '1' === process.env.LONG_RUN;
 let envPort = process.env.RELDENS_E2E_PORT || null;
 let baseUrl = envPort ? 'http://localhost:'+envPort : (testConfig.baseUrl || 'http://localhost:8080');
-let testResultsDir = FileHandler.joinPaths(process.cwd(), 'test-results');
-let launchOptions = { slowMo: longRun ? 400 : 0, headless: true };
+let testResultsDir = FileHandler.joinPaths(process.cwd(), 'test-results', 'playwright');
+let launchOptions = { slowMo: longRun ? 400 : 0, headless: true, channel: 'chromium' };
 let maxFailures = Number(process.env.RELDENS_E2E_MAX_FAILURES || '1');
 let browserExecutablePath = process.env.PLAYWRIGHT_BROWSER_EXECUTABLE || '';
 if(browserExecutablePath){

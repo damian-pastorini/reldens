@@ -11,6 +11,7 @@ const { FileHandler } = require('@reldens/server-utils');
 const { Logger } = require('@reldens/utils');
 const { GameDataSkills } = require('./helpers/game-data-skills');
 const { PlayerStateReset } = require('./helpers/player-state-reset');
+const { SecurityState } = require('./helpers/security-state');
 const { TestDataSetup } = require('./helpers/test-data-setup');
 const { StartupGuard } = require('./helpers/startup-guard');
 const { ClientBundleCheck } = require('./helpers/client-bundle-check');
@@ -228,6 +229,7 @@ class CollectGameData
         CollectGameData.attachEventListeners(serverManager);
         await TestDataSetup.ensureRequiredItems(serverManager.dataServer, config);
         let snapshots = await PlayerStateReset.captureSnapshots(serverManager.dataServer, config);
+        SecurityState.registerEndpoints(serverManager);
         PlayerStateReset.registerResetEndpoint(serverManager, snapshots, config);
         CollectGameData.serverManager = serverManager;
     }
@@ -310,13 +312,16 @@ class CollectGameData
         let logPath = FileHandler.joinPaths(process.cwd(), 'test-results', 'server.log');
         FileHandler.createFolder(FileHandler.joinPaths(process.cwd(), 'test-results'));
         FileHandler.writeFile(logPath, '');
-        Logger.callback = (...args) => {
+        let writeLog = (...args) => {
             FileHandler.appendToFile(logPath, args.map(a => 'object' === typeof a ? JSON.stringify(a) : ''+a).join(' ')+'\n');
         };
-        console.log = () => {
-        };
-        console.error = () => {
-        };
+        console.log = writeLog;
+        console.error = writeLog;
+        process.on('uncaughtException', (error) => {
+            let errorDetails = error && error.stack ? error.stack : String(error);
+            writeLog('Uncaught exception, the game server shuts down and ends the run: '+errorDetails);
+            process.stderr.write('\nServer: uncaught exception, the run ends - '+errorDetails+'\n');
+        });
     }
 
     static async run()

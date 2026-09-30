@@ -31,6 +31,16 @@ class Login
 
     static async loginToSelection(page, username, password, longRun)
     {
+        await Login.submitLogin(page, username, password, longRun);
+        await page.waitForSelector(
+            Selectors.characterSelect.container+':not(.hidden)',
+            { timeout: TimeConstants.forLongRun(TimeConstants.CHARACTER_SCREEN, longRun) }
+        );
+        await page.waitForTimeout(TimeConstants.pauseMs(longRun));
+    }
+
+    static async submitLogin(page, username, password, longRun)
+    {
         let typeDelay = TimeConstants.typeDelay(longRun);
         let pauseMs = TimeConstants.pauseMs(longRun);
         let loadTimeout = TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun);
@@ -56,11 +66,17 @@ class Login
         await page.hover(Selectors.login.submit);
         await page.waitForTimeout(pauseMs);
         await page.click(Selectors.login.submit);
-        await page.waitForSelector(
-            Selectors.characterSelect.container+':not(.hidden)',
-            { timeout: TimeConstants.forLongRun(TimeConstants.CHARACTER_SCREEN, longRun) }
+    }
+
+    static async submitLoginExpectingError(page, username, password, longRun)
+    {
+        await Login.submitLogin(page, username, password, longRun);
+        let errorLocator = page.locator(Selectors.login.error);
+        await expect(errorLocator).not.toBeEmpty(
+            { timeout: TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun) }
         );
-        await page.waitForTimeout(pauseMs);
+        await expect(page.locator(Selectors.characterSelect.container+':not(.hidden)')).toHaveCount(0);
+        return (await errorLocator.textContent()).trim();
     }
 
     static async selectScene(page, sceneName)

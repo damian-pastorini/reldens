@@ -2,6 +2,7 @@
     <div class="row">
         <form name="login-form" id="login-form" class="login-form" action="#" method="post">
             <h3 class="form-title">Login</h3>
+            <input type="hidden" name="_csrf" value="{{&csrfToken}}"/>
             <div class="input-box login-email">
                 <label for="email">E-mail</label>
                 <input type="text" name="email" id="email" class="required" required autocomplete="on"/>

@@ -25,7 +25,21 @@ class TestProgressReporter
         this.failed = 0;
         this.skipped = 0;
         this.hasActiveLine = false;
+        this.hasEnded = false;
+        process.once('exit', (exitCode) => this.reportAbortedRun(exitCode));
         process.stdout.write('Running '+this.total+' tests\n\n');
+    }
+
+    reportAbortedRun(exitCode)
+    {
+        if(this.hasEnded) {
+            return;
+        }
+        process.stdout.write(
+            '\nRun aborted with exit code '+exitCode+' during test '+this.index+' of '+this.total
+            +' - '+this.passed+' passed  '+this.failed+' failed  '+this.skipped+' skipped'
+            +', see test-results/server.log for the cause.\n'
+        );
     }
 
     onTestBegin(test)
@@ -82,6 +96,7 @@ class TestProgressReporter
 
     async onEnd(result)
     {
+        this.hasEnded = true;
         try {
             let duration = result && result.duration ? result.duration : 0;
             let seconds = Math.round(duration / 1000);

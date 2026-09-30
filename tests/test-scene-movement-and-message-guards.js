@@ -94,7 +94,9 @@ class TestSceneMovementAndMessageGuards extends BaseTest
         await this.test('the game room ignores a create player message without valid form data', async () => {
             let createdPlayers = [];
             let roomGame = Object.create(RoomGame.prototype);
-            roomGame.loginManager = {createNewPlayer: async (formData) => createdPlayers.push(formData)};
+            roomGame.loginManager = {
+                playerCreation: {createNewPlayer: async (formData) => createdPlayers.push(formData)}
+            };
             let client = {sessionId: 'session-a', auth: {id: 1}, send: () => true};
             await roomGame.handleReceivedMessage(client, {act: GameConst.CREATE_PLAYER});
             await roomGame.handleReceivedMessage(client, {act: GameConst.CREATE_PLAYER, formData: {}});

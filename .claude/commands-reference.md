@@ -173,7 +173,7 @@ reldens resetPassword --user=someuser --pass=NewSecurePass456
 - Service classes: `CreateAdmin` and `ResetPassword` in `lib/users/server/`
 - Both receive `serverManager` in constructor (following importer pattern)
 - Services return boolean result with `error` property for failure details
-- `createAdmin` uses existing `usersRepository.create()` with `role_id` in userData
+- `createAdmin` uses existing `usersRepository.create()` with `role_id` and the `admin` origin in userData
 - `resetPassword` uses `usersRepository.loadOneBy()` and `updateById()`
 - Admin role ID from config: `server/admin/roleId` (default: 1)
 - Email validation via `sc.validateInput(email, 'email')` from `@reldens/utils`

@@ -71,6 +71,29 @@ class TestExpiringHmacToken extends BaseTest
         });
     }
 
+    async testTheMalformedTokenIsRejectedWithoutThrowing()
+    {
+        await this.test('a token with a multi-byte signature of the expected length is rejected', async () => {
+            let expiringHmacToken = new ExpiringHmacToken({secret: this.secret});
+            let now = Date.now();
+            let malformedToken = (now+this.expirationMs)+'.'+'a'.repeat(63)+'é';
+            let tokenValues = [this.email, this.passwordHash];
+            this.assert.strictEqual(expiringHmacToken.validate(tokenValues, malformedToken, now), false);
+        });
+    }
+
+    async testTheTokenWithoutTheExpectedFormatIsRejected()
+    {
+        await this.test('the tokens without the expiration and hex signature format are rejected', async () => {
+            let expiringHmacToken = new ExpiringHmacToken({secret: this.secret});
+            let now = Date.now();
+            let validToken = expiringHmacToken.generate([this.email], now+this.expirationMs);
+            this.assert.strictEqual(expiringHmacToken.validate([this.email], validToken+'.extra', now), false);
+            this.assert.strictEqual(expiringHmacToken.validate([this.email], validToken.toUpperCase(), now), false);
+            this.assert.strictEqual(expiringHmacToken.validate([this.email], validToken, now), true);
+        });
+    }
+
     async testTheTokenIsNotGeneratedWithoutSecret()
     {
         await this.test('the token is not generated without a secret', async () => {

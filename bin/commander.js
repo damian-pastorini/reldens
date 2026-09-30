@@ -11,6 +11,7 @@ const { spawn } = require('child_process');
 const { CreateAdmin } = require('../lib/users/server/create-admin');
 const { ResetPassword } = require('../lib/users/server/reset-password');
 const { ThemeManager } = require('../lib/game/server/theme-manager');
+const { EnvironmentVariablesReader } = require('../lib/game/server/environment-variables-reader');
 const { PackagesInstallation } = require('../lib/game/server/installer/packages-installation');
 const { ServerManager } = require('../server');
 const { FileHandler } = require('@reldens/server-utils');
@@ -52,7 +53,9 @@ class Commander
                 return false;
             }
         }
-        this.themeManager = new ThemeManager(this);
+        this.themeManager = new ThemeManager(
+            {...this, ...EnvironmentVariablesReader.fetchThemeFromEnvironmentVariables()}
+        );
         if(!this.validateThemeManagerCommand()){
             return false;
         }

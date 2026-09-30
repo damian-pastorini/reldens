@@ -57,6 +57,13 @@ class UsersEntity extends EntityProperties
             login_count: {
                 type: 'number',
                 dbType: 'int'
+            },
+            password_reset_sent_at: {
+                type: 'datetime',
+                dbType: 'timestamp'
+            },
+            origin: {
+                dbType: 'varchar'
             }
         };
         let propertiesKeys = Object.keys(properties);

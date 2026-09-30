@@ -153,7 +153,7 @@ class TilesetAiElementOperations
         try {
             let response = await fetch(fetchUrl, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: adminFunctions.csrfHeaders({'Content-Type': 'application/json'}),
                 body: JSON.stringify(body)
             });
             result.data = await response.json();

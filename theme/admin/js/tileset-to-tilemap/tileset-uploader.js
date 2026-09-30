@@ -54,7 +54,12 @@ class TilesetUploader
         formData.append('tilesetParams', JSON.stringify(params));
         let controller = this.app.createAbortController();
         try {
-            let response = await fetch('upload', { method: 'POST', body: formData, signal: controller.signal });
+            let response = await fetch('upload', {
+                method: 'POST',
+                headers: adminFunctions.csrfHeaders({}),
+                body: formData,
+                signal: controller.signal
+            });
             await SharedUtils.readSseStream(response, (part) => this.handleStreamEvent(part, messageEl));
         } finally {
             this.app.releaseAbortController(controller);

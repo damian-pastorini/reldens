@@ -16,6 +16,11 @@ class DatabaseResetUtility
         this.config = config;
         this.productionPath = FileHandler.joinPaths(process.cwd(), 'migrations', 'production');
         this.developmentPath = FileHandler.joinPaths(process.cwd(), 'migrations', 'development');
+        this.fixturesPath = FileHandler.joinPaths(process.cwd(), 'tests', 'fixtures');
+        this.schemaFiles = [
+            {path: this.fixturesPath, file: 'database-drop-tables.sql', label: 'Drop tables'},
+            {path: this.productionPath, file: 'reldens-install-v4.0.0.sql', label: 'Install schema'}
+        ];
         this.seedFiles = seedFiles || [
             {path: this.productionPath, file: 'reldens-basic-config-v4.0.0.sql', label: 'Basic config'},
             {path: this.developmentPath, file: 'reldens-test-sample-data-v4.0.0.sql', label: 'Test sample data'}
@@ -40,7 +45,7 @@ class DatabaseResetUtility
             Logger.log(100, '', 'Database connection failed');
             return false;
         }
-        for(let seed of this.seedFiles){
+        for(let seed of [...this.schemaFiles, ...this.seedFiles]){
             let queryContent = FileHandler.readFile(FileHandler.joinPaths(seed.path, seed.file), {encoding: 'utf8'});
             if(!queryContent){
                 Logger.log(100, '', 'Database reset failed: cannot read '+seed.file);
