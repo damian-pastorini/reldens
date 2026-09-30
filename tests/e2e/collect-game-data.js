@@ -312,13 +312,16 @@ class CollectGameData
         let logPath = FileHandler.joinPaths(process.cwd(), 'test-results', 'server.log');
         FileHandler.createFolder(FileHandler.joinPaths(process.cwd(), 'test-results'));
         FileHandler.writeFile(logPath, '');
-        Logger.callback = (...args) => {
+        let writeLog = (...args) => {
             FileHandler.appendToFile(logPath, args.map(a => 'object' === typeof a ? JSON.stringify(a) : ''+a).join(' ')+'\n');
         };
-        console.log = () => {
-        };
-        console.error = () => {
-        };
+        console.log = writeLog;
+        console.error = writeLog;
+        process.on('uncaughtException', (error) => {
+            let errorDetails = error && error.stack ? error.stack : String(error);
+            writeLog('Uncaught exception, the game server shuts down and ends the run: '+errorDetails);
+            process.stderr.write('\nServer: uncaught exception, the run ends - '+errorDetails+'\n');
+        });
     }
 
     static async run()

@@ -157,13 +157,11 @@ class BaseE2eTest
     {
         let logPath = FileHandler.joinPaths(process.cwd(), 'test-results', 'tests.log');
         FileHandler.createFolder(FileHandler.joinPaths(process.cwd(), 'test-results'));
-        Logger.callback = (...args) => {
+        let writeLog = (...args) => {
             FileHandler.appendToFile(logPath, args.map(a => 'object' === typeof a ? JSON.stringify(a) : ''+a).join(' ')+'\n');
         };
-        console.log = () => {
-        };
-        console.error = () => {
-        };
+        console.log = writeLog;
+        console.error = writeLog;
     }
 }
 
