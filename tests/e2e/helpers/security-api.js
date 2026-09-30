@@ -3,7 +3,8 @@
  * Reldens - Security Api
  *
  * HTTP client for the e2e security endpoints registered by SecurityState: lowered limits, bans, denied addresses,
- * stored address blocks, the simulated restart and the reset password sent time.
+ * stored address blocks, the simulated restart, the reset password sent time, the test mailer switch and the emails
+ * recorded by the test mailer.
  *
  */
 
@@ -22,8 +23,7 @@ class SecurityApi
         if(body){
             options.body = JSON.stringify(body);
         }
-        let response = await fetch(new URL(path, SecurityApi.baseUrl(gameConfig)).toString(), options);
-        return await response.json();
+        return await (await fetch(new URL(path, SecurityApi.baseUrl(gameConfig)).toString(), options)).json();
     }
 
     static async updateSettings(gameConfig, settings)
@@ -68,8 +68,21 @@ class SecurityApi
 
     static async fetchResetSentTime(gameConfig, username)
     {
-        let path = '/api/e2e/security/reset-sent-time?username='+encodeURIComponent(username);
-        return (await SecurityApi.request(gameConfig, 'GET', path)).sentTime;
+        return (await SecurityApi.request(
+            gameConfig,
+            'GET',
+            '/api/e2e/security/reset-sent-time?username='+encodeURIComponent(username)
+        )).sentTime;
+    }
+
+    static async setMailerEnabled(gameConfig, enabled)
+    {
+        return await SecurityApi.request(gameConfig, 'POST', '/api/e2e/security/mailer', {enabled});
+    }
+
+    static async fetchSentEmails(gameConfig)
+    {
+        return (await SecurityApi.request(gameConfig, 'GET', '/api/e2e/security/sent-emails')).emails;
     }
 
 }

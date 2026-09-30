@@ -4,8 +4,10 @@
  *
  * Server side e2e endpoints and reset for the login security features. The endpoints lower the limits a spec needs to
  * reach quickly, ban accounts, deny addresses, list the stored address blocks, simulate the restart that restores them
- * and mark a reset password email as sent. The reset runs before every test with the players reset, so the lockouts,
- * joins, bans, denied addresses and stored blocks left by one spec never affect the next one.
+ * mark a reset password email as sent and switch the mailer on or off with a test sender that only records the emails,
+ * so no real email is ever sent and the app .env mailer settings never matter. The reset runs before every test with
+ * the players reset, so the lockouts, joins, bans, denied addresses, stored blocks and mailer state left by one spec
+ * never affect the next one.
  *
  */
 
@@ -19,6 +21,8 @@ class SecurityState
     static bannedUsersStatus = {};
     static resetSentUsernames = [];
     static denyListTimer = null;
+    static mailerDefaults = {};
+    static sentEmails = [];
 
     static captureDefaults(serverManager)
     {
@@ -30,6 +34,36 @@ class SecurityState
             gameLoginMaxJoins: serverManager.configManager.getWithoutLogs('server/security/gameLogin/maxJoins', 20),
             ipListsEnabled: serverManager.configManager.getWithoutLogs('server/security/ipLists/enabled', false)
         };
+        let mailer = serverManager.mailer;
+        SecurityState.mailerDefaults = {
+            enabled: mailer.enabled,
+            transporter: mailer.transporter,
+            serviceInstance: mailer.serviceInstance
+        };
+    }
+
+    static setMailerEnabled(serverManager, enabled)
+    {
+        let mailer = serverManager.mailer;
+        if(!enabled){
+            mailer.enabled = false;
+            mailer.transporter = false;
+            return;
+        }
+        mailer.enabled = true;
+        mailer.transporter = {e2eTransporter: true};
+        mailer.serviceInstance = {
+            sendMail: async (sendProps) => {
+                SecurityState.sentEmails.push({to: sendProps.mailOptions.to, subject: sendProps.mailOptions.subject});
+                return true;
+            }
+        };
+    }
+
+    static restoreMailer(serverManager)
+    {
+        Object.assign(serverManager.mailer, SecurityState.mailerDefaults);
+        SecurityState.sentEmails = [];
     }
 
     static applySettings(serverManager, settings)
@@ -159,7 +193,8 @@ class SecurityState
         await SecurityState.restoreBannedUsers(serverManager);
         await SecurityState.liftDenyList(serverManager);
         await SecurityState.clearResetSentTimes(serverManager);
-        Logger.info('[security-state] Login attempts, bans, address lists and reset emails cleared.');
+        SecurityState.restoreMailer(serverManager);
+        Logger.info('[security-state] Login attempts, bans, address lists, reset emails and mailer cleared.');
     }
 
     static registerEndpoints(serverManager)
@@ -195,6 +230,13 @@ class SecurityState
         app.get('/api/e2e/security/reset-sent-time', async (request, response) => {
             let username = sc.get(request.query, 'username', '');
             response.json({sentTime: await SecurityState.fetchResetSentTime(serverManager, username)});
+        });
+        app.post('/api/e2e/security/mailer', (request, response) => {
+            SecurityState.setMailerEnabled(serverManager, true === sc.get(request.body, 'enabled', false));
+            response.json({ok: true});
+        });
+        app.get('/api/e2e/security/sent-emails', (request, response) => {
+            response.json({emails: SecurityState.sentEmails});
         });
         Logger.info('[security-state] Security endpoints registered.');
     }

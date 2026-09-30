@@ -79,6 +79,7 @@ lockouts and the blocks left by one spec never reach the next one:
 - restores the status of the accounts banned by a spec
 - lifts the deny list: restores the address lists switch, deletes every `ip_lists` row and rebuilds the lists
 - clears the `password_reset_sent_at` of the accounts marked by a spec
+- restores the real mailer state captured on the startup and clears the emails recorded by the test sender
 
 The security specs (`test-login-security.spec.js`, `test-admin-security.spec.js`) drive the server state through the
 `/api/e2e/security/*` endpoints, wrapped by `tests/e2e/helpers/security-api.js`:
@@ -90,6 +91,10 @@ The security specs (`test-login-security.spec.js`, `test-admin-security.spec.js`
 - `GET stored-blocks` and `POST restore-blocks` - lists the stored temporary address blocks and restores them into a
   cleared login attempts registry, which is what a restart does
 - `POST mark-reset-sent` and `GET reset-sent-time` - store and read the last reset password email time of a user
+- `POST mailer` (`{enabled}`) and `GET sent-emails` - switch the running server mailer on with a test sender that only
+  records the emails (never a real one), or off, and read the recorded emails; the forgot password specs cover the
+  mailer off (form hidden), on inside the interval (same answer, nothing sent) and on outside the interval (one email),
+  so they never depend on the `RELDENS_MAILER_*` values of the app `.env`
 
 The server runs on `localhost`, which turns on the development mode of `AppServerFactory`, so the administration
 panel login limiter allows 10 times `RELDENS_ADMIN_LOGIN_MAX_ATTEMPTS`; the limiter spec reads the real limit from the

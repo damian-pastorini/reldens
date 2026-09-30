@@ -192,9 +192,40 @@ class TestLoginSecurity
         return (await errorLocator.textContent()).trim();
     }
 
+    static async runForgotPasswordDisabledTest(page, screenshots, gameConfig, longRun)
+    {
+        await SecurityApi.setMailerEnabled(gameConfig, false);
+        await page.goto('/');
+        await page.waitForLoadState('networkidle');
+        await expect(page.locator(Selectors.login.form)).toBeVisible(
+            { timeout: TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun) }
+        );
+        await expect(page.locator(Selectors.forgot.form)).toBeHidden();
+        await screenshots.capture(page, 'forgot-hidden-mailer-disabled');
+    }
+
+    static async runForgotPasswordSendTest(page, screenshots, gameConfig, longRun)
+    {
+        let username = gameConfig.e2eUsername || 'root';
+        let email = username+'@yourgame.com';
+        await SecurityApi.setMailerEnabled(gameConfig, true);
+        await TestLoginSecurity.submitForgotPassword(page, email, longRun);
+        await screenshots.capture(page, 'forgot-email-sent');
+        await expect
+            .poll(
+                async () => SecurityApi.fetchSentEmails(gameConfig),
+                { timeout: TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun) }
+            )
+            .toHaveLength(1);
+        let sentEmail = [...await SecurityApi.fetchSentEmails(gameConfig)].shift();
+        expect(sentEmail.to).toBe(email);
+        expect(await SecurityApi.fetchResetSentTime(gameConfig, username)).toBeGreaterThan(0);
+    }
+
     static async runForgotPasswordTest(page, screenshots, gameConfig, longRun)
     {
         let username = gameConfig.e2eUsername || 'root';
+        await SecurityApi.setMailerEnabled(gameConfig, true);
         let sentTime = await SecurityApi.markResetSent(gameConfig, username);
         expect(sentTime).toBeGreaterThan(0);
         let knownEmailMessage = await TestLoginSecurity.submitForgotPassword(page, username+'@yourgame.com', longRun);
@@ -208,6 +239,7 @@ class TestLoginSecurity
         expect(knownEmailMessage).toBe(unknownEmailMessage);
         let lastSentTime = await SecurityApi.fetchResetSentTime(gameConfig, username);
         expect(lastSentTime, 'No email sent in the interval').toBe(sentTime);
+        expect(await SecurityApi.fetchSentEmails(gameConfig), 'No email sent in the interval').toHaveLength(0);
     }
 
     static run()
@@ -253,6 +285,18 @@ class TestLoginSecurity
                 'forgot password answers the same and sends nothing inside the interval',
                 async ({ page, screenshots, gameConfig, longRun }) => {
                     await TestLoginSecurity.runForgotPasswordTest(page, screenshots, gameConfig, longRun);
+                }
+            );
+            test(
+                'forgot password sends one email outside the interval',
+                async ({ page, screenshots, gameConfig, longRun }) => {
+                    await TestLoginSecurity.runForgotPasswordSendTest(page, screenshots, gameConfig, longRun);
+                }
+            );
+            test(
+                'forgot password form is hidden when the mailer is disabled',
+                async ({ page, screenshots, gameConfig, longRun }) => {
+                    await TestLoginSecurity.runForgotPasswordDisabledTest(page, screenshots, gameConfig, longRun);
                 }
             );
         });
