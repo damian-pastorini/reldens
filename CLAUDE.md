@@ -198,6 +198,7 @@ See `.claude/commands-reference.md` for the full command reference.
 ## Reference Documentation
 
 - `.claude/commands-reference.md` - All CLI commands
+- `.claude/server-client-build-and-assets.md` - Theme vs dist copies, what the server and the browser read, client build and asset sync
 - `.claude/e2e-testing-guide.md` - E2E suite: commands, its own database, app bundle and browser requirements
 - `.claude/environment-variables.md` - All `RELDENS_*` variables
 - `.claude/feature-modules.md` - All feature modules
