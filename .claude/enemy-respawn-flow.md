@@ -636,8 +636,9 @@ Loads the `rock_forest_1` spritesheet, creates the Phaser sprite with `pointerdo
 Client `room-events.js` line 150: `this.roomData = AnimationsDefaultsMerger.mergeDefaults(sc.toJson(this.room.state.sceneData))`.
 
 `AnimationsDefaultsMerger.mergeDefaults`:
+- `preloadAssetsDefaults` is merged first into `preloadAssets` (grouped by `asset_type`), so shared spritesheet `extra_params` are restored before the preloader reads them.
 - `animationsDefaults = {}`, so the rock entry matches no group and stays untouched.
-- `roomData.animationsDefaults` is deleted before the data is returned.
+- `roomData.preloadAssetsDefaults` and `roomData.animationsDefaults` are deleted before the data is returned.
 
 `ScenePreloader.preloadValidAssets`:
 - Processes `preloadAssets['1614']`: `asset_type='spritesheet'` -> `this.load.spritesheet('rock_forest_1', '/assets/custom/sprites/rock.png', {frameWidth:32, frameHeight:32})`.

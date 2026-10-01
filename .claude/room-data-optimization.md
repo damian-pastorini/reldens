@@ -10,7 +10,7 @@ The SceneDataFilter system prevents Colyseus buffer overflow by analyzing room d
 
 **Key Components**:
 - **Server**: `SceneDataFilter` (`lib/rooms/server/scene-data-filter.js`) - Detects shared properties, creates optimized data structure
-- **Client**: `AnimationsDefaultsMerger` (`lib/game/client/animations-defaults-merger.js`) - Merges defaults back into objects
+- **Client**: `AnimationsDefaultsMerger` (`lib/game/client/animations-defaults-merger.js`) - Merges the `preloadAssetsDefaults` back into the preload assets and the `animationsDefaults` back into the objects
 
 **Critical Design Principle**: The filter NEVER adds properties to objects. It ONLY extracts existing identical properties to a separate defaults structure.
 
@@ -123,7 +123,7 @@ The SceneDataFilter system prevents Colyseus buffer overflow by analyzing room d
 
 ### Purpose
 
-Merges extracted defaults back into objects after receiving optimized data from server.
+Merges extracted defaults back into the preload assets and the objects after receiving optimized data from server.
 
 ### When It Runs
 
@@ -133,20 +133,34 @@ Merges extracted defaults back into objects after receiving optimized data from 
 this.roomData = AnimationsDefaultsMerger.mergeDefaults(sc.toJson(this.room.state.sceneData));
 ```
 
-**Important**: `mergeDefaults` returns the room data unchanged when `animationsDefaults` or `objectsAnimationsData` are not present. Server adds `animationsDefaults: {}` (even if empty) when filter is active.
+**Important**: `mergeDefaults` runs `mergeGroupDefaults` twice, first for `preloadAssets` with `preloadAssetsDefaults` grouped by `asset_type`, then for `objectsAnimationsData` with `animationsDefaults` grouped by `asset_key`. Each pass leaves the room data unchanged when its data or its defaults are not present. Server adds `animationsDefaults: {}` and `preloadAssetsDefaults: {}` (even if empty) when filter is active.
+
+**Preload assets**: when every spritesheet of the room shares the same `extra_params` (for example two enemies with the same frame size and no other objects), the filter moves `extra_params` to `preloadAssetsDefaults.spritesheet`. The merger restores it before `ScenePreloader.preloadValidAssets()` reads `asset.extra_params`, otherwise the spritesheets are never loaded and the objects have no sprite.
 
 ### Merge Logic
 
 ```javascript
-for(let key of objectKeys){
-    let objectData = objectsAnimationsData[key];
-    let groupValue = GroupValueResolver.resolve(objectData, 'asset_key');
-    if('' === groupValue || !sc.hasOwn(animationsDefaults, groupValue)){
-        continue;
+static mergeGroupDefaults(roomData, dataKey, defaultsKey, groupingField)
+{
+    if(!sc.hasOwn(roomData, defaultsKey)){
+        return;
     }
-    objectsAnimationsData[key] = Object.assign({}, animationsDefaults[groupValue], objectData);
+    if(!sc.hasOwn(roomData, dataKey)){
+        return;
+    }
+    let groupDefaults = roomData[defaultsKey];
+    let groupData = roomData[dataKey];
+    let itemKeys = Object.keys(groupData);
+    for(let key of itemKeys){
+        let itemData = groupData[key];
+        let groupValue = GroupValueResolver.resolve(itemData, groupingField);
+        if('' === groupValue || !sc.hasOwn(groupDefaults, groupValue)){
+            continue;
+        }
+        groupData[key] = Object.assign({}, groupDefaults[groupValue], itemData);
+    }
+    delete roomData[defaultsKey];
 }
-delete roomData.animationsDefaults;
 ```
 
 ### Key Behavior
@@ -161,7 +175,7 @@ delete roomData.animationsDefaults;
 2. All original properties preserved as-is
 3. Ready for rendering without merge
 
-After the loop the merger deletes `animationsDefaults` from the room data.
+After each loop the merger deletes the merged defaults (`preloadAssetsDefaults`, `animationsDefaults`) from the room data.
 
 ### Why This Matters
 
