@@ -28,6 +28,7 @@ class TimeConstants
     static ROOM_TRANSITION = 5000;
     // Walking/navigation loop budget (multi-step movement)
     static NAVIGATION = 10000;
+    static MAP_CROSSING = 90000;
     // Full login flow: auth → char select → scene loads → HUD ready (~10–20s + 10s buffer)
     static GAME_START = 30000;
     // Character selection/creation screen to appear after login (~5–15s + 5s buffer)
