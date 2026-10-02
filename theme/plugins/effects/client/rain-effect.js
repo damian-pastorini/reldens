@@ -3,6 +3,7 @@
  * Reldens - Theme - RainEffect
  *
  * Emits rain drops over the camera view with a particles emitter, configured by the room customData "weather.rain".
+ * The textures are shared by every scene, so the drop texture is generated once per drop size and color.
  *
  */
 
@@ -37,15 +38,16 @@ class RainEffect
     create(sceneDynamic, rainConfig)
     {
         let config = Object.assign({}, this.defaults, rainConfig);
-        if(!sceneDynamic.textures.exists(this.textureKey)){
+        let dropTextureKey = this.textureKey+'-'+config.dropWidth+'-'+config.dropHeight+'-'+config.dropColor;
+        if(!sceneDynamic.textures.exists(dropTextureKey)){
             let graphics = sceneDynamic.add.graphics();
             graphics.fillStyle(config.dropColor, 1);
             graphics.fillRect(0, 0, config.dropWidth, config.dropHeight);
-            graphics.generateTexture(this.textureKey, config.dropWidth, config.dropHeight);
+            graphics.generateTexture(dropTextureKey, config.dropWidth, config.dropHeight);
             graphics.destroy();
         }
         let camera = sceneDynamic.cameras.main;
-        let rain = sceneDynamic.add.particles(0, 0, this.textureKey, {
+        let rain = sceneDynamic.add.particles(0, 0, dropTextureKey, {
             x: {min: 0, max: camera.width},
             y: -config.dropHeight,
             lifespan: Math.ceil((camera.height + config.dropHeight) / config.speedMin * this.millisecondsPerSecond),
