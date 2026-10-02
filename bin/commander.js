@@ -6,7 +6,6 @@
  *
  */
 
-const dotenv = require('dotenv');
 const { spawn } = require('child_process');
 const { CreateAdmin } = require('../lib/users/server/create-admin');
 const { ResetPassword } = require('../lib/users/server/reset-password');
@@ -211,7 +210,7 @@ class Commander
             Logger.error('.env file not found at: '+envPath);
             process.exit(1);
         }
-        dotenv.config({path: envPath});
+        process.loadEnvFile(envPath);
     }
 
     async initializeServerManager()

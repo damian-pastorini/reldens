@@ -81,7 +81,7 @@ See `.claude/feature-modules.md` for details on each module.
 ## Server Startup Flow
 
 1. `theme/index.js.dist` (copied into the project as `index.js`) instantiates `ServerManager` with a config object, passing `theme/plugins/server-plugin.js` as `customPlugin`.
-2. `ServerManager` constructor loads `.env` via `dotenv`, creates `ThemeManager` and `AppServerFactory`, sets up the `Installer`.
+2. `ServerManager` constructor loads `.env` via the Node.js `process.loadEnvFile` (when the file exists), creates `ThemeManager` and `AppServerFactory`, sets up the `Installer`.
 3. `createServers()` creates the Express/HTTP app server. If not yet installed, it launches the web installer and halts.
 4. Once installed, `start()` runs in sequence:
    - `initializeStorage()` - connects to database, generates entities via the configured driver
@@ -144,7 +144,7 @@ See `.claude/installer-guide.md` for the storage drivers packages and manual set
 ## Configuration
 
 1. **Database** (`config` table): path-based keys (e.g. `server/players/guestsUser/emailDomain`) scoped by `scope` field (`server` or `client`)
-2. **Environment** (`.env`): `RELDENS_*` prefix for all settings, loaded via `dotenv` at startup
+2. **Environment** (`.env`): `RELDENS_*` prefix for all settings, loaded via the Node.js `process.loadEnvFile` at startup
 3. **Custom Classes**: passed via `customClasses` in the `ServerManager` config object to override default implementations
 
 Key variables: `RELDENS_STORAGE_DRIVER`, `RELDENS_DB_*`, `RELDENS_HOT_PLUG`, `RELDENS_LOG_LEVEL`.
