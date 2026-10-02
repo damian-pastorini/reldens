@@ -47,7 +47,7 @@
         </tr>
         <tr>
             <td>Walk within 50px of the NPC and trigger the interaction</td>
-            <td><code>await Navigation.moveToObjectWithinRange(page, npcKey ? 'asset_key' : 'type', npcKey || 'npc', npcKey ? 'active' : 'visible', 50, navTimeout)</code><br><code>await Phaser.triggerObjectInteraction(page, npcKey || 'npc')</code></td>
+            <td><code>await ObjectChase.moveToObjectWithinRange(page, npcKey ? 'asset_key' : 'type', npcKey || 'npc', npcKey ? 'active' : 'visible', 50, navTimeout)</code><br><code>await Phaser.triggerObjectInteraction(page, npcKey || 'npc')</code></td>
             <td>test-npc.spec.js:91-98<br>test-npc.spec.js:100</td>
             <td>tests/e2e/helpers/phaser.js:213</td>
             <td><code>static async triggerObjectInteraction(page, objectKey)</code></td>
