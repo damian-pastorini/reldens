@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Forest Objects Animations Use The Frames Stored For Each Animation</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Forest Objects Animations Use The Frames Stored For Each Animation</h1>
+<p>Test: <code>tests/e2e/test-object-animation-frame-ranges.spec.js</code> - <em>forest objects animations use the frames stored for each animation</em></p>
+<p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/forest-objects-animations-use-the-frames-stored-for-each-animation.webm" data-title="forest objects animations use the frames stored for each animation">&#9654; Watch video</a></p>
+<table>
+    <thead><tr><th>Action</th><th>Test Code</th><th>Test File</th><th>File Proof</th><th>Code Proof</th><th>Comments</th></tr></thead>
+    <tbody>
+        <tr>
+            <td>Login in the forest level 1 and wait for the enemy</td>
+            <td><code>Login.loginAndEnterForest(page, gameConfig, longRun)</code><br><code>Phaser.waitForObjectByAssetKey(page, enemyKey, forestData.sceneTimeout)</code></td>
+            <td>test-object-animation-frame-ranges.spec.js:26-27</td>
+            <td>tests/e2e/helpers/login.js:148</td>
+            <td><code>static async loginAndEnterForest(page, gameConfig, longRun)</code></td>
+            <td>The forest objects carry directional animations stored in <code>objects_animations</code></td>
+        </tr>
+        <tr>
+            <td>Read the stored frames and the created frames of every object animation</td>
+            <td><code>ObjectAnimationFrameRangesReader.fetchStoredAndCreated(page)</code></td>
+            <td>test-object-animation-frame-ranges.spec.js:29</td>
+            <td>tests/e2e/helpers/object-animation-frame-ranges-reader.js:12</td>
+            <td><code>static async fetchStoredAndCreated(page)</code></td>
+            <td>Compares the <code>start</code> / <code>end</code> of each stored animation with the frames of the Phaser animation created on the client</td>
+        </tr>
+        <tr>
+            <td>Assert every created animation uses its stored frames</td>
+            <td><code>expect(animationsFrames.map(frames =&gt; frames.created)).toEqual(animationsFrames.map(frames =&gt; frames.stored))</code></td>
+            <td>test-object-animation-frame-ranges.spec.js:30-36</td>
+            <td>lib/objects/client/animation-engine.js:368</td>
+            <td><code>start: sc.get(animData, 'start', this.frameStart),</code></td>
+            <td>A stored <code>start</code> of 0 is kept: the previous falsy check replaced it with the object default frame start</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>
