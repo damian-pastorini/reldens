@@ -2,15 +2,38 @@
  *
  * Reldens - Navigation Helper
  *
- * Provides page actions for room transitions, waiting for room state, and keyboard movement.
+ * Provides page actions for the page load (with the pending requests reported when the network never gets idle), room
+ * transitions, waiting for room state, and keyboard movement.
  *
  */
 
+const { Phaser } = require('./phaser');
 const { Logger } = require('@reldens/utils');
 const { Selectors } = require('../selectors');
 
 class Navigation
 {
+    static TILE_SIZE = 32;
+
+    static async openPageAndWaitForNetworkIdle(page, url)
+    {
+        let pendingUrls = new Set();
+        let addPendingUrl = request => pendingUrls.add(request.url());
+        let removePendingUrl = request => pendingUrls.delete(request.url());
+        page.on('request', addPendingUrl);
+        page.on('requestfinished', removePendingUrl);
+        page.on('requestfailed', removePendingUrl);
+        await page.goto(url);
+        let isIdle = await page.waitForLoadState('networkidle').then(() => true).catch((error) => {
+            Logger.critical('Network not idle on '+url+': '+error.message+' Pending: '+[...pendingUrls].join(', '));
+            return false;
+        });
+        page.off('request', addPendingUrl);
+        page.off('requestfinished', removePendingUrl);
+        page.off('requestfailed', removePendingUrl);
+        return isIdle ? [] : [...pendingUrls];
+    }
+
     static async walkInDirection(page, arrowKey, durationMs)
     {
         let dirMap = { ArrowRight: 'right', ArrowLeft: 'left', ArrowUp: 'up', ArrowDown: 'down' };
@@ -60,6 +83,19 @@ class Navigation
         return true;
     }
 
+    static async moveToWorldPoint(page, worldX, worldY)
+    {
+        await page.evaluate((args) => {
+            window.reldens.activeRoomEvents.send({
+                'act': 'mp',
+                'column': Math.floor(args.x / args.tileSize),
+                'row': Math.floor(args.y / args.tileSize),
+                'x': args.x,
+                'y': args.y
+            });
+        }, { x: worldX, y: worldY, tileSize: Navigation.TILE_SIZE });
+    }
+
     static async waitForRoom(page, roomName, timeout)
     {
         await page.waitForFunction((rn) => {
@@ -91,17 +127,7 @@ class Navigation
 
     static async walkTowardWorldPoint(page, worldX, worldY, stepMs)
     {
-        let position = await page.evaluate(() => {
-            let room = window.reldens && window.reldens.activeRoomEvents && window.reldens.activeRoomEvents.room;
-            if(!room || !room.state || !room.state.players) {
-                return null;
-            }
-            let playerState = window.reldens.activeRoomEvents.playerBySessionIdFromState(room, room.sessionId);
-            if(!playerState) {
-                return null;
-            }
-            return { x: playerState.state.x, y: playerState.state.y };
-        });
+        let position = await Phaser.getPlayerServerPosition(page);
         if(!position) {
             return false;
         }
@@ -147,17 +173,13 @@ class Navigation
             worldY,
             stepMs,
             maxSteps,
-            async () => page.evaluate((args) => {
-                let room = window.reldens && window.reldens.activeRoomEvents && window.reldens.activeRoomEvents.room;
-                if(!room || !room.state || !room.state.players) {
+            async () => {
+                let position = await Phaser.getPlayerServerPosition(page);
+                if(!position){
                     return false;
                 }
-                let playerState = window.reldens.activeRoomEvents.playerBySessionIdFromState(room, room.sessionId);
-                if(!playerState) {
-                    return false;
-                }
-                return Math.hypot(playerState.state.x - args.wx, playerState.state.y - args.wy) <= args.range;
-            }, { wx: worldX, wy: worldY, range })
+                return range >= Math.hypot(position.x - worldX, position.y - worldY);
+            }
         );
     }
 
@@ -187,83 +209,6 @@ class Navigation
             );
         }
         return reached;
-    }
-
-    static async moveToObjectWithinRange(page, matchProp, matchValue, statusKey, range, timeout, useRespawnFind = false)
-    {
-        let stepMs = 1200;
-        let maxSteps = Math.ceil(timeout / stepMs);
-        let lastPlayerX = null;
-        let lastPlayerY = null;
-        let stuckCount = 0;
-        for(let i = 0; i < maxSteps; i++){
-            let state = await page.evaluate((args) => {
-                let scene = window.reldens.getActiveScene();
-                if(!scene || !scene.objectsAnimations){
-                    return null;
-                }
-                let found = args.useRespawnFind
-                    ? Object.values(scene.objectsAnimations).find(
-                        anim => anim.key !== anim.asset_key && anim.sceneSprite && anim.sceneSprite.visible
-                    )
-                    : Object.values(scene.objectsAnimations).find(
-                        anim => anim[args.prop] === args.value && anim.sceneSprite && anim.sceneSprite[args.statusKey]
-                    );
-                if(!found || !found.sceneSprite){
-                    return null;
-                }
-                let room = window.reldens && window.reldens.activeRoomEvents && window.reldens.activeRoomEvents.room;
-                if(!room || !room.state || !room.state.players){
-                    return null;
-                }
-                let player = window.reldens.activeRoomEvents.playerBySessionIdFromState(room, room.sessionId);
-                if(!player){
-                    return null;
-                }
-                let body = room.state.bodies ? room.state.bodies.get(found.key) : null;
-                let targetX = body ? body.x : found.sceneSprite.x;
-                let targetY = body ? body.y : found.sceneSprite.y;
-                let dist = Math.hypot(player.state.x - targetX, player.state.y - targetY);
-                if(dist <= args.range){
-                    return { inRange: true, playerX: player.state.x, playerY: player.state.y, targetX, targetY, dist };
-                }
-                return { inRange: false, playerX: player.state.x, playerY: player.state.y, targetX, targetY, dist };
-            }, { prop: matchProp, value: matchValue, statusKey, range, useRespawnFind });
-            if(!state){
-                Logger.error('moveToObjectWithinRange step '+i+': no enemy or player found in scene');
-                return false;
-            }
-            if(state.inRange){
-                Logger.debug('moveToObjectWithinRange: in range at step '+i+' player=('+state.playerX+','+state.playerY+') enemy=('+state.targetX+','+state.targetY+') dist='+state.dist);
-                return true;
-            }
-            Logger.debug('moveToObjectWithinRange step '+i+': player=('+state.playerX+','+state.playerY+') enemy=('+state.targetX+','+state.targetY+') dist='+state.dist);
-            let moved = null === lastPlayerX
-                ? true
-                : 10 < Math.hypot(state.playerX - lastPlayerX, state.playerY - lastPlayerY);
-            stuckCount = moved ? 0 : stuckCount + 1;
-            lastPlayerX = state.playerX;
-            lastPlayerY = state.playerY;
-            let dx = state.targetX - state.playerX;
-            let dy = state.targetY - state.playerY;
-            let dirs = [];
-            if(1 <= stuckCount){
-                let detourDirs = ['up', 'right', 'down', 'left'];
-                dirs.push(detourDirs[stuckCount % detourDirs.length]);
-            }
-            if(0 === stuckCount && 0 !== dx){
-                dirs.push(dx > 0 ? 'right' : 'left');
-            }
-            if(0 === stuckCount && 0 !== dy){
-                dirs.push(dy > 0 ? 'down' : 'up');
-            }
-            if(0 === dirs.length){
-                dirs.push('right');
-            }
-            await Navigation.executeMovementStep(page, dirs, stepMs);
-        }
-        Logger.error('moveToObjectWithinRange: failed to reach range '+range+' within '+maxSteps+' steps');
-        return false;
     }
 
     static async sendPlayerDirections(page, dirs)
