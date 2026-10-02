@@ -4,10 +4,15 @@
  *
  */
 
-const { TimingObject } = require('reldens/lib/objects/client/object/type/timing-object');
+const { ToolTimingObject } = require('./tool-timing-object');
 
-class Rock extends TimingObject
+class Rock extends ToolTimingObject
 {
+
+    constructor(gameManager, props, currentPreloader)
+    {
+        super(gameManager, props, currentPreloader, {toolType: 'pickaxe', swingAngle: 35, swingDuration: 220});
+    }
 
 }
 
