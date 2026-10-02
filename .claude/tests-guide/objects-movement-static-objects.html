@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Forest Objects Without Random Movement Keep Their Position</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Forest Objects Without Random Movement Keep Their Position</h1>
+<p>Test: <code>tests/e2e/test-objects-movement.spec.js</code> - <em>forest objects without random movement keep their position</em></p>
+<p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/forest-objects-without-random-movement-keep-their-position.webm" data-title="forest objects without random movement keep their position">&#9654; Watch video</a></p>
+<table>
+    <thead><tr><th>Action</th><th>Test Code</th><th>Test File</th><th>File Proof</th><th>Code Proof</th><th>Comments</th></tr></thead>
+    <tbody>
+        <tr>
+            <td>Collect the asset keys of every forest object with random movement</td>
+            <td><code>BaseE2eTest.loadPlayerRoomEntries('root', TestObjectsMovement.FOREST_LISTS, true)</code></td>
+            <td>test-objects-movement.spec.js:104-105</td>
+            <td>tests/e2e/base-e2e-test.js</td>
+            <td><code>static loadPlayerRoomEntries(playerKey, listsKeys, onlyMoving = false)</code></td>
+            <td>The NPC Miles and the enemy respawn areas of the forest level 1 move; everything else must not</td>
+        </tr>
+        <tr>
+            <td>Login in the forest level 1 and list the other scene objects</td>
+            <td><code>TestObjectsMovement.fetchSceneAnimations(page)</code></td>
+            <td>test-objects-movement.spec.js:106-110</td>
+            <td>migrations/production/reldens-sample-data-v4.0.0.sql:175-177</td>
+            <td><code>"collisionType":2</code></td>
+            <td>The chest, the mining rocks and the six fishing spots, all STATIC bodies without <code>randomMovement</code></td>
+        </tr>
+        <tr>
+            <td>Sample their sprites for 10 seconds</td>
+            <td><code>PhaserRange.collectPositionRanges(page, staticKeys, TestObjectsMovement.STATIC_SAMPLES, TestObjectsMovement.SAMPLE_INTERVAL_MS, PhaserRange.getObjectsSpritePositions)</code></td>
+            <td>test-objects-movement.spec.js:111-117</td>
+            <td>tests/e2e/helpers/phaser-range.js</td>
+            <td><code>static async getObjectsSpritePositions(page, objectsKeys)</code></td>
+            <td>The sprite positions are used because the chest and the fishing spots have no synced body state</td>
+        </tr>
+        <tr>
+            <td>Assert none of them moved</td>
+            <td><code>expect(movement.wandered, 'The objects without random movement must keep their position').toEqual([])</code></td>
+            <td>test-objects-movement.spec.js:119-125</td>
+            <td>lib/objects/server/manager.js:267-284</td>
+            <td><code>startObjectRandomMovement(roomObject, objectBody)</code></td>
+            <td>The random movement only starts for objects with a <code>randomMovement</code> config</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>
