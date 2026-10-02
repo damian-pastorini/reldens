@@ -6,7 +6,7 @@ Reldens uses the p2.js physics engine (server-authoritative). Every object that 
 
 - `1` - `DYNAMIC`: affected by forces, pushed by other DYNAMIC bodies. Default for all objects.
 - `2` - `STATIC`: immovable (`invMass = 0`). Cannot be pushed. Player stops at it.
-- `4` - `KINEMATIC`: scripted movement (not used by game objects).
+- `4` - `KINEMATIC`: moved only by its own velocity, never pushed (`invMass = 0`). Used by the NPCs with random movement.
 
 ## Default Object Body Type
 
@@ -36,9 +36,9 @@ UPDATE `objects` SET `private_params` = JSON_SET(`private_params`, '$.collisionT
 
 ### `collisionType` Values
 
-- `2` (STATIC) - NPC cannot be pushed or moved. Player stops when walking into it. Use for all interactive NPCs, rocks, chests, and any stationary interactable.
+- `2` (STATIC) - the body cannot be pushed or moved, p2 never integrates its velocity. Player stops when walking into it. Use for rocks, chests, fishing spots and any interactable that never moves.
 - `1` (DYNAMIC) - default. NPC body is pushed by the player. Use for enemies that chase (they must move) and any object that should not block.
-- `4` (KINEMATIC) - scripted movement, not currently used for game objects.
+- `4` (KINEMATIC) - the body moves by its own velocity and cannot be pushed, so the player stops when walking into it. Use for the interactive NPCs with `randomMovement`, a STATIC body never moves.
 
 ### `hasState` Requirement for Respawnable STATIC Objects
 
@@ -50,17 +50,20 @@ When `collisionType:2` is used on a respawnable object (e.g. the mining rock) th
 
 Without `hasState`, the body is a plain `p2.Body` with no `bodyState`, and the Respawn plugin skips adding it to the room state entirely (`lib/respawn/server/plugin.js:119`).
 
-## Which Objects Should Have collisionType:2
+## Which Objects Should Block the Player
 
-### Static NPCs and interactables
+### Moving NPCs: collisionType:4
 
-All NPCs and interactables that are physically present in the world and should block the player (ids from `migrations/production/reldens-sample-data-v4.0.0.sql`):
+The interactive NPCs wander around their tile, so they use KINEMATIC bodies with `hasState:true` and `randomMovement` (ids from `migrations/production/reldens-sample-data-v4.0.0.sql`):
 
 - `npc_1` (Alfred, id=5) - town NPC
 - `npc_2` (Mamon/healer, id=8) - town NPC
 - `npc_3` (Gimly/merchant, id=10) - town NPC
 - `npc_4` (Barrik/weapons master, id=12) - town NPC
-- `npc_5` (Miles/quest NPC, id=13) - forest NPC
+- `npc_5` (Miles/quest NPC, id=13) - forest level 1 NPC
+
+### Static interactables: collisionType:2
+
 - `rock_forest_1_area` (id=16) - mining rock respawn parent, also needs `hasState:true`
 - `fish_spawn_forest_1` (id=17) - fishing spot in the river
 - `chest_forest_1` (id=18) - treasure chest
@@ -71,11 +74,37 @@ Enemy objects (class_type=4, childObjectType=4) use DYNAMIC bodies - they need t
 
 ### Doors and transition triggers: no body blocking
 
-Doors (class_type=2, `runOnHit:true`) fire the hit event when the player overlaps the tile, which runs the door animation only. The body type remains DYNAMIC so the player passes through and the event fires. The room change is NOT done by the door: it comes from the change point body on that tile, created either from a map layer whose name contains `change-points` or from the `rooms_change_points` records by `StorageChangePointsCreator` (`lib/world/server/storage-change-points-creator.js`). A door without a change point on its tile opens and does nothing else.
+Doors (class_type=2, `runOnHit:true`) fire the hit event when the player touches their body, which runs the door animation only. The door body is a full tile (shifted by `yFix`) on the same tile as the change point, while the change point body is half a tile (`P2world.createChangePoint`), so the door needs `"collisionResponse":false` in `private_params`: the player then walks through the door body (the hit event still fires) into the change point. With the default `collisionResponse` (true) the solid door body stops the player before the change point and the door never leads anywhere. The sample town doors (objects 19, 22 to 27) use `{"runOnHit":true,"roomVisible":true,"yFix":6,"collisionResponse":false}`. The room change is NOT done by the door: it comes from the change point body on that tile, created either from a map layer whose name contains `change-points` or from the `rooms_change_points` records by `StorageChangePointsCreator` (`lib/world/server/storage-change-points-creator.js`). A door without a change point on its tile opens and does nothing else.
 
 ### Fish spawn: tile layer boundary
 
 The fish spawn point (id=17, `fish_spawn_forest_1`) sits in the river. The river's physical boundary comes from the map tile collision layer. The object itself carries `collisionType:2`, so its body is STATIC and also acts as an interaction target the player cannot push.
+
+## Random Movement
+
+An object wanders around its original tile when its `private_params` contain `randomMovement`:
+
+```json
+{"collisionType":4,"hasState":true,"randomMovement":{"maxTiles":5}}
+```
+
+- `maxTiles` (default `3`) - the farthest column and row offset from the original tile
+- `minDelay` and `maxDelay` (defaults `3000` and `8000`) - the random wait in milliseconds between two moves
+- `targetAttempts` (default `10`) - the random tiles tried per move before skipping it
+- `interactionPause` (default `15000`) - the milliseconds the object stays still after a valid player interaction, so a dialogue or a trade is not broken by the object walking out of the interaction distance (`server/objects/actions/interactionsDistance`)
+
+The flow:
+
+- `ObjectsPlugin` listens `reldens.createdWorldObject` and calls `ObjectsManager.startObjectRandomMovement` (`lib/objects/server/manager.js`), which sets the body original tile (`originalCol`, `originalRow`) to the tile the body was created on and creates the `ObjectRandomMovement` (`lib/objects/server/object/object-random-movement.js`) on `roomObject.randomMovementBehavior`. The respawn restore sets the original tile again on every new respawn tile.
+- The body must be a `PhysicalBody` (`hasState:true`, enemies set it in their constructor), otherwise a warning is logged and the object stays still.
+- Each move picks a walkable tile of the room path finder grid inside `maxTiles` and calls `moveToPoint`, the move is skipped while the body is auto moving (chase or return), while its state is not active (dead) or while it is in battle with a player.
+- A path that kept the body on the same tile between two moves (blocked by a wall corner or by another body standing on it) is stopped (`stopAutoMoving`) and the body gets a new random target in the same move, the path of an object in battle is never stopped this way. A body pushed out of its area by another body walks back inside on its next move, because every target is inside `maxTiles` from the original tile.
+- `ObjectsPlugin` listens `reldens.sceneRoomOnCreate` and calls `ObjectsManager.addStateBodiesToRoomState`, so the bodies with state of the room objects are synced to the clients by the `client_key` (before only the respawn and bullet bodies were).
+- `NpcObject.executeMessageActions` (also used by the traders) moves the interaction area of an NPC with random movement to its current body state position (`this.state.x`, `this.state.y`) before validating the interaction; the objects that never move keep the area of their creation or respawn position.
+- `NpcObject.executeMessageActions` (also used by the traders) calls `ObjectRandomMovement.pauseForInteraction` after a valid interaction: the current path is stopped and no new move starts until `interactionPause` ends, every new interaction restarts the pause.
+- `RoomScene.handleObjectsManagerOnRoomDispose` stops the timers.
+
+The respawn parents pass `randomMovement` to their children. The sample data uses `3` for the aggressive enemies, `8` for the passive enemies and `5` for the NPCs.
 
 ## Room `customData` and the world options
 
