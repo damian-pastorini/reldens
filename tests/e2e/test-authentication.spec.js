@@ -8,6 +8,7 @@
 
 const { BaseE2eTest } = require('./base-e2e-test');
 const { Login } = require('./helpers/login');
+const { Navigation } = require('./helpers/navigation');
 const { Registration } = require('./helpers/registration');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
@@ -49,15 +50,11 @@ class TestAuthentication
         expect(regUsername, 'e2eRegUsername must be configured for registration test').toBeTruthy();
         expect(regEmail, 'e2eRegEmail must be configured for registration test').toBeTruthy();
         expect(regPassword, 'e2eRegPassword must be configured for registration test').toBeTruthy();
-        await Registration.submitRegistration(
+        await Registration.registerAndWaitForPlayerSelection(
             page,
             {username: regUsername, email: regEmail, password: regPassword},
             longRun,
             screenshots
-        );
-        await page.waitForSelector(
-            Selectors.characterSelect.container+':not(.hidden)',
-            { timeout: TimeConstants.forLongRun(TimeConstants.CHARACTER_SCREEN, longRun) }
         );
         await expect(page.locator(Selectors.characterSelect.container)).toBeVisible();
         await screenshots.capture(page, 'player-selection-after-register');
@@ -67,8 +64,7 @@ class TestAuthentication
     {
         let typeDelay = TimeConstants.typeDelay(longRun);
         let pauseMs = TimeConstants.pauseMs(longRun);
-        await page.goto('/');
-        await page.waitForLoadState('networkidle');
+        expect(await Navigation.openPageAndWaitForNetworkIdle(page, '/'), 'Page requests must finish').toEqual([]);
         await page.waitForFunction(() => {
             return !!(window.reldens && window.reldens.startHandler && window.reldens.config);
         }, null, { timeout: TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun) });
