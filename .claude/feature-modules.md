@@ -150,7 +150,14 @@ Game objects (NPCs, interactables, respawn areas)
   - `"collisionType":2` - makes the object body STATIC (p2.js Body.STATIC), blocking the player from walking through it
   - `"collisionType":1` - DYNAMIC body (default), enemies and moving objects use this
   - `"hasState":true` - required alongside `collisionType:2` for respawnable objects that need Colyseus state sync
+  - `"collisionType":4` - KINEMATIC body, moved by its own velocity and never pushed, used by the NPCs that wander
+  - `"randomMovement":{"maxTiles":3}` - the object wanders around its original tile (`ObjectRandomMovement`), requires
+    `hasState:true`
   - See `.claude/collision-configuration-guide.md` for full details
+- Timing objects (`server/object/type/timing-object.js`, the mining rocks and the fishing spots) run an action for
+  `timingDuration` and give the reward at the end; the `private_params` cancel rules are `"cancelOnMove":true` (the
+  player position changed), `"cancelOnHit":true` (the player affected property, `hp`, went below its value at the
+  start, a hit from an enemy or another player) and `"cancelOnOutOfRange":true` (the player left the interaction area)
 
 ### Snippets (`lib/snippets/`)
 Text snippets, locales and translations
