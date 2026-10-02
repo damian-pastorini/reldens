@@ -24,8 +24,8 @@
     <tbody>
         <tr>
             <td>Navigate to home page</td>
-            <td><code>page.goto('/')</code><br><code>page.waitForLoadState('networkidle')</code></td>
-            <td>test-authentication.spec.js:93-94</td>
+            <td><code>Navigation.openPageAndWaitForNetworkIdle(page, '/')</code> (<code>page.goto('/')</code> and <code>page.waitForLoadState('networkidle')</code>, the URLs of the requests still pending are returned when the network never gets idle)</td>
+            <td>test-authentication.spec.js:67</td>
             <td>theme/default/index.html:54</td>
             <td><code>&lt;form name="login-form" id="login-form"...&gt;</code></td>
             <td>Loads the login page</td>
