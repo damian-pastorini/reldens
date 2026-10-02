@@ -69,8 +69,8 @@ class TestRoomsMapDataProvider extends BaseTest
                 [{
                     id: 41,
                     name: 'reldens-new-age-town',
-                    map_filename: 'random-map-2026-08-18-16-59-11.json',
-                    scene_images: 'random-map-2026-08-18-16-59-11.png'
+                    map_filename: 'reldens-new-age-town.json',
+                    scene_images: 'reldens-new-age-town.png'
                 }],
                 {'reldens-house-1': {layers: [{name: 'ground'}]}}
             );
