@@ -23,20 +23,20 @@
     </thead>
     <tbody>
         <tr>
-            <td>Login and navigate to reldens-forest</td>
+            <td>Login and enter reldens-forest-level-1</td>
             <td><code>TestCombat.loginAndGetEnemyWithWorldPos(page, gameConfig, longRun)</code></td>
-            <td>test-combat.spec.js:268</td>
-            <td>tests/e2e/helpers/login.js:77<br>tests/e2e/helpers/navigation.js:164</td>
-            <td><code>static async loginAndStartGame(page, username, password, playerName, longRun, false, 'reldens-forest')</code></td>
-            <td>Logs in as root/ImRoot with forest scene selected; waits for enemy to appear in scene</td>
+            <td>test-combat.spec.js:255</td>
+            <td>tests/e2e/test-combat.spec.js:38-47<br>tests/e2e/helpers/login.js:148</td>
+            <td><code>static async loginAndEnterForest(page, gameConfig, longRun)</code></td>
+            <td>Logs in as root/ImRoot with the forest level 1 scene selected; waits for the aggressive enemy to appear in scene</td>
         </tr>
         <tr>
-            <td>Walk very close to enemy (range 30)</td>
-            <td><code>TestCombat.walkToEnemyWithinRange(page, data.enemyKey, 30, data.navigationTimeout)</code></td>
-            <td>test-combat.spec.js:269</td>
-            <td>tests/e2e/helpers/navigation.js:192</td>
+            <td>Walk next to the closest enemy (range 40)</td>
+            <td><code>TestCombat.walkToEnemyWithinRange(page, data.enemyKey, TestCombat.DEATH_CHASE_RANGE, data.navigationTimeout)</code></td>
+            <td>test-combat.spec.js:256</td>
+            <td>tests/e2e/helpers/object-chase.js:198</td>
             <td><code>static async moveToObjectWithinRange(...)</code></td>
-            <td>Gets player into enemy attack range (30px); enemy will begin attacking the player automatically</td>
+            <td>Locks the closest enemy and follows its server position until the player touches it (40px, the bodies touch at about 29 to 36px); the enemy starts attacking the player automatically</td>
         </tr>
         <tr>
             <td>Wait for player to die from enemy attacks</td>
