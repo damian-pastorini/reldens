@@ -102,6 +102,83 @@ The server runs on `localhost`, which turns on the development mode of `AppServe
 panel login limiter allows 10 times `RELDENS_ADMIN_LOGIN_MAX_ATTEMPTS`; the limiter spec reads the real limit from the
 `RateLimit` response header. See `.claude/ip-lists-and-login-blocks.md` for the lists and blocks flow.
 
+## Forest navigation and moving objects
+
+The forest specs start in `reldens-forest-level-1` (`Login.loginAndEnterForest`), entering at its default return
+point near the bottom of a 72x100 tiles map, so the rocks and the fishing spots are a whole map crossing away: those
+specs walk with `TimeConstants.MAP_CROSSING` instead of `TimeConstants.NAVIGATION`.
+
+`ObjectChase.moveToObjectWithinRange` (`tests/e2e/helpers/object-chase.js`, also `moveToEnemyWithinRange`) returns
+the key of the reached object instance, or false:
+
+- picks the closest matching instance to the player and locks it, then reads its position again on every step, from
+  the synced server body (`room.state.bodies`) when the object has a body state, so the moving NPCs and enemies are
+  followed; when the locked instance is gone (dead or disabled) it picks the closest one again
+- sends path finder moves (`{act: 'mp', column, row}`, `Navigation.moveToWorldPoint`) to the walkable tile inside the
+  range nearest to the player side (`PhaserRange.approachOffsets` and `PhaserRange.filterWalkableOffsets`, which apply
+  the server path finder rule on the client map: a tile on a `collisions` or `change-points` layer blocks, an empty
+  tile on a `pathfinder` layer blocks), and sends it again when that tile changes or the player reached the last sent
+  point; this is what reaches the fishing spot, its own tile is a lake collision
+- when the player does not move for `STUCK_MS` (4 seconds) it walks one walkable tile in a different direction (the
+  four directions rotate on every stuck) and the chase starts again
+- a target closer than `CONTACT_DISTANCE` (40px) is reached even for a smaller range: the 25px player body and a 32px
+  object body touch at about 29 to 36px and can not get any closer
+- every move goes through the path finder, which treats the change points as unwalkable (`P2world.markPathFinderTile`
+  for the map layer ones, `StorageChangePointsCreator.markPositionAsChangePoint` for the stored ones), so a stuck player
+  never walks into a room exit; raw arrow key steps would (the forest level 1 entry is two tiles above the town exit)
+- once in range it sends a move to the player own tile, which ends the path, and waits for the player to stand still
+  (`PhaserRange.waitForPlayerToStandStill`), because the timing objects (`cancelOnMove`) cancel on any position change
+
+The callers interact with the returned instance key (`Phaser.triggerObjectInteraction`), so the mining rock clicked is
+the one the player reached, and `Phaser.targetEnemy` already targets the closest visible enemy.
+
+`RoomObjectsState` (`tests/e2e/helpers/room-objects-state.js`, registered by `collect-game-data.js`) exposes the live
+scene rooms to the specs, wrapped by `tests/e2e/helpers/room-objects-api.js`:
+
+- `GET /api/e2e/room-objects?roomName=` - every room object with a body state: key, asset key, type, position,
+  velocity, the bodies in contact with it, the current tile (`currentCol`, `currentRow`), the original tile
+  (`originalCol`, `originalRow`), the destination tile and the steps of the path it follows, state, the players in
+  battle with it, `isAggressive` and the random movement `maxTiles` and `maxDelay`
+- `POST /api/e2e/room-objects/disable-enemies` (`{roomName, onlyAggressive}`) - stops every enemy of the room (or only
+  the aggressive ones with `onlyAggressive: true`) until the next players reset: no path, no battle, no collision
+  response, affected property 0 (so the aggression and the hits never start a battle) and the `DISABLED` state (so the
+  body is not integrated and the random movement never moves it)
+- `POST /api/e2e/room-objects/enemy-attack` (`{roomName, playerName, assetKey}`) - restores one enemy of that asset
+  key, places it 40px from the player on a walkable tile (inside the 50px `attackShort` range, out of contact with the
+  25px player body) and starts its battle with the player
+
+`TimingObjectSession` (`tests/e2e/helpers/timing-object-session.js`) holds the shared steps of the chest, mining and
+fishing specs: enter the forest with its enemies disabled, reach the closest instance, read the reward quantity from
+the inventory, record the `timingStart`, `timingCancel` and `timingComplete` messages and start a timing on the
+reached instance.
+
+The game data (`collect-game-data.js`) adds per room object `layerName`, `tileIndex`, `childObjectType`,
+`isAggressive`, `interactionRadio`, `randomMovementTiles` and the `respawnAreas` list (class type 7), read through
+`BaseE2eTest.loadGameData`, `BaseE2eTest.loadPlayerRoomObjects` and `BaseE2eTest.loadPlayerRoomEntries`:
+
+- `test-npc.spec.js` - the town NPCs wander inside their area (synced bodies sampled with
+  `PhaserRange.collectPositionRanges` and checked with `PhaserRange.summarizeMovement`), and a moving NPC still opens
+  its dialogue after it left its spawn tile
+- `test-objects-movement.spec.js` - the aggressive and the passive forest enemies wander inside their own area: the
+  server snapshots are sampled every 250ms for 30 seconds (`EnemiesWanderSummary`,
+  `tests/e2e/helpers/enemies-wander-summary.js`), the enemies that were in battle at any sample are left out, and for
+  the others every destination tile must be at most `maxTiles` columns and rows from the original tile, a rest outside
+  the area (pushed by another body) must end within `maxDelay` and a path blocked on the same tile must be dropped
+  within two moves (`2 * maxDelay`); every invalid enemy is reported with its whole trail (tile, original tile,
+  position, velocity, path, contacts and battle per sample); the objects without random movement keep their
+  position, and a passive enemy does not attack a player standing 3 to 4 tiles away from it (the aggressive enemies
+  are disabled with `onlyAggressive`, the closest active passive enemy is read from the server snapshot and the player
+  walks with `ObjectChase.moveToPointWithinRange`)
+- `test-interactive-objects.spec.js` - the chest, the mining rock and the fishing spot with the forest enemies disabled
+- `test-timing-objects-cancel.spec.js` - the mining is cancelled and gives no reward when the player moves, when an
+  enemy hits the player (placed by `enemy-attack`) and when another player hits the player (`attackShort` sent by
+  `ImRoot2` standing next to the miner); the hit cases also check the player HP went down and the position did not
+  change, so the cancel comes from `cancelOnHit` and not from `cancelOnMove`
+
+`RoomEnemiesReset` (run by the player reset before every test) resets the path of every respawned body
+(`resetAuto`), as `EnemyObject.respawn` does, otherwise a body moved to a new respawn tile keeps walking its old random
+path.
+
 ## Browser binaries
 
 The Playwright version in `package.json` pins a chromium revision (`node_modules/playwright-core/browsers.json`).
