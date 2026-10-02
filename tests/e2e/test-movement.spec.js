@@ -11,7 +11,7 @@ const { BaseE2eTest } = require('./base-e2e-test');
 const { Login } = require('./helpers/login');
 const { Phaser } = require('./helpers/phaser');
 const { Navigation } = require('./helpers/navigation');
-const { ObjectChase } = require('./helpers/object-chase');
+const { TestCombatDeath } = require('./helpers/test-combat-death');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
 let test = BaseE2eTest.test;
@@ -19,7 +19,6 @@ let expect = BaseE2eTest.expect;
 
 class TestMovement
 {
-    static DEATH_CHASE_RANGE = 40;
     static TOWN_DOOR_COLUMN = 44;
     static TOWN_DOOR_ROW = 39;
     static TOWN_DOOR_ARRIVAL_RANGE = 24;
@@ -47,7 +46,6 @@ class TestMovement
         let forestData = await Login.loginAndEnterForest(page, gameConfig, longRun);
         let pauseMs = forestData.pauseMs;
         let sceneTimeout = forestData.sceneTimeout;
-        let navTimeout = forestData.navTimeout;
         await Phaser.waitForPlayerInRoomState(page, sceneTimeout);
         await Navigation.focusGame(page);
         await screenshots.capture(page, 'in-forest-before-death');
@@ -59,33 +57,7 @@ class TestMovement
             + TimeConstants.ENEMY_KILL
             + TimeConstants.PLAYER_REVIVE
         );
-        await ObjectChase.moveToEnemyWithinRange(page, enemyKey, TestMovement.DEATH_CHASE_RANGE, navTimeout);
-        let deathDeadline = Date.now() + TimeConstants.ENEMY_KILL;
-        let deathMaxSteps = Math.ceil(TimeConstants.ENEMY_KILL / 500) + 1;
-        let isDead = false;
-        for(let i = 0; i < deathMaxSteps; i++){
-            isDead = await page.evaluate(() => {
-                return null !== document.querySelector('#game-over:not(.hidden)');
-            });
-            if(isDead){
-                break;
-            }
-            let remaining = deathDeadline - Date.now();
-            if(0 >= remaining){
-                break;
-            }
-            await ObjectChase.moveToEnemyWithinRange(
-                page,
-                enemyKey,
-                TestMovement.DEATH_CHASE_RANGE,
-                Math.min(6000, remaining)
-            );
-            let waitMs = Math.min(1000, deathDeadline - Date.now());
-            if(0 < waitMs){
-                await page.waitForTimeout(waitMs);
-            }
-        }
-        expect(isDead, 'Player must die from enemy attacks within timeout').toBeTruthy();
+        await TestCombatDeath.killPlayerWithEnemyAttack(page, gameConfig, enemyKey, TimeConstants.ENEMY_KILL);
         await screenshots.capture(page, 'player-died-in-forest');
         await Navigation.waitForRoom(page, returnRoom, TimeConstants.PLAYER_REVIVE);
         let currentRoom = await Navigation.getCurrentRoomName(page);
