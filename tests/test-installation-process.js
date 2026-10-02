@@ -106,6 +106,45 @@ class TestInstallationProcess extends BaseTest
         });
     }
 
+    async testInstallerDefaultsToTheNodemailerService()
+    {
+        await this.test('the installer selects the nodemailer service by default', async () => {
+            let installer = this.createInstaller();
+            let defaults = installer.fetchDefaults();
+            FileHandler.remove(this.installProjectRoot);
+            this.assert.strictEqual(defaults['mailer-service-nodemailer'], ' selected="selected"');
+            this.assert.strictEqual(defaults['mailer-secure-checked'], ' checked="checked"');
+        });
+    }
+
+    async testInstallerEnablesTheMailerOnlyForASelectedService()
+    {
+        await this.test('the installer enables the mailer for nodemailer and sendgrid and disables it for none', async () => {
+            let installer = this.createInstaller();
+            let expectedEnable = {nodemailer: '1', sendgrid: '1', none: '0'};
+            let resultEnable = {};
+            for(let mailerService of Object.keys(expectedEnable)){
+                let templateVariables = {'mailer-service': mailerService};
+                installer.setSelectedOptions(templateVariables);
+                resultEnable[mailerService] = templateVariables['mailer-enable'];
+            }
+            FileHandler.remove(this.installProjectRoot);
+            this.assert.deepStrictEqual(resultEnable, expectedEnable);
+        });
+    }
+
+    async testInstallerAcceptsTheNoneAndTheInstalledMailerServices()
+    {
+        await this.test('the installer accepts no mailer and the installed nodemailer package', async () => {
+            let installer = this.createInstaller();
+            let noneAvailable = installer.isMailerServiceAvailable('none');
+            let nodemailerAvailable = installer.isMailerServiceAvailable('nodemailer');
+            FileHandler.remove(this.installProjectRoot);
+            this.assert.strictEqual(noneAvailable, true);
+            this.assert.strictEqual(nodemailerAvailable, true);
+        });
+    }
+
     async testEntitiesLoaderResolvesTheGeneratedKnexModels()
     {
         await this.test('the entities loader resolves the generated knex models', async () => {

@@ -1,22 +1,22 @@
-.maps-wizard-generating-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: var(--space-lg);
-    color: var(--color-white);
-
-    img {
-        width: 3rem;
-    }
-
-    p {
-        margin: 0;
-        font-size: var(--font-size-base);
-        font-weight: var(--bold);
-    }
-}
-
 .maps-wizard {
+
+    .maps-wizard-generating-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: var(--space-lg);
+        color: var(--color-white);
+
+        img {
+            width: 3rem;
+        }
+
+        p {
+            margin: 0;
+            font-size: var(--font-size-base);
+            font-weight: var(--bold);
+        }
+    }
 
     .main-action-container.maps-selection {
         width: 100%;

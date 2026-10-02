@@ -51,7 +51,6 @@ window.addEventListener('load', () => {
         {key: 'app-use-https', filterClass: 'https-filter'},
         {key: 'app-use-monitor', filterClass: 'monitor-filter'},
         {key: 'app-secure-monitor', filterClass: 'secure-monitor-filter'},
-        {key: 'mailer-enable', filterClass: 'mailer-filter'},
         {key: 'firebase-enable', filterClass: 'firebase-filter'}
     ];
 
@@ -77,6 +76,13 @@ window.addEventListener('load', () => {
         });
         toggleExpander(expanderElement.checked, expander);
     }
+
+    let mailerExpander = {key: 'mailer-service', filterClass: 'mailer-filter'};
+    let mailerServiceElement = document.getElementById(mailerExpander.key);
+    mailerServiceElement.addEventListener('change', (event) => {
+        toggleExpander('none' !== event?.currentTarget?.value, mailerExpander);
+    });
+    toggleExpander('none' !== mailerServiceElement.value, mailerExpander);
 
     let useMonitorElement = document.getElementById('app-use-monitor');
     let secureMonitorElement = document.getElementById('app-secure-monitor');

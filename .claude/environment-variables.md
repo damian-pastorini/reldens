@@ -121,10 +121,13 @@ The basic configuration installs a `server/security/*` row for the admin CSRF, a
 
 ## Mailer
 
+All the mailer variables are read once by `EnvironmentVariablesReader.fetchMailerFromEnvironmentVariables()` into `server/mailer` and passed to the `Mailer` constructor.
+
 - `RELDENS_MAILER_ENABLE` - Enable email functionality
-- `RELDENS_MAILER_SERVICE` - Mail service provider
+- `RELDENS_MAILER_SERVICE` - Mail service provider: `nodemailer` (installed with Reldens) or `sendgrid` (requires `npm install @sendgrid/mail` in the project); the package is loaded from the project `node_modules` through the `@reldens/server-utils` `PackageResolver`, a missing package logs the install command and leaves the mailer disabled
 - `RELDENS_MAILER_HOST` - SMTP host
 - `RELDENS_MAILER_PORT` - SMTP port
+- `RELDENS_MAILER_SECURE` - Use SSL for the SMTP connection (default: 1)
 - `RELDENS_MAILER_USER` - SMTP username
 - `RELDENS_MAILER_PASS` - SMTP password
 - `RELDENS_MAILER_FROM` - From email address
