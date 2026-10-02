@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Another Player Hit Cancels The Mining And The Player Receives No Item</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Another Player Hit Cancels The Mining And The Player Receives No Item</h1>
+<p>Test: <code>tests/e2e/test-timing-objects-cancel.spec.js</code> - <em>another player hit cancels the mining and the player receives no item</em></p>
+<p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/another-player-hit-cancels-the-mining-and-the-player-receives-no-item.webm" data-title="another player hit cancels the mining and the player receives no item">&#9654; Watch video</a></p>
+<table>
+    <thead><tr><th>Action</th><th>Test Code</th><th>Test File</th><th>File Proof</th><th>Code Proof</th><th>Comments</th></tr></thead>
+    <tbody>
+        <tr>
+            <td>Read the attacker skill from the game data</td>
+            <td><code>BaseE2eTest.loadGameData().players.root2.skills.find(skill =&gt; 'attackShort' === skill.key)</code></td>
+            <td>test-timing-objects-cancel.spec.js:163-166</td>
+            <td>tests/e2e/game-data.json</td>
+            <td><code>"key": "attackShort"</code>, <code>"range": 50</code></td>
+            <td>ImRoot2 (level 1) has <code>attackShort</code>, a direct attack with no bullet body</td>
+        </tr>
+        <tr>
+            <td>The miner enters the forest with its enemies disabled and reaches the closest rock</td>
+            <td><code>TestTimingObjectsCancel.prepareMining(page, gameConfig, longRun)</code></td>
+            <td>test-timing-objects-cancel.spec.js:167</td>
+            <td>tests/e2e/test-timing-objects-cancel.spec.js:33-55</td>
+            <td><code>static async prepareMining(page, gameConfig, longRun)</code></td>
+            <td>The mining does not start yet, so the attacker walk can not cancel it</td>
+        </tr>
+        <tr>
+            <td>ImRoot2 enters the forest and the server places it next to the miner</td>
+            <td><code>Login.loginAndStartGame(secondPage, ..., Login.FOREST_ROOM_NAME)</code><br><code>TestTimingObjectsCancel.placeAttackerNextToMiner(secondPage, gameConfig, minerName, await Phaser.getPlayerServerPosition(page), attackSkill.range, mining.serverTimeout)</code></td>
+            <td>test-timing-objects-cancel.spec.js:169-185</td>
+            <td>tests/e2e/helpers/room-objects-state.js:199</td>
+            <td><code>static placePlayerNearPlayer(room, playerName, nearPlayerName)</code></td>
+            <td><code>POST /api/e2e/room-objects/place-player</code> stops the attacker body and places it 40px from the miner on a walkable tile (<code>findAttackPosition</code>, room-objects-state.js:152): inside the 50px skill range and out of contact with the 25px miner body, so the attacker never pushes the miner; the spec waits for the attacker client to reach the placed position and asserts the distance is inside the skill range</td>
+        </tr>
+        <tr>
+            <td>Start the mining</td>
+            <td><code>TimingObjectSession.startTiming(page, mining.rockKey, mining.serverTimeout)</code></td>
+            <td>test-timing-objects-cancel.spec.js:186</td>
+            <td>tests/e2e/helpers/timing-object-session.js:104</td>
+            <td><code>static async startTiming(page, objectKey, timeout)</code></td>
+            <td>Waits for <code>timingStart</code>, then reads the miner HP and position</td>
+        </tr>
+        <tr>
+            <td>ImRoot2 targets the miner and casts attackShort</td>
+            <td><code>TestTimingObjectsCancel.targetPlayerByName(secondPage, minerName)</code><br><code>secondPage.click(Selectors.combat.skillButton('attackShort'), {force: true})</code></td>
+            <td>test-timing-objects-cancel.spec.js:189-191</td>
+            <td>lib/users/client/player-engine.js:205</td>
+            <td><code>setTargetPlayerById(id)</code></td>
+            <td>The target is set with the player engine like a click on the player; the server runs <code>Pvp.runBattle</code> (lib/actions/server/message-actions.js:55) and the forest room has PvP enabled (no <code>pvpEnabled:false</code> in its customData)</td>
+        </tr>
+        <tr>
+            <td>Assert the hit cancels the mining without moving the miner and no ore is given</td>
+            <td><code>TestTimingObjectsCancel.assertHitCancelledMining(page, mining, hpBefore, positionBefore)</code></td>
+            <td>test-timing-objects-cancel.spec.js:193</td>
+            <td>lib/objects/server/object/type/timing-object.js:80-83</td>
+            <td><code>if(this.cancelOnHit &amp;&amp; sc.get(playerSchema.stats, affectedProperty, 0) &lt; startAffectedValue)</code></td>
+            <td>Waits for <code>timingCancel</code>, asserts the position did not change, polls the HP below the value before the hit and waits the timing duration to assert the ore quantity did not change</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>
