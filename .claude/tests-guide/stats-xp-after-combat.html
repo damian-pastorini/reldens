@@ -14,28 +14,12 @@
     <thead><tr><th>Action</th><th>Test Code</th><th>Test File</th><th>File Proof</th><th>Code Proof</th><th>Comments</th></tr></thead>
     <tbody>
         <tr>
-            <td>Log in as root player with forest scene selection and wait for game to fully load</td>
-            <td><code>await TestStats.loginRootPlayer(page, gameConfig, longRun, 'reldens-forest')</code></td>
-            <td>test-stats.spec.js:57</td>
-            <td>tests/e2e/helpers/login.js:77</td>
-            <td><code>static async loginAndStartGame(page, username, password, playerName, longRun, skipUiSelectors = false, scene = null)</code></td>
-            <td>Calls Login.loginAndStartGame with scene='reldens-forest'; player starts directly in forest since each test resets player to town (SAFE_ROOM_ID=4)</td>
-        </tr>
-        <tr>
-            <td>Verify player is in reldens-forest (immediate - scene selection already placed them there)</td>
-            <td><code>let inForest = await Navigation.ensureInRoom(page, 'reldens-forest', 608, 16, navTimeout)</code></td>
-            <td>test-stats.spec.js:62</td>
-            <td>tests/e2e/helpers/navigation.js:164</td>
-            <td><code>static async ensureInRoom(page, roomName, transitionX, transitionY, timeout)</code></td>
-            <td>Checks activeRoomEvents.roomName first; returns true immediately since scene selection started player in forest; no walking required</td>
-        </tr>
-        <tr>
-            <td>Assert the player successfully reached reldens-forest</td>
-            <td><code>expect(inForest, 'Player must reach reldens-forest for XP test').toBeTruthy()</code></td>
-            <td>test-stats.spec.js:63</td>
-            <td>tests/e2e/helpers/navigation.js:164</td>
-            <td><code>static async ensureInRoom(page, roomName, transitionX, transitionY, timeout)</code></td>
-            <td>Fails with a descriptive message if the room transition was not completed within the timeout.</td>
+            <td>Log in as root player in the forest level 1 and wait for the game to fully load</td>
+            <td><code>let forestData = await Login.loginAndEnterForest(page, gameConfig, longRun)</code></td>
+            <td>test-stats.spec.js:45</td>
+            <td>tests/e2e/helpers/login.js:148</td>
+            <td><code>static async loginAndEnterForest(page, gameConfig, longRun)</code></td>
+            <td>Selects <code>Login.FOREST_ROOM_NAME</code> (reldens-forest-level-1) at login; the player starts in the forest after each test resets it to the town start point (room 41, <code>SAFE_ROOM_ID</code>), and <code>ensureInRoom</code> asserts the room without walking</td>
         </tr>
         <tr>
             <td>Wait for an enemy sprite to become visible in the scene</td>
@@ -73,7 +57,7 @@
             <td>Chase the enemy until it is within 100px</td>
             <td><code>await TestStats.chaseEnemyForRange(page, enemyKey, 100, navTimeout)</code></td>
             <td>test-stats.spec.js:70</td>
-            <td>tests/e2e/helpers/navigation.js:192</td>
+            <td>tests/e2e/helpers/object-chase.js:198</td>
             <td><code>static async moveToObjectWithinRange(page, matchProp, matchValue, statusKey, range, timeout, useRespawnFind = false)</code></td>
             <td>Walks the player toward the enemy until it is in skill range before casting.</td>
         </tr>
