@@ -215,9 +215,6 @@ Written under `test-results/` (gitignored):
 An uncaught exception in the game server makes Colyseus shut it down and exit the run: the stack is written to
 `server.log` and to the run output, and the reporter prints the `Run aborted` line with the test it stopped at.
 
-The manual verification pages in `.claude/tests-guide/` link these videos with a relative path, so they only
-resolve when the guide is opened from the same working copy that produced the run.
-
 ## Reading a failure
 
 Start with `test-results/playwright/test-*/error-context.md`: it names the spec, the failing call and the page snapshot
