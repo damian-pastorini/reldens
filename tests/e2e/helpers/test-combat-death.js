@@ -2,15 +2,42 @@
  *
  * Reldens - Test Combat Death
  *
- * Death detection and revive waiting helpers for combat tests.
+ * Death detection and revive waiting helpers for combat tests, and the deterministic death: the server sets the player
+ * life to the points one hit removes and places an enemy next to the player with its battle started, so the death
+ * comes from a real enemy hit without depending on the enemies damage rate.
  *
  */
 
-const { Logger } = require('@reldens/utils');
+const { expect } = require('@playwright/test');
+const { Login } = require('./login');
+const { RoomObjectsApi } = require('./room-objects-api');
+const { Logger, sc } = require('@reldens/utils');
 
 class TestCombatDeath
 {
     static POLL_STEP_MS = 500;
+    static LAST_HIT_POINTS = 1;
+
+    static async killPlayerWithEnemyAttack(page, gameConfig, enemyAssetKey, timeout)
+    {
+        let playerName = sc.get(gameConfig, 'e2ePlayerName', 'ImRoot');
+        let lastHitPoints = await RoomObjectsApi.setPlayerAffectedProperty(
+            gameConfig,
+            Login.FOREST_ROOM_NAME,
+            playerName,
+            TestCombatDeath.LAST_HIT_POINTS
+        );
+        expect(lastHitPoints.value, 'The player last hit points must be set: '+sc.get(lastHitPoints, 'error', ''))
+            .toBe(TestCombatDeath.LAST_HIT_POINTS);
+        let enemyAttack = await RoomObjectsApi.startEnemyAttack(
+            gameConfig,
+            Login.FOREST_ROOM_NAME,
+            playerName,
+            enemyAssetKey
+        );
+        expect(enemyAttack.enemyKey, 'The enemy attack must start: '+sc.get(enemyAttack, 'error', '')).toBeTruthy();
+        await TestCombatDeath.waitForPlayerHpCondition(page, 'dead', timeout);
+    }
 
     static async waitForPlayerHpCondition(page, condition, timeout)
     {
