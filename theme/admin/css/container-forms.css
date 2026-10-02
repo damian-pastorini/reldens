@@ -3,20 +3,20 @@
     max-width: 25rem;
     margin: auto;
 
-    .form-title {
+    & .form-title {
         font-size: var(--font-size-xl);
         margin-bottom: 2rem;
         text-align: center;
     }
 
-    .response-error {
+    & .response-error {
         color: var(--color-red);
         font-weight: var(--bold);
         justify-content: center;
         text-align: center;
     }
 
-    .input-box {
+    & .input-box {
         display: flex;
         align-items: center;
         gap: var(--space-lg);
@@ -35,7 +35,7 @@
         }
     }
 
-    .form-textarea {
+    & .form-textarea {
         width: 98%;
         margin: 0;
         padding: var(--space-sm);
