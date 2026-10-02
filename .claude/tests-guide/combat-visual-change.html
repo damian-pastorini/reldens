@@ -23,18 +23,18 @@
     </thead>
     <tbody>
         <tr>
-            <td>Login and navigate to reldens-forest</td>
+            <td>Login and enter reldens-forest-level-1</td>
             <td><code>TestCombat.loginAndGetEnemyWithWorldPos(page, gameConfig, longRun)</code></td>
-            <td>test-combat.spec.js:233</td>
-            <td>tests/e2e/helpers/login.js:77<br>tests/e2e/helpers/navigation.js:164</td>
-            <td><code>static async loginAndStartGame(page, username, password, playerName, longRun, false, 'reldens-forest')</code></td>
-            <td>Logs in as root/ImRoot with forest scene selected; waits for enemy to appear in scene</td>
+            <td>test-combat.spec.js:220</td>
+            <td>tests/e2e/test-combat.spec.js:38-47<br>tests/e2e/helpers/login.js:148</td>
+            <td><code>static async loginAndEnterForest(page, gameConfig, longRun)</code></td>
+            <td>Logs in as root/ImRoot with the forest level 1 scene selected; waits for the enemy to appear in scene</td>
         </tr>
         <tr>
             <td>Walk to half attack range</td>
             <td><code>TestCombat.walkToEnemyWithinRange(page, data.enemyKey, Math.floor(skillRange / 2), data.navigationTimeout)</code></td>
             <td>test-combat.spec.js:236</td>
-            <td>tests/e2e/helpers/navigation.js:192</td>
+            <td>tests/e2e/helpers/object-chase.js:198</td>
             <td><code>static async moveToObjectWithinRange(...)</code></td>
             <td>Gets close to enemy before taking baseline screenshot; ensures reliable canvas change after attack</td>
         </tr>
