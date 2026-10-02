@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Town NPCs With Random Movement Wander Inside Their Configured Area</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Town NPCs With Random Movement Wander Inside Their Configured Area</h1>
+<p>Test: <code>tests/e2e/test-npc.spec.js</code> - <em>town NPCs with random movement wander inside their configured area</em></p>
+<p>Video: <a href="#" class="video-link" data-src="../../test-results/videos/town-npcs-with-random-movement-wander-inside-their-configured-area.webm" data-title="town NPCs with random movement wander inside their configured area">&#9654; Watch video</a></p>
+<table>
+    <thead><tr><th>Action</th><th>Test Code</th><th>Test File</th><th>File Proof</th><th>Code Proof</th><th>Comments</th></tr></thead>
+    <tbody>
+        <tr>
+            <td>Load the town NPCs and traders with random movement from the game data</td>
+            <td><code>BaseE2eTest.loadPlayerRoomEntries('root2', TestNpc.NPC_LISTS, true)</code></td>
+            <td>test-npc.spec.js:31-32</td>
+            <td>migrations/production/reldens-sample-data-v4.0.0.sql:166-172</td>
+            <td><code>"collisionType":4,"hasState":true,"randomMovement":{"maxTiles":5}</code></td>
+            <td>Alfred, Mamon, Gimly and Barrik in the town (room 41) have a KINEMATIC body with state and wander up to 5 tiles</td>
+        </tr>
+        <tr>
+            <td>Login as root2/ImRoot2 in the town</td>
+            <td><code>TestNpc.loginRoot2Player(page, gameConfig, longRun)</code><br><code>Navigation.waitForRoom(page, Login.TOWN_ROOM_NAME, ...)</code></td>
+            <td>test-npc.spec.js:33-34</td>
+            <td>tests/e2e/helpers/login.js:16</td>
+            <td><code>static TOWN_ROOM_NAME = 'reldens-new-age-town';</code></td>
+            <td>root2 is saved in the town start point (1520, 1424)</td>
+        </tr>
+        <tr>
+            <td>Sample the NPC bodies positions for 30 seconds</td>
+            <td><code>PhaserRange.collectPositionRanges(page, Object.keys(maxTilesByKey), TestNpc.MOVEMENT_SAMPLES, TestNpc.MOVEMENT_SAMPLE_INTERVAL_MS, PhaserRange.getStateBodiesPositions)</code></td>
+            <td>test-npc.spec.js:36-43</td>
+            <td>lib/objects/server/manager.js:288</td>
+            <td><code>addStateBodiesToRoomState(roomState)</code></td>
+            <td>The NPC bodies are synced in <code>room.state.bodies</code> by their client key; the moves start every 3 to 8 seconds</td>
+        </tr>
+        <tr>
+            <td>Assert every NPC is synced, at least one wandered and none left its area</td>
+            <td><code>PhaserRange.summarizeMovement(ranges, maxTilesByKey, Navigation.TILE_SIZE)</code></td>
+            <td>test-npc.spec.js:45-48</td>
+            <td>lib/objects/server/object/object-random-movement.js</td>
+            <td><code>findTargetTile()</code></td>
+            <td>The targets are walkable tiles inside <code>maxTiles</code> of the original tile, so the x and y spread can not exceed <code>(2 * maxTiles + 1) * 32</code></td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>
