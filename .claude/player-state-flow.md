@@ -278,7 +278,7 @@ async savePlayerState(sessionId) {
 ## Data Flow Diagram
 
 **Step 1: DATABASE (players_state table)**
-- room_id: 4, x: 400, y: 345, dir: 'down'
+- room_id: 41, x: 1520, y: 1424, dir: 'down'
 - (NO scene property)
 
 **Step 2: LOAD - UsersManager.loadUserByUsername()**
@@ -321,12 +321,12 @@ After login, you have **TWO sources of state** that diverge:
 ```javascript
 userModel.player.state = {
   // Town (from database)
-  room_id: 4,
-  x: 400,
-  y: 345,
+  room_id: 41,
+  x: 1520,
+  y: 1424,
   dir: 'down',
   // Added by server
-  scene: 'reldens-town'
+  scene: 'reldens-new-age-town'
 }
 ```
 
@@ -334,19 +334,19 @@ userModel.player.state = {
 ```javascript
 // UNCHANGED for the whole session:
 userModel.player.state = {
-  room_id: 4,
-  x: 400,
-  y: 345,
+  room_id: 41,
+  x: 1520,
+  y: 1424,
   dir: 'down',
-  scene: 'reldens-town'
+  scene: 'reldens-new-age-town'
 }
 
 // UPDATED during gameplay:
 playerSchema.state = {
   room_id: 2,
-  x: 548,
-  y: 615,
-  dir: 'up',
+  x: 528,
+  y: 624,
+  dir: 'down',
   scene: 'reldens-house-1'
 }
 ```
