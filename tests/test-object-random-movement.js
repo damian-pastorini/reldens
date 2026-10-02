@@ -9,8 +9,7 @@ const { BaseTest } = require('./base-test');
 const { ObjectRandomMovement } = require('../lib/objects/server/object/object-random-movement');
 const { ObjectsManager } = require('../lib/objects/server/manager');
 const { NpcObject } = require('../lib/objects/server/object/type/npc-object');
-const { PhysicalBody } = require('../lib/world/server/physical-body');
-const { PathFinder } = require('../lib/world/server/path-finder');
+const { RandomMovementBodyBuilder } = require('./fixtures/random-movement-body-builder');
 const { GameConst } = require('../lib/game/constants');
 const { ObjectsConst } = require('../lib/objects/constants');
 
@@ -25,24 +24,7 @@ class TestObjectRandomMovement extends BaseTest
         this.originalTile = 10;
         this.maxTiles = 3;
         this.targetSamples = 200;
-    }
-
-    createMovingBody()
-    {
-        let world = {
-            mapJson: {tilewidth: this.tileSize, tileheight: this.tileSize, width: this.mapSize, height: this.mapSize},
-            onlyWalkable: true,
-            tryClosestPath: false
-        };
-        let pathFinder = new PathFinder();
-        pathFinder.world = world;
-        pathFinder.createGridFromMap();
-        world.pathFinder = pathFinder;
-        let tileCenter = this.originalTile * this.tileSize + this.tileSize / 2;
-        let body = new PhysicalBody({mass: 1, position: [tileCenter, tileCenter], type: Body.DYNAMIC});
-        body.world = world;
-        body.bodyState = {inState: GameConst.STATUS.ACTIVE};
-        return body;
+        this.bodyBuilder = new RandomMovementBodyBuilder(this.tileSize, this.mapSize, this.originalTile);
     }
 
     createRandomMovement(body, inBattlePlayers = {})
@@ -60,21 +42,26 @@ class TestObjectRandomMovement extends BaseTest
             || this.maxTiles < Math.abs(target.row - this.originalTile);
     }
 
+    collectInvalidTargets(randomMovement, isInvalidTarget)
+    {
+        let invalidTargets = [];
+        for(let sample = 0; sample < this.targetSamples; sample++){
+            let target = randomMovement.findTargetTile();
+            if(!target || isInvalidTarget(target)){
+                invalidTargets.push(target);
+            }
+        }
+        return invalidTargets;
+    }
+
     async testRandomTargetsStayAroundTheOriginalTile()
     {
         await this.test('the random targets are walkable tiles around the original tile and never the current tile', async () => {
-            let randomMovement = this.createRandomMovement(this.createMovingBody());
-            let invalidTargets = [];
-            for(let sample = 0; sample < this.targetSamples; sample++){
-                let target = randomMovement.findTargetTile();
-                if(!target || this.isOutsideTheMovementArea(target)){
-                    invalidTargets.push(target);
-                    continue;
-                }
-                if(this.originalTile === target.column && this.originalTile === target.row){
-                    invalidTargets.push(target);
-                }
-            }
+            let invalidTargets = this.collectInvalidTargets(
+                this.createRandomMovement(this.bodyBuilder.build()),
+                (target) => this.isOutsideTheMovementArea(target)
+                    || (this.originalTile === target.column && this.originalTile === target.row)
+            );
             this.assert.deepStrictEqual(invalidTargets, []);
         });
     }
@@ -82,27 +69,20 @@ class TestObjectRandomMovement extends BaseTest
     async testNoTargetWhenTheSurroundingTilesAreNotWalkable()
     {
         await this.test('there is no random target when every tile around the original tile is not walkable', async () => {
-            let body = this.createMovingBody();
+            let body = this.bodyBuilder.build();
             let firstTile = this.originalTile - this.maxTiles;
             let lastTile = this.originalTile + this.maxTiles;
             for(let column = firstTile; column <= lastTile; column++){
-                this.blockColumnTiles(body.world.pathFinder.grid, column, firstTile, lastTile);
+                this.bodyBuilder.blockColumnTiles(body.world.pathFinder.grid, column, firstTile, lastTile);
             }
             this.assert.strictEqual(this.createRandomMovement(body).findTargetTile(), false);
         });
     }
 
-    blockColumnTiles(grid, column, firstRow, lastRow)
-    {
-        for(let row = firstRow; row <= lastRow; row++){
-            grid.setWalkableAt(column, row, false);
-        }
-    }
-
     async testMoveToRandomTileStartsAPathInsideTheArea()
     {
         await this.test('moving to a random tile starts a path that ends inside the movement area', async () => {
-            let body = this.createMovingBody();
+            let body = this.bodyBuilder.build();
             let path = this.createRandomMovement(body).moveToRandomTile();
             this.assert.notStrictEqual(0, body.autoMoving.length);
             let lastNode = [...path].pop();
@@ -110,10 +90,37 @@ class TestObjectRandomMovement extends BaseTest
         });
     }
 
+    async testTargetsBehindAWallAreNotReachedFromOutsideTheArea()
+    {
+        await this.test('the random targets are only the tiles reached with a path inside the movement area', async () => {
+            let body = this.bodyBuilder.build();
+            let wallColumn = this.originalTile + 1;
+            this.bodyBuilder.blockColumnTiles(body.world.pathFinder.grid, wallColumn, 0, this.originalTile + this.maxTiles);
+            let invalidTargets = this.collectInvalidTargets(
+                this.createRandomMovement(body),
+                (target) => wallColumn < target.column || target.path.some(
+                    pathTile => this.isOutsideTheMovementArea({column: pathTile[0], row: pathTile[1]})
+                )
+            );
+            this.assert.deepStrictEqual(invalidTargets, []);
+        });
+    }
+
+    async testBodyOutsideTheAreaWalksBackToTheOriginalTile()
+    {
+        await this.test('a body pushed outside the movement area walks back to its original tile', async () => {
+            let body = this.bodyBuilder.build();
+            body.updateCurrentPoints();
+            body.position[0] += (this.maxTiles + 2) * this.tileSize;
+            let path = this.createRandomMovement(body).moveToRandomTile();
+            this.assert.deepStrictEqual([...path].pop(), [this.originalTile, this.originalTile]);
+        });
+    }
+
     async testBodyDoesNotMoveWhileItIsAlreadyMoving()
     {
         await this.test('the body does not get a new random target while it is following a path', async () => {
-            let body = this.createMovingBody();
+            let body = this.bodyBuilder.build();
             body.autoMoving = [[this.originalTile, this.originalTile + 1]];
             this.assert.strictEqual(this.createRandomMovement(body).moveToRandomTile(), false);
         });
@@ -122,7 +129,7 @@ class TestObjectRandomMovement extends BaseTest
     async testBlockedPathIsDroppedForANewTarget()
     {
         await this.test('a path that kept the body on the same tile between two moves is dropped for a new target', async () => {
-            let body = this.createMovingBody();
+            let body = this.bodyBuilder.build();
             let blockedPath = [[this.originalTile + 1, this.originalTile]];
             body.autoMoving = blockedPath;
             let randomMovement = this.createRandomMovement(body);
@@ -136,7 +143,7 @@ class TestObjectRandomMovement extends BaseTest
     async testProgressingPathIsKept()
     {
         await this.test('a path that moved the body to another tile between two moves is kept', async () => {
-            let body = this.createMovingBody();
+            let body = this.bodyBuilder.build();
             let pendingPath = [[this.originalTile + 2, this.originalTile]];
             body.autoMoving = pendingPath;
             let randomMovement = this.createRandomMovement(body);
@@ -150,7 +157,7 @@ class TestObjectRandomMovement extends BaseTest
     async testPathInBattleIsNeverDropped()
     {
         await this.test('the path of an object in battle is never dropped by the random movement', async () => {
-            let body = this.createMovingBody();
+            let body = this.bodyBuilder.build();
             let chasePath = [[this.originalTile + 1, this.originalTile]];
             body.autoMoving = chasePath;
             let randomMovement = this.createRandomMovement(body, {1: true});
@@ -163,7 +170,7 @@ class TestObjectRandomMovement extends BaseTest
     async testDeadBodyDoesNotMove()
     {
         await this.test('a body that is not active does not move', async () => {
-            let body = this.createMovingBody();
+            let body = this.bodyBuilder.build();
             body.bodyState.inState = GameConst.STATUS.DEATH;
             this.assert.strictEqual(this.createRandomMovement(body).moveToRandomTile(), false);
         });
@@ -172,18 +179,20 @@ class TestObjectRandomMovement extends BaseTest
     async testBodyInBattleDoesNotMove()
     {
         await this.test('an object in battle with players does not move randomly', async () => {
-            let randomMovement = this.createRandomMovement(this.createMovingBody(), {1: true});
+            let randomMovement = this.createRandomMovement(this.bodyBuilder.build(), {1: true});
             this.assert.strictEqual(randomMovement.moveToRandomTile(), false);
         });
     }
 
-    async testInteractionPausesTheMovementUntilThePauseEnds()
+    async testOpenDialogsPauseTheMovementUntilEveryDialogIsClosed()
     {
-        await this.test('an object does not move randomly while a player interaction pause is active', async () => {
-            let randomMovement = this.createRandomMovement(this.createMovingBody());
-            randomMovement.pauseForInteraction();
+        await this.test('an object does not move randomly until every player closed its dialog', async () => {
+            let randomMovement = this.createRandomMovement(this.bodyBuilder.build());
+            randomMovement.pauseForInteraction('session-a');
+            randomMovement.pauseForInteraction('session-b');
+            randomMovement.resumeAfterInteraction('session-a');
             this.assert.strictEqual(randomMovement.moveToRandomTile(), false);
-            randomMovement.pausedUntil = Date.now() - 1;
+            randomMovement.resumeAfterInteraction('session-b');
             this.assert.notStrictEqual(randomMovement.moveToRandomTile(), false);
         });
     }
@@ -191,17 +200,29 @@ class TestObjectRandomMovement extends BaseTest
     async testInteractionStopsThePathTheBodyIsFollowing()
     {
         await this.test('a player interaction stops the path the object body is following', async () => {
-            let body = this.createMovingBody();
+            let body = this.bodyBuilder.build();
             body.autoMoving = [[this.originalTile, this.originalTile + 1]];
-            this.createRandomMovement(body).pauseForInteraction();
+            this.createRandomMovement(body).pauseForInteraction('session-a');
             this.assert.strictEqual(body.autoMoving, false);
+        });
+    }
+
+    async testManagerResumesTheMovementOfTheRemovedPlayerDialogs()
+    {
+        await this.test('the objects manager closes the dialogs of a removed player on every room object', async () => {
+            let objectsManager = new ObjectsManager({config: {}, events: {}, dataServer: {}});
+            let randomMovement = this.createRandomMovement(this.bodyBuilder.build());
+            randomMovement.pauseForInteraction('session-a');
+            objectsManager.roomObjects = {'ground-npc-1': {randomMovementBehavior: randomMovement}, 'ground-npc-2': {}};
+            objectsManager.resumeObjectsMovementAfterInteraction('session-a');
+            this.assert.deepStrictEqual(randomMovement.openDialogs, {});
         });
     }
 
     async testMovementStopsWhenTheBodyLeftTheWorld()
     {
         await this.test('the movement loop stops when the body is no longer in the world', async () => {
-            let body = this.createMovingBody();
+            let body = this.bodyBuilder.build();
             let randomMovement = this.createRandomMovement(body);
             body.world = null;
             randomMovement.moveAndScheduleNext();
@@ -213,7 +234,7 @@ class TestObjectRandomMovement extends BaseTest
     {
         await this.test('the objects manager starts the random movement only for objects with the config', async () => {
             let objectsManager = new ObjectsManager({config: {}, events: {}, dataServer: {}});
-            let body = this.createMovingBody();
+            let body = this.bodyBuilder.build();
             this.assert.strictEqual(objectsManager.startObjectRandomMovement({key: 'static_npc'}, body), false);
             let movingObject = {key: 'moving_npc', randomMovement: {maxTiles: 5}};
             let randomMovement = objectsManager.startObjectRandomMovement(movingObject, body);
@@ -227,7 +248,7 @@ class TestObjectRandomMovement extends BaseTest
     {
         await this.test('the objects manager sets the body original tile to the tile the body was created on', async () => {
             let objectsManager = new ObjectsManager({config: {}, events: {}, dataServer: {}});
-            let body = this.createMovingBody();
+            let body = this.bodyBuilder.build();
             objectsManager.startObjectRandomMovement({key: 'moving_npc', randomMovement: {}}, body).stop();
             this.assert.deepStrictEqual([body.originalCol, body.originalRow], [this.originalTile, this.originalTile]);
         });
@@ -297,7 +318,7 @@ class TestObjectRandomMovement extends BaseTest
     {
         await this.test('a moving npc validates the interaction at its current body state position', async () => {
             let npc = this.createInteractiveNpc();
-            npc.randomMovementBehavior = this.createRandomMovement(this.createMovingBody());
+            npc.randomMovementBehavior = this.createRandomMovement(this.bodyBuilder.build());
             this.assert.strictEqual((await this.sendInteractionFromMovedPosition(npc)).act, GameConst.UI);
         });
     }
