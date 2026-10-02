@@ -21,7 +21,6 @@ let expect = BaseE2eTest.expect;
 class TestCombat
 {
     static TAB_TARGET_RANGE = 200;
-    static DEATH_CHASE_RANGE = 40;
     static gameDataPath = FileHandler.joinPaths(process.cwd(), 'tests', 'e2e', 'game-data.json');
     static gameData = FileHandler.exists(TestCombat.gameDataPath) ? FileHandler.fetchFileJson(TestCombat.gameDataPath) : null;
     static rootPlayerData = TestCombat.gameData && TestCombat.gameData.players && TestCombat.gameData.players.root
@@ -155,30 +154,6 @@ class TestCombat
         await screenshots.capture(page, prefix+'-'+skill.key+'-cast-completed');
     }
 
-    static async waitForPlayerDeathLoop(page, enemyKey, timeout)
-    {
-        let deadline = Date.now() + timeout;
-        let maxSteps = Math.ceil(timeout / 500) + 1;
-        for(let i = 0; i < maxSteps; i++){
-            let isDead = await page.evaluate(() => {
-                return null !== document.querySelector('#game-over:not(.hidden)');
-            });
-            if(isDead){
-                return true;
-            }
-            let remaining = deadline - Date.now();
-            if(0 >= remaining){
-                break;
-            }
-            await TestCombat.walkToEnemyWithinRange(page, enemyKey, TestCombat.DEATH_CHASE_RANGE, Math.min(6000, remaining));
-            let waitMs = Math.min(1000, deadline - Date.now());
-            if(0 < waitMs){
-                await page.waitForTimeout(waitMs);
-            }
-        }
-        return false;
-    }
-
     static async resolveAttackKey(page, firstAttackSkill, context)
     {
         let availableActionKeys = await Phaser.getPlayerAvailableActionKeys(page);
@@ -253,9 +228,7 @@ class TestCombat
                     + TimeConstants.PLAYER_REVIVE
                 );
                 let data = await TestCombat.loginAndGetEnemyWithWorldPos(page, gameConfig, longRun);
-                await TestCombat.walkToEnemyWithinRange(page, data.enemyKey, TestCombat.DEATH_CHASE_RANGE, data.navigationTimeout);
-                let died = await TestCombat.waitForPlayerDeathLoop(page, data.enemyKey, TimeConstants.ENEMY_KILL);
-                expect(died, 'Player must die from enemy attacks within timeout').toBeTruthy();
+                await TestCombatDeath.killPlayerWithEnemyAttack(page, gameConfig, data.enemyKey, TimeConstants.ENEMY_KILL);
                 await screenshots.capture(page, 'player-dead');
                 await TestCombatDeath.waitForPlayerHpCondition(page, 'alive', TimeConstants.PLAYER_REVIVE);
                 let playerHpAfter = await TestCombatDeath.getPlayerHpFromState(page);
