@@ -70,11 +70,12 @@ The SceneDataFilter system prevents Colyseus buffer overflow by analyzing room d
 
 ### When Optimization Happens vs Doesn't
 
-**Town Room (6 NPCs)**:
-- Each NPC has unique properties (different types, content, options)
-- No groups with 2+ identical objects
-- Result: `animationsDefaults: {}` (empty), all data stays in objects
-- All objects keep their original structure with `key` field as asset reference
+**Town Room (`reldens-new-age-town`, 7 doors and 4 NPCs)**:
+- The 7 doors share the `door_house_3` asset key (their `client_params.asset_key`), so they are one group: the
+  properties with the same value in every door go to `animationsDefaults['door_house_3']`, the different ones stay in
+  each door (`key`, position and `positionFix`, because one door uses another offset)
+- Each NPC has its own key and no asset key, so every NPC is a single-object group: no optimization, its data stays
+  as it is with the `key` field as asset reference
 
 **Forest Room (400 NPCs)**:
 - 200 enemies of type A, 200 enemies of type B
@@ -189,65 +190,56 @@ The merger never rewrites the `key` field: the filter never extracts `key` to th
 
 ## Data Flow Examples
 
-### Town Room (No Optimization)
+### Town NPCs (No Optimization)
 
 **Server Processing**:
 ```javascript
-// Original data
+// Original data, two of the town NPCs (objects 5 and 8, layer 'ground', tiles 3482 and 3567)
 objectsAnimationsData: {
-  'ground-collisions444': {
-    key: 'door_house_1',
-    type: 'anim',
-    enabled: true,
-    x: 400,
-    y: 310,
+  'ground3482': {
+    key: 'people_town_1',
+    content: 'Hello! My name is Alfred...',
     ...all properties...
   },
-  'house-collisions-over-player535': {
-    key: 'people_town_1',
-    type: 'npc',
-    enabled: true,
-    content: 'Hello! My name is Alfred...',
-    x: 240,
-    y: 368,
+  'ground3567': {
+    key: 'healer_1',
     ...all properties...
   }
 }
 
 // SceneDataFilter analysis:
-// - Group by 'key' field (no asset_key present)
+// - Group by 'asset_key', falling back to the 'key' field (GroupValueResolver), no asset_key present
 // - Each object has unique 'key' value = single-object groups
-// - No optimization performed
+// - No optimization performed for them
 
 // Server output
 {
   objectsAnimationsData: { ...unchanged... },
-  animationsDefaults: {}  // Empty - triggers merger but no data to merge
+  animationsDefaults: {...}  // only the door_house_3 entry of the town doors, nothing for the NPCs
 }
 ```
 
 **Client Processing**:
 ```javascript
 // AnimationsDefaultsMerger.mergeDefaults() runs
-for(let key of ['ground-collisions444', 'house-collisions-over-player535']){
+for(let key of ['ground3482', 'ground3567']){
     let objectData = objectsAnimationsData[key];
-    // resolved group value: 'door_house_1' / 'people_town_1' (from the key field)
+    // resolved group value: 'people_town_1' / 'healer_1' (from the key field)
     let groupValue = GroupValueResolver.resolve(objectData, 'asset_key');
-    // animationsDefaults is empty, so there is no entry for the group value:
+    // animationsDefaults has no entry for these group values:
     if('' === groupValue || !sc.hasOwn(animationsDefaults, groupValue)){
         continue;  // SKIP - no modifications, keep original data
     }
 }
 
-// Result: All objects unchanged
+// Result: the NPC objects are unchanged
 objectsAnimationsData: {
-  'ground-collisions444': {key: 'door_house_1', ...},
-  'house-collisions-over-player535': {key: 'people_town_1', ...}
+  'ground3482': {key: 'people_town_1', ...},
+  'ground3567': {key: 'healer_1', ...}
 }
 
 // AnimationEngine uses props.key fallback
-// object['ground-collisions444'].key = 'door_house_1' loads asset 'door_house_1'
-// object['house-collisions-over-player535'].key = 'people_town_1' NPC dialog works
+// object['ground3482'].key = 'people_town_1' loads asset 'people_town_1' and the NPC dialog works
 ```
 
 ### Forest Room (With Optimization)
@@ -522,11 +514,11 @@ constructor(props){
 
 ### Verify Optimization Behavior
 
-**Town Room (No Optimization Expected)**:
-1. Join Town room
-2. Check browser console: No `asset_key` in objects
-3. Verify: `animationsDefaults: {}`
-4. Test NPC dialogs work correctly
+**Town Room (Doors Optimized, NPCs Not)**:
+1. Join the `reldens-new-age-town` room
+2. Verify: `animationsDefaults` only has the `door_house_3` entry
+3. Check browser console: the NPC objects keep all their data
+4. Test the doors open and the NPC dialogs work correctly
 
 **Forest Room (Optimization Expected)**:
 1. Join Forest room with 400 objects
