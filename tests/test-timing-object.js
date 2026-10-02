@@ -19,6 +19,7 @@ class TestTimingObject extends BaseTest
         this.startHp = 100;
         this.timingDuration = 5000;
         this.checksWaitMs = 350;
+        this.healCheckWaitMs = 150;
         this.configValues = {'client/actions/skills/affectedProperty': this.affectedProperty};
     }
 
@@ -45,7 +46,7 @@ class TestTimingObject extends BaseTest
         client.send = (type, data) => client.sentActions.push(data.act);
         let playerSchema = {state: {x: 100, y: 100}, stats: {[this.affectedProperty]: this.startHp}};
         timingObject.startTiming(client, {config: timingObject.config}, playerSchema);
-        changePlayer(playerSchema);
+        await changePlayer(playerSchema);
         await timersPromises.setTimeout(this.checksWaitMs);
         clearInterval(timingObject.timingCheckInterval);
         clearTimeout(timingObject.timingTimer);
@@ -79,6 +80,18 @@ class TestTimingObject extends BaseTest
                 playerSchema.stats[this.affectedProperty] = this.startHp + 10;
             });
             this.assert.deepStrictEqual(result, {sentActions: ['timingStart'], isActive: true});
+        });
+    }
+
+    async testHitAfterAHealCancelsTheTiming()
+    {
+        await this.test('a hit after a heal cancels the timing even when the value stays above the starting one', async () => {
+            let result = await this.runTimingWithPlayerChange({cancelOnHit: true}, async (playerSchema) => {
+                playerSchema.stats[this.affectedProperty] = this.startHp + 20;
+                await timersPromises.setTimeout(this.healCheckWaitMs);
+                playerSchema.stats[this.affectedProperty] = this.startHp + 10;
+            });
+            this.assert.deepStrictEqual(result, {sentActions: ['timingStart', 'timingCancel'], isActive: false});
         });
     }
 
