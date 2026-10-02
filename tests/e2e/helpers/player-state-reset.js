@@ -15,9 +15,9 @@ const { SecurityState } = require('./security-state');
 
 class PlayerStateReset
 {
-    static SAFE_ROOM_ID = 4;
-    static SAFE_X = 400;
-    static SAFE_Y = 345;
+    static SAFE_ROOM_ID = 41;
+    static SAFE_X = 1520;
+    static SAFE_Y = 1424;
     static SAFE_DIR = 'down';
 
     static async captureSnapshots(dataServer, config)
