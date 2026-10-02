@@ -16,7 +16,7 @@
         <tr>
             <td>Assert e2eReturnRoom is configured</td>
             <td><code>expect(returnRoom, 'e2eReturnRoom not configured for return point test').toBeTruthy()</code></td>
-            <td>test-movement.spec.js:38-40</td>
+            <td>test-movement.spec.js:42-44</td>
             <td>tests/config.json.dist:35</td>
             <td><code>"e2eReturnRoom": "reldens-forest-level-1"</code></td>
             <td>The revive happens in the same room, at the forest level 1 default return point</td>
@@ -24,7 +24,7 @@
         <tr>
             <td>Login as root/ImRoot in the forest level 1</td>
             <td><code>Login.loginAndEnterForest(page, gameConfig, longRun)</code></td>
-            <td>test-movement.spec.js:42</td>
+            <td>test-movement.spec.js:46</td>
             <td>tests/e2e/helpers/login.js:148</td>
             <td><code>static async loginAndEnterForest(page, gameConfig, longRun)</code></td>
             <td>Selects <code>Login.FOREST_ROOM_NAME</code> at login; the player starts at the forest default return point (1888, 3088)</td>
@@ -32,7 +32,7 @@
         <tr>
             <td>Wait for the player state and the enemy in the scene</td>
             <td><code>Phaser.waitForPlayerInRoomState(page, sceneTimeout)</code><br><code>Phaser.waitForObjectByAssetKey(page, enemyKey, sceneTimeout)</code></td>
-            <td>test-movement.spec.js:46-51</td>
+            <td>test-movement.spec.js:49-54</td>
             <td>tests/e2e/helpers/phaser.js:98</td>
             <td><code>static async waitForObjectByAssetKey(page, assetKey, timeout)</code></td>
             <td>Waits for an aggressive Tree (<code>enemy_forest_1</code>); falls back to any enemy by type</td>
@@ -40,39 +40,23 @@
         <tr>
             <td>Extend the test timeout for the full death cycle</td>
             <td><code>test.setTimeout(TimeConstants.forLongRun(...) + ENEMY_KILL + PLAYER_REVIVE)</code></td>
-            <td>test-movement.spec.js:52-56</td>
+            <td>test-movement.spec.js:55-59</td>
             <td>tests/e2e/helpers/time-constants.js</td>
             <td><code>static ENEMY_KILL = 170000;</code></td>
-            <td>The level 10 player has 280 HP, so the enemy needs time to kill it</td>
+            <td>Upper bound for the death wait; the death comes from the first enemy hit after the hp is set to 1</td>
         </tr>
         <tr>
-            <td>Walk next to the enemy</td>
-            <td><code>ObjectChase.moveToEnemyWithinRange(page, enemyKey, TestMovement.DEATH_CHASE_RANGE, navTimeout)</code></td>
-            <td>test-movement.spec.js:57</td>
-            <td>tests/e2e/helpers/object-chase.js:233</td>
-            <td><code>static async moveToEnemyWithinRange(page, enemyKey, range, timeout)</code></td>
-            <td>Locks the closest enemy and sends path finder moves toward its current server position until within <code>DEATH_CHASE_RANGE</code> = 40px (the bodies touch at about 29 to 36px); a player stuck for 4s takes one walkable tile aside; the player never attacks</td>
-        </tr>
-        <tr>
-            <td>Poll the game over overlay while staying next to the enemy</td>
-            <td><code>document.querySelector('#game-over:not(.hidden)')</code> inside a chase-and-wait loop</td>
-            <td>test-movement.spec.js:58-82</td>
-            <td>lib/objects/server/object/type/enemy-aggression.js:59-111</td>
-            <td><code>waitForPlayers(event, room)</code></td>
-            <td>The aggressive enemy starts the battle by itself; each iteration re-chases the enemy (it may wander or respawn) and waits up to 1s</td>
-        </tr>
-        <tr>
-            <td>Assert the player died</td>
-            <td><code>expect(isDead, 'Player must die from enemy attacks within timeout').toBeTruthy()</code></td>
-            <td>test-movement.spec.js:83</td>
-            <td>-</td>
-            <td>-</td>
-            <td>Fails if the game over overlay never appeared within ENEMY_KILL ms</td>
+            <td>Set the player hp to 1 and place a Tree next to the player with its battle started</td>
+            <td><code>TestCombatDeath.killPlayerWithEnemyAttack(page, gameConfig, enemyKey, TimeConstants.ENEMY_KILL)</code></td>
+            <td>test-movement.spec.js:60</td>
+            <td>tests/e2e/helpers/test-combat-death.js:21-40<br>tests/e2e/helpers/room-objects-state.js:179, 221</td>
+            <td><code>static async killPlayerWithEnemyAttack(page, gameConfig, enemyAssetKey, timeout)</code></td>
+            <td><code>player-affected-property</code> sets the live ImRoot hp to 1 (the response value must be 1), <code>enemy-attack</code> places an <code>enemy_forest_1</code> 40px from the player with its battle started (the response must have the enemy key), then waits for <code>window.reldens.playerData.stats.hp</code> &lt;= 0</td>
         </tr>
         <tr>
             <td>Assert the player revived in the configured return room</td>
             <td><code>Navigation.waitForRoom(page, returnRoom, TimeConstants.PLAYER_REVIVE)</code><br><code>expect(currentRoom).toBe(returnRoom)</code></td>
-            <td>test-movement.spec.js:85-87</td>
+            <td>test-movement.spec.js:62-64</td>
             <td>tests/e2e/helpers/navigation.js:99</td>
             <td><code>static async waitForRoom(page, roomName, timeout)</code></td>
             <td>Core assertion - the player respawns in <code>reldens-forest-level-1</code> within PLAYER_REVIVE</td>
