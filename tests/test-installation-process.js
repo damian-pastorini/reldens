@@ -113,6 +113,7 @@ class TestInstallationProcess extends BaseTest
             let defaults = installer.fetchDefaults();
             FileHandler.remove(this.installProjectRoot);
             this.assert.strictEqual(defaults['mailer-service-nodemailer'], ' selected="selected"');
+            this.assert.strictEqual(defaults['mailer-secure-checked'], ' checked="checked"');
         });
     }
 

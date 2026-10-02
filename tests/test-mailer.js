@@ -4,6 +4,7 @@
  *
  */
 
+const os = require('os');
 const { BaseTest } = require('./base-test');
 const { Mailer } = require('../lib/game/server/mailer');
 const { MailerServiceRegistry } = require('../lib/game/server/mailer/mailer-service-registry');
@@ -92,6 +93,15 @@ class TestMailer extends BaseTest
             this.assert.strictEqual(MailerServiceRegistry.packageName('nodemailer'), 'nodemailer');
             this.assert.strictEqual(MailerServiceRegistry.packageName('sendgrid'), '@sendgrid/mail');
             this.assert.strictEqual(MailerServiceRegistry.packageName('none'), false);
+        });
+    }
+
+    async testTheRegistryLoadsThePackageFromTheNextPath()
+    {
+        await this.test('the registry loads the service package from the next path when the first one misses it', () => {
+            let packagePaths = [os.tmpdir(), this.projectRoot];
+            this.assert.strictEqual(MailerServiceRegistry.loadPackage('nodemailer', packagePaths), require('nodemailer'));
+            this.assert.strictEqual(MailerServiceRegistry.loadPackage('none', packagePaths), false);
         });
     }
 
