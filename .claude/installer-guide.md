@@ -148,7 +148,7 @@ The form defaults are read from the environment when present: `RELDENS_APP_HOST`
 ### Optional Features
 - **HTTPS** - SSL/TLS configuration
 - **Monitor** - Colyseus monitoring tools
-- **Mailer** - Email service integration (SendGrid, NodeMailer)
+- **Mailer** - Service select with None, NodeMailer (default, installed with Reldens) and SendGrid; SendGrid adds `@sendgrid/mail` to the packages the installer runs `npm install` for, None writes `RELDENS_MAILER_ENABLE=0`, and a selected service whose package is not found stops the installation with the `mailer-packages-missing` error
 - **Firebase** - Firebase authentication integration
 
 ## Installer Architecture
