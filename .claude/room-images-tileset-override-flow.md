@@ -32,8 +32,8 @@ When enabled, the system uses the Tiled map file as the source of truth for scen
 
 ### Rooms Table
 - `id` - Room identifier
-- `map_filename` - Tiled map JSON file (e.g., `reldens-forest.json`)
-- `scene_images` - Comma-separated list of tileset images (e.g., `reldens-forest.png,reldens-town.png`)
+- `map_filename` - Tiled map JSON file (e.g., `reldens-forest-level-1.json`)
+- `scene_images` - Comma-separated list of tileset images (e.g., `reldens-forest-level-1.png,reldens-new-age-town.png`)
 
 ### Upload Configuration
 Both fields are configured as upload fields in `lib/rooms/server/entities/rooms-entity-override.js`, and BOTH use the SAME bucket, `<projectThemePath>/assets/maps` (e.g. `theme/default/assets/maps`), with `bucketPath` `/assets/maps/`:
@@ -67,7 +67,7 @@ mapData = readMapFile(bucket, mapFilename, roomId)
 
 // Extract tileset images from map JSON
 tilesetImages = extractTilesetImages(mapData)
-// Example: ['reldens-forest.png']
+// Example: ['reldens-forest-level-1.png']
 
 // Compare with current scene_images
 if (tilesetImages !== currentSceneImages) {
@@ -185,18 +185,18 @@ if (propertyKey === 'scene_images' && tilesetImages.length > 0) {
 
 ### Map File Structure
 
-**Example: reldens-forest.json**
+**Example: reldens-forest-level-1.json**
 ```json
 {
     "tilesets": [
         {
-            "columns": 14,
+            "columns": 25,
             "firstgid": 1,
-            "image": "reldens-forest.png",
-            "imageheight": 408,
-            "imagewidth": 476,
-            "name": "reldens-forest",
-            "tilecount": 168
+            "image": "reldens-forest-level-1.png",
+            "imageheight": 782,
+            "imagewidth": 850,
+            "name": "reldens-forest-level-1",
+            "tilecount": 564
         }
     ]
 }
@@ -209,7 +209,7 @@ extractTilesetImages(mapData) {
     let images = []
 
     for (let tileset of tilesets) {
-        let tilesetImage = tileset.image  // 'reldens-forest.png' or '../images/reldens-forest.png'
+        let tilesetImage = tileset.image  // 'reldens-forest-level-1.png' or '../images/reldens-forest-level-1.png'
         let imageFileName = tilesetImage.split('/').pop()  // Extract filename only
 
         if (!images.includes(imageFileName)) {
@@ -217,7 +217,7 @@ extractTilesetImages(mapData) {
         }
     }
 
-    return images  // ['reldens-forest.png']
+    return images  // ['reldens-forest-level-1.png']
 }
 ```
 
