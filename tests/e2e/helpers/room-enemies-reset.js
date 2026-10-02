@@ -76,6 +76,7 @@ class RoomEnemiesReset
         clearTimeout(objInstance.respawnTimer);
         clearTimeout(objInstance.respawnStateTimer);
         clearTimeout(objInstance.objectBody?.moveToOriginalPointTimer);
+        objInstance.objectBody?.resetAuto();
         objInstance.objectBody?.stopFull();
         try {
             await objInstance.respawnBehavior.restore(room);
