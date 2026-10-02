@@ -47,7 +47,7 @@
         </tr>
         <tr>
             <td>Walk within 50px of the trader, trigger the interaction and send the buy action</td>
-            <td><code>await Navigation.moveToObjectWithinRange(page, traderKey ? 'asset_key' : 'type', traderKey || 'trader', traderKey ? 'active' : 'visible', 50, navTimeout)</code><br><code>await Phaser.triggerObjectInteraction(page, traderKey || 'trader')</code><br><code>await TestNpc.sendTraderAction(page, traderKey || 'trader', 'buy')</code></td>
+            <td><code>await ObjectChase.moveToObjectWithinRange(page, traderKey ? 'asset_key' : 'type', traderKey || 'trader', traderKey ? 'active' : 'visible', 50, navTimeout)</code><br><code>await Phaser.triggerObjectInteraction(page, traderKey || 'trader')</code><br><code>await TestNpc.sendTraderAction(page, traderKey || 'trader', 'buy')</code></td>
             <td>test-npc.spec.js:60-67<br>test-npc.spec.js:68<br>test-npc.spec.js:70</td>
             <td>tests/e2e/helpers/phaser.js:213<br>tests/e2e/test-npc.spec.js:41</td>
             <td><code>static async triggerObjectInteraction(page, objectKey)</code><br><code>window.reldens.activeRoomEvents.send({ 'act': 'oi', 'id': tempId, 'value': args.value });</code></td>
