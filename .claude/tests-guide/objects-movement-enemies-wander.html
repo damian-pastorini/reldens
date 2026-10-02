@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification: Aggressive And Passive Forest Enemies Wander Inside Their Configured Area</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to index</a></p>
+<h1>Verification: Aggressive And Passive Forest Enemies Wander Inside Their Configured Area</h1>
+<p>Tests: <code>tests/e2e/test-objects-movement.spec.js</code> - <em>aggressive forest enemies wander inside their configured area</em> and <em>passive forest enemies wander inside their configured area</em>, both run <code>TestObjectsMovement.runEnemiesWanderTest</code> with <code>isAggressive</code> true or false.</p>
+<p>Videos: <a href="#" class="video-link" data-src="../../test-results/videos/aggressive-forest-enemies-wander-inside-their-configured-area.webm" data-title="aggressive forest enemies wander inside their configured area">&#9654; Aggressive</a> - <a href="#" class="video-link" data-src="../../test-results/videos/passive-forest-enemies-wander-inside-their-configured-area.webm" data-title="passive forest enemies wander inside their configured area">&#9654; Passive</a></p>
+<table>
+    <thead><tr><th>Action</th><th>Test Code</th><th>Test File</th><th>File Proof</th><th>Code Proof</th><th>Comments</th></tr></thead>
+    <tbody>
+        <tr>
+            <td>Load the forest enemy respawn areas with random movement</td>
+            <td><code>TestObjectsMovement.loadForestEnemyAreas()</code></td>
+            <td>test-objects-movement.spec.js:84-85</td>
+            <td>migrations/production/reldens-sample-data-v4.0.0.sql:167-168</td>
+            <td><code>"isAggressive":true,"interactionRadio":170,"randomMovement":{"maxTiles":3}</code><br><code>"isAggressive":false,"interactionRadio":70,"randomMovement":{"maxTiles":8}</code></td>
+            <td>Every forest level has one aggressive enemy area (3 tiles) and one passive enemy area (8 tiles)</td>
+        </tr>
+        <tr>
+            <td>Login in the forest level 1</td>
+            <td><code>Login.loginAndEnterForest(page, gameConfig, longRun)</code></td>
+            <td>test-objects-movement.spec.js:86</td>
+            <td>lib/objects/server/manager.js:277</td>
+            <td><code>objectBody.updateCurrentPoints();</code></td>
+            <td>The random movement start sets the original tile to the respawn tile the enemy was created on, and the players reset before the test restores every enemy of a live room on a new respawn tile, which becomes its original tile</td>
+        </tr>
+        <tr>
+            <td>Sample the server data of the enemies of this kind for 30 seconds</td>
+            <td><code>EnemiesWanderSummary.collectEnemiesSamples(page, gameConfig, isAggressive)</code></td>
+            <td>test-objects-movement.spec.js:89</td>
+            <td>tests/e2e/helpers/room-objects-state.js:90</td>
+            <td><code>static mapObjectSnapshot(roomObject, room)</code></td>
+            <td>Reads <code>GET /api/e2e/room-objects</code> every 250ms (enemies-wander-summary.js:40): the position, velocity, bodies in contact, current tile, original tile, destination and steps of the path it follows, the players in battle with it and its <code>maxTiles</code> and <code>maxDelay</code>, straight from the server bodies, with the time of each sample</td>
+        </tr>
+        <tr>
+            <td>Leave out the enemies that were in battle and check the rest</td>
+            <td><code>EnemiesWanderSummary.summarize(samplesByKey)</code></td>
+            <td>test-objects-movement.spec.js:88</td>
+            <td>lib/objects/server/object/object-random-movement.js:94-114</td>
+            <td><code>stopBlockedPath()</code>, <code>findTargetTile()</code></td>
+            <td>An enemy in battle chases the player out of its area, so it is left out; for the others (enemies-wander-summary.js:129-148) every destination tile must be at most <code>maxTiles</code> columns and rows from the original tile, a rest outside the area (a body pushed by another body) must end within <code>maxDelay</code> because the next move targets a tile inside the area, and a path that keeps the enemy on the same tile must be dropped within two moves (<code>2 * maxDelay</code>)</td>
+        </tr>
+        <tr>
+            <td>Assert some enemies were free, at least one wandered and none moved against the rules</td>
+            <td><code>expect(summary.freeKeys.length).toBeGreaterThan(0)</code><br><code>expect(summary.wanderedKeys.length).toBeGreaterThan(0)</code><br><code>expect(summary.invalidMovements).toEqual([])</code></td>
+            <td>test-objects-movement.spec.js:92-99</td>
+            <td>tests/e2e/helpers/room-enemies-reset.js</td>
+            <td><code>objInstance.objectBody?.resetAuto();</code></td>
+            <td>The failure lists every invalid enemy with its whole trail (tile, original tile, position, velocity, path, contacts and battle per sample); the enemies reset before every test resets the path of the moved bodies, as <code>EnemyObject.respawn</code> does</td>
+        </tr>
+    </tbody>
+</table>
+<script src="guide.js"></script>
+</body>
+</html>
