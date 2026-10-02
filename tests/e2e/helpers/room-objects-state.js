@@ -9,8 +9,10 @@
  * of a room (or only the aggressive ones) until the next players reset, so the specs that are not about those enemies
  * are never interrupted by an attack;
  * the enemy attack that places one enemy next to a player and starts its battle, so the specs that need a hit get it
- * at the exact moment they need it; and the player placement next to another player, out of contact with its body
- * and inside the short attack range, so a player versus player hit never pushes the target.
+ * at the exact moment they need it; the player placement next to another player, out of contact with its body
+ * and inside the short attack range, so a player versus player hit never pushes the target; and the player affected
+ * property (hp) set on the live player and sent to its client, so the specs that need a death set the exact life the
+ * next hit removes instead of depending on the enemies damage rate.
  *
  */
 
@@ -216,6 +218,18 @@ class RoomObjectsState
         return {position};
     }
 
+    static async setPlayerAffectedProperty(room, playerName, value)
+    {
+        let playerSchema = RoomObjectsState.findPlayerByName(room, playerName);
+        if(!playerSchema){
+            return {error: 'Player '+playerName+' not found in room '+room.roomName+'.'};
+        }
+        let affectedProperty = room.config.get('client/actions/skills/affectedProperty');
+        playerSchema.stats[affectedProperty] = value;
+        await room.savePlayerStats(playerSchema, room.getClientById(playerSchema.sessionId));
+        return {affectedProperty, value: playerSchema.stats[affectedProperty]};
+    }
+
     static async respondForRoom(serverManager, roomName, response, roomAction)
     {
         let room = RoomObjectsState.findRoom(serverManager, roomName);
@@ -267,6 +281,18 @@ class RoomObjectsState
                     room,
                     sc.get(request.body, 'playerName', ''),
                     sc.get(request.body, 'nearPlayerName', '')
+                )
+            );
+        });
+        app.post('/api/e2e/room-objects/player-affected-property', async (request, response) => {
+            await RoomObjectsState.respondForRoom(
+                serverManager,
+                sc.get(request.body, 'roomName', ''),
+                response,
+                async (room) => RoomObjectsState.setPlayerAffectedProperty(
+                    room,
+                    sc.get(request.body, 'playerName', ''),
+                    Number(sc.get(request.body, 'value', 0))
                 )
             );
         });
