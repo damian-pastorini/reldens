@@ -2,14 +2,17 @@
  *
  * Reldens - Test NPC
  *
- * Tests NPC dialogue, trader shop, item purchasing, and item selling.
+ * Tests NPC dialogue, trader shop, item purchasing, item selling, the NPCs random movement and the dialogue of a moving
+ * NPC away from its spawn tile.
  *
  */
 
 const { BaseE2eTest } = require('./base-e2e-test');
 const { Login } = require('./helpers/login');
 const { Phaser } = require('./helpers/phaser');
+const { PhaserRange } = require('./helpers/phaser-range');
 const { Navigation } = require('./helpers/navigation');
+const { ObjectChase } = require('./helpers/object-chase');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
 let test = BaseE2eTest.test;
@@ -17,6 +20,35 @@ let expect = BaseE2eTest.expect;
 
 class TestNpc
 {
+    static MOVEMENT_SAMPLES = 30;
+    static MOVEMENT_SAMPLE_INTERVAL_MS = 1000;
+    static MOVEMENT_TEST_TIMEOUT_MS = 90000;
+    static NPC_WANDER_TIMEOUT_MS = 60000;
+    static NPC_LISTS = ['npcs', 'traders'];
+
+    static async runRandomMovementTest(page, screenshots, gameConfig, longRun)
+    {
+        test.setTimeout(TimeConstants.forLongRun(TestNpc.MOVEMENT_TEST_TIMEOUT_MS, longRun));
+        let movingNpcs = BaseE2eTest.loadPlayerRoomEntries('root2', TestNpc.NPC_LISTS, true);
+        expect(movingNpcs.length, 'The town must have NPCs configured with random movement').toBeGreaterThan(0);
+        await TestNpc.loginRoot2Player(page, gameConfig, longRun);
+        await Navigation.waitForRoom(page, Login.TOWN_ROOM_NAME, TimeConstants.forLongRun(TimeConstants.ROOM_TRANSITION, longRun));
+        await screenshots.capture(page, 'town-npcs-before-wandering');
+        let maxTilesByKey = Object.fromEntries(movingNpcs.map(npc => [npc.clientKey, npc.randomMovementTiles]));
+        let ranges = await PhaserRange.collectPositionRanges(
+            page,
+            Object.keys(maxTilesByKey),
+            TestNpc.MOVEMENT_SAMPLES,
+            TestNpc.MOVEMENT_SAMPLE_INTERVAL_MS,
+            PhaserRange.getStateBodiesPositions
+        );
+        await screenshots.capture(page, 'town-npcs-after-wandering');
+        let movement = PhaserRange.summarizeMovement(ranges, maxTilesByKey, Navigation.TILE_SIZE);
+        expect(movement.notSynced, 'Every moving NPC body must be synced in the room state').toEqual([]);
+        expect(movement.wandered.length, 'At least one town NPC must wander').toBeGreaterThan(0);
+        expect(movement.outOfArea, 'Every NPC must stay inside its configured movement area').toEqual([]);
+    }
+
     static async loginRoot2Player(page, gameConfig, longRun)
     {
         let username = gameConfig.e2eUsername2 || 'root2';
@@ -57,7 +89,7 @@ class TestNpc
             : Phaser.getObjectScreenCoordsByType(page, 'trader'));
         expect(traderCoords, 'Trader NPC must be found in the scene').not.toBeNull();
         await Navigation.focusGame(page);
-        await Navigation.moveToObjectWithinRange(
+        await ObjectChase.moveToObjectWithinRange(
             page,
             traderKey ? 'asset_key' : 'type',
             traderKey || 'trader',
@@ -74,8 +106,39 @@ class TestNpc
 
     static async runNpcDialogueTest(page, screenshots, gameConfig, longRun)
     {
-        let npcKey = gameConfig.e2eNpcKey || '';
         await TestNpc.loginRoot2Player(page, gameConfig, longRun);
+        await TestNpc.openNpcDialogue(page, screenshots, gameConfig, longRun);
+    }
+
+    static async runWanderedNpcDialogueTest(page, screenshots, gameConfig, longRun)
+    {
+        test.setTimeout(TimeConstants.forLongRun(TestNpc.MOVEMENT_TEST_TIMEOUT_MS, longRun));
+        let npcKey = gameConfig.e2eNpcKey || '';
+        let movingNpc = BaseE2eTest.loadPlayerRoomEntries('root2', TestNpc.NPC_LISTS, true).find(
+            npc => npcKey === npc.clientKey
+        );
+        expect(movingNpc, 'The e2eNpcKey NPC must be configured with random movement').toBeTruthy();
+        await TestNpc.loginRoot2Player(page, gameConfig, longRun);
+        await page.waitForFunction((args) => {
+            let scene = window.reldens.getActiveScene();
+            let body = window.reldens.activeRoomEvents.room.state.bodies.get(args.key);
+            if(!body || !scene.map){
+                return false;
+            }
+            return args.tileSize <= Math.hypot(
+                body.x - ((args.tileIndex % scene.map.width) * args.tileSize + args.tileSize / 2),
+                body.y - (Math.floor(args.tileIndex / scene.map.width) * args.tileSize + args.tileSize / 2)
+            );
+        }, {key: movingNpc.clientKey, tileIndex: movingNpc.tileIndex, tileSize: Navigation.TILE_SIZE}, {
+            timeout: TimeConstants.forLongRun(TestNpc.NPC_WANDER_TIMEOUT_MS, longRun)
+        });
+        await screenshots.capture(page, 'npc-away-from-spawn-tile');
+        await TestNpc.openNpcDialogue(page, screenshots, gameConfig, longRun);
+    }
+
+    static async openNpcDialogue(page, screenshots, gameConfig, longRun)
+    {
+        let npcKey = gameConfig.e2eNpcKey || '';
         let pauseMs = TimeConstants.pauseMs(longRun);
         let sceneTimeout = TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun);
         let navTimeout = TimeConstants.forLongRun(TimeConstants.NAVIGATION, longRun);
@@ -88,7 +151,7 @@ class TestNpc
         expect(npcCoords, 'NPC must be found in the scene').not.toBeNull();
         await screenshots.capture(page, 'npc-found-in-scene');
         await Navigation.focusGame(page);
-        await Navigation.moveToObjectWithinRange(
+        await ObjectChase.moveToObjectWithinRange(
             page,
             npcKey ? 'asset_key' : 'type',
             npcKey || 'npc',
@@ -169,6 +232,12 @@ class TestNpc
             });
             test('sell item to NPC trader removes item from inventory', async ({ page, screenshots, gameConfig, longRun }) => {
                 await TestNpc.runSellItemTest(page, screenshots, gameConfig, longRun);
+            });
+            test('town NPCs with random movement wander inside their configured area', async ({ page, screenshots, gameConfig, longRun }) => {
+                await TestNpc.runRandomMovementTest(page, screenshots, gameConfig, longRun);
+            });
+            test('moving NPC opens its dialogue after it wandered away from its spawn tile', async ({ page, screenshots, gameConfig, longRun }) => {
+                await TestNpc.runWanderedNpcDialogueTest(page, screenshots, gameConfig, longRun);
             });
         });
     }
