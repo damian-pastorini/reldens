@@ -278,6 +278,8 @@ DELETE FROM `rewards` WHERE `id` IN (1, 2);
 DELETE FROM `objects` WHERE `id` IN (1, 2, 3, 4);
 UPDATE `players_state` SET `room_id` = 41, `x` = 1520, `y` = 1424, `dir` = 'down';
 UPDATE `chat` SET `room_id` = NULL WHERE `room_id` IN (4, 5, 8);
+UPDATE `objects` SET `room_id` = NULL WHERE `room_id` IN (4, 5, 8);
+UPDATE `audio` SET `room_id` = NULL WHERE `room_id` IN (4, 5, 8);
 DELETE FROM `rooms_change_points` WHERE `room_id` IN (4, 5, 8) OR `next_room_id` IN (4, 5, 8);
 DELETE FROM `rooms_return_points` WHERE `room_id` IN (4, 5, 8) OR `from_room_id` IN (4, 5, 8);
 DELETE FROM `rooms` WHERE `id` IN (4, 5, 8);
