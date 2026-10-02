@@ -146,6 +146,9 @@ scene rooms to the specs, wrapped by `tests/e2e/helpers/room-objects-api.js`:
 - `POST /api/e2e/room-objects/enemy-attack` (`{roomName, playerName, assetKey}`) - restores one enemy of that asset
   key, places it 40px from the player on a walkable tile (inside the 50px `attackShort` range, out of contact with the
   25px player body) and starts its battle with the player
+- `POST /api/e2e/room-objects/player-affected-property` (`{roomName, playerName, value}`) - sets the affected property
+  (`client/actions/skills/affectedProperty`, the hp) of the live player to that value, saves the stats and sends them to
+  the player client (`RoomScene.savePlayerStats`)
 
 `TimingObjectSession` (`tests/e2e/helpers/timing-object-session.js`) holds the shared steps of the chest, mining and
 fishing specs: enter the forest with its enemies disabled, reach the closest instance, read the reward quantity from
@@ -174,6 +177,9 @@ The game data (`collect-game-data.js`) adds per room object `layerName`, `tileIn
   enemy hits the player (placed by `enemy-attack`) and when another player hits the player (`attackShort` sent by
   `ImRoot2` standing next to the miner); the hit cases also check the player HP went down and the position did not
   change, so the cancel comes from `cancelOnHit` and not from `cancelOnMove`
+- `test-combat.spec.js` and `test-movement.spec.js` - the death and revive and the return point after death:
+  `TestCombatDeath.killPlayerWithEnemyAttack` sets the player hp to 1 (`player-affected-property`) and places a Tree
+  next to the player with its battle started (`enemy-attack`), so the death comes from one real enemy hit
 
 `RoomEnemiesReset` (run by the player reset before every test) resets the path of every respawned body
 (`resetAuto`), as `EnemyObject.respawn` does, otherwise a body moved to a new respawn tile keeps walking its old random
