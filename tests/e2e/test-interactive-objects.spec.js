@@ -7,10 +7,9 @@
  */
 
 const { BaseE2eTest } = require('./base-e2e-test');
-const { Login } = require('./helpers/login');
 const { Phaser } = require('./helpers/phaser');
-const { Navigation } = require('./helpers/navigation');
 const { PhaserRange } = require('./helpers/phaser-range');
+const { TimingObjectSession } = require('./helpers/timing-object-session');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
 let test = BaseE2eTest.test;
@@ -18,31 +17,10 @@ let expect = BaseE2eTest.expect;
 
 class TestInteractiveObjects
 {
-    static FOREST_TRANSITION_X = 608;
-    static FOREST_TRANSITION_Y = 16;
     static INTERACTION_RANGE = 120;
     static MINING_ROCK_INTERACTION_RANGE = 120;
     static FISH_SPAWN_CYCLES = ['first', 'second'];
-
-    static async loginAndEnterForest(page, gameConfig, longRun)
-    {
-        let username = gameConfig.e2eUsername || 'root';
-        let password = gameConfig.e2ePassword || 'root';
-        let playerName = gameConfig.e2ePlayerName || 'ImRoot';
-        await Login.loginAndStartGame(page, username, password, playerName, longRun, false, 'reldens-forest');
-        let pauseMs = TimeConstants.pauseMs(longRun);
-        let sceneTimeout = TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun);
-        let navTimeout = TimeConstants.forLongRun(TimeConstants.NAVIGATION, longRun);
-        let inForest = await Navigation.ensureInRoom(
-            page,
-            'reldens-forest',
-            TestInteractiveObjects.FOREST_TRANSITION_X,
-            TestInteractiveObjects.FOREST_TRANSITION_Y,
-            navTimeout
-        );
-        expect(inForest, 'Player must reach reldens-forest').toBeTruthy();
-        return { pauseMs, sceneTimeout, navTimeout };
-    }
+    static FAR_OBJECT_TEST_TIMEOUT = 240000;
 
     static async waitForObjectInScene(page, objectKey, timeout)
     {
@@ -50,30 +28,6 @@ class TestInteractiveObjects
         if(!found){
             await Phaser.waitForObject(page, objectKey, timeout);
         }
-    }
-
-    static async navigateToObjectAndAssertInRange(page, objectKey, forestData, label, range = null)
-    {
-        let interactionRange = range !== null ? range : TestInteractiveObjects.INTERACTION_RANGE;
-        let reached = await Navigation.moveToObjectWithinRange(
-            page,
-            'asset_key',
-            objectKey,
-            'visible',
-            interactionRange,
-            forestData.navTimeout
-        );
-        if(!reached){
-            reached = await Navigation.moveToObjectWithinRange(
-                page,
-                'asset_key',
-                objectKey,
-                'active',
-                interactionRange,
-                forestData.navTimeout
-            );
-        }
-        expect(reached, 'Player must reach '+label+' within interaction range').toBeTruthy();
     }
 
     static async clickObjectByAssetKeyOrKey(page, objectKey)
@@ -102,32 +56,15 @@ class TestInteractiveObjects
         await Phaser.clickObjectByAssetKey(page, objectKey);
     }
 
-    static async fetchInventoryItemQty(page, itemKey)
-    {
-        let quantities = await page.locator(Selectors.inventory.itemQty(itemKey)).allTextContents();
-        let totalQty = 0;
-        for(let quantity of quantities){
-            totalQty += Number(quantity) || 1;
-        }
-        return totalQty;
-    }
-
-    static async openInventory(page, pauseMs)
-    {
-        await page.click(Selectors.hud.inventoryOpen);
-        await page.waitForTimeout(pauseMs);
-        await expect(page.locator(Selectors.inventory.ui)).toBeVisible();
-    }
-
     static async runTimingCycle(page, screenshots, objectKey, rewardItemId, forestData, label)
     {
         await page.waitForTimeout(TimeConstants.ACTION + forestData.pauseMs);
-        let qtyBefore = await TestInteractiveObjects.fetchInventoryItemQty(page, rewardItemId);
+        let qtyBefore = await TimingObjectSession.fetchInventoryItemQty(page, rewardItemId);
         await TestInteractiveObjects.clickObjectByAssetKeyOrKey(page, objectKey);
         await screenshots.capture(page, 'fish-spawn-'+label+'-cycle-started');
         await expect
             .poll(
-                async () => TestInteractiveObjects.fetchInventoryItemQty(page, rewardItemId),
+                async () => TimingObjectSession.fetchInventoryItemQty(page, rewardItemId),
                 {
                     timeout: TimeConstants.TIMING_OBJECT_COMPLETE,
                     message: 'Reward item quantity must increase after the '+label+' timing cycle completes'
@@ -135,7 +72,43 @@ class TestInteractiveObjects
             )
             .toBeGreaterThan(qtyBefore);
         await screenshots.capture(page, 'fish-spawn-'+label+'-cycle-rewarded');
-        return TestInteractiveObjects.fetchInventoryItemQty(page, rewardItemId);
+        return TimingObjectSession.fetchInventoryItemQty(page, rewardItemId);
+    }
+
+    static async runMiningTest(page, screenshots, gameConfig, longRun)
+    {
+        test.setTimeout(TimeConstants.forLongRun(TestInteractiveObjects.FAR_OBJECT_TEST_TIMEOUT, longRun));
+        let objectKey = gameConfig.e2eMiningRockKey || '';
+        expect(objectKey, 'e2eMiningRockKey not configured').toBeTruthy();
+        let rewardItemId = gameConfig.e2eMiningRockRewardItemId || '';
+        expect(rewardItemId, 'e2eMiningRockRewardItemId must be configured').toBeTruthy();
+        let forestData = await TimingObjectSession.enterForestWithoutEnemies(page, gameConfig, longRun);
+        await screenshots.capture(page, 'mining-rock-forest-entered');
+        await TestInteractiveObjects.waitForObjectInScene(page, objectKey, forestData.sceneTimeout);
+        await screenshots.capture(page, 'mining-rock-found-in-scene');
+        let rockKey = await TimingObjectSession.reachObject(
+            page,
+            objectKey,
+            TimeConstants.forLongRun(TimeConstants.MAP_CROSSING, longRun),
+            'mining rock',
+            TestInteractiveObjects.MINING_ROCK_INTERACTION_RANGE
+        );
+        await TimingObjectSession.openInventory(page, forestData.pauseMs);
+        let rewardQtyBefore = await TimingObjectSession.fetchInventoryItemQty(page, rewardItemId);
+        await screenshots.capture(page, 'mining-rock-inventory-before');
+        await page.waitForTimeout(forestData.pauseMs);
+        await TestInteractiveObjects.clickObjectByAssetKeyOrKey(page, rockKey);
+        await expect
+            .poll(
+                async () => TimingObjectSession.fetchInventoryItemQty(page, rewardItemId),
+                {
+                    timeout: TimeConstants.forLongRun(TimeConstants.TIMING_OBJECT_COMPLETE, longRun),
+                    message: 'Reward item quantity must increase after mining'
+                }
+            )
+            .toBeGreaterThan(rewardQtyBefore);
+        await screenshots.capture(page, 'mining-rock-interaction-complete');
+        await screenshots.capture(page, 'mining-rock-inventory-after');
     }
 
     static async waitForNpcDialogue(page, selector, timeout)
@@ -162,13 +135,19 @@ class TestInteractiveObjects
                 test.setTimeout(TimeConstants.forLongRun(60000, longRun));
                 let objectKey = gameConfig.e2eChestKey || '';
                 expect(objectKey, 'e2eChestKey not configured').toBeTruthy();
-                let forestData = await TestInteractiveObjects.loginAndEnterForest(page, gameConfig, longRun);
+                let forestData = await TimingObjectSession.enterForestWithoutEnemies(page, gameConfig, longRun);
                 await screenshots.capture(page, 'chest-forest-entered');
                 await TestInteractiveObjects.waitForObjectInScene(page, objectKey, forestData.sceneTimeout);
                 await screenshots.capture(page, 'chest-found-in-scene');
-                await TestInteractiveObjects.navigateToObjectAndAssertInRange(page, objectKey, forestData, 'chest');
+                let chestKey = await TimingObjectSession.reachObject(
+                    page,
+                    objectKey,
+                    forestData.navTimeout,
+                    'chest',
+                    TestInteractiveObjects.INTERACTION_RANGE
+                );
                 await screenshots.capture(page, 'chest-player-in-range');
-                await TestInteractiveObjects.clickObjectByAssetKeyOrKey(page, objectKey);
+                await TestInteractiveObjects.clickObjectByAssetKeyOrKey(page, chestKey);
                 await page.waitForTimeout(2000 + forestData.pauseMs);
                 await screenshots.capture(page, 'chest-interaction-complete');
                 let npcTimeout = TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun);
@@ -181,53 +160,34 @@ class TestInteractiveObjects
                 await screenshots.capture(page, 'chest-dialog-visible');
             });
             test('player mines rock and receives items', async ({ page, screenshots, gameConfig, longRun }) => {
-                test.setTimeout(TimeConstants.forLongRun(60000, longRun));
-                let objectKey = gameConfig.e2eMiningRockKey || '';
-                expect(objectKey, 'e2eMiningRockKey not configured').toBeTruthy();
-                let rewardItemId = gameConfig.e2eMiningRockRewardItemId || '';
-                expect(rewardItemId, 'e2eMiningRockRewardItemId must be configured').toBeTruthy();
-                let forestData = await TestInteractiveObjects.loginAndEnterForest(page, gameConfig, longRun);
-                await screenshots.capture(page, 'mining-rock-forest-entered');
-                await TestInteractiveObjects.waitForObjectInScene(page, objectKey, forestData.sceneTimeout);
-                await screenshots.capture(page, 'mining-rock-found-in-scene');
-                await TestInteractiveObjects.navigateToObjectAndAssertInRange(page, objectKey, forestData, 'mining rock', TestInteractiveObjects.MINING_ROCK_INTERACTION_RANGE);
-                await TestInteractiveObjects.openInventory(page, forestData.pauseMs);
-                let rewardQtyBefore = await TestInteractiveObjects.fetchInventoryItemQty(page, rewardItemId);
-                await screenshots.capture(page, 'mining-rock-inventory-before');
-                await page.waitForTimeout(forestData.pauseMs);
-                await TestInteractiveObjects.clickObjectByAssetKeyOrKey(page, objectKey);
-                await expect
-                    .poll(
-                        async () => TestInteractiveObjects.fetchInventoryItemQty(page, rewardItemId),
-                        {
-                            timeout: TimeConstants.forLongRun(TimeConstants.TIMING_OBJECT_COMPLETE, longRun),
-                            message: 'Reward item quantity must increase after mining'
-                        }
-                    )
-                    .toBeGreaterThan(rewardQtyBefore);
-                await screenshots.capture(page, 'mining-rock-interaction-complete');
-                await screenshots.capture(page, 'mining-rock-inventory-after');
+                await TestInteractiveObjects.runMiningTest(page, screenshots, gameConfig, longRun);
             });
             test('player fishes repeatedly at the same spawn without it moving or respawning', async ({ page, screenshots, gameConfig, longRun }) => {
-                test.setTimeout(TimeConstants.forLongRun(120000, longRun));
+                test.setTimeout(TimeConstants.forLongRun(TestInteractiveObjects.FAR_OBJECT_TEST_TIMEOUT, longRun));
                 let objectKey = gameConfig.e2eFishSpawnKey || '';
                 expect(objectKey, 'e2eFishSpawnKey not configured').toBeTruthy();
                 let rewardItemId = gameConfig.e2eFishSpawnRewardItemId || '';
                 expect(rewardItemId, 'e2eFishSpawnRewardItemId must be configured').toBeTruthy();
-                let forestData = await TestInteractiveObjects.loginAndEnterForest(page, gameConfig, longRun);
+                let forestData = await TimingObjectSession.enterForestWithoutEnemies(page, gameConfig, longRun);
                 await screenshots.capture(page, 'fish-spawn-forest-entered');
                 await TestInteractiveObjects.waitForObjectInScene(page, objectKey, forestData.sceneTimeout);
                 await screenshots.capture(page, 'fish-spawn-found-in-scene');
-                await TestInteractiveObjects.navigateToObjectAndAssertInRange(page, objectKey, forestData, 'fish spawn');
+                let fishSpawnKey = await TimingObjectSession.reachObject(
+                    page,
+                    objectKey,
+                    TimeConstants.forLongRun(TimeConstants.MAP_CROSSING, longRun),
+                    'fish spawn',
+                    TestInteractiveObjects.INTERACTION_RANGE
+                );
                 let positionBefore = await PhaserRange.getObjectWorldPosByAssetKey(page, objectKey);
                 expect(positionBefore, 'Fish spawn must expose a world position').toBeTruthy();
-                await TestInteractiveObjects.openInventory(page, forestData.pauseMs);
+                await TimingObjectSession.openInventory(page, forestData.pauseMs);
                 await screenshots.capture(page, 'fish-spawn-inventory-before');
-                let startingQty = await TestInteractiveObjects.fetchInventoryItemQty(page, rewardItemId);
+                let startingQty = await TimingObjectSession.fetchInventoryItemQty(page, rewardItemId);
                 let latestQty = startingQty;
                 for(let cycleLabel of TestInteractiveObjects.FISH_SPAWN_CYCLES){
                     latestQty = await TestInteractiveObjects
-                        .runTimingCycle(page, screenshots, objectKey, rewardItemId, forestData, cycleLabel);
+                        .runTimingCycle(page, screenshots, fishSpawnKey, rewardItemId, forestData, cycleLabel);
                     let currentPosition = await PhaserRange.getObjectWorldPosByAssetKey(page, objectKey);
                     expect(
                         currentPosition,
