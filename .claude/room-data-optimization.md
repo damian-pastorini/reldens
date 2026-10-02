@@ -10,7 +10,7 @@ The SceneDataFilter system prevents Colyseus buffer overflow by analyzing room d
 
 **Key Components**:
 - **Server**: `SceneDataFilter` (`lib/rooms/server/scene-data-filter.js`) - Detects shared properties, creates optimized data structure
-- **Client**: `AnimationsDefaultsMerger` (`lib/game/client/animations-defaults-merger.js`) - Merges defaults back into objects
+- **Client**: `AnimationsDefaultsMerger` (`lib/game/client/animations-defaults-merger.js`) - Merges the `preloadAssetsDefaults` back into the preload assets and the `animationsDefaults` back into the objects
 
 **Critical Design Principle**: The filter NEVER adds properties to objects. It ONLY extracts existing identical properties to a separate defaults structure.
 
@@ -70,11 +70,12 @@ The SceneDataFilter system prevents Colyseus buffer overflow by analyzing room d
 
 ### When Optimization Happens vs Doesn't
 
-**Town Room (6 NPCs)**:
-- Each NPC has unique properties (different types, content, options)
-- No groups with 2+ identical objects
-- Result: `animationsDefaults: {}` (empty), all data stays in objects
-- All objects keep their original structure with `key` field as asset reference
+**Town Room (`reldens-new-age-town`, 7 doors and 4 NPCs)**:
+- The 7 doors share the `door_house_3` asset key (their `client_params.asset_key`), so they are one group: the
+  properties with the same value in every door go to `animationsDefaults['door_house_3']`, the different ones stay in
+  each door (`key`, position and `positionFix`, because one door uses another offset)
+- Each NPC has its own key and no asset key, so every NPC is a single-object group: no optimization, its data stays
+  as it is with the `key` field as asset reference
 
 **Forest Room (400 NPCs)**:
 - 200 enemies of type A, 200 enemies of type B
@@ -123,7 +124,7 @@ The SceneDataFilter system prevents Colyseus buffer overflow by analyzing room d
 
 ### Purpose
 
-Merges extracted defaults back into objects after receiving optimized data from server.
+Merges extracted defaults back into the preload assets and the objects after receiving optimized data from server.
 
 ### When It Runs
 
@@ -133,20 +134,34 @@ Merges extracted defaults back into objects after receiving optimized data from 
 this.roomData = AnimationsDefaultsMerger.mergeDefaults(sc.toJson(this.room.state.sceneData));
 ```
 
-**Important**: `mergeDefaults` returns the room data unchanged when `animationsDefaults` or `objectsAnimationsData` are not present. Server adds `animationsDefaults: {}` (even if empty) when filter is active.
+**Important**: `mergeDefaults` runs `mergeGroupDefaults` twice, first for `preloadAssets` with `preloadAssetsDefaults` grouped by `asset_type`, then for `objectsAnimationsData` with `animationsDefaults` grouped by `asset_key`. Each pass leaves the room data unchanged when its data or its defaults are not present. Server adds `animationsDefaults: {}` and `preloadAssetsDefaults: {}` (even if empty) when filter is active.
+
+**Preload assets**: when every spritesheet of the room shares the same `extra_params` (for example two enemies with the same frame size and no other objects), the filter moves `extra_params` to `preloadAssetsDefaults.spritesheet`. The merger restores it before `ScenePreloader.preloadValidAssets()` reads `asset.extra_params`, otherwise the spritesheets are never loaded and the objects have no sprite.
 
 ### Merge Logic
 
 ```javascript
-for(let key of objectKeys){
-    let objectData = objectsAnimationsData[key];
-    let groupValue = GroupValueResolver.resolve(objectData, 'asset_key');
-    if('' === groupValue || !sc.hasOwn(animationsDefaults, groupValue)){
-        continue;
+static mergeGroupDefaults(roomData, dataKey, defaultsKey, groupingField)
+{
+    if(!sc.hasOwn(roomData, defaultsKey)){
+        return;
     }
-    objectsAnimationsData[key] = Object.assign({}, animationsDefaults[groupValue], objectData);
+    if(!sc.hasOwn(roomData, dataKey)){
+        return;
+    }
+    let groupDefaults = roomData[defaultsKey];
+    let groupData = roomData[dataKey];
+    let itemKeys = Object.keys(groupData);
+    for(let key of itemKeys){
+        let itemData = groupData[key];
+        let groupValue = GroupValueResolver.resolve(itemData, groupingField);
+        if('' === groupValue || !sc.hasOwn(groupDefaults, groupValue)){
+            continue;
+        }
+        groupData[key] = Object.assign({}, groupDefaults[groupValue], itemData);
+    }
+    delete roomData[defaultsKey];
 }
-delete roomData.animationsDefaults;
 ```
 
 ### Key Behavior
@@ -161,7 +176,7 @@ delete roomData.animationsDefaults;
 2. All original properties preserved as-is
 3. Ready for rendering without merge
 
-After the loop the merger deletes `animationsDefaults` from the room data.
+After each loop the merger deletes the merged defaults (`preloadAssetsDefaults`, `animationsDefaults`) from the room data.
 
 ### Why This Matters
 
@@ -175,65 +190,56 @@ The merger never rewrites the `key` field: the filter never extracts `key` to th
 
 ## Data Flow Examples
 
-### Town Room (No Optimization)
+### Town NPCs (No Optimization)
 
 **Server Processing**:
 ```javascript
-// Original data
+// Original data, two of the town NPCs (objects 5 and 8, layer 'ground', tiles 3482 and 3567)
 objectsAnimationsData: {
-  'ground-collisions444': {
-    key: 'door_house_1',
-    type: 'anim',
-    enabled: true,
-    x: 400,
-    y: 310,
+  'ground3482': {
+    key: 'people_town_1',
+    content: 'Hello! My name is Alfred...',
     ...all properties...
   },
-  'house-collisions-over-player535': {
-    key: 'people_town_1',
-    type: 'npc',
-    enabled: true,
-    content: 'Hello! My name is Alfred...',
-    x: 240,
-    y: 368,
+  'ground3567': {
+    key: 'healer_1',
     ...all properties...
   }
 }
 
 // SceneDataFilter analysis:
-// - Group by 'key' field (no asset_key present)
+// - Group by 'asset_key', falling back to the 'key' field (GroupValueResolver), no asset_key present
 // - Each object has unique 'key' value = single-object groups
-// - No optimization performed
+// - No optimization performed for them
 
 // Server output
 {
   objectsAnimationsData: { ...unchanged... },
-  animationsDefaults: {}  // Empty - triggers merger but no data to merge
+  animationsDefaults: {...}  // only the door_house_3 entry of the town doors, nothing for the NPCs
 }
 ```
 
 **Client Processing**:
 ```javascript
 // AnimationsDefaultsMerger.mergeDefaults() runs
-for(let key of ['ground-collisions444', 'house-collisions-over-player535']){
+for(let key of ['ground3482', 'ground3567']){
     let objectData = objectsAnimationsData[key];
-    // resolved group value: 'door_house_1' / 'people_town_1' (from the key field)
+    // resolved group value: 'people_town_1' / 'healer_1' (from the key field)
     let groupValue = GroupValueResolver.resolve(objectData, 'asset_key');
-    // animationsDefaults is empty, so there is no entry for the group value:
+    // animationsDefaults has no entry for these group values:
     if('' === groupValue || !sc.hasOwn(animationsDefaults, groupValue)){
         continue;  // SKIP - no modifications, keep original data
     }
 }
 
-// Result: All objects unchanged
+// Result: the NPC objects are unchanged
 objectsAnimationsData: {
-  'ground-collisions444': {key: 'door_house_1', ...},
-  'house-collisions-over-player535': {key: 'people_town_1', ...}
+  'ground3482': {key: 'people_town_1', ...},
+  'ground3567': {key: 'healer_1', ...}
 }
 
 // AnimationEngine uses props.key fallback
-// object['ground-collisions444'].key = 'door_house_1' loads asset 'door_house_1'
-// object['house-collisions-over-player535'].key = 'people_town_1' NPC dialog works
+// object['ground3482'].key = 'people_town_1' loads asset 'people_town_1' and the NPC dialog works
 ```
 
 ### Forest Room (With Optimization)
@@ -508,11 +514,11 @@ constructor(props){
 
 ### Verify Optimization Behavior
 
-**Town Room (No Optimization Expected)**:
-1. Join Town room
-2. Check browser console: No `asset_key` in objects
-3. Verify: `animationsDefaults: {}`
-4. Test NPC dialogs work correctly
+**Town Room (Doors Optimized, NPCs Not)**:
+1. Join the `reldens-new-age-town` room
+2. Verify: `animationsDefaults` only has the `door_house_3` entry
+3. Check browser console: the NPC objects keep all their data
+4. Test the doors open and the NPC dialogs work correctly
 
 **Forest Room (Optimization Expected)**:
 1. Join Forest room with 400 objects

@@ -9,6 +9,7 @@ const { Npc1 } = require('./objects/client/npc1');
 const { Rock } = require('./objects/client/rock');
 const { FishSpawn } = require('./objects/client/fish-spawn');
 const { TreasureChestClient } = require('./objects/client/treasure-chest');
+const { SceneWeatherEffectsCreator } = require('./effects/client/scene-weather-effects-creator');
 
 class ClientPlugin extends PluginInterface
 {
@@ -16,8 +17,18 @@ class ClientPlugin extends PluginInterface
     setup(props)
     {
         this.events = props.events;
+        this.sceneWeatherEffectsCreator = new SceneWeatherEffectsCreator();
         this.events.on('reldens.beforeJoinGame', (props) => {
             this.defineCustomClasses(props);
+        });
+        this.events.on('reldens.beforePreload', (scenePreloader) => {
+            this.sceneWeatherEffectsCreator.cloudsEffect.preloadTexture(scenePreloader);
+        });
+        this.events.on('reldens.afterSceneDynamicCreate', (sceneDynamic) => {
+            this.sceneWeatherEffectsCreator.createForScene(sceneDynamic);
+        });
+        this.events.on('reldens.createdMinimap', (minimap) => {
+            this.sceneWeatherEffectsCreator.hideFromMinimap(minimap);
         });
     }
 

@@ -55,7 +55,7 @@ The legend lists every detected element, cluster, and spot in a single unified l
 - **Toggle Lock**: toggles the `approved` flag on all bulk-selected elements/clusters
 - **Convert All**: converts all bulk-selected clusters to elements
 - **Detect AI / Name AI** (bulk, AI-dependent): runs AI detection or naming on all bulk-selected items
-- **Delete** (trash icon): removes all bulk-selected unlocked items (elements, clusters, and spots); locked items are kept and shown in the confirmation count
+- **Delete** (trash icon): removes every bulk-selected item (elements, clusters, and spots), locked items included, after a confirmation that shows the selected count (`theme/admin/js/tileset-to-tilemap/tileset-row-binder.js:188-222`)
 
 > **Note**: The elements list is a single unified list containing all three map object types - elements, clusters, and spots. Bulk operations (select-all, delete, lock) apply across all three types together.
 

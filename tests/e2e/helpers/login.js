@@ -9,9 +9,15 @@
 const { expect } = require('@playwright/test');
 const { Selectors } = require('../selectors');
 const { TimeConstants } = require('./time-constants');
+const { Navigation } = require('./navigation');
 
 class Login
 {
+    static TOWN_ROOM_NAME = 'reldens-new-age-town';
+    static FOREST_ROOM_NAME = 'reldens-forest-level-1';
+    static FOREST_TRANSITION_X = 608;
+    static FOREST_TRANSITION_Y = 16;
+
     static async selectPlayer(page, playerName)
     {
         let select = page.locator(Selectors.characterSelect.select);
@@ -133,10 +139,30 @@ class Login
         ];
         for(let selector of uiSelectors) {
             await page.waitForSelector(selector, { state: 'visible', timeout: uiTimeout })
-                .catch((e) => {
-                    expect(false, 'UI selector failed ['+selector+']: '+e.message).toBeTruthy();
+                .catch((error) => {
+                    expect(false, 'UI selector failed ['+selector+']: '+error.message).toBeTruthy();
                 });
         }
+    }
+
+    static async loginAndEnterForest(page, gameConfig, longRun)
+    {
+        let username = gameConfig.e2eUsername || 'root';
+        let password = gameConfig.e2ePassword || 'root';
+        let playerName = gameConfig.e2ePlayerName || 'ImRoot';
+        await Login.loginAndStartGame(page, username, password, playerName, longRun, false, Login.FOREST_ROOM_NAME);
+        let pauseMs = TimeConstants.pauseMs(longRun);
+        let sceneTimeout = TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun);
+        let navTimeout = TimeConstants.forLongRun(TimeConstants.NAVIGATION, longRun);
+        let inForest = await Navigation.ensureInRoom(
+            page,
+            Login.FOREST_ROOM_NAME,
+            Login.FOREST_TRANSITION_X,
+            Login.FOREST_TRANSITION_Y,
+            navTimeout
+        );
+        expect(inForest, 'Player must reach '+Login.FOREST_ROOM_NAME).toBeTruthy();
+        return { pauseMs, sceneTimeout, navTimeout };
     }
 }
 

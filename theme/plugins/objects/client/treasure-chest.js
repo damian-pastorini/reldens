@@ -39,8 +39,8 @@ class TreasureChestClient extends AnimationEngine
         if(!this.isInteractive){
             return;
         }
-        this.sceneSprite.setInteractive({useHandCursor: true}).on('pointerdown', (e) => {
-            if(GameConst.SELECTORS.CANVAS !== e.downElement.nodeName){
+        this.sceneSprite.setInteractive({useHandCursor: true}).on('pointerdown', (event) => {
+            if(GameConst.SELECTORS.CANVAS !== event.downElement.nodeName){
                 return;
             }
             if(this.pendingOpen){
@@ -54,14 +54,7 @@ class TreasureChestClient extends AnimationEngine
             let tempId = (this.key === this.asset_key) ? this.id : this.key;
             this.gameManager.activeRoomEvents.send({act: ObjectsConst.OBJECT_INTERACTION, id: tempId, type: this.type});
         });
-        if(this.highlightOnOver){
-            this.sceneSprite.on('pointerover', () => {
-                this.sceneSprite.setTint(this.highlightColor);
-            });
-            this.sceneSprite.on('pointerout', () => {
-                this.sceneSprite.clearTint();
-            });
-        }
+        this.enableHighlightOnOver();
     }
 
     playOpenAnimation()

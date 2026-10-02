@@ -8,10 +8,11 @@
 
 const { createRequire } = require('module');
 const { FileHandler } = require('@reldens/server-utils');
-const { Logger } = require('@reldens/utils');
+const { Logger, sc } = require('@reldens/utils');
 const { GameDataSkills } = require('./helpers/game-data-skills');
 const { PlayerStateReset } = require('./helpers/player-state-reset');
 const { SecurityState } = require('./helpers/security-state');
+const { RoomObjectsState } = require('./helpers/room-objects-state');
 const { TestDataSetup } = require('./helpers/test-data-setup');
 const { StartupGuard } = require('./helpers/startup-guard');
 const { ClientBundleCheck } = require('./helpers/client-bundle-check');
@@ -24,6 +25,7 @@ class CollectGameData
     static OBJECT_TYPE_ENEMY = 4;
     static OBJECT_TYPE_NPC = 3;
     static OBJECT_TYPE_TRADER = 5;
+    static OBJECT_TYPE_MULTIPLE = 7;
     static serverManager = null;
 
     static loadConfig()
@@ -125,15 +127,31 @@ class CollectGameData
         });
         await objManager.loadObjectsByRoomId(roomId);
         if(!objManager.roomObjectsData) {
-            return { enemies: [], npcs: [], traders: [] };
+            return { enemies: [], npcs: [], traders: [], respawnAreas: [] };
         }
         let enemies = [];
         let npcs = [];
         let traders = [];
+        let respawnAreas = [];
         for(let roomObject of objManager.roomObjectsData) {
             let assets = roomObject.related_objects_assets;
             let assetKey = assets && assets[0] ? assets[0].asset_key : null;
-            let entry = { assetKey, objectId: roomObject.id, objectClassKey: roomObject.object_class_key };
+            let privateParams = sc.toJson(roomObject.private_params, {});
+            let entry = {
+                assetKey,
+                objectId: roomObject.id,
+                objectClassKey: roomObject.object_class_key,
+                clientKey: roomObject.client_key,
+                layerName: roomObject.layer_name,
+                tileIndex: roomObject.tile_index,
+                childObjectType: sc.get(privateParams, 'childObjectType', 0),
+                isAggressive: sc.get(privateParams, 'isAggressive', false),
+                interactionRadio: sc.get(privateParams, 'interactionRadio', 0),
+                randomMovementTiles: sc.get(sc.get(privateParams, 'randomMovement', {}), 'maxTiles', 0)
+            };
+            if(CollectGameData.OBJECT_TYPE_MULTIPLE === roomObject.class_type) {
+                respawnAreas.push(entry);
+            }
             if(CollectGameData.OBJECT_TYPE_ENEMY === roomObject.class_type) {
                 enemies.push(entry);
             }
@@ -144,7 +162,7 @@ class CollectGameData
                 traders.push(entry);
             }
         }
-        return { enemies, npcs, traders };
+        return { enemies, npcs, traders, respawnAreas };
     }
 
     static async buildPlayersData(dataServer, configManager, config)
@@ -230,6 +248,7 @@ class CollectGameData
         await TestDataSetup.ensureRequiredItems(serverManager.dataServer, config);
         let snapshots = await PlayerStateReset.captureSnapshots(serverManager.dataServer, config);
         SecurityState.registerEndpoints(serverManager, config);
+        RoomObjectsState.registerEndpoints(serverManager);
         PlayerStateReset.registerResetEndpoint(serverManager, snapshots, config);
         CollectGameData.serverManager = serverManager;
     }

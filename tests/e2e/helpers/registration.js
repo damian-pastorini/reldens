@@ -8,6 +8,7 @@
 
 const { expect } = require('@playwright/test');
 const { Selectors } = require('../selectors');
+const { Navigation } = require('./navigation');
 const { TimeConstants } = require('./time-constants');
 
 class Registration
@@ -37,8 +38,7 @@ class Registration
     {
         let typeOptions = {delay: TimeConstants.typeDelay(longRun)};
         let pauseMs = TimeConstants.pauseMs(longRun);
-        await page.goto('/');
-        await page.waitForLoadState('networkidle');
+        expect(await Navigation.openPageAndWaitForNetworkIdle(page, '/'), 'Page requests must finish').toEqual([]);
         await screenshots.capture(page, 'register-form-visible');
         await page.locator(Selectors.register.username).pressSequentially(registrationData.username, typeOptions);
         await page.waitForTimeout(pauseMs);
@@ -53,6 +53,15 @@ class Registration
         await page.hover(Selectors.register.submit);
         await page.waitForTimeout(pauseMs);
         await page.click(Selectors.register.submit);
+    }
+
+    static async registerAndWaitForPlayerSelection(page, registrationData, longRun, screenshots)
+    {
+        await Registration.submitRegistration(page, registrationData, longRun, screenshots);
+        await page.waitForSelector(
+            Selectors.characterSelect.container+':not(.hidden)',
+            {timeout: TimeConstants.forLongRun(TimeConstants.CHARACTER_SCREEN, longRun)}
+        );
     }
 
 }

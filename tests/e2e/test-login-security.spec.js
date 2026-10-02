@@ -10,6 +10,7 @@
 
 const { BaseE2eTest } = require('./base-e2e-test');
 const { Login } = require('./helpers/login');
+const { Navigation } = require('./helpers/navigation');
 const { Registration } = require('./helpers/registration');
 const { SecurityApi } = require('./helpers/security-api');
 const { TimeConstants } = require('./helpers/time-constants');
@@ -70,15 +71,11 @@ class TestLoginSecurity
     {
         let suffix = String(Date.now());
         await SecurityApi.updateSettings(BaseE2eTest.gameConfig, {registrationMaxPerIp: 1});
-        await Registration.submitRegistration(
+        await Registration.registerAndWaitForPlayerSelection(
             page,
             {username: 'e2ereg'+suffix, email: 'e2ereg'+suffix+'@yourgame.com', password: 'TestReg123'},
             longRun,
             screenshots
-        );
-        await page.waitForSelector(
-            Selectors.characterSelect.container+':not(.hidden)',
-            { timeout: TimeConstants.forLongRun(TimeConstants.CHARACTER_SCREEN, longRun) }
         );
         await Registration.submitRegistration(
             page,
@@ -95,8 +92,7 @@ class TestLoginSecurity
 
     static async submitGuestLogin(page, longRun)
     {
-        await page.goto('/');
-        await page.waitForLoadState('networkidle');
+        expect(await Navigation.openPageAndWaitForNetworkIdle(page, '/'), 'Page requests must finish').toEqual([]);
         await expect(page.locator(Selectors.login.guestForm)).toBeVisible(
             { timeout: TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun) }
         );
@@ -195,8 +191,7 @@ class TestLoginSecurity
     static async runForgotPasswordDisabledTest(page, screenshots, gameConfig, longRun)
     {
         await SecurityApi.setMailerEnabled(gameConfig, false);
-        await page.goto('/');
-        await page.waitForLoadState('networkidle');
+        expect(await Navigation.openPageAndWaitForNetworkIdle(page, '/'), 'Page requests must finish').toEqual([]);
         await expect(page.locator(Selectors.login.form)).toBeVisible(
             { timeout: TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun) }
         );

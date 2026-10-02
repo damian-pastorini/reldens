@@ -22,6 +22,7 @@ class BaseE2eTest
     static longRun = '1' === process.env.LONG_RUN;
     static videosDir = FileHandler.joinPaths(process.cwd(), 'test-results', 'videos');
     static screenshotsDir = FileHandler.joinPaths(process.cwd(), 'test-results', 'screenshots');
+    static gameDataPath = FileHandler.joinPaths(process.cwd(), 'tests', 'e2e', 'game-data.json');
     static expect = baseExpect;
     static test = baseTest.extend({
         gameConfig: async ({}, use) => {
@@ -43,6 +44,33 @@ class BaseE2eTest
             await BaseE2eTest.runPageFixture(browser, use, testInfo, 'player2');
         }
     });
+
+    static loadGameData()
+    {
+        let gameData = FileHandler.exists(BaseE2eTest.gameDataPath)
+            ? FileHandler.fetchFileJson(BaseE2eTest.gameDataPath)
+            : null;
+        BaseE2eTest.expect(gameData, 'The game data must be collected before the specs run').toBeTruthy();
+        return gameData;
+    }
+
+    static loadPlayerRoomObjects(playerKey)
+    {
+        let gameData = BaseE2eTest.loadGameData();
+        let roomObjects = gameData.rooms[String(gameData.players[playerKey].roomId)];
+        BaseE2eTest.expect(roomObjects, 'The game data must contain the room objects of '+playerKey).toBeTruthy();
+        return roomObjects;
+    }
+
+    static loadPlayerRoomEntries(playerKey, listsKeys, onlyMoving = false)
+    {
+        let roomObjects = BaseE2eTest.loadPlayerRoomObjects(playerKey);
+        let entries = [];
+        for(let listKey of listsKeys){
+            entries.push(...roomObjects[listKey]);
+        }
+        return onlyMoving ? entries.filter(entry => 0 < entry.randomMovementTiles) : entries;
+    }
 
     static slugify(title)
     {

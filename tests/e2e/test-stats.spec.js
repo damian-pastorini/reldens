@@ -9,7 +9,7 @@
 const { BaseE2eTest } = require('./base-e2e-test');
 const { Login } = require('./helpers/login');
 const { Phaser } = require('./helpers/phaser');
-const { Navigation } = require('./helpers/navigation');
+const { ObjectChase } = require('./helpers/object-chase');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
 let test = BaseE2eTest.test;
@@ -36,38 +36,24 @@ class TestStats
         });
     }
 
-    static async chaseEnemyForRange(page, enemyKey, range, timeout)
-    {
-        return Navigation.moveToObjectWithinRange(
-            page,
-            enemyKey ? 'asset_key' : 'type',
-            enemyKey || 'enemy',
-            enemyKey ? 'active' : 'visible',
-            range,
-            timeout
-        );
-    }
-
     static async runXpTest(page, screenshots, gameConfig, longRun)
     {
         test.setTimeout(
             TimeConstants.forLongRun(TimeConstants.GAME_START + TimeConstants.NAVIGATION, longRun)
             + TimeConstants.ENEMY_KILL
         );
-        await TestStats.loginRootPlayer(page, gameConfig, longRun, 'reldens-forest');
-        let pauseMs = TimeConstants.pauseMs(longRun);
+        let forestData = await Login.loginAndEnterForest(page, gameConfig, longRun);
+        let pauseMs = forestData.pauseMs;
         let enemyKey = gameConfig.e2eEnemyKey || '';
-        let sceneTimeout = TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun);
-        let navTimeout = TimeConstants.forLongRun(TimeConstants.NAVIGATION, longRun);
-        let inForest = await Navigation.ensureInRoom(page, 'reldens-forest', 608, 16, navTimeout);
-        expect(inForest, 'Player must reach reldens-forest for XP test').toBeTruthy();
+        let sceneTimeout = forestData.sceneTimeout;
+        let navTimeout = forestData.navTimeout;
         await (enemyKey
             ? Phaser.waitForObjectByAssetKey(page, enemyKey, sceneTimeout)
             : Phaser.waitForObjectByType(page, 'enemy', sceneTimeout));
         let xpBefore = await TestStats.getPlayerExpFromState(page);
         expect(xpBefore, 'Player XP must be readable from room state before attack').not.toBeNull();
         await screenshots.capture(page, 'xp-before-attack');
-        await TestStats.chaseEnemyForRange(page, enemyKey, 100, navTimeout);
+        await ObjectChase.moveToEnemyWithinRange(page, enemyKey, 100, navTimeout);
         let killDeadline = Date.now() + TimeConstants.ENEMY_KILL;
         let killMaxSteps = Math.ceil(TimeConstants.ENEMY_KILL / 1500) + 1;
         let xpIncreased = false;
@@ -93,7 +79,7 @@ class TestStats
                 return null;
             });
             await page.waitForTimeout(Math.min(500, Math.max(0, killDeadline - Date.now())));
-            await TestStats.chaseEnemyForRange(page, enemyKey, 100, Math.min(3000, killDeadline - Date.now()));
+            await ObjectChase.moveToEnemyWithinRange(page, enemyKey, 100, Math.min(3000, killDeadline - Date.now()));
         }
         await page.waitForTimeout(1000 + pauseMs);
         let xpAfter = await TestStats.getPlayerExpFromState(page);

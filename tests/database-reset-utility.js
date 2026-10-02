@@ -6,7 +6,7 @@
 
 const { FileHandler } = require('@reldens/server-utils');
 const { Logger } = require('@reldens/utils');
-const { KnexDataServer } = require('@reldens/storage');
+const { Utils } = require('./utils');
 
 class DatabaseResetUtility
 {
@@ -29,18 +29,7 @@ class DatabaseResetUtility
 
     async resetDatabase()
     {
-        let dbConfig = {
-            client: 'mysql2',
-            config: {
-                host: this.config.dbHost,
-                port: Number(this.config.dbPort),
-                database: this.config.dbName,
-                user: this.config.dbUser,
-                password: this.config.dbPassword,
-                multipleStatements: true
-            }
-        };
-        let dbDriver = new KnexDataServer(dbConfig);
+        let dbDriver = Utils.createDataServer(this.config);
         if(!await dbDriver.connect()){
             Logger.log(100, '', 'Database connection failed');
             return false;

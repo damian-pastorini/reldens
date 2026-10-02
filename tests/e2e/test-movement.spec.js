@@ -6,10 +6,12 @@
  *
  */
 
+const { Logger, sc } = require('@reldens/utils');
 const { BaseE2eTest } = require('./base-e2e-test');
 const { Login } = require('./helpers/login');
 const { Phaser } = require('./helpers/phaser');
 const { Navigation } = require('./helpers/navigation');
+const { TestCombatDeath } = require('./helpers/test-combat-death');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
 let test = BaseE2eTest.test;
@@ -17,7 +19,12 @@ let expect = BaseE2eTest.expect;
 
 class TestMovement
 {
-    static DEATH_CHASE_RANGE = 30;
+    static TOWN_DOOR_COLUMN = 44;
+    static TOWN_DOOR_ROW = 39;
+    static TOWN_DOOR_ARRIVAL_RANGE = 24;
+    static DOOR_MOVE_RETRY_MS = 1000;
+    static DOOR_STEP_MS = 1500;
+    static DOOR_ENTER_ATTEMPTS = 4;
 
     static async loginAndPrepare(page, gameConfig, longRun, scene = null)
     {
@@ -30,29 +37,17 @@ class TestMovement
         await Navigation.focusGame(page);
     }
 
-    static async chaseEnemy(page, enemyKey, range, timeout)
-    {
-        return Navigation.moveToObjectWithinRange(
-            page,
-            enemyKey ? 'asset_key' : 'type',
-            enemyKey || 'enemy',
-            enemyKey ? 'active' : 'visible',
-            range,
-            timeout
-        );
-    }
-
     static async runReturnPointTest(page, screenshots, gameConfig, longRun)
     {
         let returnRoom = gameConfig.e2eReturnRoom || '';
         let enemyKey = gameConfig.e2eEnemyKey || '';
         expect(returnRoom, 'e2eReturnRoom not configured for return point test').toBeTruthy();
-        await TestMovement.loginAndPrepare(page, gameConfig, longRun, 'reldens-forest');
-        let pauseMs = TimeConstants.pauseMs(longRun);
-        let sceneTimeout = TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun);
-        let navTimeout = TimeConstants.forLongRun(TimeConstants.NAVIGATION, longRun);
-        let inForest = await Navigation.ensureInRoom(page, 'reldens-forest', 608, 16, navTimeout);
-        expect(inForest, 'Player must reach reldens-forest before continuing').toBeTruthy();
+        page.on('dialog', dialog => dialog.dismiss());
+        let forestData = await Login.loginAndEnterForest(page, gameConfig, longRun);
+        let pauseMs = forestData.pauseMs;
+        let sceneTimeout = forestData.sceneTimeout;
+        await Phaser.waitForPlayerInRoomState(page, sceneTimeout);
+        await Navigation.focusGame(page);
         await screenshots.capture(page, 'in-forest-before-death');
         await (enemyKey
             ? Phaser.waitForObjectByAssetKey(page, enemyKey, sceneTimeout)
@@ -62,28 +57,7 @@ class TestMovement
             + TimeConstants.ENEMY_KILL
             + TimeConstants.PLAYER_REVIVE
         );
-        await TestMovement.chaseEnemy(page, enemyKey, TestMovement.DEATH_CHASE_RANGE, navTimeout);
-        let deathDeadline = Date.now() + TimeConstants.ENEMY_KILL;
-        let deathMaxSteps = Math.ceil(TimeConstants.ENEMY_KILL / 500) + 1;
-        let isDead = false;
-        for(let i = 0; i < deathMaxSteps; i++){
-            isDead = await page.evaluate(() => {
-                return null !== document.querySelector('#game-over:not(.hidden)');
-            });
-            if(isDead){
-                break;
-            }
-            let remaining = deathDeadline - Date.now();
-            if(0 >= remaining){
-                break;
-            }
-            await TestMovement.chaseEnemy(page, enemyKey, TestMovement.DEATH_CHASE_RANGE, Math.min(6000, remaining));
-            let waitMs = Math.min(1000, deathDeadline - Date.now());
-            if(0 < waitMs){
-                await page.waitForTimeout(waitMs);
-            }
-        }
-        expect(isDead, 'Player must die from enemy attacks within timeout').toBeTruthy();
+        await TestCombatDeath.killPlayerWithEnemyAttack(page, gameConfig, enemyKey, TimeConstants.ENEMY_KILL);
         await screenshots.capture(page, 'player-died-in-forest');
         await Navigation.waitForRoom(page, returnRoom, TimeConstants.PLAYER_REVIVE);
         let currentRoom = await Navigation.getCurrentRoomName(page);
@@ -94,41 +68,41 @@ class TestMovement
 
     static async sendPointerOriginMove(page, dx, dy)
     {
-        await page.evaluate((args) => {
-            let scene = window.reldens.getActiveScene();
-            if(!scene || !scene.cameras || !scene.cameras.main){
-                return;
-            }
-            let room = window.reldens.activeRoomEvents && window.reldens.activeRoomEvents.room;
-            let player = room && room.state && room.state.players
-                ? window.reldens.activeRoomEvents.playerBySessionIdFromState(room, room.sessionId)
-                : null;
-            if(!player){
-                return;
-            }
-            let worldX = player.state.x + args.dx;
-            let worldY = player.state.y + args.dy;
-            let tileSize = 32;
-            window.reldens.activeRoomEvents.send({
-                'act': 'mp',
-                'column': Math.floor(worldX / tileSize),
-                'row': Math.floor(worldY / tileSize),
-                'x': worldX,
-                'y': worldY
-            });
-        }, { dx, dy });
+        let position = await Phaser.getPlayerServerPosition(page);
+        expect(position, 'Player position must be available before click-to-move').not.toBeNull();
+        await Navigation.moveToWorldPoint(page, position.x + dx, position.y + dy);
     }
 
-    static async walkUntilRoomChanged(page, initialRoom, maxAttempts, waitMs)
+    static async moveBelowTownDoor(page, timeout)
     {
-        let directions = ['ArrowUp', 'ArrowLeft', 'ArrowRight', 'ArrowDown'];
-        for(let attempt = 0; attempt < maxAttempts; attempt++){
-            let currentRoom = await Navigation.getCurrentRoomName(page);
-            if(currentRoom !== initialRoom){
+        let tileSize = Navigation.TILE_SIZE;
+        let targetX = TestMovement.TOWN_DOOR_COLUMN * tileSize + tileSize / 2;
+        let targetY = (TestMovement.TOWN_DOOR_ROW + 1) * tileSize + tileSize / 2;
+        let maxChecks = Math.ceil(timeout / TestMovement.DOOR_MOVE_RETRY_MS);
+        for(let check = 0; check < maxChecks; check++){
+            await Navigation.moveToWorldPoint(page, targetX, targetY);
+            await page.waitForTimeout(TestMovement.DOOR_MOVE_RETRY_MS);
+            let position = await Phaser.getPlayerServerPosition(page);
+            if(TestMovement.TOWN_DOOR_ARRIVAL_RANGE >= Math.hypot(position.x - targetX, position.y - targetY)){
                 return true;
             }
-            let direction = directions[attempt % directions.length];
-            await Navigation.walkInDirection(page, direction, waitMs);
+        }
+        return false;
+    }
+
+    static async enterTownDoor(page, initialRoom, maxAttempts, timeout)
+    {
+        for(let attempt = 0; attempt < maxAttempts; attempt++){
+            if(await TestMovement.moveBelowTownDoor(page, timeout)){
+                await Navigation.walkInDirection(page, 'ArrowUp', TestMovement.DOOR_STEP_MS);
+            }
+            if(initialRoom !== await Navigation.getCurrentRoomName(page)){
+                return true;
+            }
+            Logger.error(
+                'enterTownDoor attempt '+attempt+': still in '+initialRoom+' at '
+                +sc.toJsonString(await Phaser.getPlayerServerPosition(page))
+            );
         }
         return false;
     }
@@ -153,14 +127,14 @@ class TestMovement
         let username = gameConfig.e2eUsername || 'root';
         let password = gameConfig.e2ePassword || 'root';
         let playerName = gameConfig.e2ePlayerName || 'ImRoot';
-        await Login.loginAndStartGame(page, username, password, playerName, longRun, false, 'reldens-forest');
+        await Login.loginAndStartGame(page, username, password, playerName, longRun, false, Login.FOREST_ROOM_NAME);
         await Navigation.waitForRoom(
             page,
-            'reldens-forest',
+            Login.FOREST_ROOM_NAME,
             TimeConstants.forLongRun(TimeConstants.ROOM_TRANSITION, longRun)
         );
         let currentRoom = await Navigation.getCurrentRoomName(page);
-        expect(currentRoom, 'Player must start in the selected scene reldens-forest').toBe('reldens-forest');
+        expect(currentRoom, 'Player must start in the selected scene '+Login.FOREST_ROOM_NAME).toBe(Login.FOREST_ROOM_NAME);
         await screenshots.capture(page, 'started-in-selected-scene');
     }
 
@@ -204,12 +178,17 @@ class TestMovement
                 let password = gameConfig.e2ePassword2 || 'root';
                 let playerName = gameConfig.e2ePlayerName2 || 'ImRoot2';
                 page.on('dialog', dialog => dialog.dismiss());
-                await Login.loginAndStartGame(page, username, password, playerName, longRun, false, 'reldens-town');
+                await Login.loginAndStartGame(page, username, password, playerName, longRun, false, Login.TOWN_ROOM_NAME);
                 let roomTimeout = TimeConstants.forLongRun(TimeConstants.ROOM_TRANSITION, longRun);
-                await Navigation.waitForRoom(page, 'reldens-town', roomTimeout);
+                await Navigation.waitForRoom(page, Login.TOWN_ROOM_NAME, roomTimeout);
                 let initialRoom = await Navigation.getCurrentRoomName(page);
                 await screenshots.capture(page, 'in-town-before-transition');
-                let reached = await TestMovement.walkUntilRoomChanged(page, initialRoom, 30, 1500);
+                let reached = await TestMovement.enterTownDoor(
+                    page,
+                    initialRoom,
+                    TestMovement.DOOR_ENTER_ATTEMPTS,
+                    TimeConstants.forLongRun(TimeConstants.NAVIGATION, longRun)
+                );
                 expect(reached, 'Player must enter a new room via transition tile').toBeTruthy();
                 let currentRoom = await Navigation.getCurrentRoomName(page);
                 expect(currentRoom).not.toBe(initialRoom);
