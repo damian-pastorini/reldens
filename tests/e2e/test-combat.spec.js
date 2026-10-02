@@ -9,7 +9,7 @@
 const { BaseE2eTest } = require('./base-e2e-test');
 const { Login } = require('./helpers/login');
 const { Phaser } = require('./helpers/phaser');
-const { Navigation } = require('./helpers/navigation');
+const { ObjectChase } = require('./helpers/object-chase');
 const { TimeConstants } = require('./helpers/time-constants');
 const { FileHandler } = require('@reldens/server-utils');
 const { Logger } = require('@reldens/utils');
@@ -20,10 +20,8 @@ let expect = BaseE2eTest.expect;
 
 class TestCombat
 {
-    static FOREST_TRANSITION_X = 608;
-    static FOREST_TRANSITION_Y = 16;
     static TAB_TARGET_RANGE = 200;
-    static DEATH_CHASE_RANGE = 30;
+    static DEATH_CHASE_RANGE = 40;
     static gameDataPath = FileHandler.joinPaths(process.cwd(), 'tests', 'e2e', 'game-data.json');
     static gameData = FileHandler.exists(TestCombat.gameDataPath) ? FileHandler.fetchFileJson(TestCombat.gameDataPath) : null;
     static rootPlayerData = TestCombat.gameData && TestCombat.gameData.players && TestCombat.gameData.players.root
@@ -39,22 +37,11 @@ class TestCombat
 
     static async loginAndGetEnemyWithWorldPos(page, gameConfig, longRun)
     {
-        let username = gameConfig.e2eUsername || 'root';
-        let password = gameConfig.e2ePassword || 'root';
-        let playerName = gameConfig.e2ePlayerName || 'ImRoot';
         let enemyKey = gameConfig.e2eEnemyKey || '';
-        await Login.loginAndStartGame(page, username, password, playerName, longRun, false, 'reldens-forest');
-        let pauseMs = TimeConstants.pauseMs(longRun);
-        let sceneLoadTimeout = TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun);
-        let navigationTimeout = TimeConstants.forLongRun(TimeConstants.NAVIGATION, longRun);
-        let inForest = await Navigation.ensureInRoom(
-            page,
-            'reldens-forest',
-            TestCombat.FOREST_TRANSITION_X,
-            TestCombat.FOREST_TRANSITION_Y,
-            navigationTimeout
-        );
-        expect(inForest, 'Player must reach reldens-forest before continuing').toBeTruthy();
+        let forestData = await Login.loginAndEnterForest(page, gameConfig, longRun);
+        let pauseMs = forestData.pauseMs;
+        let sceneLoadTimeout = forestData.sceneTimeout;
+        let navigationTimeout = forestData.navTimeout;
         await (enemyKey
             ? Phaser.waitForObjectByAssetKey(page, enemyKey, sceneLoadTimeout)
             : Phaser.waitForObjectByType(page, 'enemy', sceneLoadTimeout));
@@ -113,13 +100,13 @@ class TestCombat
     static async walkToEnemyWithinRange(page, enemyKey, range, timeout)
     {
         if(enemyKey){
-            let reached = await Navigation.moveToObjectWithinRange(page, 'asset_key', enemyKey, 'active', range, timeout);
+            let reached = await ObjectChase.moveToObjectWithinRange(page, 'asset_key', enemyKey, 'active', range, timeout);
             if(!reached){
                 Logger.error('walkToEnemyWithinRange: did not reach range '+range+' enemyKey='+enemyKey);
             }
             return reached;
         }
-        let reached = await Navigation.moveToObjectWithinRange(page, null, null, null, range, timeout, true);
+        let reached = await ObjectChase.moveToObjectWithinRange(page, null, null, null, range, timeout, true);
         if(!reached){
             Logger.error('walkToEnemyWithinRange: did not reach range '+range+' (no enemyKey)');
         }
@@ -266,7 +253,7 @@ class TestCombat
                     + TimeConstants.PLAYER_REVIVE
                 );
                 let data = await TestCombat.loginAndGetEnemyWithWorldPos(page, gameConfig, longRun);
-                await TestCombat.walkToEnemyWithinRange(page, data.enemyKey, 30, data.navigationTimeout);
+                await TestCombat.walkToEnemyWithinRange(page, data.enemyKey, TestCombat.DEATH_CHASE_RANGE, data.navigationTimeout);
                 let died = await TestCombat.waitForPlayerDeathLoop(page, data.enemyKey, TimeConstants.ENEMY_KILL);
                 expect(died, 'Player must die from enemy attacks within timeout').toBeTruthy();
                 await screenshots.capture(page, 'player-dead');
