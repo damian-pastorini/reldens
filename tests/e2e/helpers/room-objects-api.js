@@ -3,8 +3,8 @@
  * Reldens - Room Objects Api
  *
  * HTTP client for the e2e room objects endpoints registered by RoomObjectsState: the server snapshot of the room
- * bodies with state, the enemies switch off until the next players reset, the enemy attack on a player and the
- * player placement next to another player.
+ * bodies with state, the enemies switch off until the next players reset, the enemy attack on a player, the player
+ * placement next to another player and the player affected property (hp) value.
  *
  */
 
@@ -49,6 +49,16 @@ class RoomObjectsApi
             'POST',
             '/api/e2e/room-objects/place-player',
             {roomName, playerName, nearPlayerName}
+        );
+    }
+
+    static async setPlayerAffectedProperty(gameConfig, roomName, playerName, value)
+    {
+        return await SecurityApi.request(
+            gameConfig,
+            'POST',
+            '/api/e2e/room-objects/player-affected-property',
+            {roomName, playerName, value}
         );
     }
 
