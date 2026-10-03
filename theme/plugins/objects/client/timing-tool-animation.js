@@ -39,6 +39,8 @@ class TimingToolAnimation
         this.config = Object.assign({}, this.defaults, toolConfig);
         this.toolSprite = null;
         this.swingTween = null;
+        this.toolScene = null;
+        this.followPlayer = null;
     }
 
     /**
@@ -84,14 +86,19 @@ class TimingToolAnimation
         }
         let facesLeft = Boolean(objectSprite) && objectSprite.x < playerSprite.x;
         let direction = facesLeft ? -1 : 1;
-        this.toolSprite = scene.add.sprite(
-            playerSprite.x + direction * this.config.offsetX,
-            playerSprite.y + this.config.offsetY,
-            textureKey
-        );
+        this.toolSprite = scene.add.sprite(0, 0, textureKey);
         this.toolSprite.setOrigin(facesLeft ? 1 : 0, 1);
         this.toolSprite.setFlipX(facesLeft);
-        this.toolSprite.setDepth(playerSprite.depth + 1);
+        this.followPlayer = () => {
+            this.toolSprite.setPosition(
+                playerSprite.x + direction * this.config.offsetX,
+                playerSprite.y + this.config.offsetY
+            );
+            this.toolSprite.setDepth(playerSprite.depth + 1);
+        };
+        this.followPlayer();
+        this.toolScene = scene;
+        scene.events.on('update', this.followPlayer);
         this.swingTween = scene.tweens.add({
             targets: this.toolSprite,
             angle: {from: 0, to: direction * this.config.swingAngle},
@@ -105,6 +112,10 @@ class TimingToolAnimation
 
     stop()
     {
+        if(this.toolScene){
+            this.toolScene.events.off('update', this.followPlayer);
+            this.toolScene = null;
+        }
         if(this.swingTween){
             this.swingTween.stop();
             this.swingTween = null;
