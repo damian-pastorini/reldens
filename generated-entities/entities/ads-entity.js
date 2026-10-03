@@ -22,17 +22,22 @@ class AdsEntity extends EntityProperties
             },
             [titleProperty]: {
                 isRequired: true,
+                isUnique: true,
                 dbType: 'varchar'
             },
             provider_id: {
                 type: 'reference',
                 reference: 'ads_providers',
+                alias: 'related_ads_providers',
+                onDelete: 'noAction',
                 isRequired: true,
                 dbType: 'int'
             },
             type_id: {
                 type: 'reference',
                 reference: 'ads_types',
+                alias: 'related_ads_types',
+                onDelete: 'noAction',
                 isRequired: true,
                 dbType: 'int'
             },

@@ -45,13 +45,13 @@ class FeaturesTestData
         return {
             json: JSON.stringify([
                 {
-                    room_id: 4,
+                    room_id: 41,
                     object_class_key: 'imported-object-1-'+timestamp,
                     client_key: 'obj1',
                     title: 'Test Object 1'
                 },
                 {
-                    room_id: 4,
+                    room_id: 41,
                     object_class_key: 'imported-object-2-'+timestamp,
                     client_key: 'obj2',
                     title: 'Test Object 2'
@@ -67,7 +67,7 @@ class FeaturesTestData
 
     static getObjectsImportMissingFieldsData()
     {
-        return {json: JSON.stringify([{room_id: 4}])};
+        return {json: JSON.stringify([{room_id: 41}])};
     }
 
     static getSkillsImportValidData()
@@ -114,7 +114,7 @@ class FeaturesTestData
         let audioKey = 'test-audio-'+timestamp;
         return {
             audio_key: audioKey,
-            room_id: 4,
+            room_id: 41,
             files_name: audioKey+'.mp3',
             category_id: 1,
             enabled: 1

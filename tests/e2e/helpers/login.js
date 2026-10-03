@@ -1,0 +1,169 @@
+/**
+ *
+ * Reldens - Login Helper
+ *
+ * Provides page actions for logging in, selecting a character, and waiting for the game to start.
+ *
+ */
+
+const { expect } = require('@playwright/test');
+const { Selectors } = require('../selectors');
+const { TimeConstants } = require('./time-constants');
+const { Navigation } = require('./navigation');
+
+class Login
+{
+    static TOWN_ROOM_NAME = 'reldens-new-age-town';
+    static FOREST_ROOM_NAME = 'reldens-forest-level-1';
+    static FOREST_TRANSITION_X = 608;
+    static FOREST_TRANSITION_Y = 16;
+
+    static async selectPlayer(page, playerName)
+    {
+        let select = page.locator(Selectors.characterSelect.select);
+        await expect(select).toBeVisible();
+        let options = await select.locator('option').all();
+        for(let option of options) {
+            let text = await option.textContent();
+            let trimmed = text ? text.trim() : '';
+            if(trimmed === playerName || trimmed.startsWith(playerName+' ') || trimmed.startsWith(playerName+'-')) {
+                let value = await option.getAttribute('value');
+                await select.selectOption(value);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    static async loginToSelection(page, username, password, longRun)
+    {
+        await Login.submitLogin(page, username, password, longRun);
+        await page.waitForSelector(
+            Selectors.characterSelect.container+':not(.hidden)',
+            { timeout: TimeConstants.forLongRun(TimeConstants.CHARACTER_SCREEN, longRun) }
+        );
+        await page.waitForTimeout(TimeConstants.pauseMs(longRun));
+    }
+
+    static async submitLogin(page, username, password, longRun)
+    {
+        let typeDelay = TimeConstants.typeDelay(longRun);
+        let pauseMs = TimeConstants.pauseMs(longRun);
+        let loadTimeout = TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun);
+        let loaded = false;
+        for(let attempt = 1; 3 >= attempt; attempt++) {
+            await page.goto('/');
+            loaded = await page.waitForSelector(
+                Selectors.login.form,
+                { state: 'visible', timeout: loadTimeout }
+            ).then(() => true).catch(() => false);
+            if(loaded) {
+                break;
+            }
+            await page.waitForTimeout(3000);
+        }
+        expect(loaded, 'Login form not visible after 3 page loads').toBeTruthy();
+        await page.locator(Selectors.login.username).click();
+        await page.locator(Selectors.login.username).pressSequentially(username, { delay: typeDelay });
+        await page.waitForTimeout(pauseMs);
+        await page.locator(Selectors.login.password).click();
+        await page.locator(Selectors.login.password).pressSequentially(password, { delay: typeDelay });
+        await page.waitForTimeout(pauseMs);
+        await page.hover(Selectors.login.submit);
+        await page.waitForTimeout(pauseMs);
+        await page.click(Selectors.login.submit);
+    }
+
+    static async submitLoginExpectingError(page, username, password, longRun)
+    {
+        await Login.submitLogin(page, username, password, longRun);
+        let errorLocator = page.locator(Selectors.login.error);
+        await expect(errorLocator).not.toBeEmpty(
+            { timeout: TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun) }
+        );
+        await expect(page.locator(Selectors.characterSelect.container+':not(.hidden)')).toHaveCount(0);
+        return (await errorLocator.textContent()).trim();
+    }
+
+    static async selectScene(page, sceneName)
+    {
+        let sceneSelect = page.locator(Selectors.characterSelect.sceneSelect);
+        let count = await sceneSelect.count();
+        if(0 === count) {
+            return false;
+        }
+        await sceneSelect.selectOption(sceneName);
+        return true;
+    }
+
+    static async loginAndStartGame(page, username, password, playerName, longRun, skipUiSelectors = false, scene = null)
+    {
+        let pauseMs = TimeConstants.pauseMs(longRun);
+        await Login.loginToSelection(page, username, password, longRun);
+        if(playerName) {
+            let selected = await Login.selectPlayer(page, playerName);
+            if(!selected) {
+                let available = await page.locator(Selectors.characterSelect.option).allTextContents();
+                expect(selected, 'Player "'+playerName+'" not found. Available: '+available.join(', ')).toBeTruthy();
+            }
+        }
+        if(scene) {
+            await Login.selectScene(page, scene);
+        }
+        await page.waitForTimeout(pauseMs);
+        await page.hover(Selectors.characterSelect.selectorSubmit);
+        await page.waitForTimeout(pauseMs);
+        let gameTimeout = TimeConstants.forLongRun(TimeConstants.GAME_START, longRun);
+        let uiTimeout = TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun);
+        let gameStartedPromise = page.waitForSelector(Selectors.body.gameEngineStarted, { timeout: gameTimeout });
+        let dialogHandler = async (dialog) => {
+            await dialog.dismiss();
+        };
+        page.on('dialog', dialogHandler);
+        await page.click(Selectors.characterSelect.selectorSubmit);
+        await gameStartedPromise;
+        page.off('dialog', dialogHandler);
+        if(skipUiSelectors){
+            return;
+        }
+        let uiSelectors = [
+            Selectors.hud.chatOpen,
+            Selectors.hud.logout,
+            Selectors.hud.up,
+            Selectors.hud.settingsOpen,
+            Selectors.hud.playerStatsOpen,
+            Selectors.hud.fullScreen,
+            Selectors.hud.inventoryOpen,
+            Selectors.hud.equipmentOpen,
+            Selectors.hud.minimapOpen
+        ];
+        for(let selector of uiSelectors) {
+            await page.waitForSelector(selector, { state: 'visible', timeout: uiTimeout })
+                .catch((error) => {
+                    expect(false, 'UI selector failed ['+selector+']: '+error.message).toBeTruthy();
+                });
+        }
+    }
+
+    static async loginAndEnterForest(page, gameConfig, longRun)
+    {
+        let username = gameConfig.e2eUsername || 'root';
+        let password = gameConfig.e2ePassword || 'root';
+        let playerName = gameConfig.e2ePlayerName || 'ImRoot';
+        await Login.loginAndStartGame(page, username, password, playerName, longRun, false, Login.FOREST_ROOM_NAME);
+        let pauseMs = TimeConstants.pauseMs(longRun);
+        let sceneTimeout = TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun);
+        let navTimeout = TimeConstants.forLongRun(TimeConstants.NAVIGATION, longRun);
+        let inForest = await Navigation.ensureInRoom(
+            page,
+            Login.FOREST_ROOM_NAME,
+            Login.FOREST_TRANSITION_X,
+            Login.FOREST_TRANSITION_Y,
+            navTimeout
+        );
+        expect(inForest, 'Player must reach '+Login.FOREST_ROOM_NAME).toBeTruthy();
+        return { pauseMs, sceneTimeout, navTimeout };
+    }
+}
+
+module.exports.Login = Login;

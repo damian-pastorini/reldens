@@ -47,19 +47,19 @@ All four properties are required. If any property is missing, the bar will not b
 
 ### Development Migration
 
-Add to `migrations/development/beta.39.7-sql-update.sql`:
+From `migrations/development/beta.39.7-sql-update.sql`:
 
 ```sql
 INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES
-('client', 'players/barsProperties', '{"hp":{"enabled":true,"label":"HP","activeColor":"#ff0000","inactiveColor":"#330000"},"mp":{"enabled":true,"label":"MP","activeColor":"#0000ff","inactiveColor":"#000033"}}', 4);
+('client', 'players/barsProperties', '{"hp":{"enabled":true,"label":"HP","activeColor":"#d53434","inactiveColor":"#330000"},"mp":{"enabled":true,"label":"MP","activeColor":"#5959fb","inactiveColor":"#000033"}}', 4);
 ```
 
 ### Production Migration
 
-Add to `migrations/production/reldens-basic-config-v4.0.0.sql`:
+From `migrations/production/reldens-basic-config-v4.0.0.sql`:
 
 ```sql
-(92, 'client', 'players/barsProperties', '{"hp":{"enabled":true,"label":"HP","activeColor":"#ff0000","inactiveColor":"#330000"},"mp":{"enabled":true,"label":"MP","activeColor":"#0000ff","inactiveColor":"#000033"}}', 4),
+(82, 'client', 'players/barsProperties', '{"hp":{"enabled":true,"label":"HP","activeColor":"#d53434","inactiveColor":"#330000"},"mp":{"enabled":true,"label":"MP","activeColor":"#5959fb","inactiveColor":"#000033"}}', 4),
 ```
 
 ## Examples
@@ -174,8 +174,8 @@ The player names system displays character names above sprites. Names can be con
 ### Visibility Controls
 
 - **showCurrentPlayerName** (type 3 - boolean): Show name for the current player
-  - Default: `0` (hidden)
-  - Database: `client/ui/players/showCurrentPlayerName`
+  - Default: hidden (no config row is seeded, the value resolves to `false`)
+  - Database: `client/ui/players/showCurrentPlayerName` (not included in the migrations, must be added manually)
   - When disabled, current player's name will not be displayed
   - Useful when using alternative UI systems or cleaner visual experience
 
@@ -185,8 +185,8 @@ The player names system displays character names above sprites. Names can be con
   - Controls name visibility for other players (not current player)
 
 - **showNamesLimit** (type 2 - number): Maximum name length before truncation
-  - Default: `10`
-  - Database: `client/ui/players/showNamesLimit`
+  - Default: `10` (code fallback, no config row is seeded)
+  - Database: `client/ui/players/showNamesLimit` (not included in the migrations, must be added manually)
   - Names longer than this value will be truncated with '...'
 
 ### Visual Appearance
@@ -274,9 +274,9 @@ Existing configurations (IDs 239-252):
 (252, 'client', 'ui/players/showNames', '1', 3),
 ```
 
-New configuration to add:
+New configuration to add (ID 253 is already used by `ui/playerStats/enabled`, use the next free ID):
 ```sql
-(253, 'client', 'ui/players/showCurrentPlayerName', '0', 3),
+('client', 'ui/players/showCurrentPlayerName', '0', 3),
 ```
 
 ## Configuration Examples
@@ -347,10 +347,10 @@ Creates green player names with 16px font size and thicker stroke.
 - `updateNamePosition(playerSprite)`: Updates name position during movement
 - `applyNameLengthLimit(showName)`: Truncates long names
 
-### Events
+### Call Sites
 
-- `reldens.playerEngineAddPlayer`: Called when player is added, triggers name display
-- `reldens.runPlayerAnimation`: Updates name position during animation
+- `PlayerEngine.addPlayer()`: calls `showPlayerName(id)` before emitting `reldens.playerEngineAddPlayer`
+- `PlayerEngine.updatePlayerState()`: calls `updateNamePosition(playerSprite)` after emitting `reldens.runPlayerAnimation`
 
 ---
 
@@ -436,8 +436,8 @@ The lifebar system supports two positioning modes: fixed and floating.
 ### Visibility Controls
 
 - **showCurrentPlayer** (type 3 - boolean): Show lifebar for the current player
-  - Default: `0` (hidden)
-  - Database: `client/ui/lifeBar/showCurrentPlayer`
+  - Default: hidden (no config row is seeded, the value resolves to `undefined`)
+  - Database: `client/ui/lifeBar/showCurrentPlayer` (not included in the migrations, must be added manually)
   - When disabled, current player's lifebar will not be displayed
   - Useful when using alternative UI systems like player stats bars
 
@@ -483,7 +483,7 @@ INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES
 
 ### Production Migration
 
-From `migrations/production/reldens-basic-config-v4.0.0.sql` (IDs 181-194):
+From `migrations/production/reldens-basic-config-v4.0.0.sql` (IDs 181-194), note there is no `showCurrentPlayer` row:
 
 ```sql
 (181, 'client', 'ui/lifeBar/enabled', '1', 3),
@@ -494,13 +494,12 @@ From `migrations/production/reldens-basic-config-v4.0.0.sql` (IDs 181-194):
 (186, 'client', 'ui/lifeBar/responsiveX', '1', 2),
 (187, 'client', 'ui/lifeBar/responsiveY', '24', 2),
 (188, 'client', 'ui/lifeBar/showAllPlayers', '0', 3),
-(189, 'client', 'ui/lifeBar/showCurrentPlayer', '0', 3),
-(190, 'client', 'ui/lifeBar/showEnemies', '1', 3),
-(191, 'client', 'ui/lifeBar/showOnClick', '1', 3),
-(192, 'client', 'ui/lifeBar/top', '5', 2),
-(193, 'client', 'ui/lifeBar/width', '50', 2),
-(194, 'client', 'ui/lifeBar/x', '5', 2),
-(195, 'client', 'ui/lifeBar/y', '12', 2),
+(189, 'client', 'ui/lifeBar/showEnemies', '1', 3),
+(190, 'client', 'ui/lifeBar/showOnClick', '1', 3),
+(191, 'client', 'ui/lifeBar/top', '5', 2),
+(192, 'client', 'ui/lifeBar/width', '50', 2),
+(193, 'client', 'ui/lifeBar/x', '5', 2),
+(194, 'client', 'ui/lifeBar/y', '12', 2),
 ```
 
 ## Configuration Examples
@@ -617,7 +616,7 @@ The current player's lifebar visibility is controlled by `showCurrentPlayer` con
 - Other players' bars float above their sprites
 - NPCs/enemies bars float above their sprites
 - Bars automatically update position as sprites move
-- Position calculation: `(spriteX - barWidth/2, spriteY - barHeight - top + spriteTopOffset/2)`
+- Position calculation: `(spriteX - barWidth/2, spriteY - barHeight - top + ownerTop/2)`, where `ownerTop` is `player.topOff - client/players/size/height`
 
 ### Fixed Mode (fixedPosition: 1)
 

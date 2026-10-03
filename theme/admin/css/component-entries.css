@@ -1,0 +1,215 @@
+.entity-view,
+.entity-edit {
+    & h2 {
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+
+    .view-field,
+    .edit-field {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0;
+        margin-bottom: var(--space-lg);
+
+        & span, label, input {
+            padding: 0.5rem;
+
+            &.field-name {
+                font-weight: var(--bold);
+                color: var(--color-grey);
+                flex: 1;
+
+                & sup {
+                    cursor: help;
+                    color: var(--color-red);
+                    font-size: var(--font-size-xs);
+                    font-weight: var(--font-weight-light);
+                    background-color: var(--color-grey-80);
+                    border-radius: var(--radius-full);
+                    padding: var(--space-xs) var(--space-sm);
+
+                    &:first-of-type {
+                        margin-left: var(--space-sm);
+                    }
+                }
+            }
+
+            &.field-value {
+                flex: 2;
+                min-height: 2rem;
+                color: var(--color-blue);
+                background-color: var(--color-grey-70);
+
+                &:has(> input[type="checkbox"]) {
+                    background-color: transparent;
+                }
+
+                &.with-button {
+                    flex: 0 0 auto;
+                    background-color: transparent;
+                    padding: 0;
+                    margin: auto 0;
+                    vertical-align: middle;
+
+                    & button {
+                        width: max-content;
+                        margin: 0;
+                    }
+                }
+
+                & input[type="checkbox"] {
+                    max-width: max-content;
+                    margin-left: 0.5rem;
+                    margin-top: 0.5rem;
+                }
+
+                .remove-upload-btn {
+                    cursor: pointer;
+                }
+            }
+        }
+    }
+
+    .view-field {
+        .field-value.with-view-button {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+
+            & > a {
+                margin-right: auto;
+            }
+        }
+
+        .field-value img {
+            max-width: 12.5rem;
+        }
+
+        .admin-audio-player {
+            width: 100%;
+            max-width: 25rem;
+        }
+    }
+
+    .edit-field {
+        & span, input {
+            &.field-value {
+                display: flex;
+                flex-direction: column;
+                padding: 0;
+
+                & p {
+                    margin-left: 0.5rem;
+                    color: var(--color-grey);
+                }
+
+                & input:not([type="checkbox"]), select {
+                    margin: 0;
+                    padding: 0.5rem;
+                    border: 1px solid var(--color-grey-40);
+                    background-color: var(--color-grey-50);
+                    color: var(--color-grey);
+
+                    &:not([disabled]) {
+                        border: none;
+                        background-color: transparent;
+                    }
+
+                    &.room-selector-required:not([disabled]) {
+                        border: 1px solid var(--color-red-10);
+                    }
+                }
+
+                & textarea {
+                    width: 100%;
+                }
+            }
+        }
+
+        .field-value.with-inline-button {
+            flex-direction: row;
+            align-items: center;
+            gap: var(--space-md);
+
+            & input {
+                flex: 1;
+            }
+        }
+    }
+
+    .actions {
+        margin: 2rem 0;
+        text-align: center;
+
+        & form {
+            display: inline;
+        }
+
+        .button {
+            display: inline-block;
+            margin: 0 0.5rem;
+        }
+    }
+
+    .actions-sticky {
+        position: sticky;
+        top: 0;
+        z-index: var(--z-sticky);
+        background-color: var(--color-grey-50);
+        margin-top: 0;
+    }
+
+    .tileset-alert-wrapper {
+        display: flex;
+        align-items: flex-start;
+        gap: var(--space-md);
+        width: 100%;
+    }
+
+    .upload-files-with-alert {
+        flex: 1;
+    }
+
+    .field-image-modal {
+        cursor: pointer;
+    }
+
+    .field-value {
+        .field-image-modal {
+            padding: 0;
+
+            p:first-child {
+                margin-top: 0;
+            }
+        }
+    }
+
+    .sub-content {
+        textarea {
+            width: 100%;
+        }
+    }
+
+    .extra-content-container {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-lg);
+
+        & > .edit-map-elements-entity-btn {
+            align-self: flex-start;
+        }
+    }
+
+    .map-unpublished-badge {
+        display: inline-block;
+        margin-left: var(--space-sm);
+        padding: var(--space-xs) var(--space-sm);
+        border-radius: var(--radius-sm);
+        background-color: var(--color-orange);
+        color: var(--color-orange-90);
+        font-size: var(--font-size-xs);
+        font-weight: var(--bold);
+    }
+}

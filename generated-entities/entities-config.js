@@ -24,6 +24,7 @@ const { ConfigEntity } = require('./entities/config-entity');
 const { ConfigTypesEntity } = require('./entities/config-types-entity');
 const { DropsAnimationsEntity } = require('./entities/drops-animations-entity');
 const { FeaturesEntity } = require('./entities/features-entity');
+const { IpListsEntity } = require('./entities/ip-lists-entity');
 const { ItemsGroupEntity } = require('./entities/items-group-entity');
 const { ItemsInventoryEntity } = require('./entities/items-inventory-entity');
 const { ItemsItemEntity } = require('./entities/items-item-entity');
@@ -43,6 +44,7 @@ const { OperationTypesEntity } = require('./entities/operation-types-entity');
 const { PlayersEntity } = require('./entities/players-entity');
 const { PlayersStateEntity } = require('./entities/players-state-entity');
 const { PlayersStatsEntity } = require('./entities/players-stats-entity');
+const { QuestsProgressEntity } = require('./entities/quests-progress-entity');
 const { RespawnEntity } = require('./entities/respawn-entity');
 const { RewardsEntity } = require('./entities/rewards-entity');
 const { RewardsEventsEntity } = require('./entities/rewards-events-entity');
@@ -80,6 +82,8 @@ const { TargetOptionsEntity } = require('./entities/target-options-entity');
 const { UsersEntity } = require('./entities/users-entity');
 const { UsersLocaleEntity } = require('./entities/users-locale-entity');
 const { UsersLoginEntity } = require('./entities/users-login-entity');
+const { UsersPasswordResetsEntity } = require('./entities/users-password-resets-entity');
+const { AdminSessionsEntity } = require('./entities/admin-sessions-entity');
 
 let entitiesConfig = {
     adsBanner: AdsBannerEntity.propertiesConfig(),
@@ -102,6 +106,7 @@ let entitiesConfig = {
     configTypes: ConfigTypesEntity.propertiesConfig(),
     dropsAnimations: DropsAnimationsEntity.propertiesConfig(),
     features: FeaturesEntity.propertiesConfig(),
+    ipLists: IpListsEntity.propertiesConfig(),
     itemsGroup: ItemsGroupEntity.propertiesConfig(),
     itemsInventory: ItemsInventoryEntity.propertiesConfig(),
     itemsItem: ItemsItemEntity.propertiesConfig(),
@@ -121,6 +126,7 @@ let entitiesConfig = {
     players: PlayersEntity.propertiesConfig(),
     playersState: PlayersStateEntity.propertiesConfig(),
     playersStats: PlayersStatsEntity.propertiesConfig(),
+    questsProgress: QuestsProgressEntity.propertiesConfig(),
     respawn: RespawnEntity.propertiesConfig(),
     rewards: RewardsEntity.propertiesConfig(),
     rewardsEvents: RewardsEventsEntity.propertiesConfig(),
@@ -157,7 +163,9 @@ let entitiesConfig = {
     targetOptions: TargetOptionsEntity.propertiesConfig(),
     users: UsersEntity.propertiesConfig(),
     usersLocale: UsersLocaleEntity.propertiesConfig(),
-    usersLogin: UsersLoginEntity.propertiesConfig()
+    usersLogin: UsersLoginEntity.propertiesConfig(),
+    usersPasswordResets: UsersPasswordResetsEntity.propertiesConfig(),
+    adminSessions: AdminSessionsEntity.propertiesConfig()
 };
 
 module.exports.entitiesConfig = entitiesConfig;

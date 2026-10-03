@@ -11,7 +11,7 @@ The Reldens Items System manages player inventory, equipment, and item modifiers
 1. **ItemsServer** (`@reldens/items-system`) - Server-side inventory manager
 2. **Inventory** (`@reldens/items-system`) - Base inventory container
 3. **ItemBase** - Base class for all items
-4. **Equipment** - Specialized item type for equippable items
+4. **ItemEquipment** - Specialized item type for equippable items
 5. **Modifier** (`@reldens/modifiers`) - Handles stat modifications
 6. **StorageObserver** - Persists inventory changes to database
 
@@ -28,6 +28,7 @@ The Reldens Items System manages player inventory, equipment, and item modifiers
   - **subscribers/** - Event subscribers
     - player-subscriber.js - Creates player inventory on login
     - player-death-subscriber.js
+    - server-subscriber.js - Initializes the inventory configuration on server ready
 - constants.js
 
 ## Item Creation Flow
@@ -51,7 +52,8 @@ this.events.on('reldens.createPlayerStatsAfter', async (client, userModel, curre
 2. **Inventory Creation** (`lib/inventory/server/subscribers/player-subscriber.js` lines 30-63)
    ```javascript
    let serverProps = {
-       owner: currentPlayer,              // The player schema instance
+       // the player schema instance:
+       owner: currentPlayer,
        client: new ClientWrapper({client, room}),
        persistence: true,
        ownerIdProperty: 'player_id',
@@ -69,9 +71,16 @@ this.events.on('reldens.createPlayerStatsAfter', async (client, userModel, curre
    ```javascript
    async loadOwnerItems(){
        let itemsModels = await this.modelsManager.loadOwnerItems(this.manager.getOwnerId());
+       if(0 === itemsModels.length){
+           return false;
+       }
        let itemsInstances = await ItemsFactory.fromModelsList(itemsModels, this.manager);
+       if(false === itemsInstances){
+           return false;
+       }
        await this.manager.fireEvent(ItemsEvents.LOADED_OWNER_ITEMS, this, itemsInstances, itemsModels);
        await this.manager.setItems(itemsInstances);
+       return true;
    }
    ```
 
@@ -84,7 +93,7 @@ this.events.on('reldens.createPlayerStatsAfter', async (client, userModel, curre
            manager.types.classByTypeId(itemInventoryModel.related_items_item.type)
        );
        let itemObj = new itemClass(itemProps);
-       if (itemObj.isType(ItemsConst.TYPES.EQUIPMENT)) {
+       if(itemObj.isType(ItemsConst.TYPES.EQUIPMENT)){
            itemObj.equipped = (1 === itemInventoryModel.is_active);  // Mark as equipped if active
        }
        await this.enrichWithModifiers(itemInventoryModel, itemObj, manager);
@@ -92,15 +101,20 @@ this.events.on('reldens.createPlayerStatsAfter', async (client, userModel, curre
    }
    ```
 
-5. **Modifier Creation** (`lib/inventory/server/items-factory.js` lines 79-93)
+5. **Modifier Creation** (`lib/inventory/server/items-factory.js` lines 79-94)
    ```javascript
    static async enrichWithModifiers(itemInventoryModel, itemObj, manager){
+       let loadedModifiers = itemInventoryModel.related_items_item?.related_items_item_modifiers;
+       if(!loadedModifiers || 0 === loadedModifiers.length){
+           return;
+       }
        let modifiers = {};
-       for(let modifierData of itemInventoryModel.related_items_item.related_items_item_modifiers){
+       for(let modifierData of loadedModifiers){
            if(modifierData.operation !== ModifierConst.OPS.SET){
                modifierData.value = Number(modifierData.value);
            }
-           modifierData.target = manager.owner;  // Set target to currentPlayer
+           // set target to currentPlayer:
+           modifierData.target = manager.owner;
            modifiers[modifierData.id] = new Modifier(modifierData);
        }
        itemObj.modifiers = modifiers;
@@ -126,16 +140,18 @@ this.events.on('reldens.createPlayerStatsAfter', async (client, userModel, curre
    }
    ```
 
-2. **Execute Equip Action** (`lib/inventory/server/message-actions.js` lines 360-373)
+2. **Execute Equip Action** (`lib/inventory/server/message-actions.js` lines 371-384)
    ```javascript
    async executeEquipAction(playerSchema, data){
        let item = playerSchema.inventory.manager.items[data.idx];
        if(!item.equipped){
-           this.unEquipPrevious(item.group_id, playerSchema.inventory.manager.items);  // Unequip same group
-           await item.equip();  // Equip new item
+           // unequip same group, then equip the new item:
+           this.unEquipPrevious(item.group_id, playerSchema.inventory.manager.items);
+           await item.equip();
            return true;
        }
-       await item.unequip();  // If already equipped, unequip
+       // if already equipped, unequip:
+       await item.unequip();
        return true;
    }
    ```
@@ -145,36 +161,48 @@ this.events.on('reldens.createPlayerStatsAfter', async (client, userModel, curre
    async equip(applyMods){
        this.equipped = true;
        await this.manager.fireEvent(ItemsEvents.EQUIP_ITEM, this);
+       // apply modifiers automatically or not:
        if(applyMods === false || this.manager.applyModifiersAuto === false){
            return false;
        }
-       await this.applyModifiers();  // Apply modifiers automatically
+       await this.applyModifiers();
    }
    ```
 
 4. **Apply Modifiers** (`npm-packages/reldens-items/lib/item/type/item-base.js` lines 90-105)
    ```javascript
    async changeModifiers(revert){
+       if(this.hasError){
+           return false;
+       }
        await this.manager.fireEvent(ItemsEvents.EQUIP_BEFORE+(revert ? 'Revert': 'Apply')+'Modifiers', this);
        let modifiersKeys = Object.keys(this.modifiers);
+       if(0 >= modifiersKeys.length){
+           return;
+       }
        let methodName = revert ? 'revert' : 'apply';
        for(let i of modifiersKeys){
-           this.modifiers[i][methodName](this.target);  // this.target is false, but modifier has its own target
+           // this.target is false, but the modifier has its own target:
+           this.modifiers[i][methodName](this.target);
        }
        return this.manager.fireEvent(ItemsEvents.EQUIP+(revert ? 'Reverted' : 'Applied')+'Modifiers', this);
    }
    ```
 
-5. **Modifier Execute** (`npm-packages/reldens-modifiers/lib/modifier.js` lines 84-108)
+5. **Modifier Execute** (`npm-packages/reldens-modifiers/lib/modifier.js` lines 84-111)
    ```javascript
    execute(target, revert = false, useBasePropertyToGetValue = false, applyOnBaseProperty = false){
-       // If target param is false, use this.target (set to currentPlayer in factory)
+       // if the target param is false, this.target is used (set to currentPlayer in the factory):
        if(target){
            this.target = target;
        }
        let newValue = this.getModifiedValue(revert, useBasePropertyToGetValue);
+       if(this.state === ModifierConst.MOD_MODIFIER_ERROR){
+           return false;
+       }
        let applyToProp = applyOnBaseProperty ? this.basePropertyKey : this.propertyKey;
-       this.setOwnerProperty(applyToProp, newValue);  // Sets currentPlayer.stats.atk
+       // sets currentPlayer.stats.atk:
+       this.setOwnerProperty(applyToProp, newValue);
        this.state = revert ? ModifierConst.MOD_REVERTED : ModifierConst.MOD_APPLIED;
        return true;
    }
@@ -183,14 +211,18 @@ this.events.on('reldens.createPlayerStatsAfter', async (client, userModel, curre
 6. **Property Manager Sets Value** (`npm-packages/reldens-modifiers/lib/property-manager.js` lines 22-34)
    ```javascript
    manageOwnerProperty(propertyOwner, propertyString, value){
-       let propertyPathParts = propertyString.split('/');  // ['stats', 'atk']
-       let childPropertyOwner = this.extractChildPropertyOwner(propertyOwner, propertyPathParts);  // Get stats object
-       let propertyKey = propertyPathParts[propertyPathParts.length-1];  // 'atk'
+       // for example ['stats', 'atk']:
+       let propertyPathParts = propertyString.split('/');
+       // get the stats object:
+       let childPropertyOwner = this.extractChildPropertyOwner(propertyOwner, propertyPathParts);
+       // for example 'atk':
+       let propertyKey = propertyPathParts[propertyPathParts.length-1];
        if('undefined' === typeof value && !sc.hasOwn(childPropertyOwner, propertyKey)){
            ErrorManager.error('Invalid property "'+propertyKey+'" from path: "'+propertyPathParts.join('/')+'"].');
        }
        if('undefined' !== typeof value){
-           childPropertyOwner[propertyKey] = value;  // Sets stats.atk = newValue
+           // sets stats.atk = newValue:
+           childPropertyOwner[propertyKey] = value;
        }
        return childPropertyOwner[propertyKey];
    }
@@ -216,16 +248,19 @@ this.events.on('reldens.createPlayerStatsAfter', async (client, userModel, curre
    }
    ```
 
-9. **Save Player Stats** (`lib/rooms/server/scene.js` lines 228-234)
+9. **Save Player Stats** (`lib/rooms/server/scene.js` lines 238-244)
    ```javascript
    currentPlayer.persistData = async (params) => {
+       await this.events.emit('reldens.playerPersistDataBefore', client, userModel, currentPlayer, params, this);
        await this.savePlayedTime(currentPlayer);
        await this.savePlayerState(currentPlayer.sessionId);
-       await this.savePlayerStats(currentPlayer, client);  // Saves stats to database
+       // saves the stats to the database:
+       await this.savePlayerStats(currentPlayer, client);
+       await this.events.emit('reldens.playerPersistDataAfter', client, userModel, currentPlayer, params, this);
    };
    ```
 
-10. **Client Update** (`lib/rooms/server/scene.js` lines 759-763)
+10. **Client Update** (`lib/rooms/server/scene.js` lines 775-779)
     ```javascript
     client.send('*', {
         act: GameConst.PLAYER_STATS,
@@ -255,12 +290,12 @@ From `@reldens/modifiers/lib/constants.js`:
 - Revert: `value / operand`
 
 **5. INC_P - Increase by %**
-- Apply: `value + (value * operand / 100)`
-- Revert: Complex percentage revert
+- Apply: `value + Math.round(value * operand / 100)`
+- Revert: `Math.round(value / (1 + operand / 100))`
 
 **6. DEC_P - Decrease by %**
-- Apply: `value - (value * operand / 100)`
-- Revert: Complex percentage revert
+- Apply: `value - Math.round(value * operand / 100)`
+- Revert: `Math.round(value / (1 - operand / 100))`
 
 **7. SET - Set value**
 - Apply: `operand`
@@ -276,7 +311,7 @@ From `@reldens/modifiers/lib/constants.js`:
 
 ### INC_P (Increase Percentage) Calculation
 
-From `@reldens/modifiers/lib/calculator.js` lines 30-37:
+From `@reldens/modifiers/lib/calculator.js` lines 30-36:
 
 **Apply**:
 ```javascript
@@ -286,27 +321,28 @@ Example: atk=100, value=5 results in 100 + Math.round(100 * 5 / 100) = 100 + 5 =
 
 **Revert**:
 ```javascript
-let revertValue = Math.ceil(originalValue - (originalValue / (100 - operationValue)) * 100);
-return originalValue + revertValue;
+return Math.round(originalValue / (1 + operationValue / 100));
 ```
-Example: atk=105, value=5 results in Math.ceil(105 - (105/95)*100) = Math.ceil(-5.26) = -5 then 105 + (-5) = 100
+Example: atk=105, value=5 results in Math.round(105 / 1.05) = 100
 
 ## Database Schema
 
 ### items_item (Item Definitions)
 ```sql
 CREATE TABLE `items_item` (
-    `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+    `id` int unsigned NOT NULL AUTO_INCREMENT,
     `key` varchar(255) NOT NULL,
-    `type` int(11) NOT NULL,
-    `group_id` int(10) unsigned DEFAULT NULL,
-    `label` varchar(255) DEFAULT NULL,
-    `description` text,
-    `qty_limit` int(11) DEFAULT NULL,
-    `uses_limit` int(11) DEFAULT NULL,
-    `useTimeOut` int(11) DEFAULT NULL,
-    `execTimeOut` int(11) DEFAULT NULL,
+    `type` int NOT NULL DEFAULT '0',
+    `group_id` int unsigned DEFAULT NULL,
+    `label` varchar(255) NOT NULL,
+    `description` varchar(255) DEFAULT NULL,
+    `qty_limit` int NOT NULL DEFAULT '0',
+    `uses_limit` int NOT NULL DEFAULT '1',
+    `useTimeOut` int DEFAULT NULL,
+    `execTimeOut` int DEFAULT NULL,
     `customData` text,
+    `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`)
 );
 ```
@@ -314,11 +350,11 @@ CREATE TABLE `items_item` (
 ### items_item_modifiers (Item Modifier Definitions)
 ```sql
 CREATE TABLE `items_item_modifiers` (
-    `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-    `item_id` int(10) unsigned NOT NULL,
+    `id` int unsigned NOT NULL AUTO_INCREMENT,
+    `item_id` int unsigned NOT NULL,
     `key` varchar(255) NOT NULL,
     `property_key` varchar(255) NOT NULL,
-    `operation` int(11) NOT NULL,
+    `operation` int unsigned NOT NULL,
     `value` varchar(255) NOT NULL,
     `maxProperty` varchar(255) DEFAULT NULL,
     PRIMARY KEY (`id`),
@@ -336,12 +372,12 @@ CREATE TABLE `items_item_modifiers` (
 ### items_inventory (Player Item Instances)
 ```sql
 CREATE TABLE `items_inventory` (
-    `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-    `owner_id` int(10) unsigned NOT NULL,
-    `item_id` int(10) unsigned NOT NULL,
-    `qty` int(11) NOT NULL,
-    `remaining_uses` int(11) DEFAULT NULL,
-    `is_active` tinyint(1) DEFAULT 0,
+    `id` int unsigned NOT NULL AUTO_INCREMENT,
+    `owner_id` int unsigned NOT NULL,
+    `item_id` int unsigned NOT NULL,
+    `qty` int NOT NULL DEFAULT '0',
+    `remaining_uses` int DEFAULT NULL,
+    `is_active` tinyint DEFAULT NULL,
     PRIMARY KEY (`id`),
     FOREIGN KEY (`owner_id`) REFERENCES `players` (`id`),
     FOREIGN KEY (`item_id`) REFERENCES `items_item` (`id`)
@@ -411,11 +447,11 @@ CREATE TABLE `items_inventory` (
 
 ### Custom Item Types
 
-Create custom item class extending ItemBase or Equipment:
+Create custom item class extending ItemBase or ItemEquipment:
 ```javascript
-const Equipment = require('@reldens/items-system').ItemBase;
+const { ItemEquipment } = require('@reldens/items-system');
 
-class MagicWeapon extends Equipment {
+class MagicWeapon extends ItemEquipment {
     async equip(applyMods){
         // Custom equip logic
         await super.equip(applyMods);
@@ -469,4 +505,4 @@ inventoryServer.manager.listenEvent(ItemsEvents.EQUIP_ITEM, async (item) => {
 
 - `@reldens/items-system` package: D:\dap\work\reldens\npm-packages\reldens-items
 - `@reldens/modifiers` package: D:\dap\work\reldens\npm-packages\reldens-modifiers
-- Sample data: D:\dap\work\reldens\src\migrations\production\reldens-sample-data-v4.0.0.sql
+- Sample data: `migrations/production/reldens-sample-data-v4.0.0.sql`

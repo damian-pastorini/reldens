@@ -26,6 +26,7 @@ module.exports.entitiesTranslations = {
         'config_types': 'Config Types',
         'drops_animations': 'Drops Animations',
         'features': 'Features',
+        'ip_lists': 'Ip Lists',
         'items_group': 'Items Group',
         'items_inventory': 'Items Inventory',
         'items_item': 'Items Item',
@@ -45,6 +46,7 @@ module.exports.entitiesTranslations = {
         'players': 'Players',
         'players_state': 'Players State',
         'players_stats': 'Players Stats',
+        'quests_progress': 'Quests Progress',
         'respawn': 'Respawn',
         'rewards': 'Rewards',
         'rewards_events': 'Rewards Events',
@@ -81,7 +83,9 @@ module.exports.entitiesTranslations = {
         'target_options': 'Target Options',
         'users': 'Users',
         'users_locale': 'Users Locale',
-        'users_login': 'Users Login'
+        'users_login': 'Users Login',
+        'users_password_resets': 'Users Password Resets',
+        'admin_sessions': 'Admin Sessions'
     },
     fields: {
         'ads_banner': {
@@ -234,6 +238,15 @@ module.exports.entitiesTranslations = {
             'title': 'Title',
             'is_enabled': 'Is Enabled'
         },
+        'ip_lists': {
+            'id': 'ID',
+            'address': 'Address',
+            'list_type': 'List Type',
+            'reason': 'Reason',
+            'expires_at': 'Expires At',
+            'created_at': 'Created At',
+            'updated_at': 'Updated At'
+        },
         'items_group': {
             'id': 'ID',
             'key': 'Key',
@@ -383,6 +396,12 @@ module.exports.entitiesTranslations = {
             'stat_id': 'Stat ID',
             'base_value': 'Base Value',
             'value': 'Value'
+        },
+        'quests_progress': {
+            'id': 'ID',
+            'player_id': 'Player ID',
+            'quest_key': 'Quest Key',
+            'customData': 'CustomData'
         },
         'respawn': {
             'id': 'ID',
@@ -703,7 +722,9 @@ module.exports.entitiesTranslations = {
             'created_at': 'Created At',
             'updated_at': 'Updated At',
             'played_time': 'Played Time',
-            'login_count': 'Login Count'
+            'login_count': 'Login Count',
+            'password_reset_sent_at': 'Password Reset Sent At',
+            'origin': 'Origin'
         },
         'users_locale': {
             'id': 'ID',
@@ -715,6 +736,12 @@ module.exports.entitiesTranslations = {
             'user_id': 'User ID',
             'login_date': 'Login Date',
             'logout_date': 'Logout Date'
+        },
+        'admin_sessions': {
+            'id': 'ID',
+            'sid': 'Sid',
+            'data': 'Data',
+            'expires': 'Expires'
         }
     }
 };

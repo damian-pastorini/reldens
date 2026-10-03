@@ -6,15 +6,15 @@
  *
  */
 
-const dotenv = require('dotenv');
 const { spawn } = require('child_process');
 const { CreateAdmin } = require('../lib/users/server/create-admin');
 const { ResetPassword } = require('../lib/users/server/reset-password');
 const { ThemeManager } = require('../lib/game/server/theme-manager');
+const { EnvironmentVariablesReader } = require('../lib/game/server/environment-variables-reader');
 const { PackagesInstallation } = require('../lib/game/server/installer/packages-installation');
 const { ServerManager } = require('../server');
 const { FileHandler } = require('@reldens/server-utils');
-const { Logger, sc } = require('@reldens/utils');
+const { EnvVar, Logger, sc } = require('@reldens/utils');
 
 class Commander
 {
@@ -52,7 +52,9 @@ class Commander
                 return false;
             }
         }
-        this.themeManager = new ThemeManager(this);
+        this.themeManager = new ThemeManager(
+            {...this, ...EnvironmentVariablesReader.fetchThemeFromEnvironmentVariables()}
+        );
         if(!this.validateThemeManagerCommand()){
             return false;
         }
@@ -125,19 +127,29 @@ class Commander
     generateEntities()
     {
         this.loadEnvironmentConfig();
+        let storageDriver = EnvVar.nonEmptyString(process.env, 'RELDENS_STORAGE_DRIVER', 'knex');
+        let client = EnvVar.nonEmptyString(process.env, 'RELDENS_DB_CLIENT', 'mysql2');
+        if('prisma' === storageDriver && 'mysql2' === client){
+            client = 'mysql';
+        }
         let args = [
             'reldens-storage',
             'generateEntities',
             '--user='+process.env.RELDENS_DB_USER,
             '--pass='+process.env.RELDENS_DB_PASSWORD,
             '--host='+process.env.RELDENS_DB_HOST,
+            '--port='+process.env.RELDENS_DB_PORT,
             '--database='+process.env.RELDENS_DB_NAME,
-            '--driver='+(process.env.RELDENS_STORAGE_DRIVER || 'objection-js'),
-            '--client='+process.env.RELDENS_DB_CLIENT
+            '--driver='+storageDriver,
+            '--client='+client
         ];
         let overrideArg = process.argv.find(arg => '--override' === arg);
         if(overrideArg){
             args.push('--override');
+        }
+        let prismaClientPathArg = process.argv.find(arg => arg.startsWith('--prismaClientPath='));
+        if(prismaClientPathArg){
+            args.push(prismaClientPathArg);
         }
         Logger.info('Running: npx '+args.join(' '));
         let child = spawn('npx', args, {
@@ -198,7 +210,7 @@ class Commander
             Logger.error('.env file not found at: '+envPath);
             process.exit(1);
         }
-        dotenv.config({path: envPath});
+        process.loadEnvFile(envPath);
     }
 
     async initializeServerManager()

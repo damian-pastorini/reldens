@@ -34,6 +34,8 @@ class ConfigEntity extends EntityProperties
             type: {
                 type: 'reference',
                 reference: 'config_types',
+                alias: 'related_config_types',
+                onDelete: 'noAction',
                 isRequired: true,
                 dbType: 'int'
             }

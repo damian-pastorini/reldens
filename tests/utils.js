@@ -5,10 +5,29 @@
  */
 
 const { FileHandler } = require('@reldens/server-utils');
+const { KnexDataServer } = require('@reldens/storage');
+const { Logger } = require('@reldens/utils');
 const { EntitiesList } = require('./fixtures/entities-list');
+const { rawRegisteredEntities } = require('../generated-entities/models/knex/registered-models-knex');
 
 class Utils
 {
+
+    static createDataServer(config)
+    {
+        return new KnexDataServer({
+            client: 'mysql2',
+            config: {
+                host: config.dbHost,
+                port: Number(config.dbPort),
+                database: config.dbName,
+                user: config.dbUser,
+                password: config.dbPassword,
+                multipleStatements: true
+            },
+            rawEntities: rawRegisteredEntities
+        });
+    }
 
     static async cleanupTestFiles(paths)
     {
@@ -23,8 +42,7 @@ class Utils
         if(!entity){
             return false;
         }
-        let result = await entity.loadOne(filters);
-        return null !== result;
+        return null !== await entity.loadOne(filters);
     }
 
     static async beginTransaction(dataServer)
@@ -74,6 +92,7 @@ class Utils
             }
             return cleanedRecords;
         } catch(error){
+            Logger.error('Test data cleanup failed: '+error.message);
             return 0;
         }
     }
@@ -84,10 +103,12 @@ class Utils
             return 0;
         }
         try {
-            let query = 'DELETE FROM config WHERE scope = "test" AND path LIKE "%'+testTimestamp+'%"';
-            let result = await dataServer.rawQuery(query);
-            return result && result.affectedRows ? result.affectedRows : 0;
+            return await dataServer.getEntity('config').delete({
+                scope: 'test',
+                path: {operator: 'LIKE', value: testTimestamp}
+            });
         } catch(error){
+            Logger.error('Test data cleanup by timestamp failed: '+error.message);
             return 0;
         }
     }

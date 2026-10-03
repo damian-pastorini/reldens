@@ -21,8 +21,8 @@ Controls the display of health bars above player and NPC sprites. Allows indepen
 ### Visibility Properties
 
 **showCurrentPlayer**
-- Path: `client/ui/lifeBar/showCurrentPlayer`
-- Default: `0` (disabled)
+- Path: `client/ui/lifeBar/showCurrentPlayer` (not seeded by the migrations, must be added manually)
+- Default: disabled (with no config row the value resolves to `undefined`)
 - Controls: Current player's lifebar visibility
 - Use case: Disable when using alternative UI systems like stat bars in player info panel
 
@@ -52,7 +52,7 @@ Controls the display of health bars above player and NPC sprites. Allows indepen
 Flow:
 1. Check if player is current player by comparing playerId with gameManager.getCurrentPlayer().playerId
 2. If current player: return value of `barConfig.showCurrentPlayer`
-3. If other player: check `barConfig.showAllPlayers` first, then `barConfig.showOnClick` if false
+3. If other player: check `barConfig.showAllPlayers` first, then `barConfig.showOnClick` and whether the player is the current target if false
 4. Draw lifebar only if check returns true
 
 **Customizable Fields**:
@@ -98,8 +98,8 @@ Controls the display of character names above player sprites. Allows independent
 ### Visibility Properties
 
 **showCurrentPlayerName**
-- Path: `client/ui/players/showCurrentPlayerName`
-- Default: `0` (disabled)
+- Path: `client/ui/players/showCurrentPlayerName` (not seeded by the migrations, must be added manually)
+- Default: disabled (with no config row the value resolves to `false`)
 - Controls: Current player's name visibility
 - Use case: Disable for cleaner visual experience when player info is shown in UI panel
 
@@ -110,8 +110,8 @@ Controls the display of character names above player sprites. Allows independent
 - Use case: Disable for less cluttered multiplayer experience
 
 **showNamesLimit**
-- Path: `client/ui/players/showNamesLimit`
-- Default: `10`
+- Path: `client/ui/players/showNamesLimit` (not seeded by the migrations, must be added manually)
+- Default: `10` (code fallback)
 - Controls: Maximum name length before truncation with ellipsis
 - Use case: Prevent long names from cluttering the screen
 
@@ -224,7 +224,7 @@ Properties are stored as class instance variables for performance:
 
 ```javascript
 this.barConfig = gameManager.config.get('client/ui/lifeBar');
-this.globalConfigShowCurrentPlayerName = Boolean(this.config.get('client/ui/players/showCurrentPlayerName'));
+this.globalConfigShowCurrentPlayerName = Boolean(this.config.getWithoutLogs('client/ui/players/showCurrentPlayerName'));
 this.globalConfigShowNames = Boolean(this.config.get('client/ui/players/showNames'));
 ```
 

@@ -21,6 +21,7 @@ class FeaturesEntity extends EntityProperties
             },
             code: {
                 isRequired: true,
+                isUnique: true,
                 dbType: 'varchar'
             },
             [titleProperty]: {
