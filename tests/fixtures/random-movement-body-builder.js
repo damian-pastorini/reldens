@@ -20,7 +20,7 @@ class RandomMovementBodyBuilder
      * @param {number} mapSize
      * @param {number} tile
      */
-    constructor(tileSize, mapSize, tile)
+    constructor(tileSize = 32, mapSize = 30, tile = 10)
     {
         /** @type {number} */
         this.tileSize = tileSize;

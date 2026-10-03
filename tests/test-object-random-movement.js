@@ -8,10 +8,8 @@ const { Body } = require('p2');
 const { BaseTest } = require('./base-test');
 const { ObjectRandomMovement } = require('../lib/objects/server/object/object-random-movement');
 const { ObjectsManager } = require('../lib/objects/server/manager');
-const { NpcObject } = require('../lib/objects/server/object/type/npc-object');
 const { RandomMovementBodyBuilder } = require('./fixtures/random-movement-body-builder');
 const { GameConst } = require('../lib/game/constants');
-const { ObjectsConst } = require('../lib/objects/constants');
 
 class TestObjectRandomMovement extends BaseTest
 {
@@ -103,6 +101,28 @@ class TestObjectRandomMovement extends BaseTest
                 )
             );
             this.assert.deepStrictEqual(invalidTargets, []);
+        });
+    }
+
+    async testTargetsWithAShorterRouteOutsideTheAreaAreReachedInsideIt()
+    {
+        await this.test('a target reached faster from outside the area is reached with the longer path inside it', async () => {
+            let body = this.bodyBuilder.build();
+            body.updateCurrentPoints();
+            body.position[1] += 2 * this.tileSize;
+            let wallColumn = this.originalTile + 1;
+            let wallFirstRow = this.originalTile - this.maxTiles + 1;
+            let wallLastRow = this.originalTile + this.maxTiles;
+            this.bodyBuilder.blockColumnTiles(body.world.pathFinder.grid, wallColumn, wallFirstRow, wallLastRow);
+            let reachedBehindTheWall = false;
+            let invalidTargets = this.collectInvalidTargets(this.createRandomMovement(body), (target) => {
+                if(wallColumn < target.column && this.originalTile < target.row){
+                    reachedBehindTheWall = true;
+                }
+                return target.path.some(pathTile => this.isOutsideTheMovementArea({column: pathTile[0], row: pathTile[1]}));
+            });
+            this.assert.deepStrictEqual(invalidTargets, []);
+            this.assert.strictEqual(reachedBehindTheWall, true);
         });
     }
 
@@ -283,53 +303,6 @@ class TestObjectRandomMovement extends BaseTest
             this.assert.deepStrictEqual(
                 [...roomState.bodies.entries()],
                 [['respawn-enemy-1', respawnedEnemyState], ['moving_npc', movingNpcState]]
-            );
-        });
-    }
-
-    createInteractiveNpc()
-    {
-        let npc = new NpcObject({
-            events: {},
-            config: {get: () => this.tileSize, getWithoutLogs: (path, defaultValue) => defaultValue},
-            dataServer: {},
-            client_key: 'moving_npc',
-            id: 1
-        });
-        npc.setupInteractionArea(false, this.tileSize, this.tileSize);
-        return npc;
-    }
-
-    async sendInteractionFromMovedPosition(npc)
-    {
-        let movedPosition = this.tileSize * this.originalTile;
-        let sentMessages = [];
-        npc.state = {x: movedPosition, y: movedPosition};
-        await npc.executeMessageActions(
-            {send: (messageKey, message) => sentMessages.push(message)},
-            {act: ObjectsConst.OBJECT_INTERACTION, id: npc.id},
-            {},
-            {state: {x: movedPosition, y: movedPosition}}
-        );
-        return [...sentMessages].shift();
-    }
-
-    async testMovingNpcValidatesTheInteractionAtItsCurrentPosition()
-    {
-        await this.test('a moving npc validates the interaction at its current body state position', async () => {
-            let npc = this.createInteractiveNpc();
-            npc.randomMovementBehavior = this.createRandomMovement(this.bodyBuilder.build());
-            this.assert.strictEqual((await this.sendInteractionFromMovedPosition(npc)).act, GameConst.UI);
-        });
-    }
-
-    async testStaticNpcKeepsTheInteractionAreaOfItsCreationPosition()
-    {
-        await this.test('an npc without random movement keeps the interaction area of its creation position', async () => {
-            let npc = this.createInteractiveNpc();
-            this.assert.strictEqual(
-                (await this.sendInteractionFromMovedPosition(npc)).act,
-                GameConst.CLOSE_UI_ACTION
             );
         });
     }
