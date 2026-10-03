@@ -1,41 +1,41 @@
 .entity-list {
-    .list-title {
+    & .list-title {
         text-align: center;
     }
 
-    .actions {
+    & .actions {
         display: flex;
         justify-content: end;
         margin-bottom: var(--space-lg);
     }
 
-    .extra-actions {
+    & .extra-actions {
         display: flex;
         justify-content: end;
     }
 
-    .table-wrapper {
+    & .table-wrapper {
         overflow-x: auto;
     }
 
-    .table-container {
+    & .table-container {
         width: 96%;
         margin: auto;
 
-        h2 {
+        & h2 {
             margin: 0 0 2rem;
             text-align: center;
         }
     }
 
-    .list {
+    & .list {
         width: 100%;
         border-collapse: collapse;
         margin-bottom: 2rem;
         color: var(--color-grey);
         table-layout: auto;
 
-        .row {
+        & .row {
             background-color: var(--color-grey-60);
 
             &:nth-child(even) {
@@ -56,7 +56,7 @@
             }
         }
 
-        .field {
+        & .field {
             padding: 0.5rem 0;
             min-width: min-content;
             white-space: nowrap;
@@ -64,13 +64,13 @@
             border: 1px solid var(--color-grey-40);
             text-align: left;
 
-            .button-list-delete {
+            & .button-list-delete {
                 border: none;
                 background-color: transparent;
                 cursor: pointer;
             }
 
-            .field-actions-container {
+            & .field-actions-container {
                 display: flex;
                 flex-direction: row;
                 justify-content: space-around;
@@ -78,25 +78,25 @@
                 gap: var(--space-sm);
                 margin: 0 var(--space-lg);
 
-                .button {
+                & .button {
                     border: 1px solid var(--color-grey-20);
                 }
 
-                .list-select {
+                & .list-select {
                     padding: 0.45rem;
                 }
 
-                .list-delete-selection {
+                & .list-delete-selection {
                     padding: 0.3rem 0.5rem;
                 }
             }
 
-            & a, a:visited {
+            & a, & a:visited {
                 color: var(--color-grey);
                 text-decoration: none;
             }
 
-            & a:active, a:hover {
+            & a:active, & a:hover {
                 color: var(--color-blue);
             }
 
@@ -106,7 +106,7 @@
             }
         }
 
-        .field-edit, .field-delete {
+        & .field-edit, & .field-delete {
             & span {
                 display: block;
                 text-align: center;
@@ -114,7 +114,7 @@
             }
         }
 
-        .field-edit {
+        & .field-edit {
             & span {
                 & svg, & path {
                     width: 1.5rem;
@@ -123,7 +123,7 @@
             }
         }
 
-        .field-delete {
+        & .field-delete {
             & span {
                 & svg, & path {
                     width: 1.5rem;
@@ -133,7 +133,7 @@
         }
     }
 
-    .sortable {
+    & .sortable {
         cursor: pointer;
         user-select: none;
         transition: background-color 0.2s;
@@ -141,26 +141,26 @@
         &:hover {
             background-color: var(--color-blue-90);
 
-            .sort-icon {
+            & .sort-icon {
                 opacity: 0.7;
             }
         }
 
-        .header-content {
+        & .header-content {
             display: flex;
             align-items: center;
             justify-content: space-between;
         }
     }
 
-    .sort-indicators {
+    & .sort-indicators {
         display: flex;
         flex-direction: column;
         margin-left: 0.5rem;
         gap: 0.125rem;
     }
 
-    .sort-icon {
+    & .sort-icon {
         width: 0.75rem;
         height: 0.75rem;
         fill: var(--color-grey-20);
@@ -173,11 +173,11 @@
         }
     }
 
-    .sorted {
+    & .sorted {
         background-color: var(--color-blue-90);
     }
 
-    .filters-header {
+    & .filters-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -186,7 +186,7 @@
         gap: var(--space-lg);
     }
 
-    .filters-toggle {
+    & .filters-toggle {
         cursor: pointer;
         margin: 0;
         padding: 0.5rem 0;
@@ -194,7 +194,7 @@
         color: var(--color-grey);
         opacity: 0.7;
 
-        img {
+        & img {
             width: 2.125rem;
             height: auto;
             margin-right: 0.5rem;
@@ -202,7 +202,7 @@
         }
     }
 
-    .filters-toggle-content {
+    & .filters-toggle-content {
         display: flex;
         flex-wrap: wrap;
         justify-content: flex-start;
@@ -213,7 +213,7 @@
         }
     }
 
-    .search-controls {
+    & .search-controls {
         display: flex;
         align-items: center;
         gap: 0.5rem;
@@ -222,8 +222,8 @@
         justify-content: flex-start;
     }
 
-    .search-input-group {
-        input[type="text"] {
+    & .search-input-group {
+        & input[type="text"] {
             width: calc(100% - var(--space-lg));
             font-size: var(--font-size-md);
 
@@ -233,8 +233,8 @@
         }
     }
 
-    .extra-content-container,
-    .default-room-container {
+    & .extra-content-container,
+    & .default-room-container {
         display: block;
         width: 100%;
         padding: var(--space-lg) 0;
@@ -247,13 +247,13 @@
         }
     }
 
-    .extra-content-container {
+    & .extra-content-container {
         & > .edit-map-elements-entity-btn {
             margin-bottom: var(--space-lg);
         }
     }
 
-    .association-maps-container {
+    & .association-maps-container {
         display: block;
         width: 100%;
         max-width: 100%;
@@ -261,7 +261,7 @@
         overflow: auto;
     }
 
-    .pagination {
+    & .pagination {
         width: 100%;
         display: flex;
         flex-flow: wrap;
@@ -286,7 +286,7 @@
         }
     }
 
-    .filter-actions {
+    & .filter-actions {
         display: flex;
         gap: 0.5rem;
         flex-wrap: wrap;
@@ -295,7 +295,7 @@
         @media (max-width: 768px) {
             flex-direction: column;
 
-            .button {
+            & .button {
                 width: 100%;
                 text-align: center;
             }

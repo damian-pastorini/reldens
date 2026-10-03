@@ -50,7 +50,7 @@ class RockObject extends TimingObject
         this.isActive = false;
         this.objectBody.setShapesCollisionGroup(0);
         this.objectBody.bodyState.inState = GameConst.STATUS.DISABLED;
-        client.send('*', {act: 'timingComplete', id: this.id, rewarded: true, itemKey: this.itemKey});
+        client.send('*', {act: 'timingComplete', id: this.id, key: this.key, rewarded: true, itemKey: this.itemKey});
         if(!this.respawnBehavior){
             return;
         }

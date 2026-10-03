@@ -83,7 +83,7 @@ UPDATE `objects` SET
 	`tile_index` = NULL,
 	`class_type` = 7,
 	`object_class_key` = 'rock_forest_1_area',
-	`private_params` = '{"shouldRespawn":true,"childObjectClassKey":"rock_forest_1","itemKey":"ore","cancelOnMove":true,"cancelOnHit":true,"cancelOnOutOfRange":false,"runOnAction":true,"collisionType":2,"hasState":true}',
+	`private_params` = '{"shouldRespawn":true,"childObjectClassKey":"rock_forest_1","itemKey":"ore","cancelOnMove":true,"cancelOnHit":true,"cancelOnOutOfRange":false,"runOnAction":true,"collisionType":2,"hasState":true,"interactionArea":48}',
 	`client_params` = '{"timingDuration":5000,"isInteractive":true,"frameStart":0,"frameEnd":0,"classKey":"rock_forest_1","ui":false}',
 	`enabled` = 1
 WHERE `id` = 16;
@@ -456,13 +456,13 @@ REPLACE INTO `objects` (`id`, `room_id`, `layer_name`, `tile_index`, `class_type
 	(5, 41, 'ground', 3482, 3, 'npc_1', 'people_town_1', 'Alfred', '{"runOnAction":true,"playerVisible":true,"collisionType":4,"hasState":true,"randomMovement":{"maxTiles":5}}', '{"content":"Hello! My name is Alfred. Go to the forest and kill some monsters! Now... leave me alone!","autoStart":true,"animations":{"people_town_1_down":{"start":0,"end":2},"people_town_1_left":{"start":3,"end":5},"people_town_1_right":{"start":6,"end":8},"people_town_1_up":{"start":9,"end":11}}}', 1),
 	(6, 114, 'merge-respawn-area-monsters', NULL, 7, 'enemy_1', 'enemy_forest_1', 'Tree', '{"shouldRespawn":true,"childObjectType":4,"isAggressive":true,"interactionRadio":170,"randomMovement":{"maxTiles":3}}', '{"autoStart":true,"frameStart":12,"frameEnd":26,"repeat":-1}', 1),
 	(7, 114, 'merge-respawn-area-monsters', NULL, 7, 'enemy_2', 'enemy_forest_2', 'Tree Punch', '{"shouldRespawn":true,"childObjectType":4,"isAggressive":false,"interactionRadio":70,"randomMovement":{"maxTiles":8}}', '{"autoStart":true,"frameStart":12,"frameEnd":26,"repeat":-1}', 1),
-	(8, 41, 'ground', 3567, 3, 'npc_2', 'healer_1', 'Mamon', '{"runOnAction":true,"playerVisible":true,"sendInvalidOptionMessage":true,"collisionType":4,"hasState":true,"randomMovement":{"maxTiles":5}}', '{"content":"Hello traveler! I can restore your health, would you like me to do it?","options":{"1":{"label":"Heal HP","value":1},"2":{"label":"Nothing...","value":2},"3":{"label":"Need some MP","value":3}},"ui":true,"autoStart":true,"animations":{"healer_1_down":{"start":0,"end":2},"healer_1_left":{"start":3,"end":5},"healer_1_right":{"start":6,"end":8},"healer_1_up":{"start":9,"end":11}}}', 1),
+	(8, 41, 'ground', 3567, 3, 'npc_2', 'healer_1', 'Mamon', '{"runOnAction":true,"playerVisible":true,"sendInvalidOptionMessage":true,"collisionType":4,"hasState":true}', '{"content":"Hello traveler! I can restore your health, would you like me to do it?","options":{"1":{"label":"Heal HP","value":1},"2":{"label":"Nothing...","value":2},"3":{"label":"Need some MP","value":3}},"ui":true,"autoStart":true,"animations":{"healer_1_down":{"start":0,"end":2},"healer_1_left":{"start":0,"end":2},"healer_1_right":{"start":0,"end":2},"healer_1_up":{"start":0,"end":2}}}', 1),
 	(10, 41, 'ground', 3578, 5, 'npc_3', 'merchant_1', 'Gimly', '{"runOnAction":true,"playerVisible":true,"sendInvalidOptionMessage":true,"collisionType":4,"hasState":true,"randomMovement":{"maxTiles":5}}', '{"content":"Hi there! What would you like to do?","options":{"buy":{"label":"Buy","value":"buy"},"sell":{"label":"Sell","value":"sell"}},"autoStart":true,"animations":{"merchant_1_down":{"start":0,"end":2},"merchant_1_left":{"start":3,"end":5},"merchant_1_right":{"start":6,"end":8},"merchant_1_up":{"start":9,"end":11}}}', 1),
 	(12, 41, 'ground', 3499, 3, 'npc_4', 'weapons_master_1', 'Barrik', '{"runOnAction":true,"playerVisible":true,"sendInvalidOptionMessage":true,"collisionType":4,"hasState":true,"randomMovement":{"maxTiles":5}}', '{"content":"Hi, I am the weapons master, choose your weapon and go kill some monsters!","options":{"1":{"key":"axe","label":"Axe","value":1,"icon":"axe"},"2":{"key":"spear","label":"Spear","value":2,"icon":"spear"}},"ui":true,"autoStart":true,"animations":{"weapons_master_1_down":{"start":0,"end":2},"weapons_master_1_left":{"start":3,"end":5},"weapons_master_1_right":{"start":6,"end":8},"weapons_master_1_up":{"start":9,"end":11}}}', 1),
 	(13, 114, 'ground', 6833, 3, 'npc_5', 'quest_npc_1', 'Miles', '{"runOnAction":true,"playerVisible":true,"sendInvalidOptionMessage":true,"collisionType":4,"hasState":true,"randomMovement":{"maxTiles":5}}', '{"content":"Hi there! Do you want a coin? I can give you one if you give me a tree branch.","options":{"1":{"label":"Sure!","value":1},"2":{"label":"No, thank you.","value":2}},"ui":true,"autoStart":true,"animations":{"quest_npc_1_down":{"start":0,"end":2},"quest_npc_1_left":{"start":3,"end":5},"quest_npc_1_right":{"start":6,"end":8},"quest_npc_1_up":{"start":9,"end":11}}}', 1),
 	(14, 9, 'ground-respawn-area', NULL, 7, 'enemy_bot_b1', 'enemy_forest_1', 'Tree', '{"shouldRespawn":true,"childObjectType":4,"isAggressive":true,"interactionRadio":170,"randomMovement":{"maxTiles":3}}', '{"autoStart":true,"frameStart":12,"frameEnd":26,"repeat":-1}', 1),
 	(15, 9, 'ground-respawn-area', NULL, 7, 'enemy_bot_b2', 'enemy_forest_2', 'Tree Punch', '{"shouldRespawn":true,"childObjectType":4,"isAggressive":false,"interactionRadio":70,"randomMovement":{"maxTiles":8}}', '{"autoStart":true,"frameStart":12,"frameEnd":26,"repeat":-1}', 1),
-	(16, 114, 'merge-respawn-area-mining-rocks', NULL, 7, 'rock_forest_1_area', 'rock_forest_1', NULL, '{"shouldRespawn":true,"childObjectClassKey":"rock_forest_1","itemKey":"ore","cancelOnMove":true,"cancelOnHit":true,"cancelOnOutOfRange":false,"runOnAction":true,"collisionType":2,"hasState":true}', '{"timingDuration":5000,"isInteractive":true,"frameStart":0,"frameEnd":0,"classKey":"rock_forest_1","ui":false}', 1),
+	(16, 114, 'merge-respawn-area-mining-rocks', NULL, 7, 'rock_forest_1_area', 'rock_forest_1', NULL, '{"shouldRespawn":true,"childObjectClassKey":"rock_forest_1","itemKey":"ore","cancelOnMove":true,"cancelOnHit":true,"cancelOnOutOfRange":false,"runOnAction":true,"collisionType":2,"hasState":true,"interactionArea":48}', '{"timingDuration":5000,"isInteractive":true,"frameStart":0,"frameEnd":0,"classKey":"rock_forest_1","ui":false}', 1),
 	(17, 114, 'merge-spot_003_river_grass-collisions', 822, 8, 'fish_spawn_forest_1', 'fish_spawn_forest_1', NULL, '{"cancelOnMove":true,"cancelOnHit":true,"cancelOnOutOfRange":false,"rewards":[{"key":"fish","rate":100}],"runOnAction":true,"fishCooldown":3000,"collisionType":2}', '{"timingDuration":10000,"isInteractive":true,"frameStart":0,"frameEnd":2,"autoStart":true,"repeat":-1,"classKey":"fish_spawn_forest_1","ui":false}', 1),
 	(18, 114, 'ground', 6613, 3, 'chest_forest_1', 'chest_forest_1', 'Treasure Chest', '{"runOnAction":true,"playerVisible":true,"collisionType":2}', '{"content":"A dusty old chest...","ui":true,"frameStart":0,"frameEnd":0,"animations":{"chest_forest_1_open":{"asset_key":"chest_forest_1","start":0,"end":1,"frameRate":8,"repeat":0}}}', 1),
 	(19, 41, 'merge-collisions', 2078, 2, 'door_3', 'door_house_3', NULL, '{"runOnHit":true,"roomVisible":true,"yFix":6,"collisionResponse":false}', '{"positionFix":{"y":-22},"frameStart":0,"frameEnd":3,"repeat":0,"hideOnComplete":false,"autoStart":false,"restartTime":2000,"asset_key":"door_house_3"}', 1),
@@ -562,7 +562,19 @@ REPLACE INTO `objects_animations` (`id`, `object_id`, `animationKey`, `animation
 	(45, 37, 'merge-respawn-area-monsters_37_right', '{"start":6,"end":8}'),
 	(46, 37, 'merge-respawn-area-monsters_37_down', '{"start":0,"end":2}'),
 	(47, 37, 'merge-respawn-area-monsters_37_left', '{"start":3,"end":5}'),
-	(48, 37, 'merge-respawn-area-monsters_37_up', '{"start":9,"end":11}');
+	(48, 37, 'merge-respawn-area-monsters_37_up', '{"start":9,"end":11}'),
+	(49, 7, 'merge-respawn-area-monsters_7_right', '{"start":6,"end":8}'),
+	(50, 7, 'merge-respawn-area-monsters_7_down', '{"start":0,"end":2}'),
+	(51, 7, 'merge-respawn-area-monsters_7_left', '{"start":3,"end":5}'),
+	(52, 7, 'merge-respawn-area-monsters_7_up', '{"start":9,"end":11}'),
+	(53, 14, 'ground-respawn-area_14_right', '{"start":6,"end":8}'),
+	(54, 14, 'ground-respawn-area_14_down', '{"start":0,"end":2}'),
+	(55, 14, 'ground-respawn-area_14_left', '{"start":3,"end":5}'),
+	(56, 14, 'ground-respawn-area_14_up', '{"start":9,"end":11}'),
+	(57, 15, 'ground-respawn-area_15_right', '{"start":6,"end":8}'),
+	(58, 15, 'ground-respawn-area_15_down', '{"start":0,"end":2}'),
+	(59, 15, 'ground-respawn-area_15_left', '{"start":3,"end":5}'),
+	(60, 15, 'ground-respawn-area_15_up', '{"start":9,"end":11}');
 
 REPLACE INTO `objects_stats` (`id`, `object_id`, `stat_id`, `base_value`, `value`) VALUES
 	(21, 6, 1, 50, 50),

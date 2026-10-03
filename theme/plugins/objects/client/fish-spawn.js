@@ -4,10 +4,15 @@
  *
  */
 
-const { TimingObject } = require('reldens/lib/objects/client/object/type/timing-object');
+const { ToolTimingObject } = require('./tool-timing-object');
 
-class FishSpawn extends TimingObject
+class FishSpawn extends ToolTimingObject
 {
+
+    constructor(gameManager, props, currentPreloader)
+    {
+        super(gameManager, props, currentPreloader, {toolType: 'fishing-rod', swingAngle: 8, swingDuration: 700});
+    }
 
 }
 

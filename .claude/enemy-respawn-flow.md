@@ -685,12 +685,12 @@ Server `RoomScene.executeSceneMessageActions` (scene.js line 445) iterates `mess
 
 `TimingObject.startTiming`:
 - `this.isActive = true`.
-- `client.send('*', {act: 'timingStart', id: 16})`, sending `id = this.id = 16` (DB id).
+- `client.send('*', {act: 'timingStart', id: 16, key: 'merge-respawn-area-mining-rocks_7_0'})`, sending `id = this.id = 16` (DB id, shared by every rock instance) and the instance `key`.
 - Reads the affected property (`client/actions/skills/affectedProperty`, `hp`) and keeps its value at the start.
 - Starts `timingCheckInterval` every 100ms: checks if player moved (`cancelOnMove=true`) or if the affected property went below the start value, a hit from an enemy or another player (`cancelOnHit=true`). Either one -> `cancelTiming(client)`.
 - Starts `timingTimer = setTimeout(completeTiming, this.clientParams.timingDuration)` (5000ms).
 
-Client receives `{act: 'timingStart', id: 16}`. The registered `Rock` class (client `TimingObject`) matches on `Number(message.id) === Number(this.id)` and shows the progress bar. The base `AnimationEngine` does NOT handle `timingStart`, so without `classKey: 'rock_forest_1'` in `client_params` no progress bar would be rendered.
+Client receives `{act: 'timingStart', id: 16, key: 'merge-respawn-area-mining-rocks_7_0'}`. The registered `Rock` class (client `TimingObject`) matches on `message.key === this.key` and shows the progress bar only on that instance (matching on the shared id showed the bar on every rock). The base `AnimationEngine` does NOT handle `timingStart`, so without `classKey: 'rock_forest_1'` in `client_params` no progress bar would be rendered.
 
 ---
 
@@ -705,7 +705,7 @@ After 5000ms (if player did not move), `RockObject.completeTiming(client, room, 
 - `this.isActive = false`.
 - `this.objectBody.setShapesCollisionGroup(0)`.
 - `this.objectBody.bodyState.inState = GameConst.STATUS.DISABLED`.
-- `client.send('*', {act: 'timingComplete', id: 16, rewarded: true, itemKey: 'ore'})`.
+- `client.send('*', {act: 'timingComplete', id: 16, key: 'merge-respawn-area-mining-rocks_7_0', rewarded: true, itemKey: 'ore'})`.
 - `if(!this.respawnBehavior) { return; }` guard (respawnBehavior is set in Step 3).
 - `this.respawnBehavior.execute(room)`.
 
@@ -747,7 +747,7 @@ If the player moves or is hit during the mining countdown, all timers are cleare
 - `clearInterval(timingCheckInterval)`.
 - `clearTimeout(timingTimer)`.
 - `this.isActive = false`.
-- `client.send('*', {act: 'timingCancel', id: 16})`.
+- `client.send('*', {act: 'timingCancel', id: 16, key: 'merge-respawn-area-mining-rocks_7_0'})`.
 
 Rock remains active and clickable. No respawn triggered.
 
