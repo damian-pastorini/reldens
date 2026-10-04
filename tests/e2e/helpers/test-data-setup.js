@@ -2,15 +2,28 @@
  *
  * Reldens - Test Data Setup
  *
- * Ensures the required test items exist in the root player's inventory
- * before snapshots are captured. Runs once at global setup time.
+ * Prepares the test players before the snapshots are captured, once at global setup time: creates the test users of
+ * every parallel spec group users set that does not exist yet, as a copy of the user of the same slot in the users set 0
+ * (tests/config.json): the user (same password, role and status), its locale, its player and the player state, stats,
+ * class path (level and experience) and inventory, so every group logs in with players that have the same data as the
+ * configured ones (the users created by a previous run on the same database are kept); then ensures the required test
+ * items exist in the inventory of every test player.
  *
  */
 
+const { ParallelSpecGroups } = require('./parallel-spec-groups');
 const { Logger } = require('@reldens/utils');
 
 class TestDataSetup
 {
+
+    static USER_ROWS_ENTITY = {entityKey: 'usersLocale', ownerField: 'user_id'};
+    static PLAYER_ROWS_ENTITIES = [
+        {entityKey: 'playersState', ownerField: 'player_id'},
+        {entityKey: 'playersStats', ownerField: 'player_id'},
+        {entityKey: 'skillsOwnersClassPath', ownerField: 'owner_id'},
+        {entityKey: 'itemsInventory', ownerField: 'owner_id'}
+    ];
 
     static async ensurePlayerHasItem(dataServer, playerId, itemKey, qty)
     {
@@ -61,16 +74,78 @@ class TestDataSetup
         }
     }
 
-    static async ensureRequiredItems(dataServer, config)
+    static async ensureRequiredItems(dataServer, config, users = ParallelSpecGroups.fetchAllUsers(config))
     {
-        let players = [
-            { username: config.e2eUsername || 'root', playerName: config.e2ePlayerName || 'ImRoot' },
-            { username: config.e2eUsername2 || 'root2', playerName: config.e2ePlayerName2 || 'ImRoot2' },
-            { username: config.e2eUsername3 || 'root3', playerName: config.e2ePlayerName3 || 'ImRoot3' }
-        ];
-        for(let entry of players){
+        for(let entry of users){
             await TestDataSetup.ensurePlayerItems(dataServer, entry.username, entry.playerName, config);
         }
+    }
+
+    static async createGroupsUsers(dataServer, config)
+    {
+        let baseUsers = ParallelSpecGroups.fetchSetUsers(config, 0);
+        let createdCount = 0;
+        for(let user of ParallelSpecGroups.fetchAllUsers(config).slice(baseUsers.length)){
+            if(await TestDataSetup.cloneUser(dataServer, baseUsers[user.baseSlot], user)){
+                createdCount++;
+            }
+        }
+        Logger.info('[test-data-setup] Created '+createdCount+' parallel spec groups test users.');
+        return createdCount;
+    }
+
+    static async cloneUser(dataServer, baseUser, user)
+    {
+        let usersRepository = dataServer.getEntity('users');
+        if(await usersRepository.loadOneBy('username', user.username)){
+            return false;
+        }
+        let baseUserModel = await usersRepository.loadOneBy('username', baseUser.username);
+        if(!baseUserModel){
+            Logger.error('[test-data-setup] Base user not found: '+baseUser.username);
+            return false;
+        }
+        let basePlayer = (await dataServer.getEntity('players').loadBy('user_id', baseUserModel.id) || []).find(
+            player => baseUser.playerName === player.name
+        );
+        if(!basePlayer){
+            Logger.error('[test-data-setup] Base player not found: '+baseUser.playerName);
+            return false;
+        }
+        let createdUser = await usersRepository.create(TestDataSetup.copyRow(baseUserModel, {
+            username: user.username,
+            email: user.username+'@'+[...String(baseUserModel.email).split('@')].pop()
+        }));
+        await TestDataSetup.copyRows(dataServer, TestDataSetup.USER_ROWS_ENTITY, baseUserModel.id, createdUser.id);
+        let createdPlayer = await dataServer.getEntity('players').create(TestDataSetup.copyRow(basePlayer, {
+            user_id: createdUser.id,
+            name: user.playerName
+        }));
+        for(let playerRowsEntity of TestDataSetup.PLAYER_ROWS_ENTITIES){
+            await TestDataSetup.copyRows(dataServer, playerRowsEntity, basePlayer.id, createdPlayer.id);
+        }
+        Logger.info('[test-data-setup] Created '+user.username+' / '+user.playerName+' from '+baseUser.username+'.');
+        return true;
+    }
+
+    static async copyRows(dataServer, rowsEntity, baseOwnerId, ownerId)
+    {
+        let repository = dataServer.getEntity(rowsEntity.entityKey);
+        for(let row of await repository.loadBy(rowsEntity.ownerField, baseOwnerId) || []){
+            await repository.create(TestDataSetup.copyRow(row, {[rowsEntity.ownerField]: ownerId}));
+        }
+    }
+
+    static copyRow(row, overrides)
+    {
+        let copy = {};
+        for(let fieldKey of Object.keys(row)){
+            if('id' === fieldKey){
+                continue;
+            }
+            copy[fieldKey] = row[fieldKey];
+        }
+        return Object.assign(copy, overrides);
     }
 
 }

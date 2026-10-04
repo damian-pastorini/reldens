@@ -17,7 +17,8 @@ npm run test:e2e:long:clean
 Flags accepted by `tests/e2e/run-tests.js`:
 
 - `--long` - slow motion plus scaled timeouts (also via `LONG_RUN=1`)
-- `--filter=<text>` - passed to Playwright as a quoted `--grep`, so a filter with spaces works (`"--filter=Combat System"`)
+- `--filter=<text>` - passed to Playwright as a quoted `--grep`, so a filter with spaces works (`"--filter=Combat System"`),
+  with `--no-deps`, so filtering a spec of the exclusive group does not run the other groups first
 - `--port=<port>` - overrides the port from `tests/config.json`; when the port is busy the runner logs a warning and
   tries the next one, up to 5 ports, and stops with a critical log when all of them are busy
 - `--clean-output` - removes `test-results/` before the run
@@ -53,7 +54,8 @@ survive a reset.
 ### Required accounts
 
 The sample data must contain the three users the specs log in as: `root`, `root2` and `root3`, with players
-`ImRoot`, `ImRoot2` and `ImRoot3`. The setup logs `[collect-game-data] User not found: root2` and snapshots
+`ImRoot`, `ImRoot2` and `ImRoot3`; the users of the other parallel spec groups (`root4` to `root9`) are created from
+them on the setup. The setup logs `[collect-game-data] User not found: root2` and snapshots
 fewer than 3 players when they are missing. Every multi-player spec (global, private and cross-player chat,
 teams, trading, double login) then fails waiting for `#player-selection:not(.hidden)`, which reads as a chat or
 trading bug but is really a missing account.
@@ -78,7 +80,9 @@ loads that app's `dist/index.html`. When `serverPath` does not exist the setup l
 
 If `dist/index.html` still references `src="./index.js"` the client was never bundled, so `window.reldens`
 never exists and every spec times out after 10 seconds waiting for it. `ClientBundleCheck.isMissing()` detects
-this and the setup enables the bundler for that run; the bundle step adds about a minute before the first test.
+this, and `ClientBundleCheck.isOutdated()` detects a bundle older than any client source of the checkout (a `lib` js
+file outside a `server` folder changed after `dist/index.html` was built), so a client fix is always tested; in both
+cases the setup enables the bundler for that run, which adds about a minute before the first test.
 
 ## Security state between tests
 
@@ -95,6 +99,9 @@ lockouts and the blocks left by one spec never reach the next one:
   the test mailer; the three e2e accounts are queued on the startup, so the first reset also clears the times left by
   a previous run on the same database
 - restores the real mailer state captured on the startup and clears the emails recorded by the test sender
+
+The global teardown (`tests/e2e/server-teardown.js`) runs the same `SecurityState.resetAll()` before it shuts the
+server down, so a ban or a deny list left by the last test of a run never reaches the next run on the same database.
 
 The security specs (`test-login-security.spec.js`, `test-admin-security.spec.js`) drive the server state through the
 `/api/e2e/security/*` endpoints, wrapped by `tests/e2e/helpers/security-api.js`:
@@ -149,11 +156,34 @@ Both placements receive the client `sessionId` (`room.sessionId`) and move that 
 (`RoomObjectsState.findPlayer`), never the first player found by name, so a body left by another session of the same
 user can never take the placement.
 
-The players reset before every test (`/api/e2e/reset-players`) first disconnects the test users from every room
-(`UserDisconnection.disconnectUserFromEveryRoom`: the previous test session is saved and removed), so no previous
-session stays in a room the next test uses or overwrites the restored state; then it restores the stats, the
-inventory and the town state, and the random movement stopped by a setup request
-(`RoomMovementState.restoreRandomMovement`).
+The players reset before every test (`/api/e2e/reset-players`, with the group of the test) first waits until no scene
+room holds a player of that group (`PlayerStateReset.waitForTestPlayersToLeave`: the closed page of the previous test
+leaves, the room saves the player and removes it), so no previous session stays in a room the next test uses or
+overwrites the restored state; then it restores the stats, the inventory and the state of the group players (placed
+on the default return point of the group start room), and the enemies and the random movement stopped by a setup
+request (`RoomEnemiesReset.restoreAll`, `RoomMovementState.restoreRandomMovement`) only in the group rooms.
+
+## Parallel spec groups
+
+The specs run in groups (`tests/e2e/helpers/parallel-spec-groups.js`), every group is a Playwright project with one
+worker, so its specs run one after the other, and the groups run at the same time:
+
+- `world` - the town specs that need the town layout (NPCs, player and object pathfinding), users set 0 (`root`,
+  `root2`, `root3`), start room `reldens-new-age-town`
+- `forest` - combat, stats, interactive objects, timing objects, objects movement and animation frames, users set 1
+  (`root4` to `root6`), start room `reldens-forest-level-1`
+- `social` - chat, teams, clans, trading, items, rewards, quests and the game login flow, users set 2 (`root7` to
+  `root9`), start room `reldens-new-age-town-house-01`
+- `exclusive` - the specs that change the server wide state (login and admin security), create players
+  (authentication, character system) or use more than one room (movement), users set 0, it runs after every other
+  group ended and its reset restores every room
+
+Players collide with every other body, so two groups never share a room: every group starts its players on the
+default return point of its own start room and the per test reset only touches the group players and rooms. The
+users sets after the set 0 are created on the setup (`TestDataSetup.createGroupsUsers`) as a copy of the user of the
+same slot (same password, stats, class path, level and inventory), the `gameConfig` fixture gives every spec the users
+of its group (`e2eUsername`, `e2eUsername2`, `e2eUsername3` and the player names), so the specs never name a user.
+A new spec must be added to one group, the config stops the run when a spec does not belong to any group.
 
 The forest specs start in `reldens-forest-level-1` (`Login.loginAndEnterForest`), entering at its default return
 point near the bottom of a 72x100 tiles map. `ObjectChase` (`tests/e2e/helpers/object-chase.js`) is only kept for its

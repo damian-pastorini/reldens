@@ -26,6 +26,8 @@ class TestProgressReporter
         this.skipped = 0;
         this.hasActiveLine = false;
         this.hasEnded = false;
+        this.testsIndexes = {};
+        this.isSingleWorker = 1 === config.workers;
         process.once('exit', (exitCode) => this.reportAbortedRun(exitCode));
         process.stdout.write('Running '+this.total+' tests\n\n');
     }
@@ -45,13 +47,14 @@ class TestProgressReporter
     onTestBegin(test)
     {
         this.index++;
+        this.testsIndexes[test.id] = this.index;
         this.hasActiveLine = false;
         process.stdout.write('→ ['+this.index+'/'+this.total+'] '+test.titlePath().join(' › ')+'\n');
     }
 
     onStepBegin(test, result, step)
     {
-        if(!process.stdout.isTTY) {
+        if(!process.stdout.isTTY || !this.isSingleWorker) {
             return;
         }
         if('pw:api' !== step.category) {
@@ -72,11 +75,12 @@ class TestProgressReporter
             ? 'ok'
             : ('skipped' === result.status ? 'skip' : 'fail');
         let time = (result.duration / 1000).toFixed(1)+'s';
-        if(process.stdout.isTTY) {
+        if(process.stdout.isTTY && this.isSingleWorker) {
             let clearLines = this.hasActiveLine ? '\r\x1b[2K\x1b[1A\x1b[2K' : '\x1b[1A\x1b[2K';
             process.stdout.write(clearLines);
         }
-        process.stdout.write(' '+icon+' ['+this.index+'/'+this.total+'] '+test.titlePath().join(' › ')+' ('+time+')\n');
+        let testIndex = this.testsIndexes[test.id];
+        process.stdout.write(' '+icon+' ['+testIndex+'/'+this.total+'] '+test.titlePath().join(' › ')+' ('+time+')\n');
         if('passed' === result.status) {
             this.passed++;
         }

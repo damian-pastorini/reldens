@@ -2,13 +2,16 @@
  *
  * Reldens - Playwright Config
  *
- * Configures the Playwright test runner: browser, base URL, workers, retries, and lifecycle hooks.
+ * Configures the Playwright test runner: browser, base URL, workers, retries, and lifecycle hooks. Every parallel spec
+ * group (ParallelSpecGroups) is a project with one worker, the groups run at the same time and the exclusive group
+ * runs after them; the run stops when a spec does not belong to any group, since it would never run.
  *
  */
 
 const { defineConfig } = require('@playwright/test');
 const { FileHandler } = require('@reldens/server-utils');
 const { TimeConstants } = require('./helpers/time-constants');
+const { ParallelSpecGroups } = require('./helpers/parallel-spec-groups');
 let configPath = FileHandler.joinPaths(process.cwd(), 'tests', 'config.json');
 let testConfig = FileHandler.exists(configPath) ? FileHandler.fetchFileJson(configPath) : {};
 
@@ -22,13 +25,17 @@ let browserExecutablePath = process.env.PLAYWRIGHT_BROWSER_EXECUTABLE || '';
 if(browserExecutablePath){
     launchOptions.executablePath = browserExecutablePath;
 }
+if(!ParallelSpecGroups.validateSpecsGroups(FileHandler.joinPaths(process.cwd(), 'tests', 'e2e'))){
+    process.exit(1);
+}
 
 module.exports = defineConfig({
     globalSetup: './collect-game-data.js',
     globalTeardown: './server-teardown.js',
     testDir: '.',
     outputDir: testResultsDir,
-    workers: 1,
+    workers: Object.keys(ParallelSpecGroups.GROUPS).length - 1,
+    projects: ParallelSpecGroups.buildProjects(),
     maxFailures: maxFailures,
     retries: 0,
     timeout: TimeConstants.forLongRun(60000, longRun),

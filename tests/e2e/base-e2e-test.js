@@ -2,7 +2,9 @@
  *
  * Reldens - Base E2E Test
  *
- * Provides shared Playwright test fixtures (gameConfig, longRun, screenshots, page) used by all spec files.
+ * Provides shared Playwright test fixtures (gameConfig, longRun, screenshots, page) used by all spec files. The
+ * e2eGroup option is set by the Playwright project of the parallel spec group (ParallelSpecGroups), the gameConfig
+ * fixture gives the specs the test users of that group and the page fixture resets only that group before every test.
  *
  */
 
@@ -11,6 +13,7 @@ const { FileHandler } = require('@reldens/server-utils');
 const { Logger } = require('@reldens/utils');
 const { Selectors } = require('./selectors');
 const { PlayerReset } = require('./helpers/player-reset');
+const { ParallelSpecGroups } = require('./helpers/parallel-spec-groups');
 
 class BaseE2eTest
 {
@@ -25,8 +28,9 @@ class BaseE2eTest
     static gameDataPath = FileHandler.joinPaths(process.cwd(), 'tests', 'e2e', 'game-data.json');
     static expect = baseExpect;
     static test = baseTest.extend({
-        gameConfig: async ({}, use) => {
-            await use(BaseE2eTest.gameConfig);
+        e2eGroup: [ParallelSpecGroups.EXCLUSIVE_GROUP, {option: true}],
+        gameConfig: async ({e2eGroup}, use) => {
+            await use(ParallelSpecGroups.buildGroupConfig(BaseE2eTest.gameConfig, e2eGroup));
         },
         longRun: async ({}, use) => {
             await use(BaseE2eTest.longRun);
@@ -37,7 +41,8 @@ class BaseE2eTest
         screenshots: async ({}, use, testInfo) => {
             await use(BaseE2eTest.makeScreenshotter(testInfo));
         },
-        page: async ({ browser }, use, testInfo) => {
+        page: async ({ browser, gameConfig, e2eGroup }, use, testInfo) => {
+            await PlayerReset.resetAll(gameConfig, e2eGroup);
             await BaseE2eTest.runPageFixture(browser, use, testInfo, null);
         },
         secondPage: async ({ browser }, use, testInfo) => {
@@ -166,9 +171,6 @@ class BaseE2eTest
 
     static async runPageFixture(browser, use, testInfo, suffix)
     {
-        if(!suffix){
-            await PlayerReset.resetAll(BaseE2eTest.gameConfig.baseUrl || 'http://localhost:8080');
-        }
         let context = await BaseE2eTest.makeContext(browser);
         let page = await context.newPage();
         await use(page);

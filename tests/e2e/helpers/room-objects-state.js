@@ -36,6 +36,14 @@ class RoomObjectsState
         return false;
     }
 
+    static fetchRooms(roomsManager, roomsNames)
+    {
+        let createdInstances = sc.get(roomsManager, 'createdInstances', {});
+        return Object.keys(createdInstances).map(instanceId => createdInstances[instanceId]).filter(
+            room => false === roomsNames || roomsNames.includes(room.roomName)
+        );
+    }
+
     static fetchObjectsWithState(room)
     {
         let roomObjects = sc.get(room.objectsManager, 'roomObjects', {});

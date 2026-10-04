@@ -60,7 +60,7 @@ class RunTests
         let filterValue = filterArg ? filterArg.slice('--filter='.length) : (process.env.npm_config_filter || null);
         let playwrightArgs = ['playwright', 'test', '--config=tests/e2e/playwright.config.js'];
         if(filterValue){
-            playwrightArgs.push('--grep', '"'+filterValue+'"');
+            playwrightArgs.push('--grep', '"'+filterValue+'"', '--no-deps');
         }
         let result = spawnSync(
             'npx',

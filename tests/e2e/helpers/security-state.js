@@ -13,6 +13,7 @@
 
 const { Logger, sc } = require('@reldens/utils');
 const { GameConst } = require('../../../lib/game/constants');
+const { ParallelSpecGroups } = require('./parallel-spec-groups');
 
 class SecurityState
 {
@@ -203,11 +204,7 @@ class SecurityState
     static registerEndpoints(serverManager, config)
     {
         SecurityState.captureDefaults(serverManager);
-        SecurityState.resetSentUsernames = [
-            sc.get(config, 'e2eUsername', 'root'),
-            sc.get(config, 'e2eUsername2', 'root2'),
-            sc.get(config, 'e2eUsername3', 'root3')
-        ];
+        SecurityState.resetSentUsernames = ParallelSpecGroups.fetchAllUsers(config).map(user => user.username);
         let app = serverManager.app;
         app.post('/api/e2e/security/settings', (request, response) => {
             SecurityState.applySettings(serverManager, {...SecurityState.defaultSettings, ...request.body});

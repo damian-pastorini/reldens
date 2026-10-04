@@ -155,12 +155,11 @@ class RoomMovementState
         });
     }
 
-    static restoreRandomMovement(roomsManager)
+    static restoreRandomMovement(roomsManager, roomsNames = false)
     {
-        let createdInstances = sc.get(roomsManager, 'createdInstances', {});
         let restoredCount = 0;
-        for(let instanceId of Object.keys(createdInstances)){
-            restoredCount += RoomMovementState.restoreRoomRandomMovement(createdInstances[instanceId]);
+        for(let room of RoomObjectsState.fetchRooms(roomsManager, roomsNames)){
+            restoredCount += RoomMovementState.restoreRoomRandomMovement(room);
         }
         return restoredCount;
     }

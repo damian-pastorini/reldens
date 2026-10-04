@@ -248,6 +248,7 @@ class CollectGameData
         FileHandler.writeFile(outputPath, JSON.stringify(gameData, null, 4));
         Logger.info('[collect-game-data] Written: '+outputPath);
         CollectGameData.attachEventListeners(serverManager);
+        await TestDataSetup.createGroupsUsers(serverManager.dataServer, config);
         await TestDataSetup.ensureRequiredItems(serverManager.dataServer, config);
         let snapshots = await PlayerStateReset.captureSnapshots(serverManager.dataServer, config);
         SecurityState.registerEndpoints(serverManager, config);
@@ -255,7 +256,7 @@ class CollectGameData
         RoomMovementState.registerEndpoints(serverManager);
         RoomEnemyPlacement.registerEndpoints(serverManager);
         RoomPlayerPlacement.registerEndpoints(serverManager);
-        PlayerStateReset.registerResetEndpoint(serverManager, snapshots, config);
+        await PlayerStateReset.registerResetEndpoint(serverManager, snapshots, config);
         CollectGameData.serverManager = serverManager;
     }
 
@@ -303,9 +304,12 @@ class CollectGameData
         if(modules.ServerPlugin) {
             serverConfig.customPlugin = modules.ServerPlugin;
         }
-        let bundleRequired = ClientBundleCheck.isMissing(serverPath);
+        let bundleRequired = ClientBundleCheck.isMissing(serverPath)
+            || ClientBundleCheck.isOutdated(serverPath, process.cwd());
         if(bundleRequired){
-            Logger.warning('[collect-game-data] Client bundle not found in dist, running the bundler before the tests.');
+            Logger.warning(
+                '[collect-game-data] Client bundle missing or older than the client sources, running the bundler.'
+            );
         }
         process.env.RELDENS_ALLOW_RUN_BUNDLER = bundleRequired ? '1' : '0';
         process.env.RELDENS_ALLOW_BUILD_CLIENT = bundleRequired ? '1' : '0';

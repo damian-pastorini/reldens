@@ -2,7 +2,8 @@
  *
  * Reldens - Room Enemies Reset
  *
- * Runs the respawn restore on every respawn-managed object in the live scene rooms, dead or alive, immediately, without
+ * Runs the respawn restore on every respawn-managed object in the live scene rooms (or only in the given rooms, the
+ * rooms of the parallel spec group that requested the reset), dead or alive, immediately, without
  * waiting for the seeded respawn_time: each one is stopped, gets its initial stats, a respawn tile and the active state.
  * Enemies killed, hurt or moved by one test would otherwise be missing, start the next test without their full life or
  * stuck where the last fight left them, which makes combat specs fail for lack of a target or of time instead of for a
@@ -10,19 +11,20 @@
  *
  */
 
+const { RoomObjectsState } = require('./room-objects-state');
 const { Logger } = require('@reldens/utils');
 
 class RoomEnemiesReset
 {
 
-    static async restoreAll(roomsManager)
+    static async restoreAll(roomsManager, roomsNames = false)
     {
         if(!roomsManager || !roomsManager.createdInstances){
             return 0;
         }
         let restoredCount = 0;
-        for(let instanceId of Object.keys(roomsManager.createdInstances)){
-            restoredCount += await RoomEnemiesReset.restoreRoom(roomsManager.createdInstances[instanceId]);
+        for(let room of RoomObjectsState.fetchRooms(roomsManager, roomsNames)){
+            restoredCount += await RoomEnemiesReset.restoreRoom(room);
         }
         Logger.info('[room-enemies-reset] Restored '+restoredCount+' respawn objects to active with their full stats.');
         return restoredCount;

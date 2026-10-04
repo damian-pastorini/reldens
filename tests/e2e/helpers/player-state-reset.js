@@ -3,10 +3,12 @@
  * Reldens - Player State Reset
  *
  * Captures and restores player stats, room state, and inventory equipped status between
- * e2e tests to ensure isolation. The reset first waits until no scene room holds a test player (the closed page of the
- * previous test makes its session leave, and the room leave saves the player and then removes it, so its pending save
- * never overwrites the restored state and its body never stays in a room the next test uses), then
- * all test players are reset to full HP, placed in the safe town room, and have all equipped items unequipped.
+ * e2e tests to ensure isolation. Every reset belongs to one parallel spec group (ParallelSpecGroups) and only touches
+ * that group: it first waits until no scene room holds a player of the group (the closed page of the previous test
+ * makes its session leave, and the room leave saves the player and then removes it, so its pending save never
+ * overwrites the restored state and its body never stays in a room the next test uses), then the group players are
+ * reset to full HP, placed on the default return point of the group start room, and have all equipped items
+ * unequipped, and the enemies and the random movement are restored only in the group rooms.
  *
  */
 
@@ -16,26 +18,18 @@ const { TestDataSetup } = require('./test-data-setup');
 const { RoomEnemiesReset } = require('./room-enemies-reset');
 const { RoomMovementState } = require('./room-movement-state');
 const { SecurityState } = require('./security-state');
+const { ParallelSpecGroups } = require('./parallel-spec-groups');
 
 class PlayerStateReset
 {
-    static SAFE_ROOM_ID = 41;
-    static SAFE_X = 1520;
-    static SAFE_Y = 1424;
-    static SAFE_DIR = 'down';
     static LEAVE_CHECKS = 100;
     static LEAVE_CHECK_MS = 100;
 
     static async captureSnapshots(dataServer, config)
     {
-        let testUsers = [
-            { username: config.e2eUsername || 'root', playerName: config.e2ePlayerName || 'ImRoot' },
-            { username: config.e2eUsername2 || 'root2', playerName: config.e2ePlayerName2 || 'ImRoot2' },
-            { username: config.e2eUsername3 || 'root3', playerName: config.e2ePlayerName3 || 'ImRoot3' }
-        ];
         let snapshots = {};
-        for(let u of testUsers){
-            let user = await dataServer.getEntity('users').loadOneBy('username', u.username);
+        for(let testUser of ParallelSpecGroups.fetchAllUsers(config)){
+            let user = await dataServer.getEntity('users').loadOneBy('username', testUser.username);
             if(!user){
                 continue;
             }
@@ -43,7 +37,7 @@ class PlayerStateReset
             if(!players || !players.length){
                 continue;
             }
-            let matched = players.find(p => p.name === u.playerName) || players[0];
+            let matched = players.find(p => p.name === testUser.playerName) || players[0];
             let playerId = matched.id;
             Logger.info('[player-state-reset] Snapshot for: '+matched.name+' (id: '+playerId+')');
             let stats = await dataServer.getEntity('playersStats').loadBy('player_id', playerId);
@@ -54,7 +48,7 @@ class PlayerStateReset
                 state,
                 inventoryItems: inventoryItems || [],
                 userId: user.id,
-                username: u.username,
+                username: testUser.username,
                 playerName: matched.name
             };
         }
@@ -121,7 +115,48 @@ class PlayerStateReset
         }
     }
 
-    static async restoreSnapshots(dataServer, snapshots)
+    static async fetchStartPoint(dataServer, roomName)
+    {
+        let room = await dataServer.getEntity('rooms').loadOneBy('name', roomName);
+        if(!room){
+            Logger.error('[player-state-reset] Start room not found: '+roomName);
+            return false;
+        }
+        let returnPoint = (await dataServer.getEntity('roomsReturnPoints').loadBy('room_id', room.id) || []).find(
+            roomReturnPoint => 1 === Number(roomReturnPoint.is_default)
+        );
+        if(!returnPoint){
+            Logger.error('[player-state-reset] Default return point not found for room: '+roomName);
+            return false;
+        }
+        return {room_id: room.id, x: returnPoint.x, y: returnPoint.y, dir: returnPoint.direction};
+    }
+
+    static async fetchGroupsStartPoints(dataServer)
+    {
+        let startPoints = {};
+        for(let groupKey of Object.keys(ParallelSpecGroups.GROUPS)){
+            startPoints[groupKey] = await PlayerStateReset.fetchStartPoint(
+                dataServer,
+                ParallelSpecGroups.GROUPS[groupKey].startRoomName
+            );
+        }
+        return startPoints;
+    }
+
+    static fetchGroupSnapshots(snapshots, groupUsers)
+    {
+        let groupUsernames = groupUsers.map(user => user.username);
+        let groupSnapshots = {};
+        for(let playerId of Object.keys(snapshots)){
+            if(groupUsernames.includes(snapshots[playerId].username)){
+                groupSnapshots[playerId] = snapshots[playerId];
+            }
+        }
+        return groupSnapshots;
+    }
+
+    static async restoreSnapshots(dataServer, snapshots, startPoint)
     {
         for(let playerId of Object.keys(snapshots)){
             let snap = snapshots[playerId];
@@ -134,12 +169,7 @@ class PlayerStateReset
             if(!snap.state){
                 continue;
             }
-            await dataServer.getEntity('playersState').updateById(snap.state.id, {
-                room_id: PlayerStateReset.SAFE_ROOM_ID,
-                x: PlayerStateReset.SAFE_X,
-                y: PlayerStateReset.SAFE_Y,
-                'dir': PlayerStateReset.SAFE_DIR
-            });
+            await dataServer.getEntity('playersState').updateById(snap.state.id, startPoint);
         }
         Logger.info('[player-state-reset] Players restored: '+Object.keys(snapshots).length);
     }
@@ -180,18 +210,29 @@ class PlayerStateReset
         return false;
     }
 
-    static registerResetEndpoint(serverManager, snapshots, config)
+    static async registerResetEndpoint(serverManager, snapshots, config)
     {
+        let startPoints = await PlayerStateReset.fetchGroupsStartPoints(serverManager.dataServer);
         serverManager.app.post('/api/e2e/reset-players', async (request, response) => {
             try {
-                await PlayerStateReset.waitForTestPlayersToLeave(serverManager.roomsManager.createdInstances, snapshots);
+                let groupKey = sc.get(request.body, 'group', ParallelSpecGroups.EXCLUSIVE_GROUP);
+                let group = ParallelSpecGroups.fetchGroup(groupKey);
+                let groupUsers = ParallelSpecGroups.fetchSetUsers(config, group.usersSet);
+                let groupSnapshots = PlayerStateReset.fetchGroupSnapshots(snapshots, groupUsers);
+                let roomsNames = group.resetsEveryRoom ? false : [group.startRoomName];
+                await PlayerStateReset.waitForTestPlayersToLeave(
+                    serverManager.roomsManager.createdInstances,
+                    groupSnapshots
+                );
                 await SecurityState.resetAll(serverManager);
-                await PlayerStateReset.restoreSnapshots(serverManager.dataServer, snapshots);
-                if(config){
-                    await TestDataSetup.ensureRequiredItems(serverManager.dataServer, config);
-                }
-                await RoomEnemiesReset.restoreAll(serverManager.roomsManager);
-                RoomMovementState.restoreRandomMovement(serverManager.roomsManager);
+                await PlayerStateReset.restoreSnapshots(
+                    serverManager.dataServer,
+                    groupSnapshots,
+                    sc.get(startPoints, groupKey, startPoints[ParallelSpecGroups.EXCLUSIVE_GROUP])
+                );
+                await TestDataSetup.ensureRequiredItems(serverManager.dataServer, config, groupUsers);
+                await RoomEnemiesReset.restoreAll(serverManager.roomsManager, roomsNames);
+                RoomMovementState.restoreRandomMovement(serverManager.roomsManager, roomsNames);
                 response.json({ ok: true });
             } catch(error){
                 Logger.error('[player-state-reset] Reset failed: '+error.message);
