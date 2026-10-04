@@ -8,15 +8,13 @@
  * so the specs read the exact server data instead of guessing from the sprites; the switch that disables the enemies
  * of a room (or only the aggressive ones) until the next players reset, so the specs that are not about those enemies
  * are never interrupted by an attack;
- * the enemy attack that places one enemy next to a player and starts its battle, so the specs that need a hit get it
- * at the exact moment they need it; the player placement next to another player, out of contact with its body
- * and inside the short attack range, so a player versus player hit never pushes the target; and the player affected
+ * the random movement stop and the attack position next to a player used by the enemy placement (RoomEnemyPlacement);
+ * the player placement next to another player, out of contact with its body and inside the short attack range, so a player versus player hit never pushes the target; and the player affected
  * property (hp) set on the live player and sent to its client, so the specs that need a death set the exact life the
  * next hit removes instead of depending on the enemies damage rate.
  *
  */
 
-const { RoomEnemiesReset } = require('./room-enemies-reset');
 const { ObjectsConst } = require('../../../lib/objects/constants');
 const { GameConst } = require('../../../lib/game/constants');
 const { Logger, sc } = require('@reldens/utils');
@@ -44,6 +42,20 @@ class RoomObjectsState
         return Object.keys(roomObjects).map(objectIndex => roomObjects[objectIndex]).filter(
             roomObject => roomObject.objectBody && roomObject.objectBody.bodyState
         );
+    }
+
+    static findObjectByKey(roomObjects, objectKey)
+    {
+        let assetKeyMatch = false;
+        for(let roomObject of roomObjects){
+            if(objectKey === roomObject.key){
+                return roomObject;
+            }
+            if(!assetKeyMatch && objectKey === sc.get(roomObject.clientParams, 'asset_key', '')){
+                assetKeyMatch = roomObject;
+            }
+        }
+        return assetKeyMatch;
     }
 
     static fetchEnemies(room)
@@ -140,6 +152,14 @@ class RoomObjectsState
         return enemies.length;
     }
 
+    static findPlayer(room, playerName, sessionId)
+    {
+        if('' !== sessionId){
+            return room.state.players.get(sessionId) || false;
+        }
+        return RoomObjectsState.findPlayerByName(room, playerName);
+    }
+
     static findPlayerByName(room, playerName)
     {
         for(let sessionId of room.state.players.keys()){
@@ -176,26 +196,16 @@ class RoomObjectsState
         objectBody.originalRow = tilePosition.currentRow;
     }
 
-    static async startEnemyAttack(room, playerName, assetKey)
+    static stopRandomMovement(roomObject)
     {
-        let playerSchema = RoomObjectsState.findPlayerByName(room, playerName);
-        if(!playerSchema){
-            return {error: 'Player '+playerName+' not found in room '+room.roomName+'.'};
+        let randomMovement = sc.get(roomObject, 'randomMovementBehavior', false);
+        if(!randomMovement){
+            return false;
         }
-        let enemyObject = RoomObjectsState.fetchEnemies(room).find(
-            roomObject => assetKey === sc.get(roomObject.clientParams, 'asset_key', '')
-        );
-        if(!enemyObject){
-            return {error: 'Enemy '+assetKey+' not found in room '+room.roomName+'.'};
-        }
-        let attackPosition = RoomObjectsState.findAttackPosition(room, playerSchema.physicalBody);
-        if(!attackPosition){
-            return {error: 'No walkable tile next to the player '+playerName+'.'};
-        }
-        await RoomEnemiesReset.restoreInstance(enemyObject, room);
-        RoomObjectsState.placeObjectBody(enemyObject.objectBody, attackPosition);
-        await enemyObject.startBattleWithPlayer({bodyA: playerSchema.physicalBody, room});
-        return {enemyKey: enemyObject.key, position: attackPosition};
+        randomMovement.stop();
+        roomObject.objectBody.resetAuto();
+        roomObject.objectBody.stopFull();
+        return true;
     }
 
     static placePlayerNearPlayer(room, playerName, nearPlayerName)
@@ -259,18 +269,6 @@ class RoomObjectsState
             let room = RoomObjectsState.findRoom(serverManager, sc.get(request.body, 'roomName', ''));
             let onlyAggressive = true === sc.get(request.body, 'onlyAggressive', false);
             response.json({disabled: room ? RoomObjectsState.disableEnemies(room, onlyAggressive) : 0});
-        });
-        app.post('/api/e2e/room-objects/enemy-attack', async (request, response) => {
-            await RoomObjectsState.respondForRoom(
-                serverManager,
-                sc.get(request.body, 'roomName', ''),
-                response,
-                async (room) => RoomObjectsState.startEnemyAttack(
-                    room,
-                    sc.get(request.body, 'playerName', ''),
-                    sc.get(request.body, 'assetKey', '')
-                )
-            );
         });
         app.post('/api/e2e/room-objects/place-player', async (request, response) => {
             await RoomObjectsState.respondForRoom(

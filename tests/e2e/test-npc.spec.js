@@ -3,7 +3,9 @@
  * Reldens - Test NPC
  *
  * Tests NPC dialogue, trader shop, item purchasing, item selling, the NPCs random movement and the dialogue of a moving
- * NPC away from its spawn tile.
+ * NPC away from its spawn tile. The NPC and trader cases stop the object random movement and place the player next to
+ * it from the server, and the moved NPC is placed on the closest walkable tile of its spawn tile, so every case starts
+ * from known positions instead of chasing a moving object.
  *
  */
 
@@ -12,7 +14,10 @@ const { Login } = require('./helpers/login');
 const { Phaser } = require('./helpers/phaser');
 const { PhaserRange } = require('./helpers/phaser-range');
 const { Navigation } = require('./helpers/navigation');
-const { ObjectChase } = require('./helpers/object-chase');
+const { RoomMovementApi } = require('./helpers/room-movement-api');
+const { RoomObjectsApi } = require('./helpers/room-objects-api');
+const { WalkableTileLocator } = require('./helpers/walkable-tile-locator');
+const { sc } = require('@reldens/utils');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
 let test = BaseE2eTest.test;
@@ -23,13 +28,12 @@ class TestNpc
     static MOVEMENT_SAMPLES = 30;
     static MOVEMENT_SAMPLE_INTERVAL_MS = 1000;
     static MOVEMENT_TEST_TIMEOUT_MS = 90000;
-    static NPC_WANDER_TIMEOUT_MS = 60000;
     static NPC_LISTS = ['npcs', 'traders'];
 
     static async runRandomMovementTest(page, screenshots, gameConfig, longRun)
     {
         test.setTimeout(TimeConstants.forLongRun(TestNpc.MOVEMENT_TEST_TIMEOUT_MS, longRun));
-        let movingNpcs = BaseE2eTest.loadPlayerRoomEntries('root2', TestNpc.NPC_LISTS, true);
+        let movingNpcs = BaseE2eTest.loadRoomEntries(Login.TOWN_ROOM_NAME, TestNpc.NPC_LISTS, true);
         expect(movingNpcs.length, 'The town must have NPCs configured with random movement').toBeGreaterThan(0);
         await TestNpc.loginRoot2Player(page, gameConfig, longRun);
         await Navigation.waitForRoom(page, Login.TOWN_ROOM_NAME, TimeConstants.forLongRun(TimeConstants.ROOM_TRANSITION, longRun));
@@ -57,6 +61,19 @@ class TestNpc
         await Login.loginAndStartGame(page, username, password, playerName, longRun);
     }
 
+    static async placePlayerNextToNpc(page, gameConfig, objectKey, timeout)
+    {
+        let placement = await RoomObjectsApi.placePlayerNextToObject(
+            page,
+            gameConfig,
+            Login.TOWN_ROOM_NAME,
+            objectKey,
+            timeout
+        );
+        expect(placement.reached, 'The player must be placed next to '+objectKey+': '+sc.toJsonString(placement)).toBe(true);
+        return placement;
+    }
+
     static async sendTraderAction(page, traderKey, value)
     {
         await page.evaluate((args) => {
@@ -80,7 +97,6 @@ class TestNpc
         await TestNpc.loginRoot2Player(page, gameConfig, longRun);
         let pauseMs = TimeConstants.pauseMs(longRun);
         let sceneTimeout = TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun);
-        let navTimeout = TimeConstants.forLongRun(TimeConstants.NAVIGATION, longRun);
         await (traderKey
             ? Phaser.waitForObject(page, traderKey, sceneTimeout)
             : Phaser.waitForObjectByType(page, 'trader', sceneTimeout));
@@ -88,19 +104,21 @@ class TestNpc
             ? Phaser.getObjectScreenCoords(page, traderKey)
             : Phaser.getObjectScreenCoordsByType(page, 'trader'));
         expect(traderCoords, 'Trader NPC must be found in the scene').not.toBeNull();
-        await Navigation.focusGame(page);
-        await ObjectChase.moveToObjectWithinRange(
-            page,
-            traderKey ? 'asset_key' : 'type',
-            traderKey || 'trader',
-            traderKey ? 'active' : 'visible',
-            50,
-            navTimeout
+        let trader = await RoomMovementApi.switchRandomMovement(gameConfig, Login.TOWN_ROOM_NAME, traderKey, false);
+        expect(trader, 'The trader body must be in the town room').toBeTruthy();
+        await RoomMovementApi.placeObject(
+            gameConfig,
+            Login.TOWN_ROOM_NAME,
+            traderKey,
+            [trader.originalCol, trader.originalRow]
         );
+        await Navigation.focusGame(page);
+        await TestNpc.placePlayerNextToNpc(page, gameConfig, traderKey, sceneTimeout);
         await Phaser.triggerObjectInteraction(page, traderKey || 'trader');
         await page.waitForTimeout(1000 + pauseMs);
         await TestNpc.sendTraderAction(page, traderKey || 'trader', 'buy');
         await page.waitForTimeout(1000 + pauseMs);
+        await RoomMovementApi.switchRandomMovement(gameConfig, Login.TOWN_ROOM_NAME, traderKey, true);
         return { traderKey, pauseMs, sceneTimeout };
     }
 
@@ -114,24 +132,20 @@ class TestNpc
     {
         test.setTimeout(TimeConstants.forLongRun(TestNpc.MOVEMENT_TEST_TIMEOUT_MS, longRun));
         let npcKey = gameConfig.e2eNpcKey || '';
-        let movingNpc = BaseE2eTest.loadPlayerRoomEntries('root2', TestNpc.NPC_LISTS, true).find(
+        let movingNpc = BaseE2eTest.loadRoomEntries(Login.TOWN_ROOM_NAME, TestNpc.NPC_LISTS, true).find(
             npc => npcKey === npc.clientKey
         );
         expect(movingNpc, 'The e2eNpcKey NPC must be configured with random movement').toBeTruthy();
         await TestNpc.loginRoot2Player(page, gameConfig, longRun);
-        await page.waitForFunction((args) => {
-            let scene = window.reldens.getActiveScene();
-            let body = window.reldens.activeRoomEvents.room.state.bodies.get(args.key);
-            if(!body || !scene.map){
-                return false;
-            }
-            return args.tileSize <= Math.hypot(
-                body.x - ((args.tileIndex % scene.map.width) * args.tileSize + args.tileSize / 2),
-                body.y - (Math.floor(args.tileIndex / scene.map.width) * args.tileSize + args.tileSize / 2)
-            );
-        }, {key: movingNpc.clientKey, tileIndex: movingNpc.tileIndex, tileSize: Navigation.TILE_SIZE}, {
-            timeout: TimeConstants.forLongRun(TestNpc.NPC_WANDER_TIMEOUT_MS, longRun)
-        });
+        let npc = await RoomMovementApi.switchRandomMovement(gameConfig, Login.TOWN_ROOM_NAME, npcKey, false);
+        expect(npc, 'The NPC body must be in the town room').toBeTruthy();
+        let spawnTile = [npc.originalCol, npc.originalRow];
+        let tiles = await RoomMovementApi.fetchTiles(gameConfig, Login.TOWN_ROOM_NAME, spawnTile, 1);
+        let awayTile = [...WalkableTileLocator.findClosestTiles(tiles.walkable, spawnTile, 1)].shift();
+        expect(awayTile, 'The NPC spawn tile must have a walkable neighbor tile').toBeTruthy();
+        let movedNpc = await RoomMovementApi.placeObject(gameConfig, Login.TOWN_ROOM_NAME, npcKey, awayTile);
+        expect([movedNpc.currentCol, movedNpc.currentRow]).toEqual(awayTile);
+        expect([movedNpc.originalCol, movedNpc.originalRow]).toEqual(spawnTile);
         await screenshots.capture(page, 'npc-away-from-spawn-tile');
         await TestNpc.openNpcDialogue(page, screenshots, gameConfig, longRun);
     }
@@ -141,7 +155,6 @@ class TestNpc
         let npcKey = gameConfig.e2eNpcKey || '';
         let pauseMs = TimeConstants.pauseMs(longRun);
         let sceneTimeout = TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun);
-        let navTimeout = TimeConstants.forLongRun(TimeConstants.NAVIGATION, longRun);
         await (npcKey
             ? Phaser.waitForObject(page, npcKey, sceneTimeout)
             : Phaser.waitForObjectByType(page, 'npc', sceneTimeout));
@@ -151,19 +164,11 @@ class TestNpc
         expect(npcCoords, 'NPC must be found in the scene').not.toBeNull();
         await screenshots.capture(page, 'npc-found-in-scene');
         await Navigation.focusGame(page);
-        await ObjectChase.moveToObjectWithinRange(
-            page,
-            npcKey ? 'asset_key' : 'type',
-            npcKey || 'npc',
-            npcKey ? 'active' : 'visible',
-            50,
-            navTimeout
-        );
+        await TestNpc.placePlayerNextToNpc(page, gameConfig, npcKey, sceneTimeout);
         await page.waitForTimeout(pauseMs);
         await Phaser.triggerObjectInteraction(page, npcKey || 'npc');
         await page.waitForTimeout(1000 + pauseMs);
-        let npcDialogueVisible = await page.waitForSelector(
-            Selectors.npc.dialogue,
+        let npcDialogueVisible = await page.locator(Selectors.npc.dialogue).filter({visible: true}).first().waitFor(
             { state: 'visible', timeout: TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun) }
         ).then(() => true).catch(() => false);
         expect(npcDialogueVisible, 'NPC dialogue box must be visible after interacting with NPC').toBeTruthy();

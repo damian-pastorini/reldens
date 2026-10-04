@@ -3,14 +3,18 @@
  * Reldens - Player State Reset
  *
  * Captures and restores player stats, room state, and inventory equipped status between
- * e2e tests to ensure isolation. All test players are reset to full HP, placed in the safe
- * town room, and have all equipped items unequipped.
+ * e2e tests to ensure isolation. The reset first waits until no scene room holds a test player (the closed page of the
+ * previous test makes its session leave, and the room leave saves the player and then removes it, so its pending save
+ * never overwrites the restored state and its body never stays in a room the next test uses), then
+ * all test players are reset to full HP, placed in the safe town room, and have all equipped items unequipped.
  *
  */
 
-const { Logger } = require('@reldens/utils');
+const { setTimeout: waitMs } = require('timers/promises');
+const { Logger, sc } = require('@reldens/utils');
 const { TestDataSetup } = require('./test-data-setup');
 const { RoomEnemiesReset } = require('./room-enemies-reset');
+const { RoomMovementState } = require('./room-movement-state');
 const { SecurityState } = require('./security-state');
 
 class PlayerStateReset
@@ -19,6 +23,8 @@ class PlayerStateReset
     static SAFE_X = 1520;
     static SAFE_Y = 1424;
     static SAFE_DIR = 'down';
+    static LEAVE_CHECKS = 100;
+    static LEAVE_CHECK_MS = 100;
 
     static async captureSnapshots(dataServer, config)
     {
@@ -43,7 +49,14 @@ class PlayerStateReset
             let stats = await dataServer.getEntity('playersStats').loadBy('player_id', playerId);
             let state = await dataServer.getEntity('playersState').loadOneBy('player_id', playerId);
             let inventoryItems = await dataServer.getEntity('itemsInventory').loadBy('owner_id', playerId);
-            snapshots[String(playerId)] = { stats, state, inventoryItems: inventoryItems || [], userId: user.id };
+            snapshots[String(playerId)] = {
+                stats,
+                state,
+                inventoryItems: inventoryItems || [],
+                userId: user.id,
+                username: u.username,
+                playerName: matched.name
+            };
         }
         Logger.info('[player-state-reset] Snapshots captured for '+Object.keys(snapshots).length+' players.');
         return snapshots;
@@ -131,16 +144,54 @@ class PlayerStateReset
         Logger.info('[player-state-reset] Players restored: '+Object.keys(snapshots).length);
     }
 
+    static findTestPlayersSessions(createdInstances, playerNames)
+    {
+        let sessions = [];
+        for(let instanceId of Object.keys(createdInstances)){
+            let room = createdInstances[instanceId];
+            if(!sc.isFunction(room.disconnectBySessionId)){
+                continue;
+            }
+            PlayerStateReset.appendRoomTestSessions(sessions, room, playerNames);
+        }
+        return sessions;
+    }
+
+    static appendRoomTestSessions(sessions, room, playerNames)
+    {
+        for(let sessionId of room.state.players.keys()){
+            if(playerNames.includes(room.state.players.get(sessionId).playerName)){
+                sessions.push({room, sessionId});
+            }
+        }
+    }
+
+    static async waitForTestPlayersToLeave(createdInstances, snapshots)
+    {
+        let playerNames = Object.keys(snapshots).map(playerId => snapshots[playerId].playerName);
+        for(let check = 0; check < PlayerStateReset.LEAVE_CHECKS; check++){
+            let remaining = PlayerStateReset.findTestPlayersSessions(createdInstances, playerNames);
+            if(0 === remaining.length){
+                return true;
+            }
+            await waitMs(PlayerStateReset.LEAVE_CHECK_MS);
+        }
+        Logger.error('[player-state-reset] Test players still in a room after '+PlayerStateReset.LEAVE_CHECKS+' checks.');
+        return false;
+    }
+
     static registerResetEndpoint(serverManager, snapshots, config)
     {
         serverManager.app.post('/api/e2e/reset-players', async (request, response) => {
             try {
+                await PlayerStateReset.waitForTestPlayersToLeave(serverManager.roomsManager.createdInstances, snapshots);
                 await SecurityState.resetAll(serverManager);
                 await PlayerStateReset.restoreSnapshots(serverManager.dataServer, snapshots);
                 if(config){
                     await TestDataSetup.ensureRequiredItems(serverManager.dataServer, config);
                 }
                 await RoomEnemiesReset.restoreAll(serverManager.roomsManager);
+                RoomMovementState.restoreRandomMovement(serverManager.roomsManager);
                 response.json({ ok: true });
             } catch(error){
                 Logger.error('[player-state-reset] Reset failed: '+error.message);

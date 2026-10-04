@@ -9,14 +9,20 @@
 const { BaseE2eTest } = require('./base-e2e-test');
 const { Login } = require('./helpers/login');
 const { Phaser } = require('./helpers/phaser');
-const { ObjectChase } = require('./helpers/object-chase');
+const { RoomObjectsApi } = require('./helpers/room-objects-api');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
+const { sc } = require('@reldens/utils');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
 
 class TestStats
 {
+
+    static ONE_HIT_LIFE = 1;
+    static ATTACK_SKILL_KEY = 'attackShort';
+    static ATTACK_STEP_MS = 500;
+
     static async loginRootPlayer(page, gameConfig, longRun, scene = null)
     {
         let username = gameConfig.e2eUsername || 'root';
@@ -43,49 +49,36 @@ class TestStats
             + TimeConstants.ENEMY_KILL
         );
         let forestData = await Login.loginAndEnterForest(page, gameConfig, longRun);
-        let pauseMs = forestData.pauseMs;
         let enemyKey = gameConfig.e2eEnemyKey || '';
-        let sceneTimeout = forestData.sceneTimeout;
-        let navTimeout = forestData.navTimeout;
-        await (enemyKey
-            ? Phaser.waitForObjectByAssetKey(page, enemyKey, sceneTimeout)
-            : Phaser.waitForObjectByType(page, 'enemy', sceneTimeout));
-        let xpBefore = await TestStats.getPlayerExpFromState(page);
-        expect(xpBefore, 'Player XP must be readable from room state before attack').not.toBeNull();
+        await Phaser.waitForObjectByAssetKey(page, enemyKey, forestData.sceneTimeout);
+        let xpBefore = Number(await TestStats.getPlayerExpFromState(page));
         await screenshots.capture(page, 'xp-before-attack');
-        await ObjectChase.moveToEnemyWithinRange(page, enemyKey, 100, navTimeout);
-        let killDeadline = Date.now() + TimeConstants.ENEMY_KILL;
-        let killMaxSteps = Math.ceil(TimeConstants.ENEMY_KILL / 1500) + 1;
-        let xpIncreased = false;
-        for(let i = 0; i < killMaxSteps; i++){
-            if(Date.now() >= killDeadline){
-                break;
-            }
-            let xpNow = await TestStats.getPlayerExpFromState(page);
-            if(null !== xpNow && xpNow !== xpBefore && '' !== xpNow){
-                xpIncreased = true;
-                break;
-            }
-            await Phaser.targetEnemy(page, enemyKey || null);
-            await page.click('#fireball', { force: true }).catch(() => {
-                return null;
-            });
-            await page.waitForTimeout(500);
-            await page.click('#attackBullet', { force: true }).catch(() => {
-                return null;
-            });
-            await page.waitForTimeout(500);
-            await page.click('#attackShort', { force: true }).catch(() => {
-                return null;
-            });
-            await page.waitForTimeout(Math.min(500, Math.max(0, killDeadline - Date.now())));
-            await ObjectChase.moveToEnemyWithinRange(page, enemyKey, 100, Math.min(3000, killDeadline - Date.now()));
-        }
-        await page.waitForTimeout(1000 + pauseMs);
-        let xpAfter = await TestStats.getPlayerExpFromState(page);
-        expect(xpAfter, 'Player XP must be readable from room state after attack').not.toBeNull();
-        expect(xpIncreased || (xpAfter !== xpBefore && '' !== xpAfter), 'Player XP must increase after defeating an enemy').toBeTruthy();
+        let placement = await RoomObjectsApi.placeAndTargetEnemy(
+            page,
+            gameConfig,
+            Login.FOREST_ROOM_NAME,
+            enemyKey,
+            TestStats.ONE_HIT_LIFE,
+            forestData.sceneTimeout
+        );
+        expect(placement.targeted, 'The placed enemy must be targeted: '+sc.toJsonString(placement)).toBe(true);
+        expect(placement.experience, 'The enemy rewards must give experience').toBeGreaterThan(0);
+        let expectedXp = xpBefore + placement.experience;
+        await TestStats.attackUntilExperience(page, expectedXp, TimeConstants.ENEMY_KILL);
+        expect(Number(await TestStats.getPlayerExpFromState(page))).toBe(expectedXp);
         await screenshots.capture(page, 'xp-after-attack');
+    }
+
+    static async attackUntilExperience(page, expectedXp, timeout)
+    {
+        for(let step = 0; step < Math.ceil(timeout / TestStats.ATTACK_STEP_MS); step++){
+            if(expectedXp === Number(await TestStats.getPlayerExpFromState(page))){
+                return true;
+            }
+            await page.click(Selectors.combat.skillButton(TestStats.ATTACK_SKILL_KEY), {force: true});
+            await page.waitForTimeout(TestStats.ATTACK_STEP_MS);
+        }
+        return false;
     }
 
     static run()

@@ -16,6 +16,8 @@
 const { Navigation } = require('./navigation');
 const { Phaser } = require('./phaser');
 const { PhaserRange } = require('./phaser-range');
+const { RoomMovementApi } = require('./room-movement-api');
+const { BaseE2eTest } = require('../base-e2e-test');
 const { Logger, sc } = require('@reldens/utils');
 
 class ObjectChase
@@ -125,12 +127,24 @@ class ObjectChase
         Logger.info(
             'Chase stuck at '+state.playerX+','+state.playerY+' for '+ObjectChase.STUCK_MS+'ms with the target '
             +state.key+' at '+state.targetX+','+state.targetY+', side step to '+sidestepPoint.x+','+sidestepPoint.y
+            +', server body: '+sc.toJsonString(await ObjectChase.fetchServerPlayer(page))
         );
         await Navigation.moveToWorldPoint(page, sidestepPoint.x, sidestepPoint.y);
         await page.waitForTimeout(ObjectChase.STEP_MS * 2);
         chase.sidesteps++;
         chase.sentPoint = false;
         chase.lastPosition = false;
+    }
+
+    static async fetchServerPlayer(page)
+    {
+        return await RoomMovementApi.fetchPlayer(BaseE2eTest.gameConfig, ...await page.evaluate(() => {
+            let room = window.reldens.activeRoomEvents.room;
+            return [
+                window.reldens.activeRoomEvents.roomName,
+                window.reldens.activeRoomEvents.playerBySessionIdFromState(room, room.sessionId).playerName
+            ];
+        }));
     }
 
     static async recoverFromStuck(page, state, chase)

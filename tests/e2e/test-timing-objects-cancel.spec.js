@@ -4,7 +4,8 @@
  *
  * Tests the cancel rules of the timing objects on the forest mining rocks: the mining is cancelled and gives no reward
  * when the player moves (cancelOnMove), when an enemy hits the player and when another player hits the player
- * (cancelOnHit). The enemies are disabled for every case, the enemy hit case places one enemy next to the player.
+ * (cancelOnHit). The enemies are disabled for every case, the player is placed from the server next to the first
+ * mining rock and the enemy hit case places one enemy next to the player.
  *
  */
 
@@ -25,7 +26,6 @@ let expect = BaseE2eTest.expect;
 
 class TestTimingObjectsCancel
 {
-    static ROCK_INTERACTION_RANGE = 120;
     static ENEMY_OBJECT_TYPE = 4;
     static ATTACK_SKILL_KEY = 'attackShort';
     static CANCEL_TEST_TIMEOUT = 240000;
@@ -38,12 +38,12 @@ class TestTimingObjectsCancel
         let rewardItemId = gameConfig.e2eMiningRockRewardItemId || '';
         expect(rewardItemId, 'e2eMiningRockRewardItemId must be configured').toBeTruthy();
         let forestData = await TimingObjectSession.enterForestWithoutEnemies(page, gameConfig, longRun);
-        let rockKey = await TimingObjectSession.reachObject(
+        let rockKey = await TimingObjectSession.placeNextToObject(
             page,
+            gameConfig,
             rockAssetKey,
-            TimeConstants.forLongRun(TimeConstants.MAP_CROSSING, longRun),
-            'mining rock',
-            TestTimingObjectsCancel.ROCK_INTERACTION_RANGE
+            forestData.sceneTimeout,
+            'mining rock'
         );
         await TimingObjectSession.openInventory(page, forestData.pauseMs);
         return {
@@ -108,7 +108,7 @@ class TestTimingObjectsCancel
 
     static async runEnemyHitCancelTest(page, screenshots, gameConfig, longRun)
     {
-        let passiveEnemyArea = BaseE2eTest.loadPlayerRoomEntries('root', ['respawnAreas']).find(
+        let passiveEnemyArea = BaseE2eTest.loadRoomEntries(Login.FOREST_ROOM_NAME, ['respawnAreas']).find(
             area => TestTimingObjectsCancel.ENEMY_OBJECT_TYPE === area.childObjectType && !area.isAggressive
         );
         expect(passiveEnemyArea, 'The forest must have a passive enemy').toBeTruthy();

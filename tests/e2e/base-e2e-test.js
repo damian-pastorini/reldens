@@ -54,17 +54,16 @@ class BaseE2eTest
         return gameData;
     }
 
-    static loadPlayerRoomObjects(playerKey)
+    static loadRoomObjects(roomName)
     {
-        let gameData = BaseE2eTest.loadGameData();
-        let roomObjects = gameData.rooms[String(gameData.players[playerKey].roomId)];
-        BaseE2eTest.expect(roomObjects, 'The game data must contain the room objects of '+playerKey).toBeTruthy();
+        let roomObjects = BaseE2eTest.loadGameData().rooms[roomName];
+        BaseE2eTest.expect(roomObjects, 'The game data must contain the room objects of '+roomName).toBeTruthy();
         return roomObjects;
     }
 
-    static loadPlayerRoomEntries(playerKey, listsKeys, onlyMoving = false)
+    static loadRoomEntries(roomName, listsKeys, onlyMoving = false)
     {
-        let roomObjects = BaseE2eTest.loadPlayerRoomObjects(playerKey);
+        let roomObjects = BaseE2eTest.loadRoomObjects(roomName);
         let entries = [];
         for(let listKey of listsKeys){
             entries.push(...roomObjects[listKey]);

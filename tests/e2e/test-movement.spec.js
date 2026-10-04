@@ -2,7 +2,9 @@
  *
  * Reldens - Test Movement
  *
- * Tests arrow key movement, all directions, room transitions, minimap, and return-point on death.
+ * Tests arrow key movement, all directions, room transitions, minimap, and return-point on death. After the login the
+ * moving NPCs and traders of the room are stopped and placed back on their spawn tiles, so every walk starts from the
+ * same room layout.
  *
  */
 
@@ -11,6 +13,7 @@ const { BaseE2eTest } = require('./base-e2e-test');
 const { Login } = require('./helpers/login');
 const { Phaser } = require('./helpers/phaser');
 const { Navigation } = require('./helpers/navigation');
+const { MovementScenario } = require('./helpers/movement-scenario');
 const { TestCombatDeath } = require('./helpers/test-combat-death');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
@@ -34,6 +37,7 @@ class TestMovement
         page.on('dialog', dialog => dialog.dismiss());
         await Login.loginAndStartGame(page, username, password, playerName, longRun, false, scene);
         await Phaser.waitForPlayerInRoomState(page, TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun));
+        await MovementScenario.pauseMovingObjects(gameConfig, await Navigation.getCurrentRoomName(page));
         await Navigation.focusGame(page);
     }
 
@@ -64,6 +68,23 @@ class TestMovement
         expect(currentRoom).toBe(returnRoom);
         await page.waitForTimeout(pauseMs);
         await screenshots.capture(page, 'player-at-return-point-after-death');
+    }
+
+    static async fetchMinimapState(page)
+    {
+        return page.evaluate(() => {
+            let scene = window.reldens.getActiveScene();
+            let minimap = scene.minimap;
+            return {
+                textureSize: [scene.textures.get(minimap.textureKey).width, scene.textures.get(minimap.textureKey).height],
+                expectedTextureSize: [scene.map.width * minimap.pixelsPerTile, scene.map.height * minimap.pixelsPerTile],
+                markerPosition: [minimap.playerMarker.x, minimap.playerMarker.y],
+                expectedMarkerPosition: ['x', 'y'].map(
+                    axis => minimap.mapOrigin[axis] + window.reldens.getCurrentPlayerAnimation()[axis] * minimap.mapScale
+                ),
+                cameraVisible: minimap.minimapCamera.visible
+            };
+        });
     }
 
     static async sendPointerOriginMove(page, dx, dy)
@@ -205,6 +226,10 @@ class TestMovement
                 await page.click(Selectors.hud.minimapOpen);
                 await page.waitForTimeout(pauseMs);
                 await expect(page.locator(Selectors.hud.minimapUi)).not.toHaveClass(/hidden/, { timeout: uiTimeout });
+                let minimapState = await TestMovement.fetchMinimapState(page);
+                expect(minimapState.textureSize).toEqual(minimapState.expectedTextureSize);
+                expect(minimapState.markerPosition).toEqual(minimapState.expectedMarkerPosition);
+                expect(minimapState.cameraVisible).toBe(true);
                 await screenshots.capture(page, 'minimap-panel-open');
             });
             test('player returns to configured return point after death', async ({ page, screenshots, gameConfig, longRun }) => {

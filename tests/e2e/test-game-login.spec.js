@@ -38,7 +38,11 @@ class TestGameLogin
                 await page.click(Selectors.hud.settingsOpen);
                 await page.waitForTimeout(pauseMs);
                 await expect(page.locator(Selectors.hud.settingsUi)).toBeVisible();
-                await expect(page.locator(Selectors.hud.settingsDynamic)).toBeVisible();
+                let settingsContainers = page.locator(Selectors.hud.settingsDynamic);
+                await expect(settingsContainers.first(), 'The settings panel must show its options').toBeVisible();
+                for(let settingsContainer of await settingsContainers.all()){
+                    await expect(settingsContainer, 'Every settings section must be visible').toBeVisible();
+                }
                 await screenshots.capture(page, 'settings-panel-open');
                 await page.click(Selectors.hud.settingsClose);
                 await expect(page.locator(Selectors.hud.settingsUi)).not.toBeVisible();

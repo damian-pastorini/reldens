@@ -13,10 +13,15 @@ const { GameDataSkills } = require('./helpers/game-data-skills');
 const { PlayerStateReset } = require('./helpers/player-state-reset');
 const { SecurityState } = require('./helpers/security-state');
 const { RoomObjectsState } = require('./helpers/room-objects-state');
+const { RoomMovementState } = require('./helpers/room-movement-state');
+const { RoomEnemyPlacement } = require('./helpers/room-enemy-placement');
+const { RoomPlayerPlacement } = require('./helpers/room-player-placement');
 const { TestDataSetup } = require('./helpers/test-data-setup');
 const { StartupGuard } = require('./helpers/startup-guard');
 const { ClientBundleCheck } = require('./helpers/client-bundle-check');
+const { Login } = require('./helpers/login');
 const { DatabaseEnvVarsExporter } = require('../database-env-vars-exporter');
+const { ServerPathResolver } = require('../server-path-resolver');
 
 class CollectGameData
 {
@@ -26,6 +31,7 @@ class CollectGameData
     static OBJECT_TYPE_NPC = 3;
     static OBJECT_TYPE_TRADER = 5;
     static OBJECT_TYPE_MULTIPLE = 7;
+    static SPECS_ROOMS_NAMES = [Login.TOWN_ROOM_NAME, Login.FOREST_ROOM_NAME];
     static serverManager = null;
 
     static loadConfig()
@@ -183,24 +189,22 @@ class CollectGameData
         return players;
     }
 
-    static async buildRoomsData(dataServer, events, configManager, ObjectsManager, players)
+    static async buildRoomsData(dataServer, events, configManager, ObjectsManager)
     {
         let rooms = {};
-        let seenRoomIds = {};
-        for(let key of Object.keys(players)) {
-            let roomId = players[key].roomId;
-            if(!roomId || seenRoomIds[roomId]) {
+        for(let roomName of CollectGameData.SPECS_ROOMS_NAMES) {
+            let room = await dataServer.getEntity('rooms').loadOneBy('name', roomName);
+            if(!room) {
+                Logger.warning('[collect-game-data] Room not found: '+roomName);
                 continue;
             }
-            seenRoomIds[roomId] = true;
-            let roomData = await CollectGameData.collectRoomObjects(
+            rooms[roomName] = await CollectGameData.collectRoomObjects(
                 dataServer,
                 events,
                 configManager,
                 ObjectsManager,
-                roomId
+                room.id
             );
-            rooms[String(roomId)] = roomData;
         }
         return rooms;
     }
@@ -237,8 +241,7 @@ class CollectGameData
             serverManager.dataServer,
             serverManager.events,
             serverManager.configManager,
-            ObjectsManager,
-            players
+            ObjectsManager
         );
         let gameData = { players, rooms, items: itemsData };
         let outputPath = FileHandler.joinPaths(process.cwd(), 'tests', 'e2e', 'game-data.json');
@@ -249,6 +252,9 @@ class CollectGameData
         let snapshots = await PlayerStateReset.captureSnapshots(serverManager.dataServer, config);
         SecurityState.registerEndpoints(serverManager, config);
         RoomObjectsState.registerEndpoints(serverManager);
+        RoomMovementState.registerEndpoints(serverManager);
+        RoomEnemyPlacement.registerEndpoints(serverManager);
+        RoomPlayerPlacement.registerEndpoints(serverManager);
         PlayerStateReset.registerResetEndpoint(serverManager, snapshots, config);
         CollectGameData.serverManager = serverManager;
     }
@@ -352,7 +358,7 @@ class CollectGameData
         }
         process.stdout.write('Server: setting up log capture...\n');
         CollectGameData.setupLogCapture();
-        await CollectGameData.startServerAndCollect(config.serverPath);
+        await CollectGameData.startServerAndCollect(ServerPathResolver.resolve(config.serverPath));
     }
 }
 

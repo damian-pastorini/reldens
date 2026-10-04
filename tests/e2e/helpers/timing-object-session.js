@@ -3,7 +3,8 @@
  * Reldens - Timing Object Session
  *
  * Shared steps of the timing objects specs (chest, mining rocks and fishing spots): enter the forest with its enemies
- * disabled, reach the closest instance of an object, read a reward item quantity from the inventory, record the timing
+ * disabled, place the player from the server next to the first instance of an object (its random movement stopped and
+ * the player on the closest free walkable tile), read a reward item quantity from the inventory, record the timing
  * messages the server sends to the player (timingStart, timingCancel, timingComplete) and start a timing on the
  * reached instance.
  *
@@ -11,10 +12,10 @@
 
 const { expect } = require('@playwright/test');
 const { Login } = require('./login');
-const { ObjectChase } = require('./object-chase');
 const { Phaser } = require('./phaser');
 const { RoomObjectsApi } = require('./room-objects-api');
 const { Selectors } = require('../selectors');
+const { sc } = require('@reldens/utils');
 
 class TimingObjectSession
 {
@@ -31,28 +32,17 @@ class TimingObjectSession
         return forestData;
     }
 
-    static async reachObject(page, objectKey, navTimeout, label, range)
+    static async placeNextToObject(page, gameConfig, objectAssetKey, timeout, label)
     {
-        let reachedKey = await ObjectChase.moveToObjectWithinRange(
+        let placement = await RoomObjectsApi.placePlayerNextToObject(
             page,
-            'asset_key',
-            objectKey,
-            'visible',
-            range,
-            navTimeout
+            gameConfig,
+            Login.FOREST_ROOM_NAME,
+            objectAssetKey,
+            timeout
         );
-        if(!reachedKey){
-            reachedKey = await ObjectChase.moveToObjectWithinRange(
-                page,
-                'asset_key',
-                objectKey,
-                'active',
-                range,
-                navTimeout
-            );
-        }
-        expect(reachedKey, 'Player must reach '+label+' within interaction range').toBeTruthy();
-        return reachedKey;
+        expect(placement.reached, 'The player must be placed next to the '+label+': '+sc.toJsonString(placement)).toBe(true);
+        return placement.bodyKey;
     }
 
     static async fetchInventoryItemQty(page, itemKey)

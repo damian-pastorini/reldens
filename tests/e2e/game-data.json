@@ -2,7 +2,7 @@
     "players": {
         "root": {
             "name": "ImRoot",
-            "roomId": 114,
+            "roomId": 41,
             "classPathId": 1,
             "currentLevel": 10,
             "currentExp": 9080,
@@ -136,7 +136,7 @@
         }
     },
     "rooms": {
-        "41": {
+        "reldens-new-age-town": {
             "enemies": [],
             "npcs": [
                 {
@@ -173,7 +173,7 @@
                     "childObjectType": 0,
                     "isAggressive": false,
                     "interactionRadio": 0,
-                    "randomMovementTiles": 5
+                    "randomMovementTiles": 0
                 }
             ],
             "traders": [
@@ -192,7 +192,7 @@
             ],
             "respawnAreas": []
         },
-        "114": {
+        "reldens-forest-level-1": {
             "enemies": [],
             "npcs": [
                 {

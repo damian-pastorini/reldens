@@ -2,7 +2,8 @@
  *
  * Reldens - Test Interactive Objects
  *
- * Tests chest and mining rock interactions.
+ * Tests chest, mining rock and fishing spot interactions. The player is placed from the server next to the first
+ * instance of each object before the interaction, so the cases never depend on where the player or the objects were.
  *
  */
 
@@ -17,8 +18,6 @@ let expect = BaseE2eTest.expect;
 
 class TestInteractiveObjects
 {
-    static INTERACTION_RANGE = 120;
-    static MINING_ROCK_INTERACTION_RANGE = 120;
     static FISH_SPAWN_CYCLES = ['first', 'second'];
     static FAR_OBJECT_TEST_TIMEOUT = 240000;
 
@@ -86,12 +85,12 @@ class TestInteractiveObjects
         await screenshots.capture(page, 'mining-rock-forest-entered');
         await TestInteractiveObjects.waitForObjectInScene(page, objectKey, forestData.sceneTimeout);
         await screenshots.capture(page, 'mining-rock-found-in-scene');
-        let rockKey = await TimingObjectSession.reachObject(
+        let rockKey = await TimingObjectSession.placeNextToObject(
             page,
+            gameConfig,
             objectKey,
-            TimeConstants.forLongRun(TimeConstants.MAP_CROSSING, longRun),
-            'mining rock',
-            TestInteractiveObjects.MINING_ROCK_INTERACTION_RANGE
+            forestData.sceneTimeout,
+            'mining rock'
         );
         await TimingObjectSession.openInventory(page, forestData.pauseMs);
         let rewardQtyBefore = await TimingObjectSession.fetchInventoryItemQty(page, rewardItemId);
@@ -139,12 +138,12 @@ class TestInteractiveObjects
                 await screenshots.capture(page, 'chest-forest-entered');
                 await TestInteractiveObjects.waitForObjectInScene(page, objectKey, forestData.sceneTimeout);
                 await screenshots.capture(page, 'chest-found-in-scene');
-                let chestKey = await TimingObjectSession.reachObject(
+                let chestKey = await TimingObjectSession.placeNextToObject(
                     page,
+                    gameConfig,
                     objectKey,
-                    forestData.navTimeout,
-                    'chest',
-                    TestInteractiveObjects.INTERACTION_RANGE
+                    forestData.sceneTimeout,
+                    'chest'
                 );
                 await screenshots.capture(page, 'chest-player-in-range');
                 await TestInteractiveObjects.clickObjectByAssetKeyOrKey(page, chestKey);
@@ -172,12 +171,12 @@ class TestInteractiveObjects
                 await screenshots.capture(page, 'fish-spawn-forest-entered');
                 await TestInteractiveObjects.waitForObjectInScene(page, objectKey, forestData.sceneTimeout);
                 await screenshots.capture(page, 'fish-spawn-found-in-scene');
-                let fishSpawnKey = await TimingObjectSession.reachObject(
+                let fishSpawnKey = await TimingObjectSession.placeNextToObject(
                     page,
+                    gameConfig,
                     objectKey,
-                    TimeConstants.forLongRun(TimeConstants.MAP_CROSSING, longRun),
-                    'fish spawn',
-                    TestInteractiveObjects.INTERACTION_RANGE
+                    forestData.sceneTimeout,
+                    'fish spawn'
                 );
                 let positionBefore = await PhaserRange.getObjectWorldPosByAssetKey(page, objectKey);
                 expect(positionBefore, 'Fish spawn must expose a world position').toBeTruthy();

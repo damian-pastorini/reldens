@@ -30,7 +30,8 @@ Flags accepted by `tests/e2e/run-tests.js`:
 ## Stop on first failure
 
 `maxFailures` defaults to `1` (`tests/e2e/playwright.config.js`), so the run aborts on the first failing test
-instead of burning the whole suite on one upstream break. Override with `RELDENS_E2E_MAX_FAILURES` or `--all`.
+instead of burning the whole suite on one upstream break. Never override it with `RELDENS_E2E_MAX_FAILURES`,
+`--max-failures` or `--all` when running the suite: fix the failing case first, then run the suite again.
 
 ## Database
 
@@ -59,9 +60,21 @@ trading bug but is really a missing account.
 
 ## App under test
 
-`tests/config.json` `serverPath` points at the app folder (a sibling `app/` checkout). The server is booted in
-process by the Playwright `globalSetup` (`tests/e2e/collect-game-data.js`) and the browser loads that app's
-`dist/index.html`.
+The suite runs against its OWN app instance, never a shared project (like a demo or a development project): its
+`.env`, `generated-entities/` and theme are the ones the server reads.
+
+`tests/config.json` is local and gitignored, create it from `tests/config.json.dist`. Its `serverPath` defaults to
+`../app`, an `app/` folder next to the Reldens checkout. A relative `serverPath` is resolved from the folder the tests
+run in (`tests/server-path-resolver.js`), an absolute path is used as it is.
+
+The app folder is a regular Reldens project with `reldens` installed from the checkout (a `file:` dependency with the
+relative path to the checkout in its `package.json`), so the run uses the checkout code. Its `.env` must use the
+storage driver its `generated-entities/` were generated for (`RELDENS_STORAGE_DRIVER=knex` by default, refresh them
+with `npm exec -- reldens generateEntities --override` from the app folder after a driver change).
+
+The server is booted in process by the Playwright `globalSetup` (`tests/e2e/collect-game-data.js`) and the browser
+loads that app's `dist/index.html`. When `serverPath` does not exist the setup logs
+`[collect-game-data] serverPath not found` and skips the server startup.
 
 If `dist/index.html` still references `src="./index.js"` the client was never bundled, so `window.reldens`
 never exists and every spec times out after 10 seconds waiting for it. `ClientBundleCheck.isMissing()` detects
@@ -102,35 +115,50 @@ The server runs on `localhost`, which turns on the development mode of `AppServe
 panel login limiter allows 10 times `RELDENS_ADMIN_LOGIN_MAX_ATTEMPTS`; the limiter spec reads the real limit from the
 `RateLimit` response header. See `.claude/ip-lists-and-login-blocks.md` for the lists and blocks flow.
 
-## Forest navigation and moving objects
+## Deterministic room setup
+
+Every spec that needs a player next to an object builds that state on the server after the login, instead of walking
+the player to wherever the random movement left the objects: the rooms are created with the objects in random places,
+the spec sends one setup request that stops the random movement of the object it needs and places the bodies on exact
+positions, and the case starts from known values. Never chase a moving object across the map in a spec: a path through
+a body the path finder grid does not know (a tree, another object) blocks the player and the case fails by chance.
+
+- `POST /api/e2e/room-objects/place-enemy` (`{roomName, sessionId, enemyKey, enemyLife}`,
+  `tests/e2e/helpers/room-enemy-placement.js`) - restores the first enemy of that key or asset key, stops its random
+  movement, places it on the first walkable position 40px from the player (inside the 50px `attackShort` range, out of
+  contact with the 25px player body) and, with `enemyLife`, sets its life so a single hit kills it; it returns the
+  enemy key, its body state key (`bodyKey`, the client `objectsAnimations` and `room.state.bodies` key), the exact
+  position and the experience its stored rewards give on its death
+- `RoomObjectsApi.placeAndTargetEnemy` waits until the client body state of `bodyKey` is exactly on the placed position
+  and targets that exact body, so the combat specs (`test-combat.spec.js`), the XP spec (`test-stats.spec.js`, the XP
+  after the kill must equal the XP before plus the returned experience) and the passive enemy spec
+  (`test-objects-movement.spec.js`) never chase an enemy
+- `POST /api/e2e/room-objects/place-player-next-to-object` (`{roomName, sessionId, objectKey}`,
+  `tests/e2e/helpers/room-player-placement.js`) - stops the random movement of the first object of that key or asset
+  key (any object with a physics body, with or without a body state, so the chest is found too) and places the player
+  on the center of the closest walkable tile around the object tile that does not overlap the object body (closest distance first, then the lowest row and column, so the same room always gives the same tile);
+  `RoomObjectsApi.placePlayerNextToObject` waits until the client player state is exactly on the placed position, and
+  the NPC, trader, chest, mining rock and fishing spot specs interact with the returned `bodyKey`
+- the moved NPC case places the NPC with `RoomMovementApi.placeObject` on the closest walkable tile of its spawn tile
+  (it keeps its original tile) instead of waiting for a random wander
+- the town movement specs (`test-movement.spec.js` and both pathfinding specs, through
+  `MovementScenario.pauseMovingObjects`) stop every moving NPC and trader of the room and place it back on its spawn
+  tile, so the walks, the routes and the blocked targets always run on the same room layout
+
+Both placements receive the client `sessionId` (`room.sessionId`) and move that exact player schema
+(`RoomObjectsState.findPlayer`), never the first player found by name, so a body left by another session of the same
+user can never take the placement.
+
+The players reset before every test (`/api/e2e/reset-players`) first disconnects the test users from every room
+(`UserDisconnection.disconnectUserFromEveryRoom`: the previous test session is saved and removed), so no previous
+session stays in a room the next test uses or overwrites the restored state; then it restores the stats, the
+inventory and the town state, and the random movement stopped by a setup request
+(`RoomMovementState.restoreRandomMovement`).
 
 The forest specs start in `reldens-forest-level-1` (`Login.loginAndEnterForest`), entering at its default return
-point near the bottom of a 72x100 tiles map, so the rocks and the fishing spots are a whole map crossing away: those
-specs walk with `TimeConstants.MAP_CROSSING` instead of `TimeConstants.NAVIGATION`.
-
-`ObjectChase.moveToObjectWithinRange` (`tests/e2e/helpers/object-chase.js`, also `moveToEnemyWithinRange`) returns
-the key of the reached object instance, or false:
-
-- picks the closest matching instance to the player and locks it, then reads its position again on every step, from
-  the synced server body (`room.state.bodies`) when the object has a body state, so the moving NPCs and enemies are
-  followed; when the locked instance is gone (dead or disabled) it picks the closest one again
-- sends path finder moves (`{act: 'mp', column, row}`, `Navigation.moveToWorldPoint`) to the walkable tile inside the
-  range nearest to the player side (`PhaserRange.approachOffsets` and `PhaserRange.filterWalkableOffsets`, which apply
-  the server path finder rule on the client map: a tile on a `collisions` or `change-points` layer blocks, an empty
-  tile on a `pathfinder` layer blocks), and sends it again when that tile changes or the player reached the last sent
-  point; this is what reaches the fishing spot, its own tile is a lake collision
-- when the player does not move for `STUCK_MS` (4 seconds) it walks one walkable tile in a different direction (the
-  four directions rotate on every stuck) and the chase starts again
-- a target closer than `CONTACT_DISTANCE` (40px) is reached even for a smaller range: the 25px player body and a 32px
-  object body touch at about 29 to 36px and can not get any closer
-- every move goes through the path finder, which treats the change points as unwalkable (`P2world.markPathFinderTile`
-  for the map layer ones, `StorageChangePointsCreator.markPositionAsChangePoint` for the stored ones), so a stuck player
-  never walks into a room exit; raw arrow key steps would (the forest level 1 entry is two tiles above the town exit)
-- once in range it sends a move to the player own tile, which ends the path, and waits for the player to stand still
-  (`PhaserRange.waitForPlayerToStandStill`), because the timing objects (`cancelOnMove`) cancel on any position change
-
-The callers interact with the returned instance key (`Phaser.triggerObjectInteraction`), so the mining rock clicked is
-the one the player reached, and `Phaser.targetEnemy` already targets the closest visible enemy.
+point near the bottom of a 72x100 tiles map. `ObjectChase` (`tests/e2e/helpers/object-chase.js`) is only kept for its
+side step offsets (`SIDESTEP_OFFSETS`, `offsetPoint`) used by the move cancel case of `test-timing-objects-cancel.spec.js`
+and its stuck log, which includes the server body snapshot of the player (`RoomMovementApi.fetchPlayer`).
 
 `RoomObjectsState` (`tests/e2e/helpers/room-objects-state.js`, registered by `collect-game-data.js`) exposes the live
 scene rooms to the specs, wrapped by `tests/e2e/helpers/room-objects-api.js`:
@@ -143,25 +171,26 @@ scene rooms to the specs, wrapped by `tests/e2e/helpers/room-objects-api.js`:
   the aggressive ones with `onlyAggressive: true`) until the next players reset: no path, no battle, no collision
   response, affected property 0 (so the aggression and the hits never start a battle) and the `DISABLED` state (so the
   body is not integrated and the random movement never moves it)
-- `POST /api/e2e/room-objects/enemy-attack` (`{roomName, playerName, assetKey}`) - restores one enemy of that asset
-  key, places it 40px from the player on a walkable tile (inside the 50px `attackShort` range, out of contact with the
-  25px player body) and starts its battle with the player
+- `POST /api/e2e/room-objects/enemy-attack` (`{roomName, playerName, assetKey}`, `RoomEnemyPlacement`) - places one
+  enemy of that asset key the same way as `place-enemy` and starts its battle with the player
 - `POST /api/e2e/room-objects/player-affected-property` (`{roomName, playerName, value}`) - sets the affected property
   (`client/actions/skills/affectedProperty`, the hp) of the live player to that value, saves the stats and sends them to
   the player client (`RoomScene.savePlayerStats`)
 
 `TimingObjectSession` (`tests/e2e/helpers/timing-object-session.js`) holds the shared steps of the chest, mining and
-fishing specs: enter the forest with its enemies disabled, reach the closest instance, read the reward quantity from
-the inventory, record the `timingStart`, `timingCancel` and `timingComplete` messages and start a timing on the
-reached instance.
+fishing specs: enter the forest with its enemies disabled, place the player next to the first instance
+(`placeNextToObject`), read the reward quantity from the inventory, record the `timingStart`, `timingCancel` and
+`timingComplete` messages and start a timing on the placed instance.
 
-The game data (`collect-game-data.js`) adds per room object `layerName`, `tileIndex`, `childObjectType`,
-`isAggressive`, `interactionRadio`, `randomMovementTiles` and the `respawnAreas` list (class type 7), read through
-`BaseE2eTest.loadGameData`, `BaseE2eTest.loadPlayerRoomObjects` and `BaseE2eTest.loadPlayerRoomEntries`:
+The game data (`collect-game-data.js`) collects the objects of the rooms the specs use (`SPECS_ROOMS_NAMES`: the town
+and the forest level 1), keyed by room name, whatever room the players were saved in, with per room object
+`layerName`, `tileIndex`, `childObjectType`, `isAggressive`, `interactionRadio`, `randomMovementTiles` and the
+`respawnAreas` list (class type 7), read through `BaseE2eTest.loadGameData`, `BaseE2eTest.loadRoomObjects(roomName)`
+and `BaseE2eTest.loadRoomEntries(roomName, listsKeys, onlyMoving)`:
 
 - `test-npc.spec.js` - the town NPCs wander inside their area (synced bodies sampled with
   `PhaserRange.collectPositionRanges` and checked with `PhaserRange.summarizeMovement`), and a moving NPC still opens
-  its dialogue after it left its spawn tile
+  its dialogue after it was placed on a tile away from its spawn tile
 - `test-objects-movement.spec.js` - the aggressive and the passive forest enemies wander inside their own area: the
   server snapshots are sampled every 250ms for 30 seconds (`EnemiesWanderSummary`,
   `tests/e2e/helpers/enemies-wander-summary.js`), the enemies that were in battle at any sample are left out, and for
@@ -169,9 +198,8 @@ The game data (`collect-game-data.js`) adds per room object `layerName`, `tileIn
   the area (pushed by another body) must end within `maxDelay` and a path blocked on the same tile must be dropped
   within two moves (`2 * maxDelay`); every invalid enemy is reported with its whole trail (tile, original tile,
   position, velocity, path, contacts and battle per sample); the objects without random movement keep their
-  position, and a passive enemy does not attack a player standing 3 to 4 tiles away from it (the aggressive enemies
-  are disabled with `onlyAggressive`, the closest active passive enemy is read from the server snapshot and the player
-  walks with `ObjectChase.moveToPointWithinRange`)
+  position, and a passive enemy does not attack a player standing next to it (the aggressive enemies are disabled
+  with `onlyAggressive` and the passive enemy is placed 40px from the player with `place-enemy`)
 - `test-interactive-objects.spec.js` - the chest, the mining rock and the fishing spot with the forest enemies disabled
 - `test-timing-objects-cancel.spec.js` - the mining is cancelled and gives no reward when the player moves, when an
   enemy hits the player (placed by `enemy-attack`) and when another player hits the player (`attackShort` sent by

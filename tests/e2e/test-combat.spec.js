@@ -2,17 +2,18 @@
  *
  * Reldens - Test Combat
  *
- * Tests targeting enemies, attack damage, skill casting by type, death, and revive.
+ * Tests targeting enemies, attack damage, skill casting by type, death, and revive. Every attack case places the
+ * enemy from the server next to the player with its random movement stopped and targets that exact enemy body.
  *
  */
 
 const { BaseE2eTest } = require('./base-e2e-test');
 const { Login } = require('./helpers/login');
 const { Phaser } = require('./helpers/phaser');
-const { ObjectChase } = require('./helpers/object-chase');
+const { RoomObjectsApi } = require('./helpers/room-objects-api');
 const { TimeConstants } = require('./helpers/time-constants');
 const { FileHandler } = require('@reldens/server-utils');
-const { Logger } = require('@reldens/utils');
+const { Logger, sc } = require('@reldens/utils');
 const { TestCombatDeath } = require('./helpers/test-combat-death');
 const { Selectors } = require('./selectors');
 let test = BaseE2eTest.test;
@@ -20,7 +21,6 @@ let expect = BaseE2eTest.expect;
 
 class TestCombat
 {
-    static TAB_TARGET_RANGE = 200;
     static gameDataPath = FileHandler.joinPaths(process.cwd(), 'tests', 'e2e', 'game-data.json');
     static gameData = FileHandler.exists(TestCombat.gameDataPath) ? FileHandler.fetchFileJson(TestCombat.gameDataPath) : null;
     static rootPlayerData = TestCombat.gameData && TestCombat.gameData.players && TestCombat.gameData.players.root
@@ -87,35 +87,22 @@ class TestCombat
         return { enemyKey, pauseMs, sceneLoadTimeout, navigationTimeout };
     }
 
-    static async clickEnemy(page, enemyKey)
+    static async placeAndTargetEnemy(page, gameConfig, data)
     {
-        if(enemyKey) {
-            await Phaser.clickObjectByAssetKey(page, enemyKey);
-            return;
-        }
-        await Phaser.clickObjectByType(page, 'enemy');
+        let placement = await RoomObjectsApi.placeAndTargetEnemy(
+            page,
+            gameConfig,
+            Login.FOREST_ROOM_NAME,
+            data.enemyKey,
+            0,
+            data.sceneLoadTimeout
+        );
+        expect(placement.targeted, 'The placed enemy must be targeted: '+sc.toJsonString(placement)).toBe(true);
+        return placement;
     }
 
-    static async walkToEnemyWithinRange(page, enemyKey, range, timeout)
+    static async openChat(page, data)
     {
-        if(enemyKey){
-            let reached = await ObjectChase.moveToObjectWithinRange(page, 'asset_key', enemyKey, 'active', range, timeout);
-            if(!reached){
-                Logger.error('walkToEnemyWithinRange: did not reach range '+range+' enemyKey='+enemyKey);
-            }
-            return reached;
-        }
-        let reached = await ObjectChase.moveToObjectWithinRange(page, null, null, null, range, timeout, true);
-        if(!reached){
-            Logger.error('walkToEnemyWithinRange: did not reach range '+range+' (no enemyKey)');
-        }
-        return reached;
-    }
-
-    static async prepareEnemyTargetAndChat(page, data)
-    {
-        await Phaser.targetEnemy(page, data.enemyKey);
-        await page.waitForTimeout(data.pauseMs);
         await page.click(Selectors.hud.chatOpen);
         await page.waitForTimeout(data.pauseMs);
     }
@@ -123,11 +110,9 @@ class TestCombat
     static async prepareSkillCastContext(page, screenshots, gameConfig, longRun, skill, prefix)
     {
         let data = await TestCombat.loginAndGetEnemyWithWorldPos(page, gameConfig, longRun);
-        await TestCombat.walkToEnemyWithinRange(page, data.enemyKey, skill.range, data.navigationTimeout);
+        await TestCombat.placeAndTargetEnemy(page, gameConfig, data);
         await screenshots.capture(page, prefix+'-'+skill.key+'-within-range');
-        await TestCombat.prepareEnemyTargetAndChat(page, data);
-        await TestCombat.walkToEnemyWithinRange(page, data.enemyKey, Math.floor(skill.range / 2), data.navigationTimeout);
-        await Phaser.targetEnemy(page, data.enemyKey);
+        await TestCombat.openChat(page, data);
         return data;
     }
 
@@ -168,22 +153,17 @@ class TestCombat
             test('player can target and attack an enemy', async ({ page, screenshots, gameConfig, longRun }) => {
                 let data = await TestCombat.loginAndGetEnemyWithWorldPos(page, gameConfig, longRun);
                 await screenshots.capture(page, 'enemy-found-in-scene');
-                await page.waitForTimeout(data.pauseMs);
-                await TestCombat.walkToEnemyWithinRange(page, data.enemyKey, TestCombat.TAB_TARGET_RANGE, data.navigationTimeout);
-                let targeted = await Phaser.targetEnemy(page, data.enemyKey);
-                expect(true === targeted, 'Enemy must be targetable: '+targeted).toBeTruthy();
+                await TestCombat.placeAndTargetEnemy(page, gameConfig, data);
                 await expect(page.locator(Selectors.combat.targetBox)).toBeVisible();
                 await screenshots.capture(page, 'enemy-targeted');
             });
             test('combat damage message appears in chat', async ({ page, screenshots, gameConfig, longRun }) => {
                 let data = await TestCombat.loginAndGetEnemyWithWorldPos(page, gameConfig, longRun);
                 let firstAttackSkill = TestCombat.attackSkills[0];
-                let skillRange = firstAttackSkill ? firstAttackSkill.range : 100;
-                await TestCombat.walkToEnemyWithinRange(page, data.enemyKey, skillRange, data.navigationTimeout);
+                await TestCombat.placeAndTargetEnemy(page, gameConfig, data);
                 await screenshots.capture(page, 'within-attack-range');
-                await TestCombat.prepareEnemyTargetAndChat(page, data);
+                await TestCombat.openChat(page, data);
                 let resolvedAttackKey = await TestCombat.resolveAttackKey(page, firstAttackSkill, '- ensure player has attack skills');
-                await TestCombat.walkToEnemyWithinRange(page, data.enemyKey, Math.floor(skillRange / 2), data.navigationTimeout);
                 await page.click(Selectors.combat.skillButton(resolvedAttackKey));
                 await expect(page.locator(Selectors.chat.tabContentGeneral)).toContainText(
                     'damage',
@@ -194,9 +174,7 @@ class TestCombat
             test('canvas changes visually after attacking enemy', async ({ page, screenshots, gameConfig, longRun }) => {
                 let data = await TestCombat.loginAndGetEnemyWithWorldPos(page, gameConfig, longRun);
                 let firstAttackSkill = TestCombat.attackSkills[0];
-                let skillRange = firstAttackSkill ? firstAttackSkill.range : 100;
-                await TestCombat.walkToEnemyWithinRange(page, data.enemyKey, Math.floor(skillRange / 2), data.navigationTimeout);
-                await Phaser.targetEnemy(page, data.enemyKey);
+                await TestCombat.placeAndTargetEnemy(page, gameConfig, data);
                 let resolvedAttackKey = await TestCombat.resolveAttackKey(page, firstAttackSkill, 'for canvas test');
                 await page.waitForSelector(
                     Selectors.combat.skillButton(resolvedAttackKey),
@@ -211,8 +189,7 @@ class TestCombat
                         Selectors.combat.skillButton(resolvedAttackKey),
                         { state: 'visible', timeout: TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun) }
                     );
-                    await TestCombat.walkToEnemyWithinRange(page, data.enemyKey, Math.floor(skillRange / 2), data.navigationTimeout);
-                    await Phaser.targetEnemy(page, data.enemyKey);
+                    await TestCombat.placeAndTargetEnemy(page, gameConfig, data);
                     hashBefore = await Phaser.getCanvasPixelHash(page);
                 }
                 await page.click(Selectors.combat.skillButton(resolvedAttackKey), { force: true });

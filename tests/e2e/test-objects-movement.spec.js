@@ -4,7 +4,8 @@
  *
  * Tests the forest objects movement and aggression: the aggressive and the passive enemies wander inside their own
  * configured areas, the objects without random movement keep their position and a passive enemy does not attack a
- * player standing near it.
+ * player standing near it (the passive enemy is placed from the server next to the player with its random movement
+ * stopped).
  *
  */
 
@@ -12,14 +13,13 @@ const { BaseE2eTest } = require('./base-e2e-test');
 const { EnemiesWanderSummary } = require('./helpers/enemies-wander-summary');
 const { Login } = require('./helpers/login');
 const { Navigation } = require('./helpers/navigation');
-const { ObjectChase } = require('./helpers/object-chase');
-const { Phaser } = require('./helpers/phaser');
 const { PhaserRange } = require('./helpers/phaser-range');
 const { RoomObjectsApi } = require('./helpers/room-objects-api');
 const { TestCombatDeath } = require('./helpers/test-combat-death');
 const { TimeConstants } = require('./helpers/time-constants');
 const { ObjectsConst } = require('../../lib/objects/constants');
 const { GameConst } = require('../../lib/game/constants');
+const { sc } = require('@reldens/utils');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
 
@@ -31,13 +31,11 @@ class TestObjectsMovement
     static SAMPLE_INTERVAL_MS = 1000;
     static MOVEMENT_TEST_TIMEOUT_MS = 120000;
     static PASSIVE_TEST_TIMEOUT_MS = 240000;
-    static PASSIVE_STAND_MIN_TILES = 3;
-    static PASSIVE_STAND_MAX_TILES = 4;
     static PASSIVE_WATCH_MS = 5000;
 
     static loadForestEnemyAreas()
     {
-        return BaseE2eTest.loadPlayerRoomEntries('root', ['respawnAreas'], true).filter(
+        return BaseE2eTest.loadRoomEntries(Login.FOREST_ROOM_NAME, ['respawnAreas'], true).filter(
             area => TestObjectsMovement.ENEMY_OBJECT_TYPE === area.childObjectType
         );
     }
@@ -49,15 +47,6 @@ class TestObjectsMovement
                 && isAggressive === snapshot.isAggressive
                 && GameConst.STATUS.ACTIVE === snapshot.inState
         );
-    }
-
-    static async findClosestPassiveEnemyKey(gameConfig, playerPosition)
-    {
-        let distances = {};
-        for(let snapshot of await TestObjectsMovement.fetchActiveForestEnemies(gameConfig, false)){
-            distances[snapshot.key] = Math.hypot(snapshot.x - playerPosition.x, snapshot.y - playerPosition.y);
-        }
-        return [...Object.keys(distances).sort((keyA, keyB) => distances[keyA] - distances[keyB])].shift();
     }
 
     static async fetchSceneAnimations(page)
@@ -101,7 +90,7 @@ class TestObjectsMovement
     static async runStaticObjectsTest(page, screenshots, gameConfig, longRun)
     {
         test.setTimeout(TimeConstants.forLongRun(TestObjectsMovement.MOVEMENT_TEST_TIMEOUT_MS, longRun));
-        let movingAssetKeys = BaseE2eTest.loadPlayerRoomEntries('root', TestObjectsMovement.FOREST_LISTS, true)
+        let movingAssetKeys = BaseE2eTest.loadRoomEntries(Login.FOREST_ROOM_NAME, TestObjectsMovement.FOREST_LISTS, true)
             .map(entry => entry.assetKey);
         await Login.loginAndEnterForest(page, gameConfig, longRun);
         let staticKeys = (await TestObjectsMovement.fetchSceneAnimations(page))
@@ -125,56 +114,26 @@ class TestObjectsMovement
         expect(movement.wandered, 'The objects without random movement must keep their position').toEqual([]);
     }
 
-    static async moveNearObject(page, objectKey, timeout)
-    {
-        let objectPosition = (await PhaserRange.getStateBodiesPositions(page, [objectKey]))[objectKey];
-        let playerPosition = await Phaser.getPlayerServerPosition(page);
-        let standOffset = [...await PhaserRange.filterWalkableOffsets(
-            page,
-            objectPosition.x,
-            objectPosition.y,
-            PhaserRange.approachOffsets(
-                (TestObjectsMovement.PASSIVE_STAND_MAX_TILES + 1) * Navigation.TILE_SIZE,
-                Navigation.TILE_SIZE,
-                playerPosition.x - objectPosition.x,
-                playerPosition.y - objectPosition.y
-            ).filter(offset => TestObjectsMovement.PASSIVE_STAND_MIN_TILES <= Math.hypot(offset.column, offset.row)),
-            Navigation.TILE_SIZE
-        )].shift();
-        expect(standOffset, 'A walkable tile near the object must exist').toBeTruthy();
-        let standPoint = {
-            x: objectPosition.x + standOffset.column * Navigation.TILE_SIZE,
-            y: objectPosition.y + standOffset.row * Navigation.TILE_SIZE
-        };
-        expect(
-            await ObjectChase.moveToPointWithinRange(page, standPoint, Navigation.TILE_SIZE, timeout),
-            'The player must reach the stand point '+standPoint.x+','+standPoint.y+' near the object '+objectKey
-        ).toBe(true);
-        await PhaserRange.waitForPlayerToStandStill(page, TestObjectsMovement.SAMPLE_INTERVAL_MS * 3);
-    }
-
     static async runPassiveEnemyTest(page, screenshots, gameConfig, longRun)
     {
         test.setTimeout(TimeConstants.forLongRun(TestObjectsMovement.PASSIVE_TEST_TIMEOUT_MS, longRun));
-        expect(
-            TestObjectsMovement.loadForestEnemyAreas().filter(area => !area.isAggressive).length,
-            'The forest must have passive enemies'
-        ).toBeGreaterThan(0);
-        await Login.loginAndEnterForest(page, gameConfig, longRun);
+        let passiveArea = TestObjectsMovement.loadForestEnemyAreas().find(area => !area.isAggressive);
+        expect(passiveArea, 'The forest must have passive enemies').toBeTruthy();
+        let forestData = await Login.loginAndEnterForest(page, gameConfig, longRun);
         expect(
             await RoomObjectsApi.disableEnemies(gameConfig, Login.FOREST_ROOM_NAME, true),
             'The aggressive forest enemies must be disabled, so a damage can only come from the passive enemy'
         ).toBeGreaterThan(0);
-        let passiveKey = await TestObjectsMovement.findClosestPassiveEnemyKey(
-            gameConfig,
-            await Phaser.getPlayerServerPosition(page)
-        );
-        expect(passiveKey, 'An active passive enemy must exist in the forest').toBeTruthy();
-        await TestObjectsMovement.moveNearObject(
+        let placement = await RoomObjectsApi.placeAndTargetEnemy(
             page,
-            passiveKey,
-            TimeConstants.forLongRun(TimeConstants.MAP_CROSSING, longRun)
+            gameConfig,
+            Login.FOREST_ROOM_NAME,
+            passiveArea.assetKey,
+            0,
+            forestData.sceneTimeout
         );
+        expect(placement.targeted, 'The passive enemy must be placed next to the player: '+sc.toJsonString(placement))
+            .toBe(true);
         await screenshots.capture(page, 'player-near-passive-enemy');
         expect(
             (await TestObjectsMovement.fetchActiveForestEnemies(gameConfig, true)).map(snapshot => snapshot.key),
