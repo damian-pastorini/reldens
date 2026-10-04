@@ -13,7 +13,7 @@ const { ThemeManager } = require('../lib/game/server/theme-manager');
 const { EnvironmentVariablesReader } = require('../lib/game/server/environment-variables-reader');
 const { PackagesInstallation } = require('../lib/game/server/installer/packages-installation');
 const { ServerManager } = require('../server');
-const { FileHandler } = require('@reldens/server-utils');
+const { FileHandler, PackageResolver } = require('@reldens/server-utils');
 const { EnvVar, Logger, sc } = require('@reldens/utils');
 
 class Commander
@@ -132,8 +132,11 @@ class Commander
         if('prisma' === storageDriver && 'mysql2' === client){
             client = 'mysql';
         }
+        let storagePath = FileHandler.getFolderName(
+            PackageResolver.resolvePath('@reldens/storage', this.reldensModulePath)
+        );
         let args = [
-            'reldens-storage',
+            FileHandler.joinPaths(storagePath, 'bin', 'reldens-storage.js'),
             'generateEntities',
             '--user='+process.env.RELDENS_DB_USER,
             '--pass='+process.env.RELDENS_DB_PASSWORD,
@@ -151,11 +154,10 @@ class Commander
         if(prismaClientPathArg){
             args.push(prismaClientPathArg);
         }
-        Logger.info('Running: npx '+args.join(' '));
-        let child = spawn('npx', args, {
+        Logger.info('Running: node '+args.join(' '));
+        let child = spawn(process.execPath, args, {
             stdio: 'inherit',
-            cwd: this.projectRoot,
-            shell: true
+            cwd: this.projectRoot
         });
         child.on('exit', (code) => {
             process.exit(code || 0);
