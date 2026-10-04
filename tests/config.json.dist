@@ -4,7 +4,7 @@
     "adminUser": "root@yourgame.com",
     "adminPassword": "root",
     "port": 8080,
-    "serverPath": "D:\\dap\\work\\reldens\\npm-test",
+    "serverPath": "../app",
     "themeName": "custom-game-theme-test",
     "dbHost": "localhost",
     "dbPort": "3306",

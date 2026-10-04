@@ -11,6 +11,7 @@ const { createRequire } = require('module');
 const { FileHandler } = require('@reldens/server-utils');
 const { Logger, sc } = require('@reldens/utils');
 const { DatabaseEnvVarsExporter } = require('../database-env-vars-exporter');
+const { ServerPathResolver } = require('../server-path-resolver');
 
 class ServerLauncher
 {
@@ -19,7 +20,7 @@ class ServerLauncher
 
     async start(config)
     {
-        let serverPath = sc.get(config, 'serverPath', '');
+        let serverPath = ServerPathResolver.resolve(sc.get(config, 'serverPath', ''));
         if('' === serverPath){
             Logger.log(100, '', 'The serverPath is not configured in tests/config.json.');
             return false;

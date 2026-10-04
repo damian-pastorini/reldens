@@ -9,6 +9,7 @@ const { Logger } = require('@reldens/utils');
 const { FileHandler } = require('@reldens/server-utils');
 const { CrudTestData } = require('./fixtures/crud-test-data');
 const { EntitiesList } = require('./fixtures/entities-list');
+const { ServerPathResolver } = require('./server-path-resolver');
 
 class TestAdminCrud extends BaseTest
 {
@@ -23,7 +24,7 @@ class TestAdminCrud extends BaseTest
         this.createdIds = {};
         this.testRecordsForCleanup = [];
         this.baseTestIds = CrudTestData.getBaseTestIds();
-        this.serverPath = config.serverPath || null;
+        this.serverPath = ServerPathResolver.resolve(config.serverPath) || null;
         this.themeName = config.themeName || 'default';
         this.testFiles = [];
     }

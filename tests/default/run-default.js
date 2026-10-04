@@ -117,8 +117,12 @@ class RunDefault
 
     async confirmExecution()
     {
-        let rl = readline.createInterface({input: process.stdin, output: process.stdout});
         Logger.log(100, '', 'WARNING: the self-hosted tests will reset the database: '+this.config.dbName);
+        if('1' === process.env.RELDENS_TESTS_CONFIRMED){
+            Logger.log(100, '', 'Database reset confirmed by RELDENS_TESTS_CONFIRMED=1.');
+            return true;
+        }
+        let rl = readline.createInterface({input: process.stdin, output: process.stdout});
         let answer = await rl.question('Do you want to continue? (y/N): ');
         rl.close();
         return 'y' === answer.toLowerCase() || 'yes' === answer.toLowerCase();
