@@ -40,6 +40,18 @@ class TestObjectRandomMovement extends BaseTest
             || this.maxTiles < Math.abs(target.row - this.originalTile);
     }
 
+    buildBodyWithAShorterRouteOutsideTheArea()
+    {
+        let body = this.bodyBuilder.build();
+        body.updateCurrentPoints();
+        body.position[1] += 2 * this.tileSize;
+        let wallColumn = this.originalTile + 1;
+        let wallFirstRow = this.originalTile - this.maxTiles + 1;
+        let wallLastRow = this.originalTile + this.maxTiles;
+        this.bodyBuilder.blockColumnTiles(body.world.pathFinder.grid, wallColumn, wallFirstRow, wallLastRow);
+        return {body, wallColumn};
+    }
+
     collectInvalidTargets(randomMovement, isInvalidTarget)
     {
         let invalidTargets = [];
@@ -107,13 +119,7 @@ class TestObjectRandomMovement extends BaseTest
     async testTargetsWithAShorterRouteOutsideTheAreaAreReachedInsideIt()
     {
         await this.test('a target reached faster from outside the area is reached with the longer path inside it', async () => {
-            let body = this.bodyBuilder.build();
-            body.updateCurrentPoints();
-            body.position[1] += 2 * this.tileSize;
-            let wallColumn = this.originalTile + 1;
-            let wallFirstRow = this.originalTile - this.maxTiles + 1;
-            let wallLastRow = this.originalTile + this.maxTiles;
-            this.bodyBuilder.blockColumnTiles(body.world.pathFinder.grid, wallColumn, wallFirstRow, wallLastRow);
+            let {body, wallColumn} = this.buildBodyWithAShorterRouteOutsideTheArea();
             let reachedBehindTheWall = false;
             let invalidTargets = this.collectInvalidTargets(this.createRandomMovement(body), (target) => {
                 if(wallColumn < target.column && this.originalTile < target.row){
@@ -126,6 +132,25 @@ class TestObjectRandomMovement extends BaseTest
         });
     }
 
+    async testRecalculatedPathsStayInsideTheArea()
+    {
+        await this.test('a path recalculated while following a random path never leaves the movement area', async () => {
+            let {body} = this.buildBodyWithAShorterRouteOutsideTheArea();
+            this.createRandomMovement(body).moveToRandomTile();
+            body.updateCurrentPoints();
+            let currentTile = [body.currentCol, body.currentRow];
+            let targetTile = [this.originalTile + this.maxTiles, this.originalTile + this.maxTiles];
+            let path = body.findAutoMovingPath(currentTile, targetTile);
+            this.assert.notStrictEqual(0, path.length);
+            this.assert.deepStrictEqual(
+                path.filter(pathTile => this.isOutsideTheMovementArea({column: pathTile[0], row: pathTile[1]})),
+                []
+            );
+            body.resetAuto();
+            this.assert.strictEqual(body.autoMovingGrid, false);
+        });
+    }
+
     async testBodyOutsideTheAreaWalksBackToTheOriginalTile()
     {
         await this.test('a body pushed outside the movement area walks back to its original tile', async () => {
@@ -134,6 +159,7 @@ class TestObjectRandomMovement extends BaseTest
             body.position[0] += (this.maxTiles + 2) * this.tileSize;
             let path = this.createRandomMovement(body).moveToRandomTile();
             this.assert.deepStrictEqual([...path].pop(), [this.originalTile, this.originalTile]);
+            this.assert.strictEqual(body.autoMovingGrid, false);
         });
     }
 
