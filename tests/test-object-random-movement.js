@@ -177,6 +177,28 @@ class TestObjectRandomMovement extends BaseTest
         });
     }
 
+    async testBodyInsideTheAreaNeverReturnsWithAPathOutsideIt()
+    {
+        await this.test('a body inside the area never gets a path to its original tile that leaves the area', async () => {
+            let body = this.bodyBuilder.build();
+            body.updateCurrentPoints();
+            let randomMovement = this.createRandomMovement(body);
+            this.bodyBuilder.blockColumnTiles(
+                body.world.pathFinder.grid,
+                this.originalTile + 1,
+                this.originalTile - this.maxTiles,
+                this.originalTile + this.maxTiles
+            );
+            body.autoMovingGrid = randomMovement.createMovementAreaGrid(body.world.pathFinder.grid);
+            body.position[0] += 2 * this.tileSize;
+            body.updateCurrentPoints();
+            let currentTile = [body.currentCol, body.currentRow];
+            let originalTile = [this.originalTile, this.originalTile];
+            this.assert.notStrictEqual(body.world.pathFinder.findPath(currentTile, originalTile).length, 0);
+            this.assert.deepStrictEqual(body.findAutoMovingPath(currentTile, originalTile), []);
+        });
+    }
+
     async testBodyDoesNotMoveWhileItIsAlreadyMoving()
     {
         await this.test('the body does not get a new random target while it is following a path', async () => {
