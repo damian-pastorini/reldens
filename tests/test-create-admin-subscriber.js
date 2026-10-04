@@ -62,6 +62,34 @@ class TestCreateAdminSubscriber extends BaseTest
         });
     }
 
+    async testTheSessionUserKeepsOnlyTheSessionFields()
+    {
+        await this.test('the admin session user keeps the user fields without the password and relations', async () => {
+            let expectedSessionUser = {
+                id: 1,
+                email: 'root@test.com',
+                username: 'root',
+                role_id: 99,
+                status: '1',
+                sessionRevision: 'revision-a'
+            };
+            let sessionUser = new CreateAdminSubscriber().mapSessionUser({
+                ...expectedSessionUser,
+                password: 'stored-hash',
+                related_users_login: [{id: 1, user_id: 1}],
+                related_players: [{id: 1, name: 'player'}]
+            });
+            this.assert.deepStrictEqual(sessionUser, expectedSessionUser);
+        });
+    }
+
+    async testTheSessionUserIsFalseWhenTheLoginFails()
+    {
+        await this.test('the admin session user is false when the authentication fails', async () => {
+            this.assert.strictEqual(new CreateAdminSubscriber().mapSessionUser(false), false);
+        });
+    }
+
 }
 
 module.exports.TestCreateAdminSubscriber = TestCreateAdminSubscriber;
