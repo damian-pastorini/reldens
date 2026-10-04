@@ -257,7 +257,7 @@ REPLACE INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(211, 'client', 'ui/minimap/circleColor', 'rgb(0,0,0)', 1),
 	(212, 'client', 'ui/minimap/circleFillAlpha', '0', 2),
 	(213, 'client', 'ui/minimap/circleFillColor', '1', 2),
-	(214, 'client', 'ui/minimap/circleRadio', '60', 2),
+	(214, 'client', 'ui/minimap/circleRadio', '100', 2),
 	(215, 'client', 'ui/minimap/circleStrokeAlpha', '0.6', 2),
 	(216, 'client', 'ui/minimap/circleStrokeColor', '0', 2),
 	(217, 'client', 'ui/minimap/circleStrokeLineWidth', '6', 2),

@@ -7,6 +7,10 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- Update config for trade buttons position
 UPDATE `config` SET `value` = '{"decline":{"label":"Decline","value":2},"accept":{"label":"Accept","value":1}}' WHERE `scope` = 'client' AND `path` = 'ui/options/acceptOrDecline';
 
+-- Bigger minimap circle for the simplified minimap image
+UPDATE `config` SET `value` = '100' WHERE `scope` = 'client' AND `path` = 'ui/minimap/circleRadio';
+UPDATE `config` SET `value` = '0.08' WHERE `scope` = 'client' AND `path` = 'ui/minimap/camZoom';
+
 -- Add test users root2/root3, their players, states and stats
 
 REPLACE INTO `items_item` (`id`, `key`, `type`, `group_id`, `label`, `description`, `qty_limit`, `uses_limit`, `useTimeOut`, `execTimeOut`, `customData`) VALUES
