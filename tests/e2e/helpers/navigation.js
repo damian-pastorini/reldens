@@ -63,8 +63,8 @@ class Navigation
                 return null;
             }
             return {
-                x: (args.wx - scene.cameras.main.scrollX) * scene.cameras.main.zoom,
-                y: (args.wy - scene.cameras.main.scrollY) * scene.cameras.main.zoom
+                x: scene.cameras.main.x + (args.wx - scene.cameras.main.worldView.x) * scene.cameras.main.zoom,
+                y: scene.cameras.main.y + (args.wy - scene.cameras.main.worldView.y) * scene.cameras.main.zoom
             };
         }, { wx: worldX, wy: worldY });
         if(!coords) {

@@ -22,8 +22,8 @@ class Phaser
                 return null;
             }
             return {
-                x: (found.sceneSprite.x - camera.scrollX) * camera.zoom,
-                y: (found.sceneSprite.y - camera.scrollY) * camera.zoom
+                x: camera.x + (found.sceneSprite.x - camera.worldView.x) * camera.zoom,
+                y: camera.y + (found.sceneSprite.y - camera.worldView.y) * camera.zoom
             };
         }, { prop: matchProp, value: matchValue, statusKey });
     }
@@ -56,8 +56,8 @@ class Phaser
                 return null;
             }
             return {
-                x: (anim.sceneSprite.x - scene.cameras.main.scrollX) * scene.cameras.main.zoom,
-                y: (anim.sceneSprite.y - scene.cameras.main.scrollY) * scene.cameras.main.zoom
+                x: scene.cameras.main.x + (anim.sceneSprite.x - scene.cameras.main.worldView.x) * scene.cameras.main.zoom,
+                y: scene.cameras.main.y + (anim.sceneSprite.y - scene.cameras.main.worldView.y) * scene.cameras.main.zoom
             };
         }, objKey);
     }
@@ -129,8 +129,8 @@ class Phaser
                 return null;
             }
             return {
-                x: (p.x - camera.scrollX) * camera.zoom,
-                y: (p.y - camera.scrollY) * camera.zoom
+                x: camera.x + (p.x - camera.worldView.x) * camera.zoom,
+                y: camera.y + (p.y - camera.worldView.y) * camera.zoom
             };
         }, sessionId);
     }
@@ -171,8 +171,8 @@ class Phaser
                 return null;
             }
             return {
-                x: (playerSprite.x - camera.scrollX) * camera.zoom,
-                y: (playerSprite.y - camera.scrollY) * camera.zoom
+                x: camera.x + (playerSprite.x - camera.worldView.x) * camera.zoom,
+                y: camera.y + (playerSprite.y - camera.worldView.y) * camera.zoom
             };
         });
     }
