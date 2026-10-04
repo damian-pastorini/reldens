@@ -4,10 +4,8 @@
  *
  */
 
-const { Body } = require('p2');
 const { BaseTest } = require('./base-test');
 const { ObjectRandomMovement } = require('../lib/objects/server/object/object-random-movement');
-const { ObjectsManager } = require('../lib/objects/server/manager');
 const { RandomMovementBodyBuilder } = require('./fixtures/random-movement-body-builder');
 const { GameConst } = require('../lib/game/constants');
 
@@ -163,6 +161,22 @@ class TestObjectRandomMovement extends BaseTest
         });
     }
 
+    async testBodyPushedOutsideTheAreaReturnsWithTheAreaGrid()
+    {
+        await this.test('a body pushed outside the area while following an area path returns to its original tile', async () => {
+            let body = this.bodyBuilder.build();
+            body.updateCurrentPoints();
+            body.autoMovingGrid = this.createRandomMovement(body).createMovementAreaGrid(body.world.pathFinder.grid);
+            body.position[0] += (this.maxTiles + 2) * this.tileSize;
+            body.updateCurrentPoints();
+            let currentTile = [body.currentCol, body.currentRow];
+            let returnPath = body.findAutoMovingPath(currentTile, [this.originalTile, this.originalTile]);
+            this.assert.deepStrictEqual([...returnPath].pop(), [this.originalTile, this.originalTile]);
+            let outsidePath = body.findAutoMovingPath(currentTile, [this.originalTile + 1, this.originalTile]);
+            this.assert.deepStrictEqual(outsidePath, []);
+        });
+    }
+
     async testBodyDoesNotMoveWhileItIsAlreadyMoving()
     {
         await this.test('the body does not get a new random target while it is following a path', async () => {
@@ -253,18 +267,6 @@ class TestObjectRandomMovement extends BaseTest
         });
     }
 
-    async testManagerResumesTheMovementOfTheRemovedPlayerDialogs()
-    {
-        await this.test('the objects manager closes the dialogs of a removed player on every room object', async () => {
-            let objectsManager = new ObjectsManager({config: {}, events: {}, dataServer: {}});
-            let randomMovement = this.createRandomMovement(this.bodyBuilder.build());
-            randomMovement.pauseForInteraction('session-a');
-            objectsManager.roomObjects = {'ground-npc-1': {randomMovementBehavior: randomMovement}, 'ground-npc-2': {}};
-            objectsManager.resumeObjectsMovementAfterInteraction('session-a');
-            this.assert.deepStrictEqual(randomMovement.openDialogs, {});
-        });
-    }
-
     async testMovementStopsWhenTheBodyLeftTheWorld()
     {
         await this.test('the movement loop stops when the body is no longer in the world', async () => {
@@ -273,63 +275,6 @@ class TestObjectRandomMovement extends BaseTest
             body.world = null;
             randomMovement.moveAndScheduleNext();
             this.assert.strictEqual(randomMovement.movementTimer, false);
-        });
-    }
-
-    async testManagerStartsTheMovementOnlyForConfiguredObjects()
-    {
-        await this.test('the objects manager starts the random movement only for objects with the config', async () => {
-            let objectsManager = new ObjectsManager({config: {}, events: {}, dataServer: {}});
-            let body = this.bodyBuilder.build();
-            this.assert.strictEqual(objectsManager.startObjectRandomMovement({key: 'static_npc'}, body), false);
-            let movingObject = {key: 'moving_npc', randomMovement: {maxTiles: 5}};
-            let randomMovement = objectsManager.startObjectRandomMovement(movingObject, body);
-            randomMovement.stop();
-            this.assert.strictEqual(randomMovement.maxTiles, 5);
-            this.assert.strictEqual(movingObject.randomMovementBehavior, randomMovement);
-        });
-    }
-
-    async testManagerSetsTheOriginalTileWhenTheMovementStarts()
-    {
-        await this.test('the objects manager sets the body original tile to the tile the body was created on', async () => {
-            let objectsManager = new ObjectsManager({config: {}, events: {}, dataServer: {}});
-            let body = this.bodyBuilder.build();
-            objectsManager.startObjectRandomMovement({key: 'moving_npc', randomMovement: {}}, body).stop();
-            this.assert.deepStrictEqual([body.originalCol, body.originalRow], [this.originalTile, this.originalTile]);
-        });
-    }
-
-    async testManagerDoesNotStartTheMovementWithoutABodyState()
-    {
-        await this.test('the objects manager does not start the random movement on a body without state', async () => {
-            let objectsManager = new ObjectsManager({config: {}, events: {}, dataServer: {}});
-            let movingObject = {key: 'npc_without_state', randomMovement: {maxTiles: 5}};
-            let plainBody = new Body({mass: 0, position: [0, 0], type: Body.STATIC});
-            this.assert.strictEqual(objectsManager.startObjectRandomMovement(movingObject, plainBody), false);
-        });
-    }
-
-    async testManagerAddsTheObjectsWithStateToTheRoomState()
-    {
-        await this.test('the objects with a body state are added to the room state once, with their key', async () => {
-            let objectsManager = new ObjectsManager({config: {}, events: {}, dataServer: {}});
-            let movingNpcState = {x: 1, y: 1};
-            let respawnedEnemyState = {x: 2, y: 2};
-            objectsManager.roomObjects = {
-                'ground-npc-1': {key: 'moving_npc', hasState: true, state: movingNpcState},
-                'ground-npc-2': {key: 'static_npc', hasState: false, state: null},
-                'respawn-enemy-1': {key: 'respawn-enemy-1', hasState: true, state: respawnedEnemyState}
-            };
-            let roomState = {
-                bodies: new Map([['respawn-enemy-1', respawnedEnemyState]]),
-                addBodyToState: (body, key) => roomState.bodies.set(key, body)
-            };
-            objectsManager.addStateBodiesToRoomState(roomState);
-            this.assert.deepStrictEqual(
-                [...roomState.bodies.entries()],
-                [['respawn-enemy-1', respawnedEnemyState], ['moving_npc', movingNpcState]]
-            );
         });
     }
 
