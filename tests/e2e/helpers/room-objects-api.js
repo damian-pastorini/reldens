@@ -11,6 +11,7 @@
  */
 
 const { SecurityApi } = require('./security-api');
+const { RoomMovementApi } = require('./room-movement-api');
 
 class RoomObjectsApi
 {
@@ -60,7 +61,19 @@ class RoomObjectsApi
         if(!placement.position){
             return placement;
         }
-        placement.targeted = await RoomObjectsApi.targetBodyAtPosition(page, placement.bodyKey, placement.position, timeout);
+        placement.targeted = await RoomObjectsApi.targetBodyAtPosition(
+            page,
+            placement.bodyKey,
+            placement.position,
+            timeout
+        ).catch(() => false);
+        if(!placement.targeted){
+            placement.serverBody = await RoomMovementApi.fetchObject(gameConfig, roomName, placement.enemyKey);
+            placement.clientBody = await page.evaluate(
+                (bodyKey) => window.reldens.activeRoomEvents.room.state.bodies.get(bodyKey)?.toJSON() || false,
+                placement.bodyKey
+            );
+        }
         return placement;
     }
 
