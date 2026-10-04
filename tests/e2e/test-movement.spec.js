@@ -226,6 +226,11 @@ class TestMovement
                 await page.click(Selectors.hud.minimapOpen);
                 await page.waitForTimeout(pauseMs);
                 await expect(page.locator(Selectors.hud.minimapUi)).not.toHaveClass(/hidden/, { timeout: uiTimeout });
+                await page.waitForFunction(
+                    () => true === window.reldens.getActiveScene().minimap?.minimapCamera?.visible,
+                    null,
+                    { timeout: TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun) }
+                );
                 let minimapState = await TestMovement.fetchMinimapState(page);
                 expect(minimapState.textureSize).toEqual(minimapState.expectedTextureSize);
                 expect(minimapState.markerPosition).toEqual(minimapState.expectedMarkerPosition);
