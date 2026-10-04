@@ -37,3 +37,40 @@
     }
 
 }
+
+.reload-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 3000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0, 0, 0, 0.7);
+    cursor: default;
+
+    .reload-modal-content {
+        width: 100%;
+        max-width: min(90vw, 26rem);
+        box-sizing: border-box;
+        padding: 2rem 1rem;
+        background-color: $cDarkBlue;
+        color: $cWhite;
+        text-align: center;
+    }
+
+    .reload-modal-message {
+        margin: 0 0 1.5rem;
+        font-size: 1.1rem;
+    }
+
+    .reload-modal-button {
+        padding: 8px 24px;
+        border: 1px solid $cLightGrey;
+        box-shadow: 4px 4px 8px 0 #0009;
+        cursor: pointer;
+    }
+
+}
