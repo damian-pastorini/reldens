@@ -149,6 +149,7 @@ All the mailer variables are read once by `EnvironmentVariablesReader.fetchMaile
 
 - `RELDENS_PING_INTERVAL` - Ping interval in ms (default: 5000)
 - `RELDENS_PING_MAX_RETRIES` - Max ping retries (default: 3)
+- `RELDENS_ENCODER_BUFFER_KB` - Initial size in KB of the room state encoder buffer (`@colyseus/schema` `Encoder.BUFFER_SIZE`, default: 64); a room state larger than the buffer is still sent (the buffer grows) but logs the "buffer overflow" warning once per room instance
 
 ## Firebase
 
