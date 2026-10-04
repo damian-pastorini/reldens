@@ -33,7 +33,7 @@
         "url": "https://github.com/damian-pastorini/reldens/issues"
     },
     "engines": {
-        "node": ">=22.12.0"
+        "node": ">=22.15.0"
     },
     "bin": {
         "reldens": "bin/reldens-commands.js",
@@ -106,13 +106,13 @@
         "@parcel/transformer-worklet": "2.16.4",
         "@parcel/transformer-xml": "2.16.4",
         "@parcel/transformer-yaml": "2.16.4",
-        "@reldens/cms": "^0.96.0",
+        "@reldens/cms": "^0.100.0",
         "@reldens/game-data-generator": "^0.38.0",
         "@reldens/items-system": "^0.56.0",
         "@reldens/modifiers": "^0.40.0",
         "@reldens/server-utils": "^0.62.0",
         "@reldens/skills": "^0.54.0",
-        "@reldens/storage": "^0.122.0",
+        "@reldens/storage": "^0.124.0",
         "@reldens/tile-map-generator": "^0.58.0",
         "@reldens/tileset-to-tilemap": "^0.28.0",
         "@reldens/utils": "^0.60.0",
