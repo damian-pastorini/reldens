@@ -69,6 +69,11 @@ class Selectors
             guestForm: '#guest-form',
             guestSubmit: '#guest-form [type="submit"]'
         };
+        this.reloadModal = {
+            container: '.reload-modal',
+            message: '.reload-modal-message',
+            button: '.reload-modal-button'
+        };
         this.register = {
             form: '#register-form',
             username: '#reg-username',

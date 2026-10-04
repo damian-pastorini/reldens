@@ -126,17 +126,17 @@ class TestAuthentication
                     await Login.loginAndStartGame(page, username, password, playerName, longRun, true);
                     await expect(page.locator(Selectors.canvas)).toBeVisible();
                     await screenshots.capture(page, 'p1-first-session-in-game');
-                    page.on('dialog', async (dialog) => {
-                        await dialog.accept();
-                    });
-                    let loginFormPromise = page.waitForSelector(
-                        Selectors.login.form,
-                        { state: 'visible', timeout: TimeConstants.forLongRun(TimeConstants.GAME_START, longRun) }
-                    );
+                    let gameStartTimeout = TimeConstants.forLongRun(TimeConstants.GAME_START, longRun);
                     await Login.loginAndStartGame(secondPage, username, password, playerName, longRun, true);
                     await expect(secondPage.locator(Selectors.canvas)).toBeVisible();
                     await screenshots.capture(secondPage, 'p2-second-session-in-game');
-                    await loginFormPromise;
+                    await expect(page.locator(Selectors.reloadModal.message)).toHaveText(
+                        'Your session ended, please login again.',
+                        { timeout: gameStartTimeout }
+                    );
+                    await screenshots.capture(page, 'p1-session-ended-reload-modal');
+                    await page.click(Selectors.reloadModal.button);
+                    await page.waitForSelector(Selectors.login.form, { state: 'visible', timeout: gameStartTimeout });
                     await screenshots.capture(page, 'p1-disconnected-back-to-login');
                 }
             );
