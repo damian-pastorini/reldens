@@ -106,13 +106,14 @@ class TestInstallationProcess extends BaseTest
         });
     }
 
-    async testInstallerDefaultsToTheNodemailerService()
+    async testInstallerDefaultsToTheNoneMailerService()
     {
-        await this.test('the installer selects the nodemailer service by default', async () => {
+        await this.test('the installer selects the none mailer service by default', async () => {
             let installer = this.createInstaller();
             let defaults = installer.fetchDefaults();
             FileHandler.remove(this.installProjectRoot);
-            this.assert.strictEqual(defaults['mailer-service-nodemailer'], ' selected="selected"');
+            this.assert.strictEqual(defaults['mailer-service-none'], ' selected="selected"');
+            this.assert.strictEqual(sc.hasOwn(defaults, 'mailer-service-nodemailer'), false);
             this.assert.strictEqual(defaults['mailer-secure-checked'], ' checked="checked"');
         });
     }
