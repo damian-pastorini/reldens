@@ -2,12 +2,15 @@
  *
  * Reldens - Server Teardown
  *
- * Playwright globalTeardown: gracefully shuts down the game server after the test suite completes.
+ * Playwright globalTeardown: restores the security state changed by the last test (bans, address lists, reset
+ * emails and mailer), so it never reaches the next run on the same database, and gracefully shuts down the game
+ * server after the test suite completes.
  *
  */
 
 const { Logger } = require('@reldens/utils');
 const { CollectGameData } = require('./collect-game-data');
+const { SecurityState } = require('./helpers/security-state');
 
 class ServerTeardown
 {
@@ -22,6 +25,7 @@ class ServerTeardown
             Logger.info('[server-teardown] No game server to shut down.');
             return;
         }
+        await SecurityState.resetAll(serverManager);
         await serverManager.gameServer.gracefullyShutdown(false);
         Logger.info('[server-teardown] Server shutdown complete.');
     }
