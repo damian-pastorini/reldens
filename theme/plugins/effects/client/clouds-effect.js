@@ -6,8 +6,6 @@
  *
  */
 
-const { Logger } = require('@reldens/utils');
-
 class CloudsEffect
 {
 
@@ -49,7 +47,6 @@ class CloudsEffect
     create(sceneDynamic, cloudsConfig)
     {
         if(!sceneDynamic.textures.exists(this.textureKey)){
-            Logger.error('Clouds texture not loaded.', this.texturePath);
             return [];
         }
         let config = Object.assign({}, this.defaults, cloudsConfig);

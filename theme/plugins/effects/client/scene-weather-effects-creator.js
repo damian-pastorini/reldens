@@ -9,7 +9,6 @@
 
 const { CloudsEffect } = require('./clouds-effect');
 const { RainEffect } = require('./rain-effect');
-const { sc } = require('@reldens/utils');
 
 class SceneWeatherEffectsCreator
 {
@@ -28,15 +27,15 @@ class SceneWeatherEffectsCreator
     createForScene(sceneDynamic)
     {
         this.activeObjects = [];
-        let weather = sc.get(sc.get(sceneDynamic.params, 'customData', {}), 'weather', false);
+        let weather = sceneDynamic.params?.customData?.weather || false;
         if(!weather){
             return false;
         }
-        let cloudsConfig = sc.get(weather, 'clouds', false);
+        let cloudsConfig = weather.clouds || false;
         if(cloudsConfig){
             this.activeObjects.push(...this.cloudsEffect.create(sceneDynamic, cloudsConfig));
         }
-        let rainConfig = sc.get(weather, 'rain', false);
+        let rainConfig = weather.rain || false;
         if(rainConfig){
             this.activeObjects.push(...this.rainEffect.create(sceneDynamic, rainConfig));
         }
