@@ -64,7 +64,7 @@
                                     <ul>
                                         <li>The installer will attempt to run npm install for missing packages.</li>
                                         <li>Uncheck this only if you have manually installed all required packages or if you are not using NPM.</li>
-                                        <li>Required packages: reldens (always); prisma, @prisma/client and the Prisma adapter (Prisma driver only); @sendgrid/mail (SendGrid mailer only).</li>
+                                        <li>Required packages: reldens (always); the selected storage driver packages (Knex is included with Reldens); the selected mailer service package.</li>
                                     </ul>
                                 </span>
                             </div>
@@ -137,7 +137,7 @@
                         </div>
                         <div class="notice-box">
                             <ul>
-                                <li>Knex is always available, the other storage drivers are listed only when their packages are installed in the project.</li>
+                                <li>Knex is always available, the drivers marked "(will be installed)" are installed only when "Allow installer to run npm install for missing packages" is checked.</li>
                             </ul>
                         </div>
                         <div class="input-box db-client">

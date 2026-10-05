@@ -82,7 +82,7 @@ class TestInstallationProcess extends BaseTest
 
     async testInstallerDefaultsToTheKnexStorageDriver()
     {
-        await this.test('the installer defaults to the knex storage driver and lists only the available drivers', async () => {
+        await this.test('the installer defaults to the knex storage driver and lists every driver', async () => {
             let previousEnvironment = {
                 RELDENS_STORAGE_DRIVER: sc.get(process.env, 'RELDENS_STORAGE_DRIVER', false),
                 RELDENS_DB_CLIENT: sc.get(process.env, 'RELDENS_DB_CLIENT', false)
@@ -102,7 +102,13 @@ class TestInstallationProcess extends BaseTest
             this.assert.strictEqual(dbConfig.storageDriver, 'knex');
             this.assert.strictEqual([...options].shift().key, 'knex');
             this.assert.strictEqual([...options].shift().selected, ' selected="selected"');
-            this.assert.strictEqual(options.every(option => availableKeys.includes(option.key)), true);
+            this.assert.deepStrictEqual(
+                options.map(option => option.key),
+                StorageDriversResolver.drivers().map(driver => driver.key)
+            );
+            let labelsToInstall = options.filter(option => !availableKeys.includes(option.key))
+                .map(option => option.label.endsWith(installer.driverToInstallLabel));
+            this.assert.strictEqual(labelsToInstall.every(endsWithLabel => endsWithLabel), true);
         });
     }
 
