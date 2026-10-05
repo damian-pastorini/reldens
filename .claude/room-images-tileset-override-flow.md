@@ -9,7 +9,7 @@ This document explains how the room scene images upload system works and how the
 **Config Path:** `server/rooms/maps/overrideSceneImagesWithMapFile`
 **Type:** Boolean
 **Default:** `true`
-**Location:** Database `config` table (read through `ConfigManager.getWithoutLogs`; there is no environment-variable override for config paths)
+**Location:** Database `config` table, as `scope` `server` plus `path` `rooms/maps/overrideSceneImagesWithMapFile` (read through `ConfigManager.getWithoutLogs`; there is no environment-variable override for config paths). No row is seeded, so the default applies until one is added.
 
 When enabled, the system uses the Tiled map file as the source of truth for scene images, automatically overriding the `scene_images` field with images listed in the map's tilesets.
 
@@ -304,17 +304,29 @@ for (let icon of document.querySelectorAll('.alert-icon')) {
 1. **One-Way Sync:** Map -> Database only (not bidirectional)
 2. **Cleanup Required:** Removing tileset from map doesn't delete old image files
 3. **Override Always Wins:** Manual changes to scene_images get overwritten on next save
-4. **Requires Config:** Must enable `overrideSceneImagesWithMapFile` to activate
+4. **Active by Default:** the key is not seeded in the `config` table and both readers default to `true`, so the override runs until a row with value `0` is added
 
 ## Disabling the Feature
 
-To disable tileset override and manage images manually, set the config value in the database (the key is read only from the `config` table):
+The feature is active by default: no `config` row is seeded for it, and both `RoomMapTilesetsValidator.validate()` (`lib/admin/server/room-map-tilesets-validator.js`) and `RoomsEntitySubscriber.populateEditFormTilesetImages()` (`lib/admin/server/subscribers/rooms-entity-subscriber.js`) read it with `true` as the fallback:
+
+```javascript
+let overrideEnabled = this.config.getWithoutLogs('server/rooms/maps/overrideSceneImagesWithMapFile', true);
+```
+
+To disable tileset override and manage images manually, add the config row (the key is read only from the `config` table; the `path` column excludes the `server` scope, and type `3` is `boolean` in `config_types`):
 
 ```sql
-UPDATE config
-SET value = '0'
-WHERE path = 'server/rooms/maps/overrideSceneImagesWithMapFile';
+INSERT INTO config (scope, path, value, type) VALUES ('server', 'rooms/maps/overrideSceneImagesWithMapFile', '0', 3);
 ```
+
+If the row already exists, update it instead:
+
+```sql
+UPDATE config SET value = '0' WHERE scope = 'server' AND path = 'rooms/maps/overrideSceneImagesWithMapFile';
+```
+
+The `config` table is loaded into `ConfigManager` at startup, so a row added or changed by SQL takes effect after a server restart.
 
 **Result:**
 - Post-save validation skipped

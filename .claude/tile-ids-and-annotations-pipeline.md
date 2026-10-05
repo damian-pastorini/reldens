@@ -50,7 +50,7 @@ That fallback is a trap. Provider values are optimized gids and posted config va
 
 ## Option vocabularies
 
-The three vocabularies live in one place, `npm-packages/tileset-to-tilemap/lib/constants.js`, and are consumed by both `TileOptionsMerger` and `CompositeAnnotationResolver`:
+The three vocabularies live in one place, `lib/constants.js` of `@reldens/tileset-to-tilemap` (`TilesetConst`), and are consumed by both `TileOptionsMerger` and `CompositeAnnotationResolver`:
 
 - `SCALAR_TILE_PROPS`: `groundTile`, `pathTile`, `borderTile`
 - `LIST_TILE_PROPS`: `groundTiles`, `randomGroundTiles`
@@ -62,7 +62,20 @@ Positional options are keyed either by relative coordinates (`-1,-1` through `1,
 
 Annotations are Tiled tile properties named `key` whose value is:
 
-- `groundTile` and `pathTile` for the scalars. Every entry of `groundTiles` is annotated as `groundTile`; `ElementsProvider.fetchPathTiles` collects the first into `groundTile`, the rest into `groundTiles`, then zeroes `groundTile` so the generator picks one at random per map.
+- `groundTile` and `pathTile` for the scalars. Every entry of `groundTiles` is annotated as `groundTile`; `ElementsProvider.fetchPathTiles` collects the first into `groundTile` and the rest into `groundTiles`. When `groundTiles` is not empty it also appends the first tile to `groundTiles`, then zeroes `groundTile` so the generator picks one at random per map:
+
+```js
+if(0 < this.groundTiles.length){
+    if(0 !== this.groundTile && -1 === this.groundTiles.indexOf(this.groundTile)){
+        this.groundTiles.push(this.groundTile);
+    }
+    if(-1 !== this.groundTiles.indexOf(0)){
+        this.groundTiles.splice(this.groundTiles.indexOf(0), 1);
+    }
+    this.groundTile = 0;
+}
+```
+
 - `border-<side>` and `border-<corner>` for `bordersTiles` merged with `borderCornersTiles`.
 - `border-inner-corner-<corner>` for `borderInnerCornersTiles`. This branch must be tested BEFORE the generic `border-` branch in `fetchPathTiles`, otherwise the substring match swallows it.
 - spot annotations are prefixed with the normalized spot name.
@@ -75,7 +88,7 @@ The border is drawn by `MapBorderGenerator.drawBorderLayer` from `bordersTiles`,
 
 Inner walls hang below the top border. `WallsGenerator.createLayerInnerWalls` places two tiles per matching column: the middle wall row directly below the border, then the top row below it, since `determineWallTiles` returns the pair middle first and `placeWallTiles` writes index 0 at `y + 1`. A third tile is appended when a bottom row slot (`sBC`/`sBL`/`sBR`) is configured. `InnerWalls.sequences` then caps each horizontal run.
 
-This ordering looks inverted when read on its own, but it is the committed behaviour and it is what the real dungeon maps require. `WallsGenerator`, `InnerWalls` and the pattern classes are SHARED between the spot walls (used by the dungeon cave rooms) and the map border walls. Do not change the row order or the run caps to fix an appearance problem seen on a single map. `tests/test-data/dungeon-walls-expected.json` is the guard: if it fails after a walls change, the change is wrong. Never regenerate that expected file to make such a failure go away, because the spot wall validators only check pair membership and will not catch the inversion.
+This ordering looks inverted when read on its own, but it is the committed behaviour and it is what the real dungeon maps require. `WallsGenerator`, `InnerWalls` and the pattern classes are SHARED between the spot walls (used by the dungeon cave rooms) and the map border walls. Do not change the row order or the run caps to fix an appearance problem seen on a single map. `tests/test-data/dungeon-walls-expected.json` in the `@reldens/tile-map-generator` package tests is the guard: if it fails after a walls change, the change is wrong. Never regenerate that expected file to make such a failure go away, because the spot wall validators only check pair membership and will not catch the inversion.
 
 Because the generator names the row below the border `middle` and the row under it `top`, and caps runs with `sMR` on the left, a wall block picked in natural reading order reaches the generator rotated 180 degrees. That rotation is applied once, in `CompositeWangsetBuilder.remapWallsPositions()` against `MAP_BORDER_WALLS_SURROUNDING_POSITIONS` and `MAP_BORDER_WALLS_CORNER_POSITIONS`. The admin grid keeps natural `data-pos` values and no wangid table was duplicated.
 
@@ -83,7 +96,7 @@ One known limit of the current wall implementation, by design of the existing al
 
 - the first and last columns are skipped, because the tile below the top border there is the left or right border tile and the placement gate requires an empty cell below
 
-`MapBorderWallsDrawer` (`lib/generator/map-border-walls-drawer.js`) owns the border walls. A top border opening would be sealed by the wall drawn directly below it, so `openWallsForEntryPosition()` clears both wall rows over the opening columns, marks those grid positions walkable, and re-applies the inner walls patterns so the two new run ends get their end tiles.
+`MapBorderWallsDrawer` (`@reldens/tile-map-generator` `lib/generator/map-border-walls-drawer.js`) owns the border walls. A top border opening would be sealed by the wall drawn directly below it, so `openWallsForEntryPosition()` clears both wall rows over the opening columns, marks those grid positions walkable, and re-applies the inner walls patterns so the two new run ends get their end tiles.
 
 Entry openings are cut by `createEntryPosition`, and the two tiles flanking the gap are stamped by `stampEntryPositionEnds` through `fetchOpeningEndTile`, which resolves two different vocabularies:
 
@@ -94,7 +107,7 @@ When the map is auto grown, `redrawBorderForGrownMap` rebuilds the border ring a
 
 ## Checklist for adding a new tile option
 
-1. Add the key to the right list in `tileset-to-tilemap/lib/constants.js`. This alone wires `TileOptionsMerger` and `CompositeAnnotationResolver`.
+1. Add the key to the right list in `lib/constants.js` of `@reldens/tileset-to-tilemap`. This alone wires `TileOptionsMerger` and `CompositeAnnotationResolver`.
 2. Emit its annotation in `CompositeTileAnnotationBuilder.buildTileAnnotations`.
 3. Park its ids in `CompositeTileAnnotationBuilder.collectAnnotatedFlatIds`, otherwise the optimizer drops the tiles.
 4. Add the key to the `MapsWizardConfigBuilder.applyTileOptions` allow list.
@@ -105,4 +118,4 @@ When the map is auto grown, `redrawBorderForGrownMap` rebuilds the border ring a
 
 ## Environment note
 
-The reldens project resolves `@reldens/tileset-to-tilemap`, `@reldens/tile-map-generator` and `@reldens/tile-map-optimizer` from `reldens/node_modules`, which is linked to the sources under `npm-packages`, so edits there take effect immediately. The separate copy under `app/node_modules` can be stale and is not the one used by the admin. Check which copy is live before concluding that a change had no effect.
+When you change `@reldens/tileset-to-tilemap`, `@reldens/tile-map-generator` or `@reldens/tile-map-optimizer`, make sure the `@reldens/*` copy your project resolves is the one you edited before concluding that a change had no effect.

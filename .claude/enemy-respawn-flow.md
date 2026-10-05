@@ -143,9 +143,9 @@ Place the sprite PNG under:
 theme/default/assets/custom/sprites/your-sprite.png
 ```
 
-After the theme is built/deployed, it must also exist at:
+After the theme is built/deployed, it must also exist in the project root at:
 ```
-app/dist/assets/custom/sprites/your-sprite.png
+dist/assets/custom/sprites/your-sprite.png
 ```
 
 The client preloader loads it from `/assets/custom/sprites/<asset_file>`.
@@ -192,38 +192,37 @@ These are the actual values from the default Reldens installation, not templates
 
 Reads the `objects` row for the area, instantiates `MultipleObject` as the container, resolves `EnemyObject` as the child class via `childObjectType=4`, and stores the template in `roomObjectsByLayer` keyed by the map layer name. No child instances are created yet - this just prepares the template.
 
-Called from `RoomScene.onCreate` after loading all object rows for the room.
+Called from `RoomScene.onCreate` (through `ObjectsManager.generateObjects`) after loading all object rows for the room.
 
-Line 102: `let objClass = this.config.getWithoutLogs('server/customClasses/objects/enemy_1', false)` - returns `false` (not in customClasses).
-Line 104: `objClass = this.resolveClassFromTypes(objectClassTypes, 7)` - returns `MultipleObject`.
-Lines 110-113: builds `objProps` merging config/events/dataServer with all DB row fields.
-Line 116: `this.prepareInitialStats(objProps)` - object id=6 has ten `related_objects_stats` rows (`objects_stats` ids 21-30), so `objProps.initialStats` is filled with them keyed by stat key, and the spawned enemies use them.
-Line 117: `let objectInstance = new MultipleObject(objProps)`.
+- `let objClass = this.config.getWithoutLogs('server/customClasses/objects/'+objectData.object_class_key, false)` - returns `false` for `'enemy_1'` (not in customClasses).
+- `objClass = this.resolveClassFromTypes(objectClassTypes, objectData.class_type)` - class type 7 returns `MultipleObject`.
+- builds `objProps` merging config/events/dataServer with all DB row fields.
+- `this.prepareInitialStats(objProps)` - object id=6 has ten `related_objects_stats` rows (`objects_stats` ids 21-30), so `objProps.initialStats` is filled with them keyed by stat key, and the spawned enemies use them.
+- `let objectInstance = new objClass(objProps)`, a `MultipleObject`.
 
 Inside `MultipleObject` constructor (`lib/objects/server/object/type/multiple-object.js`):
-- Line 19: `super(props)` calls `BaseObject` constructor.
-- `BaseObject` line 27: `Object.assign(this, props)` - assigns ALL props including all DB fields.
-- `BaseObject` line 44: `this.appendIndex = sc.get(props, 'tile_index', props.id)` = 6 (tile_index is NULL so uses id).
-- `BaseObject` line 46: `this.objectIndex = 'merge-respawn-area-monsters' + 6` = `'merge-respawn-area-monsters6'`.
-- `BaseObject` line 48: `this.key = props.client_key` = `'enemy_forest_1'`.
-- `BaseObject` line 54: calls `mapClientParams(props)` - parses `client_params='{"autoStart":true}'`, sets `this.clientParams.key = 'enemy_forest_1'`, `this.clientParams.id = 6`.
-- `BaseObject` line 55: calls `mapPrivateParams(props)` - parses `private_params`, sets `this.shouldRespawn = true`, `this.childObjectType = 4`, `this.isAggressive = true`.
-- `MultipleObject` line 21: `this.multiple = true`.
-- `MultipleObject` line 23: `this.classInstance = false`.
+- `super(props)` calls `BaseObject` constructor.
+- `BaseObject`: `Object.assign(this, props)` - assigns ALL props including all DB fields.
+- `BaseObject`: `this.appendIndex = sc.get(props, 'tile_index', null)`, the NULL `tile_index` of the area row stays `null`.
+- `BaseObject`: `this.objectIndex = props.layer_name + (this.appendIndex || '-idx-'+props.id)`, with a `null` append index it is `'merge-respawn-area-monsters-idx-6'`.
+- `BaseObject`: `this.key = props.client_key` = `'enemy_forest_1'`.
+- `BaseObject`: calls `mapClientParams(props)` - parses `client_params='{"autoStart":true,"frameStart":12,"frameEnd":26,"repeat":-1}'`, sets `this.clientParams.key = 'enemy_forest_1'`, `this.clientParams.id = 6`.
+- `BaseObject`: calls `mapPrivateParams(props)` - parses `private_params`, sets `this.shouldRespawn = true`, `this.childObjectType = 4`, `this.isAggressive = true`.
+- `MultipleObject`: `this.multiple = true`.
+- `MultipleObject`: `this.classInstance = false`.
 
-Back in manager.js:
-Line 118: `this.attachToAnimations(objectInstance)` - checks `sc.hasOwn(objectInstance, 'isAnimation')` and `sc.hasOwn(objectInstance, 'hasAnimation')`. `MultipleObject` has neither. NOT added to `objectsAnimationsData`.
-Line 119: `if(objectInstance.multiple)` - true.
-Line 120: `objectInstance.objProps = objProps`.
-Line 121: `let childClassKey = sc.get(objectInstance, 'childObjectClassKey', false)` = false (not set on enemy).
-Lines 122-124: `subObjClass = false` since childClassKey is false.
-Line 126: `subObjClass = this.resolveClassFromTypes(objectClassTypes, objectInstance.childObjectType)` = `this.resolveClassFromTypes(objectClassTypes, 4)` = `EnemyObject`.
-Line 134: `objectInstance.classInstance = EnemyObject`.
-Line 136: `this.enrichWithMultipleAnimationsData(objectData, objectInstance)` - object id=6 has four `related_objects_animations` rows, so `objectInstance.multipleAnimations` is filled with `{'merge-respawn-area-monsters_6_right': {...}, ..._down, ..._left, ..._up}`.
-Line 137: `this.attachToMessagesListeners(objectInstance, objectData)` - `sc.hasOwn(objectInstance, 'listenMessages')` = false (MultipleObject has no listenMessages). Returns false. NOT added to `listenMessagesObjects`.
-Line 138: `this.prepareAssetsPreload(objectData)` - adds the `objects_assets` row (object_asset_id=5) to `preloadAssets`. This causes client to preload `'enemy_forest_1'` spritesheet.
-Line 145: `this.roomObjects['merge-respawn-area-monsters6'] = objectInstance`.
-Line 149: `this.roomObjectsByLayer['merge-respawn-area-monsters'][6] = objectInstance`.
+Back in `ObjectsManager.generateObjectFromObjectData`:
+- `this.attachToAnimations(objectInstance)` - checks `sc.hasOwn(objectInstance, 'isAnimation')` and `sc.hasOwn(objectInstance, 'hasAnimation')`. `MultipleObject` has neither. NOT added to `objectsAnimationsData`.
+- `if(objectInstance.multiple)` - true.
+- `objectInstance.objProps = objProps`.
+- `let childClassKey = sc.get(objectInstance, 'childObjectClassKey', false)` = false (not set on enemy), so `subObjClass` starts as false.
+- `subObjClass = this.resolveClassFromTypes(objectClassTypes, objectInstance.childObjectType)` = `this.resolveClassFromTypes(objectClassTypes, 4)` = `EnemyObject`.
+- `objectInstance.classInstance = subObjClass`, so `EnemyObject`.
+- `this.enrichWithMultipleAnimationsData(objectData, objectInstance)` - object id=6 has four `related_objects_animations` rows, so `objectInstance.multipleAnimations` is filled with `{'merge-respawn-area-monsters_6_right': {...}, ..._down, ..._left, ..._up}`.
+- `this.attachToMessagesListeners(objectInstance, objectData)` - `sc.hasOwn(objectInstance, 'listenMessages')` = false (MultipleObject has no listenMessages). Returns false. NOT added to `listenMessagesObjects`.
+- `this.prepareAssetsPreload(objectData)` - adds the `objects_assets` row (object_asset_id=5) to `preloadAssets`. This causes client to preload `'enemy_forest_1'` spritesheet.
+- `this.roomObjects[objectInstance.objectIndex] = objectInstance`, so `roomObjects['merge-respawn-area-monsters-idx-6']`. The Tree Punch area (object id=7) is on the same layer with a NULL `tile_index` too, its own id keeps it apart as `roomObjects['merge-respawn-area-monsters-idx-7']`.
+- `this.roomObjectsByLayer[objectData.layer_name][objectData.id] = objectInstance` - the layer list is keyed by the object id, so `roomObjectsByLayer['merge-respawn-area-monsters']` keeps both areas: `{6: treeArea, 7: treePunchArea}`.
 
 ---
 
@@ -231,22 +230,25 @@ Line 149: `this.roomObjectsByLayer['merge-respawn-area-monsters'][6] = objectIns
 
 Scans Tiled map layers during world creation. When a layer named `respawn-area-*` is found, fires an event that triggers `RespawnPlugin` to create a `RoomRespawn` instance for that layer, which will own all spawn tile tracking and instance creation.
 
-During `RoomScene.createWorld`, P2world parses the map layers. For each map layer (p2world.js lines 257-260):
+During `RoomScene.createWorld`, `P2world.createWorldContent` parses the map layers. After the bodies queue is processed it loops the map layers again:
 
-Event `reldens.parsingMapLayersAfterBodiesQueue` fires with `{layer, world}`.
-
-In `RespawnPlugin.listenEvents` (`lib/respawn/server/plugin.js` line 59):
-```
-this.events.on('reldens.parsingMapLayersAfterBodiesQueue', async (eventData) => {
-    await this.createRoomRespawnArea(layer, world);
-});
+```javascript
+for(let layer of mapLayers) {
+    let eventData = {layer, world: this};
+    await this.events.emit('reldens.parsingMapLayersAfterBodiesQueue', eventData);
+}
 ```
 
-`createRoomRespawnArea` (line 131):
-- Line 133: checks layer name contains `'respawn-area'`. True for `'merge-respawn-area-monsters'`.
-- Line 140-146: creates `new RoomRespawn({layer, world, events, dataServer, config})`.
-- Line 147: `await respawnArea.activateObjectsRespawn()`.
-- Line 148: `world.respawnAreas['merge-respawn-area-monsters'] = respawnArea`.
+In `RespawnPlugin.listenEvents` (`lib/respawn/server/plugin.js`) the listener validates the layer and the world from the event data and then runs:
+```javascript
+await this.createRoomRespawnArea(layer, world);
+```
+
+`RespawnPlugin.createRoomRespawnArea`:
+- checks layer name contains `'respawn-area'`. True for `'merge-respawn-area-monsters'`.
+- creates `new RoomRespawn({layer, world, events, dataServer, config})`.
+- `await respawnArea.activateObjectsRespawn()`.
+- `world.respawnAreas['merge-respawn-area-monsters'] = respawnArea`.
 
 ---
 
@@ -254,19 +256,17 @@ this.events.on('reldens.parsingMapLayersAfterBodiesQueue', async (eventData) => 
 
 Parses the map layer to build the pool of valid spawn tiles, queries the `respawn` table for the matching definition, and calls `createNewObjectInstance` once per slot up to `instances_limit`.
 
-Line 71: `this.parseMapForRespawnTiles()` - reads the layer data array. For `'merge-respawn-area-monsters'`, iterates all map tiles. Tiles with value != 0 are pushed to `this.respawnTiles` and `this.respawnTilesData[tileIndex] = {x, y, tile, tile_index, row, column}`.
-
-Line 73: `this.layerObjects = this.world.objectsManager.roomObjectsByLayer['merge-respawn-area-monsters']` = `{6: multipleObjectInstance}`.
-Line 83-86: queries the `respawn` entity with `{layer: 'merge-respawn-area-monsters', object_id: {operator: 'IN', value: ['6']}}` - returns row id=3.
-Line 87: iterates respawnDefinitions.
-Line 89: `sc.hasOwn(this.layerObjects, 3.object_id)` = `sc.hasOwn(this.layerObjects, 6)` = true.
-Line 93: `sc.hasOwn(this.layerObjects[6], 'shouldRespawn')` = true (set by mapPrivateParams).
-Line 97: `let multipleObj = this.layerObjects[6]`.
-Line 98: `if(!multipleObj.objProps.enabled)` - `objProps.enabled = 1` (from DB row) - truthy, continues.
-Line 102: `let objClass = multipleObj.classInstance` = `EnemyObject`.
-Line 107: loops `qty = 0; qty < 2` (instances_limit=2).
-Line 108: calls `createNewObjectInstance(respawnArea, multipleObj, EnemyObject, tilewidth, tileheight, 0)`.
-Line 108: calls `createNewObjectInstance(respawnArea, multipleObj, EnemyObject, tilewidth, tileheight, 1)`.
+- `this.parseMapForRespawnTiles()` - reads the layer data array. For `'merge-respawn-area-monsters'`, iterates all map tiles. Tiles with value != 0 are pushed to `this.respawnTiles` and `this.respawnTilesData[tileIndex] = {x, y, tile, tile_index, row, column}`.
+- `this.layerObjects = this.world.objectsManager.roomObjectsByLayer[this.layer.name]` = `{6: treeArea, 7: treePunchArea}` (both area objects of the layer).
+- queries the `respawn` entity with `{layer: 'merge-respawn-area-monsters', object_id: {operator: 'IN', value: ['6', '7']}}` - returns rows id=3 (object 6) and id=4 (object 7).
+- iterates `this.respawnDefinitions`, for row id=3:
+- `sc.hasOwn(this.layerObjects, respawnArea.object_id)` = `sc.hasOwn(this.layerObjects, 6)` = true.
+- `sc.hasOwn(this.layerObjects[6], 'shouldRespawn')` = true (set by mapPrivateParams).
+- `let multipleObj = this.layerObjects[respawnArea.object_id]`, the Tree area.
+- `if(!multipleObj.objProps.enabled)` - `objProps.enabled = 1` (from DB row) - truthy, continues.
+- `let objClass = multipleObj.classInstance` = `EnemyObject`.
+- loops `qty = 0; qty < 12` (instances_limit=12) and calls `createNewObjectInstance(respawnArea, multipleObj, objClass, tilewidth, tileheight, qty)` for every `qty` from 0 to 11.
+- row id=4 (object 7, Tree Punch, instances_limit=18) runs the same checks and loop, 18 times.
 
 ---
 
@@ -275,46 +275,60 @@ Line 108: calls `createNewObjectInstance(respawnArea, multipleObj, EnemyObject, 
 Picks a random valid tile, clones the parent's props, instantiates `EnemyObject` at that position with a full physics body and Colyseus body state, and registers the live instance with the room's object manager. Runs once per `instances_limit`.
 
 For qty=0:
-Line 124-126: `this.instancesCreated[3] = []`.
-Line 127: `generateObjectIndex(respawnArea)` - `instancesCreated[3].length = 0`, returns `'merge-respawn-area-monsters_3_0'`.
-Line 128: `let clonedObjProps = Object.assign({}, multipleObj.objProps)` - copies all DB fields + config/events/dataServer.
-Line 129: `clonedObjProps.client_key = 'merge-respawn-area-monsters_3_0'`.
-Line 130: `clonedObjProps.events = this.events`.
-Line 131: `let {randomTileIndex, tileData} = this.getRandomTile('merge-respawn-area-monsters_3_0')` - picks random non-zero tile, returns `{x, y, tile, tile_index, row, column}`.
-Line 133: `Object.assign(clonedObjProps, tileData)` - sets x, y on clonedObjProps.
-Line 134: `let objInstance = new EnemyObject(clonedObjProps)`.
+- `this.instancesCreated[3] = []` (first instance of the respawn row id=3).
+- `generateObjectIndex(respawnArea)` - `instancesCreated[3].length = 0`, returns `'merge-respawn-area-monsters_3_0'`.
+- `let clonedObjProps = Object.assign({}, multipleObj.objProps)` - copies all DB fields + config/events/dataServer.
+- `clonedObjProps.client_key = objectIndex`, so `'merge-respawn-area-monsters_3_0'`.
+- `clonedObjProps.events = this.events`.
+- `let {randomTileIndex, tileData} = this.getRandomTile(objectIndex)` - picks a random non-zero tile not used by another instance, returns `{x, y, tile, tile_index, row, column}` as `tileData`.
+- `Object.assign(clonedObjProps, tileData)` - sets x, y on clonedObjProps.
+- `let objInstance = new objClass(clonedObjProps)`, an `EnemyObject`.
 
 Inside `EnemyObject` constructor (`lib/objects/server/object/type/enemy-object.js`):
 - `super(props)` calls `NpcObject` -> `AnimationObject` -> `BaseObject`.
-- `BaseObject` line 27: `Object.assign(this, props)` - sets all props from clonedObjProps.
-- `BaseObject` line 48: `this.key = props.client_key` = `'merge-respawn-area-monsters_3_0'`.
+- `BaseObject`: `Object.assign(this, props)` - sets all props from clonedObjProps.
+- `BaseObject`: `this.key = props.client_key` = `'merge-respawn-area-monsters_3_0'`.
 - `mapClientParams`: `this.clientParams.key = 'merge-respawn-area-monsters_3_0'`, `this.clientParams.id = 6`.
 - `mapPrivateParams`: sets `shouldRespawn=true`, `childObjectType=4`, `isAggressive=true`.
-- `EnemyObject` line 30: `this.hasState = true`.
-- `EnemyObject` line 40: `this.runOnHit = true` (default, sc.get from props).
-- `EnemyObject` line 44: `this.isAggressive = true` (from mapPrivateParams).
-- `EnemyObject` lines 75-77: `this.respawnTime = false`, `this.respawnStateTime = sc.get(props, 'battleTimeOff', 1000)` (1000 for this enemy), `this.respawnLayer = false`.
-- `NpcObject` constructor line 42 calls `this.mapPrivateParams(props)` again, applying private params a second time via `Object.assign`. The result is identical since the source data is the same.
+- `AnimationObject` and `NpcObject` call `mapClientParams` and `mapPrivateParams` again at the end of their constructors.
+- `EnemyObject`: `this.hasState = true`.
+- `EnemyObject`: `this.runOnHit = sc.get(props, 'runOnHit', true)` = true (default).
+- `EnemyObject`: `this.isAggressive = sc.get(this, 'isAggressive', false)` = true (from mapPrivateParams).
+- `EnemyObject`: `this.respawnTime = false`, `this.respawnStateTime = sc.get(props, 'battleTimeOff', 1000)` (1000 for this enemy), `this.respawnLayer = false`.
+- `EnemyObject` calls `this.mapClientParams(props)` and `this.mapPrivateParams(props)` again at the end of its constructor, so the `private_params` values win over the constructor assignments (for example `randomMovement` becomes `{"maxTiles":3}`); this row has no `respawnStateTime` in its `private_params`, so it stays 1000.
 
 Back in createNewObjectInstance:
-Line 135: `if(sc.isObjectFunction(objInstance, 'runAdditionalRespawnSetup'))` = true.
-Line 136: `await objInstance.runAdditionalRespawnSetup()` - sets up actions (skills), aggressive behavior event listener, battle end event listener.
-Line 147: `let assetsArr = this.getObjectAssets(multipleObj)` - iterates `multipleObj.objProps.related_objects_assets`, returns `['enemy_forest_1']`.
-Line 149: `objInstance.clientParams.asset_key = 'enemy_forest_1'`.
-Line 150: `objInstance.clientParams.enabled = true`.
-Lines 151-153: `objInstance.clientParams.animations = multipleObj.multipleAnimations` (the four directional animations from `objects_animations`).
-Line 154: `this.world.objectsManager.objectsAnimationsData['merge-respawn-area-monsters_3_0'] = objInstance.clientParams`.
-Line 155: `this.world.objectsManager.roomObjects['merge-respawn-area-monsters_3_0'] = objInstance`.
-Line 156-164: `await this.world.createWorldObject(objInstance, 'merge-respawn-area-monsters_3_0', tilewidth, tileheight, x, y, pathFinder)`.
+- `if(sc.isObjectFunction(objInstance, 'runAdditionalRespawnSetup'))` = true.
+- `await objInstance.runAdditionalRespawnSetup()` - sets up actions (skills), aggressive behavior event listener, battle end event listener.
+- emits `reldens.afterRunAdditionalRespawnSetup`.
+- `let assetsArr = this.getObjectAssets(multipleObj)` - iterates `multipleObj.objProps.related_objects_assets`, returns `['enemy_forest_1']`.
+- `objInstance.clientParams.asset_key = assetsArr[0]`, so `'enemy_forest_1'`.
+- `objInstance.clientParams.enabled = true`.
+- `objInstance.clientParams.animations = multipleObj.multipleAnimations` (the four directional animations from `objects_animations`).
+- `this.world.objectsManager.objectsAnimationsData[objectIndex] = objInstance.clientParams`.
+- `this.world.objectsManager.roomObjects[objectIndex] = objInstance`.
+- `await this.world.createWorldObject(objInstance, objectIndex, tilewidth, tileheight, tileData.x, tileData.y, this.pathFinder)`.
 
-Inside createWorldObject (lib/world/server/p2world.js lines 614-678): `hasState` is resolved (line 633) and passed to `createCollisionBody`, which builds a `PhysicalBody` with an `ObjectBodyState` schema. Then `objInstance.state = bodyObject.bodyState` and `objInstance.objectBody = bodyObject` (lines 660-661).
+Inside `P2world.createWorldObject` (`lib/world/server/p2world.js`) `hasState` is resolved and passed to `createCollisionBody`, which builds a `PhysicalBody` with an `ObjectBodyState` schema:
 
-Line 165: `objInstance.respawnTime = 20000` (respawnArea.respawn_time).
-Line 166: `objInstance.respawnLayer = 'merge-respawn-area-monsters'`.
-Line 167: `objInstance.objectIndex = 'merge-respawn-area-monsters_3_0'`.
-Line 168: `objInstance.randomTileIndex = randomTileIndex`.
-Line 169: `this.instancesCreated[3].push(objInstance)`.
-Line 170: `objInstance.respawnBehavior = new ObjectRespawnBehavior(objInstance)`.
+```javascript
+let hasState = this.allowBodiesWithState ? sc.get(roomObject, 'hasState', false) : false;
+```
+
+Then the body and its state are set on the object:
+
+```javascript
+roomObject.state = bodyObject.bodyState;
+roomObject.objectBody = bodyObject;
+```
+
+Back in createNewObjectInstance:
+- `objInstance.respawnTime = respawnArea.respawn_time` = 20000.
+- `objInstance.respawnLayer = this.layer.name` = `'merge-respawn-area-monsters'`.
+- `objInstance.objectIndex = objectIndex` = `'merge-respawn-area-monsters_3_0'`.
+- `objInstance.randomTileIndex = randomTileIndex`.
+- `this.instancesCreated[respawnArea.id].push(objInstance)`.
+- `objInstance.respawnBehavior = new ObjectRespawnBehavior(objInstance)`.
 
 Same process repeated up to `instances_limit`, creating `'merge-respawn-area-monsters_3_1'` to `'merge-respawn-area-monsters_3_11'`, then the 18 `'merge-respawn-area-monsters_4_<n>'` instances of the Tree Punch (object id=7, respawn row id=4) on the same layer.
 
@@ -324,15 +338,15 @@ Same process repeated up to `instances_limit`, creating `'merge-respawn-area-mon
 
 After the room and world are fully initialized, adds each child instance's body state to the Colyseus `bodies` MapSchema. From this point on, any change to `bodyState` is synced to all connected clients.
 
-`reldens.sceneRoomOnCreate` fires (lib/rooms/server/scene.js line 115). This is AFTER the world is created and after `this.roomData.objectsAnimationsData = this.objectsManager.objectsAnimationsData` (line 105).
+`RoomScene.onCreate` (`lib/rooms/server/scene.js`) emits `reldens.sceneRoomOnCreate` at its end. This is AFTER the world is created, after `this.roomData.objectsAnimationsData = this.objectsManager.objectsAnimationsData` and after the room `State` is created.
 
 `RespawnPlugin.createRespawnAreasObjectsInstances(room)` runs:
-- Line 85: `respawnAreasKeys = Object.keys(room.roomWorld.respawnAreas)` = `['merge-respawn-area-monsters', 'merge-respawn-area-mining-rocks']`.
-- Line 89-94: for each area, calls `createRespawnObjectsInstances(area, room)`.
-- Line 103: iterates `area.instancesCreated` = `{3: [enemyInstance0, ..., enemyInstance11], 4: [...18 instances]}`.
-- Line 106: calls `createRespawnObjectsInstancesInState(instances, room)` for each respawn row.
+- `let respawnAreasKeys = Object.keys(room.roomWorld.respawnAreas)` = `['merge-respawn-area-monsters', 'merge-respawn-area-mining-rocks']`.
+- for each area, calls `this.createRespawnObjectsInstances(area, room)`.
+- `createRespawnObjectsInstances` iterates `area.instancesCreated` = `{3: [enemyInstance0, ..., enemyInstance11], 4: [...18 instances]}`.
+- calls `this.createRespawnObjectsInstancesInState(instanceObjects, room)` for each respawn row.
 
-`createRespawnObjectsInstancesInState` (line 114):
+`createRespawnObjectsInstancesInState`:
 - For `enemyInstance0`: `objInstance.hasState = true` -> `room.state.addBodyToState(objInstance.state, objInstance.client_key)` with `client_key = 'merge-respawn-area-monsters_3_0'`. Body state now synced to all clients.
 - Every other instance: same with its own `client_key`.
 
@@ -357,18 +371,26 @@ The client receives the serialized `objectsAnimationsData`, creates a Phaser spr
 }
 ```
 
-`ObjectAnimationFactory.createDynamicAnimations` (lib/objects/client/object-animation-factory.js line 20), invoked from the objects client plugin (lib/objects/client/plugin.js line 93):
+The 12 Tree enemies share the `asset_key` `'enemy_forest_1'` (and the 18 Tree Punch enemies share `'enemy_forest_2'`), so the server `SceneDataFilter` moves the properties with the same value in every enemy of the group to `animationsDefaults['enemy_forest_1']`, and the client `AnimationsDefaultsMerger.mergeDefaults` merges them back into each entry before the objects are created (see Step 4 and Step 5 of the rock flow below).
+
+`ObjectAnimationFactory.createDynamicAnimations` (`lib/objects/client/object-animation-factory.js`), invoked from the `reldens.afterSceneDynamicCreate` listener of `ObjectsPlugin.listenEvents` (`lib/objects/client/plugin.js`):
 - Iterates `sceneDynamic.objectsAnimationsData`.
-- For key `'merge-respawn-area-monsters_3_0'`: calls `createAnimationFromAnimData(animProps, sceneDynamic)` (line 33).
-- Line 35: `if(!animProps.key)` - `animProps.key = 'merge-respawn-area-monsters_3_0'` - OK.
-- Lines 43-47: `classKey = sc.get(animProps, 'classKey', animProps.key)` is the object index (no `classKey` in this `client_params`), then `config.getWithoutLogs('client/customClasses/objects/merge-respawn-area-monsters_3_0', AnimationEngine)` - no match, returns `AnimationEngine`.
-- Line 51: `let animationEngine = new AnimationEngine(gameManager, animProps, sceneDynamic)`.
+- For key `'merge-respawn-area-monsters_3_0'`: calls `this.createAnimationFromAnimData(animProps, sceneDynamic)`.
+- `if(!animProps.key)` - `animProps.key = 'merge-respawn-area-monsters_3_0'` - OK.
+- `let classKey = sc.get(animProps, 'classKey', animProps.key)` is the object index (no `classKey` in this `client_params`), then `config.getWithoutLogs('client/customClasses/objects/'+classKey, AnimationEngine)` - no match, returns `AnimationEngine`.
+- `let animationEngine = new animationClass(sceneDynamic.gameManager, animProps, sceneDynamic)`, an `AnimationEngine`.
 
 Inside `AnimationEngine` constructor: `this.key = 'merge-respawn-area-monsters_3_0'`, `this.asset_key = 'enemy_forest_1'`, `this.enabled = true`.
 
-Line 52: `animationEngine.createAnimation()` - `this.enabled = true` passes the gate (animation-engine.js line 172). Creates sprite at (x, y) with `asset_key = 'enemy_forest_1'`. Enemy IS VISIBLE.
+The factory then creates the sprite and checks its visibility in one call:
 
-Line 52 also calls `this.updateAnimationVisibility(existentBody, sprite)` (line 69) - the sprite is only hidden when the body's `inState` is DEATH or DISABLED, so an ACTIVE enemy stays visible.
+```javascript
+this.updateAnimationVisibility(existentBody, animationEngine.createAnimation());
+```
+
+`AnimationEngine.createAnimation()` - `this.enabled` is true, so it passes the `if(!this.enabled)` gate. Creates sprite at (x, y) with `asset_key = 'enemy_forest_1'`. Enemy IS VISIBLE.
+
+`updateAnimationVisibility(existentBody, sprite)` - the sprite is only hidden when the body's `inState` is DEATH or DISABLED, so an ACTIVE enemy stays visible.
 
 `setOnChangeBodyCallback` registers a Colyseus listener on the body state. When `inState` changes: `setVisibility(currentBody, ACTIVE === body.inState)` - shows/hides the sprite.
 
@@ -378,7 +400,7 @@ Line 52 also calls `this.updateAnimationVisibility(existentBody, sprite)` (line 
 
 Player walks into enemy area. P2world detects collision. `CollisionsManager` resolves collision, calls `objectInstance.onHit(props)`.
 
-`EnemyObject.onHit(props)` (line 306):
+`EnemyObject.onHit(props)`:
 - `this.startBattleOnHit = true` - proceeds.
 - Calls `startBattleWithPlayer(props)`.
 - Gets `playerBody`, `playerSchema`.
@@ -394,14 +416,23 @@ When the enemy's HP hits zero, `Pve.battleEnded` sets `inState=DEATH` to hide th
 
 When HP reaches 0, the battle system itself triggers respawn - NOT a collision.
 
-`Pve.battleEnded(playerSchema, room)` (`lib/actions/server/pve.js` line 305):
-- Line 313: `this.targetObject.objectBody.bodyState.inState = GameConst.STATUS.DEATH`. Colyseus syncs to client. Client `setVisibility(ACTIVE === DEATH)` = false. Enemy HIDDEN.
-- Line 326: `if(sc.isObjectFunction(this.targetObject, 'respawn'))` - checks if method exists on the enemy instance.
-- Line 327: `await this.targetObject.respawn(room)` - calls `EnemyObject.respawn(room)` directly.
+`Pve.battleEnded(playerSchema, room)` (`lib/actions/server/pve.js`):
+- `this.targetObject.objectBody.bodyState.inState = GameConst.STATUS.DEATH`. Colyseus syncs to client. Client `setVisibility(ACTIVE === DEATH)` = false. Enemy HIDDEN.
+- `if(sc.isObjectFunction(this.targetObject, 'respawn'))` - checks if method exists on the enemy instance.
+- `await this.targetObject.respawn(room)` - calls `EnemyObject.respawn(room)` directly.
 
-`EnemyObject.onBattleEnd` (line 360) is NOT what triggers respawn - it only logs `'BattleEnd method not implemented for EnemyObject.'`. Respawn is called directly by `Pve.battleEnded` (line 327) before the battle end event fires (line 331).
+`EnemyObject.onBattleEnd` is NOT what triggers respawn - it only logs `'BattleEnd method not implemented for EnemyObject.'`. Respawn is called directly by `Pve.battleEnded` before the battle end event fires:
 
-`EnemyObject.runAdditionalRespawnSetup` (line 96) registers:
+```javascript
+if(sc.isObjectFunction(this.targetObject, 'respawn')){
+    await this.targetObject.respawn(room);
+}
+this.sendBattleEndedActionData(room, playerSchema, actionData);
+let event = new BattleEndedEvent({playerSchema, pve: this, actionData, room});
+await this.events.emit(this.targetObject.getBattleEndEvent(), event);
+```
+
+`EnemyObject.runAdditionalRespawnSetup` registers:
 - `setupActions()` - loads skills from DB.
 - `this.aggression.setup()` - `EnemyAggression.setup()` listens to the `reldens.sceneRoomOnCreate` event to attach the aggression post-broadphase listener to the room world.
 - `events.onWithKey(getBattleEndEvent(), onBattleEnd.bind(this), ...)` - registers battle end listener (currently only logs).
@@ -410,27 +441,27 @@ The `sceneRoomOnCreate` event fires AFTER `runAdditionalRespawnSetup` runs (resp
 
 When HP reaches 0 in battle, `EnemyObject.respawn(room)` is called.
 
-`respawn(room)` (line 239):
-- Line 244: `this.objectBody.resetAuto()` - stops movement.
-- Line 245: `this.objectBody.stopMove()`.
-- Line 246: `this.objectBody.collisionResponse = false` - disables collisions.
-- Line 247: `this.originalType = this.objectBody.type`.
-- Line 248: `this.objectBody.type = STATIC` - stops physics.
-- Line 249: `return this.respawnBehavior.execute(room)`.
+`EnemyObject.respawn(room)`:
+- `this.objectBody.resetAuto()` - stops movement.
+- `this.objectBody.stopMove()`.
+- `this.objectBody.collisionResponse = false` - disables collisions.
+- `this.originalType = this.objectBody.type`.
+- `this.objectBody.type = this.objectBody.world.bodyTypes.STATIC` - stops physics.
+- `return this.respawnBehavior.execute(room)`.
 
-`ObjectRespawnBehavior.execute(room)` (`lib/respawn/server/object-respawn-behavior.js` line 43):
+`ObjectRespawnBehavior.execute(room)` (`lib/respawn/server/object-respawn-behavior.js`):
 - `this.respawnTimer = await this.scheduleWithTimer(async () => { await this.restore(room); }, this.objInstance.respawnTime)` with `respawnTime = 20000`.
 
-After 20 seconds, `restore(room)` runs (line 55):
-- Line 61-63: `obj.onBeforeRestore(room)` -> `EnemyObject.onBeforeRestore` (line 255) sets `this.objectBody.collisionResponse = true`, `this.objectBody.type = DYNAMIC`, `this.stats = Object.assign({}, this.initialStats)` (restores full HP) and `this.objectBody.bodyState.inState = GameConst.STATUS.AVOID_INTERPOLATION`. Colyseus syncs to client, `setVisibility(ACTIVE === AVOID_INTERPOLATION)` = `setVisibility(false)`. Enemy HIDDEN briefly.
-- Lines 64-82: picks a new random tile from `respawnAreas['merge-respawn-area-monsters']` and repositions the body and its `bodyState.x`/`bodyState.y`.
-- Lines 83-85: `obj.onAfterRestore(room)` -> `EnemyObject.onAfterRestore` (line 276) emits `reldens.restoreObjectAfter`.
-- Lines 86-89: `this.respawnStateTimer = await this.scheduleWithTimer(() => { this.setActive(room); }, sc.get(obj, 'respawnStateTime', 0))` (`respawnStateTime = sc.get(props, 'battleTimeOff', 1000)`, so 1000ms for this enemy).
+After 20 seconds, `ObjectRespawnBehavior.restore(room)` runs:
+- `obj.onBeforeRestore(room)` -> `EnemyObject.onBeforeRestore` sets `this.objectBody.collisionResponse = true`, `this.objectBody.type = DYNAMIC`, `this.stats = Object.assign({}, this.initialStats)` (restores full HP) and `this.objectBody.bodyState.inState = GameConst.STATUS.AVOID_INTERPOLATION`. Colyseus syncs to client, `setVisibility(ACTIVE === AVOID_INTERPOLATION)` = `setVisibility(false)`. Enemy HIDDEN briefly.
+- picks a new random tile from `respawnAreas['merge-respawn-area-monsters']` and repositions the body and its `bodyState.x`/`bodyState.y`.
+- `obj.onAfterRestore(room)` -> `EnemyObject.onAfterRestore` emits `reldens.restoreObjectAfter`.
+- `this.respawnStateTimer = await this.scheduleWithTimer(() => { this.setActive(room); }, sc.get(obj, 'respawnStateTime', 0))` (`respawnStateTime = sc.get(props, 'battleTimeOff', 1000)`, so 1000ms for this enemy).
 
-`setActive(room)` (line 95):
+`ObjectRespawnBehavior.setActive(room)`:
 - `this.objInstance.isActive = false`.
 - `this.objInstance.objectBody.bodyState.inState = GameConst.STATUS.ACTIVE`.
-- Calls the optional `onSetActive(room)` hook (`EnemyObject.onSetActive`, line 284).
+- Calls the optional `onSetActive(room)` hook (`EnemyObject.onSetActive`).
 - Colyseus syncs to client. `setVisibility(ACTIVE === ACTIVE)` = `setVisibility(true)`. Enemy VISIBLE again.
 
 ---
@@ -439,11 +470,11 @@ After 20 seconds, `restore(room)` runs (line 55):
 
 Summarizes how the Colyseus `inState` value drives sprite visibility throughout the enemy lifecycle. The same callback handles all state transitions.
 
-Client `setOnChangeBodyCallback` (lib/objects/client/plugin.js line 174):
+Client `ObjectsPlugin.setOnChangeBodyCallback` (`lib/objects/client/plugin.js`):
 - Registers listener on every property of the body state.
-- On ANY property change: `setVisibility(currentBody, ACTIVE === body.inState)` (line 190).
+- On ANY property change: `this.setVisibility(currentBody, GameConst.STATUS.ACTIVE === body.inState)`.
 - `currentBody = currentScene.objectsAnimations['merge-respawn-area-monsters_3_0']` = AnimationEngine instance.
-- `setVisibility` calls `currentBody.sceneSprite.setVisible(isActive)` (line 229).
+- `ObjectsPlugin.setVisibility` calls `currentBody.sceneSprite.setVisible(isActive)`.
 
 Enemy ACTIVE (inState=1) -> sprite visible.
 Enemy AVOID_INTERPOLATION (inState=4) -> sprite hidden.
@@ -466,14 +497,14 @@ Rocks do NOT have their own `respawn` method; they rely entirely on `ObjectRespa
 
 These are the actual values from the default Reldens installation. For field descriptions and the SQL template, see `## Required DB Records` in the setup guide above.
 
-`objects` table row id=16 (after `migrations/development/beta.39.9-sql-update.sql`):
+`objects` table row id=16 (`migrations/production/reldens-sample-data-v4.0.0.sql`):
 - `room_id = 114` (reldens-forest-level-1 scene)
 - `layer_name = 'merge-respawn-area-mining-rocks'`
 - `tile_index = NULL`
 - `class_type = 7` (MultipleObject)
 - `object_class_key = 'rock_forest_1_area'` (not in customClasses, falls back to class_type)
 - `client_key = 'rock_forest_1'` (template key, irrelevant for spawned instances)
-- `private_params = '{"shouldRespawn":true,"childObjectClassKey":"rock_forest_1","itemKey":"ore","cancelOnMove":true,"cancelOnHit":true,"cancelOnOutOfRange":false,"runOnAction":true,"collisionType":2,"hasState":true}'`
+- `private_params = '{"shouldRespawn":true,"childObjectClassKey":"rock_forest_1","itemKey":"ore","cancelOnMove":true,"cancelOnHit":true,"cancelOnOutOfRange":false,"runOnAction":true,"collisionType":2,"hasState":true,"interactionArea":48}'`
 - `client_params = '{"timingDuration":5000,"isInteractive":true,"frameStart":0,"frameEnd":0,"classKey":"rock_forest_1","ui":false}'`
 - `enabled = 1`
 
@@ -506,8 +537,8 @@ Called from `RoomScene.onCreate` for object id=16.
 `new MultipleObject(objProps)`:
 - `Object.assign(this, props)` sets all DB fields.
 - `this.key = props.client_key = 'rock_forest_1'` (template key).
-- `this.objectIndex = 'merge-respawn-area-mining-rocks' + 16 = 'merge-respawn-area-mining-rocks16'`.
-- `mapPrivateParams`: `Object.assign(this, privateParamsObject)` sets `this.shouldRespawn = true`, `this.childObjectClassKey = 'rock_forest_1'`, `this.itemKey = 'ore'`, `this.cancelOnMove = true`, `this.cancelOnHit = true`, `this.hasState = true`, `this.collisionType = 2`, `this.runOnAction = true`.
+- `this.objectIndex = props.layer_name + (this.appendIndex || '-idx-'+props.id)` = `'merge-respawn-area-mining-rocks-idx-16'` (the NULL `tile_index` stays `null`, see the enemy flow Step 1).
+- `mapPrivateParams`: `Object.assign(this, privateParamsObject)` sets `this.shouldRespawn = true`, `this.childObjectClassKey = 'rock_forest_1'`, `this.itemKey = 'ore'`, `this.cancelOnMove = true`, `this.cancelOnHit = true`, `this.hasState = true`, `this.collisionType = 2`, `this.runOnAction = true`, `this.interactionArea = 48`.
 - `this.multiple = true`, `this.classInstance = false`.
 
 `attachToAnimations(objectInstance)`: MultipleObject has no `isAnimation` or `hasAnimation` -> NOT added to `objectsAnimationsData`.
@@ -515,7 +546,7 @@ Called from `RoomScene.onCreate` for object id=16.
 `if(objectInstance.multiple)` -> true.
 `objectInstance.objProps = objProps`.
 `childClassKey = sc.get(objectInstance, 'childObjectClassKey', false)` = `'rock_forest_1'`.
-`subObjClass = config.getWithoutLogs('server/customClasses/objects/rock_forest_1', false)` = `RockObject` (registered in `theme/plugins/server-plugin.js` line 39).
+`subObjClass = config.getWithoutLogs('server/customClasses/objects/rock_forest_1', false)` = `RockObject` (registered by `ServerPlugin.defineCustomClasses` in `theme/plugins/server-plugin.js`).
 `objectInstance.classInstance = RockObject`.
 
 `enrichWithMultipleAnimationsData(objectData, objectInstance)`: object id=16 has no `objects_animations` rows, so `objectInstance.multipleAnimations` stays empty.
@@ -526,7 +557,7 @@ Called from `RoomScene.onCreate` for object id=16.
 - key = `'1614'` (object_id=16 + object_asset_id=14)
 - value = `{asset_type:'spritesheet', asset_key:'rock_forest_1', asset_file:'rock.png', extra_params:'{"frameWidth":32,"frameHeight":32}'}`
 
-`roomObjects['merge-respawn-area-mining-rocks16'] = multipleObjInstance`.
+`roomObjects['merge-respawn-area-mining-rocks-idx-16'] = multipleObjInstance`.
 `roomObjectsByLayer['merge-respawn-area-mining-rocks'][16] = multipleObjInstance`.
 
 ---
@@ -536,7 +567,7 @@ Called from `RoomScene.onCreate` for object id=16.
 Same as enemy flow. The `merge-respawn-area-mining-rocks` layer is detected and a `RoomRespawn` instance is created to manage rock spawn tile tracking and instance creation.
 
 `reldens-forest-level-1.json` contains layer `'merge-respawn-area-mining-rocks'` (id=10, width=72, height=100).
-Its `data` array has 46 non-zero tiles (the clearing tile values 14, 15, 16, 21, 22 and others) at rows 23-28, columns 56-63.
+Its `data` array has 46 non-zero tiles (the clearing tile values 14, 15, 16, 21, 22 and others) at rows 23-28, columns 56-63 (columns 59 and 60 of row 23 are empty).
 `parseMapForRespawnTiles()` finds those tiles and adds them to `this.respawnTiles`.
 
 `this.layerObjects = roomObjectsByLayer['merge-respawn-area-mining-rocks']` = `{16: multipleObjInstance}`.
@@ -545,19 +576,19 @@ DB query for `respawn` with `{layer: 'merge-respawn-area-mining-rocks', object_i
 Check: `sc.hasOwn(layerObjects[7.object_id], 'shouldRespawn')` = `sc.hasOwn(layerObjects[16], 'shouldRespawn')` = true
 Check: `multipleObj.objProps.enabled` = 1 -> truthy
 Check: `multipleObj.classInstance` = `RockObject`
-Loops `qty = 0; qty < 1` (instances_limit=1) -> calls `createNewObjectInstance` once.
+Loops `qty = 0; qty < 10` (instances_limit=10) -> calls `createNewObjectInstance` ten times.
 
 ---
 
 ## Step 3 - RoomRespawn.createNewObjectInstance
 
-Instantiates a single `RockObject` child at a random tile. The key difference from enemies: `runAdditionalRespawnSetup` registers the rock instance in `room.messageActions`, enabling server-side routing of player click messages to the correct instance.
+Instantiates one `RockObject` child at a random tile per slot, ten in total (`'merge-respawn-area-mining-rocks_7_0'` to `'merge-respawn-area-mining-rocks_7_9'`); the steps below follow the first one. The key difference from enemies: `runAdditionalRespawnSetup` registers the rock instance in `room.messageActions`, enabling server-side routing of player click messages to the correct instance.
 
 `objectIndex = generateObjectIndex(respawnArea)` = `'merge-respawn-area-mining-rocks_7_0'` (layer + respawnArea.id + instances created so far).
 
 `clonedObjProps = Object.assign({}, multipleObj.objProps)` clones all DB fields.
 `clonedObjProps.client_key = 'merge-respawn-area-mining-rocks_7_0'` overrides the template key.
-`{randomTileIndex, tileData} = getRandomTile(objectIndex)` picks a random tile with value=111 from the respawn layer.
+`{randomTileIndex, tileData} = getRandomTile(objectIndex)` picks a random non-zero tile of the respawn layer that no other instance uses.
 `Object.assign(clonedObjProps, tileData)` sets `x`, `y`, `tile`, `tile_index`, `row`, `column`.
 
 `new RockObject(clonedObjProps)` calls chain: `RockObject -> TimingObject -> NpcObject -> AnimationObject -> BaseObject`:
@@ -576,7 +607,8 @@ Instantiates a single `RockObject` child at a random tile. The key difference fr
 `NpcObject`:
 - `this.hasAnimation = true`, `this.listenMessages = true`, `this.collisionResponse = true`.
 - Sets `this.clientParams.isInteractive = true`.
-- Calls `mapClientParams`/`mapPrivateParams` again (all idempotent).
+- Sets `this.interactionArea` from the `server/objects/actions/interactionsDistance` config.
+- Calls `mapClientParams`/`mapPrivateParams` again, so the `"interactionArea":48` of `private_params` replaces the config value.
 
 `TimingObject`:
 - `this.isActive = false`, `this.timingTimer = null`, `this.timingCheckInterval = null`.
@@ -595,6 +627,7 @@ Instantiates a single `RockObject` child at a random tile. The key difference fr
 `world.objectsManager.roomObjects['merge-respawn-area-mining-rocks_7_0'] = rockInstance`.
 
 `createWorldObject(rockInstance, 'merge-respawn-area-mining-rocks_7_0', tileW, tileH, x, y, pathFinder)`:
+- `rockInstance.interactionArea` is 48, so `roomObject.setupInteractionArea()` builds the interaction area around the rock position.
 - `hasState = this.allowBodiesWithState ? sc.get(roomObject, 'hasState', false) : false` = `true`.
 - Creates a `PhysicalBody` with an `ObjectBodyState` schema object.
 - `rockInstance.state = bodyObject.bodyState`.
@@ -609,17 +642,17 @@ Instantiates a single `RockObject` child at a random tile. The key difference fr
 
 Adds the rock's body state to the Colyseus `bodies` MapSchema and serializes `objectsAnimationsData` into the room's `sceneData`, making position and asset info available to any client that joins.
 
-In `RoomScene.onCreate` (scene.js line 105):
+In `RoomScene.onCreate` (`lib/rooms/server/scene.js`):
 `this.roomData.objectsAnimationsData = this.objectsManager.objectsAnimationsData`
 
-At this point, `objectsAnimationsData['merge-respawn-area-mining-rocks_7_0']` already exists (added in Step 3 before `setState`).
+At this point, `objectsAnimationsData['merge-respawn-area-mining-rocks_7_0']` already exists (added in Step 3 before the room state is created).
 
-`new State(this.roomData, this.sceneDataFilter)` -> `mapRoomData()` -> `SceneDataFilter.buildFilteredData(roomData)`:
-- `optimizeData(objectsAnimationsData, 'asset_key', false)`: rock entry grouped by `asset_key='rock_forest_1'`, single item -> preserved as-is in `filteredData.objectsAnimationsData`.
-- `animationsDefaults = {}` (no multi-instance groups).
+`new State(this.roomData, this.sceneDataFilter)` -> `mapRoomData()` -> `SceneDataFilter.filterRoomData(roomData)` -> `buildFilteredData(roomData)` (`lib/rooms/server/scene-data-filter.js`):
+- `optimizeData(objectsAnimationsData, 'asset_key', false)`: the ten rock entries are grouped by `asset_key='rock_forest_1'` (and the enemies by `'enemy_forest_1'` and `'enemy_forest_2'`). The properties with the same value in every rock of the group (for example `classKey`, `timingDuration`, `isInteractive`, `id` and `layerName`) are moved to `animationsDefaults['rock_forest_1']`; each rock entry keeps its `key`, its `asset_key` (the grouping field) and the properties that differ, like its position.
+- `filteredData.animationsDefaults` holds one entry per group with shared properties.
 - `filteredData.preloadAssets`: rock asset entry `'1614'` preserved with all fields including `asset_type`.
 
-`this.state = roomState` (scene.js line 113): the sceneData JSON now includes rock animation data and preload assets.
+`this.state = roomState`: the sceneData JSON now includes rock animation data, the animations defaults and preload assets.
 
 `reldens.sceneRoomOnCreate` fires -> `RespawnPlugin.createRespawnAreasObjectsInstances(room)`:
 `room.state.addBodyToState(rockInstance.state, 'merge-respawn-area-mining-rocks_7_0')`.
@@ -633,11 +666,17 @@ Rock body state is now in Colyseus `bodies` MapSchema -> synced to all clients.
 
 Loads the `rock_forest_1` spritesheet, creates the Phaser sprite with `pointerdown` interaction enabled, and registers Colyseus body state change listeners. The rock is visible and clickable from this point.
 
-Client `room-events.js` line 150: `this.roomData = AnimationsDefaultsMerger.mergeDefaults(sc.toJson(this.room.state.sceneData))`.
+Client `RoomEvents.checkAndCreateScene` (`lib/game/client/room-events.js`):
 
-`AnimationsDefaultsMerger.mergeDefaults`:
+```javascript
+if(0 === Object.keys(this.roomData).length){
+    this.roomData = AnimationsDefaultsMerger.mergeDefaults(sc.toJson(this.room.state.sceneData));
+}
+```
+
+`AnimationsDefaultsMerger.mergeDefaults` (`lib/game/client/animations-defaults-merger.js`):
 - `preloadAssetsDefaults` is merged first into `preloadAssets` (grouped by `asset_type`), so shared spritesheet `extra_params` are restored before the preloader reads them.
-- `animationsDefaults = {}`, so the rock entry matches no group and stays untouched.
+- `animationsDefaults` is merged into `objectsAnimationsData` grouped by `asset_key`: the rock entry resolves the group value `'rock_forest_1'` and becomes `Object.assign({}, animationsDefaults['rock_forest_1'], rockEntry)`, so it gets back every shared property (the enemies are restored the same way from their own entries).
 - `roomData.preloadAssetsDefaults` and `roomData.animationsDefaults` are deleted before the data is returned.
 
 `ScenePreloader.preloadValidAssets`:
@@ -646,7 +685,7 @@ Client `room-events.js` line 150: `this.roomData = AnimationsDefaultsMerger.merg
 `ObjectAnimationFactory.createDynamicAnimations(sceneDynamic)` iterates `objectsAnimationsData`:
 - Key `'merge-respawn-area-mining-rocks_7_0'`: `animProps.key` is set.
 - `classKey = sc.get(animProps, 'classKey', animProps.key)` = `'rock_forest_1'` (`classKey` is set in `client_params`).
-- `animationClass = config.getWithoutLogs('client/customClasses/objects/rock_forest_1', AnimationEngine)` -> `Rock` (registered in `theme/plugins/client-plugin.js` line 32), which extends the client `TimingObject`.
+- `animationClass = config.getWithoutLogs('client/customClasses/objects/rock_forest_1', AnimationEngine)` -> `Rock` (registered by `ClientPlugin.defineCustomClasses` in `theme/plugins/client-plugin.js`), which extends `ToolTimingObject` (`theme/plugins/objects/client/tool-timing-object.js`), a client `TimingObject` that also plays the pickaxe tool animation while the timing runs.
 - `new Rock(gameManager, animProps, sceneDynamic)`.
 
 `AnimationEngine.createAnimation()`:
@@ -668,11 +707,11 @@ Rock sprite is NOW VISIBLE in the scene.
 
 A player click sends an `OBJECT_INTERACTION` message to the server, routed via `room.messageActions` to `RockObject.executeMessageActions`, which validates the player is within range then starts the `TimingObject` countdown.
 
-Client `TimingObject.enableInteraction` click handler (lib/objects/client/object/type/timing-object.js line 49):
+Client `TimingObject.enableInteraction` click handler (`lib/objects/client/object/type/timing-object.js`):
 - `(this.key === this.asset_key) ? this.id : this.key` -> the keys differ, so the id sent is `'merge-respawn-area-mining-rocks_7_0'`.
 - Sends `{act: ObjectsConst.OBJECT_INTERACTION, id: 'merge-respawn-area-mining-rocks_7_0', type: this.type}` (`type` is `TYPE_NPC` for this object).
 
-Server `RoomScene.executeSceneMessageActions` (scene.js line 445) iterates `messageActions`:
+Server `RoomScene.executeSceneMessageActions` (`lib/rooms/server/scene.js`) iterates `messageActions`:
 - `messageActions['merge-respawn-area-mining-rocks_7_0'] = rockInstance`.
 - Calls `rockInstance.executeMessageActions(client, data, room, playerSchema)`.
 
@@ -687,10 +726,10 @@ Server `RoomScene.executeSceneMessageActions` (scene.js line 445) iterates `mess
 - `this.isActive = true`.
 - `client.send('*', {act: 'timingStart', id: 16, key: 'merge-respawn-area-mining-rocks_7_0'})`, sending `id = this.id = 16` (DB id, shared by every rock instance) and the instance `key`.
 - Reads the affected property (`client/actions/skills/affectedProperty`, `hp`) and keeps its value at the start.
-- Starts `timingCheckInterval` every 100ms: checks if player moved (`cancelOnMove=true`) or if the affected property went below the start value, a hit from an enemy or another player (`cancelOnHit=true`). Either one -> `cancelTiming(client)`.
+- Starts `timingCheckInterval` every 100ms: checks if player moved (`cancelOnMove=true`) or if the affected property is lower than its value at the previous check, a hit from an enemy or another player (`cancelOnHit=true`). Either one -> `cancelTiming(client)`.
 - Starts `timingTimer = setTimeout(completeTiming, this.clientParams.timingDuration)` (5000ms).
 
-Client receives `{act: 'timingStart', id: 16, key: 'merge-respawn-area-mining-rocks_7_0'}`. The registered `Rock` class (client `TimingObject`) matches on `message.key === this.key` and shows the progress bar only on that instance (matching on the shared id showed the bar on every rock). The base `AnimationEngine` does NOT handle `timingStart`, so without `classKey: 'rock_forest_1'` in `client_params` no progress bar would be rendered.
+Client receives `{act: 'timingStart', id: 16, key: 'merge-respawn-area-mining-rocks_7_0'}`. The registered `Rock` class (a `ToolTimingObject`, so a client `TimingObject`) matches on `message.key === this.key` and shows the progress bar only on that instance (matching on the shared id showed the bar on every rock). The base `AnimationEngine` does NOT handle `timingStart`, so without `classKey: 'rock_forest_1'` in `client_params` no progress bar would be rendered.
 
 ---
 
@@ -742,7 +781,18 @@ After 30 seconds, `restore(room)`:
 
 If the player moves or is hit during the mining countdown, all timers are cleared and the client is notified. The rock remains active and immediately clickable again, no respawn is triggered.
 
-`timingCheckInterval` fires every 100ms. If `playerSchema.state.x !== startX || playerSchema.state.y !== startY` (and `cancelOnMove=true`), or if `playerSchema.stats[affectedProperty]` is lower than its value when the timing started (and `cancelOnHit=true`, a heal never cancels):
+`timingCheckInterval` fires every 100ms. If `playerSchema.state.x !== startX || playerSchema.state.y !== startY` (and `cancelOnMove=true`), or if the affected property is lower than its value at the previous 100ms check (and `cancelOnHit=true`, a heal never cancels). `lastAffectedValue` starts with the value when the timing started and is updated on every check:
+
+```javascript
+let currentAffectedValue = sc.get(playerSchema.stats, affectedProperty, 0);
+if(this.cancelOnHit && currentAffectedValue < lastAffectedValue){
+    this.cancelTiming(client);
+    return;
+}
+lastAffectedValue = currentAffectedValue;
+```
+
+Then:
 `cancelTiming(client)`:
 - `clearInterval(timingCheckInterval)`.
 - `clearTimeout(timingTimer)`.

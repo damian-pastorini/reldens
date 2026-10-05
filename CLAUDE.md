@@ -39,7 +39,7 @@ await repo.loadBy('scope', 'server');
 await repo.updateById(1, {label: 'HP'});
 ```
 
-Entity names map to database tables. All 60+ entities are listed in `.claude/entities-reference.md`.
+Entity names map to database tables. All 79 entities are listed in `.claude/entities-reference.md`.
 
 ### `@reldens/cms`
 
@@ -84,14 +84,16 @@ See `.claude/feature-modules.md` for details on each module.
 2. `ServerManager` constructor loads `.env` via the Node.js `process.loadEnvFile` (when the file exists), creates `ThemeManager` and `AppServerFactory`, sets up the `Installer`.
 3. `createServers()` creates the Express/HTTP app server. If not yet installed, it launches the web installer and halts.
 4. Once installed, `start()` runs in sequence:
+   - `setupCustomServerPlugin()` - instantiates the `customPlugin` passed in the config and calls its `setup()`
    - `initializeStorage()` - connects to database, generates entities via the configured driver
    - `initializeConfigManager()` - loads all config from the `config` table into `ConfigManager`
+   - `enableServeStaticsAndHomePage()` and `enableRoutesRateLimit()` - Express statics, home page and route limiters
    - `themeManager.validateOrCreateTheme()` - copies assets to the dist folder
    - `startGameServerInstance()` - loads maps, creates Colyseus `GameServer`, initializes all managers
 5. Manager initialization order: `Mailer` -> `FeaturesManager` -> `UsersManager` -> `RoomsManager` -> `LoginManager` -> `defineServerRooms()`
 6. `FeaturesManager.loadFeatures()` queries the `features` table for `is_enabled=1`, instantiates each feature package, and calls `setup()` on it. After all features load, fires `reldens.serverConfigFeaturesReady`.
 7. `RoomsManager` registers the login room and all scene rooms on the Colyseus game server.
-8. `ThemeManager.createClientBundle()` runs Parcel to build the client bundle if `RELDENS_ALLOW_RUN_BUNDLER=1`.
+8. When `RELDENS_CREATE_CONFIG_FILE` is unset or `1`, the theme `config.js` is written and `ThemeManager.createClientBundle()` runs Parcel to build the client bundle if `RELDENS_ALLOW_RUN_BUNDLER=1`.
 9. `gameServer.listen(port)` opens the WebSocket server and fires `reldens.serverReady`.
 
 ## Client Startup Flow
@@ -99,7 +101,7 @@ See `.claude/feature-modules.md` for details on each module.
 1. `theme/default/index.js` instantiates `GameManager`, registers any custom client plugin, and calls `clientStart()` on `DOMContentLoaded`.
 2. `clientStart()` renders the login/register UI in the DOM.
 3. On form submit, `startGame(formData)` -> `joinGame()` connects to the `ROOM_GAME` login room via WebSocket.
-4. The server `RoomLogin.onAuth()` validates credentials, loads the player from the database, and sends back a `START_GAME` message containing the game config, features list, and player data.
+4. The server `RoomLogin.onAuth()` validates credentials and loads the user with its players from the database, then `RoomGame.onJoin()` (`lib/rooms/server/game.js`) sends back a `START_GAME` message containing the game config, features list, and player data.
 5. The client receives `START_GAME`, merges the game config into `ConfigManager`, loads client-side features via `FeaturesManager.loadFeatures()`, and calls `initEngine()`.
 6. `initEngine()` creates the `GameEngine` (Phaser instance), joins any feature-specific rooms (chat, teams, etc.), then joins the player's scene room.
 7. A `RoomEvents` instance is created for the scene and `activateRoom()` begins listening to Colyseus state changes, setting up physics body callbacks and player rendering.
@@ -119,7 +121,7 @@ Each scene room extends `RoomScene extends RoomLogin` (`lib/rooms/server/scene.j
 
 The admin panel is mounted by `lib/admin/server/plugin.js` during server startup. It uses `@reldens/cms` to expose entity editors over HTTP at `/reldens-admin`.
 
-Entity changes go through the same `dataServer.getEntity()` pattern. With `RELDENS_HOT_PLUG=1`, config changes are applied to the running server without restart. Without it, a restart is required for changes to take effect.
+Entity changes go through the same `dataServer.getEntity()` pattern. Hot plug is enabled by default (`RELDENS_HOT_PLUG` unset or `1`): config changes are applied to the running server without restart. With `RELDENS_HOT_PLUG=0`, a restart is required for changes to take effect.
 
 See `.claude/admin-panel-guide.md` for which entities are managed through admin vs SQL.
 
@@ -133,11 +135,11 @@ On first launch (no lock file), the server starts the web installer at `http://l
 4. Writes `.env` and creates the installation lock file
 
 ```bash
-npm start
+node .
 # Navigate to http://localhost:8080 to run the installer
 ```
 
-The storage driver selector offers Knex by default. The optional drivers (Kysely, Drizzle, ObjectionJS, MikroORM, Prisma) are listed only when their packages resolve from the project `node_modules`, so install the one you need before running the installer.
+The storage driver selector lists every driver with Knex selected by default. Knex is bundled with `@reldens/storage`; the optional drivers (Kysely, Drizzle, ObjectionJS, MikroORM, Prisma) are marked "(will be installed)" when their packages do not resolve from the project `node_modules`, and the installer installs the selected one when "Allow installer to run npm install for missing packages" is checked.
 
 See `.claude/installer-guide.md` for the storage drivers packages and manual setup options.
 
@@ -164,7 +166,7 @@ Use `themeManager.createClientBundle()` for bundling (checks `RELDENS_ALLOW_RUN_
 ## Essential Commands
 
 ```bash
-# Unit tests
+# Integration tests (asks for confirmation, resets the database set in tests/config.json)
 npm test
 # Build styles and client
 npm exec -- reldens buildSkeleton
@@ -203,7 +205,8 @@ See `.claude/commands-reference.md` for the full command reference.
 - `.claude/environment-variables.md` - All `RELDENS_*` variables
 - `.claude/feature-modules.md` - All feature modules
 - `.claude/storage-architecture.md` - Entity management deep dive
-- `.claude/entities-reference.md` - All 60+ entity types
+- `.claude/entities-reference.md` - All 79 entity types
+- `.claude/entities-generation-guide.md` - Generated entities output and the Prisma steps
 - `.claude/admin-panel-guide.md` - Admin panel sections and entity overrides
 - `.claude/installer-guide.md` - Web-based installation wizard
 - `.claude/ip-lists-and-login-blocks.md` - Address allow and deny lists, the stored login blocks and the login limiters

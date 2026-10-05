@@ -52,22 +52,21 @@ The legend lists every detected element, cluster, and spot in a single unified l
 - **Show Elements / Show Clusters / Show Spots** checkboxes: toggle visibility of each group
 - **Add Element**: creates a blank element you can populate by clicking tiles on canvas
 - **Bulk select-all** checkbox: checks or unchecks all items (elements, clusters, and spots) at once
-- **Toggle Lock**: toggles the `approved` flag on all bulk-selected elements/clusters
+- **Toggle Lock**: toggles the `approved` flag on all bulk-selected elements/clusters (spots are not affected)
 - **Convert All**: converts all bulk-selected clusters to elements
-- **Detect AI / Name AI** (bulk, AI-dependent): runs AI detection or naming on all bulk-selected items
-- **Delete** (trash icon): removes every bulk-selected item (elements, clusters, and spots), locked items included, after a confirmation that shows the selected count (`theme/admin/js/tileset-to-tilemap/tileset-row-binder.js:188-222`)
+- **Detect AI / Name AI** (bulk, AI-dependent): runs AI detection or naming on all bulk-selected items (clusters get sub-element detection, elements get layer assignment); the bulk runs do not skip locked items
+- **Delete** (trash icon): removes every bulk-selected item (elements, clusters, and spots), locked items included, after a confirmation that shows the selected count (`TilesetRowBinder.bulkDeleteSelectedMapObjects()` in `theme/admin/js/tileset-to-tilemap/tileset-row-binder.js`)
 
-> **Note**: The elements list is a single unified list containing all three map object types - elements, clusters, and spots. Bulk operations (select-all, delete, lock) apply across all three types together.
+> **Note**: The elements list is a single unified list containing all three map object types - elements, clusters, and spots. Bulk select-all and Delete apply across all three types together; Toggle Lock, Convert All and the bulk AI buttons only act on elements and clusters.
 
 Each element/cluster row shows:
 - **Header (click)**: selects/deselects the element; expands the detail section; scrolls canvas to its tiles
 - **Name input**: kebab-case name validated as `^[a-z]+(?:-[a-z]+)*-\d+(?:-\d+)*$` (`SharedUtils.NAME_VALID_REGEX`); invalid or duplicated names block Generate
-- **Lock button**: green closed padlock = locked (protected from bulk AI ops); open padlock = unlockable
+- **Lock button**: toggles the `approved` (locked) flag; green closed padlock = locked (skipped by the per tileset Detect Elements, Detect Layers and Name All runs); open padlock = unlocked
 - **Delete button**: removes the element after confirmation
 - **Split into tiles** (clusters only): splits the cluster into individual single-tile elements
 - **Convert to element** (clusters only): converts cluster to an approved element in-place
-- **Detect Elements** (per cluster, AI): sends cluster tiles to AI, replaces with sub-elements
-- **Detect Layers** (per element, AI): sends element tiles to AI, assigns correct layer types
+- **Detect** (AI): on a cluster sends its tiles to AI and replaces it with the detected sub-elements; on an element sends its tiles to AI and assigns the correct layer types
 - **Name** (per element, AI): sends element to AI and updates its name
 - **Quantity**: how many times the element appears in the generated composite map
 - **Free space around**: tile padding around the element in the generated map
@@ -77,14 +76,14 @@ Each element/cluster row shows:
 Each spot row shows:
 - **Header (click)**: expands/collapses the spot's detail section
 - **Name input**: identifier for the spot
-- **Lock button**: locks the spot against bulk-delete
+- **Lock button**: toggles the spot `approved` (locked) flag; it does not protect the spot from the bulk **Delete**, which removes locked items too
 - **Delete button**: removes the spot after confirmation
 
 ## Step 4 - Element Types
 
-**Cluster** (`type: cluster`, `approved: false`): a group of tiles detected by pixel connectivity that may contain multiple objects. Shown with dashed border. Bulk AI operations (Detect All, Name All) process clusters. Use **Split**, **Convert**, or **Detect AI** to resolve clusters into clean elements.
+**Cluster** (`type: cluster`, `approved: false`): a group of tiles detected by pixel connectivity that may contain multiple objects. Shown with dashed border. The per tileset **Detect Elements** AI control processes the unlocked clusters, while **Detect Layers** and **Name All** process the unlocked non-cluster elements. Use **Split**, **Convert**, or **Detect AI** to resolve clusters into clean elements.
 
-**Element** (`type: element`, `approved: true`): a named game object with one or more layers. Locked elements are skipped by bulk AI operations.
+**Element** (`type: element`, `approved: true`): a named game object with one or more layers. Locked elements are skipped by the per tileset Detect Layers and Name All runs.
 
 ## Step 5 - Tile Options and Spot Config
 
@@ -111,9 +110,9 @@ The canvas renders a colored marker badge in the corner of each assigned tile al
 - **Mark %**: percentage of spot tiles to mark (0-100)
 - **Variable Tiles %**: percentage of tiles replaced with random variations
 - **Walkable**: whether players can walk on this spot. When **unchecked** (walkable = false), the generator appends `-collisions` to the spot's layer name, which the Reldens game engine reads as a non-walkable collision zone. To make a spot act as an obstacle (e.g. a lake or wall), uncheck Walkable.
-- **Spot Tile**: the single tile placed at the spot center (its own row)
-- **Spot Tile Variations**: random tiles placed as ground within the spot (its own row, multi-value)
-- **Surrounding / Corner tiles**: same positional sets as global options but scoped to this spot
+- **Spot Tile**: the spot main tile, picked in the center cell of the spot's 3x3 **Tile Configuration** grid (not its own row)
+- **Spot Tile Variations**: random tiles placed as ground within the spot (the **Variations** row below that grid, multi-value)
+- **Surrounding / Corner tiles**: same positional sets as global options but scoped to this spot; the eight surrounding positions fill the rest of the Tile Configuration grid and the corners have their own 2x2 **Corner Tiles** grid
 - **Inner Walls / Inner Walls Corner tiles**: wall tiles placed at the inside border of the spot
 - **Outer Walls / Outer Walls Corner tiles**: wall tiles placed 1 tile outside the spot boundary
 - **Split Borders in Layers**: must be checked for inner/outer wall layers to appear in output; forced on automatically when either wall option is enabled
@@ -174,7 +173,7 @@ At the top of each tileset's controls row:
 - **Provider select**: chooses the AI provider (Claude, Gemini, or Ollama models)
 - **Detect Elements**: runs AI sub-element detection on every unlocked cluster one by one
 - **Detect Layers**: runs AI layer assignment on every unlocked non-cluster element
-- **Name All**: runs AI naming on every unlocked non-cluster element in a single batch
+- **Name All**: runs AI naming on every unlocked non-cluster element one by one, then shows how many were renamed and how many locked ones were skipped
 
 ## Step 8 - Generate Output
 

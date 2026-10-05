@@ -37,11 +37,11 @@ instead of burning the whole suite on one upstream break. Never override it with
 ## Database
 
 The suite uses its OWN database, `reldens_local`, declared in `tests/config.json`. This is deliberate: it keeps
-the e2e run from touching the branch database named in `app/.env`. `collect-game-data.js` calls
+the e2e run from touching the app database named in the app `.env`. `collect-game-data.js` calls
 `DatabaseEnvVarsExporter.apply(config)`, so the values in `tests/config.json` override the app `.env` for the
 whole run.
 
-Do NOT point `tests/config.json` at the branch database.
+Do NOT point `tests/config.json` at the app database.
 
 `--db-reset` rebuilds the e2e database from scratch on every run, so each run starts from the same content:
 `DatabaseResetUtility` (`tests/database-reset-utility.js`) drops every table of the configured database with
@@ -55,10 +55,13 @@ survive a reset.
 
 The sample data must contain the three users the specs log in as: `root`, `root2` and `root3`, with players
 `ImRoot`, `ImRoot2` and `ImRoot3`; the users of the other parallel spec groups (`root4` to `root9`) are created from
-them on the setup. The setup logs `[collect-game-data] User not found: root2` and snapshots
-fewer than 3 players when they are missing. Every multi-player spec (global, private and cross-player chat,
-teams, trading, double login) then fails waiting for `#player-selection:not(.hidden)`, which reads as a chat or
-trading bug but is really a missing account.
+them on the setup. The players snapshots used by the reset are taken for all 9 users
+(`PlayerStateReset.captureSnapshots`, `tests/e2e/helpers/player-state-reset.js`), while `game-data.json` only collects
+the 3 base players (`CollectGameData.buildPlayersData`). When a base user is missing the setup logs
+`[collect-game-data] User not found: root2` and `[test-data-setup] Base user not found: root2`, its copies in the
+other users sets are not created and fewer players are snapshotted. Every multi-player spec (global, private and
+cross-player chat, teams, trading, double login) then fails waiting for `#player-selection:not(.hidden)`, which reads
+as a chat or trading bug but is really a missing account.
 
 ## App under test
 
@@ -66,13 +69,13 @@ The suite runs against its OWN app instance, never a shared project (like a demo
 `.env`, `generated-entities/` and theme are the ones the server reads.
 
 `tests/config.json` is local and gitignored, create it from `tests/config.json.dist`. Its `serverPath` defaults to
-`../app`, an `app/` folder next to the Reldens checkout. A relative `serverPath` is resolved from the folder the tests
+`../app`, a project next to the Reldens checkout. A relative `serverPath` is resolved from the folder the tests
 run in (`tests/server-path-resolver.js`), an absolute path is used as it is.
 
-The app folder is a regular Reldens project with `reldens` installed from the checkout (a `file:` dependency with the
-relative path to the checkout in its `package.json`), so the run uses the checkout code. Its `.env` must use the
-storage driver its `generated-entities/` were generated for (`RELDENS_STORAGE_DRIVER=knex` by default, refresh them
-with `npm exec -- reldens generateEntities --override` from the app folder after a driver change).
+The `serverPath` project is a regular Reldens project with `reldens` installed from the checkout (a `file:` dependency
+with the relative path to the checkout in its `package.json`), so the run uses the checkout code. Its `.env` must use
+the storage driver its `generated-entities/` were generated for (`RELDENS_STORAGE_DRIVER=knex` by default, refresh
+them with `npm exec -- reldens generateEntities --override` from that project root after a driver change).
 
 The server is booted in process by the Playwright `globalSetup` (`tests/e2e/collect-game-data.js`) and the browser
 loads that app's `dist/index.html`. When `serverPath` does not exist the setup logs
@@ -96,8 +99,8 @@ lockouts and the blocks left by one spec never reach the next one:
 - restores the status of the accounts banned by a spec
 - lifts the deny list: restores the address lists switch, deletes every `ip_lists` row and rebuilds the lists
 - clears the `password_reset_sent_at` of the accounts marked by a spec and of the accounts that received an email from
-  the test mailer; the three e2e accounts are queued on the startup, so the first reset also clears the times left by
-  a previous run on the same database
+  the test mailer; every e2e account of every users set (`root` to `root9`) is queued on the startup, so the first
+  reset also clears the times left by a previous run on the same database
 - restores the real mailer state captured on the startup and clears the emails recorded by the test sender
 
 The global teardown (`tests/e2e/server-teardown.js`) runs the same `SecurityState.resetAll()` before it shuts the
@@ -143,7 +146,9 @@ a body the path finder grid does not know (a tree, another object) blocks the pl
 - `POST /api/e2e/room-objects/place-player-next-to-object` (`{roomName, sessionId, objectKey}`,
   `tests/e2e/helpers/room-player-placement.js`) - stops the random movement of the first object of that key or asset
   key (any object with a physics body, with or without a body state, so the chest is found too) and places the player
-  on the center of the closest walkable tile around the object tile that does not overlap the object body (closest distance first, then the lowest row and column, so the same room always gives the same tile);
+  on the center of the closest walkable tile around the object tile that does not overlap any colliding body of the
+  room (the object, the objects next to it and the other players) except the player itself (closest distance first,
+  then the lowest row and column, so the same room always gives the same tile);
   `RoomObjectsApi.placePlayerNextToObject` waits until the client player state is exactly on the placed position, and
   the NPC, trader, chest, mining rock and fishing spot specs interact with the returned `bodyKey`
 - the moved NPC case places the NPC with `RoomMovementApi.placeObject` on the closest walkable tile of its spawn tile
@@ -203,6 +208,9 @@ scene rooms to the specs, wrapped by `tests/e2e/helpers/room-objects-api.js`:
   body is not integrated and the random movement never moves it)
 - `POST /api/e2e/room-objects/enemy-attack` (`{roomName, playerName, assetKey}`, `RoomEnemyPlacement`) - places one
   enemy of that asset key the same way as `place-enemy` and starts its battle with the player
+- `POST /api/e2e/room-objects/place-player` (`{roomName, playerName, nearPlayerName}`) - places the player 40px from
+  the other player (found by name), on the first walkable side of right, left, down and up, inside the 50px
+  `attackShort` range and out of contact with its body, so a player versus player hit never pushes the target
 - `POST /api/e2e/room-objects/player-affected-property` (`{roomName, playerName, value}`) - sets the affected property
   (`client/actions/skills/affectedProperty`, the hp) of the live player to that value, saves the stats and sends them to
   the player client (`RoomScene.savePlayerStats`)
@@ -232,8 +240,9 @@ and `BaseE2eTest.loadRoomEntries(roomName, listsKeys, onlyMoving)`:
   with `onlyAggressive` and the passive enemy is placed 40px from the player with `place-enemy`)
 - `test-interactive-objects.spec.js` - the chest, the mining rock and the fishing spot with the forest enemies disabled
 - `test-timing-objects-cancel.spec.js` - the mining is cancelled and gives no reward when the player moves, when an
-  enemy hits the player (placed by `enemy-attack`) and when another player hits the player (`attackShort` sent by
-  `ImRoot2` standing next to the miner); the hit cases also check the player HP went down and the position did not
+  enemy hits the player (placed by `enemy-attack`) and when another player hits the player (`attackShort` sent by the
+  second player of the group, `gameConfig.e2ePlayerName2`, `ImRoot5` in the forest group, placed next to the miner by
+  `place-player`); the hit cases also check the player HP went down and the position did not
   change, so the cancel comes from `cancelOnHit` and not from `cancelOnMove`
 - `test-combat.spec.js` and `test-movement.spec.js` - the death and revive and the return point after death:
   `TestCombatDeath.killPlayerWithEnemyAttack` sets the player hp to 1 (`player-affected-property`) and places a Tree
@@ -260,8 +269,8 @@ Written under `test-results/` (gitignored):
 
 - `videos/<test-title-slug>.webm` - one per test, plus `-player2` for two-page specs
 - `screenshots/<test-title-slug>/` - numbered captures taken by the specs
-- `console-<Y-m-d-H-i-s>.log` - the whole output of a run when it is started with
-  `> "<branch>/reldens/test-results/console-$(date +%Y-%m-%d-%H-%M-%S).log" 2>&1`, follow it with `tail -f`
+- `console-<Y-m-d-H-i-s>.log` - the whole output of a run when it is started from the checkout root with
+  `> "test-results/console-$(date +%Y-%m-%d-%H-%M-%S).log" 2>&1`, follow it with `tail -f`
 - `server.log` - the console output of the Playwright main process, where the game server runs: the server log lines,
   the framework output (Colyseus included) and any uncaught exception
 - `tests.log` - the console output of the test worker, which also receives the game server log lines written while

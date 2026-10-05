@@ -1,6 +1,6 @@
 # Entities Reference
 
-Complete list of all 60+ entity types in the Reldens platform.
+Complete list of all 79 entity types in the Reldens platform, one per table created by `migrations/production/reldens-install-v4.0.0.sql`.
 
 Entities are located in `generated-entities/entities/` and are auto-generated from the database schema.
 

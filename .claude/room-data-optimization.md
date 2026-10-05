@@ -6,7 +6,7 @@
 
 ## Overview
 
-The SceneDataFilter system prevents Colyseus buffer overflow by analyzing room data and extracting identical properties across multiple objects into a shared defaults structure. This reduces buffer usage from ~176 KB to under 64 KB for rooms with 400+ objects.
+The SceneDataFilter system prevents Colyseus buffer overflow by analyzing room data and extracting identical properties across multiple objects into a shared defaults structure. In the illustrative estimate of a room with 400+ objects (see Performance Impact) it reduces the buffer usage from ~176 KB to under 64 KB.
 
 **Key Components**:
 - **Server**: `SceneDataFilter` (`lib/rooms/server/scene-data-filter.js`) - Detects shared properties, creates optimized data structure
@@ -21,9 +21,9 @@ The SceneDataFilter system prevents Colyseus buffer overflow by analyzing room d
 ### Architecture
 
 **SceneDataFilter Methods:**
-- filterRoomData() - Main entry (called by State.mapRoomData)
-- buildCompleteData() - Returns unfiltered data (sendAll: true)
-- buildFilteredData() - Returns optimized data (sendAll: false)
+- filterRoomData() - Main entry (called by State.mapRoomData), with sendAll: true it returns `Object.assign({}, roomData)` (unfiltered copy)
+- buildCompleteData() - Returns an unfiltered copy, not called by anything (the sendAll path of filterRoomData builds its own copy)
+- buildFilteredData() - Returns optimized data (sendAll: false, no custom processor)
 - optimizeData() - Generic optimization method
 - detectIdenticalProperties() - Finds shared properties across objects
 - valuesAreDifferent() - Compares values for optimization
@@ -77,7 +77,8 @@ The SceneDataFilter system prevents Colyseus buffer overflow by analyzing room d
 - Each NPC has its own key and no asset key, so every NPC is a single-object group: no optimization, its data stays
   as it is with the `key` field as asset reference
 
-**Forest Room (400 NPCs)**:
+**Forest Room (illustrative example with 400 NPCs)**:
+- The numbers are illustrative: the sample data `reldens-forest-level-1` room has 12 Tree and 18 Tree Punch enemies and 10 mining rocks, and the `reldens-bots-forest` room has 100 Tree and 200 Tree Punch enemies
 - 200 enemies of type A, 200 enemies of type B
 - Each group has identical shared properties
 - Result: `animationsDefaults: {'enemy_forest_1': {...}, 'enemy_forest_2': {...}}`
@@ -128,7 +129,7 @@ Merges extracted defaults back into the preload assets and the objects after rec
 
 ### When It Runs
 
-`RoomEvents.checkAndCreateScene()` (`lib/game/client/room-events.js` line 150) runs it over the parsed scene data:
+`RoomEvents.checkAndCreateScene()` (`lib/game/client/room-events.js`) runs it over the parsed scene data:
 
 ```javascript
 this.roomData = AnimationsDefaultsMerger.mergeDefaults(sc.toJson(this.room.state.sceneData));
@@ -215,7 +216,8 @@ objectsAnimationsData: {
 // Server output
 {
   objectsAnimationsData: { ...unchanged... },
-  animationsDefaults: {...}  // only the door_house_3 entry of the town doors, nothing for the NPCs
+  // only the door_house_3 entry of the town doors, nothing for the NPCs
+  animationsDefaults: {...}
 }
 ```
 
@@ -228,7 +230,8 @@ for(let key of ['ground3482', 'ground3567']){
     let groupValue = GroupValueResolver.resolve(objectData, 'asset_key');
     // animationsDefaults has no entry for these group values:
     if('' === groupValue || !sc.hasOwn(animationsDefaults, groupValue)){
-        continue;  // SKIP - no modifications, keep original data
+        // SKIP - no modifications, keep original data
+        continue;
     }
 }
 
@@ -244,12 +247,15 @@ objectsAnimationsData: {
 
 ### Forest Room (With Optimization)
 
+Illustrative example, the object keys, the property values and the 400 objects are not the sample data ones.
+
 **Server Processing**:
 ```javascript
 // Original data: 400 objects, 200 identical enemies per type
 objectsAnimationsData: {
   'enemy_1': {
-    asset_key: 'enemy_forest_1',  // Already set by server
+    // Already set by server
+    asset_key: 'enemy_forest_1',
     type: 'npc',
     enabled: true,
     targetName: 'enemy-pve',
@@ -302,10 +308,11 @@ for(let key of ['enemy_1', 'enemy_2', ...]){
     let objectData = objectsAnimationsData[key];
     // {asset_key: 'enemy_forest_1', x: 100, y: 200}
 
-    // Resolve the group value
-    let groupValue = GroupValueResolver.resolve(objectData, 'asset_key');  // 'enemy_forest_1'
+    // Resolve the group value: 'enemy_forest_1'
+    let groupValue = GroupValueResolver.resolve(objectData, 'asset_key');
     if('' === groupValue || !sc.hasOwn(animationsDefaults, groupValue)){
-        continue;  // NOT executed - the defaults entry exists
+        // NOT executed - the defaults entry exists
+        continue;
     }
 
     // Merge
@@ -330,6 +337,8 @@ for(let key of ['enemy_1', 'enemy_2', ...]){
 ## Performance Impact
 
 ### 400 Objects Example (Forest Room)
+
+Illustrative estimate for a room with 400 objects, the sizes below were not measured on the sample data rooms.
 
 **Unfiltered**:
 - preloadAssets: 400 × 2 assets × 275 bytes = 220 KB
@@ -443,7 +452,8 @@ customClasses: {
 ```javascript
 // If asset_key was extracted to defaults:
 objectsAnimationsData: {
-  'enemy_1': {x: 100, y: 200}  // No asset_key!
+  // No asset_key!
+  'enemy_1': {x: 100, y: 200}
 }
 animationsDefaults: {
   'enemy_forest_1': {asset_key: 'enemy_forest_1', type: 'npc', ...}
@@ -455,8 +465,10 @@ animationsDefaults: {
 
 Keeping grouping field in each object allows lookup:
 ```javascript
-let assetKey = objectData.asset_key;  // 'enemy_forest_1'
-let defaults = animationsDefaults[assetKey];  // Found!
+// 'enemy_forest_1'
+let assetKey = objectData.asset_key;
+// Found!
+let defaults = animationsDefaults[assetKey];
 ```
 
 ---
@@ -465,47 +477,42 @@ let defaults = animationsDefaults[assetKey];  // Found!
 
 ### Server Integration
 
-**RoomScene** (`lib/rooms/server/scene.js` lines 109-111):
+**RoomScene** (`lib/rooms/server/scene.js`, `RoomScene.onCreate`):
 ```javascript
 this.sceneDataFilter = new SceneDataFilter({config: this.config});
 // room data is saved on the state:
 let roomState = new State(this.roomData, this.sceneDataFilter);
 ```
 
-**State** (`lib/rooms/server/state.js` lines 25-55):
+**State** (`lib/rooms/server/state.js`), the constructor keeps the room data and the filter and calls `mapRoomData()`:
 ```javascript
-constructor(roomData, sceneDataFilter){
-    this.roomData = roomData || {};
-    this.sceneDataFilter = sceneDataFilter || false;
-    this.mapRoomData();
-}
+this.roomData = roomData || {};
+/** @type {SceneDataFilter|boolean} */
+this.sceneDataFilter = sceneDataFilter || false;
+this.mapRoomData();
+```
 
-mapRoomData(roomData){
-    if(!roomData){
-        roomData = this.roomData;
-    }
-    if(this.sceneDataFilter && this.sceneDataFilter.filterRoomData){
-        roomData = this.sceneDataFilter.filterRoomData(roomData, false);
-    }
-    this.sceneData = sc.toJsonString(roomData);
+`State.mapRoomData(roomData)` falls back to `this.roomData` when no data is passed and then filters it:
+```javascript
+if(this.sceneDataFilter && this.sceneDataFilter.filterRoomData){
+    roomData = this.sceneDataFilter.filterRoomData(roomData);
 }
+/** @type {string} */
+this.sceneData = sc.toJsonString(roomData);
 ```
 
 ### Client Integration
 
-**RoomEvents** (`lib/game/client/room-events.js` lines 149-151, in `checkAndCreateScene()`):
+**RoomEvents** (`lib/game/client/room-events.js`, in `checkAndCreateScene()`):
 ```javascript
 if(0 === Object.keys(this.roomData).length){
     this.roomData = AnimationsDefaultsMerger.mergeDefaults(sc.toJson(this.room.state.sceneData));
 }
 ```
 
-**AnimationEngine** (`lib/objects/client/animation-engine.js` line 80):
+**AnimationEngine** (`lib/objects/client/animation-engine.js`), the constructor (`constructor(gameManager, props, currentPreloader)`) uses `asset_key` if present and falls back to `key`:
 ```javascript
-constructor(props){
-    // Uses asset_key if present, falls back to key
-    this.asset_key = sc.get(props, 'asset_key', props.key);
-}
+this.asset_key = sc.get(props, 'asset_key', props.key);
 ```
 
 ---
@@ -521,7 +528,7 @@ constructor(props){
 4. Test the doors open and the NPC dialogs work correctly
 
 **Forest Room (Optimization Expected)**:
-1. Join Forest room with 400 objects
+1. Join the `reldens-forest-level-1` room (12 Tree and 18 Tree Punch enemies and 10 mining rocks in the sample data)
 2. Check browser console: Objects have `asset_key` field
 3. Verify: `animationsDefaults` has entries
 4. Test enemies render and behave correctly

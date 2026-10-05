@@ -56,11 +56,7 @@ INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES
 
 ### Production Migration
 
-From `migrations/production/reldens-basic-config-v4.0.0.sql`:
-
-```sql
-(82, 'client', 'players/barsProperties', '{"hp":{"enabled":true,"label":"HP","activeColor":"#d53434","inactiveColor":"#330000"},"mp":{"enabled":true,"label":"MP","activeColor":"#5959fb","inactiveColor":"#000033"}}', 4),
-```
+`migrations/production/reldens-basic-config-v4.0.0.sql` seeds the same row (scope `client`, path `players/barsProperties`, type 4) with the same HP and MP value.
 
 ## Examples
 
@@ -254,27 +250,25 @@ INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES
 
 ### Production Migration
 
-From `migrations/production/reldens-basic-config-v4.0.0.sql`:
-
-Existing configurations (IDs 239-252):
+Existing configurations seeded by `migrations/production/reldens-basic-config-v4.0.0.sql` (`scope`, `path`, `value`, `type`):
 ```sql
-(239, 'client', 'ui/players/nameText/align', 'center', 1),
-(240, 'client', 'ui/players/nameText/depth', '200000', 2),
-(241, 'client', 'ui/players/nameText/fill', '#ffffff', 1),
-(242, 'client', 'ui/players/nameText/fontFamily', 'Verdana, Geneva, sans-serif', 1),
-(243, 'client', 'ui/players/nameText/fontSize', '12px', 1),
-(244, 'client', 'ui/players/nameText/height', '-90', 2),
-(245, 'client', 'ui/players/nameText/shadowBlur', '5', 2),
-(246, 'client', 'ui/players/nameText/shadowColor', 'rgba(0,0,0,0.7)', 1),
-(247, 'client', 'ui/players/nameText/shadowX', '5', 2),
-(248, 'client', 'ui/players/nameText/shadowY', '5', 2),
-(249, 'client', 'ui/players/nameText/stroke', '#000000', 1),
-(250, 'client', 'ui/players/nameText/strokeThickness', '4', 2),
-(251, 'client', 'ui/players/nameText/textLength', '4', 2),
-(252, 'client', 'ui/players/showNames', '1', 3),
+('client', 'ui/players/nameText/align', 'center', 1),
+('client', 'ui/players/nameText/depth', '200000', 2),
+('client', 'ui/players/nameText/fill', '#ffffff', 1),
+('client', 'ui/players/nameText/fontFamily', 'Verdana, Geneva, sans-serif', 1),
+('client', 'ui/players/nameText/fontSize', '12px', 1),
+('client', 'ui/players/nameText/height', '-90', 2),
+('client', 'ui/players/nameText/shadowBlur', '5', 2),
+('client', 'ui/players/nameText/shadowColor', 'rgba(0,0,0,0.7)', 1),
+('client', 'ui/players/nameText/shadowX', '5', 2),
+('client', 'ui/players/nameText/shadowY', '5', 2),
+('client', 'ui/players/nameText/stroke', '#000000', 1),
+('client', 'ui/players/nameText/strokeThickness', '4', 2),
+('client', 'ui/players/nameText/textLength', '4', 2),
+('client', 'ui/players/showNames', '1', 3),
 ```
 
-New configuration to add (ID 253 is already used by `ui/playerStats/enabled`, use the next free ID):
+New configuration to add (omit the `id` column, it is auto-increment):
 ```sql
 ('client', 'ui/players/showCurrentPlayerName', '0', 3),
 ```
@@ -283,8 +277,11 @@ New configuration to add (ID 253 is already used by `ui/playerStats/enabled`, us
 
 ### Example 1: Hide Current Player Name
 
+The `showCurrentPlayerName` row is not seeded, so an `UPDATE` changes 0 rows. Insert it or update it when it exists (the `config` table has the `scope_path` unique key):
+
 ```sql
-UPDATE `config` SET `value` = '0' WHERE `scope` = 'client' AND `path` = 'ui/players/showCurrentPlayerName';
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/players/showCurrentPlayerName', '0', 3)
+ON DUPLICATE KEY UPDATE `value` = '0';
 ```
 
 Current player's name will not be displayed. Useful when using alternative UI systems.
@@ -300,7 +297,8 @@ Other players' names will not be displayed. Current player's name visibility dep
 ### Example 3: Show Both Current Player and Other Players' Names
 
 ```sql
-UPDATE `config` SET `value` = '1' WHERE `scope` = 'client' AND `path` = 'ui/players/showCurrentPlayerName';
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/players/showCurrentPlayerName', '1', 3)
+ON DUPLICATE KEY UPDATE `value` = '1';
 UPDATE `config` SET `value` = '1' WHERE `scope` = 'client' AND `path` = 'ui/players/showNames';
 ```
 
@@ -346,6 +344,7 @@ Creates green player names with 16px font size and thicker stroke.
 - `showPlayerName(id)`: Displays name above player sprite, checks configuration
 - `updateNamePosition(playerSprite)`: Updates name position during movement
 - `applyNameLengthLimit(showName)`: Truncates long names
+- `removePlayer(key)`: Destroys the name sprite (when the player has one) and the player sprite, so players without names (for example with `showNames` set to `0`) are also removed
 
 ### Call Sites
 
@@ -449,21 +448,31 @@ The lifebar system supports two positioning modes: fixed and floating.
 - **showEnemies** (type 3 - boolean): Show lifebars for NPCs and enemies
   - Default: `1` (enabled)
   - Database: `client/ui/lifeBar/showEnemies`
-  - Controls all objects (NPCs/enemies)
+  - Controls all objects (NPCs/enemies), when disabled the objects bars are never shown (not even on click)
+  - When `showOnClick` is also enabled, only the clicked target bar is shown
 
 - **showOnClick** (type 3 - boolean): Show lifebars only when target is clicked
   - Default: `1` (enabled)
   - Database: `client/ui/lifeBar/showOnClick`
-  - Works for both other players and objects when their specific show flags are disabled
+  - Other players: applies when `showAllPlayers` is disabled, the clicked player bar is shown
+  - NPCs/enemies: requires `showEnemies` enabled, and restricts their bars to the clicked target (`lib/users/client/objects-handler.js` `ObjectsHandler.isValidMessage()` and `ObjectsHandler.isValidToDraw()`)
 
 ## Database Configuration
 
 ### Development Migration
 
-Add to `migrations/development/[version]-sql-update.sql`:
+All the lifeBar rows except `showCurrentPlayer` are already seeded, and the `config` table has the `scope_path` unique key, so inserting them again fails. Add only the missing row to `migrations/development/[version]-sql-update.sql`:
 
 ```sql
 INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES
+('client', 'ui/lifeBar/showCurrentPlayer', '0', 3);
+```
+
+### Production Migration
+
+Seeded by `migrations/production/reldens-basic-config-v4.0.0.sql` (`scope`, `path`, `value`, `type`), note there is no `showCurrentPlayer` row:
+
+```sql
 ('client', 'ui/lifeBar/enabled', '1', 3),
 ('client', 'ui/lifeBar/fillStyle', '0xff0000', 1),
 ('client', 'ui/lifeBar/fixedPosition', '0', 3),
@@ -472,34 +481,12 @@ INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES
 ('client', 'ui/lifeBar/responsiveX', '1', 2),
 ('client', 'ui/lifeBar/responsiveY', '24', 2),
 ('client', 'ui/lifeBar/showAllPlayers', '0', 3),
-('client', 'ui/lifeBar/showCurrentPlayer', '0', 3),
 ('client', 'ui/lifeBar/showEnemies', '1', 3),
 ('client', 'ui/lifeBar/showOnClick', '1', 3),
 ('client', 'ui/lifeBar/top', '5', 2),
 ('client', 'ui/lifeBar/width', '50', 2),
 ('client', 'ui/lifeBar/x', '5', 2),
-('client', 'ui/lifeBar/y', '12', 2);
-```
-
-### Production Migration
-
-From `migrations/production/reldens-basic-config-v4.0.0.sql` (IDs 181-194), note there is no `showCurrentPlayer` row:
-
-```sql
-(181, 'client', 'ui/lifeBar/enabled', '1', 3),
-(182, 'client', 'ui/lifeBar/fillStyle', '0xff0000', 1),
-(183, 'client', 'ui/lifeBar/fixedPosition', '0', 3),
-(184, 'client', 'ui/lifeBar/height', '5', 2),
-(185, 'client', 'ui/lifeBar/lineStyle', '0xffffff', 1),
-(186, 'client', 'ui/lifeBar/responsiveX', '1', 2),
-(187, 'client', 'ui/lifeBar/responsiveY', '24', 2),
-(188, 'client', 'ui/lifeBar/showAllPlayers', '0', 3),
-(189, 'client', 'ui/lifeBar/showEnemies', '1', 3),
-(190, 'client', 'ui/lifeBar/showOnClick', '1', 3),
-(191, 'client', 'ui/lifeBar/top', '5', 2),
-(192, 'client', 'ui/lifeBar/width', '50', 2),
-(193, 'client', 'ui/lifeBar/x', '5', 2),
-(194, 'client', 'ui/lifeBar/y', '12', 2),
+('client', 'ui/lifeBar/y', '12', 2),
 ```
 
 ## Configuration Examples
@@ -542,8 +529,11 @@ NPCs and enemies will not show lifebars at all.
 
 ### Example 5: Hide Current Player Lifebar
 
+The `showCurrentPlayer` row is not seeded, so an `UPDATE` changes 0 rows:
+
 ```sql
-UPDATE `config` SET `value` = '0' WHERE `scope` = 'client' AND `path` = 'ui/lifeBar/showCurrentPlayer';
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/lifeBar/showCurrentPlayer', '0', 3)
+ON DUPLICATE KEY UPDATE `value` = '0';
 ```
 
 Current player's lifebar will not be displayed. Useful when using alternative UI systems like player stats bars.
@@ -556,7 +546,7 @@ UPDATE `config` SET `value` = '1' WHERE `scope` = 'client' AND `path` = 'ui/life
 UPDATE `config` SET `value` = '1' WHERE `scope` = 'client' AND `path` = 'ui/lifeBar/showEnemies';
 ```
 
-All players and enemies will always show their lifebars without requiring click interaction.
+Other players and enemies will always show their lifebars without requiring click interaction. The current player bar still depends on `showCurrentPlayer`.
 
 ### Example 7: Custom Colors and Dimensions
 
@@ -659,3 +649,5 @@ UPDATE `config` SET `value` = 'mp' WHERE `scope` = 'client' AND `path` = 'action
 ```
 
 This would make lifebars track magic points instead of health points.
+
+Warning: this path is not only used by the lifebars. The server uses the same stat as the death and revive stat for players and enemies (`lib/actions/server/battle.js` `updateTargetClient()` and `revivePlayer()`, `lib/actions/server/pve.js`, `lib/rooms/server/scene.js` `handlePlayerLastState()`, `lib/objects/server/object/type/enemy-object.js`), and `lib/users/server/plugin.js` sends the lifebar updates with it. Changing it also changes which stat kills players and enemies.

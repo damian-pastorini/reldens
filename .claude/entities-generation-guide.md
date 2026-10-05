@@ -46,5 +46,6 @@ The output goes to `./prisma/schema.prisma` and `./prisma/client/`, and `prisma.
 ## Notes
 
 - The `RELDENS_DB_CLIENT=mysql2` setting in `.env` is automatically normalized to `mysql` when the driver is `prisma` (Prisma does not support the `mysql2://` URL scheme).
-- The Prisma client path defaults to `./prisma/client` relative to the project root.
-- If running from a different folder than the installed app is needed, copy the app `.env` into that folder first.
+- The Prisma client path defaults to `./prisma/client` relative to the project root, pass `--prismaClientPath=path` to `reldens generateEntities` to use another one.
+- `reldens generateEntities` forwards `RELDENS_PRISMA_ADAPTER` and `RELDENS_PRISMA_ADAPTER_CLASS` from `.env` to the `@reldens/storage` generator as `--prismaAdapter=` and `--prismaAdapterClass=` (defaults `@prisma/adapter-mariadb` and `PrismaMariaDb`).
+- Run the command from the project root that holds the `.env`: `reldens generateEntities` reads `.env` from the current folder and exits with ".env file not found at: ..." when it is missing.

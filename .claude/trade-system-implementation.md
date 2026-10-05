@@ -14,7 +14,7 @@
 
 **Server determines playerToExchangeKey:**
 
-Line 314 in `lib/inventory/server/message-actions.js`:
+In `lib/inventory/server/message-actions.js` `InventoryMessageActions.sendExchangeUpdate()`:
 ```javascript
 let playerToExchangeKey = ownerSessionId === playerTo.sessionId ? 'A' : 'B';
 ```
@@ -47,9 +47,10 @@ The trade UI displays three columns:
 
 **When client receives TRADE_SHOW message:**
 
-Lines 138-143 in `trade-message-handler.js`:
+In `lib/inventory/client/trade-message-handler.js` `TradeMessageHandler.showTradeBox()`:
 ```javascript
 let traderExchangeKey = sc.get(this.message, 'playerToExchangeKey', 'A');
+// my exchange key is the opposite to the received exchange key:
 let myExchangeKey = 'A' === traderExchangeKey ? 'B' : 'A';
 this.updateItemsList(items, container, exchangeData[myExchangeKey]);
 this.updateMyExchangeData((exchangeData[myExchangeKey] || {}), items, myExchangeKey);
@@ -78,9 +79,11 @@ this.updateTraderExchangeData((exchangeData[traderExchangeKey] || {}), traderIte
 
 **Every TRADE_SHOW message triggers full HTML recreation:**
 
-Line 183 in `trade-message-handler.js`:
+In `TradeMessageHandler.updateItemsList()`:
 ```javascript
 container.innerHTML = this.createTradeContainer(tradeItems);
+this.activateItemsBoxActions(tempItemsList);
+this.activateConfirmButtonAction(sc.get(this.message, 'exchangeData', {}));
 ```
 
 Server sends TRADE_SHOW to BOTH players simultaneously when:
@@ -90,7 +93,7 @@ Server sends TRADE_SHOW to BOTH players simultaneously when:
 
 **Implications:**
 - All buttons and DOM elements are DESTROYED and RECREATED each time
-- Event listeners must be re-attached after every update (lines 184-185)
+- Event listeners must be re-attached after every update (`activateItemsBoxActions()` and `activateConfirmButtonAction()` right after the HTML is set)
 - Server state is the ONLY source of truth
 - No client-side state should be maintained between updates
 
@@ -102,12 +105,12 @@ Server sends TRADE_SHOW to BOTH players simultaneously when:
 
 **Button States Calculation:**
 
-Line 185 in `trade-message-handler.js`:
+`TradeMessageHandler.updateItemsList()` calls:
 ```javascript
 this.activateConfirmButtonAction(sc.get(this.message, 'exchangeData', {}));
 ```
 
-Lines 195-202 in `activateConfirmButtonAction`:
+In `TradeMessageHandler.activateConfirmButtonAction()`:
 ```javascript
 let myExchangeKey = sc.get(this.message, 'playerToExchangeKey', 'A');
 let traderExchangeKey = 'A' === myExchangeKey ? 'B' : 'A';
@@ -227,7 +230,7 @@ confirmations = {
 
 ## Item Actions Display
 
-**CSS Behavior (lines 330-338 in items-system.scss):**
+**CSS Behavior (`theme/default/css/items-system.scss`, inside `.trade-container .trade-row.trade-items-boxes`):**
 
 ```scss
 .my-items,
@@ -266,18 +269,20 @@ confirmations = {
 
 ## CSS Styling
 
-**Player Confirmed Message** (lines 298-314 in items-system.scss):
+All the rules below are in `theme/default/css/items-system.scss`.
+
+**Player Confirmed Message** (`.trade-container .player-confirmed`):
 - Styled block with border and background
 - Empty state handling with transparent background
 
-**Button Layout** (lines 344-351):
+**Button Layout** (`.trade-container .trade-confirm-actions`):
 - Flexbox with center justification
 - No float positioning
 
-**Remove Button** (lines 702-710):
+**Remove Button** (`.trade-item .trade-action-remove`):
 - Absolute positioning at `right: -10px`
 - Icon size 20px
 
-**Item Actions** (lines 330-338):
+**Item Actions** (`.trade-container .trade-row.trade-items-boxes`, `.trade-item .actions-container.trade-actions`):
 - Displayed as block in the three columns
-- Inside the trade dialog box they are laid out inline (lines 561-621)
+- Inside the NPC trader dialog box (`.ui-dialog-box.type-trader.trade-in-progress .item-box.trade-item`) they are laid out inline as a flex row

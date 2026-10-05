@@ -35,14 +35,15 @@ Controls the display of health bars above player and NPC sprites. Allows indepen
 **showEnemies**
 - Path: `client/ui/lifeBar/showEnemies`
 - Default: `1` (enabled)
-- Controls: NPCs and enemies lifebars visibility
+- Controls: NPCs and enemies lifebars visibility, when disabled their bars are never shown (not even on click)
 - Use case: Disable for less cluttered visual experience
 
 **showOnClick**
 - Path: `client/ui/lifeBar/showOnClick`
 - Default: `1` (enabled)
 - Controls: Whether lifebars show only when target is clicked
-- Works for: Both other players and objects when their specific show flags are disabled
+- Other players: applies when `showAllPlayers` is disabled, the clicked player bar is shown
+- NPCs/enemies: requires `showEnemies` enabled, and restricts their bars to the clicked target (`lib/users/client/objects-handler.js` `ObjectsHandler.isValidMessage()` and `ObjectsHandler.isValidToDraw()`)
 
 ### Implementation Flow
 
@@ -51,9 +52,11 @@ Controls the display of health bars above player and NPC sprites. Allows indepen
 
 Flow:
 1. Check if player is current player by comparing playerId with gameManager.getCurrentPlayer().playerId
-2. If current player: return value of `barConfig.showCurrentPlayer`
+2. If current player: hide the bar and return false when the player is dead or disabled, otherwise return value of `barConfig.showCurrentPlayer`
 3. If other player: check `barConfig.showAllPlayers` first, then `barConfig.showOnClick` and whether the player is the current target if false
 4. Draw lifebar only if check returns true
+
+NPCs and enemies bars are handled by `lib/users/client/objects-handler.js`: the lifebar messages for objects are only processed when `showEnemies` is enabled, and with `showOnClick` enabled only the clicked target bar is drawn.
 
 **Customizable Fields**:
 - `showCurrentPlayer` - boolean - stored in `this.barConfig.showCurrentPlayer`
@@ -63,9 +66,12 @@ Flow:
 
 ### Configuration Examples
 
+The `showCurrentPlayer`, `showCurrentPlayerName` and `showNamesLimit` rows are not seeded, so an `UPDATE` on them changes 0 rows. The examples use `INSERT ... ON DUPLICATE KEY UPDATE` for those paths (the `config` table has the `scope_path` unique key).
+
 Hide current player lifebar:
 ```sql
-UPDATE `config` SET `value` = '0' WHERE `scope` = 'client' AND `path` = 'ui/lifeBar/showCurrentPlayer';
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/lifeBar/showCurrentPlayer', '0', 3)
+ON DUPLICATE KEY UPDATE `value` = '0';
 ```
 
 Show all players lifebars always:
@@ -74,12 +80,12 @@ UPDATE `config` SET `value` = '1' WHERE `scope` = 'client' AND `path` = 'ui/life
 UPDATE `config` SET `value` = '0' WHERE `scope` = 'client' AND `path` = 'ui/lifeBar/showOnClick';
 ```
 
-Hide all lifebars:
+Hide all lifebars (disables the whole lifebar system, `LifebarUi.createLifeBarUi()` returns false when it is off):
 ```sql
-UPDATE `config` SET `value` = '0' WHERE `scope` = 'client' AND `path` = 'ui/lifeBar/showCurrentPlayer';
-UPDATE `config` SET `value` = '0' WHERE `scope` = 'client' AND `path` = 'ui/lifeBar/showAllPlayers';
-UPDATE `config` SET `value` = '0' WHERE `scope` = 'client' AND `path` = 'ui/lifeBar/showEnemies';
+UPDATE `config` SET `value` = '0' WHERE `scope` = 'client' AND `path` = 'ui/lifeBar/enabled';
 ```
+
+Setting only `showCurrentPlayer`, `showAllPlayers` and `showEnemies` to `0` is not enough, other players bars would still show on click while `showOnClick` is `1`.
 
 ---
 
@@ -144,7 +150,8 @@ Flow:
 
 Hide current player name:
 ```sql
-UPDATE `config` SET `value` = '0' WHERE `scope` = 'client' AND `path` = 'ui/players/showCurrentPlayerName';
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/players/showCurrentPlayerName', '0', 3)
+ON DUPLICATE KEY UPDATE `value` = '0';
 ```
 
 Hide all other players names:
@@ -154,13 +161,15 @@ UPDATE `config` SET `value` = '0' WHERE `scope` = 'client' AND `path` = 'ui/play
 
 Show both current and other players names:
 ```sql
-UPDATE `config` SET `value` = '1' WHERE `scope` = 'client' AND `path` = 'ui/players/showCurrentPlayerName';
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/players/showCurrentPlayerName', '1', 3)
+ON DUPLICATE KEY UPDATE `value` = '1';
 UPDATE `config` SET `value` = '1' WHERE `scope` = 'client' AND `path` = 'ui/players/showNames';
 ```
 
 Increase name length limit:
 ```sql
-UPDATE `config` SET `value` = '20' WHERE `scope` = 'client' AND `path` = 'ui/players/showNamesLimit';
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/players/showNamesLimit', '20', 2)
+ON DUPLICATE KEY UPDATE `value` = '20';
 ```
 
 ---
@@ -172,8 +181,10 @@ UPDATE `config` SET `value` = '20' WHERE `scope` = 'client' AND `path` = 'ui/pla
 When using custom UI panels for current player information:
 
 ```sql
-UPDATE `config` SET `value` = '0' WHERE `scope` = 'client' AND `path` = 'ui/lifeBar/showCurrentPlayer';
-UPDATE `config` SET `value` = '0' WHERE `scope` = 'client' AND `path` = 'ui/players/showCurrentPlayerName';
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/lifeBar/showCurrentPlayer', '0', 3)
+ON DUPLICATE KEY UPDATE `value` = '0';
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/players/showCurrentPlayerName', '0', 3)
+ON DUPLICATE KEY UPDATE `value` = '0';
 ```
 
 Result: Current player has no floating UI elements, all info shown in panels
@@ -195,9 +206,11 @@ Result: Other players show info only when clicked
 For PvP or cooperative multiplayer:
 
 ```sql
-UPDATE `config` SET `value` = '1' WHERE `scope` = 'client' AND `path` = 'ui/lifeBar/showCurrentPlayer';
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/lifeBar/showCurrentPlayer', '1', 3)
+ON DUPLICATE KEY UPDATE `value` = '1';
 UPDATE `config` SET `value` = '1' WHERE `scope` = 'client' AND `path` = 'ui/lifeBar/showAllPlayers';
-UPDATE `config` SET `value` = '1' WHERE `scope` = 'client' AND `path` = 'ui/players/showCurrentPlayerName';
+INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES ('client', 'ui/players/showCurrentPlayerName', '1', 3)
+ON DUPLICATE KEY UPDATE `value` = '1';
 UPDATE `config` SET `value` = '1' WHERE `scope` = 'client' AND `path` = 'ui/players/showNames';
 UPDATE `config` SET `value` = '0' WHERE `scope` = 'client' AND `path` = 'ui/lifeBar/showOnClick';
 ```
@@ -212,31 +225,52 @@ Result: All players always show names and health bars
 
 Both systems follow the same architectural pattern:
 
-1. Configuration loaded in constructor from gameManager.config
+1. Configuration loaded from gameManager.config: `PlayerEngine` loads it in its constructor, `LifebarUi` loads it in `createLifeBarUi()` (not in the constructor)
 2. Single method determines visibility based on player type (current vs other)
-3. Ternary operator selects appropriate config property
+3. The player type selects the appropriate config property
 4. Early return if visibility check fails
 5. Render or update UI element if check passes
 
 ### Property Access Pattern
 
-Properties are stored as class instance variables for performance:
+Properties are stored as class instance variables for performance.
 
+`LifebarUi.createLifeBarUi()`:
 ```javascript
 this.barConfig = gameManager.config.get('client/ui/lifeBar');
-this.globalConfigShowCurrentPlayerName = Boolean(this.config.getWithoutLogs('client/ui/players/showCurrentPlayerName'));
+```
+
+`PlayerEngine` constructor:
+```javascript
 this.globalConfigShowNames = Boolean(this.config.get('client/ui/players/showNames'));
+/** @type {boolean} */
+this.globalConfigShowCurrentPlayerName = Boolean(this.config.getWithoutLogs('client/ui/players/showCurrentPlayerName'));
 ```
 
 ### Conditional Logic Pattern
 
-Both implementations use clean ternary logic:
+`PlayerEngine.showPlayerName()` uses a ternary:
 
 ```javascript
-let shouldShow = id === this.playerId ? this.configForCurrent : this.configForOthers;
+let shouldShow = id === this.playerId
+    ? this.globalConfigShowCurrentPlayerName
+    : this.globalConfigShowNames;
 if(!shouldShow){
     return false;
 }
+```
+
+`LifebarUi.canShowPlayerLifeBar()` uses early returns:
+
+```javascript
+if(isCurrentPlayer){
+    return this.barConfig.showCurrentPlayer;
+}
+if(this.barConfig.showAllPlayers){
+    // @TODO - BETA - Include validation for other players inState.
+    return true;
+}
+return this.barConfig.showOnClick && playerId === this.getCurrentTargetId();
 ```
 
 ### Integration Points
@@ -249,21 +283,19 @@ if(!shouldShow){
 **Player Names**:
 - Created in: `lib/users/client/player-engine.js` during `addPlayer()` call
 - Updated on: Every animation frame during `updatePlayerState()`
-- Removed on: `removePlayer()` call
+- Removed on: `removePlayer()` call, which destroys the name sprite when the player has one and always destroys the player sprite, so players without names (for example with `showNames` set to `0`) are removed too
 
 ---
 
 ## Migration Notes
 
-When adding these configurations to existing installations:
+No migration seeds `ui/lifeBar/showCurrentPlayer` or `ui/players/showCurrentPlayerName`. Without the rows both resolve to a falsy value, so the current player lifebar and name are hidden.
 
-Development migration file:
+To manage them from the `config` table, add the rows manually:
 ```sql
 INSERT INTO `config` (`scope`, `path`, `value`, `type`) VALUES
 ('client', 'ui/lifeBar/showCurrentPlayer', '0', 3),
 ('client', 'ui/players/showCurrentPlayerName', '0', 3);
 ```
 
-Default values set to `0` to avoid changing existing behavior where alternative UI systems may already be implemented.
-
-After migration, users can explicitly enable these features if desired.
+Then set them to `1` to enable these features if desired.

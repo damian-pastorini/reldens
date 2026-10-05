@@ -71,18 +71,18 @@ As for the latest version released, the platform will provide you with the follo
 
 Please follow the Installation Guide: https://www.reldens.com/documentation/installation.
 
-Quick start: create the project skeleton with `npx reldens createApp`, run `npm start` and open the web installer at `http://localhost:8080`.
+Quick start: create the project skeleton with `npx reldens createApp`, run `node .` and open the web installer at `http://localhost:8080`.
 
 ---
 
-## [Demo](https://dev.reldens.com/)
+## [Demo](https://demo.reldens.com/)
 
 We use this demo to show how many features are available.
 
 To access you can register in the following link (the basic registration will require email, user, and password, but
 none real data is required here):
 
-- [https://demo.reldens.com/](https://dev.reldens.com/)
+- [https://demo.reldens.com/](https://demo.reldens.com/)
 
 Your email is required to access the server admin:
 

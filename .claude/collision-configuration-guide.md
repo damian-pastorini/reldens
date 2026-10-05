@@ -6,20 +6,20 @@ Reldens uses the p2.js physics engine (server-authoritative). Every object that 
 
 - `1` - `DYNAMIC`: affected by forces, pushed by other DYNAMIC bodies. Default for all objects.
 - `2` - `STATIC`: immovable (`invMass = 0`). Cannot be pushed. Player stops at it.
-- `4` - `KINEMATIC`: moved only by its own velocity, never pushed (`invMass = 0`). Used by the NPCs with random movement.
+- `4` - `KINEMATIC`: moved only by its own velocity, never pushed (`invMass = 0`). Used by the interactive NPCs, required for the ones with random movement.
 
 ## Default Object Body Type
 
-`p2world.js` line 137:
+`P2world` constructor (`lib/world/server/p2world.js`):
 ```javascript
-this.worldObjectBodyType = sc.get(options.worldConfig, 'worldObjectBodyType', Body.DYNAMIC)
+this.worldObjectBodyType = sc.get(options.worldConfig, 'worldObjectBodyType', Body.DYNAMIC);
 ```
 
 All object bodies default to `DYNAMIC`. The player movement system reapplies velocity every tick via Colyseus state updates. Two DYNAMIC bodies with equal mass push each other, so the player body displaces the NPC body on contact. Collision detection fires correctly (groups and masks include each other), but both bodies move as a result. Setting `collisionType:2` (STATIC) on the NPC body gives it `invMass=0`, directing the full contact impulse to the player and stopping it.
 
 ## How Objects Are Created With the Right Body Type
 
-`p2world.js` in `createWorldObject` (line 634):
+`P2world.createWorldObject` (`lib/world/server/p2world.js`):
 ```javascript
 let collisionType = sc.get(roomObject, 'collisionType', this.worldObjectBodyType);
 ```
@@ -48,16 +48,23 @@ When `collisionType:2` is used on a respawnable object (e.g. the mining rock) th
 {"collisionType":2,"hasState":true}
 ```
 
-Without `hasState`, the body is a plain `p2.Body` with no `bodyState`, and the Respawn plugin skips adding it to the room state entirely (`lib/respawn/server/plugin.js:119`).
+Without `hasState`, the body is a plain `p2.Body` with no `bodyState`, and the Respawn plugin skips adding it to the room state entirely (`RespawnPlugin.createRespawnObjectsInstancesInState`, `lib/respawn/server/plugin.js`):
+
+```javascript
+if(!objInstance.hasState){
+    continue;
+}
+room.state.addBodyToState(objInstance.state, objInstance.client_key);
+```
 
 ## Which Objects Should Block the Player
 
 ### Moving NPCs: collisionType:4
 
-The interactive NPCs wander around their tile, so they use KINEMATIC bodies with `hasState:true` and `randomMovement` (ids from `migrations/production/reldens-sample-data-v4.0.0.sql`):
+The interactive NPCs use KINEMATIC bodies with `hasState:true`, and the ones that wander around their tile also have `randomMovement` (ids from `migrations/production/reldens-sample-data-v4.0.0.sql`):
 
 - `npc_1` (Alfred, id=5) - town NPC
-- `npc_2` (Mamon/healer, id=8) - town NPC
+- `npc_2` (Mamon/healer, id=8) - town NPC, KINEMATIC without `randomMovement`, so it never moves
 - `npc_3` (Gimly/merchant, id=10) - town NPC
 - `npc_4` (Barrik/weapons master, id=12) - town NPC
 - `npc_5` (Miles/quest NPC, id=13) - forest level 1 NPC
@@ -70,7 +77,7 @@ The interactive NPCs wander around their tile, so they use KINEMATIC bodies with
 
 ### Enemies: DYNAMIC
 
-Enemy objects (class_type=4, childObjectType=4) use DYNAMIC bodies - they need to move and chase the player. Movement stopping on enemy contact comes from game logic: `collisions-manager.js playerHitObjectBegin` calls `roomObject.onHit()` on the enemy, which triggers the battle system and deactivates the player.
+Enemy objects (`EnemyObject`, class type 4, created in the sample data by the respawn parents with class_type=7 and childObjectType=4) use DYNAMIC bodies - they need to move and chase the player. Movement stopping on enemy contact comes from game logic: `CollisionsManager.playerHitObjectBegin` (`lib/world/server/collisions-manager.js`) calls `roomObject.onHit()` on the enemy, which starts the battle, and `CollisionsManager.playerHitObjectEnd` stops the player body (`playerBody.stopFull`) when the contact ends.
 
 ### Doors and transition triggers: no body blocking
 
@@ -110,7 +117,7 @@ The respawn parents pass `randomMovement` to their children. The sample data use
 A room `customData` key does NOT reach the physics world by itself. Two separate paths exist and both are explicit:
 
 - `WorldConfig.mapWorldConfigValues(room, config)` (`lib/rooms/server/world-config.js`) reads a fixed list of keys from `room.customData` into `room.worldConfig` (`applyGravity`, `gravity`, `globalStiffness`, `globalRelaxation`, `useFixedWorldStep`, `timeStep`, `maxSubSteps`, `movementSpeed`, `allowPassWallsFromBelow`, `jumpSpeed`, `jumpTimeMs`, `tryClosestPath`, `onlyWalkable`, `wallsMassValue`, `playerMassValue`, `bulletsStopOnPlayer`, `bulletsStopOnObject`, `disableObjectsCollisionsOnChase`, `disableObjectsCollisionsOnReturn`, `collisionsGroupsByType`, `groupWallsVertically`, `groupWallsHorizontally`). It runs before the world is created and `worldConfig` is what `P2world` reads for those values.
-- Anything `P2world` reads from the options root (`allowChangePoints`, `usePathFinder`, `allowBodiesWithState`, `type`) has to be passed in the object built by `RoomScene.createWorld` (`lib/rooms/server/scene.js`). `usePathFinder` is passed there from `customData`; `allowChangePoints`, `allowBodiesWithState` and `type` are not passed by anything, so the first two are always true and `type` is always the default (nothing reads `world.type`).
+- Anything `P2world` reads from the options root (`allowSimultaneous`, `allowChangePoints`, `allowRoomObjectsCreation`, `usePathFinder`, `allowBodiesWithState`, `type`) has to be passed in the object built by `RoomScene.createWorld` (`lib/rooms/server/scene.js`). `usePathFinder` is passed there from `customData` and `allowSimultaneous` from the `client/general/controls/allowSimultaneousKeys` config; `allowChangePoints`, `allowRoomObjectsCreation`, `allowBodiesWithState` and `type` are not passed by anything, so the first three are always true and `type` is always the default (nothing reads `world.type`).
 
 Adding a new per room physics key means adding it to one of those two places, otherwise it is silently ignored.
 
@@ -130,7 +137,7 @@ The whole `collisionsGroupsByType` map can be overridden per room through `custo
 
 ## `collisionType` Propagation for Respawnable Objects
 
-For respawn parent objects (class_type=7), the `private_params` JSON is inherited by child instances via `room-respawn.js:128`:
+For respawn parent objects (class_type=7), the `private_params` JSON is inherited by child instances in `RoomRespawn.createNewObjectInstance` (`lib/respawn/server/room-respawn.js`):
 ```javascript
 let clonedObjProps = Object.assign({}, multipleObj.objProps);
 ```
@@ -139,4 +146,4 @@ So setting `"collisionType":2` on the respawn parent row is sufficient, all spaw
 
 ## Constructor and DB Load Order
 
-`BaseObject` constructor calls `mapPrivateParams(props)` which does `Object.assign(this, privateParamsObject)`, promoting all `private_params` JSON fields to instance properties. Any assignment in a subclass constructor runs after this, so subclass constructor assignments take precedence over DB values for the same property. `collisionType` and `hasState` are left to `private_params` so the DB drives them.
+`BaseObject` constructor calls `mapPrivateParams(props)` which does `Object.assign(this, privateParamsObject)`, promoting all `private_params` JSON fields to instance properties. `AnimationObject`, `NpcObject` and `EnemyObject` call `this.mapClientParams(props)` and `this.mapPrivateParams(props)` again at the end of their constructors, so the DB `private_params` values override the assignments those constructors make for the same property (for example the `interactionArea` that `NpcObject` reads from the config is replaced by the `"interactionArea":48` of the mining rock). Only the assignments that run after the last `mapPrivateParams` call take precedence over the DB values: the fields set by subclass constructors that do not map the params again (like the server `TimingObject` `isActive`, `timingTimer` and `timingCheckInterval`) and the class fields like `RockObject.respawnStateTime`, which are set when the parent constructors already returned. `collisionType` and `hasState` are left to `private_params` so the DB drives them.

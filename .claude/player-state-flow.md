@@ -22,7 +22,8 @@ UsersModel {
 
   // NEW: Database relations with "related_" prefix
   related_users_login: UsersLoginModel[],
-  related_players: PlayersModel[]  // ← Array of all players for this user
+  // Array of all players for this user
+  related_players: PlayersModel[]
 }
 
 PlayersModel {
@@ -36,9 +37,9 @@ PlayersModel {
   related_players_state: PlayersStateModel {
     id: number,
     player_id: number,
-    // ← Last SAVED room
+    // Last SAVED room
     room_id: number,
-    // ← Last SAVED position
+    // Last SAVED position
     x: number,
     y: number,
     dir: string
@@ -62,10 +63,11 @@ During login and gameplay, additional properties are added for runtime state man
 // After login processing:
 userModel {
   ...database fields,
-  related_players: PlayersModel[],  // From database
+  // From database
+  related_players: PlayersModel[],
 
   // ADDED AT RUNTIME: Selected player reference
-  // ← Selected from related_players[]
+  // Selected from related_players[]
   player: PlayersModel {
     ...database fields,
     // Database snapshot
@@ -73,13 +75,13 @@ userModel {
 
     // ADDED AT RUNTIME: login state used to build the room player schema
     state: {
-      // ← Room loaded from the database (or from the scene selected on login)
+      // Room loaded from the database (or from the scene selected on login)
       room_id: number,
-      // ← Position loaded from the database
+      // Position loaded from the database
       x: number,
       y: number,
       dir: string,
-      // ← ADDED: Room name (not in database!)
+      // ADDED: Room name (not in database!)
       scene: string
     }
   }
@@ -98,58 +100,63 @@ userModel {
 
 ### Step 1: User Authentication
 
-**File:** `lib/rooms/server/login.js:85-131` (onAuth)
+**File:** `lib/rooms/server/login.js` (`RoomLogin.onAuth`)
+
+After validating the options, the request origin and the joins limit, `onAuth` loads and validates the user through the login manager:
 
 ```javascript
-async onAuth(client, options, request) {
-    // Load user from database
-    let requestAddress = String(sc.get(request, 'ip', ''));
-    let loginResult = await this.loginManager.processUserRequest(options, requestAddress);
-
-    // Select player if specified
-    if(sc.hasOwn(options, 'selectedPlayer')){
-        // ← From database array, an id that is not in the array rejects the login
-        let playerModel = sc.fetchByProperty(loginResult.user.related_players, 'id', options.selectedPlayer);
-        loginResult.selectedPlayer = options.selectedPlayer;
-        loginResult.user.player = playerModel;
-    }
-
-    // ← The returned user becomes userModel in onJoin
-    return await this.disconnectFromOtherServers(loginResult.user);
+let loginResult = await this.loginManager.processUserRequest(options, requestAddress);
+if(sc.hasOwn(loginResult, 'error')){
+    // @TODO - BETA - Improve login errors, use send message with type and here just return false.
+    ErrorManager.error(loginResult.error);
 }
+```
+
+Then it selects the player (Step 5), emits `reldens.roomLoginOnAuth`, and returns the user, which becomes the `userModel` received by `onJoin`:
+
+```javascript
+return await this.disconnectFromOtherServers(loginResult.user);
 ```
 
 ### Step 2: Load User From Database
 
-**File:** `lib/users/server/manager.js:67-83`
+**File:** `lib/users/server/manager.js` (`UsersManager.loadUserByUsername`, which calls `UsersManager.loadUserByProperty`)
+
+`LoginManager.processReservedUserRequest` calls `this.usersManager.loadUserByUsername(userData.username)`, and `loadUserByProperty` loads the players WITH their state from the database:
 
 ```javascript
-async loadUserByUsername(username) {
-    let loadedUser = await this.usersRepository.loadOneByWithRelations(
-        'username',
-        username,
-        ['related_users_login', 'related_players.related_players_state']
-        //                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-        //                        Loads players WITH their state from DB
-    );
-    return loadedUser;
-}
+let loadedUser = await this.usersRepository.loadOneByWithRelations(
+    propertyKey,
+    propertyValue,
+    ['related_users_login', 'related_players.related_players_state']
+);
 ```
 
 **Result:** User loaded with `related_players[]` array, each player has `related_players_state` from database.
 
 ### Step 3: Map Player State Relation
 
-**File:** `lib/game/server/login-manager.js:228-238`
+**File:** `lib/game/server/login-manager.js` (`LoginManager.mapPlayerStateRelation`)
+
+`LoginManager.login` runs steps 3 and 4 after the password validation, when the user has players:
 
 ```javascript
-mapPlayerStateRelation(user) {
+if(sc.isArray(user.related_players) && 0 < user.related_players.length){
+    this.mapPlayerStateRelation(user);
+    // set the scene on the user players:
+    this.events.emitSync('reldens.setSceneOnPlayers', this, user, userData);
+    await this.setSceneOnPlayers(user, userData);
+}
+```
+
+```javascript
+mapPlayerStateRelation(user)
+{
     if(!sc.isArray(user.related_players)){
         return;
     }
     for(let player of user.related_players){
         if(player.related_players_state && !player.state){
-            // Create runtime state from database state
             player.state = player.related_players_state;
         }
     }
@@ -165,27 +172,27 @@ mapPlayerStateRelation(user) {
 
 ### Step 4: Set Scene On Players
 
-**File:** `lib/game/server/login-manager.js:328-347`
+**File:** `lib/game/server/login-manager.js` (`LoginManager.setSceneOnPlayers`)
+
+When the scene selection on login is allowed and a valid scene was selected, `applySelectedLocation` replaces `player.state`; then the `scene` property is ADDED to the state (it is not in the database):
 
 ```javascript
-async setSceneOnPlayers(user, userData) {
-    for(let player of user.related_players){
-        if(!player.state){
-            continue;
-        }
-
-        // Check if user selected a different scene on login
-        let config = this.config.get('client/rooms/selection');
-        if(config.allowOnLogin && userData['selectedScene'] &&
-           userData['selectedScene'] !== RoomsConst.ROOM_LAST_LOCATION_KEY &&
-           this.roomsManager.loginAvailableRooms.some(room => room.name === userData['selectedScene'])){
-            await this.applySelectedLocation(player, userData['selectedScene']);
-        }
-
-        // CRITICAL: Add scene property to state
-        player.state.scene = await this.playerRoomState.getRoomNameById(player.state.room_id);
-        //           ^^^^^ ADDED HERE - not in database!
+for(let player of user.related_players){
+    //Logger.debug('Player state:', player);
+    if(!player.state){
+        continue;
     }
+    let config = this.config.get('client/rooms/selection');
+    if(
+        config.allowOnLogin
+        && userData['selectedScene']
+        && userData['selectedScene'] !== RoomsConst.ROOM_LAST_LOCATION_KEY
+        && this.roomsManager.loginAvailableRooms.some(room => room.name === userData['selectedScene'])
+    ){
+        await this.applySelectedLocation(player, userData['selectedScene']);
+    }
+    //Logger.debug('Get room name by ID. Player state:', player.state);
+    player.state.scene = await this.playerRoomState.getRoomNameById(player.state.room_id);
 }
 ```
 
@@ -193,7 +200,7 @@ async setSceneOnPlayers(user, userData) {
 
 ### Step 5: Select Player (Runtime Assignment)
 
-**File:** `lib/rooms/server/login.js:105-113`
+**File:** `lib/rooms/server/login.js` (`RoomLogin.onAuth`, an id that is not in the `related_players` array rejects the login)
 
 ```javascript
 if(sc.hasOwn(options, 'selectedPlayer')){
@@ -217,55 +224,57 @@ if(sc.hasOwn(options, 'selectedPlayer')){
 
 ### Joining Scene Room
 
-**File:** `lib/rooms/server/scene.js:128-166`
+**File:** `lib/rooms/server/scene.js` (`RoomScene.onJoin`)
+
+`onJoin` selects the player again from `options.selectedPlayer` and validates the RUNTIME state (not the database state): a missing state, an invalid room or a scene that is not this room rejects the join with `GameConst.JOIN_GAME_ERROR_MESSAGE`:
 
 ```javascript
-async onJoin(client, options, userModel) {
-    // userModel already has player selected from onAuth
-
-    // Validate using RUNTIME state (not database state!)
-    if(this.validateRoomData){
-        if(!userModel.player.state){  // ← Check runtime state exists
-            Logger.warning('Missing user player state.', userModel);
-            return false;
-        }
-        if(!this.validateRoom(userModel.player.state.scene, isGuest)){
-            //                            ^^^^^ Use runtime state with scene!
-            return false;
-        }
-        if(userModel.player.state.scene !== this.roomName){  // ← Reject a player scene that is not this room
-            await this.events.emit('reldens.joinRoomInvalid', this, client, options, userModel, isGuest);
-            return false;
-        }
+if(sc.hasOwn(options, 'selectedPlayer')){
+    userModel.selectedPlayer = options.selectedPlayer;
+    userModel.player = sc.fetchByProperty(userModel.related_players, 'id', options.selectedPlayer);
+}
+let isGuest = this.loginManager.isGuestUser(userModel);
+if(this.validateRoomData){
+    // @NOTE: here we use userModel.player.state since it is the runtime dynamic data applied on the userModel.
+    if(!userModel.player?.state){
+        Logger.warning('Missing user player state.', {userId: userModel.id, username: userModel.username});
+        ErrorManager.error(GameConst.JOIN_GAME_ERROR_MESSAGE);
     }
-
-    // Create player schema in room...
+    if(!this.validateRoom(userModel.player.state.scene, isGuest)){
+        await this.events.emit('reldens.joinRoomInvalid', this, client, options, userModel, isGuest);
+        ErrorManager.error(GameConst.JOIN_GAME_ERROR_MESSAGE);
+    }
+    if(userModel.player.state.scene !== this.roomName){
+        Logger.warning(
+            'Player scene "'+userModel.player.state.scene+'" does not match room "'+this.roomName+'".'
+        );
+        await this.events.emit('reldens.joinRoomInvalid', this, client, options, userModel, isGuest);
+        ErrorManager.error(GameConst.JOIN_GAME_ERROR_MESSAGE);
+    }
 }
 ```
+
+After the validation `createPlayerOnScene` creates the player schema in the room.
 
 **FIX APPLIED:** Changed from `related_players_state.scene` (doesn't exist) to `state.scene` (exists).
 
 ### Saving Player State During Gameplay
 
-**File:** `lib/rooms/server/scene.js:724-753`
+**File:** `lib/rooms/server/scene.js` (`RoomScene.savePlayerState`)
+
+The CURRENT position is read from the runtime `playerSchema.state`, NOT from `related_players_state`:
 
 ```javascript
-async savePlayerState(sessionId) {
-    let playerSchema = this.playerBySessionIdFromState(sessionId);
+let playerSchema = this.playerBySessionIdFromState(sessionId);
+let {room_id, x, y, dir} = playerSchema.state;
+let playerId = playerSchema.player_id;
+let updatePatch = {room_id, x: parseInt(x), y: parseInt(y), dir};
+```
 
-    // Extract CURRENT position from runtime state
-    let {room_id, x, y, dir} = playerSchema.state;  // ← From state, NOT related_players_state
-    let playerId = playerSchema.player_id;
-    let updatePatch = {room_id, x: parseInt(x), y: parseInt(y), dir};
+After the `reldens.onSavePlayerStateBefore` event (a listener can stop the update), the database is updated with the CURRENT position:
 
-    // Update database with CURRENT position
-    updateResult = await this.loginManager.usersManager.updateUserStateByPlayerId(
-        playerId,
-        updatePatch
-    );
-
-    return playerSchema;
-}
+```javascript
+updateResult = await this.loginManager.usersManager.updateUserStateByPlayerId(playerId, updatePatch);
 ```
 
 **Key Points:**
@@ -282,6 +291,7 @@ async savePlayerState(sessionId) {
 - (NO scene property)
 
 **Step 2: LOAD - UsersManager.loadUserByUsername()**
+- loadUserByProperty() loads the related_users_login and related_players.related_players_state relations
 - related_players[].related_players_state = database snapshot
 
 **Step 3: MAP - LoginManager.mapPlayerStateRelation()**
@@ -297,6 +307,7 @@ async savePlayerState(sessionId) {
 - (Assigns selected player to userModel.player)
 
 **Step 6: VALIDATE - RoomScene.onJoin()**
+- Re-select: userModel.player from options.selectedPlayer
 - Check: userModel.player.state exists
 - Validate: userModel.player.state.scene matches room
 
@@ -330,7 +341,7 @@ userModel.player.state = {
 }
 ```
 
-**After Scene Change (player moves to house):** the room updates the Colyseus schema built from that state in `Player` (`lib/users/server/player.js:38`, `new BodyState(player.state)`), not `player.state` itself:
+**After Scene Change (player moves to house):** the room updates the Colyseus schema built from that state in the `Player` constructor (`lib/users/server/player.js`, `this.state = new BodyState(player.state)`), not `player.state` itself:
 ```javascript
 // UNCHANGED for the whole session:
 userModel.player.state = {
@@ -370,12 +381,12 @@ playerSchema.state = {
 ## Code References
 
 **Key Files:**
-- `lib/users/server/manager.js:67-83` - Load user with relations
-- `lib/game/server/login-manager.js:228-238` - Map player state relation
-- `lib/game/server/login-manager.js:328-347` - Set scene on players
-- `lib/rooms/server/login.js:76-109` - Authentication and player selection
-- `lib/rooms/server/scene.js:128-166` - Scene validation
-- `lib/rooms/server/scene.js:724-753` - Save player state
+- `lib/users/server/manager.js` (`UsersManager.loadUserByUsername`, `UsersManager.loadUserByProperty`) - Load user with relations
+- `lib/game/server/login-manager.js` (`LoginManager.mapPlayerStateRelation`) - Map player state relation
+- `lib/game/server/login-manager.js` (`LoginManager.setSceneOnPlayers`) - Set scene on players
+- `lib/rooms/server/login.js` (`RoomLogin.onAuth`) - Authentication and player selection
+- `lib/rooms/server/scene.js` (`RoomScene.onJoin`) - Scene validation
+- `lib/rooms/server/scene.js` (`RoomScene.savePlayerState`) - Save player state
 
 **Database Tables:**
 - `users` - User accounts

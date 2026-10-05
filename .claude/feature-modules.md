@@ -127,7 +127,7 @@ Firebase integration
 
 ### Ads (`lib/ads/`)
 Advertisement integration system
-- Third-party ad network support (CrazyGames, GameMonetize)
+- Third-party ad network support (CrazyGames, GameMonetize, Google AdSense), registered in `client/providers-list.js`
 - Ad placement configuration
 
 ### Sync (`lib/sync/`)
@@ -156,8 +156,18 @@ Game objects (NPCs, interactables, respawn areas)
   - See `.claude/collision-configuration-guide.md` for full details
 - Timing objects (`server/object/type/timing-object.js`, the mining rocks and the fishing spots) run an action for
   `timingDuration` and give the reward at the end; the `private_params` cancel rules are `"cancelOnMove":true` (the
-  player position changed), `"cancelOnHit":true` (the player affected property, `hp`, went below its value at the
-  start, a hit from an enemy or another player) and `"cancelOnOutOfRange":true` (the player left the interaction area)
+  player position changed), `"cancelOnHit":true` (the player affected property, `client/actions/skills/affectedProperty`,
+  installed as `hp`, decreased between two consecutive checks, a hit from an enemy or another player) and
+  `"cancelOnOutOfRange":true` (the player left the interaction area); `TimingObject.startTiming()` runs the checks every
+  100 ms and keeps the last affected value on each check, so a heal during the action does not hide a later hit:
+  ```js
+  let currentAffectedValue = sc.get(playerSchema.stats, affectedProperty, 0);
+  if(this.cancelOnHit && currentAffectedValue < lastAffectedValue){
+      this.cancelTiming(client);
+      return;
+  }
+  lastAffectedValue = currentAffectedValue;
+  ```
 
 ### Snippets (`lib/snippets/`)
 Text snippets, locales and translations

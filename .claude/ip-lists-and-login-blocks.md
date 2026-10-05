@@ -5,7 +5,7 @@ How the address allow and deny lists are built and checked, and how the failed l
 ## Lists Sources
 
 - Environment: `RELDENS_IP_LISTS_ENABLED` (0 or 1), `RELDENS_IP_ALLOW_LIST` and `RELDENS_IP_DENY_LIST` (comma separated addresses or CIDR ranges), read by `EnvironmentVariablesReader.fetchIpListsFromEnvironmentVariables()` into the `server/appServerConfig/ipLists` configuration (the `environmentConfig` passed to the `ConfigManager` constructor).
-- `config` rows (scope `server`): `security/ipLists/enabled` (boolean, overrides the environment switch), `security/ipLists/allow` and `security/ipLists/deny` (comma separated, appended to the environment entries).
+- `config` rows (scope `server`): `security/ipLists/enabled` (boolean, overrides the environment switch), `security/ipLists/allow` and `security/ipLists/deny` (comma separated, appended to the environment entries). The basic configuration installs `security/ipLists/enabled` as `0`, so `RELDENS_IP_LISTS_ENABLED=1` alone does not enable the lists: set the row to `1` (the environment switch only applies when the row is missing, and before the `config` rows are loaded at startup).
 - `ip_lists` table rows without `expires_at`: permanent entries, `list_type` is `allow` or `deny`, the `address` and `list_type` pair is unique. They are managed in the administration panel settings menu as "IP Allow And Deny Lists" (entity `ipLists`).
 
 ## Startup Flow
@@ -41,10 +41,10 @@ The `ClientAddressGuard` of `@reldens/server-utils` resolves the client address 
 
 ## Login Blocks
 
-`LoginAttempts` (`lib/game/server/memory/login-attempts.js`) is created by the `LoginManager` with the `server/security/loginAttempts` configuration (environment values overridden by the configuration rows) and the `ipLists` repository, and it is shared by the game login and the administration panel login.
+`LoginAttempts` (`lib/game/server/memory/login-attempts.js`) is created by the `LoginManager` with the `server/security/loginAttempts` configuration (environment values overridden by the configuration rows) and the `ipLists` repository, and it is shared by the game login and the administration panel login. The `security/loginAttempts/enabled` row (installed as `1`) overrides `RELDENS_LOGIN_ATTEMPTS_ENABLED`; when disabled no failure is counted and no key is blocked.
 
 1. Every failed login calls `LoginAttempts.registerLoginFailure()`, which registers a hit for `identity:<username or email>` and for `address:<request address>` (`GameConst.LOGIN_ATTEMPTS_KEYS`).
-2. When a key reaches `maxAttempts` inside the window (`RELDENS_LOGIN_ATTEMPTS_MAX` or `security/loginAttempts/maxAttempts`, the window defaults to the block time) the key is blocked for `blockTimeMs` (`RELDENS_LOGIN_ATTEMPTS_BLOCK_MS` or `security/loginAttempts/blockTimeMs`).
+2. When a key reaches `maxAttempts` inside the window (the `security/loginAttempts/maxAttempts` row, installed as `10`, overrides `RELDENS_LOGIN_ATTEMPTS_MAX`; the window defaults to the block time) the key is blocked for `blockTimeMs` (the `security/loginAttempts/blockTimeMs` row, installed as `900000`, overrides `RELDENS_LOGIN_ATTEMPTS_BLOCK_MS`).
 3. An address block is stored as a `deny` row with the reason `Login attempts limit reached.` and the `expires_at` of the block. A repeated block for the same address updates that row, and a permanent `deny` row (without `expires_at`) is never replaced. The identity blocks are kept in memory only.
 4. `LoginAttempts.isLoginBlocked()` rejects the login while the identity or the address is blocked, in `LoginManager.processUserRequest()` for the game login and in `LoginManager.roleAuthenticationCallback()` for the administration panel login, with the same invalid login message as a wrong password.
 5. On the startup `restoreAddressBlocks()` loads the `deny` rows whose `expires_at` is still in the future back into memory, so a restart does not lift the block. The expired rows stay in the table and are ignored.
@@ -53,20 +53,20 @@ The temporary rows never enter the Express or WebSocket lists, they only block t
 
 ## Other Counters Per Address
 
-The same `LoginAttempts` registry counts, in memory only:
+The same `LoginAttempts` registry counts, in memory only. Every limit below is read from its `config` row (scope `server`, all installed by the basic configuration), which overrides the environment variable; the environment value only applies when the row is missing:
 
-- `joins:<room type>:` and `joinsIdentity:<room type>:` - room joins per address and per username in `RoomLogin.isJoinsLimitReached()`, with `RELDENS_GAME_LOGIN_MAX_JOINS` in `RELDENS_GAME_LOGIN_WINDOW_MS` for the game room and `RELDENS_ROOMS_LOGIN_MAX_JOINS` in `RELDENS_ROOMS_LOGIN_WINDOW_MS` for the scene and feature rooms.
-- `guests:` - guest accounts created per address (`RELDENS_GUESTS_MAX_PER_IP`).
-- `registration:` - accounts registered per address (`RELDENS_REGISTRATION_MAX_PER_IP`).
-- `forgotAddress:` - forgot password requests per address, with the registration maximum.
+- `joins:<room type>:` and `joinsIdentity:<room type>:` - room joins per address and per username in `RoomLogin.isJoinsLimitReached()`, with `security/gameLogin/maxJoins` (installed `20`, overrides `RELDENS_GAME_LOGIN_MAX_JOINS`) in `security/gameLogin/windowMs` (installed `60000`, overrides `RELDENS_GAME_LOGIN_WINDOW_MS`) for the game room and `security/roomsLogin/maxJoins` (installed `60`, overrides `RELDENS_ROOMS_LOGIN_MAX_JOINS`) in `security/roomsLogin/windowMs` (installed `60000`, overrides `RELDENS_ROOMS_LOGIN_WINDOW_MS`) for the scene and feature rooms. A maximum of `0` or lower disables the check.
+- `guests:` - guest accounts created per address (`security/guests/maxPerIp`, installed `20`, overrides `RELDENS_GUESTS_MAX_PER_IP`).
+- `registration:` - accounts registered per address (`security/registration/maxPerIp`, installed `10`, overrides `RELDENS_REGISTRATION_MAX_PER_IP`).
+- `forgotAddress:` - forgot password requests per address, with the registration maximum (`security/registration/maxPerIp`).
 
 The registry keys are `Map` entries: the expired hits and blocks are swept once per window, the identities are truncated to 255 characters in the keys, and at 50000 tracked keys the oldest key is evicted.
 
-The `LoginManager` also caps the password validations running at the same time (`RELDENS_MAX_CONCURRENT_PASSWORD_VALIDATIONS`): each game or administration login reserves its slot before the user lookup and releases it when the login ends, so concurrent requests can not pass the check together. The validation uses the asynchronous pbkdf2 of `Encryptor.validatePassword()` so it does not block the event loop.
+The `LoginManager` also caps the password validations running at the same time (the `security/maxConcurrentPasswordValidations` row, installed as `8`, overrides `RELDENS_MAX_CONCURRENT_PASSWORD_VALIDATIONS`): each game or administration login reserves its slot before the user lookup and releases it when the login ends, so concurrent requests can not pass the check together. The validation uses the asynchronous pbkdf2 of `Encryptor.validatePassword()` so it does not block the event loop.
 
 ## Administration Panel Login Limiter
 
-Independent from the lists: `CreateAdminSubscriber.applyLoginRateLimit()` mounts an `express-rate-limit` limiter on the administration login POST, keyed by the address and the submitted email, where only the failed logins count (`RELDENS_ADMIN_LOGIN_MAX_ATTEMPTS` in `RELDENS_ADMIN_LOGIN_WINDOW_MS`) and the next request gets `429`. In development mode (`NODE_ENV` is `development`, `dev` or `test`, or the domain of a plain `http://` `RELDENS_APP_HOST` or `RELDENS_PUBLIC_URL` matches a development pattern like `localhost`, `127.0.0.1` or `.local`) `RateLimitConfigurer.createLimiter()` multiplies the limit by the `developmentMultiplier` (10), the e2e suite reads the real limit from the `RateLimit` response header.
+Independent from the lists: `CreateAdminSubscriber.applyLoginRateLimit()` mounts an `express-rate-limit` limiter on the administration login POST, keyed by the address and the submitted email, where only the failed logins count (the `security/adminLogin/maxAttempts` row, installed as `5`, in the `security/adminLogin/windowMs` row, installed as `900000`; the rows override `RELDENS_ADMIN_LOGIN_MAX_ATTEMPTS` and `RELDENS_ADMIN_LOGIN_WINDOW_MS`) and the next request gets `429`. In development mode (`NODE_ENV` is `development`, `dev` or `test`, or the domain of a plain `http://` `RELDENS_APP_HOST` or `RELDENS_PUBLIC_URL` matches a development pattern like `localhost`, `127.0.0.1` or `.local`) `RateLimitConfigurer.createLimiter()` multiplies the limit by the `developmentMultiplier` (10), the e2e suite reads the real limit from the `RateLimit` response header.
 
 ## Tests
 

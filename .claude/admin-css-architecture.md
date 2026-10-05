@@ -2,11 +2,9 @@
 
 ## The 3-Tier Model
 
-```
-Elements   ->  admin-elements.css                     (global HTML element defaults)
-Components ->  component-[name].css                   (reusable UI patterns)
-Containers ->  container-[name].css                   (page sections / layouts)
-```
+- Elements: `admin-elements.css` - global HTML element defaults
+- Components: `component-[name].css` - reusable UI patterns
+- Containers: `container-[name].css` - page sections and layouts
 
 Rules:
 - Elements never reference other elements
@@ -14,7 +12,7 @@ Rules:
 - Containers can override components; never reference other containers
 - Override cascade: `element default` -> `.component element` -> `.container .component element`
 - The goal is to push styles as far UP the cascade as possible, eliminating redundant overrides at lower levels
-- **Every container CSS file MUST have exactly ONE root selector** that wraps all child styles using nested `& .child` syntax
+- **Every container CSS file MUST have exactly ONE root selector** that wraps all child styles using nested `& .child` syntax (the only exception is `container-tileset-analyzer.css`, see Tier 3)
 
 NOT elements (always part of a component or container):
 `div`, `span`, `p`, `section`, `fieldset`, `ul`, `legend`, `img`
@@ -23,7 +21,7 @@ NOT elements (always part of a component or container):
 
 ## Tier 1 - Elements (`admin-elements.css`)
 
-Single global file. Not scoped under any class.
+Single global file. Not scoped under any class, except the `.section-title` rule (`margin-top: 0`, `margin-bottom: 2rem`), the only class selector in the file.
 
 The goal is a strong enough baseline that most component and container files have NO element overrides - only layout and structural differences.
 
@@ -72,17 +70,26 @@ Each component file has ONE main class that wraps all child styles.
 
 ## Tier 3 - Containers
 
-Each container file has ONE root selector. All children are nested inside it using `& .child`.
+Each container file has ONE root selector (except `container-tileset-analyzer.css`, see below). All children are nested inside it using `& .child`.
 
 - `container-reldens-admin-panel.css` -> `.reldens-admin-panel`
+- `container-forms.css` -> `.forms-container`
+- `container-entity-list.css` -> `.entity-list`
 - `container-maps-wizard.css` -> `.maps-wizard`
+- `container-tileset-uploader.css` -> `.upload-section`
 - `container-tileset-editor.css` -> `.review-section`
 - `container-tileset-legend-panel.css` -> `.legend-panel`
+- `container-tileset-animations-panel.css` -> `.tileset-animations-panel`
+- `container-generated-files.css` -> `.generated-files`
+- `container-tileset-results.css` -> `.results-section`
 - `container-tileset-tile-options.css` -> `.tileset-analyzer`
 - `container-maps-elements-editor.css` -> `.maps-elements-editor`
 - `container-element-tiles-layer-modal.css` -> `.element-tiles-layer-modal`
 - `container-admin-dashboard.css` -> `.admin-dashboard`
 - `container-room-active-players.css` -> `.room-active-players-banner`
+
+### Exception - `container-tileset-analyzer.css`
+This file does not follow the one root selector rule: it has a top-level `@keyframes tileset-analyzer-spin` and two root selectors, `.tileset-analyzer-wrapper` and `.tileset-analyzer`. The `.tileset-analyzer` root is shared with `container-tileset-tile-options.css`, which uses it as its own root.
 
 ### Container nesting rules
 - Context overrides (e.g. "when `.tileset-tile-options` is inside `.global-tile-options`") are expressed as `& .global-tile-options .tileset-tile-options { }` - NOT using parent-context `&` at the end
@@ -129,7 +136,7 @@ Every CSS file under `theme/admin/css/` must be `@import`-ed here - there is no 
 
 ## Key Rules Summary
 
-1. **One root selector per file** - containers scope everything under a single class
+1. **One root selector per file** - containers scope everything under a single class (`container-tileset-analyzer.css` is the documented exception)
 2. **No `min-width: 0` / `min-height: 0`** - fix the flex layout properly instead
 3. **No cross-tier references** - components don't reference other components; containers don't reference other containers
 4. **Push styles up the cascade** - if a style applies everywhere, it belongs in elements or a component, not repeated in every container

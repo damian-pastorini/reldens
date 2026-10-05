@@ -76,10 +76,11 @@ Note: `hideOnComplete` (hide) is different from `destroyOnComplete` (remove enti
 ## Object position
 
 ```
-server body / anchor = tilePixel + yFix          (collision uses THIS)
-rendered sprite       = tilePixel + yFix + positionFix
+server body / anchor = tilePixel + yFix
+rendered sprite = tilePixel + yFix + positionFix
 ```
 
+- The collision uses the server body / anchor position.
 - `yFix` moves the real object (collision + render).
 - `positionFix` nudges only the drawing, to line the art up over the body.
 
@@ -94,8 +95,10 @@ above and below the tile, and its foot does not rest on the tile.
 To make the foot sit on the tile, raise it by half the overshoot:
 
 ```
-positionFix.y ≈ -(frameHeight - tileHeight) / 2      (then nudge a few px for empty art)
+positionFix.y ≈ -(frameHeight - tileHeight) / 2
 ```
+
+Then nudge it a few px for empty art.
 
 `positionFix` is a FIXED offset, it does not scale with the sprite. Each sprite
 HEIGHT needs its own `positionFix.y`. If the sprite height changes by N pixels, adjust
@@ -112,7 +115,9 @@ Examples on a 32px tile:
 2. `AnimationEngine` is constructed from those params.
 3. `createAnimation()`:
    - if `enabled` is false, stop (logs `Animation disabled`);
-   - if the `asset_key` texture is not loaded yet, load it and retry;
+   - if the `asset_key` texture is not loaded yet (for example an object created after the scene preload), load it
+     once from the room preload assets (the `objects_assets` row `asset_file` and `extra_params`, the same data
+     `ScenePreloader.preloadValidAssets()` uses) and retry `createAnimation()` after the loader completes;
    - register a Phaser animation named after `client_key`, using the `asset_key` frames;
    - create the sprite at the computed position and store it in the scene under
      `client_key`;
@@ -122,16 +127,55 @@ Examples on a 32px tile:
 
 ## Code map (for maintainers)
 
-- Key resolution: `animation-engine.js:80` `this.asset_key = sc.get(props, 'asset_key', props.key)`.
-- Instance registry (keyed by `client_key`): `animation-engine.js:233`
-  `currentScene.objectsAnimations[this.key] = this`.
-- Hit routing (by `client_key`): `lib/objects/client/plugin.js:290-293`.
-- Texture load (by `asset_key`, one per assets row): `lib/game/client/scene-preloader.js:198`.
-- Position math: server `lib/world/server/p2world.js:617-618` (`xFix`/`yFix` applied in
-  `createWorldObject`); client `calculateAnimPosition` in `animation-engine.js:143` and sprite
-  placement around `:222-225`.
-- Server params: defaults in `lib/objects/server/object/type/animation-object.js:33-43`;
-  `client_key`/param mapping in `lib/objects/server/object/type/base-object.js`.
+- Key resolution: `AnimationEngine` constructor in `animation-engine.js`:
+
+```js
+this.asset_key = sc.get(props, 'asset_key', props.key);
+```
+
+- Instance registry (keyed by `client_key`): `AnimationEngine.createAnimation()`:
+
+```js
+currentScene.objectsAnimations[this.key] = this;
+```
+
+- Hit routing (by `client_key`): `ObjectsPlugin.startObjectAnimation()` in `lib/objects/client/plugin.js`:
+
+```js
+if(!sc.hasOwn(currentScene.objectsAnimations, message.key)){
+    return false;
+}
+currentScene.objectsAnimations[message.key].runAnimation();
+```
+
+- Texture load (by `asset_key`, one per assets row): `ScenePreloader.preloadValidAssets()` in
+  `lib/game/client/scene-preloader.js`:
+
+```js
+this.load.spritesheet(asset.asset_key, `/assets/custom/sprites/${asset.asset_file}`, assetParams);
+```
+
+- Missing texture fallback: `AnimationEngine.createAnimation()` loads the texture once from the room preload
+  assets and retries when the loader completes (see Lifecycle above).
+- Position math (server): `P2world.createWorldObject()` in `lib/world/server/p2world.js`:
+
+```js
+posX += sc.get(roomObject, 'xFix', 0);
+posY += sc.get(roomObject, 'yFix', 0);
+```
+
+- Position math (client): `AnimationEngine.calculateAnimPosition()` and the sprite placement in
+  `AnimationEngine.createAnimation()`:
+
+```js
+let spriteX = this.positionFix ? this.animPos.x : this.x;
+let spriteY = this.positionFix ? this.animPos.y : this.y;
+```
+
+- Server params: defaults in the `AnimationObject` constructor (`this.clientParams`) in
+  `lib/objects/server/object/type/animation-object.js`; `client_key`/param mapping in the `BaseObject` constructor
+  (`this.key = props.client_key;`) and `BaseObject.mapClientParams()` in
+  `lib/objects/server/object/type/base-object.js`.
 - `client_key` is also the lookup key for life bars, battle and targeting
   (`lib/actions/client/receiver-wrapper.js`, `lib/game/client/scene-dynamic.js`), which is
   why it must be unique.

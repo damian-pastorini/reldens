@@ -21,13 +21,23 @@ The Reldens Items System manages player inventory, equipment, and item modifiers
 - **client/** - Client-side inventory UI and rendering
 - **server/** - Server-side inventory logic
   - items-factory.js - Creates item instances from database models
+  - items-modifiers-enricher.js - Adds the modifiers display data to the items sent by the trader objects
+  - resolve-operation.js - Resolves the display prefix and suffix for each modifier operation
   - message-actions.js - Handles equip/unequip/trade messages
   - models-manager.js - Database operations
   - storage-observer.js - Event listeners for persistence
   - plugin.js - Inventory feature plugin
+  - group-hot-plug-callbacks.js - Admin hot-plug callbacks for the items groups (update and delete)
+  - groups-data-remover.js - Removes the items groups data from the config manager
+  - entities-config.js - Admin entities overrides map (itemsInventory, itemsItem, itemsGroup)
+  - entities-translations.js - Admin entities labels
+  - **entities/** - Admin entities overrides for the items, groups and inventory
+  - **exchange/** - Trade processors
+    - processor.js - Exchange operations (init, add, remove, confirm)
+    - player-processor.js - Extends the processor with the player-to-player confirm/disconfirm operations
   - **subscribers/** - Event subscribers
     - player-subscriber.js - Creates player inventory on login
-    - player-death-subscriber.js
+    - player-death-subscriber.js - Drops the player items on death
     - server-subscriber.js - Initializes the inventory configuration on server ready
 - constants.js
 
@@ -35,7 +45,7 @@ The Reldens Items System manages player inventory, equipment, and item modifiers
 
 ### When Player Logs In
 
-**Entry Point**: `lib/inventory/server/plugin.js` line 50-51
+**Entry Point**: `lib/inventory/server/plugin.js` `InventoryPlugin.setup()`
 ```javascript
 this.events.on('reldens.createPlayerStatsAfter', async (client, userModel, currentPlayer, room) => {
     await PlayerSubscriber.createPlayerInventory(client, currentPlayer, room, this.events, this.modelsManager);
@@ -44,32 +54,34 @@ this.events.on('reldens.createPlayerStatsAfter', async (client, userModel, curre
 
 **Sequence**:
 
-1. **Player Stats Loaded** (`lib/users/server/plugin.js` lines 289-309)
+1. **Player Stats Loaded** (`lib/users/server/plugin.js` `UsersPlugin.onCreatePlayerAfterAppendStats()`, listening to `reldens.createPlayerAfter`)
    - Stats loaded from `players_stats` table
    - Set on `currentPlayer.stats` and `currentPlayer.statsBase`
    - Event `reldens.createPlayerStatsAfter` fires
 
-2. **Inventory Creation** (`lib/inventory/server/subscribers/player-subscriber.js` lines 30-63)
+2. **Inventory Creation** (`lib/inventory/server/subscribers/player-subscriber.js` `PlayerSubscriber.createPlayerInventory()`)
    ```javascript
    let serverProps = {
-       // the player schema instance:
        owner: currentPlayer,
        client: new ClientWrapper({client, room}),
        persistence: true,
        ownerIdProperty: 'player_id',
        eventsManager: events,
        modelsManager: modelsManager,
-       itemClasses: {...},
-       groupClasses: {...},
+       itemClasses: room.config.getWithoutLogs('server/customClasses/inventory/items', {}),
+       groupClasses: room.config.getWithoutLogs('server/customClasses/inventory/groups', {}),
        itemsModelData: room.config.inventory.items
    };
+   // @TODO - BETA - Add new event here for the server properties.
    let inventoryServer = new ItemsServer(serverProps);
    inventoryServer.dataServer = new StorageObserver(inventoryServer.manager, modelsManager);
+   inventoryServer.dataServer.listenEvents();
    ```
 
-3. **Items Loading** (`lib/inventory/server/storage-observer.js` lines 169-182)
+3. **Items Loading** (`lib/inventory/server/storage-observer.js` `StorageObserver.loadOwnerItems()`)
    ```javascript
-   async loadOwnerItems(){
+   async loadOwnerItems()
+   {
        let itemsModels = await this.modelsManager.loadOwnerItems(this.manager.getOwnerId());
        if(0 === itemsModels.length){
            return false;
@@ -84,42 +96,32 @@ this.events.on('reldens.createPlayerStatsAfter', async (client, userModel, curre
    }
    ```
 
-4. **Item Instance Creation** (`lib/inventory/server/items-factory.js` lines 40-71)
+4. **Item Instance Creation** (`lib/inventory/server/items-factory.js` `ItemsFactory.fromModel()`)
+
+   The item class is resolved from `manager.itemClasses` by the item key, falling back to the class of the item type. The item props (id, key, qty, group_id, limits, customData, etc.) are built from the `items_inventory` row and its `related_items_item` relation, then:
    ```javascript
-   static async fromModel(itemInventoryModel, manager){
-       let itemClass = sc.get(
-           manager.itemClasses,
-           itemInventoryModel.related_items_item.key,
-           manager.types.classByTypeId(itemInventoryModel.related_items_item.type)
-       );
-       let itemObj = new itemClass(itemProps);
-       if(itemObj.isType(ItemsConst.TYPES.EQUIPMENT)){
-           itemObj.equipped = (1 === itemInventoryModel.is_active);  // Mark as equipped if active
-       }
-       await this.enrichWithModifiers(itemInventoryModel, itemObj, manager);
-       return itemObj;
+   let itemObj = new itemClass(itemProps);
+   if(itemObj.isType(ItemsConst.TYPES.EQUIPMENT)){
+       itemObj.equipped = (1 === itemInventoryModel.is_active);
    }
+   await this.enrichWithModifiers(itemInventoryModel, itemObj, manager);
+   return itemObj;
    ```
 
-5. **Modifier Creation** (`lib/inventory/server/items-factory.js` lines 79-94)
+5. **Modifier Creation** (`lib/inventory/server/items-factory.js` `ItemsFactory.enrichWithModifiers()`)
    ```javascript
-   static async enrichWithModifiers(itemInventoryModel, itemObj, manager){
-       let loadedModifiers = itemInventoryModel.related_items_item?.related_items_item_modifiers;
-       if(!loadedModifiers || 0 === loadedModifiers.length){
-           return;
+   let modifiers = {};
+   for(let modifierData of loadedModifiers){
+       if(modifierData.operation !== ModifierConst.OPS.SET){
+           modifierData.value = Number(modifierData.value);
        }
-       let modifiers = {};
-       for(let modifierData of loadedModifiers){
-           if(modifierData.operation !== ModifierConst.OPS.SET){
-               modifierData.value = Number(modifierData.value);
-           }
-           // set target to currentPlayer:
-           modifierData.target = manager.owner;
-           modifiers[modifierData.id] = new Modifier(modifierData);
-       }
-       itemObj.modifiers = modifiers;
+       modifierData.target = manager.owner;
+       modifiers[modifierData.id] = new Modifier(modifierData);
    }
+   itemObj.modifiers = modifiers;
    ```
+
+   Each modifier target is `manager.owner`, the player schema (`currentPlayer`).
 
 ### Critical Timing
 
@@ -133,32 +135,31 @@ this.events.on('reldens.createPlayerStatsAfter', async (client, userModel, curre
 
 **Entry Point**: User clicks equip button, client sends message, server receives
 
-1. **Message Reception** (`lib/inventory/server/message-actions.js` lines 71-73)
+1. **Message Reception** (`lib/inventory/server/message-actions.js` `InventoryMessageActions.executeMessageActions()`)
    ```javascript
    if(InventoryConst.ACTIONS.EQUIP === data.act){
        return await this.executeEquipAction(playerSchema, data);
    }
    ```
 
-2. **Execute Equip Action** (`lib/inventory/server/message-actions.js` lines 371-384)
+2. **Execute Equip Action** (`lib/inventory/server/message-actions.js` `InventoryMessageActions.executeEquipAction()`)
+
+   If the item is not equipped, the equipped item of the same group is unequipped first (`unEquipPrevious()`), then the item is equipped. If it is already equipped, it is unequipped:
    ```javascript
-   async executeEquipAction(playerSchema, data){
-       let item = playerSchema.inventory.manager.items[data.idx];
-       if(!item.equipped){
-           // unequip same group, then equip the new item:
-           this.unEquipPrevious(item.group_id, playerSchema.inventory.manager.items);
-           await item.equip();
-           return true;
-       }
-       // if already equipped, unequip:
-       await item.unequip();
+   let item = playerSchema.inventory.manager.items[data.idx];
+   if(!item.equipped){
+       this.unEquipPrevious(item.group_id, playerSchema.inventory.manager.items);
+       await item.equip();
        return true;
    }
+   await item.unequip();
+   return true;
    ```
 
-3. **Item Equip Method** (`npm-packages/reldens-items/lib/item/type/equipment.js` lines 26-35)
+3. **Item Equip Method** (`@reldens/items-system` `lib/item/type/equipment.js` `Equipment.equip()`)
    ```javascript
-   async equip(applyMods){
+   async equip(applyMods)
+   {
        this.equipped = true;
        await this.manager.fireEvent(ItemsEvents.EQUIP_ITEM, this);
        // apply modifiers automatically or not:
@@ -169,9 +170,12 @@ this.events.on('reldens.createPlayerStatsAfter', async (client, userModel, curre
    }
    ```
 
-4. **Apply Modifiers** (`npm-packages/reldens-items/lib/item/type/item-base.js` lines 90-105)
+4. **Apply Modifiers** (`@reldens/items-system` `lib/item/type/item-base.js` `ItemBase.changeModifiers()`)
+
+   `this.target` is `false` on the item, so each modifier uses its own target (set to `currentPlayer` in the factory):
    ```javascript
-   async changeModifiers(revert){
+   async changeModifiers(revert)
+   {
        if(this.hasError){
            return false;
        }
@@ -182,86 +186,89 @@ this.events.on('reldens.createPlayerStatsAfter', async (client, userModel, curre
        }
        let methodName = revert ? 'revert' : 'apply';
        for(let i of modifiersKeys){
-           // this.target is false, but the modifier has its own target:
            this.modifiers[i][methodName](this.target);
        }
        return this.manager.fireEvent(ItemsEvents.EQUIP+(revert ? 'Reverted' : 'Applied')+'Modifiers', this);
    }
    ```
 
-5. **Modifier Execute** (`npm-packages/reldens-modifiers/lib/modifier.js` lines 84-111)
+5. **Modifier Execute** (`node_modules/@reldens/modifiers/lib/modifier.js` `Modifier.execute()`)
+
+   After the target and conditions checks, the new value is calculated and set on the target property (for example `currentPlayer.stats.atk`):
    ```javascript
-   execute(target, revert = false, useBasePropertyToGetValue = false, applyOnBaseProperty = false){
-       // if the target param is false, this.target is used (set to currentPlayer in the factory):
-       if(target){
-           this.target = target;
-       }
-       let newValue = this.getModifiedValue(revert, useBasePropertyToGetValue);
-       if(this.state === ModifierConst.MOD_MODIFIER_ERROR){
-           return false;
-       }
-       let applyToProp = applyOnBaseProperty ? this.basePropertyKey : this.propertyKey;
-       // sets currentPlayer.stats.atk:
-       this.setOwnerProperty(applyToProp, newValue);
-       this.state = revert ? ModifierConst.MOD_REVERTED : ModifierConst.MOD_APPLIED;
-       return true;
+   // override target if provided:
+   if(target){
+       this.target = target;
    }
+   // calculate a new value, set on the owner and change state:
+   let newValue = this.getModifiedValue(revert, useBasePropertyToGetValue);
+   if(this.state === ModifierConst.MOD_MODIFIER_ERROR){
+       return false;
+   }
+   let applyToProp = applyOnBaseProperty ? this.basePropertyKey : this.propertyKey;
+   this.setOwnerProperty(applyToProp, newValue);
+   this.state = revert ? ModifierConst.MOD_REVERTED : ModifierConst.MOD_APPLIED;
+   return true;
    ```
 
-6. **Property Manager Sets Value** (`npm-packages/reldens-modifiers/lib/property-manager.js` lines 22-34)
+6. **Property Manager Sets Value** (`node_modules/@reldens/modifiers/lib/property-manager.js` `PropertyManager.manageOwnerProperty()`)
+
+   The path is split by `/` (for example `stats/atk`), the parent object (`stats`) is resolved and the last part (`atk`) is set:
    ```javascript
-   manageOwnerProperty(propertyOwner, propertyString, value){
-       // for example ['stats', 'atk']:
+   manageOwnerProperty(propertyOwner, propertyString, value)
+   {
        let propertyPathParts = propertyString.split('/');
-       // get the stats object:
        let childPropertyOwner = this.extractChildPropertyOwner(propertyOwner, propertyPathParts);
-       // for example 'atk':
        let propertyKey = propertyPathParts[propertyPathParts.length-1];
        if('undefined' === typeof value && !sc.hasOwn(childPropertyOwner, propertyKey)){
            ErrorManager.error('Invalid property "'+propertyKey+'" from path: "'+propertyPathParts.join('/')+'"].');
        }
        if('undefined' !== typeof value){
-           // sets stats.atk = newValue:
            childPropertyOwner[propertyKey] = value;
        }
        return childPropertyOwner[propertyKey];
    }
    ```
 
-7. **Stats Persistence** (`lib/inventory/server/storage-observer.js` lines 68-79)
+7. **Stats Persistence** (`lib/inventory/server/storage-observer.js` `StorageObserver.listenEvents()` and `StorageObserver.updateAppliedModifiers()`)
    ```javascript
    this.manager.listenEvent(
        ItemsEvents.EQUIP+'AppliedModifiers',
        this.updateAppliedModifiers.bind(this),
-       ...
+       this.manager.getOwnerUniqueEventKey('modifiersAppliedStore'),
+       masterKey
    );
-
-   async updateAppliedModifiers(item){
+   ```
+   ```javascript
+   async updateAppliedModifiers(item)
+   {
        return await this.modelsManager.onChangedModifiers(item, ModifierConst.MOD_APPLIED);
    }
    ```
 
-8. **Persist Data** (`lib/inventory/server/models-manager.js` lines 127-131)
+8. **Persist Data** (`lib/inventory/server/models-manager.js` `ModelsManager.onChangedModifiers()`)
    ```javascript
-   async onChangedModifiers(item, action){
+   async onChangedModifiers(item, action)
+   {
+       // owners will persist their own data after the modifiers were applied:
        return await item.manager.owner.persistData({act: action, item: item});
    }
    ```
 
-9. **Save Player Stats** (`lib/rooms/server/scene.js` lines 238-244)
+9. **Save Player Stats** (`lib/rooms/server/scene.js` `RoomScene.createPlayerOnScene()`)
    ```javascript
    currentPlayer.persistData = async (params) => {
        await this.events.emit('reldens.playerPersistDataBefore', client, userModel, currentPlayer, params, this);
        await this.savePlayedTime(currentPlayer);
        await this.savePlayerState(currentPlayer.sessionId);
-       // saves the stats to the database:
        await this.savePlayerStats(currentPlayer, client);
        await this.events.emit('reldens.playerPersistDataAfter', client, userModel, currentPlayer, params, this);
    };
    ```
 
-10. **Client Update** (`lib/rooms/server/scene.js` lines 775-779)
+10. **Client Update** (`lib/rooms/server/scene.js` `RoomScene.savePlayerStats()`)
     ```javascript
+    await this.events.emit('reldens.savePlayerStatsUpdateClient', client, playerSchema, this);
     client.send('*', {
         act: GameConst.PLAYER_STATS,
         stats: playerSchema.stats,
@@ -311,7 +318,7 @@ From `@reldens/modifiers/lib/constants.js`:
 
 ### INC_P (Increase Percentage) Calculation
 
-From `@reldens/modifiers/lib/calculator.js` lines 30-36:
+From `node_modules/@reldens/modifiers/lib/calculator.js` `Calculator.calculateNewValue()`:
 
 **Apply**:
 ```javascript
@@ -365,8 +372,8 @@ CREATE TABLE `items_item_modifiers` (
 - `item_id`: References the item this modifier belongs to
 - `key`: Modifier identifier (e.g., 'atk')
 - `property_key`: Path to property to modify (e.g., 'stats/atk')
-- `operation`: Operation ID (1-9, see Modifier Operations table)
-- `value`: Value to apply (as string, converted to number if not SET operation)
+- `operation`: Operation ID (1-9, see Modifier Operations)
+- `value`: Value to apply (stored as string, `ItemsFactory.enrichWithModifiers()` converts it with `Number()` for every operation except SET, and the `Modifier` default type `ModifierConst.TYPES.INT` converts it with `Number()` in `Modifier.parseValue()`)
 - `maxProperty`: Optional max value property path (e.g., 'statsBase/hp')
 
 ### items_inventory (Player Item Instances)
@@ -386,7 +393,7 @@ CREATE TABLE `items_inventory` (
 
 - `owner_id`: Player ID who owns this item instance
 - `item_id`: References the item definition
-- `qty`: Quantity (-1 for unlimited)
+- `qty`: Quantity
 - `remaining_uses`: Uses left (if item has uses limit)
 - `is_active`: 1 if equipped, 0 if not (for equipment items only)
 
@@ -407,7 +414,7 @@ CREATE TABLE `items_inventory` (
    - Custom hooks can intercept here
 
 5. `reldens.savePlayerStatsUpdateClient` - After stats saved, before client update
-   - **Listener**: `UsersPlugin.updateClientsWithPlayerStats()` - Updates life bar UI
+   - **Listener**: `UsersPlugin.updateClientsWithPlayerStats()` - Updates life bar UI (registered in `UsersPlugin.activateLifeBar()` when `client/ui/lifeBar/enabled` is on)
 
 6. Client receives `GameConst.PLAYER_STATS` message with updated stats
 
@@ -438,7 +445,7 @@ CREATE TABLE `items_inventory` (
 
 ## Performance Considerations
 
-- Modifiers are applied synchronously in a loop (item-base.js line 101-103)
+- Modifiers are applied synchronously in a loop (`@reldens/items-system` `lib/item/type/item-base.js` `ItemBase.changeModifiers()`)
 - For items with many modifiers, this could cause brief delay
 - Stats are saved to database after every equip/unequip operation
 - Consider batching stats updates if players frequently swap equipment
@@ -469,24 +476,25 @@ itemClasses: {
 
 ### Custom Modifiers
 
-Create custom modifier with METHOD operation:
+The METHOD operation (8) calls a method named by the modifier `value`, from `node_modules/@reldens/modifiers/lib/modifier.js` `Modifier.getModifiedValue()`:
 ```javascript
-const { Modifier } = require('@reldens/modifiers');
-
-class CustomModifier extends Modifier {
-    customCalculation(modifier, propertyValue){
-        // Your custom logic
-        return newValue;
+if(this.operation === ModifierConst.OPS.METHOD){
+    // this allows you to extend a modifier and set your own calculation/application method:
+    if(!sc.hasOwn(this, this.value) || 'function' !== typeof this[this.value]){
+        Logger.error(['Modifier error:', this, 'Undefined method:', this.value]);
+        this.state = ModifierConst.MOD_MODIFIER_ERROR;
+        return false;
     }
+    propertyValue = this[this.value](this, propertyValue);
 }
 ```
 
-Set in database:
-```sql
-INSERT INTO items_item_modifiers VALUES (
-    NULL, item_id, 'custom', 'stats/custom', 8, 'customCalculation', NULL
-);
-```
+A METHOD row in `items_item_modifiers` does not work with the default loader:
+- `ItemsFactory.enrichWithModifiers()` always builds the base `Modifier` class, there is no `customClasses` entry to replace it.
+- The method name is converted with `Number()` (by the factory for every operation except SET, and by the `Modifier` default INT type), so it becomes `NaN`.
+- `sc.hasOwn(this, this.value)` only finds own properties (or getters), a method declared on a subclass prototype is not found.
+
+To use METHOD modifiers, custom code must replace the `ItemsFactory.enrichWithModifiers()` logic (used by `StorageObserver.loadOwnerItems()` and the trader objects) to build a `Modifier` subclass, keep the method name as a string (pass `type: ModifierConst.TYPES.STRING`) and assign the method on the instance (for example in the subclass constructor).
 
 ### Event Hooks
 
@@ -496,13 +504,21 @@ events.on('reldens.createdPlayerSchema', async (client, userModel, currentPlayer
     // Custom logic when player is created
 });
 
-inventoryServer.manager.listenEvent(ItemsEvents.EQUIP_ITEM, async (item) => {
-    // Custom logic when any item is equipped
-});
+let manager = inventoryServer.manager;
+manager.listenEvent(
+    ItemsEvents.EQUIP_ITEM,
+    async (item) => {
+        // Custom logic when an item of this inventory is equipped
+    },
+    manager.getOwnerUniqueEventKey('myEquipItemKey'),
+    manager.getOwnerEventKey()
+);
 ```
+
+Always pass the unique key and the owner master key like `lib/inventory/server/storage-observer.js` does: `listenEvent()` uses `EventsManager.onWithKey()`, which skips the registration when the remove key already exists, so a listener registered without keys is only added once (for the first inventory).
 
 ## References
 
-- `@reldens/items-system` package: D:\dap\work\reldens\npm-packages\reldens-items
-- `@reldens/modifiers` package: D:\dap\work\reldens\npm-packages\reldens-modifiers
+- `@reldens/items-system` package: `node_modules/@reldens/items-system`
+- `@reldens/modifiers` package: `node_modules/@reldens/modifiers`
 - Sample data: `migrations/production/reldens-sample-data-v4.0.0.sql`

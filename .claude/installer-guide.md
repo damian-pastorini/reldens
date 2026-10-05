@@ -10,22 +10,26 @@ The Reldens installer (`lib/game/server/installer.js`) provides a web-based GUI 
 
 The installer runs automatically on the first launch when no installation lock file exists:
 ```bash
-npm start
+node .
 # Navigate to http://localhost:8080 (or configured host/port)
 ```
+
+A project created with `reldens createApp` has no `start` script in its `package.json` (`ThemeManager.updatePackageJson()` does not add one), so it is started with `node .` from the project root.
 
 The installer will automatically redirect to the installation wizard if the project has not been installed yet.
 
 ## Storage Drivers & Database Clients
 
-Knex is the default storage driver and the only one bundled with `@reldens/storage`. The installer lists the optional drivers only when their packages resolve from the project `node_modules` (`StorageDriversResolver.available()` from `@reldens/cms`), so install the packages before opening the wizard:
+Knex is the default storage driver and the only one bundled with `@reldens/storage`. The Storage Driver select lists every driver (`knex`, `kysely`, `drizzle`, `objection-js`, `mikro-orm`, `prisma`) with `knex` selected by default. A driver whose packages do not resolve from the project `node_modules` (`StorageDriversResolver.available()` from `@reldens/cms`) is listed with the " (will be installed)" label suffix.
+
+With the "Allow installer to run npm install for missing packages" checkbox (`app-allow-packages-installation`) checked, the default, the installer installs the packages of the selected driver from the registry in `lib/game/server/installer/storage-driver-packages.js`. With the checkbox unchecked a driver whose packages are missing stops the installation with the `driver-packages-missing` error, so install them yourself first:
 
 - `knex` (default, always available) - MySQL (native) / MySQL2 (recommended, automated installation), plus the manual clients pg, sqlite3, better-sqlite3, mssql, oracledb, cockroachdb
 - `kysely` - `npm install kysely` - MySQL / MySQL2 (automated installation)
 - `drizzle` - `npm install drizzle-orm` - MySQL / MySQL2 (automated installation)
 - `objection-js` - `npm install objection@3.1.5` - same clients as Knex
-- `mikro-orm` - `npm install @mikro-orm/core @mikro-orm/mysql` (plus `@mikro-orm/mongodb` when the client is MongoDB) - MySQL (automated installation), plus the manual clients mariadb, postgresql, sqlite, mongodb, mssql, better-sqlite3
-- `prisma` - `npm install prisma @prisma/client @prisma/adapter-mariadb` - MySQL (automated installation), plus the manual clients postgresql, sqlite, sqlserver, mongodb, cockroachdb
+- `mikro-orm` - `npm install @mikro-orm/core@7.2.0 @mikro-orm/mysql@7.2.0` (plus `@mikro-orm/mongodb` when the client is MongoDB) - MySQL (automated installation), plus the manual clients mariadb, postgresql, sqlite, mongodb, mssql, better-sqlite3
+- `prisma` - `npm install prisma @prisma/client @prisma/adapter-mariadb` (the adapter is the `RELDENS_PRISMA_ADAPTER` package) - MySQL (automated installation), plus the manual clients postgresql, sqlite, sqlserver, mongodb, cockroachdb
 
 The client list per driver lives in `install/index.js` (`DB_CLIENTS_MAP`). The default client is `mysql2` for the Knex based drivers and `mysql` for MikroORM and Prisma.
 
@@ -63,15 +67,19 @@ Clients marked with **(manual)** require manual database setup:
 ## Installation Process Flow
 
 1. **Form validation**
+   - The admin and the signed tokens secrets must not be empty (see App Settings below)
    - The driver key must exist in the `@reldens/storage` `DriversMap` (error `invalid-driver`)
 
-2. **Package Installation** (if enabled)
+2. **Package Installation** (when the packages installation checkbox is checked, the default)
    - Status: "Checking and installing required packages..."
-   - Installs or links `reldens` and the `@reldens/*` packages depending on `RELDENS_INSTALLATION_TYPE`
-   - For the Prisma driver also installs `prisma`, `@prisma/client` and the adapter (`RELDENS_PRISMA_ADAPTER`)
+   - Installs or links `reldens` and the `linkablePackages` (see `PackagesInstallation` below) depending on `RELDENS_INSTALLATION_TYPE`
+   - Installs the selected storage driver packages (`storage-driver-packages.js`, the Prisma entry installs `prisma`, `@prisma/client` and the `RELDENS_PRISMA_ADAPTER` package)
+   - Installs the selected mailer service package (`nodemailer` or `@sendgrid/mail`, from `MailerServiceRegistry`)
+   - A failed npm command stops the installation with the `installation-dependencies-failed` error
 
-3. **Driver availability**
+3. **Packages availability**
    - The selected driver packages must resolve from the project (error `driver-packages-missing`)
+   - The selected mailer service package must resolve from the project or the Reldens module (error `mailer-packages-missing`)
    - The driver modules are loaded and attached to the data server config (`knexModules`, `kyselyModules`, etc.)
 
 4. **Database Connection**
@@ -93,10 +101,26 @@ Clients marked with **(manual)** require manual database setup:
    - Status: "Creating project files..."
    - Creates `.env`, `.gitignore`, `install.lock`, and `knexfile.js` for the Knex based drivers (`knex`, `objection-js`)
    - Cleans the sample assets when the sample data was not installed
+   - Runs the `startCallback` inside `ProjectFilesCreation.createProjectFiles()` (the `ServerManager` reloads the new `.env` and starts the game server) and waits for it
 
 8. **Completion**
-   - Status: "Installation completed successfully!"
-   - Runs the `startCallback` (the `ServerManager` starts the game server) and redirects to the game
+   - Status: "Installation completed successfully!", written after `createProjectFiles()` returns, so after the `startCallback` finished
+   - Redirects to the game (`app-host` plus `:` plus `app-port`)
+
+The end of `Installer.executeInstallProcess()`:
+
+```js
+let filesCreation = await this.projectFilesCreation.createProjectFiles(
+    templateVariables,
+    storageDriverKey,
+    dbDriver
+);
+if(!filesCreation.success){
+    return res.redirect('/?error='+filesCreation.error);
+}
+this.updateInstallStatus('Installation completed successfully!');
+return res.redirect(templateVariables['app-host']+':'+templateVariables['app-port']);
+```
 
 ## Status Tracking
 
@@ -131,9 +155,12 @@ The installer provides real-time status updates during installation:
   `db-installation-process-failed-missing-signed-tokens-secret`) before the driver validation and any database work,
   so a missing secret never leaves a partial installation
 - **Hot-Plug** - Enable runtime configuration reload
+- **Allow installer to run npm install for missing packages** - Checked by default (`app-allow-packages-installation`),
+  enables the Package Installation step of the flow above
 
 ### Storage Settings
-- **Storage Driver** - `knex` by default, plus the optional drivers detected in the project
+- **Storage Driver** - every driver, `knex` selected by default, the drivers with missing packages show the
+  " (will be installed)" suffix
 - **Client** - Database client library (see list above)
 - **Host** - Database server host
 - **Port** - Database server port
@@ -148,7 +175,7 @@ The form defaults are read from the environment when present: `RELDENS_APP_HOST`
 ### Optional Features
 - **HTTPS** - SSL/TLS configuration
 - **Monitor** - Colyseus monitoring tools
-- **Mailer** - Service select with None, NodeMailer (default, installed with Reldens) and SendGrid; SendGrid adds `@sendgrid/mail` to the packages the installer runs `npm install` for, None writes `RELDENS_MAILER_ENABLE=0`, and a selected service whose package is not found stops the installation with the `mailer-packages-missing` error
+- **Mailer** - Service select with None (preselected), NodeMailer and SendGrid; with packages installation allowed the selected service package (`nodemailer` or `@sendgrid/mail`) is installed the same way as the driver packages, None writes `RELDENS_MAILER_ENABLE=0`, and a selected service whose package is not found stops the installation with the `mailer-packages-missing` error
 - **Firebase** - Firebase authentication integration
 
 ## Installer Architecture
@@ -158,7 +185,8 @@ The form defaults are read from the environment when present: `RELDENS_APP_HOST`
 **Installer** (`lib/game/server/installer.js`)
 - Main orchestration class
 - Handles Express routes and form processing
-- Renders the storage drivers list with `storageDriversOptions()` (only the available drivers)
+- Renders the storage drivers list with `storageDriversOptions()` (every driver, the ones with missing packages with
+  the " (will be installed)" suffix)
 - Checks the admin and signed tokens secrets first, then validates the driver availability
   (`isStorageDriverAvailable()`) and attaches the driver modules (`appendDriverModules()`)
 - Coordinates sub-installers
@@ -187,18 +215,24 @@ The form defaults are read from the environment when present: `RELDENS_APP_HOST`
 - Creates `.env` file with configuration
 - Creates `knexfile.js` for the Knex based drivers
 - Creates `.gitignore` and `install.lock`
-- Runs the assets cleanup and the start callback
+- Runs the assets cleanup and then the start callback, before the installer writes the completion status
 
 **PackagesInstallation** (`lib/game/server/installer/packages-installation.js`)
 - Manages npm package installation and linking based on `RELDENS_INSTALLATION_TYPE`
 - Runs installs before links so the main package link is always restored last
-- Handles the Prisma packages (`prisma`, `@prisma/client` and the adapter)
+- Installs the selected storage driver packages (the registry in `lib/game/server/installer/storage-driver-packages.js`:
+  `kysely`, `drizzle-orm`, `objection` 3.1.5, `@mikro-orm/core` and `@mikro-orm/mysql` 7.2.0, and for Prisma `prisma`,
+  `@prisma/client` and the `RELDENS_PRISMA_ADAPTER` package) and the selected mailer service package
+- The linkable packages (`linkablePackages`) are exactly `@reldens/cms`, `@reldens/game-data-generator`,
+  `@reldens/items-system`, `@reldens/modifiers`, `@reldens/server-utils`, `@reldens/skills`, `@reldens/storage`,
+  `@reldens/tile-map-generator` and `@reldens/utils`; the other Reldens dependencies (for example
+  `@reldens/tileset-to-tilemap`) are not in the list, they resolve from the linked `reldens` package own `node_modules`
 
 **Installation Types** (set via `RELDENS_INSTALLATION_TYPE` environment variable):
 
 - `normal` - installs `reldens` from npm registry; no linking
-- `link` - npm links `reldens` and all `@reldens/*` packages; no npm installs
-- `link-main` - npm installs all `@reldens/*` packages from registry, then npm links `reldens` last to restore the local source junction
+- `link` - npm links `reldens` and the `linkablePackages` above; no npm installs
+- `link-main` - npm installs the `linkablePackages` above from registry, then npm links `reldens` last to restore the local source junction
 
 ### Frontend Files
 
@@ -234,10 +268,14 @@ For other databases, these scripts must be manually adapted to the target databa
 
 `tests/test-installation-process.js` covers the installation process without a browser:
 
-- the installer defaults to the Knex driver and lists only the available drivers
+- the installer defaults to the Knex driver (first and selected in the drivers list) and the `mysql2` client
+- the installer selects the None mailer service by default
+- the installer enables the mailer for nodemailer and sendgrid and disables it for none
+- the installer accepts no mailer and the installed nodemailer package
 - the entities loader resolves the generated Knex models
 - an unknown driver is rejected before any project file is written
-- a full Knex installation against the tests database creates `.env`, `.gitignore`, `knexfile.js`, `install.lock` and the generated Knex models in `test-results/installer-project`
+- a missing admin or signed tokens secret is rejected before the driver and database checks, without any project file
+- a full Knex installation against the tests database creates `.env`, `.gitignore`, `knexfile.js`, `install.lock` and the generated Knex models in `test-results/installer-project`, and runs the `startCallback` with the `KnexDataServer`
 
 It runs with the other integration tests (`npm test` or `npm run test:default`) using the database from `tests/config.json`; the install SQL only creates the missing tables and the seeds are not executed, so the tests database data is not modified.
 
@@ -245,11 +283,11 @@ It runs with the other integration tests (`npm test` or `npm run test:default`) 
 
 ### "The selected storage driver packages were not found in the project"
 
-**Cause:** The driver was selected but its packages are not installed in the project `node_modules`
+**Cause:** The driver was selected but its packages are not installed in the project `node_modules` (and the packages installation was not allowed, or did not install them)
 
 **Solution:**
-1. Install the packages listed in the Storage Drivers section
-2. Reload the installer page, the driver is listed once the packages resolve
+1. Check "Allow installer to run npm install for missing packages" so the installer installs them, or install the packages listed in the Storage Drivers section yourself
+2. Submit the installer form again
 
 ### "Non-MySQL client detected, skipping automated SQL scripts"
 
@@ -288,7 +326,7 @@ It runs with the other integration tests (`npm test` or `npm run test:default`) 
 **Solution:**
 1. Check internet connection
 2. Manually run: `npm install reldens`
-3. For Prisma: `npm install prisma @prisma/client @prisma/adapter-mariadb`
+3. Install the selected driver packages listed in the Storage Drivers section (for Prisma: `npm install prisma @prisma/client @prisma/adapter-mariadb`)
 4. Check npm logs for errors
 
 ## Post-Installation
@@ -299,7 +337,11 @@ After successful installation:
 3. Installer becomes inaccessible
 4. Use admin panel for further configuration
 5. Access admin at configured path (default: /reldens-admin)
-6. Use configured admin secret key for first login
+6. Log in with the email and password of a user whose role is the `server/admin/roleId` config (99 in the basic
+   configuration). The basic configuration seeds the `root` user (`root@yourgame.com`, role 99): change its password
+   with `reldens resetPassword --user=root --pass=...`, or create a new admin with
+   `reldens createAdmin --user=... --pass=... --email=...` (see `.claude/commands-reference.md`). The admin secret key
+   (`RELDENS_ADMIN_SECRET`) is not a login credential, it signs the administration panel session
 
 ## Re-installation
 

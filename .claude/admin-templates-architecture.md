@@ -2,20 +2,16 @@
 
 ## The 5-Tier Model
 
-```
-1. Registry        ->  TemplatesList                   (lib/admin/server/templates-list.js)
-2. Paths           ->  ThemeManager.adminTemplates     (lib/game/server/theme-manager.js)
-3. Mapper          ->  TemplatesToPathMapper.map       (lib/game/server/templates-to-path-mapper.js)
-4. Loader          ->  AdminTemplatesLoader            (@reldens/cms/lib/admin-templates-loader.js)
-5. Renderer        ->  TemplateEngine                  (lib/game/server/template-engine.js)
-```
+- Registry: `TemplatesList` (`lib/admin/server/templates-list.js`)
+- Paths: `ThemeManager.adminTemplates` (`lib/game/server/theme-manager.js`)
+- Mapper: `TemplatesToPathMapper.map` (`lib/game/server/templates-to-path-mapper.js`)
+- Loader: `AdminTemplatesLoader` (`@reldens/cms/lib/admin-templates-loader.js`)
+- Renderer: `TemplateEngine` (`lib/game/server/template-engine.js`)
 
 Orchestration:
 
-```
-Setup     ->  CreateAdminSubscriber  ->  AdminManager  ->  ContentsBuilder
-PerReq    ->  Router                 ->  RouterContents ->  ContentsBuilder.render
-```
+- Setup: `CreateAdminSubscriber` -> `AdminManager` -> `ContentsBuilder`
+- Per request: `Router` -> `RouterContents` -> `ContentsBuilder.render`
 
 The tree shape is identical at every layer: `TemplatesList` == `adminTemplates` == `adminFilesContents`. Each layer transforms the LEAVES (filename -> absolute path -> file content) while preserving the keys and structure.
 
@@ -29,32 +25,68 @@ Single file at `lib/admin/server/templates-list.js` exporting a nested object th
 module.exports.TemplatesList = {
     login: 'login.html',
     dashboard: 'dashboard.html',
-    layout: 'layout.html',
-    sideBar: 'sidebar.html',
-    sideBarHeader: 'sidebar-header.html',
-    sideBarItem: 'sidebar-item.html',
+    management: 'management.html',
+    themeManager: 'theme-manager.html',
     mapsWizard: 'maps-wizard.html',
     mapsWizardMapsSelection: 'maps-wizard-maps-selection.html',
     mapsElementsEditorScripts: 'maps-elements-editor-scripts.html',
     roomsActivePlayers: 'rooms-active-players.html',
+    roomsDefaultRoomFlag: 'rooms-default-room-flag.html',
+    tilesetAnalyzer: 'tileset-to-tilemap.html',
+    objectsImport: 'objects-import.html',
+    skillsImport: 'skills-import.html',
+    list: 'list.html',
+    listContent: 'list-content.html',
+    view: 'view.html',
+    edit: 'edit.html',
+    layout: 'layout.html',
+    sideBar: 'sidebar.html',
+    sideBarHeader: 'sidebar-header.html',
+    sideBarItem: 'sidebar-item.html',
+    paginationLink: 'pagination-link.html',
+    defaultCopyRight: 'default-copyright.html',
     fields: {
-        view: { text: 'text.html', boolean: 'boolean.html' },
-        edit: { text: 'text.html', select: 'select.html' }
+        view: {
+            audio: 'audio.html',
+            audios: 'audios.html',
+            text: 'text.html',
+            textarea: 'textarea.html',
+            image: 'image.html',
+            images: 'images.html',
+            link: 'link.html',
+            links: 'links.html',
+            boolean: 'boolean.html'
+        },
+        edit: {
+            text: 'text.html',
+            textarea: 'textarea.html',
+            select: 'select.html',
+            checkbox: 'checkbox.html',
+            boolean: 'checkbox.html',
+            radio: 'radio.html',
+            button: 'button.html',
+            file: 'file.html'
+        }
     },
     sections: {
-        view: { rooms: 'rooms.html' },
-        editForm: { objects: 'objects.html' }
+        view: {
+            rooms: 'rooms.html'
+        },
+        editForm: {
+            objects: 'objects.html',
+            'rooms-change-points': 'rooms-change-points.html'
+        }
     }
 };
 ```
 
 Three kinds of leaves:
 
-- **Top-level page/fragment keys** (`login`, `dashboard`, `mapsWizardMapsSelection`, `mapsElementsEditorScripts`, `roomsActivePlayers`): standalone HTML files. `roomsActivePlayers` is rendered per request by `RoomsActivePlayersWarning` (`lib/admin/server/rooms-active-players-warning.js`) and assigned to `renderedViewProperties.extraContentForViewTop` on `reldens.adminViewPropertiesPopulation`, which is how a fragment gets live data into a page whose entity templates were precompiled at startup. A fragment whose content is reused inside another template (for example `mapsElementsEditorScripts`) is passed into that template as a Mustache variable - the loaded content string is handed to the consumer render as `{{&key}}` (see "Shared fragment variables" below). No Mustache `{{> }}` partials are used anywhere in the admin.
+- **Top-level page/fragment keys** (`login`, `dashboard`, `mapsWizardMapsSelection`, `mapsElementsEditorScripts`, `roomsActivePlayers`, `roomsDefaultRoomFlag`): standalone HTML files. `roomsActivePlayers` and `roomsDefaultRoomFlag` are rendered per request by `RoomsActivePlayersWarning` (`lib/admin/server/rooms-active-players-warning.js`, created by `RoomsActivePlayersSubscriber`): `appendTo()` assigns the `roomsActivePlayers` banner to `renderedViewProperties.extraContentForViewTop` on `reldens.adminViewPropertiesPopulation`, and `appendDefaultRoomFlagTo()` appends the `roomsDefaultRoomFlag` element to `listProperties.extraContentForList` on `reldens.adminListPropertiesPopulation`, which is how a fragment gets live data into a page whose entity templates were precompiled at startup. A fragment whose content is reused inside another template (for example `mapsElementsEditorScripts`) is passed into that template as a Mustache variable - the loaded content string is handed to the consumer render as `{{&key}}` (see "Shared fragment variables" below). No Mustache `{{> }}` partials are used anywhere in the admin.
 - **`fields.{view|edit}.{type}`**: per-property-type cell templates that `RouterContents` (`@reldens/cms`) selects when rendering list / view / edit field cells based on each property's resolved type.
 - **`sections.{view|editForm|viewForm|list|edit}.{entityPath}`**: per-entity extension content. `ContentsBuilder.buildEntitiesContents` looks these up by `driverResource.entityPath` (e.g. `rooms`) and injects the rendered fragment into the generic view/list/edit templates via `{{&extraContentForViewBottom}}`-style placeholders.
 
-Plugins may extend the list either by exporting their own TemplatesList and merging into the project one, or by mutating `themeManager.adminTemplatesList` at startup time via an event subscriber (see "Plugin Pages" below).
+Plugins extend the list by mutating both `themeManager.adminTemplatesList` and the already resolved `themeManager.adminTemplates` on the `reldens.beforeCreateAdminManager` event (see "Late-bound template extension" below).
 
 ---
 
@@ -108,7 +140,7 @@ Lives in `@reldens/cms/lib/admin-templates-loader.js`. Exposes a singleton with 
 await AdminTemplatesLoader.fetchAdminFilesContents(adminTemplates)
 ```
 
-It walks the path tree (same recursive shape as the mapper); for each leaf it calls `FileHandler.fetchFileContents` and writes the resulting string back under the same key. The output, `adminFilesContents`, has identical shape to `adminTemplates` but with file CONTENTS as leaves.
+It walks the path tree (same recursive shape as the mapper); for each leaf it calls `FileHandler.fetchFileContents` and writes the resulting string back under the same key. A leaf whose file does not exist logs `Admin template file not found.` and the whole load returns `false`. The output, `adminFilesContents`, has identical shape to `adminTemplates` but with file CONTENTS as leaves.
 
 `CreateAdminSubscriber.activateAdmin` (`lib/admin/server/subscribers/create-admin-subscriber.js`) calls this exactly once at admin activation:
 
@@ -158,20 +190,22 @@ So `themeManager.templateEngine.render(content, params)` and `TemplateEngine.ren
 
 ## Layer 6 - AdminManager and ContentsBuilder
 
-`CreateAdminSubscriber.activateAdmin` wires the admin pipeline:
+`CreateAdminSubscriber.activateAdmin` wires the admin pipeline. It loads the contents, puts them in `adminConfig` together with the `renderCallback` property:
 
 ```js
-let adminFilesContents = await AdminTemplatesLoader.fetchAdminFilesContents(themeManager.adminTemplates);
-let adminConfig = {
-    ...,
-    renderCallback: (content, params) => themeManager.templateEngine.render(content, params),
-    adminFilesContents,
-    ...
-};
-serverManager.serverAdmin = new AdminManager(adminConfig);
+renderCallback: (content, params) => themeManager.templateEngine.render(content, params),
 ```
 
-`AdminManager` constructs `ContentsBuilder` (`@reldens/cms/lib/admin-manager/contents-builder.js`) and forwards both fields. `ContentsBuilder.render(content, params)` is a single line: `return this.renderCallback(content, params)`. Every other render in the admin tree ultimately routes through that one method.
+and then creates and sets up the manager:
+
+```js
+serverManager.serverAdmin = new AdminManager(adminConfig);
+serverManager.events.emit('reldens.beforeSetupAdminManager', {serverManager});
+await serverManager.serverAdmin.setupAdmin();
+serverManager.events.emit('reldens.afterCreateAdminManager', {serverManager});
+```
+
+`AdminManager` constructs `ContentsBuilder` (`@reldens/cms/lib/admin-manager/contents-builder.js`) and forwards both fields. `ContentsBuilder.render(content, params)` is a single line: `return await this.renderCallback(content, params);`. Every other render in the admin tree ultimately routes through that one method.
 
 `AdminManager.setupAdmin` runs `ContentsBuilder.buildAdminContents()` once during startup, which:
 
@@ -212,18 +246,22 @@ The established pattern for adding a new admin page (examples: `MapsWizardSubscr
    this.render = adminManager.contentsBuilder.render.bind(adminManager.contentsBuilder);
    this.renderRoute = adminManager.contentsBuilder.renderRoute.bind(adminManager.contentsBuilder);
    ```
-3. Hook `reldens.eventBuildSideBarBefore` to inject the navigation entry:
+3. Hook `reldens.eventBuildSideBarBefore` to inject the navigation entry (from `TilesetAnalyzerSubscriber`):
    ```js
    event.navigationContents['Wizards'][label] = await this.render(
        event.adminManager.adminFilesContents.sideBarItem,
-       {name: label, path: this.rootPath + this.somePath}
+       {name: label, path: event.adminManager.rootPath+this.tilesetAnalyzerPath+'/'}
    );
    ```
-4. Hook `reldens.buildAdminContentsAfter` (fires after `buildAdminContents` finishes) to render the page body and cache it on `adminContents`:
+4. Hook `reldens.buildAdminContentsAfter` (emitted at the end of `buildAdminContents`, after the entities contents) to render the page body and cache it on `adminContents`:
    ```js
    let pageContent = await this.render(
        event.adminManager.adminFilesContents.tilesetAnalyzer,
-       { rootPath: this.rootPath }
+       {
+           showAiControls: this.showAiControls ? '1' : '0',
+           activeProviders: aiProviders.join(','),
+           mapsWizardPath: event.adminManager.rootPath+'/maps-wizard'
+       }
    );
    event.adminManager.contentsBuilder.adminContents.tilesetAnalyzer = await this.renderRoute(
        pageContent,
@@ -232,27 +270,53 @@ The established pattern for adding a new admin page (examples: `MapsWizardSubscr
    ```
 5. Register an Express route that returns the cached page:
    ```js
-   return res.send(await this.render(adminManager.contentsBuilder.adminContents.tilesetAnalyzer));
+   adminRouter.get(
+       this.tilesetAnalyzerPath+'/',
+       this.isAuthenticated,
+       async (req, res) => {
+           return res.send(
+               await this.render(adminManager.contentsBuilder.adminContents.tilesetAnalyzer)
+           );
+       }
+   );
    ```
 
 ### Late-bound template extension
 
-If a plugin needs to add a template entry AFTER `ThemeManager.setupPaths` has already run (so `adminTemplates` is already resolved), it must update BOTH the registry AND the paths tree. Example from `lib/admin/server/plugin.js`:
+`ThemeManager.setupPaths` runs in the `ThemeManager` constructor, so `adminTemplates` is always resolved before any plugin runs. A plugin that adds a template entry must update BOTH the registry AND the paths tree. Example from `AdminPlugin.extendAdminTemplates()` (`lib/admin/server/plugin.js`):
 
 ```js
 extendAdminTemplates(event)
 {
+    if(!event?.serverManager?.themeManager?.adminTemplatesList?.fields?.edit){
+        return;
+    }
     let themeManager = event.serverManager.themeManager;
     themeManager.adminTemplatesList.fields.edit['tileset-file-item'] = 'tileset-file-item.html';
+    themeManager.adminTemplatesList.fields.edit['tileset-alert-wrapper'] = 'tileset-alert-wrapper.html';
     let templatesPath = FileHandler.joinPaths(themeManager.projectAdminTemplatesPath, 'fields', 'edit');
     themeManager.adminTemplates.fields.edit['tileset-file-item'] = FileHandler.joinPaths(
         templatesPath,
         'tileset-file-item.html'
     );
+    themeManager.adminTemplates.fields.edit['tileset-alert-wrapper'] = FileHandler.joinPaths(
+        templatesPath,
+        'tileset-alert-wrapper.html'
+    );
 }
 ```
 
-This runs before `CreateAdminSubscriber.activateAdmin`, so when `AdminTemplatesLoader.fetchAdminFilesContents` walks `themeManager.adminTemplates`, the new leaf is present and gets loaded.
+The `AdminPlugin` calls it from its `reldens.beforeCreateAdminManager` listener. That event is emitted inside `CreateAdminSubscriber.activateAdmin()` (`lib/admin/server/subscribers/create-admin-subscriber.js`, which the `AdminPlugin` runs on `reldens.serverBeforeListen`), right before the templates are loaded:
+
+```js
+serverManager.events.emit('reldens.beforeCreateAdminManager', {serverManager});
+let dataServerConfig = serverManager.dataServerConfig;
+let dataServer = serverManager.dataServer;
+let themeManager = serverManager.themeManager;
+let adminFilesContents = await AdminTemplatesLoader.fetchAdminFilesContents(themeManager.adminTemplates);
+```
+
+So when `AdminTemplatesLoader.fetchAdminFilesContents` walks `themeManager.adminTemplates`, the new leaves are present and get loaded.
 
 ---
 
@@ -293,13 +357,17 @@ Because the two consumers are rendered through different paths, the variable is 
 
 ```js
 let sectionsContents = this.adminFilesContents?.sections;
+let extraContentForList = sc.get(sectionsContents?.list, driverResource.entityPath, '');
 let extraContentForView = await this.render(
     sc.get(sectionsContents?.view, driverResource.entityPath, ''),
-    { id: '{{&id}}', entitySerializedData: '{{&entitySerializedData}}' }
+    {
+        id: '{{&id}}',
+        entitySerializedData: '{{&entitySerializedData}}'
+    }
 );
 ```
 
-If a key matches, the section is pre-rendered and concatenated into the page's extra-content slot (`{{&extraContentForViewBottom}}` etc.). If no key matches, the slot stays empty and the page renders without the extension.
+If a key matches, the section is concatenated into the page's extra-content slot (`{{&extraContentForViewBottom}}` etc.). Only the `view` section is pre-rendered at setup (with `id` and `entitySerializedData` kept as literal placeholders); the `list`, `viewForm`, `edit` and `editForm` sections are concatenated raw and rendered with the per-request params. If no key matches, the slot stays empty and the page renders without the extension.
 
 ### Adding a per-entity view extension
 
@@ -311,56 +379,38 @@ If a key matches, the section is pre-rendered and concatenated into the page's e
 
 ## Render Lifecycle
 
-```
-ServerStart
-  -> ThemeManager.constructor
-        this.adminTemplatesList = TemplatesList                       (registry alias)
-  -> ThemeManager.setupPaths
-        this.projectAdminTemplatesPath = {root}/theme/admin/templates
-        this.adminTemplates = TemplatesToPathMapper.map(adminTemplatesList, projectAdminTemplatesPath)
+**Server start**
 
-  -> reldens.beforeCreateAdminManager event                           (plugins may extend the list here)
+1. `ThemeManager.constructor` aliases the registry (`this.adminTemplatesList = TemplatesList`) and calls `ThemeManager.setupPaths`, which sets `this.projectAdminTemplatesPath` (`theme/admin/templates` under the project root) and resolves `this.adminTemplates = TemplatesToPathMapper.map(this.adminTemplatesList, this.projectAdminTemplatesPath)`.
+2. On `reldens.serverBeforeListen` the `AdminPlugin` runs `CreateAdminSubscriber.activateAdmin()`, which:
+   - emits `reldens.beforeCreateAdminManager`, where the `AdminPlugin` listener runs `extendAdminTemplates()` (plugins extend the registry and the paths tree here);
+   - loads `adminFilesContents = await AdminTemplatesLoader.fetchAdminFilesContents(themeManager.adminTemplates)`;
+   - builds `adminConfig` with `adminFilesContents` and `renderCallback: (content, params) => themeManager.templateEngine.render(content, params)`;
+   - creates `new AdminManager(adminConfig)`, emits `reldens.beforeSetupAdminManager` (the `AdminPlugin` creates its subscribers there) and awaits `AdminManager.setupAdmin()`.
+3. `AdminManager.setupAdmin()`:
+   - `ContentsBuilder.buildAdminContents()`: `buildLayout()` to `adminContents.layout`, `buildSideBar()` to `adminContents.sideBar`, the `login` and `dashboard` pages, `buildEntitiesContents()` to `adminContents.entities[name]` (`list`, `view`, `edit`), then the `reldens.buildAdminContentsAfter` event;
+   - emits `reldens.setupAdminRouter`, runs `Router.setupAdminRoutes()`, emits `reldens.setupAdminRoutes`, awaits `Router.setupEntitiesRoutes()` and emits `reldens.setupAdminManagers`.
 
-  -> CreateAdminSubscriber.activateAdmin
-        adminFilesContents = AdminTemplatesLoader.fetchAdminFilesContents(themeManager.adminTemplates)
-        renderCallback = (content, params) => templateEngine.render(content, params)
-        new AdminManager({ adminFilesContents, renderCallback, ... })
+**Per request (entity list, view or edit)**
 
-  -> AdminManager.setupAdmin
-        ContentsBuilder.buildAdminContents()
-            buildLayout()      -> adminContents.layout
-            buildSideBar()     -> adminContents.sideBar
-            buildEntitiesContents() -> adminContents.entities[name].{list, view, edit}
-        Router.setupAdminRoutes
-        Router.setupEntitiesRoutes
-        events: reldens.setupAdminRouter, reldens.setupAdminRoutes, reldens.setupAdminManagers
+- Express calls the `Router` handler, which runs `RouterContents.generate{List|View|Edit}RouteContent`.
+- The page body goes through `ContentsBuilder.render(content, params)` -> `renderCallback(content, params)` -> `TemplateEngine.render(content, params)` -> `mustache.render(content, params)`.
+- `ContentsBuilder.renderRoute(pageContent, sideBar)` wraps the body in the cached layout and the handler returns it with `res.send(...)`.
 
-PerRequest (entity list / view / edit)
-  -> Express -> Router handler
-        RouterContents.generate{List|View|Edit}RouteContent
-            ContentsBuilder.render(content, params)
-                renderCallback(content, params)
-                    TemplateEngine.render(content, params)
-                        mustache.render(content, params)
-        ContentsBuilder.renderRoute(pageContent, sideBar)
-            wraps the body in the cached layout
-  -> res.send(html)
+**Per request (subscriber-owned page)**
 
-PerRequest (subscriber-owned page)
-  -> Express route handler
-        res.send(await this.render(adminManager.contentsBuilder.adminContents.{pageKey}))
-```
+- The subscriber Express route returns `res.send(await this.render(adminManager.contentsBuilder.adminContents.{pageKey}))`.
 
 ---
 
 ## Key Rules
 
-1. **One source of truth** - every admin HTML file is registered in `TemplatesList`. Callers never read templates ad-hoc.
+1. **One source of truth** - admin HTML files are registered in `TemplatesList` (or added to it by `AdminPlugin.extendAdminTemplates()`, like `fields/edit/tileset-file-item.html` and `fields/edit/tileset-alert-wrapper.html`). Callers never read templates ad-hoc. Exceptions: `theme/admin/templates/cache-clean-button.html` and `theme/admin/templates/clear-all-cache-button.html` are not registered in `lib/admin/server/templates-list.js`, so they are never loaded (they are the `@reldens/cms` cache buttons read as `adminFilesContents.cacheCleanButton` and `adminFilesContents.clearAllCacheButton` by its `AddCacheButtonSubscriber`, which stays inactive because Reldens passes no `cacheManager` to the `AdminManager`).
 2. **Tree shape preserved** - `TemplatesList` shape == `adminTemplates` shape == `adminFilesContents` shape. Each layer transforms only the leaves.
 3. **camelCase keys, kebab-case filenames** - `mapsElementsEditorScripts: 'maps-elements-editor-scripts.html'`. Render params and section keys reference templates by the camelCase key.
 4. **No Mustache partials** - the admin uses no `{{> }}` partials. A reused fragment is loaded into `adminFilesContents` and passed to its consumer as a `{{&key}}` variable in that render's params (see "Shared fragment variables").
 5. **renderCallback is the choke point** - every admin render funnels through the same `(content, params)` Mustache pass-through. No subscriber renders templates outside that callback.
-6. **Plugins extend at the right phase** - `reldens.beforeCreateAdminManager` fires before the loader; later extensions must touch BOTH `adminTemplatesList` AND `adminTemplates` to remain visible to the loader.
+6. **Plugins extend at the right phase** - `reldens.beforeCreateAdminManager` is emitted inside `CreateAdminSubscriber.activateAdmin()` right before the loader; since `adminTemplates` is already resolved by then, an extension must touch BOTH `adminTemplatesList` AND `adminTemplates` to be visible to the loader, and anything added after the loader ran is never loaded.
 7. **`adminContents` (rendered cache) is NOT `adminFilesContents` (raw file contents)** - know which one you need before reaching for it.
 
 ---

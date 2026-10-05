@@ -132,9 +132,20 @@ let skillData = await this.dataServer
     .getEntity('skillsClassLevelUpAnimations')
     .loadAllWithRelations();
 
-// 3. Accessing related data from loaded instances
-let classPathModel = await this.dataServer.getEntity('skillsClassPath').loadById(1);
+// 3. Accessing related data, loadById() does not load relations, pass the nested relation path
+let classPathModel = await this.dataServer
+    .getEntity('skillsClassPath')
+    .loadByIdWithRelations(1, ['related_skills_levels_set.related_skills_levels']);
 let relatedSkills = classPathModel.related_skills_levels_set.related_skills_levels;
+```
+
+The relation loaders are defined in `node_modules/@reldens/storage/lib/query-builder-driver.js` (`QueryBuilderDriver`, used by the Knex, Kysely and Drizzle drivers): `loadById()` only loads the row and the `*WithRelations()` methods populate the given relation paths (all the first level relations when the list is empty):
+
+```js
+async loadByIdWithRelations(id, relations)
+{
+    return await this.relationsLoader.populate(await this.loadById(id), relations);
+}
 ```
 
 ## Important Notes
@@ -150,7 +161,7 @@ let relatedSkills = classPathModel.related_skills_levels_set.related_skills_leve
 ## Generated Entities Structure
 
 The `generated-entities/` directory contains:
-- `entities/` - 77 auto-generated entity classes for all database tables
+- `entities/` - 79 auto-generated entity classes, one per table created by `migrations/production/reldens-install-v4.0.0.sql`
 - `models/knex/` - the Knex models plus `registered-models-knex.js`
 - `entities-config.js` - Entity relationship mappings and configuration
 - `entities-translations.js` - Translation/label mappings for admin panel
@@ -205,19 +216,25 @@ Prisma 7 removed support for the `url` property inside the `datasource` block of
 
 1. `generator.generateSchemaFile()` - writes `prisma/schema.prisma` with an empty datasource block (no `url`)
 2. `generator.setDatabaseEnvironmentVariables()` - sets `process.env.RELDENS_DB_URL` from the installer config
-3. `generator.generateConfigFile()` - writes `prisma.config.js` at the project root:
-   ```js
-   process.loadEnvFile('.env');
-   module.exports = { datasource: { url: process.env.RELDENS_DB_URL } };
-   ```
-4. `npx prisma generate` - reads the URL from `prisma.config.js`
+3. `generator.generateConfigFile()` - writes `prisma.config.js` at the project root (`PrismaSchemaGenerator.generateConfigFile()` in `node_modules/@reldens/storage/lib/prisma/prisma-schema-generator.js`), the `.env` load is wrapped in a try/catch so a missing `.env` only stores the error message in `RELDENS_PRISMA_ENV_ERROR`:
+
+```js
+try {
+    process.loadEnvFile('.env');
+} catch(error) {
+    process.env.RELDENS_PRISMA_ENV_ERROR = error.message;
+}
+module.exports = { datasource: { url: process.env.RELDENS_DB_URL } };
+```
+
+4. `generator.generateClient()` runs `npx prisma generate`, which reads the URL from `prisma.config.js`
 5. `MySQLInstaller.createPrismaClient()` (from `@reldens/cms`) builds the `prismaModules` object (`PrismaClient`, `Prisma`, the adapter and the client) used to run the SQL scripts
 
 Then `EntitiesInstallation` regenerates the full schema (`npx prisma db pull` plus `npx prisma generate`) in the main process and attaches the `prismaModules` to the installer data server, which is reused by the runtime right after the installation.
 
 ### Connection URL: `RELDENS_DB_URL` only
 
-Reldens uses the single env var `RELDENS_DB_URL` everywhere - the generated `prisma.config.js`, the generation subprocess, the installer, and the runtime adapter. `DATABASE_URL` is not used or required. The generated `prisma.config.js` loads `.env` explicitly via `process.loadEnvFile()` (Node 20.12+ native) because the Prisma CLI does not auto-load `.env` for config files in Prisma 7.
+Reldens uses the single env var `RELDENS_DB_URL` everywhere - the generated `prisma.config.js`, the generation subprocess, the installer, and the runtime adapter. `DATABASE_URL` is not used or required. The generated `prisma.config.js` loads `.env` explicitly via `process.loadEnvFile()` (Node 20.12+ native, inside a try/catch) because the Prisma CLI does not auto-load `.env` for config files in Prisma 7.
 
 ### Adapter
 
@@ -225,4 +242,10 @@ The adapter package and class come from `RELDENS_PRISMA_ADAPTER` (default `@pris
 
 ### `generateEntities` command
 
-`reldens generateEntities` spawns `npx reldens-storage generateEntities --driver=prisma`, which loads the existing `prisma/client` and the adapter from the project `node_modules`. Run `npx prisma db pull` and `npx prisma generate` first after a schema change.
+`reldens generateEntities` (`Commander.generateEntities()` in `bin/commander.js`) loads the project root `.env` and spawns, with the current Node executable (not `npx`), the `@reldens/storage` CLI resolved from the project:
+
+```bash
+node <@reldens/storage>/bin/reldens-storage.js generateEntities --user=... --pass=... --host=... --port=... --database=... --driver=prisma --client=mysql
+```
+
+The connection arguments come from `RELDENS_DB_*`, `--driver` from `RELDENS_STORAGE_DRIVER` and `--client` from `RELDENS_DB_CLIENT` (`mysql2` is sent as `mysql` for Prisma). It also forwards `RELDENS_PRISMA_ADAPTER` and `RELDENS_PRISMA_ADAPTER_CLASS` as `--prismaAdapter=` and `--prismaAdapterClass=`, plus `--override` and `--prismaClientPath=` when they are passed to the command. The storage CLI loads the existing `prisma/client` (or the `--prismaClientPath` one) and the adapter package from the project `node_modules` (`--prismaAdapter` can also be an absolute path). Run `npx prisma db pull` and `npx prisma generate` first after a schema change.

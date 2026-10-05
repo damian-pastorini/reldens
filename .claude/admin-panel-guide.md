@@ -37,8 +37,9 @@ the chart stay current without a reload. The hover listeners are bound once, not
 
 ## Request Token (CSRF)
 
-Enabled by `RELDENS_ADMIN_CSRF_ENABLED` or the `security/adminCsrf/enabled` config row (default 1) and passed by
-`CreateAdminSubscriber` as `csrfEnabled` to the `@reldens/cms` `AdminManager`.
+Enabled by the `security/adminCsrf/enabled` config row (scope `server`, installed as `1`), which overrides
+`RELDENS_ADMIN_CSRF_ENABLED` (the environment value only applies when the row is missing, code default enabled), and
+passed by `CreateAdminSubscriber.fetchConfigurations()` as `csrfEnabled` to the `@reldens/cms` `AdminManager`.
 
 - The `@reldens/cms` `CsrfProtection` middleware on the administration router creates a token per session and rejects
   every POST, PUT, PATCH or DELETE request whose `_csrf` body field or `X-CSRF-Token` header does not match it, with
@@ -65,9 +66,11 @@ Enabled by `RELDENS_ADMIN_CSRF_ENABLED` or the `security/adminCsrf/enabled` conf
 ## Sessions
 
 - `AdminSessionStore` (`lib/admin/server/admin-session-store.js`) stores the sessions in the `admin_sessions` table
-  (entity `adminSessions`), so they are shared by every server, survive a restart and expire after
-  `RELDENS_ADMIN_SESSION_MAX_AGE_MS` (default one day); the expired rows are pruned every hour. Without the generated
-  entity the default memory store is used and a warning is logged.
+  (entity `adminSessions`), so they are shared by every server, survive a restart and expire after the
+  `security/adminSession/maxAgeMs` config row (installed as `86400000`, one day), which overrides
+  `RELDENS_ADMIN_SESSION_MAX_AGE_MS` (the environment value only applies when the row is missing); a value of `0` or
+  lower is used as one day by the store. The expired rows are pruned every hour. Without the generated entity the
+  default memory store is used and a warning is logged.
 - `AdminSessionValidator` (`lib/admin/server/admin-session-validator.js`) hooks the `reldens.adminIsAuthenticated`
   event: on every authenticated request it reloads the session user and destroys the session when the user was deleted,
   banned, moved to another role or changed its password (the login stores the `sessionRevision` hash of the password
@@ -199,8 +202,9 @@ of the disconnected players fail with foreign key constraint errors:
 #### Linking rooms and picking tiles in the map
 
 The room view "Link rooms" form creates one `roomsChangePoints` row on the current room plus one `roomsReturnPoints`
-row on the destination room (`lib/admin/server/subscribers/rooms-entity-subscriber.js:209-258`). Both values are
-picked on the map canvas, never typed as coordinates:
+row on the destination room (`RoomsEntitySubscriber.handleCreateRoomsLink()` in
+`lib/admin/server/subscribers/rooms-entity-subscriber.js`). Both values are picked on the map canvas, never typed as
+coordinates:
 
 - The change point field is a tile index and the "Pick in map" button next to it toggles the current room map
   (`.current-room-change-point-container`), the same way the objects edit form works.
@@ -409,17 +413,20 @@ static propertiesConfig(extraProps) {
 }
 ```
 
-**Remove columns from the list view**:
+**Remove columns from the list view** (`ItemsItemEntityOverride`):
 ```javascript
 config.listProperties = sc.removeFromArray(config.listProperties, [
     'description',
-    'qty_limit'
+    'qty_limit',
+    'uses_limit',
+    'useTimeOut',
+    'execTimeOut'
 ]);
 ```
 
-**Remove fields from the edit form** (prevents accidental edits of critical fields):
+**Remove fields from the edit form** (prevents accidental edits of critical fields, `PlayersStateEntityOverride`):
 ```javascript
-config.editProperties.splice(config.editProperties.indexOf('player_id'), 1);
+config.editProperties.splice(config.editProperties.indexOf('player_id'), 1)
 ```
 
 **Set the display title field** (which property is shown as the row label):
@@ -434,12 +441,15 @@ config.sort = {sortBy: 'path'};
 
 ### How Overrides Are Registered
 
-Each plugin registers its overrides in `lib/{plugin}/server/entities-config.js`:
+Each plugin registers its overrides in `lib/{plugin}/server/entities-config.js`, for example `lib/users/server/entities-config.js`:
 ```javascript
 module.exports.entitiesConfig = {
     players: PlayersEntityOverride,
     playersState: PlayersStateEntityOverride,
     playersStats: PlayersStatsEntityOverride,
+    stats: StatsEntityOverride,
+    users: UsersEntityOverride,
+    usersLogin: UsersLoginEntityOverride,
 };
 ```
 

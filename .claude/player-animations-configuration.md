@@ -14,9 +14,17 @@ Controls the spritesheet frame dimensions used when loading the player sprite.
 - `client/players/size/width` - frame width in pixels (default: `52`)
 - `client/players/size/height` - frame height in pixels (default: `71`)
 
-These are read in `lib/game/client/scene-preloader.js` at preload time and used for:
-- Spritesheet loading via Phaser `load.spritesheet()`
-- Character selection avatar preview UI
+These are read in:
+- `lib/game/client/scene-preloader.js` `ScenePreloader` constructor, which only builds the spritesheet frame size used by Phaser `load.spritesheet()` (the fallback player sprite and the class paths sprites loaded through `uiScene.playerSpriteSize`):
+
+```js
+this.playerSpriteSize = {
+    frameWidth: this.gameManager.config.get('client/players/size/width', 52),
+    frameHeight: this.gameManager.config.get('client/players/size/height', 71)
+};
+```
+
+- `lib/users/client/plugin.js` `UsersPlugin.showAvatarContainer()`, which reads `client/players/size/width` and `client/players/size/height` to size the character selection avatar preview
 
 Note: size is global only. Per-class-path size is not implemented yet.
 
@@ -59,7 +67,7 @@ Example for a class path with `key = "mage"`:
 
 If no per-class-path config row exists, the `defaultFrames` value is used as fallback.
 
-**Resolution logic** (`lib/game/client/scene-preloader.js:409-411`):
+**Resolution logic** (`lib/game/client/scene-preloader.js` `ScenePreloader.createPlayerAnimations()`):
 ```javascript
 let avatarFrames = this.gameManager.config.getWithoutLogs(
     'client/players/animations/'+avatarKey+'Frames',
@@ -70,8 +78,13 @@ let avatarFrames = this.gameManager.config.getWithoutLogs(
 ### How avatarKey is assigned
 
 The `avatarKey` is set server-side from `skills_class_path.key` in
-`lib/actions/server/player-enricher.js:72` and sent to the client as part of
-player state data.
+`lib/actions/server/player-enricher.js` (`PlayerEnricher.withClassPath()` for the players list and
+`PlayerEnricher.withSkillsServerAndClassPath()` for the current player) and sent to the client as part of
+player state data:
+
+```js
+player.currentClassPathKey = player.avatarKey = classPath.related_skills_class_path.key;
+```
 
 ## Other animation config keys
 
@@ -84,9 +97,9 @@ player state data.
 ## Sprite loading flow
 
 1. Server sends class path data (including `key`) to client with initial game data
-2. `lib/actions/client/preloader-handler.js` iterates all class paths and calls
-   `load.spritesheet(avatarKey, '/assets/custom/sprites/'+avatarKey+'.png', playerSpriteSize)`
-3. After load, `createPlayerAnimations(avatarKey)` is called which reads the per-class-path
+2. `lib/actions/client/preloader-handler.js` `PreloaderHandler.preloadClassPaths()` iterates all class paths and calls
+   `uiScene.load.spritesheet(avatarKey, '/assets/custom/sprites/'+avatarKey+GameConst.FILES.EXTENSIONS.PNG, uiScene.playerSpriteSize)`
+3. After load, `PreloaderHandler.createAvatarsAnimations()` calls `createPlayerAnimations(avatarKey)` which reads the per-class-path
    or default frame config and registers Phaser animations keyed as `{avatarKey}_{direction}`
    (e.g. `mage_left`, `mage_right`, `mage_up`, `mage_down`)
 4. If the sprite file is not found in loaded assets, it falls back to `GameConst.IMAGE_PLAYER`
