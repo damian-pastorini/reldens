@@ -4,6 +4,7 @@
  *
  */
 
+const { AdminSessionsModel } = require('./admin-sessions-model');
 const { AdsBannerModel } = require('./ads-banner-model');
 const { AdsModel } = require('./ads-model');
 const { AdsEventVideoModel } = require('./ads-event-video-model');
@@ -83,11 +84,11 @@ const { UsersModel } = require('./users-model');
 const { UsersLocaleModel } = require('./users-locale-model');
 const { UsersLoginModel } = require('./users-login-model');
 const { UsersPasswordResetsModel } = require('./users-password-resets-model');
-const { AdminSessionsModel } = require('./admin-sessions-model');
 const { entitiesConfig } = require('../../entities-config');
 const { entitiesTranslations } = require('../../entities-translations');
 
 let rawRegisteredEntities = {
+    adminSessions: AdminSessionsModel,
     adsBanner: AdsBannerModel,
     ads: AdsModel,
     adsEventVideo: AdsEventVideoModel,
@@ -166,8 +167,7 @@ let rawRegisteredEntities = {
     users: UsersModel,
     usersLocale: UsersLocaleModel,
     usersLogin: UsersLoginModel,
-    usersPasswordResets: UsersPasswordResetsModel,
-    adminSessions: AdminSessionsModel
+    usersPasswordResets: UsersPasswordResetsModel
 };
 
 module.exports.rawRegisteredEntities = rawRegisteredEntities;

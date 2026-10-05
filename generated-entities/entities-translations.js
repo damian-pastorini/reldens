@@ -6,6 +6,7 @@
 
 module.exports.entitiesTranslations = {
     labels: {
+        'admin_sessions': 'Admin Sessions',
         'ads_banner': 'Ads Banner',
         'ads': 'Ads',
         'ads_event_video': 'Ads Event Video',
@@ -84,10 +85,15 @@ module.exports.entitiesTranslations = {
         'users': 'Users',
         'users_locale': 'Users Locale',
         'users_login': 'Users Login',
-        'users_password_resets': 'Users Password Resets',
-        'admin_sessions': 'Admin Sessions'
+        'users_password_resets': 'Users Password Resets'
     },
     fields: {
+        'admin_sessions': {
+            'id': 'ID',
+            'sid': 'Sid',
+            'data': 'Data',
+            'expires': 'Expires'
+        },
         'ads_banner': {
             'id': 'ID',
             'ads_id': 'Ads ID',
@@ -736,12 +742,6 @@ module.exports.entitiesTranslations = {
             'user_id': 'User ID',
             'login_date': 'Login Date',
             'logout_date': 'Logout Date'
-        },
-        'admin_sessions': {
-            'id': 'ID',
-            'sid': 'Sid',
-            'data': 'Data',
-            'expires': 'Expires'
         }
     }
 };

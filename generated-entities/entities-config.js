@@ -4,6 +4,7 @@
  *
  */
 
+const { AdminSessionsEntity } = require('./entities/admin-sessions-entity');
 const { AdsBannerEntity } = require('./entities/ads-banner-entity');
 const { AdsEntity } = require('./entities/ads-entity');
 const { AdsEventVideoEntity } = require('./entities/ads-event-video-entity');
@@ -83,9 +84,9 @@ const { UsersEntity } = require('./entities/users-entity');
 const { UsersLocaleEntity } = require('./entities/users-locale-entity');
 const { UsersLoginEntity } = require('./entities/users-login-entity');
 const { UsersPasswordResetsEntity } = require('./entities/users-password-resets-entity');
-const { AdminSessionsEntity } = require('./entities/admin-sessions-entity');
 
 let entitiesConfig = {
+    adminSessions: AdminSessionsEntity.propertiesConfig(),
     adsBanner: AdsBannerEntity.propertiesConfig(),
     ads: AdsEntity.propertiesConfig(),
     adsEventVideo: AdsEventVideoEntity.propertiesConfig(),
@@ -164,8 +165,7 @@ let entitiesConfig = {
     users: UsersEntity.propertiesConfig(),
     usersLocale: UsersLocaleEntity.propertiesConfig(),
     usersLogin: UsersLoginEntity.propertiesConfig(),
-    usersPasswordResets: UsersPasswordResetsEntity.propertiesConfig(),
-    adminSessions: AdminSessionsEntity.propertiesConfig()
+    usersPasswordResets: UsersPasswordResetsEntity.propertiesConfig()
 };
 
 module.exports.entitiesConfig = entitiesConfig;
