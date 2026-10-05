@@ -10,7 +10,7 @@ const { ConfigManager } = require('reldens/lib/config/client/config-manager');
 const { ChatConst } = require('reldens/lib/chat/constants');
 const { GameClient } = require('reldens/lib/game/client/game-client');
 const { GameConst } = require('reldens/lib/game/constants');
-const { sc } = require('@reldens/utils');
+const { randomBytes } = require('crypto');
 let botsCounter = 1;
 let startTimer = new Date().getTime();
 
@@ -19,7 +19,7 @@ async function main (options)
 
     let chatIntervalMs = Number(process.env.withChat || 0);
     let movementIntervalMs = Number(process.env.withMovement || 0);
-    let randomGuestName = 'guest-bot-'+sc.randomChars(12);
+    let randomGuestName = 'guest-bot-'+randomBytes(6).toString('hex');
     console.log('Running bot #'+botsCounter+' - User "'+randomGuestName+'".', {movementIntervalMs, chatIntervalMs});
     botsCounter++;
     let botTimer = new Date().getTime();
@@ -101,9 +101,8 @@ async function main (options)
                     return;
                 }
                 // start moving the player:
-                reldensBootsRoom?.send('*', {
-                    dir: sc.randomValueFromArray([GameConst.LEFT, GameConst.RIGHT, GameConst.DOWN, GameConst.UP])
-                });
+                let directions = [GameConst.LEFT, GameConst.RIGHT, GameConst.DOWN, GameConst.UP];
+                reldensBootsRoom?.send('*', {dir: directions[Math.floor(Math.random() * directions.length)]});
                 // stop moving the player:
                 setTimeout(() => {
                     reldensBootsRoom?.send('*', {act: GameConst.STOP});

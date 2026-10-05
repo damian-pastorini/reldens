@@ -9,6 +9,7 @@ const { Logger } = require('@reldens/utils');
 const { FileHandler } = require('@reldens/server-utils');
 const { FeaturesTestData } = require('./fixtures/features-test-data');
 const { CrudTestData } = require('./fixtures/crud-test-data');
+const { ServerPathResolver } = require('./server-path-resolver');
 
 class TestAdminFeatures extends BaseTest
 {
@@ -20,7 +21,7 @@ class TestAdminFeatures extends BaseTest
         this.testFiles = [];
         this.testPrefix = 'test-features-deterministic';
         this.baseTestIds = CrudTestData.getBaseTestIds();
-        this.serverPath = config.serverPath || null;
+        this.serverPath = ServerPathResolver.resolve(config.serverPath) || null;
         this.themeName = config.themeName || 'default';
     }
 

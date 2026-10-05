@@ -22,6 +22,7 @@
         <div class="forms-container">
             <div class="row">
                 <form name="install-form" id="install-form" class="install-form" action="/install" method="post">
+                    <div class="install-form-overlay hidden"></div>
                     <div class="col-2">
                         <!-- APP -->
                         <h3 class="form-title">- App -</h3>
@@ -49,6 +50,10 @@
                             <label for="app-admin-secret">Admin Panel Secret Key</label>
                             <input type="text" name="app-admin-secret" id="app-admin-secret" value="{{app-admin-secret}}" class="required" required/>
                         </div>
+                        <div class="input-box app-signed-tokens-secret">
+                            <label for="app-signed-tokens-secret">Signed Tokens Secret Key</label>
+                            <input type="text" name="app-signed-tokens-secret" id="app-signed-tokens-secret" value="{{app-signed-tokens-secret}}" class="required" required/>
+                        </div>
                         <div class="input-box app-admin-hot-plug">
                             <label for="app-admin-hot-plug">Hot-Plug</label>
                             <input type="checkbox" value="1" name="app-admin-hot-plug" id="app-admin-hot-plug"{{&app-admin-hot-plug-checked}}/>
@@ -60,7 +65,7 @@
                                     <ul>
                                         <li>The installer will attempt to run npm install for missing packages.</li>
                                         <li>Uncheck this only if you have manually installed all required packages or if you are not using NPM.</li>
-                                        <li>Required packages: @reldens/storage (always), @prisma/client (Prisma driver only).</li>
+                                        <li>Required packages: reldens (always); the selected storage driver packages (Knex is included with Reldens); the selected mailer service package.</li>
                                     </ul>
                                 </span>
                             </div>
@@ -126,10 +131,15 @@
                         <div class="input-box db-storage-driver">
                             <label for="db-storage-driver">Storage Driver</label>
                             <select name="db-storage-driver" id="db-storage-driver" class="required" required>
-                                <option value="prisma"{{&db-storage-driver-prisma}}>Prisma</option>
-                                <option value="objection-js"{{&db-storage-driver-objection-js}}>Objection JS</option>
-                                <option value="mikro-orm"{{&db-storage-driver-mikro-orm}}>MikroORM (untested)</option>
+                                {{#storageDrivers}}
+                                <option value="{{key}}"{{&selected}}>{{label}}</option>
+                                {{/storageDrivers}}
                             </select>
+                        </div>
+                        <div class="notice-box">
+                            <ul>
+                                <li>Knex is always available, the drivers marked "(will be installed)" are installed only when "Allow installer to run npm install for missing packages" is checked.</li>
+                            </ul>
                         </div>
                         <div class="input-box db-client">
                             <label for="db-client">Client</label>
@@ -160,6 +170,7 @@
                         <div class="input-box db-error">
                             <p class="connection-failed">Connection failed, please check the storage configuration.</p>
                             <p class="invalid-driver">Invalid storage driver.</p>
+                            <p class="driver-packages-missing">The selected storage driver packages were not found in the project.</p>
                             <p class="raw-query-not-found">Method "rawQuery" not found in the specified storage driver.</p>
                             <p class="db-installation-process-failed">There was an error during the installation process.</p>
                         </div>
@@ -186,20 +197,22 @@
                     <div class="col-2">
                         <!-- MAILER -->
                         <h3 class="form-title">- Mailer -</h3>
-                        <div class="input-box mailer-enable">
-                            <label for="mailer-enable">Enable NodeMailer</label>
-                            <input type="checkbox" value="1" name="mailer-enable" id="mailer-enable"{{&mailer-enable-checked}}/>
-                        </div>
-                        <div class="input-box mailer-service mailer-filter">
+                        <div class="input-box mailer-service">
                             <label for="mailer-service">Service</label>
                             <select name="mailer-service" id="mailer-service">
-                                <option value="sendgrid"{{&mailer-service-sendgrid}}>SendGrid</option>
+                                <option value="none"{{&mailer-service-none}}>None (no emails)</option>
                                 <option value="nodemailer"{{&mailer-service-nodemailer}}>NodeMailer</option>
+                                <option value="sendgrid"{{&mailer-service-sendgrid}}>SendGrid</option>
                             </select>
+                        </div>
+                        <div class="notice-box">
+                            <ul>
+                                <li>NodeMailer is installed with Reldens, SendGrid installs the "@sendgrid/mail" package when the npm install for missing packages is allowed.</li>
+                            </ul>
                         </div>
                         <div class="input-box mailer-host mailer-filter">
                             <label for="mailer-host">Host</label>
-                            <input type="text" name="mailer-host" id="mailer-host"/>
+                            <input type="text" name="mailer-host" id="mailer-host" value="{{mailer-host}}"/>
                         </div>
                         <div class="input-box mailer-secure mailer-filter">
                             <label for="mailer-secure">Secure (SSL)</label>
@@ -220,6 +233,9 @@
                         <div class="input-box mailer-from mailer-filter">
                             <label for="mailer-from">From email</label>
                             <input type="text" name="mailer-from" id="mailer-from" value="{{mailer-from}}"/>
+                        </div>
+                        <div class="input-box app-error">
+                            <p class="mailer-packages-missing">The selected mailer service package was not found in the project.</p>
                         </div>
                     </div>
                     <div class="col-2">

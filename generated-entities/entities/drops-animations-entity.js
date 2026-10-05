@@ -21,7 +21,10 @@ class DropsAnimationsEntity extends EntityProperties
             item_id: {
                 type: 'reference',
                 reference: 'items_item',
+                alias: 'related_items_item',
+                onDelete: 'cascade',
                 isRequired: true,
+                isUnique: true,
                 dbType: 'int'
             },
             asset_type: {

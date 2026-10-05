@@ -1,0 +1,198 @@
+/**
+ *
+ * Reldens - Base E2E Test
+ *
+ * Provides shared Playwright test fixtures (gameConfig, longRun, screenshots, page) used by all spec files. The
+ * e2eGroup option is set by the Playwright project of the parallel spec group (ParallelSpecGroups), the gameConfig
+ * fixture gives the specs the test users of that group and the page fixture resets only that group before every test.
+ *
+ */
+
+const { test: baseTest, expect: baseExpect } = require('@playwright/test');
+const { FileHandler } = require('@reldens/server-utils');
+const { Logger } = require('@reldens/utils');
+const { Selectors } = require('./selectors');
+const { PlayerReset } = require('./helpers/player-reset');
+const { ParallelSpecGroups } = require('./helpers/parallel-spec-groups');
+
+class BaseE2eTest
+{
+    // @TODO - BETA - Replace all the static methods.
+    static configPath = FileHandler.joinPaths(process.cwd(), 'tests', 'config.json');
+    static gameConfig = FileHandler.exists(BaseE2eTest.configPath)
+        ? FileHandler.fetchFileJson(BaseE2eTest.configPath)
+        : {};
+    static longRun = '1' === process.env.LONG_RUN;
+    static videosDir = FileHandler.joinPaths(process.cwd(), 'test-results', 'videos');
+    static screenshotsDir = FileHandler.joinPaths(process.cwd(), 'test-results', 'screenshots');
+    static gameDataPath = FileHandler.joinPaths(process.cwd(), 'tests', 'e2e', 'game-data.json');
+    static expect = baseExpect;
+    static test = baseTest.extend({
+        e2eGroup: [ParallelSpecGroups.EXCLUSIVE_GROUP, {option: true}],
+        gameConfig: async ({e2eGroup}, use) => {
+            await use(ParallelSpecGroups.buildGroupConfig(BaseE2eTest.gameConfig, e2eGroup));
+        },
+        longRun: async ({}, use) => {
+            await use(BaseE2eTest.longRun);
+        },
+        selectors: async ({}, use) => {
+            await use(Selectors);
+        },
+        screenshots: async ({}, use, testInfo) => {
+            await use(BaseE2eTest.makeScreenshotter(testInfo));
+        },
+        page: async ({ browser, gameConfig, e2eGroup }, use, testInfo) => {
+            await PlayerReset.resetAll(gameConfig, e2eGroup);
+            await BaseE2eTest.runPageFixture(browser, use, testInfo, null);
+        },
+        secondPage: async ({ browser }, use, testInfo) => {
+            await BaseE2eTest.runPageFixture(browser, use, testInfo, 'player2');
+        }
+    });
+
+    static loadGameData()
+    {
+        let gameData = FileHandler.exists(BaseE2eTest.gameDataPath)
+            ? FileHandler.fetchFileJson(BaseE2eTest.gameDataPath)
+            : null;
+        BaseE2eTest.expect(gameData, 'The game data must be collected before the specs run').toBeTruthy();
+        return gameData;
+    }
+
+    static loadRoomObjects(roomName)
+    {
+        let roomObjects = BaseE2eTest.loadGameData().rooms[roomName];
+        BaseE2eTest.expect(roomObjects, 'The game data must contain the room objects of '+roomName).toBeTruthy();
+        return roomObjects;
+    }
+
+    static loadRoomEntries(roomName, listsKeys, onlyMoving = false)
+    {
+        let roomObjects = BaseE2eTest.loadRoomObjects(roomName);
+        let entries = [];
+        for(let listKey of listsKeys){
+            entries.push(...roomObjects[listKey]);
+        }
+        return onlyMoving ? entries.filter(entry => 0 < entry.randomMovementTiles) : entries;
+    }
+
+    static slugify(title)
+    {
+        return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+$/, '');
+    }
+
+    static makeScreenshotter(testInfo)
+    {
+        return {
+            count: 0,
+            folder: FileHandler.joinPaths(BaseE2eTest.screenshotsDir, BaseE2eTest.slugify(testInfo.title)),
+            async capture(page, name)
+            {
+                if(!page || page.isClosed()) {
+                    return;
+                }
+                this.count++;
+                FileHandler.createFolder(this.folder);
+                let filename = String(this.count).padStart(2, '0')+'-'+BaseE2eTest.slugify(name)+'.png';
+                try {
+                    await page.screenshot({ path: FileHandler.joinPaths(this.folder, filename), fullPage: false });
+                } catch(error) {
+                    Logger.error('[screenshot] Could not save "'+filename+'": '+error.message);
+                }
+            }
+        };
+    }
+
+    static browserCursorScript()
+    {
+        let cursorEl = document.createElement('div');
+        cursorEl.style.cssText = [
+            'position:fixed',
+            'top:0',
+            'left:0',
+            'width:16px',
+            'height:16px',
+            'border-radius:50%',
+            'background:rgba(255,80,80,0.85)',
+            'border:2px solid #fff',
+            'box-shadow:0 0 4px rgba(0,0,0,0.7)',
+            'pointer-events:none',
+            'z-index:2147483647',
+            'transform:translate(-50%,-50%)',
+            'transition:background 0.1s'
+        ].join(';');
+        document.addEventListener('DOMContentLoaded', () => {
+            document.body.appendChild(cursorEl);
+        });
+        document.addEventListener('mousemove', (event) => {
+            cursorEl.style.left = event.clientX+'px';
+            cursorEl.style.top = event.clientY+'px';
+        });
+        document.addEventListener('mousedown', () => {
+            cursorEl.style.background = 'rgba(255,220,50,0.95)';
+        });
+        document.addEventListener('mouseup', () => {
+            cursorEl.style.background = 'rgba(255,80,80,0.85)';
+        });
+    }
+
+    static async makeContext(browser)
+    {
+        let outputDir = FileHandler.joinPaths(process.cwd(), 'test-results');
+        let envPort = process.env.RELDENS_E2E_PORT || null;
+        let effectiveBaseUrl = envPort
+            ? 'http://localhost:'+envPort
+            : (BaseE2eTest.gameConfig.baseUrl || 'http://localhost:8080');
+        let recordVideoConfig = {};
+        recordVideoConfig['dir'] = outputDir;
+        recordVideoConfig['size'] = { width: 1280, height: 1080 };
+        let context = await browser.newContext({
+            baseURL: effectiveBaseUrl,
+            viewport: { width: 1280, height: 1080 },
+            recordVideo: recordVideoConfig
+        });
+        await context.addInitScript(BaseE2eTest.browserCursorScript);
+        return context;
+    }
+
+    static async saveVideo(video, slug, suffix)
+    {
+        if(!video) {
+            return;
+        }
+        FileHandler.createFolder(BaseE2eTest.videosDir);
+        let filename = suffix ? slug+'-'+suffix+'.webm' : slug+'.webm';
+        try {
+            await video.saveAs(FileHandler.joinPaths(BaseE2eTest.videosDir, filename));
+        } catch(error) {
+            Logger.error('[video] Could not save "'+filename+'": '+error.message);
+        }
+    }
+
+    static async runPageFixture(browser, use, testInfo, suffix)
+    {
+        let context = await BaseE2eTest.makeContext(browser);
+        let page = await context.newPage();
+        await use(page);
+        if(!page.isClosed()) {
+            await page.waitForTimeout(BaseE2eTest.longRun ? 3000 : 1500);
+        }
+        let video = page.video();
+        await context.close();
+        await BaseE2eTest.saveVideo(video, BaseE2eTest.slugify(testInfo.title), suffix);
+    }
+
+    static setupWorkerLogCapture()
+    {
+        let logPath = FileHandler.joinPaths(process.cwd(), 'test-results', 'tests.log');
+        FileHandler.createFolder(FileHandler.joinPaths(process.cwd(), 'test-results'));
+        let writeLog = (...args) => {
+            FileHandler.appendToFile(logPath, args.map(a => 'object' === typeof a ? JSON.stringify(a) : ''+a).join(' ')+'\n');
+        };
+        console.log = writeLog;
+        console.error = writeLog;
+    }
+}
+
+BaseE2eTest.setupWorkerLogCapture();
+module.exports.BaseE2eTest = BaseE2eTest;

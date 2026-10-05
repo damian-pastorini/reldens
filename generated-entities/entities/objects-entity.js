@@ -23,7 +23,8 @@ class ObjectsEntity extends EntityProperties
             room_id: {
                 type: 'reference',
                 reference: 'rooms',
-                isRequired: true,
+                alias: 'related_rooms',
+                onDelete: 'setNull',
                 dbType: 'int'
             },
             layer_name: {
@@ -37,10 +38,13 @@ class ObjectsEntity extends EntityProperties
             class_type: {
                 type: 'reference',
                 reference: 'objects_types',
+                alias: 'related_objects_types',
+                onDelete: 'noAction',
                 dbType: 'int'
             },
             object_class_key: {
                 isRequired: true,
+                isUnique: true,
                 dbType: 'varchar'
             },
             client_key: {

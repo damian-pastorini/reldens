@@ -1,0 +1,40 @@
+.canvas-panel {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+
+    & .canvas-actions {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        flex-wrap: wrap;
+        flex-shrink: 0;
+        margin-bottom: var(--space-sm);
+    }
+
+    & .canvas-scroll-area {
+        overflow: auto;
+        flex: 1;
+    }
+
+    & .tileset-canvas {
+        display: block;
+        background: var(--color-grey-90);
+        border: 1px solid var(--color-grey-30);
+        cursor: crosshair;
+    }
+
+    & .canvas-tile-readout {
+        flex-shrink: 0;
+        height: 1.25rem;
+        line-height: 1.25rem;
+        margin-bottom: var(--space-sm);
+        padding: 0 var(--space-sm);
+        font-family: monospace;
+        white-space: nowrap;
+        overflow: hidden;
+        color: var(--color-grey-30);
+    }
+
+}

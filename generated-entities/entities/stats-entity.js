@@ -22,6 +22,7 @@ class StatsEntity extends EntityProperties
             },
             key: {
                 isRequired: true,
+                isUnique: true,
                 dbType: 'varchar'
             },
             [titleProperty]: {

@@ -22,11 +22,14 @@ class SkillsSkillEntity extends EntityProperties
             },
             key: {
                 isRequired: true,
+                isUnique: true,
                 dbType: 'varchar'
             },
             type: {
                 type: 'reference',
                 reference: 'skills_skill_type',
+                alias: 'related_skills_skill_type',
+                onDelete: 'noAction',
                 isRequired: true,
                 dbType: 'int'
             },

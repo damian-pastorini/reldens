@@ -22,6 +22,8 @@ class SkillsSkillTargetEffectsConditionsEntity extends EntityProperties
             skill_target_effect_id: {
                 type: 'reference',
                 reference: 'skills_skill_target_effects',
+                alias: 'related_skills_skill_target_effects',
+                onDelete: 'noAction',
                 isRequired: true,
                 dbType: 'int'
             },

@@ -1,0 +1,268 @@
+{
+    "players": {
+        "root": {
+            "name": "ImRoot",
+            "roomId": 41,
+            "classPathId": 1,
+            "currentLevel": 10,
+            "currentExp": 9080,
+            "skills": [
+                {
+                    "key": "attackShort",
+                    "label": "attackShort",
+                    "type": 2,
+                    "range": 50,
+                    "hasAttackData": true
+                },
+                {
+                    "key": "attackBullet",
+                    "label": "attackBullet",
+                    "type": 4,
+                    "range": 250,
+                    "hasAttackData": true
+                },
+                {
+                    "key": "fireball",
+                    "label": "fireball",
+                    "type": 4,
+                    "range": 280,
+                    "hasAttackData": true
+                },
+                {
+                    "key": "heal",
+                    "label": "heal",
+                    "type": 3,
+                    "range": 100,
+                    "hasAttackData": false
+                }
+            ],
+            "skillsByType": {
+                "attack": [
+                    {
+                        "key": "attackShort",
+                        "label": "attackShort",
+                        "type": 2,
+                        "range": 50,
+                        "hasAttackData": true
+                    }
+                ],
+                "effect": [
+                    {
+                        "key": "heal",
+                        "label": "heal",
+                        "type": 3,
+                        "range": 100,
+                        "hasAttackData": false
+                    }
+                ],
+                "physicalAttack": [
+                    {
+                        "key": "attackBullet",
+                        "label": "attackBullet",
+                        "type": 4,
+                        "range": 250,
+                        "hasAttackData": true
+                    },
+                    {
+                        "key": "fireball",
+                        "label": "fireball",
+                        "type": 4,
+                        "range": 280,
+                        "hasAttackData": true
+                    }
+                ],
+                "physicalEffect": []
+            }
+        },
+        "root2": {
+            "name": "ImRoot2",
+            "roomId": 41,
+            "classPathId": 1,
+            "currentLevel": 1,
+            "currentExp": 0,
+            "skills": [
+                {
+                    "key": "attackShort",
+                    "label": "attackShort",
+                    "type": 2,
+                    "range": 50,
+                    "hasAttackData": true
+                }
+            ],
+            "skillsByType": {
+                "attack": [
+                    {
+                        "key": "attackShort",
+                        "label": "attackShort",
+                        "type": 2,
+                        "range": 50,
+                        "hasAttackData": true
+                    }
+                ],
+                "effect": [],
+                "physicalAttack": [],
+                "physicalEffect": []
+            }
+        },
+        "root3": {
+            "name": "ImRoot3",
+            "roomId": 41,
+            "classPathId": 1,
+            "currentLevel": 1,
+            "currentExp": 0,
+            "skills": [
+                {
+                    "key": "attackShort",
+                    "label": "attackShort",
+                    "type": 2,
+                    "range": 50,
+                    "hasAttackData": true
+                }
+            ],
+            "skillsByType": {
+                "attack": [
+                    {
+                        "key": "attackShort",
+                        "label": "attackShort",
+                        "type": 2,
+                        "range": 50,
+                        "hasAttackData": true
+                    }
+                ],
+                "effect": [],
+                "physicalAttack": [],
+                "physicalEffect": []
+            }
+        }
+    },
+    "rooms": {
+        "reldens-new-age-town": {
+            "enemies": [],
+            "npcs": [
+                {
+                    "assetKey": "people_town_1",
+                    "objectId": 5,
+                    "objectClassKey": "npc_1",
+                    "clientKey": "people_town_1",
+                    "layerName": "ground",
+                    "tileIndex": 3482,
+                    "childObjectType": 0,
+                    "isAggressive": false,
+                    "interactionRadio": 0,
+                    "randomMovementTiles": 5
+                },
+                {
+                    "assetKey": "weapons_master_1",
+                    "objectId": 12,
+                    "objectClassKey": "npc_4",
+                    "clientKey": "weapons_master_1",
+                    "layerName": "ground",
+                    "tileIndex": 3499,
+                    "childObjectType": 0,
+                    "isAggressive": false,
+                    "interactionRadio": 0,
+                    "randomMovementTiles": 5
+                },
+                {
+                    "assetKey": null,
+                    "objectId": 8,
+                    "objectClassKey": "npc_2",
+                    "clientKey": "healer_1",
+                    "layerName": "ground",
+                    "tileIndex": 3567,
+                    "childObjectType": 0,
+                    "isAggressive": false,
+                    "interactionRadio": 0,
+                    "randomMovementTiles": 0
+                }
+            ],
+            "traders": [
+                {
+                    "assetKey": "merchant_1",
+                    "objectId": 10,
+                    "objectClassKey": "npc_3",
+                    "clientKey": "merchant_1",
+                    "layerName": "ground",
+                    "tileIndex": 3578,
+                    "childObjectType": 0,
+                    "isAggressive": false,
+                    "interactionRadio": 0,
+                    "randomMovementTiles": 5
+                }
+            ],
+            "respawnAreas": []
+        },
+        "reldens-forest-level-1": {
+            "enemies": [],
+            "npcs": [
+                {
+                    "assetKey": "chest_forest_1",
+                    "objectId": 18,
+                    "objectClassKey": "chest_forest_1",
+                    "clientKey": "chest_forest_1",
+                    "layerName": "ground",
+                    "tileIndex": 6613,
+                    "childObjectType": 0,
+                    "isAggressive": false,
+                    "interactionRadio": 0,
+                    "randomMovementTiles": 0
+                },
+                {
+                    "assetKey": "quest_npc_1",
+                    "objectId": 13,
+                    "objectClassKey": "npc_5",
+                    "clientKey": "quest_npc_1",
+                    "layerName": "ground",
+                    "tileIndex": 6833,
+                    "childObjectType": 0,
+                    "isAggressive": false,
+                    "interactionRadio": 0,
+                    "randomMovementTiles": 5
+                }
+            ],
+            "traders": [],
+            "respawnAreas": [
+                {
+                    "assetKey": "rock_forest_1",
+                    "objectId": 16,
+                    "objectClassKey": "rock_forest_1_area",
+                    "clientKey": "rock_forest_1",
+                    "layerName": "merge-respawn-area-mining-rocks",
+                    "tileIndex": null,
+                    "childObjectType": 0,
+                    "isAggressive": false,
+                    "interactionRadio": 0,
+                    "randomMovementTiles": 0
+                },
+                {
+                    "assetKey": "enemy_forest_1",
+                    "objectId": 6,
+                    "objectClassKey": "enemy_1",
+                    "clientKey": "enemy_forest_1",
+                    "layerName": "merge-respawn-area-monsters",
+                    "tileIndex": null,
+                    "childObjectType": 4,
+                    "isAggressive": true,
+                    "interactionRadio": 170,
+                    "randomMovementTiles": 3
+                },
+                {
+                    "assetKey": "enemy_forest_2",
+                    "objectId": 7,
+                    "objectClassKey": "enemy_2",
+                    "clientKey": "enemy_forest_2",
+                    "layerName": "merge-respawn-area-monsters",
+                    "tileIndex": null,
+                    "childObjectType": 4,
+                    "isAggressive": false,
+                    "interactionRadio": 70,
+                    "randomMovementTiles": 8
+                }
+            ]
+        }
+    },
+    "items": {
+        "firstEquippable": "axe",
+        "firstConsumable": "heal_potion_20"
+    }
+}

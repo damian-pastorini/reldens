@@ -123,6 +123,10 @@ async function runTests()
 
 async function confirmTestExecution()
 {
+    if('1' === process.env.RELDENS_TESTS_CONFIRMED){
+        Logger.log(100, '', 'Integration tests and database reset confirmed by RELDENS_TESTS_CONFIRMED=1.');
+        return;
+    }
     let rl = readline.createInterface({
         input: process.stdin,
         output: process.stdout

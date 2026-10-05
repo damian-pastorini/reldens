@@ -6,15 +6,15 @@
  *
  */
 
-const dotenv = require('dotenv');
 const { spawn } = require('child_process');
 const { CreateAdmin } = require('../lib/users/server/create-admin');
 const { ResetPassword } = require('../lib/users/server/reset-password');
 const { ThemeManager } = require('../lib/game/server/theme-manager');
+const { EnvironmentVariablesReader } = require('../lib/game/server/environment-variables-reader');
 const { PackagesInstallation } = require('../lib/game/server/installer/packages-installation');
 const { ServerManager } = require('../server');
-const { FileHandler } = require('@reldens/server-utils');
-const { Logger, sc } = require('@reldens/utils');
+const { FileHandler, PackageResolver } = require('@reldens/server-utils');
+const { EnvVar, Logger, sc } = require('@reldens/utils');
 
 class Commander
 {
@@ -34,7 +34,7 @@ class Commander
         }
         Logger.info('- Reldens - ');
         Logger.info('Use "help" as argument to see all the available commands:');
-        Logger.info('$ node scripts/reldens-commands.js help');
+        Logger.info('$ npx reldens help');
         if(!FileHandler.exists(this.projectRoot)){
             Logger.error('Can not access parent folder, check permissions.');
             return false;
@@ -52,7 +52,9 @@ class Commander
                 return false;
             }
         }
-        this.themeManager = new ThemeManager(this);
+        this.themeManager = new ThemeManager(
+            {...this, ...EnvironmentVariablesReader.fetchThemeFromEnvironmentVariables()}
+        );
         if(!this.validateThemeManagerCommand()){
             return false;
         }
@@ -125,25 +127,45 @@ class Commander
     generateEntities()
     {
         this.loadEnvironmentConfig();
+        let storageDriver = EnvVar.nonEmptyString(process.env, 'RELDENS_STORAGE_DRIVER', 'knex');
+        let client = EnvVar.nonEmptyString(process.env, 'RELDENS_DB_CLIENT', 'mysql2');
+        if('prisma' === storageDriver && 'mysql2' === client){
+            client = 'mysql';
+        }
+        let storagePath = FileHandler.getFolderName(
+            PackageResolver.resolvePath('@reldens/storage', this.reldensModulePath)
+        );
         let args = [
-            'reldens-storage',
+            FileHandler.joinPaths(storagePath, 'bin', 'reldens-storage.js'),
             'generateEntities',
             '--user='+process.env.RELDENS_DB_USER,
             '--pass='+process.env.RELDENS_DB_PASSWORD,
             '--host='+process.env.RELDENS_DB_HOST,
+            '--port='+process.env.RELDENS_DB_PORT,
             '--database='+process.env.RELDENS_DB_NAME,
-            '--driver='+(process.env.RELDENS_STORAGE_DRIVER || 'objection-js'),
-            '--client='+process.env.RELDENS_DB_CLIENT
+            '--driver='+storageDriver,
+            '--client='+client
         ];
         let overrideArg = process.argv.find(arg => '--override' === arg);
         if(overrideArg){
             args.push('--override');
         }
-        Logger.info('Running: npx '+args.join(' '));
-        let child = spawn('npx', args, {
+        let prismaClientPathArg = process.argv.find(arg => arg.startsWith('--prismaClientPath='));
+        if(prismaClientPathArg){
+            args.push(prismaClientPathArg);
+        }
+        let prismaAdapter = EnvVar.nonEmptyString(process.env, 'RELDENS_PRISMA_ADAPTER', '');
+        if('' !== prismaAdapter){
+            args.push('--prismaAdapter='+prismaAdapter);
+        }
+        let prismaAdapterClass = EnvVar.nonEmptyString(process.env, 'RELDENS_PRISMA_ADAPTER_CLASS', '');
+        if('' !== prismaAdapterClass){
+            args.push('--prismaAdapterClass='+prismaAdapterClass);
+        }
+        Logger.info('Running: node '+args.join(' '));
+        let child = spawn(process.execPath, args, {
             stdio: 'inherit',
-            cwd: this.projectRoot,
-            shell: true
+            cwd: this.projectRoot
         });
         child.on('exit', (code) => {
             process.exit(code || 0);
@@ -198,7 +220,7 @@ class Commander
             Logger.error('.env file not found at: '+envPath);
             process.exit(1);
         }
-        dotenv.config({path: envPath});
+        process.loadEnvFile(envPath);
     }
 
     async initializeServerManager()
@@ -226,14 +248,14 @@ class Commander
             +"\n"+'copyIndex                        - Copy the index file sample into the project.'
             +"\n"+'copyDefaultAssets                - Copy the reldens module default assets into the "dist/assets" folder.'
             +"\n"+'copyDefaultTheme                 - Copy the reldens module default theme into the project theme.'
-            +"\n"+'copyPackage                      - Copy the reldens module packages into the project.'
+            +"\n"+'copyPackage                      - Copy the reldens module theme plugins into the project.'
             +"\n"+'buildCss [theme-folder-name]     - Builds the project theme styles.'
             +"\n"+'buildClient [theme-folder-name]  - Builds the project theme index.html.'
             +"\n"+'buildSkeleton                    - Builds the styles and project theme index.html.'
             +"\n"+'copyNew                          - Copy all default files for the fullRebuild.'
             +"\n"+'fullRebuild                      - Rebuild the Skeleton from scratch.'
             +"\n"+'installSkeleton                  - Installs Skeleton.'
-            +"\n"+'copyServerFiles                  - Reset the "dist" folder and runs a fullRebuild.'
+            +"\n"+'copyServerFiles                  - Copy the .env, knexfile.js, .gitignore and index.js samples into the project.'
             +"\n"+'generateEntities [--override]    - Generate entities from database using .env credentials.'
             +"\n"+'createAdmin --user=X --pass=Y --email=Z  - Create admin user with specified credentials.'
             +"\n"+'resetPassword --user=X --pass=Y  - Reset password for specified user.');

@@ -7,7 +7,7 @@
         "start": "node ."
     },
     "engines": {
-        "node": ">=18.0.0",
+        "node": ">=22.15.0",
         "npm": ">=8.0.0"
     },
     "browserslist": [
@@ -20,10 +20,10 @@
         "process": false
     },
     "dependencies": {
-        "reldens": "^4.0.0-beta.39"
+        "reldens": ""
     },
     "devDependencies": {
-        "@reldens/utils": "^0.53.0",
-        "@colyseus/loadtest": "^0.15.3"
+        "@reldens/utils": "",
+        "@colyseus/loadtest": ""
     }
 }

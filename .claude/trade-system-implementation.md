@@ -14,7 +14,7 @@
 
 **Server determines playerToExchangeKey:**
 
-Line 305 in `lib/inventory/server/message-actions.js`:
+In `lib/inventory/server/message-actions.js` `InventoryMessageActions.sendExchangeUpdate()`:
 ```javascript
 let playerToExchangeKey = ownerSessionId === playerTo.sessionId ? 'A' : 'B';
 ```
@@ -32,22 +32,25 @@ The trade UI displays three columns:
 **HTML Structure:**
 
 - `.trade-container`
+  - `.trade-row.trade-items-boxes-headers` (column titles)
   - `.trade-row.trade-items-boxes`
     - `.trade-player-col.trade-col-1.my-items` (My Items)
     - `.trade-player-col.trade-col-2.pushed-to-trade` (Sending)
     - `.trade-player-col.trade-col-3.got-from-trade` (Receiving)
   - `.trade-row.trade-confirm-actions`
-    - `.confirm-action` button
-    - `.disconfirm-action` button
     - `.cancel-action` button
+    - `.disconfirm-action` button
+    - `.confirm-action` button
+    - `.player-confirmed` span
 
 ## Client Processing Flow
 
 **When client receives TRADE_SHOW message:**
 
-Line 136-141 in `trade-message-handler.js`:
+In `lib/inventory/client/trade-message-handler.js` `TradeMessageHandler.showTradeBox()`:
 ```javascript
 let traderExchangeKey = sc.get(this.message, 'playerToExchangeKey', 'A');
+// my exchange key is the opposite to the received exchange key:
 let myExchangeKey = 'A' === traderExchangeKey ? 'B' : 'A';
 this.updateItemsList(items, container, exchangeData[myExchangeKey]);
 this.updateMyExchangeData((exchangeData[myExchangeKey] || {}), items, myExchangeKey);
@@ -76,9 +79,11 @@ this.updateTraderExchangeData((exchangeData[traderExchangeKey] || {}), traderIte
 
 **Every TRADE_SHOW message triggers full HTML recreation:**
 
-Line 181 in `trade-message-handler.js`:
+In `TradeMessageHandler.updateItemsList()`:
 ```javascript
 container.innerHTML = this.createTradeContainer(tradeItems);
+this.activateItemsBoxActions(tempItemsList);
+this.activateConfirmButtonAction(sc.get(this.message, 'exchangeData', {}));
 ```
 
 Server sends TRADE_SHOW to BOTH players simultaneously when:
@@ -88,7 +93,7 @@ Server sends TRADE_SHOW to BOTH players simultaneously when:
 
 **Implications:**
 - All buttons and DOM elements are DESTROYED and RECREATED each time
-- Event listeners must be re-attached after every update (lines 182-183)
+- Event listeners must be re-attached after every update (`activateItemsBoxActions()` and `activateConfirmButtonAction()` right after the HTML is set)
 - Server state is the ONLY source of truth
 - No client-side state should be maintained between updates
 
@@ -100,12 +105,12 @@ Server sends TRADE_SHOW to BOTH players simultaneously when:
 
 **Button States Calculation:**
 
-Line 183 in `trade-message-handler.js`:
+`TradeMessageHandler.updateItemsList()` calls:
 ```javascript
 this.activateConfirmButtonAction(sc.get(this.message, 'exchangeData', {}));
 ```
 
-Lines 193-200 in `activateConfirmButtonAction`:
+In `TradeMessageHandler.activateConfirmButtonAction()`:
 ```javascript
 let myExchangeKey = sc.get(this.message, 'playerToExchangeKey', 'A');
 let traderExchangeKey = 'A' === myExchangeKey ? 'B' : 'A';
@@ -223,42 +228,37 @@ confirmations = {
 - Confirm button: ENABLED (myConfirmed=false)
 - Disconfirm button: DISABLED (myConfirmed=false)
 
-## Toggle Actions (Column 1 Only)
+## Item Actions Display
 
-**CSS Behavior (lines 373-405 in items-system.scss):**
+**CSS Behavior (`theme/default/css/items-system.scss`, inside `.trade-container .trade-row.trade-items-boxes`):**
 
 ```scss
-.my-items .trade-item {
-    .actions-container.trade-actions {
-        display: none;  // Hidden by default
+.my-items,
+.pushed-to-trade,
+.got-from-trade {
 
-        &.trade-actions-expanded {
-            display: block;  // Visible when toggled
-            position: absolute;  // Float below item
-            top: 54px;
-            left: 0;
-            z-index: 3;
-            background: $cBlack;
-            border: 1px solid $cWhite;
-            border-radius: 6px;
-            padding: 4px;
-        }
+    .trade-item .actions-container.trade-actions {
+        display: block;
     }
+
 }
 ```
 
-**Important:** Toggle behavior with absolute positioning applies ONLY to column 1 (`.my-items`). Columns 2 and 3 do not have toggle behavior - their actions are always visible.
+**Important:** The trade actions are always visible in the three columns. The only toggle is the item info box, handled on the client by `ItemDisplayEnricher.activateItemInfoToggle()`, which adds/removes the `item-info-visible` class on the item box.
 
 ## Files Involved
 
 **Client:**
 - `lib/inventory/client/trade-message-handler.js` - Main trade UI handler
 - `lib/inventory/client/trade-items-helper.js` - Item instance creation
+- `lib/inventory/client/item-display-enricher.js` - Item info toggle and trade action buttons
 - `theme/default/css/items-system.scss` - Trade UI styles
+- `theme/default/assets/features/inventory/templates/trade-player-container.html` - Trade UI template
 
 **Server:**
 - `lib/inventory/server/message-actions.js` - Trade message handling
-- `lib/inventory/server/trade.js` - Trade logic
+- `lib/inventory/server/exchange/processor.js` - Exchange operations (init, add, remove, confirm)
+- `lib/inventory/server/exchange/player-processor.js` - Player-to-player confirm/disconfirm operations
 
 **Constants:**
 - `lib/objects/constants.js` - Trade action constants (ADD, REMOVE, CONFIRM, DISCONFIRM)
@@ -269,19 +269,20 @@ confirmations = {
 
 ## CSS Styling
 
-**Player Confirmed Message** (lines 268-284 in items-system.scss):
+All the rules below are in `theme/default/css/items-system.scss`.
+
+**Player Confirmed Message** (`.trade-container .player-confirmed`):
 - Styled block with border and background
 - Empty state handling with transparent background
 
-**Button Layout** (lines 303-310):
+**Button Layout** (`.trade-container .trade-confirm-actions`):
 - Flexbox with center justification
 - No float positioning
 
-**Remove Button** (lines 358-366):
+**Remove Button** (`.trade-item .trade-action-remove`):
 - Absolute positioning at `right: -10px`
 - Icon size 20px
 
-**Toggle Actions** (lines 373-405):
-- Scoped to `.my-items` column only
-- Absolute positioning with floating styles
-- Other columns display actions inline without toggle
+**Item Actions** (`.trade-container .trade-row.trade-items-boxes`, `.trade-item .actions-container.trade-actions`):
+- Displayed as block in the three columns
+- Inside the NPC trader dialog box (`.ui-dialog-box.type-trader.trade-in-progress .item-box.trade-item`) they are laid out inline as a flex row
