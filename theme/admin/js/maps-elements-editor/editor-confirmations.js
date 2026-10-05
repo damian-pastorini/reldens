@@ -31,7 +31,7 @@ class EditorConfirmations
             }
         }, {
             title: 'Reload Backup',
-            message: 'Reload backup from '+backupTimestamp+'? A pre-restore backup will be written first.',
+            message: 'Reload backup from '+backupTimestamp+'? The current map is replaced by this backup.',
             confirmText: 'Reload',
             confirmClass: 'button-primary'
         });
