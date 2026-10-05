@@ -34,7 +34,7 @@ class Commander
         }
         Logger.info('- Reldens - ');
         Logger.info('Use "help" as argument to see all the available commands:');
-        Logger.info('$ node scripts/reldens-commands.js help');
+        Logger.info('$ npx reldens help');
         if(!FileHandler.exists(this.projectRoot)){
             Logger.error('Can not access parent folder, check permissions.');
             return false;
@@ -154,6 +154,14 @@ class Commander
         if(prismaClientPathArg){
             args.push(prismaClientPathArg);
         }
+        let prismaAdapter = EnvVar.nonEmptyString(process.env, 'RELDENS_PRISMA_ADAPTER', '');
+        if('' !== prismaAdapter){
+            args.push('--prismaAdapter='+prismaAdapter);
+        }
+        let prismaAdapterClass = EnvVar.nonEmptyString(process.env, 'RELDENS_PRISMA_ADAPTER_CLASS', '');
+        if('' !== prismaAdapterClass){
+            args.push('--prismaAdapterClass='+prismaAdapterClass);
+        }
         Logger.info('Running: node '+args.join(' '));
         let child = spawn(process.execPath, args, {
             stdio: 'inherit',
@@ -240,14 +248,14 @@ class Commander
             +"\n"+'copyIndex                        - Copy the index file sample into the project.'
             +"\n"+'copyDefaultAssets                - Copy the reldens module default assets into the "dist/assets" folder.'
             +"\n"+'copyDefaultTheme                 - Copy the reldens module default theme into the project theme.'
-            +"\n"+'copyPackage                      - Copy the reldens module packages into the project.'
+            +"\n"+'copyPackage                      - Copy the reldens module theme plugins into the project.'
             +"\n"+'buildCss [theme-folder-name]     - Builds the project theme styles.'
             +"\n"+'buildClient [theme-folder-name]  - Builds the project theme index.html.'
             +"\n"+'buildSkeleton                    - Builds the styles and project theme index.html.'
             +"\n"+'copyNew                          - Copy all default files for the fullRebuild.'
             +"\n"+'fullRebuild                      - Rebuild the Skeleton from scratch.'
             +"\n"+'installSkeleton                  - Installs Skeleton.'
-            +"\n"+'copyServerFiles                  - Reset the "dist" folder and runs a fullRebuild.'
+            +"\n"+'copyServerFiles                  - Copy the .env, knexfile.js, .gitignore and index.js samples into the project.'
             +"\n"+'generateEntities [--override]    - Generate entities from database using .env credentials.'
             +"\n"+'createAdmin --user=X --pass=Y --email=Z  - Create admin user with specified credentials.'
             +"\n"+'resetPassword --user=X --pass=Y  - Reset password for specified user.');
