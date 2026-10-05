@@ -205,6 +205,10 @@ window.addEventListener('load', () => {
         if(loadingWrapper){
             loadingWrapper.classList.remove('hidden');
         }
+        let formOverlay = document.querySelector('.install-form-overlay');
+        if(formOverlay){
+            formOverlay.classList.remove('hidden');
+        }
         let installButton = document.getElementById('install-submit-button');
         if(installButton){
             installButton.classList.add('disabled');

@@ -14,6 +14,7 @@ $cBlack: #000;
 $cRed: #ff0000;
 $titleBackground: #f2f2f2;
 $boxBackground: rgba(255, 255, 255, 0.6);
+$overlayBackground: rgba(255, 255, 255, 0.5);
 
 body, html {
     height: 100%;
@@ -142,6 +143,7 @@ body {
         justify-content: center;
 
         .install-form {
+            position: relative;
             display:flex;
             max-width: 1000px;
             flex-direction: row;
@@ -151,6 +153,18 @@ body {
             background-color: $boxBackground;
             border: 2px solid $cWhite;
             box-shadow: 10px 10px 14px 2px rgba(0, 0, 0, 0.6);
+
+            .install-form-overlay {
+                position: absolute;
+                inset: 0;
+                z-index: 1;
+                background: $overlayBackground;
+                cursor: wait;
+
+                &.hidden {
+                    display: none;
+                }
+            }
         }
     }
 
@@ -413,6 +427,8 @@ form {
 }
 
 .loading-status-wrapper {
+    position: relative;
+    z-index: 2;
     display: flex;
     flex-direction: row;
     align-items: center;
