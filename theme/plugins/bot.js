@@ -10,6 +10,7 @@ const { ConfigManager } = require('reldens/lib/config/client/config-manager');
 const { ChatConst } = require('reldens/lib/chat/constants');
 const { GameClient } = require('reldens/lib/game/client/game-client');
 const { GameConst } = require('reldens/lib/game/constants');
+const { randomBytes } = require('crypto');
 let botsCounter = 1;
 let startTimer = new Date().getTime();
 
@@ -18,7 +19,7 @@ async function main (options)
 
     let chatIntervalMs = Number(process.env.withChat || 0);
     let movementIntervalMs = Number(process.env.withMovement || 0);
-    let randomGuestName = 'guest-bot-'+Math.random().toString(36).substring(2, 14);
+    let randomGuestName = 'guest-bot-'+randomBytes(6).toString('hex');
     console.log('Running bot #'+botsCounter+' - User "'+randomGuestName+'".', {movementIntervalMs, chatIntervalMs});
     botsCounter++;
     let botTimer = new Date().getTime();
