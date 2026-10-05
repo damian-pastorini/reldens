@@ -686,7 +686,7 @@ REPLACE INTO `players` (`id`, `user_id`, `name`, `created_at`) VALUES
 	(1006, 1001, 'TestPlayerStateEditFail', '2025-01-01 05:00:00');
 
 REPLACE INTO `players_state` (`id`, `player_id`, `room_id`, `x`, `y`, `dir`) VALUES
-	(1, 1, 114, 1888, 3088, 'up'),
+	(1, 1, 41, 1520, 1424, 'down'),
 	(1001, 1001, 41, 100, 100, 'down'),
 	(1002, 1002, 41, 200, 200, 'down'),
 	(1003, 1003, 41, 300, 300, 'down');

@@ -477,7 +477,7 @@ REPLACE INTO `players` (`id`, `user_id`, `name`, `created_at`) VALUES
 	(3, 3, 'ImRoot3', '2022-03-17 19:57:50');
 
 REPLACE INTO `players_state` (`id`, `player_id`, `room_id`, `x`, `y`, `dir`) VALUES
-	(1, 1, 114, 1888, 3088, 'up'),
+	(1, 1, 41, 1520, 1424, 'down'),
 	(2, 2, 41, 1520, 1424, 'down'),
 	(3, 3, 41, 1520, 1424, 'down');
 
