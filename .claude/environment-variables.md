@@ -196,6 +196,17 @@ if(1 === Number(process.env.RELDENS_CREATE_CONFIG_FILE || 1)){
 - `RELDENS_ENCODER_BUFFER_KB` - Initial size in KB of the room state encoder buffer (`@colyseus/schema` `Encoder.BUFFER_SIZE`, default: 64); a room state larger than the buffer is still sent (the buffer grows) but logs the "buffer overflow" warning once per room instance
 - `RELDENS_GUESTS_EMAIL_DOMAIN` - Email domain of the guest accounts (default: `@guest-reldens.com`), read in `ServerManager.initializeConfiguration()`. A non empty `server/players/guestsUser/emailDomain` config row wins over it; when the row is missing or empty `ServerConfigEnricher.enrichGuestsEmailDomain()` (`lib/game/server/server-config-enricher.js`) stores the environment value in that config path
 
+## Server Health
+
+Read by `EnvironmentVariablesReader.fetchHealthFromEnvironmentVariables()` into the `server/health` configuration and passed to the `ServerHealthMonitor` and the `RemoteServersStatus` (`lib/game/server/health/`). The basic configuration installs a `health/*` row (scope `server`) for each value, and the row overrides the environment variable. The numeric values are read with `Number(process.env.NAME || default)`, so `0` disables a limit and an empty value uses the default. See `.claude/server-health-monitor.md`.
+
+- `RELDENS_HEALTH_BLOCKING_ENABLED` - General switch of the whole blocking process, 0 or 1 (default: 1); with 0 nothing is rejected (no login, arriving player, scene change or room creation is blocked and the other servers status is not requested for the rooms availability) and the health is only a monitor: the usage, the exceeded limits and the other servers are still shown in the administration panel
+- `RELDENS_HEALTH_CHECK_INTERVAL_MS` - Interval between the usage checks, also the cache time of the other servers status (default: 5000)
+- `RELDENS_HEALTH_MAX_MEMORY_PERCENT` - Maximum system memory used percent, from the available memory (default: 90)
+- `RELDENS_HEALTH_MAX_CPU_PERCENT` - Maximum system CPU used percent of all the cores between two checks (default: 90)
+- `RELDENS_HEALTH_MAX_EVENT_LOOP_DELAY_MS` - Maximum mean event loop delay between two checks (default: 1000)
+- `RELDENS_HEALTH_REMOTE_STATUS_TIMEOUT_MS` - Time to wait for the status of another server of the rooms, a server that does not answer in time is not available (default: 3000)
+
 ## Firebase
 
 - `RELDENS_FIREBASE_ENABLE` - Enable Firebase authentication

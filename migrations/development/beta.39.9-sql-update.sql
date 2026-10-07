@@ -488,6 +488,20 @@ INSERT IGNORE INTO `config` (`scope`, `path`, `value`, `type`) VALUES
 	('server', 'security/roomsLogin/maxJoins', '60', 2),
 	('server', 'security/roomsLogin/windowMs', '60000', 2);
 
+-- Server health: the system memory and CPU used percent and the event loop delay limits that reject the new game
+-- logins, the players arriving from other servers and the new scene rooms while the server is overloaded, a limit of
+-- 0 is disabled, and with health/blockingEnabled set to 0 nothing is rejected and the health is only a monitor. The
+-- administration panel shows the usage of every server in the dashboard and in the control panel, copy the
+-- theme/admin files from the reldens package before starting the server ("reldens copyAdmin" and then
+-- "reldens copyAdminFiles"), the admin templates now include server-usage.html
+INSERT IGNORE INTO `config` (`scope`, `path`, `value`, `type`) VALUES
+	('server', 'health/blockingEnabled', '1', 3),
+	('server', 'health/checkIntervalMs', '5000', 2),
+	('server', 'health/maxCpuPercent', '90', 2),
+	('server', 'health/maxEventLoopDelayMs', '1000', 2),
+	('server', 'health/maxMemoryPercent', '90', 2),
+	('server', 'health/remoteStatusTimeoutMs', '3000', 2);
+
 -- New demo assets: the new age town with its five houses and the six forest levels replace the old town, forest and
 -- bots rooms, the enemies get a different monster per level, level skills, random movement and the weather data
 -- The rooms below need the new files in the project theme, copy them from the reldens package theme/default before

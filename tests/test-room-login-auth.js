@@ -7,6 +7,7 @@
 const { BaseTest } = require('./base-test');
 const { RoomLogin } = require('../lib/rooms/server/login');
 const { RoomsConst } = require('../lib/rooms/constants');
+const { GameConst } = require('../lib/game/constants');
 const { LoginAttempts } = require('../lib/game/server/memory/login-attempts');
 
 class TestRoomLoginAuth extends BaseTest
@@ -136,6 +137,31 @@ class TestRoomLoginAuth extends BaseTest
             let requestHeaders = {origin: 'http://localhost:8080'};
             this.assert.strictEqual(this.isValidOrigin(true, requestHeaders), true);
             this.assert.strictEqual(this.isValidOrigin(false, requestHeaders), false);
+        });
+    }
+
+    async testTheGameLoginIsRejectedWhileTheServerIsOverloaded()
+    {
+        await this.test('the game login is rejected without loading the user while the server is overloaded', async () => {
+            let processedRequests = [];
+            let roomLogin = this.createRoomLogin({user: this.activeUserModel}, processedRequests);
+            roomLogin.roomType = RoomsConst.ROOM_TYPE_GAME;
+            roomLogin.serverHealthMonitor = {isBlocking: true};
+            await this.assert.rejects(
+                roomLogin.onAuth({}, {username: 'victim', password: 'valid'}, this.request),
+                {message: GameConst.SERVER_BUSY_MESSAGE}
+            );
+            this.assert.strictEqual(processedRequests.length, 0);
+        });
+    }
+
+    async testTheSceneJoinIsAcceptedWhileTheServerIsOverloaded()
+    {
+        await this.test('a scene join of a logged player is accepted while the server is overloaded', async () => {
+            let roomLogin = this.createRoomLogin({user: this.activeUserModel}, []);
+            roomLogin.serverHealthMonitor = {isBlocking: true};
+            let authResult = await roomLogin.onAuth({}, {username: 'victim', password: 'valid'}, this.request);
+            this.assert.strictEqual(authResult, this.activeUserModel);
         });
     }
 

@@ -33,6 +33,17 @@ The data comes from `UsersActivityDataProvider` (`lib/admin/server/users-activit
 The page re-fetches on the interval given by the `data-refresh-ms` attribute on the dashboard wrapper, so the count and
 the chart stay current without a reload. The hover listeners are bound once, not on every refresh.
 
+## Server Usage
+
+The dashboard (under the logged users count) and the control panel (Server Management page, in its own box) show the
+usage of this server and of every other server of the rooms: system memory and CPU used percent, event loop delay,
+available and total memory, process memory, JavaScript heap, the configured limits, whether the server is overloaded
+(new game logins, arriving players and new scene rooms rejected) or only monitored (`health/blockingEnabled` set to
+`0`), and for the other servers the response time or the not available error. `ServerHealthSubscriber` (`lib/admin/server/subscribers/server-health-subscriber.js`) fills the
+`{{&serverUsage}}` placeholder of both templates with `theme/admin/templates/server-usage.html` and serves the
+authenticated `/server-health/usage` route that `theme/admin/js/admin-server-usage-renderer.js` requests every 5
+seconds. The limits are the `health/*` config rows, see `.claude/server-health-monitor.md`.
+
 ---
 
 ## Request Token (CSRF)

@@ -26,6 +26,7 @@ module.exports.TemplatesList = {
     login: 'login.html',
     dashboard: 'dashboard.html',
     management: 'management.html',
+    serverUsage: 'server-usage.html',
     themeManager: 'theme-manager.html',
     mapsWizard: 'maps-wizard.html',
     mapsWizardMapsSelection: 'maps-wizard-maps-selection.html',
@@ -79,6 +80,8 @@ module.exports.TemplatesList = {
     }
 };
 ```
+
+`serverUsage` is a shared fragment: `ServerHealthSubscriber` replaces the `{{&serverUsage}}` placeholder of the `dashboard` and `management` raw contents with it before the admin contents are built (see `.claude/server-health-monitor.md`).
 
 Three kinds of leaves:
 
