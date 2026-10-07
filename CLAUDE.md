@@ -1,6 +1,6 @@
 ## Project Overview
 
-Reldens is an MMORPG Platform (v4.0.0-beta.39.9) built on Node.js for developers to create multiplayer games.
+Reldens is an MMORPG Platform (v4.0.0-rc.1) built on Node.js for developers to create multiplayer games.
 
 - **Server**: Colyseus 0.18 (authoritative game server, WebSockets via `@colyseus/ws-transport`)
 - **Client**: Phaser 4 (game engine), Parcel 2 (bundler)
