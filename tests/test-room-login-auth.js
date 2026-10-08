@@ -155,13 +155,36 @@ class TestRoomLoginAuth extends BaseTest
         });
     }
 
+    createBlockingSceneRoom(userSessionRoomType)
+    {
+        let roomLogin = this.createRoomLogin({user: this.activeUserModel}, []);
+        roomLogin.serverHealthMonitor = {isBlocking: true};
+        roomLogin.loginManager.activePlayers.playersSessionsByUserId = {
+            [this.activeUserModel.id]: {'session-in-this-server': 'room-in-this-server'}
+        };
+        roomLogin.loginManager.roomsManager = {
+            createdInstances: {'room-in-this-server': {roomType: userSessionRoomType}}
+        };
+        return roomLogin;
+    }
+
     async testTheSceneJoinIsAcceptedWhileTheServerIsOverloaded()
     {
-        await this.test('a scene join of a logged player is accepted while the server is overloaded', async () => {
-            let roomLogin = this.createRoomLogin({user: this.activeUserModel}, []);
-            roomLogin.serverHealthMonitor = {isBlocking: true};
+        await this.test('a scene join of a player moving between the rooms of this server is accepted while blocking', async () => {
+            let roomLogin = this.createBlockingSceneRoom(RoomsConst.ROOM_TYPE_SCENE);
             let authResult = await roomLogin.onAuth({}, {username: 'victim', password: 'valid'}, this.request);
             this.assert.strictEqual(authResult, this.activeUserModel);
+        });
+    }
+
+    async testTheSceneJoinOfAnArrivingPlayerIsRejectedWhileBlocking()
+    {
+        await this.test('a scene join of a player arriving from another server is rejected while blocking', async () => {
+            let roomLogin = this.createBlockingSceneRoom(RoomsConst.ROOM_TYPE_GAME);
+            await this.assert.rejects(
+                roomLogin.onAuth({}, {username: 'victim', password: 'valid'}, this.request),
+                {message: GameConst.SERVER_BUSY_MESSAGE}
+            );
         });
     }
 
