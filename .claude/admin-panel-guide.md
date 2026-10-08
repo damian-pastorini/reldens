@@ -10,7 +10,9 @@ The admin panel is accessible at `/reldens-admin` and is powered by the `@relden
 
 ## Dashboard
 
-The dashboard page shows the users currently logged in and the distinct logged users per day over the last 30 days.
+The dashboard page (`theme/admin/templates/dashboard.html`) shows two `sub-content` panels: the servers usage first (see
+Server Usage below), then the "Logged users" panel with two boxes, "Last 30 days" (the distinct logged users per day
+over the last 30 days) and "Currently logged" (the users currently logged in).
 
 The page itself stays static because `@reldens/cms` renders and caches the dashboard content once at startup, so the
 numbers are fetched at runtime: `theme/admin/js/admin-dashboard-stats-renderer.js` reads the route from the
@@ -35,7 +37,7 @@ the chart stay current without a reload. The hover listeners are bound once, not
 
 ## Server Usage
 
-The dashboard (under the logged users count) and the control panel (Server Management page, in its own box) show the
+The dashboard (its first panel) and the control panel (Server Management page, in its own box) show the
 usage of this server and of every other server of the rooms: system memory and CPU used percent, event loop delay,
 available and total memory, process memory, JavaScript heap, the configured limits, whether the server is overloaded
 (new game logins, arriving players and new scene rooms rejected) or only monitored (`health/blockingEnabled` set to
