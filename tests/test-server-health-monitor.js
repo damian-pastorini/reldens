@@ -9,6 +9,8 @@ const { BaseTest } = require('./base-test');
 const { ServerHealthMonitor } = require('../lib/game/server/health/server-health-monitor');
 const { ServerUsageSampler } = require('../lib/game/server/health/server-usage-sampler');
 const { EnvironmentVariablesReader } = require('../lib/game/server/environment-variables-reader');
+const { ServerManagersInitializer } = require('../lib/game/server/server-managers-initializer');
+const { GameServer } = require('../lib/game/server/game-server');
 const { sc } = require('@reldens/utils');
 
 class TestServerHealthMonitor extends BaseTest
@@ -185,6 +187,44 @@ class TestServerHealthMonitor extends BaseTest
             usageSampler.previousCpuTimes = {idle: 1000, total: 2000};
             this.assert.strictEqual(usageSampler.calculateCpuPercent({idle: 1250, total: 3000}), 75);
             this.assert.strictEqual(usageSampler.calculateCpuPercent({idle: 1000, total: 2000}), 0);
+        });
+    }
+
+    async testTheGameServerShutdownStopsTheMonitor()
+    {
+        await this.test('the game server shutdown clears the checks interval and disables the sampler', async () => {
+            let usageSampler = new ServerUsageSampler();
+            let monitor = new ServerHealthMonitor(this.defaultLimits, usageSampler);
+            monitor.start();
+            GameServer.prototype.runOnShutDown.call({shutdownCallbacks: [() => monitor.stop()]});
+            this.assert.strictEqual(monitor.checkTimer, false);
+            this.assert.strictEqual(usageSampler.eventLoopDelayHistogram.enable(), true);
+            usageSampler.eventLoopDelayHistogram.disable();
+        });
+    }
+
+    async testTheRestartStopsThePreviousMonitor()
+    {
+        await this.test('the server health of a restarted server stops the previous monitor', async () => {
+            let previousSampler = new ServerUsageSampler();
+            let previousMonitor = new ServerHealthMonitor(this.defaultLimits, previousSampler);
+            previousMonitor.start();
+            let serverManager = {
+                serverHealthMonitor: previousMonitor,
+                configManager: {getWithoutLogs: (path, defaultValue) => defaultValue},
+                loginManager: {expiringHmacToken: {}},
+                roomsManager: {isRoomCreated: () => false},
+                gameServer: {shutdownCallbacks: []},
+                app: {get: () => true}
+            };
+            new ServerManagersInitializer(serverManager).initializeServerHealth();
+            this.assert.strictEqual(previousMonitor.checkTimer, false);
+            this.assert.strictEqual(previousSampler.eventLoopDelayHistogram.enable(), true);
+            previousSampler.eventLoopDelayHistogram.disable();
+            this.assert.notStrictEqual(serverManager.serverHealthMonitor, previousMonitor);
+            this.assert.strictEqual(serverManager.gameServer.shutdownCallbacks.length, 1);
+            serverManager.gameServer.shutdownCallbacks.pop()();
+            this.assert.strictEqual(serverManager.serverHealthMonitor.checkTimer, false);
         });
     }
 

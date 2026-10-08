@@ -49,7 +49,8 @@ Each limit is a maximum and `0` disables it. The rows are read once at startup, 
 
 `ServerManagersInitializer.initializeServerHealth()` runs after the `LoginManager`:
 
-- creates the `ServerHealthMonitor` with `configManager.getWithoutLogs('server/health', {})` and calls `start()` (one check right away, then one per interval, the interval is `unref()`);
+- stops the previous `ServerHealthMonitor` when the server is started again on the same process (`ServerManager.start()` after the installer), `stop()` clears the checks interval and disables the event loop histogram (`ServerUsageSampler.stop()`);
+- creates the `ServerHealthMonitor` with `configManager.getWithoutLogs('server/health', {})` and calls `start()` (one check right away, then one per interval, the interval is `unref()`), and adds its `stop()` to the `GameServer.shutdownCallbacks`, run by `GameServer.runOnShutDown()` (the Colyseus `onShutdown` callback);
 - creates the `RemoteServersStatus` with the `LoginManager` `expiringHmacToken` (the signed tokens secret shared by every server), `remoteStatusTimeoutMs` as timeout and `checkIntervalMs` as cache time;
 - creates the `RoomsAvailability` with the monitor, the remote status, `RoomsManager.isRoomCreated()`, the `client/rooms/servers` map (room name to server URL, filled by `ServerConfigEnricher.enrichRoomsServersUrls()`) and this server URLs (`server/publicUrl` and `server/baseUrl`);
 - registers `GET /reldens-server-status` (`GameConst.ROUTE_PATHS.SERVER_STATUS`, also in the `ServerManager.enableRoutesRateLimit()` list) answered by the `ServerStatusRoute`.
@@ -96,7 +97,7 @@ Projects created before this feature do not have the new admin files. `AdminPlug
 
 ## Tests
 
-- `tests/test-server-health-monitor.js` - limits evaluation, separated CPU and memory limits, disabled limits, the monitor only mode with the blocking disabled, recovery, start, the sampler values and CPU percent, the environment variables.
+- `tests/test-server-health-monitor.js` - limits evaluation, separated CPU and memory limits, disabled limits, the monitor only mode with the blocking disabled, recovery, start, the sampler values and CPU percent, the environment variables, the monitor stopped by the game server shutdown and the previous monitor stopped on a restart.
 - `tests/test-rooms-availability.js` - local created and not created rooms while blocking, remote blocking, unreachable and available servers, every room available without requests with the blocking disabled, the rooms of different servers requested at the same time, the servers statuses list.
 - `tests/test-remote-servers-status.js` - the signed request answered by the `ServerStatusRoute`, the different secret rejection, the failed request, the missing secret and the cache.
 - `tests/test-server-health-subscriber.js` - the block injection into the real templates and the servers usage route.
