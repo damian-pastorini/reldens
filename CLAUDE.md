@@ -90,7 +90,7 @@ See `.claude/feature-modules.md` for details on each module.
    - `enableServeStaticsAndHomePage()` and `enableRoutesRateLimit()` - Express statics, home page and route limiters
    - `themeManager.validateOrCreateTheme()` - copies assets to the dist folder
    - `startGameServerInstance()` - loads maps, creates Colyseus `GameServer`, initializes all managers
-5. Manager initialization order: `Mailer` -> `FeaturesManager` -> `UsersManager` -> `RoomsManager` -> `LoginManager` -> `defineServerRooms()`
+5. Manager initialization order: `Mailer` -> `FeaturesManager` -> `UsersManager` -> `RoomsManager` -> `LoginManager` -> `ServerHealthMonitor` -> `defineServerRooms()`
 6. `FeaturesManager.loadFeatures()` queries the `features` table for `is_enabled=1`, instantiates each feature package, and calls `setup()` on it. After all features load, fires `reldens.serverConfigFeaturesReady`.
 7. `RoomsManager` registers the login room and all scene rooms on the Colyseus game server.
 8. When `RELDENS_CREATE_CONFIG_FILE` is unset or `1`, the theme `config.js` is written and `ThemeManager.createClientBundle()` runs Parcel to build the client bundle if `RELDENS_ALLOW_RUN_BUNDLER=1`.
@@ -210,6 +210,7 @@ See `.claude/commands-reference.md` for the full command reference.
 - `.claude/admin-panel-guide.md` - Admin panel sections and entity overrides
 - `.claude/installer-guide.md` - Web-based installation wizard
 - `.claude/ip-lists-and-login-blocks.md` - Address allow and deny lists, the stored login blocks and the login limiters
+- `.claude/server-health-monitor.md` - Server usage limits, rooms availability between servers, every overload case, admin usage block
 - `.claude/player-animations-configuration.md` - Sprite size, frame ranges, class-path overrides
 - `.claude/tileset-to-map-generator-technical.md` - Data contract between the tileset and map generator packages
 - `.claude/tile-ids-and-annotations-pipeline.md` - Tile id spaces, the tileset-ref parking invariant, adding a tile option

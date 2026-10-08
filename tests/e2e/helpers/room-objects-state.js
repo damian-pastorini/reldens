@@ -8,7 +8,8 @@
  * so the specs read the exact server data instead of guessing from the sprites; the switch that disables the enemies
  * of a room (or only the aggressive ones) until the next players reset, so the specs that are not about those enemies
  * are never interrupted by an attack;
- * the random movement stop and the attack position next to a player used by the enemy placement (RoomEnemyPlacement);
+ * the random movement stop and the attack position next to a player used by the enemy placement (RoomEnemyPlacement),
+ * a walkable position where the placed body does not overlap any other colliding body, so the physics never push it;
  * the player placement next to another player, out of contact with its body and inside the short attack range, so a player versus player hit never pushes the target; and the player affected
  * property (hp) set on the live player and sent to its client, so the specs that need a death set the exact life the
  * next hit removes instead of depending on the enemies damage rate.
@@ -179,14 +180,37 @@ class RoomObjectsState
         return false;
     }
 
-    static findAttackPosition(room, playerBody)
+    static isRectOverBodies(rect, bodiesBounds)
+    {
+        return bodiesBounds.some(
+            bodyBounds => rect.left < bodyBounds.upperBound[0]
+                && rect.right > bodyBounds.lowerBound[0]
+                && rect.top < bodyBounds.upperBound[1]
+                && rect.bottom > bodyBounds.lowerBound[1]
+        );
+    }
+
+    static findAttackPosition(room, playerBody, placedBody)
     {
         let grid = room.roomWorld.pathFinder.grid;
+        let bodiesBounds = room.roomWorld.bodies.filter(
+            body => playerBody !== body && placedBody !== body && false !== body.collisionResponse
+        ).map(body => body.getAABB());
+        let placedBounds = placedBody.getAABB();
         for(let offset of RoomObjectsState.ATTACK_OFFSETS){
             let x = playerBody.position[0] + offset.x * RoomObjectsState.ATTACK_DISTANCE;
             let y = playerBody.position[1] + offset.y * RoomObjectsState.ATTACK_DISTANCE;
             let tilePosition = playerBody.positionToTiles(x, y);
-            if(grid.isWalkableAt(tilePosition.currentCol, tilePosition.currentRow)){
+            if(!grid.isWalkableAt(tilePosition.currentCol, tilePosition.currentRow)){
+                continue;
+            }
+            let isOverBodies = RoomObjectsState.isRectOverBodies({
+                left: placedBounds.lowerBound[0] - placedBody.position[0] + x,
+                right: placedBounds.upperBound[0] - placedBody.position[0] + x,
+                top: placedBounds.lowerBound[1] - placedBody.position[1] + y,
+                bottom: placedBounds.upperBound[1] - placedBody.position[1] + y
+            }, bodiesBounds);
+            if(!isOverBodies){
                 return {x, y};
             }
         }
@@ -226,7 +250,11 @@ class RoomObjectsState
         if(!nearPlayerSchema){
             return {error: 'Player '+nearPlayerName+' not found in room '+room.roomName+'.'};
         }
-        let position = RoomObjectsState.findAttackPosition(room, nearPlayerSchema.physicalBody);
+        let position = RoomObjectsState.findAttackPosition(
+            room,
+            nearPlayerSchema.physicalBody,
+            playerSchema.physicalBody
+        );
         if(!position){
             return {error: 'No walkable tile next to the player '+nearPlayerName+'.'};
         }

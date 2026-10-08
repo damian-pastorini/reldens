@@ -81,6 +81,12 @@ The server is booted in process by the Playwright `globalSetup` (`tests/e2e/coll
 loads that app's `dist/index.html`. When `serverPath` does not exist the setup logs
 `[collect-game-data] serverPath not found` and skips the server startup.
 
+The setup turns off the server health blocking (`server/health/blockingEnabled`, on `reldens.beforeInitializeManagers`),
+the monitor keeps sampling and reporting: the browsers of the parallel groups run on the same machine, so the system
+CPU percent the monitor reads includes the test load, and a login during a spike over `maxCpuPercent` failed waiting
+for `#player-selection:not(.hidden)` with `The server is busy right now` on the login form. The blocking cases are
+covered by the unit tests listed in `.claude/server-health-monitor.md`.
+
 If `dist/index.html` still references `src="./index.js"` the client was never bundled, so `window.reldens`
 never exists and every spec times out after 10 seconds waiting for it. `ClientBundleCheck.isMissing()` detects
 this, and `ClientBundleCheck.isOutdated()` detects a bundle older than any client source of the checkout (a `lib` js
@@ -136,7 +142,10 @@ a body the path finder grid does not know (a tree, another object) blocks the pl
 - `POST /api/e2e/room-objects/place-enemy` (`{roomName, sessionId, enemyKey, enemyLife}`,
   `tests/e2e/helpers/room-enemy-placement.js`) - restores the first enemy of that key or asset key, stops its random
   movement, places it on the first walkable position 40px from the player (inside the 50px `attackShort` range, out of
-  contact with the 25px player body) and, with `enemyLife`, sets its life so a single hit kills it; it returns the
+  contact with the 25px player body) where its body does not overlap any other colliding body of the room
+  (`RoomObjectsState.findAttackPosition`: the enemies restored on random respawn tiles, the trees, the walls), since an
+  overlapped body is pushed off the placed position and the exact position targeting never matches, and, with
+  `enemyLife`, sets its life so a single hit kills it; it returns the
   enemy key, its body state key (`bodyKey`, the client `objectsAnimations` and `room.state.bodies` key), the exact
   position and the experience its stored rewards give on its death
 - `RoomObjectsApi.placeAndTargetEnemy` waits until the client body state of `bodyKey` is exactly on the placed position
@@ -209,7 +218,8 @@ scene rooms to the specs, wrapped by `tests/e2e/helpers/room-objects-api.js`:
 - `POST /api/e2e/room-objects/enemy-attack` (`{roomName, playerName, assetKey}`, `RoomEnemyPlacement`) - places one
   enemy of that asset key the same way as `place-enemy` and starts its battle with the player
 - `POST /api/e2e/room-objects/place-player` (`{roomName, playerName, nearPlayerName}`) - places the player 40px from
-  the other player (found by name), on the first walkable side of right, left, down and up, inside the 50px
+  the other player (found by name), on the first walkable side of right, left, down and up where it does not overlap
+  any other colliding body, inside the 50px
   `attackShort` range and out of contact with its body, so a player versus player hit never pushes the target
 - `POST /api/e2e/room-objects/player-affected-property` (`{roomName, playerName, value}`) - sets the affected property
   (`client/actions/skills/affectedProperty`, the hp) of the live player to that value, saves the stats and sends them to

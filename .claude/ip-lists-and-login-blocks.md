@@ -6,7 +6,7 @@ How the address allow and deny lists are built and checked, and how the failed l
 
 - Environment: `RELDENS_IP_LISTS_ENABLED` (0 or 1), `RELDENS_IP_ALLOW_LIST` and `RELDENS_IP_DENY_LIST` (comma separated addresses or CIDR ranges), read by `EnvironmentVariablesReader.fetchIpListsFromEnvironmentVariables()` into the `server/appServerConfig/ipLists` configuration (the `environmentConfig` passed to the `ConfigManager` constructor).
 - `config` rows (scope `server`): `security/ipLists/enabled` (boolean, overrides the environment switch), `security/ipLists/allow` and `security/ipLists/deny` (comma separated, appended to the environment entries). The basic configuration installs `security/ipLists/enabled` as `0`, so `RELDENS_IP_LISTS_ENABLED=1` alone does not enable the lists: set the row to `1` (the environment switch only applies when the row is missing, and before the `config` rows are loaded at startup).
-- `ip_lists` table rows without `expires_at`: permanent entries, `list_type` is `allow` or `deny`, the `address` and `list_type` pair is unique. They are managed in the administration panel settings menu as "IP Allow And Deny Lists" (entity `ipLists`).
+- `ip_lists` table rows without `expires_at`: permanent entries, `list_type` is `allow` or `deny`, the `address` and `list_type` pair is unique. They are managed in the administration panel as a top level sidebar item (entity `ipLists`).
 
 ## Startup Flow
 

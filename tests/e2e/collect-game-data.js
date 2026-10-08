@@ -326,6 +326,7 @@ class CollectGameData
         let serverManager = new modules.ServerManager(serverConfig);
         serverManager.events.on('reldens.beforeInitializeManagers', async (event) => {
             await CollectGameData.ensureRequiredFeatures(event.serverManager);
+            event.serverManager.configManager.server.health.blockingEnabled = false;
         });
         process.stdout.write('Server: creating HTTP server...\n');
         await StartupGuard.runStep(serverManager.createServers(), 'HTTP server creation');

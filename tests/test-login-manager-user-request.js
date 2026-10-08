@@ -9,6 +9,7 @@ const { LoginManager } = require('../lib/game/server/login-manager');
 const { RoomGame } = require('../lib/rooms/server/game');
 const { ActivePlayer } = require('../lib/game/server/memory/active-player');
 const { GameConst } = require('../lib/game/constants');
+const { RoomsConst } = require('../lib/rooms/constants');
 const { Encryptor } = require('@reldens/server-utils');
 const { sc } = require('@reldens/utils');
 
@@ -182,6 +183,112 @@ class TestLoginManagerUserRequest extends BaseTest
             let userModel = {username: 'player', email: 'player@guest-reldens.com', role_id: this.playerRoleId};
             await roomGame.onJoin(client, {password: 'player-password'}, userModel);
             this.assert.strictEqual([...sentMessages].pop().guestPassword, '');
+        });
+    }
+
+    async joinGameRoomWithAvailability(joinSetupValues, options)
+    {
+        let joinSetup = Object.assign(
+            {configValues: {}, roomSelection: [], requestedRooms: [], lastLoginUpdates: [], sentMessages: []},
+            joinSetupValues
+        );
+        let roomGame = Object.create(RoomGame.prototype, {roomId: {value: 'game-room'}});
+        roomGame.loginManager = {
+            updateLastLogin: async () => joinSetup.lastLoginUpdates.push(true),
+            activePlayers: {add: () => true},
+            isGuestUser: () => false
+        };
+        roomGame.events = {
+            emit: async (eventName, eventData) => {
+                if('reldens.beforeSuperInitialGameData' === eventName){
+                    eventData.roomSelection = joinSetup.roomSelection;
+                }
+            }
+        };
+        roomGame.config = {
+            client: {},
+            gameEngine: {},
+            availableFeaturesList: [],
+            getWithoutLogs: (path, defaultValue) => sc.get(joinSetup.configValues, path, defaultValue)
+        };
+        roomGame.activePlayerByUserName = () => false;
+        roomGame.roomsAvailability = {
+            fetchRoomsAvailability: async (roomsNames) => {
+                joinSetup.requestedRooms.push(...roomsNames);
+                return sc.pickProps(joinSetup.availabilityByRoom, roomsNames);
+            }
+        };
+        let userModel = {
+            username: 'player',
+            related_players: [{id: 1, state: {scene: 'reldens-bots-forest'}}, {id: 2, state: {scene: 'reldens-town'}}]
+        };
+        joinSetup.joinError = await roomGame.onJoin(
+            {sessionId: 'session-a', send: (type, message) => joinSetup.sentMessages.push(message)},
+            options,
+            userModel
+        ).then(() => '').catch((error) => error.message);
+        return joinSetup;
+    }
+
+    async testTheAutoStartLoginIsRejectedWhenThePlayerRoomIsNotAvailable()
+    {
+        await this.test('the login without player selection is rejected when the player room is not available', async () => {
+            let joinSetup = await this.joinGameRoomWithAvailability(
+                {
+                    availabilityByRoom: {
+                        'reldens-bots-forest': {isAvailable: false, reason: GameConst.ROOM_UNAVAILABLE.SERVER_BUSY},
+                        'reldens-town': {isAvailable: true, reason: ''}
+                    }
+                },
+                {password: 'player-password'}
+            );
+            this.assert.strictEqual(joinSetup.joinError, GameConst.PLAYER_ROOM_UNAVAILABLE_MESSAGE);
+            this.assert.strictEqual(joinSetup.lastLoginUpdates.length, 0);
+            this.assert.strictEqual(joinSetup.sentMessages.length, 0);
+        });
+    }
+
+    async testTheSelectionLoginSendsTheRoomsAvailability()
+    {
+        await this.test('the login with player selection sends the players and selection rooms availability', async () => {
+            let busyRoom = {isAvailable: false, reason: GameConst.ROOM_UNAVAILABLE.SERVER_BUSY};
+            let availableRoom = {isAvailable: true, reason: ''};
+            let joinSetup = await this.joinGameRoomWithAvailability(
+                {
+                    configValues: {'client/players/multiplePlayers/enabled': true},
+                    roomSelection: [
+                        {name: RoomsConst.ROOM_LAST_LOCATION_KEY, title: 'Last Location'},
+                        {name: 'reldens-town', title: 'Town'},
+                        {name: 'reldens-forest', title: 'Forest'}
+                    ],
+                    availabilityByRoom: {
+                        'reldens-bots-forest': busyRoom,
+                        'reldens-town': availableRoom,
+                        'reldens-forest': availableRoom
+                    }
+                },
+                {password: 'player-password'}
+            );
+            this.assert.strictEqual(joinSetup.joinError, '');
+            this.assert.deepStrictEqual(joinSetup.requestedRooms, ['reldens-bots-forest', 'reldens-town', 'reldens-forest']);
+            this.assert.deepStrictEqual([...joinSetup.sentMessages].pop().roomsAvailability, {
+                'reldens-bots-forest': busyRoom,
+                'reldens-town': availableRoom,
+                'reldens-forest': availableRoom
+            });
+        });
+    }
+
+    async testTheJoinOfASelectedPlayerSkipsTheLoginAvailability()
+    {
+        await this.test('the game room join of an already selected player does not request the availability', async () => {
+            let joinSetup = await this.joinGameRoomWithAvailability(
+                {availabilityByRoom: {}},
+                {password: 'player-password', selectedPlayer: 1}
+            );
+            this.assert.strictEqual(joinSetup.joinError, '');
+            this.assert.strictEqual(joinSetup.requestedRooms.length, 0);
+            this.assert.strictEqual(joinSetup.lastLoginUpdates.length, 1);
         });
     }
 

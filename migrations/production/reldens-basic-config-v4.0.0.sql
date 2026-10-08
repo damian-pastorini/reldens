@@ -439,7 +439,13 @@ REPLACE INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(393, 'server', 'security/registration/usernameMaximumLength', '50', 2),
 	(394, 'server', 'security/registration/usernameMinimumLength', '3', 2),
 	(395, 'server', 'security/roomsLogin/maxJoins', '60', 2),
-	(396, 'server', 'security/roomsLogin/windowMs', '60000', 2);
+	(396, 'server', 'security/roomsLogin/windowMs', '60000', 2),
+	(397, 'server', 'health/blockingEnabled', '1', 3),
+	(398, 'server', 'health/checkIntervalMs', '5000', 2),
+	(399, 'server', 'health/maxCpuPercent', '90', 2),
+	(400, 'server', 'health/maxEventLoopDelayMs', '1000', 2),
+	(401, 'server', 'health/maxMemoryPercent', '90', 2),
+	(402, 'server', 'health/remoteStatusTimeoutMs', '3000', 2);
 
 REPLACE INTO `features` (`id`, `code`, `title`, `is_enabled`) VALUES
 	(1, 'chat', 'Chat', 1),
