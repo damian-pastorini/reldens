@@ -84,6 +84,8 @@ passed by `CreateAdminSubscriber.fetchConfigurations()` as `csrfEnabled` to the 
   `RELDENS_ADMIN_SESSION_MAX_AGE_MS` (the environment value only applies when the row is missing); a value of `0` or
   lower is used as one day by the store. The expired rows are pruned every hour. Without the generated entity the
   default memory store is used and a warning is logged.
+- The `adminSessions` entity has no menu group, it is a top level item of the sidebar; deleting a row ends that
+  session.
 - `AdminSessionValidator` (`lib/admin/server/admin-session-validator.js`) hooks the `reldens.adminIsAuthenticated`
   event: on every authenticated request it reloads the session user and destroys the session when the user was deleted,
   banned, moved to another role or changed its password (the login stores the `sessionRevision` hash of the password
@@ -94,17 +96,19 @@ passed by `CreateAdminSubscriber.fetchConfigurations()` as `csrfEnabled` to the 
 
 ## Admin Panel Sections and Controlled Tables
 
-The admin panel groups entities into 16 navigation sections. The section structure is defined in:
+The admin panel groups entities into 15 navigation sections. The section structure is defined in:
 `lib/admin/server/entities-config-override.js`
+
+An entity without a `parentItemLabel` (`features`, `adminSessions`, `ipLists`) is a top level item of the sidebar,
+rendered by the `@reldens/cms` sidebar builder with `theme/admin/templates/sidebar-item.html`. The `ipLists` entity is
+the permanent allow and deny addresses and the temporary login blocks (`ip_lists` table), see
+`.claude/ip-lists-and-login-blocks.md`.
 
 ### Settings
 Configuration keys and operation types used throughout the platform.
 - `config` - Key/value configuration entries (`config` table)
 - `configTypes` - Types for configuration entries
 - `operationTypes` - Operation type definitions
-- `ipLists` - Permanent allow and deny addresses and the temporary login blocks (`ip_lists` table), see
-  `.claude/ip-lists-and-login-blocks.md`
-- `adminSessions` - The stored administration panel sessions (`admin_sessions` table), deleting a row ends that session
 
 ### Rooms
 Room definitions and player transition points.
@@ -389,11 +393,11 @@ Clan definitions, levels, modifiers, and membership.
 - `clanMembers` - Clan membership records
 
 ### Quests
-Quest progress tracking records.
+Quest progress tracking records, listed after Rewards (`QuestsProgressEntityOverride`, navigation position 650).
 - `questsProgress` - Per-player and global quest flags
 
 ### Features
-Feature flags and plugin enablement.
+Feature flags and plugin enablement, a top level item without a group.
 - `features` - Feature definitions and enabled/disabled state
 
 ---
