@@ -104,6 +104,7 @@ Configuration keys and operation types used throughout the platform.
 - `operationTypes` - Operation type definitions
 - `ipLists` - Permanent allow and deny addresses and the temporary login blocks (`ip_lists` table), see
   `.claude/ip-lists-and-login-blocks.md`
+- `adminSessions` - The stored administration panel sessions (`admin_sessions` table), deleting a row ends that session
 
 ### Rooms
 Room definitions and player transition points.
