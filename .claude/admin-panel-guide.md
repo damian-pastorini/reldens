@@ -99,8 +99,11 @@ passed by `CreateAdminSubscriber.fetchConfigurations()` as `csrfEnabled` to the 
 The admin panel groups entities into 15 navigation sections. The section structure is defined in:
 `lib/admin/server/entities-config-override.js`
 
-An entity without a `parentItemLabel` (`features`, `adminSessions`, `ipLists`) is a top level item of the sidebar,
-rendered by the `@reldens/cms` sidebar builder with `theme/admin/templates/sidebar-item.html`. The `ipLists` entity is
+An entity without a `parentItemLabel` (`features`, `adminSessions`, `ipLists`) is a top level item of the sidebar. Its
+entry in `entities-config-override.js` sets `navigationLevel: 'level-1'`, the `@reldens/cms` sidebar builder renders the
+entities items only with their name and path, so `NavigationLevelSubscriber`
+(`lib/admin/server/subscribers/navigation-level-subscriber.js`) renders those items again on
+`reldens.adminSideBarBeforeSubItems` with `theme/admin/templates/sidebar-item.html` and the `level` value. The `ipLists` entity is
 the permanent allow and deny addresses and the temporary login blocks (`ip_lists` table), see
 `.claude/ip-lists-and-login-blocks.md`.
 
