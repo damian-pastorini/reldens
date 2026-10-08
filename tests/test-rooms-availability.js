@@ -133,6 +133,39 @@ class TestRoomsAvailability extends BaseTest
         });
     }
 
+    createRecordingRemoteStatus(statusRequests)
+    {
+        return {
+            fetchStatus: async (serverUrl) => {
+                statusRequests.started.push(serverUrl);
+                await Promise.resolve();
+                statusRequests.startedWhenAnswered.push(statusRequests.started.length);
+                return {isReachable: false, usageReport: false};
+            }
+        };
+    }
+
+    async testTheRoomsOfDifferentServersAreRequestedTogether()
+    {
+        await this.test('the availability of rooms of different servers is requested at the same time', async () => {
+            let statusRequests = {started: [], startedWhenAnswered: []};
+            let roomsAvailability = new RoomsAvailability({
+                serverHealthMonitor: {blockingEnabled: true, isBlocking: false, usageReport: {isBlocking: false}},
+                remoteServersStatus: this.createRecordingRemoteStatus(statusRequests),
+                isRoomCreated: () => false,
+                roomsServers: {'reldens-forest': this.remoteServerUrl, 'reldens-desert': 'http://localhost:8100'},
+                serverSelfUrls: [this.selfServerUrl]
+            });
+            let unreachableRoom = {isAvailable: false, reason: GameConst.ROOM_UNAVAILABLE.SERVER_UNREACHABLE};
+            this.assert.deepStrictEqual(
+                await roomsAvailability.fetchRoomsAvailability(['reldens-forest', 'reldens-desert']),
+                {'reldens-forest': unreachableRoom, 'reldens-desert': unreachableRoom}
+            );
+            this.assert.deepStrictEqual(statusRequests.started, [this.remoteServerUrl, 'http://localhost:8100']);
+            this.assert.deepStrictEqual(statusRequests.startedWhenAnswered, [2, 2]);
+        });
+    }
+
     async testTheServersStatusesListThisServerAndEachRemoteServerOnce()
     {
         await this.test('the servers statuses list this server first and every other server once', async () => {

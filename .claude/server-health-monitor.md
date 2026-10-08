@@ -66,6 +66,8 @@ When the overloaded state changes the monitor logs one warning (with the exceede
 - A room of this server (its server URL is this server or it is not in the map) is available when it is already created (`RoomsManager.isRoomCreated()`) or when this server is not blocking; otherwise `SERVER_BUSY`.
 - A room of another server requests that server status (`RemoteServersStatus.fetchStatus()`): not reachable (timeout, network error, an error status like `403` for a different secret, or an invalid answer without `isBlocking`) is `SERVER_UNREACHABLE`; blocking is `SERVER_BUSY`, since that server rejects the arriving players even for its created rooms; otherwise available.
 
+`RoomsAvailability.fetchRoomsAvailability(roomsNames)` requests every room at the same time, so the login with rooms of several not responding servers waits one timeout, not one per server.
+
 The status request is `GET <server URL>/reldens-server-status?token=<ExpiringHmacToken>`, the token signs `HealthConst.STATUS_TOKEN_VALUE` and expires in `GameConst.SIGNED_TOKENS.SERVER_STATUS_EXPIRATION`. Without the signed tokens secret no token is generated and the other servers are not reachable, the same secret is already required by the multi-server user disconnection. The answers are cached per server for the cache time, the requests in progress are shared. A slow server that answers before the timeout is available, its response time is kept as `latencyMs` and shown in the administration panel. The Colyseus ping (`RELDENS_PING_INTERVAL`, `RELDENS_PING_MAX_RETRIES`) is a different thing: it closes the connected clients that stop answering.
 
 ## Cases
@@ -94,7 +96,7 @@ Projects created before this feature do not have the new admin files. `AdminPlug
 ## Tests
 
 - `tests/test-server-health-monitor.js` - limits evaluation, separated CPU and memory limits, disabled limits, the monitor only mode with the blocking disabled, recovery, start, the sampler values and CPU percent, the environment variables.
-- `tests/test-rooms-availability.js` - local created and not created rooms while blocking, remote blocking, unreachable and available servers, every room available without requests with the blocking disabled, the servers statuses list.
+- `tests/test-rooms-availability.js` - local created and not created rooms while blocking, remote blocking, unreachable and available servers, every room available without requests with the blocking disabled, the rooms of different servers requested at the same time, the servers statuses list.
 - `tests/test-remote-servers-status.js` - the signed request answered by the `ServerStatusRoute`, the different secret rejection, the failed request, the missing secret and the cache.
 - `tests/test-server-health-subscriber.js` - the block injection into the real templates and the servers usage route.
 - `tests/test-room-login-auth.js` - the game login rejected while overloaded, the scene join accepted.
