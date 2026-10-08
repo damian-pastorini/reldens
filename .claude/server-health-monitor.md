@@ -103,3 +103,5 @@ Projects created before this feature do not have the new admin files. `AdminPlug
 - `tests/test-room-login-auth.js` - the game login rejected while blocking, the scene join of a player moving between the rooms of this server accepted and of a player arriving from another server rejected.
 - `tests/test-scene-join-admission.js` - the scene room creation rejected while overloaded, the scene change to a not available room and to an available room.
 - `tests/test-login-manager-user-request.js` - the login without selection rejected for a not available player room, the rooms availability sent for the selection, the join of an already selected player.
+
+The e2e server runs the monitor without the blocking: `tests/e2e/collect-game-data.js` sets `server/health/blockingEnabled` to `false` on `reldens.beforeInitializeManagers`. The browsers of the parallel spec groups run on the same machine as the server, so the system CPU percent includes the test load, and a login during a CPU spike over `maxCpuPercent` was rejected with the server busy message.
