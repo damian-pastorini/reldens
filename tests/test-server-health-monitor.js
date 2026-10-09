@@ -8,6 +8,8 @@ const os = require('os');
 const { BaseTest } = require('./base-test');
 const { ServerHealthMonitor } = require('../lib/game/server/health/server-health-monitor');
 const { ServerUsageSampler } = require('../lib/game/server/health/server-usage-sampler');
+const { RoomsUsageCollector } = require('../lib/game/server/health/rooms-usage-collector');
+const { WorldTimer } = require('../lib/world/world-timer');
 const { EnvironmentVariablesReader } = require('../lib/game/server/environment-variables-reader');
 const { ServerManagersInitializer } = require('../lib/game/server/server-managers-initializer');
 const { GameServer } = require('../lib/game/server/game-server');
@@ -38,11 +40,12 @@ class TestServerHealthMonitor extends BaseTest
         };
     }
 
-    createMonitor(customLimits, usageSamples)
+    createMonitor(customLimits, usageSamples, roomsUsageCollector)
     {
         return new ServerHealthMonitor(
             Object.assign({}, this.defaultLimits, customLimits),
-            {sample: () => Object.assign({}, this.defaultUsage, usageSamples.shift())}
+            {sample: () => Object.assign({}, this.defaultUsage, usageSamples.shift())},
+            roomsUsageCollector
         );
     }
 
@@ -140,6 +143,39 @@ class TestServerHealthMonitor extends BaseTest
         });
     }
 
+    async testTheUsageReportIncludesTheRoomsUsage()
+    {
+        await this.test('the usage report summarizes the rooms usage and reads the physics steps counters', async () => {
+            let worldTimer = new WorldTimer({});
+            worldTimer.stepsCount = 3;
+            worldTimer.stepsDurationMs = 1.5;
+            let createdInstances = {
+                sceneRoomId: {
+                    clients: [{}],
+                    playersCountInState: () => 1,
+                    roomWorld: {bodies: [{}, {}]},
+                    worldTimer
+                },
+                chatRoomId: {clients: [{}, {}]}
+            };
+            let monitor = this.createMonitor({}, [{}], new RoomsUsageCollector(createdInstances));
+            let roomsUsage = monitor.checkUsage().roomsUsage;
+            this.assert.strictEqual(roomsUsage.roomsCount, 2);
+            this.assert.strictEqual(roomsUsage.sceneRoomsCount, 1);
+            this.assert.strictEqual(roomsUsage.playersCount, 1);
+            this.assert.strictEqual(sc.isNumber(roomsUsage.physicsBusyPercent), true);
+            this.assert.strictEqual(worldTimer.stepsCount, 0);
+            this.assert.strictEqual(worldTimer.stepsDurationMs, 0);
+        });
+    }
+
+    async testTheUsageReportWithoutRoomsCollector()
+    {
+        await this.test('the usage report has no rooms usage without a rooms usage collector', async () => {
+            this.assert.strictEqual(this.createMonitor({}, [{}]).checkUsage().roomsUsage, false);
+        });
+    }
+
     async testTheInvalidIntervalDoesNotStartTheChecks()
     {
         await this.test('a check interval of 0 does not start the checks', async () => {
@@ -213,7 +249,7 @@ class TestServerHealthMonitor extends BaseTest
                 serverHealthMonitor: previousMonitor,
                 configManager: {getWithoutLogs: (path, defaultValue) => defaultValue},
                 loginManager: {expiringHmacToken: {}},
-                roomsManager: {isRoomCreated: () => false},
+                roomsManager: {isRoomCreated: () => false, createdInstances: {}},
                 gameServer: {shutdownCallbacks: []},
                 app: {get: () => true}
             };
