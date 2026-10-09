@@ -118,7 +118,7 @@
         "@reldens/utils": "^0.62.0",
         "buffer": "6.0.3",
         "core-js": "3.50.0",
-        "firebase": "13.0.0",
+        "firebase": "12.19.0",
         "mustache": "4.2.0",
         "nodemailer": "10.0.16",
         "p2": "0.7.1",
