@@ -35,7 +35,7 @@ class TestNpc
         test.setTimeout(TimeConstants.forLongRun(TestNpc.MOVEMENT_TEST_TIMEOUT_MS, longRun));
         let movingNpcs = BaseE2eTest.loadRoomEntries(Login.TOWN_ROOM_NAME, TestNpc.NPC_LISTS, true);
         expect(movingNpcs.length, 'The town must have NPCs configured with random movement').toBeGreaterThan(0);
-        await TestNpc.loginRoot2Player(page, gameConfig, longRun);
+        await Login.loginRootPlayer(page, gameConfig, longRun, '2');
         await Navigation.waitForRoom(page, Login.TOWN_ROOM_NAME, TimeConstants.forLongRun(TimeConstants.ROOM_TRANSITION, longRun));
         await screenshots.capture(page, 'town-npcs-before-wandering');
         let maxTilesByKey = Object.fromEntries(movingNpcs.map(npc => [npc.clientKey, npc.randomMovementTiles]));
@@ -51,14 +51,6 @@ class TestNpc
         expect(movement.notSynced, 'Every moving NPC body must be synced in the room state').toEqual([]);
         expect(movement.wandered.length, 'At least one town NPC must wander').toBeGreaterThan(0);
         expect(movement.outOfArea, 'Every NPC must stay inside its configured movement area').toEqual([]);
-    }
-
-    static async loginRoot2Player(page, gameConfig, longRun)
-    {
-        let username = gameConfig.e2eUsername2 || 'root2';
-        let password = gameConfig.e2ePassword2 || 'root';
-        let playerName = gameConfig.e2ePlayerName2 || 'ImRoot2';
-        await Login.loginAndStartGame(page, username, password, playerName, longRun);
     }
 
     static async placePlayerNextToNpc(page, gameConfig, objectKey, timeout)
@@ -94,7 +86,7 @@ class TestNpc
     static async loginAndOpenTraderShop(page, gameConfig, longRun)
     {
         let traderKey = gameConfig.e2eTraderKey || '';
-        await TestNpc.loginRoot2Player(page, gameConfig, longRun);
+        await Login.loginRootPlayer(page, gameConfig, longRun, '2');
         let pauseMs = TimeConstants.pauseMs(longRun);
         let sceneTimeout = TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun);
         await (traderKey
@@ -124,7 +116,7 @@ class TestNpc
 
     static async runNpcDialogueTest(page, screenshots, gameConfig, longRun)
     {
-        await TestNpc.loginRoot2Player(page, gameConfig, longRun);
+        await Login.loginRootPlayer(page, gameConfig, longRun, '2');
         await TestNpc.openNpcDialogue(page, screenshots, gameConfig, longRun);
     }
 
@@ -136,7 +128,7 @@ class TestNpc
             npc => npcKey === npc.clientKey
         );
         expect(movingNpc, 'The e2eNpcKey NPC must be configured with random movement').toBeTruthy();
-        await TestNpc.loginRoot2Player(page, gameConfig, longRun);
+        await Login.loginRootPlayer(page, gameConfig, longRun, '2');
         let npc = await RoomMovementApi.switchRandomMovement(gameConfig, Login.TOWN_ROOM_NAME, npcKey, false);
         expect(npc, 'The NPC body must be in the town room').toBeTruthy();
         let spawnTile = [npc.originalCol, npc.originalRow];
