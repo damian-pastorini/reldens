@@ -7,12 +7,14 @@
 const { BaseTest } = require('./base-test');
 const { CreateScoresRoute } = require('../lib/scores/server/subscriber/create-scores-route');
 const { SortedRowsRepository } = require('./fixtures/sorted-rows-repository');
+const { ScoresConst } = require('../lib/scores/constants');
 const { FileHandler } = require('@reldens/server-utils');
+const { sc } = require('@reldens/utils');
 
 class TestCreateScoresRoute extends BaseTest
 {
 
-    async requestScoresPage(query, scoresRepository)
+    async requestScoresPage(query, scoresRepository, configValues = {})
     {
         let routes = {};
         let renderedParams = [];
@@ -21,7 +23,7 @@ class TestCreateScoresRoute extends BaseTest
                 projectAssetsPath: FileHandler.joinPaths(process.cwd(), 'theme', 'default', 'assets'),
                 templateEngine: {render: async (template, params) => renderedParams.push(params)}
             },
-            config: {getWithoutLogs: (path, defaultValue) => defaultValue},
+            config: {getWithoutLogs: (path, defaultValue) => sc.get(configValues, path, defaultValue)},
             dataServer: {getEntity: (entityKey) => 'scores' === entityKey ? scoresRepository : {}}
         });
         await createScoresRoute.execute(
@@ -64,6 +66,36 @@ class TestCreateScoresRoute extends BaseTest
             let scoresRepository = this.createScoresRepository();
             await this.requestScoresPage({page: '0'}, scoresRepository);
             this.assert.strictEqual(scoresRepository.loadedQueries.shift().offset, 0);
+        });
+    }
+
+    async testTheConfiguredPageSizeLimitsThePage()
+    {
+        await this.test('the configured page size is the scores query limit', async () => {
+            let scoresRepository = this.createScoresRepository();
+            await this.requestScoresPage({page: '2'}, scoresRepository, {'server/scores/fullTableView/pageSize': '25'});
+            this.assert.deepStrictEqual(
+                scoresRepository.loadedQueries.shift(),
+                {limit: 25, offset: 25, sortBy: 'total_score', sortDirection: 'DESC'}
+            );
+        });
+    }
+
+    async testAZeroPageSizeUsesTheDefaultPageSize()
+    {
+        await this.test('a page size lower than 1 uses the default page size', async () => {
+            let scoresRepository = this.createScoresRepository();
+            await this.requestScoresPage({page: '1'}, scoresRepository, {'server/scores/fullTableView/pageSize': 0});
+            this.assert.strictEqual(scoresRepository.loadedQueries.shift().limit, ScoresConst.FULL_TABLE_PAGE_SIZE);
+        });
+    }
+
+    async testANotNumericPageSizeUsesTheDefaultPageSize()
+    {
+        await this.test('a not numeric page size uses the default page size', async () => {
+            let scoresRepository = this.createScoresRepository();
+            await this.requestScoresPage({page: '1'}, scoresRepository, {'server/scores/fullTableView/pageSize': 'abc'});
+            this.assert.strictEqual(scoresRepository.loadedQueries.shift().limit, ScoresConst.FULL_TABLE_PAGE_SIZE);
         });
     }
 
