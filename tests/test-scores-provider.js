@@ -66,6 +66,26 @@ class TestScoresProvider extends BaseTest
         });
     }
 
+    async testOverlappingRequestsKeepTheirOwnPage()
+    {
+        await this.test('overlapping top scores requests load their own page and leave the repository state clean', async () => {
+            let scoresRepository = this.createScoresRepository();
+            let scoresProvider = this.createScoresProvider(scoresRepository);
+            await Promise.all([
+                scoresProvider.fetchTopScoresMappedData(100, 2),
+                scoresProvider.fetchTopScoresMappedData(100, 1)
+            ]);
+            this.assert.deepStrictEqual(scoresRepository.loadedQueries, [
+                {limit: 100, offset: 100, sortBy: 'total_score', sortDirection: 'DESC'},
+                {limit: 100, offset: 0, sortBy: 'total_score', sortDirection: 'DESC'}
+            ]);
+            this.assert.deepStrictEqual(
+                scoresRepository.preserveEntityState(),
+                {limit: 0, offset: 0, sortBy: false, sortDirection: 'ASC'}
+            );
+        });
+    }
+
 }
 
 module.exports.TestScoresProvider = TestScoresProvider;
