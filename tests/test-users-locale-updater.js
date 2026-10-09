@@ -22,9 +22,29 @@ class TestUsersLocaleUpdater extends BaseTest
             },
             usersLocaleRepository: {
                 loadOneBy: async (field, value) => usersLocaleRows.filter((row) => value === row[field]).shift(),
-                updateById: async (id, patch) => savedChanges.push({updated: id, patch}),
-                create: async (row) => savedChanges.push({created: row})
+                updateById: async (id, patch) => {
+                    Object.assign(usersLocaleRows.filter((row) => id === row.id).shift(), patch);
+                    return savedChanges.push({updated: id, patch});
+                },
+                create: async (row) => {
+                    usersLocaleRows.push(Object.assign({id: usersLocaleRows.length + 1}, row));
+                    return savedChanges.push({created: row});
+                }
             }
+        });
+    }
+
+    async testQuickLocaleChangesSaveOneRow()
+    {
+        await this.test('two quick locale changes save one user locale row with the last chosen locale', async () => {
+            let usersLocaleRows = [];
+            let updater = this.createUpdater(usersLocaleRows, []);
+            await Promise.all([
+                updater.executeMessageActions({}, {act: SnippetsConst.ACTIONS.UPDATE, up: '1'}, {}, {userId: '1001'}),
+                updater.executeMessageActions({}, {act: SnippetsConst.ACTIONS.UPDATE, up: '2'}, {}, {userId: '1001'})
+            ]);
+            this.assert.deepStrictEqual(usersLocaleRows, [{id: 1, user_id: 1001, locale_id: 2}]);
+            this.assert.deepStrictEqual(updater.pendingSaves, {});
         });
     }
 
