@@ -17,6 +17,7 @@ Keeps every server of a game under configured usage limits. While a limit is exc
 - `lib/game/server/health/constants.js` - `HealthConst`: the defaults, the limits checks and the signed status token value.
 - `lib/game/server/health/server-usage-sampler.js` - `ServerUsageSampler`: reads the usage on every `sample()` call.
 - `lib/game/server/health/server-health-monitor.js` - `ServerHealthMonitor`: samples on an interval, compares the usage with the limits and keeps `isOverloaded`, `isBlocking` and `usageReport`.
+- `lib/game/server/health/rooms-usage-collector.js` - `RoomsUsageCollector`: on every check collects the usage of each room of `RoomsManager.createdInstances` (clients, players, objects, bodies and the physics steps time read and reset by `WorldTimer.fetchStepsUsage()`), the monitor adds its summary to the `usageReport` as `roomsUsage` (`roomsCount`, `sceneRoomsCount`, `playersCount`, `physicsBusyPercent`).
 - `lib/game/server/health/remote-servers-status.js` - `RemoteServersStatus`: signed status requests to the other servers, with timeout, response time and cache.
 - `lib/game/server/health/server-status-route.js` - `ServerStatusRoute`: answers the signed status requests of the other servers.
 - `lib/game/server/health/rooms-availability.js` - `RoomsAvailability`: tells if a room can be entered, and lists every server status for the administration.
@@ -50,7 +51,7 @@ Each limit is a maximum and `0` disables it. The rows are read once at startup, 
 `ServerManagersInitializer.initializeServerHealth()` runs after the `LoginManager`:
 
 - stops the previous `ServerHealthMonitor` when the server is started again on the same process (`ServerManager.start()` after the installer), `stop()` clears the checks interval and disables the event loop histogram (`ServerUsageSampler.stop()`);
-- creates the `ServerHealthMonitor` with `configManager.getWithoutLogs('server/health', {})` and calls `start()` (one check right away, then one per interval, the interval is `unref()`), and adds its `stop()` to the `GameServer.shutdownCallbacks`, run by `GameServer.runOnShutDown()` (the Colyseus `onShutdown` callback);
+- creates the `ServerHealthMonitor` with `configManager.getWithoutLogs('server/health', {})` and a `RoomsUsageCollector` of `RoomsManager.createdInstances`, and calls `start()` (one check right away, then one per interval, the interval is `unref()`), and adds its `stop()` to the `GameServer.shutdownCallbacks`, run by `GameServer.runOnShutDown()` (the Colyseus `onShutdown` callback);
 - creates the `RemoteServersStatus` with the `LoginManager` `expiringHmacToken` (the signed tokens secret shared by every server), `remoteStatusTimeoutMs` as timeout and `checkIntervalMs` as cache time;
 - creates the `RoomsAvailability` with the monitor, the remote status, `RoomsManager.isRoomCreated()`, the `client/rooms/servers` map (room name to server URL, filled by `ServerConfigEnricher.enrichRoomsServersUrls()`) and this server URLs (`server/publicUrl` and `server/baseUrl`);
 - registers `GET /reldens-server-status` (`GameConst.ROUTE_PATHS.SERVER_STATUS`, also in the `ServerManager.enableRoutesRateLimit()` list) answered by the `ServerStatusRoute`.
