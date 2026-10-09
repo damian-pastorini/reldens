@@ -125,7 +125,9 @@ class Selectors
             rewardsOpen: '.rewards-open',
             scoresOpen: '.scores-open',
             teamsOpen: '.teams-open',
-            clanOpen: '.clan-open'
+            clanOpen: '.clan-open',
+            localeSelector: '.snippets-setting',
+            localeSettingsTitle: '.settings-container:has(.snippets-setting) h3'
         };
         this.chat = {
             input: '#chat-input',
@@ -164,6 +166,7 @@ class Selectors
         this.stats = {
             container: '.stat-container',
             value: '.stat-value',
+            valueByKey: (statKey) => '.stat-container.stat-'+statKey+' .stat-value',
             firstValue: '.stat-container .stat-value',
             levelContainer: '.level-container',
             experienceContainer: '.experience-container',
@@ -172,7 +175,13 @@ class Selectors
         this.scores = {
             dialog: '.scores-dialog-box',
             dialogTitle: '.scores-dialog-box .box-title',
-            dialogContent: '.scores-dialog-box .box-content'
+            dialogContent: '.scores-dialog-box .box-content',
+            dialogRows: '.scores-dialog-box .score-container',
+            tableRows: '.scores-table .score-container',
+            rowPlayerName: '.score-player-name',
+            rowValue: '.score-value',
+            pagerLink: '.pager-page a',
+            currentPage: '.pager-page-current'
         };
     }
 
@@ -182,7 +191,9 @@ class Selectors
             dialog: '.rewards-dialog-box',
             content: '.rewards-content',
             active: '.reward-active',
-            accepted: '.accepted-reward'
+            accepted: '.accepted-reward',
+            image: '.reward-image',
+            notificationBalloon: '#rewards-notification-balloon'
         };
         this.teams = {
             dialog: '.teams-dialog-box',
