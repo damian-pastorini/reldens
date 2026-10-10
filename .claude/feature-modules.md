@@ -14,6 +14,7 @@ Core game engine
 - Login manager
 - Installation scripts
 - Theme manager
+- Server health (`lib/game/server/health/`): usage limits, rooms availability between servers and the blocking switch, see `.claude/server-health-monitor.md`
 
 ### Rooms (`lib/rooms/`)
 Core multiplayer room system

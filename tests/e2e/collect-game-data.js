@@ -16,6 +16,7 @@ const { RoomObjectsState } = require('./helpers/room-objects-state');
 const { RoomMovementState } = require('./helpers/room-movement-state');
 const { RoomEnemyPlacement } = require('./helpers/room-enemy-placement');
 const { RoomPlayerPlacement } = require('./helpers/room-player-placement');
+const { E2eSeedAndRestoreEndpoints } = require('./helpers/e2e-seed-and-restore-endpoints');
 const { TestDataSetup } = require('./helpers/test-data-setup');
 const { StartupGuard } = require('./helpers/startup-guard');
 const { ClientBundleCheck } = require('./helpers/client-bundle-check');
@@ -256,6 +257,7 @@ class CollectGameData
         RoomMovementState.registerEndpoints(serverManager);
         RoomEnemyPlacement.registerEndpoints(serverManager);
         RoomPlayerPlacement.registerEndpoints(serverManager);
+        E2eSeedAndRestoreEndpoints.registerEndpoints(serverManager);
         await PlayerStateReset.registerResetEndpoint(serverManager, snapshots, config);
         CollectGameData.serverManager = serverManager;
     }
@@ -326,6 +328,7 @@ class CollectGameData
         let serverManager = new modules.ServerManager(serverConfig);
         serverManager.events.on('reldens.beforeInitializeManagers', async (event) => {
             await CollectGameData.ensureRequiredFeatures(event.serverManager);
+            event.serverManager.configManager.server.health.blockingEnabled = false;
         });
         process.stdout.write('Server: creating HTTP server...\n');
         await StartupGuard.runStep(serverManager.createServers(), 'HTTP server creation');

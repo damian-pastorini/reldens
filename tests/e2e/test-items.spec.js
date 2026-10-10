@@ -16,19 +16,11 @@ let expect = BaseE2eTest.expect;
 
 class TestItems
 {
-    static async loginRootPlayer(page, gameConfig, longRun)
-    {
-        let username = gameConfig.e2eUsername || 'root';
-        let password = gameConfig.e2ePassword || 'root';
-        let playerName = gameConfig.e2ePlayerName || 'ImRoot';
-        await Login.loginAndStartGame(page, username, password, playerName, longRun);
-    }
-
     static async loginAndOpenEquipButton(page, gameConfig, longRun)
     {
         let itemId = gameConfig.e2eEquipableItemId || '';
         expect(itemId, 'e2eEquipableItemId must be configured').toBeTruthy();
-        await TestItems.loginRootPlayer(page, gameConfig, longRun);
+        await Login.loginRootPlayer(page, gameConfig, longRun);
         let pauseMs = TimeConstants.pauseMs(longRun);
         await page.click(Selectors.hud.playerStatsOpen);
         await expect(page.locator(Selectors.hud.playerStatsUi)).toBeVisible();
@@ -114,7 +106,7 @@ class TestItems
     {
         let itemId = gameConfig.e2eConsumableItemId || '';
         expect(itemId, 'e2eConsumableItemId must be configured').toBeTruthy();
-        await TestItems.loginRootPlayer(page, gameConfig, longRun);
+        await Login.loginRootPlayer(page, gameConfig, longRun);
         let pauseMs = TimeConstants.pauseMs(longRun);
         await page.click(Selectors.hud.inventoryOpen);
         await expect(page.locator(Selectors.inventory.ui)).toBeVisible();
@@ -136,7 +128,7 @@ class TestItems
     {
         test.describe('Items System', () => {
             test('inventory panel opens and shows items', async ({ page, screenshots, gameConfig, longRun }) => {
-                await TestItems.loginRootPlayer(page, gameConfig, longRun);
+                await Login.loginRootPlayer(page, gameConfig, longRun);
                 let pauseMs = TimeConstants.pauseMs(longRun);
                 await page.click(Selectors.hud.inventoryOpen);
                 await page.waitForTimeout(pauseMs);
@@ -152,7 +144,7 @@ class TestItems
                 await screenshots.capture(page, 'stat-changed-after-equip');
             });
             test('equipment panel opens and shows equipment slots', async ({ page, screenshots, gameConfig, longRun }) => {
-                await TestItems.loginRootPlayer(page, gameConfig, longRun);
+                await Login.loginRootPlayer(page, gameConfig, longRun);
                 let pauseMs = TimeConstants.pauseMs(longRun);
                 await page.click(Selectors.hud.equipmentOpen);
                 await page.waitForTimeout(pauseMs);

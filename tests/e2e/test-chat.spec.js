@@ -2,14 +2,19 @@
  *
  * Reldens - Test Chat
  *
- * Tests opening the chat panel, sending messages, tab switching, and room announcements.
+ * Tests opening the chat panel, sending messages, tab switching, and room announcements. The global messages are sent
+ * by a player and by the admin (the first test user of every group is a copy of root, role 99), and rejected with the
+ * translated texts when the user role is not allowed and when the global messages are disabled (both config values
+ * are overridden for the test and restored by the next reset).
  *
  */
 
 const { BaseE2eTest } = require('./base-e2e-test');
 const { Login } = require('./helpers/login');
 const { TimeConstants } = require('./helpers/time-constants');
+const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
 const { Selectors } = require('./selectors');
+const ChatTranslations = require('../../lib/chat/client/snippets/en_US');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
 
@@ -21,14 +26,6 @@ class TestChat
         await (longRun
             ? page.locator(Selectors.chat.input).pressSequentially(message, { delay: 80 })
             : page.locator(Selectors.chat.input).fill(message));
-    }
-
-    static async loginRootPlayer(page, gameConfig, longRun)
-    {
-        let username = gameConfig.e2eUsername || 'root';
-        let password = gameConfig.e2ePassword || 'root';
-        let playerName = gameConfig.e2ePlayerName || 'ImRoot';
-        await Login.loginAndStartGame(page, username, password, playerName, longRun);
     }
 
     static async loginBothPlayers(page, secondPage, screenshots, longRun, p1, p2)
@@ -53,7 +50,7 @@ class TestChat
 
     static async runSendMessageTest(page, screenshots, gameConfig, longRun)
     {
-        await TestChat.loginRootPlayer(page, gameConfig, longRun);
+        await Login.loginRootPlayer(page, gameConfig, longRun);
         let pauseMs = TimeConstants.pauseMs(longRun);
         let testMessage = 'e2e-global-test';
         await page.click(Selectors.hud.chatOpen);
@@ -72,25 +69,66 @@ class TestChat
         await screenshots.capture(page, 'general-tab-shows-message');
     }
 
+    static async sendGlobalMessage(page, screenshots, longRun, testMessage)
+    {
+        await page.click(Selectors.hud.chatOpen);
+        await page.waitForTimeout(TimeConstants.pauseMs(longRun));
+        await expect(page.locator(Selectors.chat.input)).toBeVisible();
+        await TestChat.typeChatMessage(page, longRun, '#'+testMessage);
+        await screenshots.capture(page, 'global-message-typed');
+        await page.locator(Selectors.chat.input).press('Enter');
+    }
+
+    static async expectGlobalTabMessage(page, screenshots, longRun, testMessage)
+    {
+        await expect(page.locator(Selectors.chat.tabContentGlobal)).toContainText(
+            testMessage,
+            { timeout: TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun) }
+        );
+        await screenshots.capture(page, 'global-tab-shows-message');
+    }
+
     static async runGlobalTabTest(page, screenshots, gameConfig, longRun)
     {
         let username = gameConfig.e2eUsername2 || 'root2';
         let password = gameConfig.e2ePassword2 || 'root';
         let playerName = gameConfig.e2ePlayerName2 || 'ImRoot2';
         await Login.loginAndStartGame(page, username, password, playerName, longRun);
-        let pauseMs = TimeConstants.pauseMs(longRun);
         let testMessage = 'e2e-global-tab-test';
-        await page.click(Selectors.hud.chatOpen);
-        await page.waitForTimeout(pauseMs);
-        await expect(page.locator(Selectors.chat.input)).toBeVisible();
-        await TestChat.typeChatMessage(page, longRun, '#'+testMessage);
-        await screenshots.capture(page, 'global-message-typed');
-        await page.locator(Selectors.chat.input).press('Enter');
-        await expect(page.locator(Selectors.chat.tabContentGlobal)).toContainText(
-            testMessage,
+        await TestChat.sendGlobalMessage(page, screenshots, longRun, testMessage);
+        await TestChat.expectGlobalTabMessage(page, screenshots, longRun, testMessage);
+    }
+
+    static async runAdminGlobalMessageTest(page, screenshots, gameConfig, longRun)
+    {
+        await Login.loginRootPlayer(page, gameConfig, longRun);
+        let testMessage = 'e2e-admin-global-test';
+        await TestChat.sendGlobalMessage(page, screenshots, longRun, testMessage);
+        await TestChat.expectGlobalTabMessage(page, screenshots, longRun, testMessage);
+    }
+
+    static async runRejectedGlobalMessageTest(page, screenshots, gameConfig, e2eGroup, longRun, rejection)
+    {
+        await E2eSeedAndRestoreApi.overrideConfig(gameConfig, e2eGroup, rejection.configPath, rejection.configValue);
+        await Login.loginRootPlayer(page, gameConfig, longRun);
+        let testMessage = 'e2e-rejected-global-test';
+        await TestChat.sendGlobalMessage(page, screenshots, longRun, testMessage);
+        await expect(page.locator(Selectors.chat.tabContentGeneral)).toContainText(
+            rejection.rejectedText,
             { timeout: TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun) }
         );
-        await screenshots.capture(page, 'global-tab-shows-message');
+        await expect(page.locator(Selectors.chat.tabContentGlobal)).not.toContainText(testMessage);
+        await screenshots.capture(page, 'global-message-rejected');
+    }
+
+    static async fetchRoleNotAllowedRejection(gameConfig)
+    {
+        let users = await E2eSeedAndRestoreApi.loadRows(gameConfig, 'users', {username: gameConfig.e2eUsername});
+        return {
+            configPath: 'server/chat/messages/global_allowed_roles',
+            configValue: String(Number([...users].shift().role_id) + 1),
+            rejectedText: ChatTranslations.chat.globalMessagePermissionDenied
+        };
     }
 
     static async runPrivateMessageTest(page, secondPage, screenshots, gameConfig, longRun)
@@ -120,7 +158,7 @@ class TestChat
 
     static async runTabSwitchingTest(page, screenshots, gameConfig, longRun)
     {
-        await TestChat.loginRootPlayer(page, gameConfig, longRun);
+        await Login.loginRootPlayer(page, gameConfig, longRun);
         let pauseMs = TimeConstants.pauseMs(longRun);
         await page.click(Selectors.hud.chatOpen);
         await page.waitForTimeout(pauseMs);
@@ -177,6 +215,26 @@ class TestChat
             });
             test('global message appears in global chat tab', async ({ page, screenshots, gameConfig, longRun }) => {
                 await TestChat.runGlobalTabTest(page, screenshots, gameConfig, longRun);
+            });
+            test('admin global message appears in global chat tab', async ({ page, screenshots, gameConfig, longRun }) => {
+                await TestChat.runAdminGlobalMessageTest(page, screenshots, gameConfig, longRun);
+            });
+            test('global message from a role not allowed shows the permission denied text', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
+                await TestChat.runRejectedGlobalMessageTest(
+                    page,
+                    screenshots,
+                    gameConfig,
+                    e2eGroup,
+                    longRun,
+                    await TestChat.fetchRoleNotAllowedRejection(gameConfig)
+                );
+            });
+            test('global message with the global messages disabled shows the not allowed text', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
+                await TestChat.runRejectedGlobalMessageTest(page, screenshots, gameConfig, e2eGroup, longRun, {
+                    configPath: 'server/chat/messages/global_enabled',
+                    configValue: false,
+                    rejectedText: ChatTranslations.chat.globalMessageNotAllowed
+                });
             });
             test('private message reaches the target player', async ({ page, secondPage, screenshots, gameConfig, longRun }) => {
                 await TestChat.runPrivateMessageTest(page, secondPage, screenshots, gameConfig, longRun);

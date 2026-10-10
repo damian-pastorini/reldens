@@ -4,23 +4,19 @@
  *
  */
 
-const { BaseTest } = require('./base-test');
+const { RandomMovementBaseTest } = require('./fixtures/random-movement-base-test');
 const { ObjectRandomMovement } = require('../lib/objects/server/object/object-random-movement');
-const { RandomMovementBodyBuilder } = require('./fixtures/random-movement-body-builder');
 const { GameConst } = require('../lib/game/constants');
 
-class TestObjectRandomMovement extends BaseTest
+class TestObjectRandomMovement extends RandomMovementBaseTest
 {
 
     constructor(config)
     {
         super(config);
-        this.tileSize = 32;
-        this.mapSize = 30;
-        this.originalTile = 10;
         this.maxTiles = 3;
         this.targetSamples = 200;
-        this.bodyBuilder = new RandomMovementBodyBuilder(this.tileSize, this.mapSize, this.originalTile);
+        this.targetAttempts = 100;
     }
 
     createRandomMovement(body, inBattlePlayers = {})
@@ -28,7 +24,8 @@ class TestObjectRandomMovement extends BaseTest
         return new ObjectRandomMovement({
             objectBody: body,
             getInBattlePlayers: () => inBattlePlayers,
-            maxTiles: this.maxTiles
+            maxTiles: this.maxTiles,
+            targetAttempts: this.targetAttempts
         });
     }
 
