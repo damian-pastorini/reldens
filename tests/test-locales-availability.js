@@ -6,8 +6,9 @@
 
 const { BaseTest } = require('./base-test');
 const { ConfigurationEnricher } = require('../lib/snippets/server/configuration-enricher');
-const { SnippetsUi } = require('../lib/snippets/client/snippets-ui');
+const { SnippetsPlugin } = require('../lib/snippets/client/plugin');
 const { Translator } = require('../lib/snippets/translator');
+const { EventsManager } = require('@reldens/utils');
 
 class TestLocalesAvailability extends BaseTest
 {
@@ -30,19 +31,23 @@ class TestLocalesAvailability extends BaseTest
         });
     }
 
-    createUiScene(clientConfig)
+    async setupSnippetsPlugin(events, clientConfig)
     {
-        return {gameManager: {services: {translator: new Translator({})}, config: {client: clientConfig}}};
+        let snippetsPlugin = new SnippetsPlugin();
+        await snippetsPlugin.setup({gameManager: {services: {}, config: {client: clientConfig}}, events});
+        return snippetsPlugin;
     }
 
     async testTheSelectorOnlyListsTheLocalesWithTranslations()
     {
-        await this.test('the language selector only lists the locales with translations', async () => {
-            let snippetsUi = new SnippetsUi(this.createUiScene({
+        await this.test('only the locales with translations are available after the engine creation starts', async () => {
+            let events = new EventsManager();
+            let snippetsPlugin = await this.setupSnippetsPlugin(events, {
                 locales: [{id: 1, locale: 'en_US', country_code: 'US'}, {id: 1001, locale: 'te_TS', country_code: 'TS'}],
-                snippets: {en_US: {'translator.title': 'Languages Settings'}, te_TS: {}}
-            }));
-            this.assert.deepStrictEqual(snippetsUi.fetchAvailableLocales(), {
+                snippets: {te_TS: {}}
+            });
+            await events.emit('reldens.beforeCreateEngine');
+            this.assert.deepStrictEqual(snippetsPlugin.availableLocales, {
                 0: {id: 1, locale: 'en_US', country_code: 'US'}
             });
         });
