@@ -127,6 +127,7 @@ class Selectors
             teamsOpen: '.teams-open',
             clanOpen: '.clan-open',
             localeSelector: '.snippets-setting',
+            localeSaveError: '.snippets-save-error',
             localeSettingsTitle: '.settings-container:has(.snippets-setting) h3'
         };
         this.chat = {
