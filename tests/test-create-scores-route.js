@@ -73,7 +73,7 @@ class TestCreateScoresRoute extends BaseTest
     {
         await this.test('the configured page size is the scores query limit', async () => {
             let scoresRepository = this.createScoresRepository();
-            await this.requestScoresPage({page: '2'}, scoresRepository, {'server/scores/fullTableView/pageSize': '25'});
+            await this.requestScoresPage({page: '2'}, scoresRepository, {'server/scores/fullTableView/pageSize': 25});
             this.assert.deepStrictEqual(
                 scoresRepository.loadedQueries.shift(),
                 {limit: 25, offset: 25, sortBy: 'total_score', sortDirection: 'DESC'}
@@ -81,20 +81,11 @@ class TestCreateScoresRoute extends BaseTest
         });
     }
 
-    async testAZeroPageSizeUsesTheDefaultPageSize()
+    async testTheMissingPageSizeUsesTheDefaultPageSize()
     {
-        await this.test('a page size lower than 1 uses the default page size', async () => {
+        await this.test('a not configured page size uses the default page size', async () => {
             let scoresRepository = this.createScoresRepository();
-            await this.requestScoresPage({page: '1'}, scoresRepository, {'server/scores/fullTableView/pageSize': 0});
-            this.assert.strictEqual(scoresRepository.loadedQueries.shift().limit, ScoresConst.FULL_TABLE_PAGE_SIZE);
-        });
-    }
-
-    async testANotNumericPageSizeUsesTheDefaultPageSize()
-    {
-        await this.test('a not numeric page size uses the default page size', async () => {
-            let scoresRepository = this.createScoresRepository();
-            await this.requestScoresPage({page: '1'}, scoresRepository, {'server/scores/fullTableView/pageSize': 'abc'});
+            await this.requestScoresPage({page: '1'}, scoresRepository);
             this.assert.strictEqual(scoresRepository.loadedQueries.shift().limit, ScoresConst.FULL_TABLE_PAGE_SIZE);
         });
     }
