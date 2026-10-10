@@ -10,7 +10,7 @@ const { GameClient } = require('../lib/game/client/game-client');
 class TestGameClientFeaturesRooms extends BaseTest
 {
 
-    createGameClient(featuresRoomsNames, serverUrl = 'http://localhost:8080', onFeatureRoomJoined = false)
+    createGameClient(featuresRoomsNames, serverUrl = 'http://localhost:8080')
     {
         return new GameClient(
             serverUrl,
@@ -18,20 +18,19 @@ class TestGameClientFeaturesRooms extends BaseTest
                 getWithoutLogs: (path, defaultValue) => {
                     return 'client/rooms/featuresRoomsNames' === path ? featuresRoomsNames : defaultValue;
                 }
-            },
-            onFeatureRoomJoined
+            }
         );
     }
 
     async testTheJoinedFeatureRoomsRunTheJoinedRoomSetup()
     {
-        await this.test('every feature room joined on another server runs the joined room listeners setup', async () => {
+        await this.test('every feature room joined on another server runs the joined room setup', async () => {
             let setupRooms = [];
-            let gameClient = this.createGameClient(
-                ['chat', 'teams'],
-                'http://localhost:8080',
-                async (featureRoom, featureRoomName) => setupRooms.push([featureRoom.roomName, featureRoomName])
-            );
+            let gameClient = this.createGameClient(['chat', 'teams']);
+            gameClient.onFeatureRoomJoined = async (featureRoom, featureRoomName) => setupRooms.push([
+                featureRoom.roomName,
+                featureRoomName
+            ]);
             await gameClient.connectToGlobalFeaturesRooms(
                 'http://localhost:8081',
                 {joinOrCreate: async (roomName) => ({roomName})},
