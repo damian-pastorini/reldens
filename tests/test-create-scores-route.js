@@ -60,6 +60,15 @@ class TestCreateScoresRoute extends BaseTest
         });
     }
 
+    async testAMissingPageLoadsTheFirstPage()
+    {
+        await this.test('a request without page loads the first page', async () => {
+            let scoresRepository = this.createScoresRepository();
+            await this.requestScoresPage({}, scoresRepository);
+            this.assert.strictEqual(scoresRepository.loadedQueries.shift().offset, 0);
+        });
+    }
+
     async testAZeroPageFallsBackToTheFirstPage()
     {
         await this.test('a page lower than 1 loads the first page', async () => {
