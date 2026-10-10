@@ -6,7 +6,9 @@
 
 const { BaseTest } = require('./base-test');
 const { UsersLocaleUpdater } = require('../lib/snippets/server/users-locale-updater');
+const { SnippetsPlugin } = require('../lib/snippets/server/plugin');
 const { SnippetsConst } = require('../lib/snippets/constants');
+const { EventsManager, sc } = require('@reldens/utils');
 const timersPromises = require('timers/promises');
 
 class TestUsersLocaleUpdater extends BaseTest
@@ -44,11 +46,11 @@ class TestUsersLocaleUpdater extends BaseTest
         return await Promise.all(sentChanges);
     }
 
-    createSaveErrors(errorsCount)
+    createSaveErrors(changesTimes)
     {
         let saveErrors = [];
-        for(let i = 0; i < errorsCount; i++){
-            saveErrors.push({act: SnippetsConst.ACTIONS.UPDATE_ERROR, listener: SnippetsConst.KEY});
+        for(let changedAt of changesTimes){
+            saveErrors.push({act: SnippetsConst.ACTIONS.UPDATE_ERROR, listener: SnippetsConst.KEY, changedAt});
         }
         return saveErrors;
     }
@@ -61,6 +63,7 @@ class TestUsersLocaleUpdater extends BaseTest
             },
             usersLocaleRepository: {
                 loadOneBy: async (field, value) => usersLocaleRows.filter((row) => value === row[field]).shift(),
+                loadOneByWithRelations: async () => false,
                 updateById: async (id, patch) => {
                     Object.assign(usersLocaleRows.filter((row) => id === row.id).shift(), patch);
                     return savedChanges.push({updated: id, patch});
@@ -108,6 +111,26 @@ class TestUsersLocaleUpdater extends BaseTest
         });
     }
 
+    async testANewLoginAcceptsTheChangesOfAnEarlierClock()
+    {
+        await this.test('a new login accepts the language changes sent with an earlier device clock', async () => {
+            let usersLocaleRows = [];
+            let events = new EventsManager();
+            let storedUpdater = this.createUpdater(usersLocaleRows, []);
+            let repositories = {
+                locale: storedUpdater.localeRepository,
+                usersLocale: storedUpdater.usersLocaleRepository
+            };
+            let dataServer = {getEntity: (entityKey) => sc.get(repositories, entityKey, {})};
+            let snippetsPlugin = new SnippetsPlugin();
+            await snippetsPlugin.setup({events, dataServer});
+            await this.sendLocaleChanges(snippetsPlugin.usersLocaleUpdater, [{up: 2, changedAt: 2000}]);
+            await events.emit('reldens.beforeSuperInitialGameData', {}, {events, dataServer}, {}, {id: 1001});
+            await this.sendLocaleChanges(snippetsPlugin.usersLocaleUpdater, [{up: 1, changedAt: 1000}]);
+            this.assert.deepStrictEqual(usersLocaleRows, [{id: 1, user_id: 1001, locale_id: 1}]);
+        });
+    }
+
     async testANotIntegerLocaleSendsTheSaveError()
     {
         await this.test('a locale ID that is not a positive integer is not saved and the player gets the error', async () => {
@@ -120,7 +143,7 @@ class TestUsersLocaleUpdater extends BaseTest
             ], clientMessages);
             this.assert.deepStrictEqual(results, [false, false, false]);
             this.assert.deepStrictEqual(savedChanges, []);
-            this.assert.deepStrictEqual(clientMessages, this.createSaveErrors(3));
+            this.assert.deepStrictEqual(clientMessages, this.createSaveErrors([1, 2, 3]));
         });
     }
 
@@ -135,7 +158,7 @@ class TestUsersLocaleUpdater extends BaseTest
             ], clientMessages);
             this.assert.deepStrictEqual(results, [false, false]);
             this.assert.deepStrictEqual(savedChanges, []);
-            this.assert.deepStrictEqual(clientMessages, this.createSaveErrors(2));
+            this.assert.deepStrictEqual(clientMessages, this.createSaveErrors([0, '1']));
         });
     }
 
@@ -147,7 +170,7 @@ class TestUsersLocaleUpdater extends BaseTest
             updater.usersLocaleRepository.create = async () => Promise.reject(new Error('Storage unavailable.'));
             let results = await this.sendLocaleChanges(updater, [{up: 2, changedAt: 1}], clientMessages);
             this.assert.deepStrictEqual(results, [false]);
-            this.assert.deepStrictEqual(clientMessages, this.createSaveErrors(1));
+            this.assert.deepStrictEqual(clientMessages, this.createSaveErrors([1]));
         });
     }
 
@@ -182,7 +205,7 @@ class TestUsersLocaleUpdater extends BaseTest
             let results = await this.sendLocaleChanges(updater, [{up: 1003, changedAt: 1}], clientMessages);
             this.assert.deepStrictEqual(results, [false]);
             this.assert.deepStrictEqual(savedChanges, []);
-            this.assert.deepStrictEqual(clientMessages, this.createSaveErrors(1));
+            this.assert.deepStrictEqual(clientMessages, this.createSaveErrors([1]));
         });
     }
 
