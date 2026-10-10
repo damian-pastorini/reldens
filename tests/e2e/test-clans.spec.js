@@ -5,7 +5,9 @@
  * Tests the clans panel visibility, clan creation, and multi-player clan interactions. The clan level modifiers and the
  * owner disband cases use the third group player as the clan owner (the second one keeps the clan of the creation case):
  * the modifiers case preserves the owner clan rows, so the reset deletes the clan created by the test, and the disband
- * case seeds the clan and its memberships (the owner and the first group player, offline) before the owner logs in.
+ * case seeds the clan and its memberships (the owner and the first group player, offline) before the owner logs in. The
+ * clan modifiers are applied on every login over the stored stats, which never keep them: a new login applies them once
+ * and the member offline during the disband logs in without them.
  *
  */
 
@@ -90,10 +92,8 @@ class TestClans
         ).toBe(expectedValue);
     }
 
-    static async runClanLevelModifiersTest(page, screenshots, gameConfig, e2eGroup, longRun)
+    static async seedClanLevelModifier(gameConfig, e2eGroup)
     {
-        let ownerId = await E2eSeedAndRestoreApi.fetchRowId(gameConfig, 'players', {name: gameConfig.e2ePlayerName3});
-        await TestClans.preserveClanRows(gameConfig, e2eGroup, ownerId);
         await E2eSeedAndRestoreApi.createRow(gameConfig, e2eGroup, 'clanLevelsModifiers', {
             level_id: (await TestClans.fetchInitialLevel(gameConfig)).id,
             key: 'e2e_clan_'+TestClans.CLAN_MODIFIER_STAT_KEY,
@@ -101,11 +101,21 @@ class TestClans
             operation: TestClans.INCREMENT_OPERATION,
             value: String(TestClans.CLAN_MODIFIER_VALUE)
         });
-        await Login.loginRootPlayer(page, gameConfig, longRun, TestClans.CLAN_OWNER_USER_KEY_SUFFIX);
+    }
+
+    static async loginAndFindStat(page, gameConfig, longRun, userKeySuffix = TestClans.CLAN_OWNER_USER_KEY_SUFFIX)
+    {
+        await Login.loginRootPlayer(page, gameConfig, longRun, userKeySuffix);
         let statValueLocator = page.locator(Selectors.stats.valueByKey(TestClans.CLAN_MODIFIER_STAT_KEY));
         await statValueLocator.waitFor(
             { state: 'attached', timeout: TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun) }
         );
+        return statValueLocator;
+    }
+
+    static async createClanAndExpectModifier(page, screenshots, longRun)
+    {
+        let statValueLocator = page.locator(Selectors.stats.valueByKey(TestClans.CLAN_MODIFIER_STAT_KEY));
         let statBefore = Number(await statValueLocator.textContent());
         await TestClans.openClanPanel(page, longRun);
         await TestClans.createClan(page, screenshots, longRun);
@@ -115,6 +125,27 @@ class TestClans
             statBefore + TestClans.CLAN_MODIFIER_VALUE,
             'The clan level modifier must be applied to the clan owner'
         );
+        return statBefore;
+    }
+
+    static async fetchStoredStatValue(gameConfig, playerId)
+    {
+        let statFilters = {player_id: playerId};
+        statFilters.stat_id = await E2eSeedAndRestoreApi.fetchRowId(
+            gameConfig,
+            'stats',
+            {key: TestClans.CLAN_MODIFIER_STAT_KEY}
+        );
+        return Number([...await E2eSeedAndRestoreApi.loadRows(gameConfig, 'playersStats', statFilters)].shift().value);
+    }
+
+    static async runClanLevelModifiersTest(page, screenshots, gameConfig, e2eGroup, longRun)
+    {
+        let ownerId = await E2eSeedAndRestoreApi.fetchRowId(gameConfig, 'players', {name: gameConfig.e2ePlayerName3});
+        await TestClans.preserveClanRows(gameConfig, e2eGroup, ownerId);
+        await TestClans.seedClanLevelModifier(gameConfig, e2eGroup);
+        let statValueLocator = await TestClans.loginAndFindStat(page, gameConfig, longRun);
+        let statBefore = await TestClans.createClanAndExpectModifier(page, screenshots, longRun);
         await page.click(Selectors.clans.disbandAction);
         await TestClans.expectStatValue(
             statValueLocator,
@@ -123,6 +154,62 @@ class TestClans
             'The clan level modifier must be reverted on leave'
         );
         await screenshots.capture(page, 'clan-left-modifier-reverted');
+    }
+
+    static async runModifiersAfterNewLoginTest(page, screenshots, gameConfig, e2eGroup, longRun)
+    {
+        let ownerId = await E2eSeedAndRestoreApi.fetchRowId(gameConfig, 'players', {name: gameConfig.e2ePlayerName3});
+        await TestClans.preserveClanRows(gameConfig, e2eGroup, ownerId);
+        await TestClans.seedClanLevelModifier(gameConfig, e2eGroup);
+        await TestClans.loginAndFindStat(page, gameConfig, longRun);
+        let statBefore = await TestClans.createClanAndExpectModifier(page, screenshots, longRun);
+        let statValueLocator = await TestClans.loginAndFindStat(page, gameConfig, longRun);
+        await TestClans.expectStatValue(
+            statValueLocator,
+            longRun,
+            statBefore + TestClans.CLAN_MODIFIER_VALUE,
+            'The clan level modifier must be applied once after the new login'
+        );
+        expect(
+            await TestClans.fetchStoredStatValue(gameConfig, ownerId),
+            'The stored stat must not keep the clan level modifier'
+        ).toBe(statBefore);
+        await screenshots.capture(page, 'clan-modifier-applied-once-after-login');
+    }
+
+    static async runOfflineMemberLoginAfterDisbandTest(page, screenshots, gameConfig, e2eGroup, longRun)
+    {
+        let ownerId = await E2eSeedAndRestoreApi.fetchRowId(gameConfig, 'players', {name: gameConfig.e2ePlayerName3});
+        let memberId = await E2eSeedAndRestoreApi.fetchRowId(gameConfig, 'players', {name: gameConfig.e2ePlayerName});
+        await TestClans.seedClanLevelModifier(gameConfig, e2eGroup);
+        let clanId = await TestClans.seedClanWithMembers(gameConfig, e2eGroup, ownerId, [ownerId, memberId]);
+        let storedStat = await TestClans.fetchStoredStatValue(gameConfig, memberId);
+        let statValueLocator = await TestClans.loginAndFindStat(page, gameConfig, longRun, '');
+        await TestClans.expectStatValue(
+            statValueLocator,
+            longRun,
+            storedStat + TestClans.CLAN_MODIFIER_VALUE,
+            'The clan level modifier must be applied to the member on the login'
+        );
+        await screenshots.capture(page, 'clan-member-with-modifier');
+        await TestClans.loginAndFindStat(page, gameConfig, longRun);
+        await TestClans.openClanPanel(page, longRun);
+        await page.click(Selectors.clans.disbandAction);
+        await expect.poll(
+            async () => await E2eSeedAndRestoreApi.loadRows(gameConfig, 'clanMembers', {clan_id: clanId}),
+            {
+                message: 'The disband must delete every membership, the offline member included',
+                timeout: TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun)
+            }
+        ).toEqual([]);
+        let memberStatLocator = await TestClans.loginAndFindStat(page, gameConfig, longRun, '');
+        await TestClans.expectStatValue(
+            memberStatLocator,
+            longRun,
+            storedStat,
+            'The member offline during the disband must log in without the clan level modifier'
+        );
+        await screenshots.capture(page, 'clan-member-without-modifier-after-disband');
     }
 
     static async runOfflineMemberDisbandTest(page, screenshots, gameConfig, e2eGroup, longRun)
@@ -194,6 +281,12 @@ class TestClans
             });
             test('owner disband removes the offline members from the clan', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestClans.runOfflineMemberDisbandTest(page, screenshots, gameConfig, e2eGroup, longRun);
+            });
+            test('clan level modifiers are applied once after a new login', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
+                await TestClans.runModifiersAfterNewLoginTest(page, screenshots, gameConfig, e2eGroup, longRun);
+            });
+            test('member offline during the disband logs in without the clan modifiers', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
+                await TestClans.runOfflineMemberLoginAfterDisbandTest(page, screenshots, gameConfig, e2eGroup, longRun);
             });
         });
     }
