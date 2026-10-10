@@ -18,6 +18,16 @@ class E2eSeedAndRestoreApi
         return (await SecurityApi.request(gameConfig, 'POST', '/api/e2e/data/create', {group, entityKey, row})).row;
     }
 
+    static async updateCreatedRow(gameConfig, group, entityKey, id, patch)
+    {
+        return (await SecurityApi.request(
+            gameConfig,
+            'POST',
+            '/api/e2e/data/update-created',
+            {group, entityKey, id, patch}
+        )).updated;
+    }
+
     static async preserveRows(gameConfig, group, entityKey, filters)
     {
         return (await SecurityApi.request(gameConfig, 'POST', '/api/e2e/data/preserve', {group, entityKey, filters})).rows;
