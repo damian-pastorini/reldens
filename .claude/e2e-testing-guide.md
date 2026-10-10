@@ -137,6 +137,8 @@ group by the global teardown:
 
 - `POST create` (`{group, entityKey, row}`) - creates a row with `dataServer.getEntity(entityKey).create(row)`; the
   reset deletes the created rows of the group in reverse order
+- `POST update-created` (`{group, entityKey, id, patch}`) - updates a row created by the same group (any other row is
+  refused), for example disabling a seeded locale after the login; the reset deletes it like every created row
 - `POST preserve` (`{group, entityKey, filters}`) - stores the rows matching the filters; the reset deletes the rows
   created since then for the same filters and writes the stored values back, before it deletes the created rows, so a
   preserved row that references a seeded row (a user locale pointing to a seeded locale, a clan membership) never
