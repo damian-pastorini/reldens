@@ -29,13 +29,13 @@ class TestUsersLocaleUpdater extends BaseTest
         ].filter((locale) => filters.id === locale.id && filters.enabled === locale.enabled).shift();
     }
 
-    async sendLocaleChanges(updater, localesIds)
+    async sendLocaleChanges(updater, localesChanges)
     {
         let sentChanges = [];
-        for(let localeId of localesIds){
+        for(let localeChange of localesChanges){
             sentChanges.push(updater.executeMessageActions(
                 {},
-                {act: SnippetsConst.ACTIONS.UPDATE, up: localeId},
+                {act: SnippetsConst.ACTIONS.UPDATE, ...localeChange},
                 {},
                 {userId: '1001'}
             ));
@@ -68,7 +68,7 @@ class TestUsersLocaleUpdater extends BaseTest
         await this.test('two quick locale changes save one user locale row with the last chosen locale', async () => {
             let usersLocaleRows = [];
             let updater = this.createUpdater(usersLocaleRows, []);
-            await this.sendLocaleChanges(updater, ['1', '2']);
+            await this.sendLocaleChanges(updater, [{up: 1, changedAt: 1}, {up: 2, changedAt: 2}]);
             this.assert.deepStrictEqual(usersLocaleRows, [{id: 1, user_id: 1001, locale_id: 2}]);
             this.assert.deepStrictEqual(updater.pendingSaves, {});
         });
@@ -78,7 +78,19 @@ class TestUsersLocaleUpdater extends BaseTest
     {
         await this.test('the last chosen locale is saved when the first locale lookup answers later', async () => {
             let usersLocaleRows = [];
-            await this.sendLocaleChanges(this.createUpdater(usersLocaleRows, [], 1), ['1', '2']);
+            let updater = this.createUpdater(usersLocaleRows, [], 1);
+            await this.sendLocaleChanges(updater, [{up: 1, changedAt: 1}, {up: 2, changedAt: 2}]);
+            this.assert.deepStrictEqual(usersLocaleRows, [{id: 1, user_id: 1001, locale_id: 2}]);
+        });
+    }
+
+    async testAnOlderChangeArrivingLaterIsIgnored()
+    {
+        await this.test('a locale change older than the last received change is not saved', async () => {
+            let usersLocaleRows = [];
+            let updater = this.createUpdater(usersLocaleRows, []);
+            let results = await this.sendLocaleChanges(updater, [{up: 2, changedAt: 2}, {up: 1, changedAt: 1}]);
+            this.assert.strictEqual(results.pop(), false);
             this.assert.deepStrictEqual(usersLocaleRows, [{id: 1, user_id: 1001, locale_id: 2}]);
         });
     }
@@ -87,8 +99,25 @@ class TestUsersLocaleUpdater extends BaseTest
     {
         await this.test('a locale ID that is not a positive integer is ignored', async () => {
             let savedChanges = [];
-            let results = await this.sendLocaleChanges(this.createUpdater([], savedChanges), ['abc', '0', '1.5']);
+            let results = await this.sendLocaleChanges(this.createUpdater([], savedChanges), [
+                {up: '1', changedAt: 1},
+                {up: 0, changedAt: 2},
+                {up: 1.5, changedAt: 3}
+            ]);
             this.assert.deepStrictEqual(results, [false, false, false]);
+            this.assert.deepStrictEqual(savedChanges, []);
+        });
+    }
+
+    async testAMissingChangeTimeIsIgnored()
+    {
+        await this.test('a locale change without a valid change time is ignored', async () => {
+            let savedChanges = [];
+            let results = await this.sendLocaleChanges(this.createUpdater([], savedChanges), [
+                {up: 1},
+                {up: 1, changedAt: '1'}
+            ]);
+            this.assert.deepStrictEqual(results, [false, false]);
             this.assert.deepStrictEqual(savedChanges, []);
         });
     }
@@ -97,7 +126,7 @@ class TestUsersLocaleUpdater extends BaseTest
     {
         await this.test('the chosen locale creates the user locale row when the user has none', async () => {
             let savedChanges = [];
-            await this.sendLocaleChanges(this.createUpdater([], savedChanges), ['2']);
+            await this.sendLocaleChanges(this.createUpdater([], savedChanges), [{up: 2, changedAt: 1}]);
             this.assert.deepStrictEqual(savedChanges, [{created: {user_id: 1001, locale_id: 2}}]);
         });
     }
@@ -107,7 +136,7 @@ class TestUsersLocaleUpdater extends BaseTest
         await this.test('the chosen locale updates the existing user locale row', async () => {
             let savedChanges = [];
             let updater = this.createUpdater([{id: 1001, locale_id: 1, user_id: 1001}], savedChanges);
-            await this.sendLocaleChanges(updater, ['2']);
+            await this.sendLocaleChanges(updater, [{up: 2, changedAt: 1}]);
             this.assert.deepStrictEqual(savedChanges, [{updated: 1001, patch: {locale_id: 2}}]);
         });
     }
@@ -116,7 +145,7 @@ class TestUsersLocaleUpdater extends BaseTest
     {
         await this.test('a locale ID that does not exist or is not enabled is ignored', async () => {
             let savedChanges = [];
-            let results = await this.sendLocaleChanges(this.createUpdater([], savedChanges), ['1003']);
+            let results = await this.sendLocaleChanges(this.createUpdater([], savedChanges), [{up: 1003, changedAt: 1}]);
             this.assert.deepStrictEqual(results, [false]);
             this.assert.deepStrictEqual(savedChanges, []);
         });
@@ -128,7 +157,7 @@ class TestUsersLocaleUpdater extends BaseTest
             let savedChanges = [];
             let result = await this.createUpdater([], savedChanges).executeMessageActions(
                 {},
-                {act: 'aud.Up', up: '2'},
+                {act: 'aud.Up', up: 2, changedAt: 1},
                 {},
                 {userId: '1001'}
             );
