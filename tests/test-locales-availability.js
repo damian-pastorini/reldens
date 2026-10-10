@@ -44,7 +44,8 @@ class TestLocalesAvailability extends BaseTest
             let events = new EventsManager();
             let snippetsPlugin = await this.setupSnippetsPlugin(events, {
                 locales: [{id: 1, locale: 'en_US', country_code: 'US'}, {id: 1001, locale: 'te_TS', country_code: 'TS'}],
-                snippets: {te_TS: {}}
+                snippets: {te_TS: {}},
+                message: {listeners: {}}
             });
             await events.emit('reldens.beforeCreateEngine');
             this.assert.deepStrictEqual(snippetsPlugin.availableLocales, {
