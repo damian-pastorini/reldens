@@ -23,7 +23,7 @@ class TestAnimationObjectActionVisibility extends BaseTest
                 client_key: 'chest_forest_1',
                 id: 18
             }),
-            {runOnAction: true},
+            {runOnAction: true, runOnHit: true},
             visibility
         );
     }
@@ -42,15 +42,20 @@ class TestAnimationObjectActionVisibility extends BaseTest
         return sentToPlayer.map(message => message.act);
     }
 
-    runAction(animationObject)
+    runTrigger(animationObject, triggerMethod)
     {
         let roomMessages = {broadcasted: [], sentToPlayer: []};
-        animationObject.onAction({
+        let playerBody = {playerId: 'session1'};
+        animationObject[triggerMethod]({
             room: {
                 broadcast: (messageKey, message) => roomMessages.broadcasted.push(message),
-                getClientById: () => ({send: (messageKey, message) => roomMessages.sentToPlayer.push(message)})
+                getClientById: (playerId) => playerBody.playerId === playerId
+                    ? {send: (messageKey, message) => roomMessages.sentToPlayer.push(message)}
+                    : false
             },
-            playerBody: {playerId: 'session1'}
+            playerBody,
+            bodyA: {},
+            bodyB: playerBody
         });
         return roomMessages;
     }
@@ -59,7 +64,7 @@ class TestAnimationObjectActionVisibility extends BaseTest
     {
         await this.test('a player visible animation is sent only to the player who executed the action', async () => {
             let animationObject = this.createChestObject({playerVisible: true});
-            let roomMessages = this.runAction(animationObject);
+            let roomMessages = this.runTrigger(animationObject, 'onAction');
             this.assert.deepStrictEqual(roomMessages.sentToPlayer, [animationObject.animationData]);
             this.assert.deepStrictEqual(roomMessages.broadcasted, []);
         });
@@ -69,7 +74,7 @@ class TestAnimationObjectActionVisibility extends BaseTest
     {
         await this.test('a room visible animation is broadcasted and not sent again to the player', async () => {
             let animationObject = this.createChestObject({roomVisible: true});
-            let roomMessages = this.runAction(animationObject);
+            let roomMessages = this.runTrigger(animationObject, 'onAction');
             this.assert.deepStrictEqual(roomMessages.broadcasted, [animationObject.animationData]);
             this.assert.deepStrictEqual(roomMessages.sentToPlayer, []);
         });
@@ -78,7 +83,40 @@ class TestAnimationObjectActionVisibility extends BaseTest
     async testTheNotVisibleAnimationIsNotSent()
     {
         await this.test('an animation without room or player visibility is not sent', async () => {
-            this.assert.deepStrictEqual(this.runAction(this.createChestObject({})), {broadcasted: [], sentToPlayer: []});
+            this.assert.deepStrictEqual(
+                this.runTrigger(this.createChestObject({}), 'onAction'),
+                {broadcasted: [], sentToPlayer: []}
+            );
+        });
+    }
+
+    async testThePlayerVisibleHitAnimationIsSentOnlyToTheHittingPlayer()
+    {
+        await this.test('a player visible hit animation is sent only to the player who hit the object', async () => {
+            let animationObject = this.createChestObject({playerVisible: true});
+            let roomMessages = this.runTrigger(animationObject, 'onHit');
+            this.assert.deepStrictEqual(roomMessages.sentToPlayer, [animationObject.animationData]);
+            this.assert.deepStrictEqual(roomMessages.broadcasted, []);
+        });
+    }
+
+    async testTheRoomVisibleHitAnimationIsOnlyBroadcasted()
+    {
+        await this.test('a room visible hit animation is broadcasted and not sent again to the player', async () => {
+            let animationObject = this.createChestObject({roomVisible: true});
+            let roomMessages = this.runTrigger(animationObject, 'onHit');
+            this.assert.deepStrictEqual(roomMessages.broadcasted, [animationObject.animationData]);
+            this.assert.deepStrictEqual(roomMessages.sentToPlayer, []);
+        });
+    }
+
+    async testTheNotVisibleHitAnimationIsNotSent()
+    {
+        await this.test('a hit animation without room or player visibility is not sent', async () => {
+            this.assert.deepStrictEqual(
+                this.runTrigger(this.createChestObject({}), 'onHit'),
+                {broadcasted: [], sentToPlayer: []}
+            );
         });
     }
 
