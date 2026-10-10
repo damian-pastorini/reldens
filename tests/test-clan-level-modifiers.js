@@ -84,18 +84,11 @@ class TestClanLevelModifiers extends BaseTest
     {
         await this.test('loading a clan does not join the player so the modifiers are applied by the join only', async () => {
             let playerSchema = ClanFixturesBuilder.createPlayerSchema();
-            let clanModel = {
-                id: 10,
-                owner_id: 1,
-                name: 'Test Clan',
-                points: 0,
-                related_players: {id: 1, name: 'ImRoot'},
-                related_clan_members: [{player_id: 1}],
-                related_clan_levels: ClanFixturesBuilder.createLevelModel()
-            };
             let teamsPlugin = {
                 clans: {},
-                dataServer: {getEntity: () => ({loadByIdWithRelations: async () => clanModel})}
+                dataServer: {
+                    getEntity: () => ({loadByIdWithRelations: async () => ClanFixturesBuilder.createClanModel()})
+                }
             };
             let clan = await ClanFactory.create(10, playerSchema, {}, {}, teamsPlugin);
             this.assert.deepStrictEqual(clan.players, {});
