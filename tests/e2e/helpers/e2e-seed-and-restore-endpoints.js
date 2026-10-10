@@ -2,8 +2,8 @@
  *
  * Reldens - E2E Seed And Restore Endpoints
  *
- * Server side e2e endpoints to seed the rows a spec needs, preserve the stored rows a spec changes, read the stored rows
- * a spec asserts and override config values of the running server. The seeded rows, the preserved rows and the
+ * Server side e2e endpoints to seed the rows a spec needs, update the rows seeded by the same group, preserve the stored
+ * rows a spec changes, read the stored rows a spec asserts and override config values of the running server. The seeded rows, the preserved rows and the
  * overridden values are kept per parallel spec group, and the reset that runs before every test of a group (and the
  * global teardown for every group) restores the preserved rows (the rows created since then for the same filters are
  * deleted), deletes the seeded rows and restores the values of that group only, so the data of one spec never reaches
@@ -44,6 +44,16 @@ class E2eSeedAndRestoreEndpoints
             id: createdRow.id
         });
         return createdRow;
+    }
+
+    static async updateCreatedRow(serverManager, groupKey, entityKey, id, patch)
+    {
+        let groupCreatedRows = sc.get(E2eSeedAndRestoreEndpoints.createdRows, groupKey, []);
+        if(!groupCreatedRows.some(createdRow => entityKey === createdRow.entityKey && id === createdRow.id)){
+            Logger.warning('[e2e-seed-and-restore] Only the rows created by the group can be updated.', {entityKey, id});
+            return false;
+        }
+        return await serverManager.dataServer.getEntity(entityKey).updateById(id, patch);
     }
 
     static async preserveRows(serverManager, groupKey, entityKey, filters)
@@ -166,6 +176,17 @@ class E2eSeedAndRestoreEndpoints
                     sc.get(request.body, 'group', ''),
                     sc.get(request.body, 'entityKey', ''),
                     sc.get(request.body, 'row', {})
+                )
+            });
+        });
+        app.post('/api/e2e/data/update-created', async (request, response) => {
+            response.json({
+                updated: await E2eSeedAndRestoreEndpoints.updateCreatedRow(
+                    serverManager,
+                    sc.get(request.body, 'group', ''),
+                    sc.get(request.body, 'entityKey', ''),
+                    sc.get(request.body, 'id', 0),
+                    sc.get(request.body, 'patch', {})
                 )
             });
         });
