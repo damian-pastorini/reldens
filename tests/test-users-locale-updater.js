@@ -29,18 +29,28 @@ class TestUsersLocaleUpdater extends BaseTest
         ].filter((locale) => filters.id === locale.id && filters.enabled === locale.enabled).shift();
     }
 
-    async sendLocaleChanges(updater, localesChanges)
+    async sendLocaleChanges(updater, localesChanges, clientMessages = [])
     {
+        let client = {send: (messageKey, message) => clientMessages.push(message)};
         let sentChanges = [];
         for(let localeChange of localesChanges){
             sentChanges.push(updater.executeMessageActions(
-                {},
+                client,
                 {act: SnippetsConst.ACTIONS.UPDATE, ...localeChange},
                 {},
                 {userId: '1001'}
             ));
         }
         return await Promise.all(sentChanges);
+    }
+
+    createSaveErrors(errorsCount)
+    {
+        let saveErrors = [];
+        for(let i = 0; i < errorsCount; i++){
+            saveErrors.push({act: SnippetsConst.ACTIONS.UPDATE_ERROR, listener: SnippetsConst.KEY});
+        }
+        return saveErrors;
     }
 
     createUpdater(usersLocaleRows, savedChanges, slowLocaleId = 0)
@@ -88,37 +98,56 @@ class TestUsersLocaleUpdater extends BaseTest
     {
         await this.test('a locale change older than the last received change is not saved', async () => {
             let usersLocaleRows = [];
+            let clientMessages = [];
             let updater = this.createUpdater(usersLocaleRows, []);
-            let results = await this.sendLocaleChanges(updater, [{up: 2, changedAt: 2}, {up: 1, changedAt: 1}]);
+            let localesChanges = [{up: 2, changedAt: 2}, {up: 1, changedAt: 1}];
+            let results = await this.sendLocaleChanges(updater, localesChanges, clientMessages);
             this.assert.strictEqual(results.pop(), false);
             this.assert.deepStrictEqual(usersLocaleRows, [{id: 1, user_id: 1001, locale_id: 2}]);
+            this.assert.deepStrictEqual(clientMessages, []);
         });
     }
 
-    async testANotIntegerLocaleIsIgnored()
+    async testANotIntegerLocaleSendsTheSaveError()
     {
-        await this.test('a locale ID that is not a positive integer is ignored', async () => {
+        await this.test('a locale ID that is not a positive integer is not saved and the player gets the error', async () => {
             let savedChanges = [];
+            let clientMessages = [];
             let results = await this.sendLocaleChanges(this.createUpdater([], savedChanges), [
                 {up: '1', changedAt: 1},
                 {up: 0, changedAt: 2},
                 {up: 1.5, changedAt: 3}
-            ]);
+            ], clientMessages);
             this.assert.deepStrictEqual(results, [false, false, false]);
             this.assert.deepStrictEqual(savedChanges, []);
+            this.assert.deepStrictEqual(clientMessages, this.createSaveErrors(3));
         });
     }
 
-    async testAMissingChangeTimeIsIgnored()
+    async testAMissingChangeTimeSendsTheSaveError()
     {
-        await this.test('a locale change without a valid change time is ignored', async () => {
+        await this.test('a locale change without a valid change time is not saved and the player gets the error', async () => {
             let savedChanges = [];
+            let clientMessages = [];
             let results = await this.sendLocaleChanges(this.createUpdater([], savedChanges), [
                 {up: 1},
                 {up: 1, changedAt: '1'}
-            ]);
+            ], clientMessages);
             this.assert.deepStrictEqual(results, [false, false]);
             this.assert.deepStrictEqual(savedChanges, []);
+            this.assert.deepStrictEqual(clientMessages, this.createSaveErrors(2));
+        });
+    }
+
+    async testAStorageErrorSendsTheSaveError()
+    {
+        await this.test('a locale change that fails on the storage sends the error to the player', async () => {
+            let clientMessages = [];
+            let updater = this.createUpdater([], []);
+            updater.usersLocaleRepository.create = async () => Promise.reject(new Error('Storage unavailable.'));
+            let results = await this.sendLocaleChanges(updater, [{up: 2, changedAt: 1}], clientMessages);
+            this.assert.deepStrictEqual(results, [false]);
+            this.assert.deepStrictEqual(clientMessages, this.createSaveErrors(1));
         });
     }
 
@@ -126,8 +155,11 @@ class TestUsersLocaleUpdater extends BaseTest
     {
         await this.test('the chosen locale creates the user locale row when the user has none', async () => {
             let savedChanges = [];
-            await this.sendLocaleChanges(this.createUpdater([], savedChanges), [{up: 2, changedAt: 1}]);
+            let clientMessages = [];
+            let updater = this.createUpdater([], savedChanges);
+            await this.sendLocaleChanges(updater, [{up: 2, changedAt: 1}], clientMessages);
             this.assert.deepStrictEqual(savedChanges, [{created: {user_id: 1001, locale_id: 2}}]);
+            this.assert.deepStrictEqual(clientMessages, []);
         });
     }
 
@@ -141,13 +173,16 @@ class TestUsersLocaleUpdater extends BaseTest
         });
     }
 
-    async testAnUnknownLocaleIsIgnored()
+    async testAnUnknownLocaleSendsTheSaveError()
     {
-        await this.test('a locale ID that does not exist or is not enabled is ignored', async () => {
+        await this.test('a locale that does not exist or is not enabled is not saved and the player gets the error', async () => {
             let savedChanges = [];
-            let results = await this.sendLocaleChanges(this.createUpdater([], savedChanges), [{up: 1003, changedAt: 1}]);
+            let clientMessages = [];
+            let updater = this.createUpdater([], savedChanges);
+            let results = await this.sendLocaleChanges(updater, [{up: 1003, changedAt: 1}], clientMessages);
             this.assert.deepStrictEqual(results, [false]);
             this.assert.deepStrictEqual(savedChanges, []);
+            this.assert.deepStrictEqual(clientMessages, this.createSaveErrors(1));
         });
     }
 
