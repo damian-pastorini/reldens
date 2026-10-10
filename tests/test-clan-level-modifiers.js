@@ -11,6 +11,7 @@ const { OfflineMemberModifiersReverter } = require('../lib/teams/server/offline-
 const { ClanLeave } = require('../lib/teams/server/message-actions/clan-leave');
 const { ClanJoin } = require('../lib/teams/server/message-actions/clan-join');
 const { ChatMessageActions } = require('../lib/teams/server/message-actions/chat-message-actions');
+const { UsersPlugin } = require('../lib/users/server/plugin');
 const { Modifier } = require('@reldens/modifiers');
 const { EventsManager } = require('@reldens/utils');
 
@@ -85,16 +86,20 @@ class TestClanLevelModifiers extends BaseTest
         return clan;
     }
 
-    createOfflineMemberReverter(statsRows, playerStatsRows, updatedStats)
+    async createOfflineMemberReverter(statsRows, playerStatsRows, updatedStats)
     {
-        return new OfflineMemberModifiersReverter({
+        let dataServer = {
             getEntity: (entityKey) => 'stats' === entityKey
                 ? {loadAll: async () => statsRows}
                 : {
                     loadBy: async () => playerStatsRows,
-                    updateById: async (id, patch) => updatedStats.push({id, patch})
+                    update: async (filters, patch) => updatedStats.push({filters, patch})
                 }
-        });
+        };
+        let usersPlugin = new UsersPlugin();
+        usersPlugin.dataServer = dataServer;
+        await usersPlugin.preparePlayersStats({client: {players: {}}});
+        return new OfflineMemberModifiersReverter({usersPlugin, dataServer});
     }
 
     async testTheLevelModifiersAreMappedFromTheLevelModel()
@@ -152,7 +157,7 @@ class TestClanLevelModifiers extends BaseTest
     {
         await this.test('the stored stats of a member removed while offline get the modifiers reverted', async () => {
             let updatedStats = [];
-            let reverter = this.createOfflineMemberReverter(
+            let reverter = await this.createOfflineMemberReverter(
                 [{id: 1, key: 'hp'}, {id: 3, key: 'atk'}],
                 [
                     {id: 21, player_id: 2, stat_id: 1, base_value: 100, value: 80},
@@ -163,8 +168,8 @@ class TestClanLevelModifiers extends BaseTest
             let result = await reverter.revert('2', this.createClan().modifiers);
             this.assert.strictEqual(result, true);
             this.assert.deepStrictEqual(updatedStats, [
-                {id: 21, patch: {value: 80, base_value: 100}},
-                {id: 23, patch: {value: 100, base_value: 100}}
+                {filters: {player_id: 2, stat_id: 1}, patch: {value: 80, base_value: 100}},
+                {filters: {player_id: 2, stat_id: 3}, patch: {value: 100, base_value: 100}}
             ]);
         });
     }
@@ -173,7 +178,7 @@ class TestClanLevelModifiers extends BaseTest
     {
         await this.test('the stored base stats of a member removed while offline get the modifiers reverted', async () => {
             let updatedStats = [];
-            let reverter = this.createOfflineMemberReverter(
+            let reverter = await this.createOfflineMemberReverter(
                 [{id: 3, key: 'atk'}],
                 [{id: 23, player_id: 2, stat_id: 3, base_value: 110, value: 110}],
                 updatedStats
@@ -182,7 +187,10 @@ class TestClanLevelModifiers extends BaseTest
             levelModel.related_clan_levels_modifiers[0].property_key = 'statsBase/atk';
             let result = await reverter.revert('2', ClanFactory.mapModifiersFromLevelModel(levelModel));
             this.assert.strictEqual(result, true);
-            this.assert.deepStrictEqual(updatedStats, [{id: 23, patch: {value: 110, base_value: 100}}]);
+            this.assert.deepStrictEqual(
+                updatedStats,
+                [{filters: {player_id: 2, stat_id: 3}, patch: {value: 110, base_value: 100}}]
+            );
         });
     }
 
