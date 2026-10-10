@@ -42,6 +42,7 @@ class ClanEntity extends EntityProperties
                 type: 'reference',
                 reference: 'clan_levels',
                 alias: 'related_clan_levels',
+                referenceKey: 'key',
                 onDelete: 'noAction',
                 isRequired: true,
                 dbType: 'int'

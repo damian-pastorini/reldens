@@ -145,6 +145,14 @@ class Login
         }
     }
 
+    static async loginRootPlayer(page, gameConfig, longRun, userKeySuffix = '')
+    {
+        let username = gameConfig['e2eUsername'+userKeySuffix] || 'root'+userKeySuffix;
+        let password = gameConfig['e2ePassword'+userKeySuffix] || 'root';
+        let playerName = gameConfig['e2ePlayerName'+userKeySuffix] || 'ImRoot'+userKeySuffix;
+        await Login.loginAndStartGame(page, username, password, playerName, longRun);
+    }
+
     static async loginAndEnterForest(page, gameConfig, longRun)
     {
         let username = gameConfig.e2eUsername || 'root';

@@ -127,6 +127,32 @@ The security specs (`test-login-security.spec.js`, `test-admin-security.spec.js`
   mailer off (form hidden), on inside the interval (same answer, nothing sent) and on outside the interval (one email),
   so they never depend on the `RELDENS_MAILER_*` values of the app `.env`
 
+## Seeded rows and config overrides
+
+The specs that need their own data seed it through the `/api/e2e/data/*` endpoints
+(`tests/e2e/helpers/e2e-seed-and-restore-endpoints.js`, wrapped by `tests/e2e/helpers/e2e-seed-and-restore-api.js`),
+every request carries the spec group (`e2eGroup` fixture) and everything is undone only for that group by the players
+reset before its next test (`E2eSeedAndRestoreEndpoints.resetGroup`, called by `/api/e2e/reset-players`) and for every
+group by the global teardown:
+
+- `POST create` (`{group, entityKey, row}`) - creates a row with `dataServer.getEntity(entityKey).create(row)`; the
+  reset deletes the created rows of the group in reverse order
+- `POST update-created` (`{group, entityKey, id, patch}`) - updates a row created by the same group (any other row is
+  refused), for example disabling a seeded locale after the login; the reset deletes it like every created row
+- `POST preserve` (`{group, entityKey, filters}`) - stores the rows matching the filters; the reset deletes the rows
+  created since then for the same filters and writes the stored values back, before it deletes the created rows, so a
+  preserved row that references a seeded row (a user locale pointing to a seeded locale, a clan membership) never
+  blocks that delete
+- `POST load` (`{entityKey, filters}`) - returns the stored rows a spec asserts
+- `POST config` (`{group, path, value}`) - overrides a value of the running `ConfigManager` (for example
+  `server/chat/messages/global_enabled`); the reset restores the original value, or removes the path when it was not
+  set
+- `POST reload-locales` (`{group}`) - runs the snippets `ConfigurationEnricher` again so a seeded locale reaches the
+  client config of the next login; the reset reloads the locales again after deleting the seeded rows
+
+The values read once on startup (like the rewards provider config) can not be changed with `config`, those cases are
+covered by unit tests.
+
 The server runs on `localhost`, which turns on the development mode of `AppServerFactory`, so the administration
 panel login limiter allows 10 times `RELDENS_ADMIN_LOGIN_MAX_ATTEMPTS`; the limiter spec reads the real limit from the
 `RateLimit` response header. See `.claude/ip-lists-and-login-blocks.md` for the lists and blocks flow.
@@ -186,8 +212,8 @@ worker, so its specs run one after the other, and the groups run at the same tim
   `root2`, `root3`), start room `reldens-new-age-town`
 - `forest` - combat, stats, interactive objects, timing objects, objects movement and animation frames, users set 1
   (`root4` to `root6`), start room `reldens-forest-level-1`
-- `social` - chat, teams, clans, trading, items, rewards, quests and the game login flow, users set 2 (`root7` to
-  `root9`), start room `reldens-new-age-town-house-01`
+- `social` - chat, teams, clans, trading, items, rewards, scores, locale selector, quests and the game login flow,
+  users set 2 (`root7` to `root9`), start room `reldens-new-age-town-house-01`
 - `exclusive` - the specs that change the server wide state (login and admin security), create players
   (authentication, character system) or use more than one room (movement), users set 0, it runs after every other
   group ended and its reset restores every room

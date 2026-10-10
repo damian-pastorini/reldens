@@ -1005,6 +1005,18 @@ REPLACE INTO `rewards` (`id`, `object_id`, `item_id`, `modifier_id`, `experience
 	(15, 36, 2, NULL, 90, 100, 3, 0, 0, 1),
 	(16, 37, 2, NULL, 90, 100, 1, 0, 0, 1);
 
+-- Allow the default administration role to send global chat messages (only when the default value was not changed)
+UPDATE `config` SET `value` = '1,99,9000' WHERE `scope` = 'server' AND `path` = 'chat/messages/global_allowed_roles' AND `value` = '1,9000';
+
+-- Name the levels sets without key and label after the class path that uses them (shown in the admin selectors)
+UPDATE `skills_levels_set` AS `levels_set` INNER JOIN `skills_class_path` AS `class_path` ON `class_path`.`levels_set_id` = `levels_set`.`id` SET `levels_set`.`key` = `class_path`.`key`, `levels_set`.`label` = `class_path`.`label` WHERE `levels_set`.`key` IS NULL AND `levels_set`.`label` IS NULL;
+
+-- Prefix the footstep markers with the animation start event, the sprite audio lookups always include the event prefix
+UPDATE `audio_markers` SET `marker_key` = CONCAT('i_', `marker_key`) WHERE `marker_key` IN ('journeyman_right', 'journeyman_left', 'journeyman_up', 'journeyman_down', 'sorcerer_right', 'sorcerer_left', 'sorcerer_up', 'sorcerer_down', 'warlock_right', 'warlock_left', 'warlock_up', 'warlock_down', 'swordsman_right', 'swordsman_left', 'swordsman_up', 'swordsman_down', 'warrior_right', 'warrior_left', 'warrior_up', 'warrior_down');
+
+-- Remove the unused rewards config rows, the drops read server/objects/drops and server/objects/actions
+DELETE FROM `config` WHERE `scope` = 'server' AND `path` IN ('rewards/actions/disappearTime', 'rewards/actions/interactionsDistance', 'rewards/loginReward/enabled', 'rewards/playedTimeReward/enabled', 'rewards/playedTimeReward/time');
+
 --
 
 SET FOREIGN_KEY_CHECKS = 1;

@@ -91,6 +91,51 @@ class TestAdminCrud extends BaseTest
         await this.cleanup();
     }
 
+    async testReferenceKeyFieldsKeepTheStoredKeys()
+    {
+        let session = await this.getAuthenticatedSession();
+        await this.test('objects-items-requirements - Save without changes keeps the referenced item keys', async () => {
+            let editPath = this.adminPath+'/objects-items-requirements/edit?id=2';
+            let editForm = await this.makeAuthenticatedRequest('GET', editPath, null, session);
+            let formValues = {
+                id: 2,
+                object_id: this.fetchSelectedOptionValue(editForm.body, 'object_id'),
+                item_key: this.fetchSelectedOptionValue(editForm.body, 'item_key'),
+                required_item_key: this.fetchSelectedOptionValue(editForm.body, 'required_item_key'),
+                required_quantity: 2,
+                auto_remove_requirement: 1
+            };
+            this.assert.strictEqual(formValues.item_key, 'spear');
+            this.assert.strictEqual(formValues.required_item_key, 'coins');
+            let saveResponse = await this.makeEntityRequest(
+                'POST',
+                'objects-items-requirements',
+                '/save',
+                formValues,
+                session
+            );
+            this.assert.strictEqual(302, saveResponse.statusCode);
+            this.assert(!saveResponse.headers.location.includes('error'));
+            let savedForm = await this.makeAuthenticatedRequest('GET', editPath, null, session);
+            this.assert.strictEqual(this.fetchSelectedOptionValue(savedForm.body, 'item_key'), 'spear');
+            this.assert.strictEqual(this.fetchSelectedOptionValue(savedForm.body, 'required_item_key'), 'coins');
+        });
+    }
+
+    fetchSelectedOptionValue(formBody, fieldName)
+    {
+        let fieldStart = formBody.indexOf('name="'+fieldName+'"');
+        if(-1 === fieldStart){
+            return false;
+        }
+        let fieldOptions = formBody.substring(fieldStart, formBody.indexOf('/select', fieldStart));
+        let selectedOption = fieldOptions.match(/value="([^"]*)" selected="selected"/);
+        if(!selectedOption){
+            return false;
+        }
+        return selectedOption[1];
+    }
+
     async runEntityCrudFlow(entity, session, type)
     {
         Logger.log(100, '', 'Testing entity '+type+': '+entity);
