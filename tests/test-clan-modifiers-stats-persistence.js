@@ -9,10 +9,17 @@ const { ClanFixturesBuilder } = require('./fixtures/clan-fixtures-builder');
 const { ClanLeave } = require('../lib/teams/server/message-actions/clan-leave');
 const { TeamsPlugin } = require('../lib/teams/server/plugin');
 const { RoomScene } = require('../lib/rooms/server/scene');
-const { EventsManager } = require('@reldens/utils');
+const { EventsManager, sc } = require('@reldens/utils');
+const timersPromises = require('timers/promises');
 
 class TestClanModifiersStatsPersistence extends BaseTest
 {
+
+    constructor(config)
+    {
+        super(config);
+        this.clanLoadDelayMs = 10;
+    }
 
     createRoom(events, savedStats)
     {
@@ -25,20 +32,49 @@ class TestClanModifiersStatsPersistence extends BaseTest
         return room;
     }
 
-    async createSavingSetup()
+    async createSavingSetup(setupData = {})
     {
         let events = new EventsManager();
-        let clan = ClanFixturesBuilder.createClan();
+        let clans = sc.get(setupData, 'clans', {10: ClanFixturesBuilder.createClan()});
         let savedStats = [];
         let teamsPlugin = new TeamsPlugin();
         await teamsPlugin.setup({
             events,
-            clans: {10: clan},
-            dataServer: ClanFixturesBuilder.createClanJoinDataServer([]),
+            clans,
+            dataServer: sc.get(setupData, 'dataServer', ClanFixturesBuilder.createClanJoinDataServer([])),
             config: {get: () => ({})},
             featuresManager: {featuresList: {}}
         });
-        return {clan, savedStats, teamsPlugin, room: this.createRoom(events, savedStats)};
+        return {clan: clans[10], savedStats, teamsPlugin, room: this.createRoom(events, savedStats)};
+    }
+
+    createClanLoadingDataServer(clanLoads, failedLoadsCount = 0)
+    {
+        return {
+            getEntity: (entityKey) => ({
+                clan: {loadByIdWithRelations: async () => await this.loadDelayedClanModel(clanLoads, failedLoadsCount)},
+                clanMembers: {loadOneByWithRelations: async (field, playerId) => ({player_id: playerId, clan_id: 10})}
+            })[entityKey]
+        };
+    }
+
+    async loadDelayedClanModel(clanLoads, failedLoadsCount)
+    {
+        clanLoads.push(10);
+        await timersPromises.setTimeout(this.clanLoadDelayMs);
+        if(clanLoads.length <= failedLoadsCount){
+            return Promise.reject(new Error('Storage unavailable.'));
+        }
+        return ClanFixturesBuilder.createClanModel();
+    }
+
+    createLoggingMember(playerId)
+    {
+        let memberSchema = ClanFixturesBuilder.createPlayerSchema(playerId);
+        memberSchema.setPrivate = (key, value) => {
+            memberSchema.privateData[key] = value;
+        };
+        return memberSchema;
     }
 
     async saveAndLoadStats(savingSetup, playerSchema)
@@ -48,6 +84,53 @@ class TestClanModifiersStatsPersistence extends BaseTest
             playerSchema.player_id,
             savingSetup.savedStats.pop().statPatch.value
         );
+    }
+
+    async testMembersLoadingTheClanTogetherJoinTheSameClan()
+    {
+        await this.test('two members logging in together join one loaded clan and save without the modifiers', async () => {
+            let clanLoads = [];
+            let savingSetup = await this.createSavingSetup({
+                clans: {},
+                dataServer: this.createClanLoadingDataServer(clanLoads)
+            });
+            let firstMember = this.createLoggingMember('1');
+            let secondMember = this.createLoggingMember('2');
+            let clanHandler = savingSetup.teamsPlugin.createPlayerClanHandler;
+            await Promise.all([
+                clanHandler.enrichPlayerWithClan({send: () => true}, firstMember, {}, savingSetup.teamsPlugin),
+                clanHandler.enrichPlayerWithClan({send: () => true}, secondMember, {}, savingSetup.teamsPlugin)
+            ]);
+            this.assert.deepStrictEqual(clanLoads, [10]);
+            this.assert.deepStrictEqual(Object.keys(savingSetup.teamsPlugin.clans[10].players), ['1', '2']);
+            await savingSetup.room.savePlayerStats(firstMember);
+            this.assert.strictEqual(firstMember.stats.atk, 110);
+            this.assert.strictEqual(savingSetup.savedStats.pop().statPatch.value, 100);
+        });
+    }
+
+    async testAFailedClanLoadIsLoadedAgainOnTheNextLogin()
+    {
+        await this.test('a clan load that failed on the storage is loaded again on the next login', async () => {
+            let clanLoads = [];
+            let savingSetup = await this.createSavingSetup({
+                clans: {},
+                dataServer: this.createClanLoadingDataServer(clanLoads, 1)
+            });
+            let clanHandler = savingSetup.teamsPlugin.createPlayerClanHandler;
+            let client = {send: () => true};
+            let firstLogin = this.createLoggingMember('1');
+            this.assert.strictEqual(
+                await clanHandler.enrichPlayerWithClan(client, firstLogin, {}, savingSetup.teamsPlugin),
+                false
+            );
+            this.assert.deepStrictEqual(clanHandler.pendingClansLoads, {});
+            let secondLogin = this.createLoggingMember('1');
+            await clanHandler.enrichPlayerWithClan(client, secondLogin, {}, savingSetup.teamsPlugin);
+            this.assert.deepStrictEqual(clanLoads, [10, 10]);
+            this.assert.strictEqual(savingSetup.teamsPlugin.clans[10].players[1], secondLogin);
+            this.assert.strictEqual(secondLogin.stats.atk, 110);
+        });
     }
 
     async testTheSavedStatsDoNotKeepTheClanModifiers()

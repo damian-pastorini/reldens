@@ -22,6 +22,19 @@ class ClanFixturesBuilder
         };
     }
 
+    static createClanModel()
+    {
+        return {
+            id: 10,
+            owner_id: 1,
+            name: 'Test Clan',
+            points: 0,
+            related_players: {id: 1, name: 'ImRoot'},
+            related_clan_members: [{player_id: 1}, {player_id: 2}],
+            related_clan_levels: this.createLevelModel()
+        };
+    }
+
     static createClan()
     {
         return new Clan({
