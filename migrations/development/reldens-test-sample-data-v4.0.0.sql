@@ -107,6 +107,8 @@ REPLACE INTO `features` (`id`, `code`, `title`, `is_enabled`) VALUES
 -- Users test data (category 1)
 REPLACE INTO `users` (`id`, `email`, `username`, `password`, `role_id`, `status`, `created_at`, `updated_at`, `played_time`) VALUES
 	(1, 'root@yourgame.com', 'root', '879abc0494b36a09f184fd8308ea18f2643d71263f145b1e40e2ec3546d42202:6a186aff4d69daadcd7940a839856b394b12f0aec64a5df745c83cf9d881dc9dcb121b03d946872571f214228684216df097305b68417a56403299b8b2388db3', 99, '1', '2022-03-17 18:57:44', '2023-10-21 16:51:55', 0),
+	(2, 'root2@yourgame.com', 'root2', '879abc0494b36a09f184fd8308ea18f2643d71263f145b1e40e2ec3546d42202:6a186aff4d69daadcd7940a839856b394b12f0aec64a5df745c83cf9d881dc9dcb121b03d946872571f214228684216df097305b68417a56403299b8b2388db3', 1, '1', '2022-03-17 18:57:44', '2023-10-21 16:51:55', 0),
+	(3, 'root3@yourgame.com', 'root3', '879abc0494b36a09f184fd8308ea18f2643d71263f145b1e40e2ec3546d42202:6a186aff4d69daadcd7940a839856b394b12f0aec64a5df745c83cf9d881dc9dcb121b03d946872571f214228684216df097305b68417a56403299b8b2388db3', 1, '1', '2022-03-17 18:57:44', '2023-10-21 16:51:55', 0),
 	(1001, 'test-list@test.com', 'test-user-list', 'test-password-hash', 1, '1', '2025-01-01 00:00:00', '2025-01-01 00:00:00', 100),
 	(1002, 'test-edit@test.com', 'test-user-edit', 'test-password-hash', 1, '1', '2025-01-01 01:00:00', '2025-01-01 01:00:00', 200),
 	(1003, 'test-delete@test.com', 'test-user-delete', 'test-password-hash', 1, '1', '2025-01-01 02:00:00', '2025-01-01 02:00:00', 300),
@@ -115,6 +117,8 @@ REPLACE INTO `users` (`id`, `email`, `username`, `password`, `role_id`, `status`
 
 REPLACE INTO `users_locale` (`id`, `locale_id`, `user_id`) VALUES
 	(1, 1, 1),
+	(2, 1, 2),
+	(3, 1, 3),
 	(1001, 1, 1001),
 	(1002, 1, 1002),
 	(1003, 1, 1003);
@@ -139,7 +143,7 @@ REPLACE INTO `items_item` (`id`, `key`, `type`, `group_id`, `label`, `descriptio
 	(1, 'coins', 3, NULL, 'Coins', NULL, 0, 1, NULL, NULL, '{"canBeDropped": true}'),
 	(2, 'branch', 10, NULL, 'Tree branch', 'An useless tree branch (for now)', 0, 1, NULL, NULL, '{"canBeDropped": true}'),
 	(3, 'heal_potion_20', 5, NULL, 'Heal Potion', 'A heal potion that will restore 20 HP.', 0, 1, NULL, NULL, '{"canBeDropped":true,"animationData":{"frameWidth":64,"frameHeight":64,"start":6,"end":11,"repeat":0,"usePlayerPosition":true,"followPlayer":true,"startsOnTarget":true},"removeAfterUse":true}'),
-	(4, 'axe', 1, 1, 'Axe', 'A short distance but powerful weapon.', 0, 0, NULL, NULL, '{"canBeDropped":true,"animationData":{"frameWidth":64,"frameHeight":64,"start":6,"end":11,"repeat":0,"destroyOnComplete":true,"usePlayerPosition":true,"followPlayer":true,"startsOnTarget":true}}'),
+	(4, 'axe', 4, 1, 'Axe', 'A short distance but powerful weapon.', 0, 0, NULL, NULL, '{"canBeDropped":true,"animationData":{"frameWidth":64,"frameHeight":64,"start":6,"end":11,"repeat":0,"destroyOnComplete":true,"usePlayerPosition":true,"followPlayer":true,"startsOnTarget":true}}'),
 	(5, 'spear', 1, 1, 'Spear', 'A short distance but powerful weapon.', 0, 0, NULL, NULL, '{"canBeDropped":true,"animationData":{"frameWidth":64,"frameHeight":64,"start":6,"end":11,"repeat":0,"destroyOnComplete":true,"usePlayerPosition":true,"followPlayer":true,"startsOnTarget":true}}'),
 	(6, 'magic_potion_20', 5, NULL, 'Magic Potion', 'A magic potion that will restore 20 MP.', 0, 1, NULL, NULL, '{"canBeDropped":true,"animationData":{"frameWidth":64,"frameHeight":64,"start":6,"end":11,"repeat":0,"usePlayerPosition":true,"followPlayer":true,"startsOnTarget":true},"removeAfterUse":true}'),
 	(7, 'ore', 3, NULL, 'Ore', 'A chunk of raw ore.', 0, 0, NULL, NULL, '{}'),
@@ -368,8 +372,8 @@ REPLACE INTO `objects` (`id`, `room_id`, `layer_name`, `tile_index`, `class_type
 	(10, 41, 'ground', 3578, 5, 'npc_3', 'merchant_1', 'Gimly', '{"runOnAction":true,"playerVisible":true,"sendInvalidOptionMessage":true,"collisionType":4,"hasState":true,"randomMovement":{"maxTiles":5}}', '{"content":"Hi there! What would you like to do?","options":{"buy":{"label":"Buy","value":"buy"},"sell":{"label":"Sell","value":"sell"}},"autoStart":true,"animations":{"merchant_1_down":{"start":0,"end":2},"merchant_1_left":{"start":3,"end":5},"merchant_1_right":{"start":6,"end":8},"merchant_1_up":{"start":9,"end":11}}}', 1),
 	(12, 41, 'ground', 3499, 3, 'npc_4', 'weapons_master_1', 'Barrik', '{"runOnAction":true,"playerVisible":true,"sendInvalidOptionMessage":true,"collisionType":4,"hasState":true,"randomMovement":{"maxTiles":5}}', '{"content":"Hi, I am the weapons master, choose your weapon and go kill some monsters!","options":{"1":{"key":"axe","label":"Axe","value":1,"icon":"axe"},"2":{"key":"spear","label":"Spear","value":2,"icon":"spear"}},"ui":true,"autoStart":true,"animations":{"weapons_master_1_down":{"start":0,"end":2},"weapons_master_1_left":{"start":3,"end":5},"weapons_master_1_right":{"start":6,"end":8},"weapons_master_1_up":{"start":9,"end":11}}}', 1),
 	(13, 114, 'ground', 6833, 3, 'npc_5', 'quest_npc_1', 'Miles', '{"runOnAction":true,"playerVisible":true,"sendInvalidOptionMessage":true,"collisionType":4,"hasState":true,"randomMovement":{"maxTiles":5}}', '{"content":"Hi there! Do you want a coin? I can give you one if you give me a tree branch.","options":{"1":{"label":"Sure!","value":1},"2":{"label":"No, thank you.","value":2}},"ui":true,"autoStart":true,"animations":{"quest_npc_1_down":{"start":0,"end":2},"quest_npc_1_left":{"start":3,"end":5},"quest_npc_1_right":{"start":6,"end":8},"quest_npc_1_up":{"start":9,"end":11}}}', 1),
-	(14, 9, 'ground-respawn-area', NULL, 7, 'enemy_bot_b1', 'enemy_forest_1', 'Tree', '{"shouldRespawn":true,"childObjectType":4,"isAggressive":true,"interactionRadio":170,"randomMovement":{"maxTiles":3}}', '{"autoStart":true,"frameStart":12,"frameEnd":26,"repeat":-1}', 1),
-	(15, 9, 'ground-respawn-area', NULL, 7, 'enemy_bot_b2', 'enemy_forest_2', 'Tree Punch', '{"shouldRespawn":true,"childObjectType":4,"isAggressive":false,"interactionRadio":70,"randomMovement":{"maxTiles":8}}', '{"autoStart":true,"frameStart":12,"frameEnd":26,"repeat":-1}', 1),
+	(14, 9, 'ground-respawn-area', NULL, 7, 'enemy_bot_b1', 'enemy_forest_1', 'Tree', '{"shouldRespawn":true,"childObjectType":4,"isAggressive":true,"interactionRadio":170,"randomMovement":{"maxTiles":3}}', '{"autoStart":true,"frameStart":12,"frameEnd":26,"repeat":-1}', 0),
+	(15, 9, 'ground-respawn-area', NULL, 7, 'enemy_bot_b2', 'enemy_forest_2', 'Tree Punch', '{"shouldRespawn":true,"childObjectType":4,"isAggressive":false,"interactionRadio":70,"randomMovement":{"maxTiles":8}}', '{"autoStart":true,"frameStart":12,"frameEnd":26,"repeat":-1}', 0),
 	(16, 114, 'merge-respawn-area-mining-rocks', NULL, 7, 'rock_forest_1_area', 'rock_forest_1', NULL, '{"shouldRespawn":true,"childObjectClassKey":"rock_forest_1","itemKey":"ore","cancelOnMove":true,"cancelOnHit":true,"cancelOnOutOfRange":false,"runOnAction":true,"collisionType":2,"hasState":true,"interactionArea":48}', '{"timingDuration":5000,"isInteractive":true,"frameStart":0,"frameEnd":0,"classKey":"rock_forest_1","ui":false}', 1),
 	(17, 114, 'merge-spot_003_river_grass-collisions', 822, 8, 'fish_spawn_forest_1', 'fish_spawn_forest_1', NULL, '{"cancelOnMove":true,"cancelOnHit":true,"cancelOnOutOfRange":false,"rewards":[{"key":"fish","rate":100}],"runOnAction":true,"fishCooldown":3000,"collisionType":2}', '{"timingDuration":10000,"isInteractive":true,"frameStart":0,"frameEnd":2,"autoStart":true,"repeat":-1,"classKey":"fish_spawn_forest_1","ui":false}', 1),
 	(18, 114, 'ground', 6613, 3, 'chest_forest_1', 'chest_forest_1', 'Treasure Chest', '{"runOnAction":true,"playerVisible":true,"collisionType":2}', '{"content":"A dusty old chest...","ui":true,"frameStart":0,"frameEnd":0,"animations":{"chest_forest_1_open":{"asset_key":"chest_forest_1","start":0,"end":1,"frameRate":8,"repeat":0}}}', 1),
@@ -678,6 +682,8 @@ REPLACE INTO `objects_stats` (`id`, `object_id`, `stat_id`, `base_value`, `value
 -- Players data for FK relationships
 REPLACE INTO `players` (`id`, `user_id`, `name`, `created_at`) VALUES
 	(1, 1, 'ImRoot', '2022-03-17 19:57:50'),
+	(2, 2, 'ImRoot2', '2022-03-17 19:57:50'),
+	(3, 3, 'ImRoot3', '2022-03-17 19:57:50'),
 	(1001, 1001, 'TestPlayerList', '2025-01-01 00:00:00'),
 	(1002, 1002, 'TestPlayerEdit', '2025-01-01 01:00:00'),
 	(1003, 1003, 'TestPlayerDelete', '2025-01-01 02:00:00'),
@@ -687,6 +693,8 @@ REPLACE INTO `players` (`id`, `user_id`, `name`, `created_at`) VALUES
 
 REPLACE INTO `players_state` (`id`, `player_id`, `room_id`, `x`, `y`, `dir`) VALUES
 	(1, 1, 41, 1520, 1424, 'down'),
+	(2, 2, 41, 1520, 1424, 'down'),
+	(3, 3, 41, 1520, 1424, 'down'),
 	(1001, 1001, 41, 100, 100, 'down'),
 	(1002, 1002, 41, 200, 200, 'down'),
 	(1003, 1003, 41, 300, 300, 'down');
@@ -701,7 +709,35 @@ REPLACE INTO `players_stats` (`id`, `player_id`, `stat_id`, `base_value`, `value
 	(7, 1, 7, 100, 100),
 	(8, 1, 8, 100, 100),
 	(9, 1, 9, 100, 100),
-	(10, 1, 10, 100, 100);
+	(10, 1, 10, 100, 100),
+	(11, 2, 1, 280, 280),
+	(12, 2, 2, 280, 280),
+	(13, 2, 3, 280, 280),
+	(14, 2, 4, 280, 280),
+	(15, 2, 5, 100, 100),
+	(16, 2, 6, 100, 100),
+	(17, 2, 7, 100, 100),
+	(18, 2, 8, 100, 100),
+	(19, 2, 9, 100, 100),
+	(20, 2, 10, 100, 100),
+	(21, 3, 1, 280, 280),
+	(22, 3, 2, 280, 280),
+	(23, 3, 3, 280, 280),
+	(24, 3, 4, 280, 280),
+	(25, 3, 5, 100, 100),
+	(26, 3, 6, 100, 100),
+	(27, 3, 7, 100, 100),
+	(28, 3, 8, 100, 100),
+	(29, 3, 9, 100, 100),
+	(30, 3, 10, 100, 100);
+
+REPLACE INTO `items_inventory` (`id`, `owner_id`, `item_id`, `qty`, `remaining_uses`, `is_active`) VALUES
+	(1, 1, 4, 1, NULL, 0),
+	(2, 1, 3, 5, NULL, NULL),
+	(3, 2, 4, 1, NULL, 0),
+	(4, 2, 3, 5, NULL, NULL),
+	(5, 3, 4, 1, NULL, 0),
+	(6, 3, 3, 5, NULL, NULL);
 
 -- Chat test data (requires player_id and room_id FK)
 REPLACE INTO `chat` (`id`, `player_id`, `room_id`, `message`, `private_player_id`, `message_type`, `message_time`) VALUES
@@ -941,7 +977,9 @@ REPLACE INTO `skills_levels_set` (`id`, `key`, `label`, `autoFillRanges`, `autoF
 	(5, 'warrior', 'Warrior', 1, NULL);
 
 REPLACE INTO `skills_owners_class_path` (`id`, `class_path_id`, `owner_id`, `currentLevel`, `currentExp`) VALUES
-	(1, 1, 1, 10, 9080);
+	(1, 1, 1, 10, 9080),
+	(2, 1, 2, 1, 0),
+	(3, 1, 3, 1, 0);
 
 REPLACE INTO `skills_skill` (`id`, `key`, `type`, `label`, `autoValidation`, `skillDelay`, `castTime`, `usesLimit`, `range`, `rangeAutomaticValidation`, `rangePropertyX`, `rangePropertyY`, `rangeTargetPropertyX`, `rangeTargetPropertyY`, `allowSelfTarget`, `criticalChance`, `criticalMultiplier`, `criticalFixedValue`, `customData`) VALUES
 	(1, 'attackBullet', '4', NULL, 0, 1000, 0, 0, 250, 1, 'state/x', 'state/y', NULL, NULL, 0, 10, 2, 0, NULL),

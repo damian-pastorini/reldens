@@ -297,6 +297,19 @@ class TestObjectRandomMovement extends RandomMovementBaseTest
         });
     }
 
+    async testEveryMoveOfTheLoopIsCounted()
+    {
+        await this.test('every move run by the movement loop is counted, a body out of the world counts none', async () => {
+            let body = this.bodyBuilder.build();
+            let randomMovement = this.createRandomMovement(body);
+            randomMovement.moveAndScheduleNext();
+            randomMovement.stop();
+            body.world = null;
+            randomMovement.moveAndScheduleNext();
+            this.assert.strictEqual(randomMovement.movesCount, 1);
+        });
+    }
+
 }
 
 module.exports.TestObjectRandomMovement = TestObjectRandomMovement;

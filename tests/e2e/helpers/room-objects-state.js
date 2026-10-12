@@ -131,7 +131,8 @@ class RoomObjectsState
             inBattle: Object.keys(sc.get(sc.get(roomObject, 'battle', {}), 'inBattleWithPlayers', {})).length,
             isAggressive: true === roomObject.isAggressive,
             maxTiles: sc.get(sc.get(roomObject, 'randomMovementBehavior', {}), 'maxTiles', 0),
-            maxDelay: sc.get(sc.get(roomObject, 'randomMovementBehavior', {}), 'maxDelay', 0)
+            maxDelay: sc.get(sc.get(roomObject, 'randomMovementBehavior', {}), 'maxDelay', 0),
+            movesCount: sc.get(sc.get(roomObject, 'randomMovementBehavior', {}), 'movesCount', 0)
         };
     }
 

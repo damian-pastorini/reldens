@@ -51,6 +51,15 @@ self-hosted integration tests (`npm run test:default`) run the same drop and ins
 `migrations/development/reldens-test-sample-data-v4.0.0.sql`. Tables or columns left by an older schema never
 survive a reset.
 
+### Sample data files sync
+
+`migrations/development/reldens-test-sample-data-v4.0.0.sql` is a copy of `migrations/production/reldens-sample-data-v4.0.0.sql`
+plus the test-only rows (ids 100+ and 1001+). Every change to one of them, including the rows seeded by a new
+`migrations/development/*-sql-update.sql`, must be applied to the other one in the same change: when they drift, a
+database last reset by the unit tests misses the e2e data (the `root2` and `root3` accounts were only in the production
+file until 2026-10-12). The `dbName` of `tests/config.json` can be shared by several checkouts (`reldens_src_tests`), so
+always run the suite with `--db-reset=<dbName>`.
+
 ### Required accounts
 
 The sample data must contain the three users the specs log in as: `root`, `root2` and `root3`, with players
@@ -269,9 +278,13 @@ and `BaseE2eTest.loadRoomEntries(roomName, listsKeys, onlyMoving)`:
   server snapshots are sampled every 250ms for 30 seconds (`EnemiesWanderSummary`,
   `tests/e2e/helpers/enemies-wander-summary.js`), the enemies that were in battle at any sample are left out, and for
   the others every destination tile must be at most `maxTiles` columns and rows from the original tile, a rest outside
-  the area (pushed by another body) must end within `maxDelay` and a path blocked on the same tile must be dropped
-  within two moves (`2 * maxDelay`); every invalid enemy is reported with its whole trail (tile, original tile,
-  position, velocity, path, contacts and battle per sample); the objects without random movement keep their
+  the area (pushed by another body) must end within one move and a path blocked on the same tile must be dropped
+  within two moves; the moves are the `ObjectRandomMovement.movesCount` of the snapshot, never the elapsed time, since
+  the move timers run late on a loaded machine (a blocked path once lasted 18.4s against a `2 * maxDelay` limit of
+  16s), and the moves count of every enemy must keep growing: a stretch without a new move longer than `2 * maxDelay`
+  (one full delay of room for the late timers) reports a stopped movement loop, which the moves rules never see; every invalid
+  enemy is reported with its whole trail (tile, original tile, position, velocity, path, contacts, battle and moves per
+  sample); the objects without random movement keep their
   position, and a passive enemy does not attack a player standing next to it (the aggressive enemies are disabled
   with `onlyAggressive` and the passive enemy is placed 40px from the player with `place-enemy`)
 - `test-interactive-objects.spec.js` - the chest, the mining rock and the fishing spot with the forest enemies disabled
