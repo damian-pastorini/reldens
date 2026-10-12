@@ -184,7 +184,9 @@ The form defaults are read from the environment when present: `RELDENS_APP_HOST`
 
 **Installer** (`lib/game/server/installer.js`)
 - Main orchestration class
-- Handles Express routes and form processing
+- Handles Express routes and form processing, registers the server-utils error middleware after `/install`
+  (`appServerFactory.enableErrorResponse(app)`) and copies `req.body` before filling the template variables
+  (Express 5 leaves it undefined on an empty POST)
 - Renders the storage drivers list with `storageDriversOptions()` (every driver, the ones with missing packages with
   the " (will be installed)" suffix)
 - Checks the admin and signed tokens secrets first, then validates the driver availability

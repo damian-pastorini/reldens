@@ -105,35 +105,37 @@ class BaseE2eTest
 
     static browserCursorScript()
     {
-        let cursorEl = document.createElement('div');
-        cursorEl.style.cssText = [
-            'position:fixed',
-            'top:0',
-            'left:0',
-            'width:16px',
-            'height:16px',
-            'border-radius:50%',
-            'background:rgba(255,80,80,0.85)',
-            'border:2px solid #fff',
-            'box-shadow:0 0 4px rgba(0,0,0,0.7)',
-            'pointer-events:none',
-            'z-index:2147483647',
-            'transform:translate(-50%,-50%)',
-            'transition:background 0.1s'
-        ].join(';');
-        document.addEventListener('DOMContentLoaded', () => {
-            document.body.appendChild(cursorEl);
-        });
-        document.addEventListener('mousemove', (event) => {
-            cursorEl.style.left = event.clientX+'px';
-            cursorEl.style.top = event.clientY+'px';
-        });
-        document.addEventListener('mousedown', () => {
-            cursorEl.style.background = 'rgba(255,220,50,0.95)';
-        });
-        document.addEventListener('mouseup', () => {
-            cursorEl.style.background = 'rgba(255,80,80,0.85)';
-        });
+        return () => {
+            let cursorEl = document.createElement('div');
+            cursorEl.style.cssText = [
+                'position:fixed',
+                'top:0',
+                'left:0',
+                'width:16px',
+                'height:16px',
+                'border-radius:50%',
+                'background:rgba(255,80,80,0.85)',
+                'border:2px solid #fff',
+                'box-shadow:0 0 4px rgba(0,0,0,0.7)',
+                'pointer-events:none',
+                'z-index:2147483647',
+                'transform:translate(-50%,-50%)',
+                'transition:background 0.1s'
+            ].join(';');
+            document.addEventListener('DOMContentLoaded', () => {
+                document.body.appendChild(cursorEl);
+            });
+            document.addEventListener('mousemove', (event) => {
+                cursorEl.style.left = event.clientX+'px';
+                cursorEl.style.top = event.clientY+'px';
+            });
+            document.addEventListener('mousedown', () => {
+                cursorEl.style.background = 'rgba(255,220,50,0.95)';
+            });
+            document.addEventListener('mouseup', () => {
+                cursorEl.style.background = 'rgba(255,80,80,0.85)';
+            });
+        };
     }
 
     static async makeContext(browser)
@@ -151,7 +153,7 @@ class BaseE2eTest
             viewport: { width: 1280, height: 1080 },
             recordVideo: recordVideoConfig
         });
-        await context.addInitScript(BaseE2eTest.browserCursorScript);
+        await context.addInitScript(BaseE2eTest.browserCursorScript());
         return context;
     }
 

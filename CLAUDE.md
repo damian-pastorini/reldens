@@ -1,6 +1,6 @@
 ## Project Overview
 
-Reldens is an MMORPG Platform (v4.0.0-beta.39.9) built on Node.js for developers to create multiplayer games.
+Reldens is an MMORPG Platform (v4.0.0-rc.1) built on Node.js for developers to create multiplayer games.
 
 - **Server**: Colyseus 0.18 (authoritative game server, WebSockets via `@colyseus/ws-transport`)
 - **Client**: Phaser 4 (game engine), Parcel 2 (bundler)
@@ -24,6 +24,7 @@ Server-only utilities:
 
 - **`FileHandler`**: all file I/O in the codebase goes through this class. Never use Node.js `fs` directly.
 - **`AppServerFactory`**: creates the Express app and HTTP/HTTPS server. Used in `ServerManager` to set up the web server before Colyseus attaches to it.
+- **Express 5** (server-utils 0.68.0): never `require('express')`, use `appServerFactory.applicationFramework` or `adminManager.applicationFramework` (`Router()`, and `static()`, which sets `dotfiles: 'ignore'` by itself through the server-utils `createStaticMiddleware()` when the options do not set it, so the statics never pass the option and never call `express.static()` directly); read the body with `sc.get(req.body, ...)` because `req.body` is undefined when nothing was parsed; a catch-all route is `'/{*name}'` (a bare `*` throws at registration); the query keys like `filters[key]` arrive flat (`simple` query parser); rejected async handlers reach the error middleware registered by `appServerFactory.enableErrorResponse(app)`.
 
 ### `@reldens/storage`
 
@@ -90,11 +91,12 @@ See `.claude/feature-modules.md` for details on each module.
    - `enableServeStaticsAndHomePage()` and `enableRoutesRateLimit()` - Express statics, home page and route limiters
    - `themeManager.validateOrCreateTheme()` - copies assets to the dist folder
    - `startGameServerInstance()` - loads maps, creates Colyseus `GameServer`, initializes all managers
-5. Manager initialization order: `Mailer` -> `FeaturesManager` -> `UsersManager` -> `RoomsManager` -> `LoginManager` -> `defineServerRooms()`
+5. Manager initialization order: `Mailer` -> `FeaturesManager` -> `UsersManager` -> `RoomsManager` -> `LoginManager` -> `ServerHealthMonitor` -> `defineServerRooms()`
 6. `FeaturesManager.loadFeatures()` queries the `features` table for `is_enabled=1`, instantiates each feature package, and calls `setup()` on it. After all features load, fires `reldens.serverConfigFeaturesReady`.
 7. `RoomsManager` registers the login room and all scene rooms on the Colyseus game server.
 8. When `RELDENS_CREATE_CONFIG_FILE` is unset or `1`, the theme `config.js` is written and `ThemeManager.createClientBundle()` runs Parcel to build the client bundle if `RELDENS_ALLOW_RUN_BUNDLER=1`.
-9. `gameServer.listen(port)` opens the WebSocket server and fires `reldens.serverReady`.
+9. After `reldens.serverBeforeListen` (the last point where plugins and the admin add their routes) `appServerFactory.enableErrorResponse(this.app)` registers the final Express error middleware (`manager.js`), routes added later skip it.
+10. `gameServer.listen(port)` opens the WebSocket server and fires `reldens.serverReady`.
 
 ## Client Startup Flow
 
@@ -142,6 +144,8 @@ node .
 The storage driver selector lists every driver with Knex selected by default. Knex is bundled with `@reldens/storage`; the optional drivers (Kysely, Drizzle, ObjectionJS, MikroORM, Prisma) are marked "(will be installed)" when their packages do not resolve from the project `node_modules`, and the installer installs the selected one when "Allow installer to run npm install for missing packages" is checked.
 
 See `.claude/installer-guide.md` for the storage drivers packages and manual setup options.
+
+**Sample data sync:** `migrations/development/reldens-test-sample-data-v4.0.0.sql` (unit and self-hosted tests) is a copy of `migrations/production/reldens-sample-data-v4.0.0.sql` (installer and e2e `--db-reset`) plus the test-only rows (ids 100+ and 1001+). Every sample data change, including the rows seeded by a new `migrations/development/*-sql-update.sql`, must be applied to BOTH files in the same change (see `.claude/e2e-testing-guide.md`, "Sample data files sync").
 
 ## Configuration
 
@@ -210,6 +214,7 @@ See `.claude/commands-reference.md` for the full command reference.
 - `.claude/admin-panel-guide.md` - Admin panel sections and entity overrides
 - `.claude/installer-guide.md` - Web-based installation wizard
 - `.claude/ip-lists-and-login-blocks.md` - Address allow and deny lists, the stored login blocks and the login limiters
+- `.claude/server-health-monitor.md` - Server usage limits, rooms availability between servers, every overload case, admin usage block
 - `.claude/player-animations-configuration.md` - Sprite size, frame ranges, class-path overrides
 - `.claude/tileset-to-map-generator-technical.md` - Data contract between the tileset and map generator packages
 - `.claude/tile-ids-and-annotations-pipeline.md` - Tile id spaces, the tileset-ref parking invariant, adding a tile option

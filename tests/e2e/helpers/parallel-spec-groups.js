@@ -61,6 +61,8 @@ class ParallelSpecGroups
                 'test-trading.spec.js',
                 'test-items.spec.js',
                 'test-rewards.spec.js',
+                'test-scores.spec.js',
+                'test-locale-selector.spec.js',
                 'test-quests-tracking.spec.js',
                 'test-game-login.spec.js'
             ]

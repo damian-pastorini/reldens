@@ -8,6 +8,15 @@ class AdminFunctions
         this.csrfTokenHeaderName = 'X-CSRF-Token';
     }
 
+    onDocumentReady(callback)
+    {
+        if('loading' !== document.readyState){
+            callback();
+            return;
+        }
+        window.addEventListener('DOMContentLoaded', callback);
+    }
+
     getCookie(name)
     {
         let value = '; '+document.cookie;
