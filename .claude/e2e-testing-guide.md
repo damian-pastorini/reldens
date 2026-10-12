@@ -281,7 +281,8 @@ and `BaseE2eTest.loadRoomEntries(roomName, listsKeys, onlyMoving)`:
   the area (pushed by another body) must end within one move and a path blocked on the same tile must be dropped
   within two moves; the moves are the `ObjectRandomMovement.movesCount` of the snapshot, never the elapsed time, since
   the move timers run late on a loaded machine (a blocked path once lasted 18.4s against a `2 * maxDelay` limit of
-  16s), and every enemy must run at least one move while sampled, so a stopped movement loop is reported; every invalid
+  16s), and the moves count of every enemy must keep growing: a stretch without a new move longer than `2 * maxDelay`
+  (one full delay of room for the late timers) reports a stopped movement loop, which the moves rules never see; every invalid
   enemy is reported with its whole trail (tile, original tile, position, velocity, path, contacts, battle and moves per
   sample); the objects without random movement keep their
   position, and a passive enemy does not attack a player standing next to it (the aggressive enemies are disabled
