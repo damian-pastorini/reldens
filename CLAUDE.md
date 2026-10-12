@@ -24,6 +24,7 @@ Server-only utilities:
 
 - **`FileHandler`**: all file I/O in the codebase goes through this class. Never use Node.js `fs` directly.
 - **`AppServerFactory`**: creates the Express app and HTTP/HTTPS server. Used in `ServerManager` to set up the web server before Colyseus attaches to it.
+- **Express 5** (server-utils 0.68.0): never `require('express')`, use `appServerFactory.applicationFramework` or `adminManager.applicationFramework` (`Router()`, `static()` with `dotfiles: 'ignore'`); read the body with `sc.get(req.body, ...)` because `req.body` is undefined when nothing was parsed; a catch-all route is `'/{*name}'` (a bare `*` throws at registration); the query keys like `filters[key]` arrive flat (`simple` query parser); rejected async handlers reach the error middleware registered by `appServerFactory.enableErrorResponse(app)`.
 
 ### `@reldens/storage`
 
@@ -94,7 +95,8 @@ See `.claude/feature-modules.md` for details on each module.
 6. `FeaturesManager.loadFeatures()` queries the `features` table for `is_enabled=1`, instantiates each feature package, and calls `setup()` on it. After all features load, fires `reldens.serverConfigFeaturesReady`.
 7. `RoomsManager` registers the login room and all scene rooms on the Colyseus game server.
 8. When `RELDENS_CREATE_CONFIG_FILE` is unset or `1`, the theme `config.js` is written and `ThemeManager.createClientBundle()` runs Parcel to build the client bundle if `RELDENS_ALLOW_RUN_BUNDLER=1`.
-9. `gameServer.listen(port)` opens the WebSocket server and fires `reldens.serverReady`.
+9. After `reldens.serverBeforeListen` (the last point where plugins and the admin add their routes) `appServerFactory.enableErrorResponse(this.app)` registers the final Express error middleware (`manager.js`), routes added later skip it.
+10. `gameServer.listen(port)` opens the WebSocket server and fires `reldens.serverReady`.
 
 ## Client Startup Flow
 
@@ -142,6 +144,8 @@ node .
 The storage driver selector lists every driver with Knex selected by default. Knex is bundled with `@reldens/storage`; the optional drivers (Kysely, Drizzle, ObjectionJS, MikroORM, Prisma) are marked "(will be installed)" when their packages do not resolve from the project `node_modules`, and the installer installs the selected one when "Allow installer to run npm install for missing packages" is checked.
 
 See `.claude/installer-guide.md` for the storage drivers packages and manual setup options.
+
+**Sample data sync:** `migrations/development/reldens-test-sample-data-v4.0.0.sql` (unit and self-hosted tests) is a copy of `migrations/production/reldens-sample-data-v4.0.0.sql` (installer and e2e `--db-reset`) plus the test-only rows (ids 100+ and 1001+). Every sample data change, including the rows seeded by a new `migrations/development/*-sql-update.sql`, must be applied to BOTH files in the same change (see `.claude/e2e-testing-guide.md`, "Sample data files sync").
 
 ## Configuration
 
