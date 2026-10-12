@@ -24,7 +24,7 @@ Server-only utilities:
 
 - **`FileHandler`**: all file I/O in the codebase goes through this class. Never use Node.js `fs` directly.
 - **`AppServerFactory`**: creates the Express app and HTTP/HTTPS server. Used in `ServerManager` to set up the web server before Colyseus attaches to it.
-- **Express 5** (server-utils 0.68.0): never `require('express')`, use `appServerFactory.applicationFramework` or `adminManager.applicationFramework` (`Router()`, `static()` with `dotfiles: 'ignore'`); read the body with `sc.get(req.body, ...)` because `req.body` is undefined when nothing was parsed; a catch-all route is `'/{*name}'` (a bare `*` throws at registration); the query keys like `filters[key]` arrive flat (`simple` query parser); rejected async handlers reach the error middleware registered by `appServerFactory.enableErrorResponse(app)`.
+- **Express 5** (server-utils 0.68.0): never `require('express')`, use `appServerFactory.applicationFramework` or `adminManager.applicationFramework` (`Router()`, and `static()`, which sets `dotfiles: 'ignore'` by itself through the server-utils `createStaticMiddleware()` when the options do not set it, so the statics never pass the option and never call `express.static()` directly); read the body with `sc.get(req.body, ...)` because `req.body` is undefined when nothing was parsed; a catch-all route is `'/{*name}'` (a bare `*` throws at registration); the query keys like `filters[key]` arrive flat (`simple` query parser); rejected async handlers reach the error middleware registered by `appServerFactory.enableErrorResponse(app)`.
 
 ### `@reldens/storage`
 
