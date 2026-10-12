@@ -6,7 +6,7 @@ See `lib/game/server/install-templates/.env.dist` for the template file.
 
 ## Application Server
 
-- `NODE_ENV` - Environment mode (production/development)
+- `NODE_ENV` - Environment mode (production/development), not read by Reldens: the Express app `env` is set by `@reldens/server-utils` `applicationEnvironment` (default `production`), so the Express error responses never include the stack
 - `RELDENS_DEFAULT_ENCODING` - Default encoding (default: utf8)
 - `RELDENS_APP_HOST` - Application host (default: `http://localhost`)
 - `PORT` - Application port, takes precedence over `RELDENS_APP_PORT` when it is set to a non zero number
