@@ -7,7 +7,8 @@
  * max tiles), an enemy that rests outside its area (pushed by another body) walks back inside on its next move, and a
  * path that keeps the enemy blocked on the same tile is dropped on the second move check. Both rules are counted in the
  * random movement moves ("movesCount"), never in time, so a delayed timer on a loaded machine never fails them, and
- * every free enemy must run at least one move while it is sampled, so a stopped movement loop is reported.
+ * the moves count of every free enemy must keep growing: a stretch without a new move longer than two "maxDelay" (one
+ * full delay of room for the late timers) reports a stopped movement loop, which the moves rules alone never see.
  * Every invalid enemy is reported with its whole trail, so a failure shows the exact server data of each sample.
  *
  */
@@ -23,8 +24,9 @@ class EnemiesWanderSummary
     static SAMPLE_INTERVAL_MS = 250;
     static RESTING_OUTSIDE_MOVES = 1;
     static BLOCKED_PATH_MOVES = 2;
+    static STALLED_MOVES_DELAYS = 2;
 
-    static addSnapshotsToSamples(samplesByKey, snapshots, isAggressive, sample)
+    static addSnapshotsToSamples(samplesByKey, snapshots, isAggressive, sample, sampledAt)
     {
         for(let snapshot of snapshots){
             if(ObjectsConst.TYPE_ENEMY !== snapshot.type || isAggressive !== snapshot.isAggressive){
@@ -36,7 +38,7 @@ class EnemiesWanderSummary
             if(!samplesByKey[snapshot.key]){
                 samplesByKey[snapshot.key] = [];
             }
-            samplesByKey[snapshot.key].push({...snapshot, sample});
+            samplesByKey[snapshot.key].push({...snapshot, sample, sampledAt});
         }
     }
 
@@ -48,7 +50,8 @@ class EnemiesWanderSummary
                 samplesByKey,
                 await RoomObjectsApi.fetchRoomObjects(gameConfig, Login.FOREST_ROOM_NAME),
                 isAggressive,
-                sample
+                sample,
+                Date.now()
             );
             await page.waitForTimeout(EnemiesWanderSummary.SAMPLE_INTERVAL_MS);
         }
@@ -109,24 +112,32 @@ class EnemiesWanderSummary
             && snapshot.destination.currentRow === previousSnapshot.destination.currentRow;
     }
 
-    static longestStretchMoves(snapshots, matchesSnapshot)
+    static isMovesCountStalled(snapshot, previousSnapshot)
     {
-        let longestMoves = 0;
-        let stretchStartMoves = false;
+        if(!previousSnapshot){
+            return false;
+        }
+        return snapshot.movesCount === previousSnapshot.movesCount;
+    }
+
+    static longestStretch(snapshots, matchesSnapshot, measureKey)
+    {
+        let longestStretch = 0;
+        let stretchStartValue = false;
         let previousSnapshot = false;
         for(let snapshot of snapshots){
             if(!matchesSnapshot(snapshot, previousSnapshot)){
-                stretchStartMoves = false;
+                stretchStartValue = false;
                 previousSnapshot = snapshot;
                 continue;
             }
-            if(false === stretchStartMoves){
-                stretchStartMoves = snapshot.movesCount;
+            if(false === stretchStartValue){
+                stretchStartValue = snapshot[measureKey];
             }
-            longestMoves = Math.max(longestMoves, snapshot.movesCount - stretchStartMoves);
+            longestStretch = Math.max(longestStretch, snapshot[measureKey] - stretchStartValue);
             previousSnapshot = snapshot;
         }
-        return longestMoves;
+        return longestStretch;
     }
 
     static measureMovement(snapshots)
@@ -135,21 +146,30 @@ class EnemiesWanderSummary
             destinationsOutside: snapshots.filter(
                 snapshot => EnemiesWanderSummary.hasDestinationOutsideArea(snapshot)
             ).length,
-            restingOutsideMoves: EnemiesWanderSummary.longestStretchMoves(
+            restingOutsideMoves: EnemiesWanderSummary.longestStretch(
                 snapshots,
-                snapshot => EnemiesWanderSummary.isRestingOutsideArea(snapshot)
+                snapshot => EnemiesWanderSummary.isRestingOutsideArea(snapshot),
+                'movesCount'
             ),
-            blockedMoves: EnemiesWanderSummary.longestStretchMoves(snapshots, EnemiesWanderSummary.isBlockedOnPath),
-            sampledMoves: [...snapshots].pop().movesCount - [...snapshots].shift().movesCount
+            blockedMoves: EnemiesWanderSummary.longestStretch(
+                snapshots,
+                EnemiesWanderSummary.isBlockedOnPath,
+                'movesCount'
+            ),
+            movesStalledMs: EnemiesWanderSummary.longestStretch(
+                snapshots,
+                EnemiesWanderSummary.isMovesCountStalled,
+                'sampledAt'
+            )
         };
     }
 
-    static isInvalidMovement(movement)
+    static isInvalidMovement(movement, maxDelay)
     {
         return 0 < movement.destinationsOutside
             || EnemiesWanderSummary.RESTING_OUTSIDE_MOVES < movement.restingOutsideMoves
             || EnemiesWanderSummary.BLOCKED_PATH_MOVES < movement.blockedMoves
-            || 0 === movement.sampledMoves;
+            || EnemiesWanderSummary.STALLED_MOVES_DELAYS * maxDelay < movement.movesStalledMs;
     }
 
     static summarize(samplesByKey)
@@ -167,7 +187,7 @@ class EnemiesWanderSummary
                 summary.wanderedKeys.push(key);
             }
             let movement = EnemiesWanderSummary.measureMovement(snapshots);
-            if(!EnemiesWanderSummary.isInvalidMovement(movement)){
+            if(!EnemiesWanderSummary.isInvalidMovement(movement, firstSnapshot.maxDelay)){
                 continue;
             }
             summary.invalidMovements.push({
