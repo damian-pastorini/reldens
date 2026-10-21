@@ -31,9 +31,11 @@ class TestRoomLoginAuth extends BaseTest
         roomLogin.roomsLoginMaxJoins = 2;
         roomLogin.events = {emitSync: async () => true};
         roomLogin.loginManager = {
-            processUserRequest: async (options) => {
-                processedRequests.push(options);
-                return loginResult;
+            gameLogin: {
+                processUserRequest: async (options) => {
+                    processedRequests.push(options);
+                    return loginResult;
+                }
             },
             loginAttempts: new LoginAttempts({}),
             activePlayers: {fetchByRoomAndUserName: () => ({userModel: this.activeUserModel})},

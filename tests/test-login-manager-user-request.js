@@ -27,26 +27,27 @@ class TestLoginManagerUserRequest extends BaseTest
     createLoginManager(storedUsers)
     {
         let configValues = {'server/players/guestUser/roleId': this.guestRoleId};
-        let loginManager = new LoginManager({
+        let loginSetup = {loadedUsernames: [], loadedEmails: [], guestRequests: []};
+        loginSetup.loginManager = new LoginManager({
             config: {
                 get: (path, defaultValue) => defaultValue,
                 getWithoutLogs: (path, defaultValue) => sc.get(configValues, path, defaultValue),
                 server: {players: {guestUser: {roleId: this.guestRoleId}}}
             },
-            events: {on: () => true, emitSync: () => true, emit: async () => true}
-        });
-        let loginSetup = {loginManager, loadedUsernames: [], loadedEmails: [], guestRequests: []};
-        loginManager.usersManager = {
-            loadUserByUsername: async (username) => {
-                loginSetup.loadedUsernames.push(username);
-                return sc.get(storedUsers, username, false);
-            },
-            loadUserByEmail: async (email) => {
-                loginSetup.loadedEmails.push(email);
-                return sc.get(storedUsers, email, false);
+            events: {on: () => true, emitSync: () => true, emit: async () => true},
+            usersManager: {
+                loadUserByUsername: async (username) => {
+                    loginSetup.loadedUsernames.push(username);
+                    return sc.get(storedUsers, username, false);
+                },
+                loadUserByEmail: async (email) => {
+                    loginSetup.loadedEmails.push(email);
+                    return sc.get(storedUsers, email, false);
+                }
             }
-        };
-        loginManager.userRegistration.processGuestRequest = async (userData, requestAddress, now, result) => {
+        });
+        let userRegistration = loginSetup.loginManager.userRegistration;
+        userRegistration.processGuestRequest = async (userData, requestAddress, now, result) => {
             loginSetup.guestRequests.push(userData.username);
             return result;
         };
@@ -57,7 +58,9 @@ class TestLoginManagerUserRequest extends BaseTest
     {
         await this.test('a new guest request is registered without looking up the supplied username', async () => {
             let loginSetup = this.createLoginManager({taken: {id: 1, username: 'taken'}});
-            await loginSetup.loginManager.processUserRequest({username: 'taken', isGuest: true, isNewUser: true});
+            await loginSetup.loginManager.gameLogin.processUserRequest(
+                {username: 'taken', isGuest: true, isNewUser: true}
+            );
             this.assert.strictEqual(loginSetup.loadedUsernames.length, 0);
             this.assert.deepStrictEqual(loginSetup.guestRequests, ['taken']);
         });
@@ -67,7 +70,7 @@ class TestLoginManagerUserRequest extends BaseTest
     {
         await this.test('an unknown guest re-login registers a login failure instead of creating a guest', async () => {
             let loginSetup = this.createLoginManager({});
-            let loginResult = await loginSetup.loginManager.processUserRequest(
+            let loginResult = await loginSetup.loginManager.gameLogin.processUserRequest(
                 {username: 'ghost', password: 'secret', isGuest: true, isNewUser: false},
                 '10.0.0.1'
             );
@@ -83,9 +86,14 @@ class TestLoginManagerUserRequest extends BaseTest
         await this.test('the logins are rejected without loading the user when the validations are saturated', async () => {
             let loginSetup = this.createLoginManager({player: {id: 1, username: 'player'}});
             let loginManager = loginSetup.loginManager;
-            loginManager.pendingPasswordValidations = loginManager.maxPendingPasswordValidations;
-            let loginResult = await loginManager.processUserRequest({username: 'player', password: 'secret'});
-            let adminResult = await loginManager.roleAuthenticationCallback('admin@test.com', 'x', this.adminRoleId);
+            let passwordValidationGuard = loginManager.passwordValidationGuard;
+            passwordValidationGuard.pendingValidations = passwordValidationGuard.maxPendingValidations;
+            let loginResult = await loginManager.gameLogin.processUserRequest({username: 'player', password: 'secret'});
+            let adminResult = await loginManager.administrationLogin.roleAuthenticationCallback(
+                'admin@test.com',
+                'x',
+                this.adminRoleId
+            );
             this.assert.deepStrictEqual(loginResult, {error: GameConst.INVALID_LOGIN_MESSAGE});
             this.assert.strictEqual(adminResult, false);
             this.assert.strictEqual(loginSetup.loadedUsernames.length, 0);
@@ -101,11 +109,11 @@ class TestLoginManagerUserRequest extends BaseTest
                 player: {id: 1, username: 'player', role_id: this.playerRoleId, status: '1', password: storedPassword}
             };
             let loginManager = this.createLoginManager(storedUsers).loginManager;
-            let validLogin = await loginManager.processUserRequest({username: 'player', password: 'secret'});
-            await loginManager.processUserRequest({username: 'player', password: 'wrong'});
-            await loginManager.roleAuthenticationCallback('admin@test.com', 'x', this.adminRoleId);
+            let validLogin = await loginManager.gameLogin.processUserRequest({username: 'player', password: 'secret'});
+            await loginManager.gameLogin.processUserRequest({username: 'player', password: 'wrong'});
+            await loginManager.administrationLogin.roleAuthenticationCallback('admin@test.com', 'x', this.adminRoleId);
             this.assert.strictEqual(validLogin.user.id, 1);
-            this.assert.strictEqual(loginManager.pendingPasswordValidations, 0);
+            this.assert.strictEqual(loginManager.passwordValidationGuard.pendingValidations, 0);
         });
     }
 
@@ -114,15 +122,15 @@ class TestLoginManagerUserRequest extends BaseTest
         await this.test('concurrent logins reserve the validation before the user lookup and respect the limit', async () => {
             let loginSetup = this.createLoginManager({player: {id: 1, username: 'player'}});
             let loginManager = loginSetup.loginManager;
-            loginManager.maxPendingPasswordValidations = 1;
+            loginManager.passwordValidationGuard.maxPendingValidations = 1;
             await Promise.all([
-                loginManager.processUserRequest({username: 'player', password: 'secret'}),
-                loginManager.processUserRequest({username: 'player', password: 'secret'}),
-                loginManager.roleAuthenticationCallback('admin@test.com', 'x', this.adminRoleId)
+                loginManager.gameLogin.processUserRequest({username: 'player', password: 'secret'}),
+                loginManager.gameLogin.processUserRequest({username: 'player', password: 'secret'}),
+                loginManager.administrationLogin.roleAuthenticationCallback('admin@test.com', 'x', this.adminRoleId)
             ]);
             this.assert.deepStrictEqual(loginSetup.loadedUsernames, ['player']);
             this.assert.strictEqual(loginSetup.loadedEmails.length, 0);
-            this.assert.strictEqual(loginManager.pendingPasswordValidations, 0);
+            this.assert.strictEqual(loginManager.passwordValidationGuard.pendingValidations, 0);
         });
     }
 
@@ -133,7 +141,7 @@ class TestLoginManagerUserRequest extends BaseTest
             let adminUser = {id: 5, email: 'admin@test.com', role_id: this.adminRoleId, status: '1'};
             adminUser.password = storedPassword;
             let loginManager = this.createLoginManager({'admin@test.com': adminUser}).loginManager;
-            let authenticatedUser = await loginManager.roleAuthenticationCallback(
+            let authenticatedUser = await loginManager.administrationLogin.roleAuthenticationCallback(
                 'admin@test.com',
                 'secret',
                 this.adminRoleId
@@ -146,7 +154,9 @@ class TestLoginManagerUserRequest extends BaseTest
     {
         await this.test('a username that is not a string is rejected before any lookup', async () => {
             let loginSetup = this.createLoginManager({});
-            let loginResult = await loginSetup.loginManager.processUserRequest({username: ['player'], password: 'x'});
+            let loginResult = await loginSetup.loginManager.gameLogin.processUserRequest(
+                {username: ['player'], password: 'x'}
+            );
             this.assert.deepStrictEqual(loginResult, {error: GameConst.INVALID_LOGIN_MESSAGE});
             this.assert.strictEqual(loginSetup.loadedUsernames.length, 0);
         });
