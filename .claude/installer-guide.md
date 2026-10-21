@@ -279,7 +279,7 @@ For other databases, these scripts must be manually adapted to the target databa
 - a missing admin or signed tokens secret is rejected before the driver and database checks, without any project file
 - a full Knex installation against the tests database creates `.env`, `.gitignore`, `knexfile.js`, `install.lock` and the generated Knex models in `test-results/installer-project`, and runs the `startCallback` with the `KnexDataServer`
 
-It runs with the other integration tests (`npm test` or `npm run test:default`) using the database from `tests/config.json`; the install SQL only creates the missing tables and the seeds are not executed, so the tests database data is not modified.
+It runs with the other self-hosted integration tests (`npm run test:default`) using the database from `tests/config.json`; the install SQL only creates the missing tables and the seeds are not executed, so the tests database data is not modified.
 
 ## Troubleshooting
 
