@@ -169,9 +169,14 @@ Use `themeManager.createClientBundle()` for bundling (checks `RELDENS_ALLOW_RUN_
 
 ## Essential Commands
 
+**ALL TESTS (UNIT, INTEGRATION, E2E) MUST ALWAYS RUN IN THEIR OWN SELF-HOSTED ENVIRONMENT.** Never run `npm test` in a checkout: it targets an external server on the `tests/config.json` port that nothing starts, so every admin integration test fails with an empty `Error:` (connection refused). Every checkout uses its own `tests/config.json` test database and ports.
+
 ```bash
-# Integration tests (asks for confirmation, resets the database set in tests/config.json)
-npm test
+# Unit and integration tests, self-hosted: resets the tests/config.json database and boots its own server from the
+# serverPath app on the tests/config.json port + 100 (RELDENS_TESTS_CONFIRMED=1 skips the confirmation)
+npm run test:default
+# E2E tests, self-hosted: the Playwright globalSetup boots its own server (see .claude/e2e-testing-guide.md)
+npm run test:e2e -- --db-reset=<tests/config.json dbName>
 # Build styles and client
 npm exec -- reldens buildSkeleton
 # Full rebuild from scratch
