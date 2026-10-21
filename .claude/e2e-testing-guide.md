@@ -3,6 +3,13 @@
 Playwright end-to-end suite under `tests/e2e/`. It boots a real Reldens server against a real database and
 drives the real client in a browser.
 
+ALL TESTS (UNIT, INTEGRATION, E2E) MUST ALWAYS RUN IN THEIR OWN SELF-HOSTED ENVIRONMENT: the e2e suite boots its own
+server (see "App under test") and the unit and integration tests run with `RELDENS_TESTS_CONFIRMED=1 npm run
+test:default` (`tests/default/run-default.js`, it boots its own server on the `tests/config.json` port + 100), never
+with `npm test`, which targets an external server on the `tests/config.json` port that nothing starts (every admin
+integration test then fails with an empty `Error:`, the connection refused). Every checkout uses its own
+`tests/config.json` test database and ports.
+
 ## Commands
 
 ```bash
@@ -57,8 +64,8 @@ survive a reset.
 plus the test-only rows (ids 100+ and 1001+). Every change to one of them, including the rows seeded by a new
 `migrations/development/*-sql-update.sql`, must be applied to the other one in the same change: when they drift, a
 database last reset by the unit tests misses the e2e data (the `root2` and `root3` accounts were only in the production
-file until 2026-10-12). The `dbName` of `tests/config.json` can be shared by several checkouts (`reldens_src_tests`), so
-always run the suite with `--db-reset=<dbName>`.
+file until 2026-10-12). Every checkout uses its own `dbName` in `tests/config.json`, never a database shared with
+another checkout or the app, and always runs the suite with `--db-reset=<dbName>`.
 
 ### Required accounts
 
