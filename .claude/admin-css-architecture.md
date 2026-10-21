@@ -87,6 +87,7 @@ Each container file has ONE root selector (except `container-tileset-analyzer.cs
 - `container-element-tiles-layer-modal.css` -> `.element-tiles-layer-modal`
 - `container-admin-dashboard.css` -> `.admin-dashboard`
 - `container-room-active-players.css` -> `.room-active-players-banner`
+- `container-server-usage.css` -> `.server-usage`
 
 ### Exception - `container-tileset-analyzer.css`
 This file does not follow the one root selector rule: it has a top-level `@keyframes tileset-analyzer-spin` and two root selectors, `.tileset-analyzer-wrapper` and `.tileset-analyzer`. The `.tileset-analyzer` root is shared with `container-tileset-tile-options.css`, which uses it as its own root.
@@ -128,6 +129,7 @@ This file does not follow the one root selector rule: it has a top-level `@keyfr
 @import './container-tileset-tile-options.css';
 @import './container-admin-dashboard.css';
 @import './container-room-active-players.css';
+@import './container-server-usage.css';
 ```
 
 Every CSS file under `theme/admin/css/` must be `@import`-ed here - there is no glob, so a file that is not listed is silently never loaded.

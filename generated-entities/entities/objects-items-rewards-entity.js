@@ -30,6 +30,7 @@ class ObjectsItemsRewardsEntity extends EntityProperties
                 type: 'reference',
                 reference: 'items_item',
                 alias: 'related_items_item_item_key',
+                referenceKey: 'key',
                 onDelete: 'noAction',
                 isRequired: true,
                 dbType: 'varchar'
@@ -38,6 +39,7 @@ class ObjectsItemsRewardsEntity extends EntityProperties
                 type: 'reference',
                 reference: 'items_item',
                 alias: 'related_items_item_reward_item_key',
+                referenceKey: 'key',
                 onDelete: 'noAction',
                 isRequired: true,
                 dbType: 'varchar'

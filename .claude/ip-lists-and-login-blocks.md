@@ -6,7 +6,7 @@ How the address allow and deny lists are built and checked, and how the failed l
 
 - Environment: `RELDENS_IP_LISTS_ENABLED` (0 or 1), `RELDENS_IP_ALLOW_LIST` and `RELDENS_IP_DENY_LIST` (comma separated addresses or CIDR ranges), read by `EnvironmentVariablesReader.fetchIpListsFromEnvironmentVariables()` into the `server/appServerConfig/ipLists` configuration (the `environmentConfig` passed to the `ConfigManager` constructor).
 - `config` rows (scope `server`): `security/ipLists/enabled` (boolean, overrides the environment switch), `security/ipLists/allow` and `security/ipLists/deny` (comma separated, appended to the environment entries). The basic configuration installs `security/ipLists/enabled` as `0`, so `RELDENS_IP_LISTS_ENABLED=1` alone does not enable the lists: set the row to `1` (the environment switch only applies when the row is missing, and before the `config` rows are loaded at startup).
-- `ip_lists` table rows without `expires_at`: permanent entries, `list_type` is `allow` or `deny`, the `address` and `list_type` pair is unique. They are managed in the administration panel settings menu as "IP Allow And Deny Lists" (entity `ipLists`).
+- `ip_lists` table rows without `expires_at`: permanent entries, `list_type` is `allow` or `deny`, the `address` and `list_type` pair is unique. They are managed in the administration panel as a top level sidebar item (entity `ipLists`).
 
 ## Startup Flow
 
@@ -43,10 +43,10 @@ The `ClientAddressGuard` of `@reldens/server-utils` resolves the client address 
 
 `LoginAttempts` (`lib/game/server/memory/login-attempts.js`) is created by the `LoginManager` with the `server/security/loginAttempts` configuration (environment values overridden by the configuration rows) and the `ipLists` repository, and it is shared by the game login and the administration panel login. The `security/loginAttempts/enabled` row (installed as `1`) overrides `RELDENS_LOGIN_ATTEMPTS_ENABLED`; when disabled no failure is counted and no key is blocked.
 
-1. Every failed login calls `LoginAttempts.registerLoginFailure()`, which registers a hit for `identity:<username or email>` and for `address:<request address>` (`GameConst.LOGIN_ATTEMPTS_KEYS`).
+1. Every failed login calls `LoginAttempts.registerLoginFailure()`, which registers a hit for `identity:<username or email>` and for `address:<request address>` (`GameConst.LOGIN_ATTEMPTS_KEYS`). When the user exists the identity is the stored `username` (game login) or `email` (administration panel login) of the loaded row, and `PasswordValidationGuard.isStoredIdentityBlocked()` (`lib/game/server/password-validation-guard.js`) checks that stored identity after the lookup, because the `users` columns are `utf8mb4_unicode_ci`: the case, accent and trailing space variants of a username or email load the same account and must share its attempts. The identity keys are lower case (`LoginAttempts.identityKey()`), and every address key goes through `LoginAttempts.addressKey()` with the `express-rate-limit` `ipKeyGenerator` (passed as `addressKeyGenerator` by `ServerManagersInitializer.initializeLoginManager()`), so an IPv4 mapped address (`::ffff:10.0.0.1`) counts as its IPv4 address and the IPv6 addresses are grouped by their `/56` network (`2001:db8::/56`).
 2. When a key reaches `maxAttempts` inside the window (the `security/loginAttempts/maxAttempts` row, installed as `10`, overrides `RELDENS_LOGIN_ATTEMPTS_MAX`; the window defaults to the block time) the key is blocked for `blockTimeMs` (the `security/loginAttempts/blockTimeMs` row, installed as `900000`, overrides `RELDENS_LOGIN_ATTEMPTS_BLOCK_MS`).
-3. An address block is stored as a `deny` row with the reason `Login attempts limit reached.` and the `expires_at` of the block. A repeated block for the same address updates that row, and a permanent `deny` row (without `expires_at`) is never replaced. The identity blocks are kept in memory only.
-4. `LoginAttempts.isLoginBlocked()` rejects the login while the identity or the address is blocked, in `LoginManager.processUserRequest()` for the game login and in `LoginManager.roleAuthenticationCallback()` for the administration panel login, with the same invalid login message as a wrong password.
+3. An address block is stored as a `deny` row with the reason `Login attempts limit reached.` and the `expires_at` of the block, the `address` is the address key (an IPv4 address or an IPv6 `/56` network). A repeated block for the same address updates that row, and a permanent `deny` row (without `expires_at`) is never replaced. The identity blocks are kept in memory only.
+4. `LoginAttempts.isLoginBlocked()` rejects the login while the identity or the address is blocked, in `GameLogin.processUserRequest()` (`lib/game/server/game-login.js`) for the game login and in `AdministrationLogin.roleAuthenticationCallback()` (`lib/game/server/administration-login.js`) for the administration panel login, with the same invalid login message as a wrong password.
 5. On the startup `restoreAddressBlocks()` loads the `deny` rows whose `expires_at` is still in the future back into memory, so a restart does not lift the block. The expired rows stay in the table and are ignored.
 
 The temporary rows never enter the Express or WebSocket lists, they only block the logins.
@@ -62,7 +62,7 @@ The same `LoginAttempts` registry counts, in memory only. Every limit below is r
 
 The registry keys are `Map` entries: the expired hits and blocks are swept once per window, the identities are truncated to 255 characters in the keys, and at 50000 tracked keys the oldest key is evicted.
 
-The `LoginManager` also caps the password validations running at the same time (the `security/maxConcurrentPasswordValidations` row, installed as `8`, overrides `RELDENS_MAX_CONCURRENT_PASSWORD_VALIDATIONS`): each game or administration login reserves its slot before the user lookup and releases it when the login ends, so concurrent requests can not pass the check together. The validation uses the asynchronous pbkdf2 of `Encryptor.validatePassword()` so it does not block the event loop.
+The `PasswordValidationGuard` created by the `LoginManager` and shared by both logins also caps the password validations running at the same time (the `security/maxConcurrentPasswordValidations` row, installed as `8`, overrides `RELDENS_MAX_CONCURRENT_PASSWORD_VALIDATIONS`): each game or administration login reserves its slot in `PasswordValidationGuard.runReserved()` before the user lookup and releases it when the login ends, also when it fails, so concurrent requests can not pass the check together. The validation uses the asynchronous pbkdf2 of `Encryptor.validatePassword()` so it does not block the event loop.
 
 ## Administration Panel Login Limiter
 
@@ -70,7 +70,9 @@ Independent from the lists: `CreateAdminSubscriber.applyLoginRateLimit()` mounts
 
 ## Tests
 
-- `tests/test-login-attempts.js` - stored blocks restore, stored block update, the permanent deny row protection, the sweep, the tracked keys cap and the identity truncation.
+- `tests/test-login-attempts.js` - stored blocks restore, stored block update, the permanent deny row protection, the sweep, the tracked keys cap, the identity truncation, the identity letter case variants and the IPv4 mapped and IPv6 network address keys.
+- `tests/test-login-manager-stored-identity.js` - the failed game and administration logins of the username and email variants block the stored username and email.
+- `tests/test-global-rate-limit.js` - `RELDENS_GLOBAL_RATE_LIMIT` read into the app server configuration and the enabled global limiter answering `429` above the maximum.
 - `tests/test-ip-lists-entity-subscriber.js` - the admin saved and deleted rows refresh the lists.
 - `tests/test-room-login-auth.js` - the scene joins limit per address and per username.
 - `tests/e2e/test-login-security.spec.js` - lockout with the stored block and the simulated restart, the denied address page and room join.

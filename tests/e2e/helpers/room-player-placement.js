@@ -20,14 +20,6 @@ class RoomPlayerPlacement
 
     static MAX_TILES_RADIUS = 3;
 
-    static isTileOverBody(tileRect, bodyBounds)
-    {
-        return tileRect.left < bodyBounds.upperBound[0]
-            && tileRect.right > bodyBounds.lowerBound[0]
-            && tileRect.top < bodyBounds.upperBound[1]
-            && tileRect.bottom > bodyBounds.lowerBound[1];
-    }
-
     static mapCandidate(area, column, row)
     {
         let tileRect = {
@@ -36,7 +28,7 @@ class RoomPlayerPlacement
             top: row * area.tileHeight,
             bottom: (row + 1) * area.tileHeight
         };
-        if(area.bodiesBounds.some(bodyBounds => RoomPlayerPlacement.isTileOverBody(tileRect, bodyBounds))){
+        if(RoomObjectsState.isRectOverBodies(tileRect, area.bodiesBounds)){
             return false;
         }
         return {

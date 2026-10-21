@@ -10,7 +10,9 @@ The admin panel is accessible at `/reldens-admin` and is powered by the `@relden
 
 ## Dashboard
 
-The dashboard page shows the users currently logged in and the distinct logged users per day over the last 30 days.
+The dashboard page (`theme/admin/templates/dashboard.html`) shows two `sub-content` panels: the servers usage first (see
+Server Usage below), then the "Logged users" panel with two boxes, "Last 30 days" (the distinct logged users per day
+over the last 30 days) and "Currently logged" (the users currently logged in).
 
 The page itself stays static because `@reldens/cms` renders and caches the dashboard content once at startup, so the
 numbers are fetched at runtime: `theme/admin/js/admin-dashboard-stats-renderer.js` reads the route from the
@@ -32,6 +34,17 @@ The data comes from `UsersActivityDataProvider` (`lib/admin/server/users-activit
 
 The page re-fetches on the interval given by the `data-refresh-ms` attribute on the dashboard wrapper, so the count and
 the chart stay current without a reload. The hover listeners are bound once, not on every refresh.
+
+## Server Usage
+
+The dashboard (its first panel) and the control panel (Server Management page, in its own box) show the
+usage of this server and of every other server of the rooms: system memory and CPU used percent, event loop delay,
+available and total memory, process memory, JavaScript heap, the configured limits, whether the server is overloaded
+(new game logins, arriving players and new scene rooms rejected) or only monitored (`health/blockingEnabled` set to
+`0`), and for the other servers the response time or the not available error. `ServerHealthSubscriber` (`lib/admin/server/subscribers/server-health-subscriber.js`) fills the
+`{{&serverUsage}}` placeholder of both templates with `theme/admin/templates/server-usage.html` and serves the
+authenticated `/server-health/usage` route that `theme/admin/js/admin-server-usage-renderer.js` requests every 5
+seconds. The limits are the `health/*` config rows, see `.claude/server-health-monitor.md`.
 
 ---
 
@@ -71,6 +84,8 @@ passed by `CreateAdminSubscriber.fetchConfigurations()` as `csrfEnabled` to the 
   `RELDENS_ADMIN_SESSION_MAX_AGE_MS` (the environment value only applies when the row is missing); a value of `0` or
   lower is used as one day by the store. The expired rows are pruned every hour. Without the generated entity the
   default memory store is used and a warning is logged.
+- The `adminSessions` entity has no menu group, it is a top level item of the sidebar; deleting a row ends that
+  session.
 - `AdminSessionValidator` (`lib/admin/server/admin-session-validator.js`) hooks the `reldens.adminIsAuthenticated`
   event: on every authenticated request it reloads the session user and destroys the session when the user was deleted,
   banned, moved to another role or changed its password (the login stores the `sessionRevision` hash of the password
@@ -81,16 +96,22 @@ passed by `CreateAdminSubscriber.fetchConfigurations()` as `csrfEnabled` to the 
 
 ## Admin Panel Sections and Controlled Tables
 
-The admin panel groups entities into 16 navigation sections. The section structure is defined in:
+The admin panel groups entities into 15 navigation sections. The section structure is defined in:
 `lib/admin/server/entities-config-override.js`
+
+An entity without a `parentItemLabel` (`features`, `adminSessions`, `ipLists`) is a top level item of the sidebar. Its
+entry in `entities-config-override.js` sets `navigationLevel: 'level-1'`, the `@reldens/cms` sidebar builder renders the
+entities items only with their name and path, so `NavigationLevelSubscriber`
+(`lib/admin/server/subscribers/navigation-level-subscriber.js`) renders those items again on
+`reldens.adminSideBarBeforeSubItems` with `theme/admin/templates/sidebar-item.html` and the `level` value. The `ipLists` entity is
+the permanent allow and deny addresses and the temporary login blocks (`ip_lists` table), see
+`.claude/ip-lists-and-login-blocks.md`.
 
 ### Settings
 Configuration keys and operation types used throughout the platform.
 - `config` - Key/value configuration entries (`config` table)
 - `configTypes` - Types for configuration entries
 - `operationTypes` - Operation type definitions
-- `ipLists` - Permanent allow and deny addresses and the temporary login blocks (`ip_lists` table), see
-  `.claude/ip-lists-and-login-blocks.md`
 
 ### Rooms
 Room definitions and player transition points.
@@ -375,11 +396,11 @@ Clan definitions, levels, modifiers, and membership.
 - `clanMembers` - Clan membership records
 
 ### Quests
-Quest progress tracking records.
+Quest progress tracking records, listed after Rewards (`QuestsProgressEntityOverride`, navigation position 650).
 - `questsProgress` - Per-player and global quest flags
 
 ### Features
-Feature flags and plugin enablement.
+Feature flags and plugin enablement, a top level item without a group.
 - `features` - Feature definitions and enabled/disabled state
 
 ---

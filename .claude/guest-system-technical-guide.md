@@ -408,7 +408,7 @@ WHERE name = 'forest';
 ## 8. Guest Login Flow
 
 1. The guest form sends `isGuest: true` (the client sets `isNewUser: true` for every guest request).
-2. `LoginManager.processUserRequest()` sends new guests to `UserRegistration.processGuestRequest()`
+2. `GameLogin.processUserRequest()` (`lib/game/server/game-login.js`) sends new guests to `UserRegistration.processGuestRequest()`
    (`lib/game/server/user-registration.js`): it rejects the request when guests are disabled
    (`client/general/users/allowGuest`) or the address reached the `security/guests/maxPerIp` limit (the config row
    overrides `RELDENS_GUESTS_MAX_PER_IP`), then `overrideWithGuestData()` generates the username, the email (with the
@@ -416,7 +416,7 @@ WHERE name = 'forest';
 3. `RoomGame.onJoin()` (`lib/rooms/server/game.js`) sends the generated password back as `guestPassword` in the
    `START_GAME` message. The client keeps it only in memory (`GameManager.initEngine()`) and uses it to join the scene
    and feature rooms.
-4. Every later login of an existing guest goes through `LoginManager.isValidGuestLogin()`: it is only accepted while the
+4. Every later login of an existing guest goes through `GameLogin.isValidGuestLogin()`: it is only accepted while the
    guest is active in the game room. Once the guest leaves the game (tab closed, disconnection) nobody can log into that
    account again, the password is never stored on the client.
 
@@ -476,7 +476,7 @@ A failed guest never stops the run, the next guest is processed.
 - `lib/game/client/game-manager.js` - Config loading
 - `lib/game/client/handlers/client-start-handler.js` - Form initialization
 - `lib/game/client/handlers/guest-form-handler.js` - Guest form logic
-- `lib/game/server/login-manager.js` - Guest requests routing and `isValidGuestLogin()`
+- `lib/game/server/game-login.js` - Guest requests routing and `isValidGuestLogin()`
 - `lib/game/server/user-registration.js` - Guest account creation
 - `lib/rooms/server/game.js` - `guestPassword` in the `START_GAME` message
 - `lib/users/server/guests-cleanup.js` - Guests cleanup runs

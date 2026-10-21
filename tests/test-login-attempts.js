@@ -7,10 +7,17 @@
 const { BaseTest } = require('./base-test');
 const { LoginAttempts } = require('../lib/game/server/memory/login-attempts');
 const { GameConst } = require('../lib/game/constants');
+const { AppServerFactory } = require('@reldens/server-utils');
 const { sc } = require('@reldens/utils');
 
 class TestLoginAttempts extends BaseTest
 {
+
+    constructor(config)
+    {
+        super(config);
+        this.addressKeyGenerator = new AppServerFactory().rateLimitConfigurer.rateLimit.ipKeyGenerator;
+    }
 
     createIpListsRepository(storedRows)
     {
@@ -191,6 +198,61 @@ class TestLoginAttempts extends BaseTest
                 [GameConst.LOGIN_ATTEMPTS_KEYS.IDENTITY+'x'.repeat(10)]
             );
             this.assert.strictEqual(loginAttempts.isLoginBlocked('x'.repeat(20), '', now), true);
+        });
+    }
+
+    async testTheIdentityLetterCaseVariantsShareTheAttempts()
+    {
+        await this.test('the letter case variants of an identity share the login attempts and the block', async () => {
+            let loginAttempts = new LoginAttempts({maxAttempts: 2});
+            let now = Date.now();
+            loginAttempts.registerLoginFailure('Player', '', now);
+            loginAttempts.registerLoginFailure('PLAYER', '', now);
+            this.assert.strictEqual(loginAttempts.isLoginBlocked('player', '', now), true);
+        });
+    }
+
+    async testTheMappedAndTheSameNetworkAddressesShareTheAttempts()
+    {
+        await this.test('an IPv4 mapped address and the addresses of one IPv6 network share the attempts', async () => {
+            let loginAttempts = new LoginAttempts({maxAttempts: 2, addressKeyGenerator: this.addressKeyGenerator});
+            let now = Date.now();
+            loginAttempts.registerLoginFailure('first-player', '::ffff:10.0.0.1', now);
+            loginAttempts.registerLoginFailure('second-player', '10.0.0.1', now);
+            loginAttempts.registerLoginFailure('third-player', '2001:db8:0:1::1', now);
+            loginAttempts.registerLoginFailure('fourth-player', '2001:db8:0:2::2', now);
+            this.assert.strictEqual(loginAttempts.isLoginBlocked('another-player', '10.0.0.1', now), true);
+            this.assert.strictEqual(loginAttempts.isLoginBlocked('another-player', '2001:db8:0:3::3', now), true);
+            this.assert.strictEqual(loginAttempts.isLoginBlocked('another-player', '2001:db8:1::1', now), false);
+        });
+    }
+
+    async testTheAddressLimitsCountTheMappedAddressAsItsIpv4Address()
+    {
+        await this.test('the address limits count an IPv4 mapped address as its IPv4 address', async () => {
+            let loginAttempts = new LoginAttempts({addressKeyGenerator: this.addressKeyGenerator});
+            let now = Date.now();
+            let registrationKey = GameConst.LOGIN_ATTEMPTS_KEYS.REGISTRATION;
+            this.assert.strictEqual(
+                loginAttempts.isAddressLimitReached(registrationKey, '::ffff:10.0.0.5', 1, now),
+                false
+            );
+            this.assert.strictEqual(loginAttempts.isAddressLimitReached(registrationKey, '10.0.0.5', 1, now), true);
+        });
+    }
+
+    async testTheStoredAddressBlocksUseTheAddressKeys()
+    {
+        await this.test('the address blocks are stored and restored with the address keys', async () => {
+            let now = Date.now();
+            let ipListsRepository = this.createIpListsRepository([
+                {id: 1, address: '::ffff:10.0.0.9', list_type: 'deny', expires_at: new Date(now+60000)}
+            ]);
+            let loginAttempts = new LoginAttempts({ipListsRepository, addressKeyGenerator: this.addressKeyGenerator});
+            await loginAttempts.restoreAddressBlocks(now);
+            await loginAttempts.persistAddressBlock(loginAttempts.addressKey('2001:db8:0:1::1'), now+900000);
+            this.assert.strictEqual(loginAttempts.isLoginBlocked('player', '10.0.0.9', now), true);
+            this.assert.strictEqual([...ipListsRepository.createdRows].shift().address, '2001:db8::/56');
         });
     }
 
