@@ -127,6 +127,8 @@ The basic configuration (`migrations/production/reldens-basic-config-v4.0.0.sql`
 - `RELDENS_MONITOR_USER` - Monitor username
 - `RELDENS_MONITOR_PASS` - Monitor password
 
+The monitor is attached with basic authentication only when `RELDENS_MONITOR_AUTH` is `1` and both the user and the password are set (`GameServer.hasAuthentication()`), otherwise it is attached without authentication and `ServerStartupReport.warnInsecureDefaults()` logs the `The Colyseus monitor is enabled WITHOUT authentication` warning on the startup.
+
 ## Storage & Database
 
 - `RELDENS_STORAGE_DRIVER` - Storage driver: `knex` (default, bundled with `@reldens/storage`), or one of the optional drivers when its packages are installed in the project: `kysely`, `drizzle`, `objection-js`, `mikro-orm`, `prisma`
