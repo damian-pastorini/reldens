@@ -15,6 +15,10 @@ Core game engine
 - Installation scripts
 - Theme manager
 - Server health (`lib/game/server/health/`): usage limits, rooms availability between servers and the blocking switch, see `.claude/server-health-monitor.md`
+- In memory registries (`lib/game/server/memory/`): `ActivePlayers`, `LoginAttempts` and `KeyedOperationsLock`, which
+  runs the async operations per key: `share()` runs one operation per key and gives every waiting caller its result
+  (the clan loads), `queue()` runs them one after the other per key (the user locale and the player audio config
+  saves); the operations resolve their own errors so the key is always cleared
 
 ### Rooms (`lib/rooms/`)
 Core multiplayer room system
@@ -39,6 +43,9 @@ Plugin-like modular system
 - Features are loaded from database (`features` table with `is_enabled` flag)
 - `server/manager.js` (FeaturesManager) dynamically loads enabled features
 - Each feature can hook into events via `setup()` method
+- `plugin-interface.js` (PluginInterface) is the base interface of every feature plugin; the client plugins that require
+  the GameManager and the EventsManager extend `client/client-core-plugin.js` (ClientCorePlugin), whose
+  `setupCoreProperties(props)` reads both from the setup props and logs the missing one with the plugin class name
 
 ## Gameplay Systems
 
@@ -75,6 +82,14 @@ Party/guild system
 - Team formation
 - Shared objectives
 - Clan levels and bonuses
+- `Team` and `Clan` extend `SharedModifiersGroup` (`server/shared-modifiers-group.js`): the group level, shared
+  properties and modifiers, applied to the joined players (`applyModifiers()`) and reverted when they leave
+  (`revertModifiers()`)
+- `TeamsPlugin.fetchPlayerClan()` finds the loaded clan of a player (its `privateData.clan`), used by the stats
+  updates, the clan disconnection, the clan leave and the saved stats listener, where
+  `Clan.revertModifiersOnSavedStats()` saves the stats of the clan players without the clan modifiers
+- A clan is loaded once when several members log in together (`CreatePlayerClanHandler` shares the load through a
+  `KeyedOperationsLock`), and a failed load resolves to false in `ClanFactory.create()` so the next login loads it again
 
 ## Player Systems
 
@@ -82,8 +97,9 @@ Party/guild system
 Authentication, registration, player management
 - Supports guest users, Firebase authentication
 - `lib/game/server/login-manager.js` creates the classes of the login flows in `lib/game/server/`: `GameLogin` (game
-  and guest logins), `AdministrationLogin` (administration panel login), `PasswordValidationGuard` (the concurrent
-  password validations cap and the stored identity block shared by both logins), `UserRegistration` (accounts and
+  and guest logins), `AdministrationLogin` (administration panel login), `PasswordValidationGuard` (the login checks
+  shared by both logins: blocked requests, concurrent validations cap, stored identity block, bans, the rejections
+  with their dummy password validation and the failures registration), `UserRegistration` (accounts and
   guests), `PlayerCreation` (new players), `PlayerRoomState` (the states placed in a room and the players state and
   scene on login), `ForgotPassword` (forgot password requests, reset emails and the reset page routes) and
   `UserDisconnection` (disconnection from every room and from the other servers)
@@ -99,12 +115,18 @@ Authentication, registration, player management
 Multi-channel chat (global, room, private messages)
 - Message types and tabs
 - Real-time messaging
+- The overhead chat is shown only for the messages with a sender, a known chat type (`ChatUi.isValidMessageType()`,
+  the `ChatConst.TYPES` values) and a configured chat type
 
 ### Audio (`lib/audio/`)
 Sound and music system
 - Background music management
 - Sound effects for actions and events
 - Audio configuration per scene/room
+- The player audio categories switches are saved with the repository `upsert()`, queued per player and category
+  (`AudioManager.savePlayerConfig()`)
+- The global audios saved or deleted in the administration panel are sent to every created room
+  (`AudioManager.broadcastToCreatedRooms()` with `AudioConst.AUDIO_UPDATE` or `AudioConst.AUDIO_DELETE`)
 
 ### Prediction (`lib/prediction/`)
 Client-side prediction system
@@ -176,6 +198,10 @@ Game objects (NPCs, interactables, respawn areas)
 Text snippets, locales and translations
 - `snippets`, `locale` and `usersLocale` entities for the UI and message texts
 - `translator.js` plus the client translations mapper and templates handler
+- The settings language selector (`SnippetsUi`) sends the chosen locale with its change time, `UsersLocaleUpdater`
+  saves it as the user locale with the repository `upsert()`, queued per user, and ignores the changes older than the
+  last one; a failed save sends the error back and `LanguageSaveErrorListener` (registered when the UI is created)
+  asks `SnippetsUi.showSaveError()` to show it only for the last change
 
 ### Bundlers (`lib/bundlers/`)
 Asset bundling driver configuration
