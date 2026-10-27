@@ -6,15 +6,19 @@
  * bodies with state, the enemies switch off until the next players reset, the enemy placement next to a player (with
  * the targeting of that exact enemy body on its placed position), the player placement next to an object (waiting for
  * the client to show the player on the placed position), the enemy attack on a player, the player
- * placement next to another player and the player affected property (hp) value.
+ * placement next to another player, the player affected property (hp) value and the attack on the targeted body
+ * repeated until a condition is reached.
  *
  */
 
 const { SecurityApi } = require('./security-api');
 const { RoomMovementApi } = require('./room-movement-api');
+const { Selectors } = require('../selectors');
 
 class RoomObjectsApi
 {
+
+    static ATTACK_STEP_MS = 500;
 
     static async fetchRoomObjects(gameConfig, roomName)
     {
@@ -94,6 +98,18 @@ class RoomObjectsApi
             window.reldens.gameEngine.showTarget(animation.targetName || animation.key, scene.player.currentTarget, false);
             return true;
         }, {bodyKey, x: position.x, y: position.y}, {timeout})).jsonValue();
+    }
+
+    static async attackTargetUntil(page, skillKey, isReached, timeout)
+    {
+        for(let step = 0; step < Math.ceil(timeout / RoomObjectsApi.ATTACK_STEP_MS); step++){
+            if(await isReached()){
+                return true;
+            }
+            await page.click(Selectors.combat.skillButton(skillKey), {force: true});
+            await page.waitForTimeout(RoomObjectsApi.ATTACK_STEP_MS);
+        }
+        return await isReached();
     }
 
     static async waitForPlayerAtPosition(page, position, timeout)
