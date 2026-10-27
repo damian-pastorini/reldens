@@ -3,9 +3,9 @@
  * Reldens - Client Bundle Check
  *
  * Tells whether the app under test still serves the raw theme entry point instead of a bundled client, or serves a
- * bundle older than the client sources of the checkout (any lib file outside a server folder changed after the
- * bundle was built). The e2e setup uses it to run the bundler before the tests instead of failing every spec on a
- * missing window.reldens or testing an outdated client.
+ * bundle older than the client sources (any lib file of the checkout or theme plugins file of the app outside a server
+ * folder changed after the bundle was built). The e2e setup uses it to run the bundler before the tests instead of
+ * failing every spec on a missing window.reldens or testing an outdated client.
  *
  */
 
@@ -15,6 +15,8 @@ class ClientBundleCheck
 {
 
     static SOURCES_FOLDER = 'lib';
+    static THEME_FOLDER = 'theme';
+    static PLUGINS_FOLDER = 'plugins';
     static SERVER_FOLDER = 'server';
     static SOURCES_EXTENSION = '.js';
 
@@ -33,9 +35,14 @@ class ClientBundleCheck
         if(!bundleStats){
             return true;
         }
-        return ClientBundleCheck.findClientSources(
-            FileHandler.joinPaths(checkoutPath, ClientBundleCheck.SOURCES_FOLDER)
-        ).some(sourcePath => bundleStats.mtimeMs < FileHandler.getFileStats(sourcePath).mtimeMs);
+        return [
+            ...ClientBundleCheck.findClientSources(
+                FileHandler.joinPaths(checkoutPath, ClientBundleCheck.SOURCES_FOLDER)
+            ),
+            ...ClientBundleCheck.findClientSources(
+                FileHandler.joinPaths(serverPath, ClientBundleCheck.THEME_FOLDER, ClientBundleCheck.PLUGINS_FOLDER)
+            )
+        ].some(sourcePath => bundleStats.mtimeMs < FileHandler.getFileStats(sourcePath).mtimeMs);
     }
 
     static findClientSources(sourcesPath)
