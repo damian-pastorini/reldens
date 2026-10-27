@@ -162,7 +162,9 @@ class Selectors
             groupSlot: '.group-item-block',
             slotById: (groupKey) => '#group-item-'+groupKey,
             slotImage: '.group-item-block .equipped-item .item-box .image-container img',
-            itemBoxVisible: '#equipment-items .item-box'
+            itemBoxVisible: '#equipment-items .item-box',
+            itemImage: (itemKey) => '#equipment-items img[src$="/' + itemKey + '.png"]',
+            itemEquip: (itemKey) => '#equipment-items .item-box:has(img[src$="/' + itemKey + '.png"]) [id^="item-equip-"]'
         };
         this.stats = {
             container: '.stat-container',
