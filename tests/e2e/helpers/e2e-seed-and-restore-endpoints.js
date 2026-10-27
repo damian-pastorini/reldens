@@ -6,7 +6,8 @@
  * rows a spec changes, read the stored rows a spec asserts and override config values of the running server. The seeded rows, the preserved rows and the
  * overridden values are kept per parallel spec group, and the reset that runs before every test of a group (and the
  * global teardown for every group) restores the preserved rows (the rows created since then for the same filters are
- * deleted), deletes the seeded rows and restores the values of that group only, so the data of one spec never reaches
+ * deleted and the preserved rows deleted by the spec are created again with their own ids), deletes the seeded rows and
+ * restores the values of that group only, so the data of one spec never reaches
  * the next one and the groups running at the same time never undo each other. The preserved rows are restored first,
  * so a preserved row that references a seeded row (a user locale that points to a seeded locale) never blocks the
  * seeded row delete. The locales reload runs the snippets ConfigurationEnricher again, so a seeded locale reaches the
@@ -71,12 +72,19 @@ class E2eSeedAndRestoreEndpoints
     {
         let repository = serverManager.dataServer.getEntity(preservedEntry.entityKey);
         let preservedIds = preservedEntry.rows.map(row => row.id);
+        let currentIds = [];
         for(let currentRow of await repository.load(preservedEntry.filters)){
             if(!preservedIds.includes(currentRow.id)){
                 await repository.deleteById(currentRow.id);
+                continue;
             }
+            currentIds.push(currentRow.id);
         }
         for(let row of preservedEntry.rows){
+            if(!currentIds.includes(row.id)){
+                await repository.create(TestDataSetup.copyRow(row, {id: row.id}));
+                continue;
+            }
             await repository.updateById(row.id, TestDataSetup.copyRow(row, {}));
         }
     }
