@@ -7,6 +7,7 @@
 const { BaseTest } = require('./base-test');
 const { LoginManager } = require('../lib/game/server/login-manager');
 const { RoomGame } = require('../lib/rooms/server/game');
+const { RoomsAvailability } = require('../lib/game/server/health/rooms-availability');
 const { ActivePlayer } = require('../lib/game/server/memory/active-player');
 const { GameConst } = require('../lib/game/constants');
 const { RoomsConst } = require('../lib/rooms/constants');
@@ -222,11 +223,10 @@ class TestLoginManagerUserRequest extends BaseTest
             getWithoutLogs: (path, defaultValue) => sc.get(joinSetup.configValues, path, defaultValue)
         };
         roomGame.activePlayerByUserName = () => false;
-        roomGame.roomsAvailability = {
-            fetchRoomsAvailability: async (roomsNames) => {
-                joinSetup.requestedRooms.push(...roomsNames);
-                return sc.pickProps(joinSetup.availabilityByRoom, roomsNames);
-            }
+        roomGame.roomsAvailability = Object.create(RoomsAvailability.prototype);
+        roomGame.roomsAvailability.fetchRoomAvailability = async (roomName) => {
+            joinSetup.requestedRooms.push(roomName);
+            return sc.get(joinSetup.availabilityByRoom, roomName, false);
         };
         let userModel = {
             username: 'player',
