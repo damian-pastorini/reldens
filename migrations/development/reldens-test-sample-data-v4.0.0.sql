@@ -72,6 +72,8 @@ REPLACE INTO `ads` (`id`, `key`, `provider_id`, `type_id`, `width`, `height`, `p
 	(4, 'ui-banner', 1, 1, 320, 50, NULL, NULL, 80, NULL, 80, NULL, 0),
 	(5, 'crazy-games-sample-video', 1, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 0),
 	(6, 'game-monetize-sample-video', 2, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 0),
+	(7, 'resurrection-video', 1, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 0),
+	(8, 'skin-ad-ticket', 1, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 0),
 	(100, 'test-ad-list', 1, 1, 300, 100, NULL, 10, NULL, 10, NULL, NULL, 1),
 	(101, 'test-ad-edit', 1, 1, 250, 80, NULL, 20, NULL, 20, NULL, NULL, 1),
 	(102, 'test-ad-delete', 1, 1, 200, 60, NULL, 30, NULL, 30, NULL, NULL, 1);
@@ -82,7 +84,9 @@ REPLACE INTO `ads_banner` (`id`, `ads_id`, `banner_data`) VALUES
 
 REPLACE INTO `ads_event_video` (`id`, `ads_id`, `event_key`, `event_data`) VALUES
 	(1, 5, 'reldens.activatedRoom_reldens-new-age-town', '{"rewardItemKey":"coins","rewardItemQty":1}'),
-	(2, 6, 'reldens.activatedRoom_reldens-forest-level-1', '{"rewardItemKey":"coins","rewardItemQty":1}');
+	(2, 6, 'reldens.activatedRoom_reldens-forest-level-1', '{"rewardItemKey":"coins","rewardItemQty":1}'),
+	(3, 7, 'reldens.gameOver', '{"rewardItemKey":"restoration_scroll","rewardItemQty":1,"replayCooldown":0}'),
+	(4, 8, 'reldens.skinAdTicket', '{"rewardItemKey":"skin_warlock_robe","rewardItemQty":1,"replayCooldown":0}');
 
 REPLACE INTO `ads_providers` (`id`, `key`, `enabled`) VALUES
 	(1, 'crazyGames', 0),
@@ -137,7 +141,8 @@ REPLACE INTO `items_group` (`id`, `key`, `label`, `description`, `files_name`, `
 	(3, 'armor', 'Armor', '', 'armor.png', 4, 1, 0),
 	(4, 'boots', 'Boots', '', 'boots.png', 6, 1, 0),
 	(5, 'gauntlets', 'Gauntlets', '', 'gauntlets.png', 5, 1, 0),
-	(6, 'helmet', 'Helmet', '', 'helmet.png', 1, 1, 0);
+	(6, 'helmet', 'Helmet', '', 'helmet.png', 1, 1, 0),
+	(7, 'skin', 'Skin', 'Changes the player look.', 'skin.png', 7, 1, 0);
 
 REPLACE INTO `items_item` (`id`, `key`, `type`, `group_id`, `label`, `description`, `qty_limit`, `uses_limit`, `useTimeOut`, `execTimeOut`, `customData`) VALUES
 	(1, 'coins', 3, NULL, 'Coins', NULL, 0, 1, NULL, NULL, '{"canBeDropped": true}'),
@@ -148,6 +153,10 @@ REPLACE INTO `items_item` (`id`, `key`, `type`, `group_id`, `label`, `descriptio
 	(6, 'magic_potion_20', 5, NULL, 'Magic Potion', 'A magic potion that will restore 20 MP.', 0, 1, NULL, NULL, '{"canBeDropped":true,"animationData":{"frameWidth":64,"frameHeight":64,"start":6,"end":11,"repeat":0,"usePlayerPosition":true,"followPlayer":true,"startsOnTarget":true},"removeAfterUse":true}'),
 	(7, 'ore', 3, NULL, 'Ore', 'A chunk of raw ore.', 0, 0, NULL, NULL, '{}'),
 	(8, 'fish', 2, NULL, 'Fish', 'A fish.', 0, 0, NULL, NULL, '{"removeAfterUse":true}'),
+	(9, 'restoration_scroll', 3, NULL, 'Restoration Scroll', 'Revives you where you died instead of in town.', 0, 1, NULL, NULL, '{"canBeDropped":false}'),
+	(10, 'skin_ad_ticket', 5, NULL, 'Skin Ticket', 'Watch an ad to get a special skin.', 0, 1, NULL, NULL, '{"canBeDropped":false,"removeAfterUse":true}'),
+	(11, 'skin_warlock_robe', 1, 7, 'Warlock Robe', 'Gives you the warlock look while equipped.', 0, 0, NULL, NULL, '{"canBeDropped":false,"skinKey":"warlock"}'),
+	(12, 'growing_sword', 1, 1, 'Growing Sword', 'A sword that grows stronger with the experience you gain.', 0, 0, NULL, NULL, '{"canBeDropped":false,"growth":{"experienceShare":100,"modifiersIncreasePercentPerLevel":50,"requireEquipped":true,"levels":{"2":5,"3":30,"4":90,"5":200}}}'),
 	(1001, 'test-item-list', 1, 1, 'Test Item List', 'Test item for list validation', 0, 1, NULL, NULL, '{"canBeDropped": true}'),
 	(1002, 'test-item-edit', 1, 1, 'Test Item Edit', 'Test item for edit validation', 0, 1, NULL, NULL, '{"canBeDropped": true}'),
 	(1003, 'test-item-delete', 1, 1, 'Test Item Delete', 'Test item for delete validation', 0, 1, NULL, NULL, '{"canBeDropped": true}'),
@@ -160,7 +169,8 @@ REPLACE INTO `items_item_modifiers` (`id`, `item_id`, `key`, `property_key`, `op
 	(2, 3, 'heal_potion_20', 'stats/hp', 1, '20', 'statsBase/hp'),
 	(3, 5, 'atk', 'stats/atk', 5, '3', NULL),
 	(4, 6, 'magic_potion_20', 'stats/mp', 1, '20', 'statsBase/mp'),
-	(5, 8, 'fish', 'stats/hp', 1, '10', 'statsBase/hp');
+	(5, 8, 'fish', 'stats/hp', 1, '10', 'statsBase/hp'),
+	(6, 12, 'atk', 'stats/atk', 1, '10', NULL);
 
 -- ENTITIES WITH UPLOADS AND FK (Category 4): rooms
 
@@ -366,7 +376,7 @@ REPLACE INTO `audio_markers` (`id`, `audio_id`, `marker_key`, `start`, `duration
 
 REPLACE INTO `objects` (`id`, `room_id`, `layer_name`, `tile_index`, `class_type`, `object_class_key`, `client_key`, `title`, `private_params`, `client_params`, `enabled`) VALUES
 	(5, 41, 'ground', 3482, 3, 'npc_1', 'people_town_1', 'Alfred', '{"runOnAction":true,"playerVisible":true,"collisionType":4,"hasState":true,"randomMovement":{"maxTiles":5}}', '{"content":"Hello! My name is Alfred. Go to the forest and kill some monsters! Now... leave me alone!","autoStart":true,"animations":{"people_town_1_down":{"start":0,"end":2},"people_town_1_left":{"start":3,"end":5},"people_town_1_right":{"start":6,"end":8},"people_town_1_up":{"start":9,"end":11}}}', 1),
-	(6, 114, 'merge-respawn-area-monsters', NULL, 7, 'enemy_1', 'enemy_forest_1', 'Tree', '{"shouldRespawn":true,"childObjectType":4,"isAggressive":true,"interactionRadio":170,"randomMovement":{"maxTiles":3}}', '{"autoStart":true,"frameStart":12,"frameEnd":26,"repeat":-1}', 1),
+	(6, 114, 'merge-respawn-area-monsters', NULL, 7, 'enemy_1', 'enemy_forest_1', 'Tree', '{"shouldRespawn":true,"childObjectType":4,"isAggressive":true,"interactionRadio":170,"randomMovement":{"maxTiles":3},"killScore":8}', '{"autoStart":true,"frameStart":12,"frameEnd":26,"repeat":-1}', 1),
 	(7, 114, 'merge-respawn-area-monsters', NULL, 7, 'enemy_2', 'enemy_forest_2', 'Tree Punch', '{"shouldRespawn":true,"childObjectType":4,"isAggressive":false,"interactionRadio":70,"randomMovement":{"maxTiles":8}}', '{"autoStart":true,"frameStart":12,"frameEnd":26,"repeat":-1}', 1),
 	(8, 41, 'ground', 3567, 3, 'npc_2', 'healer_1', 'Mamon', '{"runOnAction":true,"playerVisible":true,"sendInvalidOptionMessage":true,"collisionType":4,"hasState":true}', '{"content":"Hello traveler! I can restore your health, would you like me to do it?","options":{"1":{"label":"Heal HP","value":1},"2":{"label":"Nothing...","value":2},"3":{"label":"Need some MP","value":3}},"ui":true,"autoStart":true,"animations":{"healer_1_down":{"start":0,"end":2},"healer_1_left":{"start":0,"end":2},"healer_1_right":{"start":0,"end":2},"healer_1_up":{"start":0,"end":2}}}', 1),
 	(10, 41, 'ground', 3578, 5, 'npc_3', 'merchant_1', 'Gimly', '{"runOnAction":true,"playerVisible":true,"sendInvalidOptionMessage":true,"collisionType":4,"hasState":true,"randomMovement":{"maxTiles":5}}', '{"content":"Hi there! What would you like to do?","options":{"buy":{"label":"Buy","value":"buy"},"sell":{"label":"Sell","value":"sell"}},"autoStart":true,"animations":{"merchant_1_down":{"start":0,"end":2},"merchant_1_left":{"start":3,"end":5},"merchant_1_right":{"start":6,"end":8},"merchant_1_up":{"start":9,"end":11}}}', 1),
@@ -399,6 +409,7 @@ REPLACE INTO `objects` (`id`, `room_id`, `layer_name`, `tile_index`, `class_type
 	(40, 114, 'merge-spot_003_river_grass-collisions', 1740, 8, 'fish_spawn_forest_4', 'fish_spawn_forest_4', NULL, '{"cancelOnMove":true,"cancelOnHit":true,"cancelOnOutOfRange":false,"rewards":[{"key":"fish","rate":100}],"runOnAction":true,"fishCooldown":3000,"collisionType":2}', '{"timingDuration":10000,"isInteractive":true,"frameStart":0,"frameEnd":2,"autoStart":true,"repeat":-1,"classKey":"fish_spawn_forest_1","ui":false}', 1),
 	(41, 114, 'merge-spot_003_river_grass-collisions', 946, 8, 'fish_spawn_forest_5', 'fish_spawn_forest_5', NULL, '{"cancelOnMove":true,"cancelOnHit":true,"cancelOnOutOfRange":false,"rewards":[{"key":"fish","rate":100}],"runOnAction":true,"fishCooldown":3000,"collisionType":2}', '{"timingDuration":10000,"isInteractive":true,"frameStart":0,"frameEnd":2,"autoStart":true,"repeat":-1,"classKey":"fish_spawn_forest_1","ui":false}', 1),
 	(42, 114, 'merge-spot_003_river_grass-collisions', 812, 8, 'fish_spawn_forest_6', 'fish_spawn_forest_6', NULL, '{"cancelOnMove":true,"cancelOnHit":true,"cancelOnOutOfRange":false,"rewards":[{"key":"fish","rate":100}],"runOnAction":true,"fishCooldown":3000,"collisionType":2}', '{"timingDuration":10000,"isInteractive":true,"frameStart":0,"frameEnd":2,"autoStart":true,"repeat":-1,"classKey":"fish_spawn_forest_1","ui":false}', 1),
+	(43, 41, 'ground', 4640, 9, 'teleport_1', 'teleport_master_1', 'Portia', '{"runOnAction":true,"playerVisible":true,"sendInvalidOptionMessage":true,"collisionType":4,"hasState":true,"destinations":{"1":{"room":"reldens-forest-level-1"},"2":{"room":"reldens-new-age-town-house-01"}}}', '{"content":"Hello traveler! Where would you like to go?","options":{"1":{"label":"Forest","value":1},"2":{"label":"House 1","value":2},"3":{"label":"Nowhere","value":3}},"ui":true,"autoStart":true,"animations":{"teleport_master_1_down":{"start":0,"end":2},"teleport_master_1_left":{"start":3,"end":5},"teleport_master_1_right":{"start":6,"end":8},"teleport_master_1_up":{"start":9,"end":11}}}', 1),
 	(1001, 41, 'test-layer', 100, 3, 'test-object-list', 'test_object_list', 'Test Object List', '{"runOnAction":true}', '{"content":"Test object for list validation"}', 1),
 	(1002, 41, 'test-layer', 101, 3, 'test-object-edit', 'test_object_edit', 'Test Object Edit', '{"runOnAction":true}', '{"content":"Test object for edit validation"}', 1),
 	(1003, 41, 'test-layer', 102, 3, 'test-object-delete', 'test_object_delete', 'Test Object Delete', '{"runOnAction":true}', '{"content":"Test object for delete validation"}', 1);
@@ -490,6 +501,7 @@ REPLACE INTO `objects_assets` (`object_asset_id`, `object_id`, `asset_type`, `as
 	(30, 40, 'spritesheet', 'fish_spawn_forest_4', 'fish-spawn.png', '{"frameWidth":32,"frameHeight":32}'),
 	(31, 41, 'spritesheet', 'fish_spawn_forest_5', 'fish-spawn.png', '{"frameWidth":32,"frameHeight":32}'),
 	(32, 42, 'spritesheet', 'fish_spawn_forest_6', 'fish-spawn.png', '{"frameWidth":32,"frameHeight":32}'),
+	(33, 43, 'spritesheet', 'teleport_master_1', 'people-quest-npc.png', '{"frameWidth":52,"frameHeight":71}'),
     (1001, 1001, 'spritesheet', 'test_object_list', 'test-object.png', '{"frameWidth":32,"frameHeight":32}'),
     (1002, 1002, 'spritesheet', 'test_object_edit', 'test-object.png', '{"frameWidth":32,"frameHeight":32}'),
     (1003, 1003, 'spritesheet', 'test_object_delete', 'test-object.png', '{"frameWidth":32,"frameHeight":32}');
