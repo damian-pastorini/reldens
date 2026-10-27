@@ -34,9 +34,10 @@ class TestLanguageSaveErrorNotice extends BaseTest
 
     async runListener(act, changedAt, saveError)
     {
-        return await new LanguageSaveErrorListener().executeClientMessageActions({
-            message: {act, listener: SnippetsConst.KEY, changedAt},
-            roomEvents: {gameManager: {gameDom: {getElement: () => saveError}}}
+        return await new LanguageSaveErrorListener(
+            this.createSnippetsUi(saveError, {changeHandlers: [], sentMessages: []})
+        ).executeClientMessageActions({
+            message: {act, listener: SnippetsConst.KEY, changedAt}
         });
     }
 
