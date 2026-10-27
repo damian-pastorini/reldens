@@ -186,16 +186,17 @@ class TestServerHealthMonitor extends BaseTest
         });
     }
 
-    async testTheMonitorStartsOnceWithAnInitialCheck()
+    async testTheMonitorStartsOnceWithoutAnInitialCheck()
     {
-        await this.test('the monitor checks the usage when it starts and it can not be started twice', async () => {
-            let monitor = this.createMonitor({}, [{memoryPercent: 42}, {}]);
+        await this.test('the monitor checks after a full interval and it can not be started twice', async () => {
+            let monitor = this.createMonitor({}, [{cpuPercent: 100}]);
             this.assert.strictEqual(monitor.start(), true);
             let startedTimer = monitor.checkTimer;
             this.assert.strictEqual(monitor.start(), false);
             clearInterval(monitor.checkTimer);
             this.assert.strictEqual(monitor.checkTimer, startedTimer);
-            this.assert.strictEqual(monitor.usageReport.usage.memoryPercent, 42);
+            this.assert.strictEqual(monitor.usageReport.usage, false);
+            this.assert.strictEqual(monitor.isBlocking, false);
         });
     }
 
