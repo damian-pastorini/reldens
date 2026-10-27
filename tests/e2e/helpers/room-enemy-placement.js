@@ -6,8 +6,8 @@
  * full stats (or to the given life, so a single hit kills it), its random movement is stopped and its body is placed on
  * the first walkable attack position around the player, so the combat specs attack the same enemy body on the same position instead of chasing it across the room;
  * the enemy attack places the enemy the same way and starts its battle with the player, so the specs that need a hit
- * get it at the exact moment they need it. Both return the enemy key, the body state key, the exact position and the
- * experience its stored rewards give on its death.
+ * get it at the exact moment they need it. Both return the enemy key, the body state key, the exact position, the
+ * experience its stored rewards give on its death and its "killScore" private param (0 when it has none).
  *
  */
 
@@ -68,7 +68,8 @@ class RoomEnemyPlacement
             enemyKey: placement.enemyObject.key,
             bodyKey: placement.enemyObject.objectBody.bodyState.key,
             position: placement.position,
-            experience: placement.experience
+            experience: placement.experience,
+            killScore: Number(sc.get(placement.enemyObject, 'killScore', 0))
         };
     }
 
