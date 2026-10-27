@@ -57,22 +57,29 @@ class TestUsersLocaleUpdater extends BaseTest
 
     createUpdater(usersLocaleRows, savedChanges, slowLocaleId = 0)
     {
+        let usersLocaleRepository = {
+            loadOneByWithRelations: async () => false,
+            updateById: async (id, patch) => {
+                Object.assign(usersLocaleRows.filter((row) => id === row.id).shift(), patch);
+                return savedChanges.push({updated: id, patch});
+            },
+            create: async (row) => {
+                usersLocaleRows.push(Object.assign({id: usersLocaleRows.length + 1}, row));
+                return savedChanges.push({created: row});
+            }
+        };
+        usersLocaleRepository.upsert = async (params, filters) => {
+            let existentRow = usersLocaleRows.filter((row) => filters.user_id === row.user_id).shift();
+            if(existentRow){
+                return await usersLocaleRepository.updateById(existentRow.id, params);
+            }
+            return await usersLocaleRepository.create(params);
+        };
         return new UsersLocaleUpdater({
             localeRepository: {
                 loadOne: async (filters) => await this.loadEnabledLocale(filters, slowLocaleId)
             },
-            usersLocaleRepository: {
-                loadOneBy: async (field, value) => usersLocaleRows.filter((row) => value === row[field]).shift(),
-                loadOneByWithRelations: async () => false,
-                updateById: async (id, patch) => {
-                    Object.assign(usersLocaleRows.filter((row) => id === row.id).shift(), patch);
-                    return savedChanges.push({updated: id, patch});
-                },
-                create: async (row) => {
-                    usersLocaleRows.push(Object.assign({id: usersLocaleRows.length + 1}, row));
-                    return savedChanges.push({created: row});
-                }
-            }
+            usersLocaleRepository
         });
     }
 
@@ -83,7 +90,7 @@ class TestUsersLocaleUpdater extends BaseTest
             let updater = this.createUpdater(usersLocaleRows, []);
             await this.sendLocaleChanges(updater, [{up: 1, changedAt: 1}, {up: 2, changedAt: 2}]);
             this.assert.deepStrictEqual(usersLocaleRows, [{id: 1, user_id: 1001, locale_id: 2}]);
-            this.assert.deepStrictEqual(updater.pendingSaves, {});
+            this.assert.deepStrictEqual(updater.savesLock.pendingByKey, {});
         });
     }
 
@@ -192,7 +199,7 @@ class TestUsersLocaleUpdater extends BaseTest
             let savedChanges = [];
             let updater = this.createUpdater([{id: 1001, locale_id: 1, user_id: 1001}], savedChanges);
             await this.sendLocaleChanges(updater, [{up: 2, changedAt: 1}]);
-            this.assert.deepStrictEqual(savedChanges, [{updated: 1001, patch: {locale_id: 2}}]);
+            this.assert.deepStrictEqual(savedChanges, [{updated: 1001, patch: {user_id: 1001, locale_id: 2}}]);
         });
     }
 
