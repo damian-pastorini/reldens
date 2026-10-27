@@ -124,7 +124,7 @@ class TestClanModifiersStatsPersistence extends BaseTest
                 await clanHandler.enrichPlayerWithClan(client, firstLogin, {}, savingSetup.teamsPlugin),
                 false
             );
-            this.assert.deepStrictEqual(clanHandler.pendingClansLoads, {});
+            this.assert.deepStrictEqual(clanHandler.clansLoadsLock.pendingByKey, {});
             let secondLogin = this.createLoggingMember('1');
             await clanHandler.enrichPlayerWithClan(client, secondLogin, {}, savingSetup.teamsPlugin);
             this.assert.deepStrictEqual(clanLoads, [10, 10]);
