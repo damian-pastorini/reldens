@@ -133,6 +133,30 @@ class TestRoomsAvailability extends BaseTest
         });
     }
 
+    async testTheKnownRepeatedAndEmptyRoomsAreNotRequested()
+    {
+        await this.test('the known, repeated and empty rooms names are not requested again', async () => {
+            let requestedServers = [];
+            let roomsAvailability = this.createRoomsAvailability(
+                false,
+                [],
+                {isReachable: true, usageReport: {isBlocking: false}},
+                requestedServers
+            );
+            let knownRoomsAvailability = {'reldens-town': {isAvailable: false, reason: 'known'}};
+            let fetchedRoomsAvailability = await roomsAvailability.fetchRoomsAvailability(
+                ['reldens-town', 'reldens-forest', '', 'reldens-forest'],
+                knownRoomsAvailability
+            );
+            this.assert.strictEqual(fetchedRoomsAvailability, knownRoomsAvailability);
+            this.assert.deepStrictEqual(fetchedRoomsAvailability, {
+                'reldens-town': {isAvailable: false, reason: 'known'},
+                'reldens-forest': {isAvailable: true, reason: ''}
+            });
+            this.assert.deepStrictEqual(requestedServers, [this.remoteServerUrl]);
+        });
+    }
+
     createRecordingRemoteStatus(statusRequests)
     {
         return {
