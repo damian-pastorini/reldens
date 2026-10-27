@@ -6,6 +6,7 @@
 
 const { Clan } = require('../../lib/teams/server/clan');
 const { ClanFactory } = require('../../lib/teams/server/clan-factory');
+const { TeamsPlugin } = require('../../lib/teams/server/plugin');
 
 class ClanFixturesBuilder
 {
@@ -69,6 +70,13 @@ class ClanFixturesBuilder
             delete: async (filters) => deletedRows.push({entityKey, filters}),
             deleteById: async (id) => deletedRows.push({entityKey, id})
         };
+    }
+
+    static createTeamsPlugin(teamsPluginData)
+    {
+        let teamsPlugin = Object.create(TeamsPlugin.prototype);
+        Object.assign(teamsPlugin, {teams: {}, clans: {}}, teamsPluginData);
+        return teamsPlugin;
     }
 
     static createClanJoinDataServer(recordedCalls)

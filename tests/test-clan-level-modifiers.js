@@ -106,13 +106,12 @@ class TestClanLevelModifiers extends BaseTest
                 chatPlugin: {chatManager: {saveMessage: async (message) => savedChatMessages.push(message)}}
             }).clanMemberLeavingEventListener();
             let deletedRows = [];
-            let teamsPlugin = {
+            let teamsPlugin = ClanFixturesBuilder.createTeamsPlugin({
                 events,
-                clans: {},
                 dataServer: {
                     getEntity: (entityKey) => ClanFixturesBuilder.createDeletionsRecorder(entityKey, deletedRows)
                 }
-            };
+            });
             let ownerSchema = ClanFixturesBuilder.createOwnerSchema();
             teamsPlugin.clans[10] = this.createOwnedClanWithOfflineMember(ownerSchema);
             this.assert.strictEqual(await ClanLeave.execute(ownerSchema, teamsPlugin, '1'), true);
@@ -132,11 +131,11 @@ class TestClanLevelModifiers extends BaseTest
             let recordedCalls = [];
             let ownerSchema = ClanFixturesBuilder.createOwnerSchema();
             let newClan = new Clan({id: 20, owner: {player_id: '3', playerName: 'ImRoot3'}, pendingInvites: {1: true}});
-            let teamsPlugin = {
+            let teamsPlugin = ClanFixturesBuilder.createTeamsPlugin({
                 events: new EventsManager(),
                 clans: {10: this.createOwnedClanWithOfflineMember(ownerSchema), 20: newClan},
                 dataServer: ClanFixturesBuilder.createClanJoinDataServer(recordedCalls)
-            };
+            });
             await ClanJoin.execute({send: () => true}, {id: 20}, {}, ownerSchema, teamsPlugin);
             this.assert.deepStrictEqual(recordedCalls, [
                 {entityKey: 'clanMembers', filters: {player_id: 1, clan_id: 10}},
