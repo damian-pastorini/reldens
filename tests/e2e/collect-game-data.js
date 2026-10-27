@@ -17,6 +17,7 @@ const { RoomMovementState } = require('./helpers/room-movement-state');
 const { RoomEnemyPlacement } = require('./helpers/room-enemy-placement');
 const { RoomPlayerPlacement } = require('./helpers/room-player-placement');
 const { E2eSeedAndRestoreEndpoints } = require('./helpers/e2e-seed-and-restore-endpoints');
+const { GameplayE2eStateProbe } = require('./helpers/gameplay-e2e-state-probe');
 const { TestDataSetup } = require('./helpers/test-data-setup');
 const { StartupGuard } = require('./helpers/startup-guard');
 const { ClientBundleCheck } = require('./helpers/client-bundle-check');
@@ -258,6 +259,7 @@ class CollectGameData
         RoomEnemyPlacement.registerEndpoints(serverManager);
         RoomPlayerPlacement.registerEndpoints(serverManager);
         E2eSeedAndRestoreEndpoints.registerEndpoints(serverManager);
+        GameplayE2eStateProbe.registerEndpoints(serverManager);
         await PlayerStateReset.registerResetEndpoint(serverManager, snapshots, config);
         CollectGameData.serverManager = serverManager;
     }
