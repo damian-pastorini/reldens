@@ -3,15 +3,24 @@
     & .dashboard-stats {
         display: flex;
         flex-direction: column;
-        gap: var(--space-xl);
-        margin-top: var(--space-lg);
+        gap: var(--space-md);
+    }
+
+    & .dashboard-stats-title {
+        margin: 0;
+    }
+
+    & .dashboard-stats-boxes {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        gap: var(--space-lg);
     }
 
     & .stat-tile {
         display: inline-flex;
         flex-direction: column;
         gap: var(--space-xs);
-        align-self: flex-start;
         padding: var(--space-lg) var(--space-2xl);
         border: 1px solid var(--color-grey-40);
         border-radius: var(--radius-md);

@@ -3,6 +3,13 @@
 Playwright end-to-end suite under `tests/e2e/`. It boots a real Reldens server against a real database and
 drives the real client in a browser.
 
+ALL TESTS (UNIT, INTEGRATION, E2E) MUST ALWAYS RUN IN THEIR OWN SELF-HOSTED ENVIRONMENT: the e2e suite boots its own
+server (see "App under test") and the unit and integration tests run with `RELDENS_TESTS_CONFIRMED=1 npm run
+test:default` (`tests/default/run-default.js`, it boots its own server on the `tests/config.json` port + 100), never
+with `npm test`, which targets an external server on the `tests/config.json` port that nothing starts (every admin
+integration test then fails with an empty `Error:`, the connection refused). Every checkout uses its own
+`tests/config.json` test database and ports.
+
 ## Commands
 
 ```bash
@@ -51,6 +58,15 @@ self-hosted integration tests (`npm run test:default`) run the same drop and ins
 `migrations/development/reldens-test-sample-data-v4.0.0.sql`. Tables or columns left by an older schema never
 survive a reset.
 
+### Sample data files sync
+
+`migrations/development/reldens-test-sample-data-v4.0.0.sql` is a copy of `migrations/production/reldens-sample-data-v4.0.0.sql`
+plus the test-only rows (ids 100+ and 1001+). Every change to one of them, including the rows seeded by a new
+`migrations/development/*-sql-update.sql`, must be applied to the other one in the same change: when they drift, a
+database last reset by the unit tests misses the e2e data (the `root2` and `root3` accounts were only in the production
+file until 2026-10-12). Every checkout uses its own `dbName` in `tests/config.json`, never a database shared with
+another checkout or the app, and always runs the suite with `--db-reset=<dbName>`.
+
 ### Required accounts
 
 The sample data must contain the three users the specs log in as: `root`, `root2` and `root3`, with players
@@ -80,6 +96,12 @@ them with `npm exec -- reldens generateEntities --override` from that project ro
 The server is booted in process by the Playwright `globalSetup` (`tests/e2e/collect-game-data.js`) and the browser
 loads that app's `dist/index.html`. When `serverPath` does not exist the setup logs
 `[collect-game-data] serverPath not found` and skips the server startup.
+
+The setup turns off the server health blocking (`server/health/blockingEnabled`, on `reldens.beforeInitializeManagers`),
+the monitor keeps sampling and reporting: the browsers of the parallel groups run on the same machine, so the system
+CPU percent the monitor reads includes the test load, and a login during a spike over `maxCpuPercent` failed waiting
+for `#player-selection:not(.hidden)` with `The server is busy right now` on the login form. The blocking cases are
+covered by the unit tests listed in `.claude/server-health-monitor.md`.
 
 If `dist/index.html` still references `src="./index.js"` the client was never bundled, so `window.reldens`
 never exists and every spec times out after 10 seconds waiting for it. `ClientBundleCheck.isMissing()` detects
@@ -121,6 +143,32 @@ The security specs (`test-login-security.spec.js`, `test-admin-security.spec.js`
   mailer off (form hidden), on inside the interval (same answer, nothing sent) and on outside the interval (one email),
   so they never depend on the `RELDENS_MAILER_*` values of the app `.env`
 
+## Seeded rows and config overrides
+
+The specs that need their own data seed it through the `/api/e2e/data/*` endpoints
+(`tests/e2e/helpers/e2e-seed-and-restore-endpoints.js`, wrapped by `tests/e2e/helpers/e2e-seed-and-restore-api.js`),
+every request carries the spec group (`e2eGroup` fixture) and everything is undone only for that group by the players
+reset before its next test (`E2eSeedAndRestoreEndpoints.resetGroup`, called by `/api/e2e/reset-players`) and for every
+group by the global teardown:
+
+- `POST create` (`{group, entityKey, row}`) - creates a row with `dataServer.getEntity(entityKey).create(row)`; the
+  reset deletes the created rows of the group in reverse order
+- `POST update-created` (`{group, entityKey, id, patch}`) - updates a row created by the same group (any other row is
+  refused), for example disabling a seeded locale after the login; the reset deletes it like every created row
+- `POST preserve` (`{group, entityKey, filters}`) - stores the rows matching the filters; the reset deletes the rows
+  created since then for the same filters and writes the stored values back, before it deletes the created rows, so a
+  preserved row that references a seeded row (a user locale pointing to a seeded locale, a clan membership) never
+  blocks that delete
+- `POST load` (`{entityKey, filters}`) - returns the stored rows a spec asserts
+- `POST config` (`{group, path, value}`) - overrides a value of the running `ConfigManager` (for example
+  `server/chat/messages/global_enabled`); the reset restores the original value, or removes the path when it was not
+  set
+- `POST reload-locales` (`{group}`) - runs the snippets `ConfigurationEnricher` again so a seeded locale reaches the
+  client config of the next login; the reset reloads the locales again after deleting the seeded rows
+
+The values read once on startup (like the rewards provider config) can not be changed with `config`, those cases are
+covered by unit tests.
+
 The server runs on `localhost`, which turns on the development mode of `AppServerFactory`, so the administration
 panel login limiter allows 10 times `RELDENS_ADMIN_LOGIN_MAX_ATTEMPTS`; the limiter spec reads the real limit from the
 `RateLimit` response header. See `.claude/ip-lists-and-login-blocks.md` for the lists and blocks flow.
@@ -136,7 +184,10 @@ a body the path finder grid does not know (a tree, another object) blocks the pl
 - `POST /api/e2e/room-objects/place-enemy` (`{roomName, sessionId, enemyKey, enemyLife}`,
   `tests/e2e/helpers/room-enemy-placement.js`) - restores the first enemy of that key or asset key, stops its random
   movement, places it on the first walkable position 40px from the player (inside the 50px `attackShort` range, out of
-  contact with the 25px player body) and, with `enemyLife`, sets its life so a single hit kills it; it returns the
+  contact with the 25px player body) where its body does not overlap any other colliding body of the room
+  (`RoomObjectsState.findAttackPosition`: the enemies restored on random respawn tiles, the trees, the walls), since an
+  overlapped body is pushed off the placed position and the exact position targeting never matches, and, with
+  `enemyLife`, sets its life so a single hit kills it; it returns the
   enemy key, its body state key (`bodyKey`, the client `objectsAnimations` and `room.state.bodies` key), the exact
   position and the experience its stored rewards give on its death
 - `RoomObjectsApi.placeAndTargetEnemy` waits until the client body state of `bodyKey` is exactly on the placed position
@@ -177,8 +228,8 @@ worker, so its specs run one after the other, and the groups run at the same tim
   `root2`, `root3`), start room `reldens-new-age-town`
 - `forest` - combat, stats, interactive objects, timing objects, objects movement and animation frames, users set 1
   (`root4` to `root6`), start room `reldens-forest-level-1`
-- `social` - chat, teams, clans, trading, items, rewards, quests and the game login flow, users set 2 (`root7` to
-  `root9`), start room `reldens-new-age-town-house-01`
+- `social` - chat, teams, clans, trading, items, rewards, scores, locale selector, quests and the game login flow,
+  users set 2 (`root7` to `root9`), start room `reldens-new-age-town-house-01`
 - `exclusive` - the specs that change the server wide state (login and admin security), create players
   (authentication, character system) or use more than one room (movement), users set 0, it runs after every other
   group ended and its reset restores every room
@@ -209,7 +260,8 @@ scene rooms to the specs, wrapped by `tests/e2e/helpers/room-objects-api.js`:
 - `POST /api/e2e/room-objects/enemy-attack` (`{roomName, playerName, assetKey}`, `RoomEnemyPlacement`) - places one
   enemy of that asset key the same way as `place-enemy` and starts its battle with the player
 - `POST /api/e2e/room-objects/place-player` (`{roomName, playerName, nearPlayerName}`) - places the player 40px from
-  the other player (found by name), on the first walkable side of right, left, down and up, inside the 50px
+  the other player (found by name), on the first walkable side of right, left, down and up where it does not overlap
+  any other colliding body, inside the 50px
   `attackShort` range and out of contact with its body, so a player versus player hit never pushes the target
 - `POST /api/e2e/room-objects/player-affected-property` (`{roomName, playerName, value}`) - sets the affected property
   (`client/actions/skills/affectedProperty`, the hp) of the live player to that value, saves the stats and sends them to
@@ -233,9 +285,13 @@ and `BaseE2eTest.loadRoomEntries(roomName, listsKeys, onlyMoving)`:
   server snapshots are sampled every 250ms for 30 seconds (`EnemiesWanderSummary`,
   `tests/e2e/helpers/enemies-wander-summary.js`), the enemies that were in battle at any sample are left out, and for
   the others every destination tile must be at most `maxTiles` columns and rows from the original tile, a rest outside
-  the area (pushed by another body) must end within `maxDelay` and a path blocked on the same tile must be dropped
-  within two moves (`2 * maxDelay`); every invalid enemy is reported with its whole trail (tile, original tile,
-  position, velocity, path, contacts and battle per sample); the objects without random movement keep their
+  the area (pushed by another body) must end within one move and a path blocked on the same tile must be dropped
+  within two moves; the moves are the `ObjectRandomMovement.movesCount` of the snapshot, never the elapsed time, since
+  the move timers run late on a loaded machine (a blocked path once lasted 18.4s against a `2 * maxDelay` limit of
+  16s), and the moves count of every enemy must keep growing: a stretch without a new move longer than `2 * maxDelay`
+  (one full delay of room for the late timers) reports a stopped movement loop, which the moves rules never see; every invalid
+  enemy is reported with its whole trail (tile, original tile, position, velocity, path, contacts, battle and moves per
+  sample); the objects without random movement keep their
   position, and a passive enemy does not attack a player standing next to it (the aggressive enemies are disabled
   with `onlyAggressive` and the passive enemy is placed 40px from the player with `place-enemy`)
 - `test-interactive-objects.spec.js` - the chest, the mining rock and the fishing spot with the forest enemies disabled

@@ -30,7 +30,11 @@ class RoomEnemyPlacement
         if(!enemyObject){
             return {error: 'Enemy '+enemyKey+' not found in room '+room.roomName+'.'};
         }
-        let attackPosition = RoomObjectsState.findAttackPosition(room, playerSchema.physicalBody);
+        let attackPosition = RoomObjectsState.findAttackPosition(
+            room,
+            playerSchema.physicalBody,
+            enemyObject.objectBody
+        );
         if(!attackPosition){
             return {error: 'No walkable tile next to the player '+playerName+'.'};
         }

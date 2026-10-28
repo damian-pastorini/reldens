@@ -184,7 +184,9 @@ The form defaults are read from the environment when present: `RELDENS_APP_HOST`
 
 **Installer** (`lib/game/server/installer.js`)
 - Main orchestration class
-- Handles Express routes and form processing
+- Handles Express routes and form processing, registers the server-utils error middleware after `/install`
+  (`appServerFactory.enableErrorResponse(app)`) and copies `req.body` before filling the template variables
+  (Express 5 leaves it undefined on an empty POST)
 - Renders the storage drivers list with `storageDriversOptions()` (every driver, the ones with missing packages with
   the " (will be installed)" suffix)
 - Checks the admin and signed tokens secrets first, then validates the driver availability
@@ -277,7 +279,7 @@ For other databases, these scripts must be manually adapted to the target databa
 - a missing admin or signed tokens secret is rejected before the driver and database checks, without any project file
 - a full Knex installation against the tests database creates `.env`, `.gitignore`, `knexfile.js`, `install.lock` and the generated Knex models in `test-results/installer-project`, and runs the `startCallback` with the `KnexDataServer`
 
-It runs with the other integration tests (`npm test` or `npm run test:default`) using the database from `tests/config.json`; the install SQL only creates the missing tables and the seeds are not executed, so the tests database data is not modified.
+It runs with the other self-hosted integration tests (`npm run test:default`) using the database from `tests/config.json`; the install SQL only creates the missing tables and the seeds are not executed, so the tests database data is not modified.
 
 ## Troubleshooting
 

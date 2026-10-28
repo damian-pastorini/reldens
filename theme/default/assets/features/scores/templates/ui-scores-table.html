@@ -9,7 +9,7 @@
     </div>
     {{/scores}}
     {{#pages}}
-    <div class="pager-page">
+    <div class="pager-page{{#isCurrent}} pager-page-current{{/isCurrent}}">
         <a href="{{&pageLink}}">{{&pageLabel}}</a>
     </div>
     {{/pages}}

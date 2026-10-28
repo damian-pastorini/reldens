@@ -11,6 +11,7 @@
 const { Logger } = require('@reldens/utils');
 const { CollectGameData } = require('./collect-game-data');
 const { SecurityState } = require('./helpers/security-state');
+const { E2eSeedAndRestoreEndpoints } = require('./helpers/e2e-seed-and-restore-endpoints');
 
 class ServerTeardown
 {
@@ -26,6 +27,7 @@ class ServerTeardown
             return;
         }
         await SecurityState.resetAll(serverManager);
+        await E2eSeedAndRestoreEndpoints.resetAllGroups(serverManager);
         await serverManager.gameServer.gracefullyShutdown(false);
         Logger.info('[server-teardown] Server shutdown complete.');
     }
