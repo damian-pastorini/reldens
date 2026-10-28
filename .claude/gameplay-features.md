@@ -186,15 +186,19 @@ builds the UTC period key: `2026-10-17` (daily), the ISO week `2026-W42` (weekly
 `scores/reset/lastPeriodKey` row is only changed with conditional updates (its id and the value read), so with many
 servers on the same storage only one resets each period; the first check only stores the key. The reset:
 
-- claims the period storing a pending value (`<periodKey>|resetting|<claim time ms>`, `ScoresConst.RESET.PENDING_MARK`)
-- deletes every `scores` row (and the `scores_detail` rows with `resetDetails`)
-- stores the period key and sends the stored scores (empty after the reset) to its scene rooms players
+- reads the last `scores` and `scores_detail` ids and claims the period storing a pending value
+  (`<periodKey>|resetting|{"claimedAt":<ms>,"scoresMaxId":<id>,"detailsMaxId":<id>}`, `ScoresConst.RESET.PENDING_MARK`)
+- deletes the `scores` rows up to `scoresMaxId` (and the `scores_detail` rows up to `detailsMaxId` with `resetDetails`),
+  so the rows created after the claim, the points of the new period, are never deleted
+- stores the period key and sends the stored scores to its scene rooms players
 
 A reset that fails or stops before the end keeps the pending value: the other checks wait while it is younger than
-`ScoresConst.RESET.DEFAULTS.PENDING_TIMEOUT_MS` (`60000`) and then any server takes it over and completes it. Every
-server keeps the last period key it observed: when it finds a new stored period key reset by another server it sends the
-stored top scores and the player scores to its own scene rooms (its first check after the start only remembers the
-key). A failed check is logged and releases the next one. The running instance is the `scoresPeriodReset` property of
+`ScoresConst.RESET.DEFAULTS.PENDING_TIMEOUT_MS` (`60000`) and then any server takes it over and completes it with the
+same claimed ids (a stale pending value of an older period reads the current ids), so a retry or an owner that resumes
+late never deletes the new period points. Every server keeps the last period key it observed: when it finds a new
+stored period key reset by another server it sends the stored top scores and the player scores to its own scene rooms
+(its first check after the start only remembers the key). A period is marked as observed only after its scores were
+sent, so a failed send is retried on the next check. A failed check is logged and releases the next one. The running instance is the `scoresPeriodReset` property of
 the scores plugin (`serverManager.featuresManager.featuresList.scores.package`).
 
 ## Ad items that give a skin
