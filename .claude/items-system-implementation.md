@@ -397,8 +397,8 @@ CREATE TABLE `items_inventory` (
 - `qty`: Quantity
 - `remaining_uses`: Uses left (if item has uses limit)
 - `is_active`: 1 if equipped, 0 if not (for equipment items only)
-- `customData`: JSON data of this item instance, not read by `ItemsFactory`; the theme item growth keeps the instance
-  level and experience there (`{"growth": {"level": 2, "experience": 12}}`, see `.claude/theme-gameplay-features.md`)
+- `customData`: JSON data of this item instance, not read by `ItemsFactory`; the item growth keeps the instance level
+  and experience there (`{"growth": {"level": 2, "experience": 12}}`, see `.claude/gameplay-features.md`)
 
 ## Event Flow
 
