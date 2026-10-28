@@ -213,7 +213,7 @@ See `.claude/commands-reference.md` for the full command reference.
 - `.claude/e2e-testing-guide.md` - E2E suite: commands, its own database, app bundle and browser requirements
 - `.claude/environment-variables.md` - All `RELDENS_*` variables
 - `.claude/feature-modules.md` - All feature modules
-- `.claude/theme-gameplay-features.md` - Auto recovery, teleport NPC, points per kill, item growth, death teleport, scores reset per period and ad skins
+- `.claude/gameplay-features.md` - Auto recovery, teleport NPC, points per kill, item growth, death teleport, scores reset per period and ad skins
 - `.claude/storage-architecture.md` - Entity management deep dive
 - `.claude/entities-reference.md` - All 79 entity types
 - `.claude/entities-generation-guide.md` - Generated entities output and the Prisma steps
