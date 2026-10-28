@@ -302,7 +302,7 @@ UPDATE `audio_markers` SET `marker_key` = CONCAT('i_', `marker_key`) WHERE `mark
 -- Remove the unused rewards config rows, the drops read server/objects/drops and server/objects/actions
 DELETE FROM `config` WHERE `scope` = 'server' AND `path` IN ('rewards/actions/disappearTime', 'rewards/actions/interactionsDistance', 'rewards/loginReward/enabled', 'rewards/playedTimeReward/enabled', 'rewards/playedTimeReward/time');
 
--- Inventory item instance custom data, the theme item growth keeps the level and experience of each item in it
+-- Inventory item instance custom data, the item growth keeps the level and experience of each item in it
 SET @addItemsInventoryCustomData = (
     SELECT IF(
         0 = COUNT(*),
@@ -340,7 +340,7 @@ ON DUPLICATE KEY UPDATE `is_enabled` = VALUES(`is_enabled`);
 REPLACE INTO `objects_types` (`id`, `key`) VALUES
 	(9, 'teleport');
 
--- Theme gameplay features configuration, every feature is disabled by default
+-- Gameplay features configuration, every feature is disabled by default
 INSERT IGNORE INTO `config` (`scope`, `path`, `value`, `type`) VALUES
 	('client', 'players/skins/keys', 'warlock', 5),
 	('server', 'autoRecovery/objects/enabled', '0', 3),
@@ -363,36 +363,75 @@ INSERT IGNORE INTO `config` (`scope`, `path`, `value`, `type`) VALUES
 	('server', 'skins/adsKey', 'skin-ad-ticket', 1),
 	('server', 'skins/adTicketItemKey', 'skin_ad_ticket', 1);
 
+-- Sample content: every row is added only when its key is free, so the existing game content and the ids in use are
+-- never replaced, and the related rows are found by their keys instead of fixed ids
+
 -- Sample items: restoration scroll, skin ticket, skin item and growing sword
-REPLACE INTO `items_group` (`id`, `key`, `label`, `description`, `files_name`, `sort`, `items_limit`, `limit_per_item`) VALUES
-	(7, 'skin', 'Skin', 'Changes the player look.', 'skin.png', 7, 1, 0);
+INSERT INTO `items_group` (`key`, `label`, `description`, `files_name`, `sort`, `items_limit`, `limit_per_item`)
+	SELECT 'skin', 'Skin', 'Changes the player look.', 'skin.png', 7, 1, 0 FROM DUAL
+	WHERE NOT EXISTS (SELECT 1 FROM `items_group` WHERE `key` = 'skin');
 
-REPLACE INTO `items_item` (`id`, `key`, `type`, `group_id`, `label`, `description`, `qty_limit`, `uses_limit`, `useTimeOut`, `execTimeOut`, `customData`) VALUES
-	(9, 'restoration_scroll', 3, NULL, 'Restoration Scroll', 'Revives you where you died instead of in town.', 0, 1, NULL, NULL, '{"canBeDropped":false}'),
-	(10, 'skin_ad_ticket', 5, NULL, 'Skin Ticket', 'Watch an ad to get a special skin.', 0, 1, NULL, NULL, '{"canBeDropped":false,"removeAfterUse":true}'),
-	(11, 'skin_warlock_robe', 1, 7, 'Warlock Robe', 'Gives you the warlock look while equipped.', 0, 0, NULL, NULL, '{"canBeDropped":false,"skinKey":"warlock"}'),
-	(12, 'growing_sword', 1, 1, 'Growing Sword', 'A sword that grows stronger with the experience you gain.', 0, 0, NULL, NULL, '{"canBeDropped":false,"growth":{"experienceShare":100,"modifiersIncreasePercentPerLevel":50,"requireEquipped":true,"levels":{"2":5,"3":30,"4":90,"5":200}}}');
+INSERT INTO `items_item` (`key`, `type`, `group_id`, `label`, `description`, `qty_limit`, `uses_limit`, `useTimeOut`, `execTimeOut`, `customData`)
+	SELECT 'restoration_scroll', 3, NULL, 'Restoration Scroll', 'Revives you where you died instead of in town.', 0, 1, NULL, NULL, '{"canBeDropped":false}' FROM DUAL
+	WHERE NOT EXISTS (SELECT 1 FROM `items_item` WHERE `key` = 'restoration_scroll');
 
-REPLACE INTO `items_item_modifiers` (`id`, `item_id`, `key`, `property_key`, `operation`, `value`, `maxProperty`) VALUES
-	(6, 12, 'atk', 'stats/atk', 1, '10', NULL);
+INSERT INTO `items_item` (`key`, `type`, `group_id`, `label`, `description`, `qty_limit`, `uses_limit`, `useTimeOut`, `execTimeOut`, `customData`)
+	SELECT 'skin_ad_ticket', 5, NULL, 'Skin Ticket', 'Watch an ad to get a special skin.', 0, 1, NULL, NULL, '{"canBeDropped":false,"removeAfterUse":true}' FROM DUAL
+	WHERE NOT EXISTS (SELECT 1 FROM `items_item` WHERE `key` = 'skin_ad_ticket');
+
+INSERT INTO `items_item` (`key`, `type`, `group_id`, `label`, `description`, `qty_limit`, `uses_limit`, `useTimeOut`, `execTimeOut`, `customData`)
+	SELECT 'skin_warlock_robe', 1, (SELECT `id` FROM `items_group` WHERE `key` = 'skin' ORDER BY `id` LIMIT 1), 'Warlock Robe', 'Gives you the warlock look while equipped.', 0, 0, NULL, NULL, '{"canBeDropped":false,"skinKey":"warlock"}' FROM DUAL
+	WHERE NOT EXISTS (SELECT 1 FROM `items_item` WHERE `key` = 'skin_warlock_robe');
+
+INSERT INTO `items_item` (`key`, `type`, `group_id`, `label`, `description`, `qty_limit`, `uses_limit`, `useTimeOut`, `execTimeOut`, `customData`)
+	SELECT 'growing_sword', 1, (SELECT `id` FROM `items_group` WHERE `key` = 'weapon' ORDER BY `id` LIMIT 1), 'Growing Sword', 'A sword that grows stronger with the experience you gain.', 0, 0, NULL, NULL, '{"canBeDropped":false,"growth":{"experienceShare":100,"modifiersIncreasePercentPerLevel":50,"requireEquipped":true,"levels":{"2":5,"3":30,"4":90,"5":200}}}' FROM DUAL
+	WHERE NOT EXISTS (SELECT 1 FROM `items_item` WHERE `key` = 'growing_sword');
+
+INSERT INTO `items_item_modifiers` (`item_id`, `key`, `property_key`, `operation`, `value`, `maxProperty`)
+	SELECT `items_item`.`id`, 'atk', 'stats/atk', 1, '10', NULL FROM `items_item`
+	WHERE `items_item`.`key` = 'growing_sword'
+		AND NOT EXISTS (SELECT 1 FROM `items_item_modifiers` WHERE `items_item_modifiers`.`item_id` = `items_item`.`id`);
 
 -- Sample ads: the resurrection video on the game over and the skin ticket video
-REPLACE INTO `ads` (`id`, `key`, `provider_id`, `type_id`, `width`, `height`, `position`, `top`, `bottom`, `left`, `right`, `replay`, `enabled`) VALUES
-	(7, 'resurrection-video', 1, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 0),
-	(8, 'skin-ad-ticket', 1, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 0);
+INSERT INTO `ads` (`key`, `provider_id`, `type_id`, `width`, `height`, `position`, `top`, `bottom`, `left`, `right`, `replay`, `enabled`)
+	SELECT 'resurrection-video', `ads_providers`.`id`, `ads_types`.`id`, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 0
+	FROM `ads_providers`, `ads_types`
+	WHERE `ads_providers`.`key` = 'crazyGames' AND `ads_types`.`key` = 'eventVideo'
+		AND NOT EXISTS (SELECT 1 FROM `ads` WHERE `key` = 'resurrection-video');
 
-REPLACE INTO `ads_event_video` (`id`, `ads_id`, `event_key`, `event_data`) VALUES
-	(3, 7, 'reldens.gameOver', '{"rewardItemKey":"restoration_scroll","rewardItemQty":1,"replayCooldown":0}'),
-	(4, 8, 'reldens.skinAdTicket', '{"rewardItemKey":"skin_warlock_robe","rewardItemQty":1,"replayCooldown":0}');
+INSERT INTO `ads` (`key`, `provider_id`, `type_id`, `width`, `height`, `position`, `top`, `bottom`, `left`, `right`, `replay`, `enabled`)
+	SELECT 'skin-ad-ticket', `ads_providers`.`id`, `ads_types`.`id`, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 0
+	FROM `ads_providers`, `ads_types`
+	WHERE `ads_providers`.`key` = 'crazyGames' AND `ads_types`.`key` = 'eventVideo'
+		AND NOT EXISTS (SELECT 1 FROM `ads` WHERE `key` = 'skin-ad-ticket');
 
--- Sample teleport NPC in the town and the Tree kill score
-REPLACE INTO `objects` (`id`, `room_id`, `layer_name`, `tile_index`, `class_type`, `object_class_key`, `client_key`, `title`, `private_params`, `client_params`, `enabled`) VALUES
-	(43, 41, 'ground', 4640, 9, 'teleport_1', 'teleport_master_1', 'Portia', '{"runOnAction":true,"playerVisible":true,"sendInvalidOptionMessage":true,"collisionType":4,"hasState":true,"destinations":{"1":{"room":"reldens-forest-level-1"},"2":{"room":"reldens-new-age-town-house-01"}}}', '{"content":"Hello traveler! Where would you like to go?","options":{"1":{"label":"Forest","value":1},"2":{"label":"House 1","value":2},"3":{"label":"Nowhere","value":3}},"ui":true,"autoStart":true,"animations":{"teleport_master_1_down":{"start":0,"end":2},"teleport_master_1_left":{"start":3,"end":5},"teleport_master_1_right":{"start":6,"end":8},"teleport_master_1_up":{"start":9,"end":11}}}', 1);
+INSERT INTO `ads_event_video` (`ads_id`, `event_key`, `event_data`)
+	SELECT `ads`.`id`, 'reldens.gameOver', '{"rewardItemKey":"restoration_scroll","rewardItemQty":1,"replayCooldown":0}' FROM `ads`
+	WHERE `ads`.`key` = 'resurrection-video'
+		AND NOT EXISTS (SELECT 1 FROM `ads_event_video` WHERE `ads_event_video`.`ads_id` = `ads`.`id`);
 
-REPLACE INTO `objects_assets` (`object_asset_id`, `object_id`, `asset_type`, `asset_key`, `asset_file`, `extra_params`) VALUES
-	(33, 43, 'spritesheet', 'teleport_master_1', 'people-quest-npc.png', '{"frameWidth":52,"frameHeight":71}');
+INSERT INTO `ads_event_video` (`ads_id`, `event_key`, `event_data`)
+	SELECT `ads`.`id`, 'reldens.skinAdTicket', '{"rewardItemKey":"skin_warlock_robe","rewardItemQty":1,"replayCooldown":0}' FROM `ads`
+	WHERE `ads`.`key` = 'skin-ad-ticket'
+		AND NOT EXISTS (SELECT 1 FROM `ads_event_video` WHERE `ads_event_video`.`ads_id` = `ads`.`id`);
 
-UPDATE `objects` SET `private_params` = '{"shouldRespawn":true,"childObjectType":4,"isAggressive":true,"interactionRadio":170,"randomMovement":{"maxTiles":3},"killScore":8}' WHERE `id` = 6;
+-- Sample teleport NPC in the town, added only when its key and its town tile are free
+INSERT INTO `objects` (`room_id`, `layer_name`, `tile_index`, `class_type`, `object_class_key`, `client_key`, `title`, `private_params`, `client_params`, `enabled`)
+	SELECT `rooms`.`id`, 'ground', 4640, 9, 'teleport_1', 'teleport_master_1', 'Portia', '{"runOnAction":true,"playerVisible":true,"sendInvalidOptionMessage":true,"collisionType":4,"hasState":true,"destinations":{"1":{"room":"reldens-forest-level-1"},"2":{"room":"reldens-new-age-town-house-01"}}}', '{"content":"Hello traveler! Where would you like to go?","options":{"1":{"label":"Forest","value":1},"2":{"label":"House 1","value":2},"3":{"label":"Nowhere","value":3}},"ui":true,"autoStart":true,"animations":{"teleport_master_1_down":{"start":0,"end":2},"teleport_master_1_left":{"start":3,"end":5},"teleport_master_1_right":{"start":6,"end":8},"teleport_master_1_up":{"start":9,"end":11}}}', 1
+	FROM `rooms`
+	WHERE `rooms`.`name` = 'reldens-new-age-town'
+		AND NOT EXISTS (SELECT 1 FROM `objects` WHERE `object_class_key` = 'teleport_1')
+		AND NOT EXISTS (SELECT 1 FROM `objects` WHERE `room_id` = `rooms`.`id` AND `layer_name` = 'ground' AND `tile_index` = 4640);
+
+INSERT INTO `objects_assets` (`object_id`, `asset_type`, `asset_key`, `asset_file`, `extra_params`)
+	SELECT `objects`.`id`, 'spritesheet', 'teleport_master_1', 'people-quest-npc.png', '{"frameWidth":52,"frameHeight":71}' FROM `objects`
+	WHERE `objects`.`object_class_key` = 'teleport_1'
+		AND NOT EXISTS (SELECT 1 FROM `objects_assets` WHERE `objects_assets`.`object_id` = `objects`.`id` AND `objects_assets`.`asset_key` = 'teleport_master_1');
+
+-- Sample Tree kill score, merged into its current settings only when it has none
+UPDATE `objects` SET `private_params` = JSON_SET(`private_params`, '$.killScore', 8)
+	WHERE `object_class_key` = 'enemy_1' AND `client_key` = 'enemy_forest_1'
+		AND JSON_VALID(`private_params`) AND JSON_EXTRACT(`private_params`, '$.killScore') IS NULL;
 
 --
 
