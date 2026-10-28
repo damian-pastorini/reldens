@@ -7,6 +7,10 @@
 const { BaseTest } = require('./base-test');
 const { IncreaseScoreOnKill } = require('../lib/scores/server/subscriber/increase-score-on-kill');
 const { IncreaseScoreOnKillMapper } = require('../lib/scores/server/mapper/increase-score-on-kill-mapper');
+const { GameplayPlayerBuilder } = require('./fixtures/gameplay-player-builder');
+const { ScoresConst } = require('../lib/scores/constants');
+const { ObjectsConst } = require('../lib/objects/constants');
+const { sc } = require('@reldens/utils');
 
 class TestIncreaseScoreOnKill extends BaseTest
 {
@@ -20,6 +24,11 @@ class TestIncreaseScoreOnKill extends BaseTest
             useNpcCustomScore: true,
             obtainedScorePerPlayerLevelMultiplier: 3
         };
+        this.pendingResetValue = '2026-10-18'+ScoresConst.RESET.PENDING_MARK+sc.toJsonString({
+            claimedAt: 1,
+            scoresMaxId: 1,
+            detailsMaxId: 0
+        });
     }
 
     createIncreaseScoreOnKill(scoresConfig)
@@ -37,6 +46,100 @@ class TestIncreaseScoreOnKill extends BaseTest
             attackerPlayer: {player_id: 1},
             targetSchema: {player_id: 2, skillsServer: {classPath: {currentLevel: killedPlayerLevel}}}
         };
+    }
+
+    createKillSetup(scoresRows, lastPeriodValue, resetEnabled)
+    {
+        let scores = {rows: scoresRows, deletedIds: [], savedScores: []};
+        scores.loadOneBy = async (field, value) => scores.rows.find(row => value === row[field]) || false;
+        scores.deleteById = async (id) => {
+            scores.deletedIds.push(id);
+            scores.rows = scores.rows.filter(row => id !== row.id);
+            return true;
+        };
+        scores.upsert = async (scoreData) => {
+            scores.savedScores.push(scoreData);
+            return scoreData;
+        };
+        scores.loadWithRelations = async () => [];
+        scores.preserveEntityState = () => ({});
+        scores.restoreEntityState = () => true;
+        let dataServer = {
+            scores,
+            scoresDetail: {create: async () => true},
+            config: {loadOne: async () => ({id: 390, value: lastPeriodValue})}
+        };
+        dataServer.getEntity = (entityName) => dataServer[entityName];
+        return {
+            scores,
+            increaseScoreOnKill: new IncreaseScoreOnKill({
+                config: GameplayPlayerBuilder.createConfig({
+                    'server/scores': this.scoresConfig,
+                    [ScoresConst.RESET.CONFIG_PATHS.ENABLED]: resetEnabled
+                }),
+                dataServer
+            })
+        };
+    }
+
+    async killTheNpc(setup)
+    {
+        return await setup.increaseScoreOnKill.execute(
+            new IncreaseScoreOnKillMapper().fromBattleEndedEvent({
+                room: {roomId: 'room-1', activePlayerByPlayerId: () => ({client: {send: () => true}})},
+                playerSchema: {player_id: 1},
+                pve: {targetObject: {id: 6}}
+            }),
+            ObjectsConst.TYPE_OBJECT
+        );
+    }
+
+    async testKillDuringAPendingResetReplacesThePreviousPeriodRow()
+    {
+        await this.test('a kill during a pending reset replaces the previous period row', async () => {
+            let previousRow = {id: 1, player_id: 1, total_score: 50, players_kills_count: 2, npcs_kills_count: 3};
+            let setup = this.createKillSetup([previousRow], this.pendingResetValue, true);
+            await this.killTheNpc(setup);
+            this.assert.deepStrictEqual(setup.scores.deletedIds, [1]);
+            let savedScore = [...setup.scores.savedScores].pop();
+            this.assert.strictEqual(sc.hasOwn(savedScore, 'id'), false);
+            this.assert.strictEqual(savedScore.total_score, this.scoresConfig.obtainedScorePerNpc);
+            this.assert.strictEqual(savedScore.players_kills_count, 0);
+            this.assert.strictEqual(savedScore.npcs_kills_count, 1);
+        });
+    }
+
+    async testKillDuringAPendingResetKeepsTheNewPeriodRow()
+    {
+        await this.test('a kill while a reset is pending adds to a row created after the claim', async () => {
+            let newPeriodRow = {id: 2, player_id: 1, total_score: 50, players_kills_count: 0, npcs_kills_count: 3};
+            let setup = this.createKillSetup([newPeriodRow], this.pendingResetValue, true);
+            await this.killTheNpc(setup);
+            this.assert.deepStrictEqual(setup.scores.deletedIds, []);
+            let savedScore = [...setup.scores.savedScores].pop();
+            this.assert.strictEqual(savedScore.id, 2);
+            this.assert.strictEqual(savedScore.total_score, 50 + this.scoresConfig.obtainedScorePerNpc);
+        });
+    }
+
+    async testKillWithoutAPendingResetAddsToTheStoredRow()
+    {
+        await this.test('a kill without a pending reset or a disabled reset adds to the row', async () => {
+            let completedSetup = this.createKillSetup([{id: 1, player_id: 1, total_score: 50}], '2026-10-18', true);
+            await this.killTheNpc(completedSetup);
+            this.assert.deepStrictEqual(completedSetup.scores.deletedIds, []);
+            let completedScore = [...completedSetup.scores.savedScores].pop();
+            this.assert.strictEqual(completedScore.total_score, 50 + this.scoresConfig.obtainedScorePerNpc);
+            let disabledSetup = this.createKillSetup(
+                [{id: 1, player_id: 1, total_score: 50}],
+                this.pendingResetValue,
+                false
+            );
+            await this.killTheNpc(disabledSetup);
+            this.assert.deepStrictEqual(disabledSetup.scores.deletedIds, []);
+            let disabledScore = [...disabledSetup.scores.savedScores].pop();
+            this.assert.strictEqual(disabledScore.total_score, 50 + this.scoresConfig.obtainedScorePerNpc);
+        });
     }
 
     async testPlayerKillAddsTheKilledPlayerLevelScore()
