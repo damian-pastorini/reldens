@@ -69,8 +69,9 @@ Combat system (PvP/PvE), skills, battle mechanics
 Items system with equipment and usable items
 - Integrates with @reldens/items-system
 - Item management, equipment slots, consumables
-- `reldens.createPlayerInventoryAfter` (`{client, playerSchema, room, inventoryServer}`) is emitted after the inventory
-  data is sent to the joined player
+- `reldens.createPlayerInventoryBeforeSend` (`{client, playerSchema, room, inventoryServer, sendData}`) is emitted
+  before the groups data is sent to the joined player (a listener can change `sendData`) and
+  `reldens.createPlayerInventoryAfter` (the same event data) after it is sent
 - `items_inventory.customData` keeps the data of one item instance, `server/items-growth-applier.js` grows the items
   with the experience of their owner and `server/item-growth-calculator.js` has the item growth maths (see
   `.claude/gameplay-features.md`)
