@@ -97,7 +97,10 @@ Leaderboards and ranking system
   `server/scores/obtainedScorePerPlayerLevelMultiplier`, and the enemy `private_params` `"killScore"` with
   `server/scores/useNpcCustomScore`
 - `server/scores-period-reset.js` resets the scores once per period (`server/scores/reset/*`), started by the plugin on
-  `reldens.serverReady`, and `server/scores-period-key-builder.js` builds the UTC daily, weekly (ISO) and monthly keys
+  `reldens.serverReady`, and `server/scores-period-key-builder.js` builds the UTC daily, weekly (ISO) and monthly keys;
+  `server/scores-reset-claim.js` reads the pending reset claim shared by the reset and the kill score
+- The score updates of a player run one after the other and an existing score row is saved only while it holds the
+  read id and counters (`ScoresUpdater.saveScore()`), a changed or deleted row is read again and the update retried
 
 ### Teams (`lib/teams/`)
 Party/guild system
