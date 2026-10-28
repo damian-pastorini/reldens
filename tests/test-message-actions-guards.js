@@ -249,7 +249,6 @@ class TestMessageActionsGuards extends BaseTest
             let client = this.createClient(sentMessages);
             this.assert.strictEqual(messageActions.startExchange(client, data, room, invitedPlayer), true);
             this.assert.strictEqual(messageActions.startExchange(client, data, room, invitedPlayer), false);
-            // @possible-hallucinated-undefined-method
             this.assert.strictEqual(initializedExchanges.length, 1);
         });
     }
