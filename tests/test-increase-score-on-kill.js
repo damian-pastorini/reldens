@@ -78,14 +78,20 @@ class TestIncreaseScoreOnKill extends BaseTest
         scores.loadWithRelations = async () => [];
         scores.preserveEntityState = () => ({});
         scores.restoreEntityState = () => true;
+        let scoresDetail = {createdRows: []};
+        scoresDetail.create = async (detailData) => {
+            scoresDetail.createdRows.push(detailData);
+            return detailData;
+        };
         let dataServer = {
             scores,
-            scoresDetail: {create: async () => true},
+            scoresDetail,
             config: {loadOne: async () => ({id: 390, value: lastPeriodValue})}
         };
         dataServer.getEntity = (entityName) => dataServer[entityName];
         return {
             scores,
+            scoresDetail,
             increaseScoreOnKill: new IncreaseScoreOnKill({
                 config: GameplayPlayerBuilder.createConfig({
                     'server/scores': this.scoresConfig,
@@ -96,20 +102,38 @@ class TestIncreaseScoreOnKill extends BaseTest
         };
     }
 
-    async killTheNpc(setup)
+    async killTheNpc(setup, mapper = false, targetObject = {id: 6})
     {
         return await setup.increaseScoreOnKill.execute(
-            new IncreaseScoreOnKillMapper().fromBattleEndedEvent({
+            (mapper || new IncreaseScoreOnKillMapper()).fromBattleEndedEvent({
                 room: {
                     roomId: 'room-1',
                     activePlayerByPlayerId: () => ({client: {send: () => true}}),
                     broadcast: () => true
                 },
                 playerSchema: {player_id: 1},
-                pve: {targetObject: {id: 6}}
+                pve: {targetObject}
             }),
             ObjectsConst.TYPE_OBJECT
         );
+    }
+
+    async testQueuedKillsOfASharedMapperKeepTheirOwnData()
+    {
+        await this.test('queued kills mapped by the same mapper keep their own kill data', async () => {
+            let setup = this.createKillSetup([], '2026-10-18', true);
+            let sharedMapper = new IncreaseScoreOnKillMapper();
+            await Promise.all([
+                this.killTheNpc(setup, sharedMapper, {id: 6, killScore: 8}),
+                this.killTheNpc(setup, sharedMapper, {id: 7, killScore: 3})
+            ]);
+            this.assert.strictEqual(setup.scores.rows.length, 1);
+            let scoreRow = [...setup.scores.rows].shift();
+            this.assert.strictEqual(scoreRow.total_score, 11);
+            this.assert.strictEqual(scoreRow.npcs_kills_count, 2);
+            this.assert.deepStrictEqual(setup.scoresDetail.createdRows.map(row => row.kill_npc_id), [6, 7]);
+            this.assert.deepStrictEqual(setup.scoresDetail.createdRows.map(row => row.obtained_score), [8, 3]);
+        });
     }
 
     async testKillDuringAPendingResetReplacesThePreviousPeriodRow()
