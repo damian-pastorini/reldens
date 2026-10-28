@@ -237,7 +237,12 @@ class TestScoresPeriodReset extends BaseTest
     async testStalePendingOfAnOlderPeriodUsesTheCurrentIds()
     {
         await this.test('a stale pending reset of an older period resets every current row', async () => {
-            let staleValue = this.builder.buildPendingValue(this.previousPeriodKey, 1000, this.builder.storedScoreId, 1);
+            let staleValue = this.builder.buildPendingValue(
+                this.previousPeriodKey,
+                1000,
+                this.builder.storedScoreId,
+                1
+            );
             let setup = this.builder.createSetup(staleValue, {}, [{id: 1, player_id: 7}, {id: 2, player_id: 8}]);
             let checkResult = await setup.scoresPeriodReset.check(this.resetDate);
             this.assert.deepStrictEqual(checkResult, {periodKey: this.resetPeriodKey, resetScores: true});
