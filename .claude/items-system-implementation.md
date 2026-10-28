@@ -123,6 +123,20 @@ this.events.on('reldens.createPlayerStatsAfter', async (client, userModel, curre
 
    Each modifier target is `manager.owner`, the player schema (`currentPlayer`).
 
+6. **Groups Data Send** (`lib/inventory/server/subscribers/player-subscriber.js` `PlayerSubscriber.createPlayerInventory()`)
+
+   After the items are loaded the inventory is set on `currentPlayer.inventory` and the groups data is sent to the
+   client between two events that share the same event data:
+   ```javascript
+   let inventoryEventData = {client, playerSchema: currentPlayer, room, inventoryServer, sendData};
+   await events.emit('reldens.createPlayerInventoryBeforeSend', inventoryEventData);
+   client.send('*', inventoryEventData.sendData);
+   await events.emit('reldens.createPlayerInventoryAfter', inventoryEventData);
+   ```
+
+   A `reldens.createPlayerInventoryBeforeSend` listener can change `sendData` before it is sent; the item growth and the
+   skins listen `reldens.createPlayerInventoryAfter` (see `.claude/gameplay-features.md`).
+
 ### Critical Timing
 
 - **BEFORE items load**: `currentPlayer.stats` is set (fresh object from database)
