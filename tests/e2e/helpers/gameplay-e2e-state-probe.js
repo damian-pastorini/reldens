@@ -2,12 +2,12 @@
  *
  * Reldens - Gameplay E2E State Probe
  *
- * Server side e2e endpoints for the theme gameplay features: the live player snapshot (avatar key, life, base life,
- * stats, state and scene), the life of an active enemy out of battle of a live room (set, then read by its body state
- * key, so the auto recovery spec watches the exact body it changed) and the scores period reset check run on a given
- * date, after the stored last period key was set to the given value (the spec preserves that config row and the scores
- * rows before); the check interval of the plugin is stopped and any running check awaited first, so the interval never
- * runs a check of its own in the middle, and it is started again after the check.
+ * Server side e2e endpoints for the gameplay features: the live player snapshot (avatar key, life, base life, stats,
+ * state and scene), the life of an active enemy out of battle of a live room (set, then read by its body state key, so
+ * the auto recovery spec watches the exact body it changed) and the scores period reset check run on a given date,
+ * after the stored last period key was set to the given value (the spec preserves that config row and the scores rows
+ * before); the check interval of the scores plugin is stopped and any running check awaited first, so the interval
+ * never runs a check of its own in the middle, and it is started again after the check.
  *
  */
 
@@ -95,14 +95,14 @@ class GameplayE2eStateProbe
 
     static async runScoresResetCheck(serverManager, isoDate, previousPeriodKey)
     {
-        let scoresPeriodReset = serverManager.customPlugin?.scoresPeriodReset;
+        let scoresPeriodReset = serverManager.featuresManager?.featuresList?.scores?.package?.scoresPeriodReset;
         if(!scoresPeriodReset){
-            return {error: 'The theme scores period reset is not running.'};
+            return {error: 'The scores period reset is not running.'};
         }
         scoresPeriodReset.stop();
         if(!await GameplayE2eStateProbe.waitForIdleScoresReset(scoresPeriodReset)){
             scoresPeriodReset.start();
-            return {error: 'The theme scores period reset check is still running.'};
+            return {error: 'The scores period reset check is still running.'};
         }
         if(sc.isString(previousPeriodKey)){
             await serverManager.dataServer.getEntity('config').update(
