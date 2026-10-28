@@ -209,7 +209,7 @@ class E2eSeedAndRestoreEndpoints
                 serverManager,
                 sc.get(request.body, 'group', ''),
                 sc.get(request.body, 'path', ''),
-                request.body.value
+                sc.get(request.body, 'value', null)
             );
             response.json({ok: true});
         });
