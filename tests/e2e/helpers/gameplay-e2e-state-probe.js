@@ -3,8 +3,11 @@
  * Reldens - Gameplay E2E State Probe
  *
  * Server side e2e endpoints for the gameplay features: the live player snapshot (avatar key, life, base life, stats,
- * state and scene), the life of an active enemy out of battle of a live room (set, then read by its body state key, so
- * the auto recovery spec watches the exact body it changed) and the scores period reset check run on a given date,
+ * state, scene, position, experience and level), the player state set with the room activate and deactivate methods
+ * (dead, disabled or active, so a spec reaches the dead or disabled player paths where no enemy can kill it), the life
+ * of an active enemy out of battle of a live room (set, then read by its body state key, so the auto recovery spec
+ * watches the exact body it changed), the life of an exact enemy body (in battle or not) and the scores period reset
+ * check run on a given date,
  * after the stored last period key was set to the given value (the spec preserves that config row and the scores rows
  * before); the check interval of the scores plugin is stopped and any running check awaited first, so the interval
  * never runs a check of its own in the middle, and it is started again after the check.
@@ -31,14 +34,46 @@ class GameplayE2eStateProbe
             return {error: 'Player '+playerName+' not found in room '+room.roomName+'.'};
         }
         let affectedProperty = room.config.get('client/actions/skills/affectedProperty');
+        let classPath = sc.get(sc.get(playerSchema, 'skillsServer', {}), 'classPath', {});
         return {
             avatarKey: playerSchema.avatarKey,
             life: playerSchema.stats[affectedProperty],
             totalLife: playerSchema.statsBase[affectedProperty],
             stats: Object.assign({}, playerSchema.stats),
             inState: playerSchema.state.inState,
-            scene: playerSchema.state.scene
+            scene: playerSchema.state.scene,
+            x: playerSchema.state.x,
+            y: playerSchema.state.y,
+            experience: Number(sc.get(classPath, 'currentExp', 0)),
+            level: Number(sc.get(classPath, 'currentLevel', 0))
         };
+    }
+
+    static setPlayerState(room, playerName, inState)
+    {
+        let playerSchema = RoomObjectsState.findPlayerByName(room, playerName);
+        if(!playerSchema){
+            return {error: 'Player '+playerName+' not found in room '+room.roomName+'.'};
+        }
+        if(GameConst.STATUS.ACTIVE === inState){
+            room.activatePlayer(playerSchema, inState);
+            return GameplayE2eStateProbe.fetchPlayerSnapshot(room, playerName);
+        }
+        room.deactivatePlayer(playerSchema, inState);
+        return GameplayE2eStateProbe.fetchPlayerSnapshot(room, playerName);
+    }
+
+    static setEnemyLifeByBody(room, bodyKey, life)
+    {
+        let enemyObject = RoomObjectsState.fetchEnemies(room).find(
+            roomObject => bodyKey === roomObject.objectBody.bodyState.key
+        );
+        if(!enemyObject){
+            return {error: 'Enemy body '+bodyKey+' not found in room '+room.roomName+'.'};
+        }
+        let affectedProperty = room.config.get('client/actions/skills/affectedProperty');
+        enemyObject.stats[affectedProperty] = life;
+        return GameplayE2eStateProbe.mapEnemyLife(enemyObject, affectedProperty);
     }
 
     static isIdleEnemy(roomObject, enemyKey)
@@ -142,6 +177,30 @@ class GameplayE2eStateProbe
                 async (room) => GameplayE2eStateProbe.setEnemyLife(
                     room,
                     sc.get(request.body, 'enemyKey', ''),
+                    Number(sc.get(request.body, 'life', 0))
+                )
+            );
+        });
+        app.post('/api/e2e/gameplay/player-state', async (request, response) => {
+            await RoomObjectsState.respondForRoom(
+                serverManager,
+                sc.get(request.body, 'roomName', ''),
+                response,
+                async (room) => GameplayE2eStateProbe.setPlayerState(
+                    room,
+                    sc.get(request.body, 'playerName', ''),
+                    Number(sc.get(request.body, 'inState', GameConst.STATUS.ACTIVE))
+                )
+            );
+        });
+        app.post('/api/e2e/gameplay/enemy-body-life', async (request, response) => {
+            await RoomObjectsState.respondForRoom(
+                serverManager,
+                sc.get(request.body, 'roomName', ''),
+                response,
+                async (room) => GameplayE2eStateProbe.setEnemyLifeByBody(
+                    room,
+                    sc.get(request.body, 'bodyKey', ''),
                     Number(sc.get(request.body, 'life', 0))
                 )
             );
