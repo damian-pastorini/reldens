@@ -197,7 +197,11 @@ A reset that fails or stops before the end keeps the pending value: the other ch
 same claimed ids (a stale pending value of an older period reads the current ids), so a retry or an owner that resumes
 late never deletes the new period points. While a reset is pending, a kill of a player whose score row was created up
 to the claimed `scoresMaxId` deletes that previous period row and stores the new points in a new row
-(`IncreaseScoreOnKill.releasePreviousPeriodScore()`), so the reset delete never removes them. The pending claim is read
+(`IncreaseScoreOnKill.releasePreviousPeriodScore()`), so the reset delete never removes them. The score updates of a
+player run one after the other (`IncreaseScoreOnKill.queuePlayerUpdate()`), so overlapping kills share one row, and an
+existing row is saved only while it still holds the read id and counters (`ScoresUpdater.saveScore()`): a row deleted
+by the reset or changed by another server after the read is read again and the update retried
+(`ScoresConst.SCORE_UPDATE_ATTEMPTS`), so no stale total is ever written back. The pending claim is read
 by `ScoresResetClaim` (`lib/scores/server/scores-reset-claim.js`). Every server keeps the last period key it observed: when it finds a new
 stored period key reset by another server it sends the stored top scores and the player scores to its own scene rooms
 (its first check after the start only remembers the key). A period is marked as observed only after its scores were
