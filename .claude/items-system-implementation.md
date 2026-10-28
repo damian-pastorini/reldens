@@ -33,8 +33,8 @@ The Reldens Items System manages player inventory, equipment, and item modifiers
   - entities-translations.js - Admin entities labels
   - **entities/** - Admin entities overrides for the items, groups and inventory
   - **exchange/** - Trade processors
-    - processor.js - Exchange operations (init, add, remove, confirm)
-    - player-processor.js - Extends the processor with the player-to-player confirm/disconfirm operations
+    - processor.js - Exchange operations (init, add, remove, confirm of both inventories for the NPC trades and
+      `updatePlayerConfirmation()`, the confirm or disconfirm of the player inventory for the trades between players)
   - **subscribers/** - Event subscribers
     - player-subscriber.js - Creates player inventory on login
     - player-death-subscriber.js - Drops the player items on death
