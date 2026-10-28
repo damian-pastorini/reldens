@@ -25,7 +25,7 @@ Core multiplayer room system
 - `server/scene.js` (RoomScene): Main game room with physics, collisions, objects
 - `server/login.js` (RoomLogin): Authentication and player initialization
 - `server/player-relocator.js` (PlayerRelocator): moves a player to a room and position decided by the server, without
-  a change point (used by the teleport NPC and the death teleport, see `.claude/theme-gameplay-features.md`)
+  a change point (used by the teleport NPC and the death teleport, see `.claude/gameplay-features.md`)
 - Client connects via `lib/game/client/room-events.js` to handle server state synchronization
 
 ### World (`lib/world/`)
@@ -60,6 +60,10 @@ Combat system (PvP/PvE), skills, battle mechanics
 - `server/pvp.js` - PvP combat logic
 - `reldens.playerDeath` (`server/events/player-death-event.js`) carries `revivePlayerCallback`, the battle revive bound
   to the dead player, so a listener can revive the player without receiving the battle
+- `server/room-auto-recovery.js` (with `players-auto-recovery.js`, `objects-auto-recovery.js` and
+  `stats-recovery-calculator.js`): the stats auto recovery of every scene room
+- `server/player-death-relocator.js` and `server/resurrection-ad-gate.js`: the death teleport to town, the restoration
+  item and the resurrection ad (see `.claude/gameplay-features.md`)
 
 ### Inventory (`lib/inventory/`)
 Items system with equipment and usable items
@@ -67,8 +71,9 @@ Items system with equipment and usable items
 - Item management, equipment slots, consumables
 - `reldens.createPlayerInventoryAfter` (`{client, playerSchema, room, inventoryServer}`) is emitted after the inventory
   data is sent to the joined player
-- `items_inventory.customData` keeps the data of one item instance, `server/item-growth-calculator.js` has the item
-  growth maths (see `.claude/theme-gameplay-features.md`)
+- `items_inventory.customData` keeps the data of one item instance, `server/items-growth-applier.js` grows the items
+  with the experience of their owner and `server/item-growth-calculator.js` has the item growth maths (see
+  `.claude/gameplay-features.md`)
 - Every new inventory item gets its own Modifier copies targeting its owner (`ItemsFactory.isolateModifiers()` in
   `StorageObserver.saveNewItem()`), the items model data modifiers are shared by every item created from them
 - The equip and use messages are rejected for an item key that is not in the inventory or an item of another type
@@ -90,7 +95,8 @@ Leaderboards and ranking system
 - Kill points: `server/scores/obtainedScorePerPlayer` plus the killed player level times
   `server/scores/obtainedScorePerPlayerLevelMultiplier`, and the enemy `private_params` `"killScore"` with
   `server/scores/useNpcCustomScore`
-- `server/scores-period-key-builder.js` builds the UTC daily, weekly (ISO) and monthly keys of the scores reset
+- `server/scores-period-reset.js` resets the scores once per period (`server/scores/reset/*`), started by the plugin on
+  `reldens.serverReady`, and `server/scores-period-key-builder.js` builds the UTC daily, weekly (ISO) and monthly keys
 
 ### Teams (`lib/teams/`)
 Party/guild system
@@ -125,6 +131,10 @@ Authentication, registration, player management
   (empty or older than the interval) before the email is sent, so concurrent requests send a single email, and a
   failed send restores the previous value
 - Player creation and management
+- Skins: `server/skin-ad-ticket-gate.js` (the skin ticket requests the skin ad and pays its reward) and
+  `server/player-skin-applier.js` (an equipped `"skinKey"` item changes the player avatar), and the client
+  `client/skins-sprites-preloader.js`, `client/skin-ad-messages-listener.js` and `client/players-skin-switcher.js` (see
+  `.claude/gameplay-features.md`)
 
 ### Chat (`lib/chat/`)
 Multi-channel chat (global, room, private messages)
@@ -176,7 +186,7 @@ Advertisement integration system
   `AdsConst.REPLAY_COOLDOWN`) after its last reward, an `AD_ENDED` before the minimum duration is rejected, `AD_FAILED`
   closes the play without reward, a disabled player is activated again after `server/ads/videoMaximumDuration`, and
   the `reldens.beforeGiveAdRewardItem` subscribers can cancel a reward (see "Ads rewards rules" in
-  `.claude/theme-gameplay-features.md`)
+  `.claude/gameplay-features.md`)
 
 ### Sync (`lib/sync/`)
 Colyseus primitives isolation layer
@@ -217,7 +227,7 @@ Game objects (NPCs, interactables, respawn areas)
   lastAffectedValue = currentAffectedValue;
   ```
 - Teleport objects (`server/object/type/teleport-object.js`, class type `9`) are NPCs whose dialog options move the
-  player to the `private_params` `"destinations"` of the chosen option (see `.claude/theme-gameplay-features.md`)
+  player to the `private_params` `"destinations"` of the chosen option (see `.claude/gameplay-features.md`)
 
 ### Snippets (`lib/snippets/`)
 Text snippets, locales and translations
