@@ -316,8 +316,9 @@ PREPARE addItemsInventoryCustomDataStatement FROM @addItemsInventoryCustomData;
 EXECUTE addItemsInventoryCustomDataStatement;
 DEALLOCATE PREPARE addItemsInventoryCustomDataStatement;
 
--- Every feature enabled in the basic config is created or enabled, the quests feature was never added by an update
-INSERT INTO `features` (`code`, `title`, `is_enabled`) VALUES
+-- Every feature enabled in the basic config is created when missing (the quests feature was never added by an update),
+-- the existing features keep their enabled value, so a feature disabled by the game owner stays disabled
+INSERT IGNORE INTO `features` (`code`, `title`, `is_enabled`) VALUES
 	('chat', 'Chat', 1),
 	('objects', 'Objects', 1),
 	('respawn', 'Respawn', 1),
@@ -333,8 +334,7 @@ INSERT INTO `features` (`code`, `title`, `is_enabled`) VALUES
 	('snippets', 'Snippets', 1),
 	('ads', 'Ads', 1),
 	('scores', 'Scores', 1),
-	('quests', 'Quests', 1)
-ON DUPLICATE KEY UPDATE `is_enabled` = VALUES(`is_enabled`);
+	('quests', 'Quests', 1);
 
 -- Teleport object type
 REPLACE INTO `objects_types` (`id`, `key`) VALUES
