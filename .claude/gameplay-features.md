@@ -201,12 +201,13 @@ to the claimed `scoresMaxId` deletes that previous period row and stores the new
 player run one after the other (`IncreaseScoreOnKill.queuePlayerUpdate()`), so overlapping kills share one row, and an
 existing row is saved only while it still holds the read id and counters (`ScoresUpdater.saveScore()`): a row deleted
 by the reset or changed by another server after the read is read again and the update retried
-(`ScoresConst.SCORE_UPDATE_ATTEMPTS`), so no stale total is ever written back. The pending claim is read
-by `ScoresResetClaim` (`lib/scores/server/scores-reset-claim.js`). Every server keeps the last period key it observed: when it finds a new
-stored period key reset by another server it sends the stored top scores and the player scores to its own scene rooms
-(its first check after the start only remembers the key). A period is marked as observed only after its scores were
-sent, so a failed send is retried on the next check. A failed check is logged and releases the next one. The running instance is the `scoresPeriodReset` property of
-the scores plugin (`serverManager.featuresManager.featuresList.scores.package`).
+(`ScoresConst.SCORE_UPDATE_ATTEMPTS`), so no stale total is ever written back. The pending claim is read by
+`ScoresResetClaim` (`lib/scores/server/scores-reset-claim.js`). Every server keeps the last period key it observed:
+when it finds a new stored period key reset by another server it sends the stored top scores and the player scores to
+its own scene rooms (its first check after the start only remembers the key). A period is marked as observed only
+after its scores were sent, so a failed send is retried on the next check. A failed check is logged and releases the
+next one. The running instance is the `scoresPeriodReset` property of the scores plugin
+(`serverManager.featuresManager.featuresList.scores.package`).
 
 ## Ad items that give a skin
 
@@ -254,7 +255,8 @@ the inventory or of an item without `equip()`, and the use of an item without `u
 ## Events added
 
 - `reldens.createPlayerInventoryBeforeSend` (`{client, playerSchema, room, inventoryServer, sendData}`), emitted by
-  the inventory `PlayerSubscriber` before the groups data (`sendData`) is sent to the client, so a listener can change it
+  the inventory `PlayerSubscriber` before the groups data (`sendData`) is sent to the client, so a listener can change
+  it
 - `reldens.createPlayerInventoryAfter` (the same event data), emitted by the inventory `PlayerSubscriber` after the
   inventory data is sent to the client
 - `reldens.playerDeath` carries `revivePlayerCallback`
@@ -269,8 +271,9 @@ Unit tests (the stubs of the gameplay classes are built by `tests/fixtures/gamep
 `test-increase-score-on-kill.js`, `test-item-growth-calculator.js`, `test-ads-collection-finder.js`,
 `test-scores-period-key-builder.js`, `test-stats-recovery-calculator.js`, `test-players-auto-recovery.js`,
 `test-objects-auto-recovery.js`, `test-room-auto-recovery.js`, `test-player-death-relocator.js`,
-`test-resurrection-ad-gate.js`, `test-items-growth-applier.js`, `test-scores-period-reset.js`,
-`test-skin-ad-ticket-gate.js`, `test-player-skin-applier.js`, `test-skins-sprites-preloader.js`,
+`test-resurrection-ad-gate.js`, `test-items-growth-applier.js`, `test-scores-period-reset.js` (with
+`tests/fixtures/scores-period-reset-builder.js`), `test-player-subscriber.js` (the inventory before send and after
+events), `test-skin-ad-ticket-gate.js`, `test-player-skin-applier.js`, `test-skins-sprites-preloader.js`,
 `test-skin-ad-messages-listener.js`, `test-players-skin-switcher.js`, `test-ads-reward-claims.js`,
 `test-items-factory.js` (the modifiers isolation) and `test-message-actions-guards.js` (the equip and use checks), run
 self-hosted with `RELDENS_TESTS_CONFIRMED=1 npm run test:default`.
