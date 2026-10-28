@@ -147,6 +147,19 @@ class TestPlayerDeathRelocatorFailures extends BaseTest
         });
     }
 
+    async testFailedResurrectionAdIsNotWaited()
+    {
+        await this.test('a failed resurrection ad is not waited and the player revives in town', async () => {
+            let deathTimerKey = ActionsConst.DEATH.PRIVATE_DATA.PLAYER_DEATH_TIMER;
+            let setup = this.deathBuilder.createSetup();
+            setup.playerSchema.setPrivate(ActionsConst.DEATH.PRIVATE_DATA.RESURRECTION_AD_STARTED, Date.now());
+            setup.playerSchema.setPrivate(ActionsConst.DEATH.PRIVATE_DATA.RESURRECTION_AD_FAILED, true);
+            this.assert.strictEqual(await this.createRelocator().resolveDeath(setup.event), true);
+            this.assert.strictEqual(sc.hasOwn(setup.playerSchema.privateData, deathTimerKey), false);
+            this.assertRevivedInTown(setup);
+        });
+    }
+
     async testScheduledResolutionRevivesAfterTheTimeOut()
     {
         await this.test('the scheduled death resolution revives the player in town after the game over time', async () => {
