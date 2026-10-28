@@ -3,8 +3,8 @@
  * Reldens - ScoresPeriodResetBuilder
  *
  * Builds the scores period reset under test with the stubs it uses: the config row repository with conditional
- * updates, the scores and details repositories (newest id first loads, deletes up to an id, failing reads), a scene room
- * with a connected and a disconnected player, a room still being created and a game room, plus the pending claim
+ * updates, the scores and details repositories (newest id first loads, deletes up to an id, failing reads), a scene
+ * room with a connected and a disconnected player, a room still being created and a game room, plus the pending claim
  * values and the scores messages the scene room players receive.
  *
  */
