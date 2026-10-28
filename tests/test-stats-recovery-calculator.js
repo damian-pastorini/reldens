@@ -5,7 +5,7 @@
  */
 
 const { BaseTest } = require('./base-test');
-const { StatsRecoveryCalculator } = require('../theme/plugins/recovery/server/stats-recovery-calculator');
+const { StatsRecoveryCalculator } = require('../lib/actions/server/stats-recovery-calculator');
 
 class TestStatsRecoveryCalculator extends BaseTest
 {
