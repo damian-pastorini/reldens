@@ -174,7 +174,7 @@ player, the affected property and the client, so the listeners never receive the
 
 - a player who left the room or is alive again is ignored
 - with a restoration item (quantity above 0) one is consumed and the player revives where it died
-- while the resurrection ad plays (started less than 60 seconds before) it checks again every second
+- while the resurrection ad plays (started less than 60 seconds before and not failed) it checks again every second
 - otherwise it revives in the town: in the same room the player is placed on the return point and revived, from
   another room the affected stat is restored, the `REVIVED` message is sent and the player moves to the town room; a
   failed relocation revives where it died
@@ -184,8 +184,9 @@ The resurrection ad (`ads_event_video` on the client `reldens.gameOver` event, `
 restoration item. `ResurrectionAdGate` (`lib/actions/server/resurrection-ad-gate.js`) accepts its `AD_STARTED` message
 (`reldens.beforeSceneExecuteMessages`) only from a dead player and once per death (`resurrectionAdStarted` private data,
 cleared on every death). `AdsMessageActions` no longer disables a dead player on `AD_STARTED` and only activates a
-disabled player on `AD_ENDED`, so the ad never revives a dead player. A failed resurrection ad gives no item, the death
-resolves in the town after the 60 seconds wait. The death timers are cleared when the player leaves
+disabled player on `AD_ENDED`, so the ad never revives a dead player. The `AD_FAILED` message of the started
+resurrection ad sets the `resurrectionAdFailed` private data (cleared on every death too): a failed ad gives no item, so
+the next death check stops waiting and the player revives in the town, and no other ad can start in the same death. The death timers are cleared when the player leaves
 (`RoomScene.removeAllPlayerReferences()`) and when the room is disposed (`RoomScene.clearPlayersTimers()`).
 
 ## Scores reset per period
@@ -280,7 +281,11 @@ Unit tests (the stubs of the gameplay classes are built by `tests/fixtures/gamep
 `test-teleport-object.js`, `test-player-relocator.js` (with `tests/fixtures/relocation-room-builder.js`),
 `test-increase-score-on-kill.js`, `test-item-growth-calculator.js`, `test-ads-collection-finder.js`,
 `test-scores-period-key-builder.js`, `test-stats-recovery-calculator.js`, `test-players-auto-recovery.js`,
-`test-objects-auto-recovery.js`, `test-room-auto-recovery.js`, `test-player-death-relocator.js`,
+`test-objects-auto-recovery.js`, `test-room-auto-recovery.js`, `test-player-death-relocator.js` and
+`test-player-death-relocator-failures.js` (with `tests/fixtures/death-relocation-builder.js`),
+`test-scene-change-point.js` (the change points flow, with `tests/fixtures/scene-change-room-builder.js`),
+`test-rc1-sql-update.js` (the rc.1 update run on the tests database: no updated row changes, disabled features and
+existing content kept, only the missing features and sample rows added),
 `test-resurrection-ad-gate.js`, `test-items-growth-applier.js`, `test-scores-period-reset.js` (with
 `tests/fixtures/scores-period-reset-builder.js`), `test-player-subscriber.js` (the inventory before send and after
 events), `test-skin-ad-ticket-gate.js`, `test-player-skin-applier.js`, `test-skins-sprites-preloader.js`,
