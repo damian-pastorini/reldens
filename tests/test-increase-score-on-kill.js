@@ -86,7 +86,11 @@ class TestIncreaseScoreOnKill extends BaseTest
     {
         return await setup.increaseScoreOnKill.execute(
             new IncreaseScoreOnKillMapper().fromBattleEndedEvent({
-                room: {roomId: 'room-1', activePlayerByPlayerId: () => ({client: {send: () => true}})},
+                room: {
+                    roomId: 'room-1',
+                    activePlayerByPlayerId: () => ({client: {send: () => true}}),
+                    broadcast: () => true
+                },
                 playerSchema: {player_id: 1},
                 pve: {targetObject: {id: 6}}
             }),
