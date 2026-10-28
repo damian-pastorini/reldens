@@ -242,8 +242,10 @@ the inventory or of an item without `equip()`, and the use of an item without `u
 
 ## Events added
 
-- `reldens.createPlayerInventoryAfter` (`{client, playerSchema, room, inventoryServer}`), emitted by the inventory
-  `PlayerSubscriber` after the inventory data is sent to the client
+- `reldens.createPlayerInventoryBeforeSend` (`{client, playerSchema, room, inventoryServer, sendData}`), emitted by
+  the inventory `PlayerSubscriber` before the groups data (`sendData`) is sent to the client, so a listener can change it
+- `reldens.createPlayerInventoryAfter` (the same event data), emitted by the inventory `PlayerSubscriber` after the
+  inventory data is sent to the client
 - `reldens.playerDeath` carries `revivePlayerCallback`
 - `reldens.beforeGiveAdRewardItem` (`{playedAd, room, playerSchema, continueEvent}`), emitted by `AdsMessageActions`
   before the reward of a valid ended ad
