@@ -100,6 +100,53 @@ class TestIncreaseScoreOnKill extends BaseTest
         });
     }
 
+    async testNpcWithZeroKillScoreGivesNoPoints()
+    {
+        await this.test('an npc kill with a zero kill score gives no points', async () => {
+            let scoreProps = new IncreaseScoreOnKillMapper().fromBattleEndedEvent({
+                room: {},
+                playerSchema: {player_id: 1},
+                pve: {targetObject: {id: 6, killScore: 0, useNpcCustomScore: 3}}
+            });
+            this.assert.strictEqual(scoreProps.obtainedNpcCustomScore, 0);
+            this.assert.strictEqual(
+                this.createIncreaseScoreOnKill(this.scoresConfig).determineObtainedScore(scoreProps, false),
+                0
+            );
+        });
+    }
+
+    async testNpcWithInvalidKillScoreGivesTheDefaultNpcScore()
+    {
+        await this.test('an npc kill with an invalid kill score gives the configured npc score', async () => {
+            let scoreProps = new IncreaseScoreOnKillMapper().fromBattleEndedEvent({
+                room: {},
+                playerSchema: {player_id: 1},
+                pve: {targetObject: {id: 6, killScore: 'many'}}
+            });
+            this.assert.strictEqual(
+                this.createIncreaseScoreOnKill(this.scoresConfig).determineObtainedScore(scoreProps, false),
+                this.scoresConfig.obtainedScorePerNpc
+            );
+        });
+    }
+
+    async testNpcKillScoreIsIgnoredWithoutTheCustomScoreConfig()
+    {
+        await this.test('the npc kill score is ignored while the npc custom score is disabled', async () => {
+            let scoresConfig = Object.assign({}, this.scoresConfig, {useNpcCustomScore: false});
+            let scoreProps = new IncreaseScoreOnKillMapper().fromBattleEndedEvent({
+                room: {},
+                playerSchema: {player_id: 1},
+                pve: {targetObject: {id: 6, killScore: 0}}
+            });
+            this.assert.strictEqual(
+                this.createIncreaseScoreOnKill(scoresConfig).determineObtainedScore(scoreProps, false),
+                scoresConfig.obtainedScorePerNpc
+            );
+        });
+    }
+
     async testMapperResetsThePreviousEventData()
     {
         await this.test('the mapper resets the data of the previous event', async () => {
