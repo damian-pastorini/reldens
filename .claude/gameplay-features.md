@@ -33,6 +33,8 @@ Applied to the install and basic config files, both sample data files, and to ex
 - `items_inventory.customData` (TEXT, after `is_active`): the custom data of one item instance, the item growth keeps
   its level and experience there; the update adds it only when the column is missing
 - `objects_types` row `9` `teleport`
+- the features enabled in the basic config are added when missing (the quests feature was never added by an update),
+  the existing features keep their enabled value
 - the config rows listed below
 - sample data: the `skin` items group (7), the items `restoration_scroll` (9), `skin_ad_ticket` (10),
   `skin_warlock_robe` (11) and `growing_sword` (12, with the `atk` +10 modifier 6), the ads `resurrection-video` (7) and
@@ -105,14 +107,22 @@ intervals.
 ```
 
 - an option without destination (the sample "Nowhere") closes the dialog
+- a dead or disabled player gets the dialog closed and is never relocated, so the NPC can not skip the death resolution
 - a destination without a string `room`, or a room `room.validateRoom()` refuses for that user (guests included), shows
   the `"invalidDestinationMessage"` private param (default `I can not take you there.`)
 - otherwise the dialog closes and `PlayerRelocator` moves the player
 
 `PlayerRelocator` (`lib/rooms/server/player-relocator.js`) moves a player without a change point. The same room places
 the body on the new position and saves the state; another room runs the change point flow (`isNextRoomAvailable()`, the
-`CHANGING_SCENE` broadcast, the state save, `broadcastSceneChange()`). Without `x` and `y` the destination room default
-return point is used, and a player already changing scene is skipped. The death teleport uses it too.
+state save, the `CHANGING_SCENE` broadcast, `broadcastSceneChange()`). A failed state save restores the previous state
+(`RoomScene.replacePlayerState()`) and never sends `CHANGING_SCENE`, so the client keeps the current scene visible.
+Without `x` and `y` the destination room default return point is used. A player without body or already changing scene
+is skipped, checked again after the destination room load, so overlapping relocations (a double option click) or a
+change point started meanwhile run a single scene change. The death teleport uses it too.
+
+The change points flow (`RoomScene.nextSceneInitialPosition()`) follows the same order: the `CHANGING_SCENE` broadcast
+is sent only after the next room, its return point and the state save succeeded, and a failed save restores the
+previous state, so a failed scene change never leaves the client scene hidden.
 
 ## Points per kill
 
