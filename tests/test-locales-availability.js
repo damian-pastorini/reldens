@@ -8,6 +8,7 @@ const { BaseTest } = require('./base-test');
 const { ConfigurationEnricher } = require('../lib/snippets/server/configuration-enricher');
 const { SnippetsPlugin } = require('../lib/snippets/client/plugin');
 const { Translator } = require('../lib/snippets/translator');
+const { ConfigManager } = require('../lib/config/client/config-manager');
 const { EventsManager } = require('@reldens/utils');
 
 class TestLocalesAvailability extends BaseTest
@@ -34,7 +35,9 @@ class TestLocalesAvailability extends BaseTest
     async setupSnippetsPlugin(events, clientConfig)
     {
         let snippetsPlugin = new SnippetsPlugin();
-        await snippetsPlugin.setup({gameManager: {services: {}, config: {client: clientConfig}}, events});
+        let config = new ConfigManager();
+        config.client = clientConfig;
+        await snippetsPlugin.setup({gameManager: {services: {}, config}, events});
         return snippetsPlugin;
     }
 
