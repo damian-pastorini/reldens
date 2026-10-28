@@ -195,7 +195,10 @@ servers on the same storage only one resets each period; the first check only st
 A reset that fails or stops before the end keeps the pending value: the other checks wait while it is younger than
 `ScoresConst.RESET.DEFAULTS.PENDING_TIMEOUT_MS` (`60000`) and then any server takes it over and completes it with the
 same claimed ids (a stale pending value of an older period reads the current ids), so a retry or an owner that resumes
-late never deletes the new period points. Every server keeps the last period key it observed: when it finds a new
+late never deletes the new period points. While a reset is pending, a kill of a player whose score row was created up
+to the claimed `scoresMaxId` deletes that previous period row and stores the new points in a new row
+(`IncreaseScoreOnKill.releasePreviousPeriodScore()`), so the reset delete never removes them. The pending claim is read
+by `ScoresResetClaim` (`lib/scores/server/scores-reset-claim.js`). Every server keeps the last period key it observed: when it finds a new
 stored period key reset by another server it sends the stored top scores and the player scores to its own scene rooms
 (its first check after the start only remembers the key). A period is marked as observed only after its scores were
 sent, so a failed send is retried on the next check. A failed check is logged and releases the next one. The running instance is the `scoresPeriodReset` property of
