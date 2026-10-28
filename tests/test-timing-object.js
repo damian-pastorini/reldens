@@ -18,12 +18,13 @@ class TestTimingObject extends BaseTest
         this.affectedProperty = 'hp';
         this.startHp = 100;
         this.timingDuration = 5000;
+        this.shortTimingDuration = 50;
         this.checksWaitMs = 350;
         this.healCheckWaitMs = 150;
         this.configValues = {'client/actions/skills/affectedProperty': this.affectedProperty};
     }
 
-    createTimingObject(privateParams)
+    createTimingObject(privateParams, timingDuration = this.timingDuration)
     {
         return new TimingObject({
             events: {},
@@ -34,23 +35,93 @@ class TestTimingObject extends BaseTest
             dataServer: {},
             client_key: 'timing_object',
             id: 1,
-            client_params: sc.toJsonString({timingDuration: this.timingDuration}),
+            client_params: sc.toJsonString({timingDuration}),
             private_params: sc.toJsonString(privateParams)
         });
     }
 
+    createTimingSetup(privateParams, timingDuration = this.timingDuration)
+    {
+        let timingSetup = {
+            timingObject: this.createTimingObject(privateParams, timingDuration),
+            client: {sessionId: 'session-1', sentActions: []},
+            addedItems: [],
+            playerSchema: {state: {x: 100, y: 100}, stats: {[this.affectedProperty]: this.startHp}}
+        };
+        timingSetup.client.send = (type, data) => timingSetup.client.sentActions.push(data.act);
+        timingSetup.playerSchema.inventory = {
+            manager: {
+                createItemInstance: (itemKey) => ({key: itemKey}),
+                addItem: async (item) => timingSetup.addedItems.push(item.key)
+            }
+        };
+        timingSetup.roomPlayers = {[timingSetup.client.sessionId]: timingSetup.playerSchema};
+        timingSetup.room = {
+            config: timingSetup.timingObject.config,
+            playerBySessionIdFromState: (sessionId) => sc.get(timingSetup.roomPlayers, sessionId, false)
+        };
+        return timingSetup;
+    }
+
     async runTimingWithPlayerChange(privateParams, changePlayer)
     {
-        let timingObject = this.createTimingObject(privateParams);
-        let client = {sentActions: []};
-        client.send = (type, data) => client.sentActions.push(data.act);
-        let playerSchema = {state: {x: 100, y: 100}, stats: {[this.affectedProperty]: this.startHp}};
-        timingObject.startTiming(client, {config: timingObject.config}, playerSchema);
-        await changePlayer(playerSchema);
+        let timingSetup = this.createTimingSetup(privateParams);
+        let timingObject = timingSetup.timingObject;
+        timingObject.startTiming(timingSetup.client, timingSetup.room, timingSetup.playerSchema);
+        await changePlayer(timingSetup.playerSchema, timingSetup);
         await timersPromises.setTimeout(this.checksWaitMs);
         clearInterval(timingObject.timingCheckInterval);
         clearTimeout(timingObject.timingTimer);
-        return {sentActions: client.sentActions, isActive: timingObject.isActive};
+        return {sentActions: timingSetup.client.sentActions, isActive: timingObject.isActive};
+    }
+
+    async testPlayerLeavingTheRoomStopsTheTiming()
+    {
+        await this.test('a player that leaves the room stops the timing so the object can be used again', async () => {
+            let result = await this.runTimingWithPlayerChange({cancelOnMove: true}, (playerSchema, timingSetup) => {
+                timingSetup.roomPlayers = {};
+            });
+            this.assert.deepStrictEqual(result, {sentActions: ['timingStart'], isActive: false});
+        });
+    }
+
+    async testCompletedTimingOfARemovedPlayerGivesNoReward()
+    {
+        await this.test('a timing that completes after the player left gives no reward and never rejects', async () => {
+            let timingSetup = this.createTimingSetup({rewards: [{key: 'ore', rate: 100}]});
+            timingSetup.roomPlayers = {};
+            timingSetup.playerSchema.inventory = null;
+            timingSetup.timingObject.isActive = true;
+            await timingSetup.timingObject.completeTiming(timingSetup.client, timingSetup.room, timingSetup.playerSchema);
+            this.assert.strictEqual(timingSetup.timingObject.isActive, false);
+            this.assert.deepStrictEqual(timingSetup.client.sentActions, []);
+        });
+    }
+
+    async testCompletedTimingRewardsThePlayerInTheRoom()
+    {
+        await this.test('a timing that completes with the player in the room adds the reward item', async () => {
+            let timingSetup = this.createTimingSetup({rewards: [{key: 'ore', rate: 100}]}, this.shortTimingDuration);
+            let timingObject = timingSetup.timingObject;
+            timingObject.startTiming(timingSetup.client, timingSetup.room, timingSetup.playerSchema);
+            await timersPromises.setTimeout(this.checksWaitMs);
+            this.assert.deepStrictEqual(timingSetup.addedItems, ['ore']);
+            this.assert.deepStrictEqual(timingSetup.client.sentActions, ['timingStart', 'timingComplete']);
+            this.assert.strictEqual(timingObject.isActive, false);
+        });
+    }
+
+    async testRejectedRewardAddIsCaught()
+    {
+        await this.test('a rejected reward item add is caught and the object can be used again', async () => {
+            let timingSetup = this.createTimingSetup({rewards: [{key: 'ore', rate: 100}]}, this.shortTimingDuration);
+            let timingObject = timingSetup.timingObject;
+            timingSetup.playerSchema.inventory.manager.addItem = async () => Promise.reject({message: 'Storage.'});
+            timingObject.startTiming(timingSetup.client, timingSetup.room, timingSetup.playerSchema);
+            await timersPromises.setTimeout(this.checksWaitMs);
+            this.assert.deepStrictEqual(timingSetup.client.sentActions, ['timingStart']);
+            this.assert.strictEqual(timingObject.isActive, false);
+        });
     }
 
     async testHitCancelsTheTiming()
