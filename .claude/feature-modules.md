@@ -88,6 +88,11 @@ Player and NPC respawn system
 Loot and rewards system
 - Drop tables
 - Reward distribution
+- The accept of a reward event (`server/rewards-events-message-actions.js`) gives the items only of a `ready` and not
+  `complete` state, the accepts of a player run one after the other, every given item is stored in the state
+  `givenItems` as soon as it is given (an item the inventory does not add or a rejected give stops the claim, which is
+  never sent as accepted), so a claim that failed after some items gives only the missing ones when it is claimed
+  again; the completed state drops `givenItems` and a new claim date clears it (`LoginStateHandler.resetRewardState()`)
 
 ### Scores (`lib/scores/`)
 Leaderboards and ranking system
@@ -107,6 +112,9 @@ Party/guild system
 - Team formation
 - Shared objectives
 - Clan levels and bonuses
+- Every invite is used once: the team join and decline remove it from `teamPendingInvites`, the clan join and decline
+  use `Clan.consumeInvite()`, a decline without a pending invite is rejected without notifying the inviter, and two
+  overlapping accepts of one clan invite add the member once
 - `Team` and `Clan` extend `SharedModifiersGroup` (`server/shared-modifiers-group.js`): the group level, shared
   properties and modifiers, applied to the joined players (`applyModifiers()`) and reverted when they leave
   (`revertModifiers()`)
@@ -230,6 +238,9 @@ Game objects (NPCs, interactables, respawn areas)
   }
   lastAffectedValue = currentAffectedValue;
   ```
+  A player that leaves the room (it is not the room state player of its session anymore) stops the timing without a
+  message and gets no reward, and a rejected completion (a failed reward item add) is caught and ends the timing, so the
+  object can always be used again
 - Teleport objects (`server/object/type/teleport-object.js`, class type `9`) are NPCs whose dialog options move the
   player to the `private_params` `"destinations"` of the chosen option (see `.claude/gameplay-features.md`)
 
