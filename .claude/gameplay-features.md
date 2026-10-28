@@ -1,20 +1,29 @@
-# Theme Gameplay Features
+# Gameplay Features
 
 Seven gameplay features: stats auto recovery, the teleport NPC, points per kill by level, item growth, death teleport to
 town (with the restoration item and the resurrection ad), the scores reset per period and the ad items that give a
 skin.
 
-The reusable parts live in `lib/` (the teleport object type, the player relocator, the kill score, the ads finder, the
-growth and period maths, the events and constants). The gameplay rules live in the theme plugins:
-`theme/plugins/server-plugin.js` creates them in `createGameplayFeatures()` (on `reldens.beforeInitializeManagers`) and
-`startScoresPeriodReset()` (on `reldens.serverReady`), and `theme/plugins/client-plugin.js` binds the skins classes in
-`listenSkinsEvents()`. The theme plugins only import `reldens/lib/...` and relative files: `lib/game/constants.js`
-re-exports `ItemsEvents` (`@reldens/items-system`), `SkillsEvents` (`@reldens/skills`) and `sc` (`@reldens/utils`) for
-them.
+Every feature lives in its core module and is wired by that module plugin, so it runs only while the module feature is
+enabled in the `features` table:
+
+- `actions` (`lib/actions/server/plugin.js`): the auto recovery (`RoomAutoRecovery` on `reldens.sceneRoomOnCreate` and
+  `reldens.onRoomDispose`), the death teleport (`PlayerDeathRelocator` on `reldens.playerDeath`) and the resurrection ad
+  gate (`ResurrectionAdGate` on `reldens.beforeSceneExecuteMessages`)
+- `inventory` (`lib/inventory/server/plugin.js`): the item growth (`ItemsGrowthApplier` on
+  `reldens.createPlayerInventoryAfter`)
+- `scores` (`lib/scores/server/plugin.js`): the points per kill (`IncreaseScoreOnKill`) and the scores reset
+  (`ScoresPeriodReset`, created and started on `reldens.serverReady` with the rooms manager)
+- `users` (`lib/users/server/plugin.js`): the skin ticket gate (`SkinAdTicketGate` on
+  `reldens.beforeSceneExecuteMessages` and `reldens.beforeGiveAdRewardItem`) and the skin applier (`PlayerSkinApplier`
+  on `reldens.createPlayerInventoryAfter`); `lib/users/client/plugin.js` binds the client skins classes in
+  `listenSkinsEvents()`
+- `objects`: the teleport NPC object type
 
 Every feature with a switch is disabled by default (the `enabled` rows are `0`), and the sample ads are disabled
 (`ads.enabled = 0`). An ad is played and rewarded only when the ad and its provider (`ads_providers.enabled`) are
-enabled, see "Ads rewards rules" below.
+enabled, see "Ads rewards rules" below. The sample items icons are in `theme/default/assets/custom/` and the sample
+rows (items, ads, the teleport NPC) are in the sample data files.
 
 ## Database changes
 
@@ -31,6 +40,11 @@ Applied to the install and basic config files, both sample data files, and to ex
   room 41, asset 33, tile 4640: column 48 of the southern street row 56, away from the players start, because the path
   finder grid does not mark the NPC bodies, so an NPC on the start area blocks the town door walk and changes the
   pathfinding e2e cases) and the `killScore` 8 of the Tree (object 6)
+
+The update adds every sample row only when its key is free (the items, the skin group, the ads, the teleport NPC and its
+tile), finds the related rows by their keys (the skin and weapon groups, the `crazyGames` provider, the `eventVideo`
+type, the `reldens-new-age-town` room) and merges the Tree `killScore` into its current `private_params` with
+`JSON_SET` only when it has none, so the content and the ids of an existing game are never replaced.
 
 After the update on an existing database refresh the entities (`npm exec -- reldens generateEntities --override`),
 otherwise `itemsInventory` has no `customData` and the item growth can not load or save the item levels.
@@ -66,10 +80,11 @@ intervals.
 
 ## Stats auto recovery
 
-`theme/plugins/recovery/server/`:
+`lib/actions/server/`:
 
 - `RoomAutoRecovery` starts one interval per scene room on `reldens.sceneRoomOnCreate` and clears it on
-  `reldens.onRoomDispose`; a tick never overlaps the previous one of the same room
+  `reldens.onRoomDispose`; a tick never overlaps the previous one of the same room and a failed tick is logged and
+  releases the room for the next one
 - `PlayersAutoRecovery` raises the configured stats of every alive player up to `statsBase`, skipping the dead, the
   disabled, the players changing scene and the ones without a client; every tick emits
   `reldens.savePlayerStatsUpdateClient` and sends the `PLAYER_STATS` message, every `persistEveryTicks` recoveries it
@@ -105,8 +120,8 @@ return point is used, and a player already changing scene is skipped. The death 
 
 - player kill: `obtainedScorePerPlayer + killedPlayerLevel * obtainedScorePerPlayerLevelMultiplier`, the level is the
   killed player class path `currentLevel` (`IncreaseScoreOnKillMapper.fromPlayerDeathEvent()`)
-- enemy kill with `scores/useNpcCustomScore` enabled: the enemy `private_params` `"killScore"`, falling back to
-  `obtainedScorePerNpc`
+- enemy kill with `scores/useNpcCustomScore` enabled: the enemy `private_params` `"killScore"` (`0` gives no points),
+  falling back to `obtainedScorePerNpc` when it is missing or not a number
 
 ## Item growth
 
@@ -123,13 +138,14 @@ An item with a `"growth"` custom data (`items_item.customData`) grows with the e
   original value (`SET`, `METHOD` and `SET_N` operations are never scaled)
 
 Every item instance keeps its own level and experience in its `items_inventory.customData`
-(`{"growth": {"level": 2, "experience": 12}}`). `ItemsGrowthApplier` (`theme/plugins/items/server/`) runs on
-`reldens.createPlayerInventoryAfter`: it loads the rows of the growing items and scales their modifiers, listens the
-inventory `ADD_ITEM` (a new item starts at level 1) and the class path `LEVEL_EXPERIENCE_ADDED`. A level up unequips the
-item, scales the modifiers, equips it again and sends the system chat message `<label> reached level <level>.`. Every
-item instance has its own modifiers (the items loaded from the storage by `ItemsFactory.fromModel()`, the new items by
-`ItemsFactory.isolateModifiers()`), so the growth scales the modifiers values of that instance only. The maths are in
-`ItemGrowthCalculator` (`lib/inventory/server/item-growth-calculator.js`).
+(`{"growth": {"level": 2, "experience": 12}}`). `ItemsGrowthApplier` (`lib/inventory/server/items-growth-applier.js`)
+runs on `reldens.createPlayerInventoryAfter`: it loads the rows of the growing items and scales their modifiers, listens
+the inventory `ADD_ITEM` (a new item starts at level 1) and the class path `LEVEL_EXPERIENCE_ADDED`. A level up
+unequips the item, scales the modifiers, equips it again and sends the system chat message
+`<label> reached level <level>.`. Every item instance has its own modifiers (the items loaded from the storage by
+`ItemsFactory.fromModel()`, the new items by `ItemsFactory.isolateModifiers()`), so the growth scales the modifiers
+values of that instance only. The maths are in `ItemGrowthCalculator`
+(`lib/inventory/server/item-growth-calculator.js`).
 
 The items created during the game (`ItemsManager.createItemInstance()` of `@reldens/items-system`: rewards, drops,
 trades) receive the Modifier instances of the shared items model data (`room.config.inventory.items`), and the package
@@ -143,7 +159,7 @@ item is stored and added.
 `Battle.clientDeathUpdate()` (`lib/actions/server/battle.js`) stores the revive timer in the `playerDeathTimer` private
 data and emits `reldens.playerDeath` with `revivePlayerCallback`, the battle revive bound to the room, the body, the
 player, the affected property and the client, so the listeners never receive the battle. With the teleport enabled
-`PlayerDeathRelocator` (`theme/plugins/death/server/`) replaces that timer by its own, with the same
+`PlayerDeathRelocator` (`lib/actions/server/player-death-relocator.js`) replaces that timer by its own, with the same
 `players/gameOver/timeOut`, and on its end:
 
 - a player who left the room or is alive again is ignored
@@ -152,36 +168,47 @@ player, the affected property and the client, so the listeners never receive the
 - otherwise it revives in the town: in the same room the player is placed on the return point and revived, from
   another room the affected stat is restored, the `REVIVED` message is sent and the player moves to the town room; a
   failed relocation revives where it died
+- a failed resolution is logged
 
 The resurrection ad (`ads_event_video` on the client `reldens.gameOver` event, `"replayCooldown":0`) rewards one
-restoration item. `ResurrectionAdGate` accepts its `AD_STARTED` message (`reldens.beforeSceneExecuteMessages`) only from
-a dead player and once per death (`resurrectionAdStarted` private data, cleared on every death). `AdsMessageActions`
-no longer disables a dead player on `AD_STARTED` and only activates a disabled player on `AD_ENDED`, so the ad never
-revives a dead player. A failed resurrection ad gives no item, the death resolves in the town after the 60 seconds wait.
-The death timers are cleared when the player leaves (`RoomScene.removeAllPlayerReferences()`) and when the room is
-disposed (`RoomScene.clearPlayersTimers()`).
+restoration item. `ResurrectionAdGate` (`lib/actions/server/resurrection-ad-gate.js`) accepts its `AD_STARTED` message
+(`reldens.beforeSceneExecuteMessages`) only from a dead player and once per death (`resurrectionAdStarted` private data,
+cleared on every death). `AdsMessageActions` no longer disables a dead player on `AD_STARTED` and only activates a
+disabled player on `AD_ENDED`, so the ad never revives a dead player. A failed resurrection ad gives no item, the death
+resolves in the town after the 60 seconds wait. The death timers are cleared when the player leaves
+(`RoomScene.removeAllPlayerReferences()`) and when the room is disposed (`RoomScene.clearPlayersTimers()`).
 
 ## Scores reset per period
 
-`ScoresPeriodReset` (`theme/plugins/scores/server/`) checks the period on every `checkIntervalMs` (the interval never
-keeps the process alive). `ScoresPeriodKeyBuilder` (`lib/scores/server/scores-period-key-builder.js`) builds the UTC
-period key: `2026-10-17` (daily), the ISO week `2026-W42` (weekly) or `2026-10` (monthly). When the key changes the
-stored `scores/reset/lastPeriodKey` row is claimed with a conditional update (its id and its previous value), so with
-many servers on the same storage only one resets each period; the first check only stores the key. The reset deletes
-every `scores` row (and the `scores_detail` rows with `resetDetails`), broadcasts the empty top scores to every scene
-room and sends score `0` to every player.
+`ScoresPeriodReset` (`lib/scores/server/scores-period-reset.js`) checks the period on every `checkIntervalMs` (the
+interval never keeps the process alive). `ScoresPeriodKeyBuilder` (`lib/scores/server/scores-period-key-builder.js`)
+builds the UTC period key: `2026-10-17` (daily), the ISO week `2026-W42` (weekly) or `2026-10` (monthly). The stored
+`scores/reset/lastPeriodKey` row is only changed with conditional updates (its id and the value read), so with many
+servers on the same storage only one resets each period; the first check only stores the key. The reset:
+
+- claims the period storing a pending value (`<periodKey>|resetting|<claim time ms>`, `ScoresConst.RESET.PENDING_MARK`)
+- deletes every `scores` row (and the `scores_detail` rows with `resetDetails`)
+- stores the period key and sends the stored scores (empty after the reset) to its scene rooms players
+
+A reset that fails or stops before the end keeps the pending value: the other checks wait while it is younger than
+`ScoresConst.RESET.DEFAULTS.PENDING_TIMEOUT_MS` (`60000`) and then any server takes it over and completes it. Every
+server keeps the last period key it observed: when it finds a new stored period key reset by another server it sends the
+stored top scores and the player scores to its own scene rooms (its first check after the start only remembers the
+key). A failed check is logged and releases the next one. The running instance is the `scoresPeriodReset` property of
+the scores plugin (`serverManager.featuresManager.featuresList.scores.package`).
 
 ## Ad items that give a skin
 
-- using the skin ticket item (`skins/adTicketItemKey`) replaces its normal use: `SkinAdTicketGate` sends
-  `{act: 'skinAdS', adsId}` when the player has a ticket and the ad exists, and accepts the skin ad `AD_STARTED` message
-  only from a player with a ticket; the ticket is consumed on `reldens.beforeGiveAdRewardItem`, right before the reward
-  (`skin_warlock_robe`, from the `ads_event_video` of the `reldens.skinAdTicket` event, `"replayCooldown":0`), so every
-  reward costs one ticket, a failed ad keeps the ticket, and a player without the ticket at the end gets no reward
-- an item with a `"skinKey"` custom data changes the player look while equipped: `PlayerSkinApplier` sets
-  `playerSchema.avatarKey` on the inventory `EQUIP_ITEM`, restores the class path avatar (or another equipped skin) on
-  `UNEQUIP_ITEM` and applies the equipped skin on the join
-- client (`theme/plugins/skins/client/`): `SkinsSpritesPreloader` loads `/assets/custom/sprites/<skinKey>.png` for the
+- using the skin ticket item (`skins/adTicketItemKey`) replaces its normal use: `SkinAdTicketGate`
+  (`lib/users/server/skin-ad-ticket-gate.js`) sends `{act: 'skinAdS', adsId}` when the player has a ticket and the ad
+  exists, and accepts the skin ad `AD_STARTED` message only from a player with a ticket; the ticket is consumed on
+  `reldens.beforeGiveAdRewardItem`, right before the reward (`skin_warlock_robe`, from the `ads_event_video` of the
+  `reldens.skinAdTicket` event, `"replayCooldown":0`), so every reward costs one ticket, a failed ad keeps the ticket,
+  and a player without the ticket at the end gets no reward
+- an item with a `"skinKey"` custom data changes the player look while equipped: `PlayerSkinApplier`
+  (`lib/users/server/player-skin-applier.js`) sets `playerSchema.avatarKey` on the inventory `EQUIP_ITEM`, restores the
+  class path avatar (or another equipped skin) on `UNEQUIP_ITEM` and applies the equipped skin on the join
+- client (`lib/users/client/`): `SkinsSpritesPreloader` loads `/assets/custom/sprites/<skinKey>.png` for the
   `players/skins/keys` that are not class paths and creates their animations (`gameManager.mappedAvatars`),
   `SkinAdMessagesListener` fires `reldens.skinAdTicket` on the `skinAdS` message so the ads providers play the video,
   and `PlayersSkinSwitcher` switches every player sprite texture when its `avatarKey` changes
@@ -224,13 +251,18 @@ the inventory or of an item without `equip()`, and the use of an item without `u
 
 ## Tests
 
-Unit tests: `test-teleport-object.js`, `test-player-relocator.js` (with `tests/fixtures/relocation-room-builder.js`),
+Unit tests (the stubs of the gameplay classes are built by `tests/fixtures/gameplay-player-builder.js`):
+`test-teleport-object.js`, `test-player-relocator.js` (with `tests/fixtures/relocation-room-builder.js`),
 `test-increase-score-on-kill.js`, `test-item-growth-calculator.js`, `test-ads-collection-finder.js`,
-`test-scores-period-key-builder.js`, `test-stats-recovery-calculator.js`, `test-ads-reward-claims.js`,
+`test-scores-period-key-builder.js`, `test-stats-recovery-calculator.js`, `test-players-auto-recovery.js`,
+`test-objects-auto-recovery.js`, `test-room-auto-recovery.js`, `test-player-death-relocator.js`,
+`test-resurrection-ad-gate.js`, `test-items-growth-applier.js`, `test-scores-period-reset.js`,
+`test-skin-ad-ticket-gate.js`, `test-player-skin-applier.js`, `test-skins-sprites-preloader.js`,
+`test-skin-ad-messages-listener.js`, `test-players-skin-switcher.js`, `test-ads-reward-claims.js`,
 `test-items-factory.js` (the modifiers isolation) and `test-message-actions-guards.js` (the equip and use checks), run
 self-hosted with `RELDENS_TESTS_CONFIRMED=1 npm run test:default`.
 
-E2E specs (see "Theme gameplay features specs" in `.claude/e2e-testing-guide.md`): `test-auto-recovery.spec.js`,
+E2E specs (see "Gameplay features specs" in `.claude/e2e-testing-guide.md`): `test-auto-recovery.spec.js`,
 `test-kill-score.spec.js`, `test-item-growth.spec.js`, `test-ad-skins.spec.js`, `test-teleport-npc.spec.js`,
 `test-death-teleport.spec.js` and `test-scores-reset.spec.js`, run self-hosted with
 `npm run test:e2e -- --db-reset=<tests/config.json dbName>`.
