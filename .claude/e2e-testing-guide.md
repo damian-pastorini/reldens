@@ -307,9 +307,9 @@ and `BaseE2eTest.loadRoomEntries(roomName, listsKeys, onlyMoving)`:
   `TestCombatDeath.killPlayerWithEnemyAttack` sets the player hp to 1 (`player-affected-property`) and places a Tree
   next to the player with its battle started (`enemy-attack`), so the death comes from one real enemy hit
 
-## Theme gameplay features specs
+## Gameplay features specs
 
-The specs of the features described in `.claude/theme-gameplay-features.md` read every expected value from the stored
+The specs of the features described in `.claude/gameplay-features.md` read every expected value from the stored
 rows (config, items, ads, objects), enable the disabled features with `POST config` for their group and use
 `GameplayE2eStateProbe` (`tests/e2e/helpers/gameplay-e2e-state-probe.js`, registered by `collect-game-data.js`,
 wrapped by `GameplayE2eStateApi`):
@@ -320,7 +320,7 @@ wrapped by `GameplayE2eStateApi`):
   `GET /api/e2e/gameplay/enemy-life?roomName=&bodyKey=` - set the life of an active enemy out of battle, then read
   that exact body
 - `POST /api/e2e/gameplay/scores-reset-check` (`{isoDate, previousPeriodKey}`) - stores the previous period key in
-  its config row and runs the theme scores reset check on that date
+  its config row and runs the scores plugin reset check on that date
 
 The shared helpers: `E2eSeedAndRestoreApi.seedInventoryItem()`, `loadInventoryRows()` and `fetchConfigValue()`,
 `AdMessagesPlayer` (`tests/e2e/helpers/ad-messages-player.js`: enables an ad and its provider for the group and plays
