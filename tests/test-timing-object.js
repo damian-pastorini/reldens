@@ -21,6 +21,8 @@ class TestTimingObject extends BaseTest
         this.shortTimingDuration = 50;
         this.checksWaitMs = 350;
         this.healCheckWaitMs = 150;
+        this.slowAddItemMs = 300;
+        this.busyCheckWaitMs = 150;
         this.configValues = {'client/actions/skills/affectedProperty': this.affectedProperty};
     }
 
@@ -87,14 +89,68 @@ class TestTimingObject extends BaseTest
 
     async testCompletedTimingOfARemovedPlayerGivesNoReward()
     {
-        await this.test('a timing that completes after the player left gives no reward and never rejects', async () => {
-            let timingSetup = this.createTimingSetup({rewards: [{key: 'ore', rate: 100}]});
+        await this.test('a timing that completes after the player left gives no reward and frees the object', async () => {
+            let timingSetup = this.createTimingSetup({rewards: [{key: 'ore', rate: 100}]}, this.shortTimingDuration);
+            let timingObject = timingSetup.timingObject;
+            timingObject.startTiming(timingSetup.client, timingSetup.room, timingSetup.playerSchema);
             timingSetup.roomPlayers = {};
             timingSetup.playerSchema.inventory = null;
-            timingSetup.timingObject.isActive = true;
-            await timingSetup.timingObject.completeTiming(timingSetup.client, timingSetup.room, timingSetup.playerSchema);
-            this.assert.strictEqual(timingSetup.timingObject.isActive, false);
-            this.assert.deepStrictEqual(timingSetup.client.sentActions, []);
+            await timersPromises.setTimeout(this.checksWaitMs);
+            this.assert.deepStrictEqual(timingSetup.addedItems, []);
+            this.assert.deepStrictEqual(timingSetup.client.sentActions, ['timingStart']);
+            this.assert.strictEqual(timingObject.isActive, false);
+        });
+    }
+
+    async testObjectStaysBusyWhileTheRewardIsAdded()
+    {
+        await this.test('the object stays busy while the reward is added and is freed when the add ends', async () => {
+            let timingSetup = this.createTimingSetup({rewards: [{key: 'ore', rate: 100}]}, this.shortTimingDuration);
+            let timingObject = timingSetup.timingObject;
+            timingSetup.playerSchema.inventory.manager.addItem = async (item) => {
+                await timersPromises.setTimeout(this.slowAddItemMs);
+                timingSetup.addedItems.push(item.key);
+                return true;
+            };
+            timingObject.startTiming(timingSetup.client, timingSetup.room, timingSetup.playerSchema);
+            await timersPromises.setTimeout(this.busyCheckWaitMs);
+            this.assert.strictEqual(timingObject.isActive, true);
+            this.assert.deepStrictEqual(timingSetup.addedItems, []);
+            await timersPromises.setTimeout(this.checksWaitMs);
+            this.assert.deepStrictEqual(timingSetup.addedItems, ['ore']);
+            this.assert.deepStrictEqual(timingSetup.client.sentActions, ['timingStart', 'timingComplete']);
+            this.assert.strictEqual(timingObject.isActive, false);
+        });
+    }
+
+    async testRejectedRewardAddKeepsTheObjectBusyUntilItSettles()
+    {
+        await this.test('a rejected reward add keeps the object busy until it settles and frees it after', async () => {
+            let timingSetup = this.createTimingSetup({rewards: [{key: 'ore', rate: 100}]}, this.shortTimingDuration);
+            let timingObject = timingSetup.timingObject;
+            timingSetup.playerSchema.inventory.manager.addItem = async () => {
+                await timersPromises.setTimeout(this.slowAddItemMs);
+                return Promise.reject({message: 'Storage.'});
+            };
+            timingObject.startTiming(timingSetup.client, timingSetup.room, timingSetup.playerSchema);
+            await timersPromises.setTimeout(this.busyCheckWaitMs);
+            this.assert.strictEqual(timingObject.isActive, true);
+            await timersPromises.setTimeout(this.checksWaitMs);
+            this.assert.deepStrictEqual(timingSetup.client.sentActions, ['timingStart']);
+            this.assert.strictEqual(timingObject.isActive, false);
+        });
+    }
+
+    async testNotAddedRewardCancelsTheTiming()
+    {
+        await this.test('a reward item the inventory does not add cancels the timing and frees the object', async () => {
+            let timingSetup = this.createTimingSetup({rewards: [{key: 'ore', rate: 100}]}, this.shortTimingDuration);
+            let timingObject = timingSetup.timingObject;
+            timingSetup.playerSchema.inventory.manager.addItem = async () => false;
+            timingObject.startTiming(timingSetup.client, timingSetup.room, timingSetup.playerSchema);
+            await timersPromises.setTimeout(this.checksWaitMs);
+            this.assert.deepStrictEqual(timingSetup.client.sentActions, ['timingStart', 'timingCancel']);
+            this.assert.strictEqual(timingObject.isActive, false);
         });
     }
 
