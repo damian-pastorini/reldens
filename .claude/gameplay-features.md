@@ -168,9 +168,11 @@ item is stored and added.
 
 `Battle.clientDeathUpdate()` (`lib/actions/server/battle.js`) stores the revive timer in the `playerDeathTimer` private
 data and emits `reldens.playerDeath` with `revivePlayerCallback`, the battle revive bound to the room, the body, the
-player, the affected property and the client, so the listeners never receive the battle. With the teleport enabled
-`PlayerDeathRelocator` (`lib/actions/server/player-death-relocator.js`) replaces that timer by its own, with the same
-`players/gameOver/timeOut`, and on its end:
+player, the affected property and the client, so the listeners never receive the battle.
+`PlayerDeathRelocator` (`lib/actions/server/player-death-relocator.js`) only takes a `ConfigProcessor` instance as its
+config, any other value (missing, `false`, a plain object) is logged as critical and discarded, so every death keeps the
+battle revive. With the teleport enabled it replaces that timer by its own, with the same `players/gameOver/timeOut`,
+and on its end:
 
 - a player who left the room or is alive again is ignored
 - with a restoration item (quantity above 0) one is consumed and the player revives where it died
@@ -279,7 +281,8 @@ the inventory or of an item without `equip()`, and the use of an item without `u
 
 Unit tests (the stubs of the gameplay classes are built by `tests/fixtures/gameplay-player-builder.js`):
 `test-teleport-object.js`, `test-player-relocator.js` (with `tests/fixtures/relocation-room-builder.js`),
-`test-increase-score-on-kill.js`, `test-item-growth-calculator.js`, `test-ads-collection-finder.js`,
+`test-increase-score-on-kill.js` (with `tests/fixtures/increase-score-on-kill-builder.js`),
+`test-item-growth-calculator.js`, `test-ads-collection-finder.js`,
 `test-scores-period-key-builder.js`, `test-stats-recovery-calculator.js`, `test-players-auto-recovery.js`,
 `test-objects-auto-recovery.js`, `test-room-auto-recovery.js`, `test-player-death-relocator.js` and
 `test-player-death-relocator-failures.js` (with `tests/fixtures/death-relocation-builder.js`),
