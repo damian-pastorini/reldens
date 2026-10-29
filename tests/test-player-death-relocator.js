@@ -7,6 +7,7 @@
 const { BaseTest } = require('./base-test');
 const { DeathRelocationBuilder } = require('./fixtures/death-relocation-builder');
 const { PlayerDeathRelocator } = require('../lib/actions/server/player-death-relocator');
+const { ConfigProcessor } = require('../lib/config/processor');
 const { ActionsConst } = require('../lib/actions/constants');
 const { RoomsConst } = require('../lib/rooms/constants');
 const { GameConst } = require('../lib/game/constants');
@@ -23,6 +24,26 @@ class TestPlayerDeathRelocator extends BaseTest
         this.roomBuilder = this.deathBuilder.roomBuilder;
         this.battleTimerMs = 5;
         this.battleTimerWaitMs = 30;
+    }
+
+    async testConfigProcessorInstancesAreKept()
+    {
+        await this.test('a ConfigProcessor or ConfigManager instance is kept and drives the death teleport', async () => {
+            let deathTimerKey = ActionsConst.DEATH.PRIVATE_DATA.PLAYER_DEATH_TIMER;
+            let validCases = [
+                {config: new ConfigProcessor(), isHandled: false},
+                {config: this.deathBuilder.createConfig(), isHandled: true}
+            ];
+            for(let validCase of validCases){
+                let setup = this.deathBuilder.createSetup();
+                let relocator = new PlayerDeathRelocator({config: validCase.config});
+                this.assert.strictEqual(relocator.config, validCase.config);
+                this.assert.strictEqual(relocator.onPlayerDeath(setup.event), validCase.isHandled);
+                clearTimeout(setup.playerSchema.getPrivate(deathTimerKey));
+                this.assert.strictEqual(sc.hasOwn(setup.playerSchema.privateData, deathTimerKey), validCase.isHandled);
+                this.assert.strictEqual(setup.revivedPlayers, 0);
+            }
+        });
     }
 
     async testDisabledTeleportKeepsTheBattleRevive()
