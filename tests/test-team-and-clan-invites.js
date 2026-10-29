@@ -11,6 +11,7 @@ const { ClanMessageActions } = require('../lib/teams/server/clan-message-actions
 const { ClanJoin } = require('../lib/teams/server/message-actions/clan-join');
 const { Clan } = require('../lib/teams/server/clan');
 const { TeamsConst } = require('../lib/teams/constants');
+const timersPromises = require('timers/promises');
 
 class TestTeamAndClanInvites extends BaseTest
 {
@@ -62,6 +63,105 @@ class TestTeamAndClanInvites extends BaseTest
             players: {[this.inviterId]: {state: {room_id: 1}}},
             clients: {[this.inviterId]: setup.client},
             pendingInvites
+        });
+    }
+
+    createJoinDataServer(setup)
+    {
+        let dataServer = ClanFixturesBuilder.createClanJoinDataServer(setup.recordedCalls);
+        let getEntity = dataServer.getEntity;
+        dataServer.getEntity = (entityKey) => Object.assign(getEntity(entityKey), {
+            create: async (row) => {
+                await timersPromises.setImmediate();
+                let createResult = setup.createResults.shift();
+                if('rejected' === createResult){
+                    return Promise.reject({message: 'Storage.'});
+                }
+                if('failed' === createResult){
+                    return false;
+                }
+                setup.recordedCalls.push({entityKey, created: row});
+                return true;
+            }
+        });
+        return dataServer;
+    }
+
+    createRetrySetup(createResults, cancelledJoins = 0)
+    {
+        let setup = this.createSetup();
+        setup.createResults = createResults;
+        setup.cancelledJoins = cancelledJoins;
+        setup.invitingClan = this.createInvitingClan(setup, {[setup.invitedPlayer.player_id]: true});
+        setup.teamsPlugin = this.createTeamsPlugin({
+            clans: {[this.clanId]: setup.invitingClan},
+            dataServer: this.createJoinDataServer(setup),
+            events: {emit: async (eventName, eventData) => this.recordJoinEvent(setup, eventName, eventData)}
+        }, setup);
+        return setup;
+    }
+
+    recordJoinEvent(setup, eventName, eventData)
+    {
+        setup.emittedEvents.push(eventName);
+        if('reldens.beforeClanJoin' !== eventName){
+            return;
+        }
+        if(0 >= setup.cancelledJoins){
+            return;
+        }
+        setup.cancelledJoins--;
+        eventData.continueBeforeJoin = false;
+    }
+
+    async assertJoinRetriedAfterAFailure(setup)
+    {
+        this.assert.strictEqual(await this.sendClanMessage(setup, setup.teamsPlugin, this.clanAccept), false);
+        this.assert.deepStrictEqual(setup.invitingClan.pendingInvites, {[setup.invitedPlayer.player_id]: true});
+        this.assert.deepStrictEqual(setup.invitingClan.reservedInvites, {});
+        this.assert.deepStrictEqual(setup.recordedCalls, []);
+        await this.sendClanMessage(setup, setup.teamsPlugin, this.clanAccept);
+        this.assert.deepStrictEqual(setup.recordedCalls, [
+            {entityKey: 'clanMembers', created: {player_id: setup.invitedPlayer.player_id, clan_id: this.clanId}}
+        ]);
+        this.assert.deepStrictEqual(setup.invitingClan.pendingInvites, {});
+        this.assert.strictEqual(setup.invitedPlayer.privateData.clan, this.clanId);
+    }
+
+    async testFailedMemberCreationKeepsTheInvite()
+    {
+        await this.test('a failed clan member creation keeps the invite so the join can be retried', async () => {
+            await this.assertJoinRetriedAfterAFailure(this.createRetrySetup(['failed']));
+        });
+    }
+
+    async testRejectedMemberCreationKeepsTheInvite()
+    {
+        await this.test('a rejected clan member creation keeps the invite and never rejects the join', async () => {
+            await this.assertJoinRetriedAfterAFailure(this.createRetrySetup(['rejected']));
+        });
+    }
+
+    async testCancelledJoinKeepsTheInvite()
+    {
+        await this.test('a clan join cancelled by a listener keeps the invite so the join can be retried', async () => {
+            await this.assertJoinRetriedAfterAFailure(this.createRetrySetup([], 1));
+        });
+    }
+
+    async testDeclineWhileTheJoinRunsIsRejected()
+    {
+        await this.test('a clan decline sent while the join of the same invite runs is rejected', async () => {
+            let setup = this.createRetrySetup([]);
+            let results = await Promise.all([
+                this.sendClanMessage(setup, setup.teamsPlugin, this.clanAccept),
+                this.sendClanMessage(setup, setup.teamsPlugin, this.clanDecline)
+            ]);
+            this.assert.strictEqual([...results].pop(), false);
+            this.assert.strictEqual(setup.emittedEvents.indexOf('reldens.clanJoinInviteRejected'), -1);
+            this.assert.strictEqual(setup.recordedCalls.length, 1);
+            this.assert.deepStrictEqual(setup.invitingClan.pendingInvites, {});
+            this.assert.deepStrictEqual(setup.invitingClan.reservedInvites, {});
         });
     }
 
