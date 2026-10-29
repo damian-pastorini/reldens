@@ -112,9 +112,12 @@ Party/guild system
 - Team formation
 - Shared objectives
 - Clan levels and bonuses
-- Every invite is used once: the team join and decline remove it from `teamPendingInvites`, the clan join and decline
-  use `Clan.consumeInvite()`, a decline without a pending invite is rejected without notifying the inviter, and two
-  overlapping accepts of one clan invite add the member once
+- Every invite is used once: the team join and decline remove it from `teamPendingInvites`, the clan decline uses
+  `Clan.consumeInvite()`, a decline without a pending invite is rejected without notifying the inviter; the clan join
+  reserves the invite (`Clan.reserveInvite()`) while the member row is created and releases it as used on success or
+  restores it when the creation fails, is rejected or a `reldens.beforeClanJoin` listener cancels it
+  (`Clan.releaseInvite()`), so a failed join can be retried, two overlapping accepts add the member once and a decline
+  sent while the join runs is rejected
 - `Team` and `Clan` extend `SharedModifiersGroup` (`server/shared-modifiers-group.js`): the group level, shared
   properties and modifiers, applied to the joined players (`applyModifiers()`) and reverted when they leave
   (`revertModifiers()`)
@@ -239,8 +242,9 @@ Game objects (NPCs, interactables, respawn areas)
   lastAffectedValue = currentAffectedValue;
   ```
   A player that leaves the room (it is not the room state player of its session anymore) stops the timing without a
-  message and gets no reward, and a rejected completion (a failed reward item add) is caught and ends the timing, so the
-  object can always be used again
+  message and gets no reward, the object stays busy (`isActive`) until the completion settles, so no other timing
+  starts while the reward item is added, and a rejected completion (a failed reward item add) is caught and frees the
+  object after it settles, so the object can always be used again
 - Teleport objects (`server/object/type/teleport-object.js`, class type `9`) are NPCs whose dialog options move the
   player to the `private_params` `"destinations"` of the chosen option (see `.claude/gameplay-features.md`)
 
