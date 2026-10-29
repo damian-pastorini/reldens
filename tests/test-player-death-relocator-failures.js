@@ -6,7 +6,9 @@
 
 const { BaseTest } = require('./base-test');
 const { DeathRelocationBuilder } = require('./fixtures/death-relocation-builder');
+const { GameplayPlayerBuilder } = require('./fixtures/gameplay-player-builder');
 const { PlayerDeathRelocator } = require('../lib/actions/server/player-death-relocator');
+const { ConfigProcessor } = require('../lib/config/processor');
 const { ActionsConst } = require('../lib/actions/constants');
 const { GameConst } = require('../lib/game/constants');
 const { sc } = require('@reldens/utils');
@@ -22,6 +24,7 @@ class TestPlayerDeathRelocatorFailures extends BaseTest
         this.roomBuilder = this.deathBuilder.roomBuilder;
         this.deathTimeOutMs = 5;
         this.deathTimeOutWaitMs = 30;
+        this.battleTimerMarker = 'battle-revive-timer';
     }
 
     createRelocator(configValues = {})
@@ -37,6 +40,37 @@ class TestPlayerDeathRelocatorFailures extends BaseTest
         }]);
         this.assert.strictEqual(setup.savedStats, 1);
         this.assert.strictEqual(setup.revivedPlayers, 0);
+    }
+
+    async testInvalidConfigKeepsTheBattleRevive()
+    {
+        await this.test('a config that is not a ConfigProcessor is discarded and keeps the battle revive', async () => {
+            let privateDataKeys = ActionsConst.DEATH.PRIVATE_DATA;
+            let invalidProps = [
+                {},
+                {config: false},
+                {config: null},
+                {config: 'config'},
+                {config: ConfigProcessor},
+                {config: GameplayPlayerBuilder.createConfig({[ActionsConst.DEATH.CONFIG_PATHS.TELEPORT_ENABLED]: true})}
+            ];
+            for(let props of invalidProps){
+                let setup = this.deathBuilder.createSetup();
+                setup.playerSchema.setPrivate(privateDataKeys.PLAYER_DEATH_TIMER, this.battleTimerMarker);
+                setup.playerSchema.setPrivate(privateDataKeys.RESURRECTION_AD_STARTED, Date.now());
+                setup.playerSchema.setPrivate(privateDataKeys.RESURRECTION_AD_FAILED, true);
+                let relocator = new PlayerDeathRelocator(props);
+                this.assert.strictEqual(relocator.config, false);
+                this.assert.strictEqual(relocator.onPlayerDeath(setup.event), false);
+                this.assert.deepStrictEqual(setup.playerSchema.privateData, {
+                    [privateDataKeys.PLAYER_DEATH_TIMER]: this.battleTimerMarker,
+                    [privateDataKeys.RESURRECTION_AD_STARTED]: false,
+                    [privateDataKeys.RESURRECTION_AD_FAILED]: false
+                });
+                this.assert.strictEqual(setup.revivedPlayers, 0);
+                this.assert.deepStrictEqual(setup.sceneChanges, []);
+            }
+        });
     }
 
     async testFailedTownStateSaveRevivesWhereThePlayerDied()
