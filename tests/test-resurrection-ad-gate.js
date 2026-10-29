@@ -65,11 +65,14 @@ class TestResurrectionAdGate extends BaseTest
 
     async testAlivePlayerOrMissingPlayerIsRejected()
     {
-        await this.test('the resurrection ad start of an alive or missing player is rejected', async () => {
+        await this.test('the resurrection ad start of an alive, disabled or missing player is rejected', async () => {
             let gate = this.createGate();
-            let aliveEvent = this.createEvent(this.resurrectionAdId, GameConst.STATUS.ACTIVE);
-            this.assert.strictEqual(gate.onBeforeSceneExecuteMessages(aliveEvent), false);
-            this.assert.strictEqual(aliveEvent.canContinue, false);
+            for(let inState of [GameConst.STATUS.ACTIVE, GameConst.STATUS.DISABLED]){
+                let notDeadEvent = this.createEvent(this.resurrectionAdId, inState);
+                this.assert.strictEqual(gate.onBeforeSceneExecuteMessages(notDeadEvent), false);
+                this.assert.strictEqual(notDeadEvent.canContinue, false);
+                this.assert.deepStrictEqual(notDeadEvent.playerSchema.privateData, {});
+            }
             let missingPlayerEvent = this.createEvent(this.resurrectionAdId);
             missingPlayerEvent.playerSchema = false;
             this.assert.strictEqual(gate.onBeforeSceneExecuteMessages(missingPlayerEvent), false);
@@ -91,6 +94,8 @@ class TestResurrectionAdGate extends BaseTest
             secondEvent.playerSchema = firstEvent.playerSchema;
             this.assert.strictEqual(gate.onBeforeSceneExecuteMessages(secondEvent), false);
             this.assert.strictEqual(secondEvent.canContinue, false);
+            let keptStart = secondEvent.playerSchema.getPrivate(ActionsConst.DEATH.PRIVATE_DATA.RESURRECTION_AD_STARTED);
+            this.assert.strictEqual(keptStart, adStarted);
         });
     }
 
@@ -100,7 +105,7 @@ class TestResurrectionAdGate extends BaseTest
             let gate = this.createGate();
             let startEvent = this.createEvent(this.resurrectionAdId);
             gate.onBeforeSceneExecuteMessages(startEvent);
-            let relocator = new PlayerDeathRelocator({config: GameplayPlayerBuilder.createConfig({})});
+            let relocator = new PlayerDeathRelocator({config: GameplayPlayerBuilder.createConfigManager({})});
             this.assert.strictEqual(relocator.isWaitingResurrectionAd(startEvent.playerSchema), true);
             let failedEvent = this.createEvent(this.resurrectionAdId, GameConst.STATUS.DEATH, AdsConst.ACTIONS.AD_FAILED);
             failedEvent.playerSchema = startEvent.playerSchema;
@@ -148,7 +153,7 @@ class TestResurrectionAdGate extends BaseTest
             let failedEvent = this.createEvent(this.resurrectionAdId, GameConst.STATUS.DEATH, AdsConst.ACTIONS.AD_FAILED);
             failedEvent.playerSchema = startEvent.playerSchema;
             gate.onBeforeSceneExecuteMessages(failedEvent);
-            let relocator = new PlayerDeathRelocator({config: GameplayPlayerBuilder.createConfig({})});
+            let relocator = new PlayerDeathRelocator({config: GameplayPlayerBuilder.createConfigManager({})});
             this.assert.strictEqual(relocator.onPlayerDeath({targetSchema: startEvent.playerSchema}), false);
             let privateData = startEvent.playerSchema.privateData;
             this.assert.strictEqual(privateData[ActionsConst.DEATH.PRIVATE_DATA.RESURRECTION_AD_STARTED], false);
