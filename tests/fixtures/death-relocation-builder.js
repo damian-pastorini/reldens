@@ -29,7 +29,7 @@ class DeathRelocationBuilder
      */
     createConfig(values = {})
     {
-        return GameplayPlayerBuilder.createConfig(Object.assign({
+        return GameplayPlayerBuilder.createConfigManager(Object.assign({
             [ActionsConst.DEATH.CONFIG_PATHS.TELEPORT_ENABLED]: true,
             [ActionsConst.DEATH.CONFIG_PATHS.TELEPORT_ROOM_ID]: this.roomBuilder.townRoom.roomId,
             [ActionsConst.DEATH.CONFIG_PATHS.RESTORATION_ITEM_KEY]: this.restorationItemKey,
