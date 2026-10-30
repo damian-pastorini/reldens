@@ -16,6 +16,7 @@ const { Navigation } = require('./helpers/navigation');
 const { AdMessagesPlayer } = require('./helpers/ad-messages-player');
 const { GameplayE2eStateApi } = require('./helpers/gameplay-e2e-state-api');
 const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
+const { LongRunShowcase } = require('./helpers/long-run-showcase');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
 const { UsersConst } = require('../../lib/users/constants');
@@ -90,6 +91,16 @@ class TestAdSkins
         await itemButton.click();
     }
 
+    static async useTicket(page, ticketItemKey, longRun)
+    {
+        await TestAdSkins.clickItemButton(
+            page,
+            Selectors.inventory.itemImage(ticketItemKey),
+            Selectors.inventory.itemUse(ticketItemKey),
+            longRun
+        );
+    }
+
     static async runAdSkinTest(page, screenshots, gameConfig, e2eGroup, longRun)
     {
         let skinData = await TestAdSkins.loadSkinData(gameConfig);
@@ -103,12 +114,8 @@ class TestAdSkins
         expect(avatarsBefore.client, 'The client sprite must show the server avatar').toBe(avatarsBefore.server);
         await page.click(Selectors.hud.inventoryOpen);
         await expect(page.locator(Selectors.inventory.ui)).toBeVisible();
-        await TestAdSkins.clickItemButton(
-            page,
-            Selectors.inventory.itemImage(skinData.ticketItemKey),
-            Selectors.inventory.itemUse(skinData.ticketItemKey),
-            longRun
-        );
+        await LongRunShowcase.pause(page, longRun);
+        await TestAdSkins.useTicket(page, skinData.ticketItemKey, longRun);
         await screenshots.capture(page, 'skin-ticket-used');
         expect(
             await TestAdSkins.fetchItemQuantities(gameConfig, playerName, skinData.ticketItemKey),
@@ -124,6 +131,7 @@ class TestAdSkins
             ),
             {message: 'The rewarded skin ad must consume the ticket'}
         ).toEqual([]);
+        await LongRunShowcase.pause(page, longRun);
         await screenshots.capture(page, 'skin-item-rewarded');
         await TestAdSkins.clickItemButton(
             page,
@@ -135,6 +143,7 @@ class TestAdSkins
             async () => await TestAdSkins.fetchAvatarKeys(page, gameConfig, roomName),
             {message: 'The equipped skin must change the server and client avatar'}
         ).toEqual({server: skinData.skinKey, client: skinData.skinKey});
+        await LongRunShowcase.pause(page, longRun);
         await screenshots.capture(page, 'skin-equipped');
         await page.click(Selectors.hud.equipmentOpen);
         await expect(page.locator(Selectors.equipment.ui)).toBeVisible();
@@ -148,6 +157,7 @@ class TestAdSkins
             async () => await TestAdSkins.fetchAvatarKeys(page, gameConfig, roomName),
             {message: 'The unequipped skin must restore the player avatar'}
         ).toEqual(avatarsBefore);
+        await LongRunShowcase.pause(page, longRun);
         await screenshots.capture(page, 'skin-unequipped');
     }
 
@@ -158,6 +168,10 @@ class TestAdSkins
         let skinAd = await AdMessagesPlayer.enableAd(gameConfig, e2eGroup, skinData.adsKey, playerName);
         await E2eSeedAndRestoreApi.seedInventoryItem(gameConfig, e2eGroup, playerName, skinData.ticketItemKey, 1);
         await Login.loginRootPlayer(page, gameConfig, longRun);
+        await LongRunShowcase.openPanel(page, Selectors.hud.inventoryOpen, Selectors.inventory.ui, longRun);
+        if(longRun){
+            await TestAdSkins.useTicket(page, skinData.ticketItemKey, longRun);
+        }
         await AdMessagesPlayer.sendAdMessage(page, skinAd, AdsConst.ACTIONS.AD_STARTED);
         await expect.poll(
             async () => {
@@ -180,6 +194,13 @@ class TestAdSkins
             await TestAdSkins.fetchItemQuantities(gameConfig, playerName, skinData.rewardItemKey),
             'The failed skin ad must not give the skin item'
         ).toEqual([]);
+        await LongRunShowcase.showElementsCount(
+            page,
+            Selectors.inventory.itemImage(skinData.ticketItemKey),
+            1,
+            TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun),
+            longRun
+        );
     }
 
     static run()
