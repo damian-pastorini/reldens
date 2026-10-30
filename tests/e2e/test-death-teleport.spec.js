@@ -18,7 +18,9 @@ const { TestCombatDeath } = require('./helpers/test-combat-death');
 const { AdMessagesPlayer } = require('./helpers/ad-messages-player');
 const { GameplayE2eStateApi } = require('./helpers/gameplay-e2e-state-api');
 const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
+const { LongRunShowcase } = require('./helpers/long-run-showcase');
 const { TimeConstants } = require('./helpers/time-constants');
+const { Selectors } = require('./selectors');
 const { ActionsConst } = require('../../lib/actions/constants');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
@@ -49,6 +51,7 @@ class TestDeathTeleport
     static async killPlayerInForest(page, screenshots, gameConfig, longRun)
     {
         await Login.loginAndEnterForest(page, gameConfig, longRun);
+        await LongRunShowcase.openPanel(page, Selectors.hud.inventoryOpen, Selectors.inventory.ui, longRun);
         await TestCombatDeath.killPlayerWithEnemyAttack(
             page,
             gameConfig,
@@ -59,7 +62,7 @@ class TestDeathTeleport
         await screenshots.capture(page, 'player-dead-in-forest');
     }
 
-    static async expectRevivedInForest(page, screenshots, gameConfig, restorationItemKey)
+    static async expectRevivedInForest(page, screenshots, gameConfig, restorationItemKey, longRun)
     {
         let revived = await TestCombatDeath.waitForPlayerHpCondition(page, 'alive', TimeConstants.PLAYER_REVIVE);
         expect(revived, 'The player must revive').toBe(true);
@@ -75,6 +78,13 @@ class TestDeathTeleport
             restorationRows.filter(row => 0 < Number(row.qty)),
             'The revive must consume the restoration item'
         ).toEqual([]);
+        await LongRunShowcase.showElementsCount(
+            page,
+            Selectors.inventory.itemImage(restorationItemKey),
+            0,
+            TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun),
+            longRun
+        );
         await screenshots.capture(page, 'player-revived-in-forest');
     }
 
@@ -95,6 +105,7 @@ class TestDeathTeleport
             async () => (await GameplayE2eStateApi.fetchPlayer(gameConfig, townRoomName, gameConfig.e2ePlayerName)).life,
             {message: 'The player must be alive in the town room'}
         ).toBeGreaterThan(0);
+        await LongRunShowcase.pause(page, longRun);
         await screenshots.capture(page, 'player-revived-in-town');
     }
 
@@ -109,7 +120,7 @@ class TestDeathTeleport
             1
         );
         await TestDeathTeleport.killPlayerInForest(page, screenshots, gameConfig, longRun);
-        await TestDeathTeleport.expectRevivedInForest(page, screenshots, gameConfig, restorationItemKey);
+        await TestDeathTeleport.expectRevivedInForest(page, screenshots, gameConfig, restorationItemKey, longRun);
     }
 
     static async runResurrectionAdTest(page, screenshots, gameConfig, e2eGroup, longRun)
@@ -123,7 +134,7 @@ class TestDeathTeleport
         );
         await TestDeathTeleport.killPlayerInForest(page, screenshots, gameConfig, longRun);
         await AdMessagesPlayer.playAd(page, resurrectionAd);
-        await TestDeathTeleport.expectRevivedInForest(page, screenshots, gameConfig, restorationItemKey);
+        await TestDeathTeleport.expectRevivedInForest(page, screenshots, gameConfig, restorationItemKey, longRun);
     }
 
     static run()
