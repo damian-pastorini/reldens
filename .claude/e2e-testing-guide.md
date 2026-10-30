@@ -23,9 +23,15 @@ npm run test:e2e:long:clean
 
 Flags accepted by `tests/e2e/run-tests.js`:
 
-- `--long` - slow motion plus scaled timeouts (also via `LONG_RUN=1`)
+- `--long` - slow motion plus scaled timeouts (also via `LONG_RUN=1`); the gameplay features specs also run the
+  `tests/e2e/helpers/long-run-showcase.js` steps, only in the long run, so their videos show the tested result: the
+  result stays on screen for `TimeConstants.SHOWCASE` (3 seconds), the panel that shows it (inventory, chat, scores) is
+  opened, the recovery amounts are raised and the recovering enemy (a passive one with no `over-player` map layer tile,
+  the tree tops drawn above the sprites, within 2 tiles) is targeted next to the player
 - `--filter=<text>` - passed to Playwright as a quoted `--grep`, so a filter with spaces works (`"--filter=Combat System"`),
-  with `--no-deps`, so filtering a spec of the exclusive group does not run the other groups first
+  with `--no-deps`, so filtering a spec of the exclusive group does not run the other groups first; for the same
+  reason a filter that matches specs of the exclusive group and of another group runs both at the same time, and the
+  exclusive specs reset and disable the enemies of every room, so run them in two separate filtered runs
 - `--port=<port>` - overrides the port from `tests/config.json`; when the port is busy the runner logs a warning and
   tries the next one, up to 5 ports, and stops with a critical log when all of them are busy
 - `--clean-output` - removes `test-results/` before the run
