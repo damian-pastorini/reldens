@@ -18,6 +18,7 @@ class TimeConstants
     static PAUSE = 800;
     // Keystroke delay when simulating human typing in longRun (0 when non-longRun)
     static TYPE_DELAY = 150;
+    static SHOWCASE = 3000;
     // UI DOM operations: panel visible after button click (~1s expected + 2s buffer)
     static UI_OPEN = 3000;
     // Server message round-trip: send → process → broadcast → render (~1s + 2s buffer)
