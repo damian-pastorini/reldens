@@ -13,6 +13,7 @@ const { BaseE2eTest } = require('./base-e2e-test');
 const { Login } = require('./helpers/login');
 const { GameplayE2eStateApi } = require('./helpers/gameplay-e2e-state-api');
 const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
+const { LongRunShowcase } = require('./helpers/long-run-showcase');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
 const { ScoresPeriodKeyBuilder } = require('../../lib/scores/server/scores-period-key-builder');
@@ -47,6 +48,7 @@ class TestScoresReset
         await page.click(Selectors.hud.scoresOpen);
         let scoresRows = page.locator(Selectors.scores.dialogRows);
         await expect(scoresRows.first()).toBeVisible({timeout: uiTimeout});
+        await LongRunShowcase.pause(page, longRun);
         await screenshots.capture(page, 'scores-before-reset');
         let period = await E2eSeedAndRestoreApi.fetchConfigValue(gameConfig, ScoresConst.RESET.CONFIG_PATHS.PERIOD);
         let currentDate = new Date();
@@ -64,6 +66,7 @@ class TestScoresReset
         await expect(scoresRows, 'The scores panel must receive the empty top scores').toHaveCount(0, {
             timeout: TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun)
         });
+        await LongRunShowcase.pause(page, longRun);
         await screenshots.capture(page, 'scores-after-reset');
     }
 
