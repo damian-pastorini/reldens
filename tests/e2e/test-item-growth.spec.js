@@ -15,6 +15,7 @@ const { RoomObjectsApi } = require('./helpers/room-objects-api');
 const { ForestEnemyKill } = require('./helpers/forest-enemy-kill');
 const { GameplayE2eStateApi } = require('./helpers/gameplay-e2e-state-api');
 const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
+const { LongRunShowcase } = require('./helpers/long-run-showcase');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
 const { ItemGrowthCalculator } = require('../../lib/inventory/server/item-growth-calculator');
@@ -100,7 +101,9 @@ class TestItemGrowth
             async () => await TestItemGrowth.fetchStat(gameConfig, playerName, statKey),
             {message: 'The equipped sword must apply its modifier'}
         ).toBe(statBefore + modifierValue);
+        await LongRunShowcase.pause(page, longRun);
         await screenshots.capture(page, 'growing-sword-equipped');
+        await LongRunShowcase.openPanel(page, Selectors.hud.chatOpen, Selectors.chat.input, longRun);
         let placement = await ForestEnemyKill.placeOneHitEnemy(page, gameConfig, forestData.sceneTimeout);
         let expectedExperience = ItemGrowthCalculator.experienceFor(
             itemData.growth.experienceShare,
@@ -134,6 +137,15 @@ class TestItemGrowth
             async () => await TestItemGrowth.fetchStat(gameConfig, playerName, statKey),
             {message: 'The equipped sword modifier must grow with its level'}
         ).toBe(statBefore + expectedModifierValue);
+        await LongRunShowcase.showWhen(
+            page,
+            async () => (await page.locator(Selectors.chat.tabContentGeneral).innerText()).includes(
+                InventoryConst.GROWTH.MESSAGES.ITEM_REACHED_LEVEL+expectedLevel
+            ),
+            'The chat must show the level reached by the sword',
+            TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun),
+            longRun
+        );
         await screenshots.capture(page, 'growing-sword-level-reached');
     }
 
