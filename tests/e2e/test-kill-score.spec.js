@@ -13,7 +13,9 @@ const { Login } = require('./helpers/login');
 const { RoomObjectsApi } = require('./helpers/room-objects-api');
 const { ForestEnemyKill } = require('./helpers/forest-enemy-kill');
 const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
+const { LongRunShowcase } = require('./helpers/long-run-showcase');
 const { TimeConstants } = require('./helpers/time-constants');
+const { Selectors } = require('./selectors');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
 
@@ -38,6 +40,7 @@ class TestKillScore
         await E2eSeedAndRestoreApi.preserveRows(gameConfig, e2eGroup, 'scores', {player_id: playerId});
         let scoreBefore = await TestKillScore.fetchTotalScore(gameConfig, playerId);
         let forestData = await Login.loginAndEnterForest(page, gameConfig, longRun);
+        await LongRunShowcase.openPanel(page, Selectors.hud.scoresOpen, Selectors.scores.dialog, longRun);
         let placement = await ForestEnemyKill.placeOneHitEnemy(page, gameConfig, forestData.sceneTimeout);
         expect(placement.killScore, 'The placed enemy must have its own kill score').toBeGreaterThan(0);
         await screenshots.capture(page, 'enemy-with-kill-score-targeted');
@@ -49,6 +52,15 @@ class TestKillScore
             TimeConstants.ENEMY_KILL
         );
         expect(scoreReached, 'The kill must add the enemy kill score to the player score').toBe(true);
+        await LongRunShowcase.showWhen(
+            page,
+            async () => (await page.locator(Selectors.scores.dialogContent).innerText()).includes(
+                String(expectedScore)
+            ),
+            'The scores panel must show the score with the kill score added',
+            TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun),
+            longRun
+        );
         await screenshots.capture(page, 'kill-score-added');
     }
 
