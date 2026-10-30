@@ -15,6 +15,7 @@ const { Login } = require('./helpers/login');
 const { RoomObjectsApi } = require('./helpers/room-objects-api');
 const { GameplayE2eStateApi } = require('./helpers/gameplay-e2e-state-api');
 const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
+const { LongRunShowcase } = require('./helpers/long-run-showcase');
 const { TimeConstants } = require('./helpers/time-constants');
 const { ActionsConst } = require('../../lib/actions/constants');
 const { sc } = require('@reldens/utils');
@@ -26,10 +27,20 @@ class TestAutoRecovery
 
     static LOW_LIFE = 1;
     static RECOVERY_TICKS = 3;
+    static LONG_RUN_PLAYER_RECOVERED_LIFE = 30;
+    static LONG_RUN_ENEMY_RECOVERED_LIFE = 10;
 
-    static async prepareRecovery(gameConfig, e2eGroup, recoveryConfigPath, longRun)
+    static async prepareRecovery(gameConfig, e2eGroup, recoveryConfigPath, longRunRecoveredLife, longRun)
     {
         await E2eSeedAndRestoreApi.overrideConfig(gameConfig, e2eGroup, recoveryConfigPath+'/enabled', true);
+        if(longRun){
+            await E2eSeedAndRestoreApi.overrideConfig(
+                gameConfig,
+                e2eGroup,
+                recoveryConfigPath+'/properties/hp',
+                longRunRecoveredLife
+            );
+        }
         let tickMs = Number(
             await E2eSeedAndRestoreApi.fetchConfigValue(gameConfig, ActionsConst.AUTO_RECOVERY.CONFIG_PATHS.TICK_MS)
         );
@@ -51,6 +62,7 @@ class TestAutoRecovery
             gameConfig,
             e2eGroup,
             ActionsConst.AUTO_RECOVERY.CONFIG_PATHS.PLAYERS,
+            TestAutoRecovery.LONG_RUN_PLAYER_RECOVERED_LIFE,
             longRun
         );
         await Login.loginAndEnterForest(page, gameConfig, longRun);
@@ -75,6 +87,17 @@ class TestAutoRecovery
             TestAutoRecovery.LOW_LIFE,
             {timeout: recoveryTimeout}
         );
+        await LongRunShowcase.showWhen(
+            page,
+            async () => await page.evaluate(
+                (shownLife) => Number(window.reldens.playerData.stats.hp) >= shownLife,
+                TestAutoRecovery.LOW_LIFE
+                + TestAutoRecovery.RECOVERY_TICKS * TestAutoRecovery.LONG_RUN_PLAYER_RECOVERED_LIFE
+            ),
+            'The player life must grow on every recovery tick',
+            recoveryTimeout * 2,
+            longRun
+        );
         await screenshots.capture(page, 'player-life-recovered');
     }
 
@@ -84,6 +107,7 @@ class TestAutoRecovery
             gameConfig,
             e2eGroup,
             ActionsConst.AUTO_RECOVERY.CONFIG_PATHS.OBJECTS,
+            TestAutoRecovery.LONG_RUN_ENEMY_RECOVERED_LIFE,
             longRun
         );
         await E2eSeedAndRestoreApi.overrideConfig(
@@ -92,26 +116,55 @@ class TestAutoRecovery
             ActionsConst.AUTO_RECOVERY.CONFIG_PATHS.OBJECTS+'/onlyOutOfBattle',
             false
         );
-        await Login.loginAndEnterForest(page, gameConfig, longRun);
+        let forestData = await Login.loginAndEnterForest(page, gameConfig, longRun);
         let enemyLife = await GameplayE2eStateApi.setEnemyLife(
             gameConfig,
             Login.FOREST_ROOM_NAME,
-            gameConfig.e2eEnemyKey,
+            await LongRunShowcase.findCentralPassiveEnemyKey(
+                page,
+                gameConfig,
+                Login.FOREST_ROOM_NAME,
+                gameConfig.e2eEnemyKey,
+                longRun
+            ),
             TestAutoRecovery.LOW_LIFE
         );
         expect(enemyLife.life, 'The enemy life must be lowered: '+sc.get(enemyLife, 'error', '')).toBe(
             TestAutoRecovery.LOW_LIFE
         );
         expect(enemyLife.totalLife, 'The enemy must have room to recover').toBeGreaterThan(TestAutoRecovery.LOW_LIFE);
+        if(longRun){
+            await RoomObjectsApi.disableEnemies(gameConfig, Login.FOREST_ROOM_NAME, true);
+        }
+        await LongRunShowcase.targetObjectNextToPlayer(
+            page,
+            gameConfig,
+            Login.FOREST_ROOM_NAME,
+            enemyLife.bodyKey,
+            forestData.sceneTimeout,
+            longRun
+        );
         await screenshots.capture(page, 'enemy-life-lowered');
+        let fetchServerEnemyLife = async () => (await GameplayE2eStateApi.fetchEnemyLife(
+            gameConfig,
+            Login.FOREST_ROOM_NAME,
+            enemyLife.bodyKey
+        )).life;
         await expect.poll(
-            async () => (await GameplayE2eStateApi.fetchEnemyLife(
-                gameConfig,
-                Login.FOREST_ROOM_NAME,
-                enemyLife.bodyKey
-            )).life,
+            fetchServerEnemyLife,
             {message: 'The server enemy life must recover', timeout: recoveryTimeout}
         ).toBeGreaterThan(TestAutoRecovery.LOW_LIFE);
+        let shownEnemyLife = Math.min(
+            enemyLife.totalLife,
+            TestAutoRecovery.LOW_LIFE + TestAutoRecovery.RECOVERY_TICKS * TestAutoRecovery.LONG_RUN_ENEMY_RECOVERED_LIFE
+        );
+        await LongRunShowcase.showWhen(
+            page,
+            async () => shownEnemyLife <= await fetchServerEnemyLife(),
+            'The targeted enemy life must grow on every recovery tick',
+            recoveryTimeout * 2,
+            longRun
+        );
         await screenshots.capture(page, 'enemy-life-recovered');
     }
 
