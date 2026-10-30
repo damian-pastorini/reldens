@@ -15,6 +15,7 @@ const { Navigation } = require('./helpers/navigation');
 const { RoomObjectsApi } = require('./helpers/room-objects-api');
 const { GameplayE2eStateApi } = require('./helpers/gameplay-e2e-state-api');
 const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
+const { LongRunShowcase } = require('./helpers/long-run-showcase');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
 const { sc } = require('@reldens/utils');
@@ -65,6 +66,7 @@ class TestTeleportNpc
             '[data-option-value="'+teleportData.optionValue+'"]'
         );
         await expect(optionButton).toBeVisible({timeout: TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun)});
+        await LongRunShowcase.pause(page, longRun);
         await screenshots.capture(page, 'teleport-npc-dialog-options');
         await optionButton.click();
         await Navigation.waitForRoom(
@@ -80,6 +82,7 @@ class TestTeleportNpc
             )).scene,
             {message: 'The server must place the player in the destination room'}
         ).toBe(teleportData.destinationRoom);
+        await LongRunShowcase.pause(page, longRun);
         await screenshots.capture(page, 'teleport-npc-destination-room');
     }
 
