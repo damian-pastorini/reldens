@@ -47,7 +47,10 @@ class ParallelSpecGroups
                 'test-interactive-objects.spec.js',
                 'test-timing-objects-cancel.spec.js',
                 'test-objects-movement.spec.js',
-                'test-object-animation-frame-ranges.spec.js'
+                'test-object-animation-frame-ranges.spec.js',
+                'test-auto-recovery.spec.js',
+                'test-kill-score.spec.js',
+                'test-item-growth.spec.js'
             ]
         },
         social: {
@@ -64,7 +67,8 @@ class ParallelSpecGroups
                 'test-scores.spec.js',
                 'test-locale-selector.spec.js',
                 'test-quests-tracking.spec.js',
-                'test-game-login.spec.js'
+                'test-game-login.spec.js',
+                'test-ad-skins.spec.js'
             ]
         },
         exclusive: {
@@ -76,7 +80,10 @@ class ParallelSpecGroups
                 'test-login-security.spec.js',
                 'test-authentication.spec.js',
                 'test-character-system.spec.js',
-                'test-movement.spec.js'
+                'test-movement.spec.js',
+                'test-teleport-npc.spec.js',
+                'test-death-teleport.spec.js',
+                'test-scores-reset.spec.js'
             ]
         }
     };

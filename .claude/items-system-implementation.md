@@ -33,8 +33,8 @@ The Reldens Items System manages player inventory, equipment, and item modifiers
   - entities-translations.js - Admin entities labels
   - **entities/** - Admin entities overrides for the items, groups and inventory
   - **exchange/** - Trade processors
-    - processor.js - Exchange operations (init, add, remove, confirm)
-    - player-processor.js - Extends the processor with the player-to-player confirm/disconfirm operations
+    - processor.js - Exchange operations (init, add, remove, confirm of both inventories for the NPC trades and
+      `updatePlayerConfirmation()`, the confirm or disconfirm of the player inventory for the trades between players)
   - **subscribers/** - Event subscribers
     - player-subscriber.js - Creates player inventory on login
     - player-death-subscriber.js - Drops the player items on death
@@ -122,6 +122,20 @@ this.events.on('reldens.createPlayerStatsAfter', async (client, userModel, curre
    ```
 
    Each modifier target is `manager.owner`, the player schema (`currentPlayer`).
+
+6. **Groups Data Send** (`lib/inventory/server/subscribers/player-subscriber.js` `PlayerSubscriber.createPlayerInventory()`)
+
+   After the items are loaded the inventory is set on `currentPlayer.inventory` and the groups data is sent to the
+   client between two events that share the same event data:
+   ```javascript
+   let inventoryEventData = {client, playerSchema: currentPlayer, room, inventoryServer, sendData};
+   await events.emit('reldens.createPlayerInventoryBeforeSend', inventoryEventData);
+   client.send('*', inventoryEventData.sendData);
+   await events.emit('reldens.createPlayerInventoryAfter', inventoryEventData);
+   ```
+
+   A `reldens.createPlayerInventoryBeforeSend` listener can change `sendData` before it is sent; the item growth and the
+   skins listen `reldens.createPlayerInventoryAfter` (see `.claude/gameplay-features.md`).
 
 ### Critical Timing
 
@@ -385,6 +399,7 @@ CREATE TABLE `items_inventory` (
     `qty` int NOT NULL DEFAULT '0',
     `remaining_uses` int DEFAULT NULL,
     `is_active` tinyint DEFAULT NULL,
+    `customData` text,
     PRIMARY KEY (`id`),
     FOREIGN KEY (`owner_id`) REFERENCES `players` (`id`),
     FOREIGN KEY (`item_id`) REFERENCES `items_item` (`id`)
@@ -396,6 +411,8 @@ CREATE TABLE `items_inventory` (
 - `qty`: Quantity
 - `remaining_uses`: Uses left (if item has uses limit)
 - `is_active`: 1 if equipped, 0 if not (for equipment items only)
+- `customData`: JSON data of this item instance, not read by `ItemsFactory`; the item growth keeps the instance level
+  and experience there (`{"growth": {"level": 2, "experience": 12}}`, see `.claude/gameplay-features.md`)
 
 ## Event Flow
 

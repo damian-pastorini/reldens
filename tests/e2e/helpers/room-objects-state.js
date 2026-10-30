@@ -9,8 +9,11 @@
  * of a room (or only the aggressive ones) until the next players reset, so the specs that are not about those enemies
  * are never interrupted by an attack;
  * the random movement stop and the attack position next to a player used by the enemy placement (RoomEnemyPlacement),
- * a walkable position where the placed body does not overlap any other colliding body, so the physics never push it;
- * the player placement next to another player, out of contact with its body and inside the short attack range, so a player versus player hit never pushes the target; and the player affected
+ * a walkable position where the placed body does not overlap any colliding body (that player included), so the physics
+ * never push it, tried in a fixed order (40px right, left, down and up, then the 40px diagonals, then 32px right,
+ * left, down and up), so a player surrounded by bodies on its sides (the mining rocks cluster) still gets a position;
+ * the player placement next to another player, out of contact with its body and inside the short attack range, so a
+ * player versus player hit never pushes the target; and the player affected
  * property (hp) set on the live player and sent to its client, so the specs that need a death set the exact life the
  * next hit removes instead of depending on the enemies damage rate.
  *
@@ -24,7 +27,11 @@ class RoomObjectsState
 {
 
     static ATTACK_DISTANCE = 40;
-    static ATTACK_OFFSETS = [{x: 1, y: 0}, {x: -1, y: 0}, {x: 0, y: 1}, {x: 0, y: -1}];
+    static ATTACK_OFFSETS = [
+        {x: 1, y: 0}, {x: -1, y: 0}, {x: 0, y: 1}, {x: 0, y: -1},
+        {x: 0.71, y: 0.71}, {x: -0.71, y: 0.71}, {x: 0.71, y: -0.71}, {x: -0.71, y: -0.71},
+        {x: 0.8, y: 0}, {x: -0.8, y: 0}, {x: 0, y: 0.8}, {x: 0, y: -0.8}
+    ];
 
     static findRoom(serverManager, roomName)
     {
@@ -195,7 +202,7 @@ class RoomObjectsState
     {
         let grid = room.roomWorld.pathFinder.grid;
         let bodiesBounds = room.roomWorld.bodies.filter(
-            body => playerBody !== body && placedBody !== body && false !== body.collisionResponse
+            body => placedBody !== body && false !== body.collisionResponse
         ).map(body => body.getAABB());
         let placedBounds = placedBody.getAABB();
         for(let offset of RoomObjectsState.ATTACK_OFFSETS){

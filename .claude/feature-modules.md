@@ -24,6 +24,8 @@ Core game engine
 Core multiplayer room system
 - `server/scene.js` (RoomScene): Main game room with physics, collisions, objects
 - `server/login.js` (RoomLogin): Authentication and player initialization
+- `server/player-relocator.js` (PlayerRelocator): moves a player to a room and position decided by the server, without
+  a change point (used by the teleport NPC and the death teleport, see `.claude/gameplay-features.md`)
 - Client connects via `lib/game/client/room-events.js` to handle server state synchronization
 
 ### World (`lib/world/`)
@@ -56,11 +58,26 @@ Combat system (PvP/PvE), skills, battle mechanics
 - `server/battle.js` - Main battle system
 - `server/pve.js` - PvE combat logic
 - `server/pvp.js` - PvP combat logic
+- `reldens.playerDeath` (`server/events/player-death-event.js`) carries `revivePlayerCallback`, the battle revive bound
+  to the dead player, so a listener can revive the player without receiving the battle
+- `server/room-auto-recovery.js` (with `players-auto-recovery.js`, `objects-auto-recovery.js` and
+  `stats-recovery-calculator.js`): the stats auto recovery of every scene room
+- `server/player-death-relocator.js` and `server/resurrection-ad-gate.js`: the death teleport to town, the restoration
+  item and the resurrection ad (see `.claude/gameplay-features.md`)
 
 ### Inventory (`lib/inventory/`)
 Items system with equipment and usable items
 - Integrates with @reldens/items-system
 - Item management, equipment slots, consumables
+- `reldens.createPlayerInventoryBeforeSend` (`{client, playerSchema, room, inventoryServer, sendData}`) is emitted
+  before the groups data is sent to the joined player (a listener can change `sendData`) and
+  `reldens.createPlayerInventoryAfter` (the same event data) after it is sent
+- `items_inventory.customData` keeps the data of one item instance, `server/items-growth-applier.js` grows the items
+  with the experience of their owner and `server/item-growth-calculator.js` has the item growth maths (see
+  `.claude/gameplay-features.md`)
+- Every new inventory item gets its own Modifier copies targeting its owner (`ItemsFactory.isolateModifiers()` in
+  `StorageObserver.saveNewItem()`), the items model data modifiers are shared by every item created from them
+- The equip and use messages are rejected for an item key that is not in the inventory or an item of another type
 
 ### Respawn (`lib/respawn/`)
 Player and NPC respawn system
@@ -71,17 +88,36 @@ Player and NPC respawn system
 Loot and rewards system
 - Drop tables
 - Reward distribution
+- The accept of a reward event (`server/rewards-events-message-actions.js`) gives the items only of a `ready` and not
+  `complete` state, the accepts of a player run one after the other, every given item is stored in the state
+  `givenItems` as soon as it is given (an item the inventory does not add or a rejected give stops the claim, which is
+  never sent as accepted), so a claim that failed after some items gives only the missing ones when it is claimed
+  again; the completed state drops `givenItems` and a new claim date clears it (`LoginStateHandler.resetRewardState()`)
 
 ### Scores (`lib/scores/`)
 Leaderboards and ranking system
 - Player scores tracking
 - Global leaderboards
+- Kill points: `server/scores/obtainedScorePerPlayer` plus the killed player level times
+  `server/scores/obtainedScorePerPlayerLevelMultiplier`, and the enemy `private_params` `"killScore"` with
+  `server/scores/useNpcCustomScore`
+- `server/scores-period-reset.js` resets the scores once per period (`server/scores/reset/*`), started by the plugin on
+  `reldens.serverReady`, and `server/scores-period-key-builder.js` builds the UTC daily, weekly (ISO) and monthly keys;
+  `server/scores-reset-claim.js` reads the pending reset claim shared by the reset and the kill score
+- The score updates of a player run one after the other and an existing score row is saved only while it holds the
+  read id and counters (`ScoresUpdater.saveScore()`), a changed or deleted row is read again and the update retried
 
 ### Teams (`lib/teams/`)
 Party/guild system
 - Team formation
 - Shared objectives
 - Clan levels and bonuses
+- Every invite is used once: the team join and decline remove it from `teamPendingInvites`, the clan decline uses
+  `Clan.consumeInvite()`, a decline without a pending invite is rejected without notifying the inviter; the clan join
+  reserves the invite (`Clan.reserveInvite()`) while the member row is created and releases it as used on success or
+  restores it when the creation fails, is rejected or a `reldens.beforeClanJoin` listener cancels it
+  (`Clan.releaseInvite()`), so a failed join can be retried, two overlapping accepts add the member once and a decline
+  sent while the join runs is rejected
 - `Team` and `Clan` extend `SharedModifiersGroup` (`server/shared-modifiers-group.js`): the group level, shared
   properties and modifiers, applied to the joined players (`applyModifiers()`) and reverted when they leave
   (`revertModifiers()`)
@@ -110,6 +146,10 @@ Authentication, registration, player management
   (empty or older than the interval) before the email is sent, so concurrent requests send a single email, and a
   failed send restores the previous value
 - Player creation and management
+- Skins: `server/skin-ad-ticket-gate.js` (the skin ticket requests the skin ad and pays its reward) and
+  `server/player-skin-applier.js` (an equipped `"skinKey"` item changes the player avatar), and the client
+  `client/skins-sprites-preloader.js`, `client/skin-ad-messages-listener.js` and `client/players-skin-switcher.js` (see
+  `.claude/gameplay-features.md`)
 
 ### Chat (`lib/chat/`)
 Multi-channel chat (global, room, private messages)
@@ -154,6 +194,14 @@ Firebase integration
 Advertisement integration system
 - Third-party ad network support (CrazyGames, GameMonetize, Google AdSense), registered in `client/providers-list.js`
 - Ad placement configuration
+- `server/ads-collection-finder.js` finds an enabled ad (ad and provider enabled) of `server/ads/collection` by its key
+  or ID and matches the messages by its ID
+- `AD_STARTED` does not disable a dead player and `AD_ENDED` only activates a disabled player
+- Only the enabled ads are started and rewarded, a replay ad waits its `"replayCooldown"` (event data, default
+  `AdsConst.REPLAY_COOLDOWN`) after its last reward, an `AD_ENDED` before the minimum duration is rejected, `AD_FAILED`
+  closes the play without reward, a disabled player is activated again after `server/ads/videoMaximumDuration`, and
+  the `reldens.beforeGiveAdRewardItem` subscribers can cancel a reward (see "Ads rewards rules" in
+  `.claude/gameplay-features.md`)
 
 ### Sync (`lib/sync/`)
 Colyseus primitives isolation layer
@@ -193,6 +241,12 @@ Game objects (NPCs, interactables, respawn areas)
   }
   lastAffectedValue = currentAffectedValue;
   ```
+  A player that leaves the room (it is not the room state player of its session anymore) stops the timing without a
+  message and gets no reward, the object stays busy (`isActive`) until the completion settles, so no other timing
+  starts while the reward item is added, and a rejected completion (a failed reward item add) is caught and frees the
+  object after it settles, so the object can always be used again
+- Teleport objects (`server/object/type/teleport-object.js`, class type `9`) are NPCs whose dialog options move the
+  player to the `private_params` `"destinations"` of the chosen option (see `.claude/gameplay-features.md`)
 
 ### Snippets (`lib/snippets/`)
 Text snippets, locales and translations

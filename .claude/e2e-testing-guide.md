@@ -23,9 +23,15 @@ npm run test:e2e:long:clean
 
 Flags accepted by `tests/e2e/run-tests.js`:
 
-- `--long` - slow motion plus scaled timeouts (also via `LONG_RUN=1`)
+- `--long` - slow motion plus scaled timeouts (also via `LONG_RUN=1`); the gameplay features specs also run the
+  `tests/e2e/helpers/long-run-showcase.js` steps, only in the long run, so their videos show the tested result: the
+  result stays on screen for `TimeConstants.SHOWCASE` (3 seconds), the panel that shows it (inventory, chat, scores) is
+  opened, the recovery amounts are raised and the recovering enemy (a passive one with no `over-player` map layer tile,
+  the tree tops drawn above the sprites, within 2 tiles) is targeted next to the player
 - `--filter=<text>` - passed to Playwright as a quoted `--grep`, so a filter with spaces works (`"--filter=Combat System"`),
-  with `--no-deps`, so filtering a spec of the exclusive group does not run the other groups first
+  with `--no-deps`, so filtering a spec of the exclusive group does not run the other groups first; for the same
+  reason a filter that matches specs of the exclusive group and of another group runs both at the same time, and the
+  exclusive specs reset and disable the enemies of every room, so run them in two separate filtered runs
 - `--port=<port>` - overrides the port from `tests/config.json`; when the port is busy the runner logs a warning and
   tries the next one, up to 5 ports, and stops with a critical log when all of them are busy
 - `--clean-output` - removes `test-results/` before the run
@@ -105,8 +111,9 @@ covered by the unit tests listed in `.claude/server-health-monitor.md`.
 
 If `dist/index.html` still references `src="./index.js"` the client was never bundled, so `window.reldens`
 never exists and every spec times out after 10 seconds waiting for it. `ClientBundleCheck.isMissing()` detects
-this, and `ClientBundleCheck.isOutdated()` detects a bundle older than any client source of the checkout (a `lib` js
-file outside a `server` folder changed after `dist/index.html` was built), so a client fix is always tested; in both
+this, and `ClientBundleCheck.isOutdated()` detects a bundle older than any client source (a `lib` js file of the
+checkout or a `theme/plugins` js file of the app, outside a `server` folder, changed after `dist/index.html` was
+built), so a client fix is always tested; in both
 cases the setup enables the bundler for that run, which adds about a minute before the first test.
 
 ## Security state between tests
@@ -156,7 +163,8 @@ group by the global teardown:
 - `POST update-created` (`{group, entityKey, id, patch}`) - updates a row created by the same group (any other row is
   refused), for example disabling a seeded locale after the login; the reset deletes it like every created row
 - `POST preserve` (`{group, entityKey, filters}`) - stores the rows matching the filters; the reset deletes the rows
-  created since then for the same filters and writes the stored values back, before it deletes the created rows, so a
+  created since then for the same filters, creates again with their own ids the stored rows the spec deleted (the
+  scores reset deletes every scores row) and writes the stored values back, before it deletes the created rows, so a
   preserved row that references a seeded row (a user locale pointing to a seeded locale, a clan membership) never
   blocks that delete
 - `POST load` (`{entityKey, filters}`) - returns the stored rows a spec asserts
@@ -183,13 +191,14 @@ a body the path finder grid does not know (a tree, another object) blocks the pl
 
 - `POST /api/e2e/room-objects/place-enemy` (`{roomName, sessionId, enemyKey, enemyLife}`,
   `tests/e2e/helpers/room-enemy-placement.js`) - restores the first enemy of that key or asset key, stops its random
-  movement, places it on the first walkable position 40px from the player (inside the 50px `attackShort` range, out of
-  contact with the 25px player body) where its body does not overlap any other colliding body of the room
+  movement, places it on the first walkable position around the player (40px right, left, down and up, then the 40px
+  diagonals, then 32px right, left, down and up: all inside the 50px `attackShort` range) where its body does not
+  overlap any colliding body of the room, the player body included
   (`RoomObjectsState.findAttackPosition`: the enemies restored on random respawn tiles, the trees, the walls), since an
   overlapped body is pushed off the placed position and the exact position targeting never matches, and, with
   `enemyLife`, sets its life so a single hit kills it; it returns the
   enemy key, its body state key (`bodyKey`, the client `objectsAnimations` and `room.state.bodies` key), the exact
-  position and the experience its stored rewards give on its death
+  position, the experience its stored rewards give on its death and its `killScore` private param (0 without one)
 - `RoomObjectsApi.placeAndTargetEnemy` waits until the client body state of `bodyKey` is exactly on the placed position
   and targets that exact body, so the combat specs (`test-combat.spec.js`), the XP spec (`test-stats.spec.js`, the XP
   after the kill must equal the XP before plus the returned experience) and the passive enemy spec
@@ -226,13 +235,13 @@ worker, so its specs run one after the other, and the groups run at the same tim
 
 - `world` - the town specs that need the town layout (NPCs, player and object pathfinding), users set 0 (`root`,
   `root2`, `root3`), start room `reldens-new-age-town`
-- `forest` - combat, stats, interactive objects, timing objects, objects movement and animation frames, users set 1
-  (`root4` to `root6`), start room `reldens-forest-level-1`
-- `social` - chat, teams, clans, trading, items, rewards, scores, locale selector, quests and the game login flow,
-  users set 2 (`root7` to `root9`), start room `reldens-new-age-town-house-01`
-- `exclusive` - the specs that change the server wide state (login and admin security), create players
-  (authentication, character system) or use more than one room (movement), users set 0, it runs after every other
-  group ended and its reset restores every room
+- `forest` - combat, stats, interactive objects, timing objects, objects movement, animation frames, auto recovery,
+  kill score and item growth, users set 1 (`root4` to `root6`), start room `reldens-forest-level-1`
+- `social` - chat, teams, clans, trading, items, rewards, scores, locale selector, quests, the game login flow and the
+  ad skins, users set 2 (`root7` to `root9`), start room `reldens-new-age-town-house-01`
+- `exclusive` - the specs that change the server wide state (login and admin security, the scores reset), create
+  players (authentication, character system) or use more than one room (movement, teleport NPC, death teleport), users
+  set 0, it runs after every other group ended and its reset restores every room
 
 Players collide with every other body, so two groups never share a room: every group starts its players on the
 default return point of its own start room and the per test reset only touches the group players and rooms. The
@@ -303,6 +312,41 @@ and `BaseE2eTest.loadRoomEntries(roomName, listsKeys, onlyMoving)`:
 - `test-combat.spec.js` and `test-movement.spec.js` - the death and revive and the return point after death:
   `TestCombatDeath.killPlayerWithEnemyAttack` sets the player hp to 1 (`player-affected-property`) and places a Tree
   next to the player with its battle started (`enemy-attack`), so the death comes from one real enemy hit
+
+## Gameplay features specs
+
+The specs of the features described in `.claude/gameplay-features.md` read every expected value from the stored
+rows (config, items, ads, objects), enable the disabled features with `POST config` for their group and use
+`GameplayE2eStateProbe` (`tests/e2e/helpers/gameplay-e2e-state-probe.js`, registered by `collect-game-data.js`,
+wrapped by `GameplayE2eStateApi`):
+
+- `GET /api/e2e/gameplay/player?roomName=&playerName=` - the live player avatar key, life, base life, stats, state and
+  scene
+- `POST /api/e2e/gameplay/enemy-life` (`{roomName, enemyKey, life}`) and
+  `GET /api/e2e/gameplay/enemy-life?roomName=&bodyKey=` - set the life of an active enemy out of battle, then read
+  that exact body
+- `POST /api/e2e/gameplay/scores-reset-check` (`{isoDate, previousPeriodKey}`) - stores the previous period key in
+  its config row and runs the scores plugin reset check on that date
+
+The shared helpers: `E2eSeedAndRestoreApi.seedInventoryItem()`, `loadInventoryRows()` and `fetchConfigValue()`,
+`AdMessagesPlayer` (`tests/e2e/helpers/ad-messages-player.js`: enables an ad and its provider for the group and plays
+it with the `AD_STARTED` and `AD_ENDED` messages after the stored provider minimum duration, the providers SDKs are
+never loaded), `ForestEnemyKill` (`tests/e2e/helpers/forest-enemy-kill.js`: the configured forest enemy placed and
+targeted with one hit point) and `RoomObjectsApi.attackTargetUntil()` (the `attackShort` skill repeated until a
+condition is reached).
+
+- `test-auto-recovery.spec.js` (forest) - a player life and an idle enemy life set to 1 recover on the next ticks
+- `test-kill-score.spec.js` (forest) - killing the Tree adds its `killScore` to the player scores row
+- `test-item-growth.spec.js` (forest) - the equipped growing sword stores the kill experience and level in its
+  `items_inventory.customData` and the player attack grows with the scaled modifier
+- `test-ad-skins.spec.js` (social) - the skin ticket use keeps the ticket, the played skin ad consumes it and rewards
+  the skin item, and equipping it changes the server and client avatar until it is unequipped; a failed skin ad
+  (`AD_FAILED` sent after the server opened the play) closes the play keeping the ticket and gives no skin item
+- `test-teleport-npc.spec.js` (exclusive) - the teleport NPC option moves the player to its destination room
+- `test-death-teleport.spec.js` (exclusive) - the dead player revives in the town, or in the forest consuming the
+  restoration item seeded or rewarded by the resurrection ad played while dead
+- `test-scores-reset.spec.js` (exclusive) - the check on a new period deletes every score and empties the open scores
+  panel; the scores rows and the last period key row are preserved and created again by the group reset
 
 `RoomEnemiesReset` (run by the player reset before every test) resets the path of every respawned body
 (`resetAuto`), as `EnemyObject.respawn` does, otherwise a body moved to a new respawn tile keeps walking its old random
