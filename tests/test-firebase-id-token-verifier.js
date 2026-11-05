@@ -211,6 +211,61 @@ class TestFirebaseIdTokenVerifier extends BaseTest
         });
     }
 
+    async testTheVerifiedLoginIsValidatedOnlyOnce()
+    {
+        await this.test('a verified login is validated by the email only once', async () => {
+            let verifier = this.createVerifier(this.verifiedResponse, []);
+            let userData = await this.createVerifiedLoginData(verifier);
+            this.assert.strictEqual(this.validateByEmail(verifier, userData, 'player@test.com').validationResult, true);
+            let secondValidation = this.validateByEmail(verifier, userData, 'player@test.com');
+            this.assert.strictEqual(secondValidation.validationResult, false);
+            this.assert.strictEqual(secondValidation.isValid, false);
+        });
+    }
+
+    async testThePendingLoginsKeepTheMaximumPerUser()
+    {
+        await this.test('the pending logins of a user keep the maximum and drop the oldest login', async () => {
+            let verifier = this.createVerifier(this.verifiedResponse, []);
+            await verifier.verify('valid-token', 'firebase-uid');
+            let loginsData = [];
+            for(let loginIndex = 0; loginIndex <= FirebaseConst.PENDING_LOGINS_PER_USER_MAX; loginIndex++){
+                loginsData.push(this.createFirebaseLoginData('valid-token'));
+                this.assert.strictEqual(verifier.applyVerifiedLogin(loginsData[loginIndex]), true);
+            }
+            let pendingLogins = verifier.verifiedUsers.get('firebase-uid').pendingLogins;
+            this.assert.strictEqual(pendingLogins.length, FirebaseConst.PENDING_LOGINS_PER_USER_MAX);
+            let droppedValidation = this.validateByEmail(verifier, [...loginsData].shift(), 'player@test.com');
+            this.assert.strictEqual(droppedValidation.validationResult, false);
+            this.assert.strictEqual(this.validateByEmail(verifier, loginsData.pop(), 'player@test.com').isValid, true);
+            this.assert.strictEqual(pendingLogins.length, FirebaseConst.PENDING_LOGINS_PER_USER_MAX - 1);
+        });
+    }
+
+    async testTheExpiredPendingLoginIsRejectedAndDropped()
+    {
+        await this.test('an expired pending login is rejected and dropped by the next verified login', async () => {
+            let verifier = this.createVerifier(this.verifiedResponse, []);
+            let expiredUserData = await this.createVerifiedLoginData(verifier);
+            [...verifier.verifiedUsers.get('firebase-uid').pendingLogins].shift().expiresAt = sc.getTime() - 1;
+            this.assert.strictEqual(this.validateByEmail(verifier, expiredUserData, 'player@test.com').isValid, false);
+            let nextUserData = this.createFirebaseLoginData('valid-token');
+            verifier.applyVerifiedLogin(nextUserData);
+            let currentPendingLogins = verifier.verifiedUsers.get('firebase-uid').pendingLogins;
+            this.assert.deepStrictEqual(currentPendingLogins.map(pendingLogin => pendingLogin.userData), [nextUserData]);
+        });
+    }
+
+    async testTheVerifiedTokenRefreshKeepsThePendingLogins()
+    {
+        await this.test('a new verification of the same user keeps its pending logins', async () => {
+            let verifier = this.createVerifier(this.verifiedResponse, []);
+            let userData = await this.createVerifiedLoginData(verifier);
+            await verifier.verify('valid-token', 'firebase-uid');
+            this.assert.strictEqual(this.validateByEmail(verifier, userData, 'player@test.com').isValid, true);
+        });
+    }
+
     async testTheVerifiedUsersCacheKeepsTheConfiguredMaximum()
     {
         await this.test('the verified users cache keeps the maximum entries and drops the oldest uid', async () => {
