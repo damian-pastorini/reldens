@@ -14,6 +14,7 @@ const { Logger } = require('@reldens/utils');
 const { Selectors } = require('./selectors');
 const { PlayerReset } = require('./helpers/player-reset');
 const { ParallelSpecGroups } = require('./helpers/parallel-spec-groups');
+const { TimeConstants } = require('./helpers/time-constants');
 
 class BaseE2eTest
 {
@@ -24,6 +25,12 @@ class BaseE2eTest
         : {};
     static longRun = '1' === process.env.LONG_RUN;
     static videosDir = FileHandler.joinPaths(process.cwd(), 'test-results', 'videos');
+    static videoSize = {width: 1280, height: 1080};
+    static gameplayRecordingStartDelayMs = 1000;
+    static cameraStillPollMs = 250;
+    static gameplayRecordingPages = [];
+    static overlaysStylesPath = FileHandler.joinPaths(process.cwd(), 'tests', 'e2e', 'assets', 'e2e-overlays.css');
+    static recordingNote = 'Automatic e2e test recording - the player teleports skip the walk to the required areas.';
     static screenshotsDir = FileHandler.joinPaths(process.cwd(), 'test-results', 'screenshots');
     static gameDataPath = FileHandler.joinPaths(process.cwd(), 'tests', 'e2e', 'game-data.json');
     static expect = baseExpect;
@@ -147,10 +154,10 @@ class BaseE2eTest
             : (BaseE2eTest.gameConfig.baseUrl || 'http://localhost:8080');
         let recordVideoConfig = {};
         recordVideoConfig['dir'] = outputDir;
-        recordVideoConfig['size'] = { width: 1280, height: 1080 };
+        recordVideoConfig['size'] = BaseE2eTest.videoSize;
         let context = await browser.newContext({
             baseURL: effectiveBaseUrl,
-            viewport: { width: 1280, height: 1080 },
+            viewport: BaseE2eTest.videoSize,
             recordVideo: recordVideoConfig
         });
         await context.addInitScript(BaseE2eTest.browserCursorScript());
@@ -171,6 +178,61 @@ class BaseE2eTest
         }
     }
 
+    static async startGameplayRecording(page, testInfo)
+    {
+        await page.addStyleTag({path: BaseE2eTest.overlaysStylesPath});
+        await page.evaluate((bannerTexts) => {
+            let banner = document.createElement('div');
+            banner.classList.add('e2e-recording-banner');
+            for(let className of Object.keys(bannerTexts)){
+                let bannerLine = document.createElement('div');
+                bannerLine.classList.add(className);
+                bannerLine.textContent = bannerTexts[className];
+                banner.append(bannerLine);
+            }
+            document.body.append(banner);
+        }, {'e2e-recording-title': testInfo.title, 'e2e-recording-note': BaseE2eTest.recordingNote});
+        await BaseE2eTest.waitForCameraStill(page);
+        await page.waitForTimeout(BaseE2eTest.gameplayRecordingStartDelayMs);
+        FileHandler.createFolder(BaseE2eTest.videosDir);
+        await page.screencast.start({
+            path: FileHandler.joinPaths(BaseE2eTest.videosDir, BaseE2eTest.slugify(testInfo.title)+'.webm'),
+            size: BaseE2eTest.videoSize
+        });
+        BaseE2eTest.gameplayRecordingPages.push(page);
+    }
+
+    static async waitForCameraStill(page)
+    {
+        await page.waitForFunction(
+            () => {
+                let camera = window.reldens?.getActiveScene()?.cameras?.main;
+                if(!camera){
+                    return false;
+                }
+                let cameraScroll = Math.round(camera.scrollX)+'/'+Math.round(camera.scrollY);
+                let isCameraStill = cameraScroll === window.e2eCameraScroll;
+                window.e2eCameraScroll = cameraScroll;
+                return isCameraStill;
+            },
+            null,
+            {polling: BaseE2eTest.cameraStillPollMs, timeout: TimeConstants.SCENE_LOAD}
+        );
+    }
+
+    static async stopGameplayRecording(page)
+    {
+        let recordingPageIndex = BaseE2eTest.gameplayRecordingPages.indexOf(page);
+        if(-1 === recordingPageIndex){
+            return false;
+        }
+        BaseE2eTest.gameplayRecordingPages.splice(recordingPageIndex, 1);
+        await page.screencast.stop().catch((error) => {
+            Logger.error('[video] Could not stop the gameplay recording: '+error.message);
+        });
+        return true;
+    }
+
     static async runPageFixture(browser, use, testInfo, suffix)
     {
         let context = await BaseE2eTest.makeContext(browser);
@@ -180,7 +242,12 @@ class BaseE2eTest
             await page.waitForTimeout(BaseE2eTest.longRun ? 3000 : 1500);
         }
         let video = page.video();
+        let isGameplayRecorded = await BaseE2eTest.stopGameplayRecording(page);
         await context.close();
+        if(isGameplayRecorded){
+            await video.delete();
+            return;
+        }
         await BaseE2eTest.saveVideo(video, BaseE2eTest.slugify(testInfo.title), suffix);
     }
 
