@@ -949,7 +949,13 @@ REPLACE INTO `snippets` (`id`, `locale_id`, `key`, `value`) VALUES
 	(6, 2, 'actions.death.resurrectionAdButton', 'Mira un anuncio para revivir donde moriste'),
 	(7, 2, 'items.growth.level', 'Nivel %level'),
 	(8, 2, 'items.growth.reachedLevel', '%itemLabel alcanzó el nivel %level.'),
-	(9, 2, 'users.skinAdFailed', 'Algo salió mal con el anuncio de la apariencia, tu ticket no fue canjeado ni quitado de tu inventario. Intenta de nuevo más tarde, si el problema persiste contacta a los administradores para solucionarlo.');
+	(9, 2, 'users.skinAdFailed', 'Algo salió mal con el anuncio de la apariencia, tu ticket no fue canjeado ni quitado de tu inventario. Intenta de nuevo más tarde, si el problema persiste contacta a los administradores para solucionarlo.'),
+	(10, 2, 'actions.death.reviveWait', 'Podrás revivir en %seconds segundos.'),
+	(11, 2, 'actions.death.reviveReady', 'Ya puedes revivir.'),
+	(12, 2, 'actions.death.reviveButton', 'Revivir'),
+	(13, 2, 'actions.death.askRestorationItem', 'Tienes %itemLabel: ¿quieres usarlo para revivir donde moriste en lugar de en %townLabel?'),
+	(14, 2, 'actions.death.restorationItemUseButton', 'Sí, usarlo'),
+	(15, 2, 'actions.death.restorationItemKeepButton', 'No, guardarlo');
 
 REPLACE INTO `stats` (`id`, `key`, `label`, `description`, `base_value`, `customData`) VALUES
 	(1, 'hp', 'HP', 'Player life points', 100, '{"showBase":true}'),
