@@ -466,7 +466,9 @@ REPLACE INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(420, 'server', 'skins/adsKey', 'skin-ad-ticket', 1),
 	(421, 'server', 'skins/adTicketItemKey', 'skin_ad_ticket', 1),
 	(422, 'server', 'actions/pve/chaseTimeOut', '0', 2),
-	(423, 'server', 'autoRecovery/players/onlyOutOfBattle', '1', 3);
+	(423, 'server', 'autoRecovery/players/onlyOutOfBattle', '1', 3),
+	(424, 'server', 'players/death/autoConsumeRestorationItem', '1', 3),
+	(425, 'server', 'players/death/autoRevive', '1', 3);
 
 REPLACE INTO `features` (`id`, `code`, `title`, `is_enabled`) VALUES
 	(1, 'chat', 'Chat', 1),
