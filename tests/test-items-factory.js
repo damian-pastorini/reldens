@@ -48,6 +48,38 @@ class TestItemsFactory extends BaseTest
         });
     }
 
+    async testLoadedItemsKeepTheirDisplayData()
+    {
+        await this.test('a loaded item keeps its modifiers display and a zero growth level', async () => {
+            let owner = {id: 1, stats: {atk: 100}};
+            let manager = new ItemsManager({owner, itemsModelData: {}, eventsManager: new EventsManager()});
+            let itemModel = {
+                id: 30,
+                qty: 1,
+                is_active: 0,
+                related_items_item: {
+                    id: 12,
+                    key: 'growing_sword',
+                    type: 1,
+                    label: 'Growing Sword',
+                    related_items_item_modifiers: [
+                        {id: 6, item_id: 12, key: 'atk', property_key: 'stats/atk', operation: 1, value: '10'}
+                    ]
+                }
+            };
+            let loadedItem = await ItemsFactory.fromModel(itemModel, manager);
+            this.assert.deepStrictEqual(loadedItem.customData, {
+                modifiersDisplay: [{propertyKey: 'stats/atk', operation: 1, value: 10, display: '+10 atk'}],
+                growthLevel: 0
+            });
+            let itemWithoutModifiers = await ItemsFactory.fromModel(
+                Object.assign({}, itemModel, {related_items_item: {id: 13, key: 'potion', type: 1, label: 'Potion'}}),
+                manager
+            );
+            this.assert.deepStrictEqual(itemWithoutModifiers.customData, {modifiersDisplay: [], growthLevel: 0});
+        });
+    }
+
     async testIsolatedModifiersAreNotTheItemsDataModifiers()
     {
         await this.test('the item modifiers are copies of the items data modifiers', async () => {
