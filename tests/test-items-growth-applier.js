@@ -5,13 +5,12 @@
  */
 
 const { BaseTest } = require('./base-test');
-const { GameplayPlayerBuilder } = require('./fixtures/gameplay-player-builder');
-const { ItemsGrowthApplier } = require('../lib/inventory/server/items-growth-applier');
+const { ItemsGrowthApplierBuilder } = require('./fixtures/items-growth-applier-builder');
 const { MessageFactory } = require('../lib/chat/message-factory');
 const { ChatConst } = require('../lib/chat/constants');
-const { ItemsEvents } = require('@reldens/items-system');
+const { InventoryConst } = require('../lib/inventory/constants');
+const { ItemBase } = require('@reldens/items-system');
 const { SkillsEvents } = require('@reldens/skills');
-const { ModifierConst } = require('@reldens/modifiers');
 const { sc } = require('@reldens/utils');
 
 class TestItemsGrowthApplier extends BaseTest
@@ -20,102 +19,91 @@ class TestItemsGrowthApplier extends BaseTest
     constructor(config)
     {
         super(config);
-        this.growingItemId = 12;
-    }
-
-    createRepository(storedRows)
-    {
-        let repository = {storedRows, loads: [], updates: []};
-        repository.load = async (filters) => {
-            repository.loads.push(filters.id.value);
-            return repository.storedRows.filter(row => -1 !== filters.id.value.indexOf(row.id));
-        };
-        repository.updateById = async (id, data) => {
-            repository.updates.push({id, data});
-            return true;
-        };
-        return repository;
-    }
-
-    createGrowingItem(props = {})
-    {
-        let equipCalls = [];
-        let growingItem = GameplayPlayerBuilder.createItem('growing_sword', Object.assign({
-            id: this.growingItemId,
-            label: 'Growing Sword',
-            equipped: true,
-            equipCalls,
-            growth: {
-                experienceShare: 50,
-                modifiersIncreasePercentPerLevel: 50,
-                requireEquipped: true,
-                levels: {'2': 5, '3': 30}
-            },
-            modifiers: {
-                attack: {operation: ModifierConst.OPS.INC, originalValue: 10, value: 10},
-                setter: {operation: ModifierConst.OPS.SET, originalValue: 3, value: 3}
-            }
-        }, props));
-        growingItem.equip = async () => {
-            equipCalls.push('equip');
-            growingItem.equipped = true;
-        };
-        growingItem.unequip = async () => {
-            equipCalls.push('unequip');
-            growingItem.equipped = false;
-        };
-        return growingItem;
-    }
-
-    createSetup(items, storedRows)
-    {
-        let repository = this.createRepository(storedRows);
-        let itemsGrowthApplier = new ItemsGrowthApplier({dataServer: {getEntity: () => repository}});
-        let inventoryManager = GameplayPlayerBuilder.createInventoryManager(items);
-        let classPath = {listenedEvents: {}};
-        classPath.listenEvent = (eventName, callback) => classPath.listenedEvents[eventName] = callback;
-        classPath.getOwnerUniqueEventKey = (suffix) => 'player-7-'+suffix;
-        classPath.getOwnerEventKey = () => 'player-7';
-        let playerSchema = GameplayPlayerBuilder.createPlayerSchema();
-        playerSchema.skillsServer = {classPath};
-        let client = {sentMessages: []};
-        client.send = (data) => client.sentMessages.push(data);
-        playerSchema.inventory = {manager: inventoryManager, client: {client}};
-        return {
-            repository,
-            itemsGrowthApplier,
-            inventoryManager,
-            classPath,
-            playerSchema,
-            client,
-            event: {inventoryServer: {manager: inventoryManager}, playerSchema}
-        };
+        this.builder = new ItemsGrowthApplierBuilder();
     }
 
     async testPlayerWithoutInventoryIsNotHandled()
     {
         await this.test('a player without inventory manager is not handled', async () => {
-            let setup = this.createSetup({}, []);
-            let withoutInventoryEvent = {playerSchema: setup.playerSchema};
-            let result = await setup.itemsGrowthApplier.onCreatePlayerInventoryAfter(withoutInventoryEvent);
+            let setup = this.builder.createSetup([]);
+            let result = await setup.itemsGrowthApplier.onCreatePlayerInventoryAfter({playerSchema: setup.playerSchema});
             this.assert.strictEqual(result, false);
             this.assert.deepStrictEqual(setup.repository.loads, []);
+            this.assert.deepStrictEqual(setup.classPath.listenedEvents, {});
         });
     }
 
-    async testStoredLevelScalesTheModifiersOnJoin()
+    async testStoredLevelIsLoadedAndSentOnJoin()
     {
-        await this.test('the stored level scales the growing item modifiers and the events are listened', async () => {
-            let growingItem = this.createGrowingItem();
-            let storedRow = {id: this.growingItemId, customData: '{"growth":{"level":2,"experience":12}}'};
-            let setup = this.createSetup({growing_sword: growingItem}, [storedRow]);
+        await this.test('the stored level scales the growing item modifiers and the item update is sent', async () => {
+            let setup = this.builder.createSetup([this.builder.storedRows.levelTwo]);
+            let sword = this.builder.createGrowingSword(setup.inventoryManager);
+            await setup.inventoryManager.setItems({[sword.getInventoryId()]: sword});
             this.assert.strictEqual(await setup.itemsGrowthApplier.onCreatePlayerInventoryAfter(setup.event), true);
-            this.assert.deepStrictEqual(setup.repository.loads, [[this.growingItemId]]);
-            this.assert.strictEqual(growingItem.growthLevel, 2);
-            this.assert.strictEqual(growingItem.growthExperience, 12);
-            this.assert.strictEqual(growingItem.modifiers.attack.value, 15);
-            this.assert.strictEqual(growingItem.modifiers.setter.value, 3);
-            this.assert.deepStrictEqual(Object.keys(setup.inventoryManager.listenedEvents), [ItemsEvents.ADD_ITEM]);
+            this.assert.deepStrictEqual(setup.repository.loads, [[this.builder.growingItemId]]);
+            this.assert.strictEqual(sword.growthLevel, 2);
+            this.assert.strictEqual(sword.growthExperience, 12);
+            this.assert.deepStrictEqual(sword.inventoryCustomData, {growth: {level: 2, experience: 12}});
+            this.assert.strictEqual(sword.modifiers.attack.value, 15);
+            this.assert.strictEqual(sword.modifiers.setter.value, 3);
+            this.assert.deepStrictEqual(setup.updatedItems, [{
+                key: 'growing_sword',
+                customData: {modifiersDisplay: this.builder.secondLevelModifiers, growthLevel: 2}
+            }]);
+            this.assert.deepStrictEqual(
+                Object.keys(setup.classPath.listenedEvents),
+                [SkillsEvents.LEVEL_EXPERIENCE_ADDED]
+            );
+            this.assert.deepStrictEqual(setup.repository.updates, []);
+        });
+    }
+
+    async testItemWithoutStoredGrowthStartsAtTheFirstLevel()
+    {
+        await this.test('a growing item without stored growth data starts at the first level', async () => {
+            let setup = this.builder.createSetup([this.builder.storedRows.withoutGrowth]);
+            let sword = this.builder.createGrowingSword(setup.inventoryManager);
+            await setup.inventoryManager.setItems({[sword.getInventoryId()]: sword});
+            await setup.itemsGrowthApplier.onCreatePlayerInventoryAfter(setup.event);
+            this.assert.strictEqual(sword.growthLevel, 1);
+            this.assert.strictEqual(sword.growthExperience, 0);
+            this.assert.deepStrictEqual(sword.inventoryCustomData, {});
+            this.assert.strictEqual(sword.modifiers.attack.value, 10);
+            this.assert.deepStrictEqual(setup.updatedItems, [{
+                key: 'growing_sword',
+                customData: {modifiersDisplay: this.builder.firstLevelModifiers, growthLevel: 1}
+            }]);
+        });
+    }
+
+    async testOnlyTheGrowingItemsWithStoredRowsAreLoaded()
+    {
+        await this.test('the growing items without id or without stored row and the other items are not loaded', async () => {
+            let setup = this.builder.createSetup([this.builder.storedRows.levelTwo]);
+            let sword = this.builder.createGrowingSword(setup.inventoryManager);
+            let deletedSword = this.builder.createGrowingSword(setup.inventoryManager, {id: 13, uid: 'deleted_sword'});
+            let unsavedSword = this.builder.createGrowingSword(setup.inventoryManager, {id: null, uid: 'unsaved_sword'});
+            let potion = new ItemBase({key: 'potion', id: 20, manager: setup.inventoryManager});
+            await setup.inventoryManager.setItems({sword, deletedSword, unsavedSword, potion});
+            this.assert.strictEqual(await setup.itemsGrowthApplier.onCreatePlayerInventoryAfter(setup.event), true);
+            this.assert.deepStrictEqual(setup.repository.loads, [[this.builder.growingItemId, 13]]);
+            this.assert.strictEqual(sword.growthLevel, 2);
+            this.assert.strictEqual(sc.hasOwn(deletedSword, 'growthLevel'), false);
+            this.assert.strictEqual(sc.hasOwn(unsavedSword, 'growthLevel'), false);
+            this.assert.strictEqual(sc.hasOwn(potion, 'growthLevel'), false);
+            this.assert.deepStrictEqual(setup.updatedItems.map(updatedItem => updatedItem.key), ['growing_sword']);
+        });
+    }
+
+    async testInventoryWithoutGrowingItemsLoadsNoRows()
+    {
+        await this.test('an inventory without growing items loads no stored rows and sends no update', async () => {
+            let setup = this.builder.createSetup([]);
+            let potion = new ItemBase({key: 'potion', id: 20, manager: setup.inventoryManager});
+            await setup.inventoryManager.setItems({potion});
+            this.assert.strictEqual(await setup.itemsGrowthApplier.onCreatePlayerInventoryAfter(setup.event), false);
+            this.assert.deepStrictEqual(setup.repository.loads, []);
+            this.assert.deepStrictEqual(setup.updatedItems, []);
             this.assert.deepStrictEqual(
                 Object.keys(setup.classPath.listenedEvents),
                 [SkillsEvents.LEVEL_EXPERIENCE_ADDED]
@@ -123,76 +111,99 @@ class TestItemsGrowthApplier extends BaseTest
         });
     }
 
-    async testItemWithoutStoredGrowthStartsAtTheFirstLevel()
+    async testNewItemsAreInitializedWhenAdded()
     {
-        await this.test('a growing item without stored growth data starts at the first level', async () => {
-            let growingItem = this.createGrowingItem();
-            let setup = this.createSetup({growing_sword: growingItem}, [{id: this.growingItemId, customData: null}]);
+        await this.test('a new growing item starts at the first level and every new item gets its display data', async () => {
+            let setup = this.builder.createSetup([]);
             await setup.itemsGrowthApplier.onCreatePlayerInventoryAfter(setup.event);
-            this.assert.strictEqual(growingItem.growthLevel, 1);
-            this.assert.strictEqual(growingItem.growthExperience, 0);
-            this.assert.strictEqual(growingItem.modifiers.attack.value, 10);
-        });
-    }
-
-    async testInventoryWithoutGrowingItemsLoadsNoRows()
-    {
-        await this.test('an inventory without growing items loads no stored rows', async () => {
-            let setup = this.createSetup({potion: GameplayPlayerBuilder.createItem('potion')}, []);
-            this.assert.strictEqual(await setup.itemsGrowthApplier.onCreatePlayerInventoryAfter(setup.event), false);
-            this.assert.deepStrictEqual(setup.repository.loads, []);
-        });
-    }
-
-    async testNewGrowingItemStartsAtTheFirstLevel()
-    {
-        await this.test('a new growing item starts at the first level and other new items are ignored', async () => {
-            let setup = this.createSetup({}, []);
-            let potion = GameplayPlayerBuilder.createItem('potion');
-            this.assert.strictEqual(setup.itemsGrowthApplier.initializeAddedItem(potion), false);
-            let growingItem = this.createGrowingItem();
-            growingItem.modifiers.attack.value = 99;
-            this.assert.strictEqual(setup.itemsGrowthApplier.initializeAddedItem(growingItem), true);
-            this.assert.strictEqual(growingItem.growthLevel, 1);
-            this.assert.strictEqual(growingItem.growthExperience, 0);
-            this.assert.deepStrictEqual(growingItem.inventoryCustomData, {});
-            this.assert.strictEqual(growingItem.modifiers.attack.value, 10);
+            let sword = this.builder.createGrowingSword(setup.inventoryManager);
+            sword.modifiers.attack.value = 99;
+            await setup.inventoryManager.addItem(sword);
+            this.assert.strictEqual(sword.growthLevel, 1);
+            this.assert.strictEqual(sword.growthExperience, 0);
+            this.assert.deepStrictEqual(sword.inventoryCustomData, {});
+            this.assert.strictEqual(sword.modifiers.attack.value, 10);
+            this.assert.deepStrictEqual(sword.customData, {
+                modifiersDisplay: this.builder.firstLevelModifiers,
+                growthLevel: 1
+            });
+            let potion = new ItemBase({key: 'potion', id: 20, manager: setup.inventoryManager});
+            await setup.inventoryManager.addItem(potion);
+            this.assert.strictEqual(sc.hasOwn(potion, 'growthLevel'), false);
+            this.assert.strictEqual(sc.hasOwn(potion, 'inventoryCustomData'), false);
+            this.assert.deepStrictEqual(potion.customData, {modifiersDisplay: [], growthLevel: 0});
+            this.assert.deepStrictEqual(setup.updatedItems, []);
         });
     }
 
     async testEquippedItemStoresItsExperienceShare()
     {
-        await this.test('an equipped growing item receives and stores its experience share', async () => {
-            let growingItem = this.createGrowingItem({growthLevel: 1, growthExperience: 0});
-            let setup = this.createSetup({growing_sword: growingItem}, []);
-            this.assert.strictEqual(await setup.itemsGrowthApplier.addOwnerExperience(setup.playerSchema, 4), 1);
-            this.assert.strictEqual(growingItem.growthExperience, 2);
-            this.assert.strictEqual(growingItem.growthLevel, 1);
+        await this.test('an equipped growing item receives and stores its share of the player experience', async () => {
+            let setup = this.builder.createSetup([this.builder.storedRows.levelOne]);
+            let sword = this.builder.createGrowingSword(setup.inventoryManager, {equipped: true});
+            await setup.inventoryManager.setItems({[sword.getInventoryId()]: sword});
+            await setup.itemsGrowthApplier.onCreatePlayerInventoryAfter(setup.event);
+            this.assert.strictEqual(await setup.addPlayerExperience(4), 1);
+            this.assert.strictEqual(sword.growthExperience, 2);
+            this.assert.strictEqual(sword.growthLevel, 1);
             this.assert.deepStrictEqual(setup.repository.updates, [{
-                id: this.growingItemId,
+                id: this.builder.growingItemId,
                 data: {customData: sc.toJsonString({growth: {level: 1, experience: 2}})}
             }]);
-            this.assert.deepStrictEqual(growingItem.equipCalls, []);
-            this.assert.deepStrictEqual(setup.client.sentMessages, []);
+            this.assert.deepStrictEqual(setup.chatClient.sentMessages, []);
+            this.assert.strictEqual(setup.updatedItems.length, 1);
         });
     }
 
-    async testLevelUpReequipsTheItemAndTellsTheOwner()
+    async testExperienceIsSharedOnlyAfterTheStoredGrowthIsLoaded()
     {
-        await this.test('a growing item level up is equipped again with the scaled modifiers', async () => {
-            let growingItem = this.createGrowingItem({growthLevel: 1, growthExperience: 4});
-            let setup = this.createSetup({growing_sword: growingItem}, []);
-            this.assert.strictEqual(await setup.itemsGrowthApplier.addOwnerExperience(setup.playerSchema, 10), 1);
-            this.assert.strictEqual(growingItem.growthLevel, 2);
-            this.assert.strictEqual(growingItem.growthExperience, 9);
-            this.assert.deepStrictEqual(growingItem.equipCalls, ['unequip', 'equip']);
-            this.assert.strictEqual(growingItem.equipped, true);
-            this.assert.strictEqual(growingItem.modifiers.attack.value, 15);
-            this.assert.strictEqual(growingItem.modifiers.setter.value, 3);
+        await this.test('the player experience is shared only after the stored growth is loaded', async () => {
+            let setup = this.builder.createSetup([this.builder.storedRows.levelTwo]);
+            let sword = this.builder.createGrowingSword(setup.inventoryManager, {equipped: true});
+            await setup.inventoryManager.setItems({[sword.getInventoryId()]: sword});
+            let loadStoredRows = setup.repository.load;
+            let listenedEventsOnLoad = [];
+            setup.repository.load = async (filters) => {
+                listenedEventsOnLoad.push(Object.keys(setup.classPath.listenedEvents));
+                return await loadStoredRows(filters);
+            };
+            this.assert.strictEqual(await setup.itemsGrowthApplier.onCreatePlayerInventoryAfter(setup.event), true);
+            this.assert.deepStrictEqual(listenedEventsOnLoad, [[]]);
             this.assert.deepStrictEqual(
-                setup.client.sentMessages,
-                [MessageFactory.create(ChatConst.TYPES.SYSTEM, 'Growing Sword reached level 2.')]
+                Object.keys(setup.classPath.listenedEvents),
+                [SkillsEvents.LEVEL_EXPERIENCE_ADDED]
             );
+            this.assert.strictEqual(await setup.addPlayerExperience(4), 1);
+            this.assert.strictEqual(sword.growthLevel, 2);
+            this.assert.strictEqual(sword.growthExperience, 14);
+            this.assert.deepStrictEqual(
+                setup.repository.updates.map(update => update.data.customData),
+                [sc.toJsonString({growth: {level: 2, experience: 14}})]
+            );
+        });
+    }
+
+    async testLevelUpSendsTheDisplayDataAndTheReachedLevel()
+    {
+        await this.test('a level up sends the grown display data and the reached level and stores the growth', async () => {
+            let setup = await this.builder.createEquippedSwordSetup(this.builder.storedRows.nearLevelTwo);
+            this.assert.strictEqual(setup.playerSchema.stats.atk, 110);
+            this.assert.strictEqual(await setup.addPlayerExperience(10), 1);
+            this.assert.strictEqual(setup.sword.growthLevel, 2);
+            this.assert.strictEqual(setup.sword.growthExperience, 9);
+            this.assert.strictEqual(setup.sword.equipped, true);
+            this.assert.strictEqual(setup.playerSchema.stats.atk, 115);
+            this.assert.deepStrictEqual(setup.updatedItems.map(updatedItem => updatedItem.customData), [
+                {modifiersDisplay: this.builder.firstLevelModifiers, growthLevel: 1},
+                {modifiersDisplay: this.builder.secondLevelModifiers, growthLevel: 2}
+            ]);
+            this.assert.deepStrictEqual(setup.chatClient.sentMessages, [
+                MessageFactory.create(
+                    ChatConst.TYPES.SYSTEM,
+                    InventoryConst.SNIPPETS.ITEM_REACHED_LEVEL,
+                    {itemLabel: 'Growing Sword', level: 2}
+                )
+            ]);
             this.assert.deepStrictEqual(
                 setup.repository.updates.map(update => update.data.customData),
                 [sc.toJsonString({growth: {level: 2, experience: 9}})]
@@ -203,32 +214,88 @@ class TestItemsGrowthApplier extends BaseTest
     async testUnequippedItemGrowsOnlyWithoutTheEquipmentRule()
     {
         await this.test('an unequipped growing item grows only when it does not require the equipment', async () => {
-            let requiredItem = this.createGrowingItem({equipped: false, growthLevel: 1, growthExperience: 0});
-            let requiredSetup = this.createSetup({growing_sword: requiredItem}, []);
-            let requiredApplier = requiredSetup.itemsGrowthApplier;
-            this.assert.strictEqual(await requiredApplier.addOwnerExperience(requiredSetup.playerSchema, 10), 0);
-            this.assert.strictEqual(requiredItem.growthExperience, 0);
+            let requiredSetup = this.builder.createSetup([this.builder.storedRows.levelOne]);
+            let requiredSword = this.builder.createGrowingSword(requiredSetup.inventoryManager);
+            await requiredSetup.inventoryManager.setItems({[requiredSword.getInventoryId()]: requiredSword});
+            await requiredSetup.itemsGrowthApplier.onCreatePlayerInventoryAfter(requiredSetup.event);
+            this.assert.strictEqual(await requiredSetup.addPlayerExperience(10), 0);
+            this.assert.strictEqual(requiredSword.growthExperience, 0);
             this.assert.deepStrictEqual(requiredSetup.repository.updates, []);
-            let freeItem = this.createGrowingItem({equipped: false, growthLevel: 1, growthExperience: 0});
-            freeItem.growth.requireEquipped = false;
-            let freeSetup = this.createSetup({growing_sword: freeItem}, []);
-            let freeApplier = freeSetup.itemsGrowthApplier;
-            this.assert.strictEqual(await freeApplier.addOwnerExperience(freeSetup.playerSchema, 10), 1);
-            this.assert.strictEqual(freeItem.growthLevel, 2);
-            this.assert.deepStrictEqual(freeItem.equipCalls, []);
-            this.assert.strictEqual(freeItem.equipped, false);
+            this.assert.deepStrictEqual(requiredSetup.chatClient.sentMessages, []);
+            let freeSetup = this.builder.createSetup([this.builder.storedRows.levelOne]);
+            let freeSword = this.builder.createGrowingSword(freeSetup.inventoryManager, {
+                customData: {growth: Object.assign(sc.deepJsonClone(this.builder.growth), {requireEquipped: false})}
+            });
+            await freeSetup.inventoryManager.setItems({[freeSword.getInventoryId()]: freeSword});
+            await freeSetup.itemsGrowthApplier.onCreatePlayerInventoryAfter(freeSetup.event);
+            this.assert.strictEqual(await freeSetup.addPlayerExperience(10), 1);
+            this.assert.strictEqual(freeSword.growthLevel, 2);
+            this.assert.strictEqual(freeSword.equipped, false);
+            this.assert.strictEqual(freeSetup.playerSchema.stats.atk, 100);
+            this.assert.deepStrictEqual(
+                freeSetup.updatedItems.map(updatedItem => updatedItem.customData.growthLevel),
+                [1, 2]
+            );
+            this.assert.strictEqual(freeSetup.chatClient.sentMessages.length, 1);
+            this.assert.strictEqual(freeSetup.repository.updates.length, 1);
         });
     }
 
-    async testNoExperienceOrInventoryGivesNoGrowth()
+    async testNoExperienceGivesNoGrowth()
     {
-        await this.test('no experience or a player without inventory gives no growth', async () => {
-            let growingItem = this.createGrowingItem({growthLevel: 1, growthExperience: 0});
-            let setup = this.createSetup({growing_sword: growingItem}, []);
-            this.assert.strictEqual(await setup.itemsGrowthApplier.addOwnerExperience(setup.playerSchema, 0), 0);
-            this.assert.strictEqual(await setup.itemsGrowthApplier.addOwnerExperience({}, 10), 0);
-            this.assert.strictEqual(growingItem.growthExperience, 0);
+        await this.test('a zero or negative experience gives no growth, no update and no stored row', async () => {
+            let setup = this.builder.createSetup([this.builder.storedRows.levelOne]);
+            let sword = this.builder.createGrowingSword(setup.inventoryManager, {equipped: true});
+            await setup.inventoryManager.setItems({[sword.getInventoryId()]: sword});
+            await setup.itemsGrowthApplier.onCreatePlayerInventoryAfter(setup.event);
+            this.assert.strictEqual(await setup.addPlayerExperience(0), 0);
+            this.assert.strictEqual(await setup.addPlayerExperience(-10), 0);
+            this.assert.strictEqual(sword.growthExperience, 0);
             this.assert.deepStrictEqual(setup.repository.updates, []);
+            this.assert.strictEqual(setup.updatedItems.length, 1);
+        });
+    }
+
+    async testReachedLevelWithoutClientOnlyUpdatesTheDisplayData()
+    {
+        await this.test('a reached level without inventory client updates the display data without message', async () => {
+            let setup = this.builder.createSetup([]);
+            let sword = this.builder.createGrowingSword(setup.inventoryManager);
+            sword.growthLevel = 2;
+            this.assert.strictEqual(setup.itemsGrowthApplier.applyReachedLevel(sword, false), false);
+            this.assert.strictEqual(sword.customData.growthLevel, 2);
+            this.assert.deepStrictEqual(setup.chatClient.sentMessages, []);
+        });
+    }
+
+    async testItemWithoutIdIsNotStored()
+    {
+        await this.test('the growth of an item without id is not stored', async () => {
+            let setup = this.builder.createSetup([]);
+            let grownProps = {growthLevel: 2, growthExperience: 9};
+            let unsavedSword = this.builder.createGrowingSword(setup.inventoryManager, {id: null});
+            Object.assign(unsavedSword, grownProps);
+            this.assert.strictEqual(await setup.itemsGrowthApplier.saveItemGrowth(unsavedSword), false);
+            this.assert.deepStrictEqual(setup.repository.updates, []);
+            let sword = Object.assign(this.builder.createGrowingSword(setup.inventoryManager), grownProps);
+            this.assert.strictEqual(await setup.itemsGrowthApplier.saveItemGrowth(sword), true);
+            this.assert.deepStrictEqual(setup.repository.updates, [{
+                id: this.builder.growingItemId,
+                data: {customData: sc.toJsonString({growth: {level: 2, experience: 9}})}
+            }]);
+        });
+    }
+
+    async testPlayerWithoutClassPathStillLoadsTheStoredGrowth()
+    {
+        await this.test('a player without class path still loads the stored growth of its items', async () => {
+            let setup = this.builder.createSetup([this.builder.storedRows.levelTwo]);
+            setup.playerSchema.skillsServer = {};
+            let sword = this.builder.createGrowingSword(setup.inventoryManager);
+            await setup.inventoryManager.setItems({[sword.getInventoryId()]: sword});
+            this.assert.strictEqual(await setup.itemsGrowthApplier.onCreatePlayerInventoryAfter(setup.event), true);
+            this.assert.strictEqual(sword.growthLevel, 2);
+            this.assert.deepStrictEqual(setup.classPath.listenedEvents, {});
         });
     }
 

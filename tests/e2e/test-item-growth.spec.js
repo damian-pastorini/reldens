@@ -3,9 +3,14 @@
  * Reldens - Test Item Growth
  *
  * Tests the item growth: the growing sword (seeded in the player inventory for the test) is equipped from the inventory
- * panel, a Tree placed next to the player with one hit point is killed, and the experience of the kill reaches the
+ * panel, a Tree placed next to the player (ForestEnemyKill) is killed, and the experience of the kill reaches the
  * sword instance, stored in its items_inventory customData with the level the stored growth levels give, while the
- * player attack grows by the sword modifier scaled to that level. The expected values come from the stored item rows.
+ * player attack grows by the sword modifier scaled to that level. The sword details (ItemDetailsShowcase) show its
+ * stored label and description, its level and its modifier before the equip, in the equipment slot after the equip, and
+ * in the equipment slot with the reached level and the scaled modifier after the level up, and the chat shows the
+ * translated level reached message. The expected values come from the stored item rows and the inventory snippets.
+ * The Tree is placed before the long run recording starts, and the long run shows the attack value in the player stats
+ * panel before the equip, the sword details, the attack after the equip and after the level up.
  *
  */
 
@@ -16,10 +21,12 @@ const { ForestEnemyKill } = require('./helpers/forest-enemy-kill');
 const { GameplayE2eStateApi } = require('./helpers/gameplay-e2e-state-api');
 const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
 const { LongRunShowcase } = require('./helpers/long-run-showcase');
+const { ItemDetailsShowcase } = require('./helpers/item-details-showcase');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
-const { ItemGrowthCalculator } = require('../../lib/inventory/server/item-growth-calculator');
-const { InventoryConst } = require('../../lib/inventory/constants');
+const { ResolveOperation } = require('../../lib/inventory/server/resolve-operation');
+const InventoryTranslations = require('../../lib/inventory/client/snippets/en_US');
+const { ItemGrowthCalculator, ItemsConst } = require('@reldens/items-system');
 const { ModifierConst } = require('@reldens/modifiers');
 const { sc } = require('@reldens/utils');
 let test = BaseE2eTest.test;
@@ -44,7 +51,7 @@ class TestItemGrowth
         expect(Number(modifierRow.operation), 'The growing item modifier must increase its stat').toBe(
             ModifierConst.OPS.INC
         );
-        return {growth: sc.toJson(itemRow.customData, {}).growth, modifierRow};
+        return {growth: sc.toJson(itemRow.customData, {}).growth, modifierRow, label: itemRow.label};
     }
 
     static async fetchStat(gameConfig, playerName, statKey)
@@ -71,16 +78,57 @@ class TestItemGrowth
         );
     }
 
-    static async equipFromInventory(page, longRun)
+    static async showStatValue(page, statKey, statValue, longRun)
+    {
+        return await LongRunShowcase.showWhen(
+            page,
+            async () => statValue === Number(
+                [...(await page.locator(Selectors.stats.valueByKey(statKey)).innerText()).split('/')].shift()
+            ),
+            'The player stats panel must show the '+statKey+' value '+statValue,
+            TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun),
+            longRun
+        );
+    }
+
+    static createLevelDetails(statKey, modifierOperation, level, modifierValue)
+    {
+        return [
+            InventoryTranslations.items.growth.level.replace('%level', level),
+            ResolveOperation.prefix(modifierOperation)+modifierValue+ResolveOperation.suffix(modifierOperation)
+                +' '+statKey
+        ];
+    }
+
+    static async equipFromInventory(page, gameConfig, levelDetails, longRun)
     {
         await page.click(Selectors.hud.inventoryOpen);
         await expect(page.locator(Selectors.inventory.ui)).toBeVisible();
-        await page.locator(Selectors.inventory.itemImage(TestItemGrowth.ITEM_KEY)).click({
-            timeout: TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun)
-        });
+        await ItemDetailsShowcase.showDetails(
+            page,
+            Selectors.inventory.itemImage(TestItemGrowth.ITEM_KEY),
+            Selectors.inventory.itemDetails(TestItemGrowth.ITEM_KEY),
+            [...await ItemDetailsShowcase.loadStoredTexts(gameConfig, TestItemGrowth.ITEM_KEY), ...levelDetails],
+            longRun
+        );
         let equipButton = page.locator(Selectors.inventory.itemEquip(TestItemGrowth.ITEM_KEY));
         await expect(equipButton).toBeVisible();
         await equipButton.click();
+        await page.click(Selectors.hud.inventoryClose);
+    }
+
+    static async showEquippedItemDetails(page, levelDetails, longRun)
+    {
+        await page.click(Selectors.hud.equipmentOpen);
+        await expect(page.locator(Selectors.equipment.ui)).toBeVisible();
+        await ItemDetailsShowcase.showDetails(
+            page,
+            Selectors.equipment.itemImage(TestItemGrowth.ITEM_KEY),
+            Selectors.equipment.itemDetails(TestItemGrowth.ITEM_KEY),
+            levelDetails,
+            longRun
+        );
+        await page.click(Selectors.hud.equipmentClose);
     }
 
     static async runItemGrowthTest(page, screenshots, gameConfig, e2eGroup, longRun)
@@ -93,18 +141,29 @@ class TestItemGrowth
         let itemData = await TestItemGrowth.loadGrowingItemData(gameConfig);
         let statKey = [...itemData.modifierRow.property_key.split('/')].pop();
         let modifierValue = Number(itemData.modifierRow.value);
+        let modifierOperation = Number(itemData.modifierRow.operation);
+        let firstLevelDetails = TestItemGrowth.createLevelDetails(
+            statKey,
+            modifierOperation,
+            ItemsConst.GROWTH.DEFAULT_LEVEL,
+            modifierValue
+        );
         await E2eSeedAndRestoreApi.seedInventoryItem(gameConfig, e2eGroup, playerName, TestItemGrowth.ITEM_KEY, 1);
         let forestData = await Login.loginAndEnterForest(page, gameConfig, longRun);
+        let placement = await ForestEnemyKill.placeEnemyToKill(page, gameConfig, forestData.sceneTimeout, longRun);
+        await LongRunShowcase.startGameplayRecording(page, longRun);
         let statBefore = await TestItemGrowth.fetchStat(gameConfig, playerName, statKey);
-        await TestItemGrowth.equipFromInventory(page, longRun);
+        await LongRunShowcase.openPanel(page, Selectors.hud.playerStatsOpen, Selectors.hud.playerStatsUi, longRun);
+        await TestItemGrowth.showStatValue(page, statKey, statBefore, longRun);
+        await TestItemGrowth.equipFromInventory(page, gameConfig, firstLevelDetails, longRun);
         await expect.poll(
             async () => await TestItemGrowth.fetchStat(gameConfig, playerName, statKey),
             {message: 'The equipped sword must apply its modifier'}
         ).toBe(statBefore + modifierValue);
-        await LongRunShowcase.pause(page, longRun);
+        await TestItemGrowth.showEquippedItemDetails(page, firstLevelDetails, longRun);
+        await TestItemGrowth.showStatValue(page, statKey, statBefore + modifierValue, longRun);
         await screenshots.capture(page, 'growing-sword-equipped');
         await LongRunShowcase.openPanel(page, Selectors.hud.chatOpen, Selectors.chat.input, longRun);
-        let placement = await ForestEnemyKill.placeOneHitEnemy(page, gameConfig, forestData.sceneTimeout);
         let expectedExperience = ItemGrowthCalculator.experienceFor(
             itemData.growth.experienceShare,
             placement.experience
@@ -113,7 +172,7 @@ class TestItemGrowth
         let expectedLevel = ItemGrowthCalculator.levelFor(
             expectedExperience,
             itemData.growth.levels,
-            InventoryConst.GROWTH.DEFAULT_LEVEL
+            ItemsConst.GROWTH.DEFAULT_LEVEL
         );
         let experienceReached = await RoomObjectsApi.attackTargetUntil(
             page,
@@ -137,13 +196,20 @@ class TestItemGrowth
             async () => await TestItemGrowth.fetchStat(gameConfig, playerName, statKey),
             {message: 'The equipped sword modifier must grow with its level'}
         ).toBe(statBefore + expectedModifierValue);
-        await LongRunShowcase.showWhen(
+        await expect(
+            page.locator(Selectors.chat.tabContentGeneral),
+            'The chat must show the translated level reached by the sword'
+        ).toContainText(
+            InventoryTranslations.items.growth.reachedLevel
+                .replace('%itemLabel', itemData.label)
+                .replace('%level', expectedLevel),
+            {timeout: TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun)}
+        );
+        await LongRunShowcase.pause(page, longRun);
+        await TestItemGrowth.showStatValue(page, statKey, statBefore + expectedModifierValue, longRun);
+        await TestItemGrowth.showEquippedItemDetails(
             page,
-            async () => (await page.locator(Selectors.chat.tabContentGeneral).innerText()).includes(
-                InventoryConst.GROWTH.MESSAGES.ITEM_REACHED_LEVEL+expectedLevel
-            ),
-            'The chat must show the level reached by the sword',
-            TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun),
+            TestItemGrowth.createLevelDetails(statKey, modifierOperation, expectedLevel, expectedModifierValue),
             longRun
         );
         await screenshots.capture(page, 'growing-sword-level-reached');
