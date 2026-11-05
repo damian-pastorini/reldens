@@ -64,8 +64,10 @@ Combat system (PvP/PvE), skills, battle mechanics
   `stats-recovery-calculator.js`): the stats auto recovery of every scene room
 - `server/player-death-relocator.js` and `server/resurrection-ad-gate.js`: the death teleport to town, the restoration
   item and the resurrection ad (see `.claude/gameplay-features.md`)
-- `server/death-revive-notifier.js` and `client/game-over-revive-message.js`: the revive mode shown in the game over box
-  and the resurrection ad button
+- `server/death-revive-notifier.js` and `client/game-over-revive-message.js`: the revive mode shown in the game over box,
+  the seconds left to the revive, the revive, restoration item choice and resurrection ad buttons
+- `server/death-revive-requests.js`: the revive request and the restoration item choice of the dead player, without the
+  auto revive or the restoration item auto consume
 
 ### Inventory (`lib/inventory/`)
 Items system with equipment and usable items
