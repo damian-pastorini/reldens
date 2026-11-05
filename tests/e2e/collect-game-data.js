@@ -19,12 +19,14 @@ const { RoomPlayerPlacement } = require('./helpers/room-player-placement');
 const { E2eSeedAndRestoreEndpoints } = require('./helpers/e2e-seed-and-restore-endpoints');
 const { GameplayE2eStateProbe } = require('./helpers/gameplay-e2e-state-probe');
 const { LiveObjectsOverrides } = require('./helpers/live-objects-overrides');
+const { E2eAssetsEndpoints } = require('./helpers/e2e-assets-endpoints');
 const { TestDataSetup } = require('./helpers/test-data-setup');
 const { StartupGuard } = require('./helpers/startup-guard');
 const { ClientBundleCheck } = require('./helpers/client-bundle-check');
 const { Login } = require('./helpers/login');
 const { DatabaseEnvVarsExporter } = require('../database-env-vars-exporter');
 const { ServerPathResolver } = require('../server-path-resolver');
+const { GameConst } = require('../../lib/game/constants');
 
 class CollectGameData
 {
@@ -262,6 +264,7 @@ class CollectGameData
         E2eSeedAndRestoreEndpoints.registerEndpoints(serverManager);
         GameplayE2eStateProbe.registerEndpoints(serverManager);
         LiveObjectsOverrides.registerEndpoints(serverManager);
+        E2eAssetsEndpoints.registerEndpoints(serverManager);
         await PlayerStateReset.registerResetEndpoint(serverManager, snapshots, config);
         CollectGameData.serverManager = serverManager;
     }
@@ -311,7 +314,11 @@ class CollectGameData
             serverConfig.customPlugin = modules.ServerPlugin;
         }
         let bundleRequired = ClientBundleCheck.isMissing(serverPath)
-            || ClientBundleCheck.isOutdated(serverPath, process.cwd());
+            || ClientBundleCheck.isOutdated(
+                serverPath,
+                process.cwd(),
+                sc.get(serverConfig, 'projectThemeName', GameConst.STRUCTURE.DEFAULT)
+            );
         if(bundleRequired){
             Logger.warning(
                 '[collect-game-data] Client bundle missing or older than the client sources, running the bundler.'
