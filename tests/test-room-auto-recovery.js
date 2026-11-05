@@ -23,7 +23,8 @@ class TestRoomAutoRecovery extends BaseTest
             broadcastKey: 'enemy-1',
             stats: {hp: 10},
             initialStats: {hp: 100},
-            objectBody: {bodyState: {inState: GameConst.STATUS.ACTIVE}}
+            objectBody: {bodyState: {inState: GameConst.STATUS.ACTIVE}},
+            autoRecoveryState: {lastValues: {}, loweredAt: {}}
         };
         let room = {
             roomId,
@@ -74,6 +75,20 @@ class TestRoomAutoRecovery extends BaseTest
             this.assert.strictEqual(room.enemy.stats.hp, 15);
             this.assert.strictEqual(room.playerSchema.stats.hp, 55);
             this.assert.deepStrictEqual(Object.keys(roomAutoRecovery.runningRooms), []);
+        });
+    }
+
+    async testTickPassesTheConfiguredStartDelay()
+    {
+        await this.test('a tick waits the configured start delay of the players and the enemies', async () => {
+            let roomAutoRecovery = this.createRoomAutoRecovery();
+            let room = this.createRoom('room-a');
+            room.config.values[ActionsConst.AUTO_RECOVERY.CONFIG_PATHS.OBJECTS].startDelayMs = 60000;
+            room.config.values[ActionsConst.AUTO_RECOVERY.CONFIG_PATHS.PLAYERS].startDelayMs = 60000;
+            let tickResult = await roomAutoRecovery.runRoomTick(room);
+            this.assert.deepStrictEqual(tickResult, {recoveredObjects: 0, recoveredPlayers: 0});
+            this.assert.strictEqual(room.enemy.stats.hp, 10);
+            this.assert.strictEqual(room.playerSchema.stats.hp, 50);
         });
     }
 
