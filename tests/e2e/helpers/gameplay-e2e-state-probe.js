@@ -63,7 +63,7 @@ class GameplayE2eStateProbe
         return GameplayE2eStateProbe.fetchPlayerSnapshot(room, playerName);
     }
 
-    static setEnemyLifeByBody(room, bodyKey, life)
+    static async setEnemyLifeByBody(serverManager, room, bodyKey, life)
     {
         let enemyObject = RoomObjectsState.fetchEnemies(room).find(
             roomObject => bodyKey === roomObject.objectBody.bodyState.key
@@ -71,8 +71,14 @@ class GameplayE2eStateProbe
         if(!enemyObject){
             return {error: 'Enemy body '+bodyKey+' not found in room '+room.roomName+'.'};
         }
+        return await GameplayE2eStateProbe.applyEnemyLife(serverManager, room, enemyObject, life);
+    }
+
+    static async applyEnemyLife(serverManager, room, enemyObject, life)
+    {
         let affectedProperty = room.config.get('client/actions/skills/affectedProperty');
         enemyObject.stats[affectedProperty] = life;
+        await serverManager.featuresManager.featuresList.users.package.broadcastObjectUpdate(room, enemyObject);
         return GameplayE2eStateProbe.mapEnemyLife(enemyObject, affectedProperty);
     }
 
@@ -87,7 +93,7 @@ class GameplayE2eStateProbe
         return 0 === Object.keys(sc.get(sc.get(roomObject, 'battle', {}), 'inBattleWithPlayers', {})).length;
     }
 
-    static setEnemyLife(room, enemyKey, life)
+    static async setEnemyLife(serverManager, room, enemyKey, life)
     {
         let enemyObject = RoomObjectsState.fetchEnemies(room).find(
             roomObject => GameplayE2eStateProbe.isIdleEnemy(roomObject, enemyKey)
@@ -95,9 +101,7 @@ class GameplayE2eStateProbe
         if(!enemyObject){
             return {error: 'Active enemy '+enemyKey+' out of battle not found in room '+room.roomName+'.'};
         }
-        let affectedProperty = room.config.get('client/actions/skills/affectedProperty');
-        enemyObject.stats[affectedProperty] = life;
-        return GameplayE2eStateProbe.mapEnemyLife(enemyObject, affectedProperty);
+        return await GameplayE2eStateProbe.applyEnemyLife(serverManager, room, enemyObject, life);
     }
 
     static fetchEnemyLife(room, bodyKey)
@@ -174,7 +178,8 @@ class GameplayE2eStateProbe
                 serverManager,
                 sc.get(request.body, 'roomName', ''),
                 response,
-                async (room) => GameplayE2eStateProbe.setEnemyLife(
+                async (room) => await GameplayE2eStateProbe.setEnemyLife(
+                    serverManager,
                     room,
                     sc.get(request.body, 'enemyKey', ''),
                     Number(sc.get(request.body, 'life', 0))
@@ -198,7 +203,8 @@ class GameplayE2eStateProbe
                 serverManager,
                 sc.get(request.body, 'roomName', ''),
                 response,
-                async (room) => GameplayE2eStateProbe.setEnemyLifeByBody(
+                async (room) => await GameplayE2eStateProbe.setEnemyLifeByBody(
+                    serverManager,
                     room,
                     sc.get(request.body, 'bodyKey', ''),
                     Number(sc.get(request.body, 'life', 0))
