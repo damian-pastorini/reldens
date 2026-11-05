@@ -4,9 +4,12 @@
  *
  * Tests the ad items that give a skin: with the skin ad enabled for the group and a skin ticket seeded in the player
  * inventory, using the ticket from the inventory panel keeps it (the use only asks the client to play the skin ad),
- * the played ad consumes the ticket and rewards the skin item, and equipping the skin item changes the player avatar on
- * the server and on the client sprite until it is unequipped. A failed skin ad is closed without consuming the ticket
- * nor giving the skin item. The keys come from the stored config and item rows.
+ * the ad played by the client ads provider through the e2e SDK mock (AdMessagesPlayer) consumes the ticket and rewards
+ * the skin item, and equipping the skin item changes the player avatar on the server and on the client sprite until it
+ * is unequipped. Before every item action the item details (ItemDetailsShowcase) show the stored label and description.
+ * A failed skin ad (the mock calls the provider error callback) is closed without consuming the ticket nor giving the
+ * skin item, and the chat tells the player the translated skin ad failure. The keys come from the stored config and
+ * item rows.
  *
  */
 
@@ -17,10 +20,11 @@ const { AdMessagesPlayer } = require('./helpers/ad-messages-player');
 const { GameplayE2eStateApi } = require('./helpers/gameplay-e2e-state-api');
 const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
 const { LongRunShowcase } = require('./helpers/long-run-showcase');
+const { ItemDetailsShowcase } = require('./helpers/item-details-showcase');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
 const { UsersConst } = require('../../lib/users/constants');
-const { AdsConst } = require('../../lib/ads/constants');
+const UsersTranslations = require('../../lib/users/client/snippets/en_US');
 const { sc } = require('@reldens/utils');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
@@ -81,21 +85,43 @@ class TestAdSkins
         })].shift();
     }
 
-    static async clickItemButton(page, imageSelector, buttonSelector, longRun)
+    static async clickItemButton(page, gameConfig, panelSelectors, itemKey, buttonSelector, longRun)
     {
-        await page.locator(imageSelector).click({
-            timeout: TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun)
-        });
+        await ItemDetailsShowcase.showDetails(
+            page,
+            panelSelectors.itemImage(itemKey),
+            panelSelectors.itemDetails(itemKey),
+            await ItemDetailsShowcase.loadStoredTexts(gameConfig, itemKey),
+            longRun
+        );
         let itemButton = page.locator(buttonSelector);
         await expect(itemButton).toBeVisible();
         await itemButton.click();
     }
 
-    static async useTicket(page, ticketItemKey, longRun)
+    static async prepareSkinAd(page, gameConfig, e2eGroup, longRun)
     {
+        let skinData = await TestAdSkins.loadSkinData(gameConfig);
+        let playerName = gameConfig.e2ePlayerName;
+        let skinAd = await AdMessagesPlayer.enableAd(gameConfig, e2eGroup, skinData.adsKey, playerName);
+        await E2eSeedAndRestoreApi.seedInventoryItem(gameConfig, e2eGroup, playerName, skinData.ticketItemKey, 1);
+        await Login.loginRootPlayer(page, gameConfig, longRun);
+        await LongRunShowcase.startGameplayRecording(page, longRun);
+        let adTimeout = TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun);
+        await AdMessagesPlayer.waitForProviderReady(page, adTimeout);
+        return {skinData, skinAd, playerName, adTimeout};
+    }
+
+    static async openInventoryAndUseTicket(page, gameConfig, ticketItemKey, longRun)
+    {
+        await page.click(Selectors.hud.inventoryOpen);
+        await expect(page.locator(Selectors.inventory.ui)).toBeVisible();
+        await LongRunShowcase.pause(page, longRun);
         await TestAdSkins.clickItemButton(
             page,
-            Selectors.inventory.itemImage(ticketItemKey),
+            gameConfig,
+            Selectors.inventory,
+            ticketItemKey,
             Selectors.inventory.itemUse(ticketItemKey),
             longRun
         );
@@ -103,25 +129,21 @@ class TestAdSkins
 
     static async runAdSkinTest(page, screenshots, gameConfig, e2eGroup, longRun)
     {
-        let skinData = await TestAdSkins.loadSkinData(gameConfig);
+        let skinAdData = await TestAdSkins.prepareSkinAd(page, gameConfig, e2eGroup, longRun);
+        let skinData = skinAdData.skinData;
+        let playerName = skinAdData.playerName;
         expect(skinData.skinKey, 'The skin ad reward item must have a skin key').toBeTruthy();
-        let playerName = gameConfig.e2ePlayerName;
-        let skinAd = await AdMessagesPlayer.enableAd(gameConfig, e2eGroup, skinData.adsKey, playerName);
-        await E2eSeedAndRestoreApi.seedInventoryItem(gameConfig, e2eGroup, playerName, skinData.ticketItemKey, 1);
-        await Login.loginRootPlayer(page, gameConfig, longRun);
+        await LongRunShowcase.zoomCamera(page, longRun);
         let roomName = await Navigation.getCurrentRoomName(page);
         let avatarsBefore = await TestAdSkins.fetchAvatarKeys(page, gameConfig, roomName);
         expect(avatarsBefore.client, 'The client sprite must show the server avatar').toBe(avatarsBefore.server);
-        await page.click(Selectors.hud.inventoryOpen);
-        await expect(page.locator(Selectors.inventory.ui)).toBeVisible();
-        await LongRunShowcase.pause(page, longRun);
-        await TestAdSkins.useTicket(page, skinData.ticketItemKey, longRun);
+        await TestAdSkins.openInventoryAndUseTicket(page, gameConfig, skinData.ticketItemKey, longRun);
         await screenshots.capture(page, 'skin-ticket-used');
         expect(
             await TestAdSkins.fetchItemQuantities(gameConfig, playerName, skinData.ticketItemKey),
             'The ticket use only requests the skin ad'
         ).toEqual([1]);
-        await AdMessagesPlayer.playAd(page, skinAd);
+        await AdMessagesPlayer.waitForPlayedAd(page, skinAdData.skinAd, skinAdData.adTimeout);
         await expect(page.locator(Selectors.inventory.itemImage(skinData.rewardItemKey))).toBeVisible({
             timeout: TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun)
         });
@@ -135,7 +157,9 @@ class TestAdSkins
         await screenshots.capture(page, 'skin-item-rewarded');
         await TestAdSkins.clickItemButton(
             page,
-            Selectors.inventory.itemImage(skinData.rewardItemKey),
+            gameConfig,
+            Selectors.inventory,
+            skinData.rewardItemKey,
             Selectors.inventory.itemEquip(skinData.rewardItemKey),
             longRun
         );
@@ -149,7 +173,9 @@ class TestAdSkins
         await expect(page.locator(Selectors.equipment.ui)).toBeVisible();
         await TestAdSkins.clickItemButton(
             page,
-            Selectors.equipment.itemImage(skinData.rewardItemKey),
+            gameConfig,
+            Selectors.equipment,
+            skinData.rewardItemKey,
             Selectors.equipment.itemEquip(skinData.rewardItemKey),
             longRun
         );
@@ -163,28 +189,29 @@ class TestAdSkins
 
     static async runFailedAdTest(page, screenshots, gameConfig, e2eGroup, longRun)
     {
-        let skinData = await TestAdSkins.loadSkinData(gameConfig);
-        let playerName = gameConfig.e2ePlayerName;
-        let skinAd = await AdMessagesPlayer.enableAd(gameConfig, e2eGroup, skinData.adsKey, playerName);
-        await E2eSeedAndRestoreApi.seedInventoryItem(gameConfig, e2eGroup, playerName, skinData.ticketItemKey, 1);
-        await Login.loginRootPlayer(page, gameConfig, longRun);
-        await LongRunShowcase.openPanel(page, Selectors.hud.inventoryOpen, Selectors.inventory.ui, longRun);
-        if(longRun){
-            await TestAdSkins.useTicket(page, skinData.ticketItemKey, longRun);
-        }
-        await AdMessagesPlayer.sendAdMessage(page, skinAd, AdsConst.ACTIONS.AD_STARTED);
+        let skinAdData = await TestAdSkins.prepareSkinAd(page, gameConfig, e2eGroup, longRun);
+        let skinData = skinAdData.skinData;
+        let playerName = skinAdData.playerName;
+        let skinAd = skinAdData.skinAd;
+        await AdMessagesPlayer.failNextAd(page, skinAdData.adTimeout);
+        await LongRunShowcase.openPanel(page, Selectors.hud.chatOpen, Selectors.chat.input, longRun);
+        await TestAdSkins.openInventoryAndUseTicket(page, gameConfig, skinData.ticketItemKey, longRun);
         await expect.poll(
-            async () => {
-                let playedAd = await TestAdSkins.fetchPlayedAd(gameConfig, playerName, skinAd.id);
-                return Boolean(playedAd?.started_at) && !playedAd.ended_at;
-            },
+            async () => await TestAdSkins.fetchPlayedAd(gameConfig, playerName, skinAd.id),
             {message: 'The skin ad start must open the played ad'}
-        ).toBe(true);
-        await AdMessagesPlayer.sendAdMessage(page, skinAd, AdsConst.ACTIONS.AD_FAILED);
+        ).toEqual(expect.objectContaining({started_at: expect.anything(), ended_at: null}));
+        await AdMessagesPlayer.waitForPlayedAd(page, skinAd, skinAdData.adTimeout);
         await expect.poll(
             async () => Boolean((await TestAdSkins.fetchPlayedAd(gameConfig, playerName, skinAd.id)).ended_at),
             {message: 'The failed skin ad must close the played ad'}
         ).toBe(true);
+        await expect(
+            page.locator(Selectors.chat.tabContentGeneral),
+            'The player must be told the failed skin ad kept the ticket'
+        ).toContainText(UsersTranslations.users.skinAdFailed, {
+            timeout: TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun)
+        });
+        await LongRunShowcase.pause(page, longRun);
         await screenshots.capture(page, 'skin-ad-failed');
         expect(
             await TestAdSkins.fetchItemQuantities(gameConfig, playerName, skinData.ticketItemKey),
