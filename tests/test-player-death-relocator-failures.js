@@ -65,7 +65,10 @@ class TestPlayerDeathRelocatorFailures extends BaseTest
                 this.assert.deepStrictEqual(setup.playerSchema.privateData, {
                     [privateDataKeys.PLAYER_DEATH_TIMER]: this.battleTimerMarker,
                     [privateDataKeys.RESURRECTION_AD_STARTED]: false,
-                    [privateDataKeys.RESURRECTION_AD_FAILED]: false
+                    [privateDataKeys.RESURRECTION_AD_FAILED]: false,
+                    [privateDataKeys.RESTORATION_ITEM_CHOICE]: '',
+                    [privateDataKeys.REVIVE_READY]: false,
+                    [privateDataKeys.PLAYER_DEATH_EVENT]: setup.event
                 });
                 this.assert.strictEqual(setup.revivedPlayers, 0);
                 this.assert.deepStrictEqual(setup.sceneChanges, []);
