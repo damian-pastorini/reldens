@@ -149,7 +149,11 @@ class Selectors
         this.gameOver = {
             box: '#game-over',
             title: '#game-over .game-over-title',
+            wait: '#game-over .game-over-wait',
             reviveMessage: '#game-over .game-over-revive-message',
+            reviveButton: '#game-over .game-over-revive',
+            restorationItemUseButton: '#game-over .game-over-restoration-item-use',
+            restorationItemKeepButton: '#game-over .game-over-restoration-item-keep',
             resurrectionAdButton: '#game-over .game-over-resurrection-ad'
         };
     }
