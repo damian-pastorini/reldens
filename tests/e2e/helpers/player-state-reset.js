@@ -18,6 +18,7 @@ const { TestDataSetup } = require('./test-data-setup');
 const { RoomEnemiesReset } = require('./room-enemies-reset');
 const { RoomMovementState } = require('./room-movement-state');
 const { SecurityState } = require('./security-state');
+const { E2eSeedAndRestoreEndpoints } = require('./e2e-seed-and-restore-endpoints');
 const { ParallelSpecGroups } = require('./parallel-spec-groups');
 
 class PlayerStateReset
@@ -225,6 +226,7 @@ class PlayerStateReset
                     groupSnapshots
                 );
                 await SecurityState.resetAll(serverManager);
+                await E2eSeedAndRestoreEndpoints.resetGroup(serverManager, groupKey);
                 await PlayerStateReset.restoreSnapshots(
                     serverManager.dataServer,
                     groupSnapshots,

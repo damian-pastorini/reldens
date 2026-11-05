@@ -4,23 +4,14 @@
  *
  */
 
-const { BaseTest } = require('./base-test');
+const { RandomMovementBaseTest } = require('./fixtures/random-movement-base-test');
 const { ObjectRandomMovement } = require('../lib/objects/server/object/object-random-movement');
 const { NpcObject } = require('../lib/objects/server/object/type/npc-object');
-const { RandomMovementBodyBuilder } = require('./fixtures/random-movement-body-builder');
 const { GameConst } = require('../lib/game/constants');
 const { ObjectsConst } = require('../lib/objects/constants');
 
-class TestNpcObjectInteractionArea extends BaseTest
+class TestNpcObjectInteractionArea extends RandomMovementBaseTest
 {
-
-    constructor(config)
-    {
-        super(config);
-        this.bodyBuilder = new RandomMovementBodyBuilder();
-        this.tileSize = this.bodyBuilder.tileSize;
-        this.originalTile = this.bodyBuilder.tile;
-    }
 
     createInteractiveNpc()
     {

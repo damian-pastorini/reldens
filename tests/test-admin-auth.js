@@ -6,6 +6,7 @@
 
 const { BaseTest } = require('./base-test');
 const { GameConst } = require('../lib/game/constants');
+const { sc } = require('@reldens/utils');
 
 class TestAdminAuth extends BaseTest
 {
@@ -32,6 +33,25 @@ class TestAdminAuth extends BaseTest
             }, loginPageCookies);
             this.assert.strictEqual(302, response.statusCode);
             this.assert(response.headers.location.includes(this.adminPath));
+        });
+    }
+
+    async testValidLoginRegeneratesTheSession()
+    {
+        await this.test('Valid login issues a new session and the session before the login is not authenticated', async () => {
+            let loginPageCookies = await this.fetchLoginPageCookies();
+            let loginForm = {email: this.adminUser, password: this.adminPassword};
+            let response = await this.makeFormRequest('POST', this.adminPath+'/login', loginForm, loginPageCookies);
+            let sessionCookiePrefix = 'connect.sid=';
+            let loginPageSession = loginPageCookies.find((cookie) => 0 === cookie.indexOf(sessionCookiePrefix));
+            let loginSession = response.headers['set-cookie'].find((cookie) => 0 === cookie.indexOf(sessionCookiePrefix));
+            this.assert.strictEqual(302, response.statusCode);
+            this.assert.strictEqual(sc.isString(loginPageSession), true);
+            this.assert.strictEqual(sc.isString(loginSession), true);
+            this.assert.notStrictEqual(loginPageSession, loginSession);
+            let adminResponse = await this.makeAuthenticatedRequest('GET', this.adminPath, null, loginPageCookies);
+            this.assert.strictEqual(302, adminResponse.statusCode);
+            this.assert(adminResponse.headers.location.includes('/login'));
         });
     }
 

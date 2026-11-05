@@ -12,10 +12,14 @@ The project provides three main CLI entry points:
 ## Development & Building
 
 ```bash
-# Run tests
-npm test
+# Run tests: ALL TESTS (UNIT, INTEGRATION, E2E) MUST ALWAYS RUN IN THEIR OWN SELF-HOSTED ENVIRONMENT, never `npm test`
+# (it targets an external server on the tests/config.json port that nothing starts)
+# Unit and integration tests, boots its own server (RELDENS_TESTS_CONFIRMED=1 skips the confirmation)
+npm run test:default
 # Or with filters
-node tests/manager.js --filter="test-name" --break-on-error
+npm run test:default -- --filter="test-name" --break-on-error
+# E2E tests, boots its own server
+npm run test:e2e -- --db-reset=<tests/config.json dbName>
 
 # Build commands (via reldens CLI)
 # Build theme styles

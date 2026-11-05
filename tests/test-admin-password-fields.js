@@ -5,10 +5,11 @@
  */
 
 const { BaseTest } = require('./base-test');
+const { LoggerOutputCapture } = require('./fixtures/logger-output-capture');
 const { PasswordEncryptionHandler } = require('@reldens/cms/lib/password-encryption-handler');
 const { RouterContents } = require('@reldens/cms/lib/admin-manager/router-contents');
 const { Encryptor } = require('@reldens/server-utils');
-const { Logger, sc } = require('@reldens/utils');
+const { Logger } = require('@reldens/utils');
 
 class TestAdminPasswordFields extends BaseTest
 {
@@ -63,30 +64,19 @@ class TestAdminPasswordFields extends BaseTest
         routerContents.fetchUploadProperties = () => ({});
         routerContents.loadEntityById = async () => ({id: 5, password: 'stored-hash'});
         routerContents.dataServer = {getEntity: () => ({updateById})};
-        let loggedArguments = [];
-        let previousCallback = Logger.callback;
-        let previousLevels = Logger.activeLogLevels;
-        Logger.activeLogLevels = [4];
-        Logger.callback = (...args) => loggedArguments.push(sc.toJsonString(args));
-        try {
-            await routerContents.processSaveEntity(
-                {body: {id: '5', password: passwordHash, status: '1'}},
-                {},
-                {
-                    entityKey: 'users',
-                    entityPath: 'users',
-                    options: {
-                        editProperties: ['password', 'status'],
-                        properties: {id: {type: 'number'}, password: {type: 'string'}, status: {type: 'string'}}
-                    }
-                },
-                'users'
-            );
-        } finally {
-            Logger.callback = previousCallback;
-            Logger.activeLogLevels = previousLevels;
-        }
-        return loggedArguments.join(' ');
+        return await LoggerOutputCapture.capture(Logger.logLevels.error, async () => routerContents.processSaveEntity(
+            {body: {id: '5', password: passwordHash, status: '1'}},
+            {},
+            {
+                entityKey: 'users',
+                entityPath: 'users',
+                options: {
+                    editProperties: ['password', 'status'],
+                    properties: {id: {type: 'number'}, password: {type: 'string'}, status: {type: 'string'}}
+                }
+            },
+            'users'
+        ));
     }
 
     async testTheFailedSaveResultDoesNotLogThePassword()

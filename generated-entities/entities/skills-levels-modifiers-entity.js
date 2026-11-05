@@ -39,6 +39,7 @@ class SkillsLevelsModifiersEntity extends EntityProperties
                 type: 'reference',
                 reference: 'operation_types',
                 alias: 'related_operation_types',
+                referenceKey: 'key',
                 onDelete: 'noAction',
                 isRequired: true,
                 dbType: 'int'

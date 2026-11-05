@@ -5,6 +5,7 @@
  */
 
 const { BaseTest } = require('./base-test');
+const { ClanFixturesBuilder } = require('./fixtures/clan-fixtures-builder');
 const { InventoryMessageActions } = require('../lib/inventory/server/message-actions');
 const { InventoryConst } = require('../lib/inventory/constants');
 const { ObjectsConst } = require('../lib/objects/constants');
@@ -35,13 +36,13 @@ class TestMessageActionsGuards extends BaseTest
 
     createTeamsPlugin(teams, clans)
     {
-        return {
+        return ClanFixturesBuilder.createTeamsPlugin({
             events: {emit: async () => true},
             dataServer: {getEntity: () => ({delete: async () => true, deleteById: async () => true})},
             teams,
             clans,
             teamPendingInvites: {}
-        };
+        });
     }
 
     createTeamWithThreePlayers(sentMessages)

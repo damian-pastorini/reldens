@@ -5,22 +5,12 @@
  */
 
 const { Body } = require('p2');
-const { BaseTest } = require('./base-test');
+const { RandomMovementBaseTest } = require('./fixtures/random-movement-base-test');
 const { ObjectRandomMovement } = require('../lib/objects/server/object/object-random-movement');
 const { ObjectsManager } = require('../lib/objects/server/manager');
-const { RandomMovementBodyBuilder } = require('./fixtures/random-movement-body-builder');
 
-class TestObjectsManagerRandomMovement extends BaseTest
+class TestObjectsManagerRandomMovement extends RandomMovementBaseTest
 {
-
-    constructor(config)
-    {
-        super(config);
-        this.tileSize = 32;
-        this.mapSize = 30;
-        this.originalTile = 10;
-        this.bodyBuilder = new RandomMovementBodyBuilder(this.tileSize, this.mapSize, this.originalTile);
-    }
 
     async testManagerResumesTheMovementOfTheRemovedPlayerDialogs()
     {
