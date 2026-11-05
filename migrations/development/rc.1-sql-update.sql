@@ -354,6 +354,8 @@ INSERT IGNORE INTO `config` (`scope`, `path`, `value`, `type`) VALUES
 	('server', 'autoRecovery/players/properties/hp', '1', 2),
 	('server', 'autoRecovery/players/startDelayMs', '10000', 2),
 	('server', 'autoRecovery/tickMs', '5000', 2),
+	('server', 'players/death/autoConsumeRestorationItem', '1', 3),
+	('server', 'players/death/autoRevive', '1', 3),
 	('server', 'players/death/restorationItemKey', 'restoration_scroll', 1),
 	('server', 'players/death/resurrectionAdsKey', 'resurrection-video', 1),
 	('server', 'players/death/teleportToTown/enabled', '0', 3),
