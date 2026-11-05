@@ -10,6 +10,8 @@ const { SkinAdTicketGate } = require('../lib/users/server/skin-ad-ticket-gate');
 const { UsersConst } = require('../lib/users/constants');
 const { InventoryConst } = require('../lib/inventory/constants');
 const { AdsConst } = require('../lib/ads/constants');
+const { MessageFactory } = require('../lib/chat/message-factory');
+const { ChatConst } = require('../lib/chat/constants');
 
 class TestSkinAdTicketGate extends BaseTest
 {
@@ -172,6 +174,35 @@ class TestSkinAdTicketGate extends BaseTest
             let event = this.createEvent({act: InventoryConst.ACTIONS.USE, idx: this.ticketItemKey}, 1);
             this.assert.strictEqual(gate.findTicketItem(event.playerSchema), false);
             this.assert.strictEqual(gate.findTicketItem(false), false);
+        });
+    }
+
+    async testFailedSkinAdTellsThePlayerTheTicketWasKept()
+    {
+        await this.test('a failed skin ad tells the player the ticket was kept, other failed ads tell nothing', async () => {
+            let skinAdFailedData = {act: AdsConst.ACTIONS.AD_FAILED, ads_id: this.skinAdId};
+            let skinAdEvent = this.createEvent(skinAdFailedData, 1);
+            this.assert.strictEqual(await this.createGate().onBeforeSceneExecuteMessages(skinAdEvent), true);
+            this.assert.deepStrictEqual(
+                skinAdEvent.client.sentMessages,
+                [MessageFactory.create(ChatConst.TYPES.ERROR, UsersConst.SNIPPETS.SKIN_AD_FAILED)]
+            );
+            this.assert.strictEqual(skinAdEvent.canContinue, true);
+            this.assert.strictEqual(skinAdEvent.playerSchema.inventory.manager.items[this.ticketItemKey].qty, 1);
+            this.assert.deepStrictEqual(skinAdEvent.playerSchema.inventory.manager.decreasedItems, []);
+            let notToldCases = [
+                {gate: this.createGate(), messageData: {act: AdsConst.ACTIONS.AD_FAILED, ads_id: this.otherAdId}},
+                {
+                    gate: this.createGate({[UsersConst.SKINS.CONFIG_PATHS.ADS_KEY]: 'missing-video'}),
+                    messageData: skinAdFailedData
+                }
+            ];
+            for(let notToldCase of notToldCases){
+                let notToldEvent = this.createEvent(notToldCase.messageData, 1);
+                this.assert.strictEqual(await notToldCase.gate.onBeforeSceneExecuteMessages(notToldEvent), false);
+                this.assert.deepStrictEqual(notToldEvent.client.sentMessages, []);
+                this.assert.strictEqual(notToldEvent.canContinue, true);
+            }
         });
     }
 
