@@ -81,6 +81,8 @@ class ParallelSpecGroups
                 'test-authentication.spec.js',
                 'test-character-system.spec.js',
                 'test-movement.spec.js',
+                'test-client-interpolation.spec.js',
+                'test-scene-interpolation-branches.spec.js',
                 'test-teleport-npc.spec.js',
                 'test-death-teleport.spec.js',
                 'test-scores-reset.spec.js'
