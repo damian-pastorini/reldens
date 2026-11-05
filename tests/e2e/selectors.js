@@ -15,6 +15,7 @@ class Selectors
 {
     constructor()
     {
+        this.gameOver = {};
         this.initBaseSelectors();
         this.initHudAndChatSelectors();
         this.initInventoryAndStatsSelectors();
@@ -118,7 +119,9 @@ class Selectors
             playerStatsUi: '#player-stats-ui',
             fullScreen: '#full-screen-btn',
             inventoryOpen: '#inventory-open',
+            inventoryClose: '#inventory-close',
             equipmentOpen: '#equipment-open',
+            equipmentClose: '#equipment-close',
             minimapOpen: '#minimap-open',
             minimapUi: '#minimap-ui',
             minimapClose: '#minimap-close',
@@ -143,6 +146,12 @@ class Selectors
             tabLabelActive: '.tab-label.active',
             tabContentActive: '.chat-tab-content-active'
         };
+        this.gameOver = {
+            box: '#game-over',
+            title: '#game-over .game-over-title',
+            reviveMessage: '#game-over .game-over-revive-message',
+            resurrectionAdButton: '#game-over .game-over-resurrection-ad'
+        };
     }
 
     initInventoryAndStatsSelectors()
@@ -154,7 +163,8 @@ class Selectors
             itemImage: (itemKey) => '#inventory-items img[src$="/' + itemKey + '.png"]',
             itemQty: (itemKey) => '.item-box:has(img[src$="/' + itemKey + '.png"]) [id^="item-qty-"]',
             itemEquip: (itemKey) => '.item-box:has(img[src$="/' + itemKey + '.png"]) [id^="item-equip-"]',
-            itemUse: (itemKey) => '.item-box:has(img[src$="/' + itemKey + '.png"]) [id^="item-use-"]'
+            itemUse: (itemKey) => '.item-box:has(img[src$="/' + itemKey + '.png"]) [id^="item-use-"]',
+            itemDetails: (itemKey) => '#inventory-items .item-box:has(img[src$="/'+itemKey+'.png"]) .item-data-container'
         };
         this.equipment = {
             ui: '#equipment-ui',
@@ -162,9 +172,11 @@ class Selectors
             groupSlot: '.group-item-block',
             slotById: (groupKey) => '#group-item-'+groupKey,
             slotImage: '.group-item-block .equipped-item .item-box .image-container img',
+            equippedItemImage: (itemKey) => '.group-item-block .equipped-item img[src$="/'+itemKey+'.png"]',
             itemBoxVisible: '#equipment-items .item-box',
             itemImage: (itemKey) => '#equipment-items img[src$="/' + itemKey + '.png"]',
-            itemEquip: (itemKey) => '#equipment-items .item-box:has(img[src$="/' + itemKey + '.png"]) [id^="item-equip-"]'
+            itemEquip: (itemKey) => '#equipment-items .item-box:has(img[src$="/' + itemKey + '.png"]) [id^="item-equip-"]',
+            itemDetails: (itemKey) => '#equipment-items .item-box:has(img[src$="/'+itemKey+'.png"]) .item-data-container'
         };
         this.stats = {
             container: '.stat-container',
