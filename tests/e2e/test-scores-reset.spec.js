@@ -43,6 +43,7 @@ class TestScoresReset
             npcs_kills_count: 0
         });
         await Login.loginRootPlayer(page, gameConfig, longRun);
+        await LongRunShowcase.startGameplayRecording(page, longRun);
         let uiTimeout = TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun);
         await page.locator(Selectors.hud.scoresOpen).waitFor({state: 'visible', timeout: uiTimeout});
         await page.click(Selectors.hud.scoresOpen);
