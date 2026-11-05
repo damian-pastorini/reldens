@@ -8,7 +8,6 @@ const { BaseTest } = require('./base-test');
 const { IncreaseScoreOnKillMapper } = require('../lib/scores/server/mapper/increase-score-on-kill-mapper');
 const { IncreaseScoreOnKillBuilder } = require('./fixtures/increase-score-on-kill-builder');
 const { ScoresConst } = require('../lib/scores/constants');
-const { ObjectsConst } = require('../lib/objects/constants');
 const { sc } = require('@reldens/utils');
 
 class TestIncreaseScoreOnKill extends BaseTest
@@ -17,43 +16,13 @@ class TestIncreaseScoreOnKill extends BaseTest
     constructor(config)
     {
         super(config);
-        this.scoresConfig = {
-            obtainedScorePerPlayer: 10,
-            obtainedScorePerNpc: 5,
-            useNpcCustomScore: true,
-            obtainedScorePerPlayerLevelMultiplier: 3
-        };
+        this.killBuilder = new IncreaseScoreOnKillBuilder();
+        this.scoresConfig = this.killBuilder.scoresConfig;
         this.pendingResetValue = '2026-10-18'+ScoresConst.RESET.PENDING_MARK+sc.toJsonString({
             claimedAt: 1,
             scoresMaxId: 1,
             detailsMaxId: 0
         });
-        this.killBuilder = new IncreaseScoreOnKillBuilder(this.scoresConfig);
-    }
-
-    createPlayerDeathEvent(killedPlayerLevel)
-    {
-        return {
-            room: {},
-            attackerPlayer: {player_id: 1},
-            targetSchema: {player_id: 2, skillsServer: {classPath: {currentLevel: killedPlayerLevel}}}
-        };
-    }
-
-    async killTheNpc(setup, mapper = false, targetObject = {id: 6})
-    {
-        return await setup.increaseScoreOnKill.execute(
-            (mapper || new IncreaseScoreOnKillMapper()).fromBattleEndedEvent({
-                room: {
-                    roomId: 'room-1',
-                    activePlayerByPlayerId: () => ({client: {send: () => true}}),
-                    broadcast: () => true
-                },
-                playerSchema: {player_id: 1},
-                pve: {targetObject}
-            }),
-            ObjectsConst.TYPE_OBJECT
-        );
     }
 
     async testQueuedKillsOfASharedMapperKeepTheirOwnData()
@@ -62,8 +31,8 @@ class TestIncreaseScoreOnKill extends BaseTest
             let setup = this.killBuilder.createKillSetup([], '2026-10-18', true);
             let sharedMapper = new IncreaseScoreOnKillMapper();
             await Promise.all([
-                this.killTheNpc(setup, sharedMapper, {id: 6, killScore: 8}),
-                this.killTheNpc(setup, sharedMapper, {id: 7, killScore: 3})
+                this.killBuilder.killTheNpc(setup, sharedMapper, {id: 6, killScore: 8}),
+                this.killBuilder.killTheNpc(setup, sharedMapper, {id: 7, killScore: 3})
             ]);
             this.assert.strictEqual(setup.scores.rows.length, 1);
             let scoreRow = [...setup.scores.rows].shift();
@@ -79,7 +48,7 @@ class TestIncreaseScoreOnKill extends BaseTest
         await this.test('a kill during a pending reset replaces the previous period row', async () => {
             let previousRow = {id: 1, player_id: 1, total_score: 50, players_kills_count: 2, npcs_kills_count: 3};
             let setup = this.killBuilder.createKillSetup([previousRow], this.pendingResetValue, true);
-            await this.killTheNpc(setup);
+            await this.killBuilder.killTheNpc(setup);
             this.assert.deepStrictEqual(setup.scores.deletedIds, [1]);
             this.assert.strictEqual(setup.scores.rows.length, 1);
             let newPeriodRow = [...setup.scores.rows].shift();
@@ -95,7 +64,7 @@ class TestIncreaseScoreOnKill extends BaseTest
         await this.test('overlapping kills during a pending reset share one new period row', async () => {
             let previousRow = {id: 1, player_id: 1, total_score: 50, players_kills_count: 2, npcs_kills_count: 3};
             let setup = this.killBuilder.createKillSetup([previousRow], this.pendingResetValue, true);
-            await Promise.all([this.killTheNpc(setup), this.killTheNpc(setup)]);
+            await Promise.all([this.killBuilder.killTheNpc(setup), this.killBuilder.killTheNpc(setup)]);
             this.assert.deepStrictEqual(setup.scores.deletedIds, [1]);
             this.assert.strictEqual(setup.scores.rows.length, 1);
             let newPeriodRow = [...setup.scores.rows].shift();
@@ -108,7 +77,7 @@ class TestIncreaseScoreOnKill extends BaseTest
     {
         await this.test('overlapping first kills of a player without score create one row', async () => {
             let setup = this.killBuilder.createKillSetup([], '2026-10-18', true);
-            await Promise.all([this.killTheNpc(setup), this.killTheNpc(setup)]);
+            await Promise.all([this.killBuilder.killTheNpc(setup), this.killBuilder.killTheNpc(setup)]);
             this.assert.strictEqual(setup.scores.rows.length, 1);
             let createdRow = [...setup.scores.rows].shift();
             this.assert.strictEqual(createdRow.total_score, 2 * this.scoresConfig.obtainedScorePerNpc);
@@ -121,7 +90,7 @@ class TestIncreaseScoreOnKill extends BaseTest
             let previousRow = {id: 1, player_id: 1, total_score: 50, players_kills_count: 0, npcs_kills_count: 3};
             let setup = this.killBuilder.createKillSetup([previousRow], '2026-10-18', true);
             setup.scores.deletesOnUpdate = 1;
-            await this.killTheNpc(setup);
+            await this.killBuilder.killTheNpc(setup);
             this.assert.strictEqual(setup.scores.rows.length, 1);
             let newPeriodRow = [...setup.scores.rows].shift();
             this.assert.strictEqual(newPeriodRow.id, 10);
@@ -134,7 +103,7 @@ class TestIncreaseScoreOnKill extends BaseTest
         await this.test('a kill while a reset is pending adds to a row created after the claim', async () => {
             let newPeriodRow = {id: 2, player_id: 1, total_score: 50, players_kills_count: 0, npcs_kills_count: 3};
             let setup = this.killBuilder.createKillSetup([newPeriodRow], this.pendingResetValue, true);
-            await this.killTheNpc(setup);
+            await this.killBuilder.killTheNpc(setup);
             this.assert.deepStrictEqual(setup.scores.deletedIds, []);
             this.assert.deepStrictEqual(setup.scores.rows.map(row => row.id), [2]);
             this.assert.strictEqual(newPeriodRow.total_score, 50 + this.scoresConfig.obtainedScorePerNpc);
@@ -150,7 +119,7 @@ class TestIncreaseScoreOnKill extends BaseTest
                 '2026-10-18',
                 true
             );
-            await this.killTheNpc(completedSetup);
+            await this.killBuilder.killTheNpc(completedSetup);
             this.assert.deepStrictEqual(completedSetup.scores.deletedIds, []);
             let completedScore = [...completedSetup.scores.rows].shift();
             this.assert.strictEqual(completedScore.total_score, 50 + this.scoresConfig.obtainedScorePerNpc);
@@ -159,7 +128,7 @@ class TestIncreaseScoreOnKill extends BaseTest
                 this.pendingResetValue,
                 false
             );
-            await this.killTheNpc(disabledSetup);
+            await this.killBuilder.killTheNpc(disabledSetup);
             this.assert.deepStrictEqual(disabledSetup.scores.deletedIds, []);
             let disabledScore = [...disabledSetup.scores.rows].shift();
             this.assert.strictEqual(disabledScore.total_score, 50 + this.scoresConfig.obtainedScorePerNpc);
@@ -186,7 +155,7 @@ class TestIncreaseScoreOnKill extends BaseTest
         await this.test('a player kill adds the killed player level times the level multiplier', async () => {
             let killedPlayerLevel = 4;
             let scoreProps = new IncreaseScoreOnKillMapper().fromPlayerDeathEvent(
-                this.createPlayerDeathEvent(killedPlayerLevel)
+                this.killBuilder.createPlayerDeathEvent(killedPlayerLevel)
             );
             this.assert.strictEqual(scoreProps.killedPlayerLevel, killedPlayerLevel);
             this.assert.strictEqual(
@@ -201,7 +170,9 @@ class TestIncreaseScoreOnKill extends BaseTest
     {
         await this.test('a player kill without level multiplier gives the fixed player score', async () => {
             let scoresConfig = Object.assign({}, this.scoresConfig, {obtainedScorePerPlayerLevelMultiplier: 0});
-            let scoreProps = new IncreaseScoreOnKillMapper().fromPlayerDeathEvent(this.createPlayerDeathEvent(9));
+            let scoreProps = new IncreaseScoreOnKillMapper().fromPlayerDeathEvent(
+                this.killBuilder.createPlayerDeathEvent(9)
+            );
             this.assert.strictEqual(
                 this.killBuilder.createIncreaseScoreOnKill(scoresConfig).determineObtainedScore(scoreProps, true),
                 scoresConfig.obtainedScorePerPlayer
@@ -293,7 +264,7 @@ class TestIncreaseScoreOnKill extends BaseTest
     {
         await this.test('the mapper resets the data of the previous event', async () => {
             let mapper = new IncreaseScoreOnKillMapper();
-            mapper.fromPlayerDeathEvent(this.createPlayerDeathEvent(4));
+            mapper.fromPlayerDeathEvent(this.killBuilder.createPlayerDeathEvent(4));
             mapper.fromBattleEndedEvent({room: {}, playerSchema: {player_id: 1}, pve: {targetObject: {id: 7}}});
             this.assert.strictEqual(mapper.killPlayerId, null);
             this.assert.strictEqual(mapper.killedPlayerLevel, 0);
