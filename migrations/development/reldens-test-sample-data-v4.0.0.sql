@@ -85,7 +85,7 @@ REPLACE INTO `ads_banner` (`id`, `ads_id`, `banner_data`) VALUES
 REPLACE INTO `ads_event_video` (`id`, `ads_id`, `event_key`, `event_data`) VALUES
 	(1, 5, 'reldens.activatedRoom_reldens-new-age-town', '{"rewardItemKey":"coins","rewardItemQty":1}'),
 	(2, 6, 'reldens.activatedRoom_reldens-forest-level-1', '{"rewardItemKey":"coins","rewardItemQty":1}'),
-	(3, 7, 'reldens.gameOver', '{"rewardItemKey":"restoration_scroll","rewardItemQty":1,"replayCooldown":0}'),
+	(3, 7, 'reldens.resurrectionAd', '{"rewardItemKey":"restoration_scroll","rewardItemQty":1,"replayCooldown":0}'),
 	(4, 8, 'reldens.skinAdTicket', '{"rewardItemKey":"skin_warlock_robe","rewardItemQty":1,"replayCooldown":0}');
 
 REPLACE INTO `ads_providers` (`id`, `key`, `enabled`) VALUES
@@ -129,6 +129,15 @@ REPLACE INTO `users_locale` (`id`, `locale_id`, `user_id`) VALUES
 
 -- Snippets test data (category 1)
 REPLACE INTO `snippets` (`id`, `locale_id`, `key`, `value`) VALUES
+	(1, 2, 'actions.death.title', '¡Moriste!'),
+	(2, 2, 'actions.death.wait', 'Sólo espera...'),
+	(3, 2, 'actions.death.reviveInPlace', '¡Serás revivido donde moriste!'),
+	(4, 2, 'actions.death.reviveWithRestorationItem', '¡Como tienes %itemLabel serás revivido donde moriste!'),
+	(5, 2, 'actions.death.reviveInTown', '¡Serás revivido en %townLabel!'),
+	(6, 2, 'actions.death.resurrectionAdButton', 'Mira un anuncio para revivir donde moriste'),
+	(7, 2, 'items.growth.level', 'Nivel %level'),
+	(8, 2, 'items.growth.reachedLevel', '%itemLabel alcanzó el nivel %level.'),
+	(9, 2, 'users.skinAdFailed', 'Algo salió mal con el anuncio de la apariencia, tu ticket no fue canjeado ni quitado de tu inventario. Intenta de nuevo más tarde, si el problema persiste contacta a los administradores para solucionarlo.'),
 	(1001, 1, 'test.snippet.list', 'Test snippet for list validation'),
 	(1002, 1, 'test.snippet.edit', 'Test snippet for edit validation'),
 	(1003, 1, 'test.snippet.delete', 'Test snippet for delete validation');
@@ -1059,6 +1068,7 @@ REPLACE INTO `clan_levels` (`id`, `key`, `label`, `required_experience`) VALUES
 -- Locale data (category 1 - no required FK)
 REPLACE INTO `locale` (`id`, `locale`, `language_code`, `country_code`, `enabled`) VALUES
 	(1, 'en_US', 'en', 'US', 1),
+	(2, 'es_ES', 'es', 'ES', 1),
 	(1001, 'te_TS', 'te', 'TS', NULL),
 	(1002, 'te_ED', 'te', 'TS', NULL),
 	(1003, 'te_DL', 'te', 'TS', NULL);
