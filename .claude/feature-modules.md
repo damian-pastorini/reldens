@@ -64,6 +64,8 @@ Combat system (PvP/PvE), skills, battle mechanics
   `stats-recovery-calculator.js`): the stats auto recovery of every scene room
 - `server/player-death-relocator.js` and `server/resurrection-ad-gate.js`: the death teleport to town, the restoration
   item and the resurrection ad (see `.claude/gameplay-features.md`)
+- `server/death-revive-notifier.js` and `client/game-over-revive-message.js`: the revive mode shown in the game over box
+  and the resurrection ad button
 
 ### Inventory (`lib/inventory/`)
 Items system with equipment and usable items
@@ -72,9 +74,9 @@ Items system with equipment and usable items
 - `reldens.createPlayerInventoryBeforeSend` (`{client, playerSchema, room, inventoryServer, sendData}`) is emitted
   before the groups data is sent to the joined player (a listener can change `sendData`) and
   `reldens.createPlayerInventoryAfter` (the same event data) after it is sent
-- `items_inventory.customData` keeps the data of one item instance, `server/items-growth-applier.js` grows the items
-  with the experience of their owner and `server/item-growth-calculator.js` has the item growth maths (see
-  `.claude/gameplay-features.md`)
+- `items_inventory.customData` keeps the data of one item instance, `server/items-growth-applier.js` loads and saves the
+  items growth, shares the owner experience with the items and sends the reached level, the growth mechanics are the
+  `ItemGrowthLeveler` and `ItemGrowthCalculator` of `@reldens/items-system` (see `.claude/gameplay-features.md`)
 - Every new inventory item gets its own Modifier copies targeting its owner (`ItemsFactory.isolateModifiers()` in
   `StorageObserver.saveNewItem()`), the items model data modifiers are shared by every item created from them
 - The equip and use messages are rejected for an item key that is not in the inventory or an item of another type
