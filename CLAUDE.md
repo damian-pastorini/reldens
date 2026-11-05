@@ -22,9 +22,9 @@ Provides the core utilities used throughout the entire codebase on both client a
 
 Server-only utilities:
 
-- **`FileHandler`**: all file I/O in the codebase goes through this class. Never use Node.js `fs` directly.
+- **`FileHandler`**: the file I/O helper used by the server code: path resolution, read and write, existence checks and validation.
 - **`AppServerFactory`**: creates the Express app and HTTP/HTTPS server. Used in `ServerManager` to set up the web server before Colyseus attaches to it.
-- **Express 5** (server-utils 0.68.0): never `require('express')`, use `appServerFactory.applicationFramework` or `adminManager.applicationFramework` (`Router()`, and `static()`, which sets `dotfiles: 'ignore'` by itself through the server-utils `createStaticMiddleware()` when the options do not set it, so the statics never pass the option and never call `express.static()` directly); read the body with `sc.get(req.body, ...)` because `req.body` is undefined when nothing was parsed; a catch-all route is `'/{*name}'` (a bare `*` throws at registration); the query keys like `filters[key]` arrive flat (`simple` query parser); rejected async handlers reach the error middleware registered by `appServerFactory.enableErrorResponse(app)`.
+- **Express 5** (server-utils 0.68.0): the framework instance is exposed as `appServerFactory.applicationFramework` and `adminManager.applicationFramework` (`Router()`, and `static()`, which sets `dotfiles: 'ignore'` by itself through the server-utils `createStaticMiddleware()` when the options do not set it); `req.body` is undefined when nothing was parsed, so it is read with `sc.get(req.body, ...)`; a catch-all route is `'/{*name}'` (a bare `*` throws at registration); the query keys like `filters[key]` arrive flat (`simple` query parser); rejected async handlers reach the error middleware registered by `appServerFactory.enableErrorResponse(app)`.
 
 ### `@reldens/storage`
 
@@ -165,11 +165,11 @@ See `.claude/environment-variables.md` for the full list.
 - `theme/plugins/` - custom server and client plugins
 - `theme/admin/` - admin panel CSS and template overrides
 
-Use `themeManager.createClientBundle()` for bundling (checks `RELDENS_ALLOW_RUN_BUNDLER`). Do not call `buildClient()` or `buildCss()` directly during startup.
+`themeManager.createClientBundle()` runs the bundling and checks `RELDENS_ALLOW_RUN_BUNDLER`; `buildClient()` and `buildCss()` are its internals.
 
 ## Essential Commands
 
-**ALL TESTS (UNIT, INTEGRATION, E2E) MUST ALWAYS RUN IN THEIR OWN SELF-HOSTED ENVIRONMENT.** Never run `npm test` in a checkout: it targets an external server on the `tests/config.json` port that nothing starts, so every admin integration test fails with an empty `Error:` (connection refused). Every checkout uses its own `tests/config.json` test database and ports.
+The unit, integration and e2e suites are self-hosted: each one resets the `tests/config.json` database and boots its own server on that checkout ports. `npm test` targets an external server on the `tests/config.json` port that nothing starts, so the admin integration tests fail with an empty `Error:` (connection refused).
 
 ```bash
 # Unit and integration tests, self-hosted: resets the tests/config.json database and boots its own server from the
