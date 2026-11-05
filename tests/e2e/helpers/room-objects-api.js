@@ -3,9 +3,12 @@
  * Reldens - Room Objects Api
  *
  * HTTP client for the e2e room objects endpoints registered by RoomObjectsState: the server snapshot of the room
- * bodies with state, the enemies switch off until the next players reset, the enemy placement next to a player (with
- * the targeting of that exact enemy body on its placed position), the player placement next to an object (waiting for
- * the client to show the player on the placed position), the enemy attack on a player, the player
+ * bodies with state, the enemies switch off until the next players reset (only the aggressive ones, or every one but a
+ * given body), the enemy placement next to a player (with
+ * the targeting of that exact enemy body on its placed position, optionally holding its aggression until the player
+ * attacks it), the player placement next to an object (waiting for
+ * the client state and the player sprite on the placed position, optionally some tiles away from the object), the enemy
+ * attack on a player, the battle of an already placed enemy, the player
  * placement next to another player, the player affected property (hp) value and the attack on the targeted body
  * repeated until a condition is reached.
  *
@@ -29,13 +32,13 @@ class RoomObjectsApi
         )).objects;
     }
 
-    static async disableEnemies(gameConfig, roomName, onlyAggressive = false)
+    static async disableEnemies(gameConfig, roomName, onlyAggressive = false, exceptBodyKey = '')
     {
         return (await SecurityApi.request(
             gameConfig,
             'POST',
             '/api/e2e/room-objects/disable-enemies',
-            {roomName, onlyAggressive}
+            {roomName, onlyAggressive, exceptBodyKey}
         )).disabled;
     }
 
@@ -49,7 +52,17 @@ class RoomObjectsApi
         );
     }
 
-    static async placeAndTargetEnemy(page, gameConfig, roomName, enemyKey, enemyLife, timeout)
+    static async startEnemyBattle(gameConfig, roomName, playerName, enemyKey)
+    {
+        return await SecurityApi.request(
+            gameConfig,
+            'POST',
+            '/api/e2e/room-objects/enemy-battle',
+            {roomName, playerName, enemyKey}
+        );
+    }
+
+    static async placeAndTargetEnemy(page, gameConfig, roomName, enemyKey, enemyLife, timeout, holdAggression = false)
     {
         let placement = await SecurityApi.request(
             gameConfig,
@@ -59,6 +72,7 @@ class RoomObjectsApi
                 roomName,
                 enemyKey,
                 enemyLife,
+                holdAggression,
                 sessionId: await page.evaluate(() => window.reldens.activeRoomEvents.room.sessionId)
             }
         );
@@ -123,18 +137,46 @@ class RoomObjectsApi
             if(!player){
                 return false;
             }
-            return args.x === player.state.x && args.y === player.state.y;
+            if(args.x !== player.state.x || args.y !== player.state.y){
+                return false;
+            }
+            let playerEngine = window.reldens.getActiveScene()?.player;
+            let playerSprite = playerEngine?.players?.[room.sessionId];
+            if(!playerSprite){
+                return false;
+            }
+            return args.x - playerEngine.leftOff === playerSprite.x && args.y - playerEngine.topOff === playerSprite.y;
         }, {x: position.x, y: position.y}, {timeout})).jsonValue();
     }
 
-    static async placePlayerNextToObject(page, gameConfig, roomName, objectKey, timeout)
+    static async placePlayerNextToObject(page, gameConfig, roomName, objectKey, timeout, minimumTilesDistance = 0)
     {
-        let placement = await SecurityApi.request(
+        return await RoomObjectsApi.requestPlayerPlacement(
+            page,
             gameConfig,
-            'POST',
             '/api/e2e/room-objects/place-player-next-to-object',
-            {roomName, objectKey, sessionId: await page.evaluate(() => window.reldens.activeRoomEvents.room.sessionId)}
+            {roomName, objectKey, minimumTilesDistance},
+            timeout
         );
+    }
+
+    static async placePlayerInLineOfObject(page, gameConfig, roomName, objectKey, timeout, distances)
+    {
+        return await RoomObjectsApi.requestPlayerPlacement(
+            page,
+            gameConfig,
+            '/api/e2e/room-objects/place-player-in-line-of-object',
+            {roomName, objectKey, distances: distances.join(',')},
+            timeout
+        );
+    }
+
+    static async requestPlayerPlacement(page, gameConfig, path, placementData, timeout)
+    {
+        let placement = await SecurityApi.request(gameConfig, 'POST', path, {
+            ...placementData,
+            sessionId: await page.evaluate(() => window.reldens.activeRoomEvents.room.sessionId)
+        });
         if(!placement.position){
             return placement;
         }
