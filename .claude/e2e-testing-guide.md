@@ -413,7 +413,12 @@ placements wait for the client sprite on the placed position, not only for the s
   no skin item
 - `test-teleport-npc.spec.js` (exclusive) - the teleport NPC option moves the player to its destination room
 - `test-death-teleport.spec.js` (exclusive) - the dead player revives in the town, or in the forest consuming the
-  restoration item seeded or rewarded by the resurrection ad played while dead
+  restoration item seeded or rewarded by the resurrection ad played while dead; without the restoration item auto
+  consume the game over box asks to use the item (yes revives in the forest consuming it, no keeps it and revives in
+  the town); without the auto revive the box tells the seconds left, the player stays dead once that time passed and
+  the revive button revives it where it died, with the teleport disabled or consuming the chosen item. The death and
+  revive steps live in `helpers/death-revive-steps.js` (`DeathReviveSteps`, over a context with the page, the
+  screenshots, the game config, the e2e group and the long run flag)
 - `test-scores-reset.spec.js` (exclusive) - the check on a new period deletes every score and empties the open scores
   panel; the scores rows and the last period key row are preserved and created again by the group reset
 
