@@ -2,9 +2,11 @@
  *
  * Reldens - Test Teleport NPC
  *
- * Tests the teleport object type: the player placed next to the stored teleport NPC of the town opens its dialog,
- * chooses the first option that has a destination and is moved to that destination room, on the client and on the
- * server. The NPC, its options and its destinations come from the stored object row.
+ * Tests the teleport object type: the player placed next to the stored teleport NPC of the town clicks the NPC on the
+ * game canvas, which targets it (the target box shows the NPC title) and opens its dialog, chooses the first option that
+ * has a destination and is moved to that destination room, on the client and on the server. The NPC, its title, its
+ * options and its destinations come from the stored object row. The long run recording starts after the placement, so
+ * the video starts with the player next to the NPC.
  *
  */
 
@@ -42,6 +44,7 @@ class TestTeleportNpc
         expect(optionKey, 'The teleport NPC must have a destination').toBeTruthy();
         return {
             clientKey: teleportRow.client_key,
+            title: teleportRow.title,
             optionValue: sc.toJson(teleportRow.client_params, {}).options[optionKey].value,
             destinationRoom: destinations[optionKey].room
         };
@@ -61,7 +64,13 @@ class TestTeleportNpc
             sceneTimeout
         );
         expect(placement.reached, 'The player must be placed next to the NPC: '+sc.toJsonString(placement)).toBe(true);
-        await Phaser.triggerObjectInteraction(page, teleportData.clientKey);
+        await LongRunShowcase.startGameplayRecording(page, longRun);
+        await BaseE2eTest.waitForCameraStill(page);
+        await Phaser.clickObject(page, teleportData.clientKey);
+        await expect(
+            page.locator(Selectors.combat.targetBox),
+            'The clicked teleport NPC must be targeted'
+        ).toContainText(teleportData.title);
         let optionButton = page.locator(Selectors.npc.dialogue).filter({visible: true}).locator(
             '[data-option-value="'+teleportData.optionValue+'"]'
         );
