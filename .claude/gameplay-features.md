@@ -11,7 +11,7 @@ enabled in the `features` table:
   `reldens.onRoomDispose`), the death teleport (`PlayerDeathRelocator` on `reldens.playerDeath`) and the resurrection ad
   gate (`ResurrectionAdGate` on `reldens.beforeSceneExecuteMessages`)
 - `inventory` (`lib/inventory/server/plugin.js`): the item growth (`ItemsGrowthApplier` on
-  `reldens.createPlayerInventoryAfter`)
+  `reldens.createPlayerInventoryAfter`, over the `@reldens/items-system` `ItemGrowthLeveler`)
 - `scores` (`lib/scores/server/plugin.js`): the points per kill (`IncreaseScoreOnKill`) and the scores reset
   (`ScoresPeriodReset`, created and started on `reldens.serverReady` with the rooms manager)
 - `users` (`lib/users/server/plugin.js`): the skin ticket gate (`SkinAdTicketGate` on
@@ -57,10 +57,20 @@ otherwise `itemsInventory` has no `customData` and the item growth can not load 
 - `server/autoRecovery/players/enabled` (`0`): players recovery switch
 - `server/autoRecovery/players/properties/hp` (`1`): amount recovered per tick, one row per stat key
 - `server/autoRecovery/players/persistEveryTicks` (`12`): save the stats in the storage every N recoveries
+- `server/autoRecovery/players/startDelayMs` (`10000`): time a lowered stat waits before it starts recovering
 - `server/autoRecovery/objects/enabled` (`0`): enemies recovery switch
 - `server/autoRecovery/objects/onlyOutOfBattle` (`1`): skip the enemies in battle with a player
 - `server/autoRecovery/objects/properties/hp` (`1`): amount recovered per tick, one row per stat key
+- `server/autoRecovery/objects/startDelayMs` (`10000`): time a lowered stat waits before it starts recovering
+- `server/autoRecovery/players/onlyOutOfBattle` (`1`, enabled when missing): skip the players in battle
+- `server/actions/pve/chaseTimeOut` (`0`, no limit): time without hits (from the enemy or from the player) after which a
+  chasing enemy leaves the battle and goes back to its origin; an enemy `private_params` `"chaseTimeOut"` overrides it
+
+With the sample values a player or an enemy recovers 1 life point every 5 seconds, and only 10 seconds after its last
+damage and after its battle ended, so a fight is never undone by the recovery.
 - `server/scores/obtainedScorePerPlayerLevelMultiplier` (`0`): extra points per level of the killed player
+- `server/scores/npcKills/enabled` (`1`): enemies kills score switch
+- `server/scores/playerKills/enabled` (`1`): players kills score switch
 - `server/players/death/teleportToTown/enabled` (`0`): death teleport switch
 - `server/players/death/teleportToTown/roomId` (`41`): town room, falls back to `server/players/initialState/room_id`
 - `server/players/death/restorationItemKey` (`restoration_scroll`): item that revives where the player died
@@ -87,6 +97,16 @@ intervals.
 - `RoomAutoRecovery` starts one interval per scene room on `reldens.sceneRoomOnCreate` and clears it on
   `reldens.onRoomDispose`; a tick never overlaps the previous one of the same room and a failed tick is logged and
   releases the room for the next one
+- a player or an enemy in battle (with `onlyOutOfBattle`) never recovers and the first tick that sees its battle ended
+  restarts every delay, so the delay counts from the battle end: an enemy is in battle while its
+  `battle.inBattleWithPlayers` has a player, a player while an enemy of the room has it there or a PvP battle of it or
+  against it is open (`actions.pvp.inBattleWith`, closed `actions/pvp/battleTimeOff` after the last attack); the kill,
+  the chase time out, the death and the scene change end the enemy battle
+- `Pve` (`lib/actions/server/pve.js`) keeps the time of the last hit of every player (`lastHitAt`, set on every
+  `startBattleWith` call, from the player skills, physical included, and the bodies hit, and when the enemy hits the
+  player, never by the enemy own battle loop `continueBattleWith`, cleared when the player leaves the battle); with
+  `actions/pve/chaseTimeOut` above 0 the enemy that has to chase a player whose last hit is older than that time leaves
+  the battle and goes back to its origin, so running far enough escapes
 - `PlayersAutoRecovery` raises the configured stats of every alive player up to `statsBase`, skipping the dead, the
   disabled, the players changing scene and the ones without a client; every tick emits
   `reldens.savePlayerStatsUpdateClient` and sends the `PLAYER_STATS` message, every `persistEveryTicks` recoveries it
@@ -94,7 +114,13 @@ intervals.
 - `ObjectsAutoRecovery` raises the configured stats of every active enemy up to `initialStats`; the enemy
   `private_params` `"autoRecovery"` overrides the amounts (`{"hp": 5}`) or disables it (`false`), and the life bar
   update is broadcast when the life property changed
-- `StatsRecoveryCalculator.recover(stats, maxStats, amounts)` never passes the maximum and returns the changed keys
+- `StatsRecoveryCalculator.recover(stats, maxStats, amounts, recoveryState, {startDelayMs, now, inBattle})` never
+  passes the maximum and returns the changed keys; the recovery state keeps the value every stat had after the previous
+  tick, a lower value (or a stat seen for the first time) restarts its `startDelayMs`, so a stat starts recovering only
+  when it took no damage for that time (the delay counts from the tick that sees the lowered value); `inBattle` stops
+  every recovery and is kept in the state (`inBattle: true`) until the first tick out of battle restarts every delay;
+  the players keep the state in the `autoRecoveryState` private data and the enemies in their `autoRecoveryState`
+  property (declared in the `EnemyObject` constructor)
 
 ## Teleport NPC
 
@@ -132,6 +158,8 @@ previous state, so a failed scene change never leaves the client scene hidden.
   killed player class path `currentLevel` (`IncreaseScoreOnKillMapper.fromPlayerDeathEvent()`)
 - enemy kill with `scores/useNpcCustomScore` enabled: the enemy `private_params` `"killScore"` (`0` gives no points),
   falling back to `obtainedScorePerNpc` when it is missing or not a number
+- `scores/npcKills/enabled` and `scores/playerKills/enabled` (both `1`, a missing switch counts as enabled) turn each
+  kill type on or off: a disabled kill type changes no score, no kills count and stores no `scores_detail` row
 
 ## Item growth
 
@@ -148,14 +176,39 @@ An item with a `"growth"` custom data (`items_item.customData`) grows with the e
   original value (`SET`, `METHOD` and `SET_N` operations are never scaled)
 
 Every item instance keeps its own level and experience in its `items_inventory.customData`
-(`{"growth": {"level": 2, "experience": 12}}`). `ItemsGrowthApplier` (`lib/inventory/server/items-growth-applier.js`)
-runs on `reldens.createPlayerInventoryAfter`: it loads the rows of the growing items and scales their modifiers, listens
-the inventory `ADD_ITEM` (a new item starts at level 1) and the class path `LEVEL_EXPERIENCE_ADDED`. A level up
-unequips the item, scales the modifiers, equips it again and sends the system chat message
-`<label> reached level <level>.`. Every item instance has its own modifiers (the items loaded from the storage by
+(`{"growth": {"level": 2, "experience": 12}}`). The growth mechanics are in `@reldens/items-system`:
+`ItemGrowthLeveler` (`initializeItem()`, `addOwnerExperience()`, the level up and the modifiers scaling),
+`ItemGrowthCalculator` (the maths) and `ItemsConst.GROWTH` (the default level, the percent base and the operations that
+are never scaled). On a level up the package unequips an equipped item, scales its modifiers, fires
+`ItemsEvents.GROWTH_LEVEL_UP`, fires `ItemsEvents.UPDATE_ITEM` (the items sender sends the `ItemsConst.ACTION_UPDATE`
+message, the items receiver assigns the sent properties to the client item and fires `UPDATE_ITEM` on the client
+manager) and equips the item again; `ItemsEvents.GROWTH_EXPERIENCE_ADDED` follows every experience added. The
+experience added to the same item runs in order (the experience received during a level up is never lost), and a failed
+step (the unequip, a growth listener or the equip again) is logged and stored as the items manager `lastError`
+(`items.growth.stepFailed`): a failed unequip stops the level up, the failed listeners never stop the equip again.
+
+`ItemsGrowthApplier` (`lib/inventory/server/items-growth-applier.js`) connects the package growth to the player on
+`reldens.createPlayerInventoryAfter`: it loads the rows of the growing items, initializes them with their stored growth
+and fires their `UPDATE_ITEM` (the items set was already sent), initializes every item added on `ADD_ITEM_BEFORE` (a new
+item starts at level 1, before the item is sent), passes the class path `LEVEL_EXPERIENCE_ADDED` experience to
+`addOwnerExperience()` (listened after the stored growth is loaded, an experience saved before would replace the
+stored growth), saves the growth on `GROWTH_EXPERIENCE_ADDED`, and on `GROWTH_LEVEL_UP` calculates the item
+display data again (before the item update is sent) and sends the system chat message with the
+`items.growth.reachedLevel` snippet (`%itemLabel reached level %level.`, translated on the client).
+
+Every player item keeps its display data in its `customData`, `modifiersDisplay`
+(`ItemsModifiersEnricher.extractModifiers()`, the scaled values) and `growthLevel` (0 for the items that do not grow),
+set by `ItemsModifiersEnricher.applyDisplayData()` when the item is loaded (`ItemsFactory.fromModel()`), added, grown or
+loaded with its stored growth. `PlayerSubscriber` adds `customData` to the items sender add and update properties, so
+the items set, add and update messages carry it. On the client every new item spreads its custom data (items-system
+`ItemBase`), the update message spreads it on the existing item (`ItemBase.updateProperties()`), and the inventory plugin
+renders the item box again on `UPDATE_ITEM` with the `item.html` template, which shows the translated
+`items.growth.level` snippet when the level is above 0 and every modifier (`.item-modifiers`), in the inventory and in
+the equipment slots; the trade boxes built from the plain items data read the same values from their `customData`.
+
+Every item instance has its own modifiers (the items loaded from the storage by
 `ItemsFactory.fromModel()`, the new items by `ItemsFactory.isolateModifiers()`), so the growth scales the modifiers
-values of that instance only. The maths are in `ItemGrowthCalculator`
-(`lib/inventory/server/item-growth-calculator.js`).
+values of that instance only.
 
 The items created during the game (`ItemsManager.createItemInstance()` of `@reldens/items-system`: rewards, drops,
 trades) receive the Modifier instances of the shared items model data (`room.config.inventory.items`), and the package
@@ -182,7 +235,19 @@ and on its end:
   failed relocation revives where it died
 - a failed resolution is logged
 
-The resurrection ad (`ads_event_video` on the client `reldens.gameOver` event, `"replayCooldown":0`) rewards one
+`DeathReviveNotifier` (`lib/actions/server/death-revive-notifier.js`, on `reldens.playerDeath`) sends the dead player
+the `drm` message (`ActionsConst.DEATH.ACTIONS.REVIVE_MESSAGE`) with the revive mode: `reviveInPlace` (teleport
+disabled), `reviveWithRestorationItem` (with the item label) or `reviveInTown` (with the town room title and
+`resurrectionAdEventKey`, the `ads_event_video` event key of the enabled resurrection ad, empty when the ad is
+disabled or has no event key). It sends it again on `reldens.afterGiveAdRewardItem` (emitted by
+`AdsMessageActions` after a given reward) when the resurrection ad reward reaches a dead player. The client
+`GameOverReviveMessage` (`lib/actions/client/game-over-revive-message.js`) renders the game over box content from the
+`theme/default/assets/features/skills/templates/ui-game-over.html` template with the translated `actions.death.*`
+snippets (title and wait on `GAME_OVER`, plus the revive mode on `drm`), the `.game-over-resurrection-ad` button is
+rendered only when the ad is offered; the ad is never played automatically, the button click fires the event key sent
+by the server and the button stays, so the player can ask again when the provider could not play the ad.
+
+The resurrection ad (`ads_event_video` on the client `reldens.resurrectionAd` event, `"replayCooldown":0`) rewards one
 restoration item. `ResurrectionAdGate` (`lib/actions/server/resurrection-ad-gate.js`) accepts its `AD_STARTED` message
 (`reldens.beforeSceneExecuteMessages`) only from a dead player and once per death (`resurrectionAdStarted` private data,
 cleared on every death). `AdsMessageActions` no longer disables a dead player on `AD_STARTED` and only activates a
@@ -282,16 +347,19 @@ the inventory or of an item without `equip()`, and the use of an item without `u
 Unit tests (the stubs of the gameplay classes are built by `tests/fixtures/gameplay-player-builder.js`):
 `test-teleport-object.js`, `test-player-relocator.js` (with `tests/fixtures/relocation-room-builder.js`),
 `test-increase-score-on-kill.js` (with `tests/fixtures/increase-score-on-kill-builder.js`),
-`test-item-growth-calculator.js`, `test-ads-collection-finder.js`,
+`test-ads-collection-finder.js`,
 `test-scores-period-key-builder.js`, `test-stats-recovery-calculator.js`, `test-players-auto-recovery.js`,
 `test-objects-auto-recovery.js`, `test-room-auto-recovery.js`, `test-player-death-relocator.js` and
 `test-player-death-relocator-failures.js` (with `tests/fixtures/death-relocation-builder.js`),
 `test-scene-change-point.js` (the change points flow, with `tests/fixtures/scene-change-room-builder.js`),
 `test-rc1-sql-update.js` (the rc.1 update run on the tests database: no updated row changes, disabled features and
 existing content kept, only the missing features and sample rows added),
-`test-resurrection-ad-gate.js`, `test-items-growth-applier.js`, `test-scores-period-reset.js` (with
+`test-resurrection-ad-gate.js`, `test-items-growth-applier.js` and `test-items-growth-applier-failures.js` (the invalid
+stored data, the failed load, save and level reached message, with `tests/fixtures/items-growth-applier-builder.js`,
+over the real items-system manager, items and modifiers; the growth maths and leveler are tested in the package),
+`test-scores-period-reset.js` (with
 `tests/fixtures/scores-period-reset-builder.js`), `test-player-subscriber.js` (the inventory before send and after
-events), `test-skin-ad-ticket-gate.js`, `test-player-skin-applier.js`, `test-skins-sprites-preloader.js`,
+events, the items display data sent only with the add and update messages), `test-skin-ad-ticket-gate.js`, `test-player-skin-applier.js`, `test-skins-sprites-preloader.js`,
 `test-skin-ad-messages-listener.js`, `test-players-skin-switcher.js`, `test-ads-reward-claims.js`,
 `test-items-factory.js` (the modifiers isolation) and `test-message-actions-guards.js` (the equip and use checks), run
 self-hosted with `RELDENS_TESTS_CONFIRMED=1 npm run test:default`.
