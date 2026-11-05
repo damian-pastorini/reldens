@@ -243,7 +243,8 @@ disabled or has no event key). It sends it again on `reldens.afterGiveAdRewardIt
 `AdsMessageActions` after a given reward) when the resurrection ad reward reaches a dead player. The client
 `GameOverReviveMessage` (`lib/actions/client/game-over-revive-message.js`) renders the game over box content from the
 `theme/default/assets/features/skills/templates/ui-game-over.html` template with the translated `actions.death.*`
-snippets (title and wait on `GAME_OVER`, plus the revive mode on `drm`), the `.game-over-resurrection-ad` button is
+snippets (title and wait on `GAME_OVER`, with no ad button until the `drm` message offers it, plus the revive mode on
+`drm`, covered by `tests/test-game-over-revive-message.js`), the `.game-over-resurrection-ad` button is
 rendered only when the ad is offered; the ad is never played automatically, the button click fires the event key sent
 by the server and the button stays, so the player can ask again when the provider could not play the ad.
 
