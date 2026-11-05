@@ -343,18 +343,24 @@ REPLACE INTO `objects_types` (`id`, `key`) VALUES
 -- Gameplay features configuration, every feature is disabled by default
 INSERT IGNORE INTO `config` (`scope`, `path`, `value`, `type`) VALUES
 	('client', 'players/skins/keys', 'warlock', 5),
+	('server', 'actions/pve/chaseTimeOut', '0', 2),
 	('server', 'autoRecovery/objects/enabled', '0', 3),
 	('server', 'autoRecovery/objects/onlyOutOfBattle', '1', 3),
 	('server', 'autoRecovery/objects/properties/hp', '1', 2),
+	('server', 'autoRecovery/objects/startDelayMs', '10000', 2),
 	('server', 'autoRecovery/players/enabled', '0', 3),
+	('server', 'autoRecovery/players/onlyOutOfBattle', '1', 3),
 	('server', 'autoRecovery/players/persistEveryTicks', '12', 2),
 	('server', 'autoRecovery/players/properties/hp', '1', 2),
+	('server', 'autoRecovery/players/startDelayMs', '10000', 2),
 	('server', 'autoRecovery/tickMs', '5000', 2),
 	('server', 'players/death/restorationItemKey', 'restoration_scroll', 1),
 	('server', 'players/death/resurrectionAdsKey', 'resurrection-video', 1),
 	('server', 'players/death/teleportToTown/enabled', '0', 3),
 	('server', 'players/death/teleportToTown/roomId', '41', 2),
+	('server', 'scores/npcKills/enabled', '1', 3),
 	('server', 'scores/obtainedScorePerPlayerLevelMultiplier', '0', 2),
+	('server', 'scores/playerKills/enabled', '1', 3),
 	('server', 'scores/reset/checkIntervalMs', '60000', 2),
 	('server', 'scores/reset/enabled', '0', 3),
 	('server', 'scores/reset/lastPeriodKey', '', 1),
@@ -406,7 +412,7 @@ INSERT INTO `ads` (`key`, `provider_id`, `type_id`, `width`, `height`, `position
 		AND NOT EXISTS (SELECT 1 FROM `ads` WHERE `key` = 'skin-ad-ticket');
 
 INSERT INTO `ads_event_video` (`ads_id`, `event_key`, `event_data`)
-	SELECT `ads`.`id`, 'reldens.gameOver', '{"rewardItemKey":"restoration_scroll","rewardItemQty":1,"replayCooldown":0}' FROM `ads`
+	SELECT `ads`.`id`, 'reldens.resurrectionAd', '{"rewardItemKey":"restoration_scroll","rewardItemQty":1,"replayCooldown":0}' FROM `ads`
 	WHERE `ads`.`key` = 'resurrection-video'
 		AND NOT EXISTS (SELECT 1 FROM `ads_event_video` WHERE `ads_event_video`.`ads_id` = `ads`.`id`);
 
