@@ -7,8 +7,8 @@
 const { BaseTest } = require('./base-test');
 const { GameplayPlayerBuilder } = require('./fixtures/gameplay-player-builder');
 const { PlayerSubscriber } = require('../lib/inventory/server/subscribers/player-subscriber');
-const { ItemsConst } = require('@reldens/items-system');
-const { EventsManager } = require('@reldens/utils');
+const { ItemBase, ItemsConst, ItemsEvents } = require('@reldens/items-system');
+const { EventsManager, sc } = require('@reldens/utils');
 
 class TestPlayerSubscriber extends BaseTest
 {
@@ -71,6 +71,41 @@ class TestPlayerSubscriber extends BaseTest
             this.assert.deepStrictEqual(setup.client.sentMessages, [
                 {act: ItemsConst.ACTION_SET_GROUPS, owner: 7, groups: {weapon: {key: 'weapon'}}}
             ]);
+        });
+    }
+
+    async testItemsDisplayDataIsSentOnlyWithTheAddAndUpdateMessages()
+    {
+        await this.test('the items display data is sent only with the item add and update messages', async () => {
+            let setup = this.createSetup();
+            await this.createInventory(setup);
+            let itemsSender = setup.currentPlayer.inventory.client;
+            let displayDataActions = [ItemsConst.ACTION_ADD, ItemsConst.ACTION_UPDATE];
+            for(let itemAction of Object.keys(itemsSender.sendProperties)){
+                this.assert.strictEqual(
+                    sc.get(itemsSender.sendProperties[itemAction], 'send', []).includes('customData'),
+                    displayDataActions.includes(itemAction)
+                );
+            }
+            let inventoryManager = setup.currentPlayer.inventory.manager;
+            let item = new ItemBase({key: 'growing_sword', id: 12, uid: 'growing_sword', manager: inventoryManager});
+            item.growthLevel = 2;
+            item.growthExperience = 9;
+            item.customData = {modifiersDisplay: [], growthLevel: 2};
+            await inventoryManager.fireEvent(ItemsEvents.UPDATE_ITEM, item);
+            this.assert.deepStrictEqual([...setup.client.sentMessages].pop(), {
+                act: ItemsConst.ACTION_UPDATE,
+                owner: 7,
+                item: {
+                    idx: 'growing_sword',
+                    id: 12,
+                    key: 'growing_sword',
+                    growthLevel: 2,
+                    growthExperience: 9,
+                    customData: {modifiersDisplay: [], growthLevel: 2}
+                },
+                targetProps: {}
+            });
         });
     }
 
