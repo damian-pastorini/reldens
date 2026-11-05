@@ -1,6 +1,15 @@
 <h3 class="game-over-title">{{gameOverTitle}}</h3>
 <p class="game-over-wait">{{gameOverWait}}</p>
 <p class="game-over-revive-message">{{reviveMessage}}</p>
+{{#restorationItemQuestion}}
+<div class="game-over-restoration-item-choice">
+    <button type="button" class="game-over-restoration-item-use">{{restorationItemUseButton}}</button>
+    <button type="button" class="game-over-restoration-item-keep">{{restorationItemKeepButton}}</button>
+</div>
+{{/restorationItemQuestion}}
+{{#reviveReady}}
+<button type="button" class="game-over-revive">{{reviveButton}}</button>
+{{/reviveReady}}
 {{#resurrectionAd}}
 <button type="button" class="game-over-resurrection-ad">{{resurrectionAdButton}}</button>
 {{/resurrectionAd}}
