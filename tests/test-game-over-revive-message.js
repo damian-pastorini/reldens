@@ -5,15 +5,9 @@
  */
 
 const { BaseTest } = require('./base-test');
-const { GameOverReviveMessage } = require('../lib/actions/client/game-over-revive-message');
-const { Translator } = require('../lib/snippets/translator');
-const { TranslationsMapper } = require('../lib/snippets/client/translations-mapper');
-const { SnippetsConst } = require('../lib/snippets/constants');
+const { GameOverReviveMessageBuilder } = require('./fixtures/game-over-revive-message-builder');
 const { ActionsConst } = require('../lib/actions/constants');
 const { GameConst } = require('../lib/game/constants');
-const ActionsTranslations = require('../lib/actions/client/snippets/en_US');
-const { FileHandler } = require('@reldens/server-utils');
-const TemplateEngineRender = require('mustache');
 
 class TestGameOverReviveMessage extends BaseTest
 {
@@ -21,96 +15,47 @@ class TestGameOverReviveMessage extends BaseTest
     constructor(config)
     {
         super(config);
-        this.gameOverTemplate = FileHandler.readFile(FileHandler.joinPaths(
-            process.cwd(),
-            'theme',
-            'default',
-            'assets',
-            'features',
-            'skills',
-            'templates',
-            'ui-game-over.html'
-        ));
-        this.translator = new Translator({
-            snippets: {[SnippetsConst.DEFAULT_LOCALE]: TranslationsMapper.fromObject(ActionsTranslations)}
-        });
-        this.deathSnippets = ActionsTranslations.actions.death;
-        this.adButtonClass = 'class="game-over-resurrection-ad"';
+        this.messageBuilder = new GameOverReviveMessageBuilder();
+        this.deathSnippets = this.messageBuilder.deathSnippets;
+        this.selectors = this.messageBuilder.selectors;
         this.itemLabel = 'Restoration Scroll';
         this.townLabel = 'Town';
+        this.reviveAction = ActionsConst.DEATH.ACTIONS.REVIVE_MESSAGE;
         this.gameOverMessage = {act: GameConst.GAME_OVER};
         this.townMessage = {
-            act: ActionsConst.DEATH.ACTIONS.REVIVE_MESSAGE,
+            act: this.reviveAction,
             mode: ActionsConst.DEATH.REVIVE_MODES.TOWN,
             townLabel: this.townLabel,
             resurrectionAdEventKey: 'reldens.resurrectionAd'
         };
+        this.townReviveMessage = this.deathSnippets.reviveInTown.replace('%townLabel', this.townLabel);
+        this.adButtonOnly = [this.selectors.RESURRECTION_AD_BUTTON];
+        this.townModeMessage = {act: this.reviveAction, mode: ActionsConst.DEATH.REVIVE_MODES.TOWN};
     }
 
-    createReviveMessageSetup(templateLoaded = true, contentFound = true)
+    async clickButton(setup, buttonSelector)
     {
-        let setup = {emittedEvents: [], clickHandlers: [], contentElement: {innerHTML: ''}};
-        let adButton = {addEventListener: (eventName, handler) => setup.clickHandlers.push({eventName, handler})};
-        let gameDom = {
-            updateContent: (selector, content) => {
-                if(!contentFound || ActionsConst.DEATH.SELECTORS.GAME_OVER_CONTENT !== selector){
-                    return false;
-                }
-                setup.contentElement.innerHTML = content;
-                return setup.contentElement;
-            },
-            getElement: (selector) => {
-                if(ActionsConst.DEATH.SELECTORS.RESURRECTION_AD_BUTTON !== selector){
-                    return null;
-                }
-                return this.hasAdButton(setup) ? adButton : null;
-            }
-        };
-        let htmlCache = {
-            get: (templateKey) => {
-                if(!templateLoaded || ActionsConst.TEMPLATES.GAME_OVER !== templateKey){
-                    return false;
-                }
-                return this.gameOverTemplate;
-            }
-        };
-        setup.reviveMessage = new GameOverReviveMessage({
-            gameManager: {
-                services: {translator: this.translator},
-                gameEngine: {
-                    uiScene: {cache: {html: htmlCache}},
-                    parseTemplate: (template, view) => TemplateEngineRender.render(template, view)
-                },
-                gameDom
-            },
-            events: {emit: async (eventKey, eventData) => setup.emittedEvents.push({eventKey, eventData})}
-        });
-        return setup;
+        let clickHandler = setup.clickHandlers.find(handler => buttonSelector === handler.selector);
+        this.assert.strictEqual(clickHandler.eventName, 'click');
+        await clickHandler.handler();
     }
 
-    hasAdButton(setup)
+    expectRenderedReviveMessage(setup, waitMessage, reviveMessage)
     {
-        return -1 !== setup.contentElement.innerHTML.indexOf(this.adButtonClass);
+        let elementsTexts = this.messageBuilder.readElementsTexts(setup);
+        this.assert.strictEqual(elementsTexts['game-over-title'], this.deathSnippets.title);
+        this.assert.strictEqual(elementsTexts['game-over-wait'], waitMessage);
+        this.assert.strictEqual(elementsTexts['game-over-revive-message'], reviveMessage);
+        return elementsTexts;
     }
 
-    expectRenderedReviveMessage(setup, reviveMessage)
+    async testTheGameOverShowsNoButtonBeforeTheReviveMode()
     {
-        let renderedContent = setup.contentElement.innerHTML;
-        this.assert.notStrictEqual(renderedContent.indexOf(this.deathSnippets.title), -1);
-        this.assert.notStrictEqual(renderedContent.indexOf(this.deathSnippets.wait), -1);
-        this.assert.notStrictEqual(
-            renderedContent.indexOf('<p class="game-over-revive-message">'+reviveMessage+'</p>'),
-            -1
-        );
-    }
-
-    async testTheGameOverShowsNoAdButtonBeforeTheReviveMode()
-    {
-        await this.test('the game over shows the title and wait text without the resurrection ad button', async () => {
-            let setup = this.createReviveMessageSetup();
+        await this.test('the game over shows the title and wait text without any button', async () => {
+            let setup = this.messageBuilder.createSetup();
             this.assert.strictEqual(setup.reviveMessage.onRoomMessage(this.gameOverMessage), true);
-            this.expectRenderedReviveMessage(setup, '');
-            this.assert.strictEqual(this.hasAdButton(setup), false);
+            this.expectRenderedReviveMessage(setup, this.deathSnippets.wait, '');
+            this.assert.deepStrictEqual(this.messageBuilder.shownButtons(setup), []);
             this.assert.deepStrictEqual(setup.clickHandlers, []);
         });
     }
@@ -118,41 +63,39 @@ class TestGameOverReviveMessage extends BaseTest
     async testTheTownReviveOffersTheResurrectionAdButton()
     {
         await this.test('the town revive ad button fires the sent ad event on every click', async () => {
-            let setup = this.createReviveMessageSetup();
+            let setup = this.messageBuilder.createSetup();
             setup.reviveMessage.onRoomMessage(this.gameOverMessage);
             this.assert.strictEqual(setup.reviveMessage.onRoomMessage(this.townMessage), true);
-            this.expectRenderedReviveMessage(
+            let elementsTexts = this.expectRenderedReviveMessage(
                 setup,
-                this.deathSnippets.reviveInTown.replace('%townLabel', this.townLabel)
+                this.deathSnippets.wait,
+                this.townReviveMessage
             );
-            this.assert.strictEqual(this.hasAdButton(setup), true);
-            this.assert.notStrictEqual(
-                setup.contentElement.innerHTML.indexOf(this.deathSnippets.resurrectionAdButton),
-                -1
+            this.assert.strictEqual(
+                elementsTexts['game-over-resurrection-ad'],
+                this.deathSnippets.resurrectionAdButton
             );
+            this.assert.deepStrictEqual(this.messageBuilder.shownButtons(setup), this.adButtonOnly);
             this.assert.strictEqual(setup.clickHandlers.length, 1);
-            let clickHandler = setup.clickHandlers.shift();
-            this.assert.strictEqual(clickHandler.eventName, 'click');
-            await clickHandler.handler();
-            await clickHandler.handler();
+            await this.clickButton(setup, this.selectors.RESURRECTION_AD_BUTTON);
+            await this.clickButton(setup, this.selectors.RESURRECTION_AD_BUTTON);
             let expectedEvent = {eventKey: this.townMessage.resurrectionAdEventKey, eventData: {}};
             this.assert.deepStrictEqual(setup.emittedEvents, [expectedEvent, expectedEvent]);
+            this.assert.deepStrictEqual(setup.sentRequests, []);
         });
     }
 
     async testTheReviveModesWithoutAdShowNoButton()
     {
-        await this.test('the revive modes without an ad event key show their message and no ad button', async () => {
-            let reviveAction = ActionsConst.DEATH.ACTIONS.REVIVE_MESSAGE;
-            let townReviveMessage = this.deathSnippets.reviveInTown.replace('%townLabel', this.townLabel);
+        await this.test('the revive modes without an ad event key show their message and no button', async () => {
             let reviveCases = [
                 {
-                    message: {act: reviveAction, mode: ActionsConst.DEATH.REVIVE_MODES.IN_PLACE},
+                    message: {act: this.reviveAction, mode: ActionsConst.DEATH.REVIVE_MODES.IN_PLACE},
                     reviveMessage: this.deathSnippets.reviveInPlace
                 },
                 {
                     message: {
-                        act: reviveAction,
+                        act: this.reviveAction,
                         mode: ActionsConst.DEATH.REVIVE_MODES.RESTORATION_ITEM,
                         itemLabel: this.itemLabel
                     },
@@ -160,33 +103,134 @@ class TestGameOverReviveMessage extends BaseTest
                 },
                 {
                     message: Object.assign({}, this.townMessage, {resurrectionAdEventKey: ''}),
-                    reviveMessage: townReviveMessage
+                    reviveMessage: this.townReviveMessage
                 },
                 {
-                    message: {act: reviveAction, mode: ActionsConst.DEATH.REVIVE_MODES.TOWN, townLabel: this.townLabel},
-                    reviveMessage: townReviveMessage
+                    message: Object.assign({townLabel: this.townLabel}, this.townModeMessage),
+                    reviveMessage: this.townReviveMessage
                 }
             ];
             for(let reviveCase of reviveCases){
-                let setup = this.createReviveMessageSetup();
+                let setup = this.messageBuilder.createSetup();
                 this.assert.strictEqual(setup.reviveMessage.onRoomMessage(reviveCase.message), true);
-                this.expectRenderedReviveMessage(setup, reviveCase.reviveMessage);
-                this.assert.strictEqual(this.hasAdButton(setup), false);
+                this.expectRenderedReviveMessage(setup, this.deathSnippets.wait, reviveCase.reviveMessage);
+                this.assert.deepStrictEqual(this.messageBuilder.shownButtons(setup), []);
                 this.assert.deepStrictEqual(setup.clickHandlers, []);
             }
         });
     }
 
-    async testTheNextGameOverRemovesThePreviousAdButton()
+    async testTheRestorationItemQuestionSendsTheChoice()
     {
-        await this.test('the next game over removes the previous town revive ad button', async () => {
-            let setup = this.createReviveMessageSetup();
-            setup.reviveMessage.onRoomMessage(this.townMessage);
-            this.assert.strictEqual(this.hasAdButton(setup), true);
+        await this.test('the restoration item question shows yes and no buttons that send the choice', async () => {
+            let askMessage = {
+                act: this.reviveAction,
+                mode: ActionsConst.DEATH.REVIVE_MODES.ASK_RESTORATION_ITEM,
+                itemLabel: this.itemLabel,
+                townLabel: this.townLabel
+            };
+            let setup = this.messageBuilder.createSetup();
+            this.assert.strictEqual(setup.reviveMessage.onRoomMessage(askMessage), true);
+            let elementsTexts = this.expectRenderedReviveMessage(
+                setup,
+                this.deathSnippets.wait,
+                this.deathSnippets.askRestorationItem.replace('%itemLabel', this.itemLabel)
+                    .replace('%townLabel', this.townLabel)
+            );
+            this.assert.strictEqual(
+                elementsTexts['game-over-restoration-item-use'],
+                this.deathSnippets.restorationItemUseButton
+            );
+            this.assert.strictEqual(
+                elementsTexts['game-over-restoration-item-keep'],
+                this.deathSnippets.restorationItemKeepButton
+            );
+            this.assert.deepStrictEqual(
+                this.messageBuilder.shownButtons(setup),
+                [this.selectors.RESTORATION_ITEM_USE_BUTTON, this.selectors.RESTORATION_ITEM_KEEP_BUTTON]
+            );
+            await this.clickButton(setup, this.selectors.RESTORATION_ITEM_USE_BUTTON);
+            await this.clickButton(setup, this.selectors.RESTORATION_ITEM_KEEP_BUTTON);
+            let choiceAction = ActionsConst.DEATH.ACTIONS.RESTORATION_ITEM_CHOICE;
+            this.assert.deepStrictEqual(
+                setup.sentRequests,
+                [{act: choiceAction, use: true}, {act: choiceAction, use: false}]
+            );
+            this.assert.deepStrictEqual(setup.emittedEvents, []);
+        });
+    }
+
+    async testTheReviveWaitShowsTheSecondsLeft()
+    {
+        await this.test('the disabled auto revive shows the seconds left and no revive button', async () => {
+            let setup = this.messageBuilder.createSetup();
+            this.assert.strictEqual(
+                setup.reviveMessage.onRoomMessage(Object.assign({}, this.townMessage, {reviveWaitSeconds: 7})),
+                true
+            );
+            this.expectRenderedReviveMessage(
+                setup,
+                this.deathSnippets.reviveWait.replace('%seconds', '7'),
+                this.townReviveMessage
+            );
+            this.assert.deepStrictEqual(this.messageBuilder.shownButtons(setup), this.adButtonOnly);
+        });
+    }
+
+    async testTheReadyReviveButtonSendsTheReviveRequest()
+    {
+        await this.test('the ready revive shows the revive button that sends the revive request', async () => {
+            let readyMessage = {
+                act: this.reviveAction,
+                mode: ActionsConst.DEATH.REVIVE_MODES.IN_PLACE,
+                reviveReady: true
+            };
+            let setup = this.messageBuilder.createSetup();
+            this.assert.strictEqual(setup.reviveMessage.onRoomMessage(readyMessage), true);
+            let elementsTexts = this.expectRenderedReviveMessage(
+                setup,
+                this.deathSnippets.reviveReady,
+                this.deathSnippets.reviveInPlace
+            );
+            this.assert.strictEqual(elementsTexts['game-over-revive'], this.deathSnippets.reviveButton);
+            this.assert.deepStrictEqual(this.messageBuilder.shownButtons(setup), [this.selectors.REVIVE_BUTTON]);
+            await this.clickButton(setup, this.selectors.REVIVE_BUTTON);
+            this.assert.deepStrictEqual(setup.sentRequests, [{act: ActionsConst.DEATH.ACTIONS.REVIVE_REQUEST}]);
+        });
+    }
+
+    async testInvalidReviveTimeValuesShowTheDefaultWait()
+    {
+        await this.test('the revive ready and wait values that are not valid show the default wait', async () => {
+            let invalidValues = [
+                {reviveReady: 'true'},
+                {reviveReady: 1},
+                {reviveWaitSeconds: 0},
+                {reviveWaitSeconds: -3},
+                {reviveWaitSeconds: 'soon'}
+            ];
+            for(let invalidValue of invalidValues){
+                let setup = this.messageBuilder.createSetup();
+                setup.reviveMessage.onRoomMessage(Object.assign({}, this.townMessage, invalidValue));
+                this.expectRenderedReviveMessage(setup, this.deathSnippets.wait, this.townReviveMessage);
+                this.assert.deepStrictEqual(this.messageBuilder.shownButtons(setup), this.adButtonOnly);
+            }
+        });
+    }
+
+    async testTheNextGameOverRemovesThePreviousButtons()
+    {
+        await this.test('the next game over removes the previous revive buttons', async () => {
+            let setup = this.messageBuilder.createSetup();
+            setup.reviveMessage.onRoomMessage(Object.assign({}, this.townMessage, {reviveReady: true}));
+            this.assert.deepStrictEqual(
+                this.messageBuilder.shownButtons(setup),
+                [this.selectors.RESURRECTION_AD_BUTTON, this.selectors.REVIVE_BUTTON]
+            );
             this.assert.strictEqual(setup.reviveMessage.onRoomMessage(this.gameOverMessage), true);
-            this.expectRenderedReviveMessage(setup, '');
-            this.assert.strictEqual(this.hasAdButton(setup), false);
-            this.assert.strictEqual(setup.clickHandlers.length, 1);
+            this.expectRenderedReviveMessage(setup, this.deathSnippets.wait, '');
+            this.assert.deepStrictEqual(this.messageBuilder.shownButtons(setup), []);
+            this.assert.strictEqual(setup.clickHandlers.length, 2);
         });
     }
 
@@ -195,7 +239,7 @@ class TestGameOverReviveMessage extends BaseTest
         await this.test('an unknown revive mode, another message or no message render nothing', async () => {
             let unknownModeMessage = Object.assign({}, this.townMessage, {mode: 'reviveSomewhereElse'});
             for(let message of [unknownModeMessage, {act: 'otherAction'}, {}, null]){
-                let setup = this.createReviveMessageSetup();
+                let setup = this.messageBuilder.createSetup();
                 this.assert.strictEqual(setup.reviveMessage.onRoomMessage(message), false);
                 this.assert.strictEqual(setup.contentElement.innerHTML, '');
                 this.assert.deepStrictEqual(setup.clickHandlers, []);
@@ -206,11 +250,11 @@ class TestGameOverReviveMessage extends BaseTest
     async testAMissingTemplateOrContentRendersNothing()
     {
         await this.test('a missing game over template or content element renders nothing', async () => {
-            let missingTemplate = this.createReviveMessageSetup(false, true);
+            let missingTemplate = this.messageBuilder.createSetup(false, true);
             this.assert.strictEqual(missingTemplate.reviveMessage.onRoomMessage(this.townMessage), false);
             this.assert.strictEqual(missingTemplate.contentElement.innerHTML, '');
             this.assert.deepStrictEqual(missingTemplate.clickHandlers, []);
-            let missingContent = this.createReviveMessageSetup(true, false);
+            let missingContent = this.messageBuilder.createSetup(true, false);
             this.assert.strictEqual(missingContent.reviveMessage.onRoomMessage(this.townMessage), false);
             this.assert.strictEqual(missingContent.reviveMessage.onRoomMessage(this.gameOverMessage), false);
             this.assert.deepStrictEqual(missingContent.clickHandlers, []);
@@ -220,7 +264,7 @@ class TestGameOverReviveMessage extends BaseTest
     async testTheRoomMessagesAreListened()
     {
         await this.test('every room message reaches the game over revive message', async () => {
-            let setup = this.createReviveMessageSetup();
+            let setup = this.messageBuilder.createSetup();
             let listenedMessages = [];
             let room = {onMessage: (messageType, callback) => listenedMessages.push({messageType, callback})};
             this.assert.strictEqual(setup.reviveMessage.listenRoomMessages(room), true);
@@ -228,9 +272,9 @@ class TestGameOverReviveMessage extends BaseTest
             let listenedMessage = listenedMessages.shift();
             this.assert.strictEqual(listenedMessage.messageType, '*');
             listenedMessage.callback(this.gameOverMessage);
-            this.expectRenderedReviveMessage(setup, '');
+            this.expectRenderedReviveMessage(setup, this.deathSnippets.wait, '');
             listenedMessage.callback(this.townMessage);
-            this.assert.strictEqual(this.hasAdButton(setup), true);
+            this.assert.deepStrictEqual(this.messageBuilder.shownButtons(setup), this.adButtonOnly);
         });
     }
 
