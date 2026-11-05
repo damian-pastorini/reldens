@@ -22,7 +22,12 @@ class RelocationRoomBuilder
 
     constructor()
     {
-        this.townRoom = {roomId: 4, roomName: 'reldens-town', returnPointDefault: {x: 400, y: 500, d: GameConst.UP}};
+        this.townRoom = {
+            roomId: 4,
+            roomName: 'reldens-town',
+            roomTitle: 'Reldens Town',
+            returnPointDefault: {x: 400, y: 500, d: GameConst.UP}
+        };
         this.forestRoom = {roomId: 6, roomName: 'reldens-forest', returnPointDefault: {x: 96, y: 64, d: GameConst.DOWN}};
         this.noReturnPointRoom = {roomId: 9, roomName: 'reldens-house-1'};
         this.destinationRooms = {
