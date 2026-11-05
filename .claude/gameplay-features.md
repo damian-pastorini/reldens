@@ -224,29 +224,67 @@ data and emits `reldens.playerDeath` with `revivePlayerCallback`, the battle rev
 player, the affected property and the client, so the listeners never receive the battle.
 `PlayerDeathRelocator` (`lib/actions/server/player-death-relocator.js`) only takes a `ConfigProcessor` instance as its
 config, any other value (missing, `false`, a plain object) is logged as critical and discarded, so every death keeps the
-battle revive. With the teleport enabled it replaces that timer by its own, with the same `players/gameOver/timeOut`,
-and on its end:
+battle revive. On every death it resets the death private data (`restorationItemChoice`, `playerReviveReady`, the ad
+flags) and keeps the death event (`playerDeathEvent`). Two options, both enabled by default (the previous behavior):
+
+- `players/death/autoRevive`: enabled, the player is revived once `players/gameOver/timeOut` passed; disabled, the
+  game over box tells the seconds left (`playerReviveAt`) and, once that time passed, the relocator marks the revive
+  ready and emits `reldens.playerReviveReady`, the box shows the revive button and the player is revived only when it
+  sends the `drq` request (`ActionsConst.DEATH.ACTIONS.REVIVE_REQUEST`), accepted once
+- `players/death/autoConsumeRestorationItem` (only with the teleport enabled, the item has no use otherwise):
+  enabled, a carried restoration item is consumed and revives the player where it died; disabled, the game over box
+  asks to use it (yes) or keep it (no), the `drc` choice (`RESTORATION_ITEM_CHOICE` with a boolean `use`) is accepted
+  once per death, an unanswered or kept item is not consumed and the player revives in the town; the resurrection ad
+  reward is the choice to use the item it gives
+
+The resulting cases, with or without items:
+
+1. teleport disabled, auto revive: the battle timer revives the player where it died (the item is never used)
+2. teleport disabled, no auto revive: wait, then the revive button revives the player where it died
+3. teleport enabled without item, auto revive: revived in the town (or where it died after the resurrection ad)
+4. teleport enabled without item, no auto revive: the same, after the revive button
+5. teleport enabled with item and auto consume: the item is used, revived where it died (auto or after the button)
+6. teleport enabled with item, no auto consume, auto revive: yes revives where it died consuming the item, no or no
+   answer revives in the town keeping the item, at the game over time
+7. teleport enabled with item, no auto consume, no auto revive: the same choice, applied by the revive button
+
+With the teleport enabled or the auto revive disabled it replaces the battle timer by its own, with the same
+`players/gameOver/timeOut`, and on the revive (the timer end or the accepted revive request):
 
 - a player who left the room or is alive again is ignored
-- with a restoration item (quantity above 0) one is consumed and the player revives where it died
+- with the teleport disabled the player revives where it died
+- with a restoration item (quantity above 0) used (auto consume or chosen) one is consumed and the player revives where
+  it died
 - while the resurrection ad plays (started less than 60 seconds before and not failed) it checks again every second
 - otherwise it revives in the town: in the same room the player is placed on the return point and revived, from
   another room the affected stat is restored, the `REVIVED` message is sent and the player moves to the town room; a
   failed relocation revives where it died
 - a failed resolution is logged
 
-`DeathReviveNotifier` (`lib/actions/server/death-revive-notifier.js`, on `reldens.playerDeath`) sends the dead player
-the `drm` message (`ActionsConst.DEATH.ACTIONS.REVIVE_MESSAGE`) with the revive mode: `reviveInPlace` (teleport
-disabled), `reviveWithRestorationItem` (with the item label) or `reviveInTown` (with the town room title and
+`DeathReviveRequests` (`lib/actions/server/death-revive-requests.js`, on `reldens.beforeSceneExecuteMessages`, so a
+room with its actions disabled can not leave a dead player waiting) receives the `drq` and `drc` messages; the
+relocator accepts them only from the dead player of the room of its death, and the chosen revive is told again.
+
+`DeathReviveNotifier` (`lib/actions/server/death-revive-notifier.js`, on `reldens.playerDeath` and
+`reldens.playerReviveReady`) sends the dead player the `drm` message (`ActionsConst.DEATH.ACTIONS.REVIVE_MESSAGE`) with
+the revive mode: `reviveInPlace` (teleport disabled), `reviveWithRestorationItem` (with the item label),
+`askRestorationItem` (with the item label and the town room title) or `reviveInTown` (with the town room title and
 `resurrectionAdEventKey`, the `ads_event_video` event key of the enabled resurrection ad, empty when the ad is
-disabled or has no event key). It sends it again on `reldens.afterGiveAdRewardItem` (emitted by
-`AdsMessageActions` after a given reward) when the resurrection ad reward reaches a dead player. The client
+disabled, has no event key or the player keeps a restoration item). Without the auto revive it also carries
+`reviveWaitSeconds` (rounded up, at least 1) or, once the revive is ready, `reviveReady`. It sends it again on
+`reldens.afterGiveAdRewardItem` (emitted by `AdsMessageActions` after a given reward) when the resurrection ad reward
+reaches a dead player, and after every accepted restoration item choice. The client
 `GameOverReviveMessage` (`lib/actions/client/game-over-revive-message.js`) renders the game over box content from the
 `theme/default/assets/features/skills/templates/ui-game-over.html` template with the translated `actions.death.*`
-snippets (title and wait on `GAME_OVER`, with no ad button until the `drm` message offers it, plus the revive mode on
-`drm`, covered by `tests/test-game-over-revive-message.js`), the `.game-over-resurrection-ad` button is
+snippets (title and wait on `GAME_OVER`, with no button until the `drm` message offers it, plus the revive mode on
+`drm`, covered by `tests/test-game-over-revive-message.js`): the wait text is the seconds left or the ready text
+without auto revive, the `.game-over-restoration-item-use` and `.game-over-restoration-item-keep` buttons send the
+choice, the `.game-over-revive` button sends the revive request and the `.game-over-resurrection-ad` button is
 rendered only when the ad is offered; the ad is never played automatically, the button click fires the event key sent
-by the server and the button stays, so the player can ask again when the provider could not play the ad.
+by the server and the button stays, so the player can ask again when the provider could not play the ad. The server
+cases are covered by `tests/test-player-death-auto-revive.js`, `tests/test-player-death-revive-choices.js`,
+`tests/test-death-revive-requests.js` and `tests/test-death-revive-notifier.js`, the game over box flows by
+`tests/e2e/test-death-teleport.spec.js`.
 
 The resurrection ad (`ads_event_video` on the client `reldens.resurrectionAd` event, `"replayCooldown":0`) rewards one
 restoration item. `ResurrectionAdGate` (`lib/actions/server/resurrection-ad-gate.js`) accepts its `AD_STARTED` message
@@ -350,8 +388,10 @@ Unit tests (the stubs of the gameplay classes are built by `tests/fixtures/gamep
 `test-increase-score-on-kill.js` (with `tests/fixtures/increase-score-on-kill-builder.js`),
 `test-ads-collection-finder.js`,
 `test-scores-period-key-builder.js`, `test-stats-recovery-calculator.js`, `test-players-auto-recovery.js`,
-`test-objects-auto-recovery.js`, `test-room-auto-recovery.js`, `test-player-death-relocator.js` and
-`test-player-death-relocator-failures.js` (with `tests/fixtures/death-relocation-builder.js`),
+`test-objects-auto-recovery.js`, `test-room-auto-recovery.js`, `test-player-death-relocator.js`,
+`test-player-death-relocator-failures.js`, `test-player-death-auto-revive.js`, `test-player-death-revive-choices.js`,
+`test-death-revive-requests.js` and `test-death-revive-notifier.js` (with `tests/fixtures/death-relocation-builder.js`),
+`test-game-over-revive-message.js` (with `tests/fixtures/game-over-revive-message-builder.js`),
 `test-scene-change-point.js` (the change points flow, with `tests/fixtures/scene-change-room-builder.js`),
 `test-rc1-sql-update.js` (the rc.1 update run on the tests database: no updated row changes, disabled features and
 existing content kept, only the missing features and sample rows added),
