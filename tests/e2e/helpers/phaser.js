@@ -142,6 +142,18 @@ class Phaser
         await page.mouse.click(canvasBox.x + coords.x, canvasBox.y + coords.y);
     }
 
+    static async clickPlayerAwayFromOwnPlayer(page, sessionId, offsetPixels)
+    {
+        let targetCoords = await Phaser.getOtherPlayerScreenCoords(page, sessionId);
+        let ownCoords = await Phaser.getPlayerScreenCoords(page);
+        let distance = Math.hypot(targetCoords.x - ownCoords.x, targetCoords.y - ownCoords.y) || 1;
+        let canvasBox = await page.locator(Selectors.canvas).boundingBox();
+        await page.mouse.click(
+            canvasBox.x + targetCoords.x + (targetCoords.x - ownCoords.x) / distance * offsetPixels,
+            canvasBox.y + targetCoords.y + (targetCoords.y - ownCoords.y) / distance * offsetPixels
+        );
+    }
+
     static async getPlayerServerPosition(page)
     {
         return page.evaluate(() => {
