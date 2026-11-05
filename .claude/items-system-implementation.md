@@ -448,6 +448,25 @@ CREATE TABLE `items_inventory` (
 
 4-6. Same persistence and client update flow as equip
 
+### Growth Level Up Events Sequence
+
+Fired by the items-system `ItemGrowthLeveler` when a growing item reaches a new level (see
+`.claude/gameplay-features.md`):
+
+1. The unequip sequence above, when the item is equipped
+2. `ItemsEvents.GROWTH_LEVEL_UP` - After the modifiers were scaled to the new level
+   - **Listener**: `ItemsGrowthApplier.applyReachedLevel()` - Calculates the display data again and sends the level
+     reached chat message
+3. `ItemsEvents.UPDATE_ITEM` - The items sender sends `ItemsConst.ACTION_UPDATE` with the item `customData`, the client
+   receiver updates the client item and the inventory plugin renders its box again
+4. The equip sequence above, when the item was equipped
+5. `ItemsEvents.GROWTH_EXPERIENCE_ADDED` - After every experience added, also without a level up
+   - **Listener**: `ItemsGrowthApplier.saveItemGrowth()` - Saves the level and experience in `items_inventory.customData`
+
+The experience added to the same item runs in order. A failed step (the unequip, a listener of steps 2, 3 or 5 or the
+equip again) is logged and stored as the items manager `lastError` (`items.growth.stepFailed`): a failed unequip stops
+the level up (level and modifiers unchanged), a failed listener never stops the next steps.
+
 ## Testing Checklist
 
 - Equip item - Stats increase correctly
