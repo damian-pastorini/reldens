@@ -94,6 +94,40 @@ class TestMessageActionsGuards extends BaseTest
         });
     }
 
+    async testEquipOfAMissingItemIsRejected()
+    {
+        await this.test('the equip of an item key that is not in the inventory is rejected', async () => {
+            let playerSchema = {player_id: 1, inventory: {manager: {items: {}}}};
+            let messageActions = new InventoryMessageActions();
+            let missingResult = await messageActions.executeEquipAction(playerSchema, {'idx': 'missing-item'});
+            this.assert.strictEqual(missingResult, false);
+            let prototypeResult = await messageActions.executeEquipAction(playerSchema, {'idx': '__proto__'});
+            this.assert.strictEqual(prototypeResult, false);
+        });
+    }
+
+    async testEquipOfANonEquipmentItemIsRejected()
+    {
+        await this.test('the equip of an item that is not an equipment is rejected and changes nothing', async () => {
+            let equippedSword = {group_id: 1, equipped: true, unequip: async () => equippedSword.equipped = false};
+            let potion = {group_id: 1, use: async () => true};
+            let playerSchema = {player_id: 1, inventory: {manager: {items: {sword: equippedSword, potion}}}};
+            let result = await new InventoryMessageActions().executeEquipAction(playerSchema, {'idx': 'potion'});
+            this.assert.strictEqual(result, false);
+            this.assert.strictEqual(equippedSword.equipped, true);
+        });
+    }
+
+    async testUseOfANonUsableItemIsRejected()
+    {
+        await this.test('the use of an item that is not usable is rejected', async () => {
+            let playerSchema = {player_id: 1, inventory: {manager: {items: {sword: {group_id: 1, equipped: false}}}}};
+            let data = {act: InventoryConst.ACTIONS.USE, 'idx': 'sword'};
+            let result = await new InventoryMessageActions().executeMessageActions({}, data, {}, playerSchema);
+            this.assert.strictEqual(result, false);
+        });
+    }
+
     async testTeamJoinWithoutInviteIsRejected()
     {
         await this.test('a player cannot join a team without an invite', async () => {
@@ -215,7 +249,6 @@ class TestMessageActionsGuards extends BaseTest
             let client = this.createClient(sentMessages);
             this.assert.strictEqual(messageActions.startExchange(client, data, room, invitedPlayer), true);
             this.assert.strictEqual(messageActions.startExchange(client, data, room, invitedPlayer), false);
-            // @possible-hallucinated-undefined-method
             this.assert.strictEqual(initializedExchanges.length, 1);
         });
     }

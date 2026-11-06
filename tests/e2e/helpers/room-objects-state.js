@@ -9,10 +9,13 @@
  * of a room (or only the aggressive ones) until the next players reset, so the specs that are not about those enemies
  * are never interrupted by an attack;
  * the random movement stop and the attack position next to a player used by the enemy placement (RoomEnemyPlacement),
- * a walkable position where the placed body does not overlap any other colliding body, so the physics never push it;
- * the player placement next to another player, out of contact with its body and inside the short attack range, so a player versus player hit never pushes the target; and the player affected
- * property (hp) set on the live player and sent to its client, so the specs that need a death set the exact life the
- * next hit removes instead of depending on the enemies damage rate.
+ * a walkable position where the placed body does not overlap any colliding body (that player included), so the physics
+ * never push it, tried in a fixed order (40px right, left, down and up, then the 40px diagonals, then 32px right,
+ * left, down and up, rounded to whole pixels as the synced state), so a player surrounded by bodies on its sides (the
+ * mining rocks cluster) still gets a position; the player placement next to another player, out of contact with its
+ * body and inside the short attack range, so a player versus player hit never pushes the target; and the player
+ * affected property (hp) set on the live player and sent to its client, so the specs that need a death set the exact
+ * life the next hit removes instead of depending on the enemies damage rate.
  *
  */
 
@@ -24,7 +27,11 @@ class RoomObjectsState
 {
 
     static ATTACK_DISTANCE = 40;
-    static ATTACK_OFFSETS = [{x: 1, y: 0}, {x: -1, y: 0}, {x: 0, y: 1}, {x: 0, y: -1}];
+    static ATTACK_OFFSETS = [
+        {x: 1, y: 0}, {x: -1, y: 0}, {x: 0, y: 1}, {x: 0, y: -1},
+        {x: 0.71, y: 0.71}, {x: -0.71, y: 0.71}, {x: 0.71, y: -0.71}, {x: -0.71, y: -0.71},
+        {x: 0.8, y: 0}, {x: -0.8, y: 0}, {x: 0, y: 0.8}, {x: 0, y: -0.8}
+    ];
 
     static findRoom(serverManager, roomName)
     {
@@ -115,6 +122,7 @@ class RoomObjectsState
         let objectBody = roomObject.objectBody;
         return {
             key: roomObject.key,
+            bodyKey: sc.get(objectBody.bodyState, 'key', roomObject.key),
             assetKey: sc.get(roomObject.clientParams, 'asset_key', roomObject.key),
             type: roomObject.type,
             x: Math.round(objectBody.position[0]),
@@ -149,10 +157,11 @@ class RoomObjectsState
         enemyObject.objectBody.bodyState.inState = GameConst.STATUS.DISABLED;
     }
 
-    static disableEnemies(room, onlyAggressive)
+    static disableEnemies(room, onlyAggressive, exceptBodyKey)
     {
         let enemies = RoomObjectsState.fetchEnemies(room).filter(
-            enemyObject => !onlyAggressive || true === enemyObject.isAggressive
+            enemyObject => (!onlyAggressive || true === enemyObject.isAggressive)
+                && exceptBodyKey !== enemyObject.objectBody.bodyState.key
         );
         let affectedProperty = room.config.get('client/actions/skills/affectedProperty');
         for(let enemyObject of enemies){
@@ -195,12 +204,12 @@ class RoomObjectsState
     {
         let grid = room.roomWorld.pathFinder.grid;
         let bodiesBounds = room.roomWorld.bodies.filter(
-            body => playerBody !== body && placedBody !== body && false !== body.collisionResponse
+            body => placedBody !== body && false !== body.collisionResponse
         ).map(body => body.getAABB());
         let placedBounds = placedBody.getAABB();
         for(let offset of RoomObjectsState.ATTACK_OFFSETS){
-            let x = playerBody.position[0] + offset.x * RoomObjectsState.ATTACK_DISTANCE;
-            let y = playerBody.position[1] + offset.y * RoomObjectsState.ATTACK_DISTANCE;
+            let x = Math.round(playerBody.position[0] + offset.x * RoomObjectsState.ATTACK_DISTANCE);
+            let y = Math.round(playerBody.position[1] + offset.y * RoomObjectsState.ATTACK_DISTANCE);
             let tilePosition = playerBody.positionToTiles(x, y);
             if(!grid.isWalkableAt(tilePosition.currentCol, tilePosition.currentRow)){
                 continue;
@@ -305,7 +314,8 @@ class RoomObjectsState
         app.post('/api/e2e/room-objects/disable-enemies', (request, response) => {
             let room = RoomObjectsState.findRoom(serverManager, sc.get(request.body, 'roomName', ''));
             let onlyAggressive = true === sc.get(request.body, 'onlyAggressive', false);
-            response.json({disabled: room ? RoomObjectsState.disableEnemies(room, onlyAggressive) : 0});
+            let exceptBodyKey = String(sc.get(request.body, 'exceptBodyKey', ''));
+            response.json({disabled: room ? RoomObjectsState.disableEnemies(room, onlyAggressive, exceptBodyKey) : 0});
         });
         app.post('/api/e2e/room-objects/place-player', async (request, response) => {
             await RoomObjectsState.respondForRoom(

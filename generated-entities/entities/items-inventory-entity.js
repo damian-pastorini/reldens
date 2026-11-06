@@ -45,13 +45,18 @@ class ItemsInventoryEntity extends EntityProperties
             is_active: {
                 type: 'boolean',
                 dbType: 'tinyint'
+            },
+            customData: {
+                type: 'textarea',
+                dbType: 'text'
             }
         };
         let propertiesKeys = Object.keys(properties);
         let showProperties = propertiesKeys;
         let editProperties = [...propertiesKeys];
         editProperties.splice(editProperties.indexOf('id'), 1);
-        let listProperties = propertiesKeys;
+        let listProperties = [...propertiesKeys];
+        listProperties.splice(listProperties.indexOf('customData'), 1);
         return {
             showProperties,
             editProperties,

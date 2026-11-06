@@ -23,9 +23,31 @@ npm run test:e2e:long:clean
 
 Flags accepted by `tests/e2e/run-tests.js`:
 
-- `--long` - slow motion plus scaled timeouts (also via `LONG_RUN=1`)
+- `--long` - slow motion plus scaled timeouts (also via `LONG_RUN=1`); the gameplay features specs also run the
+  `tests/e2e/helpers/long-run-showcase.js` steps, only in the long run, so their videos show the tested result: the
+  video is recorded with `page.screencast` from the game start (`BaseE2eTest.startGameplayRecording()`, the login and
+  the player selection are left out and a bottom banner shows the test title and that the player teleports skip the
+  walks), the result stays on screen for `TimeConstants.SHOWCASE` (3 seconds), the panel that shows it (inventory,
+  chat, scores, player stats) is opened, the recovery amounts are raised, the recovering enemy (a passive one with no
+  `over-player` map layer tile, the tree tops drawn above the sprites, within 2 tiles) is targeted with the player 2
+  tiles away (touching it starts a battle) and, when possible, far enough from the map borders that the camera keeps
+  the player at the center, away from the panels, the killed Tree keeps its full life and is fought near the map
+  center (the aggressive enemies are disabled before the player moves there, and the placed Tree aggression is held
+  until the player attacks it, since the center is inside its respawn area and it would start the battle and chase
+  the player before the targeting sees its placed position), the death videos place the passive enemy of the map
+  center next to the player with the player life lowered, the player attacks it until it hits back (one attack never
+  kills it) and its battle keeps hitting until the player dies, and the skin video zooms the game camera on the
+  player; every placement and disabled enemy is done before the recording starts, and the recording starts once the
+  game camera stopped following the player (`BaseE2eTest.waitForCameraStill()`, its scroll checked every
+  `BaseE2eTest.cameraStillPollMs`) and 1 second after the banner (`BaseE2eTest.gameplayRecordingStartDelayMs`),
+  because its first frame is the last frame already captured for the context video, so no video starts on the scene
+  before the placement or with the camera panning; a canvas click on a sprite right after a placement waits for the
+  same still camera in every run (the camera follows the player with a slow interpolation, so a click computed while
+  it pans misses the sprite)
 - `--filter=<text>` - passed to Playwright as a quoted `--grep`, so a filter with spaces works (`"--filter=Combat System"`),
-  with `--no-deps`, so filtering a spec of the exclusive group does not run the other groups first
+  with `--no-deps`, so filtering a spec of the exclusive group does not run the other groups first; for the same
+  reason a filter that matches specs of the exclusive group and of another group runs both at the same time, and the
+  exclusive specs reset and disable the enemies of every room, so run them in two separate filtered runs
 - `--port=<port>` - overrides the port from `tests/config.json`; when the port is busy the runner logs a warning and
   tries the next one, up to 5 ports, and stops with a critical log when all of them are busy
 - `--clean-output` - removes `test-results/` before the run
@@ -105,8 +127,10 @@ covered by the unit tests listed in `.claude/server-health-monitor.md`.
 
 If `dist/index.html` still references `src="./index.js"` the client was never bundled, so `window.reldens`
 never exists and every spec times out after 10 seconds waiting for it. `ClientBundleCheck.isMissing()` detects
-this, and `ClientBundleCheck.isOutdated()` detects a bundle older than any client source of the checkout (a `lib` js
-file outside a `server` folder changed after `dist/index.html` was built), so a client fix is always tested; in both
+this, and `ClientBundleCheck.isOutdated()` detects a bundle older than any client source (a `lib` js file of the
+checkout or a `theme/plugins` js file of the app, outside a `server` folder, or an `html` or `scss` file of the tested
+theme, `tests/config.json` `themeName`, outside its `assets` folder, changed after `dist/index.html` was built) or a
+missing tested theme folder, so a client or theme styles fix is always tested; in both
 cases the setup enables the bundler for that run, which adds about a minute before the first test.
 
 ## Security state between tests
@@ -156,7 +180,8 @@ group by the global teardown:
 - `POST update-created` (`{group, entityKey, id, patch}`) - updates a row created by the same group (any other row is
   refused), for example disabling a seeded locale after the login; the reset deletes it like every created row
 - `POST preserve` (`{group, entityKey, filters}`) - stores the rows matching the filters; the reset deletes the rows
-  created since then for the same filters and writes the stored values back, before it deletes the created rows, so a
+  created since then for the same filters, creates again with their own ids the stored rows the spec deleted (the
+  scores reset deletes every scores row) and writes the stored values back, before it deletes the created rows, so a
   preserved row that references a seeded row (a user locale pointing to a seeded locale, a clan membership) never
   blocks that delete
 - `POST load` (`{entityKey, filters}`) - returns the stored rows a spec asserts
@@ -183,25 +208,42 @@ a body the path finder grid does not know (a tree, another object) blocks the pl
 
 - `POST /api/e2e/room-objects/place-enemy` (`{roomName, sessionId, enemyKey, enemyLife}`,
   `tests/e2e/helpers/room-enemy-placement.js`) - restores the first enemy of that key or asset key, stops its random
-  movement, places it on the first walkable position 40px from the player (inside the 50px `attackShort` range, out of
-  contact with the 25px player body) where its body does not overlap any other colliding body of the room
+  movement, places it on the first walkable position around the player (40px right, left, down and up, then the 40px
+  diagonals, then 32px right, left, down and up: all inside the 50px `attackShort` range) where its body does not
+  overlap any colliding body of the room, the player body included
   (`RoomObjectsState.findAttackPosition`: the enemies restored on random respawn tiles, the trees, the walls), since an
   overlapped body is pushed off the placed position and the exact position targeting never matches, and, with
   `enemyLife`, sets its life so a single hit kills it; it returns the
   enemy key, its body state key (`bodyKey`, the client `objectsAnimations` and `room.state.bodies` key), the exact
-  position and the experience its stored rewards give on its death
+  position, the experience its stored rewards give on its death and its `killScore` private param (0 without one)
 - `RoomObjectsApi.placeAndTargetEnemy` waits until the client body state of `bodyKey` is exactly on the placed position
   and targets that exact body, so the combat specs (`test-combat.spec.js`), the XP spec (`test-stats.spec.js`, the XP
   after the kill must equal the XP before plus the returned experience) and the passive enemy spec
   (`test-objects-movement.spec.js`) never chase an enemy
-- `POST /api/e2e/room-objects/place-player-next-to-object` (`{roomName, sessionId, objectKey}`,
+- `POST /api/e2e/room-objects/place-player-next-to-object` (`{roomName, sessionId, objectKey, minimumTilesDistance}`,
   `tests/e2e/helpers/room-player-placement.js`) - stops the random movement of the first object of that key or asset
   key (any object with a physics body, with or without a body state, so the chest is found too) and places the player
   on the center of the closest walkable tile around the object tile that does not overlap any colliding body of the
   room (the object, the objects next to it and the other players) except the player itself (closest distance first,
-  then the lowest row and column, so the same room always gives the same tile);
+  then the lowest row and column, so the same room always gives the same tile), skipping the tiles closer than
+  `minimumTilesDistance` (0 by default; the long run uses 2, so the player never touches an enemy that starts a battle
+  on the hit); `RoomObjectsApi.placePlayerNextToObject()` waits for the client state and the player sprite on that
+  position;
   `RoomObjectsApi.placePlayerNextToObject` waits until the client player state is exactly on the placed position, and
   the NPC, trader, chest, mining rock and fishing spot specs interact with the returned `bodyKey`
+- `POST /api/e2e/room-objects/place-player-in-line-of-object` (`{roomName, sessionId, objectKey, distances}`,
+  `RoomPlayerPlacement.placePlayerInLineOfObject`) - stops the random movement of the object, places it on the center
+  of its tile and places the player on the first tile at one of the `distances` (in that order) right, left, down or
+  up (in that order) whose line is walkable on the path finder grid and crossed by no body of the room except the
+  object and the player (`RoomPlayerPlacement.findClearLineTile`: the walls, the change points, the objects with or
+  without state, the disabled enemies and the other players), so a shot always crosses the same free tiles; the
+  bullet interpolation spec disables the other enemies first (the snapshot `bodyKey` of `/api/e2e/room-objects`), so
+  no enemy wanders into the line after it is chosen
+- `GET /api/e2e/movement/clear-line-tile` (`roomName`, `playerName`, `distances`,
+  `RoomPlayerPlacement.fetchPlayerWalkTile`) - the walk target of a player with the same rule, its line rectangle
+  starting on the player body bounds, so a walk never stops on a body the path finder grid does not know (a tree, an
+  object without state): the grid path alone was not enough, a path to a grid walkable tile ended with the player
+  pushing against an object body one tile before the target
 - the moved NPC case places the NPC with `RoomMovementApi.placeObject` on the closest walkable tile of its spawn tile
   (it keeps its original tile) instead of waiting for a random wander
 - the town movement specs (`test-movement.spec.js` and both pathfinding specs, through
@@ -226,13 +268,13 @@ worker, so its specs run one after the other, and the groups run at the same tim
 
 - `world` - the town specs that need the town layout (NPCs, player and object pathfinding), users set 0 (`root`,
   `root2`, `root3`), start room `reldens-new-age-town`
-- `forest` - combat, stats, interactive objects, timing objects, objects movement and animation frames, users set 1
-  (`root4` to `root6`), start room `reldens-forest-level-1`
-- `social` - chat, teams, clans, trading, items, rewards, scores, locale selector, quests and the game login flow,
-  users set 2 (`root7` to `root9`), start room `reldens-new-age-town-house-01`
-- `exclusive` - the specs that change the server wide state (login and admin security), create players
-  (authentication, character system) or use more than one room (movement), users set 0, it runs after every other
-  group ended and its reset restores every room
+- `forest` - combat, stats, interactive objects, timing objects, objects movement, animation frames, auto recovery,
+  kill score and item growth, users set 1 (`root4` to `root6`), start room `reldens-forest-level-1`
+- `social` - chat, teams, clans, trading, items, rewards, scores, locale selector, quests, the game login flow and the
+  ad skins, users set 2 (`root7` to `root9`), start room `reldens-new-age-town-house-01`
+- `exclusive` - the specs that change the server wide state (login and admin security, the scores reset), create
+  players (authentication, character system) or use more than one room (movement, client interpolation, teleport NPC,
+  death teleport), users set 0, it runs after every other group ended and its reset restores every room
 
 Players collide with every other body, so two groups never share a room: every group starts its players on the
 default return point of its own start room and the per test reset only touches the group players and rooms. The
@@ -253,8 +295,9 @@ scene rooms to the specs, wrapped by `tests/e2e/helpers/room-objects-api.js`:
   velocity, the bodies in contact with it, the current tile (`currentCol`, `currentRow`), the original tile
   (`originalCol`, `originalRow`), the destination tile and the steps of the path it follows, state, the players in
   battle with it, `isAggressive` and the random movement `maxTiles` and `maxDelay`
-- `POST /api/e2e/room-objects/disable-enemies` (`{roomName, onlyAggressive}`) - stops every enemy of the room (or only
-  the aggressive ones with `onlyAggressive: true`) until the next players reset: no path, no battle, no collision
+- `POST /api/e2e/room-objects/disable-enemies` (`{roomName, onlyAggressive, exceptBodyKey}`) - stops every enemy of the
+  room (or only the aggressive ones with `onlyAggressive: true`, never the body state key `exceptBodyKey`) until the
+  next players reset: no path, no battle, no collision
   response, affected property 0 (so the aggression and the hits never start a battle) and the `DISABLED` state (so the
   body is not integrated and the random movement never moves it)
 - `POST /api/e2e/room-objects/enemy-attack` (`{roomName, playerName, assetKey}`, `RoomEnemyPlacement`) - places one
@@ -303,6 +346,76 @@ and `BaseE2eTest.loadRoomEntries(roomName, listsKeys, onlyMoving)`:
 - `test-combat.spec.js` and `test-movement.spec.js` - the death and revive and the return point after death:
   `TestCombatDeath.killPlayerWithEnemyAttack` sets the player hp to 1 (`player-affected-property`) and places a Tree
   next to the player with its battle started (`enemy-attack`), so the death comes from one real enemy hit
+
+## Client interpolation specs
+
+The client scene interpolation (`SceneDynamic.processPlayersPositionInterpolation` and
+`processObjectsPositionInterpolation`) is checked in the browser on the real bundle, frame by frame:
+
+- `InterpolationFramesRecorder` (`tests/e2e/helpers/interpolation-frames-recorder.js`) listens to the `preupdate` and
+  `postupdate` events of the active scene and records, for the tracked players, objects animations and bullets, the
+  sprite position before and after the scene update and the interpolation entry the update read (the state `x`, `y`
+  and `mov`); `summarize()` checks every frame against the real Phaser `Linear` (`node_modules/phaser/src/math/Linear.js`)
+  and the configured `client/general/engine/interpolationSpeed`: a moving entry steps the sprite and is kept, a stopped
+  entry places the sprite on the state position and ends, an entry already on the sprite position (rounded) ends
+  without moving it and a sprite without entry never moves; the players use 2 decimals and the players size offsets,
+  the objects and bullets integers; it also collects the page errors, so a client update that throws fails the spec
+- `test-client-interpolation.spec.js` (exclusive) - the own player walk (intermediate steps and the stop placed on the
+  server position), the own player placement next to the `e2eNpcKey` NPC (one frame jump, no step), another player
+  walking and placed as the first client sees it, the `e2eNpcKey` NPC placed on a tile and walking back to its original
+  tile, an `attackBullet` bullet flying to a passive forest enemy over a clear line of 4 (or 3) tiles
+  (`RoomObjectsApi.placePlayerInLineOfObject`, the other enemies disabled before), and the walk in the forest after
+  entering it through the town change point, with every forest enemy disabled and the target tile on a clear line of 3
+  (or 2) tiles (`RoomMovementApi.fetchClearLineTile`); every
+  failed player wait reports the state, the sprite and the entry it saw (`InterpolationFramesRecorder.readPlayerPositions`)
+- `SceneInterpolationProbe` (`tests/e2e/helpers/scene-interpolation-probe.js`) calls the live scene interpolation
+  methods inside one page evaluation with the crafted entries the real movements never create (no state, no sprite,
+  no animation, already in place, the interpolation disabled, no player engine), ending with the real state so the
+  sprites end where they started, and reads the depth of every map layer
+- `test-scene-interpolation-branches.spec.js` (exclusive) - asserts those branches, that every town map layer gets
+  the `client/map/layersDepth` depth of its name, or its index times the map height in pixels for the over player
+  layers, and that with `client/general/engine/clientInterpolation` overridden to `false` for the group the walking
+  player sprite is placed on its state position on every state change (`PlayerEngine.updatePlayer`), with no frame
+  moved by the scene update
+
+## Gameplay features specs
+
+The specs of the features described in `.claude/gameplay-features.md` read every expected value from the stored
+rows (config, items, ads, objects), enable the disabled features with `POST config` for their group and use
+`GameplayE2eStateProbe` (`tests/e2e/helpers/gameplay-e2e-state-probe.js`, registered by `collect-game-data.js`,
+wrapped by `GameplayE2eStateApi`):
+
+- `GET /api/e2e/gameplay/player?roomName=&playerName=` - the live player avatar key, life, base life, stats, state and
+  scene
+- `POST /api/e2e/gameplay/enemy-life` (`{roomName, enemyKey, life}`) and
+  `GET /api/e2e/gameplay/enemy-life?roomName=&bodyKey=` - set the life of an active enemy out of battle (the life bar
+  update is broadcast like a hit does), then read that exact body
+- `POST /api/e2e/gameplay/scores-reset-check` (`{isoDate, previousPeriodKey}`) - stores the previous period key in
+  its config row and runs the scores plugin reset check on that date
+
+The shared helpers: `E2eSeedAndRestoreApi.seedInventoryItem()`, `loadInventoryRows()` and `fetchConfigValue()`,
+`AdMessagesPlayer` (`tests/e2e/helpers/ad-messages-player.js`: enables an ad, its CrazyGames provider and the client
+provider for the group, with the provider `sdkUrl` set to the SDK mock `tests/e2e/assets/crazy-games-sdk-mock.js`
+served by `E2eAssetsEndpoints` at `/api/e2e/assets/`; the client loads the mock and plays the ad on its event: an
+advertisement overlay is shown for the provider minimum duration and the client provider sends the start and end
+messages, or the failed message after `failNextAd()`), `ForestEnemyKill` (`tests/e2e/helpers/forest-enemy-kill.js`:
+the configured forest enemy placed and targeted with one hit point, with its full life in the long run) and
+`RoomObjectsApi.attackTargetUntil()` (the `attackShort` skill repeated until a condition is reached). The player
+placements wait for the client sprite on the placed position, not only for the state.
+
+- `test-auto-recovery.spec.js` (forest) - a player life and an idle enemy life set to 1 recover on the next ticks
+- `test-kill-score.spec.js` (forest) - killing the Tree adds its `killScore` to the player scores row
+- `test-item-growth.spec.js` (forest) - the equipped growing sword stores the kill experience and level in its
+  `items_inventory.customData` and the player attack grows with the scaled modifier
+- `test-ad-skins.spec.js` (social) - the skin ticket use keeps the ticket, the played skin ad consumes it and rewards
+  the skin item, and equipping it changes the server and client avatar until it is unequipped; a failed skin ad (the
+  mock calls the provider error callback after the server opened the play) closes the play keeping the ticket and gives
+  no skin item
+- `test-teleport-npc.spec.js` (exclusive) - the teleport NPC option moves the player to its destination room
+- `test-death-teleport.spec.js` (exclusive) - the dead player revives in the town, or in the forest consuming the
+  restoration item seeded or rewarded by the resurrection ad played while dead
+- `test-scores-reset.spec.js` (exclusive) - the check on a new period deletes every score and empties the open scores
+  panel; the scores rows and the last period key row are preserved and created again by the group reset
 
 `RoomEnemiesReset` (run by the player reset before every test) resets the path of every respawned body
 (`resetAuto`), as `EnemyObject.respawn` does, otherwise a body moved to a new respawn tile keeps walking its old random

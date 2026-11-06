@@ -80,6 +80,9 @@ class RoomEnemiesReset
         clearTimeout(objInstance.objectBody?.moveToOriginalPointTimer);
         objInstance.objectBody?.resetAuto();
         objInstance.objectBody?.stopFull();
+        if(objInstance.battle){
+            objInstance.battle.inBattleWithPlayers = {};
+        }
         try {
             await objInstance.respawnBehavior.restore(room);
             objInstance.respawnBehavior.setActive(room);

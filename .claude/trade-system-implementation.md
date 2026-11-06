@@ -257,8 +257,9 @@ confirmations = {
 
 **Server:**
 - `lib/inventory/server/message-actions.js` - Trade message handling
-- `lib/inventory/server/exchange/processor.js` - Exchange operations (init, add, remove, confirm)
-- `lib/inventory/server/exchange/player-processor.js` - Player-to-player confirm/disconfirm operations
+- `lib/inventory/server/exchange/processor.js` - Exchange operations (init, add, remove, confirm), and
+  `updatePlayerConfirmation(props, isConfirmed)` for the player-to-player confirm (then finalize) and disconfirm, mapped
+  from the trade sub-actions by `InventoryMessageActions.mapSubAction()`
 
 **Constants:**
 - `lib/objects/constants.js` - Trade action constants (ADD, REMOVE, CONFIRM, DISCONFIRM)

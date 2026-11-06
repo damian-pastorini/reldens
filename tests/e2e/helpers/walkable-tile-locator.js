@@ -147,6 +147,18 @@ class WalkableTileLocator
         return false;
     }
 
+    static findWalkableTilesAlongDirections(tiles, from, distances)
+    {
+        let walkableTiles = [];
+        for(let direction of WalkableTileLocator.DIRECTIONS){
+            let tile = WalkableTileLocator.findWalkableAlong(tiles, from, direction.step, distances);
+            if(tile){
+                walkableTiles.push(tile);
+            }
+        }
+        return walkableTiles;
+    }
+
     static appendDirectionCases(cases, sourceTile, walkableKeys, mapCase)
     {
         for(let direction of WalkableTileLocator.DIRECTIONS){
