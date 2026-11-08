@@ -9,10 +9,11 @@
  * (placeEnemyToKill) the configured forest enemy (e2eEnemyKey) is placed with one hit point in the normal run, so the
  * next attack kills it; the long run first moves the player to the center of the map and disables every enemy (the
  * placement restores the placed one), then places it with its full life, so its video shows the whole fight. To be
- * killed by it (placeEnemyToKillPlayer, long run only) a passive enemy of the center is placed with its full life and
- * the player life is set to the given points, then the server starts its battle in place, a single attack loop that
- * keeps hitting until the player dies (fightUntilPlayerDeath; the player attacks would start more loops that chase and
- * push the player until the enemy leaves the battle), the passive enemy never attacks the revived player.
+ * killed by it (placeEnemyToKillPlayer, long run only) a passive enemy of the center is placed with its full life, the
+ * player life is lowered before the recording (lowerPlayerLife), then the server starts its battle in place, a single
+ * attack loop that keeps hitting until the player dies (fightUntilPlayerDeath, the HUD shows the life; the player
+ * attacks would start more loops that chase and push the player until the enemy leaves the battle), the passive enemy
+ * never attacks the revived player.
  *
  */
 
@@ -29,6 +30,7 @@ class ForestEnemyKill
     static ONE_HIT_LIFE = 1;
     static FULL_LIFE = 0;
     static ATTACK_SKILL_KEY = 'attackShort';
+    static LIFE_POLL_MS = 200;
 
     static async placeEnemyToKill(page, gameConfig, timeout, longRun)
     {
@@ -42,9 +44,9 @@ class ForestEnemyKill
         );
     }
 
-    static async placeEnemyToKillPlayer(page, gameConfig, playerLife, timeout)
+    static async placeEnemyToKillPlayer(page, gameConfig, timeout)
     {
-        let placement = await ForestEnemyKill.placeTargetedEnemy(
+        return await ForestEnemyKill.placeTargetedEnemy(
             page,
             gameConfig,
             await LongRunShowcase.findCentralPassiveEnemyKey(
@@ -58,6 +60,18 @@ class ForestEnemyKill
             timeout,
             true
         );
+    }
+
+    static async fetchClientLife(page)
+    {
+        return await page.evaluate(() => ({
+            value: Number(window.reldens.playerData.stats.hp),
+            text: 'HP '+window.reldens.playerData.stats.hp+' of '+window.reldens.playerData.statsBase.hp
+        }));
+    }
+
+    static async lowerPlayerLife(page, gameConfig, playerLife)
+    {
         let lowered = await RoomObjectsApi.setPlayerAffectedProperty(
             gameConfig,
             Login.FOREST_ROOM_NAME,
@@ -65,7 +79,10 @@ class ForestEnemyKill
             playerLife
         );
         expect(lowered.value, 'The player life must be set: '+sc.get(lowered, 'error', '')).toBe(playerLife);
-        return placement;
+        await expect.poll(
+            async () => (await ForestEnemyKill.fetchClientLife(page)).value,
+            {message: 'The client must receive the lowered player life'}
+        ).toBe(playerLife);
     }
 
     static async fightUntilPlayerDeath(page, gameConfig, enemyKey, timeout)
@@ -77,9 +94,10 @@ class ForestEnemyKill
             enemyKey
         );
         expect(battle.enemyKey, 'The placed enemy battle must start: '+sc.get(battle, 'error', '')).toBe(enemyKey);
-        await expect.poll(async () => await page.evaluate(() => Number(window.reldens.playerData.stats.hp)), {
+        await expect.poll(async () => (await ForestEnemyKill.fetchClientLife(page)).value, {
             message: 'The placed enemy must keep attacking until the player dies',
-            timeout
+            timeout,
+            intervals: [ForestEnemyKill.LIFE_POLL_MS]
         }).toBeLessThanOrEqual(0);
     }
 
@@ -90,6 +108,11 @@ class ForestEnemyKill
         if(longRun){
             await RoomObjectsApi.disableEnemies(gameConfig, Login.FOREST_ROOM_NAME);
         }
+        return await ForestEnemyKill.placeAndTargetForestEnemy(page, gameConfig, enemyKey, enemyLife, timeout, true);
+    }
+
+    static async placeAndTargetForestEnemy(page, gameConfig, enemyKey, enemyLife, timeout, holdAggression = false)
+    {
         let placement = await RoomObjectsApi.placeAndTargetEnemy(
             page,
             gameConfig,
@@ -97,7 +120,7 @@ class ForestEnemyKill
             enemyKey,
             enemyLife,
             timeout,
-            true
+            holdAggression
         );
         expect(placement.targeted, 'The placed enemy must be targeted: '+sc.toJsonString(placement)).toBe(true);
         return placement;
