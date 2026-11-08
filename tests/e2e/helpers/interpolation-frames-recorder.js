@@ -8,8 +8,9 @@
  * sprite by the configured interpolation speed from its last position and keeps the entry, a stopped entry places the
  * sprite on the state position and ends the entry, an entry already on the sprite position ends without moving it and
  * a sprite without entry is never moved by the update. The players positions are rounded to 2 decimals and use the
- * players size offsets, the objects and bullets positions are rounded to integers. The page errors are collected, so a
- * failing client update (like a missing import) fails the spec.
+ * players size offsets, the objects and bullets positions are rounded to integers. Every frame also keeps the texture
+ * its sprite renders while it is visible, so a bullet flying with a missing texture or hidden fails the spec. The page
+ * errors are collected, so a failing client update (like a missing import) fails the spec.
  *
  */
 
@@ -38,6 +39,7 @@ class InterpolationFramesRecorder
             let recorder = {scene, frames: [], pendingFrames: []};
             let readPosition = (sprite) => sprite ? {x: sprite.x, y: sprite.y} : false;
             let readEntry = (entry) => entry ? {x: entry.x, y: entry.y, mov: Boolean(entry.mov)} : false;
+            let readRenderedTexture = (sprite) => sprite?.visible && 0 < sprite.alpha ? sprite.texture?.key : false;
             let fetchTargets = () => [
                 ...tracked.players.map(key => ({
                     kind: 'player',
@@ -78,7 +80,8 @@ class InterpolationFramesRecorder
                     before: pendingFrame.before,
                     entry: pendingFrame.entry,
                     after,
-                    isEntryKept: Boolean(target.entries[target.key])
+                    isEntryKept: Boolean(target.entries[target.key]),
+                    renderedTexture: readRenderedTexture(target.sprite)
                 });
                 return true;
             };
@@ -173,9 +176,21 @@ class InterpolationFramesRecorder
 
     static summarize(recording, kind)
     {
-        let summary = {frames: 0, mismatches: [], moving: 0, partialMoving: 0, placed: 0, current: 0, longestPlacedJump: 0};
+        let summary = {
+            frames: 0,
+            mismatches: [],
+            moving: 0,
+            partialMoving: 0,
+            placed: 0,
+            current: 0,
+            longestPlacedJump: 0,
+            renderedTextures: []
+        };
         for(let frame of recording.frames.filter(recordedFrame => kind === recordedFrame.kind)){
             summary.frames++;
+            if(frame.renderedTexture && !summary.renderedTextures.includes(frame.renderedTexture)){
+                summary.renderedTextures.push(frame.renderedTexture);
+            }
             let expected = InterpolationFramesRecorder.expectFrame(frame, recording);
             let isExpected = expected.after.x === frame.after.x
                 && expected.after.y === frame.after.y
