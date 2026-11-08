@@ -16,7 +16,10 @@
  * down and up directions (in that order) at the given distances (in that order) whose tiles are all walkable on the
  * grid and whose rectangle (from the start bounds to the end tile) overlaps no body except the ignored ones. It gives
  * the walk target of a player, and the player placement on the line of an object (its random movement stopped and the
- * object placed on the center of its tile), so the same room always gives the same walk and the same shot.
+ * object placed on the center of its tile), so the same room always gives the same walk and the same shot. The line of
+ * a shot also covers the row above and the column on the left of the object tile: P2world.shootBullet starts the bullet
+ * half a tile and half a bullet away from the shooter on both axes, a body there removes the bullet before a client
+ * can see it.
  *
  */
 
@@ -151,6 +154,16 @@ class RoomPlayerPlacement
         };
     }
 
+    static shotStartBounds(room, tile)
+    {
+        let tileBounds = RoomPlayerPlacement.tileBounds(room, tile);
+        return {
+            ...tileBounds,
+            left: tileBounds.left - room.roomWorld.mapJson.tilewidth,
+            top: tileBounds.top - room.roomWorld.mapJson.tileheight
+        };
+    }
+
     static isLineWalkable(grid, fromTile, direction, distance)
     {
         for(let step = 1; step <= distance; step++){
@@ -189,8 +202,8 @@ class RoomPlayerPlacement
             startBounds,
             bodiesBounds: room.roomWorld.bodies.filter(body => !ignoredBodies.includes(body)).map(body => body.getAABB())
         };
-        for(let direction of RoomPlayerPlacement.LINE_DIRECTIONS){
-            let tile = RoomPlayerPlacement.findDirectionTile(room, line, direction, distances);
+        for(let distance of distances){
+            let tile = RoomPlayerPlacement.findDistanceTile(room, line, distance);
             if(tile){
                 return tile;
             }
@@ -198,9 +211,9 @@ class RoomPlayerPlacement
         return false;
     }
 
-    static findDirectionTile(room, line, direction, distances)
+    static findDistanceTile(room, line, distance)
     {
-        for(let distance of distances){
+        for(let direction of RoomPlayerPlacement.LINE_DIRECTIONS){
             let tile = RoomPlayerPlacement.findLineTile(room, line, direction, distance);
             if(tile){
                 return tile;
@@ -249,7 +262,7 @@ class RoomPlayerPlacement
         let tile = RoomPlayerPlacement.findClearLineTile(
             room,
             fromTile,
-            RoomPlayerPlacement.tileBounds(room, fromTile),
+            RoomPlayerPlacement.shotStartBounds(room, fromTile),
             distances,
             [objectBody, subjects.playerSchema.physicalBody]
         );
