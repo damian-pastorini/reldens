@@ -6,7 +6,10 @@
  * game canvas, which targets it (the target box shows the NPC title) and opens its dialog, chooses the first option that
  * has a destination and is moved to that destination room, on the client and on the server. The NPC, its title, its
  * options and its destinations come from the stored object row. The long run recording starts after the placement, so
- * the video starts with the player next to the NPC.
+ * the video starts with the player next to the NPC; the pointer leaves the NPC after the click, so its hover highlight
+ * ends and the NPC keeps its sprite colors, the dialog is moved away from the player stats box (the client config is
+ * sent on the login, the group reset restores it), the option is hovered on its corner before the click, and after the
+ * arrival, once the camera shows the player in the destination room, it is captioned and walks toward the map center.
  *
  */
 
@@ -18,6 +21,7 @@ const { RoomObjectsApi } = require('./helpers/room-objects-api');
 const { GameplayE2eStateApi } = require('./helpers/gameplay-e2e-state-api');
 const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
 const { LongRunShowcase } = require('./helpers/long-run-showcase');
+const { ShowcaseSteps } = require('./helpers/showcase-steps');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
 const { sc } = require('@reldens/utils');
@@ -28,6 +32,10 @@ class TestTeleportNpc
 {
 
     static TELEPORT_TYPE_KEY = 'teleport';
+    static DIALOG_RESPONSIVE_X_PATH = 'client/ui/npcDialog/responsiveX';
+    static DIALOG_SHOWCASE_RESPONSIVE_X = 20;
+    static ARRIVAL_WALK_TILES = 6;
+    static ARRIVAL_WALK_TIMEOUT_MS = 3000;
 
     static async loadTeleportData(gameConfig)
     {
@@ -41,19 +49,54 @@ class TestTeleportNpc
         expect(teleportRow, 'The teleport NPC must be stored').toBeTruthy();
         let destinations = sc.toJson(teleportRow.private_params, {}).destinations;
         let optionKey = [...Object.keys(destinations)].shift();
+        let option = sc.toJson(teleportRow.client_params, {}).options[optionKey];
         expect(optionKey, 'The teleport NPC must have a destination').toBeTruthy();
         return {
             clientKey: teleportRow.client_key,
             title: teleportRow.title,
-            optionValue: sc.toJson(teleportRow.client_params, {}).options[optionKey].value,
+            optionValue: option.value,
+            optionLabel: option.label,
             destinationRoom: destinations[optionKey].room
         };
     }
 
-    static async runTeleportTest(page, screenshots, gameConfig, longRun)
+    static async showArrival(page, gameConfig, destinationRoom, timeout, longRun)
+    {
+        if(!longRun){
+            return false;
+        }
+        await Phaser.waitForPlayerInRoomState(page, timeout);
+        await Phaser.waitForPlayerBySessionId(
+            page,
+            await page.evaluate(() => window.reldens.activeRoomEvents.room.sessionId),
+            timeout
+        );
+        await LongRunShowcase.waitForCamera(page, longRun);
+        let roomTitle = [...await E2eSeedAndRestoreApi.loadRows(gameConfig, 'rooms', {name: destinationRoom})]
+            .shift().title;
+        await LongRunShowcase.showStep(page, 'The player arrived in '+roomTitle+' and walks in the room', longRun);
+        await ShowcaseSteps.walkTowardMapCenter(
+            page,
+            gameConfig,
+            destinationRoom,
+            gameConfig.e2ePlayerName,
+            TestTeleportNpc.ARRIVAL_WALK_TILES,
+            TestTeleportNpc.ARRIVAL_WALK_TIMEOUT_MS
+        );
+        return true;
+    }
+
+    static async runTeleportTest(page, screenshots, gameConfig, e2eGroup, longRun)
     {
         let teleportData = await TestTeleportNpc.loadTeleportData(gameConfig);
         let sceneTimeout = TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun);
+        await ShowcaseSteps.overrideConfig(
+            gameConfig,
+            e2eGroup,
+            TestTeleportNpc.DIALOG_RESPONSIVE_X_PATH,
+            TestTeleportNpc.DIALOG_SHOWCASE_RESPONSIVE_X,
+            longRun
+        );
         await Login.loginRootPlayer(page, gameConfig, longRun);
         await Phaser.waitForObject(page, teleportData.clientKey, sceneTimeout);
         let placement = await RoomObjectsApi.placePlayerNextToObject(
@@ -61,12 +104,17 @@ class TestTeleportNpc
             gameConfig,
             Login.TOWN_ROOM_NAME,
             teleportData.clientKey,
-            sceneTimeout
+            sceneTimeout,
+            longRun ? LongRunShowcase.TARGET_DISTANCE_TILES : 0
         );
         expect(placement.reached, 'The player must be placed next to the NPC: '+sc.toJsonString(placement)).toBe(true);
-        await LongRunShowcase.startGameplayRecording(page, longRun);
+        await LongRunShowcase.startGameplayRecording(
+            page,
+            longRun,
+            'The player clicks the teleport NPC '+teleportData.title
+        );
         await BaseE2eTest.waitForCameraStill(page);
-        await Phaser.clickObject(page, teleportData.clientKey);
+        await ShowcaseSteps.clickObjectAndLeave(page, teleportData.clientKey, longRun);
         await expect(
             page.locator(Selectors.combat.targetBox),
             'The clicked teleport NPC must be targeted'
@@ -75,9 +123,13 @@ class TestTeleportNpc
             '[data-option-value="'+teleportData.optionValue+'"]'
         );
         await expect(optionButton).toBeVisible({timeout: TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun)});
-        await LongRunShowcase.pause(page, longRun);
+        await ShowcaseSteps.showAndPause(
+            page,
+            teleportData.title+' asks where to go: the player chooses "'+teleportData.optionLabel+'"',
+            longRun
+        );
         await screenshots.capture(page, 'teleport-npc-dialog-options');
-        await optionButton.click();
+        await ShowcaseSteps.click(page, optionButton, longRun);
         await Navigation.waitForRoom(
             page,
             teleportData.destinationRoom,
@@ -91,15 +143,15 @@ class TestTeleportNpc
             )).scene,
             {message: 'The server must place the player in the destination room'}
         ).toBe(teleportData.destinationRoom);
-        await LongRunShowcase.pause(page, longRun);
+        await TestTeleportNpc.showArrival(page, gameConfig, teleportData.destinationRoom, sceneTimeout, longRun);
         await screenshots.capture(page, 'teleport-npc-destination-room');
     }
 
     static run()
     {
         test.describe('Teleport NPC', () => {
-            test('teleport NPC option moves the player to its destination room', async ({ page, screenshots, gameConfig, longRun }) => {
-                await TestTeleportNpc.runTeleportTest(page, screenshots, gameConfig, longRun);
+            test('teleport NPC option moves the player to its destination room', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
+                await TestTeleportNpc.runTeleportTest(page, screenshots, gameConfig, e2eGroup, longRun);
             });
         });
     }
