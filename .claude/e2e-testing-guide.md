@@ -26,24 +26,32 @@ Flags accepted by `tests/e2e/run-tests.js`:
 - `--long` - slow motion plus scaled timeouts (also via `LONG_RUN=1`); the gameplay features specs also run the
   `tests/e2e/helpers/long-run-showcase.js` steps, only in the long run, so their videos show the tested result: the
   video is recorded with `page.screencast` from the game start (`BaseE2eTest.startGameplayRecording()`, the login and
-  the player selection are left out and a bottom banner shows the test title and that the player teleports skip the
-  walks), the result stays on screen for `TimeConstants.SHOWCASE` (3 seconds), the panel that shows it (inventory,
-  chat, scores, player stats) is opened, the recovery amounts are raised, the recovering enemy (a passive one with no
-  `over-player` map layer tile, the tree tops drawn above the sprites, within 2 tiles) is targeted with the player 2
-  tiles away (touching it starts a battle) and, when possible, far enough from the map borders that the camera keeps
-  the player at the center, away from the panels, the killed Tree keeps its full life and is fought near the map
-  center (the aggressive enemies are disabled before the player moves there, and the placed Tree aggression is held
-  until the player attacks it, since the center is inside its respawn area and it would start the battle and chase
-  the player before the targeting sees its placed position), the death videos place the passive enemy of the map
-  center next to the player with the player life lowered, the player attacks it until it hits back (one attack never
-  kills it) and its battle keeps hitting until the player dies, and the skin video zooms the game camera on the
-  player; every placement and disabled enemy is done before the recording starts, and the recording starts once the
-  game camera stopped following the player (`BaseE2eTest.waitForCameraStill()`, its scroll checked every
-  `BaseE2eTest.cameraStillPollMs`) and 1 second after the banner (`BaseE2eTest.gameplayRecordingStartDelayMs`),
-  because its first frame is the last frame already captured for the context video, so no video starts on the scene
-  before the placement or with the camera panning; a canvas click on a sprite right after a placement waits for the
-  same still camera in every run (the camera follows the player with a slow interpolation, so a click computed while
-  it pans misses the sprite)
+  the player selection are left out and an opaque top banner, over the page header, shows the test title, that the
+  player teleports skip the walks and the current step, the `tests/e2e/assets/e2e-overlays.css` styles added with it
+  move the whole scene label box 18rem left of the top center, so it never covers the player, and the game over box
+  30% down from the top), the first step is given to the recording start
+  (`LongRunShowcase.startGameplayRecording(page, longRun, firstStep, zoom, suffix)`), so no video starts without it, the
+  steps tell the general flow of the test and the HUD, the life bars and the panels show the live values (a step that
+  changes with every value cannot be read), every step stays on screen for `TimeConstants.STEP_READ` (4 seconds,
+  `RecordingStepReadTimer`: the next `LongRunShowcase.showStep()` and the end of the recording wait for it, so a step
+  never goes between a timed action and its check), the result stays on screen for `TimeConstants.SHOWCASE` (2
+  seconds), the panel that shows it (inventory, chat, scores, player stats) is opened, the
+  recovery amounts are raised, the recovering enemy (a passive one with no `over-player` map layer tile, the tree tops
+  drawn above the sprites, within 2 tiles) is targeted with the player 2 tiles away (touching it starts a battle) and
+  far enough from the map borders that the camera keeps the player at the center, away from the panels, the killed
+  Tree keeps its full life and is fought near the map center (the aggressive enemies are disabled before the player
+  moves there, and the placed Tree aggression is held until the player attacks it, since the center is inside its
+  respawn area and it would start the battle and chase the player before the targeting sees its placed position), the
+  death videos place the passive enemy of the map center next to the player with the player life lowered and its
+  battle keeps hitting until the player dies; every placement and disabled enemy is done before the recording starts,
+  and the recording starts with the camera on the player (its lerp is instant until the screencast runs and then
+  `BaseE2eTest.recordingCameraLerp`, kept by the recording view, which every `BaseE2eTest.recordingViewIntervalMs` also
+  keeps the zoom, hides the weather clouds and puts back the Phaser DOM container a click scrolled), once the game
+  camera stopped (`BaseE2eTest.waitForCameraStill()`, its scroll checked every `BaseE2eTest.cameraStillPollMs`) and 1
+  second after the banner (`BaseE2eTest.gameplayRecordingStartDelayMs`), because its first frame is the last frame
+  already captured for the context video; the recorded cursor dot hides after 1.5 seconds without moving; a canvas click
+  on a sprite right after a placement waits for the same still camera in every run (the camera follows the player with
+  a slow interpolation, so a click computed while it pans misses the sprite)
 - `--filter=<text>` - passed to Playwright as a quoted `--grep`, so a filter with spaces works (`"--filter=Combat System"`),
   with `--no-deps`, so filtering a spec of the exclusive group does not run the other groups first; for the same
   reason a filter that matches specs of the exclusive group and of another group runs both at the same time, and the
@@ -365,9 +373,18 @@ The client scene interpolation (`SceneDynamic.processPlayersPositionInterpolatio
   walking and placed as the first client sees it, the `e2eNpcKey` NPC placed on a tile and walking back to its original
   tile, an `attackBullet` bullet flying to a passive forest enemy over a clear line of 4 (or 3) tiles
   (`RoomObjectsApi.placePlayerInLineOfObject`, the other enemies disabled before), and the walk in the forest after
-  entering it through the town change point, with every forest enemy disabled and the target tile on a clear line of 3
-  (or 2) tiles (`RoomMovementApi.fetchClearLineTile`); every
-  failed player wait reports the state, the sprite and the entry it saw (`InterpolationFramesRecorder.readPlayerPositions`)
+  entering it through the town change point, with every forest enemy disabled; the other player and the forest walks
+  go with the pointer to a tile on a clear line of 3 (or 2) tiles (`MovementScenario.walkClearLine`, the target from
+  `RoomMovementApi.fetchClearLineTile`) until the server reports the player still on it, and the clients are checked
+  against that final server state (`GameplayE2eStateApi.fetchPlayer`), so no timed walk runs into a body and keeps
+  moving after the stop (the long run slow motion made the timed keyboard walk reach an NPC); every failed player wait
+  reports the expected server position, the state, the sprite and the entry it saw
+  (`InterpolationFramesRecorder.readPlayerPositions`); the flying bullet frames keep the rendered texture, it must be
+  `default_bullet`. Its long run steps are in `ClientInterpolationShowcase` and `ClientInterpolationBulletShowcase`: the
+  walkers get a slower live speed (`POST /api/e2e/live-objects/body-property`, restored by
+  `/api/e2e/live-objects/restore`), the bullet flies at its stored speed, the own placement target is marked on the
+  map and the camera stops following, the first client of the two players case uses a wider zoom, and the player stands
+  off the NPC walking line
 - `SceneInterpolationProbe` (`tests/e2e/helpers/scene-interpolation-probe.js`) calls the live scene interpolation
   methods inside one page evaluation with the crafted entries the real movements never create (no state, no sprite,
   no animation, already in place, the interpolation disabled, no player engine), ending with the real state so the
@@ -376,7 +393,9 @@ The client scene interpolation (`SceneDynamic.processPlayersPositionInterpolatio
   the `client/map/layersDepth` depth of its name, or its index times the map height in pixels for the over player
   layers, and that with `client/general/engine/clientInterpolation` overridden to `false` for the group the walking
   player sprite is placed on its state position on every state change (`PlayerEngine.updatePlayer`), with no frame
-  moved by the scene update
+  moved by the scene update; the long run steps are in `SceneInterpolationShowcase` and
+  `SceneInterpolationBranchesShowcase`, the probe entries run first and the video replays them slowed with one caption
+  per group of branches
 
 ## Gameplay features specs
 
@@ -403,22 +422,39 @@ the configured forest enemy placed and targeted with one hit point, with its ful
 `RoomObjectsApi.attackTargetUntil()` (the `attackShort` skill repeated until a condition is reached). The player
 placements wait for the client sprite on the placed position, not only for the state.
 
-- `test-auto-recovery.spec.js` (forest) - a player life and an idle enemy life set to 1 recover on the next ticks
-- `test-kill-score.spec.js` (forest) - killing the Tree adds its `killScore` to the player scores row
+- `test-auto-recovery.spec.js` (forest) - a player life and an idle enemy life set to 1 recover on the next ticks, and
+  the life of an escaped player recovers only after the chase time out and the start delay. The steps are in
+  `AutoRecoverySteps`; the long run ones in `AutoRecoveryShowcase` (shorter start delay and tick time, the tick time
+  reaches the live room through `POST /api/e2e/gameplay/restart-recovery-ticks`; the bigger life bars change only the
+  client config object of the recording page, a server override would reach the parallel specs, and an object bar takes
+  the width of its sprite, the only one drawn centered, and the escape walk stops on the closest tile with no tree drawn
+  over the player); its steps tell the lowered life, the recovered points per tick and the start delay
+- `test-kill-score.spec.js` (forest) - killing the Tree adds its `killScore` to the player scores row; the check that no
+  late score arrives with the switch disabled keeps its whole wait, the long run walks the player during it; the long
+  run step changes as soon as the scores panel shows the new score (`LongRunShowcase.showStepWhenText()`) and the player
+  kill test disables every enemy in the long run, so none walks around in its videos
 - `test-item-growth.spec.js` (forest) - the equipped growing sword stores the kill experience and level in its
-  `items_inventory.customData` and the player attack grows with the scaled modifier
+  `items_inventory.customData` and the player attack grows with the scaled modifier; the long run steps tell the attack
+  before and after the equip and, after the level up, the stored experience and level (the game panels never show them)
 - `test-ad-skins.spec.js` (social) - the skin ticket use keeps the ticket, the played skin ad consumes it and rewards
   the skin item, and equipping it changes the server and client avatar until it is unequipped; a failed skin ad (the
   mock calls the provider error callback after the server opened the play) closes the play keeping the ticket and gives
   no skin item
-- `test-teleport-npc.spec.js` (exclusive) - the teleport NPC option moves the player to its destination room
+- `test-teleport-npc.spec.js` (exclusive) - the teleport NPC option moves the player to its destination room; the long
+  run moves the pointer off the NPC after the click (`ShowcaseSteps.clickObjectAndLeave()`), because a pointer that goes
+  from the sprite to a DOM dialog never fires its pointer out and the green hover highlight stays on
 - `test-death-teleport.spec.js` (exclusive) - the dead player revives in the town, or in the forest consuming the
   restoration item seeded or rewarded by the resurrection ad played while dead; without the restoration item auto
   consume the game over box asks to use the item (yes revives in the forest consuming it, no keeps it and revives in
   the town); without the auto revive the box tells the seconds left, the player stays dead once that time passed and
   the revive button revives it where it died, with the teleport disabled or consuming the chosen item. The death and
   revive steps live in `helpers/death-revive-steps.js` (`DeathReviveSteps`, over a context with the page, the
-  screenshots, the game config, the e2e group and the long run flag)
+  screenshots, the game config, the e2e group and the long run flag); the long run ones in
+  `helpers/death-revive-showcase.js` (`DeathReviveShowcase`): the group gets a 5 seconds game over time, 9 when the box
+  asks for the item, plus the ad duration in the ad case, and no item drop (`server/players/drop/percent` 0), the
+  player life is lowered before the recording, the steps tell the general flow of each case (the attack, the death and
+  how the case goes on, the choice, the revive) and the clicks hover the button near its corner, so the recorded cursor
+  never hides its label
 - `test-scores-reset.spec.js` (exclusive) - the check on a new period deletes every score and empties the open scores
   panel; the scores rows and the last period key row are preserved and created again by the group reset
 
