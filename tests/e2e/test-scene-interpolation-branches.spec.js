@@ -10,7 +10,9 @@
  * disabled client interpolation and the missing player engine move nothing. It also checks the depth the scene gives
  * to every town map layer: the below player and change points depths from the config and the over player depth from
  * the layer position, and that with the client interpolation disabled (overridden for the group, restored by the next
- * players reset) every state change places the walking player sprite directly on its state position.
+ * players reset) every state change places the walking player sprite directly on its state position. The long run
+ * videos start in gameplay and explain each check on screen (SceneInterpolationShowcase and
+ * SceneInterpolationBranchesShowcase), the normal run keeps its walk and the checks are the same in both runs.
  *
  */
 
@@ -21,6 +23,10 @@ const { Phaser } = require('./helpers/phaser');
 const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
 const { InterpolationFramesRecorder } = require('./helpers/interpolation-frames-recorder');
 const { SceneInterpolationProbe } = require('./helpers/scene-interpolation-probe');
+const { LongRunShowcase } = require('./helpers/long-run-showcase');
+const { ClientInterpolationShowcase } = require('./helpers/client-interpolation-showcase');
+const { SceneInterpolationShowcase } = require('./helpers/scene-interpolation-showcase');
+const { SceneInterpolationBranchesShowcase } = require('./helpers/scene-interpolation-branches-showcase');
 const { sc } = require('@reldens/utils');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
@@ -116,11 +122,13 @@ class TestSceneInterpolationBranches
             .toEqual({x: results.stopped.body.x, y: results.stopped.body.y});
     }
 
-    static async runBranchesTest(page, screenshots, gameConfig, longRun)
+    static async runBranchesTest(page, screenshots, gameConfig, e2eGroup, longRun)
     {
         let pageErrors = InterpolationFramesRecorder.trackPageErrors(page);
+        await SceneInterpolationShowcase.enableCurrentPlayerName(gameConfig, e2eGroup, longRun);
         let context = await MovementScenario.start(page, gameConfig, longRun);
         expect(context.npcKey, 'e2eNpcKey must be configured').toBeTruthy();
+        await SceneInterpolationShowcase.placePlayerNearNpc(page, context, longRun);
         let sessionId = await page.evaluate(() => window.reldens.activeRoomEvents.room.sessionId);
         expect(
             await InterpolationFramesRecorder.waitForPlayerSpriteOnState(page, sessionId, false, context.navTimeout),
@@ -130,18 +138,34 @@ class TestSceneInterpolationBranches
             await InterpolationFramesRecorder.waitForObjectOnBody(page, context.npcKey, false, context.navTimeout),
             'The NPC animation must be on its stopped body before the branches run'
         ).toBe(true);
+        await LongRunShowcase.startGameplayRecording(
+            page,
+            longRun,
+            SceneInterpolationBranchesShowcase.PLAYER_SKIPPED_CAPTION
+        );
         let playersResults = await SceneInterpolationProbe.runPlayersBranches(page);
         let objectsResults = await SceneInterpolationProbe.runObjectsBranches(page, context.npcKey);
+        await SceneInterpolationBranchesShowcase.showResults(
+            page,
+            playersResults,
+            objectsResults,
+            context.npcKey,
+            longRun
+        );
         await screenshots.capture(page, 'interpolation-branches-done');
         TestSceneInterpolationBranches.expectPlayersBranches(playersResults);
         TestSceneInterpolationBranches.expectObjectsBranches(objectsResults, context.npcKey);
         expect(pageErrors, 'The client must not throw on the interpolation branches').toEqual([]);
     }
 
-    static async runLayersDepthTest(page, screenshots, gameConfig, longRun)
+    static async runLayersDepthTest(page, screenshots, gameConfig, e2eGroup, longRun)
     {
-        await MovementScenario.start(page, gameConfig, longRun);
+        await SceneInterpolationShowcase.enableCurrentPlayerName(gameConfig, e2eGroup, longRun);
+        let context = await MovementScenario.start(page, gameConfig, longRun);
         let layersData = await SceneInterpolationProbe.readLayersDepths(page);
+        let coverWalk = await SceneInterpolationShowcase.prepareCoverWalk(page, context, layersData, longRun);
+        await LongRunShowcase.startGameplayRecording(page, longRun, sc.get(coverWalk, 'firstCaption', ''));
+        await SceneInterpolationShowcase.showWalkUnderCover(page, context, layersData, coverWalk);
         await screenshots.capture(page, 'town-layers');
         expect(layersData, 'The active scene must have a map').toBeTruthy();
         expect(layersData.layers.length, 'Every map layer must be created').toBe(layersData.mapLayersCount);
@@ -167,11 +191,21 @@ class TestSceneInterpolationBranches
             TestSceneInterpolationBranches.CLIENT_INTERPOLATION_PATH,
             false
         );
+        await SceneInterpolationShowcase.enableCurrentPlayerName(gameConfig, e2eGroup, longRun);
         let context = await MovementScenario.start(page, gameConfig, longRun);
+        let walkTiles = await SceneInterpolationShowcase.findWalkTilesAwayFromNpcs(context, longRun);
+        await ClientInterpolationShowcase.slowBody(gameConfig, context.roomName, context.playerName, longRun);
+        await LongRunShowcase.startGameplayRecording(
+            page,
+            longRun,
+            'Client interpolation off: the sprite jumps to every server state, with no steps in between'
+        );
         let sessionId = await page.evaluate(() => window.reldens.activeRoomEvents.room.sessionId);
         let startPosition = await Phaser.getPlayerServerPosition(page);
         await InterpolationFramesRecorder.start(page, {players: [sessionId]});
-        await Navigation.walkInDirection(page, 'ArrowRight', TestSceneInterpolationBranches.WALK_MS);
+        if(!await SceneInterpolationShowcase.walkAwayFromNpcs(page, context, walkTiles)){
+            await Navigation.walkInDirection(page, 'ArrowRight', TestSceneInterpolationBranches.WALK_MS);
+        }
         let isOnState = await InterpolationFramesRecorder.waitForPlayerSpriteOnState(
             page,
             sessionId,
@@ -196,6 +230,11 @@ class TestSceneInterpolationBranches
                 offsets: {left: scene.player.leftOff, top: scene.player.topOff}
             };
         }, sessionId);
+        await LongRunShowcase.showStep(
+            page,
+            'Walk ended: the scene update moved the sprite in '+summary.frames+' frames',
+            longRun
+        );
         await screenshots.capture(page, 'walked-with-the-interpolation-disabled');
         expect(positions.isInterpolationEnabled, 'The client interpolation must be disabled').toBe(false);
         expect(positions.state, 'The player state must have moved').not.toEqual({...startPosition, mov: false});
@@ -211,11 +250,11 @@ class TestSceneInterpolationBranches
             test('player sprite follows the walking state with the client interpolation disabled', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestSceneInterpolationBranches.runDisabledInterpolationTest(page, screenshots, gameConfig, e2eGroup, longRun);
             });
-            test('scene interpolation skips the missing bodies, ends the entries in place and stops when disabled', async ({ page, screenshots, gameConfig, longRun }) => {
-                await TestSceneInterpolationBranches.runBranchesTest(page, screenshots, gameConfig, longRun);
+            test('scene interpolation skips the missing bodies, ends the entries in place and stops when disabled', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
+                await TestSceneInterpolationBranches.runBranchesTest(page, screenshots, gameConfig, e2eGroup, longRun);
             });
-            test('scene map layers get the depth of their layer name and position', async ({ page, screenshots, gameConfig, longRun }) => {
-                await TestSceneInterpolationBranches.runLayersDepthTest(page, screenshots, gameConfig, longRun);
+            test('scene map layers get the depth of their layer name and position', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
+                await TestSceneInterpolationBranches.runLayersDepthTest(page, screenshots, gameConfig, e2eGroup, longRun);
             });
         });
     }
