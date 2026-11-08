@@ -3,7 +3,7 @@
  * Reldens - Navigation Helper
  *
  * Provides page actions for the page load (with the pending requests reported when the network never gets idle), room
- * transitions, waiting for room state, and keyboard movement.
+ * transitions (the walk can skip its canvas focus click), waiting for room state, and keyboard movement.
  *
  */
 
@@ -183,7 +183,7 @@ class Navigation
         );
     }
 
-    static async ensureInRoom(page, roomName, transitionX, transitionY, timeout)
+    static async ensureInRoom(page, roomName, transitionX, transitionY, timeout, isFocusClickEnabled = true)
     {
         let currentRoom = await Navigation.getCurrentRoomName(page);
         if(currentRoom === roomName) {
@@ -191,7 +191,9 @@ class Navigation
         }
         let stepMs = 400;
         let maxSteps = Math.ceil(timeout / stepMs);
-        await Navigation.focusGame(page);
+        if(isFocusClickEnabled){
+            await Navigation.focusGame(page);
+        }
         let reached = await Navigation.walkSteps(
             page,
             transitionX,
