@@ -13,12 +13,15 @@
  * the carried item, the yes button revives the player where it died consuming the item and the no button keeps the
  * item and revives it in the town room; without the auto revive the game over box tells the seconds left to the
  * revive, the player stays dead once that time passed and the revive button revives it where it died, with the death
- * teleport disabled or consuming the chosen restoration item. The death and revive steps are the DeathReviveSteps ones.
+ * teleport disabled or consuming the chosen restoration item. The death and revive steps are the DeathReviveSteps ones,
+ * the long run recording steps tell the general flow of each case (DeathReviveShowcase), the HUD shows the life.
  *
  */
 
 const { BaseE2eTest } = require('./base-e2e-test');
 const { DeathReviveSteps } = require('./helpers/death-revive-steps');
+const { DeathReviveShowcase } = require('./helpers/death-revive-showcase');
+const { LongRunShowcase } = require('./helpers/long-run-showcase');
 const { AdMessagesPlayer } = require('./helpers/ad-messages-player');
 const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
 const { TestCombatDeath } = require('./helpers/test-combat-death');
@@ -36,20 +39,28 @@ class TestDeathTeleport
     static async runTownReviveTest(context)
     {
         await DeathReviveSteps.prepareDeath(context);
-        await DeathReviveSteps.killPlayerInForest(context, await DeathReviveSteps.enterForest(context));
+        await DeathReviveSteps.killPlayerInForest(
+            context,
+            await DeathReviveSteps.enterForest(context),
+            'The player died: it revives in '+context.reviveLabels.townRoom.title+' when the game over time ends'
+        );
         let townRoomName = await DeathReviveSteps.expectTownGameOverMessage(context, 0);
         await DeathReviveSteps.expectRevivedInTown(context, townRoomName);
     }
 
     static async runRestorationItemTest(context)
     {
-        let restorationItemKey = await DeathReviveSteps.killPlayerWithRestorationItem(context, {});
+        let restorationItemKey = await DeathReviveSteps.killPlayerWithRestorationItem(
+            context,
+            {},
+            DeathReviveSteps.LONG_RUN_GAME_OVER_TIME_OUT,
+            reviveLabels => 'The player died: the '+reviveLabels.itemLabel+' revives it where it died'
+        );
         await DeathReviveSteps.expectRevivedInForest(context, restorationItemKey);
     }
 
     static async runResurrectionAdTest(context)
     {
-        let restorationItemKey = await DeathReviveSteps.prepareDeath(context);
         let resurrectionAd = await AdMessagesPlayer.enableAd(
             context.gameConfig,
             context.e2eGroup,
@@ -59,10 +70,21 @@ class TestDeathTeleport
             ),
             context.gameConfig.e2ePlayerName
         );
-        let placement = await DeathReviveSteps.enterForest(context);
+        let restorationItemKey = await DeathReviveSteps.prepareDeath(
+            context,
+            {},
+            DeathReviveSteps.LONG_RUN_ASKED_ITEM_TIME_OUT
+            + resurrectionAd.minimumDurationMs
+            + AdMessagesPlayer.PLAY_MARGIN_MS
+        );
+        let placement = await DeathReviveSteps.enterForest(context, true);
         let adTimeout = TimeConstants.forLongRun(TimeConstants.UI_OPEN, context.longRun);
         await AdMessagesPlayer.waitForProviderReady(context.page, adTimeout);
-        await DeathReviveSteps.killPlayerInForest(context, placement);
+        await DeathReviveSteps.killPlayerInForest(
+            context,
+            placement,
+            'The player died: the game over box offers the resurrection ad'
+        );
         await DeathReviveSteps.expectTownGameOverMessage(context, 1);
         await expect(
             context.page.locator(AdMessagesPlayer.AD_OVERLAY_SELECTOR),
@@ -71,8 +93,14 @@ class TestDeathTeleport
         await expect(context.page.locator(Selectors.gameOver.resurrectionAdButton)).toHaveText(
             DeathReviveSteps.DEATH_SNIPPETS.resurrectionAdButton
         );
-        await context.page.click(Selectors.gameOver.resurrectionAdButton);
+        await DeathReviveShowcase.clickButton(context, Selectors.gameOver.resurrectionAdButton);
+        await DeathReviveShowcase.showStep(context, 'The ad plays: its reward is the '+context.reviveLabels.itemLabel);
         await AdMessagesPlayer.waitForPlayedAd(context.page, resurrectionAd, adTimeout);
+        await DeathReviveShowcase.expectShownItem(context, restorationItemKey);
+        await DeathReviveShowcase.showStep(
+            context,
+            'The ad gave the '+context.reviveLabels.itemLabel+': it revives the player where it died'
+        );
         await DeathReviveSteps.expectRevivedInForest(context, restorationItemKey);
     }
 
@@ -80,7 +108,9 @@ class TestDeathTeleport
     {
         let restorationItemKey = await DeathReviveSteps.killPlayerWithRestorationItem(
             context,
-            Object.assign({}, DeathReviveSteps.ASKED_ITEM_CONFIG, configValues)
+            Object.assign({}, DeathReviveSteps.ASKED_ITEM_CONFIG, configValues),
+            DeathReviveSteps.LONG_RUN_ASKED_ITEM_TIME_OUT,
+            reviveLabels => 'The player died: the game over box asks to use or keep the '+reviveLabels.itemLabel
         );
         await DeathReviveSteps.expectRestorationItemQuestion(context, restorationItemKey);
         return restorationItemKey;
@@ -89,14 +119,23 @@ class TestDeathTeleport
     static async runUsedRestorationItemTest(context)
     {
         let restorationItemKey = await TestDeathTeleport.killPlayerAskedForTheItem(context, {});
-        await context.page.click(Selectors.gameOver.restorationItemUseButton);
+        await DeathReviveShowcase.showStep(
+            context,
+            'The player chooses to use the '+context.reviveLabels.itemLabel+': it revives where it died'
+        );
+        await DeathReviveShowcase.clickButton(context, Selectors.gameOver.restorationItemUseButton);
         await DeathReviveSteps.expectRevivedInForest(context, restorationItemKey);
     }
 
     static async runKeptRestorationItemTest(context)
     {
         let restorationItemKey = await TestDeathTeleport.killPlayerAskedForTheItem(context, {});
-        await context.page.click(Selectors.gameOver.restorationItemKeepButton);
+        await DeathReviveShowcase.showStep(
+            context,
+            'The player keeps the '+context.reviveLabels.itemLabel+': it revives in '
+                +context.reviveLabels.townRoom.title
+        );
+        await DeathReviveShowcase.clickButton(context, Selectors.gameOver.restorationItemKeepButton);
         await expect(
             context.page.locator(Selectors.gameOver.restorationItemKeepButton),
             'The restoration item is not asked once it is kept'
@@ -104,6 +143,7 @@ class TestDeathTeleport
         let townRoomName = await DeathReviveSteps.expectTownGameOverMessage(context, 0);
         await DeathReviveSteps.expectRevivedInTown(context, townRoomName);
         await DeathReviveSteps.expectRestorationItemQuantity(context, restorationItemKey, 1);
+        await DeathReviveShowcase.showKeptItem(context, restorationItemKey);
     }
 
     static async runManualReviveInPlaceTest(context)
@@ -112,7 +152,11 @@ class TestDeathTeleport
             {[ActionsConst.DEATH.CONFIG_PATHS.TELEPORT_ENABLED]: false},
             DeathReviveSteps.MANUAL_REVIVE_CONFIG
         ));
-        await DeathReviveSteps.killPlayerInForest(context, await DeathReviveSteps.enterForest(context));
+        await DeathReviveSteps.killPlayerInForest(
+            context,
+            await DeathReviveSteps.enterForest(context),
+            'The player died: without auto revive the Revive button appears when the wait ends'
+        );
         await DeathReviveSteps.expectReviveWait(context);
         await DeathReviveSteps.expectGameOverMessage(context, DeathReviveSteps.DEATH_SNIPPETS.reviveInPlace, 0);
         await DeathReviveSteps.requestReviveInForest(context);
@@ -123,6 +167,8 @@ class TestDeathTeleport
         expect(await Navigation.getCurrentRoomName(context.page), 'The player must revive where it died').toBe(
             Login.FOREST_ROOM_NAME
         );
+        await DeathReviveShowcase.showStep(context, 'The player clicked Revive and revived where it died');
+        await LongRunShowcase.pause(context.page, context.longRun);
         await context.screenshots.capture(context.page, 'player-revived-in-forest');
     }
 
@@ -133,7 +179,12 @@ class TestDeathTeleport
             DeathReviveSteps.MANUAL_REVIVE_CONFIG
         );
         await DeathReviveSteps.expectReviveWait(context);
-        await context.page.click(Selectors.gameOver.restorationItemUseButton);
+        await DeathReviveShowcase.showStep(
+            context,
+            'The player chooses to use the '+context.reviveLabels.itemLabel
+                +': the Revive button appears when the wait ends'
+        );
+        await DeathReviveShowcase.clickButton(context, Selectors.gameOver.restorationItemUseButton);
         await DeathReviveSteps.expectItemReviveMessage(context, restorationItemKey);
         await DeathReviveSteps.requestReviveInForest(context);
         await DeathReviveSteps.expectItemConsumedInForest(context, restorationItemKey);
