@@ -6,7 +6,6 @@
 
 const { BaseTest } = require('./base-test');
 const { DeathRelocationBuilder } = require('./fixtures/death-relocation-builder');
-const { PlayerDeathRelocator } = require('../lib/actions/server/player-death-relocator');
 const { ActionsConst } = require('../lib/actions/constants');
 const { GameConst } = require('../lib/game/constants');
 const { once } = require('events');
@@ -29,9 +28,9 @@ class TestPlayerDeathAutoRevive extends BaseTest
 
     async createReadySetup(configValues = this.manualRevive, setupOptions = {})
     {
-        let setup = this.deathBuilder.createRelocatorSetup(configValues, setupOptions);
+        let setup = await this.deathBuilder.createRelocatorSetup(configValues, setupOptions);
         this.deathBuilder.startDeath(setup);
-        await setup.relocator.onReviveTime(setup.event);
+        await setup.relocator.markReviveReady(setup.event);
         return setup;
     }
 
@@ -39,7 +38,7 @@ class TestPlayerDeathAutoRevive extends BaseTest
     {
         await this.test('the disabled auto revive replaces the battle timer with or without teleport', async () => {
             for(let teleportEnabled of [false, true]){
-                let setup = this.deathBuilder.createRelocatorSetup(
+                let setup = await this.deathBuilder.createRelocatorSetup(
                     Object.assign({}, this.manualRevive, {[this.paths.TELEPORT_ENABLED]: teleportEnabled})
                 );
                 let battleTimer = {battleRevive: true};
@@ -64,7 +63,7 @@ class TestPlayerDeathAutoRevive extends BaseTest
                 );
                 this.assert.strictEqual(setup.revivedPlayers, 0);
             }
-            let battleReviveSetup = this.deathBuilder.createRelocatorSetup({[this.paths.TELEPORT_ENABLED]: false});
+            let battleReviveSetup = await this.deathBuilder.createRelocatorSetup({[this.paths.TELEPORT_ENABLED]: false});
             this.assert.strictEqual(this.deathBuilder.startDeath(battleReviveSetup), false);
             this.assert.strictEqual(battleReviveSetup.playerSchema.getPrivate(this.privateData.REVIVE_AT), null);
         });
@@ -90,30 +89,34 @@ class TestPlayerDeathAutoRevive extends BaseTest
         await this.test('the revive time of a player that left or is alive marks and tells nothing', async () => {
             for(let setupOptions of [{activePlayers: []}, {inState: GameConst.STATUS.ACTIVE}]){
                 let setup = await this.createReadySetup(this.manualRevive, setupOptions);
-                this.assert.strictEqual(await setup.relocator.onReviveTime(setup.event), false);
+                this.assert.strictEqual(await setup.relocator.markReviveReady(setup.event), false);
                 this.assert.strictEqual(setup.playerSchema.getPrivate(this.privateData.REVIVE_READY), null);
                 this.assert.deepStrictEqual(setup.emittedEvents, []);
             }
         });
     }
 
-    async testReviveTimeWithoutEventsKeepsTheReviveReady()
+    async testFailedReviveRequestCanBeAskedAgain()
     {
-        await this.test('the revive time without events manager keeps the revive ready for the request', async () => {
-            let setup = this.deathBuilder.createRelocatorSetup(this.manualRevive);
-            setup.relocator.events = false;
-            this.deathBuilder.startDeath(setup);
-            this.assert.strictEqual(await setup.relocator.onReviveTime(setup.event), false);
+        await this.test('a revive request that fails keeps the revive ready, so the player can ask again', async () => {
+            let setup = await this.createReadySetup();
+            setup.room.savePlayerStats = async () => Promise.reject({message: 'Storage.'});
+            this.assert.strictEqual(await setup.relocator.requestRevive(setup.playerSchema, setup.room), false);
+            this.assert.strictEqual(setup.playerSchema.isDeath(), true);
             this.assert.strictEqual(setup.playerSchema.getPrivate(this.privateData.REVIVE_READY), true);
+            this.assert.strictEqual(setup.playerSchema.privateData[this.privateData.REVIVE_REQUESTED], false);
+            this.assert.deepStrictEqual(setup.sceneChanges, []);
+            setup.room.savePlayerStats = async () => true;
             this.assert.strictEqual(await setup.relocator.requestRevive(setup.playerSchema, setup.room), true);
             this.assert.deepStrictEqual(setup.sceneChanges, this.townChange);
+            this.assert.deepStrictEqual(setup.client.sentMessages, [this.revivedMessage]);
         });
     }
 
     async testScheduledReviveTimeTellsTheReviveReady()
     {
         await this.test('the scheduled game over time of the disabled auto revive tells the revive ready', async () => {
-            let setup = this.deathBuilder.createRelocatorSetup(
+            let setup = await this.deathBuilder.createRelocatorSetup(
                 Object.assign({[this.paths.GAME_OVER_TIME_OUT]: 1}, this.manualRevive)
             );
             let reviveReadyEvent = once(setup.eventsEmitter, this.reviveReadyEventKey);
@@ -127,14 +130,15 @@ class TestPlayerDeathAutoRevive extends BaseTest
     async testReviveRequestRevivesOnlyOnceAfterTheWait()
     {
         await this.test('the revive request revives in place only once and only after the wait', async () => {
-            let setup = this.deathBuilder.createRelocatorSetup(this.inPlaceManualRevive);
+            let setup = await this.deathBuilder.createRelocatorSetup(this.inPlaceManualRevive);
             this.deathBuilder.startDeath(setup);
             this.assert.strictEqual(await setup.relocator.requestRevive(setup.playerSchema, setup.room), false);
             this.assert.strictEqual(setup.revivedPlayers, 0);
-            await setup.relocator.onReviveTime(setup.event);
+            await setup.relocator.markReviveReady(setup.event);
             this.assert.strictEqual(await setup.relocator.requestRevive(setup.playerSchema, setup.room), true);
             this.assert.strictEqual(setup.revivedPlayers, 1);
-            this.assert.strictEqual(setup.playerSchema.privateData[this.privateData.REVIVE_READY], false);
+            this.assert.strictEqual(setup.playerSchema.isDeath(), false);
+            this.assert.strictEqual(setup.playerSchema.privateData[this.privateData.REVIVE_REQUESTED], false);
             this.assert.strictEqual(await setup.relocator.requestRevive(setup.playerSchema, setup.room), false);
             this.assert.strictEqual(setup.revivedPlayers, 1);
             this.assert.deepStrictEqual(setup.sceneChanges, []);
@@ -198,22 +202,19 @@ class TestPlayerDeathAutoRevive extends BaseTest
             this.assert.deepStrictEqual(setup.sceneChanges, this.townChange);
             this.assert.deepStrictEqual(setup.client.sentMessages, [this.revivedMessage]);
             this.assert.strictEqual(setup.emittedEvents.length, 1);
-            this.assert.strictEqual(setup.playerSchema.privateData[this.privateData.REVIVE_READY], false);
+            this.assert.strictEqual(setup.playerSchema.privateData[this.privateData.REVIVE_REQUESTED], false);
         });
     }
 
     async testReviveOptionsAndTheirDefaults()
     {
         await this.test('auto revive and auto consume are enabled when missing and follow the config', async () => {
-            let defaultRelocator = this.deathBuilder.createRelocatorSetup().relocator;
+            let defaultRelocator = (await this.deathBuilder.createRelocatorSetup()).relocator;
             this.assert.strictEqual(defaultRelocator.isAutoReviveEnabled(), true);
             this.assert.strictEqual(defaultRelocator.isAutoConsumeEnabled(), true);
-            let invalidRelocator = new PlayerDeathRelocator({config: {getWithoutLogs: () => false}});
-            this.assert.strictEqual(invalidRelocator.isAutoReviveEnabled(), true);
-            this.assert.strictEqual(invalidRelocator.isAutoConsumeEnabled(), true);
-            let disabledRelocator = this.deathBuilder.createRelocatorSetup(
+            let disabledRelocator = (await this.deathBuilder.createRelocatorSetup(
                 Object.assign({[this.paths.AUTO_CONSUME_RESTORATION_ITEM]: false}, this.manualRevive)
-            ).relocator;
+            )).relocator;
             this.assert.strictEqual(disabledRelocator.isAutoReviveEnabled(), false);
             this.assert.strictEqual(disabledRelocator.isAutoConsumeEnabled(), false);
         });
@@ -222,7 +223,7 @@ class TestPlayerDeathAutoRevive extends BaseTest
     async testReviveWaitSecondsAreRoundedUp()
     {
         await this.test('the revive wait seconds are rounded up and never below one second', async () => {
-            let setup = this.deathBuilder.createRelocatorSetup();
+            let setup = await this.deathBuilder.createRelocatorSetup();
             let waitCases = [
                 {reviveAt: Date.now() + 10000, seconds: 10},
                 {reviveAt: Date.now() - 5000, seconds: 1},
