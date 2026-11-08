@@ -7,7 +7,6 @@
 const { BaseTest } = require('./base-test');
 const { DeathRelocationBuilder } = require('./fixtures/death-relocation-builder');
 const { DeathReviveNotifier } = require('../lib/actions/server/death-revive-notifier');
-const { PlayerDeathRelocator } = require('../lib/actions/server/player-death-relocator');
 const { ActionsConst } = require('../lib/actions/constants');
 const { AdsConst } = require('../lib/ads/constants');
 const { GameConst } = require('../lib/game/constants');
@@ -29,7 +28,7 @@ class TestDeathReviveNotifier extends BaseTest
     async testDisabledTeleportTellsTheRevivePlace()
     {
         await this.test('the disabled death teleport tells the player it revives where it died', async () => {
-            let setup = this.deathBuilder.createNotifierSetup(
+            let setup = await this.deathBuilder.createNotifierSetup(
                 {[ActionsConst.DEATH.CONFIG_PATHS.TELEPORT_ENABLED]: false},
                 {restorationQty: 1}
             );
@@ -39,14 +38,20 @@ class TestDeathReviveNotifier extends BaseTest
         });
     }
 
-    async testInvalidRelocatorConfigTellsTheRevivePlace()
+    async testValidationNeedsTheConfigAndTheRelocator()
     {
-        await this.test('a relocator without a valid config keeps the battle revive and tells the place', async () => {
-            let setup = this.deathBuilder.createNotifierSetup();
-            setup.notifier.playerDeathRelocator = new PlayerDeathRelocator({config: {getWithoutLogs: () => true}});
-            this.assert.strictEqual(setup.notifier.playerDeathRelocator.config, false);
-            this.assert.strictEqual(await setup.notify(), true);
-            this.assert.deepStrictEqual(setup.client.sentMessages, [this.inPlaceMessage]);
+        await this.test('the notifier is valid only with a ConfigProcessor config and the death relocator', async () => {
+            let setup = await this.deathBuilder.createNotifierSetup();
+            this.assert.strictEqual(setup.notifier.validate(), true);
+            let invalidProps = [
+                {},
+                {config: setup.relocator.config},
+                {playerDeathRelocator: setup.relocator},
+                {config: {getWithoutLogs: () => true}, playerDeathRelocator: setup.relocator}
+            ];
+            for(let props of invalidProps){
+                this.assert.strictEqual(new DeathReviveNotifier(props).validate(), false);
+            }
         });
     }
 
@@ -54,7 +59,7 @@ class TestDeathReviveNotifier extends BaseTest
     {
         await this.test('a carried restoration item tells the revive where it died with the item label', async () => {
             for(let restorationQty of [1, 3]){
-                let setup = this.deathBuilder.createNotifierSetup({}, {restorationQty});
+                let setup = await this.deathBuilder.createNotifierSetup({}, {restorationQty});
                 this.assert.strictEqual(await setup.notify(), true);
                 this.assert.deepStrictEqual(setup.client.sentMessages, [this.itemMessage]);
                 this.assert.strictEqual(
@@ -91,7 +96,7 @@ class TestDeathReviveNotifier extends BaseTest
                 {configValues: {[adsKeyPath]: 'missing-video'}, eventKey: ''}
             ];
             for(let adCase of adCases){
-                let setup = this.deathBuilder.createNotifierSetup(adCase.configValues, {restorationQty: 0});
+                let setup = await this.deathBuilder.createNotifierSetup(adCase.configValues, {restorationQty: 0});
                 this.assert.strictEqual(await setup.notify(), true);
                 this.assert.deepStrictEqual(
                     setup.client.sentMessages,
@@ -104,7 +109,7 @@ class TestDeathReviveNotifier extends BaseTest
     async testPlayerWithoutInventoryIsToldTheTownRevive()
     {
         await this.test('a player without inventory is told the town revive', async () => {
-            let setup = this.deathBuilder.createNotifierSetup({}, {restorationQty: 1});
+            let setup = await this.deathBuilder.createNotifierSetup({}, {restorationQty: 1});
             setup.playerSchema.inventory = false;
             await setup.notify();
             this.assert.deepStrictEqual(setup.client.sentMessages, [this.townMessage]);
@@ -113,45 +118,41 @@ class TestDeathReviveNotifier extends BaseTest
 
     async testUnknownTownRoomIsToldWithoutTitle()
     {
-        await this.test('an unknown town room or a town room without title is told without title', async () => {
+        await this.test('an unknown town room tells the revive in place, a town without title is told without it', async () => {
             let roomIdPath = ActionsConst.DEATH.CONFIG_PATHS.TELEPORT_ROOM_ID;
-            let untitledTownMessage = Object.assign({}, this.townMessage, {townLabel: ''});
-            let roomIdCases = [999, this.deathBuilder.roomBuilder.forestRoom.roomId];
-            for(let townRoomId of roomIdCases){
-                let setup = this.deathBuilder.createNotifierSetup({[roomIdPath]: townRoomId});
+            let roomIdCases = [
+                {townRoomId: 999, message: this.inPlaceMessage},
+                {
+                    townRoomId: this.deathBuilder.roomBuilder.forestRoom.roomId,
+                    message: Object.assign({}, this.townMessage, {townLabel: ''})
+                }
+            ];
+            for(let roomIdCase of roomIdCases){
+                let setup = await this.deathBuilder.createNotifierSetup({[roomIdPath]: roomIdCase.townRoomId});
                 await setup.notify();
-                this.assert.deepStrictEqual(setup.client.sentMessages, [untitledTownMessage]);
+                this.assert.deepStrictEqual(setup.client.sentMessages, [roomIdCase.message]);
             }
         });
     }
 
     async testDeathThatCanNotBeToldSendsNothing()
     {
-        await this.test('an alive player, a missing client, config or relocator are not told anything', async () => {
+        await this.test('an alive player, a missing client or a missing player are not told anything', async () => {
             for(let inState of [GameConst.STATUS.ACTIVE, GameConst.STATUS.DISABLED]){
-                let aliveSetup = this.deathBuilder.createNotifierSetup({}, {inState});
+                let aliveSetup = await this.deathBuilder.createNotifierSetup({}, {inState});
                 this.assert.strictEqual(await aliveSetup.notify(), false);
                 this.assert.deepStrictEqual(aliveSetup.client.sentMessages, []);
             }
-            let setup = this.deathBuilder.createNotifierSetup();
+            let setup = await this.deathBuilder.createNotifierSetup();
             let notifier = setup.notifier;
             let playerSchema = setup.playerSchema;
             let notToldCases = [
-                {notifier, client: false, playerSchema},
-                {notifier, client: setup.client, playerSchema: false},
-                {notifier: new DeathReviveNotifier({}), client: setup.client, playerSchema},
-                {notifier: new DeathReviveNotifier({config: notifier.config}), client: setup.client, playerSchema},
-                {
-                    notifier: new DeathReviveNotifier({playerDeathRelocator: notifier.playerDeathRelocator}),
-                    client: setup.client,
-                    playerSchema
-                }
+                {client: false, playerSchema},
+                {client: setup.client, playerSchema: false},
+                {client: setup.client, playerSchema: null}
             ];
             for(let notToldCase of notToldCases){
-                this.assert.strictEqual(
-                    await notToldCase.notifier.notifyClient(notToldCase.client, notToldCase.playerSchema, setup.room),
-                    false
-                );
+                this.assert.strictEqual(notifier.notifyClient(notToldCase.client, notToldCase.playerSchema), false);
             }
             this.assert.deepStrictEqual(setup.client.sentMessages, []);
         });
@@ -160,7 +161,7 @@ class TestDeathReviveNotifier extends BaseTest
     async testResurrectionAdRewardTellsTheRevivePlace()
     {
         await this.test('the resurrection ad reward of a dead player tells the revive where it died', async () => {
-            let setup = this.deathBuilder.createNotifierSetup({}, {restorationQty: 0});
+            let setup = await this.deathBuilder.createNotifierSetup({}, {restorationQty: 0});
             await setup.notify();
             setup.playerSchema.inventory.manager.items.restoration_scroll.qty = 1;
             this.assert.strictEqual(await setup.notifier.onAfterGiveAdRewardItem(setup.rewardEvent), true);
@@ -171,7 +172,7 @@ class TestDeathReviveNotifier extends BaseTest
     async testOtherRewardsAreNotTold()
     {
         await this.test('other ads rewards, missing ads keys or players and alive players are not told', async () => {
-            let setup = this.deathBuilder.createNotifierSetup({}, {restorationQty: 1});
+            let setup = await this.deathBuilder.createNotifierSetup({}, {restorationQty: 1});
             let notifier = setup.notifier;
             let rewardEvent = setup.rewardEvent;
             let notToldEvents = [
@@ -182,14 +183,13 @@ class TestDeathReviveNotifier extends BaseTest
             for(let notToldEvent of notToldEvents){
                 this.assert.strictEqual(await notifier.onAfterGiveAdRewardItem(notToldEvent), false);
             }
-            let emptyKeySetup = this.deathBuilder.createNotifierSetup({
+            let emptyKeySetup = await this.deathBuilder.createNotifierSetup({
                 [ActionsConst.DEATH.CONFIG_PATHS.RESURRECTION_ADS_KEY]: ''
             });
             emptyKeySetup.rewardEvent.playedAd.key = '';
             let emptyKeyResult = await emptyKeySetup.notifier.onAfterGiveAdRewardItem(emptyKeySetup.rewardEvent);
             this.assert.strictEqual(emptyKeyResult, false);
             this.assert.deepStrictEqual(emptyKeySetup.client.sentMessages, []);
-            this.assert.strictEqual(await new DeathReviveNotifier({}).onAfterGiveAdRewardItem(rewardEvent), false);
             setup.playerSchema.inState = GameConst.STATUS.ACTIVE;
             this.assert.strictEqual(await notifier.onAfterGiveAdRewardItem(rewardEvent), false);
             this.assert.deepStrictEqual(setup.client.sentMessages, []);
@@ -216,7 +216,7 @@ class TestDeathReviveNotifier extends BaseTest
             ];
             let choicePath = ActionsConst.DEATH.PRIVATE_DATA.RESTORATION_ITEM_CHOICE;
             for(let choiceCase of choiceCases){
-                let setup = this.deathBuilder.createNotifierSetup(
+                let setup = await this.deathBuilder.createNotifierSetup(
                     this.deathBuilder.askedRestorationItemConfig,
                     {restorationQty: 1}
                 );
@@ -240,7 +240,7 @@ class TestDeathReviveNotifier extends BaseTest
                 {teleport: true, reviveAt: null, message: townWaitMessage, wait: 1}
             ];
             for(let reviveCase of reviveCases){
-                let setup = this.deathBuilder.createNotifierSetup({
+                let setup = await this.deathBuilder.createNotifierSetup({
                     [ActionsConst.DEATH.CONFIG_PATHS.AUTO_REVIVE]: false,
                     [ActionsConst.DEATH.CONFIG_PATHS.TELEPORT_ENABLED]: reviveCase.teleport
                 });
@@ -251,14 +251,14 @@ class TestDeathReviveNotifier extends BaseTest
                     [Object.assign({}, reviveCase.message, {reviveWaitSeconds: reviveCase.wait})]
                 );
             }
-            let readySetup = this.deathBuilder.createNotifierSetup(this.deathBuilder.manualReviveConfig);
+            let readySetup = await this.deathBuilder.createNotifierSetup(this.deathBuilder.manualReviveConfig);
             readySetup.playerSchema.setPrivate(ActionsConst.DEATH.PRIVATE_DATA.REVIVE_READY, true);
             await readySetup.notify();
             this.assert.deepStrictEqual(
                 readySetup.client.sentMessages,
                 [Object.assign({}, this.townMessage, {reviveReady: true})]
             );
-            let autoReviveSetup = this.deathBuilder.createNotifierSetup();
+            let autoReviveSetup = await this.deathBuilder.createNotifierSetup();
             autoReviveSetup.playerSchema.setPrivate(ActionsConst.DEATH.PRIVATE_DATA.REVIVE_READY, true);
             await autoReviveSetup.notify();
             this.assert.deepStrictEqual(autoReviveSetup.client.sentMessages, [this.townMessage]);
@@ -268,7 +268,7 @@ class TestDeathReviveNotifier extends BaseTest
     async testResurrectionAdRewardIsTheChoiceToUseTheItem()
     {
         await this.test('the resurrection ad reward is the choice to use the restoration item it gives', async () => {
-            let setup = this.deathBuilder.createNotifierSetup(
+            let setup = await this.deathBuilder.createNotifierSetup(
                 this.deathBuilder.askedRestorationItemConfig,
                 {restorationQty: 0}
             );
@@ -286,7 +286,7 @@ class TestDeathReviveNotifier extends BaseTest
     async testRewardOfPlayerWithoutClientIsNotTold()
     {
         await this.test('the resurrection ad reward of a dead player without room client is not told', async () => {
-            let setup = this.deathBuilder.createNotifierSetup({}, {restorationQty: 1});
+            let setup = await this.deathBuilder.createNotifierSetup({}, {restorationQty: 1});
             setup.room.getClientById = () => false;
             this.assert.strictEqual(await setup.notifier.onAfterGiveAdRewardItem(setup.rewardEvent), false);
             this.assert.deepStrictEqual(setup.client.sentMessages, []);
