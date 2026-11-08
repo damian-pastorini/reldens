@@ -7,13 +7,20 @@
  * adds exactly that score to the player scores row; with the enemies kills switch disabled for the group the same kill
  * (detected by the experience it gives) adds no score. A player killed by the test player, placed next to it in the
  * forest with one life point, targeted with a click and attacked, adds the stored player kill score plus the killed
- * player level points. The player scores rows are preserved and the config values are restored by the group reset.
+ * player level points. The player scores rows are preserved and the config values are restored by the group reset. The
+ * long run targets the victim and then opens the scores panel, which would cover it, before the recording starts and
+ * captions the score before and after the kill with the stored values, the caption changes as soon as the panel shows
+ * the new score; the killed player gets some life points, so its video shows a few hits, and it is recorded too, with
+ * its life in the HUD, and all the other enemies are disabled so none walks around in those videos (the normal run
+ * disables only the aggressive ones). The check for a late score keeps its whole wait, the long run walks the
+ * player during it, so the video never freezes.
  *
  */
 
 const { BaseE2eTest } = require('./base-e2e-test');
 const { Login } = require('./helpers/login');
 const { Phaser } = require('./helpers/phaser');
+const { Navigation } = require('./helpers/navigation');
 const { RoomObjectsApi } = require('./helpers/room-objects-api');
 const { ForestEnemyKill } = require('./helpers/forest-enemy-kill');
 const { GameplayE2eStateApi } = require('./helpers/gameplay-e2e-state-api');
@@ -32,6 +39,11 @@ class TestKillScore
     static PLAYER_KILL_SCORE_PATH = 'server/scores/obtainedScorePerPlayer';
     static PLAYER_LEVEL_MULTIPLIER_PATH = 'server/scores/obtainedScorePerPlayerLevelMultiplier';
     static VICTIM_CLICK_OFFSET_PIXELS = 16;
+    static VICTIM_ONE_HIT_LIFE = 1;
+    static VICTIM_SHOWCASE_LIFE = 30;
+    static VICTIM_VIDEO_SUFFIX = 'player2';
+    static LATE_SCORE_WALK_KEYS = ['ArrowDown', 'ArrowUp'];
+    static LATE_SCORE_WALK_MS = TimeConstants.SERVER_RESPONSE / 2;
 
     static async fetchTotalScore(gameConfig, playerId)
     {
@@ -57,7 +69,6 @@ class TestKillScore
         let forestData = await Login.loginAndEnterForest(page, gameConfig, longRun);
         let placement = await ForestEnemyKill.placeEnemyToKill(page, gameConfig, forestData.sceneTimeout, longRun);
         expect(placement.killScore, 'The placed enemy must have its own kill score').toBeGreaterThan(0);
-        await LongRunShowcase.startGameplayRecording(page, longRun);
         await LongRunShowcase.openPanel(page, Selectors.hud.scoresOpen, Selectors.scores.dialog, longRun);
         return placement;
     }
@@ -77,22 +88,34 @@ class TestKillScore
     {
         let scoreData = await TestKillScore.prepareKillScore(gameConfig, e2eGroup, longRun);
         let placement = await TestKillScore.placeEnemyWithKillScore(page, gameConfig, longRun);
-        await screenshots.capture(page, 'enemy-with-kill-score-targeted');
         let expectedScore = scoreData.scoreBefore + placement.killScore;
-        await TestKillScore.attackUntilScore(page, gameConfig, scoreData.playerId, expectedScore, longRun);
+        await LongRunShowcase.startGameplayRecording(
+            page,
+            longRun,
+            'Score before the kill: '+scoreData.scoreBefore+' - this enemy kill score: '+placement.killScore
+        );
+        await screenshots.capture(page, 'enemy-with-kill-score-targeted');
+        await TestKillScore.attackUntilScore(page, gameConfig, scoreData, expectedScore, longRun);
+        await TestKillScore.showScore(page, expectedScore, longRun);
         await screenshots.capture(page, 'kill-score-added');
     }
 
-    static async attackUntilScore(page, gameConfig, playerId, expectedScore, longRun)
+    static async attackUntilScore(page, gameConfig, scoreData, expectedScore, longRun)
     {
+        await LongRunShowcase.showStepWhenText(
+            page,
+            Selectors.scores.dialogContent,
+            String(expectedScore),
+            'Score after the kill: '+expectedScore+' (it was '+scoreData.scoreBefore+')',
+            longRun
+        );
         let scoreReached = await RoomObjectsApi.attackTargetUntil(
             page,
             ForestEnemyKill.ATTACK_SKILL_KEY,
-            async () => expectedScore === await TestKillScore.fetchTotalScore(gameConfig, playerId),
+            async () => expectedScore === await TestKillScore.fetchTotalScore(gameConfig, scoreData.playerId),
             TimeConstants.ENEMY_KILL
         );
         expect(scoreReached, 'The kill must add its kill score, the player score must be '+expectedScore).toBe(true);
-        return await TestKillScore.showScore(page, expectedScore, longRun);
     }
 
     static async runDisabledNpcKillsTest(page, screenshots, gameConfig, e2eGroup, longRun)
@@ -106,20 +129,49 @@ class TestKillScore
             gameConfig.e2ePlayerName
         )).experience;
         let experienceBefore = await fetchExperience();
+        let experienceAfter = experienceBefore;
+        await LongRunShowcase.startGameplayRecording(
+            page,
+            longRun,
+            'Kills score disabled - score before the kill: '+scoreData.scoreBefore
+        );
         let enemyKilled = await RoomObjectsApi.attackTargetUntil(
             page,
             ForestEnemyKill.ATTACK_SKILL_KEY,
-            async () => experienceBefore < await fetchExperience(),
+            async () => {
+                experienceAfter = await fetchExperience();
+                return experienceBefore < experienceAfter;
+            },
             TimeConstants.ENEMY_KILL
         );
         expect(enemyKilled, 'The enemy must be killed and give its experience').toBe(true);
-        await page.waitForTimeout(TimeConstants.SERVER_RESPONSE);
+        await LongRunShowcase.showStep(
+            page,
+            'Killed, experience '+experienceBefore+' to '+experienceAfter+': the player walks during the score check',
+            longRun
+        );
+        await TestKillScore.waitForLateScore(page, longRun);
         expect(
             await TestKillScore.fetchTotalScore(gameConfig, scoreData.playerId),
             'The disabled enemies kills switch must add no score'
         ).toBe(scoreData.scoreBefore);
+        await LongRunShowcase.showStep(
+            page,
+            'No score added: '+scoreData.scoreBefore+' before and after the kill',
+            longRun
+        );
         await TestKillScore.showScore(page, scoreData.scoreBefore, longRun);
         await screenshots.capture(page, 'enemy-kill-without-score');
+    }
+
+    static async waitForLateScore(page, longRun)
+    {
+        if(!longRun){
+            return await page.waitForTimeout(TimeConstants.SERVER_RESPONSE);
+        }
+        for(let walkKey of TestKillScore.LATE_SCORE_WALK_KEYS){
+            await Navigation.walkInDirection(page, walkKey, TestKillScore.LATE_SCORE_WALK_MS);
+        }
     }
 
     static async placeTargetedVictim(page, secondPage, gameConfig, longRun)
@@ -134,7 +186,7 @@ class TestKillScore
             false,
             Login.FOREST_ROOM_NAME
         );
-        await RoomObjectsApi.disableEnemies(gameConfig, Login.FOREST_ROOM_NAME, true);
+        await RoomObjectsApi.disableEnemies(gameConfig, Login.FOREST_ROOM_NAME, !longRun);
         let placement = await RoomObjectsApi.placePlayerNearPlayer(
             gameConfig,
             Login.FOREST_ROOM_NAME,
@@ -143,8 +195,14 @@ class TestKillScore
         );
         expect(placement.position, 'The victim must be placed next to the player: '+sc.get(placement, 'error', ''))
             .toBeTruthy();
-        let lowered = await RoomObjectsApi.setPlayerAffectedProperty(gameConfig, Login.FOREST_ROOM_NAME, victimName, 1);
-        expect(lowered.value, 'The victim life must be lowered: '+sc.get(lowered, 'error', '')).toBe(1);
+        let victimLife = longRun ? TestKillScore.VICTIM_SHOWCASE_LIFE : TestKillScore.VICTIM_ONE_HIT_LIFE;
+        let lowered = await RoomObjectsApi.setPlayerAffectedProperty(
+            gameConfig,
+            Login.FOREST_ROOM_NAME,
+            victimName,
+            victimLife
+        );
+        expect(lowered.value, 'The victim life must be lowered: '+sc.get(lowered, 'error', '')).toBe(victimLife);
         let victimSessionId = await (await page.waitForFunction((name) => {
             let playerEngine = window.reldens.getActiveScene()?.player;
             if(!playerEngine?.players){
@@ -162,13 +220,31 @@ class TestKillScore
         }, {sessionId: victimSessionId, x: placement.position.x, y: placement.position.y}, {
             timeout: TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun)
         });
-        await LongRunShowcase.startGameplayRecording(page, longRun);
-        await LongRunShowcase.openPanel(page, Selectors.hud.scoresOpen, Selectors.scores.dialog, longRun);
+        await BaseE2eTest.waitForCameraStill(page);
         await Phaser.clickPlayerAwayFromOwnPlayer(page, victimSessionId, TestKillScore.VICTIM_CLICK_OFFSET_PIXELS);
         await expect(page.locator(Selectors.combat.targetBox), 'The clicked victim must be targeted').toContainText(
             victimName
         );
+        await LongRunShowcase.openPanel(page, Selectors.hud.scoresOpen, Selectors.scores.dialog, longRun);
         return (await GameplayE2eStateApi.fetchPlayer(gameConfig, Login.FOREST_ROOM_NAME, victimName)).level;
+    }
+
+    static async startBothClientsRecording(page, secondPage, gameConfig, scoreBefore, killScore, longRun)
+    {
+        await Promise.all([
+            LongRunShowcase.startGameplayRecording(
+                page,
+                longRun,
+                'Score before the kill: '+scoreBefore+' - this player kill score: '+killScore
+            ),
+            LongRunShowcase.startGameplayRecording(
+                secondPage,
+                longRun,
+                gameConfig.e2ePlayerName+' attacks '+gameConfig.e2ePlayerName2+' until it dies',
+                LongRunShowcase.CAMERA_ZOOM,
+                TestKillScore.VICTIM_VIDEO_SUFFIX
+            )
+        ]);
     }
 
     static async runPlayerKillScoreTest(page, secondPage, screenshots, gameConfig, e2eGroup, longRun)
@@ -177,14 +253,28 @@ class TestKillScore
         let forestData = await Login.loginAndEnterForest(page, gameConfig, longRun);
         await LongRunShowcase.moveToCentralArea(page, gameConfig, Login.FOREST_ROOM_NAME, forestData.sceneTimeout, longRun);
         let victimLevel = await TestKillScore.placeTargetedVictim(page, secondPage, gameConfig, longRun);
-        await screenshots.capture(page, 'player-victim-targeted');
         let expectedScore = scoreData.scoreBefore
             + Number(await E2eSeedAndRestoreApi.fetchConfigValue(gameConfig, TestKillScore.PLAYER_KILL_SCORE_PATH))
             + victimLevel * Number(
                 await E2eSeedAndRestoreApi.fetchConfigValue(gameConfig, TestKillScore.PLAYER_LEVEL_MULTIPLIER_PATH)
             );
         expect(expectedScore, 'The player kill must be worth points').toBeGreaterThan(scoreData.scoreBefore);
-        await TestKillScore.attackUntilScore(page, gameConfig, scoreData.playerId, expectedScore, longRun);
+        await TestKillScore.startBothClientsRecording(
+            page,
+            secondPage,
+            gameConfig,
+            scoreData.scoreBefore,
+            expectedScore - scoreData.scoreBefore,
+            longRun
+        );
+        await screenshots.capture(page, 'player-victim-targeted');
+        await TestKillScore.attackUntilScore(page, gameConfig, scoreData, expectedScore, longRun);
+        await LongRunShowcase.showStep(
+            secondPage,
+            gameConfig.e2ePlayerName2+' killed: the score of '+gameConfig.e2ePlayerName+' is now '+expectedScore,
+            longRun
+        );
+        await TestKillScore.showScore(page, expectedScore, longRun);
         await screenshots.capture(page, 'player-kill-score-added');
     }
 
