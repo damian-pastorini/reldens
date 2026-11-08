@@ -4,11 +4,12 @@
  *
  * Tests the client scene interpolation (SceneDynamic) frame by frame on the real movements: the own player walking and
  * stopping, the own player placed by the server without movement, another player walking and placed as the first
- * client sees it, a town object placed and walking back to its original tile, a bullet flying to its target and the
- * player walking in the room it entered through a change point. Every recorded frame must follow the interpolation of
- * its entry (the real Phaser Linear step with the configured speed while moving, the exact state position once
- * stopped), the walks must show intermediate positions, the placements must land in one frame and the client must
- * never throw.
+ * client sees it, a town object placed and walking back to its original tile, a bullet flying to its target (rendering
+ * its texture) and the player walking in the room it entered through a change point. Every recorded frame must follow
+ * the interpolation of its entry (the real Phaser Linear step with the configured speed while moving, the exact state
+ * position once stopped), the walks must show intermediate positions, the placements must land in one frame and the
+ * client must never throw. The long run only steps that show each movement on screen are in
+ * ClientInterpolationShowcase and ClientInterpolationBulletShowcase.
  *
  */
 
@@ -17,14 +18,13 @@ const { Login } = require('./helpers/login');
 const { Phaser } = require('./helpers/phaser');
 const { Navigation } = require('./helpers/navigation');
 const { MovementScenario } = require('./helpers/movement-scenario');
+const { ClientInterpolationShowcase } = require('./helpers/client-interpolation-showcase');
+const { ClientInterpolationBulletShowcase } = require('./helpers/client-interpolation-bullet-showcase');
 const { RoomMovementApi } = require('./helpers/room-movement-api');
-const { RoomObjectsApi } = require('./helpers/room-objects-api');
 const { WalkableTileLocator } = require('./helpers/walkable-tile-locator');
 const { InterpolationFramesRecorder } = require('./helpers/interpolation-frames-recorder');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
-const { ObjectsConst } = require('../../lib/objects/constants');
-const { GameConst } = require('../../lib/game/constants');
 const { sc } = require('@reldens/utils');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
@@ -34,6 +34,7 @@ class TestClientInterpolation
 
     static WALK_MS = 1500;
     static BULLET_SKILL_KEY = 'attackBullet';
+    static BULLET_TEXTURE_KEY = 'default_bullet';
     static BULLET_TILES_DISTANCES = [4, 3];
     static OTHER_PLAYER_TILES_DISTANCE = 2;
     static WALK_TILES_DISTANCES = [3, 2];
@@ -48,28 +49,16 @@ class TestClientInterpolation
         expect(pageErrors, 'The client must not throw while the '+label+' moves').toEqual([]);
     }
 
-    static async placeNextToNpc(page, gameConfig, context, minimumTilesDistance)
-    {
-        let placement = await RoomObjectsApi.placePlayerNextToObject(
-            page,
-            gameConfig,
-            context.roomName,
-            context.npcKey,
-            context.navTimeout,
-            minimumTilesDistance
-        );
-        expect(placement.reached, 'The player sprite must reach the placement: '+sc.toJsonString(placement)).toBe(true);
-        return placement;
-    }
-
     static async runOwnPlayerWalkTest(page, screenshots, gameConfig, longRun)
     {
         let pageErrors = InterpolationFramesRecorder.trackPageErrors(page);
         let context = await MovementScenario.start(page, gameConfig, longRun);
+        await ClientInterpolationShowcase.prepareOwnWalk(page, context, longRun);
         let sessionId = await page.evaluate(() => window.reldens.activeRoomEvents.room.sessionId);
         await InterpolationFramesRecorder.start(page, {players: [sessionId]});
-        await Navigation.walkInDirection(page, 'ArrowRight', TestClientInterpolation.WALK_MS);
+        await ClientInterpolationShowcase.walkOwnPlayer(page, TestClientInterpolation.WALK_MS, longRun);
         let result = await InterpolationFramesRecorder.stopOnPlayerState(page, sessionId, false, context.navTimeout);
+        await ClientInterpolationShowcase.showWalkResult(page, 'The player stopped', result.summary, longRun);
         await screenshots.capture(page, 'own-player-after-walk');
         expect(result.isOnState, 'The stopped player sprite must end on its server position').toBe(true);
         TestClientInterpolation.expectFrames(result.summary, pageErrors, 'own player');
@@ -81,16 +70,18 @@ class TestClientInterpolation
     static async runOwnPlayerPlacementTest(page, screenshots, gameConfig, longRun)
     {
         let pageErrors = InterpolationFramesRecorder.trackPageErrors(page);
-        let context = await MovementScenario.start(page, gameConfig, longRun);
+        let context = await ClientInterpolationShowcase.startWithPlacementAnchor(page, gameConfig, longRun);
         let sessionId = await page.evaluate(() => window.reldens.activeRoomEvents.room.sessionId);
+        await ClientInterpolationShowcase.prepareOwnPlacement(page, context, longRun);
         await InterpolationFramesRecorder.start(page, {players: [sessionId]});
-        let placement = await TestClientInterpolation.placeNextToNpc(page, gameConfig, context, 0);
+        let placement = await ClientInterpolationShowcase.placeOwnPlayer(page, context, longRun);
         let result = await InterpolationFramesRecorder.stopOnPlayerState(
             page,
             sessionId,
             placement.position,
             context.navTimeout
         );
+        await ClientInterpolationShowcase.showPlacementResult(page, result.summary, longRun);
         await screenshots.capture(page, 'own-player-placed');
         expect(result.isOnState, 'The placed player sprite must end on its server position').toBe(true);
         TestClientInterpolation.expectFrames(result.summary, pageErrors, 'placed player');
@@ -104,41 +95,56 @@ class TestClientInterpolation
         test.setTimeout(TimeConstants.forLongRun(MovementScenario.TEST_TIMEOUT_MS, longRun));
         let pageErrors = InterpolationFramesRecorder.trackPageErrors(page);
         let otherPageErrors = InterpolationFramesRecorder.trackPageErrors(secondPage);
-        let context = await MovementScenario.start(page, gameConfig, longRun);
+        let context = await ClientInterpolationShowcase.startWithPlacementAnchor(page, gameConfig, longRun);
         await Login.loginRootPlayer(secondPage, gameConfig, longRun);
         await Phaser.waitForPlayerInRoomState(secondPage, TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun));
         let otherSessionId = await secondPage.evaluate(() => window.reldens.activeRoomEvents.room.sessionId);
         await Phaser.waitForPlayerBySessionId(page, otherSessionId, context.navTimeout);
-        await TestClientInterpolation.placeNextToNpc(page, gameConfig, context, 0);
+        await ClientInterpolationShowcase.placeOwnPlayer(page, context, longRun);
+        await ClientInterpolationShowcase.startBothClientsRecording(
+            page,
+            secondPage,
+            context,
+            gameConfig.e2ePlayerName,
+            longRun
+        );
         await InterpolationFramesRecorder.start(page, {players: [otherSessionId]});
-        await Navigation.walkInDirection(secondPage, 'ArrowRight', TestClientInterpolation.WALK_MS);
+        let walkedPlayer = await MovementScenario.walkClearLine(
+            secondPage,
+            context,
+            context.roomName,
+            gameConfig.e2ePlayerName,
+            longRun ? ClientInterpolationShowcase.WALK_TILES_DISTANCES : TestClientInterpolation.WALK_TILES_DISTANCES
+        );
         let isOwnWalkShown = await InterpolationFramesRecorder.waitForPlayerSpriteOnState(
             secondPage,
             otherSessionId,
-            false,
+            walkedPlayer,
             context.navTimeout
         );
         expect(
             isOwnWalkShown,
-            'The second client must show its player stopped on its server position: '
-                +sc.toJsonString(await InterpolationFramesRecorder.readPlayerPositions(secondPage, otherSessionId))
+            'The second client must show its player stopped on its server position '+sc.toJsonString(walkedPlayer)
+                +': '+sc.toJsonString(await InterpolationFramesRecorder.readPlayerPositions(secondPage, otherSessionId))
         ).toBe(true);
         let isWalkShown = await InterpolationFramesRecorder.waitForPlayerSpriteOnState(
             page,
             otherSessionId,
-            await Phaser.getPlayerServerPosition(secondPage),
+            walkedPlayer,
             context.navTimeout
         );
         expect(
             isWalkShown,
-            'The first client must show the other player stopped on its server position: '
-                +sc.toJsonString(await InterpolationFramesRecorder.readPlayerPositions(page, otherSessionId))
+            'The first client must show the other player stopped on its server position '+sc.toJsonString(walkedPlayer)
+                +': '+sc.toJsonString(await InterpolationFramesRecorder.readPlayerPositions(page, otherSessionId))
         ).toBe(true);
-        let placement = await TestClientInterpolation.placeNextToNpc(
+        await ClientInterpolationShowcase.prepareOtherPlayerPlacement(page, secondPage, walkedPlayer, longRun);
+        let placement = await MovementScenario.placePlayerNextToNpc(
             secondPage,
-            gameConfig,
             context,
-            TestClientInterpolation.OTHER_PLAYER_TILES_DISTANCE
+            longRun
+                ? ClientInterpolationShowcase.OTHER_PLACEMENT_DISTANCE
+                : TestClientInterpolation.OTHER_PLAYER_TILES_DISTANCE
         );
         let result = await InterpolationFramesRecorder.stopOnPlayerState(
             page,
@@ -146,6 +152,7 @@ class TestClientInterpolation
             placement.position,
             context.navTimeout
         );
+        await ClientInterpolationShowcase.showOtherPlacementResult(page, secondPage, result.summary, longRun);
         await screenshots.capture(page, 'other-player-placed');
         expect(
             result.isOnState,
@@ -171,11 +178,19 @@ class TestClientInterpolation
             await InterpolationFramesRecorder.waitForObjectOnBody(page, context.npcKey, false, context.navTimeout),
             'The NPC animation must be on its stopped body before the recording'
         ).toBe(true);
-        let startTile = WalkableTileLocator.findWalkableTilesAlongDirections(
-            await context.fetchTiles(origin, npc.maxTiles + 1),
+        await ClientInterpolationShowcase.prepareObjectWalk(page, context, origin, longRun);
+        let tilesDistances = longRun
+            ? ClientInterpolationShowcase.OBJECT_TILES_DISTANCES
+            : TestClientInterpolation.OBJECT_TILES_DISTANCES;
+        let startTile = ClientInterpolationShowcase.pickObjectStartTile(
+            WalkableTileLocator.findWalkableTilesAlongDirections(
+                await context.fetchTiles(origin, Math.max(npc.maxTiles, ...tilesDistances) + 1),
+                origin,
+                tilesDistances
+            ),
             origin,
-            TestClientInterpolation.OBJECT_TILES_DISTANCES
-        ).shift();
+            longRun
+        );
         expect(startTile, 'A walkable tile must exist next to the object original tile').toBeTruthy();
         await InterpolationFramesRecorder.start(page, {objects: [context.npcKey]});
         let placedNpc = await RoomMovementApi.placeObject(gameConfig, context.roomName, context.npcKey, startTile);
@@ -185,6 +200,7 @@ class TestClientInterpolation
             {x: placedNpc.x, y: placedNpc.y},
             context.navTimeout
         );
+        await ClientInterpolationShowcase.showObjectPlacement(page, startTile, longRun);
         await RoomMovementApi.moveObjectToOriginalTile(gameConfig, context.roomName, context.npcKey, false);
         let movement = await RoomMovementApi.collectTrail(
             context.fetchNpc,
@@ -193,6 +209,7 @@ class TestClientInterpolation
         );
         let isWalkShown = await InterpolationFramesRecorder.waitForObjectOnBody(page, context.npcKey, false, context.navTimeout);
         let summary = InterpolationFramesRecorder.summarize(await InterpolationFramesRecorder.stop(page), 'object');
+        await ClientInterpolationShowcase.showWalkResult(page, 'The NPC is back on its tile', summary, longRun);
         await screenshots.capture(page, 'object-walked-back');
         expect(isPlacementShown, 'The object sprite must land on its placement').toBe(true);
         expect(movement.done, 'The object must walk back to its original tile: '+sc.toJsonString(movement.last)).toBe(true);
@@ -208,67 +225,46 @@ class TestClientInterpolation
         test.setTimeout(TimeConstants.forLongRun(MovementScenario.TEST_TIMEOUT_MS, longRun));
         let pageErrors = InterpolationFramesRecorder.trackPageErrors(page);
         let forestData = await Login.loginAndEnterForest(page, gameConfig, longRun);
-        let enemy = (await RoomObjectsApi.fetchRoomObjects(gameConfig, Login.FOREST_ROOM_NAME)).find(
-            snapshot => ObjectsConst.TYPE_ENEMY === snapshot.type
-                && GameConst.STATUS.ACTIVE === snapshot.inState
-                && !snapshot.isAggressive
+        let enemy = await ClientInterpolationBulletShowcase.findCentralEnemy(
+            page,
+            gameConfig,
+            await MovementScenario.fetchPassiveEnemy(gameConfig, Login.FOREST_ROOM_NAME),
+            longRun
         );
-        expect(enemy, 'The forest must have an active passive enemy').toBeTruthy();
-        await RoomObjectsApi.disableEnemies(gameConfig, Login.FOREST_ROOM_NAME, false, enemy.bodyKey);
-        let placement = await RoomObjectsApi.placePlayerInLineOfObject(
+        await MovementScenario.stopMovingBodies(gameConfig, Login.FOREST_ROOM_NAME, enemy.bodyKey);
+        await MovementScenario.placePlayerInLineAndTarget(
             page,
             gameConfig,
             Login.FOREST_ROOM_NAME,
             enemy.key,
             forestData.sceneTimeout,
-            TestClientInterpolation.BULLET_TILES_DISTANCES
+            longRun
+                ? ClientInterpolationBulletShowcase.TILES_DISTANCES
+                : TestClientInterpolation.BULLET_TILES_DISTANCES
         );
-        expect(
-            placement.reached,
-            'The player must be placed on a clear line of tiles from the enemy: '+sc.toJsonString(placement)
-        ).toBe(true);
-        let isTargeted = await RoomObjectsApi.targetBodyAtPosition(
+        await ClientInterpolationBulletShowcase.prepareFlight(
             page,
-            placement.bodyKey,
-            placement.objectPosition,
-            forestData.sceneTimeout
+            gameConfig,
+            TestClientInterpolation.BULLET_SKILL_KEY,
+            enemy.bodyKey,
+            longRun
         );
-        expect(isTargeted, 'The enemy must be targeted').toBe(true);
+        let skillSelector = Selectors.combat.skillButton(TestClientInterpolation.BULLET_SKILL_KEY);
         await InterpolationFramesRecorder.start(page, {bullets: true});
-        await page.click(Selectors.combat.skillButton(TestClientInterpolation.BULLET_SKILL_KEY), {force: true});
+        await ClientInterpolationBulletShowcase.hoverBeforeClick(page, skillSelector, longRun);
+        await page.click(skillSelector, {force: true});
         let isFlightEnded = await InterpolationFramesRecorder.waitForBulletsFlightEnd(
             page,
             TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun)
         );
         let summary = InterpolationFramesRecorder.summarize(await InterpolationFramesRecorder.stop(page), 'bullet');
+        await ClientInterpolationBulletShowcase.showResult(page, gameConfig, enemy.bodyKey, summary, longRun);
         await screenshots.capture(page, 'bullet-flight-ended');
         expect(isFlightEnded, 'A bullet must fly and end').toBe(true);
         TestClientInterpolation.expectFrames(summary, pageErrors, 'bullet');
         expect(summary.partialMoving, 'The bullet sprite must step toward its flying body').toBeGreaterThan(0);
-    }
-
-    static async walkIntoTheForest(page, context, longRun)
-    {
-        let townMovement = await MovementScenario.movePlayer(
-            page,
-            context,
-            [
-                Math.floor(Login.FOREST_TRANSITION_X / Navigation.TILE_SIZE),
-                Math.floor(Login.FOREST_TRANSITION_Y / Navigation.TILE_SIZE) + 1
-            ],
-            TimeConstants.forLongRun(TimeConstants.MAP_CROSSING, longRun)
-        );
-        expect(townMovement.done, 'The player must reach the tile below the forest change point').toBe(true);
-        let isInForest = await Navigation.ensureInRoom(
-            page,
-            Login.FOREST_ROOM_NAME,
-            Login.FOREST_TRANSITION_X,
-            Login.FOREST_TRANSITION_Y,
-            context.navTimeout
-        );
-        expect(isInForest, 'The player must walk into the forest').toBe(true);
-        await Phaser.waitForPlayerInRoomState(page, TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun));
-        return await page.evaluate(() => window.reldens.activeRoomEvents.room.sessionId);
+        expect(summary.renderedTextures, 'The flying bullet sprite must be visible and render its texture')
+            .toEqual([TestClientInterpolation.BULLET_TEXTURE_KEY]);
     }
 
     static async runSceneChangeTest(page, screenshots, gameConfig, longRun)
@@ -276,7 +272,8 @@ class TestClientInterpolation
         test.setTimeout(TimeConstants.forLongRun(MovementScenario.TEST_TIMEOUT_MS, longRun));
         let pageErrors = InterpolationFramesRecorder.trackPageErrors(page);
         let context = await MovementScenario.start(page, gameConfig, longRun);
-        let sessionId = await TestClientInterpolation.walkIntoTheForest(page, context, longRun);
+        await ClientInterpolationShowcase.prepareChangePointWalk(page, context, longRun);
+        let sessionId = await ClientInterpolationShowcase.walkIntoTheForest(page, context, longRun);
         let isArrivalShown = await InterpolationFramesRecorder.waitForPlayerSpriteOnState(
             page,
             sessionId,
@@ -284,31 +281,28 @@ class TestClientInterpolation
             context.navTimeout
         );
         expect(isArrivalShown, 'The new scene must show the player sprite on its server position').toBe(true);
-        await RoomObjectsApi.disableEnemies(gameConfig, Login.FOREST_ROOM_NAME);
-        let forestContext = {
-            fetchPlayer: async () => RoomMovementApi.fetchPlayer(gameConfig, Login.FOREST_ROOM_NAME, context.playerName),
-            isStill: context.isStill
-        };
-        let targetTile = await RoomMovementApi.fetchClearLineTile(
-            gameConfig,
+        await MovementScenario.stopMovingBodies(gameConfig, Login.FOREST_ROOM_NAME);
+        await ClientInterpolationShowcase.showForestArrival(page, context, sessionId, longRun);
+        await InterpolationFramesRecorder.start(page, {players: [sessionId]});
+        let walkedPlayer = await MovementScenario.walkClearLine(
+            page,
+            context,
             Login.FOREST_ROOM_NAME,
             context.playerName,
-            TestClientInterpolation.WALK_TILES_DISTANCES
+            longRun ? ClientInterpolationShowcase.FOREST_WALK_DISTANCES : TestClientInterpolation.WALK_TILES_DISTANCES
         );
-        expect(
-            targetTile,
-            'A clear line of forest tiles must start on the arrival point: '
-                +sc.toJsonString(await forestContext.fetchPlayer())
-        ).toBeTruthy();
-        await InterpolationFramesRecorder.start(page, {players: [sessionId]});
-        let forestMovement = await MovementScenario.movePlayer(page, forestContext, targetTile, context.navTimeout);
-        let result = await InterpolationFramesRecorder.stopOnPlayerState(page, sessionId, false, context.navTimeout);
+        let result = await InterpolationFramesRecorder.stopOnPlayerState(
+            page,
+            sessionId,
+            walkedPlayer,
+            context.navTimeout
+        );
+        await ClientInterpolationShowcase.showWalkResult(page, 'The player stopped', result.summary, longRun);
         await screenshots.capture(page, 'player-walked-in-the-forest');
         expect(
-            forestMovement.done,
-            'The player must walk in the forest to '+targetTile.join(',')+': '+sc.toJsonString(forestMovement.last)
+            result.isOnState,
+            'The stopped player sprite must end on its server position '+sc.toJsonString(walkedPlayer)
         ).toBe(true);
-        expect(result.isOnState, 'The stopped player sprite must end on its server position').toBe(true);
         TestClientInterpolation.expectFrames(result.summary, pageErrors, 'player in the new scene');
         expect(result.summary.partialMoving, 'The player sprite must step toward its moving state').toBeGreaterThan(0);
         expect(result.summary.placed, 'The stopped state must place the sprite on the server position')
@@ -318,6 +312,9 @@ class TestClientInterpolation
     static run()
     {
         test.describe('Client Interpolation', () => {
+            test.afterEach(async ({ gameConfig, e2eGroup, longRun }) => {
+                await ClientInterpolationShowcase.restoreLiveChanges(gameConfig, e2eGroup, longRun);
+            });
             test('own player sprite follows the walking state frame by frame and stops on the server position', async ({ page, screenshots, gameConfig, longRun }) => {
                 await TestClientInterpolation.runOwnPlayerWalkTest(page, screenshots, gameConfig, longRun);
             });
