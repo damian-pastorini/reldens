@@ -3,18 +3,22 @@
  * Reldens - Long Run Showcase
  *
  * Steps that run only in the long run, so its videos show the result of the tested feature: record the video from the
- * game start (the login and the player selection are skipped, a bottom banner names the test), keep the screen still
- * for a while, zoom the game camera on the player (the DOM panels keep their size), open the panel that shows the
- * feature data, wait until an element or a polled value shows the expected state, move the player to the center of
- * the map (with the aggressive enemies disabled first, so none attacks on arrival, and preferring an enemy far enough
- * from the map borders that the camera keeps the player at the center, away from the panels) and target an enemy
- * some tiles away, so its life bar is visible and no battle starts from the bodies touching. The normal run skips
- * them.
+ * game start (the login and the player selection are skipped, a top banner names the test and shows the current step,
+ * the camera is zoomed on the player, in every scene, and the weather clouds are hidden; the DOM panels keep their
+ * size), keep the screen still for a while, wait for the camera to catch up with a placed player, show the steps that
+ * tell the general flow of the test (each one stays on screen for TimeConstants.STEP_READ, so it can be read, the HUD
+ * shows the live values), open the panel that shows the feature data, wait until an element or a polled value shows the
+ * expected state, move the player to the
+ * center of the map (with the aggressive enemies disabled first, so none attacks on arrival, and preferring an enemy
+ * far enough from the map borders that the camera keeps the player at the center, away from the panels) and target an
+ * enemy some tiles away, so its life bar is visible and no battle starts from the bodies touching, and change the
+ * step once a panel shows an expected text (checked by the page, so it never lags). The normal run skips them.
  *
  */
 
 const { expect, test } = require('@playwright/test');
 const { BaseE2eTest } = require('../base-e2e-test');
+const { RecordingStepReadTimer } = require('./recording-step-read-timer');
 const { RoomObjectsApi } = require('./room-objects-api');
 const { TimeConstants } = require('./time-constants');
 const { GameConst } = require('../../../lib/game/constants');
@@ -25,18 +29,20 @@ class LongRunShowcase
 {
 
     static OVER_PLAYER_LAYER_NAME = 'over-player';
-    static CLEAR_TILES_RADIUS = 2;
+    static CLEAR_TILES_RADIUSES = [4, 3, 2];
     static TARGET_DISTANCE_TILES = 2;
     static CAMERA_ZOOM = 2;
-    static CAMERA_ZOOM_MS = 1000;
+    static LIVE_STEP_REFRESH_MS = 100;
 
-    static async startGameplayRecording(page, longRun)
+    static async startGameplayRecording(page, longRun, firstStep = '', zoom = LongRunShowcase.CAMERA_ZOOM, suffix = '')
     {
         if(!longRun){
             return false;
         }
-        await BaseE2eTest.startGameplayRecording(page, test.info());
-        return await LongRunShowcase.pause(page, longRun);
+        await BaseE2eTest.startGameplayRecording(page, test.info(), zoom, suffix, firstStep);
+        await RecordingStepReadTimer.markShown(page);
+        await page.waitForTimeout(TimeConstants.PAUSE);
+        return true;
     }
 
     static async pause(page, longRun)
@@ -48,16 +54,56 @@ class LongRunShowcase
         return true;
     }
 
-    static async zoomCamera(page, longRun)
+    static async waitForCamera(page, longRun)
     {
         if(!longRun){
             return false;
         }
-        await page.evaluate(
-            (zoomData) => window.reldens.getActiveScene().cameras.main.zoomTo(zoomData.zoom, zoomData.duration),
-            {zoom: LongRunShowcase.CAMERA_ZOOM, duration: LongRunShowcase.CAMERA_ZOOM_MS}
-        );
-        return await LongRunShowcase.pause(page, longRun);
+        await BaseE2eTest.waitForCameraStill(page);
+        return true;
+    }
+
+    static async showStep(page, stepText, longRun)
+    {
+        if(!longRun){
+            return false;
+        }
+        await RecordingStepReadTimer.waitForRead(page);
+        await page.evaluate((text) => {
+            clearInterval(window.e2eLiveStep);
+            window.e2eStepShownAt = Date.now();
+            let stepElement = document.querySelector('.e2e-recording-step');
+            if(stepElement){
+                stepElement.textContent = text;
+            }
+        }, stepText);
+        return true;
+    }
+
+    static async fetchUncoveredKeys(page, enemies, clearTilesRadius)
+    {
+        return await page.evaluate((args) => args.candidates.filter(
+            candidate => !Object.keys(window.reldens.getActiveScene().layers).some(
+                layerIndex => window.reldens.getActiveScene().layers[layerIndex]
+                    && -1 !== window.reldens.getActiveScene().layers[layerIndex].layer.name.indexOf(
+                        args.overPlayerLayerName
+                    )
+                    && 0 < window.reldens.getActiveScene().layers[layerIndex].getTilesWithinWorldXY(
+                        candidate.x - args.areaSize,
+                        candidate.y - args.areaSize,
+                        args.areaSize * 2,
+                        args.areaSize * 2,
+                        {isNotEmpty: true}
+                    ).length
+            )
+        ).map(candidate => candidate.key), {
+            overPlayerLayerName: LongRunShowcase.OVER_PLAYER_LAYER_NAME,
+            areaSize: await page.evaluate(
+                (tilesRadius) => window.reldens.getActiveScene().map.tileWidth * tilesRadius,
+                clearTilesRadius
+            ),
+            candidates: enemies.map(enemy => ({key: enemy.key, x: enemy.x, y: enemy.y}))
+        });
     }
 
     static async openPanel(page, openSelector, panelSelector, longRun)
@@ -99,33 +145,15 @@ class LongRunShowcase
                 && GameConst.STATUS.ACTIVE === roomObject.inState
                 && 0 === roomObject.inBattle
         );
-        let areaSize = await page.evaluate(
-            (clearTilesRadius) => window.reldens.getActiveScene().map.tileWidth * clearTilesRadius,
-            LongRunShowcase.CLEAR_TILES_RADIUS
-        );
-        let uncoveredKeys = await page.evaluate((args) => args.candidates.filter(
-            candidate => !Object.keys(window.reldens.getActiveScene().layers).some(
-                layerIndex => window.reldens.getActiveScene().layers[layerIndex]
-                    && -1 !== window.reldens.getActiveScene().layers[layerIndex].layer.name.indexOf(
-                        args.overPlayerLayerName
-                    )
-                    && 0 < window.reldens.getActiveScene().layers[layerIndex].getTilesWithinWorldXY(
-                        candidate.x - args.areaSize,
-                        candidate.y - args.areaSize,
-                        args.areaSize * 2,
-                        args.areaSize * 2,
-                        {isNotEmpty: true}
-                    ).length
-            )
-        ).map(candidate => candidate.key), {
-            overPlayerLayerName: LongRunShowcase.OVER_PLAYER_LAYER_NAME,
-            areaSize,
-            candidates: passiveEnemies.map(enemy => ({key: enemy.key, x: enemy.x, y: enemy.y}))
-        });
-        let enemies = await LongRunShowcase.filterCenteredObjects(
-            page,
-            passiveEnemies.filter(enemy => uncoveredKeys.includes(enemy.key))
-        );
+        let centeredEnemies = await LongRunShowcase.filterCenteredObjects(page, passiveEnemies);
+        let uncoveredKeys = [];
+        for(let clearTilesRadius of LongRunShowcase.CLEAR_TILES_RADIUSES){
+            uncoveredKeys = await LongRunShowcase.fetchUncoveredKeys(page, centeredEnemies, clearTilesRadius);
+            if(0 < uncoveredKeys.length){
+                break;
+            }
+        }
+        let enemies = centeredEnemies.filter(enemy => uncoveredKeys.includes(enemy.key));
         let center = {
             x: enemies.reduce((total, enemy) => total + enemy.x, 0) / enemies.length,
             y: enemies.reduce((total, enemy) => total + enemy.y, 0) / enemies.length
@@ -211,6 +239,35 @@ class LongRunShowcase
         }, placement.bodyKey, {timeout})).jsonValue();
         expect(targeted, 'The object next to the player must be targeted').toBe(true);
         return await LongRunShowcase.pause(page, longRun);
+    }
+
+    static async showStepWhenText(page, textSelector, expectedText, stepText, longRun)
+    {
+        if(!longRun){
+            return false;
+        }
+        await page.evaluate((nextStep) => {
+            clearInterval(window.e2eLiveStep);
+            window.e2eLiveStep = setInterval(() => {
+                let textElement = document.querySelector(nextStep.textSelector);
+                if(!textElement || -1 === textElement.textContent.indexOf(nextStep.expectedText)){
+                    return;
+                }
+                if(Date.now() < window.e2eStepShownAt + nextStep.readMs){
+                    return;
+                }
+                clearInterval(window.e2eLiveStep);
+                window.e2eStepShownAt = Date.now();
+                document.querySelector('.e2e-recording-step').textContent = nextStep.stepText;
+            }, nextStep.refreshMs);
+        }, {
+            textSelector,
+            expectedText,
+            stepText,
+            readMs: TimeConstants.STEP_READ,
+            refreshMs: LongRunShowcase.LIVE_STEP_REFRESH_MS
+        });
+        return true;
     }
 
 }
