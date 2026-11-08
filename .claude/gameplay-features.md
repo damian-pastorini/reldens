@@ -222,15 +222,23 @@ item is stored and added.
 `Battle.clientDeathUpdate()` (`lib/actions/server/battle.js`) stores the revive timer in the `playerDeathTimer` private
 data and emits `reldens.playerDeath` with `revivePlayerCallback`, the battle revive bound to the room, the body, the
 player, the affected property and the client, so the listeners never receive the battle.
-`PlayerDeathRelocator` (`lib/actions/server/player-death-relocator.js`) only takes a `ConfigProcessor` instance as its
-config, any other value (missing, `false`, a plain object) is logged as critical and discarded, so every death keeps the
-battle revive. On every death it resets the death private data (`restorationItemChoice`, `playerReviveReady`, the ad
-flags) and keeps the death event (`playerDeathEvent`). Two options, both enabled by default (the previous behavior):
+The death classes check their dependencies once: `ActionsPlugin.listenDeathEvents()` (`lib/actions/server/plugin.js`)
+runs the `validate()` of `PlayerDeathRelocator` (a `ConfigProcessor` config and the events manager),
+`ResurrectionAdGate` (a `ConfigProcessor` config), `DeathReviveNotifier` (the config and the relocator) and
+`DeathReviveRequests` (the relocator and the notifier) and attaches the death listeners only when all of them are
+valid, otherwise it logs the error and every death keeps the battle revive; their constructors only assign the props
+and their methods never check those dependencies again. On `reldens.serverReady` the relocator loads the town room once
+(`players/death/teleportToTown/roomId`, or the players initial room when it is not set): the teleport is enabled only
+with that room loaded, an unknown room logs the error and the players revive where they died.
+`PlayerDeathRelocator` (`lib/actions/server/player-death-relocator.js`) resets on every death the death private data
+(`restorationItemChoice`, `playerReviveReady`, `playerReviveRequested`, the ad flags) and keeps the death event
+(`playerDeathEvent`). Two options, both enabled by default (the previous behavior):
 
 - `players/death/autoRevive`: enabled, the player is revived once `players/gameOver/timeOut` passed; disabled, the
   game over box tells the seconds left (`playerReviveAt`) and, once that time passed, the relocator marks the revive
   ready and emits `reldens.playerReviveReady`, the box shows the revive button and the player is revived only when it
-  sends the `drq` request (`ActionsConst.DEATH.ACTIONS.REVIVE_REQUEST`), accepted once
+  sends the `drq` request (`ActionsConst.DEATH.ACTIONS.REVIVE_REQUEST`): one request runs at a time
+  (`playerReviveRequested`) and the revive stays ready, so a failed revive (a rejected stats save) can be asked again
 - `players/death/autoConsumeRestorationItem` (only with the teleport enabled, the item has no use otherwise):
   enabled, a carried restoration item is consumed and revives the player where it died; disabled, the game over box
   asks to use it (yes) or keep it (no), the `drc` choice (`RESTORATION_ITEM_CHOICE` with a boolean `use`) is accepted
@@ -255,7 +263,8 @@ With the teleport enabled or the auto revive disabled it replaces the battle tim
 - with the teleport disabled the player revives where it died
 - with a restoration item (quantity above 0) used (auto consume or chosen) one is consumed and the player revives where
   it died
-- while the resurrection ad plays (started less than 60 seconds before and not failed) it checks again every second
+- while the resurrection ad plays (its start stored by the ads system, not ended nor failed, started less than the ads
+  `server/ads/videoMaximumDuration` before) it checks again every second
 - otherwise it revives in the town: in the same room the player is placed on the return point and revived, from
   another room the affected stat is restored, the `REVIVED` message is sent and the player moves to the town room; a
   failed relocation revives where it died
@@ -276,8 +285,11 @@ disabled, has no event key or the player keeps a restoration item). Without the 
 reaches a dead player, and after every accepted restoration item choice. The client
 `GameOverReviveMessage` (`lib/actions/client/game-over-revive-message.js`) renders the game over box content from the
 `theme/default/assets/features/skills/templates/ui-game-over.html` template with the translated `actions.death.*`
-snippets (title and wait on `GAME_OVER`, with no button until the `drm` message offers it, plus the revive mode on
-`drm`, covered by `tests/test-game-over-revive-message.js`): the wait text is the seconds left or the ready text
+snippets (`ActionsConst.SNIPPETS.DEATH_*`; title and wait on `GAME_OVER`, with no button until the `drm` message offers
+it, plus the revive mode on `drm`, covered by `tests/test-game-over-revive-message.js` and
+`tests/test-game-over-revive-message-preparation.js`). The client plugin validates it once and, on the UI scene
+creation, it reads the template and translates the fixed snippets (title and buttons) once; every message only
+translates its wait and revive texts, a message received before that is not rendered. The wait text is the seconds left or the ready text
 without auto revive, the `.game-over-restoration-item-use` and `.game-over-restoration-item-keep` buttons send the
 choice, the `.game-over-revive` button sends the revive request and the `.game-over-resurrection-ad` button is
 rendered only when the ad is offered; the ad is never played automatically, the button click fires the event key sent
@@ -288,11 +300,16 @@ cases are covered by `tests/test-player-death-auto-revive.js`, `tests/test-playe
 
 The resurrection ad (`ads_event_video` on the client `reldens.resurrectionAd` event, `"replayCooldown":0`) rewards one
 restoration item. `ResurrectionAdGate` (`lib/actions/server/resurrection-ad-gate.js`) accepts its `AD_STARTED` message
-(`reldens.beforeSceneExecuteMessages`) only from a dead player and once per death (`resurrectionAdStarted` private data,
-cleared on every death). `AdsMessageActions` no longer disables a dead player on `AD_STARTED` and only activates a
-disabled player on `AD_ENDED`, so the ad never revives a dead player. The `AD_FAILED` message of the started
-resurrection ad sets the `resurrectionAdFailed` private data (cleared on every death too): a failed ad gives no item, so
-the next death check stops waiting and the player revives in the town, and no other ad can start in the same death. The death timers are cleared when the player leaves
+(`reldens.beforeSceneExecuteMessages`) only from a dead player and once per death (`resurrectionAdRequested` private
+data). The ad counts as started only when the ads system stored its start: `AdsMessageActions` emits
+`reldens.afterAdStarted` after saving it and the gate sets `resurrectionAdStarted` (a start rejected by the ads system,
+an unavailable ad or a played non replay ad, is never waited). After processing an `AD_ENDED` message (with or without
+reward, the reward is already given) it emits `reldens.afterAdEnded` and the gate sets `resurrectionAdEnded`; the
+`AD_FAILED` message of the requested ad sets `resurrectionAdFailed`. Both stop the wait, an ad that runs past the ads
+videos maximum duration is not waited either (a later reward stays in the inventory); every flag is cleared on every
+death. `AdsMessageActions` no longer disables a dead player on `AD_STARTED` and only activates a disabled player on
+`AD_ENDED`, so the ad never revives a dead player, and no other ad can start in the same death. The death timers are
+cleared when the player leaves
 (`RoomScene.removeAllPlayerReferences()`) and when the room is disposed (`RoomScene.clearPlayersTimers()`).
 
 ## Scores reset per period
