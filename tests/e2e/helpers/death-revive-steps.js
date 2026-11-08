@@ -9,9 +9,13 @@
  * the translated revive message of each case with the town room title and the restoration item label read from their
  * stored rows, the resurrection ad button only when the ad is offered, the restoration item question with its yes and
  * no buttons, the seconds left to the revive and the revive button once the game over time passed. Then the revive is
- * checked where the player died, consuming the item, or in the town room. Before the long run recording starts, a
- * passive enemy is placed and targeted next to the player at the center of the map and the player life is lowered
- * (ForestEnemyKill), then its battle starts in place, so the video shows every enemy hit that kills the player.
+ * checked where the player died, consuming the item, or in the town room. The random drop of the player items is off
+ * for the group, so a death only changes the restoration item. Before the long run recording starts, a passive enemy is
+ * placed and targeted next to the player at the center of the map (ForestEnemyKill), the chat panel, plus the inventory
+ * panel when the case needs it, are opened and the player life is lowered; once recording, the battle starts in place,
+ * so the video shows every enemy hit that kills the player, with the recording steps telling the general flow of the
+ * case (DeathReviveShowcase). The long run shortens the game over time to what each case needs on screen, the question
+ * and the ad cases need the time for their clicks, their reward and to read their steps.
  *
  */
 
@@ -24,6 +28,7 @@ const { ForestEnemyKill } = require('./forest-enemy-kill');
 const { GameplayE2eStateApi } = require('./gameplay-e2e-state-api');
 const { E2eSeedAndRestoreApi } = require('./e2e-seed-and-restore-api');
 const { LongRunShowcase } = require('./long-run-showcase');
+const { DeathReviveShowcase } = require('./death-revive-showcase');
 const { TimeConstants } = require('./time-constants');
 const { Selectors } = require('../selectors');
 const { ActionsConst } = require('../../../lib/actions/constants');
@@ -32,12 +37,16 @@ const ActionsTranslations = require('../../../lib/actions/client/snippets/en_US'
 class DeathReviveSteps
 {
 
-    static LONG_RUN_PLAYER_LIFE = 16;
+    static LONG_RUN_GAME_OVER_TIME_OUT = 5000;
+    static LONG_RUN_ASKED_ITEM_TIME_OUT = 9000;
+    static ENEMY_ATTACK_STEP = 'The enemy attacks the player until it dies';
+    static DROP_PERCENT_PATH = 'server/players/drop/percent';
+    static NO_DROP_PERCENT = 0;
     static DEATH_SNIPPETS = ActionsTranslations.actions.death;
     static ASKED_ITEM_CONFIG = {[ActionsConst.DEATH.CONFIG_PATHS.AUTO_CONSUME_RESTORATION_ITEM]: false};
     static MANUAL_REVIVE_CONFIG = {[ActionsConst.DEATH.CONFIG_PATHS.AUTO_REVIVE]: false};
 
-    static async prepareDeath(context, configValues = {})
+    static async prepareDeath(context, configValues = {}, longRunTimeOut = DeathReviveSteps.LONG_RUN_GAME_OVER_TIME_OUT)
     {
         test.setTimeout(
             TimeConstants.forLongRun(TimeConstants.GAME_START + TimeConstants.NAVIGATION, context.longRun)
@@ -45,7 +54,17 @@ class DeathReviveSteps
             + TimeConstants.PLAYER_REVIVE
             + TimeConstants.forLongRun(TimeConstants.ROOM_TRANSITION, context.longRun)
         );
-        let deathConfig = Object.assign({[ActionsConst.DEATH.CONFIG_PATHS.TELEPORT_ENABLED]: true}, configValues);
+        context.gameOverTimeOut = context.longRun ? longRunTimeOut : Number(
+            await E2eSeedAndRestoreApi.fetchConfigValue(
+                context.gameConfig,
+                ActionsConst.DEATH.CONFIG_PATHS.GAME_OVER_TIME_OUT
+            )
+        );
+        let deathConfig = Object.assign({
+            [ActionsConst.DEATH.CONFIG_PATHS.TELEPORT_ENABLED]: true,
+            [ActionsConst.DEATH.CONFIG_PATHS.GAME_OVER_TIME_OUT]: context.gameOverTimeOut,
+            [DeathReviveSteps.DROP_PERCENT_PATH]: DeathReviveSteps.NO_DROP_PERCENT
+        }, configValues);
         for(let configPath of Object.keys(deathConfig)){
             await E2eSeedAndRestoreApi.overrideConfig(
                 context.gameConfig,
@@ -54,10 +73,12 @@ class DeathReviveSteps
                 deathConfig[configPath]
             );
         }
-        return await E2eSeedAndRestoreApi.fetchConfigValue(
+        let restorationItemKey = await E2eSeedAndRestoreApi.fetchConfigValue(
             context.gameConfig,
             ActionsConst.DEATH.CONFIG_PATHS.RESTORATION_ITEM_KEY
         );
+        context.reviveLabels = await DeathReviveSteps.fetchReviveLabels(context.gameConfig, restorationItemKey);
+        return restorationItemKey;
     }
 
     static async fetchReviveLabels(gameConfig, restorationItemKey = '')
@@ -79,25 +100,23 @@ class DeathReviveSteps
         return reviveLabels;
     }
 
-    static async enterForest(context)
+    static async enterForest(context, withInventory = false, firstStep = DeathReviveSteps.ENEMY_ATTACK_STEP)
     {
-        let forestData = await Login.loginAndEnterForest(context.page, context.gameConfig, context.longRun);
-        let placement = context.longRun
-            ? await ForestEnemyKill.placeEnemyToKillPlayer(
-                context.page,
-                context.gameConfig,
-                DeathReviveSteps.LONG_RUN_PLAYER_LIFE,
-                forestData.sceneTimeout
-            )
-            : {};
         let page = context.page;
-        await LongRunShowcase.startGameplayRecording(page, context.longRun);
-        await LongRunShowcase.openPanel(page, Selectors.hud.inventoryOpen, Selectors.inventory.ui, context.longRun);
+        let forestData = await Login.loginAndEnterForest(page, context.gameConfig, context.longRun);
+        let placement = context.longRun
+            ? await ForestEnemyKill.placeEnemyToKillPlayer(page, context.gameConfig, forestData.sceneTimeout)
+            : {};
+        if(withInventory){
+            await LongRunShowcase.openPanel(page, Selectors.hud.inventoryOpen, Selectors.inventory.ui, context.longRun);
+        }
         await LongRunShowcase.openPanel(page, Selectors.hud.chatOpen, Selectors.chat.input, context.longRun);
+        await DeathReviveShowcase.lowerLife(context);
+        await LongRunShowcase.startGameplayRecording(page, context.longRun, firstStep);
         return placement;
     }
 
-    static async killPlayerInForest(context, placement)
+    static async killPlayerInForest(context, placement, deathStep)
     {
         await (context.longRun
             ? ForestEnemyKill.fightUntilPlayerDeath(
@@ -112,13 +131,14 @@ class DeathReviveSteps
                 context.gameConfig.e2eEnemyKey,
                 TimeConstants.ENEMY_KILL
             ));
+        await DeathReviveShowcase.showStep(context, deathStep);
         await RoomObjectsApi.disableEnemies(context.gameConfig, Login.FOREST_ROOM_NAME, true);
         await context.screenshots.capture(context.page, 'player-dead-in-forest');
     }
 
-    static async killPlayerWithRestorationItem(context, configValues)
+    static async killPlayerWithRestorationItem(context, configValues, longRunTimeOut, createDeathStep)
     {
-        let restorationItemKey = await DeathReviveSteps.prepareDeath(context, configValues);
+        let restorationItemKey = await DeathReviveSteps.prepareDeath(context, configValues, longRunTimeOut);
         await E2eSeedAndRestoreApi.seedInventoryItem(
             context.gameConfig,
             context.e2eGroup,
@@ -126,7 +146,13 @@ class DeathReviveSteps
             restorationItemKey,
             1
         );
-        await DeathReviveSteps.killPlayerInForest(context, await DeathReviveSteps.enterForest(context));
+        let placement = await DeathReviveSteps.enterForest(
+            context,
+            true,
+            'The player carries the '+context.reviveLabels.itemLabel+' and the enemy attacks it until it dies'
+        );
+        await DeathReviveShowcase.expectShownItem(context, restorationItemKey);
+        await DeathReviveSteps.killPlayerInForest(context, placement, createDeathStep(context.reviveLabels));
         return restorationItemKey;
     }
 
@@ -189,6 +215,10 @@ class DeathReviveSteps
             Login.FOREST_ROOM_NAME
         );
         await DeathReviveSteps.expectRestorationItemQuantity(context, restorationItemKey, 0);
+        await DeathReviveShowcase.showStep(
+            context,
+            'The player revived where it died and the '+context.reviveLabels.itemLabel+' was consumed'
+        );
         await LongRunShowcase.showElementsCount(
             page,
             Selectors.inventory.itemImage(restorationItemKey),
@@ -226,6 +256,7 @@ class DeathReviveSteps
             ).life,
             {message: 'The player must be alive in the town room'}
         ).toBeGreaterThan(0);
+        await DeathReviveShowcase.showRevivedInTown(context);
         await LongRunShowcase.pause(context.page, context.longRun);
         await context.screenshots.capture(context.page, 'player-revived-in-town');
     }
@@ -249,16 +280,12 @@ class DeathReviveSteps
 
     static async expectReviveWait(context)
     {
-        let gameOverTimeOut = Number(await E2eSeedAndRestoreApi.fetchConfigValue(
-            context.gameConfig,
-            ActionsConst.DEATH.CONFIG_PATHS.GAME_OVER_TIME_OUT
-        ));
         await expect(
             context.page.locator(Selectors.gameOver.wait),
             'The game over box must tell the seconds left to the revive'
         ).toHaveText(DeathReviveSteps.DEATH_SNIPPETS.reviveWait.replace(
             '%seconds',
-            String(Math.ceil(gameOverTimeOut / ActionsConst.DEATH.DEFAULTS.SECOND_MS))
+            String(Math.ceil(context.gameOverTimeOut / ActionsConst.DEATH.DEFAULTS.SECOND_MS))
         ));
         await expect(
             context.page.locator(Selectors.gameOver.reviveButton),
@@ -281,8 +308,9 @@ class DeathReviveSteps
         );
         expect(deadPlayer.life, 'The player must stay dead until it asks for the revive').toBe(0);
         await context.screenshots.capture(page, 'game-over-revive-button');
+        await DeathReviveShowcase.showStep(context, 'The wait ended: the player stays dead until it clicks Revive');
         await LongRunShowcase.pause(page, context.longRun);
-        await page.click(Selectors.gameOver.reviveButton);
+        await DeathReviveShowcase.clickButton(context, Selectors.gameOver.reviveButton);
     }
 
 }
