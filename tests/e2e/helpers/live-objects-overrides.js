@@ -3,10 +3,11 @@
  * Reldens - Live Objects Overrides
  *
  * Server side e2e endpoints that change a property of the live objects of a scene room (the private params the objects
- * read on every use: the enemies "killScore" and "autoRecovery", the teleport NPC options and destinations) and restore
- * them. The original value of every changed property is kept per parallel spec group the first time it changes, the
- * restore puts back the originals of that group in the reverse order (a property that did not exist is removed again),
- * and the specs that change a property restore their group after every test, so no change reaches the next test.
+ * read on every use: the enemies "killScore" and "autoRecovery", the teleport NPC options and destinations) or of a
+ * live body (the movement speed of a player or an object) and restore them. The original value of every changed
+ * property is kept per parallel spec group the first time it changes, the restore puts back the originals of that
+ * group in the reverse order (a property that did not exist is removed again), and the specs that change a property
+ * restore their group after every test, so no change reaches the next test.
  *
  */
 
@@ -77,6 +78,18 @@ class LiveObjectsOverrides
         return {objectId: teleportObject.id, optionKey};
     }
 
+    static changeBodyProperty(room, groupKey, bodyOwner, propertyKey, value)
+    {
+        let playerSchema = RoomObjectsState.findPlayerByName(room, bodyOwner);
+        let roomObject = RoomObjectsState.findObjectByKey(RoomObjectsState.fetchObjectsWithState(room), bodyOwner);
+        let body = playerSchema ? playerSchema.physicalBody : sc.get(roomObject, 'objectBody', false);
+        if(!body){
+            return {error: 'Body of '+bodyOwner+' not found in room '+room.roomName+'.'};
+        }
+        LiveObjectsOverrides.changeProperty(groupKey, body, propertyKey, value, false);
+        return {bodyOwner, propertyKey, value: body[propertyKey]};
+    }
+
     static restoreGroup(groupKey)
     {
         let groupChanges = sc.get(LiveObjectsOverrides.changedProperties, groupKey, []);
@@ -121,6 +134,20 @@ class LiveObjectsOverrides
                     String(sc.get(request.body, 'optionKey', '')),
                     sc.get(request.body, 'option', {}),
                     sc.get(request.body, 'destination', {})
+                )
+            );
+        });
+        app.post('/api/e2e/live-objects/body-property', async (request, response) => {
+            await RoomObjectsState.respondForRoom(
+                serverManager,
+                sc.get(request.body, 'roomName', ''),
+                response,
+                async (room) => LiveObjectsOverrides.changeBodyProperty(
+                    room,
+                    sc.get(request.body, 'group', ''),
+                    sc.get(request.body, 'bodyOwner', ''),
+                    sc.get(request.body, 'propertyKey', ''),
+                    sc.get(request.body, 'value', null)
                 )
             );
         });
