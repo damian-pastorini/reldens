@@ -25,9 +25,9 @@ class TestDeathReviveRequests extends BaseTest
         );
     }
 
-    createRequestsSetup(configValues = {}, setupOptions = {})
+    async createRequestsSetup(configValues = {}, setupOptions = {})
     {
-        let setup = this.deathBuilder.createNotifierSetup(configValues, setupOptions);
+        let setup = await this.deathBuilder.createNotifierSetup(configValues, setupOptions);
         this.deathBuilder.startDeath(setup);
         setup.requests = new DeathReviveRequests({
             playerDeathRelocator: setup.relocator,
@@ -46,7 +46,7 @@ class TestDeathReviveRequests extends BaseTest
     async testReviveRequestRevivesOnlyWhenReady()
     {
         await this.test('the revive request message revives the player only once its revive is ready', async () => {
-            let setup = this.createRequestsSetup(this.manualInPlaceRevive);
+            let setup = await this.createRequestsSetup(this.manualInPlaceRevive);
             let requestEvent = setup.createEvent({act: ActionsConst.DEATH.ACTIONS.REVIVE_REQUEST});
             this.assert.strictEqual(await setup.requests.onBeforeSceneExecuteMessages(requestEvent), false);
             this.assert.strictEqual(setup.revivedPlayers, 0);
@@ -74,7 +74,7 @@ class TestDeathReviveRequests extends BaseTest
                 }
             ];
             for(let choiceCase of choiceCases){
-                let setup = this.createRequestsSetup(this.askedItem, {restorationQty: 1});
+                let setup = await this.createRequestsSetup(this.askedItem, {restorationQty: 1});
                 let choiceEvent = setup.createEvent({act: this.choiceAction, use: choiceCase.use});
                 this.assert.strictEqual(await setup.requests.onBeforeSceneExecuteMessages(choiceEvent), true);
                 this.assert.strictEqual(setup.playerSchema.getPrivate(this.choicePath), choiceCase.choice);
@@ -98,7 +98,7 @@ class TestDeathReviveRequests extends BaseTest
                 {act: this.choiceAction, use: null},
                 {act: this.choiceAction, use: {}}
             ];
-            let setup = this.createRequestsSetup(this.askedItem, {restorationQty: 1});
+            let setup = await this.createRequestsSetup(this.askedItem, {restorationQty: 1});
             for(let invalidMessage of invalidMessages){
                 this.assert.strictEqual(
                     await setup.requests.onBeforeSceneExecuteMessages(setup.createEvent(invalidMessage)),
@@ -114,8 +114,8 @@ class TestDeathReviveRequests extends BaseTest
     {
         await this.test('a restoration item choice that is not asked is rejected and tells nothing', async () => {
             let rejectedSetups = [
-                this.createRequestsSetup({}, {restorationQty: 1}),
-                this.createRequestsSetup(this.askedItem, {restorationQty: 0})
+                await this.createRequestsSetup({}, {restorationQty: 1}),
+                await this.createRequestsSetup(this.askedItem, {restorationQty: 0})
             ];
             for(let setup of rejectedSetups){
                 let choiceEvent = setup.createEvent({act: this.choiceAction, use: true});
@@ -129,7 +129,7 @@ class TestDeathReviveRequests extends BaseTest
     async testOtherMessagesAreIgnored()
     {
         await this.test('the other messages, an empty message or no message are ignored', async () => {
-            let setup = this.createRequestsSetup(
+            let setup = await this.createRequestsSetup(
                 Object.assign({}, this.deathBuilder.manualReviveConfig, this.askedItem),
                 {restorationQty: 1}
             );
@@ -139,10 +139,21 @@ class TestDeathReviveRequests extends BaseTest
                 this.assert.strictEqual(await setup.requests.onBeforeSceneExecuteMessages(messageEvent), false);
                 this.assert.strictEqual(messageEvent.canContinue, true);
             }
+            this.assert.strictEqual(await setup.requests.onBeforeSceneExecuteMessages(null), false);
             this.assert.strictEqual(setup.playerSchema.getPrivate(this.choicePath), null);
             this.assert.strictEqual(setup.revivedPlayers, 0);
             this.assert.deepStrictEqual(setup.sceneChanges, []);
             this.assert.deepStrictEqual(setup.client.sentMessages, []);
+        });
+    }
+
+    async testValidationNeedsTheRelocatorAndTheNotifier()
+    {
+        await this.test('the validation fails without the death relocator or the notifier', async () => {
+            let setup = await this.createRequestsSetup();
+            this.assert.strictEqual(setup.requests.validate(), true);
+            this.assert.strictEqual(new DeathReviveRequests({deathReviveNotifier: setup.notifier}).validate(), false);
+            this.assert.strictEqual(new DeathReviveRequests({playerDeathRelocator: setup.relocator}).validate(), false);
         });
     }
 
