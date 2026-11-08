@@ -165,7 +165,13 @@ class TestAdsRewardClaims extends BaseTest
             adsSetup.continueReward = false;
             let storedAd = this.adsBuilder.storeStartedAd(adsSetup, AdsConst.VIDEOS_MINIMUM_DURATION * 2);
             await adsSetup.adsMessageActions.adEnded(adsSetup.endedMessage, adsSetup.room, adsSetup.playerSchema);
-            this.assert.deepStrictEqual(adsSetup.emittedEvents, ['reldens.beforeGiveAdRewardItem']);
+            this.assert.deepStrictEqual(
+                adsSetup.emittedEvents,
+                ['reldens.beforeGiveAdRewardItem', 'reldens.afterAdEnded']
+            );
+            let adEndedData = [...adsSetup.emittedEventsData].pop();
+            this.assert.strictEqual(adEndedData.messageData, adsSetup.endedMessage);
+            this.assert.strictEqual(adEndedData.claimResult, false);
             this.assert.deepStrictEqual(adsSetup.givenRewards, []);
             this.assert.notStrictEqual(storedAd.ended_at, null);
         });
@@ -179,9 +185,13 @@ class TestAdsRewardClaims extends BaseTest
             await adsSetup.adsMessageActions.adEnded(adsSetup.endedMessage, adsSetup.room, adsSetup.playerSchema);
             this.assert.deepStrictEqual(
                 adsSetup.emittedEvents,
-                ['reldens.beforeGiveAdRewardItem', 'reldens.afterGiveAdRewardItem']
+                ['reldens.beforeGiveAdRewardItem', 'reldens.afterGiveAdRewardItem', 'reldens.afterAdEnded']
             );
-            let afterRewardData = [...adsSetup.emittedEventsData].pop();
+            let adEndedData = adsSetup.emittedEventsData.pop();
+            this.assert.strictEqual(adEndedData.messageData, adsSetup.endedMessage);
+            this.assert.strictEqual(adEndedData.playerSchema, adsSetup.playerSchema);
+            this.assert.strictEqual(adEndedData.claimResult, 1);
+            let afterRewardData = adsSetup.emittedEventsData.pop();
             this.assert.strictEqual(afterRewardData.playedAd.id, adsSetup.adId);
             this.assert.strictEqual(afterRewardData.room, adsSetup.room);
             this.assert.strictEqual(afterRewardData.playerSchema, adsSetup.playerSchema);
@@ -194,7 +204,38 @@ class TestAdsRewardClaims extends BaseTest
                 failedSetup.room,
                 failedSetup.playerSchema
             );
-            this.assert.deepStrictEqual(failedSetup.emittedEvents, ['reldens.beforeGiveAdRewardItem']);
+            this.assert.deepStrictEqual(
+                failedSetup.emittedEvents,
+                ['reldens.beforeGiveAdRewardItem', 'reldens.afterAdEnded']
+            );
+            this.assert.strictEqual([...failedSetup.emittedEventsData].pop().claimResult, false);
+        });
+    }
+
+    async testStoredAdStartIsAnnouncedAndARejectedStartIsNot()
+    {
+        await this.test('only a stored ad start is announced after it is saved', async () => {
+            let adsSetup = this.adsBuilder.createAdsSetup(false);
+            await adsSetup.adsMessageActions.adStart(adsSetup.startedMessage, adsSetup.room, adsSetup.playerSchema);
+            this.assert.deepStrictEqual(adsSetup.emittedEvents, ['reldens.afterAdStarted']);
+            let adStartedData = [...adsSetup.emittedEventsData].pop();
+            this.assert.strictEqual(adStartedData.messageData, adsSetup.startedMessage);
+            this.assert.strictEqual(adStartedData.startedAd.id, adsSetup.adId);
+            this.assert.strictEqual(adStartedData.playerSchema, adsSetup.playerSchema);
+            let claimedSetup = this.adsBuilder.createAdsSetup(false);
+            this.adsBuilder.storeStartedAd(claimedSetup, AdsConst.VIDEOS_MINIMUM_DURATION * 2);
+            await claimedSetup.adsMessageActions.adEnded(
+                claimedSetup.endedMessage,
+                claimedSetup.room,
+                claimedSetup.playerSchema
+            );
+            claimedSetup.emittedEvents.length = 0;
+            await claimedSetup.adsMessageActions.adStart(
+                claimedSetup.startedMessage,
+                claimedSetup.room,
+                claimedSetup.playerSchema
+            );
+            this.assert.deepStrictEqual(claimedSetup.emittedEvents, []);
         });
     }
 
