@@ -4,8 +4,9 @@
  *
  * Builds the client game over revive message over the real game over template file, rendered with mustache as the game
  * engine does, and the real English death snippets: the game over content element keeps the rendered content, every
- * button rendered in it can be found and records its click handlers, the room requests and the fired events are
- * recorded. It also reads the rendered buttons and the text of every rendered element by its class.
+ * button rendered in it can be found and records its click handlers, the room requests, the fired events and every
+ * translated snippet key are recorded. The template is prepared as the UI scene creation does, with or without the
+ * loaded template and translator. It also reads the rendered buttons and the text of every rendered element by class.
  *
  */
 
@@ -55,11 +56,24 @@ class GameOverReviveMessageBuilder
     /**
      * @param {boolean} [templateLoaded]
      * @param {boolean} [contentFound]
+     * @param {boolean} [translatorLoaded]
      * @returns {Object}
      */
-    createSetup(templateLoaded = true, contentFound = true)
+    createSetup(templateLoaded = true, contentFound = true, translatorLoaded = true)
     {
-        let setup = {emittedEvents: [], clickHandlers: [], sentRequests: [], contentElement: {innerHTML: ''}};
+        let setup = {
+            emittedEvents: [],
+            clickHandlers: [],
+            sentRequests: [],
+            translatedKeys: [],
+            contentElement: {innerHTML: ''}
+        };
+        let translator = {
+            t: (snippetKey, params) => {
+                setup.translatedKeys.push(snippetKey);
+                return this.translator.t(snippetKey, params);
+            }
+        };
         let gameDom = {
             updateContent: (selector, content) => {
                 if(!contentFound || this.selectors.GAME_OVER_CONTENT !== selector){
@@ -85,18 +99,17 @@ class GameOverReviveMessageBuilder
                 return this.gameOverTemplate;
             }
         };
+        setup.uiScene = {cache: {html: htmlCache}};
         setup.reviveMessage = new GameOverReviveMessage({
             gameManager: {
-                services: {translator: this.translator},
-                gameEngine: {
-                    uiScene: {cache: {html: htmlCache}},
-                    parseTemplate: (template, view) => TemplateEngineRender.render(template, view)
-                },
+                services: translatorLoaded ? {translator} : {},
+                gameEngine: {parseTemplate: (template, view) => TemplateEngineRender.render(template, view)},
                 gameDom,
                 activeRoomEvents: {send: (requestData) => setup.sentRequests.push(requestData)}
             },
             events: {emit: async (eventKey, eventData) => setup.emittedEvents.push({eventKey, eventData})}
         });
+        setup.isPrepared = setup.reviveMessage.prepareTemplate(setup.uiScene);
         return setup;
     }
 
