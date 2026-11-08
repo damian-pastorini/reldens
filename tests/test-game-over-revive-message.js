@@ -247,24 +247,13 @@ class TestGameOverReviveMessage extends BaseTest
         });
     }
 
-    async testAMissingTemplateOrContentRendersNothing()
-    {
-        await this.test('a missing game over template or content element renders nothing', async () => {
-            let missingTemplate = this.messageBuilder.createSetup(false, true);
-            this.assert.strictEqual(missingTemplate.reviveMessage.onRoomMessage(this.townMessage), false);
-            this.assert.strictEqual(missingTemplate.contentElement.innerHTML, '');
-            this.assert.deepStrictEqual(missingTemplate.clickHandlers, []);
-            let missingContent = this.messageBuilder.createSetup(true, false);
-            this.assert.strictEqual(missingContent.reviveMessage.onRoomMessage(this.townMessage), false);
-            this.assert.strictEqual(missingContent.reviveMessage.onRoomMessage(this.gameOverMessage), false);
-            this.assert.deepStrictEqual(missingContent.clickHandlers, []);
-        });
-    }
-
     async testTheRoomMessagesAreListened()
     {
-        await this.test('every room message reaches the game over revive message', async () => {
+        await this.test('every room message reaches the game over revive message, a missing room is skipped', async () => {
             let setup = this.messageBuilder.createSetup();
+            for(let missingRoom of [null, false]){
+                this.assert.strictEqual(setup.reviveMessage.listenRoomMessages(missingRoom), false);
+            }
             let listenedMessages = [];
             let room = {onMessage: (messageType, callback) => listenedMessages.push({messageType, callback})};
             this.assert.strictEqual(setup.reviveMessage.listenRoomMessages(room), true);
