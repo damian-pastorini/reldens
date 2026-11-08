@@ -10,7 +10,9 @@
  * in the equipment slot with the reached level and the scaled modifier after the level up, and the chat shows the
  * translated level reached message. The expected values come from the stored item rows and the inventory snippets.
  * The Tree is placed before the long run recording starts, and the long run shows the attack value in the player stats
- * panel before the equip, the sword details, the attack after the equip and after the level up.
+ * panel before the equip, after the equip and after the level up, closing the panel each time so the inventory and the
+ * equipment panels never open on top of it. The recording steps tell the general flow with the real attack, the sword
+ * level and modifier and, after the level up, the experience stored in the database (the game panels never show it).
  *
  */
 
@@ -21,6 +23,7 @@ const { ForestEnemyKill } = require('./helpers/forest-enemy-kill');
 const { GameplayE2eStateApi } = require('./helpers/gameplay-e2e-state-api');
 const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
 const { LongRunShowcase } = require('./helpers/long-run-showcase');
+const { ShowcaseSteps } = require('./helpers/showcase-steps');
 const { ItemDetailsShowcase } = require('./helpers/item-details-showcase');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
@@ -80,15 +83,23 @@ class TestItemGrowth
 
     static async showStatValue(page, statKey, statValue, longRun)
     {
-        return await LongRunShowcase.showWhen(
-            page,
-            async () => statValue === Number(
+        if(!longRun){
+            return false;
+        }
+        await page.click(Selectors.hud.playerStatsOpen);
+        await expect(page.locator(Selectors.hud.playerStatsUi)).toBeVisible();
+        await expect.poll(
+            async () => Number(
                 [...(await page.locator(Selectors.stats.valueByKey(statKey)).innerText()).split('/')].shift()
             ),
-            'The player stats panel must show the '+statKey+' value '+statValue,
-            TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun),
-            longRun
-        );
+            {
+                message: 'The player stats panel must show the '+statKey+' value '+statValue,
+                timeout: TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun)
+            }
+        ).toBe(statValue);
+        await page.waitForTimeout(TimeConstants.pauseMs(longRun));
+        await page.click(Selectors.hud.playerStatsClose);
+        return true;
     }
 
     static createLevelDetails(statKey, modifierOperation, level, modifierValue)
@@ -100,8 +111,9 @@ class TestItemGrowth
         ];
     }
 
-    static async equipFromInventory(page, gameConfig, levelDetails, longRun)
+    static async equipFromInventory(page, gameConfig, itemLabel, levelDetails, longRun)
     {
+        await LongRunShowcase.showStep(page, 'The player equips the '+itemLabel+': '+levelDetails.join(', '), longRun);
         await page.click(Selectors.hud.inventoryOpen);
         await expect(page.locator(Selectors.inventory.ui)).toBeVisible();
         await ItemDetailsShowcase.showDetails(
@@ -113,7 +125,7 @@ class TestItemGrowth
         );
         let equipButton = page.locator(Selectors.inventory.itemEquip(TestItemGrowth.ITEM_KEY));
         await expect(equipButton).toBeVisible();
-        await equipButton.click();
+        await ShowcaseSteps.click(page, equipButton, longRun);
         await page.click(Selectors.hud.inventoryClose);
     }
 
@@ -129,6 +141,51 @@ class TestItemGrowth
             longRun
         );
         await page.click(Selectors.hud.equipmentClose);
+    }
+
+    static async openChat(page, longRun)
+    {
+        if(!longRun){
+            return false;
+        }
+        await page.click(Selectors.hud.chatOpen);
+        await expect(page.locator(Selectors.chat.input)).toBeVisible();
+        return true;
+    }
+
+    static async killEnemyForGrowth(page, gameConfig, itemData, placement, longRun)
+    {
+        let playerName = gameConfig.e2ePlayerName;
+        let expectedExperience = ItemGrowthCalculator.experienceFor(
+            itemData.growth.experienceShare,
+            placement.experience
+        );
+        expect(expectedExperience, 'The kill must give experience to the sword').toBeGreaterThan(0);
+        let expectedLevel = ItemGrowthCalculator.levelFor(
+            expectedExperience,
+            itemData.growth.levels,
+            ItemsConst.GROWTH.DEFAULT_LEVEL
+        );
+        await LongRunShowcase.showStep(
+            page,
+            'The player kills the enemy: the kill experience goes to the '+itemData.label,
+            longRun
+        );
+        let experienceReached = await RoomObjectsApi.attackTargetUntil(
+            page,
+            ForestEnemyKill.ATTACK_SKILL_KEY,
+            async () => expectedExperience === Number(
+                sc.get(await TestItemGrowth.fetchItemGrowth(gameConfig, playerName), 'experience', 0)
+            ),
+            TimeConstants.ENEMY_KILL
+        );
+        expect(experienceReached, 'The sword instance must store the kill experience').toBe(true);
+        let storedGrowth = await TestItemGrowth.fetchItemGrowth(gameConfig, playerName);
+        expect(storedGrowth).toEqual({
+            level: expectedLevel,
+            experience: expectedExperience
+        });
+        return storedGrowth;
     }
 
     static async runItemGrowthTest(page, screenshots, gameConfig, e2eGroup, longRun)
@@ -151,45 +208,32 @@ class TestItemGrowth
         await E2eSeedAndRestoreApi.seedInventoryItem(gameConfig, e2eGroup, playerName, TestItemGrowth.ITEM_KEY, 1);
         let forestData = await Login.loginAndEnterForest(page, gameConfig, longRun);
         let placement = await ForestEnemyKill.placeEnemyToKill(page, gameConfig, forestData.sceneTimeout, longRun);
-        await LongRunShowcase.startGameplayRecording(page, longRun);
         let statBefore = await TestItemGrowth.fetchStat(gameConfig, playerName, statKey);
-        await LongRunShowcase.openPanel(page, Selectors.hud.playerStatsOpen, Selectors.hud.playerStatsUi, longRun);
+        await LongRunShowcase.startGameplayRecording(
+            page,
+            longRun,
+            'Before the equip: player '+statKey+' '+statBefore
+        );
+        let showStatStep = async (stepText, statModifier) => await LongRunShowcase.showStep(
+            page,
+            stepText+': player '+statKey+' '+statBefore+' + '+statModifier+' = '+(statBefore + statModifier),
+            longRun
+        );
         await TestItemGrowth.showStatValue(page, statKey, statBefore, longRun);
-        await TestItemGrowth.equipFromInventory(page, gameConfig, firstLevelDetails, longRun);
+        await TestItemGrowth.equipFromInventory(page, gameConfig, itemData.label, firstLevelDetails, longRun);
         await expect.poll(
             async () => await TestItemGrowth.fetchStat(gameConfig, playerName, statKey),
             {message: 'The equipped sword must apply its modifier'}
         ).toBe(statBefore + modifierValue);
+        await showStatStep('Equipped at '+firstLevelDetails.join(', '), modifierValue);
         await TestItemGrowth.showEquippedItemDetails(page, firstLevelDetails, longRun);
         await TestItemGrowth.showStatValue(page, statKey, statBefore + modifierValue, longRun);
         await screenshots.capture(page, 'growing-sword-equipped');
-        await LongRunShowcase.openPanel(page, Selectors.hud.chatOpen, Selectors.chat.input, longRun);
-        let expectedExperience = ItemGrowthCalculator.experienceFor(
-            itemData.growth.experienceShare,
-            placement.experience
-        );
-        expect(expectedExperience, 'The kill must give experience to the sword').toBeGreaterThan(0);
-        let expectedLevel = ItemGrowthCalculator.levelFor(
-            expectedExperience,
-            itemData.growth.levels,
-            ItemsConst.GROWTH.DEFAULT_LEVEL
-        );
-        let experienceReached = await RoomObjectsApi.attackTargetUntil(
-            page,
-            ForestEnemyKill.ATTACK_SKILL_KEY,
-            async () => expectedExperience === Number(
-                sc.get(await TestItemGrowth.fetchItemGrowth(gameConfig, playerName), 'experience', 0)
-            ),
-            TimeConstants.ENEMY_KILL
-        );
-        expect(experienceReached, 'The sword instance must store the kill experience').toBe(true);
-        expect(await TestItemGrowth.fetchItemGrowth(gameConfig, playerName)).toEqual({
-            level: expectedLevel,
-            experience: expectedExperience
-        });
+        await TestItemGrowth.openChat(page, longRun);
+        let storedGrowth = await TestItemGrowth.killEnemyForGrowth(page, gameConfig, itemData, placement, longRun);
         let expectedModifierValue = ItemGrowthCalculator.scaledValue(
             modifierValue,
-            expectedLevel,
+            storedGrowth.level,
             itemData.growth.modifiersIncreasePercentPerLevel
         );
         await expect.poll(
@@ -202,14 +246,17 @@ class TestItemGrowth
         ).toContainText(
             InventoryTranslations.items.growth.reachedLevel
                 .replace('%itemLabel', itemData.label)
-                .replace('%level', expectedLevel),
+                .replace('%level', storedGrowth.level),
             {timeout: TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun)}
         );
-        await LongRunShowcase.pause(page, longRun);
+        await showStatStep(
+            'Level '+storedGrowth.level+', stored experience '+storedGrowth.experience,
+            expectedModifierValue
+        );
         await TestItemGrowth.showStatValue(page, statKey, statBefore + expectedModifierValue, longRun);
         await TestItemGrowth.showEquippedItemDetails(
             page,
-            TestItemGrowth.createLevelDetails(statKey, modifierOperation, expectedLevel, expectedModifierValue),
+            TestItemGrowth.createLevelDetails(statKey, modifierOperation, storedGrowth.level, expectedModifierValue),
             longRun
         );
         await screenshots.capture(page, 'growing-sword-level-reached');
