@@ -4,13 +4,15 @@
  *
  * Opens the details of an item by clicking its image in the inventory or in the equipment panel, checks the details
  * show the expected texts (the stored item label and description, and the item level and modifiers when given) and, in
- * the long run, keeps the details on screen, so the video shows the item before any item action is clicked.
+ * the long run, keeps the details on screen, so the video shows the item before any item action is clicked. The long
+ * run clicks the corner of the image, so the recorded cursor never hides the item.
  *
  */
 
 const { expect } = require('@playwright/test');
 const { E2eSeedAndRestoreApi } = require('./e2e-seed-and-restore-api');
 const { LongRunShowcase } = require('./long-run-showcase');
+const { ShowcaseSteps } = require('./showcase-steps');
 const { TimeConstants } = require('./time-constants');
 
 class ItemDetailsShowcase
@@ -26,7 +28,8 @@ class ItemDetailsShowcase
     static async showDetails(page, imageSelector, detailsSelector, expectedTexts, longRun)
     {
         await page.locator(imageSelector).click({
-            timeout: TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun)
+            timeout: TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun),
+            ...(longRun ? ShowcaseSteps.CORNER_CLICK : {})
         });
         let itemDetails = page.locator(detailsSelector);
         await expect(itemDetails, 'The clicked item must show its details').toBeVisible();
