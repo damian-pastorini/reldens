@@ -6,8 +6,13 @@
  * single page evaluation (so no game frame runs in the middle) and returns what each call did: an entry without state,
  * an entry without sprite, the update with the client interpolation disabled, the players interpolation without the
  * player engine, a bullet entry without bullet sprite, an object entry without animation, the entries already on the
- * sprite position, a moving entry and a stopped entry (the real state, so the sprites end where they started). It also
+ * sprite position, a moving entry and a stopped entry (the real state, so the sprites end where they started). The real
+ * entries waiting for the next frame (a state update of any player or object received after the last frame) are set
+ * aside during the evaluation and put back after it, so every branch runs only with the crafted entries. It also
  * reads the depth of every map layer the scene created, so the depths are compared with the layer name and index rules.
+ * For the long run videos (SceneInterpolationShowcase) it reads the client interpolation values, the player depths, the
+ * walkable tiles covered by the over player layers and the layer covering a tile, and it sets an entry that the real
+ * frames process, so a moving entry and the stopped entry with the real state are visible on the screen.
  *
  */
 
@@ -31,6 +36,10 @@ class SceneInterpolationProbe
             let realState = room.state.players.get(room.sessionId).state;
             let readSprite = () => ({x: sprite.x, y: sprite.y});
             let craftState = (x, y, mov) => ({x, y, mov, dir: realState.dir, inState: realState.inState});
+            let pendingEntries = {...entries};
+            for(let pendingKey of Object.keys(pendingEntries)){
+                delete entries[pendingKey];
+            }
             let results = {
                 start: readSprite(),
                 leftOff: playerEngine.leftOff,
@@ -84,6 +93,7 @@ class SceneInterpolationProbe
             };
             scene.player = playerEngine;
             delete entries['e2e-without-engine'];
+            Object.assign(entries, pendingEntries);
             return results;
         }, {x: SceneInterpolationProbe.CRAFTED_STEP_X, y: SceneInterpolationProbe.CRAFTED_STEP_Y});
     }
@@ -109,6 +119,10 @@ class SceneInterpolationProbe
                 object: readPosition(animation),
                 objectSprite: readPosition(animation.sceneSprite)
             });
+            let pendingEntries = {...entries};
+            for(let pendingKey of Object.keys(pendingEntries)){
+                delete entries[pendingKey];
+            }
             objectsPlugin.bullets[bulletKey] = bulletSprite;
             let results = {
                 start: readPosition(animation),
@@ -148,6 +162,7 @@ class SceneInterpolationProbe
                 ...runObjectsInterpolation()
             };
             delete objectsPlugin.bullets[bulletKey];
+            Object.assign(entries, pendingEntries);
             return results;
         }, {
             objectKey,
@@ -196,6 +211,78 @@ class SceneInterpolationProbe
             depth = layersData.changePointsDepth;
         }
         return depth;
+    }
+
+    static async readPlayerDepths(page)
+    {
+        return await page.evaluate(() => {
+            let room = window.reldens.activeRoomEvents.room;
+            let playerSprite = window.reldens.getActiveScene().player.players[room.sessionId];
+            if(!playerSprite){
+                return false;
+            }
+            return {player: playerSprite.depth, name: playerSprite.nameSprite?.depth};
+        });
+    }
+
+    static async findCoveredTiles(page, walkableTiles, coverOffsets, coverLayerName)
+    {
+        return await page.evaluate((args) => {
+            let layers = window.reldens.getActiveScene().layers;
+            return args.walkableTiles.filter(tile => !args.coverOffsets.some(offset => !Object.keys(layers).some(
+                layerIndex => -1 !== layers[layerIndex].layer.name.indexOf(args.coverLayerName)
+                    && layers[layerIndex].hasTileAt(tile[0] + offset[0], tile[1] + offset[1])
+            )));
+        }, {walkableTiles, coverOffsets, coverLayerName});
+    }
+
+    static async readCoveringLayer(page, tile, coverLayerName)
+    {
+        return await page.evaluate((args) => {
+            let layers = window.reldens.getActiveScene().layers;
+            let layerIndex = Object.keys(layers).find(
+                index => -1 !== layers[index].layer.name.indexOf(args.coverLayerName)
+                    && layers[index].hasTileAt(args.tile[0], args.tile[1])
+            );
+            if(!layerIndex){
+                return false;
+            }
+            return {
+                layerIndex: Number(layerIndex),
+                name: layers[layerIndex].layer.name,
+                depth: layers[layerIndex].depth
+            };
+        }, {tile, coverLayerName});
+    }
+
+    static async setVisibleEntry(page, objectKey, interpolationSpeed, movingTo = false, isInterpolationEnabled = true)
+    {
+        await page.evaluate((args) => {
+            let scene = window.reldens.getActiveScene();
+            let room = window.reldens.activeRoomEvents.room;
+            let target = args.objectKey
+                ? {
+                    key: args.objectKey,
+                    realState: room.state.bodies.get(args.objectKey),
+                    entries: scene.interpolateObjectsPositions
+                }
+                : {
+                    key: room.sessionId,
+                    realState: room.state.players.get(room.sessionId).state,
+                    entries: scene.interpolatePlayersPosition
+                };
+            scene.interpolationSpeed = args.interpolationSpeed;
+            scene.clientInterpolation = args.isInterpolationEnabled;
+            target.entries[target.key] = args.movingTo
+                ? {
+                    x: args.movingTo.x,
+                    y: args.movingTo.y,
+                    mov: true,
+                    dir: target.realState.dir,
+                    inState: target.realState.inState
+                }
+                : target.realState;
+        }, {objectKey, interpolationSpeed, movingTo, isInterpolationEnabled});
     }
 
 }
