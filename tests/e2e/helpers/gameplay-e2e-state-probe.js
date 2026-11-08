@@ -211,6 +211,17 @@ class GameplayE2eStateProbe
                 )
             );
         });
+        app.post('/api/e2e/gameplay/restart-recovery-ticks', async (request, response) => {
+            await RoomObjectsState.respondForRoom(
+                serverManager,
+                sc.get(request.body, 'roomName', ''),
+                response,
+                async (room) => ({
+                    restarted: serverManager.featuresManager.featuresList.actions.package.roomAutoRecovery
+                        .startRoomTicks(room)
+                })
+            );
+        });
         app.post('/api/e2e/gameplay/scores-reset-check', async (request, response) => {
             response.json(await GameplayE2eStateProbe.runScoresResetCheck(
                 serverManager,
