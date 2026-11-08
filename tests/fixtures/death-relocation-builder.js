@@ -4,12 +4,13 @@
  *
  * Builds the death teleport config and the player death event over the relocation room stub: a dead player carrying
  * the restoration item with the given quantity, the active players of the room, the stats save and the revive callback
- * recording every call, and the rooms loaded by ID for the town room name. The relocator setup adds the death relocator
- * with an events manager that records every emitted event and emits it again on a node EventEmitter, so a test can
- * await it; the death start runs the relocator death and clears its timer. The notifier setup adds the death revive
- * notifier with the enabled resurrection ad and another ad in the ads collection, the room client found by the player
- * session and the resurrection ad reward event, the revive messages expected for the revive where the player died,
- * with the restoration item and in the town room are kept on the builder.
+ * (that revives the player) recording every call, and the rooms loaded by ID for the town room. The relocator is
+ * created as the plugin does it: with an events manager that records every emitted event and emits it again on a node
+ * EventEmitter, so a test can await it, and its town room loaded from the rooms manager as on the server ready. The
+ * death start runs the relocator death and clears its timer. The notifier setup adds the death revive notifier with
+ * the enabled resurrection ad and another ad in the ads collection, the room client found by the player session and the
+ * resurrection ad reward event, the revive messages expected for the revive where the player died, with the restoration
+ * item and in the town room are kept on the builder.
  *
  */
 
@@ -61,16 +62,15 @@ class DeathRelocationBuilder
     }
 
     /**
+     * @param {Object} setup
      * @param {Object} [configValues]
-     * @param {Object} [setupOptions]
-     * @returns {Object}
+     * @returns {Promise<PlayerDeathRelocator>}
      */
-    createRelocatorSetup(configValues = {}, setupOptions = {})
+    async createRelocator(setup, configValues = {})
     {
-        let setup = this.createSetup(setupOptions);
         setup.emittedEvents = [];
         setup.eventsEmitter = new EventEmitter();
-        setup.relocator = new PlayerDeathRelocator({
+        let relocator = new PlayerDeathRelocator({
             config: this.createConfig(configValues),
             events: {
                 emit: async (eventKey, eventData) => {
@@ -79,7 +79,31 @@ class DeathRelocationBuilder
                 }
             }
         });
+        setup.isTownRoomLoaded = await relocator.loadTownRoom(setup.room.loginManager.roomsManager);
+        return relocator;
+    }
+
+    /**
+     * @param {Object} [configValues]
+     * @param {Object} [setupOptions]
+     * @returns {Promise<Object>}
+     */
+    async createRelocatorSetup(configValues = {}, setupOptions = {})
+    {
+        let setup = this.createSetup(setupOptions);
+        setup.relocator = await this.createRelocator(setup, configValues);
         return setup;
+    }
+
+    /**
+     * @param {Object} assert
+     * @param {Object} setup
+     */
+    assertRevivedWithRestorationItem(assert, setup)
+    {
+        assert.deepStrictEqual(setup.playerSchema.inventory.manager.decreasedItems, this.consumedRestorationItem);
+        assert.strictEqual(setup.revivedPlayers, 1);
+        assert.deepStrictEqual(setup.sceneChanges, []);
     }
 
     /**
@@ -96,17 +120,10 @@ class DeathRelocationBuilder
     /**
      * @param {Object} [configValues]
      * @param {Object} [setupOptions]
-     * @returns {Object}
+     * @returns {Promise<Object>}
      */
-    createNotifierSetup(configValues = {}, setupOptions = {})
+    async createNotifierSetup(configValues = {}, setupOptions = {})
     {
-        let config = this.createConfig(Object.assign({
-            [ActionsConst.DEATH.CONFIG_PATHS.RESURRECTION_ADS_KEY]: this.resurrectionAd.key,
-            [AdsConst.CONFIG_PATHS.COLLECTION]: {
-                [this.resurrectionAd.id]: this.resurrectionAd,
-                [this.otherAd.id]: this.otherAd
-            }
-        }, configValues));
         let setup = this.createSetup(setupOptions);
         setup.room.getClientById = (sessionId) => sessionId === setup.playerSchema.sessionId ? setup.client : false;
         setup.rewardEvent = {
@@ -114,9 +131,15 @@ class DeathRelocationBuilder
             room: setup.room,
             playerSchema: setup.playerSchema
         };
-        setup.relocator = new PlayerDeathRelocator({config});
-        setup.notifier = new DeathReviveNotifier({config, playerDeathRelocator: setup.relocator});
-        setup.notify = async () => await setup.notifier.notifyClient(setup.client, setup.playerSchema, setup.room);
+        setup.relocator = await this.createRelocator(setup, Object.assign({
+            [ActionsConst.DEATH.CONFIG_PATHS.RESURRECTION_ADS_KEY]: this.resurrectionAd.key,
+            [AdsConst.CONFIG_PATHS.COLLECTION]: {
+                [this.resurrectionAd.id]: this.resurrectionAd,
+                [this.otherAd.id]: this.otherAd
+            }
+        }, configValues));
+        setup.notifier = new DeathReviveNotifier({config: setup.relocator.config, playerDeathRelocator: setup.relocator});
+        setup.notify = () => setup.notifier.notifyClient(setup.client, setup.playerSchema);
         return setup;
     }
 
@@ -178,6 +201,7 @@ class DeathRelocationBuilder
             affectedProperty: 'hp',
             revivePlayerCallback: async () => {
                 setup.revivedPlayers++;
+                playerSchema.inState = GameConst.STATUS.ACTIVE;
                 return true;
             }
         };
