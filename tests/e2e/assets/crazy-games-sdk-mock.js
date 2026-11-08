@@ -6,7 +6,8 @@
  * loads it from the provider "sdkUrl" and plays its video ads through it, like with the real SDK. Every requested ad
  * shows an advertisement overlay with a countdown for the provider video minimum duration plus a margin, calling the
  * client "adStarted" callback when it opens and "adFinished" when it closes, or "adError" when the spec set
- * "failNextAd" before the request.
+ * "failNextAd" before the request. A spec that also sets "failureNoticeMs" (only the long run, so its video shows the
+ * failure) gets the failure text in the overlay for those last milliseconds of the same play duration.
  *
  */
 
@@ -22,6 +23,9 @@ class CrazyGamesSdkMock
         this.playMarginMs = 1000;
         this.countdownStepMs = 1000;
         this.failureMessage = 'Mocked ad failure.';
+        this.failureNoticeTitle = 'The ad failed';
+        this.failureNoticeClass = 'mock-ad-failed';
+        this.failureNoticeMs = 0;
         this.failNextAd = false;
         this.getEnvironment = async () => this.environment;
         this.ad = {
@@ -61,9 +65,28 @@ class CrazyGamesSdkMock
         let overlay = this.appendElement(document.body, 'crazy-games-sdk-mock-ad', '');
         let box = this.appendElement(overlay, 'mock-ad-box', '');
         this.appendElement(box, 'mock-ad-label', 'Advertisement');
-        this.appendElement(box, 'mock-ad-title', 'Mocked '+adType+' video ad');
+        let title = this.appendElement(box, 'mock-ad-title', 'Mocked '+adType+' video ad');
         this.appendElement(box, 'mock-ad-screen', '');
-        return {overlay, countdown: this.appendElement(box, 'mock-ad-countdown', 'The ad ends in '+seconds+'s')};
+        return {
+            overlay,
+            box,
+            title,
+            countdown: this.appendElement(box, 'mock-ad-countdown', 'The ad ends in '+seconds+'s')
+        };
+    }
+
+    scheduleFailureNotice(adElements, countdownInterval, duration)
+    {
+        if(!this.failNextAd || 0 >= this.failureNoticeMs){
+            return false;
+        }
+        setTimeout(() => {
+            clearInterval(countdownInterval);
+            adElements.box.classList.add(this.failureNoticeClass);
+            adElements.title.textContent = this.failureNoticeTitle;
+            adElements.countdown.textContent = this.failureMessage;
+        }, Math.max(0, duration - this.failureNoticeMs));
+        return true;
     }
 
     playAd(adType, callbacks)
@@ -76,6 +99,7 @@ class CrazyGamesSdkMock
             seconds = Math.max(0, seconds - 1);
             adElements.countdown.textContent = 'The ad ends in '+seconds+'s';
         }, this.countdownStepMs);
+        this.scheduleFailureNotice(adElements, countdownInterval, duration);
         setTimeout(async () => {
             clearInterval(countdownInterval);
             adElements.overlay.remove();
