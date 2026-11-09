@@ -87,8 +87,9 @@ damage and after its battle ended, so a fight is never undone by the recovery.
   disabled by an ad start is activated again when the ad never ends
 
 The config paths and defaults are in `ActionsConst.AUTO_RECOVERY`, `ActionsConst.DEATH`, `ScoresConst.RESET`,
-`UsersConst.SKINS` and `AdsConst.CONFIG_PATHS`. The values are read on every use (hot plug applies), except the two
-intervals.
+`UsersConst.SKINS` and `AdsConst.CONFIG_PATHS`. The auto recovery, death, skins and ads values are read once at startup
+and kept on properties (`loadConfig()`, the e2e config overrides load them again); the scores reset values are read on
+every use, except its interval.
 
 ## Stats auto recovery
 
@@ -315,8 +316,8 @@ emits `reldens.afterAdEnded` and the gate sets `resurrectionAdEnded`; the `AD_FA
 duration is not waited either (a later reward stays in the inventory); every flag is cleared on every death.
 `AdsMessageActions` receives the data server and the ads plugin, loads the `adsPlayed` repository (`setRepository()`) and
 `executeMessageActions()` does nothing without them; the ads plugin `listenEvents()` attaches nothing without its events
-manager or data server. The provider minimum duration and the videos maximum duration are read once per path
-(`fetchConfigOnce()`). `AdsMessageActions` no longer disables a dead player on `AD_STARTED` and only activates a disabled player on
+manager or data server. `AdsMessageActions` also receives the config and reads the providers minimum durations and the videos maximum duration
+once when it is created (`loadConfig()`), so the messages only read those properties. `AdsMessageActions` no longer disables a dead player on `AD_STARTED` and only activates a disabled player on
 `AD_ENDED`, so the ad never revives a dead player, and no other ad can start in the same death. The death timers are
 cleared when the player leaves
 (`RoomScene.removeAllPlayerReferences()`) and when the room is disposed (`RoomScene.clearPlayersTimers()`).
@@ -368,8 +369,9 @@ next one. The running instance is the `scoresPeriodReset` property of the scores
   `SkinAdMessagesListener` fires `reldens.skinAdTicket` on the `skinAdS` message so the ads providers play the video,
   and `PlayersSkinSwitcher` switches every player sprite texture when its `avatarKey` changes
 
-`AdsCollectionFinder` (`lib/ads/server/ads-collection-finder.js`) finds an enabled ad of `server/ads/collection` (the ad
-and its provider enabled) by its key or its ID and checks if a message carries its ID; the disabled ads are never found.
+`AdsCollectionFinder` (`lib/ads/server/ads-collection-finder.js`) finds an enabled ad of the collection its callers read
+once from `server/ads/collection` (the ad and its provider enabled) by its key or its ID and checks if a message carries
+its ID; the disabled ads are never found.
 
 ## Ads rewards rules
 
