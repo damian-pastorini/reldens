@@ -28,9 +28,9 @@ class TestResurrectionAdGate extends BaseTest
     createGate(resurrectionAdEnabled = 1)
     {
         return new ResurrectionAdGate({
-            playerDeathRelocator: {resurrectionAdsKey: 'resurrection-video'},
-            config: GameplayPlayerBuilder.createConfig({
-                [AdsConst.CONFIG_PATHS.COLLECTION]: {
+            playerDeathRelocator: {
+                resurrectionAdsKey: 'resurrection-video',
+                adsCollection: {
                     [this.resurrectionAdId]: {
                         id: this.resurrectionAdId,
                         key: 'resurrection-video',
@@ -39,7 +39,7 @@ class TestResurrectionAdGate extends BaseTest
                     },
                     [this.otherAdId]: {id: this.otherAdId, key: 'other-video', enabled: 1, provider: {enabled: 1}}
                 }
-            })
+            }
         });
     }
 
