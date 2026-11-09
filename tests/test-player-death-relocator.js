@@ -40,6 +40,7 @@ class TestPlayerDeathRelocator extends BaseTest
         await this.test('an empty config keeps the battle revive and a loaded town room drives the death teleport', async () => {
             let emptyConfigSetup = this.deathBuilder.createSetup();
             let emptyConfigRelocator = new PlayerDeathRelocator({config: new ConfigProcessor(), events: {}});
+            emptyConfigRelocator.loadConfig();
             this.assert.strictEqual(emptyConfigRelocator.isTeleportEnabled(), false);
             this.assert.strictEqual(emptyConfigRelocator.onPlayerDeath(emptyConfigSetup.event), false);
             this.assert.strictEqual(sc.hasOwn(emptyConfigSetup.playerSchema.privateData, this.deathTimerKey), false);
