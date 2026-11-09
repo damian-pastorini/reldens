@@ -223,10 +223,13 @@ item is stored and added.
 data and emits `reldens.playerDeath` with `revivePlayerCallback`, the battle revive bound to the room, the body, the
 player, the affected property and the client, so the listeners never receive the battle.
 `ActionsPlugin.setup()` (`lib/actions/server/plugin.js`) logs a missing events manager, data server or config.
-`listenEvents()` checks the events manager once and attaches nothing without it, and `listenDeathEvents()` checks the
-config once and attaches no death listener without it. The death classes (`PlayerDeathRelocator`, `ResurrectionAdGate`,
+`listenEvents()` checks the events manager once and attaches nothing without it, and `listenConfigRequiredEvents()`
+checks the config once and attaches none of the listeners that need it without it (the player class path and skills
+enrichment and the death listeners). The death classes (`PlayerDeathRelocator`, `ResurrectionAdGate`,
 `DeathReviveNotifier`, `DeathReviveRequests`) are created by the plugin, their constructors only assign the props and
-they never check them again. On `reldens.serverReady` the relocator loads the town room once
+they never check them again. On `reldens.serverReady` the relocator reads the death config once and keeps it on its
+properties (`loadConfig()`: the teleport, auto revive, auto consume, game over time out, restoration item key,
+resurrection ad key and ads maximum duration values, the e2e config overrides load it again), and loads the town room once
 (`players/death/teleportToTown/roomId`, or the players initial room when it is not set): the teleport is enabled only
 with that room loaded, an unknown room logs the error and the players revive where they died.
 `PlayerDeathRelocator` (`lib/actions/server/player-death-relocator.js`) resets on every death the death private data
@@ -312,7 +315,8 @@ emits `reldens.afterAdEnded` and the gate sets `resurrectionAdEnded`; the `AD_FA
 duration is not waited either (a later reward stays in the inventory); every flag is cleared on every death.
 `AdsMessageActions` receives the data server and the ads plugin, loads the `adsPlayed` repository (`setRepository()`) and
 `executeMessageActions()` does nothing without them; the ads plugin `listenEvents()` attaches nothing without its events
-manager or data server. `AdsMessageActions` no longer disables a dead player on `AD_STARTED` and only activates a disabled player on
+manager or data server. The provider minimum duration and the videos maximum duration are read once per path
+(`fetchConfigOnce()`). `AdsMessageActions` no longer disables a dead player on `AD_STARTED` and only activates a disabled player on
 `AD_ENDED`, so the ad never revives a dead player, and no other ad can start in the same death. The death timers are
 cleared when the player leaves
 (`RoomScene.removeAllPlayerReferences()`) and when the room is disposed (`RoomScene.clearPlayersTimers()`).
