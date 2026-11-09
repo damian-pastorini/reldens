@@ -79,6 +79,7 @@ class DeathRelocationBuilder
                 }
             }
         });
+        relocator.loadConfig();
         setup.isTownRoomLoaded = await relocator.loadTownRoom(setup.room.loginManager.roomsManager);
         return relocator;
     }
