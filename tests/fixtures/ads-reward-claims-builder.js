@@ -23,9 +23,10 @@ class AdsRewardClaimsBuilder
      * @param {boolean} replay
      * @param {string|number} [inState]
      * @param {Object} [adModelData]
+     * @param {Object} [configValues]
      * @returns {Object}
      */
-    createAdsSetup(replay, inState = GameConst.STATUS.ACTIVE, adModelData = {})
+    createAdsSetup(replay, inState = GameConst.STATUS.ACTIVE, adModelData = {}, configValues = {})
     {
         let adsSetup = {
             storedRecords: {},
@@ -56,10 +57,6 @@ class AdsRewardClaimsBuilder
             },
             updateById: async (recordId, newAdData) => Object.assign(adsSetup.storedRecords[recordId], newAdData)
         };
-        adsSetup.adsMessageActions = new AdsMessageActions({dataServer: {getEntity: () => repository}});
-        adsSetup.adsMessageActions.giveRewardAction = {
-            execute: async (playerSchema, itemKey) => adsSetup.givenRewards.push(itemKey)
-        };
         let videoAd = EventVideo.fromModel(Object.assign({
             id: adsSetup.adId,
             key: 'test-reward-video',
@@ -70,13 +67,22 @@ class AdsRewardClaimsBuilder
             related_ads_providers: {id: 1, key: 'crazyGames', enabled: 1},
             related_ads_event_video: {event_key: 'reldens.testEvent', event_data: '{"rewardItemKey":"coins","rewardItemQty":1}'}
         }, adModelData));
-        adsSetup.configValues = {
+        adsSetup.configValues = Object.assign({
             [AdsConst.CONFIG_PATHS.COLLECTION]: {[adsSetup.adId]: videoAd},
-            [AdsConst.CONFIG_PATHS.VIDEOS_MAXIMUM_DURATION]: 1
+            [AdsConst.CONFIG_PATHS.VIDEOS_MAXIMUM_DURATION]: 1,
+            [AdsConst.CONFIG_PATHS.PROVIDERS]: {crazyGames: {}}
+        }, configValues);
+        adsSetup.config = {getWithoutLogs: (path, defaultValue) => sc.get(adsSetup.configValues, path, defaultValue)};
+        adsSetup.adsMessageActions = new AdsMessageActions({
+            dataServer: {getEntity: () => repository},
+            config: adsSetup.config
+        });
+        adsSetup.adsMessageActions.giveRewardAction = {
+            execute: async (playerSchema, itemKey) => adsSetup.givenRewards.push(itemKey)
         };
         adsSetup.room = {
             roomId: 'room-1',
-            config: {getWithoutLogs: (path, defaultValue) => sc.get(adsSetup.configValues, path, defaultValue)},
+            config: adsSetup.config,
             activePlayerBySessionId: () => ({playerData: adsSetup.playerSchema}),
             activatePlayer: (playerSchema, newState) => {
                 adsSetup.activatedStates.push(newState);
