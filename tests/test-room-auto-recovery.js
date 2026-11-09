@@ -32,11 +32,7 @@ class TestRoomAutoRecovery extends BaseTest
             playersAffectedProperty: 'hp',
             playerSchema,
             enemy,
-            config: GameplayPlayerBuilder.createConfig({
-                [ActionsConst.AUTO_RECOVERY.CONFIG_PATHS.TICK_MS]: 60000,
-                [ActionsConst.AUTO_RECOVERY.CONFIG_PATHS.OBJECTS]: {enabled: true, properties: {hp: 5}},
-                [ActionsConst.AUTO_RECOVERY.CONFIG_PATHS.PLAYERS]: {enabled: true, properties: {hp: 5}}
-            }),
+            config: this.recoveryConfig,
             objectsManager: {roomObjects: {enemy1: enemy}}
         };
         room.broadcast = () => true;
@@ -48,7 +44,27 @@ class TestRoomAutoRecovery extends BaseTest
 
     createRoomAutoRecovery()
     {
-        return new RoomAutoRecovery({events: {emit: async () => true}});
+        this.recoveryConfig = GameplayPlayerBuilder.createConfig({
+            [ActionsConst.AUTO_RECOVERY.CONFIG_PATHS.TICK_MS]: 60000,
+            [ActionsConst.AUTO_RECOVERY.CONFIG_PATHS.OBJECTS]: {enabled: true, properties: {hp: 5}},
+            [ActionsConst.AUTO_RECOVERY.CONFIG_PATHS.PLAYERS]: {enabled: true, properties: {hp: 5}}
+        });
+        return new RoomAutoRecovery({events: {emit: async () => true}, config: this.recoveryConfig});
+    }
+
+    async testConfigIsReadWhenCreated()
+    {
+        await this.test('the recovery config is read when created and kept until it is loaded again', async () => {
+            let roomAutoRecovery = this.createRoomAutoRecovery();
+            this.assert.strictEqual(roomAutoRecovery.tickMs, 60000);
+            this.recoveryConfig.values[ActionsConst.AUTO_RECOVERY.CONFIG_PATHS.TICK_MS] = 30000;
+            this.recoveryConfig.values[ActionsConst.AUTO_RECOVERY.CONFIG_PATHS.OBJECTS] = false;
+            this.assert.strictEqual(roomAutoRecovery.tickMs, 60000);
+            this.assert.strictEqual(roomAutoRecovery.objectsConfig.enabled, true);
+            roomAutoRecovery.loadConfig();
+            this.assert.strictEqual(roomAutoRecovery.tickMs, 30000);
+            this.assert.strictEqual(roomAutoRecovery.objectsConfig, false);
+        });
     }
 
     async testRoomTicksStartAndStop()
