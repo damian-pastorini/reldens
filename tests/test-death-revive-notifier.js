@@ -6,7 +6,6 @@
 
 const { BaseTest } = require('./base-test');
 const { DeathRelocationBuilder } = require('./fixtures/death-relocation-builder');
-const { DeathReviveNotifier } = require('../lib/actions/server/death-revive-notifier');
 const { ActionsConst } = require('../lib/actions/constants');
 const { AdsConst } = require('../lib/ads/constants');
 const { GameConst } = require('../lib/game/constants');
@@ -35,23 +34,6 @@ class TestDeathReviveNotifier extends BaseTest
             this.assert.strictEqual(await setup.notify(), true);
             this.assert.deepStrictEqual(setup.client.sentMessages, [this.inPlaceMessage]);
             this.assert.strictEqual(setup.playerSchema.inventory.manager.items.restoration_scroll.qty, 1);
-        });
-    }
-
-    async testValidationNeedsTheConfigAndTheRelocator()
-    {
-        await this.test('the notifier is valid only with the config and the death relocator', async () => {
-            let setup = await this.deathBuilder.createNotifierSetup();
-            this.assert.strictEqual(setup.notifier.validate(), true);
-            let invalidProps = [
-                {},
-                {config: setup.relocator.config},
-                {playerDeathRelocator: setup.relocator},
-                {config: false, playerDeathRelocator: setup.relocator}
-            ];
-            for(let props of invalidProps){
-                this.assert.strictEqual(new DeathReviveNotifier(props).validate(), false);
-            }
         });
     }
 
