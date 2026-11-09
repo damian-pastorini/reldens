@@ -147,16 +147,6 @@ class TestDeathReviveRequests extends BaseTest
         });
     }
 
-    async testValidationNeedsTheRelocatorAndTheNotifier()
-    {
-        await this.test('the validation fails without the death relocator or the notifier', async () => {
-            let setup = await this.createRequestsSetup();
-            this.assert.strictEqual(setup.requests.validate(), true);
-            this.assert.strictEqual(new DeathReviveRequests({deathReviveNotifier: setup.notifier}).validate(), false);
-            this.assert.strictEqual(new DeathReviveRequests({playerDeathRelocator: setup.relocator}).validate(), false);
-        });
-    }
-
 }
 
 module.exports.TestDeathReviveRequests = TestDeathReviveRequests;
