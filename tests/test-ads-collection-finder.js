@@ -50,49 +50,46 @@ class TestAdsCollectionFinder extends BaseTest
             [disabledAd.id]: disabledAd,
             [disabledProviderAd.id]: disabledProviderAd
         };
-        this.adsConfig = {
-            getWithoutLogs: (path, defaultValue) => 'server/ads/collection' === path ? this.adsCollection : defaultValue
-        };
     }
 
     async testAdIsFoundByItsKey()
     {
         await this.test('the ad of the collection is found by its key', async () => {
-            this.assert.strictEqual(AdsCollectionFinder.findByKey(this.adsConfig, 'skin-ad-ticket').id, 8);
+            this.assert.strictEqual(AdsCollectionFinder.findByKey(this.adsCollection, 'skin-ad-ticket').id, 8);
         });
     }
 
     async testMissingKeyFindsNothing()
     {
         await this.test('an empty or unknown ad key finds nothing', async () => {
-            this.assert.strictEqual(AdsCollectionFinder.findByKey(this.adsConfig, ''), false);
-            this.assert.strictEqual(AdsCollectionFinder.findByKey(this.adsConfig, 'missing-ad'), false);
+            this.assert.strictEqual(AdsCollectionFinder.findByKey(this.adsCollection, ''), false);
+            this.assert.strictEqual(AdsCollectionFinder.findByKey(this.adsCollection, 'missing-ad'), false);
         });
     }
 
     async testDisabledAdsAreNotFound()
     {
         await this.test('a disabled ad or an ad of a disabled provider is not found by key nor by ID', async () => {
-            this.assert.strictEqual(AdsCollectionFinder.findByKey(this.adsConfig, 'crazy-games-sample-video'), false);
-            this.assert.strictEqual(AdsCollectionFinder.findByKey(this.adsConfig, 'game-monetize-sample-video'), false);
-            this.assert.strictEqual(AdsCollectionFinder.findById(this.adsConfig, 5), false);
-            this.assert.strictEqual(AdsCollectionFinder.findById(this.adsConfig, 6), false);
+            this.assert.strictEqual(AdsCollectionFinder.findByKey(this.adsCollection, 'crazy-games-sample-video'), false);
+            this.assert.strictEqual(AdsCollectionFinder.findByKey(this.adsCollection, 'game-monetize-sample-video'), false);
+            this.assert.strictEqual(AdsCollectionFinder.findById(this.adsCollection, 5), false);
+            this.assert.strictEqual(AdsCollectionFinder.findById(this.adsCollection, 6), false);
         });
     }
 
     async testEnabledAdIsFoundByItsId()
     {
         await this.test('an enabled ad is found by the ID the messages carry', async () => {
-            this.assert.strictEqual(AdsCollectionFinder.findById(this.adsConfig, '7').key, 'resurrection-video');
-            this.assert.strictEqual(AdsCollectionFinder.findById(this.adsConfig, 99), false);
-            this.assert.strictEqual(AdsCollectionFinder.findById(this.adsConfig, '__proto__'), false);
+            this.assert.strictEqual(AdsCollectionFinder.findById(this.adsCollection, '7').key, 'resurrection-video');
+            this.assert.strictEqual(AdsCollectionFinder.findById(this.adsCollection, 99), false);
+            this.assert.strictEqual(AdsCollectionFinder.findById(this.adsCollection, '__proto__'), false);
         });
     }
 
     async testMessageIsMatchedByTheAdId()
     {
         await this.test('a message is for the ad when it carries the ID of the ad found by key', async () => {
-            let config = this.adsConfig;
+            let config = this.adsCollection;
             let startedMessage = {act: AdsConst.ACTIONS.AD_STARTED, ads_id: '7'};
             this.assert.strictEqual(AdsCollectionFinder.isMessageForAd(config, 'resurrection-video', startedMessage), true);
             this.assert.strictEqual(AdsCollectionFinder.isMessageForAd(config, 'skin-ad-ticket', startedMessage), false);
