@@ -17,6 +17,8 @@ class TestPlayerReviveDisplay extends BaseTest
         super(config);
         this.ownPlayerId = 'own-session';
         this.otherPlayerId = 'other-session';
+        this.leftOff = 3;
+        this.topOff = 20;
     }
 
     createSetup(hasAnimation = true)
@@ -26,7 +28,12 @@ class TestPlayerReviveDisplay extends BaseTest
             [this.ownPlayerId]: {x: 10, y: 20, visible: false, nameSprite: {visible: false}},
             [this.otherPlayerId]: {x: 30, y: 40, visible: false, nameSprite: {visible: false}}
         };
-        setup.currentPlayer = {playerId: this.ownPlayerId, players: setup.players};
+        setup.currentPlayer = {
+            playerId: this.ownPlayerId,
+            players: setup.players,
+            leftOff: this.leftOff,
+            topOff: this.topOff
+        };
         setup.gameManager = {
             getCurrentPlayer: () => setup.currentPlayer,
             gameDom: {
@@ -100,7 +107,7 @@ class TestPlayerReviveDisplay extends BaseTest
             this.assert.strictEqual(setup.players[this.ownPlayerId].visible, true);
             this.assert.strictEqual(setup.players[this.ownPlayerId].nameSprite.visible, true);
             this.assert.strictEqual(setup.players[this.otherPlayerId].visible, false);
-            this.assertAnimationPlayed(setup, 100, 200);
+            this.assertAnimationPlayed(setup, 100 - this.leftOff, 200 - this.topOff);
             let animationSprite = [...setup.createdSprites].shift();
             let completeListener = [...setup.completeCallbacks].shift();
             this.assert.strictEqual(animationSprite.destroyed, false);
@@ -119,7 +126,7 @@ class TestPlayerReviveDisplay extends BaseTest
             this.assert.strictEqual(setup.players[this.otherPlayerId].visible, true);
             this.assert.strictEqual(setup.players[this.otherPlayerId].nameSprite.visible, true);
             this.assert.strictEqual(setup.players[this.ownPlayerId].visible, false);
-            this.assertAnimationPlayed(setup, 300, 400);
+            this.assertAnimationPlayed(setup, 300 - this.leftOff, 400 - this.topOff);
         });
     }
 
