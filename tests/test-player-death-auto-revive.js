@@ -9,6 +9,7 @@ const { DeathRelocationBuilder } = require('./fixtures/death-relocation-builder'
 const { ActionsConst } = require('../lib/actions/constants');
 const { GameConst } = require('../lib/game/constants');
 const { once } = require('events');
+const timersPromises = require('timers/promises');
 
 class TestPlayerDeathAutoRevive extends BaseTest
 {
@@ -104,7 +105,7 @@ class TestPlayerDeathAutoRevive extends BaseTest
             this.assert.strictEqual(await setup.relocator.requestRevive(setup.playerSchema, setup.room), false);
             this.assert.strictEqual(setup.playerSchema.isDeath(), true);
             this.assert.strictEqual(setup.playerSchema.getPrivate(this.privateData.REVIVE_READY), true);
-            this.assert.strictEqual(setup.playerSchema.privateData[this.privateData.REVIVE_REQUESTED], false);
+            this.assert.strictEqual(setup.playerSchema.privateData[this.privateData.DEATH_RESOLVING], false);
             this.assert.deepStrictEqual(setup.sceneChanges, []);
             setup.room.savePlayerStats = async () => true;
             this.assert.strictEqual(await setup.relocator.requestRevive(setup.playerSchema, setup.room), true);
@@ -138,7 +139,7 @@ class TestPlayerDeathAutoRevive extends BaseTest
             this.assert.strictEqual(await setup.relocator.requestRevive(setup.playerSchema, setup.room), true);
             this.assert.strictEqual(setup.revivedPlayers, 1);
             this.assert.strictEqual(setup.playerSchema.isDeath(), false);
-            this.assert.strictEqual(setup.playerSchema.privateData[this.privateData.REVIVE_REQUESTED], false);
+            this.assert.strictEqual(setup.playerSchema.privateData[this.privateData.DEATH_RESOLVING], false);
             this.assert.strictEqual(await setup.relocator.requestRevive(setup.playerSchema, setup.room), false);
             this.assert.strictEqual(setup.revivedPlayers, 1);
             this.assert.deepStrictEqual(setup.sceneChanges, []);
@@ -155,6 +156,29 @@ class TestPlayerDeathAutoRevive extends BaseTest
             ]);
             this.assert.deepStrictEqual(requestResults, [true, false]);
             this.assert.strictEqual(setup.revivedPlayers, 1);
+        });
+    }
+
+    async testScheduledResolutionAndReviveRequestConsumeOneItem()
+    {
+        await this.test('a scheduled resolution and a revive request at the same time consume one item', async () => {
+            let setup = await this.createReadySetup(this.manualRevive, {restorationQty: 2});
+            let inventoryManager = setup.playerSchema.inventory.manager;
+            let decreaseItem = inventoryManager.decreaseItemQty;
+            inventoryManager.decreaseItemQty = async (inventoryId, qty) => {
+                await timersPromises.setImmediate();
+                return await decreaseItem(inventoryId, qty);
+            };
+            let resolutionResults = await Promise.all([
+                setup.relocator.resolveDeath(setup.event),
+                setup.relocator.requestRevive(setup.playerSchema, setup.room)
+            ]);
+            this.assert.deepStrictEqual(resolutionResults, [true, false]);
+            this.assert.deepStrictEqual(inventoryManager.decreasedItems, this.deathBuilder.consumedRestorationItem);
+            this.assert.strictEqual(setup.revivedPlayers, 1);
+            this.assert.strictEqual(setup.playerSchema.privateData[this.privateData.DEATH_RESOLVING], false);
+            this.assert.strictEqual(await setup.relocator.requestRevive(setup.playerSchema, setup.room), false);
+            this.assert.deepStrictEqual(inventoryManager.decreasedItems, this.deathBuilder.consumedRestorationItem);
         });
     }
 
@@ -194,6 +218,7 @@ class TestPlayerDeathAutoRevive extends BaseTest
                 setup.eventsEmitter.emit('sceneChange', data);
             };
             let townRevive = once(setup.eventsEmitter, 'sceneChange');
+            setup.playerSchema.setPrivate(this.privateData.RESURRECTION_AD_REQUESTED, Date.now());
             setup.playerSchema.setPrivate(this.privateData.RESURRECTION_AD_STARTED, Date.now());
             this.assert.strictEqual(await setup.relocator.requestRevive(setup.playerSchema, setup.room), true);
             this.assert.deepStrictEqual(setup.sceneChanges, []);
@@ -202,7 +227,6 @@ class TestPlayerDeathAutoRevive extends BaseTest
             this.assert.deepStrictEqual(setup.sceneChanges, this.townChange);
             this.assert.deepStrictEqual(setup.client.sentMessages, [this.revivedMessage]);
             this.assert.strictEqual(setup.emittedEvents.length, 1);
-            this.assert.strictEqual(setup.playerSchema.privateData[this.privateData.REVIVE_REQUESTED], false);
         });
     }
 
