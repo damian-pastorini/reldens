@@ -22,13 +22,14 @@ class TestResurrectionAdGate extends BaseTest
         this.otherAdId = 8;
         this.privateDataKeys = ActionsConst.DEATH.PRIVATE_DATA;
         this.relocator = new PlayerDeathRelocator({config: GameplayPlayerBuilder.createConfigManager({}), events: {}});
+        this.relocator.loadConfig();
     }
 
     createGate(resurrectionAdEnabled = 1)
     {
         return new ResurrectionAdGate({
+            playerDeathRelocator: {resurrectionAdsKey: 'resurrection-video'},
             config: GameplayPlayerBuilder.createConfig({
-                [ActionsConst.DEATH.CONFIG_PATHS.RESURRECTION_ADS_KEY]: 'resurrection-video',
                 [AdsConst.CONFIG_PATHS.COLLECTION]: {
                     [this.resurrectionAdId]: {
                         id: this.resurrectionAdId,
@@ -72,6 +73,10 @@ class TestResurrectionAdGate extends BaseTest
             this.assert.strictEqual(gate.onBeforeSceneExecuteMessages(otherAdEvent), false);
             this.assert.strictEqual(otherAdEvent.canContinue, true);
             this.assert.strictEqual(gate.onBeforeSceneExecuteMessages(null), false);
+            for(let emptyEvent of [null, {}]){
+                this.assert.strictEqual(gate.onAfterAdStarted(emptyEvent), false);
+                this.assert.strictEqual(gate.onAfterAdEnded(emptyEvent), false);
+            }
         });
     }
 
