@@ -40,14 +40,14 @@ class TestDeathReviveNotifier extends BaseTest
 
     async testValidationNeedsTheConfigAndTheRelocator()
     {
-        await this.test('the notifier is valid only with a ConfigProcessor config and the death relocator', async () => {
+        await this.test('the notifier is valid only with the config and the death relocator', async () => {
             let setup = await this.deathBuilder.createNotifierSetup();
             this.assert.strictEqual(setup.notifier.validate(), true);
             let invalidProps = [
                 {},
                 {config: setup.relocator.config},
                 {playerDeathRelocator: setup.relocator},
-                {config: {getWithoutLogs: () => true}, playerDeathRelocator: setup.relocator}
+                {config: false, playerDeathRelocator: setup.relocator}
             ];
             for(let props of invalidProps){
                 this.assert.strictEqual(new DeathReviveNotifier(props).validate(), false);
