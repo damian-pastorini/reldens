@@ -24,6 +24,8 @@ class TestPluginsSetupValidation extends BaseTest
             'reldens.beforeSuperInitialGameData',
             'reldens.createdPlayerSchema',
             'reldens.createdNewPlayer',
+            'reldens.sceneRoomOnCreate',
+            'reldens.onRoomDispose',
             'reldens.playerDeath',
             'reldens.playerReviveReady',
             'reldens.afterGiveAdRewardItem',
@@ -31,11 +33,7 @@ class TestPluginsSetupValidation extends BaseTest
             'reldens.afterAdEnded',
             'reldens.beforeSceneExecuteMessages'
         ];
-        this.actionsEvents = [
-            'reldens.roomsMessageActionsByRoom',
-            'reldens.sceneRoomOnCreate',
-            'reldens.onRoomDispose'
-        ];
+        this.actionsEvents = ['reldens.roomsMessageActionsByRoom'];
     }
 
     createProps()
@@ -111,7 +109,7 @@ class TestPluginsSetupValidation extends BaseTest
             this.assertListened(props.listenedEvents, this.actionsEvents, 1);
             this.assertListened(props.listenedEvents, ['reldens.serverReady'], 2);
             this.assert.strictEqual(plugin.playerDeathRelocator.config, props.config);
-            this.assert.strictEqual(plugin.resurrectionAdGate.config, props.config);
+            this.assert.strictEqual(plugin.roomAutoRecovery.config, props.config);
             this.assert.strictEqual(plugin.resurrectionAdGate.playerDeathRelocator, plugin.playerDeathRelocator);
             this.assert.strictEqual(plugin.playerDeathRelocator.autoReviveEnabled, false);
             await props.listenedEvents['reldens.serverReady'][1]({
@@ -190,10 +188,14 @@ class TestPluginsSetupValidation extends BaseTest
 
     async testAdsPluginListenersWithoutDataServer()
     {
-        await this.test('the ads plugin attaches no listener without its data server', async () => {
+        await this.test('the ads plugin attaches no listener without its data server or config', async () => {
             let props = this.createProps();
             let plugin = new AdsPlugin();
             plugin.events = props.events;
+            plugin.config = props.config;
+            this.assert.strictEqual(plugin.listenEvents(), false);
+            plugin.config = false;
+            plugin.dataServer = props.dataServer;
             this.assert.strictEqual(plugin.listenEvents(), false);
             this.assert.deepStrictEqual(props.listenedEvents, {});
         });
@@ -215,6 +217,7 @@ class TestPluginsSetupValidation extends BaseTest
             this.assert.strictEqual(roomMessageActions.ads instanceof AdsMessageActions, true);
             this.assert.strictEqual(roomMessageActions.ads.dataServer, props.dataServer);
             this.assert.strictEqual(roomMessageActions.ads.adsPlugin, plugin);
+            this.assert.strictEqual(roomMessageActions.ads.config, props.config);
             this.assert.strictEqual(roomMessageActions.ads.adsPlayedRepository, this.adsPlayedRepository);
         });
     }
@@ -232,8 +235,19 @@ class TestPluginsSetupValidation extends BaseTest
     async testAdsMessageActionsWithoutAdsPlugin()
     {
         await this.test('the ads message actions do not execute without the ads plugin', async () => {
-            let messageActions = new AdsMessageActions({dataServer: this.createProps().dataServer});
+            let props = this.createProps();
+            let messageActions = new AdsMessageActions({dataServer: props.dataServer, config: props.config});
             this.assert.strictEqual(messageActions.adsPlayedRepository, this.adsPlayedRepository);
+            this.assert.strictEqual(await messageActions.executeMessageActions({}, {act: 'none'}, {}, {}), false);
+        });
+    }
+
+    async testAdsMessageActionsWithoutConfig()
+    {
+        await this.test('the ads message actions do not execute or load durations without the config', async () => {
+            let messageActions = new AdsMessageActions({dataServer: this.createProps().dataServer, adsPlugin: {}});
+            this.assert.strictEqual(messageActions.loadConfig(), false);
+            this.assert.deepStrictEqual(messageActions.providersMinimumDurations, {});
             this.assert.strictEqual(await messageActions.executeMessageActions({}, {act: 'none'}, {}, {}), false);
         });
     }
@@ -241,7 +255,8 @@ class TestPluginsSetupValidation extends BaseTest
     async testAdsMessageActionsWithEveryProperty()
     {
         await this.test('the ads message actions load the played ad and execute with all their properties', async () => {
-            let messageActions = new AdsMessageActions({dataServer: this.createProps().dataServer, adsPlugin: {}});
+            let props = this.createProps();
+            let messageActions = new AdsMessageActions({dataServer: props.dataServer, adsPlugin: {}, config: props.config});
             let executeArguments = {client: {id: 1}, data: {act: 'none'}, room: {id: 2}, playerSchema: {id: 3}};
             this.assert.deepStrictEqual(await messageActions.loadPlayedAd(1, 2), {player_id: 1, ads_id: 2});
             this.assert.deepStrictEqual(
