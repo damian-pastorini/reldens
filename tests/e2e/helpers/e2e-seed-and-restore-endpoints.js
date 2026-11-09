@@ -136,9 +136,11 @@ class E2eSeedAndRestoreEndpoints
         });
     }
 
-    static reloadDeathConfig(serverManager)
+    static reloadLoadedConfig(serverManager)
     {
-        serverManager.featuresManager.featuresList.actions.package.playerDeathRelocator.loadConfig();
+        let actionsPlugin = serverManager.featuresManager.featuresList.actions.package;
+        actionsPlugin.playerDeathRelocator.loadConfig();
+        actionsPlugin.roomAutoRecovery.loadConfig();
     }
 
     static async resetGroup(serverManager, groupKey)
@@ -156,7 +158,7 @@ class E2eSeedAndRestoreEndpoints
             E2eSeedAndRestoreEndpoints.restoreConfigValue(serverManager.configManager, path, groupOriginalValues[path]);
         }
         delete E2eSeedAndRestoreEndpoints.originalConfigValues[groupKey];
-        E2eSeedAndRestoreEndpoints.reloadDeathConfig(serverManager);
+        E2eSeedAndRestoreEndpoints.reloadLoadedConfig(serverManager);
         if(E2eSeedAndRestoreEndpoints.reloadLocalesGroups.includes(groupKey)){
             E2eSeedAndRestoreEndpoints.reloadLocalesGroups.splice(
                 E2eSeedAndRestoreEndpoints.reloadLocalesGroups.indexOf(groupKey),
@@ -225,7 +227,7 @@ class E2eSeedAndRestoreEndpoints
                 sc.get(request.body, 'path', ''),
                 sc.get(request.body, 'value', null)
             );
-            E2eSeedAndRestoreEndpoints.reloadDeathConfig(serverManager);
+            E2eSeedAndRestoreEndpoints.reloadLoadedConfig(serverManager);
             response.json({ok: true});
         });
         app.post('/api/e2e/data/reload-locales', async (request, response) => {
