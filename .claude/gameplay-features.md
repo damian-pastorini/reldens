@@ -272,7 +272,9 @@ With the teleport enabled or the auto revive disabled it replaces the battle tim
 - otherwise it revives in the town: in the same room the player is placed on the return point and revived, from
   another room the affected stat is restored, the `REVIVED` message is sent and the player moves to the town room; a
   failed relocation revives where it died
-- a failed resolution is logged
+- a failed resolution is logged, with the auto revive enabled it is retried every
+  `ActionsConst.DEATH.DEFAULTS.REVIVE_RETRY_MS` (5 seconds) while the player is dead in the room, and with the auto
+  revive disabled the revive stays ready, so the player can ask again
 
 `DeathReviveRequests` (`lib/actions/server/death-revive-requests.js`, on `reldens.beforeSceneExecuteMessages`, so a
 room with its actions disabled can not leave a dead player waiting) receives the `drq` and `drc` messages; the
@@ -357,10 +359,11 @@ next one. The running instance is the `scoresPeriodReset` property of the scores
 
 - using the skin ticket item (`skins/adTicketItemKey`) replaces its normal use: `SkinAdTicketGate`
   (`lib/users/server/skin-ad-ticket-gate.js`) sends `{act: 'skinAdS', adsId}` when the player has a ticket and the ad
-  exists, and accepts the skin ad `AD_STARTED` message only from a player with a ticket; the ticket is consumed on
-  `reldens.beforeGiveAdRewardItem`, right before the reward (`skin_warlock_robe`, from the `ads_event_video` of the
-  `reldens.skinAdTicket` event, `"replayCooldown":0`), so every reward costs one ticket, a failed ad keeps the ticket,
-  and a player without the ticket at the end gets no reward
+  exists, and accepts the skin ad `AD_STARTED` message only from a player with a ticket; the ticket is checked on
+  `reldens.beforeGiveAdRewardItem` and consumed on `reldens.afterGiveAdRewardItem`, once the reward was given
+  (`skin_warlock_robe`, from the `ads_event_video` of the `reldens.skinAdTicket` event, `"replayCooldown":0`), so every
+  reward costs one ticket, a failed ad or a failed reward keeps the ticket, and a player without the ticket at the end
+  gets no reward
 - an item with a `"skinKey"` custom data changes the player look while equipped: `PlayerSkinApplier`
   (`lib/users/server/player-skin-applier.js`) sets `playerSchema.avatarKey` on the inventory `EQUIP_ITEM`, restores the
   class path avatar (or another equipped skin) on `UNEQUIP_ITEM` and applies the equipped skin on the join
