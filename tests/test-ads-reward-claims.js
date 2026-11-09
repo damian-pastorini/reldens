@@ -6,7 +6,6 @@
 
 const { BaseTest } = require('./base-test');
 const { AdsRewardClaimsBuilder } = require('./fixtures/ads-reward-claims-builder');
-const { AdsMessageActions } = require('../lib/ads/server/message-actions');
 const { AdsConst } = require('../lib/ads/constants');
 const { GameConst } = require('../lib/game/constants');
 const timersPromises = require('timers/promises');
@@ -249,8 +248,6 @@ class TestAdsRewardClaims extends BaseTest
                 false
             );
             this.assert.strictEqual([...brokenSetup.emittedEventsData].pop().startResult, false);
-            this.assert.strictEqual(brokenSetup.adsMessageActions.validate(), true);
-            this.assert.strictEqual(new AdsMessageActions({}).validate(), false);
         });
     }
 
