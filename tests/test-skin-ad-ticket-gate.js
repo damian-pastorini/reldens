@@ -133,15 +133,32 @@ class TestSkinAdTicketGate extends BaseTest
         });
     }
 
-    async testSkinAdRewardConsumesOneTicket()
+    async testSkinAdRewardKeepsTheTicketUntilItWasGiven()
     {
-        await this.test('the skin ad reward consumes one ticket', async () => {
+        await this.test('the ticket is kept before the skin ad reward and one is consumed after it was given', async () => {
+            let gate = this.createGate();
             let rewardEvent = this.createRewardEvent('skin-ad-ticket', 2);
-            this.assert.strictEqual(await this.createGate().onBeforeGiveAdRewardItem(rewardEvent), true);
-            this.assert.strictEqual(rewardEvent.continueEvent, true);
             let inventoryManager = rewardEvent.playerSchema.inventory.manager;
+            this.assert.strictEqual(await gate.onBeforeGiveAdRewardItem(rewardEvent), true);
+            this.assert.strictEqual(rewardEvent.continueEvent, true);
+            this.assert.deepStrictEqual(inventoryManager.decreasedItems, []);
+            this.assert.strictEqual(inventoryManager.items[this.ticketItemKey].qty, 2);
+            this.assert.strictEqual(await gate.onAfterGiveAdRewardItem(rewardEvent), true);
             this.assert.deepStrictEqual(inventoryManager.decreasedItems, [{inventoryId: this.ticketItemKey, qty: 1}]);
             this.assert.strictEqual(inventoryManager.items[this.ticketItemKey].qty, 1);
+        });
+    }
+
+    async testGivenRewardOfOtherAdOrWithoutTicketConsumesNothing()
+    {
+        await this.test('a given reward of another ad or without a ticket consumes nothing', async () => {
+            let gate = this.createGate();
+            let otherAdEvent = this.createRewardEvent('other-video', 1);
+            this.assert.strictEqual(await gate.onAfterGiveAdRewardItem(otherAdEvent), false);
+            this.assert.deepStrictEqual(otherAdEvent.playerSchema.inventory.manager.decreasedItems, []);
+            let withoutTicketEvent = this.createRewardEvent('skin-ad-ticket', -1);
+            this.assert.strictEqual(await gate.onAfterGiveAdRewardItem(withoutTicketEvent), false);
+            this.assert.deepStrictEqual(withoutTicketEvent.playerSchema.inventory.manager.decreasedItems, []);
         });
     }
 
