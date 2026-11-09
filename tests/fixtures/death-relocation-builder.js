@@ -79,8 +79,8 @@ class DeathRelocationBuilder
                 }
             }
         });
-        relocator.loadConfig();
         setup.isTownRoomLoaded = await relocator.loadTownRoom(setup.room.loginManager.roomsManager);
+        relocator.loadConfig();
         return relocator;
     }
 
@@ -139,7 +139,7 @@ class DeathRelocationBuilder
                 [this.otherAd.id]: this.otherAd
             }
         }, configValues));
-        setup.notifier = new DeathReviveNotifier({config: setup.relocator.config, playerDeathRelocator: setup.relocator});
+        setup.notifier = new DeathReviveNotifier({playerDeathRelocator: setup.relocator});
         setup.notify = () => setup.notifier.notifyClient(setup.client, setup.playerSchema);
         return setup;
     }
