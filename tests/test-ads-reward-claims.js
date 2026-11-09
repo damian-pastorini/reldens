@@ -30,6 +30,36 @@ class TestAdsRewardClaims extends BaseTest
         });
     }
 
+    async testProviderMinimumDurationIsReadOnce()
+    {
+        await this.test('the provider minimum duration is read once and rejects the shorter ads', async () => {
+            let adsSetup = this.adsBuilder.createAdsSetup(true);
+            let minimumDurationPath = [
+                AdsConst.CONFIG_PATHS.PROVIDERS,
+                'crazyGames',
+                AdsConst.CONFIG_PATHS.VIDEO_MINIMUM_DURATION
+            ].join('/');
+            adsSetup.configValues[minimumDurationPath] = AdsConst.VIDEOS_MINIMUM_DURATION * 4;
+            this.adsBuilder.storeStartedAd(adsSetup, AdsConst.VIDEOS_MINIMUM_DURATION * 2);
+            await adsSetup.adsMessageActions.adEnded(adsSetup.endedMessage, adsSetup.room, adsSetup.playerSchema);
+            this.assert.deepStrictEqual(adsSetup.givenRewards, []);
+            adsSetup.configValues[minimumDurationPath] = 1;
+            await adsSetup.adsMessageActions.adEnded(adsSetup.endedMessage, adsSetup.room, adsSetup.playerSchema);
+            this.assert.deepStrictEqual(adsSetup.givenRewards, []);
+        });
+    }
+
+    async testConfigValueMissingUsesTheDefaultOnce()
+    {
+        await this.test('a missing config value keeps its default after the first read', async () => {
+            let adsSetup = this.adsBuilder.createAdsSetup(true);
+            let messageActions = adsSetup.adsMessageActions;
+            this.assert.strictEqual(messageActions.fetchConfigOnce(adsSetup.room, 'server/ads/missing', 7), 7);
+            adsSetup.configValues['server/ads/missing'] = 9;
+            this.assert.strictEqual(messageActions.fetchConfigOnce(adsSetup.room, 'server/ads/missing', 7), 7);
+        });
+    }
+
     async testConcurrentAdEndedMessagesGiveASingleReward()
     {
         await this.test('concurrent ad ended messages give a single reward', async () => {
