@@ -41,7 +41,7 @@ class TestPlayerDeathRelocator extends BaseTest
             let emptyConfigSetup = this.deathBuilder.createSetup();
             let emptyConfigRelocator = new PlayerDeathRelocator({config: new ConfigProcessor(), events: {}});
             emptyConfigRelocator.loadConfig();
-            this.assert.strictEqual(emptyConfigRelocator.isTeleportEnabled(), false);
+            this.assert.strictEqual(emptyConfigRelocator.teleportEnabled, false);
             this.assert.strictEqual(emptyConfigRelocator.onPlayerDeath(emptyConfigSetup.event), false);
             this.assert.strictEqual(sc.hasOwn(emptyConfigSetup.playerSchema.privateData, this.deathTimerKey), false);
             let setup = await this.deathBuilder.createRelocatorSetup();
