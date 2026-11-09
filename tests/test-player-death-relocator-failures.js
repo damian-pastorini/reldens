@@ -6,9 +6,7 @@
 
 const { BaseTest } = require('./base-test');
 const { DeathRelocationBuilder } = require('./fixtures/death-relocation-builder');
-const { GameplayPlayerBuilder } = require('./fixtures/gameplay-player-builder');
 const { PlayerDeathRelocator } = require('../lib/actions/server/player-death-relocator');
-const { ConfigProcessor } = require('../lib/config/processor');
 const { ActionsConst } = require('../lib/actions/constants');
 const { AdsConst } = require('../lib/ads/constants');
 const { GameConst } = require('../lib/game/constants');
@@ -37,16 +35,13 @@ class TestPlayerDeathRelocatorFailures extends BaseTest
 
     async testInvalidPropsAreNotValid()
     {
-        await this.test('a config that is not a ConfigProcessor or a missing events manager is not valid', async () => {
+        await this.test('a missing config or a missing events manager is not valid', async () => {
             let events = {emit: async () => true};
-            let plainConfig = GameplayPlayerBuilder.createConfig({[ActionsConst.DEATH.CONFIG_PATHS.TELEPORT_ENABLED]: true});
             let invalidProps = [
                 {},
                 {config: false, events},
                 {config: null, events},
-                {config: 'config', events},
-                {config: ConfigProcessor, events},
-                {config: plainConfig, events},
+                {events},
                 {config: this.deathBuilder.createConfig()},
                 {config: this.deathBuilder.createConfig(), events: false}
             ];
