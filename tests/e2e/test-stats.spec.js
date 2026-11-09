@@ -9,10 +9,9 @@
 const { BaseE2eTest } = require('./base-e2e-test');
 const { Login } = require('./helpers/login');
 const { Phaser } = require('./helpers/phaser');
-const { RoomObjectsApi } = require('./helpers/room-objects-api');
+const { ForestEnemyKill } = require('./helpers/forest-enemy-kill');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
-const { sc } = require('@reldens/utils');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
 
@@ -53,15 +52,13 @@ class TestStats
         await Phaser.waitForObjectByAssetKey(page, enemyKey, forestData.sceneTimeout);
         let xpBefore = Number(await TestStats.getPlayerExpFromState(page));
         await screenshots.capture(page, 'xp-before-attack');
-        let placement = await RoomObjectsApi.placeAndTargetEnemy(
+        let placement = await ForestEnemyKill.placeAndTargetForestEnemy(
             page,
             gameConfig,
-            Login.FOREST_ROOM_NAME,
             enemyKey,
             TestStats.ONE_HIT_LIFE,
             forestData.sceneTimeout
         );
-        expect(placement.targeted, 'The placed enemy must be targeted: '+sc.toJsonString(placement)).toBe(true);
         expect(placement.experience, 'The enemy rewards must give experience').toBeGreaterThan(0);
         let expectedXp = xpBefore + placement.experience;
         await TestStats.attackUntilExperience(page, expectedXp, TimeConstants.ENEMY_KILL);

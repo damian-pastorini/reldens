@@ -152,6 +152,7 @@ class TestServerHealthMonitor extends BaseTest
             let createdInstances = {
                 sceneRoomId: {
                     clients: [{}],
+                    state: {},
                     playersCountInState: () => 1,
                     roomWorld: {bodies: [{}, {}]},
                     worldTimer
@@ -166,6 +167,24 @@ class TestServerHealthMonitor extends BaseTest
             this.assert.strictEqual(sc.isNumber(roomsUsage.physicsBusyPercent), true);
             this.assert.strictEqual(worldTimer.stepsCount, 0);
             this.assert.strictEqual(worldTimer.stepsDurationMs, 0);
+        });
+    }
+
+    async testTheRoomsUsageCountsNoPlayersInARoomStillCreated()
+    {
+        await this.test('a scene room registered before its state is created counts no players', async () => {
+            let roomInCreation = {
+                clients: [],
+                playersCountInState()
+                {
+                    return this.state.players.size;
+                }
+            };
+            let roomsUsage = this.createMonitor({}, [{}], new RoomsUsageCollector({creatingRoomId: roomInCreation}))
+                .checkUsage()
+                .roomsUsage;
+            this.assert.strictEqual(roomsUsage.roomsCount, 1);
+            this.assert.strictEqual(roomsUsage.playersCount, 0);
         });
     }
 

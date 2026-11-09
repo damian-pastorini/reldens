@@ -78,12 +78,19 @@ class TestSceneJoinAdmission extends BaseTest
 
     async changeSceneWithAvailability(roomAvailability)
     {
-        let changeSetup = {broadcasts: [], sentMessages: [], playerBody: {isChangingScene: true}};
+        let changeSetup = {broadcasts: [], sentMessages: [], loadedRooms: [], playerBody: {isChangingScene: true}};
         let roomScene = Object.create(RoomScene.prototype, {roomName: {value: 'reldens-town'}});
         roomScene.roomsAvailability = {fetchRoomAvailability: async () => roomAvailability};
         roomScene.playerBySessionIdFromState = () => ({state: {scene: 'reldens-town'}});
         roomScene.broadcast = (type, message) => changeSetup.broadcasts.push(message);
-        roomScene.loginManager = {roomsManager: {loadRoomByName: async () => false}};
+        roomScene.loginManager = {
+            roomsManager: {
+                loadRoomByName: async (roomName) => {
+                    changeSetup.loadedRooms.push(roomName);
+                    return false;
+                }
+            }
+        };
         await roomScene.nextSceneInitialPosition(
             {sessionId: 'session-a', send: (type, message) => changeSetup.sentMessages.push(message)},
             {prev: 'reldens-town', next: 'reldens-bots-forest'},
@@ -100,6 +107,7 @@ class TestSceneJoinAdmission extends BaseTest
                 reason: GameConst.ROOM_UNAVAILABLE.SERVER_BUSY
             });
             this.assert.strictEqual(changeSetup.broadcasts.length, 0);
+            this.assert.deepStrictEqual(changeSetup.loadedRooms, []);
             this.assert.strictEqual(changeSetup.playerBody.isChangingScene, false);
             this.assert.deepStrictEqual(changeSetup.sentMessages, [{
                 [GameConst.ACTION_KEY]: ChatConst.CHAT_ACTION,
@@ -111,10 +119,11 @@ class TestSceneJoinAdmission extends BaseTest
 
     async testTheSceneChangeToAnAvailableRoomContinues()
     {
-        await this.test('the scene change to an available room continues with the changing scene broadcast', async () => {
+        await this.test('the scene change to an available room continues loading the next room', async () => {
             let changeSetup = await this.changeSceneWithAvailability({isAvailable: true, reason: ''});
-            this.assert.strictEqual(changeSetup.broadcasts.length, 1);
-            this.assert.strictEqual([...changeSetup.broadcasts].shift().act, GameConst.CHANGING_SCENE);
+            this.assert.deepStrictEqual(changeSetup.loadedRooms, ['reldens-bots-forest']);
+            this.assert.strictEqual(changeSetup.broadcasts.length, 0);
+            this.assert.strictEqual(changeSetup.playerBody.isChangingScene, false);
             this.assert.strictEqual(changeSetup.sentMessages.length, 0);
         });
     }

@@ -61,6 +61,23 @@ class RoomMovementApi
         );
     }
 
+    static async fetchClearLineTile(gameConfig, roomName, playerName, distances)
+    {
+        return sc.get(
+            await SecurityApi.request(
+                gameConfig,
+                'GET',
+                '/api/e2e/movement/clear-line-tile?'+new URLSearchParams({
+                    roomName,
+                    playerName,
+                    distances: distances.join(',')
+                }).toString()
+            ),
+            'tile',
+            false
+        );
+    }
+
     static async fetchTiles(gameConfig, roomName, tile, radius)
     {
         return await SecurityApi.request(

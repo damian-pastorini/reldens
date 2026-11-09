@@ -104,7 +104,6 @@ class TestNpc
             traderKey,
             [trader.originalCol, trader.originalRow]
         );
-        await Navigation.focusGame(page);
         await TestNpc.placePlayerNextToNpc(page, gameConfig, traderKey, sceneTimeout);
         await Phaser.triggerObjectInteraction(page, traderKey || 'trader');
         await page.waitForTimeout(1000 + pauseMs);
@@ -155,7 +154,6 @@ class TestNpc
             : Phaser.getObjectScreenCoordsByType(page, 'npc'));
         expect(npcCoords, 'NPC must be found in the scene').not.toBeNull();
         await screenshots.capture(page, 'npc-found-in-scene');
-        await Navigation.focusGame(page);
         await TestNpc.placePlayerNextToNpc(page, gameConfig, npcKey, sceneTimeout);
         await page.waitForTimeout(pauseMs);
         await Phaser.triggerObjectInteraction(page, npcKey || 'npc');

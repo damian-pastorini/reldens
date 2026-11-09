@@ -14,6 +14,8 @@ const { Logger } = require('@reldens/utils');
 const { Selectors } = require('./selectors');
 const { PlayerReset } = require('./helpers/player-reset');
 const { ParallelSpecGroups } = require('./helpers/parallel-spec-groups');
+const { TimeConstants } = require('./helpers/time-constants');
+const { RecordingStepReadTimer } = require('./helpers/recording-step-read-timer');
 
 class BaseE2eTest
 {
@@ -24,6 +26,16 @@ class BaseE2eTest
         : {};
     static longRun = '1' === process.env.LONG_RUN;
     static videosDir = FileHandler.joinPaths(process.cwd(), 'test-results', 'videos');
+    static videoSize = {width: 1280, height: 1080};
+    static gameplayRecordingStartDelayMs = 1000;
+    static cameraStillPollMs = 250;
+    static recordingViewIntervalMs = 100;
+    static recordingCameraLerp = 0.1;
+    static instantCameraLerp = 1;
+    static cloudTextureKey = 'weather-cloud';
+    static gameplayRecordingPages = [];
+    static overlaysStylesPath = FileHandler.joinPaths(process.cwd(), 'tests', 'e2e', 'assets', 'e2e-overlays.css');
+    static recordingNote = 'Automatic e2e test recording - the player teleports skip the walk to the required areas.';
     static screenshotsDir = FileHandler.joinPaths(process.cwd(), 'test-results', 'screenshots');
     static gameDataPath = FileHandler.joinPaths(process.cwd(), 'tests', 'e2e', 'game-data.json');
     static expect = baseExpect;
@@ -120,20 +132,36 @@ class BaseE2eTest
                 'pointer-events:none',
                 'z-index:2147483647',
                 'transform:translate(-50%,-50%)',
-                'transition:background 0.1s'
+                'transition:background 0.1s,opacity 0.3s,width 0.1s,height 0.1s'
             ].join(';');
+            let hideAfterMs = 1500;
+            let hideTimer = false;
+            let showCursor = () => {
+                cursorEl.style.opacity = '1';
+                clearTimeout(hideTimer);
+                hideTimer = setTimeout(() => {
+                    cursorEl.style.opacity = '0';
+                }, hideAfterMs);
+            };
             document.addEventListener('DOMContentLoaded', () => {
                 document.body.appendChild(cursorEl);
             });
             document.addEventListener('mousemove', (event) => {
                 cursorEl.style.left = event.clientX+'px';
                 cursorEl.style.top = event.clientY+'px';
+                showCursor();
             });
             document.addEventListener('mousedown', () => {
                 cursorEl.style.background = 'rgba(255,220,50,0.95)';
+                cursorEl.style.width = '32px';
+                cursorEl.style.height = '32px';
+                showCursor();
             });
             document.addEventListener('mouseup', () => {
                 cursorEl.style.background = 'rgba(255,80,80,0.85)';
+                cursorEl.style.width = '16px';
+                cursorEl.style.height = '16px';
+                showCursor();
             });
         };
     }
@@ -147,10 +175,10 @@ class BaseE2eTest
             : (BaseE2eTest.gameConfig.baseUrl || 'http://localhost:8080');
         let recordVideoConfig = {};
         recordVideoConfig['dir'] = outputDir;
-        recordVideoConfig['size'] = { width: 1280, height: 1080 };
+        recordVideoConfig['size'] = BaseE2eTest.videoSize;
         let context = await browser.newContext({
             baseURL: effectiveBaseUrl,
-            viewport: { width: 1280, height: 1080 },
+            viewport: BaseE2eTest.videoSize,
             recordVideo: recordVideoConfig
         });
         await context.addInitScript(BaseE2eTest.browserCursorScript());
@@ -171,16 +199,126 @@ class BaseE2eTest
         }
     }
 
+    static async startRecordingView(page, zoom)
+    {
+        await page.evaluate((recordingView) => {
+            setInterval(() => {
+                let scene = window.reldens?.getActiveScene();
+                let camera = scene?.cameras?.main;
+                if(!camera){
+                    return;
+                }
+                if(recordingView.zoom !== camera.zoom){
+                    camera.setZoom(recordingView.zoom);
+                }
+                if(recordingView.cameraLerp > camera.lerp.x){
+                    camera.setLerp(recordingView.cameraLerp, recordingView.cameraLerp);
+                }
+                let clouds = scene.children.list.filter(child => recordingView.cloudTextureKey === child.texture?.key);
+                for(let cloud of clouds){
+                    cloud.setVisible(false);
+                }
+                let domContainer = scene.game.domContainer;
+                if(domContainer?.scrollLeft || domContainer?.scrollTop){
+                    domContainer.scrollTo(0, 0);
+                }
+            }, recordingView.intervalMs);
+        }, {
+            zoom,
+            cameraLerp: BaseE2eTest.recordingCameraLerp,
+            cloudTextureKey: BaseE2eTest.cloudTextureKey,
+            intervalMs: BaseE2eTest.recordingViewIntervalMs
+        });
+    }
+
+    static async setCameraLerp(page, cameraLerp)
+    {
+        await page.evaluate((lerp) => {
+            window.reldens.getActiveScene().cameras.main.setLerp(lerp, lerp);
+        }, cameraLerp);
+    }
+
+    static async startGameplayRecording(page, testInfo, zoom, suffix, firstStep)
+    {
+        await page.addStyleTag({path: BaseE2eTest.overlaysStylesPath});
+        await BaseE2eTest.setCameraLerp(page, BaseE2eTest.instantCameraLerp);
+        await page.evaluate((bannerTexts) => {
+            let banner = document.createElement('div');
+            banner.classList.add('e2e-recording-banner');
+            for(let className of Object.keys(bannerTexts)){
+                let bannerLine = document.createElement('div');
+                bannerLine.classList.add(className);
+                bannerLine.textContent = bannerTexts[className];
+                banner.append(bannerLine);
+            }
+            document.body.append(banner);
+        }, {
+            'e2e-recording-title': testInfo.title,
+            'e2e-recording-note': BaseE2eTest.recordingNote,
+            'e2e-recording-step': firstStep
+        });
+        await BaseE2eTest.startRecordingView(page, zoom);
+        await BaseE2eTest.waitForCameraStill(page);
+        await page.waitForTimeout(BaseE2eTest.gameplayRecordingStartDelayMs);
+        FileHandler.createFolder(BaseE2eTest.videosDir);
+        await page.screencast.start({
+            path: FileHandler.joinPaths(
+                BaseE2eTest.videosDir,
+                BaseE2eTest.slugify(testInfo.title)+(suffix ? '-'+suffix : '')+'.webm'
+            ),
+            size: BaseE2eTest.videoSize
+        });
+        await BaseE2eTest.setCameraLerp(page, BaseE2eTest.recordingCameraLerp);
+        BaseE2eTest.gameplayRecordingPages.push(page);
+    }
+
+    static async waitForCameraStill(page)
+    {
+        await page.waitForFunction(
+            () => {
+                let camera = window.reldens?.getActiveScene()?.cameras?.main;
+                if(!camera || camera.fadeEffect?.isRunning){
+                    return false;
+                }
+                let cameraScroll = Math.round(camera.scrollX)+'/'+Math.round(camera.scrollY);
+                let isCameraStill = cameraScroll === window.e2eCameraScroll;
+                window.e2eCameraScroll = cameraScroll;
+                return isCameraStill;
+            },
+            null,
+            {polling: BaseE2eTest.cameraStillPollMs, timeout: TimeConstants.SCENE_LOAD}
+        );
+    }
+
+    static async stopGameplayRecording(page)
+    {
+        let recordingPageIndex = BaseE2eTest.gameplayRecordingPages.indexOf(page);
+        if(-1 === recordingPageIndex){
+            return false;
+        }
+        BaseE2eTest.gameplayRecordingPages.splice(recordingPageIndex, 1);
+        await RecordingStepReadTimer.waitForRead(page);
+        await page.screencast.stop().catch((error) => {
+            Logger.error('[video] Could not stop the gameplay recording: '+error.message);
+        });
+        return true;
+    }
+
     static async runPageFixture(browser, use, testInfo, suffix)
     {
         let context = await BaseE2eTest.makeContext(browser);
         let page = await context.newPage();
         await use(page);
-        if(!page.isClosed()) {
+        if(!page.isClosed() && !BaseE2eTest.gameplayRecordingPages.includes(page)) {
             await page.waitForTimeout(BaseE2eTest.longRun ? 3000 : 1500);
         }
         let video = page.video();
+        let isGameplayRecorded = await BaseE2eTest.stopGameplayRecording(page);
         await context.close();
+        if(isGameplayRecorded){
+            await video.delete();
+            return;
+        }
         await BaseE2eTest.saveVideo(video, BaseE2eTest.slugify(testInfo.title), suffix);
     }
 
