@@ -77,7 +77,7 @@ class TestPlayerDeathRelocatorFailures extends BaseTest
             );
             this.assert.strictEqual(setup.isTownRoomLoaded, false);
             this.assert.strictEqual(setup.relocator.townRoom, false);
-            this.assert.strictEqual(setup.relocator.isTeleportEnabled(), false);
+            this.assert.strictEqual(setup.relocator.teleportEnabled, false);
             this.assert.strictEqual(await setup.relocator.resolveDeath(setup.event), true);
             this.assert.deepStrictEqual(setup.loadedRooms, []);
             this.assert.deepStrictEqual(setup.sceneChanges, []);
