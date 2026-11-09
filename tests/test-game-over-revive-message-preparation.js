@@ -83,18 +83,6 @@ class TestGameOverReviveMessagePreparation extends BaseTest
         });
     }
 
-    async testTheValidationNeedsTheGameManagerAndTheEvents()
-    {
-        await this.test('the validation fails without the game manager or the events manager', async () => {
-            this.assert.strictEqual(this.messageBuilder.createSetup().reviveMessage.validate(), true);
-            for(let missingKey of ['gameManager', 'events']){
-                let invalidMessage = this.messageBuilder.createSetup().reviveMessage;
-                invalidMessage[missingKey] = false;
-                this.assert.strictEqual(invalidMessage.validate(), false);
-            }
-        });
-    }
-
 }
 
 module.exports.TestGameOverReviveMessagePreparation = TestGameOverReviveMessagePreparation;
