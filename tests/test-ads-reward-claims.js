@@ -6,6 +6,7 @@
 
 const { BaseTest } = require('./base-test');
 const { AdsRewardClaimsBuilder } = require('./fixtures/ads-reward-claims-builder');
+const { AdsMessageActions } = require('../lib/ads/server/message-actions');
 const { AdsConst } = require('../lib/ads/constants');
 const { GameConst } = require('../lib/game/constants');
 const timersPromises = require('timers/promises');
@@ -214,13 +215,13 @@ class TestAdsRewardClaims extends BaseTest
 
     async testStoredAdStartIsAnnouncedAndARejectedStartIsNot()
     {
-        await this.test('only a stored ad start is announced after it is saved', async () => {
+        await this.test('every processed ad start is announced with its stored or rejected result', async () => {
             let adsSetup = this.adsBuilder.createAdsSetup(false);
             await adsSetup.adsMessageActions.adStart(adsSetup.startedMessage, adsSetup.room, adsSetup.playerSchema);
             this.assert.deepStrictEqual(adsSetup.emittedEvents, ['reldens.afterAdStarted']);
             let adStartedData = [...adsSetup.emittedEventsData].pop();
             this.assert.strictEqual(adStartedData.messageData, adsSetup.startedMessage);
-            this.assert.strictEqual(adStartedData.startedAd.id, adsSetup.adId);
+            this.assert.strictEqual(adStartedData.startResult.ads_id, adsSetup.adId);
             this.assert.strictEqual(adStartedData.playerSchema, adsSetup.playerSchema);
             let claimedSetup = this.adsBuilder.createAdsSetup(false);
             this.adsBuilder.storeStartedAd(claimedSetup, AdsConst.VIDEOS_MINIMUM_DURATION * 2);
@@ -235,7 +236,21 @@ class TestAdsRewardClaims extends BaseTest
                 claimedSetup.room,
                 claimedSetup.playerSchema
             );
-            this.assert.deepStrictEqual(claimedSetup.emittedEvents, []);
+            this.assert.deepStrictEqual(claimedSetup.emittedEvents, ['reldens.afterAdStarted']);
+            this.assert.strictEqual([...claimedSetup.emittedEventsData].pop().startResult, false);
+            let brokenSetup = this.adsBuilder.createAdsSetup(false);
+            brokenSetup.adsMessageActions.adsPlayedRepository.loadOne = async () => Promise.reject({message: 'Storage.'});
+            this.assert.strictEqual(
+                await brokenSetup.adsMessageActions.adStart(
+                    brokenSetup.startedMessage,
+                    brokenSetup.room,
+                    brokenSetup.playerSchema
+                ),
+                false
+            );
+            this.assert.strictEqual([...brokenSetup.emittedEventsData].pop().startResult, false);
+            this.assert.strictEqual(brokenSetup.adsMessageActions.validate(), true);
+            this.assert.strictEqual(new AdsMessageActions({}).validate(), false);
         });
     }
 
