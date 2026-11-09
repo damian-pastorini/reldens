@@ -160,7 +160,9 @@ class TestDeathReviveNotifier extends BaseTest
             let notToldEvents = [
                 Object.assign({}, rewardEvent, {playedAd: this.otherAd}),
                 Object.assign({}, rewardEvent, {playedAd: false}),
-                Object.assign({}, rewardEvent, {playerSchema: false})
+                Object.assign({}, rewardEvent, {playerSchema: false}),
+                null,
+                {}
             ];
             for(let notToldEvent of notToldEvents){
                 this.assert.strictEqual(await notifier.onAfterGiveAdRewardItem(notToldEvent), false);
