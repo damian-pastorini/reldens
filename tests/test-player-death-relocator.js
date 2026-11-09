@@ -126,29 +126,40 @@ class TestPlayerDeathRelocator extends BaseTest
 
     async testPlayingResurrectionAdDelaysTheResolution()
     {
-        await this.test('a started resurrection ad not ended delays the death resolution to wait its reward', async () => {
-            let setup = await this.deathBuilder.createRelocatorSetup();
-            setup.playerSchema.setPrivate(this.privateDataKeys.RESURRECTION_AD_STARTED, Date.now());
-            this.assert.strictEqual(setup.relocator.isWaitingResurrectionAd(setup.playerSchema), true);
-            this.assert.strictEqual(await setup.relocator.resolveDeath(setup.event), true);
-            clearTimeout(setup.playerSchema.getPrivate(this.deathTimerKey));
-            this.assert.strictEqual(sc.hasOwn(setup.playerSchema.privateData, this.deathTimerKey), true);
-            this.assert.strictEqual(setup.revivedPlayers, 0);
-            this.assert.deepStrictEqual(setup.sceneChanges, []);
-            this.assert.strictEqual(setup.savedStats, 0);
+        await this.test('a requested ad being stored or a started ad not ended delays the resolution', async () => {
+            let keys = this.privateDataKeys;
+            let waitedCases = [
+                {[keys.RESURRECTION_AD_REQUESTED]: Date.now()},
+                {[keys.RESURRECTION_AD_REQUESTED]: Date.now(), [keys.RESURRECTION_AD_STARTED]: Date.now()}
+            ];
+            for(let privateData of waitedCases){
+                let setup = await this.deathBuilder.createRelocatorSetup();
+                Object.assign(setup.playerSchema.privateData, privateData);
+                this.assert.strictEqual(setup.relocator.isWaitingResurrectionAd(setup.playerSchema), true);
+                this.assert.strictEqual(await setup.relocator.resolveDeath(setup.event), true);
+                clearTimeout(setup.playerSchema.getPrivate(this.deathTimerKey));
+                this.assert.strictEqual(sc.hasOwn(setup.playerSchema.privateData, this.deathTimerKey), true);
+                this.assert.strictEqual(setup.revivedPlayers, 0);
+                this.assert.deepStrictEqual(setup.sceneChanges, []);
+                this.assert.strictEqual(setup.savedStats, 0);
+            }
         });
     }
 
     async testResurrectionAdWaitEndsWithTheAd()
     {
-        await this.test('the resurrection ad is not waited when it was not started, ended, failed or too long', async () => {
+        await this.test('the resurrection ad is not waited when not requested, rejected, ended, failed or too long', async () => {
             let keys = this.privateDataKeys;
             let maximumDuration = 100;
+            let now = Date.now();
+            let expired = now - maximumDuration;
             let notWaitedCases = [
-                {[keys.RESURRECTION_AD_REQUESTED]: true},
-                {[keys.RESURRECTION_AD_STARTED]: Date.now(), [keys.RESURRECTION_AD_ENDED]: true},
-                {[keys.RESURRECTION_AD_STARTED]: Date.now(), [keys.RESURRECTION_AD_FAILED]: true},
-                {[keys.RESURRECTION_AD_STARTED]: Date.now() - maximumDuration}
+                {},
+                {[keys.RESURRECTION_AD_REQUESTED]: now, [keys.RESURRECTION_AD_FAILED]: true},
+                {[keys.RESURRECTION_AD_REQUESTED]: now, [keys.RESURRECTION_AD_STARTED]: now, [keys.RESURRECTION_AD_ENDED]: true},
+                {[keys.RESURRECTION_AD_REQUESTED]: now, [keys.RESURRECTION_AD_STARTED]: now, [keys.RESURRECTION_AD_FAILED]: true},
+                {[keys.RESURRECTION_AD_REQUESTED]: expired},
+                {[keys.RESURRECTION_AD_REQUESTED]: expired, [keys.RESURRECTION_AD_STARTED]: expired}
             ];
             for(let privateData of notWaitedCases){
                 let setup = await this.deathBuilder.createRelocatorSetup(
