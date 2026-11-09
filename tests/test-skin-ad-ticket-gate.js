@@ -26,7 +26,7 @@ class TestSkinAdTicketGate extends BaseTest
 
     createGate(configValues = {})
     {
-        return new SkinAdTicketGate({
+        let gate = new SkinAdTicketGate({
             config: GameplayPlayerBuilder.createConfig(Object.assign({
                 [UsersConst.SKINS.CONFIG_PATHS.ADS_KEY]: 'skin-ad-ticket',
                 [UsersConst.SKINS.CONFIG_PATHS.AD_TICKET_ITEM_KEY]: this.ticketItemKey,
@@ -36,6 +36,8 @@ class TestSkinAdTicketGate extends BaseTest
                 }
             }, configValues))
         });
+        gate.loadConfig();
+        return gate;
     }
 
     createEvent(messageData, ticketQty)
