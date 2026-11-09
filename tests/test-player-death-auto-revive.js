@@ -234,13 +234,49 @@ class TestPlayerDeathAutoRevive extends BaseTest
     {
         await this.test('auto revive and auto consume are enabled when missing and follow the config', async () => {
             let defaultRelocator = (await this.deathBuilder.createRelocatorSetup()).relocator;
-            this.assert.strictEqual(defaultRelocator.isAutoReviveEnabled(), true);
-            this.assert.strictEqual(defaultRelocator.isAutoConsumeEnabled(), true);
+            this.assert.strictEqual(defaultRelocator.autoReviveEnabled, true);
+            this.assert.strictEqual(defaultRelocator.autoConsumeEnabled, true);
             let disabledRelocator = (await this.deathBuilder.createRelocatorSetup(
                 Object.assign({[this.paths.AUTO_CONSUME_RESTORATION_ITEM]: false}, this.manualRevive)
             )).relocator;
-            this.assert.strictEqual(disabledRelocator.isAutoReviveEnabled(), false);
-            this.assert.strictEqual(disabledRelocator.isAutoConsumeEnabled(), false);
+            this.assert.strictEqual(disabledRelocator.autoReviveEnabled, false);
+            this.assert.strictEqual(disabledRelocator.autoConsumeEnabled, false);
+        });
+    }
+
+    async testDeathConfigIsReadOnce()
+    {
+        await this.test('a player death uses the loaded config values until the config is loaded again', async () => {
+            let setup = await this.deathBuilder.createRelocatorSetup({
+                [this.paths.AUTO_REVIVE]: true,
+                [this.paths.AUTO_CONSUME_RESTORATION_ITEM]: true
+            }, {restorationQty: 1});
+            let deathConfig = setup.relocator.config.server.players.death;
+            deathConfig.autoRevive = false;
+            deathConfig.autoConsumeRestorationItem = false;
+            deathConfig.restorationItemKey = 'other-item';
+            this.deathBuilder.startDeath(setup);
+            this.assert.strictEqual(setup.relocator.autoReviveEnabled, true);
+            this.assert.strictEqual(setup.relocator.autoConsumeEnabled, true);
+            this.assert.strictEqual(
+                setup.relocator.findRestorationItem(setup.playerSchema).key,
+                this.deathBuilder.restorationItemKey
+            );
+            setup.relocator.loadConfig();
+            this.assert.strictEqual(setup.relocator.autoReviveEnabled, false);
+            this.assert.strictEqual(setup.relocator.autoConsumeEnabled, false);
+            this.assert.strictEqual(setup.relocator.findRestorationItem(setup.playerSchema), false);
+        });
+    }
+
+    async testReviveInTownWithoutEventData()
+    {
+        await this.test('the town revive does nothing without an event or its player', async () => {
+            let setup = await this.deathBuilder.createRelocatorSetup();
+            for(let emptyEvent of [null, {}]){
+                this.assert.strictEqual(await setup.relocator.reviveInTown(emptyEvent), false);
+            }
+            this.assert.deepStrictEqual(setup.sceneChanges, []);
         });
     }
 
