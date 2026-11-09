@@ -53,9 +53,9 @@ Flags accepted by `tests/e2e/run-tests.js`:
   on a sprite right after a placement waits for the same still camera in every run (the camera follows the player with
   a slow interpolation, so a click computed while it pans misses the sprite)
 - `--filter=<text>` - passed to Playwright as a quoted `--grep`, so a filter with spaces works (`"--filter=Combat System"`),
-  with `--no-deps`, so filtering a spec of the exclusive group does not run the other groups first; for the same
-  reason a filter that matches specs of the exclusive group and of another group runs both at the same time, and the
-  exclusive specs reset and disable the enemies of every room, so run them in two separate filtered runs
+  with `--no-deps`, so filtering a spec of the exclusive group does not run the other groups first, and with
+  `--workers=1`, so a filter that matches specs of several groups runs them one at a time and the exclusive specs,
+  which reset and disable the enemies of every room, never run at the same time as another group
 - `--port=<port>` - overrides the port from `tests/config.json`; when the port is busy the runner logs a warning and
   tries the next one, up to 5 ports, and stops with a critical log when all of them are busy
 - `--clean-output` - removes `test-results/` before the run
