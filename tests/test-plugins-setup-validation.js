@@ -20,7 +20,10 @@ class TestPluginsSetupValidation extends BaseTest
     {
         super(config);
         this.adsPlayedRepository = {loadOne: async (filters) => filters};
-        this.deathEvents = [
+        this.configRequiredEvents = [
+            'reldens.beforeSuperInitialGameData',
+            'reldens.createdPlayerSchema',
+            'reldens.createdNewPlayer',
             'reldens.playerDeath',
             'reldens.playerReviveReady',
             'reldens.afterGiveAdRewardItem',
@@ -29,10 +32,7 @@ class TestPluginsSetupValidation extends BaseTest
             'reldens.beforeSceneExecuteMessages'
         ];
         this.actionsEvents = [
-            'reldens.beforeSuperInitialGameData',
             'reldens.roomsMessageActionsByRoom',
-            'reldens.createdPlayerSchema',
-            'reldens.createdNewPlayer',
             'reldens.sceneRoomOnCreate',
             'reldens.onRoomDispose'
         ];
@@ -75,16 +75,16 @@ class TestPluginsSetupValidation extends BaseTest
 
     async testActionsPluginWithoutConfig()
     {
-        await this.test('the actions plugin attaches no death listener without its config', async () => {
+        await this.test('the actions plugin attaches no config required listener without its config', async () => {
             let props = this.createProps();
             let plugin = new ActionsPlugin();
             plugin.events = props.events;
             plugin.listenEvents();
-            this.assertListened(props.listenedEvents, this.deathEvents, 0);
+            this.assertListened(props.listenedEvents, this.configRequiredEvents, 0);
             this.assertListened(props.listenedEvents, this.actionsEvents, 1);
             this.assertListened(props.listenedEvents, ['reldens.serverReady'], 1);
-            this.assert.strictEqual(plugin.listenDeathEvents(), false);
-            this.assertListened(props.listenedEvents, this.deathEvents, 0);
+            this.assert.strictEqual(plugin.listenConfigRequiredEvents(), false);
+            this.assertListened(props.listenedEvents, this.configRequiredEvents, 0);
         });
     }
 
@@ -96,7 +96,7 @@ class TestPluginsSetupValidation extends BaseTest
             let plugin = new ActionsPlugin();
             plugin.setup(props);
             this.assert.strictEqual(plugin.dataServer, false);
-            this.assertListened(props.listenedEvents, this.deathEvents, 1);
+            this.assertListened(props.listenedEvents, this.configRequiredEvents, 1);
             this.assertListened(props.listenedEvents, this.actionsEvents, 1);
         });
     }
@@ -107,11 +107,17 @@ class TestPluginsSetupValidation extends BaseTest
             let props = this.createProps();
             let plugin = new ActionsPlugin();
             plugin.setup(props);
-            this.assertListened(props.listenedEvents, this.deathEvents, 1);
+            this.assertListened(props.listenedEvents, this.configRequiredEvents, 1);
             this.assertListened(props.listenedEvents, this.actionsEvents, 1);
             this.assertListened(props.listenedEvents, ['reldens.serverReady'], 2);
             this.assert.strictEqual(plugin.playerDeathRelocator.config, props.config);
             this.assert.strictEqual(plugin.resurrectionAdGate.config, props.config);
+            this.assert.strictEqual(plugin.resurrectionAdGate.playerDeathRelocator, plugin.playerDeathRelocator);
+            this.assert.strictEqual(plugin.playerDeathRelocator.autoReviveEnabled, false);
+            await props.listenedEvents['reldens.serverReady'][1]({
+                serverManager: {roomsManager: {loadRoomById: async () => false}}
+            });
+            this.assert.strictEqual(plugin.playerDeathRelocator.autoReviveEnabled, true);
             this.assert.strictEqual(plugin.deathReviveNotifier.playerDeathRelocator, plugin.playerDeathRelocator);
             this.assert.strictEqual(plugin.deathReviveRequests.deathReviveNotifier, plugin.deathReviveNotifier);
         });
