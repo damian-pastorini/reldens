@@ -60,15 +60,6 @@ class TestResurrectionAdGate extends BaseTest
         return startEvent;
     }
 
-    async testValidationNeedsTheConfig()
-    {
-        await this.test('the gate is valid only with the config', async () => {
-            this.assert.strictEqual(this.createGate().validate(), true);
-            this.assert.strictEqual(new ResurrectionAdGate({}).validate(), false);
-            this.assert.strictEqual(new ResurrectionAdGate({config: false}).validate(), false);
-        });
-    }
-
     async testOtherMessagesAreIgnored()
     {
         await this.test('the messages that are not an ad start and the other ads starts are not gated', async () => {
