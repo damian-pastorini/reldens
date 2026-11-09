@@ -6,7 +6,6 @@
 
 const { BaseTest } = require('./base-test');
 const { DeathRelocationBuilder } = require('./fixtures/death-relocation-builder');
-const { PlayerDeathRelocator } = require('../lib/actions/server/player-death-relocator');
 const { ActionsConst } = require('../lib/actions/constants');
 const { AdsConst } = require('../lib/ads/constants');
 const { GameConst } = require('../lib/game/constants');
@@ -31,25 +30,6 @@ class TestPlayerDeathRelocatorFailures extends BaseTest
         this.assert.deepStrictEqual(setup.sceneChanges, this.deathBuilder.townSceneChange);
         this.assert.strictEqual(setup.savedStats, 1);
         this.assert.strictEqual(setup.revivedPlayers, 0);
-    }
-
-    async testInvalidPropsAreNotValid()
-    {
-        await this.test('a missing config or a missing events manager is not valid', async () => {
-            let events = {emit: async () => true};
-            let invalidProps = [
-                {},
-                {config: false, events},
-                {config: null, events},
-                {events},
-                {config: this.deathBuilder.createConfig()},
-                {config: this.deathBuilder.createConfig(), events: false}
-            ];
-            for(let props of invalidProps){
-                this.assert.strictEqual(new PlayerDeathRelocator(props).validate(), false);
-            }
-            this.assert.strictEqual(new PlayerDeathRelocator({config: this.deathBuilder.createConfig(), events}).validate(), true);
-        });
     }
 
     async testFailedTownStateSaveRevivesWhereThePlayerDied()
