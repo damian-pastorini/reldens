@@ -56,7 +56,7 @@ class AdsRewardClaimsBuilder
             },
             updateById: async (recordId, newAdData) => Object.assign(adsSetup.storedRecords[recordId], newAdData)
         };
-        adsSetup.adsMessageActions = new AdsMessageActions({dataServer: {getEntity: () => repository}});
+        adsSetup.adsMessageActions = new AdsMessageActions({adsPlayedRepository: repository});
         adsSetup.adsMessageActions.giveRewardAction = {
             execute: async (playerSchema, itemKey) => adsSetup.givenRewards.push(itemKey)
         };
