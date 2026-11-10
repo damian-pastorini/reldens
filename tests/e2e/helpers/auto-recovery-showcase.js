@@ -67,6 +67,11 @@ class AutoRecoveryShowcase
         if(!longRun){
             return false;
         }
+        return await AutoRecoveryShowcase.requestTicksRestart(gameConfig, roomName);
+    }
+
+    static async requestTicksRestart(gameConfig, roomName)
+    {
         let ticks = await SecurityApi.request(
             gameConfig,
             'POST',
