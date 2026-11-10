@@ -24,8 +24,8 @@ const { BaseE2eTest } = require('./base-e2e-test');
 const { DeathReviveSteps } = require('./helpers/death-revive-steps');
 const { DeathReviveShowcase } = require('./helpers/death-revive-showcase');
 const { LongRunShowcase } = require('./helpers/long-run-showcase');
-const { AdMessagesPlayer } = require('./helpers/ad-messages-player');
-const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
+const { DeathResurrectionAdSteps } = require('./helpers/death-resurrection-ad-steps');
+const { SceneSpritesRecorder } = require('./helpers/scene-sprites-recorder');
 const { TestCombatDeath } = require('./helpers/test-combat-death');
 const { GameplayE2eStateApi } = require('./helpers/gameplay-e2e-state-api');
 const { RoomObjectsApi } = require('./helpers/room-objects-api');
@@ -66,64 +66,15 @@ class TestDeathTeleport
 
     static async runResurrectionAdTest(context)
     {
-        let resurrectionAd = await AdMessagesPlayer.enableAd(
-            context.gameConfig,
-            context.e2eGroup,
-            await E2eSeedAndRestoreApi.fetchConfigValue(
-                context.gameConfig,
-                ActionsConst.DEATH.CONFIG_PATHS.RESURRECTION_ADS_KEY
-            ),
-            context.gameConfig.e2ePlayerName
-        );
-        let restorationItemKey = await DeathReviveSteps.prepareDeath(
+        await DeathResurrectionAdSteps.playAdAndExpectRevivedInForest(
             context,
-            {},
-            DeathReviveSteps.LONG_RUN_ASKED_ITEM_TIME_OUT
-            + resurrectionAd.minimumDurationMs
-            + AdMessagesPlayer.PLAY_MARGIN_MS
+            await DeathResurrectionAdSteps.killWithResurrectionAd(context, {}, 0)
         );
-        let placement = await DeathReviveSteps.enterForest(context, true);
-        let adTimeout = TimeConstants.forLongRun(TimeConstants.UI_OPEN, context.longRun);
-        await AdMessagesPlayer.waitForProviderReady(context.page, adTimeout);
-        await DeathReviveSteps.killPlayerInForest(
-            context,
-            placement,
-            'The player died: the game over box offers the resurrection ad'
-        );
-        await DeathReviveSteps.expectTownGameOverMessage(context, 1);
-        await expect(
-            context.page.locator(AdMessagesPlayer.AD_OVERLAY_SELECTOR),
-            'The resurrection ad must not play before the player asks for it'
-        ).toHaveCount(0);
-        await expect(context.page.locator(Selectors.gameOver.resurrectionAdButton)).toHaveText(
-            DeathReviveSteps.DEATH_SNIPPETS.resurrectionAdButton
-        );
-        await DeathReviveShowcase.clickButton(context, Selectors.gameOver.resurrectionAdButton);
-        await DeathReviveShowcase.showStep(context, 'The ad plays: its reward is the '+context.reviveLabels.itemLabel);
-        await AdMessagesPlayer.waitForPlayedAd(context.page, resurrectionAd, adTimeout);
-        await DeathReviveShowcase.expectShownItem(context, restorationItemKey);
-        await DeathReviveShowcase.showStep(
-            context,
-            'The ad gave the '+context.reviveLabels.itemLabel+': it revives the player where it died'
-        );
-        await DeathReviveSteps.expectRevivedInForest(context, restorationItemKey);
-    }
-
-    static async killPlayerAskedForTheItem(context, configValues)
-    {
-        let restorationItemKey = await DeathReviveSteps.killPlayerWithRestorationItem(
-            context,
-            Object.assign({}, DeathReviveSteps.ASKED_ITEM_CONFIG, configValues),
-            DeathReviveSteps.LONG_RUN_ASKED_ITEM_TIME_OUT,
-            reviveLabels => 'The player died: the game over box asks to use or keep the '+reviveLabels.itemLabel
-        );
-        await DeathReviveSteps.expectRestorationItemQuestion(context, restorationItemKey);
-        return restorationItemKey;
     }
 
     static async runUsedRestorationItemTest(context)
     {
-        let restorationItemKey = await TestDeathTeleport.killPlayerAskedForTheItem(context, {});
+        let restorationItemKey = await DeathReviveSteps.killPlayerAskedForTheItem(context, {});
         await DeathReviveShowcase.showStep(
             context,
             'The player chooses to use the '+context.reviveLabels.itemLabel+': it revives where it died'
@@ -134,7 +85,7 @@ class TestDeathTeleport
 
     static async runKeptRestorationItemTest(context)
     {
-        let restorationItemKey = await TestDeathTeleport.killPlayerAskedForTheItem(context, {});
+        let restorationItemKey = await DeathReviveSteps.killPlayerAskedForTheItem(context, {});
         await DeathReviveShowcase.showStep(
             context,
             'The player keeps the '+context.reviveLabels.itemLabel+': it revives in '
@@ -179,7 +130,7 @@ class TestDeathTeleport
 
     static async runManualReviveWithRestorationItemTest(context)
     {
-        let restorationItemKey = await TestDeathTeleport.killPlayerAskedForTheItem(
+        let restorationItemKey = await DeathReviveSteps.killPlayerAskedForTheItem(
             context,
             DeathReviveSteps.MANUAL_REVIVE_CONFIG
         );
@@ -193,15 +144,6 @@ class TestDeathTeleport
         await DeathReviveSteps.expectItemReviveMessage(context, restorationItemKey);
         await DeathReviveSteps.requestReviveInForest(context);
         await DeathReviveSteps.expectItemConsumedInForest(context, restorationItemKey);
-    }
-
-    static fetchSecondPlayerConfig(gameConfig)
-    {
-        return Object.assign({}, gameConfig, {
-            e2eUsername: gameConfig.e2eUsername2,
-            e2ePassword: gameConfig.e2ePassword2 || gameConfig.e2ePassword,
-            e2ePlayerName: gameConfig.e2ePlayerName2
-        });
     }
 
     static async killBothPlayersInForest(context, secondPlayerConfig)
@@ -244,15 +186,6 @@ class TestDeathTeleport
         );
     }
 
-    static waitForShownPlayer(page, playerId)
-    {
-        return page.waitForFunction(
-            (shownPlayerId) => window.reldens.getCurrentPlayer().players[shownPlayerId].visible,
-            playerId,
-            {timeout: TimeConstants.PLAYER_REVIVE}
-        );
-    }
-
     static async revivePlayerAndExpectEveryClient(revivedPage, otherPage)
     {
         let animationsPlayed = Promise.all([
@@ -265,16 +198,17 @@ class TestDeathTeleport
             await TestCombatDeath.waitForPlayerHpCondition(revivedPage, 'alive', TimeConstants.PLAYER_REVIVE),
             'The revived player game over box must close and its life must be restored'
         ).toBe(true);
-        await TestDeathTeleport.waitForShownPlayer(
+        await SceneSpritesRecorder.waitForShownPlayer(
             otherPage,
-            await revivedPage.evaluate(() => window.reldens.getCurrentPlayer().playerId)
+            await revivedPage.evaluate(() => window.reldens.getCurrentPlayer().playerId),
+            TimeConstants.PLAYER_REVIVE
         );
     }
 
     static async runOnlyRevivedPlayerBoxClosesTest(context)
     {
         let gameConfig = context.gameConfig;
-        let secondPlayerConfig = TestDeathTeleport.fetchSecondPlayerConfig(gameConfig);
+        let secondPlayerConfig = Login.fetchSecondPlayerConfig(gameConfig);
         await TestDeathTeleport.killBothPlayersInForest(context, secondPlayerConfig);
         let reviveTimeout = {timeout: TimeConstants.PLAYER_REVIVE};
         await expect(context.page.locator(Selectors.gameOver.reviveButton)).toBeVisible(reviveTimeout);
