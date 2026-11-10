@@ -6,7 +6,8 @@
  * (dead, disabled or active), the enemy body life set and read, and the scores period reset check on a given date; and
  * by LiveObjectsOverrides: a property of the live enemies of a key changed or removed, a teleport NPC option added with
  * its destination, the next calls of a room method made to reject with the failures done read back, and the restore of
- * every live object change of a group; and by CombatE2eState: the live player and
+ * every live object change of a group; by FeaturePropertiesOverrides: a property of a live feature object changed by
+ * its path in the features list; and by CombatE2eState: the live player and
  * enemy stats, the player skill properties and snapshot, and the recorded damages and end states of the player skills.
  *
  */
@@ -196,6 +197,16 @@ class GameplayE2eStateApi
             'POST',
             '/api/e2e/live-objects/body-property',
             {group, roomName, bodyOwner, propertyKey, value}
+        );
+    }
+
+    static async changeFeatureProperty(gameConfig, group, featurePath, propertyKey, value)
+    {
+        return await SecurityApi.request(
+            gameConfig,
+            'POST',
+            '/api/e2e/live-objects/feature-property',
+            {group, featurePath, propertyKey, value}
         );
     }
 
