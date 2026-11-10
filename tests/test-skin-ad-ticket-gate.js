@@ -53,8 +53,11 @@ class TestSkinAdTicketGate extends BaseTest
 
     createRewardEvent(playedAdKey, ticketQty)
     {
-        let event = this.createEvent({}, ticketQty);
-        return {playedAd: {key: playedAdKey}, playerSchema: event.playerSchema, continueEvent: true};
+        return {
+            playedAd: {key: playedAdKey},
+            playerSchema: this.createEvent({}, ticketQty).playerSchema,
+            continueEvent: true
+        };
     }
 
     async testTicketUseRequestsTheSkinAd()
@@ -133,32 +136,112 @@ class TestSkinAdTicketGate extends BaseTest
         });
     }
 
-    async testSkinAdRewardKeepsTheTicketUntilItWasGiven()
+    createAdEndedEvent(rewardEvent, claimResult, adId = this.skinAdId)
     {
-        await this.test('the ticket is kept before the skin ad reward and one is consumed after it was given', async () => {
+        return {
+            messageData: {act: AdsConst.ACTIONS.AD_ENDED, ads_id: adId},
+            playerSchema: rewardEvent.playerSchema,
+            claimResult
+        };
+    }
+
+    async testSkinAdRewardReservesTheTicketBeforeItIsGiven()
+    {
+        await this.test('the ticket is removed before the reward and stays removed once the reward was given', async () => {
             let gate = this.createGate();
             let rewardEvent = this.createRewardEvent('skin-ad-ticket', 2);
             let inventoryManager = rewardEvent.playerSchema.inventory.manager;
             this.assert.strictEqual(await gate.onBeforeGiveAdRewardItem(rewardEvent), true);
             this.assert.strictEqual(rewardEvent.continueEvent, true);
-            this.assert.deepStrictEqual(inventoryManager.decreasedItems, []);
-            this.assert.strictEqual(inventoryManager.items[this.ticketItemKey].qty, 2);
-            this.assert.strictEqual(await gate.onAfterGiveAdRewardItem(rewardEvent), true);
             this.assert.deepStrictEqual(inventoryManager.decreasedItems, [{inventoryId: this.ticketItemKey, qty: 1}]);
+            this.assert.strictEqual(inventoryManager.items[this.ticketItemKey].qty, 1);
+            this.assert.strictEqual(await gate.onAfterAdEnded(this.createAdEndedEvent(rewardEvent, {id: 1})), false);
+            this.assert.deepStrictEqual(inventoryManager.increasedItems, []);
+            this.assert.strictEqual(inventoryManager.items[this.ticketItemKey].qty, 1);
+            this.assert.strictEqual(await gate.onAfterAdEnded(this.createAdEndedEvent(rewardEvent, false)), false);
+            this.assert.deepStrictEqual(inventoryManager.increasedItems, []);
+        });
+    }
+
+    async testRefusedReservationCancelsTheReward()
+    {
+        await this.test('a ticket the locked inventory refuses to remove cancels the reward and gives nothing back', async () => {
+            let gate = this.createGate();
+            let rewardEvent = this.createRewardEvent('skin-ad-ticket', 1);
+            let inventoryManager = rewardEvent.playerSchema.inventory.manager;
+            inventoryManager.decreaseItemQty = async () => false;
+            this.assert.strictEqual(await gate.onBeforeGiveAdRewardItem(rewardEvent), false);
+            this.assert.strictEqual(rewardEvent.continueEvent, false);
+            this.assert.strictEqual(await gate.onAfterAdEnded(this.createAdEndedEvent(rewardEvent, false)), false);
+            this.assert.deepStrictEqual(inventoryManager.increasedItems, []);
             this.assert.strictEqual(inventoryManager.items[this.ticketItemKey].qty, 1);
         });
     }
 
-    async testGivenRewardOfOtherAdOrWithoutTicketConsumesNothing()
+    async testFailedRewardGivesTheTicketBack()
     {
-        await this.test('a given reward of another ad or without a ticket consumes nothing', async () => {
+        await this.test('a failed reward gives the reserved ticket back to its stack only once', async () => {
             let gate = this.createGate();
-            let otherAdEvent = this.createRewardEvent('other-video', 1);
-            this.assert.strictEqual(await gate.onAfterGiveAdRewardItem(otherAdEvent), false);
-            this.assert.deepStrictEqual(otherAdEvent.playerSchema.inventory.manager.decreasedItems, []);
-            let withoutTicketEvent = this.createRewardEvent('skin-ad-ticket', -1);
-            this.assert.strictEqual(await gate.onAfterGiveAdRewardItem(withoutTicketEvent), false);
-            this.assert.deepStrictEqual(withoutTicketEvent.playerSchema.inventory.manager.decreasedItems, []);
+            let rewardEvent = this.createRewardEvent('skin-ad-ticket', 2);
+            let inventoryManager = rewardEvent.playerSchema.inventory.manager;
+            await gate.onBeforeGiveAdRewardItem(rewardEvent);
+            this.assert.strictEqual(await gate.onAfterAdEnded(this.createAdEndedEvent(rewardEvent, false)), true);
+            this.assert.deepStrictEqual(inventoryManager.increasedItems, [{inventoryId: this.ticketItemKey, qty: 1}]);
+            this.assert.strictEqual(inventoryManager.items[this.ticketItemKey].qty, 2);
+            this.assert.strictEqual(await gate.onAfterAdEnded(this.createAdEndedEvent(rewardEvent, false)), false);
+            this.assert.strictEqual(inventoryManager.increasedItems.length, 1);
+        });
+    }
+
+    async testFailedRewardRecreatesTheRemovedLastTicket()
+    {
+        await this.test('a failed reward creates the ticket again when the last one left the inventory', async () => {
+            let gate = this.createGate();
+            let givenItems = [];
+            gate.giveRewardAction = {
+                execute: async (playerSchema, itemKey, qty) => {
+                    givenItems.push({playerSchema, itemKey, qty});
+                    return {key: itemKey};
+                }
+            };
+            let rewardEvent = this.createRewardEvent('skin-ad-ticket', 1);
+            let inventoryManager = rewardEvent.playerSchema.inventory.manager;
+            await gate.onBeforeGiveAdRewardItem(rewardEvent);
+            delete inventoryManager.items[this.ticketItemKey];
+            this.assert.strictEqual(await gate.onAfterAdEnded(this.createAdEndedEvent(rewardEvent, false)), true);
+            this.assert.deepStrictEqual(
+                givenItems,
+                [{playerSchema: rewardEvent.playerSchema, itemKey: this.ticketItemKey, qty: 1}]
+            );
+            this.assert.deepStrictEqual(inventoryManager.increasedItems, []);
+        });
+    }
+
+    async testRefusedOrRejectedTicketReleaseIsCaught()
+    {
+        await this.test('a refused or rejected ticket release returns false and never throws', async () => {
+            let gate = this.createGate();
+            for(let increaseItemQty of [async () => false, async () => Promise.reject({message: 'Storage.'})]){
+                let rewardEvent = this.createRewardEvent('skin-ad-ticket', 2);
+                await gate.onBeforeGiveAdRewardItem(rewardEvent);
+                rewardEvent.playerSchema.inventory.manager.increaseItemQty = increaseItemQty;
+                this.assert.strictEqual(await gate.onAfterAdEnded(this.createAdEndedEvent(rewardEvent, false)), false);
+            }
+        });
+    }
+
+    async testOtherAdEndedDoesNotReleaseTheReservedTicket()
+    {
+        await this.test('another ad that ends without reward does not give back the reserved skin ticket', async () => {
+            let gate = this.createGate();
+            let rewardEvent = this.createRewardEvent('skin-ad-ticket', 2);
+            let inventoryManager = rewardEvent.playerSchema.inventory.manager;
+            await gate.onBeforeGiveAdRewardItem(rewardEvent);
+            let otherAdEvent = this.createAdEndedEvent(rewardEvent, false, this.otherAdId);
+            this.assert.strictEqual(await gate.onAfterAdEnded(otherAdEvent), false);
+            this.assert.deepStrictEqual(inventoryManager.increasedItems, []);
+            this.assert.strictEqual(await gate.onAfterAdEnded(this.createAdEndedEvent(rewardEvent, false)), true);
+            this.assert.strictEqual(inventoryManager.increasedItems.length, 1);
         });
     }
 
