@@ -15,12 +15,18 @@ const { TimeConstants } = require('./helpers/time-constants');
 const { FileHandler } = require('@reldens/server-utils');
 const { Logger, sc } = require('@reldens/utils');
 const { TestCombatDeath } = require('./helpers/test-combat-death');
+const { CombatSkillCasting } = require('./helpers/combat-skill-casting');
+const { GameplayE2eStateApi } = require('./helpers/gameplay-e2e-state-api');
+const { SceneSpritesRecorder } = require('./helpers/scene-sprites-recorder');
 const { Selectors } = require('./selectors');
+const { ActionsConst } = require('../../lib/actions/constants');
+const { ModifierConst } = require('@reldens/modifiers');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
 
 class TestCombat
 {
+    static DIRECT_ATTACK_KEY = 'attackShort';
     static gameDataPath = FileHandler.joinPaths(process.cwd(), 'tests', 'e2e', 'game-data.json');
     static gameData = FileHandler.exists(TestCombat.gameDataPath) ? FileHandler.fetchFileJson(TestCombat.gameDataPath) : null;
     static rootPlayerData = TestCombat.gameData && TestCombat.gameData.players && TestCombat.gameData.players.root
@@ -127,16 +133,48 @@ class TestCombat
         await screenshots.capture(page, prefix+'-'+skill.key+'-damage-in-chat');
     }
 
-    static async runEffectSkillTest(page, screenshots, gameConfig, longRun, skill, prefix, buttonLabel)
+    static async runEffectSkillTest(page, screenshots, gameConfig, e2eGroup, longRun, skill, prefix)
     {
-        let data = await TestCombat.prepareSkillCastContext(page, screenshots, gameConfig, longRun, skill, prefix);
-        let skillButton = page.locator(Selectors.combat.skillButton(skill.key));
-        await expect(skillButton, buttonLabel+' skill button must be present in HUD').toBeVisible(
-            { timeout: TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun) }
+        let context = await CombatSkillCasting.prepareEnemyTarget(page, gameConfig, longRun);
+        let targetEffect = await CombatSkillCasting.loadSkillRow(gameConfig, 'skillsSkillTargetEffects', skill.key);
+        let effectValue = Number(targetEffect.value);
+        let statKey = targetEffect.property_key.split('/').pop();
+        expect(Number(targetEffect.operation), 'The effect increases the property').toBe(ModifierConst.OPS.INC);
+        expect(targetEffect.maxProperty, 'The effect stops at the base value').toBe('statsBase/'+statKey);
+        let baseValue = (await GameplayE2eStateApi.fetchPlayer(gameConfig, context.roomName, context.playerName))
+            .statsBase[statKey];
+        await CombatSkillCasting.changeSkill(context, e2eGroup, skill.key, {criticalChance: 0});
+        await CombatSkillCasting.targetSelf(page);
+        await CombatSkillCasting.setPlayerStats(context, {[statKey]: baseValue - effectValue * 2});
+        await CombatSkillCasting.clickWhenReady(page, context, skill.key);
+        await CombatSkillCasting.waitForEndStates(context, skill.key, 1);
+        expect(await CombatSkillCasting.fetchPlayerStat(context, statKey), 'Raised by the stored value').toBe(
+            baseValue - effectValue
         );
-        await page.click(Selectors.combat.skillButton(skill.key), { force: true });
-        await page.waitForTimeout(2000 + data.pauseMs);
-        await screenshots.capture(page, prefix+'-'+skill.key+'-cast-completed');
+        await CombatSkillCasting.setPlayerStats(context, {[statKey]: baseValue - 1});
+        await CombatSkillCasting.clickWhenReady(page, context, skill.key);
+        await CombatSkillCasting.waitForEndStates(context, skill.key, 2);
+        expect(await CombatSkillCasting.fetchPlayerStat(context, statKey), 'Stops at the base value').toBe(baseValue);
+        await screenshots.capture(page, prefix+'-'+skill.key+'-applied');
+    }
+
+    static async runAttackSpritesTest(page, screenshots, gameConfig, e2eGroup, longRun)
+    {
+        let context = await CombatSkillCasting.prepareEnemyTarget(page, gameConfig, longRun);
+        let attackKey = TestCombat.DIRECT_ATTACK_KEY;
+        await CombatSkillCasting.changeSkill(context, e2eGroup, attackKey, {criticalChance: 0, range: 0});
+        await SceneSpritesRecorder.start(page);
+        await CombatSkillCasting.castSkill(page, context, attackKey, 1);
+        let ownerAnimationKey = 'default'+ActionsConst.ACTIONS.SUFFIX.ATTACK;
+        let addedTextures = await SceneSpritesRecorder.waitForTextures(
+            page,
+            [ownerAnimationKey, ActionsConst.DEFAULT_HIT_ANIMATION_KEY],
+            context.timeout
+        );
+        expect(addedTextures.filter(textureKey => ownerAnimationKey === textureKey), 'One attack sprite').toHaveLength(
+            1
+        );
+        await screenshots.capture(page, 'attack-and-hit-sprites');
     }
 
     static async resolveAttackKey(page, firstAttackSkill, context)
@@ -171,32 +209,8 @@ class TestCombat
                 );
                 await screenshots.capture(page, 'damage-message-in-chat');
             });
-            test('canvas changes visually after attacking enemy', async ({ page, screenshots, gameConfig, longRun }) => {
-                let data = await TestCombat.loginAndGetEnemyWithWorldPos(page, gameConfig, longRun);
-                let firstAttackSkill = TestCombat.attackSkills[0];
-                await TestCombat.placeAndTargetEnemy(page, gameConfig, data);
-                let resolvedAttackKey = await TestCombat.resolveAttackKey(page, firstAttackSkill, 'for canvas test');
-                await page.waitForSelector(
-                    Selectors.combat.skillButton(resolvedAttackKey),
-                    { state: 'visible', timeout: TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun) }
-                );
-                let hashBefore = await Phaser.getCanvasPixelHash(page);
-                await screenshots.capture(page, 'canvas-before-attack');
-                let isGameOver = await page.evaluate(() => null !== document.querySelector('#game-over:not(.hidden)'));
-                if(isGameOver){
-                    await TestCombatDeath.waitForPlayerHpCondition(page, 'alive', data.sceneLoadTimeout);
-                    await page.waitForSelector(
-                        Selectors.combat.skillButton(resolvedAttackKey),
-                        { state: 'visible', timeout: TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun) }
-                    );
-                    await TestCombat.placeAndTargetEnemy(page, gameConfig, data);
-                    hashBefore = await Phaser.getCanvasPixelHash(page);
-                }
-                await page.click(Selectors.combat.skillButton(resolvedAttackKey), { force: true });
-                await page.waitForTimeout(TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun));
-                let hashAfter = await Phaser.getCanvasPixelHash(page);
-                expect(hashBefore).not.toBe(hashAfter);
-                await screenshots.capture(page, 'canvas-after-attack');
+            test('own client plays the attack sprite on the owner and the hit sprite on the target', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
+                await TestCombat.runAttackSpritesTest(page, screenshots, gameConfig, e2eGroup, longRun);
             });
             test('player dies from enemy and revives after timeout', async ({ page, screenshots, gameConfig, longRun }) => {
                 test.setTimeout(
@@ -223,13 +237,13 @@ class TestCombat
                 });
             }
             for(let skill of TestCombat.skillsByType.effect) {
-                test('combat skill (effect) - '+skill.key+' applies effect on cast', async ({ page, screenshots, gameConfig, longRun }) => {
-                    await TestCombat.runEffectSkillTest(page, screenshots, gameConfig, longRun, skill, 'effect', 'Effect');
+                test('combat skill (effect) - '+skill.key+' applies effect on cast', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
+                    await TestCombat.runEffectSkillTest(page, screenshots, gameConfig, e2eGroup, longRun, skill, 'effect');
                 });
             }
             for(let skill of TestCombat.skillsByType.physicalEffect) {
-                test('combat skill (physical effect) - '+skill.key+' applies effect on cast', async ({ page, screenshots, gameConfig, longRun }) => {
-                    await TestCombat.runEffectSkillTest(page, screenshots, gameConfig, longRun, skill, 'physical-effect', 'Physical effect');
+                test('combat skill (physical effect) - '+skill.key+' applies effect on cast', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
+                    await TestCombat.runEffectSkillTest(page, screenshots, gameConfig, e2eGroup, longRun, skill, 'physical-effect');
                 });
             }
         });
