@@ -50,7 +50,8 @@ class Selectors
             deleteTopButton: '.actions .form-delete [type="submit"]',
             dialogConfirm: '.confirm-dialog .dialog-confirm',
             accountMenu: '.user-area .side-bar-item-header',
-            logoutLink: '.logout-link'
+            logoutLink: '.logout-link',
+            shuttingDownTime: '.shutting-down-time'
         };
     }
 
@@ -105,6 +106,7 @@ class Selectors
         this.hud = {
             chatOpen: '#chat-open',
             logout: '#logout',
+            playerBoxName: '.ui-box-player .player-name',
             up: '#up',
             settingsOpen: '#settings-open',
             settingsClose: '#settings-close',
@@ -199,6 +201,7 @@ class Selectors
             tableRows: '.scores-table .score-container',
             rowPlayerName: '.score-player-name',
             rowValue: '.score-value',
+            myScore: '.scores-dialog-box .current-player-score-data',
             pagerLink: '.pager-page a',
             currentPage: '.pager-page-current'
         };
@@ -219,7 +222,8 @@ class Selectors
             dialogContent: '.teams-dialog-box .box-content',
             container: '.team-container',
             invite: (playerId) => '.team-invite-'+playerId+' button',
-            acceptOption: '[id^="opt-accept-teams"]'
+            acceptOption: '[id^="opt-accept-teams"]',
+            playerProperty: (playerId, propertyKey) => '.team-player-'+playerId+' .property-key-'+propertyKey+' .value'
         };
         this.clans = {
             dialog: '.clan-dialog-box',
@@ -227,7 +231,8 @@ class Selectors
             container: '.clan-container',
             disbandAction: '.clan-disband-action',
             nameInput: '.clan-name-input',
-            submitCreate: '.submit-clan-create'
+            submitCreate: '.submit-clan-create',
+            playerProperty: (playerId, propertyKey) => '.clan-player-'+playerId+' .property-key-'+propertyKey+' .value'
         };
         this.npc = {
             dialogue: '.type-npc'
