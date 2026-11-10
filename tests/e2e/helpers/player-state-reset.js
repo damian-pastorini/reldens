@@ -182,7 +182,7 @@ class PlayerStateReset
         let sessions = [];
         for(let instanceId of Object.keys(createdInstances)){
             let room = createdInstances[instanceId];
-            if(!sc.isFunction(room.disconnectBySessionId)){
+            if(!room.state?.players){
                 continue;
             }
             PlayerStateReset.appendRoomTestSessions(sessions, room, playerNames);
