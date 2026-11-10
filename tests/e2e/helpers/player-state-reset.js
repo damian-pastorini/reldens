@@ -8,7 +8,8 @@
  * makes its session leave, and the room leave saves the player and then removes it, so its pending save never
  * overwrites the restored state and its body never stays in a room the next test uses), then the group players are
  * reset to full HP, placed on the default return point of the group start room, and have all equipped items
- * unequipped, and the enemies and the random movement are restored only in the group rooms.
+ * unequipped, the live objects and skills properties changed by the group (LiveObjectsOverrides) are restored, and the
+ * enemies and the random movement are restored only in the group rooms.
  *
  */
 
@@ -17,6 +18,7 @@ const { Logger, sc } = require('@reldens/utils');
 const { TestDataSetup } = require('./test-data-setup');
 const { RoomEnemiesReset } = require('./room-enemies-reset');
 const { RoomMovementState } = require('./room-movement-state');
+const { LiveObjectsOverrides } = require('./live-objects-overrides');
 const { SecurityState } = require('./security-state');
 const { E2eSeedAndRestoreEndpoints } = require('./e2e-seed-and-restore-endpoints');
 const { ParallelSpecGroups } = require('./parallel-spec-groups');
@@ -109,7 +111,7 @@ class PlayerStateReset
     {
         try {
             let usersLoginRepo = dataServer.getEntity('usersLogin');
-            await usersLoginRepo.create({ 'user_id': userId, 'login_date': new Date() });
+            await usersLoginRepo.create({ 'user_id': userId, 'login_date': sc.getCurrentDate() });
             Logger.info('[player-state-reset] Added users_login row for user '+userId);
         } catch(error){
             Logger.warning('[player-state-reset] Could not add users_login for user '+userId+': '+error.message);
@@ -226,6 +228,7 @@ class PlayerStateReset
                     groupSnapshots
                 );
                 await SecurityState.resetAll(serverManager);
+                LiveObjectsOverrides.restoreGroup(groupKey);
                 await E2eSeedAndRestoreEndpoints.resetGroup(serverManager, groupKey);
                 await PlayerStateReset.restoreSnapshots(
                     serverManager.dataServer,
