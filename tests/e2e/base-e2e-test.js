@@ -5,6 +5,7 @@
  * Provides shared Playwright test fixtures (gameConfig, longRun, screenshots, page) used by all spec files. The
  * e2eGroup option is set by the Playwright project of the parallel spec group (ParallelSpecGroups), the gameConfig
  * fixture gives the specs the test users of that group and the page fixture resets only that group before every test.
+ * The console output of the process is written to test-results/tests.log (E2eConsoleFileRedirect).
  *
  */
 
@@ -16,6 +17,7 @@ const { PlayerReset } = require('./helpers/player-reset');
 const { ParallelSpecGroups } = require('./helpers/parallel-spec-groups');
 const { TimeConstants } = require('./helpers/time-constants');
 const { RecordingStepReadTimer } = require('./helpers/recording-step-read-timer');
+const { E2eConsoleFileRedirect } = require('./helpers/e2e-console-file-redirect');
 
 class BaseE2eTest
 {
@@ -321,18 +323,7 @@ class BaseE2eTest
         }
         await BaseE2eTest.saveVideo(video, BaseE2eTest.slugify(testInfo.title), suffix);
     }
-
-    static setupWorkerLogCapture()
-    {
-        let logPath = FileHandler.joinPaths(process.cwd(), 'test-results', 'tests.log');
-        FileHandler.createFolder(FileHandler.joinPaths(process.cwd(), 'test-results'));
-        let writeLog = (...args) => {
-            FileHandler.appendToFile(logPath, args.map(a => 'object' === typeof a ? JSON.stringify(a) : ''+a).join(' ')+'\n');
-        };
-        console.log = writeLog;
-        console.error = writeLog;
-    }
 }
 
-BaseE2eTest.setupWorkerLogCapture();
+E2eConsoleFileRedirect.redirect('tests.log', false);
 module.exports.BaseE2eTest = BaseE2eTest;
