@@ -9,6 +9,7 @@ const { LoggerOutputCapture } = require('./fixtures/logger-output-capture');
 const { ServerStartupReport } = require('../lib/game/server/server-startup-report');
 const { GameServer } = require('../lib/game/server/game-server');
 const { ConfigManager } = require('../lib/config/server/manager');
+const PackageData = require('../package.json');
 const { Encryptor } = require('@reldens/server-utils');
 const { Logger } = require('@reldens/utils');
 
@@ -84,6 +85,23 @@ class TestServerStartupReport extends BaseTest
             );
             this.assert.strictEqual(-1 !== emptyCredentialsText.indexOf(monitorWarning), true);
             this.assert.strictEqual(-1 === securedText.indexOf(monitorWarning), true);
+        });
+    }
+
+    async testTheServerReadyReportsTheInstalledFirebasePackagesVersions()
+    {
+        await this.test('the server ready report shows the Firebase compat packages versions', async () => {
+            let serverStartupReport = this.createServerStartupReport(0, []);
+            let loggedText = await LoggerOutputCapture.capture(
+                Logger.logLevels.info,
+                async () => serverStartupReport.logServerReady()
+            );
+            for(let packageName of ['app-compat', 'auth-compat', 'analytics-compat']){
+                let packageVersion = PackageData.dependencies['@firebase/'+packageName];
+                this.assert.match(packageVersion, /^\d+\.\d+\.\d+$/);
+                this.assert.strictEqual(-1 !== loggedText.indexOf('firebase/'+packageName+': '+packageVersion), true);
+            }
+            this.assert.strictEqual(-1 === loggedText.indexOf('undefined'), true);
         });
     }
 
