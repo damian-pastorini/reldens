@@ -55,18 +55,25 @@ class MovementScenario
         await Navigation.waitForRoom(page, roomName, TimeConstants.forLongRun(TimeConstants.ROOM_TRANSITION, longRun));
         await MovementScenario.pauseMovingObjects(gameConfig, roomName);
         let context = {
-            gameConfig,
-            roomName,
-            playerName,
+            ...MovementScenario.createWalkContext(gameConfig, roomName, playerName, longRun),
             npcKey,
-            navTimeout: TimeConstants.forLongRun(TimeConstants.NAVIGATION, longRun),
-            fetchPlayer: async () => RoomMovementApi.fetchPlayer(gameConfig, roomName, playerName),
             fetchNpc: async () => RoomMovementApi.fetchObject(gameConfig, roomName, npcKey),
-            fetchTiles: async (tile, radius) => RoomMovementApi.fetchTiles(gameConfig, roomName, tile, radius),
-            isStill: (snapshot) => 0 === snapshot.pathSteps && 0 === snapshot.velocityX && 0 === snapshot.velocityY
+            fetchTiles: async (tile, radius) => RoomMovementApi.fetchTiles(gameConfig, roomName, tile, radius)
         };
         await MovementScenario.placePlayerOnReturnPoint(page, context);
         return context;
+    }
+
+    static createWalkContext(gameConfig, roomName, playerName, longRun)
+    {
+        return {
+            gameConfig,
+            roomName,
+            playerName,
+            navTimeout: TimeConstants.forLongRun(TimeConstants.NAVIGATION, longRun),
+            fetchPlayer: async () => RoomMovementApi.fetchPlayer(gameConfig, roomName, playerName),
+            isStill: (snapshot) => 0 === snapshot.pathSteps && 0 === snapshot.velocityX && 0 === snapshot.velocityY
+        };
     }
 
     static async placePlayerOnReturnPoint(page, context)
@@ -134,16 +141,7 @@ class MovementScenario
 
     static async walkIntoTheForest(page, context, longRun)
     {
-        let townMovement = await MovementScenario.movePlayer(
-            page,
-            context,
-            [
-                Math.floor(Login.FOREST_TRANSITION_X / Navigation.TILE_SIZE),
-                Math.floor(Login.FOREST_TRANSITION_Y / Navigation.TILE_SIZE) + 1
-            ],
-            TimeConstants.forLongRun(TimeConstants.MAP_CROSSING, longRun)
-        );
-        expect(townMovement.done, 'The player must reach the tile below the forest change point').toBe(true);
+        await MovementScenario.walkBelowTheForestChangePoint(page, context, longRun);
         let isInForest = await Navigation.ensureInRoom(
             page,
             Login.FOREST_ROOM_NAME,
@@ -155,6 +153,38 @@ class MovementScenario
         expect(isInForest, 'The player must walk into the forest').toBe(true);
         await Phaser.waitForPlayerInRoomState(page, TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun));
         return await page.evaluate(() => window.reldens.activeRoomEvents.room.sessionId);
+    }
+
+    static async walkBelowTheForestFromReturnPoint(page, gameConfig, playerName, longRun)
+    {
+        let walkContext = MovementScenario.createWalkContext(gameConfig, Login.TOWN_ROOM_NAME, playerName, longRun);
+        await MovementScenario.placePlayerOnReturnPoint(page, walkContext);
+        await MovementScenario.walkBelowTheForestChangePoint(page, walkContext, longRun);
+    }
+
+    static async tryWalkIntoTheForest(page, longRun)
+    {
+        return await Navigation.ensureInRoom(
+            page,
+            Login.FOREST_ROOM_NAME,
+            Login.FOREST_TRANSITION_X,
+            Login.FOREST_TRANSITION_Y,
+            TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun)
+        );
+    }
+
+    static async walkBelowTheForestChangePoint(page, context, longRun)
+    {
+        let townMovement = await MovementScenario.movePlayer(
+            page,
+            context,
+            [
+                Math.floor(Login.FOREST_TRANSITION_X / Navigation.TILE_SIZE),
+                Math.floor(Login.FOREST_TRANSITION_Y / Navigation.TILE_SIZE) + 1
+            ],
+            TimeConstants.forLongRun(TimeConstants.MAP_CROSSING, longRun)
+        );
+        expect(townMovement.done, 'The player must reach the tile below the forest change point').toBe(true);
     }
 
     static async pauseMovingObjects(gameConfig, roomName)
