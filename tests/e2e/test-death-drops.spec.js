@@ -16,13 +16,12 @@
 
 const { BaseE2eTest } = require('./base-e2e-test');
 const { DeathReviveSteps } = require('./helpers/death-revive-steps');
+const { DeathDropSteps } = require('./helpers/death-drop-steps');
 const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
 const { GameplayE2eStateApi } = require('./helpers/gameplay-e2e-state-api');
 const { RoomMessagesRecorder } = require('./helpers/room-messages-recorder');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Login } = require('./helpers/login');
-const { Navigation } = require('./helpers/navigation');
-const { Phaser } = require('./helpers/phaser');
 const { ActionsConst } = require('../../lib/actions/constants');
 const { ObjectsConst } = require('../../lib/objects/constants');
 let test = BaseE2eTest.test;
@@ -33,29 +32,8 @@ class TestDeathDrops
 
     static AXE = 'axe';
     static HEAL_POTION = 'heal_potion_20';
-    static DROP_QUANTITY_PATH = 'server/players/drop/quantity';
-    static FULL_DROP_PERCENT = 100;
     static DROPPED_QUANTITY = 1;
     static QUIET_MS = 1500;
-    static TILE_MOVE_MS = 500;
-
-    static async fetchDrops(clientPage)
-    {
-        return await clientPage.evaluate(
-            (dropsKey) => (window.e2eRoomMessages || []).filter(message => message[dropsKey]).map(
-                message => message[dropsKey]
-            ),
-            ObjectsConst.DROPS.KEY
-        );
-    }
-
-    static async killOnPlayerTile(context, placement, deathMessage)
-    {
-        let position = await Phaser.getPlayerServerPosition(context.page);
-        await Navigation.moveToWorldPoint(context.page, position.x, position.y);
-        await context.page.waitForTimeout(TestDeathDrops.TILE_MOVE_MS);
-        await DeathReviveSteps.killPlayerInForest(context, placement, deathMessage);
-    }
 
     static async carryOnlyTheEquippedAxe(gameConfig, e2eGroup, secondPlayerName)
     {
@@ -83,8 +61,8 @@ class TestDeathDrops
         let context = {page, screenshots, gameConfig, e2eGroup, longRun};
         await DeathReviveSteps.prepareDeath(context, {
             [ActionsConst.DEATH.CONFIG_PATHS.TELEPORT_ENABLED]: false,
-            [DeathReviveSteps.DROP_PERCENT_PATH]: TestDeathDrops.FULL_DROP_PERCENT,
-            [TestDeathDrops.DROP_QUANTITY_PATH]: TestDeathDrops.DROPPED_QUANTITY
+            [DeathReviveSteps.DROP_PERCENT_PATH]: DeathDropSteps.FULL_DROP_PERCENT,
+            [DeathDropSteps.DROP_QUANTITY_PATH]: TestDeathDrops.DROPPED_QUANTITY
         });
         let secondPlayerConfig = Login.fetchSecondPlayerConfig(gameConfig);
         let axeFilters = await TestDeathDrops.carryOnlyTheEquippedAxe(
@@ -101,12 +79,12 @@ class TestDeathDrops
             gameConfig.e2ePlayerName
         );
         let attackWithAxe = (await fetchPlayer()).stats.atk;
-        await TestDeathDrops.killOnPlayerTile(context, placement, 'The player dies carrying only its equipped axe');
+        await DeathDropSteps.killOnPlayerTile(context, placement, 'The player dies carrying only its equipped axe');
         await expect.poll(
-            async () => (await TestDeathDrops.fetchDrops(secondPage)).length,
+            async () => (await DeathDropSteps.fetchDrops(secondPage)).length,
             {message: 'The second client receives the drops', timeout: TimeConstants.SERVER_RESPONSE}
         ).toBeGreaterThan(0);
-        let drops = [...await TestDeathDrops.fetchDrops(secondPage)].shift();
+        let drops = [...await DeathDropSteps.fetchDrops(secondPage)].shift();
         expect(Object.keys(drops), 'A single drop').toHaveLength(TestDeathDrops.DROPPED_QUANTITY);
         let axeDropAnimation = [...await E2eSeedAndRestoreApi.loadRows(gameConfig, 'dropsAnimations', {
             item_id: axeFilters.item_id
@@ -123,7 +101,7 @@ class TestDeathDrops
     {
         await DeathReviveSteps.prepareDeath(context, Object.assign({
             [ActionsConst.DEATH.CONFIG_PATHS.TELEPORT_ENABLED]: false,
-            [DeathReviveSteps.DROP_PERCENT_PATH]: TestDeathDrops.FULL_DROP_PERCENT
+            [DeathReviveSteps.DROP_PERCENT_PATH]: DeathDropSteps.FULL_DROP_PERCENT
         }, deathConfig));
         let axeFilters = await TestDeathDrops.carryOnlyTheEquippedAxe(
             context.gameConfig,
@@ -132,7 +110,7 @@ class TestDeathDrops
         );
         let placement = await DeathReviveSteps.enterForest(context, true);
         await RoomMessagesRecorder.start(context.page);
-        await TestDeathDrops.killOnPlayerTile(context, placement, deathMessage);
+        await DeathDropSteps.killOnPlayerTile(context, placement, deathMessage);
         return axeFilters;
     }
 
@@ -141,7 +119,7 @@ class TestDeathDrops
         let axeFilters = await TestDeathDrops.killPlayerCarryingOnlyTheAxe(
             {page, screenshots, gameConfig, e2eGroup, longRun},
             Object.assign(
-                {[TestDeathDrops.DROP_QUANTITY_PATH]: TestDeathDrops.DROPPED_QUANTITY},
+                {[DeathDropSteps.DROP_QUANTITY_PATH]: TestDeathDrops.DROPPED_QUANTITY},
                 DeathReviveSteps.MANUAL_REVIVE_CONFIG
             ),
             'The player dies dropping its axe'
@@ -151,13 +129,13 @@ class TestDeathDrops
             {message: 'The axe is dropped', timeout: TimeConstants.SERVER_RESPONSE}
         ).toEqual([]);
         await expect.poll(
-            async () => (await TestDeathDrops.fetchDrops(page)).length,
+            async () => (await DeathDropSteps.fetchDrops(page)).length,
             {message: 'The dead player client receives its drop', timeout: TimeConstants.SERVER_RESPONSE}
         ).toBeGreaterThan(0);
         await RoomMessagesRecorder.sendMessage(page, {
             act: ObjectsConst.OBJECT_INTERACTION,
             type: ObjectsConst.DROPS.PICK_UP_ACT,
-            id: [...Object.keys([...await TestDeathDrops.fetchDrops(page)].shift())].shift()
+            id: [...Object.keys([...await DeathDropSteps.fetchDrops(page)].shift())].shift()
         });
         await page.waitForTimeout(TestDeathDrops.QUIET_MS);
         expect(
@@ -170,11 +148,11 @@ class TestDeathDrops
     {
         let axeFilters = await TestDeathDrops.killPlayerCarryingOnlyTheAxe(
             {page, screenshots, gameConfig, e2eGroup, longRun},
-            {[TestDeathDrops.DROP_QUANTITY_PATH]: 0},
+            {[DeathDropSteps.DROP_QUANTITY_PATH]: 0},
             'The player dies with a drop quantity of 0'
         );
         await page.waitForTimeout(TestDeathDrops.QUIET_MS);
-        expect(await TestDeathDrops.fetchDrops(page), 'No drop').toEqual([]);
+        expect(await DeathDropSteps.fetchDrops(page), 'No drop').toEqual([]);
         expect(await E2eSeedAndRestoreApi.loadRows(gameConfig, 'itemsInventory', axeFilters), 'Axe kept').toHaveLength(1);
     }
 
