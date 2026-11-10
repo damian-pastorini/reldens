@@ -38,21 +38,33 @@ class TestSkinAdTicketReservation extends BaseTest
         });
     }
 
-    async testRefusedOrRejectedRemovalClearsTheReservedMark()
+    async testRefusedRemovalClearsTheReservedMark()
     {
-        await this.test('a refused or rejected ticket removal clears the reserved mark and cancels the reward', async () => {
+        await this.test('a refused ticket removal clears the reserved mark and cancels the reward', async () => {
             let gate = SkinAdTicketGateBuilder.createGate();
-            for(let decreaseItemQty of [async () => false, async () => Promise.reject({message: 'Storage.'})]){
-                let rewardEvent = SkinAdTicketGateBuilder.createRewardEvent('skin-ad-ticket', 1);
-                rewardEvent.playerSchema.inventory.manager.decreaseItemQty = decreaseItemQty;
-                this.assert.strictEqual(await gate.onBeforeGiveAdRewardItem(rewardEvent), false);
-                this.assert.strictEqual(rewardEvent.continueEvent, false);
-                this.assert.strictEqual(Boolean(rewardEvent.playerSchema.getPrivate(this.reservedKey)), false);
-                let acceptEvent = SkinAdTicketGateBuilder.createTradeAcceptEvent(false, false, '1');
-                acceptEvent.playerSchema = rewardEvent.playerSchema;
-                this.assert.strictEqual(await gate.onBeforeSceneExecuteMessages(acceptEvent), false);
-                this.assert.strictEqual(acceptEvent.canContinue, true);
-            }
+            let rewardEvent = SkinAdTicketGateBuilder.createRewardEvent('skin-ad-ticket', 1);
+            rewardEvent.playerSchema.inventory.manager.decreaseItemQty = async () => false;
+            this.assert.strictEqual(await gate.onBeforeGiveAdRewardItem(rewardEvent), false);
+            this.assert.strictEqual(rewardEvent.continueEvent, false);
+            this.assert.strictEqual(Boolean(rewardEvent.playerSchema.getPrivate(this.reservedKey)), false);
+            let acceptEvent = SkinAdTicketGateBuilder.createTradeAcceptEvent(false, false, '1');
+            acceptEvent.playerSchema = rewardEvent.playerSchema;
+            this.assert.strictEqual(await gate.onBeforeSceneExecuteMessages(acceptEvent), false);
+            this.assert.strictEqual(acceptEvent.canContinue, true);
+        });
+    }
+
+    async testRejectedRemovalRejectsTheRewardUntilTheAdEnd()
+    {
+        await this.test('a rejected ticket removal rejects, the ad end then clears the reserved mark', async () => {
+            let gate = SkinAdTicketGateBuilder.createGate();
+            let rewardEvent = SkinAdTicketGateBuilder.createRewardEvent('skin-ad-ticket', 1);
+            let playerSchema = rewardEvent.playerSchema;
+            playerSchema.inventory.manager.decreaseItemQty = async () => Promise.reject({message: 'Storage.'});
+            await this.assert.rejects(gate.onBeforeGiveAdRewardItem(rewardEvent), {message: 'Storage.'});
+            this.assert.strictEqual(Boolean(playerSchema.getPrivate(this.reservedKey)), true);
+            await gate.onAfterAdEnded(SkinAdTicketGateBuilder.createAdEndedEvent(rewardEvent, false));
+            this.assert.strictEqual(Boolean(playerSchema.getPrivate(this.reservedKey)), false);
         });
     }
 
