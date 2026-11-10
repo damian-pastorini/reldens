@@ -171,6 +171,59 @@ class RoomObjectsApi
         );
     }
 
+    static async placePlayerForAggression(page, gameConfig, roomName, bodyKey, placement, timeout)
+    {
+        return await RoomObjectsApi.requestPlayerPlacement(
+            page,
+            gameConfig,
+            '/api/e2e/room-objects/place-player-for-aggression',
+            {roomName, bodyKey, ...placement},
+            timeout
+        );
+    }
+
+    static async placePlayerInRespawnArea(page, gameConfig, roomName, bodyKey, radius, timeout)
+    {
+        return await RoomObjectsApi.requestPlayerPlacement(
+            page,
+            gameConfig,
+            '/api/e2e/room-objects/place-player-in-respawn-area',
+            {roomName, bodyKey, radius},
+            timeout
+        );
+    }
+
+    static async placePlayersAcrossWall(page, gameConfig, roomName, targetSessionId, timeout)
+    {
+        return await RoomObjectsApi.requestPlayerPlacement(
+            page,
+            gameConfig,
+            '/api/e2e/room-objects/place-players-across-wall',
+            {roomName, targetSessionId},
+            timeout
+        );
+    }
+
+    static async placePlayerOnChangePoint(page, gameConfig, roomName, nextRoomName)
+    {
+        return await SecurityApi.request(gameConfig, 'POST', '/api/e2e/room-objects/place-player-on-change-point', {
+            roomName,
+            nextRoomName,
+            sessionId: await page.evaluate(() => window.reldens.activeRoomEvents.room.sessionId)
+        });
+    }
+
+    static async placeEnemiesOnLine(page, gameConfig, roomName, bodyKeys, tilesStep, direction)
+    {
+        return await SecurityApi.request(gameConfig, 'POST', '/api/e2e/room-objects/place-enemies-on-line', {
+            roomName,
+            bodyKeys,
+            tilesStep,
+            direction,
+            sessionId: await page.evaluate(() => window.reldens.activeRoomEvents.room.sessionId)
+        });
+    }
+
     static async requestPlayerPlacement(page, gameConfig, path, placementData, timeout)
     {
         let placement = await SecurityApi.request(gameConfig, 'POST', path, {
