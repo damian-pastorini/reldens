@@ -23,12 +23,12 @@ const { ForestEnemyKill } = require('./helpers/forest-enemy-kill');
 const { GameplayE2eStateApi } = require('./helpers/gameplay-e2e-state-api');
 const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
 const { ItemGrowthSteps } = require('./helpers/item-growth-steps');
+const { ItemGrowthChecks } = require('./helpers/item-growth-checks');
 const { LongRunShowcase } = require('./helpers/long-run-showcase');
 const { ShowcaseSteps } = require('./helpers/showcase-steps');
 const { ItemDetailsShowcase } = require('./helpers/item-details-showcase');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
-const { ResolveOperation } = require('../../lib/inventory/server/resolve-operation');
 const InventoryTranslations = require('../../lib/inventory/client/snippets/en_US');
 const { ItemGrowthCalculator, ItemsConst } = require('@reldens/items-system');
 const { sc } = require('@reldens/utils');
@@ -68,15 +68,6 @@ class TestItemGrowth
         return true;
     }
 
-    static createLevelDetails(statKey, modifierOperation, level, modifierValue)
-    {
-        return [
-            InventoryTranslations.items.growth.level.replace('%level', level),
-            ResolveOperation.prefix(modifierOperation)+modifierValue+ResolveOperation.suffix(modifierOperation)
-                +' '+statKey
-        ];
-    }
-
     static async equipFromInventory(page, gameConfig, itemLabel, levelDetails, longRun)
     {
         await LongRunShowcase.showStep(page, 'The player equips the '+itemLabel+': '+levelDetails.join(', '), longRun);
@@ -93,20 +84,6 @@ class TestItemGrowth
         await expect(equipButton).toBeVisible();
         await ShowcaseSteps.click(page, equipButton, longRun);
         await page.click(Selectors.hud.inventoryClose);
-    }
-
-    static async showEquippedItemDetails(page, levelDetails, longRun)
-    {
-        await page.click(Selectors.hud.equipmentOpen);
-        await expect(page.locator(Selectors.equipment.ui)).toBeVisible();
-        await ItemDetailsShowcase.showDetails(
-            page,
-            Selectors.equipment.itemImage(TestItemGrowth.ITEM_KEY),
-            Selectors.equipment.itemDetails(TestItemGrowth.ITEM_KEY),
-            levelDetails,
-            longRun
-        );
-        await page.click(Selectors.hud.equipmentClose);
     }
 
     static async openChat(page, longRun)
@@ -165,7 +142,7 @@ class TestItemGrowth
         let statKey = [...itemData.modifierRow.property_key.split('/')].pop();
         let modifierValue = Number(itemData.modifierRow.value);
         let modifierOperation = Number(itemData.modifierRow.operation);
-        let firstLevelDetails = TestItemGrowth.createLevelDetails(
+        let firstLevelDetails = ItemGrowthChecks.createLevelDetails(
             statKey,
             modifierOperation,
             ItemsConst.GROWTH.DEFAULT_LEVEL,
@@ -192,7 +169,7 @@ class TestItemGrowth
             {message: 'The equipped sword must apply its modifier'}
         ).toBe(statBefore + modifierValue);
         await showStatStep('Equipped at '+firstLevelDetails.join(', '), modifierValue);
-        await TestItemGrowth.showEquippedItemDetails(page, firstLevelDetails, longRun);
+        await ItemGrowthChecks.showItemDetails(page, true, firstLevelDetails, longRun);
         await TestItemGrowth.showStatValue(page, statKey, statBefore + modifierValue, longRun);
         await screenshots.capture(page, 'growing-sword-equipped');
         await TestItemGrowth.openChat(page, longRun);
@@ -220,9 +197,10 @@ class TestItemGrowth
             expectedModifierValue
         );
         await TestItemGrowth.showStatValue(page, statKey, statBefore + expectedModifierValue, longRun);
-        await TestItemGrowth.showEquippedItemDetails(
+        await ItemGrowthChecks.showItemDetails(
             page,
-            TestItemGrowth.createLevelDetails(statKey, modifierOperation, storedGrowth.level, expectedModifierValue),
+            true,
+            ItemGrowthChecks.createLevelDetails(statKey, modifierOperation, storedGrowth.level, expectedModifierValue),
             longRun
         );
         await screenshots.capture(page, 'growing-sword-level-reached');
