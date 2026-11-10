@@ -5,7 +5,7 @@ Reldens is an MMORPG Platform (v4.0.0-rc.1) built on Node.js for developers to c
 - **Server**: Colyseus 0.18 (authoritative game server, WebSockets via `@colyseus/ws-transport`)
 - **Client**: Phaser 4 (game engine), Parcel 2 (bundler)
 - **Database**: `@reldens/storage` with Knex as the default driver (bundled), plus the optional Kysely, Drizzle, ObjectionJS, MikroORM and Prisma drivers when their packages are installed in the project
-- **Node Version**: >= 22.15.0
+- **Node Version**: >= 24.12.0
 
 ## @reldens Packages
 
@@ -213,7 +213,6 @@ See `.claude/commands-reference.md` for the full command reference.
 - `.claude/e2e-testing-guide.md` - E2E suite: commands, its own database, app bundle and browser requirements
 - `.claude/environment-variables.md` - All `RELDENS_*` variables
 - `.claude/feature-modules.md` - All feature modules
-- `.claude/gameplay-features.md` - Auto recovery, teleport NPC, points per kill, item growth, death teleport, scores reset per period and ad skins
 - `.claude/storage-architecture.md` - Entity management deep dive
 - `.claude/entities-reference.md` - All 79 entity types
 - `.claude/entities-generation-guide.md` - Generated entities output and the Prisma steps
