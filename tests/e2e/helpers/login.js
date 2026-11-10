@@ -163,7 +163,7 @@ class Login
         });
     }
 
-    static async startConfigPlayer(page, gameConfig, longRun, sceneName = null)
+    static async startConfigPlayer(page, gameConfig, longRun, sceneName = null, skipUiSelectors = false)
     {
         await Login.loginAndStartGame(
             page,
@@ -171,7 +171,7 @@ class Login
             gameConfig.e2ePassword,
             gameConfig.e2ePlayerName,
             longRun,
-            false,
+            skipUiSelectors,
             sceneName
         );
     }
