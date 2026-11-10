@@ -6,7 +6,9 @@
 
 const { BaseTest } = require('./base-test');
 const { ActiveSessionsBuilder } = require('./fixtures/active-sessions-builder');
+const { GameRoomLeaveHandler } = require('../lib/game/client/handlers/game-room-leave-handler');
 const { SyncServerDriver } = require('../lib/sync/server/colyseus/sync-server-driver');
+const { SyncClientDriver } = require('../lib/sync/client/colyseus/sync-client-driver');
 const { GameConst } = require('../lib/game/constants');
 
 class TestDoubleLoginSessions extends BaseTest
@@ -166,6 +168,51 @@ class TestDoubleLoginSessions extends BaseTest
                 ActiveSessionsBuilder.fetchUserSessions(setup, 1),
                 ['old-scene', 'other-scene']
             );
+        });
+    }
+
+    createClientGameManager(gameOver)
+    {
+        let gameManager = {gameOver, alerts: [], services: {translator: {t: (snippetKey) => 'translated:'+snippetKey}}};
+        gameManager.gameDom = {alertReload: (message) => gameManager.alerts.push(message)};
+        return gameManager;
+    }
+
+    async testTheClosedOldLobbyShowsTheSessionEnded()
+    {
+        await this.test('the old lobby closed by the double login shows the session ended message once', async () => {
+            let gameManager = this.createClientGameManager(false);
+            let leaveHandler = new GameRoomLeaveHandler(gameManager);
+            this.assert.strictEqual(leaveHandler.endSession(SyncClientDriver.CloseCode.CONSENTED), true);
+            this.assert.deepStrictEqual(gameManager.alerts, ['translated:game.errors.sessionEnded']);
+            this.assert.strictEqual(gameManager.gameOver, true);
+            this.assert.strictEqual(leaveHandler.endSession(SyncClientDriver.CloseCode.CONSENTED), false);
+            this.assert.strictEqual(gameManager.alerts.length, 1);
+        });
+    }
+
+    async testTheGameOverTabIsNotAlertedByTheLobbyClose()
+    {
+        await this.test('a tab already showing the game over message is not alerted by the lobby close', async () => {
+            let gameManager = this.createClientGameManager(true);
+            this.assert.strictEqual(
+                new GameRoomLeaveHandler(gameManager).endSession(SyncClientDriver.CloseCode.CONSENTED),
+                false
+            );
+            this.assert.deepStrictEqual(gameManager.alerts, []);
+        });
+    }
+
+    async testOtherLobbyClosesShowNothing()
+    {
+        await this.test('a lobby close that is not consented shows nothing and keeps the game running', async () => {
+            let closeCodes = SyncClientDriver.CloseCode;
+            for(let code of [closeCodes.NORMAL_CLOSURE, closeCodes.ABNORMAL_CLOSURE, closeCodes.SERVER_SHUTDOWN]){
+                let gameManager = this.createClientGameManager(false);
+                this.assert.strictEqual(new GameRoomLeaveHandler(gameManager).endSession(code), false);
+                this.assert.deepStrictEqual(gameManager.alerts, []);
+                this.assert.strictEqual(gameManager.gameOver, false);
+            }
         });
     }
 
