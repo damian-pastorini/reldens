@@ -22,6 +22,7 @@ const { GameplayE2eStateApi } = require('./helpers/gameplay-e2e-state-api');
 const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
 const { LongRunShowcase } = require('./helpers/long-run-showcase');
 const { ShowcaseSteps } = require('./helpers/showcase-steps');
+const { TeleportNpcData } = require('./helpers/teleport-npc-data');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
 const { sc } = require('@reldens/utils');
@@ -31,34 +32,10 @@ let expect = BaseE2eTest.expect;
 class TestTeleportNpc
 {
 
-    static TELEPORT_TYPE_KEY = 'teleport';
     static DIALOG_RESPONSIVE_X_PATH = 'client/ui/npcDialog/responsiveX';
     static DIALOG_SHOWCASE_RESPONSIVE_X = 20;
     static ARRIVAL_WALK_TILES = 6;
     static ARRIVAL_WALK_TIMEOUT_MS = 3000;
-
-    static async loadTeleportData(gameConfig)
-    {
-        let teleportTypeId = await E2eSeedAndRestoreApi.fetchRowId(
-            gameConfig,
-            'objectsTypes',
-            {key: TestTeleportNpc.TELEPORT_TYPE_KEY}
-        );
-        let teleportRow = [...await E2eSeedAndRestoreApi.loadRows(gameConfig, 'objects', {class_type: teleportTypeId})]
-            .shift();
-        expect(teleportRow, 'The teleport NPC must be stored').toBeTruthy();
-        let destinations = sc.toJson(teleportRow.private_params, {}).destinations;
-        let optionKey = [...Object.keys(destinations)].shift();
-        let option = sc.toJson(teleportRow.client_params, {}).options[optionKey];
-        expect(optionKey, 'The teleport NPC must have a destination').toBeTruthy();
-        return {
-            clientKey: teleportRow.client_key,
-            title: teleportRow.title,
-            optionValue: option.value,
-            optionLabel: option.label,
-            destinationRoom: destinations[optionKey].room
-        };
-    }
 
     static async showArrival(page, gameConfig, destinationRoom, timeout, longRun)
     {
@@ -88,7 +65,7 @@ class TestTeleportNpc
 
     static async runTeleportTest(page, screenshots, gameConfig, e2eGroup, longRun)
     {
-        let teleportData = await TestTeleportNpc.loadTeleportData(gameConfig);
+        let teleportData = await TeleportNpcData.load(gameConfig);
         let sceneTimeout = TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun);
         await ShowcaseSteps.overrideConfig(
             gameConfig,
