@@ -3,7 +3,8 @@
  * Reldens - E2E Seed And Restore Endpoints
  *
  * Server side e2e endpoints to seed the rows a spec needs, update the rows seeded by the same group, preserve the stored
- * rows a spec changes, read the stored rows a spec asserts and override config values of the running server. The seeded rows, the preserved rows and the
+ * rows a spec changes, read the stored rows a spec asserts and override (or remove) config values of the running
+ * server. The seeded rows, the preserved rows and the
  * overridden values are kept per parallel spec group, and the reset that runs before every test of a group (and the
  * global teardown for every group) restores the preserved rows (the rows created since then for the same filters are
  * deleted and the preserved rows deleted by the spec are created again with their own ids), deletes the seeded rows and
@@ -11,11 +12,15 @@
  * the next one and the groups running at the same time never undo each other. The preserved rows are restored first,
  * so a preserved row that references a seeded row (a user locale that points to a seeded locale) never blocks the
  * seeded row delete. The locales reload runs the snippets ConfigurationEnricher again, so a seeded locale reaches the
- * client config sent on the next login.
+ * client config sent on the next login. The config values that the running server reads only once (the config rows
+ * are never hot plugged, a server restart applies them) are read again after every override and restore: the death
+ * relocator, the rooms auto recovery and the kill score subscriber, created again with the new values, like the
+ * restart that loads them.
  *
  */
 
 const { TestDataSetup } = require('./test-data-setup');
+const { IncreaseScoreOnKill } = require('../../../lib/scores/server/subscriber/increase-score-on-kill');
 const { Logger, sc } = require('@reldens/utils');
 
 class E2eSeedAndRestoreEndpoints
@@ -68,6 +73,12 @@ class E2eSeedAndRestoreEndpoints
         return rows;
     }
 
+    static async updateWithPreserve(serverManager, groupKey, entityKey, filters, patch)
+    {
+        await E2eSeedAndRestoreEndpoints.preserveRows(serverManager, groupKey, entityKey, filters);
+        return await serverManager.dataServer.getEntity(entityKey).update(filters, patch);
+    }
+
     static async restorePreservedRows(serverManager, preservedEntry)
     {
         let repository = serverManager.dataServer.getEntity(preservedEntry.entityKey);
@@ -89,7 +100,7 @@ class E2eSeedAndRestoreEndpoints
         }
     }
 
-    static overrideConfigValue(serverManager, groupKey, path, value)
+    static overrideConfigValue(serverManager, groupKey, path, value, removeValue = false)
     {
         if(!sc.hasOwn(E2eSeedAndRestoreEndpoints.originalConfigValues, groupKey)){
             E2eSeedAndRestoreEndpoints.originalConfigValues[groupKey] = {};
@@ -101,6 +112,10 @@ class E2eSeedAndRestoreEndpoints
                 isSet: sc.hasOwn(configPosition.configNode, configPosition.lastKey),
                 value: configPosition.configNode[configPosition.lastKey]
             };
+        }
+        if(removeValue){
+            delete configPosition.configNode[configPosition.lastKey];
+            return;
         }
         configPosition.configNode[configPosition.lastKey] = value;
     }
@@ -136,11 +151,17 @@ class E2eSeedAndRestoreEndpoints
         });
     }
 
-    static reloadLoadedConfig(serverManager)
+    static async reloadLoadedConfig(serverManager)
     {
         let actionsPlugin = serverManager.featuresManager.featuresList.actions.package;
+        await actionsPlugin.playerDeathRelocator.loadTownRoom(serverManager.roomsManager);
         actionsPlugin.playerDeathRelocator.loadConfig();
         actionsPlugin.roomAutoRecovery.loadConfig();
+        let scoresPlugin = serverManager.featuresManager.featuresList.scores.package;
+        scoresPlugin.increaseScoreOnKill = new IncreaseScoreOnKill({
+            config: scoresPlugin.config,
+            dataServer: scoresPlugin.dataServer
+        });
     }
 
     static async resetGroup(serverManager, groupKey)
@@ -158,7 +179,7 @@ class E2eSeedAndRestoreEndpoints
             E2eSeedAndRestoreEndpoints.restoreConfigValue(serverManager.configManager, path, groupOriginalValues[path]);
         }
         delete E2eSeedAndRestoreEndpoints.originalConfigValues[groupKey];
-        E2eSeedAndRestoreEndpoints.reloadLoadedConfig(serverManager);
+        await E2eSeedAndRestoreEndpoints.reloadLoadedConfig(serverManager);
         if(E2eSeedAndRestoreEndpoints.reloadLocalesGroups.includes(groupKey)){
             E2eSeedAndRestoreEndpoints.reloadLocalesGroups.splice(
                 E2eSeedAndRestoreEndpoints.reloadLocalesGroups.indexOf(groupKey),
@@ -216,18 +237,30 @@ class E2eSeedAndRestoreEndpoints
                 )
             });
         });
+        app.post('/api/e2e/data/update-with-preserve', async (request, response) => {
+            response.json({
+                updated: await E2eSeedAndRestoreEndpoints.updateWithPreserve(
+                    serverManager,
+                    sc.get(request.body, 'group', ''),
+                    sc.get(request.body, 'entityKey', ''),
+                    sc.get(request.body, 'filters', {}),
+                    sc.get(request.body, 'patch', {})
+                )
+            });
+        });
         app.post('/api/e2e/data/load', async (request, response) => {
             let repository = serverManager.dataServer.getEntity(sc.get(request.body, 'entityKey', ''));
             response.json({rows: await repository.load(sc.get(request.body, 'filters', {}))});
         });
-        app.post('/api/e2e/data/config', (request, response) => {
+        app.post('/api/e2e/data/config', async (request, response) => {
             E2eSeedAndRestoreEndpoints.overrideConfigValue(
                 serverManager,
                 sc.get(request.body, 'group', ''),
                 sc.get(request.body, 'path', ''),
-                sc.get(request.body, 'value', null)
+                sc.get(request.body, 'value', null),
+                true === sc.get(request.body, 'remove', false)
             );
-            E2eSeedAndRestoreEndpoints.reloadLoadedConfig(serverManager);
+            await E2eSeedAndRestoreEndpoints.reloadLoadedConfig(serverManager);
             response.json({ok: true});
         });
         app.post('/api/e2e/data/reload-locales', async (request, response) => {
