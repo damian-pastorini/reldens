@@ -15,6 +15,7 @@ const { BaseE2eTest } = require('./base-e2e-test');
 const { Login } = require('./helpers/login');
 const { TimeConstants } = require('./helpers/time-constants');
 const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
+const { ClanSeed } = require('./helpers/clan-seed');
 const { Selectors } = require('./selectors');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
@@ -50,28 +51,6 @@ class TestClans
         await E2eSeedAndRestoreApi.preserveRows(gameConfig, e2eGroup, 'clan', {owner_id: ownerId});
     }
 
-    static async fetchInitialLevel(gameConfig)
-    {
-        let clanLevels = await E2eSeedAndRestoreApi.loadRows(gameConfig, 'clanLevels', {});
-        return [...clanLevels].sort((levelA, levelB) => Number(levelA.key) - Number(levelB.key)).shift();
-    }
-
-    static async seedClanWithMembers(gameConfig, e2eGroup, ownerId, membersIds)
-    {
-        let clan = await E2eSeedAndRestoreApi.createRow(gameConfig, e2eGroup, 'clan', {
-            name: 'E2eClan'+Date.now(),
-            owner_id: ownerId,
-            level: (await TestClans.fetchInitialLevel(gameConfig)).key
-        });
-        for(let playerId of membersIds){
-            await E2eSeedAndRestoreApi.createRow(gameConfig, e2eGroup, 'clanMembers', {
-                clan_id: clan.id,
-                player_id: playerId
-            });
-        }
-        return clan.id;
-    }
-
     static async createClan(page, screenshots, longRun)
     {
         let nameInput = page.locator(Selectors.clans.nameInput);
@@ -94,13 +73,13 @@ class TestClans
 
     static async seedClanLevelModifier(gameConfig, e2eGroup)
     {
-        await E2eSeedAndRestoreApi.createRow(gameConfig, e2eGroup, 'clanLevelsModifiers', {
-            level_id: (await TestClans.fetchInitialLevel(gameConfig)).id,
-            key: 'e2e_clan_'+TestClans.CLAN_MODIFIER_STAT_KEY,
-            property_key: 'stats/'+TestClans.CLAN_MODIFIER_STAT_KEY,
-            operation: TestClans.INCREMENT_OPERATION,
-            value: String(TestClans.CLAN_MODIFIER_VALUE)
-        });
+        await ClanSeed.seedLevelModifier(
+            gameConfig,
+            e2eGroup,
+            TestClans.CLAN_MODIFIER_STAT_KEY,
+            TestClans.INCREMENT_OPERATION,
+            TestClans.CLAN_MODIFIER_VALUE
+        );
     }
 
     static async loginAndFindStat(page, gameConfig, longRun, userKeySuffix = TestClans.CLAN_OWNER_USER_KEY_SUFFIX)
@@ -130,13 +109,7 @@ class TestClans
 
     static async fetchStoredStatValue(gameConfig, playerId)
     {
-        let statFilters = {player_id: playerId};
-        statFilters.stat_id = await E2eSeedAndRestoreApi.fetchRowId(
-            gameConfig,
-            'stats',
-            {key: TestClans.CLAN_MODIFIER_STAT_KEY}
-        );
-        return Number([...await E2eSeedAndRestoreApi.loadRows(gameConfig, 'playersStats', statFilters)].shift().value);
+        return await ClanSeed.fetchStoredStatValue(gameConfig, playerId, TestClans.CLAN_MODIFIER_STAT_KEY);
     }
 
     static async runClanLevelModifiersTest(page, screenshots, gameConfig, e2eGroup, longRun)
@@ -182,7 +155,7 @@ class TestClans
         let ownerId = await E2eSeedAndRestoreApi.fetchRowId(gameConfig, 'players', {name: gameConfig.e2ePlayerName3});
         let memberId = await E2eSeedAndRestoreApi.fetchRowId(gameConfig, 'players', {name: gameConfig.e2ePlayerName});
         await TestClans.seedClanLevelModifier(gameConfig, e2eGroup);
-        let clanId = await TestClans.seedClanWithMembers(gameConfig, e2eGroup, ownerId, [ownerId, memberId]);
+        let clanId = await ClanSeed.seedClanWithMembers(gameConfig, e2eGroup, ownerId, [ownerId, memberId]);
         let storedStat = await TestClans.fetchStoredStatValue(gameConfig, memberId);
         let statValueLocator = await TestClans.loginAndFindStat(page, gameConfig, longRun, '');
         await TestClans.expectStatValue(
@@ -220,7 +193,7 @@ class TestClans
             'players',
             {name: gameConfig.e2ePlayerName}
         );
-        let clanId = await TestClans.seedClanWithMembers(gameConfig, e2eGroup, ownerId, [ownerId, offlineMemberId]);
+        let clanId = await ClanSeed.seedClanWithMembers(gameConfig, e2eGroup, ownerId, [ownerId, offlineMemberId]);
         await Login.loginRootPlayer(page, gameConfig, longRun, TestClans.CLAN_OWNER_USER_KEY_SUFFIX);
         await TestClans.openClanPanel(page, longRun);
         await expect(page.locator(Selectors.clans.disbandAction)).toBeVisible(
