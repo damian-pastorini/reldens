@@ -32,24 +32,32 @@ class SkinAdTicketGateBuilder
             config: GameplayPlayerBuilder.createConfig(Object.assign({
                 [UsersConst.SKINS.CONFIG_PATHS.ADS_KEY]: 'skin-ad-ticket',
                 [UsersConst.SKINS.CONFIG_PATHS.AD_TICKET_ITEM_KEY]: SkinAdTicketGateBuilder.TICKET_ITEM_KEY,
-                [AdsConst.CONFIG_PATHS.COLLECTION]: {
-                    [SkinAdTicketGateBuilder.SKIN_AD_ID]: {
-                        id: SkinAdTicketGateBuilder.SKIN_AD_ID,
-                        key: 'skin-ad-ticket',
-                        enabled: 1,
-                        provider: {enabled: 1}
-                    },
-                    [SkinAdTicketGateBuilder.OTHER_AD_ID]: {
-                        id: SkinAdTicketGateBuilder.OTHER_AD_ID,
-                        key: 'other-video',
-                        enabled: 1,
-                        provider: {enabled: 1}
-                    }
-                }
+                [AdsConst.CONFIG_PATHS.COLLECTION]: SkinAdTicketGateBuilder.createAdsCollection()
             }, configValues))
         });
         gate.loadConfig();
         return gate;
+    }
+
+    /**
+     * @returns {Object<number, Object>}
+     */
+    static createAdsCollection()
+    {
+        return {
+            [SkinAdTicketGateBuilder.SKIN_AD_ID]: {
+                id: SkinAdTicketGateBuilder.SKIN_AD_ID,
+                key: 'skin-ad-ticket',
+                enabled: 1,
+                provider: {enabled: 1}
+            },
+            [SkinAdTicketGateBuilder.OTHER_AD_ID]: {
+                id: SkinAdTicketGateBuilder.OTHER_AD_ID,
+                key: 'other-video',
+                enabled: 1,
+                provider: {enabled: 1}
+            }
+        };
     }
 
     /**
@@ -122,7 +130,7 @@ class SkinAdTicketGateBuilder
         event.room = {
             playerBySessionIdFromState: (sessionId) => SkinAdTicketGateBuilder.PARTNER_SESSION_ID === sessionId
                 ? partnerSchema
-                : false
+                : null
         };
         return event;
     }
