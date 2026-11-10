@@ -15,10 +15,18 @@ const { SecurityState } = require('./helpers/security-state');
 const { RoomObjectsState } = require('./helpers/room-objects-state');
 const { RoomMovementState } = require('./helpers/room-movement-state');
 const { RoomEnemyPlacement } = require('./helpers/room-enemy-placement');
+const { RoomAggressionPlacement } = require('./helpers/room-aggression-placement');
+const { RoomLinePlacement } = require('./helpers/room-line-placement');
+const { RoomChangePointPlacement } = require('./helpers/room-change-point-placement');
 const { RoomPlayerPlacement } = require('./helpers/room-player-placement');
+const { WorldE2eStateProbe } = require('./helpers/world-e2e-state-probe');
 const { E2eSeedAndRestoreEndpoints } = require('./helpers/e2e-seed-and-restore-endpoints');
 const { GameplayE2eStateProbe } = require('./helpers/gameplay-e2e-state-probe');
 const { LiveObjectsOverrides } = require('./helpers/live-objects-overrides');
+const { KillScoreSubscriberOverrides } = require('./helpers/kill-score-subscriber-overrides');
+const { E2eConsoleFileRedirect } = require('./helpers/e2e-console-file-redirect');
+const { InventoryGrowthProbe } = require('./helpers/inventory-growth-probe');
+const { CombatE2eState } = require('./helpers/combat-e2e-state');
 const { E2eAssetsEndpoints } = require('./helpers/e2e-assets-endpoints');
 const { TestDataSetup } = require('./helpers/test-data-setup');
 const { StartupGuard } = require('./helpers/startup-guard');
@@ -260,10 +268,17 @@ class CollectGameData
         RoomObjectsState.registerEndpoints(serverManager);
         RoomMovementState.registerEndpoints(serverManager);
         RoomEnemyPlacement.registerEndpoints(serverManager);
+        RoomAggressionPlacement.registerEndpoints(serverManager);
+        RoomLinePlacement.registerEndpoints(serverManager);
+        RoomChangePointPlacement.registerEndpoints(serverManager);
         RoomPlayerPlacement.registerEndpoints(serverManager);
+        WorldE2eStateProbe.registerEndpoints(serverManager);
         E2eSeedAndRestoreEndpoints.registerEndpoints(serverManager);
         GameplayE2eStateProbe.registerEndpoints(serverManager);
         LiveObjectsOverrides.registerEndpoints(serverManager);
+        KillScoreSubscriberOverrides.registerEndpoints(serverManager);
+        InventoryGrowthProbe.registerEndpoints(serverManager);
+        CombatE2eState.registerEndpoints(serverManager);
         E2eAssetsEndpoints.registerEndpoints(serverManager);
         await PlayerStateReset.registerResetEndpoint(serverManager, snapshots, config);
         CollectGameData.serverManager = serverManager;
@@ -352,14 +367,7 @@ class CollectGameData
 
     static setupLogCapture()
     {
-        let logPath = FileHandler.joinPaths(process.cwd(), 'test-results', 'server.log');
-        FileHandler.createFolder(FileHandler.joinPaths(process.cwd(), 'test-results'));
-        FileHandler.writeFile(logPath, '');
-        let writeLog = (...args) => {
-            FileHandler.appendToFile(logPath, args.map(a => 'object' === typeof a ? JSON.stringify(a) : ''+a).join(' ')+'\n');
-        };
-        console.log = writeLog;
-        console.error = writeLog;
+        let writeLog = E2eConsoleFileRedirect.redirect('server.log', true);
         process.on('uncaughtException', (error) => {
             let errorDetails = error && error.stack ? error.stack : String(error);
             writeLog('Uncaught exception, the game server shuts down and ends the run: '+errorDetails);
