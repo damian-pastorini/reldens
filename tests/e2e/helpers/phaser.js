@@ -2,7 +2,10 @@
  *
  * Reldens - Phaser Helper
  *
- * Queries and interacts with in-scene Phaser objects (NPCs, enemies, players) via browser evaluate.
+ * Queries and interacts with in-scene Phaser objects (NPCs, enemies, players) via browser evaluate. A real click on an
+ * object waits until the camera stopped with the object in view (the camera follows the player with a small lerp, so
+ * after a server placement it needs a few seconds to reach it) and clicks the object bounds center moved away from the
+ * own player, so the player sprite drawn over the object never takes the click.
  *
  */
 
@@ -10,6 +13,11 @@ const { Selectors } = require('../selectors');
 
 class Phaser
 {
+    static CAMERA_SETTLE_TIMEOUT = 15000;
+    static CAMERA_SETTLE_POLL_MS = 200;
+    static OVERLAY_CLASS = 'e2e-canvas-overlay';
+    static OVERLAY_HALF_SIZE = 10;
+
     static async getObjectScreenCoordsByProp(page, matchProp, matchValue, statusKey)
     {
         return page.evaluate((args) => {
@@ -76,6 +84,93 @@ class Phaser
     {
         let coords = await Phaser.getObjectScreenCoords(page, objKey);
         await page.locator(Selectors.canvas).click({ position: { x: coords.x, y: coords.y }, force: true });
+    }
+
+    static async getObjectBoundsCenterScreenCoords(page, objKey)
+    {
+        return page.evaluate((key) => {
+            let scene = window.reldens.getActiveScene();
+            let anim = scene.objectsAnimations[key];
+            if(!anim || !anim.sceneSprite) {
+                return null;
+            }
+            let bounds = anim.sceneSprite.getBounds();
+            let camera = scene.cameras.main;
+            return {
+                x: camera.x + (bounds.centerX - camera.worldView.x) * camera.zoom,
+                y: camera.y + (bounds.centerY - camera.worldView.y) * camera.zoom
+            };
+        }, objKey);
+    }
+
+    static async waitForCameraOnObject(page, objKey, timeout = Phaser.CAMERA_SETTLE_TIMEOUT)
+    {
+        await page.waitForFunction((key) => {
+            let scene = window.reldens.getActiveScene();
+            let camera = scene.cameras.main;
+            let sprite = scene.objectsAnimations[key]?.sceneSprite;
+            let scroll = Math.round(camera.scrollX)+','+Math.round(camera.scrollY);
+            let isSettled = window.e2eCameraScroll === scroll;
+            window.e2eCameraScroll = scroll;
+            return isSettled && Boolean(sprite) && camera.worldView.contains(sprite.x, sprite.y);
+        }, objKey, {timeout, polling: Phaser.CAMERA_SETTLE_POLL_MS});
+    }
+
+    static async fetchObjectPointClearOfPlayers(page, objKey, offsetPixels)
+    {
+        return page.evaluate((args) => {
+            let scene = window.reldens.getActiveScene();
+            let camera = scene.cameras.main;
+            let bounds = scene.objectsAnimations[args.key].sceneSprite.getBounds();
+            let playersBounds = Object.values(scene.player.players).map(player => player.getBounds());
+            let offsets = [[0, 0], [0, -1], [0, 1], [-1, 0], [1, 0], [-1, -1], [1, -1], [-1, 1], [1, 1]];
+            let worldPoint = offsets.map(offset => ({
+                x: bounds.centerX + offset[0] * args.offset,
+                y: bounds.centerY + offset[1] * args.offset
+            })).find(point => !playersBounds.some(playerBounds => playerBounds.contains(point.x, point.y)));
+            if(!worldPoint){
+                return null;
+            }
+            let canvas = window.reldens.gameEngine.canvas;
+            let canvasRect = canvas.getBoundingClientRect();
+            return {
+                x: (camera.x + (worldPoint.x - camera.worldView.x) * camera.zoom) * canvasRect.width / canvas.width,
+                y: (camera.y + (worldPoint.y - camera.worldView.y) * camera.zoom) * canvasRect.height / canvas.height
+            };
+        }, {key: objKey, offset: offsetPixels});
+    }
+
+    static async clickObjectAwayFromOwnPlayer(page, objKey, offsetPixels, isDoubleClick = false)
+    {
+        await Phaser.waitForCameraOnObject(page, objKey);
+        let clickPoint = await Phaser.fetchObjectPointClearOfPlayers(page, objKey, offsetPixels);
+        if(!clickPoint){
+            return false;
+        }
+        let canvasBox = await page.locator(Selectors.canvas).boundingBox();
+        await page.mouse[isDoubleClick ? 'dblclick' : 'click'](canvasBox.x + clickPoint.x, canvasBox.y + clickPoint.y);
+        return true;
+    }
+
+    static async clickPageElementOverObject(page, objKey, offsetPixels)
+    {
+        await Phaser.waitForCameraOnObject(page, objKey);
+        let clickPoint = await Phaser.fetchObjectPointClearOfPlayers(page, objKey, offsetPixels);
+        if(!clickPoint){
+            return false;
+        }
+        let canvasBox = await page.locator(Selectors.canvas).boundingBox();
+        let halfSize = Phaser.OVERLAY_HALF_SIZE;
+        await page.addStyleTag({content: '.'+Phaser.OVERLAY_CLASS+'{position:fixed;z-index:99999;'
+            +'width:'+(halfSize * 2)+'px;height:'+(halfSize * 2)+'px;'
+            +'left:'+(canvasBox.x + clickPoint.x - halfSize)+'px;top:'+(canvasBox.y + clickPoint.y - halfSize)+'px;}'});
+        await page.evaluate((className) => {
+            let overlay = document.createElement('div');
+            overlay.classList.add(className);
+            document.body.appendChild(overlay);
+        }, Phaser.OVERLAY_CLASS);
+        await page.locator('.'+Phaser.OVERLAY_CLASS).click({force: true});
+        return true;
     }
 
     static async clickObjectByType(page, type)
