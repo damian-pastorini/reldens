@@ -11,6 +11,7 @@
 
 const { BaseE2eTest } = require('./base-e2e-test');
 const { DirectFormSubmit } = require('./helpers/direct-form-submit');
+const { InitialClientConfig } = require('./helpers/initial-client-config');
 const { Login } = require('./helpers/login');
 const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
 const { SecurityApi } = require('./helpers/security-api');
@@ -26,23 +27,6 @@ class TestAuthenticationAccess
 
     static SESSION_END_WAIT_MS = 1000;
     static GUEST_EMAIL_DOMAIN = '@e2e-guest.test';
-
-    static async overrideClientConfig(page, configPath, value)
-    {
-        await page.addInitScript((override) => {
-            let storedConfig = false;
-            Object.defineProperty(window, 'reldensInitialConfig', {
-                configurable: true,
-                get: () => storedConfig,
-                set: (initialConfig) => {
-                    let pathKeys = override.configPath.split('/');
-                    let lastKey = pathKeys.pop();
-                    pathKeys.reduce((configNode, pathKey) => configNode[pathKey], initialConfig)[lastKey] = override.value;
-                    storedConfig = initialConfig;
-                }
-            });
-        }, {configPath, value});
-    }
 
     static createAccountValues()
     {
@@ -81,7 +65,7 @@ class TestAuthenticationAccess
     static async runRegistrationFormsHiddenTest(page, screenshots, gameConfig)
     {
         await SecurityApi.setMailerEnabled(gameConfig, true);
-        await TestAuthenticationAccess.overrideClientConfig(page, 'client/general/users/allowRegistration', false);
+        await InitialClientConfig.override(page, 'client/general/users/allowRegistration', false);
         await DirectFormSubmit.openPage(page);
         await expect(page.locator(Selectors.register.form)).toBeHidden();
         await expect(page.locator(Selectors.forgot.form)).toBeHidden();
@@ -91,7 +75,7 @@ class TestAuthenticationAccess
 
     static async runGuestFormHiddenTest(page, screenshots, override, screenshotName)
     {
-        await TestAuthenticationAccess.overrideClientConfig(page, override.configPath, override.value);
+        await InitialClientConfig.override(page, override.configPath, override.value);
         await DirectFormSubmit.openPage(page);
         await expect(page.locator(Selectors.login.guestForm)).toBeHidden();
         await expect(page.locator(Selectors.login.form), 'The login form must stay').toBeVisible();
