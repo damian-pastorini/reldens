@@ -4,7 +4,7 @@
  *
  * Server side e2e endpoints for the gameplay features: the live player snapshot (avatar key, life, base life, stats,
  * base stats, state, scene, position, whether its body is in the room physics world, whether it got the PvP action,
- * experience and level), the player
+ * experience and level, the body movement speed and the player speed the room world creates the bodies with), the player
  * state set with the room activate and deactivate methods
  * (dead, disabled or active, so a spec reaches the dead or disabled player paths where no enemy can kill it), the life
  * of an active enemy out of battle of a live room (set, then read by its body state key, so the auto recovery spec
@@ -50,7 +50,12 @@ class GameplayE2eStateProbe
             bodyInWorld: Boolean(playerSchema.physicalBody?.world),
             hasPvpAction: Boolean(playerSchema.actions?.pvp),
             experience: Number(sc.get(classPath, 'currentExp', 0)),
-            level: Number(sc.get(classPath, 'currentLevel', 0))
+            level: Number(sc.get(classPath, 'currentLevel', 0)),
+            nextLevelExperience: sc.isFunction(classPath.getNextLevelExperience) ? classPath.getNextLevelExperience() : 0,
+            classPathLabel: sc.get(classPath, 'currentLabel', ''),
+            skillsKeys: Object.keys(sc.get(classPath, 'currentSkills', {})),
+            movementSpeed: Number(sc.get(sc.get(playerSchema, 'physicalBody', {}), 'movementSpeed', 0)),
+            worldPlayerSpeed: Number(sc.get(room.roomWorld, 'playerMovementSpeed', 0))
         };
     }
 
