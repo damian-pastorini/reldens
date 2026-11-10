@@ -70,7 +70,12 @@ class GameplayPlayerBuilder
      */
     static createInventoryManager(items)
     {
-        let inventoryManager = {items, decreasedItems: [], listenedEvents: {}};
+        let inventoryManager = {items, decreasedItems: [], increasedItems: [], listenedEvents: {}};
+        inventoryManager.increaseItemQty = async (inventoryId, qty) => {
+            inventoryManager.increasedItems.push({inventoryId, qty});
+            inventoryManager.items[inventoryId].qty += qty;
+            return true;
+        };
         inventoryManager.findItemByKey = (itemKey) => Object.keys(inventoryManager.items).map(
             itemIndex => inventoryManager.items[itemIndex]
         ).find(item => itemKey === item.key) || false;
