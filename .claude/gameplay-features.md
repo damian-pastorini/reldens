@@ -359,11 +359,11 @@ next one. The running instance is the `scoresPeriodReset` property of the scores
 
 - using the skin ticket item (`skins/adTicketItemKey`) replaces its normal use: `SkinAdTicketGate`
   (`lib/users/server/skin-ad-ticket-gate.js`) sends `{act: 'skinAdS', adsId}` when the player has a ticket and the ad
-  exists, and accepts the skin ad `AD_STARTED` message only from a player with a ticket; the ticket is checked on
-  `reldens.beforeGiveAdRewardItem` and consumed on `reldens.afterGiveAdRewardItem`, once the reward was given
-  (`skin_warlock_robe`, from the `ads_event_video` of the `reldens.skinAdTicket` event, `"replayCooldown":0`), so every
-  reward costs one ticket, a failed ad or a failed reward keeps the ticket, and a player without the ticket at the end
-  gets no reward
+  exists, and accepts the skin ad `AD_STARTED` message only from a player with a ticket; the ticket is reserved (removed
+  from the inventory, so it can not be traded away during the reward) on `reldens.beforeGiveAdRewardItem` and given back
+  on `reldens.afterAdEnded` when no reward was given (`skin_warlock_robe`, from the `ads_event_video` of the
+  `reldens.skinAdTicket` event, `"replayCooldown":0`), so every reward costs one ticket, a failed ad or a failed reward
+  keeps the ticket, and a player without the ticket at the end gets no reward
 - an item with a `"skinKey"` custom data changes the player look while equipped: `PlayerSkinApplier`
   (`lib/users/server/player-skin-applier.js`) sets `playerSchema.avatarKey` on the inventory `EQUIP_ITEM`, restores the
   class path avatar (or another equipped skin) on `UNEQUIP_ITEM` and applies the equipped skin on the join
