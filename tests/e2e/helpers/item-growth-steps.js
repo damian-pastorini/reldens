@@ -7,8 +7,9 @@
  * inventory for the group (with a given customData on its inventory row), the sword growth configuration changed for
  * the group before the login (the items are loaded on the join), the live inventory items read from the server
  * (InventoryGrowthProbe), the item equip toggle message, the experience added to the player class path directly (an
- * experience that is not a kill), a method of an inventory item or of the growth applier delayed or failed for the group
- * and its calls read, and the forest entered with the seeded sword equipped.
+ * experience that is not a kill), the stored growth waited for, the live player stats, a method of an inventory item or
+ * of the growth applier delayed or failed for the group and its calls read, the forest entered with the seeded sword
+ * equipped (with the stored sword data and the player stats after the equip) and entered again after a page reload.
  *
  */
 
@@ -16,6 +17,8 @@ const { expect, test } = require('@playwright/test');
 const { E2eSeedAndRestoreApi } = require('./e2e-seed-and-restore-api');
 const { RoomMessagesRecorder } = require('./room-messages-recorder');
 const { SecurityApi } = require('./security-api');
+const { GameplayE2eStateApi } = require('./gameplay-e2e-state-api');
+const { Navigation } = require('./navigation');
 const { Login } = require('./login');
 const { TimeConstants } = require('./time-constants');
 const { InventoryConst } = require('../../../lib/inventory/constants');
@@ -55,12 +58,12 @@ class ItemGrowthSteps
         };
     }
 
-    static async fetchItemGrowth(gameConfig, playerName)
+    static async fetchItemGrowth(gameConfig, playerName, itemKey = ItemGrowthSteps.ITEM_KEY)
     {
         return sc.get(
             sc.toJson(
                 sc.get(
-                    [...await E2eSeedAndRestoreApi.loadInventoryRows(gameConfig, playerName, ItemGrowthSteps.ITEM_KEY)].shift(),
+                    [...await E2eSeedAndRestoreApi.loadInventoryRows(gameConfig, playerName, itemKey)].shift(),
                     'customData',
                     ''
                 ),
@@ -88,7 +91,21 @@ class ItemGrowthSteps
         return seededRow;
     }
 
-    static async changeItemGrowth(context, growthChanges, removedKeys = [])
+    static async seedItemModifiers(context, modifiers)
+    {
+        let itemData = await ItemGrowthSteps.loadGrowingItemData(context.gameConfig);
+        for(let modifier of modifiers){
+            await E2eSeedAndRestoreApi.createRow(context.gameConfig, context.e2eGroup, 'itemsItemModifiers', {
+                item_id: itemData.itemId,
+                key: modifier.key,
+                property_key: modifier.propertyKey,
+                operation: modifier.operation,
+                value: modifier.value
+            });
+        }
+    }
+
+    static async changeItemGrowth(context, growthChanges, removedKeys = [], customDataChanges = {})
     {
         let itemData = await ItemGrowthSteps.loadGrowingItemData(context.gameConfig);
         let growth = Object.assign({}, itemData.growth, growthChanges);
@@ -100,7 +117,7 @@ class ItemGrowthSteps
             context.e2eGroup,
             'itemsItem',
             {key: ItemGrowthSteps.ITEM_KEY},
-            {customData: sc.toJsonString(Object.assign({}, itemData.customData, {growth}))}
+            {customData: sc.toJsonString(Object.assign({}, itemData.customData, customDataChanges, {growth}))}
         );
         return growth;
     }
@@ -181,27 +198,55 @@ class ItemGrowthSteps
         );
     }
 
-    static async startGrowth(context, growthChanges = {}, removedKeys = [], isEquipped = true)
+    static async startGrowth(context, growthChanges = {}, removedKeys = [], isEquipped = true, inventoryCustomData = false)
     {
         test.setTimeout(
             TimeConstants.forLongRun(TimeConstants.GAME_START + TimeConstants.NAVIGATION, context.longRun)
             + ItemGrowthSteps.GROWTH_TIME_OUT_MS
         );
         let growth = await ItemGrowthSteps.changeItemGrowth(context, growthChanges, removedKeys);
-        await ItemGrowthSteps.seedGrowingItem(context);
+        await ItemGrowthSteps.seedGrowingItem(context, inventoryCustomData);
         let item = await ItemGrowthSteps.enterWithGrowingItem(context, isEquipped);
         await RoomMessagesRecorder.start(context.page);
-        return {growth, item};
+        return {
+            growth,
+            item,
+            itemData: await ItemGrowthSteps.loadGrowingItemData(context.gameConfig),
+            statsBefore: await ItemGrowthSteps.fetchPlayerStats(context.gameConfig)
+        };
     }
 
-    static async gainExperience(context, experience, expectedGrowth)
+    static async gainExperience(context, experience, expectedGrowth, roomName = Login.FOREST_ROOM_NAME)
     {
-        await ItemGrowthSteps.addExperience(context.gameConfig, context.gameConfig.e2ePlayerName, experience);
+        await ItemGrowthSteps.addExperience(context.gameConfig, context.gameConfig.e2ePlayerName, experience, roomName);
+        return await ItemGrowthSteps.waitForStoredGrowth(context, expectedGrowth, roomName);
+    }
+
+    static async waitForStoredGrowth(context, expectedGrowth, roomName = Login.FOREST_ROOM_NAME)
+    {
         await expect.poll(
             async () => await ItemGrowthSteps.fetchItemGrowth(context.gameConfig, context.gameConfig.e2ePlayerName),
             {message: 'The item growth must be stored', timeout: TimeConstants.SERVER_RESPONSE}
         ).toEqual(expectedGrowth);
-        return await ItemGrowthSteps.fetchGrowingItem(context.gameConfig, context.gameConfig.e2ePlayerName);
+        return await ItemGrowthSteps.fetchGrowingItem(context.gameConfig, context.gameConfig.e2ePlayerName, roomName);
+    }
+
+    static async giveGrowingItem(context, roomName = Login.FOREST_ROOM_NAME)
+    {
+        let added = await SecurityApi.request(context.gameConfig, 'POST', '/api/e2e/inventory/add-item', {
+            roomName,
+            playerName: context.gameConfig.e2ePlayerName,
+            itemKey: ItemGrowthSteps.ITEM_KEY
+        });
+        expect(added.inventoryId, 'The growing item must be given: '+added.error).toBeTruthy();
+        return added;
+    }
+
+    static async fetchPlayerStats(gameConfig, roomName = Login.FOREST_ROOM_NAME)
+    {
+        let player = await GameplayE2eStateApi.fetchPlayer(gameConfig, roomName, gameConfig.e2ePlayerName);
+        expect(player.stats, 'The stats of '+gameConfig.e2ePlayerName+' must be read: '+player.error).toBeTruthy();
+        return player.stats;
     }
 
     static async fetchLevelMessages(page)
@@ -211,13 +256,34 @@ class ItemGrowthSteps
         );
     }
 
+    static async reEnterForest(context)
+    {
+        await context.page.reload();
+        await Login.loginRootPlayer(context.page, context.gameConfig, context.longRun);
+        await Navigation.waitForRoom(
+            context.page,
+            Login.FOREST_ROOM_NAME,
+            TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, context.longRun)
+        );
+        await RoomMessagesRecorder.start(context.page);
+        return await ItemGrowthSteps.fetchGrowingItem(context.gameConfig, context.gameConfig.e2ePlayerName);
+    }
+
     static async enterWithGrowingItem(context, isEquipped = true)
     {
         await Login.loginAndEnterForest(context.page, context.gameConfig, context.longRun);
         let item = await ItemGrowthSteps.fetchGrowingItem(context.gameConfig, context.gameConfig.e2ePlayerName);
-        if(isEquipped){
-            await ItemGrowthSteps.toggleEquip(context.page, context.gameConfig, item, true);
+        if(!isEquipped){
+            return item;
         }
+        let modifierRow = (await ItemGrowthSteps.loadGrowingItemData(context.gameConfig)).modifierRow;
+        let statKey = [...modifierRow.property_key.split('/')].pop();
+        let statBefore = (await ItemGrowthSteps.fetchPlayerStats(context.gameConfig))[statKey];
+        await ItemGrowthSteps.toggleEquip(context.page, context.gameConfig, item, true);
+        await expect.poll(
+            async () => (await ItemGrowthSteps.fetchPlayerStats(context.gameConfig))[statKey],
+            {message: 'The equipped sword modifier must be applied', timeout: TimeConstants.SERVER_RESPONSE}
+        ).toBe(statBefore + item.modifiers.find(modifier => modifierRow.key === modifier.key).value);
         return await ItemGrowthSteps.fetchGrowingItem(context.gameConfig, context.gameConfig.e2ePlayerName);
     }
 
