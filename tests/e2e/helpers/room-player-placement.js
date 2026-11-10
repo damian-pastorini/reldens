@@ -195,11 +195,18 @@ class RoomPlayerPlacement
         return tile;
     }
 
-    static findClearLineTile(room, fromTile, startBounds, distances, ignoredBodies)
-    {
+    static findClearLineTile(
+        room,
+        fromTile,
+        startBounds,
+        distances,
+        ignoredBodies,
+        directions = RoomPlayerPlacement.LINE_DIRECTIONS
+    ){
         let line = {
             fromTile,
             startBounds,
+            directions,
             bodiesBounds: room.roomWorld.bodies.filter(body => !ignoredBodies.includes(body)).map(body => body.getAABB())
         };
         for(let distance of distances){
@@ -213,7 +220,7 @@ class RoomPlayerPlacement
 
     static findDistanceTile(room, line, distance)
     {
-        for(let direction of RoomPlayerPlacement.LINE_DIRECTIONS){
+        for(let direction of line.directions){
             let tile = RoomPlayerPlacement.findLineTile(room, line, direction, distance);
             if(tile){
                 return tile;
