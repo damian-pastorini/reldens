@@ -363,7 +363,10 @@ next one. The running instance is the `scoresPeriodReset` property of the scores
   from the inventory, so it can not be traded away during the reward) on `reldens.beforeGiveAdRewardItem` and given back
   on `reldens.afterAdEnded` when no reward was given (`skin_warlock_robe`, from the `ads_event_video` of the
   `reldens.skinAdTicket` event, `"replayCooldown":0`), so every reward costs one ticket, a failed ad or a failed reward
-  keeps the ticket, and a player without the ticket at the end gets no reward
+  keeps the ticket, and a player without the ticket at the end gets no reward; the reserved mark is set before the
+  ticket removal starts, and while it is set the trade accept and the NPC options (`btn-opt`) of that player, or of a
+  trade accept with that player, are refused, because the inventory lock of an exchange would refuse both the reward
+  and the ticket give back
 - an item with a `"skinKey"` custom data changes the player look while equipped: `PlayerSkinApplier`
   (`lib/users/server/player-skin-applier.js`) sets `playerSchema.avatarKey` on the inventory `EQUIP_ITEM`, restores the
   class path avatar (or another equipped skin) on `UNEQUIP_ITEM` and applies the equipped skin on the join
