@@ -10,6 +10,7 @@ const { expect } = require('@playwright/test');
 const { Selectors } = require('../selectors');
 const { TimeConstants } = require('./time-constants');
 const { Navigation } = require('./navigation');
+const { SecurityApi } = require('./security-api');
 
 class Login
 {
@@ -143,6 +144,54 @@ class Login
                     expect(false, 'UI selector failed ['+selector+']: '+error.message).toBeTruthy();
                 });
         }
+    }
+
+    static async loginOnOpenPage(target, username, password, playerName, longRun)
+    {
+        await target.locator(Selectors.login.username).fill(username, {
+            timeout: TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun)
+        });
+        await target.locator(Selectors.login.password).fill(password);
+        await target.click(Selectors.login.submit);
+        await target.waitForSelector(Selectors.characterSelect.container+':not(.hidden)', {
+            timeout: TimeConstants.forLongRun(TimeConstants.CHARACTER_SCREEN, longRun)
+        });
+        expect(await Login.selectPlayer(target, playerName), playerName).toBe(true);
+        await target.click(Selectors.characterSelect.selectorSubmit);
+        await target.waitForSelector(Selectors.body.gameEngineStarted, {
+            timeout: TimeConstants.forLongRun(TimeConstants.GAME_START, longRun)
+        });
+    }
+
+    static async startConfigPlayer(page, gameConfig, longRun, sceneName = null)
+    {
+        await Login.loginAndStartGame(
+            page,
+            gameConfig.e2eUsername,
+            gameConfig.e2ePassword,
+            gameConfig.e2ePlayerName,
+            longRun,
+            false,
+            sceneName
+        );
+    }
+
+    static fetchSecondPlayerConfig(gameConfig)
+    {
+        return Object.assign({}, gameConfig, {
+            e2eUsername: gameConfig.e2eUsername2,
+            e2ePassword: gameConfig.e2ePassword2 || gameConfig.e2ePassword,
+            e2ePlayerName: gameConfig.e2ePlayerName2
+        });
+    }
+
+    static async openClientPage(page, gameConfig)
+    {
+        let client = {
+            clientContext: await page.context().browser().newContext({baseURL: SecurityApi.baseUrl(gameConfig)})
+        };
+        client.clientPage = await client.clientContext.newPage();
+        return client;
     }
 
     static async loginRootPlayer(page, gameConfig, longRun, userKeySuffix = '')
