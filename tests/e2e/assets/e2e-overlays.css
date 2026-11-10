@@ -103,6 +103,16 @@
     top: 30%;
 }
 
+.e2e-frame-page {
+    margin: 0;
+}
+
+.e2e-game-frame {
+    width: 100vw;
+    height: 100vh;
+    border: 0;
+}
+
 .ui-box-scene-data {
     left: -18rem;
 }
