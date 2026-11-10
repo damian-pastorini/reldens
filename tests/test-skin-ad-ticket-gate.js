@@ -171,16 +171,24 @@ class TestSkinAdTicketGate extends BaseTest
         });
     }
 
-    async testRefusedOrRejectedTicketReleaseIsCaught()
+    async testRefusedOrRejectedTicketRelease()
     {
-        await this.test('a refused or rejected ticket release returns false and never throws', async () => {
+        await this.test('a refused ticket release returns false and a rejected one rejects the ad end', async () => {
             let gate = SkinAdTicketGateBuilder.createGate();
-            for(let increaseItemQty of [async () => false, async () => Promise.reject({message: 'Storage.'})]){
-                let rewardEvent = SkinAdTicketGateBuilder.createRewardEvent('skin-ad-ticket', 2);
-                await gate.onBeforeGiveAdRewardItem(rewardEvent);
-                rewardEvent.playerSchema.inventory.manager.increaseItemQty = increaseItemQty;
-                this.assert.strictEqual(await gate.onAfterAdEnded(SkinAdTicketGateBuilder.createAdEndedEvent(rewardEvent, false)), false);
-            }
+            let refusedEvent = SkinAdTicketGateBuilder.createRewardEvent('skin-ad-ticket', 2);
+            await gate.onBeforeGiveAdRewardItem(refusedEvent);
+            refusedEvent.playerSchema.inventory.manager.increaseItemQty = async () => false;
+            let refusedEndEvent = SkinAdTicketGateBuilder.createAdEndedEvent(refusedEvent, false);
+            this.assert.strictEqual(await gate.onAfterAdEnded(refusedEndEvent), false);
+            let rejectedEvent = SkinAdTicketGateBuilder.createRewardEvent('skin-ad-ticket', 2);
+            await gate.onBeforeGiveAdRewardItem(rejectedEvent);
+            rejectedEvent.playerSchema.inventory.manager.increaseItemQty = async () => Promise.reject(
+                {message: 'Storage.'}
+            );
+            await this.assert.rejects(
+                gate.onAfterAdEnded(SkinAdTicketGateBuilder.createAdEndedEvent(rejectedEvent, false)),
+                {message: 'Storage.'}
+            );
         });
     }
 
