@@ -4,13 +4,15 @@
  *
  * Death detection and revive waiting helpers for combat tests, and the deterministic death: the server sets the player
  * life to the points one hit removes and places an enemy next to the player with its battle started, so the death
- * comes from a real enemy hit without depending on the enemies damage rate.
+ * comes from a real enemy hit without depending on the enemies damage rate. A later death of the same player uses the
+ * other enemy of the configured enemy respawn layer (the aggressive enemies are disabled after the first death).
  *
  */
 
 const { expect } = require('@playwright/test');
 const { Login } = require('./login');
 const { RoomObjectsApi } = require('./room-objects-api');
+const { BaseE2eTest } = require('../base-e2e-test');
 const { Logger, sc } = require('@reldens/utils');
 
 class TestCombatDeath
@@ -37,6 +39,25 @@ class TestCombatDeath
         );
         expect(enemyAttack.enemyKey, 'The enemy attack must start: '+sc.get(enemyAttack, 'error', '')).toBeTruthy();
         await TestCombatDeath.waitForPlayerHpCondition(page, 'dead', timeout);
+    }
+
+    static loadOtherEnemyKey(gameConfig)
+    {
+        let respawnAreas = BaseE2eTest.loadRoomEntries(Login.FOREST_ROOM_NAME, ['respawnAreas']);
+        let configuredLayerName = respawnAreas.find(area => gameConfig.e2eEnemyKey === area.assetKey).layerName;
+        return respawnAreas.find(
+            respawnArea => gameConfig.e2eEnemyKey !== respawnArea.assetKey && configuredLayerName === respawnArea.layerName
+        ).assetKey;
+    }
+
+    static async killPlayerAgain(page, gameConfig, timeout)
+    {
+        await TestCombatDeath.killPlayerWithEnemyAttack(
+            page,
+            gameConfig,
+            TestCombatDeath.loadOtherEnemyKey(gameConfig),
+            timeout
+        );
     }
 
     static async waitForPlayerHpCondition(page, condition, timeout)
