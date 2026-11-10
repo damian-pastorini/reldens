@@ -11,14 +11,11 @@
 
 const { BaseE2eTest } = require('./base-e2e-test');
 const { Login } = require('./helpers/login');
-const { Navigation } = require('./helpers/navigation');
-const { ObjectChase } = require('./helpers/object-chase');
 const { Phaser } = require('./helpers/phaser');
 const { PhaserRange } = require('./helpers/phaser-range');
 const { RoomObjectsApi } = require('./helpers/room-objects-api');
 const { TestCombatDeath } = require('./helpers/test-combat-death');
 const { TimingObjectSession } = require('./helpers/timing-object-session');
-const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
 const { sc } = require('@reldens/utils');
 let test = BaseE2eTest.test;
@@ -28,55 +25,15 @@ class TestTimingObjectsCancel
 {
     static ENEMY_OBJECT_TYPE = 4;
     static ATTACK_SKILL_KEY = 'attackShort';
-    static CANCEL_TEST_TIMEOUT = 240000;
-
-    static async prepareMining(page, gameConfig, longRun)
-    {
-        test.setTimeout(TimeConstants.forLongRun(TestTimingObjectsCancel.CANCEL_TEST_TIMEOUT, longRun));
-        let rockAssetKey = gameConfig.e2eMiningRockKey || '';
-        expect(rockAssetKey, 'e2eMiningRockKey not configured').toBeTruthy();
-        let rewardItemId = gameConfig.e2eMiningRockRewardItemId || '';
-        expect(rewardItemId, 'e2eMiningRockRewardItemId must be configured').toBeTruthy();
-        let forestData = await TimingObjectSession.enterForestWithoutEnemies(page, gameConfig, longRun);
-        let rockKey = await TimingObjectSession.placeNextToObject(
-            page,
-            gameConfig,
-            rockAssetKey,
-            forestData.sceneTimeout,
-            'mining rock'
-        );
-        await TimingObjectSession.openInventory(page, forestData.pauseMs);
-        return {
-            rockKey,
-            rewardItemId,
-            rewardQtyBefore: await TimingObjectSession.fetchInventoryItemQty(page, rewardItemId),
-            serverTimeout: TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun)
-        };
-    }
-
-    static async fetchSideStepPoint(page, position)
-    {
-        let walkableOffsets = await PhaserRange.filterWalkableOffsets(
-            page,
-            position.x,
-            position.y,
-            ObjectChase.SIDESTEP_OFFSETS,
-            Navigation.TILE_SIZE
-        );
-        expect(walkableOffsets.length, 'A walkable tile next to '+position.x+','+position.y+' must exist')
-            .toBeGreaterThan(0);
-        return ObjectChase.offsetPoint(position.x, position.y, [...walkableOffsets].shift());
-    }
 
     static async assertNoRewardAfterTimingDuration(page, mining)
     {
-        await page.waitForTimeout(
-            await TimingObjectSession.fetchTimingDuration(page, mining.rockKey) + TimeConstants.ACTION
-        );
-        expect(
-            await TimingObjectSession.fetchInventoryItemQty(page, mining.rewardItemId),
+        await TimingObjectSession.expectRewardAfterDuration(
+            page,
+            mining,
+            mining.rewardQtyBefore,
             'A cancelled mining must not give the reward item'
-        ).toBe(mining.rewardQtyBefore);
+        );
     }
 
     static async assertHitCancelledMining(page, mining, hpBefore, positionBefore)
@@ -93,14 +50,10 @@ class TestTimingObjectsCancel
 
     static async runMoveCancelTest(page, screenshots, gameConfig, longRun)
     {
-        let mining = await TestTimingObjectsCancel.prepareMining(page, gameConfig, longRun);
+        let mining = await TimingObjectSession.prepareMining(page, gameConfig, longRun);
         await TimingObjectSession.startTiming(page, mining.rockKey, mining.serverTimeout);
         await screenshots.capture(page, 'mining-started-before-move');
-        let sideStepPoint = await TestTimingObjectsCancel.fetchSideStepPoint(
-            page,
-            await Phaser.getPlayerServerPosition(page)
-        );
-        await Navigation.moveToWorldPoint(page, sideStepPoint.x, sideStepPoint.y);
+        await TimingObjectSession.sideStep(page);
         await TimingObjectSession.waitForTimingAction(page, 'timingCancel', mining.serverTimeout);
         await TestTimingObjectsCancel.assertNoRewardAfterTimingDuration(page, mining);
         await screenshots.capture(page, 'mining-cancelled-by-move');
@@ -112,7 +65,7 @@ class TestTimingObjectsCancel
             area => TestTimingObjectsCancel.ENEMY_OBJECT_TYPE === area.childObjectType && !area.isAggressive
         );
         expect(passiveEnemyArea, 'The forest must have a passive enemy').toBeTruthy();
-        let mining = await TestTimingObjectsCancel.prepareMining(page, gameConfig, longRun);
+        let mining = await TimingObjectSession.prepareMining(page, gameConfig, longRun);
         await TimingObjectSession.startTiming(page, mining.rockKey, mining.serverTimeout);
         let hpBefore = await TestCombatDeath.getPlayerHpFromState(page);
         let positionBefore = await Phaser.getPlayerServerPosition(page);
@@ -164,7 +117,7 @@ class TestTimingObjectsCancel
             skill => TestTimingObjectsCancel.ATTACK_SKILL_KEY === skill.key
         );
         expect(attackSkill, 'The second player must have the attack skill').toBeTruthy();
-        let mining = await TestTimingObjectsCancel.prepareMining(page, gameConfig, longRun);
+        let mining = await TimingObjectSession.prepareMining(page, gameConfig, longRun);
         let minerName = gameConfig.e2ePlayerName || 'ImRoot';
         await Login.loginAndStartGame(
             secondPage,
