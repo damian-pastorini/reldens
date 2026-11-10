@@ -5,12 +5,9 @@
  */
 
 const { BaseTest } = require('./base-test');
-const { RoomChat } = require('../lib/chat/server/room-chat');
-const { RoomGame } = require('../lib/rooms/server/game');
-const { RoomScene } = require('../lib/rooms/server/scene');
+const { ActiveSessionsBuilder } = require('./fixtures/active-sessions-builder');
 const { ChatManager } = require('../lib/chat/server/manager');
 const { UserDisconnection } = require('../lib/game/server/user-disconnection');
-const { ActivePlayers } = require('../lib/game/server/memory/active-players');
 const { SyncServerDriver } = require('../lib/sync/server/colyseus/sync-server-driver');
 const { MessageFactory } = require('../lib/chat/message-factory');
 const { ChatConst } = require('../lib/chat/constants');
@@ -22,8 +19,8 @@ class TestRoomChatDisconnection extends BaseTest
     constructor(config)
     {
         super(config);
-        this.userModel = {id: 1, username: 'root', role_id: 1, player: {id: 1, name: 'ImRoot', state: {room_id: 4}}};
-        this.otherUserModel = {id: 2, username: 'other', role_id: 1, player: {id: 2, name: 'Other'}};
+        this.userModel = ActiveSessionsBuilder.createUserModel(1, 'root', 'ImRoot');
+        this.otherUserModel = ActiveSessionsBuilder.createUserModel(2, 'other', 'Other');
         this.configValues = {
             'client/chat/messages/characterLimit': 100,
             'server/chat/messages/global_enabled': 1,
@@ -35,10 +32,9 @@ class TestRoomChatDisconnection extends BaseTest
 
     createSessionsSetup()
     {
-        let setup = {activePlayers: new ActivePlayers.constructor(), closedSessions: [], broadcasted: [], saved: []};
-        setup.activePlayers.gameRoomInstanceId = 'game-room';
-        setup.gameRoom = this.createRoom(RoomGame, 'game-room', setup);
-        setup.chatRoom = this.createRoom(RoomChat, 'chat-room', setup);
+        let setup = ActiveSessionsBuilder.createSetup();
+        setup.broadcasted = [];
+        setup.saved = [];
         setup.chatRoom.config = {
             get: (path) => this.configValues[path],
             getWithoutLogs: (path, defaultValue) => this.configValues[path] ?? defaultValue
@@ -49,25 +45,14 @@ class TestRoomChatDisconnection extends BaseTest
         return setup;
     }
 
-    createRoom(roomClass, roomId, setup)
+    joinChat(setup, sessionId)
     {
-        let room = Object.create(roomClass.prototype);
-        room.roomId = roomId;
-        room.roomName = roomId;
-        room.loginManager = {activePlayers: setup.activePlayers};
-        return room;
-    }
-
-    joinRoom(setup, room, sessionId, userModel)
-    {
-        let client = {sessionId, leave: (closeCode) => setup.closedSessions.push([sessionId, closeCode])};
-        setup.activePlayers.add(userModel || this.userModel, client, room);
-        return client;
+        return ActiveSessionsBuilder.joinRoom(setup, setup.chatRoom, sessionId, this.userModel);
     }
 
     hasChatSession(setup, sessionId)
     {
-        return Boolean(setup.chatRoom.activePlayerBySessionId(sessionId, 'chat-room'));
+        return Boolean(setup.chatRoom.activePlayerBySessionId(sessionId, ActiveSessionsBuilder.CHAT_ROOM_ID));
     }
 
     createGlobalMessage()
@@ -79,13 +64,16 @@ class TestRoomChatDisconnection extends BaseTest
     {
         await this.test('the ended chat session is removed and its connection closed as consented', async () => {
             let setup = this.createSessionsSetup();
-            let endedClient = this.joinRoom(setup, setup.chatRoom, 'ended-session');
+            let endedClient = this.joinChat(setup, 'ended-session');
             this.assert.strictEqual(setup.chatRoom.disconnectBySessionId('ended-session', endedClient), true);
             this.assert.deepStrictEqual(setup.closedSessions, [['ended-session', this.consentedCode]]);
             this.assert.strictEqual(this.hasChatSession(setup, 'ended-session'), false);
-            this.assert.strictEqual(setup.chatRoom.activePlayerByUserName('root', 'chat-room'), false);
-            this.assert.strictEqual(setup.chatRoom.activePlayerByPlayerName('ImRoot', 'chat-room'), false);
-            this.assert.deepStrictEqual(setup.activePlayers.playersSessionsByUserId[1], {});
+            this.assert.strictEqual(setup.chatRoom.activePlayerByUserName('root', ActiveSessionsBuilder.CHAT_ROOM_ID), false);
+            this.assert.strictEqual(
+                setup.chatRoom.activePlayerByPlayerName('ImRoot', ActiveSessionsBuilder.CHAT_ROOM_ID),
+                false
+            );
+            this.assert.deepStrictEqual(ActiveSessionsBuilder.fetchUserSessions(setup, 1), []);
         });
     }
 
@@ -95,7 +83,7 @@ class TestRoomChatDisconnection extends BaseTest
             let globalMessage = MessageFactory.create(ChatConst.TYPES.GLOBAL, 'hello everyone', {}, 'ImRoot');
             for(let isDisconnected of [false, true]){
                 let setup = this.createSessionsSetup();
-                let endedClient = this.joinRoom(setup, setup.chatRoom, 'ended-session');
+                let endedClient = this.joinChat(setup, 'ended-session');
                 if(isDisconnected){
                     setup.chatRoom.disconnectBySessionId('ended-session', endedClient);
                 }
@@ -116,7 +104,7 @@ class TestRoomChatDisconnection extends BaseTest
             );
             for(let isDisconnected of [false, true]){
                 let setup = this.createSessionsSetup();
-                let endedClient = this.joinRoom(setup, setup.chatRoom, 'ended-session');
+                let endedClient = this.joinChat(setup, 'ended-session');
                 if(isDisconnected){
                     setup.chatRoom.disconnectBySessionId('ended-session', endedClient);
                 }
@@ -131,22 +119,32 @@ class TestRoomChatDisconnection extends BaseTest
     {
         await this.test('a new chat session of the same user is kept when the ended one is closed', async () => {
             let setup = this.createSessionsSetup();
-            let endedClient = this.joinRoom(setup, setup.chatRoom, 'ended-session');
-            let newClient = this.joinRoom(setup, setup.chatRoom, 'new-session');
+            let endedClient = this.joinChat(setup, 'ended-session');
+            let newClient = this.joinChat(setup, 'new-session');
             setup.chatRoom.disconnectBySessionId('ended-session', endedClient);
             this.assert.deepStrictEqual(setup.closedSessions, [['ended-session', this.consentedCode]]);
-            this.assert.strictEqual(setup.chatRoom.activePlayerByUserName('root', 'chat-room').client, newClient);
-            this.assert.strictEqual(setup.chatRoom.activePlayerByPlayerName('ImRoot', 'chat-room').client, newClient);
-            this.assert.deepStrictEqual(setup.activePlayers.playersSessionsByUserId[1], {'new-session': 'chat-room'});
+            this.assert.strictEqual(
+                setup.chatRoom.activePlayerByUserName('root', ActiveSessionsBuilder.CHAT_ROOM_ID).client,
+                newClient
+            );
+            this.assert.strictEqual(
+                setup.chatRoom.activePlayerByPlayerName('ImRoot', ActiveSessionsBuilder.CHAT_ROOM_ID).client,
+                newClient
+            );
+            this.assert.deepStrictEqual(ActiveSessionsBuilder.fetchUserSessions(setup, 1), ['new-session']);
         });
     }
 
-    createUserDisconnection(setup, sceneRoom)
+    createUserDisconnection(setup)
     {
         return new UserDisconnection({
             config: {getWithoutLogs: (path, defaultValue) => defaultValue},
             roomsManager: {
-                createdInstances: {'game-room': setup.gameRoom, 'scene-room': sceneRoom, 'chat-room': setup.chatRoom}
+                createdInstances: {
+                    [ActiveSessionsBuilder.GAME_ROOM_ID]: setup.gameRoom,
+                    [ActiveSessionsBuilder.SCENE_ROOM_ID]: setup.sceneRoom,
+                    [ActiveSessionsBuilder.CHAT_ROOM_ID]: setup.chatRoom
+                }
             },
             activePlayers: setup.activePlayers
         });
@@ -158,27 +156,28 @@ class TestRoomChatDisconnection extends BaseTest
             for(let avoidGameRoom of [true, false]){
                 let setup = this.createSessionsSetup();
                 let sceneDisconnections = [];
-                let sceneRoom = this.createRoom(RoomScene, 'scene-room', setup);
-                sceneRoom.disconnectBySessionId = async (sessionId) => sceneDisconnections.push(sessionId);
-                let gameClient = this.joinRoom(setup, setup.gameRoom, 'game-session');
-                this.joinRoom(setup, sceneRoom, 'scene-session');
-                this.joinRoom(setup, setup.chatRoom, 'chat-session');
-                let otherClient = this.joinRoom(setup, setup.chatRoom, 'other-chat-session', this.otherUserModel);
+                setup.sceneRoom.disconnectBySessionId = async (sessionId) => sceneDisconnections.push(sessionId);
+                let gameClient = ActiveSessionsBuilder.joinRoom(setup, setup.gameRoom, 'game-session', this.userModel);
+                ActiveSessionsBuilder.joinRoom(setup, setup.sceneRoom, 'scene-session', this.userModel);
+                this.joinChat(setup, 'chat-session');
+                let otherClient = ActiveSessionsBuilder.joinRoom(
+                    setup,
+                    setup.chatRoom,
+                    'other-chat-session',
+                    this.otherUserModel
+                );
                 this.assert.strictEqual(
-                    await this.createUserDisconnection(setup, sceneRoom).disconnectUserFromEveryRoom(
-                        this.userModel,
-                        avoidGameRoom
-                    ),
+                    await this.createUserDisconnection(setup).disconnectUserFromEveryRoom(this.userModel, avoidGameRoom),
                     true
                 );
                 this.assert.deepStrictEqual(sceneDisconnections, ['scene-session']);
                 this.assert.deepStrictEqual(setup.closedSessions, [['chat-session', this.consentedCode]]);
                 this.assert.strictEqual(
-                    setup.activePlayers.fetchByRoomAndSessionId('game-session', 'game-room').client,
+                    setup.activePlayers.fetchByRoomAndSessionId('game-session', ActiveSessionsBuilder.GAME_ROOM_ID).client,
                     gameClient
                 );
                 this.assert.strictEqual(
-                    setup.chatRoom.activePlayerByUserName('other', 'chat-room').client,
+                    setup.chatRoom.activePlayerByUserName('other', ActiveSessionsBuilder.CHAT_ROOM_ID).client,
                     otherClient
                 );
             }
