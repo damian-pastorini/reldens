@@ -8,7 +8,8 @@
  * messages the server sends to the player (timingStart, timingCancel, timingComplete) and start a timing on the
  * reached instance; prepare a mining (the player next to the first mining rock with the inventory open and the reward
  * quantity read), wait the timing duration and check the reward quantity, and through TimingObjectsProbe change a
- * cancel rule of the object for the group, read its timing state and override the inventory "addItem" of the player.
+ * cancel rule of the object for the group, pin its respawn for the group to the closest tile out of reach of the old
+ * place, read its timing state and override the inventory "addItem" of the player.
  *
  */
 
@@ -191,6 +192,16 @@ class TimingObjectSession
         });
         expect(changed.value, 'The '+propertyKey+' of '+objectKey+' must change: '+changed.error).toEqual(value);
         return changed;
+    }
+
+    static async pinRespawnOutOfReach(gameConfig, group, objectKey)
+    {
+        let pinned = await SecurityApi.request(gameConfig, 'POST', '/api/e2e/timing-objects/pin-respawn-out-of-reach', {
+            roomName: Login.FOREST_ROOM_NAME,
+            group,
+            objectKey
+        });
+        expect(pinned.isRespawnPinned, 'The respawn of '+objectKey+' must be pinned: '+pinned.error).toBe(true);
     }
 
     static async holdTimingStop(gameConfig, group, objectKey)
