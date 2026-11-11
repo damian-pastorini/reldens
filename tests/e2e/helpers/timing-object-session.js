@@ -199,7 +199,8 @@ class TimingObjectSession
         let pinned = await SecurityApi.request(gameConfig, 'POST', '/api/e2e/timing-objects/pin-respawn-out-of-reach', {
             roomName: Login.FOREST_ROOM_NAME,
             group,
-            objectKey
+            objectKey,
+            playerName: gameConfig.e2ePlayerName
         });
         expect(pinned.isRespawnPinned, 'The respawn of '+objectKey+' must be pinned: '+pinned.error).toBe(true);
     }
