@@ -15,11 +15,10 @@
  * walk or end a bullet on a tile the grid marks walkable): from a start tile, the first line along the right, left,
  * down and up directions (in that order) at the given distances (in that order) whose tiles are all walkable on the
  * grid and whose rectangle (from the start bounds to the end tile) overlaps no body except the ignored ones. It gives
- * the walk target of a player, and the player placement on the line of an object (its random movement stopped and the
- * object placed on the center of its tile), so the same room always gives the same walk and the same shot. The line of
- * a shot also covers the row above and the column on the left of the object tile: P2world.shootBullet starts the bullet
- * half a tile and half a bullet away from the shooter on both axes, a body there removes the bullet before a client
- * can see it.
+ * the walk target of a player and the lines of RoomLinePlacement, so the same room always gives the same walk and the
+ * same shot. The line of a shot also covers the row above and the column on the left of the object tile:
+ * P2world.shootBullet starts the bullet half a tile and half a bullet away from the shooter on both axes, a body there
+ * removes the bullet before a client can see it.
  *
  */
 
@@ -256,34 +255,6 @@ class RoomPlayerPlacement
         return {tile};
     }
 
-    static placePlayerInLineOfObject(room, playerName, objectKey, sessionId, distances)
-    {
-        let subjects = RoomPlayerPlacement.fetchPlacementSubjects(room, playerName, objectKey, sessionId);
-        if(subjects.error){
-            return subjects;
-        }
-        let objectBody = subjects.roomObject.objectBody;
-        let objectTile = objectBody.positionToTiles(objectBody.position[0], objectBody.position[1]);
-        let fromTile = [objectTile.currentCol, objectTile.currentRow];
-        RoomMovementState.placeObjectOnTile(room, objectKey, fromTile[0], fromTile[1]);
-        let tile = RoomPlayerPlacement.findClearLineTile(
-            room,
-            fromTile,
-            RoomPlayerPlacement.shotStartBounds(room, fromTile),
-            distances,
-            [objectBody, subjects.playerSchema.physicalBody]
-        );
-        if(!tile){
-            return {error: 'No clear line of tiles from the object '+objectKey+' in room '+room.roomName+'.'};
-        }
-        let tileBounds = RoomPlayerPlacement.tileBounds(room, tile);
-        return RoomPlayerPlacement.placePlayerOnPosition(
-            subjects.playerSchema,
-            subjects.roomObject,
-            {x: (tileBounds.left + tileBounds.right) / 2, y: (tileBounds.top + tileBounds.bottom) / 2}
-        );
-    }
-
     static findObjectWithBody(room, objectKey)
     {
         let roomObjects = sc.get(room.objectsManager, 'roomObjects', {});
@@ -318,17 +289,6 @@ class RoomPlayerPlacement
                 String(sc.get(query, 'distances', '')).split(',').map(Number)
             );
         });
-        RoomMovementState.registerActionEndpoint(
-            serverManager,
-            '/api/e2e/room-objects/place-player-in-line-of-object',
-            (room, body) => RoomPlayerPlacement.placePlayerInLineOfObject(
-                room,
-                sc.get(body, 'playerName', ''),
-                sc.get(body, 'objectKey', ''),
-                String(sc.get(body, 'sessionId', '')),
-                String(sc.get(body, 'distances', '')).split(',').map(Number)
-            )
-        );
         Logger.info('[room-player-placement] Player placement endpoints registered.');
     }
 
