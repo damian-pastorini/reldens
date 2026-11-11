@@ -6,6 +6,7 @@
 
 const { BaseTest } = require('./base-test');
 const { ItemsGrowthApplierBuilder } = require('./fixtures/items-growth-applier-builder');
+const { InventoryMessageActions } = require('../lib/inventory/server/message-actions');
 const { ItemsConst, ItemsEvents } = require('@reldens/items-system');
 const { sc } = require('@reldens/utils');
 
@@ -132,6 +133,22 @@ class TestItemsGrowthApplierFailures extends BaseTest
                 {itemUid: setup.sword.getInventoryId(), stepName: ItemsEvents.GROWTH_LEVEL_UP}
             );
             this.assert.strictEqual(setup.inventoryManager.lastError.withError, sendError);
+        });
+    }
+
+    async testEquipToggleDuringTheLevelUpUnequipsTheGrownItem()
+    {
+        await this.test('an equip toggle sent during the level up unequips the item after the level up', async () => {
+            let setup = await this.builder.createEquippedSwordSetup(this.builder.storedRows.nearLevelTwo);
+            let togglesDuringLevelUp = [];
+            setup.inventoryManager.listenEvent(ItemsEvents.GROWTH_LEVEL_UP, () => togglesDuringLevelUp.push(
+                new InventoryMessageActions().executeEquipAction(setup.playerSchema, {'idx': setup.sword.getInventoryId()})
+            ), 'toggleDuringLevelUp');
+            this.assert.strictEqual(await setup.addPlayerExperience(10), 1);
+            this.assert.deepStrictEqual(await Promise.all(togglesDuringLevelUp), [true]);
+            this.assert.strictEqual(setup.sword.growthLevel, 2);
+            this.assert.strictEqual(setup.sword.equipped, false);
+            this.assert.strictEqual(setup.playerSchema.stats.atk, 100);
         });
     }
 
