@@ -9,7 +9,9 @@
  * it), and places the given enemies (their random movement stopped) on that line, one every given tiles step, the
  * first one the closest to the player, and returns the player and the enemies positions; the player placement on the
  * line of an object moves the object (its random movement stopped) the same way to the closest free tile with a clear
- * line along the right, left, down and up directions at the given distances, and the player on that line; the wall
+ * line along the right, left, down and up directions at the given distances, and the player on that line; the line
+ * start moves the player itself the same way to the closest free tile with a clear line and returns the tile at the end
+ * of that line, so a walk from a spot closed by bodies or walls (like a death position) always has room; the wall
  * line places the player and a target player on the two free walkable tiles at both sides of a wall tile
  * (RoomTileKindsClassifier wall tiles), the closest to the player, so a bullet shot at the target ends on that wall.
  *
@@ -104,6 +106,29 @@ class RoomLinePlacement
             subjects.roomObject,
             RoomLinePlacement.tileCenter(room, lineStart.tile)
         );
+    }
+
+    static placePlayerOnLineStart(room, sessionId, distances)
+    {
+        let playerSchema = RoomObjectsState.findPlayer(room, '', sessionId);
+        if(!playerSchema){
+            return {error: 'Player session '+sessionId+' not found in '+room.roomName+'.'};
+        }
+        let lineStart = RoomLinePlacement.findLineStart(
+            room,
+            {
+                fromTile: RoomLinePlacement.fetchTile(playerSchema.physicalBody),
+                distances,
+                directions: RoomLinePlacement.LINE_DIRECTIONS
+            },
+            [playerSchema.physicalBody]
+        );
+        if(!lineStart){
+            return {error: 'No free tile with a clear line around the session '+sessionId+' in '+room.roomName+'.'};
+        }
+        let position = RoomLinePlacement.tileCenter(room, lineStart.fromTile);
+        RoomAggressionPlacement.placePlayer(playerSchema, position);
+        return {position, tile: lineStart.tile};
     }
 
     static placeEnemiesOnLine(room, sessionId, bodyKeys, tilesStep, direction)
@@ -222,6 +247,15 @@ class RoomLinePlacement
                 room,
                 sc.get(body, 'playerName', ''),
                 sc.get(body, 'objectKey', ''),
+                String(sc.get(body, 'sessionId', '')),
+                String(sc.get(body, 'distances', '')).split(',').map(Number)
+            )
+        );
+        RoomMovementState.registerActionEndpoint(
+            serverManager,
+            '/api/e2e/room-objects/place-player-on-line-start',
+            (room, body) => RoomLinePlacement.placePlayerOnLineStart(
+                room,
                 String(sc.get(body, 'sessionId', '')),
                 String(sc.get(body, 'distances', '')).split(',').map(Number)
             )
