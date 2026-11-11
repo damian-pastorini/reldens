@@ -4,8 +4,10 @@
  *
  * Provides shared Playwright test fixtures (gameConfig, longRun, screenshots, page) used by all spec files. The
  * e2eGroup option is set by the Playwright project of the parallel spec group (ParallelSpecGroups), the gameConfig
- * fixture gives the specs the test users of that group and the page fixture resets only that group before every test.
- * The console output of the process is written to test-results/tests.log (E2eConsoleFileRedirect).
+ * fixture gives the specs the test users of that group and the page fixture resets only that group before every test
+ * and closes the extra client pages the test opened (Login.openClientPage) after it, even when it fails.
+ * The console output of the process is written to tests.log in the run results folder (E2eConsoleFileRedirect), the
+ * config, the game data and every output come from E2eInstance (the instance folder and database of an isolated run).
  *
  */
 
@@ -14,20 +16,19 @@ const { FileHandler } = require('@reldens/server-utils');
 const { Logger } = require('@reldens/utils');
 const { Selectors } = require('./selectors');
 const { PlayerReset } = require('./helpers/player-reset');
+const { Login } = require('./helpers/login');
 const { ParallelSpecGroups } = require('./helpers/parallel-spec-groups');
 const { TimeConstants } = require('./helpers/time-constants');
 const { RecordingStepReadTimer } = require('./helpers/recording-step-read-timer');
 const { E2eConsoleFileRedirect } = require('./helpers/e2e-console-file-redirect');
+const { E2eInstance } = require('./helpers/e2e-instance');
 
 class BaseE2eTest
 {
     // @TODO - BETA - Replace all the static methods.
-    static configPath = FileHandler.joinPaths(process.cwd(), 'tests', 'config.json');
-    static gameConfig = FileHandler.exists(BaseE2eTest.configPath)
-        ? FileHandler.fetchFileJson(BaseE2eTest.configPath)
-        : {};
+    static gameConfig = E2eInstance.loadConfig() || {};
     static longRun = '1' === process.env.LONG_RUN;
-    static videosDir = FileHandler.joinPaths(process.cwd(), 'test-results', 'videos');
+    static videosDir = E2eInstance.resultsPath('videos');
     static videoSize = {width: 1280, height: 1080};
     static gameplayRecordingStartDelayMs = 1000;
     static cameraStillPollMs = 250;
@@ -38,8 +39,8 @@ class BaseE2eTest
     static gameplayRecordingPages = [];
     static overlaysStylesPath = FileHandler.joinPaths(process.cwd(), 'tests', 'e2e', 'assets', 'e2e-overlays.css');
     static recordingNote = 'Automatic e2e test recording - the player teleports skip the walk to the required areas.';
-    static screenshotsDir = FileHandler.joinPaths(process.cwd(), 'test-results', 'screenshots');
-    static gameDataPath = FileHandler.joinPaths(process.cwd(), 'tests', 'e2e', 'game-data.json');
+    static screenshotsDir = E2eInstance.resultsPath('screenshots');
+    static gameDataPath = E2eInstance.generatedFilePath('game-data.json');
     static expect = baseExpect;
     static test = baseTest.extend({
         e2eGroup: [ParallelSpecGroups.EXCLUSIVE_GROUP, {option: true}],
@@ -58,6 +59,7 @@ class BaseE2eTest
         page: async ({ browser, gameConfig, e2eGroup }, use, testInfo) => {
             await PlayerReset.resetAll(gameConfig, e2eGroup);
             await BaseE2eTest.runPageFixture(browser, use, testInfo, null);
+            await Login.closeClientPages();
         },
         secondPage: async ({ browser }, use, testInfo) => {
             await BaseE2eTest.runPageFixture(browser, use, testInfo, 'player2');
@@ -170,7 +172,7 @@ class BaseE2eTest
 
     static async makeContext(browser)
     {
-        let outputDir = FileHandler.joinPaths(process.cwd(), 'test-results');
+        let outputDir = E2eInstance.resultsPath();
         let envPort = process.env.RELDENS_E2E_PORT || null;
         let effectiveBaseUrl = envPort
             ? 'http://localhost:'+envPort
