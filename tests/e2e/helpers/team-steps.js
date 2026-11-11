@@ -5,7 +5,8 @@
  * The steps of the teams specs: the group players logged in their scene (the first two on the spec pages and the third
  * one on its own client page) with the room messages and the chat messages recorded on each client, each player with
  * its page, config, name, player id and session id; an invite and an answer sent with the team messages a client sends
- * (the accept value "1" and the decline value "2"), a team formed by an invite and its accept; the team messages a
+ * (the player ids as strings like the target and request boxes send them, the accept value "1" and the decline value
+ * "2"), a team formed by an invite and its accept; the team messages a
  * client received; and the live teams and pending invites of the server (TeamsProbe).
  *
  */
@@ -54,14 +55,14 @@ class TeamSteps
 
     static async invite(fromPlayer, toPlayer)
     {
-        await RoomMessagesRecorder.sendMessage(fromPlayer.page, {act: TeamsConst.ACTIONS.TEAM_INVITE, id: toPlayer.playerId});
+        await RoomMessagesRecorder.sendMessage(fromPlayer.page, {act: TeamsConst.ACTIONS.TEAM_INVITE, id: String(toPlayer.playerId)});
     }
 
     static async answer(answeringPlayer, inviterPlayer, value)
     {
         await RoomMessagesRecorder.sendMessage(
             answeringPlayer.page,
-            {act: TeamsConst.ACTIONS.TEAM_ACCEPTED, id: inviterPlayer.playerId, value}
+            {act: TeamsConst.ACTIONS.TEAM_ACCEPTED, id: String(inviterPlayer.playerId), value}
         );
     }
 
@@ -89,6 +90,19 @@ class TeamSteps
     static async fetchMessages(player, act)
     {
         return await RoomMessagesRecorder.fetchMessages(player.page, act);
+    }
+
+    static sortedIds(players)
+    {
+        return players.map(player => player.playerId).sort((idA, idB) => idA - idB);
+    }
+
+    static async expectTeams(gameConfig, expectedTeams, message)
+    {
+        await expect.poll(async () => {
+            let teams = (await TeamSteps.fetchState(gameConfig)).teams || {};
+            return Object.keys(teams).map(ownerId => [Number(ownerId), teams[ownerId].playersIds]);
+        }, {message, timeout: TimeConstants.SERVER_RESPONSE}).toEqual(expectedTeams);
     }
 
     static async fetchState(gameConfig)
