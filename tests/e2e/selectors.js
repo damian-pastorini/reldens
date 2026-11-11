@@ -16,6 +16,7 @@ class Selectors
     constructor()
     {
         this.gameOver = {};
+        this.trade = {};
         this.initBaseSelectors();
         this.initHudAndChatSelectors();
         this.initInventoryAndStatsSelectors();
@@ -170,7 +171,9 @@ class Selectors
             itemQty: (itemKey) => '.item-box:has(img[src$="/' + itemKey + '.png"]) [id^="item-qty-"]',
             itemEquip: (itemKey) => '.item-box:has(img[src$="/' + itemKey + '.png"]) [id^="item-equip-"]',
             itemUse: (itemKey) => '.item-box:has(img[src$="/' + itemKey + '.png"]) [id^="item-use-"]',
-            itemDetails: (itemKey) => '#inventory-items .item-box:has(img[src$="/'+itemKey+'.png"]) .item-data-container'
+            itemDetails: (itemKey) => '#inventory-items .item-box:has(img[src$="/'+itemKey+'.png"]) .item-data-container',
+            boxImage: (itemId) => '#item-'+itemId+' .image-container img',
+            boxDetails: (itemId) => '#item-'+itemId+' .item-data-container'
         };
         this.equipment = {
             ui: '#equipment-ui',
@@ -203,7 +206,8 @@ class Selectors
             rowValue: '.score-value',
             myScore: '.scores-dialog-box .current-player-score-data',
             pagerLink: '.pager-page a',
-            currentPage: '.pager-page-current'
+            currentPage: '.pager-page-current',
+            pageTitle: '.scores-content h3'
         };
     }
 
@@ -211,11 +215,22 @@ class Selectors
     {
         this.rewards = {
             dialog: '.rewards-dialog-box',
+            dialogTitle: '.rewards-dialog-box .box-title',
+            dialogClose: '.rewards-dialog-box .box-close',
             content: '.rewards-content',
+            container: '.reward-container',
+            reward: (rewardId) => '.reward-'+rewardId,
+            rewardName: (rewardId) => '.reward-'+rewardId+' .reward-name',
+            rewardDescription: (rewardId) => '.reward-'+rewardId+' .reward-description',
+            rewardImage: (rewardId) => '.reward-'+rewardId+' .reward-image',
             active: '.reward-active',
+            inactive: '.reward-inactive',
             accepted: '.accepted-reward',
             image: '.reward-image',
             notificationBalloon: '#rewards-notification-balloon'
+        };
+        this.trade = {
+            sessionBoxes: '[id^="box-trade"]:not(#box-trade)'
         };
         this.teams = {
             dialog: '.teams-dialog-box',
