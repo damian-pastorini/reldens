@@ -3,7 +3,8 @@
  * Reldens - Test Character Names
  *
  * Tests the names accepted and rejected on the players creation: the short and empty names the client never sends,
- * the server minimum length, the names already used in any letter case, the banned names, the guests names, the exact
+ * the server minimum length, the names already used in any letter case, the same name created by two users at the same
+ * time (only one of them gets it), the banned names, the guests names, the exact
  * minimum and the names with HTML shown as text.
  *
  */
@@ -63,6 +64,30 @@ class TestCharacterNames
         await CharacterCreation.submitCreateForm(page, playerName);
         await CharacterCreation.waitForGameStart(page, longRun);
         expect((await CharacterCreation.loadPlayers(gameConfig, playerName)).length).toBe(1);
+    }
+
+    static async runSameNameAtTheSameTimeTest(page, secondPage, screenshots, gameConfig, longRun)
+    {
+        let playerName = CharacterCreation.createPlayerName();
+        await CharacterCreation.loginToCreation(page, gameConfig, longRun);
+        await CharacterCreation.loginToCreation(secondPage, gameConfig, longRun, '2');
+        for(let creationPage of [page, secondPage]){
+            await creationPage.locator(Selectors.characterSelect.newPlayerName).fill(playerName);
+        }
+        await Promise.all([page, secondPage].map(
+            creationPage => creationPage.click(Selectors.characterSelect.createSubmit)
+        ));
+        await expect.poll(
+            async () => (await CharacterCreation.loadPlayers(gameConfig, playerName)).length,
+            {timeout: TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun)}
+        ).toBe(1);
+        let createdPlayer = [...await CharacterCreation.loadPlayers(gameConfig, playerName)].shift();
+        let firstUserId = await E2eSeedAndRestoreApi.fetchRowId(gameConfig, 'users', {username: gameConfig.e2eUsername});
+        let pagesByResult = firstUserId === createdPlayer.user_id ? [page, secondPage] : [secondPage, page];
+        await CharacterCreation.waitForGameStart(pagesByResult[0], longRun);
+        await CharacterCreation.expectCreateError(pagesByResult[1], CharacterCreation.NAME_UNAVAILABLE_MESSAGE, longRun);
+        expect((await CharacterCreation.loadPlayers(gameConfig, playerName)).length, 'One player for the name').toBe(1);
+        await screenshots.capture(pagesByResult[1], 'same-name-at-the-same-time');
     }
 
     static async runBannedNameTest(page, screenshots, gameConfig, longRun)
@@ -140,6 +165,9 @@ class TestCharacterNames
             });
             test('taken names are rejected and a corrected name works', async ({ page, screenshots, gameConfig, longRun }) => {
                 await TestCharacterNames.runTakenNamesTest(page, screenshots, gameConfig, longRun);
+            });
+            test('same name created by two users at the same time is given once', async ({ page, secondPage, screenshots, gameConfig, longRun }) => {
+                await TestCharacterNames.runSameNameAtTheSameTimeTest(page, secondPage, screenshots, gameConfig, longRun);
             });
             test('banned name is rejected', async ({ page, screenshots, gameConfig, longRun }) => {
                 await TestCharacterNames.runBannedNameTest(page, screenshots, gameConfig, longRun);
