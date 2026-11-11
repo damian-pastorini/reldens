@@ -4,7 +4,9 @@
  *
  * Server side e2e endpoints that put one enemy of a live scene room next to a player: the enemy is restored to its
  * full stats (or to the given life, so a single hit kills it), its random movement is stopped and its body is placed on
- * the first walkable attack position around the player, so the combat specs attack the same enemy body on the same position instead of chasing it across the room;
+ * the first free attack position around the player (RoomAnchoredPlacement, the player itself moved to the closest free
+ * tile pair when nothing fits where it stands), so the combat specs attack the same enemy body on the same position
+ * instead of chasing it across the room;
  * the placement can hold the enemy aggression (it counts as in battle with that player, so an aggressive enemy does not
  * start the battle and chase the player from its respawn area before the player attacks it, the attack starts it);
  * the enemy attack places the enemy the same way and starts its battle with the player, so the specs that need a hit
@@ -17,6 +19,7 @@
  */
 
 const { RoomObjectsState } = require('./room-objects-state');
+const { RoomAnchoredPlacement } = require('./room-anchored-placement');
 const { RoomEnemiesReset } = require('./room-enemies-reset');
 const { Logger, sc } = require('@reldens/utils');
 
@@ -53,14 +56,18 @@ class RoomEnemyPlacement
         }
         let playerSchema = found.playerSchema;
         let enemyObject = found.enemyObject;
-        let attackPosition = RoomObjectsState.findAttackPosition(
+        let placement = RoomAnchoredPlacement.findAnchoredPlacement(
             room,
             playerSchema.physicalBody,
             enemyObject.objectBody
         );
-        if(!attackPosition){
-            return {error: 'No walkable tile next to the player '+playerName+'.'};
+        if(!placement){
+            return {error: 'No free tile pair around the player '+playerName+sessionId+' in '+room.roomName+'.'};
         }
+        if(placement.anchorPosition){
+            RoomAnchoredPlacement.placePlayerBody(playerSchema.physicalBody, placement.anchorPosition);
+        }
+        let attackPosition = placement.position;
         await RoomEnemiesReset.restoreInstance(enemyObject, room);
         RoomObjectsState.stopRandomMovement(enemyObject);
         RoomObjectsState.placeObjectBody(enemyObject.objectBody, attackPosition);
