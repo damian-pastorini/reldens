@@ -4,8 +4,9 @@
  *
  * Tests where a fireball bullet ends in the forest (CombatSkillCasting): with a second forest enemy placed between the
  * player and the targeted enemy (RoomLinePlacement, both enemies placed again without the held aggression and with
- * their aggression off by a 1 pixel "interactionRadio"), the bullet hits the enemy in between (the hit is broadcast on
- * its position); with "validateTargetOnHit" off that enemy starts its own battle with the player and with it on the hit
+ * their aggression off by a 1 pixel "interactionRadio", and every enemy action with an unlimited range for the group,
+ * so a started battle always attacks instead of a chase that fails and leaves it), the bullet hits the enemy in
+ * between (the hit is broadcast on its position); with "validateTargetOnHit" off that enemy starts its own battle with the player and with it on the hit
  * applies no damage and only the target battle is started, the enemy in between stays out of battle and both enemies
  * keep their life. The line goes to the left of the player, so the bullet flies to the left: the physics broadphase
  * sorts the bodies by their left bound, the enemy in between is then the first body of the hit, which is the only order
@@ -34,6 +35,7 @@ class TestCombatBulletObstacleHits
     static NO_AGGRESSION_RADIO = 1;
     static LINE_TILES_STEP = 2;
     static LINE_DIRECTION = [-1, 0];
+    static UNLIMITED_RANGE = 0;
 
     static async prepareFireball(context, e2eGroup, properties)
     {
@@ -63,6 +65,9 @@ class TestCombatBulletObstacleHits
         let blockerContext = Object.assign({}, context, {enemyKey: blocker.key, bodyKey: blocker.bodyKey});
         for(let enemyContext of [context, blockerContext]){
             await TestCombatBulletObstacleHits.placeWithoutHold(page, enemyContext, e2eGroup);
+            await GameplayE2eStateApi.changeEnemyActions(gameConfig, e2eGroup, context.roomName, enemyContext.bodyKey, {
+                range: TestCombatBulletObstacleHits.UNLIMITED_RANGE
+            });
         }
         let line = await RoomObjectsApi.placeEnemiesOnLine(
             page,
@@ -70,9 +75,11 @@ class TestCombatBulletObstacleHits
             context.roomName,
             [blockerContext.bodyKey, context.bodyKey],
             TestCombatBulletObstacleHits.LINE_TILES_STEP,
-            TestCombatBulletObstacleHits.LINE_DIRECTION
+            TestCombatBulletObstacleHits.LINE_DIRECTION,
+            context.timeout
         );
         expect(line.positions, 'The enemies must be placed on a clear line: '+line.error).toHaveLength(2);
+        expect(line.reached, 'The client must show the player on the line start').toBe(true);
         await TestCombatBulletObstacleHits.prepareFireball(context, e2eGroup, {validateTargetOnHit});
         await CombatSkillCasting.targetEnemy(page, context);
         let lives = {
