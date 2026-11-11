@@ -5,7 +5,8 @@
  * Server side e2e endpoint for the drops specs: the drop objects of a room (the room objects of the pick up type) with
  * their object id, the id of the item they give, their position and their interaction limits, including the drops the
  * clients never received, with the room auto dispose flag; and the drops of a room removed (like the room removes a
- * picked drop, so the clients get the remove and the room enables its auto dispose again).
+ * picked drop, so the clients get the remove and the room enables its auto dispose again), also for every room the
+ * players reset restores, so a drop left by a test never reaches the next one.
  *
  */
 
@@ -45,6 +46,16 @@ class DropsProbe
             room.removeObject(drop.dropObject);
         }
         return {removed: drops.length, autoDispose: room.autoDispose};
+    }
+
+    static clearRoomsDrops(roomsManager, roomsNames)
+    {
+        let removedCount = 0;
+        for(let room of RoomObjectsState.fetchRooms(roomsManager, roomsNames)){
+            removedCount += DropsProbe.clearDrops(room).removed;
+        }
+        Logger.info('[drops-probe] Removed '+removedCount+' drops left by the tests.');
+        return removedCount;
     }
 
     static registerEndpoints(serverManager)
