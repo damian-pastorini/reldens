@@ -210,6 +210,11 @@ class GameplayE2eStateApi
         );
     }
 
+    static async cancelEvent(gameConfig, group, eventName)
+    {
+        return await SecurityApi.request(gameConfig, 'POST', '/api/e2e/live-objects/cancel-event', {group, eventName});
+    }
+
     static async delayRoomMethod(gameConfig, group, roomName, methodKey, delayMs)
     {
         return await SecurityApi.request(
