@@ -6,7 +6,7 @@
 
 const { BaseTest } = require('./base-test');
 const { ActiveSessionsBuilder } = require('./fixtures/active-sessions-builder');
-const { GameRoomLeaveHandler } = require('../lib/game/client/handlers/game-room-leave-handler');
+const { GameRoomsConnections } = require('../lib/game/client/game-rooms-connections');
 const { SyncServerDriver } = require('../lib/sync/server/colyseus/sync-server-driver');
 const { SyncClientDriver } = require('../lib/sync/client/colyseus/sync-client-driver');
 const { GameConst } = require('../lib/game/constants');
@@ -182,11 +182,12 @@ class TestDoubleLoginSessions extends BaseTest
     {
         await this.test('the old lobby closed by the double login shows the session ended message once', async () => {
             let gameManager = this.createClientGameManager(false);
-            let leaveHandler = new GameRoomLeaveHandler(gameManager);
-            this.assert.strictEqual(leaveHandler.endSession(SyncClientDriver.CloseCode.CONSENTED), true);
+            let roomsConnections = new GameRoomsConnections(gameManager);
+            let consentedCode = SyncClientDriver.CloseCode.CONSENTED;
+            this.assert.strictEqual(roomsConnections.endSessionOnGameRoomLeave(consentedCode), true);
             this.assert.deepStrictEqual(gameManager.alerts, ['translated:game.errors.sessionEnded']);
             this.assert.strictEqual(gameManager.gameOver, true);
-            this.assert.strictEqual(leaveHandler.endSession(SyncClientDriver.CloseCode.CONSENTED), false);
+            this.assert.strictEqual(roomsConnections.endSessionOnGameRoomLeave(consentedCode), false);
             this.assert.strictEqual(gameManager.alerts.length, 1);
         });
     }
@@ -196,7 +197,7 @@ class TestDoubleLoginSessions extends BaseTest
         await this.test('a tab already showing the game over message is not alerted by the lobby close', async () => {
             let gameManager = this.createClientGameManager(true);
             this.assert.strictEqual(
-                new GameRoomLeaveHandler(gameManager).endSession(SyncClientDriver.CloseCode.CONSENTED),
+                new GameRoomsConnections(gameManager).endSessionOnGameRoomLeave(SyncClientDriver.CloseCode.CONSENTED),
                 false
             );
             this.assert.deepStrictEqual(gameManager.alerts, []);
@@ -209,7 +210,7 @@ class TestDoubleLoginSessions extends BaseTest
             let closeCodes = SyncClientDriver.CloseCode;
             for(let code of [closeCodes.NORMAL_CLOSURE, closeCodes.ABNORMAL_CLOSURE, closeCodes.SERVER_SHUTDOWN]){
                 let gameManager = this.createClientGameManager(false);
-                this.assert.strictEqual(new GameRoomLeaveHandler(gameManager).endSession(code), false);
+                this.assert.strictEqual(new GameRoomsConnections(gameManager).endSessionOnGameRoomLeave(code), false);
                 this.assert.deepStrictEqual(gameManager.alerts, []);
                 this.assert.strictEqual(gameManager.gameOver, false);
             }
