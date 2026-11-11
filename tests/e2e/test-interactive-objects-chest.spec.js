@@ -9,7 +9,7 @@
  * coin while the first player client gets no dialog; a real click on a looted chest toggles the animation without a
  * message; a real double click sends one interaction; a click out of reach closes with no dialog and a later click in
  * range opens it; a coin that can not be added says it is stuck and stores no row; two messages in one tick give one
- * coin and one row; with the close on out of reach off no close message is sent; and a wrong id, a different act or a
+ * coin and one row, the second gets no answer; a disabled player gets no answer, coin or row; with the close on out of reach off no close message is sent; and a wrong id, a different act or a
  * click on a page element over the chest get no chest answer.
  *
  */
@@ -100,13 +100,8 @@ class TestInteractiveObjectsChest
     static async fetchChestClient(page, chestKey)
     {
         return await page.evaluate((key) => {
-            let chest = window.reldens.getActiveScene().objectsAnimations[key];
-            return {
-                isOpen: chest.isOpen,
-                isLooted: chest.isLooted,
-                pendingOpen: chest.pendingOpen,
-                animation: chest.sceneSprite?.anims?.currentAnim?.key || ''
-            };
+            let {isOpen, isLooted, pendingOpen, sceneSprite} = window.reldens.getActiveScene().objectsAnimations[key];
+            return {isOpen, isLooted, pendingOpen, animation: sceneSprite?.anims?.currentAnim?.key || ''};
         }, chestKey);
     }
 
@@ -219,16 +214,30 @@ class TestInteractiveObjectsChest
         await TestInteractiveObjectsChest.enterForest(context);
         let chest = await TestInteractiveObjectsChest.prepareChest(context);
         let objectId = await context.page.evaluate((key) => {
-            let chestObject = window.reldens.getActiveScene().objectsAnimations[key];
-            return chestObject.key === chestObject.asset_key ? chestObject.id : chestObject.key;
+            let {key: chestKey, asset_key: assetKey, id} = window.reldens.getActiveScene().objectsAnimations[key];
+            return chestKey === assetKey ? id : chestKey;
         }, chest.chestKey);
         await RoomMessagesRecorder.sendMessages(context.page, [
             {act: ObjectsConst.OBJECT_INTERACTION, id: objectId},
             {act: ObjectsConst.OBJECT_INTERACTION, id: objectId}
         ]);
         await context.page.waitForTimeout(TestInteractiveObjectsChest.SETTLE_MS);
-        expect(await TestInteractiveObjectsChest.fetchChestAnswers(context.page), 'The chest answers the messages')
-            .toContain(TestInteractiveObjectsChest.FOUND);
+        expect(await TestInteractiveObjectsChest.fetchChestAnswers(context.page), 'Only the first message is answered')
+            .toEqual([TestInteractiveObjectsChest.FOUND]);
+        expect(await TestInteractiveObjectsChest.fetchCoins(context.gameConfig), 'One coin is stored').toBe(chest.coinsBefore + 1);
+        expect((await TestInteractiveObjectsChest.fetchChestRows(context.gameConfig, chest)).length, 'One progress row').toBe(1);
+    }
+
+    static async runDisabledPlayerTest(context)
+    {
+        await TestInteractiveObjectsChest.enterForest(context);
+        let chest = await TestInteractiveObjectsChest.prepareChest(context);
+        await TimingObjectSession.disableForestPlayer(context.gameConfig);
+        await TestInteractiveObjectsChest.openChest(context.page, chest);
+        await context.page.waitForTimeout(TestInteractiveObjectsChest.SETTLE_MS);
+        expect(await TestInteractiveObjectsChest.fetchChestAnswers(context.page), 'The disabled player gets no answer').toEqual([]);
+        expect(await TestInteractiveObjectsChest.fetchCoins(context.gameConfig), 'The disabled player gets no coin').toBe(chest.coinsBefore);
+        expect(await TestInteractiveObjectsChest.fetchChestRows(context.gameConfig, chest), 'No progress row').toEqual([]);
     }
 
     static async runNoCloseUiTest(context)
@@ -293,6 +302,9 @@ class TestInteractiveObjectsChest
             });
             test('two messages in one tick give one coin and one row', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestInteractiveObjectsChest.runSameTickTest({page, screenshots, gameConfig, e2eGroup, longRun});
+            });
+            test('disabled player gets no chest answer, coin or row', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
+                await TestInteractiveObjectsChest.runDisabledPlayerTest({page, screenshots, gameConfig, e2eGroup, longRun});
             });
             test('close on out of reach off sends no close message', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestInteractiveObjectsChest.runNoCloseUiTest({page, screenshots, gameConfig, e2eGroup, longRun});
