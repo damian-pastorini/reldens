@@ -68,7 +68,7 @@ class TestKillScorePanels
         let observerPage = false;
         let victimScoreBefore = 0;
         let kill = await KillScoreRulesSteps.killVictim(context, scoreData, async () => {
-            observerPage = await KillScoreSteps.loginThirdInForest(context);
+            observerPage = (await Login.startThirdPlayer(context, Login.FOREST_ROOM_NAME)).clientPage;
             await RoomMessagesRecorder.start(context.secondPage);
             victimScoreBefore = (await KillScoreSteps.fetchPanelContent(context.secondPage)).myScore;
         });
