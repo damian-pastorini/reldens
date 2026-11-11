@@ -104,6 +104,12 @@ another instance), for example two sessions working on the same branch, without 
   default run keeps `test-results/instances/`
 - an `instances` entry in `tests/config.json` overrides any config value of one instance, like
   `{"instances": {"server-3": {"dbName": "reldens_other_tests", "port": 5060}}}`
+- servers with their own database: an instance entry with `"crossServerNamesCheck": true` and a `servers` entry giving
+  `server-2` its own `dbName` boots every server of the run with all the run servers URLs in `RELDENS_ROOMS_DATABASES`
+  (each server skips its own URL), so the usernames, emails and player names are checked between them; both databases
+  are reset with `--db-reset=<server-1 dbName>,<server-2 dbName>` (every database of the run must be listed, the
+  server-2 one created once like the instance one). `tests/e2e/test-cross-server-names.spec.js` runs its own databases
+  cases only on such a run and skips them on the others
 
 Both runs still boot their servers from the same `serverPath` app, so they share its `.env` (the database values are
 overridden by each run), its theme and its client bundle.
