@@ -10,7 +10,8 @@
  * database reset of an instance. Server-1 is booted in the Playwright global setup process and every next instance in
  * its own child process (tests/e2e/forked-server-instance.js, a second ServerManager in one process would share the
  * events manager singleton), which answers "ready" once its e2e endpoints are registered and shuts down gracefully
- * when the global teardown asks it to. A spec reaches an instance with forServer(gameConfig, 'server-2'), the game
+ * when the global teardown asks it to (an instance already ended, by an exit or a signal, is skipped, and one whose
+ * IPC channel is closed is killed). A spec reaches an instance with forServer(gameConfig, 'server-2'), the game
  * config with that instance URL used by the e2e endpoints requests and the client pages it opens.
  *
  */
@@ -87,13 +88,23 @@ class E2eServerInstances
     static async stopInstances()
     {
         for(let child of E2eServerInstances.children){
-            if(null !== child.exitCode){
+            if(null !== child.exitCode || null !== child.signalCode){
                 continue;
             }
-            child.send(E2eServerInstances.SHUTDOWN_MESSAGE);
-            await once(child, 'exit');
+            let childExit = once(child, 'exit');
+            E2eServerInstances.requestStop(child);
+            await childExit;
         }
         E2eServerInstances.children = [];
+    }
+
+    static requestStop(child)
+    {
+        if(child.connected){
+            child.send(E2eServerInstances.SHUTDOWN_MESSAGE);
+            return true;
+        }
+        return child.kill();
     }
 
 }
