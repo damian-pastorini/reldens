@@ -8,8 +8,11 @@
  * production scripts (migrations/production) so the e2e runs against a clean production DB. Every numbered game
  * server (E2eServerInstances: server-1 on the found port, server-2 on the next free port) shares that database, the
  * --skip-servers=server-2 flag avoids creating an instance and --skip-db-reset=server-1,server-2 avoids the database
- * reset of an instance (a database shared by several instances is reset once). Supports --long, --filter, --port,
- * --clean-output, --db-reset, --skip-servers and --skip-db-reset flags.
+ * reset of an instance (a database shared by several instances is reset once). --instance=<name> runs an isolated
+ * suite (E2eInstance): its own database (it must exist, confirmed with --db-reset=<its dbName>), its own ports
+ * and its own results folder (test-results/instances/<name>), so it runs at the same time as the default run. The
+ * --clean-output of an instance removes only its folder and the one of the default run keeps every instance folder.
+ * Supports --long, --filter, --port, --clean-output, --db-reset, --skip-servers, --skip-db-reset and --instance flags.
  *
  */
 
@@ -20,6 +23,7 @@ const { FileHandler } = require('@reldens/server-utils');
 const { Logger, sc } = require('@reldens/utils');
 const { DatabaseResetUtility } = require('../database-reset-utility');
 const { E2eServerInstances } = require('./helpers/e2e-server-instances');
+const { E2eInstance } = require('./helpers/e2e-instance');
 
 class RunTests
 {
@@ -27,7 +31,10 @@ class RunTests
 
     static async run()
     {
-        let config = FileHandler.fetchFileJson(FileHandler.joinPaths(process.cwd(), 'tests', 'config.json'));
+        if(!RunTests.applyInstanceArg()){
+            process.exit(1);
+        }
+        let config = E2eInstance.loadConfig();
         if(!config){
             Logger.error('Cannot run e2e tests: tests/config.json not found.');
             process.exit(1);
@@ -46,8 +53,7 @@ class RunTests
             await RunTests.resetServersDatabases(config, dbResetName, serversKeys);
         }
         if(process.argv.includes('--clean-output') || 'true' === process.env.npm_config_clean_output){
-            Logger.info('Cleaning test-results folder...');
-            FileHandler.remove(FileHandler.joinPaths(process.cwd(), 'test-results'));
+            RunTests.cleanOutput();
         }
         if(process.argv.includes('--long') || '1' === process.env.LONG_RUN){
             process.env.LONG_RUN = '1';
@@ -85,6 +91,41 @@ class RunTests
         }
         Logger.info('Playwright ended with the exit code 0.');
         process.exit(0);
+    }
+
+    static applyInstanceArg()
+    {
+        let instanceArg = process.argv.find(a => a.startsWith('--instance='));
+        let instanceName = instanceArg
+            ? instanceArg.slice('--instance='.length)
+            : sc.get(process.env, 'npm_config_instance', E2eInstance.instanceName);
+        if('' === instanceName){
+            return true;
+        }
+        if(!E2eInstance.NAME_PATTERN.test(instanceName)){
+            Logger.critical('Invalid instance "'+instanceName+'", use lower case letters, numbers and hyphens.');
+            return false;
+        }
+        process.env[E2eInstance.INSTANCE_ENV] = instanceName;
+        E2eInstance.instanceName = instanceName;
+        Logger.info('Running the isolated e2e instance "'+instanceName+'".');
+        return true;
+    }
+
+    static cleanOutput()
+    {
+        let resultsPath = E2eInstance.resultsPath();
+        Logger.info('Cleaning the results folder '+resultsPath+'...');
+        if('' !== E2eInstance.instanceName){
+            return FileHandler.remove(resultsPath);
+        }
+        FileHandler.createFolder(resultsPath);
+        for(let entryName of FileHandler.readFolder(resultsPath)){
+            if(E2eInstance.INSTANCES_RESULTS_FOLDER !== entryName){
+                FileHandler.remove(FileHandler.joinPaths(resultsPath, entryName));
+            }
+        }
+        return true;
     }
 
     static fetchListArg(argPrefix)
