@@ -368,6 +368,9 @@ class CollectGameData
         process.env.RELDENS_ALLOW_BUILD_CLIENT = bundleRequired ? '1' : '0';
         process.env.RELDENS_ALLOW_BUILD_CSS = bundleRequired ? '1' : '0';
         process.env.RELDENS_MAILER_ENABLE = '0';
+        process.env.RELDENS_ROOMS_DATABASES = true === sc.get(config, 'crossServerNamesCheck', false)
+            ? E2eServerInstances.fetchAllServersUrls().join(',')
+            : '';
         DatabaseEnvVarsExporter.apply(config);
         let effectivePort = process.env.RELDENS_E2E_PORT || config.port;
         if(effectivePort) {
