@@ -6,7 +6,8 @@
  * recorded from the scene room and the global chat room, and the stored chat rows of the sender): three clients see a
  * room message once each; an HTML text and a text equal to a snippet key are
  * shown as literal text; a dead player message is still broadcast; an input with only "#", "@" or blanks is not sent
- * and the raw blank, non string or prefix only messages are dropped with no row; a message over the character limit is
+ * and the raw blank, non string or prefix only messages are dropped with no row (the joined and left notices are ignored,
+ * the global chat room sends them for the players of every group); a message over the character limit is
  * cut by the client and by the server, one with exactly the limit arrives whole and a limit of 0 cuts nothing; the
  * backslashes are removed and the line breaks replaced; and the cooldown drops a second room message, keeps separate
  * counters for the room and the global messages, lets a message after it pass, and with 0 lets every message pass.
@@ -118,7 +119,7 @@ class TestChatMessages
         await ChatSteps.sendRaw(context.page, {[ChatConst.MESSAGE.KEY]: '@'+context.gameConfig.e2ePlayerName2+' ', t: context.gameConfig.e2ePlayerName2}, true);
         await context.page.waitForTimeout(TestChatMessages.SETTLE_MS);
         for(let page of [context.page, context.secondPage]){
-            expect(await ChatSteps.fetchChat(page), 'No blank message is delivered').toEqual([]);
+            expect(await ChatSteps.fetchPlayersChat(page), 'No blank message is delivered').toEqual([]);
         }
     }
 
@@ -164,7 +165,7 @@ class TestChatMessages
             await context.page.waitForTimeout(TestChatMessages.COOLDOWN_MS);
         }
         await context.secondPage.waitForTimeout(TestChatMessages.SETTLE_MS);
-        expect(await ChatSteps.fetchChat(context.secondPage), 'No tampered message is broadcast').toEqual([]);
+        expect(await ChatSteps.fetchPlayersChat(context.secondPage), 'No tampered message is broadcast').toEqual([]);
         expect(await TestChatMessages.fetchStoredRows(context.gameConfig, context.gameConfig.e2ePlayerName, ''), 'No row').toEqual([]);
     }
 
