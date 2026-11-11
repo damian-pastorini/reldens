@@ -173,6 +173,17 @@ class RoomObjectsApi
         );
     }
 
+    static async placePlayerNextToObjectWithRoom(page, gameConfig, roomName, objectKey, enemyKey, timeout)
+    {
+        return await RoomObjectsApi.requestPlayerPlacement(
+            page,
+            gameConfig,
+            '/api/e2e/room-objects/place-player-next-to-object-with-room',
+            {roomName, playerName: gameConfig.e2ePlayerName, objectKey, enemyKey},
+            timeout
+        );
+    }
+
     static async placePlayerOnLineStart(page, gameConfig, roomName, timeout, distances)
     {
         return await RoomObjectsApi.requestPlayerPlacement(
