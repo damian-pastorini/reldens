@@ -5,9 +5,12 @@
  * HTTP client for the e2e security endpoints registered by SecurityState: lowered limits, bans, denied addresses,
  * stored address blocks, the simulated restart, the reset password sent time, the test mailer switch and the emails
  * recorded by the test mailer. The requests always go to the IPv4 loopback address, so the tests that deny the IPv6
- * loopback address never cut the e2e endpoints.
+ * loopback address never cut the e2e endpoints, and to server-1 unless the game config is the one of a numbered
+ * instance (E2eServerInstances.forServer, its serverBaseUrl).
  *
  */
+
+const { sc } = require('@reldens/utils');
 
 class SecurityApi
 {
@@ -16,8 +19,13 @@ class SecurityApi
 
     static baseUrl(gameConfig)
     {
-        let envPort = process.env.RELDENS_E2E_PORT || null;
-        return envPort ? 'http://localhost:'+envPort : (gameConfig.baseUrl || 'http://localhost:8080');
+        let serverBaseUrl = sc.get(gameConfig, 'serverBaseUrl', '');
+        if('' === serverBaseUrl){
+            serverBaseUrl = process.env.RELDENS_E2E_PORT
+                ? 'http://localhost:'+process.env.RELDENS_E2E_PORT
+                : sc.get(gameConfig, 'baseUrl', 'http://localhost:8080');
+        }
+        return serverBaseUrl;
     }
 
     static hostUrl(gameConfig, host)
@@ -62,11 +70,6 @@ class SecurityApi
     static async fetchStoredBlocks(gameConfig)
     {
         return (await SecurityApi.request(gameConfig, 'GET', '/api/e2e/security/stored-blocks')).blocks;
-    }
-
-    static async setAdminBlackList(gameConfig, blackList)
-    {
-        return await SecurityApi.request(gameConfig, 'POST', '/api/e2e/security/admin-black-list', {blackList});
     }
 
     static async fetchIdentityState(gameConfig, identity)
