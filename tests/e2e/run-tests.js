@@ -8,7 +8,8 @@
  * production scripts (migrations/production) so the e2e runs against a clean production DB. Every numbered game
  * server (E2eServerInstances: server-1 on the found port, server-2 on the next free port) shares that database, the
  * --skip-servers=server-2 flag avoids creating an instance and --skip-db-reset=server-1,server-2 avoids the database
- * reset of an instance (a database shared by several instances is reset once). --instance=<name> runs an isolated
+ * reset of an instance (a database shared by several instances is reset once; a server with its own database in a
+ * "servers" entry is reset only when its dbName is also listed, --db-reset=<first dbName>,<second dbName>). --instance=<name> runs an isolated
  * suite (E2eInstance): its own database (it must exist, confirmed with --db-reset=<its dbName>), its own ports
  * and its own results folder (test-results/instances/<name>), so it runs at the same time as the default run. The
  * --clean-output of an instance removes only its folder and the one of the default run keeps every instance folder.
@@ -47,11 +48,14 @@ class RunTests
         }
         let skippedServers = RunTests.fetchListArg('--skip-servers=');
         let serversKeys = await RunTests.assignServersPorts(port, skippedServers);
-        let dbResetArg = process.argv.find(a => a.startsWith('--db-reset'));
-        let dbResetName = dbResetArg ? dbResetArg.slice('--db-reset='.length) : (process.env.npm_config_db_reset || '');
-        if(dbResetArg || '' !== dbResetName){
-            await RunTests.resetServersDatabases(config, dbResetName, serversKeys);
+        let dbResetNames = [
+            ...RunTests.fetchListArg('--db-reset='),
+            ...String(sc.get(process.env, 'npm_config_db_reset', '')).split(',').map(dbName => dbName.trim())
+        ].filter(dbName => '' !== dbName);
+        if(process.argv.some(arg => arg.startsWith('--db-reset')) || 0 < dbResetNames.length){
+            await RunTests.resetServersDatabases(config, dbResetNames, serversKeys);
         }
+        process.env[E2eServerInstances.FIRST_SERVER_PORT_ENV] = String(port);
         if(process.argv.includes('--clean-output') || 'true' === process.env.npm_config_clean_output){
             RunTests.cleanOutput();
         }
@@ -162,7 +166,7 @@ class RunTests
         return serversKeys;
     }
 
-    static async resetServersDatabases(config, dbResetName, serversKeys)
+    static async resetServersDatabases(config, dbResetNames, serversKeys)
     {
         let skippedResets = RunTests.fetchListArg('--skip-db-reset=');
         let resetDatabases = [];
@@ -172,7 +176,7 @@ class RunTests
                 Logger.info('The database of '+serverKey+' is not reset (--skip-db-reset or already reset).');
                 continue;
             }
-            if(!await RunTests.resetDatabase(serverConfig, dbResetName)){
+            if(!await RunTests.resetDatabase(serverConfig, dbResetNames)){
                 process.exit(1);
             }
             resetDatabases.push(serverConfig.dbName);
@@ -206,12 +210,12 @@ class RunTests
         return true;
     }
 
-    static async resetDatabase(config, dbResetName)
+    static async resetDatabase(config, dbResetNames)
     {
-        if(!config.dbName || config.dbName !== dbResetName){
+        if(!config.dbName || !dbResetNames.includes(config.dbName)){
             Logger.error(
-                'Database reset refused: pass --db-reset='+config.dbName+' to confirm the tests/config.json database'
-                +' can be dropped.'
+                'Database reset refused: pass --db-reset='+config.dbName+' (comma separated with the other servers'
+                +' databases) to confirm the database of '+sc.get(config, 'serverKey', 'server-1')+' can be dropped.'
             );
             return false;
         }
