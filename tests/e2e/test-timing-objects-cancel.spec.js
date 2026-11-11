@@ -65,7 +65,7 @@ class TestTimingObjectsCancel
             area => TestTimingObjectsCancel.ENEMY_OBJECT_TYPE === area.childObjectType && !area.isAggressive
         );
         expect(passiveEnemyArea, 'The forest must have a passive enemy').toBeTruthy();
-        let mining = await TimingObjectSession.prepareMining(page, gameConfig, longRun);
+        let mining = await TimingObjectSession.prepareMining(page, gameConfig, longRun, passiveEnemyArea.assetKey);
         await TimingObjectSession.startTiming(page, mining.rockKey, mining.serverTimeout);
         let hpBefore = await TestCombatDeath.getPlayerHpFromState(page);
         let positionBefore = await Phaser.getPlayerServerPosition(page);
