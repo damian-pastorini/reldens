@@ -2,7 +2,8 @@
  *
  * Reldens - E2E Server Instances
  *
- * The numbered game servers of an e2e run (server-1, server-2): every instance shares the tests/config.json database
+ * The numbered game servers of an e2e run (server-1, server-2): every server of the run shares the run database (the
+ * tests/config.json one, or the own database of an isolated --instance run, E2eInstance)
  * and the signed tokens secret of its app .env and runs on its own port (server-1 on the free e2e port, every next one
  * on the next free port, given by run-tests.js in RELDENS_E2E_SERVERS_PORTS). A "servers" entry in tests/config.json
  * (like {"servers": {"server-2": {"serverPath": "../../other-checkout/app"}}}) overrides the config of one instance.
