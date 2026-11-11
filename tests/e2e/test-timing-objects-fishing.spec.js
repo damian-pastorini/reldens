@@ -16,6 +16,7 @@ const { TimingObjectSession } = require('./helpers/timing-object-session');
 const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
 const { RoomObjectsApi } = require('./helpers/room-objects-api');
 const { ForestEnemyKill } = require('./helpers/forest-enemy-kill');
+const { TestCombatDeath } = require('./helpers/test-combat-death');
 const { Phaser } = require('./helpers/phaser');
 const { Login } = require('./helpers/login');
 const { TimeConstants } = require('./helpers/time-constants');
@@ -27,7 +28,6 @@ class TestTimingObjectsFishing
 
     static FISHING_SPOT_KEY = 'fish_spawn_forest_1';
     static FISH_KEY = 'fish';
-    static ENEMY_OBJECT_TYPE = 4;
     static OPEN_TILES_DISTANCE = 2;
 
     static async fetchStoredFish(gameConfig)
@@ -88,18 +88,9 @@ class TestTimingObjectsFishing
 
     static async runEnemyHitCancelTest(context)
     {
-        let passiveEnemyArea = BaseE2eTest.loadRoomEntries(Login.FOREST_ROOM_NAME, ['respawnAreas']).find(
-            area => TestTimingObjectsFishing.ENEMY_OBJECT_TYPE === area.childObjectType && !area.isAggressive
-        );
-        expect(passiveEnemyArea, 'The forest must have a passive enemy').toBeTruthy();
+        let passiveEnemyKey = TestCombatDeath.loadPassiveEnemyKey();
         let fishing = await TestTimingObjectsFishing.startFishing(context, TestTimingObjectsFishing.OPEN_TILES_DISTANCE);
-        let enemyAttack = await RoomObjectsApi.startEnemyAttack(
-            context.gameConfig,
-            Login.FOREST_ROOM_NAME,
-            context.gameConfig.e2ePlayerName,
-            passiveEnemyArea.assetKey
-        );
-        expect(enemyAttack.enemyKey, 'The enemy attack must start: '+enemyAttack.error).toBeTruthy();
+        await TestCombatDeath.startEnemyAttack(context.gameConfig, passiveEnemyKey);
         await TimingObjectSession.waitForTimingAction(context.page, TimingMiningSteps.CANCEL, fishing.duration);
         await RoomObjectsApi.disableEnemies(context.gameConfig, Login.FOREST_ROOM_NAME);
         await TestTimingObjectsFishing.expectNoFish(context, fishing, 'An enemy hit cancels the fishing');
