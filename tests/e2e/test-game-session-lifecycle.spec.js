@@ -24,7 +24,6 @@ const { Selectors } = require('./selectors');
 const { GameConst } = require('../../lib/game/constants');
 const { ChatConst } = require('../../lib/chat/constants');
 const GameTranslations = require('../../lib/game/client/snippets/en_US');
-const { sc } = require('@reldens/utils');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
 
@@ -39,18 +38,12 @@ class TestGameSessionLifecycle
     {
         await MovementScenario.pauseMovingObjects(gameConfig, Login.TOWN_ROOM_NAME);
         await Navigation.walkInDirection(page, 'ArrowRight', TestGameSessionLifecycle.WALK_MS);
-        let walkContext = MovementScenario.createWalkContext(
+        await RoomMovementApi.waitForPlayerStill(
             gameConfig,
             Login.TOWN_ROOM_NAME,
             gameConfig.e2ePlayerName,
-            false
+            TimeConstants.NAVIGATION
         );
-        let stopped = await RoomMovementApi.collectTrail(
-            walkContext.fetchPlayer,
-            walkContext.isStill,
-            walkContext.navTimeout
-        );
-        expect(stopped.done, 'The player must stop after the walk: '+sc.toJsonString(stopped.last)).toBe(true);
     }
 
     static async logout(page, longRun)
